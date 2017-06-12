@@ -82,14 +82,14 @@ public final class SharedPreferencesHelper
             case APP:
                 return GeckoSharedPrefs.forApp(mContext);
             case PROFILE:
-                final String profileName = message.getString("profileName", null);
+                final String profileName = message.getString("profileName");
                 if (profileName == null) {
                     return GeckoSharedPrefs.forProfile(mContext);
                 } else {
                     return GeckoSharedPrefs.forProfileName(mContext, profileName);
                 }
             case GLOBAL:
-                final String branch = message.getString("branch", null);
+                final String branch = message.getString("branch");
                 if (branch == null) {
                     return PreferenceManager.getDefaultSharedPreferences(mContext);
                 } else {
@@ -167,15 +167,15 @@ public final class SharedPreferencesHelper
             final String name = pref.getString("name");
             final String type = pref.getString("type");
             final GeckoBundle bundleValue = new GeckoBundle(3);
-            bundleValue.put("name", name);
-            bundleValue.put("type", type);
+            bundleValue.putString("name", name);
+            bundleValue.putString("type", type);
             try {
                 if ("bool".equals(type)) {
-                    bundleValue.put("value", prefs.getBoolean(name, false));
+                    bundleValue.putBoolean("value", prefs.getBoolean(name, false));
                 } else if ("int".equals(type)) {
-                    bundleValue.put("value", prefs.getInt(name, 0));
+                    bundleValue.putInt("value", prefs.getInt(name, 0));
                 } else if ("string".equals(type)) {
-                    bundleValue.put("value", prefs.getString(name, ""));
+                    bundleValue.putString("value", prefs.getString(name, ""));
                 } else {
                     Log.w(LOGTAG, "Unknown pref value type [" + type + "] for pref [" + name + "]");
                 }
@@ -258,8 +258,8 @@ public final class SharedPreferencesHelper
         final boolean enable = message.getBoolean("enable");
 
         final Scope scope = Scope.forKey(message.getString("scope"));
-        final String profileName = message.getString("profileName", null);
-        final String branch = getBranch(scope, profileName, message.getString("branch", null));
+        final String profileName = message.getString("profileName");
+        final String branch = getBranch(scope, profileName, message.getString("branch"));
 
         if (branch == null) {
             Log.e(LOGTAG, "No branch specified for SharedPreference:Observe; aborting.");

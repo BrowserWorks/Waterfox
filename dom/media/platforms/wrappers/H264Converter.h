@@ -8,6 +8,7 @@
 #define mozilla_H264Converter_h
 
 #include "PlatformDecoderModule.h"
+#include "mozilla/Maybe.h"
 
 namespace mozilla {
 
@@ -18,7 +19,8 @@ namespace mozilla {
 // H264Converter will monitor the input data, and will delay creation of the
 // MediaDataDecoder until a SPS and PPS NALs have been extracted.
 
-class H264Converter : public MediaDataDecoder {
+class H264Converter : public MediaDataDecoder
+{
 public:
 
   H264Converter(PlatformDecoderModule* aPDM,
@@ -26,10 +28,10 @@ public:
   virtual ~H264Converter();
 
   RefPtr<InitPromise> Init() override;
-  void Input(MediaRawData* aSample) override;
-  void Flush() override;
-  void Drain() override;
-  void Shutdown() override;
+  RefPtr<DecodePromise> Decode(MediaRawData* aSample) override;
+  RefPtr<DecodePromise> Drain() override;
+  RefPtr<FlushPromise> Flush() override;
+  RefPtr<ShutdownPromise> Shutdown() override;
   bool IsHardwareAccelerated(nsACString& aFailureReason) const override;
   const char* GetDescriptionName() const override
   {
@@ -47,33 +49,60 @@ public:
     return false;
   }
 
+  ConversionRequired NeedsConversion() const override
+  {
+    if (mDecoder) {
+      return mDecoder->NeedsConversion();
+    }
+    // Default so no conversion is performed.
+    return ConversionRequired::kNeedAVCC;
+  }
   nsresult GetLastError() const { return mLastError; }
 
 private:
   // Will create the required MediaDataDecoder if need AVCC and we have a SPS NAL.
   // Returns NS_ERROR_FAILURE if error is permanent and can't be recovered and
   // will set mError accordingly.
-  nsresult CreateDecoder(DecoderDoctorDiagnostics* aDiagnostics);
+  nsresult CreateDecoder(const VideoInfo& aConfig,
+                         DecoderDoctorDiagnostics* aDiagnostics);
   nsresult CreateDecoderAndInit(MediaRawData* aSample);
   nsresult CheckForSPSChange(MediaRawData* aSample);
   void UpdateConfigFromExtraData(MediaByteBuffer* aExtraData);
 
   void OnDecoderInitDone(const TrackType aTrackType);
-  void OnDecoderInitFailed(MediaResult aError);
+  void OnDecoderInitFailed(const MediaResult& aError);
+
+  bool CanRecycleDecoder() const
+  {
+    MOZ_ASSERT(mDecoder);
+    return MediaPrefs::MediaDecoderCheckRecycling()
+           && mDecoder->SupportDecoderRecycling();
+  }
+
+  void DecodeFirstSample(MediaRawData* aSample);
 
   RefPtr<PlatformDecoderModule> mPDM;
+  const VideoInfo mOriginalConfig;
   VideoInfo mCurrentConfig;
   RefPtr<layers::KnowsCompositor> mKnowsCompositor;
   RefPtr<layers::ImageContainer> mImageContainer;
   const RefPtr<TaskQueue> mTaskQueue;
-  nsTArray<RefPtr<MediaRawData>> mMediaRawSamples;
-  MediaDataDecoderCallback* mCallback;
+  RefPtr<MediaRawData> mPendingSample;
   RefPtr<MediaDataDecoder> mDecoder;
   MozPromiseRequestHolder<InitPromise> mInitPromiseRequest;
+  MozPromiseRequestHolder<DecodePromise> mDecodePromiseRequest;
+  MozPromiseHolder<DecodePromise> mDecodePromise;
+  MozPromiseRequestHolder<FlushPromise> mFlushRequest;
+  MozPromiseRequestHolder<ShutdownPromise> mShutdownRequest;
+  RefPtr<ShutdownPromise> mShutdownPromise;
+
   RefPtr<GMPCrashHelper> mGMPCrashHelper;
-  bool mNeedAVCC;
+  Maybe<bool> mNeedAVCC;
   nsresult mLastError;
   bool mNeedKeyframe = true;
+  const TrackInfo::TrackType mType;
+  MediaEventProducer<TrackInfo::TrackType>* const mOnWaitingForKeyEvent;
+  const CreateDecoderParams::OptionSet mDecoderOptions;
 };
 
 } // namespace mozilla

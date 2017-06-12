@@ -2,6 +2,8 @@
  * http://creativecommons.org/publicdomain/zero/1.0/
  */
 
+/* eslint-env mozilla/frame-script */
+
 add_task(function* () {
   let firstLocation = "http://example.org/browser/browser/base/content/test/general/dummy_page.html";
   yield BrowserTestUtils.openNewForegroundTab(gBrowser, firstLocation);
@@ -12,10 +14,9 @@ add_task(function* () {
 
     // While in the child process, add a listener for the popstate event here. This
     // event will fire when the mouse click happens.
-    content.addEventListener("popstate", function onPopState() {
-      content.removeEventListener("popstate", onPopState);
+    content.addEventListener("popstate", function() {
       sendAsyncMessage("Test:PopStateOccurred", { location: content.document.location.href });
-    });
+    }, {once: true});
   });
 
   window.maximize();

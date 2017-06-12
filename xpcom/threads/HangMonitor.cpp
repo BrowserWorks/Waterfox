@@ -16,9 +16,6 @@
 #include "mozilla/UniquePtr.h"
 #include "nsReadableUtils.h"
 #include "mozilla/StackWalk.h"
-#ifdef _WIN64
-#include "mozilla/StackWalk_windows.h"
-#endif
 #include "nsThreadUtils.h"
 #include "nsXULAppAPI.h"
 #include "GeckoProfiler.h"
@@ -31,7 +28,7 @@
 #include <windows.h>
 #endif
 
-#if defined(MOZ_ENABLE_PROFILER_SPS) && defined(MOZ_PROFILING) && defined(XP_WIN)
+#if defined(MOZ_GECKO_PROFILER) && defined(MOZ_PROFILING) && defined(XP_WIN)
   #define REPORT_CHROME_HANGS
 #endif
 
@@ -151,13 +148,6 @@ GetChromeHangReport(Telemetry::ProcessedStack& aStack,
   std::vector<uintptr_t> rawStack;
   rawStack.reserve(MAX_CALL_STACK_PCS);
 
-  // Workaround possible deadlock where the main thread is running a
-  // long-standing JS job, and happens to be in the JIT allocator when we
-  // suspend it. Since, on win 64, this requires holding a process lock that
-  // MozStackWalk requires, take this "workaround lock" to avoid deadlock.
-#ifdef _WIN64
-  AcquireStackWalkWorkaroundLock();
-#endif
   DWORD ret = ::SuspendThread(winMainThreadHandle);
   bool suspended = false;
   if (ret != -1) {
@@ -170,10 +160,6 @@ GetChromeHangReport(Telemetry::ProcessedStack& aStack,
       suspended = true;
     }
   }
-
-#ifdef _WIN64
-  ReleaseStackWalkWorkaroundLock();
-#endif
 
   if (!suspended) {
     if (ret != -1) {

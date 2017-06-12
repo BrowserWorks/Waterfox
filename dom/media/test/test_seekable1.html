@@ -9,13 +9,13 @@
 </head>
 <body>
 <pre id='test'>
-<script class="testbody" type='application/javascript;version=1.8'>
+<script class="testbody" type='application/javascript'>
 
 let manager = new MediaTestManager;
 
 function finish_test(element) {
   if (element.parentNode)
-    element.parentNode.removeChild(element);
+    element.remove();
   element.src="";
   manager.finished(element.token);
 }

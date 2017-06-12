@@ -30,8 +30,6 @@ public:
   typedef mozilla::LayoutDeviceIntRect LayoutDeviceIntRect;
   typedef mozilla::LayoutDeviceIntRegion LayoutDeviceIntRegion;
 
-  NS_DECL_AND_IMPL_ZEROING_OPERATOR_NEW
-
   NS_INLINE_DECL_REFCOUNTING(nsViewManager)
 
   nsViewManager();
@@ -331,7 +329,7 @@ private:
   void ProcessPendingUpdatesForView(nsView *aView,
                                     bool aFlushDirtyRegion = true);
   void ProcessPendingUpdatesRecurse(nsView* aView,
-                                    nsTArray<nsCOMPtr<nsIWidget> >& aWidgets);
+                                    AutoTArray<nsCOMPtr<nsIWidget>, 1>& aWidgets);
   void ProcessPendingUpdatesPaint(nsIWidget* aWidget);
 
   void FlushDirtyRegionToWidget(nsView* aView);

@@ -5,7 +5,6 @@
 
 package org.mozilla.gecko.home.activitystream.stream;
 
-import android.database.Cursor;
 import android.graphics.Color;
 import android.text.TextUtils;
 import android.view.View;
@@ -40,6 +39,7 @@ public class HighlightItem extends StreamItem implements IconCallback {
     public static final int LAYOUT_ID = R.layout.activity_stream_card_history_item;
 
     private Highlight highlight;
+    private int position;
 
     private final FaviconView vIconView;
     private final TextView vLabel;
@@ -77,9 +77,10 @@ public class HighlightItem extends StreamItem implements IconCallback {
             public void onClick(View v) {
                 ActivityStreamTelemetry.Extras.Builder extras = ActivityStreamTelemetry.Extras.builder()
                         .set(ActivityStreamTelemetry.Contract.SOURCE_TYPE, ActivityStreamTelemetry.Contract.TYPE_HIGHLIGHTS)
+                        .set(ActivityStreamTelemetry.Contract.ACTION_POSITION, position)
                         .forHighlightSource(highlight.getSource());
 
-                ActivityStreamContextMenu.show(v.getContext(),
+                ActivityStreamContextMenu.show(itemView.getContext(),
                         menuButton,
                         extras,
                         ActivityStreamContextMenu.MenuMode.HIGHLIGHT,
@@ -98,8 +99,9 @@ public class HighlightItem extends StreamItem implements IconCallback {
         ViewUtil.enableTouchRipple(menuButton);
     }
 
-    public void bind(Cursor cursor, int tilesWidth, int tilesHeight) {
-        highlight = Highlight.fromCursor(cursor);
+    public void bind(Highlight highlight, int position, int tilesWidth, int tilesHeight) {
+        this.highlight = highlight;
+        this.position = position;
 
         vLabel.setText(highlight.getTitle());
         vTimeSince.setText(highlight.getRelativeTimeSpan());

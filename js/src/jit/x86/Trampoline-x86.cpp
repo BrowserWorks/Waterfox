@@ -19,6 +19,7 @@
 #endif
 #include "jit/VMFunctions.h"
 #include "jit/x86/SharedICHelpers-x86.h"
+#include "vtune/VTuneWrapper.h"
 
 #include "jsscriptinlines.h"
 
@@ -224,7 +225,7 @@ JitRuntime::generateEnterJIT(JSContext* cx, EnterJitType type)
         masm.push(scratch); // Fake return address.
         masm.push(Imm32(0));
         // No GC things to mark on the stack, push a bare token.
-        masm.enterFakeExitFrame(ExitFrameLayoutBareToken);
+        masm.enterFakeExitFrame(scratch, ExitFrameLayoutBareToken);
 
         masm.push(framePtr);
         masm.push(jitcode);
@@ -250,7 +251,7 @@ JitRuntime::generateEnterJIT(JSContext* cx, EnterJitType type)
         {
             Label skipProfilingInstrumentation;
             Register realFramePtr = numStackValues;
-            AbsoluteAddress addressOfEnabled(cx->runtime()->spsProfiler.addressOfEnabled());
+            AbsoluteAddress addressOfEnabled(cx->runtime()->geckoProfiler().addressOfEnabled());
             masm.branch32(Assembler::Equal, addressOfEnabled, Imm32(0),
                           &skipProfilingInstrumentation);
             masm.lea(Operand(framePtr, sizeof(void*)), realFramePtr);
@@ -384,6 +385,9 @@ JitRuntime::generateInvalidator(JSContext* cx)
 
 #ifdef JS_ION_PERF
     writePerfSpewerJitCodeProfile(code, "Invalidator");
+#endif
+#ifdef MOZ_VTUNE
+    vtune::MarkStub(code, "Invalidator");
 #endif
 
     return code;
@@ -546,6 +550,9 @@ JitRuntime::generateArgumentsRectifier(JSContext* cx, void** returnAddrOut)
 #ifdef JS_ION_PERF
     writePerfSpewerJitCodeProfile(code, "ArgumentsRectifier");
 #endif
+#ifdef MOZ_VTUNE
+    vtune::MarkStub(code, "ArgumentsRectifier");
+#endif
 
     if (returnAddrOut)
         *returnAddrOut = (void*) (code->raw() + returnOffset);
@@ -645,7 +652,10 @@ JitRuntime::generateBailoutTable(JSContext* cx, uint32_t frameClass)
     JitCode* code = linker.newCode<NoGC>(cx, OTHER_CODE);
 
 #ifdef JS_ION_PERF
-    writePerfSpewerJitCodeProfile(code, "BailoutHandler");
+    writePerfSpewerJitCodeProfile(code, "BailoutTable");
+#endif
+#ifdef MOZ_VTUNE
+    vtune::MarkStub(code, "BailoutTable");
 #endif
 
     return code;
@@ -662,6 +672,9 @@ JitRuntime::generateBailoutHandler(JSContext* cx)
 
 #ifdef JS_ION_PERF
     writePerfSpewerJitCodeProfile(code, "BailoutHandler");
+#endif
+#ifdef MOZ_VTUNE
+    vtune::MarkStub(code, "BailoutHandler");
 #endif
 
     return code;
@@ -696,7 +709,7 @@ JitRuntime::generateVMWrapper(JSContext* cx, const VMFunction& f)
     //  +0  returnAddress
     //
     // We're aligned to an exit frame, so link it up.
-    masm.enterExitFrame(&f);
+    masm.enterExitFrame(cxreg, &f);
     masm.loadJSContext(cxreg);
 
     // Save the current stack pointer as the base for copying arguments.
@@ -843,6 +856,9 @@ JitRuntime::generateVMWrapper(JSContext* cx, const VMFunction& f)
 #ifdef JS_ION_PERF
     writePerfSpewerJitCodeProfile(wrapper, "VMWrapper");
 #endif
+#ifdef MOZ_VTUNE
+    vtune::MarkStub(wrapper, "VMWrapper");
+#endif
 
     // linker.newCode may trigger a GC and sweep functionWrappers_ so we have to
     // use relookupOrAdd instead of add.
@@ -883,6 +899,9 @@ JitRuntime::generatePreBarrier(JSContext* cx, MIRType type)
 
 #ifdef JS_ION_PERF
     writePerfSpewerJitCodeProfile(code, "PreBarrier");
+#endif
+#ifdef MOZ_VTUNE
+    vtune::MarkStub(code, "PreBarrier");
 #endif
 
     return code;
@@ -946,7 +965,7 @@ JitRuntime::generateDebugTrapHandler(JSContext* cx)
     // is set to the correct caller frame.
     {
         Label skipProfilingInstrumentation;
-        AbsoluteAddress addressOfEnabled(cx->runtime()->spsProfiler.addressOfEnabled());
+        AbsoluteAddress addressOfEnabled(cx->runtime()->geckoProfiler().addressOfEnabled());
         masm.branch32(Assembler::Equal, addressOfEnabled, Imm32(0), &skipProfilingInstrumentation);
         masm.profilerExitFrame();
         masm.bind(&skipProfilingInstrumentation);
@@ -959,6 +978,9 @@ JitRuntime::generateDebugTrapHandler(JSContext* cx)
 
 #ifdef JS_ION_PERF
     writePerfSpewerJitCodeProfile(codeDbg, "DebugTrapHandler");
+#endif
+#ifdef MOZ_VTUNE
+    vtune::MarkStub(codeDbg, "DebugTrapHandler");
 #endif
 
     return codeDbg;
@@ -977,6 +999,9 @@ JitRuntime::generateExceptionTailStub(JSContext* cx, void* handler)
 #ifdef JS_ION_PERF
     writePerfSpewerJitCodeProfile(code, "ExceptionTailStub");
 #endif
+#ifdef MOZ_VTUNE
+    vtune::MarkStub(code, "ExceptionTailStub");
+#endif
 
     return code;
 }
@@ -993,6 +1018,9 @@ JitRuntime::generateBailoutTailStub(JSContext* cx)
 
 #ifdef JS_ION_PERF
     writePerfSpewerJitCodeProfile(code, "BailoutTailStub");
+#endif
+#ifdef MOZ_VTUNE
+    vtune::MarkStub(code, "BailoutTailStub");
 #endif
 
     return code;
@@ -1056,8 +1084,8 @@ JitRuntime::generateProfilerExitFrameTailStub(JSContext* cx)
     // ^--- Entry Frame (From C++)
     //
     Register actReg = scratch4;
-    AbsoluteAddress activationAddr(GetJitContext()->runtime->addressOfProfilingActivation());
-    masm.loadPtr(activationAddr, actReg);
+    masm.loadJSContext(actReg);
+    masm.loadPtr(Address(actReg, offsetof(JSContext, profilingActivation_)), actReg);
 
     Address lastProfilingFrame(actReg, JitActivation::offsetOfLastProfilingFrame());
     Address lastProfilingCallSite(actReg, JitActivation::offsetOfLastProfilingCallSite());
@@ -1330,6 +1358,9 @@ JitRuntime::generateProfilerExitFrameTailStub(JSContext* cx)
 
 #ifdef JS_ION_PERF
     writePerfSpewerJitCodeProfile(code, "ProfilerExitFrameStub");
+#endif
+#ifdef MOZ_VTUNE
+    vtune::MarkStub(code, "ProfilerExitFrameStub");
 #endif
 
     return code;

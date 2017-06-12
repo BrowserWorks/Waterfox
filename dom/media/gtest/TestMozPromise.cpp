@@ -39,7 +39,7 @@ class DelayedResolveOrReject : public Runnable
 public:
   DelayedResolveOrReject(TaskQueue* aTaskQueue,
                          TestPromise::Private* aPromise,
-                         TestPromise::ResolveOrRejectValue aValue,
+                         const TestPromise::ResolveOrRejectValue& aValue,
                          int aIterations)
   : mTaskQueue(aTaskQueue)
   , mPromise(aPromise)
@@ -195,7 +195,7 @@ TEST(MozPromise, CompletionPromises)
       },
       DO_FAIL)
     ->Then(queue, __func__,
-      [queue] (int aVal) -> RefPtr<TestPromise> { return TestPromise::CreateAndReject(double(aVal - 42) + 42.0, __func__); },
+      [] (int aVal) -> RefPtr<TestPromise> { return TestPromise::CreateAndReject(double(aVal - 42) + 42.0, __func__); },
       DO_FAIL)
     ->Then(queue, __func__,
       DO_FAIL,
@@ -254,9 +254,12 @@ TEST(MozPromise, PromiseAllReject)
 // chaining upon task queue shutdown.
 TEST(MozPromise, Chaining)
 {
+  // We declare this variable before |atq| to ensure
+  // the destructor is run after |holder.Disconnect()|.
+  MozPromiseRequestHolder<TestPromise> holder;
+
   AutoTaskQueue atq;
   RefPtr<TaskQueue> queue = atq.Queue();
-  MozPromiseRequestHolder<TestPromise> holder;
 
   RunOnTaskQueue(queue, [queue, &holder] () {
     auto p = TestPromise::CreateAndResolve(42, __func__);

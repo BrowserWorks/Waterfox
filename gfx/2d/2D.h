@@ -19,6 +19,7 @@
 // without having a dependency on that type. This is used for DrawTargetSkia
 // to be able to hold on to a GLContext.
 #include "mozilla/GenericRefCounted.h"
+#include "mozilla/MemoryReporting.h"
 
 // This RefPtr class isn't ideal for usage in Azure, as it doesn't allow T**
 // outparams using the &-operator. But it will have to do as there's no easy
@@ -30,8 +31,6 @@
 #ifdef MOZ_ENABLE_FREETYPE
 #include <string>
 #endif
-
-#include "gfxPrefs.h"
 
 struct _cairo_surface;
 typedef _cairo_surface cairo_surface_t;
@@ -353,6 +352,16 @@ public:
   virtual bool IsValid() const { return true; }
 
   /**
+   * This function will return true if the surface type matches that of a
+   * DataSourceSurface and if GetDataSurface will return the same object.
+   */
+  bool IsDataSourceSurface() const {
+    SurfaceType type = GetType();
+    return type == SurfaceType::DATA ||
+           type == SurfaceType::DATA_SHARED;
+  }
+
+  /**
    * This function will get a DataSourceSurface for this surface, a
    * DataSourceSurface's data can be accessed directly.
    */
@@ -492,8 +501,29 @@ public:
   /**
    * Returns a DataSourceSurface with the same data as this one, but
    * guaranteed to have surface->GetType() == SurfaceType::DATA.
+   *
+   * The returning surface might be null, because of OOM or gfx device reset.
+   * The caller needs to do null-check before using it.
    */
   virtual already_AddRefed<DataSourceSurface> GetDataSurface() override;
+
+  /**
+   * Add the size of the underlying data buffer to the aggregate.
+   */
+  virtual void AddSizeOfExcludingThis(MallocSizeOf aMallocSizeOf,
+                                      size_t& aHeapSizeOut,
+                                      size_t& aNonHeapSizeOut) const
+  {
+  }
+
+  /**
+   * Returns whether or not the data was allocated on the heap. This should
+   * be used to determine if the memory needs to be cleared to 0.
+   */
+  virtual bool OnHeap() const
+  {
+    return true;
+  }
 
 protected:
   bool mIsMapped;
@@ -691,13 +721,7 @@ public:
   typedef void (*FontDescriptorOutput)(const uint8_t* aData, uint32_t aLength, Float aFontSize, void* aBaton);
 
   virtual FontType GetType() const = 0;
-  virtual AntialiasMode GetDefaultAAMode() {
-    if (gfxPrefs::DisableAllTextAA()) {
-      return AntialiasMode::NONE;
-    }
-
-    return AntialiasMode::DEFAULT;
-  }
+  virtual AntialiasMode GetDefaultAAMode();
 
   /** This allows getting a path that describes the outline of a set of glyphs.
    * A target is passed in so that the guarantee is made the returned path
@@ -722,6 +746,8 @@ public:
   virtual bool GetFontInstanceData(FontInstanceDataOutput, void *) { return false; }
 
   virtual bool GetFontDescriptor(FontDescriptorOutput, void *) { return false; }
+
+  virtual bool CanSerialize() { return false; }
 
   void AddUserData(UserDataKey *key, void *userData, void (*destroy)(void*)) {
     mUserData.Add(key, userData, destroy);
@@ -982,13 +1008,23 @@ public:
                     const DrawOptions &aOptions = DrawOptions()) = 0;
 
   /**
-   * Fill a series of clyphs on the draw target with a certain source pattern.
+   * Fill a series of glyphs on the draw target with a certain source pattern.
    */
   virtual void FillGlyphs(ScaledFont *aFont,
                           const GlyphBuffer &aBuffer,
                           const Pattern &aPattern,
                           const DrawOptions &aOptions = DrawOptions(),
                           const GlyphRenderingOptions *aRenderingOptions = nullptr) = 0;
+
+  /**
+   * Stroke a series of glyphs on the draw target with a certain source pattern.
+   */
+  virtual void StrokeGlyphs(ScaledFont* aFont,
+                            const GlyphBuffer& aBuffer,
+                            const Pattern& aPattern,
+                            const StrokeOptions& aStrokeOptions = StrokeOptions(),
+                            const DrawOptions& aOptions = DrawOptions(),
+                            const GlyphRenderingOptions* aRenderingOptions = nullptr);
 
   /**
    * This takes a source pattern and a mask, and composites the source pattern
@@ -1542,6 +1578,7 @@ public:
   static bool SetDWriteFactory(IDWriteFactory *aFactory);
   static ID3D11Device *GetDirect3D11Device();
   static ID2D1Device *GetD2D1Device();
+  static uint32_t GetD2D1DeviceSeq();
   static IDWriteFactory *GetDWriteFactory();
   static bool SupportsD2D1();
 

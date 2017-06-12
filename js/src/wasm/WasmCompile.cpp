@@ -91,7 +91,7 @@ DecodeCodeSection(Decoder& d, ModuleGenerator& mg)
 }
 
 bool
-CompileArgs::initFromContext(ExclusiveContext* cx, ScriptedCaller&& scriptedCaller)
+CompileArgs::initFromContext(JSContext* cx, ScriptedCaller&& scriptedCaller)
 {
     alwaysBaseline = cx->options().wasmAlwaysBaseline();
 
@@ -99,8 +99,7 @@ CompileArgs::initFromContext(ExclusiveContext* cx, ScriptedCaller&& scriptedCall
     // additional memory and permanently stay in baseline code, so we try to
     // only enable it when a developer actually cares: when the debugger tab
     // is open.
-    debugEnabled = cx->options().wasmAllowDebugging() &&
-                   cx->compartment()->debuggerObservesAsmJS();
+    debugEnabled = cx->compartment()->debuggerObservesAsmJS();
 
     this->scriptedCaller = Move(scriptedCaller);
     return assumptions.initBuildIdFromContext(cx);
@@ -111,7 +110,7 @@ wasm::Compile(const ShareableBytes& bytecode, const CompileArgs& args, UniqueCha
 {
     MOZ_RELEASE_ASSERT(wasm::HaveSignalHandlers());
 
-    Decoder d(bytecode.begin(), bytecode.end(), error);
+    Decoder d(bytecode.bytes, error);
 
     auto env = js::MakeUnique<ModuleEnvironment>();
     if (!env)

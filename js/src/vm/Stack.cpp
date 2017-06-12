@@ -26,6 +26,7 @@
 
 using namespace js;
 
+using mozilla::ArrayLength;
 using mozilla::Maybe;
 using mozilla::PodCopy;
 
@@ -265,7 +266,7 @@ void
 InterpreterFrame::epilogue(JSContext* cx, jsbytecode* pc)
 {
     RootedScript script(cx, this->script());
-    probes::ExitScript(cx, script, script->functionNonDelazifying(), hasPushedSPSFrame());
+    probes::ExitScript(cx, script, script->functionNonDelazifying(), hasPushedGeckoProfilerFrame());
 
     // Check that the scope matches the environment at the point of leaving
     // the frame.
@@ -275,7 +276,9 @@ InterpreterFrame::epilogue(JSContext* cx, jsbytecode* pc)
     UnwindAllEnvironmentsInFrame(cx, ei);
 
     if (isFunctionFrame()) {
-        if (!callee().isGenerator() &&
+        if (!callee().isStarGenerator() &&
+            !callee().isLegacyGenerator() &&
+            !callee().isAsync() &&
             isConstructing() &&
             thisArgument().isObject() &&
             returnValue().isPrimitive())
@@ -421,9 +424,9 @@ TraceInterpreterActivation(JSTracer* trc, InterpreterActivation* act)
 }
 
 void
-js::TraceInterpreterActivations(JSRuntime* rt, JSTracer* trc)
+js::TraceInterpreterActivations(JSContext* cx, const CooperatingContext& target, JSTracer* trc)
 {
-    for (ActivationIterator iter(rt); !iter.done(); ++iter) {
+    for (ActivationIterator iter(cx, target); !iter.done(); ++iter) {
         Activation* act = iter.activation();
         if (act->isInterpreter())
             TraceInterpreterActivation(trc, act->asInterpreter());
@@ -587,7 +590,7 @@ FrameIter::Data::Data(JSContext* cx, DebuggerEvalOption debuggerEvalOption,
     state_(DONE),
     pc_(nullptr),
     interpFrames_(nullptr),
-    activations_(cx->runtime()),
+    activations_(cx),
     jitFrames_(),
     ionInlineFrameNo_(0),
     wasmFrames_()
@@ -1018,7 +1021,7 @@ FrameIter::updatePcQuadratic()
 
             // ActivationIterator::jitTop_ may be invalid, so create a new
             // activation iterator.
-            data_.activations_ = ActivationIterator(data_.cx_->runtime());
+            data_.activations_ = ActivationIterator(data_.cx_);
             while (data_.activations_.activation() != activation)
                 ++data_.activations_;
 
@@ -1035,6 +1038,22 @@ FrameIter::updatePcQuadratic()
         break;
     }
     MOZ_CRASH("Unexpected state");
+}
+
+void
+FrameIter::wasmUpdateBytecodeOffset()
+{
+    MOZ_RELEASE_ASSERT(data_.state_ == WASM, "Unexpected state");
+
+    wasm::DebugFrame* frame = data_.wasmFrames_.debugFrame();
+    WasmActivation* activation = data_.activations_->asWasm();
+
+    // Relookup the current frame, updating the bytecode offset in the process.
+    data_.wasmFrames_ = wasm::FrameIterator(activation);
+    while (data_.wasmFrames_.debugFrame() != frame)
+        ++data_.wasmFrames_;
+
+    MOZ_ASSERT(data_.wasmFrames_.debugFrame() == frame);
 }
 
 JSFunction*
@@ -1334,15 +1353,15 @@ NonBuiltinScriptFrameIter::settle()
 }
 
 ActivationEntryMonitor::ActivationEntryMonitor(JSContext* cx)
-  : cx_(cx), entryMonitor_(cx->runtime()->entryMonitor)
+  : cx_(cx), entryMonitor_(cx->entryMonitor)
 {
-    cx->runtime()->entryMonitor = nullptr;
+    cx->entryMonitor = nullptr;
 }
 
 Value
 ActivationEntryMonitor::asyncStack(JSContext* cx)
 {
-    RootedValue stack(cx, ObjectOrNullValue(cx->asyncStackForNewActivations));
+    RootedValue stack(cx, ObjectOrNullValue(cx->asyncStackForNewActivations()));
     if (!cx->compartment()->wrap(cx, &stack)) {
         cx->clearPendingException();
         return UndefinedValue();
@@ -1386,8 +1405,8 @@ ActivationEntryMonitor::ActivationEntryMonitor(JSContext* cx, jit::CalleeToken e
 
 jit::JitActivation::JitActivation(JSContext* cx, bool active)
   : Activation(cx, Jit),
-    prevJitTop_(cx->runtime()->jitTop),
-    prevJitActivation_(cx->runtime()->jitActivation),
+    prevJitTop_(cx->jitTop),
+    prevJitActivation_(cx->jitActivation),
     active_(active),
     rematerializedFrames_(nullptr),
     ionRecovery_(cx),
@@ -1396,7 +1415,7 @@ jit::JitActivation::JitActivation(JSContext* cx, bool active)
     lastProfilingCallSite_(nullptr)
 {
     if (active) {
-        cx->runtime()->jitActivation = this;
+        cx->jitActivation = this;
         registerProfiling();
     }
 }
@@ -1407,11 +1426,11 @@ jit::JitActivation::~JitActivation()
         if (isProfiling())
             unregisterProfiling();
 
-        cx_->runtime()->jitTop = prevJitTop_;
-        cx_->runtime()->jitActivation = prevJitActivation_;
+        cx_->jitTop = prevJitTop_;
+        cx_->jitActivation = prevJitActivation_;
     } else {
-        MOZ_ASSERT(cx_->runtime()->jitTop == prevJitTop_);
-        MOZ_ASSERT(cx_->runtime()->jitActivation == prevJitActivation_);
+        MOZ_ASSERT(cx_->jitTop == prevJitTop_);
+        MOZ_ASSERT(cx_->jitActivation == prevJitActivation_);
     }
 
     // All reocvered value are taken from activation during the bailout.
@@ -1454,22 +1473,22 @@ jit::JitActivation::setActive(JSContext* cx, bool active)
 {
     // Only allowed to deactivate/activate if activation is top.
     // (Not tested and will probably fail in other situations.)
-    MOZ_ASSERT(cx->runtime()->activation_ == this);
+    MOZ_ASSERT(cx->activation_ == this);
     MOZ_ASSERT(active != active_);
 
     if (active) {
         *((volatile bool*) active_) = true;
-        MOZ_ASSERT(prevJitTop_ == cx->runtime()->jitTop);
-        MOZ_ASSERT(prevJitActivation_ == cx->runtime()->jitActivation);
-        cx->runtime()->jitActivation = this;
+        MOZ_ASSERT(prevJitTop_ == cx->jitTop);
+        MOZ_ASSERT(prevJitActivation_ == cx->jitActivation);
+        cx->jitActivation = this;
 
         registerProfiling();
 
     } else {
         unregisterProfiling();
 
-        cx->runtime()->jitTop = prevJitTop_;
-        cx->runtime()->jitActivation = prevJitActivation_;
+        cx->jitTop = prevJitTop_;
+        cx->jitActivation = prevJitActivation_;
 
         *((volatile bool*) active_) = false;
     }
@@ -1537,7 +1556,7 @@ jit::JitActivation::getRematerializedFrame(JSContext* cx, const JitFrameIterator
         // Frames are often rematerialized with the cx inside a Debugger's
         // compartment. To recover slots and to create CallObjects, we need to
         // be in the activation's compartment.
-        AutoCompartment ac(cx, compartment_);
+        AutoCompartmentUnchecked ac(cx, compartment_);
 
         if (!RematerializedFrame::RematerializeInlineFrames(cx, top, inlineIter, recover,
                                                             p->value()))
@@ -1633,8 +1652,8 @@ WasmActivation::WasmActivation(JSContext* cx)
 {
     (void) entrySP_;  // silence "unused private member" warning
 
-    prevWasm_ = cx->runtime()->wasmActivationStack_;
-    cx->runtime()->wasmActivationStack_ = this;
+    prevWasm_ = cx->wasmActivationStack_;
+    cx->wasmActivationStack_ = this;
 
     cx->compartment()->wasm.activationCount_++;
 
@@ -1650,8 +1669,8 @@ WasmActivation::~WasmActivation()
 
     MOZ_ASSERT(fp_ == nullptr);
 
-    MOZ_ASSERT(cx_->runtime()->wasmActivationStack_ == this);
-    cx_->runtime()->wasmActivationStack_ = prevWasm_;
+    MOZ_ASSERT(cx_->wasmActivationStack_ == this);
+    cx_->wasmActivationStack_ = prevWasm_;
 
     MOZ_ASSERT(cx_->compartment()->wasm.activationCount_ > 0);
     cx_->compartment()->wasm.activationCount_--;
@@ -1677,27 +1696,47 @@ void
 Activation::registerProfiling()
 {
     MOZ_ASSERT(isProfiling());
-    cx_->runtime()->profilingActivation_ = this;
+    cx_->profilingActivation_ = this;
 }
 
 void
 Activation::unregisterProfiling()
 {
     MOZ_ASSERT(isProfiling());
-    MOZ_ASSERT(cx_->runtime()->profilingActivation_ == this);
+    MOZ_ASSERT(cx_->profilingActivation_ == this);
 
     // There may be a non-active jit activation in the linked list.  Skip past it.
     Activation* prevProfiling = prevProfiling_;
     while (prevProfiling && prevProfiling->isJit() && !prevProfiling->asJit()->isActive())
         prevProfiling = prevProfiling->prevProfiling_;
 
-    cx_->runtime()->profilingActivation_ = prevProfiling;
+    cx_->profilingActivation_ = prevProfiling;
 }
 
-ActivationIterator::ActivationIterator(JSRuntime* rt)
-  : jitTop_(rt->jitTop),
-    activation_(rt->activation_)
+ActivationIterator::ActivationIterator(JSContext* cx)
+    : jitTop_(cx->jitTop)
+    , activation_(cx->activation_)
 {
+    MOZ_ASSERT(cx == TlsContext.get());
+    settle();
+}
+
+ActivationIterator::ActivationIterator(JSContext* cx, const CooperatingContext& target)
+{
+    MOZ_ASSERT(cx == TlsContext.get());
+
+    // If target was specified --- even if it is the same as cx itself --- then
+    // we must be in a scope where changes of the active context are prohibited.
+    // Otherwise our state would be corrupted if the target thread resumed
+    // execution while we are iterating over its state.
+    MOZ_ASSERT(cx->runtime()->activeContextChangeProhibited() ||
+               !cx->runtime()->gc.canChangeActiveContext(cx));
+
+    // Tolerate a null target context, in case we are iterating over the
+    // activations for a zone group that is not in use by any thread.
+    jitTop_ = target.context() ? target.context()->jitTop.ref() : nullptr;
+    activation_ = target.context() ? target.context()->activation_.ref() : nullptr;
+
     settle();
 }
 
@@ -1723,13 +1762,13 @@ ActivationIterator::settle()
 
 JS::ProfilingFrameIterator::ProfilingFrameIterator(JSContext* cx, const RegisterState& state,
                                                    uint32_t sampleBufferGen)
-  : rt_(cx),
+  : cx_(cx),
     sampleBufferGen_(sampleBufferGen),
     activation_(nullptr),
     savedPrevJitTop_(nullptr)
 {
-    if (!cx->spsProfiler.enabled())
-        MOZ_CRASH("ProfilingFrameIterator called when spsProfiler not enabled for runtime.");
+    if (!cx->runtime()->geckoProfiler().enabled())
+        MOZ_CRASH("ProfilingFrameIterator called when geckoProfiler not enabled for runtime.");
 
     if (!cx->profilingActivation())
         return;
@@ -1744,7 +1783,10 @@ JS::ProfilingFrameIterator::ProfilingFrameIterator(JSContext* cx, const Register
 
     static_assert(sizeof(wasm::ProfilingFrameIterator) <= StorageSpace &&
                   sizeof(jit::JitProfilingFrameIterator) <= StorageSpace,
-                  "Need to increase storage");
+                  "ProfilingFrameIterator::storage_ is too small");
+    static_assert(alignof(void*) >= alignof(wasm::ProfilingFrameIterator) &&
+                  alignof(void*) >= alignof(jit::JitProfilingFrameIterator),
+                  "ProfilingFrameIterator::storage_ is too weakly aligned");
 
     iteratorConstruct(state);
     settle();
@@ -1798,14 +1840,14 @@ JS::ProfilingFrameIterator::iteratorConstruct(const RegisterState& state)
     MOZ_ASSERT(activation_->isWasm() || activation_->isJit());
 
     if (activation_->isWasm()) {
-        new (storage_.addr()) wasm::ProfilingFrameIterator(*activation_->asWasm(), state);
+        new (storage()) wasm::ProfilingFrameIterator(*activation_->asWasm(), state);
         // Set savedPrevJitTop_ to the actual jitTop_ from the runtime.
-        savedPrevJitTop_ = activation_->cx()->runtime()->jitTop;
+        savedPrevJitTop_ = activation_->cx()->jitTop;
         return;
     }
 
     MOZ_ASSERT(activation_->asJit()->isActive());
-    new (storage_.addr()) jit::JitProfilingFrameIterator(rt_, state);
+    new (storage()) jit::JitProfilingFrameIterator(cx_, state);
 }
 
 void
@@ -1815,13 +1857,13 @@ JS::ProfilingFrameIterator::iteratorConstruct()
     MOZ_ASSERT(activation_->isWasm() || activation_->isJit());
 
     if (activation_->isWasm()) {
-        new (storage_.addr()) wasm::ProfilingFrameIterator(*activation_->asWasm());
+        new (storage()) wasm::ProfilingFrameIterator(*activation_->asWasm());
         return;
     }
 
     MOZ_ASSERT(activation_->asJit()->isActive());
     MOZ_ASSERT(savedPrevJitTop_ != nullptr);
-    new (storage_.addr()) jit::JitProfilingFrameIterator(savedPrevJitTop_);
+    new (storage()) jit::JitProfilingFrameIterator(savedPrevJitTop_);
 }
 
 void
@@ -1883,9 +1925,9 @@ JS::ProfilingFrameIterator::getPhysicalFrameAndEntry(jit::JitcodeGlobalEntry* en
 
     // Look up an entry for the return address.
     void* returnAddr = jitIter().returnAddressToFp();
-    jit::JitcodeGlobalTable* table = rt_->jitRuntime()->getJitcodeGlobalTable();
+    jit::JitcodeGlobalTable* table = cx_->runtime()->jitRuntime()->getJitcodeGlobalTable();
     if (hasSampleBufferGen())
-        *entry = table->lookupForSamplerInfallible(returnAddr, rt_, sampleBufferGen_);
+        *entry = table->lookupForSamplerInfallible(returnAddr, cx_->runtime(), sampleBufferGen_);
     else
         *entry = table->lookupInfallible(returnAddr);
 
@@ -1925,8 +1967,9 @@ JS::ProfilingFrameIterator::extractStack(Frame* frames, uint32_t offset, uint32_
 
     // Extract the stack for the entry.  Assume maximum inlining depth is <64
     const char* labels[64];
-    uint32_t depth = entry.callStackAtAddr(rt_, jitIter().returnAddressToFp(), labels, 64);
-    MOZ_ASSERT(depth < 64);
+    uint32_t depth = entry.callStackAtAddr(cx_->runtime(), jitIter().returnAddressToFp(),
+                                           labels, ArrayLength(labels));
+    MOZ_ASSERT(depth < ArrayLength(labels));
     for (uint32_t i = 0; i < depth; i++) {
         if (offset + i >= end)
             return i;

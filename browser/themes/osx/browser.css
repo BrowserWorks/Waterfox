@@ -15,6 +15,8 @@
 @namespace html url("http://www.w3.org/1999/xhtml");
 @namespace svg url("http://www.w3.org/2000/svg");
 
+%include ../shared/browser.inc.css
+
 :root {
   --space-above-tabbar: 9px;
   --tabs-toolbar-color: #333;
@@ -1649,36 +1651,6 @@ toolbar .toolbarbutton-1 > .toolbarbutton-menubutton-button {
   }
 }
 
-#urlbar-zoom-button {
-  margin: 0 3px;
-  font-size: .8em;
-  padding: 0 8px;
-  border-radius: 1em;
-  background-color: hsla(0,0%,0%,.05);
-  border: 1px solid ThreeDLightShadow;
-}
-
-#urlbar-zoom-button[animate="true"] {
-  animation-name: urlbar-zoom-reset-pulse;
-  animation-duration: 250ms;
-}
-
-#urlbar-zoom-button:hover {
-  background-color: hsla(0,0%,0%,.1);
-}
-
-#urlbar-zoom-button:hover:active {
-  background-color: hsla(0,0%,0%,.15);
-}
-
-#urlbar-zoom-button > .toolbarbutton-text {
-  display: -moz-box;
-}
-
-#urlbar-zoom-button > .toolbarbutton-icon {
-  display: none;
-}
-
 #urlbar-search-footer {
   border-top: 1px solid var(--panel-separator-color);
   background-color: var(--arrowpanel-dimmed);
@@ -2641,7 +2613,7 @@ toolbarbutton.chevron > .toolbarbutton-menu-dropmarker {
   transition: 1s background-color ease-out;
 }
 
-.tabbrowser-arrowscrollbox > .scrollbutton-down[notifybgtab] {
+.tabbrowser-arrowscrollbox > .scrollbutton-down[highlight] {
   background-color: Highlight;
   transition: none;
 }
@@ -3087,6 +3059,7 @@ menulist.translate-infobar-element > .menulist-dropmarker {
 }
 
 .addon-webext-name {
+  display: inline;
   font-weight: bold;
   margin: 0;
 }
@@ -3207,14 +3180,12 @@ menulist.translate-infobar-element > .menulist-dropmarker {
   background-attachment: fixed;
 }
 
-#main-window[tabsintitlebar][customization-lwtheme] > #titlebar:-moz-lwtheme,
-#main-window[customization-lwtheme] > #tab-view-deck:-moz-lwtheme {
+#main-window[tabsintitlebar][customization-lwtheme] > #titlebar:-moz-lwtheme {
   background-repeat: no-repeat;
   background-position: right top;
   background-attachment: fixed;
-  /* The image will get set from CustomizeMode.jsm */
-  background-image: none;
-  background-color: transparent;
+  background-image: var(--lwt-header-image);
+  background-color: var(--lwt-accent-color);
 }
 
 #main-window[customization-lwtheme]:-moz-lwtheme {

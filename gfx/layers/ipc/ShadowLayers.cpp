@@ -54,13 +54,14 @@ typedef nsTArray<SurfaceDescriptor> BufferArray;
 typedef nsTArray<Edit> EditVector;
 typedef nsTHashtable<nsPtrHashKey<ShadowableLayer>> ShadowableLayerSet;
 typedef nsTArray<OpDestroy> OpDestroyVector;
+typedef nsTArray<ReadLockInit> ReadLockVector;
 
 class Transaction
 {
 public:
   Transaction()
-    : mTargetRotation(ROTATION_0)
-    , mSwapRequired(false)
+    : mReadLockSequenceNumber(0)
+    , mTargetRotation(ROTATION_0)
     , mOpen(false)
     , mRotationChanged(false)
   {}
@@ -79,10 +80,8 @@ public:
     }
     mTargetRotation = aRotation;
     mTargetOrientation = aOrientation;
-  }
-  void MarkSyncTransaction()
-  {
-    mSwapRequired = true;
+    mReadLockSequenceNumber = 0;
+    mReadLocks.AppendElement();
   }
   void AddEdit(const Edit& aEdit)
   {
@@ -93,22 +92,7 @@ public:
   {
     AddEdit(Edit(aEdit));
   }
-  void AddPaint(const Edit& aPaint)
-  {
-    AddNoSwapPaint(aPaint);
-    mSwapRequired = true;
-  }
-  void AddPaint(const CompositableOperation& aPaint)
-  {
-    AddNoSwapPaint(Edit(aPaint));
-    mSwapRequired = true;
-  }
 
-  void AddNoSwapPaint(const Edit& aPaint)
-  {
-    MOZ_ASSERT(!Finished(), "forgot BeginTransaction?");
-    mPaints.AppendElement(aPaint);
-  }
   void AddNoSwapPaint(const CompositableOperation& aPaint)
   {
     MOZ_ASSERT(!Finished(), "forgot BeginTransaction?");
@@ -119,20 +103,38 @@ public:
     MOZ_ASSERT(!Finished(), "forgot BeginTransaction?");
     mMutants.PutEntry(aLayer);
   }
+  void AddSimpleMutant(ShadowableLayer* aLayer)
+  {
+    MOZ_ASSERT(!Finished(), "forgot BeginTransaction?");
+    mSimpleMutants.PutEntry(aLayer);
+  }
+  ReadLockHandle AddReadLock(const ReadLockDescriptor& aReadLock)
+  {
+    ReadLockHandle handle(++mReadLockSequenceNumber);
+    if (mReadLocks.LastElement().Length() >= CompositableForwarder::GetMaxFileDescriptorsPerMessage()) {
+      mReadLocks.AppendElement();
+    }
+    mReadLocks.LastElement().AppendElement(ReadLockInit(aReadLock, handle));
+    return handle;
+  }
   void End()
   {
     mCset.Clear();
     mPaints.Clear();
     mMutants.Clear();
+    mSimpleMutants.Clear();
     mDestroyedActors.Clear();
+    mReadLocks.Clear();
     mOpen = false;
-    mSwapRequired = false;
     mRotationChanged = false;
   }
 
   bool Empty() const {
-    return mCset.IsEmpty() && mPaints.IsEmpty() && mMutants.IsEmpty()
-           && mDestroyedActors.IsEmpty();
+    return mCset.IsEmpty() &&
+           mPaints.IsEmpty() &&
+           mMutants.IsEmpty() &&
+           mSimpleMutants.IsEmpty() &&
+           mDestroyedActors.IsEmpty();
   }
   bool RotationChanged() const {
     return mRotationChanged;
@@ -142,13 +144,15 @@ public:
   bool Opened() const { return mOpen; }
 
   EditVector mCset;
-  EditVector mPaints;
+  nsTArray<CompositableOperation> mPaints;
   OpDestroyVector mDestroyedActors;
   ShadowableLayerSet mMutants;
+  ShadowableLayerSet mSimpleMutants;
+  nsTArray<ReadLockVector> mReadLocks;
+  uint64_t mReadLockSequenceNumber;
   gfx::IntRect mTargetBounds;
   ScreenRotation mTargetRotation;
   dom::ScreenOrientationInternal mTargetOrientation;
-  bool mSwapRequired;
 
 private:
   bool mOpen;
@@ -295,7 +299,13 @@ ShadowLayerForwarder::CreatedRefLayer(ShadowableLayer* aRef)
 void
 ShadowLayerForwarder::Mutated(ShadowableLayer* aMutant)
 {
-mTxn->AddMutant(aMutant);
+  mTxn->AddMutant(aMutant);
+}
+
+void
+ShadowLayerForwarder::MutatedSimple(ShadowableLayer* aMutant)
+{
+  mTxn->AddSimpleMutant(aMutant);
 }
 
 void
@@ -403,7 +413,7 @@ ShadowLayerForwarder::UpdateTextureRegion(CompositableClient* aCompositable,
     return;
   }
 
-  mTxn->AddPaint(
+  mTxn->AddNoSwapPaint(
     CompositableOperation(
       aCompositable->GetIPCHandle(),
       OpPaintTextureRegion(aThebesBufferData, aUpdatedRegion)));
@@ -426,19 +436,14 @@ ShadowLayerForwarder::UseTextures(CompositableClient* aCompositable,
     MOZ_ASSERT(t.mTextureClient->GetIPDLActor());
     MOZ_RELEASE_ASSERT(t.mTextureClient->GetIPDLActor()->GetIPCChannel() == mShadowManager->GetIPCChannel());
     ReadLockDescriptor readLock;
-    t.mTextureClient->SerializeReadLock(readLock);
+    ReadLockHandle readLockHandle;
+    if (t.mTextureClient->SerializeReadLock(readLock)) {
+      readLockHandle = mTxn->AddReadLock(readLock);
+    }
     textures.AppendElement(TimedTexture(nullptr, t.mTextureClient->GetIPDLActor(),
-                                        readLock,
+                                        readLockHandle,
                                         t.mTimeStamp, t.mPictureRect,
                                         t.mFrameID, t.mProducerID));
-    if ((t.mTextureClient->GetFlags() & TextureFlags::IMMEDIATE_UPLOAD)
-        && t.mTextureClient->HasIntermediateBuffer()) {
-
-      // We use IMMEDIATE_UPLOAD when we want to be sure that the upload cannot
-      // race with updates on the main thread. In this case we want the transaction
-      // to be synchronous.
-      mTxn->MarkSyncTransaction();
-    }
     mClientLayerManager->GetCompositorBridgeChild()->HoldUntilCompositableRefReleasedIfNecessary(t.mTextureClient);
   }
   mTxn->AddEdit(CompositableOperation(aCompositable->GetIPCHandle(),
@@ -465,10 +470,16 @@ ShadowLayerForwarder::UseComponentAlphaTextures(CompositableClient* aCompositabl
   MOZ_RELEASE_ASSERT(aTextureOnWhite->GetIPDLActor()->GetIPCChannel() == mShadowManager->GetIPCChannel());
   MOZ_RELEASE_ASSERT(aTextureOnBlack->GetIPDLActor()->GetIPCChannel() == mShadowManager->GetIPCChannel());
 
-  ReadLockDescriptor readLockW;
   ReadLockDescriptor readLockB;
-  aTextureOnBlack->SerializeReadLock(readLockB);
-  aTextureOnWhite->SerializeReadLock(readLockW);
+  ReadLockHandle readLockHandleB;
+  ReadLockDescriptor readLockW;
+  ReadLockHandle readLockHandleW;
+  if (aTextureOnBlack->SerializeReadLock(readLockB)) {
+    readLockHandleB = mTxn->AddReadLock(readLockB);
+  }
+  if (aTextureOnWhite->SerializeReadLock(readLockW)) {
+    readLockHandleW = mTxn->AddReadLock(readLockW);
+  }
 
   mClientLayerManager->GetCompositorBridgeChild()->HoldUntilCompositableRefReleasedIfNecessary(aTextureOnBlack);
   mClientLayerManager->GetCompositorBridgeChild()->HoldUntilCompositableRefReleasedIfNecessary(aTextureOnWhite);
@@ -479,36 +490,32 @@ ShadowLayerForwarder::UseComponentAlphaTextures(CompositableClient* aCompositabl
       OpUseComponentAlphaTextures(
         nullptr, aTextureOnBlack->GetIPDLActor(),
         nullptr, aTextureOnWhite->GetIPDLActor(),
-        readLockB, readLockW)
+        readLockHandleB, readLockHandleW)
       )
     );
 }
 
 static bool
-AddOpDestroy(Transaction* aTxn, const OpDestroy& op, bool synchronously)
+AddOpDestroy(Transaction* aTxn, const OpDestroy& op)
 {
   if (!aTxn->Opened()) {
     return false;
   }
 
   aTxn->mDestroyedActors.AppendElement(op);
-  if (synchronously) {
-    aTxn->MarkSyncTransaction();
-  }
-
   return true;
 }
 
 bool
-ShadowLayerForwarder::DestroyInTransaction(PTextureChild* aTexture, bool synchronously)
+ShadowLayerForwarder::DestroyInTransaction(PTextureChild* aTexture)
 {
-  return AddOpDestroy(mTxn, OpDestroy(aTexture), synchronously);
+  return AddOpDestroy(mTxn, OpDestroy(aTexture));
 }
 
 bool
 ShadowLayerForwarder::DestroyInTransaction(const CompositableHandle& aHandle)
 {
-  return AddOpDestroy(mTxn, OpDestroy(aHandle), false);
+  return AddOpDestroy(mTxn, OpDestroy(aHandle));
 }
 
 void
@@ -528,9 +535,6 @@ ShadowLayerForwarder::RemoveTextureFromCompositable(CompositableClient* aComposi
     CompositableOperation(
       aCompositable->GetIPCHandle(),
       OpRemoveTexture(nullptr, aTexture->GetIPDLActor())));
-  if (aTexture->GetFlags() & TextureFlags::DEALLOCATE_CLIENT) {
-    mTxn->MarkSyncTransaction();
-  }
 }
 
 bool
@@ -619,6 +623,21 @@ ShadowLayerForwarder::EndTransaction(const nsIntRegion& aRegionToClear,
 
   MOZ_LAYERS_LOG(("[LayersForwarder] building transaction..."));
 
+  nsTArray<OpSetSimpleLayerAttributes> setSimpleAttrs;
+  for (ShadowableLayerSet::Iterator it(&mTxn->mSimpleMutants); !it.Done(); it.Next()) {
+    ShadowableLayer* shadow = it.Get()->GetKey();
+    if (!shadow->HasShadow()) {
+      continue;
+    }
+
+    Layer* mutant = shadow->AsLayer();
+    setSimpleAttrs.AppendElement(OpSetSimpleLayerAttributes(
+      Shadow(shadow),
+      mutant->GetSimpleAttributes()));
+  }
+
+  nsTArray<OpSetLayerAttributes> setAttrs;
+
   // We purposely add attribute-change ops to the final changeset
   // before we add paint ops.  This allows layers to record the
   // attribute changes before new pixels arrive, which can be useful
@@ -634,47 +653,16 @@ ShadowLayerForwarder::EndTransaction(const nsIntRegion& aRegionToClear,
     Layer* mutant = shadow->AsLayer();
     MOZ_ASSERT(!!mutant, "unshadowable layer?");
 
-    LayerAttributes attrs;
+    OpSetLayerAttributes op;
+    op.layer() = Shadow(shadow);
+
+    LayerAttributes& attrs = op.attrs();
     CommonLayerAttributes& common = attrs.common();
-    common.layerBounds() = mutant->GetLayerBounds();
     common.visibleRegion() = mutant->GetVisibleRegion();
     common.eventRegions() = mutant->GetEventRegions();
-    common.postXScale() = mutant->GetPostXScale();
-    common.postYScale() = mutant->GetPostYScale();
-    common.transform() = mutant->GetBaseTransform();
-    common.transformIsPerspective() = mutant->GetTransformIsPerspective();
-    common.contentFlags() = mutant->GetContentFlags();
-    common.opacity() = mutant->GetOpacity();
     common.useClipRect() = !!mutant->GetClipRect();
     common.clipRect() = (common.useClipRect() ?
                          *mutant->GetClipRect() : ParentLayerIntRect());
-    common.scrolledClip() = mutant->GetScrolledClip();
-    common.isFixedPosition() = mutant->GetIsFixedPosition();
-    if (mutant->GetIsFixedPosition()) {
-      common.fixedPositionScrollContainerId() = mutant->GetFixedPositionScrollContainerId();
-      common.fixedPositionAnchor() = mutant->GetFixedPositionAnchor();
-      common.fixedPositionSides() = mutant->GetFixedPositionSides();
-    }
-    common.isStickyPosition() = mutant->GetIsStickyPosition();
-    if (mutant->GetIsStickyPosition()) {
-      common.stickyScrollContainerId() = mutant->GetStickyScrollContainerId();
-      common.stickyScrollRangeOuter() = mutant->GetStickyScrollRangeOuter();
-      common.stickyScrollRangeInner() = mutant->GetStickyScrollRangeInner();
-    } else {
-#ifdef MOZ_VALGRIND
-      // Initialize these so that Valgrind doesn't complain when we send them
-      // to another process.
-      common.stickyScrollContainerId() = 0;
-      common.stickyScrollRangeOuter() = LayerRect();
-      common.stickyScrollRangeInner() = LayerRect();
-#endif
-    }
-    common.scrollbarTargetContainerId() = mutant->GetScrollbarTargetContainerId();
-    common.scrollbarDirection() = mutant->GetScrollbarDirection();
-    common.scrollbarThumbRatio() = mutant->GetScrollbarThumbRatio();
-    common.isScrollbarContainer() = mutant->IsScrollbarContainer();
-    common.mixBlendMode() = (int8_t)mutant->GetMixBlendMode();
-    common.forceIsolatedGroup() = mutant->GetForceIsolatedGroup();
     if (Layer* maskLayer = mutant->GetMaskLayer()) {
       common.maskLayer() = Shadow(maskLayer->AsShadowableLayer());
     } else {
@@ -696,25 +684,23 @@ ShadowLayerForwarder::EndTransaction(const nsIntRegion& aRegionToClear,
 
     MOZ_LAYERS_LOG(("[LayersForwarder] OpSetLayerAttributes(%p)\n", mutant));
 
-    mTxn->AddEdit(OpSetLayerAttributes(Shadow(shadow), attrs));
+    setAttrs.AppendElement(op);
   }
 
   if (mTxn->mCset.IsEmpty() &&
       mTxn->mPaints.IsEmpty() &&
+      setAttrs.IsEmpty() &&
       !mTxn->RotationChanged())
   {
     return true;
   }
 
-  // Paints after non-paint ops, including attribute changes.  See
-  // above.
-  if (!mTxn->mPaints.IsEmpty()) {
-    mTxn->mCset.AppendElements(mTxn->mPaints);
-  }
-
   mWindowOverlayChanged = false;
 
   info.cset() = Move(mTxn->mCset);
+  info.setSimpleAttrs() = Move(setSimpleAttrs);
+  info.setAttrs() = Move(setAttrs);
+  info.paints() = Move(mTxn->mPaints);
   info.toDestroy() = mTxn->mDestroyedActors;
   info.fwdTransactionId() = GetFwdTransactionId();
   info.id() = aId;
@@ -737,26 +723,20 @@ ShadowLayerForwarder::EndTransaction(const nsIntRegion& aRegionToClear,
     PlatformSyncBeforeUpdate();
   }
 
-  profiler_tracing("Paint", "Rasterize", TRACING_INTERVAL_END);
+  for (ReadLockVector& locks : mTxn->mReadLocks) {
+    if (locks.Length()) {
+      if (!mShadowManager->SendInitReadLocks(locks)) {
+        MOZ_LAYERS_LOG(("[LayersForwarder] WARNING: sending read locks failed!"));
+        return false;
+      }
+    }
+  }
 
-  AutoTArray<EditReply, 10> replies;
-  if (mTxn->mSwapRequired) {
-    MOZ_LAYERS_LOG(("[LayersForwarder] sending transaction..."));
-    RenderTraceScope rendertrace3("Forward Transaction", "000093");
-    if (!mShadowManager->SendUpdate(info, &replies)) {
-      MOZ_LAYERS_LOG(("[LayersForwarder] WARNING: sending transaction failed!"));
-      return false;
-    }
-    ProcessReplies(replies);
-  } else {
-    // If we don't require a swap we can call SendUpdateNoSwap which
-    // assumes that aReplies is empty (DEBUG assertion)
-    MOZ_LAYERS_LOG(("[LayersForwarder] sending no swap transaction..."));
-    RenderTraceScope rendertrace3("Forward NoSwap Transaction", "000093");
-    if (!mShadowManager->SendUpdateNoSwap(info)) {
-      MOZ_LAYERS_LOG(("[LayersForwarder] WARNING: sending transaction failed!"));
-      return false;
-    }
+  MOZ_LAYERS_LOG(("[LayersForwarder] sending transaction..."));
+  RenderTraceScope rendertrace3("Forward Transaction", "000093");
+  if (!mShadowManager->SendUpdate(info)) {
+    MOZ_LAYERS_LOG(("[LayersForwarder] WARNING: sending transaction failed!"));
+    return false;
   }
 
   *aSent = true;
@@ -764,29 +744,6 @@ ShadowLayerForwarder::EndTransaction(const nsIntRegion& aRegionToClear,
   mPaintSyncId = 0;
   MOZ_LAYERS_LOG(("[LayersForwarder] ... done"));
   return true;
-}
-
-void
-ShadowLayerForwarder::ProcessReplies(const nsTArray<EditReply>& aReplies)
-{
-  for (const auto& reply : aReplies) {
-    switch (reply.type()) {
-    case EditReply::TOpContentBufferSwap: {
-      MOZ_LAYERS_LOG(("[LayersForwarder] DoubleBufferSwap"));
-
-      const OpContentBufferSwap& obs = reply.get_OpContentBufferSwap();
-
-      RefPtr<CompositableClient> compositable = FindCompositable(obs.compositable());
-      ContentClientRemote* contentClient = compositable->AsContentClientRemote();
-      MOZ_ASSERT(contentClient);
-
-      contentClient->SwapBuffers(obs.frontUpdatedRegion());
-      break;
-    }
-    default:
-      MOZ_CRASH("not reached");
-    }
-  }
 }
 
 RefPtr<CompositableClient>
@@ -1098,6 +1055,9 @@ ShadowLayerForwarder::ReleaseCompositable(const CompositableHandle& aHandle)
 {
   AssertInForwarderThread();
   if (!DestroyInTransaction(aHandle)) {
+    if (!IPCOpen()) {
+      return;
+    }
     mShadowManager->SendReleaseCompositable(aHandle);
   }
   mCompositables.Remove(aHandle.Value());

@@ -65,11 +65,11 @@ fuzzy-if(true,1,33) fuzzy-if(d2d,48,350) fuzzy-if(cocoaWidget,1,332) fuzzy-if(An
 == inherit-1.html inherit-1.html
 
 # Table elements
-# == table-collapse-1.html table-collapse-1.html
+== table-collapse-1.html table-collapse-1.html
 # when border-collapse: collapse
 
-fuzzy-if(azureQuartz,1,3) fuzzy-if(skiaContent,1,116) == invalidate-1a.html invalidate-1a.html
-fuzzy-if(azureQuartz,1,3) fuzzy-if(skiaContent,1,117) == invalidate-1b.html invalidate-1b.html
+fuzzy-if(skiaContent,1,116) == invalidate-1a.html invalidate-1a.html
+fuzzy-if(skiaContent,1,117) == invalidate-1b.html invalidate-1b.html
 
 # test that border-radius is reduced for scrollbars
 fails == scrollbar-clamping-1.html scrollbar-clamping-1.html
@@ -77,7 +77,7 @@ fails == scrollbar-clamping-2.html scrollbar-clamping-2.html
 
 # Test for bad corner joins.
 fails == corner-joins-1.xhtml corner-joins-1.xhtml
-fails == corner-joins-2.xhtml corner-joins-2.xhtml
+== corner-joins-2.xhtml corner-joins-2.xhtml
 
 == scroll-1.html scroll-1.html
 
@@ -85,7 +85,7 @@ fails == corner-joins-2.xhtml corner-joins-2.xhtml
 
 == zero-radius-clip-1.html zero-radius-clip-1.html
 
-# == iframe-1.html iframe-1.html
+== iframe-1.html iframe-1.html
 
 # Test for antialiasing gaps between background and border
 fuzzy-if(gtkWidget,1,9) fuzzy-if(winWidget&&!d2d,1,9) fuzzy-if(d2d,5,40) fuzzy-if(Android||skiaContent,1,9) == curved-border-background-nogap.html curved-border-background-nogap.html

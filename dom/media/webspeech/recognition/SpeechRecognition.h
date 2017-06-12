@@ -15,6 +15,7 @@
 #include "nsTArray.h"
 #include "js/TypeDecls.h"
 
+#include "DOMMediaStream.h"
 #include "nsIDOMNavigatorUserMedia.h"
 #include "nsITimer.h"
 #include "MediaStreamGraph.h"
@@ -27,6 +28,7 @@
 #include "nsISpeechRecognitionService.h"
 #include "endpointer.h"
 
+#include "mozilla/dom/BindingDeclarations.h"
 #include "mozilla/dom/SpeechRecognitionError.h"
 
 namespace mozilla {
@@ -90,7 +92,8 @@ public:
 
   void SetServiceURI(const nsAString& aArg, ErrorResult& aRv);
 
-  void Start(const Optional<NonNull<DOMMediaStream>>& aStream, ErrorResult& aRv);
+  void Start(const Optional<NonNull<DOMMediaStream>>& aStream,
+             CallerType aCallerType, ErrorResult& aRv);
 
   void Stop();
 

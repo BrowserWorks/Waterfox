@@ -276,6 +276,7 @@ LoadInfo::LoadInfo(const LoadInfo& rhs)
   : mLoadingPrincipal(rhs.mLoadingPrincipal)
   , mTriggeringPrincipal(rhs.mTriggeringPrincipal)
   , mPrincipalToInherit(rhs.mPrincipalToInherit)
+  , mSandboxedLoadingPrincipal(rhs.mSandboxedLoadingPrincipal)
   , mLoadingContext(rhs.mLoadingContext)
   , mSecurityFlags(rhs.mSecurityFlags)
   , mInternalContentPolicyType(rhs.mInternalContentPolicyType)
@@ -306,6 +307,7 @@ LoadInfo::LoadInfo(const LoadInfo& rhs)
 LoadInfo::LoadInfo(nsIPrincipal* aLoadingPrincipal,
                    nsIPrincipal* aTriggeringPrincipal,
                    nsIPrincipal* aPrincipalToInherit,
+                   nsIPrincipal* aSandboxedLoadingPrincipal,
                    nsSecurityFlags aSecurityFlags,
                    nsContentPolicyType aContentPolicyType,
                    LoadTainting aTainting,
@@ -458,6 +460,31 @@ nsIPrincipal*
 LoadInfo::PrincipalToInherit()
 {
   return mPrincipalToInherit;
+}
+
+NS_IMETHODIMP
+LoadInfo::GetSandboxedLoadingPrincipal(nsIPrincipal** aPrincipal)
+{
+  if (!(mSecurityFlags & nsILoadInfo::SEC_SANDBOXED)) {
+    *aPrincipal = nullptr;
+    return NS_OK;
+  }
+
+  if (!mSandboxedLoadingPrincipal) {
+    if (mLoadingPrincipal) {
+      mSandboxedLoadingPrincipal =
+        nsNullPrincipal::CreateWithInheritedAttributes(mLoadingPrincipal);
+    } else {
+      OriginAttributes attrs(mOriginAttributes);
+      attrs.StripAttributes(OriginAttributes::STRIP_ADDON_ID);
+      mSandboxedLoadingPrincipal = nsNullPrincipal::Create(attrs);
+    }
+  }
+  MOZ_ASSERT(mSandboxedLoadingPrincipal);
+
+  nsCOMPtr<nsIPrincipal> copy(mSandboxedLoadingPrincipal);
+  copy.forget(aPrincipal);
+  return NS_OK;
 }
 
 NS_IMETHODIMP
@@ -694,7 +721,7 @@ LoadInfo::GetScriptableOriginAttributes(JSContext* aCx,
 }
 
 NS_IMETHODIMP
-LoadInfo::ResetPrincipalsToNullPrincipal()
+LoadInfo::ResetPrincipalToInheritToNullPrincipal()
 {
   // take the originAttributes from the LoadInfo and create
   // a new NullPrincipal using those origin attributes.
@@ -702,15 +729,6 @@ LoadInfo::ResetPrincipalsToNullPrincipal()
   attrs.Inherit(mOriginAttributes);
   nsCOMPtr<nsIPrincipal> newNullPrincipal = nsNullPrincipal::Create(attrs);
 
-  MOZ_ASSERT(mInternalContentPolicyType != nsIContentPolicy::TYPE_DOCUMENT ||
-             !mLoadingPrincipal,
-             "LoadingPrincipal should be null for toplevel loads");
-
-  // the loadingPrincipal for toplevel loads is always a nullptr;
-  if (mInternalContentPolicyType != nsIContentPolicy::TYPE_DOCUMENT) {
-    mLoadingPrincipal = newNullPrincipal;
-  }
-  mTriggeringPrincipal = newNullPrincipal;
   mPrincipalToInherit = newNullPrincipal;
 
   // setting SEC_FORCE_INHERIT_PRINCIPAL_OVERRULE_OWNER will overrule
@@ -858,6 +876,12 @@ LoadInfo::SetIsPreflight()
   MOZ_ASSERT(GetSecurityMode() == nsILoadInfo::SEC_REQUIRE_CORS_DATA_INHERITS);
   MOZ_ASSERT(!mInitialSecurityCheckDone);
   mIsPreflight = true;
+}
+
+void
+LoadInfo::SetUpgradeInsecureRequests()
+{
+  mUpgradeInsecureRequests = true;
 }
 
 NS_IMETHODIMP

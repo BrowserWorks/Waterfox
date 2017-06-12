@@ -4,39 +4,34 @@
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
 
-#include "WMF.h"
 #include "WMFDecoderModule.h"
-#include "WMFVideoMFTManager.h"
-#include "WMFAudioMFTManager.h"
-#include "MFTDecoder.h"
-#include "mozilla/DebugOnly.h"
-#include "mozilla/Services.h"
-#include "WMFMediaDataDecoder.h"
-#include "nsAutoPtr.h"
-#include "nsIWindowsRegKey.h"
-#include "nsComponentManagerUtils.h"
-#include "nsServiceManagerUtils.h"
-#include "nsIGfxInfo.h"
-#include "nsWindowsHelpers.h"
 #include "GfxDriverInfo.h"
-#include "mozilla/gfx/gfxVars.h"
+#include "MFTDecoder.h"
+#include "MP4Decoder.h"
 #include "MediaInfo.h"
 #include "MediaPrefs.h"
-#include "prsystem.h"
+#include "VPXDecoder.h"
+#include "WMF.h"
+#include "WMFAudioMFTManager.h"
+#include "WMFMediaDataDecoder.h"
+#include "WMFVideoMFTManager.h"
+#include "mozilla/DebugOnly.h"
 #include "mozilla/Maybe.h"
+#include "mozilla/Services.h"
 #include "mozilla/StaticMutex.h"
 #include "mozilla/WindowsVersion.h"
-#include "MP4Decoder.h"
-#include "VPXDecoder.h"
+#include "mozilla/gfx/gfxVars.h"
+#include "nsAutoPtr.h"
+#include "nsComponentManagerUtils.h"
+#include "nsIGfxInfo.h"
+#include "nsIWindowsRegKey.h"
+#include "nsServiceManagerUtils.h"
+#include "nsWindowsHelpers.h"
+#include "prsystem.h"
 
 namespace mozilla {
 
 static Atomic<bool> sDXVAEnabled(false);
-
-WMFDecoderModule::WMFDecoderModule()
-  : mWMFInitialized(false)
-{
-}
 
 WMFDecoderModule::~WMFDecoderModule()
 {
@@ -84,6 +79,12 @@ WMFDecoderModule::Startup()
 already_AddRefed<MediaDataDecoder>
 WMFDecoderModule::CreateVideoDecoder(const CreateDecoderParams& aParams)
 {
+  if (aParams.mOptions.contains(CreateDecoderParams::Option::LowLatency)) {
+    // Latency on Windows is bad. Let's not attempt to decode with WMF decoders
+    // when low latency is required.
+    return nullptr;
+  }
+
   nsAutoPtr<WMFVideoMFTManager> manager(
     new WMFVideoMFTManager(aParams.VideoConfig(),
                            aParams.mKnowsCompositor,
@@ -95,7 +96,7 @@ WMFDecoderModule::CreateVideoDecoder(const CreateDecoderParams& aParams)
   }
 
   RefPtr<MediaDataDecoder> decoder =
-    new WMFMediaDataDecoder(manager.forget(), aParams.mTaskQueue, aParams.mCallback);
+    new WMFMediaDataDecoder(manager.forget(), aParams.mTaskQueue);
 
   return decoder.forget();
 }
@@ -103,14 +104,15 @@ WMFDecoderModule::CreateVideoDecoder(const CreateDecoderParams& aParams)
 already_AddRefed<MediaDataDecoder>
 WMFDecoderModule::CreateAudioDecoder(const CreateDecoderParams& aParams)
 {
-  nsAutoPtr<WMFAudioMFTManager> manager(new WMFAudioMFTManager(aParams.AudioConfig()));
+  nsAutoPtr<WMFAudioMFTManager> manager(
+    new WMFAudioMFTManager(aParams.AudioConfig()));
 
   if (!manager->Init()) {
     return nullptr;
   }
 
   RefPtr<MediaDataDecoder> decoder =
-    new WMFMediaDataDecoder(manager.forget(), aParams.mTaskQueue, aParams.mCallback);
+    new WMFMediaDataDecoder(manager.forget(), aParams.mTaskQueue);
   return decoder.forget();
 }
 
@@ -191,8 +193,9 @@ WMFDecoderModule::HasAAC()
 }
 
 bool
-WMFDecoderModule::SupportsMimeType(const nsACString& aMimeType,
-                                   DecoderDoctorDiagnostics* aDiagnostics) const
+WMFDecoderModule::SupportsMimeType(
+  const nsACString& aMimeType,
+  DecoderDoctorDiagnostics* aDiagnostics) const
 {
   UniquePtr<TrackInfo> trackInfo = CreateTrackInfoWithMIMEType(aMimeType);
   if (!trackInfo) {
@@ -210,7 +213,8 @@ WMFDecoderModule::Supports(const TrackInfo& aTrackInfo,
        WMFDecoderModule::HasAAC()) {
     return true;
   }
-  if (MP4Decoder::IsH264(aTrackInfo.mMimeType) && WMFDecoderModule::HasH264()) {
+  if (MP4Decoder::IsH264(aTrackInfo.mMimeType)
+      && WMFDecoderModule::HasH264()) {
     if (!MediaPrefs::PDMWMFAllowUnsupportedResolutions()) {
       const VideoInfo* videoInfo = aTrackInfo.GetAsVideoInfo();
       MOZ_ASSERT(videoInfo);
@@ -218,12 +222,14 @@ WMFDecoderModule::Supports(const TrackInfo& aTrackInfo,
       // https://msdn.microsoft.com/en-us/library/windows/desktop/dd797815(v=vs.85).aspx
       if (IsWin8OrLater()) {
         // Windows >7 supports at most 4096x2304.
-        if (videoInfo->mImage.width > 4096 || videoInfo->mImage.height > 2304) {
+        if (videoInfo->mImage.width > 4096
+            || videoInfo->mImage.height > 2304) {
           return false;
         }
       } else {
         // Windows <=7 supports at most 1920x1088.
-        if (videoInfo->mImage.width > 1920 || videoInfo->mImage.height > 1088) {
+        if (videoInfo->mImage.width > 1920
+            || videoInfo->mImage.height > 1088) {
           return false;
         }
       }
@@ -235,25 +241,15 @@ WMFDecoderModule::Supports(const TrackInfo& aTrackInfo,
     return true;
   }
   if (MediaPrefs::PDMWMFVP9DecoderEnabled() && sDXVAEnabled) {
-    if ((VPXDecoder::IsVP8(aTrackInfo.mMimeType) ||
-         VPXDecoder::IsVP9(aTrackInfo.mMimeType)) &&
-        CanCreateWMFDecoder<CLSID_WebmMfVpxDec>()) {
+    if ((VPXDecoder::IsVP8(aTrackInfo.mMimeType)
+         || VPXDecoder::IsVP9(aTrackInfo.mMimeType))
+        && CanCreateWMFDecoder<CLSID_WebmMfVpxDec>()) {
       return true;
     }
   }
 
   // Some unsupported codec.
   return false;
-}
-
-PlatformDecoderModule::ConversionRequired
-WMFDecoderModule::DecoderNeedsConversion(const TrackInfo& aConfig) const
-{
-  if (aConfig.IsVideo() && MP4Decoder::IsH264(aConfig.mMimeType)) {
-    return ConversionRequired::kNeedAnnexB;
-  } else {
-    return ConversionRequired::kNeedNone;
-  }
 }
 
 } // namespace mozilla

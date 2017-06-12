@@ -6,34 +6,21 @@
 
 #include "EMEVideoDecoder.h"
 #include "GMPVideoEncodedFrameImpl.h"
-#include "mozilla/CDMProxy.h"
-#include "MediaData.h"
 #include "MP4Decoder.h"
+#include "MediaData.h"
+#include "PlatformDecoderModule.h"
 #include "VPXDecoder.h"
+#include "mozilla/CDMProxy.h"
 
 namespace mozilla {
 
-void
-EMEVideoCallbackAdapter::Error(GMPErr aErr)
-{
-  if (aErr == GMPNoKeyErr) {
-    // The GMP failed to decrypt a frame due to not having a key. This can
-    // happen if a key expires or a session is closed during playback.
-    NS_WARNING("GMP failed to decrypt due to lack of key");
-    return;
-  }
-  VideoCallbackAdapter::Error(aErr);
-}
-
 EMEVideoDecoder::EMEVideoDecoder(CDMProxy* aProxy,
                                  const GMPVideoDecoderParams& aParams)
-  : GMPVideoDecoder(GMPVideoDecoderParams(aParams).WithAdapter(
-                    new EMEVideoCallbackAdapter(aParams.mCallback,
-                                                VideoInfo(aParams.mConfig.mDisplay),
-                                                aParams.mImageContainer)))
+  : GMPVideoDecoder(GMPVideoDecoderParams(aParams))
   , mProxy(aProxy)
   , mDecryptorId(aProxy->GetDecryptorId())
-{}
+{
+}
 
 void
 EMEVideoDecoder::InitTags(nsTArray<nsCString>& aTags)
@@ -58,9 +45,11 @@ EMEVideoDecoder::GetNodeId()
 GMPUniquePtr<GMPVideoEncodedFrame>
 EMEVideoDecoder::CreateFrame(MediaRawData* aSample)
 {
-  GMPUniquePtr<GMPVideoEncodedFrame> frame = GMPVideoDecoder::CreateFrame(aSample);
+  GMPUniquePtr<GMPVideoEncodedFrame> frame =
+    GMPVideoDecoder::CreateFrame(aSample);
   if (frame && aSample->mCrypto.mValid) {
-    static_cast<gmp::GMPVideoEncodedFrameImpl*>(frame.get())->InitCrypto(aSample->mCrypto);
+    static_cast<gmp::GMPVideoEncodedFrameImpl*>(frame.get())
+      ->InitCrypto(aSample->mCrypto);
   }
   return frame;
 }

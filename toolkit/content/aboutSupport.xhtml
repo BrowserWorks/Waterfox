@@ -23,14 +23,15 @@
     <link rel="stylesheet" href="chrome://global/skin/aboutSupport.css"
           type="text/css"/>
 
-    <script type="application/javascript;version=1.7"
+    <script type="application/javascript"
             src="chrome://global/content/aboutSupport.js"/>
-    <script type="application/javascript;version=1.7"
+    <script type="application/javascript"
             src="chrome://global/content/resetProfile.js"/>
   </head>
 
   <body dir="&locale.dir;">
 
+#ifndef ANDROID
     <div id="action-box">
       <div id="reset-box">
         <h3>&refreshProfile.title;</h3>
@@ -44,8 +45,9 @@
           &aboutSupport.restartInSafeMode.label;
         </button>
       </div>
-
     </div>
+#endif
+
     <h1>
       &aboutSupport.pageTitle;
     </h1>
@@ -223,6 +225,24 @@
             </th>
 
             <td id="multiprocess-box">
+            </td>
+          </tr>
+
+          <tr>
+            <th class="column">
+              &aboutSupport.appBasicsKeyGoogle;
+            </th>
+
+            <td id="key-google-box">
+            </td>
+          </tr>
+
+          <tr>
+            <th class="column">
+              &aboutSupport.appBasicsKeyMozilla;
+            </th>
+
+            <td id="key-mozilla-box">
             </td>
           </tr>
 
@@ -546,6 +566,39 @@
 	<tbody id="sandbox-tbody">
 	</tbody>
       </table>
+
+#if defined(XP_LINUX)
+      <h4>&aboutSupport.sandboxSyscallLogTitle;</h4>
+      <table>
+	<thead>
+	  <tr>
+	    <th>
+	      &aboutSupport.sandboxSyscallIndex;
+	    </th>
+	    <th>
+	      &aboutSupport.sandboxSyscallAge;
+	    </th>
+	    <th>
+	      &aboutSupport.sandboxSyscallPID;
+	    </th>
+	    <th>
+	      &aboutSupport.sandboxSyscallTID;
+	    </th>
+	    <th>
+	      &aboutSupport.sandboxSyscallProcType;
+	    </th>
+	    <th>
+	      &aboutSupport.sandboxSyscallNumber;
+	    </th>
+	    <th id="sandbox-syscalls-argshead">
+	      &aboutSupport.sandboxSyscallArgs;
+	    </th>
+	    </tr>
+	</thead>
+	<tbody id="sandbox-syscalls-tbody">
+	</tbody>
+      </table>
+#endif
 #endif
 
     </div>

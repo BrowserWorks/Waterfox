@@ -58,7 +58,6 @@ FrameIterator::FrameIterator()
     callsite_(nullptr),
     codeRange_(nullptr),
     fp_(nullptr),
-    pc_(nullptr),
     unwind_(Unwind::False),
     missingFrameMessage_(false)
 {
@@ -71,7 +70,6 @@ FrameIterator::FrameIterator(WasmActivation* activation, Unwind unwind)
     callsite_(nullptr),
     codeRange_(nullptr),
     fp_(activation->fp()),
-    pc_(nullptr),
     unwind_(unwind),
     missingFrameMessage_(false)
 {
@@ -85,7 +83,6 @@ FrameIterator::FrameIterator(WasmActivation* activation, Unwind unwind)
         MOZ_ASSERT(done());
         return;
     }
-    pc_ = (uint8_t*)pc;
 
     code_ = activation_->compartment()->wasm.lookupCode(pc);
     MOZ_ASSERT(code_);
@@ -112,12 +109,8 @@ FrameIterator::operator++()
 {
     MOZ_ASSERT(!done());
     if (fp_) {
-        DebugOnly<uint8_t*> oldfp = fp_;
-        fp_ += callsite_->stackDepth();
-        MOZ_ASSERT_IF(code_->profilingEnabled(), fp_ == CallerFPFromFP(oldfp));
         settle();
     } else if (codeRange_) {
-        MOZ_ASSERT(codeRange_);
         codeRange_ = nullptr;
         missingFrameMessage_ = true;
     } else {
@@ -129,6 +122,9 @@ FrameIterator::operator++()
 void
 FrameIterator::settle()
 {
+    if (unwind_ == Unwind::True)
+        activation_->unwindFP(fp_);
+
     void* returnAddress = ReturnAddressFromFP(fp_);
 
     code_ = activation_->compartment()->wasm.lookupCode(returnAddress);
@@ -137,30 +133,29 @@ FrameIterator::settle()
     codeRange_ = code_->lookupRange(returnAddress);
     MOZ_ASSERT(codeRange_);
 
-    switch (codeRange_->kind()) {
-      case CodeRange::Function:
-        pc_ = (uint8_t*)returnAddress;
-        callsite_ = code_->lookupCallSite(returnAddress);
-        MOZ_ASSERT(callsite_);
-        break;
-      case CodeRange::Entry:
+    if (codeRange_->kind() == CodeRange::Entry) {
         fp_ = nullptr;
-        pc_ = nullptr;
         code_ = nullptr;
         codeRange_ = nullptr;
+        callsite_ = nullptr;
+
+        if (unwind_ == Unwind::True)
+            activation_->unwindFP(nullptr);
+
         MOZ_ASSERT(done());
-        break;
-      case CodeRange::ImportJitExit:
-      case CodeRange::ImportInterpExit:
-      case CodeRange::TrapExit:
-      case CodeRange::DebugTrap:
-      case CodeRange::Inline:
-      case CodeRange::FarJumpIsland:
-        MOZ_CRASH("Should not encounter an exit during iteration");
+        return;
     }
 
-    if (unwind_ == Unwind::True)
-        activation_->unwindFP(fp_);
+    MOZ_RELEASE_ASSERT(codeRange_->kind() == CodeRange::Function);
+
+    callsite_ = code_->lookupCallSite(returnAddress);
+    MOZ_ASSERT(callsite_);
+
+    DebugOnly<uint8_t*> oldfp = fp_;
+    fp_ += callsite_->stackDepth();
+    MOZ_ASSERT_IF(code_->profilingEnabled(), fp_ == CallerFPFromFP(oldfp));
+
+    MOZ_ASSERT(!done());
 }
 
 const char*
@@ -226,7 +221,7 @@ Instance*
 FrameIterator::instance() const
 {
     MOZ_ASSERT(!done() && debugEnabled());
-    return TlsDataFromFP(fp_ + callsite_->stackDepth())->instance;
+    return TlsDataFromFP(fp_)->instance;
 }
 
 bool
@@ -234,8 +229,11 @@ FrameIterator::debugEnabled() const
 {
     MOZ_ASSERT(!done() && code_);
     MOZ_ASSERT_IF(!missingFrameMessage_, codeRange_->kind() == CodeRange::Function);
+    MOZ_ASSERT_IF(missingFrameMessage_, !codeRange_ && !fp_);
     // Only non-imported functions can have debug frames.
     return code_->metadata().debugEnabled &&
+           fp_ &&
+           !missingFrameMessage_ &&
            codeRange_->funcIndex() >= code_->metadata().funcImports.length();
 }
 
@@ -243,8 +241,9 @@ DebugFrame*
 FrameIterator::debugFrame() const
 {
     MOZ_ASSERT(!done() && debugEnabled());
+    MOZ_ASSERT(fp_);
     // The fp() points to wasm::Frame.
-    void* buf = static_cast<uint8_t*>(fp_ + callsite_->stackDepth()) - DebugFrame::offsetOfFrame();
+    void* buf = static_cast<uint8_t*>(fp_) - DebugFrame::offsetOfFrame();
     return static_cast<DebugFrame*>(buf);
 }
 
@@ -252,7 +251,8 @@ const CallSite*
 FrameIterator::debugTrapCallsite() const
 {
     MOZ_ASSERT(!done() && debugEnabled());
-    MOZ_ASSERT(callsite_->kind() == CallSite::EnterFrame || callsite_->kind() == CallSite::LeaveFrame);
+    MOZ_ASSERT(callsite_->kind() == CallSite::EnterFrame || callsite_->kind() == CallSite::LeaveFrame ||
+               callsite_->kind() == CallSite::Breakpoint);
     return callsite_;
 }
 
@@ -267,19 +267,19 @@ FrameIterator::debugTrapCallsite() const
 static const unsigned PushedRetAddr = 0;
 static const unsigned PostStorePrePopFP = 0;
 # endif
-static const unsigned PushedFP = 23;
-static const unsigned StoredFP = 30;
+static const unsigned PushedFP = 26;
+static const unsigned StoredFP = 33;
 #elif defined(JS_CODEGEN_X86)
 # if defined(DEBUG)
 static const unsigned PushedRetAddr = 0;
 static const unsigned PostStorePrePopFP = 0;
 # endif
-static const unsigned PushedFP = 14;
-static const unsigned StoredFP = 17;
+static const unsigned PushedFP = 16;
+static const unsigned StoredFP = 19;
 #elif defined(JS_CODEGEN_ARM)
 static const unsigned PushedRetAddr = 4;
-static const unsigned PushedFP = 24;
-static const unsigned StoredFP = 28;
+static const unsigned PushedFP = 28;
+static const unsigned StoredFP = 32;
 static const unsigned PostStorePrePopFP = 4;
 #elif defined(JS_CODEGEN_ARM64)
 static const unsigned PushedRetAddr = 0;
@@ -288,8 +288,8 @@ static const unsigned StoredFP = 0;
 static const unsigned PostStorePrePopFP = 0;
 #elif defined(JS_CODEGEN_MIPS32) || defined(JS_CODEGEN_MIPS64)
 static const unsigned PushedRetAddr = 8;
-static const unsigned PushedFP = 32;
-static const unsigned StoredFP = 36;
+static const unsigned PushedFP = 36;
+static const unsigned StoredFP = 40;
 static const unsigned PostStorePrePopFP = 4;
 #elif defined(JS_CODEGEN_NONE)
 # if defined(DEBUG)
@@ -330,7 +330,7 @@ GenerateProfilingPrologue(MacroAssembler& masm, unsigned framePushed, ExitReason
     // randomly inserted between two instructions.
     {
 #if defined(JS_CODEGEN_ARM)
-        AutoForbidPools afp(&masm, /* number of instructions in scope = */ 7);
+        AutoForbidPools afp(&masm, /* number of instructions in scope = */ 8);
 #endif
 
         offsets->begin = masm.currentOffset();

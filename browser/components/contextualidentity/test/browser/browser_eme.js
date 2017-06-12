@@ -23,7 +23,7 @@ function* openTabInUserContext(uri, userContextId) {
 
   // Select tab and make sure its browser is focused.
   gBrowser.selectedTab = tab;
-  tab.ownerDocument.defaultView.focus();
+  tab.ownerGlobal.focus();
 
   let browser = gBrowser.getBrowserForTab(tab);
   yield BrowserTestUtils.browserLoaded(browser);
@@ -86,7 +86,6 @@ add_task(function* setup() {
   yield SpecialPowers.pushPrefEnv({"set": [
     [ "privacy.userContext.enabled", true ],
     [ "media.mediasource.enabled", true ],
-    [ "media.eme.apiVisible", true ],
     [ "media.mediasource.webm.enabled", true ],
     [ "media.clearkey.persistent-license.enabled", true ],
   ]});

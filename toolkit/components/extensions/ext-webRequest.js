@@ -20,15 +20,30 @@ var {
 // when invoking listeners.
 function WebRequestEventManager(context, eventName) {
   let name = `webRequest.${eventName}`;
-  let register = (callback, filter, info) => {
+  let register = (fire, filter, info) => {
     let listener = data => {
       // Prevent listening in on requests originating from system principal to
       // prevent tinkering with OCSP, app and addon updates, etc.
       if (data.isSystemPrincipal) {
         return;
       }
-      let browserData = {};
-      extensions.emit("fill-browser-data", data.browser, browserData);
+
+      // Check hosts permissions for both the resource being requested,
+      const hosts = context.extension.whiteListedHosts;
+      if (!hosts.matchesIgnoringPath(NetUtil.newURI(data.url))) {
+        return;
+      }
+      // and the origin that is loading the resource.
+      const origin = data.documentUrl;
+      const own = origin && origin.startsWith(context.extension.getURL());
+      if (origin && !own && !hosts.matchesIgnoringPath(NetUtil.newURI(origin))) {
+        return;
+      }
+
+      let browserData = {tabId: -1, windowId: -1};
+      if (data.browser) {
+        browserData = tabTracker.getBrowserData(data.browser);
+      }
       if (filter.tabId != null && browserData.tabId != filter.tabId) {
         return;
       }
@@ -40,6 +55,7 @@ function WebRequestEventManager(context, eventName) {
         requestId: data.requestId,
         url: data.url,
         originUrl: data.originUrl,
+        documentUrl: data.documentUrl,
         method: data.method,
         tabId: browserData.tabId,
         type: data.type,
@@ -58,18 +74,23 @@ function WebRequestEventManager(context, eventName) {
       }
 
       let optional = ["requestHeaders", "responseHeaders", "statusCode", "statusLine", "error", "redirectUrl",
-                      "requestBody"];
+                      "requestBody", "scheme", "realm", "isProxy", "challenger"];
       for (let opt of optional) {
         if (opt in data) {
           data2[opt] = data[opt];
         }
       }
 
-      return context.runSafe(callback, data2);
+      return fire.sync(data2);
     };
 
     let filter2 = {};
-    filter2.urls = new MatchPattern(filter.urls);
+    if (filter.urls) {
+      filter2.urls = new MatchPattern(filter.urls);
+      if (!filter2.urls.overlapsPermissions(context.extension.whiteListedHosts)) {
+        Cu.reportError("The webRequest.addListener filter doesn't overlap with host permissions.");
+      }
+    }
     if (filter.types) {
       filter2.types = filter.types;
     }
@@ -110,6 +131,7 @@ extensions.registerSchemaAPI("webRequest", "addon_parent", context => {
       onBeforeSendHeaders: new WebRequestEventManager(context, "onBeforeSendHeaders").api(),
       onSendHeaders: new WebRequestEventManager(context, "onSendHeaders").api(),
       onHeadersReceived: new WebRequestEventManager(context, "onHeadersReceived").api(),
+      onAuthRequired: new WebRequestEventManager(context, "onAuthRequired").api(),
       onBeforeRedirect: new WebRequestEventManager(context, "onBeforeRedirect").api(),
       onResponseStarted: new WebRequestEventManager(context, "onResponseStarted").api(),
       onErrorOccurred: new WebRequestEventManager(context, "onErrorOccurred").api(),

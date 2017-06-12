@@ -33,6 +33,7 @@ struct LoadInfoArgs
   OptionalPrincipalInfo requestingPrincipalInfo;
   PrincipalInfo         triggeringPrincipalInfo;
   OptionalPrincipalInfo principalToInheritInfo;
+  OptionalPrincipalInfo sandboxedLoadingPrincipalInfo;
   uint32_t              securityFlags;
   uint32_t              contentPolicyType;
   uint32_t              tainting;
@@ -104,10 +105,9 @@ struct HttpChannelOpenArgs
   nsCString                   requestMethod;
   OptionalIPCStream           uploadStream;
   bool                        uploadStreamHasHeaders;
-  uint16_t                    priority;
+  int16_t                     priority;
   uint32_t                    classOfService;
   uint8_t                     redirectionLimit;
-  bool                        allowPipelining;
   bool                        allowSTS;
   uint32_t                    thirdPartyFlags;
   bool                        resumeAt;

@@ -33,8 +33,10 @@ NS_INTERFACE_MAP_BEGIN_CYCLE_COLLECTION(ServiceWorkerClient)
   NS_INTERFACE_MAP_ENTRY(nsISupports)
 NS_INTERFACE_MAP_END
 
-ServiceWorkerClientInfo::ServiceWorkerClientInfo(nsIDocument* aDoc)
-  : mWindowId(0)
+ServiceWorkerClientInfo::ServiceWorkerClientInfo(nsIDocument* aDoc, uint32_t aOrdinal)
+  : mType(ClientType::Window)
+  , mOrdinal(aOrdinal)
+  , mWindowId(0)
   , mFrameType(FrameType::None)
 {
   MOZ_ASSERT(aDoc);
@@ -58,11 +60,16 @@ ServiceWorkerClientInfo::ServiceWorkerClientInfo(nsIDocument* aDoc)
   }
   mVisibilityState = aDoc->VisibilityState();
 
+  mLastFocusTime = aDoc->LastFocusTime();
+
   ErrorResult result;
   mFocused = aDoc->HasFocus(result);
   if (result.Failed()) {
     NS_WARNING("Failed to get focus information.");
   }
+
+  MOZ_ASSERT_IF(mLastFocusTime.IsNull(), !mFocused);
+  MOZ_ASSERT_IF(mFocused, !mLastFocusTime.IsNull());
 
   RefPtr<nsGlobalWindow> outerWindow = nsGlobalWindow::Cast(aDoc->GetWindow());
   if (!outerWindow) {
@@ -76,10 +83,46 @@ ServiceWorkerClientInfo::ServiceWorkerClientInfo(nsIDocument* aDoc)
   }
 }
 
+bool
+ServiceWorkerClientInfo::operator<(const ServiceWorkerClientInfo& aRight) const
+{
+  // Note: the mLastFocusTime comparisons are reversed because we need to
+  // put most recently focused values first.  The mOrdinal comparison is
+  // normal, though, because otherwise we want normal creation order.
+
+  if (mLastFocusTime == aRight.mLastFocusTime) {
+    return mOrdinal < aRight.mOrdinal;
+  }
+
+  if (mLastFocusTime.IsNull()) {
+    return false;
+  }
+
+  if (aRight.mLastFocusTime.IsNull()) {
+    return true;
+  }
+
+  return mLastFocusTime > aRight.mLastFocusTime;
+}
+
+bool
+ServiceWorkerClientInfo::operator==(const ServiceWorkerClientInfo& aRight) const
+{
+  return mLastFocusTime == aRight.mLastFocusTime &&
+         mOrdinal == aRight.mOrdinal &&
+         mClientId == aRight.mClientId;
+}
+
 JSObject*
 ServiceWorkerClient::WrapObject(JSContext* aCx, JS::Handle<JSObject*> aGivenProto)
 {
   return ClientBinding::Wrap(aCx, this, aGivenProto);
+}
+
+ClientType
+ServiceWorkerClient::Type() const
+{
+  return mType;
 }
 
 namespace {
@@ -191,7 +234,7 @@ private:
 
 void
 ServiceWorkerClient::PostMessage(JSContext* aCx, JS::Handle<JS::Value> aMessage,
-                                 const Optional<Sequence<JS::Value>>& aTransferable,
+                                 const Sequence<JSObject*>& aTransferable,
                                  ErrorResult& aRv)
 {
   WorkerPrivate* workerPrivate = GetCurrentThreadWorkerPrivate();
@@ -199,20 +242,11 @@ ServiceWorkerClient::PostMessage(JSContext* aCx, JS::Handle<JS::Value> aMessage,
   workerPrivate->AssertIsOnWorkerThread();
 
   JS::Rooted<JS::Value> transferable(aCx, JS::UndefinedValue());
-  if (aTransferable.WasPassed()) {
-    const Sequence<JS::Value>& realTransferable = aTransferable.Value();
 
-    JS::HandleValueArray elements =
-      JS::HandleValueArray::fromMarkedLocation(realTransferable.Length(),
-                                               realTransferable.Elements());
-
-    JSObject* array = JS_NewArrayObject(aCx, elements);
-    if (!array) {
-      aRv.Throw(NS_ERROR_OUT_OF_MEMORY);
-      return;
-    }
-
-    transferable.setObject(*array);
+  aRv = nsContentUtils::CreateJSValueFromSequenceOfObject(aCx, aTransferable,
+                                                          &transferable);
+  if (NS_WARN_IF(aRv.Failed())) {
+    return;
   }
 
   RefPtr<ServiceWorkerClientPostMessageRunnable> runnable =

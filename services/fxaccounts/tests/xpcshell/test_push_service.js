@@ -6,14 +6,13 @@
 // Tests for the FxA push service.
 
 Cu.import("resource://gre/modules/Task.jsm");
-Cu.import("resource://gre/modules/Services.jsm");
 Cu.import("resource://gre/modules/Promise.jsm");
 Cu.import("resource://gre/modules/FxAccountsCommon.js");
 Cu.import("resource://gre/modules/Log.jsm");
 
-let scope = {};
-Services.scriptloader.loadSubScript("resource://gre/components/FxAccountsPush.js", scope);
-const FxAccountsPushService = scope.FxAccountsPushService;
+let importScope = {};
+Services.scriptloader.loadSubScript("resource://gre/components/FxAccountsPush.js", importScope);
+const FxAccountsPushService = importScope.FxAccountsPushService;
 
 XPCOMUtils.defineLazyServiceGetter(this, "pushService",
   "@mozilla.org/push/Service;1", "nsIPushService");

@@ -1796,6 +1796,9 @@
         this.controlListeners = [];
 
         // Helper function to add an event listener to the given element
+        // Due to this helper function, "Utils" is made available to the event
+        // listener functions. Hence declare it as a global for ESLint.
+        /* global Utils */
         function addListener(elem, eventName, func, capture = false) {
           let boundFunc = func.bind(self);
           self.controlListeners.push({ item: elem, event: eventName, func: boundFunc, capture });

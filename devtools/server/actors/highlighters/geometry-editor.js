@@ -92,7 +92,7 @@ var GeoProp = {
  * @return {Object}
  */
 function getOffsetParent(node) {
-  let win = node.ownerDocument.defaultView;
+  let win = node.ownerGlobal;
 
   let offsetParent = node.offsetParent;
   if (offsetParent &&
@@ -224,6 +224,10 @@ function GeometryEditorHighlighter(highlighterEnv) {
     this.getElement("handler-" + side)
       .addEventListener("mousedown", onMouseDown);
   }
+
+  this.onWillNavigate = this.onWillNavigate.bind(this);
+
+  this.highlighterEnv.on("will-navigate", this.onWillNavigate);
 }
 
 GeometryEditorHighlighter.prototype = extend(AutoRefreshHighlighter.prototype, {
@@ -643,7 +647,7 @@ GeometryEditorHighlighter.prototype = extend(AutoRefreshHighlighter.prototype, {
       if (GeoProp.isInverted(side)) {
         return this.offsetParent.dimension[GeoProp.mainAxisSize(side)];
       }
-      return -1 * this.currentNode.ownerDocument.defaultView["scroll" +
+      return -1 * this.currentNode.ownerGlobal["scroll" +
                                               GeoProp.axis(side).toUpperCase()];
     };
 
@@ -699,6 +703,12 @@ GeometryEditorHighlighter.prototype = extend(AutoRefreshHighlighter.prototype, {
                          : "translate(" + labelCross + " " + labelMain + ")");
     labelEl.removeAttribute("hidden");
     labelTextEl.setTextContent(labelValue);
-  }
+  },
+
+  onWillNavigate({ isTopLevel }) {
+    if (isTopLevel) {
+      this.hide();
+    }
+  },
 });
 exports.GeometryEditorHighlighter = GeometryEditorHighlighter;

@@ -6,6 +6,7 @@
 
 #include "ExternalHelperAppChild.h"
 #include "mozilla/net/ChannelDiverterChild.h"
+#include "mozilla/dom/TabChild.h"
 #include "nsIDivertableChannel.h"
 #include "nsIInputStream.h"
 #include "nsIFTPChannel.h"
@@ -60,20 +61,28 @@ ExternalHelperAppChild::OnDataAvailable(nsIRequest *request,
 NS_IMETHODIMP
 ExternalHelperAppChild::OnStartRequest(nsIRequest *request, nsISupports *ctx)
 {
-  nsCOMPtr<nsIDivertableChannel> divertable = do_QueryInterface(request);
-  if (divertable) {
-    return DivertToParent(divertable, request);
-  }
-
   nsresult rv = mHandler->OnStartRequest(request, ctx);
   NS_ENSURE_SUCCESS(rv, NS_ERROR_UNEXPECTED);
+
+  // Calling OnStartRequest could cause mHandler to close the window it was
+  // loaded for. In that case, the TabParent in the parent context might then
+  // point to the wrong window. Re-send the window context along with either
+  // DivertToParent or SendOnStartRequest just in case.
+  nsCOMPtr<nsPIDOMWindowOuter> window =
+    do_GetInterface(mHandler->GetDialogParent());
+  TabChild *tabChild = window ? mozilla::dom::TabChild::GetFrom(window) : nullptr;
+
+  nsCOMPtr<nsIDivertableChannel> divertable = do_QueryInterface(request);
+  if (divertable) {
+    return DivertToParent(divertable, request, tabChild);
+  }
 
   nsCString entityID;
   nsCOMPtr<nsIResumableChannel> resumable(do_QueryInterface(request));
   if (resumable) {
     resumable->GetEntityID(entityID);
   }
-  SendOnStartRequest(entityID);
+  SendOnStartRequest(entityID, tabChild);
   return NS_OK;
 }
 
@@ -94,7 +103,8 @@ ExternalHelperAppChild::OnStopRequest(nsIRequest *request,
 
 nsresult
 ExternalHelperAppChild::DivertToParent(nsIDivertableChannel *divertable,
-                                       nsIRequest *request)
+                                       nsIRequest *request,
+                                       TabChild *tabChild)
 {
   // nsIDivertable must know about content conversions before being diverted.
   MOZ_ASSERT(mHandler);
@@ -107,7 +117,7 @@ ExternalHelperAppChild::DivertToParent(nsIDivertableChannel *divertable,
   }
   MOZ_ASSERT(diverter);
 
-  if (SendDivertToParentUsing(diverter)) {
+  if (SendDivertToParentUsing(diverter, tabChild)) {
     mHandler->DidDivertRequest(request);
     mHandler = nullptr;
     return NS_OK;

@@ -12,6 +12,7 @@ import android.support.annotation.Nullable;
 import android.support.annotation.WorkerThread;
 import android.util.Log;
 import org.mozilla.gecko.BrowserApp;
+import org.mozilla.gecko.GeckoApp;
 import org.mozilla.gecko.GeckoProfile;
 import org.mozilla.gecko.GeckoSharedPrefs;
 import org.mozilla.gecko.Telemetry;
@@ -38,10 +39,7 @@ public class TelemetryCorePingDelegate extends BrowserAppDelegateWithReference
     private static final String LOGTAG = StringUtils.safeSubstring(
             "Gecko" + TelemetryCorePingDelegate.class.getSimpleName(), 0, 23);
 
-    private static final String PREF_IS_FIRST_RUN = "telemetry-isFirstRun";
-
     private boolean isOnResumeCalled = false;
-
     private TelemetryDispatcher telemetryDispatcher; // lazy
     private final SessionMeasurements sessionMeasurements = new SessionMeasurements();
 
@@ -74,10 +72,8 @@ public class TelemetryCorePingDelegate extends BrowserAppDelegateWithReference
         // If we are really interested in the user's last session data, we could consider uploading in onStop
         // but it's less robust (see discussion in bug 1277091).
         final SharedPreferences sharedPrefs = getSharedPreferences(browserApp);
-        if (sharedPrefs.getBoolean(PREF_IS_FIRST_RUN, true)) {
-            sharedPrefs.edit()
-                    .putBoolean(PREF_IS_FIRST_RUN, false)
-                    .apply();
+        if (sharedPrefs.getBoolean(GeckoApp.PREFS_IS_FIRST_RUN, true)) {
+            // GeckoApp will set this pref to false afterwards.
             uploadPing(browserApp);
         }
     }

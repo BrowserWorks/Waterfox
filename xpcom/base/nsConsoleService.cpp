@@ -19,12 +19,15 @@
 #include "nsConsoleMessage.h"
 #include "nsIClassInfoImpl.h"
 #include "nsIConsoleListener.h"
+#include "nsIObserverService.h"
 #include "nsPrintfCString.h"
 #include "nsProxyRelease.h"
 #include "nsIScriptError.h"
 #include "nsISupportsPrimitives.h"
 
 #include "mozilla/Preferences.h"
+#include "mozilla/Services.h"
+#include "mozilla/SystemGroup.h"
 
 #if defined(ANDROID)
 #include <android/log.h>
@@ -324,7 +327,7 @@ nsConsoleService::LogMessageWithMode(nsIConsoleMessage* aMessage,
     // avoid failing in XPCShell tests
     nsCOMPtr<nsIThread> mainThread = do_GetMainThread();
     if (mainThread) {
-      NS_DispatchToMainThread(r.forget());
+      SystemGroup::Dispatch("LogMessageRunnable", TaskCategory::Other, r.forget());
     }
   }
 

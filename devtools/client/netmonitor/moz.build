@@ -15,23 +15,11 @@ DIRS += [
 
 DevToolsModules(
     'constants.js',
-    'custom-request-view.js',
-    'details-view.js',
-    'events.js',
-    'filter-predicates.js',
-    'l10n.js',
     'netmonitor-controller.js',
-    'netmonitor-view.js',
     'panel.js',
-    'prefs.js',
     'request-list-context-menu.js',
-    'request-utils.js',
-    'requests-menu-view.js',
-    'sidebar-view.js',
-    'sort-predicates.js',
-    'statistics-view.js',
+    'request-list-tooltip.js',
     'store.js',
-    'toolbar-view.js',
     'waterfall-background.js',
 )
 

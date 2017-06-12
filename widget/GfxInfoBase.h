@@ -118,8 +118,10 @@ protected:
     JS::Handle<JSObject*> aContainer,
     const char* aName,
     int32_t aFeature,
-    Maybe<mozilla::gfx::FeatureStatus> aKnownStatus,
+    const Maybe<mozilla::gfx::FeatureStatus>& aKnownStatus,
     JS::MutableHandle<JSObject*> aOutObj);
+
+  NS_IMETHOD ControlGPUProcessForXPCShell(bool aEnable, bool *_retval) override;
 
 private:
   virtual int32_t FindBlocklistedDeviceInList(const nsTArray<GfxDriverInfo>& aDriverInfo,

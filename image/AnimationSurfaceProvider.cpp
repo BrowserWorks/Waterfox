@@ -50,7 +50,7 @@ AnimationSurfaceProvider::DropImageReference()
   // get evicted is holding the surface cache lock, causing deadlock.
   RefPtr<RasterImage> image = mImage;
   mImage = nullptr;
-  NS_ReleaseOnMainThread(image.forget(), /* aAlwaysProxy = */ true);
+  NS_ReleaseOnMainThreadSystemGroup(image.forget(), /* aAlwaysProxy = */ true);
 }
 
 DrawableFrameRef
@@ -118,7 +118,8 @@ AnimationSurfaceProvider::LogicalSizeInBytes() const
 void
 AnimationSurfaceProvider::AddSizeOfExcludingThis(MallocSizeOf aMallocSizeOf,
                                                  size_t& aHeapSizeOut,
-                                                 size_t& aNonHeapSizeOut)
+                                                 size_t& aNonHeapSizeOut,
+                                                 size_t& aSharedHandlesOut)
 {
   // Note that the surface cache lock is already held here, and then we acquire
   // mFramesMutex. For this method, this ordering is unavoidable, which means
@@ -126,7 +127,8 @@ AnimationSurfaceProvider::AddSizeOfExcludingThis(MallocSizeOf aMallocSizeOf,
   MutexAutoLock lock(mFramesMutex);
 
   for (const RawAccessFrameRef& frame : mFrames) {
-    frame->AddSizeOfExcludingThis(aMallocSizeOf, aHeapSizeOut, aNonHeapSizeOut);
+    frame->AddSizeOfExcludingThis(aMallocSizeOf, aHeapSizeOut,
+                                  aNonHeapSizeOut, aSharedHandlesOut);
   }
 }
 

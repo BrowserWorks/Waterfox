@@ -34,12 +34,7 @@ public:
       mContent(aContent)
     {}
 
-    ContentInfo(nsIContent* aContent, nsStyleContext* aStyleContext) :
-      mContent(aContent), mStyleContext(aStyleContext)
-    {}
-
     nsIContent* mContent;
-    RefPtr<nsStyleContext> mStyleContext;
     nsTArray<ContentInfo> mChildren;
   };
 
@@ -72,14 +67,6 @@ public:
    */
   virtual void AppendAnonymousContentTo(nsTArray<nsIContent*>& aElements,
                                         uint32_t aFilter) = 0;
-
-  /**
-   * Implementations can override this method to create special frames for the
-   * anonymous content returned from CreateAnonymousContent.
-   * By default this method returns nullptr, which means the default frame
-   * is created.
-   */
-  virtual nsIFrame* CreateFrameFor(nsIContent* aContent) { return nullptr; }
 };
 
 #endif

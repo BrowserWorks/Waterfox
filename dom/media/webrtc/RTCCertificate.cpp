@@ -75,7 +75,7 @@ private:
     char buf[sizeof(randomName) * 2 + 4];
     PL_strncpy(buf, "CN=", 3);
     for (size_t i = 0; i < sizeof(randomName); ++i) {
-      snprintf(&buf[i * 2 + 3], 2, "%.2x", randomName[i]);
+      snprintf(&buf[i * 2 + 3], 3, "%.2x", randomName[i]);
     }
     buf[sizeof(buf) - 1] = '\0';
 
@@ -220,11 +220,11 @@ private:
   {
     // Make copies of the private key and certificate, otherwise, when this
     // object is deleted, the structures they reference will be deleted too.
-    SECKEYPrivateKey* key = mKeyPair->mPrivateKey.get()->GetPrivateKey();
+    UniqueSECKEYPrivateKey key = mKeyPair->mPrivateKey.get()->GetPrivateKey();
     CERTCertificate* cert = CERT_DupCertificate(mCertificate.get());
     RefPtr<RTCCertificate> result =
         new RTCCertificate(mResultPromise->GetParentObject(),
-                           key, cert, mAuthType, mExpires);
+                           key.release(), cert, mAuthType, mExpires);
     mResultPromise->MaybeResolve(result);
   }
 };
@@ -416,7 +416,7 @@ RTCCertificate::ReadPrivateKey(JSStructuredCloneReader* aReader,
   if (!jwk.Init(json)) {
     return false;
   }
-  mPrivateKey.reset(CryptoKey::PrivateKeyFromJwk(jwk, aLockProof));
+  mPrivateKey = CryptoKey::PrivateKeyFromJwk(jwk, aLockProof);
   return !!mPrivateKey;
 }
 

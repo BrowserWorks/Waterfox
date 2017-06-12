@@ -35,7 +35,6 @@
 
 #include "MediaInfo.h"
 #include "MediaPrefs.h"
-#include "FuzzingWrapper.h"
 #include "H264Converter.h"
 
 #include "AgnosticDecoderModule.h"
@@ -45,10 +44,6 @@
 
 #include "MP4Decoder.h"
 #include "mozilla/dom/RemoteVideoDecoder.h"
-
-#ifdef XP_WIN
-#include "mozilla/WindowsVersion.h"
-#endif
 
 #include "mp4_demuxer/H264.h"
 
@@ -295,21 +290,8 @@ PDMFactory::CreateDecoderWithPDM(PlatformDecoderModule* aPDM,
     return nullptr;
   }
 
-  MediaDataDecoderCallback* callback = aParams.mCallback;
-  RefPtr<DecoderCallbackFuzzingWrapper> callbackWrapper;
-  if (MediaPrefs::PDMFuzzingEnabled()) {
-    callbackWrapper = new DecoderCallbackFuzzingWrapper(callback);
-    callbackWrapper->SetVideoOutputMinimumInterval(
-      TimeDuration::FromMilliseconds(MediaPrefs::PDMFuzzingInterval()));
-    callbackWrapper->SetDontDelayInputExhausted(!MediaPrefs::PDMFuzzingDelayInputExhausted());
-    callback = callbackWrapper.get();
-  }
-
-  CreateDecoderParams params = aParams;
-  params.mCallback = callback;
-
   if (MP4Decoder::IsH264(config.mMimeType) && !aParams.mUseBlankDecoder) {
-    RefPtr<H264Converter> h = new H264Converter(aPDM, params);
+    RefPtr<H264Converter> h = new H264Converter(aPDM, aParams);
     const nsresult rv = h->GetLastError();
     if (NS_SUCCEEDED(rv) || rv == NS_ERROR_NOT_INITIALIZED) {
       // The H264Converter either successfully created the wrapped decoder,
@@ -318,11 +300,7 @@ PDMFactory::CreateDecoderWithPDM(PlatformDecoderModule* aPDM,
       m = h.forget();
     }
   } else {
-    m = aPDM->CreateVideoDecoder(params);
-  }
-
-  if (callbackWrapper && m) {
-    m = new DecoderFuzzingWrapper(m.forget(), callbackWrapper.forget());
+    m = aPDM->CreateVideoDecoder(aParams);
   }
 
   return m.forget();
@@ -372,14 +350,7 @@ PDMFactory::CreatePDMs()
   }
 #endif
 #ifdef XP_WIN
-  if (MediaPrefs::PDMWMFEnabled() && IsVistaOrLater()) {
-    // *Only* use WMF on Vista and later, as if Firefox is run in Windows 95
-    // compatibility mode on Windows 7 (it does happen!) we may crash trying
-    // to startup WMF. So we need to detect the OS version here, as in
-    // compatibility mode IsVistaOrLater() and friends behave as if we're on
-    // the emulated version of Windows. See bug 1279171.
-    // Additionally, we don't want to start the RemoteDecoderModule if we
-    // expect it's not going to work (i.e. on Windows older than Vista).
+  if (MediaPrefs::PDMWMFEnabled()) {
     m = new WMFDecoderModule();
     RefPtr<PlatformDecoderModule> remote = new dom::RemoteDecoderModule(m);
     StartupPDM(remote);

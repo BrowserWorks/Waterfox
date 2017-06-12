@@ -40,8 +40,6 @@
 #include "DeviceManagerD3D9.h"
 #include "mozilla/layers/ReadbackManagerD3D11.h"
 
-#include "WinUtils.h"
-
 #include "gfxDWriteFontList.h"
 #include "gfxDWriteFonts.h"
 #include "gfxDWriteCommon.h"
@@ -60,6 +58,7 @@
 
 #include "nsMemory.h"
 
+#include <dwmapi.h>
 #include <d3d11.h>
 
 #include "nsIMemoryReporter.h"
@@ -144,9 +143,6 @@ public:
 };
 
 NS_IMPL_ISUPPORTS(GfxD2DVramReporter, nsIMemoryReporter)
-
-#define GFX_USE_CLEARTYPE_ALWAYS "gfx.font_rendering.cleartype.always_use_for_content"
-#define GFX_DOWNLOADABLE_FONTS_USE_CLEARTYPE "gfx.font_rendering.cleartype.use_for_downloadable_fonts"
 
 #define GFX_CLEARTYPE_PARAMS           "gfx.font_rendering.cleartype_params."
 #define GFX_CLEARTYPE_PARAMS_GAMMA     "gfx.font_rendering.cleartype_params.gamma"
@@ -315,9 +311,6 @@ NS_IMPL_ISUPPORTS(D3DSharedTexturesReporter, nsIMemoryReporter)
 gfxWindowsPlatform::gfxWindowsPlatform()
   : mRenderMode(RENDER_GDI)
 {
-  mUseClearTypeForDownloadableFonts = UNINITIALIZED_VALUE;
-  mUseClearTypeAlways = UNINITIALIZED_VALUE;
-
   /*
    * Initialize COM
    */
@@ -458,7 +451,6 @@ gfxWindowsPlatform::HandleDeviceReset()
 
   InitializeDevices();
   UpdateANGLEConfig();
-  BumpDeviceCounter();
   return true;
 }
 
@@ -987,26 +979,6 @@ gfxWindowsPlatform::GetPlatformCMSOutputProfile(void* &mem, size_t &mem_size)
 #endif // _WIN32
 }
 
-bool
-gfxWindowsPlatform::UseClearTypeForDownloadableFonts()
-{
-    if (mUseClearTypeForDownloadableFonts == UNINITIALIZED_VALUE) {
-        mUseClearTypeForDownloadableFonts = Preferences::GetBool(GFX_DOWNLOADABLE_FONTS_USE_CLEARTYPE, true);
-    }
-
-    return mUseClearTypeForDownloadableFonts;
-}
-
-bool
-gfxWindowsPlatform::UseClearTypeAlways()
-{
-    if (mUseClearTypeAlways == UNINITIALIZED_VALUE) {
-        mUseClearTypeAlways = Preferences::GetBool(GFX_USE_CLEARTYPE_ALWAYS, false);
-    }
-
-    return mUseClearTypeAlways;
-}
-
 void
 gfxWindowsPlatform::GetDLLVersion(char16ptr_t aDLLPath, nsAString& aVersion)
 {
@@ -1150,14 +1122,7 @@ gfxWindowsPlatform::FontsPrefsChanged(const char *aPref)
 
     gfxPlatform::FontsPrefsChanged(aPref);
 
-    if (!aPref) {
-        mUseClearTypeForDownloadableFonts = UNINITIALIZED_VALUE;
-        mUseClearTypeAlways = UNINITIALIZED_VALUE;
-    } else if (!strcmp(GFX_DOWNLOADABLE_FONTS_USE_CLEARTYPE, aPref)) {
-        mUseClearTypeForDownloadableFonts = UNINITIALIZED_VALUE;
-    } else if (!strcmp(GFX_USE_CLEARTYPE_ALWAYS, aPref)) {
-        mUseClearTypeAlways = UNINITIALIZED_VALUE;
-    } else if (!strncmp(GFX_CLEARTYPE_PARAMS, aPref, strlen(GFX_CLEARTYPE_PARAMS))) {
+    if (aPref && !strncmp(GFX_CLEARTYPE_PARAMS, aPref, strlen(GFX_CLEARTYPE_PARAMS))) {
         SetupClearTypeParams();
     } else {
         clearTextFontCaches = false;
@@ -1478,8 +1443,6 @@ gfxWindowsPlatform::RecordContentDeviceFailure(TelemetryDeviceCode aDevice)
 void
 gfxWindowsPlatform::InitializeDevices()
 {
-  MOZ_ASSERT(!InSafeMode());
-
   if (XRE_IsParentProcess()) {
     // If we're the UI process, and the GPU process is enabled, then we don't
     // initialize any DirectX devices. We do leave them enabled in gfxConfig
@@ -1652,7 +1615,11 @@ gfxWindowsPlatform::InitGPUProcessSupport()
   }
 
   if (!gfxConfig::IsEnabled(Feature::D3D11_COMPOSITING)) {
-    // Don't use the GPU process if not using D3D11.
+    // Don't use the GPU process if not using D3D11, unless software
+    // compositor is allowed
+    if (gfxPrefs::GPUProcessAllowSoftware()) {
+      return gpuProc.IsEnabled();
+    }
     gpuProc.Disable(
       FeatureStatus::Unavailable,
       "Not using GPU Process since D3D11 is unavailable",
@@ -1686,10 +1653,9 @@ gfxWindowsPlatform::InitGPUProcessSupport()
 bool
 gfxWindowsPlatform::DwmCompositionEnabled()
 {
-  MOZ_ASSERT(WinUtils::dwmIsCompositionEnabledPtr);
   BOOL dwmEnabled = false;
 
-  if (FAILED(WinUtils::dwmIsCompositionEnabledPtr(&dwmEnabled))) {
+  if (FAILED(DwmIsCompositionEnabled(&dwmEnabled))) {
     return false;
   }
 
@@ -1724,7 +1690,7 @@ public:
         DWM_TIMING_INFO vblankTime;
         // Make sure to init the cbSize, otherwise GetCompositionTiming will fail
         vblankTime.cbSize = sizeof(DWM_TIMING_INFO);
-        HRESULT hr = WinUtils::dwmGetCompositionTimingInfoPtr(0, &vblankTime);
+        HRESULT hr = DwmGetCompositionTimingInfo(0, &vblankTime);
         if (SUCCEEDED(hr)) {
           UNSIGNED_RATIO refreshRate = vblankTime.rateRefresh;
           // We get the rate in hertz / time, but we want the rate in ms.
@@ -1809,7 +1775,7 @@ public:
         // Make sure to init the cbSize, otherwise
         // GetCompositionTiming will fail
         vblankTime.cbSize = sizeof(DWM_TIMING_INFO);
-        HRESULT hr = WinUtils::dwmGetCompositionTimingInfoPtr(0, &vblankTime);
+        HRESULT hr = DwmGetCompositionTimingInfo(0, &vblankTime);
         if (!SUCCEEDED(hr)) {
             return vsync;
         }
@@ -1891,7 +1857,7 @@ public:
 
           // Using WaitForVBlank, the whole system dies because WaitForVBlank
           // only works if it's run on the same thread as the Present();
-          HRESULT hr = WinUtils::dwmFlushProcPtr();
+          HRESULT hr = DwmFlush();
           if (!SUCCEEDED(hr)) {
             // DWMFlush isn't working, fallback to software vsync.
             ScheduleSoftwareVsync(TimeStamp::Now());
@@ -1971,13 +1937,9 @@ already_AddRefed<mozilla::gfx::VsyncSource>
 gfxWindowsPlatform::CreateHardwareVsyncSource()
 {
   MOZ_RELEASE_ASSERT(NS_IsMainThread(), "GFX: Not in main thread.");
-  if (!WinUtils::dwmIsCompositionEnabledPtr) {
-    NS_WARNING("Dwm composition not available, falling back to software vsync");
-    return gfxPlatform::CreateHardwareVsyncSource();
-  }
 
   BOOL dwmEnabled = false;
-  WinUtils::dwmIsCompositionEnabledPtr(&dwmEnabled);
+  DwmIsCompositionEnabled(&dwmEnabled);
   if (!dwmEnabled) {
     NS_WARNING("DWM not enabled, falling back to software vsync");
     return gfxPlatform::CreateHardwareVsyncSource();

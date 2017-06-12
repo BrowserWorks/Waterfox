@@ -12,6 +12,7 @@
 #include "mozilla/dom/U2F.h"
 #include "mozilla/Preferences.h"
 #include "mozilla/ReentrantMonitor.h"
+#include "mozilla/SizePrintfMacros.h"
 #include "nsContentUtils.h"
 #include "nsINSSU2FToken.h"
 #include "nsNetCID.h"
@@ -637,14 +638,14 @@ U2FRegisterRunnable::Run()
 
     U2FPrepPromise::All(mAbstractMainThread, prepPromiseList)
     ->Then(mAbstractMainThread, __func__,
-      [status] (const nsTArray<Authenticator>& aTokens) {
+      [&status] (const nsTArray<Authenticator>& aTokens) {
         MOZ_LOG(gU2FLog, LogLevel::Debug,
-                ("ALL: None of the RegisteredKeys were recognized. n=%d",
+                ("ALL: None of the RegisteredKeys were recognized. n=%" PRIuSIZE,
                  aTokens.Length()));
 
         status->WaitGroupDone();
       },
-      [status] (ErrorCode aErrorCode) {
+      [&status] (ErrorCode aErrorCode) {
         status->Stop(aErrorCode);
         status->WaitGroupDone();
     });
@@ -657,13 +658,12 @@ U2FRegisterRunnable::Run()
   // recognized.
   if (status->IsStopped()) {
     status->WaitGroupAdd();
-    RefPtr<U2FRegisterRunnable> self = this;
     mAbstractMainThread->Dispatch(NS_NewRunnableFunction(
-      [status, self] () {
+      [&status, this] () {
         RegisterResponse response;
         response.mErrorCode.Construct(
             static_cast<uint32_t>(status->GetErrorCode()));
-        self->SendResponse(response);
+        SendResponse(response);
         status->WaitGroupDone();
       }
     ));
@@ -714,18 +714,16 @@ U2FRegisterRunnable::Run()
       status->WaitGroupAdd();
 
       registerTask->Execute()->Then(mAbstractMainThread, __func__,
-        [status, this] (nsString aResponse) {
-          if (status->IsStopped()) {
-            return;
+        [&status, this] (nsString aResponse) {
+          if (!status->IsStopped()) {
+            status->Stop(ErrorCode::OK, aResponse);
           }
-          status->Stop(ErrorCode::OK, aResponse);
           status->WaitGroupDone();
         },
-        [status, this] (ErrorCode aErrorCode) {
-          if (status->IsStopped()) {
-            return;
-          }
-          status->Stop(aErrorCode);
+        [&status, this] (ErrorCode aErrorCode) {
+          // Ignore the failing error code, as we only want the first success.
+          // U2F devices don't provide much for error codes anyway, so if
+          // they all fail we'll return DEVICE_INELIGIBLE.
           status->WaitGroupDone();
      });
     }
@@ -741,9 +739,8 @@ U2FRegisterRunnable::Run()
 
   // Transmit back to the JS engine from the Main Thread
   status->WaitGroupAdd();
-  RefPtr<U2FRegisterRunnable> self = this;
   mAbstractMainThread->Dispatch(NS_NewRunnableFunction(
-    [status, self] () {
+    [&status, this] () {
       RegisterResponse response;
       if (status->GetErrorCode() == ErrorCode::OK) {
         response.Init(status->GetResponse());
@@ -751,7 +748,7 @@ U2FRegisterRunnable::Run()
         response.mErrorCode.Construct(
             static_cast<uint32_t>(status->GetErrorCode()));
       }
-      self->SendResponse(response);
+      SendResponse(response);
       status->WaitGroupDone();
     }
   ));
@@ -903,18 +900,16 @@ U2FSignRunnable::Run()
       status->WaitGroupAdd();
 
       signTask->Execute()->Then(mAbstractMainThread, __func__,
-        [status, this] (nsString aResponse) {
-          if (status->IsStopped()) {
-            return;
+        [&status, this] (nsString aResponse) {
+          if (!status->IsStopped()) {
+            status->Stop(ErrorCode::OK, aResponse);
           }
-          status->Stop(ErrorCode::OK, aResponse);
           status->WaitGroupDone();
         },
-        [status, this] (ErrorCode aErrorCode) {
-          if (status->IsStopped()) {
-            return;
-          }
-          status->Stop(aErrorCode);
+        [&status, this] (ErrorCode aErrorCode) {
+          // Ignore the failing error code, as we only want the first success.
+          // U2F devices don't provide much for error codes anyway, so if
+          // they all fail we'll return DEVICE_INELIGIBLE.
           status->WaitGroupDone();
       });
     }
@@ -930,9 +925,8 @@ U2FSignRunnable::Run()
 
   // Transmit back to the JS engine from the Main Thread
   status->WaitGroupAdd();
-  RefPtr<U2FSignRunnable> self = this;
   mAbstractMainThread->Dispatch(NS_NewRunnableFunction(
-    [status, self] () {
+    [&status, this] () {
       SignResponse response;
       if (status->GetErrorCode() == ErrorCode::OK) {
         response.Init(status->GetResponse());
@@ -940,7 +934,7 @@ U2FSignRunnable::Run()
         response.mErrorCode.Construct(
           static_cast<uint32_t>(status->GetErrorCode()));
       }
-      self->SendResponse(response);
+      SendResponse(response);
       status->WaitGroupDone();
     }
   ));

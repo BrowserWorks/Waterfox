@@ -11,6 +11,7 @@
 #include "mozilla/BasePrincipal.h"
 #include "mozilla/ipc/PBackgroundSharedTypes.h"
 #include "mozilla/net/NeckoChannelParams.h"
+#include "nsExpandedPrincipal.h"
 #include "nsPrincipal.h"
 #include "nsIScriptSecurityManager.h"
 #include "nsIURI.h"
@@ -291,6 +292,19 @@ LoadInfoToLoadInfoArgs(nsILoadInfo *aLoadInfo,
     principalToInheritInfo = principalToInheritInfoTemp;
   }
 
+  OptionalPrincipalInfo sandboxedLoadingPrincipalInfo = mozilla::void_t();
+  if (aLoadInfo->GetLoadingSandboxed()) {
+    PrincipalInfo sandboxedLoadingPrincipalInfoTemp;
+    nsCOMPtr<nsIPrincipal> sandboxedLoadingPrincipal;
+    rv = aLoadInfo->GetSandboxedLoadingPrincipal(
+        getter_AddRefs(sandboxedLoadingPrincipal));
+    NS_ENSURE_SUCCESS(rv, rv);
+    rv = PrincipalToPrincipalInfo(sandboxedLoadingPrincipal,
+                                  &sandboxedLoadingPrincipalInfoTemp);
+    NS_ENSURE_SUCCESS(rv, rv);
+    sandboxedLoadingPrincipalInfo = sandboxedLoadingPrincipalInfoTemp;
+  }
+
   nsTArray<PrincipalInfo> redirectChainIncludingInternalRedirects;
   for (const nsCOMPtr<nsIPrincipal>& principal : aLoadInfo->RedirectChainIncludingInternalRedirects()) {
     rv = PrincipalToPrincipalInfo(principal, redirectChainIncludingInternalRedirects.AppendElement());
@@ -308,6 +322,7 @@ LoadInfoToLoadInfoArgs(nsILoadInfo *aLoadInfo,
       loadingPrincipalInfo,
       triggeringPrincipalInfo,
       principalToInheritInfo,
+      sandboxedLoadingPrincipalInfo,
       aLoadInfo->GetSecurityFlags(),
       aLoadInfo->InternalContentPolicyType(),
       static_cast<uint32_t>(aLoadInfo->GetTainting()),
@@ -364,6 +379,13 @@ LoadInfoArgsToLoadInfo(const OptionalLoadInfoArgs& aOptionalLoadInfoArgs,
     NS_ENSURE_SUCCESS(rv, rv);
   }
 
+  nsCOMPtr<nsIPrincipal> sandboxedLoadingPrincipal;
+  if (loadInfoArgs.sandboxedLoadingPrincipalInfo().type() != OptionalPrincipalInfo::Tvoid_t) {
+    sandboxedLoadingPrincipal =
+      PrincipalInfoToPrincipal(loadInfoArgs.sandboxedLoadingPrincipalInfo(), &rv);
+    NS_ENSURE_SUCCESS(rv, rv);
+  }
+
   nsTArray<nsCOMPtr<nsIPrincipal>> redirectChainIncludingInternalRedirects;
   for (const PrincipalInfo& principalInfo : loadInfoArgs.redirectChainIncludingInternalRedirects()) {
     nsCOMPtr<nsIPrincipal> redirectedPrincipal =
@@ -384,6 +406,7 @@ LoadInfoArgsToLoadInfo(const OptionalLoadInfoArgs& aOptionalLoadInfoArgs,
     new mozilla::LoadInfo(loadingPrincipal,
                           triggeringPrincipal,
                           principalToInherit,
+                          sandboxedLoadingPrincipal,
                           loadInfoArgs.securityFlags(),
                           loadInfoArgs.contentPolicyType(),
                           static_cast<LoadTainting>(loadInfoArgs.tainting()),

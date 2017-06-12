@@ -13,19 +13,26 @@
       'sources': [
         'util_utf8_unittest.cc',
         'util_b64_unittest.cc',
-        '<(DEPTH)/gtests/common/gtests.cc'
+        '<(DEPTH)/gtests/common/gtests.cc',
       ],
       'dependencies': [
         '<(DEPTH)/exports.gyp:nss_exports',
         '<(DEPTH)/gtests/google_test/google_test.gyp:gtest',
         '<(DEPTH)/lib/util/util.gyp:nssutil',
+        '<(DEPTH)/lib/nss/nss.gyp:nss_static',
+        '<(DEPTH)/lib/pk11wrap/pk11wrap.gyp:pk11wrap_static',
+        '<(DEPTH)/lib/cryptohi/cryptohi.gyp:cryptohi',
+        '<(DEPTH)/lib/certhigh/certhigh.gyp:certhi',
+        '<(DEPTH)/lib/certdb/certdb.gyp:certdb',
+        '<(DEPTH)/lib/base/base.gyp:nssb',
+        '<(DEPTH)/lib/dev/dev.gyp:nssdev',
+        '<(DEPTH)/lib/pki/pki.gyp:nsspki',
+        '<(DEPTH)/lib/ssl/ssl.gyp:ssl',
       ]
     }
   ],
   'target_defaults': {
     'include_dirs': [
-      '../../gtests/google_test/gtest/include',
-      '../../gtests/common',
       '../../lib/util'
     ]
   },

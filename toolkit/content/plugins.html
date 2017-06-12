@@ -23,6 +23,8 @@
 <body>
 <div id="outside">
 <script type="application/javascript">
+  /* eslint-env mozilla/frame-script */
+
   "use strict";
 
   function setDirection() {
@@ -30,7 +32,7 @@
     var direction = frame.contentDocument
                          .defaultView
                          .window
-                         .getComputedStyle(frame.contentDocument.getElementById("target"), "")
+                         .getComputedStyle(frame.contentDocument.getElementById("target"))
                          .getPropertyValue("direction");
     document.body.removeChild(frame);
     document.dir = direction;

@@ -54,7 +54,8 @@ public:
         COLL_KERN = 16,     // collisions with this glyph are fixed by adding kerning space after it
         COLL_ISCOL = 32,    // this glyph has a collision
         COLL_KNOWN = 64,    // we've figured out what's happening with this glyph
-        COLL_TEMPLOCK = 128,    // Lock glyphs that have been given priority positioning
+        COLL_ISSPACE = 128,		// treat this glyph as a space with regard to kerning
+        COLL_TEMPLOCK = 256,    // Lock glyphs that have been given priority positioning
         ////COLL_JUMPABLE = 128,    // moving glyphs may jump this stationary glyph in any direction - DELETE
         ////COLL_OVERLAP = 256,    // use maxoverlap to restrict - DELETE
     };
@@ -93,6 +94,7 @@ public:
     SLOTCOLSETUINTPROP(seqValignWt, setSeqValignWt)
 
     float getKern(int dir) const;
+    bool ignore() const;
     
 private:
     Rect        _limit;
@@ -131,7 +133,7 @@ public:
     bool initSlot(Segment *seg, Slot *aSlot, const Rect &constraint,
                 float margin, float marginMin, const Position &currShift,
                 const Position &currOffset, int dir, GR_MAYBE_UNUSED json * const dbgout);
-    bool mergeSlot(Segment *seg, Slot *slot, const Position &currShift, bool isAfter, 
+    bool mergeSlot(Segment *seg, Slot *slot, const SlotCollision *cinfo, const Position &currShift, bool isAfter, 
                 bool sameCluster, bool &hasCol, bool isExclusion, GR_MAYBE_UNUSED json * const dbgout);
     Position resolve(Segment *seg, bool &isCol, GR_MAYBE_UNUSED json * const dbgout);
     void addBox_slope(bool isx, const Rect &box, const BBox &bb, const SlantBox &sb, const Position &org, float weight, float m, bool minright, int mode);
@@ -191,7 +193,7 @@ public:
             const Position &currShift, const Position &offsetPrev, int dir,
             float ymin, float ymax, json * const dbgout);
     bool mergeSlot(Segment *seg, Slot *slot, const Position &currShift, float currSpace, int dir, json * const dbgout);
-    Position resolve(Segment *seg, Slot *slot, int dir, float margin, json * const dbgout);
+    Position resolve(Segment *seg, Slot *slot, int dir, json * const dbgout);
     void shift(const Position &mv, int dir);
 
     CLASS_NEW_DELETE;

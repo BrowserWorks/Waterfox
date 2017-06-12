@@ -26,12 +26,11 @@
 #include "MediaPrefs.h"
 #include "VideoUtils.h"
 
-#include "mozilla/dom/CrashReporterParent.h"
-using mozilla::dom::CrashReporterParent;
 using mozilla::ipc::GeckoChildProcessHost;
 
 #ifdef MOZ_CRASHREPORTER
 #include "nsPrintfCString.h"
+#include "mozilla/ipc/CrashReporterHost.h"
 using CrashReporter::AnnotationTable;
 using CrashReporter::GetIDFromMinidump;
 #endif
@@ -177,13 +176,6 @@ GMPParent::LoadProcess()
     }
     LOGD("%s: Opened channel to new child process", __FUNCTION__);
 
-    bool ok = SendSetNodeId(mNodeId);
-    if (!ok) {
-      LOGD("%s: Failed to send node id to child process", __FUNCTION__);
-      return NS_ERROR_FAILURE;
-    }
-    LOGD("%s: Sent node id to child process", __FUNCTION__);
-
 #ifdef XP_WIN
     if (!mLibs.IsEmpty()) {
       bool ok = SendPreloadLibs(mLibs);
@@ -196,8 +188,7 @@ GMPParent::LoadProcess()
 #endif
 
     // Intr call to block initialization on plugin load.
-    ok = CallStartPlugin(mAdapter);
-    if (!ok) {
+    if (!CallStartPlugin(mAdapter)) {
       LOGD("%s: Failed to send start to child process", __FUNCTION__);
       return NS_ERROR_FAILURE;
     }
@@ -465,37 +456,28 @@ GMPParent::EnsureProcessLoaded()
 
 #ifdef MOZ_CRASHREPORTER
 void
-GMPParent::WriteExtraDataForMinidump(CrashReporter::AnnotationTable& notes)
+GMPParent::WriteExtraDataForMinidump()
 {
-  notes.Put(NS_LITERAL_CSTRING("GMPPlugin"), NS_LITERAL_CSTRING("1"));
-  notes.Put(NS_LITERAL_CSTRING("PluginFilename"),
-                               NS_ConvertUTF16toUTF8(mName));
-  notes.Put(NS_LITERAL_CSTRING("PluginName"), mDisplayName);
-  notes.Put(NS_LITERAL_CSTRING("PluginVersion"), mVersion);
+  mCrashReporter->AddNote(NS_LITERAL_CSTRING("GMPPlugin"), NS_LITERAL_CSTRING("1"));
+  mCrashReporter->AddNote(NS_LITERAL_CSTRING("PluginFilename"), NS_ConvertUTF16toUTF8(mName));
+  mCrashReporter->AddNote(NS_LITERAL_CSTRING("PluginName"), mDisplayName);
+  mCrashReporter->AddNote(NS_LITERAL_CSTRING("PluginVersion"), mVersion);
 }
 
-void
+bool
 GMPParent::GetCrashID(nsString& aResult)
 {
-  CrashReporterParent* cr =
-    static_cast<CrashReporterParent*>(LoneManagedOrNullAsserts(ManagedPCrashReporterParent()));
-  if (NS_WARN_IF(!cr)) {
-    return;
+  if (!mCrashReporter) {
+    return false;
   }
 
-  AnnotationTable notes(4);
-  WriteExtraDataForMinidump(notes);
-  nsCOMPtr<nsIFile> dumpFile;
-  TakeMinidump(getter_AddRefs(dumpFile), nullptr);
-  if (!dumpFile) {
-    NS_WARNING("GMP crash without crash report");
-    aResult = mName;
-    aResult += '-';
-    AppendUTF8toUTF16(mVersion, aResult);
-    return;
+  WriteExtraDataForMinidump();
+  if (!mCrashReporter->GenerateCrashReport(OtherPid())) {
+    return false;
   }
-  GetIDFromMinidump(dumpFile, aResult);
-  cr->GenerateCrashReportForMinidump(dumpFile, &notes);
+
+  aResult = mCrashReporter->MinidumpID();
+  return true;
 }
 
 static void
@@ -527,7 +509,12 @@ GMPParent::ActorDestroy(ActorDestroyReason aWhy)
     Telemetry::Accumulate(Telemetry::SUBPROCESS_ABNORMAL_ABORT,
                           NS_LITERAL_CSTRING("gmplugin"), 1);
     nsString dumpID;
-    GetCrashID(dumpID);
+    if (!GetCrashID(dumpID)) {
+      NS_WARNING("GMP crash without crash report");
+      dumpID = mName;
+      dumpID += '-';
+      AppendUTF8toUTF16(mVersion, dumpID);
+    }
 
     // NotifyObservers is mainthread-only
     NS_DispatchToMainThread(WrapRunnableNM(&GMPNotifyObservers,
@@ -552,22 +539,16 @@ GMPParent::ActorDestroy(ActorDestroyReason aWhy)
   }
 }
 
-mozilla::dom::PCrashReporterParent*
-GMPParent::AllocPCrashReporterParent(const NativeThreadId& aThread)
+mozilla::ipc::IPCResult
+GMPParent::RecvInitCrashReporter(Shmem&& aShmem, const NativeThreadId& aThreadId)
 {
-#ifndef MOZ_CRASHREPORTER
-  MOZ_ASSERT(false, "Should only be sent if crash reporting is enabled.");
+#ifdef MOZ_CRASHREPORTER
+  mCrashReporter = MakeUnique<ipc::CrashReporterHost>(
+    GeckoProcessType_GMPlugin,
+    aShmem,
+    aThreadId);
 #endif
-  CrashReporterParent* cr = new CrashReporterParent();
-  cr->SetChildData(aThread, GeckoProcessType_GMPlugin);
-  return cr;
-}
-
-bool
-GMPParent::DeallocPCrashReporterParent(PCrashReporterParent* aCrashReporter)
-{
-  delete aCrashReporter;
-  return true;
+  return IPC_OK();
 }
 
 PGMPStorageParent*
@@ -716,9 +697,12 @@ GMPParent::ReadGMPInfoFile(nsIFile* aFile)
 
 #if defined(XP_LINUX) && defined(MOZ_GMP_SANDBOX)
       if (!mozilla::SandboxInfo::Get().CanSandboxMedia()) {
-        printf_stderr("GMPParent::ReadGMPMetaData: Plugin \"%s\" is an EME CDM"
-                      " but this system can't sandbox it; not loading.\n",
-                      mDisplayName.get());
+        nsPrintfCString msg(
+          "GMPParent::ReadGMPMetaData: Plugin \"%s\" is an EME CDM"
+          " but this system can't sandbox it; not loading.",
+          mDisplayName.get());
+        printf_stderr("%s\n", msg.get());
+        LOGD("%s", msg.get());
         return GenericPromise::CreateAndReject(NS_ERROR_FAILURE, __func__);
       }
 #endif
@@ -770,6 +754,18 @@ GMPParent::ParseChromiumManifest(const nsAString& aJSON)
   mDisplayName = NS_ConvertUTF16toUTF8(m.mName);
   mDescription = NS_ConvertUTF16toUTF8(m.mDescription);
   mVersion = NS_ConvertUTF16toUTF8(m.mVersion);
+
+#if defined(XP_LINUX) && defined(MOZ_GMP_SANDBOX)
+  if (!mozilla::SandboxInfo::Get().CanSandboxMedia()) {
+    nsPrintfCString msg(
+      "GMPParent::ParseChromiumManifest: Plugin \"%s\" is an EME CDM"
+      " but this system can't sandbox it; not loading.",
+      mDisplayName.get());
+    printf_stderr("%s\n", msg.get());
+    LOGD("%s", msg.get());
+    return GenericPromise::CreateAndReject(NS_ERROR_FAILURE, __func__);
+  }
+#endif
 
   nsCString kEMEKeySystem;
 
@@ -877,19 +873,32 @@ GMPParent::ResolveGetContentParentPromises()
   }
 }
 
-PGMPContentParent*
-GMPParent::AllocPGMPContentParent(Transport* aTransport, ProcessId aOtherPid)
+bool
+GMPParent::OpenPGMPContent()
 {
   MOZ_ASSERT(GMPThread() == NS_GetCurrentThread());
   MOZ_ASSERT(!mGMPContentParent);
 
+  Endpoint<PGMPContentParent> parent;
+  Endpoint<PGMPContentChild> child;
+  if (NS_FAILED(PGMPContent::CreateEndpoints(base::GetCurrentProcId(),
+                                             OtherPid(), &parent, &child))) {
+    return false;
+  }
+
   mGMPContentParent = new GMPContentParent(this);
-  mGMPContentParent->Open(aTransport, aOtherPid, XRE_GetIOMessageLoop(),
-                          ipc::ParentSide);
+
+  if (!parent.Bind(mGMPContentParent)) {
+    return false;
+  }
+
+  if (!SendInitGMPContentChild(Move(child))) {
+    return false;
+  }
 
   ResolveGetContentParentPromises();
 
-  return mGMPContentParent;
+  return true;
 }
 
 void
@@ -920,7 +929,7 @@ GMPParent::GetGMPContentParent(UniquePtr<MozPromiseHolder<GetGMPContentParentPro
     // set then we should just store them, so that they get called when we set
     // mGMPContentParent as a result of the PGMPContent::Open call.
     if (mGetContentParentPromises.Length() == 1) {
-      if (!EnsureProcessLoaded() || !PGMPContent::Open(this)) {
+      if (!EnsureProcessLoaded() || !OpenPGMPContent()) {
         RejectGetContentParentPromises();
         return;
       }
@@ -949,14 +958,10 @@ GMPParent::EnsureProcessLoaded(base::ProcessId* aID)
   return true;
 }
 
-bool
-GMPParent::Bridge(GMPServiceParent* aGMPServiceParent)
+void
+GMPParent::IncrementGMPContentChildCount()
 {
-  if (NS_FAILED(PGMPContent::Bridge(aGMPServiceParent, this))) {
-    return false;
-  }
   ++mGMPContentChildCount;
-  return true;
 }
 
 nsString

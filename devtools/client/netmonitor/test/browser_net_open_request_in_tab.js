@@ -11,10 +11,10 @@ add_task(function* () {
   let { tab, monitor } = yield initNetMonitor(CUSTOM_GET_URL);
   info("Starting test...");
 
-  let { NetMonitorView } = monitor.panelWin;
-  let { RequestsMenu } = NetMonitorView;
+  let { document, gStore, windowRequire } = monitor.panelWin;
+  let Actions = windowRequire("devtools/client/netmonitor/actions/index");
 
-  RequestsMenu.lazyUpdate = false;
+  gStore.dispatch(Actions.batchEnable(false));
 
   let wait = waitForNetworkEvents(monitor, 1);
   yield ContentTask.spawn(tab.linkedBrowser, {}, function* () {
@@ -22,11 +22,14 @@ add_task(function* () {
   });
   yield wait;
 
-  let requestItem = RequestsMenu.getItemAtIndex(0);
-  RequestsMenu.selectedItem = requestItem;
+  EventUtils.sendMouseEvent({ type: "mousedown" },
+    document.querySelectorAll(".request-list-item")[0]);
+  EventUtils.sendMouseEvent({ type: "contextmenu" },
+    document.querySelectorAll(".request-list-item")[0]);
 
   let onTabOpen = once(gBrowser.tabContainer, "TabOpen", false);
-  RequestsMenu.contextMenu.openRequestInTab();
+  monitor.panelWin.parent.document
+    .querySelector("#request-list-context-newtab").click();
   yield onTabOpen;
 
   ok(true, "A new tab has been opened");

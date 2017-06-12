@@ -35,9 +35,8 @@ if "regionOverrides" in searchinfo:
       else:
         continue
     for i, engine in enumerate(localeSearchInfo[region]["visibleDefaultEngines"]):
-      for engineToReplace in regionOverrides[region]:
-        if engine == engineToReplace:
-          localeSearchInfo[region]["visibleDefaultEngines"][i] = regionOverrides[region][engineToReplace]
+      if engine in regionOverrides[region]:
+        localeSearchInfo[region]["visibleDefaultEngines"][i] = regionOverrides[region][engine]
 
 output.write(json.dumps(localeSearchInfo))
 

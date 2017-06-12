@@ -62,6 +62,28 @@ CONFIGS = defaultdict(lambda: {
             'LIB_SUFFIX': 'a',
         },
     },
+    'host-rust-library': {
+        'defines': {},
+        'non_global_defines': [],
+        'substs': {
+            'COMPILE_ENVIRONMENT': '1',
+            'RUST_HOST_TARGET': 'x86_64-unknown-linux-gnu',
+            'RUST_TARGET': 'armv7-linux-androideabi',
+            'LIB_PREFIX': 'lib',
+            'LIB_SUFFIX': 'a',
+        },
+    },
+    'host-rust-library-features': {
+        'defines': {},
+        'non_global_defines': [],
+        'substs': {
+            'COMPILE_ENVIRONMENT': '1',
+            'RUST_HOST_TARGET': 'x86_64-unknown-linux-gnu',
+            'RUST_TARGET': 'armv7-linux-androideabi',
+            'LIB_PREFIX': 'lib',
+            'LIB_SUFFIX': 'a',
+        },
+    },
     'rust-library-features': {
         'defines': {},
         'non_global_defines': [],
@@ -81,6 +103,15 @@ CONFIGS = defaultdict(lambda: {
             'RUST_HOST_TARGET': 'i686-pc-windows-msvc',
             'BIN_SUFFIX': '.exe',
             'HOST_BIN_SUFFIX': '.exe',
+        },
+    },
+    'test-support-binaries-tracked': {
+        'defines': {},
+        'non_global_defines': [],
+        'substs': {
+            'COMPILE_ENVIRONMENT': '1',
+            'LIB_SUFFIX': 'dll',
+            'BIN_SUFFIX': '.exe',
         },
     },
     'sources': {

@@ -407,8 +407,8 @@ nsresult nsZipArchive::Test(const char *aEntryName)
   }
 
   // test all items in archive
-  for (int i = 0; i < ZIP_TABSIZE; i++) {
-    for (currItem = mFiles[i]; currItem; currItem = currItem->next) {
+  for (auto* item : mFiles) {
+    for (currItem = item; currItem; currItem = currItem->next) {
       //-- don't test (synthetic) directory items
       if (currItem->IsDirectory())
         continue;
@@ -507,7 +507,8 @@ nsresult nsZipArchive::ExtractFile(nsZipItem *item, const char *outname,
       nsZipArchive::sFileCorruptedReason = "nsZipArchive: Read() failed to return a buffer";
       rv = NS_ERROR_FILE_CORRUPTED;
       break;
-    } else if (count == 0) {
+    }
+    if (count == 0) {
       break;
     }
 
@@ -802,13 +803,13 @@ nsresult nsZipArchive::BuildSynthetics()
 MOZ_WIN_MEM_TRY_BEGIN
   // Create synthetic entries for any missing directories.
   // Do this when all ziptable has scanned to prevent double entries.
-  for (int i = 0; i < ZIP_TABSIZE; ++i)
+  for (auto* item : mFiles)
   {
-    for (nsZipItem* item = mFiles[i]; item != nullptr; item = item->next)
+    for (; item != nullptr; item = item->next)
     {
       if (item->isSynthetic)
         continue;
-    
+
       //-- add entries for directories in the current item's path
       //-- go from end to beginning, because then we can stop trying
       //-- to create diritems if we find that the diritem we want to

@@ -14,19 +14,20 @@ add_task(function* () {
   // It seems that this test may be slow on Ubuntu builds running on ec2.
   requestLongerTimeout(2);
 
-  let { window, $, NetMonitorView } = monitor.panelWin;
-  let { RequestsMenu } = NetMonitorView;
+  let { window, document, gStore, windowRequire } = monitor.panelWin;
+  let Actions = windowRequire("devtools/client/netmonitor/actions/index");
 
-  RequestsMenu.lazyUpdate = false;
+  gStore.dispatch(Actions.batchEnable(false));
 
   let count = 0;
-  function check(selectedIndex, paneVisibility) {
+  function check(selectedIndex, panelVisibility) {
     info("Performing check " + (count++) + ".");
 
-    is(RequestsMenu.selectedIndex, selectedIndex,
+    let requestItems = Array.from(document.querySelectorAll(".request-list-item"));
+    is(requestItems.findIndex((item) => item.matches(".selected")), selectedIndex,
       "The selected item in the requests menu was incorrect.");
-    is(NetMonitorView.detailsPaneHidden, !paneVisibility,
-      "The network requests details pane visibility state was incorrect.");
+    is(!!document.querySelector(".network-details-panel"), panelVisibility,
+      "The network details panel should render correctly.");
   }
 
   let wait = waitForNetworkEvents(monitor, 2);
@@ -35,7 +36,7 @@ add_task(function* () {
   });
   yield wait;
 
-  $(".requests-menu-contents").focus();
+  document.querySelector(".requests-list-contents").focus();
 
   check(-1, false);
 
@@ -122,7 +123,8 @@ add_task(function* () {
   EventUtils.sendKey("DOWN", window);
   check(19, true);
 
-  EventUtils.sendMouseEvent({ type: "mousedown" }, $(".request-list-item"));
+  EventUtils.sendMouseEvent({ type: "mousedown" },
+    document.querySelector(".request-list-item"));
   check(0, true);
 
   yield teardown(monitor);

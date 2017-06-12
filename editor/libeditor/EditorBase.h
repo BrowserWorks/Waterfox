@@ -11,6 +11,7 @@
 #include "mozilla/OwningNonNull.h"      // for OwningNonNull
 #include "mozilla/SelectionState.h"     // for RangeUpdater, etc.
 #include "mozilla/StyleSheet.h"   // for StyleSheet
+#include "mozilla/UniquePtr.h"
 #include "mozilla/dom/Text.h"
 #include "nsCOMPtr.h"                   // for already_AddRefed, nsCOMPtr
 #include "nsCycleCollectionParticipant.h"
@@ -35,7 +36,6 @@ class nsIDOMDocument;
 class nsIDOMEvent;
 class nsIDOMEventListener;
 class nsIDOMEventTarget;
-class nsIDOMKeyEvent;
 class nsIDOMNode;
 class nsIDocument;
 class nsIDocumentStateListener;
@@ -260,7 +260,8 @@ public:
    * IME event handlers.
    */
   virtual nsresult BeginIMEComposition(WidgetCompositionEvent* aEvent);
-  virtual nsresult UpdateIMEComposition(nsIDOMEvent* aDOMTextEvent) = 0;
+  virtual nsresult UpdateIMEComposition(
+                     WidgetCompositionEvent* aCompositionChangeEvet) = 0;
   void EndIMEComposition();
 
   void SwitchTextDirectionTo(uint32_t aDirection);
@@ -341,16 +342,14 @@ protected:
   /**
    * Create a transaction for adding a style sheet.
    */
-  NS_IMETHOD CreateTxnForAddStyleSheet(
-               StyleSheet* aSheet,
-               AddStyleSheetTransaction** aTransaction);
+  already_AddRefed<mozilla::AddStyleSheetTransaction>
+    CreateTxnForAddStyleSheet(StyleSheet* aSheet);
 
   /**
    * Create a transaction for removing a style sheet.
    */
-  NS_IMETHOD CreateTxnForRemoveStyleSheet(
-               StyleSheet* aSheet,
-               RemoveStyleSheetTransaction** aTransaction);
+  already_AddRefed<mozilla::RemoveStyleSheetTransaction>
+    CreateTxnForRemoveStyleSheet(StyleSheet* aSheet);
 
   nsresult DeleteText(nsGenericDOMDataNode& aElement,
                       uint32_t aOffset, uint32_t aLength);
@@ -404,8 +403,8 @@ protected:
   /**
    * Tell the doc state listeners that the doc state has changed.
    */
-  NS_IMETHOD NotifyDocumentListeners(
-               TDocumentListenerNotification aNotificationType);
+  nsresult NotifyDocumentListeners(
+             TDocumentListenerNotification aNotificationType);
 
   /**
    * Make the given selection span the entire document.
@@ -423,7 +422,7 @@ protected:
    * that the editor's sync/async settings for reflowing, painting, and
    * scrolling match.
    */
-  NS_IMETHOD ScrollSelectionIntoView(bool aScrollToAnchor);
+  nsresult ScrollSelectionIntoView(bool aScrollToAnchor);
 
   virtual bool IsBlockNode(nsINode* aNode);
 
@@ -750,7 +749,7 @@ public:
 
   bool GetShouldTxnSetSelection();
 
-  virtual nsresult HandleKeyPressEvent(nsIDOMKeyEvent* aKeyEvent);
+  virtual nsresult HandleKeyPressEvent(WidgetKeyboardEvent* aKeyboardEvent);
 
   nsresult HandleInlineSpellCheck(EditAction action,
                                   Selection* aSelection,
@@ -859,6 +858,11 @@ public:
     return !!mSelConWeak;
   }
 
+  bool IsModifiable() const
+  {
+    return !IsReadonly();
+  }
+
   /**
    * Get the input event target. This might return null.
    */
@@ -883,12 +887,12 @@ public:
   virtual bool IsActiveInDOMWindow();
 
   /**
-   * Whether the aEvent should be handled by this editor or not.  When this
-   * returns FALSE, The aEvent shouldn't be handled on this editor,
-   * i.e., The aEvent should be handled by another inner editor or ancestor
+   * Whether the aGUIEvent should be handled by this editor or not.  When this
+   * returns false, The aGUIEvent shouldn't be handled on this editor,
+   * i.e., The aGUIEvent should be handled by another inner editor or ancestor
    * elements.
    */
-  virtual bool IsAcceptableInputEvent(nsIDOMEvent* aEvent);
+  virtual bool IsAcceptableInputEvent(WidgetGUIEvent* aGUIEvent);
 
   /**
    * FindSelectionRoot() returns a selection root of this editor when aNode
@@ -992,7 +996,7 @@ protected:
   // Name of placeholder transaction.
   nsIAtom* mPlaceHolderName;
   // Saved selection state for placeholder transaction batching.
-  SelectionState* mSelState;
+  mozilla::UniquePtr<SelectionState> mSelState;
   nsString* mPhonetic;
   // IME composition this is not null between compositionstart and
   // compositionend.

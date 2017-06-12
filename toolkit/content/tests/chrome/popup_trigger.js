@@ -1,3 +1,5 @@
+/* import-globals-from ../widgets/popup_shared.js */
+
 var gMenuPopup = null;
 var gTrigger = null;
 var gIsMenu = false;
@@ -847,9 +849,9 @@ var popupTests = [
   testname: "remove content",
   test(testname, step) {
     var submenupopup = document.getElementById("submenupopup");
-    submenupopup.parentNode.removeChild(submenupopup);
+    submenupopup.remove();
     var popup = document.getElementById("thepopup");
-    popup.parentNode.removeChild(popup);
+    popup.remove();
   }
 }
 

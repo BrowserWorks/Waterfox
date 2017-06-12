@@ -1631,16 +1631,6 @@ nsDOMWindowUtils::GetIsMozAfterPaintPending(bool *aResult)
 }
 
 NS_IMETHODIMP
-nsDOMWindowUtils::ClearMozAfterPaintEvents()
-{
-  nsPresContext* presContext = GetPresContext();
-  if (!presContext)
-    return NS_OK;
-  presContext->ClearMozAfterPaintEvents();
-  return NS_OK;
-}
-
-NS_IMETHODIMP
 nsDOMWindowUtils::DisableNonTestMouseEvents(bool aDisable)
 {
   nsCOMPtr<nsPIDOMWindowOuter> window = do_QueryReferent(mWindow);
@@ -1660,9 +1650,9 @@ nsDOMWindowUtils::SuppressEventHandling(bool aSuppress)
   NS_ENSURE_TRUE(doc, NS_ERROR_FAILURE);
 
   if (aSuppress) {
-    doc->SuppressEventHandling(nsIDocument::eEvents);
+    doc->SuppressEventHandling();
   } else {
-    doc->UnsuppressEventHandlingAndFireEvents(nsIDocument::eEvents, true);
+    doc->UnsuppressEventHandlingAndFireEvents(true);
   }
 
   return NS_OK;
@@ -2330,7 +2320,7 @@ nsDOMWindowUtils::GetLayerManagerRemote(bool* retval)
   if (!mgr)
     return NS_ERROR_FAILURE;
 
-  *retval = !!mgr->AsShadowForwarder();
+  *retval = !!mgr->AsKnowsCompositor();
   return NS_OK;
 }
 
@@ -2348,7 +2338,7 @@ nsDOMWindowUtils::GetSupportsHardwareH264Decoding(JS::MutableHandle<JS::Value> a
   LayerManager *mgr = widget->GetLayerManager();
   NS_ENSURE_STATE(mgr);
   RefPtr<Promise> promise =
-    MP4Decoder::IsVideoAccelerated(mgr->AsShadowForwarder(), parentObject);
+    MP4Decoder::IsVideoAccelerated(mgr->AsKnowsCompositor(), parentObject);
   NS_ENSURE_STATE(promise);
   aPromise.setObject(*promise->PromiseObj());
 #else
@@ -2662,6 +2652,28 @@ nsDOMWindowUtils::ZoomToFocusedInput()
     return NS_OK;
   }
 
+  nsIFrame* currentFrame = content->GetPrimaryFrame();
+  nsIFrame* rootFrame = shell->GetRootFrame();
+  nsIFrame* scrolledFrame = rootScrollFrame->GetScrolledFrame();
+  bool isFixedPos = true;
+
+  while (currentFrame) {
+    if (currentFrame == rootFrame) {
+      break;
+    } else if (currentFrame == scrolledFrame) {
+      // we are in the rootScrollFrame so this element is not fixed
+      isFixedPos = false;
+      break;
+    }
+    currentFrame = nsLayoutUtils::GetCrossDocParentFrame(currentFrame);
+  }
+
+  if (isFixedPos) {
+    // We didn't find the scrolledFrame in our parent frames so this content must be fixed position.
+    // Zooming into fixed position content doesn't make sense so just return with out panning and zooming.
+    return NS_OK;
+  }
+
   nsIDocument* document = shell->GetDocument();
   if (!document) {
     return NS_OK;
@@ -2817,27 +2829,6 @@ nsDOMWindowUtils::GetContainerElement(nsIDOMElement** aResult)
     do_QueryInterface(window->GetFrameElementInternal());
 
   element.forget(aResult);
-  return NS_OK;
-}
-
-NS_IMETHODIMP
-nsDOMWindowUtils::WrapDOMFile(nsIFile *aFile,
-                              nsISupports **aDOMFile)
-{
-  if (!aFile) {
-    return NS_ERROR_FAILURE;
-  }
-
-  nsCOMPtr<nsPIDOMWindowOuter> window = do_QueryReferent(mWindow);
-  NS_ENSURE_STATE(window);
-
-  nsPIDOMWindowInner* innerWindow = window->GetCurrentInnerWindow();
-  if (!innerWindow) {
-    return NS_ERROR_FAILURE;
-  }
-
-  nsCOMPtr<nsIDOMBlob> blob = File::CreateFromFile(innerWindow, aFile);
-  blob.forget(aDOMFile);
   return NS_OK;
 }
 
@@ -3707,10 +3698,8 @@ nsDOMWindowUtils::GetOMTAStyle(nsIDOMElement* aElement,
     cssValue->GetCssText(text, rv);
     aResult.Assign(text);
     return rv.StealNSResult();
-  } else {
-    aResult.Truncate();
   }
-
+  aResult.Truncate();
   return NS_OK;
 }
 

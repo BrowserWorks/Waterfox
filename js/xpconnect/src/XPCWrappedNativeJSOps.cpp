@@ -118,7 +118,7 @@ XPC_WN_Shared_toPrimitive(JSContext* cx, unsigned argc, Value* vp)
         return true;
     }
 
-    MOZ_ASSERT(hint == JSTYPE_STRING || hint == JSTYPE_VOID);
+    MOZ_ASSERT(hint == JSTYPE_STRING || hint == JSTYPE_UNDEFINED);
     ccx.SetName(ccx.GetContext()->GetStringID(XPCJSContext::IDX_TO_STRING));
     ccx.SetArgsAndResultPtr(0, nullptr, args.rval().address());
 
@@ -200,7 +200,7 @@ XPC_WN_DoubleWrappedGetter(JSContext* cx, unsigned argc, Value* vp)
 
     // It is a double wrapped object. This should really never appear in
     // content these days, but addons still do it - see bug 965921.
-    if (MOZ_UNLIKELY(!nsContentUtils::IsCallerChrome())) {
+    if (MOZ_UNLIKELY(!nsContentUtils::IsSystemCaller(cx))) {
         JS_ReportErrorASCII(cx, "Attempt to use .wrappedJSObject in untrusted code");
         return false;
     }

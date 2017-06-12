@@ -25,7 +25,7 @@ const Log = Cu.import("resource://gre/modules/AndroidLog.jsm", {}).AndroidLog.bi
 function FxAccountsPush() {
   Services.obs.addObserver(this, "FxAccountsPush:ReceivedPushMessageToDecode", false);
 
-  Messaging.sendRequestForResult({
+  EventDispatcher.instance.sendRequestForResult({
     type: "FxAccountsPush:Initialized"
   });
 }
@@ -65,7 +65,7 @@ FxAccountsPush.prototype = {
         });
     })
     .then(subscription => {
-      Messaging.sendRequest({
+      EventDispatcher.instance.sendRequest({
         type: "FxAccountsPush:Subscribe:Response",
         subscription: {
           pushCallback: subscription.endpoint,
@@ -122,7 +122,7 @@ FxAccountsPush.prototype = {
     })
     .then(plaintext => {
       let decryptedMessage = plaintext ? _decoder.decode(plaintext) : "";
-      Messaging.sendRequestForResult({
+      EventDispatcher.instance.sendRequestForResult({
         type: "FxAccountsPush:ReceivedPushMessageToDecode:Response",
         message: decryptedMessage
       });

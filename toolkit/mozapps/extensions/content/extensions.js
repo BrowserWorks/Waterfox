@@ -21,6 +21,8 @@ Cu.import("resource://gre/modules/AddonManager.jsm");
 Cu.import("resource://gre/modules/addons/AddonRepository.jsm");
 
 XPCOMUtils.defineLazyModuleGetter(this, "E10SUtils", "resource:///modules/E10SUtils.jsm");
+XPCOMUtils.defineLazyModuleGetter(this, "Extension",
+                                  "resource://gre/modules/Extension.jsm");
 XPCOMUtils.defineLazyModuleGetter(this, "ExtensionParent",
                                   "resource://gre/modules/ExtensionParent.jsm");
 
@@ -37,6 +39,9 @@ XPCOMUtils.defineLazyModuleGetter(this, "Preferences",
 
 XPCOMUtils.defineLazyModuleGetter(this, "Experiments",
   "resource:///modules/experiments/Experiments.jsm");
+
+XPCOMUtils.defineLazyPreferenceGetter(this, "WEBEXT_PERMISSION_PROMPTS",
+                                      "extensions.webextPermissionPrompts", false);
 
 const PREF_DISCOVERURL = "extensions.webservice.discoverURL";
 const PREF_DISCOVER_ENABLED = "extensions.getAddons.showPane";
@@ -694,6 +699,45 @@ var gEventManager = {
   }
 };
 
+function attachUpdateHandler(install) {
+  if (!WEBEXT_PERMISSION_PROMPTS) {
+    return;
+  }
+
+  install.promptHandler = (info) => {
+    let oldPerms = info.existingAddon.userPermissions;
+    if (!oldPerms) {
+      // Updating from a legacy add-on, let it proceed
+      return Promise.resolve();
+    }
+
+    let newPerms = info.addon.userPermissions;
+
+    let difference = Extension.comparePermissions(oldPerms, newPerms);
+
+    // If there are no new permissions, just proceed
+    if (difference.hosts.length == 0 && difference.permissions.length == 0) {
+      return Promise.resolve();
+    }
+
+    return new Promise((resolve, reject) => {
+      let subject = {
+        wrappedJSObject: {
+          target: getBrowserElement(),
+          info: {
+            type: "update",
+            addon: info.addon,
+            icon: info.addon.icon,
+            permissions: difference,
+            resolve,
+            reject,
+          },
+        },
+      };
+      Services.obs.notifyObservers(subject, "webextension-permission-prompt", null);
+    });
+  };
+}
 
 var gViewController = {
   viewPort: null,
@@ -1067,6 +1111,8 @@ var gViewController = {
           document.getElementById("updates-progress").hidden = true;
           gUpdatesView.maybeRefresh();
 
+          Services.obs.notifyObservers(null, "EM-update-check-finished", null);
+
           if (numManualUpdates > 0 && numUpdated == 0) {
             document.getElementById("updates-manualUpdatesFound-btn").hidden = false;
             return;
@@ -1090,6 +1136,10 @@ var gViewController = {
             pendingChecks--;
             updateStatus();
           },
+          onInstallCancelled() {
+            pendingChecks--;
+            updateStatus();
+          },
           onInstallFailed() {
             pendingChecks--;
             updateStatus();
@@ -1107,6 +1157,7 @@ var gViewController = {
           onUpdateAvailable(aAddon, aInstall) {
             gEventManager.delegateAddonEvent("onUpdateAvailable",
                                              [aAddon, aInstall]);
+            attachUpdateHandler(aInstall);
             if (AddonManager.shouldAutoUpdate(aAddon)) {
               aInstall.addListener(updateInstallListener);
               aInstall.install();
@@ -1152,6 +1203,7 @@ var gViewController = {
           onUpdateAvailable(aAddon, aInstall) {
             gEventManager.delegateAddonEvent("onUpdateAvailable",
                                              [aAddon, aInstall]);
+            attachUpdateHandler(aInstall);
             if (AddonManager.shouldAutoUpdate(aAddon))
               aInstall.install();
           },
@@ -1237,6 +1289,26 @@ var gViewController = {
                 hasPermission(aAddon, "enable"));
       },
       doCommand(aAddon) {
+        if (aAddon.isWebExtension && !aAddon.seen && WEBEXT_PERMISSION_PROMPTS) {
+          let perms = aAddon.userPermissions;
+          if (perms.hosts.length > 0 || perms.permissions.length > 0) {
+            let subject = {
+              wrappedJSObject: {
+                target: getBrowserElement(),
+                info: {
+                  type: "sideload",
+                  addon: aAddon,
+                  icon: aAddon.iconURL,
+                  permissions: perms,
+                  resolve() { aAddon.userDisabled = false },
+                  reject() {},
+                },
+              },
+            };
+            Services.obs.notifyObservers(subject, "webextension-permission-prompt", null);
+            return;
+          }
+        }
         aAddon.userDisabled = false;
       },
       getTooltip(aAddon) {
@@ -1346,21 +1418,23 @@ var gViewController = {
                 nsIFilePicker.modeOpenMultiple);
         try {
           fp.appendFilter(gStrings.ext.GetStringFromName("installFromFile.filterName"),
-                          "*.xpi;*.jar");
+                          "*.xpi;*.jar;*.zip");
           fp.appendFilters(nsIFilePicker.filterAll);
         } catch (e) { }
 
-        if (fp.show() != nsIFilePicker.returnOK)
-          return;
+        fp.open(result => {
+          if (result != nsIFilePicker.returnOK)
+            return;
 
-        let browser = getBrowserElement();
-        let files = fp.files;
-        while (files.hasMoreElements()) {
-          let file = files.getNext();
-          AddonManager.getInstallForFile(file, install => {
-            AddonManager.installAddonFromAOM(browser, document.documentURIObject, install);
-          });
-        }
+          let browser = getBrowserElement();
+          let files = fp.files;
+          while (files.hasMoreElements()) {
+            let file = files.getNext();
+            AddonManager.getInstallForFile(file, install => {
+              AddonManager.installAddonFromAOM(browser, document.documentURIObject, install);
+            });
+          }
+        });
       }
     },
 
@@ -2092,7 +2166,7 @@ var gHeader = {
     // If the back-button or any of its parents are hidden then make the buttons
     // visible
     while (node != outerDoc) {
-      var style = outerWin.getComputedStyle(node, "");
+      var style = outerWin.getComputedStyle(node);
       if (style.display == "none")
         return true;
       if (style.visibility != "visible")
@@ -2679,6 +2753,27 @@ var gSearchView = {
     this.removeInstall(aInstall);
   },
 
+  onInstallEnded(aInstall) {
+    // If this is a webextension that was installed from this page,
+    // display the post-install notification.
+    if (!WEBEXT_PERMISSION_PROMPTS || !aInstall.addon.isWebExtension) {
+      return;
+    }
+
+    for (let item of this._listBox.childNodes) {
+      if (item.mInstall == aInstall) {
+        let subject = {
+          wrappedJSObject: {
+            target: getBrowserElement(),
+            addon: aInstall.addon,
+          },
+        };
+        Services.obs.notifyObservers(subject, "webextension-install-notify", null);
+        return;
+      }
+    }
+  },
+
   removeInstall(aInstall) {
     for (let item of this._listBox.childNodes) {
       if (item.mInstall == aInstall) {
@@ -3129,7 +3224,7 @@ var gDetailView = {
     var gridRows = document.querySelectorAll("#detail-grid rows row");
     let first = true;
     for (let gridRow of gridRows) {
-      if (first && window.getComputedStyle(gridRow, null).getPropertyValue("display") != "none") {
+      if (first && window.getComputedStyle(gridRow).getPropertyValue("display") != "none") {
         gridRow.setAttribute("first-row", true);
         first = false;
       } else {
@@ -3402,10 +3497,9 @@ var gDetailView = {
     // listeners, and promises resolve asynchronously.
     let whenViewLoaded = callback => {
       if (gViewController.displayedView.hasAttribute("loading")) {
-        gDetailView.node.addEventListener("ViewChanged", function viewChangedEventListener() {
-          gDetailView.node.removeEventListener("ViewChanged", viewChangedEventListener);
+        gDetailView.node.addEventListener("ViewChanged", function() {
           callback();
-        });
+        }, {once: true});
       } else {
         callback();
       }
@@ -3449,10 +3543,9 @@ var gDetailView = {
           this.createOptionsBrowser(rows).then(browser => {
             // Make sure the browser is unloaded as soon as we change views,
             // rather than waiting for the next detail view to load.
-            document.addEventListener("ViewChanged", function viewChangedEventListener() {
-              document.removeEventListener("ViewChanged", viewChangedEventListener);
+            document.addEventListener("ViewChanged", function() {
               browser.remove();
-            });
+            }, {once: true});
 
             finish(browser);
           });
@@ -3487,7 +3580,7 @@ var gDetailView = {
             }
 
             rows.appendChild(setting);
-            var visible = window.getComputedStyle(setting, null).getPropertyValue("display") != "none";
+            var visible = window.getComputedStyle(setting).getPropertyValue("display") != "none";
             if (!firstSetting && visible) {
               setting.setAttribute("first-row", true);
               firstSetting = setting;
@@ -3520,7 +3613,7 @@ var gDetailView = {
     let firstRow = gDetailView.node.querySelector('setting[first-row="true"]');
     if (firstRow) {
       let top = firstRow.boxObject.y;
-      top -= parseInt(window.getComputedStyle(firstRow, null).getPropertyValue("margin-top"));
+      top -= parseInt(window.getComputedStyle(firstRow).getPropertyValue("margin-top"));
 
       let detailViewBoxObject = gDetailView.node.boxObject;
       top -= detailViewBoxObject.y;

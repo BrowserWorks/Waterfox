@@ -34,7 +34,8 @@ public:
     static bool
     FindFBConfigForWindow(Display* display, int screen, Window window,
                           ScopedXFree<GLXFBConfig>* const out_scopedConfigArr,
-                          GLXFBConfig* const out_config, int* const out_visid);
+                          GLXFBConfig* const out_config, int* const out_visid,
+                          bool aWebRender);
 
     ~GLContextGLX();
 
@@ -58,6 +59,8 @@ public:
     virtual bool SupportsRobustness() const override;
 
     virtual bool SwapBuffers() override;
+
+    virtual void GetWSIInfo(nsCString* const out) const override;
 
     // Overrides the current GLXDrawable backing the context and makes the
     // context current.

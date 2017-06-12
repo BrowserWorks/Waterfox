@@ -41,9 +41,7 @@ add_task(function* () {
     header("Cache-Control: no-cache")
   ];
 
-  let { NetMonitorView } = monitor.panelWin;
-  let { RequestsMenu } = NetMonitorView;
-  RequestsMenu.lazyUpdate = false;
+  let { document } = monitor.panelWin;
 
   let wait = waitForNetworkEvents(monitor, 1);
   yield ContentTask.spawn(tab.linkedBrowser, SIMPLE_SJS, function* (url) {
@@ -51,11 +49,14 @@ add_task(function* () {
   });
   yield wait;
 
-  let requestItem = RequestsMenu.getItemAtIndex(0);
-  RequestsMenu.selectedItem = requestItem;
+  EventUtils.sendMouseEvent({ type: "mousedown" },
+    document.querySelectorAll(".request-list-item")[0]);
+  EventUtils.sendMouseEvent({ type: "contextmenu" },
+    document.querySelectorAll(".request-list-item")[0]);
 
   yield waitForClipboardPromise(function setup() {
-    RequestsMenu.contextMenu.copyAsCurl();
+    monitor.panelWin.parent.document
+      .querySelector("#request-list-context-copy-as-curl").click();
   }, function validate(result) {
     if (typeof result !== "string") {
       return false;

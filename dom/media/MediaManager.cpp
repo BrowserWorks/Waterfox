@@ -38,6 +38,7 @@
 #include "mozilla/Telemetry.h"
 #include "mozilla/Types.h"
 #include "mozilla/PeerIdentity.h"
+#include "mozilla/dom/BindingDeclarations.h"
 #include "mozilla/dom/ContentChild.h"
 #include "mozilla/dom/File.h"
 #include "mozilla/dom/MediaStreamBinding.h"
@@ -239,7 +240,8 @@ public:
   already_AddRefed<PledgeVoid>
   ApplyConstraintsToTrack(nsPIDOMWindowInner* aWindow,
                           TrackID aID,
-                          const dom::MediaTrackConstraints& aConstraints);
+                          const dom::MediaTrackConstraints& aConstraints,
+                          dom::CallerType aCallerType);
 
   // mVideo/AudioDevice are set by Activate(), so we assume they're capturing
   // if set and represent a real capture device.
@@ -896,7 +898,7 @@ nsresult MediaDevice::Deallocate() {
 void
 MediaOperationTask::ReturnCallbackError(nsresult rv, const char* errorLog)
 {
-  MM_LOG(("%s , rv=%d", errorLog, rv));
+  MM_LOG(("%s , rv=%" PRIu32, errorLog, static_cast<uint32_t>(rv)));
   NS_DispatchToMainThread(do_AddRef(new ReleaseMediaOperationResource(mStream.forget(),
     mOnTracksAvailableCallback.forget())));
   nsString log;
@@ -1083,7 +1085,7 @@ public:
         DOMMediaStream::CreateAudioCaptureStreamAsInput(window, principal, msg);
 
       stream = msg->CreateSourceStream(
-        globalWindow->AbstractMainThreadFor(dom::TaskCategory::Other)); // Placeholder
+        globalWindow->AbstractMainThreadFor(TaskCategory::Other)); // Placeholder
       msg->RegisterCaptureStreamForWindow(
             mWindowID, domStream->GetInputStream()->AsProcessedStream());
       window->SetAudioCapture(true);
@@ -1112,7 +1114,8 @@ public:
 
         already_AddRefed<PledgeVoid>
         ApplyConstraints(nsPIDOMWindowInner* aWindow,
-                         const MediaTrackConstraints& aConstraints) override
+                         const MediaTrackConstraints& aConstraints,
+                         dom::CallerType aCallerType) override
         {
           if (sInShutdown || !mListener) {
             // Track has been stopped, or we are in shutdown. In either case
@@ -1121,7 +1124,8 @@ public:
             p->Resolve(false);
             return p.forget();
           }
-          return mListener->ApplyConstraintsToTrack(aWindow, mTrackID, aConstraints);
+          return mListener->ApplyConstraintsToTrack(aWindow, mTrackID,
+                                                    aConstraints, aCallerType);
         }
 
         void
@@ -1468,7 +1472,7 @@ public:
       }
     }
     if (errorMsg) {
-      LOG(("%s %d", errorMsg, rv));
+      LOG(("%s %" PRIu32, errorMsg, static_cast<uint32_t>(rv)));
       if (badConstraint) {
         Fail(NS_LITERAL_STRING("OverconstrainedError"),
              NS_LITERAL_STRING(""),
@@ -1998,7 +2002,8 @@ nsresult
 MediaManager::GetUserMedia(nsPIDOMWindowInner* aWindow,
                            const MediaStreamConstraints& aConstraintsPassedIn,
                            nsIDOMGetUserMediaSuccessCallback* aOnSuccess,
-                           nsIDOMGetUserMediaErrorCallback* aOnFailure)
+                           nsIDOMGetUserMediaErrorCallback* aOnFailure,
+                           dom::CallerType aCallerType)
 {
   MOZ_ASSERT(NS_IsMainThread());
   MOZ_ASSERT(aWindow);
@@ -2036,7 +2041,7 @@ MediaManager::GetUserMedia(nsPIDOMWindowInner* aWindow,
   if (!docURI) {
     return NS_ERROR_UNEXPECTED;
   }
-  bool isChrome = nsContentUtils::IsCallerChrome();
+  bool isChrome = (aCallerType == dom::CallerType::System);
   bool privileged = isChrome ||
       Preferences::GetBool("media.navigator.permission.disabled", false);
   bool isHTTPS = false;
@@ -2667,7 +2672,7 @@ void
 MediaManager::OnNavigation(uint64_t aWindowID)
 {
   MOZ_ASSERT(NS_IsMainThread());
-  LOG(("OnNavigation for %llu", aWindowID));
+  LOG(("OnNavigation for %" PRIu64, aWindowID));
 
   // Stop the streams for this window. The runnables check this value before
   // making a call to content.
@@ -2735,13 +2740,13 @@ MediaManager::RemoveWindowID(uint64_t aWindowId)
   // get outer windowID
   auto* window = nsGlobalWindow::GetInnerWindowWithId(aWindowId);
   if (!window) {
-    LOG(("No inner window for %llu", aWindowId));
+    LOG(("No inner window for %" PRIu64, aWindowId));
     return;
   }
 
   nsPIDOMWindowOuter* outer = window->AsInner()->GetOuterWindow();
   if (!outer) {
-    LOG(("No outer window for inner %llu", aWindowId));
+    LOG(("No outer window for inner %" PRIu64, aWindowId));
     return;
   }
 
@@ -2754,7 +2759,7 @@ MediaManager::RemoveWindowID(uint64_t aWindowId)
 
   nsCOMPtr<nsIObserverService> obs = services::GetObserverService();
   obs->NotifyObservers(nullptr, "recording-window-ended", data.get());
-  LOG(("Sent recording-window-ended for window %llu (outer %llu)",
+  LOG(("Sent recording-window-ended for window %" PRIu64 " (outer %" PRIu64 ")",
        aWindowId, outerID));
 }
 
@@ -3123,14 +3128,14 @@ MediaManager::Observe(nsISupports* aSubject, const char* aTopic,
       uint64_t windowID = PromiseFlatString(Substring(data, strlen("screen:"))).ToInteger64(&rv);
       MOZ_ASSERT(NS_SUCCEEDED(rv));
       if (NS_SUCCEEDED(rv)) {
-        LOG(("Revoking Screen/windowCapture access for window %llu", windowID));
+        LOG(("Revoking Screen/windowCapture access for window %" PRIu64, windowID));
         StopScreensharing(windowID);
       }
     } else {
       uint64_t windowID = nsString(aData).ToInteger64(&rv);
       MOZ_ASSERT(NS_SUCCEEDED(rv));
       if (NS_SUCCEEDED(rv)) {
-        LOG(("Revoking MediaCapture access for window %llu", windowID));
+        LOG(("Revoking MediaCapture access for window %" PRIu64, windowID));
         OnNavigation(windowID);
       }
     }
@@ -3269,7 +3274,7 @@ MediaManager::MediaCaptureWindowState(nsIDOMWindow* aWindow, bool* aVideo,
     IterateWindowListeners(piWin, CaptureWindowStateCallback, &data);
   }
 #ifdef DEBUG
-  LOG(("%s: window %lld capturing %s %s %s %s %s %s", __FUNCTION__, piWin ? piWin->WindowID() : -1,
+  LOG(("%s: window %" PRIu64 " capturing %s %s %s %s %s %s", __FUNCTION__, piWin ? piWin->WindowID() : -1,
        *aVideo ? "video" : "", *aAudio ? "audio" : "",
        *aScreenShare ? "screenshare" : "",  *aWindowShare ? "windowshare" : "",
        *aAppShare ? "appshare" : "", *aBrowserShare ? "browsershare" : ""));
@@ -3281,7 +3286,7 @@ NS_IMETHODIMP
 MediaManager::SanitizeDeviceIds(int64_t aSinceWhen)
 {
   MOZ_ASSERT(NS_IsMainThread());
-  LOG(("%s: sinceWhen = %llu", __FUNCTION__, aSinceWhen));
+  LOG(("%s: sinceWhen = %" PRId64, __FUNCTION__, aSinceWhen));
 
   media::SanitizeOriginKeys(aSinceWhen, false); // we fire and forget
   return NS_OK;
@@ -3468,7 +3473,8 @@ auto
 GetUserMediaCallbackMediaStreamListener::ApplyConstraintsToTrack(
     nsPIDOMWindowInner* aWindow,
     TrackID aTrackID,
-    const MediaTrackConstraints& aConstraints) -> already_AddRefed<PledgeVoid>
+    const MediaTrackConstraints& aConstraints,
+    dom::CallerType aCallerType) -> already_AddRefed<PledgeVoid>
 {
   MOZ_ASSERT(NS_IsMainThread());
   RefPtr<PledgeVoid> p = new PledgeVoid();
@@ -3491,7 +3497,7 @@ GetUserMediaCallbackMediaStreamListener::ApplyConstraintsToTrack(
   RefPtr<MediaManager> mgr = MediaManager::GetInstance();
   uint32_t id = mgr->mOutstandingVoidPledges.Append(*p);
   uint64_t windowId = aWindow->WindowID();
-  bool isChrome = nsContentUtils::IsCallerChrome();
+  bool isChrome = (aCallerType == dom::CallerType::System);
 
   MediaManager::PostTask(NewTaskFrom([id, windowId,
                                       audioDevice, videoDevice,

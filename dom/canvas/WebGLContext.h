@@ -400,17 +400,17 @@ public:
     }
 
     void SynthesizeGLError(GLenum err);
-    void SynthesizeGLError(GLenum err, const char* fmt, ...);
+    void SynthesizeGLError(GLenum err, const char* fmt, ...) MOZ_FORMAT_PRINTF(3, 4);
 
-    void ErrorInvalidEnum(const char* fmt = 0, ...);
-    void ErrorInvalidOperation(const char* fmt = 0, ...);
-    void ErrorInvalidValue(const char* fmt = 0, ...);
-    void ErrorInvalidFramebufferOperation(const char* fmt = 0, ...);
+    void ErrorInvalidEnum(const char* fmt = 0, ...) MOZ_FORMAT_PRINTF(2, 3);
+    void ErrorInvalidOperation(const char* fmt = 0, ...) MOZ_FORMAT_PRINTF(2, 3);
+    void ErrorInvalidValue(const char* fmt = 0, ...) MOZ_FORMAT_PRINTF(2, 3);
+    void ErrorInvalidFramebufferOperation(const char* fmt = 0, ...) MOZ_FORMAT_PRINTF(2, 3);
     void ErrorInvalidEnumInfo(const char* info, GLenum enumValue);
     void ErrorInvalidEnumInfo(const char* info, const char* funcName,
                               GLenum enumValue);
-    void ErrorOutOfMemory(const char* fmt = 0, ...);
-    void ErrorImplementationBug(const char* fmt = 0, ...);
+    void ErrorOutOfMemory(const char* fmt = 0, ...) MOZ_FORMAT_PRINTF(2, 3);
+    void ErrorImplementationBug(const char* fmt = 0, ...) MOZ_FORMAT_PRINTF(2, 3);
 
     void ErrorInvalidEnumArg(const char* funcName, const char* argName, GLenum val);
 
@@ -670,7 +670,8 @@ public:
     ValidImplementationColorReadPI(const webgl::FormatUsageInfo* usage) const;
 
 protected:
-    bool ReadPixels_SharedPrecheck(ErrorResult* const out_error);
+    bool ReadPixels_SharedPrecheck(dom::CallerType aCallerType,
+                                   ErrorResult& out_error);
     void ReadPixelsImpl(GLint x, GLint y, GLsizei width, GLsizei height, GLenum format,
                         GLenum type, void* data, uint32_t dataLen);
     bool DoReadPixelsAndConvert(const webgl::FormatInfo* srcFormat, GLint x, GLint y,
@@ -680,22 +681,24 @@ protected:
 public:
     void ReadPixels(GLint x, GLint y, GLsizei width, GLsizei height, GLenum format,
                     GLenum type, const dom::Nullable<dom::ArrayBufferView>& maybeView,
-                    ErrorResult& rv)
+                    dom::CallerType aCallerType, ErrorResult& rv)
     {
         const char funcName[] = "readPixels";
         if (maybeView.IsNull()) {
             ErrorInvalidValue("%s: `pixels` must not be null.", funcName);
             return;
         }
-        ReadPixels(x, y, width, height, format, type, maybeView.Value(), 0, rv);
+        ReadPixels(x, y, width, height, format, type, maybeView.Value(), 0,
+                   aCallerType, rv);
     }
 
     void ReadPixels(GLint x, GLint y, GLsizei width, GLsizei height, GLenum format,
-                    GLenum type, WebGLsizeiptr offset, ErrorResult& out_error);
+                    GLenum type, WebGLsizeiptr offset,
+                    dom::CallerType, ErrorResult& out_error);
 
     void ReadPixels(GLint x, GLint y, GLsizei width, GLsizei height, GLenum format,
                     GLenum type, const dom::ArrayBufferView& dstData, GLuint dstOffset,
-                    ErrorResult& out_error);
+                    dom::CallerType, ErrorResult& out_error);
 
     ////
 
@@ -1349,9 +1352,22 @@ public:
 
     ////
 
+protected:
+    void VertexAttribAnyPointer(const char* funcName, bool isFuncInt, GLuint index,
+                                GLint size, GLenum type, bool normalized, GLsizei stride,
+                                WebGLintptr byteOffset);
+
+public:
     void VertexAttribPointer(GLuint index, GLint size, GLenum type,
                              WebGLboolean normalized, GLsizei stride,
-                             WebGLintptr byteOffset);
+                             WebGLintptr byteOffset)
+    {
+        const char funcName[] = "vertexAttribPointer";
+        const bool isFuncInt = false;
+        VertexAttribAnyPointer(funcName, isFuncInt, index, size, type, normalized, stride,
+                               byteOffset);
+    }
+
     void VertexAttribDivisor(GLuint index, GLuint divisor);
 
 private:
@@ -1787,9 +1803,6 @@ private:
     // Context customization points
     virtual WebGLVertexArray* CreateVertexArrayImpl();
 
-    virtual bool ValidateAttribPointerType(bool integerMode, GLenum type, uint32_t* alignment, const char* info) = 0;
-    virtual bool ValidateUniformMatrixTranspose(bool transpose, const char* info) = 0;
-
 public:
     void ForceLoseContext(bool simulateLoss = false);
 
@@ -2034,10 +2047,10 @@ protected:
 
 public:
     // console logging helpers
-    void GenerateWarning(const char* fmt, ...);
+    void GenerateWarning(const char* fmt, ...) MOZ_FORMAT_PRINTF(2, 3);
     void GenerateWarning(const char* fmt, va_list ap);
 
-    void GeneratePerfWarning(const char* fmt, ...) const;
+    void GeneratePerfWarning(const char* fmt, ...) const MOZ_FORMAT_PRINTF(2, 3);
 
 public:
     UniquePtr<webgl::FormatUsageAuthority> mFormatUsage;

@@ -8,6 +8,7 @@
 #define CertVerifier_h
 
 #include "BRNameMatchingPolicy.h"
+#include "CTPolicyEnforcer.h"
 #include "CTVerifyResult.h"
 #include "OCSPCache.h"
 #include "ScopedNSSTypes.h"
@@ -28,10 +29,11 @@
 
 namespace mozilla { namespace ct {
 
-// Including MultiLogCTVerifier.h would bring along all of its dependent
-// headers and force us to export them in moz.build. Just forward-declare
-// the class here instead.
+// Including the headers of the classes below would bring along all of their
+// dependent headers and force us to export them in moz.build.
+// Just forward-declare the classes here instead.
 class MultiLogCTVerifier;
+class CTDiversityPolicy;
 
 } } // namespace mozilla::ct
 
@@ -66,7 +68,7 @@ public:
 
   // Should we accumulate pinning telemetry for the result?
   bool accumulateResult;
-  Telemetry::ID certPinningResultHistogram;
+  Telemetry::HistogramID certPinningResultHistogram;
   int32_t certPinningResultBucket;
   // Should we accumulate telemetry for the root?
   bool accumulateForRoot;
@@ -82,12 +84,12 @@ public:
 
   // Was CT enabled?
   bool enabled;
-  // Did we receive and process any binary SCT data from the supported sources?
-  bool processedSCTs;
   // Verification result of the processed SCTs.
   mozilla::ct::CTVerifyResult verifyResult;
+  // Connection compliance to the CT Policy.
+  mozilla::ct::CTPolicyCompliance policyCompliance;
 
-  void Reset() { enabled = false; processedSCTs = false; verifyResult.Reset(); }
+  void Reset();
 };
 
 class NSSCertDBTrustDomain;
@@ -206,12 +208,13 @@ public:
 private:
   OCSPCache mOCSPCache;
 
-  // We only have a forward declaration of MultiLogCTVerifier (see above),
-  // so we keep a pointer to it and allocate dynamically.
+  // We only have a forward declarations of these classes (see above)
+  // so we must allocate dynamically.
   UniquePtr<mozilla::ct::MultiLogCTVerifier> mCTVerifier;
+  UniquePtr<mozilla::ct::CTDiversityPolicy> mCTDiversityPolicy;
 
   void LoadKnownCTLogs();
-  mozilla::pkix::Result VerifySignedCertificateTimestamps(
+  mozilla::pkix::Result VerifyCertificateTransparencyPolicy(
                      NSSCertDBTrustDomain& trustDomain,
                      const UniqueCERTCertList& builtChain,
                      mozilla::pkix::Input sctsFromTLS,

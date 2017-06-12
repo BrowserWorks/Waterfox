@@ -40,6 +40,7 @@ let initDevTools;
 global.getDevToolsTargetForContext = (context) => {
   return Task.spawn(function* asyncGetTabTarget() {
     if (context.devToolsTarget) {
+      yield context.devToolsTarget.makeRemote();
       return context.devToolsTarget;
     }
 
@@ -78,10 +79,10 @@ global.getTargetTabIdForToolbox = (toolbox) => {
     throw new Error("Unexpected target type: only local tabs are currently supported.");
   }
 
-  let parentWindow = target.tab.linkedBrowser.ownerDocument.defaultView;
+  let parentWindow = target.tab.linkedBrowser.ownerGlobal;
   let tab = parentWindow.gBrowser.getTabForBrowser(target.tab.linkedBrowser);
 
-  return TabManager.getId(tab);
+  return tabTracker.getId(tab);
 };
 
 /**

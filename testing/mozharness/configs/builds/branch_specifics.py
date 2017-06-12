@@ -137,6 +137,21 @@ config = {
                 'src_mozconfig': 'browser/config/mozconfigs/win64/beta',
                 'force_clobber': True,
             },
+            'linux-devedition': {
+                "update_channel": "aurora",
+            },
+            'linux64-devedition': {
+                "update_channel": "aurora",
+            },
+            'macosx64-devedition': {
+                "update_channel": "aurora",
+            },
+            'win32-devedition': {
+                "update_channel": "aurora",
+            },
+            'win64-devedition': {
+                "update_channel": "aurora",
+            },
             'linux-debug': {
                 'update_channel': 'default',
             },
@@ -319,7 +334,7 @@ config = {
     },
     # 'holly': {},
     'jamun': {
-        'update_channel': 'release-dev',
+        'update_channel': 'beta-dev',
         'enable_release_promotion': 1,
         'platform_overrides': {
             'linux': {
@@ -347,7 +362,7 @@ config = {
                 'update_channel': 'default',
             },
             'macosx64': {
-                'src_mozconfig': 'browser/config/mozconfigs/macosx-universal/release',
+                'src_mozconfig': 'browser/config/mozconfigs/macosx64/release',
             },
             'macosx64-debug': {
                 'update_channel': 'default',
@@ -369,6 +384,21 @@ config = {
             },
             'win64-debug': {
                 'update_channel': 'default',
+            },
+            'linux-devedition': {
+                "update_channel": "aurora-dev",
+            },
+            'linux64-devedition': {
+                "update_channel": "aurora-dev",
+            },
+            'macosx64-devedition': {
+                "update_channel": "aurora-dev",
+            },
+            'win32-devedition': {
+                "update_channel": "aurora-dev",
+            },
+            'win64-devedition': {
+                "update_channel": "aurora-dev",
             },
         },
         'stage_server': 'upload.ffxbld.productdelivery.prod.mozaws.net',

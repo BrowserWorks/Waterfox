@@ -6,13 +6,13 @@
 
 #include "WMFAudioMFTManager.h"
 #include "MediaInfo.h"
+#include "TimeUnits.h"
 #include "VideoUtils.h"
 #include "WMFUtils.h"
-#include "nsTArray.h"
-#include "TimeUnits.h"
 #include "mozilla/AbstractThread.h"
-#include "mozilla/Telemetry.h"
 #include "mozilla/Logging.h"
+#include "mozilla/Telemetry.h"
+#include "nsTArray.h"
 
 #define LOG(...) MOZ_LOG(sPDMLog, mozilla::LogLevel::Debug, (__VA_ARGS__))
 
@@ -86,8 +86,6 @@ WMFAudioMFTManager::WMFAudioMFTManager(
   const AudioInfo& aConfig)
   : mAudioChannels(aConfig.mChannels)
   , mAudioRate(aConfig.mRate)
-  , mAudioFrameSum(0)
-  , mMustRecaptureAudioPosition(true)
 {
   MOZ_COUNT_CTOR(WMFAudioMFTManager);
 
@@ -253,7 +251,7 @@ WMFAudioMFTManager::Output(int64_t aStreamOffset,
     LOG("Audio MFTDecoder returned success but null output.");
     nsCOMPtr<nsIRunnable> task = NS_NewRunnableFunction([]() -> void {
       LOG("Reporting telemetry AUDIO_MFT_OUTPUT_NULL_SAMPLES");
-      Telemetry::Accumulate(Telemetry::ID::AUDIO_MFT_OUTPUT_NULL_SAMPLES, 1);
+      Telemetry::Accumulate(Telemetry::HistogramID::AUDIO_MFT_OUTPUT_NULL_SAMPLES, 1);
     });
     // Non-DocGroup version of AbstractThread::MainThread is fine for Telemetry.
     AbstractThread::MainThread()->Dispatch(task.forget());
@@ -264,7 +262,8 @@ WMFAudioMFTManager::Output(int64_t aStreamOffset,
   hr = sample->ConvertToContiguousBuffer(getter_AddRefs(buffer));
   NS_ENSURE_TRUE(SUCCEEDED(hr), hr);
 
-  BYTE* data = nullptr; // Note: *data will be owned by the IMFMediaBuffer, we don't need to free it.
+  BYTE* data = nullptr; // Note: *data will be owned by the IMFMediaBuffer, we
+                        // don't need to free it.
   DWORD maxLength = 0, currentLength = 0;
   hr = buffer->Lock(&data, &maxLength, &currentLength);
   NS_ENSURE_TRUE(SUCCEEDED(hr), hr);

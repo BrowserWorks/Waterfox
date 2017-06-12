@@ -20,7 +20,7 @@ class ContentBridgeParent : public PContentBridgeParent
                           , public nsIObserver
 {
 public:
-  explicit ContentBridgeParent(Transport* aTransport);
+  explicit ContentBridgeParent();
 
   NS_DECL_ISUPPORTS
   NS_DECL_NSIOBSERVER
@@ -31,7 +31,7 @@ public:
   void NotifyTabDestroyed();
 
   static ContentBridgeParent*
-  Create(Transport* aTransport, ProcessId aOtherProcess);
+  Create(Endpoint<PContentBridgeParent>&& aEndpoint);
 
   virtual PBlobParent*
   SendPBlobConstructor(PBlobParent* actor,
@@ -114,6 +114,11 @@ protected:
 
   virtual bool DeallocPBlobParent(PBlobParent*) override;
 
+  virtual PMemoryStreamParent*
+  AllocPMemoryStreamParent(const uint64_t& aSize) override;
+
+  virtual bool DeallocPMemoryStreamParent(PMemoryStreamParent*) override;
+
   virtual PSendStreamParent* AllocPSendStreamParent() override;
 
   virtual bool DeallocPSendStreamParent(PSendStreamParent* aActor) override;
@@ -128,7 +133,6 @@ protected:
 
 protected: // members
   RefPtr<ContentBridgeParent> mSelfRef;
-  Transport* mTransport; // owned
   ContentParentId mChildID;
   bool mIsForBrowser;
 

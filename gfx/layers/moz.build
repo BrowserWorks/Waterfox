@@ -4,6 +4,9 @@
 # License, v. 2.0. If a copy of the MPL was not distributed with this
 # file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
+with Files('**'):
+    BUG_COMPONENT = ('Core', 'Graphics: Layers')
+
 with Files('apz/**'):
     BUG_COMPONENT = ('Core', 'Panning and Zooming')
 
@@ -37,7 +40,6 @@ EXPORTS += [
     'LayersTypes.h',
     'LayerTreeInvalidation.h',
     'LayerUserData.h',
-    'opengl/Composer2D.h',
     'opengl/OGLShaderProgram.h',
     'opengl/TexturePoolOGL.h',
     'protobuf/LayerScopePacket.pb.h',
@@ -96,6 +98,7 @@ EXPORTS.mozilla.dom += [
 ]
 
 EXPORTS.mozilla.layers += [
+    'AnimationHelper.h',
     'apz/public/CompositorController.h',
     'apz/public/GeckoContentController.h',
     'apz/public/IAPZCTreeManager.h',
@@ -139,6 +142,7 @@ EXPORTS.mozilla.layers += [
     'client/TextureClientRecycleAllocator.h',
     'client/TextureClientSharedSurface.h',
     'client/TiledContentClient.h',
+    'composite/AnimationMetricsTracker.h',
     'composite/AsyncCompositionManager.h',
     'composite/CanvasLayerComposite.h',
     'composite/ColorLayerComposite.h',
@@ -146,6 +150,7 @@ EXPORTS.mozilla.layers += [
     'composite/ContentHost.h',
     'composite/FrameUniformityData.h',
     'composite/GPUVideoTextureHost.h',
+    'composite/ImageComposite.h',
     'composite/ImageHost.h',
     'composite/ImageLayerComposite.h',
     'composite/LayerManagerComposite.h',
@@ -187,6 +192,7 @@ EXPORTS.mozilla.layers += [
     'ipc/UiCompositorControllerParent.h',
     'ipc/VideoBridgeChild.h',
     'ipc/VideoBridgeParent.h',
+    'LayerAttributes.h',
     'LayerMetricsWrapper.h',
     'LayersTypes.h',
     'opengl/CompositingRenderTargetOGL.h',
@@ -197,8 +203,18 @@ EXPORTS.mozilla.layers += [
     'opengl/TextureHostOGL.h',
     'PersistentBufferProvider.h',
     'RenderTrace.h',
+    'SourceSurfaceSharedData.h',
+    'SourceSurfaceVolatileData.h',
     'TextureWrapperImage.h',
     'TransactionIdAllocator.h',
+    'wr/WebRenderBridgeChild.h',
+    'wr/WebRenderBridgeParent.h',
+    'wr/WebRenderCompositableHolder.h',
+    'wr/WebRenderDisplayItemLayer.h',
+    'wr/WebRenderImageHost.h',
+    'wr/WebRenderLayerManager.h',
+    'wr/WebRenderLayersLogging.h',
+    'wr/WebRenderMessageUtils.h',
 ]
 
 if CONFIG['MOZ_X11']:
@@ -241,6 +257,7 @@ if CONFIG['MOZ_WIDGET_TOOLKIT'] == 'android':
     ]
 
 UNIFIED_SOURCES += [
+    'AnimationHelper.cpp',
     'apz/public/IAPZCTreeManager.cpp',
     'apz/src/APZCTreeManager.cpp',
     'apz/src/AsyncPanZoomController.cpp',
@@ -276,6 +293,7 @@ UNIFIED_SOURCES += [
     'basic/BasicColorLayer.cpp',
     'basic/BasicCompositor.cpp',
     'basic/BasicContainerLayer.cpp',
+    'basic/BasicDisplayItemLayer.cpp',
     'basic/BasicImages.cpp',
     'basic/BasicLayerManager.cpp',
     'basic/BasicLayersImpl.cpp',
@@ -305,6 +323,7 @@ UNIFIED_SOURCES += [
     'client/TextureClientRecycleAllocator.cpp',
     'client/TextureClientSharedSurface.cpp',
     'client/TiledContentClient.cpp',
+    'composite/AnimationMetricsTracker.cpp',
     'composite/AsyncCompositionManager.cpp',
     'composite/CanvasLayerComposite.cpp',
     'composite/ColorLayerComposite.cpp',
@@ -314,6 +333,7 @@ UNIFIED_SOURCES += [
     'composite/FPSCounter.cpp',
     'composite/FrameUniformityData.cpp',
     'composite/GPUVideoTextureHost.cpp',
+    'composite/ImageComposite.cpp',
     'composite/ImageHost.cpp',
     'composite/ImageLayerComposite.cpp',
     'composite/LayerManagerComposite.cpp',
@@ -356,7 +376,6 @@ UNIFIED_SOURCES += [
     'LayerScope.cpp',
     'LayersLogging.cpp',
     'LayerSorter.cpp',
-    'LayersTypes.cpp',
     'opengl/CompositingRenderTargetOGL.cpp',
     'opengl/CompositorOGL.cpp',
     'opengl/GLBlitTextureImageHelper.cpp',
@@ -369,7 +388,23 @@ UNIFIED_SOURCES += [
     'RenderTrace.cpp',
     'RotatedBuffer.cpp',
     'ShareableCanvasLayer.cpp',
+    'SourceSurfaceSharedData.cpp',
+    'SourceSurfaceVolatileData.cpp',
     'TextureWrapperImage.cpp',
+    'wr/WebRenderBorderLayer.cpp',
+    'wr/WebRenderBridgeChild.cpp',
+    'wr/WebRenderBridgeParent.cpp',
+    'wr/WebRenderCanvasLayer.cpp',
+    'wr/WebRenderColorLayer.cpp',
+    'wr/WebRenderCompositableHolder.cpp',
+    'wr/WebRenderContainerLayer.cpp',
+    'wr/WebRenderDisplayItemLayer.cpp',
+    'wr/WebRenderImageHost.cpp',
+    'wr/WebRenderImageLayer.cpp',
+    'wr/WebRenderLayerManager.cpp',
+    'wr/WebRenderLayersLogging.cpp',
+    'wr/WebRenderPaintedLayer.cpp',
+    'wr/WebRenderTextLayer.cpp',
 ]
 
 SOURCES += [
@@ -409,6 +444,8 @@ IPDL_SOURCES += [
     'ipc/PTexture.ipdl',
     'ipc/PUiCompositorController.ipdl',
     'ipc/PVideoBridge.ipdl',
+    'ipc/PWebRenderBridge.ipdl',
+    'ipc/WebRenderMessages.ipdlh',
 ]
 
 include('/ipc/chromium/chromium-config.mozbuild')
@@ -417,7 +454,7 @@ LOCAL_INCLUDES += [
     '/docshell/base',  # for nsDocShell.h
     '/layout/base',    # for TouchManager.h
     '/layout/generic', # for nsTextFrame.h
-    '/media/libyuv/include', # for libyuv.h
+    '/media/libyuv/libyuv/include', # for libyuv.h
 ]
 
 FINAL_LIBRARY = 'xul'

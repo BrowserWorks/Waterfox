@@ -84,8 +84,6 @@ class PresShell final : public nsIPresShell,
 public:
   PresShell();
 
-  NS_DECL_AND_IMPL_ZEROING_OPERATOR_NEW
-
   // nsISupports
   NS_DECL_ISUPPORTS
 
@@ -128,8 +126,8 @@ public:
   virtual void FrameNeedsToContinueReflow(nsIFrame *aFrame) override;
   virtual void CancelAllPendingReflows() override;
   virtual bool IsSafeToFlush() const override;
-  virtual void FlushPendingNotifications(mozilla::FlushType aType) override;
-  virtual void FlushPendingNotifications(mozilla::ChangesToFlush aType) override;
+  virtual void DoFlushPendingNotifications(mozilla::FlushType aType) override;
+  virtual void DoFlushPendingNotifications(mozilla::ChangesToFlush aType) override;
   virtual void DestroyFramesFor(nsIContent*  aContent,
                                 nsIContent** aDestroyedFramesFor) override;
   virtual void CreateFramesFor(nsIContent* aContent) override;
@@ -332,8 +330,7 @@ public:
 #endif
 
 #ifdef DEBUG
-  virtual void ListStyleContexts(nsIFrame *aRootFrame, FILE *out,
-                                 int32_t aIndent = 0) override;
+  virtual void ListStyleContexts(FILE *out, int32_t aIndent = 0) override;
 
   virtual void ListStyleSheets(FILE *out, int32_t aIndent = 0) override;
   virtual void VerifyStyleTree() override;
@@ -381,8 +378,6 @@ public:
                               size_t *aPresContextSize) override;
   size_t SizeOfTextRuns(mozilla::MallocSizeOf aMallocSizeOf) const;
 
-  virtual void AddInvalidateHiddenPresShellObserver(nsRefreshDriver *aDriver) override;
-
   // This data is stored as a content property (nsGkAtoms::scrolling) on
   // mContentToScrollTo when we have a pending ScrollIntoView.
   struct ScrollIntoViewData {
@@ -415,6 +410,11 @@ public:
       const mozilla::WidgetGUIEvent* aEvent = nullptr) const override;
 
   void SetNextPaintCompressed() { mNextPaintCompressed = true; }
+
+  void NotifyStyleSheetServiceSheetAdded(mozilla::StyleSheet* aSheet,
+                                         uint32_t aSheetType) override;
+  void NotifyStyleSheetServiceSheetRemoved(mozilla::StyleSheet* aSheet,
+                                           uint32_t aSheetType) override;
 
 protected:
   virtual ~PresShell();
@@ -568,10 +568,10 @@ protected:
    * Methods to handle changes to user and UA sheet lists that we get
    * notified about.
    */
-  void AddUserSheet(nsISupports* aSheet);
-  void AddAgentSheet(nsISupports* aSheet);
-  void AddAuthorSheet(nsISupports* aSheet);
-  void RemoveSheet(mozilla::SheetType aType, nsISupports* aSheet);
+  void AddUserSheet(StyleSheet* aSheet);
+  void AddAgentSheet(StyleSheet* aSheet);
+  void AddAuthorSheet(StyleSheet* aSheet);
+  void RemoveSheet(mozilla::SheetType aType, StyleSheet* aSheet);
 
   // Hide a view if it is a popup
   void HideViewIfPopup(nsView* aView);
@@ -743,9 +743,7 @@ protected:
   virtual void SysColorChanged() override { mPresContext->SysColorChanged(); }
   virtual void ThemeChanged() override { mPresContext->ThemeChanged(); }
   virtual void BackingScaleFactorChanged() override { mPresContext->UIResolutionChanged(); }
-#ifdef ANDROID
-  virtual nsIDocument* GetTouchEventTargetDocument() override;
-#endif
+  virtual nsIDocument* GetPrimaryContentDocument() override;
 
   virtual void PausePainting() override;
   virtual void ResumePainting() override;
@@ -760,7 +758,7 @@ protected:
   void UpdateApproximateFrameVisibility();
   void DoUpdateApproximateFrameVisibility(bool aRemoveOnly);
 
-  void ClearApproximatelyVisibleFramesList(Maybe<mozilla::OnNonvisible> aNonvisibleAction
+  void ClearApproximatelyVisibleFramesList(const Maybe<mozilla::OnNonvisible>& aNonvisibleAction
                                              = Nothing());
   static void ClearApproximateFrameVisibilityVisited(nsView* aView, bool aClear);
   static void MarkFramesInListApproximatelyVisible(const nsDisplayList& aList,
@@ -771,7 +769,7 @@ protected:
                                                bool aRemoveOnly = false);
 
   void DecApproximateVisibleCount(VisibleFrames& aFrames,
-                                  Maybe<OnNonvisible> aNonvisibleAction = Nothing());
+                                  const Maybe<OnNonvisible>& aNonvisibleAction = Nothing());
 
   nsRevocableEventPtr<nsRunnableMethod<PresShell>> mUpdateApproximateFrameVisibilityEvent;
 
@@ -908,6 +906,11 @@ protected:
   bool                      mIsLastKeyDownCanceled : 1;
 
   static bool               sDisableNonTestMouseEvents;
+
+  mozilla::TimeStamp        mLastOSWake;
+
+  static mozilla::TimeStamp sLastInputCreated;
+  static mozilla::TimeStamp sLastInputProcessed;
 };
 
 } // namespace mozilla

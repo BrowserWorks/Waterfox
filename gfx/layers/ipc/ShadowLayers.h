@@ -33,11 +33,9 @@ namespace layers {
 
 class ClientLayerManager;
 class CompositorBridgeChild;
-class EditReply;
 class FixedSizeSmallShmemSectionAllocator;
 class ImageContainer;
 class Layer;
-class PLayerChild;
 class PLayerTransactionChild;
 class LayerTransactionChild;
 class ShadowableLayer;
@@ -216,9 +214,11 @@ public:
   /**
    * At least one attribute of |aMutant| has changed, and |aMutant|
    * needs to sync to its shadow layer.  This initial implementation
-   * forwards all attributes when any is mutated.
+   * forwards all attributes when any of the appropriate attribute
+   * set is mutated.
    */
   void Mutated(ShadowableLayer* aMutant);
+  void MutatedSimple(ShadowableLayer* aMutant);
 
   void SetRoot(ShadowableLayer* aRoot);
   /**
@@ -252,7 +252,7 @@ public:
                                    const SurfaceDescriptorTiles& aTileLayerDescriptor) override;
 
   void ReleaseCompositable(const CompositableHandle& aHandle) override;
-  bool DestroyInTransaction(PTextureChild* aTexture, bool synchronously) override;
+  bool DestroyInTransaction(PTextureChild* aTexture) override;
   bool DestroyInTransaction(const CompositableHandle& aHandle);
 
   virtual void RemoveTextureFromCompositable(CompositableClient* aCompositable,
@@ -419,8 +419,6 @@ protected:
 #else
   void CheckSurfaceDescriptor(const SurfaceDescriptor* aDescriptor) const {}
 #endif
-
-  void ProcessReplies(const nsTArray<EditReply>& aReplies);
 
   RefPtr<CompositableClient> FindCompositable(const CompositableHandle& aHandle);
 

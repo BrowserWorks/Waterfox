@@ -17,20 +17,21 @@ add_task(function* () {
   };
 
   let { tab, monitor } = yield initNetMonitor(CUSTOM_GET_URL);
-  let { $, EVENTS, NetMonitorView } = monitor.panelWin;
-  let { RequestsMenu } = NetMonitorView;
-  RequestsMenu.lazyUpdate = false;
+  let { document, gStore, windowRequire } = monitor.panelWin;
+  let Actions = windowRequire("devtools/client/netmonitor/actions/index");
+
+  gStore.dispatch(Actions.batchEnable(false));
 
   yield performRequests();
 
-  for (let item of RequestsMenu.items) {
-    let target = getItemTarget(RequestsMenu, item);
-    let domain = $(".requests-menu-domain", target).textContent;
+  for (let subitemNode of Array.from(document.querySelectorAll(
+    "requests-list-subitem.requests-list-security-and-domain"))) {
+    let domain = subitemNode.querySelector(".requests-list-domain").textContent;
 
     info("Found a request to " + domain);
     ok(domain in EXPECTED_SECURITY_STATES, "Domain " + domain + " was expected.");
 
-    let classes = $(".requests-security-state-icon", target).classList;
+    let classes = subitemNode.querySelector(".requests-security-state-icon").classList;
     let expectedClass = EXPECTED_SECURITY_STATES[domain];
 
     info("Classes of security state icon are: " + classes);
@@ -85,7 +86,9 @@ add_task(function* () {
     yield done;
 
     const expectedCount = Object.keys(EXPECTED_SECURITY_STATES).length;
-    is(RequestsMenu.itemCount, expectedCount, expectedCount + " events logged.");
+    is(gStore.getState().requests.requests.size,
+      expectedCount,
+      expectedCount + " events logged.");
   }
 
   /**

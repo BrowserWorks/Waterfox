@@ -20,6 +20,7 @@
 #include "mozilla/layers/PLayerTransactionChild.h"
 #include "mozilla/layers/TextureClient.h"// for TextureClient
 #include "mozilla/layers/TextureClientPool.h"// for TextureClientPool
+#include "mozilla/layers/WebRenderBridgeChild.h"
 #include "mozilla/gfx/gfxVars.h"
 #include "mozilla/gfx/GPUProcessManager.h"
 #include "mozilla/gfx/Logging.h"
@@ -78,6 +79,7 @@ CompositorBridgeChild::CompositorBridgeChild(LayerManager *aLayerManager)
   : mLayerManager(aLayerManager)
   , mCanSend(false)
   , mFwdTransactionId(0)
+  , mDeviceResetSequenceNumber(0)
   , mMessageLoop(MessageLoop::current())
   , mSectionAllocator(nullptr)
 {
@@ -142,6 +144,14 @@ CompositorBridgeChild::Destroy()
     RefPtr<LayerTransactionChild> layers =
       static_cast<LayerTransactionChild*>(transactions[i]);
     layers->Destroy();
+  }
+
+  AutoTArray<PWebRenderBridgeChild*, 16> wRBridges;
+  ManagedPWebRenderBridgeChild(wRBridges);
+  for (int i = wRBridges.Length() - 1; i >= 0; --i) {
+    RefPtr<WebRenderBridgeChild> wRBridge =
+      static_cast<WebRenderBridgeChild*>(wRBridges[i]);
+    wRBridge->Destroy();
   }
 
   const ManagedContainer<PTextureChild>& textures = ManagedPTextureChild();
@@ -365,10 +375,9 @@ CompositorBridgeChild::RecvCompositorUpdated(const uint64_t& aLayersId,
   } else if (aLayersId != 0) {
     // Update gfxPlatform if this is the first time we're seeing this compositor
     // update (we will get an update for each connected tab).
-    static uint64_t sLastSeqNo = 0;
-    if (sLastSeqNo != aSeqNo) {
+    if (mDeviceResetSequenceNumber != aSeqNo) {
       gfxPlatform::GetPlatform()->CompositorUpdated();
-      sLastSeqNo = aSeqNo;
+      mDeviceResetSequenceNumber = aSeqNo;
 
       // If we still get device reset here, something must wrong when creating
       // d3d11 devices.
@@ -379,12 +388,12 @@ CompositorBridgeChild::RecvCompositorUpdated(const uint64_t& aLayersId,
     }
 
     if (dom::TabChild* child = dom::TabChild::GetFrom(aLayersId)) {
-      child->CompositorUpdated(aNewIdentifier);
+      child->CompositorUpdated(aNewIdentifier, aSeqNo);
     }
     if (!mCanSend) {
       return IPC_OK();
     }
-    SendAcknowledgeCompositorUpdate(aLayersId);
+    SendAcknowledgeCompositorUpdate(aLayersId, aSeqNo);
   }
   return IPC_OK();
 }
@@ -568,8 +577,10 @@ CompositorBridgeChild::RecvDidComposite(const uint64_t& aId, const uint64_t& aTr
 {
   if (mLayerManager) {
     MOZ_ASSERT(aId == 0);
-    RefPtr<ClientLayerManager> m = mLayerManager->AsClientLayerManager();
-    MOZ_ASSERT(m);
+    MOZ_ASSERT(mLayerManager->GetBackendType() == LayersBackend::LAYERS_CLIENT ||
+               mLayerManager->GetBackendType() == LayersBackend::LAYERS_WR);
+    // Hold a reference to keep LayerManager alive. See Bug 1242668.
+    RefPtr<LayerManager> m = mLayerManager;
     m->DidComposite(aTransactionId, aCompositeStart, aCompositeEnd);
   } else if (aId != 0) {
     RefPtr<dom::TabChild> child = dom::TabChild::GetFrom(aId);
@@ -582,33 +593,6 @@ CompositorBridgeChild::RecvDidComposite(const uint64_t& aId, const uint64_t& aTr
     mTexturePools[i]->ReturnDeferredClients();
   }
 
-  return IPC_OK();
-}
-
-mozilla::ipc::IPCResult
-CompositorBridgeChild::RecvOverfill(const uint32_t &aOverfill)
-{
-  for (size_t i = 0; i < mOverfillObservers.Length(); i++) {
-    mOverfillObservers[i]->RunOverfillCallback(aOverfill);
-  }
-  mOverfillObservers.Clear();
-  return IPC_OK();
-}
-
-void
-CompositorBridgeChild::AddOverfillObserver(ClientLayerManager* aLayerManager)
-{
-  MOZ_ASSERT(aLayerManager);
-  mOverfillObservers.AppendElement(aLayerManager);
-}
-
-mozilla::ipc::IPCResult
-CompositorBridgeChild::RecvClearCachedResources(const uint64_t& aId)
-{
-  dom::TabChild* child = dom::TabChild::GetFrom(aId);
-  if (child) {
-    child->ClearCachedResources();
-  }
   return IPC_OK();
 }
 
@@ -1143,6 +1127,22 @@ void
 CompositorBridgeChild::HandleFatalError(const char* aName, const char* aMsg) const
 {
   dom::ContentChild::FatalErrorIfNotUsingGPUProcess(aName, aMsg, OtherPid());
+}
+
+PWebRenderBridgeChild*
+CompositorBridgeChild::AllocPWebRenderBridgeChild(const wr::PipelineId& aPipelineId, TextureFactoryIdentifier*, uint32_t *aIdNamespace)
+{
+  WebRenderBridgeChild* child = new WebRenderBridgeChild(aPipelineId);
+  child->AddIPDLReference();
+  return child;
+}
+
+bool
+CompositorBridgeChild::DeallocPWebRenderBridgeChild(PWebRenderBridgeChild* aActor)
+{
+  WebRenderBridgeChild* child = static_cast<WebRenderBridgeChild*>(aActor);
+  child->ReleaseIPDLReference();
+  return true;
 }
 
 } // namespace layers

@@ -231,11 +231,13 @@ namespace dom {
 
 XMLDocument::XMLDocument(const char* aContentType)
   : nsDocument(aContentType),
-    mAsync(true)
+    mChannelIsPending(false),
+    mAsync(true),
+    mLoopingForSyncLoad(false),
+    mIsPlainDocument(false),
+    mSuppressParserErrorElement(false),
+    mSuppressParserErrorConsoleMessages(false)
 {
-  // NOTE! nsDocument::operator new() zeroes out all members, so don't
-  // bother initializing members to 0.
-
   mType = eGenericXML;
 }
 
@@ -277,7 +279,8 @@ XMLDocument::ResetToURI(nsIURI *aURI, nsILoadGroup *aLoadGroup,
 }
 
 bool
-XMLDocument::Load(const nsAString& aUrl, ErrorResult& aRv)
+XMLDocument::Load(const nsAString& aUrl, CallerType aCallerType,
+                  ErrorResult& aRv)
 {
   bool hasHadScriptObject = true;
   nsIScriptGlobalObject* scriptObject =
@@ -308,7 +311,7 @@ XMLDocument::Load(const nsAString& aUrl, ErrorResult& aRv)
   // warning on our entry document, if any, since that should have things like
   // window ids and associated docshells.
   nsIDocument* docForWarning = callingDoc ? callingDoc.get() : this;
-  if (nsContentUtils::IsCallerChrome()) {
+  if (aCallerType == CallerType::System) {
     docForWarning->WarnOnceAbout(nsIDocument::eChromeUseOfDOM3LoadMethod);
   } else {
     docForWarning->WarnOnceAbout(nsIDocument::eUseOfDOM3LoadMethod);

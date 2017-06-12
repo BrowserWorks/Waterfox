@@ -4,6 +4,9 @@
 # License, v. 2.0. If a copy of the MPL was not distributed with this
 # file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
+with Files('**'):
+    BUG_COMPONENT = ('Core', 'Networking: HTTP')
+
 XPIDL_SOURCES += [
     'nsIHstsPrimingCallback.idl',
     'nsIHttpActivityObserver.idl',
@@ -17,6 +20,7 @@ XPIDL_SOURCES += [
     'nsIHttpEventSink.idl',
     'nsIHttpHeaderVisitor.idl',
     'nsIHttpProtocolHandler.idl',
+    'nsIRaceCacheWithNetwork.idl',
     'nsIWellKnownOpportunisticUtils.idl',
 ]
 
@@ -34,6 +38,7 @@ EXPORTS += [
 EXPORTS.mozilla.net += [
     'AltDataOutputStreamChild.h',
     'AltDataOutputStreamParent.h',
+    'HttpAuthUtils.h',
     'HttpBaseChannel.h',
     'HttpChannelChild.h',
     'HttpChannelParent.h',
@@ -63,6 +68,7 @@ UNIFIED_SOURCES += [
     'Http2Push.cpp',
     'Http2Session.cpp',
     'Http2Stream.cpp',
+    'HttpAuthUtils.cpp',
     'HttpBaseChannel.cpp',
     'HttpChannelChild.cpp',
     'HttpChannelParent.cpp',
@@ -82,7 +88,6 @@ UNIFIED_SOURCES += [
     'nsHttpDigestAuth.cpp',
     'nsHttpHeaderArray.cpp',
     'nsHttpNTLMAuth.cpp',
-    'nsHttpPipeline.cpp',
     'nsHttpRequestHead.cpp',
     'nsHttpResponseHead.cpp',
     'nsHttpTransaction.cpp',

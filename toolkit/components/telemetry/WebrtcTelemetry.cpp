@@ -12,8 +12,6 @@
 #include "nsPrintfCString.h"
 #include "nsTHashtable.h"
 
-using mozilla::Telemetry::Common::AutoHashtable;
-
 void
 WebrtcTelemetry::RecordIceCandidateMask(const uint32_t iceCandidateBitmask,
                                         const bool success)
@@ -46,7 +44,7 @@ ReflectIceEntry(const WebrtcTelemetry::WebrtcIceCandidateType *entry,
   if (!statsObj)
     return false;
   if (!JS_DefineProperty(cx, obj,
-                         nsPrintfCString("%lu", bitmask).BeginReading(),
+                         nsPrintfCString("%" PRIu32, bitmask).BeginReading(),
                          statsObj, JSPROP_ENUMERATE)) {
     return false;
   }

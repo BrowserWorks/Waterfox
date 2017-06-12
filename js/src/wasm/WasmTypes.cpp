@@ -81,13 +81,13 @@ __aeabi_uidivmod(int, int);
 static void
 WasmReportOverRecursed()
 {
-    ReportOverRecursed(JSRuntime::innermostWasmActivation()->cx());
+    ReportOverRecursed(JSContext::innermostWasmActivation()->cx());
 }
 
 static bool
 WasmHandleExecutionInterrupt()
 {
-    WasmActivation* activation = JSRuntime::innermostWasmActivation();
+    WasmActivation* activation = JSContext::innermostWasmActivation();
     bool success = CheckForInterrupt(activation->cx());
 
     // Preserve the invariant that having a non-null resumePC means that we are
@@ -102,7 +102,7 @@ WasmHandleExecutionInterrupt()
 static bool
 WasmHandleDebugTrap()
 {
-    WasmActivation* activation = JSRuntime::innermostWasmActivation();
+    WasmActivation* activation = JSContext::innermostWasmActivation();
     MOZ_ASSERT(activation);
     JSContext* cx = activation->cx();
 
@@ -129,19 +129,44 @@ WasmHandleDebugTrap()
     }
     if (site->kind() == CallSite::LeaveFrame) {
         DebugFrame* frame = iter.debugFrame();
+        frame->updateReturnJSValue();
         bool ok = Debugger::onLeaveFrame(cx, frame, nullptr, true);
         frame->leaveFrame(cx);
         return ok;
     }
-    // TODO baseline debug traps
-    MOZ_CRASH();
+
+    DebugFrame* frame = iter.debugFrame();
+    Code& code = iter.instance()->code();
+    MOZ_ASSERT(code.hasBreakpointTrapAtOffset(site->lineOrBytecode()));
+    if (code.stepModeEnabled(frame->funcIndex())) {
+        RootedValue result(cx, UndefinedValue());
+        JSTrapStatus status = Debugger::onSingleStep(cx, &result);
+        if (status == JSTRAP_RETURN) {
+            // TODO properly handle JSTRAP_RETURN.
+            JS_ReportErrorASCII(cx, "Unexpected resumption value from onSingleStep");
+            return false;
+        }
+        if (status != JSTRAP_CONTINUE)
+            return false;
+    }
+    if (code.hasBreakpointSite(site->lineOrBytecode())) {
+        RootedValue result(cx, UndefinedValue());
+        JSTrapStatus status = Debugger::onTrap(cx, &result);
+        if (status == JSTRAP_RETURN) {
+            // TODO properly handle JSTRAP_RETURN.
+            JS_ReportErrorASCII(cx, "Unexpected resumption value from breakpoint handler");
+            return false;
+        }
+        if (status != JSTRAP_CONTINUE)
+            return false;
+    }
     return true;
 }
 
 static void
 WasmHandleThrow()
 {
-    WasmActivation* activation = JSRuntime::innermostWasmActivation();
+    WasmActivation* activation = JSContext::innermostWasmActivation();
     MOZ_ASSERT(activation);
     JSContext* cx = activation->cx();
 
@@ -150,6 +175,7 @@ WasmHandleThrow()
             continue;
 
         DebugFrame* frame = iter.debugFrame();
+        frame->clearReturnJSValue();
 
         // Assume JSTRAP_ERROR status if no exception is pending --
         // no onExceptionUnwind handlers must be fired.
@@ -177,7 +203,7 @@ WasmHandleThrow()
 static void
 WasmReportTrap(int32_t trapIndex)
 {
-    JSContext* cx = JSRuntime::innermostWasmActivation()->cx();
+    JSContext* cx = JSContext::innermostWasmActivation()->cx();
 
     MOZ_ASSERT(trapIndex < int32_t(Trap::Limit) && trapIndex >= 0);
     Trap trap = Trap(trapIndex);
@@ -221,21 +247,21 @@ WasmReportTrap(int32_t trapIndex)
 static void
 WasmReportOutOfBounds()
 {
-    JSContext* cx = JSRuntime::innermostWasmActivation()->cx();
+    JSContext* cx = JSContext::innermostWasmActivation()->cx();
     JS_ReportErrorNumberASCII(cx, GetErrorMessage, nullptr, JSMSG_WASM_OUT_OF_BOUNDS);
 }
 
 static void
 WasmReportUnalignedAccess()
 {
-    JSContext* cx = JSRuntime::innermostWasmActivation()->cx();
+    JSContext* cx = JSContext::innermostWasmActivation()->cx();
     JS_ReportErrorNumberASCII(cx, GetErrorMessage, nullptr, JSMSG_WASM_UNALIGNED_ACCESS);
 }
 
 static int32_t
 CoerceInPlace_ToInt32(MutableHandleValue val)
 {
-    JSContext* cx = JSRuntime::innermostWasmActivation()->cx();
+    JSContext* cx = JSContext::innermostWasmActivation()->cx();
 
     int32_t i32;
     if (!ToInt32(cx, val, &i32))
@@ -248,7 +274,7 @@ CoerceInPlace_ToInt32(MutableHandleValue val)
 static int32_t
 CoerceInPlace_ToNumber(MutableHandleValue val)
 {
-    JSContext* cx = JSRuntime::innermostWasmActivation()->cx();
+    JSContext* cx = JSContext::innermostWasmActivation()->cx();
 
     double dbl;
     if (!ToNumber(cx, val, &dbl))
@@ -317,17 +343,31 @@ TruncateDoubleToUint64(double input)
 }
 
 static double
-Int64ToFloatingPoint(int32_t x_hi, uint32_t x_lo)
+Int64ToDouble(int32_t x_hi, uint32_t x_lo)
 {
     int64_t x = int64_t((uint64_t(x_hi) << 32)) + int64_t(x_lo);
     return double(x);
 }
 
+static float
+Int64ToFloat32(int32_t x_hi, uint32_t x_lo)
+{
+    int64_t x = int64_t((uint64_t(x_hi) << 32)) + int64_t(x_lo);
+    return float(x);
+}
+
 static double
-Uint64ToFloatingPoint(int32_t x_hi, uint32_t x_lo)
+Uint64ToDouble(int32_t x_hi, uint32_t x_lo)
 {
     uint64_t x = (uint64_t(x_hi) << 32) + uint64_t(x_lo);
     return double(x);
+}
+
+static float
+Uint64ToFloat32(int32_t x_hi, uint32_t x_lo)
+{
+    uint64_t x = (uint64_t(x_hi) << 32) + uint64_t(x_lo);
+    return float(x);
 }
 
 template <class F>
@@ -342,13 +382,11 @@ FuncCast(F* pf, ABIFunctionType type)
 }
 
 void*
-wasm::AddressOf(SymbolicAddress imm, ExclusiveContext* cx)
+wasm::AddressOf(SymbolicAddress imm, JSContext* cx)
 {
     switch (imm) {
-      case SymbolicAddress::Context:
-        return cx->contextAddressForJit();
-      case SymbolicAddress::InterruptUint32:
-        return cx->runtimeAddressOfInterruptUint32();
+      case SymbolicAddress::ContextPtr:
+        return cx->zone()->group()->addressOfOwnerContext();
       case SymbolicAddress::ReportOverRecursed:
         return FuncCast(WasmReportOverRecursed, Args_General0);
       case SymbolicAddress::HandleExecutionInterrupt:
@@ -389,10 +427,14 @@ wasm::AddressOf(SymbolicAddress imm, ExclusiveContext* cx)
         return FuncCast(TruncateDoubleToUint64, Args_Int64_Double);
       case SymbolicAddress::TruncateDoubleToInt64:
         return FuncCast(TruncateDoubleToInt64, Args_Int64_Double);
-      case SymbolicAddress::Uint64ToFloatingPoint:
-        return FuncCast(Uint64ToFloatingPoint, Args_Double_IntInt);
-      case SymbolicAddress::Int64ToFloatingPoint:
-        return FuncCast(Int64ToFloatingPoint, Args_Double_IntInt);
+      case SymbolicAddress::Uint64ToDouble:
+        return FuncCast(Uint64ToDouble, Args_Double_IntInt);
+      case SymbolicAddress::Uint64ToFloat32:
+        return FuncCast(Uint64ToFloat32, Args_Float32_IntInt);
+      case SymbolicAddress::Int64ToDouble:
+        return FuncCast(Int64ToDouble, Args_Double_IntInt);
+      case SymbolicAddress::Int64ToFloat32:
+        return FuncCast(Int64ToFloat32, Args_Float32_IntInt);
 #if defined(JS_CODEGEN_ARM)
       case SymbolicAddress::aeabi_idivmod:
         return FuncCast(__aeabi_idivmod, Args_General2);
@@ -809,7 +851,7 @@ Assumptions::Assumptions()
 {}
 
 bool
-Assumptions::initBuildIdFromContext(ExclusiveContext* cx)
+Assumptions::initBuildIdFromContext(JSContext* cx)
 {
     if (!cx->buildIdOp() || !cx->buildIdOp()(&buildId)) {
         ReportOutOfMemory(cx);

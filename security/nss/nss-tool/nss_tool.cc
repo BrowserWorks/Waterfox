@@ -13,7 +13,7 @@
 
 static void Usage() {
   std::cerr << "Usage: nss <command> <subcommand> [options]" << std::endl;
-  std::cerr << "       nss db [--path <directory>] --list-certs" << std::endl;
+  std::cerr << "       nss db [--path <directory>] <commands>" << std::endl;
 }
 
 int main(int argc, char **argv) {
@@ -33,7 +33,6 @@ int main(int argc, char **argv) {
   std::vector<std::string> arguments(argv + 2, argv + argc);
   DBTool tool;
   if (!tool.Run(arguments)) {
-    tool.Usage();
     exit_code = 1;
   }
 

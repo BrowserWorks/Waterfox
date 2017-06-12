@@ -40,7 +40,39 @@
 
 #layout-grid-container {
   display: flex;
+  flex-direction: column;
   margin: 5px;
+}
+
+/**
+ * Grid Content
+ */
+
+.grid-content {
+  display: flex;
+  flex: 1;
+}
+
+/**
+ * Grid Outline
+ */
+
+#grid-outline {
+  margin: 5px auto;
+}
+
+.grid-outline-border {
+  stroke-width: 0.75;
+  fill: none;
+}
+
+.grid-outline-cell {
+  pointer-events: all;
+  stroke-dasharray: 0.5, 2;
+}
+
+.grid-outline-cell:hover {
+  opacity: 0.45;
 }
 
 /**
@@ -51,4 +83,30 @@
   font-style: italic;
   text-align: center;
   padding: 0.5em;
+}
+
+/**
+ * Grid Item
+ */
+
+.grid-item {
+  display: flex;
+  align-items: center;
+}
+
+.grid-item input {
+  margin: 0 5px;
+}
+
+.grid-color-swatch {
+  width: 12px;
+  height: 12px;
+  margin-left: 5px;
+  border: 1px solid var(--theme-highlight-gray);
+  border-radius: 50%;
+  cursor: pointer;
+}
+
+.grid-color-value {
+  display: none;
 }

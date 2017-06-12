@@ -413,7 +413,7 @@ function safelyGetContentWindow(frame) {
  *         of the content document.
  */
 function getFrameContentOffset(frame) {
-  let style = safelyGetContentWindow(frame).getComputedStyle(frame, null);
+  let style = safelyGetContentWindow(frame).getComputedStyle(frame);
 
   // In some cases, the computed style is null
   if (!style) {
@@ -658,6 +658,26 @@ function getWindowDimensions(window) {
   return { width, height };
 }
 exports.getWindowDimensions = getWindowDimensions;
+
+/**
+ * Returns the viewport's dimensions for the `window` given.
+ *
+ * @return {Object} An object with `width` and `height` properties, representing the
+ * number of pixels for the viewport's size.
+ */
+function getViewportDimensions(window) {
+  let windowUtils = utilsFor(window);
+
+  let scrollbarHeight = {};
+  let scrollbarWidth = {};
+  windowUtils.getScrollbarSize(false, scrollbarWidth, scrollbarHeight);
+
+  let width = window.innerWidth - scrollbarWidth.value;
+  let height = window.innerHeight - scrollbarHeight.value;
+
+  return { width, height };
+}
+exports.getViewportDimensions = getViewportDimensions;
 
 /**
  * Returns the max size allowed for a surface like textures or canvas.

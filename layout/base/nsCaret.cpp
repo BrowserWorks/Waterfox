@@ -537,13 +537,20 @@ nsCaret::GetPaintGeometry(nsRect* aRect)
   return frame;
 }
 
+nsIFrame*
+nsCaret::GetFrame(int32_t* aContentOffset) {
+  return GetFrameAndOffset(GetSelectionInternal(),
+                           mOverrideContent,
+                           mOverrideOffset,
+                           aContentOffset);
+}
+
 void nsCaret::PaintCaret(DrawTarget& aDrawTarget,
                          nsIFrame* aForFrame,
                          const nsPoint &aOffset)
 {
   int32_t contentOffset;
-  nsIFrame* frame = GetFrameAndOffset(GetSelectionInternal(),
-    mOverrideContent, mOverrideOffset, &contentOffset);
+  nsIFrame* frame = GetFrame(&contentOffset);
   if (!frame) {
     return;
   }
@@ -615,8 +622,9 @@ void nsCaret::ResetBlinking()
     LookAndFeel::GetInt(LookAndFeel::eIntID_CaretBlinkTime, 500));
   if (blinkRate > 0) {
     mBlinkCount = Preferences::GetInt("ui.caretBlinkCount", -1);
-    mBlinkTimer->InitWithFuncCallback(CaretBlinkCallback, this, blinkRate,
-                                      nsITimer::TYPE_REPEATING_SLACK);
+    mBlinkTimer->InitWithNamedFuncCallback(CaretBlinkCallback, this, blinkRate,
+                                           nsITimer::TYPE_REPEATING_SLACK,
+                                           "nsCaret::CaretBlinkCallback_timer");
   }
 }
 

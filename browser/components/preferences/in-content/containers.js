@@ -2,6 +2,8 @@
  * License, v. 2.0. If a copy of the MPL was not distributed with this file,
  * You can obtain one at http://mozilla.org/MPL/2.0/. */
 
+/* import-globals-from preferences.js */
+
 Components.utils.import("resource://gre/modules/AppConstants.jsm");
 Components.utils.import("resource://gre/modules/ContextualIdentityService.jsm");
 
@@ -23,7 +25,7 @@ let gContainersPane = {
   },
 
   _rebuildView() {
-    const containers = ContextualIdentityService.getIdentities();
+    const containers = ContextualIdentityService.getPublicIdentities();
     while (this._list.firstChild) {
       this._list.firstChild.remove();
     }
@@ -83,7 +85,7 @@ let gContainersPane = {
     };
     let title;
     if (userContextId) {
-      identity = ContextualIdentityService.getIdentityFromId(userContextId);
+      identity = ContextualIdentityService.getPublicIdentityFromId(userContextId);
       // This is required to get the translation string from defaults
       identity.name = ContextualIdentityService.getUserContextLabel(identity.userContextId);
       title = containersBundle.formatStringFromName("containers.updateContainerTitle", [identity.name], 1);

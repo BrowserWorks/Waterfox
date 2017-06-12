@@ -11,6 +11,7 @@
 #include "LookupResult.h"
 #include "MainThreadUtils.h"
 #include "RasterImage.h"
+#include "gfxPrefs.h"
 
 #include "pixman.h"
 
@@ -25,9 +26,9 @@ namespace image {
 ///////////////////////////////////////////////////////////////////////////////
 
 void
-AnimationState::SetDoneDecoding(bool aDone)
+AnimationState::NotifyDecodeComplete()
 {
-  mDoneDecoding = aDone;
+  mHasBeenDecoded = true;
 }
 
 void
@@ -52,7 +53,7 @@ AnimationState::UpdateKnownFrameCount(uint32_t aFrameCount)
     return;
   }
 
-  MOZ_ASSERT(!mDoneDecoding, "Adding new frames after decoding is finished?");
+  MOZ_ASSERT(!mHasBeenDecoded, "Adding new frames after decoding is finished?");
   MOZ_ASSERT(aFrameCount <= mFrameCount + 1, "Skipped a frame?");
 
   mFrameCount = aFrameCount;
@@ -61,7 +62,7 @@ AnimationState::UpdateKnownFrameCount(uint32_t aFrameCount)
 Maybe<uint32_t>
 AnimationState::FrameCount() const
 {
-  return mDoneDecoding ? Some(mFrameCount) : Nothing();
+  return mHasBeenDecoded ? Some(mFrameCount) : Nothing();
 }
 
 void
@@ -98,7 +99,7 @@ AnimationState::LoopLength() const
     return FrameTimeout::Forever();
   }
 
-  MOZ_ASSERT(mDoneDecoding, "We know the loop length but decoding isn't done?");
+  MOZ_ASSERT(mHasBeenDecoded, "We know the loop length but decoding isn't done?");
 
   // If we're not looping, a single loop time has no meaning.
   if (mAnimationMode != imgIContainer::kNormalAnimMode) {
@@ -353,10 +354,11 @@ DoCollectSizeOfCompositingSurfaces(const RawAccessFrameRef& aSurface,
   SurfaceMemoryCounter counter(key, /* aIsLocked = */ true, aType);
 
   // Extract the surface's memory usage information.
-  size_t heap = 0, nonHeap = 0;
-  aSurface->AddSizeOfExcludingThis(aMallocSizeOf, heap, nonHeap);
+  size_t heap = 0, nonHeap = 0, handles = 0;
+  aSurface->AddSizeOfExcludingThis(aMallocSizeOf, heap, nonHeap, handles);
   counter.Values().SetDecodedHeap(heap);
   counter.Values().SetDecodedNonHeap(nonHeap);
+  counter.Values().SetSharedHandles(handles);
 
   // Record it.
   aCounters.AppendElement(counter);
@@ -511,8 +513,8 @@ FrameAnimator::DoBlend(IntRect* aDirtyRect,
   // Create the Compositing Frame
   if (!mCompositingFrame) {
     RefPtr<imgFrame> newFrame = new imgFrame;
-    nsresult rv = newFrame->InitForDecoder(mSize,
-                                           SurfaceFormat::B8G8R8A8);
+    nsresult rv = newFrame->InitForAnimator(mSize,
+                                            SurfaceFormat::B8G8R8A8);
     if (NS_FAILED(rv)) {
       mCompositingFrame.reset();
       return false;
@@ -652,8 +654,8 @@ FrameAnimator::DoBlend(IntRect* aDirtyRect,
     // overwrite.
     if (!mCompositingPrevFrame) {
       RefPtr<imgFrame> newFrame = new imgFrame;
-      nsresult rv = newFrame->InitForDecoder(mSize,
-                                             SurfaceFormat::B8G8R8A8);
+      nsresult rv = newFrame->InitForAnimator(mSize,
+                                              SurfaceFormat::B8G8R8A8);
       if (NS_FAILED(rv)) {
         mCompositingPrevFrame.reset();
         return false;

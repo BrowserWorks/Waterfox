@@ -3,6 +3,8 @@
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
 
+/* eslint-env mozilla/frame-script */
+
 var Cc = Components.classes;
 var Ci = Components.interfaces;
 var Cu = Components.utils;
@@ -84,11 +86,11 @@ var ClickEventHandler = {
         continue;
       }
 
-      var overflowx = this._scrollable.ownerDocument.defaultView
-                          .getComputedStyle(this._scrollable, "")
+      var overflowx = this._scrollable.ownerGlobal
+                          .getComputedStyle(this._scrollable)
                           .getPropertyValue("overflow-x");
-      var overflowy = this._scrollable.ownerDocument.defaultView
-                          .getComputedStyle(this._scrollable, "")
+      var overflowy = this._scrollable.ownerGlobal
+                          .getComputedStyle(this._scrollable)
                           .getPropertyValue("overflow-y");
       // we already discarded non-multiline selects so allow vertical
       // scroll for multiline ones directly without checking for a
@@ -111,7 +113,7 @@ var ClickEventHandler = {
     }
 
     if (!this._scrollable) {
-      this._scrollable = aNode.ownerDocument.defaultView;
+      this._scrollable = aNode.ownerGlobal;
       if (this._scrollable.scrollMaxX != this._scrollable.scrollMinX) {
         this._scrolldir = this._scrollable.scrollMaxY !=
                           this._scrollable.scrollMinY ? "NSEW" : "EW";
@@ -651,7 +653,19 @@ var Printing = {
       if (printSettings && simplifiedMode)
         printSettings.docURL = contentWindow.document.baseURI;
 
-      docShell.printPreview.printPreview(printSettings, contentWindow, this);
+      // The print preview docshell will be in a different TabGroup,
+      // so we run it in a separate runnable to avoid touching a
+      // different TabGroup in our own runnable.
+      Services.tm.mainThread.dispatch(() => {
+        try {
+          docShell.printPreview.printPreview(printSettings, contentWindow, this);
+        } catch (error) {
+          // This might fail if we, for example, attempt to print a XUL document.
+          // In that case, we inform the parent to bail out of print preview.
+          Components.utils.reportError(error);
+          notifyEntered(error);
+        }
+      }, Ci.nsIThread.DISPATCH_NORMAL);
     } catch (error) {
       // This might fail if we, for example, attempt to print a XUL document.
       // In that case, we inform the parent to bail out of print preview.
@@ -936,7 +950,7 @@ addMessageListener("WebChannelMessageToContent", function(e) {
     if (e.principal.subsumes(targetPrincipal)) {
       // If eventTarget is a window, use it as the targetWindow, otherwise
       // find the window that owns the eventTarget.
-      let targetWindow = eventTarget instanceof Ci.nsIDOMWindow ? eventTarget : eventTarget.ownerDocument.defaultView;
+      let targetWindow = eventTarget instanceof Ci.nsIDOMWindow ? eventTarget : eventTarget.ownerGlobal;
 
       eventTarget.dispatchEvent(new targetWindow.CustomEvent("WebChannelMessageToContent", {
         detail: Cu.cloneInto({
@@ -1016,8 +1030,10 @@ var AudioPlaybackListener = {
     if (topic === "audio-playback") {
       if (subject && subject.top == global.content) {
         let name = "AudioPlayback:";
-        if (data === "block") {
-          name += "Block";
+        if (data === "blockStart") {
+          name += "BlockStart";
+        } else if (data === "blockStop") {
+          name += "BlockStop";
         } else {
           name += (data === "active") ? "Start" : "Stop";
         }
@@ -1240,7 +1256,7 @@ var ViewSelectionSource = {
    *        Some element within the fragment of interest.
    */
   getMathMLSelection(node) {
-    var Node = node.ownerDocument.defaultView.Node;
+    var Node = node.ownerGlobal.Node;
     this._lineCount = 0;
     this._startTargetLine = 0;
     this._endTargetLine = 0;
@@ -1297,7 +1313,7 @@ var ViewSelectionSource = {
   },
 
   getOuterMarkup(node, indent) {
-    var Node = node.ownerDocument.defaultView.Node;
+    var Node = node.ownerGlobal.Node;
     var newline = "";
     var padding = "";
     var str = "";
@@ -1546,7 +1562,7 @@ let AutoCompletePopup = {
     }
 
     let rect = BrowserUtils.getElementBoundingScreenRect(element);
-    let window = element.ownerDocument.defaultView;
+    let window = element.ownerGlobal;
     let dir = window.getComputedStyle(element).direction;
     let results = this.getResultsFromController(input);
 
@@ -1667,7 +1683,7 @@ let DateTimePickerListener = {
    * Helper function that returns the CSS direction property of the element.
    */
   getComputedDirection(aElement) {
-    return aElement.ownerDocument.defaultView.getComputedStyle(aElement)
+    return aElement.ownerGlobal.getComputedStyle(aElement)
       .getPropertyValue("direction");
   },
 
@@ -1778,4 +1794,3 @@ addEventListener("mozshowdropdown-sourcetouch", event => {
     new SelectContentHelper(event.target, {isOpenedViaTouch: true}, this);
   }
 });
-

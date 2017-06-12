@@ -92,7 +92,8 @@ this.RotaryTracker = function RotaryTracker(name, engine) {
   Tracker.call(this, name, engine);
 }
 RotaryTracker.prototype = {
-  __proto__: Tracker.prototype
+  __proto__: Tracker.prototype,
+  persistChangedIDs: false,
 };
 
 
@@ -120,5 +121,6 @@ RotaryEngine.prototype = {
         return id;
       }
     }
+    return null;
   }
 };

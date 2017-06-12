@@ -30,8 +30,15 @@
   white-space: nowrap;
 }
 
+/* To avoid "select all" commands from selecting content in hidden tabs */
+.tabs .hidden,
+.tabs .hidden * {
+  -moz-user-select: none !important;
+}
+
 .tabs .tabs-menu-item a {
   cursor: default;
+  -moz-user-select: none;
 }
 
 /* Make sure panel content takes entire vertical space.
@@ -42,19 +49,6 @@
 
 .tabs .tab-panel {
   height: 100%;
-}
-
-.tabs .all-tabs-menu  {
-  position: absolute;
-  top: 0;
-  offset-inline-end: 0;
-  width: 15px;
-  height: 100%;
-  border-inline-start: 1px solid var(--theme-splitter-color);
-  background: var(--theme-tab-toolbar-background);
-  background-image: url("chrome://devtools/skin/images/dropmarker.svg");
-  background-repeat: no-repeat;
-  background-position: center;
 }
 
 .tabs .tabs-navigation,
@@ -88,12 +82,12 @@
 
 .theme-dark .tabs .tabs-menu-item:hover:not(.is-active),
 .theme-light .tabs .tabs-menu-item:hover:not(.is-active) {
-  background-color: var(--toolbar-tab-hover);
+  background-color: var(--theme-toolbar-hover);
 }
 
 .theme-dark .tabs .tabs-menu-item:hover:active:not(.is-active),
 .theme-light .tabs .tabs-menu-item:hover:active:not(.is-active) {
-  background-color: var(--toolbar-tab-hover-active);
+  background-color: var(--theme-toolbar-hover-active);
 }
 
 .theme-dark .tabs .tabs-menu-item.is-active,
@@ -158,7 +152,7 @@
 }
 
 .theme-firebug .tabs .tabs-menu-item:hover:active a {
-  background-color: var(--toolbar-tab-hover-active);
+  background-color: var(--theme-toolbar-hover-active);
 }
 
 .theme-firebug .tabs .tabs-menu-item.is-active:hover:active a {

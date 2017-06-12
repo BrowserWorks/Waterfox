@@ -9,6 +9,7 @@
 #include "nsDebug.h"
 #include "nsIWidget.h"
 #include "gfxPlatform.h"
+#include "gfxPrefs.h"
 #include "gfxWindowsSurface.h"
 
 #include "gfxCrashReporterUtils.h"
@@ -18,7 +19,9 @@
 #include "mozilla/gfx/gfxVars.h"
 #include "mozilla/Preferences.h"
 #include "mozilla/StaticPtr.h"
+#include "mozilla/layers/CompositorOptions.h"
 #include "mozilla/widget/CompositorWidget.h"
+#include "mozilla/widget/WinCompositorWidget.h"
 
 namespace mozilla {
 namespace gl {
@@ -66,7 +69,7 @@ WGLLibrary::CreateDummyWindow(HDC* aWindowDC)
         pfd.cGreenBits = 8;
         pfd.cBlueBits = 8;
         pfd.cAlphaBits = 8;
-        pfd.cDepthBits = 0;
+        pfd.cDepthBits = gfxVars::UseWebRender() ? 24 : 0;
         pfd.iLayerType = PFD_MAIN_PLANE;
 
         mWindowPixelFormat = ChoosePixelFormat(dc, &pfd);
@@ -377,6 +380,13 @@ GLContextWGL::SwapBuffers() {
     return ::SwapBuffers(mDC);
 }
 
+void
+GLContextWGL::GetWSIInfo(nsCString* const out) const
+{
+    out->AppendLiteral("wglGetExtensionsString: ");
+    out->Append(sWGLLib.fGetExtensionsString(mDC));
+}
+
 bool
 GLContextWGL::SetupLookupFunction()
 {
@@ -421,12 +431,6 @@ IsValidSizeForFormat(HDC hDC, int format,
     return true;
 }
 
-static GLContextWGL*
-GetGlobalContextWGL()
-{
-    return static_cast<GLContextWGL*>(GLContextProviderWGL::GetGlobalContext());
-}
-
 already_AddRefed<GLContext>
 GLContextProviderWGL::CreateWrappingExisting(void*, void*)
 {
@@ -434,13 +438,9 @@ GLContextProviderWGL::CreateWrappingExisting(void*, void*)
 }
 
 already_AddRefed<GLContext>
-GLContextProviderWGL::CreateForCompositorWidget(CompositorWidget* aCompositorWidget, bool aForceAccelerated)
-{
-    return CreateForWindow(aCompositorWidget->RealWidget(), aForceAccelerated);
-}
-
-already_AddRefed<GLContext>
-GLContextProviderWGL::CreateForWindow(nsIWidget* aWidget, bool aForceAccelerated)
+CreateForWidget(HWND aHwnd,
+                bool aWebRender,
+                bool aForceAccelerated)
 {
     if (!sWGLLib.EnsureInitialized()) {
         return nullptr;
@@ -452,7 +452,7 @@ GLContextProviderWGL::CreateForWindow(nsIWidget* aWidget, bool aForceAccelerated
        * wglCreateContext will fail.
        */
 
-    HDC dc = (HDC)aWidget->GetNativeData(NS_NATIVE_GRAPHIC);
+    HDC dc = ::GetDC(aHwnd);
 
     SetPixelFormat(dc, sWGLLib.GetWindowPixelFormat(), nullptr);
     HGLRC context;
@@ -483,6 +483,20 @@ GLContextProviderWGL::CreateForWindow(nsIWidget* aWidget, bool aForceAccelerated
     glContext->SetIsDoubleBuffered(true);
 
     return glContext.forget();
+}
+
+already_AddRefed<GLContext>
+GLContextProviderWGL::CreateForCompositorWidget(CompositorWidget* aCompositorWidget, bool aForceAccelerated)
+{
+    return CreateForWidget(aCompositorWidget->AsWindows()->GetHwnd(),
+                           aCompositorWidget->GetCompositorOptions().UseWebRender(),
+                           aForceAccelerated);
+}
+
+already_AddRefed<GLContext>
+GLContextProviderWGL::CreateForWindow(nsIWidget* aWidget, bool aWebRender, bool aForceAccelerated)
+{
+    return CreateForWidget((HWND)aWidget->GetNativeData(NS_NATIVE_WINDOW), aWebRender, aForceAccelerated);
 }
 
 static already_AddRefed<GLContextWGL>

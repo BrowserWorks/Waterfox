@@ -30,7 +30,6 @@
 #include "nsIURL.h"
 #include "nsTArray.h"
 #include "nsReadableUtils.h"
-#include "nsProtocolProxyService.h"
 #include "nsIStreamConverterService.h"
 #include "nsIFile.h"
 #if defined(XP_MACOSX)
@@ -187,13 +186,10 @@ busy_beaver_PR_Read(PRFileDesc *fd, void * start, int32_t len)
                 return -1;
             break;
         }
-        else
-        {
-            remaining -= n;
-            char *cp = (char *) start;
-            cp += n;
-            start = cp;
-        }
+        remaining -= n;
+        char *cp = (char *) start;
+        cp += n;
+        start = cp;
     }
     return len - remaining;
 }
@@ -265,8 +261,10 @@ static bool UnloadPluginsASAP()
 }
 
 nsPluginHost::nsPluginHost()
-  // No need to initialize members to nullptr, false etc because this class
-  // has a zeroing operator new.
+  : mPluginsLoaded(false)
+  , mOverrideInternalTypes(false)
+  , mPluginsDisabled(false)
+  , mPluginEpoch(0)
 {
   // Bump the pluginchanged epoch on startup. This insures content gets a
   // good plugin list the first time it requests it. Normally we'd just
@@ -274,12 +272,6 @@ nsPluginHost::nsPluginHost()
   // this manually.
   if (XRE_IsParentProcess()) {
     IncrementChromeEpoch();
-  } else {
-    // When NPAPI requests the proxy setting by calling |FindProxyForURL|,
-    // the service is requested and initialized asynchronously, but
-    // |FindProxyForURL| is synchronous, so we should initialize this earlier.
-    nsCOMPtr<nsIProtocolProxyService> proxyService =
-      do_GetService(NS_PROTOCOLPROXYSERVICE_CONTRACTID);
   }
 
   // check to see if pref is set at startup to let plugins take over in
@@ -595,88 +587,6 @@ nsresult nsPluginHost::PostURL(nsISupports* pluginInst,
   return rv;
 }
 
-/* This method queries the prefs for proxy information.
- * It has been tested and is known to work in the following three cases
- * when no proxy host or port is specified
- * when only the proxy host is specified
- * when only the proxy port is specified
- * This method conforms to the return code specified in
- * http://developer.netscape.com/docs/manuals/proxy/adminnt/autoconf.htm#1020923
- * with the exception that multiple values are not implemented.
- */
-
-nsresult nsPluginHost::FindProxyForURL(const char* url, char* *result)
-{
-  if (!url || !result) {
-    return NS_ERROR_INVALID_ARG;
-  }
-  nsresult res;
-
-  nsCOMPtr<nsIProtocolProxyService> proxyService =
-    do_GetService(NS_PROTOCOLPROXYSERVICE_CONTRACTID, &res);
-  if (NS_FAILED(res) || !proxyService)
-    return res;
-
-  RefPtr<nsProtocolProxyService> rawProxyService = do_QueryObject(proxyService);
-  if (!rawProxyService) {
-    return NS_ERROR_FAILURE;
-  }
-
-  // make a temporary channel from the argument url
-  nsCOMPtr<nsIURI> uri;
-  res = NS_NewURI(getter_AddRefs(uri), nsDependentCString(url));
-  NS_ENSURE_SUCCESS(res, res);
-
-  nsCOMPtr<nsIPrincipal> nullPrincipal = nsNullPrincipal::Create();
-  // The following channel is never openend, so it does not matter what
-  // securityFlags we pass; let's follow the principle of least privilege.
-  nsCOMPtr<nsIChannel> tempChannel;
-  res = NS_NewChannel(getter_AddRefs(tempChannel), uri, nullPrincipal,
-                      nsILoadInfo::SEC_REQUIRE_SAME_ORIGIN_DATA_IS_BLOCKED,
-                      nsIContentPolicy::TYPE_OTHER);
-  NS_ENSURE_SUCCESS(res, res);
-
-  nsCOMPtr<nsIProxyInfo> pi;
-
-  // Remove this deprecated call in the future (see Bug 778201):
-  res = rawProxyService->DeprecatedBlockingResolve(tempChannel, 0, getter_AddRefs(pi));
-  if (NS_FAILED(res))
-    return res;
-
-  nsAutoCString host, type;
-  int32_t port = -1;
-
-  // These won't fail, and even if they do... we'll be ok.
-  if (pi) {
-    pi->GetType(type);
-    pi->GetHost(host);
-    pi->GetPort(&port);
-  }
-
-  if (!pi || host.IsEmpty() || port <= 0 || host.EqualsLiteral("direct")) {
-    *result = PL_strdup("DIRECT");
-  } else if (type.EqualsLiteral("http")) {
-    *result = PR_smprintf("PROXY %s:%d", host.get(), port);
-  } else if (type.EqualsLiteral("socks4")) {
-    *result = PR_smprintf("SOCKS %s:%d", host.get(), port);
-  } else if (type.EqualsLiteral("socks")) {
-    // XXX - this is socks5, but there is no API for us to tell the
-    // plugin that fact. SOCKS for now, in case the proxy server
-    // speaks SOCKS4 as well. See bug 78176
-    // For a long time this was returning an http proxy type, so
-    // very little is probably broken by this
-    *result = PR_smprintf("SOCKS %s:%d", host.get(), port);
-  } else {
-    NS_ASSERTION(false, "Unknown proxy type!");
-    *result = PL_strdup("DIRECT");
-  }
-
-  if (nullptr == *result)
-    res = NS_ERROR_OUT_OF_MEMORY;
-
-  return res;
-}
-
 nsresult nsPluginHost::UnloadPlugins()
 {
   PLUGIN_LOG(PLUGIN_LOG_NORMAL, ("nsPluginHost::UnloadPlugins Called\n"));
@@ -859,8 +769,8 @@ nsPluginHost::InstantiatePluginInstance(const nsACString& aMimeType, nsIURI* aUR
   if (aURL != nullptr) aURL->GetAsciiSpec(urlSpec2);
 
   MOZ_LOG(nsPluginLogging::gPluginLog, PLUGIN_LOG_NORMAL,
-        ("nsPluginHost::InstantiatePlugin Finished mime=%s, rv=%d, url=%s\n",
-         PromiseFlatCString(aMimeType).get(), rv, urlSpec2.get()));
+        ("nsPluginHost::InstantiatePlugin Finished mime=%s, rv=%" PRIu32 ", url=%s\n",
+         PromiseFlatCString(aMimeType).get(), static_cast<uint32_t>(rv), urlSpec2.get()));
 
   PR_LogFlush();
 #endif
@@ -996,8 +906,8 @@ nsPluginHost::TrySetUpPluginInstance(const nsACString &aMimeType,
 
 #ifdef PLUGIN_LOGGING
   MOZ_LOG(nsPluginLogging::gPluginLog, PLUGIN_LOG_BASIC,
-        ("nsPluginHost::TrySetupPluginInstance Finished mime=%s, rv=%d, owner=%p, url=%s\n",
-         PromiseFlatCString(aMimeType).get(), rv, aOwner,
+        ("nsPluginHost::TrySetupPluginInstance Finished mime=%s, rv=%" PRIu32 ", owner=%p, url=%s\n",
+         PromiseFlatCString(aMimeType).get(), static_cast<uint32_t>(rv), aOwner,
          aURL ? aURL->GetSpecOrDefault().get() : ""));
 
   PR_LogFlush();
@@ -1463,8 +1373,8 @@ nsresult nsPluginHost::GetPlugin(const nsACString &aMimeType,
   }
 
   PLUGIN_LOG(PLUGIN_LOG_NORMAL,
-  ("nsPluginHost::GetPlugin End mime=%s, rv=%d, plugin=%p name=%s\n",
-   PromiseFlatCString(aMimeType).get(), rv, *aPlugin,
+  ("nsPluginHost::GetPlugin End mime=%s, rv=%" PRIu32 ", plugin=%p name=%s\n",
+   PromiseFlatCString(aMimeType).get(), static_cast<uint32_t>(rv), *aPlugin,
    (pluginTag ? pluginTag->FileName().get() : "(not found)")));
 
   return rv;
@@ -2917,8 +2827,8 @@ nsPluginHost::ReadPluginInfo()
                           getter_AddRefs(mPluginRegFile));
     if (!mPluginRegFile)
       return NS_ERROR_FAILURE;
-    else
-      return NS_ERROR_NOT_AVAILABLE;
+
+    return NS_ERROR_NOT_AVAILABLE;
   }
 
   PRFileDesc* fd = nullptr;
@@ -3115,9 +3025,7 @@ nsPluginHost::ReadPluginInfo()
     }
 
     if (mtr != mimetypecount) {
-      if (heapalloced) {
-        delete [] heapalloced;
-      }
+      delete [] heapalloced;
       return rv;
     }
 
@@ -3130,8 +3038,8 @@ nsPluginHost::ReadPluginInfo()
       (const char* const*)mimedescriptions,
       (const char* const*)extensions,
       mimetypecount, lastmod, fromExtension, true);
-    if (heapalloced)
-      delete [] heapalloced;
+
+    delete [] heapalloced;
 
     // Import flags from registry into prefs for old registry versions
     MOZ_LOG(nsPluginLogging::gPluginLog, PLUGIN_LOG_BASIC,

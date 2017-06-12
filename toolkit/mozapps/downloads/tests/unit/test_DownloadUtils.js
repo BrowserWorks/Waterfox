@@ -78,7 +78,7 @@ function testAllGetReadableDates() {
   const sixdaysago      = new Date(2000, 11, 25, 11, 30, 15);
   const sevendaysago    = new Date(2000, 11, 24, 11, 30, 15);
 
-  // TODO: Remove Intl fallback when bug 1215247 is fixed.
+  // TODO: Remove Intl fallback when no longer needed (bug 1344543).
   const locale = typeof Intl === "undefined"
                  ? undefined
                  : Components.classes["@mozilla.org/chrome/chrome-registry;1"]

@@ -9,10 +9,10 @@
 
 add_task(function* () {
   let { tab, monitor } = yield initNetMonitor(CUSTOM_GET_URL);
-  let { document, NetMonitorView } = monitor.panelWin;
-  let { RequestsMenu } = NetMonitorView;
+  let { document, gStore, windowRequire } = monitor.panelWin;
+  let Actions = windowRequire("devtools/client/netmonitor/actions/index");
 
-  RequestsMenu.lazyUpdate = false;
+  gStore.dispatch(Actions.batchEnable(false));
 
   info("Performing a secure request.");
   const REQUESTS_URL = "https://example.com" + CORS_SJS_PATH;
@@ -22,14 +22,14 @@ add_task(function* () {
   });
   yield wait;
 
-  wait = waitForDOM(document, "#security-tabpanel");
-  EventUtils.sendMouseEvent({ type: "mousedown" },
-    document.getElementById("details-pane-toggle"));
-  EventUtils.sendMouseEvent({ type: "mousedown" },
-    document.querySelectorAll("#details-pane tab")[5]);
+  wait = waitForDOM(document, "#security-panel");
+  EventUtils.sendMouseEvent({ type: "click" },
+    document.querySelector(".network-details-panel-toggle"));
+  EventUtils.sendMouseEvent({ type: "click" },
+    document.querySelector("#security-tab"));
   yield wait;
 
-  let tabpanel = document.querySelector("#security-tabpanel");
+  let tabpanel = document.querySelector("#security-panel");
   let textboxes = tabpanel.querySelectorAll(".textbox-input");
 
   // Connection
@@ -46,8 +46,8 @@ add_task(function* () {
 
   // Host
   is(tabpanel.querySelectorAll(".treeLabel.objectLabel")[1].textContent,
-    "Host example.com:",
-    "Label has the expected value.");
+     "Host example.com:",
+     "Label has the expected value.");
   is(textboxes[2].value, "Disabled", "Label has the expected value.");
   is(textboxes[3].value, "Disabled", "Label has the expected value.");
 
@@ -56,7 +56,8 @@ add_task(function* () {
   is(textboxes[5].value, "<Not Available>", "Label has the expected value.");
   is(textboxes[6].value, "<Not Available>", "Label has the expected value.");
 
-  is(textboxes[7].value, "Temporary Certificate Authority", "Label has the expected value.");
+  is(textboxes[7].value, "Temporary Certificate Authority",
+     "Label has the expected value.");
   is(textboxes[8].value, "Mozilla Testing", "Label has the expected value.");
   is(textboxes[9].value, "Profile Guided Optimization", "Label has the expected value.");
 

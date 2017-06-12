@@ -4,16 +4,65 @@
   <meta charset="utf8">
   <title>Test for the Console API and Service Workers</title>
   <script type="text/javascript" src="chrome://mochikit/content/tests/SimpleTest/SimpleTest.js"></script>
-  <script type="text/javascript;version=1.8" src="common.js"></script>
+  <script type="text/javascript" src="common.js"></script>
   <!-- Any copyright is dedicated to the Public Domain.
      - http://creativecommons.org/publicdomain/zero/1.0/ -->
 </head>
 <body>
 <p>Test for the Console API and Service Workers</p>
 
-<script class="testbody" type="text/javascript;version=1.8">
+<script class="testbody" type="text/javascript">
 SimpleTest.waitForExplicitFinish();
 
+// Utils functions
+function withFrame(url) {
+  return new Promise(resolve => {
+    let iframe = document.createElement("iframe");
+    iframe.onload = function () {
+      resolve(iframe);
+    };
+    iframe.src = url;
+    document.body.appendChild(iframe);
+  });
+}
+
+function navigateFrame(iframe, url) {
+  return new Promise(resolve => {
+    iframe.onload = function () {
+      resolve(iframe);
+    };
+    iframe.src = url;
+  });
+}
+
+function forceReloadFrame(iframe) {
+  return new Promise(resolve => {
+    iframe.onload = function () {
+      resolve(iframe);
+    };
+    iframe.contentWindow.location.reload(true);
+  });
+}
+
+function messageServiceWorker(win, scope, message) {
+  return win.navigator.serviceWorker.getRegistration(scope).then(swr => {
+    return new Promise(resolve => {
+      win.navigator.serviceWorker.onmessage = evt => {
+        resolve();
+      };
+      let sw = swr.active || swr.waiting || swr.installing;
+      sw.postMessage({ type: "PING", message: message });
+    });
+  });
+}
+
+function unregisterServiceWorker(win) {
+  return win.navigator.serviceWorker.ready.then(swr => {
+    return swr.unregister();
+  });
+}
+
+// Test
 let BASE_URL = "https://example.com/chrome/devtools/shared/webconsole/test/";
 let SERVICE_WORKER_URL = BASE_URL + "helper_serviceworker.js";
 let SCOPE = BASE_URL + "foo/";

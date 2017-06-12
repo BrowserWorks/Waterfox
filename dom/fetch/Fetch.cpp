@@ -11,7 +11,6 @@
 #include "nsIStreamLoader.h"
 #include "nsIThreadRetargetableRequest.h"
 #include "nsIUnicodeDecoder.h"
-#include "nsIUnicodeEncoder.h"
 
 #include "nsCharSeparatedTokenizer.h"
 #include "nsDOMString.h"
@@ -21,8 +20,8 @@
 #include "nsStringStream.h"
 
 #include "mozilla/ErrorResult.h"
+#include "mozilla/dom/BindingDeclarations.h"
 #include "mozilla/dom/BodyUtil.h"
-#include "mozilla/dom/EncodingUtils.h"
 #include "mozilla/dom/Exceptions.h"
 #include "mozilla/dom/FetchDriver.h"
 #include "mozilla/dom/File.h"
@@ -38,6 +37,7 @@
 #include "mozilla/dom/workers/ServiceWorkerManager.h"
 #include "mozilla/Telemetry.h"
 
+#include "BodyExtractor.h"
 #include "InternalRequest.h"
 #include "InternalResponse.h"
 
@@ -100,7 +100,7 @@ class MainThreadFetchResolver final : public FetchDriverObserver
   RefPtr<Promise> mPromise;
   RefPtr<Response> mResponse;
 
-  nsCOMPtr<nsIDocument> mDocument;
+  nsCOMPtr<nsILoadGroup> mLoadGroup;
 
   NS_DECL_OWNINGTHREAD
 public:
@@ -109,9 +109,9 @@ public:
   void
   OnResponseAvailableInternal(InternalResponse* aResponse) override;
 
-  void SetDocument(nsIDocument* aDocument)
+  void SetLoadGroup(nsILoadGroup* aLoadGroup)
   {
-    mDocument = aDocument;
+    mLoadGroup = aLoadGroup;
   }
 
   virtual void OnResponseEnd() override
@@ -124,7 +124,7 @@ private:
 
   void FlushConsoleReport() override
   {
-    mReporter->FlushConsoleReports(mDocument);
+    mReporter->FlushConsoleReports(mLoadGroup);
   }
 };
 
@@ -177,7 +177,7 @@ public:
 
 already_AddRefed<Promise>
 FetchRequest(nsIGlobalObject* aGlobal, const RequestOrUSVString& aInput,
-             const RequestInit& aInit, ErrorResult& aRv)
+             const RequestInit& aInit, CallerType aCallerType, ErrorResult& aRv)
 {
   RefPtr<Promise> p = Promise::Create(aGlobal, aRv);
   if (NS_WARN_IF(aRv.Failed())) {
@@ -185,12 +185,10 @@ FetchRequest(nsIGlobalObject* aGlobal, const RequestOrUSVString& aInput,
   }
 
   // Double check that we have chrome privileges if the Request's content
-  // policy type has been overridden.  Note, we must do this before
-  // entering the global below.  Otherwise the IsCallerChrome() will
-  // always fail.
+  // policy type has been overridden.
   MOZ_ASSERT_IF(aInput.IsRequest() &&
                 aInput.GetAsRequest().IsContentPolicyTypeOverridden(),
-                nsContentUtils::IsCallerChrome());
+                aCallerType == CallerType::System);
 
   AutoJSAPI jsapi;
   if (!jsapi.Init(aGlobal)) {
@@ -240,7 +238,7 @@ FetchRequest(nsIGlobalObject* aGlobal, const RequestOrUSVString& aInput,
     RefPtr<MainThreadFetchResolver> resolver = new MainThreadFetchResolver(p);
     RefPtr<FetchDriver> fetch = new FetchDriver(r, principal, loadGroup);
     fetch->SetDocument(doc);
-    resolver->SetDocument(doc);
+    resolver->SetLoadGroup(loadGroup);
     aRv = fetch->Fetch(resolver);
     if (NS_WARN_IF(aRv.Failed())) {
       return nullptr;
@@ -455,7 +453,7 @@ WorkerFetchResolver::FlushConsoleReport()
 
   workers::WorkerPrivate* worker = mPromiseProxy->GetWorkerPrivate();
   if (!worker) {
-    mReporter->FlushConsoleReports((nsIDocument*)nullptr);
+    mReporter->FlushReportsToConsole(0);
     return;
   }
 
@@ -463,7 +461,7 @@ WorkerFetchResolver::FlushConsoleReport()
     // Flush to service worker
     RefPtr<ServiceWorkerManager> swm = ServiceWorkerManager::GetInstance();
     if (!swm) {
-      mReporter->FlushConsoleReports((nsIDocument*)nullptr);
+      mReporter->FlushReportsToConsole(0);
       return;
     }
 
@@ -478,159 +476,56 @@ WorkerFetchResolver::FlushConsoleReport()
   }
 
   // Flush to dedicated worker
-  mReporter->FlushConsoleReports(worker->GetDocument());
-}
-
-namespace {
-nsresult
-ExtractFromArrayBuffer(const ArrayBuffer& aBuffer,
-                       nsIInputStream** aStream,
-                       uint64_t& aContentLength)
-{
-  aBuffer.ComputeLengthAndData();
-  aContentLength = aBuffer.Length();
-  //XXXnsm reinterpret_cast<> is used in DOMParser, should be ok.
-  return NS_NewByteInputStream(aStream,
-                               reinterpret_cast<char*>(aBuffer.Data()),
-                               aBuffer.Length(), NS_ASSIGNMENT_COPY);
+  mReporter->FlushConsoleReports(worker->GetLoadGroup());
 }
 
 nsresult
-ExtractFromArrayBufferView(const ArrayBufferView& aBuffer,
-                           nsIInputStream** aStream,
-                           uint64_t& aContentLength)
-{
-  aBuffer.ComputeLengthAndData();
-  aContentLength = aBuffer.Length();
-  //XXXnsm reinterpret_cast<> is used in DOMParser, should be ok.
-  return NS_NewByteInputStream(aStream,
-                               reinterpret_cast<char*>(aBuffer.Data()),
-                               aBuffer.Length(), NS_ASSIGNMENT_COPY);
-}
-
-nsresult
-ExtractFromBlob(const Blob& aBlob,
-                nsIInputStream** aStream,
-                nsCString& aContentType,
-                uint64_t& aContentLength)
-{
-  RefPtr<BlobImpl> impl = aBlob.Impl();
-  ErrorResult rv;
-  aContentLength = impl->GetSize(rv);
-  if (NS_WARN_IF(rv.Failed())) {
-    return rv.StealNSResult();
-  }
-
-  impl->GetInternalStream(aStream, rv);
-  if (NS_WARN_IF(rv.Failed())) {
-    return rv.StealNSResult();
-  }
-
-  nsAutoString type;
-  impl->GetType(type);
-  if (!type.IsEmpty()) {
-    CopyUTF16toUTF8(type, aContentType);
-  }
-  return NS_OK;
-}
-
-nsresult
-ExtractFromFormData(FormData& aFormData,
-                    nsIInputStream** aStream,
-                    nsCString& aContentType,
-                    uint64_t& aContentLength)
-{
-  nsAutoCString unusedCharset;
-  return aFormData.GetSendInfo(aStream, &aContentLength,
-                               aContentType, unusedCharset);
-}
-
-nsresult
-ExtractFromUSVString(const nsString& aStr,
-                     nsIInputStream** aStream,
-                     nsCString& aContentType,
-                     uint64_t& aContentLength)
-{
-  nsCOMPtr<nsIUnicodeEncoder> encoder = EncodingUtils::EncoderForEncoding("UTF-8");
-  if (!encoder) {
-    return NS_ERROR_OUT_OF_MEMORY;
-  }
-
-  int32_t destBufferLen;
-  nsresult rv = encoder->GetMaxLength(aStr.get(), aStr.Length(), &destBufferLen);
-  if (NS_WARN_IF(NS_FAILED(rv))) {
-    return rv;
-  }
-
-  nsCString encoded;
-  if (!encoded.SetCapacity(destBufferLen, fallible)) {
-    return NS_ERROR_OUT_OF_MEMORY;
-  }
-
-  char* destBuffer = encoded.BeginWriting();
-  int32_t srcLen = (int32_t) aStr.Length();
-  int32_t outLen = destBufferLen;
-  rv = encoder->Convert(aStr.get(), &srcLen, destBuffer, &outLen);
-  if (NS_WARN_IF(NS_FAILED(rv))) {
-    return rv;
-  }
-
-  MOZ_ASSERT(outLen <= destBufferLen);
-  encoded.SetLength(outLen);
-
-  aContentType = NS_LITERAL_CSTRING("text/plain;charset=UTF-8");
-  aContentLength = outLen;
-
-  return NS_NewCStringInputStream(aStream, encoded);
-}
-
-nsresult
-ExtractFromURLSearchParams(const URLSearchParams& aParams,
-                           nsIInputStream** aStream,
-                           nsCString& aContentType,
-                           uint64_t& aContentLength)
-{
-  nsAutoString serialized;
-  aParams.Stringify(serialized);
-  aContentType = NS_LITERAL_CSTRING("application/x-www-form-urlencoded;charset=UTF-8");
-  aContentLength = serialized.Length();
-  return NS_NewCStringInputStream(aStream, NS_ConvertUTF16toUTF8(serialized));
-}
-} // namespace
-
-nsresult
-ExtractByteStreamFromBody(const OwningArrayBufferOrArrayBufferViewOrBlobOrFormDataOrUSVStringOrURLSearchParams& aBodyInit,
+ExtractByteStreamFromBody(const fetch::OwningBodyInit& aBodyInit,
                           nsIInputStream** aStream,
-                          nsCString& aContentType,
+                          nsCString& aContentTypeWithCharset,
                           uint64_t& aContentLength)
 {
   MOZ_ASSERT(aStream);
-  aContentType.SetIsVoid(true);
+  nsAutoCString charset;
+  aContentTypeWithCharset.SetIsVoid(true);
 
   if (aBodyInit.IsArrayBuffer()) {
-    const ArrayBuffer& buf = aBodyInit.GetAsArrayBuffer();
-    return ExtractFromArrayBuffer(buf, aStream, aContentLength);
+    BodyExtractor<const ArrayBuffer> body(&aBodyInit.GetAsArrayBuffer());
+    return body.GetAsStream(aStream, &aContentLength, aContentTypeWithCharset,
+                            charset);
   }
+
   if (aBodyInit.IsArrayBufferView()) {
-    const ArrayBufferView& buf = aBodyInit.GetAsArrayBufferView();
-    return ExtractFromArrayBufferView(buf, aStream, aContentLength);
+    BodyExtractor<const ArrayBufferView> body(&aBodyInit.GetAsArrayBufferView());
+    return body.GetAsStream(aStream, &aContentLength, aContentTypeWithCharset,
+                            charset);
   }
+
   if (aBodyInit.IsBlob()) {
-    const Blob& blob = aBodyInit.GetAsBlob();
-    return ExtractFromBlob(blob, aStream, aContentType, aContentLength);
+    Blob& blob = aBodyInit.GetAsBlob();
+    BodyExtractor<nsIXHRSendable> body(&blob);
+    return body.GetAsStream(aStream, &aContentLength, aContentTypeWithCharset,
+                            charset);
   }
+
   if (aBodyInit.IsFormData()) {
-    FormData& form = aBodyInit.GetAsFormData();
-    return ExtractFromFormData(form, aStream, aContentType, aContentLength);
+    FormData& formData = aBodyInit.GetAsFormData();
+    BodyExtractor<nsIXHRSendable> body(&formData);
+    return body.GetAsStream(aStream, &aContentLength, aContentTypeWithCharset,
+                            charset);
   }
+
   if (aBodyInit.IsUSVString()) {
-    nsAutoString str;
-    str.Assign(aBodyInit.GetAsUSVString());
-    return ExtractFromUSVString(str, aStream, aContentType, aContentLength);
+    BodyExtractor<const nsAString> body(&aBodyInit.GetAsUSVString());
+    return body.GetAsStream(aStream, &aContentLength, aContentTypeWithCharset,
+                            charset);
   }
+
   if (aBodyInit.IsURLSearchParams()) {
-    URLSearchParams& params = aBodyInit.GetAsURLSearchParams();
-    return ExtractFromURLSearchParams(params, aStream, aContentType, aContentLength);
+    URLSearchParams& usp = aBodyInit.GetAsURLSearchParams();
+    BodyExtractor<nsIXHRSendable> body(&usp);
+    return body.GetAsStream(aStream, &aContentLength, aContentTypeWithCharset,
+                            charset);
   }
 
   NS_NOTREACHED("Should never reach here");
@@ -638,39 +533,51 @@ ExtractByteStreamFromBody(const OwningArrayBufferOrArrayBufferViewOrBlobOrFormDa
 }
 
 nsresult
-ExtractByteStreamFromBody(const ArrayBufferOrArrayBufferViewOrBlobOrFormDataOrUSVStringOrURLSearchParams& aBodyInit,
+ExtractByteStreamFromBody(const fetch::BodyInit& aBodyInit,
                           nsIInputStream** aStream,
-                          nsCString& aContentType,
+                          nsCString& aContentTypeWithCharset,
                           uint64_t& aContentLength)
 {
   MOZ_ASSERT(aStream);
   MOZ_ASSERT(!*aStream);
-  aContentType.SetIsVoid(true);
+
+  nsAutoCString charset;
+  aContentTypeWithCharset.SetIsVoid(true);
 
   if (aBodyInit.IsArrayBuffer()) {
-    const ArrayBuffer& buf = aBodyInit.GetAsArrayBuffer();
-    return ExtractFromArrayBuffer(buf, aStream, aContentLength);
+    BodyExtractor<const ArrayBuffer> body(&aBodyInit.GetAsArrayBuffer());
+    return body.GetAsStream(aStream, &aContentLength, aContentTypeWithCharset,
+                            charset);
   }
+
   if (aBodyInit.IsArrayBufferView()) {
-    const ArrayBufferView& buf = aBodyInit.GetAsArrayBufferView();
-    return ExtractFromArrayBufferView(buf, aStream, aContentLength);
+    BodyExtractor<const ArrayBufferView> body(&aBodyInit.GetAsArrayBufferView());
+    return body.GetAsStream(aStream, &aContentLength, aContentTypeWithCharset,
+                            charset);
   }
+
   if (aBodyInit.IsBlob()) {
-    const Blob& blob = aBodyInit.GetAsBlob();
-    return ExtractFromBlob(blob, aStream, aContentType, aContentLength);
+    BodyExtractor<nsIXHRSendable> body(&aBodyInit.GetAsBlob());
+    return body.GetAsStream(aStream, &aContentLength, aContentTypeWithCharset,
+                            charset);
   }
+
   if (aBodyInit.IsFormData()) {
-    FormData& form = aBodyInit.GetAsFormData();
-    return ExtractFromFormData(form, aStream, aContentType, aContentLength);
+    BodyExtractor<nsIXHRSendable> body(&aBodyInit.GetAsFormData());
+    return body.GetAsStream(aStream, &aContentLength, aContentTypeWithCharset,
+                            charset);
   }
+
   if (aBodyInit.IsUSVString()) {
-    nsAutoString str;
-    str.Assign(aBodyInit.GetAsUSVString());
-    return ExtractFromUSVString(str, aStream, aContentType, aContentLength);
+    BodyExtractor<const nsAString> body(&aBodyInit.GetAsUSVString());
+    return body.GetAsStream(aStream, &aContentLength, aContentTypeWithCharset,
+                            charset);
   }
+
   if (aBodyInit.IsURLSearchParams()) {
-    URLSearchParams& params = aBodyInit.GetAsURLSearchParams();
-    return ExtractFromURLSearchParams(params, aStream, aContentType, aContentLength);
+    BodyExtractor<nsIXHRSendable> body(&aBodyInit.GetAsURLSearchParams());
+    return body.GetAsStream(aStream, &aContentLength, aContentTypeWithCharset,
+                            charset);
   }
 
   NS_NOTREACHED("Should never reach here");

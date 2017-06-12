@@ -52,9 +52,16 @@ task_description_schema = Schema({
     # automatically
     Optional('routes'): [basestring],
 
+    # The index paths where this task may be cached. Transforms are expected to
+    # fill these automatically when wanted.
+    Optional('index-paths'): [basestring],
+
     # custom scopes for this task; any scopes required for the worker will be
     # added automatically
     Optional('scopes'): [basestring],
+
+    # Tags
+    Optional('tags'): {basestring: object},
 
     # custom "task.extra" content
     Optional('extra'): {basestring: object},
@@ -86,7 +93,7 @@ task_description_schema = Schema({
     # if omitted, the build will not be indexed.
     Optional('index'): {
         # the name of the product this build produces
-        'product': Any('firefox', 'mobile', 'static-analysis'),
+        'product': Any('firefox', 'mobile', 'static-analysis', 'devedition'),
 
         # the names to use for this job in the TaskCluster index
         'job-name': basestring,
@@ -244,13 +251,17 @@ task_description_schema = Schema({
             Extra: basestring,  # additional properties are allowed
         },
     }, {
-        'implementation': 'macosx-engine',
+        Required('implementation'): 'native-engine',
 
         # A link for an executable to download
-        Optional('link'): basestring,
+        Optional('context'): basestring,
+
+        # Tells the worker whether machine should reboot
+        # after the task is finished.
+        Optional('reboot'): bool,
 
         # the command to run
-        Required('command'): [taskref_or_string],
+        Optional('command'): [taskref_or_string],
 
         # environment variables
         Optional('env'): {basestring: taskref_or_string},
@@ -344,7 +355,7 @@ task_description_schema = Schema({
         }],
 
         # "Invalid" is a noop for try and other non-supported branches
-        Required('google-play-track'): Any('production', 'beta', 'alpha', 'rollout', 'invalid'),
+        Required('google-play-track'): Any('production', 'beta', 'alpha', 'rollout',  'invalid'),
         Required('dry-run', default=True): bool,
         Optional('rollout-percentage'): int,
     }),
@@ -361,6 +372,7 @@ task_description_schema = Schema({
 })
 
 GROUP_NAMES = {
+    'py': 'Python unit tests',
     'tc': 'Executed by TaskCluster',
     'tc-e10s': 'Executed by TaskCluster with e10s',
     'tc-Fxfn-l': 'Firefox functional tests (local) executed by TaskCluster',
@@ -374,6 +386,7 @@ GROUP_NAMES = {
     'tc-R-e10s': 'Reftests executed by TaskCluster with e10s',
     'tc-T': 'Talos performance tests executed by TaskCluster',
     'tc-T-e10s': 'Talos performance tests executed by TaskCluster with e10s',
+    'tc-SY-e10s': 'Are we slim yet tests by TaskCluster with e10s',
     'tc-VP': 'VideoPuppeteer tests executed by TaskCluster',
     'tc-W': 'Web platform tests executed by TaskCluster',
     'tc-W-e10s': 'Web platform tests executed by TaskCluster with e10s',
@@ -386,7 +399,10 @@ GROUP_NAMES = {
     'tc-BMcs': 'Beetmover checksums, executed by Taskcluster',
     'Aries': 'Aries Device Image',
     'Nexus 5-L': 'Nexus 5-L Device Image',
-    'Cc': 'Toolchain builds',
+    'TL': 'Toolchain builds for Linux 64-bits',
+    'TM': 'Toolchain builds for OSX',
+    'TW32': 'Toolchain builds for Windows 32-bits',
+    'TW64': 'Toolchain builds for Windows 64-bits',
     'SM-tc': 'Spidermonkey builds',
     'pub': 'APK publishing',
 }
@@ -476,6 +492,8 @@ def build_docker_worker_payload(config, task, task_def):
                 level=config.params['level'])
         )
         worker['env']['USE_SCCACHE'] = '1'
+    else:
+        worker['env']['SCCACHE_DISABLE'] = '1'
 
     capabilities = {}
 
@@ -618,7 +636,7 @@ def build_push_apk_breakpoint_payload(config, task, task_def):
     task_def['payload'] = task['worker']['payload']
 
 
-@payload_builder('macosx-engine')
+@payload_builder('native-engine')
 def build_macosx_engine_payload(config, task, task_def):
     worker = task['worker']
     artifacts = map(lambda artifact: {
@@ -629,14 +647,15 @@ def build_macosx_engine_payload(config, task, task_def):
     }, worker['artifacts'])
 
     task_def['payload'] = {
-        'link': worker['link'],
+        'context': worker['context'],
         'command': worker['command'],
         'env': worker['env'],
+        'reboot': worker['reboot'],
         'artifacts': artifacts,
     }
 
     if task.get('needs-sccache'):
-        raise Exception('needs-sccache not supported in macosx-engine')
+        raise Exception('needs-sccache not supported in native-engine')
 
 
 @payload_builder('buildbot-bridge')
@@ -784,6 +803,25 @@ def add_index_routes(config, tasks):
 
 
 @transforms.add
+def add_files_changed(config, tasks):
+    for task in tasks:
+        if 'files-changed' not in task.get('when', {}):
+            yield task
+            continue
+
+        task['when']['files-changed'].extend([
+            '{}/**'.format(config.path),
+            'taskcluster/taskgraph/**',
+        ])
+
+        if 'in-tree' in task['worker'].get('docker-image', {}):
+            task['when']['files-changed'].append('taskcluster/docker/{}/**'.format(
+                task['worker']['docker-image']['in-tree']))
+
+        yield task
+
+
+@transforms.add
 def build_task(config, tasks):
     for task in tasks:
         worker_type = task['worker-type'].format(level=str(config.params['level']))
@@ -834,6 +872,9 @@ def build_task(config, tasks):
                 name=task['coalesce-name'])
             routes.append('coalesce.v1.' + key)
 
+        tags = task.get('tags', {})
+        tags.update({'createdForUser': config.params['owner']})
+
         task_def = {
             'provisionerId': provisioner_id,
             'workerType': worker_type,
@@ -852,7 +893,7 @@ def build_task(config, tasks):
                     config.path),
             },
             'extra': extra,
-            'tags': {'createdForUser': config.params['owner']},
+            'tags': tags,
         }
 
         if task_th:
@@ -873,6 +914,7 @@ def build_task(config, tasks):
             'task': task_def,
             'dependencies': task.get('dependencies', {}),
             'attributes': attributes,
+            'index-paths': task.get('index-paths'),
             'when': task.get('when', {}),
         }
 

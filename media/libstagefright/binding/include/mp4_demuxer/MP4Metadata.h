@@ -24,7 +24,6 @@ public:
   explicit MP4Metadata(Stream* aSource);
   ~MP4Metadata();
 
-  static bool HasCompleteMetadata(Stream* aSource);
   static already_AddRefed<mozilla::MediaByteBuffer> Metadata(Stream* aSource);
   uint32_t GetNumberTracks(mozilla::TrackInfo::TrackType aType) const;
   mozilla::UniquePtr<mozilla::TrackInfo> GetTrackInfo(mozilla::TrackInfo::TrackType aType,
@@ -37,7 +36,6 @@ public:
 
 private:
   UniquePtr<MP4MetadataStagefright> mStagefright;
-#ifdef MOZ_RUST_MP4PARSE
   UniquePtr<MP4MetadataRust> mRust;
   mutable bool mPreferRust;
   mutable bool mReportedAudioTrackTelemetry;
@@ -46,7 +44,6 @@ private:
   mutable bool mRustTestMode;
 #endif
   bool ShouldPreferRust() const;
-#endif
 };
 
 } // namespace mp4_demuxer

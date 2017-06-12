@@ -119,10 +119,9 @@ protected:
                    const nsCString&           requestMethod,
                    const OptionalIPCStream&   uploadStream,
                    const bool&                uploadStreamHasHeaders,
-                   const uint16_t&            priority,
+                   const int16_t&             priority,
                    const uint32_t&            classOfService,
                    const uint8_t&             redirectionLimit,
-                   const bool&                allowPipelining,
                    const bool&                allowSTS,
                    const uint32_t&            thirdPartyFlags,
                    const bool&                doResumeAt,
@@ -148,7 +147,7 @@ protected:
                    const uint64_t&            aContentWindowId,
                    const nsCString&           aPreferredAlternativeType);
 
-  virtual mozilla::ipc::IPCResult RecvSetPriority(const uint16_t& priority) override;
+  virtual mozilla::ipc::IPCResult RecvSetPriority(const int16_t& priority) override;
   virtual mozilla::ipc::IPCResult RecvSetClassOfService(const uint32_t& cos) override;
   virtual mozilla::ipc::IPCResult RecvSetCacheTokenCachedCharset(const nsCString& charset) override;
   virtual mozilla::ipc::IPCResult RecvSuspend() override;
@@ -221,11 +220,10 @@ private:
 
   nsAutoPtr<class nsHttpChannel::OfflineCacheEntryAsForeignMarker> mOfflineForeignMarker;
 
-  // state for combining OnStatus/OnProgress with OnDataAvailable
-  // into one IPDL call to child.
-  nsresult mStoredStatus;
-  int64_t mStoredProgress;
-  int64_t mStoredProgressMax;
+  // OnStatus is always called before OnProgress.
+  // Set true in OnStatus if next OnProgress can be ignored
+  // since the information can be recontructed from ODA.
+  bool mIgnoreProgress              : 1;
 
   bool mSentRedirect1Begin          : 1;
   bool mSentRedirect1BeginFailed    : 1;

@@ -1,5 +1,5 @@
 /* Any copyright is dedicated to the Public Domain.
-   http://creativecommons.org/publicdomain/zero/1.0/ */
+*  http://creativecommons.org/publicdomain/zero/1.0/ */
 
 "use strict";
 
@@ -16,11 +16,14 @@ add_task(function* () {
   let { tab, monitor } = yield initNetMonitor(POST_DATA_URL);
   info("Starting test... ");
 
-  let { panelWin } = monitor;
-  let { document, EVENTS, NetMonitorView } = panelWin;
-  let { RequestsMenu } = NetMonitorView;
+  let { document, gStore, windowRequire } = monitor.panelWin;
+  let Actions = windowRequire("devtools/client/netmonitor/actions/index");
+  let {
+    getSelectedRequest,
+    getSortedRequests,
+  } = windowRequire("devtools/client/netmonitor/selectors/index");
 
-  RequestsMenu.lazyUpdate = false;
+  gStore.dispatch(Actions.batchEnable(false));
 
   let wait = waitForNetworkEvents(monitor, 0, 2);
   yield ContentTask.spawn(tab.linkedBrowser, {}, function* () {
@@ -28,34 +31,30 @@ add_task(function* () {
   });
   yield wait;
 
-  let origItem = RequestsMenu.getItemAtIndex(0);
+  let origItem = getSortedRequests(gStore.getState()).get(0);
 
-  let onTabUpdated = panelWin.once(EVENTS.TAB_UPDATED);
-  RequestsMenu.selectedItem = origItem;
-  yield onTabUpdated;
+  gStore.dispatch(Actions.selectRequest(origItem.id));
 
   // add a new custom request cloned from selected request
-  let onPopulated = panelWin.once(EVENTS.CUSTOMREQUESTVIEW_POPULATED);
-  RequestsMenu.cloneSelectedRequest();
-  yield onPopulated;
+  gStore.dispatch(Actions.cloneSelectedRequest());
 
   testCustomForm(origItem);
 
-  let customItem = RequestsMenu.selectedItem;
+  let customItem = getSelectedRequest(gStore.getState());
   testCustomItem(customItem, origItem);
 
   // edit the custom request
   yield editCustomForm();
   // FIXME: reread the customItem, it's been replaced by a new object (immutable!)
-  customItem = RequestsMenu.selectedItem;
+  customItem = getSelectedRequest(gStore.getState());
   testCustomItemChanged(customItem, origItem);
 
   // send the new request
   wait = waitForNetworkEvents(monitor, 0, 1);
-  RequestsMenu.sendCustomRequest();
+  gStore.dispatch(Actions.sendCustomRequest());
   yield wait;
 
-  let sentItem = RequestsMenu.selectedItem;
+  let sentItem = getSelectedRequest(gStore.getState());
   testSentRequest(sentItem, origItem);
 
   return teardown(monitor);
@@ -75,7 +74,8 @@ add_task(function* () {
   /*
    * Test that the New Request form was populated correctly
    */
-  function testCustomForm(data) {
+  function* testCustomForm(data) {
+    yield waitUntil(() => document.querySelector(".custom-request-panel"));
     is(document.getElementById("custom-method-value").value, data.method,
        "new request form showing correct method");
 
@@ -100,7 +100,7 @@ add_task(function* () {
    * Add some params and headers to the request form
    */
   function* editCustomForm() {
-    panelWin.focus();
+    monitor.panelWin.focus();
 
     let query = document.getElementById("custom-query-value");
     let queryFocus = once(query, "focus", false);
@@ -160,7 +160,7 @@ add_task(function* () {
 
   function type(string) {
     for (let ch of string) {
-      EventUtils.synthesizeKey(ch, {}, panelWin);
+      EventUtils.synthesizeKey(ch, {}, monitor.panelWin);
     }
   }
 });

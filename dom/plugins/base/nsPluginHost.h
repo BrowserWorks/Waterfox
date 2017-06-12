@@ -85,8 +85,6 @@ public:
 
   static already_AddRefed<nsPluginHost> GetInst();
 
-  NS_DECL_AND_IMPL_ZEROING_OPERATOR_NEW
-
   NS_DECL_ISUPPORTS
   NS_DECL_NSIPLUGINHOST
   NS_DECL_NSIOBSERVER
@@ -141,7 +139,6 @@ public:
                    uint32_t postHeadersLength,
                    const char* postHeaders);
 
-  nsresult FindProxyForURL(const char* url, char* *result);
   nsresult UserAgent(const char **retstring);
   nsresult ParsePostBufferToFixHeaders(const char *inPostData,
                                        uint32_t inPostDataLen,

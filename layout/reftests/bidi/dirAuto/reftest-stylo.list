@@ -42,8 +42,8 @@ fails == dynamicDirAuto-setLTR-InvalidDir3.html dynamicDirAuto-setLTR-InvalidDir
 fails == dynamicDirAuto-setLTR-InvalidDir4.html dynamicDirAuto-setLTR-InvalidDir4.html
 fails == dynamicDirAuto-setLTR-InvalidDir5.html dynamicDirAuto-setLTR-InvalidDir5.html
 fails == dynamicDirAuto-setLTR-InvalidDir6.html dynamicDirAuto-setLTR-InvalidDir6.html
-# == dynamicDirAuto-setLTR-InvalidDir7.html dynamicDirAuto-setLTR-InvalidDir7.html
-# == dynamicDirAuto-setLTR-InvalidDir7.html dynamicDirAuto-setLTR-InvalidDir7.html
+fails == dynamicDirAuto-setLTR-InvalidDir7.html dynamicDirAuto-setLTR-InvalidDir7.html # Bug 1340696, bug 1341086
+fails == dynamicDirAuto-setLTR-InvalidDir7.html dynamicDirAuto-setLTR-InvalidDir7.html # Bug 1340696, bug 1341086
 fails == dynamicDirAuto-setRTL-Auto1.html dynamicDirAuto-setRTL-Auto1.html
 fails == dynamicDirAuto-setRTL-Auto2.html dynamicDirAuto-setRTL-Auto2.html
 fails == dynamicDirAuto-setRTL-Auto3.html dynamicDirAuto-setRTL-Auto3.html
@@ -111,7 +111,7 @@ fails == dynamicDirAuto-DeleteText-RTL1.html dynamicDirAuto-DeleteText-RTL1.html
 fails == dynamicDirAuto-DeleteText-RTL2.html dynamicDirAuto-DeleteText-RTL2.html
 fails == dynamicDirAuto-DeleteText-RTL3.html dynamicDirAuto-DeleteText-RTL3.html
 fails == 839886-1.html 839886-1.html
-fails == 859093-1.html 859093-1.html
+== 859093-1.html 859093-1.html
 fails == 889742-1.html 889742-1.html
 fails == 1103348-1.html 1103348-1.html
 fails == 1169267-delete-add-1a.html 1169267-delete-add-1a.html

@@ -278,6 +278,7 @@ ScaledFontFontconfig::GetFontDescriptor(FontDescriptorOutput aCb, void* aBaton)
   memcpy(data + sizeof(FontDescriptor), pathname, pathLength);
 
   aCb(data, dataLength, mSize, aBaton);
+  delete[] data;
   return true;
 }
 
@@ -332,6 +333,7 @@ ScaledFontFontconfig::CreateFromInstanceData(const InstanceData& aInstanceData,
   RefPtr<ScaledFontFontconfig> scaledFont =
     new ScaledFontFontconfig(cairoScaledFont, pattern, aSize);
 
+  cairo_scaled_font_destroy(cairoScaledFont);
   FcPatternDestroy(pattern);
 
   return scaledFont.forget();

@@ -78,9 +78,9 @@ this.BrowserTestUtils = {
       }
     }
     let tab = yield BrowserTestUtils.openNewForegroundTab(options.gBrowser, options.url);
-    let originalWindow = tab.ownerDocument.defaultView;
+    let originalWindow = tab.ownerGlobal;
     let result = yield taskFn(tab.linkedBrowser);
-    let finalWindow = tab.ownerDocument.defaultView;
+    let finalWindow = tab.ownerGlobal;
     if (originalWindow == finalWindow && !tab.closing && tab.linkedBrowser) {
       yield BrowserTestUtils.removeTab(tab);
     } else {
@@ -147,10 +147,9 @@ this.BrowserTestUtils = {
    */
   switchTab(tabbrowser, tab) {
     let promise = new Promise(resolve => {
-      tabbrowser.addEventListener("TabSwitchDone", function onSwitch() {
-        tabbrowser.removeEventListener("TabSwitchDone", onSwitch);
+      tabbrowser.addEventListener("TabSwitchDone", function() {
         TestUtils.executeSoon(() => resolve(tabbrowser.selectedTab));
-      });
+      }, {once: true});
     });
 
     if (typeof tab == "function") {
@@ -184,6 +183,13 @@ this.BrowserTestUtils = {
    * @resolves When a load event is triggered for the browser.
    */
   browserLoaded(browser, includeSubFrames=false, wantLoad=null) {
+    // If browser belongs to tabbrowser-tab, ensure it has been
+    // inserted into the document.
+    let tabbrowser = browser.ownerGlobal.gBrowser;
+    if (tabbrowser && tabbrowser.getTabForBrowser) {
+      tabbrowser._insertBrowser(tabbrowser.getTabForBrowser(browser));
+    }
+
     function isWanted(url) {
       if (!wantLoad) {
         return true;
@@ -196,7 +202,7 @@ this.BrowserTestUtils = {
     }
 
     return new Promise(resolve => {
-      let mm = browser.ownerDocument.defaultView.messageManager;
+      let mm = browser.ownerGlobal.messageManager;
       mm.addMessageListener("browser-test-utils:loadEvent", function onLoad(msg) {
         if (msg.target == browser && (!msg.data.subframe || includeSubFrames) &&
             isWanted(msg.data.url)) {
@@ -283,9 +289,7 @@ this.BrowserTestUtils = {
    */
   waitForNewTab(tabbrowser, url) {
     return new Promise((resolve, reject) => {
-      tabbrowser.tabContainer.addEventListener("TabOpen", function onTabOpen(openEvent) {
-        tabbrowser.tabContainer.removeEventListener("TabOpen", onTabOpen);
-
+      tabbrowser.tabContainer.addEventListener("TabOpen", function(openEvent) {
         let progressListener = {
           onLocationChange(aBrowser) {
             if (aBrowser != openEvent.target.linkedBrowser ||
@@ -300,7 +304,7 @@ this.BrowserTestUtils = {
         };
         tabbrowser.addTabsProgressListener(progressListener);
 
-      });
+      }, {once: true});
     });
   },
 
@@ -397,7 +401,7 @@ this.BrowserTestUtils = {
     browser.loadURI(uri);
 
     // Nothing to do in non-e10s mode.
-    if (!browser.ownerDocument.defaultView.gMultiProcessBrowser) {
+    if (!browser.ownerGlobal.gMultiProcessBrowser) {
       return;
     }
 
@@ -483,6 +487,11 @@ this.BrowserTestUtils = {
                     createInstance(Ci.nsISupportsString);
     argString.data = "";
     let features = "chrome,dialog=no,all";
+    let opener = null;
+
+    if (options.opener) {
+      opener = options.opener;
+    }
 
     if (options.private) {
       features += ",private";
@@ -501,7 +510,7 @@ this.BrowserTestUtils = {
     }
 
     let win = Services.ww.openWindow(
-      null, Services.prefs.getCharPref("browser.chromeURL"), "_blank",
+      opener, Services.prefs.getCharPref("browser.chromeURL"), "_blank",
       features, argString);
 
     // Wait for browser-delayed-startup-finished notification, it indicates
@@ -697,7 +706,7 @@ this.BrowserTestUtils = {
     let waitForLoad = () =>
       this.waitForContentEvent(browser, "AboutNetErrorLoad", false, null, true);
 
-    let win = browser.ownerDocument.defaultView;
+    let win = browser.ownerGlobal;
     let tab = win.gBrowser.getTabForBrowser(browser);
     if (!tab || browser.isRemoteBrowser || !win.gMultiProcessBrowser) {
       return waitForLoad();
@@ -707,10 +716,9 @@ this.BrowserTestUtils = {
     // quite careful in order to make sure we're adding the listener in time to
     // get this event:
     return new Promise((resolve, reject) => {
-      tab.addEventListener("TabRemotenessChange", function onTRC() {
-        tab.removeEventListener("TabRemotenessChange", onTRC);
+      tab.addEventListener("TabRemotenessChange", function() {
         waitForLoad().then(resolve, reject);
-      });
+      }, {once: true});
     });
   },
 
@@ -814,10 +822,31 @@ this.BrowserTestUtils = {
   /**
    * Removes the given tab from its parent tabbrowser and
    * waits until its final message has reached the parent.
+   *
+   * @param (tab) tab
+   *        The tab to remove.
+   * @param (Object) options
+   *        Extra options to pass to tabbrowser's removeTab method.
+   * @returns (Promise)
+   * @resolves When the tab is removed. Does not get passed a value.
    */
   removeTab(tab, options = {}) {
-    let dontRemove = options && options.dontRemove;
+    let tabRemoved = BrowserTestUtils.tabRemoved(tab);
+    if (!tab.closing) {
+      tab.ownerGlobal.gBrowser.removeTab(tab, options);
+    }
+    return tabRemoved;
+  },
 
+  /**
+   * Returns a Promise that resolves once a tab has been removed.
+   *
+   * @param (tab) tab
+   *        The tab that will be removed.
+   * @returns (Promise)
+   * @resolves When the tab is removed. Does not get passed a value.
+   */
+  tabRemoved(tab) {
     return new Promise(resolve => {
       let {messageManager: mm, frameLoader} = tab.linkedBrowser;
       mm.addMessageListener("SessionStore:update", function onMessage(msg) {
@@ -826,10 +855,6 @@ this.BrowserTestUtils = {
           resolve();
         }
       }, true);
-
-      if (!dontRemove && !tab.closing) {
-        tab.ownerDocument.defaultView.gBrowser.removeTab(tab);
-      }
     });
   },
 
@@ -987,7 +1012,7 @@ this.BrowserTestUtils = {
     yield Promise.all(expectedPromises);
 
     if (shouldShowTabCrashPage) {
-      let gBrowser = browser.ownerDocument.defaultView.gBrowser;
+      let gBrowser = browser.ownerGlobal.gBrowser;
       let tab = gBrowser.getTabForBrowser(browser);
       if (tab.getAttribute("crashed") != "true") {
         throw new Error("Tab should be marked as crashed");
@@ -1010,7 +1035,7 @@ this.BrowserTestUtils = {
    * @returns {Promise}
    */
   waitForAttribute(attr, element, value) {
-    let MutationObserver = element.ownerDocument.defaultView.MutationObserver;
+    let MutationObserver = element.ownerGlobal.MutationObserver;
     return new Promise(resolve => {
       let mut = new MutationObserver(mutations => {
         if ((!value && element.getAttribute(attr)) ||

@@ -169,7 +169,7 @@ module.exports = {
     "no-trailing-spaces": "error",
 
     // No using undeclared variables
-    // "no-undef": "error",
+    "no-undef": "error",
 
     // Error on newline where a semicolon is needed
     "no-unexpected-multiline": "error",
@@ -247,13 +247,22 @@ module.exports = {
     "browser": true,
   },
   "globals": {
+    "BroadcastChannel": false,
+    // Specific to Firefox (Chrome code only).
+    "ChromeWindow": false,
     "ChromeWorker": false,
     "ChromeUtils": false,
     "Components": false,
     "dump": true,
+    // Specific to Firefox
+    // https://developer.mozilla.org/docs/Web/JavaScript/Reference/Global_Objects/InternalError
+    "InternalError": true,
     "KeyEvent": false,
     "openDialog": false,
     "MenuBoxObject": false,
+    // Specific to Firefox (Chrome code only).
+    "MozSelfSupport": false,
+    "SimpleGestureEvent": false,
     "sizeToContent": false,
     "SharedArrayBuffer": false,
     // Note: StopIteration will likely be removed as part of removing legacy
@@ -261,6 +270,7 @@ module.exports = {
     "StopIteration": false,
     // Specific to Firefox
     // https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/uneval
-    "uneval": false
+    "uneval": false,
+    "XULElement": false,
   }
 };

@@ -1,4 +1,4 @@
-﻿// -*- indent-tabs-mode: nil; js-indent-level: 2 -*-
+// -*- indent-tabs-mode: nil; js-indent-level: 2 -*-
 /* This Source Code Form is subject to the terms of the Mozilla Public
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
@@ -29,16 +29,12 @@ const gChromeWin = Services.wm.getMostRecentWindow("navigator:browser");
  */
 function do_promiseTabChangeEvent(tabId, eventType) {
   return new Promise(resolve => {
-    let observer = (subject, topic, data) => {
-      let message = JSON.parse(data);
-
+    EventDispatcher.instance.registerListener(function listener(event, message, callback) {
       if (message.event === eventType && message.tabId === tabId) {
-        Services.obs.removeObserver(observer, TAB_CHANGE_EVENT);
-        resolve(data);
+        EventDispatcher.instance.unregisterListener(listener, TAB_CHANGE_EVENT);
+        resolve();
       }
-    }
-
-    Services.obs.addObserver(observer, TAB_CHANGE_EVENT, false);
+    }, TAB_CHANGE_EVENT);
   });
 }
 
@@ -57,7 +53,7 @@ function isInputOrTextarea(element) {
 function elementSelection(element) {
   return (isInputOrTextarea(element)) ?
     element.editor.selection :
-    element.ownerDocument.defaultView.getSelection();
+    element.ownerGlobal.getSelection();
 }
 
 /**
@@ -144,8 +140,8 @@ function UIhasActionByID(expectedActionID) {
  * Messages the ActionBarHandler to close the Selection UI.
  */
 function closeSelectionUI() {
-  Services.obs.notifyObservers(null, "TextSelection:End",
-    JSON.stringify({selectionID: gChromeWin.ActionBarHandler._selectionID}));
+  gChromeWin.WindowEventDispatcher.dispatch("TextSelection:End",
+    {selectionID: gChromeWin.ActionBarHandler._selectionID});
 }
 
 /**
@@ -186,6 +182,8 @@ add_task(function* testAccessibleCarets() {
   let ip_LTR_elem = doc.getElementById("LTRphone");
   let ip_RTL_elem = doc.getElementById("RTLphone");
   let bug1265750_elem = doc.getElementById("bug1265750");
+  let bug1338445_elem1 = doc.getElementById("bug1338445-1");
+  let bug1338445_elem2 = doc.getElementById("bug1338445-2");
 
   // Locate longpress midpoints for test elements, ensure expactations.
   let ce_LTR_midPoint = getCharPressPoint(doc, ce_LTR_elem, 0, "F");
@@ -201,6 +199,8 @@ add_task(function* testAccessibleCarets() {
   let ip_LTR_midPoint = getCharPressPoint(doc, ip_LTR_elem, 8, "2");
   let ip_RTL_midPoint = getCharPressPoint(doc, ip_RTL_elem, 9, "2");
   let bug1265750_midPoint = getCharPressPoint(doc, bug1265750_elem, 2, "7");
+  let bug1338445_midPoint1 = getCharPressPoint(doc, bug1338445_elem1, 3, "3");
+  let bug1338445_midPoint2 = getCharPressPoint(doc, bug1338445_elem2, 1, "3");
 
   // Longpress various LTR content elements. Test focused element against
   // expected, and selected text against expected.
@@ -230,6 +230,16 @@ add_task(function* testAccessibleCarets() {
   result = getLongPressResult(browser, bug1265750_midPoint);
   is(result.focusedElement, null, "Focused element should match expected.");
   is(result.text, "3 45 678 90",
+    "Selected phone number should match expected text.");
+
+  result = getLongPressResult(browser, bug1338445_midPoint1);
+  is(result.focusedElement, null, "Focused element should match expected.");
+  is(result.text, "012345p",
+    "Selected phone number should match expected text.");
+
+  result = getLongPressResult(browser, bug1338445_midPoint2);
+  is(result.focusedElement, null, "Focused element should match expected.");
+  is(result.text, "p34",
     "Selected phone number should match expected text.");
 
   // Longpress various RTL content elements. Test focused element against

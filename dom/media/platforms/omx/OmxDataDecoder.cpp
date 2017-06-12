@@ -12,6 +12,8 @@
 
 #include "OmxPlatformLayer.h"
 
+#include "mozilla/IntegerPrintfMacros.h"
+#include "mozilla/SizePrintfMacros.h"
 
 #ifdef LOG
 #undef LOG
@@ -96,10 +98,8 @@ protected:
 };
 
 OmxDataDecoder::OmxDataDecoder(const TrackInfo& aTrackInfo,
-                               MediaDataDecoderCallback* aCallback,
                                layers::ImageContainer* aImageContainer)
-  : mMonitor("OmxDataDecoder")
-  , mOmxTaskQueue(CreateMediaDecodeTaskQueue())
+  : mOmxTaskQueue(CreateMediaDecodeTaskQueue())
   , mImageContainer(aImageContainer)
   , mWatchManager(this, mOmxTaskQueue)
   , mOmxState(OMX_STATETYPE::OMX_StateInvalid, "OmxDataDecoder::mOmxState")
@@ -108,12 +108,9 @@ OmxDataDecoder::OmxDataDecoder(const TrackInfo& aTrackInfo,
   , mShuttingDown(false)
   , mCheckingInputExhausted(false)
   , mPortSettingsChanged(-1, "OmxDataDecoder::mPortSettingsChanged")
-  , mCallback(aCallback)
 {
   LOG("");
   mOmxLayer = new OmxPromiseLayer(mOmxTaskQueue, this, aImageContainer);
-
-  mOmxTaskQueue->Dispatch(NewRunnableMethod(this, &OmxDataDecoder::InitializationTask));
 }
 
 OmxDataDecoder::~OmxDataDecoder()
@@ -134,17 +131,16 @@ OmxDataDecoder::EndOfStream()
   LOG("");
   MOZ_ASSERT(mOmxTaskQueue->IsCurrentThreadIn());
 
-  mFlushing = true;
   RefPtr<OmxDataDecoder> self = this;
   mOmxLayer->SendCommand(OMX_CommandFlush, OMX_ALL, nullptr)
-    ->Then(mReaderTaskQueue, __func__,
-        [self] () {
-          self->mFlushing = false;
-          self->mCallback->DrainComplete();
+    ->Then(mOmxTaskQueue, __func__,
+        [self, this] () {
+          mDrainPromise.ResolveIfExists(mDecodedData, __func__);
+            mDecodedData.Clear();
         },
-        [self] () {
-          self->mFlushing = false;
-          self->mCallback->DrainComplete();
+        [self, this] () {
+          mDrainPromise.ResolveIfExists(mDecodedData, __func__);
+          mDecodedData.Clear();
         });
 }
 
@@ -152,101 +148,82 @@ RefPtr<MediaDataDecoder::InitPromise>
 OmxDataDecoder::Init()
 {
   LOG("");
-  mReaderTaskQueue = AbstractThread::GetCurrent()->AsTaskQueue();
-  MOZ_ASSERT(mReaderTaskQueue);
 
-  RefPtr<InitPromise> p = mInitPromise.Ensure(__func__);
   RefPtr<OmxDataDecoder> self = this;
+  return InvokeAsync(mOmxTaskQueue, __func__, [self, this]() {
+    InitializationTask();
 
-  // TODO: it needs to get permission from resource manager before allocating
-  //       Omx component.
-  InvokeAsync<const TrackInfo*>(mOmxTaskQueue, mOmxLayer.get(), __func__,
-                                &OmxPromiseLayer::Init, mTrackInfo.get())
-    ->Then(mOmxTaskQueue, __func__,
-      [self] () {
-        // Omx state should be OMX_StateIdle.
-        self->mOmxState = self->mOmxLayer->GetState();
-        MOZ_ASSERT(self->mOmxState != OMX_StateIdle);
-      },
-      [self] () {
-        self->RejectInitPromise(NS_ERROR_DOM_MEDIA_FATAL_ERR, __func__);
-      });
-
-  return p;
+    RefPtr<InitPromise> p = mInitPromise.Ensure(__func__);
+    mOmxLayer->Init(mTrackInfo.get())
+      ->Then(mOmxTaskQueue, __func__,
+             [self, this]() {
+               // Omx state should be OMX_StateIdle.
+               mOmxState = mOmxLayer->GetState();
+               MOZ_ASSERT(mOmxState != OMX_StateIdle);
+             },
+             [self, this]() {
+               RejectInitPromise(NS_ERROR_DOM_MEDIA_FATAL_ERR, __func__);
+             });
+    return p;
+  });
 }
 
-void
-OmxDataDecoder::Input(MediaRawData* aSample)
+RefPtr<MediaDataDecoder::DecodePromise>
+OmxDataDecoder::Decode(MediaRawData* aSample)
 {
   LOG("sample %p", aSample);
   MOZ_ASSERT(mInitPromise.IsEmpty());
 
   RefPtr<OmxDataDecoder> self = this;
   RefPtr<MediaRawData> sample = aSample;
+  return InvokeAsync(mOmxTaskQueue, __func__, [self, this, sample]() {
+    RefPtr<DecodePromise> p = mDecodePromise.Ensure(__func__);
+    mMediaRawDatas.AppendElement(Move(sample));
 
-  nsCOMPtr<nsIRunnable> r =
-    NS_NewRunnableFunction([self, sample] () {
-      self->mMediaRawDatas.AppendElement(sample);
-
-      // Start to fill/empty buffers.
-      if (self->mOmxState == OMX_StateIdle ||
-          self->mOmxState == OMX_StateExecuting) {
-        self->FillAndEmptyBuffers();
-      }
-    });
-  mOmxTaskQueue->Dispatch(r.forget());
+    // Start to fill/empty buffers.
+    if (mOmxState == OMX_StateIdle ||
+        mOmxState == OMX_StateExecuting) {
+      FillAndEmptyBuffers();
+    }
+    return p;
+  });
 }
 
-void
+RefPtr<MediaDataDecoder::FlushPromise>
 OmxDataDecoder::Flush()
 {
   LOG("");
 
   mFlushing = true;
 
-  mOmxTaskQueue->Dispatch(NewRunnableMethod(this, &OmxDataDecoder::DoFlush));
-
-  // According to the definition of Flush() in PDM:
-  // "the decoder must be ready to accept new input for decoding".
-  // So it needs to wait for the Omx to complete the flush command.
-  MonitorAutoLock lock(mMonitor);
-  while (mFlushing) {
-    lock.Wait();
-  }
+  return InvokeAsync(mOmxTaskQueue, this, __func__, &OmxDataDecoder::DoFlush);
 }
 
-void
+RefPtr<MediaDataDecoder::DecodePromise>
 OmxDataDecoder::Drain()
 {
   LOG("");
 
-  mOmxTaskQueue->Dispatch(NewRunnableMethod(this, &OmxDataDecoder::SendEosBuffer));
+  RefPtr<OmxDataDecoder> self = this;
+  return InvokeAsync(mOmxTaskQueue, __func__, [self, this]() {
+    RefPtr<DecodePromise> p = mDrainPromise.Ensure(__func__);
+    SendEosBuffer();
+    return p;
+  });
 }
 
-void
+RefPtr<ShutdownPromise>
 OmxDataDecoder::Shutdown()
 {
   LOG("");
 
   mShuttingDown = true;
 
-  mOmxTaskQueue->Dispatch(NewRunnableMethod(this, &OmxDataDecoder::DoAsyncShutdown));
-
-  {
-    // DoAsyncShutdown() will be running for a while, it could be still running
-    // when reader releasing the decoder and then it causes problem. To avoid it,
-    // Shutdown() must block until DoAsyncShutdown() is completed.
-    MonitorAutoLock lock(mMonitor);
-    while (mShuttingDown) {
-      lock.Wait();
-    }
-  }
-
-  mOmxTaskQueue->BeginShutdown();
-  mOmxTaskQueue->AwaitShutdownAndIdle();
+  return InvokeAsync(mOmxTaskQueue, this, __func__,
+                     &OmxDataDecoder::DoAsyncShutdown);
 }
 
-void
+RefPtr<ShutdownPromise>
 OmxDataDecoder::DoAsyncShutdown()
 {
   LOG("");
@@ -297,9 +274,10 @@ OmxDataDecoder::DoAsyncShutdown()
              self->mOmxLayer = nullptr;
              self->mMediaDataHelper = nullptr;
 
-             MonitorAutoLock lock(self->mMonitor);
              self->mShuttingDown = false;
-             self->mMonitor.Notify();
+             self->mOmxTaskQueue->BeginShutdown();
+             self->mOmxTaskQueue->AwaitShutdownAndIdle();
+             self->mShutdownPromise.Resolve(true, __func__);
            },
            [self] () {
              self->mOmxLayer->Shutdown();
@@ -307,10 +285,12 @@ OmxDataDecoder::DoAsyncShutdown()
              self->mOmxLayer = nullptr;
              self->mMediaDataHelper = nullptr;
 
-             MonitorAutoLock lock(self->mMonitor);
              self->mShuttingDown = false;
-             self->mMonitor.Notify();
+             self->mOmxTaskQueue->BeginShutdown();
+             self->mOmxTaskQueue->AwaitShutdownAndIdle();
+             self->mShutdownPromise.Resolve(true, __func__);
            });
+  return mShutdownPromise.Ensure(__func__);
 }
 
 void
@@ -378,7 +358,7 @@ OmxDataDecoder::Output(BufferData* aData)
     aData->mStatus = BufferData::BufferStatus::FREE;
   }
 
-  mCallback->Output(data);
+  mDecodedData.AppendElement(Move(data));
 }
 
 void
@@ -390,6 +370,7 @@ OmxDataDecoder::FillBufferFailure(OmxBufferFailureHolder aFailureHolder)
 void
 OmxDataDecoder::EmptyBufferDone(BufferData* aData)
 {
+  MOZ_ASSERT(mOmxTaskQueue->IsCurrentThreadIn());
   MOZ_ASSERT(!aData || aData->mStatus == BufferData::BufferStatus::OMX_CLIENT);
 
   // Nothing to do when status of input buffer is OMX_CLIENT.
@@ -403,19 +384,16 @@ OmxDataDecoder::EmptyBufferDone(BufferData* aData)
     mCheckingInputExhausted = true;
 
     RefPtr<OmxDataDecoder> self = this;
-    nsCOMPtr<nsIRunnable> r =
-      NS_NewRunnableFunction([self] () {
-        MOZ_ASSERT(self->mOmxTaskQueue->IsCurrentThreadIn());
+    nsCOMPtr<nsIRunnable> r = NS_NewRunnableFunction([self, this]() {
+      mCheckingInputExhausted = false;
 
-        self->mCheckingInputExhausted = false;
+      if (mMediaRawDatas.Length()) {
+        return;
+      }
 
-        if (self->mMediaRawDatas.Length()) {
-          return;
-        }
-
-        LOGL("Call InputExhausted()");
-        self->mCallback->InputExhausted();
-      });
+      mDecodePromise.ResolveIfExists(mDecodedData, __func__);
+      mDecodedData.Clear();
+    });
 
     mOmxTaskQueue->Dispatch(r.forget());
   }
@@ -430,8 +408,12 @@ OmxDataDecoder::EmptyBufferFailure(OmxBufferFailureHolder aFailureHolder)
 void
 OmxDataDecoder::NotifyError(OMX_ERRORTYPE aOmxError, const char* aLine, const MediaResult& aError)
 {
-  LOG("NotifyError %d (%d) at %s", aOmxError, aError.Code(), aLine);
-  mCallback->Error(aError);
+  LOG("NotifyError %d (%" PRIu32 ") at %s", static_cast<int>(aOmxError),
+      static_cast<uint32_t>(aError.Code()), aLine);
+  mDecodedData.Clear();
+  mDecodePromise.RejectIfExists(aError, __func__);
+  mDrainPromise.RejectIfExists(aError, __func__);
+  mFlushPromise.RejectIfExists(aError, __func__);
 }
 
 void
@@ -471,7 +453,7 @@ OmxDataDecoder::FillAndEmptyBuffers()
       inbuf->mBuffer->nFlags |= OMX_BUFFERFLAG_EOS;
     }
 
-    LOG("feed sample %p to omx component, len %d, flag %X", data.get(),
+    LOG("feed sample %p to omx component, len %ld, flag %lX", data.get(),
         inbuf->mBuffer->nFilledLen, inbuf->mBuffer->nFlags);
     mOmxLayer->EmptyBuffer(inbuf)->Then(mOmxTaskQueue, __func__, this,
                                         &OmxDataDecoder::EmptyBufferDone,
@@ -538,26 +520,16 @@ OmxDataDecoder::GetBuffers(OMX_DIRTYPE aType)
 void
 OmxDataDecoder::ResolveInitPromise(const char* aMethodName)
 {
+  MOZ_ASSERT(mOmxTaskQueue->IsCurrentThreadIn());
   LOG("called from %s", aMethodName);
-  RefPtr<OmxDataDecoder> self = this;
-  nsCOMPtr<nsIRunnable> r =
-    NS_NewRunnableFunction([self, aMethodName] () {
-      MOZ_ASSERT(self->mReaderTaskQueue->IsCurrentThreadIn());
-      self->mInitPromise.ResolveIfExists(self->mTrackInfo->GetType(), aMethodName);
-    });
-  mReaderTaskQueue->Dispatch(r.forget());
+  mInitPromise.ResolveIfExists(mTrackInfo->GetType(), aMethodName);
 }
 
 void
 OmxDataDecoder::RejectInitPromise(MediaResult aError, const char* aMethodName)
 {
-  RefPtr<OmxDataDecoder> self = this;
-  nsCOMPtr<nsIRunnable> r =
-    NS_NewRunnableFunction([self, aError, aMethodName] () {
-      MOZ_ASSERT(self->mReaderTaskQueue->IsCurrentThreadIn());
-      self->mInitPromise.RejectIfExists(aError, aMethodName);
-    });
-  mReaderTaskQueue->Dispatch(r.forget());
+  MOZ_ASSERT(mOmxTaskQueue->IsCurrentThreadIn());
+  mInitPromise.RejectIfExists(aError, aMethodName);
 }
 
 void
@@ -692,7 +664,7 @@ OmxDataDecoder::Event(OMX_EVENTTYPE aEvent, OMX_U32 aData1, OMX_U32 aData2)
                     MediaResult(NS_ERROR_DOM_MEDIA_DECODE_ERR, __func__));
         return true;
       }
-      LOG("WARNING: got none handle event: %d, aData1: %d, aData2: %d",
+      LOG("WARNING: got none handle event: %d, aData1: %ld, aData2: %ld",
           aEvent, aData1, aData2);
       return false;
     }
@@ -755,7 +727,7 @@ OmxDataDecoder::CollectBufferPromises(OMX_DIRTYPE aType)
     }
   }
 
-  LOG("CollectBufferPromises: type %d, total %d promiese", aType, promises.Length());
+  LOG("CollectBufferPromises: type %d, total %" PRIuSIZE " promiese", aType, promises.Length());
   if (promises.Length()) {
     return OmxBufferPromise::All(mOmxTaskQueue, promises);
   }
@@ -794,7 +766,7 @@ OmxDataDecoder::PortSettingsChanged()
   RefPtr<OmxDataDecoder> self = this;
   if (def.bEnabled) {
     // 1. disable port.
-    LOG("PortSettingsChanged: disable port %d", def.nPortIndex);
+    LOG("PortSettingsChanged: disable port %lu", def.nPortIndex);
     mOmxLayer->SendCommand(OMX_CommandPortDisable, mPortSettingsChanged, nullptr)
       ->Then(mOmxTaskQueue, __func__,
              [self, def] () -> RefPtr<OmxCommandPromise> {
@@ -862,10 +834,16 @@ OmxDataDecoder::SendEosBuffer()
   FillAndEmptyBuffers();
 }
 
-void
+RefPtr<MediaDataDecoder::FlushPromise>
 OmxDataDecoder::DoFlush()
 {
   MOZ_ASSERT(mOmxTaskQueue->IsCurrentThreadIn());
+
+  mDecodedData.Clear();
+  mDecodePromise.RejectIfExists(NS_ERROR_DOM_MEDIA_CANCELED, __func__);
+  mDrainPromise.RejectIfExists(NS_ERROR_DOM_MEDIA_CANCELED, __func__);
+
+  RefPtr<FlushPromise> p = mFlushPromise.Ensure(__func__);
 
   // 1. Call OMX command OMX_CommandFlush in Omx TaskQueue.
   // 2. Remove all elements in mMediaRawDatas when flush is completed.
@@ -873,6 +851,8 @@ OmxDataDecoder::DoFlush()
     ->Then(mOmxTaskQueue, __func__, this,
            &OmxDataDecoder::FlushComplete,
            &OmxDataDecoder::FlushFailure);
+
+  return p;
 }
 
 void
@@ -881,18 +861,14 @@ OmxDataDecoder::FlushComplete(OMX_COMMANDTYPE aCommandType)
   mMediaRawDatas.Clear();
   mFlushing = false;
 
-  MonitorAutoLock lock(mMonitor);
-  mMonitor.Notify();
   LOG("Flush complete");
+  mFlushPromise.ResolveIfExists(true, __func__);
 }
 
 void OmxDataDecoder::FlushFailure(OmxCommandFailureHolder aFailureHolder)
 {
-  NotifyError(OMX_ErrorUndefined, __func__);
   mFlushing = false;
-
-  MonitorAutoLock lock(mMonitor);
-  mMonitor.Notify();
+  mFlushPromise.RejectIfExists(NS_ERROR_DOM_MEDIA_FATAL_ERR, __func__);
 }
 
 MediaDataHelper::MediaDataHelper(const TrackInfo* aTrackInfo,
@@ -1025,7 +1001,7 @@ MediaDataHelper::CreateYUV420VideoData(BufferData* aBufferData)
                                  -1,
                                  info.ImageRect());
 
-  LOG("YUV420 VideoData: disp width %d, height %d, pic width %d, height %d, time %ld",
+  LOG("YUV420 VideoData: disp width %d, height %d, pic width %d, height %d, time %lld",
       info.mDisplay.width, info.mDisplay.height, info.mImage.width,
       info.mImage.height, aBufferData->mBuffer->nTimeStamp);
 

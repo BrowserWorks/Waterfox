@@ -26,7 +26,7 @@ dictionary FilePropertyBag {
 
 dictionary ChromeFilePropertyBag : FilePropertyBag {
   DOMString name = "";
-  boolean temporary = false;
+  boolean existenceCheck = true;
 };
 
 // Mozilla extensions
@@ -37,14 +37,22 @@ partial interface File {
   [BinaryName="relativePath", Func="mozilla::dom::Directory::WebkitBlinkDirectoryPickerEnabled"]
   readonly attribute USVString webkitRelativePath;
 
-  [GetterThrows, ChromeOnly]
+  [GetterThrows, ChromeOnly, NeedsCallerType]
   readonly attribute DOMString mozFullPath;
+};
 
-  [ChromeOnly, Throws]
-  static File createFromNsIFile(nsIFile file,
-                                optional ChromeFilePropertyBag options);
+// Mozilla extensions
+// These 2 methods can be used only in these conditions:
+// - the main-thread
+// - parent process OR file process OR, only for testing, with pref
+//   `dom.file.createInChild' set to true.
+[Exposed=(Window)]
+partial interface File {
+  [ChromeOnly, Throws, NeedsCallerType]
+  static Promise<File> createFromNsIFile(nsIFile file,
+                                         optional ChromeFilePropertyBag options);
 
-  [ChromeOnly, Throws]
-  static File createFromFileName(USVString fileName,
-                                 optional ChromeFilePropertyBag options);
+  [ChromeOnly, Throws, NeedsCallerType]
+  static Promise<File> createFromFileName(USVString fileName,
+                                          optional ChromeFilePropertyBag options);
 };

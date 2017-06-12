@@ -80,6 +80,8 @@ function Startup() {
   togglePasswordsButton.label = kSignonBundle.getString("showPasswords");
   togglePasswordsButton.accessKey = kSignonBundle.getString("showPasswordsAccessKey");
   signonsIntro.textContent = kSignonBundle.getString("loginsDescriptionAll");
+  removeAllButton.setAttribute("label", kSignonBundle.getString("removeAll.label"));
+  removeAllButton.setAttribute("accesskey", kSignonBundle.getString("removeAll.accesskey"));
   document.getElementsByTagName("treecols")[0].addEventListener("click", (event) => {
     let { target, button } = event;
     let sortField = target.getAttribute("data-field-name");
@@ -556,6 +558,8 @@ function SignonClearFilter() {
   signonsTreeView._lastSelectedRanges = [];
 
   signonsIntro.textContent = kSignonBundle.getString("loginsDescriptionAll");
+  removeAllButton.setAttribute("label", kSignonBundle.getString("removeAll.label"));
+  removeAllButton.setAttribute("accesskey", kSignonBundle.getString("removeAll.accesskey"));
 }
 
 function FocusFilterBox() {
@@ -624,6 +628,8 @@ function FilterPasswords() {
     signonsTreeView.selection.select(0);
 
   signonsIntro.textContent = kSignonBundle.getString("loginsDescriptionFiltered");
+  removeAllButton.setAttribute("label", kSignonBundle.getString("removeAllShown.label"));
+  removeAllButton.setAttribute("accesskey", kSignonBundle.getString("removeAllShown.accesskey"));
 }
 
 function CopyPassword() {

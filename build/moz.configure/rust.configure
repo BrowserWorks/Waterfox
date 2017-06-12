@@ -4,79 +4,98 @@
 # License, v. 2.0. If a copy of the MPL was not distributed with this
 # file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
-option('--disable-rust', help='Don\'t include Rust language sources')
-
-@depends('--enable-rust')
-def rust_compiler_names(value):
-    if value:
-        return ['rustc']
-
-@depends('--enable-rust')
-def cargo_binary_names(value):
-    if value:
-        return ['cargo']
-
-rustc = check_prog('RUSTC', rust_compiler_names, allow_missing=True)
-cargo = check_prog('CARGO', cargo_binary_names, allow_missing=True)
+# Rust is required by `rust_compiler` below. We allow_missing here
+# to propagate failures to the better error message there.
+rustc = check_prog('RUSTC', ['rustc'], allow_missing=True)
+cargo = check_prog('CARGO', ['cargo'], allow_missing=True)
 
 @depends_if(rustc)
 @checking('rustc version', lambda info: info.version)
 def rustc_info(rustc):
-        out = check_cmd_output(rustc, '--version', '--verbose').splitlines()
-        info = dict((s.strip() for s in line.split(':', 1)) for line in out[1:])
-        return namespace(
-            version=Version(info.get('release', '0')),
-            commit=info.get('commit-hash', 'unknown'),
-        )
+    out = check_cmd_output(rustc, '--version', '--verbose').splitlines()
+    info = dict((s.strip() for s in line.split(':', 1)) for line in out[1:])
+    return namespace(
+        version=Version(info.get('release', '0')),
+        commit=info.get('commit-hash', 'unknown'),
+    )
 
 @depends_if(cargo)
-@checking('cargo support for --frozen')
-@imports('subprocess')
-@imports('os')
-def cargo_supports_frozen(cargo):
-    try:
-        lines = subprocess.check_output(
-            [cargo, 'help', 'build']
-        ).splitlines()
-        supported = any('    --frozen' in l for l in lines)
-        if 'MOZ_AUTOMATION' in os.environ and not supported:
-            die('cargo in automation must support --frozen')
-        return supported
-    except subprocess.CalledProcessError as e:
-        die('Failed to call cargo: %s', e.message)
+@checking('cargo version', lambda info: info.version)
+@imports('re')
+def cargo_info(cargo):
+    out = check_cmd_output(cargo, '--version', '--verbose').splitlines()
+    info = dict((s.strip() for s in line.split(':', 1)) for line in out[1:])
+    version = info.get('release')
+    # Older versions of cargo didn't support --verbose, in which case, they
+    # only output a not-really-pleasant-to-parse output. Fortunately, they
+    # don't error out, so we can just try some regexp matching on the output
+    # we already got.
+    if version is None:
+        VERSION_FORMAT = r'^cargo (\d\.\d+\.\d+).*'
 
-set_config('MOZ_CARGO_SUPPORTS_FROZEN', cargo_supports_frozen)
+        m = re.search(VERSION_FORMAT, out[0])
+        # Fail fast if cargo changes its output on us.
+        if not m:
+            die('Could not determine cargo version from output: %s', out)
+        version = m.group(1)
 
-@depends('--enable-rust', rustc, rustc_info)
+    return namespace(
+        version=Version(version),
+    )
+
+@depends(rustc_info, cargo_info)
 @imports(_from='textwrap', _import='dedent')
-def rust_compiler(value, rustc, rustc_info):
-    if value:
-        if not rustc:
-            die(dedent('''\
-            Rust compiler not found.
-            To compile rust language sources, you must have 'rustc' in your path.
-            See https//www.rust-lang.org/ for more information.
+def rust_compiler(rustc_info, cargo_info):
+    if not rustc_info:
+        die(dedent('''\
+        Rust compiler not found.
+        To compile rust language sources, you must have 'rustc' in your path.
+        See https//www.rust-lang.org/ for more information.
 
-            You can install rust by running './mach bootstrap'
-            or by directly running the installer from https://rustup.rs/
-            '''))
-        version = rustc_info.version
-        min_version = Version('1.13')
-        if version < min_version:
-            die(dedent('''\
-            Rust compiler {} is too old.
+        You can install rust by running './mach bootstrap'
+        or by directly running the installer from https://rustup.rs/
+        '''))
+    rustc_min_version = Version('1.15.1')
+    cargo_min_version = Version('0.{}'.format(rustc_min_version.minor + 1))
 
-            To compile Rust language sources please install at least
-            version {} of the 'rustc' toolchain and make sure it is
-            first in your path.
+    version = rustc_info.version
+    if version < rustc_min_version:
+        die(dedent('''\
+        Rust compiler {} is too old.
 
-            You can verify this by typing 'rustc --version'.
+        To compile Rust language sources please install at least
+        version {} of the 'rustc' toolchain and make sure it is
+        first in your path.
 
-            If you have the 'rustup' tool installed you can upgrade
-            to the latest release by typing 'rustup update'. The
-            installer is available from https://rustup.rs/
-            '''.format(version, min_version)))
-        return True
+        You can verify this by typing 'rustc --version'.
+
+        If you have the 'rustup' tool installed you can upgrade
+        to the latest release by typing 'rustup update'. The
+        installer is available from https://rustup.rs/
+        '''.format(version, rustc_min_version)))
+
+    if not cargo_info:
+        die(dedent('''\
+        Cargo package manager not found.
+        To compile Rust language sources, you must have 'cargo' in your path.
+        See https://www.rust-lang.org/ for more information.
+
+        You can install cargo by running './mach bootstrap'
+        or by directly running the installer from https://rustup.rs/
+        '''))
+
+    version = cargo_info.version
+    if version < cargo_min_version:
+        die(dedent('''\
+        Cargo package manager {} is too old.
+
+        To compile Rust language sources please install at least
+        version {} of 'cargo' and make sure it is first in your path.
+
+        You can verify this by typing 'cargo --version'.
+        ''').format(version, cargo_min_version))
+
+    return True
 
 set_config('MOZ_RUST', rust_compiler)
 

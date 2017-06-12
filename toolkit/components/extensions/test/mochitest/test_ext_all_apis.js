@@ -76,12 +76,16 @@ let expectedBackgroundApis = [
   "runtime.getBackgroundPage",
   "runtime.getBrowserInfo",
   "runtime.getPlatformInfo",
+  "runtime.onConnectExternal",
   "runtime.onInstalled",
+  "runtime.onMessageExternal",
   "runtime.onStartup",
   "runtime.onUpdateAvailable",
   "runtime.openOptionsPage",
   "runtime.reload",
   "runtime.setUninstallURL",
+  "types.LevelOfControl",
+  "types.SettingScope",
 ];
 
 function sendAllApis() {

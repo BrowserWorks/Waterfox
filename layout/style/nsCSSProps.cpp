@@ -8,9 +8,10 @@
  * values they accept
  */
 
+#include "nsCSSProps.h"
+
 #include "mozilla/ArrayUtils.h"
 
-#include "nsCSSProps.h"
 #include "nsCSSKeywords.h"
 #include "nsLayoutUtils.h"
 #include "nsStyleConsts.h"
@@ -1668,8 +1669,8 @@ const KTableEntry nsCSSProps::kGridAutoFlowKTable[] = {
 };
 
 const KTableEntry nsCSSProps::kGridTrackBreadthKTable[] = {
-  { eCSSKeyword_min_content, NS_STYLE_GRID_TRACK_BREADTH_MIN_CONTENT },
-  { eCSSKeyword_max_content, NS_STYLE_GRID_TRACK_BREADTH_MAX_CONTENT },
+  { eCSSKeyword_min_content, StyleGridTrackBreadth::MinContent },
+  { eCSSKeyword_max_content, StyleGridTrackBreadth::MaxContent },
   { eCSSKeyword_UNKNOWN, -1 }
 };
 
@@ -1999,6 +2000,17 @@ KTableEntry nsCSSProps::kTextAlignLastKTable[] = {
   { eCSSKeyword_UNKNOWN, -1 }
 };
 
+const KTableEntry nsCSSProps::kTextJustifyKTable[] = {
+  { eCSSKeyword_none, StyleTextJustify::None },
+  { eCSSKeyword_auto, StyleTextJustify::Auto },
+  { eCSSKeyword_inter_word, StyleTextJustify::InterWord },
+  { eCSSKeyword_inter_character, StyleTextJustify::InterCharacter },
+  // For legacy reasons, UAs must also support the keyword "distribute" with
+  // the exact same meaning and behavior as "inter-character".
+  { eCSSKeyword_distribute, StyleTextJustify::InterCharacter },
+  { eCSSKeyword_UNKNOWN, -1 }
+};
+
 const KTableEntry nsCSSProps::kTextCombineUprightKTable[] = {
   { eCSSKeyword_none, NS_STYLE_TEXT_COMBINE_UPRIGHT_NONE },
   { eCSSKeyword_all, NS_STYLE_TEXT_COMBINE_UPRIGHT_ALL },
@@ -2063,6 +2075,12 @@ const KTableEntry nsCSSProps::kTextOverflowKTable[] = {
   { eCSSKeyword_UNKNOWN, -1 }
 };
 
+const KTableEntry nsCSSProps::kTextSizeAdjustKTable[] = {
+  { eCSSKeyword_none, NS_STYLE_TEXT_SIZE_ADJUST_NONE },
+  { eCSSKeyword_auto, NS_STYLE_TEXT_SIZE_ADJUST_AUTO },
+  { eCSSKeyword_UNKNOWN, -1 }
+};
+
 const KTableEntry nsCSSProps::kTextTransformKTable[] = {
   { eCSSKeyword_none, NS_STYLE_TEXT_TRANSFORM_NONE },
   { eCSSKeyword_capitalize, NS_STYLE_TEXT_TRANSFORM_CAPITALIZE },
@@ -2112,9 +2130,6 @@ const KTableEntry nsCSSProps::kUnicodeBidiKTable[] = {
   { eCSSKeyword_isolate, NS_STYLE_UNICODE_BIDI_ISOLATE },
   { eCSSKeyword_isolate_override, NS_STYLE_UNICODE_BIDI_ISOLATE_OVERRIDE },
   { eCSSKeyword_plaintext, NS_STYLE_UNICODE_BIDI_PLAINTEXT },
-  { eCSSKeyword__moz_isolate, NS_STYLE_UNICODE_BIDI_ISOLATE },
-  { eCSSKeyword__moz_isolate_override, NS_STYLE_UNICODE_BIDI_ISOLATE_OVERRIDE },
-  { eCSSKeyword__moz_plaintext, NS_STYLE_UNICODE_BIDI_PLAINTEXT },
   { eCSSKeyword_UNKNOWN, -1 }
 };
 
@@ -2344,10 +2359,10 @@ const KTableEntry nsCSSProps::kMaskTypeKTable[] = {
 };
 
 const KTableEntry nsCSSProps::kShapeOutsideShapeBoxKTable[] = {
-  { eCSSKeyword_content_box, StyleShapeOutsideShapeBox::Content },
-  { eCSSKeyword_padding_box, StyleShapeOutsideShapeBox::Padding },
-  { eCSSKeyword_border_box, StyleShapeOutsideShapeBox::Border },
-  { eCSSKeyword_margin_box, StyleShapeOutsideShapeBox::Margin },
+  { eCSSKeyword_content_box, StyleGeometryBox::Content },
+  { eCSSKeyword_padding_box, StyleGeometryBox::Padding },
+  { eCSSKeyword_border_box, StyleGeometryBox::Border },
+  { eCSSKeyword_margin_box, StyleGeometryBox::Margin },
   { eCSSKeyword_UNKNOWN, -1 }
 };
 
@@ -2714,7 +2729,7 @@ static_assert(eSideTop == 0 && eSideRight == 1 &&
               "box side constants not top/right/bottom/left == 0/1/2/3");
 static const nsCSSPropertyID gBorderColorSubpropTable[] = {
   // Code relies on these being in top-right-bottom-left order.
-  // Code relies on these matching the NS_SIDE_* constants.
+  // Code relies on these matching the enum Side constants.
   eCSSProperty_border_top_color,
   eCSSProperty_border_right_color,
   eCSSProperty_border_bottom_color,

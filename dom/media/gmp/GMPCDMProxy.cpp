@@ -12,16 +12,15 @@
 #include "mozilla/dom/MediaKeySession.h"
 
 #include "mozIGeckoMediaPluginService.h"
-#include "nsContentCID.h"
-#include "nsIConsoleService.h"
 #include "nsPrintfCString.h"
-#include "nsServiceManagerUtils.h"
 #include "nsString.h"
 #include "prenv.h"
 #include "GMPCDMCallbackProxy.h"
 #include "GMPService.h"
 #include "MainThreadUtils.h"
 #include "MediaData.h"
+#include "DecryptJob.h"
+#include "GMPUtils.h"
 
 namespace mozilla {
 
@@ -36,7 +35,6 @@ GMPCDMProxy::GMPCDMProxy(dom::MediaKeys* aKeys,
              aPersistentStateRequired)
   , mCrashHelper(aCrashHelper)
   , mCDM(nullptr)
-  , mDecryptionJobCount(0)
   , mShutdownCalled(false)
   , mDecryptorId(0)
   , mCreatePromiseId(0)
@@ -637,19 +635,6 @@ GMPCDMProxy::OnDecrypted(uint32_t aId,
   gmp_Decrypted(aId, aResult, aDecryptedData);
 }
 
-static void
-LogToConsole(const nsAString& aMsg)
-{
-  nsCOMPtr<nsIConsoleService> console(
-    do_GetService("@mozilla.org/consoleservice;1"));
-  if (!console) {
-    NS_WARNING("Failed to log message to console.");
-    return;
-  }
-  nsAutoString msg(aMsg);
-  console->LogStringMessage(msg.get());
-}
-
 void
 GMPCDMProxy::OnSessionError(const nsAString& aSessionId,
                          nsresult aException,
@@ -687,7 +672,7 @@ GMPCDMProxy::Capabilites() {
   return mCapabilites;
 }
 
-RefPtr<GMPCDMProxy::DecryptPromise>
+RefPtr<DecryptPromise>
 GMPCDMProxy::Decrypt(MediaRawData* aSample)
 {
   RefPtr<DecryptJob> job(new DecryptJob(aSample));
@@ -709,7 +694,6 @@ GMPCDMProxy::gmp_Decrypt(RefPtr<DecryptJob> aJob)
     return;
   }
 
-  aJob->mId = ++mDecryptionJobCount;
   nsTArray<uint8_t> data;
   data.AppendElements(aJob->mSample->Data(), aJob->mSample->Size());
   mCDM->Decrypt(aJob->mId, aJob->mSample->mCrypto, data);
@@ -740,37 +724,6 @@ GMPCDMProxy::gmp_Decrypted(uint32_t aId,
     NS_WARNING("GMPDecryptorChild returned incorrect job ID");
   }
 #endif
-}
-
-void
-GMPCDMProxy::DecryptJob::PostResult(DecryptStatus aResult)
-{
-  nsTArray<uint8_t> empty;
-  PostResult(aResult, empty);
-}
-
-void
-GMPCDMProxy::DecryptJob::PostResult(DecryptStatus aResult,
-                                    const nsTArray<uint8_t>& aDecryptedData)
-{
-  if (aDecryptedData.Length() != mSample->Size()) {
-    NS_WARNING("CDM returned incorrect number of decrypted bytes");
-  }
-  if (aResult == Ok) {
-    UniquePtr<MediaRawDataWriter> writer(mSample->CreateWriter());
-    PodCopy(writer->Data(),
-            aDecryptedData.Elements(),
-            std::min<size_t>(aDecryptedData.Length(), mSample->Size()));
-  } else if (aResult == NoKeyErr) {
-    NS_WARNING("CDM returned NoKeyErr");
-    // We still have the encrypted sample, so we can re-enqueue it to be
-    // decrypted again once the key is usable again.
-  } else {
-    nsAutoCString str("CDM returned decode failure DecryptStatus=");
-    str.AppendInt(aResult);
-    NS_WARNING(str.get());
-  }
-  mPromise.Resolve(DecryptResult(aResult, mSample), __func__);
 }
 
 void

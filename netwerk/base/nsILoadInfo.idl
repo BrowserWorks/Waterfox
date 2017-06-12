@@ -518,20 +518,13 @@ interface nsILoadInfo : nsISupports
   [infallible] readonly attribute unsigned long long frameOuterWindowID;
 
   /**
-   * For all loads of type other than TYPE_DOCUMENT this function resets the
-   * loadingPrincipal, the triggeringPrincipal and the
-   * principalToInherit to a freshly created NullPrincipal which inherits
-   * the current origin attributes from the loadinfo.
-   * For loads of TYPE_DOCUMENT this function resets only the
-   * TriggeringPrincipal as well as the PrincipalToInherit to a freshly
-   * created NullPrincipal which inherits the origin attributes from
-   * the loadInfo. (Please note that the loadingPrincipal for TYPE_DOCUMENT
-   * loads is always null.)
+   * Resets the PrincipalToInherit to a freshly created NullPrincipal
+   * which inherits the origin attributes from the loadInfo.
    *
    * WARNING: Please only use that function if you know exactly what
    * you are doing!!!
    */
-  void resetPrincipalsToNullPrincipal();
+  void resetPrincipalToInheritToNullPrincipal();
 
   /**
    * Customized OriginAttributes within LoadInfo to allow overwriting of the
@@ -746,4 +739,12 @@ interface nsILoadInfo : nsISupports
    * Note that the load for a sub-frame's document will return false here.
    */
   [infallible] readonly attribute boolean isTopLevelLoad;
+
+  /**
+   * Returns the null principal of the resulting resource if the SEC_SANDBOXED
+   * flag is set.  Otherwise returns null.  This is used by
+   * GetChannelResultPrincipal() to ensure that the same null principal object
+   * is returned every time.
+   */
+  [noscript] readonly attribute nsIPrincipal sandboxedLoadingPrincipal;
 };

@@ -273,7 +273,7 @@ def test_add_test_module(runner):
         with patch('os.path.abspath', return_value=test) as abspath:
             runner.add_test(test)
         assert abspath.called
-        expected = {'filepath': test, 'expected': 'pass'}
+        expected = {'filepath': test, 'expected': 'pass', 'group': 'default'}
         assert expected in runner.tests
     # add_test doesn't validate module names; 'bad_test.py' gets through
     assert len(runner.tests) == 3
@@ -439,4 +439,5 @@ def test_e10s_option_clash_raises(mock_runner):
 
 if __name__ == '__main__':
     import sys
-    sys.exit(pytest.main(['--verbose', __file__]))
+    sys.exit(pytest.main(
+        ['--log-tbpl=-', __file__]))

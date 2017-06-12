@@ -6,13 +6,19 @@
 
 const I = require("devtools/client/shared/vendor/immutable");
 const {
-  OPEN_SIDEBAR,
+  CLEAR_REQUESTS,
+  OPEN_NETWORK_DETAILS,
   OPEN_STATISTICS,
+  REMOVE_SELECTED_CUSTOM_REQUEST,
+  SELECT_DETAILS_PANEL_TAB,
+  SEND_CUSTOM_REQUEST,
+  SELECT_REQUEST,
   WATERFALL_RESIZE,
 } = require("../constants");
 
 const UI = I.Record({
-  sidebarOpen: false,
+  detailsPanelSelectedTab: "headers",
+  networkDetailsOpen: false,
   statisticsOpen: false,
   waterfallWidth: null,
 });
@@ -24,20 +30,33 @@ function resizeWaterfall(state, action) {
   return state.set("waterfallWidth", action.width - REQUESTS_WATERFALL_SAFE_BOUNDS);
 }
 
-function openSidebar(state, action) {
-  return state.set("sidebarOpen", action.open);
+function openNetworkDetails(state, action) {
+  return state.set("networkDetailsOpen", action.open);
 }
 
 function openStatistics(state, action) {
   return state.set("statisticsOpen", action.open);
 }
 
+function setDetailsPanelTab(state, action) {
+  return state.set("detailsPanelSelectedTab", action.id);
+}
+
 function ui(state = new UI(), action) {
   switch (action.type) {
-    case OPEN_SIDEBAR:
-      return openSidebar(state, action);
+    case CLEAR_REQUESTS:
+      return openNetworkDetails(state, { open: false });
+    case OPEN_NETWORK_DETAILS:
+      return openNetworkDetails(state, action);
     case OPEN_STATISTICS:
       return openStatistics(state, action);
+    case REMOVE_SELECTED_CUSTOM_REQUEST:
+    case SEND_CUSTOM_REQUEST:
+      return openNetworkDetails(state, { open: false });
+    case SELECT_DETAILS_PANEL_TAB:
+      return setDetailsPanelTab(state, action);
+    case SELECT_REQUEST:
+      return openNetworkDetails(state, { open: true });
     case WATERFALL_RESIZE:
       return resizeWaterfall(state, action);
     default:
@@ -45,4 +64,7 @@ function ui(state = new UI(), action) {
   }
 }
 
-module.exports = ui;
+module.exports = {
+  UI,
+  ui
+};

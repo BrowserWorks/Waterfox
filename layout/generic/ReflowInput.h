@@ -220,6 +220,7 @@ public:
     bool mStaticPosIsCBOrigin : 1; // the STATIC_POS_IS_CB_ORIGIN ctor flag
     bool mIClampMarginBoxMinSize : 1; // the I_CLAMP_MARGIN_BOX_MIN_SIZE ctor flag
     bool mBClampMarginBoxMinSize : 1; // the B_CLAMP_MARGIN_BOX_MIN_SIZE ctor flag
+    bool mApplyAutoMinSize : 1;       // the I_APPLY_AUTO_MIN_SIZE ctor flag
 
     // If set, the following two flags indicate that:
     // (1) this frame is absolutely-positioned (or fixed-positioned).
@@ -337,7 +338,8 @@ struct ReflowInput : public SizeComputationInput {
   // parent's reflow state
   const ReflowInput* mParentReflowInput;
 
-  // pointer to the float manager associated with this area
+  // A non-owning pointer to the float manager associated with this area,
+  // which points to the object owned by nsAutoFloatManager::mNew.
   nsFloatManager* mFloatManager;
 
   // LineLayout object (only for inline reflow; set to nullptr otherwise)
@@ -738,6 +740,9 @@ public:
 
     // Pass ComputeSizeFlags::eBClampMarginBoxMinSize to ComputeSize().
     B_CLAMP_MARGIN_BOX_MIN_SIZE = (1<<6),
+
+    // Pass ComputeSizeFlags::eIApplyAutoMinSize to ComputeSize().
+    I_APPLY_AUTO_MIN_SIZE = (1<<7),
   };
 
   // This method initializes various data members. It is automatically

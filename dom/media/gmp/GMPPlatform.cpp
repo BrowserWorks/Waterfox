@@ -8,6 +8,10 @@
 #include "GMPTimerChild.h"
 #include "mozilla/Monitor.h"
 #include "GMPChild.h"
+#include "mozilla/Mutex.h"
+#include "base/thread.h"
+#include "mozilla/ReentrantMonitor.h"
+
 #include <ctime>
 
 namespace mozilla {
@@ -100,6 +104,21 @@ private:
   Monitor mMonitor;
 };
 
+class GMPThreadImpl : public GMPThread
+{
+public:
+  GMPThreadImpl();
+  virtual ~GMPThreadImpl();
+
+  // GMPThread
+  void Post(GMPTask* aTask) override;
+  void Join() override;
+
+private:
+  Mutex mMutex;
+  base::Thread mThread;
+};
+
 GMPErr
 CreateThread(GMPThread** aThread)
 {
@@ -138,6 +157,21 @@ SyncRunOnMainThread(GMPTask* aTask)
 
   return GMPNoErr;
 }
+
+class GMPMutexImpl : public GMPMutex
+{
+public:
+  GMPMutexImpl();
+  virtual ~GMPMutexImpl();
+
+  // GMPMutex
+  void Acquire() override;
+  void Release() override;
+  void Destroy() override;
+
+private:
+  ReentrantMonitor mMonitor;
+};
 
 GMPErr
 CreateMutex(GMPMutex** aMutex)
@@ -190,21 +224,6 @@ GetClock(GMPTimestamp* aOutTime)
   return GMPNoErr;
 }
 
-GMPErr
-CreateRecordIterator(RecvGMPRecordIteratorPtr aRecvIteratorFunc,
-                     void* aUserArg)
-{
-  if (!aRecvIteratorFunc) {
-    return GMPInvalidArgErr;
-  }
-  GMPStorageChild* storage = sChild->GetGMPStorage();
-  if (!storage) {
-    return GMPGenericErr;
-  }
-  MOZ_ASSERT(storage);
-  return storage->EnumerateRecords(aRecvIteratorFunc, aUserArg);
-}
-
 void
 InitPlatformAPI(GMPPlatformAPI& aPlatformAPI, GMPChild* aChild)
 {
@@ -223,7 +242,6 @@ InitPlatformAPI(GMPPlatformAPI& aPlatformAPI, GMPChild* aChild)
   aPlatformAPI.createrecord = &CreateRecord;
   aPlatformAPI.settimer = &SetTimerOnMainThread;
   aPlatformAPI.getcurrenttime = &GetClock;
-  aPlatformAPI.getrecordenumerator = &CreateRecordIterator;
 }
 
 GMPThreadImpl::GMPThreadImpl()
@@ -294,6 +312,33 @@ void
 GMPMutexImpl::Release()
 {
   mMonitor.Exit();
+}
+
+GMPTask*
+NewGMPTask(std::function<void()>&& aFunction)
+{
+  class Task : public GMPTask
+  {
+  public:
+    explicit Task(std::function<void()>&& aFunction)
+      : mFunction(Move(aFunction))
+    {
+    }
+    void Destroy() override
+    {
+      delete this;
+    }
+    ~Task() override
+    {
+    }
+    void Run() override
+    {
+      mFunction();
+    }
+  private:
+    std::function<void()> mFunction;
+  };
+  return new Task(Move(aFunction));
 }
 
 } // namespace gmp

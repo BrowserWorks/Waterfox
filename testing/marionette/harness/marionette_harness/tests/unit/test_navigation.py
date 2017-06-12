@@ -30,6 +30,7 @@ class BaseNavigationTestCase(WindowManagerMixin, MarionetteTestCase):
         self.test_page_insecure = self.fixtures.where_is("test.html", on="https")
         self.test_page_not_remote = "about:robots"
         self.test_page_remote = self.marionette.absolute_url("test.html")
+        self.test_page_slow_resource = self.marionette.absolute_url("slow_resource.html")
 
         if self.marionette.session_capabilities["platformName"] == "darwin":
             self.mod_key = Keys.META
@@ -44,7 +45,9 @@ class BaseNavigationTestCase(WindowManagerMixin, MarionetteTestCase):
         self.marionette.navigate(self.marionette.absolute_url("windowHandles.html"))
         self.new_tab = self.open_tab(open_with_link)
         self.marionette.switch_to_window(self.new_tab)
-        self.assertEqual(self.history_length, 1)
+        Wait(self.marionette, timeout=self.marionette.timeout.page_load).until(
+            lambda _: self.history_length == 1,
+            message="The newly opened tab doesn't have a browser history length of 1")
 
     def tearDown(self):
         self.marionette.timeout.reset()
@@ -91,6 +94,11 @@ class BaseNavigationTestCase(WindowManagerMixin, MarionetteTestCase):
 
               return tabBrowser.isRemoteBrowser;
             """)
+
+    @property
+    def ready_state(self):
+        return self.marionette.execute_script("return window.document.readyState;",
+                                              sandbox=None)
 
 
 class TestNavigate(BaseNavigationTestCase):
@@ -146,9 +154,7 @@ class TestNavigate(BaseNavigationTestCase):
 
     def test_find_element_state_complete(self):
         self.marionette.navigate(self.test_page_remote)
-        state = self.marionette.execute_script(
-            "return window.document.readyState", sandbox=None)
-        self.assertEqual("complete", state)
+        self.assertEqual("complete", self.ready_state)
         self.assertTrue(self.marionette.find_element(By.ID, "mozLink"))
 
     def test_navigate_timeout_error_no_remoteness_change(self):
@@ -447,10 +453,10 @@ class TestBackForwardNavigation(BaseNavigationTestCase):
             self.marionette.go_back()
         self.marionette.timeout.reset()
 
-        Wait(self.marionette, self.marionette.timeout.page_load).until(
-            lambda mn: urls[0] == mn.get_url(),
-            message="'{}' has been successfully loaded after going back".format(urls[0]))
-        self.assertEqual(self.marionette.find_element(By.ID, "delay").text, "3")
+        delay = Wait(self.marionette, timeout=self.marionette.timeout.page_load).until(
+            expected.element_present(By.ID, "delay"),
+            message="Target element 'delay' has not been found after timeout in 'back'")
+        self.assertEqual(delay.text, "3")
 
         self.marionette.go_forward()
         self.assertEqual(urls[1], self.marionette.get_url())
@@ -461,10 +467,10 @@ class TestBackForwardNavigation(BaseNavigationTestCase):
             self.marionette.go_forward()
         self.marionette.timeout.reset()
 
-        Wait(self.marionette, self.marionette.timeout.page_load).until(
-            lambda mn: urls[2] == mn.get_url(),
-            message="'{}' has been successfully loaded after going back".format(urls[2]))
-        self.assertEqual(self.marionette.find_element(By.ID, "delay").text, "4")
+        delay = Wait(self.marionette, timeout=self.marionette.timeout.page_load).until(
+            expected.element_present(By.ID, "delay"),
+            message="Target element 'delay' has not been found after timeout in 'forward'")
+        self.assertEqual(delay.text, "4")
 
     def test_certificate_error(self):
         test_pages = [
@@ -604,3 +610,35 @@ class TestTLSNavigation(MarionetteTestCase):
         with self.safe_session() as session:
             with self.assertRaises(errors.InsecureCertificateException):
                 session.navigate(invalid_cert_url)
+
+
+class TestPageLoadStrategy(BaseNavigationTestCase):
+
+    def setUp(self):
+        super(TestPageLoadStrategy, self).setUp()
+
+        if self.marionette.session is not None:
+            self.marionette.delete_session()
+
+    def test_none(self):
+        self.marionette.start_session({"desiredCapabilities": {"pageLoadStrategy": "none"}})
+
+        # With a strategy of "none" there should be no wait for the page load, and the
+        # current load state is unknown. So only test that the command executes successfully.
+        self.marionette.navigate(self.test_page_slow_resource)
+
+    def test_eager(self):
+        self.marionette.start_session({"desiredCapabilities": {"pageLoadStrategy": "eager"}})
+
+        self.marionette.navigate(self.test_page_slow_resource)
+        self.assertEqual("interactive", self.ready_state)
+        self.assertEqual(self.test_page_slow_resource, self.marionette.get_url())
+        self.marionette.find_element(By.ID, "slow")
+
+    def test_normal(self):
+        self.marionette.start_session({"desiredCapabilities": {"pageLoadStrategy": "normal"}})
+
+        self.marionette.navigate(self.test_page_slow_resource)
+        self.assertEqual(self.test_page_slow_resource, self.marionette.get_url())
+        self.assertEqual("complete", self.ready_state)
+        self.marionette.find_element(By.ID, "slow")

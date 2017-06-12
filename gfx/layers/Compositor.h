@@ -432,7 +432,7 @@ public:
    */
   virtual void EndFrame();
 
-  virtual void CancelFrame() { ReadUnlockTextures(); }
+  virtual void CancelFrame(bool aNeedFlush = true) { ReadUnlockTextures(); }
 
   virtual void SetDispAcquireFence(Layer* aLayer);
 
@@ -542,31 +542,10 @@ public:
     mScreenRotation = aRotation;
   }
 
-  TimeStamp GetCompositionTime() const {
-    return mCompositionTime;
-  }
-  void SetCompositionTime(TimeStamp aTimeStamp) {
-    mCompositionTime = aTimeStamp;
-    if (!mCompositionTime.IsNull() && !mCompositeUntilTime.IsNull() &&
-        mCompositionTime >= mCompositeUntilTime) {
-      mCompositeUntilTime = TimeStamp();
-    }
-  }
-
-  void CompositeUntil(TimeStamp aTimeStamp) {
-    if (mCompositeUntilTime.IsNull() ||
-        mCompositeUntilTime < aTimeStamp) {
-      mCompositeUntilTime = aTimeStamp;
-    }
-  }
-  TimeStamp GetCompositeUntilTime() const {
-    return mCompositeUntilTime;
-  }
-
   // A stale Compositor has no CompositorBridgeParent; it will not process
   // frames and should not be used.
   void SetInvalid();
-  bool IsValid() const;
+  virtual bool IsValid() const;
   CompositorBridgeParent* GetCompositorBridgeParent() const {
     return mParent;
   }
@@ -651,17 +630,6 @@ protected:
    * Last Composition end time.
    */
   TimeStamp mLastCompositionEndTime;
-
-  /**
-   * Render time for the current composition.
-   */
-  TimeStamp mCompositionTime;
-  /**
-   * When nonnull, during rendering, some compositable indicated that it will
-   * change its rendering at this time. In order not to miss it, we composite
-   * on every vsync until this time occurs (this is the latest such time).
-   */
-  TimeStamp mCompositeUntilTime;
 
   uint32_t mCompositorID;
   DiagnosticTypes mDiagnosticTypes;

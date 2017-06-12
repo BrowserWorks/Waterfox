@@ -4,6 +4,30 @@
 # License, v. 2.0. If a copy of the MPL was not distributed with this
 # file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
+with Files('**'):
+    BUG_COMPONENT = ('Core', 'Canvas: 2D')
+
+with Files('TexUnpackBlob.cpp'):
+    BUG_COMPONENT = ('Core', 'Canvas: WebGL')
+
+with Files('WebGL*'):
+    BUG_COMPONENT = ('Core', 'Canvas: WebGL')
+
+with Files('test/webgl-conf/**'):
+    BUG_COMPONENT = ('Core', 'Canvas: WebGL')
+
+with Files('test/webgl-mochitest/**'):
+    BUG_COMPONENT = ('Core', 'Canvas: WebGL')
+
+with Files('test/reftest/webgl*'):
+    BUG_COMPONENT = ('Core', 'Canvas: WebGL')
+
+with Files('test/chrome/*webgl*'):
+    BUG_COMPONENT = ('Core', 'Canvas: WebGL')
+
+with Files('test/crossorigin/*webgl*'):
+    BUG_COMPONENT = ('Core', 'Canvas: WebGL')
+
 TEST_DIRS += [
     'gtest'
 ]
@@ -31,6 +55,7 @@ EXPORTS.mozilla.ipc += [
 ]
 
 EXPORTS.mozilla.dom += [
+    'BasicRenderingContext2D.h',
     'CanvasGradient.h',
     'CanvasPath.h',
     'CanvasPattern.h',
@@ -70,7 +95,6 @@ SOURCES += [
 UNIFIED_SOURCES += [
     'TexUnpackBlob.cpp',
     'WebGL1Context.cpp',
-    'WebGL1ContextUniforms.cpp',
     'WebGL2Context.cpp',
     'WebGL2ContextBuffers.cpp',
     'WebGL2ContextFramebuffers.cpp',
@@ -85,7 +109,6 @@ UNIFIED_SOURCES += [
     'WebGL2ContextTransformFeedback.cpp',
     'WebGL2ContextUniforms.cpp',
     'WebGL2ContextVAOs.cpp',
-    'WebGL2ContextVertices.cpp',
     'WebGLActiveInfo.cpp',
     'WebGLBuffer.cpp',
     'WebGLContext.cpp',
@@ -113,6 +136,7 @@ UNIFIED_SOURCES += [
     'WebGLExtensionCompressedTextureETC1.cpp',
     'WebGLExtensionCompressedTexturePVRTC.cpp',
     'WebGLExtensionCompressedTextureS3TC.cpp',
+    'WebGLExtensionDebugGet.cpp',
     'WebGLExtensionDebugRendererInfo.cpp',
     'WebGLExtensionDebugShaders.cpp',
     'WebGLExtensionDepthTexture.cpp',
@@ -186,7 +210,7 @@ LOCAL_INCLUDES += [
     '/layout/generic',
     '/layout/style',
     '/layout/xul',
-    '/media/libyuv/include',
+    '/media/libyuv/libyuv/include',
 ]
 
 CXXFLAGS += CONFIG['MOZ_CAIRO_CFLAGS']

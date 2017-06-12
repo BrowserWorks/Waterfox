@@ -69,10 +69,16 @@ class ThrottledEventQueue::Inner final : public nsIObserver
     { }
 
     NS_IMETHODIMP
-    Run()
+    Run() override
     {
       mInner->ExecuteRunnable();
       return NS_OK;
+    }
+
+    NS_IMETHODIMP
+    GetName(nsACString& aName) override
+    {
+      return mInner->CurrentName(aName);
     }
   };
 
@@ -111,6 +117,39 @@ class ThrottledEventQueue::Inner final : public nsIObserver
   {
     MOZ_ASSERT(!mExecutor);
     MOZ_ASSERT(mShutdownStarted);
+  }
+
+  nsresult
+  CurrentName(nsACString& aName)
+  {
+    nsCOMPtr<nsIRunnable> event;
+
+#ifdef DEBUG
+    bool currentThread = false;
+    mBaseTarget->IsOnCurrentThread(&currentThread);
+    MOZ_ASSERT(currentThread);
+#endif
+
+    {
+      MutexAutoLock lock(mMutex);
+
+      // We only check the name of an executor runnable when we know there is something
+      // in the queue, so this should never fail.
+      MOZ_ALWAYS_TRUE(mEventQueue.PeekEvent(getter_AddRefs(event), lock));
+    }
+
+    if (nsCOMPtr<nsINamed> named = do_QueryInterface(event)) {
+      // Increase mExecutionDepth here so that GetName is allowed to call
+      // IsOnCurrentThread on us and have it be true (in the case when we are on
+      // the right thread).
+      mExecutionDepth++;
+      nsresult rv = named->GetName(aName);
+      mExecutionDepth--;
+      return rv;
+    }
+
+    aName.AssignLiteral("non-nsINamed ThrottledEventQueue runnable");
+    return NS_OK;
   }
 
   void
@@ -166,7 +205,8 @@ class ThrottledEventQueue::Inner final : public nsIObserver
     // of the method in order to wait for the event to finish running.
     if (shouldShutdown) {
       MOZ_ASSERT(IsEmpty());
-      NS_DispatchToMainThread(NewRunnableMethod(this, &Inner::ShutdownComplete));
+      NS_DispatchToMainThread(NewRunnableMethod("ThrottledEventQueue::Inner::ShutdownComplete",
+                                                this, &Inner::ShutdownComplete));
     }
   }
 
@@ -244,7 +284,8 @@ public:
     }
 
     // The queue is empty, so we can complete immediately.
-    NS_DispatchToMainThread(NewRunnableMethod(this, &Inner::ShutdownComplete));
+    NS_DispatchToMainThread(NewRunnableMethod("ThrottledEventQueue::Inner::ShutdownComplete",
+                                              this, &Inner::ShutdownComplete));
   }
 
   bool

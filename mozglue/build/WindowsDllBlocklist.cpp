@@ -225,9 +225,20 @@ static const DllBlockInfo sWindowsDllBlocklist[] = {
   // K7TotalSecurity, bug 1339083.
   { "k7pswsen.dll", MAKE_VERSION(15, 2, 2, 95) },
 
+  // smci*.dll - goobzo crashware (bug 1339908)
+  { "smci32.dll", ALL_VERSIONS },
+  { "smci64.dll", ALL_VERSIONS },
+
   // Crashes with Internet Download Manager, bug 1333486
   { "idmcchandler7.dll", ALL_VERSIONS },
   { "idmcchandler7_64.dll", ALL_VERSIONS },
+  { "idmcchandler5.dll", ALL_VERSIONS },
+  { "idmcchandler5_64.dll", ALL_VERSIONS },
+
+  // Nahimic 2 breaks applicaton update (bug 1356637)
+  { "nahimic2devprops.dll", ALL_VERSIONS },
+  // Nahimic is causing crashes, bug 1233556
+  { "nahimicmsiosd.dll", ALL_VERSIONS },
 
   { nullptr, 0 }
 };
@@ -251,7 +262,6 @@ static const char kUser32BeforeBlocklistParameter[] = "User32BeforeBlocklist=1\n
 static const int kUser32BeforeBlocklistParameterLen =
   sizeof(kUser32BeforeBlocklistParameter) - 1;
 
-static DWORD sThreadLoadingXPCOMModule;
 static bool sBlocklistInitAttempted;
 static bool sBlocklistInitFailed;
 static bool sUser32BeforeBlocklist;
@@ -315,41 +325,6 @@ private:
   const T* mMappedView;
   void* mRealView;
 };
-
-bool
-CheckASLR(const wchar_t* path)
-{
-  bool retval = false;
-
-  HANDLE file = ::CreateFileW(path, GENERIC_READ, FILE_SHARE_READ,
-                              nullptr, OPEN_EXISTING, FILE_ATTRIBUTE_NORMAL,
-                              nullptr);
-  if (file != INVALID_HANDLE_VALUE) {
-    HANDLE map = ::CreateFileMappingW(file, nullptr, PAGE_READONLY, 0, 0,
-                                      nullptr);
-    if (map) {
-      RVAMap<IMAGE_DOS_HEADER> peHeader(map, 0);
-      if (peHeader) {
-        RVAMap<IMAGE_NT_HEADERS> ntHeader(map, peHeader->e_lfanew);
-        if (ntHeader) {
-          // If the DLL has no code, permit it regardless of ASLR status.
-          if (ntHeader->OptionalHeader.SizeOfCode == 0) {
-            retval = true;
-          }
-          // Check to see if the DLL supports ASLR
-          else if ((ntHeader->OptionalHeader.DllCharacteristics &
-                    IMAGE_DLLCHARACTERISTICS_DYNAMIC_BASE) != 0) {
-            retval = true;
-          }
-        }
-      }
-      ::CloseHandle(map);
-    }
-    ::CloseHandle(file);
-  }
-
-  return retval;
-}
 
 DWORD
 GetTimestamp(const wchar_t* path)
@@ -734,21 +709,6 @@ continue_loading:
   printf_stderr("LdrLoadDll: continuing load... ('%S')\n", moduleFileName->Buffer);
 #endif
 
-  if (GetCurrentThreadId() == sThreadLoadingXPCOMModule) {
-    // Check to ensure that the DLL has ASLR.
-    full_fname = getFullPath(filePath, fname);
-    if (!full_fname) {
-      // uh, we couldn't find the DLL at all, so...
-      printf_stderr("LdrLoadDll: Blocking load of '%s' (SearchPathW didn't find it?)\n", dllName);
-      return STATUS_DLL_NOT_FOUND;
-    }
-
-    if (!CheckASLR(full_fname.get())) {
-      printf_stderr("LdrLoadDll: Blocking load of '%s'.  XPCOM components must support ASLR.\n", dllName);
-      return STATUS_DLL_NOT_FOUND;
-    }
-  }
-
   return stub_LdrLoadDll(filePath, flags, moduleFileName, handle);
 }
 
@@ -787,17 +747,6 @@ DllBlocklist_Initialize()
 #ifdef DEBUG
     printf_stderr("LdrLoadDll hook failed, no dll blocklisting active\n");
 #endif
-  }
-}
-
-MFBT_API void
-DllBlocklist_SetInXPCOMLoadOnMainThread(bool inXPCOMLoadOnMainThread)
-{
-  if (inXPCOMLoadOnMainThread) {
-    MOZ_ASSERT(sThreadLoadingXPCOMModule == 0, "Only one thread should be doing this");
-    sThreadLoadingXPCOMModule = GetCurrentThreadId();
-  } else {
-    sThreadLoadingXPCOMModule = 0;
   }
 }
 

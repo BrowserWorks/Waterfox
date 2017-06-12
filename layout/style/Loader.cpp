@@ -16,11 +16,13 @@
 
 /* loading of CSS style sheets using the network APIs */
 
+#include "mozilla/css/Loader.h"
+
 #include "mozilla/ArrayUtils.h"
+#include "mozilla/IntegerPrintfMacros.h"
 #include "mozilla/LoadInfo.h"
 #include "mozilla/MemoryReporting.h"
 
-#include "mozilla/css/Loader.h"
 #include "mozilla/StyleSheetInlines.h"
 #include "nsIRunnable.h"
 #include "nsIUnicharStreamLoader.h"
@@ -57,6 +59,7 @@
 #include "mozilla/StyleSheet.h"
 #include "mozilla/StyleSheetInlines.h"
 #include "mozilla/ConsoleReportCollector.h"
+#include "mozilla/ServoUtils.h"
 
 #ifdef MOZ_XUL
 #include "nsXULPrototypeCache.h"
@@ -801,7 +804,7 @@ SheetLoadData::OnStreamComplete(nsIUnicharStreamLoader* aLoader,
   }
 
   if (NS_FAILED(aStatus)) {
-    LOG_WARN(("  Load failed: status 0x%x", aStatus));
+    LOG_WARN(("  Load failed: status 0x%" PRIx32, static_cast<uint32_t>(aStatus)));
     // Handle sheet not loading error because source was a tracking URL.
     // We make a note of this sheet node by including it in a dedicated
     // array of blocked tracking nodes under its parent document.
@@ -941,7 +944,7 @@ SheetLoadData::OnStreamComplete(nsIUnicharStreamLoader* aLoader,
   mSheet->GetIntegrity(sriMetadata);
   if (sriMetadata.IsEmpty()) {
     nsCOMPtr<nsILoadInfo> loadInfo = channel->GetLoadInfo();
-    if (loadInfo->GetEnforceSRI()) {
+    if (loadInfo && loadInfo->GetEnforceSRI()) {
       LOG(("  Load was blocked by SRI"));
       MOZ_LOG(gSriPRLog, mozilla::LogLevel::Debug,
               ("css::Loader::OnStreamComplete, required SRI not found"));
@@ -965,7 +968,15 @@ SheetLoadData::OnStreamComplete(nsIUnicharStreamLoader* aLoader,
     }
     nsresult rv = SRICheck::VerifyIntegrity(sriMetadata, aLoader, aBuffer,
                                             sourceUri, mLoader->mReporter);
-    mLoader->mReporter->FlushConsoleReports(mLoader->mDocument);
+
+    nsCOMPtr<nsILoadGroup> loadGroup;
+    channel->GetLoadGroup(getter_AddRefs(loadGroup));
+    if (loadGroup) {
+      mLoader->mReporter->FlushConsoleReports(loadGroup);
+    } else {
+      mLoader->mReporter->FlushConsoleReports(mLoader->mDocument);
+    }
+
     if (NS_FAILED(rv)) {
       LOG(("  Load was blocked by SRI"));
       MOZ_LOG(gSriPRLog, mozilla::LogLevel::Debug,
@@ -1098,14 +1109,16 @@ Loader::CreateSheet(nsIURI* aURI,
   // can mess with our hashtables.
   *aIsAlternate = IsAlternate(aTitle, aHasAlternateRel);
 
-  // XXXheycam Cached sheets currently must be CSSStyleSheets.
-  if (aURI && GetStyleBackendType() == StyleBackendType::Gecko) {
+  if (aURI) {
     aSheetState = eSheetComplete;
     RefPtr<StyleSheet> sheet;
 
     // First, the XUL cache
 #ifdef MOZ_XUL
-    if (IsChromeURI(aURI)) {
+    // The XUL cache is a singleton that only holds Gecko-style sheets, so
+    // only use the cache if the loader is also Gecko.
+    if (IsChromeURI(aURI) &&
+        GetStyleBackendType() == StyleBackendType::Gecko) {
       nsXULPrototypeCache* cache = nsXULPrototypeCache::GetInstance();
       if (cache) {
         if (cache->IsEnabled()) {
@@ -1130,17 +1143,13 @@ Loader::CreateSheet(nsIURI* aURI,
     }
 
     if (sheet) {
-      if (sheet->IsServo()) {
-        MOZ_CRASH("stylo: can't clone ServoStyleSheets yet");
-      }
-
       // This sheet came from the XUL cache or our per-document hashtable; it
       // better be a complete sheet.
-      NS_ASSERTION(sheet->AsGecko()->IsComplete(),
+      NS_ASSERTION(sheet->IsComplete(),
                    "Sheet thinks it's not complete while we think it is");
 
       // Make sure it hasn't been modified; if it has, we can't use it
-      if (sheet->AsGecko()->IsModified()) {
+      if (sheet->IsModified()) {
         LOG(("  Not cloning completed sheet %p because it's been modified",
              sheet.get()));
         sheet = nullptr;
@@ -1193,28 +1202,25 @@ Loader::CreateSheet(nsIURI* aURI,
 
     if (sheet) {
       // The sheet we have now should be either incomplete or unmodified
-      if (sheet->IsServo()) {
-        MOZ_CRASH("stylo: can't clone ServoStyleSheets yet");
-      }
-      NS_ASSERTION(!sheet->AsGecko()->IsModified() ||
-                   !sheet->AsGecko()->IsComplete(),
+      NS_ASSERTION(!sheet->IsModified() ||
+                   !sheet->IsComplete(),
                    "Unexpected modified complete sheet");
-      NS_ASSERTION(sheet->AsGecko()->IsComplete() ||
+      NS_ASSERTION(sheet->IsComplete() ||
                    aSheetState != eSheetComplete,
                    "Sheet thinks it's not complete while we think it is");
 
-      RefPtr<CSSStyleSheet> clonedSheet =
-        sheet->AsGecko()->Clone(nullptr, nullptr, nullptr, nullptr);
+      RefPtr<StyleSheet> clonedSheet =
+        sheet->Clone(nullptr, nullptr, nullptr, nullptr);
       *aSheet = Move(clonedSheet);
       if (*aSheet && fromCompleteSheets &&
-          !sheet->AsGecko()->GetOwnerNode() &&
-          !sheet->AsGecko()->GetParentSheet()) {
+          !sheet->GetOwnerNode() &&
+          !sheet->GetParentSheet()) {
         // The sheet we're cloning isn't actually referenced by
         // anyone.  Replace it in the cache, so that if our CSSOM is
         // later modified we don't end up with two copies of our inner
         // hanging around.
         URIPrincipalReferrerPolicyAndCORSModeHashKey key(aURI, aLoaderPrincipal, aCORSMode, aReferrerPolicy);
-        NS_ASSERTION((*aSheet)->AsGecko()->IsComplete(),
+        NS_ASSERTION((*aSheet)->IsComplete(),
                      "Should only be caching complete sheets");
         mSheets->mCompleteSheets.Put(&key, *aSheet);
       }
@@ -1419,9 +1425,12 @@ Loader::InsertChildSheet(StyleSheet* aSheet,
     aSheet->AsGecko()->SetEnabled(true);
     aGeckoParentRule->SetSheet(aSheet->AsGecko()); // This sets the ownerRule on the sheet
   } else {
+    // No matter what, consume the sheet, but we might not use it.
     RefPtr<RawServoStyleSheet> sheet =
       Servo_ImportRule_GetSheet(aServoParentRule).Consume();
-    aSheet->AsServo()->SetSheetForImport(sheet);
+    if (!aSheet->AsServo()->RawSheet()) {
+      aSheet->AsServo()->SetSheetForImport(sheet);
+    }
   }
   aParentSheet->AppendStyleSheet(aSheet);
 
@@ -1864,7 +1873,7 @@ Loader::DoSheetComplete(SheetLoadData* aLoadData, nsresult aStatus,
   NS_PRECONDITION(aLoadData->mSheet, "Must have a sheet");
   NS_ASSERTION(mSheets, "mLoadingDatas should be initialized by now.");
 
-  LOG(("Load completed, status: 0x%x", aStatus));
+  LOG(("Load completed, status: 0x%" PRIx32, static_cast<uint32_t>(aStatus)));
 
   // Twiddle the hashtables
   if (aLoadData->mURI) {
@@ -1877,9 +1886,11 @@ Loader::DoSheetComplete(SheetLoadData* aLoadData, nsresult aStatus,
                                          aLoadData->mSheet->GetReferrerPolicy());
 #ifdef DEBUG
       SheetLoadData *loadingData;
-      NS_ASSERTION(mSheets->mLoadingDatas.Get(&key, &loadingData) &&
-                   loadingData == aLoadData,
-                   "Bad loading table");
+      // XXXheycam Temporarily downgrade this assertion (bug 1314045).
+      NS_ASSERTION_STYLO_WARNING(
+        mSheets->mLoadingDatas.Get(&key, &loadingData) &&
+        loadingData == aLoadData,
+        "Bad loading table");
 #endif
 
       mSheets->mLoadingDatas.Remove(&key);
@@ -1936,43 +1947,40 @@ Loader::DoSheetComplete(SheetLoadData* aLoadData, nsresult aStatus,
     // one of the sheets that will be kept alive by a document or
     // parent sheet anyway, so that if someone then accesses it via
     // CSSOM we won't have extra clones of the inner lying around.
-    if (aLoadData->mSheet->IsGecko()) {
-      data = aLoadData;
-      CSSStyleSheet* sheet = aLoadData->mSheet->AsGecko();
-      while (data) {
-        if (data->mSheet->GetParentSheet() || data->mSheet->GetOwnerNode()) {
-          sheet = data->mSheet->AsGecko();
-          break;
-        }
-        data = data->mNext;
+    data = aLoadData;
+    StyleSheet* sheet = aLoadData->mSheet;
+    while (data) {
+      if (data->mSheet->GetParentSheet() || data->mSheet->GetOwnerNode()) {
+        sheet = data->mSheet;
+        break;
       }
-#ifdef MOZ_XUL
-      if (IsChromeURI(aLoadData->mURI)) {
-        nsXULPrototypeCache* cache = nsXULPrototypeCache::GetInstance();
-        if (cache && cache->IsEnabled()) {
-          if (!cache->GetStyleSheet(aLoadData->mURI)) {
-            LOG(("  Putting sheet in XUL prototype cache"));
-            NS_ASSERTION(sheet->IsComplete(),
-                         "Should only be caching complete sheets");
-            cache->PutStyleSheet(sheet);
-          }
-        }
-      }
-      else {
-#endif
-        URIPrincipalReferrerPolicyAndCORSModeHashKey key(aLoadData->mURI,
-                                           aLoadData->mLoaderPrincipal,
-                                           aLoadData->mSheet->GetCORSMode(),
-                                           aLoadData->mSheet->GetReferrerPolicy());
-        NS_ASSERTION(sheet->IsComplete(),
-                     "Should only be caching complete sheets");
-        mSheets->mCompleteSheets.Put(&key, sheet);
-#ifdef MOZ_XUL
-      }
-#endif
-    } else {
-      NS_WARNING("stylo: Stylesheet caching not yet supported - see bug 1290218.");
+      data = data->mNext;
     }
+#ifdef MOZ_XUL
+    if (IsChromeURI(aLoadData->mURI) &&
+        GetStyleBackendType() == StyleBackendType::Gecko) {
+      nsXULPrototypeCache* cache = nsXULPrototypeCache::GetInstance();
+      if (cache && cache->IsEnabled()) {
+        if (!cache->GetStyleSheet(aLoadData->mURI)) {
+          LOG(("  Putting sheet in XUL prototype cache"));
+          NS_ASSERTION(sheet->IsComplete(),
+                       "Should only be caching complete sheets");
+          cache->PutStyleSheet(sheet);
+        }
+      }
+    }
+    else {
+#endif
+      URIPrincipalReferrerPolicyAndCORSModeHashKey key(aLoadData->mURI,
+                                         aLoadData->mLoaderPrincipal,
+                                         aLoadData->mSheet->GetCORSMode(),
+                                         aLoadData->mSheet->GetReferrerPolicy());
+      NS_ASSERTION(sheet->IsComplete(),
+                   "Should only be caching complete sheets");
+      mSheets->mCompleteSheets.Put(&key, sheet);
+#ifdef MOZ_XUL
+    }
+#endif
   }
 
   NS_RELEASE(aLoadData);  // this will release parents and siblings and all that

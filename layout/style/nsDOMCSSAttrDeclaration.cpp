@@ -12,7 +12,9 @@
 #include "mozilla/DeclarationBlock.h"
 #include "mozilla/DeclarationBlockInlines.h"
 #include "mozilla/dom/Element.h"
+#include "mozilla/InternalMutationEvent.h"
 #include "mozilla/ServoDeclarationBlock.h"
+#include "nsContentUtils.h"
 #include "nsIDocument.h"
 #include "nsIDOMMutationEvent.h"
 #include "nsIURI.h"
@@ -43,21 +45,20 @@ NS_IMPL_CYCLE_COLLECTION_WRAPPERCACHE(nsDOMCSSAttributeDeclaration, mElement)
 NS_IMPL_CYCLE_COLLECTION_CAN_SKIP_BEGIN(nsDOMCSSAttributeDeclaration)
   if (tmp->mElement && Element::CanSkip(tmp->mElement, true)) {
     if (tmp->PreservingWrapper()) {
-      // This marks the wrapper black.
-      tmp->GetWrapper();
+      tmp->MarkWrapperLive();
     }
     return true;
   }
-  return tmp->IsBlack();
+  return tmp->HasKnownLiveWrapper();
 NS_IMPL_CYCLE_COLLECTION_CAN_SKIP_END
 
 NS_IMPL_CYCLE_COLLECTION_CAN_SKIP_IN_CC_BEGIN(nsDOMCSSAttributeDeclaration)
-  return tmp->IsBlack() ||
+  return tmp->HasKnownLiveWrapper() ||
     (tmp->mElement && Element::CanSkipInCC(tmp->mElement));
 NS_IMPL_CYCLE_COLLECTION_CAN_SKIP_IN_CC_END
 
 NS_IMPL_CYCLE_COLLECTION_CAN_SKIP_THIS_BEGIN(nsDOMCSSAttributeDeclaration)
-  return tmp->IsBlack() ||
+  return tmp->HasKnownLiveWrapper() ||
     (tmp->mElement && Element::CanSkipThis(tmp->mElement));
 NS_IMPL_CYCLE_COLLECTION_CAN_SKIP_THIS_END
 
@@ -120,6 +121,15 @@ nsDOMCSSAttributeDeclaration::GetCSSDeclaration(Operation aOperation)
   }
 
   if (declaration) {
+    if (aOperation != eOperation_Read &&
+        nsContentUtils::HasMutationListeners(
+          mElement, NS_EVENT_BITS_MUTATION_ATTRMODIFIED, mElement)) {
+      // If there is any mutation listener on the element, we need to
+      // ensure that any change would create a new declaration so that
+      // nsStyledElement::SetInlineStyleDeclaration can generate the
+      // correct old value.
+      declaration->SetImmutable();
+    }
     return declaration;
   }
 

@@ -22,8 +22,8 @@
 # include <valgrind/memcheck.h>
 #endif
 
+#include "jit/AtomicOperations.h"
 #include "vm/SharedMem.h"
-#include "vm/TypedArrayCommon.h"
 #include "wasm/AsmJS.h"
 #include "wasm/WasmTypes.h"
 
@@ -313,7 +313,7 @@ SharedArrayBufferObject::rawBufferObject() const
 void
 SharedArrayBufferObject::Finalize(FreeOp* fop, JSObject* obj)
 {
-    MOZ_ASSERT(fop->maybeOffMainThread());
+    MOZ_ASSERT(fop->maybeOnHelperThread());
 
     SharedArrayBufferObject& buf = obj->as<SharedArrayBufferObject>();
 
@@ -342,15 +342,16 @@ SharedArrayBufferObject::addSizeOfExcludingThis(JSObject* obj, mozilla::MallocSi
 }
 
 /* static */ void
-SharedArrayBufferObject::copyData(Handle<SharedArrayBufferObject*> toBuffer,
-                                  Handle<SharedArrayBufferObject*> fromBuffer,
-                                  uint32_t fromIndex, uint32_t count)
+SharedArrayBufferObject::copyData(Handle<SharedArrayBufferObject*> toBuffer, uint32_t toIndex,
+                                  Handle<SharedArrayBufferObject*> fromBuffer, uint32_t fromIndex,
+                                  uint32_t count)
 {
     MOZ_ASSERT(toBuffer->byteLength() >= count);
+    MOZ_ASSERT(toBuffer->byteLength() >= toIndex + count);
     MOZ_ASSERT(fromBuffer->byteLength() >= fromIndex);
     MOZ_ASSERT(fromBuffer->byteLength() >= fromIndex + count);
 
-    jit::AtomicOperations::memcpySafeWhenRacy(toBuffer->dataPointerShared(),
+    jit::AtomicOperations::memcpySafeWhenRacy(toBuffer->dataPointerShared() + toIndex,
                                               fromBuffer->dataPointerShared() + fromIndex,
                                               count);
 }

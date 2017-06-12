@@ -55,7 +55,7 @@ class nsFilterInstance
   typedef mozilla::gfx::FilterPrimitiveDescription FilterPrimitiveDescription;
   typedef mozilla::gfx::FilterDescription FilterDescription;
   typedef mozilla::dom::UserSpaceMetrics UserSpaceMetrics;
-
+  typedef mozilla::image::DrawResult DrawResult;
 public:
   /**
    * Create a FilterDescription for the supplied filter. All coordinates in
@@ -83,11 +83,11 @@ public:
    *   frame space (i.e. relative to its origin, the top-left corner of its
    *   border box).
    */
-  static nsresult PaintFilteredFrame(nsIFrame *aFilteredFrame,
-                                     DrawTarget* aDrawTarget,
-                                     const gfxMatrix& aTransform,
-                                     nsSVGFilterPaintCallback *aPaintCallback,
-                                     const nsRegion* aDirtyArea);
+  static DrawResult PaintFilteredFrame(nsIFrame *aFilteredFrame,
+                                       DrawTarget* aDrawTarget,
+                                       const gfxMatrix& aTransform,
+                                       nsSVGFilterPaintCallback *aPaintCallback,
+                                       const nsRegion* aDirtyArea);
 
   /**
    * Returns the post-filter area that could be dirtied when the given
@@ -119,6 +119,7 @@ public:
                                     const gfxRect *aOverrideBBox = nullptr,
                                     const nsRect *aPreFilterBounds = nullptr);
 
+private:
   /**
    * @param aTargetFrame The frame of the filtered element under consideration,
    *   may be null.
@@ -166,7 +167,7 @@ public:
    * by passing it as the aPostFilterDirtyRegion argument to the
    * nsFilterInstance constructor.
    */
-  nsresult Render(DrawTarget* aDrawTarget);
+  DrawResult Render(DrawTarget* aDrawTarget);
 
   const FilterDescription& ExtractDescriptionAndAdditionalImages(nsTArray<RefPtr<SourceSurface>>& aOutAdditionalImages)
   {
@@ -201,15 +202,6 @@ public:
    */
   nsRect ComputeSourceNeededRect();
 
-
-  /**
-   * Returns the transform from filter space to outer-<svg> device space.
-   */
-  gfxMatrix GetFilterSpaceToDeviceSpaceTransform() const {
-    return mFilterSpaceToDeviceSpaceTransform;
-  }
-
-private:
   struct SourceInfo {
     // Specifies which parts of the source need to be rendered.
     // Set by ComputeNeededBoxes().
@@ -228,21 +220,20 @@ private:
    * Creates a SourceSurface for either the FillPaint or StrokePaint graph
    * nodes
    */
-  nsresult BuildSourcePaint(SourceInfo *aPrimitive,
-                            DrawTarget* aTargetDT);
+  DrawResult BuildSourcePaint(SourceInfo *aPrimitive);
 
   /**
    * Creates a SourceSurface for either the FillPaint and StrokePaint graph
    * nodes, fills its contents and assigns it to mFillPaint.mSourceSurface and
    * mStrokePaint.mSourceSurface respectively.
    */
-  nsresult BuildSourcePaints(DrawTarget* aTargetDT);
+  DrawResult BuildSourcePaints();
 
   /**
    * Creates the SourceSurface for the SourceGraphic graph node, paints its
    * contents, and assigns it to mSourceGraphic.mSourceSurface.
    */
-  nsresult BuildSourceImage(DrawTarget* aTargetDT);
+  DrawResult BuildSourceImage();
 
   /**
    * Build the list of FilterPrimitiveDescriptions that describes the filter's
@@ -279,7 +270,7 @@ private:
   /**
    * Compute the scale factors between user space and filter space.
    */
-  nsresult ComputeUserSpaceToFilterSpaceScale();
+  bool ComputeUserSpaceToFilterSpaceScale();
 
   /**
    * Transform a rect between user space and filter space.
@@ -312,6 +303,8 @@ private:
    */
   gfxMatrix GetUserSpaceToFrameSpaceInCSSPxTransform() const;
 
+  bool ComputeTargetBBoxInFilterSpace();
+
   /**
    * The frame for the element that is currently being filtered.
    */
@@ -338,11 +331,6 @@ private:
    * The SVG bbox of the element that is being filtered, in filter space.
    */
   nsIntRect mTargetBBoxInFilterSpace;
-
-  /**
-   * The transform from filter space to outer-<svg> device space.
-   */
-  gfxMatrix mFilterSpaceToDeviceSpaceTransform;
 
   /**
    * Transform rects between filter space and frame space in CSS pixels.

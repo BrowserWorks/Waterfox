@@ -6,26 +6,27 @@
 #ifndef MOZ_PROFILE_BUFFER_H
 #define MOZ_PROFILE_BUFFER_H
 
-#include "ProfileEntry.h"
+#include "ProfileBufferEntry.h"
 #include "platform.h"
 #include "ProfileJSONWriter.h"
 #include "mozilla/RefPtr.h"
 #include "mozilla/RefCounted.h"
 
-class ProfileBuffer : public mozilla::RefCounted<ProfileBuffer> {
+class ProfileBuffer final
+{
 public:
-  MOZ_DECLARE_REFCOUNTED_VIRTUAL_TYPENAME(ProfileBuffer)
-
   explicit ProfileBuffer(int aEntrySize);
 
-  virtual ~ProfileBuffer();
+  ~ProfileBuffer();
 
-  void addTag(const ProfileEntry& aTag);
+  void addTag(const ProfileBufferEntry& aTag);
   void StreamSamplesToJSON(SpliceableJSONWriter& aWriter, int aThreadId, double aSinceTime,
                            JSContext* cx, UniqueStacks& aUniqueStacks);
-  void StreamMarkersToJSON(SpliceableJSONWriter& aWriter, int aThreadId, double aSinceTime,
+  void StreamMarkersToJSON(SpliceableJSONWriter& aWriter, int aThreadId,
+                           const mozilla::TimeStamp& aStartTime,
+                           double aSinceTime,
                            UniqueStacks& aUniqueStacks);
-  void DuplicateLastSample(int aThreadId);
+  bool DuplicateLastSample(int aThreadId, const mozilla::TimeStamp& aStartTime);
 
   void addStoredMarker(ProfilerMarker* aStoredMarker);
 
@@ -33,13 +34,15 @@ public:
   void deleteExpiredStoredMarkers();
   void reset();
 
+  size_t SizeOfIncludingThis(mozilla::MallocSizeOf aMallocSizeOf) const;
+
 protected:
   char* processDynamicTag(int readPos, int* tagsConsumed, char* tagBuff);
   int FindLastSampleOfThread(int aThreadId);
 
 public:
   // Circular buffer 'Keep One Slot Open' implementation for simplicity
-  mozilla::UniquePtr<ProfileEntry[]> mEntries;
+  mozilla::UniquePtr<ProfileBufferEntry[]> mEntries;
 
   // Points to the next entry we will write to, which is also the one at which
   // we need to stop reading.

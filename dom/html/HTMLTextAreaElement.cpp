@@ -13,6 +13,7 @@
 #include "mozilla/dom/HTMLTextAreaElementBinding.h"
 #include "mozilla/EventDispatcher.h"
 #include "mozilla/EventStates.h"
+#include "mozilla/GenericSpecifiedValuesInlines.h"
 #include "mozilla/MouseEvents.h"
 #include "nsAttrValueInlines.h"
 #include "nsContentCID.h"
@@ -37,7 +38,6 @@
 #include "nsPresContext.h"
 #include "nsPresState.h"
 #include "nsReadableUtils.h"
-#include "nsRuleData.h"
 #include "nsStyleConsts.h"
 #include "nsTextEditorState.h"
 #include "nsIController.h"
@@ -289,7 +289,7 @@ HTMLTextAreaElement::CreateEditor()
   return mState.PrepareEditor();
 }
 
-NS_IMETHODIMP_(nsIContent*)
+NS_IMETHODIMP_(Element*)
 HTMLTextAreaElement::GetRootEditorNode()
 {
   return mState.GetRootNode();
@@ -436,16 +436,15 @@ HTMLTextAreaElement::ParseAttribute(int32_t aNamespaceID,
 
 void
 HTMLTextAreaElement::MapAttributesIntoRule(const nsMappedAttributes* aAttributes,
-                                           nsRuleData* aData)
+                                           GenericSpecifiedValues* aData)
 {
-  if (aData->mSIDs & NS_STYLE_INHERIT_BIT(Text)) {
+  if (aData->ShouldComputeStyleStruct(NS_STYLE_INHERIT_BIT(Text))) {
     // wrap=off
-    nsCSSValue* whiteSpace = aData->ValueForWhiteSpace();
-    if (whiteSpace->GetUnit() == eCSSUnit_Null) {
+    if (!aData->PropertyIsSet(eCSSProperty_white_space)) {
       const nsAttrValue* value = aAttributes->GetAttr(nsGkAtoms::wrap);
       if (value && value->Type() == nsAttrValue::eString &&
           value->Equals(nsGkAtoms::OFF, eIgnoreCase)) {
-        whiteSpace->SetIntValue(NS_STYLE_WHITESPACE_PRE, eCSSUnit_Enumerated);
+        aData->SetKeywordValue(eCSSProperty_white_space, NS_STYLE_WHITESPACE_PRE);
       }
     }
   }
@@ -841,17 +840,16 @@ HTMLTextAreaElement::SetSelectionEnd(const Nullable<uint32_t>& aSelectionEnd,
   }
 }
 
-nsresult
+NS_IMETHODIMP
 HTMLTextAreaElement::GetSelectionRange(int32_t* aSelectionStart,
                                        int32_t* aSelectionEnd)
 {
-  nsIFormControlFrame* formControlFrame = GetFormControlFrame(true);
-  nsITextControlFrame* textControlFrame = do_QueryFrame(formControlFrame);
-  if (textControlFrame) {
-    return textControlFrame->GetSelectionRange(aSelectionStart, aSelectionEnd);
+  // Flush frames, because our editor state will want to work with the frame.
+  if (IsInComposedDoc()) {
+    GetComposedDoc()->FlushPendingNotifications(FlushType::Frames);
   }
 
-  return NS_ERROR_FAILURE;
+  return mState.GetSelectionRange(aSelectionStart, aSelectionEnd);
 }
 
 static void
@@ -881,22 +879,21 @@ HTMLTextAreaElement::GetSelectionDirection(nsAString& aDirection, ErrorResult& a
 {
   nsresult rv = NS_ERROR_FAILURE;
   nsIFormControlFrame* formControlFrame = GetFormControlFrame(true);
-  nsITextControlFrame* textControlFrame = do_QueryFrame(formControlFrame);
-  if (textControlFrame) {
+  if (formControlFrame) {
     nsITextControlFrame::SelectionDirection dir;
-    rv = textControlFrame->GetSelectionRange(nullptr, nullptr, &dir);
+    rv = mState.GetSelectionDirection(&dir);
     if (NS_SUCCEEDED(rv)) {
       DirectionToName(dir, aDirection);
+      return;
     }
   }
 
-  if (NS_FAILED(rv)) {
-    if (mState.IsSelectionCached()) {
-      DirectionToName(mState.GetSelectionProperties().GetDirection(), aDirection);
-      return;
-    }
-    aError.Throw(rv);
+  if (mState.IsSelectionCached()) {
+    DirectionToName(mState.GetSelectionProperties().GetDirection(), aDirection);
+    return;
   }
+
+  aError.Throw(rv);
 }
 
 NS_IMETHODIMP

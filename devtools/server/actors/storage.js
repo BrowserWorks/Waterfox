@@ -492,7 +492,7 @@ StorageActors.createActor({
       return host == null;
     }
 
-    host = trimHttpHttps(host);
+    host = trimHttpHttpsPort(host);
 
     if (cookie.host.startsWith(".")) {
       return ("." + host).endsWith(cookie.host);
@@ -742,7 +742,7 @@ var cookieHelpers = {
       host = "";
     }
 
-    host = trimHttpHttps(host);
+    host = trimHttpHttpsPort(host);
 
     let cookies = Services.cookies.getCookiesFromHost(host, originAttributes);
     let store = [];
@@ -878,7 +878,7 @@ var cookieHelpers = {
       opts.path = split[2];
     }
 
-    host = trimHttpHttps(host);
+    host = trimHttpHttpsPort(host);
 
     function hostMatches(cookieHost, matchHost) {
       if (cookieHost == null) {
@@ -1217,8 +1217,12 @@ StorageActors.createActor({
 }, {
   getCachesForHost: Task.async(function* (host) {
     let uri = Services.io.newURI(host);
+    let attrs = this.storageActor
+                    .document
+                    .nodePrincipal
+                    .originAttributes;
     let principal =
-      Services.scriptSecurityManager.getNoAppCodebasePrincipal(uri);
+      Services.scriptSecurityManager.createCodebasePrincipal(uri, attrs);
 
     // The first argument tells if you want to get |content| cache or |chrome|
     // cache.
@@ -1662,11 +1666,11 @@ StorageActors.createActor({
 
   populateStoresForHost: Task.async(function* (host) {
     let storeMap = new Map();
-    let {names} = yield this.getDBNamesForHost(host);
 
     let win = this.storageActor.getWindowFromHost(host);
     if (win) {
       let principal = win.document.nodePrincipal;
+      let {names} = yield this.getDBNamesForHost(host, principal);
 
       for (let {name, storage} of names) {
         let metadata = yield this.getDBMetaData(host, principal, name, storage);
@@ -2025,8 +2029,8 @@ var indexedDBHelpers = {
   /**
    * Fetches all the databases and their metadata for the given `host`.
    */
-  getDBNamesForHost: Task.async(function* (host) {
-    let sanitizedHost = this.getSanitizedHost(host);
+  getDBNamesForHost: Task.async(function* (host, principal) {
+    let sanitizedHost = this.getSanitizedHost(host) + principal.originSuffix;
     let profileDir = OS.Constants.Path.profileDir;
     let files = [];
     let names = [];
@@ -2358,8 +2362,8 @@ var indexedDBHelpers = {
         return indexedDBHelpers.splitNameAndStorage(name);
       }
       case "getDBNamesForHost": {
-        let [host] = args;
-        return indexedDBHelpers.getDBNamesForHost(host);
+        let [host, principal] = args;
+        return indexedDBHelpers.getDBNamesForHost(host, principal);
       }
       case "getValuesForHost": {
         let [host, name, options, hostVsStores, principal] = args;
@@ -2414,7 +2418,12 @@ exports.setupParentProcessForIndexedDB = function ({ mm, prefix }) {
 /**
  * General helpers
  */
-function trimHttpHttps(url) {
+function trimHttpHttpsPort(url) {
+  let match = url.match(/(.+):\d+$/);
+
+  if (match) {
+    url = match[1];
+  }
   if (url.startsWith("http://")) {
     return url.substr(7);
   }

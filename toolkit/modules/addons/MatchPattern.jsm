@@ -39,6 +39,7 @@ function globToRegexp(pat, allowQuestion) {
 // These patterns follow the syntax in
 // https://developer.chrome.com/extensions/match_patterns
 function SingleMatchPattern(pat) {
+  this.pat = pat;
   if (pat == "<all_urls>") {
     this.schemes = PERMITTED_SCHEMES;
     this.hostMatch = () => true;
@@ -99,6 +100,12 @@ SingleMatchPattern.prototype = {
       ))
     );
   },
+
+  // Tests if this can possibly overlap with the |other| SingleMatchPattern.
+  overlapsIgnoringPath(other) {
+    return this.schemes.some(scheme => other.schemes.includes(scheme)) &&
+           (this.hostMatch(other) || other.hostMatch(this));
+  },
 };
 
 this.MatchPattern = function(pat) {
@@ -110,6 +117,12 @@ this.MatchPattern = function(pat) {
   } else {
     this.matchers = pat.map(p => new SingleMatchPattern(p));
   }
+
+  XPCOMUtils.defineLazyGetter(this, "explicitMatchers", () => {
+    return this.matchers.filter(matcher => matcher.pat != "<all_urls>" &&
+                                           matcher.host &&
+                                           !matcher.host.startsWith("*"));
+  });
 };
 
 MatchPattern.prototype = {
@@ -118,7 +131,10 @@ MatchPattern.prototype = {
     return this.matchers.some(matcher => matcher.matches(uri));
   },
 
-  matchesIgnoringPath(uri) {
+  matchesIgnoringPath(uri, explicit = false) {
+    if (explicit) {
+      return this.explicitMatchers.some(matcher => matcher.matches(uri, true));
+    }
     return this.matchers.some(matcher => matcher.matches(uri, true));
   },
 
@@ -162,6 +178,14 @@ MatchPattern.prototype = {
     }
 
     return false;
+  },
+
+  // Checks if every part of this filter overlaps with
+  // some of the |hosts| permissions MatchPatterns.
+  overlapsPermissions(hosts) {
+    const perms = hosts.matchers;
+    return this.matchers.length &&
+           this.matchers.every(m => perms.some(p => p.overlapsIgnoringPath(m)));
   },
 
   serialize() {

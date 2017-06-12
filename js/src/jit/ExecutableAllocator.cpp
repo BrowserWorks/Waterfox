@@ -238,7 +238,7 @@ ExecutableAllocator::createPool(size_t n)
 }
 
 void*
-ExecutableAllocator::alloc(size_t n, ExecutablePool** poolp, CodeKind type)
+ExecutableAllocator::alloc(JSContext* cx, size_t n, ExecutablePool** poolp, CodeKind type)
 {
     // Don't race with reprotectAll called from the signal handler.
     JitRuntime::AutoPreventBackedgePatching apbp(rt_);
@@ -261,6 +261,9 @@ ExecutableAllocator::alloc(size_t n, ExecutablePool** poolp, CodeKind type)
     // (found, or created if necessary) a pool that had enough space.
     void* result = (*poolp)->alloc(n, type);
     MOZ_ASSERT(result);
+
+    cx->zone()->updateJitCodeMallocBytes(n);
+
     return result;
 }
 
@@ -323,7 +326,8 @@ ExecutableAllocator::reprotectAll(ProtectionSetting protection)
 ExecutableAllocator::reprotectPool(JSRuntime* rt, ExecutablePool* pool, ProtectionSetting protection)
 {
     // Don't race with reprotectAll called from the signal handler.
-    MOZ_ASSERT(rt->jitRuntime()->preventBackedgePatching() || rt->handlingJitInterrupt());
+    MOZ_ASSERT(rt->jitRuntime()->preventBackedgePatching() ||
+               rt->activeContext()->handlingJitInterrupt());
 
     char* start = pool->m_allocation.pages;
     if (!ReprotectRegion(start, pool->m_freePtr - start, protection))

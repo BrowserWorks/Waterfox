@@ -57,6 +57,22 @@ XPCOMUtils.defineLazyGetter(this, "ROOTS", () =>
   Object.keys(ROOT_SYNC_ID_TO_GUID)
 );
 
+const HistorySyncUtils = PlacesSyncUtils.history = Object.freeze({
+  fetchURLFrecency: Task.async(function* (url) {
+    let canonicalURL = PlacesUtils.SYNC_BOOKMARK_VALIDATORS.url(url);
+
+    let db = yield PlacesUtils.promiseDBConnection();
+    let rows = yield db.executeCached(`
+      SELECT frecency
+      FROM moz_places
+      WHERE url_hash = hash(:url) AND url = :url
+      LIMIT 1`,
+      { url:canonicalURL.href }
+    );
+    return rows.length ? rows[0].getResultByName("frecency") : -1;
+  }),
+});
+
 const BookmarkSyncUtils = PlacesSyncUtils.bookmarks = Object.freeze({
   SMART_BOOKMARKS_ANNO: "Places/SmartBookmark",
   DESCRIPTION_ANNO: "bookmarkProperties/description",
@@ -108,6 +124,48 @@ const BookmarkSyncUtils = PlacesSyncUtils.bookmarks = Object.freeze({
     return childGuids.map(guid =>
       BookmarkSyncUtils.guidToSyncId(guid)
     );
+  }),
+
+  /**
+   * Returns an array of `{ syncId, syncable }` tuples for all items in
+   * `requestedSyncIds`. If any requested ID is a folder, all its descendants
+   * will be included. Ancestors of non-syncable items are not included; if
+   * any are missing on the server, the requesting client will need to make
+   * another repair request.
+   *
+   * Sync calls this method to respond to incoming bookmark repair requests
+   * and upload items that are missing on the server.
+   */
+  fetchSyncIdsForRepair: Task.async(function* (requestedSyncIds) {
+    let requestedGuids = requestedSyncIds.map(BookmarkSyncUtils.syncIdToGuid);
+    let db = yield PlacesUtils.promiseDBConnection();
+    let rows = yield db.executeCached(`
+      WITH RECURSIVE
+      syncedItems(id) AS (
+        SELECT b.id FROM moz_bookmarks b
+        WHERE b.guid IN ('menu________', 'toolbar_____', 'unfiled_____',
+                         'mobile______')
+        UNION ALL
+        SELECT b.id FROM moz_bookmarks b
+        JOIN syncedItems s ON b.parent = s.id
+      ),
+      descendants(id) AS (
+        SELECT b.id FROM moz_bookmarks b
+        WHERE b.guid IN (${requestedGuids.map(guid => JSON.stringify(guid)).join(",")})
+        UNION ALL
+        SELECT b.id FROM moz_bookmarks b
+        JOIN descendants d ON d.id = b.parent
+      )
+      SELECT b.guid, s.id NOT NULL AS syncable
+      FROM descendants d
+      JOIN moz_bookmarks b ON b.id = d.id
+      LEFT JOIN syncedItems s ON s.id = d.id
+      `);
+    return rows.map(row => {
+      let syncId = BookmarkSyncUtils.guidToSyncId(row.getResultByName("guid"));
+      let syncable = !!row.getResultByName("syncable");
+      return { syncId, syncable };
+    });
   }),
 
   /**
@@ -225,6 +283,16 @@ const BookmarkSyncUtils = PlacesSyncUtils.bookmarks = Object.freeze({
     return PlacesUtils.bookmarks.reorder(parentGuid, orderedChildrenGuids,
                                          { source: SOURCE_SYNC });
   }),
+
+  /**
+   * Resolves to true if there are known sync changes.
+   */
+  havePendingChanges() {
+    // This could be optimized to use a more efficient query -- We don't need
+    // grab all the records if all we care about is whether or not any exist.
+    return PlacesUtils.withConnectionWrapper("BookmarkSyncUtils: havePendingChanges",
+      db => pullSyncChanges(db, true).then(changes => Object.keys(changes).length > 0));
+  },
 
   /**
    * Returns a changeset containing local bookmark changes since the last sync.
@@ -901,6 +969,49 @@ var insertSyncLivemark = Task.async(function* (insertInfo) {
   return insertBookmarkMetadata(livemarkItem, insertInfo);
 });
 
+// Keywords are a 1 to 1 mapping between strings and pairs of (URL, postData).
+// (the postData is not synced, so we ignore it). Sync associates keywords with
+// bookmarks, which is not really accurate. -- We might already have a keyword
+// with that name, or we might already have another bookmark with that URL with
+// a different keyword, etc.
+//
+// If we don't handle those cases by removing the conflicting keywords first,
+// the insertion  will fail, and the keywords will either be wrong, or missing.
+// This function handles those cases.
+function removeConflictingKeywords(bookmarkURL, newKeyword) {
+  return PlacesUtils.withConnectionWrapper(
+    "BookmarkSyncUtils: removeConflictingKeywords", Task.async(function* (db) {
+      let entryForURL = yield PlacesUtils.keywords.fetch({
+        url: bookmarkURL.href,
+      });
+      if (entryForURL && entryForURL.keyword !== newKeyword) {
+        yield PlacesUtils.keywords.remove({
+          keyword: entryForURL.keyword,
+          source: SOURCE_SYNC,
+        });
+        // This will cause us to reupload this record for this sync, but without it,
+        // we will risk data corruption.
+        yield BookmarkSyncUtils.addSyncChangesForBookmarksWithURL(
+          db, entryForURL.url, 1);
+      }
+      if (!newKeyword) {
+        return;
+      }
+      let entryForNewKeyword = yield PlacesUtils.keywords.fetch({
+        keyword: newKeyword
+      });
+      if (entryForNewKeyword) {
+        yield PlacesUtils.keywords.remove({
+          keyword: entryForNewKeyword.keyword,
+          source: SOURCE_SYNC,
+        });
+        yield BookmarkSyncUtils.addSyncChangesForBookmarksWithURL(
+          db, entryForNewKeyword.url, 1);
+      }
+    })
+  );
+}
+
 // Sets annotations, keywords, and tags on a new bookmark. Returns a Sync
 // bookmark object.
 var insertBookmarkMetadata = Task.async(function* (bookmarkItem, insertInfo) {
@@ -923,6 +1034,7 @@ var insertBookmarkMetadata = Task.async(function* (bookmarkItem, insertInfo) {
   }
 
   if (insertInfo.keyword) {
+    yield removeConflictingKeywords(bookmarkItem.url, insertInfo.keyword);
     yield PlacesUtils.keywords.insert({
       keyword: insertInfo.keyword,
       url: bookmarkItem.url.href,
@@ -1136,15 +1248,7 @@ var updateBookmarkMetadata = Task.async(function* (oldBookmarkItem,
 
   if (updateInfo.hasOwnProperty("keyword")) {
     // Unconditionally remove the old keyword.
-    let entry = yield PlacesUtils.keywords.fetch({
-      url: oldBookmarkItem.url.href,
-    });
-    if (entry) {
-      yield PlacesUtils.keywords.remove({
-        keyword: entry.keyword,
-        source: SOURCE_SYNC,
-      });
-    }
+    yield removeConflictingKeywords(oldBookmarkItem.url, updateInfo.keyword);
     if (updateInfo.keyword) {
       yield PlacesUtils.keywords.insert({
         keyword: updateInfo.keyword,
@@ -1551,11 +1655,13 @@ function addRowToChangeRecords(row, changeRecords) {
  *
  * @param db
  *        The Sqlite.jsm connection handle.
+ * @param preventUpdate {boolean}
+ *        Should we skip updating the records we pull.
  * @return {Promise} resolved once all items have been fetched.
  * @resolves to an object containing records for changed bookmarks, keyed by
  *           the sync ID.
  */
-var pullSyncChanges = Task.async(function* (db) {
+var pullSyncChanges = Task.async(function* (db, preventUpdate = false) {
   let changeRecords = {};
 
   yield db.executeCached(`
@@ -1580,7 +1686,9 @@ var pullSyncChanges = Task.async(function* (db) {
     { deletedSyncStatus: PlacesUtils.bookmarks.SYNC_STATUS.NORMAL },
     row => addRowToChangeRecords(row, changeRecords));
 
-  yield markChangesAsSyncing(db, changeRecords);
+  if (!preventUpdate) {
+    yield markChangesAsSyncing(db, changeRecords);
+  }
 
   return changeRecords;
 });

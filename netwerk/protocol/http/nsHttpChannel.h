@@ -29,6 +29,7 @@
 #include "nsICorsPreflightCallback.h"
 #include "AlternateServices.h"
 #include "nsIHstsPrimingCallback.h"
+#include "nsIRaceCacheWithNetwork.h"
 
 class nsDNSPrefetch;
 class nsICancelable;
@@ -77,6 +78,8 @@ class nsHttpChannel final : public HttpBaseChannel
                           , public nsICorsPreflightCallback
                           , public nsIChannelWithDivertableParentListener
                           , public nsIHstsPrimingCallback
+                          , public nsIRaceCacheWithNetwork
+                          , public nsITimerCallback
 {
 public:
     NS_DECL_ISUPPORTS_INHERITED
@@ -97,6 +100,8 @@ public:
     NS_DECL_NSIDNSLISTENER
     NS_DECL_NSICHANNELWITHDIVERTABLEPARENTLISTENER
     NS_DECLARE_STATIC_IID_ACCESSOR(NS_HTTPCHANNEL_IID)
+    NS_DECL_NSIRACECACHEWITHNETWORK
+    NS_DECL_NSITIMERCALLBACK
 
     // nsIHttpAuthenticableChannel. We can't use
     // NS_DECL_NSIHTTPAUTHENTICABLECHANNEL because it duplicates cancel() and
@@ -111,6 +116,7 @@ public:
     NS_IMETHOD OnAuthAvailable() override;
     NS_IMETHOD OnAuthCancelled(bool userCancel) override;
     NS_IMETHOD CloseStickyConnection() override;
+    NS_IMETHOD ConnectionRestartable(bool) override;
     // Functions we implement from nsIHttpAuthenticableChannel but are
     // declared in HttpBaseChannel must be implemented in this class. We
     // just call the HttpBaseChannel:: impls.
@@ -147,7 +153,6 @@ public:
     // nsIHttpChannelInternal
     NS_IMETHOD SetupFallbackChannel(const char *aFallbackKey) override;
     NS_IMETHOD ForceIntercepted(uint64_t aInterceptionID) override;
-    virtual mozilla::net::nsHttpChannel * QueryHttpChannelImpl(void) override;
     // nsISupportsPriority
     NS_IMETHOD SetPriority(int32_t value) override;
     // nsIClassOfService
@@ -267,6 +272,10 @@ public: /* internal necko use only */
     bool AwaitingCacheCallbacks();
     void SetCouldBeSynthesized();
 
+    // Return true if the latest ODA is invoked by mCachePump.
+    // Should only be called on the same thread as ODA.
+    bool IsReadingFromCache() const { return mIsReadingFromCache; }
+
 private: // used for alternate service validation
     RefPtr<TransactionObserver> mTransactionObserver;
 public:
@@ -282,6 +291,8 @@ private:
 
     bool     RequestIsConditional();
     nsresult BeginConnect();
+    void     HandleBeginConnectContinue();
+    MOZ_MUST_USE nsresult BeginConnectContinue();
     nsresult ContinueBeginConnectWithResult();
     void     ContinueBeginConnect();
     nsresult Connect();
@@ -435,6 +446,7 @@ private:
 
     // Report net vs cache time telemetry
     void ReportNetVSCacheTelemetry();
+    int64_t ComputeTelemetryBucketNumber(int64_t difftime_ms);
 
     // Create a aggregate set of the current notification callbacks
     // and ensure the transaction is updated to use it.
@@ -459,6 +471,19 @@ private:
     void SetLoadGroupUserAgentOverride();
 
     void SetDoNotTrack();
+
+private:
+    // this section is for main-thread-only object
+    // all the references need to be proxy released on main thread.
+    nsCOMPtr<nsIApplicationCache> mApplicationCacheForWrite;
+    // auth specific data
+    nsCOMPtr<nsIHttpChannelAuthProvider> mAuthProvider;
+    nsCOMPtr<nsIURI> mRedirectURI;
+    nsCOMPtr<nsIChannel> mRedirectChannel;
+    nsCOMPtr<nsIChannel> mPreflightChannel;
+
+    // Proxy release all members above on main thread.
+    void ReleaseMainThreadOnlyReferences();
 
 private:
     nsCOMPtr<nsICancelable>           mProxyRequest;
@@ -486,10 +511,6 @@ private:
 
     nsCOMPtr<nsICacheEntry> mOfflineCacheEntry;
     uint32_t                          mOfflineCacheLastModifiedTime;
-    nsCOMPtr<nsIApplicationCache>     mApplicationCacheForWrite;
-
-    // auth specific data
-    nsCOMPtr<nsIHttpChannelAuthProvider> mAuthProvider;
 
     mozilla::TimeStamp                mOnStartRequestTimestamp;
 
@@ -515,8 +536,6 @@ private:
     friend class AutoRedirectVetoNotifier;
     friend class HttpAsyncAborter<nsHttpChannel>;
 
-    nsCOMPtr<nsIURI>                  mRedirectURI;
-    nsCOMPtr<nsIChannel>              mRedirectChannel;
     uint32_t                          mRedirectType;
 
     static const uint32_t WAIT_FOR_CACHE_ENTRY = 1;
@@ -578,7 +597,8 @@ private:
     // true if an HTTP transaction is created for the socket thread
     uint32_t                          mUsedNetwork : 1;
 
-    nsCOMPtr<nsIChannel>              mPreflightChannel;
+    // the next authentication request can be sent on a whole new connection
+    uint32_t                          mAuthConnectionRestartable : 1;
 
     nsTArray<nsContinueRedirectionFunc> mRedirectFuncStack;
 
@@ -600,6 +620,38 @@ private:
     HttpChannelSecurityWarningReporter* mWarningReporter;
 
     RefPtr<ADivertableParentChannel> mParentChannel;
+
+    // True if the channel is reading from cache.
+    Atomic<bool> mIsReadingFromCache;
+
+    // These next members are only used in unit tests to delay the call to
+    // cache->AsyncOpenURI in order to race the cache with the network.
+    nsCOMPtr<nsITimer> mCacheOpenTimer;
+    std::function<void(nsHttpChannel*)> mCacheOpenFunc;
+    uint32_t mCacheOpenDelay = 0;
+
+    // We need to remember which is the source of the response we are using.
+    enum {
+        RESPONSE_PENDING,           // response is pending
+        RESPONSE_FROM_CACHE,        // response coming from cache. no network.
+        RESPONSE_FROM_NETWORK,      // response coming from the network
+    } mFirstResponseSource = RESPONSE_PENDING;
+
+    nsresult TriggerNetwork(int32_t aTimeout);
+    void CancelNetworkRequest(nsresult aStatus);
+    // Timer used to delay the network request, or to trigger the network
+    // request if retrieving the cache entry takes too long.
+    nsCOMPtr<nsITimer> mNetworkTriggerTimer;
+    // Is true if the network request has been triggered.
+    bool mNetworkTriggered = false;
+    bool mWaitingForProxy = false;
+    // Is true if the onCacheEntryAvailable callback has been called.
+    Atomic<bool> mOnCacheAvailableCalled;
+    // Will be true if the onCacheEntryAvailable callback is not called by the
+    // time we send the network request. This could also be true when we are
+    // bypassing the cache.
+    Atomic<bool> mRacingNetAndCache;
+
 protected:
     virtual void DoNotifyListenerCleanup() override;
 

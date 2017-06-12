@@ -1,3 +1,7 @@
+/* import-globals-from head_appinfo.js */
+/* import-globals-from ../../../common/tests/unit/head_helpers.js */
+/* import-globals-from head_helpers.js */
+
 var Cm = Components.manager;
 
 // Shared logging for all HTTP server functions.
@@ -21,6 +25,11 @@ function return_timestamp(request, response, timestamp) {
   response.setStatusLine(request.httpVersion, 200, "OK");
   response.bodyOutputStream.write(body, body.length);
   return timestamp;
+}
+
+function has_hawk_header(req) {
+  return req.hasHeader("Authorization") &&
+         req.getHeader("Authorization").startsWith("Hawk");
 }
 
 function basic_auth_header(user, password) {
@@ -394,7 +403,14 @@ ServerCollection.prototype = {
           options[chunk[0]] = chunk[1];
         }
       }
-      if (options.ids) {
+      // The real servers return 400 if ids= is specified without a list of IDs.
+      if (options.hasOwnProperty("ids")) {
+        if (!options.ids) {
+          response.setStatusLine(request.httpVersion, "400", "Bad Request");
+          body = "Bad Request";
+          response.bodyOutputStream.write(body, body.length);
+          return;
+        }
         options.ids = options.ids.split(",");
       }
       if (options.newer) {
@@ -866,8 +882,8 @@ SyncServer.prototype = {
 
     // Hand off to the appropriate handler for this path component.
     if (first in this.toplevelHandlers) {
-      let handler = this.toplevelHandlers[first];
-      return handler.call(this, handler, req, resp, version, username, rest);
+      let newHandler = this.toplevelHandlers[first];
+      return newHandler.call(this, newHandler, req, resp, version, username, rest);
     }
     this._log.debug("SyncServer: Unknown top-level " + first);
     throw HTTP_404;
@@ -919,13 +935,15 @@ SyncServer.prototype = {
       let [, collection, wboID] = match;
       let coll = this.getCollection(username, collection);
       switch (req.method) {
-        case "GET":
+        case "GET": {
           if (!coll) {
             if (wboID) {
               respond(404, "Not found", "Not found");
               return undefined;
             }
-            // *cries inside*: Bug 687299.
+            // *cries inside*: Bug 687299 - now fixed, so apparently the real
+            // sync server *will* 404 in this case - bug 1347807 is to change
+            // this to a 404 and fix a handful of test failures it causes.
             respond(200, "OK", "[]");
             return undefined;
           }
@@ -938,9 +956,9 @@ SyncServer.prototype = {
             return undefined;
           }
           return wbo.handler()(req, resp);
-
+        }
         // TODO: implement handling of X-If-Unmodified-Since for write verbs.
-        case "DELETE":
+        case "DELETE": {
           if (!coll) {
             respond(200, "OK", "{}");
             return undefined;
@@ -984,6 +1002,7 @@ SyncServer.prototype = {
             this.callback.onItemDeleted(username, collection, deleted[i]);
           }
           return undefined;
+        }
         case "POST":
         case "PUT":
           if (!coll) {

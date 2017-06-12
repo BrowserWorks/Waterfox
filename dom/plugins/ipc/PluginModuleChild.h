@@ -46,17 +46,12 @@ typedef NS_NPAPIPLUGIN_CALLBACK(NPError, NP_PLUGINUNIXINIT) (const NPNetscapeFun
 typedef NS_NPAPIPLUGIN_CALLBACK(NPError, NP_PLUGINSHUTDOWN) (void);
 
 namespace mozilla {
-namespace dom {
-class PCrashReporterChild;
-} // namespace dom
-
 namespace plugins {
 
 class PluginInstanceChild;
 
 class PluginModuleChild : public PPluginModuleChild
 {
-    typedef mozilla::dom::PCrashReporterChild PCrashReporterChild;
 protected:
     virtual mozilla::ipc::RacyInterruptPolicy
     MediateInterruptRace(const MessageInfo& parent,
@@ -78,13 +73,11 @@ protected:
                                    override;
     virtual mozilla::ipc::IPCResult RecvAsyncNPP_New(PPluginInstanceChild* aActor) override;
 
-    virtual PPluginModuleChild*
-    AllocPPluginModuleChild(mozilla::ipc::Transport* aTransport,
-                            base::ProcessId aOtherProcess) override;
+    virtual mozilla::ipc::IPCResult
+    RecvInitPluginModuleChild(Endpoint<PPluginModuleChild>&& endpoint) override;
 
     virtual PPluginInstanceChild*
     AllocPPluginInstanceChild(const nsCString& aMimeType,
-                              const uint16_t& aMode,
                               const InfallibleTArray<nsCString>& aNames,
                               const InfallibleTArray<nsCString>& aValues)
                               override;
@@ -95,7 +88,6 @@ protected:
     virtual mozilla::ipc::IPCResult
     RecvPPluginInstanceConstructor(PPluginInstanceChild* aActor,
                                    const nsCString& aMimeType,
-                                   const uint16_t& aMode,
                                    InfallibleTArray<nsCString>&& aNames,
                                    InfallibleTArray<nsCString>&& aValues)
                                    override;
@@ -124,15 +116,8 @@ protected:
     virtual mozilla::ipc::IPCResult
     RecvSetParentHangTimeout(const uint32_t& aSeconds) override;
 
-    virtual PCrashReporterChild*
-    AllocPCrashReporterChild(mozilla::dom::NativeThreadId* id,
-                             uint32_t* processType) override;
-    virtual bool
-    DeallocPCrashReporterChild(PCrashReporterChild* actor) override;
     virtual mozilla::ipc::IPCResult
-    AnswerPCrashReporterConstructor(PCrashReporterChild* actor,
-                                    mozilla::dom::NativeThreadId* id,
-                                    uint32_t* processType) override;
+    AnswerInitCrashReporter(Shmem&& aShmem, mozilla::dom::NativeThreadId* aId) override;
 
     virtual void
     ActorDestroy(ActorDestroyReason why) override;
@@ -150,9 +135,7 @@ public:
     explicit PluginModuleChild(bool aIsChrome);
     virtual ~PluginModuleChild();
 
-    bool CommonInit(base::ProcessId aParentPid,
-                    MessageLoop* aIOLoop,
-                    IPC::Channel* aChannel);
+    void CommonInit();
 
     // aPluginFilename is UTF8, not native-charset!
     bool InitForChrome(const std::string& aPluginFilename,
@@ -160,13 +143,10 @@ public:
                        MessageLoop* aIOLoop,
                        IPC::Channel* aChannel);
 
-    bool InitForContent(base::ProcessId aParentPid,
-                        MessageLoop* aIOLoop,
-                        IPC::Channel* aChannel);
+    bool InitForContent(Endpoint<PPluginModuleChild>&& aEndpoint);
 
-    static PluginModuleChild*
-    CreateForContentProcess(mozilla::ipc::Transport* aTransport,
-                            base::ProcessId aOtherProcess);
+    static bool
+    CreateForContentProcess(Endpoint<PPluginModuleChild>&& aEndpoint);
 
     void CleanUp();
 
@@ -273,7 +253,6 @@ private:
 
     bool mIsChrome;
     bool mHasShutdown; // true if NP_Shutdown has run
-    Transport* mTransport;
 
     // we get this from the plugin
     NP_PLUGINSHUTDOWN mShutdownFunc;

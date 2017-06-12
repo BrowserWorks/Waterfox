@@ -136,6 +136,12 @@ var gEditItemOverlay = {
       throw new Error("_initKeywordField called unexpectedly");
     }
 
+    // Reset the field status synchronously now, eventually we'll reinit it
+    // later if we find an existing keyword. This way we can ensure to be in a
+    // consistent status when reusing the panel across different bookmarks.
+    this._keyword = newKeyword;
+    this._initTextField(this._keywordField, newKeyword);
+
     if (!newKeyword) {
       let entries = [];
       yield PlacesUtils.keywords.fetch({ url: this._paneInfo.uri.spec },
@@ -150,11 +156,12 @@ var gEditItemOverlay = {
           existingKeyword = sameEntry ? sameEntry.keyword : "";
         }
         if (existingKeyword) {
-          this._keyword = newKeyword = existingKeyword;
+          this._keyword = existingKeyword;
+          // Update the text field to the existing keyword.
+          this._initTextField(this._keywordField, this._keyword);
         }
       }
     }
-    this._initTextField(this._keywordField, newKeyword);
   }),
 
   _initLoadInSidebar: Task.async(function* () {
@@ -286,9 +293,13 @@ var gEditItemOverlay = {
     // Note: since all controls are collapsed by default, we don't get the
     // default XUL dialog behavior, that selects the first control, so we set
     // the focus explicitly.
+    // Note: If focusedElement === "preferred", this file expects gPrefService
+    // to be defined in the global scope.
     let elt;
     if (focusedElement === "preferred") {
+      /* eslint-disable no-undef */
       elt = this._element(gPrefService.getCharPref("browser.bookmarks.editDialog.firstEditField"));
+      /* eslint-enable no-undef */
     } else if (focusedElement === "first") {
       elt = document.querySelector("textbox:not([collapsed=true])");
     }
@@ -899,7 +910,7 @@ var gEditItemOverlay = {
 
     let tagsInField = this._getTagsArrayFromTagsInputField();
     let allTags = PlacesUtils.tagging.allTags;
-    for (tag of allTags) {
+    for (let tag of allTags) {
       let elt = document.createElement("listitem");
       elt.setAttribute("type", "checkbox");
       elt.setAttribute("label", tag);
@@ -1064,7 +1075,7 @@ var gEditItemOverlay = {
       // menulist has been changed, we need to update the label of its
       // representing element.
       let menupopup = this._folderMenuList.menupopup;
-      for (menuitem of menupopup.childNodes) {
+      for (let menuitem of menupopup.childNodes) {
         if ("folderId" in menuitem && menuitem.folderId == aItemId) {
           menuitem.label = aNewTitle;
           break;

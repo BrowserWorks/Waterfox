@@ -18,17 +18,21 @@ namespace mozilla {
 class WebMBufferedState;
 
 // Queue for holding MediaRawData samples
-class MediaRawDataQueue {
+class MediaRawDataQueue
+{
  public:
-  uint32_t GetSize() {
+  uint32_t GetSize()
+  {
     return mQueue.size();
   }
 
-  void Push(MediaRawData* aItem) {
+  void Push(MediaRawData* aItem)
+  {
     mQueue.push_back(aItem);
   }
 
-  void Push(already_AddRefed<MediaRawData>&& aItem) {
+  void Push(already_AddRefed<MediaRawData>&& aItem)
+  {
     mQueue.push_back(Move(aItem));
   }
 
@@ -36,44 +40,52 @@ class MediaRawDataQueue {
     mQueue.push_front(aItem);
   }
 
-  void PushFront(already_AddRefed<MediaRawData>&& aItem) {
+  void PushFront(already_AddRefed<MediaRawData>&& aItem)
+  {
     mQueue.push_front(Move(aItem));
   }
 
-  void PushFront(MediaRawDataQueue&& aOther) {
+  void PushFront(MediaRawDataQueue&& aOther)
+  {
     while (!aOther.mQueue.empty()) {
       PushFront(aOther.Pop());
     }
   }
 
-  already_AddRefed<MediaRawData> PopFront() {
+  already_AddRefed<MediaRawData> PopFront()
+  {
     RefPtr<MediaRawData> result = mQueue.front().forget();
     mQueue.pop_front();
     return result.forget();
   }
 
-  already_AddRefed<MediaRawData> Pop() {
+  already_AddRefed<MediaRawData> Pop()
+  {
     RefPtr<MediaRawData> result = mQueue.back().forget();
     mQueue.pop_back();
     return result.forget();
   }
 
-  void Reset() {
+  void Reset()
+  {
     while (!mQueue.empty()) {
       mQueue.pop_front();
     }
   }
 
-  MediaRawDataQueue& operator=(const MediaRawDataQueue& aOther) {
+  MediaRawDataQueue& operator=(const MediaRawDataQueue& aOther)
+  {
     mQueue = aOther.mQueue;
     return *this;
   }
 
-  const RefPtr<MediaRawData>& First() const {
+  const RefPtr<MediaRawData>& First() const
+  {
     return mQueue.front();
   }
 
-  const RefPtr<MediaRawData>& Last() const {
+  const RefPtr<MediaRawData>& Last() const
+  {
     return mQueue.back();
   }
 
@@ -90,17 +102,18 @@ public:
   // Indicate if the WebMDemuxer is to be used with MediaSource. In which
   // case the demuxer will stop reads to the last known complete block.
   WebMDemuxer(MediaResource* aResource, bool aIsMediaSource);
-  
+
   RefPtr<InitPromise> Init() override;
 
   bool HasTrackType(TrackInfo::TrackType aType) const override;
 
   uint32_t GetNumberTracks(TrackInfo::TrackType aType) const override;
 
-  UniquePtr<TrackInfo> GetTrackInfo(TrackInfo::TrackType aType, size_t aTrackNumber) const;
+  UniquePtr<TrackInfo> GetTrackInfo(TrackInfo::TrackType aType,
+                                    size_t aTrackNumber) const;
 
-  already_AddRefed<MediaTrackDemuxer> GetTrackDemuxer(TrackInfo::TrackType aType,
-                                                      uint32_t aTrackNumber) override;
+  already_AddRefed<MediaTrackDemuxer>
+  GetTrackDemuxer(TrackInfo::TrackType aType, uint32_t aTrackNumber) override;
 
   bool IsSeekable() const override;
 
@@ -111,7 +124,8 @@ public:
   bool GetOffsetForTime(uint64_t aTime, int64_t* aOffset);
 
   // Demux next WebM packet and append samples to MediaRawDataQueue
-  bool GetNextPacket(TrackInfo::TrackType aType, MediaRawDataQueue *aSamples);
+  nsresult GetNextPacket(TrackInfo::TrackType aType,
+                         MediaRawDataQueue *aSamples);
 
   nsresult Reset(TrackInfo::TrackType aType);
 
@@ -132,11 +146,14 @@ public:
     return mLastWebMBlockOffset;
   }
 
-  struct NestEggContext {
+  struct NestEggContext
+  {
     NestEggContext(WebMDemuxer* aParent, MediaResource* aResource)
-    : mParent(aParent)
-    , mResource(aResource)
-    , mContext(nullptr) {}
+      : mParent(aParent)
+      , mResource(aResource)
+      , mContext(nullptr)
+    {
+    }
 
     ~NestEggContext();
 
@@ -150,7 +167,8 @@ public:
     int64_t GetEndDataOffset() const
     {
       return (!mParent->IsMediaSource() || mParent->LastWebMBlockOffset() < 0)
-             ? mResource.GetLength() : mParent->LastWebMBlockOffset();
+             ? mResource.GetLength()
+             : mParent->LastWebMBlockOffset();
     }
 
     WebMDemuxer* mParent;
@@ -175,11 +193,13 @@ private:
   // Read a packet from the nestegg file. Returns nullptr if all packets for
   // the particular track have been read. Pass TrackInfo::kVideoTrack or
   // TrackInfo::kVideoTrack to indicate the type of the packet we want to read.
-  RefPtr<NesteggPacketHolder> NextPacket(TrackInfo::TrackType aType);
+  nsresult NextPacket(TrackInfo::TrackType aType,
+                      RefPtr<NesteggPacketHolder>& aPacket);
 
   // Internal method that demuxes the next packet from the stream. The caller
   // is responsible for making sure it doesn't get lost.
-  RefPtr<NesteggPacketHolder> DemuxPacket(TrackInfo::TrackType aType);
+  nsresult DemuxPacket(TrackInfo::TrackType aType,
+                       RefPtr<NesteggPacketHolder>& aPacket);
 
   // libnestegg audio and video context for webm container.
   // Access on reader's thread only.
@@ -241,7 +261,7 @@ private:
   Maybe<uint32_t> mLastSeenFrameHeight;
   // This will be populated only if a resolution change occurs, otherwise it
   // will be left as null so the original metadata is used
-  RefPtr<SharedTrackInfo> mSharedVideoTrackInfo;
+  RefPtr<TrackInfoSharedPtr> mSharedVideoTrackInfo;
 
   EncryptionInfo mCrypto;
 };
@@ -263,7 +283,8 @@ public:
 
   nsresult GetNextRandomAccessPoint(media::TimeUnit* aTime) override;
 
-  RefPtr<SkipAccessPointPromise> SkipToNextRandomAccessPoint(const media::TimeUnit& aTimeThreshold) override;
+  RefPtr<SkipAccessPointPromise> SkipToNextRandomAccessPoint(
+    const media::TimeUnit& aTimeThreshold) override;
 
   media::TimeIntervals GetBuffered() override;
 
@@ -276,7 +297,7 @@ private:
   ~WebMTrackDemuxer();
   void UpdateSamples(nsTArray<RefPtr<MediaRawData>>& aSamples);
   void SetNextKeyFrameTime();
-  RefPtr<MediaRawData> NextSample ();
+  nsresult NextSample(RefPtr<MediaRawData>& aData);
   RefPtr<WebMDemuxer> mParent;
   TrackInfo::TrackType mType;
   UniquePtr<TrackInfo> mInfo;

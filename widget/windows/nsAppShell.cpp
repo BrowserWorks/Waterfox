@@ -25,6 +25,12 @@
 #include "nsComponentManagerUtils.h"
 #include "nsITimer.h"
 
+// These are two messages that the code in winspool.drv on Windows 7 explicitly
+// waits for while it is pumping other Windows messages, during display of the
+// Printer Properties dialog.
+#define MOZ_WM_PRINTER_PROPERTIES_COMPLETION 0x5b7a
+#define MOZ_WM_PRINTER_PROPERTIES_FAILURE 0x5b7f
+
 using namespace mozilla;
 using namespace mozilla::widget;
 
@@ -237,7 +243,8 @@ nsAppShell::Init()
   }
 
   mEventWnd = CreateWindowW(kWindowClass, L"nsAppShell:EventWindow",
-                           0, 0, 0, 10, 10, nullptr, nullptr, module, nullptr);
+                            0, 0, 0, 10, 10, HWND_MESSAGE, nullptr, module,
+                            nullptr);
   NS_ENSURE_STATE(mEventWnd);
 
   return nsBaseAppShell::Init();
@@ -371,6 +378,15 @@ nsAppShell::ProcessNextNativeEvent(bool mayWait)
           continue;  // the message is consumed.
         }
 
+        // Store Printer Properties messages for reposting, because they are not
+        // processed by a window procedure, but are explicitly waited for in the
+        // winspool.drv code that will be further up the stack.
+        if (msg.message == MOZ_WM_PRINTER_PROPERTIES_COMPLETION ||
+            msg.message == MOZ_WM_PRINTER_PROPERTIES_FAILURE) {
+          mMsgsToRepost.push_back(msg);
+          continue;
+        }
+
         ::TranslateMessage(&msg);
         ::DispatchMessageW(&msg);
       }
@@ -378,7 +394,7 @@ nsAppShell::ProcessNextNativeEvent(bool mayWait)
       // Block and wait for any posted application message
       mozilla::HangMonitor::Suspend();
       {
-        GeckoProfilerSleepRAII profiler_sleep;
+        GeckoProfilerThreadSleepRAII sleep;
         WinUtils::WaitForMessage();
       }
     }
@@ -405,4 +421,17 @@ nsAppShell::ProcessNextNativeEvent(bool mayWait)
   }
 
   return gotMessage;
+}
+
+nsresult
+nsAppShell::AfterProcessNextEvent(nsIThreadInternal* /* unused */,
+                                  bool /* unused */)
+{
+  if (!mMsgsToRepost.empty()) {
+    for (MSG msg : mMsgsToRepost) {
+      ::PostMessageW(msg.hwnd, msg.message, msg.wParam, msg.lParam);
+    }
+    mMsgsToRepost.clear();
+  }
+  return NS_OK;
 }

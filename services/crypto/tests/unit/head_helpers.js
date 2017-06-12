@@ -3,6 +3,8 @@ var Ci = Components.interfaces;
 var Cr = Components.results;
 var Cu = Components.utils;
 
+/* import-globals-from ../../../common/tests/unit/head_helpers.js */
+
 Cu.import("resource://gre/modules/XPCOMUtils.jsm");
 
 try {
@@ -27,6 +29,29 @@ updateAppInfo({
   platformVersion: "",
   OS,
 });
+}
+
+function base64UrlDecode(s) {
+  s = s.replace(/-/g, "+");
+  s = s.replace(/_/g, "/");
+
+  // Replace padding if it was stripped by the sender.
+  // See http://tools.ietf.org/html/rfc4648#section-4
+  switch (s.length % 4) {
+    case 0:
+      break; // No pad chars in this case
+    case 2:
+      s += "==";
+      break; // Two pad chars
+    case 3:
+      s += "=";
+      break; // One pad char
+    default:
+      throw new Error("Illegal base64url string!");
+  }
+
+  // With correct padding restored, apply the standard base64 decoder
+  return atob(s);
 }
 
 // Register resource alias. Normally done in SyncComponents.manifest.

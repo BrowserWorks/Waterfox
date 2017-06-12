@@ -19,6 +19,7 @@
 #ifndef wasm_types_h
 #define wasm_types_h
 
+#include "mozilla/Alignment.h"
 #include "mozilla/EnumeratedArray.h"
 #include "mozilla/HashFunctions.h"
 #include "mozilla/Maybe.h"
@@ -92,6 +93,7 @@ typedef float F32x4[4];
 
 class Code;
 class CodeRange;
+class GlobalSegment;
 class Memory;
 class Module;
 class Instance;
@@ -899,7 +901,8 @@ class CallSiteDesc
         Symbolic,  // call to a single symbolic callee
         TrapExit,   // call to a trap exit
         EnterFrame, // call to a enter frame handler
-        LeaveFrame  // call to a leave frame handler
+        LeaveFrame, // call to a leave frame handler
+        Breakpoint  // call to instruction breakpoint
     };
     CallSiteDesc() {}
     explicit CallSiteDesc(Kind kind)
@@ -1012,8 +1015,7 @@ enum class SymbolicAddress
     LogD,
     PowD,
     ATan2D,
-    Context,
-    InterruptUint32,
+    ContextPtr,
     ReportOverRecursed,
     HandleExecutionInterrupt,
     HandleDebugTrap,
@@ -1033,15 +1035,17 @@ enum class SymbolicAddress
     UModI64,
     TruncateDoubleToInt64,
     TruncateDoubleToUint64,
-    Uint64ToFloatingPoint,
-    Int64ToFloatingPoint,
+    Uint64ToFloat32,
+    Uint64ToDouble,
+    Int64ToFloat32,
+    Int64ToDouble,
     GrowMemory,
     CurrentMemory,
     Limit
 };
 
 void*
-AddressOf(SymbolicAddress imm, ExclusiveContext* cx);
+AddressOf(SymbolicAddress imm, JSContext* cx);
 
 // Assumptions captures ambient state that must be the same when compiling and
 // deserializing a module for the compiled code to be valid. If it's not, then
@@ -1057,7 +1061,7 @@ struct Assumptions
     // If Assumptions is constructed without arguments, initBuildIdFromContext()
     // must be called to complete initialization.
     Assumptions();
-    bool initBuildIdFromContext(ExclusiveContext* cx);
+    bool initBuildIdFromContext(JSContext* cx);
 
     bool clone(const Assumptions& other);
 
@@ -1104,7 +1108,7 @@ struct TableDesc
     Limits limits;
 
     TableDesc() = default;
-    TableDesc(TableKind kind, Limits limits)
+    TableDesc(TableKind kind, const Limits& limits)
      : kind(kind),
        external(false),
        globalDataOffset(UINT32_MAX),
@@ -1153,7 +1157,15 @@ struct TlsData
     // stack pointer in the prologue of functions that allocate stack space. See
     // `CodeGenerator::generateWasm`.
     void* stackLimit;
+
+    // The globalArea must be the last field.  Globals for the module start here
+    // and are inline in this structure.  16-byte alignment is required for SIMD
+    // data.
+    MOZ_ALIGNED_DECL(char globalArea, 16);
+
 };
+
+static_assert(offsetof(TlsData, globalArea) % 16 == 0, "aligned");
 
 typedef int32_t (*ExportFuncPtr)(ExportArg* args, TlsData* tls);
 
@@ -1253,6 +1265,7 @@ class CalleeDesc
         } import;
         struct {
             uint32_t globalDataOffset_;
+            uint32_t minLength_;
             bool external_;
             SigIdDesc sigId_;
         } table;
@@ -1277,6 +1290,7 @@ class CalleeDesc
         CalleeDesc c;
         c.which_ = WasmTable;
         c.u.table.globalDataOffset_ = desc.globalDataOffset;
+        c.u.table.minLength_ = desc.limits.initial;
         c.u.table.external_ = desc.external;
         c.u.table.sigId_ = sigId;
         return c;
@@ -1328,6 +1342,10 @@ class CalleeDesc
     SigIdDesc wasmTableSigId() const {
         MOZ_ASSERT(which_ == WasmTable);
         return u.table.sigId_;
+    }
+    uint32_t wasmTableMinLength() const {
+        MOZ_ASSERT(which_ == WasmTable);
+        return u.table.minLength_;
     }
     SymbolicAddress builtin() const {
         MOZ_ASSERT(which_ == Builtin || which_ == BuiltinInstanceMethod);

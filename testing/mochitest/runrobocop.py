@@ -7,6 +7,7 @@ import os
 import sys
 import tempfile
 import traceback
+from collections import defaultdict
 
 sys.path.insert(
     0, os.path.abspath(
@@ -88,7 +89,10 @@ class RobocopTestRunner(MochitestDesktop):
         self.killNamedOrphans('xpcshell')
         self.auto.deleteANRs()
         self.auto.deleteTombstones()
-        self.dm.killProcess(self.options.app.split('/')[-1])
+        procName = self.options.app.split('/')[-1]
+        self.dm.killProcess(procName)
+        if self.dm.processExist(procName):
+            self.log.warning("unable to kill %s before running tests!" % procName)
         self.dm.removeDir(self.remoteScreenshots)
         self.dm.removeDir(self.remoteMozLog)
         self.dm.mkDir(self.remoteMozLog)
@@ -511,7 +515,12 @@ class RobocopTestRunner(MochitestDesktop):
                               (test['name'], test['disabled']))
                 continue
             active_tests.append(test)
-        self.log.suite_start([t['name'] for t in active_tests])
+
+        tests_by_manifest = defaultdict(list)
+        for test in active_tests:
+            tests_by_manifest[test['manifest']].append(test['name'])
+        self.log.suite_start(tests_by_manifest)
+
         worstTestResult = None
         for test in active_tests:
             result = self.runSingleTest(test)

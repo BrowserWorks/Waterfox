@@ -2,6 +2,47 @@
 Mozilla ESLint Plugin
 =====================
 
+Environments
+============
+
+These environments are available by specifying a comment at the top of the file,
+e.g.
+
+   /* eslint-env mozilla/chrome-worker */
+
+There are also built-in ESLint environments available as well:
+http://eslint.org/docs/user-guide/configuring#specifying-environments
+
+browser-window
+--------------
+
+Defines the environment for scripts that are in the main browser.xul scope.
+
+places-overlay
+--------------
+
+Defines the environment for scripts that are in a scope where placesOverlay.xul
+is included.
+
+chrome-worker
+-------------
+
+Defines the environment for chrome workers. This differs from normal workers by
+the fact that `ctypes` can be accessed as well.
+
+frame-script
+------------
+
+Defines the environment for frame scripts.
+
+Rules
+=====
+
+avoid-removeChild
+-----------------
+
+Rejects using element.parentNode.removeChild(element) when element.remove()
+can be used instead.
 
 balanced-listeners
 ------------------
@@ -17,13 +58,6 @@ Checks the filename of imported files e.g. ``Cu.import("some/path/Blah.jsm")``
 adds Blah to the global scope.
 
 Note: uses modules.json for a list of globals listed in each file.
-
-import-browserjs-globals
-------------------------
-
-When included files from the main browser UI scripts will be loaded and any
-declared globals will be defined for the current file. This is mostly useful for
-browser-chrome mochitests that call browser functions.
 
 
 import-globals-from
@@ -132,6 +166,11 @@ Reject common XPCOM methods called with useless optional parameters (eg.
 ``Services.io.newURI(url, null, null)``, or non-existent parameters (eg.
 ``Services.obs.removeObserver(name, observer, false)``).
 
+no-useless-removeEventListener
+------------------------------
+
+Reject calls to removeEventListener where {once: true} could be used instead.
+
 reject-importGlobalProperties
 -----------------------------
 
@@ -157,6 +196,11 @@ object is assigned to another variable e.g.::
 
    var b = gBrowser;
    b.content // Would not be detected as a CPOW.
+
+use-ownerGlobal
+---------------
+
+Require .ownerGlobal instead of .ownerDocument.defaultView.
 
 
 var-only-at-top-level

@@ -40,7 +40,6 @@
 #include "nsIMessageManager.h"
 #include "mozilla/RestyleLogging.h"
 #include "Units.h"
-#include "mozilla/RestyleManagerHandle.h"
 #include "prenv.h"
 #include "mozilla/StaticPresData.h"
 #include "mozilla/StyleBackendType.h"
@@ -73,6 +72,7 @@ namespace mozilla {
 class EffectCompositor;
 class EventStateManager;
 class CounterStyleManager;
+class RestyleManager;
 namespace layers {
 class ContainerLayer;
 class LayerManager;
@@ -110,22 +110,6 @@ enum nsLayoutPhase {
 };
 #endif
 
-class nsInvalidateRequestList {
-public:
-  struct Request {
-    nsRect   mRect;
-    uint32_t mFlags;
-  };
-
-  void TakeFrom(nsInvalidateRequestList* aList)
-  {
-    mRequests.AppendElements(mozilla::Move(aList->mRequests));
-  }
-  bool IsEmpty() { return mRequests.IsEmpty(); }
-
-  nsTArray<Request> mRequests;
-};
-
 /* Used by nsPresContext::HasAuthorSpecifiedRules */
 #define NS_AUTHOR_SPECIFIED_BACKGROUND      (1 << 0)
 #define NS_AUTHOR_SPECIFIED_BORDER          (1 << 1)
@@ -147,7 +131,6 @@ public:
 
   NS_DECL_CYCLE_COLLECTING_ISUPPORTS
   NS_DECL_NSIOBSERVER
-  NS_DECL_AND_IMPL_ZEROING_OPERATOR_NEW
   NS_DECL_CYCLE_COLLECTION_CLASS(nsPresContext)
   MOZ_DECLARE_WEAKREFERENCE_TYPENAME(nsPresContext)
 
@@ -246,7 +229,7 @@ public:
 
   nsRefreshDriver* RefreshDriver() { return mRefreshDriver; }
 
-  mozilla::RestyleManagerHandle RestyleManager() {
+  mozilla::RestyleManager* RestyleManager() {
     MOZ_ASSERT(mRestyleManager);
     return mRestyleManager;
   }
@@ -800,7 +783,8 @@ public:
     eScrollInteraction
   };
 
-  void RecordInteractionTime(InteractionType aType);
+  void RecordInteractionTime(InteractionType aType,
+                             const mozilla::TimeStamp& aTimeStamp);
 
   void DisableInteractionTimeRecording()
   {
@@ -904,6 +888,29 @@ public:
     return mFramesReflowed;
   }
 
+  /*
+   * Helper functions for a telemetry scroll probe
+   * for more information see bug 1340904
+   */
+  void SetTelemetryScrollY(nscoord aScrollY)
+  {
+    nscoord delta = abs(aScrollY - mTelemetryScrollLastY);
+    mTelemetryScrollLastY = aScrollY;
+
+    mTelemetryScrollTotalY += delta;
+    if (aScrollY > mTelemetryScrollMaxY) {
+      mTelemetryScrollMaxY = aScrollY;
+    }
+  }
+  nscoord TelemetryScrollMaxY() const
+  {
+    return mTelemetryScrollMaxY;
+  }
+  nscoord TelemetryScrollTotalY() const
+  {
+    return mTelemetryScrollTotalY;
+  }
+
   static nscoord GetBorderWidthForKeyword(unsigned int aBorderWidthKeyword)
   {
     // This table maps border-width enums 'thin', 'medium', 'thick'
@@ -971,14 +978,17 @@ public:
   // and, if necessary, synchronously rebuilding all style data.
   void EnsureSafeToHandOutCSSRules();
 
-  void NotifyInvalidation(uint32_t aFlags);
-  void NotifyInvalidation(const nsRect& aRect, uint32_t aFlags);
+  // Mark an area as invalidated, associated with a given transaction id (allocated
+  // by nsRefreshDriver::GetTransactionId).
+  // Invalidated regions will be dispatched to MozAfterPaint events when
+  // NotifyDidPaintForSubtree is called for the transaction id (or any higher id).
+  void NotifyInvalidation(uint64_t aTransactionId, const nsRect& aRect);
   // aRect is in device pixels
-  void NotifyInvalidation(const nsIntRect& aRect, uint32_t aFlags);
-  // aFlags are nsIPresShell::PAINT_ flags
-  void NotifyDidPaintForSubtree(uint32_t aFlags, uint64_t aTransactionId = 0,
+  void NotifyInvalidation(uint64_t aTransactionId, const nsIntRect& aRect);
+  void NotifyDidPaintForSubtree(uint64_t aTransactionId = 0,
                                 const mozilla::TimeStamp& aTimeStamp = mozilla::TimeStamp());
-  void FireDOMPaintEvent(nsInvalidateRequestList* aList, uint64_t aTransactionId);
+  void FireDOMPaintEvent(nsTArray<nsRect>* aList, uint64_t aTransactionId,
+                         mozilla::TimeStamp aTimeStamp = mozilla::TimeStamp());
 
   // Callback for catching invalidations in ContainerLayers
   // Passed to LayerProperties::ComputeDifference
@@ -987,11 +997,6 @@ public:
   void SetNotifySubDocInvalidationData(mozilla::layers::ContainerLayer* aContainer);
   static void ClearNotifySubDocInvalidationData(mozilla::layers::ContainerLayer* aContainer);
   bool IsDOMPaintEventPending();
-  void ClearMozAfterPaintEvents() {
-    mInvalidateRequestsSinceLastPaint.mRequests.Clear();
-    mUndeliveredInvalidateRequestsBeforeLastPaint.mRequests.Clear();
-    mAllInvalidated = false;
-  }
 
   /**
    * Returns the RestyleManager's restyle generation counter.
@@ -1197,6 +1202,8 @@ protected:
 
   void UpdateCharSet(const nsCString& aCharSet);
 
+  static bool NotifyDidPaintSubdocumentCallback(nsIDocument* aDocument, void* aData);
+
 public:
   void DoChangeCharSet(const nsCString& aCharSet);
 
@@ -1241,6 +1248,7 @@ protected:
   // Creates a one-shot timer with the given aCallback & aDelay.
   // Returns a refcounted pointer to the timer (or nullptr on failure).
   already_AddRefed<nsITimer> CreateTimer(nsTimerCallbackFunc aCallback,
+                                         const char* aName,
                                          uint32_t aDelay);
 
   // IMPORTANT: The ownership implicit in the following member variables
@@ -1262,7 +1270,7 @@ protected:
   RefPtr<mozilla::EffectCompositor> mEffectCompositor;
   RefPtr<nsTransitionManager> mTransitionManager;
   RefPtr<nsAnimationManager> mAnimationManager;
-  mozilla::RestyleManagerHandle::RefPtr mRestyleManager;
+  RefPtr<mozilla::RestyleManager> mRestyleManager;
   RefPtr<mozilla::CounterStyleManager> mCounterStyleManager;
   nsIAtom* MOZ_UNSAFE_REF("always a static atom") mMedium; // initialized by subclass ctors
   nsCOMPtr<nsIAtom> mMediaEmulated;
@@ -1307,8 +1315,11 @@ protected:
 
   FramePropertyTable    mPropertyTable;
 
-  nsInvalidateRequestList mInvalidateRequestsSinceLastPaint;
-  nsInvalidateRequestList mUndeliveredInvalidateRequestsBeforeLastPaint;
+  struct TransactionInvalidations {
+    uint64_t mTransactionId;
+    nsTArray<nsRect> mInvalidations;
+  };
+  AutoTArray<TransactionInvalidations, 4> mTransactions;
 
   // text performance metrics
   nsAutoPtr<gfxTextPerfMetrics>   mTextPerf;
@@ -1361,7 +1372,7 @@ protected:
 
   // Time of various first interaction types, used to report time from
   // first paint of the top level content pres shell to first interaction.
-  mozilla::TimeStamp    mFirstPaintTime;
+  mozilla::TimeStamp    mFirstNonBlankPaintTime;
   mozilla::TimeStamp    mFirstClickTime;
   mozilla::TimeStamp    mFirstKeyTime;
   mozilla::TimeStamp    mFirstMouseMoveTime;
@@ -1370,6 +1381,10 @@ protected:
 
   // last time we did a full style flush
   mozilla::TimeStamp    mLastStyleUpdateForAllAnimations;
+
+  nscoord mTelemetryScrollLastY;
+  nscoord mTelemetryScrollMaxY;
+  nscoord mTelemetryScrollTotalY;
 
   unsigned              mHasPendingInterrupt : 1;
   unsigned              mPendingInterruptFromTest : 1;
@@ -1397,9 +1412,6 @@ protected:
   unsigned              mPendingMediaFeatureValuesChanged : 1;
   unsigned              mPrefChangePendingNeedsReflow : 1;
   unsigned              mIsEmulatingMedia : 1;
-  // True if the requests in mInvalidateRequestsSinceLastPaint cover the
-  // entire viewport
-  unsigned              mAllInvalidated : 1;
 
   // Are we currently drawing an SVG glyph?
   unsigned              mIsGlyph : 1;
@@ -1488,15 +1500,18 @@ public:
    * Ensure that NotifyDidPaintForSubtree is eventually called on this
    * object after a timeout.
    */
-  void EnsureEventualDidPaintEvent();
+  void EnsureEventualDidPaintEvent(uint64_t aTransactionId);
 
-  void CancelDidPaintTimer()
-  {
-    if (mNotifyDidPaintTimer) {
-      mNotifyDidPaintTimer->Cancel();
-      mNotifyDidPaintTimer = nullptr;
-    }
-  }
+  /**
+   * Cancels any pending eventual did paint timer for transaction
+   * ids up to and including aTransactionId.
+   */
+  void CancelDidPaintTimers(uint64_t aTransactionId);
+
+  /**
+   * Cancel all pending eventual did paint timers.
+   */
+  void CancelAllDidPaintTimers();
 
   /**
    * Registers a plugin to receive geometry updates (position and clip
@@ -1584,7 +1599,9 @@ protected:
 
   class RunWillPaintObservers : public mozilla::Runnable {
   public:
-    explicit RunWillPaintObservers(nsRootPresContext* aPresContext) : mPresContext(aPresContext) {}
+    explicit RunWillPaintObservers(nsRootPresContext* aPresContext)
+      : Runnable("nsPresContextType::RunWillPaintObservers")
+      , mPresContext(aPresContext) {}
     void Revoke() { mPresContext = nullptr; }
     NS_IMETHOD Run() override
     {
@@ -1599,7 +1616,12 @@ protected:
 
   friend class nsPresContext;
 
-  nsCOMPtr<nsITimer> mNotifyDidPaintTimer;
+  struct NotifyDidPaintTimer {
+    uint64_t mTransactionId;
+    nsCOMPtr<nsITimer> mTimer;
+  };
+  AutoTArray<NotifyDidPaintTimer, 4> mNotifyDidPaintTimers;
+
   nsCOMPtr<nsITimer> mApplyPluginGeometryTimer;
   nsTHashtable<nsRefPtrHashKey<nsIContent> > mRegisteredPlugins;
   nsTArray<nsCOMPtr<nsIRunnable> > mWillPaintObservers;

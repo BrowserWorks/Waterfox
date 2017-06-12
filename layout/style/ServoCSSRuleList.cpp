@@ -71,7 +71,7 @@ ServoCSSRuleList::GetRule(uint32_t aIndex)
       case nsIDOMCSSRule::NAMESPACE_RULE:
         // XXX create corresponding rules
       default:
-        NS_ERROR("stylo: not implemented yet");
+        NS_WARNING("stylo: not implemented yet");
         return nullptr;
     }
     ruleObj->SetStyleSheet(mStyleSheet);
@@ -133,6 +133,10 @@ ServoCSSRuleList::DeleteRule(uint32_t aIndex)
 {
   nsresult rv = Servo_CssRules_DeleteRule(mRawRules, aIndex);
   if (!NS_FAILED(rv)) {
+    uintptr_t rule = mRules[aIndex];
+    if (rule > kMaxRuleType) {
+      CastToPtr(rule)->Release();
+    }
     mRules.RemoveElementAt(aIndex);
   }
   return rv;

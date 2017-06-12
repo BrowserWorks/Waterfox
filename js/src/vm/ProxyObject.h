@@ -31,6 +31,10 @@ class ProxyObject : public ShapedObject
                       "proxy object layout must match shadow interface");
     }
 
+    static JS::Result<ProxyObject*, JS::OOM&>
+    create(JSContext* cx, const js::Class* clasp, Handle<TaggedProto> proto,
+           js::gc::AllocKind allocKind, js::NewObjectKind newKind);
+
   public:
     static ProxyObject* New(JSContext* cx, const BaseProxyHandler* handler, HandleValue priv,
                             TaggedProto proto_, const ProxyOptions& options);
@@ -101,7 +105,7 @@ class ProxyObject : public ShapedObject
   public:
     static unsigned grayLinkExtraSlot(JSObject* obj);
 
-    void renew(JSContext* cx, const BaseProxyHandler* handler, const Value& priv);
+    void renew(const BaseProxyHandler* handler, const Value& priv);
 
     static void trace(JSTracer* trc, JSObject* obj);
 

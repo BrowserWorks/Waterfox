@@ -363,7 +363,7 @@ KeymapWrapper::InitBySystemSettings()
             Modifier modifier = GetModifierForGDKKeyval(syms[j]);
             MOZ_LOG(gKeymapWrapperLog, LogLevel::Info,
                 ("%p InitBySystemSettings, "
-                 "    Mod%d, j=%d, syms[j]=%s(0x%X), modifier=%s",
+                 "    Mod%d, j=%d, syms[j]=%s(0x%lX), modifier=%s",
                  this, modIndex + 1, j, gdk_keyval_name(syms[j]), syms[j],
                  GetModifierName(modifier)));
 
@@ -946,7 +946,7 @@ KeymapWrapper::InitKeyEvent(WidgetKeyboardEvent& aKeyEvent,
         case GDK_Super_L:
         case GDK_Hyper_L:
         case GDK_Meta_L:
-            aKeyEvent.mLocation = nsIDOMKeyEvent::DOM_KEY_LOCATION_LEFT;
+            aKeyEvent.mLocation = eKeyLocationLeft;
             break;
 
         case GDK_Shift_R:
@@ -955,7 +955,7 @@ KeymapWrapper::InitKeyEvent(WidgetKeyboardEvent& aKeyEvent,
         case GDK_Super_R:
         case GDK_Hyper_R:
         case GDK_Meta_R:
-            aKeyEvent.mLocation = nsIDOMKeyEvent::DOM_KEY_LOCATION_RIGHT;
+            aKeyEvent.mLocation = eKeyLocationRight;
             break;
 
         case GDK_KP_0:
@@ -993,11 +993,11 @@ KeymapWrapper::InitKeyEvent(WidgetKeyboardEvent& aKeyEvent,
         case GDK_KP_Subtract:
         case GDK_KP_Decimal:
         case GDK_KP_Divide:
-            aKeyEvent.mLocation = nsIDOMKeyEvent::DOM_KEY_LOCATION_NUMPAD;
+            aKeyEvent.mLocation = eKeyLocationNumpad;
             break;
 
         default:
-            aKeyEvent.mLocation = nsIDOMKeyEvent::DOM_KEY_LOCATION_STANDARD;
+            aKeyEvent.mLocation = eKeyLocationStandard;
             break;
     }
 

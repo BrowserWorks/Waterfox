@@ -14,6 +14,7 @@
 
 #include "APZTestCommon.h"
 #include "gfxPlatform.h"
+#include "gfxPrefs.h"
 
 class APZCTreeManagerTester : public APZCTesterBase {
 protected:
@@ -29,6 +30,7 @@ protected:
   virtual void TearDown() {
     while (mcc->RunThroughDelayedTasks());
     manager->ClearTree();
+    manager->ClearContentController();
   }
 
   /**

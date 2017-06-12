@@ -23,6 +23,7 @@ class TimeoutManager final
 {
 public:
   explicit TimeoutManager(nsGlobalWindow& aWindow);
+  ~TimeoutManager();
   TimeoutManager(const TimeoutManager& rhs) = delete;
   void operator=(const TimeoutManager& rhs) = delete;
 
@@ -90,6 +91,10 @@ public:
   // Exposed only for testing
   bool IsTimeoutTracking(uint32_t aTimeoutId);
 
+  // The document finished loading
+  void OnDocumentLoaded();
+  void StartThrottlingTrackingTimeouts();
+
   // Run some code for each Timeout in our list.  Note that this function
   // doesn't guarantee that Timeouts are iterated in any particular order.
   template <class Callable>
@@ -110,9 +115,12 @@ public:
     }
   }
 
+  void BeginSyncOperation();
+  void EndSyncOperation();
 private:
   nsresult ResetTimersForThrottleReduction(int32_t aPreviousThrottleDelayMS);
 
+  bool IsBackground() const;
 private:
   struct Timeouts {
     Timeouts()
@@ -207,6 +215,9 @@ private:
   uint32_t                    mIdleCallbackTimeoutCounter;
 
   int32_t                     mBackPressureDelayMS;
+
+  nsCOMPtr<nsITimer>          mThrottleTrackingTimeoutsTimer;
+  bool                        mThrottleTrackingTimeouts;
 
   static uint32_t             sNestingLevel;
 };

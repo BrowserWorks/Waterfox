@@ -226,6 +226,7 @@ NS_EVENT_MESSAGE(eXULCommand)
 NS_EVENT_MESSAGE(eCopy)
 NS_EVENT_MESSAGE(eCut)
 NS_EVENT_MESSAGE(ePaste)
+NS_EVENT_MESSAGE(ePasteNoFormatting)
 
 // Query for the selected text information, it return the selection offset,
 // selection length and selected text.
@@ -340,6 +341,7 @@ NS_EVENT_MESSAGE(eTransitionCancel)
 NS_EVENT_MESSAGE(eAnimationStart)
 NS_EVENT_MESSAGE(eAnimationEnd)
 NS_EVENT_MESSAGE(eAnimationIteration)
+NS_EVENT_MESSAGE(eAnimationCancel)
 
 // Webkit-prefixed versions of Transition & Animation events, for web compat:
 NS_EVENT_MESSAGE(eWebkitTransitionEnd)
@@ -378,6 +380,8 @@ NS_EVENT_MESSAGE(eOrientationChange)
 #endif
 
 // WebVR events
+NS_EVENT_MESSAGE(eVRDisplayActivate)
+NS_EVENT_MESSAGE(eVRDisplayDeactivate)
 NS_EVENT_MESSAGE(eVRDisplayConnect)
 NS_EVENT_MESSAGE(eVRDisplayDisconnect)
 NS_EVENT_MESSAGE(eVRDisplayPresentChange)
@@ -394,6 +398,7 @@ NS_EVENT_MESSAGE(eTouchStart)
 NS_EVENT_MESSAGE(eTouchMove)
 NS_EVENT_MESSAGE(eTouchEnd)
 NS_EVENT_MESSAGE(eTouchCancel)
+NS_EVENT_MESSAGE(eTouchPointerCancel)
 
 // Pointerlock DOM API
 NS_EVENT_MESSAGE(ePointerLockChange)

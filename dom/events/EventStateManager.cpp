@@ -115,7 +115,7 @@ static nsITimer* gUserInteractionTimer = nullptr;
 static nsITimerCallback* gUserInteractionTimerCallback = nullptr;
 
 static const double kCursorLoadingTimeout = 1000; // ms
-static nsWeakFrame gLastCursorSourceFrame;
+static AutoWeakFrame gLastCursorSourceFrame;
 static TimeStamp gLastCursorUpdateTime;
 
 static inline int32_t
@@ -196,18 +196,21 @@ PrintDocTreeAll(nsIDocShellTreeItem* aItem)
 /* mozilla::UITimerCallback                                       */
 /******************************************************************/
 
-class UITimerCallback final : public nsITimerCallback
+class UITimerCallback final :
+    public nsITimerCallback,
+    public nsINamed
 {
 public:
   UITimerCallback() : mPreviousCount(0) {}
   NS_DECL_ISUPPORTS
   NS_DECL_NSITIMERCALLBACK
+  NS_DECL_NSINAMED
 private:
   ~UITimerCallback() = default;
   uint32_t mPreviousCount;
 };
 
-NS_IMPL_ISUPPORTS(UITimerCallback, nsITimerCallback)
+NS_IMPL_ISUPPORTS(UITimerCallback, nsITimerCallback, nsINamed)
 
 // If aTimer is nullptr, this method always sends "user-interaction-inactive"
 // notification.
@@ -231,6 +234,19 @@ UITimerCallback::Notify(nsITimer* aTimer)
   }
   mPreviousCount = gMouseOrKeyboardEventCounter;
   return NS_OK;
+}
+
+NS_IMETHODIMP
+UITimerCallback::GetName(nsACString& aName)
+{
+  aName.AssignASCII("UITimerCallback_timer");
+  return NS_OK;
+}
+
+NS_IMETHODIMP
+UITimerCallback::SetName(const char* aName)
+{
+  return NS_ERROR_NOT_IMPLEMENTED;
 }
 
 /******************************************************************/
@@ -267,7 +283,7 @@ int32_t EventStateManager::sUserInputEventDepth = 0;
 bool EventStateManager::sNormalLMouseEventInProcess = false;
 EventStateManager* EventStateManager::sActiveESM = nullptr;
 nsIDocument* EventStateManager::sMouseOverDocument = nullptr;
-nsWeakFrame EventStateManager::sLastDragOverFrame = nullptr;
+AutoWeakFrame EventStateManager::sLastDragOverFrame = nullptr;
 LayoutDeviceIntPoint EventStateManager::sPreLockPoint = LayoutDeviceIntPoint(0, 0);
 LayoutDeviceIntPoint EventStateManager::sLastRefPoint = kInvalidRefPoint;
 CSSIntPoint EventStateManager::sLastScreenPoint = CSSIntPoint(0, 0);
@@ -888,7 +904,8 @@ EventStateManager::HandleQueryContentEvent(WidgetQueryContentEvent* aEvent)
   // If there is an IMEContentObserver, we need to handle QueryContentEvent
   // with it.
   if (mIMEContentObserver) {
-    mIMEContentObserver->HandleQueryContentEvent(aEvent);
+    RefPtr<IMEContentObserver> contentObserver = mIMEContentObserver;
+    contentObserver->HandleQueryContentEvent(aEvent);
     return;
   }
 
@@ -2221,7 +2238,7 @@ EventStateManager::DispatchLegacyMouseScrollEvents(nsIFrame* aTargetFrame,
   // 3. Horizontal scroll (even if #1 and/or #2 are consumed)
   // 4. Horizontal pixel scroll (even if #3 isn't consumed)
 
-  nsWeakFrame targetFrame(aTargetFrame);
+  AutoWeakFrame targetFrame(aTargetFrame);
 
   MOZ_ASSERT(*aStatus != nsEventStatus_eConsumeNoDefault &&
              !aEvent->DefaultPrevented(),
@@ -2533,7 +2550,7 @@ EventStateManager::DoScrollText(nsIScrollableFrame* aScrollableFrame,
   nsIFrame* scrollFrame = do_QueryFrame(aScrollableFrame);
   MOZ_ASSERT(scrollFrame);
 
-  nsWeakFrame scrollFrameWeak(scrollFrame);
+  AutoWeakFrame scrollFrameWeak(scrollFrame);
   if (!WheelTransaction::WillHandleDefaultAction(aEvent, scrollFrameWeak)) {
     return;
   }
@@ -3438,6 +3455,12 @@ EventStateManager::PostHandleEvent(nsPresContext* aPresContext,
      // make sure to fire the enter and exit_synth events after the
      // eDragExit event, otherwise we'll clean up too early
     GenerateDragDropEnterExit(presContext, aEvent->AsDragEvent());
+    if (ContentChild* child = ContentChild::GetSingleton()) {
+      // SendUpdateDropEffect to prevent nsIDragService from waiting for
+      // response of forwarded dragexit event.
+      child->SendUpdateDropEffect(nsIDragService::DRAGDROP_ACTION_NONE,
+                                  nsIDragService::DRAGDROP_ACTION_NONE);
+    }
     break;
 
   case eKeyUp:
@@ -3908,7 +3931,7 @@ EventStateManager::DispatchMouseOrPointerEvent(WidgetMouseEvent* aMouseEvent,
   CreateMouseOrPointerWidgetEvent(aMouseEvent, aMessage,
                                   aRelatedContent, dispatchEvent);
 
-  nsWeakFrame previousTarget = mCurrentTarget;
+  AutoWeakFrame previousTarget = mCurrentTarget;
   mCurrentTargetContent = aTargetContent;
 
   nsIFrame* targetFrame = nullptr;
@@ -4413,10 +4436,24 @@ EventStateManager::GenerateDragDropEnterExit(nsPresContext* aPresContext,
           FireDragEnterOrExit(sLastDragOverFrame->PresContext(),
                               aDragEvent, eDragExit,
                               targetContent, lastContent, sLastDragOverFrame);
+          nsIContent* target = sLastDragOverFrame ? sLastDragOverFrame.GetFrame()->GetContent() : nullptr;
+          if (IsRemoteTarget(target)) {
+            // Dragging something and moving from web content to chrome only
+            // fires dragexit and dragleave to xul:browser. We have to forward
+            // dragexit to sLastDragOverFrame when its content is a remote
+            // target. We don't forward dragleave since it's generated from
+            // dragexit.
+            WidgetDragEvent remoteEvent(aDragEvent->IsTrusted(), eDragExit,
+                                        aDragEvent->mWidget);
+            remoteEvent.AssignDragEventData(*aDragEvent, true);
+            nsEventStatus remoteStatus = nsEventStatus_eIgnore;
+            HandleCrossProcessEvent(&remoteEvent, &remoteStatus);
+          }
         }
 
+        AutoWeakFrame currentTraget = mCurrentTarget;
         FireDragEnterOrExit(aPresContext, aDragEvent, eDragEnter,
-                            lastContent, targetContent, mCurrentTarget);
+                            lastContent, targetContent, currentTraget);
 
         if (sLastDragOverFrame) {
           FireDragEnterOrExit(sLastDragOverFrame->PresContext(),
@@ -4467,17 +4504,13 @@ EventStateManager::FireDragEnterOrExit(nsPresContext* aPresContext,
                                        EventMessage aMessage,
                                        nsIContent* aRelatedTarget,
                                        nsIContent* aTargetContent,
-                                       nsWeakFrame& aTargetFrame)
+                                       AutoWeakFrame& aTargetFrame)
 {
+  MOZ_ASSERT(aMessage == eDragLeave || aMessage == eDragExit ||
+             aMessage == eDragEnter);
   nsEventStatus status = nsEventStatus_eIgnore;
   WidgetDragEvent event(aDragEvent->IsTrusted(), aMessage, aDragEvent->mWidget);
-  event.mRefPoint = aDragEvent->mRefPoint;
-  event.mModifiers = aDragEvent->mModifiers;
-  event.buttons = aDragEvent->buttons;
-  event.relatedTarget = aRelatedTarget;
-  event.pointerId = aDragEvent->pointerId;
-  event.inputSource = aDragEvent->inputSource;
-
+  event.AssignDragEventData(*aDragEvent, true);
   mCurrentTargetContent = aTargetContent;
 
   if (aTargetContent != aRelatedTarget) {
@@ -4495,10 +4528,7 @@ EventStateManager::FireDragEnterOrExit(nsPresContext* aPresContext,
 
     // collect any changes to moz cursor settings stored in the event's
     // data transfer.
-    if (aMessage == eDragLeave || aMessage == eDragExit ||
-        aMessage == eDragEnter) {
-      UpdateDragDataTransfer(&event);
-    }
+    UpdateDragDataTransfer(&event);
   }
 
   // Finally dispatch the event to the frame
@@ -4613,7 +4643,7 @@ EventStateManager::InitAndDispatchClickEvent(WidgetMouseEvent* aEvent,
                                              EventMessage aMessage,
                                              nsIPresShell* aPresShell,
                                              nsIContent* aMouseTarget,
-                                             nsWeakFrame aCurrentTarget,
+                                             AutoWeakFrame aCurrentTarget,
                                              bool aNoContentDispatch)
 {
   WidgetMouseEvent event(aEvent->IsTrusted(), aMessage,
@@ -4671,7 +4701,7 @@ EventStateManager::CheckForAndDispatchClick(WidgetMouseEvent* aEvent,
       }
 
       // HandleEvent clears out mCurrentTarget which we might need again
-      nsWeakFrame currentTarget = mCurrentTarget;
+      AutoWeakFrame currentTarget = mCurrentTarget;
       ret = InitAndDispatchClickEvent(aEvent, aStatus, eMouseClick,
                                       presShell, mouseContent, currentTarget,
                                       notDispatchToContents);

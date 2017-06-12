@@ -6,7 +6,7 @@
 #include "ProfileBuffer.h"
 
 ProfileBuffer::ProfileBuffer(int aEntrySize)
-  : mEntries(MakeUnique<ProfileEntry[]>(aEntrySize))
+  : mEntries(mozilla::MakeUnique<ProfileBufferEntry[]>(aEntrySize))
   , mWritePos(0)
   , mReadPos(0)
   , mEntrySize(aEntrySize)
@@ -22,7 +22,7 @@ ProfileBuffer::~ProfileBuffer()
 }
 
 // Called from signal, call only reentrant functions
-void ProfileBuffer::addTag(const ProfileEntry& aTag)
+void ProfileBuffer::addTag(const ProfileBufferEntry& aTag)
 {
   mEntries[mWritePos++] = aTag;
   if (mWritePos == mEntrySize) {
@@ -34,7 +34,7 @@ void ProfileBuffer::addTag(const ProfileEntry& aTag)
   }
   if (mWritePos == mReadPos) {
     // Keep one slot open.
-    mEntries[mReadPos] = ProfileEntry();
+    mEntries[mReadPos] = ProfileBufferEntry();
     mReadPos = (mReadPos + 1) % mEntrySize;
   }
 }
@@ -59,6 +59,20 @@ void ProfileBuffer::reset() {
   mReadPos = mWritePos = 0;
 }
 
+size_t
+ProfileBuffer::SizeOfIncludingThis(mozilla::MallocSizeOf aMallocSizeOf) const
+{
+  size_t n = aMallocSizeOf(this);
+  n += aMallocSizeOf(mEntries.get());
+
+  // Measurement of the following members may be added later if DMD finds it
+  // is worthwhile:
+  // - memory pointed to by the elements within mEntries
+  // - mStoredMarkers
+
+  return n;
+}
+
 #define DYNAMIC_MAX_STRING 8192
 
 char* ProfileBuffer::processDynamicTag(int readPos,
@@ -71,7 +85,7 @@ char* ProfileBuffer::processDynamicTag(int readPos,
   bool seenNullByte = false;
   while (readAheadPos != mWritePos && !seenNullByte) {
     (*tagsConsumed)++;
-    ProfileEntry readAheadEntry = mEntries[readAheadPos];
+    ProfileBufferEntry readAheadEntry = mEntries[readAheadPos];
     for (size_t pos = 0; pos < sizeof(void*); pos++) {
       tagBuff[tagBuffPos] = readAheadEntry.mTagChars[pos];
       if (tagBuff[tagBuffPos] == '\0' || tagBuffPos == DYNAMIC_MAX_STRING-2) {

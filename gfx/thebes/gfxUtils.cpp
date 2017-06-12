@@ -12,7 +12,6 @@
 #include "gfxPlatform.h"
 #include "gfxDrawable.h"
 #include "imgIEncoder.h"
-#include "libyuv.h"
 #include "mozilla/Base64.h"
 #include "mozilla/dom/ImageEncoder.h"
 #include "mozilla/dom/WorkerPrivate.h"
@@ -21,10 +20,14 @@
 #include "mozilla/gfx/DataSurfaceHelpers.h"
 #include "mozilla/gfx/Logging.h"
 #include "mozilla/gfx/PathHelpers.h"
+#include "mozilla/gfx/Swizzle.h"
+#include "mozilla/layers/WebRenderMessages.h"
 #include "mozilla/Maybe.h"
 #include "mozilla/RefPtr.h"
 #include "mozilla/UniquePtrExtensions.h"
 #include "mozilla/Vector.h"
+#include "mozilla/webrender/WebRenderTypes.h"
+#include "mozilla/layers/WebRenderBridgeChild.h"
 #include "nsComponentManagerUtils.h"
 #include "nsIClipboardHelper.h"
 #include "nsIFile.h"
@@ -47,8 +50,6 @@ using namespace mozilla;
 using namespace mozilla::image;
 using namespace mozilla::layers;
 using namespace mozilla::gfx;
-
-#include "DeprecatedPremultiplyTables.h"
 
 #undef compress
 #include "mozilla/Compression.h"
@@ -92,93 +93,6 @@ void mozilla_dump_image(void* bytes, int width, int height, int bytepp,
 
 }
 
-static uint8_t PremultiplyValue(uint8_t a, uint8_t v) {
-    return gfxUtils::sPremultiplyTable[a*256+v];
-}
-
-static uint8_t UnpremultiplyValue(uint8_t a, uint8_t v) {
-    return gfxUtils::sUnpremultiplyTable[a*256+v];
-}
-
-static void
-PremultiplyData(const uint8_t* srcData,
-                size_t srcStride,  // row-to-row stride in bytes
-                uint8_t* destData,
-                size_t destStride, // row-to-row stride in bytes
-                size_t pixelWidth,
-                size_t rowCount)
-{
-    MOZ_ASSERT(srcData && destData);
-
-    for (size_t y = 0; y < rowCount; ++y) {
-        const uint8_t* src  = srcData  + y * srcStride;
-        uint8_t* dest       = destData + y * destStride;
-
-        for (size_t x = 0; x < pixelWidth; ++x) {
-#ifdef IS_LITTLE_ENDIAN
-            uint8_t b = *src++;
-            uint8_t g = *src++;
-            uint8_t r = *src++;
-            uint8_t a = *src++;
-
-            *dest++ = PremultiplyValue(a, b);
-            *dest++ = PremultiplyValue(a, g);
-            *dest++ = PremultiplyValue(a, r);
-            *dest++ = a;
-#else
-            uint8_t a = *src++;
-            uint8_t r = *src++;
-            uint8_t g = *src++;
-            uint8_t b = *src++;
-
-            *dest++ = a;
-            *dest++ = PremultiplyValue(a, r);
-            *dest++ = PremultiplyValue(a, g);
-            *dest++ = PremultiplyValue(a, b);
-#endif
-        }
-    }
-}
-static void
-UnpremultiplyData(const uint8_t* srcData,
-                  size_t srcStride,  // row-to-row stride in bytes
-                  uint8_t* destData,
-                  size_t destStride, // row-to-row stride in bytes
-                  size_t pixelWidth,
-                  size_t rowCount)
-{
-    MOZ_ASSERT(srcData && destData);
-
-    for (size_t y = 0; y < rowCount; ++y) {
-        const uint8_t* src  = srcData  + y * srcStride;
-        uint8_t* dest       = destData + y * destStride;
-
-        for (size_t x = 0; x < pixelWidth; ++x) {
-#ifdef IS_LITTLE_ENDIAN
-            uint8_t b = *src++;
-            uint8_t g = *src++;
-            uint8_t r = *src++;
-            uint8_t a = *src++;
-
-            *dest++ = UnpremultiplyValue(a, b);
-            *dest++ = UnpremultiplyValue(a, g);
-            *dest++ = UnpremultiplyValue(a, r);
-            *dest++ = a;
-#else
-            uint8_t a = *src++;
-            uint8_t r = *src++;
-            uint8_t g = *src++;
-            uint8_t b = *src++;
-
-            *dest++ = a;
-            *dest++ = UnpremultiplyValue(a, r);
-            *dest++ = UnpremultiplyValue(a, g);
-            *dest++ = UnpremultiplyValue(a, b);
-#endif
-        }
-    }
-}
-
 static bool
 MapSrcDest(DataSourceSurface* srcSurf,
            DataSourceSurface* destSurf,
@@ -188,16 +102,7 @@ MapSrcDest(DataSourceSurface* srcSurf,
     MOZ_ASSERT(srcSurf && destSurf);
     MOZ_ASSERT(out_srcMap && out_destMap);
 
-    if (srcSurf->GetFormat()  != SurfaceFormat::B8G8R8A8 ||
-        destSurf->GetFormat() != SurfaceFormat::B8G8R8A8)
-    {
-        MOZ_ASSERT(false, "Only operate on BGRA8 surfs.");
-        return false;
-    }
-
-    if (srcSurf->GetSize().width  != destSurf->GetSize().width ||
-        srcSurf->GetSize().height != destSurf->GetSize().height)
-    {
+    if (srcSurf->GetSize() != destSurf->GetSize()) {
         MOZ_ASSERT(false, "Width and height must match.");
         return false;
     }
@@ -257,10 +162,9 @@ gfxUtils::PremultiplyDataSurface(DataSourceSurface* srcSurf,
     if (!MapSrcDest(srcSurf, destSurf, &srcMap, &destMap))
         return false;
 
-    PremultiplyData(srcMap.mData, srcMap.mStride,
-                    destMap.mData, destMap.mStride,
-                    srcSurf->GetSize().width,
-                    srcSurf->GetSize().height);
+    PremultiplyData(srcMap.mData, srcMap.mStride, srcSurf->GetFormat(),
+                    destMap.mData, destMap.mStride, destSurf->GetFormat(),
+                    srcSurf->GetSize());
 
     UnmapSrcDest(srcSurf, destSurf);
     return true;
@@ -277,10 +181,9 @@ gfxUtils::UnpremultiplyDataSurface(DataSourceSurface* srcSurf,
     if (!MapSrcDest(srcSurf, destSurf, &srcMap, &destMap))
         return false;
 
-    UnpremultiplyData(srcMap.mData, srcMap.mStride,
-                      destMap.mData, destMap.mStride,
-                      srcSurf->GetSize().width,
-                      srcSurf->GetSize().height);
+    UnpremultiplyData(srcMap.mData, srcMap.mStride, srcSurf->GetFormat(),
+                      destMap.mData, destMap.mStride, destSurf->GetFormat(),
+                      srcSurf->GetSize());
 
     UnmapSrcDest(srcSurf, destSurf);
     return true;
@@ -294,11 +197,6 @@ MapSrcAndCreateMappedDest(DataSourceSurface* srcSurf,
 {
     MOZ_ASSERT(srcSurf);
     MOZ_ASSERT(out_destSurf && out_srcMap && out_destMap);
-
-    if (srcSurf->GetFormat() != SurfaceFormat::B8G8R8A8) {
-        MOZ_ASSERT(false, "Only operate on BGRA8.");
-        return false;
-    }
 
     // Ok, map source for reading.
     DataSourceSurface::MappedSurface srcMap;
@@ -341,10 +239,9 @@ gfxUtils::CreatePremultipliedDataSurface(DataSourceSurface* srcSurf)
         return surface.forget();
     }
 
-    PremultiplyData(srcMap.mData, srcMap.mStride,
-                    destMap.mData, destMap.mStride,
-                    srcSurf->GetSize().width,
-                    srcSurf->GetSize().height);
+    PremultiplyData(srcMap.mData, srcMap.mStride, srcSurf->GetFormat(),
+                    destMap.mData, destMap.mStride, destSurf->GetFormat(),
+                    srcSurf->GetSize());
 
     UnmapSrcDest(srcSurf, destSurf);
     return destSurf.forget();
@@ -362,10 +259,9 @@ gfxUtils::CreateUnpremultipliedDataSurface(DataSourceSurface* srcSurf)
         return surface.forget();
     }
 
-    UnpremultiplyData(srcMap.mData, srcMap.mStride,
-                      destMap.mData, destMap.mStride,
-                      srcSurf->GetSize().width,
-                      srcSurf->GetSize().height);
+    UnpremultiplyData(srcMap.mData, srcMap.mStride, srcSurf->GetFormat(),
+                      destMap.mData, destMap.mStride, destSurf->GetFormat(),
+                      srcSurf->GetSize());
 
     UnmapSrcDest(srcSurf, destSurf);
     return destSurf.forget();
@@ -375,7 +271,9 @@ void
 gfxUtils::ConvertBGRAtoRGBA(uint8_t* aData, uint32_t aLength)
 {
     MOZ_ASSERT((aLength % 4) == 0, "Loop below will pass srcEnd!");
-    libyuv::ABGRToARGB(aData, aLength, aData, aLength, aLength / 4, 1);
+    SwizzleData(aData, aLength, SurfaceFormat::B8G8R8A8,
+                aData, aLength, SurfaceFormat::R8G8B8A8,
+                IntSize(aLength / 4, 1));
 }
 
 #if !defined(MOZ_GFX_OPTIMIZE_MOBILE)
@@ -885,7 +783,7 @@ gfxUtils::CopySurfaceToDataSourceSurfaceWithFormat(SourceSurface* aSurface,
 
   Rect bounds(0, 0, aSurface->GetSize().width, aSurface->GetSize().height);
 
-  if (aSurface->GetType() != SurfaceType::DATA) {
+  if (!aSurface->IsDataSourceSurface()) {
     // If the surface is NOT of type DATA then its data is not mapped into main
     // memory. Format conversion is probably faster on the GPU, and by doing it
     // there we can avoid any expensive uploads/readbacks except for (possibly)
@@ -1169,40 +1067,60 @@ For [0,1] instead of [0,255], and to 5 places:
 [B]   [1.16438,  2.11240,  0.00000]   [Cr - 0.50196]
 */
 
-/* static */ float*
-gfxUtils::Get4x3YuvColorMatrix(YUVColorSpace aYUVColorSpace)
+static const float kRec601[9] = {
+  1.16438f, 0.00000f, 1.59603f,
+  1.16438f,-0.39176f,-0.81297f,
+  1.16438f, 2.01723f, 0.00000f,
+};
+static const float kRec709[9] = {
+  1.16438f, 0.00000f, 1.79274f,
+  1.16438f,-0.21325f,-0.53291f,
+  1.16438f, 2.11240f, 0.00000f,
+};
+
+/* static */ const float*
+gfxUtils::YuvToRgbMatrix4x3RowMajor(YUVColorSpace aYUVColorSpace)
 {
-  static const float yuv_to_rgb_rec601[12] = { 1.16438f,  0.0f,      1.59603f, 0.0f,
-                                               1.16438f, -0.39176f, -0.81297f, 0.0f,
-                                               1.16438f,  2.01723f,  0.0f,     0.0f,
-                                             };
+  #define X(x) { x[0], x[1], x[2], 0.0f, \
+                 x[3], x[4], x[5], 0.0f, \
+                 x[6], x[7], x[8], 0.0f }
 
-  static const float yuv_to_rgb_rec709[12] = { 1.16438f,  0.0f,      1.79274f, 0.0f,
-                                               1.16438f, -0.21325f, -0.53291f, 0.0f,
-                                               1.16438f,  2.11240f,  0.0f,     0.0f,
-                                             };
+  static const float rec601[12] = X(kRec601);
+  static const float rec709[12] = X(kRec709);
 
-  if (aYUVColorSpace == YUVColorSpace::BT709) {
-    return const_cast<float*>(yuv_to_rgb_rec709);
-  } else {
-    return const_cast<float*>(yuv_to_rgb_rec601);
+  #undef X
+
+  switch (aYUVColorSpace) {
+  case YUVColorSpace::BT601:
+    return rec601;
+  case YUVColorSpace::BT709:
+    return rec709;
+  default: // YUVColorSpace::UNKNOWN
+    MOZ_ASSERT(false, "unknown aYUVColorSpace");
+    return rec601;
   }
 }
 
-/* static */ float*
-gfxUtils::Get3x3YuvColorMatrix(YUVColorSpace aYUVColorSpace)
+/* static */ const float*
+gfxUtils::YuvToRgbMatrix3x3ColumnMajor(YUVColorSpace aYUVColorSpace)
 {
-  static const float yuv_to_rgb_rec601[9] = {
-    1.16438f, 1.16438f, 1.16438f, 0.0f, -0.39176f, 2.01723f, 1.59603f, -0.81297f, 0.0f,
-  };
-  static const float yuv_to_rgb_rec709[9] = {
-    1.16438f, 1.16438f, 1.16438f, 0.0f, -0.21325f, 2.11240f, 1.79274f, -0.53291f, 0.0f,
-  };
+  #define X(x) { x[0], x[3], x[6], \
+                 x[1], x[4], x[7], \
+                 x[2], x[5], x[8] }
 
-  if (aYUVColorSpace == YUVColorSpace::BT709) {
-    return const_cast<float*>(yuv_to_rgb_rec709);
-  } else {
-    return const_cast<float*>(yuv_to_rgb_rec601);
+  static const float rec601[9] = X(kRec601);
+  static const float rec709[9] = X(kRec709);
+
+  #undef X
+
+  switch (aYUVColorSpace) {
+  case YUVColorSpace::BT601:
+    return rec601;
+  case YUVColorSpace::BT709:
+    return rec709;
+  default: // YUVColorSpace::UNKNOWN
+    MOZ_ASSERT(false, "unknown aYUVColorSpace");
+    return rec601;
   }
 }
 
@@ -1522,6 +1440,71 @@ Color ToDeviceColor(Color aColor)
 Color ToDeviceColor(nscolor aColor)
 {
   return ToDeviceColor(Color::FromABGR(aColor));
+}
+
+static void
+WriteFontFileData(const uint8_t* aData, uint32_t aLength, uint32_t aIndex,
+                  float aGlyphSize, uint32_t aVariationCount,
+                  const ScaledFont::VariationSetting* aVariations, void* aBaton)
+{
+  WebRenderGlyphHelper* helper = static_cast<WebRenderGlyphHelper*>(aBaton);
+
+  uint8_t* fontData = (uint8_t*)malloc(aLength * sizeof(uint8_t));
+  memcpy(fontData, aData, aLength * sizeof(uint8_t));
+
+  helper->mFontData = fontData;
+  helper->mFontDataLength = aLength;
+  helper->mIndex = aIndex;
+  helper->mGlyphSize = aGlyphSize;
+}
+
+void
+WebRenderGlyphHelper::BuildWebRenderCommands(WebRenderBridgeChild* aBridge,
+                                             nsTArray<WebRenderCommand>& aCommands,
+                                             const nsTArray<GlyphArray>& aGlyphs,
+                                             ScaledFont* aFont,
+                                             const Point& aOffset,
+                                             const Rect& aBounds,
+                                             const Rect& aClip)
+{
+  MOZ_ASSERT(aFont);
+  MOZ_ASSERT(!aGlyphs.IsEmpty());
+  MOZ_ASSERT((aFont->GetType() == gfx::FontType::DWRITE) ||
+              (aFont->GetType() == gfx::FontType::MAC));
+
+  aFont->GetFontFileData(&WriteFontFileData, this);
+  wr::ByteBuffer fontBuffer(mFontDataLength, mFontData);
+
+  WrFontKey key;
+  key.mNamespace = aBridge->GetNamespace();
+  key.mHandle = aBridge->GetNextResourceId();
+
+  aBridge->SendAddRawFont(key, fontBuffer, mIndex);
+
+  nsTArray<WrGlyphArray> wr_glyphs;
+  wr_glyphs.SetLength(aGlyphs.Length());
+
+  for (size_t i = 0; i < aGlyphs.Length(); i++) {
+    GlyphArray glyph_array = aGlyphs[i];
+    nsTArray<gfx::Glyph>& glyphs = glyph_array.glyphs();
+
+    nsTArray<WrGlyphInstance>& wr_glyph_instances = wr_glyphs[i].glyphs;
+    wr_glyph_instances.SetLength(glyphs.Length());
+    wr_glyphs[i].color = glyph_array.color().value();
+
+    for (size_t j = 0; j < glyphs.Length(); j++) {
+      wr_glyph_instances[j].index = glyphs[j].mIndex;
+      wr_glyph_instances[j].x = glyphs[j].mPosition.x - aOffset.x;
+      wr_glyph_instances[j].y = glyphs[j].mPosition.y - aOffset.y;
+    }
+  }
+
+  aCommands.AppendElement(OpDPPushText(
+                            wr::ToWrRect(aBounds),
+                            wr::ToWrRect(aClip),
+                            wr_glyphs,
+                            mGlyphSize,
+                            key));
 }
 
 } // namespace gfx

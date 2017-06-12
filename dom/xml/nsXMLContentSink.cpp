@@ -476,8 +476,12 @@ nsXMLContentSink::CreateElement(const char16_t** aAtts, uint32_t aAttsCount,
       || aNodeInfo->Equals(nsGkAtoms::script, kNameSpaceID_SVG)
     ) {
     nsCOMPtr<nsIScriptElement> sele = do_QueryInterface(content);
-    sele->SetScriptLineNumber(aLineNumber);
-    sele->SetCreatorParser(GetParser());
+    if (sele) {
+      sele->SetScriptLineNumber(aLineNumber);
+      sele->SetCreatorParser(GetParser());
+    } else {
+      MOZ_ASSERT(nsNameSpaceManager::GetInstance()->mSVGDisabled, "Node didn't QI to script, but SVG wasn't disabled.");
+    }
   }
 
   // XHTML needs some special attention
@@ -555,6 +559,10 @@ nsXMLContentSink::CloseElement(nsIContent* aContent)
       || nodeInfo->Equals(nsGkAtoms::script, kNameSpaceID_SVG)
     ) {
     nsCOMPtr<nsIScriptElement> sele = do_QueryInterface(aContent);
+    if (!sele) {
+      MOZ_ASSERT(nsNameSpaceManager::GetInstance()->mSVGDisabled, "Node didn't QI to script, but SVG wasn't disabled.");
+      return NS_OK;
+    }
 
     if (mPreventScriptExecution) {
       sele->PreventExecution();
@@ -1092,7 +1100,9 @@ nsXMLContentSink::HandleEndElement(const char16_t *aName,
   if (content->IsSVGElement(nsGkAtoms::svg)) {
     FlushTags();
     nsCOMPtr<nsIRunnable> event = new nsHtml5SVGLoadDispatcher(content);
-    if (NS_FAILED(NS_DispatchToMainThread(event))) {
+    if (NS_FAILED(content->OwnerDoc()->Dispatch("nsHtml5SVGLoadDispatcher",
+                                                TaskCategory::Other,
+                                                event.forget()))) {
       NS_WARNING("failed to dispatch svg load dispatcher");
     }
   }

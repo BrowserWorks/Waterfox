@@ -6,6 +6,7 @@
 
 #include "Accessible2.h"
 #include "ProxyAccessible.h"
+#include "ia2AccessibleRelation.h"
 #include "ia2AccessibleValue.h"
 #include "IGeckoCustom.h"
 #include "mozilla/a11y/DocAccessibleParent.h"
@@ -78,6 +79,12 @@ template<>
 struct InterfaceIID<IGeckoCustom>
 {
   static REFIID Value() { return IID_IGeckoCustom; }
+};
+
+template<>
+struct InterfaceIID<IAccessible2_2>
+{
+  static REFIID Value() { return IID_IAccessible2_2; }
 };
 
 /**
@@ -155,6 +162,23 @@ ProxyAccessible::Value(nsString& aValue) const
   aValue = (wchar_t*)resultWrap;
 }
 
+double
+ProxyAccessible::Step()
+{
+  RefPtr<IGeckoCustom> custom = QueryInterface<IGeckoCustom>(this);
+  if (!custom) {
+    return 0;
+  }
+
+  double increment;
+  HRESULT hr = custom->get_minimumIncrement(&increment);
+  if (FAILED(hr)) {
+    return 0;
+  }
+
+  return increment;
+}
+
 void
 ProxyAccessible::Description(nsString& aDesc) const
 {
@@ -176,18 +200,17 @@ ProxyAccessible::Description(nsString& aDesc) const
 uint64_t
 ProxyAccessible::State() const
 {
-  uint64_t state = 0;
-  RefPtr<IAccessible> acc;
-  if (!GetCOMInterface((void**)getter_AddRefs(acc))) {
-    return state;
+  RefPtr<IGeckoCustom> custom = QueryInterface<IGeckoCustom>(this);
+  if (!custom) {
+    return 0;
   }
 
-  VARIANT varState;
-  HRESULT hr = acc->get_accState(kChildIdSelf, &varState);
+  uint64_t state;
+  HRESULT hr = custom->get_mozState(&state);
   if (FAILED(hr)) {
-    return state;
+    return 0;
   }
-  return uint64_t(varState.lVal);
+  return state;
 }
 
 nsIntRect
@@ -316,6 +339,7 @@ ConvertBSTRAttributesToArray(const nsAString& aStr,
         break;
     }
     tokens[state] += *itr;
+    ++itr;
   }
   return true;
 }
@@ -345,6 +369,44 @@ ProxyAccessible::Attributes(nsTArray<Attribute>* aAttrs) const
   ConvertBSTRAttributesToArray(nsDependentString((wchar_t*)attrs,
                                                  attrsWrap.length()),
                                aAttrs);
+}
+
+nsTArray<ProxyAccessible*>
+ProxyAccessible::RelationByType(RelationType aType) const
+{
+  RefPtr<IAccessible2_2> acc = QueryInterface<IAccessible2_2>(this);
+  if (!acc) {
+    nsTArray<ProxyAccessible*>();
+  }
+
+  _bstr_t relationType;
+  for (uint32_t idx = 0; idx < ArrayLength(sRelationTypePairs); idx++) {
+    if (aType == sRelationTypePairs[idx].first) {
+      relationType = sRelationTypePairs[idx].second;
+      break;
+    }
+  }
+
+  if (!relationType) {
+    nsTArray<ProxyAccessible*>();
+  }
+
+  IUnknown** targets;
+  long nTargets = 0;
+  HRESULT hr = acc->get_relationTargetsOfType(relationType, 0, &targets, &nTargets);
+  if (FAILED(hr)) {
+    nsTArray<ProxyAccessible*>();
+  }
+
+  nsTArray<ProxyAccessible*> proxies;
+  for (long idx = 0; idx < nTargets; idx++) {
+    IUnknown* target = targets[idx];
+    proxies.AppendElement(GetProxyFor(Document(), target));
+    target->Release();
+  }
+  CoTaskMemFree(targets);
+
+  return Move(proxies);
 }
 
 double

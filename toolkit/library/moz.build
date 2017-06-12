@@ -27,7 +27,6 @@ def Libxul(name):
         'dbghelp.dll',
         'netapi32.dll',
         'PowrProf.dll',
-        'psapi.dll',
         'rasapi32.dll',
         'rasdlg.dll',
         'secur32.dll',
@@ -117,7 +116,6 @@ USE_LIBS += [
 ]
 
 USE_LIBS += [
-    'gkmedias',
     'lgpllibs',
     'nspr',
     'nss',
@@ -341,9 +339,9 @@ if CONFIG['OS_ARCH'] == 'WINNT':
         'msimg32',
         'netapi32',
         'shlwapi',
-        'psapi',
         'ws2_32',
         'dbghelp',
+        'dwmapi',
         'rasapi32',
         'rasdlg',
         'iphlpapi',
@@ -388,6 +386,17 @@ if CONFIG['COMPILE_ENVIRONMENT']:
         '!%s' % full_libname,
     ]
     FINAL_TARGET_FILES += ['!dependentlibs.list', '!dependentlibs.list.gtest']
+
+# WebRender dependencies
+if CONFIG['MOZ_ENABLE_WEBRENDER']:
+    if CONFIG['OS_ARCH'] == 'Linux':
+        OS_LIBS += [
+            'GL',
+        ]
+    elif CONFIG['OS_ARCH'] == 'WINNT':
+        OS_LIBS += [
+            'opengl32',
+        ]
 
 # This library needs to be last to make XPCOM module registration work.
 USE_LIBS += ['StaticXULComponentsEnd']

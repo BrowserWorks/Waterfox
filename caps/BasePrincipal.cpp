@@ -33,6 +33,23 @@ namespace mozilla {
 
 using dom::URLParams;
 
+bool OriginAttributes::sFirstPartyIsolation = false;
+bool OriginAttributes::sRestrictedOpenerAccess = false;
+
+void
+OriginAttributes::InitPrefs()
+{
+  MOZ_ASSERT(NS_IsMainThread());
+  static bool sInited = false;
+  if (!sInited) {
+    sInited = true;
+    Preferences::AddBoolVarCache(&sFirstPartyIsolation,
+                                 "privacy.firstparty.isolate");
+    Preferences::AddBoolVarCache(&sRestrictedOpenerAccess,
+                                 "privacy.firstparty.isolate.restrict_opener_access");
+  }
+}
+
 void
 OriginAttributes::Inherit(const OriginAttributes& aAttrs)
 {
@@ -271,21 +288,6 @@ OriginAttributes::SyncAttributesWithPrivateBrowsing(bool aInPrivateBrowsing)
 
 /* static */
 bool
-OriginAttributes::IsFirstPartyEnabled()
-{
-  // Cache the privacy.firstparty.isolate pref.
-  static bool sFirstPartyIsolation = false;
-  static bool sCachedFirstPartyPref = false;
-  if (!sCachedFirstPartyPref) {
-    sCachedFirstPartyPref = true;
-    Preferences::AddBoolVarCache(&sFirstPartyIsolation, "privacy.firstparty.isolate");
-  }
-
-  return sFirstPartyIsolation;
-}
-
-/* static */
-bool
 OriginAttributes::IsPrivateBrowsing(const nsACString& aOrigin)
 {
   nsAutoCString dummy;
@@ -385,6 +387,24 @@ BasePrincipal::SubsumesConsideringDomain(nsIPrincipal *aOther, bool *aResult)
 {
   NS_ENSURE_TRUE(aOther, NS_ERROR_INVALID_ARG);
   *aResult = Subsumes(aOther, ConsiderDocumentDomain);
+  return NS_OK;
+}
+
+NS_IMETHODIMP
+BasePrincipal::SubsumesConsideringDomainIgnoringFPD(nsIPrincipal *aOther,
+                                                    bool *aResult)
+{
+  NS_ENSURE_TRUE(aOther, NS_ERROR_INVALID_ARG);
+
+  if (Kind() == eCodebasePrincipal &&
+      !dom::ChromeUtils::IsOriginAttributesEqualIgnoringFPD(
+            OriginAttributesRef(), aOther->OriginAttributesRef())) {
+    *aResult = false;
+    return NS_OK;
+  }
+
+  *aResult = SubsumesInternal(aOther, ConsiderDocumentDomain);
+
   return NS_OK;
 }
 
@@ -687,7 +707,7 @@ BasePrincipal::CloneStrippingUserContextIdAndFirstPartyDomain()
 }
 
 bool
-BasePrincipal::AddonAllowsLoad(nsIURI* aURI)
+BasePrincipal::AddonAllowsLoad(nsIURI* aURI, bool aExplicit /* = false */)
 {
   if (mOriginAttributes.mAddonId.IsEmpty()) {
     return false;
@@ -697,7 +717,7 @@ BasePrincipal::AddonAllowsLoad(nsIURI* aURI)
   NS_ENSURE_TRUE(aps, false);
 
   bool allowed = false;
-  nsresult rv = aps->AddonMayLoadURI(mOriginAttributes.mAddonId, aURI, &allowed);
+  nsresult rv = aps->AddonMayLoadURI(mOriginAttributes.mAddonId, aURI, aExplicit, &allowed);
   return NS_SUCCEEDED(rv) && allowed;
 }
 

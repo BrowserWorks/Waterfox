@@ -10,14 +10,12 @@
 #include "mozilla/MouseEvents.h"
 #include "mozilla/MiscEvents.h"
 #include "mozilla/TextEvents.h"
-#include "mozilla/WindowsVersion.h"
 
 #include "nsAlgorithm.h"
 #ifdef MOZ_CRASHREPORTER
 #include "nsExceptionHandler.h"
 #endif
 #include "nsGkAtoms.h"
-#include "nsIDOMKeyEvent.h"
 #include "nsIIdleServiceInternal.h"
 #include "nsIWindowsRegKey.h"
 #include "nsMemory.h"
@@ -50,7 +48,7 @@
 namespace mozilla {
 namespace widget {
 
-static const char* kVirtualKeyName[] = {
+static const char* const kVirtualKeyName[] = {
   "NULL", "VK_LBUTTON", "VK_RBUTTON", "VK_CANCEL",
   "VK_MBUTTON", "VK_XBUTTON1", "VK_XBUTTON2", "0x07",
   "VK_BACK", "VK_TAB", "0x0A", "0x0B",
@@ -255,13 +253,13 @@ static const nsCString
 GetKeyLocationName(uint32_t aLocation)
 {
   switch (aLocation) {
-    case nsIDOMKeyEvent::DOM_KEY_LOCATION_LEFT:
+    case eKeyLocationLeft:
       return NS_LITERAL_CSTRING("KEY_LOCATION_LEFT");
-    case nsIDOMKeyEvent::DOM_KEY_LOCATION_RIGHT:
+    case eKeyLocationRight:
       return NS_LITERAL_CSTRING("KEY_LOCATION_RIGHT");
-    case nsIDOMKeyEvent::DOM_KEY_LOCATION_STANDARD:
+    case eKeyLocationStandard:
       return NS_LITERAL_CSTRING("KEY_LOCATION_STANDARD");
-    case nsIDOMKeyEvent::DOM_KEY_LOCATION_NUMPAD:
+    case eKeyLocationNumpad:
       return NS_LITERAL_CSTRING("KEY_LOCATION_NUMPAD");
     default:
       return nsPrintfCString("Unknown (0x%04X)", aLocation);
@@ -1778,18 +1776,17 @@ NativeKey::GetKeyLocation() const
     case VK_LCONTROL:
     case VK_LMENU:
     case VK_LWIN:
-      return nsIDOMKeyEvent::DOM_KEY_LOCATION_LEFT;
+      return eKeyLocationLeft;
 
     case VK_RSHIFT:
     case VK_RCONTROL:
     case VK_RMENU:
     case VK_RWIN:
-      return nsIDOMKeyEvent::DOM_KEY_LOCATION_RIGHT;
+      return eKeyLocationRight;
 
     case VK_RETURN:
       // XXX This code assumes that all keyboard drivers use same mapping.
-      return !mIsExtended ? nsIDOMKeyEvent::DOM_KEY_LOCATION_STANDARD :
-                            nsIDOMKeyEvent::DOM_KEY_LOCATION_NUMPAD;
+      return !mIsExtended ? eKeyLocationStandard : eKeyLocationNumpad;
 
     case VK_INSERT:
     case VK_DELETE:
@@ -1803,8 +1800,7 @@ NativeKey::GetKeyLocation() const
     case VK_UP:
     case VK_PRIOR:
       // XXX This code assumes that all keyboard drivers use same mapping.
-      return mIsExtended ? nsIDOMKeyEvent::DOM_KEY_LOCATION_STANDARD :
-                           nsIDOMKeyEvent::DOM_KEY_LOCATION_NUMPAD;
+      return mIsExtended ? eKeyLocationStandard : eKeyLocationNumpad;
 
     // NumLock key isn't included due to IE9's behavior.
     case VK_NUMPAD0:
@@ -1824,7 +1820,7 @@ NativeKey::GetKeyLocation() const
     case VK_ADD:
     // Separator key of Brazilian keyboard or JIS keyboard for Mac
     case VK_ABNT_C2:
-      return nsIDOMKeyEvent::DOM_KEY_LOCATION_NUMPAD;
+      return eKeyLocationNumpad;
 
     case VK_SHIFT:
     case VK_CONTROL:
@@ -1832,7 +1828,7 @@ NativeKey::GetKeyLocation() const
       NS_WARNING("Failed to decide the key location?");
 
     default:
-      return nsIDOMKeyEvent::DOM_KEY_LOCATION_STANDARD;
+      return eKeyLocationStandard;
   }
 }
 
@@ -2423,8 +2419,10 @@ NativeKey::HandleKeyDownMessage(bool* aEventDispatched) const
 
   MOZ_ASSERT(!mWidget->Destroyed());
 
-  // If the key was processed by IME, we shouldn't dispatch keypress event.
-  if (mOriginalVirtualKeyCode == VK_PROCESSKEY) {
+  // If the key was processed by IME and didn't cause WM_(SYS)CHAR messages, we
+  // shouldn't dispatch keypress event.
+  if (mOriginalVirtualKeyCode == VK_PROCESSKEY &&
+      !IsFollowedByPrintableCharOrSysCharMessage()) {
     MOZ_LOG(sNativeKeyLogger, LogLevel::Info,
       ("%p   NativeKey::HandleKeyDownMessage(), not dispatching keypress "
        "event because the key was already handled by IME, defaultPrevented=%s",

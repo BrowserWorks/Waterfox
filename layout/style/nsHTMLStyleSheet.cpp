@@ -34,8 +34,8 @@
 #include "mozilla/dom/Element.h"
 #include "nsHashKeys.h"
 #include "mozilla/OperatorNewExtensions.h"
-#include "mozilla/RestyleManagerHandle.h"
-#include "mozilla/RestyleManagerHandleInlines.h"
+#include "mozilla/RestyleManager.h"
+#include "mozilla/RestyleManagerInlines.h"
 
 using namespace mozilla;
 using namespace mozilla::dom;
@@ -289,6 +289,7 @@ nsHTMLStyleSheet::nsHTMLStyleSheet(nsIDocument* aDocument)
   , mTableQuirkColorRule(new TableQuirkColorRule())
   , mTableTHRule(new TableTHRule())
   , mMappedAttrTable(&MappedAttrTable_Ops, sizeof(MappedAttrTableEntry))
+  , mMappedAttrsDirty(false)
   , mLangRuleTable(&LangRuleTable_Ops, sizeof(LangRuleTableEntry))
 {
   MOZ_ASSERT(aDocument);
@@ -478,6 +479,7 @@ nsHTMLStyleSheet::Reset()
 
   mLangRuleTable.Clear();
   mMappedAttrTable.Clear();
+  mMappedAttrsDirty = false;
 }
 
 nsresult
@@ -526,6 +528,7 @@ nsHTMLStyleSheet::SetVisitedLinkColor(nscolor aColor)
 already_AddRefed<nsMappedAttributes>
 nsHTMLStyleSheet::UniqueMappedAttributes(nsMappedAttributes* aMapped)
 {
+  mMappedAttrsDirty = true;
   auto entry = static_cast<MappedAttrTableEntry*>
                           (mMappedAttrTable.Add(aMapped, fallible));
   if (!entry)
@@ -542,7 +545,6 @@ void
 nsHTMLStyleSheet::DropMappedAttributes(nsMappedAttributes* aMapped)
 {
   NS_ENSURE_TRUE_VOID(aMapped);
-
 #ifdef DEBUG
   uint32_t entryCount = mMappedAttrTable.EntryCount() - 1;
 #endif
@@ -550,6 +552,20 @@ nsHTMLStyleSheet::DropMappedAttributes(nsMappedAttributes* aMapped)
   mMappedAttrTable.Remove(aMapped);
 
   NS_ASSERTION(entryCount == mMappedAttrTable.EntryCount(), "not removed");
+}
+
+void
+nsHTMLStyleSheet::CalculateMappedServoDeclarations()
+{
+  nsPresContext* presContext = mDocument->GetShell()->GetPresContext();
+  for (auto iter = mMappedAttrTable.Iter(); !iter.Done(); iter.Next()) {
+    MappedAttrTableEntry* attr = static_cast<MappedAttrTableEntry*>(iter.Get());
+    if (attr->mAttributes->GetServoStyle()) {
+      // Only handle cases which haven't been filled in already
+      continue;
+    }
+    attr->mAttributes->LazilyResolveServoDeclaration(presContext);
+  }
 }
 
 nsIStyleRule*

@@ -11,6 +11,8 @@
 #include <errno.h>
 #endif
 
+#include "mozilla/IntegerPrintfMacros.h"
+
 #include "mozilla/ipc/ProtocolUtils.h"
 
 #include "mozilla/dom/ContentParent.h"
@@ -232,7 +234,7 @@ AnnotateSystemError()
   if (error) {
     CrashReporter::AnnotateCrashReport(
       NS_LITERAL_CSTRING("IPCSystemError"),
-      nsPrintfCString("%lld", error));
+      nsPrintfCString("%" PRId64, error));
   }
 }
 #endif
@@ -345,9 +347,17 @@ UnionTypeReadError(const char* aUnionName)
   NS_RUNTIMEABORT(message.get());
 }
 
-void ArrayLengthReadError(const char* aElementName)
+void
+ArrayLengthReadError(const char* aElementName)
 {
   nsPrintfCString message("error deserializing length of %s[]", aElementName);
+  NS_RUNTIMEABORT(message.get());
+}
+
+void
+SentinelReadError(const char* aClassName)
+{
+  nsPrintfCString message("incorrect sentinel when reading %s", aClassName);
   NS_RUNTIMEABORT(message.get());
 }
 
@@ -541,6 +551,22 @@ IProtocol::SetEventTargetForActorInternal(IProtocol* aActor,
                                           nsIEventTarget* aEventTarget)
 {
   Manager()->SetEventTargetForActorInternal(aActor, aEventTarget);
+}
+
+nsIEventTarget*
+IProtocol::GetActorEventTarget()
+{
+  // We should only call this function when this actor has been registered and
+  // is not unregistered yet.
+  MOZ_RELEASE_ASSERT(mId != kNullActorId && mId != kFreedActorId);
+  RefPtr<nsIEventTarget> target = Manager()->GetActorEventTargetInternal(this);
+  return target;
+}
+
+already_AddRefed<nsIEventTarget>
+IProtocol::GetActorEventTargetInternal(IProtocol* aActor)
+{
+  return Manager()->GetActorEventTargetInternal(aActor);
 }
 
 IToplevelProtocol::IToplevelProtocol(ProtocolId aProtoId, Side aSide)
@@ -800,7 +826,7 @@ IToplevelProtocol::GetMessageEventTarget(const Message& aMsg)
 }
 
 already_AddRefed<nsIEventTarget>
-IToplevelProtocol::GetActorEventTarget(IProtocol* aActor)
+IToplevelProtocol::GetActorEventTargetInternal(IProtocol* aActor)
 {
   MOZ_RELEASE_ASSERT(aActor->Id() != kNullActorId && aActor->Id() != kFreedActorId);
 
@@ -809,10 +835,26 @@ IToplevelProtocol::GetActorEventTarget(IProtocol* aActor)
   return target.forget();
 }
 
+already_AddRefed<nsIEventTarget>
+IToplevelProtocol::GetActorEventTarget(IProtocol* aActor)
+{
+  return GetActorEventTargetInternal(aActor);
+}
+
+nsIEventTarget*
+IToplevelProtocol::GetActorEventTarget()
+{
+  // The EventTarget of a ToplevelProtocol shall never be set.
+  return nullptr;
+}
+
 void
 IToplevelProtocol::SetEventTargetForActorInternal(IProtocol* aActor,
                                                   nsIEventTarget* aEventTarget)
 {
+  // The EventTarget of a ToplevelProtocol shall never be set.
+  MOZ_RELEASE_ASSERT(aActor != this);
+
   // We should only call this function on actors that haven't been used for IPC
   // code yet. Otherwise we'll be posting stuff to the wrong event target before
   // we're called.

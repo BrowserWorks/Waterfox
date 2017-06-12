@@ -1,5 +1,5 @@
 {
-    "llvm_revision": "292415",
+    "llvm_revision": "295482",
     "stages": "1",
     "build_libcxx": true,
     "build_type": "Release",
@@ -14,5 +14,6 @@
     "python_path": "/usr/bin/python2.7",
     "gcc_dir": "/home/worker/workspace/build/src/gcc",
     "cc": "/home/worker/workspace/build/src/gcc/bin/gcc",
-    "cxx": "/home/worker/workspace/build/src/gcc/bin/g++"
+    "cxx": "/home/worker/workspace/build/src/gcc/bin/g++",
+    "as": "/home/worker/workspace/build/src/gcc/bin/gcc"
 }

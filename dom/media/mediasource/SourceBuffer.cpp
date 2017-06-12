@@ -50,7 +50,7 @@ void
 SourceBuffer::SetMode(SourceBufferAppendMode aMode, ErrorResult& aRv)
 {
   MOZ_ASSERT(NS_IsMainThread());
-  MSE_API("SetMode(aMode=%d)", aMode);
+  MSE_API("SetMode(aMode=%" PRIu32 ")", static_cast<uint32_t>(aMode));
   if (!IsAttached() || mUpdating) {
     aRv.Throw(NS_ERROR_DOM_INVALID_STATE_ERR);
     return;
@@ -425,7 +425,7 @@ SourceBuffer::AppendData(const uint8_t* aData, uint32_t aLength, ErrorResult& aR
 }
 
 void
-SourceBuffer::AppendDataCompletedWithSuccess(SourceBufferTask::AppendBufferResult aResult)
+SourceBuffer::AppendDataCompletedWithSuccess(const SourceBufferTask::AppendBufferResult& aResult)
 {
   MOZ_ASSERT(mUpdating);
   mPendingAppend.Complete();
@@ -434,6 +434,7 @@ SourceBuffer::AppendDataCompletedWithSuccess(SourceBufferTask::AppendBufferResul
     if (!mActive) {
       mActive = true;
       mMediaSource->SourceBufferIsActive(this);
+      mMediaSource->GetDecoder()->NotifyInitDataArrived();
     }
   }
   if (mActive) {

@@ -11,7 +11,6 @@ include protocol PCompositorBridge;
 include protocol PContentBridge;
 include protocol PContentPermissionRequest;
 include protocol PCycleCollectWithLogs;
-include protocol PCrashReporter;
 include protocol PPSMContentDownloader;
 include protocol PExternalHelperApp;
 include protocol PHandlerService;
@@ -21,13 +20,8 @@ include protocol PHeapSnapshotTempFileHelper;
 include protocol PProcessHangMonitor;
 include protocol PImageBridge;
 include protocol PMedia;
-include protocol PMemoryReportRequest;
+include protocol PMemoryStream;
 include protocol PNecko;
-// FIXME This is pretty ridiculous, but we have to keep the order of the
-//       following 4 includes, or the parser is confused about PGMPContent
-//       bridging PContent and PGMP. As soon as it registers the bridge between
-//       PContent and PPluginModule it seems to think that PContent's parent and
-//       child live in the same process!
 include protocol PGMPContent;
 include protocol PGMPService;
 include protocol PPluginModule;
@@ -61,6 +55,7 @@ include PContentPermission;
 include ServiceWorkerConfiguration;
 include GraphicsMessages;
 include ProfilerTypes;
+include MemoryReportTypes;
 
 // Workaround to prevent error if PContentChild.cpp & PContentBridgeParent.cpp
 // are put into different UnifiedProtocolsXX.cpp files.
@@ -78,7 +73,6 @@ using base::ProcessId from "base/process.h";
 using struct IPC::Permission from "mozilla/net/NeckoMessageUtils.h";
 using class IPC::Principal from "mozilla/dom/PermissionMessageUtils.h";
 using struct mozilla::null_t from "ipc/IPCMessageUtils.h";
-using struct mozilla::void_t from "ipc/IPCMessageUtils.h";
 using mozilla::dom::NativeThreadId from "mozilla/dom/TabMessageUtils.h";
 using mozilla::hal::ProcessPriority from "mozilla/HalTypes.h";
 using mozilla::gfx::IntSize from "mozilla/gfx/2D.h";
@@ -157,11 +151,6 @@ struct ClipboardCapabilities {
   bool supportsFindClipboard;
 };
 
-union MaybeFileDesc {
-    FileDescriptor;
-    void_t;
-};
-
 union FileDescOrError {
     FileDescriptor;
     nsresult;
@@ -210,6 +199,22 @@ union GetFilesResponseResult
   GetFilesResponseFailure;
 };
 
+struct FileCreationSuccessResult
+{
+  PBlob blob;
+};
+
+struct FileCreationErrorResult
+{
+  nsresult errorCode;
+};
+
+union FileCreationResult
+{
+  FileCreationSuccessResult;
+  FileCreationErrorResult;
+};
+
 struct BlobURLRegistrationData
 {
     nsCString url;
@@ -230,6 +235,22 @@ struct GMPCapabilityData
     GMPAPITags[] capabilities;
 };
 
+struct XPCOMInitData
+{
+    bool isOffline;
+    bool isConnected;
+    int32_t captivePortalState;
+    bool isLangRTL;
+    bool haveBidiKeyboards;
+    nsString[] dictionaries;
+    ClipboardCapabilities clipboardCaps;
+    DomainPolicyClone domainPolicy;
+    /* used on MacOSX only */
+    FontFamilyListEntry[] fontFamilies;
+    OptionalURIParams userContentSheetURL;
+    PrefSetting[] prefs;
+};
+
 struct GfxInfoFeatureStatus
 {
     int32_t feature;
@@ -244,15 +265,9 @@ struct GfxInfoFeatureStatus
  */
 nested(upto inside_cpow) sync protocol PContent
 {
-    parent spawns PPluginModule;
-
-    parent opens PGMPService;
-    child opens PBackground;
-
     manages PBlob;
     manages PBrowser;
     manages PContentPermissionRequest;
-    manages PCrashReporter;
     manages PCycleCollectWithLogs;
     manages PPSMContentDownloader;
     manages PExternalHelperApp;
@@ -261,7 +276,7 @@ nested(upto inside_cpow) sync protocol PContent
     manages PHandlerService;
     manages PHeapSnapshotTempFileHelper;
     manages PMedia;
-    manages PMemoryReportRequest;
+    manages PMemoryStream;
     manages PNecko;
     manages POfflineCacheUpdate;
     manages PPrinting;
@@ -312,7 +327,9 @@ both:
                                      uint64_t aOuterWindowID);
 
 child:
+    async InitGMPService(Endpoint<PGMPServiceChild> service);
     async InitProcessHangMonitor(Endpoint<PProcessHangMonitorChild> hangMonitor);
+    async InitContentBridgeChild(Endpoint<PContentBridgeChild> endpoint);
 
     // Give the content process its endpoints to the compositor.
     async InitRendering(
@@ -337,8 +354,10 @@ child:
      */
     async SetProcessSandbox(MaybeFileDesc aBroker);
 
-    async PMemoryReportRequest(uint32_t generation, bool anonymize,
-                               bool minimizeMemoryUsage, MaybeFileDesc DMDFile);
+    async RequestMemoryReport(uint32_t generation,
+                              bool anonymize,
+                              bool minimizeMemoryUsage,
+                              MaybeFileDesc DMDFile);
 
     /**
      * Communication between the PuppetBidiKeyboard and the actual
@@ -423,6 +442,8 @@ child:
      * Send BlobURLRegistrationData to child process.
      */
     async InitBlobURLs(BlobURLRegistrationData[] registrations);
+
+    async SetXPCOMProcessAttributes(XPCOMInitData xpcomInit, StructuredCloneData initialData, LookAndFeelInt[] lookAndFeelIntCache);
 
     // Notify child that last-pb-context-exited notification was observed
     async LastPrivateDocShellDestroyed();
@@ -538,57 +559,55 @@ child:
 
     async BlobURLUnregistration(nsCString aURI);
 
+    async DispatchLocalStorageChange(nsString documentURI,
+                                     nsString key,
+                                     nsString oldValue,
+                                     nsString newValue,
+                                     Principal principal,
+                                     bool isPrivate);
 
     async GMPsChanged(GMPCapabilityData[] capabilities);
 
-parent:
+
+    async FileCreationResponse(nsID aID, FileCreationResult aResult);
+
     /**
-     * Tell the content process some attributes of itself.  This is
-     * among the first information queried by content processes after
-     * startup.  (The message is sync to allow the content process to
-     * control when it receives the information.)
-     *
-     * |id| is a unique ID among all subprocesses. When
-     * |isForBrowser|, we're loading <browser> or <xul:browser remote>.
-     *
-     * Keep the return values in sync with PBrowser()!
+     * Sending an activate message moves focus to the child.
      */
-    sync GetProcessAttributes()
-        returns (ContentParentId cpId, bool isForBrowser);
-    sync GetXPCOMProcessAttributes()
-        returns (bool isOffline, bool isConnected, int32_t captivePortalState,
-                 bool isLangRTL,
-                 bool haveBidiKeyboards, nsString[] dictionaries,
-                 ClipboardCapabilities clipboardCaps,
-                 DomainPolicyClone domainPolicy,
-                 StructuredCloneData initialData,
-                 FontFamilyListEntry[] fontFamilies /* used on MacOSX only */,
-                 OptionalURIParams userContentSheetURL,
-                 LookAndFeelInt[] lookAndFeelIntCache);
+    async Activate(PBrowser aTab);
+
+    async Deactivate(PBrowser aTab);
+
+    async ParentActivated(PBrowser aTab, bool aActivated);
+
+parent:
+    async InitBackground(Endpoint<PBackgroundParent> aEndpoint);
 
     sync CreateChildProcess(IPCTabContext context,
                             ProcessPriority priority,
                             TabId openerTabId)
         returns (ContentParentId cpId, bool isForBrowser, TabId tabId);
-    sync BridgeToChildProcess(ContentParentId cpId);
+    sync BridgeToChildProcess(ContentParentId cpId)
+        returns (Endpoint<PContentBridgeParent> endpoint);
 
     async CreateGMPService();
 
     /**
-     * This call connects the content process to a plugin process. While this
-     * call runs, a new PluginModuleParent will be created in the ContentChild
-     * via bridging. The corresponding PluginModuleChild will live in the plugin
-     * process.
+     * This call connects the content process to a plugin process. This call
+     * returns an endpoint for a new PluginModuleParent. The corresponding
+     * PluginModuleChild will be started up in the plugin process.
      */
-    sync LoadPlugin(uint32_t aPluginId) returns (nsresult aResult, uint32_t aRunID);
+    sync LoadPlugin(uint32_t aPluginId)
+        returns (nsresult aResult, uint32_t aRunID, Endpoint<PPluginModuleParent> aEndpoint);
 
     /**
      * This call is used by asynchronous plugin instantiation to notify the
      * content parent that it is now safe to initiate the plugin bridge for
-     * the specified plugin id. When this call returns, the requested bridge
-     * connection has been made.
+     * the specified plugin id. The endpoint for the content process part of the
+     * bridge is returned.
      */
-    sync ConnectPluginBridge(uint32_t aPluginId) returns (nsresult rv);
+    sync ConnectPluginBridge(uint32_t aPluginId)
+        returns (nsresult rv, Endpoint<PPluginModuleParent> aEndpoint);
 
     /**
      * Return the current blocklist state for a particular plugin.
@@ -613,7 +632,9 @@ parent:
 
     async PRemoteSpellcheckEngine();
 
-    sync PCrashReporter(NativeThreadId tid, uint32_t processType);
+    async PMemoryStream(uint64_t aSize);
+
+    async InitCrashReporter(Shmem shmem, NativeThreadId tid);
 
     /**
      * Is this token compatible with the provided version?
@@ -659,10 +680,12 @@ parent:
                          uint8_t[] keyHandle)
         returns (uint8_t[] signature);
 
-    sync IsSecureURI(uint32_t type, URIParams uri, uint32_t flags)
+    sync IsSecureURI(uint32_t aType, URIParams aURI, uint32_t aFlags,
+                     OriginAttributes aOriginAttributes)
         returns (bool isSecureURI);
 
-    async AccumulateMixedContentHSTS(URIParams uri, bool active, bool hasHSTSPriming);
+    async AccumulateMixedContentHSTS(URIParams aURI, bool aActive, bool aHasHSTSPriming,
+                                     OriginAttributes aOriginAttributes);
 
     nested(inside_cpow) async PHal();
 
@@ -706,7 +729,6 @@ parent:
     async ExtProtocolChannelConnectParent(uint32_t registrarId);
 
     // PrefService message
-    sync ReadPrefsArray() returns (PrefSetting[] prefs) verify;
     sync GetGfxVars() returns (GfxVarUpdate[] vars);
 
     sync ReadFontList() returns (FontListEntry[] retValue);
@@ -786,6 +808,9 @@ parent:
 
     // Notify the parent of the presence or absence of private docshells
     async PrivateDocShellsExist(bool aExist);
+
+    // Tell the parent that the child has gone idle for the first time.
+    async FirstIdle();
 
     async AudioChannelServiceStatus(bool aActiveTelephonyChannel,
                                     bool aContentOrNormalChannel,
@@ -1023,20 +1048,35 @@ parent:
      async GetFilesRequest(nsID aID, nsString aDirectory, bool aRecursiveFlag);
      async DeleteGetFilesRequest(nsID aID);
 
+     async FileCreationRequest(nsID aID, nsString aFullPath, nsString aType,
+                               nsString aName, bool lastModifiedPassed,
+                               int64_t lastModified, bool aExistenceCheck,
+                               bool aIsFromNsIFile);
+
      async StoreAndBroadcastBlobURLRegistration(nsCString url, PBlob blob,
                                                 Principal principal);
 
      async UnstoreAndBroadcastBlobURLUnregistration(nsCString url);
 
+     async BroadcastLocalStorageChange(nsString documentURI,
+                                       nsString key,
+                                       nsString oldValue,
+                                       nsString newValue,
+                                       Principal principal,
+                                       bool isPrivate);
+
     /**
      * Messages for communicating child Telemetry to the parent process
      */
-    async AccumulateChildHistogram(Accumulation[] accumulations);
-    async AccumulateChildKeyedHistogram(KeyedAccumulation[] accumulations);
+    async AccumulateChildHistograms(Accumulation[] accumulations);
+    async AccumulateChildKeyedHistograms(KeyedAccumulation[] accumulations);
     async UpdateChildScalars(ScalarAction[] updates);
     async UpdateChildKeyedScalars(KeyedScalarAction[] updates);
 
     sync GetA11yContentId() returns (uint32_t aContentId);
+
+    async AddMemoryReport(MemoryReport aReport);
+    async FinishMemoryReport(uint32_t aGeneration);
 
 both:
      async AsyncMessage(nsString aMessage, CpowEntry[] aCpows,

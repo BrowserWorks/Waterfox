@@ -14,8 +14,12 @@ elif toolkit == 'cocoa':
     DIRS += ['mac']
 else:
     DIRS += ['unix']
+    if 'gtk' in CONFIG['MOZ_WIDGET_TOOLKIT']:
+        DIRS += ['gtk']
 
 XPIDL_SOURCES += [
+    'mozILocaleService.idl',
+    'mozIOSPreferences.idl',
     'nsICollation.idl',
     'nsILocale.idl',
     'nsILocaleService.idl',
@@ -35,22 +39,29 @@ EXPORTS += [
     'nsWin32Locale.h',
 ]
 
+EXPORTS.mozilla.intl += [
+    'LocaleService.h',
+    'OSPreferences.h',
+]
+
 UNIFIED_SOURCES += [
+    'LocaleService.cpp',
     'nsCollation.cpp',
     'nsLanguageAtomService.cpp',
     'nsLocale.cpp',
     'nsLocaleService.cpp',
     'nsScriptableDateFormat.cpp',
     'nsUConvPropertySearch.cpp',
+    'OSPreferences.cpp',
 ]
 
 if CONFIG['ENABLE_INTL_API']:
     UNIFIED_SOURCES += [
-        'DateTimeFormatICU.cpp',
+        'DateTimeFormat.cpp',
     ]
 else:
     UNIFIED_SOURCES += [
-        'DateTimeFormatUnix.cpp',
+        'DateTimeFormatAndroid.cpp',
     ]
 
 EXTRA_JS_MODULES += [
@@ -74,3 +85,6 @@ GENERATED_FILES += [
 langgroups = GENERATED_FILES['langGroups.properties.h']
 langgroups.script = 'props2arrays.py'
 langgroups.inputs = ['langGroups.properties']
+
+if CONFIG['ENABLE_TESTS']:
+    DIRS += ['tests/gtest']

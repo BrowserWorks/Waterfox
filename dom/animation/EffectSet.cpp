@@ -6,8 +6,8 @@
 
 #include "EffectSet.h"
 #include "mozilla/dom/Element.h" // For Element
-#include "mozilla/RestyleManagerHandle.h"
-#include "mozilla/RestyleManagerHandleInlines.h"
+#include "mozilla/RestyleManager.h"
+#include "mozilla/RestyleManagerInlines.h"
 #include "nsCSSPseudoElements.h" // For CSSPseudoElementType
 #include "nsCycleCollectionNoteChild.h" // For CycleCollectionNoteChild
 #include "nsPresContext.h"
@@ -39,7 +39,7 @@ EffectSet::Traverse(nsCycleCollectionTraversalCallback& aCallback)
 }
 
 /* static */ EffectSet*
-EffectSet::GetEffectSet(dom::Element* aElement,
+EffectSet::GetEffectSet(const dom::Element* aElement,
                         CSSPseudoElementType aPseudoType)
 {
   nsIAtom* propName = GetEffectSetPropertyAtom(aPseudoType);

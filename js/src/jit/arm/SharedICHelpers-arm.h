@@ -150,22 +150,6 @@ EmitBaselineCallVM(JitCode* target, MacroAssembler& masm)
     masm.call(target);
 }
 
-inline void
-EmitIonCallVM(JitCode* target, size_t stackSlots, MacroAssembler& masm)
-{
-    uint32_t descriptor = MakeFrameDescriptor(masm.framePushed(), JitFrame_IonStub,
-                                              ExitFrameLayout::Size());
-    masm.Push(Imm32(descriptor));
-    masm.callJit(target);
-
-    // Remove rest of the frame left on the stack. We remove the return address
-    // which is implicitly popped when returning.
-    size_t framePop = sizeof(ExitFrameLayout) - sizeof(void*);
-
-    // Pop arguments from framePushed.
-    masm.implicitPop(stackSlots * sizeof(void*) + framePop);
-}
-
 // Size of vales pushed by EmitEnterStubFrame.
 static const uint32_t STUB_FRAME_SIZE = 4 * sizeof(void*);
 static const uint32_t STUB_FRAME_SAVED_STUB_OFFSET = sizeof(void*);
@@ -200,20 +184,6 @@ EmitBaselineEnterStubFrame(MacroAssembler& masm, Register scratch)
 }
 
 inline void
-EmitIonEnterStubFrame(MacroAssembler& masm, Register scratch)
-{
-    MOZ_ASSERT(ICTailCallReg == lr);
-
-    // In arm the link register contains the return address,
-    // but in jit frames we expect it to be on the stack. As a result
-    // push the link register (which is actually part of the previous frame.
-    // Therefore using push instead of Push).
-    masm.push(ICTailCallReg);
-
-    masm.Push(ICStubReg);
-}
-
-inline void
 EmitBaselineLeaveStubFrame(MacroAssembler& masm, bool calledIntoIon = false)
 {
     ScratchRegisterScope scratch(masm);
@@ -238,13 +208,6 @@ EmitBaselineLeaveStubFrame(MacroAssembler& masm, bool calledIntoIon = false)
 
     // Discard the frame descriptor.
     masm.Pop(scratch);
-}
-
-inline void
-EmitIonLeaveStubFrame(MacroAssembler& masm)
-{
-    masm.Pop(ICStubReg);
-    masm.pop(ICTailCallReg); // See EmitIonEnterStubFrame for explanation on pop/Pop.
 }
 
 inline void
@@ -287,63 +250,6 @@ EmitUnstowICValues(MacroAssembler& masm, int values, bool discard = false)
         break;
     }
     masm.adjustFrame(-values * sizeof(Value));
-}
-
-inline void
-EmitCallTypeUpdateIC(MacroAssembler& masm, JitCode* code, uint32_t objectOffset)
-{
-    MOZ_ASSERT(R2 == ValueOperand(r1, r0));
-
-    // R0 contains the value that needs to be typechecked. The object we're
-    // updating is a boxed Value on the stack, at offset objectOffset from esp,
-    // excluding the return address.
-
-    // Save the current ICStubReg to stack, as well as the TailCallReg,
-    // since on ARM, the LR is live.
-    masm.push(ICStubReg);
-    masm.push(ICTailCallReg);
-
-    // This is expected to be called from within an IC, when ICStubReg is
-    // properly initialized to point to the stub.
-    masm.loadPtr(Address(ICStubReg, ICUpdatedStub::offsetOfFirstUpdateStub()),
-                 ICStubReg);
-
-    // TODO: Change r0 uses below to use masm's configurable scratch register instead.
-
-    // Load stubcode pointer from ICStubReg into ICTailCallReg.
-    masm.loadPtr(Address(ICStubReg, ICStub::offsetOfStubCode()), r0);
-
-    // Call the stubcode.
-    masm.ma_blx(r0);
-
-    // Restore the old stub reg and tailcall reg.
-    masm.pop(ICTailCallReg);
-    masm.pop(ICStubReg);
-
-    // The update IC will store 0 or 1 in R1.scratchReg() reflecting if the
-    // value in R0 type-checked properly or not.
-    Label success;
-    masm.cmp32(R1.scratchReg(), Imm32(1));
-    masm.j(Assembler::Equal, &success);
-
-    // If the IC failed, then call the update fallback function.
-    EmitBaselineEnterStubFrame(masm, R1.scratchReg());
-
-    masm.loadValue(Address(BaselineStackReg, STUB_FRAME_SIZE + objectOffset), R1);
-
-    masm.Push(R0);
-    masm.Push(R1);
-    masm.Push(ICStubReg);
-
-    // Load previous frame pointer, push BaselineFrame*.
-    masm.loadPtr(Address(BaselineFrameReg, 0), R0.scratchReg());
-    masm.pushBaselineFramePtr(R0.scratchReg(), R0.scratchReg());
-
-    EmitBaselineCallVM(code, masm);
-    EmitBaselineLeaveStubFrame(masm);
-
-    // Success at end.
-    masm.bind(&success);
 }
 
 template <typename AddrType>

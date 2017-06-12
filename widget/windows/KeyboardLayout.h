@@ -455,7 +455,7 @@ private:
 
   UINT GetScanCodeWithExtendedFlag() const;
 
-  // The result is one of nsIDOMKeyEvent::DOM_KEY_LOCATION_*.
+  // The result is one of eKeyLocation*.
   uint32_t GetKeyLocation() const;
 
   /**

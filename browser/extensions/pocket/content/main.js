@@ -42,6 +42,7 @@
 // TODO : [nice to have] - Immediately save, buffer the actions in a local queue and send (so it works offline, works like our native extensions)
 
 /* eslint-disable no-shadow */
+/* eslint-env mozilla/browser-window */
 
 Cu.import("resource://gre/modules/XPCOMUtils.jsm");
 XPCOMUtils.defineLazyModuleGetter(this, "PrivateBrowsingUtils",
@@ -620,7 +621,7 @@ var pktUIMessaging = (function() {
             callback(panelId, data, nodePrincipal);
 
             // Cleanup the element
-            e.target.parentNode.removeChild(e.target);
+            e.target.remove();
 
         }, false, true);
     }

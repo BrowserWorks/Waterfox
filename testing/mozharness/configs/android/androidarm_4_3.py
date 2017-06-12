@@ -6,9 +6,11 @@ config = {
     "robocop_package_name": "org.mozilla.roboexample.test",
     "marionette_address": "localhost:2828",
     "marionette_test_manifest": "unit-tests.ini",
+    "download_tooltool": True,
+    "tooltool_servers": ['http://relengapi/tooltool/'],
     "tooltool_manifest_path": "testing/config/tooltool-manifests/androidarm_4_3/releng.manifest",
-    "tooltool_cache": "/builds/tooltool_cache",
-    "avds_dir": "/home/cltbld/.android",
+    "tooltool_cache": "/home/worker/tooltool_cache",
+    "avds_dir": "/home/worker/workspace/build/.android",
     "emulator_manifest": """
         [
         {
@@ -34,9 +36,6 @@ config = {
     "device_manager": "adb",
     "exes": {
         'adb': '%(abs_work_dir)s/android-sdk18/platform-tools/adb',
-        'python': '/tools/buildbot/bin/python',
-        'virtualenv': ['/tools/buildbot/bin/python', '/tools/misc-python/virtualenv.py'],
-        'tooltool.py': "/tools/tooltool.py",
     },
     "env": {
         "DISPLAY": ":0.0",
@@ -303,7 +302,7 @@ config = {
                 "--utility-path=%(utility_path)s", "--http-port=%(http_port)s",
                 "--ssl-port=%(ssl_port)s", "--httpd-path", "%(modules_dir)s",
                 "--symbols-path=%(symbols_path)s",
-                "--total-chunks=6",
+                "--total-chunks=10",
                 "--extra-profile-file=jsreftest/tests/user.js",
                 "--suite=jstestbrowser",
             ],
@@ -321,7 +320,7 @@ config = {
                 "--ssl-port=%(ssl_port)s", "--httpd-path", "%(modules_dir)s",
                 "--symbols-path=%(symbols_path)s",
                 "../jsreftest/tests/jstests.list",
-                "--total-chunks=20",
+                "--total-chunks=35",
                 "--extra-profile-file=jsreftest/tests/user.js",
             ],
         },

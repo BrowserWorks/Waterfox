@@ -16,10 +16,8 @@
 #include "nsNetUtil.h"
 #include "nsIOutputStream.h"
 #include "nsClassHashtable.h"
-
-#if DEBUG
+#include "nsDataHashtable.h"
 #include "plbase64.h"
-#endif
 
 namespace mozilla {
 namespace safebrowsing {
@@ -84,14 +82,16 @@ struct SafebrowsingHash
     return Comparator::Compare(buf, aOther.buf) < 0;
   }
 
-#ifdef DEBUG
   void ToString(nsACString& aStr) const {
     uint32_t len = ((sHashSize + 2) / 3) * 4;
+
+    // Capacity should be one greater than length, because PL_Base64Encode
+    // will not be null-terminated, while nsCString requires it.
     aStr.SetCapacity(len + 1);
     PL_Base64Encode((char*)buf, sHashSize, aStr.BeginWriting());
     aStr.BeginWriting()[len] = '\0';
+    aStr.SetLength(len);
   }
-#endif
 
   void ToHexString(nsACString& aStr) const {
     static const char* const lut = "0123456789ABCDEF";
@@ -315,6 +315,8 @@ WriteTArray(nsIOutputStream* aStream, nsTArray_Impl<T, Alloc>& aArray)
 }
 
 typedef nsClassHashtable<nsUint32HashKey, nsCString> PrefixStringMap;
+
+typedef nsDataHashtable<nsCStringHashKey, int64_t> TableFreshnessMap;
 
 } // namespace safebrowsing
 } // namespace mozilla

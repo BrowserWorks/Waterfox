@@ -93,7 +93,7 @@ public:
     return NS_OK;
   }
 private:
-  nsWeakFrame mFrame;
+  WeakFrame mFrame;
 };
 
 static void
@@ -181,7 +181,7 @@ nsSubDocumentFrame::ShowViewer()
     RefPtr<nsFrameLoader> frameloader = FrameLoader();
     if (frameloader) {
       CSSIntSize margin = GetMarginAttributes();
-      nsWeakFrame weakThis(this);
+      AutoWeakFrame weakThis(this);
       mCallingShow = true;
       const nsAttrValue* attrValue =
         GetContent()->AsElement()->GetParsedAttr(nsGkAtoms::scrolling);
@@ -321,7 +321,7 @@ WrapBackgroundColorInOwnLayer(nsDisplayListBuilder* aBuilder,
     if (item->GetType() == nsDisplayItem::TYPE_BACKGROUND_COLOR) {
       nsDisplayList tmpList;
       tmpList.AppendToTop(item);
-      item = new (aBuilder) nsDisplayOwnLayer(aBuilder, aFrame, &tmpList);
+      item = new (aBuilder) nsDisplayOwnLayer(aBuilder, aFrame, &tmpList, aBuilder->CurrentActiveScrolledRoot());
     }
     tempItems.AppendToTop(item);
   }
@@ -456,7 +456,7 @@ nsSubDocumentFrame::BuildDisplayList(nsDisplayListBuilder*   aBuilder,
       // the layer we will construct will be clipped by the current clip.
       // In fact for nsDisplayZoom propagating it down would be incorrect since
       // nsDisplayZoom changes the meaning of appunits.
-      nestedClipState.EnterStackingContextContents(true);
+      nestedClipState.Clear();
     }
 
     if (subdocRootFrame) {
@@ -752,7 +752,7 @@ nsSubDocumentFrame::Reflow(nsPresContext*           aPresContext,
                "Shouldn't have unconstrained stuff here "
                "thanks to ComputeAutoSize");
 
-  aStatus = NS_FRAME_COMPLETE;
+  aStatus.Reset();
 
   NS_ASSERTION(mContent->GetPrimaryFrame() == this,
                "Shouldn't happen");
@@ -805,8 +805,8 @@ nsSubDocumentFrame::Reflow(nsPresContext*           aPresContext,
   }
 
   NS_FRAME_TRACE(NS_FRAME_TRACE_CALLS,
-     ("exit nsSubDocumentFrame::Reflow: size=%d,%d status=%x",
-      aDesiredSize.Width(), aDesiredSize.Height(), aStatus));
+     ("exit nsSubDocumentFrame::Reflow: size=%d,%d status=%s",
+      aDesiredSize.Width(), aDesiredSize.Height(), ToString(aStatus).c_str()));
 
   NS_FRAME_SET_TRUNCATION(aStatus, aReflowInput, aDesiredSize);
 }
@@ -815,7 +815,7 @@ bool
 nsSubDocumentFrame::ReflowFinished()
 {
   if (mFrameLoader) {
-    nsWeakFrame weakFrame(this);
+    AutoWeakFrame weakFrame(this);
 
     mFrameLoader->UpdatePositionAndSize(this);
 
@@ -1182,8 +1182,8 @@ void
 nsSubDocumentFrame::EndSwapDocShells(nsIFrame* aOther)
 {
   nsSubDocumentFrame* other = static_cast<nsSubDocumentFrame*>(aOther);
-  nsWeakFrame weakThis(this);
-  nsWeakFrame weakOther(aOther);
+  AutoWeakFrame weakThis(this);
+  AutoWeakFrame weakOther(aOther);
 
   if (mInnerView) {
     ::EndSwapDocShellsForViews(mInnerView->GetFirstChild());

@@ -105,16 +105,12 @@ def locFromTok(p, num):
 ##-----------------------------------------------------------------------------
 
 reserved = set((
-        'as',
         'async',
         'both',
-        'bridges',
         'child',
         'class',
         'compress',
         'compressall',
-        '__delete__',
-        'delete',                       # reserve 'delete' to prevent its use
         'from',
         'include',
         'intr',
@@ -123,13 +119,11 @@ reserved = set((
         'namespace',
         'nested',
         'nullable',
-        'opens',
         'or',
         'parent',
         'prio',
         'protocol',
         'returns',
-        'spawns',
         'struct',
         'sync',
         'union',
@@ -341,7 +335,7 @@ def p_ProtocolDefn(p):
     protocol = p[5]
     protocol.loc = locFromTok(p, 2)
     protocol.name = p[3]
-    protocol.nestedRange = p[1][0]
+    protocol.nested = p[1][0]
     protocol.sendSemantics = p[1][1]
     p[0] = protocol
 
@@ -350,61 +344,9 @@ def p_ProtocolDefn(p):
 
 
 def p_ProtocolBody(p):
-    """ProtocolBody : SpawnsStmtsOpt"""
+    """ProtocolBody : ManagersStmtOpt"""
     p[0] = p[1]
 
-##--------------------
-## spawns/bridges/opens stmts
-
-def p_SpawnsStmtsOpt(p):
-    """SpawnsStmtsOpt : SpawnsStmt SpawnsStmtsOpt
-                      | BridgesStmtsOpt"""
-    if 2 == len(p):
-        p[0] = p[1]
-    else:
-        p[2].spawnsStmts.insert(0, p[1])
-        p[0] = p[2]
-
-def p_SpawnsStmt(p):
-    """SpawnsStmt : PARENT SPAWNS ID AsOpt ';'
-                  | CHILD SPAWNS ID AsOpt ';'"""
-    p[0] = SpawnsStmt(locFromTok(p, 1), p[1], p[3], p[4])
-
-def p_AsOpt(p):
-    """AsOpt : AS PARENT
-             | AS CHILD
-             | """
-    if 3 == len(p):
-        p[0] = p[2]
-    else:
-        p[0] = 'child'
-
-def p_BridgesStmtsOpt(p):
-    """BridgesStmtsOpt : BridgesStmt BridgesStmtsOpt
-                       | OpensStmtsOpt"""
-    if 2 == len(p):
-        p[0] = p[1]
-    else:
-        p[2].bridgesStmts.insert(0, p[1])
-        p[0] = p[2]
-
-def p_BridgesStmt(p):
-    """BridgesStmt : BRIDGES ID ',' ID ';'"""
-    p[0] = BridgesStmt(locFromTok(p, 1), p[2], p[4])
-
-def p_OpensStmtsOpt(p):
-    """OpensStmtsOpt : OpensStmt OpensStmtsOpt
-                     | ManagersStmtOpt"""
-    if 2 == len(p):
-        p[0] = p[1]
-    else:
-        p[2].opensStmts.insert(0, p[1])
-        p[0] = p[2]
-
-def p_OpensStmt(p):
-    """OpensStmt : PARENT OPENS ID ';'
-                 | CHILD OPENS ID ';'"""
-    p[0] = OpensStmt(locFromTok(p, 1), p[1], p[3])
 
 ##--------------------
 ## manager/manages stmts
@@ -496,25 +438,16 @@ def p_MessageDecl(p):
     p[0] = msg
 
 def p_MessageBody(p):
-    """MessageBody : MessageId MessageInParams MessageOutParams OptionalMessageModifiers"""
+    """MessageBody : ID MessageInParams MessageOutParams OptionalMessageModifiers"""
     # FIXME/cjones: need better loc info: use one of the quals
-    loc, name = p[1]
-    msg = MessageDecl(loc)
+    name = p[1]
+    msg = MessageDecl(locFromTok(p, 1))
     msg.name = name
     msg.addInParams(p[2])
     msg.addOutParams(p[3])
     msg.addModifiers(p[4])
 
     p[0] = msg
-
-def p_MessageId(p):
-    """MessageId : ID
-                 | __DELETE__
-                 | DELETE"""
-    loc = locFromTok(p, 1)
-    if 'delete' == p[1]:
-        _error(loc, "`delete' is a reserved identifier")
-    p[0] = [ loc, p[1] ]
 
 def p_MessageInParams(p):
     """MessageInParams : '(' ParamList ')'"""
@@ -612,7 +545,7 @@ def p_OptionalProtocolSendSemanticsQual(p):
     """OptionalProtocolSendSemanticsQual : ProtocolSendSemanticsQual
                                          | """
     if 2 == len(p): p[0] = p[1]
-    else:           p[0] = [ (NOT_NESTED, NOT_NESTED), ASYNC ]
+    else:           p[0] = [ NOT_NESTED, ASYNC ]
 
 def p_ProtocolSendSemanticsQual(p):
     """ProtocolSendSemanticsQual : ASYNC
@@ -622,10 +555,10 @@ def p_ProtocolSendSemanticsQual(p):
                                  | INTR"""
     if p[1] == 'nested':
         mtype = p[6]
-        nested = (NOT_NESTED, p[4])
+        nested = p[4]
     else:
         mtype = p[1]
-        nested = (NOT_NESTED, NOT_NESTED)
+        nested = NOT_NESTED
 
     if mtype == 'async': mtype = ASYNC
     elif mtype == 'sync': mtype = SYNC

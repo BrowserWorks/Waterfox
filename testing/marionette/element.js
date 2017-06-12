@@ -821,7 +821,7 @@ element.coordinates = function (
  *     True if if |el| is in viewport, false otherwise.
  */
 element.inViewport = function (el, x = undefined, y = undefined) {
-  let win = el.ownerDocument.defaultView;
+  let win = el.ownerGlobal;
   let c = element.coordinates(el, x, y);
   let vp = {
     top: win.pageYOffset,
@@ -911,7 +911,7 @@ element.isInView = function (el) {
  *     True if visible, false otherwise.
  */
 element.isVisible = function (el, x = undefined, y = undefined) {
-  let win = el.ownerDocument.defaultView;
+  let win = el.ownerGlobal;
 
   // Bug 1094246: webdriver's isShown doesn't work with content xul
   if (!element.isXULElement(el) && !atom.isElementDisplayed(el, win)) {

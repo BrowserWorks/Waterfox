@@ -33,7 +33,7 @@
 
 #include "EventListenerService.h"
 #include "GeckoProfiler.h"
-#ifdef MOZ_ENABLE_PROFILER_SPS
+#ifdef MOZ_GECKO_PROFILER
 #include "ProfilerMarkers.h"
 #endif
 #include "nsCOMArray.h"
@@ -118,19 +118,6 @@ IsWebkitPrefixSupportEnabled()
   }
 
   return sIsWebkitPrefixSupportEnabled;
-}
-
-static bool
-IsPrefixedPointerLockEnabled()
-{
-  static bool sIsPrefixedPointerLockEnabled;
-  static bool sIsPrefCached = false;
-  if (!sIsPrefCached) {
-    sIsPrefCached = true;
-    Preferences::AddBoolVarCache(&sIsPrefixedPointerLockEnabled,
-                                 "pointer-lock-api.prefixed.enabled");
-  }
-  return sIsPrefixedPointerLockEnabled;
 }
 
 EventListenerManagerBase::EventListenerManagerBase()
@@ -1164,14 +1151,6 @@ EventListenerManager::GetLegacyEventMessage(EventMessage aEventMessage) const
         return eWebkitAnimationIteration;
       }
     }
-    if (IsPrefixedPointerLockEnabled()) {
-      if (aEventMessage == ePointerLockChange) {
-        return eMozPointerLockChange;
-      }
-      if (aEventMessage == ePointerLockError) {
-        return eMozPointerLockError;
-      }
-    }
   }
 
   switch (aEventMessage) {
@@ -1289,7 +1268,7 @@ EventListenerManager::HandleEventInternal(nsPresContext* aPresContext,
 
             nsresult rv = NS_OK;
             if (profiler_is_active()) {
-#ifdef MOZ_ENABLE_PROFILER_SPS
+#ifdef MOZ_GECKO_PROFILER
               // Add a profiler label and a profiler marker for the actual
               // dispatch of the event.
               // This is a very hot code path, so we need to make sure not to
@@ -1312,7 +1291,7 @@ EventListenerManager::HandleEventInternal(nsPresContext* aPresContext,
                                                                 startTime,
                                                                 endTime));
 #else
-              MOZ_CRASH("SPS profiler is N/A but profiler_is_active() returned true");
+              MOZ_CRASH("Gecko Profiler is N/A but profiler_is_active() returned true");
 #endif
             } else {
               rv = HandleEventSubType(listener, *aDOMEvent, aCurrentTarget);

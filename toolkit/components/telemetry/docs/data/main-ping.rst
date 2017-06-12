@@ -86,12 +86,22 @@ are not monotonic like calculations based on ``Date.now()``.
 
 If the monotonic clock failed, this will be ``-1``.
 
+Note that this currently does not behave consistently over our supported platforms:
+
+* On Windows this uses ``GetTickCount64()``, which does increase over sleep periods
+* On OS X this uses ``mach_absolute_time()``, which does not increase over sleep periods
+* On POSIX/Linux this uses ``clock_gettime(CLOCK_MONOTONIC, &ts)``, which should not increase over sleep time
+
+See `bug 1204823 <https://bugzilla.mozilla.org/show_bug.cgi?id=1204823>`_ for details.
+
 subsessionLength
 ~~~~~~~~~~~~~~~~
 The length of this subsession in seconds.
-This uses a monotonic clock, so this may mismatch with other measurements that are not monotonic (e.g. based on Date.now()).
+This uses a monotonic clock, so this may mismatch with other measurements that are not monotonic (e.g. based on ``Date.now()``).
 
 If ``sessionLength`` is ``-1``, the monotonic clock is not working.
+
+Also see the remarks for ``sessionLength`` on platform consistency.
 
 processes
 ---------
@@ -102,10 +112,11 @@ Structure:
 .. code-block:: js
 
     "processes" : {
-      ... other processes ...
+      // ... other processes ...
       "parent": {
         scalars: {...},
         keyedScalars: {...},
+        events: {...},
       },
       "content": {
         scalars: {...},
@@ -114,7 +125,7 @@ Structure:
         keyedHistograms: {...},
       },
       "gpu": {
-        ...
+        // ...
       }
     }
 
@@ -126,7 +137,13 @@ This format was adopted in Firefox 51 via bug 1218576.
 
 scalars and keyedScalars
 ~~~~~~~~~~~~~~~~~~~~~~~~
-This section contains the :doc:`../collection/scalars` that are valid for the current platform. Scalars are only submitted if if data was added to them, and are only reported with subsession pings. The record scalars are described in the `Scalars.yaml <https://dxr.mozilla.org/mozilla-central/source/toolkit/components/telemetry/Scalars.yaml>`_ file. The ``info.revision`` field indicates the revision of the file that describes the reported scalars.
+This section contains the :doc:`../collection/scalars` that are valid for the current platform. Scalars are only submitted if data was added to them, and are only reported with subsession pings. The recorded scalars are described in the `Scalars.yaml <https://dxr.mozilla.org/mozilla-central/source/toolkit/components/telemetry/Scalars.yaml>`_ file. The ``info.revision`` field indicates the revision of the file that describes the reported scalars.
+
+events
+~~~~~~
+This section contains the :ref:`eventtelemetry` that are recorded for the current subsession. Events are not always recorded, recording has to be enabled first for the Firefox session.
+
+The recorded events are defined in the `Events.yaml <https://dxr.mozilla.org/mozilla-central/source/toolkit/components/telemetry/Events.yaml>`_. The ``info.revision`` field indicates the revision of the file that describes the reported events.
 
 childPayloads
 -------------
@@ -221,7 +238,7 @@ Integer count of pending pings that are overdue.
 
 histograms
 ----------
-This section contains the histograms that are valid for the current platform. ``Flag`` and ``count`` histograms are always created and submitted, with their default value being respectively ``false`` and ``0``. Other histogram types (`see here <https://developer.mozilla.org/en-US/docs/Mozilla/Performance/Adding_a_new_Telemetry_probe#Choosing_a_Histogram_Type>`_) are not created nor submitted if no data was added to them. The type and format of the reported histograms is described by the ``Histograms.json`` file. Its most recent version is available `here <https://dxr.mozilla.org/mozilla-central/source/toolkit/components/telemetry/Histograms.json>`_. The ``info.revision`` field indicates the revision of the file that describes the reported histograms.
+This section contains the histograms that are valid for the current platform. ``Flag`` and ``count`` histograms are always created and submitted, with their default value being respectively ``false`` and ``0``. Other histogram types (see :ref:`choosing-histogram-type`) are not created nor submitted if no data was added to them. The type and format of the reported histograms is described by the ``Histograms.json`` file. Its most recent version is available `here <https://dxr.mozilla.org/mozilla-central/source/toolkit/components/telemetry/Histograms.json>`_. The ``info.revision`` field indicates the revision of the file that describes the reported histograms.
 
 keyedHistograms
 ---------------
@@ -272,12 +289,19 @@ Structure:
 
 capturedStacks
 --------------
-Contains information about stacks captured on demand via Telemetry API. This is similar to `chromeHangs`, but only stacks captured on the main thread of the parent process are reported. It reports precise C++ stacks are reported and is only available on Windows, either in Firefox Nightly or in builds using "--enable-profiling" switch.
+Contains information about stacks captured on demand via Telemetry API. For more
+information see :doc:`stack capture <../collection/stack-capture>`.
+
+This is similar to :ref:`chromeHangs`, but only Precise C++ stacks on the main thread of
+the parent process are reported. This data is only available on Windows, either
+in Firefox Nightly or in builds using ``--enable-profiling`` switch.
 
 Limits for captured stacks are the same as for chromeHangs (see below). Furthermore:
 
 * the key length is limited to 50 characters,
 * keys are restricted to alpha-numeric characters and `-`.
+
+The module names can contain unicode characters.
 
 Structure:
 
@@ -303,6 +327,8 @@ Structure:
       "captures": [["string-key", stack-index, count], ... ]
     }
 
+.. _chromeHangs:
+
 chromeHangs
 -----------
 Contains the statistics about the hangs happening exclusively on the main thread of the parent process. Precise C++ stacks are reported. This is only available on Nightly Release on Windows, when building using "--enable-profiling" switch.
@@ -311,6 +337,8 @@ Some limits are applied:
 
 * Reported chrome hang stacks are limited in depth to 50 entries.
 * The maximum number of reported stacks is 50.
+
+The module names can contain unicode characters.
 
 Structure:
 
@@ -537,7 +565,9 @@ Structure:
 
 lateWrites
 ----------
-This sections reports writes to the file system that happen during shutdown. The reported data contains the stack and the loaded libraries at the time the writes happened.
+This sections reports writes to the file system that happen during shutdown. The reported data contains the stack and the file names of the loaded libraries at the time the writes happened.
+
+The file names of the loaded libraries can contain unicode characters.
 
 Structure:
 

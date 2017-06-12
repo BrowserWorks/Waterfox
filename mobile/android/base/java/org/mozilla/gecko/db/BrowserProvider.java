@@ -15,6 +15,7 @@ import java.util.Map;
 import org.mozilla.gecko.AboutPages;
 import org.mozilla.gecko.GeckoProfile;
 import org.mozilla.gecko.R;
+import org.mozilla.gecko.activitystream.ranking.HighlightsRanking;
 import org.mozilla.gecko.db.BrowserContract.ActivityStreamBlocklist;
 import org.mozilla.gecko.db.BrowserContract.Bookmarks;
 import org.mozilla.gecko.db.BrowserContract.Combined;
@@ -30,8 +31,10 @@ import org.mozilla.gecko.db.BrowserContract.TopSites;
 import org.mozilla.gecko.db.BrowserContract.UrlAnnotations;
 import org.mozilla.gecko.db.BrowserContract.PageMetadata;
 import org.mozilla.gecko.db.DBUtils.UpdateOperation;
+import org.mozilla.gecko.home.activitystream.model.Highlight;
 import org.mozilla.gecko.icons.IconsHelper;
 import org.mozilla.gecko.sync.Utils;
+import org.mozilla.gecko.sync.repositories.android.BrowserContractHelpers;
 import org.mozilla.gecko.util.ThreadUtils;
 
 import android.content.BroadcastReceiver;
@@ -49,10 +52,15 @@ import android.database.DatabaseUtils;
 import android.database.MatrixCursor;
 import android.database.MergeCursor;
 import android.database.SQLException;
+import android.database.sqlite.SQLiteConstraintException;
 import android.database.sqlite.SQLiteCursor;
 import android.database.sqlite.SQLiteDatabase;
 import android.database.sqlite.SQLiteQueryBuilder;
+import android.database.sqlite.SQLiteStatement;
 import android.net.Uri;
+import android.os.Bundle;
+import android.support.annotation.NonNull;
+import android.support.annotation.Nullable;
 import android.support.v4.content.LocalBroadcastManager;
 import android.text.TextUtils;
 import android.util.Log;
@@ -136,7 +144,7 @@ public class BrowserProvider extends SharedBrowserDatabaseProvider {
 
     static final int METADATA = 1200;
 
-    static final int HIGHLIGHTS = 1300;
+    static final int HIGHLIGHT_CANDIDATES = 1300;
 
     static final int ACTIVITY_STREAM_BLOCKLIST = 1400;
 
@@ -164,8 +172,8 @@ public class BrowserProvider extends SharedBrowserDatabaseProvider {
 
     static {
         sTables = new Table[] {
-            // See awful shortcut assumption hack in getURLMetadataTable.
-            new URLMetadataTable()
+            // See awful shortcut assumption hack in getURLImageDataTable.
+            new URLImageDataTable()
         };
         // We will reuse this.
         HashMap<String, String> map;
@@ -316,9 +324,9 @@ public class BrowserProvider extends SharedBrowserDatabaseProvider {
         // Combined pinned sites, top visited sites, and suggested sites
         URI_MATCHER.addURI(BrowserContract.AUTHORITY, "topsites", TOPSITES);
 
-        URI_MATCHER.addURI(BrowserContract.AUTHORITY, "highlights", HIGHLIGHTS);
-
         URI_MATCHER.addURI(BrowserContract.AUTHORITY, ActivityStreamBlocklist.TABLE_NAME, ACTIVITY_STREAM_BLOCKLIST);
+
+        URI_MATCHER.addURI(BrowserContract.AUTHORITY, "highlight_candidates", HIGHLIGHT_CANDIDATES);
     }
 
     private static class ShrinkMemoryReceiver extends BroadcastReceiver {
@@ -370,8 +378,8 @@ public class BrowserProvider extends SharedBrowserDatabaseProvider {
 
     // Convenience accessor.
     // Assumes structure of sTables!
-    private URLMetadataTable getURLMetadataTable() {
-        return (URLMetadataTable) sTables[0];
+    private URLImageDataTable getURLImageDataTable() {
+        return (URLImageDataTable) sTables[0];
     }
 
     private static boolean hasFaviconsInProjection(String[] projection) {
@@ -1077,7 +1085,7 @@ public class BrowserProvider extends SharedBrowserDatabaseProvider {
                            // Hence the weird SELECT * FROM (SELECT ...relevant suggested sites... LIMIT ?)
                            " SELECT * FROM (SELECT " +
                            Bookmarks._ID + ", " +
-                           Bookmarks._ID + " AS " + Combined.BOOKMARK_ID + ", " +
+                           " NULL " + " AS " + Combined.BOOKMARK_ID + ", " +
                            " -1 AS " + Combined.HISTORY_ID + ", " +
                            Bookmarks.URL + ", " +
                            Bookmarks.TITLE + ", " +
@@ -1172,59 +1180,30 @@ public class BrowserProvider extends SharedBrowserDatabaseProvider {
         }
     }
 
-    /**
-     * Obtain a set of links for highlights (from bookmarks and history).
-     *
-     * Based on the query for Activity^ Stream (desktop):
-     * https://github.com/mozilla/activity-stream/blob/9eb9f451b553bb62ae9b8d6b41a8ef94a2e020ea/addon/PlacesProvider.js#L578
-     */
-    public Cursor getHighlights(final SQLiteDatabase db, String limit) {
-        final int totalLimit = limit == null ? 20 : Integer.parseInt(limit);
+    public Cursor getHighlightCandidates(final SQLiteDatabase db, String limit) {
+        final String query = "SELECT " +
+                DBUtils.qualifyColumn(History.TABLE_NAME, History.URL) + " AS " + Highlights.URL + ", " +
+                DBUtils.qualifyColumn(History.TABLE_NAME, History.VISITS) + ", " +
+                DBUtils.qualifyColumn(History.TABLE_NAME, History.DATE_LAST_VISITED) + ", " +
+                DBUtils.qualifyColumn(PageMetadata.TABLE_NAME, PageMetadata.JSON) + " AS " + Highlights.METADATA + ", " +
+                DBUtils.qualifyColumn(Bookmarks.TABLE_NAME, Bookmarks.DATE_CREATED) + ", " +
 
-        final long threeDaysAgo = System.currentTimeMillis() - (1000 * 60 * 60 * 24 * 3);
-        final long bookmarkLimit = 1;
+                DBUtils.qualifyColumn(History.TABLE_NAME, History.TITLE) + " AS " + Highlights.TITLE + ", " +
+                DBUtils.qualifyColumn(Bookmarks.TABLE_NAME, Bookmarks.POSITION) + " AS " + Highlights.POSITION + ", " +
+                DBUtils.qualifyColumn(Bookmarks.TABLE_NAME, Bookmarks.PARENT) + " AS " + Highlights.PARENT + ", " +
+                DBUtils.qualifyColumn(History.TABLE_NAME, History._ID) + " AS " + Highlights.HISTORY_ID + ", " +
 
-        // Select recent bookmarks that have not been visited much
-        final String bookmarksQuery = "SELECT * FROM (SELECT " +
-                "-1 AS " + Combined.HISTORY_ID + ", " +
-                DBUtils.qualifyColumn(Bookmarks.TABLE_NAME, Bookmarks._ID) + " AS " + Combined.BOOKMARK_ID + ", " +
-                DBUtils.qualifyColumn(Bookmarks.TABLE_NAME, Bookmarks.PARENT) + " AS " + Bookmarks.PARENT + ", " +
-                DBUtils.qualifyColumn(Bookmarks.TABLE_NAME, Bookmarks.POSITION) + " AS " + Bookmarks.POSITION + ", " +
-                DBUtils.qualifyColumn(Bookmarks.TABLE_NAME, Bookmarks.URL) + ", " +
-                DBUtils.qualifyColumn(Bookmarks.TABLE_NAME, Bookmarks.TITLE) + ", " +
-                DBUtils.qualifyColumn(Bookmarks.TABLE_NAME, Bookmarks.DATE_CREATED) + " AS " + Highlights.DATE + ", " +
-                DBUtils.qualifyColumn(PageMetadata.TABLE_NAME, PageMetadata.JSON) + " AS " + Highlights.METADATA + " " +
-                "FROM " + Bookmarks.TABLE_NAME + " " +
-                "LEFT JOIN " + History.TABLE_NAME + " ON " +
-                    DBUtils.qualifyColumn(Bookmarks.TABLE_NAME, Bookmarks.URL) + " = " +
-                    DBUtils.qualifyColumn(History.TABLE_NAME, History.URL) + " " +
-                // 1:1 relationship (Metadata is added via INSERT OR REPLACE)
-                "LEFT JOIN " + PageMetadata.TABLE_NAME + " ON " +
-                    DBUtils.qualifyColumn(History.TABLE_NAME, History.GUID) + " = " +
-                    DBUtils.qualifyColumn(PageMetadata.TABLE_NAME, PageMetadata.HISTORY_GUID) + " " +
-                "WHERE " + DBUtils.qualifyColumn(Bookmarks.TABLE_NAME, Bookmarks.DATE_CREATED) + " > " + threeDaysAgo + " " +
-                "AND (" + DBUtils.qualifyColumn(History.TABLE_NAME, History.VISITS) + " <= 3 " +
-                  "OR " + DBUtils.qualifyColumn(History.TABLE_NAME, History.VISITS) + " IS NULL) " +
-                "AND " + DBUtils.qualifyColumn(Bookmarks.TABLE_NAME, Bookmarks.IS_DELETED)  + " = 0 " +
-                "AND " + DBUtils.qualifyColumn(Bookmarks.TABLE_NAME, Bookmarks.TYPE) + " = " + Bookmarks.TYPE_BOOKMARK + " " +
-                "AND " + DBUtils.qualifyColumn(Bookmarks.TABLE_NAME, Bookmarks.PARENT) + " >= " + Bookmarks.FIXED_ROOT_ID + " " +
-                "AND " + DBUtils.qualifyColumn(Bookmarks.TABLE_NAME, Bookmarks.URL) + " NOT IN (SELECT " + ActivityStreamBlocklist.URL + " FROM " + ActivityStreamBlocklist.TABLE_NAME + " )" +
-                "ORDER BY " + DBUtils.qualifyColumn(Bookmarks.TABLE_NAME, Bookmarks.DATE_CREATED) + " DESC " +
-                "LIMIT " + bookmarkLimit + ")";
+                "CASE WHEN " + DBUtils.qualifyColumn(Bookmarks.TABLE_NAME, Bookmarks._ID) + " IS NOT NULL "
+                + "AND " + DBUtils.qualifyColumn(Bookmarks.TABLE_NAME, Bookmarks.PARENT) + " IS NOT " + Bookmarks.FIXED_PINNED_LIST_ID + " "
+                + "THEN " + DBUtils.qualifyColumn(Bookmarks.TABLE_NAME, Bookmarks._ID) + " "
+                + "ELSE -1 "
+                + "END AS " + Highlights.BOOKMARK_ID + ", " +
 
-        final long last30Minutes = System.currentTimeMillis() - (1000 * 60 * 30);
-        final long historyLimit = totalLimit - bookmarkLimit;
+                "CASE WHEN " + DBUtils.qualifyColumn(Bookmarks.TABLE_NAME, Bookmarks.DATE_CREATED) + " IS NOT NULL "
+                    + "THEN " + DBUtils.qualifyColumn(Bookmarks.TABLE_NAME, Bookmarks.DATE_CREATED) + " "
+                    + "ELSE " + DBUtils.qualifyColumn(History.TABLE_NAME, History.DATE_LAST_VISITED) + " "
+                    + "END AS " + Highlights.DATE + " " +
 
-        // Select recent history that has not been visited much.
-        final String historyQuery = "SELECT * FROM (SELECT " +
-                DBUtils.qualifyColumn(History.TABLE_NAME, History._ID) + " AS " + Combined.HISTORY_ID + ", " +
-                "-1 AS " + Combined.BOOKMARK_ID + ", " +
-                DBUtils.qualifyColumn(Bookmarks.TABLE_NAME, Bookmarks.PARENT) + " AS " + Bookmarks.PARENT + ", " +
-                DBUtils.qualifyColumn(Bookmarks.TABLE_NAME, Bookmarks.POSITION) + " AS " + Bookmarks.POSITION + ", " +
-                DBUtils.qualifyColumn(History.TABLE_NAME, History.URL) + ", " +
-                DBUtils.qualifyColumn(History.TABLE_NAME, History.TITLE) + ", " +
-                DBUtils.qualifyColumn(History.TABLE_NAME, History.DATE_LAST_VISITED) + " AS " + Highlights.DATE + ", " +
-                DBUtils.qualifyColumn(PageMetadata.TABLE_NAME, PageMetadata.JSON) + " AS " + Highlights.METADATA + " " +
                 "FROM " + History.TABLE_NAME + " " +
                 "LEFT JOIN " + Bookmarks.TABLE_NAME + " ON " +
                     DBUtils.qualifyColumn(History.TABLE_NAME, History.URL) + " = " +
@@ -1233,25 +1212,16 @@ public class BrowserProvider extends SharedBrowserDatabaseProvider {
                 "LEFT JOIN " + PageMetadata.TABLE_NAME + " ON " +
                     DBUtils.qualifyColumn(History.TABLE_NAME, History.GUID) + " = " +
                     DBUtils.qualifyColumn(PageMetadata.TABLE_NAME, PageMetadata.HISTORY_GUID) + " " +
-                "WHERE " + DBUtils.qualifyColumn(History.TABLE_NAME, History.DATE_LAST_VISITED) + " < " + last30Minutes + " " +
-                "AND " + DBUtils.qualifyColumn(History.TABLE_NAME, History.VISITS) + " <= 3 " +
-                "AND " + DBUtils.qualifyColumn(History.TABLE_NAME, History.TITLE) + " NOT NULL AND " + DBUtils.qualifyColumn(History.TABLE_NAME, History.TITLE) + " != '' " +
-                "AND " + DBUtils.qualifyColumn(History.TABLE_NAME, History.IS_DELETED) + " = 0 " +
-                "AND " + DBUtils.qualifyColumn(History.TABLE_NAME, History.URL) + " NOT IN (SELECT " + ActivityStreamBlocklist.URL + " FROM " + ActivityStreamBlocklist.TABLE_NAME + " )" +
-                // TODO: Implement domain black list (bug 1298786)
-                // TODO: Group by host (bug 1298785)
-                "ORDER BY " + DBUtils.qualifyColumn(History.TABLE_NAME, History.DATE_LAST_VISITED) + " DESC " +
-                "LIMIT " + historyLimit + ")";
-
-        final String query = "SELECT DISTINCT * " +
-                "FROM (" + bookmarksQuery + " " +
-                "UNION ALL " + historyQuery + ") " +
-                "GROUP BY " + Combined.URL + ";";
+                "WHERE " + DBUtils.qualifyColumn(History.TABLE_NAME, History.URL) + " NOT IN (SELECT " + ActivityStreamBlocklist.URL + " FROM " + ActivityStreamBlocklist.TABLE_NAME + " )" +
+                "ORDER BY " + Highlights.DATE + " DESC " +
+                "LIMIT " + limit;
 
         final Cursor cursor = db.rawQuery(query, null);
+        final Context context = getContext();
 
-        cursor.setNotificationUri(getContext().getContentResolver(),
-                BrowserContract.AUTHORITY_URI);
+        if (cursor != null && context != null) {
+            cursor.setNotificationUri(context.getContentResolver(), BrowserContract.AUTHORITY_URI);
+        }
 
         return cursor;
     }
@@ -1412,11 +1382,9 @@ public class BrowserProvider extends SharedBrowserDatabaseProvider {
                 break;
             }
 
-            case HIGHLIGHTS: {
-                debug("Highlights query: " + uri);
-
-                return getHighlights(db, limit);
-            }
+            case HIGHLIGHT_CANDIDATES:
+                debug("Highlight candidates query: " + uri);
+                return getHighlightCandidates(db, limit);
 
             case PAGE_METADATA: {
                 debug("PageMetadata query: " + uri);
@@ -2204,7 +2172,231 @@ public class BrowserProvider extends SharedBrowserDatabaseProvider {
 
         return deleteFavicons(uri, faviconSelection, null) +
                deleteThumbnails(uri, thumbnailSelection, null) +
-               getURLMetadataTable().deleteUnused(getWritableDatabase(uri));
+               getURLImageDataTable().deleteUnused(getWritableDatabase(uri));
+    }
+
+    @Nullable
+    @Override
+    public Bundle call(@NonNull String method, String uriArg, Bundle extras) {
+        if (uriArg == null) {
+            throw new IllegalArgumentException("Missing required Uri argument.");
+        }
+        final Bundle result = new Bundle();
+        switch (method) {
+            case BrowserContract.METHOD_INSERT_HISTORY_WITH_VISITS_FROM_SYNC:
+                try {
+                    final Uri uri = Uri.parse(uriArg);
+                    final SQLiteDatabase db = getWritableDatabase(uri);
+                    bulkInsertHistoryWithVisits(db, extras);
+                    result.putSerializable(BrowserContract.METHOD_RESULT, null);
+
+                // If anything went wrong during insertion, we know that changes were rolled back.
+                // Inform our caller that we have failed.
+                } catch (Exception e) {
+                    Log.e(LOGTAG, "Unexpected error while bulk inserting history", e);
+                    result.putSerializable(BrowserContract.METHOD_RESULT, e);
+                }
+                break;
+            default:
+                throw new IllegalArgumentException("Unknown method call: " + method);
+        }
+
+        return result;
+    }
+
+    private void bulkInsertHistoryWithVisits(final SQLiteDatabase db, @NonNull Bundle dataBundle) {
+        // NB: dataBundle structure:
+        // Key METHOD_PARAM_DATA=[Bundle,...]
+        // Each Bundle has keys METHOD_PARAM_OBJECT=ContentValues{HistoryRecord}, VISITS=ContentValues[]{visits}
+        final Bundle[] recordBundles = (Bundle[]) dataBundle.getSerializable(BrowserContract.METHOD_PARAM_DATA);
+
+        if (recordBundles == null) {
+            throw new IllegalArgumentException("Received null recordBundle while bulk inserting history.");
+        }
+
+        if (recordBundles.length == 0) {
+            return;
+        }
+
+        final ContentValues[][] visitsValueSet = new ContentValues[recordBundles.length][];
+        final ContentValues[] historyValueSet = new ContentValues[recordBundles.length];
+        for (int i = 0; i < recordBundles.length; i++) {
+            historyValueSet[i] = recordBundles[i].getParcelable(BrowserContract.METHOD_PARAM_OBJECT);
+            visitsValueSet[i] = (ContentValues[]) recordBundles[i].getSerializable(History.VISITS);
+        }
+
+        // Wrap the whole operation in a transaction.
+        beginBatch(db);
+
+        final int historyInserted;
+        try {
+            // First, insert history records.
+            historyInserted = bulkInsertHistory(db, historyValueSet);
+            if (historyInserted != recordBundles.length) {
+                Log.w(LOGTAG, "Expected to insert " + recordBundles.length + " history records, " +
+                        "but actually inserted " + historyInserted);
+            }
+
+            // Second, insert visit records.
+            bulkInsertVisits(db, visitsValueSet);
+
+            // Finally, commit all of the insertions we just made.
+            markBatchSuccessful(db);
+
+        // We're done with our database operations.
+        } finally {
+            endBatch(db);
+        }
+
+        // Notify listeners that we've just inserted new history records.
+        if (historyInserted > 0) {
+            getContext().getContentResolver().notifyChange(
+                    BrowserContractHelpers.HISTORY_CONTENT_URI, null,
+                    // Do not sync these changes.
+                    false
+            );
+        }
+    }
+
+    private int bulkInsertHistory(final SQLiteDatabase db, ContentValues[] values) {
+        int inserted = 0;
+        final String fullInsertSqlStatement = "INSERT INTO " + History.TABLE_NAME + " (" +
+                History.GUID + "," +
+                History.TITLE + "," +
+                History.URL + "," +
+                History.DATE_LAST_VISITED + "," +
+                History.REMOTE_DATE_LAST_VISITED + "," +
+                History.VISITS + "," +
+                History.REMOTE_VISITS + ") VALUES (?, ?, ?, ?, ?, ?, ?)";
+        final String shortInsertSqlStatement = "INSERT INTO " + History.TABLE_NAME + " (" +
+                History.GUID + "," +
+                History.TITLE + "," +
+                History.URL + ") VALUES (?, ?, ?)";
+        final SQLiteStatement compiledFullStatement = db.compileStatement(fullInsertSqlStatement);
+        final SQLiteStatement compiledShortStatement = db.compileStatement(shortInsertSqlStatement);
+        SQLiteStatement statementToExec;
+
+        beginWrite(db);
+        try {
+            for (ContentValues cv : values) {
+                final String guid = cv.getAsString(History.GUID);
+                final String title = cv.getAsString(History.TITLE);
+                final String url = cv.getAsString(History.URL);
+                final Long dateLastVisited = cv.getAsLong(History.DATE_LAST_VISITED);
+                final Long remoteDateLastVisited = cv.getAsLong(History.REMOTE_DATE_LAST_VISITED);
+                final Integer visits = cv.getAsInteger(History.VISITS);
+
+                // If dateLastVisited is null, so will be remoteDateLastVisited and visits.
+                // We will use the short compiled statement in this case.
+                // See implementation in AndroidBrowserHistoryDataAccessor@getContentValues.
+                if (dateLastVisited == null) {
+                    statementToExec = compiledShortStatement;
+                } else {
+                    statementToExec = compiledFullStatement;
+                }
+
+                statementToExec.clearBindings();
+                statementToExec.bindString(1, guid);
+                // Title is allowed to be null.
+                if (title != null) {
+                    statementToExec.bindString(2, title);
+                } else {
+                    statementToExec.bindNull(2);
+                }
+                statementToExec.bindString(3, url);
+                if (dateLastVisited != null) {
+                    statementToExec.bindLong(4, dateLastVisited);
+                    statementToExec.bindLong(5, remoteDateLastVisited);
+
+                    // NB:
+                    // Both of these count values might be slightly off unless we recalculate them
+                    // from data in the visits table at some point.
+                    // See note about visit insertion failures below in the bulkInsertVisits method.
+
+                    // Visit count
+                    statementToExec.bindLong(6, visits);
+                    // Remote visit count.
+                    statementToExec.bindLong(7, visits);
+                }
+
+                try {
+                    if (statementToExec.executeInsert() != -1) {
+                        inserted += 1;
+                    }
+
+                // NB: Constraint violation might occur if we're trying to insert a duplicate GUID.
+                // This should not happen but it does in practice, possibly due to reconciliation bugs.
+                // For now we catch and log the error without failing the whole bulk insert.
+                } catch (SQLiteConstraintException e) {
+                    Log.w(LOGTAG, "Unexpected constraint violation while inserting history with GUID " + guid, e);
+                }
+            }
+            markWriteSuccessful(db);
+        } finally {
+            endWrite(db);
+        }
+
+        if (inserted != values.length) {
+            Log.w(LOGTAG, "Failed to insert some of the history. " +
+                    "Expected: " + values.length + ", actual: " + inserted);
+        }
+
+        return inserted;
+    }
+
+    private int bulkInsertVisits(SQLiteDatabase db, ContentValues[][] valueSets) {
+        final String insertSqlStatement = "INSERT INTO " + Visits.TABLE_NAME + " (" +
+                Visits.DATE_VISITED + "," +
+                Visits.VISIT_TYPE + "," +
+                Visits.HISTORY_GUID + "," +
+                Visits.IS_LOCAL + ") VALUES (?, ?, ?, ?)";
+        final SQLiteStatement compiledInsertStatement = db.compileStatement(insertSqlStatement);
+
+        int totalInserted = 0;
+        beginWrite(db);
+        try {
+            for (ContentValues[] valueSet : valueSets) {
+                int inserted = 0;
+                for (ContentValues values : valueSet) {
+                    final long date = values.getAsLong(Visits.DATE_VISITED);
+                    final long visitType = values.getAsLong(Visits.VISIT_TYPE);
+                    final String guid = values.getAsString(Visits.HISTORY_GUID);
+                    final Integer isLocal = values.getAsInteger(Visits.IS_LOCAL);
+
+                    // Bind parameters use a 1-based index.
+                    compiledInsertStatement.clearBindings();
+                    compiledInsertStatement.bindLong(1, date);
+                    compiledInsertStatement.bindLong(2, visitType);
+                    compiledInsertStatement.bindString(3, guid);
+                    compiledInsertStatement.bindLong(4, isLocal);
+
+                    try {
+                        if (compiledInsertStatement.executeInsert() != -1) {
+                            inserted++;
+                        }
+
+                    // NB:
+                    // Constraint exception will be thrown if we try to insert a visit violating
+                    // unique(guid, date) constraint. We don't expect to do that, but our incoming
+                    // data might not be clean - either due to duplicate entries in the sync data,
+                    // or, less likely, due to record reconciliation bugs at the RepositorySession
+                    // level.
+                    } catch (SQLiteConstraintException e) {
+                        Log.w(LOGTAG, "Unexpected constraint exception while inserting a visit", e);
+                    }
+                }
+                if (inserted != valueSet.length) {
+                    Log.w(LOGTAG, "Failed to insert some of the visits. " +
+                            "Expected: " + valueSet.length + ", actual: " + inserted);
+                }
+                totalInserted += inserted;
+            }
+            markWriteSuccessful(db);
+        } finally {
+            endWrite(db);
+        }
+
+        return totalInserted;
     }
 
     @Override

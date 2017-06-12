@@ -348,8 +348,11 @@ class BuildOptionParser(object):
         'asan-tc': 'builds/releng_sub_%s_configs/%s_asan_tc.py',
         'tsan': 'builds/releng_sub_%s_configs/%s_tsan.py',
         'cross-debug': 'builds/releng_sub_%s_configs/%s_cross_debug.py',
+        'cross-debug-st-an': 'builds/releng_sub_%s_configs/%s_cross_debug_st_an.py',
         'cross-opt-st-an': 'builds/releng_sub_%s_configs/%s_cross_opt_st_an.py',
         'cross-universal': 'builds/releng_sub_%s_configs/%s_cross_universal.py',
+        'cross-qr-debug': 'builds/releng_sub_%s_configs/%s_cross_qr_debug.py',
+        'cross-qr-opt': 'builds/releng_sub_%s_configs/%s_cross_qr_opt.py',
         'debug': 'builds/releng_sub_%s_configs/%s_debug.py',
         'asan-and-debug': 'builds/releng_sub_%s_configs/%s_asan_and_debug.py',
         'asan-tc-and-debug': 'builds/releng_sub_%s_configs/%s_asan_tc_and_debug.py',
@@ -375,6 +378,9 @@ class BuildOptionParser(object):
         'valgrind' : 'builds/releng_sub_%s_configs/%s_valgrind.py',
         'artifact': 'builds/releng_sub_%s_configs/%s_artifact.py',
         'debug-artifact': 'builds/releng_sub_%s_configs/%s_debug_artifact.py',
+        'qr-debug': 'builds/releng_sub_%s_configs/%s_qr_debug.py',
+        'qr-opt': 'builds/releng_sub_%s_configs/%s_qr_opt.py',
+        'devedition': 'builds/releng_sub_%s_configs/%s_devedition.py',
     }
     build_pool_cfg_file = 'builds/build_pool_specifics.py'
     branch_cfg_file = 'builds/branch_specifics.py'
@@ -1992,6 +1998,13 @@ or run without that action (ie: --no-{action})"
         build_metrics = self._load_build_resources()
         if build_metrics:
             perfherder_data['suites'].append(build_metrics)
+
+        if self.query_is_nightly():
+            for suite in perfherder_data['suites']:
+                if 'extraOptions' in suite:
+                    suite['extraOptions'] = ['nightly'] + suite['extraOptions']
+                else:
+                    suite['extraOptions'] = ['nightly']
 
         if perfherder_data["suites"]:
             self.info('PERFHERDER_DATA: %s' % json.dumps(perfherder_data))

@@ -61,8 +61,13 @@ import urlparse
 import zipfile
 
 import pylru
-import taskcluster
+from taskgraph.util.taskcluster import (
+    find_task_id,
+    get_artifact_url,
+    list_artifacts,
+)
 
+from mozbuild.action.test_archive import OBJDIR_TEST_FILES
 from mozbuild.util import (
     ensureParentDir,
     FileAvoidWrite,
@@ -78,10 +83,8 @@ from mozpack.mozjar import (
 )
 from mozpack.packager.unpack import UnpackFinder
 import mozpack.path as mozpath
-from mozregression.download_manager import (
+from dlmanager import (
     DownloadManager,
-)
-from mozregression.persist_limit import (
     PersistLimit,
 )
 
@@ -109,7 +112,7 @@ PROCESSED_SUFFIX = '.processed.jar'
 CANDIDATE_TREES = (
     'mozilla-central',
     'integration/mozilla-inbound',
-    'releases/mozilla-aurora'
+    'releases/mozilla-beta'
 )
 
 class ArtifactJob(object):
@@ -127,6 +130,7 @@ class ArtifactJob(object):
         ('bin/pk12util', ('bin', 'bin')),
         ('bin/ssltunnel', ('bin', 'bin')),
         ('bin/xpcshell', ('bin', 'bin')),
+        ('bin/plugins/gmp-*/*/*', ('bin/plugins', 'bin')),
         ('bin/plugins/*', ('bin/plugins', 'plugins')),
         ('bin/components/*', ('bin/components', 'bin/components')),
     }
@@ -196,6 +200,18 @@ class ArtifactJob(object):
                     mode = entry['external_attr'] >> 16
                     writer.add(destpath.encode('utf-8'), reader[filename], mode=mode)
                     added_entry = True
+                    break
+                for files_entry in OBJDIR_TEST_FILES.values():
+                    origin_pattern = files_entry['pattern']
+                    leaf_filename = filename
+                    if 'dest' in files_entry:
+                        dest = files_entry['dest']
+                        origin_pattern = mozpath.join(dest, origin_pattern)
+                        leaf_filename = filename[len(dest) + 1:]
+                    if mozpath.match(filename, origin_pattern):
+                        destpath = mozpath.join('..', files_entry['base'], leaf_filename)
+                        mode = entry['external_attr'] >> 16
+                        writer.add(destpath.encode('utf-8'), reader[filename], mode=mode)
 
         if not added_entry:
             raise ValueError('Archive format changed! No pattern from "{patterns}"'
@@ -253,6 +269,7 @@ class LinuxArtifactJob(ArtifactJob):
         'firefox/firefox',
         'firefox/firefox-bin',
         'firefox/minidump-analyzer',
+        'firefox/pingsender',
         'firefox/platform.ini',
         'firefox/plugin-container',
         'firefox/updater',
@@ -338,6 +355,7 @@ class MacArtifactJob(ArtifactJob):
                 'libmozavutil.dylib',
                 'libmozavcodec.dylib',
                 'libsoftokn3.dylib',
+                'pingsender',
                 'plugin-container.app/Contents/MacOS/plugin-container',
                 'updater.app/Contents/MacOS/org.mozilla.updater',
                 # 'xpcshell',
@@ -408,6 +426,7 @@ class WinArtifactJob(ArtifactJob):
         ('bin/pk12util.exe', ('bin', 'bin')),
         ('bin/ssltunnel.exe', ('bin', 'bin')),
         ('bin/xpcshell.exe', ('bin', 'bin')),
+        ('bin/plugins/gmp-*/*/*', ('bin/plugins', 'bin')),
         ('bin/plugins/*', ('bin/plugins', 'plugins')),
         ('bin/components/*', ('bin/components', 'bin/components')),
     }
@@ -439,7 +458,7 @@ class WinArtifactJob(ArtifactJob):
 # The values correpsond to a pair of (<package regex>, <test archive regex>).
 JOB_DETAILS = {
     'android-api-15-opt': (AndroidArtifactJob, (r'(public/build/fennec-(.*)\.android-arm.apk|public/build/target\.apk)',
-                                                r'public/build/fennec-(.*)\.common\.tests\.zip|public/build/target-(.*)\.common\.tests\.zip')),
+                                                r'public/build/fennec-(.*)\.common\.tests\.zip|public/build/target\.common\.tests\.zip')),
     'android-api-15-debug': (AndroidArtifactJob, (r'public/build/target\.apk',
                                                   r'public/build/target\.common\.tests\.zip')),
     'android-x86-opt': (AndroidArtifactJob, (r'public/build/target\.apk',
@@ -619,8 +638,6 @@ class TaskCache(CacheManager):
 
     def __init__(self, cache_dir, log=None, skip_cache=False):
         CacheManager.__init__(self, cache_dir, 'artifact_url', MAX_CACHED_TASKS, log=log, skip_cache=skip_cache)
-        self._index = taskcluster.Index()
-        self._queue = taskcluster.Queue()
 
     @cachedmethod(operator.attrgetter('_cache'))
     def artifact_urls(self, tree, job, rev, download_symbols):
@@ -647,14 +664,13 @@ class TaskCache(CacheManager):
                  {'namespace': namespace},
                  'Searching Taskcluster index with namespace: {namespace}')
         try:
-            task = self._index.findTask(namespace)
+            taskId = find_task_id(namespace)
         except Exception:
             # Not all revisions correspond to pushes that produce the job we
             # care about; and even those that do may not have completed yet.
             raise ValueError('Task for {namespace} does not exist (yet)!'.format(namespace=namespace))
-        taskId = task['taskId']
 
-        artifacts = self._queue.listLatestArtifacts(taskId)['artifacts']
+        artifacts = list_artifacts(taskId)
 
         urls = []
         for artifact_name in artifact_job.find_candidate_artifacts(artifacts):
@@ -662,7 +678,7 @@ class TaskCache(CacheManager):
             # extract the build ID; we use the .ini files embedded in the
             # downloaded artifact for this.  We could also use the uploaded
             # public/build/buildprops.json for this purpose.
-            url = self._queue.buildUrl('getLatestArtifact', taskId, artifact_name)
+            url = get_artifact_url(taskId, artifact_name)
             urls.append(url)
         if not urls:
             raise ValueError('Task for {namespace} existed, but no artifacts found!'.format(namespace=namespace))

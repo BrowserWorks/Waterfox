@@ -2,14 +2,18 @@
 module.exports = {
   rules: {
     "mozilla/import-headjs-globals": "warn",
-    "mozilla/import-test-globals": "warn",
     "mozilla/mark-test-function-used": "warn",
     "no-shadow": "error",
   },
 
   "env": {
     "browser": true,
+    "mozilla/simpletest": true,
   },
+
+  "plugins": [
+    "mozilla"
+  ],
 
   // All globals made available in the test environment.
   "globals": {

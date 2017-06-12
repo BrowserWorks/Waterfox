@@ -41,6 +41,8 @@ nsGfxRadioControlFrame::AccessibleType()
 }
 #endif
 
+#ifdef MOZ_WIDGET_ANDROID
+
 //--------------------------------------------------------------
 // Draw the dot for a non-native radio button in the checked state.
 static void
@@ -91,3 +93,5 @@ nsGfxRadioControlFrame::BuildDisplayList(nsDisplayListBuilder*   aBuilder,
                      "CheckedRadioButton",
                      nsDisplayItem::TYPE_CHECKED_RADIOBUTTON));
 }
+
+#endif

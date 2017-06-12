@@ -11,15 +11,19 @@ const BROTLI_REQUESTS = 1;
  */
 
 add_task(function* () {
-  let { L10N } = require("devtools/client/netmonitor/l10n");
+  let { L10N } = require("devtools/client/netmonitor/utils/l10n");
 
   let { tab, monitor } = yield initNetMonitor(BROTLI_URL);
   info("Starting test... ");
 
-  let { document, NetMonitorView } = monitor.panelWin;
-  let { RequestsMenu } = NetMonitorView;
+  let { document, gStore, windowRequire } = monitor.panelWin;
+  let Actions = windowRequire("devtools/client/netmonitor/actions/index");
+  let {
+    getDisplayedRequests,
+    getSortedRequests,
+  } = windowRequire("devtools/client/netmonitor/selectors/index");
 
-  RequestsMenu.lazyUpdate = false;
+  gStore.dispatch(Actions.batchEnable(false));
 
   let wait = waitForNetworkEvents(monitor, BROTLI_REQUESTS);
   yield ContentTask.spawn(tab.linkedBrowser, {}, function* () {
@@ -27,7 +31,10 @@ add_task(function* () {
   });
   yield wait;
 
-  verifyRequestItemTarget(RequestsMenu, RequestsMenu.getItemAtIndex(0),
+  verifyRequestItemTarget(
+    document,
+    getDisplayedRequests(gStore.getState()),
+    getSortedRequests(gStore.getState()).get(0),
     "GET", HTTPS_CONTENT_TYPE_SJS + "?fmt=br", {
       status: 200,
       statusText: "Connected",
@@ -38,12 +45,13 @@ add_task(function* () {
       time: true
     });
 
-  wait = waitForDOM(document, "#response-tabpanel .editor-mount iframe");
-  EventUtils.sendMouseEvent({ type: "mousedown" },
-    document.getElementById("details-pane-toggle"));
-  EventUtils.sendMouseEvent({ type: "mousedown" },
-    document.querySelectorAll("#details-pane tab")[3]);
+  wait = waitForDOM(document, "#response-panel .editor-mount iframe");
+  EventUtils.sendMouseEvent({ type: "click" },
+    document.querySelector(".network-details-panel-toggle"));
+  EventUtils.sendMouseEvent({ type: "click" },
+    document.querySelector("#response-tab"));
   let [editorFrame] = yield wait;
+
   yield once(editorFrame, "DOMContentLoaded");
   yield waitForDOM(editorFrame.contentDocument, ".CodeMirror-code");
   yield testResponse("br");

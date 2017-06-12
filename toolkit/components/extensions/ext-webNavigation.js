@@ -14,7 +14,6 @@ XPCOMUtils.defineLazyModuleGetter(this, "WebNavigation",
 Cu.import("resource://gre/modules/ExtensionUtils.jsm");
 var {
   SingletonEventManager,
-  ignoreEvent,
 } = ExtensionUtils;
 
 const defaultTransitionTypes = {
@@ -46,7 +45,9 @@ function isTopLevelFrame({frameId, parentFrameId}) {
 }
 
 function fillTransitionProperties(eventName, src, dst) {
-  if (eventName == "onCommitted" || eventName == "onHistoryStateUpdated") {
+  if (eventName == "onCommitted" ||
+      eventName == "onHistoryStateUpdated" ||
+      eventName == "onReferenceFragmentUpdated") {
     let frameTransitionData = src.frameTransitionData || {};
     let tabTransitionData = src.tabTransitionData || {};
 
@@ -98,7 +99,7 @@ function fillTransitionProperties(eventName, src, dst) {
 // Similar to WebRequestEventManager but for WebNavigation.
 function WebNavigationEventManager(context, eventName) {
   let name = `webNavigation.${eventName}`;
-  let register = (callback, urlFilters) => {
+  let register = (fire, urlFilters) => {
     // Don't create a MatchURLFilters instance if the listener does not include any filter.
     let filters = urlFilters ?
           new MatchURLFilters(urlFilters.url) : null;
@@ -111,23 +112,34 @@ function WebNavigationEventManager(context, eventName) {
       let data2 = {
         url: data.url,
         timeStamp: Date.now(),
-        frameId: ExtensionManagement.getFrameId(data.windowId),
-        parentFrameId: ExtensionManagement.getParentFrameId(data.parentWindowId, data.windowId),
       };
 
       if (eventName == "onErrorOccurred") {
         data2.error = data.error;
       }
 
+      if (data.windowId) {
+        data2.frameId = ExtensionManagement.getFrameId(data.windowId);
+        data2.parentFrameId = ExtensionManagement.getParentFrameId(data.parentWindowId, data.windowId);
+      }
+
+      if (data.sourceWindowId) {
+        data2.sourceFrameId = ExtensionManagement.getFrameId(data.sourceWindowId);
+      }
+
       // Fills in tabId typically.
-      extensions.emit("fill-browser-data", data.browser, data2);
+      Object.assign(data2, tabTracker.getBrowserData(data.browser));
       if (data2.tabId < 0) {
         return;
       }
 
+      if (data.sourceTabBrowser) {
+        data2.sourceTabId = tabTracker.getBrowserData(data.sourceTabBrowser).tabId;
+      }
+
       fillTransitionProperties(eventName, data, data2);
 
-      context.runSafe(callback, data2);
+      fire.async(data2);
     };
 
     WebNavigation[eventName].addListener(listener, filters);
@@ -152,9 +164,13 @@ function convertGetFrameResult(tabId, data) {
 }
 
 extensions.registerSchemaAPI("webNavigation", "addon_parent", context => {
+  let {tabManager} = context.extension;
+
   return {
     webNavigation: {
-      onTabReplaced: ignoreEvent(context, "webNavigation.onTabReplaced"),
+      onTabReplaced: new SingletonEventManager(context, "webNavigation.onTabReplaced", fire => {
+        return () => {};
+      }).api(),
       onBeforeNavigate: new WebNavigationEventManager(context, "onBeforeNavigate").api(),
       onCommitted: new WebNavigationEventManager(context, "onCommitted").api(),
       onDOMContentLoaded: new WebNavigationEventManager(context, "onDOMContentLoaded").api(),
@@ -162,24 +178,24 @@ extensions.registerSchemaAPI("webNavigation", "addon_parent", context => {
       onErrorOccurred: new WebNavigationEventManager(context, "onErrorOccurred").api(),
       onReferenceFragmentUpdated: new WebNavigationEventManager(context, "onReferenceFragmentUpdated").api(),
       onHistoryStateUpdated: new WebNavigationEventManager(context, "onHistoryStateUpdated").api(),
-      onCreatedNavigationTarget: ignoreEvent(context, "webNavigation.onCreatedNavigationTarget"),
+      onCreatedNavigationTarget: new WebNavigationEventManager(context, "onCreatedNavigationTarget").api(),
       getAllFrames(details) {
-        let tab = TabManager.getTab(details.tabId, context);
+        let tab = tabManager.get(details.tabId);
 
-        let {innerWindowID, messageManager} = tab.linkedBrowser;
+        let {innerWindowID, messageManager} = tab.browser;
         let recipient = {innerWindowID};
 
         return context.sendMessage(messageManager, "WebNavigation:GetAllFrames", {}, {recipient})
                       .then((results) => results.map(convertGetFrameResult.bind(null, details.tabId)));
       },
       getFrame(details) {
-        let tab = TabManager.getTab(details.tabId, context);
+        let tab = tabManager.get(details.tabId);
 
         let recipient = {
-          innerWindowID: tab.linkedBrowser.innerWindowID,
+          innerWindowID: tab.browser.innerWindowID,
         };
 
-        let mm = tab.linkedBrowser.messageManager;
+        let mm = tab.browser.messageManager;
         return context.sendMessage(mm, "WebNavigation:GetFrame", {options: details}, {recipient})
                       .then((result) => {
                         return result ?

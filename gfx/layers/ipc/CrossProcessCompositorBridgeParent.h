@@ -50,7 +50,6 @@ public:
                          bool* aResult,
                          TextureFactoryIdentifier* aOutIdentifier) override
   { return IPC_FAIL_NO_REASON(this); }
-  virtual mozilla::ipc::IPCResult RecvRequestOverfill() override { return IPC_OK(); }
   virtual mozilla::ipc::IPCResult RecvWillClose() override { return IPC_OK(); }
   virtual mozilla::ipc::IPCResult RecvPause() override { return IPC_OK(); }
   virtual mozilla::ipc::IPCResult RecvResume() override { return IPC_OK(); }
@@ -115,7 +114,9 @@ public:
 
   virtual AsyncCompositionManager* GetCompositionManager(LayerTransactionParent* aParent) override;
   virtual mozilla::ipc::IPCResult RecvRemotePluginsReady()  override { return IPC_FAIL_NO_REASON(this); }
-  virtual mozilla::ipc::IPCResult RecvAcknowledgeCompositorUpdate(const uint64_t& aLayersId) override;
+  virtual mozilla::ipc::IPCResult RecvAcknowledgeCompositorUpdate(
+    const uint64_t& aLayersId,
+    const uint64_t& aSeqNo) override;
 
   void DidComposite(uint64_t aId,
                     TimeStamp& aCompositeStart,
@@ -149,6 +150,13 @@ public:
   virtual bool DeallocPAPZParent(PAPZParent* aActor) override;
 
   virtual void UpdatePaintTime(LayerTransactionParent* aLayerTree, const TimeDuration& aPaintTime) override;
+
+  PWebRenderBridgeParent* AllocPWebRenderBridgeParent(const wr::PipelineId& aPipelineId,
+                                                      TextureFactoryIdentifier* aTextureFactoryIdentifier,
+                                                      uint32_t* aIdNamespace) override;
+  bool DeallocPWebRenderBridgeParent(PWebRenderBridgeParent* aActor) override;
+
+  void ObserveLayerUpdate(uint64_t aLayersId, uint64_t aEpoch, bool aActive) override;
 
 protected:
   void OnChannelConnected(int32_t pid) override {

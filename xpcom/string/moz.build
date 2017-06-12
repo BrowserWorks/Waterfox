@@ -12,7 +12,6 @@ EXPORTS += [
     'nsCharTraits.h',
     'nsDependentString.h',
     'nsDependentSubstring.h',
-    'nsEmbedString.h',
     'nsLiteralString.h',
     'nsPrintfCString.h',
     'nsPromiseFlatString.h',
@@ -25,6 +24,7 @@ EXPORTS += [
     'nsSubstringTuple.h',
     'nsTDependentString.h',
     'nsTDependentSubstring.h',
+    'nsTextFormatter.h',
     'nsTLiteralString.h',
     'nsTPromiseFlatString.h',
     'nsTString.h',
@@ -48,6 +48,7 @@ UNIFIED_SOURCES += [
     'nsStringObsolete.cpp',
     'nsSubstring.cpp',
     'nsSubstringTuple.cpp',
+    'nsTextFormatter.cpp',
 ]
 
 # Are we targeting x86 or x86-64?  If so, compile the SSE2 functions for

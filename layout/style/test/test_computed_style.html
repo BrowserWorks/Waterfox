@@ -70,7 +70,7 @@ var noframe_container = document.getElementById("content");
   is(cs.MozOutlineRadiusBottomleft, "1.5625% 3.125%",
      "computed value of % outline-radius, without frame");
 
-  p.parentNode.removeChild(p);
+  p.remove();
 })();
 
 (function test_bug_1292447() {
@@ -129,7 +129,7 @@ var noframe_container = document.getElementById("content");
        "computed value of clamped border radius (bottom left, overflow-x)");
   }
 
-  p.parentNode.removeChild(p);
+  p.remove();
 })();
 
 (function test_bug_647885_1() {
@@ -163,7 +163,7 @@ var noframe_container = document.getElementById("content");
     is(cs.backgroundPosition, test[1], "computed value of " + test[2] + " background-position");
   }
 
-  p.parentNode.removeChild(p);
+  p.remove();
 })();
 
 (function test_bug_647885_2() {
@@ -197,7 +197,7 @@ var noframe_container = document.getElementById("content");
     is(cs.backgroundSize, test[1], "computed value of " + test[2] + " background-size");
   }
 
-  p.parentNode.removeChild(p);
+  p.remove();
 })();
 
 (function test_bug_716628() {
@@ -242,7 +242,7 @@ var noframe_container = document.getElementById("content");
     is(cs.backgroundImage, test[1], "computed value of " + test[2] + " background-image");
   }
 
-  p.parentNode.removeChild(p);
+  p.remove();
 })();
 
 (function test_bug_1235015() {
@@ -339,7 +339,7 @@ var noframe_container = document.getElementById("content");
       isnot(cs.mask, "", "computed value of " + subProp[i] + " mask");
     }
   }
-  p.parentNode.removeChild(p);
+  p.remove();
 })();
 
 (function test_bug_1293164() {
@@ -361,8 +361,8 @@ var noframe_container = document.getElementById("content");
     "markerEnd" : "",
     "clipPath" : "",
     "filter" : "",
-    "fill" : " transparent",
-    "stroke" : " transparent",
+    "fill" : " rgba(0, 0, 0, 0)",
+    "stroke" : " rgba(0, 0, 0, 0)",
   };
 
   for (var prop in testStyles) {
@@ -372,7 +372,7 @@ var noframe_container = document.getElementById("content");
     is(cs[prop], resolvedNonLocalURL + testStyles[prop], "computed value of " + prop);
   }
 
-  p.parentNode.removeChild(p);
+  p.remove();
 })();
 
 (function test_bug_1347164() {
@@ -383,15 +383,17 @@ var noframe_container = document.getElementById("content");
     ["rgba(0, 0, 0, 0.5)", "rgba(0, 0, 0, 0.5)"],
     ["hsla(0, 0%, 0%, 1)", "rgb(0, 0, 0)"],
     ["hsla(0, 0%, 0%, 0.5)", "rgba(0, 0, 0, 0.5)"],
-    // css-color-4
+  ];
+
+  var css_color_4 = [
     ["rgba(0 0 0 / 1)", "rgb(0, 0, 0)"],
-    ["rgba(0 0 0 / 0.5)", "rgba(0, 0, 0, 0.5)"],
+    ["rgba(0 0 0 / 0.1)", "rgba(0, 0, 0, 0.1)"],
     ["rgb(0 0 0 / 1)", "rgb(0, 0, 0)"],
-    ["rgb(0 0 0 / 0.5)", "rgba(0, 0, 0, 0.5)"],
+    ["rgb(0 0 0 / 0.2)", "rgba(0, 0, 0, 0.2)"],
     ["hsla(0 0% 0% / 1)", "rgb(0, 0, 0)"],
-    ["hsla(0deg 0% 0% / 0.5)", "rgba(0, 0, 0, 0.5)"],
+    ["hsla(0deg 0% 0% / 0.3)", "rgba(0, 0, 0, 0.3)"],
     ["hsl(0 0% 0% / 1)", "rgb(0, 0, 0)"],
-    ["hsl(0 0% 0% / 0.5)", "rgba(0, 0, 0, 0.5)"],
+    ["hsl(0 0% 0% / 0.4)", "rgba(0, 0, 0, 0.4)"],
   ];
 
   var p = document.createElement("p");
@@ -402,6 +404,11 @@ var noframe_container = document.getElementById("content");
     var test = color[i];
     p.style.color = test[0];
     is(cs.color, test[1], "computed value of " + test[0]);
+  }
+  for (var i = 0; i < css_color_4.length; ++i) {
+    var test = css_color_4[i];
+    p.style.color = test[0];
+    is(cs.color, test[1], "css-color-4 computed value of " + test[0]);
   }
 
   p.remove();

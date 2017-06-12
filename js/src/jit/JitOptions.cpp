@@ -105,6 +105,9 @@ DefaultJitOptions::DefaultJitOptions()
     // Toggles whether Loop Unrolling is globally disabled.
     SET_DEFAULT(disableLoopUnrolling, true);
 
+    // Toggles wheter optimization tracking is globally disabled.
+    SET_DEFAULT(disableOptimizationTracking, true);
+
     // Toggle whether Profile Guided Optimization is globally disabled.
     SET_DEFAULT(disablePgo, false);
 
@@ -163,6 +166,10 @@ DefaultJitOptions::DefaultJitOptions()
     // Number of bailouts without invalidation before we set
     // JSScript::hadFrequentBailouts and invalidate.
     SET_DEFAULT(frequentBailoutThreshold, 10);
+
+    // Whether to run all debug checks in debug builds.
+    // Disabling might make it more enjoyable to run JS in debug builds.
+    SET_DEFAULT(fullDebugChecks, true);
 
     // How many actual arguments are accepted on the C stack.
     SET_DEFAULT(maxStackArgs, 4096);

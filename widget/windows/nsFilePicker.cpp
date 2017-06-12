@@ -37,8 +37,6 @@ using namespace mozilla::widget;
 char16_t *nsFilePicker::mLastUsedUnicodeDirectory;
 char nsFilePicker::mLastUsedDirectory[MAX_PATH+1] = { 0 };
 
-static const wchar_t kDialogPtrProp[] = L"DialogPtrProperty";
-static const DWORD kDialogTimerID = 9999;
 static const unsigned long kDialogTimerTimeout = 300;
 
 #define MAX_EXTENSION_LENGTH 10
@@ -373,9 +371,9 @@ nsFilePicker::ShowFolderPicker(const nsString& aInitialDir)
   if (!aInitialDir.IsEmpty()) {
     RefPtr<IShellItem> folder;
     if (SUCCEEDED(
-          WinUtils::SHCreateItemFromParsingName(aInitialDir.get(), nullptr,
-                                                IID_IShellItem,
-                                                getter_AddRefs(folder)))) {
+          SHCreateItemFromParsingName(aInitialDir.get(), nullptr,
+                                      IID_IShellItem,
+                                      getter_AddRefs(folder)))) {
       dialog->SetFolder(folder);
     }
   }
@@ -514,9 +512,9 @@ nsFilePicker::ShowFilePicker(const nsString& aInitialDir)
   if (!aInitialDir.IsEmpty()) {
     RefPtr<IShellItem> folder;
     if (SUCCEEDED(
-          WinUtils::SHCreateItemFromParsingName(aInitialDir.get(), nullptr,
-                                                IID_IShellItem,
-                                                getter_AddRefs(folder)))) {
+          SHCreateItemFromParsingName(aInitialDir.get(), nullptr,
+                                      IID_IShellItem,
+                                      getter_AddRefs(folder)))) {
       dialog->SetFolder(folder);
     }
   }

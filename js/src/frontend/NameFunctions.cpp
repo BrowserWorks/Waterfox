@@ -25,7 +25,7 @@ class NameResolver
 {
     static const size_t MaxParents = 100;
 
-    ExclusiveContext* cx;
+    JSContext* cx;
     size_t nparents;                /* number of parents in the parents array */
     ParseNode* parents[MaxParents]; /* history of ParseNodes we've been looking at */
     StringBuffer* buf;              /* when resolving, buffer to append to */
@@ -342,7 +342,7 @@ class NameResolver
     }
 
   public:
-    explicit NameResolver(ExclusiveContext* cx) : cx(cx), nparents(0), buf(nullptr) {}
+    explicit NameResolver(JSContext* cx) : cx(cx), nparents(0), buf(nullptr) {}
 
     /*
      * Resolve all names for anonymous functions recursively within the
@@ -501,24 +501,25 @@ class NameResolver
                 return false;
             break;
 
+          case PNK_INITIALYIELD:
+            MOZ_ASSERT(cur->pn_kid->isKind(PNK_ASSIGN) &&
+                       cur->pn_kid->pn_left->isKind(PNK_NAME) &&
+                       cur->pn_kid->pn_right->isKind(PNK_GENERATOR));
+            break;
+
           case PNK_YIELD_STAR:
-            MOZ_ASSERT(cur->isArity(PN_BINARY));
-            MOZ_ASSERT(cur->pn_right->isKind(PNK_NAME));
-            if (!resolve(cur->pn_left, prefix))
+            MOZ_ASSERT(cur->isArity(PN_UNARY));
+            if (!resolve(cur->pn_kid, prefix))
                 return false;
             break;
 
           case PNK_YIELD:
           case PNK_AWAIT:
-            MOZ_ASSERT(cur->isArity(PN_BINARY));
-            if (cur->pn_left) {
-                if (!resolve(cur->pn_left, prefix))
+            MOZ_ASSERT(cur->isArity(PN_UNARY));
+            if (cur->pn_kid) {
+                if (!resolve(cur->pn_kid, prefix))
                     return false;
             }
-            MOZ_ASSERT(cur->pn_right->isKind(PNK_NAME) ||
-                       (cur->pn_right->isKind(PNK_ASSIGN) &&
-                        cur->pn_right->pn_left->isKind(PNK_NAME) &&
-                        cur->pn_right->pn_right->isKind(PNK_GENERATOR)));
             break;
 
           case PNK_RETURN:
@@ -833,8 +834,9 @@ class NameResolver
 } /* anonymous namespace */
 
 bool
-frontend::NameFunctions(ExclusiveContext* cx, ParseNode* pn)
+frontend::NameFunctions(JSContext* cx, ParseNode* pn)
 {
+    AutoTraceLog traceLog(TraceLoggerForCurrentThread(cx), TraceLogger_BytecodeNameFunctions);
     NameResolver nr(cx);
     return nr.resolve(pn);
 }

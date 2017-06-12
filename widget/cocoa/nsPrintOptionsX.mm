@@ -9,19 +9,6 @@
 #include "nsPrintOptionsX.h"
 #include "nsPrintSettingsX.h"
 
-// The constants for paper orientation were renamed in 10.9. __MAC_10_9 is
-// defined on OS X 10.9 and later. Although 10.8 and earlier are not supported
-// at this time, this allows for building on those older OS versions. The
-// values are consistent across OS versions so the rename does not affect
-// runtime, just compilation.
-#ifdef __MAC_10_9
-#define NS_PAPER_ORIENTATION_PORTRAIT   (NSPaperOrientationPortrait)
-#define NS_PAPER_ORIENTATION_LANDSCAPE  (NSPaperOrientationLandscape)
-#else
-#define NS_PAPER_ORIENTATION_PORTRAIT   (NSPortraitOrientation)
-#define NS_PAPER_ORIENTATION_LANDSCAPE  (NSLandscapeOrientation)
-#endif
-
 using namespace mozilla::embedding;
 
 nsPrintOptionsX::nsPrintOptionsX()
@@ -50,15 +37,17 @@ nsPrintOptionsX::SerializeToPrintData(nsIPrintSettings* aSettings,
     char16_t** docTitles;
     uint32_t titleCount;
     rv = aWBP->EnumerateDocumentNames(&titleCount, &docTitles);
-    if (NS_SUCCEEDED(rv) && titleCount > 0) {
-      data->printJobName().Assign(docTitles[0]);
-    }
+    if (NS_SUCCEEDED(rv)) {
+      if (titleCount > 0) {
+        data->printJobName().Assign(docTitles[0]);
+      }
 
-    for (int32_t i = titleCount - 1; i >= 0; i--) {
-      free(docTitles[i]);
+      for (int32_t i = titleCount - 1; i >= 0; i--) {
+        free(docTitles[i]);
+      }
+      free(docTitles);
+      docTitles = nullptr;
     }
-    free(docTitles);
-    docTitles = nullptr;
   }
 
   RefPtr<nsPrintSettingsX> settingsX(do_QueryObject(aSettings));

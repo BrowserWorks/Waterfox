@@ -2,8 +2,6 @@
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
 
-/* globals NetMonitorController */
-
 "use strict";
 
 const {
@@ -12,17 +10,22 @@ const {
   DOM,
   PropTypes,
 } = require("devtools/client/shared/vendor/react");
-const { connect } = require("devtools/client/shared/vendor/react-redux");
-const { L10N } = require("../../l10n");
-const Actions = require("../../actions/index");
-const { getSelectedRequest } = require("../../selectors/index");
-const { writeHeaderText } = require("../../request-utils");
+const { L10N } = require("../../utils/l10n");
+const { writeHeaderText } = require("../../utils/request-utils");
+const {
+  getHeadersURL,
+  getHTTPStatusCodeURL,
+} = require("../../utils/mdn-utils");
 const { getFormattedSize } = require("../../utils/format-utils");
+const { REPS, MODE } = require("devtools/client/shared/components/reps/reps");
+const Rep = createFactory(REPS.Rep);
 
 // Components
+const MDNLink = createFactory(require("./mdn-link"));
 const PropertiesView = createFactory(require("./properties-view"));
 
-const { div, input, textarea } = DOM;
+const { button, div, input, textarea } = DOM;
+
 const EDIT_AND_RESEND = L10N.getStr("netmonitor.summary.editAndResend");
 const RAW_HEADERS = L10N.getStr("netmonitor.summary.rawHeaders");
 const RAW_HEADERS_REQUEST = L10N.getStr("netmonitor.summary.rawHeaders.requestHeaders");
@@ -47,7 +50,8 @@ const HeadersPanel = createClass({
 
   propTypes: {
     cloneSelectedRequest: PropTypes.func.isRequired,
-    request: PropTypes.object,
+    request: PropTypes.object.isRequired,
+    renderValue: PropTypes.func
   },
 
   getInitialState() {
@@ -86,6 +90,32 @@ const HeadersPanel = createClass({
           readOnly: true,
           value,
         }),
+      )
+    );
+  },
+
+  renderValue(props) {
+    const member = props.member;
+    const value = props.value;
+
+    if (typeof value !== "string") {
+      return null;
+    }
+
+    let headerDocURL = getHeadersURL(member.name);
+
+    return (
+      div({ className: "treeValueCellDivider" },
+        Rep(Object.assign(props, {
+          // FIXME: A workaround for the issue in StringRep
+          // Force StringRep to crop the text everytime
+          member: Object.assign({}, member, { open: false }),
+          mode: MODE.TINY,
+          cropLimit: 60,
+        })),
+        headerDocURL ? MDNLink({
+          url: headerDocURL,
+        }) : null
       )
     );
   },
@@ -134,6 +164,7 @@ const HeadersPanel = createClass({
         remotePort ? `${remoteAddress}:${remotePort}` : remoteAddress) : null;
 
     let summaryStatus;
+
     if (status) {
       let code;
       if (fromCache) {
@@ -144,32 +175,36 @@ const HeadersPanel = createClass({
         code = status;
       }
 
+      let statusCodeDocURL = getHTTPStatusCodeURL(code);
+      let inputWidth = status.length + statusText.length + 1;
+
       summaryStatus = (
         div({ className: "tabpanel-summary-container headers-summary" },
           div({
             className: "tabpanel-summary-label headers-summary-label",
           }, SUMMARY_STATUS),
           div({
-            className: "requests-menu-status-icon",
+            className: "requests-list-status-icon",
             "data-code": code,
           }),
           input({
-            className: "tabpanel-summary-value textbox-input devtools-monospace",
+            className: "tabpanel-summary-value textbox-input devtools-monospace"
+              + " status-text",
             readOnly: true,
             value: `${status} ${statusText}`,
+            size: `${inputWidth}`,
           }),
-          NetMonitorController.supportsCustomRequest && input({
-            className: "tool-button",
+          statusCodeDocURL ? MDNLink({
+            url: statusCodeDocURL,
+          }) : null,
+          window.NetMonitorController.supportsCustomRequest && button({
+            className: "devtools-button",
             onClick: cloneSelectedRequest,
-            type: "button",
-            value: EDIT_AND_RESEND,
-          }),
-          input({
-            className: "tool-button",
+          }, EDIT_AND_RESEND),
+          button({
+            className: "devtools-button",
             onClick: this.toggleRawHeaders,
-            type: "button",
-            value: RAW_HEADERS,
-          }),
+          }, RAW_HEADERS),
         )
       );
     }
@@ -203,7 +238,7 @@ const HeadersPanel = createClass({
 
     return (
       div({ className: "panel-container" },
-        div({ className: "summary" },
+        div({ className: "headers-overview" },
           summaryUrl,
           summaryMethod,
           summaryAddress,
@@ -215,17 +250,11 @@ const HeadersPanel = createClass({
           object,
           filterPlaceHolder: HEADERS_FILTER_TEXT,
           sectionNames: Object.keys(object),
+          renderValue: this.renderValue,
         }),
       )
     );
   }
 });
 
-module.exports = connect(
-  (state) => ({
-    request: getSelectedRequest(state) || {},
-  }),
-  (dispatch) => ({
-    cloneSelectedRequest: () => dispatch(Actions.cloneSelectedRequest()),
-  }),
-)(HeadersPanel);
+module.exports = HeadersPanel;

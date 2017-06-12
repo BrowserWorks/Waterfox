@@ -30,9 +30,6 @@ add_task(function* () {
 
   ok(isFrameSelected(dbg, 1, "secondCall"), "the first frame is selected");
 
-  clickElement(dbg, "frame", 2);
-  ok(isFrameSelected(dbg, 2, "firstCall"), "the second frame is selected");
-
   let button = toggleButton(dbg);
   ok(!button, "toggle button shouldn't be there");
 });

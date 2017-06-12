@@ -17,11 +17,10 @@ const TEST_CASES = [
 
 add_task(function* () {
   let { tab, monitor } = yield initNetMonitor(CUSTOM_GET_URL);
-  let { $, EVENTS, NetMonitorView } = monitor.panelWin;
-  let { RequestsMenu, NetworkDetails } = NetMonitorView;
-  RequestsMenu.lazyUpdate = false;
+  let { document, gStore, windowRequire } = monitor.panelWin;
+  let Actions = windowRequire("devtools/client/netmonitor/actions/index");
 
-  let cipher = $("#security-warning-cipher");
+  gStore.dispatch(Actions.batchEnable(false));
 
   for (let test of TEST_CASES) {
     info("Testing site with " + test.desc);
@@ -34,22 +33,24 @@ add_task(function* () {
     yield wait;
 
     info("Selecting the request.");
-    RequestsMenu.selectedIndex = 0;
+    wait = waitForDOM(document, ".tabs");
+    EventUtils.sendMouseEvent({ type: "mousedown" },
+      document.querySelectorAll(".request-list-item")[0]);
+    yield wait;
 
-    info("Waiting for details pane to be updated.");
-    yield monitor.panelWin.once(EVENTS.TAB_UPDATED);
-
-    if (NetworkDetails.widget.selectedIndex !== 5) {
+    if (!document.querySelector("#security-tab[aria-selected=true]")) {
       info("Selecting security tab.");
-      NetworkDetails.widget.selectedIndex = 5;
-
-      info("Waiting for details pane to be updated.");
-      yield monitor.panelWin.once(EVENTS.TAB_UPDATED);
+      wait = waitForDOM(document, "#security-panel .properties-view");
+      EventUtils.sendMouseEvent({ type: "click" },
+        document.querySelector("#security-tab"));
+      yield wait;
     }
 
-    is(cipher, test.warnCipher, "Cipher suite warning is hidden.");
+    is(document.querySelector("#security-warning-cipher"),
+      test.warnCipher,
+      "Cipher suite warning is hidden.");
 
-    RequestsMenu.clear();
+    gStore.dispatch(Actions.clearRequests());
   }
 
   return teardown(monitor);

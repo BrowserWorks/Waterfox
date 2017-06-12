@@ -10,6 +10,7 @@
 #include "mozilla/GuardObjects.h"
 #include "mozilla/LinkedList.h"
 #include "mozilla/Range.h"
+#include "mozilla/TimeStamp.h"
 #include "mozilla/Vector.h"
 
 #include "jsclist.h"
@@ -203,7 +204,7 @@ class AutoSuppressDebuggeeNoExecuteChecks
 
   public:
     explicit AutoSuppressDebuggeeNoExecuteChecks(JSContext* cx) {
-        stack_ = &cx->runtime()->noExecuteDebuggerTop;
+        stack_ = &cx->noExecuteDebuggerTop.ref();
         prev_ = *stack_;
         *stack_ = nullptr;
     }
@@ -248,6 +249,10 @@ typedef mozilla::Variant<JSScript*, WasmInstanceObject*> DebuggerScriptReferent;
 // Either a ScriptSourceObject, for ordinary JS, or a WasmInstanceObject,
 // denoting the synthesized source of a wasm module.
 typedef mozilla::Variant<ScriptSourceObject*, WasmInstanceObject*> DebuggerSourceReferent;
+
+// Either a AbstractFramePtr, for ordinary JS, or a wasm::DebugFrame,
+// for synthesized frame of a wasm code.
+typedef mozilla::Variant<AbstractFramePtr, wasm::DebugFrame*> DebuggerFrameReferent;
 
 class Debugger : private mozilla::LinkedListElement<Debugger>
 {
@@ -338,7 +343,7 @@ class Debugger : private mozilla::LinkedListElement<Debugger>
 
     struct AllocationsLogEntry
     {
-        AllocationsLogEntry(HandleObject frame, double when, const char* className,
+        AllocationsLogEntry(HandleObject frame, mozilla::TimeStamp when, const char* className,
                             HandleAtom ctorName, size_t size, bool inNursery)
             : frame(frame),
               when(when),
@@ -351,7 +356,7 @@ class Debugger : private mozilla::LinkedListElement<Debugger>
         };
 
         HeapPtr<JSObject*> frame;
-        double when;
+        mozilla::TimeStamp when;
         const char* className;
         HeapPtr<JSAtom*> ctorName;
         size_t size;
@@ -398,7 +403,7 @@ class Debugger : private mozilla::LinkedListElement<Debugger>
     static const size_t DEFAULT_MAX_LOG_LENGTH = 5000;
 
     MOZ_MUST_USE bool appendAllocationSite(JSContext* cx, HandleObject obj, HandleSavedFrame frame,
-                                           double when);
+                                           mozilla::TimeStamp when);
 
     /*
      * Recompute the set of debuggee zones based on the set of debuggee globals.
@@ -583,6 +588,7 @@ class Debugger : private mozilla::LinkedListElement<Debugger>
 
     static void traceObject(JSTracer* trc, JSObject* obj);
     void trace(JSTracer* trc);
+    void traceForMovingGC(JSTracer* trc);
     static void finalize(FreeOp* fop, JSObject* obj);
     void traceCrossCompartmentEdges(JSTracer* tracer);
 
@@ -709,7 +715,8 @@ class Debugger : private mozilla::LinkedListElement<Debugger>
     static void slowPathOnNewWasmInstance(JSContext* cx, Handle<WasmInstanceObject*> wasmInstance);
     static void slowPathOnNewGlobalObject(JSContext* cx, Handle<GlobalObject*> global);
     static MOZ_MUST_USE bool slowPathOnLogAllocationSite(JSContext* cx, HandleObject obj,
-                                                         HandleSavedFrame frame, double when,
+                                                         HandleSavedFrame frame,
+                                                         mozilla::TimeStamp when,
                                                          GlobalObject::DebuggerVector& dbgs);
     static void slowPathPromiseHook(JSContext* cx, Hook hook, HandleObject promise);
 
@@ -799,6 +806,8 @@ class Debugger : private mozilla::LinkedListElement<Debugger>
     static inline Debugger* fromJSObject(const JSObject* obj);
     static Debugger* fromChildJSObject(JSObject* obj);
 
+    Zone* zone() const { return toJSObject()->zone(); }
+
     bool hasMemory() const;
     DebuggerMemory& memory() const;
 
@@ -823,10 +832,13 @@ class Debugger : private mozilla::LinkedListElement<Debugger>
      */
     static void traceIncomingCrossCompartmentEdges(JSTracer* tracer);
     static MOZ_MUST_USE bool markIteratively(GCMarker* marker);
-    static void traceAll(JSTracer* trc);
+    static void traceAllForMovingGC(JSTracer* trc);
     static void sweepAll(FreeOp* fop);
     static void detachAllDebuggersFromGlobal(FreeOp* fop, GlobalObject* global);
     static void findZoneEdges(JS::Zone* v, gc::ZoneComponentFinder& finder);
+#ifdef DEBUG
+    static bool isDebuggerCrossCompartmentEdge(JSObject* obj, const js::gc::Cell* cell);
+#endif
 
     // Checks it the current compartment is allowed to execute code.
     static inline MOZ_MUST_USE bool checkNoExecute(JSContext* cx, HandleScript script);
@@ -896,7 +908,7 @@ class Debugger : private mozilla::LinkedListElement<Debugger>
     static inline void onNewWasmInstance(JSContext* cx, Handle<WasmInstanceObject*> wasmInstance);
     static inline void onNewGlobalObject(JSContext* cx, Handle<GlobalObject*> global);
     static inline MOZ_MUST_USE bool onLogAllocationSite(JSContext* cx, JSObject* obj,
-                                                        HandleSavedFrame frame, double when);
+                                                        HandleSavedFrame frame, mozilla::TimeStamp when);
     static JSTrapStatus onTrap(JSContext* cx, MutableHandleValue vp);
     static JSTrapStatus onSingleStep(JSContext* cx, MutableHandleValue vp);
     static MOZ_MUST_USE bool handleBaselineOsr(JSContext* cx, InterpreterFrame* from,
@@ -1379,6 +1391,8 @@ class DebuggerObject : public NativeObject
                                             MutableHandleObject result);
     static MOZ_MUST_USE bool getErrorMessageName(JSContext* cx, HandleDebuggerObject object,
                                                  MutableHandleString result);
+    static MOZ_MUST_USE bool getErrorNotes(JSContext* cx, HandleDebuggerObject object,
+                                           MutableHandleValue result);
     static MOZ_MUST_USE bool getErrorLineNumber(JSContext* cx, HandleDebuggerObject object,
                                                 MutableHandleValue result);
     static MOZ_MUST_USE bool getErrorColumnNumber(JSContext* cx, HandleDebuggerObject object,
@@ -1441,8 +1455,8 @@ class DebuggerObject : public NativeObject
     bool isGlobal() const;
     bool isScriptedProxy() const;
     bool isPromise() const;
-    JSAtom* name() const;
-    JSAtom* displayName() const;
+    JSAtom* name(JSContext* cx) const;
+    JSAtom* displayName(JSContext* cx) const;
     JS::PromiseState promiseState() const;
     double promiseLifetime() const;
     double promiseTimeToResolution() const;
@@ -1490,6 +1504,7 @@ class DebuggerObject : public NativeObject
     static MOZ_MUST_USE bool globalGetter(JSContext* cx, unsigned argc, Value* vp);
     static MOZ_MUST_USE bool allocationSiteGetter(JSContext* cx, unsigned argc, Value* vp);
     static MOZ_MUST_USE bool errorMessageNameGetter(JSContext* cx, unsigned argc, Value* vp);
+    static MOZ_MUST_USE bool errorNotesGetter(JSContext* cx, unsigned argc, Value* vp);
     static MOZ_MUST_USE bool errorLineNumberGetter(JSContext* cx, unsigned argc, Value* vp);
     static MOZ_MUST_USE bool errorColumnNumberGetter(JSContext* cx, unsigned argc, Value* vp);
     static MOZ_MUST_USE bool isProxyGetter(JSContext* cx, unsigned argc, Value* vp);
@@ -1532,6 +1547,10 @@ class DebuggerObject : public NativeObject
                                             JSErrorReport*& report);
 };
 
+class JSBreakpointSite;
+class WasmBreakpoint;
+class WasmBreakpointSite;
+
 class BreakpointSite {
     friend class Breakpoint;
     friend struct ::JSCompartment;
@@ -1539,23 +1558,32 @@ class BreakpointSite {
     friend class Debugger;
 
   public:
-    JSScript* script;
-    jsbytecode * const pc;
+    enum class Type { JS, Wasm };
 
   private:
+    Type type_;
+
     JSCList breakpoints;  /* cyclic list of all js::Breakpoints at this instruction */
     size_t enabledCount;  /* number of breakpoints in the list that are enabled */
 
-    void recompile(FreeOp* fop);
+  protected:
+    virtual void recompile(FreeOp* fop) = 0;
+    bool isEmpty() const;
+    inline bool isEnabled() const { return enabledCount > 0; }
 
   public:
-    BreakpointSite(JSScript* script, jsbytecode* pc);
+    BreakpointSite(Type type);
     Breakpoint* firstBreakpoint() const;
+    virtual ~BreakpointSite() {}
     bool hasBreakpoint(Breakpoint* bp);
+    inline Type type() const { return type_; }
 
     void inc(FreeOp* fop);
     void dec(FreeOp* fop);
-    void destroyIfEmpty(FreeOp* fop);
+    virtual void destroyIfEmpty(FreeOp* fop) = 0;
+
+    inline JSBreakpointSite* asJS();
+    inline WasmBreakpointSite* asWasm();
 };
 
 /*
@@ -1598,7 +1626,73 @@ class Breakpoint {
     Breakpoint* nextInSite();
     const PreBarrieredObject& getHandler() const { return handler; }
     PreBarrieredObject& getHandlerRef() { return handler; }
+
+    inline WasmBreakpoint* asWasm();
 };
+
+class JSBreakpointSite : public BreakpointSite
+{
+  public:
+    JSScript* script;
+    jsbytecode * const pc;
+
+  protected:
+    void recompile(FreeOp* fop) override;
+
+  public:
+    JSBreakpointSite(JSScript* script, jsbytecode* pc);
+
+    void destroyIfEmpty(FreeOp* fop) override;
+};
+
+inline JSBreakpointSite*
+BreakpointSite::asJS()
+{
+    MOZ_ASSERT(type() == Type::JS);
+    return static_cast<JSBreakpointSite*>(this);
+}
+
+class WasmBreakpointSite : public BreakpointSite
+{
+  public:
+    wasm::Code* code;
+    uint32_t offset;
+
+  protected:
+    void recompile(FreeOp* fop) override;
+
+  public:
+    WasmBreakpointSite(wasm::Code* code, uint32_t offset);
+
+    void destroyIfEmpty(FreeOp* fop) override;
+};
+
+inline WasmBreakpointSite*
+BreakpointSite::asWasm()
+{
+    MOZ_ASSERT(type() == Type::Wasm);
+    return static_cast<WasmBreakpointSite*>(this);
+}
+
+class WasmBreakpoint : public Breakpoint
+{
+  public:
+    WasmInstanceObject* wasmInstance;
+
+    WasmBreakpoint(Debugger* debugger, WasmBreakpointSite* site, JSObject* handler,
+                   WasmInstanceObject* wasmInstance_)
+      : Breakpoint(debugger, site, handler),
+        wasmInstance(wasmInstance_)
+    {}
+};
+
+inline WasmBreakpoint*
+Breakpoint::asWasm()
+{
+    MOZ_ASSERT(site && site->type() == BreakpointSite::Type::Wasm);
+    return static_cast<WasmBreakpoint*>(this);
+}
+
 
 Breakpoint*
 Debugger::firstBreakpoint() const
@@ -1672,12 +1766,12 @@ Debugger::onNewGlobalObject(JSContext* cx, Handle<GlobalObject*> global)
 #ifdef DEBUG
     global->compartment()->firedOnNewGlobalObject = true;
 #endif
-    if (!JS_CLIST_IS_EMPTY(&cx->runtime()->onNewGlobalObjectWatchers))
+    if (!JS_CLIST_IS_EMPTY(&cx->runtime()->onNewGlobalObjectWatchers()))
         Debugger::slowPathOnNewGlobalObject(cx, global);
 }
 
 /* static */ bool
-Debugger::onLogAllocationSite(JSContext* cx, JSObject* obj, HandleSavedFrame frame, double when)
+Debugger::onLogAllocationSite(JSContext* cx, JSObject* obj, HandleSavedFrame frame, mozilla::TimeStamp when)
 {
     GlobalObject::DebuggerVector* dbgs = cx->global()->getDebuggers();
     if (!dbgs || dbgs->empty())

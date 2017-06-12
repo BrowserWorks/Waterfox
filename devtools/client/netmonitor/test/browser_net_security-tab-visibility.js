@@ -32,9 +32,13 @@ add_task(function* () {
   ];
 
   let { tab, monitor } = yield initNetMonitor(CUSTOM_GET_URL);
-  let { $, EVENTS, NetMonitorView } = monitor.panelWin;
-  let { RequestsMenu } = NetMonitorView;
-  RequestsMenu.lazyUpdate = false;
+  let { document, gStore, windowRequire } = monitor.panelWin;
+  let Actions = windowRequire("devtools/client/netmonitor/actions/index");
+  let {
+    getSelectedRequest,
+  } = windowRequire("devtools/client/netmonitor/selectors/index");
+
+  gStore.dispatch(Actions.batchEnable(false));
 
   for (let testcase of TEST_DATA) {
     info("Testing Security tab visibility for " + testcase.desc);
@@ -43,9 +47,6 @@ add_task(function* () {
     let onComplete = testcase.isBroken ?
                        waitForSecurityBrokenNetworkEvent() :
                        waitForNetworkEvents(monitor, 1);
-
-    let tabEl = $("#security-tab");
-    let tabpanel = $("#security-tabpanel");
 
     info("Performing a request to " + testcase.uri);
     yield ContentTask.spawn(tab.linkedBrowser, testcase.uri, function* (url) {
@@ -56,41 +57,33 @@ add_task(function* () {
     yield onNewItem;
 
     info("Selecting the request.");
-    RequestsMenu.selectedIndex = 0;
+    EventUtils.sendMouseEvent({ type: "mousedown" },
+      document.querySelectorAll(".request-list-item")[0]);
 
-    is(RequestsMenu.selectedItem.securityState, undefined,
+    is(getSelectedRequest(gStore.getState()).securityState, undefined,
        "Security state has not yet arrived.");
-    is(tabEl.hidden, !testcase.visibleOnNewEvent,
-       "Security tab is " +
-        (testcase.visibleOnNewEvent ? "visible" : "hidden") +
-       " after new request was added to the menu.");
-    is(tabpanel.hidden, false,
-      "#security-tabpanel is visible after new request was added to the menu.");
+    is(!!document.querySelector("#security-tab"), testcase.visibleOnNewEvent,
+      "Security tab is " + (testcase.visibleOnNewEvent ? "visible" : "hidden") +
+      " after new request was added to the menu.");
 
     info("Waiting for security information to arrive.");
     yield onSecurityInfo;
 
-    ok(RequestsMenu.selectedItem.securityState,
+    ok(getSelectedRequest(gStore.getState()).securityState,
        "Security state arrived.");
-    is(tabEl.hidden, !testcase.visibleOnSecurityInfo,
-       "Security tab is " +
-        (testcase.visibleOnSecurityInfo ? "visible" : "hidden") +
+    is(!!document.querySelector("#security-tab"), testcase.visibleOnSecurityInfo,
+       "Security tab is " + (testcase.visibleOnSecurityInfo ? "visible" : "hidden") +
        " after security information arrived.");
-    is(tabpanel.hidden, false,
-      "#security-tabpanel is visible after security information arrived.");
 
     info("Waiting for request to complete.");
     yield onComplete;
 
-    is(tabEl.hidden, !testcase.visibleOnceComplete,
-       "Security tab is " +
-        (testcase.visibleOnceComplete ? "visible" : "hidden") +
+    is(!!document.querySelector("#security-tab"), testcase.visibleOnceComplete,
+       "Security tab is " + (testcase.visibleOnceComplete ? "visible" : "hidden") +
        " after request has been completed.");
-    is(tabpanel.hidden, false,
-      "#security-tabpanel is visible after request is complete.");
 
     info("Clearing requests.");
-    RequestsMenu.clear();
+    gStore.dispatch(Actions.clearRequests());
   }
 
   return teardown(monitor);

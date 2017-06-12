@@ -22,7 +22,6 @@ namespace gfx {
 class VRLayerParent;
 class VRManagerParent;
 class VRDisplayHost;
-class VRControllerManager;
 
 class VRManager
 {
@@ -49,6 +48,7 @@ public:
                    const gfx::Rect& aRightEyeRect);
   RefPtr<gfx::VRControllerHost> GetController(const uint32_t& aControllerID);
   void GetVRControllerInfo(nsTArray<VRControllerInfo>& aControllerInfo);
+  void CreateVRTestSystem();
 
 protected:
   VRManager();
@@ -66,11 +66,8 @@ private:
   typedef nsTHashtable<nsRefPtrHashKey<VRManagerParent>> VRManagerParentSet;
   VRManagerParentSet mVRManagerParents;
 
-  typedef nsTArray<RefPtr<VRDisplayManager>> VRDisplayManagerArray;
-  VRDisplayManagerArray mManagers;
-
-  typedef nsTArray<RefPtr<VRControllerManager>> VRControllerManagerArray;
-  VRControllerManagerArray mControllerManagers;
+  typedef nsTArray<RefPtr<VRSystemManager>> VRSystemManagerArray;
+  VRSystemManagerArray mManagers;
 
   typedef nsRefPtrHashtable<nsUint32HashKey, gfx::VRDisplayHost> VRDisplayHostHashMap;
   VRDisplayHostHashMap mVRDisplays;
@@ -81,6 +78,7 @@ private:
   Atomic<bool> mInitialized;
 
   TimeStamp mLastRefreshTime;
+  bool mVRTestSystemCreated;
 };
 
 } // namespace gfx

@@ -190,7 +190,7 @@ var CaptivePortalWatcher = {
   _showNotification() {
     let buttons = [
       {
-        label: this._browserBundle.GetStringFromName("captivePortal.showLoginPage"),
+        label: this._browserBundle.GetStringFromName("captivePortal.showLoginPage2"),
         callback: () => {
           this.ensureCaptivePortalTab();
 
@@ -201,7 +201,7 @@ var CaptivePortalWatcher = {
       },
     ];
 
-    let message = this._browserBundle.GetStringFromName("captivePortal.infoMessage2");
+    let message = this._browserBundle.GetStringFromName("captivePortal.infoMessage3");
 
     let closeHandler = (aEventName) => {
       if (aEventName != "removed") {

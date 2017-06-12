@@ -246,8 +246,8 @@ constexpr char CodecProxy::NativeCallbacks::DisposeNative_t::signature[];
 constexpr char CodecProxy::NativeCallbacks::OnError_t::name[];
 constexpr char CodecProxy::NativeCallbacks::OnError_t::signature[];
 
-constexpr char CodecProxy::NativeCallbacks::OnInputExhausted_t::name[];
-constexpr char CodecProxy::NativeCallbacks::OnInputExhausted_t::signature[];
+constexpr char CodecProxy::NativeCallbacks::OnInputStatus_t::name[];
+constexpr char CodecProxy::NativeCallbacks::OnInputStatus_t::signature[];
 
 constexpr char CodecProxy::NativeCallbacks::OnOutput_t::name[];
 constexpr char CodecProxy::NativeCallbacks::OnOutput_t::signature[];
@@ -285,9 +285,9 @@ auto MediaDrmProxy::CloseSession(int32_t a0, mozilla::jni::String::Param a1) con
 constexpr char MediaDrmProxy::Create_t::name[];
 constexpr char MediaDrmProxy::Create_t::signature[];
 
-auto MediaDrmProxy::Create(mozilla::jni::String::Param a0, mozilla::jni::Object::Param a1, bool a2) -> MediaDrmProxy::LocalRef
+auto MediaDrmProxy::Create(mozilla::jni::String::Param a0, mozilla::jni::Object::Param a1) -> MediaDrmProxy::LocalRef
 {
-    return mozilla::jni::Method<Create_t>::Call(MediaDrmProxy::Context(), nullptr, a0, a1, a2);
+    return mozilla::jni::Method<Create_t>::Call(MediaDrmProxy::Context(), nullptr, a0, a1);
 }
 
 constexpr char MediaDrmProxy::CreateSession_t::name[];

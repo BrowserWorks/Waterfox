@@ -31,6 +31,7 @@
 #include "ImageContainer.h"
 #include "gfx2DGlue.h"
 #include "nsStyleConsts.h"
+#include "SVGImageContext.h"
 #include <limits>
 #include <algorithm>
 
@@ -65,7 +66,6 @@ struct nsOverflowAreas;
 namespace mozilla {
 enum class CSSPseudoElementType : uint8_t;
 class EventListenerManager;
-class SVGImageContext;
 struct IntrinsicSize;
 struct ContainerLayerParameters;
 class WritingMode;
@@ -117,6 +117,13 @@ enum class RelativeTo {
   ScrollFrame
 };
 
+// Flags to customize the behavior of nsLayoutUtils::DrawString.
+enum class DrawStringFlags {
+  eDefault         = 0x0,
+  eForceHorizontal = 0x1 // Forces the text to be drawn horizontally.
+};
+MOZ_MAKE_ENUM_CLASS_BITWISE_OPERATORS(DrawStringFlags)
+
 /**
  * nsLayoutUtils is a namespace class used for various helper
  * functions that are useful in multiple places in layout.  The goal
@@ -153,6 +160,7 @@ public:
   typedef mozilla::ScreenMargin ScreenMargin;
   typedef mozilla::LayoutDeviceIntSize LayoutDeviceIntSize;
   typedef mozilla::StyleGeometryBox StyleGeometryBox;
+  typedef mozilla::SVGImageContext SVGImageContext;
 
   /**
    * Finds previously assigned ViewID for the given content element, if any.
@@ -1035,7 +1043,7 @@ public:
   /**
    * Return whether any part of aTestRect is inside of the rounded
    * rectangle formed by aBounds and aRadii (which are indexed by the
-   * NS_CORNER_* constants in nsStyleConsts.h). This is precise.
+   * enum HalfCorner constants in gfx/2d/Types.h). This is precise.
    */
   static bool RoundedRectIntersectsRect(const nsRect& aRoundedRect,
                                         const nscoord aRadii[8],
@@ -1205,7 +1213,7 @@ public:
 
   static void GetAllInFlowRectsAndTexts(nsIFrame* aFrame, nsIFrame* aRelativeTo,
                                         RectCallback* aCallback,
-                                        mozilla::dom::DOMStringList* aTextList,
+                                        mozilla::dom::Sequence<nsString>* aTextList,
                                         uint32_t aFlags = 0);
 
   /**
@@ -1383,6 +1391,10 @@ public:
    * width, its 'width', 'min-width', and 'max-width' properties (or 'height'
    * variations if that's what matches aAxis) and its padding, border and margin
    * in the corresponding dimension.
+   * @param aPercentageBasis an optional percentage basis (in aFrame's WM).
+   *   Pass NS_UNCONSTRAINEDSIZE if the basis is indefinite in either/both axes.
+   *   If you pass Nothing() a percentage basis will be calculated from aFrame's
+   *   ancestors' computed size in the relevant axis, if needed.
    * @param aMarginBoxMinSizeClamp make the result fit within this margin-box
    * size by reducing the *content size* (flooring at zero).  This is used for:
    * https://drafts.csswg.org/css-grid/#min-size-auto
@@ -1401,6 +1413,7 @@ public:
                    nsRenderingContext*   aRenderingContext,
                    nsIFrame*             aFrame,
                    IntrinsicISizeType    aType,
+                   const mozilla::Maybe<mozilla::LogicalSize>& aPercentageBasis = mozilla::Nothing(),
                    uint32_t              aFlags = 0,
                    nscoord               aMarginBoxMinSizeClamp = NS_MAXSIZE);
   /**
@@ -1606,13 +1619,14 @@ public:
                                                  nsFontMetrics& aFontMetrics,
                                                  DrawTarget* aDrawTarget);
 
-  static void DrawString(const nsIFrame*       aFrame,
-                         nsFontMetrics&        aFontMetrics,
-                         nsRenderingContext*   aContext,
-                         const char16_t*      aString,
-                         int32_t               aLength,
-                         nsPoint               aPoint,
-                         nsStyleContext*       aStyleContext = nullptr);
+  static void DrawString(const nsIFrame*     aFrame,
+                         nsFontMetrics&      aFontMetrics,
+                         nsRenderingContext* aContext,
+                         const char16_t*     aString,
+                         int32_t             aLength,
+                         nsPoint             aPoint,
+                         nsStyleContext*     aStyleContext = nullptr,
+                         DrawStringFlags     aFlags = DrawStringFlags::eDefault);
 
   /**
    * Supports only LTR or RTL. Bidi (mixed direction) is not supported.
@@ -1723,6 +1737,34 @@ public:
    */
   static SamplingFilter GetSamplingFilterForFrame(nsIFrame* aFrame);
 
+  static inline void InitDashPattern(StrokeOptions& aStrokeOptions,
+                                     uint8_t aBorderStyle) {
+    if (aBorderStyle == NS_STYLE_BORDER_STYLE_DOTTED) {
+      static Float dot[] = { 1.f, 1.f };
+      aStrokeOptions.mDashLength = MOZ_ARRAY_LENGTH(dot);
+      aStrokeOptions.mDashPattern = dot;
+    } else if (aBorderStyle == NS_STYLE_BORDER_STYLE_DASHED) {
+      static Float dash[] = { 5.f, 5.f };
+      aStrokeOptions.mDashLength = MOZ_ARRAY_LENGTH(dash);
+      aStrokeOptions.mDashPattern = dash;
+    } else {
+      aStrokeOptions.mDashLength = 0;
+      aStrokeOptions.mDashPattern = nullptr;
+    }
+  }
+
+  /**
+   * Convert an nsRect to a gfxRect.
+   */
+  static gfxRect RectToGfxRect(const nsRect& aRect,
+                               int32_t aAppUnitsPerDevPixel);
+
+  static gfxPoint PointToGfxPoint(const nsPoint& aPoint,
+                                  int32_t aAppUnitsPerPixel) {
+    return gfxPoint(gfxFloat(aPoint.x) / aAppUnitsPerPixel,
+                    gfxFloat(aPoint.y) / aAppUnitsPerPixel);
+  }
+
   /* N.B. The only difference between variants of the Draw*Image
    * functions below is the type of the aImage argument.
    */
@@ -1794,34 +1836,6 @@ public:
                               uint32_t            aImageFlags,
                               float               aOpacity = 1.0);
 
-  static inline void InitDashPattern(StrokeOptions& aStrokeOptions,
-                                     uint8_t aBorderStyle) {
-    if (aBorderStyle == NS_STYLE_BORDER_STYLE_DOTTED) {
-      static Float dot[] = { 1.f, 1.f };
-      aStrokeOptions.mDashLength = MOZ_ARRAY_LENGTH(dot);
-      aStrokeOptions.mDashPattern = dot;
-    } else if (aBorderStyle == NS_STYLE_BORDER_STYLE_DASHED) {
-      static Float dash[] = { 5.f, 5.f };
-      aStrokeOptions.mDashLength = MOZ_ARRAY_LENGTH(dash);
-      aStrokeOptions.mDashPattern = dash;
-    } else {
-      aStrokeOptions.mDashLength = 0;
-      aStrokeOptions.mDashPattern = nullptr;
-    }
-  }
-
-  /**
-   * Convert an nsRect to a gfxRect.
-   */
-  static gfxRect RectToGfxRect(const nsRect& aRect,
-                               int32_t aAppUnitsPerDevPixel);
-
-  static gfxPoint PointToGfxPoint(const nsPoint& aPoint,
-                                  int32_t aAppUnitsPerPixel) {
-    return gfxPoint(gfxFloat(aPoint.x) / aAppUnitsPerPixel,
-                    gfxFloat(aPoint.y) / aAppUnitsPerPixel);
-  }
-
   /**
    * Draw a whole image without scaling or tiling.
    *
@@ -1856,10 +1870,14 @@ public:
    *   @param aImage            The image.
    *   @param aDest             The area that the image should fill.
    *   @param aDirty            Pixels outside this area may be skipped.
-   *   @param aSVGContext       If non-null, SVG-related rendering context
-   *                            such as overridden attributes on the image
-   *                            document's root <svg> node. Ignored for
-   *                            raster images.
+   *   @param aSVGContext       Optionally provides an SVGImageContext.
+   *                            Callers should pass an SVGImageContext with at
+   *                            least the viewport size set if aImage may be of
+   *                            type imgIContainer::TYPE_VECTOR, or pass
+   *                            Nothing() if it is of type
+   *                            imgIContainer::TYPE_RASTER (to save cycles
+   *                            constructing an SVGImageContext, since this
+   *                            argument will be ignored for raster images).
    *   @param aImageFlags       Image flags of the imgIContainer::FLAG_*
    *                            variety.
    *   @param aAnchor           If non-null, a point which we will ensure
@@ -1875,7 +1893,7 @@ public:
                                     const SamplingFilter aSamplingFilter,
                                     const nsRect&       aDest,
                                     const nsRect&       aDirty,
-                                    const mozilla::SVGImageContext* aSVGContext,
+                                    const mozilla::Maybe<const SVGImageContext>& aSVGContext,
                                     uint32_t            aImageFlags,
                                     const nsPoint*      aAnchorPoint = nullptr,
                                     const nsRect*       aSourceArea = nullptr);
@@ -2060,7 +2078,7 @@ public:
     SFE_WANT_IMAGE_SURFACE = 1 << 0,
     /* Whether to extract the first frame (as opposed to the
        current frame) in the case that the element is an image. */
-    SFE_WANT_FIRST_FRAME = 1 << 1,
+    SFE_WANT_FIRST_FRAME_IF_IMAGE = 1 << 1,
     /* Whether we should skip colorspace/gamma conversion */
     SFE_NO_COLORSPACE_CONVERSION = 1 << 2,
     /* Specifies that the caller wants unpremultiplied pixel data.
@@ -2884,6 +2902,11 @@ public:
 
   static nsRect ComputeGeometryBox(nsIFrame* aFrame,
                                    StyleGeometryBox aGeometryBox);
+
+  /*
+   * Check whether aFrame is associated with CSS layout box.
+   */
+  static bool HasCSSBoxLayout(nsIFrame* aFrame);
 
 private:
   static uint32_t sFontSizeInflationEmPerLine;

@@ -25,6 +25,7 @@ var ecmaGlobals =
   [
     "Array",
     "ArrayBuffer",
+    {name: "Atomics", release: false},
     "Boolean",
     "DataView",
     "Date",
@@ -38,7 +39,7 @@ var ecmaGlobals =
     "Int32Array",
     "Int8Array",
     "InternalError",
-    {name: "Intl", android: false},
+    {name: "Intl", nonReleaseAndroid: true, android: false},
     "Iterator",
     "JSON",
     "Map",
@@ -55,7 +56,6 @@ var ecmaGlobals =
     "Set",
     {name: "SharedArrayBuffer", release: false},
     {name: "SIMD", nightly: true},
-    {name: "Atomics", release: false},
     "StopIteration",
     "String",
     "Symbol",
@@ -86,6 +86,8 @@ var interfaceNamesInGlobalScope =
 // IMPORTANT: Do not change this list without review from a DOM peer!
     "CacheStorage",
 // IMPORTANT: Do not change this list without review from a DOM peer!
+    "CloseEvent",
+// IMPORTANT: Do not change this list without review from a DOM peer!
     "Crypto",
 // IMPORTANT: Do not change this list without review from a DOM peer!
     "CustomEvent",
@@ -104,6 +106,8 @@ var interfaceNamesInGlobalScope =
 // IMPORTANT: Do not change this list without review from a DOM peer!
     "DOMStringList",
 // IMPORTANT: Do not change this list without review from a DOM peer!
+    "ErrorEvent",
+// IMPORTANT: Do not change this list without review from a DOM peer!
     "Event",
 // IMPORTANT: Do not change this list without review from a DOM peer!
     "EventSource",
@@ -111,6 +115,8 @@ var interfaceNamesInGlobalScope =
     "EventTarget",
 // IMPORTANT: Do not change this list without review from a DOM peer!
     "File",
+// IMPORTANT: Do not change this list without review from a DOM peer!
+    "FileList",
 // IMPORTANT: Do not change this list without review from a DOM peer!
     "FileReader",
 // IMPORTANT: Do not change this list without review from a DOM peer!
@@ -171,6 +177,8 @@ var interfaceNamesInGlobalScope =
     { name: "PerformanceObserver", nightly: true },
 // IMPORTANT: Do not change this list without review from a DOM peer!
     { name: "PerformanceObserverEntryList", nightly: true },
+// IMPORTANT: Do not change this list without review from a DOM peer!
+    "ProgressEvent",
 // IMPORTANT: Do not change this list without review from a DOM peer!
     "PushManager",
 // IMPORTANT: Do not change this list without review from a DOM peer!
@@ -254,8 +262,9 @@ function createInterfaceMap(version, userAgent) {
         ok(!("pref" in entry), "Bogus pref annotation for " + entry.name);
         if ((entry.nightly === !isNightly) ||
             (entry.nightlyAndroid === !(isAndroid && isNightly) && isAndroid) ||
+            (entry.nonReleaseAndroid === !(isAndroid && !isRelease) && isAndroid) ||
             (entry.desktop === !isDesktop) ||
-            (entry.android === !isAndroid && !entry.nightlyAndroid) ||
+            (entry.android === !isAndroid && !entry.nonReleaseAndroid && !entry.nightlyAndroid) ||
             (entry.release === !isRelease) ||
             entry.disabled) {
           interfaceMap[entry.name] = false;

@@ -19,7 +19,6 @@ class nsIContent;
 class nsIDOMDocument;
 class nsIDOMElement;
 class nsIDOMEvent;
-class nsIDOMKeyEvent;
 class nsIDOMNode;
 class nsIDocumentEncoder;
 class nsIEditRules;
@@ -80,7 +79,6 @@ public:
                   const nsAString& aValue) override;
 
   NS_IMETHOD GetDocumentIsEmpty(bool* aDocumentIsEmpty) override;
-  NS_IMETHOD GetIsDocumentEditable(bool* aIsDocumentEditable) override;
 
   NS_IMETHOD DeleteSelection(EDirection aAction,
                              EStripWrappers aStripWrappers) override;
@@ -128,12 +126,14 @@ public:
    */
   virtual nsresult SelectEntireDocument(Selection* aSelection) override;
 
-  virtual nsresult HandleKeyPressEvent(nsIDOMKeyEvent* aKeyEvent) override;
+  virtual nsresult HandleKeyPressEvent(
+                     WidgetKeyboardEvent* aKeyboardEvent) override;
 
   virtual already_AddRefed<dom::EventTarget> GetDOMEventTarget() override;
 
   virtual nsresult BeginIMEComposition(WidgetCompositionEvent* aEvent) override;
-  virtual nsresult UpdateIMEComposition(nsIDOMEvent* aTextEvent) override;
+  virtual nsresult UpdateIMEComposition(
+                     WidgetCompositionEvent* aCompositionChangeEvet) override;
 
   virtual already_AddRefed<nsIContent> GetInputEventTargetContent() override;
 
@@ -179,10 +179,10 @@ protected:
   void BeginEditorInit();
   nsresult EndEditorInit();
 
-  NS_IMETHOD GetAndInitDocEncoder(const nsAString& aFormatType,
-                                  uint32_t aFlags,
-                                  const nsACString& aCharset,
-                                  nsIDocumentEncoder** encoder);
+  nsresult GetAndInitDocEncoder(const nsAString& aFormatType,
+                                uint32_t aFlags,
+                                const nsACString& aCharset,
+                                nsIDocumentEncoder** encoder);
 
   NS_IMETHOD CreateBR(nsIDOMNode* aNode, int32_t aOffset,
                       nsCOMPtr<nsIDOMNode>* outBRNode,
@@ -194,17 +194,16 @@ protected:
                         int32_t* aInOutOffset,
                         nsCOMPtr<nsIDOMNode>* outBRNode,
                         EDirection aSelect);
-  nsresult InsertBR(nsCOMPtr<nsIDOMNode>* outBRNode);
 
   /**
    * Factored methods for handling insertion of data from transferables
    * (drag&drop or clipboard).
    */
   NS_IMETHOD PrepareTransferable(nsITransferable** transferable);
-  NS_IMETHOD InsertTextFromTransferable(nsITransferable* transferable,
-                                        nsIDOMNode* aDestinationNode,
-                                        int32_t aDestOffset,
-                                        bool aDoDeleteSelection);
+  nsresult InsertTextFromTransferable(nsITransferable* transferable,
+                                      nsIDOMNode* aDestinationNode,
+                                      int32_t aDestOffset,
+                                      bool aDoDeleteSelection);
 
   /**
    * Shared outputstring; returns whether selection is collapsed and resulting
@@ -212,11 +211,6 @@ protected:
    */
   nsresult SharedOutputString(uint32_t aFlags, bool* aIsCollapsed,
                               nsAString& aResult);
-
-  /**
-   * Small utility routine to test the eEditorReadonly bit.
-   */
-  bool IsModifiable();
 
   enum PasswordFieldAllowed
   {

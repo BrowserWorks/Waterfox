@@ -9,6 +9,7 @@
 #include "mozilla/Unused.h"
 #include "nsJSUtils.h" // nsAutoJSString
 #include "nsITelemetry.h"
+#include "nsThreadUtils.h"
 #include "Telemetry.h"
 #include "TelemetryFixture.h"
 
@@ -292,4 +293,70 @@ TEST_F(TelemetryTestFixture, KeyedScalarBoolean) {
   CheckKeyedBoolScalar(kScalarName, "key1", cx.GetJSContext(), scalarsSnapshot, false);
   CheckKeyedBoolScalar(kScalarName, "key2", cx.GetJSContext(), scalarsSnapshot, true);
   CheckNumberOfProperties(kScalarName, cx.GetJSContext(), scalarsSnapshot, 2);
+}
+
+TEST_F(TelemetryTestFixture, NonMainThreadAdd) {
+  AutoJSContextWithGlobal cx(mCleanGlobal);
+
+  Unused << mTelemetry->ClearScalars();
+
+  // Define the function that will be called on the testing thread.
+  nsCOMPtr<nsIRunnable> runnable = NS_NewRunnableFunction([]() -> void {
+    Telemetry::ScalarAdd(Telemetry::ScalarID::TELEMETRY_TEST_UNSIGNED_INT_KIND, 37);
+  });
+
+  // Spawn the testing thread and run the function.
+  nsCOMPtr<nsIThread> testingThread;
+  nsresult rv =
+    NS_NewNamedThread("Test thread", getter_AddRefs(testingThread), runnable);
+  ASSERT_EQ(rv, NS_OK);
+
+  // Shutdown the thread. This also waits for the runnable to complete.
+  testingThread->Shutdown();
+
+  // Check the recorded value.
+  JS::RootedValue scalarsSnapshot(cx.GetJSContext());
+  GetScalarsSnapshot(false, cx.GetJSContext(), &scalarsSnapshot);
+  CheckUintScalar("telemetry.test.unsigned_int_kind", cx.GetJSContext(), scalarsSnapshot, 37);
+}
+
+TEST_F(TelemetryTestFixture, ScalarUnknownID) {
+  AutoJSContextWithGlobal cx(mCleanGlobal);
+
+  // Make sure we don't get scalars from other tests.
+  Unused << mTelemetry->ClearScalars();
+
+// Don't run this part in debug builds as that intentionally asserts.
+#ifndef DEBUG
+  const uint32_t kTestFakeIds[] = {
+    static_cast<uint32_t>(Telemetry::ScalarID::ScalarCount),
+    static_cast<uint32_t>(Telemetry::ScalarID::ScalarCount) + 378537,
+    std::numeric_limits<uint32_t>::max()
+  };
+
+  for (auto id : kTestFakeIds) {
+    Telemetry::ScalarID scalarId = static_cast<Telemetry::ScalarID>(id);
+    Telemetry::ScalarSet(scalarId, static_cast<uint32_t>(1));
+    Telemetry::ScalarSet(scalarId, true);
+    Telemetry::ScalarSet(scalarId, NS_LITERAL_STRING("test"));
+    Telemetry::ScalarAdd(scalarId, 1);
+    Telemetry::ScalarSetMaximum(scalarId, 1);
+
+    // Make sure that nothing was recorded in the plain scalars.
+    JS::RootedValue scalarsSnapshot(cx.GetJSContext());
+    GetScalarsSnapshot(false, cx.GetJSContext(), &scalarsSnapshot);
+    ASSERT_TRUE(scalarsSnapshot.isUndefined()) << "No scalar must be recorded";
+
+    // Same for the keyed scalars.
+    Telemetry::ScalarSet(scalarId, NS_LITERAL_STRING("key1"), static_cast<uint32_t>(1));
+    Telemetry::ScalarSet(scalarId, NS_LITERAL_STRING("key1"), true);
+    Telemetry::ScalarAdd(scalarId, NS_LITERAL_STRING("key1"), 1);
+    Telemetry::ScalarSetMaximum(scalarId, NS_LITERAL_STRING("key1"), 1);
+
+    // Make sure that nothing was recorded in the keyed scalars.
+    JS::RootedValue keyedSnapshot(cx.GetJSContext());
+    GetScalarsSnapshot(true, cx.GetJSContext(), &keyedSnapshot);
+    ASSERT_TRUE(keyedSnapshot.isUndefined()) << "No keyed scalar must be recorded";
+  }
+#endif
 }

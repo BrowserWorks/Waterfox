@@ -1274,7 +1274,8 @@ MediaCache::Update()
             // This block is already going to be read by the other stream.
             // So don't try to read it from this stream as well.
             enableReading = false;
-            CACHE_LOG(LogLevel::Debug, ("Stream %p waiting on same block (%lld) from stream %p",
+            CACHE_LOG(LogLevel::Debug, ("Stream %p waiting on same block (%"
+                                        PRId64 ") from stream %p",
                                      stream, desiredOffset/BLOCK_SIZE, other));
             break;
           }
@@ -1526,8 +1527,8 @@ MediaCache::AllocateAndWriteBlock(MediaCacheStream* aStream, const void* aData,
       bo->mLastUseTime = now;
       stream->mBlocks[streamBlockIndex] = blockIndex;
       if (streamBlockIndex*BLOCK_SIZE < stream->mStreamOffset) {
-        bo->mClass = aMode == MediaCacheStream::MODE_PLAYBACK
-          ? PLAYED_BLOCK : METADATA_BLOCK;
+        bo->mClass = aMode == MediaCacheStream::MODE_PLAYBACK ? PLAYED_BLOCK
+                                                              : METADATA_BLOCK;
         // This must be the most-recently-used block, since we
         // marked it as used now (which may be slightly bogus, but we'll
         // treat it as used for simplicity).
@@ -1648,7 +1649,8 @@ MediaCache::NoteBlockUsage(MediaCacheStream* aStream, int32_t aBlockIndex,
   GetListForBlock(bo)->RemoveBlock(aBlockIndex);
   bo->mClass =
     (aMode == MediaCacheStream::MODE_METADATA || bo->mClass == METADATA_BLOCK)
-    ? METADATA_BLOCK : PLAYED_BLOCK;
+    ? METADATA_BLOCK
+    : PLAYED_BLOCK;
   // Since this is just being used now, it can definitely be at the front
   // of mMetadataBlocks or mPlayedBlocks
   GetListForBlock(bo)->AddFirstBlock(aBlockIndex);
@@ -1836,8 +1838,8 @@ MediaCacheStream::FlushPartialBlockInternal(bool aNotifyAll,
   if (blockOffset > 0) {
     CACHE_LOG(LogLevel::Debug,
               ("Stream %p writing partial block: [%d] bytes; "
-               "mStreamOffset [%lld] mChannelOffset[%lld] mStreamLength [%lld] "
-               "notifying: [%s]",
+               "mStreamOffset [%" PRId64 "] mChannelOffset[%"
+               PRId64 "] mStreamLength [%" PRId64 "] notifying: [%s]",
                this, blockOffset, mStreamOffset, mChannelOffset, mStreamLength,
                aNotifyAll ? "yes" : "no"));
 
@@ -2304,7 +2306,7 @@ MediaCacheStream::Read(char* aBuffer, uint32_t aCount, uint32_t* aBytes)
     // have changed
     gMediaCache->QueueUpdate();
   }
-  CACHE_LOG(LogLevel::Debug, ("Stream %p Read at %lld count=%d", this, streamOffset-count, count));
+  CACHE_LOG(LogLevel::Debug, ("Stream %p Read at %" PRId64 " count=%d", this, streamOffset-count, count));
   *aBytes = count;
   mStreamOffset = streamOffset;
   return NS_OK;

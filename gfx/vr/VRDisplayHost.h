@@ -95,6 +95,7 @@ public:
   uint64_t GetButtonPressed();
   void SetPose(const dom::GamepadPoseState& aPose);
   const dom::GamepadPoseState& GetPose();
+  dom::GamepadHand GetHand();
 
 protected:
   explicit VRControllerHost(VRDeviceType aType);

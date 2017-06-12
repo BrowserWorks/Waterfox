@@ -132,6 +132,12 @@ MP4Decoder::IsSupportedType(const MediaContainerType& aType,
             NS_LITERAL_CSTRING("audio/flac"), aType));
         continue;
       }
+      if (codec.EqualsLiteral("vp9") || codec.EqualsLiteral("vp9.0")) {
+        trackInfos.AppendElement(
+          CreateTrackInfoWithMIMETypeAndContainerTypeExtraParameters(
+            NS_LITERAL_CSTRING("video/vp9"), aType));
+        continue;
+      }
       // Note: Only accept H.264 in a video content type, not in an audio
       // content type.
       if (IsWhitelistedH264Codec(codec) && isVideo) {
@@ -252,7 +258,7 @@ MP4Decoder::IsVideoAccelerated(layers::KnowsCompositor* aKnowsCompositor, nsIGlo
   }
 
   decoder->Init()
-    ->Then(aParent->AbstractMainThreadFor(dom::TaskCategory::Other),
+    ->Then(aParent->AbstractMainThreadFor(TaskCategory::Other),
            __func__,
            [promise, decoder, taskQueue] (TrackInfo::TrackType aTrack) {
              nsCString failureReason;

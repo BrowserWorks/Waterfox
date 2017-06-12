@@ -157,12 +157,20 @@ evbuffer_chain_new(size_t size)
 	struct evbuffer_chain *chain;
 	size_t to_alloc;
 
+	if (size > EVBUFFER_CHAIN_MAX - EVBUFFER_CHAIN_SIZE)
+		return (NULL);
+
 	size += EVBUFFER_CHAIN_SIZE;
 
 	/* get the next largest memory that can hold the buffer */
-	to_alloc = MIN_BUFFER_SIZE;
-	while (to_alloc < size)
-		to_alloc <<= 1;
+	if (size < EVBUFFER_CHAIN_MAX / 2) {
+		to_alloc = MIN_BUFFER_SIZE;
+		while (to_alloc < size) {
+			to_alloc <<= 1;
+		}
+	} else {
+		to_alloc = size;
+	}
 
 	/* we get everything in one chunk */
 	if ((chain = mm_malloc(to_alloc)) == NULL)
@@ -470,7 +478,7 @@ evbuffer_run_callbacks(struct evbuffer *buffer, int running_deferred)
 		buffer->n_del_for_cb = 0;
 	}
 	for (cbent = TAILQ_FIRST(&buffer->callbacks);
-	     cbent != NULL;
+	     cbent != TAILQ_END(&buffer->callbacks);
 	     cbent = next) {
 		/* Get the 'next' pointer now in case this callback decides
 		 * to remove itself or something. */
@@ -1002,6 +1010,7 @@ evbuffer_drain(struct evbuffer *buf, size_t len)
 
 		buf->first = chain;
 		if (chain) {
+			EVUTIL_ASSERT(remaining <= chain->off);
 			chain->misalign += remaining;
 			chain->off -= remaining;
 		}
@@ -1068,6 +1077,7 @@ evbuffer_copyout(struct evbuffer *buf, void *data_out, size_t datlen)
 
 	if (datlen) {
 		EVUTIL_ASSERT(chain);
+		EVUTIL_ASSERT(datlen <= chain->off);
 		memcpy(data, chain->buffer + chain->misalign, datlen);
 	}
 
@@ -1543,6 +1553,10 @@ evbuffer_add(struct evbuffer *buf, const void *data_in, size_t datlen)
 	if (buf->freeze_end) {
 		goto done;
 	}
+	/* Prevent buf->total_len overflow */
+	if (datlen > EV_SIZE_MAX - buf->total_len) {
+		goto done;
+	}
 
 	if (*buf->last_with_datap == NULL) {
 		chain = buf->last;
@@ -1560,7 +1574,10 @@ evbuffer_add(struct evbuffer *buf, const void *data_in, size_t datlen)
 	}
 
 	if ((chain->flags & EVBUFFER_IMMUTABLE) == 0) {
-		remain = (size_t)(chain->buffer_len - chain->misalign - chain->off);
+		/* Always true for mutable buffers */
+		EVUTIL_ASSERT(chain->misalign >= 0 &&
+		    (ev_uint64_t)chain->misalign <= EVBUFFER_CHAIN_MAX);
+		remain = chain->buffer_len - (size_t)chain->misalign - chain->off;
 		if (remain >= datlen) {
 			/* there's enough space to hold all the data in the
 			 * current last chain */
@@ -1631,6 +1648,9 @@ evbuffer_prepend(struct evbuffer *buf, const void *data, size_t datlen)
 	if (buf->freeze_start) {
 		goto done;
 	}
+	if (datlen > EV_SIZE_MAX - buf->total_len) {
+		goto done;
+	}
 
 	chain = buf->first;
 
@@ -1643,6 +1663,10 @@ evbuffer_prepend(struct evbuffer *buf, const void *data, size_t datlen)
 
 	/* we cannot touch immutable buffers */
 	if ((chain->flags & EVBUFFER_IMMUTABLE) == 0) {
+		/* Always true for mutable buffers */
+		EVUTIL_ASSERT(chain->misalign >= 0 &&
+		    (ev_uint64_t)chain->misalign <= EVBUFFER_CHAIN_MAX);
+
 		/* If this chain is empty, we can treat it as
 		 * 'empty at the beginning' rather than 'empty at the end' */
 		if (chain->off == 0)
@@ -1680,6 +1704,7 @@ evbuffer_prepend(struct evbuffer *buf, const void *data, size_t datlen)
 	tmp->next = chain;
 
 	tmp->off = datlen;
+	EVUTIL_ASSERT(datlen <= tmp->buffer_len);
 	tmp->misalign = tmp->buffer_len - datlen;
 
 	memcpy(tmp->buffer + tmp->misalign, data, datlen);
@@ -1778,7 +1803,8 @@ evbuffer_expand_singlechain(struct evbuffer *buf, size_t datlen)
 
 	/* Would expanding this chunk be affordable and worthwhile? */
 	if (CHAIN_SPACE_LEN(chain) < chain->buffer_len / 8 ||
-	    chain->off > MAX_TO_COPY_IN_EXPAND) {
+	    chain->off > MAX_TO_COPY_IN_EXPAND ||
+	    datlen >= (EVBUFFER_CHAIN_MAX - chain->off)) {
 		/* It's not worth resizing this chain. Can the next one be
 		 * used? */
 		if (chain->next && CHAIN_SPACE_LEN(chain->next) >= datlen) {
@@ -1906,6 +1932,8 @@ _evbuffer_expand_fast(struct evbuffer *buf, size_t datlen, int n)
 			rmv_all = 1;
 			avail = 0;
 		} else {
+			/* can't overflow, since only mutable chains have
+			 * huge misaligns. */
 			avail = (size_t) CHAIN_SPACE_LEN(chain);
 			chain = chain->next;
 		}
@@ -1916,6 +1944,7 @@ _evbuffer_expand_fast(struct evbuffer *buf, size_t datlen, int n)
 			EVUTIL_ASSERT(chain->off == 0);
 			evbuffer_chain_free(chain);
 		}
+		EVUTIL_ASSERT(datlen >= avail);
 		tmp = evbuffer_chain_new(datlen - avail);
 		if (tmp == NULL) {
 			if (rmv_all) {
@@ -2045,6 +2074,7 @@ get_n_bytes_readable_on_socket(evutil_socket_t fd)
 	unsigned long lng = EVBUFFER_MAX_READ;
 	if (ioctlsocket(fd, FIONREAD, &lng) < 0)
 		return -1;
+	/* Can overflow, but mostly harmlessly. XXXX */
 	return (int)lng;
 #elif defined(FIONREAD)
 	int n = EVBUFFER_MAX_READ;
@@ -2157,8 +2187,14 @@ evbuffer_read(struct evbuffer *buf, evutil_socket_t fd, int howmuch)
 #ifdef USE_IOVEC_IMPL
 	remaining = n;
 	for (i=0; i < nvecs; ++i) {
-		ev_ssize_t space = (ev_ssize_t) CHAIN_SPACE_LEN(*chainp);
-		if (space < remaining) {
+		/* can't overflow, since only mutable chains have
+		 * huge misaligns. */
+		size_t space = (size_t) CHAIN_SPACE_LEN(*chainp);
+		/* XXXX This is a kludge that can waste space in perverse
+		 * situations. */
+		if (space > EVBUFFER_CHAIN_MAX)
+			space = EVBUFFER_CHAIN_MAX;
+		if ((ev_ssize_t)space < remaining) {
 			(*chainp)->off += space;
 			remaining -= (int)space;
 		} else {
@@ -2367,9 +2403,11 @@ evbuffer_write_atmost(struct evbuffer *buffer, evutil_socket_t fd,
 		/* XXX(nickm) Don't disable this code until we know if
 		 * the WSARecv code above works. */
 		void *p = evbuffer_pullup(buffer, howmuch);
+		EVUTIL_ASSERT(p || !howmuch);
 		n = send(fd, p, howmuch, 0);
 #else
 		void *p = evbuffer_pullup(buffer, howmuch);
+		EVUTIL_ASSERT(p || !howmuch);
 		n = write(fd, p, howmuch);
 #endif
 #ifdef USE_SENDFILE
@@ -2429,12 +2467,17 @@ evbuffer_ptr_set(struct evbuffer *buf, struct evbuffer_ptr *pos,
 	case EVBUFFER_PTR_ADD:
 		/* this avoids iterating over all previous chains if
 		   we just want to advance the position */
+		if (pos->pos < 0 || EV_SIZE_MAX - position < (size_t)pos->pos) {
+			EVBUFFER_UNLOCK(buf);
+			return -1;
+		}
 		chain = pos->_internal.chain;
 		pos->pos += position;
 		position = pos->_internal.pos_in_chain;
 		break;
 	}
 
+	EVUTIL_ASSERT(EV_SIZE_MAX - left >= position);
 	while (chain && position + left >= chain->off) {
 		left -= chain->off - position;
 		chain = chain->next;
@@ -2467,7 +2510,9 @@ evbuffer_ptr_memcmp(const struct evbuffer *buf, const struct evbuffer_ptr *pos,
 
 	ASSERT_EVBUFFER_LOCKED(buf);
 
-	if (pos->pos + len > buf->total_len)
+	if (pos->pos < 0 ||
+	    EV_SIZE_MAX - len < (size_t)pos->pos ||
+	    pos->pos + len > buf->total_len)
 		return -1;
 
 	chain = pos->_internal.chain;
@@ -2591,7 +2636,10 @@ evbuffer_peek(struct evbuffer *buffer, ev_ssize_t len,
 	if (n_vec == 0 && len < 0) {
 		/* If no vectors are provided and they asked for "everything",
 		 * pretend they asked for the actual available amount. */
-		len = buffer->total_len - len_so_far;
+		len = buffer->total_len;
+		if (start_at) {
+			len -= start_at->pos;
+		}
 	}
 
 	while (chain) {
@@ -2654,6 +2702,9 @@ evbuffer_add_vprintf(struct evbuffer *buf, const char *fmt, va_list ap)
 		va_end(aq);
 
 		if (sz < 0)
+			goto done;
+		if (INT_MAX >= EVBUFFER_CHAIN_MAX &&
+		    (size_t)sz >= EVBUFFER_CHAIN_MAX)
 			goto done;
 		if ((size_t)sz < space) {
 			chain->off += sz;
@@ -2747,6 +2798,11 @@ evbuffer_add_file(struct evbuffer *outbuf, int fd,
 	int sendfile_okay = 1;
 #endif
 	int ok = 1;
+
+	if (offset < 0 || length < 0 ||
+	    ((ev_uint64_t)length > EVBUFFER_CHAIN_MAX) ||
+	    (ev_uint64_t)offset > (ev_uint64_t)(EVBUFFER_CHAIN_MAX - length))
+		return (-1);
 
 #if defined(USE_SENDFILE)
 	if (use_sendfile) {
@@ -2853,7 +2909,8 @@ evbuffer_add_file(struct evbuffer *outbuf, int fd,
 		 * can abort without side effects if the read fails.
 		 */
 		while (length) {
-			read = evbuffer_readfile(tmp, fd, (ev_ssize_t)length);
+			ev_ssize_t to_read = length > EV_SSIZE_MAX ? EV_SSIZE_MAX : (ev_ssize_t)length;
+			read = evbuffer_readfile(tmp, fd, to_read);
 			if (read == -1) {
 				evbuffer_free(tmp);
 				return (-1);

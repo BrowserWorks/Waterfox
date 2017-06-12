@@ -56,6 +56,10 @@ const Message = createClass({
       openLink: PropTypes.func.isRequired,
       sourceMapService: PropTypes.any,
     }),
+    notes: PropTypes.arrayOf(PropTypes.shape({
+      messageBody: PropTypes.string.isRequired,
+      frame: PropTypes.any,
+    })),
   },
 
   getDefaultProps: function () {
@@ -112,6 +116,7 @@ const Message = createClass({
       dispatch,
       exceptionDocURL,
       timeStamp = Date.now(),
+      notes,
     } = this.props;
 
     topLevelClasses.push("message", source, type, level);
@@ -152,6 +157,29 @@ const Message = createClass({
           }
         },
       });
+    }
+
+    let notesNodes;
+    if (notes) {
+      notesNodes = notes.map(note => dom.span(
+        { className: "message-flex-body error-note" },
+        dom.span({ className: "message-body devtools-monospace" },
+          "note: " + note.messageBody
+        ),
+        dom.span({ className: "message-location devtools-monospace" },
+          note.frame ? FrameView({
+            frame: note.frame,
+            onClick: serviceContainer
+              ? serviceContainer.onViewSourceInDebugger
+              : undefined,
+            showEmptyPathAsHost: true,
+            sourceMapService: serviceContainer
+              ? serviceContainer.sourceMapService
+              : undefined
+          }) : null
+        )));
+    } else {
+      notesNodes = [];
     }
 
     const repeat = this.props.repeat ? MessageRepeat({repeat: this.props.repeat}) : null;
@@ -201,14 +229,19 @@ const Message = createClass({
       collapse,
       dom.span({ className: "message-body-wrapper" },
         dom.span({ className: "message-flex-body" },
-          dom.span({ className: "message-body devtools-monospace" },
+          // Add whitespaces for formatting when copying to the clipboard.
+          " ", dom.span({ className: "message-body devtools-monospace" },
             messageBody,
             learnMore
           ),
-          repeat,
-          location
+          " ", repeat,
+          " ", location
         ),
-        attachment
+        // Add a newline for formatting when copying to the clipboard.
+        "\n",
+        // If an attachment is displayed, the final newline is handled by the attachment.
+        attachment,
+        ...notesNodes
       )
     );
   }

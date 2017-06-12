@@ -13,13 +13,9 @@ CRCCheck on
 
 RequestExecutionLevel admin
 
-; The commands inside this ifdef require NSIS 3.0a2 or greater so the ifdef can
-; be removed after we require NSIS 3.0a2 or greater.
-!ifdef NSIS_PACKEDVERSION
-  Unicode true
-  ManifestSupportedOS all
-  ManifestDPIAware true
-!endif
+Unicode true
+ManifestSupportedOS all
+ManifestDPIAware true
 
 !addplugindir ./
 
@@ -130,14 +126,6 @@ Function un.onInit
   ; This only effects LoadLibrary calls and not implicitly loaded DLLs.
   System::Call 'kernel32::SetDllDirectoryW(w "")'
 
-; The commands inside this ifndef are needed prior to NSIS 3.0a2 and can be
-; removed after we require NSIS 3.0a2 or greater.
-!ifndef NSIS_PACKEDVERSION
-  ${If} ${AtLeastWinVista}
-    System::Call 'user32::SetProcessDPIAware()'
-  ${EndIf}
-!endif
-
   StrCpy $BrandFullNameDA "${MaintFullName}"
   StrCpy $BrandFullName "${MaintFullName}"
 FunctionEnd
@@ -161,14 +149,14 @@ Section "MaintenanceService"
 
   ; We always write out a copy and then decide whether to install it or 
   ; not via calling its 'install' cmdline which works by version comparison.
-  CopyFiles "$EXEDIR\maintenanceservice.exe" "$INSTDIR\$TempMaintServiceName"
+  CopyFiles /SILENT "$EXEDIR\maintenanceservice.exe" "$INSTDIR\$TempMaintServiceName"
 
   ; The updater.ini file is only used when performing an install or upgrade,
   ; and only if that install or upgrade is successful.  If an old updater.ini
   ; happened to be copied into the maintenance service installation directory
   ; but the service was not newer, the updater.ini file would be unused.
   ; It is used to fill the description of the service on success.
-  CopyFiles "$EXEDIR\updater.ini" "$INSTDIR\updater.ini"
+  CopyFiles /SILENT "$EXEDIR\updater.ini" "$INSTDIR\updater.ini"
 
   ; Install the application maintenance service.
   ; If a service already exists, the command line parameter will stop the

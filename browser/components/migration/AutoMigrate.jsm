@@ -45,11 +45,6 @@ XPCOMUtils.defineLazyGetter(this, "gBrandBundle", function() {
   return Services.strings.createBundle(kBrandBundle);
 });
 
-XPCOMUtils.defineLazyGetter(this, "gHardcodedStringBundle", function() {
-  const kBundleURI = "chrome://browser/content/migration/extra-migration-strings.properties";
-  return Services.strings.createBundle(kBundleURI);
-});
-
 Cu.importGlobalProperties(["URL"]);
 
 /* globals kUndoStateFullPath */
@@ -355,26 +350,26 @@ const AutoMigrate = {
 
     let browserName = this.getBrowserUsedForMigration();
     if (!browserName) {
-      browserName = gHardcodedStringBundle.GetStringFromName("automigration.undo.unknownbrowser");
+      browserName = MigrationUtils.getLocalizedString("automigration.undo.unknownbrowser");
     }
     const kMessageId = "automigration.undo.message." +
                       Preferences.get(kAutoMigrateImportedItemIds, "all");
     const kBrandShortName = gBrandBundle.GetStringFromName("brandShortName");
-    let message = gHardcodedStringBundle.formatStringFromName(kMessageId,
-                                                              [browserName, kBrandShortName], 2);
+    let message = MigrationUtils.getLocalizedString(kMessageId,
+                                                    [browserName, kBrandShortName]);
 
     let buttons = [
       {
-        label: gHardcodedStringBundle.GetStringFromName("automigration.undo.keep2.label"),
-        accessKey: gHardcodedStringBundle.GetStringFromName("automigration.undo.keep2.accesskey"),
+        label: MigrationUtils.getLocalizedString("automigration.undo.keep2.label"),
+        accessKey: MigrationUtils.getLocalizedString("automigration.undo.keep2.accesskey"),
         callback: () => {
           this._purgeUndoState(this.UNDO_REMOVED_REASON_OFFER_REJECTED);
           this._removeNotificationBars();
         },
       },
       {
-        label: gHardcodedStringBundle.GetStringFromName("automigration.undo.dontkeep2.label"),
-        accessKey: gHardcodedStringBundle.GetStringFromName("automigration.undo.dontkeep2.accesskey"),
+        label: MigrationUtils.getLocalizedString("automigration.undo.dontkeep2.label"),
+        accessKey: MigrationUtils.getLocalizedString("automigration.undo.dontkeep2.accesskey"),
         callback: () => {
           this._maybeOpenUndoSurveyTab(win);
           this.undo();

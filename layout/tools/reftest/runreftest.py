@@ -133,6 +133,7 @@ class ReftestThread(threading.Thread):
             if summaryHeadRegex.search(line) is None:
                 yield line
 
+
 class ReftestResolver(object):
     def defaultManifest(self, suite):
         return {"reftest": "reftest.list",
@@ -321,7 +322,8 @@ class RefTest(object):
                 addons.append(options.specialPowersExtensionPath)
             # SpecialPowers requires insecure automation-only features that we
             # put behind a pref.
-            prefs['security.turn_off_all_security_so_that_viruses_can_take_over_this_computer'] = True
+            prefs['security.turn_off_all_security_so_that_viruses'
+                  '_can_take_over_this_computer'] = True
 
         for pref in prefs:
             prefs[pref] = mozprofile.Preferences.cast(prefs[pref])
@@ -517,8 +519,9 @@ class RefTest(object):
         """handle process output timeout"""
         # TODO: bug 913975 : _processOutput should call self.processOutputLine
         # one more time one timeout (I think)
-        self.log.error("%s | application timed out after %d seconds with no output" % (self.lastTestSeen, int(timeout)))
-        self.log.error("Force-terminating active process(es).");
+        self.log.error("%s | application timed out after %d seconds with no output" % (
+                       self.lastTestSeen, int(timeout)))
+        self.log.error("Force-terminating active process(es).")
         self.killAndGetStack(
             proc, utilityPath, debuggerInfo, dump_screen=not debuggerInfo)
 
@@ -616,6 +619,7 @@ class RefTest(object):
         if self.use_marionette:
             marionette_args = {
                 'socket_timeout': options.marionette_socket_timeout,
+                'startup_timeout': options.marionette_startup_timeout,
                 'symbols_path': options.symbolsPath,
             }
             if options.marionette:
@@ -688,8 +692,7 @@ class RefTest(object):
             mozleak.process_leak_log(self.leakLogFile,
                                      leak_thresholds=options.leakThresholds,
                                      stack_fixer=get_stack_fixer_function(options.utilityPath,
-                                                                          options.symbolsPath),
-            )
+                                                                          options.symbolsPath))
         finally:
             self.cleanup(profileDir)
         return status

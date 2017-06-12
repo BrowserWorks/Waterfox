@@ -34,10 +34,9 @@ enum FrameType
     // JS frame used by the baseline JIT.
     JitFrame_BaselineJS,
 
-    // Frame pushed for JIT stubs that make non-tail calls, so that the
+    // Frame pushed by Baseline stubs that make non-tail calls, so that the
     // return address -> ICEntry mapping works.
     JitFrame_BaselineStub,
-    JitFrame_IonStub,
 
     // The entry frame is the initial prologue block transitioning from the VM
     // into the Ion world.
@@ -147,9 +146,6 @@ class JitFrameIterator
     }
     bool isIonJS() const {
         return type_ == JitFrame_IonJS;
-    }
-    bool isIonStub() const {
-        return type_ == JitFrame_IonStub;
     }
     bool isIonICCall() const {
         return type_ == JitFrame_IonICCall;
@@ -284,7 +280,7 @@ class JitProfilingFrameIterator
     void moveToNextFrame(CommonFrameLayout* frame);
 
   public:
-    JitProfilingFrameIterator(JSRuntime* rt,
+    JitProfilingFrameIterator(JSContext* cx,
                               const JS::ProfilingFrameIterator::RegisterState& state);
     explicit JitProfilingFrameIterator(void* exitFrame);
 
@@ -656,7 +652,6 @@ class InlineFrameIterator
 
   public:
     InlineFrameIterator(JSContext* cx, const JitFrameIterator* iter);
-    InlineFrameIterator(JSRuntime* rt, const JitFrameIterator* iter);
     InlineFrameIterator(JSContext* cx, const InlineFrameIterator* iter);
 
     bool more() const {
@@ -805,6 +800,7 @@ class InlineFrameIterator
         return si_;
     }
     bool isFunctionFrame() const;
+    bool isModuleFrame() const;
     bool isConstructing() const;
 
     JSObject* environmentChain(MaybeReadFallback& fallback) const {

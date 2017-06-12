@@ -6,8 +6,6 @@
 #include <stdlib.h>
 #include <stdarg.h>
 
-#include "prprf.h"
-
 #include "nsIServiceManager.h"
 
 #include "nsIConsoleService.h"
@@ -38,21 +36,12 @@ GetCanvasContextType(const nsAString& str, dom::CanvasContextType* const out_typ
     return true;
   }
 
-  if (str.EqualsLiteral("experimental-webgl")) {
+  if (str.EqualsLiteral("webgl") ||
+      str.EqualsLiteral("experimental-webgl"))
+  {
     *out_type = dom::CanvasContextType::WebGL1;
     return true;
   }
-
-#ifdef MOZ_WEBGL_CONFORMANT
-  if (str.EqualsLiteral("webgl")) {
-    /* WebGL 1.0, $2.1 "Context Creation":
-     *   If the user agent supports both the webgl and experimental-webgl
-     *   canvas context types, they shall be treated as aliases.
-     */
-    *out_type = dom::CanvasContextType::WebGL1;
-    return true;
-  }
-#endif
 
   if (WebGL2Context::IsSupported()) {
     if (str.EqualsLiteral("webgl2")) {
@@ -124,6 +113,12 @@ CoerceDouble(const JS::Value& v, double* d)
         return false;
     }
     return true;
+}
+
+bool
+HasDrawWindowPrivilege(JSContext* aCx, JSObject* /* unused */)
+{
+  return nsContentUtils::CallerHasPermission(aCx, NS_LITERAL_STRING("<all_urls>"));
 }
 
 } // namespace CanvasUtils

@@ -5,7 +5,7 @@ fails-if(Android) skip-if(gtkWidget) HTTP(..) == aspect-ratio-2a.xhtml aspect-ra
 fails-if(Android) skip-if(gtkWidget) HTTP(..) == aspect-ratio-2b.xhtml aspect-ratio-2-ref.html
 HTTP(..) == aspect-ratio-3a.xhtml aspect-ratio-3-ref.xhtml
 HTTP(..) == aspect-ratio-3b.xhtml aspect-ratio-3-ref.xhtml
-fails-if(Android) random-if(layersGPUAccelerated) == encoded-aspect-ratio-1.html encoded-aspect-ratio-1-ref.html # bug 623460 for WinXP
+fails-if(Android) random-if(layersGPUAccelerated) == encoded-aspect-ratio-1.html encoded-aspect-ratio-1-ref.html
 fails-if(Android) HTTP(..) == basic-1.xhtml basic-1-ref.html
 skip-if(Android) HTTP(..) == canvas-1a.xhtml basic-1-ref.html
 fails-if(Android) HTTP(..) == canvas-1b.xhtml basic-1-ref.html
@@ -18,7 +18,7 @@ random skip-if(Android) HTTP(..) == object-aspect-ratio-1b.xhtml aspect-ratio-1-
 skip-if(Android) HTTP(..) == offset-1.xhtml offset-1-ref.html
 random skip-if(Android) HTTP(..) == object-aspect-ratio-2a.xhtml aspect-ratio-2-ref.html
 random skip-if(Android) HTTP(..) == object-aspect-ratio-2b.xhtml aspect-ratio-2-ref.html
-skip-if(Android) fuzzy-if(winWidget,1,56000) fuzzy-if(cocoaWidget,1,56000) HTTP(..) == zoomed-1.xhtml zoomed-1-ref.html # bug 778995 for fuzzy
+skip-if(Android) fuzzy-if(winWidget,1,56000) fuzzy-if(cocoaWidget,1,56000) fails-if(webrender&&!browserIsRemote) HTTP(..) == zoomed-1.xhtml zoomed-1-ref.html # bug 778995 for fuzzy
 skip-if(Android) == poster-1.html poster-ref-blue250x200.html
 skip-if(Android) == poster-2.html poster-ref-black140x100.html
 skip-if(Android) == poster-3.html poster-ref-black140x100.html
@@ -40,7 +40,7 @@ random-if(winWidget) random-if(cocoaWidget) skip-if(Android) == bug686957.html b
 # reftest directory. They live here because they use WebM video (VP9), and it
 # wouldn't be fair of us to make a W3C testsuite implicitly depend on any
 # particular (non-spec-mandated) video codec.
-default-preferences test-pref(layout.css.object-fit-and-position.enabled,true) test-pref(gfx.ycbcr.accurate-conversion,true)
+default-preferences test-pref(gfx.ycbcr.accurate-conversion,true)
 fails-if(layersGPUAccelerated) skip-if(Android) == object-fit-contain-webm-001.html object-fit-contain-webm-001-ref.html # Bug 1083516 for layersGPUAccelerated failures, Bug 1084564 for Android failures
 fails-if(layersGPUAccelerated) skip-if(Android) == object-fit-contain-webm-002.html object-fit-contain-webm-002-ref.html # Bug 1083516 for layersGPUAccelerated failures, Bug 1084564 for Android failures
 fails-if(layersGPUAccelerated) skip-if(Android) == object-fit-cover-webm-001.html object-fit-cover-webm-001-ref.html # Bug 1083516 for layersGPUAccelerated failures, Bug 1084564 for Android failures

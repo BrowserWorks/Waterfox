@@ -908,21 +908,13 @@ public:
   virtual mozilla::PendingAnimationTracker*
   GetOrCreatePendingAnimationTracker() override;
 
-  virtual void SuppressEventHandling(SuppressionType aWhat,
-                                     uint32_t aIncrease) override;
+  virtual void SuppressEventHandling(uint32_t aIncrease) override;
 
-  virtual void UnsuppressEventHandlingAndFireEvents(SuppressionType aWhat,
-                                                    bool aFireEvents) override;
+  virtual void UnsuppressEventHandlingAndFireEvents(bool aFireEvents) override;
 
   void DecreaseEventSuppression() {
     MOZ_ASSERT(mEventsSuppressed);
     --mEventsSuppressed;
-    UpdateFrameRequestCallbackSchedulingState();
-  }
-
-  void ResumeAnimations() {
-    MOZ_ASSERT(mAnimationsPaused);
-    --mAnimationsPaused;
     UpdateFrameRequestCallbackSchedulingState();
   }
 
@@ -1361,7 +1353,8 @@ protected:
   nsTObserverArray<nsIDocumentObserver*> mObservers;
 
   // Array of intersection observers
-  nsTArray<RefPtr<mozilla::dom::DOMIntersectionObserver>> mIntersectionObservers;
+  nsTHashtable<nsPtrHashKey<mozilla::dom::DOMIntersectionObserver>>
+    mIntersectionObservers;
 
   // Tracker for animations that are waiting to start.
   // nullptr until GetOrCreatePendingAnimationTracker is called.
@@ -1449,10 +1442,6 @@ public:
   bool mSynchronousDOMContentLoaded:1;
 
   bool mInXBLUpdate:1;
-
-  // Whether we're currently under a FlushPendingNotifications call to
-  // our presshell.  This is used to handle flush reentry correctly.
-  bool mInFlush:1;
 
   // Parser aborted. True if the parser of this document was forcibly
   // terminated instead of letting it finish at its own pace.

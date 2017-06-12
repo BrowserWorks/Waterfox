@@ -22,6 +22,7 @@
 #include "nsQueryObject.h"
 #include "pratom.h"
 #include "mozilla/CycleCollectedJSContext.h"
+#include "mozilla/Dispatcher.h"
 #include "mozilla/Logging.h"
 #include "nsIObserverService.h"
 #include "mozilla/HangMonitor.h"
@@ -31,6 +32,7 @@
 #include "mozilla/Services.h"
 #include "nsXPCOMPrivate.h"
 #include "mozilla/ChaosMode.h"
+#include "mozilla/Telemetry.h"
 #include "mozilla/TimeStamp.h"
 #include "mozilla/Unused.h"
 #include "mozilla/dom/ScriptSettings.h"
@@ -195,7 +197,8 @@ class nsThreadStartupEvent : public Runnable
 {
 public:
   nsThreadStartupEvent()
-    : mMon("nsThreadStartupEvent.mMon")
+    : Runnable("nsThreadStartupEvent")
+    , mMon("nsThreadStartupEvent.mMon")
     , mInitialized(false)
   {
   }
@@ -334,7 +337,8 @@ class nsThreadShutdownAckEvent : public CancelableRunnable
 {
 public:
   explicit nsThreadShutdownAckEvent(NotNull<nsThreadShutdownContext*> aCtx)
-    : mShutdownContext(aCtx)
+    : CancelableRunnable("nsThreadShutdownAckEvent")
+    , mShutdownContext(aCtx)
   {
   }
   NS_IMETHOD Run() override
@@ -358,7 +362,8 @@ class nsThreadShutdownEvent : public Runnable
 public:
   nsThreadShutdownEvent(NotNull<nsThread*> aThr,
                         NotNull<nsThreadShutdownContext*> aCtx)
-    : mThread(aThr)
+    : Runnable("nsThreadShutdownEvent")
+    , mThread(aThr)
     , mShutdownContext(aCtx)
   {
   }
@@ -1192,8 +1197,10 @@ nsThread::ProcessNextEvent(bool aMayWait, bool* aResult)
   // and repeat the nested event loop since its state change hasn't happened yet.
   bool reallyWait = aMayWait && (mNestedEventLoopDepth > 0 || !ShuttingDown());
 
+  Maybe<ValidatingDispatcher::AutoProcessEvent> ape;
   if (mIsMainThread == MAIN_THREAD) {
     DoMainThreadSpecificProcessing(reallyWait);
+    ape.emplace();
   }
 
   ++mNestedEventLoopDepth;
@@ -1234,8 +1241,25 @@ nsThread::ProcessNextEvent(bool aMayWait, bool* aResult)
 
     if (event) {
       LOG(("THRD(%p) running [%p]\n", this, event.get()));
+#ifndef RELEASE_OR_BETA
+      Maybe<Telemetry::AutoTimer<Telemetry::MAIN_THREAD_RUNNABLE_MS>> timer;
+#endif
       if (MAIN_THREAD == mIsMainThread) {
         HangMonitor::NotifyActivity();
+
+#ifndef RELEASE_OR_BETA
+        nsCString name;
+        if (nsCOMPtr<nsINamed> named = do_QueryInterface(event)) {
+          if (NS_FAILED(named->GetName(name))) {
+            name.AssignLiteral("GetName failed");
+          } else if (name.IsEmpty()) {
+            name.AssignLiteral("anonymous runnable");
+          }
+        } else {
+          name.AssignLiteral("non-nsINamed runnable");
+        }
+        timer.emplace(name);
+#endif
       }
       event->Run();
     } else if (aMayWait) {

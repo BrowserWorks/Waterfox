@@ -38,6 +38,7 @@
 #include "nsCategoryCache.h"
 #include "nsIContentSniffer.h"
 #include "Predictor.h"
+#include "ThrottlingService.h"
 #include "nsIThreadPool.h"
 #include "mozilla/net/NeckoChild.h"
 
@@ -348,9 +349,8 @@ WebSocketChannelConstructor(bool aSecure)
 
   if (aSecure) {
     return new WebSocketSSLChannel;
-  } else {
-    return new WebSocketChannel;
   }
+  return new WebSocketChannel;
 }
 
 #define WEB_SOCKET_HANDLER_CONSTRUCTOR(type, secure)  \
@@ -756,7 +756,6 @@ NS_DEFINE_NAMED_CID(NS_STREAMLISTENERTEE_CID);
 NS_DEFINE_NAMED_CID(NS_LOADGROUP_CID);
 NS_DEFINE_NAMED_CID(NS_LOCALFILEINPUTSTREAM_CID);
 NS_DEFINE_NAMED_CID(NS_LOCALFILEOUTPUTSTREAM_CID);
-NS_DEFINE_NAMED_CID(NS_PARTIALLOCALFILEINPUTSTREAM_CID);
 NS_DEFINE_NAMED_CID(NS_ATOMICLOCALFILEOUTPUTSTREAM_CID);
 NS_DEFINE_NAMED_CID(NS_SAFELOCALFILEOUTPUTSTREAM_CID);
 NS_DEFINE_NAMED_CID(NS_LOCALFILESTREAM_CID);
@@ -876,6 +875,7 @@ NS_DEFINE_NAMED_CID(NS_REQUESTCONTEXTSERVICE_CID);
 #ifdef BUILD_NETWORK_INFO_SERVICE
 NS_DEFINE_NAMED_CID(NETWORKINFOSERVICE_CID);
 #endif // BUILD_NETWORK_INFO_SERVICE
+NS_DEFINE_NAMED_CID(NS_THROTTLINGSERVICE_CID);
 
 static const mozilla::Module::CIDEntry kNeckoCIDs[] = {
     { &kNS_IOSERVICE_CID, false, nullptr, nsIOServiceConstructor },
@@ -908,7 +908,6 @@ static const mozilla::Module::CIDEntry kNeckoCIDs[] = {
     { &kNS_LOADGROUP_CID, false, nullptr, nsLoadGroupConstructor },
     { &kNS_LOCALFILEINPUTSTREAM_CID, false, nullptr, nsFileInputStream::Create },
     { &kNS_LOCALFILEOUTPUTSTREAM_CID, false, nullptr, nsFileOutputStream::Create },
-    { &kNS_PARTIALLOCALFILEINPUTSTREAM_CID, false, nullptr, nsPartialFileInputStream::Create },
     { &kNS_ATOMICLOCALFILEOUTPUTSTREAM_CID, false, nullptr, nsAtomicFileOutputStreamConstructor },
     { &kNS_SAFELOCALFILEOUTPUTSTREAM_CID, false, nullptr, nsSafeFileOutputStreamConstructor },
     { &kNS_LOCALFILESTREAM_CID, false, nullptr, nsFileStreamConstructor },
@@ -1030,6 +1029,7 @@ static const mozilla::Module::CIDEntry kNeckoCIDs[] = {
 #ifdef BUILD_NETWORK_INFO_SERVICE
     { &kNETWORKINFOSERVICE_CID, false, nullptr, nsNetworkInfoServiceConstructor },
 #endif
+    { &kNS_THROTTLINGSERVICE_CID, false, nullptr, mozilla::net::ThrottlingService::Create },
     { nullptr }
 };
 
@@ -1062,7 +1062,6 @@ static const mozilla::Module::ContractIDEntry kNeckoContracts[] = {
     { NS_LOADGROUP_CONTRACTID, &kNS_LOADGROUP_CID },
     { NS_LOCALFILEINPUTSTREAM_CONTRACTID, &kNS_LOCALFILEINPUTSTREAM_CID },
     { NS_LOCALFILEOUTPUTSTREAM_CONTRACTID, &kNS_LOCALFILEOUTPUTSTREAM_CID },
-    { NS_PARTIALLOCALFILEINPUTSTREAM_CONTRACTID, &kNS_PARTIALLOCALFILEINPUTSTREAM_CID },
     { NS_ATOMICLOCALFILEOUTPUTSTREAM_CONTRACTID, &kNS_ATOMICLOCALFILEOUTPUTSTREAM_CID },
     { NS_SAFELOCALFILEOUTPUTSTREAM_CONTRACTID, &kNS_SAFELOCALFILEOUTPUTSTREAM_CID },
     { NS_LOCALFILESTREAM_CONTRACTID, &kNS_LOCALFILESTREAM_CID },
@@ -1189,6 +1188,7 @@ static const mozilla::Module::ContractIDEntry kNeckoContracts[] = {
 #ifdef BUILD_NETWORK_INFO_SERVICE
     { NETWORKINFOSERVICE_CONTRACT_ID, &kNETWORKINFOSERVICE_CID },
 #endif
+    { NS_THROTTLINGSERVICE_CONTRACTID, &kNS_THROTTLINGSERVICE_CID },
     { nullptr }
 };
 

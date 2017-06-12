@@ -84,6 +84,8 @@ XPCOMUtils.defineLazyModuleGetter(this, "TelemetrySend",
                                   "resource://gre/modules/TelemetrySend.jsm");
 XPCOMUtils.defineLazyModuleGetter(this, "TelemetryReportingPolicy",
                                   "resource://gre/modules/TelemetryReportingPolicy.jsm");
+XPCOMUtils.defineLazyModuleGetter(this, "TelemetryModules",
+                                  "resource://gre/modules/TelemetryModules.jsm");
 
 /**
  * Setup Telemetry logging. This function also gets called when loggin related
@@ -701,6 +703,9 @@ var Impl = {
     // a few observers and initializing the session.
     TelemetrySession.earlyInit(this._testMode);
 
+    // Annotate crash reports so that we get pings for startup crashes
+    TelemetrySend.earlyInit();
+
     // For very short session durations, we may never load the client
     // id from disk.
     // We try to cache it in prefs to avoid this, even though this may
@@ -717,10 +722,10 @@ var Impl = {
         this._initialized = true;
         TelemetryEnvironment.delayedInit();
 
-        yield TelemetrySend.setup(this._testMode);
-
         // Load the ClientID.
         this._clientID = yield ClientID.getClientID();
+
+        yield TelemetrySend.setup(this._testMode);
 
         // Perform TelemetrySession delayed init.
         yield TelemetrySession.delayedInit();
@@ -733,6 +738,9 @@ var Impl = {
         // the profile directory. This is a temporary measure that we should drop
         // in the future.
         TelemetryStorage.removeFHRDatabase();
+
+        // Report the modules loaded in the Firefox process.
+        TelemetryModules.start();
 
         this._delayedInitTaskDeferred.resolve();
       } catch (e) {

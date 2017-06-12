@@ -655,99 +655,6 @@ CodeGeneratorX64::visitAsmJSAtomicBinopHeapForEffect(LAsmJSAtomicBinopHeapForEff
 }
 
 void
-CodeGeneratorX64::visitWasmLoadGlobalVar(LWasmLoadGlobalVar* ins)
-{
-    MWasmLoadGlobalVar* mir = ins->mir();
-
-    MIRType type = mir->type();
-    MOZ_ASSERT(IsNumberType(type) || IsSimdType(type));
-
-    CodeOffset label;
-    switch (type) {
-      case MIRType::Int32:
-        label = masm.loadRipRelativeInt32(ToRegister(ins->output()));
-        break;
-      case MIRType::Float32:
-        label = masm.loadRipRelativeFloat32(ToFloatRegister(ins->output()));
-        break;
-      case MIRType::Double:
-        label = masm.loadRipRelativeDouble(ToFloatRegister(ins->output()));
-        break;
-      // Aligned access: code is aligned on PageSize + there is padding
-      // before the global data section.
-      case MIRType::Int8x16:
-      case MIRType::Int16x8:
-      case MIRType::Int32x4:
-      case MIRType::Bool8x16:
-      case MIRType::Bool16x8:
-      case MIRType::Bool32x4:
-        label = masm.loadRipRelativeInt32x4(ToFloatRegister(ins->output()));
-        break;
-      case MIRType::Float32x4:
-        label = masm.loadRipRelativeFloat32x4(ToFloatRegister(ins->output()));
-        break;
-      default:
-        MOZ_CRASH("unexpected type in visitWasmLoadGlobalVar");
-    }
-
-    masm.append(wasm::GlobalAccess(label, mir->globalDataOffset()));
-}
-
-void
-CodeGeneratorX64::visitWasmLoadGlobalVarI64(LWasmLoadGlobalVarI64* ins)
-{
-    MWasmLoadGlobalVar* mir = ins->mir();
-    MOZ_ASSERT(mir->type() == MIRType::Int64);
-    CodeOffset label = masm.loadRipRelativeInt64(ToRegister(ins->output()));
-    masm.append(wasm::GlobalAccess(label, mir->globalDataOffset()));
-}
-
-void
-CodeGeneratorX64::visitWasmStoreGlobalVar(LWasmStoreGlobalVar* ins)
-{
-    MWasmStoreGlobalVar* mir = ins->mir();
-
-    MIRType type = mir->value()->type();
-    MOZ_ASSERT(IsNumberType(type) || IsSimdType(type));
-
-    CodeOffset label;
-    switch (type) {
-      case MIRType::Int32:
-        label = masm.storeRipRelativeInt32(ToRegister(ins->value()));
-        break;
-      case MIRType::Float32:
-        label = masm.storeRipRelativeFloat32(ToFloatRegister(ins->value()));
-        break;
-      case MIRType::Double:
-        label = masm.storeRipRelativeDouble(ToFloatRegister(ins->value()));
-        break;
-      // Aligned access: code is aligned on PageSize + there is padding
-      // before the global data section.
-      case MIRType::Int32x4:
-      case MIRType::Bool32x4:
-        label = masm.storeRipRelativeInt32x4(ToFloatRegister(ins->value()));
-        break;
-      case MIRType::Float32x4:
-        label = masm.storeRipRelativeFloat32x4(ToFloatRegister(ins->value()));
-        break;
-      default:
-        MOZ_CRASH("unexpected type in visitWasmStoreGlobalVar");
-    }
-
-    masm.append(wasm::GlobalAccess(label, mir->globalDataOffset()));
-}
-
-void
-CodeGeneratorX64::visitWasmStoreGlobalVarI64(LWasmStoreGlobalVarI64* ins)
-{
-    MWasmStoreGlobalVar* mir = ins->mir();
-    MOZ_ASSERT(mir->value()->type() == MIRType::Int64);
-    Register value = ToRegister(ins->getOperand(LWasmStoreGlobalVarI64::InputIndex));
-    CodeOffset label = masm.storeRipRelativeInt64(value);
-    masm.append(wasm::GlobalAccess(label, mir->globalDataOffset()));
-}
-
-void
 CodeGeneratorX64::visitTruncateDToInt32(LTruncateDToInt32* ins)
 {
     FloatRegister input = ToFloatRegister(ins->input());
@@ -832,17 +739,21 @@ CodeGeneratorX64::visitInt64ToFloatingPoint(LInt64ToFloatingPoint* lir)
     Register64 input = ToRegister64(lir->getInt64Operand(0));
     FloatRegister output = ToFloatRegister(lir->output());
 
-    MIRType outputType = lir->mir()->type();
+    MInt64ToFloatingPoint* mir = lir->mir();
+    bool isUnsigned = mir->isUnsigned();
+
+    MIRType outputType = mir->type();
     MOZ_ASSERT(outputType == MIRType::Double || outputType == MIRType::Float32);
+    MOZ_ASSERT(isUnsigned == !lir->getTemp(0)->isBogusTemp());
 
     if (outputType == MIRType::Double) {
-        if (lir->mir()->isUnsigned())
-            masm.convertUInt64ToDouble(input, output, Register::Invalid());
+        if (isUnsigned)
+            masm.convertUInt64ToDouble(input, output, ToRegister(lir->getTemp(0)));
         else
             masm.convertInt64ToDouble(input, output);
     } else {
-        if (lir->mir()->isUnsigned())
-            masm.convertUInt64ToFloat32(input, output, Register::Invalid());
+        if (isUnsigned)
+            masm.convertUInt64ToFloat32(input, output, ToRegister(lir->getTemp(0)));
         else
             masm.convertInt64ToFloat32(input, output);
     }

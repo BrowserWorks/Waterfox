@@ -2,6 +2,8 @@
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
 
+/* eslint-env mozilla/frame-script */
+
 var { classes: Cc, interfaces: Ci, utils: Cu } = Components;
 
 Cu.importGlobalProperties(["Blob", "FileReader"]);
@@ -187,6 +189,10 @@ const backgroundPageThumbsContent = {
   // reasons: GC the captured page, and ensure it can't possibly load any more
   // resources.
   _loadAboutBlank: function _loadAboutBlank() {
+    // It's possible we've been destroyed by now, if so don't do anything:
+    if (!docShell) {
+      return;
+    }
     this._webNav.loadURI("about:blank",
                          Ci.nsIWebNavigation.LOAD_FLAGS_STOP_CONTENT,
                          null, null, null);

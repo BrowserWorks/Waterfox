@@ -70,16 +70,25 @@ reduceAudioMLineToDynamicPtAndOpus: function(sdp) {
   return sdp.replace(/m=audio .*\r\n/g, "m=audio 9 UDP/TLS/RTP/SAVPF 101 109\r\n");
 },
 
+addTiasBps: function(sdp, bps) {
+  return sdp.replace(/c=IN (.*)\r\n/g, "c=IN $1\r\nb=TIAS:" + bps + "\r\n");
+},
+
 transferSimulcastProperties: function(offer_sdp, answer_sdp) {
   if (!offer_sdp.includes("a=simulcast:")) {
     return answer_sdp;
   }
+  ok(offer_sdp.includes("a=simulcast: send rid"), "Offer contains simulcast attribute");
   var o_simul = offer_sdp.match(/simulcast: send rid=(.*)([\n$])*/i);
-  var o_rids = offer_sdp.match(/a=rid:(.*)/ig);
   var new_answer_sdp = answer_sdp + "a=simulcast: recv rid=" + o_simul[1] + "\r\n";
+  ok(offer_sdp.includes("a=rid:"), "Offer contains RID attribute");
+  var o_rids = offer_sdp.match(/a=rid:(.*)/ig);
   o_rids.forEach((o_rid) => {
     new_answer_sdp = new_answer_sdp + o_rid.replace(/send/, "recv") + "\r\n";
   });
+  var extmap_id = offer_sdp.match("a=extmap:([0-9+])/sendonly urn:ietf:params:rtp-hdrext:sdes:rtp-stream-id");
+  ok(extmap_id != null, "Offer contains RID RTP header extension");
+  new_answer_sdp = new_answer_sdp + "a=extmap:" + extmap_id[1] + "/recvonly urn:ietf:params:rtp-hdrext:sdes:rtp-stream-id\r\n";
   return new_answer_sdp;
 },
 

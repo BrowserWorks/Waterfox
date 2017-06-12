@@ -43,9 +43,7 @@ import org.mozilla.gecko.util.BundleEventListener;
 import org.mozilla.gecko.util.EventCallback;
 import org.mozilla.gecko.util.FileUtils;
 import org.mozilla.gecko.util.GeckoBundle;
-import org.mozilla.gecko.util.GeckoRequest;
 import org.mozilla.gecko.util.HardwareUtils;
-import org.mozilla.gecko.util.NativeJSObject;
 import org.mozilla.gecko.util.PrefUtils;
 import org.mozilla.gecko.util.ThreadUtils;
 
@@ -165,6 +163,10 @@ public abstract class GeckoApp
     public static final String PREFS_WAS_STOPPED           = "wasStopped";
     public static final String PREFS_CRASHED_COUNT         = "crashedCount";
     public static final String PREFS_CLEANUP_TEMP_FILES    = "cleanupTempFiles";
+
+    // Originally, this was only used for the telemetry core ping logic. To avoid
+    // having to write custom migration logic, we just keep the original pref key.
+    public static final String PREFS_IS_FIRST_RUN = "telemetry-isFirstRun";
 
     public static final String SAVED_STATE_IN_BACKGROUND   = "inBackground";
     public static final String SAVED_STATE_PRIVATE_SESSION = "privateSession";
@@ -378,6 +380,10 @@ public abstract class GeckoApp
         return GeckoSharedPrefs.forApp(this);
     }
 
+    public SharedPreferences getSharedPreferencesForProfile() {
+        return GeckoSharedPrefs.forProfile(this);
+    }
+
     @Override
     public Activity getActivity() {
         return this;
@@ -566,7 +572,7 @@ public abstract class GeckoApp
             // Make sure the Guest Browsing notification goes away when we quit.
             GuestSession.hideNotification(this);
 
-            final SharedPreferences prefs = GeckoSharedPrefs.forProfile(this);
+            final SharedPreferences prefs = getSharedPreferencesForProfile();
             final Set<String> clearSet =
                     PrefUtils.getStringSet(prefs, ClearOnShutdownPref.PREF, new HashSet<String>());
 
@@ -715,8 +721,8 @@ public abstract class GeckoApp
             });
 
         } else if ("Contact:Add".equals(event)) {
-            final String email = message.getString("email", null);
-            final String phone = message.getString("phone", null);
+            final String email = message.getString("email");
+            final String phone = message.getString("phone");
             if (email != null) {
                 Uri contactUri = Uri.parse(email);
                 Intent i = new Intent(ContactsContract.Intents.SHOW_OR_CREATE_CONTACT, contactUri);
@@ -760,7 +766,7 @@ public abstract class GeckoApp
             showSiteSettingsDialog(permissions);
 
         } else if ("PrivateBrowsing:Data".equals(event)) {
-            mPrivateBrowsingSession = message.getString("session", null);
+            mPrivateBrowsingSession = message.getString("session");
 
         } else if ("RuntimePermissions:Prompt".equals(event)) {
             String[] permissions = message.getStringArray("permissions");
@@ -870,13 +876,17 @@ public abstract class GeckoApp
                 ListView listView = ((AlertDialog) dialog).getListView();
                 SparseBooleanArray checkedItemPositions = listView.getCheckedItemPositions();
 
-                // An array of the indices of the permissions we want to clear
-                JSONArray permissionsToClear = new JSONArray();
-                for (int i = 0; i < checkedItemPositions.size(); i++)
-                    if (checkedItemPositions.get(i))
-                        permissionsToClear.put(i);
+                // An array of the indices of the permissions we want to clear.
+                final ArrayList<Integer> permissionsToClear = new ArrayList<>();
+                for (int i = 0; i < checkedItemPositions.size(); i++) {
+                    if (checkedItemPositions.valueAt(i)) {
+                        permissionsToClear.add(checkedItemPositions.keyAt(i));
+                    }
+                }
 
-                GeckoAppShell.notifyObservers("Permissions:Clear", permissionsToClear.toString());
+                final GeckoBundle data = new GeckoBundle(1);
+                data.putIntArray("permissions", permissionsToClear);
+                EventDispatcher.getInstance().dispatch("Permissions:Clear", data);
             }
         });
 
@@ -1224,8 +1234,8 @@ public abstract class GeckoApp
             final String args = intent.getStringExtra("args");
 
             sAlreadyLoaded = true;
-            GeckoThread.init(/* profile */ null, args, action,
-                             /* debugging */ ACTION_DEBUG.equals(action));
+            GeckoThread.initMainProcess(/* profile */ null, args,
+                                        /* debugging */ ACTION_DEBUG.equals(action));
 
             // Speculatively pre-fetch the profile in the background.
             ThreadUtils.postToBackgroundThread(new Runnable() {
@@ -1382,6 +1392,14 @@ public abstract class GeckoApp
                                     // Restoring the backup failed, too, so do a normal startup.
                                     Log.e(LOGTAG, "An error occurred during restore", ex);
                                     mShouldRestore = false;
+
+                                    if (!getSharedPreferencesForProfile().
+                                            getBoolean(PREFS_IS_FIRST_RUN, true)) {
+                                        // Except when starting with a fresh profile, we should normally
+                                        // always have a session file available, even if it might only
+                                        // contain an empty window.
+                                        Telemetry.addToHistogram("FENNEC_SESSIONSTORE_ALL_FILES_DAMAGED", 1);
+                                    }
                                 }
                             }
                         }
@@ -1463,7 +1481,7 @@ public abstract class GeckoApp
 
                 // We use per-profile prefs here, because we're tracking against
                 // a Gecko pref. The same applies to the locale switcher!
-                BrowserLocaleManager.storeAndNotifyOSLocale(GeckoSharedPrefs.forProfile(GeckoApp.this), osLocale);
+                BrowserLocaleManager.storeAndNotifyOSLocale(getSharedPreferencesForProfile(), osLocale);
             }
         });
 
@@ -1487,6 +1505,18 @@ public abstract class GeckoApp
         // forget to add the abort if we override this method later.
         if (mIsAbortingAppLaunch) {
             return;
+        }
+    }
+
+
+    /**
+     * Derived classes may call this if they require something to be done *after* they've
+     * done their onStop() handling.
+     */
+    protected void onAfterStop() {
+        final SharedPreferences sharedPrefs = getSharedPreferencesForProfile();
+        if (sharedPrefs.getBoolean(PREFS_IS_FIRST_RUN, true)) {
+            sharedPrefs.edit().putBoolean(PREFS_IS_FIRST_RUN, false).apply();
         }
     }
 
@@ -1969,11 +1999,13 @@ public abstract class GeckoApp
     public void createShortcut(final String title, final String url) {
 
         final Tab selectedTab = Tabs.getInstance().getSelectedTab();
+        final String manifestUrl = selectedTab.getManifestUrl();
 
-        if (selectedTab.hasManifest()) {
+        if (manifestUrl != null) {
             // If a page has associated manifest, lets install it
             final GeckoBundle message = new GeckoBundle();
             message.putInt("iconSize", GeckoAppShell.getPreferredIconSize());
+            message.putString("manifestUrl", manifestUrl);
             EventDispatcher.getInstance().dispatch("Browser:LoadManifest", message);
             return;
         }
@@ -2594,52 +2626,48 @@ public abstract class GeckoApp
         }
 
         // Give Gecko a chance to handle the back press first, then fallback to the Java UI.
-        GeckoAppShell.sendRequestToGecko(new GeckoRequest("Browser:OnBackPressed", null) {
+        getAppEventDispatcher().dispatch("Browser:OnBackPressed", null, new EventCallback() {
             @Override
-            public void onResponse(NativeJSObject nativeJSObject) {
-                if (!nativeJSObject.getBoolean("handled")) {
+            public void sendSuccess(final Object response) {
+                if (!((GeckoBundle) response).getBoolean("handled")) {
                     // Default behavior is Gecko didn't prevent.
                     onDefault();
                 }
             }
 
             @Override
-            public void onError(NativeJSObject error) {
+            public void sendError(final Object error) {
                 // Default behavior is Gecko didn't prevent, via failure.
                 onDefault();
             }
 
-            // Return from Gecko thread, then back-press through the Java UI.
             private void onDefault() {
-                ThreadUtils.postToUiThread(new Runnable() {
-                    @Override
-                    public void run() {
-                        if (tab.doBack()) {
-                            return;
-                        }
+                ThreadUtils.assertOnUiThread();
 
-                        if (tab.isExternal()) {
-                            onDone();
-                            Tab nextSelectedTab = Tabs.getInstance().getNextTab(tab);
-                            if (nextSelectedTab != null) {
-                                int nextSelectedTabId = nextSelectedTab.getId();
-                                GeckoAppShell.notifyObservers("Tab:KeepZombified", Integer.toString(nextSelectedTabId));
-                            }
-                            tabs.closeTab(tab);
-                            return;
-                        }
+                if (tab.doBack()) {
+                    return;
+                }
 
-                        final int parentId = tab.getParentId();
-                        final Tab parent = tabs.getTab(parentId);
-                        if (parent != null) {
-                            // The back button should always return to the parent (not a sibling).
-                            tabs.closeTab(tab, parent);
-                            return;
-                        }
-
-                        onDone();
+                if (tab.isExternal()) {
+                    onDone();
+                    Tab nextSelectedTab = Tabs.getInstance().getNextTab(tab);
+                    if (nextSelectedTab != null) {
+                        int nextSelectedTabId = nextSelectedTab.getId();
+                        GeckoAppShell.notifyObservers("Tab:KeepZombified", Integer.toString(nextSelectedTabId));
                     }
-                });
+                    tabs.closeTab(tab);
+                    return;
+                }
+
+                final int parentId = tab.getParentId();
+                final Tab parent = tabs.getTab(parentId);
+                if (parent != null) {
+                    // The back button should always return to the parent (not a sibling).
+                    tabs.closeTab(tab, parent);
+                    return;
+                }
+
+                onDone();
             }
         });
     }

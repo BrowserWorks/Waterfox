@@ -16,8 +16,7 @@ public:
   virtual void LiveResizeStarted() = 0;
   virtual void LiveResizeStopped() = 0;
 
-  NS_IMETHOD_(MozExternalRefCountType) AddRef(void) = 0;
-  NS_IMETHOD_(MozExternalRefCountType) Release(void) = 0;
+  NS_INLINE_DECL_PURE_VIRTUAL_REFCOUNTING
 
 protected:
   virtual ~LiveResizeListener() {}

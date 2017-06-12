@@ -87,4 +87,5 @@ def test_handler(server):
 
 if __name__ == "__main__":
     import sys
-    sys.exit(pytest.main(["--verbose", __file__]))
+    sys.exit(pytest.main(
+        ['--log-tbpl=-', __file__]))

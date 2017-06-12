@@ -387,6 +387,8 @@ size. -->
 <!ENTITY pref_history_search_suggestions "Show search history">
 <!ENTITY pref_import_options "Import options">
 <!ENTITY pref_import_android_summary "Import bookmarks and history from the native browser">
+<!-- Localization note (pref_private_data_openTabs): Open tabs is an option in
+     the Clear Private Data  dialog and refers to currently open tabs. -->
 <!ENTITY pref_private_data_openTabs "Open tabs">
 <!ENTITY pref_private_data_history2 "Browsing history">
 <!ENTITY pref_private_data_searchHistory "Search history">
@@ -518,10 +520,8 @@ size. -->
 <!ENTITY doorhanger_login_edit_username_hint "Username">
 <!ENTITY doorhanger_login_edit_password_hint "Password">
 <!ENTITY doorhanger_login_edit_toggle "Show password">
-<!ENTITY doorhanger_login_edit_toast_error "Failed to save login">
 <!ENTITY doorhanger_login_select_message "Copy password from &formatS;?">
 <!ENTITY doorhanger_login_select_toast_copy "Password copied to clipboard">
-<!ENTITY doorhanger_login_select_toast_copy_error "Couldn\'t copy password">
 <!ENTITY doorhanger_login_select_action_text "Select another login">
 <!ENTITY doorhanger_login_select_title "Copy password from">
 

@@ -397,7 +397,6 @@ public:
   }
   void SetScrollableByAPZ(bool aScrollable);
   void SetZoomableByAPZ(bool aZoomable);
-  void SetScrollsClipOnUnscrolledOutOfFlow();
 
   bool UsesContainerScrolling() const;
 
@@ -461,6 +460,8 @@ public:
   }
 
   bool DragScroll(WidgetEvent* aEvent);
+
+  void AsyncScrollbarDragRejected();
 
   // owning references to the nsIAnonymousContentCreator-built content
   nsCOMPtr<nsIContent> mHScrollbarContent;
@@ -597,8 +598,6 @@ public:
   // True if we don't want the scrollbar to repaint itself right now.
   bool mSuppressScrollbarRepaints:1;
 
-  bool mScrollsClipOnUnscrolledOutOfFlow:1;
-
   mozilla::layout::ScrollVelocityQueue mVelocityQueue;
 
 protected:
@@ -676,14 +675,6 @@ public:
 
   NS_DECL_QUERYFRAME
   NS_DECL_FRAMEARENA_HELPERS
-
-  virtual mozilla::WritingMode GetWritingMode() const override
-  {
-    if (mHelper.mScrolledFrame) {
-      return mHelper.mScrolledFrame->GetWritingMode();
-    }
-    return nsIFrame::GetWritingMode();
-  }
 
   virtual void BuildDisplayList(nsDisplayListBuilder*   aBuilder,
                                 const nsRect&           aDirtyRect,
@@ -1033,9 +1024,6 @@ public:
   void SetZoomableByAPZ(bool aZoomable) override {
     mHelper.SetZoomableByAPZ(aZoomable);
   }
-  void SetScrollsClipOnUnscrolledOutOfFlow() override {
-    mHelper.SetScrollsClipOnUnscrolledOutOfFlow();
-  }
   
   ScrollSnapInfo GetScrollSnapInfo() const override {
     return mHelper.GetScrollSnapInfo();
@@ -1043,6 +1031,18 @@ public:
 
   virtual bool DragScroll(mozilla::WidgetEvent* aEvent) override {
     return mHelper.DragScroll(aEvent);
+  }
+
+  virtual void AsyncScrollbarDragRejected() override {
+    return mHelper.AsyncScrollbarDragRejected();
+  }
+
+  // Update the style on our scrolled frame.
+  virtual void DoUpdateStyleOfOwnedAnonBoxes(mozilla::ServoStyleSet& aStyleSet,
+                                             nsStyleChangeList& aChangeList,
+                                             nsChangeHint aHintForThisFrame) override {
+    UpdateStyleOfChildAnonBox(mHelper.GetScrolledFrame(), aStyleSet,
+                              aChangeList, aHintForThisFrame);
   }
 
 #ifdef DEBUG_FRAME_DUMP
@@ -1452,9 +1452,6 @@ public:
   void SetZoomableByAPZ(bool aZoomable) override {
     mHelper.SetZoomableByAPZ(aZoomable);
   }
-  void SetScrollsClipOnUnscrolledOutOfFlow() override {
-    mHelper.SetScrollsClipOnUnscrolledOutOfFlow();
-  }
   virtual bool DecideScrollableLayer(nsDisplayListBuilder* aBuilder,
                                      nsRect* aDirtyRect,
                                      bool aAllowCreateDisplayPort) override {
@@ -1476,6 +1473,17 @@ public:
 
   virtual bool DragScroll(mozilla::WidgetEvent* aEvent) override {
     return mHelper.DragScroll(aEvent);
+  }
+
+  virtual void AsyncScrollbarDragRejected() override {
+    return mHelper.AsyncScrollbarDragRejected();
+  }
+
+  virtual void DoUpdateStyleOfOwnedAnonBoxes(mozilla::ServoStyleSet& aStyleSet,
+                                             nsStyleChangeList& aChangeList,
+                                             nsChangeHint aHintForThisFrame) override {
+    UpdateStyleOfChildAnonBox(mHelper.GetScrolledFrame(), aStyleSet,
+                              aChangeList, aHintForThisFrame);
   }
 
 #ifdef DEBUG_FRAME_DUMP

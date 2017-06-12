@@ -374,7 +374,7 @@ class OffscreenCanvas {
     return this._canvas.getContext(contextId, contextOptions);
   }
   transferToImageBitmap() {
-    let window = this._canvas.ownerDocument.defaultView;
+    let window = this._canvas.ownerGlobal;
     return window.createImageBitmap(this._canvas);
   }
 }
@@ -1213,6 +1213,8 @@ class URLLoader extends PP_Resource {
     super(instance);
     this.responseReadCallback = null;
     this.responseUnreadChunks = [];
+    this.bytes_received = 0;
+    this.total_bytes_to_be_received = -1;
   }
 
   openURL(method, url, callback) {

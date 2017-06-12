@@ -26,7 +26,6 @@ struct ShapeUtils final
   // farthest-side, for a circle or an ellipse on a single dimension. The
   // caller needs to call for both dimensions and combine the result.
   // https://drafts.csswg.org/css-shapes/#typedef-shape-radius.
-  //
   // @return The length of the radius in app units.
   static nscoord ComputeShapeRadius(const StyleShapeRadius aType,
                                     const nscoord aCenter,
@@ -34,7 +33,6 @@ struct ShapeUtils final
                                     const nscoord aPosMax);
 
   // Compute the center of a circle or an ellipse.
-  //
   // @param aRefBox The reference box of the basic shape.
   // @return The point of the center.
   static nsPoint ComputeCircleOrEllipseCenter(
@@ -48,6 +46,33 @@ struct ShapeUtils final
   static nscoord ComputeCircleRadius(
     mozilla::StyleBasicShape* const aBasicShape,
     const nsPoint& aCenter, const nsRect& aRefBox);
+
+  // Compute the radii for an ellipse.
+  // @param aCenter the center of the ellipse.
+  // @param aRefBox the reference box of the ellipse.
+  // @return The radii of the ellipse in app units. The width and height
+  // represent the x-axis and y-axis radii of the ellipse.
+  static nsSize ComputeEllipseRadii(
+    mozilla::StyleBasicShape* const aBasicShape,
+    const nsPoint& aCenter, const nsRect& aRefBox);
+
+  // Compute the rect for an inset.
+  // @param aRefBox the reference box of the inset.
+  // @return The inset rect in app units.
+  static nsRect ComputeInsetRect(
+    mozilla::StyleBasicShape* const aBasicShape,
+    const nsRect& aRefBox);
+
+  // Compute the radii for an inset.
+  // @param aRefBox the reference box of the inset.
+  // @param aInsetRect the inset rect computed by ComputeInsetRect().
+  // @param aRadii the returned radii in app units.
+  // @return true if any of the radii is nonzero; false otherwise.
+  static bool ComputeInsetRadii(
+    mozilla::StyleBasicShape* const aBasicShape,
+    const nsRect& aInsetRect,
+    const nsRect& aRefBox,
+    nscoord aRadii[8]);
 };
 
 } // namespace mozilla

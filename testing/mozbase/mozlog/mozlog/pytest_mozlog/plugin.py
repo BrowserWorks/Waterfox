@@ -3,7 +3,6 @@
 # file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
 import mozlog
-import os
 import time
 
 
@@ -34,13 +33,19 @@ def pytest_configure(config):
 class MozLog(object):
 
     def __init__(self):
+        self._started = False
         self.results = {}
         self.start_time = int(time.time() * 1000)  # in ms for Mozlog compatibility
 
-    def format_nodeid(self, nodeid):
-        '''Helper to Reformat/shorten a "::"-separated pytest test nodeid'''
-        testfile, testname = nodeid.split("::")
-        return " ".join([os.path.basename(testfile), testname])
+    def _log_suite_start(self, tests):
+        if not self._started:
+            # As this is called for each node when using pytest-xdist, we want
+            # to avoid logging multiple suite_start messages.
+            self.logger.suite_start(
+                tests=tests,
+                time=self.start_time,
+                run_info=self.run_info)
+            self._started = True
 
     def pytest_configure(self, config):
         mozlog.commandline.setup_logging('pytest', config.known_args_namespace,
@@ -50,16 +55,21 @@ class MozLog(object):
     def pytest_sessionstart(self, session):
         '''Called before test collection; records suite start time to log later'''
         self.start_time = int(time.time() * 1000)  # in ms for Mozlog compatibility
+        self.run_info = getattr(session.config, '_metadata', None)
 
-    def pytest_collection_modifyitems(self, items):
+    def pytest_collection_finish(self, session):
         '''Called after test collection is completed, just before tests are run (suite start)'''
-        self.logger.suite_start(tests=items, time=self.start_time)
+        self._log_suite_start([item.nodeid for item in session.items])
+
+    def pytest_xdist_node_collection_finished(self, node, ids):
+        '''Called after each pytest-xdist node collection is completed'''
+        self._log_suite_start(ids)
 
     def pytest_sessionfinish(self, session, exitstatus):
         self.logger.suite_end()
 
     def pytest_runtest_logstart(self, nodeid, location):
-        self.logger.test_start(test=self.format_nodeid(nodeid))
+        self.logger.test_start(test=nodeid)
 
     def pytest_runtest_logreport(self, report):
         '''Called 3 times per test (setup, call, teardown), indicated by report.when'''
@@ -67,28 +77,38 @@ class MozLog(object):
         status = expected = 'PASS'
         message = stack = None
         if hasattr(report, 'wasxfail'):
-            # Pytest reporting for xfail tests is somewhat counterinutitive:
-            # If an xfail test fails as expected, its 'call' report has .skipped,
-            # so we record status FAIL (== expected) and log an expected result.
-            # If an xfail unexpectedly passes, the 'call' report has .failed (Pytest 2)
-            # or .passed (Pytest 3), so we leave status as PASS (!= expected)
-            # to log an unexpected result.
             expected = 'FAIL'
-            if report.skipped:  # indicates expected failure (passing test)
-                status = 'FAIL'
-        elif report.failed:
+        if report.failed:
             status = 'FAIL' if report.when == 'call' else 'ERROR'
-            crash = report.longrepr.reprcrash  # here longrepr is a ReprExceptionInfo
-            message = "{0} (line {1})".format(crash.message, crash.lineno)
-            stack = report.longrepr.reprtraceback
-        elif report.skipped:  # indicates true skip
-            status = expected = 'SKIP'
-            message = report.longrepr[-1]  # here longrepr is a tuple (file, lineno, reason)
+        if report.skipped:
+            status = 'SKIP' if not hasattr(report, 'wasxfail') else 'FAIL'
+        if report.longrepr is not None:
+            longrepr = report.longrepr
+            if isinstance(longrepr, basestring):
+                # When using pytest-xdist, longrepr is serialised as a str
+                message = stack = longrepr
+                if longrepr.startswith('[XPASS(strict)]'):
+                    # Strict expected failures have an outcome of failed when
+                    # they unexpectedly pass.
+                    expected, status = ('FAIL', 'PASS')
+            elif hasattr(longrepr, "reprcrash"):
+                # For failures, longrepr is a ReprExceptionInfo
+                crash = longrepr.reprcrash
+                message = "{0} (line {1})".format(crash.message, crash.lineno)
+                stack = longrepr.reprtraceback
+            elif hasattr(longrepr, "errorstring"):
+                message = longrepr.errorstring
+                stack = longrepr.errorstring
+            elif hasattr(longrepr, "__getitem__") and len(longrepr) == 3:
+                # For skips, longrepr is a tuple of (file, lineno, reason)
+                message = report.longrepr[-1]
+            else:
+                raise ValueError("Unable to convert longrepr to message:\ntype %s\nfields:" %
+                                 (longrepr.__class__, dir(longrepr)))
         if status != expected or expected != 'PASS':
             self.results[test] = (status, expected, message, stack)
         if report.when == 'teardown':
             defaults = ('PASS', 'PASS', None, None)
             status, expected, message, stack = self.results.get(test, defaults)
-            self.logger.test_end(test=self.format_nodeid(test),
-                                 status=status, expected=expected,
+            self.logger.test_end(test=test, status=status, expected=expected,
                                  message=message, stack=stack)

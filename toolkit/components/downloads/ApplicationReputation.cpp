@@ -33,12 +33,14 @@
 #include "mozilla/LoadContext.h"
 #include "mozilla/Preferences.h"
 #include "mozilla/Services.h"
+#include "mozilla/SizePrintfMacros.h"
 #include "mozilla/Telemetry.h"
 #include "mozilla/TimeStamp.h"
 
 #include "nsAutoPtr.h"
 #include "nsCOMPtr.h"
 #include "nsDebug.h"
+#include "nsDependentSubstring.h"
 #include "nsError.h"
 #include "nsNetCID.h"
 #include "nsReadableUtils.h"
@@ -52,7 +54,9 @@
 #include "nsILoadInfo.h"
 #include "nsContentUtils.h"
 #include "nsWeakReference.h"
+#include "nsCharSeparatedTokenizer.h"
 
+using namespace mozilla::downloads;
 using mozilla::ArrayLength;
 using mozilla::BasePrincipal;
 using mozilla::OriginAttributes;
@@ -84,6 +88,98 @@ using safe_browsing::ClientDownloadRequest_SignatureInfo;
 mozilla::LazyLogModule ApplicationReputationService::prlog("ApplicationReputation");
 #define LOG(args) MOZ_LOG(ApplicationReputationService::prlog, mozilla::LogLevel::Debug, args)
 #define LOG_ENABLED() MOZ_LOG_TEST(ApplicationReputationService::prlog, mozilla::LogLevel::Debug)
+
+namespace mozilla {
+namespace downloads {
+
+enum class TelemetryMatchInfo : uint8_t
+{
+  eNoMatch   = 0x00,
+  eV2Match   = 0x01,
+  eV4Match   = 0x02,
+  eBothMatch = eV2Match | eV4Match,
+};
+
+MOZ_MAKE_ENUM_CLASS_BITWISE_OPERATORS(TelemetryMatchInfo)
+
+// Given a comma-separated list of tables which matched a URL, check to see if
+// at least one of these tables is present in the given pref.
+bool
+LookupTablesInPrefs(const nsACString& tables, const char* aPref)
+{
+  nsAutoCString prefList;
+  Preferences::GetCString(aPref, &prefList);
+  if (prefList.IsEmpty()) {
+    return false;
+  }
+
+  // Check if V2 and V4 are enabled in preference
+  // If V2 and V4 are both enabled, then we should do a telemetry record
+  // Both V2 and V4 begin with "goog" but V4 ends with "-proto"
+  nsCCharSeparatedTokenizer prefTokens(prefList, ',');
+  nsCString prefToken;
+  bool isV4Enabled = false;
+  bool isV2Enabled = false;
+
+  while (prefTokens.hasMoreTokens()) {
+    prefToken = prefTokens.nextToken();
+    if (StringBeginsWith(prefToken, NS_LITERAL_CSTRING("goog"))) {
+      if (StringEndsWith(prefToken, NS_LITERAL_CSTRING("-proto"))) {
+        isV4Enabled = true;
+      } else {
+        isV2Enabled = true;
+      }
+    }
+  }
+
+  bool shouldRecordTelemetry = isV2Enabled && isV4Enabled;
+  TelemetryMatchInfo telemetryInfo = TelemetryMatchInfo::eNoMatch;
+
+  // Parsed tables separated by "," into tokens then lookup each token
+  // in preference list
+  nsCCharSeparatedTokenizer tokens(tables, ',');
+  nsCString table;
+  bool found = false;
+
+  while (tokens.hasMoreTokens()) {
+    table = tokens.nextToken();
+    if (table.IsEmpty()) {
+      continue;
+    }
+
+    if (!FindInReadable(table, prefList)) {
+      continue;
+    }
+    found = true;
+
+    if (!shouldRecordTelemetry) {
+      return found;
+    }
+
+    // We are checking if the table found is V2 or V4 to record telemetry
+    // Both V2 and V4 begin with "goog" but V4 ends with "-proto"
+    if (StringBeginsWith(prefToken, NS_LITERAL_CSTRING("goog"))) {
+      if (StringEndsWith(prefToken, NS_LITERAL_CSTRING("-proto"))) {
+        telemetryInfo |= TelemetryMatchInfo::eV4Match;
+      } else {
+        telemetryInfo |= TelemetryMatchInfo::eV2Match;
+      }
+    }
+  }
+
+  // Record telemetry for matching allow list and block list
+  if (!strcmp(aPref, PREF_DOWNLOAD_BLOCK_TABLE)) {
+    Accumulate(mozilla::Telemetry::APPLICATION_REPUTATION_BLOCKLIST_MATCH,
+               static_cast<uint8_t>(telemetryInfo));
+  } else if (!strcmp(aPref, PREF_DOWNLOAD_ALLOW_TABLE)) {
+    Accumulate(mozilla::Telemetry::APPLICATION_REPUTATION_ALLOWLIST_MATCH,
+               static_cast<uint8_t>(telemetryInfo));
+  }
+
+  return found;
+}
+} // namespace downloads
+} // namespace mozilla
 
 class PendingDBLookup;
 
@@ -346,9 +442,7 @@ PendingDBLookup::HandleEvent(const nsACString& tables)
   // 1) PendingLookup::OnComplete if the URL matches the blocklist, or
   // 2) PendingLookup::LookupNext if the URL does not match the blocklist.
   // Blocklisting trumps allowlisting.
-  nsAutoCString blockList;
-  Preferences::GetCString(PREF_DOWNLOAD_BLOCK_TABLE, &blockList);
-  if (!mAllowlistOnly && FindInReadable(blockList, tables)) {
+  if (!mAllowlistOnly && LookupTablesInPrefs(tables, PREF_DOWNLOAD_BLOCK_TABLE)) {
     mPendingLookup->mBlocklistCount++;
     Accumulate(mozilla::Telemetry::APPLICATION_REPUTATION_LOCAL, BLOCK_LIST);
     LOG(("Found principal %s on blocklist [this = %p]", mSpec.get(), this));
@@ -356,9 +450,7 @@ PendingDBLookup::HandleEvent(const nsACString& tables)
       nsIApplicationReputationService::VERDICT_DANGEROUS);
   }
 
-  nsAutoCString allowList;
-  Preferences::GetCString(PREF_DOWNLOAD_ALLOW_TABLE, &allowList);
-  if (FindInReadable(allowList, tables)) {
+  if (LookupTablesInPrefs(tables, PREF_DOWNLOAD_ALLOW_TABLE)) {
     mPendingLookup->mAllowlistCount++;
     Accumulate(mozilla::Telemetry::APPLICATION_REPUTATION_LOCAL, ALLOW_LIST);
     LOG(("Found principal %s on allowlist [this = %p]", mSpec.get(), this));
@@ -392,7 +484,7 @@ PendingLookup::~PendingLookup()
   LOG(("Destroying pending lookup [this = %p]", this));
 }
 
-static const char16_t* kBinaryFileExtensions[] = {
+static const char16_t* const kBinaryFileExtensions[] = {
     // Extracted from the "File Type Policies" Chrome extension
     //u".001",
     //u".7z",
@@ -464,6 +556,8 @@ static const char16_t* kBinaryFileExtensions[] = {
     u".hlp", // Windows Help
     u".hqx", // Mac archive
     u".hta", // HTML trusted application
+    u".htm",
+    u".html",
     u".htt", // MS HTML template
     u".img", // Mac disk image
     u".imgpart", // Mac disk image
@@ -773,7 +867,7 @@ PendingLookup::LookupNext()
   // There are no more URIs to check against local list. If the file is
   // not eligible for remote lookup, bail.
   if (!IsBinaryFile()) {
-    LOG(("Not eligible for remote lookups [this=%x]", this));
+    LOG(("Not eligible for remote lookups [this=%p]", this));
     return OnComplete(false, NS_OK);
   }
   nsresult rv = SendRemoteQuery();
@@ -885,17 +979,19 @@ PendingLookup::GenerateWhitelistStringsForChain(
   NS_ENSURE_SUCCESS(rv, rv);
 
   nsCOMPtr<nsIX509Cert> signer;
-  rv = certDB->ConstructX509(
+  nsDependentCSubstring signerDER(
     const_cast<char *>(aChain.element(0).certificate().data()),
-    aChain.element(0).certificate().size(), getter_AddRefs(signer));
+    aChain.element(0).certificate().size());
+  rv = certDB->ConstructX509(signerDER, getter_AddRefs(signer));
   NS_ENSURE_SUCCESS(rv, rv);
 
   for (int i = 1; i < aChain.element_size(); ++i) {
     // Get the issuer.
     nsCOMPtr<nsIX509Cert> issuer;
-    rv = certDB->ConstructX509(
+    nsDependentCSubstring issuerDER(
       const_cast<char *>(aChain.element(i).certificate().data()),
-      aChain.element(i).certificate().size(), getter_AddRefs(issuer));
+      aChain.element(i).certificate().size());
+    rv = certDB->ConstructX509(issuerDER, getter_AddRefs(issuer));
     NS_ENSURE_SUCCESS(rv, rv);
 
     rv = GenerateWhitelistStringsForPair(signer, issuer);
@@ -1074,7 +1170,7 @@ PendingLookup::OnComplete(bool shouldBlock, nsresult rv, uint32_t verdict)
   Accumulate(mozilla::Telemetry::APPLICATION_REPUTATION_SHOULD_BLOCK,
     shouldBlock);
   double t = (TimeStamp::Now() - mStartTime).ToMilliseconds();
-  LOG(("Application Reputation verdict is %lu, obtained in %f ms [this = %p]",
+  LOG(("Application Reputation verdict is %u, obtained in %f ms [this = %p]",
        verdict, t, this));
   if (shouldBlock) {
     LOG(("Application Reputation check failed, blocking bad binary [this = %p]",
@@ -1254,7 +1350,7 @@ PendingLookup::SendRemoteQueryInternal()
   if (!mRequest.SerializeToString(&serialized)) {
     return NS_ERROR_UNEXPECTED;
   }
-  LOG(("Serialized protocol buffer [this = %p]: (length=%d) %s", this,
+  LOG(("Serialized protocol buffer [this = %p]: (length=%" PRIuSIZE ") %s", this,
        serialized.length(), serialized.c_str()));
 
   // Set the input stream to the serialized protocol buffer

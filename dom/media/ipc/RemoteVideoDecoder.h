@@ -28,28 +28,24 @@ public:
 
   // MediaDataDecoder
   RefPtr<InitPromise> Init() override;
-  void Input(MediaRawData* aSample) override;
-  void Flush() override;
-  void Drain() override;
-  void Shutdown() override;
+  RefPtr<DecodePromise> Decode(MediaRawData* aSample) override;
+  RefPtr<DecodePromise> Drain() override;
+  RefPtr<FlushPromise> Flush() override;
+  RefPtr<ShutdownPromise> Shutdown() override;
   bool IsHardwareAccelerated(nsACString& aFailureReason) const override;
   void SetSeekThreshold(const media::TimeUnit& aTime) override;
 
   const char* GetDescriptionName() const override { return "RemoteVideoDecoder"; }
+  ConversionRequired NeedsConversion() const override;
 
 private:
-  explicit RemoteVideoDecoder(MediaDataDecoderCallback* aCallback);
+  RemoteVideoDecoder();
   ~RemoteVideoDecoder();
 
-  RefPtr<InitPromise> InitInternal();
-
-  // Only ever written to from the reader task queue (during the constructor and destructor
-  // when we can guarantee no other threads are accessing it). Only read from the manager
-  // thread.
+  // Only ever written to from the reader task queue (during the constructor and
+  // destructor when we can guarantee no other threads are accessing it). Only
+  // read from the manager thread.
   RefPtr<VideoDecoderChild> mActor;
-#ifdef DEBUG
-  MediaDataDecoderCallback* mCallback;
-#endif
 };
 
 // A PDM implementation that creates RemoteVideoDecoders.
@@ -67,9 +63,8 @@ public:
 
   bool SupportsMimeType(const nsACString& aMimeType,
                         DecoderDoctorDiagnostics* aDiagnostics) const override;
-
-  ConversionRequired DecoderNeedsConversion(
-    const TrackInfo& aConfig) const override;
+  bool Supports(const TrackInfo& aTrackInfo,
+                DecoderDoctorDiagnostics* aDiagnostics) const override;
 
   already_AddRefed<MediaDataDecoder> CreateVideoDecoder(
     const CreateDecoderParams& aParams) override;

@@ -4,7 +4,7 @@
   <meta charset="utf8">
   <title>Test for the network actor (HPKP detection)</title>
   <script type="text/javascript" src="chrome://mochikit/content/tests/SimpleTest/SimpleTest.js"></script>
-  <script type="text/javascript;version=1.8" src="common.js"></script>
+  <script type="text/javascript" src="common.js"></script>
   <!-- Any copyright is dedicated to the Public Domain.
      - http://creativecommons.org/publicdomain/zero/1.0/ -->
 </head>
@@ -13,7 +13,7 @@
 
 <iframe src="https://example.com/chrome/devtools/shared/webconsole/test/network_requests_iframe.html"></iframe>
 
-<script class="testbody" type="text/javascript;version=1.8">
+<script class="testbody" type="text/javascript">
 SimpleTest.waitForExplicitFinish();
 
 let gCurrentTestCase = -1;
@@ -39,8 +39,7 @@ const TEST_CASES = [
   }
 ];
 
-function startTest()
-{
+function startTest() {
   // Need to enable this pref or pinning headers are rejected due test
   // certificate.
   Services.prefs.setBoolPref(HPKP_PREF, true);
@@ -54,7 +53,7 @@ function startTest()
     let gIOService = Cc["@mozilla.org/network/io-service;1"]
                        .getService(Ci.nsIIOService);
     for (let {url} of TEST_CASES) {
-      let uri = gIOService.newURI(url, null, null);
+      let uri = gIOService.newURI(url);
       gSSService.removeState(Ci.nsISiteSecurityService.HEADER_HPKP, uri, 0);
     }
   });
@@ -64,19 +63,18 @@ function startTest()
   attachConsoleToTab(["NetworkActivity"], onAttach);
 }
 
-function onAttach(aState, aResponse)
-{
-  onNetworkEventUpdate = onNetworkEventUpdate.bind(null, aState);
-  aState.dbgClient.addListener("networkEventUpdate", onNetworkEventUpdate);
+function onAttach(state, response) {
+  onNetworkEventUpdate = onNetworkEventUpdate.bind(null, state);
+  state.dbgClient.addListener("networkEventUpdate", onNetworkEventUpdate);
 
-  runNextCase(aState);
+  runNextCase(state);
 }
 
-function runNextCase(aState) {
+function runNextCase(state) {
   gCurrentTestCase++;
   if (gCurrentTestCase === TEST_CASES.length) {
     info("Tests ran. Cleaning up.");
-    closeDebugger(aState, SimpleTest.finish);
+    closeDebugger(state, SimpleTest.finish);
     return;
   }
 
@@ -87,18 +85,17 @@ function runNextCase(aState) {
   iframe.wrappedJSObject.makeXhrCallback("GET", url);
 }
 
-function onNetworkEventUpdate(aState, aType, aPacket)
-{
-  function onSecurityInfo(packet) {
+function onNetworkEventUpdate(state, type, packet) {
+  function onSecurityInfo(received) {
     let data = TEST_CASES[gCurrentTestCase];
-    is(packet.securityInfo.hpkp, data.usesPinning,
+    is(received.securityInfo.hpkp, data.usesPinning,
       "Public Key Pinning detected correctly.");
 
-    runNextCase(aState);
+    runNextCase(state);
   }
 
-  if (aPacket.updateType === "securityInfo") {
-    aState.client.getSecurityInfo(aPacket.from, onSecurityInfo);
+  if (packet.updateType === "securityInfo") {
+    state.client.getSecurityInfo(packet.from, onSecurityInfo);
   }
 }
 

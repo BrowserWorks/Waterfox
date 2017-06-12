@@ -7,6 +7,7 @@
 #include "mozilla/layers/CompositorThread.h"
 #include "mozilla/layers/ImageBridgeChild.h"
 #include "mozilla/layers/ISurfaceAllocator.h"     // for GfxMemoryImageReporter
+#include "mozilla/webrender/RenderThread.h"
 #include "mozilla/gfx/gfxVars.h"
 #include "mozilla/gfx/GPUProcessManager.h"
 #include "mozilla/gfx/GraphicsMessages.h"
@@ -502,7 +503,6 @@ gfxPlatform::gfxPlatform()
   , mTilesInfoCollector(this, &gfxPlatform::GetTilesSupportInfo)
   , mCompositorBackend(layers::LayersBackend::LAYERS_NONE)
   , mScreenDepth(0)
-  , mDeviceCounter(0)
 {
     mAllowDownloadableFonts = UNINITIALIZED_VALUE;
     mFallbackUsesCmaps = UNINITIALIZED_VALUE;
@@ -941,6 +941,9 @@ gfxPlatform::InitLayersIPC()
 
     if (XRE_IsParentProcess())
     {
+        if (gfxVars::UseWebRender()) {
+            wr::RenderThread::Start();
+        }
         layers::CompositorThreadHolder::Start();
     }
 }
@@ -969,6 +972,9 @@ gfxPlatform::ShutdownLayersIPC()
 #endif // defined(MOZ_WIDGET_ANDROID)
         // This has to happen after shutting down the child protocols.
         layers::CompositorThreadHolder::Shutdown();
+        if (gfxVars::UseWebRender()) {
+            wr::RenderThread::ShutDown();
+        }
     } else {
       // TODO: There are other kind of processes and we should make sure gfx
       // stuff is either not created there or shut down properly.
@@ -1423,11 +1429,9 @@ gfxPlatform::CreateDrawTargetForBackend(BackendType aBackend, const IntSize& aSi
     if (!surf || surf->CairoStatus()) {
       return nullptr;
     }
-
     return CreateDrawTargetForSurface(surf, aSize);
-  } else {
-    return Factory::CreateDrawTarget(aBackend, aSize, aFormat);
   }
+  return Factory::CreateDrawTarget(aBackend, aSize, aFormat);
 }
 
 already_AddRefed<DrawTarget>
@@ -2208,6 +2212,7 @@ gfxPlatform::InitAcceleration()
                                          nullptr,
                                          Preferences::ExactMatch);
     InitGPUProcessPrefs();
+    InitWebRenderConfig();
   }
 }
 
@@ -2222,25 +2227,25 @@ gfxPlatform::InitGPUProcessPrefs()
 
   FeatureState& gpuProc = gfxConfig::GetFeature(Feature::GPU_PROCESS);
 
-  gpuProc.SetDefaultFromPref(
-    gfxPrefs::GetGPUProcessEnabledPrefName(),
-    true,
-    gfxPrefs::GetGPUProcessEnabledPrefDefault());
+  // We require E10S - otherwise, there is very little benefit to the GPU
+  // process, since the UI process must still use acceleration for
+  // performance.
+  if (!BrowserTabsRemoteAutostart()) {
+    gpuProc.DisableByDefault(
+      FeatureStatus::Unavailable,
+      "Multi-process mode is not enabled",
+      NS_LITERAL_CSTRING("FEATURE_FAILURE_NO_E10S"));
+  } else {
+    gpuProc.SetDefaultFromPref(
+      gfxPrefs::GetGPUProcessEnabledPrefName(),
+      true,
+      gfxPrefs::GetGPUProcessEnabledPrefDefault());
+  }
 
   if (gfxPrefs::GPUProcessForceEnabled()) {
     gpuProc.UserForceEnable("User force-enabled via pref");
   }
 
-  // We require E10S - otherwise, there is very little benefit to the GPU
-  // process, since the UI process must still use acceleration for
-  // performance.
-  if (!BrowserTabsRemoteAutostart()) {
-    gpuProc.ForceDisable(
-      FeatureStatus::Unavailable,
-      "Multi-process mode is not enabled",
-      NS_LITERAL_CSTRING("FEATURE_FAILURE_NO_E10S"));
-    return;
-  }
   if (InSafeMode()) {
     gpuProc.ForceDisable(
       FeatureStatus::Blocked,
@@ -2292,6 +2297,47 @@ gfxPlatform::InitCompositorAccelerationPrefs()
     feature.ForceDisable(FeatureStatus::Blocked, "Acceleration blocked by safe-mode",
                          NS_LITERAL_CSTRING("FEATURE_FAILURE_COMP_SAFEMODE"));
   }
+}
+
+void
+gfxPlatform::InitWebRenderConfig()
+{
+  FeatureState& featureWebRender = gfxConfig::GetFeature(Feature::WEBRENDER);
+
+  featureWebRender.EnableByDefault();
+
+  if (!Preferences::GetBool("gfx.webrender.enabled", false)) {
+    featureWebRender.UserDisable(
+      "User disabled WebRender",
+      NS_LITERAL_CSTRING("FEATURE_FAILURE_WEBRENDER_DISABLED"));
+  }
+
+  // WebRender relies on the GPU process when on Windows
+#ifdef XP_WIN
+  if (!gfxConfig::IsEnabled(Feature::GPU_PROCESS)) {
+    featureWebRender.ForceDisable(
+      FeatureStatus::Unavailable,
+      "GPU Process is disabled",
+      NS_LITERAL_CSTRING("FEATURE_FAILURE_GPU_PROCESS_DISABLED"));
+  }
+#endif
+
+  if (InSafeMode()) {
+    featureWebRender.ForceDisable(
+      FeatureStatus::Unavailable,
+      "Safe-mode is enabled",
+      NS_LITERAL_CSTRING("FEATURE_FAILURE_SAFE_MODE"));
+  }
+
+#ifndef MOZ_ENABLE_WEBRENDER
+  featureWebRender.ForceDisable(
+    FeatureStatus::Unavailable,
+    "Build doesn't include WebRender",
+    NS_LITERAL_CSTRING("FEATURE_FAILURE_NO_WEBRENDER"));
+#endif
+
+  // gfxFeature is not usable in the GPU process, so we use gfxVars to transmit this feature
+  gfxVars::SetUseWebRender(gfxConfig::IsEnabled(Feature::WEBRENDER));
 }
 
 bool
@@ -2483,6 +2529,11 @@ gfxPlatform::AsyncPanZoomEnabled()
 #ifdef MOZ_WIDGET_ANDROID
   return true;
 #else
+  if (!gfxPrefs::SingletonExists()) {
+    // Make sure the gfxPrefs has been initialized before reading from it.
+    MOZ_ASSERT(NS_IsMainThread());
+    gfxPrefs::GetSingleton();
+  }
   return gfxPrefs::AsyncPanZoomEnabledDoNotUseDirectly();
 #endif
 }
@@ -2544,6 +2595,18 @@ gfxPlatform::NotifyCompositorCreated(LayersBackend aBackend)
   }));
 }
 
+/* static */ void
+gfxPlatform::NotifyGPUProcessDisabled()
+{
+  if (gfxConfig::IsEnabled(Feature::WEBRENDER)) {
+    gfxConfig::GetFeature(Feature::WEBRENDER).ForceDisable(
+      FeatureStatus::Unavailable,
+      "GPU Process is disabled",
+      NS_LITERAL_CSTRING("FEATURE_FAILURE_GPU_PROCESS_DISABLED"));
+    gfxVars::SetUseWebRender(false);
+  }
+}
+
 void
 gfxPlatform::FetchAndImportContentDeviceData()
 {
@@ -2597,12 +2660,6 @@ bool
 gfxPlatform::SupportsApzDragInput() const
 {
   return gfxPrefs::APZDragEnabled();
-}
-
-void
-gfxPlatform::BumpDeviceCounter()
-{
-  mDeviceCounter++;
 }
 
 void

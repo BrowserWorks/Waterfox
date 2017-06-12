@@ -31,22 +31,28 @@ class ServiceWorkerClientInfo final
   friend class ServiceWorkerWindowClient;
 
 public:
-  explicit ServiceWorkerClientInfo(nsIDocument* aDoc);
+  explicit ServiceWorkerClientInfo(nsIDocument* aDoc, uint32_t aOrdinal = 0);
 
   const nsString& ClientId() const
   {
     return mClientId;
   }
 
+  bool operator<(const ServiceWorkerClientInfo& aRight) const;
+  bool operator==(const ServiceWorkerClientInfo& aRight) const;
+
 private:
+  const mozilla::dom::ClientType mType;
+  const uint32_t mOrdinal;
   nsString mClientId;
   uint64_t mWindowId;
   nsString mUrl;
 
   // Window Clients
   VisibilityState mVisibilityState;
-  bool mFocused;
   FrameType mFrameType;
+  TimeStamp mLastFocusTime;
+  bool mFocused;
 };
 
 class ServiceWorkerClient : public nsISupports,
@@ -59,6 +65,7 @@ public:
   ServiceWorkerClient(nsISupports* aOwner,
                       const ServiceWorkerClientInfo& aClientInfo)
     : mOwner(aOwner)
+    , mType(aClientInfo.mType)
     , mId(aClientInfo.mClientId)
     , mUrl(aClientInfo.mUrl)
     , mWindowId(aClientInfo.mWindowId)
@@ -90,10 +97,12 @@ public:
     return mFrameType;
   }
 
+  mozilla::dom::ClientType
+  Type() const;
+
   void
   PostMessage(JSContext* aCx, JS::Handle<JS::Value> aMessage,
-              const Optional<Sequence<JS::Value>>& aTransferable,
-              ErrorResult& aRv);
+              const Sequence<JSObject*>& aTransferable, ErrorResult& aRv);
 
   JSObject* WrapObject(JSContext* aCx, JS::Handle<JSObject*> aGivenProto) override;
 
@@ -103,6 +112,7 @@ protected:
 
 private:
   nsCOMPtr<nsISupports> mOwner;
+  const ClientType mType;
   nsString mId;
   nsString mUrl;
 

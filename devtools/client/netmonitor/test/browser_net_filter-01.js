@@ -129,10 +129,16 @@ const EXPECTED_REQUESTS = [
 ];
 
 add_task(function* () {
-  let Actions = require("devtools/client/netmonitor/actions/index");
-
   let { monitor } = yield initNetMonitor(FILTERING_URL);
-  let { gStore } = monitor.panelWin;
+  let { document, gStore, windowRequire } = monitor.panelWin;
+  let Actions = windowRequire("devtools/client/netmonitor/actions/index");
+  let {
+    getDisplayedRequests,
+    getSelectedRequest,
+    getSortedRequests,
+  } = windowRequire("devtools/client/netmonitor/selectors/index");
+
+  gStore.dispatch(Actions.batchEnable(false));
 
   function setFreetextFilter(value) {
     gStore.dispatch(Actions.setRequestFilterText(value));
@@ -140,95 +146,114 @@ add_task(function* () {
 
   info("Starting test... ");
 
-  let { $, NetMonitorView } = monitor.panelWin;
-  let { RequestsMenu } = NetMonitorView;
-
-  RequestsMenu.lazyUpdate = false;
-
   let wait = waitForNetworkEvents(monitor, 9);
   loadCommonFrameScript();
   yield performRequestsInContent(REQUESTS_WITH_MEDIA_AND_FLASH_AND_WS);
   yield wait;
 
-  EventUtils.sendMouseEvent({ type: "mousedown" }, $("#details-pane-toggle"));
+  EventUtils.sendMouseEvent({ type: "mousedown" },
+    document.querySelectorAll(".request-list-item")[0]);
 
-  isnot(RequestsMenu.selectedItem, null,
+  isnot(getSelectedRequest(gStore.getState()), null,
     "There should be a selected item in the requests menu.");
-  is(RequestsMenu.selectedIndex, 0,
+  is(getSelectedIndex(gStore.getState()), 0,
     "The first item should be selected in the requests menu.");
-  is(NetMonitorView.detailsPaneHidden, false,
-    "The details pane should not be hidden after toggle button was pressed.");
+  is(!!document.querySelector(".network-details-panel"), true,
+    "The network details panel should render correctly.");
 
   // First test with single filters...
   testFilterButtons(monitor, "all");
   testContents([1, 1, 1, 1, 1, 1, 1, 1, 1]);
 
-  EventUtils.sendMouseEvent({ type: "click" }, $("#requests-menu-filter-html-button"));
+  EventUtils.sendMouseEvent({ type: "click" },
+    document.querySelector(".requests-list-filter-html-button"));
   testFilterButtons(monitor, "html");
   testContents([1, 0, 0, 0, 0, 0, 0, 0, 0]);
 
   // Reset filters
-  EventUtils.sendMouseEvent({ type: "click" }, $("#requests-menu-filter-all-button"));
-  EventUtils.sendMouseEvent({ type: "click" }, $("#requests-menu-filter-css-button"));
+  EventUtils.sendMouseEvent({ type: "click" },
+    document.querySelector(".requests-list-filter-all-button"));
+  EventUtils.sendMouseEvent({ type: "click" },
+    document.querySelector(".requests-list-filter-css-button"));
   testFilterButtons(monitor, "css");
   testContents([0, 1, 0, 0, 0, 0, 0, 0, 0]);
 
-  EventUtils.sendMouseEvent({ type: "click" }, $("#requests-menu-filter-all-button"));
-  EventUtils.sendMouseEvent({ type: "click" }, $("#requests-menu-filter-js-button"));
+  EventUtils.sendMouseEvent({ type: "click" },
+    document.querySelector(".requests-list-filter-all-button"));
+  EventUtils.sendMouseEvent({ type: "click" },
+    document.querySelector(".requests-list-filter-js-button"));
   testFilterButtons(monitor, "js");
   testContents([0, 0, 1, 0, 0, 0, 0, 0, 0]);
 
-  EventUtils.sendMouseEvent({ type: "click" }, $("#requests-menu-filter-all-button"));
-  EventUtils.sendMouseEvent({ type: "click" }, $("#requests-menu-filter-xhr-button"));
+  EventUtils.sendMouseEvent({ type: "click" },
+    document.querySelector(".requests-list-filter-all-button"));
+  EventUtils.sendMouseEvent({ type: "click" },
+    document.querySelector(".requests-list-filter-xhr-button"));
   testFilterButtons(monitor, "xhr");
   testContents([1, 1, 1, 1, 1, 1, 1, 1, 0]);
 
-  EventUtils.sendMouseEvent({ type: "click" }, $("#requests-menu-filter-all-button"));
-  EventUtils.sendMouseEvent({ type: "click" }, $("#requests-menu-filter-fonts-button"));
+  EventUtils.sendMouseEvent({ type: "click" },
+    document.querySelector(".requests-list-filter-all-button"));
+  EventUtils.sendMouseEvent({ type: "click" },
+     document.querySelector(".requests-list-filter-fonts-button"));
   testFilterButtons(monitor, "fonts");
   testContents([0, 0, 0, 1, 0, 0, 0, 0, 0]);
 
-  EventUtils.sendMouseEvent({ type: "click" }, $("#requests-menu-filter-all-button"));
-  EventUtils.sendMouseEvent({ type: "click" }, $("#requests-menu-filter-images-button"));
+  EventUtils.sendMouseEvent({ type: "click" },
+    document.querySelector(".requests-list-filter-all-button"));
+  EventUtils.sendMouseEvent({ type: "click" },
+    document.querySelector(".requests-list-filter-images-button"));
   testFilterButtons(monitor, "images");
   testContents([0, 0, 0, 0, 1, 0, 0, 0, 0]);
 
-  EventUtils.sendMouseEvent({ type: "click" }, $("#requests-menu-filter-all-button"));
-  EventUtils.sendMouseEvent({ type: "click" }, $("#requests-menu-filter-media-button"));
+  EventUtils.sendMouseEvent({ type: "click" },
+    document.querySelector(".requests-list-filter-all-button"));
+  EventUtils.sendMouseEvent({ type: "click" },
+    document.querySelector(".requests-list-filter-media-button"));
   testFilterButtons(monitor, "media");
   testContents([0, 0, 0, 0, 0, 1, 1, 0, 0]);
 
-  EventUtils.sendMouseEvent({ type: "click" }, $("#requests-menu-filter-all-button"));
-  EventUtils.sendMouseEvent({ type: "click" }, $("#requests-menu-filter-flash-button"));
+  EventUtils.sendMouseEvent({ type: "click" },
+    document.querySelector(".requests-list-filter-all-button"));
+  EventUtils.sendMouseEvent({ type: "click" },
+    document.querySelector(".requests-list-filter-flash-button"));
   testFilterButtons(monitor, "flash");
   testContents([0, 0, 0, 0, 0, 0, 0, 1, 0]);
 
-  EventUtils.sendMouseEvent({ type: "click" }, $("#requests-menu-filter-all-button"));
-  EventUtils.sendMouseEvent({ type: "click" }, $("#requests-menu-filter-ws-button"));
+  EventUtils.sendMouseEvent({ type: "click" },
+    document.querySelector(".requests-list-filter-all-button"));
+  EventUtils.sendMouseEvent({ type: "click" },
+    document.querySelector(".requests-list-filter-ws-button"));
   testFilterButtons(monitor, "ws");
   testContents([0, 0, 0, 0, 0, 0, 0, 0, 1]);
 
-  EventUtils.sendMouseEvent({ type: "click" }, $("#requests-menu-filter-all-button"));
+  EventUtils.sendMouseEvent({ type: "click" },
+    document.querySelector(".requests-list-filter-all-button"));
+
   testFilterButtons(monitor, "all");
   testContents([1, 1, 1, 1, 1, 1, 1, 1, 1]);
 
   // Text in filter box that matches nothing should hide all.
-  EventUtils.sendMouseEvent({ type: "click" }, $("#requests-menu-filter-all-button"));
+  EventUtils.sendMouseEvent({ type: "click" },
+    document.querySelector(".requests-list-filter-all-button"));
   setFreetextFilter("foobar");
   testContents([0, 0, 0, 0, 0, 0, 0, 0, 0]);
 
   // Text in filter box that matches should filter out everything else.
-  EventUtils.sendMouseEvent({ type: "click" }, $("#requests-menu-filter-all-button"));
+  EventUtils.sendMouseEvent({ type: "click" },
+    document.querySelector(".requests-list-filter-all-button"));
   setFreetextFilter("sample");
   testContents([1, 1, 1, 0, 0, 0, 0, 0, 0]);
 
   // Text in filter box that matches should filter out everything else.
-  EventUtils.sendMouseEvent({ type: "click" }, $("#requests-menu-filter-all-button"));
+  EventUtils.sendMouseEvent({ type: "click" },
+    document.querySelector(".requests-list-filter-all-button"));
   setFreetextFilter("SAMPLE");
   testContents([1, 1, 1, 0, 0, 0, 0, 0, 0]);
 
   // Test negative filtering (only show unmatched items)
-  EventUtils.sendMouseEvent({ type: "click" }, $("#requests-menu-filter-all-button"));
+  EventUtils.sendMouseEvent({ type: "click" },
+    document.querySelector(".requests-list-filter-all-button"));
   setFreetextFilter("-sample");
   testContents([0, 0, 0, 1, 1, 1, 1, 1, 1]);
 
@@ -236,8 +261,10 @@ add_task(function* () {
 
   // Enable filtering for html and css; should show request of both type.
   setFreetextFilter("");
-  EventUtils.sendMouseEvent({ type: "click" }, $("#requests-menu-filter-html-button"));
-  EventUtils.sendMouseEvent({ type: "click" }, $("#requests-menu-filter-css-button"));
+  EventUtils.sendMouseEvent({ type: "click" },
+    document.querySelector(".requests-list-filter-html-button"));
+  EventUtils.sendMouseEvent({ type: "click" },
+    document.querySelector(".requests-list-filter-css-button"));
   testFilterButtonsCustom(monitor, [0, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0]);
   testContents([1, 1, 0, 0, 0, 0, 0, 0, 0]);
 
@@ -246,43 +273,56 @@ add_task(function* () {
   setFreetextFilter("sample");
   testContents([1, 1, 0, 0, 0, 0, 0, 0, 0]);
 
-  EventUtils.sendMouseEvent({ type: "click" }, $("#requests-menu-filter-flash-button"));
+  EventUtils.sendMouseEvent({ type: "click" },
+    document.querySelector(".requests-list-filter-flash-button"));
   setFreetextFilter("");
   testFilterButtonsCustom(monitor, [0, 1, 1, 0, 0, 0, 0, 0, 1, 0, 0]);
   testContents([1, 1, 0, 0, 0, 0, 0, 1, 0]);
 
   // Disable some filters. Only one left active.
-  EventUtils.sendMouseEvent({ type: "click" }, $("#requests-menu-filter-css-button"));
-  EventUtils.sendMouseEvent({ type: "click" }, $("#requests-menu-filter-flash-button"));
+  EventUtils.sendMouseEvent({ type: "click" },
+    document.querySelector(".requests-list-filter-css-button"));
+  EventUtils.sendMouseEvent({ type: "click" },
+    document.querySelector(".requests-list-filter-flash-button"));
   testFilterButtons(monitor, "html");
   testContents([1, 0, 0, 0, 0, 0, 0, 0, 0]);
 
   // Disable last active filter. Should toggle to all.
-  EventUtils.sendMouseEvent({ type: "click" }, $("#requests-menu-filter-html-button"));
+  EventUtils.sendMouseEvent({ type: "click" },
+    document.querySelector(".requests-list-filter-html-button"));
   testFilterButtons(monitor, "all");
   testContents([1, 1, 1, 1, 1, 1, 1, 1, 1]);
 
   // Enable few filters and click on all. Only "all" should be checked.
-  EventUtils.sendMouseEvent({ type: "click" }, $("#requests-menu-filter-html-button"));
-  EventUtils.sendMouseEvent({ type: "click" }, $("#requests-menu-filter-css-button"));
-  EventUtils.sendMouseEvent({ type: "click" }, $("#requests-menu-filter-ws-button"));
+  EventUtils.sendMouseEvent({ type: "click" },
+    document.querySelector(".requests-list-filter-html-button"));
+  EventUtils.sendMouseEvent({ type: "click" },
+    document.querySelector(".requests-list-filter-css-button"));
+  EventUtils.sendMouseEvent({ type: "click" },
+    document.querySelector(".requests-list-filter-ws-button"));
   testFilterButtonsCustom(monitor, [0, 1, 1, 0, 0, 0, 0, 0, 0, 1]);
-  EventUtils.sendMouseEvent({ type: "click" }, $("#requests-menu-filter-all-button"));
+  EventUtils.sendMouseEvent({ type: "click" },
+    document.querySelector(".requests-list-filter-all-button"));
   testFilterButtons(monitor, "all");
   testContents([1, 1, 1, 1, 1, 1, 1, 1, 1]);
 
   yield teardown(monitor);
 
-  function testContents(visibility) {
-    isnot(RequestsMenu.selectedItem, null,
-      "There should still be a selected item after filtering.");
-    is(RequestsMenu.selectedIndex, 0,
-      "The first item should be still selected after filtering.");
-    is(NetMonitorView.detailsPaneHidden, false,
-      "The details pane should still be visible after filtering.");
+  function getSelectedIndex(state) {
+    if (!state.requests.selectedId) {
+      return -1;
+    }
+    return getSortedRequests(state).findIndex(r => r.id === state.requests.selectedId);
+  }
 
-    const items = RequestsMenu.items;
-    const visibleItems = RequestsMenu.visibleItems;
+  function testContents(visibility) {
+    isnot(getSelectedRequest(gStore.getState()), undefined,
+      "There should still be a selected item after filtering.");
+    is(getSelectedIndex(gStore.getState()), 0,
+      "The first item should be still selected after filtering.");
+
+    const items = getSortedRequests(gStore.getState());
+    const visibleItems = getDisplayedRequests(gStore.getState());
 
     is(items.size, visibility.length,
       "There should be a specific amount of items in the requests menu.");
@@ -298,7 +338,14 @@ add_task(function* () {
 
       if (shouldBeVisible) {
         let { method, url, data } = EXPECTED_REQUESTS[i];
-        verifyRequestItemTarget(RequestsMenu, items.get(i), method, url, data);
+        verifyRequestItemTarget(
+          document,
+          getDisplayedRequests(gStore.getState()),
+          getSortedRequests(gStore.getState()).get(i),
+          method,
+          url,
+          data
+        );
       }
     }
   }

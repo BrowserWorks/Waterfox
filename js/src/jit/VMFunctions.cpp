@@ -57,7 +57,7 @@ bool
 InvokeFunction(JSContext* cx, HandleObject obj, bool constructing, uint32_t argc, Value* argv,
                MutableHandleValue rval)
 {
-    TraceLoggerThread* logger = TraceLoggerForMainThread(cx->runtime());
+    TraceLoggerThread* logger = TraceLoggerForCurrentThread(cx);
     TraceLogStartEvent(logger, TraceLogger_Call);
 
     AutoArrayRooter argvRoot(cx, argc + 1 + constructing, argv);
@@ -123,6 +123,18 @@ InvokeFunctionShuffleNewTarget(JSContext* cx, HandleObject obj, uint32_t numActu
     return InvokeFunction(cx, obj, true, numActualArgs, argv, rval);
 }
 
+#ifdef JS_SIMULATOR
+static bool
+CheckSimulatorRecursionLimitWithExtra(JSContext* cx, uint32_t extra)
+{
+    if (cx->simulator()->overRecursedWithExtra(extra)) {
+        ReportOverRecursed(cx);
+        return false;
+    }
+    return true;
+}
+#endif
+
 bool
 CheckOverRecursed(JSContext* cx)
 {
@@ -131,12 +143,14 @@ CheckOverRecursed(JSContext* cx)
     //  - jitStackLimit was set to UINTPTR_MAX by JSRuntime::requestInterrupt
     //    and we need to call JSRuntime::handleInterrupt.
 #ifdef JS_SIMULATOR
-    JS_CHECK_SIMULATOR_RECURSION_WITH_EXTRA(cx, 0, return false);
+    if (!CheckSimulatorRecursionLimitWithExtra(cx, 0))
+        return false;
 #else
-    JS_CHECK_RECURSION(cx, return false);
+    if (!CheckRecursionLimit(cx))
+        return false;
 #endif
     gc::MaybeVerifyBarriers(cx);
-    return cx->runtime()->handleInterrupt(cx);
+    return cx->handleInterrupt();
 }
 
 // This function can get called in two contexts.  In the usual context, it's
@@ -162,9 +176,11 @@ CheckOverRecursedWithExtra(JSContext* cx, BaselineFrame* frame,
     if (earlyCheck) {
 #ifdef JS_SIMULATOR
         (void)checkSp;
-        JS_CHECK_SIMULATOR_RECURSION_WITH_EXTRA(cx, extra, frame->setOverRecursed());
+        if (!CheckSimulatorRecursionLimitWithExtra(cx, extra))
+            frame->setOverRecursed();
 #else
-        JS_CHECK_RECURSION_WITH_SP(cx, checkSp, frame->setOverRecursed());
+        if (!CheckRecursionLimitWithStackPointer(cx, checkSp))
+            frame->setOverRecursed();
 #endif
         return true;
     }
@@ -175,13 +191,15 @@ CheckOverRecursedWithExtra(JSContext* cx, BaselineFrame* frame,
         return false;
 
 #ifdef JS_SIMULATOR
-    JS_CHECK_SIMULATOR_RECURSION_WITH_EXTRA(cx, extra, return false);
+    if (!CheckSimulatorRecursionLimitWithExtra(cx, extra))
+        return false;
 #else
-    JS_CHECK_RECURSION_WITH_SP(cx, checkSp, return false);
+    if (!CheckRecursionLimitWithStackPointer(cx, checkSp))
+        return false;
 #endif
 
     gc::MaybeVerifyBarriers(cx);
-    return cx->runtime()->handleInterrupt(cx);
+    return cx->handleInterrupt();
 }
 
 JSObject*
@@ -395,6 +413,34 @@ ArrayJoin(JSContext* cx, HandleObject array, HandleString sep)
 }
 
 bool
+SetArrayLength(JSContext* cx, HandleObject obj, HandleValue value, bool strict)
+{
+    Handle<ArrayObject*> array = obj.as<ArrayObject>();
+
+    RootedId id(cx, NameToId(cx->names().length));
+    ObjectOpResult result;
+
+    // SetArrayLength is called by IC stubs for SetProp and SetElem on arrays'
+    // "length" property.
+    //
+    // ArraySetLength below coerces |value| before checking for length being
+    // writable, and in the case of illegal values, will throw RangeError even
+    // when "length" is not writable. This is incorrect observable behavior,
+    // as a regular [[Set]] operation will check for "length" being
+    // writable before attempting any assignment.
+    //
+    // So, perform ArraySetLength if and only if "length" is writable.
+    if (array->lengthIsWritable()) {
+        if (!ArraySetLength(cx, array, id, JSPROP_PERMANENT, value, result))
+            return false;
+    } else {
+        MOZ_ALWAYS_TRUE(result.fail(JSMSG_READ_ONLY));
+    }
+
+    return result.checkStrictErrorOrWarning(cx, obj, id, strict);
+}
+
+bool
 CharCodeAt(JSContext* cx, HandleString str, int32_t index, uint32_t* code)
 {
     char16_t c;
@@ -470,7 +516,7 @@ InterruptCheck(JSContext* cx)
     {
         JSRuntime* rt = cx->runtime();
         JitRuntime::AutoPreventBackedgePatching apbp(rt);
-        rt->jitRuntime()->patchIonBackedges(rt, JitRuntime::BackedgeLoopHeader);
+        cx->zone()->group()->jitZoneGroup->patchIonBackedges(cx, JitZoneGroup::BackedgeLoopHeader);
     }
 
     return CheckForInterrupt(cx);
@@ -493,7 +539,7 @@ NewCallObject(JSContext* cx, HandleShape shape, HandleObjectGroup group)
     // the initializing writes. The interpreter, however, may have allocated
     // the call object tenured, so barrier as needed before re-entering.
     if (!IsInsideNursery(obj))
-        cx->runtime()->gc.storeBuffer.putWholeCell(obj);
+        cx->zone()->group()->storeBuffer().putWholeCell(obj);
 
     return obj;
 }
@@ -510,7 +556,7 @@ NewSingletonCallObject(JSContext* cx, HandleShape shape)
     // the call object tenured, so barrier as needed before re-entering.
     MOZ_ASSERT(!IsInsideNursery(obj),
                "singletons are created in the tenured heap");
-    cx->runtime()->gc.storeBuffer.putWholeCell(obj);
+    cx->zone()->group()->storeBuffer().putWholeCell(obj);
 
     return obj;
 }
@@ -615,7 +661,7 @@ void
 PostWriteBarrier(JSRuntime* rt, JSObject* obj)
 {
     MOZ_ASSERT(!IsInsideNursery(obj));
-    rt->gc.storeBuffer.putWholeCell(obj);
+    obj->zone()->group()->storeBuffer().putWholeCell(obj);
 }
 
 static const size_t MAX_WHOLE_CELL_BUFFER_SIZE = 4096;
@@ -633,11 +679,11 @@ PostWriteElementBarrier(JSRuntime* rt, JSObject* obj, int32_t index)
 #endif
         ))
     {
-        rt->gc.storeBuffer.putSlot(&obj->as<NativeObject>(), HeapSlot::Element, index, 1);
+        obj->zone()->group()->storeBuffer().putSlot(&obj->as<NativeObject>(), HeapSlot::Element, index, 1);
         return;
     }
 
-    rt->gc.storeBuffer.putWholeCell(obj);
+    obj->zone()->group()->storeBuffer().putWholeCell(obj);
 }
 
 void
@@ -664,6 +710,41 @@ GetIndexFromString(JSString* str)
         return -1;
 
     return int32_t(index);
+}
+
+JSObject*
+WrapObjectPure(JSContext* cx, JSObject* obj)
+{
+    // IC code calls this directly so we shouldn't GC.
+    JS::AutoCheckCannotGC nogc;
+
+    MOZ_ASSERT(obj);
+    MOZ_ASSERT(cx->compartment() != obj->compartment());
+
+    // From: JSCompartment::getNonWrapperObjectForCurrentCompartment
+    // Note that if the object is same-compartment, but has been wrapped into a
+    // different compartment, we need to unwrap it and return the bare same-
+    // compartment object. Note again that windows are always wrapped by a
+    // WindowProxy even when same-compartment so take care not to strip this
+    // particular wrapper.
+    obj = UncheckedUnwrap(obj, /* stopAtWindowProxy = */ true);
+    if (cx->compartment() == obj->compartment()) {
+        MOZ_ASSERT(!IsWindow(obj));
+        JS::ExposeObjectToActiveJS(obj);
+        return obj;
+    }
+
+    // Try to Lookup an existing wrapper for this object. We assume that
+    // if we can find such a wrapper, not calling preWrap is correct.
+    if (WrapperMap::Ptr p = cx->compartment()->lookupWrapper(obj)) {
+        JSObject* wrapped = &p->value().get().toObject();
+
+        // Ensure the wrapper is still exposed.
+        JS::ExposeObjectToActiveJS(wrapped);
+        return wrapped;
+    }
+
+    return nullptr;
 }
 
 bool
@@ -697,7 +778,7 @@ DebugEpilogueOnBaselineReturn(JSContext* cx, BaselineFrame* frame, jsbytecode* p
     if (!DebugEpilogue(cx, frame, pc, true)) {
         // DebugEpilogue popped the frame by updating jitTop, so run the stop event
         // here before we enter the exception handler.
-        TraceLoggerThread* logger = TraceLoggerForMainThread(cx->runtime());
+        TraceLoggerThread* logger = TraceLoggerForCurrentThread(cx);
         TraceLogStopEvent(logger, TraceLogger_Baseline);
         TraceLogStopEvent(logger, TraceLogger_Scripts);
         return false;
@@ -754,7 +835,7 @@ bool
 NormalSuspend(JSContext* cx, HandleObject obj, BaselineFrame* frame, jsbytecode* pc,
               uint32_t stackDepth)
 {
-    MOZ_ASSERT(*pc == JSOP_YIELD);
+    MOZ_ASSERT(*pc == JSOP_YIELD || *pc == JSOP_AWAIT);
 
     // Return value is still on the stack.
     MOZ_ASSERT(stackDepth >= 1);
@@ -782,7 +863,7 @@ FinalSuspend(JSContext* cx, HandleObject obj, BaselineFrame* frame, jsbytecode* 
 
     if (!GeneratorObject::finalSuspend(cx, obj)) {
 
-        TraceLoggerThread* logger = TraceLoggerForMainThread(cx->runtime());
+        TraceLoggerThread* logger = TraceLoggerForCurrentThread(cx);
         TraceLogStopEvent(logger, TraceLogger_Engine);
         TraceLogStopEvent(logger, TraceLogger_Scripts);
 
@@ -835,7 +916,7 @@ GeneratorThrowOrClose(JSContext* cx, BaselineFrame* frame, Handle<GeneratorObjec
     // work. This function always returns false, so we're guaranteed to enter
     // the exception handler where we will clear the pc.
     JSScript* script = frame->script();
-    uint32_t offset = script->yieldOffsets()[genObj->yieldIndex()];
+    uint32_t offset = script->yieldAndAwaitOffsets()[genObj->yieldAndAwaitIndex()];
     frame->setOverridePc(script->offsetToPC(offset));
 
     MOZ_ALWAYS_TRUE(DebugAfterYield(cx, frame));
@@ -894,6 +975,17 @@ NewArgumentsObject(JSContext* cx, BaselineFrame* frame, MutableHandleValue res)
         return false;
     res.setObject(*obj);
     return true;
+}
+
+JSObject*
+CopyLexicalEnvironmentObject(JSContext* cx, HandleObject env, bool copySlots)
+{
+    Handle<LexicalEnvironmentObject*> lexicalEnv = env.as<LexicalEnvironmentObject>();
+
+    if (copySlots)
+        return LexicalEnvironmentObject::clone(cx, lexicalEnv);
+
+    return LexicalEnvironmentObject::recreate(cx, lexicalEnv);
 }
 
 JSObject*
@@ -1117,7 +1209,7 @@ bool
 RecompileImpl(JSContext* cx, bool force)
 {
     MOZ_ASSERT(cx->currentlyRunningInJit());
-    JitActivationIterator activations(cx->runtime());
+    JitActivationIterator activations(cx);
     JitFrameIterator iter(activations);
 
     MOZ_ASSERT(iter.type() == JitFrame_Exit);
@@ -1169,7 +1261,7 @@ SetDenseOrUnboxedArrayElement(JSContext* cx, HandleObject obj, int32_t index,
 void
 AutoDetectInvalidation::setReturnOverride()
 {
-    cx_->runtime()->jitRuntime()->setIonReturnOverride(rval_.get());
+    cx_->setIonReturnOverride(rval_.get());
 }
 
 void
@@ -1179,7 +1271,7 @@ AssertValidObjectPtr(JSContext* cx, JSObject* obj)
     // Check what we can, so that we'll hopefully assert/crash if we get a
     // bogus object (pointer).
     MOZ_ASSERT(obj->compartment() == cx->compartment());
-    MOZ_ASSERT(obj->runtimeFromMainThread() == cx->runtime());
+    MOZ_ASSERT(obj->runtimeFromActiveCooperatingThread() == cx->runtime());
 
     MOZ_ASSERT_IF(!obj->hasLazyGroup() && obj->maybeShape(),
                   obj->group()->clasp() == obj->maybeShape()->getObjectClass());
@@ -1385,8 +1477,25 @@ CallNativeGetter(JSContext* cx, HandleFunction callee, HandleObject obj,
 }
 
 bool
+CallNativeSetter(JSContext* cx, HandleFunction callee, HandleObject obj, HandleValue rhs)
+{
+    MOZ_ASSERT(callee->isNative());
+    JSNative natfun = callee->native();
+
+    JS::AutoValueArray<3> vp(cx);
+    vp[0].setObject(*callee.get());
+    vp[1].setObject(*obj.get());
+    vp[2].set(rhs);
+
+    return natfun(cx, 1, vp.begin());
+}
+
+bool
 EqualStringsHelper(JSString* str1, JSString* str2)
 {
+    // IC code calls this directly so we shouldn't GC.
+    JS::AutoCheckCannotGC nogc;
+
     MOZ_ASSERT(str1->isAtom());
     MOZ_ASSERT(!str2->isAtom());
     MOZ_ASSERT(str1->length() == str2->length());

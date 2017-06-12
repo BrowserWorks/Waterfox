@@ -3,9 +3,11 @@
 # file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
 DIRS += [
+    'boxmodel',
     'components',
     'computed',
     'fonts',
+    'grids',
     'layout',
     'markup',
     'rules',
@@ -17,6 +19,8 @@ DevToolsModules(
     'inspector-commands.js',
     'inspector-search.js',
     'panel.js',
+    'reducers.js',
+    'store.js',
     'toolsidebar.js',
 )
 

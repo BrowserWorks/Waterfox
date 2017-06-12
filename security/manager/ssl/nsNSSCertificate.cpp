@@ -42,7 +42,6 @@
 #include "pkix/Result.h"
 #include "prerror.h"
 #include "prmem.h"
-#include "prprf.h"
 #include "secasn1.h"
 #include "secder.h"
 #include "secerr.h"
@@ -1108,6 +1107,9 @@ NS_IMETHODIMP
 nsNSSCertificate::GetASN1Structure(nsIASN1Object** aASN1Structure)
 {
   NS_ENSURE_ARG_POINTER(aASN1Structure);
+  if (!NS_IsMainThread()) {
+    return NS_ERROR_NOT_SAME_THREAD;
+  }
   return CreateASN1Struct(aASN1Structure);
 }
 

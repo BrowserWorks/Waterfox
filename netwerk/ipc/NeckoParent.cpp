@@ -44,6 +44,7 @@
 #include "nsINetworkPredictor.h"
 #include "nsINetworkPredictorVerifier.h"
 #include "nsISpeculativeConnect.h"
+#include "nsIThrottlingService.h"
 
 using mozilla::OriginAttributes;
 using mozilla::dom::ChromeUtils;
@@ -148,8 +149,7 @@ static MOZ_COLD
 void CrashWithReason(const char * reason)
 {
 #ifndef RELEASE_OR_BETA
-  MOZ_CRASH_ANNOTATE(reason);
-  MOZ_REALLY_CRASH();
+  MOZ_CRASH_UNSAFE_OOL(reason);
 #endif
 }
 
@@ -823,21 +823,11 @@ mozilla::ipc::IPCResult
 NeckoParent::RecvPredPredict(const ipc::OptionalURIParams& aTargetURI,
                              const ipc::OptionalURIParams& aSourceURI,
                              const uint32_t& aReason,
-                             const SerializedLoadContext& aLoadContext,
+                             const OriginAttributes& aOriginAttributes,
                              const bool& hasVerifier)
 {
   nsCOMPtr<nsIURI> targetURI = DeserializeURI(aTargetURI);
   nsCOMPtr<nsIURI> sourceURI = DeserializeURI(aSourceURI);
-
-  // We only actually care about the loadContext.mPrivateBrowsing, so we'll just
-  // pass dummy params for nestFrameId, and originAttributes.
-  uint64_t nestedFrameId = 0;
-  OriginAttributes attrs(NECKO_UNKNOWN_APP_ID, false);
-  nsCOMPtr<nsILoadContext> loadContext;
-  if (aLoadContext.IsNotNull()) {
-    attrs.SyncAttributesWithPrivateBrowsing(aLoadContext.mOriginAttributes.mPrivateBrowsingId > 0);
-    loadContext = new LoadContext(aLoadContext, nestedFrameId, attrs);
-  }
 
   // Get the current predictor
   nsresult rv = NS_OK;
@@ -849,7 +839,7 @@ NeckoParent::RecvPredPredict(const ipc::OptionalURIParams& aTargetURI,
   if (hasVerifier) {
     verifier = do_QueryInterface(predictor);
   }
-  predictor->Predict(targetURI, sourceURI, aReason, loadContext, verifier);
+  predictor->PredictNative(targetURI, sourceURI, aReason, aOriginAttributes, verifier);
   return IPC_OK();
 }
 
@@ -857,20 +847,10 @@ mozilla::ipc::IPCResult
 NeckoParent::RecvPredLearn(const ipc::URIParams& aTargetURI,
                            const ipc::OptionalURIParams& aSourceURI,
                            const uint32_t& aReason,
-                           const SerializedLoadContext& aLoadContext)
+                           const OriginAttributes& aOriginAttributes)
 {
   nsCOMPtr<nsIURI> targetURI = DeserializeURI(aTargetURI);
   nsCOMPtr<nsIURI> sourceURI = DeserializeURI(aSourceURI);
-
-  // We only actually care about the loadContext.mPrivateBrowsing, so we'll just
-  // pass dummy params for nestFrameId, and originAttributes;
-  uint64_t nestedFrameId = 0;
-  OriginAttributes attrs(NECKO_UNKNOWN_APP_ID, false);
-  nsCOMPtr<nsILoadContext> loadContext;
-  if (aLoadContext.IsNotNull()) {
-    attrs.SyncAttributesWithPrivateBrowsing(aLoadContext.mOriginAttributes.mPrivateBrowsingId > 0);
-    loadContext = new LoadContext(aLoadContext, nestedFrameId, attrs);
-  }
 
   // Get the current predictor
   nsresult rv = NS_OK;
@@ -878,7 +858,7 @@ NeckoParent::RecvPredLearn(const ipc::URIParams& aTargetURI,
     do_GetService("@mozilla.org/network/predictor;1", &rv);
   NS_ENSURE_SUCCESS(rv, IPC_FAIL_NO_REASON(this));
 
-  predictor->Learn(targetURI, sourceURI, aReason, loadContext);
+  predictor->LearnNative(targetURI, sourceURI, aReason, aOriginAttributes);
   return IPC_OK();
 }
 
@@ -908,6 +888,23 @@ NeckoParent::RecvRemoveRequestContext(const nsCString& rcid)
   id.Parse(rcid.BeginReading());
   rcsvc->RemoveRequestContext(id);
 
+  return IPC_OK();
+}
+
+mozilla::ipc::IPCResult
+NeckoParent::RecvIncreaseThrottlePressure()
+{
+  mThrottlers.AppendElement(mozilla::UniquePtr<mozilla::net::Throttler>(new mozilla::net::Throttler));
+  return IPC_OK();
+}
+
+mozilla::ipc::IPCResult
+NeckoParent::RecvDecreaseThrottlePressure()
+{
+  MOZ_ASSERT(!mThrottlers.IsEmpty());
+  // We do this because we don't actually care which throttler gets removed,
+  // just that one of them does.
+  mThrottlers.RemoveElementAt(0);
   return IPC_OK();
 }
 

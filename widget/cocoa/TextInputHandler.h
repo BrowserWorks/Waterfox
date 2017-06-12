@@ -277,8 +277,11 @@ public:
    * ComputeGeckoCodeNameIndex() returns Gecko code name index for the key.
    *
    * @param aNativeKeyCode        A native keycode.
+   * @param aKbType               A native Keyboard Type value.  Typically,
+   *                              this is a result of ::LMGetKbdType().
    */
-  static CodeNameIndex ComputeGeckoCodeNameIndex(UInt32 aNativeKeyCode);
+  static CodeNameIndex ComputeGeckoCodeNameIndex(UInt32 aNativeKeyCode,
+                                                 UInt32 aKbType);
 
 protected:
   /**
@@ -311,6 +314,19 @@ protected:
    *                              returns 0.
    */
   uint32_t TranslateToChar(UInt32 aKeyCode, UInt32 aModifiers, UInt32 aKbType);
+
+  /**
+   * TranslateToChar() checks if aKeyCode with aModifiers is a dead key.
+   *
+   * @param aKeyCode              A native keyCode.
+   * @param aModifiers            Combination of native modifier flags.
+   * @param aKbType               A native Keyboard Type value.  Typically,
+   *                              this is a result of ::LMGetKbdType().
+   * @return                      Returns true if the key with specified
+   *                              modifier state isa dead key.  Otherwise,
+   *                              false.
+   */
+  bool IsDeadKey(UInt32 aKeyCode, UInt32 aModifiers, UInt32 aKbType);
 
   /**
    * ComputeInsertString() computes string to be inserted with the key event.
@@ -575,6 +591,11 @@ protected:
     bool CanDispatchKeyPressEvent() const
     {
       return !mKeyPressDispatched && !IsDefaultPrevented();
+    }
+
+    bool CanHandleCommand() const
+    {
+      return !mKeyDownHandled && !mKeyPressHandled;
     }
 
     void InitKeyEvent(TextInputHandlerBase* aHandler,

@@ -73,7 +73,7 @@ struct ElementPropertyTransition : public dom::KeyframeEffectReadOnly
       NS_WARNING("Failed to generate transition property values");
       return StyleAnimationValue();
     }
-    return mProperties[0].mSegments[0].mToValue;
+    return mProperties[0].mSegments[0].mToValue.mGecko;
   }
 
   // This is the start value to be used for a check for whether a
@@ -162,18 +162,6 @@ public:
 
     Animation::CancelFromStyle();
 
-    // The above call to Animation::CancelFromStyle may cause a transitioncancel
-    // event to be queued. However, it will also remove the transition from its
-    // timeline. If this transition was the last animation attached to
-    // the timeline, the timeline will stop observing the refresh driver and
-    // there may be no subsequent tick fro dispatching animation events.
-    //
-    // To ensure the cancel event is dispatched we tell the timeline it needs to
-    // observe the refresh driver for at least one more tick.
-    if (mTimeline) {
-      mTimeline->NotifyAnimationUpdated(*this);
-    }
-
     // It is important we do this *after* calling CancelFromStyle().
     // This is because CancelFromStyle() will end up posting a restyle and
     // that restyle should target the *transitions* level of the cascade.
@@ -245,9 +233,6 @@ protected:
 
 
   enum class TransitionPhase;
-  // Return the TransitionPhase to use when the transition doesn't have a target
-  // effect.
-  TransitionPhase GetTransitionPhaseWithoutEffect() const;
 
   // The (pseudo-)element whose computed transition-property refers to this
   // transition (if any).
@@ -272,7 +257,7 @@ protected:
   // to be queued on this tick.
   // See: https://drafts.csswg.org/css-transitions-2/#transition-phase
   enum class TransitionPhase {
-    Idle   = static_cast<int>(ComputedTiming::AnimationPhase::Null),
+    Idle   = static_cast<int>(ComputedTiming::AnimationPhase::Idle),
     Before = static_cast<int>(ComputedTiming::AnimationPhase::Before),
     Active = static_cast<int>(ComputedTiming::AnimationPhase::Active),
     After  = static_cast<int>(ComputedTiming::AnimationPhase::After),
@@ -419,12 +404,6 @@ public:
   }
   void SortEvents()      { mEventDispatcher.SortEvents(); }
   void ClearEventQueue() { mEventDispatcher.ClearEventQueue(); }
-
-  // Stop transitions on the element. This method takes the real element
-  // rather than the element for the generated content for transitions on
-  // ::before and ::after.
-  void StopTransitionsForElement(mozilla::dom::Element* aElement,
-                                 mozilla::CSSPseudoElementType aPseudoType);
 
 protected:
   virtual ~nsTransitionManager() {}

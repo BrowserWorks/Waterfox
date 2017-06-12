@@ -58,43 +58,12 @@ using namespace mozilla::media;
 
 typedef std::vector<CompositableOperation> OpVector;
 typedef nsTArray<OpDestroy> OpDestroyVector;
-
-namespace {
-class ImageBridgeThread : public Thread {
-public:
-
-  ImageBridgeThread() : Thread("ImageBridgeChild") {
-  }
-
-protected:
-
-  MOZ_IS_CLASS_INIT
-  void Init() {
-#ifdef MOZ_ENABLE_PROFILER_SPS
-    mPseudoStackHack = profiler_get_pseudo_stack();
-#endif
-  }
-
-  void CleanUp() {
-#ifdef MOZ_ENABLE_PROFILER_SPS
-    mPseudoStackHack = nullptr;
-#endif
-  }
-
-private:
-
-#ifdef MOZ_ENABLE_PROFILER_SPS
-  // This is needed to avoid a spurious leak report.  There's no other
-  // use for it.  See bug 1239504 and bug 1215265.
-  MOZ_INIT_OUTSIDE_CTOR PseudoStack* mPseudoStackHack;
-#endif
-};
-}
+typedef nsTArray<ReadLockInit> ReadLockVector;
 
 struct CompositableTransaction
 {
   CompositableTransaction()
-  : mSwapRequired(false)
+  : mReadLockSequenceNumber(0)
   , mFinished(true)
   {}
   ~CompositableTransaction()
@@ -109,13 +78,15 @@ struct CompositableTransaction
   {
     MOZ_ASSERT(mFinished);
     mFinished = false;
+    mReadLockSequenceNumber = 0;
+    mReadLocks.AppendElement();
   }
   void End()
   {
     mFinished = true;
-    mSwapRequired = false;
     mOperations.clear();
     mDestroyedActors.Clear();
+    mReadLocks.Clear();
   }
   bool IsEmpty() const
   {
@@ -126,19 +97,22 @@ struct CompositableTransaction
     MOZ_ASSERT(!Finished(), "forgot BeginTransaction?");
     mOperations.push_back(op);
   }
-  void AddEdit(const CompositableOperation& op)
+
+  ReadLockHandle AddReadLock(const ReadLockDescriptor& aReadLock)
   {
-    AddNoSwapEdit(op);
-    MarkSyncTransaction();
-  }
-  void MarkSyncTransaction()
-  {
-    mSwapRequired = true;
+    ReadLockHandle handle(++mReadLockSequenceNumber);
+    if (mReadLocks.LastElement().Length() >= CompositableForwarder::GetMaxFileDescriptorsPerMessage()) {
+      mReadLocks.AppendElement();
+    }
+    mReadLocks.LastElement().AppendElement(ReadLockInit(aReadLock, handle));
+    return handle;
   }
 
   OpVector mOperations;
   OpDestroyVector mDestroyedActors;
-  bool mSwapRequired;
+  nsTArray<ReadLockVector> mReadLocks;
+  uint64_t mReadLockSequenceNumber;
+
   bool mFinished;
 };
 
@@ -167,10 +141,13 @@ ImageBridgeChild::UseTextures(CompositableClient* aCompositable,
     }
 
     ReadLockDescriptor readLock;
-    t.mTextureClient->SerializeReadLock(readLock);
+    ReadLockHandle readLockHandle;
+    if (t.mTextureClient->SerializeReadLock(readLock)) {
+      readLockHandle = mTxn->AddReadLock(readLock);
+    }
 
     textures.AppendElement(TimedTexture(nullptr, t.mTextureClient->GetIPDLActor(),
-                                        readLock,
+                                        readLockHandle,
                                         t.mTimeStamp, t.mPictureRect,
                                         t.mFrameID, t.mProducerID));
 
@@ -186,32 +163,7 @@ ImageBridgeChild::UseComponentAlphaTextures(CompositableClient* aCompositable,
                                             TextureClient* aTextureOnBlack,
                                             TextureClient* aTextureOnWhite)
 {
-  MOZ_ASSERT(aCompositable);
-  MOZ_ASSERT(aTextureOnWhite);
-  MOZ_ASSERT(aTextureOnBlack);
-  MOZ_ASSERT(aCompositable->IsConnected());
-  MOZ_ASSERT(aTextureOnWhite->GetIPDLActor());
-  MOZ_ASSERT(aTextureOnBlack->GetIPDLActor());
-  MOZ_ASSERT(aTextureOnBlack->GetSize() == aTextureOnWhite->GetSize());
-
-  ReadLockDescriptor readLockW;
-  ReadLockDescriptor readLockB;
-  aTextureOnBlack->SerializeReadLock(readLockB);
-  aTextureOnWhite->SerializeReadLock(readLockW);
-
-  HoldUntilCompositableRefReleasedIfNecessary(aTextureOnBlack);
-  HoldUntilCompositableRefReleasedIfNecessary(aTextureOnWhite);
-
-  mTxn->AddNoSwapEdit(
-    CompositableOperation(
-      aCompositable->GetIPCHandle(),
-      OpUseComponentAlphaTextures(
-        nullptr, aTextureOnBlack->GetIPDLActor(),
-        nullptr, aTextureOnWhite->GetIPDLActor(),
-        readLockB, readLockW
-      )
-    )
-  );
+  MOZ_CRASH("should not be called");
 }
 
 void
@@ -587,23 +539,18 @@ ImageBridgeChild::EndTransaction()
     ShadowLayerForwarder::PlatformSyncBeforeUpdate();
   }
 
-  AutoTArray<EditReply, 10> replies;
-
-  if (mTxn->mSwapRequired) {
-    if (!SendUpdate(cset, mTxn->mDestroyedActors, GetFwdTransactionId(), &replies)) {
-      NS_WARNING("could not send async texture transaction");
-      return;
-    }
-  } else {
-    // If we don't require a swap we can call SendUpdateNoSwap which
-    // assumes that aReplies is empty (DEBUG assertion)
-    if (!SendUpdateNoSwap(cset, mTxn->mDestroyedActors, GetFwdTransactionId())) {
-      NS_WARNING("could not send async texture transaction (no swap)");
-      return;
+  for (ReadLockVector& locks : mTxn->mReadLocks) {
+    if (locks.Length()) {
+      if (!SendInitReadLocks(locks)) {
+        NS_WARNING("[LayersForwarder] WARNING: sending read locks failed!");
+        return;
+      }
     }
   }
-  for (nsTArray<EditReply>::size_type i = 0; i < replies.Length(); ++i) {
-    MOZ_CRASH("not reached");
+
+  if (!SendUpdate(cset, mTxn->mDestroyedActors, GetFwdTransactionId())) {
+    NS_WARNING("could not send async texture transaction");
+    return;
   }
 }
 
@@ -620,7 +567,7 @@ ImageBridgeChild::InitForContent(Endpoint<PImageBridgeChild>&& aEndpoint)
   gfxPlatform::GetPlatform();
 
   if (!sImageBridgeChildThread) {
-    sImageBridgeChildThread = new ImageBridgeThread();
+    sImageBridgeChildThread = new Thread("ImageBridgeChild");
     if (!sImageBridgeChildThread->Start()) {
       return false;
     }
@@ -747,7 +694,7 @@ ImageBridgeChild::InitSameProcess()
   MOZ_ASSERT(!sImageBridgeChildSingleton);
   MOZ_ASSERT(!sImageBridgeChildThread);
 
-  sImageBridgeChildThread = new ImageBridgeThread();
+  sImageBridgeChildThread = new Thread("ImageBridgeChild");
   if (!sImageBridgeChildThread->IsRunning()) {
     sImageBridgeChildThread->Start();
   }
@@ -775,7 +722,7 @@ ImageBridgeChild::InitWithGPUProcess(Endpoint<PImageBridgeChild>&& aEndpoint)
   MOZ_ASSERT(!sImageBridgeChildSingleton);
   MOZ_ASSERT(!sImageBridgeChildThread);
 
-  sImageBridgeChildThread = new ImageBridgeThread();
+  sImageBridgeChildThread = new Thread("ImageBridgeChild");
   if (!sImageBridgeChildThread->IsRunning()) {
     sImageBridgeChildThread->Start();
   }
@@ -1102,31 +1049,26 @@ ImageBridgeChild::CreateTexture(const SurfaceDescriptor& aSharedData,
 }
 
 static bool
-IBCAddOpDestroy(CompositableTransaction* aTxn, const OpDestroy& op, bool synchronously)
+IBCAddOpDestroy(CompositableTransaction* aTxn, const OpDestroy& op)
 {
   if (aTxn->Finished()) {
     return false;
   }
 
   aTxn->mDestroyedActors.AppendElement(op);
-
-  if (synchronously) {
-    aTxn->MarkSyncTransaction();
-  }
-
   return true;
 }
 
 bool
-ImageBridgeChild::DestroyInTransaction(PTextureChild* aTexture, bool synchronously)
+ImageBridgeChild::DestroyInTransaction(PTextureChild* aTexture)
 {
-  return IBCAddOpDestroy(mTxn, OpDestroy(aTexture), synchronously);
+  return IBCAddOpDestroy(mTxn, OpDestroy(aTexture));
 }
 
 bool
 ImageBridgeChild::DestroyInTransaction(const CompositableHandle& aHandle)
 {
-  return IBCAddOpDestroy(mTxn, OpDestroy(aHandle), false);
+  return IBCAddOpDestroy(mTxn, OpDestroy(aHandle));
 }
 
 void
@@ -1141,15 +1083,9 @@ ImageBridgeChild::RemoveTextureFromCompositable(CompositableClient* aCompositabl
     return;
   }
 
-  CompositableOperation op(
+  mTxn->AddNoSwapEdit(CompositableOperation(
     aCompositable->GetIPCHandle(),
-    OpRemoveTexture(nullptr, aTexture->GetIPDLActor()));
-
-  if (aTexture->GetFlags() & TextureFlags::DEALLOCATE_CLIENT) {
-    mTxn->AddEdit(op);
-  } else {
-    mTxn->AddNoSwapEdit(op);
-  }
+    OpRemoveTexture(nullptr, aTexture->GetIPDLActor())));
 }
 
 bool ImageBridgeChild::IsSameProcess() const

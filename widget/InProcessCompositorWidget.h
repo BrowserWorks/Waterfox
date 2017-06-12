@@ -36,14 +36,13 @@ public:
   virtual bool InitCompositor(layers::Compositor* aCompositor) override;
   virtual LayoutDeviceIntSize GetClientSize() override;
   virtual uint32_t GetGLFrameBufferFormat() override;
-  virtual layers::Composer2D* GetComposer2D() override;
   virtual void ObserveVsync(VsyncObserver* aObserver) override;
   virtual uintptr_t GetWidgetKey() override;
 
   // If you can override this method, inherit from CompositorWidget instead.
   nsIWidget* RealWidget() override;
 
-private:
+protected:
   nsBaseWidget* mWidget;
 };
 

@@ -23,6 +23,7 @@
 #include "mozilla/layers/CompositorOptions.h"
 #include "mozilla/layers/CompositorTypes.h"
 #include "mozilla/layers/GeckoContentController.h"
+#include "mozilla/layers/LayerAttributes.h"
 #include "mozilla/layers/LayersTypes.h"
 #include "nsRect.h"
 #include "nsRegion.h"
@@ -727,6 +728,19 @@ struct ParamTraits<mozilla::layers::CompositableHandle>
   }
 };
 
+template<>
+struct ParamTraits<mozilla::layers::ReadLockHandle>
+{
+  typedef mozilla::layers::ReadLockHandle paramType;
+
+  static void Write(Message* msg, const paramType& param) {
+    WriteParam(msg, param.mHandle);
+  }
+  static bool Read(const Message* msg, PickleIterator* iter, paramType* result) {
+    return ReadParam(msg, iter, &result->mHandle);
+  }
+};
+
 // Helper class for reading bitfields.
 // If T has bitfields members, derive ParamTraits<T> from BitfieldHelper<T>.
 template <typename ParamType>
@@ -921,6 +935,7 @@ struct ParamTraits<mozilla::layers::TextureFactoryIdentifier>
     WriteParam(aMsg, aParam.mParentBackend);
     WriteParam(aMsg, aParam.mParentProcessType);
     WriteParam(aMsg, aParam.mMaxTextureSize);
+    WriteParam(aMsg, aParam.mCompositorUseANGLE);
     WriteParam(aMsg, aParam.mSupportsTextureBlitting);
     WriteParam(aMsg, aParam.mSupportsPartialUploads);
     WriteParam(aMsg, aParam.mSupportsComponentAlpha);
@@ -932,6 +947,7 @@ struct ParamTraits<mozilla::layers::TextureFactoryIdentifier>
     bool result = ReadParam(aMsg, aIter, &aResult->mParentBackend) &&
                   ReadParam(aMsg, aIter, &aResult->mParentProcessType) &&
                   ReadParam(aMsg, aIter, &aResult->mMaxTextureSize) &&
+                  ReadParam(aMsg, aIter, &aResult->mCompositorUseANGLE) &&
                   ReadParam(aMsg, aIter, &aResult->mSupportsTextureBlitting) &&
                   ReadParam(aMsg, aIter, &aResult->mSupportsPartialUploads) &&
                   ReadParam(aMsg, aIter, &aResult->mSupportsComponentAlpha) &&
@@ -1339,10 +1355,26 @@ struct ParamTraits<mozilla::layers::CompositorOptions>
 
   static void Write(Message* aMsg, const paramType& aParam) {
     WriteParam(aMsg, aParam.mUseAPZ);
+    WriteParam(aMsg, aParam.mUseWebRender);
   }
 
   static bool Read(const Message* aMsg, PickleIterator* aIter, paramType* aResult) {
-    return ReadParam(aMsg, aIter, &aResult->mUseAPZ);
+    return ReadParam(aMsg, aIter, &aResult->mUseAPZ)
+        && ReadParam(aMsg, aIter, &aResult->mUseWebRender);
+  }
+};
+
+template <>
+struct ParamTraits<mozilla::layers::SimpleLayerAttributes>
+{
+  typedef mozilla::layers::SimpleLayerAttributes paramType;
+
+  static void Write(Message* aMsg, const paramType& aParam) {
+    aMsg->WriteBytes(&aParam, sizeof(aParam));
+  }
+
+  static bool Read(const Message* aMsg, PickleIterator* aIter, paramType* aResult) {
+    return aMsg->ReadBytesInto(aIter, aResult, sizeof(paramType));
   }
 };
 

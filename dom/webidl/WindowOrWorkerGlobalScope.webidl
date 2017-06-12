@@ -13,9 +13,7 @@
 // https://html.spec.whatwg.org/multipage/webappapis.html#windoworworkerglobalscope-mixin
 [NoInterfaceObject, Exposed=(Window,Worker)]
 interface WindowOrWorkerGlobalScope {
-  // XXXbz We don't implement 'origin' yet on either window or worker globals.
-  // See bug 1306170.
-  // [Replaceable] readonly attribute USVString origin;
+  [Replaceable] readonly attribute USVString origin;
 
   // base64 utility methods
   [Throws]
@@ -46,7 +44,8 @@ interface WindowOrWorkerGlobalScope {
 
 // https://fetch.spec.whatwg.org/#fetch-method
 partial interface WindowOrWorkerGlobalScope {
-  [NewObject] Promise<Response> fetch(RequestInfo input, optional RequestInit init);
+  [NewObject, NeedsCallerType]
+  Promise<Response> fetch(RequestInfo input, optional RequestInit init);
 };
 
 // https://w3c.github.io/webappsec-secure-contexts/#monkey-patching-global-object

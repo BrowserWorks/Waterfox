@@ -38,7 +38,7 @@ class StringObject : public NativeObject
      * |obj|'s last property to it.
      */
     static Shape*
-    assignInitialShape(ExclusiveContext* cx, Handle<StringObject*> obj);
+    assignInitialShape(JSContext* cx, Handle<StringObject*> obj);
 
     JSString* unbox() const {
         return getFixedSlot(PRIMITIVE_VALUE_SLOT).toString();
@@ -56,7 +56,7 @@ class StringObject : public NativeObject
     }
 
   private:
-    inline bool init(JSContext* cx, HandleString str);
+    static inline bool init(JSContext* cx, Handle<StringObject*> obj, HandleString str);
 
     void setStringThis(JSString* str) {
         MOZ_ASSERT(getReservedSlot(PRIMITIVE_VALUE_SLOT).isUndefined());

@@ -32,8 +32,14 @@ public:
     void Start();
     // Whether or not tracking protection should be enabled on this channel.
     nsresult ShouldEnableTrackingProtection(bool *result);
-    void AddShutdownObserver();
-    void RemoveShutdownObserver();
+
+    // Called once we actually classified an URI. (An additional whitelist
+    // check will be done if the classifier reports the URI is a tracker.)
+    nsresult OnClassifyCompleteInternal(nsresult aErrorCode,
+                                        const nsACString& aList,
+                                        const nsACString& aProvider,
+                                        const nsACString& aPrefix);
+
 private:
     // True if the channel is on the allow list.
     bool mIsAllowListed;
@@ -51,7 +57,9 @@ private:
     // from the classifier service.
     nsresult StartInternal();
     // Helper function to check a tracking URI against the whitelist
-    nsresult IsTrackerWhitelisted();
+    nsresult IsTrackerWhitelisted(const nsACString& aList,
+                                  const nsACString& aProvider,
+                                  const nsACString& aPrefix);
     // Helper function to check a URI against the hostname whitelist
     bool IsHostnameWhitelisted(nsIURI *aUri, const nsACString &aWhitelisted);
     // Checks that the channel was loaded by the URI currently loaded in aDoc
@@ -60,10 +68,17 @@ private:
     nsresult ShouldEnableTrackingProtectionInternal(nsIChannel *aChannel,
                                                     bool *result);
 
+    bool AddonMayLoad(nsIChannel *aChannel, nsIURI *aUri);
+    void AddShutdownObserver();
+    void RemoveShutdownObserver();
 public:
-    // If we are blocking tracking content, update the corresponding flag in
-    // the respective docshell and call nsISecurityEventSink::onSecurityChange.
-    static nsresult SetBlockedTrackingContent(nsIChannel *channel);
+    // If we are blocking content, update the corresponding flag in the respective
+    // docshell and call nsISecurityEventSink::onSecurityChange.
+    static nsresult SetBlockedContent(nsIChannel *channel,
+                                      nsresult aErrorCode,
+                                      const nsACString& aList,
+                                      const nsACString& aProvider,
+                                      const nsACString& aPrefix);
     static nsresult NotifyTrackingProtectionDisabled(nsIChannel *aChannel);
 };
 

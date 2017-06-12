@@ -653,13 +653,7 @@ class MachCommandBase(MozbuildObject):
                 # of the wrong objdir when the current objdir is ambiguous.
                 config_topobjdir = dummy.resolve_mozconfig_topobjdir()
 
-                try:
-                    universal_bin = dummy.substs.get('UNIVERSAL_BINARY')
-                except:
-                    universal_bin = False
-
-                if config_topobjdir and not (samepath(topobjdir, config_topobjdir) or
-                        universal_bin and topobjdir.startswith(config_topobjdir)):
+                if config_topobjdir and not samepath(topobjdir, config_topobjdir):
                     raise ObjdirMismatchException(topobjdir, config_topobjdir)
         except BuildEnvironmentNotFoundException:
             pass
@@ -783,16 +777,22 @@ class MachCommandConditions(object):
         """Must have a mercurial source checkout."""
         if hasattr(cls, 'substs'):
             top_srcdir = cls.substs.get('top_srcdir')
-            return top_srcdir and os.path.isdir(os.path.join(top_srcdir, '.hg'))
-        return False
+        elif hasattr(cls, 'topsrcdir'):
+            top_srcdir = cls.topsrcdir
+        else:
+            return False
+        return top_srcdir and os.path.isdir(os.path.join(top_srcdir, '.hg'))
 
     @staticmethod
     def is_git(cls):
         """Must have a git source checkout."""
         if hasattr(cls, 'substs'):
             top_srcdir = cls.substs.get('top_srcdir')
-            return top_srcdir and os.path.isdir(os.path.join(top_srcdir, '.git'))
-        return False
+        elif hasattr(cls, 'topsrcdir'):
+            top_srcdir = cls.topsrcdir
+        else:
+            return False
+        return top_srcdir and os.path.exists(os.path.join(top_srcdir, '.git'))
 
 
 class PathArgument(object):

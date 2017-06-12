@@ -8,13 +8,13 @@
  */
 
 add_task(function* () {
-  let { L10N } = require("devtools/client/netmonitor/l10n");
+  let { L10N } = require("devtools/client/netmonitor/utils/l10n");
 
   let { monitor } = yield initNetMonitor(SIMPLE_URL);
   info("Starting test... ");
 
-  let { document, NetMonitorView } = monitor.panelWin;
-  let { Chart } = NetMonitorView.Statistics;
+  let { document, windowRequire } = monitor.panelWin;
+  let { Chart } = windowRequire("devtools/client/shared/widgets/Chart");
 
   let chart = Chart.PieTable(document, {
     title: "Table title",
@@ -34,6 +34,10 @@ add_task(function* () {
     totals: {
       size: value => "Hello " + L10N.numberWithDecimals(value, 2),
       label: value => "World " + L10N.numberWithDecimals(value, 2)
+    },
+    header: {
+      label1: "",
+      label2: ""
     }
   });
 
@@ -54,9 +58,9 @@ add_task(function* () {
   ok(node.querySelector(".table-chart-container"),
     "A table chart was created successfully.");
 
-  is(rows.length, 3, "There should be 3 pie chart slices created.");
-  is(rows.length, 3, "There should be 3 table chart rows created.");
-  is(sums.length, 2, "There should be 2 total summaries created.");
+  is(rows.length, 4, "There should be 3 pie chart slices and 1 header created.");
+  is(rows.length, 4, "There should be 3 table chart rows and 1 header created.");
+  is(sums.length, 2, "There should be 2 total summaries and 1 header created.");
 
   yield teardown(monitor);
 });

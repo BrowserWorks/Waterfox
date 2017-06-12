@@ -4,24 +4,81 @@
 
 "use strict";
 
-const Cu = Components.utils;
+const { interfaces: Ci, utils: Cu } = Components;
 
 Cu.import("resource://gre/modules/PlacesUtils.jsm");
 Cu.import("resource://gre/modules/PlacesSyncUtils.jsm");
+Cu.import("resource://gre/modules/Services.jsm");
 Cu.import("resource://gre/modules/Task.jsm");
+Cu.import("resource://gre/modules/Timer.jsm");
 Cu.import("resource://gre/modules/XPCOMUtils.jsm");
+Cu.import("resource://services-common/utils.js");
 
+Cu.importGlobalProperties(["URLSearchParams"]);
 
 this.EXPORTED_SYMBOLS = ["BookmarkValidator", "BookmarkProblemData"];
 
 const LEFT_PANE_ROOT_ANNO = "PlacesOrganizer/OrganizerFolder";
 const LEFT_PANE_QUERY_ANNO = "PlacesOrganizer/OrganizerQuery";
+const QUERY_PROTOCOL = "place:";
 
 // Indicates if a local bookmark tree node should be excluded from syncing.
 function isNodeIgnored(treeNode) {
   return treeNode.annos && treeNode.annos.some(anno => anno.name == LEFT_PANE_ROOT_ANNO ||
                                                        anno.name == LEFT_PANE_QUERY_ANNO);
 }
+
+function areURLsEqual(a, b) {
+  if (a === b) {
+    return true;
+  }
+  if (a.startsWith(QUERY_PROTOCOL) != b.startsWith(QUERY_PROTOCOL)) {
+    return false;
+  }
+  // Tag queries are special because we rewrite them to point to the
+  // local tag folder ID. It's expected that the folders won't match,
+  // but all other params should.
+  let aParams = new URLSearchParams(a.slice(QUERY_PROTOCOL.length));
+  let aType = +aParams.get("type");
+  if (aType != Ci.nsINavHistoryQueryOptions.RESULTS_AS_TAG_CONTENTS) {
+    return false;
+  }
+  let bParams = new URLSearchParams(b.slice(QUERY_PROTOCOL.length));
+  let bType = +bParams.get("type");
+  if (bType != Ci.nsINavHistoryQueryOptions.RESULTS_AS_TAG_CONTENTS) {
+    return false;
+  }
+  let aKeys = new Set(aParams.keys());
+  let bKeys = new Set(bParams.keys());
+  if (aKeys.size != bKeys.size) {
+    return false;
+  }
+  // Tag queries shouldn't reference multiple folders, or named folders like
+  // "TOOLBAR" or "BOOKMARKS_MENU". Just in case, we make sure all folder IDs
+  // are numeric. If they are, we ignore them when comparing the query params.
+  if (aKeys.has("folder") && aParams.getAll("folder").every(isFinite)) {
+    aKeys.delete("folder");
+  }
+  if (bKeys.has("folder") && bParams.getAll("folder").every(isFinite)) {
+    bKeys.delete("folder");
+  }
+  for (let key of aKeys) {
+    if (!bKeys.has(key)) {
+      return false;
+    }
+    if (!CommonUtils.arrayEqual(aParams.getAll(key).sort(),
+                                bParams.getAll(key).sort())) {
+      return false;
+    }
+  }
+  for (let key of bKeys) {
+    if (!aKeys.has(key)) {
+      return false;
+    }
+  }
+  return true;
+}
+
 const BOOKMARK_VALIDATOR_VERSION = 1;
 
 /**
@@ -165,9 +222,13 @@ XPCOMUtils.defineLazyGetter(this, "SYNCED_ROOTS", () => [
 
 class BookmarkValidator {
 
+  async canValidate() {
+    return !await PlacesSyncUtils.bookmarks.havePendingChanges();
+  }
+
   _followQueries(recordMap) {
     for (let [guid, entry] of recordMap) {
-      if (entry.type !== "query" && (!entry.bmkUri || !entry.bmkUri.startsWith("place:"))) {
+      if (entry.type !== "query" && (!entry.bmkUri || !entry.bmkUri.startsWith(QUERY_PROTOCOL))) {
         continue;
       }
       // Might be worth trying to parse the place: query instead so that this
@@ -214,13 +275,17 @@ class BookmarkValidator {
     }
   }
 
-  createClientRecordsFromTree(clientTree) {
+  async createClientRecordsFromTree(clientTree) {
     // Iterate over the treeNode, converting it to something more similar to what
     // the server stores.
     let records = [];
     let recordsByGuid = new Map();
     let syncedRoots = SYNCED_ROOTS;
-    function traverse(treeNode, synced) {
+    let yieldCounter = 0;
+    async function traverse(treeNode, synced) {
+      if (++yieldCounter % 50 === 0) {
+        await new Promise(resolve => setTimeout(resolve, 50));
+      }
       if (!synced) {
         synced = syncedRoots.includes(treeNode.guid);
       } else if (isNodeIgnored(treeNode)) {
@@ -233,7 +298,7 @@ class BookmarkValidator {
       switch (treeNode.type) {
         case PlacesUtils.TYPE_X_MOZ_PLACE:
           let query = null;
-          if (treeNode.annos && treeNode.uri.startsWith("place:")) {
+          if (treeNode.annos && treeNode.uri.startsWith(QUERY_PROTOCOL)) {
             query = treeNode.annos.find(({name}) =>
               name === PlacesSyncUtils.bookmarks.SMART_BOOKMARKS_ANNO);
           }
@@ -280,14 +345,14 @@ class BookmarkValidator {
           treeNode.children = [];
         }
         for (let child of treeNode.children) {
-          traverse(child, synced);
+          await traverse(child, synced);
           child.parent = treeNode;
           child.parentid = guid;
           treeNode.childGUIDs.push(child.guid);
         }
       }
     }
-    traverse(clientTree, false);
+    await traverse(clientTree, false);
     clientTree.id = "places";
     this._followQueries(recordsByGuid);
     return records;
@@ -318,7 +383,7 @@ class BookmarkValidator {
    *   the fields describing client/server relationship will not have been filled
    *   out yet.
    */
-  inspectServerRecords(serverRecords) {
+  async inspectServerRecords(serverRecords) {
     let deletedItemIds = new Set();
     let idToRecord = new Map();
     let deletedRecords = [];
@@ -329,6 +394,7 @@ class BookmarkValidator {
 
     let resultRecords = [];
 
+    let yieldCounter = 0;
     for (let record of serverRecords) {
       if (!record.id) {
         ++problemData.missingIDs;
@@ -366,6 +432,9 @@ class BookmarkValidator {
         record.children = record.children.map(childID => {
           return PlacesSyncUtils.bookmarks.guidToSyncId(childID);
         });
+      }
+      if (++yieldCounter % 50 === 0) {
+        await new Promise(resolve => setTimeout(resolve, 50));
       }
     }
 
@@ -607,10 +676,10 @@ class BookmarkValidator {
    * - problemData is the same as for inspectServerRecords, except all properties
    *   will be filled out.
    */
-  compareServerWithClient(serverRecords, clientTree) {
+  async compareServerWithClient(serverRecords, clientTree) {
 
-    let clientRecords = this.createClientRecordsFromTree(clientTree);
-    let inspectionInfo = this.inspectServerRecords(serverRecords);
+    let clientRecords = await this.createClientRecordsFromTree(clientTree);
+    let inspectionInfo = await this.inspectServerRecords(serverRecords);
     inspectionInfo.clientRecords = clientRecords;
 
     // Mainly do this to remove deleted items and normalize child guids.
@@ -676,16 +745,16 @@ class BookmarkValidator {
       }
 
       if (client.tags || server.tags) {
-        let cl = client.tags || [];
-        let sl = server.tags || [];
-        if (cl.length !== sl.length || !cl.every((tag, i) => sl.indexOf(tag) >= 0)) {
+        let cl = client.tags ? [...client.tags].sort() : [];
+        let sl = server.tags ? [...server.tags].sort() : [];
+        if (!CommonUtils.arrayEqual(cl, sl)) {
           differences.push("tags");
         }
       }
 
       let sameType = client.type === server.type;
       if (!sameType) {
-        if (server.type === "query" && client.type === "bookmark" && client.bmkUri.startsWith("place:")) {
+        if (server.type === "query" && client.type === "bookmark" && client.bmkUri.startsWith(QUERY_PROTOCOL)) {
           sameType = true;
         }
       }
@@ -697,8 +766,13 @@ class BookmarkValidator {
         switch (server.type) {
           case "bookmark":
           case "query":
-            if (server.bmkUri !== client.bmkUri) {
+            if (!areURLsEqual(server.bmkUri, client.bmkUri)) {
               differences.push("bmkUri");
+            }
+            break;
+          case "separator":
+            if (server.pos != client.pos) {
+              differences.push("pos");
             }
             break;
           case "livemark":
@@ -718,7 +792,7 @@ class BookmarkValidator {
             if (client.childGUIDs || server.childGUIDs) {
               let cl = client.childGUIDs || [];
               let sl = server.childGUIDs || [];
-              if (cl.length !== sl.length || !cl.every((id, i) => sl[i] === id)) {
+              if (!CommonUtils.arrayEqual(cl, sl)) {
                 structuralDifferences.push("childGUIDs");
               }
             }
@@ -737,6 +811,8 @@ class BookmarkValidator {
   }
 
   _getServerState(engine) {
+// XXXXX - todo - we need to capture last-modified of the server here and
+// ensure the repairer only applys with if-unmodified-since that date.
     let collection = engine.itemSource();
     let collectionKey = engine.service.collectionKeys.keyForCollection(engine.name);
     collection.full = true;
@@ -752,25 +828,22 @@ class BookmarkValidator {
     return items;
   }
 
-  validate(engine) {
-    let self = this;
-    return Task.spawn(function*() {
-      let start = Date.now();
-      let clientTree = yield PlacesUtils.promiseBookmarksTree("", {
-        includeItemIds: true
-      });
-      let serverState = self._getServerState(engine);
-      let serverRecordCount = serverState.length;
-      let result = self.compareServerWithClient(serverState, clientTree);
-      let end = Date.now();
-      let duration = end - start;
-      return {
-        duration,
-        version: self.version,
-        problems: result.problemData,
-        recordCount: serverRecordCount
-      };
+  async validate(engine) {
+    let start = Date.now();
+    let clientTree = await PlacesUtils.promiseBookmarksTree("", {
+      includeItemIds: true
     });
+    let serverState = this._getServerState(engine);
+    let serverRecordCount = serverState.length;
+    let result = await this.compareServerWithClient(serverState, clientTree);
+    let end = Date.now();
+    let duration = end - start;
+    return {
+      duration,
+      version: this.version,
+      problems: result.problemData,
+      recordCount: serverRecordCount
+    };
   }
 
 }

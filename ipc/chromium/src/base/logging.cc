@@ -6,9 +6,9 @@
 
 #include "base/logging.h"
 #include "prmem.h"
-#include "prprf.h"
 #include "base/string_util.h"
 #include "nsXPCOM.h"
+#include "mozilla/Printf.h"
 
 namespace mozilla {
 
@@ -48,7 +48,7 @@ Logger::~Logger()
   if (xpcomlevel != -1)
     NS_DebugBreak(xpcomlevel, mMsg, NULL, mFile, mLine);
 
-  PR_Free(mMsg);
+  mozilla::SmprintfFree(mMsg);
 }
 
 void
@@ -56,12 +56,11 @@ Logger::printf(const char* fmt, ...)
 {
   va_list args;
   va_start(args, fmt);
-  mMsg = PR_vsprintf_append(mMsg, fmt, args);
+  mMsg = mozilla::VsmprintfAppend(mMsg, fmt, args);
   va_end(args);
 }
 
 LazyLogModule Logger::gChromiumPRLog("chromium");
-} // namespace mozilla 
 
 mozilla::Logger&
 operator<<(mozilla::Logger& log, const char* s)
@@ -97,3 +96,5 @@ operator<<(mozilla::Logger& log, void* p)
   log.printf("%p", p);
   return log;
 }
+
+} // namespace mozilla

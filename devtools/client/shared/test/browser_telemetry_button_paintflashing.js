@@ -44,16 +44,20 @@ function* delayedClicks(toolbox, node, clicks) {
       setTimeout(() => resolve(), TOOL_DELAY);
     });
 
-    // this event will fire once the command execution starts and
-    // the output object is created
-    let clicked = toolbox._requisition.commandOutputManager.onOutput.once();
+    let { CommandState } = require("devtools/shared/gcli/command-state");
+    let clicked = new Promise(resolve => {
+      CommandState.on("changed", function changed(type, { command }) {
+        if (command === "paintflashing") {
+          CommandState.off("changed", changed);
+          resolve();
+        }
+      });
+    });
 
     info("Clicking button " + node.id);
     node.click();
 
-    let outputEvent = yield clicked;
-    // promise gets resolved once execution finishes and output is ready
-    yield outputEvent.output.promise;
+    yield clicked;
   }
 }
 

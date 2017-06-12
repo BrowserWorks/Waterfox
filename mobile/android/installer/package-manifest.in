@@ -113,6 +113,7 @@
 @BINPATH@/components/docshell.xpt
 @BINPATH@/components/dom.xpt
 @BINPATH@/components/dom_base.xpt
+@BINPATH@/components/dom_bindings.xpt
 @BINPATH@/components/dom_canvas.xpt
 @BINPATH@/components/dom_core.xpt
 @BINPATH@/components/dom_css.xpt
@@ -172,11 +173,14 @@
 @BINPATH@/components/layout_xul.xpt
 @BINPATH@/components/locale.xpt
 @BINPATH@/components/lwbrk.xpt
-#ifdef MOZ_ENABLE_PROFILER_SPS
+#ifdef MOZ_GECKO_PROFILER
 @BINPATH@/components/memory_profiler.xpt
 #endif
 @BINPATH@/components/mimetype.xpt
 @BINPATH@/components/mozfind.xpt
+#ifdef ENABLE_INTL_API
+@BINPATH@/components/mozintl.xpt
+#endif
 @BINPATH@/components/necko_about.xpt
 @BINPATH@/components/necko_cache.xpt
 @BINPATH@/components/necko_cache2.xpt
@@ -204,7 +208,7 @@
 @BINPATH@/components/plugin.xpt
 @BINPATH@/components/pref.xpt
 @BINPATH@/components/prefetch.xpt
-#ifdef MOZ_ENABLE_PROFILER_SPS
+#ifdef MOZ_GECKO_PROFILER
 @BINPATH@/components/profiler.xpt
 #endif
 @BINPATH@/components/rdf.xpt
@@ -332,14 +336,11 @@
 @BINPATH@/components/nsWebHandlerApp.js
 @BINPATH@/components/satchel.manifest
 @BINPATH@/components/nsFormAutoComplete.js
-@BINPATH@/components/nsFormHistory.js
 @BINPATH@/components/FormHistoryStartup.js
 @BINPATH@/components/nsInputListAutoComplete.js
 @BINPATH@/components/formautofill.manifest
 @BINPATH@/components/FormAutofillContentService.js
 @BINPATH@/components/FormAutofillStartup.js
-@BINPATH@/components/CSSUnprefixingService.js
-@BINPATH@/components/CSSUnprefixingService.manifest
 @BINPATH@/components/contentAreaDropListener.manifest
 @BINPATH@/components/contentAreaDropListener.js
 @BINPATH@/components/messageWakeupService.js
@@ -396,6 +397,11 @@
 
 @BINPATH@/components/TVSimulatorService.js
 @BINPATH@/components/TVSimulatorService.manifest
+
+#ifdef ENABLE_INTL_API
+@BINPATH@/components/mozIntl.manifest
+@BINPATH@/components/mozIntl.js
+#endif
 
 ; Modules
 @BINPATH@/modules/*

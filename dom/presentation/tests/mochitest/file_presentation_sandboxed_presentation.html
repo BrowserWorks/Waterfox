@@ -4,7 +4,7 @@
 <head>
 <meta charset="utf-8">
 <title>Test allow-presentation sandboxing flag</title>
-<script type="application/javascript;version=1.8">
+<script type="application/javascript">
 
 "use strict";
 
@@ -96,12 +96,11 @@ function runTest() {
   .then(finish);
 }
 
-window.addEventListener("message", function onMessage(evt) {
-  window.removeEventListener("message", onMessage);
+window.addEventListener("message", function(evt) {
   if (evt.data === "start") {
     runTest();
   }
-});
+}, {once: true});
 
 window.setTimeout(function() {
   command("ready-to-start");

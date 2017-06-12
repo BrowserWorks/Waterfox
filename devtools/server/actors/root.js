@@ -7,6 +7,7 @@
 "use strict";
 
 const { Cc, Ci, Cu } = require("chrome");
+const Services = require("Services");
 const { ActorPool, appendExtraActors, createExtraActors } = require("devtools/server/actors/common");
 const { DebuggerServer } = require("devtools/server/main");
 
@@ -14,6 +15,8 @@ loader.lazyGetter(this, "ppmm", () => {
   return Cc["@mozilla.org/parentprocessmessagemanager;1"].getService(
     Ci.nsIMessageBroadcaster);
 });
+loader.lazyRequireGetter(this, "WindowActor",
+  "devtools/server/actors/window", true);
 
 /* Root actor for the remote debugging protocol. */
 
@@ -167,12 +170,15 @@ RootActor.prototype = {
     // Added in Firefox 40. Indicates that the backend supports registering custom
     // commands through the WebConsoleCommands API.
     webConsoleCommands: true,
-    // Whether root actor exposes tab actors
-    // if allowChromeProcess is true, you can fetch a ChromeActor instance
-    // to debug chrome and any non-content ressource via getProcess request
-    // if allocChromeProcess is defined, but not true, it means that root actor
-    // no longer expose tab actors, but also that getProcess forbids
-    // exposing actors for security reasons
+    // Whether root actor exposes tab actors and access to any window.
+    // If allowChromeProcess is true, you can:
+    // * get a ChromeActor instance to debug chrome and any non-content
+    //   resource via getProcess requests
+    // * get a WindowActor instance to debug windows which could be chrome,
+    //   like browser windows via getWindow requests
+    // If allowChromeProcess is defined, but not true, it means that root actor
+    // no longer expose tab actors, but also that the above requests are
+    // forbidden for security reasons.
     get allowChromeProcess() {
       return DebuggerServer.allowChromeProcess;
     },
@@ -232,6 +238,7 @@ RootActor.prototype = {
     this.conn = null;
     this._tabActorPool = null;
     this._globalActorPool = null;
+    this._windowActorPool = null;
     this._parameters = null;
     this._chromeActor = null;
     this._processActors.clear();
@@ -338,6 +345,38 @@ RootActor.prototype = {
                   });
   },
 
+  onGetWindow: function ({ outerWindowID }) {
+    if (!DebuggerServer.allowChromeProcess) {
+      return {
+        from: this.actorID,
+        error: "forbidden",
+        message: "You are not allowed to debug windows."
+      };
+    }
+    let window = Services.wm.getOuterWindowWithId(outerWindowID);
+    if (!window) {
+      return {
+        from: this.actorID,
+        error: "notFound",
+        message: `No window found with outerWindowID ${outerWindowID}`,
+      };
+    }
+
+    if (!this._windowActorPool) {
+      this._windowActorPool = new ActorPool(this.conn);
+      this.conn.addActorPool(this._windowActorPool);
+    }
+
+    let actor = new WindowActor(this.conn, window);
+    actor.parentID = this.actorID;
+    this._windowActorPool.addActor(actor);
+
+    return {
+      from: this.actorID,
+      window: actor.form(),
+    };
+  },
+
   onTabListChanged: function () {
     this.conn.send({ from: this.actorID, type: "tabListChanged" });
     /* It's a one-shot notification; no need to watch any more. */
@@ -351,6 +390,9 @@ RootActor.prototype = {
                message: "This root actor has no browser addons." };
     }
 
+    // Reattach the onListChanged listener now that a client requested the list.
+    addonList.onListChanged = this._onAddonListChanged;
+
     return addonList.getList().then((addonActors) => {
       let addonActorPool = new ActorPool(this.conn);
       for (let addonActor of addonActors) {
@@ -362,8 +404,6 @@ RootActor.prototype = {
       }
       this._addonActorPool = addonActorPool;
       this.conn.addActorPool(this._addonActorPool);
-
-      addonList.onListChanged = this._onAddonListChanged;
 
       return {
         "from": this.actorID,
@@ -384,6 +424,9 @@ RootActor.prototype = {
                message: "This root actor has no workers." };
     }
 
+    // Reattach the onListChanged listener now that a client requested the list.
+    workerList.onListChanged = this._onWorkerListChanged;
+
     return workerList.getList().then(actors => {
       let pool = new ActorPool(this.conn);
       for (let actor of actors) {
@@ -393,8 +436,6 @@ RootActor.prototype = {
       this.conn.removeActorPool(this._workerActorPool);
       this._workerActorPool = pool;
       this.conn.addActorPool(this._workerActorPool);
-
-      workerList.onListChanged = this._onWorkerListChanged;
 
       return {
         "from": this.actorID,
@@ -415,6 +456,9 @@ RootActor.prototype = {
                message: "This root actor has no service worker registrations." };
     }
 
+    // Reattach the onListChanged listener now that a client requested the list.
+    registrationList.onListChanged = this._onServiceWorkerRegistrationListChanged;
+
     return registrationList.getList().then(actors => {
       let pool = new ActorPool(this.conn);
       for (let actor of actors) {
@@ -424,8 +468,6 @@ RootActor.prototype = {
       this.conn.removeActorPool(this._serviceWorkerRegistrationActorPool);
       this._serviceWorkerRegistrationActorPool = pool;
       this.conn.addActorPool(this._serviceWorkerRegistrationActorPool);
-
-      registrationList.onListChanged = this._onServiceWorkerRegistrationListChanged;
 
       return {
         "from": this.actorID,
@@ -539,6 +581,7 @@ RootActor.prototype = {
 RootActor.prototype.requestTypes = {
   "listTabs": RootActor.prototype.onListTabs,
   "getTab": RootActor.prototype.onGetTab,
+  "getWindow": RootActor.prototype.onGetWindow,
   "listAddons": RootActor.prototype.onListAddons,
   "listWorkers": RootActor.prototype.onListWorkers,
   "listServiceWorkerRegistrations": RootActor.prototype.onListServiceWorkerRegistrations,

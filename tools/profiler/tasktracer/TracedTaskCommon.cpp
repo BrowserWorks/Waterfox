@@ -34,10 +34,14 @@ TracedTaskCommon::~TracedTaskCommon()
 void
 TracedTaskCommon::Init()
 {
-  TraceInfo* info = GetOrCreateTraceInfo();
+  // Keep the following line before GetOrCreateTraceInfo() to avoid a
+  // deadlock.
+  uint64_t taskid = GenNewUniqueTaskId();
+
+  TraceInfoHolder info = GetOrCreateTraceInfo();
   ENSURE_TRUE_VOID(info);
 
-  mTaskId = GenNewUniqueTaskId();
+  mTaskId = taskid;
   mSourceEventId = info->mCurTraceSourceId;
   mSourceEventType = info->mCurTraceSourceType;
   mParentTaskId = info->mCurTaskId;
@@ -54,7 +58,7 @@ TracedTaskCommon::DispatchTask(int aDelayTimeMs)
 void
 TracedTaskCommon::GetTLSTraceInfo()
 {
-  TraceInfo* info = GetOrCreateTraceInfo();
+  TraceInfoHolder info = GetOrCreateTraceInfo();
   ENSURE_TRUE_VOID(info);
 
   mSourceEventType = info->mCurTraceSourceType;
@@ -66,7 +70,7 @@ TracedTaskCommon::GetTLSTraceInfo()
 void
 TracedTaskCommon::SetTLSTraceInfo()
 {
-  TraceInfo* info = GetOrCreateTraceInfo();
+  TraceInfoHolder info = GetOrCreateTraceInfo();
   ENSURE_TRUE_VOID(info);
 
   if (mIsTraceInfoInit) {
@@ -79,7 +83,7 @@ TracedTaskCommon::SetTLSTraceInfo()
 void
 TracedTaskCommon::ClearTLSTraceInfo()
 {
-  TraceInfo* info = GetOrCreateTraceInfo();
+  TraceInfoHolder info = GetOrCreateTraceInfo();
   ENSURE_TRUE_VOID(info);
 
   info->mCurTraceSourceId = 0;

@@ -139,7 +139,10 @@ public:
         if (!uri) {
             return;
         }
-        specConn->SpeculativeConnect(uri, nullptr);
+
+        OriginAttributes attrs;
+        nsCOMPtr<nsIPrincipal> principal = BasePrincipal::CreateCodebasePrincipal(uri, attrs);
+        specConn->SpeculativeConnect2(uri, principal, nullptr);
     }
 
     static void WaitOnGecko()
@@ -224,11 +227,7 @@ public:
 
     static int64_t RunUiThreadCallback()
     {
-        if (!AndroidBridge::Bridge()) {
-            return -1;
-        }
-
-        return AndroidBridge::Bridge()->RunDelayedUiThreadTasks();
+        return AndroidUiThread::RunDelayedTasksIfValid();
     }
 };
 
@@ -463,9 +462,9 @@ nsAppShell::RecordLatencies()
         return;
     }
 
-    const mozilla::Telemetry::ID timeIDs[] = {
-        mozilla::Telemetry::ID::FENNEC_LOOP_UI_LATENCY,
-        mozilla::Telemetry::ID::FENNEC_LOOP_OTHER_LATENCY
+    const mozilla::Telemetry::HistogramID timeIDs[] = {
+        mozilla::Telemetry::HistogramID::FENNEC_LOOP_UI_LATENCY,
+        mozilla::Telemetry::HistogramID::FENNEC_LOOP_OTHER_LATENCY
     };
 
     static_assert(ArrayLength(Queue::sLatencyCount) == Queue::LATENCY_COUNT,

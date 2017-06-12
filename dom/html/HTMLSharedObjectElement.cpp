@@ -180,7 +180,7 @@ HTMLSharedObjectElement::SetAttr(int32_t aNameSpaceID, nsIAtom *aName,
   // attributes before inserting the node into the document.
   if (aNotify && IsInComposedDoc() && mIsDoneAddingChildren &&
       aNameSpaceID == kNameSpaceID_None && aName == URIAttrName()
-      && !BlockEmbedContentLoading()) {
+      && !BlockEmbedOrObjectContentLoading()) {
     return LoadObject(aNotify, true);
   }
 
@@ -259,7 +259,7 @@ HTMLSharedObjectElement::ParseAttribute(int32_t aNamespaceID,
 
 static void
 MapAttributesIntoRuleBase(const nsMappedAttributes *aAttributes,
-                          nsRuleData *aData)
+                          GenericSpecifiedValues* aData)
 {
   nsGenericHTMLElement::MapImageBorderAttributeInto(aAttributes, aData);
   nsGenericHTMLElement::MapImageMarginAttributeInto(aAttributes, aData);
@@ -269,7 +269,7 @@ MapAttributesIntoRuleBase(const nsMappedAttributes *aAttributes,
 
 static void
 MapAttributesIntoRuleExceptHidden(const nsMappedAttributes *aAttributes,
-                                  nsRuleData *aData)
+                                  GenericSpecifiedValues* aData)
 {
   MapAttributesIntoRuleBase(aAttributes, aData);
   nsGenericHTMLElement::MapCommonAttributesIntoExceptHidden(aAttributes, aData);
@@ -277,7 +277,7 @@ MapAttributesIntoRuleExceptHidden(const nsMappedAttributes *aAttributes,
 
 void
 HTMLSharedObjectElement::MapAttributesIntoRule(const nsMappedAttributes *aAttributes,
-                                               nsRuleData *aData)
+                                               GenericSpecifiedValues* aData)
 {
   MapAttributesIntoRuleBase(aAttributes, aData);
   nsGenericHTMLElement::MapCommonAttributesInto(aAttributes, aData);
@@ -313,7 +313,7 @@ HTMLSharedObjectElement::StartObjectLoad(bool aNotify, bool aForceLoad)
   // BindToTree can call us asynchronously, and we may be removed from the tree
   // in the interim
   if (!IsInComposedDoc() || !OwnerDoc()->IsActive() ||
-      BlockEmbedContentLoading()) {
+      BlockEmbedOrObjectContentLoading()) {
     return;
   }
 
@@ -387,32 +387,6 @@ HTMLSharedObjectElement::GetContentPolicyType() const
     MOZ_ASSERT(mNodeInfo->Equals(nsGkAtoms::embed));
     return nsIContentPolicy::TYPE_INTERNAL_EMBED;
   }
-}
-
-bool
-HTMLSharedObjectElement::BlockEmbedContentLoading()
-{
-  // Only check on embed elements
-  if (!IsHTMLElement(nsGkAtoms::embed)) {
-    return false;
-  }
-  // Traverse up the node tree to see if we have any ancestors that may block us
-  // from loading
-  for (nsIContent* parent = GetParent(); parent; parent = parent->GetParent()) {
-    if (parent->IsAnyOfHTMLElements(nsGkAtoms::video, nsGkAtoms::audio)) {
-      return true;
-    }
-    // If we have an ancestor that is an object with a source, it'll have an
-    // associated displayed type. If that type is not null, don't load content
-    // for the embed.
-    if (HTMLObjectElement* object = HTMLObjectElement::FromContent(parent)) {
-      uint32_t type = object->DisplayedType();
-      if (type != eType_Null) {
-        return true;
-      }
-    }
-  }
-  return false;
 }
 
 } // namespace dom

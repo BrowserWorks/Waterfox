@@ -14,6 +14,7 @@
 #include "nsMimeTypes.h"
 #include "nsNetCID.h"
 #include "nsNetUtil.h"
+#include "nsReadableUtils.h"
 
 #include "nsICachingChannel.h"
 #include "nsIDOMDocument.h"
@@ -42,6 +43,7 @@
 #include "mozilla/dom/Performance.h"
 #include "mozIThirdPartyUtil.h"
 #include "nsStreamUtils.h"
+#include "nsThreadUtils.h"
 #include "nsContentSecurityManager.h"
 #include "nsIChannelEventSink.h"
 #include "nsILoadGroupChild.h"
@@ -54,11 +56,13 @@
 #include "nsIConsoleService.h"
 #include "mozilla/BinarySearch.h"
 #include "mozilla/DebugOnly.h"
+#include "mozilla/Move.h"
 #include "nsIHttpHeaderVisitor.h"
 #include "nsIMIMEInputStream.h"
 #include "nsIXULRuntime.h"
 #include "nsICacheInfoChannel.h"
 #include "nsIDOMWindowUtils.h"
+#include "nsIThrottlingService.h"
 
 #include <algorithm>
 #include "HttpBaseChannel.h"
@@ -159,7 +163,6 @@ HttpBaseChannel::HttpBaseChannel()
   , mWasOpened(false)
   , mRequestObserversCalled(false)
   , mResponseHeadersModified(false)
-  , mAllowPipelining(true)
   , mAllowSTS(true)
   , mThirdPartyFlags(0)
   , mUploadStreamHasHeaders(false)
@@ -181,7 +184,6 @@ HttpBaseChannel::HttpBaseChannel()
   , mSuspendCount(0)
   , mInitialRwin(0)
   , mProxyResolveFlags(0)
-  , mProxyURI(nullptr)
   , mContentDispositionHint(UINT32_MAX)
   , mHttpHandler(gHttpHandler)
   , mReferrerPolicy(NS_GetDefaultReferrerPolicy())
@@ -203,7 +205,7 @@ HttpBaseChannel::HttpBaseChannel()
   , mForceMainDocumentChannel(false)
   , mIsTrackingResource(false)
 {
-  LOG(("Creating HttpBaseChannel @%x\n", this));
+  LOG(("Creating HttpBaseChannel @%p\n", this));
 
   // Subfields of unions cannot be targeted in an initializer list.
 #ifdef MOZ_VALGRIND
@@ -219,12 +221,39 @@ HttpBaseChannel::HttpBaseChannel()
 
 HttpBaseChannel::~HttpBaseChannel()
 {
-  LOG(("Destroying HttpBaseChannel @%x\n", this));
-
-  NS_ReleaseOnMainThread(mLoadInfo.forget());
+  LOG(("Destroying HttpBaseChannel @%p\n", this));
 
   // Make sure we don't leak
   CleanRedirectCacheChainIfNecessary();
+
+  ReleaseMainThreadOnlyReferences();
+}
+
+void
+HttpBaseChannel::ReleaseMainThreadOnlyReferences()
+{
+  if (NS_IsMainThread()) {
+    // Already on main thread, let dtor to
+    // take care of releasing references
+    return;
+  }
+
+  nsTArray<nsCOMPtr<nsISupports>> arrayToRelease;
+  arrayToRelease.AppendElement(mURI.forget());
+  arrayToRelease.AppendElement(mOriginalURI.forget());
+  arrayToRelease.AppendElement(mDocumentURI.forget());
+  arrayToRelease.AppendElement(mLoadGroup.forget());
+  arrayToRelease.AppendElement(mLoadInfo.forget());
+  arrayToRelease.AppendElement(mCallbacks.forget());
+  arrayToRelease.AppendElement(mProgressSink.forget());
+  arrayToRelease.AppendElement(mReferrer.forget());
+  arrayToRelease.AppendElement(mApplicationCache.forget());
+  arrayToRelease.AppendElement(mAPIRedirectToURI.forget());
+  arrayToRelease.AppendElement(mProxyURI.forget());
+  arrayToRelease.AppendElement(mPrincipal.forget());
+  arrayToRelease.AppendElement(mTopWindowURI.forget());
+
+  NS_DispatchToMainThread(new ProxyReleaseRunnable(Move(arrayToRelease)));
 }
 
 nsresult
@@ -316,6 +345,7 @@ NS_INTERFACE_MAP_BEGIN(HttpBaseChannel)
   NS_INTERFACE_MAP_ENTRY(nsITimedChannel)
   NS_INTERFACE_MAP_ENTRY(nsIConsoleReportCollector)
   NS_INTERFACE_MAP_ENTRY(nsIThrottledInputChannel)
+  NS_INTERFACE_MAP_ENTRY(nsIClassifiedChannel)
   if (aIID.Equals(NS_GET_IID(HttpBaseChannel))) {
     foundInterface = static_cast<nsIWritablePropertyBag*>(this);
   } else
@@ -1014,7 +1044,8 @@ public:
   NS_IMETHOD OnStopRequest(nsIRequest *aRequest, nsISupports *aContext, nsresult aStatusCode) override
   {
     if (NS_FAILED(aStatusCode) && NS_SUCCEEDED(mChannel->mStatus)) {
-      LOG(("HttpBaseChannel::InterceptFailedOnStop %p seting status %x", mChannel, aStatusCode));
+      LOG(("HttpBaseChannel::InterceptFailedOnStop %p seting status %" PRIx32,
+           mChannel, static_cast<uint32_t>(aStatusCode)));
       mChannel->mStatus = aStatusCode;
     }
     return mNext->OnStopRequest(aRequest, aContext, aStatusCode);
@@ -1465,6 +1496,10 @@ HttpBaseChannel::SetReferrerWithPolicy(nsIURI *referrer,
   // true: spoof with URI of the current request
   bool userSpoofReferrerSource = gHttpHandler->SpoofReferrerSource();
 
+  // false: use real referrer when leaving .onion
+  // true: use an empty referrer
+  bool userHideOnionReferrerSource = gHttpHandler->HideOnionReferrerSource();
+
   // 0: full URI
   // 1: scheme+host+port+path
   // 2: scheme+host+port
@@ -1616,6 +1651,13 @@ HttpBaseChannel::SetReferrerWithPolicy(nsIURI *referrer,
 
   rv = clone->GetAsciiHost(referrerHost);
   if (NS_FAILED(rv)) return rv;
+
+  // Send an empty referrer if leaving a .onion domain.
+  if(userHideOnionReferrerSource &&
+     !currentHost.Equals(referrerHost) &&
+     StringEndsWith(referrerHost, NS_LITERAL_CSTRING(".onion"))) {
+    return NS_OK;
+  }
 
   // check policy for sending ref only when hosts match
   if (userReferrerXOriginPolicy == 2 && !currentHost.Equals(referrerHost))
@@ -1912,7 +1954,7 @@ NS_IMETHODIMP
 HttpBaseChannel::GetAllowPipelining(bool *value)
 {
   NS_ENSURE_ARG_POINTER(value);
-  *value = mAllowPipelining;
+  *value = false;
   return NS_OK;
 }
 
@@ -1920,8 +1962,7 @@ NS_IMETHODIMP
 HttpBaseChannel::SetAllowPipelining(bool value)
 {
   ENSURE_CALLED_BEFORE_CONNECT();
-
-  mAllowPipelining = value;
+  // nop
   return NS_OK;
 }
 
@@ -2045,6 +2086,12 @@ HttpBaseChannel::GetRequestSucceeded(bool *aValue)
 NS_IMETHODIMP
 HttpBaseChannel::RedirectTo(nsIURI *targetURI)
 {
+  NS_ENSURE_ARG(targetURI);
+
+  nsAutoCString spec;
+  targetURI->GetAsciiSpec(spec);
+  LOG(("HttpBaseChannel::RedirectTo [this=%p, uri=%s]", this, spec.get()));
+
   // We cannot redirect after OnStartRequest of the listener
   // has been called, since to redirect we have to switch channels
   // and the dance with OnStartRequest et al has to start over.
@@ -2308,8 +2355,23 @@ NS_IMETHODIMP
 HttpBaseChannel::TakeAllSecurityMessages(
     nsCOMArray<nsISecurityConsoleMessage> &aMessages)
 {
+  MOZ_ASSERT(NS_IsMainThread());
+
   aMessages.Clear();
-  aMessages.SwapElements(mSecurityConsoleMessages);
+  for (auto pair : mSecurityConsoleMessages) {
+    nsresult rv;
+    nsCOMPtr<nsISecurityConsoleMessage> message =
+      do_CreateInstance(NS_SECURITY_CONSOLE_MESSAGE_CONTRACTID, &rv);
+    NS_ENSURE_SUCCESS(rv, rv);
+
+    message->SetTag(pair.first());
+    message->SetCategory(pair.second());
+    aMessages.AppendElement(message);
+  }
+
+  MOZ_ASSERT(mSecurityConsoleMessages.Length() == aMessages.Length());
+  mSecurityConsoleMessages.Clear();
+
   return NS_OK;
 }
 
@@ -2326,13 +2388,15 @@ nsresult
 HttpBaseChannel::AddSecurityMessage(const nsAString &aMessageTag,
     const nsAString &aMessageCategory)
 {
+  MOZ_ASSERT(NS_IsMainThread());
+
   nsresult rv;
-  nsCOMPtr<nsISecurityConsoleMessage> message =
-    do_CreateInstance(NS_SECURITY_CONSOLE_MESSAGE_CONTRACTID, &rv);
-  NS_ENSURE_SUCCESS(rv, rv);
-  message->SetTag(aMessageTag);
-  message->SetCategory(aMessageCategory);
-  mSecurityConsoleMessages.AppendElement(message);
+
+  // nsSecurityConsoleMessage is not thread-safe refcounted.
+  // Delay the object construction until requested.
+  // See TakeAllSecurityMessages()
+  Pair<nsString, nsString> pair(aMessageTag, aMessageCategory);
+  mSecurityConsoleMessages.AppendElement(Move(pair));
 
   nsCOMPtr<nsIConsoleService> console(do_GetService(NS_CONSOLESERVICE_CONTRACTID));
   if (!console) {
@@ -2665,12 +2729,6 @@ HttpBaseChannel::GetIntegrityMetadata(nsAString& aIntegrityMetadata)
   return NS_OK;
 }
 
-mozilla::net::nsHttpChannel*
-HttpBaseChannel::QueryHttpChannelImpl(void)
-{
-  return nullptr;
-}
-
 //-----------------------------------------------------------------------------
 // HttpBaseChannel::nsISupportsPriority
 //-----------------------------------------------------------------------------
@@ -2753,6 +2811,13 @@ HttpBaseChannel::AddConsoleReport(uint32_t aErrorFlags,
 }
 
 void
+HttpBaseChannel::FlushReportsToConsole(uint64_t aInnerWindowID,
+                                       ReportAction aAction)
+{
+  mReportCollector->FlushReportsToConsole(aInnerWindowID, aAction);
+}
+
+void
 HttpBaseChannel::FlushConsoleReports(nsIDocument* aDocument,
                                      ReportAction aAction)
 {
@@ -2760,16 +2825,16 @@ HttpBaseChannel::FlushConsoleReports(nsIDocument* aDocument,
 }
 
 void
-HttpBaseChannel::FlushConsoleReports(nsIConsoleReportCollector* aCollector)
+HttpBaseChannel::FlushConsoleReports(nsILoadGroup* aLoadGroup,
+                                     ReportAction aAction)
 {
-  mReportCollector->FlushConsoleReports(aCollector);
+  mReportCollector->FlushConsoleReports(aLoadGroup, aAction);
 }
 
 void
-HttpBaseChannel::FlushReportsByWindowId(uint64_t aWindowId,
-                                        ReportAction aAction)
+HttpBaseChannel::FlushConsoleReports(nsIConsoleReportCollector* aCollector)
 {
-  mReportCollector->FlushReportsByWindowId(aWindowId, aAction);
+  mReportCollector->FlushConsoleReports(aCollector);
 }
 
 void
@@ -2893,6 +2958,13 @@ HttpBaseChannel::ReleaseListeners()
 {
   MOZ_ASSERT(NS_IsMainThread(), "Should only be called on the main thread.");
 
+  if (mClassOfService & nsIClassOfService::Throttleable) {
+    nsIThrottlingService *throttler = gHttpHandler->GetThrottlingService();
+    if (throttler) {
+      throttler->RemoveChannel(this);
+    }
+  }
+
   mListener = nullptr;
   mListenerContext = nullptr;
   mCallbacks = nullptr;
@@ -2903,6 +2975,8 @@ HttpBaseChannel::ReleaseListeners()
 void
 HttpBaseChannel::DoNotifyListener()
 {
+  LOG(("HttpBaseChannel::DoNotifyListener this=%p", this));
+
   if (mListener) {
     MOZ_ASSERT(!mOnStartRequestCalled,
                "We should not call OnStartRequest twice");
@@ -2939,11 +3013,15 @@ HttpBaseChannel::DoNotifyListener()
   // document that started the navigation.  We want to show the reports on the
   // new document.  Otherwise the console is wiped and the user never sees
   // the information.
-  if (!IsNavigation() && mLoadInfo) {
-    nsCOMPtr<nsIDOMDocument> dommyDoc;
-    mLoadInfo->GetLoadingDocument(getter_AddRefs(dommyDoc));
-    nsCOMPtr<nsIDocument> doc = do_QueryInterface(dommyDoc);
-    FlushConsoleReports(doc);
+  if (!IsNavigation()) {
+    if (mLoadGroup) {
+      FlushConsoleReports(mLoadGroup);
+    } else if (mLoadInfo) {
+      nsCOMPtr<nsIDOMDocument> dommyDoc;
+      mLoadInfo->GetLoadingDocument(getter_AddRefs(dommyDoc));
+      nsCOMPtr<nsIDocument> doc = do_QueryInterface(dommyDoc);
+      FlushConsoleReports(doc);
+    }
   }
 }
 
@@ -3160,8 +3238,7 @@ HttpBaseChannel::SetupReplacementChannel(nsIURI       *newURI,
   // convey the referrer if one was used for this channel to the next one
   if (mReferrer)
     httpChannel->SetReferrerWithPolicy(mReferrer, mReferrerPolicy);
-  // convey the mAllowPipelining and mAllowSTS flags
-  httpChannel->SetAllowPipelining(mAllowPipelining);
+  // convey the mAllowSTS flags
   httpChannel->SetAllowSTS(mAllowSTS);
   // convey the new redirection limit
   // make sure we don't underflow
@@ -3183,6 +3260,12 @@ HttpBaseChannel::SetupReplacementChannel(nsIURI       *newURI,
 
   // share the request context - see bug 1236650
   httpChannel->SetRequestContextID(mRequestContextID);
+
+  // Preserve the loading order
+  nsCOMPtr<nsISupportsPriority> p = do_QueryInterface(newChannel);
+  if (p) {
+    p->SetPriority(mPriority);
+  }
 
   if (httpInternal) {
     // Convey third party cookie, conservative, and spdy flags.
@@ -3319,6 +3402,41 @@ HttpBaseChannel::SameOriginWithOriginalUri(nsIURI *aURI)
 }
 
 
+//-----------------------------------------------------------------------------
+// HttpBaseChannel::nsIClassifiedChannel
+
+NS_IMETHODIMP
+HttpBaseChannel::GetMatchedList(nsACString& aList)
+{
+  aList = mMatchedList;
+  return NS_OK;
+}
+
+NS_IMETHODIMP
+HttpBaseChannel::GetMatchedProvider(nsACString& aProvider)
+{
+  aProvider = mMatchedProvider;
+  return NS_OK;
+}
+
+NS_IMETHODIMP
+HttpBaseChannel::GetMatchedPrefix(nsACString& aPrefix)
+{
+  aPrefix = mMatchedPrefix;
+  return NS_OK;
+}
+
+NS_IMETHODIMP
+HttpBaseChannel::SetMatchedInfo(const nsACString& aList,
+                                const nsACString& aProvider,
+                                const nsACString& aPrefix) {
+  NS_ENSURE_ARG(!aList.IsEmpty());
+
+  mMatchedList = aList;
+  mMatchedProvider = aProvider;
+  mMatchedPrefix = aPrefix;
+  return NS_OK;
+}
 
 //-----------------------------------------------------------------------------
 // HttpBaseChannel::nsITimedChannel

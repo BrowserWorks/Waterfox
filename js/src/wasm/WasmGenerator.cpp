@@ -201,6 +201,18 @@ ModuleGenerator::initWasm(const CompileArgs& args)
             return false;
     }
 
+    if (metadata_->debugEnabled) {
+        if (!debugFuncArgTypes_.resize(env_->funcSigs.length()))
+            return false;
+        if (!debugFuncReturnTypes_.resize(env_->funcSigs.length()))
+            return false;
+        for (size_t i = 0; i < debugFuncArgTypes_.length(); i++) {
+            if (!debugFuncArgTypes_[i].appendAll(env_->funcSigs[i]->args()))
+                return false;
+            debugFuncReturnTypes_[i] = env_->funcSigs[i]->ret();
+        }
+    }
+
     return true;
 }
 
@@ -210,7 +222,7 @@ ModuleGenerator::init(UniqueModuleEnvironment env, const CompileArgs& args,
 {
     env_ = Move(env);
 
-    linkData_.globalDataLength = AlignBytes(InitialGlobalDataBytes, sizeof(void*));
+    linkData_.globalDataLength = 0;
 
     if (!funcToCodeRange_.appendN(BAD_CODE_RANGE, env_->funcSigs.length()))
         return false;
@@ -385,6 +397,7 @@ ModuleGenerator::patchCallSites(TrapExitOffsetArray* maybeTrapExits)
             masm_.patchCall(callerOffset, *existingTrapFarJumps[cs.trap()]);
             break;
           }
+          case CallSiteDesc::Breakpoint:
           case CallSiteDesc::EnterFrame:
           case CallSiteDesc::LeaveFrame: {
             Uint32Vector& jumps = metadata_->debugTrapFarJumpOffsets;
@@ -628,6 +641,7 @@ ModuleGenerator::finishCodegen()
 
     // Fill in LinkData with the offsets of these stubs.
 
+    linkData_.unalignedAccessOffset = unalignedAccessExit.begin;
     linkData_.outOfBoundsOffset = outOfBoundsExit.begin;
     linkData_.interruptOffset = interruptExit.begin;
 
@@ -674,30 +688,6 @@ ModuleGenerator::finishLinkData(Bytes& code)
         if (!linkData_.internalLinks.append(inLink))
             return false;
     }
-
-#if defined(JS_CODEGEN_X86)
-    // Global data accesses in x86 need to be patched with the absolute
-    // address of the global. Globals are allocated sequentially after the
-    // code section so we can just use an InternalLink.
-    for (GlobalAccess a : masm_.globalAccesses()) {
-        LinkData::InternalLink inLink(LinkData::InternalLink::RawPointer);
-        inLink.patchAtOffset = masm_.labelToPatchOffset(a.patchAt);
-        inLink.targetOffset = code.length() + a.globalDataOffset;
-        if (!linkData_.internalLinks.append(inLink))
-            return false;
-    }
-#elif defined(JS_CODEGEN_X64)
-    // Global data accesses on x64 use rip-relative addressing and thus we can
-    // patch here, now that we know the final codeLength.
-    for (GlobalAccess a : masm_.globalAccesses()) {
-        void* from = code.begin() + a.patchAt.offset();
-        void* to = code.end() + a.globalDataOffset;
-        X86Encoding::SetRel32(from, to);
-    }
-#else
-    // Global access is performed using the GlobalReg and requires no patching.
-    MOZ_ASSERT(masm_.globalAccesses().length() == 0);
-#endif
 
     return true;
 }
@@ -1084,7 +1074,7 @@ ModuleGenerator::initSigTableLength(uint32_t sigIndex, uint32_t length)
 {
     MOZ_ASSERT(isAsmJS());
     MOZ_ASSERT(length != 0);
-    MOZ_ASSERT(length <= MaxTableLength);
+    MOZ_ASSERT(length <= MaxTableInitialLength);
 
     MOZ_ASSERT(env_->asmJSSigToTableIndex[sigIndex] == 0);
     env_->asmJSSigToTableIndex[sigIndex] = numTables_;
@@ -1169,6 +1159,12 @@ ModuleGenerator::finish(const ShareableBytes& bytecode)
     metadata_->funcNames = Move(env_->funcNames);
     metadata_->customSections = Move(env_->customSections);
 
+    // Additional debug information to copy.
+    metadata_->debugFuncArgTypes = Move(debugFuncArgTypes_);
+    metadata_->debugFuncReturnTypes = Move(debugFuncReturnTypes_);
+    if (metadata_->debugEnabled)
+        metadata_->debugFuncToCodeRange = Move(funcToCodeRange_);
+
     // These Vectors can get large and the excess capacity can be significant,
     // so realloc them down to size.
     metadata_->memoryAccesses.podResizeToFit();
@@ -1178,6 +1174,7 @@ ModuleGenerator::finish(const ShareableBytes& bytecode)
     metadata_->callSites.podResizeToFit();
     metadata_->callThunks.podResizeToFit();
     metadata_->debugTrapFarJumpOffsets.podResizeToFit();
+    metadata_->debugFuncToCodeRange.podResizeToFit();
 
     // For asm.js, the tables vector is over-allocated (to avoid resize during
     // parallel copilation). Shrink it back down to fit.

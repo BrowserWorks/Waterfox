@@ -2,59 +2,50 @@
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
 
-/* globals window, document, NetMonitorController, NetMonitorView */
-/* exported Netmonitor, NetMonitorController, NetMonitorView, $, $all, dumpn */
+/* exported Netmonitor */
 
 "use strict";
 
-const Cu = Components.utils;
-const { Services } = Cu.import("resource://gre/modules/Services.jsm", {});
-const { BrowserLoader } = Cu.import("resource://devtools/client/shared/browser-loader.js", {});
+const { BrowserLoader } = Components.utils.import("resource://devtools/client/shared/browser-loader.js", {});
 
-function Netmonitor(toolbox) {
-  const { require } = BrowserLoader({
-    baseURI: "resource://devtools/client/netmonitor/",
-    window,
-    commonLibRequire: toolbox.browserRequire,
-  });
+var Netmonitor = {
+  bootstrap: ({ tabTarget, toolbox }) => {
+    const require = window.windowRequire = BrowserLoader({
+      baseURI: "resource://devtools/client/netmonitor/",
+      window,
+      commonLibRequire: toolbox.browserRequire,
+    }).require;
 
-  window.windowRequire = require;
+    const EventEmitter = require("devtools/shared/event-emitter");
+    const { createFactory } = require("devtools/client/shared/vendor/react");
+    const { render } = require("devtools/client/shared/vendor/react-dom");
+    const Provider = createFactory(require("devtools/client/shared/vendor/react-redux").Provider);
+    const { configureStore } = require("./store");
+    const store = window.gStore = configureStore();
+    const { NetMonitorController } = require("./netmonitor-controller");
+    NetMonitorController.toolbox = toolbox;
+    NetMonitorController._target = toolbox.target;
+    this.NetMonitorController = NetMonitorController;
 
-  const { NetMonitorController } = require("./netmonitor-controller.js");
-  const { NetMonitorView } = require("./netmonitor-view.js");
+    // Components
+    const NetworkMonitor = createFactory(require("./components/network-monitor"));
 
-  window.NetMonitorController = NetMonitorController;
-  window.NetMonitorView = NetMonitorView;
+    // Inject EventEmitter into netmonitor window.
+    EventEmitter.decorate(window);
 
-  NetMonitorController._toolbox = toolbox;
-  NetMonitorController._target = toolbox.target;
-}
+    this.root = document.querySelector(".root");
 
-Netmonitor.prototype = {
-  init() {
-    return window.NetMonitorController.startupNetMonitor();
+    render(Provider({ store }, NetworkMonitor()), this.root);
+
+    return NetMonitorController.startupNetMonitor();
   },
 
-  destroy() {
-    return window.NetMonitorController.shutdownNetMonitor();
+  destroy: () => {
+    const require = window.windowRequire;
+    const { unmountComponentAtNode } = require("devtools/client/shared/vendor/react-dom");
+
+    unmountComponentAtNode(this.root);
+
+    return this.NetMonitorController.shutdownNetMonitor();
   }
 };
-
-/**
- * DOM query helper.
- * TODO: Move it into "dom-utils.js" module and "require" it when needed.
- */
-var $ = (selector, target = document) => target.querySelector(selector);
-var $all = (selector, target = document) => target.querySelectorAll(selector);
-
-/**
- * Helper method for debugging.
- * @param string
- */
-function dumpn(str) {
-  if (wantLogging) {
-    dump("NET-FRONTEND: " + str + "\n");
-  }
-}
-
-var wantLogging = Services.prefs.getBoolPref("devtools.debugger.log");

@@ -92,6 +92,13 @@ nsTableCellFrame::Init(nsIContent*       aContent,
     int32_t           colIndex;
     cellFrame->GetColIndex(colIndex);
     SetColIndex(colIndex);
+  } else {
+    // Although the spec doesn't say that writing-mode is not applied to
+    // table-cells, we still override style value here because we want to
+    // make effective writing mode of table structure frames consistent
+    // within a table. The content inside table cells is reflowed by an
+    // anonymous block, hence their writing mode is not affected.
+    mWritingMode = GetTableFrame()->GetWritingMode();
   }
 }
 
@@ -876,7 +883,7 @@ nsTableCellFrame::Reflow(nsPresContext*           aPresContext,
   // see if a special bsize reflow needs to occur due to having a pct height
   nsTableFrame::CheckRequestSpecialBSizeReflow(aReflowInput);
 
-  aStatus = NS_FRAME_COMPLETE;
+  aStatus.Reset();
   WritingMode wm = aReflowInput.GetWritingMode();
   LogicalSize availSize(wm, aReflowInput.AvailableISize(),
                             aReflowInput.AvailableBSize());
@@ -957,10 +964,10 @@ nsTableCellFrame::Reflow(nsPresContext*           aPresContext,
 
   ReflowChild(firstKid, aPresContext, kidSize, kidReflowInput,
               wm, kidOrigin, containerSize, 0, aStatus);
-  if (NS_FRAME_OVERFLOW_IS_INCOMPLETE(aStatus)) {
+  if (aStatus.IsOverflowIncomplete()) {
     // Don't pass OVERFLOW_INCOMPLETE through tables until they can actually handle it
     //XXX should paginate overflow as overflow, but not in this patch (bug 379349)
-    NS_FRAME_SET_INCOMPLETE(aStatus);
+    aStatus.SetIncomplete();
     printf("Set table cell incomplete %p\n", static_cast<void*>(this));
   }
 
@@ -1095,6 +1102,17 @@ nsIAtom*
 nsTableCellFrame::GetType() const
 {
   return nsGkAtoms::tableCellFrame;
+}
+
+void
+nsTableCellFrame::DoUpdateStyleOfOwnedAnonBoxes(ServoStyleSet& aStyleSet,
+                                                nsStyleChangeList& aChangeList,
+                                                nsChangeHint aHintForThisFrame)
+{
+  nsIFrame* kid = mFrames.FirstChild();
+  MOZ_ASSERT(kid && !kid->GetNextSibling(),
+             "Table cells should have just one child");
+  UpdateStyleOfChildAnonBox(kid, aStyleSet, aChangeList, aHintForThisFrame);
 }
 
 #ifdef DEBUG_FRAME_DUMP

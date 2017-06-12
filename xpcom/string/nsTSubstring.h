@@ -6,10 +6,12 @@
 // IWYU pragma: private, include "nsString.h"
 
 #include "mozilla/Casting.h"
+#include "mozilla/IntegerPrintfMacros.h"
+#include "mozilla/UniquePtr.h"
 #include "mozilla/MemoryReporting.h"
 
 #ifndef MOZILLA_INTERNAL_API
-#error Cannot use internal string classes without MOZILLA_INTERNAL_API defined. Use the frozen header nsStringAPI.h instead.
+#error "Using XPCOM strings is limited to code linked into libxul."
 #endif
 
 /**
@@ -45,6 +47,8 @@ public:
   virtual int operator()(const char_type*, const char_type*,
                          uint32_t, uint32_t) const override;
 };
+
+class nsTSubstringSplitter_CharT;
 
 /**
  * nsTSubstring is the most abstract class in the string hierarchy. It
@@ -268,17 +272,9 @@ public:
     return CharAt(aIndex);
   }
 
-  char_type First() const
-  {
-    NS_ASSERTION(mLength > 0, "|First()| called on an empty string");
-    return mData[0];
-  }
+  char_type First() const;
 
-  inline   char_type Last() const
-  {
-    NS_ASSERTION(mLength > 0, "|Last()| called on an empty string");
-    return mData[mLength - 1];
-  }
+  char_type Last() const;
 
   size_type NS_FASTCALL CountChar(char_type) const;
   int32_t NS_FASTCALL FindChar(char_type, index_type aOffset = 0) const;
@@ -571,46 +567,54 @@ public:
   }
 
   /**
-   * Append a formatted string to the current string. Uses the format
-   * codes documented in prprf.h
+   * Append a formatted string to the current string. Uses the
+   * standard printf format codes.
    */
-  void AppendPrintf(const char* aFormat, ...);
+  void AppendPrintf(const char* aFormat, ...) MOZ_FORMAT_PRINTF(2, 3);
   void AppendPrintf(const char* aFormat, va_list aAp);
   void AppendInt(int32_t aInteger)
   {
-    AppendPrintf("%d", aInteger);
+    AppendPrintf("%" PRId32, aInteger);
   }
   void AppendInt(int32_t aInteger, int aRadix)
   {
-    const char* fmt = aRadix == 10 ? "%d" : aRadix == 8 ? "%o" : "%x";
-    AppendPrintf(fmt, aInteger);
+    if (aRadix == 10) {
+      AppendPrintf("%" PRId32, aInteger);
+    } else {
+      AppendPrintf(aRadix == 8 ? "%" PRIo32 : "%" PRIx32,
+                   static_cast<uint32_t>(aInteger));
+    }
   }
   void AppendInt(uint32_t aInteger)
   {
-    AppendPrintf("%u", aInteger);
+    AppendPrintf("%" PRIu32, aInteger);
   }
   void AppendInt(uint32_t aInteger, int aRadix)
   {
-    const char* fmt = aRadix == 10 ? "%u" : aRadix == 8 ? "%o" : "%x";
-    AppendPrintf(fmt, aInteger);
+    AppendPrintf(aRadix == 10 ? "%" PRIu32 : aRadix == 8 ? "%" PRIo32 : "%" PRIx32,
+                 aInteger);
   }
   void AppendInt(int64_t aInteger)
   {
-    AppendPrintf("%lld", aInteger);
+    AppendPrintf("%" PRId64, aInteger);
   }
   void AppendInt(int64_t aInteger, int aRadix)
   {
-    const char* fmt = aRadix == 10 ? "%lld" : aRadix == 8 ? "%llo" : "%llx";
-    AppendPrintf(fmt, aInteger);
+    if (aRadix == 10) {
+      AppendPrintf("%" PRId64, aInteger);
+    } else {
+      AppendPrintf(aRadix == 8 ? "%" PRIo64 : "%" PRIx64,
+                   static_cast<uint64_t>(aInteger));
+    }
   }
   void AppendInt(uint64_t aInteger)
   {
-    AppendPrintf("%llu", aInteger);
+    AppendPrintf("%" PRIu64, aInteger);
   }
   void AppendInt(uint64_t aInteger, int aRadix)
   {
-    const char* fmt = aRadix == 10 ? "%llu" : aRadix == 8 ? "%llo" : "%llx";
-    AppendPrintf(fmt, aInteger);
+    AppendPrintf(aRadix == 10 ? "%" PRIu64 : aRadix == 8 ? "%" PRIo64 : "%" PRIx64,
+                 aInteger);
   }
 
   /**
@@ -709,6 +713,7 @@ public:
     Replace(aCutStart, aCutLength, char_traits::sEmptyBuffer, 0);
   }
 
+  nsTSubstringSplitter_CharT Split(const char_type aChar);
 
   /**
    * buffer sizing
@@ -870,6 +875,7 @@ public:
     , mLength(aLength)
     , mFlags(aFlags)
   {
+    MOZ_RELEASE_ASSERT(CheckCapacity(aLength), "String is too large.");
   }
 #endif /* DEBUG || FORCE_BUILD_REFCNT_LOGGING */
 
@@ -907,8 +913,7 @@ protected:
 
   friend class nsTObsoleteAStringThunk_CharT;
   friend class nsTSubstringTuple_CharT;
-
-  // XXX GCC 3.4 needs this :-(
+  friend class nsTSubstringSplitter_CharT;
   friend class nsTPromiseFlatString_CharT;
 
   char_type*  mData;
@@ -1055,8 +1060,6 @@ protected:
   void NS_FASTCALL ReplaceLiteral(index_type aCutStart, size_type aCutLength,
                                   const char_type* aData, size_type aLength);
 
-  static int AppendFunc(void* aArg, const char* aStr, uint32_t aLen);
-
   static const size_type kMaxCapacity;
 public:
 
@@ -1183,3 +1186,92 @@ operator>(const nsTSubstring_CharT::base_string_type& aLhs,
 {
   return Compare(aLhs, aRhs) > 0;
 }
+
+// You should not need to instantiate this class directly.
+// Use nsTSubstring::Split instead.
+class nsTSubstringSplitter_CharT
+{
+  class nsTSubstringSplit_Iter
+  {
+  public:
+    nsTSubstringSplit_Iter(const nsTSubstringSplitter_CharT& aObj,
+                           nsTSubstring_CharT::size_type aPos)
+      : mObj(aObj)
+      , mPos(aPos)
+    {
+    }
+
+    bool operator!=(const nsTSubstringSplit_Iter& other) const
+    {
+      return mPos != other.mPos;
+    }
+
+    const nsTSubstring_CharT& operator*() const;
+
+    const nsTSubstringSplit_Iter& operator++()
+    {
+      ++mPos;
+      return *this;
+    }
+
+  private:
+    const nsTSubstringSplitter_CharT& mObj;
+    nsTSubstring_CharT::size_type mPos;
+  };
+
+private:
+  const nsTSubstring_CharT* mStr;
+  mozilla::UniquePtr<nsTSubstring_CharT[]> mArray;
+  nsTSubstring_CharT::size_type mArraySize;
+  const nsTSubstring_CharT::char_type mDelim;
+
+public:
+  nsTSubstringSplitter_CharT(const nsTSubstring_CharT* aStr,
+                             nsTSubstring_CharT::char_type aDelim)
+    : mStr(aStr)
+    , mArray(nullptr)
+    , mDelim(aDelim)
+  {
+    if (mStr->IsEmpty()) {
+      mArraySize = 0;
+      return;
+    }
+
+    nsTSubstring_CharT::size_type delimCount = mStr->CountChar(aDelim);
+    mArraySize = delimCount + 1;
+    mArray.reset(new nsTSubstring_CharT[mArraySize]);
+
+    size_t seenParts = 0;
+    nsTSubstring_CharT::size_type start = 0;
+    do {
+      MOZ_ASSERT(seenParts < mArraySize);
+      int32_t offset = mStr->FindChar(aDelim, start);
+      if (offset != -1) {
+        nsTSubstring_CharT::size_type length =
+          static_cast<nsTSubstring_CharT::size_type>(offset) - start;
+        mArray[seenParts++].Assign(mStr->Data() + start, length);
+        start = static_cast<nsTSubstring_CharT::size_type>(offset) + 1;
+      } else {
+        // Get the remainder
+        mArray[seenParts++].Assign(mStr->Data() + start, mStr->Length() - start);
+        break;
+      }
+    } while (start < mStr->Length());
+  }
+
+  nsTSubstringSplit_Iter begin() const
+  {
+    return nsTSubstringSplit_Iter(*this, 0);
+  }
+
+  nsTSubstringSplit_Iter end() const
+  {
+    return nsTSubstringSplit_Iter(*this, mArraySize);
+  }
+
+  const nsTSubstring_CharT& Get(const nsTSubstring_CharT::size_type index) const
+  {
+    MOZ_ASSERT(index < mArraySize);
+    return mArray[index];
+  }
+};

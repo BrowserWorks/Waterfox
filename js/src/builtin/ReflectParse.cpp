@@ -2372,7 +2372,9 @@ ASTSerializer::classDefinition(ParseNode* pn, bool expr, MutableHandleValue dst)
 bool
 ASTSerializer::statement(ParseNode* pn, MutableHandleValue dst)
 {
-    JS_CHECK_RECURSION(cx, return false);
+    if (!CheckRecursionLimit(cx))
+        return false;
+
     switch (pn->getKind()) {
       case PNK_FUNCTION:
       case PNK_VAR:
@@ -2800,18 +2802,20 @@ ASTSerializer::generatorExpression(ParseNode* pn, MutableHandleValue dst)
 
     LOCAL_ASSERT(next->isKind(PNK_SEMI) &&
                  next->pn_kid->isKind(PNK_YIELD) &&
-                 next->pn_kid->pn_left);
+                 next->pn_kid->pn_kid);
 
     RootedValue body(cx);
 
-    return expression(next->pn_kid->pn_left, &body) &&
+    return expression(next->pn_kid->pn_kid, &body) &&
            builder.generatorExpression(body, blocks, filter, isLegacy, &pn->pn_pos, dst);
 }
 
 bool
 ASTSerializer::expression(ParseNode* pn, MutableHandleValue dst)
 {
-    JS_CHECK_RECURSION(cx, return false);
+    if (!CheckRecursionLimit(cx))
+        return false;
+
     switch (pn->getKind()) {
       case PNK_FUNCTION:
       {
@@ -3146,19 +3150,19 @@ ASTSerializer::expression(ParseNode* pn, MutableHandleValue dst)
 
       case PNK_YIELD_STAR:
       {
-        MOZ_ASSERT(pn->pn_pos.encloses(pn->pn_left->pn_pos));
+        MOZ_ASSERT(pn->pn_pos.encloses(pn->pn_kid->pn_pos));
 
         RootedValue arg(cx);
-        return expression(pn->pn_left, &arg) &&
+        return expression(pn->pn_kid, &arg) &&
                builder.yieldExpression(arg, Delegating, &pn->pn_pos, dst);
       }
 
       case PNK_YIELD:
       {
-        MOZ_ASSERT_IF(pn->pn_left, pn->pn_pos.encloses(pn->pn_left->pn_pos));
+        MOZ_ASSERT_IF(pn->pn_kid, pn->pn_pos.encloses(pn->pn_kid->pn_pos));
 
         RootedValue arg(cx);
-        return optExpression(pn->pn_left, &arg) &&
+        return optExpression(pn->pn_kid, &arg) &&
                builder.yieldExpression(arg, NotDelegating, &pn->pn_pos, dst);
       }
 
@@ -3374,7 +3378,9 @@ ASTSerializer::objectPattern(ParseNode* pn, MutableHandleValue dst)
 bool
 ASTSerializer::pattern(ParseNode* pn, MutableHandleValue dst)
 {
-    JS_CHECK_RECURSION(cx, return false);
+    if (!CheckRecursionLimit(cx))
+        return false;
+
     switch (pn->getKind()) {
       case PNK_OBJECT:
         return objectPattern(pn, dst);
@@ -3410,10 +3416,10 @@ ASTSerializer::function(ParseNode* pn, ASTType type, MutableHandleValue dst)
     RootedFunction func(cx, pn->pn_funbox->function());
 
     GeneratorStyle generatorStyle =
-        pn->pn_funbox->isGenerator()
-        ? (pn->pn_funbox->isLegacyGenerator()
-           ? GeneratorStyle::Legacy
-           : GeneratorStyle::ES6)
+        pn->pn_funbox->isStarGenerator()
+        ? GeneratorStyle::ES6
+        : pn->pn_funbox->isLegacyGenerator()
+        ? GeneratorStyle::Legacy
         : GeneratorStyle::None;
 
     bool isAsync = pn->pn_funbox->isAsync();
@@ -3468,7 +3474,7 @@ ASTSerializer::functionArgsAndBody(ParseNode* pn, NodeVector& args, NodeVector& 
         ParseNode* pnstart = pnbody->pn_head;
 
         // Skip over initial yield in generator.
-        if (pnstart && pnstart->isKind(PNK_YIELD)) {
+        if (pnstart && pnstart->isKind(PNK_INITIALYIELD)) {
             MOZ_ASSERT(pnstart->getOp() == JSOP_INITIALYIELD);
             pnstart = pnstart->pn_next;
         }
@@ -3696,6 +3702,7 @@ reflect_parse(JSContext* cx, uint32_t argc, Value* vp)
     CompileOptions options(cx);
     options.setFileAndLine(filename, lineno);
     options.setCanLazilyParse(false);
+    options.allowHTMLComments = target == ParseTarget::Script;
     mozilla::Range<const char16_t> chars = linearChars.twoByteRange();
     UsedNameTracker usedNames(cx);
     if (!usedNames.init())

@@ -100,7 +100,7 @@ function updateCombinedWidgetStyle(aNode, aArea, aModifyCloseMenu) {
 function fillSubviewFromMenuItems(aMenuItems, aSubview) {
   let attrs = ["oncommand", "onclick", "label", "key", "disabled",
                "command", "observes", "hidden", "class", "origin",
-               "image", "checked"];
+               "image", "checked", "style"];
 
   let doc = aSubview.ownerDocument;
   let fragment = doc.createDocumentFragment();
@@ -307,6 +307,8 @@ const CustomizableWidgets = [
       DECKINDEX_FETCHING: 2,
       DECKINDEX_NOCLIENTS: 3,
     },
+    TABS_PER_PAGE: 25,
+    NEXT_PAGE_MIN_TABS: 5, // Minimum number of tabs displayed when we click "Show All"
     onCreated(aNode) {
       // Add an observer to the button so we get the animation during sync.
       // (Note the observer sets many attributes, including label and
@@ -399,13 +401,13 @@ const CustomizableWidgets = [
 
     _showTabsPromise: Promise.resolve(),
     // Update the tab list after any existing in-flight updates are complete.
-    _showTabs() {
+    _showTabs(paginationInfo) {
       this._showTabsPromise = this._showTabsPromise.then(() => {
-        return this.__showTabs();
+        return this.__showTabs(paginationInfo);
       });
     },
     // Return a new promise to update the tab list.
-    __showTabs() {
+    __showTabs(paginationInfo) {
       let doc = this._tabsList.ownerDocument;
       return SyncedTabs.getTabClients().then(clients => {
         // The view may have been hidden while the promise was resolving.
@@ -425,7 +427,7 @@ const CustomizableWidgets = [
 
         this.setDeckIndex(this.deckIndices.DECKINDEX_TABS);
         this._clearTabList();
-        SyncedTabs.sortTabClientsByLastUsed(clients, 50 /* maxTabs */);
+        SyncedTabs.sortTabClientsByLastUsed(clients);
         let fragment = doc.createDocumentFragment();
 
         for (let client of clients) {
@@ -434,7 +436,11 @@ const CustomizableWidgets = [
             let separator = doc.createElementNS(kNSXUL, "menuseparator");
             fragment.appendChild(separator);
           }
-          this._appendClient(client, fragment);
+          if (paginationInfo && paginationInfo.clientId == client.id) {
+            this._appendClient(client, fragment, paginationInfo.maxTabs);
+          } else {
+            this._appendClient(client, fragment);
+          }
         }
         this._tabsList.appendChild(fragment);
       }).catch(err => {
@@ -464,7 +470,7 @@ const CustomizableWidgets = [
       appendTo.appendChild(messageLabel);
       return messageLabel;
     },
-    _appendClient(client, attachFragment) {
+    _appendClient(client, attachFragment, maxTabs = this.TABS_PER_PAGE) {
       let doc = attachFragment.ownerDocument;
       // Create the element for the remote client.
       let clientItem = doc.createElementNS(kNSXUL, "label");
@@ -480,9 +486,29 @@ const CustomizableWidgets = [
         let label = this._appendMessageLabel("notabsforclientlabel", attachFragment);
         label.setAttribute("class", "PanelUI-remotetabs-notabsforclient-label");
       } else {
+        // If this page will display all tabs, show no additional buttons.
+        // If the next page will display all the remaining tabs, show a "Show All" button
+        // Otherwise, show a "Shore More" button
+        let hasNextPage = client.tabs.length > maxTabs;
+        let nextPageIsLastPage = hasNextPage && maxTabs + this.TABS_PER_PAGE >= client.tabs.length;
+        if (nextPageIsLastPage) {
+          // When the user clicks "Show All", try to have at least NEXT_PAGE_MIN_TABS more tabs
+          // to display in order to avoid user frustration
+          maxTabs = Math.min(client.tabs.length - this.NEXT_PAGE_MIN_TABS, maxTabs);
+        }
+        if (hasNextPage) {
+          client.tabs = client.tabs.slice(0, maxTabs);
+        }
         for (let tab of client.tabs) {
           let tabEnt = this._createTabElement(doc, tab);
           attachFragment.appendChild(tabEnt);
+        }
+        if (hasNextPage) {
+          let showAllEnt = this._createShowMoreElement(doc, client.id,
+                                                       nextPageIsLastPage ?
+                                                       Infinity :
+                                                       maxTabs + this.TABS_PER_PAGE);
+          attachFragment.appendChild(showAllEnt);
         }
       }
     },
@@ -503,6 +529,29 @@ const CustomizableWidgets = [
       });
       return item;
     },
+    _createShowMoreElement(doc, clientId, showCount) {
+      let labelAttr, tooltipAttr;
+      if (showCount === Infinity) {
+        labelAttr = "showAllLabel";
+        tooltipAttr = "showAllTooltipText";
+      } else {
+        labelAttr = "showMoreLabel";
+        tooltipAttr = "showMoreTooltipText";
+      }
+      let showAllItem = doc.createElementNS(kNSXUL, "toolbarbutton");
+      showAllItem.setAttribute("itemtype", "showmorebutton");
+      showAllItem.setAttribute("class", "subviewbutton");
+      let label = this._tabsList.getAttribute(labelAttr);
+      showAllItem.setAttribute("label", label);
+      let tooltipText = this._tabsList.getAttribute(tooltipAttr);
+      showAllItem.setAttribute("tooltiptext", tooltipText);
+      showAllItem.addEventListener("click", e => {
+        e.preventDefault();
+        e.stopPropagation();
+        this._showTabs({ clientId, maxTabs: showCount });
+      });
+      return showAllItem;
+    }
   }, {
     id: "privatebrowsing-button",
     shortcutId: "key_privatebrowsing",
@@ -614,11 +663,6 @@ const CustomizableWidgets = [
     tooltiptext: "zoom-controls.tooltiptext2",
     defaultArea: CustomizableUI.AREA_PANEL,
     onBuild(aDocument) {
-      const kPanelId = "PanelUI-popup";
-      let areaType = CustomizableUI.getAreaType(this.currentArea);
-      let inPanel = areaType == CustomizableUI.TYPE_MENU_PANEL;
-      let inToolbar = areaType == CustomizableUI.TYPE_TOOLBAR;
-
       let buttons = [{
         id: "zoom-out-button",
         command: "cmd_fullZoomReduce",
@@ -656,41 +700,6 @@ const CustomizableWidgets = [
         node.appendChild(btnNode);
       });
 
-      // The middle node is the 'Reset Zoom' button.
-      let zoomResetButton = node.childNodes[2];
-      let window = aDocument.defaultView;
-      function updateZoomResetButton() {
-        let updateDisplay = true;
-        // Label should always show 100% in customize mode, so don't update:
-        if (aDocument.documentElement.hasAttribute("customizing")) {
-          updateDisplay = false;
-        }
-        // XXXgijs in some tests we get called very early, and there's no docShell on the
-        // tabbrowser. This breaks the zoom toolkit code (see bug 897410). Don't let that happen:
-        let zoomFactor = 100;
-        try {
-          zoomFactor = Math.round(window.ZoomManager.zoom * 100);
-        } catch (e) {}
-        zoomResetButton.setAttribute("label", CustomizableUI.getLocalizedProperty(
-          buttons[1], "label", [updateDisplay ? zoomFactor : 100]
-        ));
-      }
-
-      // Register ourselves with the service so we know when the zoom prefs change.
-      Services.obs.addObserver(updateZoomResetButton, "browser-fullZoom:zoomChange", false);
-      Services.obs.addObserver(updateZoomResetButton, "browser-fullZoom:zoomReset", false);
-      Services.obs.addObserver(updateZoomResetButton, "browser-fullZoom:location-change", false);
-
-      if (inPanel) {
-        let panel = aDocument.getElementById(kPanelId);
-        panel.addEventListener("popupshowing", updateZoomResetButton);
-      } else {
-        if (inToolbar) {
-          let container = window.gBrowser.tabContainer;
-          container.addEventListener("TabSelect", updateZoomResetButton);
-        }
-        updateZoomResetButton();
-      }
       updateCombinedWidgetStyle(node, this.currentArea, true);
 
       let listener = {
@@ -699,56 +708,33 @@ const CustomizableWidgets = [
             return;
 
           updateCombinedWidgetStyle(node, aArea, true);
-          updateZoomResetButton();
-
-          let newAreaType = CustomizableUI.getAreaType(aArea);
-          if (newAreaType == CustomizableUI.TYPE_MENU_PANEL) {
-            let panel = aDocument.getElementById(kPanelId);
-            panel.addEventListener("popupshowing", updateZoomResetButton);
-          } else if (newAreaType == CustomizableUI.TYPE_TOOLBAR) {
-            let container = window.gBrowser.tabContainer;
-            container.addEventListener("TabSelect", updateZoomResetButton);
-          }
         }.bind(this),
 
         onWidgetRemoved: function(aWidgetId, aPrevArea) {
           if (aWidgetId != this.id)
             return;
 
-          let formerAreaType = CustomizableUI.getAreaType(aPrevArea);
-          if (formerAreaType == CustomizableUI.TYPE_MENU_PANEL) {
-            let panel = aDocument.getElementById(kPanelId);
-            panel.removeEventListener("popupshowing", updateZoomResetButton);
-          } else if (formerAreaType == CustomizableUI.TYPE_TOOLBAR) {
-            let container = window.gBrowser.tabContainer;
-            container.removeEventListener("TabSelect", updateZoomResetButton);
-          }
-
           // When a widget is demoted to the palette ('removed'), it's visual
           // style should change.
           updateCombinedWidgetStyle(node, null, true);
-          updateZoomResetButton();
         }.bind(this),
 
         onWidgetReset: function(aWidgetNode) {
           if (aWidgetNode != node)
             return;
           updateCombinedWidgetStyle(node, this.currentArea, true);
-          updateZoomResetButton();
         }.bind(this),
 
         onWidgetUndoMove: function(aWidgetNode) {
           if (aWidgetNode != node)
             return;
           updateCombinedWidgetStyle(node, this.currentArea, true);
-          updateZoomResetButton();
         }.bind(this),
 
         onWidgetMoved: function(aWidgetId, aArea) {
           if (aWidgetId != this.id)
             return;
           updateCombinedWidgetStyle(node, aArea, true);
-          updateZoomResetButton();
         }.bind(this),
 
         onWidgetInstanceRemoved: function(aWidgetId, aDoc) {
@@ -756,26 +742,7 @@ const CustomizableWidgets = [
             return;
 
           CustomizableUI.removeListener(listener);
-          Services.obs.removeObserver(updateZoomResetButton, "browser-fullZoom:zoomChange");
-          Services.obs.removeObserver(updateZoomResetButton, "browser-fullZoom:zoomReset");
-          Services.obs.removeObserver(updateZoomResetButton, "browser-fullZoom:location-change");
-          let panel = aDoc.getElementById(kPanelId);
-          panel.removeEventListener("popupshowing", updateZoomResetButton);
-          let container = aDoc.defaultView.gBrowser.tabContainer;
-          container.removeEventListener("TabSelect", updateZoomResetButton);
         }.bind(this),
-
-        onCustomizeStart(aWindow) {
-          if (aWindow.document == aDocument) {
-            updateZoomResetButton();
-          }
-        },
-
-        onCustomizeEnd(aWindow) {
-          if (aWindow.document == aDocument) {
-            updateZoomResetButton();
-          }
-        },
 
         onWidgetDrag: function(aWidgetId, aArea) {
           if (aWidgetId != this.id)
@@ -1137,7 +1104,7 @@ const CustomizableWidgets = [
       let fragment = doc.createDocumentFragment();
       let bundle = doc.getElementById("bundle_browser");
 
-      ContextualIdentityService.getIdentities().forEach(identity => {
+      ContextualIdentityService.getPublicIdentities().forEach(identity => {
         let label = ContextualIdentityService.getUserContextLabel(identity.userContextId);
 
         let item = doc.createElementNS(kNSXUL, "toolbarbutton");

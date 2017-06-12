@@ -541,6 +541,19 @@ NS_InitAtomTable()
   gAtomTable = new PLDHashTable(&AtomTableOps, sizeof(AtomTableEntry),
                                 ATOM_HASHTABLE_INITIAL_LENGTH);
   gAtomTableLock = new Mutex("Atom Table Lock");
+
+  // Bug 1340710 has caused us to generate an empty atom at arbitrary times
+  // after startup.  If we end up creating one before nsGkAtoms::_empty is
+  // registered, we get an assertion about transmuting a dynamic atom into a
+  // static atom.  In order to avoid that, we register an empty string static
+  // atom as soon as we initialize the atom table to guarantee that the empty
+  // string atom will always be static.
+  NS_STATIC_ATOM_BUFFER(empty, "");
+  static nsIAtom* empty_atom = nullptr;
+  static const nsStaticAtom default_atoms[] = {
+    NS_STATIC_ATOM(empty, &empty_atom)
+  };
+  NS_RegisterStaticAtoms(default_atoms);
 }
 
 void
@@ -634,13 +647,8 @@ RegisterStaticAtoms(const nsStaticAtom* aAtoms, uint32_t aAtomCount)
       if (!atom->IsStaticAtom()) {
         nsAutoCString name;
         atom->ToUTF8String(name);
-
-        static char sCrashReason[1024];
-        SprintfLiteral(sCrashReason,
-                       "static atom registration for %s should be pushed back",
-                       name.get());
-        MOZ_CRASH_ANNOTATE(sCrashReason);
-        MOZ_REALLY_CRASH();
+        MOZ_CRASH_UNSAFE_PRINTF(
+          "Static atom registration for %s should be pushed back", name.get());
       }
     } else {
       atom = new StaticAtom(stringBuffer, stringLen, hash);

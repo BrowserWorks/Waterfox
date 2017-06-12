@@ -28,6 +28,7 @@
 #include "vm/EnvironmentObject.h"
 #include "vm/Interpreter.h"
 #include "vm/TraceLogging.h"
+#include "vtune/VTuneWrapper.h"
 
 #include "jsscriptinlines.h"
 
@@ -43,7 +44,7 @@ using mozilla::AssertedCast;
 
 BaselineCompiler::BaselineCompiler(JSContext* cx, TempAllocator& alloc, JSScript* script)
   : BaselineCompilerSpecific(cx, alloc, script),
-    yieldOffsets_(cx),
+    yieldAndAwaitOffsets_(cx),
     modifiesArguments_(false)
 {
 }
@@ -51,7 +52,7 @@ BaselineCompiler::BaselineCompiler(JSContext* cx, TempAllocator& alloc, JSScript
 bool
 BaselineCompiler::init()
 {
-    if (!analysis_.init(alloc_, cx->caches.gsnCache))
+    if (!analysis_.init(alloc_, cx->caches().gsnCache))
         return false;
 
     if (!labels_.init(alloc_, script->length()))
@@ -92,8 +93,8 @@ BaselineCompiler::compile()
     JitSpew(JitSpew_Codegen, "# Emitting baseline code for script %s:%" PRIuSIZE,
             script->filename(), script->lineno());
 
-    TraceLoggerThread* logger = TraceLoggerForMainThread(cx->runtime());
-    TraceLoggerEvent scriptEvent(logger, TraceLogger_AnnotateScripts, script);
+    TraceLoggerThread* logger = TraceLoggerForCurrentThread(cx);
+    TraceLoggerEvent scriptEvent(TraceLogger_AnnotateScripts, script);
     AutoTraceLog logScript(logger, scriptEvent);
     AutoTraceLog logCompile(logger, TraceLogger_BaselineCompilation);
 
@@ -210,7 +211,7 @@ BaselineCompiler::compile()
                             pcMappingIndexEntries.length(),
                             pcEntries.length(),
                             bytecodeTypeMapEntries,
-                            yieldOffsets_.length(),
+                            yieldAndAwaitOffsets_.length(),
                             traceLoggerToggleOffsets_.length()),
         JS::DeletePolicy<BaselineScript>(cx->runtime()));
     if (!baselineScript) {
@@ -224,10 +225,6 @@ BaselineCompiler::compile()
     JitSpew(JitSpew_BaselineScripts, "Created BaselineScript %p (raw %p) for %s:%" PRIuSIZE,
             (void*) baselineScript.get(), (void*) code->raw(),
             script->filename(), script->lineno());
-
-#ifdef JS_ION_PERF
-    writePerfSpewerBaselineProfile(script, code);
-#endif
 
     MOZ_ASSERT(pcMappingIndexEntries.length() > 0);
     baselineScript->copyPCMappingIndexEntries(&pcMappingIndexEntries[0]);
@@ -275,7 +272,7 @@ BaselineCompiler::compile()
     // searches for the sought entry when queries are in linear order.
     bytecodeMap[script->nTypeSets()] = 0;
 
-    baselineScript->copyYieldEntries(script, yieldOffsets_);
+    baselineScript->copyYieldAndAwaitEntries(script, yieldAndAwaitOffsets_);
 
     if (compileDebugInstrumentation_)
         baselineScript->setHasDebugInstrumentation();
@@ -306,6 +303,14 @@ BaselineCompiler::compile()
     }
 
     script->setBaselineScript(cx->runtime(), baselineScript.release());
+
+#ifdef JS_ION_PERF
+    writePerfSpewerBaselineProfile(script, code);
+#endif
+
+#ifdef MOZ_VTUNE
+    vtune::MarkScript(code, script, "baseline");
+#endif
 
     return Method_Compiled;
 }
@@ -525,7 +530,6 @@ bool
 BaselineCompiler::emitStackCheck(bool earlyCheck)
 {
     Label skipCall;
-    void* limitAddr = cx->runtime()->addressOfJitStackLimit();
     uint32_t slotsSize = script->nslots() * sizeof(Value);
     uint32_t tolerance = earlyCheck ? slotsSize : 0;
 
@@ -551,7 +555,10 @@ BaselineCompiler::emitStackCheck(bool earlyCheck)
                           &forceCall);
     }
 
-    masm.branchPtr(Assembler::BelowOrEqual, AbsoluteAddress(limitAddr), R1.scratchReg(),
+    void* contextAddr = cx->zone()->group()->addressOfOwnerContext();
+    masm.loadPtr(AbsoluteAddress(contextAddr), R0.scratchReg());
+    masm.branchPtr(Assembler::BelowOrEqual,
+                   Address(R0.scratchReg(), offsetof(JSContext, jitStackLimit)), R1.scratchReg(),
                    &skipCall);
 
     if (!earlyCheck && needsEarlyStackCheck())
@@ -697,8 +704,11 @@ BaselineCompiler::emitInterruptCheck()
     frame.syncStack(0);
 
     Label done;
-    void* interrupt = cx->runtimeAddressOfInterruptUint32();
-    masm.branch32(Assembler::Equal, AbsoluteAddress(interrupt), Imm32(0), &done);
+    void* context = cx->zone()->group()->addressOfOwnerContext();
+    masm.loadPtr(AbsoluteAddress(context), R0.scratchReg());
+    masm.branch32(Assembler::Equal,
+                  Address(R0.scratchReg(), offsetof(JSContext, interrupt_)), Imm32(0),
+                  &done);
 
     prepareVMCall();
     if (!callVM(InterruptCheckInfo))
@@ -838,7 +848,6 @@ BaselineCompiler::emitDebugTrap()
 bool
 BaselineCompiler::emitTraceLoggerEnter()
 {
-    TraceLoggerThread* logger = TraceLoggerForMainThread(cx->runtime());
     AllocatableRegisterSet regs(RegisterSet::Volatile());
     Register loggerReg = regs.takeAnyGeneral();
     Register scriptReg = regs.takeAnyGeneral();
@@ -850,7 +859,7 @@ BaselineCompiler::emitTraceLoggerEnter()
     masm.Push(loggerReg);
     masm.Push(scriptReg);
 
-    masm.movePtr(ImmPtr(logger), loggerReg);
+    masm.loadTraceLogger(loggerReg);
 
     // Script start.
     masm.movePtr(ImmGCPtr(script), scriptReg);
@@ -873,7 +882,6 @@ BaselineCompiler::emitTraceLoggerEnter()
 bool
 BaselineCompiler::emitTraceLoggerExit()
 {
-    TraceLoggerThread* logger = TraceLoggerForMainThread(cx->runtime());
     AllocatableRegisterSet regs(RegisterSet::Volatile());
     Register loggerReg = regs.takeAnyGeneral();
 
@@ -882,7 +890,7 @@ BaselineCompiler::emitTraceLoggerExit()
         return false;
 
     masm.Push(loggerReg);
-    masm.movePtr(ImmPtr(logger), loggerReg);
+    masm.loadTraceLogger(loggerReg);
 
     masm.tracelogStopId(loggerReg, TraceLogger_Baseline, /* force = */ true);
     masm.tracelogStopId(loggerReg, TraceLogger_Scripts, /* force = */ true);
@@ -904,8 +912,7 @@ BaselineCompiler::emitTraceLoggerResume(Register baselineScript, AllocatableGene
     if (!traceLoggerToggleOffsets_.append(masm.toggledJump(&noTraceLogger)))
         return false;
 
-    TraceLoggerThread* logger = TraceLoggerForMainThread(cx->runtime());
-    masm.movePtr(ImmPtr(logger), loggerReg);
+    masm.loadTraceLogger(loggerReg);
 
     Address scriptEvent(baselineScript, BaselineScript::offsetOfTraceLoggerScriptEvent());
     masm.computeEffectiveAddress(scriptEvent, scriptId);
@@ -1058,6 +1065,12 @@ BaselineCompiler::emit_JSOP_NOP()
 
 bool
 BaselineCompiler::emit_JSOP_NOP_DESTRUCTURING()
+{
+    return true;
+}
+
+bool
+BaselineCompiler::emit_JSOP_TRY_DESTRUCTURING_ITERCLOSE()
 {
     return true;
 }
@@ -2512,7 +2525,7 @@ BaselineCompiler::emit_JSOP_LENGTH()
 }
 
 bool
-BaselineCompiler::emit_JSOP_GETXPROP()
+BaselineCompiler::emit_JSOP_GETBOUNDNAME()
 {
     return emit_JSOP_GETPROP();
 }
@@ -4171,27 +4184,28 @@ BaselineCompiler::emit_JSOP_GENERATOR()
 }
 
 bool
-BaselineCompiler::addYieldOffset()
+BaselineCompiler::addYieldAndAwaitOffset()
 {
-    MOZ_ASSERT(*pc == JSOP_INITIALYIELD || *pc == JSOP_YIELD);
+    MOZ_ASSERT(*pc == JSOP_INITIALYIELD || *pc == JSOP_YIELD || *pc == JSOP_AWAIT);
 
-    uint32_t yieldIndex = GET_UINT24(pc);
+    uint32_t yieldAndAwaitIndex = GET_UINT24(pc);
 
-    while (yieldIndex >= yieldOffsets_.length()) {
-        if (!yieldOffsets_.append(0))
+    while (yieldAndAwaitIndex >= yieldAndAwaitOffsets_.length()) {
+        if (!yieldAndAwaitOffsets_.append(0))
             return false;
     }
 
-    static_assert(JSOP_INITIALYIELD_LENGTH == JSOP_YIELD_LENGTH,
-                  "code below assumes INITIALYIELD and YIELD have same length");
-    yieldOffsets_[yieldIndex] = script->pcToOffset(pc + JSOP_YIELD_LENGTH);
+    static_assert(JSOP_INITIALYIELD_LENGTH == JSOP_YIELD_LENGTH &&
+                  JSOP_INITIALYIELD_LENGTH == JSOP_AWAIT_LENGTH,
+                  "code below assumes INITIALYIELD and YIELD and AWAIT have same length");
+    yieldAndAwaitOffsets_[yieldAndAwaitIndex] = script->pcToOffset(pc + JSOP_YIELD_LENGTH);
     return true;
 }
 
 bool
 BaselineCompiler::emit_JSOP_INITIALYIELD()
 {
-    if (!addYieldOffset())
+    if (!addYieldAndAwaitOffset())
         return false;
 
     frame.syncStack(0);
@@ -4201,7 +4215,8 @@ BaselineCompiler::emit_JSOP_INITIALYIELD()
     masm.unboxObject(frame.addressOfStackValue(frame.peek(-1)), genObj);
 
     MOZ_ASSERT(GET_UINT24(pc) == 0);
-    masm.storeValue(Int32Value(0), Address(genObj, GeneratorObject::offsetOfYieldIndexSlot()));
+    masm.storeValue(Int32Value(0),
+                    Address(genObj, GeneratorObject::offsetOfYieldAndAwaitIndexSlot()));
 
     Register envObj = R0.scratchReg();
     Address envChainSlot(genObj, GeneratorObject::offsetOfEnvironmentChainSlot());
@@ -4230,7 +4245,7 @@ static const VMFunction NormalSuspendInfo =
 bool
 BaselineCompiler::emit_JSOP_YIELD()
 {
-    if (!addYieldOffset())
+    if (!addYieldAndAwaitOffset())
         return false;
 
     // Store generator in R0.
@@ -4247,7 +4262,7 @@ BaselineCompiler::emit_JSOP_YIELD()
         // generator is in the closing state, see GeneratorObject::suspend.
 
         masm.storeValue(Int32Value(GET_UINT24(pc)),
-                        Address(genObj, GeneratorObject::offsetOfYieldIndexSlot()));
+                        Address(genObj, GeneratorObject::offsetOfYieldAndAwaitIndexSlot()));
 
         Register envObj = R0.scratchReg();
         Address envChainSlot(genObj, GeneratorObject::offsetOfEnvironmentChainSlot());
@@ -4277,6 +4292,12 @@ BaselineCompiler::emit_JSOP_YIELD()
 
     masm.loadValue(frame.addressOfStackValue(frame.peek(-1)), JSReturnOperand);
     return emitReturn();
+}
+
+bool
+BaselineCompiler::emit_JSOP_AWAIT()
+{
+    return emit_JSOP_YIELD();
 }
 
 typedef bool (*DebugAfterYieldFn)(JSContext*, BaselineFrame*);
@@ -4438,9 +4459,9 @@ BaselineCompiler::emit_JSOP_RESUME()
     {
         Register scratchReg = scratch2;
         Label skip;
-        AbsoluteAddress addressOfEnabled(cx->runtime()->spsProfiler.addressOfEnabled());
+        AbsoluteAddress addressOfEnabled(cx->runtime()->geckoProfiler().addressOfEnabled());
         masm.branch32(Assembler::Equal, addressOfEnabled, Imm32(0), &skip);
-        masm.loadPtr(AbsoluteAddress(cx->runtime()->addressOfProfilingActivation()), scratchReg);
+        masm.loadPtr(AbsoluteAddress(cx->addressOfProfilingActivation()), scratchReg);
         masm.storePtr(masm.getStackPointer(),
                       Address(scratchReg, JitActivation::offsetOfLastProfilingFrame()));
         masm.bind(&skip);
@@ -4498,16 +4519,17 @@ BaselineCompiler::emit_JSOP_RESUME()
     masm.pushValue(retVal);
 
     if (resumeKind == GeneratorObject::NEXT) {
-        // Determine the resume address based on the yieldIndex and the
-        // yieldIndex -> native table in the BaselineScript.
+        // Determine the resume address based on the yieldAndAwaitIndex and the
+        // yieldAndAwaitIndex -> native table in the BaselineScript.
         masm.load32(Address(scratch1, BaselineScript::offsetOfYieldEntriesOffset()), scratch2);
         masm.addPtr(scratch2, scratch1);
-        masm.unboxInt32(Address(genObj, GeneratorObject::offsetOfYieldIndexSlot()), scratch2);
+        masm.unboxInt32(Address(genObj, GeneratorObject::offsetOfYieldAndAwaitIndexSlot()),
+                        scratch2);
         masm.loadPtr(BaseIndex(scratch1, scratch2, ScaleFromElemWidth(sizeof(uintptr_t))), scratch1);
 
         // Mark as running and jump to the generator's JIT code.
-        masm.storeValue(Int32Value(GeneratorObject::YIELD_INDEX_RUNNING),
-                        Address(genObj, GeneratorObject::offsetOfYieldIndexSlot()));
+        masm.storeValue(Int32Value(GeneratorObject::YIELD_AND_AWAIT_INDEX_RUNNING),
+                        Address(genObj, GeneratorObject::offsetOfYieldAndAwaitIndexSlot()));
         masm.jump(scratch1);
     } else {
         MOZ_ASSERT(resumeKind == GeneratorObject::THROW || resumeKind == GeneratorObject::CLOSE);

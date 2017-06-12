@@ -280,13 +280,13 @@ MultipartBlobImpl::GetMozFullPathInternal(nsAString& aFilename,
                                           ErrorResult& aRv) const
 {
   if (!mIsFromNsIFile || mBlobImpls.Length() == 0) {
-    BlobImplBase::GetMozFullPathInternal(aFilename, aRv);
+    BaseBlobImpl::GetMozFullPathInternal(aFilename, aRv);
     return;
   }
 
   BlobImpl* blobImpl = mBlobImpls.ElementAt(0).get();
   if (!blobImpl) {
-    BlobImplBase::GetMozFullPathInternal(aFilename, aRv);
+    BaseBlobImpl::GetMozFullPathInternal(aFilename, aRv);
     return;
   }
 
@@ -313,7 +313,7 @@ MultipartBlobImpl::SetMutable(bool aMutable)
     }
   }
 
-  rv = BlobImplBase::SetMutable(aMutable);
+  rv = BaseBlobImpl::SetMutable(aMutable);
   if (NS_WARN_IF(NS_FAILED(rv))) {
     return rv;
   }
@@ -323,95 +323,60 @@ MultipartBlobImpl::SetMutable(bool aMutable)
   return NS_OK;
 }
 
-void
-MultipartBlobImpl::InitializeChromeFile(Blob& aBlob,
-                                        const ChromeFilePropertyBag& aBag,
-                                        ErrorResult& aRv)
-{
-  MOZ_ASSERT(!mImmutable, "Something went wrong ...");
-
-  if (mImmutable) {
-    aRv.Throw(NS_ERROR_UNEXPECTED);
-    return;
-  }
-
-  MOZ_ASSERT(nsContentUtils::ThreadsafeIsCallerChrome());
-
-  mName = aBag.mName;
-  mContentType = aBag.mType;
-  mIsFromNsIFile = true;
-
-  // XXXkhuey this is terrible
-  if (mContentType.IsEmpty()) {
-    aBlob.GetType(mContentType);
-  }
-
-
-  BlobSet blobSet;
-  blobSet.AppendBlobImpl(aBlob.Impl());
-  mBlobImpls = blobSet.GetBlobImpls();
-
-  SetLengthAndModifiedDate(aRv);
-  NS_WARNING_ASSERTION(!aRv.Failed(), "SetLengthAndModifiedDate failed");
-}
-
-void
-MultipartBlobImpl::InitializeChromeFile(nsPIDOMWindowInner* aWindow,
-                                        nsIFile* aFile,
-                                        const ChromeFilePropertyBag& aBag,
-                                        bool aIsFromNsIFile,
-                                        ErrorResult& aRv)
+nsresult
+MultipartBlobImpl::InitializeChromeFile(nsIFile* aFile,
+                                        const nsAString& aType,
+                                        const nsAString& aName,
+                                        bool aLastModifiedPassed,
+                                        int64_t aLastModified,
+                                        bool aIsFromNsIFile)
 {
   MOZ_ASSERT(!mImmutable, "Something went wrong ...");
   if (mImmutable) {
-    aRv.Throw(NS_ERROR_UNEXPECTED);
-    return;
+    return NS_ERROR_UNEXPECTED;
   }
 
-  MOZ_ASSERT(nsContentUtils::IsCallerChrome());
-
-  mName = aBag.mName;
-  mContentType = aBag.mType;
+  mName = aName;
+  mContentType = aType;
   mIsFromNsIFile = aIsFromNsIFile;
 
   bool exists;
-  aRv = aFile->Exists(&exists);
-  if (NS_WARN_IF(aRv.Failed())) {
-    return;
+  nsresult rv= aFile->Exists(&exists);
+  if (NS_WARN_IF(NS_FAILED(rv))) {
+    return rv;
   }
 
   if (!exists) {
-    aRv.Throw(NS_ERROR_FILE_NOT_FOUND);
-    return;
+    return NS_ERROR_FILE_NOT_FOUND;
   }
 
   bool isDir;
-  aRv = aFile->IsDirectory(&isDir);
-  if (NS_WARN_IF(aRv.Failed())) {
-    return;
+  rv = aFile->IsDirectory(&isDir);
+  if (NS_WARN_IF(NS_FAILED(rv))) {
+    return rv;
   }
 
   if (isDir) {
-    aRv.Throw(NS_ERROR_FILE_IS_DIRECTORY);
-    return;
+    return NS_ERROR_FILE_IS_DIRECTORY;
   }
 
   if (mName.IsEmpty()) {
     aFile->GetLeafName(mName);
   }
 
-  RefPtr<File> blob = File::CreateFromFile(aWindow, aFile, aBag.mTemporary);
+  RefPtr<File> blob = File::CreateFromFile(nullptr, aFile);
 
   // Pre-cache size.
-  blob->GetSize(aRv);
-  if (NS_WARN_IF(aRv.Failed())) {
-    return;
+  ErrorResult error;
+  blob->GetSize(error);
+  if (NS_WARN_IF(error.Failed())) {
+    return error.StealNSResult();
   }
 
   // Pre-cache modified date.
-  blob->GetLastModified(aRv);
-  if (NS_WARN_IF(aRv.Failed())) {
-    return;
+  blob->GetLastModified(error);
+  if (NS_WARN_IF(error.Failed())) {
+    return error.StealNSResult();
   }
 
   // XXXkhuey this is terrible
@@ -423,23 +388,16 @@ MultipartBlobImpl::InitializeChromeFile(nsPIDOMWindowInner* aWindow,
   blobSet.AppendBlobImpl(static_cast<File*>(blob.get())->Impl());
   mBlobImpls = blobSet.GetBlobImpls();
 
-  SetLengthAndModifiedDate(aRv);
-  NS_WARNING_ASSERTION(!aRv.Failed(), "SetLengthAndModifiedDate failed");
-}
-
-void
-MultipartBlobImpl::InitializeChromeFile(nsPIDOMWindowInner* aWindow,
-                                        const nsAString& aData,
-                                        const ChromeFilePropertyBag& aBag,
-                                        ErrorResult& aRv)
-{
-  nsCOMPtr<nsIFile> file;
-  aRv = NS_NewLocalFile(aData, false, getter_AddRefs(file));
-  if (NS_WARN_IF(aRv.Failed())) {
-    return;
+  SetLengthAndModifiedDate(error);
+  if (NS_WARN_IF(error.Failed())) {
+    return error.StealNSResult();
   }
 
-  InitializeChromeFile(aWindow, file, aBag, false, aRv);
+  if (aLastModifiedPassed) {
+    SetLastModified(aLastModified);
+  }
+
+  return NS_OK;
 }
 
 bool

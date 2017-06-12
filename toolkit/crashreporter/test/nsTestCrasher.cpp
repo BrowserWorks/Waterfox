@@ -3,8 +3,12 @@
 #include <stdio.h>
 
 #include "nscore.h"
-#include "nsExceptionHandler.h"
 #include "mozilla/Unused.h"
+#include "ExceptionThrower.h"
+
+#ifdef XP_WIN
+#include <windows.h>
+#endif
 
 /*
  * This pure virtual call example is from MSDN
@@ -45,6 +49,7 @@ const int16_t CRASH_PURE_VIRTUAL_CALL     = 1;
 const int16_t CRASH_OOM                   = 3;
 const int16_t CRASH_MOZ_CRASH             = 4;
 const int16_t CRASH_ABORT                 = 5;
+const int16_t CRASH_UNCAUGHT_EXCEPTION    = 6;
 
 extern "C" NS_EXPORT
 void Crash(int16_t how)
@@ -73,6 +78,10 @@ void Crash(int16_t how)
   }
   case CRASH_ABORT: {
     abort();
+    break;
+  }
+  case CRASH_UNCAUGHT_EXCEPTION: {
+    ThrowException();
     break;
   }
   default:

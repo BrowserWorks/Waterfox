@@ -13,8 +13,8 @@
 
 #include "mozilla/Attributes.h"
 #include "mozilla/LinkedList.h"
-#include "mozilla/RestyleManagerBase.h"
-#include "mozilla/RestyleManagerHandle.h"
+#include "mozilla/RestyleManager.h"
+#include "mozilla/RestyleManager.h"
 
 #include "nsCOMPtr.h"
 #include "nsILayoutHistoryState.h"
@@ -55,7 +55,7 @@ public:
   typedef mozilla::dom::Element Element;
 
   friend class mozilla::RestyleManager;
-  friend class mozilla::RestyleManagerBase;
+  friend class mozilla::GeckoRestyleManager;
   friend class mozilla::ServoRestyleManager;
 
   nsCSSFrameConstructor(nsIDocument* aDocument, nsIPresShell* aPresShell);
@@ -73,7 +73,7 @@ private:
   nsCSSFrameConstructor& operator=(const nsCSSFrameConstructor& aCopy) = delete;
 
 public:
-  mozilla::RestyleManagerHandle RestyleManager() const
+  mozilla::RestyleManager* RestyleManager() const
     { return mPresShell->GetPresContext()->RestyleManager(); }
 
   nsIFrame* ConstructRootFrame();
@@ -87,7 +87,8 @@ public:
   void CreateNeededFrames();
 
 private:
-  void CreateNeededFrames(nsIContent* aContent);
+  void CreateNeededFrames(nsIContent* aContent,
+                          TreeMatchContext& aTreeMatchContext);
 
   enum Operation {
     CONTENTAPPEND,
@@ -202,28 +203,40 @@ public:
 
   // If aAllowLazyConstruction is true then frame construction of the new
   // children can be done lazily.
+  //
+  // When constructing frames lazily, we can keep the tree match context in a
+  // much easier way than nsFrameConstructorState, and thus, we're allowed to
+  // provide a TreeMatchContext to avoid calling InitAncestors repeatedly deep
+  // in the DOM.
   nsresult ContentAppended(nsIContent* aContainer,
                            nsIContent* aFirstNewContent,
-                           bool        aAllowLazyConstruction);
+                           bool aAllowLazyConstruction,
+                           TreeMatchContext* aProvidedTreeMatchContext = nullptr);
 
   // If aAllowLazyConstruction is true then frame construction of the new child
   // can be done lazily.
-  nsresult ContentInserted(nsIContent*            aContainer,
-                           nsIContent*            aChild,
+  nsresult ContentInserted(nsIContent* aContainer,
+                           nsIContent* aChild,
                            nsILayoutHistoryState* aFrameState,
-                           bool                   aAllowLazyConstruction);
+                           bool aAllowLazyConstruction);
 
   // Like ContentInserted but handles inserting the children of aContainer in
   // the range [aStartChild, aEndChild).  aStartChild must be non-null.
   // aEndChild may be null to indicate the range includes all kids after
-  // aStartChild.  If aAllowLazyConstruction is true then frame construction of
+  // aStartChild.
+  //
+  // If aAllowLazyConstruction is true then frame construction of
   // the new children can be done lazily. It is only allowed to be true when
   // inserting a single node.
-  nsresult ContentRangeInserted(nsIContent*            aContainer,
-                                nsIContent*            aStartChild,
-                                nsIContent*            aEndChild,
+  //
+  // See ContentAppended to see why we allow passing an already initialized
+  // TreeMatchContext.
+  nsresult ContentRangeInserted(nsIContent* aContainer,
+                                nsIContent* aStartChild,
+                                nsIContent* aEndChild,
                                 nsILayoutHistoryState* aFrameState,
-                                bool                   aAllowLazyConstruction);
+                                bool aAllowLazyConstruction,
+                                TreeMatchContext* aProvidedTreeMatchContext = nullptr);
 
   enum RemoveFlags {
     REMOVE_CONTENT, REMOVE_FOR_RECONSTRUCTION, REMOVE_DESTROY_FRAMES };
@@ -364,7 +377,8 @@ private:
   already_AddRefed<nsStyleContext>
   ResolveStyleContext(nsStyleContext*          aParentStyleContext,
                       nsIContent*              aContent,
-                      nsFrameConstructorState* aState);
+                      nsFrameConstructorState* aState,
+                      Element*                 aOriginatingElementOrNull = nullptr);
 
   // Add the frame construction items for the given aContent and aParentFrame
   // to the list.  This might add more than one item in some rare cases.
@@ -1440,12 +1454,6 @@ private:
                                nsFrameItems& aFrameItems);
   static bool AtLineBoundary(FCItemIterator& aIter);
 
-  nsresult CreateAnonymousFrames(nsFrameConstructorState& aState,
-                                 nsIContent*              aParent,
-                                 nsContainerFrame*        aParentFrame,
-                                 PendingBinding*          aPendingBinding,
-                                 nsFrameItems&            aChildItems);
-
   nsresult GetAnonymousContent(nsIContent* aParent,
                                nsIFrame* aParentFrame,
                                nsTArray<nsIAnonymousContentCreator::ContentInfo>& aAnonContent);
@@ -2067,17 +2075,8 @@ private:
                       nsIContent*            aContent,
                       mozilla::StyleDisplay& aDisplay);
 
-  void QuotesDirty() {
-    NS_PRECONDITION(mUpdateCount != 0, "Instant quote updates are bad news");
-    mQuotesDirty = true;
-    mDocument->SetNeedLayoutFlush();
-  }
-
-  void CountersDirty() {
-    NS_PRECONDITION(mUpdateCount != 0, "Instant counter updates are bad news");
-    mCountersDirty = true;
-    mDocument->SetNeedLayoutFlush();
-  }
+  void QuotesDirty();
+  void CountersDirty();
 
   /**
    * Add the pair (aContent, aStyleContext) to the undisplayed items

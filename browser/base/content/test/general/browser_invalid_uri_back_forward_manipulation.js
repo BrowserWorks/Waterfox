@@ -10,16 +10,12 @@
 add_task(function* checkBackFromInvalidURI() {
   yield pushPrefs(["keyword.enabled", false]);
   let tab = yield BrowserTestUtils.openNewForegroundTab(gBrowser, "about:robots", true);
-  gURLBar.value = "::2600";
-  gURLBar.focus();
+  info("Loaded about:robots");
 
-  let promiseErrorPageLoaded = new Promise(resolve => {
-    tab.linkedBrowser.addEventListener("DOMContentLoaded", function onLoad() {
-      tab.linkedBrowser.removeEventListener("DOMContentLoaded", onLoad, false, true);
-      resolve();
-    }, false, true);
-  });
-  EventUtils.synthesizeKey("VK_RETURN", {});
+  gURLBar.value = "::2600";
+
+  let promiseErrorPageLoaded = BrowserTestUtils.waitForErrorPage(tab.linkedBrowser);
+  gURLBar.handleCommand();
   yield promiseErrorPageLoaded;
 
   ok(gBrowser.webNavigation.canGoBack, "Should be able to go back");

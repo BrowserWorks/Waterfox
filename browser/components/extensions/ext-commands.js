@@ -6,7 +6,7 @@ Cu.import("resource://devtools/shared/event-emitter.js");
 Cu.import("resource://gre/modules/ExtensionUtils.jsm");
 
 var {
-  EventManager,
+  SingletonEventManager,
   PlatformInfo,
 } = ExtensionUtils;
 
@@ -36,7 +36,7 @@ CommandList.prototype = {
    * are later created.
    */
   register() {
-    for (let window of WindowListManager.browserWindows()) {
+    for (let window of windowTracker.browserWindows()) {
       this.registerKeysToDocument(window);
     }
 
@@ -46,7 +46,7 @@ CommandList.prototype = {
       }
     };
 
-    WindowListManager.addOpenListener(this.windowOpenListener);
+    windowTracker.addOpenListener(this.windowOpenListener);
   },
 
   /**
@@ -54,13 +54,13 @@ CommandList.prototype = {
    * from being registered to windows which are later created.
    */
   unregister() {
-    for (let window of WindowListManager.browserWindows()) {
+    for (let window of windowTracker.browserWindows()) {
       if (this.keysetsMap.has(window)) {
         this.keysetsMap.get(window).remove();
       }
     }
 
-    WindowListManager.removeOpenListener(this.windowOpenListener);
+    windowTracker.removeOpenListener(this.windowOpenListener);
   },
 
   /**
@@ -74,15 +74,14 @@ CommandList.prototype = {
     // For Windows, chrome.runtime expects 'win' while chrome.commands
     // expects 'windows'.  We can special case this for now.
     let os = PlatformInfo.os == "win" ? "windows" : PlatformInfo.os;
-    for (let name of Object.keys(manifest.commands)) {
-      let command = manifest.commands[name];
-      let shortcut = command.suggested_key[os] || command.suggested_key.default;
-      if (shortcut) {
-        commands.set(name, {
-          description: command.description,
-          shortcut: shortcut.replace(/\s+/g, ""),
-        });
-      }
+    for (let [name, command] of Object.entries(manifest.commands)) {
+      let suggested_key = command.suggested_key || {};
+      let shortcut = suggested_key[os] || suggested_key.default;
+      shortcut = shortcut ? shortcut.replace(/\s+/g, "") : null;
+      commands.set(name, {
+        description: command.description,
+        shortcut,
+      });
     }
     return commands;
   },
@@ -96,8 +95,10 @@ CommandList.prototype = {
     let keyset = doc.createElementNS(XUL_NS, "keyset");
     keyset.id = `ext-keyset-id-${this.id}`;
     this.commands.forEach((command, name) => {
-      let keyElement = this.buildKey(doc, name, command.shortcut);
-      keyset.appendChild(keyElement);
+      if (command.shortcut) {
+        let keyElement = this.buildKey(doc, name, command.shortcut);
+        keyset.appendChild(keyElement);
+      }
     });
     doc.documentElement.appendChild(keyset);
     this.keysetsMap.set(window, keyset);
@@ -125,16 +126,22 @@ CommandList.prototype = {
     // We remove all references to the key elements when the extension is shutdown,
     // therefore the listeners for these elements will be garbage collected.
     keyElement.addEventListener("command", (event) => {
+      let action;
       if (name == "_execute_page_action") {
-        let win = event.target.ownerDocument.defaultView;
-        pageActionFor(this.extension).triggerAction(win);
+        action = pageActionFor(this.extension);
       } else if (name == "_execute_browser_action") {
-        let win = event.target.ownerDocument.defaultView;
-        browserActionFor(this.extension).triggerAction(win);
+        action = browserActionFor(this.extension);
+      } else if (name == "_execute_sidebar_action") {
+        action = sidebarActionFor(this.extension);
       } else {
-        TabManager.for(this.extension)
-                  .addActiveTabPermission(TabManager.activeTab);
+        this.extension.tabManager
+            .addActiveTabPermission();
         this.emit("command", name);
+        return;
+      }
+      if (action) {
+        let win = event.target.ownerGlobal;
+        action.triggerAction(win);
       }
     });
     /* eslint-enable mozilla/balanced-listeners */
@@ -245,9 +252,9 @@ extensions.registerSchemaAPI("commands", "addon_parent", context => {
           });
         }));
       },
-      onCommand: new EventManager(context, "commands.onCommand", fire => {
+      onCommand: new SingletonEventManager(context, "commands.onCommand", fire => {
         let listener = (eventName, commandName) => {
-          fire(commandName);
+          fire.async(commandName);
         };
         commandsMap.get(extension).on("command", listener);
         return () => {

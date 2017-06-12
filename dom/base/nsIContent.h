@@ -194,7 +194,7 @@ public:
   void SetIsNativeAnonymousRoot()
   {
     SetFlags(NODE_IS_ANONYMOUS_ROOT | NODE_IS_IN_NATIVE_ANONYMOUS_SUBTREE |
-             NODE_IS_NATIVE_ANONYMOUS_ROOT);
+             NODE_IS_NATIVE_ANONYMOUS_ROOT | NODE_IS_NATIVE_ANONYMOUS);
   }
 
   /**
@@ -868,18 +868,6 @@ public:
   }
 
   /**
-   * Get the class list of this content node (this corresponds to the
-   * value of the class attribute).  This may be null if there are no
-   * classes, but that's not guaranteed.
-   */
-  const nsAttrValue* GetClasses() const {
-    if (HasFlag(NODE_MAY_HAVE_CLASS)) {
-      return DoGetClasses();
-    }
-    return nullptr;
-  }
-
-  /**
    * Walk aRuleWalker over the content style rules (presentational
    * hint rules) for this content node.
    */
@@ -971,6 +959,14 @@ public:
     return false;
   }
 
+  // Returns true if this element is native-anonymous scrollbar content.
+  bool IsNativeScrollbarContent() const {
+    return IsNativeAnonymous() &&
+           IsAnyOfXULElements(nsGkAtoms::scrollbar,
+                              nsGkAtoms::resizer,
+                              nsGkAtoms::scrollcorner);
+  }
+
   // Overloaded from nsINode
   virtual already_AddRefed<nsIURI> GetBaseURI(bool aTryUseXHRDocBaseURI = false) const override;
 
@@ -987,13 +983,6 @@ protected:
    * called if HasID() is true.
    */
   nsIAtom* DoGetID() const;
-
-private:
-  /**
-   * Hook for implementing GetClasses.  This is guaranteed to only be
-   * called if the NODE_MAY_HAVE_CLASS flag is set.
-   */
-  const nsAttrValue* DoGetClasses() const;
 
 public:
 #ifdef DEBUG

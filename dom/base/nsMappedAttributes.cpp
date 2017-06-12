@@ -11,9 +11,13 @@
 
 #include "nsMappedAttributes.h"
 #include "nsHTMLStyleSheet.h"
+#include "nsRuleData.h"
 #include "nsRuleWalker.h"
+#include "mozilla/GenericSpecifiedValues.h"
 #include "mozilla/HashFunctions.h"
 #include "mozilla/MemoryReporting.h"
+#include "mozilla/ServoDeclarationBlock.h"
+#include "mozilla/ServoSpecifiedValues.h"
 
 using namespace mozilla;
 
@@ -21,14 +25,18 @@ nsMappedAttributes::nsMappedAttributes(nsHTMLStyleSheet* aSheet,
                                        nsMapRuleToAttributesFunc aMapRuleFunc)
   : mAttrCount(0),
     mSheet(aSheet),
-    mRuleMapper(aMapRuleFunc)
+    mRuleMapper(aMapRuleFunc),
+    mServoStyle(nullptr)
 {
 }
 
 nsMappedAttributes::nsMappedAttributes(const nsMappedAttributes& aCopy)
   : mAttrCount(aCopy.mAttrCount),
     mSheet(aCopy.mSheet),
-    mRuleMapper(aCopy.mRuleMapper)
+    mRuleMapper(aCopy.mRuleMapper),
+    // This is only called by ::Clone, which is used to create independent
+    // nsMappedAttributes objects which should not share a ServoDeclarationBlock
+    mServoStyle(nullptr)
 {
   NS_ASSERTION(mBufferSize >= aCopy.mAttrCount, "can't fit attributes");
 
@@ -281,3 +289,15 @@ nsMappedAttributes::SizeOfIncludingThis(MallocSizeOf aMallocSizeOf) const
   return n;
 }
 
+void
+nsMappedAttributes::LazilyResolveServoDeclaration(nsPresContext* aContext)
+{
+
+  MOZ_ASSERT(!mServoStyle,
+             "LazilyResolveServoDeclaration should not be called if mServoStyle is already set");
+  if (mRuleMapper) {
+    mServoStyle = Servo_DeclarationBlock_CreateEmpty().Consume();
+    ServoSpecifiedValues servo = ServoSpecifiedValues(aContext, mServoStyle.get());
+    (*mRuleMapper)(this, &servo);
+  }
+}

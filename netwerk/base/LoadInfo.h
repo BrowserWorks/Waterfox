@@ -73,6 +73,7 @@ public:
   already_AddRefed<nsILoadInfo> CloneForNewRequest() const;
 
   void SetIsPreflight();
+  void SetUpgradeInsecureRequests();
 
 private:
   // private constructor that is only allowed to be called from within
@@ -82,6 +83,7 @@ private:
   LoadInfo(nsIPrincipal* aLoadingPrincipal,
            nsIPrincipal* aTriggeringPrincipal,
            nsIPrincipal* aPrincipalToInherit,
+           nsIPrincipal* aSandboxedLoadingPrincipal,
            nsSecurityFlags aSecurityFlags,
            nsContentPolicyType aContentPolicyType,
            LoadTainting aTainting,
@@ -125,6 +127,7 @@ private:
   nsCOMPtr<nsIPrincipal>           mLoadingPrincipal;
   nsCOMPtr<nsIPrincipal>           mTriggeringPrincipal;
   nsCOMPtr<nsIPrincipal>           mPrincipalToInherit;
+  nsCOMPtr<nsIPrincipal>           mSandboxedLoadingPrincipal;
   nsWeakPtr                        mLoadingContext;
   nsSecurityFlags                  mSecurityFlags;
   nsContentPolicyType              mInternalContentPolicyType;

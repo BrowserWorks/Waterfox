@@ -36,7 +36,7 @@ function run() {
   var subwin = iframe.contentWindow;
   var style = subdoc.getElementById("style");
   var iframe_style = iframe.style;
-  var body_cs = subdoc.defaultView.getComputedStyle(subdoc.body, "");
+  var body_cs = subdoc.defaultView.getComputedStyle(subdoc.body);
 
   function query_applies(q) {
     style.setAttribute("media", q);
@@ -165,13 +165,13 @@ function run() {
       var clonedsheet = links[1].sheet;
       clonedsheet.insertRule("#nonexistent { color: purple}", 1);
       // remove the uncloned sheet
-      links[0].parentNode.removeChild(links[0]);
+      links[0].remove();
 
       var ser3 = clonedsheet.cssRules[0].media.mediaText;
       is(ser3, ser1, "cloning query '" + q + "' should not change " +
                      "serialization");
       if (test_application) {
-        var applies = clonewin.getComputedStyle(clonedoc.body, "").
+        var applies = clonewin.getComputedStyle(clonedoc.body).
                         textDecoration == "underline";
         is(applies, should_apply,
            "Media query '" + q + "' should " + (should_apply ? "" : "NOT ") +

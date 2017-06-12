@@ -91,7 +91,6 @@
 #include "nsXBLBinding.h"
 #include "nsXBLPrototypeBinding.h"
 #include "mozilla/Preferences.h"
-#include "prprf.h"
 #include "xpcpublic.h"
 #include "nsCSSRuleProcessor.h"
 #include "nsCSSParser.h"
@@ -106,6 +105,7 @@
 #include "nsIAnimationObserver.h"
 #include "nsChildContentList.h"
 #include "mozilla/dom/NodeBinding.h"
+#include "mozilla/dom/BindingDeclarations.h"
 
 #ifdef ACCESSIBILITY
 #include "mozilla/dom/AccessibleNode.h"
@@ -719,9 +719,11 @@ nsINode::GetBaseURI(nsAString &aURI) const
 }
 
 void
-nsINode::GetBaseURIFromJS(nsAString& aURI, ErrorResult& aRv) const
+nsINode::GetBaseURIFromJS(nsAString& aURI,
+                          CallerType aCallerType,
+                          ErrorResult& aRv) const
 {
-  nsCOMPtr<nsIURI> baseURI = GetBaseURI(nsContentUtils::IsCallerChrome());
+  nsCOMPtr<nsIURI> baseURI = GetBaseURI(aCallerType == CallerType::System);
   nsAutoCString spec;
   if (baseURI) {
     nsresult res = baseURI->GetSpec(spec);
@@ -1265,36 +1267,43 @@ nsINode::GetEventTargetParent(EventChainPreVisitor& aVisitor)
 void
 nsINode::GetBoxQuads(const BoxQuadOptions& aOptions,
                      nsTArray<RefPtr<DOMQuad> >& aResult,
+                     CallerType aCallerType,
                      mozilla::ErrorResult& aRv)
 {
-  mozilla::GetBoxQuads(this, aOptions, aResult, aRv);
+  mozilla::GetBoxQuads(this, aOptions, aResult, aCallerType, aRv);
 }
 
 already_AddRefed<DOMQuad>
 nsINode::ConvertQuadFromNode(DOMQuad& aQuad,
                              const GeometryNode& aFrom,
                              const ConvertCoordinateOptions& aOptions,
+                             CallerType aCallerType,
                              ErrorResult& aRv)
 {
-  return mozilla::ConvertQuadFromNode(this, aQuad, aFrom, aOptions, aRv);
+  return mozilla::ConvertQuadFromNode(this, aQuad, aFrom, aOptions, aCallerType,
+                                      aRv);
 }
 
 already_AddRefed<DOMQuad>
 nsINode::ConvertRectFromNode(DOMRectReadOnly& aRect,
                              const GeometryNode& aFrom,
                              const ConvertCoordinateOptions& aOptions,
+                             CallerType aCallerType,
                              ErrorResult& aRv)
 {
-  return mozilla::ConvertRectFromNode(this, aRect, aFrom, aOptions, aRv);
+  return mozilla::ConvertRectFromNode(this, aRect, aFrom, aOptions, aCallerType,
+                                      aRv);
 }
 
 already_AddRefed<DOMPoint>
 nsINode::ConvertPointFromNode(const DOMPointInit& aPoint,
                               const GeometryNode& aFrom,
                               const ConvertCoordinateOptions& aOptions,
+                              CallerType aCallerType,
                               ErrorResult& aRv)
 {
-  return mozilla::ConvertPointFromNode(this, aPoint, aFrom, aOptions, aRv);
+  return mozilla::ConvertPointFromNode(this, aPoint, aFrom, aOptions,
+                                       aCallerType, aRv);
 }
 
 nsresult
@@ -1433,19 +1442,20 @@ nsINode::Traverse(nsINode *tmp, nsCycleCollectionTraversalCallback &cb)
 
     if (nsCCUncollectableMarker::sGeneration) {
       // If we're black no need to traverse.
-      if (tmp->IsBlack() || tmp->InCCBlackTree()) {
+      if (tmp->HasKnownLiveWrapper() || tmp->InCCBlackTree()) {
         return false;
       }
 
       if (!tmp->UnoptimizableCCNode()) {
         // If we're in a black document, return early.
-        if ((currentDoc && currentDoc->IsBlack())) {
+        if ((currentDoc && currentDoc->HasKnownLiveWrapper())) {
           return false;
         }
         // If we're not in anonymous content and we have a black parent,
         // return early.
         nsIContent* parent = tmp->GetParent();
-        if (parent && !parent->UnoptimizableCCNode() && parent->IsBlack()) {
+        if (parent && !parent->UnoptimizableCCNode() &&
+            parent->HasKnownLiveWrapper()) {
           MOZ_ASSERT(parent->IndexOf(tmp) >= 0, "Parent doesn't own us?");
           return false;
         }
@@ -1501,27 +1511,6 @@ nsINode::Unlink(nsINode* tmp)
     nsNodeUtils::UnlinkUserData(tmp);
     tmp->DeleteProperty(nsGkAtoms::keepobjectsalive);
   }
-}
-
-static void
-ReleaseURI(void*, /* aObject*/
-           nsIAtom*, /* aPropertyName */
-           void* aPropertyValue,
-           void* /* aData */)
-{
-  nsIURI* uri = static_cast<nsIURI*>(aPropertyValue);
-  NS_RELEASE(uri);
-}
-
-nsresult
-nsINode::SetExplicitBaseURI(nsIURI* aURI)
-{
-  nsresult rv = SetProperty(nsGkAtoms::baseURIProperty, aURI, ReleaseURI);
-  if (NS_SUCCEEDED(rv)) {
-    SetHasExplicitBaseURI();
-    NS_ADDREF(aURI);
-  }
-  return rv;
 }
 
 static nsresult
@@ -2943,7 +2932,7 @@ nsINode::WrapObject(JSContext *aCx, JS::Handle<JSObject*> aGivenProto)
   bool hasHadScriptHandlingObject = false;
   if (!OwnerDoc()->GetScriptHandlingObject(hasHadScriptHandlingObject) &&
       !hasHadScriptHandlingObject &&
-      !nsContentUtils::IsCallerChrome()) {
+      !nsContentUtils::IsSystemCaller(aCx)) {
     Throw(aCx, NS_ERROR_UNEXPECTED);
     return nullptr;
   }

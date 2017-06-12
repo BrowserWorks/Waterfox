@@ -4,18 +4,12 @@
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
 
-#include "mozilla/TaskQueue.h"
-
-#include "nsThreadUtils.h"
-#include "ImageContainer.h"
-
-#include "MediaInfo.h"
-#include "VPXDecoder.h"
-#include "MP4Decoder.h"
-
 #include "FFmpegVideoDecoder.h"
 #include "FFmpegLog.h"
-#include "mozilla/PodOperations.h"
+#include "ImageContainer.h"
+#include "MediaInfo.h"
+#include "MP4Decoder.h"
+#include "VPXDecoder.h"
 
 #include "libavutil/pixfmt.h"
 #if LIBAVCODEC_VERSION_MAJOR < 54
@@ -25,12 +19,15 @@
 #define AV_PIX_FMT_YUV444P PIX_FMT_YUV444P
 #define AV_PIX_FMT_NONE PIX_FMT_NONE
 #endif
+#include "mozilla/PodOperations.h"
+#include "mozilla/TaskQueue.h"
+#include "nsThreadUtils.h"
+
 
 typedef mozilla::layers::Image Image;
 typedef mozilla::layers::PlanarYCbCrImage PlanarYCbCrImage;
 
-namespace mozilla
-{
+namespace mozilla {
 
 /**
  * FFmpeg calls back to this function with a list of pixel formats it supports.
@@ -71,7 +68,8 @@ FFmpegVideoDecoder<LIBAV_VER>::PtsCorrectionContext::PtsCorrectionContext()
 }
 
 int64_t
-FFmpegVideoDecoder<LIBAV_VER>::PtsCorrectionContext::GuessCorrectPts(int64_t aPts, int64_t aDts)
+FFmpegVideoDecoder<LIBAV_VER>::PtsCorrectionContext::GuessCorrectPts(
+  int64_t aPts, int64_t aDts)
 {
   int64_t pts = AV_NOPTS_VALUE;
 
@@ -83,8 +81,8 @@ FFmpegVideoDecoder<LIBAV_VER>::PtsCorrectionContext::GuessCorrectPts(int64_t aPt
     mNumFaultyPts += aPts <= mLastPts;
     mLastPts = aPts;
   }
-  if ((mNumFaultyPts <= mNumFaultyDts || aDts == int64_t(AV_NOPTS_VALUE)) &&
-      aPts != int64_t(AV_NOPTS_VALUE)) {
+  if ((mNumFaultyPts <= mNumFaultyDts || aDts == int64_t(AV_NOPTS_VALUE))
+      && aPts != int64_t(AV_NOPTS_VALUE)) {
     pts = aPts;
   } else {
     pts = aDts;
@@ -101,18 +99,19 @@ FFmpegVideoDecoder<LIBAV_VER>::PtsCorrectionContext::Reset()
   mLastDts = INT64_MIN;
 }
 
-FFmpegVideoDecoder<LIBAV_VER>::FFmpegVideoDecoder(FFmpegLibWrapper* aLib,
-  TaskQueue* aTaskQueue, MediaDataDecoderCallback* aCallback,
-  const VideoInfo& aConfig,
-  ImageContainer* aImageContainer)
-  : FFmpegDataDecoder(aLib, aTaskQueue, aCallback, GetCodecId(aConfig.mMimeType))
+FFmpegVideoDecoder<LIBAV_VER>::FFmpegVideoDecoder(
+  FFmpegLibWrapper* aLib, TaskQueue* aTaskQueue, const VideoInfo& aConfig,
+  ImageContainer* aImageContainer, bool aLowLatency)
+  : FFmpegDataDecoder(aLib, aTaskQueue, GetCodecId(aConfig.mMimeType))
   , mImageContainer(aImageContainer)
   , mInfo(aConfig)
   , mCodecParser(nullptr)
   , mLastInputDts(INT64_MIN)
+  , mLowLatency(aLowLatency)
 {
   MOZ_COUNT_CTOR(FFmpegVideoDecoder);
-  // Use a new MediaByteBuffer as the object will be modified during initialization.
+  // Use a new MediaByteBuffer as the object will be modified during
+  // initialization.
   mExtraData = new MediaByteBuffer;
   mExtraData->AppendElements(*aConfig.mExtraData);
 }
@@ -145,11 +144,18 @@ FFmpegVideoDecoder<LIBAV_VER>::InitCodecContext()
     decode_threads = 2;
   }
 
-  decode_threads = std::min(decode_threads, PR_GetNumberOfProcessors() - 1);
-  decode_threads = std::max(decode_threads, 1);
-  mCodecContext->thread_count = decode_threads;
-  if (decode_threads > 1) {
-    mCodecContext->thread_type = FF_THREAD_SLICE | FF_THREAD_FRAME;
+  if (mLowLatency) {
+    mCodecContext->flags |= CODEC_FLAG_LOW_DELAY;
+    // ffvp9 and ffvp8 at this stage do not support slice threading, but it may
+    // help with the h264 decoder if there's ever one.
+    mCodecContext->thread_type = FF_THREAD_SLICE;
+  } else {
+    decode_threads = std::min(decode_threads, PR_GetNumberOfProcessors() - 1);
+    decode_threads = std::max(decode_threads, 1);
+    mCodecContext->thread_count = decode_threads;
+    if (decode_threads > 1) {
+      mCodecContext->thread_type = FF_THREAD_SLICE | FF_THREAD_FRAME;
+    }
   }
 
   // FFmpeg will call back to this to negotiate a video pixel format.
@@ -161,15 +167,21 @@ FFmpegVideoDecoder<LIBAV_VER>::InitCodecContext()
   }
 }
 
-MediaResult
-FFmpegVideoDecoder<LIBAV_VER>::DoDecode(MediaRawData* aSample)
+RefPtr<MediaDataDecoder::DecodePromise>
+FFmpegVideoDecoder<LIBAV_VER>::ProcessDecode(MediaRawData* aSample)
 {
   bool gotFrame = false;
-  return DoDecode(aSample, &gotFrame);
+  DecodedData results;
+  MediaResult rv = DoDecode(aSample, &gotFrame, results);
+  if (NS_FAILED(rv)) {
+    return DecodePromise::CreateAndReject(rv, __func__);
+  }
+  return DecodePromise::CreateAndResolve(Move(results), __func__);
 }
 
 MediaResult
-FFmpegVideoDecoder<LIBAV_VER>::DoDecode(MediaRawData* aSample, bool* aGotFrame)
+FFmpegVideoDecoder<LIBAV_VER>::DoDecode(MediaRawData* aSample, bool* aGotFrame,
+                                        MediaDataDecoder::DecodedData& aResults)
 {
   uint8_t* inputData = const_cast<uint8_t*>(aSample->Data());
   size_t inputSize = aSample->Size();
@@ -183,10 +195,9 @@ FFmpegVideoDecoder<LIBAV_VER>::DoDecode(MediaRawData* aSample, bool* aGotFrame)
     while (inputSize) {
       uint8_t* data;
       int size;
-      int len = mLib->av_parser_parse2(mCodecParser, mCodecContext, &data, &size,
-                                       inputData, inputSize,
-                                       aSample->mTime, aSample->mTimecode,
-                                       aSample->mOffset);
+      int len = mLib->av_parser_parse2(
+        mCodecParser, mCodecContext, &data, &size, inputData, inputSize,
+        aSample->mTime, aSample->mTimecode, aSample->mOffset);
       if (size_t(len) > inputSize) {
         return NS_ERROR_DOM_MEDIA_DECODE_ERR;
       }
@@ -194,7 +205,7 @@ FFmpegVideoDecoder<LIBAV_VER>::DoDecode(MediaRawData* aSample, bool* aGotFrame)
       inputSize -= len;
       if (size) {
         bool gotFrame = false;
-        MediaResult rv = DoDecode(aSample, data, size, &gotFrame);
+        MediaResult rv = DoDecode(aSample, data, size, &gotFrame, aResults);
         if (NS_FAILED(rv)) {
           return rv;
         }
@@ -206,13 +217,14 @@ FFmpegVideoDecoder<LIBAV_VER>::DoDecode(MediaRawData* aSample, bool* aGotFrame)
     return NS_OK;
   }
 #endif
-  return DoDecode(aSample, inputData, inputSize, aGotFrame);
+  return DoDecode(aSample, inputData, inputSize, aGotFrame, aResults);
 }
 
 MediaResult
 FFmpegVideoDecoder<LIBAV_VER>::DoDecode(MediaRawData* aSample,
                                         uint8_t* aData, int aSize,
-                                        bool* aGotFrame)
+                                        bool* aGotFrame,
+                                        MediaDataDecoder::DecodedData& aResults)
 {
   AVPacket packet;
   mLib->av_init_packet(&packet);
@@ -244,8 +256,8 @@ FFmpegVideoDecoder<LIBAV_VER>::DoDecode(MediaRawData* aSample,
     mLib->avcodec_decode_video2(mCodecContext, mFrame, &decoded, &packet);
 
   FFMPEG_LOG("DoDecodeFrame:decode_video: rv=%d decoded=%d "
-             "(Input: pts(%lld) dts(%lld) Output: pts(%lld) "
-             "opaque(%lld) pkt_pts(%lld) pkt_dts(%lld))",
+             "(Input: pts(%" PRId64 ") dts(%" PRId64 ") Output: pts(%" PRId64 ") "
+             "opaque(%" PRId64 ") pkt_pts(%" PRId64 ") pkt_dts(%" PRId64 "))",
              bytesConsumed, decoded, packet.pts, packet.dts, mFrame->pts,
              mFrame->reordered_opaque, mFrame->pkt_pts, mFrame->pkt_dts);
 
@@ -276,8 +288,10 @@ FFmpegVideoDecoder<LIBAV_VER>::DoDecode(MediaRawData* aSample,
     // against the map becoming extremely big.
     mDurationMap.Clear();
   }
-  FFMPEG_LOG("Got one frame output with pts=%lld dts=%lld duration=%lld opaque=%lld",
-              pts, mFrame->pkt_dts, duration, mCodecContext->reordered_opaque);
+  FFMPEG_LOG(
+    "Got one frame output with pts=%" PRId64 " dts=%" PRId64
+    " duration=%" PRId64 " opaque=%" PRId64,
+    pts, mFrame->pkt_dts, duration, mCodecContext->reordered_opaque);
 
   VideoData::YCbCrBuffer b;
   b.mPlanes[0].mData = mFrame->data[0];
@@ -337,29 +351,31 @@ FFmpegVideoDecoder<LIBAV_VER>::DoDecode(MediaRawData* aSample,
     return MediaResult(NS_ERROR_OUT_OF_MEMORY,
                        RESULT_DETAIL("image allocation error"));
   }
-  mCallback->Output(v);
+  aResults.AppendElement(Move(v));
   if (aGotFrame) {
     *aGotFrame = true;
   }
   return NS_OK;
 }
 
-void
+RefPtr<MediaDataDecoder::DecodePromise>
 FFmpegVideoDecoder<LIBAV_VER>::ProcessDrain()
 {
   RefPtr<MediaRawData> empty(new MediaRawData());
   empty->mTimecode = mLastInputDts;
   bool gotFrame = false;
-  while (NS_SUCCEEDED(DoDecode(empty, &gotFrame)) && gotFrame);
-  mCallback->DrainComplete();
+  DecodedData results;
+  while (NS_SUCCEEDED(DoDecode(empty, &gotFrame, results)) && gotFrame) {
+  }
+  return DecodePromise::CreateAndResolve(Move(results), __func__);
 }
 
-void
+RefPtr<MediaDataDecoder::FlushPromise>
 FFmpegVideoDecoder<LIBAV_VER>::ProcessFlush()
 {
   mPtsContext.Reset();
   mDurationMap.Clear();
-  FFmpegDataDecoder::ProcessFlush();
+  return FFmpegDataDecoder::ProcessFlush();
 }
 
 FFmpegVideoDecoder<LIBAV_VER>::~FFmpegVideoDecoder()

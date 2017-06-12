@@ -4,6 +4,9 @@
 # License, v. 2.0. If a copy of the MPL was not distributed with this
 # file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
+with Files("**"):
+    BUG_COMPONENT = ("Core", "DOM: Animation")
+
 MOCHITEST_MANIFESTS += ['test/mochitest.ini']
 MOCHITEST_CHROME_MANIFESTS += ['test/chrome.ini']
 
@@ -22,6 +25,7 @@ EXPORTS.mozilla.dom += [
 EXPORTS.mozilla += [
     'AnimationComparator.h',
     'AnimationPerformanceWarning.h',
+    'AnimationRule.h',
     'AnimationTarget.h',
     'AnimationUtils.h',
     'AnimValuesStyleRule.h',
@@ -29,10 +33,12 @@ EXPORTS.mozilla += [
     'ComputedTimingFunction.h',
     'EffectCompositor.h',
     'EffectSet.h',
+    'Keyframe.h',
     'KeyframeEffectParams.h',
     'KeyframeUtils.h',
     'PendingAnimationTracker.h',
     'PseudoElementHashEntry.h',
+    'ServoAnimationRule.h',
     'TimingParams.h',
 ]
 
@@ -55,6 +61,7 @@ UNIFIED_SOURCES += [
     'KeyframeEffectReadOnly.cpp',
     'KeyframeUtils.cpp',
     'PendingAnimationTracker.cpp',
+    'ServoAnimationRule.cpp',
     'TimingParams.cpp',
 ]
 

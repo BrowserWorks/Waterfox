@@ -65,6 +65,7 @@
 #include "mozilla/dom/ContentChild.h"
 #include "mozilla/MemoryReporting.h"
 #include "mozilla/Preferences.h"
+#include "mozilla/SizePrintfMacros.h"
 #include "mozilla/Sprintf.h"
 #include "mozilla/Telemetry.h"
 #include "mozilla/gfx/2D.h"
@@ -215,6 +216,15 @@ MacOSFontEntry::ReadCMAP(FontInfoData *aFontInfoData)
                 charmap->ClearRange(sr->rangeStart, sr->rangeEnd);
             }
         }
+
+        // Bug 1360309: several of Apple's Chinese fonts have spurious blank
+        // glyphs for obscure Tibetan codepoints. Blacklist these so that font
+        // fallback will not use them.
+        if (mRequiresAAT && (FamilyName().EqualsLiteral("Songti SC") ||
+                             FamilyName().EqualsLiteral("Songti TC") ||
+                             FamilyName().EqualsLiteral("STSong"))) {
+            charmap->ClearRange(0x0f8c, 0x0f8f);
+        }
     }
 
     mHasCmapTable = NS_SUCCEEDED(rv);
@@ -226,7 +236,7 @@ MacOSFontEntry::ReadCMAP(FontInfoData *aFontInfoData)
         mCharacterMap = new gfxCharacterMap();
     }
 
-    LOG_FONTLIST(("(fontlist-cmap) name: %s, size: %d hash: %8.8x%s\n",
+    LOG_FONTLIST(("(fontlist-cmap) name: %s, size: %" PRIuSIZE " hash: %8.8x%s\n",
                   NS_ConvertUTF16toUTF8(mName).get(),
                   charmap->SizeOfIncludingThis(moz_malloc_size_of),
                   charmap->mHash, mCharacterMap == charmap ? " new" : ""));
@@ -890,7 +900,7 @@ gfxMacPlatformFontList::InitSingleFaceList()
             familyEntry->AddFontEntry(fontEntry);
             familyEntry->SetHasStyles(true);
             mFontFamilies.Put(key, familyEntry);
-            LOG_FONTLIST(("(fontlist-singleface) added new family\n",
+            LOG_FONTLIST(("(fontlist-singleface) added new family: %s, key: %s\n",
                           NS_ConvertUTF16toUTF8(familyName).get(),
                           NS_ConvertUTF16toUTF8(key).get()));
         }

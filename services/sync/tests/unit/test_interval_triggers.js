@@ -57,7 +57,9 @@ function run_test() {
   run_next_test();
 }
 
-add_identity_test(this, async function test_successful_sync_adjustSyncInterval() {
+add_task(async function test_successful_sync_adjustSyncInterval() {
+  enableValidationPrefs();
+
   _("Test successful sync calling adjustSyncInterval");
   let syncSuccesses = 0;
   function onSyncFinish() {
@@ -114,7 +116,7 @@ add_identity_test(this, async function test_successful_sync_adjustSyncInterval()
 
   _("Test as long as idle && numClients > 1 our sync interval is idleInterval.");
   // idle == true && numClients > 1 && hasIncomingItems == true
-  Service.clientsEngine._store.create({id: "foo", cleartext: "bar"});
+  Service.clientsEngine._store.create({ id: "foo", cleartext: { name: "bar", type: "mobile" } });
   Service.sync();
   do_check_eq(syncSuccesses, 5);
   do_check_true(scheduler.idle);
@@ -156,7 +158,9 @@ add_identity_test(this, async function test_successful_sync_adjustSyncInterval()
   await promiseStopServer(server);
 });
 
-add_identity_test(this, async function test_unsuccessful_sync_adjustSyncInterval() {
+add_task(async function test_unsuccessful_sync_adjustSyncInterval() {
+  enableValidationPrefs();
+
   _("Test unsuccessful sync calling adjustSyncInterval");
 
   let syncFailures = 0;
@@ -218,7 +222,8 @@ add_identity_test(this, async function test_unsuccessful_sync_adjustSyncInterval
 
   _("Test as long as idle && numClients > 1 our sync interval is idleInterval.");
   // idle == true && numClients > 1 && hasIncomingItems == true
-  Service.clientsEngine._store.create({id: "foo", cleartext: "bar"});
+  Svc.Prefs.set("clients.devices.mobile", 2);
+  scheduler.updateClientMode();
 
   Service.sync();
   do_check_eq(syncFailures, 5);
@@ -261,7 +266,9 @@ add_identity_test(this, async function test_unsuccessful_sync_adjustSyncInterval
   await promiseStopServer(server);
 });
 
-add_identity_test(this, async function test_back_triggers_sync() {
+add_task(async function test_back_triggers_sync() {
+  enableValidationPrefs();
+
   let server = sync_httpd_setup();
   await setUp(server);
 
@@ -271,7 +278,7 @@ add_identity_test(this, async function test_back_triggers_sync() {
   do_check_false(scheduler.idle);
 
   // Multiple devices: sync is triggered.
-  clientsEngine._store.create({id: "foo", cleartext: "bar"});
+  Svc.Prefs.set("clients.devices.mobile", 2);
   scheduler.updateClientMode();
 
   let promiseDone = promiseOneObserver("weave:service:sync:finish");
@@ -290,7 +297,9 @@ add_identity_test(this, async function test_back_triggers_sync() {
   await promiseStopServer(server);
 });
 
-add_identity_test(this, async function test_adjust_interval_on_sync_error() {
+add_task(async function test_adjust_interval_on_sync_error() {
+  enableValidationPrefs();
+
   let server = sync_httpd_setup();
   await setUp(server);
 
@@ -309,7 +318,7 @@ add_identity_test(this, async function test_adjust_interval_on_sync_error() {
   do_check_false(scheduler.numClients > 1);
   do_check_eq(scheduler.syncInterval, scheduler.singleDeviceInterval);
 
-  clientsEngine._store.create({id: "foo", cleartext: "bar"});
+  Svc.Prefs.set("clients.devices.mobile", 2);
   Service.sync();
 
   do_check_eq(syncFailures, 1);
@@ -321,7 +330,9 @@ add_identity_test(this, async function test_adjust_interval_on_sync_error() {
   await promiseStopServer(server);
 });
 
-add_identity_test(this, async function test_bug671378_scenario() {
+add_task(async function test_bug671378_scenario() {
+  enableValidationPrefs();
+
   // Test scenario similar to bug 671378. This bug appeared when a score
   // update occurred that wasn't large enough to trigger a sync so
   // scheduleNextSync() was called without a time interval parameter,
@@ -382,14 +393,14 @@ add_identity_test(this, async function test_bug671378_scenario() {
     });
   });
 
-  clientsEngine._store.create({id: "foo", cleartext: "bar"});
+  Service.clientsEngine._store.create({ id: "foo", cleartext: { name: "bar", type: "mobile" } });
   Service.sync();
   await promiseDone;
 });
 
 add_test(function test_adjust_timer_larger_syncInterval() {
   _("Test syncInterval > current timout period && nextSync != 0, syncInterval is NOT used.");
-  clientsEngine._store.create({id: "foo", cleartext: "bar"});
+  Svc.Prefs.set("clients.devices.mobile", 2);
   scheduler.updateClientMode();
   do_check_eq(scheduler.syncInterval, scheduler.activeInterval);
 
@@ -401,6 +412,7 @@ add_test(function test_adjust_timer_larger_syncInterval() {
 
   // Make interval large again
   clientsEngine._wipeClient();
+  Svc.Prefs.reset("clients.devices.mobile");
   scheduler.updateClientMode();
   do_check_eq(scheduler.syncInterval, scheduler.singleDeviceInterval);
 
@@ -424,7 +436,7 @@ add_test(function test_adjust_timer_smaller_syncInterval() {
   do_check_eq(scheduler.syncTimer.delay, scheduler.singleDeviceInterval);
 
   // Make interval smaller
-  clientsEngine._store.create({id: "foo", cleartext: "bar"});
+  Svc.Prefs.set("clients.devices.mobile", 2);
   scheduler.updateClientMode();
   do_check_eq(scheduler.syncInterval, scheduler.activeInterval);
 

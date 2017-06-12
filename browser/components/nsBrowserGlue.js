@@ -23,7 +23,8 @@ XPCOMUtils.defineLazyServiceGetter(this, "AlertsService", "@mozilla.org/alerts-s
           AsyncShutdown:false, AutoCompletePopup:false, BookmarkHTMLUtils:false,
           BookmarkJSONUtils:false, BrowserUITelemetry:false, BrowserUsageTelemetry:false,
           ContentClick:false, ContentPrefServiceParent:false, ContentSearch:false,
-          DateTimePickerHelper:false, DirectoryLinksProvider:false, Feeds:false,
+          DateTimePickerHelper:false, DirectoryLinksProvider:false,
+          ExtensionsUI:false, Feeds:false,
           FileUtils:false, FormValidationHandler:false, Integration:false,
           LightweightThemeManager:false, LoginHelper:false, LoginManagerParent:false,
           NetUtil:false, NewTabMessages:false, NewTabUtils:false, OS:false,
@@ -415,8 +416,7 @@ BrowserGlue.prototype = {
     this._flashHangCount = 0;
     this._firstWindowReady = new Promise(resolve => this._firstWindowLoaded = resolve);
 
-    if (AppConstants.platform == "win" ||
-        AppConstants.platform == "macosx") {
+    if (AppConstants.platform == "win" || AppConstants.platform == "macosx") {
       // Handles prompting to inform about incompatibilites when accessibility
       // and e10s are active together.
       E10SAccessibilityCheck.init();
@@ -484,6 +484,21 @@ BrowserGlue.prototype = {
 
     // handle any UI migration
     this._migrateUI();
+
+    // This is support code for the location bar search suggestions; passing
+    // from opt-in to opt-out should respect the user's choice, thus we need
+    // to cache that choice in a pref for future use.
+    // Note: this is not in migrateUI because we need to uplift it. This
+    // code is also short-lived, since we can remove it as soon as opt-out
+    // search suggestions shipped in release (Bug 1344928).
+    try {
+      let urlbarPrefs = Services.prefs.getBranch("browser.urlbar.");
+      if (!urlbarPrefs.prefHasUserValue("searchSuggestionsChoice") &&
+          urlbarPrefs.getBoolPref("userMadeSearchSuggestionsChoice")) {
+        urlbarPrefs.setBoolPref("searchSuggestionsChoice",
+                                urlbarPrefs.getBoolPref("suggest.searches"));
+      }
+    } catch (ex) { /* missing any of the prefs is not critical */ }
 
     PageThumbs.init();
     webrtcUI.init();
@@ -2124,7 +2139,9 @@ BrowserGlue.prototype = {
       "chrome://browser/locale/accounts.properties"
     );
     let title = accountsBundle.GetStringFromName("deviceConnectedTitle");
-    let body = accountsBundle.formatStringFromName("deviceConnectedBody", [deviceName], 1);
+    let body = accountsBundle.formatStringFromName("deviceConnectedBody" +
+                                                   (deviceName ? "" : ".noDeviceName"),
+                                                   [deviceName], 1);
     let url = Services.urlFormatter.formatURLPref("identity.fxaccounts.settings.devices.uri");
 
     function clickCallback(subject, topic, data) {

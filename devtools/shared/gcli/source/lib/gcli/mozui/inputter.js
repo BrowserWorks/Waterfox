@@ -109,7 +109,7 @@ Inputter.prototype.destroy = function() {
   this.history.destroy();
 
   if (this.style) {
-    this.style.parentNode.removeChild(this.style);
+    this.style.remove();
     this.style = undefined;
   }
 
@@ -145,7 +145,7 @@ Inputter.prototype.getDimensions = function() {
   var fixedLoc = {};
   var currentElement = this.element.parentNode;
   while (currentElement && currentElement.nodeName !== '#document') {
-    var style = this.document.defaultView.getComputedStyle(currentElement, '');
+    var style = this.document.defaultView.getComputedStyle(currentElement);
     if (style) {
       var position = style.getPropertyValue('position');
       if (position === 'absolute' || position === 'fixed') {

@@ -11,7 +11,7 @@ https://bugzilla.mozilla.org/show_bug.cgi?id=1214366
   <link rel="stylesheet" type="text/css" href="chrome://global/skin"/>
   <link rel="stylesheet" type="text/css" href="chrome://mochikit/content/tests/SimpleTest/test.css"/>
   <script type="application/javascript" src="head.js"></script>
-  <script type="application/javascript;version=1.7">
+  <script type="application/javascript">
 
   "use strict";
 
@@ -25,7 +25,7 @@ https://bugzilla.mozilla.org/show_bug.cgi?id=1214366
   let BrowserApp = chromeWin.BrowserApp;
 
   function get_last_visited(prePath) {
-    return Messaging.sendRequestForResult({
+    return EventDispatcher.instance.sendRequestForResult({
       type: "History:GetPrePathLastVisitedTimeMilliseconds",
       prePath: prePath,
     });
@@ -66,8 +66,8 @@ https://bugzilla.mozilla.org/show_bug.cgi?id=1214366
     var v = yield get_last_visited("https://random.com/");
     is(v, 0, `Last visited timestamp is 0 for unknown prePath: ${v}`);
 
-    let prePath = Services.io.newURI(url1, null, null).prePath + "/";
-    is(prePath, Services.io.newURI(url2, null, null).prePath + "/", "url1 and url2 have the same prePath");
+    let prePath = Services.io.newURI(url1).prePath + "/";
+    is(prePath, Services.io.newURI(url2).prePath + "/", "url1 and url2 have the same prePath");
 
     let t0 = Date.now();
     yield add_history_visit(url1);

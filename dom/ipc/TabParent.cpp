@@ -20,7 +20,6 @@
 #include "mozilla/dom/Event.h"
 #include "mozilla/dom/indexedDB/ActorsParent.h"
 #include "mozilla/dom/ipc/BlobParent.h"
-#include "mozilla/plugins/PluginWidgetParent.h"
 #include "mozilla/EventStateManager.h"
 #include "mozilla/gfx/2D.h"
 #include "mozilla/gfx/DataSurfaceHelpers.h"
@@ -32,6 +31,7 @@
 #include "mozilla/layers/AsyncDragMetrics.h"
 #include "mozilla/layers/InputAPZContext.h"
 #include "mozilla/layout/RenderFrameParent.h"
+#include "mozilla/plugins/PPluginWidgetParent.h"
 #include "mozilla/LookAndFeel.h"
 #include "mozilla/MouseEvents.h"
 #include "mozilla/net/NeckoChild.h"
@@ -100,8 +100,13 @@
 #include "nsIGroupedSHistory.h"
 #include "PartialSHistory.h"
 
+#ifdef XP_WIN
+#include "mozilla/plugins/PluginWidgetParent.h"
+#endif
+
 #if defined(XP_WIN) && defined(ACCESSIBILITY)
 #include "mozilla/a11y/AccessibleWrap.h"
+#include "mozilla/a11y/nsWinUtils.h"
 #endif
 
 using namespace mozilla::dom;
@@ -269,6 +274,16 @@ TabParent::SetOwnerElement(Element* aElement)
         reinterpret_cast<uintptr_t>(widget->GetNativeData(NS_NATIVE_WINDOW));
     }
     Unused << SendUpdateNativeWindowHandle(newWindowHandle);
+    a11y::DocAccessibleParent* doc = GetTopLevelDocAccessible();
+    if (doc) {
+      HWND hWnd = reinterpret_cast<HWND>(doc->GetEmulatedWindowHandle());
+      if (hWnd) {
+        HWND parentHwnd = reinterpret_cast<HWND>(newWindowHandle);
+        if (parentHwnd != ::GetParent(hWnd)) {
+          ::SetParent(hWnd, parentHwnd);
+        }
+      }
+    }
   }
 #endif
 
@@ -375,6 +390,7 @@ TabParent::DestroyInternal()
     frame->Destroy();
   }
 
+#ifdef XP_WIN
   // Let all PluginWidgets know we are tearing down. Prevents
   // these objects from sending async events after the child side
   // is shut down.
@@ -384,6 +400,7 @@ TabParent::DestroyInternal()
     static_cast<mozilla::plugins::PluginWidgetParent*>(
        iter.Get()->GetKey())->ParentDestroy();
   }
+#endif
 }
 
 void
@@ -843,7 +860,7 @@ void
 TabParent::Activate()
 {
   if (!mIsDestroyed) {
-    Unused << SendActivate();
+    Unused << Manager()->AsContentParent()->SendActivate(this);
   }
 }
 
@@ -851,7 +868,7 @@ void
 TabParent::Deactivate()
 {
   if (!mIsDestroyed) {
-    Unused << SendDeactivate();
+    Unused << Manager()->AsContentParent()->SendDeactivate(this);
   }
 }
 
@@ -927,15 +944,22 @@ TabParent::RecvPDocAccessibleConstructor(PDocAccessibleParent* aDoc,
 
     auto parentDoc = static_cast<a11y::DocAccessibleParent*>(aParentDoc);
     mozilla::ipc::IPCResult added = parentDoc->AddChildDoc(doc, aParentID);
+    if (!added) {
+#ifdef DEBUG
+      return added;
+#else
+      return IPC_OK();
+#endif
+    }
+
 #ifdef XP_WIN
     MOZ_ASSERT(aDocCOMProxy.IsNull());
-    if (added) {
-      a11y::WrapperFor(doc)->SetID(aMsaaID);
+    a11y::WrapperFor(doc)->SetID(aMsaaID);
+    if (a11y::nsWinUtils::IsWindowEmulationStarted()) {
+      doc->SetEmulatedWindowHandle(parentDoc->GetEmulatedWindowHandle());
     }
 #endif
-    if (!added) {
-      return added;
-    }
+
     return IPC_OK();
   } else {
     // null aParentDoc means this document is at the top level in the child
@@ -952,7 +976,9 @@ TabParent::RecvPDocAccessibleConstructor(PDocAccessibleParent* aDoc,
     a11y::WrapperFor(doc)->SetID(aMsaaID);
     MOZ_ASSERT(!aDocCOMProxy.IsNull());
     RefPtr<IAccessible> proxy(aDocCOMProxy.Get());
-    doc->SetCOMProxy(proxy);
+    doc->SetCOMInterface(proxy);
+    doc->MaybeInitWindowEmulation();
+    doc->SendParentCOMProxy();
 #endif
   }
 #endif
@@ -968,7 +994,7 @@ TabParent::GetTopLevelDocAccessible() const
   const ManagedContainer<PDocAccessibleParent>& docs = ManagedPDocAccessibleParent();
   for (auto iter = docs.ConstIter(); !iter.Done(); iter.Next()) {
     auto doc = static_cast<a11y::DocAccessibleParent*>(iter.Get()->GetKey());
-    if (!doc->ParentDoc()) {
+    if (doc->IsTopLevel()) {
       return doc;
     }
   }
@@ -2666,10 +2692,16 @@ TabParent::GetLoadContext()
   } else {
     bool isPrivate = mChromeFlags & nsIWebBrowserChrome::CHROME_PRIVATE_WINDOW;
     SetPrivateBrowsingAttributes(isPrivate);
+    bool useTrackingProtection = false;
+    nsCOMPtr<nsIDocShell> docShell = mFrameElement->OwnerDoc()->GetDocShell();
+    if (docShell) {
+      docShell->GetUseTrackingProtection(&useTrackingProtection);
+    }
     loadContext = new LoadContext(GetOwnerElement(),
                                   true /* aIsContent */,
                                   isPrivate,
                                   mChromeFlags & nsIWebBrowserChrome::CHROME_REMOTE_WINDOW,
+                                  useTrackingProtection,
                                   OriginAttributesRef());
     mLoadContext = loadContext;
   }
@@ -2864,7 +2896,12 @@ TabParent::RecvRemotePaintIsReady()
 mozilla::plugins::PPluginWidgetParent*
 TabParent::AllocPPluginWidgetParent()
 {
+#ifdef XP_WIN
   return new mozilla::plugins::PluginWidgetParent();
+#else
+  MOZ_ASSERT_UNREACHABLE();
+  return nullptr;
+#endif
 }
 
 bool
@@ -2979,7 +3016,8 @@ public:
   NS_IMETHOD GetOriginAttributes(JS::MutableHandleValue) NO_IMPL
   NS_IMETHOD GetUseRemoteTabs(bool*) NO_IMPL
   NS_IMETHOD SetRemoteTabs(bool) NO_IMPL
-  NS_IMETHOD IsTrackingProtectionOn(bool*) NO_IMPL
+  NS_IMETHOD GetUseTrackingProtection(bool*) NO_IMPL
+  NS_IMETHOD SetUseTrackingProtection(bool) NO_IMPL
 #undef NO_IMPL
 
 protected:

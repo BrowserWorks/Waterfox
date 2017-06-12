@@ -6,18 +6,17 @@
 
 from __future__ import absolute_import, print_function, unicode_literals
 
-import json
 import logging
 import requests
-import yaml
 
 from .create import create_tasks
 from .decision import write_artifact
 from .optimize import optimize_task_graph
 from .taskgraph import TaskGraph
+from .util.taskcluster import get_artifact
+
 
 logger = logging.getLogger(__name__)
-TASKCLUSTER_QUEUE_URL = "https://queue.taskcluster.net/v1/task"
 TREEHERDER_URL = "https://treeherder.mozilla.org/api"
 
 # We set this to 5 for now because this is what SETA sets the
@@ -63,15 +62,6 @@ def add_tasks(decision_task_id, task_labels, prefix=''):
     create_tasks(optimized_graph, label_to_taskid, decision_params)
 
 
-def get_artifact(task_id, path):
-    resp = requests.get(url="{}/{}/artifacts/{}".format(TASKCLUSTER_QUEUE_URL, task_id, path))
-    if path.endswith('.json'):
-        artifact = json.loads(resp.text)
-    elif path.endswith('.yml'):
-        artifact = yaml.load(resp.text)
-    return artifact
-
-
 def backfill(project, job_id):
     """
     Run the backfill task.  This function implements `mach taskgraph backfill-task`,
@@ -100,6 +90,19 @@ def backfill(project, job_id):
         add_tasks(decision, [job["job_type_name"]], '{}-'.format(decision))
 
 
+def add_talos(decision_task_id, times=1):
+    """
+    Run the add-talos task.  This function implements `mach taskgraph add-talos`,
+    and is responsible for
+
+     * Adding all talos jobs to a push.
+    """
+    full_task_json = get_artifact(decision_task_id, "public/full-task-graph.json")
+    task_labels = [label for label in full_task_json if "talos" in label]
+    for time in xrange(times):
+        add_tasks(decision_task_id, task_labels, '{}-'.format(time))
+
+
 def load_decisions(s, project, resultsets, filters):
     """
     Given a project, a list of revisions, and a dict of filters, return
@@ -122,11 +125,9 @@ def load_decisions(s, project, resultsets, filters):
                 break
             offset += jobs_per_call
         filtered = [j for j in unfiltered if all([j[k] == filters[k] for k in filters])]
-        if len(filtered) > 1:
-            raise Exception("Too many jobs matched. Aborting.")
-        elif len(filtered) == 1:
-            if filtered[0]["result"] == "success":
-                break
+        if filtered and all([j["result"] == "success" for j in filtered]):
+            logger.info("Push found with all green jobs for this type. Continuing.")
+            break
         decisions += [t for t in unfiltered if t["job_type_name"] == "Gecko Decision Task"]
 
     for decision in decisions:

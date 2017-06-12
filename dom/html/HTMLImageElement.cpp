@@ -41,11 +41,10 @@
 
 #include "nsILoadGroup.h"
 
-#include "nsRuleData.h"
-
 #include "nsIDOMHTMLMapElement.h"
 #include "mozilla/EventDispatcher.h"
 #include "mozilla/EventStates.h"
+#include "mozilla/GenericSpecifiedValuesInlines.h"
 #include "mozilla/net/ReferrerPolicy.h"
 
 #include "nsLayoutUtils.h"
@@ -319,7 +318,7 @@ HTMLImageElement::ParseAttribute(int32_t aNamespaceID,
 
 void
 HTMLImageElement::MapAttributesIntoRule(const nsMappedAttributes* aAttributes,
-                                        nsRuleData* aData)
+                                        GenericSpecifiedValues* aData)
 {
   nsGenericHTMLElement::MapImageAlignAttributeInto(aAttributes, aData);
   nsGenericHTMLElement::MapImageBorderAttributeInto(aAttributes, aData);
@@ -770,7 +769,6 @@ HTMLImageElement::NaturalHeight()
     double density = mResponsiveSelector->GetSelectedImageDensity();
     MOZ_ASSERT(density >= 0.0);
     height = NSToIntRound(double(height) / density);
-    height = std::max(height, 0u);
   }
 
   return height;
@@ -798,7 +796,6 @@ HTMLImageElement::NaturalWidth()
     double density = mResponsiveSelector->GetSelectedImageDensity();
     MOZ_ASSERT(density >= 0.0);
     width = NSToIntRound(double(width) / density);
-    width = std::max(width, 0u);
   }
 
   return width;

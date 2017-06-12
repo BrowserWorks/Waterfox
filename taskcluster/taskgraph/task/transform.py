@@ -80,13 +80,21 @@ class TransformTask(base.Task):
         self.dependencies = task['dependencies']
         self.when = task['when']
         super(TransformTask, self).__init__(kind, task['label'],
-                                            task['attributes'], task['task'])
+                                            task['attributes'], task['task'],
+                                            index_paths=task.get('index-paths'))
 
     def get_dependencies(self, taskgraph):
         return [(label, name) for name, label in self.dependencies.items()]
 
     def optimize(self, params):
-        if 'files-changed' in self.when:
+        bbb_task = False
+
+        if self.index_paths:
+            optimized, taskId = super(TransformTask, self).optimize(params)
+            if optimized:
+                return optimized, taskId
+
+        elif 'files-changed' in self.when:
             changed = files_changed.check(
                 params, self.when['files-changed'])
             if not changed:
@@ -94,9 +102,22 @@ class TransformTask(base.Task):
                              self.label)
                 return True, None
 
+        # no need to call SETA for build jobs
+        if self.task.get('extra', {}).get('treeherder', {}).get('jobKind', '') == 'build':
+            return False, None
+
+        # for bbb tasks we need to send in the buildbot buildername
+        if self.task.get('provisionerId', '') == 'buildbot-bridge':
+            self.label = self.task.get('payload').get('buildername')
+            bbb_task = True
+
         # we would like to return 'False, None' while it's high_value_task
         # and we wouldn't optimize it. Otherwise, it will return 'True, None'
-        if is_low_value_task(self.label, params.get('project'), params.get('pushlog_id')):
+        if is_low_value_task(self.label,
+                             params.get('project'),
+                             params.get('pushlog_id'),
+                             params.get('pushdate'),
+                             bbb_task):
             # Always optimize away low-value tasks
             return True, None
         else:

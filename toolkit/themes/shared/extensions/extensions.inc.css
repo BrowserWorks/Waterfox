@@ -260,6 +260,8 @@ button.warning {
 
 #header-utils-btn:not([disabled="true"]):active:hover,
 #header-utils-btn[open="true"] {
+  padding-bottom: 0px;
+  padding-top: 0px;
   background-color: #dadada;
 }
 
@@ -1006,11 +1008,6 @@ button.button-link {
   min-width: 0;
   min-height: 20px;
   margin: 0 6px;
-}
-
-button.button-link:not(:-moz-focusring) > .button-box {
-  border-width: 0;
-  margin: 1px;
 }
 
 button.button-link:hover {

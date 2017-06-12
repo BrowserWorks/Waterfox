@@ -26,10 +26,12 @@ class Element;
 class CSSStyleSheet;
 class ServoRestyleManager;
 class ServoStyleSheet;
+struct Keyframe;
 } // namespace mozilla
 class nsIDocument;
 class nsStyleContext;
 class nsPresContext;
+struct nsTimingFunction;
 struct TreeMatchContext;
 
 namespace mozilla {
@@ -42,6 +44,21 @@ class ServoStyleSet
 {
   friend class ServoRestyleManager;
 public:
+  static bool IsInServoTraversal(bool aAssertServoTraversalOrMainThread = true)
+  {
+    // The callers of this function are generally main-thread-only _except_
+    // for potentially running during the Servo traversal, in which case they may
+    // take special paths that avoid writing to caches and the like. In order
+    // to allow those callers to branch efficiently without checking TLS, we
+    // maintain this static boolean. However, the danger is that those callers
+    // are generally unprepared to deal with non-Servo-but-also-non-main-thread
+    // callers, and are likely to take the main-thread codepath if this function
+    // returns false. So we assert against other non-main-thread callers here.
+    MOZ_ASSERT_IF(aAssertServoTraversalOrMainThread,
+                  sInServoTraversal || NS_IsMainThread());
+    return sInServoTraversal;
+  }
+
   ServoStyleSet();
 
   void Init(nsPresContext* aPresContext);
@@ -128,9 +145,11 @@ public:
 
   /**
    * Performs a Servo traversal to compute style for all dirty nodes in the
-   * document. The root element must be non-null.
+   * document.  This will traverse all of the document's style roots (that
+   * is, its document element, and the roots of the document-level native
+   * anonymous content).  Returns true if a post-traversal is required.
    */
-  void StyleDocument();
+  bool StyleDocument();
 
   /**
    * Eagerly styles a subtree of unstyled nodes that was just appended to the
@@ -172,18 +191,17 @@ public:
    */
   already_AddRefed<ServoComputedValues> ResolveServoStyle(dom::Element* aElement);
 
-  /**
-   * Restyle with added declaration, for use in animations.
-   */
-  ServoComputedValuesStrong RestyleWithAddedDeclaration(
-    RawServoDeclarationBlock* aDeclarations,
-    const ServoComputedValues* aPreviousStyle);
+  bool FillKeyframesForName(const nsString& aName,
+                            const nsTimingFunction& aTimingFunction,
+                            const ServoComputedValues* aComputedValues,
+                            nsTArray<Keyframe>& aKeyframes);
 
 private:
   already_AddRefed<nsStyleContext> GetContext(already_AddRefed<ServoComputedValues>,
                                               nsStyleContext* aParentContext,
                                               nsIAtom* aPseudoTag,
-                                              CSSPseudoElementType aPseudoType);
+                                              CSSPseudoElementType aPseudoType,
+                                              dom::Element* aElementForAnimation);
 
   already_AddRefed<nsStyleContext> GetContext(nsIContent* aContent,
                                               nsStyleContext* aParentContext,
@@ -191,11 +209,27 @@ private:
                                               CSSPseudoElementType aPseudoType,
                                               LazyComputeBehavior aMayCompute);
 
+  /**
+   * Resolve all ServoDeclarationBlocks attached to mapped
+   * presentation attributes cached on the document.
+   * Call this before jumping into Servo's style system.
+   */
+  void ResolveMappedAttrDeclarationBlocks();
+
+  /**
+   * Perform all lazy operations required before traversing
+   * a subtree.  Returns whether a post-traversal is required.
+   */
+  bool PrepareAndTraverseSubtree(RawGeckoElementBorrowed aRoot,
+                                 mozilla::TraversalRootBehavior aRootBehavior);
+
   nsPresContext* mPresContext;
   UniquePtr<RawServoStyleSet> mRawSet;
   EnumeratedArray<SheetType, SheetType::Count,
                   nsTArray<RefPtr<ServoStyleSheet>>> mSheets;
   int32_t mBatching;
+
+  static bool sInServoTraversal;
 };
 
 } // namespace mozilla

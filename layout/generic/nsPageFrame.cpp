@@ -58,7 +58,7 @@ nsPageFrame::Reflow(nsPresContext*           aPresContext,
   MarkInReflow();
   DO_GLOBAL_REFLOW_COUNT("nsPageFrame");
   DISPLAY_REFLOW(aPresContext, this, aReflowInput, aDesiredSize, aStatus);
-  aStatus = NS_FRAME_COMPLETE;  // initialize out parameter
+  aStatus.Reset();  // initialize out parameter
 
   NS_ASSERTION(mFrames.FirstChild() &&
                nsGkAtoms::pageContentFrame == mFrames.FirstChild()->GetType(),
@@ -146,7 +146,7 @@ nsPageFrame::Reflow(nsPresContext*           aPresContext,
     // Place and size the child
     FinishReflowChild(frame, aPresContext, aDesiredSize, &kidReflowInput, xc, yc, 0);
 
-    NS_ASSERTION(!NS_FRAME_IS_FULLY_COMPLETE(aStatus) ||
+    NS_ASSERTION(!aStatus.IsFullyComplete() ||
                  !frame->GetNextInFlow(), "bad child flow list");
   }
   PR_PL(("PageFrame::Reflow %p ", this));
@@ -172,7 +172,7 @@ nsPageFrame::Reflow(nsPresContext*           aPresContext,
 nsIAtom*
 nsPageFrame::GetType() const
 {
-  return nsGkAtoms::pageFrame; 
+  return nsGkAtoms::pageFrame;
 }
 
 #ifdef DEBUG_FRAME_DUMP
@@ -393,7 +393,9 @@ nsPageFrame::DrawHeaderFooter(nsRenderingContext& aRenderingContext,
     gfx->SetColor(Color(0.f, 0.f, 0.f));
     nsLayoutUtils::DrawString(this, aFontMetrics, &aRenderingContext,
                               str.get(), str.Length(),
-                              nsPoint(x, y + aAscent));
+                              nsPoint(x, y + aAscent),
+                              nullptr,
+                              DrawStringFlags::eForceHorizontal);
     gfx->Restore();
   }
 }
@@ -729,13 +731,13 @@ nsPageBreakFrame::Reflow(nsPresContext*           aPresContext,
   // Note: not using NS_FRAME_FIRST_REFLOW here, since it's not clear whether
   // DidReflow will always get called before the next Reflow() call.
   mHaveReflowed = true;
-  aStatus = NS_FRAME_COMPLETE; 
+  aStatus.Reset(); 
 }
 
 nsIAtom*
 nsPageBreakFrame::GetType() const
 {
-  return nsGkAtoms::pageBreakFrame; 
+  return nsGkAtoms::pageBreakFrame;
 }
 
 #ifdef DEBUG_FRAME_DUMP

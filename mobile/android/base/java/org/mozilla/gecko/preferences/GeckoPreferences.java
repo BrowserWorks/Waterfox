@@ -9,7 +9,6 @@ import org.json.JSONArray;
 import org.mozilla.gecko.AboutPages;
 import org.mozilla.gecko.AdjustConstants;
 import org.mozilla.gecko.AppConstants;
-import org.mozilla.gecko.AppConstants.Versions;
 import org.mozilla.gecko.BrowserApp;
 import org.mozilla.gecko.BrowserLocaleManager;
 import org.mozilla.gecko.DataReportingNotification;
@@ -17,7 +16,6 @@ import org.mozilla.gecko.DynamicToolbar;
 import org.mozilla.gecko.EventDispatcher;
 import org.mozilla.gecko.Experiments;
 import org.mozilla.gecko.GeckoActivityStatus;
-import org.mozilla.gecko.GeckoApp;
 import org.mozilla.gecko.GeckoAppShell;
 import org.mozilla.gecko.GeckoApplication;
 import org.mozilla.gecko.GeckoProfile;
@@ -31,7 +29,6 @@ import org.mozilla.gecko.Telemetry;
 import org.mozilla.gecko.TelemetryContract;
 import org.mozilla.gecko.TelemetryContract.Method;
 import org.mozilla.gecko.activitystream.ActivityStream;
-import org.mozilla.gecko.background.common.GlobalConstants;
 import org.mozilla.gecko.db.BrowserContract.SuggestedSites;
 import org.mozilla.gecko.feeds.FeedService;
 import org.mozilla.gecko.feeds.action.CheckForUpdatesAction;
@@ -48,7 +45,7 @@ import org.mozilla.gecko.util.EventCallback;
 import org.mozilla.gecko.util.GeckoBundle;
 import org.mozilla.gecko.util.HardwareUtils;
 import org.mozilla.gecko.util.InputOptionsUtils;
-import org.mozilla.gecko.util.NativeJSObject;
+import org.mozilla.gecko.util.IntentUtils;
 import org.mozilla.gecko.util.ThreadUtils;
 import org.mozilla.gecko.util.ViewUtil;
 
@@ -81,16 +78,12 @@ import android.preference.TwoStatePreference;
 import android.support.design.widget.Snackbar;
 import android.support.design.widget.TextInputLayout;
 import android.support.v4.content.LocalBroadcastManager;
-import android.support.v4.content.res.ResourcesCompat;
-import android.support.v4.text.TextUtilsCompat;
-import android.support.v4.view.ViewCompat;
 import android.support.v7.app.ActionBar;
 import android.text.Editable;
 import android.text.InputType;
 import android.text.TextUtils;
 import android.text.TextWatcher;
 import android.util.Log;
-import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
 import android.widget.AdapterView;
@@ -99,7 +92,7 @@ import android.widget.LinearLayout;
 import android.widget.ListAdapter;
 import android.widget.ListView;
 
-import com.keepsafe.switchboard.SwitchBoard;
+import org.mozilla.gecko.switchboard.SwitchBoard;
 
 import java.util.ArrayList;
 import java.util.Collections;
@@ -129,6 +122,9 @@ public class GeckoPreferences
     public static final String PREFS_TRACKING_PROTECTION_PROMPT_SHOWN = NON_PREF_PREFIX + "trackingProtectionPromptShown";
     public static final String PREFS_HEALTHREPORT_UPLOAD_ENABLED = NON_PREF_PREFIX + "healthreport.uploadEnabled";
     public static final String PREFS_SYNC = NON_PREF_PREFIX + "sync";
+
+    // Has this activity recently started another Gecko activity?
+    private boolean mGeckoActivityOpened;
 
     private static boolean sIsCharEncodingEnabled;
     private boolean mInitialized;
@@ -175,7 +171,9 @@ public class GeckoPreferences
     public static final String PREFS_ACTIVITY_STREAM = NON_PREF_PREFIX + "activitystream";
     public static final String PREFS_CATEGORY_EXPERIMENTAL_FEATURES = NON_PREF_PREFIX + "category_experimental";
     public static final String PREFS_COMPACT_TABS = NON_PREF_PREFIX + "compact_tabs";
+    public static final String PREFS_SHOW_QUIT_MENU = NON_PREF_PREFIX + "distribution.show_quit_menu";
     public static final String PREFS_SEARCH_SUGGESTIONS_ENABLED = "browser.search.suggest.enabled";
+    public static final String PREFS_DEFAULT_BROWSER = NON_PREF_PREFIX + "default_browser.link";
 
     private static final String ACTION_STUMBLER_UPLOAD_PREF = "STUMBLER_PREF";
 
@@ -565,6 +563,7 @@ public class GeckoPreferences
 
         if (getApplication() instanceof GeckoApplication) {
             ((GeckoApplication) getApplication()).onActivityResume(this);
+            mGeckoActivityOpened = false;
         }
 
         // Watch prefs, otherwise we don't reliably get told when they change.
@@ -588,6 +587,12 @@ public class GeckoPreferences
     }
 
     @Override
+    public void startActivityForResult(Intent intent, int request) {
+        mGeckoActivityOpened = IntentUtils.checkIfGeckoActivity(intent);
+        super.startActivityForResult(intent, request);
+    }
+
+    @Override
     public void startWithFragment(String fragmentName, Bundle args,
             Fragment resultTo, int resultRequestCode, int titleRes, int shortTitleRes) {
         Log.v(LOGTAG, "Starting with fragment: " + fragmentName + ", title " + titleRes);
@@ -597,6 +602,7 @@ public class GeckoPreferences
         if (resultTo == null) {
             startActivityForResultChoosingTransition(intent, REQUEST_CODE_PREF_SCREEN);
         } else {
+            mGeckoActivityOpened = IntentUtils.checkIfGeckoActivity(intent);
             resultTo.startActivityForResult(intent, resultRequestCode);
             if (NO_TRANSITIONS) {
                 overridePendingTransition(0, 0);
@@ -967,10 +973,10 @@ public class GeckoPreferences
      * Restore default search engines in Gecko and retrigger a search engine refresh.
      */
     protected void restoreDefaultSearchEngines() {
-        GeckoAppShell.notifyObservers("SearchEngines:RestoreDefaults", null);
+        EventDispatcher.getInstance().dispatch("SearchEngines:RestoreDefaults", null);
 
         // Send message to Gecko to get engines. SearchPreferenceCategory listens for the response.
-        GeckoAppShell.notifyObservers("SearchEngines:GetVisible", null);
+        EventDispatcher.getInstance().dispatch("SearchEngines:GetVisible", null);
     }
 
     @Override
@@ -1532,7 +1538,7 @@ public class GeckoPreferences
 
     @Override
     public boolean isGeckoActivityOpened() {
-        return false;
+        return mGeckoActivityOpened;
     }
 
     /**

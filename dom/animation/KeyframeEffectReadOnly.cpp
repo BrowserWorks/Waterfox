@@ -10,6 +10,7 @@
   // For UnrestrictedDoubleOrKeyframeAnimationOptions;
 #include "mozilla/dom/CSSPseudoElement.h"
 #include "mozilla/dom/KeyframeEffectBinding.h"
+#include "mozilla/AnimationRule.h"
 #include "mozilla/AnimationUtils.h"
 #include "mozilla/AutoRestore.h"
 #include "mozilla/EffectSet.h"
@@ -17,7 +18,7 @@
 #include "mozilla/LookAndFeel.h" // For LookAndFeel::GetInt
 #include "mozilla/KeyframeUtils.h"
 #include "mozilla/ServoBindings.h"
-#include "mozilla/StyleAnimationValue.h"
+#include "mozilla/TypeTraits.h"
 #include "Layers.h" // For Layer
 #include "nsComputedDOMStyle.h" // nsComputedDOMStyle::GetStyleContextForElement
 #include "nsContentUtils.h"  // nsContentUtils::ReportToConsole
@@ -189,6 +190,27 @@ void
 KeyframeEffectReadOnly::SetKeyframes(nsTArray<Keyframe>&& aKeyframes,
                                      nsStyleContext* aStyleContext)
 {
+  DoSetKeyframes(Move(aKeyframes), Move(aStyleContext));
+}
+
+void
+KeyframeEffectReadOnly::SetKeyframes(
+  nsTArray<Keyframe>&& aKeyframes,
+  const ServoComputedStyleValues& aServoValues)
+{
+  DoSetKeyframes(Move(aKeyframes), aServoValues);
+}
+
+template<typename StyleType>
+void
+KeyframeEffectReadOnly::DoSetKeyframes(nsTArray<Keyframe>&& aKeyframes,
+                                       StyleType&& aStyle)
+{
+  static_assert(IsSame<StyleType, nsStyleContext*>::value ||
+                IsSame<StyleType, const ServoComputedStyleValues&>::value,
+                "StyleType should be nsStyleContext* or "
+                "const ServoComputedStyleValues&");
+
   if (KeyframesEqualIgnoringComputedOffsets(aKeyframes, mKeyframes)) {
     return;
   }
@@ -204,8 +226,11 @@ KeyframeEffectReadOnly::SetKeyframes(nsTArray<Keyframe>&& aKeyframes,
     nsNodeUtils::AnimationChanged(mAnimation);
   }
 
-  if (aStyleContext) {
-    UpdateProperties(aStyleContext);
+  // We need to call UpdateProperties() if the StyleType is
+  // 'const ServoComputedStyleValues&' (i.e. not a pointer) or nsStyleContext*
+  // is not nullptr.
+  if (!IsPointer<StyleType>::value || aStyle) {
+    UpdateProperties(aStyle);
     MaybeUpdateFrameForCompositor();
   }
 }
@@ -274,6 +299,35 @@ KeyframeEffectReadOnly::UpdateProperties(nsStyleContext* aStyleContext)
 {
   MOZ_ASSERT(aStyleContext);
 
+  if (!mDocument->IsStyledByServo()) {
+    DoUpdateProperties(Move(aStyleContext));
+    return;
+  }
+
+  const ServoComputedValues* currentStyle =
+    aStyleContext->StyleSource().AsServoComputedValues();
+  const ServoComputedValues* parentStyle =
+    aStyleContext->GetParent()
+      ? aStyleContext->GetParent()->StyleSource().AsServoComputedValues()
+      : nullptr;
+
+  const ServoComputedStyleValues servoValues = { currentStyle, parentStyle };
+  DoUpdateProperties(servoValues);
+}
+
+void
+KeyframeEffectReadOnly::UpdateProperties(
+  const ServoComputedStyleValues& aServoValues)
+{
+  DoUpdateProperties(aServoValues);
+}
+
+template<typename StyleType>
+void
+KeyframeEffectReadOnly::DoUpdateProperties(StyleType&& aStyle)
+{
+  MOZ_ASSERT_IF(IsPointer<StyleType>::value, aStyle);
+
   // Skip updating properties when we are composing style.
   // FIXME: Bug 1324966. Drop this check once we have a function to get
   // nsStyleContext without resolving animating style.
@@ -283,11 +337,12 @@ KeyframeEffectReadOnly::UpdateProperties(nsStyleContext* aStyleContext)
     return;
   }
 
-  nsTArray<AnimationProperty> properties = BuildProperties(aStyleContext);
+  nsTArray<AnimationProperty> properties =
+    BuildProperties(Forward<StyleType>(aStyle));
 
   // We need to update base styles even if any properties are not changed at all
   // since base styles might have been changed due to parent style changes, etc.
-  EnsureBaseStyles(aStyleContext, properties);
+  EnsureBaseStyles(aStyle, properties);
 
   if (mProperties == properties) {
     return;
@@ -309,10 +364,7 @@ KeyframeEffectReadOnly::UpdateProperties(nsStyleContext* aStyleContext)
       runningOnCompositorProperties.HasProperty(property.mProperty);
   }
 
-  // FIXME (bug 1303235): Do this for Servo too
-  if (aStyleContext->PresContext()->StyleSet()->IsGecko()) {
-    CalculateCumulativeChangeHint(aStyleContext);
-  }
+  CalculateCumulativeChangeHint(aStyle);
 
   MarkCascadeNeedsUpdate();
 
@@ -463,7 +515,7 @@ KeyframeEffectReadOnly::EnsureBaseStyles(
 
 void
 KeyframeEffectReadOnly::ComposeStyle(
-  RefPtr<AnimValuesStyleRule>& aStyleRule,
+  AnimationRule& aStyleRule,
   const nsCSSPropertyIDSet& aPropertiesToSkip)
 {
   MOZ_DIAGNOSTIC_ASSERT(!mIsComposingStyle,
@@ -484,6 +536,8 @@ KeyframeEffectReadOnly::ComposeStyle(
   if (computedTiming.mProgress.IsNull()) {
     return;
   }
+
+  bool isServoBackend = mDocument->IsStyledByServo();
 
   for (size_t propIdx = 0, propEnd = mProperties.Length();
        propIdx != propEnd; ++propIdx)
@@ -518,75 +572,134 @@ KeyframeEffectReadOnly::ComposeStyle(
                  prop.mSegments.Length(),
                "out of array bounds");
 
-    if (!aStyleRule) {
-      // Allocate the style rule now that we know we have animation data.
-      aStyleRule = new AnimValuesStyleRule();
-    }
+    // Bug 1333311 - We use two branches for Gecko and Stylo. However, it's
+    // better to remove the duplicated code.
+    if (isServoBackend) {
+      // Servo backend
 
-    StyleAnimationValue fromValue =
-      CompositeValue(prop.mProperty, aStyleRule,
-                     segment->mFromValue,
-                     segment->mFromComposite);
-    StyleAnimationValue toValue =
-      CompositeValue(prop.mProperty, aStyleRule,
-                     segment->mToValue,
-                     segment->mToComposite);
-    if (fromValue.IsNull() || toValue.IsNull()) {
-      continue;
-    }
+      // Bug 1329878 - Stylo: Implement accumulate and addition on Servo
+      // AnimationValue.
+      RawServoAnimationValue* servoFromValue = segment->mFromValue.mServo;
+      RawServoAnimationValue* servoToValue = segment->mToValue.mServo;
 
-    // Iteration composition for accumulate
-    if (mEffectOptions.mIterationComposite ==
-          IterationCompositeOperation::Accumulate &&
-        computedTiming.mCurrentIteration > 0) {
-      const AnimationPropertySegment& lastSegment =
-        prop.mSegments.LastElement();
-      // FIXME: Bug 1293492: Add a utility function to calculate both of
-      // below StyleAnimationValues.
-      StyleAnimationValue lastValue = lastSegment.mToValue.IsNull()
-        ? GetUnderlyingStyle(prop.mProperty, aStyleRule)
-        : lastSegment.mToValue;
-      fromValue =
-        StyleAnimationValue::Accumulate(prop.mProperty,
-                                        lastValue,
-                                        Move(fromValue),
-                                        computedTiming.mCurrentIteration);
-      toValue =
-        StyleAnimationValue::Accumulate(prop.mProperty,
-                                        lastValue,
-                                        Move(toValue),
-                                        computedTiming.mCurrentIteration);
-    }
-
-    // Special handling for zero-length segments
-    if (segment->mToKey == segment->mFromKey) {
-      if (computedTiming.mProgress.Value() < 0) {
-        aStyleRule->AddValue(prop.mProperty, Move(fromValue));
-      } else {
-        aStyleRule->AddValue(prop.mProperty, Move(toValue));
+      // For unsupported or non-animatable animation types, we get nullptrs.
+      if (!servoFromValue || !servoToValue) {
+        NS_ERROR("Compose style for unsupported or non-animatable property, "
+                 "so get invalid RawServoAnimationValues");
+        continue;
       }
-      continue;
-    }
 
-    double positionInSegment =
-      (computedTiming.mProgress.Value() - segment->mFromKey) /
-      (segment->mToKey - segment->mFromKey);
-    double valuePosition =
-      ComputedTimingFunction::GetPortion(segment->mTimingFunction,
-                                         positionInSegment,
-                                         computedTiming.mBeforeFlag);
+      if (!aStyleRule.mServo) {
+        // Allocate the style rule now that we know we have animation data.
+        aStyleRule.mServo = new ServoAnimationRule();
+      }
 
-    MOZ_ASSERT(IsFinite(valuePosition), "Position value should be finite");
-    StyleAnimationValue val;
-    if (StyleAnimationValue::Interpolate(prop.mProperty,
-                                         fromValue,
-                                         toValue,
-                                         valuePosition, val)) {
-      aStyleRule->AddValue(prop.mProperty, Move(val));
-    } else if (valuePosition < 0.5) {
-      aStyleRule->AddValue(prop.mProperty, Move(fromValue));
+      // Special handling for zero-length segments
+      if (segment->mToKey == segment->mFromKey) {
+        if (computedTiming.mProgress.Value() < 0) {
+          aStyleRule.mServo->AddValue(prop.mProperty, servoFromValue);
+        } else {
+          aStyleRule.mServo->AddValue(prop.mProperty, servoToValue);
+        }
+        continue;
+      }
+
+      double positionInSegment =
+        (computedTiming.mProgress.Value() - segment->mFromKey) /
+        (segment->mToKey - segment->mFromKey);
+      double valuePosition =
+        ComputedTimingFunction::GetPortion(segment->mTimingFunction,
+                                           positionInSegment,
+                                           computedTiming.mBeforeFlag);
+
+      MOZ_ASSERT(IsFinite(valuePosition), "Position value should be finite");
+
+      RefPtr<RawServoAnimationValue> interpolated =
+        Servo_AnimationValues_Interpolate(servoFromValue,
+                                          servoToValue,
+                                          valuePosition).Consume();
+
+      if (interpolated) {
+        aStyleRule.mServo->AddValue(prop.mProperty, interpolated);
+      } else if (valuePosition < 0.5) {
+        aStyleRule.mServo->AddValue(prop.mProperty, servoFromValue);
+      } else {
+        aStyleRule.mServo->AddValue(prop.mProperty, servoToValue);
+      }
     } else {
-      aStyleRule->AddValue(prop.mProperty, Move(toValue));
+      // Gecko backend
+
+      if (!aStyleRule.mGecko) {
+        // Allocate the style rule now that we know we have animation data.
+        aStyleRule.mGecko = new AnimValuesStyleRule();
+      }
+
+      StyleAnimationValue fromValue =
+        CompositeValue(prop.mProperty, aStyleRule.mGecko,
+                       segment->mFromValue.mGecko,
+                       segment->mFromComposite);
+      StyleAnimationValue toValue =
+        CompositeValue(prop.mProperty, aStyleRule.mGecko,
+                       segment->mToValue.mGecko,
+                       segment->mToComposite);
+      if (fromValue.IsNull() || toValue.IsNull()) {
+        continue;
+      }
+
+      // Iteration composition for accumulate
+      if (mEffectOptions.mIterationComposite ==
+          IterationCompositeOperation::Accumulate &&
+          computedTiming.mCurrentIteration > 0) {
+        const AnimationPropertySegment& lastSegment =
+          prop.mSegments.LastElement();
+        // FIXME: Bug 1293492: Add a utility function to calculate both of
+        // below StyleAnimationValues.
+        StyleAnimationValue lastValue = lastSegment.mToValue.mGecko.IsNull()
+          ? GetUnderlyingStyle(prop.mProperty, aStyleRule.mGecko)
+          : lastSegment.mToValue.mGecko;
+        fromValue =
+          StyleAnimationValue::Accumulate(prop.mProperty,
+                                          lastValue,
+                                          Move(fromValue),
+                                          computedTiming.mCurrentIteration);
+        toValue =
+          StyleAnimationValue::Accumulate(prop.mProperty,
+                                          lastValue,
+                                          Move(toValue),
+                                          computedTiming.mCurrentIteration);
+      }
+
+      // Special handling for zero-length segments
+      if (segment->mToKey == segment->mFromKey) {
+        if (computedTiming.mProgress.Value() < 0) {
+          aStyleRule.mGecko->AddValue(prop.mProperty, Move(fromValue));
+        } else {
+          aStyleRule.mGecko->AddValue(prop.mProperty, Move(toValue));
+        }
+        continue;
+      }
+
+      double positionInSegment =
+        (computedTiming.mProgress.Value() - segment->mFromKey) /
+        (segment->mToKey - segment->mFromKey);
+      double valuePosition =
+        ComputedTimingFunction::GetPortion(segment->mTimingFunction,
+                                           positionInSegment,
+                                           computedTiming.mBeforeFlag);
+
+      MOZ_ASSERT(IsFinite(valuePosition), "Position value should be finite");
+
+      StyleAnimationValue val;
+      if (StyleAnimationValue::Interpolate(prop.mProperty,
+                                           fromValue,
+                                           toValue,
+                                           valuePosition, val)) {
+        aStyleRule.mGecko->AddValue(prop.mProperty, Move(val));
+      } else if (valuePosition < 0.5) {
+        aStyleRule.mGecko->AddValue(prop.mProperty, Move(fromValue));
+      } else {
+        aStyleRule.mGecko->AddValue(prop.mProperty, Move(toValue));
+      }
     }
   }
 }
@@ -791,10 +904,16 @@ KeyframeEffectReadOnly::ConstructKeyframeEffect(const GlobalObject& aGlobal,
   return effect.forget();
 }
 
+template<typename StyleType>
 nsTArray<AnimationProperty>
-KeyframeEffectReadOnly::BuildProperties(nsStyleContext* aStyleContext)
+KeyframeEffectReadOnly::BuildProperties(StyleType&& aStyle)
 {
-  MOZ_ASSERT(aStyleContext);
+  static_assert(IsSame<StyleType, nsStyleContext*>::value ||
+                IsSame<StyleType, const ServoComputedStyleValues&>::value,
+                "StyleType should be nsStyleContext* or "
+                "const ServoComputedStyleValues&");
+
+  MOZ_ASSERT(aStyle);
 
   nsTArray<AnimationProperty> result;
   // If mTarget is null, return an empty property array.
@@ -813,19 +932,22 @@ KeyframeEffectReadOnly::BuildProperties(nsStyleContext* aStyleContext)
   nsTArray<ComputedKeyframeValues> computedValues =
     KeyframeUtils::GetComputedKeyframeValues(keyframesCopy,
                                              mTarget->mElement,
-                                             aStyleContext);
+                                             aStyle);
 
-  if (mEffectOptions.mSpacingMode == SpacingMode::paced) {
+  // FIXME: Bug 1332633: we have to implement ComputeDistance for
+  //        RawServoAnimationValue.
+  if (mEffectOptions.mSpacingMode == SpacingMode::paced &&
+      !mDocument->IsStyledByServo()) {
     KeyframeUtils::ApplySpacing(keyframesCopy, SpacingMode::paced,
                                 mEffectOptions.mPacedProperty,
-                                computedValues, aStyleContext);
+                                computedValues, aStyle);
   }
 
   result =
-    KeyframeUtils::GetAnimationPropertiesFromKeyframes(keyframesCopy,
-                                                       computedValues,
-                                                       mEffectOptions.mComposite,
-                                                       aStyleContext);
+    KeyframeUtils::GetAnimationPropertiesFromKeyframes(
+      keyframesCopy,
+      computedValues,
+      mEffectOptions.mComposite);
 
 #ifdef DEBUG
   MOZ_ASSERT(SpecifiedKeyframeArraysAreEqual(mKeyframes, keyframesCopy),
@@ -915,12 +1037,8 @@ DumpAnimationProperties(nsTArray<AnimationProperty>& aAnimationProperties)
     printf("%s\n", nsCSSProps::GetStringValue(p.mProperty).get());
     for (auto& s : p.mSegments) {
       nsString fromValue, toValue;
-      Unused << StyleAnimationValue::UncomputeValue(p.mProperty,
-                                                    s.mFromValue,
-                                                    fromValue);
-      Unused << StyleAnimationValue::UncomputeValue(p.mProperty,
-                                                    s.mToValue,
-                                                    toValue);
+      s.mFromValue.SerializeSpecifiedValue(p.mProperty, fromValue);
+      s.mToValue.SerializeSpecifiedValue(p.mProperty, toValue);
       printf("  %f..%f: %s..%s\n", s.mFromKey, s.mToKey,
              NS_ConvertUTF16toUTF8(fromValue).get(),
              NS_ConvertUTF16toUTF8(toValue).get());
@@ -981,7 +1099,7 @@ static void
 CreatePropertyValue(nsCSSPropertyID aProperty,
                     float aOffset,
                     const Maybe<ComputedTimingFunction>& aTimingFunction,
-                    const StyleAnimationValue& aValue,
+                    const AnimationValue& aValue,
                     dom::CompositeOperation aComposite,
                     AnimationPropertyValueDetails& aResult)
 {
@@ -989,9 +1107,7 @@ CreatePropertyValue(nsCSSPropertyID aProperty,
 
   if (!aValue.IsNull()) {
     nsString stringValue;
-    DebugOnly<bool> uncomputeResult =
-      StyleAnimationValue::UncomputeValue(aProperty, aValue, stringValue);
-    MOZ_ASSERT(uncomputeResult, "failed to uncompute value");
+    aValue.SerializeSpecifiedValue(aProperty, stringValue);
     aResult.mValue.Construct(stringValue);
   }
 
@@ -1053,7 +1169,8 @@ KeyframeEffectReadOnly::GetProperties(
       // a) this is the last segment, or
       // b) the next segment's from-value differs.
       if (segmentIdx == segmentLen - 1 ||
-          property.mSegments[segmentIdx + 1].mFromValue != segment.mToValue) {
+          property.mSegments[segmentIdx + 1].mFromValue.mGecko !=
+            segment.mToValue.mGecko) {
         binding_detail::FastAnimationPropertyValueDetails toValue;
         CreatePropertyValue(property.mProperty, segment.mToKey,
                             Nothing(), segment.mToValue,
@@ -1242,13 +1359,7 @@ KeyframeEffectReadOnly::CanThrottleTransformChanges(nsIFrame& aFrame) const
     return true;
   }
 
-  nsPresContext* presContext = GetPresContext();
-  // CanThrottleTransformChanges is only called as part of a refresh driver tick
-  // in which case we expect to has a pres context.
-  MOZ_ASSERT(presContext);
-
-  TimeStamp now =
-    presContext->RefreshDriver()->MostRecentRefresh();
+  TimeStamp now = aFrame.PresContext()->RefreshDriver()->MostRecentRefresh();
 
   EffectSet* effectSet = EffectSet::GetEffectSet(mTarget->mElement,
                                                  mTarget->mPseudoType);
@@ -1256,11 +1367,10 @@ KeyframeEffectReadOnly::CanThrottleTransformChanges(nsIFrame& aFrame) const
                         " on an effect in an effect set");
   MOZ_ASSERT(mAnimation, "CanThrottleTransformChanges is expected to be called"
                          " on an effect with a parent animation");
-  TimeStamp animationRuleRefreshTime =
-    effectSet->AnimationRuleRefreshTime(mAnimation->CascadeLevel());
+  TimeStamp lastSyncTime = effectSet->LastTransformSyncTime();
   // If this animation can cause overflow, we can throttle some of the ticks.
-  if (!animationRuleRefreshTime.IsNull() &&
-      (now - animationRuleRefreshTime) < OverflowRegionRefreshInterval()) {
+  if (!lastSyncTime.IsNull() &&
+      (now - lastSyncTime) < OverflowRegionRefreshInterval()) {
     return true;
   }
 
@@ -1507,6 +1617,10 @@ void
 KeyframeEffectReadOnly::CalculateCumulativeChangeHint(
   nsStyleContext *aStyleContext)
 {
+  if (mDocument->IsStyledByServo()) {
+    // FIXME (bug 1303235): Do this for Servo too
+    return;
+  }
   mCumulativeChangeHint = nsChangeHint(0);
 
   for (const AnimationProperty& property : mProperties) {
@@ -1522,11 +1636,13 @@ KeyframeEffectReadOnly::CalculateCumulativeChangeHint(
       }
       RefPtr<nsStyleContext> fromContext =
         CreateStyleContextForAnimationValue(property.mProperty,
-                                            segment.mFromValue, aStyleContext);
+                                            segment.mFromValue.mGecko,
+                                            aStyleContext);
 
       RefPtr<nsStyleContext> toContext =
         CreateStyleContextForAnimationValue(property.mProperty,
-                                            segment.mToValue, aStyleContext);
+                                            segment.mToValue.mGecko,
+                                            aStyleContext);
 
       uint32_t equalStructs = 0;
       uint32_t samePointerStructs = 0;
@@ -1575,8 +1691,7 @@ KeyframeEffectReadOnly::CanIgnoreIfNotVisible() const
 
   // FIXME (bug 1303235): We don't calculate mCumulativeChangeHint for
   // the Servo backend yet
-  nsPresContext* presContext = GetPresContext();
-  if (!presContext || presContext->StyleSet()->IsServo()) {
+  if (mDocument->IsStyledByServo()) {
     return false;
   }
 

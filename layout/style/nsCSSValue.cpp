@@ -8,6 +8,7 @@
 
 #include "nsCSSValue.h"
 
+#include "mozilla/ServoStyleSet.h"
 #include "mozilla/StyleSheetInlines.h"
 #include "mozilla/Likely.h"
 #include "mozilla/MemoryReporting.h"
@@ -408,43 +409,55 @@ nscoord nsCSSValue::GetPixelLength() const
   return nsPresContext::CSSPixelsToAppUnits(float(mValue.mFloat*scaleFactor));
 }
 
+// Assert against resetting non-trivial CSS values from the parallel Servo
+// traversal, since the refcounts aren't thread-safe.
+// Note that the caller might be an OMTA thread, which is allowed to operate off
+// main thread because it owns all of the corresponding nsCSSValues and any that
+// they might be sharing members with. So pass false for aAssertServoOrMainThread.
+#define DO_RELEASE(member) {                                                  \
+  MOZ_ASSERT(!ServoStyleSet::IsInServoTraversal(false));                      \
+  mValue.member->Release();                                                   \
+}
+
 void nsCSSValue::DoReset()
 {
   if (UnitHasStringValue()) {
-    mValue.mString->Release();
+    DO_RELEASE(mString);
   } else if (IsFloatColorUnit()) {
-    mValue.mFloatColor->Release();
+    DO_RELEASE(mFloatColor);
   } else if (eCSSUnit_ComplexColor == mUnit) {
-    mValue.mComplexColor->Release();
+    DO_RELEASE(mComplexColor);
   } else if (UnitHasArrayValue()) {
-    mValue.mArray->Release();
+    DO_RELEASE(mArray);
   } else if (eCSSUnit_URL == mUnit) {
-    mValue.mURL->Release();
+    DO_RELEASE(mURL);
   } else if (eCSSUnit_Image == mUnit) {
-    mValue.mImage->Release();
+    DO_RELEASE(mImage);
   } else if (eCSSUnit_Gradient == mUnit) {
-    mValue.mGradient->Release();
+    DO_RELEASE(mGradient);
   } else if (eCSSUnit_TokenStream == mUnit) {
-    mValue.mTokenStream->Release();
+    DO_RELEASE(mTokenStream);
   } else if (eCSSUnit_Pair == mUnit) {
-    mValue.mPair->Release();
+    DO_RELEASE(mPair);
   } else if (eCSSUnit_Triplet == mUnit) {
-    mValue.mTriplet->Release();
+    DO_RELEASE(mTriplet);
   } else if (eCSSUnit_Rect == mUnit) {
-    mValue.mRect->Release();
+    DO_RELEASE(mRect);
   } else if (eCSSUnit_List == mUnit) {
-    mValue.mList->Release();
+    DO_RELEASE(mList);
   } else if (eCSSUnit_SharedList == mUnit) {
-    mValue.mSharedList->Release();
+    DO_RELEASE(mSharedList);
   } else if (eCSSUnit_PairList == mUnit) {
-    mValue.mPairList->Release();
+    DO_RELEASE(mPairList);
   } else if (eCSSUnit_GridTemplateAreas == mUnit) {
-    mValue.mGridTemplateAreas->Release();
+    DO_RELEASE(mGridTemplateAreas);
   } else if (eCSSUnit_FontFamilyList == mUnit) {
-    mValue.mFontFamilyList->Release();
+    DO_RELEASE(mFontFamilyList);
   }
   mUnit = eCSSUnit_Null;
 }
+
+#undef DO_RELEASE
 
 void nsCSSValue::SetIntValue(int32_t aValue, nsCSSUnit aUnit)
 {
@@ -831,6 +844,46 @@ void nsCSSValue::SetCalcValue(const nsStyleCoord::CalcValue* aCalc)
   }
 
   SetArrayValue(arr, eCSSUnit_Calc);
+}
+
+nsStyleCoord::CalcValue
+nsCSSValue::GetCalcValue() const
+{
+  MOZ_ASSERT(mUnit == eCSSUnit_Calc,
+             "The unit should be eCSSUnit_Calc");
+
+  const nsCSSValue::Array* array = GetArrayValue();
+  MOZ_ASSERT(array->Count() == 1,
+             "There should be a 1-length array");
+
+  const nsCSSValue& rootValue = array->Item(0);
+
+  nsStyleCoord::CalcValue result;
+
+  if (rootValue.GetUnit() == eCSSUnit_Pixel) {
+    result.mLength = rootValue.GetFloatValue();
+    result.mPercent = 0.0f;
+    result.mHasPercent = false;
+  } else {
+    MOZ_ASSERT(rootValue.GetUnit() == eCSSUnit_Calc_Plus,
+               "Calc unit should be eCSSUnit_Calc_Plus");
+
+    const nsCSSValue::Array *calcPlusArray = rootValue.GetArrayValue();
+    MOZ_ASSERT(array->Count() == 2,
+               "eCSSUnit_Calc_Plus should have a 2-length array");
+
+    const nsCSSValue& length = calcPlusArray->Item(0);
+    const nsCSSValue& percent = calcPlusArray->Item(1);
+    MOZ_ASSERT(length.GetUnit() == eCSSUnit_Pixel,
+               "The first value should be eCSSUnit_Pixel");
+    MOZ_ASSERT(percent.GetUnit() == eCSSUnit_Percent,
+               "The first value should be eCSSUnit_Percent");
+    result.mLength = length.GetFloatValue();
+    result.mPercent = percent.GetPercentValue();
+    result.mHasPercent = true;
+  }
+
+  return result;
 }
 
 void nsCSSValue::StartImageLoad(nsIDocument* aDocument) const
@@ -1607,41 +1660,35 @@ nsCSSValue::AppendToString(nsCSSPropertyID aProperty, nsAString& aResult,
         unit == eCSSUnit_RGBColor ||
         unit == eCSSUnit_RGBAColor) {
       nscolor color = GetColorValue();
-      if (aSerialization == eNormalized &&
-          color == NS_RGBA(0, 0, 0, 0)) {
-        // Use the strictest match for 'transparent' so we do correct
-        // round-tripping of all other rgba() values.
-        aResult.AppendLiteral("transparent");
+      // For brevity, we omit the alpha component if it's equal to 255 (full
+      // opaque). Also, we use "rgba" rather than "rgb" when the color includes
+      // the non-opaque alpha value, for backwards-compat (even though they're
+      // aliases as of css-color-4).
+      // e.g.:
+      //   rgba(1, 2, 3, 1.0) => rgb(1, 2, 3)
+      //   rgba(1, 2, 3, 0.5) => rgba(1, 2, 3, 0.5)
+
+      uint8_t a = NS_GET_A(color);
+      bool showAlpha = (a != 255);
+
+      if (showAlpha) {
+        aResult.AppendLiteral("rgba(");
       } else {
-        // For brevity, we omit the alpha component if it's equal to 255 (full
-        // opaque). Also, we use "rgba" rather than "rgb" when the color includes
-        // the non-opaque alpha value, for backwards-compat (even though they're
-        // aliases as of css-color-4).
-        // e.g.:
-        //   rgba(1, 2, 3, 1.0) => rgb(1, 2, 3)
-        //   rgba(1, 2, 3, 0.5) => rgba(1, 2, 3, 0.5)
-        uint8_t a = NS_GET_A(color);
-        bool showAlpha = (a != 255);
-
-        if (showAlpha) {
-          aResult.AppendLiteral("rgba(");
-        } else {
-          aResult.AppendLiteral("rgb(");
-        }
-
-        NS_NAMED_LITERAL_STRING(comma, ", ");
-
-        aResult.AppendInt(NS_GET_R(color), 10);
-        aResult.Append(comma);
-        aResult.AppendInt(NS_GET_G(color), 10);
-        aResult.Append(comma);
-        aResult.AppendInt(NS_GET_B(color), 10);
-        if (showAlpha) {
-          aResult.Append(comma);
-          aResult.AppendFloat(nsStyleUtil::ColorComponentToFloat(a));
-        }
-        aResult.Append(char16_t(')'));
+        aResult.AppendLiteral("rgb(");
       }
+
+      NS_NAMED_LITERAL_STRING(comma, ", ");
+
+      aResult.AppendInt(NS_GET_R(color), 10);
+      aResult.Append(comma);
+      aResult.AppendInt(NS_GET_G(color), 10);
+      aResult.Append(comma);
+      aResult.AppendInt(NS_GET_B(color), 10);
+      if (showAlpha) {
+        aResult.Append(comma);
+        aResult.AppendFloat(nsStyleUtil::ColorComponentToFloat(a));
+      }
+      aResult.Append(char16_t(')'));
     } else if (eCSSUnit_HexColor == unit ||
                eCSSUnit_HexColorAlpha == unit) {
       nscolor color = GetColorValue();

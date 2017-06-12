@@ -10,7 +10,8 @@
 
 namespace mozilla {
 
-class AndroidDecoderModule : public PlatformDecoderModule {
+class AndroidDecoderModule : public PlatformDecoderModule
+{
 public:
   already_AddRefed<MediaDataDecoder>
   CreateVideoDecoder(const CreateDecoderParams& aParams) override;
@@ -19,15 +20,12 @@ public:
   CreateAudioDecoder(const CreateDecoderParams& aParams) override;
 
   AndroidDecoderModule(CDMProxy* aProxy = nullptr);
-  virtual ~AndroidDecoderModule() {}
 
   bool SupportsMimeType(const nsACString& aMimeType,
                         DecoderDoctorDiagnostics* aDiagnostics) const override;
 
-  ConversionRequired
-  DecoderNeedsConversion(const TrackInfo& aConfig) const override;
-
 private:
+  virtual ~AndroidDecoderModule() { }
   RefPtr<MediaDrmCDMProxy> mProxy;
 };
 

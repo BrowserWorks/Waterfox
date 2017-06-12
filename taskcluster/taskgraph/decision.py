@@ -17,6 +17,8 @@ from .generator import TaskGraphGenerator
 from .create import create_tasks
 from .parameters import Parameters
 from .taskgraph import TaskGraph
+from actions import render_actions_json
+from . import GECKO
 
 from taskgraph.util.templates import Templates
 from taskgraph.util.time import (
@@ -27,7 +29,6 @@ from taskgraph.util.time import (
 logger = logging.getLogger(__name__)
 
 ARTIFACTS_DIR = 'artifacts'
-GECKO = os.path.realpath(os.path.join(__file__, '..', '..', '..'))
 
 # For each project, this gives a set of parameters specific to the project.
 # See `taskcluster/docs/parameters.rst` for information on parameters.
@@ -71,10 +72,17 @@ PER_PROJECT_PARAMETERS = {
         'optimize_target_tasks': False,
         'include_nightly': True,
     },
+
     'mozilla-release': {
         'target_tasks_method': 'mozilla_release_tasks',
         'optimize_target_tasks': False,
         'include_nightly': True,
+    },
+
+    'pine': {
+        'target_tasks_method': 'pine_tasks',
+        'optimize_target_tasks': True,
+        'include_nightly': False,
     },
 
     # the default parameters are used for projects that do not match above.
@@ -109,6 +117,9 @@ def taskgraph_decision(options):
 
     # write out the yml file for action tasks
     write_artifact('action.yml', get_action_yml(parameters))
+
+    # write out the public/actions.json file
+    write_artifact('actions.json', render_actions_json(parameters))
 
     # write out the full graph for reference
     full_task_json = tgg.full_task_graph.to_json()
@@ -153,7 +164,6 @@ def get_decision_parameters(options):
     # Define default filter list, as most configurations shouldn't need
     # custom filters.
     parameters['filters'] = [
-        'check_servo',
         'target_tasks_method',
     ]
 

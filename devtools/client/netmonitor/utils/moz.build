@@ -4,5 +4,12 @@
 # file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
 DevToolsModules(
-    'format-utils.js'
+    'client.js',
+    'filter-predicates.js',
+    'format-utils.js',
+    'l10n.js',
+    'mdn-utils.js',
+    'prefs.js',
+    'request-utils.js',
+    'sort-predicates.js',
 )

@@ -28,7 +28,7 @@
 
 #include "mozilla/Unused.h"
 
-#if defined(MOZ_WIDGET_ANDROID) && defined(MOZILLA_INTERNAL_API)
+#if defined(MOZ_WIDGET_ANDROID)
 #include "AndroidJNIWrapper.h"
 #include "VideoEngine.h"
 #endif
@@ -42,9 +42,7 @@
 #ifdef MOZ_WEBRTC_MEDIACODEC
 #include "MediaCodecVideoCodec.h"
 #endif
-#if !defined(MOZILLA_EXTERNAL_LINKAGE)
 #include "WebrtcGmpVideoCodec.h"
-#endif
 
 // for ntohs
 #ifdef _MSC_VER
@@ -64,8 +62,6 @@ namespace mozilla {
 
 static const char* logTag = "WebrtcVideoSessionConduit";
 
-static const int kUlpFecPayloadType = 123;
-static const int kRedPayloadType = 122;
 static const int kNullPayloadType = -1;
 static const char* kUlpFecPayloadName = "ulpfec";
 static const char* kRedPayloadName = "red";
@@ -78,7 +74,7 @@ const uint32_t WebrtcVideoConduit::kDefaultMaxBitrate_bps = KBPS(2000);
 
 // 32 bytes is what WebRTC CodecInst expects
 const unsigned int WebrtcVideoConduit::CODEC_PLNAME_SIZE = 32;
-static const int kViEMinCodecBitrate = 30;
+static const int kViEMinCodecBitrate_bps = KBPS(30);
 
 template<typename T>
 T MinIgnoreZero(const T& a, const T& b)
@@ -202,7 +198,7 @@ WebrtcVideoConduit::WebrtcVideoConduit(RefPtr<WebRtcCallWrapper> aCall)
   , mCall(aCall) // refcounted store of the call object
   , mSendStreamConfig(this) // 'this' is stored but not  dereferenced in the constructor.
   , mRecvStreamConfig(this) // 'this' is stored but not  dereferenced in the constructor.
-  , mRecvSSRCSet(false)
+  , mRecvSSRC(0)
   , mRecvSSRCSetInProgress(false)
   , mSendCodecPlugin(nullptr)
   , mRecvCodecPlugin(nullptr)
@@ -243,20 +239,25 @@ WebrtcVideoConduit::~WebrtcVideoConduit()
 }
 
 void
-WebrtcVideoConduit::AddLocalRTPExtensions(
+WebrtcVideoConduit::AddLocalRTPExtensions(bool aIsSend,
   const std::vector<webrtc::RtpExtension> & aExtensions)
 {
-  auto& extList = mSendStreamConfig.rtp.extensions;
-  std::remove_if(extList.begin(), extList.end(), [&](const webrtc::RtpExtension & i) {
-    return std::find(aExtensions.begin(), aExtensions.end(),i) != aExtensions.end();
-  });
+  auto& extList = aIsSend ? mSendStreamConfig.rtp.extensions :
+                  mRecvStreamConfig.rtp.extensions;
+  extList.erase(std::remove_if(extList.begin(),
+                               extList.end(),
+                               [&](const webrtc::RtpExtension & i) {
+                                 return std::find(aExtensions.begin(),
+                                                  aExtensions.end(),
+                                                  i) != aExtensions.end(); }),
+                extList.end());
   extList.insert(extList.end(), aExtensions.begin(), aExtensions.end());
 }
 
 std::vector<webrtc::RtpExtension>
-WebrtcVideoConduit::GetLocalRTPExtensions() const
+WebrtcVideoConduit::GetLocalRTPExtensions(bool aIsSend) const
 {
-  return mSendStreamConfig.rtp.extensions;
+  return aIsSend ? mSendStreamConfig.rtp.extensions : mRecvStreamConfig.rtp.extensions;
 }
 
 bool WebrtcVideoConduit::SetLocalSSRCs(const std::vector<unsigned int> & aSSRCs)
@@ -318,12 +319,11 @@ PayloadNameToEncoderType(const std::string& name)
 {
   if ("VP8" == name) {
     return webrtc::VideoEncoder::EncoderType::kVp8;
-  } else if ("VP9" == name) {
+  } else if ("VP9" == name) { // NOLINT(readability-else-after-return)
     return webrtc::VideoEncoder::EncoderType::kVp9;
-  } else if ("H264" == name) {
+  } else if ("H264" == name) { // NOLINT(readability-else-after-return)
     return webrtc::VideoEncoder::EncoderType::kH264;
   }
-
   return webrtc::VideoEncoder::EncoderType::kUnsupportedCodec;
 }
 
@@ -390,12 +390,11 @@ PayloadNameToDecoderType(const std::string& name)
 {
   if ("VP8" == name) {
     return webrtc::VideoDecoder::DecoderType::kVp8;
-  } else if ("VP9" == name) {
+  } else if ("VP9" == name) { // NOLINT(readability-else-after-return)
     return webrtc::VideoDecoder::DecoderType::kVp9;
-  } else if ("H264" == name) {
+  } else if ("H264" == name) { // NOLINT(readability-else-after-return)
     return webrtc::VideoDecoder::DecoderType::kH264;
   }
-
   return webrtc::VideoDecoder::DecoderType::kUnsupportedCodec;
 }
 
@@ -499,6 +498,7 @@ WebrtcVideoConduit::ConfigureSendMediaCodec(const VideoCodecConfig* codecConfig)
 
   mSendingFramerate = 0;
   mEncoderConfig.ClearStreams();
+  mSendStreamConfig.rtp.rids.clear();
 
   unsigned short width = 320;
   unsigned short height = 240;
@@ -515,7 +515,7 @@ WebrtcVideoConduit::ConfigureSendMediaCodec(const VideoCodecConfig* codecConfig)
                                           mSendingHeight);
 
   // So we can comply with b=TIAS/b=AS/maxbr=X when input resolution changes
-  mNegotiatedMaxBitrate = codecConfig->mTias / 1000;
+  mNegotiatedMaxBitrate = codecConfig->mTias;
 
   // width/height will be overridden on the first frame; they must be 'sane' for
   // SetSendCodec()
@@ -578,7 +578,7 @@ WebrtcVideoConduit::ConfigureSendMediaCodec(const VideoCodecConfig* codecConfig)
     // Calculate these first
     video_stream.max_bitrate_bps = MinIgnoreZero(simulcastEncoding.constraints.maxBr,
                                                  kDefaultMaxBitrate_bps);
-    video_stream.max_bitrate_bps = MinIgnoreZero((int) mPrefMaxBitrate*1000,
+    video_stream.max_bitrate_bps = MinIgnoreZero((int) mPrefMaxBitrate,
                                                  video_stream.max_bitrate_bps);
     video_stream.min_bitrate_bps = (mMinBitrate ? mMinBitrate : kDefaultMinBitrate_bps);
     if (video_stream.min_bitrate_bps > video_stream.max_bitrate_bps) {
@@ -600,9 +600,9 @@ WebrtcVideoConduit::ConfigureSendMediaCodec(const VideoCodecConfig* codecConfig)
     }
 
     video_stream.max_qp = kQpMax;
-    video_stream.SetRid(simulcastEncoding.rid);
     simulcast_config.jsScaleDownBy = simulcastEncoding.constraints.scaleDownBy;
     simulcast_config.jsMaxBitrate = simulcastEncoding.constraints.maxBr; // bps
+    mSendStreamConfig.rtp.rids.push_back(simulcastEncoding.rid);
 
     if (codecConfig->mName == "H264") {
       if (codecConfig->mEncodingConstraints.maxMbps > 0) {
@@ -678,9 +678,9 @@ WebrtcVideoConduit::ConfigureSendMediaCodec(const VideoCodecConfig* codecConfig)
   // See Bug 1297058, enabling FEC when basic NACK is to be enabled in H.264 is problematic
   if (codecConfig->RtcpFbFECIsSet() &&
       !(codecConfig->mName == "H264" && codecConfig->RtcpFbNackIsSet(""))) {
-    mSendStreamConfig.rtp.fec.ulpfec_payload_type = kUlpFecPayloadType;
-    mSendStreamConfig.rtp.fec.red_payload_type = kRedPayloadType;
-    mSendStreamConfig.rtp.fec.red_rtx_payload_type = kNullPayloadType;
+    mSendStreamConfig.rtp.fec.ulpfec_payload_type = codecConfig->mULPFECPayloadType;
+    mSendStreamConfig.rtp.fec.red_payload_type = codecConfig->mREDPayloadType;
+    mSendStreamConfig.rtp.fec.red_rtx_payload_type = codecConfig->mREDRTXPayloadType;
   }
 
   mSendStreamConfig.rtp.nack.rtp_history_ms =
@@ -704,7 +704,6 @@ WebrtcVideoConduit::SetRemoteSSRC(unsigned int ssrc)
   if (!GetRemoteSSRC(&current_ssrc)) {
     return false;
   }
-  mRecvSSRCSet = true;
 
   if (current_ssrc == ssrc) {
     return true;
@@ -871,29 +870,23 @@ WebrtcVideoConduit::GetRTCPSenderReport(DOMHighResTimeStamp* timestamp,
                                         unsigned int* packetsSent,
                                         uint64_t* bytesSent)
 {
+  CSFLogVerbose(logTag, "%s for VideoConduit:%p", __FUNCTION__, this);
+  webrtc::RTCPSenderInfo senderInfo;
   {
-    CSFLogVerbose(logTag, "%s for VideoConduit:%p", __FUNCTION__, this);
-    webrtc::RTCPSenderInfo senderInfo;
-    {
-      MutexAutoLock lock(mCodecMutex);
-      if (!mRecvStream || !mRecvStream->GetRemoteRTCPSenderInfo(&senderInfo)) {
-        return false;
-      }
+    MutexAutoLock lock(mCodecMutex);
+    if (!mRecvStream || !mRecvStream->GetRemoteRTCPSenderInfo(&senderInfo)) {
+      return false;
     }
-    // Note: timestamp is not correct per the spec... should be time the rtcp
-    // was received (remote) or sent (local)
-    *timestamp = webrtc::Clock::GetRealTimeClock()->TimeInMilliseconds();
-    *packetsSent = senderInfo.sendPacketCount;
-    *bytesSent = senderInfo.sendOctetCount;
-    return true;
   }
-  return false;
+  *timestamp = webrtc::Clock::GetRealTimeClock()->TimeInMilliseconds();
+  *packetsSent = senderInfo.sendPacketCount;
+  *bytesSent = senderInfo.sendOctetCount;
+  return true;
 }
 
 MediaConduitErrorCode
 WebrtcVideoConduit::InitMain()
 {
-#if defined(MOZILLA_INTERNAL_API)
   // already know we must be on MainThread barring unit test weirdness
   MOZ_ASSERT(NS_IsMainThread());
 
@@ -912,25 +905,25 @@ WebrtcVideoConduit::InitMain()
             "media.peerconnection.video.min_bitrate", &temp))))
       {
          if (temp >= 0) {
-            mMinBitrate = temp;
+           mMinBitrate = KBPS(temp);
          }
       }
       if (!NS_WARN_IF(NS_FAILED(branch->GetIntPref(
             "media.peerconnection.video.start_bitrate", &temp))))
       {
          if (temp >= 0) {
-         mStartBitrate = temp;
+           mStartBitrate = KBPS(temp);
          }
       }
       if (!NS_WARN_IF(NS_FAILED(branch->GetIntPref(
             "media.peerconnection.video.max_bitrate", &temp))))
       {
         if (temp >= 0) {
-          mPrefMaxBitrate = temp;
+          mPrefMaxBitrate = KBPS(temp);
         }
       }
-      if (mMinBitrate != 0 && mMinBitrate < kViEMinCodecBitrate) {
-        mMinBitrate = kViEMinCodecBitrate;
+      if (mMinBitrate != 0 && mMinBitrate < kViEMinCodecBitrate_bps) {
+        mMinBitrate = kViEMinCodecBitrate_bps;
       }
       if (mStartBitrate < mMinBitrate) {
         mStartBitrate = mMinBitrate;
@@ -938,11 +931,13 @@ WebrtcVideoConduit::InitMain()
       if (mPrefMaxBitrate && mStartBitrate > mPrefMaxBitrate) {
         mStartBitrate = mPrefMaxBitrate;
       }
+      // XXX We'd love if this was a live param for testing adaptation/etc
+      // in automation
       if (!NS_WARN_IF(NS_FAILED(branch->GetIntPref(
             "media.peerconnection.video.min_bitrate_estimate", &temp))))
       {
         if (temp >= 0) {
-          mMinBitrateEstimate = temp;
+          mMinBitrateEstimate = temp; // bps!
         }
       }
       bool use_loadmanager = false;
@@ -963,8 +958,7 @@ WebrtcVideoConduit::InitMain()
     CSFLogError(logTag,  "%s: could not set Android objects", __FUNCTION__);
     return kMediaConduitSessionNotInited;
   }
-#endif
-#endif
+#endif  //MOZ_WIDGET_ANDROID
   return kMediaConduitNoError;
 }
 
@@ -1187,7 +1181,11 @@ WebrtcVideoConduit::ConfigureRecvMediaCodecs(
       mRecvStreamConfig.rtp.fec.red_rtx_payload_type = -1;
     }
 
-    if (!mRecvSSRCSet) {
+    // SetRemoteSSRC should have populated this already
+    mRecvSSRC = mRecvStreamConfig.rtp.remote_ssrc;
+
+    // XXX ugh! same SSRC==0 problem that webrtc.org has
+    if (mRecvSSRC == 0) {
       // Handle un-signalled SSRCs by creating a random one and then when it actually gets set,
       // we'll destroy and recreate.  Simpler than trying to unwind all the logic that assumes
       // the receive stream is created and started when we ConfigureRecvMediaCodecs()
@@ -1200,7 +1198,9 @@ WebrtcVideoConduit::ConfigureRecvMediaCodecs(
       } while (ssrc == 0); // webrtc.org code has fits if you select an SSRC of 0
 
       mRecvStreamConfig.rtp.remote_ssrc = ssrc;
+      mRecvSSRC = ssrc;
     }
+
     // 0 isn't allowed.  Would be best to ask for a random SSRC from the
     // RTP code.  Would need to call rtp_sender.cc -- GenerateNewSSRC(),
     // which isn't exposed.  It's called on collision, or when we decide to
@@ -1265,10 +1265,8 @@ WebrtcVideoConduit::CreateDecoder(webrtc::VideoDecoder::DecoderType aType)
   } else if (aType == webrtc::VideoDecoder::kVp8) {
     bool enabled = false;
     // attempt to get a decoder
-#ifdef MOZILLA_INTERNAL_API
     enabled = mozilla::Preferences::GetBool(
                   "media.navigator.hardware.vp8_decode.acceleration_enabled", false);
-#endif
     if (enabled) {
       nsCOMPtr<nsIGfxInfo> gfxInfo = do_GetService("@mozilla.org/gfx/info;1");
       if (gfxInfo) {
@@ -1320,10 +1318,8 @@ WebrtcVideoConduit::CreateEncoder(webrtc::VideoEncoder::EncoderType aType,
   } else if (aType == webrtc::VideoEncoder::kVp8) {
     bool enabled = false;
     // attempt to get a encoder
-#ifdef MOZILLA_INTERNAL_API
     enabled = mozilla::Preferences::GetBool(
                   "media.navigator.hardware.vp8_encode.acceleration_enabled", false);
-#endif
     if (enabled) {
       nsCOMPtr<nsIGfxInfo> gfxInfo = do_GetService("@mozilla.org/gfx/info;1");
       if (gfxInfo) {
@@ -1427,7 +1423,7 @@ WebrtcVideoConduit::SelectBitrates(
     out_min = mMinBitrate;
   }
   // If we try to set a minimum bitrate that is too low, ViE will reject it.
-  out_min = std::max(kViEMinCodecBitrate, out_min);
+  out_min = std::max(kViEMinCodecBitrate_bps, out_min);
   if (mStartBitrate && mStartBitrate > out_start) {
     out_start = mStartBitrate;
   }
@@ -1817,10 +1813,15 @@ MediaConduitErrorCode
 WebrtcVideoConduit::ReceivedRTPPacket(const void* data, int len, uint32_t ssrc)
 {
   bool queue = mRecvSSRCSetInProgress;
-  if (!mRecvSSRCSet && !mRecvSSRCSetInProgress) {
+  if (mRecvSSRC != ssrc && !queue) {
+    // we "switch" here immediately, but buffer until the queue is released
+    mRecvSSRC = ssrc;
     mRecvSSRCSetInProgress = true;
     queue = true;
-    // Handle the ssrc-not-signaled case; lock onto first ssrc
+    // any queued packets are from a previous switch that hasn't completed
+    // yet; drop them and only process the latest SSRC
+    mQueuedPackets.Clear();
+    // Handle the unknown ssrc (and ssrc-not-signaled case).
     // We can't just do this here; it has to happen on MainThread :-(
     // We also don't want to drop the packet, nor stall this thread, so we hold
     // the packet (and any following) for inserting once the SSRC is set.
@@ -1837,24 +1838,26 @@ WebrtcVideoConduit::ReceivedRTPPacket(const void* data, int len, uint32_t ssrc)
           // Receive channel at a lower level.  This is needed whenever we're
           // creating a GMPVideoCodec (in particular, H264) so it can communicate
           // errors to the PC.
-#if !defined(MOZILLA_EXTERNAL_LINKAGE)
           WebrtcGmpPCHandleSetter setter(self->mPCHandle);
-#endif
           self->SetRemoteSSRC(ssrc); // this will likely re-create the VideoReceiveStream
           // We want to unblock the queued packets on the original thread
-          thread->Dispatch(media::NewRunnableFrom([self]() mutable {
-                self->mRecvSSRCSetInProgress = false;
-                // SSRC is set; insert queued packets
-                for (auto& packet : self->mQueuedPackets) {
-                  CSFLogDebug(logTag, "%s: seq# %u, Len %d ", __FUNCTION__,
-                              (uint16_t)ntohs(((uint16_t*) packet->mData)[1]), packet->mLen);
+          thread->Dispatch(media::NewRunnableFrom([self, ssrc]() mutable {
+                if (ssrc == self->mRecvSSRC) {
+                  // SSRC is set; insert queued packets
+                  for (auto& packet : self->mQueuedPackets) {
+                    CSFLogDebug(logTag, "%s: seq# %u, Len %d ", __FUNCTION__,
+                                (uint16_t)ntohs(((uint16_t*) packet->mData)[1]), packet->mLen);
 
-                  if (self->DeliverPacket(packet->mData, packet->mLen) != kMediaConduitNoError) {
-                    CSFLogError(logTag, "%s RTP Processing Failed", __FUNCTION__);
-                    // Keep delivering and then clear the queue
+                    if (self->DeliverPacket(packet->mData, packet->mLen) != kMediaConduitNoError) {
+                      CSFLogError(logTag, "%s RTP Processing Failed", __FUNCTION__);
+                      // Keep delivering and then clear the queue
+                    }
                   }
+                  self->mQueuedPackets.Clear();
+                  // we don't leave inprogress until there are no changes in-flight
+                  self->mRecvSSRCSetInProgress = false;
                 }
-                self->mQueuedPackets.Clear();
+                // else this is an intermediate switch; another is in-flight
 
                 return NS_OK;
               }), NS_DISPATCH_NORMAL);
@@ -2011,7 +2014,8 @@ WebrtcVideoConduit::SendRtcp(const uint8_t* packet, size_t length)
     // Might be a sender report, might be a receiver report, we don't know.
     CSFLogDebug(logTag, "%s Sent RTCP Packet ", __FUNCTION__);
     return true;
-  } else if (mTransmitterTransport &&
+  }
+  if (mTransmitterTransport &&
              NS_SUCCEEDED(mTransmitterTransport->SendRtcpPacket(packet, length))) {
     CSFLogDebug(logTag, "%s Sent RTCP Packet (sender report) ", __FUNCTION__);
     return true;
@@ -2138,7 +2142,8 @@ WebrtcVideoConduit::CodecPluginID()
 {
   if (mSendCodecPlugin) {
     return mSendCodecPlugin->PluginID();
-  } else if (mRecvCodecPlugin) {
+  }
+  if (mRecvCodecPlugin) {
     return mRecvCodecPlugin->PluginID();
   }
 

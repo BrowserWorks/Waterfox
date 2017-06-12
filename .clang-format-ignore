@@ -2,6 +2,12 @@
 ^config/gcc-stl-wrapper.template.h
 ^config/msvc-stl-wrapper.template.h
 ^js/src/jsapi-tests/.*
+^widget/android/GeneratedJNINatives.h
+^widget/android/GeneratedJNIWrappers.cpp
+^widget/android/GeneratedJNIWrappers.h
+^widget/android/fennec/FennecJNINatives.h
+^widget/android/fennec/FennecJNIWrappers.cpp
+^widget/android/fennec/FennecJNIWrappers.h
 
 # Generated from ./tools/rewriting/ThirdPartyPaths.txt
 # awk '{print "^"$1".*"}' ./tools/rewriting/ThirdPartyPaths.txt
@@ -19,6 +25,8 @@
 ^gfx/ots/.*
 ^gfx/qcms/.*
 ^gfx/skia/.*
+^gfx/webrender.*
+^gfx/webrender_traits.*
 ^gfx/ycbcr/.*
 ^intl/hyphenation/hyphen/.*
 ^intl/icu/.*
@@ -28,6 +36,7 @@
 ^js/src/jit/arm64/vixl/.*
 ^media/gmp-clearkey/0.1/openaes/.*
 ^media/kiss_fft/.*
+^media/ffvpx/.*
 ^media/libav/.*
 ^media/libcubeb/.*
 ^media/libjpeg/.*
@@ -44,17 +53,19 @@
 ^media/libvorbis/.*
 ^media/libvpx/.*
 ^media/libyuv/.*
-^media/mtransport/.*
+^media/mtransport/third_party/.*
 ^media/openmax_dl/.*
 ^media/pocketsphinx/.*
 ^media/sphinxbase/.*
 ^media/webrtc/trunk/.*
+^media/webrtc/signaling/src/sdp/sipcc/.*
 ^memory/jemalloc/src/.*
 ^mfbt/decimal/.*
-^mfbt/double-conversion/.*
+^mfbt/double-conversion/source/.*
 ^mfbt/lz4.*
 ^mobile/android/thirdparty/.*
 ^modules/brotli/.*
+^modules/fdlibm/.*
 ^modules/freetype2/.*
 ^modules/libbz2/.*
 ^modules/libmar/.*
@@ -63,6 +74,7 @@
 ^netwerk/srtp/src/.*
 ^nsprpub/.*
 ^other-licenses/.*
+^parser/expat/.*
 ^security/sandbox/chromium/.*
 ^testing/gtest/gmock/.*
 ^testing/gtest/gtest/.*

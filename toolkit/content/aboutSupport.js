@@ -37,6 +37,7 @@ window.addEventListener("load", function onload(event) {
 var snapshotFormatters = {
 
   application: function application(data) {
+    let strings = stringBundle();
     $("application-box").textContent = data.name;
     $("useragent-box").textContent = data.userAgent;
     $("os-box").textContent = data.osVersion;
@@ -49,7 +50,7 @@ var snapshotFormatters = {
     if (data.updateChannel)
       $("updatechannel-box").textContent = data.updateChannel;
 
-    let statusText = stringBundle().GetStringFromName("multiProcessStatus.unknown");
+    let statusText = strings.GetStringFromName("multiProcessStatus.unknown");
 
     // Whitelist of known values with string descriptions:
     switch (data.autoStartStatus) {
@@ -60,7 +61,7 @@ var snapshotFormatters = {
       case 6:
       case 7:
       case 8:
-        statusText = stringBundle().GetStringFromName("multiProcessStatus." + data.autoStartStatus);
+        statusText = strings.GetStringFromName("multiProcessStatus." + data.autoStartStatus);
         break;
 
       case 10:
@@ -68,8 +69,14 @@ var snapshotFormatters = {
         break;
     }
 
-    $("multiprocess-box").textContent = stringBundle().formatStringFromName("multiProcessWindows",
+    $("multiprocess-box").textContent = strings.formatStringFromName("multiProcessWindows",
       [data.numRemoteWindows, data.numTotalWindows, statusText], 3);
+
+    let keyGoogleFound = data.keyGoogleFound ? "found" : "missing";
+    $("key-google-box").textContent = strings.GetStringFromName(keyGoogleFound);
+
+    let keyMozillaFound = data.keyMozillaFound ? "found" : "missing";
+    $("key-mozilla-box").textContent = strings.GetStringFromName(keyMozillaFound);
 
     $("safemode-box").textContent = data.safeMode;
   },
@@ -247,9 +254,12 @@ var snapshotFormatters = {
           title = key;
         }
       }
+      let td = $.new("td", value);
+      td.style["white-space"] = "pre-wrap";
+
       return $.new("tr", [
         $.new("th", title, "column"),
-        $.new("td", value),
+        td,
       ]);
     }
 
@@ -373,8 +383,17 @@ var snapshotFormatters = {
            apzInfo.length
            ? apzInfo.join("; ")
            : localizedMsg(["apzNone"]));
-    addRowFromKey("features", "webglRenderer");
+    addRowFromKey("features", "webgl1WSIInfo");
+    addRowFromKey("features", "webgl1Renderer");
+    addRowFromKey("features", "webgl1Version");
+    addRowFromKey("features", "webgl1DriverExtensions");
+    addRowFromKey("features", "webgl1Extensions");
+    addRowFromKey("features", "webgl2WSIInfo");
     addRowFromKey("features", "webgl2Renderer");
+    addRowFromKey("features", "webgl2Version");
+    addRowFromKey("features", "webgl2DriverExtensions");
+    addRowFromKey("features", "webgl2Extensions");
+    addRowFromKey("features", "supportsHardwareH264", "hardwareH264");
     addRowFromKey("features", "currentAudioBackend", "audioBackend");
     addRowFromKey("features", "direct2DEnabled", "#Direct2D");
 
@@ -498,7 +517,7 @@ var snapshotFormatters = {
     if (crashGuards.length) {
       for (let guard of crashGuards) {
         let resetButton = $.new("button");
-        onClickReset = function() {
+        let onClickReset = function() {
           Services.prefs.setIntPref(guard.prefName, 0);
           resetButton.removeEventListener("click", onClickReset);
           resetButton.disabled = true;
@@ -577,10 +596,35 @@ var snapshotFormatters = {
           data[key] === data["hasUserNamespaces"]) {
         continue;
       }
+      if (key === "syscallLog") {
+	// Not in this table.
+	continue;
+      }
       tbody.appendChild($.new("tr", [
         $.new("th", strings.GetStringFromName(key), "column"),
-        $.new("td", data[key])
+        $.new("td", data[key]),
       ]));
+    }
+
+    let syscallBody = $("sandbox-syscalls-tbody");
+    let argsHead = $("sandbox-syscalls-argshead");
+    for (let syscall of data.syscallLog) {
+      if (argsHead.colSpan < syscall.args.length) {
+	argsHead.colSpan = syscall.args.length;
+      }
+      let cells = [
+	$.new("td", syscall.index, "integer"),
+	$.new("td", syscall.msecAgo / 1000),
+	$.new("td", syscall.pid, "integer"),
+	$.new("td", syscall.tid, "integer"),
+	$.new("td", strings.GetStringFromName("sandboxProcType." +
+					      syscall.procType)),
+	$.new("td", syscall.syscall, "integer"),
+      ];
+      for (let arg of syscall.args) {
+	cells.push($.new("td", arg, "integer"));
+      }
+      syscallBody.appendChild($.new("tr", cells));
     }
   },
 };

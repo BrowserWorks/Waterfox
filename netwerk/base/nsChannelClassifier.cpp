@@ -9,6 +9,7 @@
 #include "mozIThirdPartyUtil.h"
 #include "nsCharSeparatedTokenizer.h"
 #include "nsContentUtils.h"
+#include "nsIAddonPolicyService.h"
 #include "nsICacheEntry.h"
 #include "nsICachingChannel.h"
 #include "nsIChannel.h"
@@ -148,6 +149,10 @@ nsChannelClassifier::ShouldEnableTrackingProtectionInternal(nsIChannel *aChannel
       return NS_OK;
     }
 
+    if (AddonMayLoad(aChannel, chanURI)) {
+        return NS_OK;
+    }
+
     nsCOMPtr<nsIIOService> ios = do_GetService(NS_IOSERVICE_CONTRACTID, &rv);
     NS_ENSURE_SUCCESS(rv, rv);
 
@@ -233,6 +238,23 @@ nsChannelClassifier::ShouldEnableTrackingProtectionInternal(nsIChannel *aChannel
     return NotifyTrackingProtectionDisabled(aChannel);
 }
 
+bool
+nsChannelClassifier::AddonMayLoad(nsIChannel *aChannel, nsIURI *aUri)
+{
+    nsCOMPtr<nsILoadInfo> channelLoadInfo = aChannel->GetLoadInfo();
+    if (!channelLoadInfo)
+        return false;
+
+    // loadingPrincipal is used here to ensure we are loading into an
+    // addon principal.  This allows an addon, with explicit permission, to
+    // call out to API endpoints that may otherwise get blocked.
+    nsIPrincipal* loadingPrincipal = channelLoadInfo->LoadingPrincipal();
+    if (!loadingPrincipal)
+        return false;
+
+    return BasePrincipal::Cast(loadingPrincipal)->AddonAllowsLoad(aUri, true);
+}
+
 // static
 nsresult
 nsChannelClassifier::NotifyTrackingProtectionDisabled(nsIChannel *aChannel)
@@ -289,7 +311,8 @@ nsChannelClassifier::Start()
   if (NS_FAILED(rv)) {
     // If we aren't getting a callback for any reason, assume a good verdict and
     // make sure we resume the channel if necessary.
-    OnClassifyComplete(NS_OK);
+    OnClassifyComplete(NS_OK, NS_LITERAL_CSTRING(""),NS_LITERAL_CSTRING(""),
+                       NS_LITERAL_CSTRING(""));
   }
 }
 
@@ -551,19 +574,33 @@ nsChannelClassifier::SameLoadingURI(nsIDocument *aDoc, nsIChannel *aChannel)
 
 // static
 nsresult
-nsChannelClassifier::SetBlockedTrackingContent(nsIChannel *channel)
+nsChannelClassifier::SetBlockedContent(nsIChannel *channel,
+                                       nsresult aErrorCode,
+                                       const nsACString& aList,
+                                       const nsACString& aProvider,
+                                       const nsACString& aPrefix)
 {
+  NS_ENSURE_ARG(!aList.IsEmpty());
+  NS_ENSURE_ARG(!aPrefix.IsEmpty());
+
   // Can be called in EITHER the parent or child process.
   nsCOMPtr<nsIParentChannel> parentChannel;
   NS_QueryNotificationCallbacks(channel, parentChannel);
   if (parentChannel) {
-    // This channel is a parent-process proxy for a child process request. The
-    // actual channel will be notified via the status passed to
-    // nsIRequest::Cancel and do this for us.
+    // This channel is a parent-process proxy for a child process request.
+    // Tell the child process channel to do this instead.
+    parentChannel->SetClassifierMatchedInfo(aList, aProvider, aPrefix);
     return NS_OK;
   }
 
   nsresult rv;
+  nsCOMPtr<nsIClassifiedChannel> classifiedChannel = do_QueryInterface(channel, &rv);
+  NS_ENSURE_SUCCESS(rv, rv);
+
+  if (classifiedChannel) {
+    classifiedChannel->SetMatchedInfo(aList, aProvider, aPrefix);
+  }
+
   nsCOMPtr<mozIDOMWindowProxy> win;
   nsCOMPtr<mozIThirdPartyUtil> thirdPartyUtil =
     do_GetService(THIRDPARTYUTIL_CONTRACTID, &rv);
@@ -596,9 +633,14 @@ nsChannelClassifier::SetBlockedTrackingContent(nsIChannel *channel)
   if (!securityUI) {
     return NS_OK;
   }
-  doc->SetHasTrackingContentBlocked(true);
   securityUI->GetState(&state);
-  state |= nsIWebProgressListener::STATE_BLOCKED_TRACKING_CONTENT;
+  if (aErrorCode == NS_ERROR_TRACKING_URI) {
+    doc->SetHasTrackingContentBlocked(true);
+    state |= nsIWebProgressListener::STATE_BLOCKED_TRACKING_CONTENT;
+  } else {
+    state |= nsIWebProgressListener::STATE_BLOCKED_UNSAFE_CONTENT;
+  }
+
   eventSink->OnSecurityChange(nullptr, state);
 
   // Log a warning to the web console.
@@ -606,18 +648,83 @@ nsChannelClassifier::SetBlockedTrackingContent(nsIChannel *channel)
   channel->GetURI(getter_AddRefs(uri));
   NS_ConvertUTF8toUTF16 spec(uri->GetSpecOrDefault());
   const char16_t* params[] = { spec.get() };
+  const char* message = (aErrorCode == NS_ERROR_TRACKING_URI) ?
+    "TrackingUriBlocked" : "UnsafeUriBlocked";
+  nsCString category = (aErrorCode == NS_ERROR_TRACKING_URI) ?
+    NS_LITERAL_CSTRING("Tracking Protection") :
+    NS_LITERAL_CSTRING("Safe Browsing");
+
   nsContentUtils::ReportToConsole(nsIScriptError::warningFlag,
-                                  NS_LITERAL_CSTRING("Tracking Protection"),
+                                  category,
                                   doc,
                                   nsContentUtils::eNECKO_PROPERTIES,
-                                  "TrackingUriBlocked",
+                                  message,
                                   params, ArrayLength(params));
 
   return NS_OK;
 }
 
+namespace {
+
+class IsTrackerWhitelistedCallback final : public nsIURIClassifierCallback {
+public:
+  explicit IsTrackerWhitelistedCallback(nsChannelClassifier* aClosure,
+                                        const nsACString& aList,
+                                        const nsACString& aProvider,
+                                        const nsACString& aPrefix,
+                                        const nsACString& aWhitelistEntry)
+    : mClosure(aClosure)
+    , mWhitelistEntry(aWhitelistEntry)
+    , mList(aList)
+    , mProvider(aProvider)
+    , mPrefix(aPrefix)
+  {
+  }
+
+  NS_DECL_THREADSAFE_ISUPPORTS
+  NS_DECL_NSIURICLASSIFIERCALLBACK
+
+private:
+  ~IsTrackerWhitelistedCallback() = default;
+
+  RefPtr<nsChannelClassifier> mClosure;
+  nsCString mWhitelistEntry;
+
+  // The following 3 values are for forwarding the callback.
+  nsCString mList;
+  nsCString mProvider;
+  nsCString mPrefix;
+};
+
+NS_IMPL_ISUPPORTS(IsTrackerWhitelistedCallback, nsIURIClassifierCallback)
+
+
+/*virtual*/ nsresult
+IsTrackerWhitelistedCallback::OnClassifyComplete(nsresult /*aErrorCode*/,
+                                                 const nsACString& aLists, // Only this matters.
+                                                 const nsACString& /*aProvider*/,
+                                                 const nsACString& /*aPrefix*/)
+{
+  nsresult rv;
+  if (aLists.IsEmpty()) {
+    LOG(("nsChannelClassifier[%p]: %s is not in the whitelist",
+       mClosure.get(), mWhitelistEntry.get()));
+    rv = NS_ERROR_TRACKING_URI;
+  } else {
+    LOG(("nsChannelClassifier[%p]:OnClassifyComplete tracker found "
+         "in whitelist so we won't block it", mClosure.get()));
+    rv = NS_OK;
+  }
+
+  return mClosure->OnClassifyCompleteInternal(rv, mList, mProvider, mPrefix);
+}
+
+} // end of unnamed namespace/
+
 nsresult
-nsChannelClassifier::IsTrackerWhitelisted()
+nsChannelClassifier::IsTrackerWhitelisted(const nsACString& aList,
+                                          const nsACString& aProvider,
+                                          const nsACString& aPrefix)
 {
   nsresult rv;
   nsCOMPtr<nsIURIClassifier> uriClassifier =
@@ -667,32 +774,38 @@ nsChannelClassifier::IsTrackerWhitelisted()
   rv = NS_NewURI(getter_AddRefs(whitelistURI), whitelistEntry);
   NS_ENSURE_SUCCESS(rv, rv);
 
-  // Check whether or not the tracker is in the entity whitelist
-  nsTArray<nsCString> results;
-  rv = uriClassifier->ClassifyLocalWithTables(whitelistURI, tables, results);
-  NS_ENSURE_SUCCESS(rv, rv);
-  if (!results.IsEmpty()) {
-    return NS_OK; // found it on the whitelist, must not be blocked
-  }
+  RefPtr<IsTrackerWhitelistedCallback> cb =
+    new IsTrackerWhitelistedCallback(this, aList, aProvider, aPrefix,
+                                     whitelistEntry);
 
-  LOG(("nsChannelClassifier[%p]: %s is not in the whitelist",
-       this, whitelistEntry.get()));
-  return NS_ERROR_TRACKING_URI;
+  return uriClassifier->AsyncClassifyLocalWithTables(whitelistURI, tables, cb);
 }
 
 NS_IMETHODIMP
-nsChannelClassifier::OnClassifyComplete(nsresult aErrorCode)
+nsChannelClassifier::OnClassifyComplete(nsresult aErrorCode,
+                                        const nsACString& aList,
+                                        const nsACString& aProvider,
+                                        const nsACString& aPrefix)
 {
-    // Should only be called in the parent process.
-    MOZ_ASSERT(XRE_IsParentProcess());
+  // Should only be called in the parent process.
+  MOZ_ASSERT(XRE_IsParentProcess());
 
-    if (aErrorCode == NS_ERROR_TRACKING_URI &&
-        NS_SUCCEEDED(IsTrackerWhitelisted())) {
-      LOG(("nsChannelClassifier[%p]:OnClassifyComplete tracker found "
-           "in whitelist so we won't block it", this));
-      aErrorCode = NS_OK;
-    }
+  if (aErrorCode == NS_ERROR_TRACKING_URI &&
+      NS_SUCCEEDED(IsTrackerWhitelisted(aList, aProvider, aPrefix))) {
+    // OnClassifyCompleteInternal() will be called once we know
+    // if the tracker is whitelisted.
+    return NS_OK;
+  }
 
+  return OnClassifyCompleteInternal(aErrorCode, aList, aProvider, aPrefix);
+}
+
+nsresult
+nsChannelClassifier::OnClassifyCompleteInternal(nsresult aErrorCode,
+                                                const nsACString& aList,
+                                                const nsACString& aProvider,
+                                                const nsACString& aPrefix)
+{
     if (mSuspendedChannel) {
       nsAutoCString errorName;
       if (LOG_ENABLED()) {
@@ -748,12 +861,11 @@ nsChannelClassifier::OnClassifyComplete(nsresult aErrorCode)
                uri->GetSpecOrDefault().get(), errorName.get()));
         }
 
-        // Channel will be cancelled (page element blocked) due to tracking.
+        // Channel will be cancelled (page element blocked) due to tracking
+        // protection or Safe Browsing.
         // Do update the security state of the document and fire a security
         // change event.
-        if (aErrorCode == NS_ERROR_TRACKING_URI) {
-          SetBlockedTrackingContent(mChannel);
-        }
+        SetBlockedContent(mChannel, aErrorCode, aList, aProvider, aPrefix);
 
         mChannel->Cancel(aErrorCode);
       }

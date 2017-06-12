@@ -60,6 +60,7 @@ registerCleanupFunction(() => {
   Services.prefs.clearUserPref("devtools.responsive.html.enabled");
   Services.prefs.clearUserPref("devtools.responsive.html.displayedDeviceList");
   asyncStorage.removeItem("devtools.devices.url_cache");
+  asyncStorage.removeItem("devtools.devices.local");
 });
 
 // This depends on the "devtools.responsive.html.enabled" pref
@@ -242,30 +243,20 @@ function openDeviceModal({ toolWindow }) {
 }
 
 function changeSelectValue({ toolWindow }, selector, value) {
+  let { document } = toolWindow;
+  let React = toolWindow.require("devtools/client/shared/vendor/react");
+  let { Simulate } = React.addons.TestUtils;
+
   info(`Selecting ${value} in ${selector}.`);
 
-  return new Promise(resolve => {
-    let select = toolWindow.document.querySelector(selector);
-    isnot(select, null, `selector "${selector}" should match an existing element.`);
+  let select = document.querySelector(selector);
+  isnot(select, null, `selector "${selector}" should match an existing element.`);
 
-    let option = [...select.options].find(o => o.value === String(value));
-    isnot(option, undefined, `value "${value}" should match an existing option.`);
+  let option = [...select.options].find(o => o.value === String(value));
+  isnot(option, undefined, `value "${value}" should match an existing option.`);
 
-    let event = new toolWindow.UIEvent("change", {
-      view: toolWindow,
-      bubbles: true,
-      cancelable: true
-    });
-
-    select.addEventListener("change", () => {
-      is(select.value, value,
-        `Select's option with value "${value}" should be selected.`);
-      resolve();
-    }, { once: true });
-
-    select.value = value;
-    select.dispatchEvent(event);
-  });
+  select.value = value;
+  Simulate.change(select);
 }
 
 const selectDevice = (ui, value) => Promise.all([
@@ -284,23 +275,10 @@ const selectNetworkThrottling = (ui, value) => Promise.all([
 function getSessionHistory(browser) {
   return ContentTask.spawn(browser, {}, function* () {
     /* eslint-disable no-undef */
-    let { interfaces: Ci } = Components;
-    let webNav = docShell.QueryInterface(Ci.nsIWebNavigation);
-    let sessionHistory = webNav.sessionHistory;
-    let result = {
-      index: sessionHistory.index,
-      entries: []
-    };
-
-    for (let i = 0; i < sessionHistory.count; i++) {
-      let entry = sessionHistory.getEntryAtIndex(i, false);
-      result.entries.push({
-        uri: entry.URI.spec,
-        title: entry.title
-      });
-    }
-
-    return result;
+    let { utils: Cu } = Components;
+    const { SessionHistory } =
+      Cu.import("resource:///modules/sessionstore/SessionHistory.jsm", {});
+    return SessionHistory.collect(docShell);
     /* eslint-enable no-undef */
   });
 }
@@ -380,7 +358,7 @@ function* testTouchEventsOverride(ui, expected) {
   let flag = yield ui.emulationFront.getTouchEventsOverride();
   is(flag === Ci.nsIDocShell.TOUCHEVENTS_OVERRIDE_ENABLED, expected,
     `Touch events override should be ${expected ? "enabled" : "disabled"}`);
-  is(touchButton.classList.contains("active"), expected,
+  is(touchButton.classList.contains("checked"), expected,
     `Touch simulation button should be ${expected ? "" : "in"}active.`);
 }
 
@@ -398,4 +376,11 @@ function* enableTouchSimulation(ui) {
   let loaded = waitForViewportLoad(ui);
   touchButton.click();
   yield loaded;
+}
+
+function* testUserAgent(ui, expected) {
+  let ua = yield ContentTask.spawn(ui.getViewportBrowser(), {}, function* () {
+    return content.navigator.userAgent;
+  });
+  is(ua, expected, `UA should be set to ${expected}`);
 }

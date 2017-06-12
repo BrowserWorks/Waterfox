@@ -60,6 +60,7 @@
 #include "nsRect.h"
 #include "Units.h"
 #include "nsIDeprecationWarner.h"
+#include "nsIThrottlingService.h"
 
 namespace mozilla {
 namespace dom {
@@ -158,8 +159,6 @@ public:
 
   nsDocShell();
 
-  NS_DECL_AND_IMPL_ZEROING_OPERATOR_NEW
-
   virtual nsresult Init() override;
 
   NS_DECL_ISUPPORTS_INHERITED
@@ -235,7 +234,6 @@ public:
   NS_IMETHOD GetUseRemoteTabs(bool*) override;
   NS_IMETHOD SetRemoteTabs(bool) override;
   NS_IMETHOD GetOriginAttributes(JS::MutableHandle<JS::Value>) override;
-  NS_IMETHOD IsTrackingProtectionOn(bool*) override;
 
   // Restores a cached presentation from history (mLSHE).
   // This method swaps out the content viewer and simulates loads for
@@ -740,9 +738,6 @@ protected:
   // Convenience method for getting our parent docshell. Can return null
   already_AddRefed<nsDocShell> GetParentDocshell();
 
-  // Check if aURI is about:newtab.
-  bool IsAboutNewtab(nsIURI* aURI);
-
 protected:
   nsresult GetCurScrollPos(int32_t aScrollOrientation, int32_t* aCurPos);
   nsresult SetCurScrollPosEx(int32_t aCurHorizontalPos,
@@ -962,6 +957,7 @@ protected:
   bool mIsAppTab : 1;
   bool mUseGlobalHistory : 1;
   bool mUseRemoteTabs : 1;
+  bool mUseTrackingProtection : 1;
   bool mDeviceSizeIsPageSize : 1;
   bool mWindowDraggingAllowed : 1;
   bool mInFrameSwap : 1;
@@ -1059,8 +1055,9 @@ private:
   // Separate function to do the actual name (i.e. not _top, _self etc.)
   // searching for FindItemWithName.
   nsresult DoFindItemWithName(const nsAString& aName,
-                              nsISupports* aRequestor,
+                              nsIDocShellTreeItem* aRequestor,
                               nsIDocShellTreeItem* aOriginalRequestor,
+                              bool aSkipTabGroup,
                               nsIDocShellTreeItem** aResult);
 
   // Helper assertion to enforce that mInPrivateBrowsing is in sync with
@@ -1070,6 +1067,13 @@ private:
   // Notify consumers of a search being loaded through the observer service:
   void MaybeNotifyKeywordSearchLoading(const nsString& aProvider,
                                        const nsString& aKeyword);
+
+  // Internal implementation of nsIDocShell::FirePageHideNotification.
+  // If aSkipCheckingDynEntries is true, it will not try to remove dynamic
+  // subframe entries. This is to avoid redundant RemoveDynEntries calls in all
+  // children docshells.
+  void FirePageHideNotificationInternal(bool aIsUnload,
+                                        bool aSkipCheckingDynEntries);
 
 #ifdef DEBUG
   // We're counting the number of |nsDocShells| to help find leaks
@@ -1089,6 +1093,9 @@ public:
     InterfaceRequestorProxy() {}
     nsWeakPtr mWeakPtr;
   };
+
+private:
+  mozilla::UniquePtr<mozilla::net::Throttler> mThrottler;
 };
 
 #endif /* nsDocShell_h__ */

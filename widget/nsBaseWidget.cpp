@@ -1,3 +1,4 @@
+
 /* -*- Mode: C++; tab-width: 8; indent-tabs-mode: nil; c-basic-offset: 2 -*- */
 /* vim: set ts=8 sts=2 et sw=2 tw=80: */
 /* This Source Code Form is subject to the terms of the Mozilla Public
@@ -59,9 +60,11 @@
 #include "mozilla/layers/CompositorOptions.h"
 #include "mozilla/layers/InputAPZContext.h"
 #include "mozilla/layers/APZCCallbackHelper.h"
+#include "mozilla/layers/WebRenderLayerManager.h"
 #include "mozilla/dom/ContentChild.h"
 #include "mozilla/dom/TabParent.h"
 #include "mozilla/gfx/GPUProcessManager.h"
+#include "mozilla/gfx/gfxVars.h"
 #include "mozilla/Move.h"
 #include "mozilla/Services.h"
 #include "mozilla/Sprintf.h"
@@ -105,7 +108,6 @@ using namespace mozilla::widget;
 using namespace mozilla;
 using base::Thread;
 
-nsIContent* nsBaseWidget::mLastRollup = nullptr;
 // Global user preference for disabling native theme. Used
 // in NativeWindowTheme.
 bool            gDisableNativeTheme               = false;
@@ -137,21 +139,6 @@ IMENotification::SelectionChangeDataBase::GetWritingMode() const
 
 } // namespace widget
 } // namespace mozilla
-
-nsAutoRollup::nsAutoRollup()
-{
-  // remember if mLastRollup was null, and only clear it upon destruction
-  // if so. This prevents recursive usage of nsAutoRollup from clearing
-  // mLastRollup when it shouldn't.
-  wasClear = !nsBaseWidget::mLastRollup;
-}
-
-nsAutoRollup::~nsAutoRollup()
-{
-  if (nsBaseWidget::mLastRollup && wasClear) {
-    NS_RELEASE(nsBaseWidget::mLastRollup);
-  }
-}
 
 NS_IMPL_ISUPPORTS(nsBaseWidget, nsIWidget, nsISupportsWeakReference)
 
@@ -307,13 +294,7 @@ nsBaseWidget::RevokeTransactionIdAllocator()
   if (!mLayerManager) {
     return;
   }
-
-  ClientLayerManager* clm = mLayerManager->AsClientLayerManager();
-  if (!clm) {
-    return;
-  }
-
-  clm->SetTransactionIdAllocator(nullptr);
+  mLayerManager->SetTransactionIdAllocator(nullptr);
 }
 
 void nsBaseWidget::ReleaseContentController()
@@ -351,7 +332,7 @@ nsBaseWidget::OnRenderingDeviceReset(uint64_t aSeqNo)
   // accelerated layers again.
   RefPtr<ClientLayerManager> clm = mLayerManager->AsClientLayerManager();
   if (!ComputeShouldAccelerate() &&
-      clm->GetTextureFactoryIdentifier().mParentBackend != LayersBackend::LAYERS_BASIC)
+      clm->GetCompositorBackendType() == LayersBackend::LAYERS_BASIC)
   {
     return;
   }
@@ -367,7 +348,7 @@ nsBaseWidget::OnRenderingDeviceReset(uint64_t aSeqNo)
   FrameLayerBuilder::InvalidateAllLayers(mLayerManager);
 
   // Update the texture factory identifier.
-  clm->UpdateTextureFactoryIdentifier(identifier);
+  clm->UpdateTextureFactoryIdentifier(identifier, aSeqNo);
   ImageBridgeChild::IdentifyCompositorTextureHost(identifier);
   gfx::VRManagerChild::IdentifyTextureHost(identifier);
 }
@@ -1212,20 +1193,22 @@ nsBaseWidget::DispatchInputEvent(WidgetInputEvent* aEvent)
       uint64_t inputBlockId = 0;
       ScrollableLayerGuid guid;
 
-      nsEventStatus result = mAPZC->ReceiveInputEvent(*aEvent, &guid, &inputBlockId);
+      nsEventStatus result =
+        mAPZC->ReceiveInputEvent(*aEvent, &guid, &inputBlockId);
       if (result == nsEventStatus_eConsumeNoDefault) {
-          return result;
+        return result;
       }
       return ProcessUntransformedAPZEvent(aEvent, guid, inputBlockId, result);
-    } else {
-      WidgetWheelEvent* wheelEvent = aEvent->AsWheelEvent();
-      if (wheelEvent) {
-        RefPtr<Runnable> r = new DispatchWheelInputOnControllerThread(*wheelEvent, mAPZC, this);
-        APZThreadUtils::RunOnControllerThread(r.forget());
-        return nsEventStatus_eConsumeDoDefault;
-      }
-      MOZ_CRASH();
     }
+    WidgetWheelEvent* wheelEvent = aEvent->AsWheelEvent();
+    if (wheelEvent) {
+      RefPtr<Runnable> r =
+        new DispatchWheelInputOnControllerThread(*wheelEvent, mAPZC, this);
+      APZThreadUtils::RunOnControllerThread(r.forget());
+      return nsEventStatus_eConsumeDoDefault;
+    }
+    // Allow dispatching keyboard events on Gecko thread.
+    MOZ_ASSERT(aEvent->AsKeyboardEvent());
   }
 
   nsEventStatus status;
@@ -1298,9 +1281,21 @@ void nsBaseWidget::CreateCompositor(int aWidth, int aHeight)
 
   CreateCompositorVsyncDispatcher();
 
-  RefPtr<ClientLayerManager> lm = new ClientLayerManager(this);
+  bool enableWR = gfx::gfxVars::UseWebRender();
+  bool enableAPZ = UseAPZ();
+  if (enableWR && !gfxPrefs::APZAllowWithWebRender()) {
+    // Disable APZ on widgets using WebRender, since it doesn't work yet. Allow
+    // it on non-WR widgets or if the pref forces it on.
+    enableAPZ = false;
+  }
+  CompositorOptions options(enableAPZ, enableWR);
 
-  CompositorOptions options(UseAPZ());
+  RefPtr<LayerManager> lm;
+  if (options.UseWebRender()) {
+    lm = new WebRenderLayerManager(this);
+  } else {
+    lm = new ClientLayerManager(this);
+  }
 
   gfx::GPUProcessManager* gpu = gfx::GPUProcessManager::Get();
   mCompositorSession = gpu->CreateTopLevelCompositor(
@@ -1327,11 +1322,18 @@ void nsBaseWidget::CreateCompositor(int aWidth, int aHeight)
     mInitialZoomConstraints.reset();
   }
 
-  ShadowLayerForwarder* lf = lm->AsShadowForwarder();
-  // As long as we are creating a ClientLayerManager above lf must be non-null.
-  MOZ_ASSERT(lf);
+  if (lm->AsWebRenderLayerManager()) {
+    TextureFactoryIdentifier textureFactoryIdentifier;
+    lm->AsWebRenderLayerManager()->Initialize(mCompositorBridgeChild,
+                                              wr::AsPipelineId(mCompositorSession->RootLayerTreeId()),
+                                              &textureFactoryIdentifier);
+    ImageBridgeChild::IdentifyCompositorTextureHost(textureFactoryIdentifier);
+    gfx::VRManagerChild::IdentifyTextureHost(textureFactoryIdentifier);
+  }
 
+  ShadowLayerForwarder* lf = lm->AsShadowForwarder();
   if (lf) {
+    // lf is non-null if we are creating a ClientLayerManager above
     TextureFactoryIdentifier textureFactoryIdentifier;
     PLayerTransactionChild* shadowManager = nullptr;
 
@@ -1352,9 +1354,7 @@ void nsBaseWidget::CreateCompositor(int aWidth, int aHeight)
     }
 
     lf->SetShadowManager(shadowManager);
-    if (ClientLayerManager* clm = lm->AsClientLayerManager()) {
-      clm->UpdateTextureFactoryIdentifier(textureFactoryIdentifier);
-    }
+    lm->UpdateTextureFactoryIdentifier(textureFactoryIdentifier, 0);
     // Some popup or transparent widgets may use a different backend than the
     // compositors used with ImageBridge and VR (and more generally web content).
     if (WidgetTypeSupportsAcceleration()) {

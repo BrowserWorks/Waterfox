@@ -1,0 +1,123 @@
+{
+  "addonDescription": {
+    "message": "Интернеттен скриншоттарды түсіріп, оларды уақытша немесе тұрақты түрде сақтаңыз."
+  },
+  "addonAuthorsList": {
+    "message": "Mozilla <screenshots-feedback@mozilla.org>"
+  },
+  "contextMenuLabel": {
+    "message": "Скриншотты түсіру"
+  },
+  "myShotsLink": {
+    "message": "Менің скриншоттарым"
+  },
+  "screenshotInstructions": {
+    "message": "Аймақты таңдау үшін бетте шертіңіз. Бас тарту үшін ESC басыңыз."
+  },
+  "saveScreenshotSelectedArea": {
+    "message": "Сақтау"
+  },
+  "saveScreenshotVisibleArea": {
+    "message": "Көрінетінді сақтау"
+  },
+  "saveScreenshotFullPage": {
+    "message": "Толық парақты сақтау"
+  },
+  "cancelScreenshot": {
+    "message": "Бас тарту"
+  },
+  "downloadScreenshot": {
+    "message": "Жүктеп алу"
+  },
+  "notificationLinkCopiedTitle": {
+    "message": "Сілтеме көшірілді"
+  },
+  "notificationLinkCopiedDetails": {
+    "message": "Сіздің скриншотыңызға сілтеме алмасу буферіне көшірілді. Кірістіру үшін $META_KEY$-V басыңыз.",
+    "placeholders": {
+      "meta_key": {
+        "content": "$1"
+      }
+    }
+  },
+  "requestErrorTitle": {
+    "message": "Жұмыс істемейді."
+  },
+  "requestErrorDetails": {
+    "message": "Кешіріңіз! Сіздің скриншотыңызды сақтай алмадық. Кейінірек қайталап көріңіз."
+  },
+  "connectionErrorTitle": {
+    "message": "Скриншоттарыңызға байланыса алмадық."
+  },
+  "connectionErrorDetails": {
+    "message": "Интернетпен байланысыңызды тексеріңіз. Егер сізде интернетпен байланыс бар болса, онда Firefox скриншоттары қызметімен уақытша мәселелер болуы мүмкін."
+  },
+  "loginErrorDetails": {
+    "message": "Скриншотыңызды сақтай алмадық, өйткені Firefox скриншоттары қызметімен мәселе бар болып тұр. Кейінірек қайталап көріңіз."
+  },
+  "unshootablePageErrorTitle": {
+    "message": "Бұл беттің скриншотын түсіре алмаймыз."
+  },
+  "unshootablePageErrorDetails": {
+    "message": "Бұл қалыпты веб беті емес, сондықтан оның скриншотын түсіру мүмкін емес."
+  },
+  "selfScreenshotErrorTitle": {
+    "message": "Firefox скриншоттары бетінің скриншотын түсіру мүмкін емес!"
+  },
+  "genericErrorTitle": {
+    "message": "Қап! Firefox скриншоттары жасамай қалған сияқты."
+  },
+  "genericErrorDetails": {
+    "message": "Не болғанын білмейміз. Қайталап көресіз бе, немесе басқа парақтың скриншотын түсіріп көресіз бе?"
+  },
+  "tourBodyOne": {
+    "message": "Firefox ішінен скриншоттарды түсіру, сақтау және олармен бөлісу."
+  },
+  "tourHeaderTwo": {
+    "message": "Тек керек нәрсені түсіріңіз"
+  },
+  "tourBodyTwo": {
+    "message": "Беттің тек бір бөлігін түсіру үшін тышқанды шертіп, тартыңыз. Таңдауыңызды түспен ерекшелеу үшін үстінен өткізсеңіз болады."
+  },
+  "tourHeaderThree": {
+    "message": "Өзіңізге керек түрде"
+  },
+  "tourBodyThree": {
+    "message": "Қиылған скриншоттарыңыздбен оңай бөлісу үшін оларды интернетте сақтаңыз, немесе өз компьютеріңізге жүктеп алыңыз. Сонымен қатар, сіз жасаған барлық скриншоттарды табу үшін Менің скриншоттарым батырмасына шерте аласыз."
+  },
+  "tourHeaderFour": {
+    "message": "Терезелер немесе толық беттерді түсіріңіз"
+  },
+  "tourBodyFour": {
+    "message": "Жоғарғы оң жақта орналасқан батырмаларды терезенің көрінетін аймағын, немесе толық бетті түсіру үшін қолданыңыз."
+  },
+  "tourSkip": {
+    "message": "Аттап кету"
+  },
+  "tourNext": {
+    "message": "Келесі слайд"
+  },
+  "tourPrevious": {
+    "message": "Алдыңғы слайд"
+  },
+  "tourDone": {
+    "message": "Дайын"
+  },
+  "termsAndPrivacyNoticeCloudServices": {
+    "message": "Firefox скриншоттарын қолдану арқылы, сіз Firefox бұлттық қызметтерінің $TERMSANDPRIVACYNOTICETERMSLINK$ және $TERMSANDPRIVACYNOTICEPRIVACYLINK$ келісесіз.",
+    "placeholders": {
+      "termsandprivacynoticetermslink": {
+        "content": "$1"
+      },
+      "termsandprivacynoticeprivacylink": {
+        "content": "$2"
+      }
+    }
+  },
+  "termsAndPrivacyNoticeTermsLink": {
+    "message": "Қолдану шарттары"
+  },
+  "termsAndPrivacyNoticyPrivacyLink": {
+    "message": "Жекелік ескертуі"
+  }
+}

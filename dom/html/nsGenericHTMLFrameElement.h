@@ -36,6 +36,7 @@ public:
     , mIsPrerendered(false)
     , mBrowserFrameListenersRegistered(false)
     , mFrameLoaderCreationDisallowed(false)
+    , mReallyIsBrowser(false)
   {
   }
 
@@ -71,6 +72,8 @@ public:
 
   virtual int32_t TabIndexDefault() override;
 
+  virtual nsIMozBrowserFrame* GetAsMozBrowserFrame() override { return this; }
+
   NS_DECL_CYCLE_COLLECTION_CLASS_INHERITED(nsGenericHTMLFrameElement,
                                            nsGenericHTMLElement)
 
@@ -86,6 +89,7 @@ public:
   void PresetOpenerWindow(mozIDOMWindowProxy* aOpenerWindow,
                           mozilla::ErrorResult& aRv);
 
+  static void InitStatics();
   static bool BrowserFramesEnabled();
 
   /**
@@ -122,6 +126,7 @@ protected:
   bool mIsPrerendered;
   bool mBrowserFrameListenersRegistered;
   bool mFrameLoaderCreationDisallowed;
+  bool mReallyIsBrowser;
 
   // This flag is only used by <iframe>. See HTMLIFrameElement::
   // FullscreenFlag() for details. It is placed here so that we

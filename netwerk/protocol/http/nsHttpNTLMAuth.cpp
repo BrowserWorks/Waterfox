@@ -29,8 +29,13 @@
 #include "mozilla/Attributes.h"
 #include "mozilla/Base64.h"
 #include "mozilla/CheckedInt.h"
+#include "mozilla/Tokenizer.h"
+#include "mozilla/UniquePtr.h"
+#include "mozilla/Unused.h"
 #include "nsNetUtil.h"
 #include "nsIChannel.h"
+#include "nsUnicharUtils.h"
+#include "mozilla/net/HttpAuthUtils.h"
 
 namespace mozilla {
 namespace net {
@@ -40,66 +45,6 @@ static const char kAllowNonFqdn[] = "network.automatic-ntlm-auth.allow-non-fqdn"
 static const char kTrustedURIs[]  = "network.automatic-ntlm-auth.trusted-uris";
 static const char kForceGeneric[] = "network.auth.force-generic-ntlm";
 static const char kSSOinPBmode[] = "network.auth.private-browsing-sso";
-
-// XXX MatchesBaseURI and TestPref are duplicated in nsHttpNegotiateAuth.cpp,
-// but since that file lives in a separate library we cannot directly share it.
-// bug 236865 addresses this problem.
-
-static bool
-MatchesBaseURI(const nsCSubstring &matchScheme,
-               const nsCSubstring &matchHost,
-               int32_t             matchPort,
-               const char         *baseStart,
-               const char         *baseEnd)
-{
-    // check if scheme://host:port matches baseURI
-
-    // parse the base URI
-    const char *hostStart, *schemeEnd = strstr(baseStart, "://");
-    if (schemeEnd) {
-        // the given scheme must match the parsed scheme exactly
-        if (!matchScheme.Equals(Substring(baseStart, schemeEnd)))
-            return false;
-        hostStart = schemeEnd + 3;
-    }
-    else
-        hostStart = baseStart;
-
-    // XXX this does not work for IPv6-literals
-    const char *hostEnd = strchr(hostStart, ':');
-    if (hostEnd && hostEnd < baseEnd) {
-        // the given port must match the parsed port exactly
-        int port = atoi(hostEnd + 1);
-        if (matchPort != (int32_t) port)
-            return false;
-    }
-    else
-        hostEnd = baseEnd;
-
-
-    // if we didn't parse out a host, then assume we got a match.
-    if (hostStart == hostEnd)
-        return true;
-
-    uint32_t hostLen = hostEnd - hostStart;
-
-    // matchHost must either equal host or be a subdomain of host
-    if (matchHost.Length() < hostLen)
-        return false;
-
-    const char *end = matchHost.EndReading();
-    if (PL_strncasecmp(end - hostLen, hostStart, hostLen) == 0) {
-        // if matchHost ends with host from the base URI, then make sure it is
-        // either an exact match, or prefixed with a dot.  we don't want
-        // "foobar.com" to match "bar.com"
-        if (matchHost.Length() == hostLen ||
-            *(end - hostLen) == '.' ||
-            *(end - hostLen - 1) == '.')
-            return true;
-    }
-
-    return false;
-}
 
 static bool
 IsNonFqdn(nsIURI *uri)
@@ -113,60 +58,6 @@ IsNonFqdn(nsIURI *uri)
     // return true if host does not contain a dot and is not an ip address
     return !host.IsEmpty() && !host.Contains('.') &&
            PR_StringToNetAddr(host.BeginReading(), &addr) != PR_SUCCESS;
-}
-
-static bool
-TestPref(nsIURI *uri, const char *pref)
-{
-    nsCOMPtr<nsIPrefBranch> prefs = do_GetService(NS_PREFSERVICE_CONTRACTID);
-    if (!prefs)
-        return false;
-
-    nsAutoCString scheme, host;
-    int32_t port;
-
-    if (NS_FAILED(uri->GetScheme(scheme)))
-        return false;
-    if (NS_FAILED(uri->GetAsciiHost(host)))
-        return false;
-    if (NS_FAILED(uri->GetPort(&port)))
-        return false;
-
-    char *hostList;
-    if (NS_FAILED(prefs->GetCharPref(pref, &hostList)) || !hostList)
-        return false;
-
-    // pseudo-BNF
-    // ----------
-    //
-    // url-list       base-url ( base-url "," LWS )*
-    // base-url       ( scheme-part | host-part | scheme-part host-part )
-    // scheme-part    scheme "://"
-    // host-part      host [":" port]
-    //
-    // for example:
-    //   "https://, http://office.foo.com"
-    //
-
-    char *start = hostList, *end;
-    for (;;) {
-        // skip past any whitespace
-        while (*start == ' ' || *start == '\t')
-            ++start;
-        end = strchr(start, ',');
-        if (!end)
-            end = start + strlen(start);
-        if (start == end)
-            break;
-        if (MatchesBaseURI(scheme, host, port, start, end))
-            return true;
-        if (*end == '\0')
-            break;
-        start = end + 1;
-    }
-
-    free(hostList);
-    return false;
 }
 
 // Check to see if we should use our generic (internal) NTLM auth module.
@@ -237,7 +128,7 @@ CanUseDefaultCredentials(nsIHttpAuthenticableChannel *channel,
         return true;
     }
 
-    bool isTrustedHost = (uri && TestPref(uri, kTrustedURIs));
+    bool isTrustedHost = (uri && auth::URIMatchesPrefPattern(uri, kTrustedURIs));
     LOG(("Default credentials allowed for host: %d\n", isTrustedHost));
     return isTrustedHost;
 }

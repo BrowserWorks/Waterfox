@@ -44,7 +44,7 @@ WidevineAdapter::SetAdaptee(PRLibrary* aLib)
 
 void* GetCdmHost(int aHostInterfaceVersion, void* aUserData)
 {
-  Log("GetCdmHostFunc(%d, %p)", aHostInterfaceVersion, aUserData);
+  CDM_LOG("GetCdmHostFunc(%d, %p)", aHostInterfaceVersion, aUserData);
   WidevineDecryptor* decryptor = reinterpret_cast<WidevineDecryptor*>(aUserData);
   MOZ_ASSERT(decryptor);
   return static_cast<cdm::Host_8*>(decryptor);
@@ -56,16 +56,6 @@ void* GetCdmHost(int aHostInterfaceVersion, void* aUserData)
 GMPErr
 WidevineAdapter::GMPInit(const GMPPlatformAPI* aPlatformAPI)
 {
-#ifdef ENABLE_WIDEVINE_LOG
-  if (getenv("GMP_LOG_FILE")) {
-    // Clear log file.
-    FILE* f = fopen(getenv("GMP_LOG_FILE"), "w");
-    if (f) {
-      fclose(f);
-    }
-  }
-#endif
-
   sPlatform = aPlatformAPI;
   if (!mLib) {
     return GMPGenericErr;
@@ -77,7 +67,7 @@ WidevineAdapter::GMPInit(const GMPPlatformAPI* aPlatformAPI)
     return GMPGenericErr;
   }
 
-  Log(STRINGIFY(INITIALIZE_CDM_MODULE)"()");
+  CDM_LOG(STRINGIFY(INITIALIZE_CDM_MODULE)"()");
   init();
 
   return GMPNoErr;
@@ -89,19 +79,19 @@ WidevineAdapter::GMPGetAPI(const char* aAPIName,
                            void** aPluginAPI,
                            uint32_t aDecryptorId)
 {
-  Log("WidevineAdapter::GMPGetAPI(%s, 0x%p, 0x%p, %u) this=0x%p",
-      aAPIName, aHostAPI, aPluginAPI, aDecryptorId, this);
+  CDM_LOG("WidevineAdapter::GMPGetAPI(%s, 0x%p, 0x%p, %u) this=0x%p",
+          aAPIName, aHostAPI, aPluginAPI, aDecryptorId, this);
   if (!strcmp(aAPIName, GMP_API_DECRYPTOR)) {
     if (WidevineDecryptor::GetInstance(aDecryptorId)) {
       // We only support one CDM instance per PGMPDecryptor. Fail!
-      Log("WidevineAdapter::GMPGetAPI() Tried to create more than once CDM per IPDL actor! FAIL!");
+      CDM_LOG("WidevineAdapter::GMPGetAPI() Tried to create more than once CDM per IPDL actor! FAIL!");
       return GMPQuotaExceededErr;
     }
     auto create = reinterpret_cast<decltype(::CreateCdmInstance)*>(
       PR_FindFunctionSymbol(mLib, "CreateCdmInstance"));
     if (!create) {
-      Log("WidevineAdapter::GMPGetAPI(%s, 0x%p, 0x%p, %u) this=0x%p FAILED to find CreateCdmInstance",
-        aAPIName, aHostAPI, aPluginAPI, aDecryptorId, this);
+      CDM_LOG("WidevineAdapter::GMPGetAPI(%s, 0x%p, 0x%p, %u) this=0x%p FAILED to find CreateCdmInstance",
+              aAPIName, aHostAPI, aPluginAPI, aDecryptorId, this);
       return GMPGenericErr;
     }
 
@@ -114,11 +104,11 @@ WidevineAdapter::GMPGetAPI(const char* aAPIName,
              &GetCdmHost,
              decryptor));
     if (!cdm) {
-      Log("WidevineAdapter::GMPGetAPI(%s, 0x%p, 0x%p, %u) this=0x%p FAILED to create cdm",
-          aAPIName, aHostAPI, aPluginAPI, aDecryptorId, this);
+      CDM_LOG("WidevineAdapter::GMPGetAPI(%s, 0x%p, 0x%p, %u) this=0x%p FAILED to create cdm",
+              aAPIName, aHostAPI, aPluginAPI, aDecryptorId, this);
       return GMPGenericErr;
     }
-    Log("cdm: 0x%x", cdm);
+    CDM_LOG("cdm: 0x%p", cdm);
     RefPtr<CDMWrapper> wrapper(new CDMWrapper(cdm, decryptor));
     decryptor->SetCDM(wrapper, aDecryptorId);
     *aPluginAPI = decryptor;
@@ -130,8 +120,8 @@ WidevineAdapter::GMPGetAPI(const char* aAPIName,
     // before we are able to create the video decoder, so we create a dummy
     // decoder to avoid crashing.
     if (!wrapper) {
-      Log("WidevineAdapter::GMPGetAPI(%s, 0x%p, 0x%p, %u) this=0x%p No cdm for video decoder. Using a DummyDecoder",
-          aAPIName, aHostAPI, aPluginAPI, aDecryptorId, this);
+      CDM_LOG("WidevineAdapter::GMPGetAPI(%s, 0x%p, 0x%p, %u) this=0x%p No cdm for video decoder. Using a DummyDecoder",
+              aAPIName, aHostAPI, aPluginAPI, aDecryptorId, this);
 
       *aPluginAPI = new WidevineDummyDecoder();
     } else {
@@ -145,20 +135,14 @@ WidevineAdapter::GMPGetAPI(const char* aAPIName,
 void
 WidevineAdapter::GMPShutdown()
 {
-  Log("WidevineAdapter::GMPShutdown()");
+  CDM_LOG("WidevineAdapter::GMPShutdown()");
 
   decltype(::DeinitializeCdmModule)* deinit;
   deinit = (decltype(deinit))(PR_FindFunctionSymbol(mLib, "DeinitializeCdmModule"));
   if (deinit) {
-    Log("DeinitializeCdmModule()");
+    CDM_LOG("DeinitializeCdmModule()");
     deinit();
   }
-}
-
-void
-WidevineAdapter::GMPSetNodeId(const char* aNodeId, uint32_t aLength)
-{
-
 }
 
 /* static */

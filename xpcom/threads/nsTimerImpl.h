@@ -50,6 +50,7 @@ public:
   static void Shutdown();
 
   void SetDelayInternal(uint32_t aDelay, TimeStamp aBase = TimeStamp::Now());
+  bool CancelCheckIfFiring();
 
   void Fire(int32_t aGeneration);
 
@@ -62,8 +63,6 @@ public:
   {
     return mGeneration;
   }
-
-  nsresult InitCommon(uint32_t aDelay, uint32_t aType);
 
   struct Callback {
     Callback() :
@@ -124,6 +123,8 @@ public:
     void*                 mClosure;
   };
 
+  nsresult InitCommon(uint32_t aDelay, uint32_t aType, Callback&& newCallback);
+
   Callback& GetCallback()
   {
     mMutex.AssertCurrentThreadOwns();
@@ -158,7 +159,7 @@ public:
                                       void* aClosure,
                                       uint32_t aDelay,
                                       uint32_t aType,
-                                      Callback::Name aName);
+                                      const Callback::Name& aName);
 
   // These members are set by the initiating thread, when the timer's type is
   // changed and during the period where it fires on that thread.

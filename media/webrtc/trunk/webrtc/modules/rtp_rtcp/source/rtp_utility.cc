@@ -325,6 +325,11 @@ void RtpHeaderParser::ParseOneByteExtensionHeader(
     // number of bytes - 1.
     const int id = (*ptr & 0xf0) >> 4;
     const int len = (*ptr & 0x0f);
+    if (ptr + len + 1 > ptrRTPDataExtensionEnd) {
+      LOG(LS_WARNING)
+          << "RTP extension header length out of bounds. Terminate parsing.";
+      return;
+    }
     ptr++;
 
     if (id == 15) {
@@ -336,7 +341,9 @@ void RtpHeaderParser::ParseOneByteExtensionHeader(
     RTPExtensionType type;
     if (ptrExtensionMap->GetType(id, &type) != 0) {
       // If we encounter an unknown extension, just skip over it.
-      LOG(LS_INFO) << "Failed to find extension id: " << id;
+      // Mozilla - we reuse the parse for demux, without registering extensions.
+      // Reduce log-spam by switching to VERBOSE
+      LOG(LS_VERBOSE) << "Failed to find extension id: " << id;
     } else {
       switch (type) {
         case kRtpExtensionTransmissionTimeOffset: {

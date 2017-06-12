@@ -4,7 +4,6 @@
 "use strict";
 
 Cu.import("resource://services-common/utils.js");
-Cu.import("resource://gre/modules/Services.jsm");
 Cu.import("resource://gre/modules/FxAccounts.jsm");
 Cu.import("resource://gre/modules/FxAccountsClient.jsm");
 Cu.import("resource://gre/modules/FxAccountsCommon.js");
@@ -27,9 +26,10 @@ Cu.importGlobalProperties(["atob"]);
 var log = Log.repository.getLogger("Services.FxAccounts.test");
 log.level = Log.Level.Debug;
 
-// See verbose logging from FxAccounts.jsm
+// See verbose logging from FxAccounts.jsm and jwcrypto.jsm.
 Services.prefs.setCharPref("identity.fxaccounts.loglevel", "Trace");
 Log.repository.getLogger("FirefoxAccounts").level = Log.Level.Trace;
+Services.prefs.setCharPref("services.crypto.jwcrypto.log.level", "Debug");
 
 // The oauth server is mocked, but set these prefs to pass param checks
 Services.prefs.setCharPref("identity.fxaccounts.remote.oauth.uri", "https://example.com/v1");
@@ -70,6 +70,9 @@ MockStorageManager.prototype = {
   },
 
   updateAccountData(updatedFields) {
+    if (!this.accountData) {
+      return Promise.resolve();
+    }
     for (let [name, value] of Object.entries(updatedFields)) {
       if (value == null) {
         delete this.accountData[name];
@@ -210,7 +213,7 @@ add_task(function* test_non_https_remote_server_uri() {
   Services.prefs.setCharPref(
     "identity.fxaccounts.remote.signup.uri",
     "http://example.com/browser/browser/base/content/test/general/accounts_testRemoteCommands.html");
-  rejects(fxAccounts.promiseAccountsSignUpURI(), null, "Firefox Accounts server must use HTTPS");
+  Assert.rejects(fxAccounts.promiseAccountsSignUpURI(), null, "Firefox Accounts server must use HTTPS");
   Services.prefs.clearUserPref("identity.fxaccounts.remote.signup.uri");
 });
 
@@ -254,6 +257,30 @@ add_task(function* test_get_signed_in_user_initially_unset() {
   // user should be undefined after sign out
   result = yield account.getSignedInUser();
   do_check_eq(result, null);
+});
+
+add_task(function* test_set_signed_in_user_deletes_previous_device() {
+  _("Check setSignedInUser tries to delete a previous registered device");
+  let account = MakeFxAccounts();
+  let deleteDeviceRegistrationCalled = false;
+  let credentials = {
+    email: "foo@example.com",
+    uid: "1234@lcip.org",
+    assertion: "foobar",
+    sessionToken: "dead",
+    kA: "beef",
+    kB: "cafe",
+    verified: true
+  };
+  yield account.setSignedInUser(credentials);
+
+  account.internal.deleteDeviceRegistration = () => {
+    deleteDeviceRegistrationCalled = true;
+    return Promise.resolve(true);
+  }
+
+  yield account.setSignedInUser(credentials);
+  do_check_true(deleteDeviceRegistrationCalled);
 });
 
 add_task(function* test_update_account_data() {
@@ -523,23 +550,23 @@ add_test(function test_getKeys() {
   user.verified = true;
 
   fxa.setSignedInUser(user).then(() => {
-    fxa.getSignedInUser().then((user) => {
+    fxa.getSignedInUser().then((user2) => {
       // Before getKeys, we have no keys
-      do_check_eq(!!user.kA, false);
-      do_check_eq(!!user.kB, false);
+      do_check_eq(!!user2.kA, false);
+      do_check_eq(!!user2.kB, false);
       // And we still have a key-fetch token and unwrapBKey to use
-      do_check_eq(!!user.keyFetchToken, true);
-      do_check_eq(!!user.unwrapBKey, true);
+      do_check_eq(!!user2.keyFetchToken, true);
+      do_check_eq(!!user2.unwrapBKey, true);
 
       fxa.internal.getKeys().then(() => {
-        fxa.getSignedInUser().then((user) => {
+        fxa.getSignedInUser().then((user3) => {
           // Now we should have keys
-          do_check_eq(fxa.internal.isUserEmailVerified(user), true);
-          do_check_eq(!!user.verified, true);
-          do_check_eq(user.kA, expandHex("11"));
-          do_check_eq(user.kB, expandHex("66"));
-          do_check_eq(user.keyFetchToken, undefined);
-          do_check_eq(user.unwrapBKey, undefined);
+          do_check_eq(fxa.internal.isUserEmailVerified(user3), true);
+          do_check_eq(!!user3.verified, true);
+          do_check_eq(user3.kA, expandHex("11"));
+          do_check_eq(user3.kB, expandHex("66"));
+          do_check_eq(user3.keyFetchToken, undefined);
+          do_check_eq(user3.unwrapBKey, undefined);
           run_next_test();
         });
       });
@@ -620,13 +647,13 @@ add_test(function test_fetchAndUnwrapKeys_no_token() {
 
   makeObserver(ONLOGOUT_NOTIFICATION, function() {
     log.debug("test_fetchAndUnwrapKeys_no_token observed logout");
-    fxa.internal.getUserAccountData().then(user => {
+    fxa.internal.getUserAccountData().then(user2 => {
       run_next_test();
     });
   });
 
   fxa.setSignedInUser(user).then(
-    user => {
+    user2 => {
       return fxa.internal.fetchAndUnwrapKeys();
     }
   ).then(
@@ -861,8 +888,8 @@ add_test(function test_accountStatus() {
                do_check_true(result);
                fxa.internal.fxAccountsClient._deletedOnServer = true;
                fxa.accountStatus().then(
-                 (result) => {
-                   do_check_false(result);
+                 (result2) => {
+                   do_check_false(result2);
                    fxa.internal.fxAccountsClient._deletedOnServer = false;
                    fxa.signOut().then(run_next_test);
                  }
@@ -961,16 +988,16 @@ add_task(function* test_sign_out_with_device() {
 
   const spy = {
     signOut: { count: 0 },
-    signOutAndDeviceDestroy: { count: 0, args: [] }
+    deleteDeviceRegistration: { count: 0, args: [] }
   };
   const client = fxa.internal.fxAccountsClient;
   client.signOut = function() {
     spy.signOut.count += 1;
     return Promise.resolve();
   };
-  client.signOutAndDestroyDevice = function() {
-    spy.signOutAndDeviceDestroy.count += 1;
-    spy.signOutAndDeviceDestroy.args.push(arguments);
+  fxa.internal.deleteDeviceRegistration = function() {
+    spy.deleteDeviceRegistration.count += 1;
+    spy.deleteDeviceRegistration.args.push(arguments);
     return Promise.resolve();
   };
 
@@ -981,12 +1008,10 @@ add_task(function* test_sign_out_with_device() {
       fxa.internal.getUserAccountData().then(user2 => {
         do_check_eq(user2, null);
         do_check_eq(spy.signOut.count, 0);
-        do_check_eq(spy.signOutAndDeviceDestroy.count, 1);
-        do_check_eq(spy.signOutAndDeviceDestroy.args[0].length, 3);
-        do_check_eq(spy.signOutAndDeviceDestroy.args[0][0], credentials.sessionToken);
-        do_check_eq(spy.signOutAndDeviceDestroy.args[0][1], credentials.deviceId);
-        do_check_true(spy.signOutAndDeviceDestroy.args[0][2]);
-        do_check_eq(spy.signOutAndDeviceDestroy.args[0][2].service, "sync");
+        do_check_eq(spy.deleteDeviceRegistration.count, 1);
+        do_check_eq(spy.deleteDeviceRegistration.args[0].length, 2);
+        do_check_eq(spy.deleteDeviceRegistration.args[0][0], credentials.sessionToken);
+        do_check_eq(spy.deleteDeviceRegistration.args[0][1], credentials.deviceId);
         resolve();
       });
     });
@@ -1008,7 +1033,7 @@ add_task(function* test_sign_out_without_device() {
 
   const spy = {
     signOut: { count: 0, args: [] },
-    signOutAndDeviceDestroy: { count: 0 }
+    deleteDeviceRegistration: { count: 0 }
   };
   const client = fxa.internal.fxAccountsClient;
   client.signOut = function() {
@@ -1016,8 +1041,8 @@ add_task(function* test_sign_out_without_device() {
     spy.signOut.args.push(arguments);
     return Promise.resolve();
   };
-  client.signOutAndDestroyDevice = function() {
-    spy.signOutAndDeviceDestroy.count += 1;
+  fxa.internal.deleteDeviceRegistration = function() {
+    spy.deleteDeviceRegistration.count += 1;
     return Promise.resolve();
   };
 
@@ -1032,7 +1057,7 @@ add_task(function* test_sign_out_without_device() {
         do_check_eq(spy.signOut.args[0][0], credentials.sessionToken);
         do_check_true(spy.signOut.args[0][1]);
         do_check_eq(spy.signOut.args[0][1].service, "sync");
-        do_check_eq(spy.signOutAndDeviceDestroy.count, 0);
+        do_check_eq(spy.deleteDeviceRegistration.count, 0);
         resolve();
       });
     });
@@ -1045,10 +1070,9 @@ add_task(function* test_sign_out_without_device() {
 
 add_task(function* test_sign_out_with_remote_error() {
   let fxa = new MockFxAccounts();
-  let client = fxa.internal.fxAccountsClient;
   let remoteSignOutCalled = false;
   // Force remote sign out to trigger an error
-  client.signOutAndDestroyDevice = function() { remoteSignOutCalled = true; throw "Remote sign out error"; };
+  fxa.internal.deleteDeviceRegistration = function() { remoteSignOutCalled = true; throw "Remote sign out error"; };
   let promiseLogout = new Promise(resolve => {
     makeObserver(ONLOGOUT_NOTIFICATION, function() {
       log.debug("test_sign_out_with_remote_error observed onlogout");

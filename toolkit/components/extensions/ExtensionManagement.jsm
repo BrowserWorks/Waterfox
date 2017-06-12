@@ -207,8 +207,8 @@ var Service = {
   // Checks whether a given extension can load this URI (typically via
   // an XML HTTP request). The manifest.json |permissions| directive
   // determines this.
-  checkAddonMayLoad(extension, uri) {
-    return extension.whiteListedHosts.matchesIgnoringPath(uri);
+  checkAddonMayLoad(extension, uri, explicit = false) {
+    return extension.whiteListedHosts.matchesIgnoringPath(uri, explicit);
   },
 
   generateBackgroundPageUrl(extension) {
@@ -283,7 +283,18 @@ function getAPILevelForWindow(window, addonId) {
     let parentDocument = parentWindow.document;
     let parentIsSystemPrincipal = Services.scriptSecurityManager
                                           .isSystemPrincipal(parentDocument.nodePrincipal);
+
     if (parentDocument.location.href == "about:addons" && parentIsSystemPrincipal) {
+      return FULL_PRIVILEGES;
+    }
+
+    // NOTE: Special handling for devtools panels using a chrome iframe here
+    // for the devtools panel, it is needed because a content iframe breaks
+    // switching between docked and undocked mode (see bug 1075490).
+    let devtoolsBrowser = parentDocument.querySelector(
+      "browser[webextension-view-type='devtools_panel']");
+    if (devtoolsBrowser && devtoolsBrowser.contentWindow === window &&
+        parentIsSystemPrincipal) {
       return FULL_PRIVILEGES;
     }
 

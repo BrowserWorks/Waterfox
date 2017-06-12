@@ -70,6 +70,7 @@ Http2Stream::Http2Stream(nsAHttpTransaction *httpTransaction,
   , mTotalSent(0)
   , mTotalRead(0)
   , mPushSource(nullptr)
+  , mAttempting0RTT(false)
   , mIsTunnel(false)
   , mPlainTextTunnel(false)
 {
@@ -148,8 +149,8 @@ Http2Stream::ReadSegments(nsAHttpSegmentReader *reader,
     rv = mTransaction->ReadSegments(this, count, countRead);
     mSegmentReader = nullptr;
 
-    LOG3(("Http2Stream::ReadSegments %p trans readsegments rv %x read=%d\n",
-          this, rv, *countRead));
+    LOG3(("Http2Stream::ReadSegments %p trans readsegments rv %" PRIx32 " read=%d\n",
+          this, static_cast<uint32_t>(rv), *countRead));
 
     // Check to see if the transaction's request could be written out now.
     // If not, mark the stream for callback when writing can proceed.
@@ -312,7 +313,8 @@ Http2Stream::WriteSegments(nsAHttpSegmentWriter *writer,
     // stash this data
     if (doBuffer) {
       rv = BufferInput(count, countWritten);
-      LOG3(("Http2Stream::WriteSegments %p Buffered %X %d\n", this, rv, *countWritten));
+      LOG3(("Http2Stream::WriteSegments %p Buffered %" PRIX32 " %d\n", this,
+            static_cast<uint32_t>(rv), *countWritten));
     }
   }
   mSegmentWriter = nullptr;
@@ -441,8 +443,8 @@ Http2Stream::ParseHttpRequestHeaders(const char *buf,
       if (pushedStream->mSession == mSession) {
         LOG3(("Pushed Stream match based on OnPush correlation %p", pushedStream));
       } else {
-        LOG3(("Pushed Stream match failed due to stream mismatch %p %d %d\n", pushedStream,
-              pushedStream->mSession->Serial(), mSession->Serial()));
+        LOG3(("Pushed Stream match failed due to stream mismatch %p %" PRId64 " %" PRId64 "\n",
+              pushedStream, pushedStream->mSession->Serial(), mSession->Serial()));
         pushedStream->OnPushFailed();
         pushedStream = nullptr;
       }
@@ -871,8 +873,8 @@ Http2Stream::TransmitFrame(const char *buf,
                               mTxInlineFrameUsed,
                               &transmittedCount);
   LOG3(("Http2Stream::TransmitFrame for inline BufferOutput session=%p "
-        "stream=%p result %x len=%d",
-        mSession, this, rv, transmittedCount));
+        "stream=%p result %" PRIx32 " len=%d",
+        mSession, this, static_cast<uint32_t>(rv), transmittedCount));
 
   MOZ_ASSERT(rv != NS_BASE_STREAM_WOULD_BLOCK,
              "inconsistent inline commitment result");
@@ -907,8 +909,8 @@ Http2Stream::TransmitFrame(const char *buf,
     }
 
     LOG3(("Http2Stream::TransmitFrame for regular session=%p "
-          "stream=%p result %x len=%d",
-          mSession, this, rv, transmittedCount));
+          "stream=%p result %" PRIx32 " len=%d",
+          mSession, this, static_cast<uint32_t>(rv), transmittedCount));
 
     MOZ_ASSERT(rv != NS_BASE_STREAM_WOULD_BLOCK,
                "inconsistent stream commitment result");
@@ -925,7 +927,9 @@ Http2Stream::TransmitFrame(const char *buf,
     *countUsed += mTxStreamFrameSize;
   }
 
-  mSession->FlushOutputQueue();
+  if (!mAttempting0RTT) {
+    mSession->FlushOutputQueue();
+  }
 
   // calling this will trigger waiting_for if mRequestBodyLenRemaining is 0
   UpdateTransportSendEvents(mTxInlineFrameUsed + mTxStreamFrameSize);
@@ -1314,7 +1318,7 @@ Http2Stream::OnReadSegment(const char *buf,
     if (!AllowFlowControlledWrite()) {
       *countRead = 0;
       LOG3(("Http2Stream this=%p, id 0x%X request body suspended because "
-            "remote window is stream=%ld session=%ld.\n", this, mStreamID,
+            "remote window is stream=%" PRId64 " session=%" PRId64 ".\n", this, mStreamID,
             mServerReceiveWindow, mSession->ServerSessionWindow()));
       mBlockedOnRwin = true;
       return NS_BASE_STREAM_WOULD_BLOCK;
@@ -1364,9 +1368,9 @@ Http2Stream::OnReadSegment(const char *buf,
     MOZ_ASSERT(NS_FAILED(rv) || !mTxInlineFrameUsed,
                "Transmit Frame should be all or nothing");
 
-    LOG3(("TransmitFrame() rv=%x returning %d data bytes. "
+    LOG3(("TransmitFrame() rv=%" PRIx32 " returning %d data bytes. "
           "Header is %d Body is %d.",
-          rv, *countRead, mTxInlineFrameUsed, mTxStreamFrameSize));
+          static_cast<uint32_t>(rv), *countRead, mTxInlineFrameUsed, mTxStreamFrameSize));
 
     // normalize a partial write with a WOULD_BLOCK into just a partial write
     // as some code will take WOULD_BLOCK to mean an error with nothing
@@ -1467,6 +1471,27 @@ Http2Stream::MapStreamToHttpConnection()
   qiTrans->MapStreamToHttpConnection(mSocketTransport,
                                      mTransaction->ConnectionInfo());
 }
+
+// -----------------------------------------------------------------------------
+// mirror nsAHttpTransaction
+// -----------------------------------------------------------------------------
+
+bool
+Http2Stream::Do0RTT()
+{
+  MOZ_ASSERT(mTransaction);
+  mAttempting0RTT = mTransaction->Do0RTT();
+  return mAttempting0RTT;
+}
+
+nsresult
+Http2Stream::Finish0RTT(bool aRestart, bool aAlpnChanged)
+{
+  MOZ_ASSERT(mTransaction);
+  mAttempting0RTT = false;
+  return mTransaction->Finish0RTT(aRestart, aAlpnChanged);
+}
+
 
 } // namespace net
 } // namespace mozilla

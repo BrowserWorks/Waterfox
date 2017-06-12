@@ -8,19 +8,14 @@
 #define mozilla_dom_MultipartBlobImpl_h
 
 #include "mozilla/Attributes.h"
-#include "mozilla/CheckedInt.h"
 #include "mozilla/ErrorResult.h"
 #include "mozilla/Move.h"
-#include "mozilla/dom/File.h"
-#include "mozilla/dom/BlobBinding.h"
-#include "mozilla/dom/FileBinding.h"
-#include <algorithm>
-#include "nsPIDOMWindow.h"
+#include "mozilla/dom/BaseBlobImpl.h"
 
 namespace mozilla {
 namespace dom {
 
-class MultipartBlobImpl final : public BlobImplBase
+class MultipartBlobImpl final : public BaseBlobImpl
 {
 public:
   NS_DECL_ISUPPORTS_INHERITED
@@ -40,14 +35,14 @@ public:
 
   // Create as a file to be later initialized
   explicit MultipartBlobImpl(const nsAString& aName)
-    : BlobImplBase(aName, EmptyString(), UINT64_MAX),
+    : BaseBlobImpl(aName, EmptyString(), UINT64_MAX),
       mIsFromNsIFile(false)
   {
   }
 
   // Create as a blob to be later initialized
   MultipartBlobImpl()
-    : BlobImplBase(EmptyString(), UINT64_MAX),
+    : BaseBlobImpl(EmptyString(), UINT64_MAX),
       mIsFromNsIFile(false)
   {
   }
@@ -60,20 +55,12 @@ public:
                       bool aNativeEOL,
                       ErrorResult& aRv);
 
-  void InitializeChromeFile(Blob& aData,
-                            const ChromeFilePropertyBag& aBag,
-                            ErrorResult& aRv);
-
-  void InitializeChromeFile(nsPIDOMWindowInner* aWindow,
-                            const nsAString& aData,
-                            const ChromeFilePropertyBag& aBag,
-                            ErrorResult& aRv);
-
-  void InitializeChromeFile(nsPIDOMWindowInner* aWindow,
-                            nsIFile* aData,
-                            const ChromeFilePropertyBag& aBag,
-                            bool aIsFromNsIFile,
-                            ErrorResult& aRv);
+  nsresult InitializeChromeFile(nsIFile* aData,
+                                const nsAString& aType,
+                                const nsAString& aName,
+                                bool aLastModifiedPassed,
+                                int64_t aLastModified,
+                                bool aIsFromNsIFile);
 
   virtual already_AddRefed<BlobImpl>
   CreateSlice(uint64_t aStart, uint64_t aLength,
@@ -110,7 +97,7 @@ protected:
   MultipartBlobImpl(nsTArray<RefPtr<BlobImpl>>&& aBlobImpls,
                     const nsAString& aName,
                     const nsAString& aContentType)
-    : BlobImplBase(aName, aContentType, UINT64_MAX),
+    : BaseBlobImpl(aName, aContentType, UINT64_MAX),
       mBlobImpls(Move(aBlobImpls)),
       mIsFromNsIFile(false)
   {
@@ -118,7 +105,7 @@ protected:
 
   MultipartBlobImpl(nsTArray<RefPtr<BlobImpl>>&& aBlobImpls,
                     const nsAString& aContentType)
-    : BlobImplBase(aContentType, UINT64_MAX),
+    : BaseBlobImpl(aContentType, UINT64_MAX),
       mBlobImpls(Move(aBlobImpls)),
       mIsFromNsIFile(false)
   {

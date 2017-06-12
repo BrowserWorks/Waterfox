@@ -8,25 +8,15 @@
 #define EMEVideoDecoder_h_
 
 #include "GMPVideoDecoder.h"
-#include "PlatformDecoderModule.h"
 
 namespace mozilla {
 
 class CDMProxy;
+class MediaRawData;
 class TaskQueue;
 
-class EMEVideoCallbackAdapter : public VideoCallbackAdapter {
-public:
-  EMEVideoCallbackAdapter(MediaDataDecoderCallbackProxy* aCallback,
-                          VideoInfo aVideoInfo,
-                          layers::ImageContainer* aImageContainer)
-   : VideoCallbackAdapter(aCallback, aVideoInfo, aImageContainer)
-  {}
-
-  void Error(GMPErr aErr) override;
-};
-
-class EMEVideoDecoder : public GMPVideoDecoder {
+class EMEVideoDecoder : public GMPVideoDecoder
+{
 public:
   EMEVideoDecoder(CDMProxy* aProxy, const GMPVideoDecoderParams& aParams);
 
@@ -34,7 +24,8 @@ private:
   void InitTags(nsTArray<nsCString>& aTags) override;
   nsCString GetNodeId() override;
   uint32_t DecryptorId() const override { return mDecryptorId; }
-  GMPUniquePtr<GMPVideoEncodedFrame> CreateFrame(MediaRawData* aSample) override;
+  GMPUniquePtr<GMPVideoEncodedFrame>
+  CreateFrame(MediaRawData* aSample) override;
 
   RefPtr<CDMProxy> mProxy;
   uint32_t mDecryptorId;

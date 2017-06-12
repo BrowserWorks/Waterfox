@@ -14,15 +14,14 @@ Test ArrayRep rep
 </head>
 <body>
 <pre id="test">
-<script src="head.js" type="application/javascript;version=1.8"></script>
-<script type="application/javascript;version=1.8">
+<script src="head.js" type="application/javascript"></script>
+<script type="application/javascript">
 "use strict";
 /* import-globals-from head.js */
 
 window.onload = Task.async(function* () {
-  let { Rep } = browserRequire("devtools/client/shared/components/reps/rep");
-  let { ArrayRep } = browserRequire("devtools/client/shared/components/reps/array");
-  const { MODE } = browserRequire("devtools/client/shared/components/reps/constants");
+  const { REPS, MODE } = browserRequire("devtools/client/shared/components/reps/reps");
+  let { Rep, ArrayRep } = REPS;
 
   let componentUnderTest = ArrayRep;
   const maxLength = {

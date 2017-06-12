@@ -3,6 +3,8 @@
    - License, v. 2.0. If a copy of the MPL was not distributed with this
    - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
 
+<!-- eslint-env mozilla/browser-window -->
+
 <!DOCTYPE bindings [
 <!ENTITY % notificationDTD SYSTEM "chrome://global/locale/notification.dtd">
 %notificationDTD;
@@ -232,9 +234,7 @@
                 this.translation.browser != gBrowser.selectedBrowser)
               return;
 
-            this.addEventListener("transitionend", function onShown() {
-              this.removeEventListener("transitionend", onShown);
-
+            this.addEventListener("transitionend", function() {
               // These strings are hardcoded because they need to reach beta
               // without riding the trains.
               let localizedStrings = {
@@ -281,7 +281,7 @@
                               "bottomcenter topleft");
 
               Services.prefs.setBoolPref(kWelcomePref, true);
-            });
+            }, {once: true});
           ]]>
         </body>
       </method>

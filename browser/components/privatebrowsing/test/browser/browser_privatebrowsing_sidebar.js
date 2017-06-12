@@ -10,32 +10,9 @@
 function test() {
   waitForExplicitFinish();
 
-  let { utils: Cu } = Components;
-
-  let { Promise: { defer } } = Cu.import("resource://gre/modules/Promise.jsm", {});
-
   // opens a sidebar
   function openSidebar(win) {
-    let { promise, resolve } = defer();
-    let doc = win.document;
-
-    let sidebarID = 'viewBookmarksSidebar';
-
-    let sidebar = doc.getElementById('sidebar');
-
-    let sidebarurl = doc.getElementById(sidebarID).getAttribute('sidebarurl');
-
-    sidebar.addEventListener('load', function onSidebarLoad() {
-      if (sidebar.contentWindow.location.href != sidebarurl)
-        return;
-      sidebar.removeEventListener('load', onSidebarLoad, true);
-
-      resolve(win);
-    }, true);
-
-    win.SidebarUI.show(sidebarID);
-
-    return promise;
+    return win.SidebarUI.show("viewBookmarksSidebar").then(() => win);
   }
 
   let windowCache = [];
@@ -43,7 +20,7 @@ function test() {
     windowCache.push(w);
     return w;
   }
-  function closeCachedWindows () {
+  function closeCachedWindows() {
     windowCache.forEach(w => w.close());
   }
 
@@ -55,7 +32,7 @@ function test() {
     then(cacheWindow).
     then(function({ document }) {
       let sidebarBox = document.getElementById("sidebar-box");
-      is(sidebarBox.hidden, true, 'Opening a private window from reg window does not open the sidebar');
+      is(sidebarBox.hidden, true, "Opening a private window from reg window does not open the sidebar");
     }).
     // Part 2: NON PRIVATE WINDOW -> NON PRIVATE WINDOW
     then(() => openWindow(window)).
@@ -65,7 +42,7 @@ function test() {
     then(cacheWindow).
     then(function({ document }) {
       let sidebarBox = document.getElementById("sidebar-box");
-      is(sidebarBox.hidden, false, 'Opening a reg window from reg window does open the sidebar');
+      is(sidebarBox.hidden, false, "Opening a reg window from reg window does open the sidebar");
     }).
     // Part 3: PRIVATE WINDOW -> NON PRIVATE WINDOW
     then(() => openWindow(window, { private: true })).
@@ -75,7 +52,7 @@ function test() {
     then(cacheWindow).
     then(function({ document }) {
       let sidebarBox = document.getElementById("sidebar-box");
-      is(sidebarBox.hidden, true, 'Opening a reg window from a private window does not open the sidebar');
+      is(sidebarBox.hidden, true, "Opening a reg window from a private window does not open the sidebar");
     }).
     // Part 4: PRIVATE WINDOW -> PRIVATE WINDOW
     then(() => openWindow(window, { private: true })).
@@ -85,7 +62,7 @@ function test() {
     then(cacheWindow).
     then(function({ document }) {
       let sidebarBox = document.getElementById("sidebar-box");
-      is(sidebarBox.hidden, false, 'Opening a private window from private window does open the sidebar');
+      is(sidebarBox.hidden, false, "Opening a private window from private window does open the sidebar");
     }).
     then(closeCachedWindows).
     then(finish);

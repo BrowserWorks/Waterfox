@@ -30,6 +30,7 @@ class RequestOrUSVString;
 class ServiceWorkerRegistration;
 class WorkerLocation;
 class WorkerNavigator;
+enum class CallerType : uint32_t;
 
 namespace cache {
 
@@ -111,9 +112,6 @@ public:
   already_AddRefed<WorkerNavigator>
   GetExistingNavigator() const;
 
-  void
-  Close(JSContext* aCx, ErrorResult& aRv);
-
   OnErrorEventHandlerNonNull*
   GetOnerror();
   void
@@ -142,6 +140,9 @@ public:
   ClearInterval(int32_t aHandle);
 
   void
+  GetOrigin(nsAString& aOrigin) const;
+
+  void
   Atob(const nsAString& aAtob, nsAString& aOutput, ErrorResult& aRv) const;
   void
   Btoa(const nsAString& aBtoa, nsAString& aOutput, ErrorResult& aRv) const;
@@ -155,7 +156,8 @@ public:
   Performance* GetPerformance();
 
   already_AddRefed<Promise>
-  Fetch(const RequestOrUSVString& aInput, const RequestInit& aInit, ErrorResult& aRv);
+  Fetch(const RequestOrUSVString& aInput, const RequestInit& aInit,
+        CallerType aCallerType, ErrorResult& aRv);
 
   already_AddRefed<IDBFactory>
   GetIndexedDB(ErrorResult& aErrorResult);
@@ -213,8 +215,11 @@ public:
 
   void
   PostMessage(JSContext* aCx, JS::Handle<JS::Value> aMessage,
-              const Optional<Sequence<JS::Value>>& aTransferable,
+              const Sequence<JSObject*>& aTransferable,
               ErrorResult& aRv);
+
+  void
+  Close(JSContext* aCx);
 
   IMPL_EVENT_HANDLER(message)
 };
@@ -237,6 +242,9 @@ public:
   {
     aName.AsAString() = NS_ConvertUTF8toUTF16(mName);
   }
+
+  void
+  Close(JSContext* aCx);
 
   IMPL_EVENT_HANDLER(connect)
 };

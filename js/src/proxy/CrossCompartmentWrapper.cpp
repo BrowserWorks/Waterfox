@@ -13,6 +13,8 @@
 #include "jscompartmentinlines.h"
 #include "jsobjinlines.h"
 
+#include "gc/Nursery-inl.h"
+
 using namespace js;
 
 #define PIERCE(cx, wrapper, pre, op, post)                      \
@@ -27,12 +29,27 @@ using namespace js;
 
 #define NOTHING (true)
 
+static bool
+MarkAtoms(JSContext* cx, jsid id)
+{
+    cx->markId(id);
+    return true;
+}
+
+static bool
+MarkAtoms(JSContext* cx, const AutoIdVector& ids)
+{
+    for (size_t i = 0; i < ids.length(); i++)
+        cx->markId(ids[i]);
+    return true;
+}
+
 bool
 CrossCompartmentWrapper::getPropertyDescriptor(JSContext* cx, HandleObject wrapper, HandleId id,
                                                MutableHandle<PropertyDescriptor> desc) const
 {
     PIERCE(cx, wrapper,
-           NOTHING,
+           MarkAtoms(cx, id),
            Wrapper::getPropertyDescriptor(cx, wrapper, id, desc),
            cx->compartment()->wrap(cx, desc));
 }
@@ -42,7 +59,7 @@ CrossCompartmentWrapper::getOwnPropertyDescriptor(JSContext* cx, HandleObject wr
                                                   MutableHandle<PropertyDescriptor> desc) const
 {
     PIERCE(cx, wrapper,
-           NOTHING,
+           MarkAtoms(cx, id),
            Wrapper::getOwnPropertyDescriptor(cx, wrapper, id, desc),
            cx->compartment()->wrap(cx, desc));
 }
@@ -54,7 +71,7 @@ CrossCompartmentWrapper::defineProperty(JSContext* cx, HandleObject wrapper, Han
 {
     Rooted<PropertyDescriptor> desc2(cx, desc);
     PIERCE(cx, wrapper,
-           cx->compartment()->wrap(cx, &desc2),
+           MarkAtoms(cx, id) && cx->compartment()->wrap(cx, &desc2),
            Wrapper::defineProperty(cx, wrapper, id, desc2, result),
            NOTHING);
 }
@@ -66,7 +83,7 @@ CrossCompartmentWrapper::ownPropertyKeys(JSContext* cx, HandleObject wrapper,
     PIERCE(cx, wrapper,
            NOTHING,
            Wrapper::ownPropertyKeys(cx, wrapper, props),
-           NOTHING);
+           MarkAtoms(cx, props));
 }
 
 bool
@@ -74,7 +91,7 @@ CrossCompartmentWrapper::delete_(JSContext* cx, HandleObject wrapper, HandleId i
                                  ObjectOpResult& result) const
 {
     PIERCE(cx, wrapper,
-           NOTHING,
+           MarkAtoms(cx, id),
            Wrapper::delete_(cx, wrapper, id, result),
            NOTHING);
 }
@@ -162,7 +179,7 @@ bool
 CrossCompartmentWrapper::has(JSContext* cx, HandleObject wrapper, HandleId id, bool* bp) const
 {
     PIERCE(cx, wrapper,
-           NOTHING,
+           MarkAtoms(cx, id),
            Wrapper::has(cx, wrapper, id, bp),
            NOTHING);
 }
@@ -171,7 +188,7 @@ bool
 CrossCompartmentWrapper::hasOwn(JSContext* cx, HandleObject wrapper, HandleId id, bool* bp) const
 {
     PIERCE(cx, wrapper,
-           NOTHING,
+           MarkAtoms(cx, id),
            Wrapper::hasOwn(cx, wrapper, id, bp),
            NOTHING);
 }
@@ -203,7 +220,7 @@ CrossCompartmentWrapper::get(JSContext* cx, HandleObject wrapper, HandleValue re
     RootedValue receiverCopy(cx, receiver);
     {
         AutoCompartment call(cx, wrappedObject(wrapper));
-        if (!WrapReceiver(cx, wrapper, &receiverCopy))
+        if (!MarkAtoms(cx, id) || !WrapReceiver(cx, wrapper, &receiverCopy))
             return false;
 
         if (!Wrapper::get(cx, wrapper, receiverCopy, id, vp))
@@ -219,6 +236,7 @@ CrossCompartmentWrapper::set(JSContext* cx, HandleObject wrapper, HandleId id, H
     RootedValue valCopy(cx, v);
     RootedValue receiverCopy(cx, receiver);
     PIERCE(cx, wrapper,
+           MarkAtoms(cx, id) &&
            cx->compartment()->wrap(cx, &valCopy) &&
            WrapReceiver(cx, wrapper, &receiverCopy),
            Wrapper::set(cx, wrapper, id, valCopy, receiverCopy, result),
@@ -232,7 +250,7 @@ CrossCompartmentWrapper::getOwnEnumerablePropertyKeys(JSContext* cx, HandleObjec
     PIERCE(cx, wrapper,
            NOTHING,
            Wrapper::getOwnEnumerablePropertyKeys(cx, wrapper, props),
-           NOTHING);
+           MarkAtoms(cx, props));
 }
 
 /*
@@ -248,15 +266,18 @@ CanReify(HandleObject obj)
 
 struct AutoCloseIterator
 {
-    AutoCloseIterator(JSContext* cx, JSObject* obj) : cx(cx), obj(cx, obj) {}
+    AutoCloseIterator(JSContext* cx, PropertyIteratorObject* obj) : cx(cx), obj(cx, obj) {}
 
-    ~AutoCloseIterator() { if (obj) CloseIterator(cx, obj); }
+    ~AutoCloseIterator() {
+        if (obj)
+            MOZ_ALWAYS_TRUE(CloseIterator(cx, obj));
+    }
 
     void clear() { obj = nullptr; }
 
   private:
     JSContext* cx;
-    RootedObject obj;
+    Rooted<PropertyIteratorObject*> obj;
 };
 
 static bool
@@ -292,8 +313,7 @@ Reify(JSContext* cx, JSCompartment* origin, MutableHandleObject objp)
     }
 
     close.clear();
-    if (!CloseIterator(cx, iterObj))
-        return false;
+    MOZ_ALWAYS_TRUE(CloseIterator(cx, iterObj));
 
     return EnumeratedIdVectorToIterator(cx, obj, ni->flags, keys, objp);
 }
@@ -449,6 +469,7 @@ CrossCompartmentWrapper::regexp_toShared(JSContext* cx, HandleObject wrapper, Re
 
     // Get an equivalent RegExpShared associated with the current compartment.
     RegExpShared* re = wrapperGuard.re();
+    cx->markAtom(re->getSource());
     return cx->compartment()->regExps.get(cx, re->getSource(), re->getFlags(), g);
 }
 
@@ -500,7 +521,7 @@ js::NukeCrossCompartmentWrappers(JSContext* cx,
     CHECK_REQUEST(cx);
     JSRuntime* rt = cx->runtime();
 
-    rt->gc.evictNursery(JS::gcreason::EVICT_NURSERY);
+    EvictAllNurseries(rt);
 
     for (CompartmentsIter c(rt, SkipAtoms); !c.done(); c.next()) {
         if (!sourceFilter.match(c))
@@ -561,7 +582,7 @@ js::RemapWrapper(JSContext* cx, JSObject* wobjArg, JSObject* newTargetArg)
     Value origv = ObjectValue(*origTarget);
     JSCompartment* wcompartment = wobj->compartment();
 
-    AutoDisableProxyCheck adpc(cx->runtime());
+    AutoDisableProxyCheck adpc;
 
     // If we're mapping to a different target (as opposed to just recomputing
     // for the same target), we must not have an existing wrapper for the new
@@ -583,7 +604,7 @@ js::RemapWrapper(JSContext* cx, JSObject* wobjArg, JSObject* newTargetArg)
     // wrapper, |wobj|, since it's been nuked anyway. The wrap() function has
     // the choice to reuse |wobj| or not.
     RootedObject tobj(cx, newTarget);
-    AutoCompartment ac(cx, wobj);
+    AutoCompartmentUnchecked ac(cx, wcompartment);
     if (!wcompartment->rewrap(cx, &tobj, wobj))
         MOZ_CRASH();
 
@@ -644,7 +665,7 @@ js::RecomputeWrappers(JSContext* cx, const CompartmentFilter& sourceFilter,
                       const CompartmentFilter& targetFilter)
 {
     // Drop any nursery-allocated wrappers.
-    cx->runtime()->gc.evictNursery(JS::gcreason::EVICT_NURSERY);
+    EvictAllNurseries(cx->runtime());
 
     AutoWrapperVector toRecompute(cx);
     for (CompartmentsIter c(cx->runtime(), SkipAtoms); !c.done(); c.next()) {

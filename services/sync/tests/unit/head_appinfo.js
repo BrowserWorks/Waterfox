@@ -1,6 +1,8 @@
 /* Any copyright is dedicated to the Public Domain.
    http://creativecommons.org/publicdomain/zero/1.0/ */
 
+/* import-globals-from ../../../common/tests/unit/head_helpers.js */
+
 var {classes: Cc, interfaces: Ci, results: Cr, utils: Cu} = Components;
 Cu.import("resource://gre/modules/Services.jsm");
 Cu.import("resource://gre/modules/XPCOMUtils.jsm");
@@ -16,12 +18,6 @@ fhs.observe(null, "profile-after-change", null);
 
 // An app is going to have some prefs set which xpcshell tests don't.
 Services.prefs.setCharPref("identity.sync.tokenserver.uri", "http://token-server");
-
-// Set the validation prefs to attempt validation every time to avoid non-determinism.
-Services.prefs.setIntPref("services.sync.validation.interval", 0);
-Services.prefs.setIntPref("services.sync.validation.percentageChance", 100);
-Services.prefs.setIntPref("services.sync.validation.maxRecords", -1);
-Services.prefs.setBoolPref("services.sync.validation.enabled", true);
 
 // Make sure to provide the right OS so crypto loads the right binaries
 function getOS() {

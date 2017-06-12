@@ -14,14 +14,14 @@ Test Symbol rep
 </head>
 <body>
 <pre id="test">
-<script src="head.js" type="application/javascript;version=1.8"></script>
-<script type="application/javascript;version=1.8">
+<script src="head.js" type="application/javascript"></script>
+<script type="application/javascript">
 "use strict";
 /* import-globals-from head.js */
 
 window.onload = Task.async(function* () {
-  let { Rep } = browserRequire("devtools/client/shared/components/reps/rep");
-  let { SymbolRep } = browserRequire("devtools/client/shared/components/reps/symbol");
+  const { REPS } = browserRequire("devtools/client/shared/components/reps/reps");
+  let { Rep, SymbolRep } = REPS;
 
   let gripStubs = new Map();
   gripStubs.set("testSymbolFoo", {

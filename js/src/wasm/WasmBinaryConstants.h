@@ -440,12 +440,6 @@ enum class Telemetry
     WASM = 1
 };
 
-// Static offsets into the global data of every module that is compiled.
-
-static const unsigned NaN64GlobalDataOffset  = 0;
-static const unsigned NaN32GlobalDataOffset  = NaN64GlobalDataOffset + sizeof(double);
-static const unsigned InitialGlobalDataBytes = NaN32GlobalDataOffset + sizeof(float);
-
 // These limits are agreed upon with other engines for consistency.
 
 static const unsigned MaxTypes               =  1000000;
@@ -455,11 +449,13 @@ static const unsigned MaxExports             =   100000;
 static const unsigned MaxGlobals             =  1000000;
 static const unsigned MaxDataSegments        =   100000;
 static const unsigned MaxElemSegments        = 10000000;
-static const unsigned MaxTableLength         = 10000000;
+static const unsigned MaxTableInitialLength  = 10000000;
 static const unsigned MaxStringBytes         =   100000;
 static const unsigned MaxLocals              =    50000;
 static const unsigned MaxParams              =     1000;
 static const unsigned MaxBrTableElems        =  1000000;
+static const unsigned MaxMemoryInitialPages  = 16384;
+static const unsigned MaxMemoryMaximumPages  = 65536;
 static const unsigned MaxModuleBytes         = 1024 * 1024 * 1024;
 static const unsigned MaxFunctionBytes       =         128 * 1024;
 

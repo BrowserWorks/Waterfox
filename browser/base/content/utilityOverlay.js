@@ -317,7 +317,30 @@ function openLinkIn(url, where, params) {
       features += ",private";
     }
 
-    Services.ww.openWindow(w || window, getBrowserURL(), null, features, sa);
+    const sourceWindow = (w || window);
+    let win;
+    if (params.frameOuterWindowID && sourceWindow) {
+      // Only notify it as a WebExtensions' webNavigation.onCreatedNavigationTarget
+      // event if it contains the expected frameOuterWindowID params.
+      // (e.g. we should not notify it as a onCreatedNavigationTarget if the user is
+      // opening a new window using the keyboard shortcut).
+      const sourceTabBrowser = sourceWindow.gBrowser.selectedBrowser;
+      let delayedStartupObserver = aSubject => {
+        if (aSubject == win) {
+          Services.obs.removeObserver(delayedStartupObserver, "browser-delayed-startup-finished");
+          Services.obs.notifyObservers({
+            wrappedJSObject: {
+              url,
+              createdTabBrowser: win.gBrowser.selectedBrowser,
+              sourceTabBrowser,
+              sourceFrameOuterWindowID: params.frameOuterWindowID,
+            },
+          }, "webNavigation-createdNavigationTarget", null);
+        }
+      };
+      Services.obs.addObserver(delayedStartupObserver, "browser-delayed-startup-finished", false);
+    }
+    win = Services.ww.openWindow(sourceWindow, getBrowserURL(), null, features, sa);
     return;
   }
 
@@ -386,7 +409,12 @@ function openLinkIn(url, where, params) {
       flags |= Ci.nsIWebNavigation.LOAD_FLAGS_ERROR_LOAD_CHANGES_RV;
     }
 
-    if (aForceAboutBlankViewerInCurrent) {
+    let {URI_INHERITS_SECURITY_CONTEXT} = Ci.nsIProtocolHandler;
+    if (aForceAboutBlankViewerInCurrent &&
+        (!uriObj ||
+         (Services.io.getProtocolFlags(uriObj.scheme) & URI_INHERITS_SECURITY_CONTEXT))) {
+      // Unless we know for sure we're not inheriting principals,
+      // force the about:blank viewer to have the right principal:
       targetBrowser.createAboutBlankContentViewer(aPrincipal);
     }
 
@@ -419,6 +447,21 @@ function openLinkIn(url, where, params) {
       triggeringPrincipal: aPrincipal,
     });
     targetBrowser = tabUsedForLoad.linkedBrowser;
+
+    if (params.frameOuterWindowID && w) {
+      // Only notify it as a WebExtensions' webNavigation.onCreatedNavigationTarget
+      // event if it contains the expected frameOuterWindowID params.
+      // (e.g. we should not notify it as a onCreatedNavigationTarget if the user is
+      // opening a new tab using the keyboard shortcut).
+      Services.obs.notifyObservers({
+        wrappedJSObject: {
+          url,
+          createdTabBrowser: targetBrowser,
+          sourceTabBrowser: w.gBrowser.selectedBrowser,
+          sourceFrameOuterWindowID: params.frameOuterWindowID,
+        },
+      }, "webNavigation-createdNavigationTarget", null);
+    }
     break;
   }
 
@@ -488,7 +531,7 @@ function createUserContextMenu(event, {
     docfrag.appendChild(menuseparator);
   }
 
-  ContextualIdentityService.getIdentities().forEach(identity => {
+  ContextualIdentityService.getPublicIdentities().forEach(identity => {
     if (identity.userContextId == excludeUserContextId) {
       return;
     }

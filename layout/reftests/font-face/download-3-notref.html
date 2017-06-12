@@ -14,13 +14,13 @@
 <script>
   document.body.offsetWidth;
   var n = document.getElementById("t");
-  var w = document.defaultView.getComputedStyle(n, "").width;
-  var h = document.defaultView.getComputedStyle(n, "").height;
+  var w = document.defaultView.getComputedStyle(n).width;
+  var h = document.defaultView.getComputedStyle(n).height;
   var d = document.createElement("div");
   d.style.width = w;
   d.style.height = h;
   d.style.backgroundColor = "green";
-  n.parentNode.removeChild(n);
+  n.remove();
   document.body.appendChild(d);
 </script>
 </body>

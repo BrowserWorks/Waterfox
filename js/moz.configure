@@ -145,8 +145,11 @@ add_old_configure_assignment('MOZ_PROFILING', profiling)
 
 @depends(profiling, target)
 def imply_vtune(value, target):
-    if value and (target.kernel == 'WINNT' or (target.kernel == 'Linux' and
-                                               target.os == 'GNU')):
+    ok_cpu    = target.cpu in ['x86', 'x86_64']
+    ok_kernel = target.kernel == 'WINNT' or \
+                (target.kernel == 'Linux' and target.os == 'GNU')
+
+    if value and ok_cpu and ok_kernel:
         return True
 
 set_config('MOZ_PROFILING', profiling)
@@ -154,7 +157,7 @@ set_define('MOZ_PROFILING', profiling)
 imply_option('--enable-vtune', imply_vtune, reason='--enable-profiling')
 
 
-js_option('--enable-vtune', env='MOZ_VTUNE', help='Enable vtune profiling')
+js_option('--enable-vtune', env='MOZ_VTUNE', help='Enable VTune profiling')
 
 @depends('--enable-vtune')
 def vtune(value):
@@ -227,3 +230,28 @@ def ctypes_and_compile_environment(ctypes, compile_environment, _):
     return ctypes and compile_environment
 
 include('ffi.configure', when=ctypes_and_compile_environment)
+
+
+# Support various fuzzing options
+# ==============================================================
+with only_when('--enable-compile-environment'):
+    js_option('--enable-fuzzing', help='Enable fuzzing support')
+
+    @depends('--enable-fuzzing')
+    def enable_fuzzing(value):
+        if value:
+            return True
+
+    @depends(enable_fuzzing,
+             try_compile(body='__AFL_COMPILER;',
+                         check_msg='for AFL compiler',
+                         when='--enable-fuzzing'))
+    def enable_libfuzzer(fuzzing, afl):
+        if fuzzing and not afl:
+            return True
+
+    set_config('FUZZING', enable_fuzzing)
+    set_define('FUZZING', enable_fuzzing)
+
+    set_config('LIBFUZZER', enable_libfuzzer)
+    set_define('LIBFUZZER', enable_libfuzzer)

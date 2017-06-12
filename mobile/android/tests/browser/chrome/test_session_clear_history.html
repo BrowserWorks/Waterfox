@@ -24,14 +24,6 @@ https://bugzilla.mozilla.org/show_bug.cgi?id=1343603
   Cu.import("resource://gre/modules/Messaging.jsm");
   Cu.import("resource://gre/modules/Task.jsm");
 
-  // Import the MemoryObserver
-  Cu.import("resource://gre/modules/PrivateBrowsingUtils.jsm");
-  XPCOMUtils.defineLazyGetter(this, "MemoryObserver", function() {
-    let sandbox = {};
-    Services.scriptloader.loadSubScript("chrome://browser/content/MemoryObserver.js", sandbox);
-    return sandbox["MemoryObserver"];
-  });
-
   // The chrome window
   let chromeWin = Services.wm.getMostRecentWindow("navigator:browser");
   let BrowserApp = chromeWin.BrowserApp;
@@ -182,7 +174,7 @@ https://bugzilla.mozilla.org/show_bug.cgi?id=1343603
     is(BrowserApp.selectedTab, tabBlank, "Test tab is in background.");
 
     // Zombify the backgrounded test tab
-    MemoryObserver.zombify(tabTest);
+    tabTest.zombify();
 
     // Check that the test tab is actually zombified
     ok(tabTest.browser.__SS_restore, "Test tab is set for delay loading.");

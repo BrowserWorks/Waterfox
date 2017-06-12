@@ -33,6 +33,7 @@
 #include "nsIFrame.h"
 #include "nsIScrollableFrame.h"
 #include "mozilla/dom/NodeInfo.h"
+#include "mozilla/dom/TabParent.h"
 #include "nsIServiceManager.h"
 #include "nsNameSpaceManager.h"
 #include "nsTextFormatter.h"
@@ -1254,15 +1255,25 @@ AccessibleWrap::GetHWNDFor(Accessible* aAccessible)
     return nullptr;
   }
 
-  // Accessibles in child processes are said to have the HWND of the window
-  // their tab is within.  Popups are always in the parent process, and so
-  // never proxied, which means this is basically correct.
   if (aAccessible->IsProxy()) {
     ProxyAccessible* proxy = aAccessible->Proxy();
     if (!proxy) {
       return nullptr;
     }
 
+    // If window emulation is enabled, retrieve the emulated window from the
+    // containing document document proxy.
+    if (nsWinUtils::IsWindowEmulationStarted()) {
+      DocAccessibleParent* doc = proxy->Document();
+      HWND hWnd = doc->GetEmulatedWindowHandle();
+      if (hWnd) {
+        return hWnd;
+      }
+    }
+
+    // Accessibles in child processes are said to have the HWND of the window
+    // their tab is within.  Popups are always in the parent process, and so
+    // never proxied, which means this is basically correct.
     Accessible* outerDoc = proxy->OuterDocOfRemoteBrowser();
     NS_ASSERTION(outerDoc, "no outer doc for accessible remote tab!");
     if (!outerDoc) {
@@ -1336,21 +1347,35 @@ GetProxiedAccessibleInSubtree(const DocAccessibleParent* aDoc,
 {
   auto wrapper = static_cast<DocProxyAccessibleWrap*>(WrapperFor(aDoc));
   RefPtr<IAccessible> comProxy;
-  int32_t wrapperChildId = AccessibleWrap::GetChildIDFor(wrapper);
-  if (wrapperChildId == aVarChild.lVal) {
+  int32_t docWrapperChildId = AccessibleWrap::GetChildIDFor(wrapper);
+  // Only top level document accessible proxies are created with a pointer to
+  // their COM proxy.
+  if (aDoc->IsTopLevel()) {
     wrapper->GetNativeInterface(getter_AddRefs(comProxy));
-    return comProxy.forget();
+  } else {
+    auto tab = static_cast<dom::TabParent*>(aDoc->Manager());
+    MOZ_ASSERT(tab);
+    DocAccessibleParent* topLevelDoc = tab->GetTopLevelDocAccessible();
+    MOZ_ASSERT(topLevelDoc && topLevelDoc->IsTopLevel());
+    VARIANT docId = {VT_I4};
+    docId.lVal = docWrapperChildId;
+    RefPtr<IDispatch> disp = GetProxiedAccessibleInSubtree(topLevelDoc, docId);
+    if (!disp) {
+      return nullptr;
+    }
+
+    DebugOnly<HRESULT> hr = disp->QueryInterface(IID_IAccessible,
+                                                 getter_AddRefs(comProxy));
+    MOZ_ASSERT(SUCCEEDED(hr));
   }
 
-  MOZ_ASSERT(aDoc->IsTopLevel());
-  if (!aDoc->IsTopLevel()) {
-    return nullptr;
-  }
-
-  wrapper->GetNativeInterface(getter_AddRefs(comProxy));
   MOZ_ASSERT(comProxy);
   if (!comProxy) {
     return nullptr;
+  }
+
+  if (docWrapperChildId == aVarChild.lVal) {
+    return comProxy.forget();
   }
 
   RefPtr<IDispatch> disp;
@@ -1394,13 +1419,18 @@ AccessibleWrap::GetIAccessibleFor(const VARIANT& aVarChild, bool* aIsDefunct)
     varChild.lVal = GetExistingID();
   }
 
-  if (IsProxy() ? Proxy()->MustPruneChildren() : nsAccUtils::MustPrune(this)) {
+  if (varChild.ulVal != GetExistingID() &&
+      (IsProxy() ? Proxy()->MustPruneChildren() : nsAccUtils::MustPrune(this))) {
+    // This accessible should have no subtree in platform, return null for its children.
     return nullptr;
   }
 
   // If the MSAA ID is not a chrome id then we already know that we won't
-  // find it here and should look remotely instead.
-  if (XRE_IsParentProcess() && !sIDGen.IsChromeID(varChild.lVal)) {
+  // find it here and should look remotely instead. This handles the case when
+  // accessible is part of the chrome process and is part of the xul browser
+  // window and the child id points in the content documents. Thus we need to
+  // make sure that it is never called on proxies.
+  if (XRE_IsParentProcess() && !IsProxy() && !sIDGen.IsChromeID(varChild.lVal)) {
     return GetRemoteIAccessibleFor(varChild);
   }
   MOZ_ASSERT(XRE_IsParentProcess() ||
@@ -1471,7 +1501,6 @@ AccessibleWrap::GetIAccessibleFor(const VARIANT& aVarChild, bool* aIsDefunct)
 already_AddRefed<IAccessible>
 AccessibleWrap::GetRemoteIAccessibleFor(const VARIANT& aVarChild)
 {
-  DocAccessibleParent* proxyDoc = nullptr;
   DocAccessible* doc = Document();
   const nsTArray<DocAccessibleParent*>* remoteDocs =
     DocManager::TopLevelRemoteDocs();

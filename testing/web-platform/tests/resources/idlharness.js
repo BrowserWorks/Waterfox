@@ -49,14 +49,19 @@ policies and contribution forms [3].
 (function(){
 "use strict";
 /// Helpers ///
-function constValue (cnt) {
+function constValue (cnt)
+//@{
+{
     if (cnt.type === "null") return null;
     if (cnt.type === "NaN") return NaN;
     if (cnt.type === "Infinity") return cnt.negative ? -Infinity : Infinity;
     return cnt.value;
 }
 
-function minOverloadLength(overloads) {
+//@}
+function minOverloadLength(overloads)
+//@{
+{
     if (!overloads.length) {
         return 0;
     }
@@ -69,7 +74,10 @@ function minOverloadLength(overloads) {
     .reduce(function(m, n) { return Math.min(m, n); });
 }
 
-function throwOrReject(a_test, operation, fn, obj, args,  message, cb) {
+//@}
+function throwOrReject(a_test, operation, fn, obj, args,  message, cb)
+//@{
+{
     if (operation.idlType.generic !== "Promise") {
         assert_throws(new TypeError(), function() {
             fn.apply(obj, args);
@@ -87,7 +95,10 @@ function throwOrReject(a_test, operation, fn, obj, args,  message, cb) {
     }
 }
 
-function awaitNCallbacks(n, cb, ctx) {
+//@}
+function awaitNCallbacks(n, cb, ctx)
+//@{
+{
     var counter = 0;
     return function() {
         counter++;
@@ -97,7 +108,10 @@ function awaitNCallbacks(n, cb, ctx) {
     };
 }
 
-var fround = (function(){
+//@}
+var fround =
+//@{
+(function(){
     if (Math.fround) return Math.fround;
 
     var arr = new Float32Array(1);
@@ -106,6 +120,7 @@ var fround = (function(){
         return arr[0];
     };
 })();
+//@}
 
 /// IdlArray ///
 // Entry point
@@ -307,6 +322,24 @@ IdlArray.prototype.recursively_get_implements = function(interface_name)
     return ret;
 };
 
+function exposure_set(object, default_set) {
+    var exposed = object.extAttrs.filter(function(a) { return a.name == "Exposed" });
+    if (exposed.length > 1 || exposed.length < 0) {
+        throw "Unexpected Exposed extended attributes on " + memberName + ": " + exposed;
+    }
+
+    if (exposed.length === 0) {
+        return default_set;
+    }
+
+    var set = exposed[0].rhs.value;
+    // Could be a list or a string.
+    if (typeof set == "string") {
+        set = [ set ];
+    }
+    return set;
+}
+
 function exposed_in(globals) {
     if ('document' in self) {
         return globals.indexOf("Window") >= 0;
@@ -381,15 +414,9 @@ IdlArray.prototype.test = function()
             return;
         }
 
-        var exposed = member.extAttrs.filter(function(a) { return a.name == "Exposed" });
-        if (exposed.length > 1) {
-            throw "Unexpected Exposed extended attributes on " + memberName + ": " + exposed;
-        }
-
-        var globals = exposed.length === 1
-                    ? exposed[0].rhs.value
-                    : ["Window"];
+        var globals = exposure_set(member, ["Window"]);
         member.exposed = exposed_in(globals);
+        member.exposureSet = globals;
     }.bind(this));
 
     // Now run test() on every member, and test_object() for every object.
@@ -443,15 +470,27 @@ IdlArray.prototype.assert_type_is = function(value, type)
             // Nothing we can do.
             return;
         }
-        this.assert_type_is(value[0], type.idlType.idlType);
+        this.assert_type_is(value[0], type.idlType);
         return;
     }
 
     if (type.generic === "Promise") {
-        assert_own_property(value, "then", "Attribute with a Promise type has a then property");
+        assert_true("then" in value, "Attribute with a Promise type has a then property");
         // TODO: Ideally, we would check on project fulfillment
         // that we get the right type
         // but that would require making the type check async
+        return;
+    }
+
+    if (type.generic === "FrozenArray") {
+        assert_true(Array.isArray(value), "Value should be array");
+        assert_true(Object.isFrozen(value), "Value should be frozen");
+        if (!value.length)
+        {
+            // Nothing we can do.
+            return;
+        }
+        this.assert_type_is(value[0], type.idlType);
         return;
     }
 
@@ -650,7 +689,9 @@ function IdlDictionary(obj)
 IdlDictionary.prototype = Object.create(IdlObject.prototype);
 
 /// IdlInterface ///
-function IdlInterface(obj, is_callback) {
+function IdlInterface(obj, is_callback)
+//@{
+{
     /**
      * obj is an object produced by the WebIDLParser.js "interface" production.
      */
@@ -687,6 +728,7 @@ function IdlInterface(obj, is_callback) {
 
     this._is_callback = is_callback;
 }
+//@}
 IdlInterface.prototype = Object.create(IdlObject.prototype);
 IdlInterface.prototype.is_callback = function()
 //@{
@@ -783,8 +825,8 @@ IdlInterface.prototype.test_self = function()
 
         if (this.is_callback()) {
             // "The internal [[Prototype]] property of an interface object for
-            // a callback interface MUST be the Object.prototype object."
-            assert_equals(Object.getPrototypeOf(self[this.name]), Object.prototype,
+            // a callback interface must be the Function.prototype object."
+            assert_equals(Object.getPrototypeOf(self[this.name]), Function.prototype,
                           "prototype of self's property " + format_value(this.name) + " is not Object.prototype");
 
             return;
@@ -957,14 +999,13 @@ IdlInterface.prototype.test_self = function()
         // following steps:
         // "If A is declared with the [Global] or [PrimaryGlobal] extended
         // attribute, and A supports named properties, then return the named
-        // properties object for A, as defined in section 4.5.5 below.
+        // properties object for A, as defined in §3.6.4 Named properties
+        // object.
         // "Otherwise, if A is declared to inherit from another interface, then
         // return the interface prototype object for the inherited interface.
-        // "Otherwise, if A is declared with the [ArrayClass] extended
-        // attribute, then return %ArrayPrototype% ([ECMA-262], section
-        // 6.1.7.4).
-        // "Otherwise, return %ObjectPrototype% ([ECMA-262], section 6.1.7.4).
-        // ([ECMA-262], section 15.2.4).
+        // "Otherwise, if A is declared with the [LegacyArrayClass] extended
+        // attribute, then return %ArrayPrototype%.
+        // "Otherwise, return %ObjectPrototype%.
         if (this.name === "Window") {
             assert_class_string(Object.getPrototypeOf(self[this.name].prototype),
                                 'WindowProperties',
@@ -978,7 +1019,7 @@ IdlInterface.prototype.test_self = function()
                     !this.array
                          .members[inherit_interface]
                          .has_extended_attribute("NoInterfaceObject");
-            } else if (this.has_extended_attribute('ArrayClass')) {
+            } else if (this.has_extended_attribute('LegacyArrayClass')) {
                 inherit_interface = 'Array';
                 inherit_interface_has_interface_object = true;
             } else {
@@ -1117,10 +1158,12 @@ IdlInterface.prototype.test_member_const = function(member)
 //@}
 IdlInterface.prototype.test_member_attribute = function(member)
 //@{
-{
-    test(function()
+  {
+    var a_test = async_test(this.name + " interface: attribute " + member.name);
+    a_test.step(function()
     {
         if (this.is_callback() && !this.has_constants()) {
+            a_test.done()
             return;
         }
 
@@ -1133,6 +1176,7 @@ IdlInterface.prototype.test_member_attribute = function(member)
             assert_own_property(self[this.name], member.name,
                 "The interface object must have a property " +
                 format_value(member.name));
+            a_test.done();
         } else if (this.is_global()) {
             assert_own_property(self, member.name,
                 "The global object must have a property " +
@@ -1161,23 +1205,42 @@ IdlInterface.prototype.test_member_attribute = function(member)
                               "Gets on a global should not require an explicit this");
             }
 
-            this.do_interface_attribute_asserts(self, member);
+            // do_interface_attribute_asserts must be the last thing we do,
+            // since it will call done() on a_test.
+            this.do_interface_attribute_asserts(self, member, a_test);
         } else {
             assert_true(member.name in self[this.name].prototype,
                 "The prototype object must have a property " +
                 format_value(member.name));
 
             if (!member.has_extended_attribute("LenientThis")) {
-                assert_throws(new TypeError(), function() {
-                    self[this.name].prototype[member.name];
-                }.bind(this), "getting property on prototype object must throw TypeError");
+                if (member.idlType.generic !== "Promise") {
+                    assert_throws(new TypeError(), function() {
+                        self[this.name].prototype[member.name];
+                    }.bind(this), "getting property on prototype object must throw TypeError");
+                    // do_interface_attribute_asserts must be the last thing we
+                    // do, since it will call done() on a_test.
+                    this.do_interface_attribute_asserts(self[this.name].prototype, member, a_test);
+                } else {
+                    promise_rejects(a_test, new TypeError(),
+                                    self[this.name].prototype[member.name])
+                        .then(function() {
+                            // do_interface_attribute_asserts must be the last
+                            // thing we do, since it will call done() on a_test.
+                            this.do_interface_attribute_asserts(self[this.name].prototype,
+                                                                member, a_test);
+                        }.bind(this));
+                }
             } else {
                 assert_equals(self[this.name].prototype[member.name], undefined,
                               "getting property on prototype object must return undefined");
+              // do_interface_attribute_asserts must be the last thing we do,
+              // since it will call done() on a_test.
+              this.do_interface_attribute_asserts(self[this.name].prototype, member, a_test);
             }
-            this.do_interface_attribute_asserts(self[this.name].prototype, member);
+
         }
-    }.bind(this), this.name + " interface: attribute " + member.name);
+    }.bind(this));
 };
 
 //@}
@@ -1316,6 +1379,51 @@ IdlInterface.prototype.do_member_operation_asserts = function(memberHolderObject
 }
 
 //@}
+IdlInterface.prototype.add_iterable_members = function(member)
+//@{
+{
+    this.members.push(new IdlInterfaceMember(
+        { type: "operation", name: "entries", idlType: "iterator", arguments: []}));
+    this.members.push(new IdlInterfaceMember(
+        { type: "operation", name: "keys", idlType: "iterator", arguments: []}));
+    this.members.push(new IdlInterfaceMember(
+        { type: "operation", name: "values", idlType: "iterator", arguments: []}));
+    this.members.push(new IdlInterfaceMember(
+        { type: "operation", name: "forEach", idlType: "void",
+          arguments:
+          [{ name: "callback", idlType: {idlType: "function"}},
+           { name: "thisValue", idlType: {idlType: "any"}, optional: true}]}));
+};
+
+//@}
+IdlInterface.prototype.test_member_iterable = function(member)
+//@{
+{
+    var interfaceName = this.name;
+    var isPairIterator = member.idlType instanceof Array;
+    test(function()
+    {
+        var descriptor = Object.getOwnPropertyDescriptor(self[interfaceName].prototype, Symbol.iterator);
+        assert_true(descriptor.writable, "property is not writable");
+        assert_true(descriptor.configurable, "property is not configurable");
+        assert_false(descriptor.enumerable, "property is enumerable");
+        assert_equals(self[interfaceName].prototype[Symbol.iterator].name, isPairIterator ? "entries" : "values", "@@iterator function does not have the right name");
+    }, "Testing Symbol.iterator property of iterable interface " + interfaceName);
+
+    if (isPairIterator) {
+        test(function() {
+            assert_equals(self[interfaceName].prototype[Symbol.iterator], self[interfaceName].prototype["entries"], "entries method is not the same as @@iterator");
+        }, "Testing pair iterable interface " + interfaceName);
+    } else {
+        test(function() {
+            ["entries", "keys", "values", "forEach", Symbol.Iterator].forEach(function(property) {
+                assert_equals(self[interfaceName].prototype[property], Array.prototype[property], property + " function is not the same as Array one");
+            });
+        }, "Testing value iterable interface " + interfaceName);
+    }
+};
+
+//@}
 IdlInterface.prototype.test_member_stringifier = function(member)
 //@{
 {
@@ -1386,7 +1494,33 @@ IdlInterface.prototype.test_members = function()
     for (var i = 0; i < this.members.length; i++)
     {
         var member = this.members[i];
+        switch (member.type) {
+        case "iterable":
+            this.add_iterable_members(member);
+            break;
+        // TODO: add setlike and maplike handling.
+        default:
+            break;
+        }
+    }
+
+    for (var i = 0; i < this.members.length; i++)
+    {
+        var member = this.members[i];
         if (member.untested) {
+            continue;
+        }
+
+        if (!exposed_in(exposure_set(member, this.exposureSet))) {
+            test(function() {
+                // It's not exposed, so we shouldn't find it anywhere.
+                assert_false(member.name in self[this.name],
+                             "The interface object must not have a property " +
+                             format_value(member.name));
+                assert_false(member.name in self[this.name].prototype,
+                             "The prototype object must not have a property " +
+                             format_value(member.name));
+            }.bind(this), this.name + " interface: member " + member.name);
             continue;
         }
 
@@ -1422,6 +1556,9 @@ IdlInterface.prototype.test_members = function()
             }
             break;
 
+        case "iterable":
+            this.test_member_iterable(member);
+            break;
         default:
             // TODO: check more member types.
             break;
@@ -1520,14 +1657,21 @@ IdlInterface.prototype.test_interface_of = function(desc, obj, exception, expect
     for (var i = 0; i < this.members.length; i++)
     {
         var member = this.members[i];
+        if (!exposed_in(exposure_set(member, this.exposureSet))) {
+            test(function() {
+                assert_false(member.name in obj);
+            }.bind(this), this.name + "interface: " + desc + 'must not have property "' + member.name + '"');
+            continue;
+        }
         if (member.type == "attribute" && member.isUnforgeable)
         {
-            test(function()
-            {
+            var a_test = async_test(this.name + " interface: " + desc + ' must have own property "' + member.name + '"');
+            a_test.step(function() {
                 assert_equals(exception, null, "Unexpected exception when evaluating object");
                 assert_equals(typeof obj, expected_typeof, "wrong typeof object");
-                this.do_interface_attribute_asserts(obj, member);
-            }.bind(this), this.name + " interface: " + desc + ' must have own property "' + member.name + '"');
+                // Call do_interface_attribute_asserts last, since it will call a_test.done()
+                this.do_interface_attribute_asserts(obj, member, a_test);
+            }.bind(this));
         }
         else if (member.type == "operation" &&
                  member.name &&
@@ -1646,7 +1790,7 @@ IdlInterface.prototype.has_stringifier = function()
 };
 
 //@}
-IdlInterface.prototype.do_interface_attribute_asserts = function(obj, member)
+IdlInterface.prototype.do_interface_attribute_asserts = function(obj, member, a_test)
 //@{
 {
     // This function tests WebIDL as of 2015-01-27.
@@ -1655,6 +1799,8 @@ IdlInterface.prototype.do_interface_attribute_asserts = function(obj, member)
     // This is called by test_member_attribute() with the prototype as obj if
     // it is not a global, and the global otherwise, and by test_interface_of()
     // with the object as obj.
+
+    var pendingPromises = [];
 
     // "For each exposed attribute of the interface, whether it was declared on
     // the interface itself or one of its consequential interfaces, there MUST
@@ -1695,9 +1841,15 @@ IdlInterface.prototype.do_interface_attribute_asserts = function(obj, member)
         // attribute, then return undefined.
         // "Otherwise, throw a TypeError."
         if (!member.has_extended_attribute("LenientThis")) {
-            assert_throws(new TypeError(), function() {
-                desc.get.call({});
-            }.bind(this), "calling getter on wrong object type must throw TypeError");
+            if (member.idlType.generic !== "Promise") {
+                assert_throws(new TypeError(), function() {
+                    desc.get.call({});
+                }.bind(this), "calling getter on wrong object type must throw TypeError");
+            } else {
+                pendingPromises.push(
+                    promise_rejects(a_test, new TypeError(), desc.get.call({}),
+                                    "calling getter on wrong object type must reject the return promise with TypeError"));
+            }
         } else {
             assert_equals(desc.get.call({}), undefined,
                           "calling getter on wrong object type must return undefined");
@@ -1748,6 +1900,8 @@ IdlInterface.prototype.do_interface_attribute_asserts = function(obj, member)
         // value 1."
         assert_equals(desc.set.length, 1, "setter length must be 1");
     }
+
+    Promise.all(pendingPromises).then(a_test.done.bind(a_test));
 }
 //@}
 

@@ -54,9 +54,10 @@ class nsComboboxControlFrame final : public nsBlockFrame,
   typedef mozilla::gfx::DrawTarget DrawTarget;
 
 public:
-  friend nsContainerFrame* NS_NewComboboxControlFrame(nsIPresShell* aPresShell,
-                                                      nsStyleContext* aContext,
-                                                      nsFrameState aFlags);
+  NS_DECL_QUERYFRAME_TARGET(nsComboboxControlFrame)
+  friend nsComboboxControlFrame* NS_NewComboboxControlFrame(nsIPresShell* aPresShell,
+                                                            nsStyleContext* aContext,
+                                                            nsFrameState aFlags);
   friend class nsComboboxDisplayFrame;
 
   explicit nsComboboxControlFrame(nsStyleContext* aContext);
@@ -69,7 +70,9 @@ public:
   virtual nsresult CreateAnonymousContent(nsTArray<ContentInfo>& aElements) override;
   virtual void AppendAnonymousContentTo(nsTArray<nsIContent*>& aElements,
                                         uint32_t aFilter) override;
-  virtual nsIFrame* CreateFrameFor(nsIContent* aContent) override;
+
+  nsIContent* GetDisplayNode() { return mDisplayContent; }
+  nsIFrame* CreateFrameForDisplayNode();
 
 #ifdef ACCESSIBILITY
   virtual mozilla::a11y::AccType AccessibleType() override;

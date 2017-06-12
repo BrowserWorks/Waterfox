@@ -36,20 +36,20 @@ set_define('MOZ_JPROF', jprof)
 imply_option('--enable-profiling', jprof)
 
 @depends(target)
-def sps_profiler(target):
+def gecko_profiler(target):
     if target.os == 'Android':
         return target.cpu in ('arm', 'x86')
     elif target.kernel == 'Linux':
         return target.cpu in ('x86', 'x86_64')
     return target.os in ('OSX', 'WINNT')
 
-@depends(sps_profiler)
-def sps_profiler_define(value):
+@depends(gecko_profiler)
+def gecko_profiler_define(value):
     if value:
         return True
 
-set_config('MOZ_ENABLE_PROFILER_SPS', sps_profiler_define)
-set_define('MOZ_ENABLE_PROFILER_SPS', sps_profiler_define)
+set_config('MOZ_GECKO_PROFILER', gecko_profiler_define)
+set_define('MOZ_GECKO_PROFILER', gecko_profiler_define)
 
 
 option('--enable-dmd', env='MOZ_DMD',
@@ -670,9 +670,11 @@ set_config('MOZ_LIBCLANG_PATH', delayed_getattr(stylo, 'libclang_path'))
 set_config('MOZ_CLANG_PATH', delayed_getattr(stylo, 'clang_path'))
 set_config('MOZ_STYLO_BINDGEN', delayed_getattr(stylo, 'bindgen_enabled'))
 
-@depends(stylo, dmd)
-def jemalloc(stylo, dmd):
-    if stylo:
+@depends(stylo, target, dmd)
+def jemalloc(stylo, target, dmd):
+    if stylo and target.kernel in ('Darwin', 'Linux', 'WINNT'):
+        # Avoid a moving performance target if the default allocator
+        # is changed on Tier1 platforms (see bug 1291356).
         return 'moz'
     elif dmd:
         return True
@@ -690,20 +692,13 @@ def servo_target_dir(value):
 
 set_config('SERVO_TARGET_DIR', servo_target_dir)
 
-# Gecko integrated IPC fuzzer
-# ==============================================================
-option('--enable-ipc-fuzzer', env='MOZ_FAULTY',
-       help='Enable IPC fuzzer')
+# WebRender integration
+option('--enable-webrender', help='Include WebRender')
 
-@depends('--enable-ipc-fuzzer', target)
-def ipc_fuzzer(value, target):
-    if value:
-        if target.os == 'WINNT':
-            die('--enable-ipc-fuzzer is not supported on this platform.')
-        return bool(value)
-
-set_config('MOZ_FAULTY', ipc_fuzzer)
-set_define('MOZ_FAULTY', ipc_fuzzer)
+set_config('MOZ_ENABLE_WEBRENDER',
+           depends_if('--enable-webrender')(lambda _: True))
+set_define('MOZ_ENABLE_WEBRENDER',
+           depends_if('--enable-webrender')(lambda _: True))
 
 # Printing
 # ==============================================================
@@ -960,30 +955,6 @@ def skia_includes(skia, skia_gpu):
     return includes
 
 set_config('SKIA_INCLUDES', skia_includes)
-
-# Support various fuzzing options
-# ==============================================================
-with only_when('--enable-compile-environment'):
-    option('--enable-fuzzing', help='Enable fuzzing support')
-
-    @depends('--enable-fuzzing')
-    def enable_fuzzing(value):
-        if value:
-            return True
-
-    @depends(enable_fuzzing,
-             try_compile(body='__AFL_COMPILER;',
-                         check_msg='for AFL compiler',
-                         when='--enable-fuzzing'))
-    def enable_libfuzzer(fuzzing, afl):
-        if fuzzing and not afl:
-            return True
-
-    set_config('FUZZING', enable_fuzzing)
-    set_define('FUZZING', enable_fuzzing)
-
-    set_config('LIBFUZZER', enable_libfuzzer)
-    set_define('LIBFUZZER', enable_libfuzzer)
 
 # Mortar
 # ==============================================================

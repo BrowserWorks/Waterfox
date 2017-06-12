@@ -26,16 +26,12 @@ class nsIThread;
 
 #ifdef MOZ_CRASHREPORTER
 #include "nsExceptionHandler.h"
-
-namespace mozilla {
-namespace dom {
-class PCrashReporterParent;
-class CrashReporterParent;
-}
-}
 #endif
 
 namespace mozilla {
+namespace ipc {
+class CrashReporterHost;
+} // namespace ipc
 namespace gmp {
 
 class GMPCapability
@@ -144,12 +140,14 @@ public:
   // Called when the child process has died.
   void ChildTerminated();
 
+  bool OpenPGMPContent();
+
   void GetGMPContentParent(UniquePtr<MozPromiseHolder<GetGMPContentParentPromise>>&& aPromiseHolder);
   already_AddRefed<GMPContentParent> ForgetGMPContentParent();
 
   bool EnsureProcessLoaded(base::ProcessId* aID);
 
-  bool Bridge(GMPServiceParent* aGMPServiceParent);
+  void IncrementGMPContentChildCount();
 
   const nsTArray<GMPCapability>& GetCapabilities() const { return mCapabilities; }
 
@@ -163,20 +161,16 @@ private:
   RefPtr<GenericPromise> ParseChromiumManifest(const nsAString& aJSON); // Main thread.
   RefPtr<GenericPromise> ReadChromiumManifestFile(nsIFile* aFile); // GMP thread.
 #ifdef MOZ_CRASHREPORTER
-  void WriteExtraDataForMinidump(CrashReporter::AnnotationTable& notes);
-  void GetCrashID(nsString& aResult);
+  void WriteExtraDataForMinidump();
+  bool GetCrashID(nsString& aResult);
 #endif
   void ActorDestroy(ActorDestroyReason aWhy) override;
 
-  PCrashReporterParent* AllocPCrashReporterParent(const NativeThreadId& aThread) override;
-  bool DeallocPCrashReporterParent(PCrashReporterParent* aCrashReporter) override;
+  mozilla::ipc::IPCResult RecvInitCrashReporter(Shmem&& shmem, const NativeThreadId& aThreadId) override;
 
   mozilla::ipc::IPCResult RecvPGMPStorageConstructor(PGMPStorageParent* actor) override;
   PGMPStorageParent* AllocPGMPStorageParent() override;
   bool DeallocPGMPStorageParent(PGMPStorageParent* aActor) override;
-
-  PGMPContentParent* AllocPGMPContentParent(Transport* aTransport,
-                                            ProcessId aOtherPid) override;
 
   mozilla::ipc::IPCResult RecvPGMPTimerConstructor(PGMPTimerParent* actor) override;
   PGMPTimerParent* AllocPGMPTimerParent() override;
@@ -230,6 +224,10 @@ private:
   // its reference to us, we stay alive long enough for the child process
   // to terminate gracefully.
   bool mHoldingSelfRef;
+
+#ifdef MOZ_CRASHREPORTER
+  UniquePtr<ipc::CrashReporterHost> mCrashReporter;
+#endif
 };
 
 } // namespace gmp

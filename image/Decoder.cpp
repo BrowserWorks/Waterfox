@@ -64,6 +64,7 @@ Decoder::Decoder(RasterImage* aImage)
   , mDecodeDone(false)
   , mError(false)
   , mShouldReportError(false)
+  , mFinalizeFrames(true)
 { }
 
 Decoder::~Decoder()
@@ -77,7 +78,7 @@ Decoder::~Decoder()
   if (mImage && !NS_IsMainThread()) {
     // Dispatch mImage to main thread to prevent it from being destructed by the
     // decode thread.
-    NS_ReleaseOnMainThread(mImage.forget());
+    NS_ReleaseOnMainThreadSystemGroup(mImage.forget());
   }
 }
 
@@ -334,7 +335,8 @@ Decoder::AllocateFrameInternal(uint32_t aFrameNum,
   NotNull<RefPtr<imgFrame>> frame = WrapNotNull(new imgFrame());
   bool nonPremult = bool(mSurfaceFlags & SurfaceFlags::NO_PREMULTIPLY_ALPHA);
   if (NS_FAILED(frame->InitForDecoder(aOutputSize, aFrameRect, aFormat,
-                                      aPaletteDepth, nonPremult))) {
+                                      aPaletteDepth, nonPremult,
+                                      aFrameNum > 0))) {
     NS_WARNING("imgFrame::Init should succeed");
     return RawAccessFrameRef();
   }
@@ -380,7 +382,12 @@ Decoder::AllocateFrameInternal(uint32_t aFrameNum,
 nsresult Decoder::InitInternal() { return NS_OK; }
 nsresult Decoder::BeforeFinishInternal() { return NS_OK; }
 nsresult Decoder::FinishInternal() { return NS_OK; }
-nsresult Decoder::FinishWithErrorInternal() { return NS_OK; }
+
+nsresult Decoder::FinishWithErrorInternal()
+{
+  MOZ_ASSERT(!mInFrame);
+  return NS_OK;
+}
 
 /*
  * Progress Notifications
@@ -450,7 +457,7 @@ Decoder::PostFrameStop(Opacity aFrameOpacity
   mFinishedNewFrame = true;
 
   mCurrentFrame->Finish(aFrameOpacity, aDisposalMethod, aTimeout,
-                        aBlendMethod, aBlendRect);
+                        aBlendMethod, aBlendRect, mFinalizeFrames);
 
   mProgress |= FLAG_FRAME_COMPLETE;
 

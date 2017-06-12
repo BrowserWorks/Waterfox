@@ -19,6 +19,7 @@
 
 #include "jsprf.h"
 
+#include "jit/CacheIRSpewer.h"
 #include "jit/Ion.h"
 #include "jit/MIR.h"
 #include "jit/MIRGenerator.h"
@@ -29,13 +30,15 @@
 #include "vm/HelperThreads.h"
 #include "vm/MutexIDs.h"
 
+#include "jscompartmentinlines.h"
+
 #ifndef JIT_SPEW_DIR
 # if defined(_WIN32)
-#  define JIT_SPEW_DIR ""
+#  define JIT_SPEW_DIR "."
 # elif defined(__ANDROID__)
-#  define JIT_SPEW_DIR "/data/local/tmp/"
+#  define JIT_SPEW_DIR "/data/local/tmp"
 # else
-#  define JIT_SPEW_DIR "/tmp/"
+#  define JIT_SPEW_DIR "/tmp"
 # endif
 #endif
 
@@ -210,7 +213,7 @@ IonSpewer::beginFunction()
 {
     // If we are doing a synchronous logging then we spew everything as we go,
     // as this is useful in case of failure during the compilation. On the other
-    // hand, it is recommended to disabled off main thread compilation.
+    // hand, it is recommended to disable off thread compilation.
     if (!getAsyncLogging() && !firstFunction_) {
         LockGuard<Mutex> guard(outputLock_);
         jsonOutput_.put(","); // separate functions
@@ -439,8 +442,8 @@ jit::CheckLogging()
             "  logs          C1 and JSON visualization logging\n"
             "  logs-sync     Same as logs, but flushes between each pass (sync. compiled functions only).\n"
             "  profiling     Profiling-related information\n"
-            "  trackopts     Optimization tracking information gathered by SPS. "
-                            "(Note: call enableSPSProfiling() in your script to enable it).\n"
+            "  trackopts     Optimization tracking information gathered by the Gecko profiler. "
+                            "(Note: call enableGeckoProfiling() in your script to enable it).\n"
             "  trackopts-ext Encoding information about optimization tracking"
             "  dump-mir-expr Dump the MIR expressions\n"
             "  cfg           Control flow graph generation\n"
@@ -516,8 +519,10 @@ jit::CheckLogging()
         EnableIonDebugSyncLogging();
     if (ContainsFlag(env, "profiling"))
         EnableChannel(JitSpew_Profiling);
-    if (ContainsFlag(env, "trackopts"))
+    if (ContainsFlag(env, "trackopts")) {
+        JitOptions.disableOptimizationTracking = false;
         EnableChannel(JitSpew_OptimizationTracking);
+    }
     if (ContainsFlag(env, "trackopts-ext"))
         EnableChannel(JitSpew_OptimizationTrackingExtended);
     if (ContainsFlag(env, "dump-mir-expr"))
@@ -553,6 +558,9 @@ jit::CheckLogging()
         EnableChannel(JitSpew_BaselineBailouts);
         EnableChannel(JitSpew_BaselineDebugModeOSR);
     }
+
+    if (ContainsFlag(env, "cacheir-logs"))
+        GetCacheIRSpewerSingleton().init();
 
     JitSpewPrinter().init(stderr);
 }

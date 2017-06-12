@@ -25,6 +25,7 @@
 #ifdef XP_WIN
 #include <process.h>
 #include "mozilla/ipc/WindowsMessageLoop.h"
+#include "mozilla/TlsAllocationTracker.h"
 #endif
 
 #include "nsAppDirectoryServiceDefs.h"
@@ -70,7 +71,6 @@
 #include "mozilla/WindowsDllBlocklist.h"
 
 #include "GMPProcessChild.h"
-#include "GMPLoader.h"
 #include "mozilla/gfx/GPUProcessImpl.h"
 
 #include "GeckoProfiler.h"
@@ -89,6 +89,16 @@
 #if defined(XP_LINUX) && defined(MOZ_GMP_SANDBOX)
 #include "mozilla/Sandbox.h"
 #include "mozilla/SandboxInfo.h"
+#endif
+
+#if defined(XP_LINUX)
+#include <sys/prctl.h>
+#ifndef PR_SET_PTRACER
+#define PR_SET_PTRACER 0x59616d61
+#endif
+#ifndef PR_SET_PTRACER_ANY
+#define PR_SET_PTRACER_ANY ((unsigned long)-1)
+#endif
 #endif
 
 #ifdef MOZ_IPDL_TESTS
@@ -115,8 +125,6 @@ using mozilla::dom::ContentProcess;
 using mozilla::dom::ContentParent;
 using mozilla::dom::ContentChild;
 
-using mozilla::gmp::GMPLoader;
-using mozilla::gmp::CreateGMPLoader;
 using mozilla::gmp::GMPProcessChild;
 
 using mozilla::ipc::TestShellParent;
@@ -328,32 +336,6 @@ AddContentSandboxLevelAnnotation()
 #endif /* MOZ_CONTENT_SANDBOX && !MOZ_WIDGET_GONK */
 #endif /* MOZ_CRASHREPORTER */
 
-#if defined (XP_LINUX) && defined(MOZ_GMP_SANDBOX)
-namespace {
-class LinuxSandboxStarter : public mozilla::gmp::SandboxStarter {
-private:
-  LinuxSandboxStarter() { }
-  friend mozilla::detail::UniqueSelector<LinuxSandboxStarter>::SingleObject mozilla::MakeUnique<LinuxSandboxStarter>();
-
-public:
-  static UniquePtr<SandboxStarter> Make() {
-    if (mozilla::SandboxInfo::Get().CanSandboxMedia()) {
-      return MakeUnique<LinuxSandboxStarter>();
-    } else {
-      // Sandboxing isn't possible, but the parent has already
-      // checked that this plugin doesn't require it.  (Bug 1074561)
-      return nullptr;
-    }
-    return nullptr;
-  }
-  virtual bool Start(const char *aLibPath) override {
-    mozilla::SetMediaPluginSandbox(aLibPath);
-    return true;
-  }
-};
-} // anonymous namespace
-#endif // XP_LINUX && MOZ_GMP_SANDBOX
-
 nsresult
 XRE_InitChildProcess(int aArgc,
                      char* aArgv[],
@@ -374,27 +356,15 @@ XRE_InitChildProcess(int aArgc,
   setupProfilingStuff();
 #endif
 
-#ifdef XP_LINUX
-  // On Fennec, the GMPLoader's code resides inside XUL (because for the time
-  // being GMPLoader relies upon NSPR, which we can't use in plugin-container
-  // on Android), so we create it here inside XUL and pass it to the GMP code.
-  //
-  // On desktop Linux, the sandbox code lives in a shared library, and
-  // the GMPLoader is in libxul instead of executables to avoid unwanted
-  // library dependencies.
-  UniquePtr<mozilla::gmp::SandboxStarter> starter;
-#ifdef MOZ_GMP_SANDBOX
-  starter = LinuxSandboxStarter::Make();
-#endif
-  UniquePtr<GMPLoader> loader = CreateGMPLoader(Move(starter));
-  GMPProcessChild::SetGMPLoader(loader.get());
-#else
-  // On non-Linux platforms, the GMPLoader code resides in plugin-container,
-  // and we must forward it through to the GMP code here.
-  GMPProcessChild::SetGMPLoader(aChildData->gmpLoader.get());
+#if defined(XP_WIN)
+#ifndef DEBUG
+  // XXX Bug 1320134: added for diagnosing the crashes because we're running out
+  // of TLS indices on Windows. Remove after the root cause is found.
+  if (XRE_GetProcessType() == GeckoProcessType_Content) {
+    mozilla::InitTlsAllocationTracker();
+  }
 #endif
 
-#if defined(XP_WIN)
   // From the --attach-console support in nsNativeAppSupportWin.cpp, but
   // here we are a content child process, so we always attempt to attach
   // to the parent's (ie, the browser's) console.
@@ -518,18 +488,18 @@ XRE_InitChildProcess(int aArgc,
 
 #endif
 
-  SetupErrorHandling(aArgv[0]);  
+  SetupErrorHandling(aArgv[0]);
 
 #if defined(MOZ_CRASHREPORTER)
   if (aArgc < 1)
     return NS_ERROR_FAILURE;
   const char* const crashReporterArg = aArgv[--aArgc];
-  
+
 #  if defined(XP_WIN) || defined(XP_MACOSX)
   // on windows and mac, |crashReporterArg| is the named pipe on which the
   // server is listening for requests, or "-" if crash reporting is
   // disabled.
-  if (0 != strcmp("-", crashReporterArg) && 
+  if (0 != strcmp("-", crashReporterArg) &&
       !XRE_SetRemoteExceptionHandler(crashReporterArg)) {
     // Bug 684322 will add better visibility into this condition
     NS_WARNING("Could not setup crash reporting\n");
@@ -537,14 +507,14 @@ XRE_InitChildProcess(int aArgc,
 #  elif defined(OS_LINUX)
   // on POSIX, |crashReporterArg| is "true" if crash reporting is
   // enabled, false otherwise
-  if (0 != strcmp("false", crashReporterArg) && 
+  if (0 != strcmp("false", crashReporterArg) &&
       !XRE_SetRemoteExceptionHandler(nullptr)) {
     // Bug 684322 will add better visibility into this condition
     NS_WARNING("Could not setup crash reporting\n");
   }
 #  else
 #    error "OOP crash reporting unsupported on this platform"
-#  endif   
+#  endif
 #endif // if defined(MOZ_CRASHREPORTER)
 
   gArgv = aArgv;
@@ -564,6 +534,11 @@ XRE_InitChildProcess(int aArgc,
 #ifdef OS_POSIX
   if (PR_GetEnv("MOZ_DEBUG_CHILD_PROCESS") ||
       PR_GetEnv("MOZ_DEBUG_CHILD_PAUSE")) {
+#if defined(XP_LINUX) && defined(DEBUG)
+    if (prctl(PR_SET_PTRACER, PR_SET_PTRACER_ANY, 0, 0, 0) != 0) {
+      printf_stderr("Could not allow ptrace from any process.\n");
+    }
+#endif
     printf_stderr("\n\nCHILDCHILDCHILDCHILD\n  debug me @ %d\n\n",
                   base::GetCurrentProcId());
     sleep(30);
@@ -659,52 +634,14 @@ XRE_InitChildProcess(int aArgc,
         process = new PluginProcessChild(parentPID);
         break;
 
-      case GeckoProcessType_Content: {
-          process = new ContentProcess(parentPID);
-          // If passed in grab the application path for xpcom init
-          bool foundAppdir = false;
-
-#if defined(XP_MACOSX) && defined(MOZ_CONTENT_SANDBOX)
-          // If passed in grab the profile path for sandboxing
-          bool foundProfile = false;
-#endif
-
-          for (int idx = aArgc; idx > 0; idx--) {
-            if (aArgv[idx] && !strcmp(aArgv[idx], "-appdir")) {
-              MOZ_ASSERT(!foundAppdir);
-              if (foundAppdir) {
-                  continue;
-              }
-              nsCString appDir;
-              appDir.Assign(nsDependentCString(aArgv[idx+1]));
-              static_cast<ContentProcess*>(process.get())->SetAppDir(appDir);
-              foundAppdir = true;
-            }
-
-            if (aArgv[idx] && !strcmp(aArgv[idx], "-safeMode")) {
-              gSafeMode = true;
-            }
-
-#if defined(XP_MACOSX) && defined(MOZ_CONTENT_SANDBOX)
-            if (aArgv[idx] && !strcmp(aArgv[idx], "-profile")) {
-              MOZ_ASSERT(!foundProfile);
-              if (foundProfile) {
-                continue;
-              }
-              nsCString profile;
-              profile.Assign(nsDependentCString(aArgv[idx+1]));
-              static_cast<ContentProcess*>(process.get())->SetProfile(profile);
-              foundProfile = true;
-            }
-#endif /* XP_MACOSX && MOZ_CONTENT_SANDBOX */
-          }
-        }
+      case GeckoProcessType_Content:
+        process = new ContentProcess(parentPID);
         break;
 
       case GeckoProcessType_IPDLUnitTest:
 #ifdef MOZ_IPDL_TESTS
         process = new IPDLUnitTestProcessChild(parentPID);
-#else 
+#else
         MOZ_CRASH("rebuild with --enable-ipdl-tests");
 #endif
         break;
@@ -721,7 +658,7 @@ XRE_InitChildProcess(int aArgc,
         MOZ_CRASH("Unknown main thread class");
       }
 
-      if (!process->Init()) {
+      if (!process->Init(aArgc, aArgv)) {
         return NS_ERROR_FAILURE;
       }
 
@@ -767,6 +704,14 @@ XRE_InitChildProcess(int aArgc,
     }
   }
 
+#if defined(XP_WIN) && !defined(DEBUG)
+  // XXX Bug 1320134: added for diagnosing the crashes because we're running out
+  // of TLS indices on Windows. Remove after the root cause is found.
+  if (XRE_GetProcessType() == GeckoProcessType_Content) {
+    mozilla::ShutdownTlsAllocationTracker();
+  }
+#endif
+
   Telemetry::DestroyStatisticsRecorder();
   return XRE_DeinitCommandLine();
 }
@@ -791,7 +736,7 @@ public:
                        void* aData)
   : mFunction(aFunction),
     mData(aData)
-  { 
+  {
     NS_ASSERTION(aFunction, "Don't give me a null pointer!");
   }
 
@@ -888,7 +833,7 @@ XRE_RunAppShell()
       // Cocoa nsAppShell impl, however, implements its own Run()
       // that's unaware of MessagePump.  That's all rather suboptimal,
       // but oddly enough not a problem... usually.
-      // 
+      //
       // The problem with this setup comes during startup.
       // XPCOM-in-subprocesses depends on IPC, e.g. to init the pref
       // service, so we have to init IPC first.  But, IPC also
@@ -904,7 +849,7 @@ XRE_RunAppShell()
       // run], because it's not aware that MessagePump has work that
       // needs to be processed; that was supposed to be signaled by
       // nsIRunnable(s).
-      // 
+      //
       // So instead of hacking Cocoa nsAppShell or rewriting the
       // event-loop system, we compromise here by processing any tasks
       // that might have been enqueued on MessagePump, *before*

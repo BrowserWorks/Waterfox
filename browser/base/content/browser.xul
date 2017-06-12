@@ -13,7 +13,6 @@
 <?xml-stylesheet href="chrome://browser/skin/controlcenter/panel.css" type="text/css"?>
 <?xml-stylesheet href="chrome://browser/skin/customizableui/panelUI.css" type="text/css"?>
 <?xml-stylesheet href="chrome://browser/skin/" type="text/css"?>
-<?xml-stylesheet href="chrome://browser/skin/browser-lightweightTheme.css" type="text/css"?>
 
 <?xul-overlay href="chrome://global/content/editMenuOverlay.xul"?>
 <?xul-overlay href="chrome://browser/content/baseMenuOverlay.xul"?>
@@ -53,7 +52,6 @@
 #endif
         titlemenuseparator="&mainWindow.titlemodifiermenuseparator;"
         lightweightthemes="true"
-        lightweightthemesfooter="browser-bottombox"
         windowtype="navigator:browser"
         macanimationtype="document"
         screenX="4" screenY="4"
@@ -149,7 +147,8 @@
            noautofocus="true"
            hidden="true"
            overflowpadding="4"
-           norolluponanchor="true" />
+           norolluponanchor="true"
+           nomaxresults="true" />
 
     <!-- for search with one-off buttons -->
     <panel type="autocomplete" id="PopupSearchAutoComplete" noautofocus="true" hidden="true"/>
@@ -169,7 +168,8 @@
            orient="vertical"
            noautofocus="true"
            consumeoutsideclicks="false"
-           level="parent">
+           level="parent"
+           tabspecific="true">
       <iframe id="dateTimePopupFrame"/>
     </panel>
 
@@ -669,6 +669,7 @@
                        consumeanchor="identity-box"
                        onclick="PageProxyClickHandler(event);"/>
                 <image id="sharing-icon" mousethrough="always"/>
+                <image id="tracking-protection-icon"/>
                 <box id="blocked-permissions-container" align="center">
                   <image data-permission-id="geo" class="blocked-permission-icon geo-icon" role="button"
                          tooltiptext="&urlbar.geolocationBlocked.tooltip;"/>
@@ -717,7 +718,6 @@
                   <image id="eme-notification-icon" class="notification-anchor-icon drm-icon" role="button"
                          tooltiptext="&urlbar.emeNotificationAnchor.tooltip;"/>
                 </box>
-                <image id="tracking-protection-icon"/>
                 <image id="connection-icon"/>
                 <hbox id="identity-icon-labels">
                   <label id="identity-icon-label" class="plain" flex="1"/>
@@ -846,6 +846,19 @@
                                            new PlacesMenu(event, 'place:folder=UNFILED_BOOKMARKS',
                                                           PlacesUIUtils.getViewForNode(this.parentNode.parentNode).options);"/>
             </menu>
+            <menu id="BMB_mobileBookmarks"
+                  class="menu-iconic bookmark-item subviewbutton"
+                  label="&bookmarksMenuButton.mobile.label;"
+                  hidden="true"
+                  container="true">
+              <menupopup id="BMB_mobileBookmarksPopup"
+                         placespopup="true"
+                         context="placesContext"
+                         onpopupshowing="if (!this.parentNode._placesView)
+                                           new PlacesMenu(event, 'place:folder=MOBILE_BOOKMARKS',
+                                                          PlacesUIUtils.getViewForNode(this.parentNode.parentNode).options);"/>
+            </menu>
+
             <menuseparator/>
             <!-- Bookmarks menu items will go here -->
             <menuitem id="BMB_bookmarksShowAll"

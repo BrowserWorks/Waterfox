@@ -37,7 +37,6 @@
 #include "nsIDOMClientRect.h"
 #include "mozilla/ClearOnShutdown.h"
 #include "nsPrintfCString.h"
-#include "NativeJSContainer.h"
 #include "nsContentUtils.h"
 #include "nsIScriptError.h"
 #include "nsIHttpChannel.h"
@@ -665,15 +664,6 @@ AndroidBridge::GetCurrentBatteryInformation(hal::BatteryInformation* aBatteryInf
 }
 
 void
-AndroidBridge::HandleGeckoMessage(JSContext* cx, JS::HandleObject object)
-{
-    ALOG_BRIDGE("%s", __PRETTY_FUNCTION__);
-
-    auto message = widget::CreateNativeJSContainer(cx, object);
-    GeckoAppShell::HandleGeckoMessage(message);
-}
-
-void
 AndroidBridge::GetCurrentNetworkInformation(hal::NetworkInformation* aNetworkInfo)
 {
     ALOG_BRIDGE("AndroidBridge::GetCurrentNetworkInformation");
@@ -739,7 +729,8 @@ NS_IMPL_ISUPPORTS(nsAndroidBridge,
                   nsIAndroidBridge,
                   nsIObserver)
 
-nsAndroidBridge::nsAndroidBridge()
+nsAndroidBridge::nsAndroidBridge() :
+    mAudibleWindowsNum(0)
 {
   if (jni::IsAvailable()) {
     RefPtr<widget::EventDispatcher> dispatcher = new widget::EventDispatcher();
@@ -758,34 +749,41 @@ nsAndroidBridge::~nsAndroidBridge()
 NS_IMETHODIMP nsAndroidBridge::HandleGeckoMessage(JS::HandleValue val,
                                                   JSContext *cx)
 {
-    if (val.isObject()) {
-        JS::RootedObject object(cx, &val.toObject());
-        AndroidBridge::Bridge()->HandleGeckoMessage(cx, object);
-        return NS_OK;
-    }
-
-    // Now handle legacy JSON messages.
-    if (!val.isString()) {
-        return NS_ERROR_INVALID_ARG;
-    }
-    JS::RootedString jsonStr(cx, val.toString());
-
-    JS::RootedValue jsonVal(cx);
-    if (!JS_ParseJSON(cx, jsonStr, &jsonVal) || !jsonVal.isObject()) {
-        return NS_ERROR_INVALID_ARG;
-    }
-
     // Spit out a warning before sending the message.
     nsContentUtils::ReportToConsoleNonLocalized(
-        NS_LITERAL_STRING("Use of JSON is deprecated. "
-            "Please pass Javascript objects directly to handleGeckoMessage."),
+        NS_LITERAL_STRING("Use of handleGeckoMessage is deprecated. "
+                          "Please use EventDispatcher from Messaging.jsm."),
         nsIScriptError::warningFlag,
         NS_LITERAL_CSTRING("nsIAndroidBridge"),
         nullptr);
 
-    JS::RootedObject object(cx, &jsonVal.toObject());
-    AndroidBridge::Bridge()->HandleGeckoMessage(cx, object);
-    return NS_OK;
+    JS::RootedValue jsonVal(cx);
+
+    if (val.isObject()) {
+        jsonVal = val;
+
+    } else {
+        // Handle legacy JSON messages.
+        if (!val.isString()) {
+            return NS_ERROR_INVALID_ARG;
+        }
+        JS::RootedString jsonStr(cx, val.toString());
+
+        if (!JS_ParseJSON(cx, jsonStr, &jsonVal) || !jsonVal.isObject()) {
+            JS_ClearPendingException(cx);
+            return NS_ERROR_INVALID_ARG;
+        }
+    }
+
+    JS::RootedObject jsonObj(cx, &jsonVal.toObject());
+    JS::RootedValue typeVal(cx);
+
+    if (!JS_GetProperty(cx, jsonObj, "type", &typeVal)) {
+        JS_ClearPendingException(cx);
+        return NS_ERROR_INVALID_ARG;
+    }
+
+    return Dispatch(typeVal, jsonVal, /* callback */ nullptr, cx);
 }
 
 NS_IMETHODIMP nsAndroidBridge::ContentDocumentChanged(mozIDOMWindowProxy* aWindow)
@@ -807,45 +805,28 @@ nsAndroidBridge::Observe(nsISupports* aSubject, const char* aTopic,
 {
   if (!strcmp(aTopic, "xpcom-shutdown")) {
     RemoveObservers();
-  } else if (!strcmp(aTopic, "media-playback")) {
-    ALOG_BRIDGE("nsAndroidBridge::Observe, get media-playback event.");
-
-    nsCOMPtr<nsISupportsPRUint64> wrapper = do_QueryInterface(aSubject);
-    if (!wrapper) {
-      return NS_OK;
-    }
-
-    uint64_t windowId = 0;
-    nsresult rv = wrapper->GetData(&windowId);
-    if (NS_WARN_IF(NS_FAILED(rv))) {
-      return rv;
-    }
+  } else if (!strcmp(aTopic, "audio-playback")) {
+    ALOG_BRIDGE("nsAndroidBridge::Observe, get audio-playback event.");
 
     nsAutoString activeStr(aData);
     bool isPlaying = activeStr.EqualsLiteral("active");
-    UpdateAudioPlayingWindows(windowId, isPlaying);
+    UpdateAudioPlayingWindows(isPlaying);
   }
   return NS_OK;
 }
 
 void
-nsAndroidBridge::UpdateAudioPlayingWindows(uint64_t aWindowId,
-                                           bool aPlaying)
+nsAndroidBridge::UpdateAudioPlayingWindows(bool aPlaying)
 {
   // Request audio focus for the first audio playing window and abandon focus
   // for the last audio playing window.
-  if (aPlaying && !mAudioPlayingWindows.Contains(aWindowId)) {
-    mAudioPlayingWindows.AppendElement(aWindowId);
-    if (mAudioPlayingWindows.Length() == 1) {
-      ALOG_BRIDGE("nsAndroidBridge, request audio focus.");
-      AudioFocusAgent::NotifyStartedPlaying();
-    }
-  } else if (!aPlaying && mAudioPlayingWindows.Contains(aWindowId)) {
-    mAudioPlayingWindows.RemoveElement(aWindowId);
-    if (mAudioPlayingWindows.Length() == 0) {
-      ALOG_BRIDGE("nsAndroidBridge, abandon audio focus.");
-      AudioFocusAgent::NotifyStoppedPlaying();
-    }
+  MOZ_ASSERT(mAudibleWindowsNum >= 0);
+  if (aPlaying && mAudibleWindowsNum++ == 0) {
+    ALOG_BRIDGE("nsAndroidBridge, request audio focus.");
+    AudioFocusAgent::NotifyStartedPlaying();
+  } else if (!aPlaying && --mAudibleWindowsNum == 0) {
+    ALOG_BRIDGE("nsAndroidBridge, abandon audio focus.");
+    AudioFocusAgent::NotifyStoppedPlaying();
   }
 }
 
@@ -856,7 +837,7 @@ nsAndroidBridge::AddObservers()
   if (obs) {
     obs->AddObserver(this, "xpcom-shutdown", false);
     if (jni::IsFennec()) { // No AudioFocusAgent in non-Fennec environment.
-        obs->AddObserver(this, "media-playback", false);
+        obs->AddObserver(this, "audio-playback", false);
     }
   }
 }
@@ -868,7 +849,7 @@ nsAndroidBridge::RemoveObservers()
   if (obs) {
     obs->RemoveObserver(this, "xpcom-shutdown");
     if (jni::IsFennec()) { // No AudioFocusAgent in non-Fennec environment.
-        obs->RemoveObserver(this, "media-playback");
+        obs->RemoveObserver(this, "audio-playback");
     }
   }
 }

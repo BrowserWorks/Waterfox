@@ -33,11 +33,22 @@ add_task(function* () {
     yield targetFromURL(new URL("http://foo?type=x"));
     ok(false, "Shouldn't pass");
   } catch (e) {
-    is(e.message, "targetFromURL, unsupported type='x' parameter");
+    is(e.message, "targetFromURL, unsupported type 'x' parameter");
   }
 
+  info("Test browser window");
+  let windowId = window.QueryInterface(Ci.nsIInterfaceRequestor)
+                       .getInterface(Ci.nsIDOMWindowUtils)
+                       .outerWindowID;
+  target = yield targetFromURL(new URL("http://foo?type=window&id=" + windowId));
+  is(target.url, window.location.href);
+  is(target.isLocalTab, false);
+  is(target.chrome, true);
+  is(target.isTabActor, true);
+  is(target.isRemote, true);
+
   info("Test tab");
-  let windowId = browser.outerWindowID;
+  windowId = browser.outerWindowID;
   target = yield targetFromURL(new URL("http://foo?type=tab&id=" + windowId));
   assertIsTabTarget(target, TEST_URI);
 
@@ -50,7 +61,7 @@ add_task(function* () {
     yield targetFromURL(new URL("http://foo?type=tab&id=10000"));
     ok(false, "Shouldn't pass");
   } catch (e) {
-    is(e.message, "targetFromURL, tab with outerWindowID:'10000' doesn't exist");
+    is(e.message, "targetFromURL, tab with outerWindowID '10000' doesn't exist");
   }
 
   info("Test parent process");

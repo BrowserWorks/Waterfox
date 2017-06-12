@@ -49,9 +49,7 @@ function promiseWindow(url) {
   return new Promise(resolve => {
     Services.obs.addObserver(function obs(win) {
       win.QueryInterface(Ci.nsIDOMWindow);
-      win.addEventListener("load", function loadHandler() {
-        win.removeEventListener("load", loadHandler);
-
+      win.addEventListener("load", function() {
         if (win.location.href !== url) {
           info("ignoring a window with this url: " + win.location.href);
           return;
@@ -59,7 +57,7 @@ function promiseWindow(url) {
 
         Services.obs.removeObserver(obs, "domwindowopened");
         resolve(win);
-      });
+      }, {once: true});
     }, "domwindowopened", false);
   });
 }
@@ -169,10 +167,9 @@ function promisePopupEvent(popup, eventSuffix) {
 
   let eventType = "popup" + eventSuffix;
   let deferred = Promise.defer();
-  popup.addEventListener(eventType, function onPopupShown(event) {
-    popup.removeEventListener(eventType, onPopupShown);
+  popup.addEventListener(eventType, function(event) {
     deferred.resolve();
-  });
+  }, {once: true});
 
   return deferred.promise;
 }
@@ -244,6 +241,18 @@ function expectNoObserverCalled(aIgnoreDeviceEvents = false) {
   });
 }
 
+function ignoreObserversCalled() {
+  return new Promise(resolve => {
+    let mm = _mm();
+    mm.addMessageListener("Test:ExpectNoObserverCalled:Reply",
+                          function listener() {
+      mm.removeMessageListener("Test:ExpectNoObserverCalled:Reply", listener);
+      resolve();
+    });
+    mm.sendAsyncMessage("Test:ExpectNoObserverCalled");
+  });
+}
+
 function promiseMessageReceived() {
   return new Promise((resolve, reject) => {
     let mm = _mm();
@@ -275,15 +284,13 @@ function promiseMessage(aMessage, aAction) {
 function promisePopupNotificationShown(aName, aAction) {
   let deferred = Promise.defer();
 
-  PopupNotifications.panel.addEventListener("popupshown", function popupNotifShown() {
-    PopupNotifications.panel.removeEventListener("popupshown", popupNotifShown);
-
+  PopupNotifications.panel.addEventListener("popupshown", function() {
     ok(!!PopupNotifications.getNotification(aName), aName + " notification shown");
     ok(PopupNotifications.isPanelOpen, "notification panel open");
     ok(!!PopupNotifications.panel.firstChild, "notification panel populated");
 
     deferred.resolve();
-  });
+  }, {once: true});
 
   if (aAction)
     aAction();
@@ -444,7 +451,9 @@ function checkDeviceSelectors(aAudio, aVideo, aScreen) {
     ok(screenSelector.hidden, "screen selector hidden");
 }
 
-function* checkSharingUI(aExpected, aWin = window) {
+// aExpected is for the current tab,
+// aExpectedGlobal is for all tabs.
+function* checkSharingUI(aExpected, aWin = window, aExpectedGlobal = null) {
   let doc = aWin.document;
   // First check the icon above the control center (i) icon.
   let identityBox = doc.getElementById("identity-box");
@@ -488,7 +497,7 @@ function* checkSharingUI(aExpected, aWin = window) {
   aWin.gIdentityHandler._identityPopup.hidden = true;
 
   // Check the global indicators.
-  yield* assertWebRTCIndicatorStatus(aExpected);
+  yield* assertWebRTCIndicatorStatus(aExpectedGlobal || aExpected);
 }
 
 function* checkNotSharing() {
@@ -510,4 +519,35 @@ function promiseReloadFrame(aFrameId) {
            .location
            .reload();
   });
+}
+
+async function runTests(tests, options = {}) {
+  let leaf = options.relativeURI || "get_user_media.html";
+
+  let rootDir = getRootDirectory(gTestPath);
+  rootDir = rootDir.replace("chrome://mochitests/content/",
+                            "https://example.com/");
+  let absoluteURI = rootDir + leaf;
+  let cleanup = options.cleanup || (() => expectNoObserverCalled());
+
+  let tab = await BrowserTestUtils.openNewForegroundTab(gBrowser, absoluteURI);
+  let browser = tab.linkedBrowser;
+
+  browser.messageManager.loadFrameScript(CONTENT_SCRIPT_HELPER, true);
+
+  is(PopupNotifications._currentNotifications.length, 0,
+     "should start the test without any prior popup notification");
+  ok(gIdentityHandler._identityPopup.hidden,
+     "should start the test with the control center hidden");
+
+  await SpecialPowers.pushPrefEnv({"set": [[PREF_PERMISSION_FAKE, true]]});
+
+  for (let testCase of tests) {
+    info(testCase.desc);
+    await Task.spawn(testCase.run(browser));
+    await cleanup();
+  }
+
+  // Some tests destroy the original tab and leave a new one in its place.
+  await BrowserTestUtils.removeTab(gBrowser.selectedTab);
 }

@@ -9,7 +9,7 @@
   <link rel="stylesheet" href="/tests/SimpleTest/test.css" />
 </head>
 <body>
-<script type="application/javascript;version=1.8">
+<script type="application/javascript">
 const LMCBackstagePass = SpecialPowers.Cu.import("resource://gre/modules/LoginManagerContent.jsm");
 const { LoginManagerContent, LoginFormFactory } = LMCBackstagePass;
 
@@ -140,10 +140,9 @@ add_task(function* test() {
     for (let scriptName of Object.keys(SCRIPTS)) {
       info("Starting testcase with script " + scriptName + ": " + JSON.stringify(tc));
       let loadedPromise = new Promise((resolve) => {
-        loginFrame.addEventListener("load", function frameLoaded() {
-          loginFrame.removeEventListener("load", frameLoaded);
+        loginFrame.addEventListener("load", function() {
           resolve();
-        });
+        }, {once: true});
       });
       loginFrame.src = DEFAULT_ORIGIN + "/tests/toolkit/components/passwordmgr/test/mochitest/blank.html";
       yield loadedPromise;

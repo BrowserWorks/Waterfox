@@ -39,6 +39,12 @@ Cu.import("resource://gre/modules/Services.jsm");
 XPCOMUtils.defineLazyModuleGetter(this, "fxAccounts",
   "resource://gre/modules/FxAccounts.jsm");
 
+XPCOMUtils.defineLazyModuleGetter(this, "getRepairRequestor",
+  "resource://services-sync/collection_repair.js");
+
+XPCOMUtils.defineLazyModuleGetter(this, "getRepairResponder",
+  "resource://services-sync/collection_repair.js");
+
 const CLIENTS_TTL = 1814400; // 21 days
 const CLIENTS_TTL_REFRESH = 604800; // 7 days
 const STALE_CLIENT_REMOTE_AGE = 604800; // 7 days
@@ -100,9 +106,13 @@ ClientEngine.prototype = {
     return Object.values(this._store._remoteClients).filter(v => !v.stale);
   },
 
-  remoteClientExists(id) {
+  remoteClient(id) {
     let client = this._store._remoteClients[id];
-    return !!(client && !client.stale);
+    return client && !client.stale ? client : null;
+  },
+
+  remoteClientExists(id) {
+    return !!this.remoteClient(id);
   },
 
   // Aggregate some stats on the composition of clients on this account
@@ -128,12 +138,15 @@ ClientEngine.prototype = {
   /**
    * Obtain information about device types.
    *
-   * Returns a Map of device types to integer counts.
+   * Returns a Map of device types to integer counts. Guaranteed to include
+   * "desktop" (which will have at least 1 - this device) and "mobile" (which
+   * may have zero) counts. It almost certainly will include only these 2.
    */
   get deviceTypes() {
     let counts = new Map();
 
-    counts.set(this.localType, 1);
+    counts.set(this.localType, 1); // currently this must be DEVICE_TYPE_DESKTOP
+    counts.set(DEVICE_TYPE_MOBILE, 0);
 
     for (let id in this._store._remoteClients) {
       let record = this._store._remoteClients[id];
@@ -247,6 +260,20 @@ ClientEngine.prototype = {
     );
   },
 
+  // Gets commands for a client we are yet to write to the server. Doesn't
+  // include commands for that client which are already on the server.
+  // We should rename this!
+  getClientCommands(clientId) {
+    const allCommands = this._readCommands();
+    return allCommands[clientId] || [];
+  },
+
+  removeLocalCommand(command) {
+    // the implementation of this engine is such that adding a command to
+    // the local client is how commands are deleted! ¯\_(ツ)_/¯
+    this._addClientCommand(this.localID, command);
+  },
+
   _addClientCommand(clientId, command) {
     const allCommands = this._readCommands();
     const clientCommands = allCommands[clientId] || [];
@@ -256,6 +283,12 @@ ClientEngine.prototype = {
     allCommands[clientId] = clientCommands.concat(command);
     this._saveCommands(allCommands);
     return true;
+  },
+
+  _removeClientCommands(clientId) {
+    const allCommands = this._readCommands();
+    delete allCommands[clientId];
+    this._saveCommands(allCommands);
   },
 
   _syncStartup: function _syncStartup() {
@@ -291,8 +324,10 @@ ClientEngine.prototype = {
       // bug 1287687)
       delete this._incomingClients[this.localID];
       let names = new Set([this.localName]);
-      for (let id in this._incomingClients) {
+      for (let [id, serverLastModified] of Object.entries(this._incomingClients)) {
         let record = this._store._remoteClients[id];
+        // stash the server last-modified time on the record.
+        record.serverLastModified = serverLastModified;
         if (!names.has(record.name)) {
           names.add(record.name);
           continue;
@@ -316,7 +351,14 @@ ClientEngine.prototype = {
         this._modified.set(clientId, 0);
       }
     }
+    let updatedIDs = this._modified.ids();
     SyncEngine.prototype._uploadOutgoing.call(this);
+    // Record the response time as the server time for each item we uploaded.
+    for (let id of updatedIDs) {
+      if (id != this.localID) {
+        this._store._remoteClients[id].serverLastModified = this.lastSync;
+      }
+    }
   },
 
   _onRecordsWritten(succeeded, failed) {
@@ -336,7 +378,7 @@ ClientEngine.prototype = {
           continue;
         }
         // fixup the client record, so our copy of _remoteClients matches what we uploaded.
-        clientRecord.commands = this._store.createRecord(id);
+        this._store._remoteClients[id] =  this._store.createRecord(id);
         // we could do better and pass the reference to the record we just uploaded,
         // but this will do for now
       }
@@ -379,16 +421,18 @@ ClientEngine.prototype = {
 
   _syncFinish() {
     // Record histograms for our device types, and also write them to a pref
-    // so non-histogram telemetry (eg, UITelemetry) has easy access to them.
+    // so non-histogram telemetry (eg, UITelemetry) and the sync scheduler
+    // has easy access to them, and so they are accurate even before we've
+    // successfully synced the first time after startup.
     for (let [deviceType, count] of this.deviceTypes) {
       let hid;
       let prefName = this.name + ".devices.";
       switch (deviceType) {
-        case "desktop":
+        case DEVICE_TYPE_DESKTOP:
           hid = "WEAVE_DEVICE_COUNT_DESKTOP";
           prefName += "desktop";
           break;
-        case "mobile":
+        case DEVICE_TYPE_MOBILE:
           hid = "WEAVE_DEVICE_COUNT_MOBILE";
           prefName += "mobile";
           break;
@@ -469,6 +513,8 @@ ClientEngine.prototype = {
     wipeEngine:  { args: 1, desc: "Delete all client data for engine" },
     logout:      { args: 0, desc: "Log out client" },
     displayURI:  { args: 3, desc: "Instruct a client to display a URI" },
+    repairRequest:  {args: 1, desc: "Instruct a client to initiate a repair"},
+    repairResponse: {args: 1, desc: "Instruct a client a repair request is complete"},
   },
 
   /**
@@ -523,12 +569,13 @@ ClientEngine.prototype = {
 
       const clearedCommands = this._readCommands()[this.localID];
       const commands = this.localCommands.filter(command => !hasDupeCommand(clearedCommands, command));
-
+      let didRemoveCommand = false;
       let URIsToDisplay = [];
       // Process each command in order.
       for (let rawCommand of commands) {
+        let shouldRemoveCommand = true; // most commands are auto-removed.
         let {command, args, flowID} = rawCommand;
-        this._log.debug("Processing command: " + command + "(" + args + ")");
+        this._log.debug("Processing command " + command, args);
 
         this.service.recordTelemetryEvent("processcommand", command, undefined,
                                           { flowID });
@@ -554,14 +601,65 @@ ClientEngine.prototype = {
             let [uri, clientId, title] = args;
             URIsToDisplay.push({ uri, clientId, title });
             break;
+          case "repairResponse": {
+            // When we send a repair request to another device that understands
+            // it, that device will send a response indicating what it did.
+            let response = args[0];
+            let requestor = getRepairRequestor(response.collection);
+            if (!requestor) {
+              this._log.warn("repairResponse for unknown collection", response);
+              break;
+            }
+            if (!requestor.continueRepairs(response)) {
+              this._log.warn("repairResponse couldn't continue the repair", response);
+            }
+            break;
+          }
+          case "repairRequest": {
+            // Another device has sent us a request to make some repair.
+            let request = args[0];
+            let responder = getRepairResponder(request.collection);
+            if (!responder) {
+              this._log.warn("repairRequest for unknown collection", request);
+              break;
+            }
+            try {
+              if (Async.promiseSpinningly(responder.repair(request, rawCommand))) {
+                // We've started a repair - once that collection has synced it
+                // will write a "response" command and arrange for this repair
+                // request to be removed from the local command list - if we
+                // removed it now we might fail to write a response in cases of
+                // premature shutdown etc.
+                shouldRemoveCommand = false;
+              }
+            } catch (ex) {
+              if (Async.isShutdownException(ex)) {
+                // Let's assume this error was caused by the shutdown, so let
+                // it try again next time.
+                throw ex;
+              }
+              // otherwise there are no second chances - the command is removed
+              // and will not be tried again.
+              // (Note that this shouldn't be hit in the normal case - it's
+              // expected the responder will handle all reasonable failures and
+              // write a response indicating that it couldn't do what was asked.)
+              this._log.error("Failed to handle a repair request", ex);
+            }
+            break;
+          }
           default:
-            this._log.debug("Received an unknown command: " + command);
+            this._log.warn("Received an unknown command: " + command);
             break;
         }
         // Add the command to the "cleared" commands list
-        this._addClientCommand(this.localID, rawCommand)
+        if (shouldRemoveCommand) {
+          this.removeLocalCommand(rawCommand);
+          didRemoveCommand = true;
+        }
       }
-      this._tracker.addChangedID(this.localID);
+      if (didRemoveCommand) {
+        this._tracker.addChangedID(this.localID);
+      }
 
       if (URIsToDisplay.length) {
         this._handleDisplayURIs(URIsToDisplay);
@@ -674,6 +772,8 @@ ClientEngine.prototype = {
   _removeRemoteClient(id) {
     delete this._store._remoteClients[id];
     this._tracker.removeChangedID(id);
+    this._removeClientCommands(id);
+    this._modified.delete(id);
   },
 };
 
@@ -734,7 +834,8 @@ ClientStore.prototype = {
       // record.device = "";            // Bug 1100723
       // record.formfactor = "";        // Bug 1100722
     } else {
-      record.cleartext = this._remoteClients[id];
+      record.cleartext = Object.assign({}, this._remoteClients[id]);
+      delete record.cleartext.serverLastModified; // serverLastModified is a local only attribute.
 
       // Add the commands we have to send
       if (commandsChanges && commandsChanges.length) {

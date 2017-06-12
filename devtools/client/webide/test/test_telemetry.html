@@ -8,13 +8,13 @@
 
     <script type="application/javascript" src="chrome://mochikit/content/tests/SimpleTest/SimpleTest.js"></script>
     <script type="application/javascript" src="chrome://mochikit/content/chrome-harness.js"></script>
-    <script type="application/javascript;version=1.8" src="head.js"></script>
+    <script type="application/javascript" src="head.js"></script>
     <link rel="stylesheet" type="text/css" href="chrome://mochikit/content/tests/SimpleTest/test.css">
   </head>
 
   <body>
 
-    <script type="application/javascript;version=1.8">
+    <script type="application/javascript">
       const Telemetry = require("devtools/client/shared/telemetry");
       const { _DeprecatedUSBRuntime, _WiFiRuntime, _SimulatorRuntime,
               _gRemoteRuntime, _gLocalRuntime, RuntimeTypes }
@@ -166,7 +166,7 @@
 
       function checkResults() {
         let result = Telemetry.prototype.telemetryInfo;
-        for (let [histId, value] of Iterator(result)) {
+        for (let [histId, value] of Object.entries(result)) {
           if (histId === "DEVTOOLS_WEBIDE_IMPORT_PROJECT_BOOLEAN") {
             ok(value.length === 1 && !!value[0],
                histId + " has 1 successful entry");

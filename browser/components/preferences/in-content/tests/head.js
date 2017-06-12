@@ -33,9 +33,8 @@ function open_preferences(aCallback) {
   gBrowser.selectedTab = gBrowser.addTab("about:preferences");
   let newTabBrowser = gBrowser.getBrowserForTab(gBrowser.selectedTab);
   newTabBrowser.addEventListener("Initialized", function() {
-    newTabBrowser.removeEventListener("Initialized", arguments.callee, true);
     aCallback(gBrowser.contentWindow);
-  }, true);
+  }, {capture: true, once: true});
 }
 
 function openAndLoadSubDialog(aURL, aFeatures = null, aParams = null, aClosingCallback = null) {
@@ -126,10 +125,8 @@ function openPreferencesViaOpenPreferencesAPI(aPane, aAdvancedTab, aOptions) {
   openPreferences(aPane, aAdvancedTab ? {advancedTab: aAdvancedTab} : undefined);
   let newTabBrowser = gBrowser.selectedBrowser;
 
-  newTabBrowser.addEventListener("Initialized", function PrefInit() {
-    newTabBrowser.removeEventListener("Initialized", PrefInit, true);
-    newTabBrowser.contentWindow.addEventListener("load", function prefLoad() {
-      newTabBrowser.contentWindow.removeEventListener("load", prefLoad);
+  newTabBrowser.addEventListener("Initialized", function() {
+    newTabBrowser.contentWindow.addEventListener("load", function() {
       let win = gBrowser.contentWindow;
       let selectedPane = win.history.state;
       let doc = win.document;
@@ -137,8 +134,8 @@ function openPreferencesViaOpenPreferencesAPI(aPane, aAdvancedTab, aOptions) {
       if (!aOptions || !aOptions.leaveOpen)
         gBrowser.removeCurrentTab();
       deferred.resolve({selectedPane, selectedAdvancedTab});
-    });
-  }, true);
+    }, {once: true});
+  }, {capture: true, once: true});
 
   return deferred.promise;
 }
@@ -164,20 +161,23 @@ function waitForCondition(aConditionFn, aMaxTries = 50, aCheckInterval = 100) {
   });
 }
 
-function promiseAlertDialogOpen(buttonAction) {
+function promiseWindowDialogOpen(buttonAction, url) {
   return new Promise(resolve => {
     Services.ww.registerNotification(function onOpen(subj, topic, data) {
       if (topic == "domwindowopened" && subj instanceof Ci.nsIDOMWindow) {
         subj.addEventListener("load", function onLoad() {
-          subj.removeEventListener("load", onLoad);
-          if (subj.document.documentURI == "chrome://global/content/commonDialog.xul") {
+          if (subj.document.documentURI == url) {
             Services.ww.unregisterNotification(onOpen);
             let doc = subj.document.documentElement;
             doc.getButton(buttonAction).click();
             resolve();
           }
-        });
+        }, {once: true});
       }
     });
   });
+}
+
+function promiseAlertDialogOpen(buttonAction) {
+  return promiseWindowDialogOpen(buttonAction, "chrome://global/content/commonDialog.xul");
 }

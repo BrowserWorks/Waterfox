@@ -83,19 +83,34 @@ add_task(function* reorder() {
     }
   }
 
+
   do_print("Test partial sorting");
-  // Try a partial sorting by passing only 2 entries.
-  // The unspecified entries should retain the original order.
-  sorted = [ sorted[1], sorted[0] ].concat(sorted.slice(2));
-  let sortedGuids = [ sorted[0].guid, sorted[1].guid ];
-  dump("Expected order: " + sorted.map(b => b.guid).join() + "\n");
-  yield PlacesUtils.bookmarks.reorder(PlacesUtils.bookmarks.unfiledGuid,
-                                      sortedGuids);
-  for (let i = 0; i < sorted.length; ++i) {
-    let item = yield PlacesUtils.bookmarks.fetch(sorted[i].guid);
-    Assert.equal(item.index, i);
+  {
+    // Try a partial sorting by passing 2 entries in same order as they
+    // currently have. No entries should change order.
+    let sortedGuids = [ sorted[0].guid, sorted[3].guid ];
+    dump("Expected order: " + sorted.map(b => b.guid).join() + "\n");
+    yield PlacesUtils.bookmarks.reorder(PlacesUtils.bookmarks.unfiledGuid,
+                                        sortedGuids);
+    for (let i = 0; i < sorted.length; ++i) {
+      let item = yield PlacesUtils.bookmarks.fetch(sorted[i].guid);
+      Assert.equal(item.index, i);
+    }
   }
 
+  {
+    // Try a partial sorting by passing 2 entries out of order
+    // The unspecified entries should be appended and retain the original order
+    sorted = [ sorted[1], sorted[0] ].concat(sorted.slice(2));
+    let sortedGuids = [ sorted[0].guid, sorted[1].guid ];
+    dump("Expected order: " + sorted.map(b => b.guid).join() + "\n");
+    yield PlacesUtils.bookmarks.reorder(PlacesUtils.bookmarks.unfiledGuid,
+                                        sortedGuids);
+    for (let i = 0; i < sorted.length; ++i) {
+      let item = yield PlacesUtils.bookmarks.fetch(sorted[i].guid);
+      Assert.equal(item.index, i);
+    }
+  }
   // Use triangular numbers to detect skipped position.
   let db = yield PlacesUtils.promiseDBConnection();
   let rows = yield db.execute(
@@ -174,4 +189,17 @@ add_task(function* move_and_reorder() {
   Assert.equal(bm4.index, 1);
   bm5 = yield PlacesUtils.bookmarks.fetch(bm5.guid);
   Assert.equal(bm5.index, 0);
+});
+
+add_task(function* reorder_empty_folder_invalid_children() {
+  // Start clean.
+  yield PlacesUtils.bookmarks.eraseEverything();
+
+  let f1 = yield PlacesUtils.bookmarks.insert({
+    type: PlacesUtils.bookmarks.TYPE_FOLDER,
+    parentGuid: PlacesUtils.bookmarks.unfiledGuid
+  });
+  // Specifying a child that doesn't exist should cause that to be ignored.
+  // However, before bug 1333304, doing this on an empty folder threw.
+  yield PlacesUtils.bookmarks.reorder(f1.guid, ["123456789012"]);
 });

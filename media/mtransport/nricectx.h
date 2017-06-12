@@ -192,6 +192,14 @@ class NrIceProxyServer {
 
 class TestNat;
 
+class NrIceStats {
+ public:
+  uint16_t stun_retransmits = 0;
+  uint16_t turn_401s = 0;
+  uint16_t turn_403s = 0;
+  uint16_t turn_438s = 0;
+};
+
 class NrIceCtx {
  friend class NrIceCtxHandler;
  public:
@@ -321,6 +329,9 @@ class NrIceCtx {
   // Finalize the ICE negotiation. I.e., there will be no
   // more forking.
   nsresult Finalize();
+
+  void AccumulateStats(const NrIceStats& stats);
+  NrIceStats Destroy();
 
   // Are we trickling?
   bool generating_trickle() const { return trickle_; }

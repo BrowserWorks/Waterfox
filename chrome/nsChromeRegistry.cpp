@@ -8,8 +8,6 @@
 #include "nsChromeRegistryChrome.h"
 #include "nsChromeRegistryContent.h"
 
-#include "prprf.h"
-
 #include "nsCOMPtr.h"
 #include "nsError.h"
 #include "nsEscape.h"
@@ -29,6 +27,7 @@
 #include "nsIScriptError.h"
 #include "nsIWindowMediator.h"
 #include "nsIPrefService.h"
+#include "mozilla/Printf.h"
 #include "mozilla/StyleSheet.h"
 #include "mozilla/StyleSheetInlines.h"
 
@@ -55,13 +54,13 @@ nsChromeRegistry::LogMessage(const char* aMsg, ...)
 
   va_list args;
   va_start(args, aMsg);
-  char* formatted = PR_vsmprintf(aMsg, args);
+  char* formatted = mozilla::Vsmprintf(aMsg, args);
   va_end(args);
   if (!formatted)
     return;
 
   console->LogStringMessage(NS_ConvertUTF8toUTF16(formatted).get());
-  PR_smprintf_free(formatted);
+  mozilla::SmprintfFree(formatted);
 }
 
 void
@@ -80,7 +79,7 @@ nsChromeRegistry::LogMessageWithContext(nsIURI* aURL, uint32_t aLineNumber, uint
 
   va_list args;
   va_start(args, aMsg);
-  char* formatted = PR_vsmprintf(aMsg, args);
+  char* formatted = mozilla::Vsmprintf(aMsg, args);
   va_end(args);
   if (!formatted)
     return;
@@ -93,7 +92,7 @@ nsChromeRegistry::LogMessageWithContext(nsIURI* aURL, uint32_t aLineNumber, uint
                    NS_ConvertUTF8toUTF16(spec),
                    EmptyString(),
                    aLineNumber, 0, flags, "chrome registration");
-  PR_smprintf_free(formatted);
+  mozilla::SmprintfFree(formatted);
 
   if (NS_FAILED(rv))
     return;
@@ -650,6 +649,15 @@ nsChromeRegistry::MustLoadURLRemotely(nsIURI *aURI, bool *aResult)
 bool
 nsChromeRegistry::GetDirectionForLocale(const nsACString& aLocale)
 {
+#ifdef ENABLE_INTL_API
+  int pref = mozilla::Preferences::GetInt("intl.uidirection", -1);
+  if (pref >= 0) {
+    return (pref > 0);
+  }
+  nsAutoCString locale(aLocale);
+  SanitizeForBCP47(locale);
+  return uloc_isRightToLeft(locale.get());
+#else
   // first check the intl.uidirection.<locale> preference, and if that is not
   // set, check the same preference but with just the first two characters of
   // the locale. If that isn't set, default to left-to-right.
@@ -670,6 +678,7 @@ nsChromeRegistry::GetDirectionForLocale(const nsACString& aLocale)
   }
 
   return dir.EqualsLiteral("rtl");
+#endif
 }
 
 NS_IMETHODIMP_(bool)
