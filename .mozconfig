@@ -34,7 +34,6 @@ ac_add_options --disable-eme
 ac_add_options --disable-js-shell
 ac_add_options --disable-maintenance-service
 ac_add_options --disable-profiling
-ac_add_options --disable-rust 
 ac_add_options --disable-tests
 ac_add_options --disable-verify-mar
 
