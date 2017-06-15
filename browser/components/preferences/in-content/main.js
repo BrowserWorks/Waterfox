@@ -141,11 +141,14 @@ var gMainPane = {
   {
     let alertsService = Cc["@mozilla.org/alerts-service;1"].getService(Ci.nsIAlertsService);
     let selectedLocale = document.getElementById("localeSelect").value;
-	  
+    let contentLocaleUpdate = selectedLocale + ",en-us,en";
+    let contentLocaleUpdated = contentLocaleUpdate.toLowerCase();
+
     if (selectedLocale === Services.prefs.getCharPref('general.useragent.locale')) return;
 	
     if (selectedLocale != "") {
       Services.prefs.setCharPref('general.useragent.locale', selectedLocale);
+      Services.prefs.setCharPref('intl.accept_languages', contentLocaleUpdated);
       alertsService.showAlertNotification("",  "Restart Waterfox", "You'll need to restart Waterfox to see your selected locale.");
     }
   },

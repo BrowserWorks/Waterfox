@@ -295,6 +295,7 @@
       <menuitem value="ml" label="Malayalam - മലയാളം"/>
       <menuitem value="mr" label="Marathi - मराठी"/>
       <menuitem value="ms" label="Malay - Bahasa Melayu"/>
+      <menuitem value="my" label="Burmese"/>
       <menuitem value="nb-NO" label="Norwegian (Bokmål) - Norsk bokmål"/>
       <menuitem value="nl" label="Dutch - Nederlands"/>
       <menuitem value="nn-NO" label="Norwegian (Nynorsk) - Norsk nynorsk"/>
