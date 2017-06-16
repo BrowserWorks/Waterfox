@@ -149,6 +149,7 @@ var gMainPane = {
     if (selectedLocale != "") {
       Services.prefs.setCharPref('general.useragent.locale', selectedLocale);
       Services.prefs.setCharPref('intl.accept_languages', contentLocaleUpdated);
+      Services.prefs.setBoolPref('intl.locale.matchOS', false);
       alertsService.showAlertNotification("",  "Restart Waterfox", "You'll need to restart Waterfox to see your selected locale.");
     }
   },
