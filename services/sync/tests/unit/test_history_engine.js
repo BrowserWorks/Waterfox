@@ -4,7 +4,6 @@
 Cu.import("resource://services-sync/constants.js");
 Cu.import("resource://services-sync/engines/history.js");
 Cu.import("resource://services-sync/engines.js");
-Cu.import("resource://services-sync/identity.js");
 Cu.import("resource://services-sync/record.js");
 Cu.import("resource://services-sync/service.js");
 Cu.import("resource://services-sync/util.js");
@@ -121,7 +120,7 @@ add_task(async function test_processIncoming_mobile_history_batched() {
     do_check_eq(collection.get_log[4].full, undefined);
     do_check_eq(collection.get_log[4].sort, "index");
     do_check_eq(collection.get_log[4].limit, MAX_HISTORY_DOWNLOAD);
-    for (let i = 0; i <= Math.floor((234 - 50) / MOBILE_BATCH_SIZE); i++) {
+    for (i = 0; i <= Math.floor((234 - 50) / MOBILE_BATCH_SIZE); i++) {
       let j = i + 5;
       do_check_eq(collection.get_log[j].full, 1);
       do_check_eq(collection.get_log[j].limit, undefined);

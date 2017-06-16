@@ -2,8 +2,6 @@
  * Tests ProfileStorage object.
  */
 
-/* global ProfileStorage */
-
 "use strict";
 
 Cu.import("resource://gre/modules/Task.jsm");
@@ -13,27 +11,27 @@ const TEST_STORE_FILE_NAME = "test-profile.json";
 
 const TEST_PROFILE_1 = {
   organization: "World Wide Web Consortium",
-  streetAddress: "32 Vassar Street\nMIT Room 32-G524",
-  addressLevel2: "Cambridge",
-  addressLevel1: "MA",
-  postalCode: "02139",
+  "street-address": "32 Vassar Street\nMIT Room 32-G524",
+  "address-level2": "Cambridge",
+  "address-level1": "MA",
+  "postal-code": "02139",
   country: "US",
   tel: "+1 617 253 5702",
   email: "timbl@w3.org",
 };
 
 const TEST_PROFILE_2 = {
-  streetAddress: "Some Address",
+  "street-address": "Some Address",
   country: "US",
 };
 
 const TEST_PROFILE_3 = {
-  streetAddress: "Other Address",
-  postalCode: "12345",
+  "street-address": "Other Address",
+  "postal-code": "12345",
 };
 
 const TEST_PROFILE_WITH_INVALID_FIELD = {
-  streetAddress: "Another Address",
+  "street-address": "Another Address",
   invalidField: "INVALID",
 };
 
@@ -41,7 +39,10 @@ let prepareTestProfiles = Task.async(function* (path) {
   let profileStorage = new ProfileStorage(path);
   yield profileStorage.initialize();
 
+  let onChanged = TestUtils.topicObserved("formautofill-storage-changed",
+                                          (subject, data) => data == "add");
   profileStorage.add(TEST_PROFILE_1);
+  yield onChanged;
   profileStorage.add(TEST_PROFILE_2);
   yield profileStorage._saveImmediately();
 });
@@ -109,6 +110,38 @@ add_task(function* test_get() {
     /No matching profile\./);
 });
 
+add_task(function* test_getByFilter() {
+  let path = getTempFile(TEST_STORE_FILE_NAME).path;
+  yield prepareTestProfiles(path);
+
+  let profileStorage = new ProfileStorage(path);
+  yield profileStorage.initialize();
+
+  let filter = {info: {fieldName: "street-address"}, searchString: "Some"};
+  let profiles = profileStorage.getByFilter(filter);
+  do_check_eq(profiles.length, 1);
+  do_check_profile_matches(profiles[0], TEST_PROFILE_2);
+
+  filter = {info: {fieldName: "country"}, searchString: "u"};
+  profiles = profileStorage.getByFilter(filter);
+  do_check_eq(profiles.length, 2);
+  do_check_profile_matches(profiles[0], TEST_PROFILE_1);
+  do_check_profile_matches(profiles[1], TEST_PROFILE_2);
+
+  filter = {info: {fieldName: "street-address"}, searchString: "test"};
+  profiles = profileStorage.getByFilter(filter);
+  do_check_eq(profiles.length, 0);
+
+  filter = {info: {fieldName: "street-address"}, searchString: ""};
+  profiles = profileStorage.getByFilter(filter);
+  do_check_eq(profiles.length, 2);
+
+  // Check if the filtering logic is free from searching special chars.
+  filter = {info: {fieldName: "street-address"}, searchString: ".*"};
+  profiles = profileStorage.getByFilter(filter);
+  do_check_eq(profiles.length, 0);
+});
+
 add_task(function* test_add() {
   let path = getTempFile(TEST_STORE_FILE_NAME).path;
   yield prepareTestProfiles(path);
@@ -144,9 +177,13 @@ add_task(function* test_update() {
   let guid = profiles[1].guid;
   let timeLastModified = profiles[1].timeLastModified;
 
+  let onChanged = TestUtils.topicObserved("formautofill-storage-changed",
+                                          (subject, data) => data == "update");
+
   do_check_neq(profiles[1].country, undefined);
 
   profileStorage.update(guid, TEST_PROFILE_3);
+  yield onChanged;
   yield profileStorage._saveImmediately();
 
   profileStorage = new ProfileStorage(path);
@@ -181,7 +218,11 @@ add_task(function* test_notifyUsed() {
   let timeLastUsed = profiles[1].timeLastUsed;
   let timesUsed = profiles[1].timesUsed;
 
+  let onChanged = TestUtils.topicObserved("formautofill-storage-changed",
+                                          (subject, data) => data == "notifyUsed");
+
   profileStorage.notifyUsed(guid);
+  yield onChanged;
   yield profileStorage._saveImmediately();
 
   profileStorage = new ProfileStorage(path);
@@ -206,9 +247,13 @@ add_task(function* test_remove() {
   let profiles = profileStorage.getAll();
   let guid = profiles[1].guid;
 
+  let onChanged = TestUtils.topicObserved("formautofill-storage-changed",
+                                          (subject, data) => data == "remove");
+
   do_check_eq(profiles.length, 2);
 
   profileStorage.remove(guid);
+  yield onChanged;
   yield profileStorage._saveImmediately();
 
   profileStorage = new ProfileStorage(path);

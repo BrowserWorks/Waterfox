@@ -49,10 +49,10 @@ MainProcessSingleton.prototype = {
       var searchBundle = Services.strings.createBundle("chrome://global/locale/search/search.properties");
       var brandBundle = Services.strings.createBundle("chrome://branding/locale/brand.properties");
       var brandName = brandBundle.GetStringFromName("brandShortName");
-      var title = searchBundle.GetStringFromName("error_invalid_engine_title");
-      var msg = searchBundle.formatStringFromName("error_invalid_engine_msg",
-                                                  [brandName], 1);
-      Services.ww.getNewPrompter(browser.ownerDocument.defaultView).alert(title, msg);
+      var title = searchBundle.GetStringFromName("error_invalid_format_title");
+      var msg = searchBundle.formatStringFromName("error_invalid_engine_msg2",
+                                                  [brandName, engineURL.spec], 2);
+      Services.ww.getNewPrompter(browser.ownerGlobal).alert(title, msg);
       return;
     }
 

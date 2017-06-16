@@ -38,6 +38,8 @@
 #include "nsCSSPseudoElements.h"
 #include "mozilla/StyleSetHandle.h"
 #include "mozilla/StyleSetHandleInlines.h"
+#include "mozilla/GeckoRestyleManager.h"
+#include "mozilla/RestyleManagerInlines.h"
 #include "imgIRequest.h"
 #include "nsLayoutUtils.h"
 #include "nsCSSKeywords.h"
@@ -309,15 +311,15 @@ NS_IMPL_CYCLE_COLLECTION_TRAVERSE_END
 NS_IMPL_CYCLE_COLLECTION_TRACE_WRAPPERCACHE(nsComputedDOMStyle)
 
 NS_IMPL_CYCLE_COLLECTION_CAN_SKIP_BEGIN(nsComputedDOMStyle)
-  return tmp->IsBlack();
+  return tmp->HasKnownLiveWrapper();
 NS_IMPL_CYCLE_COLLECTION_CAN_SKIP_END
 
 NS_IMPL_CYCLE_COLLECTION_CAN_SKIP_IN_CC_BEGIN(nsComputedDOMStyle)
-  return tmp->IsBlack();
+  return tmp->HasKnownLiveWrapper();
 NS_IMPL_CYCLE_COLLECTION_CAN_SKIP_IN_CC_END
 
 NS_IMPL_CYCLE_COLLECTION_CAN_SKIP_THIS_BEGIN(nsComputedDOMStyle)
-  return tmp->IsBlack();
+  return tmp->HasKnownLiveWrapper();
 NS_IMPL_CYCLE_COLLECTION_CAN_SKIP_THIS_END
 
 // QueryInterface implementation for nsComputedDOMStyle
@@ -565,7 +567,7 @@ public:
   }
 
 private:
-  RestyleManager* mRestyleManager = nullptr;
+  GeckoRestyleManager* mRestyleManager = nullptr;
   bool mOldSkipAnimationRules = false;
   nsComputedDOMStyle::AnimationFlag mAnimationFlag;
 };
@@ -635,7 +637,7 @@ nsComputedDOMStyle::DoGetStyleContextForElementNoFlush(
   // a throwaway style context chain.
   if (ServoStyleSet* servoSet = styleSet->GetAsServo()) {
     if (aStyleType == eDefaultOnly) {
-      NS_ERROR("stylo: ServoStyleSets cannot supply UA-only styles yet");
+      NS_WARNING("stylo: ServoStyleSets cannot supply UA-only styles yet");
       return nullptr;
     }
     return servoSet->ResolveTransientStyle(aElement, type);
@@ -1114,11 +1116,6 @@ void
 nsComputedDOMStyle::SetToRGBAColor(nsROCSSPrimitiveValue* aValue,
                                    nscolor aColor)
 {
-  if (NS_GET_A(aColor) == 0) {
-    aValue->SetIdent(eCSSKeyword_transparent);
-    return;
-  }
-
   nsROCSSPrimitiveValue *red   = new nsROCSSPrimitiveValue;
   nsROCSSPrimitiveValue *green = new nsROCSSPrimitiveValue;
   nsROCSSPrimitiveValue *blue  = new nsROCSSPrimitiveValue;
@@ -4053,6 +4050,16 @@ nsComputedDOMStyle::DoGetTextIndent()
 }
 
 already_AddRefed<CSSValue>
+nsComputedDOMStyle::DoGetTextJustify()
+{
+  RefPtr<nsROCSSPrimitiveValue> val = new nsROCSSPrimitiveValue;
+  val->SetIdent(
+    nsCSSProps::ValueToKeywordEnum(StyleText()->mTextJustify,
+                                   nsCSSProps::kTextJustifyKTable));
+  return val.forget();
+}
+
+already_AddRefed<CSSValue>
 nsComputedDOMStyle::DoGetTextOrientation()
 {
   RefPtr<nsROCSSPrimitiveValue> val = new nsROCSSPrimitiveValue;
@@ -4104,6 +4111,15 @@ nsComputedDOMStyle::DoGetTextShadow()
   return GetCSSShadowArray(StyleText()->mTextShadow,
                            StyleColor()->mColor,
                            false);
+}
+
+already_AddRefed<CSSValue>
+nsComputedDOMStyle::DoGetTextSizeAdjust()
+{
+  RefPtr<nsROCSSPrimitiveValue> val = new nsROCSSPrimitiveValue;
+  val->SetIdent(nsCSSProps::ValueToKeywordEnum(StyleText()->mTextSizeAdjust,
+                                               nsCSSProps::kTextSizeAdjustKTable));
+  return val.forget();
 }
 
 already_AddRefed<CSSValue>
@@ -4197,24 +4213,6 @@ nsComputedDOMStyle::DoGetHyphens()
   val->SetIdent(
     nsCSSProps::ValueToKeywordEnum(StyleText()->mHyphens,
                                    nsCSSProps::kHyphensKTable));
-  return val.forget();
-}
-
-already_AddRefed<CSSValue>
-nsComputedDOMStyle::DoGetTextSizeAdjust()
-{
-  RefPtr<nsROCSSPrimitiveValue> val = new nsROCSSPrimitiveValue;
-  switch (StyleText()->mTextSizeAdjust) {
-    default:
-      NS_NOTREACHED("unexpected value");
-      MOZ_FALLTHROUGH;
-    case NS_STYLE_TEXT_SIZE_ADJUST_AUTO:
-      val->SetIdent(eCSSKeyword_auto);
-      break;
-    case NS_STYLE_TEXT_SIZE_ADJUST_NONE:
-      val->SetIdent(eCSSKeyword_none);
-      break;
-  }
   return val.forget();
 }
 
@@ -6220,10 +6218,9 @@ nsComputedDOMStyle::CreatePrimitiveValueForShapeSource(
   return valueList.forget();
 }
 
-template<typename ReferenceBox>
 already_AddRefed<CSSValue>
 nsComputedDOMStyle::GetShapeSource(
-  const StyleShapeSource<ReferenceBox>& aShapeSource,
+  const StyleShapeSource& aShapeSource,
   const KTableEntry aBoxKeywordTable[])
 {
   switch (aShapeSource.GetType()) {

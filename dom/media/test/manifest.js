@@ -790,6 +790,29 @@ var gMetadataTests = [
 // Test files for Encrypted Media Extensions
 var gEMETests = [
   {
+    name:"vp9 in mp4",
+    tracks: [
+      {
+          name:"video",
+          type:"video/mp4; codecs=\"vp9.0\"",
+          fragments:[ "short-vp9-encrypted-video.mp4",
+                    ]
+      },
+      {
+          name:"audio",
+          type:"audio/mp4; codecs=\"mp4a.40.2\"",
+          fragments:[ "short-aac-encrypted-audio.mp4",
+                    ]
+      }
+    ],
+    keys: {
+      "2cdb0ed6119853e7850671c3e9906c3c":"808B9ADAC384DE1E4F56140F4AD76194"
+    },
+    sessionType:"temporary",
+    sessionCount:2,
+    duration:0.47
+  },
+  {
     name:"video-only with 2 keys",
     tracks: [
       {
@@ -1422,6 +1445,30 @@ var gEMETests = [
     sessionCount:2,
     duration:1.60,
   },
+  {
+    name: "WebM vorbis audio & vp9 video clearkey with subsample encryption",
+    tracks: [
+      {
+        name:"audio",
+        type:"audio/webm; codecs=\"vorbis\"",
+        fragments:[ "sintel-short-clearkey-subsample-encrypted-audio.webm",
+                  ],
+      },
+      {
+        name:"video",
+        type:"video/webm; codecs=\"vp9\"",
+        fragments:[ "sintel-short-clearkey-subsample-encrypted-video.webm",
+                  ],
+      },
+    ],
+    keys: {
+      // "keyid" : "key"
+      "2cdb0ed6119853e7850671c3e9906c3c" : "808B9ADAC384DE1E4F56140F4AD76194",
+    },
+    sessionType:"temporary",
+    sessionCount:2,
+    duration:2.0,
+  },
 ];
 
 var gEMENonMSEFailTests = [
@@ -1505,10 +1552,9 @@ function removeNodeAndSource(n) {
 
 function once(target, name, cb) {
   var p = new Promise(function(resolve, reject) {
-    target.addEventListener(name, function onceEvent() {
-      target.removeEventListener(name, onceEvent);
+    target.addEventListener(name, function() {
       resolve();
-    });
+    }, {once: true});
   });
   if (cb) {
     p.then(cb);
@@ -1566,6 +1612,10 @@ const DEBUG_TEST_LOOP_FOREVER = false;
 //      or end the mochitest if all the tests are done.
 function MediaTestManager() {
 
+  // Set a very large timeout to prevent Mochitest timeout.
+  // Instead MediaTestManager will manage timeout of each test.
+  SimpleTest.requestLongerTimeout(1000);
+
   // Return how many seconds elapsed since |begin|.
   function elapsedTime(begin) {
     var end = new Date();
@@ -1589,6 +1639,7 @@ function MediaTestManager() {
     this.isShutdown = false;
     this.numTestsRunning = 0;
     this.handlers = {};
+    this.timers = {};
 
     // Always wait for explicit finish.
     SimpleTest.waitForExplicitFinish();
@@ -1615,6 +1666,14 @@ function MediaTestManager() {
     this.tokens.push(token);
     this.numTestsRunning++;
     this.handlers[token] = handler;
+
+    var onTimeout = function() {
+      ok(false, `${token} timed out!`);
+      this.finished(token);
+    }.bind(this);
+    // Default timeout to 180s for each test.
+    this.timers[token] = setTimeout(onTimeout, 180000);
+
     is(this.numTestsRunning, this.tokens.length,
        "[started " + token + " t=" + elapsedTime(this.startTime) + "] Length of array should match number of running tests");
   }
@@ -1628,6 +1687,12 @@ function MediaTestManager() {
     if (i != -1) {
       // Remove the element from the list of running tests.
       this.tokens.splice(i, 1);
+    }
+
+    if (this.timers[token]) {
+      // Cancel the timer when the test finishes.
+      clearTimeout(this.timers[token]);
+      this.timers[token] = null;
     }
 
     info("[finished " + token + "] remaining= " + this.tokens);

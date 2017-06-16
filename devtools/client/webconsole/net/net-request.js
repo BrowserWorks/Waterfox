@@ -8,7 +8,7 @@ const React = require("devtools/client/shared/vendor/react");
 const ReactDOM = require("devtools/client/shared/vendor/react-dom");
 
 // Reps
-const { parseURLParams } = require("devtools/client/shared/components/reps/load-reps");
+const { parseURLParams } = require("devtools/client/shared/components/reps/reps");
 
 // Network
 const { cancelEvent, isLeftClick } = require("./utils/events");
@@ -143,7 +143,7 @@ NetRequest.prototype = {
    * Close network inline preview body.
    */
   closeBody: function () {
-    this.netInfoBodyBox.parentNode.removeChild(this.netInfoBodyBox);
+    this.netInfoBodyBox.remove();
   },
 
   /**

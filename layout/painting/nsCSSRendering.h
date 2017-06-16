@@ -354,6 +354,7 @@ struct nsBackgroundLayerState {
 };
 
 struct nsCSSRendering {
+  typedef mozilla::gfx::Color Color;
   typedef mozilla::gfx::CompositionOp CompositionOp;
   typedef mozilla::gfx::DrawTarget DrawTarget;
   typedef mozilla::gfx::Float Float;
@@ -374,11 +375,32 @@ struct nsCSSRendering {
    */
   static void Shutdown();
   
+  static bool GetShadowInnerRadii(nsIFrame* aFrame,
+                                  const nsRect& aFrameArea,
+                                  RectCornerRadii& aOutInnerRadii);
+  static nsRect GetBoxShadowInnerPaddingRect(nsIFrame* aFrame,
+                                             const nsRect& aFrameArea);
+  static bool CanPaintBoxShadowInner(nsIFrame* aFrame);
   static void PaintBoxShadowInner(nsPresContext* aPresContext,
                                   nsRenderingContext& aRenderingContext,
                                   nsIFrame* aForFrame,
                                   const nsRect& aFrameArea);
 
+  static bool GetBorderRadii(const nsRect& aFrameRect,
+                             const nsRect& aBorderRect,
+                             nsIFrame* aFrame,
+                             RectCornerRadii& aOutRadii);
+  static nsRect GetShadowRect(const nsRect aFrameArea,
+                              bool aNativeTheme,
+                              nsIFrame* aForFrame);
+  static mozilla::gfx::Color GetShadowColor(nsCSSShadowItem* aShadow,
+                                   nsIFrame* aFrame,
+                                   float aOpacity);
+  // Returns if the frame has a themed frame.
+  // aMaybeHasBorderRadius will return false if we can early detect
+  // that we don't have a border radius.
+  static bool HasBoxShadowNativeTheme(nsIFrame* aFrame,
+                                      bool& aMaybeHasBorderRadius);
   static void PaintBoxShadowOuter(nsPresContext* aPresContext,
                                   nsRenderingContext& aRenderingContext,
                                   nsIFrame* aForFrame,
@@ -438,6 +460,13 @@ struct nsCSSRendering {
                                       nsStyleContext* aStyleContext,
                                       Sides aSkipSides = Sides());
 
+  static mozilla::Maybe<nsCSSBorderRenderer>
+  CreateBorderRendererForOutline(nsPresContext* aPresContext,
+                                 nsRenderingContext* aRenderingContext,
+                                 nsIFrame* aForFrame,
+                                 const nsRect& aDirtyRect,
+                                 const nsRect& aBorderArea,
+                                 nsStyleContext* aStyleContext);
 
   /**
    * Render the outline for an element using css rendering rules
@@ -579,8 +608,8 @@ struct nsCSSRendering {
   struct ImageLayerClipState {
     nsRect mBGClipArea;            // Affected by mClippedRadii
     nsRect mAdditionalBGClipArea;  // Not affected by mClippedRadii
-    nsRect mDirtyRect;
-    gfxRect mDirtyRectGfx;
+    nsRect mDirtyRectInAppUnits;
+    gfxRect mDirtyRectInDevPx;
 
     nscoord mRadii[8];
     RectCornerRadii mClippedRadii;
@@ -598,6 +627,8 @@ struct nsCSSRendering {
     {
       memset(mRadii, 0, sizeof(nscoord) * 8);
     }
+
+    bool IsValid() const;
   };
 
   static void

@@ -14,9 +14,9 @@
 namespace js {
 namespace jit {
 
-static constexpr Register StackPointer = { Registers::invalid_reg };
-static constexpr Register FramePointer = { Registers::invalid_reg };
-static constexpr Register ReturnReg = { Registers::invalid_reg };
+static constexpr Register StackPointer { Registers::invalid_reg };
+static constexpr Register FramePointer { Registers::invalid_reg };
+static constexpr Register ReturnReg { Registers::invalid_reg };
 static constexpr FloatRegister ReturnFloat32Reg = { FloatRegisters::invalid_reg };
 static constexpr FloatRegister ReturnDoubleReg = { FloatRegisters::invalid_reg };
 static constexpr FloatRegister ReturnSimd128Reg = { FloatRegisters::invalid_reg };
@@ -25,47 +25,46 @@ static constexpr FloatRegister ScratchDoubleReg = { FloatRegisters::invalid_reg 
 static constexpr FloatRegister ScratchSimd128Reg = { FloatRegisters::invalid_reg };
 static constexpr FloatRegister InvalidFloatReg = { FloatRegisters::invalid_reg };
 
-static constexpr Register OsrFrameReg = { Registers::invalid_reg };
-static constexpr Register ArgumentsRectifierReg = { Registers::invalid_reg };
-static constexpr Register PreBarrierReg = { Registers::invalid_reg };
-static constexpr Register CallTempReg0 = { Registers::invalid_reg };
-static constexpr Register CallTempReg1 = { Registers::invalid_reg };
-static constexpr Register CallTempReg2 = { Registers::invalid_reg };
-static constexpr Register CallTempReg3 = { Registers::invalid_reg };
-static constexpr Register CallTempReg4 = { Registers::invalid_reg };
-static constexpr Register CallTempReg5 = { Registers::invalid_reg };
-static constexpr Register InvalidReg = { Registers::invalid_reg };
+static constexpr Register OsrFrameReg { Registers::invalid_reg };
+static constexpr Register ArgumentsRectifierReg { Registers::invalid_reg };
+static constexpr Register PreBarrierReg { Registers::invalid_reg };
+static constexpr Register CallTempReg0 { Registers::invalid_reg };
+static constexpr Register CallTempReg1 { Registers::invalid_reg };
+static constexpr Register CallTempReg2 { Registers::invalid_reg };
+static constexpr Register CallTempReg3 { Registers::invalid_reg };
+static constexpr Register CallTempReg4 { Registers::invalid_reg };
+static constexpr Register CallTempReg5 { Registers::invalid_reg };
+static constexpr Register InvalidReg { Registers::invalid_reg };
 
-static constexpr Register IntArgReg0 = { Registers::invalid_reg };
-static constexpr Register IntArgReg1 = { Registers::invalid_reg };
-static constexpr Register IntArgReg2 = { Registers::invalid_reg };
-static constexpr Register IntArgReg3 = { Registers::invalid_reg };
-static constexpr Register GlobalReg = { Registers::invalid_reg };
-static constexpr Register HeapReg = { Registers::invalid_reg };
+static constexpr Register IntArgReg0 { Registers::invalid_reg };
+static constexpr Register IntArgReg1 { Registers::invalid_reg };
+static constexpr Register IntArgReg2 { Registers::invalid_reg };
+static constexpr Register IntArgReg3 { Registers::invalid_reg };
+static constexpr Register HeapReg { Registers::invalid_reg };
 
-static constexpr Register WasmIonExitRegCallee = { Registers::invalid_reg };
-static constexpr Register WasmIonExitRegE0 = { Registers::invalid_reg };
-static constexpr Register WasmIonExitRegE1 = { Registers::invalid_reg };
+static constexpr Register WasmIonExitRegCallee { Registers::invalid_reg };
+static constexpr Register WasmIonExitRegE0 { Registers::invalid_reg };
+static constexpr Register WasmIonExitRegE1 { Registers::invalid_reg };
 
-static constexpr Register WasmIonExitRegReturnData = { Registers::invalid_reg };
-static constexpr Register WasmIonExitRegReturnType = { Registers::invalid_reg };
-static constexpr Register WasmIonExitRegD0 = { Registers::invalid_reg };
-static constexpr Register WasmIonExitRegD1 = { Registers::invalid_reg };
-static constexpr Register WasmIonExitRegD2 = { Registers::invalid_reg };
+static constexpr Register WasmIonExitRegReturnData { Registers::invalid_reg };
+static constexpr Register WasmIonExitRegReturnType { Registers::invalid_reg };
+static constexpr Register WasmIonExitRegD0 { Registers::invalid_reg };
+static constexpr Register WasmIonExitRegD1 { Registers::invalid_reg };
+static constexpr Register WasmIonExitRegD2 { Registers::invalid_reg };
 
-static constexpr Register RegExpTesterRegExpReg = { Registers::invalid_reg };
-static constexpr Register RegExpTesterStringReg = { Registers::invalid_reg };
-static constexpr Register RegExpTesterLastIndexReg = { Registers::invalid_reg };
-static constexpr Register RegExpTesterStickyReg = { Registers::invalid_reg };
+static constexpr Register RegExpTesterRegExpReg { Registers::invalid_reg };
+static constexpr Register RegExpTesterStringReg { Registers::invalid_reg };
+static constexpr Register RegExpTesterLastIndexReg { Registers::invalid_reg };
+static constexpr Register RegExpTesterStickyReg { Registers::invalid_reg };
 
-static constexpr Register RegExpMatcherRegExpReg = { Registers::invalid_reg };
-static constexpr Register RegExpMatcherStringReg = { Registers::invalid_reg };
-static constexpr Register RegExpMatcherLastIndexReg = { Registers::invalid_reg };
-static constexpr Register RegExpMatcherStickyReg = { Registers::invalid_reg };
+static constexpr Register RegExpMatcherRegExpReg { Registers::invalid_reg };
+static constexpr Register RegExpMatcherStringReg { Registers::invalid_reg };
+static constexpr Register RegExpMatcherLastIndexReg { Registers::invalid_reg };
+static constexpr Register RegExpMatcherStickyReg { Registers::invalid_reg };
 
-static constexpr Register JSReturnReg_Type = { Registers::invalid_reg };
-static constexpr Register JSReturnReg_Data = { Registers::invalid_reg };
-static constexpr Register JSReturnReg = { Registers::invalid_reg };
+static constexpr Register JSReturnReg_Type { Registers::invalid_reg };
+static constexpr Register JSReturnReg_Data { Registers::invalid_reg };
+static constexpr Register JSReturnReg { Registers::invalid_reg };
 
 #if defined(JS_NUNBOX32)
 static constexpr ValueOperand JSReturnOperand(InvalidReg, InvalidReg);
@@ -77,15 +76,15 @@ static constexpr Register64 ReturnReg64(InvalidReg);
 #error "Bad architecture"
 #endif
 
-static constexpr Register ABINonArgReg0 = { Registers::invalid_reg };
-static constexpr Register ABINonArgReg1 = { Registers::invalid_reg };
-static constexpr Register ABINonArgReturnReg0 = { Registers::invalid_reg };
-static constexpr Register ABINonArgReturnReg1 = { Registers::invalid_reg };
+static constexpr Register ABINonArgReg0 { Registers::invalid_reg };
+static constexpr Register ABINonArgReg1 { Registers::invalid_reg };
+static constexpr Register ABINonArgReturnReg0 { Registers::invalid_reg };
+static constexpr Register ABINonArgReturnReg1 { Registers::invalid_reg };
 
-static constexpr Register WasmTableCallScratchReg = { Registers::invalid_reg };
-static constexpr Register WasmTableCallSigReg = { Registers::invalid_reg };
-static constexpr Register WasmTableCallIndexReg = { Registers::invalid_reg };
-static constexpr Register WasmTlsReg = { Registers::invalid_reg };
+static constexpr Register WasmTableCallScratchReg { Registers::invalid_reg };
+static constexpr Register WasmTableCallSigReg { Registers::invalid_reg };
+static constexpr Register WasmTableCallIndexReg { Registers::invalid_reg };
+static constexpr Register WasmTlsReg { Registers::invalid_reg };
 
 static constexpr uint32_t ABIStackAlignment = 4;
 static constexpr uint32_t CodeAlignment = 4;
@@ -267,7 +266,9 @@ class MacroAssemblerNone : public Assembler
     template <typename T> void loadInt32x1(T, FloatRegister dest) { MOZ_CRASH(); }
     template <typename T> void loadInt32x2(T, FloatRegister dest) { MOZ_CRASH(); }
     template <typename T> void loadInt32x3(T, FloatRegister dest) { MOZ_CRASH(); }
+    template <typename T> void loadInt32x4(T, FloatRegister dest) { MOZ_CRASH(); }
     template <typename T> void loadFloat32x3(T, FloatRegister dest) { MOZ_CRASH(); }
+    template <typename T> void loadFloat32x4(T, FloatRegister dest) { MOZ_CRASH(); }
 
     template <typename T> void loadPtr(T, Register) { MOZ_CRASH(); }
     template <typename T> void load32(T, Register) { MOZ_CRASH(); }
@@ -284,7 +285,7 @@ class MacroAssemblerNone : public Assembler
     template <typename T> void load16ZeroExtend(T, Register) { MOZ_CRASH(); }
     template <typename T> void load64(T, Register64 ) { MOZ_CRASH(); }
 
-    template <typename T, typename S> void storePtr(T, S) { MOZ_CRASH(); }
+    template <typename T, typename S> void storePtr(const T&, S) { MOZ_CRASH(); }
     template <typename T, typename S> void store32(T, S) { MOZ_CRASH(); }
     template <typename T, typename S> void store32_NoSecondScratch(T, S) { MOZ_CRASH(); }
     template <typename T, typename S> void storeFloat32(T, S) { MOZ_CRASH(); }
@@ -298,7 +299,9 @@ class MacroAssemblerNone : public Assembler
     template <typename T, typename S> void storeInt32x1(T, S) { MOZ_CRASH(); }
     template <typename T, typename S> void storeInt32x2(T, S) { MOZ_CRASH(); }
     template <typename T, typename S> void storeInt32x3(T, S) { MOZ_CRASH(); }
+    template <typename T, typename S> void storeInt32x4(T, S) { MOZ_CRASH(); }
     template <typename T, typename S> void storeFloat32x3(T, S) { MOZ_CRASH(); }
+    template <typename T, typename S> void storeFloat32x4(T, S) { MOZ_CRASH(); }
     template <typename T, typename S> void store64(T, S) { MOZ_CRASH(); }
 
     template <typename T> void computeEffectiveAddress(T, Register) { MOZ_CRASH(); }
@@ -454,7 +457,7 @@ PatchJump(CodeLocationJump&, CodeLocationLabel, ReprotectCode reprotect = DontRe
 static inline bool GetTempRegForIntArg(uint32_t, uint32_t, Register*) { MOZ_CRASH(); }
 
 static inline
-void PatchBackedge(CodeLocationJump& jump_, CodeLocationLabel label, JitRuntime::BackedgeTarget target)
+void PatchBackedge(CodeLocationJump& jump_, CodeLocationLabel label, JitZoneGroup::BackedgeTarget target)
 {
     MOZ_CRASH();
 }

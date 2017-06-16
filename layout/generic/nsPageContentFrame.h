@@ -43,7 +43,7 @@ public:
    * @see nsGkAtoms::pageContentFrame
    */
   virtual nsIAtom* GetType() const override;
-  
+
 #ifdef DEBUG_FRAME_DUMP
   // Debugging
   virtual nsresult  GetFrameName(nsAString& aResult) const override;

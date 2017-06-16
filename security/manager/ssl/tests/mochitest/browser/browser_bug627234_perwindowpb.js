@@ -28,10 +28,9 @@ FakeSSLStatus.prototype = {
 
 function whenNewWindowLoaded(aOptions, aCallback) {
   let win = OpenBrowserWindow(aOptions);
-  win.addEventListener("load", function onLoad() {
-    win.removeEventListener("load", onLoad);
+  win.addEventListener("load", function() {
     aCallback(win);
-  });
+  }, {once: true});
 }
 
 // This is a template to help porting global private browsing tests
@@ -50,16 +49,17 @@ function test() {
   }
 
   function doTest(aIsPrivateMode, aWindow, aCallback) {
-    aWindow.gBrowser.selectedBrowser.addEventListener("load", function onLoad() {
-      aWindow.gBrowser.selectedBrowser.removeEventListener("load", onLoad, true);
+    aWindow.gBrowser.selectedBrowser.addEventListener("load", function() {
       let sslStatus = new FakeSSLStatus();
       uri = aWindow.Services.io.newURI("https://localhost/img.png");
       gSSService.processHeader(Ci.nsISiteSecurityService.HEADER_HSTS, uri,
                                "max-age=1000", sslStatus, privacyFlags(aIsPrivateMode));
-      ok(gSSService.isSecureHost(Ci.nsISiteSecurityService.HEADER_HSTS, "localhost", privacyFlags(aIsPrivateMode)), "checking sts host");
+      ok(gSSService.isSecureURI(Ci.nsISiteSecurityService.HEADER_HSTS, uri,
+                                privacyFlags(aIsPrivateMode)),
+                                "checking sts host");
 
       aCallback();
-    }, true);
+    }, {capture: true, once: true});
 
     aWindow.gBrowser.selectedBrowser.loadURI(testURI);
   }

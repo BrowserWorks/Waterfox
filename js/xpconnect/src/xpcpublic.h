@@ -151,6 +151,23 @@ IsXrayWrapper(JSObject* obj);
 JSObject*
 XrayAwareCalleeGlobal(JSObject* fun);
 
+// A version of XrayAwareCalleeGlobal that can be used from a binding
+// specialized getter.  We need this function because in a specialized getter we
+// don't have a callee JSFunction, so can't use xpc::XrayAwareCalleeGlobal.
+// Instead we do something a bit hacky using our current compartment and "this"
+// value.  Note that for the Xray case thisObj will NOT be in the compartment of
+// "cx".
+//
+// As expected, the outparam "global" need not be same-compartment with either
+// thisObj or cx, though it _will_ be same-compartment with one of them.
+//
+// This function can fail; the return value indicates success or failure.
+bool
+XrayAwareCalleeGlobalForSpecializedGetters(JSContext* cx,
+                                           JS::Handle<JSObject*> thisObj,
+                                           JS::MutableHandle<JSObject*> global);
+
+
 void
 TraceXPCGlobal(JSTracer* trc, JSObject* obj);
 
@@ -244,7 +261,7 @@ public:
         ZoneStringCache* cache = static_cast<ZoneStringCache*>(JS_GetZoneUserData(zone));
         if (cache && buf == cache->mBuffer && length == cache->mLength) {
             MOZ_ASSERT(JS::GetStringZone(cache->mString) == zone);
-            JS::MarkStringAsLive(zone, cache->mString);
+            JS::StringReadBarrier(cache->mString);
             rval.setString(cache->mString);
             *sharedBuffer = false;
             return true;
@@ -518,13 +535,50 @@ AllowCPOWsInAddon(const nsACString& addonId, bool allow);
 bool
 ExtraWarningsForSystemJS();
 
-class ErrorReport {
+class ErrorBase {
+  public:
+    nsString mErrorMsg;
+    nsString mFileName;
+    uint32_t mLineNumber;
+    uint32_t mColumn;
+
+    ErrorBase() : mLineNumber(0)
+                , mColumn(0)
+    {}
+
+    void Init(JSErrorBase* aReport);
+
+    void AppendErrorDetailsTo(nsCString& error);
+};
+
+class ErrorNote : public ErrorBase {
+  public:
+    void Init(JSErrorNotes::Note* aNote);
+
+    // Produce an error event message string from the given JSErrorNotes::Note.
+    // This may produce an empty string if aNote doesn't have a message
+    // attached.
+    static void ErrorNoteToMessageString(JSErrorNotes::Note* aNote,
+                                         nsAString& aString);
+
+    // Log the error note to the stderr.
+    void LogToStderr();
+};
+
+class ErrorReport : public ErrorBase {
   public:
     NS_INLINE_DECL_THREADSAFE_REFCOUNTING(ErrorReport);
 
+    nsTArray<ErrorNote> mNotes;
+
+    nsCString mCategory;
+    nsString mSourceLine;
+    nsString mErrorMsgName;
+    uint64_t mWindowID;
+    uint32_t mFlags;
+    bool mIsMuted;
+
     ErrorReport() : mWindowID(0)
-                  , mLineNumber(0)
-                  , mColumn(0)
                   , mFlags(0)
                   , mIsMuted(false)
     {}
@@ -533,6 +587,7 @@ class ErrorReport {
               bool aIsChrome, uint64_t aWindowID);
     void Init(JSContext* aCx, mozilla::dom::Exception* aException,
               bool aIsChrome, uint64_t aWindowID);
+
     // Log the error report to the console.  Which console will depend on the
     // window id it was initialized with.
     void LogToConsole();
@@ -547,18 +602,8 @@ class ErrorReport {
     static void ErrorReportToMessageString(JSErrorReport* aReport,
                                            nsAString& aString);
 
-  public:
-
-    nsCString mCategory;
-    nsString mErrorMsgName;
-    nsString mErrorMsg;
-    nsString mFileName;
-    nsString mSourceLine;
-    uint64_t mWindowID;
-    uint32_t mLineNumber;
-    uint32_t mColumn;
-    uint32_t mFlags;
-    bool mIsMuted;
+    // Log the error report to the stderr.
+    void LogToStderr();
 
   private:
     ~ErrorReport() {}

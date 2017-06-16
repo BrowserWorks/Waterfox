@@ -23,8 +23,7 @@ class LayersIPCActor;
  */
 class KnowsCompositor {
 public:
-  NS_IMETHOD_(MozExternalRefCountType) AddRef(void) = 0;
-  NS_IMETHOD_(MozExternalRefCountType) Release(void) = 0;
+  NS_INLINE_DECL_PURE_VIRTUAL_REFCOUNTING
 
   KnowsCompositor();
   ~KnowsCompositor();
@@ -63,9 +62,18 @@ public:
     return mTextureFactoryIdentifier.mSupportsComponentAlpha;
   }
 
+  bool GetCompositorUseANGLE() const
+  {
+    return mTextureFactoryIdentifier.mCompositorUseANGLE;
+  }
+
   const TextureFactoryIdentifier& GetTextureFactoryIdentifier() const
   {
     return mTextureFactoryIdentifier;
+  }
+
+  bool DeviceCanReset() const {
+    return GetCompositorBackendType() != LayersBackend::LAYERS_BASIC;
   }
 
   int32_t GetSerial() { return mSerial; }

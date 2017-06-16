@@ -261,10 +261,8 @@ class IonBuilder
                                                          size_t fieldIndex);
     AbortReasonOr<Ok> getPropTryInnerize(bool* emitted, MDefinition* obj, PropertyName* name,
                                          TemporaryTypeSet* types);
-    AbortReasonOr<Ok> getPropTryCache(bool* emitted, MDefinition* obj, PropertyName* name,
+    AbortReasonOr<Ok> getPropAddCache(MDefinition* obj, PropertyName* name,
                                       BarrierKind barrier, TemporaryTypeSet* types);
-    AbortReasonOr<Ok> getPropTrySharedStub(bool* emitted, MDefinition* obj,
-                                           TemporaryTypeSet* types);
 
     // jsop_setprop() helpers.
     AbortReasonOr<Ok> setPropTryCommonSetter(bool* emitted, MDefinition* obj,
@@ -397,12 +395,13 @@ class IonBuilder
                                             MDefinition* index, MDefinition* value);
     AbortReasonOr<Ok> setElemTryTypedStatic(bool* emitted, MDefinition* object,
                                             MDefinition* index, MDefinition* value);
-    AbortReasonOr<Ok> setElemTryDense(bool* emitted, MDefinition* object,
-                                      MDefinition* index, MDefinition* value, bool writeHole);
+    AbortReasonOr<Ok> initOrSetElemTryDense(bool* emitted, MDefinition* object,
+                                            MDefinition* index, MDefinition* value,
+                                            bool writeHole);
     AbortReasonOr<Ok> setElemTryArguments(bool* emitted, MDefinition* object,
                                           MDefinition* index, MDefinition* value);
-    AbortReasonOr<Ok> setElemTryCache(bool* emitted, MDefinition* object,
-                                      MDefinition* index, MDefinition* value);
+    AbortReasonOr<Ok> initOrSetElemTryCache(bool* emitted, MDefinition* object,
+                                            MDefinition* index, MDefinition* value);
     AbortReasonOr<Ok> setElemTryReferenceElemOfTypedObject(bool* emitted,
                                                            MDefinition* obj,
                                                            MDefinition* index,
@@ -530,7 +529,7 @@ class IonBuilder
     AbortReasonOr<Ok> jsop_getelem_typed(MDefinition* obj, MDefinition* index,
                                          ScalarTypeDescr::Type arrayType);
     AbortReasonOr<Ok> jsop_setelem();
-    AbortReasonOr<Ok> jsop_setelem_dense(TemporaryTypeSet::DoubleConversion conversion,
+    AbortReasonOr<Ok> initOrSetElemDense(TemporaryTypeSet::DoubleConversion conversion,
                                          MDefinition* object, MDefinition* index,
                                          MDefinition* value, JSValueType unboxedType,
                                          bool writeHole, bool* emitted);
@@ -563,6 +562,8 @@ class IonBuilder
     AbortReasonOr<Ok> jsop_lambda(JSFunction* fun);
     AbortReasonOr<Ok> jsop_lambda_arrow(JSFunction* fun);
     AbortReasonOr<Ok> jsop_setfunname(uint8_t prefixKind);
+    AbortReasonOr<Ok> jsop_pushlexicalenv(uint32_t index);
+    AbortReasonOr<Ok> jsop_copylexicalenv(bool copySlots);
     AbortReasonOr<Ok> jsop_functionthis();
     AbortReasonOr<Ok> jsop_globalthis();
     AbortReasonOr<Ok> jsop_typeof();
@@ -947,8 +948,7 @@ class IonBuilder
     }
 
     TraceLoggerThread *traceLogger() {
-        // Currently ionbuilder only runs on the main thread.
-        return TraceLoggerForMainThread(compartment->runtime()->mainThread()->runtimeFromMainThread());
+        return TraceLoggerForCurrentThread();
     }
 
     void actionableAbortLocationAndMessage(JSScript** abortScript, jsbytecode** abortPc,

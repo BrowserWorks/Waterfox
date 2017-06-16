@@ -39,14 +39,14 @@ const EXPECTED_REQUESTS_TOP = [
     url: EXAMPLE_URL + "xhr_request",
     causeType: "xhr",
     causeUri: TOP_URL,
-    stack: [{ fn: "performXhrRequest", file: TOP_FILE_NAME, line: 23 }]
+    stack: [{ fn: "performXhrRequest", file: TOP_FILE_NAME, line: 25 }]
   },
   {
     method: "GET",
     url: EXAMPLE_URL + "fetch_request",
     causeType: "fetch",
     causeUri: TOP_URL,
-    stack: [{ fn: "performFetchRequest", file: TOP_FILE_NAME, line: 27 }]
+    stack: [{ fn: "performFetchRequest", file: TOP_FILE_NAME, line: 29 }]
   },
   {
     method: "GET",
@@ -54,8 +54,8 @@ const EXPECTED_REQUESTS_TOP = [
     causeType: "fetch",
     causeUri: TOP_URL,
     stack: [
-      { fn: "performPromiseFetchRequest", file: TOP_FILE_NAME, line: 39 },
-      { fn: null, file: TOP_FILE_NAME, line: 38, asyncCause: "promise callback" },
+      { fn: "performPromiseFetchRequest", file: TOP_FILE_NAME, line: 41 },
+      { fn: null, file: TOP_FILE_NAME, line: 40, asyncCause: "promise callback" },
     ]
   },
   {
@@ -64,8 +64,8 @@ const EXPECTED_REQUESTS_TOP = [
     causeType: "fetch",
     causeUri: TOP_URL,
     stack: [
-      { fn: "performTimeoutFetchRequest", file: TOP_FILE_NAME, line: 41 },
-      { fn: "performPromiseFetchRequest", file: TOP_FILE_NAME, line: 40,
+      { fn: "performTimeoutFetchRequest", file: TOP_FILE_NAME, line: 43 },
+      { fn: "performPromiseFetchRequest", file: TOP_FILE_NAME, line: 42,
         asyncCause: "setTimeout handler" },
     ]
   },
@@ -74,7 +74,7 @@ const EXPECTED_REQUESTS_TOP = [
     url: EXAMPLE_URL + "beacon_request",
     causeType: "beacon",
     causeUri: TOP_URL,
-    stack: [{ fn: "performBeaconRequest", file: TOP_FILE_NAME, line: 31 }]
+    stack: [{ fn: "performBeaconRequest", file: TOP_FILE_NAME, line: 33 }]
   },
 ];
 
@@ -105,14 +105,14 @@ const EXPECTED_REQUESTS_SUB = [
     url: EXAMPLE_URL + "xhr_request",
     causeType: "xhr",
     causeUri: SUB_URL,
-    stack: [{ fn: "performXhrRequest", file: SUB_FILE_NAME, line: 22 }]
+    stack: [{ fn: "performXhrRequest", file: SUB_FILE_NAME, line: 24 }]
   },
   {
     method: "GET",
     url: EXAMPLE_URL + "fetch_request",
     causeType: "fetch",
     causeUri: SUB_URL,
-    stack: [{ fn: "performFetchRequest", file: SUB_FILE_NAME, line: 26 }]
+    stack: [{ fn: "performFetchRequest", file: SUB_FILE_NAME, line: 28 }]
   },
   {
     method: "GET",
@@ -120,8 +120,8 @@ const EXPECTED_REQUESTS_SUB = [
     causeType: "fetch",
     causeUri: SUB_URL,
     stack: [
-      { fn: "performPromiseFetchRequest", file: SUB_FILE_NAME, line: 38 },
-      { fn: null, file: SUB_FILE_NAME, line: 37, asyncCause: "promise callback" },
+      { fn: "performPromiseFetchRequest", file: SUB_FILE_NAME, line: 40 },
+      { fn: null, file: SUB_FILE_NAME, line: 39, asyncCause: "promise callback" },
     ]
   },
   {
@@ -130,8 +130,8 @@ const EXPECTED_REQUESTS_SUB = [
     causeType: "fetch",
     causeUri: SUB_URL,
     stack: [
-      { fn: "performTimeoutFetchRequest", file: SUB_FILE_NAME, line: 40 },
-      { fn: "performPromiseFetchRequest", file: SUB_FILE_NAME, line: 39,
+      { fn: "performTimeoutFetchRequest", file: SUB_FILE_NAME, line: 42 },
+      { fn: "performPromiseFetchRequest", file: SUB_FILE_NAME, line: 41,
         asyncCause: "setTimeout handler" },
     ]
   },
@@ -140,7 +140,7 @@ const EXPECTED_REQUESTS_SUB = [
     url: EXAMPLE_URL + "beacon_request",
     causeType: "beacon",
     causeUri: SUB_URL,
-    stack: [{ fn: "performBeaconRequest", file: SUB_FILE_NAME, line: 30 }]
+    stack: [{ fn: "performBeaconRequest", file: SUB_FILE_NAME, line: 32 }]
   },
 ];
 
@@ -157,15 +157,21 @@ add_task(function* () {
   // We can't use about:blank here, because initNetMonitor checks that the
   // page has actually made at least one request.
   let { tab, monitor } = yield initNetMonitor(SIMPLE_URL);
-  let { NetMonitorView } = monitor.panelWin;
-  let { RequestsMenu } = NetMonitorView;
-  RequestsMenu.lazyUpdate = false;
+
+  let { document, gStore, windowRequire } = monitor.panelWin;
+  let Actions = windowRequire("devtools/client/netmonitor/actions/index");
+  let {
+    getDisplayedRequests,
+    getSortedRequests,
+  } = windowRequire("devtools/client/netmonitor/selectors/index");
+
+  gStore.dispatch(Actions.batchEnable(false));
 
   tab.linkedBrowser.loadURI(TOP_URL, null, null);
 
   yield waitForNetworkEvents(monitor, REQUEST_COUNT);
 
-  is(RequestsMenu.itemCount, REQUEST_COUNT,
+  is(gStore.getState().requests.requests.size, REQUEST_COUNT,
     "All the page events should be recorded.");
 
   // While there is a defined order for requests in each document separately, the requests
@@ -174,7 +180,7 @@ add_task(function* () {
   let currentTop = 0;
   let currentSub = 0;
   for (let i = 0; i < REQUEST_COUNT; i++) {
-    let requestItem = RequestsMenu.getItemAtIndex(i);
+    let requestItem = getSortedRequests(gStore.getState()).get(i);
 
     let itemUrl = requestItem.url;
     let itemCauseUri = requestItem.cause.loadingDocumentUri;
@@ -186,8 +192,13 @@ add_task(function* () {
     }
     let { method, url, causeType, causeUri, stack } = spec;
 
-    verifyRequestItemTarget(RequestsMenu, requestItem,
-      method, url, { cause: { type: causeType, loadingDocumentUri: causeUri } }
+    verifyRequestItemTarget(
+      document,
+      getDisplayedRequests(gStore.getState()),
+      requestItem,
+      method,
+      url,
+      { cause: { type: causeType, loadingDocumentUri: causeUri } }
     );
 
     let { stacktrace } = requestItem.cause;

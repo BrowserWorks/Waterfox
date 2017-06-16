@@ -2,7 +2,7 @@
  * Provides infrastructure for automated formautofill components tests.
  */
 
-/* exported loadFormAutofillContent, getTempFile */
+/* exported loadFormAutofillContent, getTempFile, sinon */
 
 "use strict";
 
@@ -12,11 +12,20 @@ Cu.import("resource://gre/modules/XPCOMUtils.jsm");
 Cu.import("resource://gre/modules/Services.jsm");
 Cu.import("resource://gre/modules/NetUtil.jsm");
 Cu.import("resource://testing-common/MockDocument.jsm");
+Cu.import("resource://testing-common/TestUtils.jsm");
 
 XPCOMUtils.defineLazyModuleGetter(this, "DownloadPaths",
                                   "resource://gre/modules/DownloadPaths.jsm");
 XPCOMUtils.defineLazyModuleGetter(this, "FileUtils",
                                   "resource://gre/modules/FileUtils.jsm");
+
+do_get_profile();
+
+// Setup the environment for sinon.
+Cu.import("resource://gre/modules/Timer.jsm");
+let self = {}; // eslint-disable-line no-unused-vars
+var sinon;
+Services.scriptloader.loadSubScript("resource://testing-common/sinon-1.16.1.js");
 
 // Load our bootstrap extension manifest so we can access our chrome/resource URIs.
 const EXTENSION_ID = "formautofill@mozilla.org";
@@ -36,19 +45,6 @@ Components.manager.addBootstrappedManifestLocation(extensionDir);
 // system.  Thus, start from a new base number every time, to make a collision
 // with a file that is still pending deletion highly unlikely.
 let gFileCounter = Math.floor(Math.random() * 1000000);
-
-function loadFormAutofillContent() {
-  let facGlobal = {
-    addEventListener: function() {},
-  };
-  let loader = Cc["@mozilla.org/moz/jssubscript-loader;1"]
-               .getService(Ci.mozIJSSubScriptLoader);
-  loader.loadSubScriptWithOptions("chrome://formautofill/content/FormAutofillContent.js", {
-    target: facGlobal,
-  });
-
-  return facGlobal;
-}
 
 /**
  * Returns a reference to a temporary file, that is guaranteed not to exist, and
@@ -83,12 +79,12 @@ function getTempFile(leafName) {
   return file;
 }
 
-add_task(function* test_common_initialize() {
+add_task(function* head_initialize() {
   Services.prefs.setBoolPref("browser.formautofill.experimental", true);
   Services.prefs.setBoolPref("dom.forms.autocomplete.experimental", true);
 
   // Clean up after every test.
-  do_register_cleanup(() => {
+  do_register_cleanup(function head_cleanup() {
     Services.prefs.clearUserPref("browser.formautofill.experimental");
     Services.prefs.clearUserPref("dom.forms.autocomplete.experimental");
   });

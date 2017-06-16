@@ -395,7 +395,7 @@ t_6_v</textarea>
   </p>
 </form>
 <pre id="test">
-<script class="testbody" type="text/javascript;version=1.8">
+<script class="testbody" type="text/javascript">
 
 SimpleTest.waitForExplicitFinish();
 
@@ -681,9 +681,7 @@ function setDisabled(list, state) {
 var gen;
 function onFilesSet() {
   gen = runTest();
-  addLoadEvent(function() {
-    gen.next();
-  });
+  gen.next();
 }
 
 function* runTest() {

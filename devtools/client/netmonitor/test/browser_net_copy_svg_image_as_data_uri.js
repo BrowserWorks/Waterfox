@@ -13,10 +13,7 @@ add_task(function* () {
   let { tab, monitor } = yield initNetMonitor(CURL_URL);
   info("Starting test... ");
 
-  let { NetMonitorView } = monitor.panelWin;
-  let { RequestsMenu } = NetMonitorView;
-
-  RequestsMenu.lazyUpdate = false;
+  let { document } = monitor.panelWin;
 
   let wait = waitForNetworkEvents(monitor, 1);
   yield ContentTask.spawn(tab.linkedBrowser, SVG_URL, function* (url) {
@@ -24,11 +21,14 @@ add_task(function* () {
   });
   yield wait;
 
-  let requestItem = RequestsMenu.getItemAtIndex(0);
-  RequestsMenu.selectedItem = requestItem;
+  EventUtils.sendMouseEvent({ type: "mousedown" },
+    document.querySelectorAll(".request-list-item")[0]);
+  EventUtils.sendMouseEvent({ type: "contextmenu" },
+    document.querySelectorAll(".request-list-item")[0]);
 
   yield waitForClipboardPromise(function setup() {
-    RequestsMenu.contextMenu.copyImageAsDataUri();
+    monitor.panelWin.parent.document
+      .querySelector("#request-list-context-copy-image-as-data-uri").click();
   }, function check(text) {
     return text.startsWith("data:") && !/undefined/.test(text);
   });

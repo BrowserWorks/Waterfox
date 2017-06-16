@@ -22,6 +22,10 @@
       <field name="TIME_PICKER_HEIGHT" readonly="true">"21em"</field>
       <field name="DATE_PICKER_WIDTH" readonly="true">"23.1em"</field>
       <field name="DATE_PICKER_HEIGHT" readonly="true">"20.7em"</field>
+      <constructor><![CDATA[
+        this.mozIntl = Components.classes["@mozilla.org/mozintl;1"]
+                                 .getService(Components.interfaces.mozIMozIntl);
+      ]]></constructor>
       <method name="loadPicker">
         <parameter name="type"/>
         <parameter name="detail"/>
@@ -115,6 +119,34 @@
             }
             case "date": {
               const { year, month, day } = detail.value;
+              const { firstDayOfWeek, weekends } =
+                this.getCalendarInfo(locale);
+              const monthStrings = this.getDisplayNames(
+                locale, [
+                  "dates/gregorian/months/january",
+                  "dates/gregorian/months/february",
+                  "dates/gregorian/months/march",
+                  "dates/gregorian/months/april",
+                  "dates/gregorian/months/may",
+                  "dates/gregorian/months/june",
+                  "dates/gregorian/months/july",
+                  "dates/gregorian/months/august",
+                  "dates/gregorian/months/september",
+                  "dates/gregorian/months/october",
+                  "dates/gregorian/months/november",
+                  "dates/gregorian/months/december",
+                ], "short");
+              const weekdayStrings = this.getDisplayNames(
+                locale, [
+                  "dates/gregorian/weekdays/sunday",
+                  "dates/gregorian/weekdays/monday",
+                  "dates/gregorian/weekdays/tuesday",
+                  "dates/gregorian/weekdays/wednesday",
+                  "dates/gregorian/weekdays/thursday",
+                  "dates/gregorian/weekdays/friday",
+                  "dates/gregorian/weekdays/saturday",
+                ], "short");
+
               this.postMessageToPicker({
                 name: "PickerInit",
                 detail: {
@@ -122,6 +154,10 @@
                   // Month value from input box starts from 1 instead of 0
                   month: month == undefined ? undefined : month - 1,
                   day,
+                  firstDayOfWeek,
+                  weekends,
+                  monthStrings,
+                  weekdayStrings,
                   locale
                 }
               });
@@ -182,6 +218,46 @@
               break;
             }
           }
+        ]]></body>
+      </method>
+      <method name="getCalendarInfo">
+        <parameter name="locale"/>
+        <body><![CDATA[
+          const calendarInfo = this.mozIntl.getCalendarInfo(locale);
+
+          // Day of week from calendarInfo starts from 1 as Sunday to 7 as Saturday,
+          // so they need to be mapped to JavaScript convention with 0 as Sunday
+          // and 6 as Saturday
+          let firstDayOfWeek = calendarInfo.firstDayOfWeek - 1,
+              weekendStart = calendarInfo.weekendStart - 1,
+              weekendEnd = calendarInfo.weekendEnd - 1;
+
+          let weekends = [];
+
+          // Make sure weekendEnd is greater than weekendStart
+          if (weekendEnd < weekendStart) {
+            weekendEnd += 7;
+          }
+
+          // We get the weekends by incrementing weekendStart up to weekendEnd.
+          // If the start and end is the same day, then weekends only has one day.
+          for (let day = weekendStart; day <= weekendEnd; day++) {
+            weekends.push(day % 7);
+          }
+
+          return {
+            firstDayOfWeek,
+            weekends
+          }
+        ]]></body>
+      </method>
+      <method name="getDisplayNames">
+        <parameter name="locale"/>
+        <parameter name="keys"/>
+        <parameter name="style"/>
+        <body><![CDATA[
+          const displayNames = this.mozIntl.getDisplayNames(locale, {keys, style});
+          return keys.map(key => displayNames.values[key]);
         ]]></body>
       </method>
       <method name="handleEvent">

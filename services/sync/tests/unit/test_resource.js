@@ -3,11 +3,11 @@
 
 Cu.import("resource://gre/modules/Log.jsm");
 Cu.import("resource://services-common/observers.js");
-Cu.import("resource://services-sync/identity.js");
 Cu.import("resource://services-sync/resource.js");
+Cu.import("resource://services-sync/status.js");
 Cu.import("resource://services-sync/util.js");
-
-var logger;
+Cu.import("resource://services-sync/browserid_identity.js");
+Cu.import("resource://testing-common/services/sync/utils.js");
 
 var fetched = false;
 function server_open(metadata, response) {
@@ -26,7 +26,7 @@ function server_open(metadata, response) {
 function server_protected(metadata, response) {
   let body;
 
-  if (basic_auth_matches(metadata, "guest", "guest")) {
+  if (has_hawk_header(metadata)) {
     body = "This path exists and is protected";
     response.setStatusLine(metadata.httpVersion, 200, "OK, authorized");
     response.setHeader("WWW-Authenticate", 'Basic realm="secret"', false);
@@ -229,11 +229,6 @@ function run_test() {
               "Parse fail: Response body starts: \"\"This path exists\"\".");
   logger.debug = dbg;
 
-  _("Test that the BasicAuthenticator doesn't screw up header case.");
-  let res1 = new Resource(server.baseURI + "/foo");
-  res1.setHeader("Authorization", "Basic foobar");
-  do_check_eq(res1.headers["authorization"], "Basic foobar");
-
   _("GET a password protected resource (test that it'll fail w/o pass, no throw)");
   let res2 = new Resource(server.baseURI + "/protected");
   content = res2.get();
@@ -243,8 +238,10 @@ function run_test() {
 
   _("GET a password protected resource");
   let res3 = new Resource(server.baseURI + "/protected");
-  let identity = new IdentityManager();
-  let auth = identity.getBasicResourceAuthenticator("guest", "guest");
+  let identityConfig = makeIdentityConfig();
+  let browseridManager = Status._authManager;
+  configureFxAccountIdentity(browseridManager, identityConfig);
+  let auth = browseridManager.getResourceAuthenticator();
   res3.authenticator = auth;
   do_check_eq(res3.authenticator, auth);
   content = res3.get();
@@ -453,7 +450,7 @@ function run_test() {
     throw "BOO!";
   };
   res18._onProgress = onProgress;
-  oldWarn = res18._log.warn;
+  let oldWarn = res18._log.warn;
   warnings = [];
   res18._log.warn = function(msg) { warnings.push(msg) };
   error = undefined;
@@ -471,6 +468,7 @@ function run_test() {
               "Got exception calling onProgress handler during fetch of " +
               server.baseURI + "/json");
 
+  res18._log.warn = oldWarn;
 
   _("Ensure channel timeouts are thrown appropriately.");
   let res19 = new Resource(server.baseURI + "/json");

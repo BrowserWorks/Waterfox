@@ -46,9 +46,17 @@ PlatformChild::PlatformChild()
   : mAccTypelib(mozilla::mscom::RegisterTypelib(L"oleacc.dll",
         mozilla::mscom::RegistrationFlags::eUseSystemDirectory))
   , mMiscTypelib(mozilla::mscom::RegisterTypelib(L"Accessible.tlb"))
+  , mSdnTypelib(mozilla::mscom::RegisterTypelib(L"AccessibleMarshal.dll"))
 {
   mozilla::mscom::InterceptorLog::Init();
   mozilla::mscom::RegisterArrayData(sPlatformChildArrayData);
+
+
+  UniquePtr<mozilla::mscom::RegisteredProxy> customProxy;
+  mozilla::mscom::EnsureMTA([&customProxy]() -> void {
+    customProxy = Move(mozilla::mscom::RegisterProxy());
+  });
+  mCustomProxy = Move(customProxy);
 
   UniquePtr<mozilla::mscom::RegisteredProxy> ia2Proxy;
   mozilla::mscom::EnsureMTA([&ia2Proxy]() -> void {

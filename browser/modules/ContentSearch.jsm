@@ -454,6 +454,7 @@ this.ContentSearch = {
     if (msg.target.contentWindow) {
       engine.speculativeConnect({
         window: msg.target.contentWindow,
+        originAttributes: msg.target.contentPrincipal.originAttributes
       });
     }
   },

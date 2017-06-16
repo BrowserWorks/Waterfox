@@ -121,7 +121,7 @@ public:
     return NS_OK;
   }
 
-  // Let the text editor tell us we're no longer relevant - avoids use of nsWeakFrame
+  // Let the text editor tell us we're no longer relevant - avoids use of AutoWeakFrame
   void Revoke() {
     mFrame = nullptr;
     mTextEditorState = nullptr;
@@ -814,7 +814,7 @@ NS_IMETHODIMP
 nsTextInputListener::NotifySelectionChanged(nsIDOMDocument* aDoc, nsISelection* aSel, int16_t aReason)
 {
   bool collapsed;
-  nsWeakFrame weakFrame = mFrame;
+  AutoWeakFrame weakFrame = mFrame;
 
   if (!aDoc || !aSel || NS_FAILED(aSel->GetIsCollapsed(&collapsed)))
     return NS_OK;
@@ -965,7 +965,7 @@ nsTextInputListener::EditAction()
     return NS_OK;
   }
 
-  nsWeakFrame weakFrame = mFrame;
+  AutoWeakFrame weakFrame = mFrame;
 
   nsITextControlFrame* frameBase = do_QueryFrame(mFrame);
   nsTextControlFrame* frame = static_cast<nsTextControlFrame*> (frameBase);
@@ -1573,6 +1573,75 @@ nsTextEditorState::SetSelectionProperties(nsTextEditorState::SelectionProperties
   }
 }
 
+nsresult
+nsTextEditorState::GetSelectionRange(int32_t* aSelectionStart,
+                                     int32_t* aSelectionEnd)
+{
+  MOZ_ASSERT(aSelectionStart);
+  MOZ_ASSERT(aSelectionEnd);
+
+  if (!mBoundFrame) {
+    return NS_ERROR_FAILURE;
+  }
+
+  // It's not clear that all the checks here are needed, but the previous
+  // version of this code in nsTextControlFrame was doing them, so we keep them
+  // for now.
+
+  nsresult rv = mBoundFrame->EnsureEditorInitialized();
+  NS_ENSURE_SUCCESS(rv, rv);
+
+  nsISelectionController* selCon = GetSelectionController();
+  NS_ENSURE_TRUE(selCon, NS_ERROR_FAILURE);
+
+  nsCOMPtr<nsISelection> selection;
+  rv = selCon->GetSelection(nsISelectionController::SELECTION_NORMAL,
+                            getter_AddRefs(selection));
+  NS_ENSURE_SUCCESS(rv, rv);
+  NS_ENSURE_TRUE(selection, NS_ERROR_FAILURE);
+
+  dom::Selection* sel = selection->AsSelection();
+  mozilla::dom::Element* root = GetRootNode();
+  NS_ENSURE_STATE(root);
+  nsContentUtils::GetSelectionInTextControl(sel, root,
+                                            *aSelectionStart, *aSelectionEnd);
+  return NS_OK;
+}
+
+nsresult
+nsTextEditorState::GetSelectionDirection(nsITextControlFrame::SelectionDirection* aDirection)
+{
+  MOZ_ASSERT(mBoundFrame,
+             "Caller didn't flush out frames and check for a frame?");
+  MOZ_ASSERT(aDirection);
+
+  // It's not clear that all the checks here are needed, but the previous
+  // version of this code in nsTextControlFrame was doing them, so we keep them
+  // for now.
+
+  nsresult rv = mBoundFrame->EnsureEditorInitialized();
+  NS_ENSURE_SUCCESS(rv, rv);
+
+  nsISelectionController* selCon = GetSelectionController();
+  NS_ENSURE_TRUE(selCon, NS_ERROR_FAILURE);
+
+  nsCOMPtr<nsISelection> selection;
+  rv = selCon->GetSelection(nsISelectionController::SELECTION_NORMAL,
+                            getter_AddRefs(selection));
+  NS_ENSURE_SUCCESS(rv, rv);
+  NS_ENSURE_TRUE(selection, NS_ERROR_FAILURE);
+
+  dom::Selection* sel = selection->AsSelection();
+  nsDirection direction = sel->GetSelectionDirection();
+  if (direction == eDirNext) {
+    *aDirection = nsITextControlFrame::eForward;
+  } else if (direction == eDirPrevious) {
+    *aDirection = nsITextControlFrame::eBackward;
+  } else {
+    NS_NOTREACHED("Invalid nsDirection enum value");
+  }
+  return NS_OK;
+}
 
 HTMLInputElement*
 nsTextEditorState::GetParentNumberControl(nsFrame* aFrame) const
@@ -1645,7 +1714,7 @@ nsTextEditorState::UnbindFromFrame(nsTextControlFrame* aFrame)
   }
 
   // Save our selection state if needed.
-  // Note that nsTextControlFrame::GetSelectionRange attempts to initialize the
+  // Note that GetSelectionRange attempts to initialize the
   // editor before grabbing the range, and because this is not an acceptable
   // side effect for unbinding from a text control frame, we need to call
   // GetSelectionRange before calling DestroyEditor, and only if
@@ -1660,13 +1729,15 @@ nsTextEditorState::UnbindFromFrame(nsTextControlFrame* aFrame)
       // parent control, because this text editor state will be destroyed
       // together with the native anonymous text control.
       SelectionProperties props;
-      mBoundFrame->GetSelectionRange(&start, &end, &direction);
+      GetSelectionRange(&start, &end);
+      GetSelectionDirection(&direction);
       props.SetStart(start);
       props.SetEnd(end);
       props.SetDirection(direction);
       number->SetSelectionProperties(props);
     } else {
-      mBoundFrame->GetSelectionRange(&start, &end, &direction);
+      GetSelectionRange(&start, &end);
+      GetSelectionDirection(&direction);
       mSelectionProperties.SetStart(start);
       mSelectionProperties.SetEnd(end);
       mSelectionProperties.SetDirection(direction);
@@ -2081,7 +2152,7 @@ nsTextEditorState::SetValue(const nsAString& aValue, uint32_t aFlags)
     nsAutoString currentValue;
     mBoundFrame->GetText(currentValue);
 
-    nsWeakFrame weakFrame(mBoundFrame);
+    AutoWeakFrame weakFrame(mBoundFrame);
 
     // this is necessary to avoid infinite recursion
     if (!currentValue.Equals(newValue))

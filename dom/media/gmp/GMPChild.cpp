@@ -17,7 +17,7 @@
 #include "gmp-video-decode.h"
 #include "gmp-video-encode.h"
 #include "GMPPlatform.h"
-#include "mozilla/dom/CrashReporterChild.h"
+#include "mozilla/ipc/CrashReporterClient.h"
 #include "mozilla/ipc/ProcessChild.h"
 #include "GMPUtils.h"
 #include "prio.h"
@@ -25,7 +25,6 @@
 #include "widevine-adapter/WidevineAdapter.h"
 
 using namespace mozilla::ipc;
-using mozilla::dom::CrashReporterChild;
 
 #ifdef XP_WIN
 #include <stdlib.h> // for _exit()
@@ -220,7 +219,8 @@ GMPChild::SetMacSandboxInfo(MacSandboxPluginType aPluginType)
 
   MacSandboxInfo info;
   info.type = MacSandboxType_Plugin;
-  info.shouldLog = Preferences::GetBool("security.sandbox.logging.enabled", true);
+  info.shouldLog = Preferences::GetBool("security.sandbox.logging.enabled") ||
+                   PR_GetEnv("MOZ_SANDBOX_LOGGING");
   info.pluginInfo.type = aPluginType;
   info.pluginInfo.pluginPath.assign(pluginDirectoryPath.get());
   info.pluginInfo.pluginBinaryPath.assign(pluginFilePath.get());
@@ -245,24 +245,12 @@ GMPChild::Init(const nsAString& aPluginPath,
   }
 
 #ifdef MOZ_CRASHREPORTER
-  SendPCrashReporterConstructor(CrashReporter::CurrentThreadId());
+  CrashReporterClient::InitSingleton(this);
 #endif
 
   mPluginPath = aPluginPath;
 
   return true;
-}
-
-mozilla::ipc::IPCResult
-GMPChild::RecvSetNodeId(const nsCString& aNodeId)
-{
-  LOGD("%s nodeId=%s", __FUNCTION__, aNodeId.Data());
-
-  // Store the per origin salt for the node id. Note: we do this in a
-  // separate message than RecvStartPlugin() so that the string is not
-  // sitting in a string on the IPC code's call stack.
-  mNodeId = aNodeId;
-  return IPC_OK();
 }
 
 GMPErr
@@ -348,12 +336,14 @@ GMPChild::AnswerStartPlugin(const nsString& aAdapter)
   auto platformAPI = new GMPPlatformAPI();
   InitPlatformAPI(*platformAPI, this);
 
-  mGMPLoader = GMPProcessChild::GetGMPLoader();
-  if (!mGMPLoader) {
-    NS_WARNING("Failed to get GMPLoader");
+  mGMPLoader = MakeUnique<GMPLoader>();
+#if defined(MOZ_GMP_SANDBOX)
+  if (!mGMPLoader->CanSandbox()) {
+    LOGD("%s Can't sandbox GMP, failing", __FUNCTION__);
     delete platformAPI;
     return IPC_FAIL_NO_REASON(this);
   }
+#endif
 
   bool isWidevine = aAdapter.EqualsLiteral("widevine");
 #if defined(MOZ_GMP_SANDBOX) && defined(XP_MACOSX)
@@ -371,8 +361,6 @@ GMPChild::AnswerStartPlugin(const nsString& aAdapter)
   GMPAdapter* adapter = (isWidevine) ? new WidevineAdapter() : nullptr;
   if (!mGMPLoader->Load(libPath.get(),
                         libPath.Length(),
-                        mNodeId.BeginWriting(),
-                        mNodeId.Length(),
                         platformAPI,
                         adapter)) {
     NS_WARNING("Failed to load GMP");
@@ -407,6 +395,9 @@ GMPChild::ActorDestroy(ActorDestroyReason aWhy)
     ProcessChild::QuickExit();
   }
 
+#ifdef MOZ_CRASHREPORTER
+  CrashReporterClient::DestroySingleton();
+#endif
   XRE_ShutdownChildProcess();
 }
 
@@ -431,19 +422,6 @@ GMPChild::ProcessingError(Result aCode, const char* aReason)
     default:
       MOZ_CRASH("not reached");
   }
-}
-
-mozilla::dom::PCrashReporterChild*
-GMPChild::AllocPCrashReporterChild(const NativeThreadId& aThread)
-{
-  return new CrashReporterChild();
-}
-
-bool
-GMPChild::DeallocPCrashReporterChild(PCrashReporterChild* aCrashReporter)
-{
-  delete aCrashReporter;
-  return true;
 }
 
 PGMPTimerChild*
@@ -515,15 +493,13 @@ GMPChild::RecvCloseActive()
   return IPC_OK();
 }
 
-PGMPContentChild*
-GMPChild::AllocPGMPContentChild(Transport* aTransport,
-                                ProcessId aOtherPid)
+mozilla::ipc::IPCResult
+GMPChild::RecvInitGMPContentChild(Endpoint<PGMPContentChild>&& aEndpoint)
 {
   GMPContentChild* child =
     mGMPContentChildren.AppendElement(new GMPContentChild(this))->get();
-  child->Open(aTransport, aOtherPid, XRE_GetIOMessageLoop(), ipc::ChildSide);
-
-  return child;
+  aEndpoint.Bind(child);
+  return IPC_OK();
 }
 
 void

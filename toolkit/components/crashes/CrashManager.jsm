@@ -55,7 +55,9 @@ function parseAndRemoveField(obj, field, parseAsJson = true) {
 
   if (field in obj) {
     if (!parseAsJson) {
-      value = obj[field];
+      // We split extra files on LF characters but Windows-generated ones might
+      // contain trailing CR characters so trim them here.
+      value = obj[field].trim();
     } else {
       try {
         value = JSON.parse(obj[field]);
@@ -453,8 +455,9 @@ this.CrashManager.prototype = Object.freeze({
         deferred.resolve();
       }
 
-      // Send a telemetry ping for each content process crash
-      if (processType === this.PROCESS_TYPE_CONTENT) {
+      // Send a telemetry ping for each non-main process crash
+      if (processType === this.PROCESS_TYPE_CONTENT ||
+          processType === this.PROCESS_TYPE_GPU) {
         this._sendCrashPing(id, processType, date, metadata);
       }
    }.bind(this));
@@ -654,7 +657,6 @@ this.CrashManager.prototype = Object.freeze({
         hasCrashEnvironment: (crashEnvironment !== null),
       },
       {
-        retentionDays: 180,
         addClientId: true,
         addEnvironment: true,
         overrideEnvironment: crashEnvironment,
@@ -683,7 +685,14 @@ this.CrashManager.prototype = Object.freeze({
           store.addCrash(this.PROCESS_TYPE_MAIN, this.CRASH_TYPE_CRASH,
                          crashID, date, metadata);
 
-          this._sendCrashPing(crashID, this.PROCESS_TYPE_MAIN, date, metadata);
+          if (!("CrashPingUUID" in metadata)) {
+            // If CrashPingUUID is not present then a ping was not generated
+            // by the crashreporter for this crash so we need to send one from
+            // here.
+            this._sendCrashPing(crashID, this.PROCESS_TYPE_MAIN, date,
+                                metadata);
+          }
+
           break;
 
         case "crash.submission.1":

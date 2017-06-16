@@ -263,7 +263,7 @@ public class BrowserSearch extends HomeFragment
                 getLoaderManager().destroyLoader(LOADER_ID_SUGGESTION);
             }
 
-            GeckoAppShell.notifyObservers("SearchEngines:GetVisible", null);
+            EventDispatcher.getInstance().dispatch("SearchEngines:GetVisible", null);
         }
         super.onHiddenChanged(hidden);
     }
@@ -277,7 +277,7 @@ public class BrowserSearch extends HomeFragment
 
         // Fetch engines if we need to.
         if (mSearchEngines.isEmpty() || !Locale.getDefault().equals(mLastLocale)) {
-            GeckoAppShell.notifyObservers("SearchEngines:GetVisible", null);
+            EventDispatcher.getInstance().dispatch("SearchEngines:GetVisible", null);
         } else {
             updateSearchEngineBar();
         }
@@ -731,8 +731,8 @@ public class BrowserSearch extends HomeFragment
         }
 
         final GeckoBundle suggest = data.getBundle("suggest");
-        final String suggestEngine = suggest.getString("engine", null);
-        final String suggestTemplate = suggest.getString("template", null);
+        final String suggestEngine = suggest.getString("engine");
+        final String suggestTemplate = suggest.getString("template");
         final boolean suggestionsPrompted = suggest.getBoolean("prompted");
         final GeckoBundle[] engines = data.getBundleArray("searchEngines");
 

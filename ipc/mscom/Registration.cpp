@@ -10,57 +10,93 @@
 #define CINTERFACE
 
 #include "mozilla/mscom/ActivationContext.h"
-#include "mozilla/mscom/EnsureMTA.h"
 #include "mozilla/mscom/Registration.h"
 #include "mozilla/mscom/Utils.h"
 
 #include "mozilla/ArrayUtils.h"
 #include "mozilla/Assertions.h"
-#include "mozilla/ClearOnShutdown.h"
 #include "mozilla/Move.h"
-#include "mozilla/Mutex.h"
 #include "mozilla/Pair.h"
+#include "mozilla/RefPtr.h"
 #include "mozilla/StaticPtr.h"
-#include "nsTArray.h"
+#include "mozilla/Vector.h"
 #include "nsWindowsHelpers.h"
+
+#if defined(MOZILLA_INTERNAL_API)
+#include "mozilla/ClearOnShutdown.h"
+#include "mozilla/mscom/EnsureMTA.h"
+#else
+#include <stdlib.h>
+#endif // defined(MOZILLA_INTERNAL_API)
 
 #include <oaidl.h>
 #include <objidl.h>
 #include <rpcproxy.h>
 #include <shlwapi.h>
 
+#include <algorithm>
+
 /* This code MUST NOT use any non-inlined internal Mozilla APIs, as it will be
    compiled into DLLs that COM may load into non-Mozilla processes! */
 
-namespace {
+extern "C" {
 
 // This function is defined in generated code for proxy DLLs but is not declared
-// in rpcproxy.h, so we need this typedef.
-typedef void (RPC_ENTRY *GetProxyDllInfoFnPtr)(const ProxyFileInfo*** aInfo,
-                                               const CLSID** aId);
+// in rpcproxy.h, so we need this declaration.
+void RPC_ENTRY GetProxyDllInfo(const ProxyFileInfo*** aInfo, const CLSID** aId);
 
-} // anonymous namespace
+#if defined(_MSC_VER)
+extern IMAGE_DOS_HEADER __ImageBase;
+#endif
+
+}
 
 namespace mozilla {
 namespace mscom {
+
+static HMODULE
+GetContainingModule()
+{
+  HMODULE thisModule = nullptr;
+#if defined(_MSC_VER)
+  thisModule = reinterpret_cast<HMODULE>(&__ImageBase);
+#else
+  if (!GetModuleHandleEx(GET_MODULE_HANDLE_EX_FLAG_FROM_ADDRESS |
+                         GET_MODULE_HANDLE_EX_UNCHANGED_REFCOUNT,
+                         reinterpret_cast<LPCTSTR>(&GetContainingModule),
+                         &thisModule)) {
+    return nullptr;
+  }
+#endif
+  return thisModule;
+}
+
+static bool
+GetContainingLibPath(wchar_t* aBuffer, size_t aBufferLen)
+{
+  HMODULE thisModule = GetContainingModule();
+  if (!thisModule) {
+    return false;
+  }
+
+  DWORD fileNameResult = GetModuleFileName(thisModule, aBuffer, aBufferLen);
+  if (!fileNameResult || (fileNameResult == aBufferLen &&
+        ::GetLastError() == ERROR_INSUFFICIENT_BUFFER)) {
+    return false;
+  }
+
+  return true;
+}
 
 static bool
 BuildLibPath(RegistrationFlags aFlags, wchar_t* aBuffer, size_t aBufferLen,
              const wchar_t* aLeafName)
 {
   if (aFlags == RegistrationFlags::eUseBinDirectory) {
-    HMODULE thisModule = nullptr;
-    if (!GetModuleHandleEx(GET_MODULE_HANDLE_EX_FLAG_FROM_ADDRESS |
-                           GET_MODULE_HANDLE_EX_FLAG_UNCHANGED_REFCOUNT,
-                           reinterpret_cast<LPCTSTR>(&RegisterProxy),
-                           &thisModule)) {
+    if (!GetContainingLibPath(aBuffer, aBufferLen)) {
       return false;
     }
-    DWORD fileNameResult = GetModuleFileName(thisModule, aBuffer, aBufferLen);
-    if (!fileNameResult || (fileNameResult == aBufferLen &&
-          ::GetLastError() == ERROR_INSUFFICIENT_BUFFER)) {
-      return false;
-    }
+
     if (!PathRemoveFileSpec(aBuffer)) {
       return false;
     }
@@ -77,6 +113,74 @@ BuildLibPath(RegistrationFlags aFlags, wchar_t* aBuffer, size_t aBufferLen,
     return false;
   }
   return true;
+}
+
+static bool
+RegisterPSClsids(const ProxyFileInfo** aProxyInfo, const CLSID* aProxyClsid)
+{
+  while (*aProxyInfo) {
+    const ProxyFileInfo& curInfo = **aProxyInfo;
+    for (unsigned short idx = 0, size = curInfo.TableSize; idx < size; ++idx) {
+      HRESULT hr = CoRegisterPSClsid(*(curInfo.pStubVtblList[idx]->header.piid),
+                                     *aProxyClsid);
+      if (FAILED(hr)) {
+        return false;
+      }
+    }
+    ++aProxyInfo;
+  }
+
+  return true;
+}
+
+UniquePtr<RegisteredProxy>
+RegisterProxy()
+{
+  const ProxyFileInfo** proxyInfo = nullptr;
+  const CLSID* proxyClsid = nullptr;
+  GetProxyDllInfo(&proxyInfo, &proxyClsid);
+  if (!proxyInfo || !proxyClsid) {
+    return nullptr;
+  }
+
+  IUnknown* classObject = nullptr;
+  HRESULT hr = DllGetClassObject(*proxyClsid, IID_IUnknown, (void**)&classObject);
+  if (FAILED(hr)) {
+    return nullptr;
+  }
+
+  DWORD regCookie;
+  hr = CoRegisterClassObject(*proxyClsid, classObject, CLSCTX_INPROC_SERVER,
+                             REGCLS_MULTIPLEUSE, &regCookie);
+  if (FAILED(hr)) {
+    classObject->lpVtbl->Release(classObject);
+    return nullptr;
+  }
+
+  wchar_t modulePathBuf[MAX_PATH + 1] = {0};
+  if (!GetContainingLibPath(modulePathBuf, ArrayLength(modulePathBuf))) {
+    CoRevokeClassObject(regCookie);
+    classObject->lpVtbl->Release(classObject);
+    return nullptr;
+  }
+
+  ITypeLib* typeLib = nullptr;
+  hr = LoadTypeLibEx(modulePathBuf, REGKIND_NONE, &typeLib);
+  MOZ_ASSERT(SUCCEEDED(hr));
+  if (FAILED(hr)) {
+    CoRevokeClassObject(regCookie);
+    classObject->lpVtbl->Release(classObject);
+    return nullptr;
+  }
+
+  // RegisteredProxy takes ownership of classObject and typeLib references
+  auto result(MakeUnique<RegisteredProxy>(classObject, regCookie, typeLib));
+
+  if (!RegisterPSClsids(proxyInfo, proxyClsid)) {
+    return nullptr;
+  }
+
+  return result;
 }
 
 UniquePtr<RegisteredProxy>
@@ -100,7 +204,7 @@ RegisterProxy(const wchar_t* aLeafName, RegistrationFlags aFlags)
     return nullptr;
   }
 
-  auto GetProxyDllInfoFn = reinterpret_cast<GetProxyDllInfoFnPtr>(
+  auto GetProxyDllInfoFn = reinterpret_cast<decltype(&GetProxyDllInfo)>(
       GetProcAddress(proxyDll, "GetProxyDllInfo"));
   if (!GetProxyDllInfoFn) {
     return nullptr;
@@ -144,16 +248,8 @@ RegisterProxy(const wchar_t* aLeafName, RegistrationFlags aFlags)
   auto result(MakeUnique<RegisteredProxy>(reinterpret_cast<uintptr_t>(proxyDll.disown()),
                                           classObject, regCookie, typeLib));
 
-  while (*proxyInfo) {
-    const ProxyFileInfo& curInfo = **proxyInfo;
-    for (unsigned short i = 0, e = curInfo.TableSize; i < e; ++i) {
-      hr = CoRegisterPSClsid(*(curInfo.pStubVtblList[i]->header.piid),
-                             *proxyClsid);
-      if (FAILED(hr)) {
-        return nullptr;
-      }
-    }
-    ++proxyInfo;
+  if (!RegisterPSClsids(proxyInfo, proxyClsid)) {
+    return nullptr;
   }
 
   return result;
@@ -185,7 +281,24 @@ RegisteredProxy::RegisteredProxy(uintptr_t aModule, IUnknown* aClassObject,
   , mClassObject(aClassObject)
   , mRegCookie(aRegCookie)
   , mTypeLib(aTypeLib)
+#if defined(MOZILLA_INTERNAL_API)
   , mIsRegisteredInMTA(IsCurrentThreadMTA())
+#endif // defined(MOZILLA_INTERNAL_API)
+{
+  MOZ_ASSERT(aClassObject);
+  MOZ_ASSERT(aTypeLib);
+  AddToRegistry(this);
+}
+
+RegisteredProxy::RegisteredProxy(IUnknown* aClassObject, uint32_t aRegCookie,
+                                 ITypeLib* aTypeLib)
+  : mModule(0)
+  , mClassObject(aClassObject)
+  , mRegCookie(aRegCookie)
+  , mTypeLib(aTypeLib)
+#if defined(MOZILLA_INTERNAL_API)
+  , mIsRegisteredInMTA(IsCurrentThreadMTA())
+#endif // defined(MOZILLA_INTERNAL_API)
 {
   MOZ_ASSERT(aClassObject);
   MOZ_ASSERT(aTypeLib);
@@ -199,7 +312,9 @@ RegisteredProxy::RegisteredProxy(ITypeLib* aTypeLib)
   , mClassObject(nullptr)
   , mRegCookie(0)
   , mTypeLib(aTypeLib)
+#if defined(MOZILLA_INTERNAL_API)
   , mIsRegisteredInMTA(false)
+#endif // defined(MOZILLA_INTERNAL_API)
 {
   MOZ_ASSERT(aTypeLib);
   AddToRegistry(this);
@@ -218,11 +333,16 @@ RegisteredProxy::~RegisteredProxy()
       ::CoRevokeClassObject(mRegCookie);
       mClassObject->lpVtbl->Release(mClassObject);
     };
+#if defined(MOZILLA_INTERNAL_API)
+    // This code only supports MTA when built internally
     if (mIsRegisteredInMTA) {
       EnsureMTA mta(cleanupFn);
     } else {
       cleanupFn();
     }
+#else
+    cleanupFn();
+#endif // defined(MOZILLA_INTERNAL_API)
   }
   if (mModule) {
     ::FreeLibrary(reinterpret_cast<HMODULE>(mModule));
@@ -249,8 +369,8 @@ RegisteredProxy::operator=(RegisteredProxy&& aOther)
 }
 
 HRESULT
-RegisteredProxy::GetTypeInfoForInterface(REFIID aIid,
-                                         ITypeInfo** aOutTypeInfo) const
+RegisteredProxy::GetTypeInfoForGuid(REFGUID aGuid,
+                                    ITypeInfo** aOutTypeInfo) const
 {
   if (!aOutTypeInfo) {
     return E_INVALIDARG;
@@ -258,89 +378,138 @@ RegisteredProxy::GetTypeInfoForInterface(REFIID aIid,
   if (!mTypeLib) {
     return E_UNEXPECTED;
   }
-  return mTypeLib->lpVtbl->GetTypeInfoOfGuid(mTypeLib, aIid, aOutTypeInfo);
+  return mTypeLib->lpVtbl->GetTypeInfoOfGuid(mTypeLib, aGuid, aOutTypeInfo);
 }
 
-static StaticAutoPtr<nsTArray<RegisteredProxy*>> sRegistry;
-static StaticAutoPtr<Mutex> sRegMutex;
-static StaticAutoPtr<nsTArray<Pair<const ArrayData*, size_t>>> sArrayData;
+static StaticAutoPtr<Vector<RegisteredProxy*>> sRegistry;
 
-static Mutex&
+namespace UseGetMutexForAccess {
+
+// This must not be accessed directly; use GetMutex() instead
+static CRITICAL_SECTION sMutex;
+
+} // UseGetMutexForAccess
+
+static CRITICAL_SECTION*
 GetMutex()
 {
-  static Mutex& mutex = []() -> Mutex& {
-    if (!sRegMutex) {
-      sRegMutex = new Mutex("RegisteredProxy::sRegMutex");
-      ClearOnShutdown(&sRegMutex, ShutdownPhase::ShutdownThreads);
-    }
-    return *sRegMutex;
+  static CRITICAL_SECTION& mutex = []() -> CRITICAL_SECTION& {
+#if defined(RELEASE_OR_BETA)
+    DWORD flags = CRITICAL_SECTION_NO_DEBUG_INFO;
+#else
+    DWORD flags = 0;
+#endif
+    InitializeCriticalSectionEx(&UseGetMutexForAccess::sMutex, 4000, flags);
+#if !defined(MOZILLA_INTERNAL_API)
+    atexit([]() { DeleteCriticalSection(&UseGetMutexForAccess::sMutex); });
+#endif
+    return UseGetMutexForAccess::sMutex;
   }();
-  return mutex;
+  return &mutex;
 }
 
 /* static */ bool
 RegisteredProxy::Find(REFIID aIid, ITypeInfo** aTypeInfo)
 {
-  MutexAutoLock lock(GetMutex());
-  nsTArray<RegisteredProxy*>& registry = *sRegistry;
-  for (uint32_t idx = 0, len = registry.Length(); idx < len; ++idx) {
-    if (SUCCEEDED(registry[idx]->GetTypeInfoForInterface(aIid, aTypeInfo))) {
+  AutoCriticalSection lock(GetMutex());
+
+  if (!sRegistry) {
+    return false;
+  }
+
+  for (auto&& proxy : *sRegistry) {
+    if (SUCCEEDED(proxy->GetTypeInfoForGuid(aIid, aTypeInfo))) {
       return true;
     }
   }
+
   return false;
 }
 
 /* static */ void
 RegisteredProxy::AddToRegistry(RegisteredProxy* aProxy)
 {
-  MutexAutoLock lock(GetMutex());
+  MOZ_ASSERT(aProxy);
+
+  AutoCriticalSection lock(GetMutex());
+
   if (!sRegistry) {
-    sRegistry = new nsTArray<RegisteredProxy*>();
-    ClearOnShutdown(&sRegistry);
+    sRegistry = new Vector<RegisteredProxy*>();
+
+#if !defined(MOZILLA_INTERNAL_API)
+    // sRegistry allocation is fallible outside of Mozilla processes
+    if (!sRegistry) {
+      return;
+    }
+#endif
   }
-  sRegistry->AppendElement(aProxy);
+
+  sRegistry->emplaceBack(aProxy);
 }
 
 /* static */ void
 RegisteredProxy::DeleteFromRegistry(RegisteredProxy* aProxy)
 {
-  MutexAutoLock lock(GetMutex());
-  sRegistry->RemoveElement(aProxy);
+  MOZ_ASSERT(aProxy);
+
+  AutoCriticalSection lock(GetMutex());
+
+  MOZ_ASSERT(sRegistry && !sRegistry->empty());
+
+  if (!sRegistry) {
+    return;
+  }
+
+  sRegistry->erase(std::remove(sRegistry->begin(), sRegistry->end(), aProxy),
+                   sRegistry->end());
+
+  if (sRegistry->empty()) {
+    sRegistry = nullptr;
+  }
 }
+
+#if defined(MOZILLA_INTERNAL_API)
+
+static StaticAutoPtr<Vector<Pair<const ArrayData*, size_t>>> sArrayData;
 
 void
 RegisterArrayData(const ArrayData* aArrayData, size_t aLength)
 {
-  MutexAutoLock lock(GetMutex());
+  AutoCriticalSection lock(GetMutex());
+
   if (!sArrayData) {
-    sArrayData = new nsTArray<Pair<const ArrayData*, size_t>>();
+    sArrayData = new Vector<Pair<const ArrayData*, size_t>>();
     ClearOnShutdown(&sArrayData, ShutdownPhase::ShutdownThreads);
   }
-  sArrayData->AppendElement(MakePair(aArrayData, aLength));
+
+  sArrayData->emplaceBack(MakePair(aArrayData, aLength));
 }
 
 const ArrayData*
 FindArrayData(REFIID aIid, ULONG aMethodIndex)
 {
-  MutexAutoLock lock(GetMutex());
+  AutoCriticalSection lock(GetMutex());
+
   if (!sArrayData) {
     return nullptr;
   }
-  for (uint32_t outerIdx = 0, outerLen = sArrayData->Length();
-       outerIdx < outerLen; ++outerIdx) {
-    auto& data = sArrayData->ElementAt(outerIdx);
+
+  for (auto&& data : *sArrayData) {
     for (size_t innerIdx = 0, innerLen = data.second(); innerIdx < innerLen;
          ++innerIdx) {
       const ArrayData* array = data.first();
-      if (aIid == array[innerIdx].mIid &&
-          aMethodIndex == array[innerIdx].mMethodIndex) {
+      if (aMethodIndex == array[innerIdx].mMethodIndex &&
+          IsInterfaceEqualToOrInheritedFrom(aIid, array[innerIdx].mIid,
+                                            aMethodIndex)) {
         return &array[innerIdx];
       }
     }
   }
+
   return nullptr;
 }
+
+#endif // defined(MOZILLA_INTERNAL_API)
 
 } // namespace mscom
 } // namespace mozilla

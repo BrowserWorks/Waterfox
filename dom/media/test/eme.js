@@ -131,7 +131,7 @@ function UpdateSessionFunc(test, token, sessionType, resolve, reject) {
           "k":HexToBase64(key)
         });
       } else {
-        bail(token + " couldn't find key for key id " + idHex);
+        bail(token + " couldn't find key for key id " + idHex)("No such key");
       }
     }
 
@@ -296,7 +296,7 @@ function SetupEME(test, token, params)
       () => {
         v.setMediaKeys(null);
         if (v.parentNode) {
-          v.parentNode.removeChild(v);
+          v.remove();
         }
         v.onerror = null;
         v.src = null;
@@ -337,10 +337,19 @@ function SetupEME(test, token, params)
 
   function processInitDataQueue()
   {
-    if (initDataQueue === null) { return; }
+    function maybeResolveInitDataPromise() {
+      if (params && params.initDataPromise) {
+        params.initDataPromise.resolve();
+      }
+    }
+    if (initDataQueue === null) {
+      maybeResolveInitDataPromise();
+      return;
+    }
     // If we're processed all our init data null the queue to indicate encrypted event handled.
     if (initDataQueue.length === 0) {
       initDataQueue = null;
+      maybeResolveInitDataPromise();
       return;
     }
     var ev = initDataQueue.shift();
@@ -454,8 +463,8 @@ function SetupEME(test, token, params)
 function SetupEMEPref(callback) {
   var prefs = [
     [ "media.mediasource.enabled", true ],
-    [ "media.eme.apiVisible", true ],
     [ "media.mediasource.webm.enabled", true ],
+    [ "media.eme.vp9-in-mp4.enabled", true ],
   ];
 
   if (SpecialPowers.Services.appinfo.name == "B2G" ||
@@ -488,10 +497,9 @@ function fetchWithXHR(uri, onLoadFunction) {
 
 function once(target, name, cb) {
   var p = new Promise(function(resolve, reject) {
-    target.addEventListener(name, function onceEvent(arg) {
-      target.removeEventListener(name, onceEvent);
+    target.addEventListener(name, function(arg) {
       resolve(arg);
-    });
+    }, {once: true});
   });
   if (cb) {
     p.then(cb);

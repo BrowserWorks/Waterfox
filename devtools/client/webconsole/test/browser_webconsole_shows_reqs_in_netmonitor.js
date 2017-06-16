@@ -30,7 +30,7 @@ add_task(function* () {
   info("Document loaded.");
 
   // Test that the request appears in the network panel.
-  testNetmonitor(toolbox);
+  yield testNetmonitor(toolbox);
 
   // Test that the request appears in the console.
   let hud = yield openConsole();
@@ -52,22 +52,24 @@ add_task(function* () {
 function loadDocument(browser) {
   let deferred = promise.defer();
 
-  browser.addEventListener("load", function onLoad() {
-    browser.removeEventListener("load", onLoad, true);
+  browser.addEventListener("load", function () {
     deferred.resolve();
-  }, true);
+  }, {capture: true, once: true});
   BrowserTestUtils.loadURI(gBrowser.selectedBrowser, TEST_PATH);
 
   return deferred.promise;
 }
 
-function testNetmonitor(toolbox) {
+function* testNetmonitor(toolbox) {
   let monitor = toolbox.getCurrentPanel();
-  let { RequestsMenu } = monitor.panelWin.NetMonitorView;
-  RequestsMenu.lazyUpdate = false;
-  is(RequestsMenu.itemCount, 1, "Network request appears in the network panel");
+  let { gStore, windowRequire } = monitor.panelWin;
+  let { getSortedRequests } = windowRequire("devtools/client/netmonitor/selectors/index");
 
-  let item = RequestsMenu.getItemAtIndex(0);
+  yield waitUntil(() => gStore.getState().requests.requests.size > 0);
+
+  is(gStore.getState().requests.requests.size, 1, "Network request appears in the network panel");
+
+  let item = getSortedRequests(gStore.getState()).get(0);
   is(item.method, "GET", "The request method is correct.");
   is(item.url, TEST_PATH, "The request url is correct.");
 }

@@ -15,6 +15,7 @@
 #include "nsTHashtable.h"
 #include "nsThreadUtils.h"
 #include "nsWeakReference.h"
+#include "mozilla/IntegerPrintfMacros.h"
 #include "mozilla/SHA1.h"
 #include "mozilla/StaticMutex.h"
 #include "mozilla/StaticPtr.h"
@@ -255,7 +256,7 @@ public:
   void Log() const {
     LOG(("CacheIndexEntry::Log() [this=%p, hash=%08x%08x%08x%08x%08x, fresh=%u,"
          " initialized=%u, removed=%u, dirty=%u, anonymous=%u, "
-         "originAttrsHash=%llx, frecency=%u, expirationTime=%u, size=%u]",
+         "originAttrsHash=%" PRIx64 ", frecency=%u, expirationTime=%u, size=%u]",
          this, LOGSHA1(mRec->mHash), IsFresh(), IsInitialized(), IsRemoved(),
          IsDirty(), Anonymous(), OriginAttrsHash(), GetFrecency(),
          GetExpirationTime(), GetFileSize()));
@@ -264,6 +265,8 @@ public:
   static bool RecordMatchesLoadContextInfo(CacheIndexRecord *aRec,
                                            nsILoadContextInfo *aInfo)
   {
+    MOZ_ASSERT(aInfo);
+
     if (!aInfo->IsPrivate() &&
         GetOriginAttrsHash(*aInfo->OriginAttributesPtr()) == aRec->mOriginAttrsHash &&
         aInfo->IsAnonymous() == !!(aRec->mFlags & kAnonymousMask)) {
@@ -666,7 +669,8 @@ public:
   static nsresult GetEntryFileCount(uint32_t *_retval);
 
   // Synchronously returns the disk occupation and number of entries per-context.
-  // Callable on any thread.
+  // Callable on any thread. It will ignore loadContextInfo and get stats for
+  // all entries if the aInfo is a nullptr.
   static nsresult GetCacheStats(nsILoadContextInfo *aInfo, uint32_t *aSize, uint32_t *aCount);
 
   // Asynchronously gets the disk cache size, used for display in the UI.

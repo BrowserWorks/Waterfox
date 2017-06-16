@@ -21,7 +21,7 @@ https://bugzilla.mozilla.org/show_bug.cgi?id=963835
   Test for correction of invalid email case in Fx Accounts signIn
 </div>
 <pre id="test">
-<script class="testbody" type="text/javascript;version=1.8">
+<script class="testbody" type="text/javascript">
 
 SimpleTest.waitForExplicitFinish();
 
@@ -118,7 +118,6 @@ function runTest() {
 SpecialPowers.pushPrefEnv({"set": [
     ["identity.fxaccounts.enabled", true],         // fx accounts
     ["identity.fxaccounts.auth.uri", TEST_SERVER], // our sjs server
-    ["toolkit.identity.debug", true],              // verbose identity logging
     ["browser.dom.window.dump.enabled", true],
   ]},
   function () { runTest(); }

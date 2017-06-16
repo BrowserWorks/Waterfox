@@ -67,7 +67,6 @@ const PREF_FHR_UPLOAD_ENABLED = "datareporting.healthreport.uploadEnabled";
 const PREF_ASYNC_PLUGIN_INIT = "dom.ipc.plugins.asyncInit.enabled";
 const PREF_UNIFIED = PREF_BRANCH + "unified";
 
-
 const MESSAGE_TELEMETRY_PAYLOAD = "Telemetry:Payload";
 const MESSAGE_TELEMETRY_THREAD_HANGS = "Telemetry:ChildThreadHangs";
 const MESSAGE_TELEMETRY_GET_CHILD_THREAD_HANGS = "Telemetry:GetChildThreadHangs";
@@ -713,6 +712,7 @@ var Impl = {
   _childrenToHearFrom: null,
   // monotonically-increasing id for USS reports
   _nextTotalMemoryId: 1,
+  _USSFromChildProcesses: null,
   _lastEnvironmentChangeDate: 0,
 
 
@@ -732,8 +732,6 @@ var Impl = {
    * @return simple measurements as a dictionary.
    */
   getSimpleMeasurements: function getSimpleMeasurements(forSavedSession, isSubsession, clearSubsession) {
-    this._log.trace("getSimpleMeasurements");
-
     let si = Services.startup.getStartupInfo();
 
     // Measurements common to chrome and content processes.
@@ -886,9 +884,6 @@ var Impl = {
   },
 
   getHistograms: function getHistograms(subsession, clearSubsession) {
-    this._log.trace("getHistograms - subsession: " + subsession +
-                    ", clearSubsession: " + clearSubsession);
-
     let registered =
       Telemetry.registeredHistograms(this.getDatasetType(), []);
     if (this._testing == false) {
@@ -916,8 +911,6 @@ var Impl = {
   },
 
   getAddonHistograms: function getAddonHistograms() {
-    this._log.trace("getAddonHistograms");
-
     let ahs = Telemetry.addonHistogramSnapshots;
     let ret = {};
 
@@ -935,9 +928,6 @@ var Impl = {
   },
 
   getKeyedHistograms(subsession, clearSubsession) {
-    this._log.trace("getKeyedHistograms - subsession: " + subsession +
-                    ", clearSubsession: " + clearSubsession);
-
     let registered =
       Telemetry.registeredKeyedHistograms(this.getDatasetType(), []);
     if (this._testing == false) {
@@ -986,9 +976,6 @@ var Impl = {
    *            {'content': { 'scalarName': ... }, 'gpu': { ... } }
    */
   getScalars(subsession, clearSubsession, keyed) {
-    this._log.trace("getScalars - subsession: " + subsession + ", clearSubsession: " +
-                    clearSubsession + ", keyed: " + keyed);
-
     if (!subsession) {
       // We only support scalars for subsessions.
       this._log.trace("getScalars - We only support scalars in subsessions.");
@@ -1004,7 +991,6 @@ var Impl = {
     for (let processName in scalarsSnapshot) {
       for (let name in scalarsSnapshot[processName]) {
         if (name.startsWith("telemetry.test") && this._testing == false) {
-          this._log.trace("getScalars - Skipping test scalar: " + name);
           continue;
         }
         // Finally arrange the data in the returned object.
@@ -1037,8 +1023,6 @@ var Impl = {
   },
 
   getThreadHangStats: function getThreadHangStats(stats) {
-    this._log.trace("getThreadHangStats");
-
     stats.forEach((thread) => {
       thread.activity = this.packHistogram(thread.activity);
       thread.hangs.forEach((hang) => {
@@ -1057,8 +1041,6 @@ var Impl = {
    * @return The metadata as a JS object
    */
   getMetadata: function getMetadata(reason) {
-    this._log.trace("getMetadata - Reason " + reason);
-
     const sessionStartDate = Utils.toLocalTimeISOString(Utils.truncateToDays(this._sessionStartDate));
     const subsessionStartDate = Utils.toLocalTimeISOString(Utils.truncateToDays(this._subsessionStartDate));
     const monotonicNow = Policy.monotonicNow();
@@ -1109,11 +1091,8 @@ var Impl = {
    */
   gatherMemory: function gatherMemory() {
     if (!Telemetry.canRecordExtended) {
-      this._log.trace("gatherMemory - Extended data recording disabled, skipping.");
       return;
     }
-
-    this._log.trace("gatherMemory");
 
     let mgr;
     try {
@@ -1190,6 +1169,7 @@ var Impl = {
             this._childrenToHearFrom.clear();
           },
           TOTAL_MEMORY_COLLECTOR_TIMEOUT);
+        this._USSFromChildProcesses = [];
         this._childrenToHearFrom = new Set();
         for (let i = 1; i < ppmm.childCount; i++) {
           let child = ppmm.getChildAt(i);
@@ -1214,7 +1194,7 @@ var Impl = {
     histogram.add(new Date() - startTime);
   },
 
-  handleMemoryReport(id, units, amount) {
+  handleMemoryReport(id, units, amount, key) {
     let val;
     if (units == Ci.nsIMemoryReporter.UNITS_BYTES) {
       val = Math.floor(amount / 1024);
@@ -1244,10 +1224,19 @@ var Impl = {
 
     let h = this._histograms[id];
     if (!h) {
-      h = Telemetry.getHistogramById(id);
+      if (key) {
+        h = Telemetry.getKeyedHistogramById(id);
+      } else {
+        h = Telemetry.getHistogramById(id);
+      }
       this._histograms[id] = h;
     }
-    h.add(val);
+
+    if (key) {
+      h.add(key, val);
+    } else {
+      h.add(val);
+    }
   },
 
   getChildPayloads: function getChildPayloads() {
@@ -1513,13 +1502,13 @@ var Impl = {
     ppml.addMessageListener(MESSAGE_TELEMETRY_PAYLOAD, this);
     ppml.addMessageListener(MESSAGE_TELEMETRY_THREAD_HANGS, this);
     ppml.addMessageListener(MESSAGE_TELEMETRY_USS, this);
-},
+  },
 
-/**
-  * Does the "heavy" Telemetry initialization later on, so we
-  * don't impact startup performance.
-  * @return {Promise} Resolved when the initialization completes.
-  */
+  /**
+   * Does the "heavy" Telemetry initialization later on, so we
+   * don't impact startup performance.
+   * @return {Promise} Resolved when the initialization completes.
+   */
   delayedInit() {
     this._log.trace("delayedInit");
 
@@ -1573,6 +1562,18 @@ var Impl = {
     return this._delayedInitTask;
   },
 
+  getOpenTabsCount: function getOpenTabsCount() {
+    let tabCount = 0;
+
+    let browserEnum = Services.wm.getEnumerator("navigator:browser");
+    while (browserEnum.hasMoreElements()) {
+      let win = browserEnum.getNext();
+      tabCount += win.gBrowser.tabs.length;
+    }
+
+    return tabCount;
+  },
+
   /**
    * Initializes telemetry for a content process.
    */
@@ -1604,7 +1605,6 @@ var Impl = {
   },
 
   getFlashVersion: function getFlashVersion() {
-    this._log.trace("getFlashVersion");
     let host = Cc["@mozilla.org/plugin/host;1"].getService(Ci.nsIPluginHost);
     let tags = host.getPluginTags();
 
@@ -1670,7 +1670,9 @@ var Impl = {
     {
       // In parent process, receive the USS report from the child
       if (this._totalMemoryTimeout && this._childrenToHearFrom.delete(message.data.id)) {
-        this._totalMemory += message.data.bytes;
+        let uss = message.data.bytes;
+        this._totalMemory += uss;
+        this._USSFromChildProcesses.push(uss);
         if (this._childrenToHearFrom.size == 0) {
           clearTimeout(this._totalMemoryTimeout);
           this._totalMemoryTimeout = undefined;
@@ -1678,6 +1680,36 @@ var Impl = {
             "MEMORY_TOTAL",
             Ci.nsIMemoryReporter.UNITS_BYTES,
             this._totalMemory);
+
+          let length = this._USSFromChildProcesses.length;
+          if (length > 1) {
+            // Mean of the USS of all the content processes.
+            let mean = this._USSFromChildProcesses.reduce((a, b) => a + b, 0) / length;
+            // Absolute error of USS for each content process, normalized by the mean (*100 to get it in percentage).
+            // 20% means for a content process that it is using 20% more or 20% less than the mean.
+            let diffs = this._USSFromChildProcesses.map(value => Math.floor(Math.abs(value - mean) * 100 / mean));
+            let tabsCount = this.getOpenTabsCount();
+            let key;
+            if (tabsCount < 11) {
+              key = "0 - 10 tabs";
+            } else if (tabsCount < 501) {
+              key = "11 - 500 tabs";
+            } else {
+              key = "more tabs";
+            }
+
+            diffs.forEach(value => {
+              this.handleMemoryReport(
+              "MEMORY_DISTRIBUTION_AMONG_CONTENT",
+              Ci.nsIMemoryReporter.UNITS_COUNT,
+              value,
+              key);
+            });
+
+            // This notification is for testing only.
+            Services.obs.notifyObservers(null, "gather-memory-telemetry-finished", null);
+          }
+          this._USSFromChildProcesses = undefined;
         }
       } else {
         this._log.trace("Child USS report was missed");
@@ -1774,8 +1806,7 @@ var Impl = {
   },
 
 
-  testSavePendingPing: function testSaveHistograms() {
-    this._log.trace("testSaveHistograms");
+  testSavePendingPing() {
     let payload = this.getSessionPayload(REASON_SAVED_SESSION, false);
     let options = {
       addClientId: true,

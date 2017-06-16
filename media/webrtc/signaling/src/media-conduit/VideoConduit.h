@@ -81,8 +81,9 @@ public:
   * TODO(@@NG) promote this the MediaConduitInterface when the VoE rework
   * hits Webrtc.org.
   */
-  void AddLocalRTPExtensions(const std::vector<webrtc::RtpExtension>& extensions) override;
-  std::vector<webrtc::RtpExtension> GetLocalRTPExtensions() const override;
+  void AddLocalRTPExtensions(bool aIsSend,
+                             const std::vector<webrtc::RtpExtension>& extensions) override;
+  std::vector<webrtc::RtpExtension> GetLocalRTPExtensions(bool aIsSend) const override;
 
   /**
    * Set up A/V sync between this (incoming) VideoConduit and an audio conduit.
@@ -485,9 +486,6 @@ private:
   int mNegotiatedMaxBitrate;
   int mMinBitrateEstimate;
 
-  bool mRtpStreamIdEnabled;
-  uint8_t mRtpStreamIdExtId;
-
   static const unsigned int sAlphaNum = 7;
   static const unsigned int sAlphaDen = 8;
   static const unsigned int sRoundingPadding = 1024;
@@ -505,10 +503,10 @@ private:
   webrtc::VideoCodecH264 mEncoderSpecificH264;
 
   webrtc::VideoReceiveStream::Config mRecvStreamConfig;
-  // We can't create mRecvStream without knowing the remote SSRC
-  // Atomic since we key off this on packet insertion, which happens
-  // on a different thread.
-  Atomic<bool> mRecvSSRCSet;
+
+  // accessed on creation, and when receiving packets
+  uint32_t mRecvSSRC; // this can change during a stream!
+
   // The runnable to set the SSRC is in-flight; queue packets until it's done.
   bool mRecvSSRCSetInProgress;
   struct QueuedPacket {

@@ -227,11 +227,13 @@ struct VMFunction
         return count;
     }
 
+    constexpr
     VMFunction(void* wrapped, const char* name, uint32_t explicitArgs, uint32_t argumentProperties,
                uint32_t argumentPassedInFloatRegs, uint64_t argRootTypes,
                DataType outParam, RootType outParamRootType, DataType returnType,
                uint32_t extraValuesToPop = 0, MaybeTailCall expectTailCall = NonTailCall)
-      : wrapped(wrapped),
+      : next(nullptr),
+        wrapped(wrapped),
         name_(name),
         explicitArgs(explicitArgs),
         argumentProperties(argumentProperties),
@@ -242,15 +244,26 @@ struct VMFunction
         outParamRootType(outParamRootType),
         extraValuesToPop(extraValuesToPop),
         expectTailCall(expectTailCall)
+    { }
+
+    VMFunction(const VMFunction& o)
+      : next(nullptr),
+        wrapped(o.wrapped),
+        name_(o.name_),
+        explicitArgs(o.explicitArgs),
+        argumentProperties(o.argumentProperties),
+        argumentPassedInFloatRegs(o.argumentPassedInFloatRegs),
+        outParam(o.outParam),
+        returnType(o.returnType),
+        argumentRootTypes(o.argumentRootTypes),
+        outParamRootType(o.outParamRootType),
+        extraValuesToPop(o.extraValuesToPop),
+        expectTailCall(o.expectTailCall)
     {
         // Check for valid failure/return type.
         MOZ_ASSERT_IF(outParam != Type_Void, returnType == Type_Bool);
         MOZ_ASSERT(returnType == Type_Bool ||
                    returnType == Type_Object);
-    }
-
-    VMFunction(const VMFunction& o) {
-        *this = o;
         addToFunctions();
     }
 
@@ -266,6 +279,7 @@ template <> struct TypeToDataType<NativeObject*> { static const DataType result 
 template <> struct TypeToDataType<PlainObject*> { static const DataType result = Type_Object; };
 template <> struct TypeToDataType<InlineTypedObject*> { static const DataType result = Type_Object; };
 template <> struct TypeToDataType<NamedLambdaObject*> { static const DataType result = Type_Object; };
+template <> struct TypeToDataType<LexicalEnvironmentObject*> { static const DataType result = Type_Object; };
 template <> struct TypeToDataType<ArrayObject*> { static const DataType result = Type_Object; };
 template <> struct TypeToDataType<TypedArrayObject*> { static const DataType result = Type_Object; };
 template <> struct TypeToDataType<JSString*> { static const DataType result = Type_Object; };
@@ -449,9 +463,6 @@ template <class> struct MatchContext { };
 template <> struct MatchContext<JSContext*> {
     static const bool valid = true;
 };
-template <> struct MatchContext<ExclusiveContext*> {
-    static const bool valid = true;
-};
 
 // Extract the last element of a list of types.
 template <typename... ArgTypes>
@@ -632,6 +643,7 @@ MOZ_MUST_USE bool ArrayPopDense(JSContext* cx, HandleObject obj, MutableHandleVa
 MOZ_MUST_USE bool ArrayPushDense(JSContext* cx, HandleObject obj, HandleValue v, uint32_t* length);
 MOZ_MUST_USE bool ArrayShiftDense(JSContext* cx, HandleObject obj, MutableHandleValue rval);
 JSString* ArrayJoin(JSContext* cx, HandleObject array, HandleString sep);
+MOZ_MUST_USE bool SetArrayLength(JSContext* cx, HandleObject obj, HandleValue value, bool strict);
 
 MOZ_MUST_USE bool
 CharCodeAt(JSContext* cx, HandleString str, int32_t index, uint32_t* code);
@@ -669,6 +681,8 @@ void PostGlobalWriteBarrier(JSRuntime* rt, JSObject* obj);
 // is not an index in this range, return -1.
 int32_t GetIndexFromString(JSString* str);
 
+JSObject* WrapObjectPure(JSContext* cx, JSObject* obj);
+
 MOZ_MUST_USE bool
 DebugPrologue(JSContext* cx, BaselineFrame* frame, jsbytecode* pc, bool* mustReturn);
 MOZ_MUST_USE bool
@@ -702,6 +716,8 @@ InitFunctionEnvironmentObjects(JSContext* cx, BaselineFrame* frame);
 
 MOZ_MUST_USE bool
 NewArgumentsObject(JSContext* cx, BaselineFrame* frame, MutableHandleValue res);
+
+JSObject* CopyLexicalEnvironmentObject(JSContext* cx, HandleObject env, bool copySlots);
 
 JSObject* InitRestParameter(JSContext* cx, uint32_t length, Value* rest, HandleObject templateObj,
                             HandleObject res);
@@ -816,6 +832,9 @@ MOZ_MUST_USE bool
 CallNativeGetter(JSContext* cx, HandleFunction callee, HandleObject obj,
                  MutableHandleValue result);
 
+MOZ_MUST_USE bool
+CallNativeSetter(JSContext* cx, HandleFunction callee, HandleObject obj,
+                 HandleValue rhs);
 
 MOZ_MUST_USE bool
 EqualStringsHelper(JSString* str1, JSString* str2);

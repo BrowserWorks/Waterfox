@@ -2,6 +2,9 @@
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
 
+/* eslint-env browser */
+/* global XPCNativeWrapper */
+
 "use strict";
 
 // URL constructor doesn't support about: scheme
@@ -26,6 +29,23 @@ if (url.search.length > 1) {
                    .getInterface(Ci.nsIDOMWindowUtils)
                    .containerElement;
 
+  // If there's no containerElement (which happens when loading about:devtools-toolbox as
+  // a top level document), use the current window.
+  if (!host) {
+    host = {
+      contentWindow: window,
+      contentDocument: document,
+      // toolbox-host-manager.js wants to set attributes on the frame that contains it,
+      // but that is fine to skip and doesn't make sense when using the current window.
+      setAttribute() {},
+      ownerDocument: document,
+      // toolbox-host-manager.js wants to listen for unload events from outside the frame,
+      // but this is fine to skip since the toolbox code listens inside the frame as well,
+      // and there is no outer document in this case.
+      addEventListener() {},
+    };
+  }
+
   // Specify the default tool to open
   let tool = url.searchParams.get("tool");
 
@@ -38,30 +58,30 @@ if (url.search.length > 1) {
       // `iframe` is the targeted document to debug
       let iframe = host.wrappedJSObject ? host.wrappedJSObject.target
                                         : host.target;
+      if (!iframe) {
+        throw new Error("Unable to find the targeted iframe to debug");
+      }
+
       // Need to use a xray and query some interfaces to have
       // attributes and behavior expected by devtools codebase
       iframe = XPCNativeWrapper(iframe);
       iframe.QueryInterface(Ci.nsIFrameLoaderOwner);
 
-      if (iframe) {
-        // Fake a xul:tab object as we don't have one.
-        // linkedBrowser is the only one attribute being queried by client.getTab
-        let tab = { linkedBrowser: iframe };
+      // Fake a xul:tab object as we don't have one.
+      // linkedBrowser is the only one attribute being queried by client.getTab
+      let tab = { linkedBrowser: iframe };
 
-        if (!DebuggerServer.initialized) {
-          DebuggerServer.init();
-          DebuggerServer.addBrowserActors();
-        }
-        let client = new DebuggerClient(DebuggerServer.connectPipe());
-
-        yield client.connect();
-        // Creates a target for a given browser iframe.
-        let response = yield client.getTab({ tab });
-        let form = response.tab;
-        target = yield TargetFactory.forRemoteTab({client, form, chrome: false});
-      } else {
-        alert("Unable to find the targetted iframe to debug");
+      if (!DebuggerServer.initialized) {
+        DebuggerServer.init();
+        DebuggerServer.addBrowserActors();
       }
+      let client = new DebuggerClient(DebuggerServer.connectPipe());
+
+      yield client.connect();
+      // Creates a target for a given browser iframe.
+      let response = yield client.getTab({ tab });
+      let form = response.tab;
+      target = yield TargetFactory.forRemoteTab({client, form, chrome: false});
     } else {
       target = yield targetFromURL(url);
     }

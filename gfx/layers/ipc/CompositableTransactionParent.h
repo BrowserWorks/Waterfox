@@ -12,12 +12,11 @@
 #include "mozilla/Attributes.h"         // for override
 #include "mozilla/layers/ISurfaceAllocator.h"  // for ISurfaceAllocator
 #include "mozilla/layers/LayersMessages.h"  // for EditReply, etc
+#include "mozilla/layers/TextureClient.h"
 #include "CompositableHost.h"
 
 namespace mozilla {
 namespace layers {
-
-typedef std::vector<mozilla::layers::EditReply> EditReplyVector;
 
 // Since PCompositble has two potential manager protocols, we can't just call
 // the Manager() method usually generated when there's one manager protocol,
@@ -26,6 +25,8 @@ typedef std::vector<mozilla::layers::EditReply> EditReplyVector;
 class CompositableParentManager : public HostIPCAllocator
 {
 public:
+  typedef InfallibleTArray<ReadLockInit> ReadLockArray;
+
   CompositableParentManager() {}
 
   void DestroyActor(const OpDestroy& aOp);
@@ -43,12 +44,14 @@ public:
     const TextureInfo& aInfo);
   RefPtr<CompositableHost> FindCompositable(const CompositableHandle& aHandle);
 
+  bool AddReadLocks(ReadLockArray&& aReadLocks);
+  TextureReadLock* FindReadLock(const ReadLockHandle& aLockHandle);
+
 protected:
   /**
    * Handle the IPDL messages that affect PCompositable actors.
    */
-  bool ReceiveCompositableUpdate(const CompositableOperation& aEdit,
-                                 EditReplyVector& replyv);
+  bool ReceiveCompositableUpdate(const CompositableOperation& aEdit);
 
   void ReleaseCompositable(const CompositableHandle& aHandle);
 
@@ -58,6 +61,22 @@ protected:
    * Mapping form IDs to CompositableHosts.
    */
   std::map<uint64_t, RefPtr<CompositableHost>> mCompositables;
+  std::map<uint64_t, RefPtr<TextureReadLock>> mReadLocks;
+
+};
+
+struct AutoClearReadLocks {
+  explicit AutoClearReadLocks(std::map<uint64_t, RefPtr<TextureReadLock>>& aReadLocks)
+    : mReadLocks(aReadLocks)
+
+  {}
+
+  ~AutoClearReadLocks()
+  {
+    mReadLocks.clear();
+  }
+
+  std::map<uint64_t, RefPtr<TextureReadLock>>& mReadLocks;
 };
 
 } // namespace layers

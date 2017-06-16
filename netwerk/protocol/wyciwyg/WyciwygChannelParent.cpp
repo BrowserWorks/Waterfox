@@ -129,7 +129,9 @@ WyciwygChannelParent::RecvInit(const URIParams&          aURI,
   }
 
   nsCOMPtr<nsILoadInfo> loadInfo = chan->GetLoadInfo();
-  rv = loadInfo->SetPrincipalToInherit(principalToInherit);
+  if (loadInfo) {
+    rv = loadInfo->SetPrincipalToInherit(principalToInherit);
+  }
   if (NS_FAILED(rv)) {
     if (!SendCancelEarly(rv)) {
       return IPC_FAIL_NO_REASON(this);
@@ -253,7 +255,7 @@ WyciwygChannelParent::RecvAsyncOpen(const URIParams& aOriginal,
 }
 
 mozilla::ipc::IPCResult
-WyciwygChannelParent::RecvWriteToCacheEntry(const nsString& data)
+WyciwygChannelParent::RecvWriteToCacheEntry(const nsDependentSubstring& data)
 {
   if (!mReceivedAppData) {
     printf_stderr("WyciwygChannelParent::RecvWriteToCacheEntry: FATAL ERROR: didn't receive app data\n");
@@ -356,8 +358,8 @@ WyciwygChannelParent::OnStopRequest(nsIRequest *aRequest,
                                     nsISupports *aContext,
                                     nsresult aStatusCode)
 {
-  LOG(("WyciwygChannelParent::OnStopRequest: [this=%p status=%ul]\n",
-       this, aStatusCode));
+  LOG(("WyciwygChannelParent::OnStopRequest: [this=%p status=%" PRIu32 "]\n",
+       this, static_cast<uint32_t>(aStatusCode)));
 
   if (mIPCClosed || !SendOnStopRequest(aStatusCode)) {
     return NS_ERROR_UNEXPECTED;

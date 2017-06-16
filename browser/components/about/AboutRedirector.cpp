@@ -34,7 +34,7 @@ struct RedirEntry {
   required before adding new map entries without
   URI_SAFE_FOR_UNTRUSTED_CONTENT.
 */
-static RedirEntry kRedirMap[] = {
+static const RedirEntry kRedirMap[] = {
   { "blocked", "chrome://browser/content/blockedSite.xhtml",
     nsIAboutModule::URI_SAFE_FOR_UNTRUSTED_CONTENT |
     nsIAboutModule::URI_CAN_LOAD_IN_CHILD |
@@ -105,7 +105,6 @@ static RedirEntry kRedirMap[] = {
     nsIAboutModule::URI_MUST_LOAD_IN_CHILD |
     nsIAboutModule::HIDE_FROM_ABOUTABOUT },
 };
-static const int kRedirTotal = ArrayLength(kRedirMap);
 
 static nsAutoCString
 GetAboutModuleName(nsIURI *aURI)
@@ -139,8 +138,8 @@ AboutRedirector::NewChannel(nsIURI* aURI,
   nsCOMPtr<nsIIOService> ioService = do_GetIOService(&rv);
   NS_ENSURE_SUCCESS(rv, rv);
 
-  for (int i = 0; i < kRedirTotal; i++) {
-    if (!strcmp(path.get(), kRedirMap[i].id)) {
+  for (auto & redir : kRedirMap) {
+    if (!strcmp(path.get(), redir.id)) {
       nsAutoCString url;
 
       if (path.EqualsLiteral("newtab")) {
@@ -150,20 +149,10 @@ AboutRedirector::NewChannel(nsIURI* aURI,
         NS_ENSURE_SUCCESS(rv, rv);
         rv = aboutNewTabService->GetDefaultURL(url);
         NS_ENSURE_SUCCESS(rv, rv);
-
-        // if about:newtab points to an external resource we have to make sure
-        // the content is signed and trusted
-        bool remoteEnabled = false;
-        rv = aboutNewTabService->GetRemoteEnabled(&remoteEnabled);
-        NS_ENSURE_SUCCESS(rv, rv);
-        if (remoteEnabled) {
-          NS_ENSURE_ARG_POINTER(aLoadInfo);
-          aLoadInfo->SetVerifySignedContent(true);
-        }
       }
       // fall back to the specified url in the map
       if (url.IsEmpty()) {
-        url.AssignASCII(kRedirMap[i].url);
+        url.AssignASCII(redir.url);
       }
 
       nsCOMPtr<nsIChannel> tempChannel;
@@ -209,9 +198,9 @@ AboutRedirector::GetURIFlags(nsIURI *aURI, uint32_t *result)
 
   nsAutoCString name = GetAboutModuleName(aURI);
 
-  for (int i = 0; i < kRedirTotal; i++) {
-    if (name.Equals(kRedirMap[i].id)) {
-      *result = kRedirMap[i].flags;
+  for (auto & redir : kRedirMap) {
+    if (name.Equals(redir.id)) {
+      *result = redir.flags;
       return NS_OK;
     }
   }

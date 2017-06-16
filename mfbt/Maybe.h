@@ -13,9 +13,11 @@
 #include "mozilla/Assertions.h"
 #include "mozilla/Attributes.h"
 #include "mozilla/Move.h"
+#include "mozilla/OperatorNewExtensions.h"
 #include "mozilla/TypeTraits.h"
 
 #include <new>  // for placement new
+#include <ostream>
 #include <type_traits>
 
 namespace mozilla {
@@ -81,13 +83,18 @@ struct Nothing { };
  * whether or not this is still a problem.
  */
 template<class T>
-class Maybe
+class MOZ_NON_PARAM Maybe
 {
-  bool mIsSome;
-  AlignedStorage2<T> mStorage;
+  alignas(T) unsigned char mStorage[sizeof(T)];
+  char mIsSome; // not bool -- guarantees minimal space consumption
+
+  // GCC fails due to -Werror=strict-aliasing if |mStorage| is directly cast to
+  // T*.  Indirecting through these functions addresses the problem.
+  void* data() { return mStorage; }
+  const void* data() const { return mStorage; }
 
 public:
-  typedef T ValueType;
+  using ValueType = T;
 
   Maybe() : mIsSome(false) { }
   ~Maybe() { reset(); }
@@ -321,13 +328,13 @@ public:
   T& ref()
   {
     MOZ_ASSERT(mIsSome);
-    return *mStorage.addr();
+    return *static_cast<T*>(data());
   }
 
   const T& ref() const
   {
     MOZ_ASSERT(mIsSome);
-    return *mStorage.addr();
+    return *static_cast<const T*>(data());
   }
 
   /*
@@ -449,8 +456,19 @@ public:
   void emplace(Args&&... aArgs)
   {
     MOZ_ASSERT(!mIsSome);
-    ::new (mStorage.addr()) T(Forward<Args>(aArgs)...);
+    ::new (KnownNotNull, data()) T(Forward<Args>(aArgs)...);
     mIsSome = true;
+  }
+
+  friend std::ostream&
+  operator<<(std::ostream& aStream, const Maybe<T>& aMaybe)
+  {
+    if (aMaybe) {
+      aStream << aMaybe.ref();
+    } else {
+      aStream << "<Nothing>";
+    }
+    return aStream;
   }
 };
 

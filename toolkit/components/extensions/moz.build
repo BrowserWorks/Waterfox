@@ -12,8 +12,11 @@ EXTRA_JS_MODULES += [
     'ExtensionContent.jsm',
     'ExtensionManagement.jsm',
     'ExtensionParent.jsm',
+    'ExtensionPreferencesManager.jsm',
+    'ExtensionSettingsStore.jsm',
     'ExtensionStorage.jsm',
     'ExtensionStorageSync.jsm',
+    'ExtensionTabs.jsm',
     'ExtensionUtils.jsm',
     'LegacyExtensionsUtils.jsm',
     'MessageChannel.jsm',
@@ -33,6 +36,10 @@ TESTING_JS_MODULES += [
 DIRS += ['schemas']
 
 JAR_MANIFESTS += ['jar.mn']
+
+BROWSER_CHROME_MANIFESTS += [
+    'test/browser/browser.ini',
+]
 
 MOCHITEST_MANIFESTS += [
     'test/mochitest/mochitest-remote.ini',

@@ -1,5 +1,3 @@
-/* -*- indent-tabs-mode: nil; js-indent-level: 2 -*- */
-/* vim: set ft=javascript ts=2 et sw=2 tw=80: */
 /* This Source Code Form is subject to the terms of the Mozilla Public
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
@@ -13,6 +11,8 @@ const {gDevTools} = require("devtools/client/framework/devtools");
 
 const {LocalizationHelper} = require("devtools/shared/l10n");
 const L10N = new LocalizationHelper("devtools/client/locales/toolbox.properties");
+
+loader.lazyRequireGetter(this, "system", "devtools/shared/system");
 
 exports.OptionsPanel = OptionsPanel;
 
@@ -67,8 +67,7 @@ function OptionsPanel(iframeWindow, toolbox) {
   this._themeUnregistered = this._themeUnregistered.bind(this);
   this._disableJSClicked = this._disableJSClicked.bind(this);
 
-  this.disableJSNode = this.panelDoc.getElementById(
-    "devtools-disable-javascript");
+  this.disableJSNode = this.panelDoc.getElementById("devtools-disable-javascript");
 
   this._addListeners();
 
@@ -91,6 +90,7 @@ OptionsPanel.prototype = {
     this.setupToolsList();
     this.setupToolbarButtonsList();
     this.setupThemeList();
+    this.setupNightlyOptions();
     yield this.populatePreferences();
     this.isReady = true;
     this.emit("ready");
@@ -113,9 +113,8 @@ OptionsPanel.prototype = {
 
   _prefChanged: function (subject, topic, prefName) {
     if (prefName === "devtools.cache.disabled") {
-      let cacheDisabled = data.newValue;
+      let cacheDisabled = GetPref(prefName);
       let cbx = this.panelDoc.getElementById("devtools-disable-cache");
-
       cbx.checked = cacheDisabled;
     } else if (prefName === "devtools.theme") {
       this.updateCurrentTheme();
@@ -302,7 +301,61 @@ OptionsPanel.prototype = {
     this.updateCurrentTheme();
   },
 
-  populatePreferences: function () {
+  /**
+   * Add common preferences enabled only on Nightly.
+   */
+  setupNightlyOptions: function () {
+    let isNightly = system.constants.NIGHTLY_BUILD;
+    if (!isNightly) {
+      return;
+    }
+
+    // Labels for these new buttons are nightly only and mostly intended for working on
+    // devtools. They should not be localized.
+    let prefDefinitions = [{
+      pref: "devtools.webconsole.new-frontend-enabled",
+      label: "Enable new console frontend",
+      id: "devtools-new-webconsole",
+      parentId: "webconsole-options"
+    }, {
+      pref: "devtools.debugger.new-debugger-frontend",
+      label: "Enable new debugger frontend",
+      id: "devtools-new-debugger",
+      parentId: "debugger-options"
+    }, {
+      pref: "devtools.layoutview.enabled",
+      label: "Enable layout panel",
+      id: "devtools-layout-panel",
+      parentId: "inspector-options"
+    }];
+
+    let createPreferenceOption = ({pref, label, id}) => {
+      let inputLabel = this.panelDoc.createElement("label");
+      let checkbox = this.panelDoc.createElement("input");
+      checkbox.setAttribute("type", "checkbox");
+      if (GetPref(pref)) {
+        checkbox.setAttribute("checked", "checked");
+      }
+      checkbox.setAttribute("id", id);
+      checkbox.addEventListener("change", e => {
+        SetPref(pref, e.target.checked);
+      });
+
+      let inputSpanLabel = this.panelDoc.createElement("span");
+      inputSpanLabel.textContent = label;
+      inputLabel.appendChild(checkbox);
+      inputLabel.appendChild(inputSpanLabel);
+
+      return inputLabel;
+    };
+
+    for (let prefDefinition of prefDefinitions) {
+      let parent = this.panelDoc.getElementById(prefDefinition.parentId);
+      parent.appendChild(createPreferenceOption(prefDefinition));
+    }
+  },
+
+  populatePreferences: Task.async(function* () {
     let prefCheckboxes = this.panelDoc.querySelectorAll(
       "input[type=checkbox][data-pref]");
     for (let prefCheckbox of prefCheckboxes) {
@@ -342,6 +395,7 @@ OptionsPanel.prototype = {
           prefSelect.selectedIndex = options.indexOf(option);
           return true;
         }
+        return false;
       });
 
       prefSelect.addEventListener("change", function (e) {
@@ -352,16 +406,15 @@ OptionsPanel.prototype = {
     }
 
     if (this.target.activeTab) {
-      return this.target.client.attachTab(this.target.activeTab._actor)
-        .then(([response, client]) => {
-          this._origJavascriptEnabled = !response.javascriptEnabled;
-          this.disableJSNode.checked = this._origJavascriptEnabled;
-          this.disableJSNode.addEventListener("click",
-            this._disableJSClicked);
-        });
+      let [ response ] = yield this.target.client.attachTab(this.target.activeTab._actor);
+      this._origJavascriptEnabled = !response.javascriptEnabled;
+      this.disableJSNode.checked = this._origJavascriptEnabled;
+      this.disableJSNode.addEventListener("click", this._disableJSClicked);
+    } else {
+      // Hide the checkbox and label
+      this.disableJSNode.parentNode.style.display = "none";
     }
-    this.disableJSNode.hidden = true;
-  },
+  }),
 
   updateCurrentTheme: function () {
     let currentTheme = GetPref("devtools.theme");

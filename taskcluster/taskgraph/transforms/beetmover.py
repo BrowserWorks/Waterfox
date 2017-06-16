@@ -15,6 +15,11 @@ from taskgraph.transforms.task import task_description_schema
 from voluptuous import Schema, Any, Required, Optional
 
 
+# For developers: if you are adding any new artifacts here that need to be
+# transfered to S3, please be aware you also need to follow-up with patch in
+# the actual beetmoverscript logic that lies under
+# https://github.com/mozilla-releng/beetmoverscript/. See example in bug
+# 1348286
 _DESKTOP_UPSTREAM_ARTIFACTS_UNSIGNED_EN_US = [
     "balrog_props.json",
     "target.common.tests.zip",
@@ -25,6 +30,7 @@ _DESKTOP_UPSTREAM_ARTIFACTS_UNSIGNED_EN_US = [
     "target.mozinfo.json",
     "target.reftest.tests.zip",
     "target.talos.tests.zip",
+    "target.awsy.tests.zip",
     "target.test_packages.json",
     "target.txt",
     "target.web-platform.tests.zip",
@@ -33,6 +39,8 @@ _DESKTOP_UPSTREAM_ARTIFACTS_UNSIGNED_EN_US = [
     "target.jsshell.zip",
     "mozharness.zip",
     "target.langpack.xpi",
+    "host/bin/mar",
+    "host/bin/mbsdiff",
 ]
 _DESKTOP_UPSTREAM_ARTIFACTS_SIGNED_EN_US = [
     "update/target.complete.mar",
@@ -53,6 +61,7 @@ _MOBILE_UPSTREAM_ARTIFACTS_UNSIGNED_EN_US = [
     "en-US/target.mozinfo.json",
     "en-US/target.reftest.tests.zip",
     "en-US/target.talos.tests.zip",
+    "en-US/target.awsy.tests.zip",
     "en-US/target.test_packages.json",
     "en-US/target.txt",
     "en-US/target.web-platform.tests.zip",
@@ -72,6 +81,7 @@ _MOBILE_UPSTREAM_ARTIFACTS_UNSIGNED_MULTI = [
     "target.mozinfo.json",
     "target.reftest.tests.zip",
     "target.talos.tests.zip",
+    "target.awsy.tests.zip",
     "target.test_packages.json",
     "target.txt",
     "target.web-platform.tests.zip",
@@ -93,6 +103,8 @@ _MOBILE_UPSTREAM_ARTIFACTS_SIGNED_MULTI = [
 UPSTREAM_ARTIFACT_UNSIGNED_PATHS = {
     'linux64-nightly': _DESKTOP_UPSTREAM_ARTIFACTS_UNSIGNED_EN_US,
     'linux-nightly': _DESKTOP_UPSTREAM_ARTIFACTS_UNSIGNED_EN_US,
+    'linux64-devedition-nightly': _DESKTOP_UPSTREAM_ARTIFACTS_UNSIGNED_EN_US,
+    'linux-devedition-nightly': _DESKTOP_UPSTREAM_ARTIFACTS_UNSIGNED_EN_US,
     'android-x86-nightly': _MOBILE_UPSTREAM_ARTIFACTS_UNSIGNED_EN_US,
     'android-api-15-nightly': _MOBILE_UPSTREAM_ARTIFACTS_UNSIGNED_EN_US,
     'macosx64-nightly': [],
@@ -110,6 +122,14 @@ UPSTREAM_ARTIFACT_SIGNED_PATHS = {
         "target.tar.bz2.asc",
     ],
     'linux-nightly': _DESKTOP_UPSTREAM_ARTIFACTS_SIGNED_EN_US + [
+        "target.tar.bz2",
+        "target.tar.bz2.asc",
+    ],
+    'linux64-devedition-nightly': _DESKTOP_UPSTREAM_ARTIFACTS_SIGNED_EN_US + [
+        "target.tar.bz2",
+        "target.tar.bz2.asc",
+    ],
+    'linux-devedition-nightly': _DESKTOP_UPSTREAM_ARTIFACTS_SIGNED_EN_US + [
         "target.tar.bz2",
         "target.tar.bz2.asc",
     ],

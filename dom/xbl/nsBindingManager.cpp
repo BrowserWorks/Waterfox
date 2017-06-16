@@ -20,6 +20,7 @@
 #include "nsIDocument.h"
 #include "nsContentUtils.h"
 #include "nsIPresShell.h"
+#include "nsIPresShellInlines.h"
 #include "nsIXMLContentSink.h"
 #include "nsContentCID.h"
 #include "mozilla/dom/XMLDocument.h"
@@ -338,7 +339,9 @@ nsBindingManager::AddToAttachedQueue(nsXBLBinding* aBinding)
   }
 
   // Make sure that flushes will flush out the new items as needed.
-  mDocument->SetNeedStyleFlush();
+  if (nsIPresShell* shell = mDocument->GetShell()) {
+    shell->SetNeedStyleFlush();
+  }
 
   return NS_OK;
 
@@ -348,7 +351,8 @@ void
 nsBindingManager::PostProcessAttachedQueueEvent()
 {
   mProcessAttachedQueueEvent =
-    NewRunnableMethod(this, &nsBindingManager::DoProcessAttachedQueue);
+    NewRunnableMethod("nsBindingManager::DoProcessAttachedQueue",
+                      this, &nsBindingManager::DoProcessAttachedQueue);
   nsresult rv = NS_DispatchToCurrentThread(mProcessAttachedQueueEvent);
   if (NS_SUCCEEDED(rv) && mDocument) {
     mDocument->BlockOnload();

@@ -19,9 +19,7 @@
  * <ARGUMENT_COUNT> is an integer literal specifying the total number of
  * replaceable arguments in the following format string.
  *
- * <EXCEPTION_NAME> is an exception index from the enum in jsexn.c;
- * JSEXN_NONE for none.  The given exception index will be raised by the
- * engine when the corresponding error occurs.
+ * <EXCEPTION_NAME> is an enum JSExnType value, defined in jsapi.h.
  *
  * <FORMAT_STRING> is a string literal, optionally containing sequences
  * {X} where X  is an integer representing the argument number that will
@@ -29,7 +27,7 @@
  *
  * e.g.
  *
- * MSG_DEF(JSMSG_NOT_A_SUBSPECIES, 2, JSEXN_NONE,
+ * MSG_DEF(JSMSG_NOT_A_SUBSPECIES, 2, JSEXN_TYPEERROR,
  *         "{0} is not a member of the {1} family")
  *
  * can be used:
@@ -38,7 +36,7 @@
  *
  * to report:
  *
- * "Rhino is not a member of the Monkey family"
+ * "TypeError: Rhino is not a member of the Monkey family"
  */
 
 MSG_DEF(JSMSG_NOT_AN_ERROR,            0, JSEXN_ERR, "<Error #0 is reserved>")
@@ -63,6 +61,7 @@ MSG_DEF(JSMSG_SPREAD_TOO_LARGE,        0, JSEXN_RANGEERR, "array too large due t
 MSG_DEF(JSMSG_BAD_WEAKMAP_KEY,         0, JSEXN_TYPEERR, "cannot use the given object as a weak map key")
 MSG_DEF(JSMSG_BAD_GETTER_OR_SETTER,    1, JSEXN_TYPEERR, "invalid {0} usage")
 MSG_DEF(JSMSG_BAD_ARRAY_LENGTH,        0, JSEXN_RANGEERR, "invalid array length")
+MSG_DEF(JSMSG_REDECLARED_PREV,         2, JSEXN_NOTE, "Previously declared at line {0}, column {1}")
 MSG_DEF(JSMSG_REDECLARED_VAR,          2, JSEXN_SYNTAXERR, "redeclaration of {0} {1}")
 MSG_DEF(JSMSG_UNDECLARED_VAR,          1, JSEXN_REFERENCEERR, "assignment to undeclared variable {0}")
 MSG_DEF(JSMSG_GETTER_ONLY,             0, JSEXN_TYPEERR, "setting a property that has only a getter")
@@ -266,6 +265,7 @@ MSG_DEF(JSMSG_IMPORT_DECL_AT_TOP_LEVEL, 0, JSEXN_SYNTAXERR, "import declarations
 MSG_DEF(JSMSG_OF_AFTER_FOR_LOOP_DECL,  0, JSEXN_SYNTAXERR, "a declaration in the head of a for-of loop can't have an initializer")
 MSG_DEF(JSMSG_IN_AFTER_LEXICAL_FOR_DECL,0,JSEXN_SYNTAXERR, "a lexical declaration in the head of a for-in loop can't have an initializer")
 MSG_DEF(JSMSG_INVALID_FOR_IN_DECL_WITH_INIT,0,JSEXN_SYNTAXERR,"for-in loop head declarations may not have initializers")
+MSG_DEF(JSMSG_INVALID_ID,              1, JSEXN_SYNTAXERR, "{0} is an invalid identifier")
 MSG_DEF(JSMSG_LABEL_NOT_FOUND,         0, JSEXN_SYNTAXERR, "label not found")
 MSG_DEF(JSMSG_LET_COMP_BINDING,        0, JSEXN_SYNTAXERR, "'let' is not a valid name for a comprehension variable")
 MSG_DEF(JSMSG_LEXICAL_DECL_NOT_IN_BLOCK,   1, JSEXN_SYNTAXERR, "{0} declaration not directly within block")
@@ -433,7 +433,6 @@ MSG_DEF(JSMSG_SC_SAB_REFCNT_OFLO,      0, JSEXN_TYPEERR, "SharedArrayBuffer has 
 
 // Debugger
 MSG_DEF(JSMSG_ASSIGN_FUNCTION_OR_NULL, 1, JSEXN_TYPEERR, "value assigned to {0} must be a function or null")
-MSG_DEF(JSMSG_DEBUG_BAD_AWAIT,         0, JSEXN_TYPEERR, "await expression received invalid value")
 MSG_DEF(JSMSG_DEBUG_BAD_LINE,          0, JSEXN_TYPEERR, "invalid line number")
 MSG_DEF(JSMSG_DEBUG_BAD_OFFSET,        0, JSEXN_TYPEERR, "invalid script offset")
 MSG_DEF(JSMSG_DEBUG_BAD_REFERENT,      2, JSEXN_TYPEERR, "{0} does not refer to {1}")
@@ -474,7 +473,6 @@ MSG_DEF(JSMSG_TRACELOGGER_ENABLE_FAIL, 1, JSEXN_ERR, "enabling tracelogger faile
 MSG_DEF(JSMSG_DATE_NOT_FINITE,         0, JSEXN_RANGEERR, "date value is not finite in DateTimeFormat.format()")
 MSG_DEF(JSMSG_INTERNAL_INTL_ERROR,     0, JSEXN_ERR, "internal error while computing Intl data")
 MSG_DEF(JSMSG_INTL_OBJECT_NOT_INITED,  3, JSEXN_TYPEERR, "Intl.{0}.prototype.{1} called on value that's not an object initialized as a {2}")
-MSG_DEF(JSMSG_INTL_OBJECT_REINITED,    0, JSEXN_TYPEERR, "can't initialize object twice as an object of an Intl constructor")
 MSG_DEF(JSMSG_INVALID_CURRENCY_CODE,   1, JSEXN_RANGEERR, "invalid currency code in NumberFormat(): {0}")
 MSG_DEF(JSMSG_INVALID_DIGITS_VALUE,    1, JSEXN_RANGEERR, "invalid digits value: {0}")
 MSG_DEF(JSMSG_INVALID_KEYS_TYPE,       0, JSEXN_TYPEERR, "calendar info keys must be an object or undefined")

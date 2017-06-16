@@ -20,7 +20,8 @@
 
 namespace mozilla {
 
-class WidevineVideoDecoder : public GMPVideoDecoder {
+class WidevineVideoDecoder : public GMPVideoDecoder
+{
 public:
 
   NS_INLINE_DECL_THREADSAFE_REFCOUNTING(WidevineVideoDecoder)
@@ -45,7 +46,8 @@ private:
 
   ~WidevineVideoDecoder();
 
-  cdm::ContentDecryptionModule_8* CDM() const {
+  cdm::ContentDecryptionModule_8* CDM() const
+  {
     // CDM should only be accessed before 'DecodingComplete'.
     MOZ_ASSERT(mCDMWrapper);
     // CDMWrapper ensure the CDM is non-null, no need to check again.
@@ -57,8 +59,6 @@ private:
 
   GMPVideoHost* mVideoHost;
   RefPtr<CDMWrapper> mCDMWrapper;
-  RefPtr<MediaByteBuffer> mExtraData;
-  RefPtr<MediaByteBuffer> mAnnexB;
   GMPVideoDecoderCallback* mCallback = nullptr;
   std::map<uint64_t, uint64_t> mFrameDurations;
   bool mSentInput;

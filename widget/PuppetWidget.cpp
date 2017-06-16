@@ -10,14 +10,17 @@
 #include "ClientLayerManager.h"
 #include "gfxPlatform.h"
 #include "mozilla/dom/TabChild.h"
+#include "mozilla/gfx/gfxVars.h"
 #include "mozilla/Hal.h"
 #include "mozilla/IMEStateManager.h"
 #include "mozilla/layers/APZChild.h"
 #include "mozilla/layers/PLayerTransactionChild.h"
+#include "mozilla/layers/WebRenderLayerManager.h"
 #include "mozilla/Preferences.h"
 #include "mozilla/TextComposition.h"
 #include "mozilla/TextEvents.h"
 #include "mozilla/Unused.h"
+#include "BasicLayers.h"
 #include "PuppetWidget.h"
 #include "nsContentUtils.h"
 #include "nsIWidgetListener.h"
@@ -73,6 +76,9 @@ MightNeedIMEFocus(const nsWidgetInitData* aInitData)
 // Arbitrary, fungible.
 const size_t PuppetWidget::kMaxDimension = 4000;
 
+static bool gRemoteDesktopBehaviorEnabled = false;
+static bool gRemoteDesktopBehaviorInitialized = false;
+
 NS_IMPL_ISUPPORTS_INHERITED0(PuppetWidget, nsBaseWidget)
 
 PuppetWidget::PuppetWidget(TabChild* aTabChild)
@@ -91,6 +97,11 @@ PuppetWidget::PuppetWidget(TabChild* aTabChild)
 
   // Setting 'Unknown' means "not yet cached".
   mInputContext.mIMEState.mEnabled = IMEState::UNKNOWN;
+
+  if (!gRemoteDesktopBehaviorInitialized) {
+    Preferences::AddBoolVarCache(&gRemoteDesktopBehaviorEnabled, "browser.tabs.remote.desktopbehavior", false);
+    gRemoteDesktopBehaviorInitialized = true;
+  }
 }
 
 PuppetWidget::~PuppetWidget()
@@ -588,12 +599,27 @@ PuppetWidget::GetLayerManager(PLayerTransactionChild* aShadowManager,
                               LayerManagerPersistence aPersistence)
 {
   if (!mLayerManager) {
-    mLayerManager = new ClientLayerManager(this);
+    if (XRE_IsParentProcess()) {
+      // On the parent process there is no CompositorBridgeChild which confuses
+      // some layers code, so we use basic layers instead. Note that we create
+      // a non-retaining layer manager since we don't care about performance.
+      mLayerManager = new BasicLayerManager(BasicLayerManager::BLM_OFFSCREEN);
+      return mLayerManager;
+    }
+
+    if (gfxVars::UseWebRender()) {
+      mLayerManager = new WebRenderLayerManager(this);
+    } else {
+      mLayerManager = new ClientLayerManager(this);
+    }
   }
+
+  // Attach a shadow forwarder if none exists.
   ShadowLayerForwarder* lf = mLayerManager->AsShadowForwarder();
   if (lf && !lf->HasShadowManager() && aShadowManager) {
     lf->SetShadowManager(aShadowManager);
   }
+
   return mLayerManager;
 }
 
@@ -604,7 +630,12 @@ PuppetWidget::RecreateLayerManager(PLayerTransactionChild* aShadowManager)
   // could fail to revoke the most recent transaction.
   DestroyLayerManager();
 
-  mLayerManager = new ClientLayerManager(this);
+  MOZ_ASSERT(mTabChild);
+  if (gfxVars::UseWebRender()) {
+    mLayerManager = new WebRenderLayerManager(this);
+  } else {
+    mLayerManager = new ClientLayerManager(this);
+  }
   if (ShadowLayerForwarder* lf = mLayerManager->AsShadowForwarder()) {
     lf->SetShadowManager(aShadowManager);
   }
@@ -1145,7 +1176,7 @@ PuppetWidget::NeedsPaint()
 {
   // e10s popups are handled by the parent process, so never should be painted here
   if (XRE_IsContentProcess() &&
-      Preferences::GetBool("browser.tabs.remote.desktopbehavior", false) &&
+      gRemoteDesktopBehaviorEnabled &&
       mWindowType == eWindowType_popup) {
     NS_WARNING("Trying to paint an e10s popup in the child process!");
     return false;

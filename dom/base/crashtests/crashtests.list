@@ -45,7 +45,7 @@ load 371466-1.xhtml
 load 372554-1.html
 load 375399-1.html
 load 377360-1.xhtml
-asserts-if(stylo,3) load 377960-1.html # bug 1324633
+load 377960-1.html
 load 377960-2.html
 load 384663-1.html
 load 386000-1.html
@@ -79,7 +79,7 @@ load 472593-1.html
 load 473284.xul
 load 474041-1.svg
 load 476526.html
-asserts-if(stylo,1) load 483818-1.html # bug 1324683
+load 483818-1.html
 load 490760-1.xhtml
 load 493281-1.html
 load 493281-2.html
@@ -99,7 +99,7 @@ load 554230-1.xhtml
 load 558973.html
 load 561981-1.html
 load 561981-2.html
-load 564079-1.html 
+load 564079-1.html
 load 564114.html
 load 565125-1.html
 load 575462.svg
@@ -168,8 +168,8 @@ load 824719.html
 load 827190.html
 load 828054.html
 load 828903.html
-asserts-if(stylo,2) load 829428.html # bug 1324669
-asserts-if(stylo,2) load 830098.html # bug 1324669
+load 829428.html
+load 830098.html
 load 831287.html
 load 832644.html
 load 836890.html
@@ -183,7 +183,7 @@ load 847127.html
 load 849601.html
 load 849727.html
 load 849732.html
-asserts-if(stylo,17) load 851353-1.html # bug 1324699
+load 851353-1.html
 load 852381.html
 load 863950.html
 load 864448.html
@@ -193,7 +193,7 @@ load 930250.html
 load 942979.html
 load 973401.html
 load 978646.html
-asserts-if(stylo,1-11) pref(dom.webcomponents.enabled,true) load 1024428-1.html # bug 1324671
+skip-if(stylo) pref(dom.webcomponents.enabled,true) load 1024428-1.html # bug 1340009
 load 1026714.html
 pref(dom.webcomponents.enabled,true) load 1027461-1.html
 pref(dom.webcomponents.enabled,true) load 1029710.html
@@ -211,3 +211,6 @@ load 1304437.html
 pref(dom.IntersectionObserver.enabled,true) load 1324209.html
 pref(dom.IntersectionObserver.enabled,true) load 1326194-1.html
 pref(dom.IntersectionObserver.enabled,true) load 1326194-2.html
+pref(dom.IntersectionObserver.enabled,true) load 1332939.html
+pref(dom.IntersectionObserver.enabled,true) load 1353529.xul
+pref(dom.webcomponents.enabled,true) load 1341693.html

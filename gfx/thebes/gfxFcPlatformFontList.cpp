@@ -4,6 +4,7 @@
  * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
 
 #include "mozilla/Logging.h"
+#include "mozilla/SizePrintfMacros.h"
 
 #include "gfxFcPlatformFontList.h"
 #include "gfxFont.h"
@@ -134,29 +135,37 @@ GetFaceNames(FcPattern* aFont, const nsAString& aFamilyName,
 static uint16_t
 MapFcWeight(int aFcWeight)
 {
-    if (aFcWeight <= (FC_WEIGHT_THIN + FC_WEIGHT_EXTRALIGHT) / 2) {
-        return 100;
-    } else if (aFcWeight <= (FC_WEIGHT_EXTRALIGHT + FC_WEIGHT_LIGHT) / 2) {
-        return 200;
-    } else if (aFcWeight <= (FC_WEIGHT_LIGHT + FC_WEIGHT_BOOK) / 2) {
-        return 300;
-    } else if (aFcWeight <= (FC_WEIGHT_REGULAR + FC_WEIGHT_MEDIUM) / 2) {
-        // This includes FC_WEIGHT_BOOK
-        return 400;
-    } else if (aFcWeight <= (FC_WEIGHT_MEDIUM + FC_WEIGHT_DEMIBOLD) / 2) {
-        return 500;
-    } else if (aFcWeight <= (FC_WEIGHT_DEMIBOLD + FC_WEIGHT_BOLD) / 2) {
-        return 600;
-    } else if (aFcWeight <= (FC_WEIGHT_BOLD + FC_WEIGHT_EXTRABOLD) / 2) {
-        return 700;
-    } else if (aFcWeight <= (FC_WEIGHT_EXTRABOLD + FC_WEIGHT_BLACK) / 2) {
-        return 800;
-    } else if (aFcWeight <= FC_WEIGHT_BLACK) {
-        return 900;
-    }
+  if (aFcWeight <= (FC_WEIGHT_THIN + FC_WEIGHT_EXTRALIGHT) / 2) {
+    return 100;
+  }
+  if (aFcWeight <= (FC_WEIGHT_EXTRALIGHT + FC_WEIGHT_LIGHT) / 2) {
+    return 200;
+  }
+  if (aFcWeight <= (FC_WEIGHT_LIGHT + FC_WEIGHT_BOOK) / 2) {
+    return 300;
+  }
+  if (aFcWeight <= (FC_WEIGHT_REGULAR + FC_WEIGHT_MEDIUM) / 2) {
+    // This includes FC_WEIGHT_BOOK
+    return 400;
+  }
+  if (aFcWeight <= (FC_WEIGHT_MEDIUM + FC_WEIGHT_DEMIBOLD) / 2) {
+    return 500;
+  }
+  if (aFcWeight <= (FC_WEIGHT_DEMIBOLD + FC_WEIGHT_BOLD) / 2) {
+    return 600;
+  }
+  if (aFcWeight <= (FC_WEIGHT_BOLD + FC_WEIGHT_EXTRABOLD) / 2) {
+    return 700;
+  }
+  if (aFcWeight <= (FC_WEIGHT_EXTRABOLD + FC_WEIGHT_BLACK) / 2) {
+    return 800;
+  }
+  if (aFcWeight <= FC_WEIGHT_BLACK) {
+    return 900;
+  }
 
-    // including FC_WEIGHT_EXTRABLACK
-    return 901;
+  // including FC_WEIGHT_EXTRABLACK
+  return 901;
 }
 
 static int16_t
@@ -373,7 +382,7 @@ gfxFontconfigFontEntry::ReadCMAP(FontInfoData *aFontInfoData)
         mCharacterMap = new gfxCharacterMap();
     }
 
-    LOG_FONTLIST(("(fontlist-cmap) name: %s, size: %d hash: %8.8x%s\n",
+    LOG_FONTLIST(("(fontlist-cmap) name: %s, size: %" PRIuSIZE " hash: %8.8x%s\n",
                   NS_ConvertUTF16toUTF8(mName).get(),
                   charmap->SizeOfIncludingThis(moz_malloc_size_of),
                   charmap->mHash, mCharacterMap == charmap ? " new" : ""));
@@ -813,6 +822,15 @@ ChooseFontSize(gfxFontconfigFontEntry* aEntry,
             bestSize = size;
         }
     }
+    // If the font has bitmaps but wants to be scaled, then let it scale.
+    if (bestSize >= 0.0) {
+        FcBool scalable;
+        if (FcPatternGetBool(aEntry->GetPattern(),
+                             FC_SCALABLE, 0, &scalable) == FcResultMatch &&
+            scalable) {
+            return requestedSize;
+        }
+    }
     return bestSize;
 }
 
@@ -952,6 +970,12 @@ gfxFontconfigFontFamily::AddFontPattern(FcPattern* aFontPattern)
     if (FcPatternGetBool(aFontPattern, FC_SCALABLE, 0, &scalable) != FcResultMatch ||
         !scalable) {
         mHasNonScalableFaces = true;
+
+        FcBool scalable;
+        if (FcPatternGetBool(aFontPattern, FC_SCALABLE, 0, &scalable) == FcResultMatch &&
+            scalable) {
+            mForceScalable = true;
+        }
     }
 
     nsCountedRef<FcPattern> pattern(aFontPattern);
@@ -963,7 +987,9 @@ static const double kRejectDistance = 10000.0;
 // Calculate a distance score representing the size disparity between the
 // requested style's size and the font entry's size.
 static double
-SizeDistance(gfxFontconfigFontEntry* aEntry, const gfxFontStyle& aStyle)
+SizeDistance(gfxFontconfigFontEntry* aEntry,
+             const gfxFontStyle& aStyle,
+             bool aForceScalable)
 {
     double requestedSize = SizeForStyle(aEntry, aStyle);
     double bestDist = -1.0;
@@ -980,7 +1006,7 @@ SizeDistance(gfxFontconfigFontEntry* aEntry, const gfxFontStyle& aStyle)
     if (bestDist < 0.0) {
         // No size means scalable
         return -1.0;
-    } else if (5.0 * bestDist < requestedSize) {
+    } else if (aForceScalable || 5.0 * bestDist < requestedSize) {
         // fontconfig prefers a matching family or lang to pixelsize of bitmap
         // fonts. CSS suggests a tolerance of 20% on pixelsize.
         return bestDist;
@@ -1014,7 +1040,7 @@ gfxFontconfigFontFamily::FindAllFontsForStyle(const gfxFontStyle& aFontStyle,
     for (size_t i = 0; i < aFontEntryList.Length(); i++) {
         gfxFontconfigFontEntry* entry =
             static_cast<gfxFontconfigFontEntry*>(aFontEntryList[i]);
-        double dist = SizeDistance(entry, aFontStyle);
+        double dist = SizeDistance(entry, aFontStyle, mForceScalable);
         // If the entry is scalable or has a style that does not match
         // the group of unscalable fonts, then start a new group.
         if (dist < 0.0 ||

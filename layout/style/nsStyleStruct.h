@@ -904,7 +904,6 @@ struct nsStyleImageLayers {
   nsChangeHint CalcDifference(const nsStyleImageLayers& aNewLayers,
                               nsStyleImageLayers::LayerType aType) const;
 
-  bool HasLayerWithImage() const;
   nsStyleImageLayers& operator=(const nsStyleImageLayers& aOther);
   nsStyleImageLayers& operator=(nsStyleImageLayers&& aOther);
   bool operator==(const nsStyleImageLayers& aOther) const;
@@ -939,7 +938,7 @@ struct MOZ_NEEDS_MEMMOVABLE_MEMBERS nsStyleBackground {
 
   nsChangeHint CalcDifference(const nsStyleBackground& aNewData) const;
   static nsChangeHint MaxDifference() {
-     return nsChangeHint_UpdateEffects |
+    return nsChangeHint_UpdateEffects |
            nsChangeHint_RepaintFrame |
            nsChangeHint_UpdateBackgroundPosition |
            nsChangeHint_NeutralChange;
@@ -2102,6 +2101,7 @@ struct MOZ_NEEDS_MEMMOVABLE_MEMBERS nsStyleText
   uint8_t mTextAlignLast;               // [inherited] see nsStyleConsts.h
   bool mTextAlignTrue : 1;              // [inherited] see nsStyleConsts.h
   bool mTextAlignLastTrue : 1;          // [inherited] see nsStyleConsts.h
+  mozilla::StyleTextJustify mTextJustify;   // [inherited]
   uint8_t mTextTransform;               // [inherited] see nsStyleConsts.h
   uint8_t mWhiteSpace;                  // [inherited] see nsStyleConsts.h
   uint8_t mWordBreak;                   // [inherited] see nsStyleConsts.h
@@ -2640,7 +2640,6 @@ private:
   nsStyleCorners mRadius;
 };
 
-template<typename ReferenceBox>
 struct StyleShapeSource
 {
   StyleShapeSource()
@@ -2678,7 +2677,7 @@ struct StyleShapeSource
       SetReferenceBox(aOther.mReferenceBox);
     } else {
       ReleaseRef();
-      mReferenceBox = ReferenceBox::NoBox;
+      mReferenceBox = StyleGeometryBox::NoBox;
       mType = StyleShapeSourceType::None;
     }
     return *this;
@@ -2735,7 +2734,7 @@ struct StyleShapeSource
   }
 
   void SetBasicShape(StyleBasicShape* aBasicShape,
-                     ReferenceBox aReferenceBox)
+                     StyleGeometryBox aReferenceBox)
   {
     NS_ASSERTION(aBasicShape, "expected pointer");
     ReleaseRef();
@@ -2745,7 +2744,7 @@ struct StyleShapeSource
     mType = StyleShapeSourceType::Shape;
   }
 
-  ReferenceBox GetReferenceBox() const
+  StyleGeometryBox GetReferenceBox() const
   {
     MOZ_ASSERT(mType == StyleShapeSourceType::Box ||
                mType == StyleShapeSourceType::Shape,
@@ -2753,7 +2752,7 @@ struct StyleShapeSource
     return mReferenceBox;
   }
 
-  void SetReferenceBox(ReferenceBox aReferenceBox)
+  void SetReferenceBox(StyleGeometryBox aReferenceBox)
   {
     ReleaseRef();
     mReferenceBox = aReferenceBox;
@@ -2782,11 +2781,8 @@ private:
     css::URLValue* mURL;
   };
   StyleShapeSourceType mType = StyleShapeSourceType::None;
-  ReferenceBox mReferenceBox = ReferenceBox::NoBox;
+  StyleGeometryBox mReferenceBox = StyleGeometryBox::NoBox;
 };
-
-using StyleClipPath = StyleShapeSource<StyleGeometryBox>;
-using StyleShapeOutside = StyleShapeSource<StyleShapeOutsideShapeBox>;
 
 } // namespace mozilla
 
@@ -2794,9 +2790,8 @@ struct MOZ_NEEDS_MEMMOVABLE_MEMBERS nsStyleDisplay
 {
   explicit nsStyleDisplay(const nsPresContext* aContext);
   nsStyleDisplay(const nsStyleDisplay& aOther);
-  ~nsStyleDisplay() {
-    MOZ_COUNT_DTOR(nsStyleDisplay);
-  }
+  ~nsStyleDisplay();
+
   void FinishStyle(nsPresContext* aPresContext) {}
 
   void* operator new(size_t sz, nsStyleDisplay* aSelf) { return aSelf; }
@@ -2911,7 +2906,7 @@ struct MOZ_NEEDS_MEMMOVABLE_MEMBERS nsStyleDisplay
            mAnimationPlayStateCount,
            mAnimationIterationCountCount;
 
-  mozilla::StyleShapeOutside mShapeOutside; // [reset]
+  mozilla::StyleShapeSource mShapeOutside; // [reset]
 
   bool IsBlockInsideStyle() const {
     return mozilla::StyleDisplay::Block == mDisplay ||
@@ -3872,6 +3867,7 @@ struct MOZ_NEEDS_MEMMOVABLE_MEMBERS nsStyleSVGReset
            nsChangeHint_NeutralChange |
            nsChangeHint_RepaintFrame |
            nsChangeHint_UpdateBackgroundPosition |
+           nsChangeHint_UpdateContainingBlock |
            NS_STYLE_HINT_REFLOW;
   }
   static nsChangeHint DifferenceAlwaysHandledForDescendants() {
@@ -3886,12 +3882,14 @@ struct MOZ_NEEDS_MEMMOVABLE_MEMBERS nsStyleSVGReset
     return mClipPath.GetType() != mozilla::StyleShapeSourceType::None;
   }
 
+  bool HasMask() const;
+
   bool HasNonScalingStroke() const {
     return mVectorEffect == NS_STYLE_VECTOR_EFFECT_NON_SCALING_STROKE;
   }
 
   nsStyleImageLayers    mMask;
-  mozilla::StyleClipPath mClipPath;   // [reset]
+  mozilla::StyleShapeSource mClipPath;// [reset]
   nscolor          mStopColor;        // [reset]
   nscolor          mFloodColor;       // [reset]
   nscolor          mLightingColor;    // [reset]
@@ -4081,5 +4079,22 @@ STATIC_ASSERT_TYPE_LAYOUTS_MATCH(nsTArray<mozilla::StyleTransition>,
                                  nsTArray_Simple<mozilla::StyleTransition>);
 STATIC_ASSERT_TYPE_LAYOUTS_MATCH(nsTArray<mozilla::StyleAnimation>,
                                  nsTArray_Simple<mozilla::StyleAnimation>);
+
+/**
+ * <div rustbindgen replaces="nsCOMArray"></div>
+ *
+ * mozilla::ArrayIterator doesn't work well with bindgen.
+ */
+template<typename T>
+class nsCOMArray_Simple {
+  nsTArray<nsISupports*> mBuffer;
+};
+
+STATIC_ASSERT_TYPE_LAYOUTS_MATCH(nsCOMArray<nsIContent>,
+                                 nsCOMArray_Simple<nsIContent>);
+STATIC_ASSERT_TYPE_LAYOUTS_MATCH(nsCOMArray<nsINode>,
+                                 nsCOMArray_Simple<nsINode>);
+STATIC_ASSERT_TYPE_LAYOUTS_MATCH(nsCOMArray<imgIContainer>,
+                                 nsCOMArray_Simple<imgIContainer>);
 
 #endif /* nsStyleStruct_h___ */

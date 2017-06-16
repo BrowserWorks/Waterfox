@@ -889,7 +889,7 @@ CompositorD3D11::DrawQuad(const gfx::Rect& aRect,
         return;
       }
 
-      float* yuvToRgb = gfxUtils::Get4x3YuvColorMatrix(ycbcrEffect->mYUVColorSpace);
+      const float* yuvToRgb = gfxUtils::YuvToRgbMatrix4x3RowMajor(ycbcrEffect->mYUVColorSpace);
       memcpy(&mPSConstants.yuvColorMatrix, yuvToRgb, sizeof(mPSConstants.yuvColorMatrix));
 
       TextureSourceD3D11* sourceY  = source->GetSubSource(Y)->AsSourceD3D11();
@@ -1184,12 +1184,14 @@ CompositorD3D11::EndFrame()
 }
 
 void
-CompositorD3D11::CancelFrame()
+CompositorD3D11::CancelFrame(bool aNeedFlush)
 {
   ReadUnlockTextures();
   // Flush the context, otherwise the driver might hold some resources alive
   // until the next flush or present.
-  mContext->Flush();
+  if (aNeedFlush) {
+    mContext->Flush();
+  }
 }
 
 void

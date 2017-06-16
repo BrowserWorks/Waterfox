@@ -14,15 +14,14 @@ Test comment-node rep
 </head>
 <body>
 <pre id="test">
-<script src="head.js" type="application/javascript;version=1.8"></script>
-<script type="application/javascript;version=1.8">
+<script src="head.js" type="application/javascript"></script>
+<script type="application/javascript">
 "use strict";
 
 window.onload = Task.async(function* () {
   try {
-    let { Rep } = browserRequire("devtools/client/shared/components/reps/rep");
-    let { CommentNode } = browserRequire("devtools/client/shared/components/reps/comment-node");
-    const { MODE } = browserRequire("devtools/client/shared/components/reps/constants");
+    const { REPS, MODE } = browserRequire("devtools/client/shared/components/reps/reps");
+    let { Rep, CommentNode } = REPS;
 
     let gripStub = {
       "type": "object",

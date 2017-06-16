@@ -159,7 +159,7 @@ var gGrid = {
     this._node.appendChild(fragment);
 
     document.getElementById("topsites-heading").textContent =
-      hasHistoryTiles ? "Your Top Sites" : "Top Sites";
+      newTabString(hasHistoryTiles ? "userTopSites.heading" : "defaultTopSites.heading");
   },
 
   /**

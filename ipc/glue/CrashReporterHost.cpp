@@ -19,21 +19,52 @@ namespace mozilla {
 namespace ipc {
 
 CrashReporterHost::CrashReporterHost(GeckoProcessType aProcessType,
-                                     const Shmem& aShmem)
+                                     const Shmem& aShmem,
+                                     CrashReporter::ThreadId aThreadId)
  : mProcessType(aProcessType),
    mShmem(aShmem),
-   mStartTime(::time(nullptr))
+   mThreadId(aThreadId),
+   mStartTime(::time(nullptr)),
+   mFinalized(false)
 {
 }
 
 #ifdef MOZ_CRASHREPORTER
-void
-CrashReporterHost::GenerateCrashReport(RefPtr<nsIFile> aCrashDump)
+bool
+CrashReporterHost::GenerateCrashReport(base::ProcessId aPid)
 {
-  nsString dumpID;
-  if (!CrashReporter::GetIDFromMinidump(aCrashDump, dumpID)) {
-    return;
+  if (!TakeCrashedChildMinidump(aPid, nullptr)) {
+    return false;
   }
+  return FinalizeCrashReport();
+}
+
+RefPtr<nsIFile>
+CrashReporterHost::TakeCrashedChildMinidump(base::ProcessId aPid, uint32_t* aOutSequence)
+{
+  MOZ_ASSERT(!HasMinidump());
+
+  RefPtr<nsIFile> crashDump;
+  if (!XRE_TakeMinidumpForChild(aPid, getter_AddRefs(crashDump), aOutSequence)) {
+    return nullptr;
+  }
+  if (!AdoptMinidump(crashDump)) {
+    return nullptr;
+  }
+  return crashDump.get();
+}
+
+bool
+CrashReporterHost::AdoptMinidump(nsIFile* aFile)
+{
+  return CrashReporter::GetIDFromMinidump(aFile, mDumpID);
+}
+
+bool
+CrashReporterHost::FinalizeCrashReport()
+{
+  MOZ_ASSERT(!mFinalized);
+  MOZ_ASSERT(HasMinidump());
 
   CrashReporter::AnnotationTable notes;
 
@@ -59,10 +90,19 @@ CrashReporterHost::GenerateCrashReport(RefPtr<nsIFile> aCrashDump)
   SprintfLiteral(startTime, "%lld", static_cast<long long>(mStartTime));
   notes.Put(NS_LITERAL_CSTRING("StartupTime"), nsDependentCString(startTime));
 
-  CrashReporterMetadataShmem::ReadAppNotes(mShmem, &notes);
+  // We might not have shmem (for example, when running crashreporter tests).
+  if (mShmem.IsReadable()) {
+    CrashReporterMetadataShmem::ReadAppNotes(mShmem, &notes);
+  }
+  CrashReporter::AppendExtraData(mDumpID, mExtraNotes);
+  CrashReporter::AppendExtraData(mDumpID, notes);
 
-  CrashReporter::AppendExtraData(dumpID, notes);
-  NotifyCrashService(mProcessType, dumpID, &notes);
+  // Use mExtraNotes, since NotifyCrashService looks for "PluginHang" which is
+  // set in the parent process.
+  NotifyCrashService(mProcessType, mDumpID, &mExtraNotes);
+
+  mFinalized = true;
+  return true;
 }
 
 /**
@@ -101,7 +141,8 @@ public:
   {
     MOZ_ASSERT(!NS_IsMainThread());
 
-    if (mProcessType == nsICrashService::PROCESS_TYPE_CONTENT) {
+    if (mProcessType == nsICrashService::PROCESS_TYPE_CONTENT ||
+        mProcessType == nsICrashService::PROCESS_TYPE_GPU) {
       CrashReporter::RunMinidumpAnalyzer(mChildDumpID);
     }
 
@@ -261,6 +302,12 @@ CrashReporterHost::NotifyCrashService(GeckoProcessType aProcessType,
 
   AsyncAddCrash(processType, crashType, aChildDumpID);
   Telemetry::Accumulate(Telemetry::SUBPROCESS_CRASHES_WITH_DUMP, telemetryKey, 1);
+}
+
+void
+CrashReporterHost::AddNote(const nsCString& aKey, const nsCString& aValue)
+{
+  mExtraNotes.Put(aKey, aValue);
 }
 #endif
 

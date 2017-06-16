@@ -25,6 +25,7 @@ var ecmaGlobals =
   [
     "Array",
     "ArrayBuffer",
+    {name: "Atomics", release: false},
     "Boolean",
     "DataView",
     "Date",
@@ -38,7 +39,7 @@ var ecmaGlobals =
     "Int32Array",
     "Int8Array",
     "InternalError",
-    {name: "Intl", android: false},
+    {name: "Intl", nonReleaseAndroid: true, android: false},
     "Iterator",
     "JSON",
     "Map",
@@ -55,7 +56,6 @@ var ecmaGlobals =
     "Set",
     {name: "SharedArrayBuffer", release: false},
     {name: "SIMD", nightly: true},
-    {name: "Atomics", release: false},
     "StopIteration",
     "String",
     "Symbol",
@@ -90,6 +90,8 @@ var interfaceNamesInGlobalScope =
 // IMPORTANT: Do not change this list without review from a DOM peer!
     "Clients",
 // IMPORTANT: Do not change this list without review from a DOM peer!
+    "CloseEvent",
+// IMPORTANT: Do not change this list without review from a DOM peer!
     "Crypto",
 // IMPORTANT: Do not change this list without review from a DOM peer!
     "CustomEvent",
@@ -106,6 +108,8 @@ var interfaceNamesInGlobalScope =
 // IMPORTANT: Do not change this list without review from a DOM peer!
     "DOMStringList",
 // IMPORTANT: Do not change this list without review from a DOM peer!
+    "ErrorEvent",
+// IMPORTANT: Do not change this list without review from a DOM peer!
     "Event",
 // IMPORTANT: Do not change this list without review from a DOM peer!
     "EventTarget",
@@ -117,6 +121,8 @@ var interfaceNamesInGlobalScope =
     "FetchEvent",
 // IMPORTANT: Do not change this list without review from a DOM peer!
     "File",
+// IMPORTANT: Do not change this list without review from a DOM peer!
+    "FileList",
 // IMPORTANT: Do not change this list without review from a DOM peer!
     "FileReader",
 // IMPORTANT: Do not change this list without review from a DOM peer!
@@ -177,6 +183,8 @@ var interfaceNamesInGlobalScope =
     { name: "PerformanceObserver", nightly: true },
 // IMPORTANT: Do not change this list without review from a DOM peer!
     { name: "PerformanceObserverEntryList", nightly: true },
+// IMPORTANT: Do not change this list without review from a DOM peer!
+    "ProgressEvent",
 // IMPORTANT: Do not change this list without review from a DOM peer!
     "PushEvent",
 // IMPORTANT: Do not change this list without review from a DOM peer!

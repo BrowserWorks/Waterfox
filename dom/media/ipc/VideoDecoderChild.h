@@ -6,15 +6,11 @@
 #ifndef include_dom_ipc_VideoDecoderChild_h
 #define include_dom_ipc_VideoDecoderChild_h
 
-#include "mozilla/RefPtr.h"
-#include "mozilla/dom/PVideoDecoderChild.h"
-#include "MediaData.h"
 #include "PlatformDecoderModule.h"
+#include "mozilla/Atomics.h"
+#include "mozilla/dom/PVideoDecoderChild.h"
 
 namespace mozilla {
-namespace layers {
-class SynchronousTask;
-}
 namespace dom {
 
 class RemoteVideoDecoder;
@@ -33,23 +29,25 @@ public:
   mozilla::ipc::IPCResult RecvInputExhausted() override;
   mozilla::ipc::IPCResult RecvDrainComplete() override;
   mozilla::ipc::IPCResult RecvError(const nsresult& aError) override;
-  mozilla::ipc::IPCResult RecvInitComplete(const bool& aHardware, const nsCString& aHardwareReason) override;
+  mozilla::ipc::IPCResult RecvInitComplete(const bool& aHardware,
+                                           const nsCString& aHardwareReason,
+                                           const uint32_t& aConversion) override;
   mozilla::ipc::IPCResult RecvInitFailed(const nsresult& aReason) override;
   mozilla::ipc::IPCResult RecvFlushComplete() override;
 
   void ActorDestroy(ActorDestroyReason aWhy) override;
 
   RefPtr<MediaDataDecoder::InitPromise> Init();
-  void Input(MediaRawData* aSample);
-  void Flush(layers::SynchronousTask* Task);
-  void Drain();
+  RefPtr<MediaDataDecoder::DecodePromise> Decode(MediaRawData* aSample);
+  RefPtr<MediaDataDecoder::DecodePromise> Drain();
+  RefPtr<MediaDataDecoder::FlushPromise> Flush();
   void Shutdown();
   bool IsHardwareAccelerated(nsACString& aFailureReason) const;
   void SetSeekThreshold(const media::TimeUnit& aTime);
+  MediaDataDecoder::ConversionRequired NeedsConversion() const;
 
   MOZ_IS_CLASS_INIT
-  bool InitIPDL(MediaDataDecoderCallback* aCallback,
-                const VideoInfo& aVideoInfo,
+  bool InitIPDL(const VideoInfo& aVideoInfo,
                 const layers::TextureFactoryIdentifier& aIdentifier);
   void DestroyIPDL();
 
@@ -61,21 +59,26 @@ public:
 private:
   ~VideoDecoderChild();
 
-  void AssertOnManagerThread();
+  void AssertOnManagerThread() const;
 
   RefPtr<VideoDecoderChild> mIPDLSelfRef;
   RefPtr<nsIThread> mThread;
 
-  MediaDataDecoderCallback* mCallback;
-
   MozPromiseHolder<MediaDataDecoder::InitPromise> mInitPromise;
-
-  layers::SynchronousTask* mFlushTask;
+  MozPromiseHolder<MediaDataDecoder::DecodePromise> mDecodePromise;
+  MozPromiseHolder<MediaDataDecoder::DecodePromise> mDrainPromise;
+  MozPromiseHolder<MediaDataDecoder::FlushPromise> mFlushPromise;
 
   nsCString mHardwareAcceleratedReason;
   bool mCanSend;
   bool mInitialized;
-  bool mIsHardwareAccelerated;
+  Atomic<bool> mIsHardwareAccelerated;
+  Atomic<MediaDataDecoder::ConversionRequired> mConversion;
+
+  // Set to true if the actor got destroyed and we haven't yet notified the
+  // caller.
+  bool mNeedNewDecoder;
+  MediaDataDecoder::DecodedData mDecodedData;
 };
 
 } // namespace dom

@@ -1220,7 +1220,10 @@ LoopChoiceNode::FilterASCII(int depth, bool ignore_case, bool unicode)
 void
 Analysis::EnsureAnalyzed(RegExpNode* that)
 {
-    JS_CHECK_RECURSION(cx, failASCII("Stack overflow"); return);
+    if (!CheckRecursionLimit(cx)) {
+        failASCII("Stack overflow");
+        return;
+    }
 
     if (that->info()->been_analyzed || that->info()->being_analyzed)
         return;
@@ -1611,6 +1614,20 @@ class RecursionCheck
     RegExpCompiler* compiler_;
 };
 
+static inline bool
+IsLatin1Equivalent(char16_t c, RegExpCompiler* compiler)
+{
+    if (c <= kMaxOneByteCharCode)
+        return true;
+
+    if (!compiler->ignore_case())
+        return false;
+
+    char16_t converted = ConvertNonLatin1ToLatin1(c, compiler->unicode());
+
+    return converted != 0 && converted <= kMaxOneByteCharCode;
+}
+
 // Attempts to compile the regexp using an Irregexp code generator.  Returns
 // a fixed array or a null handle depending on whether it succeeded.
 RegExpCompiler::RegExpCompiler(JSContext* cx, LifoAlloc* alloc, int capture_count,
@@ -1788,7 +1805,7 @@ irregexp::CompilePattern(JSContext* cx, RegExpShared* shared, RegExpCompileData*
                      : NativeRegExpMacroAssembler::CHAR16;
 
         ctx.emplace(cx, (jit::TempAllocator*) nullptr);
-        native_assembler.emplace(&alloc, shared, cx->runtime(), mode, (data->capture_count + 1) * 2);
+        native_assembler.emplace(cx, &alloc, shared, mode, (data->capture_count + 1) * 2);
         assembler = native_assembler.ptr();
     } else {
         interpreted_assembler.emplace(&alloc, shared, (data->capture_count + 1) * 2);
@@ -2254,7 +2271,10 @@ void
 BoyerMoorePositionInfo::SetInterval(const Interval& interval)
 {
     s_ = AddRange(s_, kSpaceRanges, kSpaceRangeCount, interval);
-    w_ = AddRange(w_, kWordRanges, kWordRangeCount, interval);
+    if (unicode_ignore_case_)
+        w_ = AddRange(w_, kIgnoreCaseWordRanges, kIgnoreCaseWordRangeCount, interval);
+    else
+        w_ = AddRange(w_, kWordRanges, kWordRangeCount, interval);
     d_ = AddRange(d_, kDigitRanges, kDigitRangeCount, interval);
     surrogate_ =
         AddRange(surrogate_, kSurrogateRanges, kSurrogateRangeCount, interval);
@@ -2291,11 +2311,12 @@ BoyerMoorePositionInfo::SetAll()
 BoyerMooreLookahead::BoyerMooreLookahead(LifoAlloc* alloc, size_t length, RegExpCompiler* compiler)
   : length_(length), compiler_(compiler), bitmaps_(*alloc)
 {
+    bool unicode_ignore_case = compiler->unicode() && compiler->ignore_case();
     max_char_ = MaximumCharacter(compiler->ascii());
 
     bitmaps_.reserve(length);
     for (size_t i = 0; i < length; i++)
-        bitmaps_.append(alloc->newInfallible<BoyerMoorePositionInfo>(alloc));
+        bitmaps_.append(alloc->newInfallible<BoyerMoorePositionInfo>(alloc, unicode_ignore_case));
 }
 
 // Find the longest range of lookahead that has the fewest number of different
@@ -2478,7 +2499,11 @@ BoyerMooreLookahead::EmitSkipInstructions(RegExpMacroAssembler* masm)
 bool
 BoyerMooreLookahead::CheckOverRecursed()
 {
-    JS_CHECK_RECURSION(compiler()->cx(), compiler()->SetRegExpTooBig(); return false);
+    if (!CheckRecursionLimit(compiler()->cx())) {
+        compiler()->SetRegExpTooBig();
+        return false;
+    }
+
     return true;
 }
 
@@ -2961,13 +2986,20 @@ EmitNotInSurrogatePair(RegExpCompiler* compiler, RegExpNode* on_success, Trace* 
 // Check for [0-9A-Z_a-z].
 static void
 EmitWordCheck(RegExpMacroAssembler* assembler,
-              jit::Label* word, jit::Label* non_word, bool fall_through_on_word)
+              jit::Label* word, jit::Label* non_word, bool fall_through_on_word,
+              bool unicode_ignore_case)
 {
-    if (assembler->CheckSpecialCharacterClass(fall_through_on_word ? 'w' : 'W',
+    if (!unicode_ignore_case &&
+        assembler->CheckSpecialCharacterClass(fall_through_on_word ? 'w' : 'W',
                                               fall_through_on_word ? non_word : word))
     {
         // Optimized implementation available.
         return;
+    }
+
+    if (unicode_ignore_case) {
+        assembler->CheckCharacter(0x017F, word);
+        assembler->CheckCharacter(0x212A, word);
     }
 
     assembler->CheckCharacterGT('z', non_word);
@@ -3018,7 +3050,8 @@ AssertionNode::EmitBoundaryCheck(RegExpCompiler* compiler, Trace* trace)
             assembler->LoadCurrentCharacter(trace->cp_offset(), &before_non_word);
         }
         // Fall through on non-word.
-        EmitWordCheck(assembler, &before_word, &before_non_word, false);
+        EmitWordCheck(assembler, &before_word, &before_non_word, false,
+                      compiler->unicode() && compiler->ignore_case());
         // Next character is not a word character.
         assembler->Bind(&before_non_word);
         jit::Label ok;
@@ -3058,7 +3091,8 @@ AssertionNode::BacktrackIfPrevious(RegExpCompiler* compiler,
     // We already checked that we are not at the start of input so it must be
     // OK to load the previous character.
     assembler->LoadCurrentCharacter(new_trace.cp_offset() - 1, &dummy, false);
-    EmitWordCheck(assembler, word, non_word, backtrack_if_previous == kIsNonWord);
+    EmitWordCheck(assembler, word, non_word, backtrack_if_previous == kIsNonWord,
+                  compiler->unicode() && compiler->ignore_case());
 
     assembler->Bind(&fall_through);
     on_success()->Emit(compiler, &new_trace);
@@ -3632,38 +3666,34 @@ EmitSimpleCharacter(RegExpCompiler* compiler,
     return bound_checked;
 }
 
-// Only emits non-letters (things that don't have case).  Only used for case
-// independent matches.
+// Emit character for case independent match, when GetCaseIndependentLetters
+// returns single character.
+// This is used by the following 2 cases:
+//   * non-letters (things that don't have case)
+//   * letters that map across Latin1 and non-Latin1, and non-Latin1 case is
+//     filtered out because of Latin1 match
 static inline bool
-EmitAtomNonLetter(RegExpCompiler* compiler,
-                  char16_t c,
-                  jit::Label* on_failure,
-                  int cp_offset,
-                  bool check,
-                  bool preloaded)
+EmitAtomSingle(RegExpCompiler* compiler,
+               char16_t c,
+               jit::Label* on_failure,
+               int cp_offset,
+               bool check,
+               bool preloaded)
 {
     RegExpMacroAssembler* macro_assembler = compiler->macro_assembler();
+    // FIXME: `ascii` actually means latin1 (bug 1338841).
     bool ascii = compiler->ascii();
     char16_t chars[kEcma262UnCanonicalizeMaxWidth];
     int length = GetCaseIndependentLetters(c, ascii, compiler->unicode(), chars);
-    if (length < 1) {
-        // This can't match.  Must be an ASCII subject and a non-ASCII character.
-        // We do not need to do anything since the ASCII pass already handled this.
-        return false;  // Bounds not checked.
-    }
+    if (length != 1)
+        return false;
+
     bool checked = false;
-    // We handle the length > 1 case in a later pass.
-    if (length == 1) {
-        if (ascii && c > kMaxOneByteCharCode) {
-            // Can't match - see above.
-            return false;  // Bounds not checked.
-        }
-        if (!preloaded) {
-            macro_assembler->LoadCurrentCharacter(cp_offset, on_failure, check);
-            checked = check;
-        }
-        macro_assembler->CheckNotCharacter(c, on_failure);
+    if (!preloaded) {
+        macro_assembler->LoadCurrentCharacter(cp_offset, on_failure, check);
+        checked = check;
     }
+    macro_assembler->CheckNotCharacter(chars[0], on_failure);
     return checked;
 }
 
@@ -3708,15 +3738,15 @@ ShortCutEmitCharacterPair(RegExpMacroAssembler* macro_assembler,
     return false;
 }
 
-// Only emits letters (things that have case).  Only used for case independent
-// matches.
+// Emit character for case independent match, when GetCaseIndependentLetters
+// returns multiple characters.
 static inline bool
-EmitAtomLetter(RegExpCompiler* compiler,
-               char16_t c,
-               jit::Label* on_failure,
-               int cp_offset,
-               bool check,
-               bool preloaded)
+EmitAtomMulti(RegExpCompiler* compiler,
+              char16_t c,
+              jit::Label* on_failure,
+              int cp_offset,
+              bool check,
+              bool preloaded)
 {
     RegExpMacroAssembler* macro_assembler = compiler->macro_assembler();
     bool ascii = compiler->ascii();
@@ -3812,19 +3842,19 @@ TextNode::TextEmitPass(RegExpCompiler* compiler,
                 switch (pass) {
                   case NON_ASCII_MATCH:
                     MOZ_ASSERT(ascii);
-                    if (quarks[j] > kMaxOneByteCharCode) {
+                    if (!IsLatin1Equivalent(quarks[j], compiler)) {
                         assembler->JumpOrBacktrack(backtrack);
                         return;
                     }
                     break;
-                  case NON_LETTER_CHARACTER_MATCH:
-                    emit_function = &EmitAtomNonLetter;
+                  case CASE_SINGLE_CHARACTER_MATCH:
+                    emit_function = &EmitAtomSingle;
                     break;
                   case SIMPLE_CHARACTER_MATCH:
                     emit_function = &EmitSimpleCharacter;
                     break;
-                  case CASE_CHARACTER_MATCH:
-                    emit_function = &EmitAtomLetter;
+                  case CASE_MUTLI_CHARACTER_MATCH:
+                    emit_function = &EmitAtomMulti;
                     break;
                   default:
                     break;
@@ -3873,7 +3903,7 @@ TextNode::SkipPass(int int_pass, bool ignore_case)
     TextEmitPassType pass = static_cast<TextEmitPassType>(int_pass);
     if (ignore_case)
         return pass == SIMPLE_CHARACTER_MATCH;
-    return pass == NON_LETTER_CHARACTER_MATCH || pass == CASE_CHARACTER_MATCH;
+    return pass == CASE_SINGLE_CHARACTER_MATCH || pass == CASE_MUTLI_CHARACTER_MATCH;
 }
 
 // This generates the code to match a text node.  A text node can contain

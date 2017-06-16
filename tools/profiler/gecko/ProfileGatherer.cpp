@@ -3,13 +3,14 @@
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
 
-#include "mozilla/ProfileGatherer.h"
+#include "ProfileGatherer.h"
+
 #include "mozilla/Services.h"
 #include "nsIObserverService.h"
 #include "nsIProfileSaveEvent.h"
-#include "GeckoSampler.h"
 #include "nsLocalFile.h"
 #include "nsIFileStreams.h"
+#include "platform.h"
 
 using mozilla::dom::AutoJSAPI;
 using mozilla::dom::Promise;
@@ -27,8 +28,8 @@ static const uint32_t MAX_SUBPROCESS_EXIT_PROFILES = 5;
 
 NS_IMPL_ISUPPORTS(ProfileGatherer, nsIObserver)
 
-ProfileGatherer::ProfileGatherer(GeckoSampler* aTicker)
-  : mTicker(aTicker)
+ProfileGatherer::ProfileGatherer()
+  : mIsCancelled(false)
   , mSinceTime(0)
   , mPendingProfiles(0)
   , mGathering(false)
@@ -72,6 +73,7 @@ ProfileGatherer::Start(double aSinceTime,
                        Promise* aPromise)
 {
   MOZ_ASSERT(NS_IsMainThread());
+
   if (mGathering) {
     // If we're already gathering, reject the promise - this isn't going
     // to end well.
@@ -81,63 +83,52 @@ ProfileGatherer::Start(double aSinceTime,
     return;
   }
 
-  mSinceTime = aSinceTime;
   mPromise = aPromise;
-  mGathering = true;
-  mPendingProfiles = 0;
 
-  nsCOMPtr<nsIObserverService> os = mozilla::services::GetObserverService();
-  if (os) {
-    DebugOnly<nsresult> rv =
-      os->AddObserver(this, "profiler-subprocess", false);
-    NS_WARNING_ASSERTION(NS_SUCCEEDED(rv), "AddObserver failed");
-    rv = os->NotifyObservers(this, "profiler-subprocess-gather", nullptr);
-    NS_WARNING_ASSERTION(NS_SUCCEEDED(rv), "NotifyObservers failed");
-  }
-
-  if (!mPendingProfiles) {
-    Finish();
-  }
-}
-
-void
-ProfileGatherer::Start(double aSinceTime,
-                       nsIFile* aFile)
-{
-  MOZ_ASSERT(NS_IsMainThread());
-  if (mGathering) {
-    return;
-  }
-
-  mSinceTime = aSinceTime;
-  mFile = aFile;
-  mGathering = true;
-  mPendingProfiles = 0;
-
-  nsCOMPtr<nsIObserverService> os = mozilla::services::GetObserverService();
-  if (os) {
-    DebugOnly<nsresult> rv =
-      os->AddObserver(this, "profiler-subprocess", false);
-    NS_WARNING_ASSERTION(NS_SUCCEEDED(rv), "AddObserver failed");
-    rv = os->NotifyObservers(this, "profiler-subprocess-gather", nullptr);
-    NS_WARNING_ASSERTION(NS_SUCCEEDED(rv), "NotifyObservers failed");
-  }
-
-  if (!mPendingProfiles) {
-    Finish();
-  }
+  Start2(aSinceTime);
 }
 
 void
 ProfileGatherer::Start(double aSinceTime,
                        const nsACString& aFileName)
 {
+  MOZ_ASSERT(NS_IsMainThread());
+
   nsCOMPtr<nsIFile> file = do_CreateInstance(NS_LOCAL_FILE_CONTRACTID);
   nsresult rv = file->InitWithNativePath(aFileName);
   if (NS_FAILED(rv)) {
     MOZ_CRASH();
   }
-  Start(aSinceTime, file);
+
+  if (mGathering) {
+    return;
+  }
+
+  mFile = file;
+
+  Start2(aSinceTime);
+}
+
+// This is the common tail shared by both Start() methods.
+void
+ProfileGatherer::Start2(double aSinceTime)
+{
+  mSinceTime = aSinceTime;
+  mGathering = true;
+  mPendingProfiles = 0;
+
+  nsCOMPtr<nsIObserverService> os = mozilla::services::GetObserverService();
+  if (os) {
+    DebugOnly<nsresult> rv =
+      os->AddObserver(this, "profiler-subprocess", false);
+    NS_WARNING_ASSERTION(NS_SUCCEEDED(rv), "AddObserver failed");
+    rv = os->NotifyObservers(this, "profiler-subprocess-gather", nullptr);
+    NS_WARNING_ASSERTION(NS_SUCCEEDED(rv), "NotifyObservers failed");
+  }
+
+  if (!mPendingProfiles) {
+    Finish();
+  }
 }
 
 void
@@ -145,13 +136,13 @@ ProfileGatherer::Finish()
 {
   MOZ_ASSERT(NS_IsMainThread());
 
-  if (!mTicker) {
+  if (mIsCancelled) {
     // We somehow got called after we were cancelled! This shouldn't
     // be possible, but doing a belt-and-suspenders check to be sure.
     return;
   }
 
-  UniquePtr<char[]> buf = mTicker->ToJSON(mSinceTime);
+  UniquePtr<char[]> buf = ToJSON(mSinceTime);
 
   if (mFile) {
     nsCOMPtr<nsIFileOutputStream> of =
@@ -216,16 +207,15 @@ ProfileGatherer::Reset()
 void
 ProfileGatherer::Cancel()
 {
-  // The GeckoSampler is going away. If we have a Promise in flight, we
-  // should reject it.
+  // We're about to stop profiling. If we have a Promise in flight, we should
+  // reject it.
   if (mPromise) {
     mPromise->MaybeReject(NS_ERROR_DOM_ABORT_ERR);
   }
   mPromise = nullptr;
   mFile = nullptr;
 
-  // Clear out the GeckoSampler reference, since it's being destroyed.
-  mTicker = nullptr;
+  mIsCancelled = true;
 }
 
 void

@@ -61,8 +61,7 @@ ScheduleComposition(CompositableHost* aCompositable)
 }
 
 bool
-CompositableParentManager::ReceiveCompositableUpdate(const CompositableOperation& aEdit,
-                                                     EditReplyVector& replyv)
+CompositableParentManager::ReceiveCompositableUpdate(const CompositableOperation& aEdit)
 {
   // Ignore all operations on compositables created on stale compositors. We
   // return true because the child is unable to handle errors.
@@ -89,16 +88,12 @@ CompositableParentManager::ReceiveCompositableUpdate(const CompositableOperation
 
       RenderTraceInvalidateStart(thebes, "FF00FF", op.updatedRegion().GetBounds());
 
-      nsIntRegion frontUpdatedRegion;
       if (!compositable->UpdateThebes(bufferData,
                                       op.updatedRegion(),
-                                      thebes->GetValidRegion(),
-                                      &frontUpdatedRegion))
+                                      thebes->GetValidRegion()))
       {
         return false;
       }
-      replyv.push_back(
-        OpContentBufferSwap(aEdit.compositable(), frontUpdatedRegion));
 
       RenderTraceInvalidateEnd(thebes, "FF00FF");
       break;
@@ -165,7 +160,7 @@ CompositableParentManager::ReceiveCompositableUpdate(const CompositableOperation
         t->mPictureRect = timedTexture.picture();
         t->mFrameID = timedTexture.frameID();
         t->mProducerID = timedTexture.producerID();
-        t->mTexture->DeserializeReadLock(timedTexture.sharedLock(), this);
+        t->mTexture->SetReadLock(FindReadLock(timedTexture.sharedLock()));
       }
       if (textures.Length() > 0) {
         compositable->UseTextureHost(textures);
@@ -190,8 +185,8 @@ CompositableParentManager::ReceiveCompositableUpdate(const CompositableOperation
       const OpUseComponentAlphaTextures& op = aEdit.detail().get_OpUseComponentAlphaTextures();
       RefPtr<TextureHost> texOnBlack = TextureHost::AsTextureHost(op.textureOnBlackParent());
       RefPtr<TextureHost> texOnWhite = TextureHost::AsTextureHost(op.textureOnWhiteParent());
-      texOnBlack->DeserializeReadLock(op.sharedLockBlack(), this);
-      texOnWhite->DeserializeReadLock(op.sharedLockWhite(), this);
+      texOnBlack->SetReadLock(FindReadLock(op.sharedLockBlack()));
+      texOnWhite->SetReadLock(FindReadLock(op.sharedLockWhite()));
 
       MOZ_ASSERT(texOnBlack && texOnWhite);
       compositable->UseComponentAlphaTextures(texOnBlack, texOnWhite);
@@ -286,6 +281,29 @@ CompositableParentManager::ReleaseCompositable(const CompositableHandle& aHandle
   mCompositables.erase(iter);
 
   host->Detach(nullptr, CompositableHost::FORCE_DETACH);
+}
+
+bool
+CompositableParentManager::AddReadLocks(ReadLockArray&& aReadLocks)
+{
+  for (ReadLockInit& r : aReadLocks) {
+    if (mReadLocks.find(r.handle().Value()) != mReadLocks.end()) {
+      NS_ERROR("Duplicate read lock handle!");
+      return false;
+    }
+    mReadLocks[r.handle().Value()] = TextureReadLock::Deserialize(r.sharedLock(), this);
+  }
+  return true;
+}
+
+TextureReadLock*
+CompositableParentManager::FindReadLock(const ReadLockHandle& aHandle)
+{
+  auto iter = mReadLocks.find(aHandle.Value());
+  if (iter == mReadLocks.end()) {
+    return nullptr;
+  }
+  return iter->second.get();
 }
 
 } // namespace layers

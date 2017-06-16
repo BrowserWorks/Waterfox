@@ -58,6 +58,11 @@ public class BrowserContract {
     public static final String PARAM_DATASET_ID = "dataset_id";
     public static final String PARAM_GROUP_BY = "group_by";
 
+    public static final String METHOD_INSERT_HISTORY_WITH_VISITS_FROM_SYNC = "insertHistoryWithVisitsSync";
+    public static final String METHOD_RESULT = "methodResult";
+    public static final String METHOD_PARAM_OBJECT = "object";
+    public static final String METHOD_PARAM_DATA = "data";
+
     static public enum ExpirePriority {
         NORMAL,
         AGGRESSIVE
@@ -606,11 +611,20 @@ public class BrowserContract {
         public static final Uri CONTENT_URI = Uri.withAppendedPath(AUTHORITY_URI, "topsites");
     }
 
-    public static final class Highlights {
-        public static final Uri CONTENT_URI = Uri.withAppendedPath(AUTHORITY_URI, "highlights");
+    public static class Highlights {
+        public static final String BOOKMARK_ID = "bookmark_id";
+        public static final String HISTORY_ID = "history_id";
 
+        public static final String TITLE = "title";
+        public static final String URL = "url";
+        public static final String POSITION = "position";
+        public static final String PARENT = "parent";
         public static final String DATE = "date";
         public static final String METADATA = "metadata";
+    }
+
+    public static final class HighlightCandidates extends Highlights {
+        public static final Uri CONTENT_URI = Uri.withAppendedPath(AUTHORITY_URI, "highlight_candidates");
     }
 
     @RobocopTarget

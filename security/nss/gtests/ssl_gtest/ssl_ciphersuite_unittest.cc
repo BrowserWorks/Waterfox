@@ -128,16 +128,22 @@ class TlsCipherSuiteTestBase : public TlsConnectTestBase {
     Connect();
     SendReceive();
 
-    // Check that we used the right cipher suite.
+    // Check that we used the right cipher suite, auth type and kea type.
     uint16_t actual;
-    EXPECT_TRUE(client_->cipher_suite(&actual) && actual == cipher_suite_);
-    EXPECT_TRUE(server_->cipher_suite(&actual) && actual == cipher_suite_);
+    EXPECT_TRUE(client_->cipher_suite(&actual));
+    EXPECT_EQ(cipher_suite_, actual);
+    EXPECT_TRUE(server_->cipher_suite(&actual));
+    EXPECT_EQ(cipher_suite_, actual);
     SSLAuthType auth;
-    EXPECT_TRUE(client_->auth_type(&auth) && auth == auth_type_);
-    EXPECT_TRUE(server_->auth_type(&auth) && auth == auth_type_);
+    EXPECT_TRUE(client_->auth_type(&auth));
+    EXPECT_EQ(auth_type_, auth);
+    EXPECT_TRUE(server_->auth_type(&auth));
+    EXPECT_EQ(auth_type_, auth);
     SSLKEAType kea;
-    EXPECT_TRUE(client_->kea_type(&kea) && kea == kea_type_);
-    EXPECT_TRUE(server_->kea_type(&kea) && kea == kea_type_);
+    EXPECT_TRUE(client_->kea_type(&kea));
+    EXPECT_EQ(kea_type_, kea);
+    EXPECT_TRUE(server_->kea_type(&kea));
+    EXPECT_EQ(kea_type_, kea);
   }
 
   // Get the expected limit on the number of records that can be sent for the
@@ -252,12 +258,15 @@ TEST_P(TlsCipherSuiteTest, ReadLimit) {
   // authentication tag.
   static const uint8_t payload[18] = {6};
   DataBuffer record;
-  uint64_t epoch = 0;
+  uint64_t epoch;
   if (mode_ == DGRAM) {
-    epoch++;
     if (version_ == SSL_LIBRARY_VERSION_TLS_1_3) {
-      epoch++;
+      epoch = 3;  // Application traffic keys.
+    } else {
+      epoch = 1;
     }
+  } else {
+    epoch = 0;
   }
   TlsAgentTestBase::MakeRecord(mode_, kTlsApplicationDataType, version_,
                                payload, sizeof(payload), &record,

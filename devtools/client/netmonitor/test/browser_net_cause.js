@@ -38,14 +38,14 @@ const EXPECTED_REQUESTS = [
     url: EXAMPLE_URL + "xhr_request",
     causeType: "xhr",
     causeUri: CAUSE_URL,
-    stack: [{ fn: "performXhrRequest", file: CAUSE_FILE_NAME, line: 22 }]
+    stack: [{ fn: "performXhrRequest", file: CAUSE_FILE_NAME, line: 24 }]
   },
   {
     method: "GET",
     url: EXAMPLE_URL + "fetch_request",
     causeType: "fetch",
     causeUri: CAUSE_URL,
-    stack: [{ fn: "performFetchRequest", file: CAUSE_FILE_NAME, line: 26 }]
+    stack: [{ fn: "performFetchRequest", file: CAUSE_FILE_NAME, line: 28 }]
   },
   {
     method: "GET",
@@ -53,8 +53,8 @@ const EXPECTED_REQUESTS = [
     causeType: "fetch",
     causeUri: CAUSE_URL,
     stack: [
-      { fn: "performPromiseFetchRequest", file: CAUSE_FILE_NAME, line: 38 },
-      { fn: null, file: CAUSE_FILE_NAME, line: 37, asyncCause: "promise callback" },
+      { fn: "performPromiseFetchRequest", file: CAUSE_FILE_NAME, line: 40 },
+      { fn: null, file: CAUSE_FILE_NAME, line: 39, asyncCause: "promise callback" },
     ]
   },
   {
@@ -63,8 +63,8 @@ const EXPECTED_REQUESTS = [
     causeType: "fetch",
     causeUri: CAUSE_URL,
     stack: [
-      { fn: "performTimeoutFetchRequest", file: CAUSE_FILE_NAME, line: 40 },
-      { fn: "performPromiseFetchRequest", file: CAUSE_FILE_NAME, line: 39,
+      { fn: "performTimeoutFetchRequest", file: CAUSE_FILE_NAME, line: 42 },
+      { fn: "performPromiseFetchRequest", file: CAUSE_FILE_NAME, line: 41,
         asyncCause: "setTimeout handler" },
     ]
   },
@@ -73,7 +73,7 @@ const EXPECTED_REQUESTS = [
     url: EXAMPLE_URL + "beacon_request",
     causeType: "beacon",
     causeUri: CAUSE_URL,
-    stack: [{ fn: "performBeaconRequest", file: CAUSE_FILE_NAME, line: 30 }]
+    stack: [{ fn: "performBeaconRequest", file: CAUSE_FILE_NAME, line: 32 }]
   },
 ];
 
@@ -88,23 +88,33 @@ add_task(function* () {
   // We can't use about:blank here, because initNetMonitor checks that the
   // page has actually made at least one request.
   let { tab, monitor } = yield initNetMonitor(SIMPLE_URL);
-  let { $, NetMonitorView } = monitor.panelWin;
-  let { RequestsMenu } = NetMonitorView;
-  RequestsMenu.lazyUpdate = false;
 
+  let { document, gStore, windowRequire } = monitor.panelWin;
+  let Actions = windowRequire("devtools/client/netmonitor/actions/index");
+  let {
+    getDisplayedRequests,
+    getSortedRequests,
+  } = windowRequire("devtools/client/netmonitor/selectors/index");
+
+  gStore.dispatch(Actions.batchEnable(false));
   let wait = waitForNetworkEvents(monitor, EXPECTED_REQUESTS.length);
   tab.linkedBrowser.loadURI(CAUSE_URL);
   yield wait;
 
-  is(RequestsMenu.itemCount, EXPECTED_REQUESTS.length,
+  is(gStore.getState().requests.requests.size, EXPECTED_REQUESTS.length,
     "All the page events should be recorded.");
 
   EXPECTED_REQUESTS.forEach((spec, i) => {
     let { method, url, causeType, causeUri, stack } = spec;
 
-    let requestItem = RequestsMenu.getItemAtIndex(i);
-    verifyRequestItemTarget(RequestsMenu, requestItem,
-      method, url, { cause: { type: causeType, loadingDocumentUri: causeUri } }
+    let requestItem = getSortedRequests(gStore.getState()).get(i);
+    verifyRequestItemTarget(
+      document,
+      getDisplayedRequests(gStore.getState()),
+      requestItem,
+      method,
+      url,
+      { cause: { type: causeType, loadingDocumentUri: causeUri } }
     );
 
     let { stacktrace } = requestItem.cause;
@@ -134,10 +144,11 @@ add_task(function* () {
   });
 
   // Sort the requests by cause and check the order
-  EventUtils.sendMouseEvent({ type: "click" }, $("#requests-menu-cause-button"));
+  EventUtils.sendMouseEvent({ type: "click" },
+    document.querySelector("#requests-list-cause-button"));
   let expectedOrder = EXPECTED_REQUESTS.map(r => r.causeType).sort();
   expectedOrder.forEach((expectedCause, i) => {
-    const cause = RequestsMenu.getItemAtIndex(i).cause.type;
+    const cause = getSortedRequests(gStore.getState()).get(i).cause.type;
     is(cause, expectedCause, `The request #${i} has the expected cause after sorting`);
   });
 

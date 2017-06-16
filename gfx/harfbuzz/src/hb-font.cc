@@ -28,14 +28,7 @@
 
 #include "hb-private.hh"
 
-#include "hb-ot-layout-private.hh"
-
 #include "hb-font-private.hh"
-#include "hb-open-file-private.hh"
-#include "hb-ot-head-table.hh"
-#include "hb-ot-maxp-table.hh"
-
-#include <string.h>
 
 
 /*
@@ -1203,6 +1196,8 @@ hb_font_get_empty (void)
     NULL, /* user_data */
     NULL, /* destroy */
 
+    hb_font_t::NOTHING, /* dirty */
+
     {
 #define HB_SHAPER_IMPLEMENT(shaper) HB_SHAPER_DATA_INVALID,
 #include "hb-shaper-list.hh"
@@ -1355,6 +1350,11 @@ hb_font_set_parent (hb_font_t *font,
   if (!parent)
     parent = hb_font_get_empty ();
 
+  if (parent == font->parent)
+    return;
+
+  font->dirty |= font->PARENT;
+
   hb_font_t *old = font->parent;
 
   font->parent = hb_font_reference (parent);
@@ -1376,6 +1376,37 @@ hb_font_t *
 hb_font_get_parent (hb_font_t *font)
 {
   return font->parent;
+}
+
+/**
+ * hb_font_set_face:
+ * @font: a font.
+ * @face: new face.
+ *
+ * Sets font-face of @font.
+ *
+ * Since: 1.4.3
+ **/
+void
+hb_font_set_face (hb_font_t *font,
+		  hb_face_t *face)
+{
+  if (font->immutable)
+    return;
+
+  if (unlikely (!face))
+    face = hb_face_get_empty ();
+
+  if (font->face == face)
+    return;
+
+  font->dirty |= font->FACE;
+
+  hb_face_t *old = font->face;
+
+  font->face = hb_face_reference (face);
+
+  hb_face_destroy (old);
 }
 
 /**
@@ -1423,6 +1454,8 @@ hb_font_set_funcs (hb_font_t         *font,
 
   if (!klass)
     klass = hb_font_funcs_get_empty ();
+
+  font->dirty |= font->FUNCS;
 
   hb_font_funcs_reference (klass);
   hb_font_funcs_destroy (font->klass);
@@ -1479,6 +1512,11 @@ hb_font_set_scale (hb_font_t *font,
   if (font->immutable)
     return;
 
+  if (font->x_scale == x_scale && font->y_scale == y_scale)
+    return;
+
+  font->dirty |= font->SCALE;
+
   font->x_scale = x_scale;
   font->y_scale = y_scale;
 }
@@ -1520,6 +1558,11 @@ hb_font_set_ppem (hb_font_t *font,
   if (font->immutable)
     return;
 
+  if (font->x_ppem == x_ppem && font->y_ppem == y_ppem)
+    return;
+
+  font->dirty |= font->PPEM;
+
   font->x_ppem = x_ppem;
   font->y_ppem = y_ppem;
 }
@@ -1543,30 +1586,122 @@ hb_font_get_ppem (hb_font_t *font,
   if (y_ppem) *y_ppem = font->y_ppem;
 }
 
+/*
+ * Variations
+ */
 
+static void
+_hb_font_adopt_var_coords_normalized (hb_font_t *font,
+				      int *coords, /* 2.14 normalized */
+				      unsigned int coords_length)
+{
+  if (font->num_coords == coords_length &&
+      (coords_length == 0 ||
+       0 == memcmp (font->coords, coords, coords_length * sizeof (coords[0]))))
+  {
+    free (coords);
+    return;
+  }
+
+  font->dirty |= font->VARIATIONS;
+
+  free (font->coords);
+
+  font->coords = coords;
+  font->num_coords = coords_length;
+}
+
+/**
+ * hb_font_set_variations:
+ *
+ * Since: 1.4.2
+ */
+void
+hb_font_set_variations (hb_font_t *font,
+			const hb_variation_t *variations,
+			unsigned int variations_length)
+{
+  if (font->immutable)
+    return;
+
+  if (!variations_length)
+  {
+    hb_font_set_var_coords_normalized (font, NULL, 0);
+    return;
+  }
+
+  unsigned int coords_length = hb_ot_var_get_axis_count (font->face);
+
+  int *normalized = coords_length ? (int *) calloc (coords_length, sizeof (int)) : NULL;
+  if (unlikely (coords_length && !normalized))
+    return;
+
+  hb_ot_var_normalize_variations (font->face,
+				  variations, variations_length,
+				  normalized, coords_length);
+  _hb_font_adopt_var_coords_normalized (font, normalized, coords_length);
+}
+
+/**
+ * hb_font_set_var_coords_design:
+ *
+ * Since: 1.4.2
+ */
+void
+hb_font_set_var_coords_design (hb_font_t *font,
+			       const float *coords,
+			       unsigned int coords_length)
+{
+  if (font->immutable)
+    return;
+
+  int *normalized = coords_length ? (int *) calloc (coords_length, sizeof (int)) : NULL;
+  if (unlikely (coords_length && !normalized))
+    return;
+
+  hb_ot_var_normalize_coords (font->face, coords_length, coords, normalized);
+  _hb_font_adopt_var_coords_normalized (font, normalized, coords_length);
+}
+
+/**
+ * hb_font_set_var_coords_normalized:
+ *
+ * Since: 1.4.2
+ */
 void
 hb_font_set_var_coords_normalized (hb_font_t *font,
-				   int *coords, /* XXX 2.14 normalized */
+				   const int *coords, /* 2.14 normalized */
 				   unsigned int coords_length)
 {
   if (font->immutable)
     return;
 
-  /* Skip tail zero entries. */
-  while (coords_length && !coords[coords_length - 1])
-    coords_length--;
-
   int *copy = coords_length ? (int *) calloc (coords_length, sizeof (coords[0])) : NULL;
   if (unlikely (coords_length && !copy))
     return;
 
-  free (font->coords);
-
   if (coords_length)
     memcpy (copy, coords, coords_length * sizeof (coords[0]));
 
-  font->coords = copy;
-  font->num_coords = coords_length;
+  _hb_font_adopt_var_coords_normalized (font, copy, coords_length);
+}
+
+/**
+ * hb_font_get_var_coords_normalized:
+ *
+ * Return value is valid as long as variation coordinates of the font
+ * are not modified.
+ *
+ * Since: 1.4.2
+ */
+const int *
+hb_font_get_var_coords_normalized (hb_font_t *font,
+				   unsigned int *length)
+{
+  if (length)
+    *length = font->num_coords;
+
+  return font->coords;
 }
 
 

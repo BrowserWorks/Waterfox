@@ -16,6 +16,8 @@
 #include "nsIContent.h" // for GetParent()
 #include "nsTextFrame.h" // for nsTextFrame::ShouldSuppressLineBreak
 
+#include "mozilla/ServoStyleSet.h"
+
 inline void
 nsStyleImage::EnsureCachedBIData() const
 {
@@ -149,12 +151,18 @@ nsStyleDisplay::HasFixedPosContainingBlockStyleInternal(
 {
   // NOTE: Any CSS properties that influence the output of this function
   // should have the CSS_PROPERTY_FIXPOS_CB set on them.
-  NS_ASSERTION(aStyleContext->StyleDisplay() == this,
+  NS_ASSERTION(aStyleContext->ThreadsafeStyleDisplay() == this,
                "unexpected aStyleContext");
-  return IsContainPaint() ||
-         HasPerspectiveStyle() ||
-         (mWillChangeBitField & NS_STYLE_WILL_CHANGE_FIXPOS_CB) ||
-         aStyleContext->StyleEffects()->HasFilters();
+
+  if (IsContainPaint() || HasPerspectiveStyle()) {
+    return true;
+  }
+
+  if (mWillChangeBitField & NS_STYLE_WILL_CHANGE_FIXPOS_CB) {
+    return true;
+  }
+
+  return aStyleContext->ThreadsafeStyleEffects()->HasFilters();
 }
 
 template<class StyleContextLike>
@@ -187,7 +195,7 @@ nsStyleDisplay::HasAbsPosContainingBlockStyleInternal(
 {
   // NOTE: Any CSS properties that influence the output of this function
   // should have the CSS_PROPERTY_ABSPOS_CB set on them.
-  NS_ASSERTION(aStyleContext->StyleDisplay() == this,
+  NS_ASSERTION(aStyleContext->ThreadsafeStyleDisplay() == this,
                "unexpected aStyleContext");
   return IsAbsolutelyPositionedStyle() ||
          IsRelativelyPositionedStyle() ||

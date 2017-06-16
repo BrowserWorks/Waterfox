@@ -65,7 +65,6 @@
 #include "nsIDOMEventListener.h"        // for nsIDOMEventListener
 #include "nsIDOMEventTarget.h"          // for nsIDOMEventTarget
 #include "nsIDOMHTMLElement.h"          // for nsIDOMHTMLElement
-#include "nsIDOMKeyEvent.h"             // for nsIDOMKeyEvent, etc.
 #include "nsIDOMMozNamedAttrMap.h"      // for nsIDOMMozNamedAttrMap
 #include "nsIDOMMouseEvent.h"           // for nsIDOMMouseEvent
 #include "nsIDOMNode.h"                 // for nsIDOMNode, etc.
@@ -328,7 +327,7 @@ EditorBase::PostCreate()
     rv = GetPreferredIMEState(&newState);
     NS_ENSURE_SUCCESS(rv, NS_OK);
     nsCOMPtr<nsIContent> content = GetFocusedContentForIME();
-    IMEStateManager::UpdateIMEState(newState, content, this);
+    IMEStateManager::UpdateIMEState(newState, content, *this);
   }
 
   // FYI: This call might cause destroying this editor.
@@ -516,7 +515,7 @@ EditorBase::SetFlags(uint32_t aFlags)
       // NOTE: When the enabled state isn't going to be modified, this method
       // is going to do nothing.
       nsCOMPtr<nsIContent> content = GetFocusedContentForIME();
-      IMEStateManager::UpdateIMEState(newState, content, this);
+      IMEStateManager::UpdateIMEState(newState, content, *this);
     }
   }
 
@@ -545,7 +544,7 @@ EditorBase::GetIsDocumentEditable(bool* aIsDocumentEditable)
 {
   NS_ENSURE_ARG_POINTER(aIsDocumentEditable);
   nsCOMPtr<nsIDocument> doc = GetDocument();
-  *aIsDocumentEditable = !!doc;
+  *aIsDocumentEditable = doc && IsModifiable();
 
   return NS_OK;
 }
@@ -674,13 +673,10 @@ EditorBase::DoTransaction(nsITransaction* aTxn)
 {
   if (mPlaceHolderBatch && !mPlaceHolderTxn) {
     nsCOMPtr<nsIAbsorbingTransaction> placeholderTransaction =
-      new PlaceholderTransaction();
+      new PlaceholderTransaction(*this, mPlaceHolderName, Move(mSelState));
 
     // Save off weak reference to placeholder transaction
     mPlaceHolderTxn = do_GetWeakReference(placeholderTransaction);
-    placeholderTransaction->Init(mPlaceHolderName, mSelState, this);
-    // placeholder txn took ownership of this pointer
-    mSelState = nullptr;
 
     // QI to an nsITransaction since that's what DoTransaction() expects
     nsCOMPtr<nsITransaction> transaction =
@@ -930,7 +926,7 @@ EditorBase::BeginPlaceHolderTransaction(nsIAtom* aName)
     mPlaceHolderName = aName;
     RefPtr<Selection> selection = GetSelection();
     if (selection) {
-      mSelState = new SelectionState();
+      mSelState = MakeUnique<SelectionState>();
       mSelState->SaveSelection(selection);
       // Composition transaction can modify multiple nodes and it merges text
       // node for ime into single text node.
@@ -994,7 +990,6 @@ EditorBase::EndPlaceHolderTransaction()
       if (mPlaceHolderName == nsGkAtoms::IMETxnName) {
         mRangeUpdater.DropSelectionState(*mSelState);
       }
-      delete mSelState;
       mSelState = nullptr;
     }
     // We might have never made a placeholder if no action took place.
@@ -2330,7 +2325,7 @@ EditorBase::CloneAttributes(Element* aDest,
   }
 }
 
-NS_IMETHODIMP
+nsresult
 EditorBase::ScrollSelectionIntoView(bool aScrollToAnchor)
 {
   nsCOMPtr<nsISelectionController> selCon;
@@ -2450,6 +2445,18 @@ EditorBase::InsertTextImpl(const nsAString& aStringToInsert,
   // element.  Let's try to look for better insertion point in the nearest
   // text node if there is.
   FindBetterInsertionPoint(node, offset);
+
+  // If a neighboring text node already exists, use that
+  if (!node->IsNodeOfType(nsINode::eTEXT)) {
+    if (offset && node->GetChildAt(offset - 1)->IsNodeOfType(nsINode::eTEXT)) {
+      node = node->GetChildAt(offset - 1);
+      offset = node->Length();
+    } else if (offset < static_cast<int32_t>(node->Length()) &&
+               node->GetChildAt(offset)->IsNodeOfType(nsINode::eTEXT)) {
+      node = node->GetChildAt(offset);
+      offset = 0;
+    }
+  }
 
   if (ShouldHandleIMEComposition()) {
     CheckedInt<int32_t> newOffset;
@@ -2618,7 +2625,7 @@ EditorBase::GetFirstEditableNode(nsINode* aRoot)
   return (node != aRoot) ? node : nullptr;
 }
 
-NS_IMETHODIMP
+nsresult
 EditorBase::NotifyDocumentListeners(
               TDocumentListenerNotification aNotificationType)
 {
@@ -2964,15 +2971,13 @@ EditorBase::JoinNodesImpl(nsINode* aNodeToKeep,
 
   // OK, ready to do join now.
   // If it's a text node, just shuffle around some text.
-  nsCOMPtr<nsIDOMCharacterData> keepNodeAsText( do_QueryInterface(aNodeToKeep) );
-  nsCOMPtr<nsIDOMCharacterData> joinNodeAsText( do_QueryInterface(aNodeToJoin) );
-  if (keepNodeAsText && joinNodeAsText) {
+  if (IsTextNode(aNodeToKeep) && IsTextNode(aNodeToJoin)) {
     nsAutoString rightText;
     nsAutoString leftText;
-    keepNodeAsText->GetData(rightText);
-    joinNodeAsText->GetData(leftText);
+    aNodeToKeep->GetAsText()->GetData(rightText);
+    aNodeToJoin->GetAsText()->GetData(leftText);
     leftText += rightText;
-    keepNodeAsText->SetData(leftText);
+    aNodeToKeep->GetAsText()->SetData(leftText);
   } else {
     // Otherwise it's an interior node, so shuffle around the children.
     nsCOMPtr<nsINodeList> childNodes = aNodeToJoin->ChildNodes();
@@ -4328,34 +4333,22 @@ EditorBase::CreateTxnForComposition(const nsAString& aStringToInsert)
   return transaction.forget();
 }
 
-NS_IMETHODIMP
-EditorBase::CreateTxnForAddStyleSheet(StyleSheet* aSheet,
-                                      AddStyleSheetTransaction** aTransaction)
+already_AddRefed<AddStyleSheetTransaction>
+EditorBase::CreateTxnForAddStyleSheet(StyleSheet* aSheet)
 {
-  RefPtr<AddStyleSheetTransaction> transaction = new AddStyleSheetTransaction();
+  RefPtr<AddStyleSheetTransaction> transaction =
+    new AddStyleSheetTransaction(*this, aSheet);
 
-  nsresult rv = transaction->Init(this, aSheet);
-  if (NS_SUCCEEDED(rv)) {
-    transaction.forget(aTransaction);
-  }
-
-  return rv;
+  return transaction.forget();
 }
 
-NS_IMETHODIMP
-EditorBase::CreateTxnForRemoveStyleSheet(
-              StyleSheet* aSheet,
-              RemoveStyleSheetTransaction** aTransaction)
+already_AddRefed<RemoveStyleSheetTransaction>
+EditorBase::CreateTxnForRemoveStyleSheet(StyleSheet* aSheet)
 {
   RefPtr<RemoveStyleSheetTransaction> transaction =
-    new RemoveStyleSheetTransaction();
+    new RemoveStyleSheetTransaction(*this, aSheet);
 
-  nsresult rv = transaction->Init(this, aSheet);
-  if (NS_SUCCEEDED(rv)) {
-    transaction.forget(aTransaction);
-  }
-
-  return rv;
+  return transaction.forget();
 }
 
 nsresult
@@ -4702,7 +4695,7 @@ EditorBase::RemoveAttributeOrEquivalent(nsIDOMElement* aElement,
 }
 
 nsresult
-EditorBase::HandleKeyPressEvent(nsIDOMKeyEvent* aKeyEvent)
+EditorBase::HandleKeyPressEvent(WidgetKeyboardEvent* aKeyboardEvent)
 {
   // NOTE: When you change this method, you should also change:
   //   * editor/libeditor/tests/test_texteditor_keyevent_handling.html
@@ -4711,49 +4704,49 @@ EditorBase::HandleKeyPressEvent(nsIDOMKeyEvent* aKeyEvent)
   // And also when you add new key handling, you need to change the subclass's
   // HandleKeyPressEvent()'s switch statement.
 
-  WidgetKeyboardEvent* nativeKeyEvent =
-    aKeyEvent->AsEvent()->WidgetEventPtr()->AsKeyboardEvent();
-  NS_ENSURE_TRUE(nativeKeyEvent, NS_ERROR_UNEXPECTED);
-  NS_ASSERTION(nativeKeyEvent->mMessage == eKeyPress,
-               "HandleKeyPressEvent gets non-keypress event");
+  if (NS_WARN_IF(!aKeyboardEvent)) {
+    return NS_ERROR_UNEXPECTED;
+  }
+  MOZ_ASSERT(aKeyboardEvent->mMessage == eKeyPress,
+             "HandleKeyPressEvent gets non-keypress event");
 
   // if we are readonly or disabled, then do nothing.
   if (IsReadonly() || IsDisabled()) {
     // consume backspace for disabled and readonly textfields, to prevent
     // back in history, which could be confusing to users
-    if (nativeKeyEvent->mKeyCode == NS_VK_BACK) {
-      aKeyEvent->AsEvent()->PreventDefault();
+    if (aKeyboardEvent->mKeyCode == NS_VK_BACK) {
+      aKeyboardEvent->PreventDefault();
     }
     return NS_OK;
   }
 
-  switch (nativeKeyEvent->mKeyCode) {
+  switch (aKeyboardEvent->mKeyCode) {
     case NS_VK_META:
     case NS_VK_WIN:
     case NS_VK_SHIFT:
     case NS_VK_CONTROL:
     case NS_VK_ALT:
-      aKeyEvent->AsEvent()->PreventDefault(); // consumed
+      aKeyboardEvent->PreventDefault(); // consumed
       return NS_OK;
     case NS_VK_BACK:
-      if (nativeKeyEvent->IsControl() || nativeKeyEvent->IsAlt() ||
-          nativeKeyEvent->IsMeta() || nativeKeyEvent->IsOS()) {
+      if (aKeyboardEvent->IsControl() || aKeyboardEvent->IsAlt() ||
+          aKeyboardEvent->IsMeta() || aKeyboardEvent->IsOS()) {
         return NS_OK;
       }
       DeleteSelection(nsIEditor::ePrevious, nsIEditor::eStrip);
-      aKeyEvent->AsEvent()->PreventDefault(); // consumed
+      aKeyboardEvent->PreventDefault(); // consumed
       return NS_OK;
     case NS_VK_DELETE:
       // on certain platforms (such as windows) the shift key
       // modifies what delete does (cmd_cut in this case).
       // bailing here to allow the keybindings to do the cut.
-      if (nativeKeyEvent->IsShift() || nativeKeyEvent->IsControl() ||
-          nativeKeyEvent->IsAlt() || nativeKeyEvent->IsMeta() ||
-          nativeKeyEvent->IsOS()) {
+      if (aKeyboardEvent->IsShift() || aKeyboardEvent->IsControl() ||
+          aKeyboardEvent->IsAlt() || aKeyboardEvent->IsMeta() ||
+          aKeyboardEvent->IsOS()) {
         return NS_OK;
       }
       DeleteSelection(nsIEditor::eNext, nsIEditor::eStrip);
-      aKeyEvent->AsEvent()->PreventDefault(); // consumed
+      aKeyboardEvent->PreventDefault(); // consumed
       return NS_OK;
   }
   return NS_OK;
@@ -5136,19 +5129,16 @@ EditorBase::IsActiveInDOMWindow()
 }
 
 bool
-EditorBase::IsAcceptableInputEvent(nsIDOMEvent* aEvent)
+EditorBase::IsAcceptableInputEvent(WidgetGUIEvent* aGUIEvent)
 {
   // If the event is trusted, the event should always cause input.
-  NS_ENSURE_TRUE(aEvent, false);
-
-  WidgetEvent* widgetEvent = aEvent->WidgetEventPtr();
-  if (NS_WARN_IF(!widgetEvent)) {
+  if (NS_WARN_IF(!aGUIEvent)) {
     return false;
   }
 
   // If this is dispatched by using cordinates but this editor doesn't have
   // focus, we shouldn't handle it.
-  if (widgetEvent->IsUsingCoordinates()) {
+  if (aGUIEvent->IsUsingCoordinates()) {
     nsCOMPtr<nsIContent> focusedContent = GetFocusedContent();
     if (!focusedContent) {
       return false;
@@ -5161,8 +5151,7 @@ EditorBase::IsAcceptableInputEvent(nsIDOMEvent* aEvent)
   // Note that if we allow to handle such events, editor may be confused by
   // strange event order.
   bool needsWidget = false;
-  WidgetGUIEvent* widgetGUIEvent = nullptr;
-  switch (widgetEvent->mMessage) {
+  switch (aGUIEvent->mMessage) {
     case eUnidentifiedEvent:
       // If events are not created with proper event interface, their message
       // are initialized with eUnidentifiedEvent.  Let's ignore such event.
@@ -5174,25 +5163,26 @@ EditorBase::IsAcceptableInputEvent(nsIDOMEvent* aEvent)
     case eCompositionCommitAsIs:
       // Don't allow composition events whose internal event are not
       // WidgetCompositionEvent.
-      widgetGUIEvent = aEvent->WidgetEventPtr()->AsCompositionEvent();
+      if (!aGUIEvent->AsCompositionEvent()) {
+        return false;
+      }
       needsWidget = true;
       break;
     default:
       break;
   }
-  if (needsWidget &&
-      (!widgetGUIEvent || !widgetGUIEvent->mWidget)) {
+  if (needsWidget && !aGUIEvent->mWidget) {
     return false;
   }
 
   // Accept all trusted events.
-  if (widgetEvent->IsTrusted()) {
+  if (aGUIEvent->IsTrusted()) {
     return true;
   }
 
   // Ignore untrusted mouse event.
   // XXX Why are we handling other untrusted input events?
-  if (widgetEvent->AsMouseEventBase()) {
+  if (aGUIEvent->AsMouseEventBase()) {
     return false;
   }
 

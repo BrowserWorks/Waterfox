@@ -240,10 +240,9 @@ function promiseFindFinished(searchText, highlightOn) {
 function promiseRemotenessChange(tab, shouldBeRemote) {
   return new Promise((resolve) => {
     let browser = gBrowser.getBrowserForTab(tab);
-    tab.addEventListener("TabRemotenessChange", function listener() {
-      tab.removeEventListener("TabRemotenessChange", listener);
+    tab.addEventListener("TabRemotenessChange", function() {
       resolve();
-    });
+    }, {once: true});
     gBrowser.updateBrowserRemoteness(browser, shouldBeRemote);
   });
 }

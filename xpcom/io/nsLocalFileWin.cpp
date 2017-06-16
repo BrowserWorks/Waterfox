@@ -7,7 +7,6 @@
 #include "mozilla/ArrayUtils.h"
 #include "mozilla/DebugOnly.h"
 #include "mozilla/UniquePtrExtensions.h"
-#include "mozilla/WindowsVersion.h"
 
 #include "nsCOMPtr.h"
 #include "nsAutoPtr.h"
@@ -22,7 +21,6 @@
 #include "nsIComponentManager.h"
 #include "prio.h"
 #include "private/pprio.h"  // To get PR_ImportFile
-#include "prprf.h"
 #include "prmem.h"
 #include "nsHashKeys.h"
 
@@ -1970,13 +1968,11 @@ nsLocalFile::CopySingleFile(nsIFile* aSourceFile, nsIFile* aDestParent,
   // So we only use COPY_FILE_NO_BUFFERING when we have a remote drive.
   int copyOK;
   DWORD dwCopyFlags = COPY_FILE_ALLOW_DECRYPTED_DESTINATION;
-  if (IsVistaOrLater()) {
-    bool path1Remote, path2Remote;
-    if (!IsRemoteFilePath(filePath.get(), path1Remote) ||
-        !IsRemoteFilePath(destPath.get(), path2Remote) ||
-        path1Remote || path2Remote) {
-      dwCopyFlags |= COPY_FILE_NO_BUFFERING;
-    }
+  bool path1Remote, path2Remote;
+  if (!IsRemoteFilePath(filePath.get(), path1Remote) ||
+      !IsRemoteFilePath(destPath.get(), path2Remote) ||
+      path1Remote || path2Remote) {
+    dwCopyFlags |= COPY_FILE_NO_BUFFERING;
   }
 
   if (!move) {

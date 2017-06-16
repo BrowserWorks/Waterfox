@@ -76,8 +76,6 @@
 
 #include "ContentParent.h"
 #include "TabParent.h"
-#include "mozilla/plugins/PPluginWidgetParent.h"
-#include "../plugins/ipc/PluginWidgetParent.h"
 #include "mozilla/AsyncEventDispatcher.h"
 #include "mozilla/BasePrincipal.h"
 #include "mozilla/GuardObjects.h"
@@ -101,6 +99,11 @@
 #include "mozilla/dom/PromiseNativeHandler.h"
 
 #include "nsPrincipal.h"
+
+#ifdef XP_WIN
+#include "mozilla/plugins/PPluginWidgetParent.h"
+#include "../plugins/ipc/PluginWidgetParent.h"
+#endif
 
 #ifdef MOZ_XUL
 #include "nsXULPopupManager.h"
@@ -174,17 +177,10 @@ nsFrameLoader::nsFrameLoader(Element* aOwner, nsPIDOMWindowOuter* aOpener, bool 
   , mClampScrollPosition(true)
   , mObservingOwnerContent(false)
   , mVisible(true)
-  , mFreshProcess(false)
 {
   mRemoteFrame = ShouldUseRemoteProcess();
   MOZ_ASSERT(!mRemoteFrame || !aOpener,
              "Cannot pass aOpener for a remote frame!");
-
-  // Check if we are supposed to load into a fresh process
-  mFreshProcess = mOwnerContent->AttrValueIs(kNameSpaceID_None,
-                                             nsGkAtoms::freshProcess,
-                                             nsGkAtoms::_true,
-                                             eCaseMatters);
 }
 
 nsFrameLoader::~nsFrameLoader()
@@ -1431,6 +1427,7 @@ nsFrameLoader::SwapWithOtherRemoteLoader(nsFrameLoader* aOther,
   aOther->mRemoteBrowser->SetBrowserDOMWindow(browserDOMWindow);
   mRemoteBrowser->SetBrowserDOMWindow(otherBrowserDOMWindow);
 
+#ifdef XP_WIN
   // Native plugin windows used by this remote content need to be reparented.
   if (nsPIDOMWindowOuter* newWin = ourDoc->GetWindow()) {
     RefPtr<nsIWidget> newParent = nsGlobalWindow::Cast(newWin)->GetMainWidget();
@@ -1440,6 +1437,7 @@ nsFrameLoader::SwapWithOtherRemoteLoader(nsFrameLoader* aOther,
       static_cast<mozilla::plugins::PluginWidgetParent*>(iter.Get()->GetKey())->SetParent(newParent);
     }
   }
+#endif // XP_WIN
 
   MaybeUpdatePrimaryTabParent(eTabParentRemoved);
   aOther->MaybeUpdatePrimaryTabParent(eTabParentRemoved);
@@ -1496,6 +1494,20 @@ nsFrameLoader::SwapWithOtherRemoteLoader(nsFrameLoader* aOther,
   if (NS_WARN_IF(NS_FAILED(rv))) {
     return rv;
   }
+
+  // Swap the remoteType property as the frameloaders are being swapped
+  nsAutoString ourRemoteType;
+  if (!ourContent->GetAttr(kNameSpaceID_None, nsGkAtoms::RemoteType,
+                           ourRemoteType)) {
+    ourRemoteType.AssignLiteral(DEFAULT_REMOTE_TYPE);
+  }
+  nsAutoString otherRemoteType;
+  if (!otherContent->GetAttr(kNameSpaceID_None, nsGkAtoms::RemoteType,
+                             otherRemoteType)) {
+    otherRemoteType.AssignLiteral(DEFAULT_REMOTE_TYPE);
+  }
+  ourContent->SetAttr(kNameSpaceID_None, nsGkAtoms::RemoteType, otherRemoteType, false);
+  otherContent->SetAttr(kNameSpaceID_None, nsGkAtoms::RemoteType, ourRemoteType, false);
 
   Unused << mRemoteBrowser->SendSwappedWithOtherRemoteLoader(
     ourContext.AsIPCTabContext());
@@ -2687,7 +2699,7 @@ nsFrameLoader::UpdateBaseWindowPositionAndSize(nsSubDocumentFrame *aIFrame)
     int32_t x = 0;
     int32_t y = 0;
 
-    nsWeakFrame weakFrame(aIFrame);
+    AutoWeakFrame weakFrame(aIFrame);
 
     baseWindow->GetPosition(&x, &y);
 
@@ -2815,15 +2827,12 @@ GetContentParent(Element* aBrowser)
     return nullptr;
   }
 
-  nsCOMPtr<nsIDOMElement> related;
-  browser->GetRelatedBrowser(getter_AddRefs(related));
-
-  nsCOMPtr<nsIFrameLoaderOwner> otherOwner = do_QueryInterface(related);
-  if (!otherOwner) {
+  nsCOMPtr<nsIFrameLoader> otherLoader;
+  browser->GetSameProcessAsFrameLoader(getter_AddRefs(otherLoader));
+  if (!otherLoader) {
     return nullptr;
   }
 
-  nsCOMPtr<nsIFrameLoader> otherLoader = otherOwner->GetFrameLoader();
   TabParent* tabParent = TabParent::GetFrom(otherLoader);
   if (tabParent &&
       tabParent->Manager() &&
@@ -2932,8 +2941,7 @@ nsFrameLoader::TryRemoteBrowser()
   NS_ENSURE_SUCCESS(rv, false);
 
   nsCOMPtr<Element> ownerElement = mOwnerContent;
-  mRemoteBrowser = ContentParent::CreateBrowser(context, ownerElement, openerContentParent,
-                                                mFreshProcess);
+  mRemoteBrowser = ContentParent::CreateBrowser(context, ownerElement, openerContentParent);
   if (!mRemoteBrowser) {
     return false;
   }
@@ -3477,7 +3485,8 @@ NS_IMETHODIMP
 nsFrameLoader::GetLoadContext(nsILoadContext** aLoadContext)
 {
   nsCOMPtr<nsILoadContext> loadContext;
-  if (mRemoteBrowser) {
+  if (IsRemoteFrame() &&
+      (mRemoteBrowser || TryRemoteBrowser())) {
     loadContext = mRemoteBrowser->GetLoadContext();
   } else {
     nsCOMPtr<nsIDocShell> docShell;
@@ -3667,13 +3676,6 @@ NS_IMETHODIMP
 nsFrameLoader::GetIsDead(bool* aIsDead)
 {
   *aIsDead = mDestroyCalled;
-  return NS_OK;
-}
-
-NS_IMETHODIMP
-nsFrameLoader::GetIsFreshProcess(bool* aIsFreshProcess)
-{
-  *aIsFreshProcess = mFreshProcess;
   return NS_OK;
 }
 

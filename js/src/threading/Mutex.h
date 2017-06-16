@@ -8,63 +8,12 @@
 #define threading_Mutex_h
 
 #include "mozilla/Assertions.h"
-#include "mozilla/Attributes.h"
 #include "mozilla/Move.h"
+#include "mozilla/PlatformMutex.h"
 #include "mozilla/ThreadLocal.h"
 #include "mozilla/Vector.h"
 
-#include <new>
-#include <string.h>
-
 namespace js {
-
-class ConditionVariable;
-
-namespace detail {
-
-class MutexImpl
-{
-public:
-  struct PlatformData;
-
-  MutexImpl();
-  ~MutexImpl();
-
-  MutexImpl(MutexImpl&& rhs)
-    : platformData_(rhs.platformData_)
-  {
-    MOZ_ASSERT(this != &rhs, "self move disallowed!");
-    rhs.platformData_ = nullptr;
-  }
-
-  MutexImpl& operator=(MutexImpl&& rhs) {
-    this->~MutexImpl();
-    new (this) MutexImpl(mozilla::Move(rhs));
-    return *this;
-  }
-
-  bool operator==(const MutexImpl& rhs) {
-    return platformData_ == rhs.platformData_;
-  }
-
-protected:
-  void lock();
-  void unlock();
-
-private:
-  MutexImpl(const MutexImpl&) = delete;
-  void operator=(const MutexImpl&) = delete;
-
-  friend class js::ConditionVariable;
-  PlatformData* platformData() {
-    MOZ_ASSERT(platformData_);
-    return platformData_;
-  };
-
-  PlatformData* platformData_;
-};
-
-} // namespace detail
 
 // A MutexId secifies the name and mutex order for a mutex.
 //
@@ -79,7 +28,7 @@ struct MutexId
 
 #ifndef DEBUG
 
-class Mutex : public detail::MutexImpl
+class Mutex : public mozilla::detail::MutexImpl
 {
 public:
   static bool Init() { return true; }
@@ -98,7 +47,7 @@ public:
 //
 // The class maintains a per-thread stack of currently-held mutexes to enable it
 // to check this.
-class Mutex : public detail::MutexImpl
+class Mutex : public mozilla::detail::MutexImpl
 {
 public:
   static bool Init();
@@ -112,6 +61,7 @@ public:
 
   void lock();
   void unlock();
+  bool ownedByCurrentThread() const;
 
 private:
   const MutexId id_;

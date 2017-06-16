@@ -12,6 +12,8 @@ gfx/harfbuzz/
 gfx/ots/
 gfx/qcms/
 gfx/skia/
+gfx/webrender
+gfx/webrender_traits
 gfx/ycbcr/
 intl/hyphenation/hyphen/
 intl/icu/
@@ -21,6 +23,7 @@ js/src/dtoa.c
 js/src/jit/arm64/vixl/
 media/gmp-clearkey/0.1/openaes/
 media/kiss_fft/
+media/ffvpx/
 media/libav/
 media/libcubeb/
 media/libjpeg/
@@ -37,17 +40,19 @@ media/libtremor/
 media/libvorbis/
 media/libvpx/
 media/libyuv/
-media/mtransport/
+media/mtransport/third_party/
 media/openmax_dl/
 media/pocketsphinx/
 media/sphinxbase/
 media/webrtc/trunk/
+media/webrtc/signaling/src/sdp/sipcc/
 memory/jemalloc/src/
 mfbt/decimal/
-mfbt/double-conversion/
+mfbt/double-conversion/source/
 mfbt/lz4
 mobile/android/thirdparty/
 modules/brotli/
+modules/fdlibm/
 modules/freetype2/
 modules/libbz2/
 modules/libmar/
@@ -56,6 +61,7 @@ netwerk/sctp/src/
 netwerk/srtp/src/
 nsprpub/
 other-licenses/
+parser/expat/
 security/sandbox/chromium/
 testing/gtest/gmock/
 testing/gtest/gtest/

@@ -5,6 +5,8 @@
 
 /* the interface (to internal code) for retrieving computed style data */
 
+#include "nsStyleContext.h"
+
 #include "CSSVariableImageTable.h"
 #include "mozilla/DebugOnly.h"
 #include "mozilla/Maybe.h"
@@ -24,7 +26,6 @@
 #include "nsIPresShell.h"
 
 #include "nsRuleNode.h"
-#include "nsStyleContext.h"
 #include "GeckoProfiler.h"
 #include "nsIDocument.h"
 #include "nsPrintfCString.h"
@@ -178,11 +179,51 @@ nsStyleContext::FinishConstruction(bool aSkipParentDisplayBasedStyleFixup)
   #undef eStyleStruct_LastItem
 }
 
+void
+nsStyleContext::EnsureStructsForServo(const nsStyleContext* aOldContext)
+{
+  MOZ_ASSERT(aOldContext);
+  MOZ_ASSERT(mSource.IsServoComputedValues() &&
+             aOldContext->mSource.IsServoComputedValues());
+
+  // NOTE(emilio): We could do better here. We only call Style##name_() because
+  // we need to run FinishStyle, but otherwise this is only a bitwise or.
+  //
+  // We could reduce the FFI traffic we do only doing it for structs that have
+  // non-trivial FinishStyle.
+#define STYLE_STRUCT(name_, checkdata_cb)                                      \
+  if (aOldContext->mBits & NS_STYLE_INHERIT_BIT(name_)) {                      \
+    mozilla::Unused << Style##name_();                                         \
+  }
+
+#include "nsStyleStructList.h"
+
+#undef STYLE_STRUCT
+
+#ifdef DEBUG
+  auto oldMask = aOldContext->mBits & NS_STYLE_INHERIT_MASK;
+  auto newMask = mBits & NS_STYLE_INHERIT_MASK;
+  MOZ_ASSERT((oldMask & newMask) == oldMask,
+             "Should have at least as many structs computed as the "
+             "old context!");
+#endif
+}
+
 nsStyleContext::~nsStyleContext()
 {
   NS_ASSERTION((nullptr == mChild) && (nullptr == mEmptyChild), "destructing context with children");
+  MOZ_ASSERT_IF(mSource.IsServoComputedValues(), !mCachedResetData);
 
 #ifdef DEBUG
+  if (mSource.IsServoComputedValues()) {
+    MOZ_ASSERT(!mCachedResetData,
+               "Servo shouldn't cache reset structs in nsStyleContext");
+    for (const auto* data : mCachedInheritedData.mStyleStructs) {
+      MOZ_ASSERT(!data,
+                 "Servo shouldn't cache inherit structs in nsStyleContext");
+    }
+  }
+
   if (sExpensiveStyleStructAssertionsEnabled) {
     // Assert that the style structs we are about to destroy are not referenced
     // anywhere else in the style context tree.  These checks are expensive,
@@ -585,6 +626,8 @@ nsStyleContext::CreateEmptyStyleData(const nsStyleStructID& aSID)
 void
 nsStyleContext::SetStyle(nsStyleStructID aSID, void* aStruct)
 {
+  MOZ_ASSERT(!mSource.IsServoComputedValues(),
+             "Servo shouldn't cache style structs in the style context!");
   // This method should only be called from nsRuleNode!  It is not a public
   // method!
 
@@ -959,8 +1002,7 @@ nsStyleContext::ApplyStyleFixups(bool aSkipParentDisplayBasedStyleFixup)
 #undef GET_UNIQUE_STYLE_DATA
 }
 
-template<class StyleContextLike,
-         nsStyleContext::NeutralChangeHandling aNeutralChangeHandling>
+template<class StyleContextLike>
 nsChangeHint
 nsStyleContext::CalcStyleDifferenceInternal(StyleContextLike* aNewContext,
                                             nsChangeHint aParentHintsNotHandledForDescendants,
@@ -969,11 +1011,6 @@ nsStyleContext::CalcStyleDifferenceInternal(StyleContextLike* aNewContext,
 {
   PROFILER_LABEL("nsStyleContext", "CalcStyleDifference",
     js::ProfileEntry::Category::CSS);
-
-  // See the comment in CalcStyleDifference(ServoComputedValues*, ...) to
-  // understand why we need to manually handle the neutral change in Servo.
-  MOZ_ASSERT_IF(mSource.IsServoComputedValues(),
-                aNeutralChangeHandling == NeutralChangeHandling::Retain);
   MOZ_ASSERT(NS_IsHintSubset(aParentHintsNotHandledForDescendants,
                              nsChangeHint_Hints_NotHandledForDescendants),
              "caller is passing inherited hints, but shouldn't be");
@@ -1165,6 +1202,11 @@ nsStyleContext::CalcStyleDifferenceInternal(StyleContextLike* aNewContext,
     // Presume a difference.
     hint |= nsChangeHint_RepaintFrame;
   } else if (thisVis && !NS_IsHintSubset(nsChangeHint_RepaintFrame, hint)) {
+    // We'll handle visited style differently in servo. Assert against being
+    // in the parallel traversal to avoid static analysis hazards when calling
+    // StyleFoo() below.
+    MOZ_ASSERT(!ServoStyleSet::IsInServoTraversal());
+
     // Both style contexts have a style-if-visited.
     bool change = false;
 
@@ -1198,18 +1240,18 @@ nsStyleContext::CalcStyleDifferenceInternal(StyleContextLike* aNewContext,
     // only need to return the hint if the overall computation of
     // whether we establish a containing block has changed.
 
-    // This depends on data in nsStyleDisplay and nsStyleEffects, so we
-    // do it here.
+    // This depends on data in nsStyleDisplay, nsStyleEffects and
+    // nsStyleSVGReset, so we do it here.
 
     // Note that it's perhaps good for this test to be last because it
     // doesn't use Peek* functions to get the structs on the old
     // context.  But this isn't a big concern because these struct
     // getters should be called during frame construction anyway.
-    if (StyleDisplay()->IsAbsPosContainingBlockForAppropriateFrame(this) ==
-        aNewContext->StyleDisplay()->
+    if (ThreadsafeStyleDisplay()->IsAbsPosContainingBlockForAppropriateFrame(this) ==
+        aNewContext->ThreadsafeStyleDisplay()->
           IsAbsPosContainingBlockForAppropriateFrame(aNewContext) &&
-        StyleDisplay()->IsFixedPosContainingBlockForAppropriateFrame(this) ==
-        aNewContext->StyleDisplay()->
+        ThreadsafeStyleDisplay()->IsFixedPosContainingBlockForAppropriateFrame(this) ==
+        aNewContext->ThreadsafeStyleDisplay()->
           IsFixedPosContainingBlockForAppropriateFrame(aNewContext)) {
       // While some styles that cause the frame to be a containing block
       // has changed, the overall result hasn't.
@@ -1219,9 +1261,7 @@ nsStyleContext::CalcStyleDifferenceInternal(StyleContextLike* aNewContext,
 
   MOZ_ASSERT(NS_IsHintSubset(hint, nsChangeHint_AllHints),
              "Added a new hint without bumping AllHints?");
-  return aNeutralChangeHandling == NeutralChangeHandling::Strip
-           ? (hint & ~nsChangeHint_NeutralChange)
-           : hint;
+  return hint & ~nsChangeHint_NeutralChange;
 }
 
 nsChangeHint
@@ -1230,9 +1270,10 @@ nsStyleContext::CalcStyleDifference(nsStyleContext* aNewContext,
                                     uint32_t* aEqualStructs,
                                     uint32_t* aSamePointerStructs)
 {
-  return CalcStyleDifferenceInternal<nsStyleContext, NeutralChangeHandling::Strip>
-    (aNewContext, aParentHintsNotHandledForDescendants, aEqualStructs,
-     aSamePointerStructs);
+  return CalcStyleDifferenceInternal(aNewContext,
+                                     aParentHintsNotHandledForDescendants,
+                                     aEqualStructs,
+                                     aSamePointerStructs);
 }
 
 class MOZ_STACK_CLASS FakeStyleContext
@@ -1254,6 +1295,9 @@ public:
   #define STYLE_STRUCT(name_, checkdata_cb_)                                  \
   const nsStyle##name_ * Style##name_() {                                     \
     return Servo_GetStyle##name_(mComputedValues);                            \
+  }                                                                           \
+  const nsStyle##name_ * ThreadsafeStyle##name_() {                           \
+    return Servo_GetStyle##name_(mComputedValues);                            \
   }
   #include "nsStyleStructList.h"
   #undef STYLE_STRUCT
@@ -1268,15 +1312,11 @@ nsStyleContext::CalcStyleDifference(const ServoComputedValues* aNewComputedValue
                                     uint32_t* aEqualStructs,
                                     uint32_t* aSamePointerStructs)
 {
-  // NB: Servo uses the presence of a change hint to determine whether it should
-  // generate a new nsStyleContext.
-  //
-  // Given that, we can't strip the neutral change hint here, since it may
-  // provoke errors like bug 1330874.
   FakeStyleContext newContext(aNewComputedValues);
-  return CalcStyleDifferenceInternal<FakeStyleContext, NeutralChangeHandling::Retain>(
-      &newContext, aParentHintsNotHandledForDescendants, aEqualStructs,
-      aSamePointerStructs);
+  return CalcStyleDifferenceInternal(&newContext,
+                                     aParentHintsNotHandledForDescendants,
+                                     aEqualStructs,
+                                     aSamePointerStructs);
 }
 
 #ifdef DEBUG

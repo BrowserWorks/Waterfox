@@ -18,6 +18,7 @@ static StaticAutoPtr<PlatformChild> sPlatformChild;
 
 DocAccessibleChild::DocAccessibleChild(DocAccessible* aDoc, IProtocol* aManager)
   : DocAccessibleChildBase(aDoc)
+  , mEmulatedWindowHandle(nullptr)
   , mIsRemoteConstructed(false)
 {
   MOZ_COUNT_CTOR_INHERITED(DocAccessibleChild, DocAccessibleChildBase);
@@ -58,6 +59,20 @@ DocAccessibleChild::RecvParentCOMProxy(const IAccessibleHolder& aParentCOMProxy)
   }
 
   mDeferredEvents.Clear();
+
+  return IPC_OK();
+}
+
+ipc::IPCResult
+DocAccessibleChild::RecvEmulatedWindow(const WindowsHandle& aEmulatedWindowHandle,
+                                       const IAccessibleHolder& aEmulatedWindowCOMProxy)
+{
+  mEmulatedWindowHandle = reinterpret_cast<HWND>(aEmulatedWindowHandle);
+  if (!aEmulatedWindowCOMProxy.IsNull()) {
+    MOZ_ASSERT(!mEmulatedWindowProxy);
+    mEmulatedWindowProxy.reset(
+      const_cast<IAccessibleHolder&>(aEmulatedWindowCOMProxy).Release());
+  }
 
   return IPC_OK();
 }

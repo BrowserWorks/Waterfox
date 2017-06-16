@@ -172,6 +172,8 @@ namespace jit {
     _(LoadSlot)                                                             \
     _(StoreSlot)                                                            \
     _(FunctionEnvironment)                                                  \
+    _(NewLexicalEnvironmentObject)                                          \
+    _(CopyLexicalEnvironmentObject)                                         \
     _(FilterTypeSet)                                                        \
     _(TypeBarrier)                                                          \
     _(MonitorTypes)                                                         \
@@ -311,6 +313,7 @@ namespace jit {
     _(WasmCall)                                                             \
     _(WasmSelect)                                                           \
     _(WasmReinterpret)                                                      \
+    _(WasmFloatConstant)                                                    \
     _(WasmTruncateToInt64)
 
 // Forward declarations of MIR types.

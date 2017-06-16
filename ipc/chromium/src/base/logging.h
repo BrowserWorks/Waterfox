@@ -11,6 +11,7 @@
 #include <cstring>
 
 #include "base/basictypes.h"
+#include "mozilla/Attributes.h"
 #include "mozilla/Logging.h"
 
 #ifdef NO_CHROMIUM_LOGGING
@@ -44,7 +45,7 @@ public:
   ~Logger();
 
   // not private so that the operator<< overloads can get to it
-  void printf(const char* fmt, ...);
+  void printf(const char* fmt, ...) MOZ_FORMAT_PRINTF(2, 3);
 
 private:
   static mozilla::LazyLogModule gChromiumPRLog;
@@ -76,8 +77,6 @@ struct EmptyLog
 {
 };
 
-} // namespace mozilla
-
 mozilla::Logger& operator<<(mozilla::Logger& log, const char* s);
 mozilla::Logger& operator<<(mozilla::Logger& log, const std::string& s);
 mozilla::Logger& operator<<(mozilla::Logger& log, int i);
@@ -89,6 +88,8 @@ const mozilla::EmptyLog& operator <<(const mozilla::EmptyLog& log, const T&)
 {
   return log;
 }
+
+} // namespace mozilla
 
 #ifdef NO_CHROMIUM_LOGGING
 #define CHROMIUM_LOG(info) std::stringstream()

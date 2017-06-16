@@ -47,7 +47,6 @@
 
 #include "harfbuzz/hb.h"
 #include "harfbuzz/hb-ot.h"
-#include "graphite2/Font.h"
 
 #include <algorithm>
 #include <limits>
@@ -1743,11 +1742,11 @@ private:
 
     void FlushStroke(gfx::GlyphBuffer& aBuf, const Pattern& aPattern)
     {
-        RefPtr<Path> path =
-            mFontParams.scaledFont->GetPathForGlyphs(aBuf, mRunParams.dt);
-        mRunParams.dt->Stroke(path, aPattern, *mRunParams.strokeOpts,
-                              (mRunParams.drawOpts) ? *mRunParams.drawOpts
-                                                    : DrawOptions());
+        mRunParams.dt->StrokeGlyphs(mFontParams.scaledFont, aBuf,
+                                    aPattern,
+                                    *mRunParams.strokeOpts,
+                                    mFontParams.drawOptions,
+                                    mFontParams.renderingOptions);
     }
 
     Glyph        mGlyphBuffer[GLYPH_BUFFER_SIZE];
@@ -2074,15 +2073,15 @@ gfxFont::Draw(const gfxTextRun *aTextRun, uint32_t aStart, uint32_t aEnd,
         aRunParams.context->SetMatrix(mat);
     }
 
-    UniquePtr<SVGContextPaint> contextPaint;
+    RefPtr<SVGContextPaint> contextPaint;
     if (fontParams.haveSVGGlyphs && !fontParams.contextPaint) {
         // If no pattern is specified for fill, use the current pattern
         NS_ASSERTION((int(aRunParams.drawMode) & int(DrawMode::GLYPH_STROKE)) == 0,
                      "no pattern supplied for stroking text");
         RefPtr<gfxPattern> fillPattern = aRunParams.context->GetPattern();
-        contextPaint.reset(
+        contextPaint =
             new SimpleTextContextPaint(fillPattern, nullptr,
-                                       aRunParams.context->CurrentMatrix()));
+                                       aRunParams.context->CurrentMatrix());
         fontParams.contextPaint = contextPaint.get();
     }
 
@@ -2686,6 +2685,7 @@ gfxFont::ShapeText(DrawTarget      *aDrawTarget,
         if (gfxPlatform::GetPlatform()->UseGraphiteShaping()) {
             if (!mGraphiteShaper) {
                 mGraphiteShaper = MakeUnique<gfxGraphiteShaper>(this);
+                Telemetry::ScalarAdd(Telemetry::ScalarID::BROWSER_USAGE_GRAPHITE, 1);
             }
             ok = mGraphiteShaper->ShapeText(aDrawTarget, aText, aOffset, aLength,
                                             aScript, aVertical, aShapedText);

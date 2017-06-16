@@ -48,7 +48,7 @@ dnl ========================================================
 MOZJPEG=62
 MOZPNG=10628
 NSPR_VERSION=4
-NSPR_MINVER=4.13.1
+NSPR_MINVER=4.14
 NSS_VERSION=3
 
 dnl Set the minimum version of toolkit libs used by mozilla
@@ -203,7 +203,7 @@ dnl ========================================================
 dnl Special win32 checks
 dnl ========================================================
 
-WINVER=502
+WINVER=601
 
 case "$target" in
 *-mingw*)
@@ -398,8 +398,8 @@ case "$target" in
 
     AC_DEFINE_UNQUOTED(WINVER,0x$WINVER)
     AC_DEFINE_UNQUOTED(_WIN32_WINNT,0x$WINVER)
-    # Require OS features provided by IE 6.0 SP2 (XP SP2)
-    AC_DEFINE_UNQUOTED(_WIN32_IE,0x0603)
+    # Require OS features provided by IE 8.0 (Win7)
+    AC_DEFINE_UNQUOTED(_WIN32_IE,0x0800)
 
     ;;
 esac
@@ -432,31 +432,6 @@ dnl ========================================================
 dnl Checks for programs.
 dnl ========================================================
 if test "$COMPILE_ENVIRONMENT"; then
-
-dnl ========================================================
-dnl = Mac OS X toolchain support
-dnl ========================================================
-
-dnl The universal machinery sets UNIVERSAL_BINARY to inform packager.mk
-dnl that a universal binary is being produced.
-AC_SUBST(UNIVERSAL_BINARY)
-
-MOZ_ARG_WITH_STRING(unify-dist,
-[  --with-unify-dist=dir   Location of the dist directory to unify with at packaging time (Mac OS X universal build only)],
-    UNIFY_DIST=$withval)
-if test -n "$UNIVERSAL_BINARY"; then
-    if test -z "$UNIFY_DIST"; then
-        AC_MSG_ERROR([You need to provide the --with-unify-dist=dir argument when performing a universal build])
-    fi
-    case "$UNIFY_DIST" in
-    /*)
-        ;;
-    *)
-        UNIFY_DIST="${MOZ_BUILD_ROOT}/${UNIFY_DIST}"
-        ;;
-    esac
-fi
-AC_SUBST(UNIFY_DIST)
 
 dnl ========================================================
 dnl = Mac OS X SDK support
@@ -992,12 +967,14 @@ case "$target" in
             dnl VS2012+ defaults to -arch:SSE2. We want to target nothing
             dnl more recent, so set that explicitly here unless another
             dnl target arch has already been set.
+            changequote(,)
             if test -z `echo $CFLAGS | grep -i [-/]arch:`; then
               CFLAGS="$CFLAGS -arch:SSE2"
             fi
             if test -z `echo $CXXFLAGS | grep -i [-/]arch:`; then
               CXXFLAGS="$CXXFLAGS -arch:SSE2"
             fi
+            changequote([,])
             SSE_FLAGS="-arch:SSE"
             SSE2_FLAGS="-arch:SSE2"
             dnl MSVC allows the use of intrinsics without any flags
@@ -1045,11 +1022,6 @@ case "$target" in
             # We use offsetof on non-POD objects all the time.
             # We also suppress this warning on other platforms.
             CXXFLAGS="$CXXFLAGS -Wno-invalid-offsetof"
-            # MFBT thinks clang-cl supports constexpr, which it does, but
-            # not everything in Windows C++ headers supports constexpr
-            # as we might expect until MSVC 2015, so turn off this warning
-            # for now.
-            CXXFLAGS="$CXXFLAGS -Wno-invalid-constexpr"
             # This warns for reasonable things like:
             #   enum { X = 0xffffffffU };
             # which is annoying for IDL headers.
@@ -1096,10 +1068,8 @@ case "$target" in
             # At least one MSVC header and several headers in-tree have
             # unused typedefs, so turn this on.
             CXXFLAGS="$CXXFLAGS -Wno-unused-local-typedef"
-            # Several JS engine header files use __declspec(dllimport) on
-            # classes, and clang-cl helpfully warns about its non-support
-            # for such cases.  We're not particularly worried about that,
-            # so ignore that warning.
+            # jemalloc uses __declspec(allocator) as a profiler hint,
+            # which clang-cl doesn't understand.
             CXXFLAGS="$CXXFLAGS -Wno-ignored-attributes"
         fi
         # make 'foo == bar;' error out
@@ -1132,16 +1102,11 @@ case "$target" in
         PROFILE_USE_LDFLAGS="-LTCG:PGUPDATE $cgthreads"
         LDFLAGS="$LDFLAGS -DYNAMICBASE"
         RCFLAGS="-nologo"
-        if test "$CC_VERSION" = "18.00.31101"; then
-            dnl Use MaxILKSize as a workaround for LNK1248 in VS2013update4
-            dnl See https://connect.microsoft.com/VisualStudio/feedback/details/1044914/fatal-error-lnk1248
-            LDFLAGS="$LDFLAGS -MaxILKSize:0x7FF00000"
-        fi
-        dnl Minimum reqiurement of Gecko is VS2010 or later which supports
+        dnl Minimum reqiurement of Gecko is VS2015 or later which supports
         dnl both SSSE3 and SSE4.1.
         HAVE_TOOLCHAIN_SUPPORT_MSSSE3=1
         HAVE_TOOLCHAIN_SUPPORT_MSSE4_1=1
-        dnl allow AVX2 code from VS2012
+        dnl allow AVX2 code from VS2015
         HAVE_X86_AVX2=1
     fi
     AC_DEFINE(WIN32_LEAN_AND_MEAN)
@@ -2040,7 +2005,7 @@ MOZ_ARG_WITH_BOOL(system-nss,
     _USE_SYSTEM_NSS=1 )
 
 if test -n "$_USE_SYSTEM_NSS"; then
-    AM_PATH_NSS(3.29.5, [MOZ_SYSTEM_NSS=1], [AC_MSG_ERROR([you don't have NSS installed or your version is too old])])
+    AM_PATH_NSS(3.30.2, [MOZ_SYSTEM_NSS=1], [AC_MSG_ERROR([you don't have NSS installed or your version is too old])])
 fi
 
 if test -n "$MOZ_SYSTEM_NSS"; then
@@ -3251,13 +3216,6 @@ x86_64)
   ;;
 esac
 
-# This is potentially set in external mozconfig files; if it's set,
-# then the build exposes the "webgl" context name, which is reserved
-# for conformant implementations.
-if test -n "$MOZ_WEBGL_CONFORMANT"; then
-  AC_DEFINE(MOZ_WEBGL_CONFORMANT)
-fi
-
 dnl ========================================================
 dnl D3D compiler DLL
 dnl ========================================================
@@ -3783,14 +3741,14 @@ if test -n "$gonkdir"; then
     MOZ_CONTENT_SANDBOX=$MOZ_SANDBOX
 fi
 
-case "$OS_TARGET:$NIGHTLY_BUILD" in
-WINNT:*)
+case "$OS_TARGET" in
+WINNT)
     MOZ_CONTENT_SANDBOX=$MOZ_SANDBOX
     ;;
-Darwin:*)
+Darwin)
     MOZ_CONTENT_SANDBOX=$MOZ_SANDBOX
     ;;
-Linux:1)
+Linux)
     case $CPU_ARCH in
         x86_64|x86)
             MOZ_CONTENT_SANDBOX=$MOZ_SANDBOX
@@ -4419,7 +4377,7 @@ MOZ_ARG_ENABLE_BOOL(stdcxx-compat,
 [  --enable-stdcxx-compat  Enable compatibility with older libstdc++],
     STDCXX_COMPAT=1)
 
-if test -n "$STDCXX_COMPAT"; then
+if test -n "$STDCXX_COMPAT" -a -n "$COMPILE_ENVIRONMENT"; then
    eval $(CXX="$CXX" HOST_CXX="$HOST_CXX" $PYTHON -m mozbuild.configure.libstdcxx)
    AC_SUBST(MOZ_LIBSTDCXX_TARGET_VERSION)
    AC_SUBST(MOZ_LIBSTDCXX_HOST_VERSION)
@@ -5336,13 +5294,10 @@ dnl ========================================================
 dnl ICU Support
 dnl ========================================================
 
-# Internationalization is not built or exposed on Fennec.
-# See Bug 1215256
-
-if test "$MOZ_BUILD_APP" = "mobile/android"; then
-    _INTL_API=no
-else
+if test "$MOZ_WIDGET_TOOLKIT" != "android" -o -z "$RELEASE_OR_BETA"; then
     _INTL_API=yes
+else
+    _INTL_API=no
 fi
 
 if test "$MOZ_WIDGET_TOOLKIT" = "cocoa"; then

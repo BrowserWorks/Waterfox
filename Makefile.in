@@ -96,36 +96,10 @@ ifndef TEST_MOZBUILD
 .PHONY: backend
 backend: $(BUILD_BACKEND_FILES)
 
-# A traditional rule would look like this:
-#    backend.%:
-#        @echo do stuff
-#
-# But with -j<n>, and multiple items in BUILD_BACKEND_FILES, the command would
-# run multiple times in parallel.
-#
-# "Fortunately", make has some weird semantics for pattern rules: if there are
-# multiple targets in a pattern rule and each of them is matched at most once,
-# the command will only run once. So:
-#     backend%RecursiveMakeBackend backend%FasterMakeBackend:
-#         @echo do stuff
-#     backend: backend.RecursiveMakeBackend backend.FasterMakeBackend
-# would only execute the command once.
-#
-# Credit where due: http://stackoverflow.com/questions/2973445/gnu-makefile-rule-generating-a-few-targets-from-a-single-source-file/3077254#3077254
-$(subst .,%,$(BUILD_BACKEND_FILES)):
-	@echo 'Build configuration changed. Regenerating backend.'
-	$(PYTHON) config.status
+include $(topsrcdir)/build/rebuild-backend.mk
 
 Makefile: $(BUILD_BACKEND_FILES)
 	@$(TOUCH) $@
-
-define build_backend_rule
-$(1)_files := $$(shell cat $(1).in)
-$(1): $$($(1)_files)
-$$($(1)_files):
-
-endef
-$(foreach file,$(BUILD_BACKEND_FILES),$(eval $(call build_backend_rule,$(file))))
 
 default:: $(BUILD_BACKEND_FILES)
 endif
@@ -190,6 +164,12 @@ ifdef JS_STANDALONE
 NO_REMOVE=1
 endif
 
+# For an artifact build, _tests will already be partly populated, so run
+# this install manifest with NO_REMOVE set in this case.
+ifdef MOZ_ARTIFACT_BUILDS
+install-_tests: NO_REMOVE=1
+endif
+
 .PHONY: $(addprefix install-,$(subst /,_,$(install_manifests)))
 $(addprefix install-,$(install_manifests)): install-%: $(install_manifest_depends)
 ifneq (,$(filter FasterMake+RecursiveMake,$(BUILD_BACKENDS)))
@@ -205,11 +185,6 @@ $(addprefix install-,$(subst /,_,$(filter dist/%,$(install_manifests)))): instal
 
 .PHONY: install-tests
 install-tests: install-test-files
-
-# We no longer run "make install-tests" directly before running tests, but we still
-# want to depend on things like config.status, hence this target.
-.PHONY: run-tests-deps
-run-tests-deps: $(install_manifest_depends)
 
 # Force --no-remove, because $objdir/_tests is handled by multiple manifests.
 .PHONY: install-test-files
@@ -289,13 +264,8 @@ MAKE_SYM_STORE_PATH := .
 endif
 ifeq ($(OS_ARCH),Darwin)
 # need to pass arch flags for universal builds
-ifdef UNIVERSAL_BINARY
-MAKE_SYM_STORE_ARGS := -c --vcs-info
-MAKE_SYM_STORE_PATH := $(DIST)/bin $(UNIFY_DIST)/bin
-else
 MAKE_SYM_STORE_ARGS := -c -a $(OS_TEST) --vcs-info
 MAKE_SYM_STORE_PATH := $(DIST)/bin
-endif
 DUMP_SYMS_BIN ?= $(DIST)/host/bin/dump_syms
 endif
 ifeq (,$(filter-out Linux SunOS,$(OS_ARCH)))
@@ -361,26 +331,6 @@ endif
 .PHONY: update-packaging
 update-packaging:
 	$(MAKE) -C tools/update-packaging
-
-.PHONY: pretty-package
-pretty-package:
-	unset MOZ_SIGN_CMD && $(MAKE) package MOZ_PKG_PRETTYNAMES=1
-
-.PHONY: pretty-package-tests
-pretty-package-tests:
-	unset MOZ_SIGN_CMD && $(MAKE) package-tests MOZ_PKG_PRETTYNAMES=1
-
-.PHONY: pretty-l10n-check
-pretty-l10n-check:
-	unset MOZ_SIGN_CMD && $(MAKE) l10n-check MOZ_PKG_PRETTYNAMES=1
-
-.PHONY: pretty-update-packaging
-pretty-update-packaging:
-	unset MOZ_SIGN_CMD && $(MAKE) -C tools/update-packaging MOZ_PKG_PRETTYNAMES=1
-
-.PHONY: pretty-installer
-pretty-installer:
-	unset MOZ_SIGN_CMD && $(MAKE) installer MOZ_PKG_PRETTYNAMES=1
 
 #XXX: this is a hack, since we don't want to clobber for MSVC
 # PGO support, but we can't do this test in client.mk

@@ -232,7 +232,7 @@ function run_next_test() {
 }
 
 var get_tooltip_info = Task.async(function*(addon) {
-  let managerWindow = addon.ownerDocument.defaultView;
+  let managerWindow = addon.ownerGlobal;
 
   // The popup code uses a triggering event's target to set the
   // document.tooltipNode property.
@@ -370,9 +370,8 @@ function wait_for_view_load(aManagerWindow, aCallback, aForceWait, aLongerTimeou
   }
 
   aManagerWindow.document.addEventListener("ViewChanged", function() {
-    aManagerWindow.document.removeEventListener("ViewChanged", arguments.callee);
     log_exceptions(aCallback, aManagerWindow);
-  });
+  }, {once: true});
 }
 
 function wait_for_manager_load(aManagerWindow, aCallback) {
@@ -383,9 +382,8 @@ function wait_for_manager_load(aManagerWindow, aCallback) {
 
   info("Waiting for initialization");
   aManagerWindow.document.addEventListener("Initialized", function() {
-    aManagerWindow.document.removeEventListener("Initialized", arguments.callee);
     log_exceptions(aCallback, aManagerWindow);
-  });
+  }, {once: true});
 }
 
 function open_manager(aView, aCallback, aLoadCallback, aLongerTimeout) {
@@ -482,11 +480,10 @@ function wait_for_window_open(aCallback) {
       let domwindow = aWindow.QueryInterface(Ci.nsIInterfaceRequestor)
                              .getInterface(Ci.nsIDOMWindow);
       domwindow.addEventListener("load", function() {
-        domwindow.removeEventListener("load", arguments.callee);
         executeSoon(function() {
           aCallback(domwindow);
         });
-      });
+      }, {once: true});
     },
 
     onCloseWindow(aWindow) {
@@ -513,7 +510,7 @@ function formatDate(aDate) {
 }
 
 function is_hidden(aElement) {
-  var style = aElement.ownerDocument.defaultView.getComputedStyle(aElement, "");
+  var style = aElement.ownerGlobal.getComputedStyle(aElement);
   if (style.display == "none")
     return true;
   if (style.visibility != "visible")
@@ -571,9 +568,8 @@ function CategoryUtilities(aManagerWindow) {
 
   var self = this;
   this.window.addEventListener("unload", function() {
-    self.window.removeEventListener("unload", arguments.callee);
     self.window = null;
-  });
+  }, {once: true});
 }
 
 CategoryUtilities.prototype = {

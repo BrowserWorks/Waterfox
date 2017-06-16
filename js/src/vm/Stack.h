@@ -41,7 +41,7 @@ class CallObject;
 class FrameIter;
 class EnvironmentObject;
 class ScriptFrameIter;
-class SPSProfiler;
+class GeckoProfiler;
 class InterpreterFrame;
 class LexicalEnvironmentObject;
 class EnvironmentIter;
@@ -317,8 +317,8 @@ class InterpreterFrame
          */
         DEBUGGEE               =       0x40,  /* Execution is being observed by Debugger */
 
-        /* Used in tracking calls and profiling (see vm/SPSProfiler.cpp) */
-        HAS_PUSHED_SPS_FRAME   =       0x80,  /* SPS was notified of entry */
+        /* Used in tracking calls and profiling (see vm/GeckoProfiler.cpp) */
+        HAS_PUSHED_PROF_FRAME  =       0x80,  /* Gecko Profiler was notified of entry */
 
         /*
          * If set, we entered one of the JITs and ScriptFrameIter should skip
@@ -666,16 +666,16 @@ class InterpreterFrame
 
     /* Profiler flags */
 
-    bool hasPushedSPSFrame() {
-        return !!(flags_ & HAS_PUSHED_SPS_FRAME);
+    bool hasPushedGeckoProfilerFrame() {
+        return !!(flags_ & HAS_PUSHED_PROF_FRAME);
     }
 
-    void setPushedSPSFrame() {
-        flags_ |= HAS_PUSHED_SPS_FRAME;
+    void setPushedGeckoProfilerFrame() {
+        flags_ |= HAS_PUSHED_PROF_FRAME;
     }
 
-    void unsetPushedSPSFrame() {
-        flags_ &= ~HAS_PUSHED_SPS_FRAME;
+    void unsetPushedGeckoProfilerFrame() {
+        flags_ &= ~HAS_PUSHED_PROF_FRAME;
     }
 
     /* Return value */
@@ -705,7 +705,8 @@ class InterpreterFrame
     }
 
     void resumeGeneratorFrame(JSObject* envChain) {
-        MOZ_ASSERT(script()->isGenerator());
+        MOZ_ASSERT(script()->isStarGenerator() || script()->isLegacyGenerator() ||
+                   script()->isAsync());
         MOZ_ASSERT(isFunctionFrame());
         flags_ |= HAS_INITIAL_ENV;
         envChain_ = envChain;
@@ -936,7 +937,24 @@ class InterpreterStack
     }
 };
 
-void TraceInterpreterActivations(JSRuntime* rt, JSTracer* trc);
+// CooperatingContext is a wrapper for a JSContext that is participating in
+// cooperative scheduling and may be different from the current thread. It is
+// in place to make it clearer when we might be operating on another thread,
+// and harder to accidentally pass in another thread's context to an API that
+// expects the current thread's context.
+class CooperatingContext
+{
+    JSContext* cx;
+
+  public:
+    explicit CooperatingContext(JSContext* cx) : cx(cx) {}
+    JSContext* context() const { return cx; }
+
+    // For &cx. The address should not be taken for other CooperatingContexts.
+    friend class ZoneGroup;
+};
+
+void TraceInterpreterActivations(JSContext* cx, const CooperatingContext& target, JSTracer* trc);
 
 /*****************************************************************************/
 
@@ -1409,8 +1427,7 @@ class InterpreterActivation : public Activation
     }
 };
 
-// Iterates over a thread's activation list. If given a runtime, iterate over
-// the runtime's main thread's activation list.
+// Iterates over a thread's activation list.
 class ActivationIterator
 {
     uint8_t* jitTop_;
@@ -1422,7 +1439,12 @@ class ActivationIterator
     void settle();
 
   public:
-    explicit ActivationIterator(JSRuntime* rt);
+    explicit ActivationIterator(JSContext* cx);
+
+    // ActivationIterator can be used to iterate over a different thread's
+    // activations, for use by the GC, invalidation, and other operations that
+    // don't have a user-visible effect on the target thread's JS behavior.
+    ActivationIterator(JSContext* cx, const CooperatingContext& target);
 
     ActivationIterator& operator++();
 
@@ -1614,8 +1636,14 @@ class JitActivationIterator : public ActivationIterator
     }
 
   public:
-    explicit JitActivationIterator(JSRuntime* rt)
-      : ActivationIterator(rt)
+    explicit JitActivationIterator(JSContext* cx)
+      : ActivationIterator(cx)
+    {
+        settle();
+    }
+
+    JitActivationIterator(JSContext* cx, const CooperatingContext& target)
+      : ActivationIterator(cx, target)
     {
         settle();
     }
@@ -1722,7 +1750,7 @@ class WasmActivation : public Activation
     void unwindFP(uint8_t* fp) { fp_ = fp; }
 };
 
-// A FrameIter walks over the runtime's stack of JS script activations,
+// A FrameIter walks over a context's stack of JS script activations,
 // abstracting over whether the JS scripts were running in the interpreter or
 // different modes of compiled code.
 //
@@ -1817,6 +1845,8 @@ class FrameIter
 
     inline bool wasmDebugEnabled() const;
     inline wasm::Instance* wasmInstance() const;
+    inline unsigned wasmBytecodeOffset() const;
+    void wasmUpdateBytecodeOffset();
 
     // -----------------------------------------------------------
     // The following functions can only be called when hasScript()
@@ -2075,6 +2105,14 @@ FrameIter::wasmInstance() const
     MOZ_ASSERT(!done());
     MOZ_ASSERT(data_.state_ == WASM && wasmDebugEnabled());
     return data_.wasmFrames_.instance();
+}
+
+inline unsigned
+FrameIter::wasmBytecodeOffset() const
+{
+    MOZ_ASSERT(!done());
+    MOZ_ASSERT(data_.state_ == WASM);
+    return data_.wasmFrames_.lineOrBytecode();
 }
 
 inline bool

@@ -8,13 +8,11 @@
 
 #include <ogg/ogg.h>
 // For MOZ_SAMPLE_TYPE_*
-#include <nsAutoPtr.h>
-#include <nsAutoRef.h>
+#include "FlacFrameParser.h"
+#include "VideoUtils.h"
 #include <nsDeque.h>
 #include <nsTArray.h>
 #include <nsClassHashtable.h>
-#include "VideoUtils.h"
-#include "FlacFrameParser.h"
 
 #include <theora/theoradec.h>
 #ifdef MOZ_TREMOR
@@ -36,14 +34,23 @@ namespace mozilla {
 
 class OpusParser;
 
+struct OggPacketDeletePolicy
+{
+  void operator()(ogg_packet* aPacket) const
+  {
+    delete [] aPacket->packet;
+    delete aPacket;
+  }
+};
+
+using OggPacketPtr = UniquePtr<ogg_packet, OggPacketDeletePolicy>;
+
 // Deallocates a packet, used in OggPacketQueue below.
 class OggPacketDeallocator : public nsDequeFunctor
 {
-  virtual void* operator() (void* aPacket)
+  virtual void* operator()(void* aPacket)
   {
-    ogg_packet* p = static_cast<ogg_packet*>(aPacket);
-    delete [] p->packet;
-    delete p;
+    OggPacketDeletePolicy()(static_cast<ogg_packet*>(aPacket));
     return nullptr;
   }
 };
@@ -61,19 +68,31 @@ class OggPacketDeallocator : public nsDequeFunctor
 class OggPacketQueue : private nsDeque
 {
 public:
-  OggPacketQueue() : nsDeque(new OggPacketDeallocator()) {}
+  OggPacketQueue() : nsDeque(new OggPacketDeallocator()) { }
   ~OggPacketQueue() { Erase(); }
   bool IsEmpty() { return nsDeque::GetSize() == 0; }
-  void Append(ogg_packet* aPacket);
-  ogg_packet* PopFront() { return static_cast<ogg_packet*>(nsDeque::PopFront()); }
-  ogg_packet* PeekFront() { return static_cast<ogg_packet*>(nsDeque::PeekFront()); }
-  ogg_packet* Pop() { return static_cast<ogg_packet*>(nsDeque::Pop()); }
+  void Append(OggPacketPtr aPacket);
+  OggPacketPtr PopFront()
+  {
+    return OggPacketPtr(static_cast<ogg_packet*>(nsDeque::PopFront()));
+  }
+  ogg_packet* PeekFront()
+  {
+    return static_cast<ogg_packet*>(nsDeque::PeekFront());
+  }
+  OggPacketPtr Pop()
+  {
+    return OggPacketPtr(static_cast<ogg_packet*>(nsDeque::Pop()));
+  }
   ogg_packet* operator[](size_t aIndex) const
   {
     return static_cast<ogg_packet*>(nsDeque::ObjectAt(aIndex));
   }
   size_t Length() const { return nsDeque::GetSize(); }
-  void PushFront(ogg_packet* aPacket) { nsDeque::PushFront(aPacket); }
+  void PushFront(OggPacketPtr aPacket)
+  {
+    nsDeque::PushFront(aPacket.release());
+  }
   void Erase() { nsDeque::Erase(); }
 };
 
@@ -107,7 +126,7 @@ public:
   // to determine if the last header has been read.
   // This function takes ownership of the packet and is responsible for
   // releasing it or queuing it for later processing.
-  virtual bool DecodeHeader(ogg_packet* aPacket)
+  virtual bool DecodeHeader(OggPacketPtr aPacket)
   {
     return (mDoneReadingHeaders = true);
   }
@@ -179,10 +198,9 @@ public:
 
   // Returns the next raw packet in the stream, or nullptr if there are no more
   // packets buffered in the packet queue. More packets can be buffered by
-  // inserting one or more pages into the stream by calling PageIn(). The
-  // caller is responsible for deleting returned packet's using
-  // OggCodecState::ReleasePacket(). The packet will have a valid granulepos.
-  ogg_packet* PacketOut();
+  // inserting one or more pages into the stream by calling PageIn().
+  // The packet will have a valid granulepos.
+  OggPacketPtr PacketOut();
 
   // Returns the next raw packet in the stream, or nullptr if there are no more
   // packets buffered in the packet queue, without consuming it.
@@ -191,10 +209,6 @@ public:
 
   // Moves all raw packets from aOther to the front of the current packet queue.
   void PushFront(OggPacketQueue&& aOther);
-
-  // Releases the memory used by a cloned packet. Every packet returned by
-  // PacketOut() must be free'd using this function.
-  static void ReleasePacket(ogg_packet* aPacket);
 
   // Returns the next packet in the stream as a MediaRawData, or nullptr
   // if there are no more packets buffered in the packet queue. More packets
@@ -271,9 +285,10 @@ protected:
 
   // Temporary buffer in which to store packets while we're reading packets
   // in order to capture granulepos.
-  nsTArray<ogg_packet*> mUnstamped;
+  nsTArray<OggPacketPtr> mUnstamped;
 
-  bool SetCodecSpecificConfig(MediaByteBuffer* aBuffer, OggPacketQueue& aHeaders);
+  bool SetCodecSpecificConfig(MediaByteBuffer* aBuffer,
+                              OggPacketQueue& aHeaders);
 
 private:
   bool InternalInit();
@@ -286,7 +301,7 @@ public:
   virtual ~VorbisState();
 
   CodecType GetType() override { return TYPE_VORBIS; }
-  bool DecodeHeader(ogg_packet* aPacket) override;
+  bool DecodeHeader(OggPacketPtr aPacket) override;
   int64_t Time(int64_t granulepos) override;
   int64_t PacketDuration(ogg_packet* aPacket) override;
   bool Init() override;
@@ -363,7 +378,7 @@ public:
   virtual ~TheoraState();
 
   CodecType GetType() override { return TYPE_THEORA; }
-  bool DecodeHeader(ogg_packet* aPacket) override;
+  bool DecodeHeader(OggPacketPtr aPacket) override;
   int64_t Time(int64_t granulepos) override;
   int64_t StartTime(int64_t granulepos) override;
   int64_t PacketDuration(ogg_packet* aPacket) override;
@@ -397,7 +412,6 @@ private:
   // known granulepos, and the known frame numbers, we recover the granulepos
   // of all frames in the array. This enables us to determine their timestamps.
   void ReconstructTheoraGranulepos();
-
 };
 
 class OpusState : public OggCodecState
@@ -407,7 +421,7 @@ public:
   virtual ~OpusState();
 
   CodecType GetType() override { return TYPE_OPUS; }
-  bool DecodeHeader(ogg_packet* aPacket) override;
+  bool DecodeHeader(OggPacketPtr aPacket) override;
   int64_t Time(int64_t aGranulepos) override;
   int64_t PacketDuration(ogg_packet* aPacket) override;
   bool Init() override;
@@ -451,7 +465,8 @@ private:
 // version numbers.
 #define SKELETON_VERSION(major, minor) (((major)<<16)|(minor))
 
-enum EMsgHeaderType {
+enum EMsgHeaderType
+{
   eContentType,
   eRole,
   eName,
@@ -484,7 +499,7 @@ public:
   nsClassHashtable<nsUint32HashKey, MessageField> mMsgFieldStore;
 
   CodecType GetType() override { return TYPE_SKELETON; }
-  bool DecodeHeader(ogg_packet* aPacket) override;
+  bool DecodeHeader(OggPacketPtr aPacket) override;
   int64_t Time(int64_t granulepos) override { return -1; }
   bool IsHeader(ogg_packet* aPacket) override { return true; }
 
@@ -522,7 +537,7 @@ public:
   class nsSeekTarget
   {
   public:
-    nsSeekTarget() : mSerial(0) {}
+    nsSeekTarget() : mSerial(0) { }
     nsKeyPoint mKeyPoint;
     uint32_t mSerial;
     bool IsNull()
@@ -624,7 +639,7 @@ public:
   explicit FlacState(ogg_page* aBosPage);
 
   CodecType GetType() override { return TYPE_FLAC; }
-  bool DecodeHeader(ogg_packet* aPacket) override;
+  bool DecodeHeader(OggPacketPtr aPacket) override;
   int64_t Time(int64_t granulepos) override;
   int64_t PacketDuration(ogg_packet* aPacket) override;
   bool IsHeader(ogg_packet* aPacket) override;
@@ -642,18 +657,5 @@ private:
 };
 
 } // namespace mozilla
-
-// This allows the use of nsAutoRefs for an ogg_packet that properly free the
-// contents of the packet.
-template <>
-class nsAutoRefTraits<ogg_packet> : public nsPointerRefTraits<ogg_packet>
-{
-public:
-  static void Release(ogg_packet* aPacket)
-  {
-    mozilla::OggCodecState::ReleasePacket(aPacket);
-  }
-};
-
 
 #endif

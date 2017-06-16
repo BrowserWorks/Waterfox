@@ -77,6 +77,7 @@
 #include "ServiceWorkerEvents.h"
 #include "ServiceWorkerUnregisterJob.h"
 #include "ServiceWorkerUpdateJob.h"
+#include "ServiceWorkerUpdaterChild.h"
 #include "SharedWorker.h"
 #include "WorkerInlines.h"
 #include "WorkerPrivate.h"
@@ -506,6 +507,238 @@ public:
 private:
   ~PropagateRemoveAllRunnable()
   {}
+};
+
+class PromiseResolverCallback final : public ServiceWorkerUpdateFinishCallback
+{
+public:
+  PromiseResolverCallback(ServiceWorkerUpdateFinishCallback* aCallback,
+                          GenericPromise::Private* aPromise)
+    : mCallback(aCallback)
+    , mPromise(aPromise)
+  {
+    MOZ_DIAGNOSTIC_ASSERT(mPromise);
+  }
+
+  void UpdateSucceeded(ServiceWorkerRegistrationInfo* aInfo) override
+  {
+    MOZ_DIAGNOSTIC_ASSERT(mPromise);
+
+    if (mCallback) {
+      mCallback->UpdateSucceeded(aInfo);
+    }
+
+    MaybeResolve();
+  }
+
+  void UpdateFailed(ErrorResult& aStatus) override
+  {
+    MOZ_DIAGNOSTIC_ASSERT(mPromise);
+
+    if (mCallback) {
+      mCallback->UpdateFailed(aStatus);
+    }
+
+    MaybeResolve();
+  }
+
+private:
+  ~PromiseResolverCallback()
+  {
+    MaybeResolve();
+  }
+
+  void
+  MaybeResolve()
+  {
+    if (mPromise) {
+      mPromise->Resolve(true, __func__);
+      mPromise = nullptr;
+    }
+  }
+
+  RefPtr<ServiceWorkerUpdateFinishCallback> mCallback;
+  RefPtr<GenericPromise::Private> mPromise;
+};
+
+// This runnable is used for 2 different tasks:
+// - to postpone the SoftUpdate() until the IPC SWM actor is created
+//   (aInternalMethod == false)
+// - to call the 'real' SoftUpdate when the ServiceWorkerUpdaterChild is
+//   notified by the parent (aInternalMethod == true)
+class SoftUpdateRunnable final : public CancelableRunnable
+{
+public:
+  SoftUpdateRunnable(const OriginAttributes& aOriginAttributes,
+                     const nsACString& aScope, bool aInternalMethod,
+                     GenericPromise::Private* aPromise)
+    : mAttrs(aOriginAttributes)
+    , mScope(aScope)
+    , mInternalMethod(aInternalMethod)
+    , mPromise(aPromise)
+  {}
+
+  NS_IMETHOD Run() override
+  {
+    AssertIsOnMainThread();
+
+    RefPtr<ServiceWorkerManager> swm = ServiceWorkerManager::GetInstance();
+    if (!swm) {
+      return NS_ERROR_FAILURE;
+    }
+
+    if (mInternalMethod) {
+      RefPtr<PromiseResolverCallback> callback =
+        new PromiseResolverCallback(nullptr, mPromise);
+      mPromise = nullptr;
+
+      swm->SoftUpdateInternal(mAttrs, mScope, callback);
+    } else {
+      swm->SoftUpdate(mAttrs, mScope);
+    }
+
+    return NS_OK;
+  }
+
+  nsresult
+  Cancel() override
+  {
+    mPromise = nullptr;
+    return NS_OK;
+  }
+
+private:
+  ~SoftUpdateRunnable()
+  {
+    if (mPromise) {
+      mPromise->Resolve(true, __func__);
+    }
+  }
+
+  const OriginAttributes mAttrs;
+  const nsCString mScope;
+  bool mInternalMethod;
+
+  RefPtr<GenericPromise::Private> mPromise;
+};
+
+// This runnable is used for 3 different tasks:
+// - to postpone the Update() until the IPC SWM actor is created
+//   (aType == ePostpone)
+// - to call the 'real' Update when the ServiceWorkerUpdaterChild is
+//   notified by the parent (aType == eSuccess)
+// - an error must be propagated (aType == eFailure)
+class UpdateRunnable final : public CancelableRunnable
+{
+public:
+  enum Type {
+    ePostpone,
+    eSuccess,
+    eFailure,
+  };
+
+  UpdateRunnable(nsIPrincipal* aPrincipal,
+                 const nsACString& aScope,
+                 ServiceWorkerUpdateFinishCallback* aCallback,
+                 Type aType,
+                 GenericPromise::Private* aPromise)
+    : mPrincipal(aPrincipal)
+    , mScope(aScope)
+    , mCallback(aCallback)
+    , mType(aType)
+    , mPromise(aPromise)
+  {}
+
+  NS_IMETHOD Run() override
+  {
+    AssertIsOnMainThread();
+
+    RefPtr<ServiceWorkerManager> swm = ServiceWorkerManager::GetInstance();
+    if (!swm) {
+      return NS_ERROR_FAILURE;
+    }
+
+    if (mType == ePostpone) {
+      swm->Update(mPrincipal, mScope, mCallback);
+      return NS_OK;
+    }
+
+    MOZ_ASSERT(mPromise);
+
+    RefPtr<PromiseResolverCallback> callback =
+      new PromiseResolverCallback(mCallback, mPromise);
+    mPromise = nullptr;
+
+    if (mType == eSuccess) {
+      swm->UpdateInternal(mPrincipal, mScope, callback);
+      return NS_OK;
+    }
+
+    ErrorResult error(NS_ERROR_DOM_ABORT_ERR);
+    callback->UpdateFailed(error);
+    return NS_OK;
+  }
+
+  nsresult
+  Cancel() override
+  {
+    mPromise = nullptr;
+    return NS_OK;
+  }
+
+private:
+  ~UpdateRunnable()
+  {
+    if (mPromise) {
+      mPromise->Resolve(true, __func__);
+    }
+  }
+
+  nsCOMPtr<nsIPrincipal> mPrincipal;
+  const nsCString mScope;
+  RefPtr<ServiceWorkerUpdateFinishCallback> mCallback;
+  Type mType;
+
+  RefPtr<GenericPromise::Private> mPromise;
+};
+
+class ResolvePromiseRunnable final : public CancelableRunnable
+{
+public:
+  explicit ResolvePromiseRunnable(GenericPromise::Private* aPromise)
+    : mPromise(aPromise)
+  {}
+
+  NS_IMETHOD
+  Run() override
+  {
+    MaybeResolve();
+    return NS_OK;
+  }
+
+  nsresult
+  Cancel() override
+  {
+    mPromise = nullptr;
+    return NS_OK;
+  }
+
+private:
+  ~ResolvePromiseRunnable()
+  {
+    MaybeResolve();
+  }
+
+  void
+  MaybeResolve()
+  {
+    if (mPromise) {
+      mPromise->Resolve(true, __func__);
+      mPromise = nullptr;
+    }
+  }
+
+  RefPtr<GenericPromise::Private> mPromise;
 };
 
 } // namespace
@@ -1017,7 +1250,7 @@ ServiceWorkerManager::SendPushEvent(const nsACString& aOriginAttributes,
   }
 
   RefPtr<ServiceWorkerRegistrationInfo> registration =
-    GetRegistration(serviceWorker->GetPrincipal(), aScope);
+    GetRegistration(serviceWorker->Principal(), aScope);
   MOZ_DIAGNOSTIC_ASSERT(registration);
 
   return serviceWorker->WorkerPrivate()->SendPushEvent(aMessageId, aData,
@@ -1377,7 +1610,7 @@ ServiceWorkerManager::WorkerIsIdle(ServiceWorkerInfo* aWorker)
   MOZ_DIAGNOSTIC_ASSERT(aWorker);
 
   RefPtr<ServiceWorkerRegistrationInfo> reg =
-    GetRegistration(aWorker->GetPrincipal(), aWorker->Scope());
+    GetRegistration(aWorker->Principal(), aWorker->Scope());
   if (!reg) {
     return;
   }
@@ -1654,10 +1887,11 @@ ServiceWorkerManager::FlushReportsToAllClients(const nsACString& aScope,
       continue;
     }
 
-    windows.AppendElement(doc->InnerWindowID());
+    uint64_t innerWindowId = doc->InnerWindowID();
+    windows.AppendElement(innerWindowId);
 
-    aReporter->FlushConsoleReports(doc,
-                                   nsIConsoleReportCollector::ReportAction::Save);
+    aReporter->FlushReportsToConsole(
+      innerWindowId, nsIConsoleReportCollector::ReportAction::Save);
   }
 
   // Report to any documents that have called .register() for this scope.  They
@@ -1682,8 +1916,8 @@ ServiceWorkerManager::FlushReportsToAllClients(const nsACString& aScope,
 
       windows.AppendElement(innerWindowId);
 
-      aReporter->FlushConsoleReports(doc,
-                                     nsIConsoleReportCollector::ReportAction::Save);
+      aReporter->FlushReportsToConsole(
+        innerWindowId, nsIConsoleReportCollector::ReportAction::Save);
     }
 
     if (regList->IsEmpty()) {
@@ -1712,15 +1946,15 @@ ServiceWorkerManager::FlushReportsToAllClients(const nsACString& aScope,
 
       windows.AppendElement(innerWindowId);
 
-      aReporter->FlushReportsByWindowId(innerWindowId,
-                                        nsIConsoleReportCollector::ReportAction::Save);
+      aReporter->FlushReportsToConsole(
+        innerWindowId, nsIConsoleReportCollector::ReportAction::Save);
     }
   }
 
   // If there are no documents to report to, at least report something to the
   // browser console.
   if (windows.IsEmpty()) {
-    aReporter->FlushConsoleReports((nsIDocument*)nullptr);
+    aReporter->FlushReportsToConsole(0);
     return;
   }
 
@@ -2725,6 +2959,80 @@ ServiceWorkerManager::SoftUpdate(const OriginAttributes& aOriginAttributes,
     return;
   }
 
+  if (!mActor) {
+    RefPtr<Runnable> runnable =
+      new SoftUpdateRunnable(aOriginAttributes, aScope, false, nullptr);
+    AppendPendingOperation(runnable);
+    return;
+  }
+
+  RefPtr<GenericPromise::Private> promise =
+    new GenericPromise::Private(__func__);
+
+  RefPtr<CancelableRunnable> successRunnable =
+    new SoftUpdateRunnable(aOriginAttributes, aScope, true, promise);
+
+  RefPtr<CancelableRunnable> failureRunnable =
+    new ResolvePromiseRunnable(promise);
+
+  ServiceWorkerUpdaterChild* actor =
+    new ServiceWorkerUpdaterChild(promise, successRunnable, failureRunnable);
+
+  mActor->SendPServiceWorkerUpdaterConstructor(actor, aOriginAttributes,
+                                               nsCString(aScope));
+}
+
+namespace {
+
+class UpdateJobCallback final : public ServiceWorkerJob::Callback
+{
+  RefPtr<ServiceWorkerUpdateFinishCallback> mCallback;
+
+  ~UpdateJobCallback() = default;
+
+public:
+  explicit UpdateJobCallback(ServiceWorkerUpdateFinishCallback* aCallback)
+    : mCallback(aCallback)
+  {
+    AssertIsOnMainThread();
+    MOZ_ASSERT(mCallback);
+  }
+
+  void
+  JobFinished(ServiceWorkerJob* aJob, ErrorResult& aStatus)
+  {
+    AssertIsOnMainThread();
+    MOZ_ASSERT(aJob);
+
+    if (aStatus.Failed()) {
+      mCallback->UpdateFailed(aStatus);
+      return;
+    }
+
+    MOZ_DIAGNOSTIC_ASSERT(aJob->GetType() == ServiceWorkerJob::Type::Update);
+    RefPtr<ServiceWorkerUpdateJob> updateJob =
+      static_cast<ServiceWorkerUpdateJob*>(aJob);
+    RefPtr<ServiceWorkerRegistrationInfo> reg = updateJob->GetRegistration();
+    mCallback->UpdateSucceeded(reg);
+  }
+
+  NS_INLINE_DECL_REFCOUNTING(UpdateJobCallback)
+};
+
+} // anonymous namespace
+
+void
+ServiceWorkerManager::SoftUpdateInternal(const OriginAttributes& aOriginAttributes,
+                                         const nsACString& aScope,
+                                         ServiceWorkerUpdateFinishCallback* aCallback)
+{
+  AssertIsOnMainThread();
+  MOZ_ASSERT(aCallback);
+
+  if (mShuttingDown) {
+    return;
+  }
+
   nsCOMPtr<nsIURI> scopeURI;
   nsresult rv = NS_NewURI(getter_AddRefs(scopeURI), aScope);
   if (NS_WARN_IF(NS_FAILED(rv))) {
@@ -2778,53 +3086,51 @@ ServiceWorkerManager::SoftUpdate(const OriginAttributes& aOriginAttributes,
     new ServiceWorkerUpdateJob(principal, registration->mScope,
                                newest->ScriptSpec(), nullptr,
                                registration->GetLoadFlags());
+
+  RefPtr<UpdateJobCallback> cb = new UpdateJobCallback(aCallback);
+  job->AppendResultCallback(cb);
+
   queue->ScheduleJob(job);
 }
-
-namespace {
-
-class UpdateJobCallback final : public ServiceWorkerJob::Callback
-{
-  RefPtr<ServiceWorkerUpdateFinishCallback> mCallback;
-
-  ~UpdateJobCallback()
-  {
-  }
-
-public:
-  explicit UpdateJobCallback(ServiceWorkerUpdateFinishCallback* aCallback)
-    : mCallback(aCallback)
-  {
-    AssertIsOnMainThread();
-    MOZ_ASSERT(mCallback);
-  }
-
-  void
-  JobFinished(ServiceWorkerJob* aJob, ErrorResult& aStatus)
-  {
-    AssertIsOnMainThread();
-    MOZ_ASSERT(aJob);
-
-    if (aStatus.Failed()) {
-      mCallback->UpdateFailed(aStatus);
-      return;
-    }
-
-    MOZ_ASSERT(aJob->GetType() == ServiceWorkerJob::Type::Update);
-    RefPtr<ServiceWorkerUpdateJob> updateJob =
-      static_cast<ServiceWorkerUpdateJob*>(aJob);
-    RefPtr<ServiceWorkerRegistrationInfo> reg = updateJob->GetRegistration();
-    mCallback->UpdateSucceeded(reg);
-  }
-
-  NS_INLINE_DECL_REFCOUNTING(UpdateJobCallback)
-};
-} // anonymous namespace
 
 void
 ServiceWorkerManager::Update(nsIPrincipal* aPrincipal,
                              const nsACString& aScope,
                              ServiceWorkerUpdateFinishCallback* aCallback)
+{
+  AssertIsOnMainThread();
+
+  if (!mActor) {
+    RefPtr<Runnable> runnable =
+      new UpdateRunnable(aPrincipal, aScope, aCallback,
+                         UpdateRunnable::ePostpone, nullptr);
+    AppendPendingOperation(runnable);
+    return;
+  }
+
+  RefPtr<GenericPromise::Private> promise =
+    new GenericPromise::Private(__func__);
+
+  RefPtr<CancelableRunnable> successRunnable =
+    new UpdateRunnable(aPrincipal, aScope, aCallback,
+                       UpdateRunnable::eSuccess, promise);
+
+  RefPtr<CancelableRunnable> failureRunnable =
+    new UpdateRunnable(aPrincipal, aScope, aCallback,
+                       UpdateRunnable::eFailure, promise);
+
+  ServiceWorkerUpdaterChild* actor =
+    new ServiceWorkerUpdaterChild(promise, successRunnable, failureRunnable);
+
+  mActor->SendPServiceWorkerUpdaterConstructor(actor,
+                                               aPrincipal->OriginAttributesRef(),
+                                               nsCString(aScope));
+}
+
+void
+ServiceWorkerManager::UpdateInternal(nsIPrincipal* aPrincipal,
+                                     const nsACString& aScope,
+                                     ServiceWorkerUpdateFinishCallback* aCallback)
 {
   MOZ_ASSERT(aPrincipal);
   MOZ_ASSERT(aCallback);
@@ -2948,6 +3254,7 @@ ServiceWorkerManager::GetClient(nsIPrincipal* aPrincipal,
 void
 ServiceWorkerManager::GetAllClients(nsIPrincipal* aPrincipal,
                                     const nsCString& aScope,
+                                    uint64_t aServiceWorkerID,
                                     bool aIncludeUncontrolled,
                                     nsTArray<ServiceWorkerClientInfo>& aDocuments)
 {
@@ -2973,61 +3280,67 @@ ServiceWorkerManager::GetAllClients(nsIPrincipal* aPrincipal,
     return;
   }
 
-  auto ProcessDocument = [&aDocuments](nsIPrincipal* aPrincipal, nsIDocument* aDoc) {
-    if (!aDoc || !aDoc->GetWindow()) {
-      return;
+  // Get a list of Client documents out of the observer service
+  AutoTArray<nsCOMPtr<nsIDocument>, 32> docList;
+  bool loop = true;
+  while (NS_SUCCEEDED(enumerator->HasMoreElements(&loop)) && loop) {
+    nsCOMPtr<nsISupports> ptr;
+    rv = enumerator->GetNext(getter_AddRefs(ptr));
+    if (NS_WARN_IF(NS_FAILED(rv))) {
+      continue;
+    }
+
+    nsCOMPtr<nsIDocument> doc = do_QueryInterface(ptr);
+    if (!doc || !doc->GetWindow()) {
+      continue;
     }
 
     bool equals = false;
-    aPrincipal->Equals(aDoc->NodePrincipal(), &equals);
+    Unused << aPrincipal->Equals(doc->NodePrincipal(), &equals);
     if (!equals) {
-      return;
+      continue;
     }
 
     // Treat http windows with devtools opened as secure if the correct devtools
     // setting is enabled.
-    if (!aDoc->GetWindow()->GetServiceWorkersTestingEnabled() &&
+    if (!doc->GetWindow()->GetServiceWorkersTestingEnabled() &&
         !Preferences::GetBool("dom.serviceWorkers.testing.enabled") &&
-        !IsFromAuthenticatedOrigin(aDoc)) {
-      return;
+        !IsFromAuthenticatedOrigin(doc)) {
+      continue;
     }
 
-    ServiceWorkerClientInfo clientInfo(aDoc);
-    aDocuments.AppendElement(aDoc);
-  };
-
-  // Since it's not simple to check whether a document is in
-  // mControlledDocuments, we take different code paths depending on whether we
-  // need to look at all documents.  The common parts of the two loops are
-  // factored out into the ProcessDocument lambda.
-  if (aIncludeUncontrolled) {
-    bool loop = true;
-    while (NS_SUCCEEDED(enumerator->HasMoreElements(&loop)) && loop) {
-      nsCOMPtr<nsISupports> ptr;
-      rv = enumerator->GetNext(getter_AddRefs(ptr));
-      if (NS_WARN_IF(NS_FAILED(rv))) {
+    // If we are only returning controlled Clients then skip any documents
+    // that are for different registrations.  We also skip service workers
+    // that don't match the ID of our calling service worker.  We should
+    // only return Clients controlled by that precise service worker.
+    if (!aIncludeUncontrolled) {
+      ServiceWorkerRegistrationInfo* reg = mControlledDocuments.GetWeak(doc);
+      if (!reg || reg->mScope != aScope || !reg->GetActive() ||
+          reg->GetActive()->ID() != aServiceWorkerID) {
         continue;
       }
-
-      nsCOMPtr<nsIDocument> doc = do_QueryInterface(ptr);
-      ProcessDocument(aPrincipal, doc);
     }
-  } else {
-    for (auto iter = mControlledDocuments.Iter(); !iter.Done(); iter.Next()) {
-      ServiceWorkerRegistrationInfo* thisRegistration = iter.UserData();
-      MOZ_ASSERT(thisRegistration);
-      if (!registration->mScope.Equals(thisRegistration->mScope)) {
-        continue;
-      }
 
-      nsCOMPtr<nsIDocument> doc = do_QueryInterface(iter.Key());
-
-      // All controlled documents must have an outer window.
-      MOZ_ASSERT(doc->GetWindow());
-
-      ProcessDocument(aPrincipal, doc);
+    if (!aIncludeUncontrolled && !mControlledDocuments.Contains(doc)) {
+      continue;
     }
+
+    docList.AppendElement(doc.forget());
   }
+
+  // The observer service gives us the list in reverse creation order.
+  // We need to maintain creation order, so reverse the list before
+  // processing.
+  docList.Reverse();
+
+  // Finally convert to the list of ServiceWorkerClientInfo objects.
+  uint32_t ordinal = 0;
+  for (uint32_t i = 0; i < docList.Length(); ++i) {
+    aDocuments.AppendElement(ServiceWorkerClientInfo(docList[i], ordinal));
+    ordinal += 1;
+  }
+
+  aDocuments.Sort();
 }
 
 void

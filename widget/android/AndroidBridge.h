@@ -153,8 +153,6 @@ public:
     // DeleteGlobalRef() when the context is no longer needed.
     jobject GetGlobalContextRef(void);
 
-    void HandleGeckoMessage(JSContext* cx, JS::HandleObject message);
-
     void GetCurrentBatteryInformation(hal::BatteryInformation* aBatteryInfo);
 
     void GetCurrentNetworkInformation(hal::NetworkInformation* aNetworkInfo);
@@ -407,9 +405,9 @@ private:
   void AddObservers();
   void RemoveObservers();
 
-  void UpdateAudioPlayingWindows(uint64_t aWindowId, bool aPlaying);
+  void UpdateAudioPlayingWindows(bool aPlaying);
 
-  nsTArray<uint64_t> mAudioPlayingWindows;
+  int32_t mAudibleWindowsNum;
   nsCOMPtr<nsIAndroidEventDispatcher> mEventDispatcher;
 
 protected:

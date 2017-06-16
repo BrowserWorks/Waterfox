@@ -143,22 +143,6 @@ EmitBaselineCallVM(JitCode* target, MacroAssembler& masm)
     masm.call(target);
 }
 
-inline void
-EmitIonCallVM(JitCode* target, size_t stackSlots, MacroAssembler& masm)
-{
-    uint32_t descriptor = MakeFrameDescriptor(masm.framePushed(), JitFrame_IonStub,
-                                              ExitFrameLayout::Size());
-    masm.Push(Imm32(descriptor));
-    masm.callJit(target);
-
-    // Remove rest of the frame left on the stack. We remove the return address
-    // which is implicitly popped when returning.
-    size_t framePop = sizeof(ExitFrameLayout) - sizeof(void*);
-
-    // Pop arguments from framePushed.
-    masm.implicitPop(stackSlots * sizeof(void*) + framePop);
-}
-
 struct BaselineStubFrame {
     uintptr_t savedFrame;
     uintptr_t savedStub;
@@ -203,20 +187,6 @@ EmitBaselineEnterStubFrame(MacroAssembler& masm, Register scratch)
 }
 
 inline void
-EmitIonEnterStubFrame(MacroAssembler& masm, Register scratch)
-{
-    MOZ_ASSERT(ICTailCallReg == ra);
-
-    // In MIPS the ra register contains the return address,
-    // but in jit frames we expect it to be on the stack. As a result
-    // push the link register (which is actually part of the previous frame.
-    // Therefore using push instead of Push).
-    masm.push(ICTailCallReg);
-
-    masm.Push(ICStubReg);
-}
-
-inline void
 EmitBaselineLeaveStubFrame(MacroAssembler& masm, bool calledIntoIon = false)
 {
     // Ion frames do not save and restore the frame pointer. If we called
@@ -243,13 +213,6 @@ EmitBaselineLeaveStubFrame(MacroAssembler& masm, bool calledIntoIon = false)
     // Discard the frame descriptor.
     masm.loadPtr(Address(StackPointer, offsetof(BaselineStubFrame, descriptor)), ScratchRegister);
     masm.addPtr(Imm32(STUB_FRAME_SIZE), StackPointer);
-}
-
-inline void
-EmitIonLeaveStubFrame(MacroAssembler& masm)
-{
-    masm.Pop(ICStubReg);
-    masm.pop(ICTailCallReg); // See EmitIonEnterStubFrame for explanation on pop/Pop.
 }
 
 inline void
@@ -291,60 +254,6 @@ EmitUnstowICValues(MacroAssembler& masm, int values, bool discard = false)
         break;
     }
     masm.adjustFrame(-values * sizeof(Value));
-}
-
-inline void
-EmitCallTypeUpdateIC(MacroAssembler& masm, JitCode* code, uint32_t objectOffset)
-{
-    // R0 contains the value that needs to be typechecked.
-    // The object we're updating is a boxed Value on the stack, at offset
-    // objectOffset from $sp, excluding the return address.
-
-    // Save the current ICStubReg to stack, as well as the TailCallReg,
-    // since on mips, the $ra is live.
-    masm.subPtr(Imm32(2 * sizeof(intptr_t)), StackPointer);
-    masm.storePtr(ICStubReg, Address(StackPointer, sizeof(intptr_t)));
-    masm.storePtr(ICTailCallReg, Address(StackPointer, 0));
-
-    // This is expected to be called from within an IC, when ICStubReg
-    // is properly initialized to point to the stub.
-    masm.loadPtr(Address(ICStubReg, ICUpdatedStub::offsetOfFirstUpdateStub()),
-                 ICStubReg);
-
-    // Load stubcode pointer from ICStubReg into ICTailCallReg.
-    masm.loadPtr(Address(ICStubReg, ICStub::offsetOfStubCode()), R2.scratchReg());
-
-    // Call the stubcode.
-    masm.call(R2.scratchReg());
-
-    // Restore the old stub reg and tailcall reg.
-    masm.loadPtr(Address(StackPointer, 0), ICTailCallReg);
-    masm.loadPtr(Address(StackPointer, sizeof(intptr_t)), ICStubReg);
-    masm.addPtr(Imm32(2 * sizeof(intptr_t)), StackPointer);
-
-    // The update IC will store 0 or 1 in R1.scratchReg() reflecting if the
-    // value in R0 type-checked properly or not.
-    Label success;
-    masm.ma_b(R1.scratchReg(), Imm32(1), &success, Assembler::Equal, ShortJump);
-
-    // If the IC failed, then call the update fallback function.
-    EmitBaselineEnterStubFrame(masm, R1.scratchReg());
-
-    masm.loadValue(Address(BaselineStackReg, STUB_FRAME_SIZE + objectOffset), R1);
-
-    masm.Push(R0);
-    masm.Push(R1);
-    masm.Push(ICStubReg);
-
-    // Load previous frame pointer, push BaselineFrame*.
-    masm.loadPtr(Address(BaselineFrameReg, 0), R0.scratchReg());
-    masm.pushBaselineFramePtr(R0.scratchReg(), R0.scratchReg());
-
-    EmitBaselineCallVM(code, masm);
-    EmitBaselineLeaveStubFrame(masm);
-
-    // Success at end.
-    masm.bind(&success);
 }
 
 template <typename AddrType>

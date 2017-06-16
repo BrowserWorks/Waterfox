@@ -477,8 +477,10 @@ class MochitestArguments(ArgumentContainer):
          {"action": "store_true",
           "default": False,
           "dest": "dumpDMDAfterTest",
-          "help": "Dump a DMD log after each test in the directory specified "
-                  "by --dump-output-directory.",
+          "help": "Dump a DMD log (and an accompanying about:memory log) after each test. "
+                  "These will be dumped into your default temp directory, NOT the directory "
+                  "specified by --dump-output-directory. The logs are numbered by test, and "
+                  "each test will include output that indicates the DMD output filename.",
           }],
         [["--screenshot-on-fail"],
          {"action": "store_true",
@@ -581,6 +583,11 @@ class MochitestArguments(ArgumentContainer):
           "help": "Timeout while waiting to receive a message from the marionette server.",
           "suppress": True,
           }],
+        [["--marionette-startup-timeout"],
+         {"default": None,
+          "help": "Timeout while waiting for marionette server startup.",
+          "suppress": True,
+          }],
         [["--cleanup-crashes"],
          {"action": "store_true",
           "dest": "cleanupCrashes",
@@ -592,6 +599,12 @@ class MochitestArguments(ArgumentContainer):
          {"default": "8191",
           "dest": "websocket_process_bridge_port",
           "help": "Port for websocket/process bridge. Default 8191.",
+          }],
+        [["--failure-pattern-file"],
+         {"default": None,
+          "dest": "failure_pattern_file",
+          "help": "File describes all failure patterns of the tests.",
+          "suppress": True,
           }],
     ]
 

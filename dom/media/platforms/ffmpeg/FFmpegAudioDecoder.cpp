@@ -11,16 +11,15 @@
 
 #define MAX_CHANNELS 16
 
-namespace mozilla
-{
+namespace mozilla {
 
 FFmpegAudioDecoder<LIBAV_VER>::FFmpegAudioDecoder(FFmpegLibWrapper* aLib,
-  TaskQueue* aTaskQueue, MediaDataDecoderCallback* aCallback,
-  const AudioInfo& aConfig)
-  : FFmpegDataDecoder(aLib, aTaskQueue, aCallback, GetCodecId(aConfig.mMimeType))
+  TaskQueue* aTaskQueue, const AudioInfo& aConfig)
+  : FFmpegDataDecoder(aLib, aTaskQueue, GetCodecId(aConfig.mMimeType))
 {
   MOZ_COUNT_CTOR(FFmpegAudioDecoder);
-  // Use a new MediaByteBuffer as the object will be modified during initialization.
+  // Use a new MediaByteBuffer as the object will be modified during
+  // initialization.
   if (aConfig.mCodecSpecificConfig && aConfig.mCodecSpecificConfig->Length()) {
     mExtraData = new MediaByteBuffer;
     mExtraData->AppendElements(*aConfig.mCodecSpecificConfig);
@@ -32,8 +31,10 @@ FFmpegAudioDecoder<LIBAV_VER>::Init()
 {
   nsresult rv = InitDecoder();
 
-  return rv == NS_OK ? InitPromise::CreateAndResolve(TrackInfo::kAudioTrack, __func__)
-                     : InitPromise::CreateAndReject(NS_ERROR_DOM_MEDIA_FATAL_ERR, __func__);
+  return rv == NS_OK
+         ? InitPromise::CreateAndResolve(TrackInfo::kAudioTrack, __func__)
+         : InitPromise::CreateAndReject(NS_ERROR_DOM_MEDIA_FATAL_ERR,
+                                        __func__);
 }
 
 void
@@ -45,7 +46,8 @@ FFmpegAudioDecoder<LIBAV_VER>::InitCodecContext()
   // isn't implemented.
   mCodecContext->thread_count = 1;
   // FFmpeg takes this as a suggestion for what format to use for audio samples.
-  // LibAV 0.8 produces rubbish float interleaved samples, request 16 bits audio.
+  // LibAV 0.8 produces rubbish float interleaved samples, request 16 bits
+  // audio.
   mCodecContext->request_sample_fmt =
     (mLib->mVersion == 53) ? AV_SAMPLE_FMT_S16 : AV_SAMPLE_FMT_FLT;
 }
@@ -117,8 +119,8 @@ CopyAndPackAudio(AVFrame* aFrame, uint32_t aNumChannels, uint32_t aNumAFrames)
   return audio;
 }
 
-MediaResult
-FFmpegAudioDecoder<LIBAV_VER>::DoDecode(MediaRawData* aSample)
+RefPtr<MediaDataDecoder::DecodePromise>
+FFmpegAudioDecoder<LIBAV_VER>::ProcessDecode(MediaRawData* aSample)
 {
   AVPacket packet;
   mLib->av_init_packet(&packet);
@@ -127,14 +129,17 @@ FFmpegAudioDecoder<LIBAV_VER>::DoDecode(MediaRawData* aSample)
   packet.size = aSample->Size();
 
   if (!PrepareFrame()) {
-    return MediaResult(
-      NS_ERROR_OUT_OF_MEMORY,
-      RESULT_DETAIL("FFmpeg audio decoder failed to allocate frame"));
+    return DecodePromise::CreateAndReject(
+      MediaResult(
+        NS_ERROR_OUT_OF_MEMORY,
+        RESULT_DETAIL("FFmpeg audio decoder failed to allocate frame")),
+      __func__);
   }
 
   int64_t samplePosition = aSample->mOffset;
   media::TimeUnit pts = media::TimeUnit::FromMicroseconds(aSample->mTime);
 
+  DecodedData results;
   while (packet.size > 0) {
     int decoded;
     int bytesConsumed =
@@ -142,28 +147,33 @@ FFmpegAudioDecoder<LIBAV_VER>::DoDecode(MediaRawData* aSample)
 
     if (bytesConsumed < 0) {
       NS_WARNING("FFmpeg audio decoder error.");
-      return MediaResult(NS_ERROR_DOM_MEDIA_DECODE_ERR,
-                         RESULT_DETAIL("FFmpeg audio error:%d", bytesConsumed));
-    }
-
-    if (mFrame->format != AV_SAMPLE_FMT_FLT &&
-        mFrame->format != AV_SAMPLE_FMT_FLTP &&
-        mFrame->format != AV_SAMPLE_FMT_S16 &&
-        mFrame->format != AV_SAMPLE_FMT_S16P &&
-        mFrame->format != AV_SAMPLE_FMT_S32 &&
-        mFrame->format != AV_SAMPLE_FMT_S32P) {
-      return MediaResult(
-        NS_ERROR_DOM_MEDIA_DECODE_ERR,
-        RESULT_DETAIL("FFmpeg audio decoder outputs unsupported audio format"));
+      return DecodePromise::CreateAndReject(
+        MediaResult(NS_ERROR_DOM_MEDIA_DECODE_ERR,
+                    RESULT_DETAIL("FFmpeg audio error:%d", bytesConsumed)),
+        __func__);
     }
 
     if (decoded) {
+      if (mFrame->format != AV_SAMPLE_FMT_FLT &&
+          mFrame->format != AV_SAMPLE_FMT_FLTP &&
+          mFrame->format != AV_SAMPLE_FMT_S16 &&
+          mFrame->format != AV_SAMPLE_FMT_S16P &&
+          mFrame->format != AV_SAMPLE_FMT_S32 &&
+          mFrame->format != AV_SAMPLE_FMT_S32P) {
+        return DecodePromise::CreateAndReject(
+          MediaResult(
+            NS_ERROR_DOM_MEDIA_DECODE_ERR,
+            RESULT_DETAIL(
+              "FFmpeg audio decoder outputs unsupported audio format")),
+          __func__);
+      }
       uint32_t numChannels = mCodecContext->channels;
       AudioConfig::ChannelLayout layout(numChannels);
       if (!layout.IsValid()) {
-        return MediaResult(
-          NS_ERROR_DOM_MEDIA_FATAL_ERR,
-          RESULT_DETAIL("Unsupported channel layout:%u", numChannels));
+        return DecodePromise::CreateAndReject(
+          MediaResult(NS_ERROR_DOM_MEDIA_FATAL_ERR,
+                      RESULT_DETAIL("Unsupported channel layout:%u", numChannels)),
+          __func__);
       }
 
       uint32_t samplingRate = mCodecContext->sample_rate;
@@ -171,44 +181,46 @@ FFmpegAudioDecoder<LIBAV_VER>::DoDecode(MediaRawData* aSample)
       AlignedAudioBuffer audio =
         CopyAndPackAudio(mFrame, numChannels, mFrame->nb_samples);
       if (!audio) {
-        return MediaResult(NS_ERROR_OUT_OF_MEMORY, __func__);
+        return DecodePromise::CreateAndReject(
+          MediaResult(NS_ERROR_OUT_OF_MEMORY, __func__), __func__);
       }
 
       media::TimeUnit duration =
         FramesToTimeUnit(mFrame->nb_samples, samplingRate);
       if (!duration.IsValid()) {
-        return MediaResult(
-          NS_ERROR_DOM_MEDIA_OVERFLOW_ERR,
-          RESULT_DETAIL("Invalid sample duration"));
+        return DecodePromise::CreateAndReject(
+          MediaResult(NS_ERROR_DOM_MEDIA_OVERFLOW_ERR,
+                      RESULT_DETAIL("Invalid sample duration")),
+          __func__);
       }
 
-      RefPtr<AudioData> data = new AudioData(samplePosition,
-                                             pts.ToMicroseconds(),
-                                             duration.ToMicroseconds(),
-                                             mFrame->nb_samples,
-                                             Move(audio),
-                                             numChannels,
-                                             samplingRate);
-      mCallback->Output(data);
-      pts += duration;
-      if (!pts.IsValid()) {
-        return MediaResult(
-          NS_ERROR_DOM_MEDIA_OVERFLOW_ERR,
-          RESULT_DETAIL("Invalid count of accumulated audio samples"));
+      media::TimeUnit newpts = pts + duration;
+      if (!newpts.IsValid()) {
+        return DecodePromise::CreateAndReject(
+          MediaResult(
+            NS_ERROR_DOM_MEDIA_OVERFLOW_ERR,
+            RESULT_DETAIL("Invalid count of accumulated audio samples")),
+          __func__);
       }
+
+      results.AppendElement(new AudioData(
+        samplePosition, pts.ToMicroseconds(), duration.ToMicroseconds(),
+        mFrame->nb_samples, Move(audio), numChannels, samplingRate));
+
+      pts = newpts;
     }
     packet.data += bytesConsumed;
     packet.size -= bytesConsumed;
     samplePosition += bytesConsumed;
   }
-  return NS_OK;
+  return DecodePromise::CreateAndResolve(Move(results), __func__);
 }
 
-void
+RefPtr<MediaDataDecoder::DecodePromise>
 FFmpegAudioDecoder<LIBAV_VER>::ProcessDrain()
 {
   ProcessFlush();
-  mCallback->DrainComplete();
+  return DecodePromise::CreateAndResolve(DecodedData(), __func__);
 }
 
 AVCodecID

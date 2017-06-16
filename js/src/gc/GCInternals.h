@@ -46,7 +46,7 @@ class MOZ_RAII AutoTraceSession
     void operator=(const AutoTraceSession&) = delete;
 
     JS::HeapState prevState;
-    AutoSPSEntry pseudoFrame;
+    AutoGeckoProfilerEntry pseudoFrame;
 };
 
 class MOZ_RAII AutoPrepareForTracing
@@ -85,16 +85,16 @@ class MOZ_RAII AutoStopVerifyingBarriers
         // inside of an outer minor GC. This is not allowed by the
         // gc::Statistics phase tree. So we pause the "real" GC, if in fact one
         // is in progress.
-        gcstats::Phase outer = gc->stats.currentPhase();
+        gcstats::Phase outer = gc->stats().currentPhase();
         if (outer != gcstats::PHASE_NONE)
-            gc->stats.endPhase(outer);
-        MOZ_ASSERT(gc->stats.currentPhase() == gcstats::PHASE_NONE);
+            gc->stats().endPhase(outer);
+        MOZ_ASSERT(gc->stats().currentPhase() == gcstats::PHASE_NONE);
 
         if (restartPreVerifier)
             gc->startVerifyPreBarriers();
 
         if (outer != gcstats::PHASE_NONE)
-            gc->stats.beginPhase(outer);
+            gc->stats().beginPhase(outer);
     }
 };
 #else

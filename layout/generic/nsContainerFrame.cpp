@@ -686,7 +686,7 @@ nsContainerFrame::SyncWindowProperties(nsPresContext*       aPresContext,
   }
 
   RefPtr<nsPresContext> kungFuDeathGrip(aPresContext);
-  nsWeakFrame weak(rootFrame);
+  AutoWeakFrame weak(rootFrame);
 
   nsTransparencyMode mode = nsLayoutUtils::GetFrameTransparency(aFrame, rootFrame);
   int32_t shadow = rootFrame->StyleUIReset()->mWindowShadow;
@@ -999,8 +999,8 @@ nsContainerFrame::ComputeAutoSize(nsRenderingContext* aRenderingContext,
 void
 nsContainerFrame::ReflowChild(nsIFrame*                aKidFrame,
                               nsPresContext*           aPresContext,
-                              ReflowOutput&     aDesiredSize,
-                              const ReflowInput& aReflowInput,
+                              ReflowOutput&            aDesiredSize,
+                              const ReflowInput&       aReflowInput,
                               const WritingMode&       aWM,
                               const LogicalPoint&      aPos,
                               const nsSize&            aContainerSize,
@@ -1013,6 +1013,9 @@ nsContainerFrame::ReflowChild(nsIFrame*                aKidFrame,
     NS_ASSERTION(aContainerSize.width != NS_UNCONSTRAINEDSIZE,
                  "ReflowChild with unconstrained container width!");
   }
+  MOZ_ASSERT(aDesiredSize.VisualOverflow() == nsRect(0,0,0,0) &&
+             aDesiredSize.ScrollableOverflow() == nsRect(0,0,0,0),
+             "please reset the overflow areas before calling ReflowChild");
 
   // Position the child frame and its view if requested.
   if (NS_FRAME_NO_MOVE_FRAME != (aFlags & NS_FRAME_NO_MOVE_FRAME)) {
@@ -1029,8 +1032,8 @@ nsContainerFrame::ReflowChild(nsIFrame*                aKidFrame,
 
   // If the child frame is complete, delete any next-in-flows,
   // but only if the NO_DELETE_NEXT_IN_FLOW flag isn't set.
-  if (!NS_INLINE_IS_BREAK_BEFORE(aStatus) &&
-      NS_FRAME_IS_FULLY_COMPLETE(aStatus) &&
+  if (!aStatus.IsInlineBreakBefore() &&
+      aStatus.IsFullyComplete() &&
       !(aFlags & NS_FRAME_NO_DELETE_NEXT_IN_FLOW_CHILD)) {
     nsIFrame* kidNextInFlow = aKidFrame->GetNextInFlow();
     if (kidNextInFlow) {
@@ -1073,7 +1076,7 @@ nsContainerFrame::ReflowChild(nsIFrame*                aKidFrame,
 
   // If the child frame is complete, delete any next-in-flows,
   // but only if the NO_DELETE_NEXT_IN_FLOW flag isn't set.
-  if (NS_FRAME_IS_FULLY_COMPLETE(aStatus) &&
+  if (aStatus.IsFullyComplete() &&
       !(aFlags & NS_FRAME_NO_DELETE_NEXT_IN_FLOW_CHILD)) {
     nsIFrame* kidNextInFlow = aKidFrame->GetNextInFlow();
     if (kidNextInFlow) {
@@ -1280,22 +1283,22 @@ nsContainerFrame::ReflowOverflowContainerChildren(nsPresContext*           aPres
                         wm, pos, containerSize, aFlags);
 
       // Handle continuations
-      if (!NS_FRAME_IS_FULLY_COMPLETE(frameStatus)) {
+      if (!frameStatus.IsFullyComplete()) {
         if (frame->GetStateBits() & NS_FRAME_OUT_OF_FLOW) {
           // Abspos frames can't cause their parent to be incomplete,
           // only overflow incomplete.
-          NS_FRAME_SET_OVERFLOW_INCOMPLETE(frameStatus);
+          frameStatus.SetOverflowIncomplete();
         }
         else {
-          NS_ASSERTION(NS_FRAME_IS_COMPLETE(frameStatus),
+          NS_ASSERTION(frameStatus.IsComplete(),
                        "overflow container frames can't be incomplete, only overflow-incomplete");
         }
 
         // Acquire a next-in-flow, creating it if necessary
         nsIFrame* nif = frame->GetNextInFlow();
         if (!nif) {
-          NS_ASSERTION(frameStatus & NS_FRAME_REFLOW_NEXTINFLOW,
-                       "Someone forgot a REFLOW_NEXTINFLOW flag");
+          NS_ASSERTION(frameStatus.NextInFlowNeedsReflow(),
+                       "Someone forgot a NextInFlowNeedsReflow flag");
           nif = aPresContext->PresShell()->FrameConstructor()->
             CreateContinuingFrame(aPresContext, frame, this);
         }
@@ -1309,7 +1312,7 @@ nsContainerFrame::ReflowOverflowContainerChildren(nsPresContext*           aPres
 
         tracker.Insert(nif, frameStatus);
       }
-      NS_MergeReflowStatusInto(&aStatus, frameStatus);
+      aStatus.MergeCompletionStatusFrom(frameStatus);
       // At this point it would be nice to assert !frame->GetOverflowRect().IsEmpty(),
       // but we have some unsplittable frames that, when taller than
       // availableHeight will push zero-height content into a next-in-flow.
@@ -2195,11 +2198,11 @@ nsOverflowContinuationTracker::Insert(nsIFrame*       aOverflowCont,
     }
 
     mOverflowContList->InsertFrame(mParent, mPrevOverflowCont, aOverflowCont);
-    aReflowStatus |= NS_FRAME_REFLOW_NEXTINFLOW;
+    aReflowStatus.SetNextInFlowNeedsReflow();
   }
 
   // If we need to reflow it, mark it dirty
-  if (aReflowStatus & NS_FRAME_REFLOW_NEXTINFLOW)
+  if (aReflowStatus.NextInFlowNeedsReflow())
     aOverflowCont->AddStateBits(NS_FRAME_IS_DIRTY);
 
   // It's in our list, just step forward

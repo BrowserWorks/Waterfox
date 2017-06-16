@@ -20,6 +20,7 @@
 
 #include "nsDocShell.h"
 #include "nsGlobalWindow.h"
+#include "nsHashPropertyBag.h"
 #include "nsIBaseWindow.h"
 #include "nsIBrowserDOMWindow.h"
 #include "nsIDocShell.h"
@@ -472,12 +473,6 @@ CheckUserContextCompatibility(nsIDocShell* aDocShell)
   }
 
   return subjectPrincipal->GetUserContextId() == userContextId;
-}
-
-NS_IMETHODIMP
-nsWindowWatcher::OpenWindowWithoutParent(nsITabParent** aResult)
-{
-  return OpenWindowWithTabParent(nullptr, EmptyCString(), true, 1.0f, aResult);
 }
 
 nsresult
@@ -1215,6 +1210,29 @@ nsWindowWatcher::OpenWindowInternal(mozIDOMWindowProxy* aParent,
   // userContextId.
   MOZ_ASSERT(CheckUserContextCompatibility(newDocShell));
 
+  // If this tab or window has been opened by a window.open call, we have to provide
+  // all the data needed to send a webNavigation.onCreatedNavigationTarget event.
+  if (parentDocShell && newDocShellItem) {
+    nsCOMPtr<nsIObserverService> obsSvc =
+      mozilla::services::GetObserverService();
+
+    if (obsSvc) {
+      RefPtr<nsHashPropertyBag> props = new nsHashPropertyBag();
+
+      if (uriToLoad) {
+        // The url notified in the webNavigation.onCreatedNavigationTarget event.
+        props->SetPropertyAsACString(NS_LITERAL_STRING("url"),
+                                     uriToLoad->GetSpecOrDefault());
+      }
+
+      props->SetPropertyAsInterface(NS_LITERAL_STRING("sourceTabDocShell"), parentDocShell);
+      props->SetPropertyAsInterface(NS_LITERAL_STRING("createdTabDocShell"), newDocShellItem);
+
+      obsSvc->NotifyObservers(static_cast<nsIPropertyBag2*>(props),
+                              "webNavigation-createdNavigationTarget-from-js", nullptr);
+    }
+  }
+
   if (uriToLoad && aNavigate) {
     newDocShell->LoadURI(
       uriToLoad,
@@ -1652,6 +1670,7 @@ nsWindowWatcher::GetWindowByName(const nsAString& aTargetName,
   if (startItem) {
     // Note: original requestor is null here, per idl comments
     startItem->FindItemWithName(aTargetName, nullptr, nullptr,
+                                /* aSkipTabGroup = */ false,
                                 getter_AddRefs(treeItem));
   } else {
     // Note: original requestor is null here, per idl comments
@@ -1928,8 +1947,8 @@ nsWindowWatcher::CalculateChromeFlagsForParent(mozIDOMWindowProxy* aParent,
     chromeFlags |= nsIWebBrowserChrome::CHROME_WINDOW_RAISED;
   }
 
-  chromeFlags |= WinHasOption(aFeatures, "macsuppressanimation", 0, nullptr) ?
-    nsIWebBrowserChrome::CHROME_MAC_SUPPRESS_ANIMATION : 0;
+  chromeFlags |= WinHasOption(aFeatures, "suppressanimation", 0, nullptr) ?
+    nsIWebBrowserChrome::CHROME_SUPPRESS_ANIMATION : 0;
 
   chromeFlags |= WinHasOption(aFeatures, "chrome", 0, nullptr) ?
     nsIWebBrowserChrome::CHROME_OPENAS_CHROME : 0;
@@ -2108,6 +2127,7 @@ nsWindowWatcher::SafeGetWindowByName(const nsAString& aName,
   nsCOMPtr<nsIDocShellTreeItem> foundItem;
   if (startItem) {
     startItem->FindItemWithName(aName, nullptr, callerItem,
+                                /* aSkipTabGroup = */ false,
                                 getter_AddRefs(foundItem));
   } else {
     FindItemWithName(aName, nullptr, callerItem,
@@ -2252,7 +2272,7 @@ nsWindowWatcher::SizeOpenedWindow(nsIDocShellTreeOwner* aTreeOwner,
                                   mozIDOMWindowProxy* aParent,
                                   bool aIsCallerChrome,
                                   const SizeSpec& aSizeSpec,
-                                  Maybe<float> aOpenerFullZoom)
+                                  const Maybe<float>& aOpenerFullZoom)
 {
   // We should only be sizing top-level windows if we're in the parent
   // process.

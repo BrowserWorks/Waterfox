@@ -108,6 +108,7 @@ public:
   mozilla::ipc::IPCResult RecvNotifyTrackingProtectionDisabled() override;
   mozilla::ipc::IPCResult RecvNotifyTrackingResource() override;
   void FlushedForDiversion();
+  mozilla::ipc::IPCResult RecvSetClassifierMatchedInfo(const ClassifierInfo& aInfo) override;
 
 protected:
   mozilla::ipc::IPCResult RecvOnStartRequest(const nsresult& channelStatus,
@@ -126,8 +127,6 @@ protected:
                                              const nsCString& altDataType) override;
   mozilla::ipc::IPCResult RecvOnTransportAndData(const nsresult& channelStatus,
                                                  const nsresult& status,
-                                                 const uint64_t& progress,
-                                                 const uint64_t& progressMax,
                                                  const uint64_t& offset,
                                                  const uint32_t& count,
                                                  const nsCString& data) override;
@@ -155,7 +154,7 @@ protected:
   mozilla::ipc::IPCResult RecvIssueDeprecationWarning(const uint32_t& warning,
                                                       const bool& asError) override;
 
-  mozilla::ipc::IPCResult RecvSetPriority(const uint16_t& aPriority) override;
+  mozilla::ipc::IPCResult RecvSetPriority(const int16_t& aPriority) override;
 
   bool GetAssociatedContentSecurity(nsIAssociatedContentSecurity** res = nullptr);
   virtual void DoNotifyListenerCleanup() override;
@@ -309,8 +308,6 @@ private:
                          const uint32_t& count);
   void OnTransportAndData(const nsresult& channelStatus,
                           const nsresult& status,
-                          const uint64_t progress,
-                          const uint64_t& progressMax,
                           const uint64_t& offset,
                           const uint32_t& count,
                           const nsCString& data);

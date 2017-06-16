@@ -159,6 +159,7 @@ EXPORTS.js += [
 
 UNIFIED_SOURCES += [
     'builtin/AtomicsObject.cpp',
+    'builtin/DataViewObject.cpp',
     'builtin/Eval.cpp',
     'builtin/Intl.cpp',
     'builtin/MapObject.cpp',
@@ -175,6 +176,7 @@ UNIFIED_SOURCES += [
     'builtin/WeakMapObject.cpp',
     'builtin/WeakSetObject.cpp',
     'devtools/sharkctl.cpp',
+    'ds/Bitmap.cpp',
     'ds/LifoAlloc.cpp',
     'ds/MemoryProtectionExceptionHandler.cpp',
     'frontend/BytecodeCompiler.cpp',
@@ -184,6 +186,7 @@ UNIFIED_SOURCES += [
     'frontend/ParseNode.cpp',
     'frontend/TokenStream.cpp',
     'gc/Allocator.cpp',
+    'gc/AtomMarking.cpp',
     'gc/Barrier.cpp',
     'gc/GCTrace.cpp',
     'gc/Iteration.cpp',
@@ -196,6 +199,7 @@ UNIFIED_SOURCES += [
     'gc/Tracer.cpp',
     'gc/Verifier.cpp',
     'gc/Zone.cpp',
+    'gc/ZoneGroup.cpp',
     'irregexp/NativeRegExpMacroAssembler.cpp',
     'irregexp/RegExpAST.cpp',
     'irregexp/RegExpCharacters.cpp',
@@ -223,6 +227,7 @@ UNIFIED_SOURCES += [
     'jit/C1Spewer.cpp',
     'jit/CacheIR.cpp',
     'jit/CacheIRCompiler.cpp',
+    'jit/CacheIRSpewer.cpp',
     'jit/CodeGenerator.cpp',
     'jit/CompileWrappers.cpp',
     'jit/Disassembler.cpp',
@@ -245,6 +250,7 @@ UNIFIED_SOURCES += [
     'jit/JitFrames.cpp',
     'jit/JitOptions.cpp',
     'jit/JitSpewer.cpp',
+    'jit/JSONPrinter.cpp',
     'jit/JSONSpewer.cpp',
     'jit/LICM.cpp',
     'jit/Linker.cpp',
@@ -309,6 +315,7 @@ UNIFIED_SOURCES += [
     'proxy/SecurityWrapper.cpp',
     'proxy/Wrapper.cpp',
     'threading/Mutex.cpp',
+    'threading/ProtectedData.cpp',
     'vm/ArgumentsObject.cpp',
     'vm/ArrayBufferObject.cpp',
     'vm/AsyncFunction.cpp',
@@ -323,6 +330,7 @@ UNIFIED_SOURCES += [
     'vm/EnvironmentObject.cpp',
     'vm/ErrorObject.cpp',
     'vm/ForOfIterator.cpp',
+    'vm/GeckoProfiler.cpp',
     'vm/GeneratorObject.cpp',
     'vm/GlobalObject.cpp',
     'vm/HelperThreads.cpp',
@@ -346,7 +354,6 @@ UNIFIED_SOURCES += [
     'vm/Shape.cpp',
     'vm/SharedArrayObject.cpp',
     'vm/SharedImmutableStringsCache.cpp',
-    'vm/SPSProfiler.cpp',
     'vm/Stack.cpp',
     'vm/Stopwatch.cpp',
     'vm/String.cpp',
@@ -586,16 +593,14 @@ elif CONFIG['JS_CODEGEN_MIPS32'] or CONFIG['JS_CODEGEN_MIPS64']:
 
 if CONFIG['OS_ARCH'] == 'WINNT':
     SOURCES += [
-        'threading/windows/ConditionVariable.cpp',
-        'threading/windows/MutexImpl.cpp',
+        'threading/windows/CpuCount.cpp',
         'threading/windows/Thread.cpp',
     ]
     # _CRT_RAND_S must be #defined before #including stdlib.h to get rand_s()
     DEFINES['_CRT_RAND_S'] = True
 else:
     SOURCES += [
-        'threading/posix/ConditionVariable.cpp',
-        'threading/posix/MutexImpl.cpp',
+        'threading/posix/CpuCount.cpp',
         'threading/posix/Thread.cpp',
     ]
 
@@ -612,7 +617,9 @@ if CONFIG['JS_HAS_CTYPES']:
 
 if CONFIG['MOZ_VTUNE']:
     SOURCES += [
-        'vtune/jitprofiling.c'
+        'vtune/ittnotify_static.c',
+        'vtune/jitprofiling.c',
+        'vtune/VTuneWrapper.cpp',
     ]
 
 if CONFIG['HAVE_LINUX_PERF_EVENT_H']:
@@ -626,11 +633,11 @@ else:
         'perf/pm_stub.cpp'
     ]
 
-GENERATED_FILES += ['jsautokw.h']
-jsautokw = GENERATED_FILES['jsautokw.h']
-jsautokw.script = 'jsautokw.py'
-jsautokw.inputs += [
-    'vm/Keywords.h'
+GENERATED_FILES += ['frontend/ReservedWordsGenerated.h']
+ReservedWordsGenerated = GENERATED_FILES['frontend/ReservedWordsGenerated.h']
+ReservedWordsGenerated.script = 'frontend/GenerateReservedWords.py'
+ReservedWordsGenerated.inputs += [
+    'frontend/ReservedWords.h'
 ]
 
 # JavaScript must be built shared, even for static builds, as it is used by

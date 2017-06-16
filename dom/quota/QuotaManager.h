@@ -44,11 +44,7 @@ class QuotaObject;
 class NS_NO_VTABLE RefCountedObject
 {
 public:
-  NS_IMETHOD_(MozExternalRefCountType)
-  AddRef() = 0;
-
-  NS_IMETHOD_(MozExternalRefCountType)
-  Release() = 0;
+  NS_INLINE_DECL_PURE_VIRTUAL_REFCOUNTING
 };
 
 class DirectoryLock
@@ -256,9 +252,9 @@ public:
 
   // XXX RemoveMe once bug 1170279 gets fixed.
   void
-  OpenDirectoryInternal(Nullable<PersistenceType> aPersistenceType,
+  OpenDirectoryInternal(const Nullable<PersistenceType>& aPersistenceType,
                         const OriginScope& aOriginScope,
-                        Nullable<Client::Type> aClientType,
+                        const Nullable<Client::Type>& aClientType,
                         bool aExclusive,
                         OpenDirectoryListener* aOpenListener);
 
@@ -411,11 +407,11 @@ private:
   Shutdown();
 
   already_AddRefed<DirectoryLockImpl>
-  CreateDirectoryLock(Nullable<PersistenceType> aPersistenceType,
+  CreateDirectoryLock(const Nullable<PersistenceType>& aPersistenceType,
                       const nsACString& aGroup,
                       const OriginScope& aOriginScope,
-                      Nullable<bool> aIsApp,
-                      Nullable<Client::Type> aClientType,
+                      const Nullable<bool>& aIsApp,
+                      const Nullable<Client::Type>& aClientType,
                       bool aExclusive,
                       bool aInternal,
                       OpenDirectoryListener* aOpenListener);

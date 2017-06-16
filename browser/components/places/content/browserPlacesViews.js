@@ -2,6 +2,8 @@
  * License, v. 2.0. If a copy of the MPL was not distributed with this file,
  * You can obtain one at http://mozilla.org/MPL/2.0/. */
 
+/* eslint-env mozilla/browser-window */
+
 Components.utils.import("resource://gre/modules/AppConstants.jsm");
 Components.utils.import("resource://gre/modules/XPCOMUtils.jsm");
 Components.utils.import("resource://gre/modules/Services.jsm");
@@ -286,7 +288,7 @@ PlacesViewBase.prototype = {
     if (document.popupNode == aChild)
       document.popupNode = null;
 
-    aChild.parentNode.removeChild(aChild);
+    aChild.remove();
   },
 
   _setEmptyPopupStatus:
@@ -755,7 +757,7 @@ PlacesViewBase.prototype = {
       return this._isRTL;
 
     return this._isRTL = document.defaultView
-                                 .getComputedStyle(this.viewElt, "")
+                                 .getComputedStyle(this.viewElt)
                                  .direction == "rtl";
   },
 

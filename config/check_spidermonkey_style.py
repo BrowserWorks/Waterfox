@@ -40,10 +40,10 @@ from __future__ import print_function
 import difflib
 import os
 import re
-import subprocess
 import sys
-import traceback
-from check_utils import get_all_toplevel_filenames
+
+from mozversioncontrol import get_repository_from_env
+
 
 # We don't bother checking files in these directories, because they're (a) auxiliary or (b)
 # imported code that doesn't follow our coding style.
@@ -63,7 +63,7 @@ included_inclnames_to_ignore = set([
     'devtools/Instruments.h',   # we ignore devtools/ in general
     'double-conversion.h',      # strange MFBT case
     'javascript-trace.h',       # generated in $OBJDIR if HAVE_DTRACE is defined
-    'jsautokw.h',               # generated in $OBJDIR
+    'frontend/ReservedWordsGenerated.h', # generated in $OBJDIR
     'jscustomallocator.h',      # provided by embedders;  allowed to be missing
     'js-config.h',              # generated in $OBJDIR
     'fdlibm.h',                 # fdlibm
@@ -88,6 +88,7 @@ included_inclnames_to_ignore = set([
     'unicode/udat.h',           # ICU
     'unicode/udatpg.h',         # ICU
     'unicode/uenum.h',          # ICU
+    'unicode/uloc.h',           # ICU
     'unicode/unorm2.h',         # ICU
     'unicode/unum.h',           # ICU
     'unicode/unumsys.h',        # ICU
@@ -101,7 +102,7 @@ included_inclnames_to_ignore = set([
 # ignore #includes of them when checking #include ordering.
 oddly_ordered_inclnames = set([
     'ctypes/typedefs.h',        # Included multiple times in the body of ctypes/CTypes.h
-    'jsautokw.h',               # Included in the body of frontend/TokenStream.h
+    'frontend/ReservedWordsGenerated.h', # Included in the body of frontend/TokenStream.h
     'jswin.h',                  # Must be #included before <psapi.h>
     'machine/endian.h',         # Must be included after <sys/types.h> on BSD
     'winbase.h',                # Must precede other system headers(?)
@@ -243,8 +244,10 @@ def check_style():
     non_js_inclnames = set()        # type: set(inclname)
     js_names = dict()               # type: dict(filename, inclname)
 
+    repo = get_repository_from_env()
+
     # Select the appropriate files.
-    for filename in get_all_toplevel_filenames():
+    for filename in repo.get_files_in_working_directory():
         for non_js_dir in non_js_dirnames:
             if filename.startswith(non_js_dir) and filename.endswith('.h'):
                 inclname = 'mozilla/' + filename.split('/')[-1]
@@ -279,7 +282,7 @@ def check_style():
 
             # This script is run in js/src/, so prepend '../../' to get to the root of the Mozilla
             # source tree.
-            with open(os.path.join('../..', filename)) as f:
+            with open(os.path.join(repo.path, filename)) as f:
                 do_file(filename, inclname, file_kind, f, all_inclnames, included_h_inclnames)
 
         edges[inclname] = included_h_inclnames

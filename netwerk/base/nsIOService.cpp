@@ -84,7 +84,7 @@ namespace net {
 
 nsIOService* gIOService = nullptr;
 static bool gHasWarnedUploadChannel2;
-
+static bool gCaptivePortalEnabled = false;
 static LazyLogModule gIOServiceLog("nsIOService");
 #undef LOG
 #define LOG(args)     MOZ_LOG(gIOServiceLog, LogLevel::Debug, args)
@@ -171,7 +171,7 @@ static const char kProfileDoChange[] = "profile-do-change";
 uint32_t   nsIOService::gDefaultSegmentSize = 4096;
 uint32_t   nsIOService::gDefaultSegmentCount = 24;
 
-bool nsIOService::sTelemetryEnabled = false;
+bool nsIOService::sDataURIInheritSecurityContext = true;
 
 ////////////////////////////////////////////////////////////////////////////////
 
@@ -250,7 +250,8 @@ nsIOService::Init()
     else
         NS_WARNING("failed to get observer service");
 
-    Preferences::AddBoolVarCache(&sTelemetryEnabled, "toolkit.telemetry.enabled", false);
+    Preferences::AddBoolVarCache(&sDataURIInheritSecurityContext,
+                                 "security.data_uri.inherit_security_context", true);
     Preferences::AddBoolVarCache(&mOfflineMirrorsConnectivity, OFFLINE_MIRRORS_CONNECTIVITY, true);
 
     gIOService = this;
@@ -595,6 +596,10 @@ nsIOService::GetProtocolFlags(const char* scheme, uint32_t *flags)
     // API is used by (and only used by) extensions, which is why it's still
     // around. Calling this on a scheme with dynamic flags will throw.
     rv = handler->GetProtocolFlags(flags);
+#if !IS_ORIGIN_IS_FULL_SPEC_DEFINED
+    MOZ_RELEASE_ASSERT(!(*flags & nsIProtocolHandler::ORIGIN_IS_FULL_SPEC),
+                       "ORIGIN_IS_FULL_SPEC is unsupported but used");
+#endif
     return rv;
 }
 
@@ -790,7 +795,9 @@ nsIOService::NewChannelFromURIWithProxyFlagsInternal(nsIURI* aURI,
         // creating a new channel by calling NewChannel().
         if (NS_FAILED(rv)) {
             rv = handler->NewChannel(aURI, getter_AddRefs(channel));
-            NS_ENSURE_SUCCESS(rv, rv);
+            if (NS_FAILED(rv)) {
+                return rv;
+            }
             // The protocol handler does not implement NewChannel2, so
             // maybe we need to wrap the channel (see comment in MaybeWrap
             // function).
@@ -1151,7 +1158,7 @@ nsIOService::SetConnectivityInternal(bool aConnectivity)
     mLastConnectivityChange = PR_IntervalNow();
 
     if (mCaptivePortalService) {
-        if (aConnectivity && !xpc::AreNonLocalConnectionsDisabled()) {
+        if (aConnectivity && !xpc::AreNonLocalConnectionsDisabled() && gCaptivePortalEnabled) {
             // This will also trigger a captive portal check for the new network
             static_cast<CaptivePortalService*>(mCaptivePortalService.get())->Start();
         } else {
@@ -1294,10 +1301,9 @@ nsIOService::PrefsChanged(nsIPrefBranch *prefs, const char *pref)
     }
 
     if (!pref || strcmp(pref, NETWORK_CAPTIVE_PORTAL_PREF) == 0) {
-        bool captivePortalEnabled;
-        nsresult rv = prefs->GetBoolPref(NETWORK_CAPTIVE_PORTAL_PREF, &captivePortalEnabled);
+        nsresult rv = prefs->GetBoolPref(NETWORK_CAPTIVE_PORTAL_PREF, &gCaptivePortalEnabled);
         if (NS_SUCCEEDED(rv) && mCaptivePortalService) {
-            if (captivePortalEnabled && !xpc::AreNonLocalConnectionsDisabled()) {
+            if (gCaptivePortalEnabled && !xpc::AreNonLocalConnectionsDisabled()) {
                 static_cast<CaptivePortalService*>(mCaptivePortalService.get())->Start();
             } else {
                 static_cast<CaptivePortalService*>(mCaptivePortalService.get())->Stop();
@@ -1803,6 +1809,8 @@ nsIOService::SpeculativeConnectInternal(nsIURI *aURI,
 
     nsCOMPtr<nsIPrincipal> loadingPrincipal = aPrincipal;
 
+    NS_ASSERTION(aPrincipal, "We expect passing a principal here.");
+
     // If the principal is given, we use this prinicpal directly. Otherwise,
     // we fallback to use the system principal.
     if (!aPrincipal) {
@@ -1874,6 +1882,12 @@ nsIOService::SpeculativeAnonymousConnect2(nsIURI *aURI,
                                           nsIInterfaceRequestor *aCallbacks)
 {
     return SpeculativeConnectInternal(aURI, aPrincipal, aCallbacks, true);
+}
+
+/*static*/ bool
+nsIOService::IsInheritSecurityContextForDataURIEnabled()
+{
+  return sDataURIInheritSecurityContext;
 }
 
 } // namespace net

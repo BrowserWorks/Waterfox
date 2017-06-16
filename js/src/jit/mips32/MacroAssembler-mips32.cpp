@@ -1912,7 +1912,7 @@ MacroAssemblerMIPSCompat::handleFailureWithHandlerTail(void* handler)
     {
         Label skipProfilingInstrumentation;
         // Test if profiler enabled.
-        AbsoluteAddress addressOfEnabled(GetJitContext()->runtime->spsProfiler().addressOfEnabled());
+        AbsoluteAddress addressOfEnabled(GetJitContext()->runtime->geckoProfiler().addressOfEnabled());
         asMasm().branch32(Assembler::Equal, addressOfEnabled, Imm32(0),
                           &skipProfilingInstrumentation);
         profilerExitFrame();
@@ -2052,8 +2052,8 @@ MacroAssemblerMIPSCompat::toggledCall(JitCode* target, bool enabled)
 void
 MacroAssemblerMIPSCompat::profilerEnterFrame(Register framePtr, Register scratch)
 {
-    AbsoluteAddress activation(GetJitContext()->runtime->addressOfProfilingActivation());
-    loadPtr(activation, scratch);
+    asMasm().loadJSContext(scratch);
+    loadPtr(Address(scratch, offsetof(JSContext, profilingActivation_)), scratch);
     storePtr(framePtr, Address(scratch, JitActivation::offsetOfLastProfilingFrame()));
     storePtr(ImmPtr(nullptr), Address(scratch, JitActivation::offsetOfLastProfilingCallSite()));
 }

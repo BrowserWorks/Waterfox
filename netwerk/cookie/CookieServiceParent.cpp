@@ -92,7 +92,6 @@ CookieServiceParent::ActorDestroy(ActorDestroyReason aWhy)
 mozilla::ipc::IPCResult
 CookieServiceParent::RecvGetCookieString(const URIParams& aHost,
                                          const bool& aIsForeign,
-                                         const bool& aFromHttp,
                                          const OriginAttributes& aAttrs,
                                          nsCString* aResult)
 {
@@ -106,7 +105,7 @@ CookieServiceParent::RecvGetCookieString(const URIParams& aHost,
     return IPC_FAIL_NO_REASON(this);
 
   bool isPrivate = aAttrs.mPrivateBrowsingId > 0;
-  mCookieService->GetCookieStringInternal(hostURI, aIsForeign, aFromHttp, aAttrs,
+  mCookieService->GetCookieStringInternal(hostURI, aIsForeign, false, aAttrs,
                                           isPrivate, *aResult);
   return IPC_OK();
 }
@@ -116,8 +115,8 @@ CookieServiceParent::RecvSetCookieString(const URIParams& aHost,
                                          const bool& aIsForeign,
                                          const nsCString& aCookieString,
                                          const nsCString& aServerTime,
-                                         const bool& aFromHttp,
-                                         const OriginAttributes& aAttrs)
+                                         const OriginAttributes& aAttrs,
+                                         const bool& aFromHttp)
 {
   if (!mCookieService)
     return IPC_OK();

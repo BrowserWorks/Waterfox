@@ -301,6 +301,7 @@ LoadContextOptions(const char* aPrefName, void* /* aClosure */)
   JS::ContextOptions contextOptions;
   contextOptions.setAsmJS(GetWorkerPref<bool>(NS_LITERAL_CSTRING("asmjs")))
                 .setWasm(GetWorkerPref<bool>(NS_LITERAL_CSTRING("wasm")))
+                .setWasmAlwaysBaseline(GetWorkerPref<bool>(NS_LITERAL_CSTRING("wasm_baselinejit")))
                 .setThrowOnAsmJSValidationFailure(GetWorkerPref<bool>(
                       NS_LITERAL_CSTRING("throw_on_asmjs_validation_failure")))
                 .setBaseline(GetWorkerPref<bool>(NS_LITERAL_CSTRING("baselinejit")))
@@ -308,6 +309,9 @@ LoadContextOptions(const char* aPrefName, void* /* aClosure */)
                 .setNativeRegExp(GetWorkerPref<bool>(NS_LITERAL_CSTRING("native_regexp")))
                 .setAsyncStack(GetWorkerPref<bool>(NS_LITERAL_CSTRING("asyncstack")))
                 .setWerror(GetWorkerPref<bool>(NS_LITERAL_CSTRING("werror")))
+#ifdef FUZZING
+                .setFuzzing(GetWorkerPref<bool>(NS_LITERAL_CSTRING("fuzzing.enabled")))
+#endif
                 .setExtraWarnings(GetWorkerPref<bool>(NS_LITERAL_CSTRING("strict")));
 
   RuntimeService::SetDefaultContextOptions(contextOptions);
@@ -1029,7 +1033,7 @@ Wrap(JSContext *cx, JS::HandleObject existing, JS::HandleObject obj)
   }
 
   if (existing) {
-    js::Wrapper::Renew(cx, existing, obj, wrapper);
+    js::Wrapper::Renew(existing, obj, wrapper);
   }
   return js::Wrapper::New(cx, obj, wrapper);
 }
@@ -1071,10 +1075,10 @@ public:
     mWorkerPrivate = nullptr;
   }
 
-  nsresult Initialize(JSContext* aParentContext)
+  nsresult Initialize(JSRuntime* aParentRuntime)
   {
     nsresult rv =
-      CycleCollectedJSContext::Initialize(aParentContext,
+      CycleCollectedJSContext::Initialize(aParentRuntime,
                                           WORKER_DEFAULT_RUNTIME_HEAPSIZE,
                                           WORKER_DEFAULT_NURSERY_SIZE);
      if (NS_WARN_IF(NS_FAILED(rv))) {
@@ -1183,7 +1187,7 @@ class WorkerThreadPrimaryRunnable final : public Runnable
 {
   WorkerPrivate* mWorkerPrivate;
   RefPtr<WorkerThread> mThread;
-  JSContext* mParentContext;
+  JSRuntime* mParentRuntime;
 
   class FinishedRunnable final : public Runnable
   {
@@ -1191,7 +1195,8 @@ class WorkerThreadPrimaryRunnable final : public Runnable
 
   public:
     explicit FinishedRunnable(already_AddRefed<WorkerThread> aThread)
-    : mThread(aThread)
+    : Runnable("WorkerThreadPrimaryRunnable::FinishedRunnable")
+    , mThread(aThread)
     {
       MOZ_ASSERT(mThread);
     }
@@ -1208,8 +1213,8 @@ class WorkerThreadPrimaryRunnable final : public Runnable
 public:
   WorkerThreadPrimaryRunnable(WorkerPrivate* aWorkerPrivate,
                               WorkerThread* aThread,
-                              JSContext* aParentContext)
-  : mWorkerPrivate(aWorkerPrivate), mThread(aThread), mParentContext(aParentContext)
+                              JSRuntime* aParentRuntime)
+  : mWorkerPrivate(aWorkerPrivate), mThread(aThread), mParentRuntime(aParentRuntime)
   {
     MOZ_ASSERT(aWorkerPrivate);
     MOZ_ASSERT(aThread);
@@ -1888,7 +1893,7 @@ RuntimeService::ScheduleWorker(WorkerPrivate* aWorkerPrivate)
   JSContext* cx = CycleCollectedJSContext::Get()->Context();
   nsCOMPtr<nsIRunnable> runnable =
     new WorkerThreadPrimaryRunnable(aWorkerPrivate, thread,
-                                    JS_GetParentContext(cx));
+                                    JS_GetParentRuntime(cx));
   if (NS_FAILED(thread->DispatchPrimaryRunnable(friendKey, runnable.forget()))) {
     UnregisterWorker(aWorkerPrivate);
     return false;
@@ -2762,16 +2767,6 @@ RuntimeService::WorkerPrefChanged(const char* aPrefName, void* aClosure)
   }
 }
 
-void
-RuntimeService::JSVersionChanged(const char* /* aPrefName */, void* /* aClosure */)
-{
-  AssertIsOnMainThread();
-
-  bool useLatest = Preferences::GetBool("dom.workers.latestJSVersion", false);
-  JS::CompartmentOptions& options = sDefaultJSSettings.content.compartmentOptions;
-  options.behaviors().setVersion(useLatest ? JSVERSION_LATEST : JSVERSION_DEFAULT);
-}
-
 bool
 LogViolationDetailsRunnable::MainThreadRun()
 {
@@ -2856,7 +2851,7 @@ WorkerThreadPrimaryRunnable::Run()
     nsCycleCollector_startup();
 
     WorkerJSContext context(mWorkerPrivate);
-    nsresult rv = context.Initialize(mParentContext);
+    nsresult rv = context.Initialize(mParentRuntime);
     if (NS_WARN_IF(NS_FAILED(rv))) {
       return rv;
     }
@@ -2870,7 +2865,7 @@ WorkerThreadPrimaryRunnable::Run()
     }
 
     {
-#ifdef MOZ_ENABLE_PROFILER_SPS
+#ifdef MOZ_GECKO_PROFILER
       PseudoStack* stack = profiler_get_pseudo_stack();
       if (stack) {
         stack->sampleContext(cx);
@@ -2889,7 +2884,7 @@ WorkerThreadPrimaryRunnable::Run()
 
       BackgroundChild::CloseForCurrentThread();
 
-#ifdef MOZ_ENABLE_PROFILER_SPS
+#ifdef MOZ_GECKO_PROFILER
       if (stack) {
         stack->sampleContext(nullptr);
       }

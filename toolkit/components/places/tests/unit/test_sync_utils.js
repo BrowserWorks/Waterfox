@@ -171,6 +171,25 @@ var ignoreChangedRoots = Task.async(function* () {
   yield setChangesSynced(changes);
 });
 
+add_task(function* test_fetchURLFrecency() {
+  // Add visits to the following URLs and then check if frecency for those URLs is not -1.
+  let arrayOfURLsToVisit = ["https://www.mozilla.org/en-US/", "http://getfirefox.com", "http://getthunderbird.com"];
+  for (let url of arrayOfURLsToVisit) {
+    yield PlacesTestUtils.addVisits(url);
+  }
+  for (let url of arrayOfURLsToVisit) {
+    let frecency = yield PlacesSyncUtils.history.fetchURLFrecency(url);
+    equal(typeof frecency, "number");
+    notEqual(frecency, -1);
+  }
+  // Do not add visits to the following URLs, and then check if frecency for those URLs is -1.
+  let arrayOfURLsNotVisited = ["https://bugzilla.org", "https://example.org"];
+  for (let url of arrayOfURLsNotVisited) {
+    let frecency = yield PlacesSyncUtils.history.fetchURLFrecency(url);
+    equal(frecency, -1);
+  }
+});
+
 add_task(function* test_order() {
   do_print("Insert some bookmarks");
   let guids = yield populateTree(PlacesUtils.bookmarks.menuGuid, {
@@ -198,16 +217,28 @@ add_task(function* test_order() {
     deepEqual(childSyncIds, order, "New bookmarks should be reordered according to array");
   }
 
-  do_print("Reorder with unspecified children");
+  do_print("Same order with unspecified children");
   {
     yield PlacesSyncUtils.bookmarks.order(PlacesUtils.bookmarks.menuGuid, [
       guids.siblingSep, guids.siblingBmk,
     ]);
     let childSyncIds = yield PlacesSyncUtils.bookmarks.fetchChildSyncIds(
       PlacesUtils.bookmarks.menuGuid);
-    deepEqual(childSyncIds, [guids.siblingSep, guids.siblingBmk,
+    deepEqual(childSyncIds, [guids.siblingFolder, guids.siblingSep,
+      guids.childBmk, guids.siblingBmk],
+      "Current order should be respected if possible");
+  }
+
+  do_print("New order with unspecified children");
+  {
+    yield PlacesSyncUtils.bookmarks.order(PlacesUtils.bookmarks.menuGuid, [
+      guids.siblingBmk, guids.siblingSep,
+    ]);
+    let childSyncIds = yield PlacesSyncUtils.bookmarks.fetchChildSyncIds(
+      PlacesUtils.bookmarks.menuGuid);
+    deepEqual(childSyncIds, [guids.siblingBmk, guids.siblingSep,
       guids.siblingFolder, guids.childBmk],
-      "Unordered children should be moved to end");
+      "Unordered children should be moved to end if current order can't be respected");
   }
 
   do_print("Reorder with nonexistent children");
@@ -617,6 +648,180 @@ add_task(function* test_update_keyword() {
     });
     ok(!entry,
       "Removing keyword for URL without existing keyword should succeed");
+  }
+
+  let item2;
+  do_print("Insert removes other item's keyword if they are the same");
+  {
+    let updatedItem = yield PlacesSyncUtils.bookmarks.update({
+      syncId: item.syncId,
+      keyword: "test",
+    });
+    equal(updatedItem.keyword, "test", "Initial update succeeds");
+    item2 = yield PlacesSyncUtils.bookmarks.insert({
+      kind: "bookmark",
+      parentSyncId: "menu",
+      url: "https://mozilla.org/1",
+      syncId: makeGuid(),
+      keyword: "test",
+    });
+    equal(item2.keyword, "test", "insert with existing should succeed");
+    updatedItem = yield PlacesSyncUtils.bookmarks.fetch(item.syncId);
+    ok(!updatedItem.keyword, "initial item no longer has keyword");
+    let entry = yield PlacesUtils.keywords.fetch({
+      url: "https://mozilla.org",
+    });
+    ok(!entry, "Direct check for original url keyword gives nothing");
+    let newEntry = yield PlacesUtils.keywords.fetch("test");
+    ok(newEntry, "Keyword should exist for new item");
+    equal(newEntry.url.href, "https://mozilla.org/1", "Keyword should point to new url");
+  }
+
+  do_print("Insert updates other item's keyword if they are the same url");
+  {
+    let updatedItem = yield PlacesSyncUtils.bookmarks.update({
+      syncId: item.syncId,
+      keyword: "test2",
+    });
+    equal(updatedItem.keyword, "test2", "Initial update succeeds");
+    let newItem = yield PlacesSyncUtils.bookmarks.insert({
+      kind: "bookmark",
+      parentSyncId: "menu",
+      url: "https://mozilla.org",
+      syncId: makeGuid(),
+      keyword: "test3",
+    });
+    equal(newItem.keyword, "test3", "insert with existing should succeed");
+    updatedItem = yield PlacesSyncUtils.bookmarks.fetch(item.syncId);
+    equal(updatedItem.keyword, "test3", "initial item has new keyword");
+  }
+
+  do_print("Update removes other item's keyword if they are the same");
+  {
+    let updatedItem = yield PlacesSyncUtils.bookmarks.update({
+      syncId: item.syncId,
+      keyword: "test4",
+    });
+    equal(updatedItem.keyword, "test4", "Initial update succeeds");
+    let updatedItem2 = yield PlacesSyncUtils.bookmarks.update({
+      syncId: item2.syncId,
+      keyword: "test4",
+    });
+    equal(updatedItem2.keyword, "test4", "New update succeeds");
+    updatedItem = yield PlacesSyncUtils.bookmarks.fetch(item.syncId);
+    ok(!updatedItem.keyword, "initial item no longer has keyword");
+    let entry = yield PlacesUtils.keywords.fetch({
+      url: "https://mozilla.org",
+    });
+    ok(!entry, "Direct check for original url keyword gives nothing");
+    let newEntry = yield PlacesUtils.keywords.fetch("test4");
+    ok(newEntry, "Keyword should exist for new item");
+    equal(newEntry.url.href, "https://mozilla.org/1", "Keyword should point to new url");
+  }
+
+  do_print("Update url updates it's keyword if url already has keyword");
+  {
+    let updatedItem = yield PlacesSyncUtils.bookmarks.update({
+      syncId: item.syncId,
+      keyword: "test4",
+    });
+    equal(updatedItem.keyword, "test4", "Initial update succeeds");
+    let updatedItem2 = yield PlacesSyncUtils.bookmarks.update({
+      syncId: item2.syncId,
+      keyword: "test5",
+    });
+    equal(updatedItem2.keyword, "test5", "New update succeeds");
+    yield PlacesSyncUtils.bookmarks.update({
+      syncId: item2.syncId,
+      url: item.url.href,
+    });
+    updatedItem2 = yield PlacesSyncUtils.bookmarks.fetch(item2.syncId);
+    equal(updatedItem2.keyword, "test4", "Item keyword has been updated");
+    updatedItem = yield PlacesSyncUtils.bookmarks.fetch(item.syncId);
+    equal(updatedItem.keyword, "test4", "Initial item still has keyword");
+  }
+
+
+  yield PlacesUtils.bookmarks.eraseEverything();
+  yield PlacesSyncUtils.bookmarks.reset();
+});
+
+add_task(function* test_conflicting_keywords() {
+  yield ignoreChangedRoots();
+
+  do_print("Insert bookmark with new keyword");
+  let tbBmk = yield PlacesSyncUtils.bookmarks.insert({
+    kind: "bookmark",
+    syncId: makeGuid(),
+    parentSyncId: "unfiled",
+    url: "http://getthunderbird.com",
+    keyword: "tbird",
+  });
+  {
+    let entryByKeyword = yield PlacesUtils.keywords.fetch("tbird");
+    equal(entryByKeyword.url.href, "http://getthunderbird.com/",
+      "Should return new keyword entry by URL");
+    let entryByURL = yield PlacesUtils.keywords.fetch({
+      url: "http://getthunderbird.com",
+    });
+    equal(entryByURL.keyword, "tbird", "Should return new entry by keyword");
+    let changes = yield PlacesSyncUtils.bookmarks.pullChanges();
+    deepEqual(changes, {},
+      "Should not bump change counter for new keyword entry");
+  }
+
+  do_print("Insert bookmark with same URL and different keyword");
+  let dupeTbBmk = yield PlacesSyncUtils.bookmarks.insert({
+    kind: "bookmark",
+    syncId: makeGuid(),
+    parentSyncId: "toolbar",
+    url: "http://getthunderbird.com",
+    keyword: "tb",
+  });
+  {
+    let oldKeywordByURL = yield PlacesUtils.keywords.fetch("tbird");
+    ok(!oldKeywordByURL,
+      "Should remove old entry when inserting bookmark with different keyword");
+    let entryByKeyword = yield PlacesUtils.keywords.fetch("tb");
+    equal(entryByKeyword.url.href, "http://getthunderbird.com/",
+      "Should return different keyword entry by URL");
+    let entryByURL = yield PlacesUtils.keywords.fetch({
+      url: "http://getthunderbird.com",
+    });
+    equal(entryByURL.keyword, "tb", "Should return different entry by keyword");
+    let changes = yield PlacesSyncUtils.bookmarks.pullChanges();
+    deepEqual(Object.keys(changes).sort(), [
+      tbBmk.syncId,
+      dupeTbBmk.syncId,
+    ].sort(), "Should bump change counter for bookmarks with different keyword");
+    yield setChangesSynced(changes);
+  }
+
+  do_print("Update bookmark with different keyword");
+  yield PlacesSyncUtils.bookmarks.update({
+    kind: "bookmark",
+    syncId: tbBmk.syncId,
+    url: "http://getthunderbird.com",
+    keyword: "thunderbird",
+  });
+  {
+    let oldKeywordByURL = yield PlacesUtils.keywords.fetch("tb");
+    ok(!oldKeywordByURL,
+      "Should remove old entry when updating bookmark keyword");
+    let entryByKeyword = yield PlacesUtils.keywords.fetch("thunderbird");
+    equal(entryByKeyword.url.href, "http://getthunderbird.com/",
+      "Should return updated keyword entry by URL");
+    let entryByURL = yield PlacesUtils.keywords.fetch({
+      url: "http://getthunderbird.com",
+    });
+    equal(entryByURL.keyword, "thunderbird",
+      "Should return entry by updated keyword");
+    let changes = yield PlacesSyncUtils.bookmarks.pullChanges();
+    deepEqual(Object.keys(changes).sort(), [
+      tbBmk.syncId,
+      dupeTbBmk.syncId,
+    ].sort(), "Should bump change counter for bookmarks with updated keyword");
+    yield setChangesSynced(changes);
   }
 
   yield PlacesUtils.bookmarks.eraseEverything();
@@ -2130,6 +2335,64 @@ add_task(function* test_touch() {
   } finally {
     yield stopServer();
   }
+
+  yield PlacesUtils.bookmarks.eraseEverything();
+  yield PlacesSyncUtils.bookmarks.reset();
+});
+
+add_task(function* test_separator() {
+  yield ignoreChangedRoots();
+
+  yield PlacesSyncUtils.bookmarks.insert({
+    kind: "bookmark",
+    parentSyncId: "menu",
+    syncId: makeGuid(),
+    url: "https://example.com",
+  });
+  let childBmk = yield PlacesSyncUtils.bookmarks.insert({
+    kind: "bookmark",
+    parentSyncId: "menu",
+    syncId: makeGuid(),
+    url: "https://foo.bar",
+  });
+  let separatorSyncId = makeGuid();
+  let separator = yield PlacesSyncUtils.bookmarks.insert({
+    kind: "separator",
+    parentSyncId: "menu",
+    syncId: separatorSyncId
+  });
+  yield PlacesSyncUtils.bookmarks.insert({
+    kind: "bookmark",
+    parentSyncId: "menu",
+    syncId: makeGuid(),
+    url: "https://bar.foo",
+  });
+  let child2Id = yield syncIdToId(childBmk.syncId);
+  let parentId = yield syncIdToId("menu");
+  let separatorId = yield syncIdToId(separator.syncId);
+  let separatorGuid = PlacesSyncUtils.bookmarks.syncIdToGuid(separatorSyncId);
+
+  do_print("Move a bookmark around the separator");
+  PlacesUtils.bookmarks.moveItem(child2Id, parentId, separator + 1);
+  let changes = yield PlacesSyncUtils.bookmarks.pullChanges();
+  deepEqual(Object.keys(changes).sort(),
+    [separator.syncId, "menu"].sort());
+
+  yield setChangesSynced(changes);
+
+  do_print("Move a separator around directly");
+  PlacesUtils.bookmarks.moveItem(separatorId, parentId, 0);
+  changes = yield PlacesSyncUtils.bookmarks.pullChanges();
+  deepEqual(Object.keys(changes).sort(),
+    [separator.syncId, "menu"].sort());
+
+  yield setChangesSynced(changes);
+
+  do_print("Move a separator around directly using update");
+  yield PlacesUtils.bookmarks.update({ guid: separatorGuid, index: 2 });
+  changes = yield PlacesSyncUtils.bookmarks.pullChanges();
+  deepEqual(Object.keys(changes).sort(),
+    [separator.syncId, "menu"].sort());
 
   yield PlacesUtils.bookmarks.eraseEverything();
   yield PlacesSyncUtils.bookmarks.reset();

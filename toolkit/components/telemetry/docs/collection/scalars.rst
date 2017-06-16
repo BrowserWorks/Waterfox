@@ -99,6 +99,13 @@ Required Fields
 - ``expires``: The version number in which the scalar expires, e.g. "30"; a version number of type "N" and "N.0" is automatically converted to "N.0a1" in order to expire the scalar also in the development channels. A telemetry probe acting on an expired scalar will print a warning into the browser console. For scalars that never expire the value ``never`` can be used.
 - ``kind``: A string representing the scalar type. Allowed values are ``uint``, ``string`` and ``boolean``.
 - ``notification_emails``: A list of email addresses to notify with alerts of expiring probes. More importantly, these are used by the data steward to verify that the probe is still useful.
+- ``record_in_processes``: A list of processes the scalar is allowed to record in. Currently supported values are:
+
+  - ``main``;
+  - ``content``;
+  - ``gpu``;
+  - ``all_child`` (record in all the child processes);
+  - ``all`` (record in all the processes).
 
 Optional Fields
 ---------------
@@ -106,13 +113,6 @@ Optional Fields
 - ``cpp_guard``: A string that gets inserted as an ``#ifdef`` directive around the automatically generated C++ declaration. This is typically used for platform-specific scalars, e.g. ``ANDROID``.
 - ``release_channel_collection``: This can be either ``opt-in`` (default) or ``opt-out``. With the former the scalar is submitted by default on pre-release channels; on the release channel only if the user opted into additional data collection. With the latter the scalar is submitted by default on release and pre-release channels, unless the user opted out.
 - ``keyed``: A boolean that determines whether this is a keyed scalar. It defaults to ``False``.
-- ``record_in_processes``: A list of processes the scalar is allowed to record in. Currently supported values are:
-
-  - ``main`` (the default value);
-  - ``content``;
-  - ``gpu``;
-  - ``all_child`` (record in all the child processes);
-  - ``all`` (record in all the processes).
 
 String type restrictions
 ------------------------
@@ -149,6 +149,83 @@ This script is called by the build system to generate the ``TelemetryScalarEnums
 file out of the scalar definitions.
 This header file contains an enum class with all the scalar identifiers used to access them
 from code through the C++ API.
+
+Adding a new probe
+==================
+Making a scalar measurement is a two step process:
+
+1. add the probe definition to the scalar registry;
+2. record into the scalar using the API.
+
+Registering the scalar
+----------------------
+Let's start by registering two probes in the `Scalars.yaml <https://dxr.mozilla.org/mozilla-central/source/toolkit/components/telemetry/Scalars.yaml>`_ definition file: a simple boolean scalar and a keyed unsigned scalar.
+
+.. code-block:: yaml
+
+    # The following section contains the demo scalars.
+    profile:
+      was_reset:
+        bug_numbers:
+          - 1301364
+        description: True if the profile was reset.
+        expires: "60"
+        kind: boolean
+        notification_emails:
+          - change-me@allizom.com
+        release_channel_collection: opt-out
+        record_in_processes:
+          - 'main'
+
+    ui:
+      download_button_activated:
+        bug_numbers:
+          - 1301364
+        description: >
+          The number of times the download button was activated, per
+          input type (e.g. 'mouse_click', 'touchscreen', ...).
+        expires: "60"
+        kind: uint
+        keyed: true
+        notification_emails:
+          - change-me@allizom.com
+        release_channel_collection: opt-in
+        record_in_processes:
+          - 'main'
+
+These two scalars have different collection policies and are both constrained to recording only in the main process.
+For example, the ``ui.download_button_activated`` can be recorded only by users who opted into the extended Telemetry collection.
+
+Using the JS API
+----------------
+Changing the demo scalars from privileged JavaScript code is straightforward:
+
+.. code-block:: js
+
+  // Set the scalar value: trying to use a non-boolean value doesn't throw
+  // but rather prints a warning to the browser console
+  Services.telemetry.scalarSet("profile.was_reset", true);
+
+  // This call increments the value stored in "mouse_click" within the
+  // "ui.download_button_activated" scalar, by 1.
+  Services.telemetry.keyedScalarAdd("ui.download_button_activated", "mouse_click", 1);
+
+More usage examples can be found in the tests covering the `JS Scalars API <https://dxr.mozilla.org/mozilla-central/source/toolkit/components/telemetry/tests/unit/test_TelemetryScalars.js>`_ and `child processes scalars <https://dxr.mozilla.org/mozilla-central/source/toolkit/components/telemetry/tests/unit/test_ChildScalars.js>`_.
+
+Using the C++ API
+-----------------
+Native code can take advantage of Scalars as well, by including the ``Telemetry.h`` header file.
+
+.. code-block:: cpp
+
+    Telemetry::ScalarSet(Telemetry::ScalarID::PROFILE_WAS_RESET, false);
+
+    Telemetry::ScalarAdd(Telemetry::ScalarID::UI_DOWNLOAD_BUTTON_ACTIVATED,
+                         NS_LITERAL_STRING("touchscreen"), 1);
+
+The ``ScalarID`` enum is automatically generated by the build process, with an example being available `here <https://dxr.mozilla.org/mozilla-central/search?q=path%3ATelemetryScalarEnums.h&redirect=false>`_ .
+
+Other examples can be found in the `test coverage <https://dxr.mozilla.org/mozilla-central/source/toolkit/components/telemetry/tests/gtest/TestScalars.cpp>`_ for the scalars C++ API.
 
 Version History
 ===============

@@ -77,9 +77,9 @@ public class Prompt implements OnClickListener, OnCancelListener, OnItemClickLis
     }
 
     public void show(GeckoBundle message) {
-        String title = message.getString("title");
-        String text = message.getString("text");
-        mGuid = message.getString("guid");
+        String title = message.getString("title", "");
+        String text = message.getString("text", "");
+        mGuid = message.getString("guid", "");
 
         mButtons = message.getStringArray("buttons");
         final int buttonCount = mButtons == null ? 0 : mButtons.length;
@@ -94,7 +94,7 @@ public class Prompt implements OnClickListener, OnCancelListener, OnItemClickLis
         }
 
         PromptListItem[] menuitems = PromptListItem.getArray(message.getBundleArray("listitems"));
-        String selected = message.getString("choiceMode");
+        String selected = message.getString("choiceMode", "");
 
         int choiceMode = ListView.CHOICE_MODE_NONE;
         if ("single".equals(selected)) {
@@ -253,25 +253,7 @@ public class Prompt implements OnClickListener, OnCancelListener, OnItemClickLis
             if (input == null) {
                 continue;
             }
-
-            final String id = input.getId();
-            final Object value = input.getValue();
-
-            if (value == null) {
-                result.putBundle(id, null);
-            } else if (value instanceof Boolean) {
-                result.putBoolean(id, (Boolean) value);
-            } else if (value instanceof Double) {
-                result.putDouble(id, (Double) value);
-            } else if (value instanceof Integer) {
-                result.putInt(id, (Integer) value);
-            } else if (value instanceof CharSequence) {
-                result.putString(id, value.toString());
-            } else if (value instanceof GeckoBundle) {
-                result.putBundle(id, (GeckoBundle) value);
-            } else {
-                throw new UnsupportedOperationException(value.getClass().toString());
-            }
+            input.putInBundle(result);
         }
     }
 

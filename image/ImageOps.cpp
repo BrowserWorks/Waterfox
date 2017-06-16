@@ -113,6 +113,13 @@ ImageOps::DecodeToSurface(nsIInputStream* aInputStream,
   if (NS_FAILED(rv)) {
     return nullptr;
   }
+  // Make sure our sourceBuffer is marked as complete.
+  if (sourceBuffer->IsComplete()) {
+    NS_WARNING("The SourceBuffer was unexpectedly marked as complete. This may "
+               "indicate either an OOM condition, or that imagelib was not "
+               "initialized properly.");
+    return nullptr;
+  }
   sourceBuffer->Complete(NS_OK);
 
   // Create a decoder.

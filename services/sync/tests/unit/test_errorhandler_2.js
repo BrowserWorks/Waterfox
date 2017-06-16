@@ -63,7 +63,9 @@ function clean() {
   errorHandler.didReportProlongedError = false;
 }
 
-add_identity_test(this, async function test_crypto_keys_login_server_maintenance_error() {
+add_task(async function test_crypto_keys_login_server_maintenance_error() {
+  enableValidationPrefs();
+
   Status.resetSync();
   // Test crypto/keys server maintenance errors are not reported.
   let server = EHTestsCommon.sync_httpd_setup();
@@ -106,6 +108,8 @@ add_identity_test(this, async function test_crypto_keys_login_server_maintenance
 });
 
 add_task(async function test_sync_prolonged_server_maintenance_error() {
+  enableValidationPrefs();
+
   // Test prolonged server maintenance errors are reported.
   let server = EHTestsCommon.sync_httpd_setup();
   await EHTestsCommon.setUp(server);
@@ -135,7 +139,9 @@ add_task(async function test_sync_prolonged_server_maintenance_error() {
   clean();
 });
 
-add_identity_test(this, async function test_info_collections_login_prolonged_server_maintenance_error() {
+add_task(async function test_info_collections_login_prolonged_server_maintenance_error() {
+  enableValidationPrefs();
+
   // Test info/collections prolonged server maintenance errors are reported.
   let server = EHTestsCommon.sync_httpd_setup();
   await EHTestsCommon.setUp(server);
@@ -167,7 +173,9 @@ add_identity_test(this, async function test_info_collections_login_prolonged_ser
   await promiseStopServer(server);
 });
 
-add_identity_test(this, async function test_meta_global_login_prolonged_server_maintenance_error() {
+add_task(async function test_meta_global_login_prolonged_server_maintenance_error() {
+  enableValidationPrefs();
+
   // Test meta/global prolonged server maintenance errors are reported.
   let server = EHTestsCommon.sync_httpd_setup();
   await EHTestsCommon.setUp(server);
@@ -199,7 +207,9 @@ add_identity_test(this, async function test_meta_global_login_prolonged_server_m
   await promiseStopServer(server);
 });
 
-add_identity_test(this, async function test_download_crypto_keys_login_prolonged_server_maintenance_error() {
+add_task(async function test_download_crypto_keys_login_prolonged_server_maintenance_error() {
+  enableValidationPrefs();
+
   // Test crypto/keys prolonged server maintenance errors are reported.
   let server = EHTestsCommon.sync_httpd_setup();
   await EHTestsCommon.setUp(server);
@@ -232,7 +242,9 @@ add_identity_test(this, async function test_download_crypto_keys_login_prolonged
   await promiseStopServer(server);
 });
 
-add_identity_test(this, async function test_upload_crypto_keys_login_prolonged_server_maintenance_error() {
+add_task(async function test_upload_crypto_keys_login_prolonged_server_maintenance_error() {
+  enableValidationPrefs();
+
   // Test crypto/keys prolonged server maintenance errors are reported.
   let server = EHTestsCommon.sync_httpd_setup();
 
@@ -264,7 +276,9 @@ add_identity_test(this, async function test_upload_crypto_keys_login_prolonged_s
   await promiseStopServer(server);
 });
 
-add_identity_test(this, async function test_wipeServer_login_prolonged_server_maintenance_error() {
+add_task(async function test_wipeServer_login_prolonged_server_maintenance_error() {
+  enableValidationPrefs();
+
   // Test that we report prolonged server maintenance errors that occur whilst
   // wiping the server.
   let server = EHTestsCommon.sync_httpd_setup();
@@ -297,7 +311,9 @@ add_identity_test(this, async function test_wipeServer_login_prolonged_server_ma
   await promiseStopServer(server);
 });
 
-add_identity_test(this, async function test_wipeRemote_prolonged_server_maintenance_error() {
+add_task(async function test_wipeRemote_prolonged_server_maintenance_error() {
+  enableValidationPrefs();
+
   // Test that we report prolonged server maintenance errors that occur whilst
   // wiping all remote devices.
   let server = EHTestsCommon.sync_httpd_setup();
@@ -338,6 +354,8 @@ add_identity_test(this, async function test_wipeRemote_prolonged_server_maintena
 });
 
 add_task(async function test_sync_syncAndReportErrors_server_maintenance_error() {
+  enableValidationPrefs();
+
   // Test server maintenance errors are reported
   // when calling syncAndReportErrors.
   let server = EHTestsCommon.sync_httpd_setup();
@@ -365,7 +383,9 @@ add_task(async function test_sync_syncAndReportErrors_server_maintenance_error()
   await promiseStopServer(server);
 });
 
-add_identity_test(this, async function test_info_collections_login_syncAndReportErrors_server_maintenance_error() {
+add_task(async function test_info_collections_login_syncAndReportErrors_server_maintenance_error() {
+  enableValidationPrefs();
+
   // Test info/collections server maintenance errors are reported
   // when calling syncAndReportErrors.
   let server = EHTestsCommon.sync_httpd_setup();
@@ -398,7 +418,9 @@ add_identity_test(this, async function test_info_collections_login_syncAndReport
   await promiseStopServer(server);
 });
 
-add_identity_test(this, async function test_meta_global_login_syncAndReportErrors_server_maintenance_error() {
+add_task(async function test_meta_global_login_syncAndReportErrors_server_maintenance_error() {
+  enableValidationPrefs();
+
   // Test meta/global server maintenance errors are reported
   // when calling syncAndReportErrors.
   let server = EHTestsCommon.sync_httpd_setup();
@@ -431,7 +453,9 @@ add_identity_test(this, async function test_meta_global_login_syncAndReportError
   await promiseStopServer(server);
 });
 
-add_identity_test(this, async function test_download_crypto_keys_login_syncAndReportErrors_server_maintenance_error() {
+add_task(async function test_download_crypto_keys_login_syncAndReportErrors_server_maintenance_error() {
+  enableValidationPrefs();
+
   // Test crypto/keys server maintenance errors are reported
   // when calling syncAndReportErrors.
   let server = EHTestsCommon.sync_httpd_setup();
@@ -466,7 +490,9 @@ add_identity_test(this, async function test_download_crypto_keys_login_syncAndRe
   await promiseStopServer(server);
 });
 
-add_identity_test(this, async function test_upload_crypto_keys_login_syncAndReportErrors_server_maintenance_error() {
+add_task(async function test_upload_crypto_keys_login_syncAndReportErrors_server_maintenance_error() {
+  enableValidationPrefs();
+
   // Test crypto/keys server maintenance errors are reported
   // when calling syncAndReportErrors.
   let server = EHTestsCommon.sync_httpd_setup();
@@ -499,7 +525,9 @@ add_identity_test(this, async function test_upload_crypto_keys_login_syncAndRepo
   await promiseStopServer(server);
 });
 
-add_identity_test(this, async function test_wipeServer_login_syncAndReportErrors_server_maintenance_error() {
+add_task(async function test_wipeServer_login_syncAndReportErrors_server_maintenance_error() {
+  enableValidationPrefs();
+
   // Test crypto/keys server maintenance errors are reported
   // when calling syncAndReportErrors.
   let server = EHTestsCommon.sync_httpd_setup();
@@ -532,7 +560,9 @@ add_identity_test(this, async function test_wipeServer_login_syncAndReportErrors
   await promiseStopServer(server);
 });
 
-add_identity_test(this, async function test_wipeRemote_syncAndReportErrors_server_maintenance_error() {
+add_task(async function test_wipeRemote_syncAndReportErrors_server_maintenance_error() {
+  enableValidationPrefs();
+
   // Test that we report prolonged server maintenance errors that occur whilst
   // wiping all remote devices.
   let server = EHTestsCommon.sync_httpd_setup();
@@ -572,6 +602,8 @@ add_identity_test(this, async function test_wipeRemote_syncAndReportErrors_serve
 });
 
 add_task(async function test_sync_syncAndReportErrors_prolonged_server_maintenance_error() {
+  enableValidationPrefs();
+
   // Test prolonged server maintenance errors are
   // reported when calling syncAndReportErrors.
   let server = EHTestsCommon.sync_httpd_setup();
@@ -601,7 +633,9 @@ add_task(async function test_sync_syncAndReportErrors_prolonged_server_maintenan
   await promiseStopServer(server);
 });
 
-add_identity_test(this, async function test_info_collections_login_syncAndReportErrors_prolonged_server_maintenance_error() {
+add_task(async function test_info_collections_login_syncAndReportErrors_prolonged_server_maintenance_error() {
+  enableValidationPrefs();
+
   // Test info/collections server maintenance errors are reported
   // when calling syncAndReportErrors.
   let server = EHTestsCommon.sync_httpd_setup();
@@ -636,7 +670,9 @@ add_identity_test(this, async function test_info_collections_login_syncAndReport
   await promiseStopServer(server);
 });
 
-add_identity_test(this, async function test_meta_global_login_syncAndReportErrors_prolonged_server_maintenance_error() {
+add_task(async function test_meta_global_login_syncAndReportErrors_prolonged_server_maintenance_error() {
+  enableValidationPrefs();
+
   // Test meta/global server maintenance errors are reported
   // when calling syncAndReportErrors.
   let server = EHTestsCommon.sync_httpd_setup();
@@ -671,7 +707,9 @@ add_identity_test(this, async function test_meta_global_login_syncAndReportError
   await promiseStopServer(server);
 });
 
-add_identity_test(this, async function test_download_crypto_keys_login_syncAndReportErrors_prolonged_server_maintenance_error() {
+add_task(async function test_download_crypto_keys_login_syncAndReportErrors_prolonged_server_maintenance_error() {
+  enableValidationPrefs();
+
   // Test crypto/keys server maintenance errors are reported
   // when calling syncAndReportErrors.
   let server = EHTestsCommon.sync_httpd_setup();
@@ -708,7 +746,9 @@ add_identity_test(this, async function test_download_crypto_keys_login_syncAndRe
   await promiseStopServer(server);
 });
 
-add_identity_test(this, async function test_upload_crypto_keys_login_syncAndReportErrors_prolonged_server_maintenance_error() {
+add_task(async function test_upload_crypto_keys_login_syncAndReportErrors_prolonged_server_maintenance_error() {
+  enableValidationPrefs();
+
   // Test crypto/keys server maintenance errors are reported
   // when calling syncAndReportErrors.
   let server = EHTestsCommon.sync_httpd_setup();
@@ -743,7 +783,9 @@ add_identity_test(this, async function test_upload_crypto_keys_login_syncAndRepo
   await promiseStopServer(server);
 });
 
-add_identity_test(this, async function test_wipeServer_login_syncAndReportErrors_prolonged_server_maintenance_error() {
+add_task(async function test_wipeServer_login_syncAndReportErrors_prolonged_server_maintenance_error() {
+  enableValidationPrefs();
+
   // Test crypto/keys server maintenance errors are reported
   // when calling syncAndReportErrors.
   let server = EHTestsCommon.sync_httpd_setup();
@@ -779,6 +821,8 @@ add_identity_test(this, async function test_wipeServer_login_syncAndReportErrors
 });
 
 add_task(async function test_sync_engine_generic_fail() {
+  enableValidationPrefs();
+
   let server = EHTestsCommon.sync_httpd_setup();
 
 let engine = engineManager.get("catapult");
@@ -835,6 +879,8 @@ let engine = engineManager.get("catapult");
 });
 
 add_test(function test_logs_on_sync_error_despite_shouldReportError() {
+  enableValidationPrefs();
+
   _("Ensure that an error is still logged when weave:service:sync:error " +
     "is notified, despite shouldReportError returning false.");
 
@@ -862,6 +908,8 @@ add_test(function test_logs_on_sync_error_despite_shouldReportError() {
 });
 
 add_test(function test_logs_on_login_error_despite_shouldReportError() {
+  enableValidationPrefs();
+
   _("Ensure that an error is still logged when weave:service:login:error " +
     "is notified, despite shouldReportError returning false.");
 
@@ -891,6 +939,8 @@ add_test(function test_logs_on_login_error_despite_shouldReportError() {
 // This test should be the last one since it monkeypatches the engine object
 // and we should only have one engine object throughout the file (bug 629664).
 add_task(async function test_engine_applyFailed() {
+  enableValidationPrefs();
+
   let server = EHTestsCommon.sync_httpd_setup();
 
   let engine = engineManager.get("catapult");

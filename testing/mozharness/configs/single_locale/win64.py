@@ -14,9 +14,9 @@ config = {
         "LOCALE_MERGEDIR": "%(abs_merge_dir)s",
         "L10NBASEDIR": "../../l10n",
         "MOZ_MAKE_COMPLETE_MAR": "1",
-        "PATH": 'C:\\mozilla-build\\nsis-3.0b1;'
+        "PATH": 'C:\\mozilla-build\\nsis-3.01;'
                 '%s' % (os.environ.get('path')),
-        'TOOLTOOL_CACHE': '/c/builds/tooltool_cache',
+        'TOOLTOOL_CACHE': 'c:/builds/tooltool_cache',
         'TOOLTOOL_HOME': '/c/builds',
     },
     "ssh_key_dir": "~/.ssh",

@@ -11,6 +11,15 @@
   --panelui-subview-transition-duration: 150ms;
 }
 
+:root:-moz-lwtheme {
+  color: var(--lwt-text-color) !important;
+}
+
+:root:-moz-lwtheme:not([customization-lwtheme]) {
+  background-color: var(--lwt-accent-color) !important;
+  background-image: var(--lwt-header-image) !important;
+}
+
 #main-window:not([chromehidden~="toolbar"]) {
 %ifdef XP_MACOSX
   min-width: 335px;
@@ -324,6 +333,10 @@ toolbarpaletteitem > toolbaritem[sdkstylewidget="true"][cui-areatype="toolbar"] 
   .webextension-page-action {
     list-style-image: var(--webextension-urlbar-image);
   }
+
+  .webextension-menuitem {
+    list-style-image: var(--webextension-menuitem-image);
+  }
 }
 
 @media (min-resolution: 1.1dppx) {
@@ -339,6 +352,15 @@ toolbarpaletteitem > toolbaritem[sdkstylewidget="true"][cui-areatype="toolbar"] 
   .webextension-page-action {
     list-style-image: var(--webextension-urlbar-image-2x);
   }
+
+  .webextension-menuitem {
+    list-style-image: var(--webextension-menuitem-image-2x);
+  }
+}
+
+toolbarbutton.webextension-menuitem > .toolbarbutton-icon {
+  width: 16px;
+  height: 16px;
 }
 
 toolbarpaletteitem[removable="false"] {
@@ -429,9 +451,11 @@ toolbar:not(#TabsToolbar) > #personal-bookmarks {
 }
 %endif
 
-#browser-bottombox[lwthemefooter="true"] {
+:root[lwthemefooter=true] #browser-bottombox:-moz-lwtheme {
   background-repeat: no-repeat;
   background-position: bottom left;
+  background-color: var(--lwt-accent-color);
+  background-image: var(--lwt-footer-image);
 }
 
 .menuitem-iconic-tooltip {
@@ -964,10 +988,14 @@ toolbarpaletteitem[place="palette"] > #downloads-button[indicator] > #downloads-
   display: none;
 }
 
-#downloads-button:-moz-any([progress], [counter], [paused]) #downloads-indicator-icon,
-#downloads-button:not(:-moz-any([progress], [counter], [paused]))
-                                                   #downloads-indicator-progress-area
-{
+#downloads-button.withProgressBar:-moz-any([progress], [counter], [paused]) #downloads-indicator-icon,
+#downloads-button:not(:-moz-any([progress], [counter], [paused])) #downloads-indicator-progress-area {
+  visibility: hidden;
+}
+
+/* Hide elements for another type of progressmeter if it's not in use. */
+#downloads-button.withProgressBar #downloads-indicator-progress-icon,
+#downloads-button:not(.withProgressBar) #downloads-indicator-progress-area {
   visibility: hidden;
 }
 

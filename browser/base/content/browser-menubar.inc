@@ -297,6 +297,7 @@
 #endif
                 <menuitem id="menu_readerModeItem"
                           observes="View:ReaderView"
+                          key="key_toggleReaderMode"
                           hidden="true"/>
                 <menuitem id="menu_showAllTabs"
                           hidden="true"
@@ -452,6 +453,19 @@
                    onpopupshowing="if (!this.parentNode._placesView)
                                      new PlacesMenu(event, 'place:folder=UNFILED_BOOKMARKS');"/>
       </menu>
+      <menu id="menu_mobileBookmarks"
+            class="menu-iconic bookmark-item"
+            label="&mobileBookmarksCmd.label;"
+            hidden="true"
+            container="true">
+        <menupopup id="mobileBookmarksFolderPopup"
+#ifndef XP_MACOSX
+                   placespopup="true"
+#endif
+                   context="placesContext"
+                   onpopupshowing="if (!this.parentNode._placesView)
+                                     new PlacesMenu(event, 'place:folder=MOBILE_BOOKMARKS');"/>
+      </menu>
       <menuseparator id="bookmarksMenuItemsSeparator"/>
       <!-- Bookmarks menu items -->
     </menupopup>
@@ -483,7 +497,7 @@
                         label="&syncSignIn.label;"
                         accesskey="&syncSignIn.accesskey;"
                         observes="sync-setup-state"
-                        oncommand="gSyncUI.openSetup(null, 'menubar')"/>
+                        oncommand="gSyncUI.openPrefs('menubar')"/>
               <menuitem id="sync-syncnowitem"
                         label="&syncSyncNowItem.label;"
                         accesskey="&syncSyncNowItem.accesskey;"

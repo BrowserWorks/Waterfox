@@ -1,3 +1,6 @@
+// This file also defines a frame script.
+/* eslint-env mozilla/frame-script */
+
 var Cc = Components.classes;
 var Ci = Components.interfaces;
 var Cu = Components.utils;
@@ -22,10 +25,9 @@ function forEachWindow(f) {
 }
 
 function addLoadListener(target, listener) {
-  target.addEventListener("load", function handler(event) {
-    target.removeEventListener("load", handler, true);
+  target.addEventListener("load", function(event) {
     return listener(event);
-  }, true);
+  }, {capture: true, once: true});
 }
 
 var gWin;
@@ -208,9 +210,7 @@ function testSandbox() {
     const url = baseURL + "browser_addonShims_testpage.html";
     let tab = gBrowser.addTab(url);
     let browser = tab.linkedBrowser;
-    browser.addEventListener("load", function handler() {
-      browser.removeEventListener("load", handler);
-
+    browser.addEventListener("load", function() {
       let sandbox = Cu.Sandbox(browser.contentWindow,
                                {sandboxPrototype: browser.contentWindow,
                                 wantXrays: false});
@@ -231,7 +231,7 @@ function testSandbox() {
          "EP sandbox code ran successfully");
 
       removeTab(tab, resolve);
-    }, true);
+    }, {capture: true, once: true});
   });
 }
 
@@ -429,6 +429,8 @@ function testAboutModuleRegistration() {
    */
   let testAboutModulesWork = (browser) => {
     let testConnection = () => {
+      // This section is loaded into a frame script.
+      /* global content:false */
       let request = new content.XMLHttpRequest();
       try {
         request.open("GET", "about:test1", false);
@@ -630,4 +632,3 @@ function install(aData, aReason) {
 
 function uninstall(aData, aReason) {
 }
-

@@ -47,7 +47,7 @@ SharedWorker::~SharedWorker()
 
 // static
 already_AddRefed<SharedWorker>
-SharedWorker::Constructor(const GlobalObject& aGlobal, JSContext* aCx,
+SharedWorker::Constructor(const GlobalObject& aGlobal,
                           const nsAString& aScriptURL,
                           const mozilla::dom::Optional<nsAString>& aName,
                           ErrorResult& aRv)
@@ -145,7 +145,7 @@ SharedWorker::Close()
 
 void
 SharedWorker::PostMessage(JSContext* aCx, JS::Handle<JS::Value> aMessage,
-                          const Optional<Sequence<JS::Value>>& aTransferable,
+                          const Sequence<JSObject*>& aTransferable,
                           ErrorResult& aRv)
 {
   AssertIsOnMainThread();

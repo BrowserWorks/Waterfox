@@ -311,10 +311,21 @@ Site.prototype = {
   _speculativeConnect: function Site_speculativeConnect() {
     let sc = Services.io.QueryInterface(Ci.nsISpeculativeConnect);
     let uri = Services.io.newURI(this.url);
+
+    if (!uri.schemeIs("http") && !uri.schemeIs("https")) {
+      return;
+    }
+
     try {
       // This can throw for certain internal URLs, when they wind up in
       // about:newtab. Be sure not to propagate the error.
-      sc.speculativeConnect(uri, null);
+
+      // We use the URI's codebase principal here to open its speculative
+      // connection.
+      let originAttributes = document.docShell.getOriginAttributes();
+      let principal = Services.scriptSecurityManager
+                              .createCodebasePrincipal(uri, originAttributes);
+      sc.speculativeConnect2(uri, principal, null);
     } catch (e) {}
   },
 
@@ -337,7 +348,7 @@ Site.prototype = {
     let button = this._querySelector(buttonClass);
     if (button.hasAttribute("active")) {
       let explain = this._querySelector(explanationTextClass);
-      explain.parentNode.removeChild(explain);
+      explain.remove();
 
       button.removeAttribute("active");
     }

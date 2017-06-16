@@ -15,8 +15,8 @@ const escope = require("escope");
 const estraverse = require("estraverse");
 
 /**
- * Parses a list of "name:boolean_value" or/and "name" options divided by comma or
- * whitespace.
+ * Parses a list of "name:boolean_value" or/and "name" options divided by comma
+ * or whitespace.
  *
  * This function was copied from eslint.js
  *
@@ -38,7 +38,7 @@ function parseBooleanConfig(string, comment) {
     }
 
     let pos = name.indexOf(":");
-    let value = undefined;
+    let value;
     if (pos !== -1) {
       value = name.substring(pos + 1, name.length);
       name = name.substring(0, pos);
@@ -60,17 +60,25 @@ function parseBooleanConfig(string, comment) {
 const globalCache = new Map();
 
 /**
+ * Global discovery can occasionally meet circular dependencies due to the way
+ * js files are included via xul files etc. This set is used to avoid getting
+ * into loops whilst the discovery is in progress.
+ */
+var globalDiscoveryInProgressForFiles = new Set();
+
+/**
  * An object that returns found globals for given AST node types. Each prototype
  * property should be named for a node type and accepts a node parameter and a
  * parents parameter which is a list of the parent nodes of the current node.
  * Each returns an array of globals found.
  *
- * @param  {String} path
+ * @param  {String} filePath
  *         The absolute path of the file being parsed.
  */
-function GlobalsForNode(path) {
-  this.path = path;
-  this.root = helpers.getRootDir(path);
+function GlobalsForNode(filePath) {
+  this.path = filePath;
+  this.dirname = path.dirname(this.path);
+  this.root = helpers.getRootDir(this.path);
 }
 
 GlobalsForNode.prototype = {
@@ -84,18 +92,31 @@ GlobalsForNode.prototype = {
     let filePath = match[1].trim();
 
     if (!path.isAbsolute(filePath)) {
-      let dirName = path.dirname(this.path);
-      filePath = path.resolve(dirName, filePath);
+      filePath = path.resolve(this.dirname, filePath);
     }
 
     return module.exports.getGlobalsForFile(filePath);
   },
 
-  ExpressionStatement(node, parents) {
+  ExpressionStatement(node, parents, globalScope) {
     let isGlobal = helpers.getIsGlobalScope(parents);
-    let names = helpers.convertExpressionToGlobals(node, isGlobal, this.root);
-    return names.map(name => { return { name, writable: true }});
-  },
+    let globals = helpers.convertExpressionToGlobals(node, isGlobal, this.root);
+    // Map these globals now, as getGlobalsForFile is pre-mapped.
+    globals = globals.map(name => {
+      return { name, writable: true };
+    });
+
+    // Here we assume that if importScripts is set in the global scope, then
+    // this is a worker. It would be nice if eslint gave us a way of getting
+    // the environment directly.
+    if (globalScope && globalScope.set.get("importScripts")) {
+      let workerDetails = helpers.convertWorkerExpressionToGlobals(node,
+        isGlobal, this.root, this.dirname);
+      globals = globals.concat(workerDetails);
+    }
+
+    return globals;
+  }
 };
 
 module.exports = {
@@ -106,10 +127,24 @@ module.exports = {
    *
    * @param  {String} path
    *         The absolute path of the file to be parsed.
+   * @return {Array}
+   *         An array of objects that contain details about the globals:
+   *         - {String} name
+   *                    The name of the global.
+   *         - {Boolean} writable
+   *                     If the global is writeable or not.
    */
   getGlobalsForFile(path) {
     if (globalCache.has(path)) {
       return globalCache.get(path);
+    }
+
+    if (globalDiscoveryInProgressForFiles.has(path)) {
+      // We're already processing this file, so return an empty set for now -
+      // the initial processing will pick up on the globals for this file.
+      return [];
+    } else {
+      globalDiscoveryInProgressForFiles.add(path);
     }
 
     let content = fs.readFileSync(path, "utf8");
@@ -123,7 +158,7 @@ module.exports = {
 
     let globals = Object.keys(globalScope.variables).map(v => ({
       name: globalScope.variables[v].name,
-      writable: true,
+      writable: true
     }));
 
     // Walk over the AST to find any of our custom globals
@@ -142,19 +177,20 @@ module.exports = {
             globals.push({
               name,
               writable: values[name].value
-            })
+            });
           }
         }
       }
 
       if (type in handler) {
-        let newGlobals = handler[type](node, parents);
+        let newGlobals = handler[type](node, parents, globalScope);
         globals.push.apply(globals, newGlobals);
       }
     });
 
     globalCache.set(path, globals);
 
+    globalDiscoveryInProgressForFiles.delete(path);
     return globals;
   },
 
@@ -179,9 +215,12 @@ module.exports = {
 
     for (let type of Object.keys(GlobalsForNode.prototype)) {
       parser[type] = function(node) {
-        let globals = handler[type](node, context.getAncestors());
+        if (type === "Program") {
+          globalScope = context.getScope();
+        }
+        let globals = handler[type](node, context.getAncestors(), globalScope);
         helpers.addGlobals(globals, globalScope);
-      }
+      };
     }
 
     return parser;

@@ -8,7 +8,7 @@
  */
 
 add_task(function* () {
-  let { L10N } = require("devtools/client/netmonitor/l10n");
+  let { L10N } = require("devtools/client/netmonitor/utils/l10n");
 
   // Set a higher panel height in order to get full CodeMirror content
   Services.prefs.setIntPref("devtools.toolbox.footer.height", 400);
@@ -16,10 +16,14 @@ add_task(function* () {
   let { tab, monitor } = yield initNetMonitor(POST_DATA_URL);
   info("Starting test... ");
 
-  let { document, NetMonitorView } = monitor.panelWin;
-  let { RequestsMenu } = NetMonitorView;
+  let { document, gStore, windowRequire } = monitor.panelWin;
+  let Actions = windowRequire("devtools/client/netmonitor/actions/index");
+  let {
+    getDisplayedRequests,
+    getSortedRequests,
+  } = windowRequire("devtools/client/netmonitor/selectors/index");
 
-  RequestsMenu.lazyUpdate = false;
+  gStore.dispatch(Actions.batchEnable(false));
 
   let wait = waitForNetworkEvents(monitor, 0, 2);
   yield ContentTask.spawn(tab.linkedBrowser, {}, function* () {
@@ -27,38 +31,51 @@ add_task(function* () {
   });
   yield wait;
 
-  verifyRequestItemTarget(RequestsMenu, RequestsMenu.getItemAtIndex(0),
-    "POST", SIMPLE_SJS + "?foo=bar&baz=42&type=urlencoded", {
+  verifyRequestItemTarget(
+    document,
+    getDisplayedRequests(gStore.getState()),
+    getSortedRequests(gStore.getState()).get(0),
+    "POST",
+    SIMPLE_SJS + "?foo=bar&baz=42&type=urlencoded",
+    {
       status: 200,
       statusText: "Och Aye",
       type: "plain",
       fullMimeType: "text/plain; charset=utf-8",
       size: L10N.getFormatStrWithNumbers("networkMenu.sizeB", 12),
       time: true
-    });
-  verifyRequestItemTarget(RequestsMenu, RequestsMenu.getItemAtIndex(1),
-    "POST", SIMPLE_SJS + "?foo=bar&baz=42&type=multipart", {
+    }
+  );
+  verifyRequestItemTarget(
+    document,
+    getDisplayedRequests(gStore.getState()),
+    getSortedRequests(gStore.getState()).get(1),
+    "POST",
+    SIMPLE_SJS + "?foo=bar&baz=42&type=multipart",
+    {
       status: 200,
       statusText: "Och Aye",
       type: "plain",
       fullMimeType: "text/plain; charset=utf-8",
       size: L10N.getFormatStrWithNumbers("networkMenu.sizeB", 12),
       time: true
-    });
+    }
+  );
 
   // Wait for all tree sections updated by react
-  wait = waitForDOM(document, "#params-tabpanel .tree-section", 2);
+  wait = waitForDOM(document, "#params-panel .tree-section", 2);
   EventUtils.sendMouseEvent({ type: "mousedown" },
-    document.getElementById("details-pane-toggle"));
-  EventUtils.sendMouseEvent({ type: "mousedown" },
-    document.querySelectorAll("#details-pane tab")[2]);
+    document.querySelectorAll(".request-list-item")[0]);
+  EventUtils.sendMouseEvent({ type: "click" },
+    document.querySelector("#params-tab"));
   yield wait;
   yield testParamsTab("urlencoded");
 
   // Wait for all tree sections and editor updated by react
-  let waitForSections = waitForDOM(document, "#params-tabpanel .tree-section", 2);
-  let waitForEditor = waitForDOM(document, "#params-tabpanel .editor-mount iframe");
-  RequestsMenu.selectedIndex = 1;
+  let waitForSections = waitForDOM(document, "#params-panel .tree-section", 2);
+  let waitForEditor = waitForDOM(document, "#params-panel .editor-mount iframe");
+  EventUtils.sendMouseEvent({ type: "mousedown" },
+    document.querySelectorAll(".request-list-item")[1]);
   let [, editorFrames] = yield Promise.all([waitForSections, waitForEditor]);
   yield once(editorFrames[0], "DOMContentLoaded");
   yield waitForDOM(editorFrames[0].contentDocument, ".CodeMirror-code");
@@ -67,11 +84,7 @@ add_task(function* () {
   return teardown(monitor);
 
   function* testParamsTab(type) {
-    let tabEl = document.querySelectorAll("#details-pane tab")[2];
-    let tabpanel = document.querySelectorAll("#details-pane tabpanel")[2];
-
-    is(tabEl.getAttribute("selected"), "true",
-      "The params tab in the network details pane should be selected.");
+    let tabpanel = document.querySelector("#params-panel");
 
     function checkVisibility(box) {
       is(!tabpanel.querySelector(".treeTable"), !box.includes("params"),
@@ -96,15 +109,18 @@ add_task(function* () {
       L10N.getStr(type == "urlencoded" ? "paramsFormData" : "paramsPostPayload"),
       "The post section doesn't have the correct title.");
 
-    let labels = tabpanel.querySelectorAll("tr:not(.tree-section) .treeLabelCell .treeLabel");
-    let values = tabpanel.querySelectorAll("tr:not(.tree-section) .treeValueCell .objectBox");
+    let labels = tabpanel
+      .querySelectorAll("tr:not(.tree-section) .treeLabelCell .treeLabel");
+    let values = tabpanel
+      .querySelectorAll("tr:not(.tree-section) .treeValueCell .objectBox");
 
     is(labels[0].textContent, "foo", "The first query param name was incorrect.");
     is(values[0].textContent, "\"bar\"", "The first query param value was incorrect.");
     is(labels[1].textContent, "baz", "The second query param name was incorrect.");
     is(values[1].textContent, "\"42\"", "The second query param value was incorrect.");
     is(labels[2].textContent, "type", "The third query param name was incorrect.");
-    is(values[2].textContent, "\"" + type + "\"", "The third query param value was incorrect.");
+    is(values[2].textContent, "\"" + type + "\"",
+      "The third query param value was incorrect.");
 
     if (type == "urlencoded") {
       checkVisibility("params");
@@ -118,7 +134,8 @@ add_task(function* () {
 
       is(labels.length, 3, "There should be 3 param values displayed in this tabpanel.");
 
-      let text = editorFrames[0].contentDocument.querySelector(".CodeMirror-code").textContent;
+      let text = editorFrames[0].contentDocument.querySelector(".CodeMirror-code")
+                                                .textContent;
 
       ok(text.includes("Content-Disposition: form-data; name=\"text\""),
         "The text shown in the source editor is incorrect (1.1).");

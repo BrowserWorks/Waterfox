@@ -16,7 +16,6 @@ Cu.import("resource://gre/modules/FxAccountsCommon.js", fxAccountsCommon);
 Cu.import("resource://services-sync/util.js");
 
 const PREF_LAST_FXA_USER = "identity.fxaccounts.lastSignedInUserHash";
-const PREF_SYNC_SHOW_CUSTOMIZATION = "services.sync-setup.ui.showCustomizationDialog";
 
 const ACTION_URL_PARAM = "action";
 
@@ -197,9 +196,8 @@ var wrapper = {
   onLogin(accountData) {
     log("Received: 'login'. Data:" + JSON.stringify(accountData));
 
-    if (accountData.customizeSync) {
-      Services.prefs.setBoolPref(PREF_SYNC_SHOW_CUSTOMIZATION, true);
-    }
+    // We don't act on customizeSync anymore, it used to open a dialog inside
+    // the browser to selecte the engines to sync but we do it on the web now.
     delete accountData.customizeSync;
     // sessionTokenContext is erroneously sent by the content server.
     // https://github.com/mozilla/fxa-content-server/issues/2766
@@ -306,18 +304,6 @@ var wrapper = {
 
 
 // Button onclick handlers
-function handleOldSync() {
-  let chromeWin = window
-    .QueryInterface(Ci.nsIInterfaceRequestor)
-    .getInterface(Ci.nsIWebNavigation)
-    .QueryInterface(Ci.nsIDocShellTreeItem)
-    .rootTreeItem
-    .QueryInterface(Ci.nsIInterfaceRequestor)
-    .getInterface(Ci.nsIDOMWindow)
-    .QueryInterface(Ci.nsIDOMChromeWindow);
-  let url = Services.urlFormatter.formatURLPref("app.support.baseURL") + "old-sync";
-  chromeWin.switchToTabHavingURI(url, true);
-}
 
 function getStarted() {
   show("remote");
@@ -497,8 +483,7 @@ function getDefaultProfilePath() {
   return defaultProfile.rootDir.path;
 }
 
-document.addEventListener("DOMContentLoaded", function onload() {
-  document.removeEventListener("DOMContentLoaded", onload, true);
+document.addEventListener("DOMContentLoaded", function() {
   init();
   var buttonGetStarted = document.getElementById("buttonGetStarted");
   buttonGetStarted.addEventListener("click", getStarted);
@@ -506,12 +491,9 @@ document.addEventListener("DOMContentLoaded", function onload() {
   var buttonRetry = document.getElementById("buttonRetry");
   buttonRetry.addEventListener("click", retry);
 
-  var oldsync = document.getElementById("oldsync");
-  oldsync.addEventListener("click", handleOldSync);
-
-  var buttonOpenPrefs = document.getElementById("buttonOpenPrefs")
+  var buttonOpenPrefs = document.getElementById("buttonOpenPrefs");
   buttonOpenPrefs.addEventListener("click", openPrefs);
-}, true);
+}, {capture: true, once: true});
 
 function initObservers() {
   function observe(subject, topic, data) {

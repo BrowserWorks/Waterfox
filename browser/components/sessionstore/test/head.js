@@ -71,10 +71,9 @@ function provideWindow(aCallback, aURL, aFeatures) {
       return;
     }
 
-    aWin.gBrowser.selectedBrowser.addEventListener("load", function selectedBrowserLoadListener() {
-      aWin.gBrowser.selectedBrowser.removeEventListener("load", selectedBrowserLoadListener, true);
+    aWin.gBrowser.selectedBrowser.addEventListener("load", function() {
       callbackSoon(aWin);
-    }, true);
+    }, {capture: true, once: true});
   });
 }
 
@@ -126,8 +125,6 @@ function waitForBrowserState(aState, aSetStateCallback) {
     if (aTopic == "domwindowopened") {
       let newWindow = aSubject.QueryInterface(Ci.nsIDOMWindow);
       newWindow.addEventListener("load", function() {
-        newWindow.removeEventListener("load", arguments.callee);
-
         if (++windowsOpen == expectedWindows) {
           Services.ww.unregisterNotification(windowObserver);
           windowObserving = false;
@@ -137,7 +134,7 @@ function waitForBrowserState(aState, aSetStateCallback) {
         windows.push(newWindow);
         // Add the progress listener
         newWindow.gBrowser.tabContainer.addEventListener("SSTabRestored", onSSTabRestored, true);
-      });
+      }, {once: true});
     }
   }
 
@@ -291,12 +288,11 @@ function promiseBrowserLoaded(aBrowser, ignoreSubFrames = true, wantLoad = null)
 }
 
 function whenWindowLoaded(aWindow, aCallback = next) {
-  aWindow.addEventListener("load", function windowLoadListener() {
-    aWindow.removeEventListener("load", windowLoadListener);
+  aWindow.addEventListener("load", function() {
     executeSoon(function executeWhenWindowLoaded() {
       aCallback(aWindow);
     });
-  });
+  }, {once: true});
 }
 function promiseWindowLoaded(aWindow) {
   return new Promise(resolve => whenWindowLoaded(aWindow, resolve));
@@ -441,11 +437,10 @@ function whenNewWindowLoaded(aOptions, aCallback) {
       return;
     }
 
-    win.addEventListener("load", function onLoad() {
-      win.removeEventListener("load", onLoad);
+    win.addEventListener("load", function() {
       let browser = win.gBrowser.selectedBrowser;
       promiseBrowserLoaded(browser).then(resolve);
-    });
+    }, {once: true});
   });
 
   Promise.all([delayedStartup, browserLoaded]).then(() => aCallback(win));
@@ -473,10 +468,9 @@ function promiseDelayedStartupFinished(aWindow) {
 
 function promiseEvent(element, eventType, isCapturing = false) {
   return new Promise(resolve => {
-    element.addEventListener(eventType, function listener(event) {
-      element.removeEventListener(eventType, listener, isCapturing);
+    element.addEventListener(eventType, function(event) {
       resolve(event);
-    }, isCapturing);
+    }, {capture: isCapturing, once: true});
   });
 }
 

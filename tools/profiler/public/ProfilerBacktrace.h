@@ -7,14 +7,15 @@
 #ifndef __PROFILER_BACKTRACE_H
 #define __PROFILER_BACKTRACE_H
 
-class SyncProfile;
+class ProfileBuffer;
 class SpliceableJSONWriter;
+class ThreadInfo;
 class UniqueStacks;
 
 class ProfilerBacktrace
 {
 public:
-  explicit ProfilerBacktrace(SyncProfile* aProfile);
+  explicit ProfilerBacktrace(ProfileBuffer* aBuffer, ThreadInfo* aThreadInfo);
   ~ProfilerBacktrace();
 
   // ProfilerBacktraces' stacks are deduplicated in the context of the
@@ -23,13 +24,16 @@ public:
   // That is, markers that contain backtraces should not need their own stack,
   // frame, and string tables. They should instead reuse their parent
   // profile's tables.
-  void StreamJSON(SpliceableJSONWriter& aWriter, UniqueStacks& aUniqueStacks);
+  void StreamJSON(SpliceableJSONWriter& aWriter,
+                  const mozilla::TimeStamp& aStartTime,
+                  UniqueStacks& aUniqueStacks);
 
 private:
   ProfilerBacktrace(const ProfilerBacktrace&);
   ProfilerBacktrace& operator=(const ProfilerBacktrace&);
 
-  SyncProfile*  mProfile;
+  ProfileBuffer* mBuffer;
+  ThreadInfo* mThreadInfo;
 };
 
 #endif // __PROFILER_BACKTRACE_H

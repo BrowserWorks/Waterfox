@@ -85,42 +85,6 @@ IsWindowsBuildOrLater(uint32_t aBuild)
 }
 
 MOZ_ALWAYS_INLINE bool
-IsXPSP3OrLater()
-{
-  return IsWindowsVersionOrLater(0x05010300ul);
-}
-
-MOZ_ALWAYS_INLINE bool
-IsWin2003OrLater()
-{
-  return IsWindowsVersionOrLater(0x05020000ul);
-}
-
-MOZ_ALWAYS_INLINE bool
-IsWin2003SP2OrLater()
-{
-  return IsWindowsVersionOrLater(0x05020200ul);
-}
-
-MOZ_ALWAYS_INLINE bool
-IsVistaOrLater()
-{
-  return IsWindowsVersionOrLater(0x06000000ul);
-}
-
-MOZ_ALWAYS_INLINE bool
-IsVistaSP1OrLater()
-{
-  return IsWindowsVersionOrLater(0x06000100ul);
-}
-
-MOZ_ALWAYS_INLINE bool
-IsWin7OrLater()
-{
-  return IsWindowsVersionOrLater(0x06010000ul);
-}
-
-MOZ_ALWAYS_INLINE bool
 IsWin7SP1OrLater()
 {
   return IsWindowsVersionOrLater(0x06010100ul);
@@ -147,8 +111,7 @@ IsWin10OrLater()
 MOZ_ALWAYS_INLINE bool
 IsNotWin7PreRTM()
 {
-  return IsWin7SP1OrLater() || !IsWin7OrLater() ||
-         IsWindowsBuildOrLater(7600);
+  return IsWin7SP1OrLater() || IsWindowsBuildOrLater(7600);
 }
 
 } // namespace mozilla

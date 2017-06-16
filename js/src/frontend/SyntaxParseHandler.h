@@ -170,7 +170,7 @@ class SyntaxParseHandler
     }
 
   public:
-    SyntaxParseHandler(ExclusiveContext* cx, LifoAlloc& alloc,
+    SyntaxParseHandler(JSContext* cx, LifoAlloc& alloc,
                        TokenStream& tokenStream, Parser<SyntaxParseHandler>* syntaxParser,
                        LazyScript* lazyOuterFunction)
       : lastAtom(nullptr),
@@ -184,7 +184,7 @@ class SyntaxParseHandler
 
     void trace(JSTracer* trc) {}
 
-    Node newName(PropertyName* name, const TokenPos& pos, ExclusiveContext* cx) {
+    Node newName(PropertyName* name, const TokenPos& pos, JSContext* cx) {
         lastAtom = name;
         if (name == cx->names().arguments)
             return NodeUnparenthesizedArgumentsName;
@@ -239,6 +239,10 @@ class SyntaxParseHandler
 
     Node newTypeof(uint32_t begin, Node kid) {
         return NodeUnparenthesizedUnary;
+    }
+
+    Node newNullary(ParseNodeKind kind, JSOp op, const TokenPos& pos) {
+        return NodeGeneric;
     }
 
     Node newUnary(ParseNodeKind kind, JSOp op, uint32_t begin, Node kid) {
@@ -296,9 +300,9 @@ class SyntaxParseHandler
     MOZ_MUST_USE bool addShorthand(Node literal, Node name, Node expr) { return true; }
     MOZ_MUST_USE bool addObjectMethodDefinition(Node literal, Node name, Node fn, JSOp op) { return true; }
     MOZ_MUST_USE bool addClassMethodDefinition(Node literal, Node name, Node fn, JSOp op, bool isStatic) { return true; }
-    Node newYieldExpression(uint32_t begin, Node value, Node gen) { return NodeGeneric; }
-    Node newYieldStarExpression(uint32_t begin, Node value, Node gen) { return NodeGeneric; }
-    Node newAwaitExpression(uint32_t begin, Node value, Node gen) { return NodeGeneric; }
+    Node newYieldExpression(uint32_t begin, Node value) { return NodeGeneric; }
+    Node newYieldStarExpression(uint32_t begin, Node value) { return NodeGeneric; }
+    Node newAwaitExpression(uint32_t begin, Node value) { return NodeGeneric; }
 
     // Statements
 
@@ -307,6 +311,16 @@ class SyntaxParseHandler
     void addCaseStatementToList(Node list, Node stmt) {}
     MOZ_MUST_USE bool prependInitialYield(Node stmtList, Node gen) { return true; }
     Node newEmptyStatement(const TokenPos& pos) { return NodeEmptyStatement; }
+
+    Node newExportDeclaration(Node kid, const TokenPos& pos) {
+        return NodeGeneric;
+    }
+    Node newExportFromDeclaration(uint32_t begin, Node exportSpecSet, Node moduleSpec) {
+        return NodeGeneric;
+    }
+    Node newExportDefaultDeclaration(Node kid, Node maybeBinding, const TokenPos& pos) {
+        return NodeGeneric;
+    }
 
     Node newSetThis(Node thisName, Node value) { return value; }
 
@@ -547,11 +561,11 @@ class SyntaxParseHandler
                node == NodeParenthesizedName;
     }
 
-    bool isEvalAnyParentheses(Node node, ExclusiveContext* cx) {
+    bool isEvalAnyParentheses(Node node, JSContext* cx) {
         return node == NodeUnparenthesizedEvalName || node == NodeParenthesizedEvalName;
     }
 
-    const char* nameIsArgumentsEvalAnyParentheses(Node node, ExclusiveContext* cx) {
+    const char* nameIsArgumentsEvalAnyParentheses(Node node, JSContext* cx) {
         MOZ_ASSERT(isNameAnyParentheses(node),
                    "must only call this method on known names");
 
@@ -562,7 +576,7 @@ class SyntaxParseHandler
         return nullptr;
     }
 
-    bool isAsyncKeyword(Node node, ExclusiveContext* cx) {
+    bool isAsyncKeyword(Node node, JSContext* cx) {
         return node == NodePotentialAsyncKeyword;
     }
 

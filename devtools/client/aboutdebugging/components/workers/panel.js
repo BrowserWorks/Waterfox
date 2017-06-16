@@ -16,6 +16,7 @@ const Services = require("Services");
 const PanelHeader = createFactory(require("../panel-header"));
 const TargetList = createFactory(require("../target-list"));
 const WorkerTarget = createFactory(require("./target"));
+const MultiE10SWarning = createFactory(require("./multi-e10s-warning"));
 const ServiceWorkerTarget = createFactory(require("./service-worker-target"));
 
 loader.lazyImporter(this, "PrivateBrowsingUtils",
@@ -29,6 +30,8 @@ const Strings = Services.strings.createBundle(
 
 const WorkerIcon = "chrome://devtools/skin/images/debugging-workers.svg";
 const MORE_INFO_URL = "https://developer.mozilla.org/en-US/docs/Tools/about%3Adebugging";
+const PROCESS_COUNT_PREF = "dom.ipc.processCount";
+const MULTI_OPTOUT_PREF = "dom.ipc.multiOptOut";
 
 module.exports = createClass({
   displayName: "WorkersPanel",
@@ -44,29 +47,56 @@ module.exports = createClass({
         service: [],
         shared: [],
         other: []
-      }
+      },
+      processCount: 1,
     };
   },
 
   componentDidMount() {
     let client = this.props.client;
-    client.addListener("workerListChanged", this.update);
-    client.addListener("serviceWorkerRegistrationListChanged", this.update);
-    client.addListener("processListChanged", this.update);
-    client.addListener("registration-changed", this.update);
+    client.addListener("workerListChanged", this.updateWorkers);
+    client.addListener("serviceWorkerRegistrationListChanged", this.updateWorkers);
+    client.addListener("processListChanged", this.updateWorkers);
+    client.addListener("registration-changed", this.updateWorkers);
 
-    this.update();
+    // Some notes about these observers:
+    // - nsIPrefBranch.addObserver observes prefixes. In reality, watching
+    //   PROCESS_COUNT_PREF watches two separate prefs:
+    //   dom.ipc.processCount *and* dom.ipc.processCount.web. Because these
+    //   are the two ways that we control the number of content processes,
+    //   that works perfectly fine.
+    // - The user might opt in or out of multi by setting the multi opt out
+    //   pref. That affects whether we need to show our warning, so we need to
+    //   update our state when that pref changes.
+    // - In all cases, we don't have to manually check which pref changed to
+    //   what. The platform code in nsIXULRuntime.maxWebProcessCount does all
+    //   of that for us.
+    Services.prefs.addObserver(PROCESS_COUNT_PREF, this.updateMultiE10S, false);
+    Services.prefs.addObserver(MULTI_OPTOUT_PREF, this.updateMultiE10S, false);
+
+    this.updateMultiE10S();
+    this.updateWorkers();
   },
 
   componentWillUnmount() {
     let client = this.props.client;
-    client.removeListener("processListChanged", this.update);
-    client.removeListener("serviceWorkerRegistrationListChanged", this.update);
-    client.removeListener("workerListChanged", this.update);
-    client.removeListener("registration-changed", this.update);
+    client.removeListener("processListChanged", this.updateWorkers);
+    client.removeListener("serviceWorkerRegistrationListChanged", this.updateWorkers);
+    client.removeListener("workerListChanged", this.updateWorkers);
+    client.removeListener("registration-changed", this.updateWorkers);
+
+    Services.prefs.removeObserver(PROCESS_COUNT_PREF, this.updateMultiE10S);
+    Services.prefs.removeObserver(MULTI_OPTOUT_PREF, this.updateMultiE10S);
   },
 
-  update() {
+  updateMultiE10S() {
+    // We watch the pref but set the state based on
+    // nsIXULRuntime.maxWebProcessCount.
+    let processCount = Services.appinfo.maxWebProcessCount;
+    this.setState({ processCount });
+  },
+
+  updateWorkers() {
     let workers = this.getInitialState().workers;
 
     getWorkerForms(this.props.client).then(forms => {
@@ -136,61 +166,89 @@ module.exports = createClass({
     return null;
   },
 
-  render() {
-    let { client, id } = this.props;
-    let { workers } = this.state;
+  isE10S() {
+    return Services.appinfo.browserTabsRemoteAutostart;
+  },
 
+  renderServiceWorkersError() {
     let isWindowPrivate = PrivateBrowsingUtils.isContentWindowPrivate(window);
     let isPrivateBrowsingMode = PrivateBrowsingUtils.permanentPrivateBrowsing;
     let isServiceWorkerDisabled = !Services.prefs
                                     .getBoolPref("dom.serviceWorkers.enabled");
-    let errorMsg = isWindowPrivate || isPrivateBrowsingMode ||
-           isServiceWorkerDisabled ?
-      dom.p({ className: "service-worker-disabled" },
-        dom.div({ className: "warning" }),
-        Strings.GetStringFromName("configurationIsNotCompatible"),
-        " (",
-        dom.a({ href: MORE_INFO_URL, target: "_blank" },
-          Strings.GetStringFromName("moreInfo")),
-        ")"
-      ) : "";
 
-    return dom.div({
-      id: id + "-panel",
-      className: "panel",
-      role: "tabpanel",
-      "aria-labelledby": id + "-header"
-    },
-    PanelHeader({
-      id: id + "-header",
-      name: Strings.GetStringFromName("workers")
-    }),
-    dom.div({ id: "workers", className: "inverted-icons" },
-      TargetList({
-        client,
-        error: errorMsg,
-        id: "service-workers",
-        name: Strings.GetStringFromName("serviceWorkers"),
-        sort: true,
-        targetClass: ServiceWorkerTarget,
-        targets: workers.service
+    let isDisabled = isWindowPrivate || isPrivateBrowsingMode || isServiceWorkerDisabled;
+    if (!isDisabled) {
+      return "";
+    }
+    return dom.p(
+      {
+        className: "service-worker-disabled"
+      },
+      dom.div({ className: "warning" }),
+      Strings.GetStringFromName("configurationIsNotCompatible"),
+      " (",
+      dom.a(
+        {
+          href: MORE_INFO_URL,
+          target: "_blank"
+        },
+        Strings.GetStringFromName("moreInfo")
+      ),
+      ")"
+    );
+  },
+
+  render() {
+    let { client, id } = this.props;
+    let { workers, processCount } = this.state;
+
+    let isE10S = Services.appinfo.browserTabsRemoteAutostart;
+    let isMultiE10S = isE10S && processCount > 1;
+
+    return dom.div(
+      {
+        id: id + "-panel",
+        className: "panel",
+        role: "tabpanel",
+        "aria-labelledby": id + "-header"
+      },
+      PanelHeader({
+        id: id + "-header",
+        name: Strings.GetStringFromName("workers")
       }),
-      TargetList({
-        client,
-        id: "shared-workers",
-        name: Strings.GetStringFromName("sharedWorkers"),
-        sort: true,
-        targetClass: WorkerTarget,
-        targets: workers.shared
-      }),
-      TargetList({
-        client,
-        id: "other-workers",
-        name: Strings.GetStringFromName("otherWorkers"),
-        sort: true,
-        targetClass: WorkerTarget,
-        targets: workers.other
-      })
-    ));
+      isMultiE10S ? MultiE10SWarning() : "",
+      dom.div(
+        {
+          id: "workers",
+          className: "inverted-icons"
+        },
+        TargetList({
+          client,
+          debugDisabled: isMultiE10S,
+          error: this.renderServiceWorkersError(),
+          id: "service-workers",
+          name: Strings.GetStringFromName("serviceWorkers"),
+          sort: true,
+          targetClass: ServiceWorkerTarget,
+          targets: workers.service
+        }),
+        TargetList({
+          client,
+          id: "shared-workers",
+          name: Strings.GetStringFromName("sharedWorkers"),
+          sort: true,
+          targetClass: WorkerTarget,
+          targets: workers.shared
+        }),
+        TargetList({
+          client,
+          id: "other-workers",
+          name: Strings.GetStringFromName("otherWorkers"),
+          sort: true,
+          targetClass: WorkerTarget,
+          targets: workers.other
+        })
+      )
+    );
   }
 });

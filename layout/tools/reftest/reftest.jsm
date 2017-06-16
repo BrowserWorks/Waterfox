@@ -433,10 +433,11 @@ function InitAndStartRefTests()
 
     // Focus the content browser.
     if (gFocusFilterMode != FOCUS_FILTER_NON_NEEDS_FOCUS_TESTS) {
+        gBrowser.addEventListener("focus", StartTests, true);
         gBrowser.focus();
+    } else {
+        StartTests();
     }
-
-    StartTests();
 }
 
 function StartHTTPServer()
@@ -459,6 +460,10 @@ function Shuffle(array)
 
 function StartTests()
 {
+    if (gFocusFilterMode != FOCUS_FILTER_NON_NEEDS_FOCUS_TESTS) {
+        gBrowser.removeEventListener("focus", StartTests, true);
+    }
+
     var manifests;
     /* These prefs are optional, so we don't need to spit an error to the log */
     try {
@@ -661,7 +666,6 @@ function BuildConditionSandbox(aURL) {
 
     sandbox.gpuProcess = gfxInfo.usingGPUProcess;
     sandbox.azureCairo = canvasBackend == "cairo";
-    sandbox.azureQuartz = canvasBackend == "quartz";
     sandbox.azureSkia = canvasBackend == "skia";
     sandbox.skiaContent = contentBackend == "skia";
     sandbox.azureSkiaGL = canvasAccelerated; // FIXME: assumes GL right now
@@ -677,6 +681,8 @@ function BuildConditionSandbox(aURL) {
       gWindowUtils.layerManagerType == "Direct3D 9";
     sandbox.layersOpenGL =
       gWindowUtils.layerManagerType == "OpenGL";
+    sandbox.webrender =
+      gWindowUtils.layerManagerType == "WebRender";
     sandbox.layersOMTC =
       gWindowUtils.layerManagerRemote == true;
 
@@ -841,6 +847,14 @@ function AddTestItem(aTest, aFilter)
     gURLs.push(aTest);
 }
 
+function AddStyloTestPrefs(aSandbox, aTestPrefSettings, aRefPrefSettings)
+{
+    AddPrefSettings("test-", "layout.css.servo.enabled", "true", aSandbox,
+                    aTestPrefSettings, aRefPrefSettings);
+    AddPrefSettings("ref-", "layout.css.servo.enabled", "false", aSandbox,
+                    aTestPrefSettings, aRefPrefSettings);
+}
+
 // Note: If you materially change the reftest manifest parsing,
 // please keep the parser in print-manifest-dirs.py in sync.
 function ReadManifest(aURL, inherited_status, aFilter)
@@ -875,6 +889,10 @@ function ReadManifest(aURL, inherited_status, aFilter)
     var lineNo = 0;
     var urlprefix = "";
     var defaultTestPrefSettings = [], defaultRefPrefSettings = [];
+    if (gCompareStyloToGecko) {
+        AddStyloTestPrefs(sandbox, defaultTestPrefSettings,
+                          defaultRefPrefSettings);
+    }
     for (var str of lines) {
         ++lineNo;
         if (str.charAt(0) == "#")
@@ -908,6 +926,10 @@ function ReadManifest(aURL, inherited_status, aFilter)
                 if (!AddPrefSettings(m[1], m[2], m[3], sandbox, defaultTestPrefSettings, defaultRefPrefSettings)) {
                     throw "Error in pref value in manifest file " + aURL.spec + " line " + lineNo;
                 }
+            }
+            if (gCompareStyloToGecko) {
+                AddStyloTestPrefs(sandbox, defaultTestPrefSettings,
+                                  defaultRefPrefSettings);
             }
             continue;
         }
@@ -1138,6 +1160,7 @@ function ReadManifest(aURL, inherited_status, aFilter)
                                              CI.nsIScriptSecurityManager.DISALLOW_SCRIPT);
             secMan.checkLoadURIWithPrincipal(principal, refURI,
                                              CI.nsIScriptSecurityManager.DISALLOW_SCRIPT);
+
             AddTestItem({ type: items[0],
                           expected: expected_status,
                           allowSilentFail: allow_silent_fail,
@@ -1319,16 +1342,6 @@ function StartCurrentURI(aState)
 
     var prefs = Components.classes["@mozilla.org/preferences-service;1"].
         getService(Components.interfaces.nsIPrefBranch);
-
-    if (gCompareStyloToGecko) {
-        if (gState == 2){
-            logger.info("Disabling Servo-backed style system");
-            prefs.setBoolPref('layout.css.servo.enabled', false);
-        } else {
-            logger.info("Enabling Servo-backed style system");
-            prefs.setBoolPref('layout.css.servo.enabled', true);
-        }
-    }
 
     var prefSettings = gURLs[0]["prefSettings" + aState];
     if (prefSettings.length > 0) {
@@ -1755,7 +1768,12 @@ function RecordResult(testRunTime, errorMsg, scriptResults)
                         message += (", max difference: " + extra.max_difference +
                                     ", number of differing pixels: " + differences);
                     } else {
-                        extra.image1 = gCanvas1.toDataURL();
+                        var image1 = gCanvas1.toDataURL();
+                        extra.reftest_screenshots = [
+                            {url:gURLs[0].identifier[0],
+                             screenshot: image1.slice(image1.indexOf(",") + 1)}
+                        ];
+                        extra.image1 = image1;
                     }
                 }
                 logger.testEnd(gURLs[0].identifier, output.s[0], output.s[1], message, null, extra);

@@ -93,6 +93,9 @@ ReflowInput::ReflowInput(nsPresContext*       aPresContext,
   if (aFlags & B_CLAMP_MARGIN_BOX_MIN_SIZE) {
     mFlags.mBClampMarginBoxMinSize = true;
   }
+  if (aFlags & I_APPLY_AUTO_MIN_SIZE) {
+    mFlags.mApplyAutoMinSize = true;
+  }
 
   if (!(aFlags & CALLER_WILL_INIT)) {
     Init(aPresContext);
@@ -242,6 +245,7 @@ ReflowInput::ReflowInput(
   mFlags.mIOffsetsNeedCSSAlign = mFlags.mBOffsetsNeedCSSAlign = false;
   mFlags.mIClampMarginBoxMinSize = !!(aFlags & I_CLAMP_MARGIN_BOX_MIN_SIZE);
   mFlags.mBClampMarginBoxMinSize = !!(aFlags & B_CLAMP_MARGIN_BOX_MIN_SIZE);
+  mFlags.mApplyAutoMinSize = !!(aFlags & I_APPLY_AUTO_MIN_SIZE);
 
   mDiscoveredClearance = nullptr;
   mPercentBSizeObserver = (aParentReflowInput.mPercentBSizeObserver &&
@@ -1663,6 +1667,10 @@ ReflowInput::InitAbsoluteConstraints(nsPresContext* aPresContext,
     computeSizeFlags = ComputeSizeFlags(computeSizeFlags |
                          ComputeSizeFlags::eBClampMarginBoxMinSize);
   }
+  if (mFlags.mApplyAutoMinSize) {
+    computeSizeFlags = ComputeSizeFlags(computeSizeFlags |
+                         ComputeSizeFlags::eIApplyAutoMinSize);
+  }
   if (mFlags.mShrinkWrap) {
     computeSizeFlags =
       ComputeSizeFlags(computeSizeFlags | ComputeSizeFlags::eShrinkWrap);
@@ -2376,6 +2384,10 @@ ReflowInput::InitConstraints(nsPresContext*     aPresContext,
         computeSizeFlags = ComputeSizeFlags(computeSizeFlags |
                              ComputeSizeFlags::eBClampMarginBoxMinSize);
       }
+      if (mFlags.mApplyAutoMinSize) {
+        computeSizeFlags = ComputeSizeFlags(computeSizeFlags |
+                             ComputeSizeFlags::eIApplyAutoMinSize);
+      }
       if (mFlags.mShrinkWrap) {
         computeSizeFlags =
           ComputeSizeFlags(computeSizeFlags | ComputeSizeFlags::eShrinkWrap);
@@ -3038,24 +3050,6 @@ ReflowInput::ComputeMinMaxValues(const LogicalSize&aCBSize)
   // 'max-height', 'max-height' is set to the value of 'min-height'
   if (ComputedMinBSize() > ComputedMaxBSize()) {
     ComputedMaxBSize() = ComputedMinBSize();
-  }
-}
-
-void
-ReflowInput::SetTruncated(const ReflowOutput& aMetrics,
-                                nsReflowStatus* aStatus) const
-{
-  const WritingMode containerWM = aMetrics.GetWritingMode();
-  if (GetWritingMode().IsOrthogonalTo(containerWM)) {
-    // Orthogonal flows are always reflowed with an unconstrained dimension,
-    // so should never end up truncated (see ReflowInput::Init()).
-    *aStatus &= ~NS_FRAME_TRUNCATED;
-  } else if (AvailableBSize() != NS_UNCONSTRAINEDSIZE &&
-             AvailableBSize() < aMetrics.BSize(containerWM) &&
-             !mFlags.mIsTopOfPage) {
-    *aStatus |= NS_FRAME_TRUNCATED;
-  } else {
-    *aStatus &= ~NS_FRAME_TRUNCATED;
   }
 }
 

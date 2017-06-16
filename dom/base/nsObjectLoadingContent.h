@@ -14,6 +14,7 @@
 #define NSOBJECTLOADINGCONTENT_H_
 
 #include "mozilla/Attributes.h"
+#include "mozilla/dom/BindingDeclarations.h"
 #include "nsImageLoadingContent.h"
 #include "nsIStreamListener.h"
 #include "nsIChannelEventSink.h"
@@ -193,10 +194,8 @@ class nsObjectLoadingContent : public nsImageLoadingContent
     {
       return GetTypeOfContent(NS_ConvertUTF16toUTF8(aMIMEType));
     }
-    void PlayPlugin(mozilla::ErrorResult& aRv)
-    {
-      aRv = PlayPlugin();
-    }
+    void PlayPlugin(mozilla::dom::SystemCallerGuarantee,
+                    mozilla::ErrorResult& aRv);
     void Reload(bool aClearActivation, mozilla::ErrorResult& aRv)
     {
       aRv = Reload(aClearActivation);
@@ -239,17 +238,8 @@ class nsObjectLoadingContent : public nsImageLoadingContent
                     JS::MutableHandle<JS::Value> aRetval,
                     mozilla::ErrorResult& aRv);
 
-    uint32_t GetRunID(mozilla::ErrorResult& aRv)
-    {
-      uint32_t runID;
-      nsresult rv = GetRunID(&runID);
-      if (NS_FAILED(rv)) {
-        aRv.Throw(rv);
-        return 0;
-      }
-
-      return runID;
-    }
+    uint32_t GetRunID(mozilla::dom::SystemCallerGuarantee,
+                      mozilla::ErrorResult& aRv);
 
     bool IsRewrittenYoutubeEmbed() const
     {
@@ -343,6 +333,21 @@ class nsObjectLoadingContent : public nsImageLoadingContent
      * Return the content policy type used for loading the element.
      */
     virtual nsContentPolicyType GetContentPolicyType() const = 0;
+
+    /**
+     * Decides whether we should load <embed>/<object> node content.
+     *
+     * If this is an <embed> or <object> node there are cases in which we should
+     * not try to load the content:
+     *
+     * - If the node is the child of a media element
+     * - If the node is the child of an <object> node that already has
+     *   content being loaded.
+     *
+     * In these cases, this function will return false, which will cause
+     * us to skip calling LoadObject.
+     */
+    bool BlockEmbedOrObjectContentLoading();
 
   private:
 
@@ -710,7 +715,7 @@ class nsObjectLoadingContent : public nsImageLoadingContent
     bool                        mPreferFallback : 1;
     bool                        mPreferFallbackKnown : 1;
 
-    nsWeakFrame                 mPrintFrame;
+    WeakFrame                   mPrintFrame;
 
     RefPtr<nsPluginInstanceOwner> mInstanceOwner;
     nsTArray<mozilla::dom::MozPluginParameter> mCachedAttributes;

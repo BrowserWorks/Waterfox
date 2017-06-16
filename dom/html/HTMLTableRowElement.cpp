@@ -6,9 +6,9 @@
 
 #include "mozilla/dom/HTMLTableRowElement.h"
 #include "mozilla/dom/HTMLTableElement.h"
+#include "mozilla/GenericSpecifiedValuesInlines.h"
 #include "nsMappedAttributes.h"
 #include "nsAttrValueInlines.h"
-#include "nsRuleData.h"
 #include "mozilla/dom/BindingUtils.h"
 #include "mozilla/dom/HTMLTableRowElementBinding.h"
 #include "nsContentList.h"
@@ -120,10 +120,10 @@ HTMLTableRowElement::SectionRowIndex() const
 }
 
 static bool
-IsCell(nsIContent *aContent, int32_t aNamespaceID,
+IsCell(Element *aElement, int32_t aNamespaceID,
        nsIAtom* aAtom, void *aData)
 {
-  return aContent->IsAnyOfHTMLElements(nsGkAtoms::td, nsGkAtoms::th);
+  return aElement->IsAnyOfHTMLElements(nsGkAtoms::td, nsGkAtoms::th);
 }
 
 nsIHTMLCollection*
@@ -175,8 +175,8 @@ HTMLTableRowElement::InsertCell(int32_t aIndex,
 
   // create the cell
   RefPtr<mozilla::dom::NodeInfo> nodeInfo;
-  nsContentUtils::NameChanged(mNodeInfo, nsGkAtoms::td,
-                              getter_AddRefs(nodeInfo));
+  nsContentUtils::QNameChanged(mNodeInfo, nsGkAtoms::td,
+                               getter_AddRefs(nodeInfo));
 
   RefPtr<nsGenericHTMLElement> cell =
     NS_NewHTMLTableCellElement(nodeInfo.forget());
@@ -264,38 +264,11 @@ HTMLTableRowElement::ParseAttribute(int32_t aNamespaceID,
 
 void
 HTMLTableRowElement::MapAttributesIntoRule(const nsMappedAttributes* aAttributes,
-                                           nsRuleData* aData)
+                                           GenericSpecifiedValues* aData)
 {
-  if (aData->mSIDs & NS_STYLE_INHERIT_BIT(Position)) {
-    // height: value
-    nsCSSValue* height = aData->ValueForHeight();
-    if (height->GetUnit() == eCSSUnit_Null) {
-      const nsAttrValue* value = aAttributes->GetAttr(nsGkAtoms::height);
-      if (value && value->Type() == nsAttrValue::eInteger)
-        height->SetFloatValue((float)value->GetIntegerValue(), eCSSUnit_Pixel);
-      else if (value && value->Type() == nsAttrValue::ePercent)
-        height->SetPercentValue(value->GetPercentValue());
-    }
-  }
-  if (aData->mSIDs & NS_STYLE_INHERIT_BIT(Text)) {
-    nsCSSValue* textAlign = aData->ValueForTextAlign();
-    if (textAlign->GetUnit() == eCSSUnit_Null) {
-      // align: enum
-      const nsAttrValue* value = aAttributes->GetAttr(nsGkAtoms::align);
-      if (value && value->Type() == nsAttrValue::eEnum)
-        textAlign->SetIntValue(value->GetEnumValue(), eCSSUnit_Enumerated);
-    }
-  }
-  if (aData->mSIDs & NS_STYLE_INHERIT_BIT(Display)) {
-    nsCSSValue* verticalAlign = aData->ValueForVerticalAlign();
-    if (verticalAlign->GetUnit() == eCSSUnit_Null) {
-      // valign: enum
-      const nsAttrValue* value = aAttributes->GetAttr(nsGkAtoms::valign);
-      if (value && value->Type() == nsAttrValue::eEnum)
-        verticalAlign->SetIntValue(value->GetEnumValue(), eCSSUnit_Enumerated);
-    }
-  }
-
+  nsGenericHTMLElement::MapHeightAttributeInto(aAttributes, aData);
+  nsGenericHTMLElement::MapDivAlignAttributeInto(aAttributes, aData);
+  nsGenericHTMLElement::MapVAlignAttributeInto(aAttributes, aData);
   nsGenericHTMLElement::MapBackgroundAttributesInto(aAttributes, aData);
   nsGenericHTMLElement::MapCommonAttributesInto(aAttributes, aData);
 }

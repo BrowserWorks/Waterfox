@@ -90,15 +90,7 @@ _pixman_implementation_lookup_composite (pixman_implementation_t  *toplevel,
     /* Check cache for fast paths */
     cache = PIXMAN_GET_THREAD_LOCAL (fast_path_cache);
 
-    /* Bug 1324130 - For compatibility with Windows XP, we have to use Tls
-     * functions for the per-thread fast-path cache instead of the safer
-     * __declspec(thread) mechanism. If the Tls functions fail to set up
-     * the storage for some reason, cache will end up null here. As a
-     * temporary workaround, just check that cache is not null before
-     * using it. The implementation lookup will still function without the
-     * fast-path cache, however, it will incur a slow linear search.
-     */
-    if (cache) for (i = 0; i < N_CACHED_FAST_PATHS; ++i)
+    for (i = 0; i < N_CACHED_FAST_PATHS; ++i)
     {
 	const pixman_fast_path_t *info = &(cache->cache[i].fast_path);
 
@@ -163,7 +155,7 @@ _pixman_implementation_lookup_composite (pixman_implementation_t  *toplevel,
     *out_func = dummy_composite_rect;
 
 update_cache:
-    if (cache && i)
+    if (i)
     {
 	while (i--)
 	    cache->cache[i + 1] = cache->cache[i];

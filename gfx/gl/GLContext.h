@@ -45,8 +45,6 @@
 #include "gfx2DGlue.h"
 #include "GeckoProfiler.h"
 
-class nsIWidget;
-
 namespace android {
     class GraphicBuffer;
 } // namespace android
@@ -72,6 +70,10 @@ namespace mozilla {
     namespace layers {
         class ColorTextureLayerProgram;
     } // namespace layers
+
+    namespace widget {
+        class CompositorWidget;
+    } // namespace widget
 } // namespace mozilla
 
 namespace mozilla {
@@ -221,6 +223,8 @@ public:
         return false;
     }
 
+    virtual void GetWSIInfo(nsCString* const out) const = 0;
+
     /**
      * Return true if we are running on a OpenGL core profile context
      */
@@ -327,6 +331,10 @@ public:
 
     bool IsContextLost() const {
         return mContextLost;
+    }
+
+    bool HasPBOState() const {
+        return (!IsGLES() || Version() >= 300);
     }
 
     /**
@@ -3376,7 +3384,7 @@ public:
             LOCAL_GL_TEXTURE_EXTERNAL : LOCAL_GL_TEXTURE_2D;
     }
 
-    virtual bool RenewSurface(nsIWidget* aWidget) { return false; }
+    virtual bool RenewSurface(widget::CompositorWidget* aWidget) { return false; }
 
     // Shared code for GL extensions and GLX extensions.
     static bool ListHasExtension(const GLubyte* extensions,
@@ -3668,6 +3676,15 @@ public:
     static bool ShouldSpew();
     static bool ShouldDumpExts();
     void Readback(SharedSurface* src, gfx::DataSourceSurface* dest);
+
+    ////
+
+    void TexParams_SetClampNoMips(GLenum target = LOCAL_GL_TEXTURE_2D) {
+        fTexParameteri(target, LOCAL_GL_TEXTURE_WRAP_S, LOCAL_GL_CLAMP_TO_EDGE);
+        fTexParameteri(target, LOCAL_GL_TEXTURE_WRAP_T, LOCAL_GL_CLAMP_TO_EDGE);
+        fTexParameteri(target, LOCAL_GL_TEXTURE_MAG_FILTER, LOCAL_GL_NEAREST);
+        fTexParameteri(target, LOCAL_GL_TEXTURE_MIN_FILTER, LOCAL_GL_NEAREST);
+    }
 };
 
 bool DoesStringMatch(const char* aString, const char* aWantedString);

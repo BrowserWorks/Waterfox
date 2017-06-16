@@ -2990,9 +2990,8 @@ CSS_PROP_POSITION(
     object-fit,
     object_fit,
     ObjectFit,
-    CSS_PROPERTY_PARSE_VALUE |
-        CSS_PROPERTY_ENABLED_IN_UA_SHEETS,
-    "layout.css.object-fit-and-position.enabled",
+    CSS_PROPERTY_PARSE_VALUE,
+    "",
     VARIANT_HK,
     kObjectFitKTable,
     CSS_PROP_NO_OFFSET,
@@ -3002,9 +3001,8 @@ CSS_PROP_POSITION(
     object_position,
     ObjectPosition,
     CSS_PROPERTY_PARSE_FUNCTION |
-        CSS_PROPERTY_STORES_CALC |
-        CSS_PROPERTY_ENABLED_IN_UA_SHEETS,
-    "layout.css.object-fit-and-position.enabled",
+        CSS_PROPERTY_STORES_CALC,
+    "",
     0,
     kImageLayerPositionKTable,
     offsetof(nsStylePosition, mObjectPosition),
@@ -4052,6 +4050,17 @@ CSS_PROP_TEXT(
     nullptr,
     offsetof(nsStyleText, mTextIndent),
     eStyleAnimType_Coord)
+CSS_PROP_TEXT(
+    text-justify,
+    text_justify,
+    TextJustify,
+    CSS_PROPERTY_PARSE_VALUE |
+        CSS_PROPERTY_APPLIES_TO_PLACEHOLDER,
+    "layout.css.text-justify.enabled",
+    VARIANT_HK,
+    kTextJustifyKTable,
+    CSS_PROP_NO_OFFSET,
+    eStyleAnimType_Discrete)
 CSS_PROP_VISIBILITY(
     text-orientation,
     text_orientation,
@@ -4105,8 +4114,8 @@ CSS_PROP_TEXT(
     CSS_PROP_DOMPROP_PREFIXED(TextSizeAdjust),
     CSS_PROPERTY_PARSE_VALUE,
     "",
-    VARIANT_AUTO | VARIANT_NONE | VARIANT_INHERIT,
-    nullptr,
+    VARIANT_HK,
+    kTextSizeAdjustKTable,
     CSS_PROP_NO_OFFSET,
     eStyleAnimType_Discrete)
 CSS_PROP_SHORTHAND(

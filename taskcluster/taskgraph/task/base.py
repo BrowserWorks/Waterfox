@@ -5,6 +5,9 @@
 from __future__ import absolute_import, print_function, unicode_literals
 
 import abc
+import os
+import requests
+from taskgraph.util.taskcluster import find_task_id
 
 
 class Task(object):
@@ -28,7 +31,7 @@ class Task(object):
     """
     __metaclass__ = abc.ABCMeta
 
-    def __init__(self, kind, label, attributes, task):
+    def __init__(self, kind, label, attributes, task, index_paths=None):
         self.kind = kind
         self.label = label
         self.attributes = attributes
@@ -39,12 +42,15 @@ class Task(object):
 
         self.attributes['kind'] = kind
 
+        self.index_paths = index_paths or ()
+
     def __eq__(self, other):
         return self.kind == other.kind and \
             self.label == other.label and \
             self.attributes == other.attributes and \
             self.task == other.task and \
-            self.task_id == other.task_id
+            self.task_id == other.task_id and \
+            self.index_paths == other.index_paths
 
     @classmethod
     @abc.abstractmethod
@@ -90,8 +96,19 @@ class Task(object):
         dependencies on this task will isntead depend on that taskId.  It is an
         error to return no taskId for a task on which other tasks depend.
 
-        The default never optimizes.
+        The default optimizes when a taskId can be found for one of the index
+        paths attached to the task.
         """
+        for index_path in self.index_paths:
+            try:
+                task_id = find_task_id(
+                    index_path,
+                    use_proxy=bool(os.environ.get('TASK_ID')))
+
+                return True, task_id
+            except requests.exceptions.HTTPError:
+                pass
+
         return False, None
 
     @classmethod

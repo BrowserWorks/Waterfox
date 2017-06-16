@@ -58,6 +58,7 @@
 using namespace mozilla;
 using namespace mozilla::dom;
 using namespace mozilla::gfx;
+using namespace mozilla::image;
 
 static bool sSVGPathCachingEnabled;
 static bool sSVGDisplayListHitTestingEnabled;
@@ -147,21 +148,20 @@ nsSVGUtils::Init()
                                "svg.new-getBBox.enabled");
 }
 
-nsSVGDisplayContainerFrame*
+nsIFrame*
 nsSVGUtils::GetNearestSVGViewport(nsIFrame *aFrame)
 {
   NS_ASSERTION(aFrame->IsFrameOfType(nsIFrame::eSVG), "SVG frame expected");
-  if (aFrame->GetType() == nsGkAtoms::svgOuterSVGFrame) {
-    return nullptr;
-  }
-  while ((aFrame = aFrame->GetParent())) {
+
+  for (; aFrame &&  aFrame->IsFrameOfType(nsIFrame::eSVG);
+       aFrame = aFrame->GetParent()) {
     NS_ASSERTION(aFrame->IsFrameOfType(nsIFrame::eSVG), "SVG frame expected");
     if (aFrame->GetType() == nsGkAtoms::svgInnerSVGFrame ||
         aFrame->GetType() == nsGkAtoms::svgOuterSVGFrame) {
-      return do_QueryFrame(aFrame);
+      return aFrame;
     }
   }
-  NS_NOTREACHED("This is not reached. It's only needed to compile.");
+
   return nullptr;
 }
 
@@ -398,7 +398,7 @@ nsSVGUtils::GetCanvasTM(nsIFrame *aFrame)
   // XXX yuck, we really need a common interface for GetCanvasTM
 
   if (!aFrame->IsFrameOfType(nsIFrame::eSVG)) {
-    return nsSVGIntegrationUtils::GetCSSPxToDevPxMatrix(aFrame);
+    return GetCSSPxToDevPxMatrix(aFrame);
   }
 
   nsIAtom* type = aFrame->GetType();
@@ -406,7 +406,7 @@ nsSVGUtils::GetCanvasTM(nsIFrame *aFrame)
     return static_cast<nsSVGForeignObjectFrame*>(aFrame)->GetCanvasTM();
   }
   if (type == nsGkAtoms::svgOuterSVGFrame) {
-    return nsSVGIntegrationUtils::GetCSSPxToDevPxMatrix(aFrame);
+    return GetCSSPxToDevPxMatrix(aFrame);
   }
 
   nsSVGContainerFrame *containerFrame = do_QueryFrame(aFrame);
@@ -482,7 +482,9 @@ public:
       }
     }
 
-    return svgChildFrame->PaintSVG(aContext, aTransform, dirtyRect);
+    return svgChildFrame->PaintSVG(aContext,
+                                   nsSVGUtils::GetCSSPxToDevPxMatrix(aTarget),
+                                   dirtyRect);
   }
 };
 
@@ -858,10 +860,12 @@ nsSVGUtils::PaintFrameWithEffects(nsIFrame *aFrame,
         aFrame->GetPosition();
       dirtyRegion = &tmpDirtyRegion;
     }
+
     SVGPaintCallback paintCallback;
-    nsFilterInstance::PaintFilteredFrame(aFrame, target->GetDrawTarget(),
-                                         aTransform, &paintCallback,
-                                         dirtyRegion);
+    result =
+      nsFilterInstance::PaintFilteredFrame(aFrame, target->GetDrawTarget(),
+                                           aTransform, &paintCallback,
+                                           dirtyRegion);
   } else {
     result = svgChildFrame->PaintSVG(*target, aTransform, aDirtyRect);
   }
@@ -1006,7 +1010,7 @@ nsSVGUtils::ConvertToSurfaceSize(const gfxSize& aSize,
   *aResultOverflows = surfaceSize.width != ceil(aSize.width) ||
     surfaceSize.height != ceil(aSize.height);
 
-  if (!Factory::CheckSurfaceSize(surfaceSize)) {
+  if (!Factory::AllowedSurfaceSize(surfaceSize)) {
     surfaceSize.width = std::min(NS_SVG_OFFSCREEN_MAX_DIMENSION,
                                surfaceSize.width);
     surfaceSize.height = std::min(NS_SVG_OFFSCREEN_MAX_DIMENSION,
@@ -1861,4 +1865,16 @@ nsSVGUtils::ToCanvasBounds(const gfxRect &aUserspaceRect,
   return nsLayoutUtils::RoundGfxRectToAppRect(
                           aToCanvas.TransformBounds(aUserspaceRect),
                           presContext->AppUnitsPerDevPixel());
+}
+
+gfxMatrix
+nsSVGUtils::GetCSSPxToDevPxMatrix(nsIFrame* aNonSVGFrame)
+{
+  int32_t appUnitsPerDevPixel = aNonSVGFrame->PresContext()->AppUnitsPerDevPixel();
+  float devPxPerCSSPx =
+    1 / nsPresContext::AppUnitsToFloatCSSPixels(appUnitsPerDevPixel);
+
+  return gfxMatrix(devPxPerCSSPx, 0.0,
+                   0.0, devPxPerCSSPx,
+                   0.0, 0.0);
 }

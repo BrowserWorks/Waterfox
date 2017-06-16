@@ -187,7 +187,7 @@ const DEFAULT_ENVIRONMENT_PREFS = new Map([
   ["devtools.debugger.remote-enabled", {what: RECORD_PREF_VALUE}],
   ["dom.ipc.plugins.asyncInit.enabled", {what: RECORD_PREF_VALUE}],
   ["dom.ipc.plugins.enabled", {what: RECORD_PREF_VALUE}],
-  ["dom.ipc.processCount", {what: RECORD_PREF_VALUE, requiresRestart: true}],
+  ["dom.ipc.processCount", {what: RECORD_PREF_VALUE}],
   ["dom.max_script_run_time", {what: RECORD_PREF_VALUE}],
   ["experiments.manifest.uri", {what: RECORD_PREF_VALUE}],
   ["extensions.autoDisableScopes", {what: RECORD_PREF_VALUE}],
@@ -198,6 +198,8 @@ const DEFAULT_ENVIRONMENT_PREFS = new Map([
   ["extensions.update.enabled", {what: RECORD_PREF_VALUE}],
   ["extensions.update.url", {what: RECORD_PREF_VALUE}],
   ["extensions.update.background.url", {what: RECORD_PREF_VALUE}],
+  ["extensions.screenshots.disabled", {what: RECORD_PREF_VALUE}],
+  ["extensions.screenshots.system-disabled", {what: RECORD_PREF_VALUE}],
   ["general.smoothScroll", {what: RECORD_PREF_VALUE}],
   ["gfx.direct2d.disabled", {what: RECORD_PREF_VALUE}],
   ["gfx.direct2d.force-enabled", {what: RECORD_PREF_VALUE}],
@@ -221,7 +223,6 @@ const DEFAULT_ENVIRONMENT_PREFS = new Map([
   ["places.history.enabled", {what: RECORD_PREF_VALUE}],
   ["privacy.trackingprotection.enabled", {what: RECORD_PREF_VALUE}],
   ["privacy.donottrackheader.enabled", {what: RECORD_PREF_VALUE}],
-  ["services.sync.serverURL", {what: RECORD_PREF_STATE}],
   ["security.mixed_content.block_active_content", {what: RECORD_PREF_VALUE}],
   ["security.mixed_content.block_display_content", {what: RECORD_PREF_VALUE}],
   ["security.sandbox.content.level", {what: RECORD_PREF_VALUE}],
@@ -270,9 +271,7 @@ function enforceBoolean(aValue) {
  */
 function getBrowserLocale() {
   try {
-    return Cc["@mozilla.org/chrome/chrome-registry;1"].
-             getService(Ci.nsIXULChromeRegistry).
-             getSelectedLocale("global");
+    return Services.locale.getAppLocale();
   } catch (e) {
     return null;
   }
@@ -284,7 +283,9 @@ function getBrowserLocale() {
  */
 function getSystemLocale() {
   try {
-    return Services.locale.getLocaleComponentForUserAgent();
+    return Cc["@mozilla.org/intl/ospreferences;1"].
+             getService(Ci.mozIOSPreferences).
+             systemLocale;
   } catch (e) {
     return null;
   }
@@ -423,7 +424,7 @@ function getWindowsVersionInfo() {
   let kernel32 = ctypes.open("kernel32");
   try {
     let GetVersionEx = kernel32.declare("GetVersionExW",
-                                        ctypes.default_abi,
+                                        ctypes.winapi_abi,
                                         BOOL,
                                         OSVERSIONINFOEXW.ptr);
     let winVer = OSVERSIONINFOEXW();
@@ -626,6 +627,7 @@ EnvironmentAddonBuilder.prototype = {
           updateDay: Utils.millisecondsToDays(updateDate.getTime()),
           signedState: addon.signedState,
           isSystem: addon.isSystem,
+          isWebExtension: addon.isWebExtension,
         };
 
         if (addon.signedState !== undefined)
@@ -1244,6 +1246,7 @@ EnvironmentCache.prototype = {
     this._currentEnvironment.settings = {
       blocklistEnabled: Preferences.get(PREF_BLOCKLIST_ENABLED, true),
       e10sEnabled: Services.appinfo.browserTabsRemoteAutostart,
+      e10sMultiProcesses: Services.appinfo.maxWebProcessCount,
       e10sCohort: Preferences.get(PREF_E10S_COHORT, "unknown"),
       telemetryEnabled: Utils.isTelemetryEnabled,
       locale: getBrowserLocale(),
@@ -1394,10 +1397,10 @@ EnvironmentCache.prototype = {
       let versionInfo = getWindowsVersionInfo();
       data.servicePackMajor = versionInfo.servicePackMajor;
       data.servicePackMinor = versionInfo.servicePackMinor;
-      // We only need the build number and UBR if we're at or above Windows 10.
+      data.windowsBuildNumber = versionInfo.buildNumber;
+      // We only need the UBR if we're at or above Windows 10.
       if (typeof(data.version) === "string" &&
           Services.vc.compare(data.version, "10") >= 0) {
-        data.windowsBuildNumber = versionInfo.buildNumber;
         // Query the UBR key and only add it to the environment if it's available.
         // |readRegKey| doesn't throw, but rather returns 'undefined' on error.
         let ubr = WindowsRegistry.readRegKey(Ci.nsIWindowsRegKey.ROOT_KEY_LOCAL_MACHINE,

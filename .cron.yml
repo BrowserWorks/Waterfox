@@ -11,8 +11,15 @@ jobs:
           target-tasks-method: nightly_linux
       run-on-projects:
           - mozilla-central
+          - mozilla-aurora
           - date
-      when: []  # never (temporary)
+      when:
+          by-project:
+            # Match buildbot starts for now
+            date: [{hour: 15, minute: 0}]
+            mozilla-central: [{hour: 10, minute: 0}]
+            mozilla-aurora: [{hour: 7, minute: 45}]  # Buildbot uses minute 40
+            # No default
 
     - name: nightly-android
       job:
@@ -22,6 +29,33 @@ jobs:
           target-tasks-method: nightly_fennec
       run-on-projects:
           - mozilla-central
+          - mozilla-aurora
           - date
-      when: []  # never (temporary)
+      when:
+        by-project:
+            # Match buildbot starts for now
+            date: [{hour: 15, minute: 0}]
+            mozilla-central: [{hour: 10, minute: 0}]
+            mozilla-aurora: [{hour: 7, minute: 45}]  # Buildbot uses minute 40
+            # No default
 
+    - name: nightly-mochitest-valgrind
+      job:
+          type: decision-task
+          treeherder-symbol: Vg
+          target-tasks-method: mochitest_valgrind
+      run-on-projects:
+          - mozilla-central
+      when:
+          - {hour: 16, minute: 0}
+          - {hour: 4, minute: 0}
+
+    - name: nightly-code-coverage
+      job:
+          type: decision-task
+          treeherder-symbol: Nc
+          target-tasks-method: nightly_code_coverage
+      run-on-projects:
+          - mozilla-central
+      when:
+          - {hour: 18, minute: 0}

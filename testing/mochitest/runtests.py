@@ -13,6 +13,8 @@ SCRIPT_DIR = os.path.abspath(os.path.realpath(os.path.dirname(__file__)))
 sys.path.insert(0, SCRIPT_DIR)
 
 from argparse import Namespace
+from collections import defaultdict
+from contextlib import closing
 import ctypes
 import glob
 import json
@@ -79,6 +81,15 @@ except ImportError:
     pass
 
 here = os.path.abspath(os.path.dirname(__file__))
+
+NO_TESTS_FOUND = """
+No tests were found for flavor '{}' and the following manifest filters:
+{}
+
+Make sure the test paths (if any) are spelt correctly and the corresponding
+--flavor and --subsuite are being used. See `mach mochitest --help` for a
+list of valid flavors.
+""".lstrip()
 
 
 ########################################
@@ -322,6 +333,7 @@ def killPid(pid, log):
     except Exception as e:
         log.info("Failed to kill process %d: %s" % (pid, str(e)))
 
+
 if mozinfo.isWin:
     import ctypes.wintypes
 
@@ -382,8 +394,14 @@ class MochitestServer(object):
         self._profileDir = options['profilePath']
         self.webServer = options['webServer']
         self.httpPort = options['httpPort']
+        if options.get('remoteWebServer') == "10.0.2.2":
+            # probably running an Android emulator and 10.0.2.2 will
+            # not be visible from host
+            shutdownServer = "127.0.0.1"
+        else:
+            shutdownServer = self.webServer
         self.shutdownURL = "http://%(server)s:%(port)s/server/shutdown" % {
-            "server": self.webServer,
+            "server": shutdownServer,
             "port": self.httpPort}
         self.testPrefix = "undefined"
 
@@ -473,7 +491,7 @@ class MochitestServer(object):
 
     def stop(self):
         try:
-            with urllib2.urlopen(self.shutdownURL) as c:
+            with closing(urllib2.urlopen(self.shutdownURL)) as c:
                 c.read()
 
             # TODO: need ProcessHandler.poll()
@@ -486,6 +504,8 @@ class MochitestServer(object):
                 # self._process.terminate()
                 self._process.proc.terminate()
         except:
+            self._log.info("Failed to stop web server on %s" % self.shutdownURL)
+            traceback.print_exc()
             self._process.kill()
 
 
@@ -776,6 +796,8 @@ class MochitestDesktop(object):
     DEFAULT_TIMEOUT = 60.0
     mediaDevices = None
 
+    patternFiles = {}
+
     # XXX use automation.py for test name to avoid breaking legacy
     # TODO: replace this with 'runtests.py' or 'mochitest' or the like
     test_name = 'automation.py'
@@ -786,6 +808,7 @@ class MochitestDesktop(object):
         self.wsserver = None
         self.websocketProcessBridge = None
         self.sslTunnel = None
+        self.tests_by_manifest = defaultdict(list)
         self._active_tests = None
         self._locations = None
 
@@ -825,7 +848,6 @@ class MochitestDesktop(object):
         self.result = {}
 
         self.start_script = os.path.join(here, 'start_desktop.js')
-        self.disable_leak_checking = False
 
     def update_mozinfo(self):
         """walk up directories to find mozinfo.json update the info"""
@@ -967,6 +989,8 @@ class MochitestDesktop(object):
                 self.urlOpts.append("dumpDMDAfterTest=true")
             if options.debugger:
                 self.urlOpts.append("interactiveDebugger=true")
+            if options.jscov_dir_prefix:
+                self.urlOpts.append("jscovDirPrefix=%s" % options.jscov_dir_prefix)
 
     def normflavor(self, flavor):
         """
@@ -1292,7 +1316,7 @@ toolbar#nav-bar {
     def logPreamble(self, tests):
         """Logs a suite_start message and test_start/test_end at the beginning of a run.
         """
-        self.log.suite_start([t['path'] for t in tests])
+        self.log.suite_start(self.tests_by_manifest)
         for test in tests:
             if 'disabled' in test:
                 self.log.test_start(test['path'])
@@ -1300,6 +1324,54 @@ toolbar#nav-bar {
                     test['path'],
                     'SKIP',
                     message=test['disabled'])
+
+    def loadFailurePatternFile(self, pat_file):
+        if pat_file in self.patternFiles:
+            return self.patternFiles[pat_file]
+        if not os.path.isfile(pat_file):
+            self.log.error("TEST-UNEXPECTED-ERROR | runtests.py | "
+                           "Cannot find failure pattern file " + pat_file)
+            return None
+
+        # Using ":error" to ensure it shows up in the failure summary.
+        self.log.warning(
+            "[runtests.py:error] Using {} to filter failures. If there "
+            "is any number mismatch below, you could have fixed "
+            "something documented in that file. Please reduce the "
+            "failure count appropriately.".format(pat_file))
+        patternRE = re.compile(r"""
+            ^\s*\*\s*               # list bullet
+            (test_\S+|\.{3})        # test name
+            (?:\s*(`.+?`|asserts))? # failure pattern
+            (?::.+)?                # optional description
+            \s*\[(\d+|\*)\]         # expected count
+            \s*$
+        """, re.X)
+        patterns = {}
+        with open(pat_file) as f:
+            last_name = None
+            for line in f:
+                match = patternRE.match(line)
+                if not match:
+                    continue
+                name = match.group(1)
+                name = last_name if name == "..." else name
+                last_name = name
+                pat = match.group(2)
+                if pat is not None:
+                    pat = "ASSERTION" if pat == "asserts" else pat[1:-1]
+                count = match.group(3)
+                count = None if count == "*" else int(count)
+                if name not in patterns:
+                    patterns[name] = []
+                patterns[name].append((pat, count))
+        self.patternFiles[pat_file] = patterns
+        return patterns
+
+    def getFailurePatterns(self, pat_file, test_name):
+        patterns = self.loadFailurePatternFile(pat_file)
+        if patterns:
+            return patterns.get(test_name, None)
 
     def getActiveTests(self, options, disabled=True):
         """
@@ -1372,16 +1444,13 @@ toolbar#nav-bar {
                 exists=False, disabled=disabled, filters=filters, **info)
 
             if len(tests) == 0:
-                self.log.error("no tests to run using specified "
-                               "combination of filters: {}".format(
-                                   manifest.fmt_filters()))
+                self.log.error(NO_TESTS_FOUND.format(options.flavor, manifest.fmt_filters()))
 
         paths = []
 
         # When running mochitest locally the manifest is based on topsrcdir,
         # but when running in automation it is based on the test root.
         manifest_root = build_obj.topsrcdir if build_obj else self.testRootAbs
-        manifests = set()
         for test in tests:
             if len(tests) == 1 and 'disabled' in test:
                 del test['disabled']
@@ -1396,7 +1465,8 @@ toolbar#nav-bar {
                     (test['name'], test['manifest']))
                 continue
 
-            manifests.add(os.path.relpath(test['manifest'], manifest_root))
+            manifest_relpath = os.path.relpath(test['manifest'], manifest_root)
+            self.tests_by_manifest[manifest_relpath].append(tp)
 
             testob = {'path': tp}
             if 'disabled' in test:
@@ -1405,6 +1475,12 @@ toolbar#nav-bar {
                 testob['expected'] = test['expected']
             if 'scheme' in test:
                 testob['scheme'] = test['scheme']
+            if options.failure_pattern_file:
+                pat_file = os.path.join(os.path.dirname(test['manifest']),
+                                        options.failure_pattern_file)
+                patterns = self.getFailurePatterns(pat_file, test['name'])
+                if patterns:
+                    testob['expected'] = patterns
             paths.append(testob)
 
         def path_sort(ob1, ob2):
@@ -1426,7 +1502,7 @@ toolbar#nav-bar {
         if 'MOZ_UPLOAD_DIR' in os.environ:
             artifact = os.path.join(os.environ['MOZ_UPLOAD_DIR'], 'manifests.list')
             with open(artifact, 'a') as fh:
-                fh.write('\n'.join(sorted(manifests)))
+                fh.write('\n'.join(sorted(self.tests_by_manifest.keys())))
 
         self._active_tests = paths
         return self._active_tests
@@ -1510,8 +1586,7 @@ toolbar#nav-bar {
             self.log.error(str(e))
             return None
 
-        if not self.disable_leak_checking:
-            browserEnv["XPCOM_MEM_BLOAT_LOG"] = self.leak_report_file
+        browserEnv["XPCOM_MEM_BLOAT_LOG"] = self.leak_report_file
 
         try:
             gmp_path = self.getGMPPluginPath(options)
@@ -1954,13 +2029,12 @@ toolbar#nav-bar {
             args.append('-foreground')
             self.start_script_kwargs['testUrl'] = testUrl or 'about:blank'
 
-            if detectShutdownLeaks and not self.disable_leak_checking:
+            if detectShutdownLeaks:
                 shutdownLeaks = ShutdownLeaks(self.log)
             else:
                 shutdownLeaks = None
 
-            if mozinfo.info["asan"] and (mozinfo.isLinux or mozinfo.isMac) \
-                    and not self.disable_leak_checking:
+            if mozinfo.info["asan"] and (mozinfo.isLinux or mozinfo.isMac):
                 lsanLeaks = LSANLeaks(self.log)
             else:
                 lsanLeaks = None
@@ -2232,28 +2306,6 @@ toolbar#nav-bar {
         result = 1  # default value, if no tests are run.
         for d in dirs:
             print("dir: %s" % d)
-
-            # BEGIN LEAKCHECK HACK
-            # Leak checking was broken in mochitest unnoticed for a length of time. During
-            # this time, several leaks slipped through. The leak checking was fixed by bug
-            # 1325148, but it couldn't land until all the regressions were also fixed or
-            # backed out. Rather than waiting and risking new regressions, in the meantime
-            # this code will selectively disable leak checking on flavors/directories where
-            # known regressions exist. At least this way we can prevent further damage while
-            # they get fixed.
-
-            skip_leak_conditions = []
-
-            for condition, reason in skip_leak_conditions:
-                if condition:
-                    self.log.warning('WARNING | disabling leakcheck due to {}'.format(reason))
-                    self.disable_leak_checking = True
-                    break
-            else:
-                self.disable_leak_checking = False
-
-            # END LEAKCHECK HACK
-
             tests_in_dir = [t for t in testsToRun if os.path.dirname(t) == d]
 
             # If we are using --run-by-dir, we should not use the profile path (if) provided
@@ -2360,6 +2412,7 @@ toolbar#nav-bar {
             self.browserEnv["MOZ_LOG_FILE"] = "{}/moz-pid=%PID-uid={}.log".format(
                 self.browserEnv["MOZ_UPLOAD_DIR"], str(uuid.uuid4()))
 
+        status = 0
         try:
             self.startServers(options, debuggerInfo)
 
@@ -2396,6 +2449,7 @@ toolbar#nav-bar {
                 'symbols_path': options.symbolsPath,
                 'socket_timeout': options.marionette_socket_timeout,
                 'port_timeout': options.marionette_port_timeout,
+                'startup_timeout': options.marionette_startup_timeout,
             }
 
             if options.marionette:
@@ -2419,23 +2473,25 @@ toolbar#nav-bar {
 
                 self.log.info("runtests.py | Running with e10s: {}".format(options.e10s))
                 self.log.info("runtests.py | Running tests: start.\n")
-                status = self.runApp(testURL,
-                                     self.browserEnv,
-                                     options.app,
-                                     profile=self.profile,
-                                     extraArgs=options.browserArgs,
-                                     utilityPath=options.utilityPath,
-                                     debuggerInfo=debuggerInfo,
-                                     valgrindPath=valgrindPath,
-                                     valgrindArgs=valgrindArgs,
-                                     valgrindSuppFiles=valgrindSuppFiles,
-                                     symbolsPath=options.symbolsPath,
-                                     timeout=timeout,
-                                     detectShutdownLeaks=detectShutdownLeaks,
-                                     screenshotOnFail=options.screenshotOnFail,
-                                     bisectChunk=options.bisectChunk,
-                                     marionette_args=marionette_args,
-                                     )
+                ret = self.runApp(
+                    testURL,
+                    self.browserEnv,
+                    options.app,
+                    profile=self.profile,
+                    extraArgs=options.browserArgs,
+                    utilityPath=options.utilityPath,
+                    debuggerInfo=debuggerInfo,
+                    valgrindPath=valgrindPath,
+                    valgrindArgs=valgrindArgs,
+                    valgrindSuppFiles=valgrindSuppFiles,
+                    symbolsPath=options.symbolsPath,
+                    timeout=timeout,
+                    detectShutdownLeaks=detectShutdownLeaks,
+                    screenshotOnFail=options.screenshotOnFail,
+                    bisectChunk=options.bisectChunk,
+                    marionette_args=marionette_args,
+                )
+                status = ret or status
         except KeyboardInterrupt:
             self.log.info("runtests.py | Received keyboard interrupt.\n")
             status = -1
@@ -2736,6 +2792,7 @@ def cli(args=sys.argv[1:]):
         sys.exit(1)
 
     return run_test_harness(parser, options)
+
 
 if __name__ == "__main__":
     sys.exit(cli())

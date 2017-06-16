@@ -12,7 +12,7 @@
 <body>
 <a target="_blank" href="https://bugzilla.mozilla.org/show_bug.cgi?id=1197690">Test for Presentation API at sender side</a>
 <iframe id="iframe" src="file_presentation_reconnect.html"></iframe>
-<script type="application/javascript;version=1.8">
+<script type="application/javascript">
 
 'use strict';
 
@@ -318,11 +318,10 @@ function testReconnect() {
           is(aConnection.state, "connected", "Connection should be connected.");
 
           const incomingMessage = "test incoming message";
-          aConnection.addEventListener('message', function messageHandler(aEvent) {
-            aConnection.removeEventListener('message', messageHandler);
+          aConnection.addEventListener('message', function(aEvent) {
             is(aEvent.data, incomingMessage, "An incoming message should be received.");
             aResolve();
-          });
+          }, {once: true});
 
           frameScript.sendAsyncMessage('trigger-incoming-message', incomingMessage);
         };

@@ -170,8 +170,7 @@ private:
   nsresult MakeAnonymousElement(Element** aResult,
                                 nsTArray<ContentInfo>& aElements,
                                 nsIAtom* aTagName,
-                                CSSPseudoElementType aPseudoType,
-                                nsStyleContext* aParentContext);
+                                CSSPseudoElementType aPseudoType);
 
   class SyncDisabledStateEvent;
   friend class SyncDisabledStateEvent;
@@ -193,7 +192,7 @@ private:
     }
 
   private:
-    nsWeakFrame mFrame;
+    WeakFrame mFrame;
   };
 
   /**

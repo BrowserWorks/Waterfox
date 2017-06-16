@@ -695,9 +695,9 @@ class Clobber(MachCommandBase):
                 raise
 
         if 'python' in what:
-            if os.path.isdir(mozpath.join(self.topsrcdir, '.hg')):
+            if conditions.is_hg(self):
                 cmd = ['hg', 'purge', '--all', '-I', 'glob:**.py[co]']
-            elif os.path.isdir(mozpath.join(self.topsrcdir, '.git')):
+            elif conditions.is_git(self):
                 cmd = ['git', 'clean', '-f', '-x', '*.py[co]']
             else:
                 cmd = ['find', '.', '-type', 'f', '-name', '*.py[co]', '-delete']
@@ -1477,32 +1477,7 @@ class PackageFrontend(MachCommandBase):
     def _set_log_level(self, verbose):
         self.log_manager.terminal_handler.setLevel(logging.INFO if not verbose else logging.DEBUG)
 
-    def _install_pip_package(self, package):
-        if os.environ.get('MOZ_AUTOMATION'):
-            self.virtualenv_manager._run_pip([
-                'install',
-                package,
-                '--no-index',
-                '--find-links',
-                'http://pypi.pub.build.mozilla.org/pub',
-                '--trusted-host',
-                'pypi.pub.build.mozilla.org',
-            ])
-            return
-        self.virtualenv_manager.install_pip_package(package)
-
     def _make_artifacts(self, tree=None, job=None, skip_cache=False):
-        # Undo PATH munging that will be done by activating the virtualenv,
-        # so that invoked subprocesses expecting to find system python
-        # (git cinnabar, in particular), will not find virtualenv python.
-        original_path = os.environ.get('PATH', '')
-        self._activate_virtualenv()
-        os.environ['PATH'] = original_path
-
-        for package in ('taskcluster==0.0.32',
-                        'mozregression==1.0.2'):
-            self._install_pip_package(package)
-
         state_dir = self._mach_context.state_dir
         cache_dir = os.path.join(state_dir, 'package-frontend')
 
@@ -1531,7 +1506,6 @@ class PackageFrontend(MachCommandBase):
             else:
                 git = which.which('git')
 
-        # Absolutely must come after the virtualenv is populated!
         from mozbuild.artifacts import Artifacts
         artifacts = Artifacts(tree, self.substs, self.defines, job,
                               log=self.log, cache_dir=cache_dir,
@@ -1593,6 +1567,9 @@ class Vendor(MachCommandBase):
                 description='Vendor rust crates from crates.io into third_party/rust')
     @CommandArgument('--ignore-modified', action='store_true',
         help='Ignore modified files in current checkout',
+        default=False)
+    @CommandArgument('--build-peers-said-large-imports-were-ok', action='store_true',
+        help='Permit overly-large files to be added to the repository',
         default=False)
     def vendor_rust(self, **kwargs):
         from mozbuild.vendor_rust import VendorRust

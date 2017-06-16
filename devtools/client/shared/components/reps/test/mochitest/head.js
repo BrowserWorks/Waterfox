@@ -1,8 +1,17 @@
 /* This Source Code Form is subject to the terms of the Mozilla Public
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
-/* eslint no-unused-vars: [2, {"vars": "local"}] */
 
+/* Entirely disable no-unused-vars, because the second line here
+   doesn't seem to work with eslint 3.15.0 -- it doesn't suppress
+   other no-unused-vars errors.  */
+/* eslint-disable no-unused-vars */
+/* eslint no-unused-vars: ["error", {"vars": "local"}] */
+
+/* globals is */
+
+/* Not really a module.  */
+/* eslint-disable strict */
 "use strict";
 
 var { classes: Cc, interfaces: Ci, utils: Cu, results: Cr } = Components;
@@ -13,6 +22,7 @@ var { gDevTools } = require("devtools/client/framework/devtools");
 var { BrowserLoader } = Cu.import("resource://devtools/client/shared/browser-loader.js", {});
 var flags = require("devtools/shared/flags");
 var { Task } = require("devtools/shared/task");
+var DevToolsUtils = require("devtools/shared/DevToolsUtils");
 
 flags.testing = true;
 var { require: browserRequire } = BrowserLoader({
@@ -44,14 +54,22 @@ function shallowRenderComponent(component, props) {
 /**
  * Test that a rep renders correctly across different modes.
  */
-function testRepRenderModes(modeTests, testName, componentUnderTest, gripStub) {
-  modeTests.forEach(({mode, expectedOutput, message}) => {
+function testRepRenderModes(modeTests, testName, componentUnderTest, gripStub,
+  props = {}) {
+  modeTests.forEach(({mode, expectedOutput, message, title}) => {
     const modeString = typeof mode === "undefined" ? "no mode" : mode.toString();
     if (!message) {
       message = `${testName}: ${modeString} renders correctly.`;
     }
 
-    const rendered = renderComponent(componentUnderTest.rep, { object: gripStub, mode });
+    const rendered = renderComponent(
+      componentUnderTest.rep,
+      Object.assign({}, { object: gripStub, mode, title }, props)
+    );
     is(rendered.textContent, expectedOutput, message);
   });
+}
+
+function getStubAttachedActorIds(gripStubs) {
+  return gripStubs.map(gripStub => gripStub.actor);
 }

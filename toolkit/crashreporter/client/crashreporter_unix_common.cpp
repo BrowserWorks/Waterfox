@@ -70,16 +70,50 @@ void UIPruneSavedDumps(const std::string& directory)
   }
 }
 
-void UIRunMinidumpAnalyzer(const string& exename, const string& filename)
+bool UIRunProgram(const std::string& exename,
+                  const std::vector<std::string>& args,
+                  bool wait)
 {
-  // Run the minidump analyzer and wait for it to finish
   pid_t pid = fork();
 
   if (pid == -1) {
-    return; // Nothing to do upon failure
+    return false;
   } else if (pid == 0) {
-    execl(exename.c_str(), exename.c_str(), filename.c_str(), nullptr);
+    // Child
+    size_t argvLen = args.size() + 2;
+    char** argv = new char*[argvLen];
+
+    argv[0] = const_cast<char*>(exename.c_str());
+
+    for (size_t i = 0; i < args.size(); i++) {
+      argv[i + 1] = const_cast<char*>(args[i].c_str());
+    }
+
+    argv[argvLen - 1] = nullptr;
+
+    // Run the program
+    int rv = execv(exename.c_str(), argv);
+    delete[] argv;
+
+    if (rv == -1) {
+      exit(EXIT_FAILURE);
+    }
   } else {
-    waitpid(pid, nullptr, 0);
+    // Parent
+    if (wait) {
+      waitpid(pid, nullptr, 0);
+    }
   }
+
+  return true;
+}
+
+string UIGetEnv(const string name)
+{
+  const char *var = getenv(name.c_str());
+  if (var && *var) {
+    return var;
+  }
+
+  return "";
 }

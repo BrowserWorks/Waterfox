@@ -22,7 +22,7 @@ using namespace js;
 static void
 resc_finalize(FreeOp* fop, JSObject* obj)
 {
-    MOZ_ASSERT(fop->onMainThread());
+    MOZ_ASSERT(fop->onActiveCooperatingThread());
     RegExpStatics* res = static_cast<RegExpStatics*>(obj->as<RegExpStaticsObject>().getPrivate());
     fop->delete_(res);
 }
@@ -58,7 +58,7 @@ const Class RegExpStaticsObject::class_ = {
 };
 
 RegExpStaticsObject*
-RegExpStatics::create(ExclusiveContext* cx, Handle<GlobalObject*> parent)
+RegExpStatics::create(JSContext* cx, Handle<GlobalObject*> parent)
 {
     RegExpStaticsObject* obj = NewObjectWithGivenProto<RegExpStaticsObject>(cx, nullptr);
     if (!obj)

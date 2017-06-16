@@ -19,10 +19,11 @@
 #include "mozilla/Attributes.h"
 #include "mozilla/ComputedTimingFunction.h"
 #include "mozilla/EffectCompositor.h"
+#include "mozilla/Keyframe.h"
 #include "mozilla/KeyframeEffectParams.h"
 // RawServoDeclarationBlock and associated RefPtrTraits
 #include "mozilla/ServoBindingTypes.h"
-#include "mozilla/StyleAnimationValue.h"
+#include "mozilla/StyleAnimationValueInlines.h"
 #include "mozilla/dom/AnimationEffectReadOnly.h"
 #include "mozilla/dom/BindingDeclarations.h"
 #include "mozilla/dom/Element.h"
@@ -40,6 +41,7 @@ namespace mozilla {
 class AnimValuesStyleRule;
 enum class CSSPseudoElementType : uint8_t;
 class ErrorResult;
+struct AnimationRule;
 struct TimingParams;
 
 namespace dom {
@@ -53,78 +55,12 @@ enum class CompositeOperation : uint8_t;
 struct AnimationPropertyDetails;
 }
 
-/**
- * A property-value pair specified on a keyframe.
- */
-struct PropertyValuePair
-{
-  nsCSSPropertyID mProperty;
-  // The specified value for the property. For shorthand properties or invalid
-  // property values, we store the specified property value as a token stream
-  // (string).
-  nsCSSValue mValue;
-
-  // The specified value when using the Servo backend. However, even when
-  // using the Servo backend, we still fill in |mValue| in the case where we
-  // fail to parse the value since we use it to store the original string.
-  RefPtr<RawServoDeclarationBlock> mServoDeclarationBlock;
-
-  bool operator==(const PropertyValuePair&) const;
-};
-
-/**
- * A single keyframe.
- *
- * This is the canonical form in which keyframe effects are stored and
- * corresponds closely to the type of objects returned via the getKeyframes()
- * API.
- *
- * Before computing an output animation value, however, we flatten these frames
- * down to a series of per-property value arrays where we also resolve any
- * overlapping shorthands/longhands, convert specified CSS values to computed
- * values, etc.
- *
- * When the target element or style context changes, however, we rebuild these
- * per-property arrays from the original list of keyframes objects. As a result,
- * these objects represent the master definition of the effect's values.
- */
-struct Keyframe
-{
-  Keyframe() = default;
-  Keyframe(const Keyframe& aOther) = default;
-  Keyframe(Keyframe&& aOther)
-  {
-    *this = Move(aOther);
-  }
-
-  Keyframe& operator=(const Keyframe& aOther) = default;
-  Keyframe& operator=(Keyframe&& aOther)
-  {
-    mOffset         = aOther.mOffset;
-    mComputedOffset = aOther.mComputedOffset;
-    mTimingFunction = Move(aOther.mTimingFunction);
-    mComposite      = Move(aOther.mComposite);
-    mPropertyValues = Move(aOther.mPropertyValues);
-    return *this;
-  }
-
-  Maybe<double>                 mOffset;
-  static constexpr double kComputedOffsetNotSet = -1.0;
-  double                        mComputedOffset = kComputedOffsetNotSet;
-  Maybe<ComputedTimingFunction> mTimingFunction; // Nothing() here means
-                                                 // "linear"
-  Maybe<dom::CompositeOperation> mComposite;
-  nsTArray<PropertyValuePair>   mPropertyValues;
-};
-
 struct AnimationPropertySegment
 {
   float mFromKey, mToKey;
   // NOTE: In the case that no keyframe for 0 or 1 offset is specified
   // the unit of mFromValue or mToValue is eUnit_Null.
-  StyleAnimationValue mFromValue, mToValue;
-  // FIXME add a deep == impl for RawServoAnimationValue
-  RefPtr<RawServoAnimationValue> mServoFromValue, mServoToValue;
+  AnimationValue mFromValue, mToValue;
 
   Maybe<ComputedTimingFunction> mTimingFunction;
   dom::CompositeOperation mFromComposite = dom::CompositeOperation::Replace;
@@ -194,6 +130,13 @@ struct AnimationProperty
   }
 };
 
+struct ServoComputedStyleValues
+{
+  const ServoComputedValues* mCurrentStyle;
+  const ServoComputedValues* mParentStyle;
+  explicit operator bool() const { return true; }
+};
+
 struct ElementPropertyTransition;
 
 namespace dom {
@@ -260,6 +203,8 @@ public:
                     ErrorResult& aRv);
   void SetKeyframes(nsTArray<Keyframe>&& aKeyframes,
                     nsStyleContext* aStyleContext);
+  void SetKeyframes(nsTArray<Keyframe>&& aKeyframes,
+                    const ServoComputedStyleValues& aServoValues);
 
   // Returns true if the effect includes |aProperty| regardless of whether the
   // property is overridden by !important rule.
@@ -287,11 +232,13 @@ public:
   // Update |mProperties| by recalculating from |mKeyframes| using
   // |aStyleContext| to resolve specified values.
   void UpdateProperties(nsStyleContext* aStyleContext);
+  // Servo version of the above function.
+  void UpdateProperties(const ServoComputedStyleValues& aServoValues);
 
   // Updates |aStyleRule| with the animation values produced by this
   // AnimationEffect for the current time except any properties contained
   // in |aPropertiesToSkip|.
-  void ComposeStyle(RefPtr<AnimValuesStyleRule>& aStyleRule,
+  void ComposeStyle(AnimationRule& aStyleRule,
                     const nsCSSPropertyIDSet& aPropertiesToSkip);
 
   // Composite |aValueToComposite| on |aUnderlyingValue| with
@@ -341,6 +288,10 @@ public:
   // Cumulative change hint on each segment for each property.
   // This is used for deciding the animation is paint-only.
   void CalculateCumulativeChangeHint(nsStyleContext* aStyleContext);
+  void CalculateCumulativeChangeHint(
+    const ServoComputedStyleValues& aServoValues)
+  {
+  }
 
   // Returns true if all of animation properties' change hints
   // can ignore painting if the animation is not visible.
@@ -388,7 +339,8 @@ protected:
   // Build properties by recalculating from |mKeyframes| using |aStyleContext|
   // to resolve specified values. This function also applies paced spacing if
   // needed.
-  nsTArray<AnimationProperty> BuildProperties(nsStyleContext* aStyleContext);
+  template<typename StyleType>
+  nsTArray<AnimationProperty> BuildProperties(StyleType&& aStyle);
 
   // This effect is registered with its target element so long as:
   //
@@ -441,6 +393,11 @@ protected:
   // Ensure the base styles is available for any properties in |aProperties|.
   void EnsureBaseStyles(nsStyleContext* aStyleContext,
                         const nsTArray<AnimationProperty>& aProperties);
+  void EnsureBaseStyles(const ServoComputedStyleValues& aServoValues,
+                        const nsTArray<AnimationProperty>& aProperties)
+  {
+    // FIXME: Bug 1311257: Support missing keyframes.
+  }
 
   // Returns the base style resolved by |aStyleContext| for |aProperty|.
   StyleAnimationValue ResolveBaseStyle(nsCSSPropertyID aProperty,
@@ -477,6 +434,12 @@ protected:
 
 private:
   nsChangeHint mCumulativeChangeHint;
+
+  template<typename StyleType>
+  void DoSetKeyframes(nsTArray<Keyframe>&& aKeyframes, StyleType&& aStyle);
+
+  template<typename StyleType>
+  void DoUpdateProperties(StyleType&& aStyle);
 
   nsIFrame* GetAnimationFrame() const;
 

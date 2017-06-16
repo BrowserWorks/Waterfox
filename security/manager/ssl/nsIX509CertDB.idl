@@ -35,13 +35,6 @@ interface nsIVerifySignedDirectoryCallback : nsISupports
                                      in nsIX509Cert aSignerCert);
 };
 
-[scriptable, function, uuid(3d6a9c87-5c5f-46fc-9410-96da6092f0f2)]
-interface nsIVerifySignedManifestCallback : nsISupports
-{
-  void verifySignedManifestFinished(in nsresult rv,
-                                    in nsIX509Cert aSignerCert);
-};
-
 /**
  * Callback type for use with asyncVerifyCertAtTime.
  * If aPRErrorCode is PRErrorCodeSuccess (i.e. 0), aVerifiedChain represents the
@@ -82,7 +75,7 @@ interface nsIX509CertDB : nsISupports {
    *  @param aDBkey Database internal key, as obtained using
    *                attribute dbkey in nsIX509Cert.
    */
-  nsIX509Cert findCertByDBKey(in string aDBkey);
+  nsIX509Cert findCertByDBKey(in ACString aDBkey);
 
   /**
    *  Find a certificate by email address.
@@ -92,7 +85,7 @@ interface nsIX509CertDB : nsISupports {
    *
    *  @return The matching certificate if found.
    */
-  nsIX509Cert findCertByEmailAddress(in string aEmailAddress);
+  nsIX509Cert findCertByEmailAddress(in ACString aEmailAddress);
 
   /**
    *  Use this to import a stream sent down as a mime type into
@@ -190,28 +183,19 @@ interface nsIX509CertDB : nsISupports {
   /**
    *  Import a PKCS#12 file containing cert(s) and key(s) into the database.
    *
-   *  @param aToken Optionally limits the scope of
-   *                this function to a token device.
-   *                Can be null to mean any token.
-   *  @param aFile Identifies a file that contains the data
-   *               to be imported.
+   *  @param aFile Identifies a file that contains the data to be imported.
    */
-  void importPKCS12File(in nsISupports aToken,
-                        in nsIFile aFile);
+  void importPKCS12File(in nsIFile aFile);
 
   /**
    *  Export a set of certs and keys from the database to a PKCS#12 file.
    *
-   *  @param aToken Optionally limits the scope of
-   *                this function to a token device.
-   *                Can be null to mean any token.
-   *  @param aFile Identifies a file that will be filled with the data
-   *               to be exported.
+   *  @param aFile Identifies a file that will be filled with the data to be
+   *               exported.
    *  @param count The number of certificates to be exported.
    *  @param aCerts The array of all certificates to be exported.
    */
-  void exportPKCS12File(in nsISupports aToken,
-                        in nsIFile aFile,
+  void exportPKCS12File(in nsIFile aFile,
                         in unsigned long count,
                         [array, size_is(count)] in nsIX509Cert aCerts);
 
@@ -229,10 +213,9 @@ interface nsIX509CertDB : nsISupports {
    *
    *  @param certDER The raw representation of a certificate,
    *                 encoded as raw DER.
-   *  @param length  The length of the DER string.
    *  @return The new certificate object.
    */
-  nsIX509Cert constructX509(in string certDER, in unsigned long length);
+  nsIX509Cert constructX509(in ACString certDER);
 
   /**
    *  Verifies the signature on the given JAR file to verify that it has a
@@ -250,11 +233,11 @@ interface nsIX509CertDB : nsISupports {
    *  as input, to encourage users of the API to verify the signature as the
    *  first step in opening the JAR.
    */
-  const AppTrustedRoot AppMarketplaceProdPublicRoot = 1;
-  const AppTrustedRoot AppMarketplaceProdReviewersRoot = 2;
-  const AppTrustedRoot AppMarketplaceDevPublicRoot = 3;
-  const AppTrustedRoot AppMarketplaceDevReviewersRoot = 4;
-  const AppTrustedRoot AppMarketplaceStageRoot = 5;
+  // 1 used to be AppMarketplaceProdPublicRoot.
+  // 2 used to be AppMarketplaceProdReviewersRoot.
+  // 3 used to be AppMarketplaceDevPublicRoot.
+  // 4 used to be AppMarketplaceDevReviewersRoot.
+  // 5 used to be AppMarketplaceStageRoot.
   const AppTrustedRoot AppXPCShellRoot = 6;
   const AppTrustedRoot AddonsPublicRoot = 7;
   const AppTrustedRoot AddonsStageRoot = 8;
@@ -286,22 +269,6 @@ interface nsIX509CertDB : nsISupports {
   void verifySignedDirectoryAsync(in AppTrustedRoot trustedRoot,
                                   in nsIFile aUnpackedDir,
                                   in nsIVerifySignedDirectoryCallback callback);
-
-  /**
-   * Given streams containing a signature and a manifest file, verifies
-   * that the signature is valid for the manifest. The signature must
-   * come from a certificate that is trusted for code signing and that
-   * was issued by the given trusted root.
-   *
-   *  On success, NS_OK and the trusted certificate that signed the
-   *  Manifest are returned.
-   *
-   *  On failure, an error code is returned.
-   */
-  void verifySignedManifestAsync(in AppTrustedRoot trustedRoot,
-                                 in nsIInputStream aManifestStream,
-                                 in nsIInputStream aSignatureStream,
-                                 in nsIVerifySignedManifestCallback callback);
 
   /*
    * Add a cert to a cert DB from a binary string.
@@ -346,7 +313,7 @@ interface nsIX509CertDB : nsISupports {
     verifyCertAtTime(in nsIX509Cert aCert,
                      in int64_t /*SECCertificateUsage*/ aUsage,
                      in uint32_t aFlags,
-                     in string aHostname,
+                     in ACString aHostname,
                      in uint64_t aTime,
                      out nsIX509CertList aVerifiedChain,
                      out bool aHasEVPolicy);
@@ -354,7 +321,7 @@ interface nsIX509CertDB : nsISupports {
     verifyCertNow(in nsIX509Cert aCert,
                   in int64_t /*SECCertificateUsage*/ aUsage,
                   in uint32_t aFlags,
-                  in string aHostname,
+                  in ACString aHostname,
                   out nsIX509CertList aVerifiedChain,
                   out bool aHasEVPolicy);
 
@@ -365,7 +332,7 @@ interface nsIX509CertDB : nsISupports {
   void asyncVerifyCertAtTime(in nsIX509Cert aCert,
                              in int64_t /*SECCertificateUsage*/ aUsage,
                              in uint32_t aFlags,
-                             in string aHostname,
+                             in ACString aHostname,
                              in uint64_t aTime,
                              in nsICertVerificationCallback aCallback);
 

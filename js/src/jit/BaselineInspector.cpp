@@ -27,16 +27,10 @@ SetElemICInspector::sawOOBDenseWrite() const
     if (!icEntry_)
         return false;
 
-    // Check for an element adding stub.
-    for (ICStub* stub = icEntry_->firstStub(); stub; stub = stub->next()) {
-        if (stub->isSetElem_DenseOrUnboxedArrayAdd())
-            return true;
-    }
-
     // Check for a write hole bit on the SetElem_Fallback stub.
     ICStub* stub = icEntry_->fallbackStub();
     if (stub->isSetElem_Fallback())
-        return stub->toSetElem_Fallback()->hasArrayWriteHole();
+        return stub->toSetElem_Fallback()->hasDenseAdd();
 
     return false;
 }
@@ -47,41 +41,10 @@ SetElemICInspector::sawOOBTypedArrayWrite() const
     if (!icEntry_)
         return false;
 
-    // Check for SetElem_TypedArray stubs with expectOutOfBounds set.
-    for (ICStub* stub = icEntry_->firstStub(); stub; stub = stub->next()) {
-        if (!stub->isSetElem_TypedArray())
-            continue;
-        if (stub->toSetElem_TypedArray()->expectOutOfBounds())
-            return true;
-    }
-    return false;
-}
+    ICStub* stub = icEntry_->fallbackStub();
+    if (stub->isSetElem_Fallback())
+        return stub->toSetElem_Fallback()->hasTypedArrayOOB();
 
-bool
-SetElemICInspector::sawDenseWrite() const
-{
-    if (!icEntry_)
-        return false;
-
-    // Check for a SetElem_DenseAdd or SetElem_Dense stub.
-    for (ICStub* stub = icEntry_->firstStub(); stub; stub = stub->next()) {
-        if (stub->isSetElem_DenseOrUnboxedArrayAdd() || stub->isSetElem_DenseOrUnboxedArray())
-            return true;
-    }
-    return false;
-}
-
-bool
-SetElemICInspector::sawTypedArrayWrite() const
-{
-    if (!icEntry_)
-        return false;
-
-    // Check for a SetElem_TypedArray stub.
-    for (ICStub* stub = icEntry_->firstStub(); stub; stub = stub->next()) {
-        if (stub->isSetElem_TypedArray())
-            return true;
-    }
     return false;
 }
 
@@ -754,8 +717,8 @@ BaselineInspector::templateCallObject()
 }
 
 static bool
-MatchCacheIRReceiverGuard(CacheIRReader& reader, ICCacheIR_Monitored* stub, ObjOperandId objId,
-                          ReceiverGuard* receiver)
+MatchCacheIRReceiverGuard(CacheIRReader& reader, ICStub* stub, const CacheIRStubInfo* stubInfo,
+                          ObjOperandId objId, ReceiverGuard* receiver)
 {
     // This matches the CacheIR emitted in TestMatchingReceiver.
     //
@@ -778,13 +741,13 @@ MatchCacheIRReceiverGuard(CacheIRReader& reader, ICCacheIR_Monitored* stub, ObjO
 
     if (reader.matchOp(CacheOp::GuardShape, objId)) {
         // The first case.
-        receiver->shape = stub->stubInfo()->getStubField<Shape*>(stub, reader.stubOffset());
+        receiver->shape = stubInfo->getStubField<Shape*>(stub, reader.stubOffset());
         return true;
     }
 
     if (!reader.matchOp(CacheOp::GuardGroup, objId))
         return false;
-    receiver->group = stub->stubInfo()->getStubField<ObjectGroup*>(stub, reader.stubOffset());
+    receiver->group = stubInfo->getStubField<ObjectGroup*>(stub, reader.stubOffset());
 
     if (!reader.matchOp(CacheOp::GuardAndLoadUnboxedExpando, objId)) {
         // Second case, just a group guard.
@@ -797,7 +760,7 @@ MatchCacheIRReceiverGuard(CacheIRReader& reader, ICCacheIR_Monitored* stub, ObjO
     if (!reader.matchOp(CacheOp::GuardShape, expandoId))
         return false;
 
-    receiver->shape = stub->stubInfo()->getStubField<Shape*>(stub, reader.stubOffset());
+    receiver->shape = stubInfo->getStubField<Shape*>(stub, reader.stubOffset());
     return true;
 }
 
@@ -933,7 +896,7 @@ AddCacheIRGetPropFunction(ICCacheIR_Monitored* stub, bool innerized,
     }
 
     ReceiverGuard receiver;
-    if (!MatchCacheIRReceiverGuard(reader, stub, objId, &receiver))
+    if (!MatchCacheIRReceiverGuard(reader, stub, stub->stubInfo(), objId, &receiver))
         return false;
 
     if (reader.matchOp(CacheOp::CallScriptedGetterResult, objId) ||
@@ -1055,6 +1018,98 @@ BaselineInspector::commonGetPropFunction(jsbytecode* pc, bool innerized,
     return true;
 }
 
+static bool
+AddCacheIRSetPropFunction(ICCacheIR_Updated* stub, JSObject** holder, Shape** holderShape,
+                          JSFunction** commonSetter, bool* isOwnProperty,
+                          BaselineInspector::ReceiverVector& receivers,
+                          BaselineInspector::ObjectGroupVector& convertUnboxedGroups)
+{
+    // We match either an own setter:
+    //
+    //   GuardIsObject objId
+    //   <GuardReceiver objId>
+    //   Call(Scripted|Native)Setter objId
+    //
+    // Or a setter on the prototype:
+    //
+    //   GuardIsObject objId
+    //   <GuardReceiver objId>
+    //   LoadObject holderId
+    //   GuardShape holderId
+    //   Call(Scripted|Native)Setter objId
+
+    CacheIRReader reader(stub->stubInfo());
+
+    ObjOperandId objId = ObjOperandId(0);
+    if (!reader.matchOp(CacheOp::GuardIsObject, objId))
+        return false;
+
+    ReceiverGuard receiver;
+    if (!MatchCacheIRReceiverGuard(reader, stub, stub->stubInfo(), objId, &receiver))
+        return false;
+
+    if (reader.matchOp(CacheOp::CallScriptedSetter, objId) ||
+        reader.matchOp(CacheOp::CallNativeSetter, objId))
+    {
+        // This is an own property setter, the first case.
+        MOZ_ASSERT(receiver.shape);
+        MOZ_ASSERT(!receiver.group);
+
+        size_t offset = reader.stubOffset();
+        JSFunction* setter =
+            &stub->stubInfo()->getStubField<JSObject*>(stub, offset)->as<JSFunction>();
+
+        if (*commonSetter && (!*isOwnProperty || *holderShape != receiver.shape))
+            return false;
+
+        MOZ_ASSERT_IF(*commonSetter, *commonSetter == setter);
+        *holder = nullptr;
+        *holderShape = receiver.shape;
+        *commonSetter = setter;
+        *isOwnProperty = true;
+        return true;
+    }
+
+    if (!reader.matchOp(CacheOp::LoadObject))
+        return false;
+    ObjOperandId holderId = reader.objOperandId();
+    JSObject* obj = stub->stubInfo()->getStubField<JSObject*>(stub, reader.stubOffset());
+
+    if (!reader.matchOp(CacheOp::GuardShape, holderId))
+        return false;
+    Shape* objShape = stub->stubInfo()->getStubField<Shape*>(stub, reader.stubOffset());
+
+    if (!reader.matchOp(CacheOp::CallScriptedSetter, objId) &&
+        !reader.matchOp(CacheOp::CallNativeSetter, objId))
+    {
+        return false;
+    }
+
+    // A setter on the prototype.
+    size_t offset = reader.stubOffset();
+    JSFunction* setter =
+        &stub->stubInfo()->getStubField<JSObject*>(stub, offset)->as<JSFunction>();
+
+    if (*commonSetter && (*isOwnProperty || *holderShape != objShape))
+        return false;
+
+    MOZ_ASSERT_IF(*commonSetter, *commonSetter == setter);
+
+    if (obj->as<NativeObject>().lastProperty() != objShape) {
+        // Skip this stub as the shape is no longer correct.
+        return true;
+    }
+
+    if (!AddReceiver(receiver, receivers, convertUnboxedGroups))
+        return false;
+
+    *holder = obj;
+    *holderShape = objShape;
+    *commonSetter = setter;
+    *isOwnProperty = false;
+    return true;
+}
+
 bool
 BaselineInspector::commonSetPropFunction(jsbytecode* pc, JSObject** holder, Shape** holderShape,
                                          JSFunction** commonSetter, bool* isOwnProperty,
@@ -1071,21 +1126,13 @@ BaselineInspector::commonSetPropFunction(jsbytecode* pc, JSObject** holder, Shap
     const ICEntry& entry = icEntryFromPC(pc);
 
     for (ICStub* stub = entry.firstStub(); stub; stub = stub->next()) {
-        if (stub->isSetProp_CallScripted() || stub->isSetProp_CallNative()) {
-            ICSetPropCallSetter* nstub = static_cast<ICSetPropCallSetter*>(stub);
-            bool isOwn = nstub->isOwnSetter();
-            if (!isOwn && !AddReceiver(nstub->receiverGuard(), receivers, convertUnboxedGroups))
+        if (stub->isCacheIR_Updated()) {
+            if (!AddCacheIRSetPropFunction(stub->toCacheIR_Updated(),
+                                           holder, holderShape,
+                                           commonSetter, isOwnProperty, receivers,
+                                           convertUnboxedGroups))
+            {
                 return false;
-
-            if (!*commonSetter) {
-                *holder = isOwn ? nullptr : nstub->holder().get();
-                *holderShape = nstub->holderShape();
-                *commonSetter = nstub->setter();
-                *isOwnProperty = isOwn;
-            } else if (nstub->holderShape() != *holderShape || isOwn != *isOwnProperty) {
-                return false;
-            } else {
-                MOZ_ASSERT(*commonSetter == nstub->setter());
             }
         } else if (!stub->isSetProp_Fallback() ||
                    stub->toSetProp_Fallback()->hadUnoptimizableAccess())

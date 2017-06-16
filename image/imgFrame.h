@@ -11,10 +11,10 @@
 #include "mozilla/MemoryReporting.h"
 #include "mozilla/Monitor.h"
 #include "mozilla/Move.h"
-#include "mozilla/VolatileBuffer.h"
 #include "gfxDrawable.h"
 #include "imgIContainer.h"
 #include "MainThreadUtils.h"
+#include "nsAutoPtr.h"
 
 namespace mozilla {
 namespace image {
@@ -210,14 +210,14 @@ public:
                           const nsIntRect& aRect,
                           SurfaceFormat aFormat,
                           uint8_t aPaletteDepth = 0,
-                          bool aNonPremult = false);
+                          bool aNonPremult = false,
+                          bool aIsAnimated = false);
 
-  nsresult InitForDecoder(const nsIntSize& aSize,
-                          SurfaceFormat aFormat,
-                          uint8_t aPaletteDepth = 0)
+  nsresult InitForAnimator(const nsIntSize& aSize,
+                           SurfaceFormat aFormat)
   {
     return InitForDecoder(aSize, nsIntRect(0, 0, aSize.width, aSize.height),
-                          aFormat, aPaletteDepth);
+                          aFormat, 0, false, true);
   }
 
 
@@ -279,12 +279,15 @@ public:
    * @param aBlendRect       For animation frames, if present, the subrect in
    *                         which @aBlendMethod applies. Outside of this
    *                         subrect, BlendMethod::OVER is always used.
+   * @param aFinalize        Finalize the underlying surface (e.g. so that it
+   *                         may be marked as read only if possible).
    */
   void Finish(Opacity aFrameOpacity = Opacity::SOME_TRANSPARENCY,
               DisposalMethod aDisposalMethod = DisposalMethod::KEEP,
               FrameTimeout aTimeout = FrameTimeout::FromRawMilliseconds(0),
               BlendMethod aBlendMethod = BlendMethod::OVER,
-              const Maybe<IntRect>& aBlendRect = Nothing());
+              const Maybe<IntRect>& aBlendRect = Nothing(),
+              bool aFinalize = true);
 
   /**
    * Mark this imgFrame as aborted. This informs the imgFrame that if it isn't
@@ -341,10 +344,12 @@ public:
 
   void SetOptimizable();
 
+  void FinalizeSurface();
   already_AddRefed<SourceSurface> GetSourceSurface();
 
   void AddSizeOfExcludingThis(MallocSizeOf aMallocSizeOf, size_t& aHeapSizeOut,
-                              size_t& aNonHeapSizeOut) const;
+                              size_t& aNonHeapSizeOut,
+                              size_t& aSharedHandlesOut) const;
 
 private: // methods
 
@@ -352,7 +357,6 @@ private: // methods
 
   nsresult LockImageData();
   nsresult UnlockImageData();
-  bool     CanOptimizeOpaqueImage();
   nsresult Optimize(gfx::DrawTarget* aTarget);
 
   void AssertImageDataLocked() const;
@@ -362,6 +366,7 @@ private: // methods
   void GetImageDataInternal(uint8_t** aData, uint32_t* length) const;
   uint32_t GetImageBytesPerRow() const;
   uint32_t GetImageDataLength() const;
+  void FinalizeSurfaceInternal();
   already_AddRefed<SourceSurface> GetSourceSurfaceInternal();
 
   uint32_t PaletteDataLength() const
@@ -396,11 +401,25 @@ private: // data
 
   mutable Monitor mMonitor;
 
-  RefPtr<DataSourceSurface> mImageSurface;
-  RefPtr<SourceSurface> mOptSurface;
+  /**
+   * Surface which contains either a weak or a strong reference to its
+   * underlying data buffer. If it is a weak reference, and there are no strong
+   * references, the buffer may be released due to events such as low memory.
+   */
+  RefPtr<DataSourceSurface> mRawSurface;
 
-  RefPtr<VolatileBuffer> mVBuf;
-  VolatileBufferPtr<uint8_t> mVBufPtr;
+  /**
+   * Refers to the same data as mRawSurface, but when set, it guarantees that
+   * we hold a strong reference to the underlying data buffer.
+   */
+  RefPtr<DataSourceSurface> mLockedSurface;
+
+  /**
+   * Optimized copy of mRawSurface for the DrawTarget that will render it. This
+   * is unused if the DrawTarget is able to render DataSourceSurface buffers
+   * directly.
+   */
+  RefPtr<SourceSurface> mOptSurface;
 
   nsIntRect mDecoded;
 
@@ -415,7 +434,6 @@ private: // data
   Maybe<IntRect> mBlendRect;
   SurfaceFormat  mFormat;
 
-  bool mHasNoAlpha;
   bool mAborted;
   bool mFinished;
   bool mOptimizable;
@@ -452,16 +470,30 @@ private: // data
  */
 class DrawableFrameRef final
 {
+  typedef gfx::DataSourceSurface DataSourceSurface;
+
 public:
   DrawableFrameRef() { }
 
   explicit DrawableFrameRef(imgFrame* aFrame)
     : mFrame(aFrame)
-    , mRef(aFrame->mVBuf)
   {
-    if (mRef.WasBufferPurged()) {
-      mFrame = nullptr;
-      mRef = nullptr;
+    MOZ_ASSERT(aFrame);
+    MonitorAutoLock lock(aFrame->mMonitor);
+
+    // Paletted images won't have a surface so there is no strong reference
+    // to hold on to. Since Draw() and GetSourceSurface() calls will not work
+    // in that case, we should be using RawAccessFrameRef exclusively instead.
+    // See FrameAnimator::GetRawFrame for an example of this behaviour.
+    if (aFrame->mRawSurface) {
+      mRef = new DataSourceSurface::ScopedMap(aFrame->mRawSurface,
+                                              DataSourceSurface::READ_WRITE);
+      if (!mRef->IsMapped()) {
+        mFrame = nullptr;
+        mRef = nullptr;
+      }
+    } else {
+      MOZ_ASSERT(aFrame->mOptSurface || aFrame->GetIsPaletted());
     }
   }
 
@@ -505,7 +537,7 @@ private:
   DrawableFrameRef(const DrawableFrameRef& aOther) = delete;
 
   RefPtr<imgFrame> mFrame;
-  VolatileBufferPtr<uint8_t> mRef;
+  nsAutoPtr<DataSourceSurface::ScopedMap> mRef;
 };
 
 /**
@@ -593,6 +625,8 @@ private:
 
   RefPtr<imgFrame> mFrame;
 };
+
+void MarkSurfaceShared(gfx::SourceSurface* aSurface);
 
 } // namespace image
 } // namespace mozilla

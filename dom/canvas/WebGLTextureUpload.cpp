@@ -17,6 +17,7 @@
 #include "mozilla/dom/ImageData.h"
 #include "mozilla/MathAlgorithms.h"
 #include "mozilla/Scoped.h"
+#include "mozilla/SizePrintfMacros.h"
 #include "mozilla/Unused.h"
 #include "ScopedGLHelpers.h"
 #include "TexUnpackBlob.h"
@@ -293,7 +294,11 @@ WebGLContext::FromDomElem(const char* funcName, TexImageTarget target, uint32_t 
                           uint32_t height, uint32_t depth, const dom::Element& elem,
                           ErrorResult* const out_error)
 {
-    uint32_t flags = nsLayoutUtils::SFE_WANT_IMAGE_SURFACE |
+    // The canvas spec says that drawImage should draw the first frame of
+    // animated images. The webgl spec doesn't mention the issue, so we do the
+    // same as drawImage.
+    uint32_t flags = nsLayoutUtils::SFE_WANT_FIRST_FRAME_IF_IMAGE |
+                     nsLayoutUtils::SFE_WANT_IMAGE_SURFACE |
                      nsLayoutUtils::SFE_USE_ELEMENT_SIZE_IF_VECTOR;
 
     if (mPixelStore_ColorspaceConversion == LOCAL_GL_NONE)
@@ -695,7 +700,7 @@ ValidateCompressedTexUnpack(WebGLContext* webgl, const char* funcName, GLsizei w
 
     if (dataSize != bytesNeeded.value()) {
         webgl->ErrorInvalidValue("%s: Provided buffer's size must match expected size."
-                                 " (needs %u, has %u)",
+                                 " (needs %u, has %" PRIuSIZE ")",
                                  funcName, bytesNeeded.value(), dataSize);
         return false;
     }
@@ -1394,7 +1399,7 @@ WebGLTexture::TexSubImage(const char* funcName, TexImageTarget target, GLint lev
     }
 
     if (glError) {
-        mContext->ErrorInvalidOperation("%s: Unexpected error during upload: 0x04x",
+        mContext->ErrorInvalidOperation("%s: Unexpected error during upload: 0x%04x",
                                         funcName, glError);
         MOZ_ASSERT(false, "Unexpected GL error.");
         return;

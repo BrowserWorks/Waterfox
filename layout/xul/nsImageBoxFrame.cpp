@@ -30,7 +30,6 @@
 #include "nsIURL.h"
 #include "nsILoadGroup.h"
 #include "nsContainerFrame.h"
-#include "prprf.h"
 #include "nsCSSRendering.h"
 #include "nsIDOMHTMLImageElement.h"
 #include "nsNameSpaceManager.h"
@@ -52,6 +51,7 @@
 #include "mozilla/BasicEvents.h"
 #include "mozilla/EventDispatcher.h"
 #include "mozilla/Maybe.h"
+#include "SVGImageContext.h"
 
 #define ONLOAD_CALLED_TOO_EARLY 1
 
@@ -409,7 +409,8 @@ nsImageBoxFrame::PaintImage(nsRenderingContext& aRenderingContext,
            *aRenderingContext.ThebesContext(),
            PresContext(), imgCon,
            nsLayoutUtils::GetSamplingFilterForFrame(this),
-           dest, dirty, nullptr, aFlags,
+           dest, dirty,
+           /* no SVGImageContext */ Nothing(), aFlags,
            anchorPoint.ptrOr(nullptr),
            hasSubRect ? &mSubRect : nullptr);
 }

@@ -11,6 +11,7 @@
 #include "mozilla/dom/CSSTransitionBinding.h"
 
 #include "nsIContent.h"
+#include "nsContentUtils.h"
 #include "nsStyleContext.h"
 #include "mozilla/MemoryReporting.h"
 #include "mozilla/TimeStamp.h"
@@ -32,8 +33,8 @@
 #include "nsDisplayList.h"
 #include "nsStyleChangeList.h"
 #include "nsStyleSet.h"
-#include "mozilla/RestyleManagerHandle.h"
-#include "mozilla/RestyleManagerHandleInlines.h"
+#include "mozilla/RestyleManager.h"
+#include "mozilla/RestyleManagerInlines.h"
 #include "nsDOMMutationObserver.h"
 
 using mozilla::TimeStamp;
@@ -45,8 +46,6 @@ using mozilla::dom::KeyframeEffectReadOnly;
 
 using namespace mozilla;
 using namespace mozilla::css;
-
-typedef mozilla::ComputedTiming::AnimationPhase AnimationPhase;
 
 namespace {
 struct TransitionEventParams {
@@ -122,7 +121,7 @@ ElementPropertyTransition::UpdateStartValueFromReplacedTransition()
         StyleAnimationValue::UncomputeValue(mProperties[0].mProperty,
                                             startValue,
                                             cssValue);
-      mProperties[0].mSegments[0].mFromValue = Move(startValue);
+      mProperties[0].mSegments[0].mFromValue.mGecko = Move(startValue);
       MOZ_ASSERT(uncomputeResult, "UncomputeValue should not fail");
       MOZ_ASSERT(mKeyframes.Length() == 2,
           "Transitions should have exactly two animation keyframes");
@@ -191,7 +190,8 @@ CSSTransition::QueueEvents(StickyTimeDuration aActiveTime)
   mOwningElement.GetElement(owningElement, owningPseudoType);
   MOZ_ASSERT(owningElement, "Owning element should be set");
 
-  nsPresContext* presContext = mOwningElement.GetRenderedPresContext();
+  nsPresContext* presContext =
+    nsContentUtils::GetContextForContent(owningElement);
   if (!presContext) {
     return;
   }
@@ -203,9 +203,7 @@ CSSTransition::QueueEvents(StickyTimeDuration aActiveTime)
   StickyTimeDuration intervalEndTime;
 
   if (!mEffect) {
-    currentPhase      = GetTransitionPhaseWithoutEffect();
-    intervalStartTime = zeroDuration;
-    intervalEndTime   = zeroDuration;
+    currentPhase = GetAnimationPhaseWithoutEffect<TransitionPhase>(*this);
   } else {
     ComputedTiming computedTiming = mEffect->GetComputedTiming();
 
@@ -223,9 +221,9 @@ CSSTransition::QueueEvents(StickyTimeDuration aActiveTime)
   // perhaps even with different timelines.
   // The zero timestamp is for transitionrun events where we ignore the delay
   // for the purpose of ordering events.
-  TimeStamp zeroTimeStamp   = AnimationTimeToTimeStamp(zeroDuration);
-  TimeStamp startTimeStamp  = ElapsedTimeToTimeStamp(intervalStartTime);
-  TimeStamp endTimeStamp    = ElapsedTimeToTimeStamp(intervalEndTime);
+  TimeStamp zeroTimeStamp  = AnimationTimeToTimeStamp(zeroDuration);
+  TimeStamp startTimeStamp = ElapsedTimeToTimeStamp(intervalStartTime);
+  TimeStamp endTimeStamp   = ElapsedTimeToTimeStamp(intervalEndTime);
 
   if (mPendingState != PendingState::NotPending &&
       (mPreviousTransitionPhase == TransitionPhase::Idle ||
@@ -236,8 +234,9 @@ CSSTransition::QueueEvents(StickyTimeDuration aActiveTime)
 
   AutoTArray<TransitionEventParams, 3> events;
 
-  // Handle cancel events firts
-  if (mPreviousTransitionPhase != TransitionPhase::Idle &&
+  // Handle cancel events first
+  if ((mPreviousTransitionPhase != TransitionPhase::Idle &&
+       mPreviousTransitionPhase != TransitionPhase::After) &&
       currentPhase == TransitionPhase::Idle) {
     TimeStamp activeTimeStamp = ElapsedTimeToTimeStamp(aActiveTime);
     events.AppendElement(TransitionEventParams{ eTransitionCancel,
@@ -327,23 +326,6 @@ CSSTransition::QueueEvents(StickyTimeDuration aActiveTime)
                                             evt.mTimeStamp,
                                             this));
   }
-}
-
-CSSTransition::TransitionPhase
-CSSTransition::GetTransitionPhaseWithoutEffect() const
-{
-  MOZ_ASSERT(!mEffect, "Should only be called when we do not have an effect");
-
-  Nullable<TimeDuration> currentTime = GetCurrentTime();
-  if (currentTime.IsNull()) {
-    return TransitionPhase::Idle;
-  }
-
-  // If we don't have a target effect, the duration will be zero so the phase is
-  // 'before' if the current time is less than zero.
-  return currentTime.Value() < TimeDuration()
-         ? TransitionPhase::Before
-         : TransitionPhase::After;
 }
 
 void
@@ -914,12 +896,11 @@ nsTransitionManager::ConsiderInitiatingTransition(
     reversePortion = valuePortion;
   }
 
-  TimingParams timing;
-  timing.mDuration.emplace(StickyTimeDuration::FromMilliseconds(duration));
-  timing.mDelay = TimeDuration::FromMilliseconds(delay);
-  timing.mIterations = 1.0;
-  timing.mDirection = dom::PlaybackDirection::Normal;
-  timing.mFill = dom::FillMode::Backwards;
+  TimingParams timing =
+    TimingParamsFromCSSParams(duration, delay,
+                              1.0 /* iteration count */,
+                              dom::PlaybackDirection::Normal,
+                              dom::FillMode::Backwards);
 
   // aElement is non-null here, so we emplace it directly.
   Maybe<OwningAnimationTarget> target;
@@ -992,8 +973,8 @@ nsTransitionManager::ConsiderInitiatingTransition(
           oldPT->GetAnimation()->PlaybackRate(),
           oldPT->SpecifiedTiming(),
           segment.mTimingFunction,
-          segment.mFromValue,
-          segment.mToValue
+          segment.mFromValue.mGecko,
+          segment.mToValue.mGecko
         })
       );
     }
@@ -1098,20 +1079,4 @@ nsTransitionManager::PruneCompletedTransitions(mozilla::dom::Element* aElement,
     // |collection| is now a dangling pointer!
     collection = nullptr;
   }
-}
-
-void
-nsTransitionManager::StopTransitionsForElement(
-  mozilla::dom::Element* aElement,
-  mozilla::CSSPseudoElementType aPseudoType)
-{
-  MOZ_ASSERT(aElement);
-  CSSTransitionCollection* collection =
-    CSSTransitionCollection::GetAnimationCollection(aElement, aPseudoType);
-  if (!collection) {
-    return;
-  }
-
-  nsAutoAnimationMutationBatch mb(aElement->OwnerDoc());
-  collection->Destroy();
 }

@@ -332,11 +332,11 @@ function backupCerts()
   fp.appendFilter(bundle.getString("file_browse_PKCS12_spec"),
                   "*.p12");
   fp.appendFilters(nsIFilePicker.filterAll);
-  var rv = fp.show();
-  if (rv == nsIFilePicker.returnOK || rv == nsIFilePicker.returnReplace) {
-    certdb.exportPKCS12File(null, fp.file, selected_certs.length,
-                            selected_certs);
-  }
+  fp.open(rv => {
+    if (rv == nsIFilePicker.returnOK || rv == nsIFilePicker.returnReplace) {
+      certdb.exportPKCS12File(fp.file, selected_certs.length, selected_certs);
+    }
+  });
 }
 
 function backupAllCerts()
@@ -368,7 +368,11 @@ function restoreCerts()
   fp.appendFilter(bundle.getString("file_browse_Certificate_spec"),
                   gCertFileTypes);
   fp.appendFilters(nsIFilePicker.filterAll);
-  if (fp.show() == nsIFilePicker.returnOK) {
+  fp.open(rv => {
+    if (rv != nsIFilePicker.returnOK) {
+      return;
+    }
+
     // If this is an X509 user certificate, import it as one.
 
     var isX509FileType = false;
@@ -399,7 +403,7 @@ function restoreCerts()
       certdb.importUserCertificate(dataArray, dataArray.length, interfaceRequestor);
     } else {
       // Otherwise, assume it's a PKCS12 file and import it that way.
-      certdb.importPKCS12File(null, fp.file);
+      certdb.importPKCS12File(fp.file);
     }
 
     var certcache = certdb.getCerts();
@@ -408,7 +412,7 @@ function restoreCerts()
     caTreeView.loadCertsFromCache(certcache, nsIX509Cert.CA_CERT);
     caTreeView.selection.clearSelection();
     enableBackupAllButton();
-  }
+  });
 }
 
 function exportCerts()
@@ -486,11 +490,13 @@ function addCACerts()
   fp.appendFilter(bundle.getString("file_browse_Certificate_spec"),
                   gCertFileTypes);
   fp.appendFilters(nsIFilePicker.filterAll);
-  if (fp.show() == nsIFilePicker.returnOK) {
-    certdb.importCertsFromFile(fp.file, nsIX509Cert.CA_CERT);
-    caTreeView.loadCerts(nsIX509Cert.CA_CERT);
-    caTreeView.selection.clearSelection();
-  }
+  fp.open(rv => {
+    if (rv == nsIFilePicker.returnOK) {
+      certdb.importCertsFromFile(fp.file, nsIX509Cert.CA_CERT);
+      caTreeView.loadCerts(nsIX509Cert.CA_CERT);
+      caTreeView.selection.clearSelection();
+    }
+  });
 }
 
 function onSmartCardChange()
@@ -520,14 +526,16 @@ function addEmailCert()
   fp.appendFilter(bundle.getString("file_browse_Certificate_spec"),
                   gCertFileTypes);
   fp.appendFilters(nsIFilePicker.filterAll);
-  if (fp.show() == nsIFilePicker.returnOK) {
-    certdb.importCertsFromFile(fp.file, nsIX509Cert.EMAIL_CERT);
-    var certcache = certdb.getCerts();
-    emailTreeView.loadCertsFromCache(certcache, nsIX509Cert.EMAIL_CERT);
-    emailTreeView.selection.clearSelection();
-    caTreeView.loadCertsFromCache(certcache, nsIX509Cert.CA_CERT);
-    caTreeView.selection.clearSelection();
-  }
+  fp.open(rv => {
+    if (rv == nsIFilePicker.returnOK) {
+      certdb.importCertsFromFile(fp.file, nsIX509Cert.EMAIL_CERT);
+      var certcache = certdb.getCerts();
+      emailTreeView.loadCertsFromCache(certcache, nsIX509Cert.EMAIL_CERT);
+      emailTreeView.selection.clearSelection();
+      caTreeView.loadCertsFromCache(certcache, nsIX509Cert.CA_CERT);
+      caTreeView.selection.clearSelection();
+    }
+  });
 }
 
 function addException()

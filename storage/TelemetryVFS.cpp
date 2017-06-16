@@ -37,11 +37,11 @@ using namespace mozilla::dom::quota;
 
 struct Histograms {
   const char *name;
-  const Telemetry::ID readB;
-  const Telemetry::ID writeB;
-  const Telemetry::ID readMS;
-  const Telemetry::ID writeMS;
-  const Telemetry::ID syncMS;
+  const Telemetry::HistogramID readB;
+  const Telemetry::HistogramID writeB;
+  const Telemetry::HistogramID readMS;
+  const Telemetry::HistogramID writeMS;
+  const Telemetry::HistogramID syncMS;
 };
 
 #define SQLITE_TELEMETRY(FILENAME, HGRAM) \
@@ -78,11 +78,11 @@ public:
    * IOInterposer. Filename will be reported as NULL, and reference will be
    * either "sqlite-mainthread" or "sqlite-otherthread".
    */
-  explicit IOThreadAutoTimer(Telemetry::ID aId,
+  explicit IOThreadAutoTimer(Telemetry::HistogramID aId,
     IOInterposeObserver::Operation aOp = IOInterposeObserver::OpNone)
     : start(TimeStamp::Now()),
       id(aId)
-#if defined(MOZ_ENABLE_PROFILER_SPS) && !defined(XP_WIN)
+#if defined(MOZ_GECKO_PROFILER) && !defined(XP_WIN)
       , op(aOp)
 #endif
   {
@@ -97,7 +97,7 @@ public:
   explicit IOThreadAutoTimer(IOInterposeObserver::Operation aOp)
     : start(TimeStamp::Now()),
       id(Telemetry::HistogramCount)
-#if defined(MOZ_ENABLE_PROFILER_SPS) && !defined(XP_WIN)
+#if defined(MOZ_GECKO_PROFILER) && !defined(XP_WIN)
       , op(aOp)
 #endif
   {
@@ -108,13 +108,13 @@ public:
     TimeStamp end(TimeStamp::Now());
     uint32_t mainThread = NS_IsMainThread() ? 1 : 0;
     if (id != Telemetry::HistogramCount) {
-      Telemetry::AccumulateTimeDelta(static_cast<Telemetry::ID>(id + mainThread),
+      Telemetry::AccumulateTimeDelta(static_cast<Telemetry::HistogramID>(id + mainThread),
                                      start, end);
     }
     // We don't report SQLite I/O on Windows because we have a comprehensive
     // mechanism for intercepting I/O on that platform that captures a superset
     // of the data captured here.
-#if defined(MOZ_ENABLE_PROFILER_SPS) && !defined(XP_WIN)
+#if defined(MOZ_GECKO_PROFILER) && !defined(XP_WIN)
     if (IOInterposer::IsObservedOperation(op)) {
       const char* main_ref  = "sqlite-mainthread";
       const char* other_ref = "sqlite-otherthread";
@@ -125,13 +125,13 @@ public:
       // Report observation
       IOInterposer::Report(ob);
     }
-#endif /* defined(MOZ_ENABLE_PROFILER_SPS) && !defined(XP_WIN) */
+#endif /* defined(MOZ_GECKO_PROFILER) && !defined(XP_WIN) */
   }
 
 private:
   const TimeStamp start;
-  const Telemetry::ID id;
-#if defined(MOZ_ENABLE_PROFILER_SPS) && !defined(XP_WIN)
+  const Telemetry::HistogramID id;
+#if defined(MOZ_GECKO_PROFILER) && !defined(XP_WIN)
   IOInterposeObserver::Operation op;
 #endif
 };

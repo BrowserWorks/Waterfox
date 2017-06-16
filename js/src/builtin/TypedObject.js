@@ -866,7 +866,7 @@ function SimdFormatString(descr, typedObj) {
       }
   }
   assert(false, "unexpected SIMD kind");
-  return '?';
+  return "?";
 }
 
 ///////////////////////////////////////////////////////////////////////////
@@ -930,7 +930,7 @@ function StorageOfTypedObject(obj) {
       var byteLength = DESCR_SIZE(descr);
 
       return { buffer: TypedObjectBuffer(obj),
-               byteLength: byteLength,
+               byteLength,
                byteOffset: TypedObjectByteOffset(obj) };
     }
   }
@@ -967,7 +967,7 @@ function TypeOfTypedObject(obj) {
 // TypedObject surface API methods (sequential implementations).
 
 // Warning: user exposed!
-function TypedObjectArrayTypeBuild(a,b,c) {
+function TypedObjectArrayTypeBuild(a, b, c) {
   // Arguments : [depth], func
 
   if (!IsObject(this) || !ObjectIsTypeDescr(this))
@@ -1150,9 +1150,7 @@ function ComputeIterationSpace(arrayType, depth, len) {
       ThrowTypeError(JSMSG_TYPEDOBJECT_BAD_ARGS);
     }
   }
-  return { iterationSpace: iterationSpace,
-           grainType: grainType,
-           totalLength: totalLength };
+  return { iterationSpace, grainType, totalLength };
 }
 
 function IncrementIterationSpace(indices, iterationSpace) {

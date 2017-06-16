@@ -24,6 +24,7 @@ load 1242093-1.html
 load 1242778-1.png
 load 1249576-1.png
 load 1253362-1.html
+load 1355898-1.html
 load colormap-range.gif
 HTTP load delayedframe.sjs # A 3-frame animated GIF with an inordinate delay between the second and third frame
 
@@ -47,5 +48,5 @@ load invalid-size.gif
 load invalid-size-second-frame.gif
 
 load multiple-png-hassize.ico # Bug 863958 - This icon's size is such that it leads to multiple writes to the PNG decoder after we've gotten our size.
-skip-if(stylo) asserts(0-2) load ownerdiscard.html # Bug 1323672, bug 807211
+asserts(0-2) load ownerdiscard.html # Bug 1323672, bug 807211
 load truncated-second-frame.png # Bug 863975

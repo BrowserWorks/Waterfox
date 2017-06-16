@@ -686,22 +686,22 @@ class MacroAssembler : public MacroAssemblerSpecific
     inline bool hasSelfReference() const;
 
     // Push stub code and the VMFunction pointer.
-    inline void enterExitFrame(const VMFunction* f = nullptr);
+    inline void enterExitFrame(Register temp, const VMFunction* f = nullptr);
 
     // Push an exit frame token to identify which fake exit frame this footer
     // corresponds to.
-    inline void enterFakeExitFrame(enum ExitFrameTokenValues token);
+    inline void enterFakeExitFrame(Register temp, enum ExitFrameTokenValues token);
 
     // Push an exit frame token for a native call.
-    inline void enterFakeExitFrameForNative(bool isConstructing);
+    inline void enterFakeExitFrameForNative(Register temp, bool isConstructing);
 
     // Pop ExitFrame footer in addition to the extra frame.
     inline void leaveExitFrame(size_t extraFrame = 0);
 
   private:
-    // Save the top of the stack into PerThreadData::jitTop of the main thread,
+    // Save the top of the stack into JSontext::jitTop of the current thread,
     // which should be the location of the latest exit frame.
-    void linkExitFrame();
+    void linkExitFrame(Register temp);
 
     // Patch the value of PushStubCode with the pointer to the finalized code.
     void linkSelfReference(JitCode* code);
@@ -1432,7 +1432,7 @@ class MacroAssembler : public MacroAssemblerSpecific
     void wasmCallImport(const wasm::CallSiteDesc& desc, const wasm::CalleeDesc& callee);
 
     // WasmTableCallIndexReg must contain the index of the indirect call.
-    void wasmCallIndirect(const wasm::CallSiteDesc& desc, const wasm::CalleeDesc& callee);
+    void wasmCallIndirect(const wasm::CallSiteDesc& desc, const wasm::CalleeDesc& callee, bool needsBoundsCheck);
 
     // This function takes care of loading the pointer to the current instance
     // as the implicit first argument. It preserves TLS and pinned registers.
@@ -1495,18 +1495,18 @@ class MacroAssembler : public MacroAssemblerSpecific
     void loadStringChars(Register str, Register dest);
     void loadStringChar(Register str, Register index, Register output);
 
-    void loadJSContext(Register dest) {
-        movePtr(ImmPtr(GetJitContext()->runtime->getJSContext()), dest);
-    }
+    void loadJSContext(Register dest);
     void loadJitActivation(Register dest) {
-        loadPtr(AbsoluteAddress(GetJitContext()->runtime->addressOfActivation()), dest);
+        loadJSContext(dest);
+        loadPtr(Address(dest, offsetof(JSContext, activation_)), dest);
     }
     void loadWasmActivationFromTls(Register dest) {
         loadPtr(Address(WasmTlsReg, offsetof(wasm::TlsData, cx)), dest);
         loadPtr(Address(dest, JSContext::offsetOfWasmActivation()), dest);
     }
     void loadWasmActivationFromSymbolicAddress(Register dest) {
-        movePtr(wasm::SymbolicAddress::Context, dest);
+        movePtr(wasm::SymbolicAddress::ContextPtr, dest);
+        loadPtr(Address(dest, 0), dest);
         loadPtr(Address(dest, JSContext::offsetOfWasmActivation()), dest);
     }
 
@@ -1604,10 +1604,6 @@ class MacroAssembler : public MacroAssemblerSpecific
 
     inline void storeCallResultValue(TypedOrValueRegister dest);
 
-    template <typename T>
-    Register extractString(const T& source, Register scratch) {
-        return extractObject(source, scratch);
-    }
     using MacroAssemblerSpecific::store32;
     void store32(const RegisterOrInt32Constant& key, const Address& dest) {
         if (key.isRegister())
@@ -1699,11 +1695,14 @@ class MacroAssembler : public MacroAssemblerSpecific
     void checkUnboxedArrayCapacity(Register obj, const RegisterOrInt32Constant& index,
                                    Register temp, Label* failure);
 
-    Register extractString(const Address& address, Register scratch) {
-        return extractObject(address, scratch);
+    template <typename T>
+    Register extractString(const T& source, Register scratch) {
+        return extractObject(source, scratch);
     }
-    Register extractString(const ValueOperand& value, Register scratch) {
-        return extractObject(value, scratch);
+
+    template <typename T>
+    Register extractSymbol(const T& source, Register scratch) {
+        return extractObject(source, scratch);
     }
 
     void debugAssertIsObject(const ValueOperand& val);
@@ -1912,6 +1911,10 @@ class MacroAssembler : public MacroAssemblerSpecific
     void printf(const char* output, Register value);
 
 #ifdef JS_TRACE_LOGGING
+    void loadTraceLogger(Register logger) {
+        loadJSContext(logger);
+        loadPtr(Address(logger, offsetof(JSContext, traceLogger)), logger);
+    }
     void tracelogStartId(Register logger, uint32_t textId, bool force = false);
     void tracelogStartId(Register logger, Register textId);
     void tracelogStartEvent(Register logger, Register event);
@@ -1957,6 +1960,8 @@ class MacroAssembler : public MacroAssemblerSpecific
                                bool compilingWasm);
 
     void convertInt32ValueToDouble(const Address& address, Register scratch, Label* done);
+    void convertInt32ValueToDouble(ValueOperand val);
+
     void convertValueToDouble(ValueOperand value, FloatRegister output, Label* fail) {
         convertValueToFloatingPoint(value, output, fail, MIRType::Double);
     }

@@ -5,16 +5,19 @@
 /* CSS Variables specific to this panel that aren't defined by the themes */
 .theme-light {
   --rule-highlight-background-color: #ffee99;
+  --rule-overridden-item-border-color: var(--theme-content-color3);
 }
 
 .theme-dark {
   --rule-highlight-background-color: #594724;
+  --rule-overridden-item-border-color: var(--theme-content-color1);
 }
 
 .theme-firebug {
   --rule-highlight-background-color: #ffee99;
   --rule-property-name: darkgreen;
   --rule-property-value: darkblue;
+  --rule-overridden-item-border-color: var(--theme-content-color2);
 }
 
 /* Rule View Tabpanel */
@@ -123,13 +126,15 @@
 }
 
 .ruleview-computedlist,
+.ruleview-overridden-items[hidden],
 .ruleview-overridden-rule-filter[hidden],
 .ruleview-warning[hidden] {
   display: none;
 }
 
 .ruleview-computedlist[user-open],
-.ruleview-computedlist[filter-open] {
+.ruleview-computedlist[filter-open],
+.ruleview-overridden-items {
   display: block;
 }
 
@@ -362,12 +367,48 @@
   margin-inline-start: 35px;
 }
 
+.ruleview-overridden-items {
+  margin: 0px 0px 0px 5px;
+  list-style: none;
+  line-height: 1.5em;
+}
+
+.ruleview-overridden-item {
+  position: relative;
+}
+
+.ruleview-overridden-item::before {
+  position: absolute;
+  left: -15px;
+  top: 0px;
+  content: '';
+  display: block;
+  border-left: 0.5px solid var(--rule-overridden-item-border-color);
+  height: 0.8em;
+  border-bottom: 0.5px solid var(--rule-overridden-item-border-color);
+  width: 10px;
+}
+
+.ruleview-overridden-item::after {
+  position: absolute;
+  left: -15px;
+  bottom: -7px;
+  content: '';
+  display: block;
+  border-left: 0.5px solid var(--rule-overridden-item-border-color);
+  height: 100%;
+}
+
+.ruleview-overridden-item:last-child:after {
+  display: none;
+}
+
 .ruleview-grid,
 .ruleview-swatch {
   cursor: pointer;
   border-radius: 50%;
-  width: 0.9em;
-  height: 0.9em;
+  width: 1em;
+  height: 1em;
   vertical-align: middle;
   /* align the swatch with its value */
   margin-top: -1px;

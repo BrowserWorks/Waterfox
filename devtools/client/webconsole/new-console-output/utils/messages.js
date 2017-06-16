@@ -29,7 +29,7 @@ function prepareMessage(packet, idGenerator) {
   if (packet.allowRepeating) {
     packet = packet.set("repeatId", getRepeatId(packet));
   }
-  return packet.set("id", idGenerator.getNextId());
+  return packet.set("id", idGenerator.getNextId(packet));
 }
 
 /**
@@ -170,7 +170,8 @@ function transformPacket(packet) {
         stacktrace: pageError.stacktrace ? pageError.stacktrace : null,
         frame,
         exceptionDocURL: pageError.exceptionDocURL,
-        timeStamp: pageError.timeStamp
+        timeStamp: pageError.timeStamp,
+        notes: pageError.notes,
       });
     }
 
@@ -182,7 +183,8 @@ function transformPacket(packet) {
         isXHR: networkEvent.isXHR,
         request: networkEvent.request,
         response: networkEvent.response,
-        timeStamp: networkEvent.timeStamp
+        timeStamp: networkEvent.timeStamp,
+        totalTime: networkEvent.totalTime,
       });
     }
 
@@ -194,6 +196,7 @@ function transformPacket(packet) {
         frame,
         result: parameters,
         timestamp: timeStamp,
+        notes,
       } = packet;
 
       const level = messageText ? MESSAGE_LEVEL.ERROR : MESSAGE_LEVEL.LOG;
@@ -206,6 +209,7 @@ function transformPacket(packet) {
         exceptionDocURL,
         frame,
         timeStamp,
+        notes,
       });
     }
   }

@@ -13,6 +13,9 @@ const Cu = Components.utils;
 const COMPLETE_LENGTH = 32;
 const PARTIAL_LENGTH = 4;
 
+// Upper limit on the server response minimumWaitDuration
+const MIN_WAIT_DURATION_MAX_VALUE = 24 * 60 * 60 * 1000;
+
 Cu.import("resource://gre/modules/XPCOMUtils.jsm");
 Cu.import("resource://gre/modules/Services.jsm");
 Cu.import("resource://gre/modules/NetUtil.jsm");
@@ -165,6 +168,9 @@ function HashCompleter() {
   // Whether we have been informed of a shutdown by the shutdown event.
   this._shuttingDown = false;
 
+  // A map of gethash URLs to next gethash time in miliseconds
+  this._nextGethashTimeMs = {};
+
   Services.obs.addObserver(this, "quit-application", false);
 
 }
@@ -210,6 +216,11 @@ HashCompleter.prototype = {
         10 /* keep track of max requests */,
         0  /* don't throttle on successful requests per time period */);
     }
+
+    if (!this._nextGethashTimeMs[aGethashUrl]) {
+      this._nextGethashTimeMs[aGethashUrl] = 0;
+    }
+
     // Start off this request. Without dispatching to a thread, every call to
     // complete makes an individual HTTP request.
     Services.tm.currentThread.dispatch(this, Ci.nsIThread.DISPATCH_NORMAL);
@@ -223,6 +234,8 @@ HashCompleter.prototype = {
     if (this._shuttingDown) {
       this._currentRequest = null;
       this._pendingRequests = null;
+      this._nextGethashTimeMs = null;
+
       for (var url in this._backoffs) {
         this._backoffs[url] = null;
       }
@@ -256,7 +269,8 @@ HashCompleter.prototype = {
 
   // Returns true if we can make a request from the given url, false otherwise.
   canMakeRequest: function(aGethashUrl) {
-    return this._backoffs[aGethashUrl].canMakeRequest();
+    return this._backoffs[aGethashUrl].canMakeRequest() &&
+           Date.now() >= this._nextGethashTimeMs[aGethashUrl];
   },
 
   // Notifies the RequestBackoff of a new request so we can throttle based on
@@ -525,32 +539,50 @@ HashCompleterRequest.prototype = {
   },
 
   handleResponseV4: function HCR_handleResponseV4() {
-    let callback = (aCompleteHash,
-                    aTableNames,
-                    aMinWaitDuration,
-                    aNegCacheDuration,
-                    aPerHashCacheDuration) => {
-      log("V4 response callback: " + JSON.stringify(aCompleteHash) + ", " +
-          aTableNames + ", " +
-          aMinWaitDuration + ", " +
-          aNegCacheDuration + ", " +
-          aPerHashCacheDuration);
+    let callback = {
+      onCompleteHashFound : (aCompleteHash,
+                             aTableNames,
+                             aPerHashCacheDuration) => {
+        log("V4 fullhash response complete hash found callback: " +
+            JSON.stringify(aCompleteHash) + ", " +
+            aTableNames + ", CacheDuration(" + aPerHashCacheDuration + ")");
 
-      // Filter table names which we didn't requested.
-      let filteredTables = aTableNames.split(",").filter(name => {
-        return this.tableNames.get(name);
-      });
-      if (0 === filteredTables.length) {
-        log("ERROR: Got complete hash which is from unknown table.");
-        return;
-      }
-      if (filteredTables.length > 1) {
-        log("WARNING: Got complete hash which has ambigious threat type.");
-      }
+        // Filter table names which we didn't requested.
+        let filteredTables = aTableNames.split(",").filter(name => {
+          return this.tableNames.get(name);
+        });
+        if (0 === filteredTables.length) {
+          log("ERROR: Got complete hash which is from unknown table.");
+          return;
+        }
+        if (filteredTables.length > 1) {
+          log("WARNING: Got complete hash which has ambigious threat type.");
+        }
 
-      this.handleItem(aCompleteHash, filteredTables[0], 0);
+        this.handleItem(aCompleteHash, filteredTables[0], 0);
 
-      // TODO: Bug 1311935 - Implement v4 cache.
+        // TODO: Bug 1311935 - Implement v4 cache.
+      },
+
+      onResponseParsed : (aMinWaitDuration,
+                          aNegCacheDuration) => {
+        log("V4 fullhash response parsed callback: " +
+            "MinWaitDuration(" + aMinWaitDuration + "), " +
+            "NegativeCacheDuration(" + aNegCacheDuration + ")");
+
+        let minWaitDuration = aMinWaitDuration;
+
+        if (aMinWaitDuration > MIN_WAIT_DURATION_MAX_VALUE) {
+          minWaitDuration = MIN_WAIT_DURATION_MAX_VALUE;
+        } else if (aMinWaitDuration < 0) {
+          minWaitDuration = 0;
+        }
+
+        this._completer._nextGethashTimeMs[this.gethashUrl] =
+          Date.now() + minWaitDuration;
+
+        // TODO: Bug 1311935 - Implement v4 cache.
+      },
     };
 
     gUrlUtil.parseFindFullHashResponseV4(this._response, callback);
@@ -644,6 +676,7 @@ HashCompleterRequest.prototype = {
   onStartRequest: function HCR_onStartRequest(aRequest, aContext) {
     // At this point no data is available for us and we have no reason to
     // terminate the connection, so we do nothing until |onStopRequest|.
+    this._completer._nextGethashTimeMs[this.gethashUrl] = 0;
   },
 
   onStopRequest: function HCR_onStopRequest(aRequest, aContext, aStatusCode) {

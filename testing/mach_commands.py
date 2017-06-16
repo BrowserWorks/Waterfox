@@ -18,7 +18,7 @@ from mach.decorators import (
     Command,
 )
 
-from mozbuild.base import MachCommandBase
+from mozbuild.base import BuildEnvironmentNotFoundException, MachCommandBase
 from mozbuild.base import MachCommandConditions as conditions
 import mozpack.path as mozpath
 from argparse import ArgumentParser
@@ -41,6 +41,15 @@ UNKNOWN_FLAVOR = '''
 I know you are trying to run a %s test. Unfortunately, I can't run those
 tests yet. Sorry!
 '''.strip()
+
+CONFIG_ENVIRONMENT_NOT_FOUND = '''
+No config environment detected. This means we are unable to properly
+detect test files in the specified paths or tags. Please run:
+
+    $ mach configure
+
+and try again.
+'''.lstrip()
 
 MOCHITEST_CHUNK_BY_DIR = 4
 MOCHITEST_TOTAL_CHUNKS = 5
@@ -494,7 +503,18 @@ class JsapiTestsCommand(MachCommandBase):
 
 def autotry_parser():
     from autotry import arg_parser
-    return arg_parser()
+    parser = arg_parser()
+    # The --no-artifact flag is only interpreted locally by |mach try|; it's not
+    # like the --artifact flag, which is interpreted remotely by the try server.
+    #
+    # We need a tri-state where set is different than the default value, so we
+    # use a different variable than --artifact.
+    parser.add_argument('--no-artifact',
+                        dest='no_artifact',
+                        action='store_true',
+                        help='Force compiled (non-artifact) builds even when '
+                             '--enable-artifact-builds is set.')
+    return parser
 
 @CommandProvider
 class PushToTry(MachCommandBase):
@@ -652,6 +672,10 @@ class PushToTry(MachCommandBase):
         builds, platforms, tests, talos, paths, tags, extra = self.validate_args(**kwargs)
 
         if paths or tags:
+            if not os.path.exists(os.path.join(self.topobjdir, 'config.status')):
+                print(CONFIG_ENVIRONMENT_NOT_FOUND)
+                sys.exit(1)
+
             paths = [os.path.relpath(os.path.normpath(os.path.abspath(item)), self.topsrcdir)
                      for item in paths]
             paths_by_flavor = at.paths_by_flavor(paths=paths, tags=tags)
@@ -666,12 +690,40 @@ class PushToTry(MachCommandBase):
         else:
             paths_by_flavor = {}
 
+        local_artifact_build = False
+        try:
+            if self.substs.get("MOZ_ARTIFACT_BUILDS"):
+                local_artifact_build = True
+        except BuildEnvironmentNotFoundException:
+            # If we don't have a build locally, we can't tell whether
+            # an artifact build is desired, but we still want the
+            # command to succeed, if possible.
+            pass
+
+        # Add --artifact if --enable-artifact-builds is set ...
+        if local_artifact_build:
+            extra["artifact"] = True
+        # ... unless --no-artifact is explicitly given.
+        if kwargs["no_artifact"]:
+            if "artifact" in extra:
+                del extra["artifact"]
+
         try:
             msg = at.calc_try_syntax(platforms, tests, talos, builds, paths_by_flavor, tags,
                                      extra, kwargs["intersection"])
         except ValueError as e:
             print(e.message)
             sys.exit(1)
+
+        if local_artifact_build:
+            if kwargs["no_artifact"]:
+                print('mozconfig has --enable-artifact-builds but '
+                      '--no-artifact specified, not including --artifact '
+                      'flag in try syntax')
+            else:
+                print('mozconfig has --enable-artifact-builds; including '
+                      '--artifact flag in try syntax (use --no-artifact '
+                      'to override)')
 
         if kwargs["verbose"] and paths_by_flavor:
             print('The following tests will be selected: ')
@@ -829,3 +881,279 @@ class ChunkFinder(MachCommandBase):
         os.remove(dump_tests)
         if temp_dir:
             shutil.rmtree(temp_dir)
+
+
+@CommandProvider
+class TestInfoCommand(MachCommandBase):
+    from datetime import date, timedelta
+    @Command('test-info', category='testing',
+        description='Display historical test result summary.')
+    @CommandArgument('test_name', nargs='?', metavar='N',
+        help='Test of interest.')
+    @CommandArgument('--branches',
+        default='mozilla-central,mozilla-inbound,autoland',
+        help='Report for named branches (default: mozilla-central,mozilla-inbound,autoland)')
+    @CommandArgument('--start',
+        default=(date.today() - timedelta(7)).strftime("%Y-%m-%d"),
+        help='Start date (YYYY-MM-DD)')
+    @CommandArgument('--end',
+        default=date.today().strftime("%Y-%m-%d"),
+        help='End date (YYYY-MM-DD)')
+
+    def test_info(self, **params):
+
+        import which
+        from mozbuild.base import MozbuildObject
+
+        self.test_name = params['test_name']
+        self.branches = params['branches']
+        self.start = params['start']
+        self.end = params['end']
+
+        if len(self.test_name) < 6:
+            print("'%s' is too short for a test name!" % self.test_name)
+            return
+
+        here = os.path.abspath(os.path.dirname(__file__))
+        build_obj = MozbuildObject.from_environment(cwd=here)
+
+        self._hg = None
+        if conditions.is_hg(build_obj):
+            if self._is_windows():
+                self._hg = which.which('hg.exe')
+            else:
+                self._hg = which.which('hg')
+
+        self._git = None
+        if conditions.is_git(build_obj):
+            if self._is_windows():
+                self._git = which.which('git.exe')
+            else:
+                self._git = which.which('git')
+
+        self.set_test_name()
+        self.report_test_results()
+        self.report_test_durations()
+        self.report_bugs()
+
+    def find_in_hg_or_git(self, test_name):
+        if self._hg:
+            cmd = [self._hg, 'files', '-I', test_name]
+        elif self._git:
+            cmd = [self._git, 'ls-files', test_name]
+        else:
+            return None
+        try:
+            out = subprocess.check_output(cmd).splitlines()
+        except subprocess.CalledProcessError:
+            out = None
+        return out
+
+    def set_test_name(self):
+        # Generating a unified report for a specific test is complicated
+        # by differences in the test name used in various data sources.
+        # Consider:
+        #   - It is often convenient to request a report based only on
+        #     a short file name, rather than the full path;
+        #   - Bugs may be filed in bugzilla against a simple, short test
+        #     name or the full path to the test;
+        #   - In ActiveData, the full path is usually used, but sometimes
+        #     also includes additional path components outside of the
+        #     mercurial repo (common for reftests).
+        # This function attempts to find appropriate names for different
+        # queries based on the specified test name.
+
+        import re
+
+        # full_test_name is full path to file in hg (or git)
+        self.full_test_name = None
+        out = self.find_in_hg_or_git(self.test_name)
+        if out and len(out) == 1:
+            self.full_test_name = out[0]
+        elif out and len(out) > 1:
+            print("Ambiguous test name specified. Found:")
+            for line in out:
+                print(line)
+        else:
+            out = self.find_in_hg_or_git('**/%s*' % self.test_name)
+            if out and len(out) == 1:
+                self.full_test_name = out[0]
+            elif out and len(out) > 1:
+                print("Ambiguous test name. Found:")
+                for line in out:
+                    print(line)
+        if self.full_test_name:
+            print("Found %s in source control." % self.full_test_name)
+        else:
+            print("Unable to validate test name '%s'!" % self.test_name)
+            self.full_test_name = self.test_name
+
+        # short_name is full_test_name without path
+        self.short_name = None
+        name_idx = self.full_test_name.rfind('/')
+        if name_idx > 0:
+            self.short_name = self.full_test_name[name_idx+1:]
+
+        # robo_name is short_name without ".java" - for robocop
+        self.robo_name = None
+        if self.short_name:
+            robo_idx = self.short_name.rfind('.java')
+            if robo_idx > 0:
+                self.robo_name = self.short_name[:robo_idx]
+            if self.short_name == self.test_name:
+                self.short_name = None
+
+        # activedata_test_name is name in ActiveData
+        self.activedata_test_name = None
+        simple_names = [
+            self.full_test_name,
+            self.test_name,
+            self.short_name,
+            self.robo_name
+        ]
+        simple_names = [x for x in simple_names if x]
+        searches = [
+            {"in": {"result.test": simple_names}},
+        ]
+        regex_names = [".*%s.*" % re.escape(x) for x in simple_names if x]
+        for r in regex_names:
+            searches.append({"regexp": {"result.test": r}})
+        query = {
+            "from": "unittest",
+            "format": "list",
+            "limit": 10,
+            "groupby": ["result.test"],
+            "where": {"and": [
+                {"or": searches},
+                {"in": {"build.branch": self.branches.split(',')}},
+                {"gt": {"run.timestamp": {"date": self.start}}},
+                {"lt": {"run.timestamp": {"date": self.end}}}
+            ]}
+        }
+        print("Querying ActiveData...") # Following query can take a long time
+        data = self.submit(query)
+        if data and len(data) > 0:
+            self.activedata_test_name = [
+                d['result']['test']
+                for p in simple_names + regex_names
+                for d in data
+                if re.match(p+"$", d['result']['test'])
+            ][0]  # first match is best match
+        if self.activedata_test_name:
+            print("Found records matching '%s' in ActiveData." %
+                self.activedata_test_name)
+        else:
+            print("Unable to find matching records in ActiveData; using %s!" %
+                self.test_name)
+            self.activedata_test_name = self.test_name
+
+    def get_platform(self, record):
+        platform = record['build']['platform']
+        type = record['build']['type']
+        e10s = "-%s" % record['run']['type'] if 'run' in record else ""
+        return "%s/%s%s:" % (platform, type, e10s)
+
+    def submit(self, query):
+        import requests
+        response = requests.post("http://activedata.allizom.org/query",
+                                 data=json.dumps(query),
+                                 stream=True)
+        response.raise_for_status()
+        data = response.json()["data"]
+        return data
+
+    def report_test_results(self):
+        # Report test pass/fail summary from ActiveData
+        query = {
+            "from": "unittest",
+            "format": "list",
+            "limit": 100,
+            "groupby": ["build.platform", "build.type", "run.type"],
+            "select": [
+                {"aggregate": "count"},
+                {
+                    "name": "failures",
+                    "value": {"case": [
+                        {"when": {"eq": {"result.ok": "F"}}, "then": 1}
+                    ]},
+                    "aggregate": "sum",
+                    "default": 0
+                }
+            ],
+            "where": {"and": [
+                {"eq": {"result.test": self.activedata_test_name}},
+                {"in": {"build.branch": self.branches.split(',')}},
+                {"gt": {"run.timestamp": {"date": self.start}}},
+                {"lt": {"run.timestamp": {"date": self.end}}}
+            ]}
+        }
+        print("\nTest results for %s on %s between %s and %s" %
+            (self.activedata_test_name, self.branches, self.start, self.end))
+        data = self.submit(query)
+        if data and len(data) > 0:
+            data.sort(key=self.get_platform)
+            for record in data:
+                platform = self.get_platform(record)
+                runs = record['count']
+                failures = record['failures']
+                print("%-30s %6d failures in %6d runs" % (
+                    platform, failures, runs))
+        else:
+            print("No test result data found.")
+
+    def report_test_durations(self):
+        # Report test durations summary from ActiveData
+        query = {
+	    "from": "unittest",
+            "format": "list",
+	    "limit": 100,
+	    "groupby": ["build.platform","build.type","run.type"],
+	    "select": [
+		{"value":"result.duration","aggregate":"average","name":"average"},
+		{"value":"result.duration","aggregate":"min","name":"min"},
+		{"value":"result.duration","aggregate":"max","name":"max"},
+		{"aggregate":"count"}
+	    ],
+	    "where": {"and": [
+                {"eq": {"result.ok": "T"}},
+		{"eq": {"result.test": self.activedata_test_name}},
+                {"in": {"build.branch": self.branches.split(',')}},
+                {"gt": {"run.timestamp": {"date": self.start}}},
+                {"lt": {"run.timestamp": {"date": self.end}}}
+	    ]}
+        }
+        data = self.submit(query)
+        print("\nTest durations for %s on %s between %s and %s" %
+            (self.activedata_test_name, self.branches, self.start, self.end))
+        if data and len(data) > 0:
+            data.sort(key=self.get_platform)
+            for record in data:
+                platform = self.get_platform(record)
+                print("%-30s %6.2f s (%.2f s - %.2f s over %d runs)" % (
+                    platform, record['average'], record['min'],
+                    record['max'], record['count']))
+        else:
+            print("No test durations found.")
+
+    def report_bugs(self):
+        # Report open bugs matching test name
+        import requests
+        search = self.full_test_name
+        if self.test_name:
+            search = '%s,%s' % (search, self.test_name)
+        if self.short_name:
+            search = '%s,%s' % (search, self.short_name)
+        if self.robo_name:
+            search = '%s,%s' % (search, self.robo_name)
+        payload = {'quicksearch': search,
+                   'include_fields':'id,summary'}
+        response = requests.get('https://bugzilla.mozilla.org/rest/bug',
+                                payload)
+        response.raise_for_status()
+        json_response = response.json()
+        print("\nBugzilla quick search for '%s':" % search)
+        if 'bugs' in json_response:
+            for bug in json_response['bugs']:
+                print("Bug %s: %s" % (bug['id'], bug['summary']))
+        else:
+            print("No bugs found.")

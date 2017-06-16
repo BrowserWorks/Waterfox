@@ -29,6 +29,7 @@ using namespace mozilla::gfx;
 
 VRDisplayClient::VRDisplayClient(const VRDisplayInfo& aDisplayInfo)
   : mDisplayInfo(aDisplayInfo)
+  , bLastEventWasMounted(false)
   , bLastEventWasPresenting(false)
   , mPresentationCount(0)
 {
@@ -112,7 +113,19 @@ VRDisplayClient::NotifyVsync()
   // Check if we need to trigger onVRDisplayPresentChange event
   if (bLastEventWasPresenting != isPresenting) {
     bLastEventWasPresenting = isPresenting;
-    vm->FireDOMVRDisplayPresentChangeEvent();
+    vm->FireDOMVRDisplayPresentChangeEvent(mDisplayInfo.mDisplayID);
+  }
+
+  // Check if we need to trigger onvrdisplayactivate event
+  if (!bLastEventWasMounted && mDisplayInfo.mIsMounted) {
+    bLastEventWasMounted = true;
+    vm->FireDOMVRDisplayMountedEvent(mDisplayInfo.mDisplayID);
+  }
+
+  // Check if we need to trigger onvrdisplaydeactivate event
+  if (bLastEventWasMounted && !mDisplayInfo.mIsMounted) {
+    bLastEventWasMounted = false;
+    vm->FireDOMVRDisplayUnmountedEvent(mDisplayInfo.mDisplayID);
   }
 }
 

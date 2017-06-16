@@ -51,12 +51,10 @@ public:
     nsProtocolProxyService();
 
     nsresult Init();
-    nsresult DeprecatedBlockingResolve(nsIChannel *aChannel,
-                                       uint32_t aFlags,
-                                       nsIProxyInfo **retval);
 
 protected:
     friend class nsAsyncResolveRequest;
+    friend class TestProtocolProxyService_LoadHostFilters_Test; // for gtest
 
     ~nsProtocolProxyService();
 
@@ -276,7 +274,7 @@ protected:
      * @param hostFilters
      *        A "no-proxy-for" exclusion list.
      */
-    void LoadHostFilters(const char *hostFilters);
+    void LoadHostFilters(const nsACString& hostFilters);
 
     /**
      * This method checks the given URI against mHostFiltersArray.

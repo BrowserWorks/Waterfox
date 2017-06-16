@@ -125,6 +125,10 @@
             <!-- Sync is ready to Sync and the "tabs" engine is enabled -->
             <vbox id="PanelUI-remotetabs-tabspane">
               <vbox id="PanelUI-remotetabs-tabslist"
+                    showAllLabel="&appMenuRemoteTabs.showAll.label;"
+                    showAllTooltipText="&appMenuRemoteTabs.showAll.tooltip;"
+                    showMoreLabel="&appMenuRemoteTabs.showMore.label;"
+                    showMoreTooltipText="&appMenuRemoteTabs.showMore.tooltip;"
                     notabsforclientlabel="&appMenuRemoteTabs.notabs.label;"
                     />
             </vbox>
@@ -132,13 +136,13 @@
             <hbox id="PanelUI-remotetabs-tabsdisabledpane" pack="center" flex="1">
               <vbox class="PanelUI-remotetabs-instruction-box">
                 <hbox pack="center">
-                  <image class="fxaSyncIllustration" alt=""/>
+                  <html:img class="fxaSyncIllustration" src="chrome://browser/skin/fxa/sync-illustration.svg"/>
                 </hbox>
                 <label class="PanelUI-remotetabs-instruction-label">&appMenuRemoteTabs.tabsnotsyncing.label;</label>
                 <hbox pack="center">
                   <toolbarbutton class="PanelUI-remotetabs-prefs-button"
                                  label="&appMenuRemoteTabs.openprefs.label;"
-                                 oncommand="gSyncUI.openSetup(null, 'synced-tabs');"/>
+                                 oncommand="gSyncUI.openPrefs('synced-tabs');"/>
                 </hbox>
               </vbox>
             </hbox>
@@ -150,7 +154,7 @@
             <hbox id="PanelUI-remotetabs-nodevicespane" pack="center" flex="1">
               <vbox class="PanelUI-remotetabs-instruction-box">
                 <hbox pack="center">
-                  <image class="fxaSyncIllustration" alt=""/>
+                  <html:img class="fxaSyncIllustration" src="chrome://browser/skin/fxa/sync-illustration.svg"/>
                 </hbox>
                 <label class="PanelUI-remotetabs-instruction-title">&appMenuRemoteTabs.noclients.title;</label>
                 <label class="PanelUI-remotetabs-instruction-label">&appMenuRemoteTabs.noclients.subtitle;</label>
@@ -168,11 +172,11 @@
                 align="center"
                 class="PanelUI-remotetabs-instruction-box"
                 observes="sync-setup-state">
-            <image class="fxaSyncIllustration" alt=""/>
+            <html:img class="fxaSyncIllustration" src="chrome://browser/skin/fxa/sync-illustration.svg"/>
             <label class="PanelUI-remotetabs-instruction-label">&appMenuRemoteTabs.notsignedin.label;</label>
             <toolbarbutton class="PanelUI-remotetabs-prefs-button"
                            label="&appMenuRemoteTabs.signin.label;"
-                           oncommand="gSyncUI.openSetup(null, 'synced-tabs');"/>
+                           oncommand="gSyncUI.openPrefs('synced-tabs');"/>
           </vbox>
           <!-- When Sync needs re-authentication. This uses the exact same messaging
                as "Sync is not configured" but remains a separate box so we get
@@ -182,11 +186,11 @@
                 align="center"
                 class="PanelUI-remotetabs-instruction-box"
                 observes="sync-reauth-state">
-            <image class="fxaSyncIllustration" alt=""/>
+            <html:img class="fxaSyncIllustration" src="chrome://browser/skin/fxa/sync-illustration.svg"/>
             <label class="PanelUI-remotetabs-instruction-label">&appMenuRemoteTabs.notsignedin.label;</label>
             <toolbarbutton class="PanelUI-remotetabs-prefs-button"
                            label="&appMenuRemoteTabs.signin.label;"
-                           oncommand="gSyncUI.openSetup(null, 'synced-tabs');"/>
+                           oncommand="gSyncUI.openPrefs('synced-tabs');"/>
           </vbox>
         </hbox>
       </vbox>

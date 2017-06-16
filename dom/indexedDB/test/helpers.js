@@ -4,8 +4,6 @@
  */
 
 var testGenerator = testSteps();
-var archiveReaderEnabled = false;
-
 // The test js is shared between xpcshell (which has no SpecialPowers object)
 // and content mochitests (where the |Components| object is accessible only as
 // SpecialPowers.Components). Expose Components if necessary here to make things
@@ -44,7 +42,7 @@ function clearAllDatabases(callback) {
 var testHarnessGenerator = testHarnessSteps();
 testHarnessGenerator.next();
 
-function testHarnessSteps() {
+function* testHarnessSteps() {
   function nextTestHarnessStep(val) {
     testHarnessGenerator.next(val);
   }
@@ -75,9 +73,6 @@ function testHarnessSteps() {
       "set": [
         ["dom.indexedDB.testing", true],
         ["dom.indexedDB.experimental", true],
-        ["dom.archivereader.enabled", true],
-        ["dom.workers.latestJSVersion", true],
-        ["javascript.options.wasm", true]
       ]
     },
     nextTestHarnessStep
@@ -108,7 +103,7 @@ function testHarnessSteps() {
 
     let workerScriptBlob =
       new Blob([ "(" + workerScript.toString() + ")();" ],
-               { type: "text/javascript;version=1.7" });
+               { type: "text/javascript" });
     let workerScriptURL = URL.createObjectURL(workerScriptBlob);
 
     let worker = new Worker(workerScriptURL);

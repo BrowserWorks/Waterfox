@@ -5,7 +5,6 @@
 from __future__ import absolute_import, print_function, unicode_literals
 
 import unittest
-import itertools
 
 from ..try_option_syntax import TryOptionSyntax
 from ..try_option_syntax import RIDEALONG_BUILDS
@@ -33,7 +32,7 @@ def talos_task(n, tp):
 
 tasks = {k: v for k, v in [
     unittest_task('mochitest-browser-chrome', 'linux'),
-    unittest_task('mochitest-e10s-browser-chrome', 'linux64'),
+    unittest_task('mochitest-browser-chrome-e10s', 'linux64'),
     unittest_task('mochitest-chrome', 'linux'),
     unittest_task('mochitest-webgl', 'linux'),
     unittest_task('crashtest-e10s', 'linux'),
@@ -57,6 +56,12 @@ class TestTryOptionSyntax(unittest.TestCase):
         self.assertEqual(tos.unittests, [])
         self.assertEqual(tos.talos, [])
         self.assertEqual(tos.platforms, [])
+        self.assertEqual(tos.trigger_tests, 0)
+        self.assertEqual(tos.talos_trigger_tests, 0)
+        self.assertEqual(tos.env, [])
+        self.assertFalse(tos.profile)
+        self.assertIsNone(tos.tag)
+        self.assertFalse(tos.no_retry)
 
     def test_message_without_try(self):
         "Given a non-try message, it should return an empty value"
@@ -66,6 +71,12 @@ class TestTryOptionSyntax(unittest.TestCase):
         self.assertEqual(tos.unittests, [])
         self.assertEqual(tos.talos, [])
         self.assertEqual(tos.platforms, [])
+        self.assertEqual(tos.trigger_tests, 0)
+        self.assertEqual(tos.talos_trigger_tests, 0)
+        self.assertEqual(tos.env, [])
+        self.assertFalse(tos.profile)
+        self.assertIsNone(tos.tag)
+        self.assertFalse(tos.no_retry)
 
     def test_unknown_args(self):
         "unknown arguments are ignored"
@@ -137,12 +148,9 @@ class TestTryOptionSyntax(unittest.TestCase):
     def test_p_expands_ridealongs(self):
         "-p linux,linux64 includes the RIDEALONG_BUILDS"
         tos = TryOptionSyntax('try: -p linux,linux64', empty_graph)
-        ridealongs = list(task
-                          for task in itertools.chain.from_iterable(
-                                RIDEALONG_BUILDS.itervalues()
-                          )
-                          if 'android' not in task)  # Don't include android-l10n
-        self.assertEqual(sorted(tos.platforms), sorted(['linux', 'linux64'] + ridealongs))
+        platforms = set(['linux'] + RIDEALONG_BUILDS['linux'])
+        platforms |= set(['linux64'] + RIDEALONG_BUILDS['linux64'])
+        self.assertEqual(sorted(tos.platforms), sorted(platforms))
 
     def test_u_none(self):
         "-u none sets unittests=[]"
@@ -250,6 +258,11 @@ class TestTryOptionSyntax(unittest.TestCase):
         tos = TryOptionSyntax('try: --rebuild 10', empty_graph)
         self.assertEqual(tos.trigger_tests, 10)
 
+    def test_talos_trigger_tests(self):
+        "--rebuild-talos 10 sets talos_trigger_tests"
+        tos = TryOptionSyntax('try: --rebuild-talos 10', empty_graph)
+        self.assertEqual(tos.talos_trigger_tests, 10)
+
     def test_interactive(self):
         "--interactive sets interactive"
         tos = TryOptionSyntax('try: --interactive', empty_graph)
@@ -269,6 +282,26 @@ class TestTryOptionSyntax(unittest.TestCase):
         "no email settings don't set notifications"
         tos = TryOptionSyntax('try:', empty_graph)
         self.assertEqual(tos.notifications, None)
+
+    def test_setenv(self):
+        "--setenv VAR=value adds a environment variables setting to env"
+        tos = TryOptionSyntax('try: --setenv VAR1=value1 --setenv VAR2=value2', empty_graph)
+        self.assertEqual(tos.env, ['VAR1=value1', 'VAR2=value2'])
+
+    def test_profile(self):
+        "--spsProfile sets profile to true"
+        tos = TryOptionSyntax('try: --spsProfile', empty_graph)
+        self.assertTrue(tos.profile)
+
+    def test_tag(self):
+        "--tag TAG sets tag to TAG value"
+        tos = TryOptionSyntax('try: --tag tagName', empty_graph)
+        self.assertEqual(tos.tag, 'tagName')
+
+    def test_no_retry(self):
+        "--no-retry sets no_retry to true"
+        tos = TryOptionSyntax('try: --no-retry', empty_graph)
+        self.assertTrue(tos.no_retry)
 
 if __name__ == '__main__':
     main()

@@ -152,9 +152,11 @@ class AutoTry(object):
         'xpcshell': ['xpcshell'],
         'chrome': ['mochitest-o'],
         'browser-chrome': ['mochitest-browser-chrome-1',
-                           'mochitest-e10s-browser-chrome-1'],
+                           'mochitest-e10s-browser-chrome-1',
+                           'mochitest-browser-chrome-e10s-1'],
         'devtools-chrome': ['mochitest-devtools-chrome-1',
-                            'mochitest-e10s-devtools-chrome-1'],
+                            'mochitest-e10s-devtools-chrome-1',
+                            'mochitest-devtools-chrome-e10s-1'],
         'crashtest': ['crashtest', 'crashtest-e10s'],
         'reftest': ['reftest', 'reftest-e10s'],
         'web-platform-tests': ['web-platform-tests-1'],
@@ -408,6 +410,19 @@ class AutoTry(object):
                 raise ValueError("You can't run {} with "
                                  "--artifact option.".format(', '.join(rejected)))
 
+        if extras.get('artifact') and 'all' in suites.keys():
+            non_compiled_suites = set(self.common_suites) - set(self.compiled_suites)
+            message = ('You asked for |-u all| with |--artifact| but compiled-code tests ({tests})'
+                       ' can\'t run against an artifact build. Running (-u {non_compiled_suites}) '
+                       'instead.')
+            string_format = {
+                'tests': ','.join(self.compiled_suites),
+                'non_compiled_suites': ','.join(non_compiled_suites),
+            }
+            print(message.format(**string_format))
+            del suites['all']
+            suites.update({suite_name: None for suite_name in non_compiled_suites})
+
         parts.append("-u")
         parts.append(",".join("%s%s" % (k, "[%s]" % ",".join(v) if v else "")
                               for k,v in sorted(suites.items())) if suites else "none")
@@ -438,19 +453,6 @@ class AutoTry(object):
                 parts.append(arg)
 
         try_syntax = " ".join(parts)
-        if extras.get('artifact') and 'all' in suites.keys():
-            message = ('You asked for |-u all| with |--artifact| but compiled-code tests ({tests})'
-                       ' can\'t run against an artifact build. Try listing the suites you want'
-                       ' instead. For example, this syntax covers most suites:\n{try_syntax}')
-            string_format = {
-                'tests': ','.join(self.compiled_suites),
-                'try_syntax': try_syntax.replace(
-                    '-u all',
-                    '-u ' + ','.join(sorted(set(self.common_suites) - set(self.compiled_suites)))
-                )
-            }
-            raise ValueError(message.format(**string_format))
-
         return try_syntax
 
     def _run_git(self, *args):

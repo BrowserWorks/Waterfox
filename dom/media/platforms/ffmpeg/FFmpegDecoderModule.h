@@ -11,9 +11,9 @@
 #include "FFmpegLibWrapper.h"
 #include "FFmpegAudioDecoder.h"
 #include "FFmpegVideoDecoder.h"
+#include "MediaPrefs.h"
 
-namespace mozilla
-{
+namespace mozilla {
 
 template <int V>
 class FFmpegDecoderModule : public PlatformDecoderModule
@@ -27,8 +27,8 @@ public:
     return pdm.forget();
   }
 
-  explicit FFmpegDecoderModule(FFmpegLibWrapper* aLib) : mLib(aLib) {}
-  virtual ~FFmpegDecoderModule() {}
+  explicit FFmpegDecoderModule(FFmpegLibWrapper* aLib) : mLib(aLib) { }
+  virtual ~FFmpegDecoderModule() { }
 
   already_AddRefed<MediaDataDecoder>
   CreateVideoDecoder(const CreateDecoderParams& aParams) override
@@ -40,12 +40,17 @@ public:
     if (aParams.VideoConfig().HasAlpha()) {
       return nullptr;
     }
-    RefPtr<MediaDataDecoder> decoder =
-      new FFmpegVideoDecoder<V>(mLib,
-                                aParams.mTaskQueue,
-                                aParams.mCallback,
-                                aParams.VideoConfig(),
-                                aParams.mImageContainer);
+    if (aParams.mOptions.contains(
+          CreateDecoderParams::Option::LowLatency) &&
+        !MediaPrefs::PDMFFmpegLowLatencyEnabled()) {
+      return nullptr;
+    }
+    RefPtr<MediaDataDecoder> decoder = new FFmpegVideoDecoder<V>(
+      mLib,
+      aParams.mTaskQueue,
+      aParams.VideoConfig(),
+      aParams.mImageContainer,
+      aParams.mOptions.contains(CreateDecoderParams::Option::LowLatency));
     return decoder.forget();
   }
 
@@ -55,7 +60,6 @@ public:
     RefPtr<MediaDataDecoder> decoder =
       new FFmpegAudioDecoder<V>(mLib,
                                 aParams.mTaskQueue,
-                                aParams.mCallback,
                                 aParams.AudioConfig());
     return decoder.forget();
   }
@@ -70,18 +74,6 @@ public:
     }
     AVCodecID codec = audioCodec != AV_CODEC_ID_NONE ? audioCodec : videoCodec;
     return !!FFmpegDataDecoder<V>::FindAVCodec(mLib, codec);
-  }
-
-  ConversionRequired
-  DecoderNeedsConversion(const TrackInfo& aConfig) const override
-  {
-    if (aConfig.IsVideo() &&
-        (aConfig.mMimeType.EqualsLiteral("video/avc") ||
-         aConfig.mMimeType.EqualsLiteral("video/mp4"))) {
-      return ConversionRequired::kNeedAVCC;
-    } else {
-      return ConversionRequired::kNeedNone;
-    }
   }
 
 private:

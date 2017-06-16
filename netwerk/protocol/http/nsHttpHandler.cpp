@@ -28,7 +28,7 @@
 #include "nsPrintfCString.h"
 #include "nsCOMPtr.h"
 #include "nsNetCID.h"
-#include "prprf.h"
+#include "mozilla/Printf.h"
 #include "mozilla/Sprintf.h"
 #include "nsAsyncRedirectVerifyHelper.h"
 #include "nsSocketTransportService2.h"
@@ -41,7 +41,6 @@
 #include "nsIObserverService.h"
 #include "nsISiteSecurityService.h"
 #include "nsIStreamConverterService.h"
-#include "nsITimer.h"
 #include "nsCRT.h"
 #include "nsIMemoryReporter.h"
 #include "nsIParentalControlsService.h"
@@ -53,6 +52,7 @@
 #include "nsSocketTransportService2.h"
 #include "nsIOService.h"
 #include "nsIUUIDGenerator.h"
+#include "nsIThrottlingService.h"
 
 #include "mozilla/net/NeckoChild.h"
 #include "mozilla/net/NeckoParent.h"
@@ -98,7 +98,6 @@
 #define ALLOW_EXPERIMENTS        "network.allow-experiments"
 #define SAFE_HINT_HEADER_VALUE   "safeHint.enabled"
 #define SECURITY_PREFIX          "security."
-#define NEW_TAB_REMOTE_MODE           "browser.newtabpage.remote.mode"
 
 #define UA_PREF(_pref) UA_PREF_PREFIX _pref
 #define HTTP_PREF(_pref) HTTP_PREF_PREFIX _pref
@@ -168,11 +167,11 @@ nsHttpHandler::nsHttpHandler()
     , mCapabilities(NS_HTTP_ALLOW_KEEPALIVE)
     , mReferrerLevel(0xff) // by default we always send a referrer
     , mSpoofReferrerSource(false)
+    , mHideOnionReferrerSource(false)
     , mReferrerTrimmingPolicy(0)
     , mReferrerXOriginTrimmingPolicy(0)
     , mReferrerXOriginPolicy(0)
     , mFastFallbackToIPv4(false)
-    , mProxyPipelining(true)
     , mIdleTimeout(PR_SecondsToInterval(10))
     , mSpdyTimeout(PR_SecondsToInterval(180))
     , mResponseTimeout(PR_SecondsToInterval(300))
@@ -182,21 +181,12 @@ nsHttpHandler::nsHttpHandler()
     , mMaxRequestDelay(10)
     , mIdleSynTimeout(250)
     , mH2MandatorySuiteEnabled(false)
-    , mPipeliningEnabled(false)
     , mMaxConnections(24)
     , mMaxPersistentConnectionsPerServer(2)
     , mMaxPersistentConnectionsPerProxy(4)
-    , mMaxPipelinedRequests(32)
-    , mMaxOptimisticPipelinedRequests(4)
-    , mPipelineAggressive(false)
-    , mMaxPipelineObjectSize(300000)
-    , mPipelineRescheduleOnTimeout(true)
-    , mPipelineRescheduleTimeout(PR_MillisecondsToInterval(1500))
-    , mPipelineReadTimeout(PR_MillisecondsToInterval(30000))
     , mRedirectionLimit(10)
     , mPhishyUserPassLength(1)
     , mQoSBits(0x00)
-    , mPipeliningOverSSL(false)
     , mEnforceAssocReq(false)
     , mLastUniqueID(NowInSeconds())
     , mSessionStartTime(0)
@@ -267,11 +257,6 @@ nsHttpHandler::~nsHttpHandler()
     // and it'll segfault.  NeckoChild will get cleaned up by process exit.
 
     nsHttp::DestroyAtomTable();
-    if (mPipelineTestTimer) {
-        mPipelineTestTimer->Cancel();
-        mPipelineTestTimer = nullptr;
-    }
-
     gHttpHandler = nullptr;
 }
 
@@ -313,7 +298,6 @@ nsHttpHandler::Init()
         prefBranch->AddObserver(HTTP_PREF("tcp_keepalive.long_lived_connections"), this, true);
         prefBranch->AddObserver(SAFE_HINT_HEADER_VALUE, this, true);
         prefBranch->AddObserver(SECURITY_PREFIX, this, true);
-        prefBranch->AddObserver(NEW_TAB_REMOTE_MODE, this, true);
         PrefsChanged(prefBranch, nullptr);
     }
 
@@ -392,11 +376,13 @@ nsHttpHandler::Init()
         obsService->AddObserver(this, "net:prune-dead-connections", true);
         // Sent by the TorButton add-on in the Tor Browser
         obsService->AddObserver(this, "net:prune-all-connections", true);
-        obsService->AddObserver(this, "net:failed-to-process-uri-content", true);
         obsService->AddObserver(this, "last-pb-context-exited", true);
         obsService->AddObserver(this, "browser:purge-session-history", true);
         obsService->AddObserver(this, NS_NETWORK_LINK_TOPIC, true);
         obsService->AddObserver(this, "application-background", true);
+
+        // disabled as its a nop right now
+        // obsService->AddObserver(this, "net:failed-to-process-uri-content", true);
     }
 
     MakeNewRequestTokenBucket();
@@ -441,9 +427,7 @@ nsHttpHandler::InitConnectionMgr()
     rv = mConnMgr->Init(mMaxConnections,
                         mMaxPersistentConnectionsPerServer,
                         mMaxPersistentConnectionsPerProxy,
-                        mMaxRequestDelay,
-                        mMaxPipelinedRequests,
-                        mMaxOptimisticPipelinedRequests);
+                        mMaxRequestDelay);
     return rv;
 }
 
@@ -588,6 +572,17 @@ nsHttpHandler::GetIOService(nsIIOService** result)
     return NS_OK;
 }
 
+nsIThrottlingService *
+nsHttpHandler::GetThrottlingService()
+{
+    if (!mThrottlingService) {
+        nsCOMPtr<nsIThrottlingService> service = do_GetService(NS_THROTTLINGSERVICE_CONTRACTID);
+        mThrottlingService = new nsMainThreadPtrHolder<nsIThrottlingService>(service);
+    }
+
+    return mThrottlingService;
+}
+
 uint32_t
 nsHttpHandler::Get32BitsOfPseudoRandom()
 {
@@ -613,7 +608,7 @@ nsHttpHandler::Get32BitsOfPseudoRandom()
 void
 nsHttpHandler::NotifyObservers(nsIHttpChannel *chan, const char *event)
 {
-    LOG(("nsHttpHandler::NotifyObservers [chan=%x event=\"%s\"]\n", chan, event));
+    LOG(("nsHttpHandler::NotifyObservers [chan=%p event=\"%s\"]\n", chan, event));
     nsCOMPtr<nsIObserverService> obsService = services::GetObserverService();
     if (obsService)
         obsService->NotifyObservers(chan, event, nullptr);
@@ -862,12 +857,12 @@ nsHttpHandler::InitUserAgentComponents()
           ? WNT_BASE "; WOW64"
           : WNT_BASE;
 #endif
-        char *buf = PR_smprintf(format,
-                                info.dwMajorVersion,
-                                info.dwMinorVersion);
+        char *buf = mozilla::Smprintf(format,
+                               info.dwMajorVersion,
+                               info.dwMinorVersion);
         if (buf) {
             mOscpu = buf;
-            PR_smprintf_free(buf);
+            mozilla::SmprintfFree(buf);
         }
     }
 #elif defined (XP_MACOSX)
@@ -878,7 +873,8 @@ nsHttpHandler::InitUserAgentComponents()
 #endif
     SInt32 majorVersion = nsCocoaFeatures::OSXVersionMajor();
     SInt32 minorVersion = nsCocoaFeatures::OSXVersionMinor();
-    mOscpu += nsPrintfCString(" %d.%d", majorVersion, minorVersion);
+    mOscpu += nsPrintfCString(" %d.%d", static_cast<int>(majorVersion),
+                              static_cast<int>(minorVersion));
 #elif defined (XP_UNIX)
     struct utsname name;
 
@@ -1072,6 +1068,12 @@ nsHttpHandler::PrefsChanged(nsIPrefBranch *prefs, const char *pref)
             mSpoofReferrerSource = cVar;
     }
 
+    if (PREF_CHANGED(HTTP_PREF("referer.spoofOnionSource"))) {
+        rv = prefs->GetBoolPref(HTTP_PREF("referer.spoofOnionSource"), &cVar);
+        if (NS_SUCCEEDED(rv))
+            mHideOnionReferrerSource = cVar;
+    }
+
     if (PREF_CHANGED(HTTP_PREF("referer.trimmingPolicy"))) {
         rv = prefs->GetIntPref(HTTP_PREF("referer.trimmingPolicy"), &val);
         if (NS_SUCCEEDED(rv))
@@ -1131,96 +1133,6 @@ nsHttpHandler::PrefsChanged(nsIPrefBranch *prefs, const char *pref)
                 mProxyHttpVersion = NS_HTTP_VERSION_1_0;
             // it does not make sense to issue a HTTP/0.9 request to a proxy server
         }
-    }
-
-    if (PREF_CHANGED(HTTP_PREF("pipelining"))) {
-        rv = prefs->GetBoolPref(HTTP_PREF("pipelining"), &cVar);
-        if (NS_SUCCEEDED(rv)) {
-            if (cVar)
-                mCapabilities |=  NS_HTTP_ALLOW_PIPELINING;
-            else
-                mCapabilities &= ~NS_HTTP_ALLOW_PIPELINING;
-            mPipeliningEnabled = cVar;
-        }
-    }
-
-    if (PREF_CHANGED(HTTP_PREF("pipelining.maxrequests"))) {
-        rv = prefs->GetIntPref(HTTP_PREF("pipelining.maxrequests"), &val);
-        if (NS_SUCCEEDED(rv)) {
-            mMaxPipelinedRequests = clamped(val, 1, 0xffff);
-            if (mConnMgr)
-                mConnMgr->UpdateParam(nsHttpConnectionMgr::MAX_PIPELINED_REQUESTS,
-                                      mMaxPipelinedRequests);
-        }
-    }
-
-    if (PREF_CHANGED(HTTP_PREF("pipelining.max-optimistic-requests"))) {
-        rv = prefs->
-            GetIntPref(HTTP_PREF("pipelining.max-optimistic-requests"), &val);
-        if (NS_SUCCEEDED(rv)) {
-            mMaxOptimisticPipelinedRequests = clamped(val, 1, 0xffff);
-            if (mConnMgr)
-                mConnMgr->UpdateParam
-                    (nsHttpConnectionMgr::MAX_OPTIMISTIC_PIPELINED_REQUESTS,
-                     mMaxOptimisticPipelinedRequests);
-        }
-    }
-
-    if (PREF_CHANGED(HTTP_PREF("pipelining.aggressive"))) {
-        rv = prefs->GetBoolPref(HTTP_PREF("pipelining.aggressive"), &cVar);
-        if (NS_SUCCEEDED(rv))
-            mPipelineAggressive = cVar;
-    }
-
-    if (PREF_CHANGED(HTTP_PREF("pipelining.maxsize"))) {
-        rv = prefs->GetIntPref(HTTP_PREF("pipelining.maxsize"), &val);
-        if (NS_SUCCEEDED(rv)) {
-            mMaxPipelineObjectSize =
-                static_cast<int64_t>(clamped(val, 1000, 100000000));
-        }
-    }
-
-    // Determines whether or not to actually reschedule after the
-    // reschedule-timeout has expired
-    if (PREF_CHANGED(HTTP_PREF("pipelining.reschedule-on-timeout"))) {
-        rv = prefs->GetBoolPref(HTTP_PREF("pipelining.reschedule-on-timeout"),
-                                &cVar);
-        if (NS_SUCCEEDED(rv))
-            mPipelineRescheduleOnTimeout = cVar;
-    }
-
-    // The amount of time head of line blocking is allowed (in ms)
-    // before the blocked transactions are moved to another pipeline
-    if (PREF_CHANGED(HTTP_PREF("pipelining.reschedule-timeout"))) {
-        rv = prefs->GetIntPref(HTTP_PREF("pipelining.reschedule-timeout"),
-                               &val);
-        if (NS_SUCCEEDED(rv)) {
-            mPipelineRescheduleTimeout =
-                PR_MillisecondsToInterval((uint16_t) clamped(val, 500, 0xffff));
-        }
-    }
-
-    // The amount of time a pipelined transaction is allowed to wait before
-    // being canceled and retried in a non-pipeline connection
-    if (PREF_CHANGED(HTTP_PREF("pipelining.read-timeout"))) {
-        rv = prefs->GetIntPref(HTTP_PREF("pipelining.read-timeout"), &val);
-        if (NS_SUCCEEDED(rv)) {
-            mPipelineReadTimeout =
-                PR_MillisecondsToInterval((uint16_t) clamped(val, 5000,
-                                                             0xffff));
-        }
-    }
-
-    if (PREF_CHANGED(HTTP_PREF("pipelining.ssl"))) {
-        rv = prefs->GetBoolPref(HTTP_PREF("pipelining.ssl"), &cVar);
-        if (NS_SUCCEEDED(rv))
-            mPipeliningOverSSL = cVar;
-    }
-
-    if (PREF_CHANGED(HTTP_PREF("proxy.pipelining"))) {
-        rv = prefs->GetBoolPref(HTTP_PREF("proxy.pipelining"), &cVar);
-        if (NS_SUCCEEDED(rv))
-            mProxyPipelining = cVar;
     }
 
     if (PREF_CHANGED(HTTP_PREF("qos"))) {
@@ -1556,37 +1468,6 @@ nsHttpHandler::PrefsChanged(nsIPrefBranch *prefs, const char *pref)
         }
     }
 
-    //
-    // Test HTTP Pipelining (bug796192)
-    // If experiments are allowed and pipelining is Off,
-    // turn it On for just 10 minutes
-    //
-    if (mAllowExperiments && !mPipeliningEnabled &&
-        PREF_CHANGED(HTTP_PREF("pipelining.abtest"))) {
-        rv = prefs->GetBoolPref(HTTP_PREF("pipelining.abtest"), &cVar);
-        if (NS_SUCCEEDED(rv)) {
-            // If option is enabled, only test for ~1% of sessions
-            if (cVar && !(rand() % 128)) {
-                mCapabilities |=  NS_HTTP_ALLOW_PIPELINING;
-                if (mPipelineTestTimer)
-                    mPipelineTestTimer->Cancel();
-                mPipelineTestTimer =
-                    do_CreateInstance("@mozilla.org/timer;1", &rv);
-                if (NS_SUCCEEDED(rv)) {
-                    rv = mPipelineTestTimer->InitWithFuncCallback(
-                        TimerCallback, this, 10*60*1000, // 10 minutes
-                        nsITimer::TYPE_ONE_SHOT);
-                }
-            } else {
-                mCapabilities &= ~NS_HTTP_ALLOW_PIPELINING;
-                if (mPipelineTestTimer) {
-                    mPipelineTestTimer->Cancel();
-                    mPipelineTestTimer = nullptr;
-                }
-            }
-        }
-    }
-
     if (PREF_CHANGED(HTTP_PREF("pacing.requests.enabled"))) {
         rv = prefs->GetBoolPref(HTTP_PREF("pacing.requests.enabled"), &cVar);
         if (NS_SUCCEEDED(rv)) {
@@ -1675,19 +1556,6 @@ nsHttpHandler::PrefsChanged(nsIPrefBranch *prefs, const char *pref)
         }
     }
 
-    // remote content-signature testing option
-    if (PREF_CHANGED(NEW_TAB_REMOTE_MODE)) {
-        nsAutoCString channel;
-        prefs->GetCharPref(NEW_TAB_REMOTE_MODE, getter_Copies(channel));
-        if (channel.EqualsLiteral("test") ||
-            channel.EqualsLiteral("test2") ||
-            channel.EqualsLiteral("dev")) {
-            mNewTabContentSignaturesDisabled = true;
-        } else {
-            mNewTabContentSignaturesDisabled = false;
-        }
-    }
-
     if (PREF_CHANGED(HTTP_PREF("keep_empty_response_headers_as_empty_string"))) {
         rv = prefs->GetBoolPref(HTTP_PREF("keep_empty_response_headers_as_empty_string"),
                                 &cVar);
@@ -1711,17 +1579,6 @@ nsHttpHandler::PrefsChanged(nsIPrefBranch *prefs, const char *pref)
 #undef MULTI_PREF_CHANGED
 }
 
-
-/**
- * Static method called by mPipelineTestTimer when it expires.
- */
-void
-nsHttpHandler::TimerCallback(nsITimer * aTimer, void * aClosure)
-{
-    RefPtr<nsHttpHandler> thisObject = static_cast<nsHttpHandler*>(aClosure);
-    if (!thisObject->mPipeliningEnabled)
-        thisObject->mCapabilities &= ~NS_HTTP_ALLOW_PIPELINING;
-}
 
 /**
  * Currently, only regularizes the case of subtags.
@@ -2024,12 +1881,6 @@ nsHttpHandler::NewProxiedChannel2(nsIURI *uri,
 
     uint32_t caps = mCapabilities;
 
-    if (https) {
-        // enable pipelining over SSL if requested
-        if (mPipeliningOverSSL)
-            caps |= NS_HTTP_ALLOW_PIPELINING;
-    }
-
     if (!IsNeckoChild()) {
         // HACK: make sure PSM gets initialized on the main thread.
         net_EnsurePSMInit();
@@ -2167,11 +2018,12 @@ nsHttpHandler::Observe(nsISupports *subject,
             mConnMgr->DoShiftReloadConnectionCleanup(nullptr);
             mConnMgr->PruneDeadConnections();
         }
+#if 0
     } else if (!strcmp(topic, "net:failed-to-process-uri-content")) {
-        nsCOMPtr<nsIURI> uri = do_QueryInterface(subject);
-        if (uri && mConnMgr) {
-            mConnMgr->ReportFailedToProcess(uri);
-        }
+         // nop right now - we used to cancel h1 pipelines based on this,
+         // but those are no longer implemented
+         nsCOMPtr<nsIURI> uri = do_QueryInterface(subject);
+#endif
     } else if (!strcmp(topic, "last-pb-context-exited")) {
         mPrivateAuthCache.ClearAll();
         if (mConnMgr) {
@@ -2233,14 +2085,12 @@ nsHttpHandler::SpeculativeConnectInternal(nsIURI *aURI,
         // feature
         obsService->NotifyObservers(nullptr, "speculative-connect-request",
                                     nullptr);
-        if (!IsNeckoChild()) {
-            for (auto* cp : dom::ContentParent::AllProcesses(dom::ContentParent::eLive)) {
-                PNeckoParent* neckoParent = SingleManagedOrNull(cp->ManagedPNeckoParent());
-                if (!neckoParent) {
-                    continue;
-                }
-                Unused << neckoParent->SendSpeculativeConnectRequest();
+        for (auto* cp : dom::ContentParent::AllProcesses(dom::ContentParent::eLive)) {
+            PNeckoParent* neckoParent = SingleManagedOrNull(cp->ManagedPNeckoParent());
+            if (!neckoParent) {
+                continue;
             }
+            Unused << neckoParent->SendSpeculativeConnectRequest();
         }
     }
 
@@ -2253,9 +2103,22 @@ nsHttpHandler::SpeculativeConnectInternal(nsIURI *aURI,
     uint32_t flags = 0;
     if (loadContext && loadContext->UsePrivateBrowsing())
         flags |= nsISocketProvider::NO_PERMANENT_STORAGE;
+
+    OriginAttributes originAttributes;
+    // If the principal is given, we use the originAttributes from this
+    // principal. Otherwise, we use the originAttributes from the
+    // loadContext.
+    if (aPrincipal) {
+        originAttributes.Inherit(aPrincipal->OriginAttributesRef());
+    } else if (loadContext) {
+        loadContext->GetOriginAttributes(originAttributes);
+        originAttributes.StripAttributes(OriginAttributes::STRIP_ADDON_ID);
+    }
+
     nsCOMPtr<nsIURI> clone;
     if (NS_SUCCEEDED(sss->IsSecureURI(nsISiteSecurityService::HEADER_HSTS,
-                                      aURI, flags, nullptr, &isStsHost)) &&
+                                      aURI, flags, originAttributes,
+                                      nullptr, &isStsHost)) &&
                                       isStsHost) {
         if (NS_SUCCEEDED(NS_GetSecureUpgradedURI(aURI,
                                                  getter_AddRefs(clone)))) {
@@ -2300,17 +2163,6 @@ nsHttpHandler::SpeculativeConnectInternal(nsIURI *aURI,
 
     nsAutoCString username;
     aURI->GetUsername(username);
-
-    OriginAttributes originAttributes;
-    // If the principal is given, we use the originAttributes from this
-    // principal. Otherwise, we use the originAttributes from the
-    // loadContext.
-    if (aPrincipal) {
-        originAttributes.Inherit(aPrincipal->OriginAttributesRef());
-    } else if (loadContext) {
-        loadContext->GetOriginAttributes(originAttributes);
-        originAttributes.StripAttributes(OriginAttributes::STRIP_ADDON_ID);
-    }
 
     auto *ci =
         new nsHttpConnectionInfo(host, port, EmptyCString(), username, nullptr,

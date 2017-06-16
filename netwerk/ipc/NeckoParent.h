@@ -10,6 +10,7 @@
 #include "mozilla/net/NeckoCommon.h"
 #include "nsIAuthPrompt2.h"
 #include "nsINetworkPredictor.h"
+#include "nsIThrottlingService.h"
 #include "nsNetUtil.h"
 
 #ifndef mozilla_net_NeckoParent_h
@@ -209,16 +210,23 @@ protected:
   virtual mozilla::ipc::IPCResult RecvPredPredict(const ipc::OptionalURIParams& aTargetURI,
                                                   const ipc::OptionalURIParams& aSourceURI,
                                                   const PredictorPredictReason& aReason,
-                                                  const IPC::SerializedLoadContext& aLoadContext,
+                                                  const OriginAttributes& aOriginAttributes,
                                                   const bool& hasVerifier) override;
 
   virtual mozilla::ipc::IPCResult RecvPredLearn(const ipc::URIParams& aTargetURI,
                                                 const ipc::OptionalURIParams& aSourceURI,
                                                 const PredictorPredictReason& aReason,
-                                                const IPC::SerializedLoadContext& aLoadContext) override;
+                                                const OriginAttributes& aOriginAttributes) override;
   virtual mozilla::ipc::IPCResult RecvPredReset() override;
 
   virtual mozilla::ipc::IPCResult RecvRemoveRequestContext(const nsCString& rcid) override;
+
+  /* Throttler messages */
+  virtual mozilla::ipc::IPCResult RecvIncreaseThrottlePressure() override;
+  virtual mozilla::ipc::IPCResult RecvDecreaseThrottlePressure() override;
+
+private:
+  nsTArray<mozilla::UniquePtr<mozilla::net::Throttler>> mThrottlers;
 };
 
 } // namespace net

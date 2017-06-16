@@ -9,8 +9,6 @@
 #include "nsThreadUtils.h"
 #include "nsITimer.h"
 #include "mozilla/Monitor.h"
-#include "ProfileEntry.h"
-#include "ThreadProfile.h"
 
 using mozilla::Monitor;
 using mozilla::MonitorAutoLock;
@@ -80,9 +78,8 @@ private:
 NS_IMPL_ISUPPORTS_INHERITED(CheckResponsivenessTask, mozilla::Runnable,
                             nsITimerCallback)
 
-ThreadResponsiveness::ThreadResponsiveness(ThreadProfile *aThreadProfile)
-  : mThreadProfile(aThreadProfile)
-  , mActiveTracerEvent(nullptr)
+ThreadResponsiveness::ThreadResponsiveness()
+  : mActiveTracerEvent(nullptr)
 {
   MOZ_COUNT_CTOR(ThreadResponsiveness);
 }
@@ -96,16 +93,15 @@ ThreadResponsiveness::~ThreadResponsiveness()
 }
 
 void
-ThreadResponsiveness::Update()
+ThreadResponsiveness::Update(bool aIsMainThread, nsIThread* aThread)
 {
   if (!mActiveTracerEvent) {
-    if (mThreadProfile->GetThreadInfo()->IsMainThread()) {
+    if (aIsMainThread) {
       mActiveTracerEvent = new CheckResponsivenessTask();
       NS_DispatchToMainThread(mActiveTracerEvent);
-    } else if (mThreadProfile->GetThreadInfo()->GetThread()) {
+    } else if (aThread) {
       mActiveTracerEvent = new CheckResponsivenessTask();
-      mThreadProfile->GetThreadInfo()->
-        GetThread()->Dispatch(mActiveTracerEvent, NS_DISPATCH_NORMAL);
+      aThread->Dispatch(mActiveTracerEvent, NS_DISPATCH_NORMAL);
     }
   }
 

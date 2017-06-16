@@ -13,12 +13,12 @@ random-if(/^Windows\x20NT\x205\.1/.test(http.oscpu)) == sync-image-switch-1c.htm
 random-if(/^Windows\x20NT\x205\.1/.test(http.oscpu)) == sync-image-switch-1d.html sync-image-switch-1d.html
 
 # Tests for "object-fit" & "object-position"
-test-pref(layout.css.object-fit-and-position.enabled,true) == image-object-fit-dyn-1.html image-object-fit-dyn-1.html
-fails test-pref(layout.css.object-fit-and-position.enabled,true) == image-object-fit-with-background-1.html image-object-fit-with-background-1.html
-fails test-pref(layout.css.object-fit-and-position.enabled,true) == image-object-fit-with-background-2.html image-object-fit-with-background-2.html
-# test-pref(layout.css.object-fit-and-position.enabled,true) == image-object-position-dyn-1.html image-object-position-dyn-1.html
-fails test-pref(layout.css.object-fit-and-position.enabled,true) == image-object-position-with-background-1.html image-object-position-with-background-1.html
-fails == image-object-position-with-background-2.html image-object-position-with-background-2.html
+== image-object-fit-dyn-1.html image-object-fit-dyn-1.html
+fails skip-if(stylo) == image-object-fit-with-background-1.html image-object-fit-with-background-1.html # Bug 1342188
+fails == image-object-fit-with-background-2.html image-object-fit-with-background-2.html
+== image-object-position-dyn-1.html image-object-position-dyn-1.html
+asserts(0-1) fails == image-object-position-with-background-1.html image-object-position-with-background-1.html
+== image-object-position-with-background-2.html image-object-position-with-background-2.html
 
 # Tests for image-orientation used with 'from-image' (note that all
 # image-orientation tests are fuzzy because the JPEG images do not perfectly
@@ -71,8 +71,8 @@ fails == image-orientation-generated-content.html?180&flip image-orientation-gen
 fails == image-orientation-generated-content.html?270&flip image-orientation-generated-content.html?270&flip
 
 # Tests that image-orientation does not apply to decorative images:
-# == image-orientation-background.html?from-image image-orientation-background.html?from-image
-# == image-orientation-background.html?90&flip image-orientation-background.html?90&flip
+== image-orientation-background.html?from-image image-orientation-background.html?from-image
+== image-orientation-background.html?90&flip image-orientation-background.html?90&flip
 fails == image-orientation-border-image.html?from-image image-orientation-border-image.html?from-image
 fails == image-orientation-border-image.html?90&flip image-orientation-border-image.html?90&flip
 fails == image-orientation-list-style-image.html?from-image image-orientation-list-style-image.html?from-image
@@ -100,7 +100,7 @@ fails == image-orientation-list-style-image.html?90&flip image-orientation-list-
 == image-orientation-generated-content-ref.html?90 image-orientation-generated-content-ref.html?90
 == image-orientation-generated-content-ref.html?180 image-orientation-generated-content-ref.html?180
 == image-orientation-generated-content-ref.html?270 image-orientation-generated-content-ref.html?270
-# == image-orientation-dynamic.html image-orientation-dynamic.html
+fails == image-orientation-dynamic.html image-orientation-dynamic.html # Bug 1341758
 
 # <img srcset> tests
 fails == image-srcset-basic-selection-0.1x.html image-srcset-basic-selection-0.1x.html

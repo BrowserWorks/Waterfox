@@ -34,7 +34,8 @@ public class GeckoViewActivity extends Activity {
 
         mGeckoView = (GeckoView) findViewById(R.id.gecko_view);
         mGeckoView.setChromeDelegate(new MyGeckoViewChrome());
-        mGeckoView.setContentDelegate(new MyGeckoViewContent());
+        mGeckoView.setContentListener(new MyGeckoViewContent());
+        mGeckoView.setProgressListener(new MyGeckoViewProgress());
     }
 
     @Override
@@ -43,7 +44,7 @@ public class GeckoViewActivity extends Activity {
 
         final GeckoProfile profile = GeckoProfile.get(getApplicationContext());
 
-        GeckoThread.init(profile, /* args */ null, /* action */ null, /* debugging */ false);
+        GeckoThread.initMainProcess(profile, /* args */ null, /* debugging */ false);
         GeckoThread.launch();
     }
 
@@ -89,30 +90,37 @@ public class GeckoViewActivity extends Activity {
         }
     }
 
-    private class MyGeckoViewContent implements GeckoView.ContentDelegate {
+    private class MyGeckoViewContent implements GeckoView.ContentListener {
+        @Override
+        public void onTitleChanged(GeckoView view, String title) {
+            Log.i(LOGTAG, "Content title changed to " + title);
+        }
+    }
+
+    private class MyGeckoViewProgress implements GeckoView.ProgressListener {
         @Override
         public void onPageStart(GeckoView view, String url) {
-
+            Log.i(LOGTAG, "Starting to load page at " + url);
         }
 
         @Override
         public void onPageStop(GeckoView view, boolean success) {
-
+            Log.i(LOGTAG, "Stopping page load " + (success ? "successfully" : "unsuccessfully"));
         }
 
         @Override
-        public void onPageShow(GeckoView view) {
-
-        }
-
-        @Override
-        public void onReceivedTitle(GeckoView view, String title) {
-            Log.i(LOGTAG, "Received a title: " + title);
-        }
-
-        @Override
-        public void onReceivedFavicon(GeckoView view, String url, int size) {
-            Log.i(LOGTAG, "Received a favicon URL: " + url);
+        public void onSecurityChanged(GeckoView view, int status) {
+            String statusString;
+            if ((status & STATE_IS_BROKEN) != 0) {
+                statusString = "broken";
+            } else if ((status & STATE_IS_SECURE) != 0) {
+                statusString = "secure";
+            } else if ((status & STATE_IS_INSECURE) != 0) {
+                statusString = "insecure";
+            } else {
+                statusString = "unknown";
+            }
+            Log.i(LOGTAG, "Security status changed to " + statusString);
         }
     }
 }

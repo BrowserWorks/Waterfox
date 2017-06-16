@@ -48,7 +48,6 @@
 #ifdef XP_WIN
 #include <windows.h>
 #include <shlobj.h>
-#include "mozilla/WindowsVersion.h"
 #endif
 #ifdef XP_MACOSX
 #include "nsILocalFileMac.h"
@@ -772,10 +771,7 @@ IsContentSandboxDisabled()
   if (!BrowserTabsRemoteAutostart()) {
     return false;
   }
-#if defined(XP_WIN)
-  const bool isSandboxDisabled = !mozilla::IsVistaOrLater() ||
-    (Preferences::GetInt("security.sandbox.content.level") < 1);
-#elif defined(XP_MACOSX)
+#if defined(XP_WIN) || defined(XP_MACOSX)
   const bool isSandboxDisabled =
     Preferences::GetInt("security.sandbox.content.level") < 1;
 #endif
@@ -1233,12 +1229,6 @@ nsXREDirProvider::DoShutdown()
   PROFILER_LABEL_FUNC(js::ProfileEntry::Category::OTHER);
 
   if (mProfileNotified) {
-#if (defined(XP_WIN) || defined(XP_MACOSX)) && defined(MOZ_CONTENT_SANDBOX)
-    if (XRE_IsParentProcess()) {
-      Unused << DeleteDirIfExists(mContentProcessSandboxTempDir);
-    }
-#endif
-
     nsCOMPtr<nsIObserverService> obsSvc =
       mozilla::services::GetObserverService();
     NS_ASSERTION(obsSvc, "No observer service?");
@@ -1261,6 +1251,12 @@ nsXREDirProvider::DoShutdown()
     }
     mProfileNotified = false;
   }
+
+#if (defined(XP_WIN) || defined(XP_MACOSX)) && defined(MOZ_CONTENT_SANDBOX)
+  if (XRE_IsParentProcess()) {
+    Unused << DeleteDirIfExists(mContentProcessSandboxTempDir);
+  }
+#endif
 }
 
 #ifdef XP_WIN

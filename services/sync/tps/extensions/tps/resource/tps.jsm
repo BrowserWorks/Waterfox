@@ -129,26 +129,14 @@ var TPS = {
   shouldValidateForms: false,
 
   _init: function TPS__init() {
-    // Check if Firefox Accounts is enabled
-    let service = Cc["@mozilla.org/weave/service;1"]
-                  .getService(Components.interfaces.nsISupports)
-                  .wrappedJSObject;
-    this.fxaccounts_enabled = service.fxAccountsEnabled;
-
     this.delayAutoSync();
 
     OBSERVER_TOPICS.forEach(function(aTopic) {
       Services.obs.addObserver(this, aTopic, true);
     }, this);
 
-    // Configure some logging prefs for Sync itself.
-    Weave.Svc.Prefs.set("log.appender.dump", "Debug");
-    // Import the appropriate authentication module
-    if (this.fxaccounts_enabled) {
-      Cu.import("resource://tps/auth/fxaccounts.jsm", module);
-    } else {
-      Cu.import("resource://tps/auth/sync.jsm", module);
-    }
+    /* global Authentication */
+    Cu.import("resource://tps/auth/fxaccounts.jsm", module);
   },
 
   DumpError(msg, exc = null) {
@@ -633,7 +621,7 @@ var TPS = {
       serverRecordDumpStr = JSON.stringify(serverRecords);
 
       let validator = new BookmarkValidator();
-      let {problemData} = validator.compareServerWithClient(serverRecords, clientTree);
+      let {problemData} = Async.promiseSpinningly(validator.compareServerWithClient(serverRecords, clientTree));
 
       for (let {name, count} of problemData.getSummary()) {
         // Exclude mobile showing up on the server hackily so that we don't
@@ -860,7 +848,6 @@ var TPS = {
       Logger.logInfo("Firefox version: " + Services.appinfo.version);
       Logger.logInfo("Firefox source revision: " + (AppConstants.SOURCE_REVISION_URL || "unknown"));
       Logger.logInfo("Firefox platform: " + AppConstants.platform);
-      Logger.logInfo("Firefox Accounts enabled: " + this.fxaccounts_enabled);
 
       // do some sync housekeeping
       if (Weave.Service.isLoggedIn) {
@@ -1136,18 +1123,13 @@ var TPS = {
     }
 
     Logger.logInfo("Setting client credentials and login.");
-    let account = this.fxaccounts_enabled ? this.config.fx_account
-                                          : this.config.sync_account;
-    Authentication.signIn(account);
+    Authentication.signIn(this.config.fx_account);
     this.waitForSetupComplete();
     Logger.AssertEqual(Weave.Status.service, Weave.STATUS_OK, "Weave status OK");
     this.waitForTracking();
-    // If fxaccounts is enabled we get an initial sync at login time - let
-    // that complete.
-    if (this.fxaccounts_enabled) {
-      this._triggeredSync = true;
-      this.waitForSyncFinished();
-    }
+    // We get an initial sync at login time - let that complete.
+    this._triggeredSync = true;
+    this.waitForSyncFinished();
   },
 
   /**

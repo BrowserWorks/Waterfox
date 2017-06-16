@@ -176,9 +176,6 @@ user_pref("layout.css.contain.enabled", true);
 // Enable CSS initial-letter for testing
 user_pref("layout.css.initial-letter.enabled", true);
 
-// Enable CSS object-fit & object-position for testing
-user_pref("layout.css.object-fit-and-position.enabled", true);
-
 // Enable webkit prefixed CSS features for testing
 user_pref("layout.css.prefixes.webkit", true);
 
@@ -187,6 +184,9 @@ user_pref("layout.css.prefixes.device-pixel-ratio-webkit", true);
 
 // Enable CSS shape-outside for testing
 user_pref("layout.css.shape-outside.enabled", true);
+
+// Enable CSS text-justify for testing
+user_pref("layout.css.text-justify.enabled", true);
 
 // Disable spammy layout warnings because they pollute test logs
 user_pref("layout.spammy_warnings.enabled", false);
@@ -300,7 +300,7 @@ user_pref("browser.search.geoSpecificDefaults", false);
 
 // Make sure self support doesn't hit the network.
 user_pref("browser.selfsupport.url", "https://%(server)s/selfsupport-dummy/");
-user_pref("extensions.shield-recipe-client.api_url", "https://example.com/selfsupport-dummy/");
+user_pref("extensions.shield-recipe-client.api_url", "https://%(server)s/selfsupport-dummy/");
 
 user_pref("media.eme.enabled", true);
 
@@ -335,6 +335,8 @@ user_pref("browser.urlbar.suggest.searches", false);
 // tests that don't expect it to be there.
 user_pref("browser.urlbar.userMadeSearchSuggestionsChoice", true);
 
+user_pref("browser.urlbar.usepreloadedtopurls.enabled", false);
+
 user_pref("dom.audiochannel.mutedByDefault", false);
 
 user_pref("webextensions.tests", true);
@@ -354,3 +356,14 @@ user_pref("media.openUnsupportedTypeWithExternalApp", false);
 // Disable password capture, so that mochitests that include forms aren't
 // influenced by the presence of the persistent doorhanger notification.
 user_pref("signon.rememberSignons", false);
+
+// Enable form autofill feature testing.
+user_pref("browser.formautofill.experimental", true);
+
+// Disable all recommended Marionette preferences for Gecko tests.
+// The prefs recommended by Marionette are typically geared towards
+// consumer automation; not vendor testing.
+user_pref("marionette.prefs.recommended", false);
+
+// Disable Screenshots by default for now
+user_pref("extensions.screenshots.system-disabled", true);

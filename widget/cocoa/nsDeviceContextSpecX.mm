@@ -64,6 +64,19 @@ NS_IMETHODIMP nsDeviceContextSpecX::Init(nsIWidget *aWidget,
   if (!settings)
     return NS_ERROR_NO_INTERFACE;
 
+  bool toFile;
+  settings->GetPrintToFile(&toFile);
+
+  bool toPrinter = !toFile && !aIsPrintPreview;
+  if (!toPrinter) {
+    double width, height;
+    settings->GetEffectivePageSize(&width, &height);
+    width /= TWIPS_PER_POINT_FLOAT;
+    height /= TWIPS_PER_POINT_FLOAT;
+
+    settings->SetCocoaPaperSize(width, height);
+  }
+
   mPrintSession = settings->GetPMPrintSession();
   ::PMRetain(mPrintSession);
   mPageFormat = settings->GetPMPageFormat();
@@ -183,11 +196,11 @@ NS_IMETHODIMP nsDeviceContextSpecX::EndDocument()
       if (status == noErr) {
         CFStringRef sourcePathRef =
           CFURLCopyFileSystemPath(pdfURL, kCFURLPOSIXPathStyle);
+        NSString* sourcePath = (NSString*) sourcePathRef;
+#ifdef DEBUG
         CFStringRef destPathRef =
           CFURLCopyFileSystemPath(destURL, kCFURLPOSIXPathStyle);
-        NSString* sourcePath = (NSString*) sourcePathRef;
         NSString* destPath = (NSString*) destPathRef;
-#ifdef DEBUG
         NSString* destPathExt = [destPath pathExtension];
         MOZ_ASSERT([destPathExt isEqualToString: @"pdf"],
                    "nsDeviceContextSpecX::Init only allows '.pdf' for now");

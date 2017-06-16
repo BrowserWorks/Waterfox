@@ -18,6 +18,8 @@
 using namespace mozilla;
 using namespace mozilla::gfx;
 
+#ifdef MOZ_WIDGET_ANDROID
+
 static void
 PaintCheckMark(nsIFrame* aFrame,
                DrawTarget* aDrawTarget,
@@ -74,6 +76,8 @@ PaintIndeterminateMark(nsIFrame* aFrame,
     devPxRect, ColorPattern(ToDeviceColor(aFrame->StyleColor()->mColor)));
 }
 
+#endif
+
 //------------------------------------------------------------
 nsIFrame*
 NS_NewGfxCheckboxControlFrame(nsIPresShell* aPresShell,
@@ -105,6 +109,8 @@ nsGfxCheckboxControlFrame::AccessibleType()
 #endif
 
 //------------------------------------------------------------
+#ifdef MOZ_WIDGET_ANDROID
+
 void
 nsGfxCheckboxControlFrame::BuildDisplayList(nsDisplayListBuilder*   aBuilder,
                                             const nsRect&           aDirtyRect,
@@ -127,6 +133,7 @@ nsGfxCheckboxControlFrame::BuildDisplayList(nsDisplayListBuilder*   aBuilder,
                      nsDisplayItem::TYPE_CHECKED_CHECKBOX));
 }
 
+#endif
 //------------------------------------------------------------
 bool
 nsGfxCheckboxControlFrame::IsChecked()

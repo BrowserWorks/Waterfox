@@ -75,6 +75,8 @@ public:
   void Init(nsIWidget* aWidget, nsPresContext* aPresContext,
             nsIContent* aContent, nsIEditor* aEditor);
   void Destroy();
+  bool Destroyed() const;
+
   /**
    * IMEContentObserver is stored by EventStateManager during observing.
    * DisconnectFromEventStateManager() is called when EventStateManager stops
@@ -218,8 +220,10 @@ private:
       eChangeEventType_CompositionEventHandled
     };
 
-    explicit AChangeEvent(IMEContentObserver* aIMEContentObserver)
-      : mIMEContentObserver(aIMEContentObserver)
+    explicit AChangeEvent(const char* aName,
+                          IMEContentObserver* aIMEContentObserver)
+      : Runnable(aName)
+      , mIMEContentObserver(aIMEContentObserver)
     {
       MOZ_ASSERT(mIMEContentObserver);
     }
@@ -241,7 +245,7 @@ private:
   {
   public:
     explicit IMENotificationSender(IMEContentObserver* aIMEContentObserver)
-      : AChangeEvent(aIMEContentObserver)
+      : AChangeEvent("IMENotificationSender", aIMEContentObserver)
       , mIsRunning(false)
     {
     }

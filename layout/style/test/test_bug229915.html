@@ -45,7 +45,7 @@ https://bugzilla.mozilla.org/show_bug.cgi?id=229915
 
 const GREEN = "rgb(0, 128, 0)";
 const BLACK = "rgb(0, 0, 0)";
-const TRANSPARENT = "transparent";
+const TRANSPARENT = "rgba(0, 0, 0, 0)";
 const WHITE = "rgb(255, 255, 255)";
 
 function make_prev() {
@@ -85,7 +85,7 @@ is(bg("replacecolor"), WHITE, "replacing should turn background white");
 is(color("removecolor"), BLACK, "initial state (removal test)");
 is(bg("removecolor"), WHITE, "initial state (removal test; no change)");
 node = document.getElementById("toremove");
-node.parentNode.removeChild(node);
+node.remove();
 is(color("removecolor"), GREEN, "removing should turn node green");
 is(bg("removecolor"), WHITE, "removing should leave background");
 

@@ -2,6 +2,11 @@
 // License, v. 2.0. If a copy of the MPL was not distributed with this
 // file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
+#[cfg(feature="servo")]
+extern crate geckoservo;
+
 extern crate mp4parse_capi;
 extern crate nsstring;
 extern crate rust_url_capi;
+#[cfg(feature = "quantum_render")]
+extern crate webrender_bindings;

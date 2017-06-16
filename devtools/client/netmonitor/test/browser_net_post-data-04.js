@@ -9,15 +9,15 @@
  */
 
 add_task(function* () {
-  let { L10N } = require("devtools/client/netmonitor/l10n");
+  let { L10N } = require("devtools/client/netmonitor/utils/l10n");
 
   let { tab, monitor } = yield initNetMonitor(POST_JSON_URL);
   info("Starting test... ");
 
-  let { document, NetMonitorView } = monitor.panelWin;
-  let { RequestsMenu } = NetMonitorView;
+  let { document, gStore, windowRequire } = monitor.panelWin;
+  let Actions = windowRequire("devtools/client/netmonitor/actions/index");
 
-  RequestsMenu.lazyUpdate = false;
+  gStore.dispatch(Actions.batchEnable(false));
 
   let wait = waitForNetworkEvents(monitor, 0, 1);
   yield ContentTask.spawn(tab.linkedBrowser, {}, function* () {
@@ -26,14 +26,14 @@ add_task(function* () {
   yield wait;
 
   // Wait for all tree view updated by react
-  wait = waitForDOM(document, "#params-tabpanel .tree-section");
-  EventUtils.sendMouseEvent({ type: "mousedown" },
-    document.getElementById("details-pane-toggle"));
-  EventUtils.sendMouseEvent({ type: "mousedown" },
-    document.querySelectorAll("#details-pane tab")[2]);
+  wait = waitForDOM(document, "#params-panel .tree-section");
+  EventUtils.sendMouseEvent({ type: "click" },
+    document.querySelector(".network-details-panel-toggle"));
+  EventUtils.sendMouseEvent({ type: "click" },
+    document.querySelector("#params-tab"));
   yield wait;
 
-  let tabpanel = document.querySelectorAll("#event-details-pane tabpanel")[2];
+  let tabpanel = document.querySelector("#params-panel");
 
   ok(tabpanel.querySelector(".treeTable"),
     "The request params doesn't have the indended visibility.");

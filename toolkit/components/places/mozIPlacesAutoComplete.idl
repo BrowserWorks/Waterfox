@@ -135,4 +135,12 @@ interface mozIPlacesAutoComplete : nsISupports
    *        The Container Id of the tab.
    */
   void unregisterOpenPage(in nsIURI aURI, in uint32_t aUserContextId);
+
+  /**
+   * Populate list of Prefill Sites from JSON.
+   *
+   * @param sites
+   *        Array of [url,title] to populate from.
+   */
+  void populatePrefillSiteStorage(in jsval sites);
 };

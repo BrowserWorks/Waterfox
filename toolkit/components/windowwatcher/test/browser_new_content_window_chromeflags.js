@@ -88,8 +88,8 @@ const DISALLOWED = {
     flag: Ci.nsIWebBrowserChrome.CHROME_WINDOW_RAISED,
     defaults_to: false,
   },
-  "macsuppressanimation": {
-    flag: Ci.nsIWebBrowserChrome.CHROME_MAC_SUPPRESS_ANIMATION,
+  "suppressanimation": {
+    flag: Ci.nsIWebBrowserChrome.CHROME_SUPPRESS_ANIMATION,
     defaults_to: false,
   },
   "extrachrome": {
@@ -192,6 +192,7 @@ function assertContentFlags(chromeFlags) {
 
   for (let feature in DISALLOWED) {
     let flag = DISALLOWED[feature].flag;
+    Assert.ok(flag, "Expected flag to be a non-zeroish value");
     if (DISALLOWED[feature].defaults_to) {
       // The feature is supposed to default to true, so it should
       // stay true.
@@ -237,6 +238,8 @@ add_task(function* test_new_remote_window_flags() {
     // as part of the TabChild, so we have to check those too.
     let b = win.gBrowser.selectedBrowser;
     let contentChromeFlags = yield ContentTask.spawn(b, null, function*() {
+      // Content scripts provide docShell as a global.
+      /* global docShell */
       docShell.QueryInterface(Ci.nsIInterfaceRequestor);
       try {
         // This will throw if we're not a remote browser.

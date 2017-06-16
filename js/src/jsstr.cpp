@@ -454,7 +454,8 @@ const Class StringObject::class_ = {
 static MOZ_ALWAYS_INLINE JSString*
 ToStringForStringFunction(JSContext* cx, HandleValue thisv)
 {
-    JS_CHECK_RECURSION(cx, return nullptr);
+    if (!CheckRecursionLimit(cx))
+        return nullptr;
 
     if (thisv.isString())
         return thisv.toString();
@@ -2994,12 +2995,12 @@ static const JSFunctionSpec string_static_methods[] = {
 };
 
 /* static */ Shape*
-StringObject::assignInitialShape(ExclusiveContext* cx, Handle<StringObject*> obj)
+StringObject::assignInitialShape(JSContext* cx, Handle<StringObject*> obj)
 {
     MOZ_ASSERT(obj->empty());
 
-    return obj->addDataProperty(cx, cx->names().length, LENGTH_SLOT,
-                                JSPROP_PERMANENT | JSPROP_READONLY);
+    return NativeObject::addDataProperty(cx, obj, cx->names().length, LENGTH_SLOT,
+                                         JSPROP_PERMANENT | JSPROP_READONLY);
 }
 
 JSObject*
@@ -3011,7 +3012,10 @@ js::InitStringClass(JSContext* cx, HandleObject obj)
 
     Rooted<JSString*> empty(cx, cx->runtime()->emptyString);
     RootedObject proto(cx, GlobalObject::createBlankPrototype(cx, global, &StringObject::class_));
-    if (!proto || !proto->as<StringObject>().init(cx, empty))
+    if (!proto)
+        return nullptr;
+    Handle<StringObject*> protoObj = proto.as<StringObject>();
+    if (!StringObject::init(cx, protoObj, empty))
         return nullptr;
 
     /* Now create the String function. */
@@ -3062,17 +3066,18 @@ js::ValueToPrintable(JSContext* cx, const Value& vArg, JSAutoByteString* bytes, 
 
 template <AllowGC allowGC>
 JSString*
-js::ToStringSlow(ExclusiveContext* cx, typename MaybeRooted<Value, allowGC>::HandleType arg)
+js::ToStringSlow(JSContext* cx, typename MaybeRooted<Value, allowGC>::HandleType arg)
 {
     /* As with ToObjectSlow, callers must verify that |arg| isn't a string. */
     MOZ_ASSERT(!arg.isString());
 
     Value v = arg;
     if (!v.isPrimitive()) {
-        if (!cx->shouldBeJSContext() || !allowGC)
+        MOZ_ASSERT(!cx->helperThread());
+        if (!allowGC)
             return nullptr;
         RootedValue v2(cx, v);
-        if (!ToPrimitive(cx->asJSContext(), JSTYPE_STRING, &v2))
+        if (!ToPrimitive(cx, JSTYPE_STRING, &v2))
             return nullptr;
         v = v2;
     }
@@ -3089,8 +3094,9 @@ js::ToStringSlow(ExclusiveContext* cx, typename MaybeRooted<Value, allowGC>::Han
     } else if (v.isNull()) {
         str = cx->names().null;
     } else if (v.isSymbol()) {
-        if (cx->shouldBeJSContext() && allowGC) {
-            JS_ReportErrorNumberASCII(cx->asJSContext(), GetErrorMessage, nullptr,
+        MOZ_ASSERT(!cx->helperThread());
+        if (allowGC) {
+            JS_ReportErrorNumberASCII(cx, GetErrorMessage, nullptr,
                                       JSMSG_SYMBOL_TO_STRING);
         }
         return nullptr;
@@ -3102,10 +3108,10 @@ js::ToStringSlow(ExclusiveContext* cx, typename MaybeRooted<Value, allowGC>::Han
 }
 
 template JSString*
-js::ToStringSlow<CanGC>(ExclusiveContext* cx, HandleValue arg);
+js::ToStringSlow<CanGC>(JSContext* cx, HandleValue arg);
 
 template JSString*
-js::ToStringSlow<NoGC>(ExclusiveContext* cx, const Value& arg);
+js::ToStringSlow<NoGC>(JSContext* cx, const Value& arg);
 
 JS_PUBLIC_API(JSString*)
 js::ToStringSlow(JSContext* cx, HandleValue v)
@@ -3140,7 +3146,8 @@ SymbolToSource(JSContext* cx, Symbol* symbol)
 JSString*
 js::ValueToSource(JSContext* cx, HandleValue v)
 {
-    JS_CHECK_RECURSION(cx, return nullptr);
+    if (!CheckRecursionLimit(cx))
+        return nullptr;
     assertSameCompartment(cx, v);
 
     if (v.isUndefined())
@@ -3351,7 +3358,7 @@ js_fputs(const char16_t* s, FILE* f)
 }
 
 UniqueChars
-js::DuplicateString(js::ExclusiveContext* cx, const char* s)
+js::DuplicateString(JSContext* cx, const char* s)
 {
     size_t n = strlen(s) + 1;
     auto ret = cx->make_pod_array<char>(n);
@@ -3362,7 +3369,7 @@ js::DuplicateString(js::ExclusiveContext* cx, const char* s)
 }
 
 UniqueTwoByteChars
-js::DuplicateString(js::ExclusiveContext* cx, const char16_t* s)
+js::DuplicateString(JSContext* cx, const char16_t* s)
 {
     size_t n = js_strlen(s) + 1;
     auto ret = cx->make_pod_array<char16_t>(n);
@@ -3425,7 +3432,7 @@ template const char16_t*
 js_strchr_limit(const char16_t* s, char16_t c, const char16_t* limit);
 
 char16_t*
-js::InflateString(ExclusiveContext* cx, const char* bytes, size_t* lengthp)
+js::InflateString(JSContext* cx, const char* bytes, size_t* lengthp)
 {
     size_t nchars;
     char16_t* chars;
@@ -4014,7 +4021,7 @@ js::PutEscapedStringImpl(char* buffer, size_t bufferSize, GenericPrinter* out, c
                 buffer = nullptr;
             }
         } else if (out) {
-            if (out->put(&c, 1) < 0)
+            if (!out->put(&c, 1))
                 return size_t(-1);
         }
         n++;

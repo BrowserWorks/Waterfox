@@ -61,18 +61,6 @@ WebGLContext::Enable(GLenum cap)
     gl->fEnable(cap);
 }
 
-static JS::Value
-StringValue(JSContext* cx, const nsAString& str, ErrorResult& rv)
-{
-    JSString* jsStr = JS_NewUCStringCopyN(cx, str.BeginReading(), str.Length());
-    if (!jsStr) {
-        rv.Throw(NS_ERROR_OUT_OF_MEMORY);
-        return JS::NullValue();
-    }
-
-    return JS::StringValue(jsStr);
-}
-
 bool
 WebGLContext::GetStencilBits(GLint* const out_stencilBits)
 {
@@ -659,7 +647,7 @@ WebGLContext::GetParameterIndexed(JSContext* cx, GLenum pname, GLuint index,
         case LOCAL_GL_TRANSFORM_FEEDBACK_BUFFER_BINDING:
         {
             if (index >= mGLMaxTransformFeedbackSeparateAttribs) {
-                ErrorInvalidValue("getParameterIndexed: index should be less than MAX_TRANSFORM_FEEDBACK_SEPARATE_ATTRIBS", index);
+                ErrorInvalidValue("getParameterIndexed: index should be less than MAX_TRANSFORM_FEEDBACK_SEPARATE_ATTRIBS");
                 retval.setNull();
                 return;
             }

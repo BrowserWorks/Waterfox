@@ -22,9 +22,10 @@
 #include "tls13exthandle.h"
 
 typedef enum {
-    TrafficKeyEarlyApplicationData,
-    TrafficKeyHandshake,
-    TrafficKeyApplicationData
+    TrafficKeyClearText = 0,
+    TrafficKeyEarlyApplicationData = 1,
+    TrafficKeyHandshake = 2,
+    TrafficKeyApplicationData = 3
 } TrafficKeyType;
 
 typedef enum {
@@ -76,7 +77,6 @@ tls13_DeriveSecret(sslSocket *ss, PK11SymKey *key,
                    const char *suffix,
                    const SSL3Hashes *hashes,
                    PK11SymKey **dest);
-static void tls13_SetNullCipherSpec(sslSocket *ss, ssl3CipherSpec **specp);
 static SECStatus tls13_SendEndOfEarlyData(sslSocket *ss);
 static SECStatus tls13_SendFinished(sslSocket *ss, PK11SymKey *baseKey);
 static SECStatus tls13_ComputePskBinderHash(sslSocket *ss,
@@ -628,13 +628,9 @@ tls13_RecoverWrappedSharedSecret(sslSocket *ss, sslSessionID *sid)
     hashType = tls13_GetHashForCipherSuite(sid->u.ssl3.cipherSuite);
 
     /* If we are the server, we compute the wrapping key, but if we
-     * are the client, it's coordinates are stored with the ticket. */
+     * are the client, its coordinates are stored with the ticket. */
     if (ss->sec.isServer) {
-        const sslServerCert *serverCert;
-
-        serverCert = ssl_FindServerCert(ss, &sid->certType);
-        PORT_Assert(serverCert);
-        wrapKey = ssl3_GetWrappingKey(ss, NULL, serverCert,
+        wrapKey = ssl3_GetWrappingKey(ss, NULL,
                                       sid->u.ssl3.masterWrapMech,
                                       ss->pkcs11PinArg);
     } else {
@@ -937,7 +933,7 @@ tls13_CanResume(sslSocket *ss, const sslSessionID *sid)
      * do remember the type of certificate we originally used, so we can locate
      * it again, provided that the current ssl socket has had its server certs
      * configured the same as the previous one. */
-    sc = ssl_FindServerCert(ss, &sid->certType);
+    sc = ssl_FindServerCert(ss, sid->authType, sid->namedCurve);
     if (!sc || !sc->serverCert) {
         return PR_FALSE;
     }
@@ -1161,6 +1157,30 @@ tls13_NegotiateKeyExchange(sslSocket *ss, TLS13KeyShareEntry **clientShare)
     return SECSuccess;
 }
 
+SSLAuthType
+ssl_SignatureSchemeToAuthType(SSLSignatureScheme scheme)
+{
+    switch (scheme) {
+        case ssl_sig_rsa_pkcs1_sha1:
+        case ssl_sig_rsa_pkcs1_sha256:
+        case ssl_sig_rsa_pkcs1_sha384:
+        case ssl_sig_rsa_pkcs1_sha512:
+        /* We report PSS signatures as being just RSA signatures. */
+        case ssl_sig_rsa_pss_sha256:
+        case ssl_sig_rsa_pss_sha384:
+        case ssl_sig_rsa_pss_sha512:
+            return ssl_auth_rsa_sign;
+        case ssl_sig_ecdsa_secp256r1_sha256:
+        case ssl_sig_ecdsa_secp384r1_sha384:
+        case ssl_sig_ecdsa_secp521r1_sha512:
+        case ssl_sig_ecdsa_sha1:
+            return ssl_auth_ecdsa;
+        default:
+            PORT_Assert(0);
+    }
+    return ssl_auth_null;
+}
+
 SECStatus
 tls13_SelectServerCert(sslSocket *ss)
 {
@@ -1184,8 +1204,7 @@ tls13_SelectServerCert(sslSocket *ss)
          cursor = PR_NEXT_LINK(cursor)) {
         sslServerCert *cert = (sslServerCert *)cursor;
 
-        if (cert->certType.authType == ssl_auth_rsa_pss ||
-            cert->certType.authType == ssl_auth_rsa_decrypt) {
+        if (SSL_CERT_IS_ONLY(cert, ssl_auth_rsa_decrypt)) {
             continue;
         }
 
@@ -1198,8 +1217,8 @@ tls13_SelectServerCert(sslSocket *ss)
         if (rv == SECSuccess) {
             /* Found one. */
             ss->sec.serverCert = cert;
-            ss->sec.authType = cert->certType.authType;
-            ss->ssl3.hs.kea_def_mutable.authKeyType = cert->certType.authType;
+            ss->sec.authType = ss->ssl3.hs.kea_def_mutable.authKeyType =
+                ssl_SignatureSchemeToAuthType(ss->ssl3.hs.signatureScheme);
             ss->sec.authKeyBits = cert->serverKeyBits;
             return SECSuccess;
         }
@@ -1230,8 +1249,6 @@ tls13_NegotiateAuthentication(sslSocket *ss)
     if (rv != SECSuccess) {
         return SECFailure;
     }
-    ss->ssl3.hs.kea_def_mutable.authKeyType =
-        ss->sec.serverCert->certType.authType;
     return SECSuccess;
 }
 
@@ -1251,16 +1268,6 @@ tls13_HandleClientHelloPart2(sslSocket *ss,
 
     if (ssl3_ExtensionNegotiated(ss, ssl_tls13_early_data_xtn)) {
         ss->ssl3.hs.zeroRttState = ssl_0rtt_sent;
-
-        if (IS_DTLS(ss)) {
-            /* Save the null spec, which we should be currently reading.  We will
-             * use this when 0-RTT sending is over. */
-            ssl_GetSpecReadLock(ss);
-            ss->ssl3.hs.nullSpec = ss->ssl3.crSpec;
-            tls13_CipherSpecAddRef(ss->ssl3.hs.nullSpec);
-            PORT_Assert(ss->ssl3.hs.nullSpec->cipher_def->cipher == cipher_null);
-            ssl_ReleaseSpecReadLock(ss);
-        }
     }
 
 #ifndef PARANOID
@@ -1343,6 +1350,10 @@ tls13_HandleClientHelloPart2(sslSocket *ss,
             goto loser;
         }
 
+        ss->sec.serverCert = ssl_FindServerCert(ss, sid->authType,
+                                                sid->namedCurve);
+        PORT_Assert(ss->sec.serverCert);
+
         rv = tls13_RecoverWrappedSharedSecret(ss, sid);
         if (rv != SECSuccess) {
             SSL_AtomicIncrementLong(&ssl3stats->hch_sid_cache_not_ok);
@@ -1351,12 +1362,11 @@ tls13_HandleClientHelloPart2(sslSocket *ss,
         }
         tls13_RestoreCipherInfo(ss, sid);
 
-        ss->sec.serverCert = ssl_FindServerCert(ss, &sid->certType);
-        PORT_Assert(ss->sec.serverCert);
         ss->sec.localCert = CERT_DupCertificate(ss->sec.serverCert->serverCert);
         if (sid->peerCert != NULL) {
             ss->sec.peerCert = CERT_DupCertificate(sid->peerCert);
         }
+
         ssl3_RegisterExtensionSender(
             ss, &ss->xtnData,
             ssl_tls13_pre_shared_key_xtn, tls13_ServerSendPreSharedKeyXtn);
@@ -1617,9 +1627,9 @@ static SECStatus
 tls13_SendCertificateRequest(sslSocket *ss)
 {
     SECStatus rv;
-    int calen;
+    unsigned int calen;
     SECItem *names;
-    int nnames;
+    unsigned int nnames;
     SECItem *name;
     int i;
     PRUint8 sigSchemes[MAX_SIGNATURE_SCHEMES * 2];
@@ -1635,7 +1645,10 @@ tls13_SendCertificateRequest(sslSocket *ss)
         return rv;
     }
 
-    ssl3_GetCertificateRequestCAs(ss, &calen, &names, &nnames);
+    rv = ssl_GetCertificateRequestCAs(ss, &calen, &names, &nnames);
+    if (rv != SECSuccess) {
+        return rv;
+    }
     length = 1 + 0 /* length byte for empty request context */ +
              2 + sigSchemesLength + 2 + calen + 2;
 
@@ -1703,9 +1716,13 @@ tls13_HandleHelloRetryRequest(sslSocket *ss, SSL3Opaque *b, PRUint32 length)
     }
 
     if (ss->ssl3.hs.zeroRttState == ssl_0rtt_sent) {
-        /* Oh well, back to the start. */
-        tls13_SetNullCipherSpec(ss, &ss->ssl3.cwSpec);
         ss->ssl3.hs.zeroRttState = ssl_0rtt_ignored;
+        /* Restore the null cipher spec for writing. */
+        ssl_GetSpecWriteLock(ss);
+        tls13_CipherSpecRelease(ss->ssl3.cwSpec);
+        ss->ssl3.cwSpec = ss->ssl3.crSpec;
+        PORT_Assert(ss->ssl3.cwSpec->cipher_def->cipher == cipher_null);
+        ssl_ReleaseSpecWriteLock(ss);
     } else {
         PORT_Assert(ss->ssl3.hs.zeroRttState == ssl_0rtt_none);
     }
@@ -1808,7 +1825,7 @@ tls13_HandleCertificateRequest(sslSocket *ss, SSL3Opaque *b, PRUint32 length)
                                    &certRequest->signatureSchemes,
                                    &certRequest->signatureSchemeCount,
                                    &b, &length);
-    if (rv != SECSuccess) {
+    if (rv != SECSuccess || certRequest->signatureSchemeCount == 0) {
         FATAL_ERROR(ss, SSL_ERROR_RX_MALFORMED_CERT_REQUEST,
                     decode_error);
         goto loser;
@@ -2761,7 +2778,7 @@ tls13_SetCipherSpec(sslSocket *ss, TrafficKeyType type,
     if ((*specp)->epoch == PR_UINT16_MAX) {
         return SECFailure;
     }
-    spec->epoch = (*specp)->epoch + 1;
+    spec->epoch = (PRUint16)type;
 
     if (!IS_DTLS(ss)) {
         spec->read_seq_num = spec->write_seq_num = 0;
@@ -3294,16 +3311,7 @@ tls13_HandleCertificateVerify(sslSocket *ss, SSL3Opaque *b, PRUint32 length,
 
     /* Set the auth type. */
     if (!ss->sec.isServer) {
-        switch (ssl_SignatureSchemeToKeyType(sigScheme)) {
-            case rsaKey:
-                ss->sec.authType = ssl_auth_rsa_sign;
-                break;
-            case ecKey:
-                ss->sec.authType = ssl_auth_ecdsa;
-                break;
-            default:
-                PORT_Assert(PR_FALSE);
-        }
+        ss->sec.authType = ssl_SignatureSchemeToAuthType(sigScheme);
     }
 
     /* Request a client certificate now if one was requested. */
@@ -3723,17 +3731,10 @@ tls13_SendClientSecondRound(sslSocket *ss)
         return SECWouldBlock;
     }
 
-    if (ss->ssl3.hs.zeroRttState != ssl_0rtt_none) {
-        if (ss->ssl3.hs.zeroRttState == ssl_0rtt_accepted) {
-            rv = tls13_SendEndOfEarlyData(ss);
-            if (rv != SECSuccess) {
-                return SECFailure; /* Error code already set. */
-            }
-        }
-        if (IS_DTLS(ss) && !ss->ssl3.hs.helloRetry) {
-            /* Reset the counters so that the next epoch isn't set
-             * incorrectly. */
-            tls13_SetNullCipherSpec(ss, &ss->ssl3.cwSpec);
+    if (ss->ssl3.hs.zeroRttState == ssl_0rtt_accepted) {
+        rv = tls13_SendEndOfEarlyData(ss);
+        if (rv != SECSuccess) {
+            return SECFailure; /* Error code already set. */
         }
     }
 
@@ -4324,12 +4325,6 @@ tls13_MaybeDo0RTTHandshake(sslSocket *ss)
             return rv;
     }
 
-    /* Null spec... */
-    ssl_GetSpecReadLock(ss);
-    ss->ssl3.hs.nullSpec = ss->ssl3.cwSpec;
-    tls13_CipherSpecAddRef(ss->ssl3.hs.nullSpec);
-    ssl_ReleaseSpecReadLock(ss);
-
     /* Cipher suite already set in tls13_SetupClientHello. */
     ss->ssl3.hs.preliminaryInfo = 0;
 
@@ -4372,21 +4367,6 @@ tls13_Read0RttData(sslSocket *ss, void *buf, PRInt32 len)
     return len;
 }
 
-/* 0-RTT data will be followed by a different cipher spec; this resets the
- * current spec to the null spec so that the following state can be set as
- * though 0-RTT didn't happen. TODO: work out if this is the best plan. */
-static void
-tls13_SetNullCipherSpec(sslSocket *ss, ssl3CipherSpec **specp)
-{
-    PORT_Assert(ss->ssl3.hs.nullSpec);
-
-    ssl_GetSpecWriteLock(ss);
-    tls13_CipherSpecRelease(*specp);
-    *specp = ss->ssl3.hs.nullSpec;
-    ssl_ReleaseSpecWriteLock(ss);
-    ss->ssl3.hs.nullSpec = NULL;
-}
-
 static SECStatus
 tls13_SendEndOfEarlyData(sslSocket *ss)
 {
@@ -4418,11 +4398,6 @@ tls13_HandleEndOfEarlyData(sslSocket *ss)
     }
 
     PORT_Assert(TLS13_IN_HS_STATE(ss, ss->opt.requestCertificate ? wait_client_cert : wait_finished));
-
-    if (IS_DTLS(ss)) {
-        /* Reset the cipher spec so that the epoch counter is properly reset. */
-        tls13_SetNullCipherSpec(ss, &ss->ssl3.crSpec);
-    }
 
     rv = tls13_SetCipherSpec(ss, TrafficKeyHandshake,
                              CipherSpecRead, PR_FALSE);

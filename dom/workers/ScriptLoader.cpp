@@ -113,7 +113,7 @@ ChannelFromScriptURL(nsIPrincipal* principal,
                      const nsAString& aScriptURL,
                      bool aIsMainScript,
                      WorkerScriptType aWorkerScriptType,
-                     nsContentPolicyType aContentPolicyType,
+                     nsContentPolicyType aMainScriptContentPolicyType,
                      nsLoadFlags aLoadFlags,
                      bool aDefaultURIEncoding,
                      nsIChannel** aChannel)
@@ -170,6 +170,10 @@ ChannelFromScriptURL(nsIPrincipal* principal,
     secFlags = nsILoadInfo::SEC_ALLOW_CROSS_ORIGIN_DATA_IS_NULL;
   }
 
+  nsContentPolicyType contentPolicyType =
+    aIsMainScript ? aMainScriptContentPolicyType
+                  : nsIContentPolicy::TYPE_INTERNAL_WORKER_IMPORT_SCRIPTS;
+
   nsCOMPtr<nsIChannel> channel;
   // If we have the document, use it. Unfortunately, for dedicated workers
   // 'parentDoc' ends up being the parent document, which is not the document
@@ -180,7 +184,7 @@ ChannelFromScriptURL(nsIPrincipal* principal,
                        uri,
                        parentDoc,
                        secFlags,
-                       aContentPolicyType,
+                       contentPolicyType,
                        loadGroup,
                        nullptr, // aCallbacks
                        aLoadFlags,
@@ -195,7 +199,7 @@ ChannelFromScriptURL(nsIPrincipal* principal,
                        uri,
                        principal,
                        secFlags,
-                       aContentPolicyType,
+                       contentPolicyType,
                        loadGroup,
                        nullptr, // aCallbacks
                        aLoadFlags,
@@ -470,6 +474,9 @@ private:
   nsCOMPtr<nsIURI> mBaseURI;
   mozilla::dom::ChannelInfo mChannelInfo;
   UniquePtr<PrincipalInfo> mPrincipalInfo;
+  nsCString mCSPHeaderValue;
+  nsCString mCSPReportOnlyHeaderValue;
+  nsCString mReferrerPolicyHeaderValue;
 };
 
 NS_IMPL_ISUPPORTS(CacheScriptLoader, nsIStreamLoaderObserver)
@@ -616,6 +623,10 @@ private:
     MOZ_ASSERT(!loadInfo.mLoadingFinished);
     loadInfo.mLoadingFinished = true;
 
+    if (IsMainWorkerScript() && NS_SUCCEEDED(aRv)) {
+      MOZ_DIAGNOSTIC_ASSERT(mWorkerPrivate->PrincipalURIMatchesScriptURL());
+    }
+
     MaybeExecuteFinishedScripts(aIndex);
   }
 
@@ -669,6 +680,7 @@ private:
     RefPtr<mozilla::dom::InternalResponse> ir =
       new mozilla::dom::InternalResponse(200, NS_LITERAL_CSTRING("OK"));
     ir->SetBody(loadInfo.mCacheReadStream, InternalResponse::UNKNOWN_BODY_SIZE);
+
     // Drop our reference to the stream now that we've passed it along, so it
     // doesn't hang around once the cache is done with it and keep data alive.
     loadInfo.mCacheReadStream = nullptr;
@@ -697,6 +709,7 @@ private:
     }
 
     ir->SetPrincipalInfo(Move(principalInfo));
+    ir->Headers()->FillResponseHeaders(loadInfo.mChannel);
 
     RefPtr<mozilla::dom::Response> response =
       new mozilla::dom::Response(mCacheCreator->Global(), ir);
@@ -872,17 +885,9 @@ private:
 
     WorkerPrivate* parentWorker = mWorkerPrivate->GetParent();
 
-    // Figure out which principal to use.
     nsIPrincipal* principal = mWorkerPrivate->GetPrincipal();
     nsCOMPtr<nsILoadGroup> loadGroup = mWorkerPrivate->GetLoadGroup();
-    if (!principal) {
-      NS_ASSERTION(parentWorker, "Must have a principal!");
-      NS_ASSERTION(mIsMainScript, "Must have a principal for importScripts!");
-
-      principal = parentWorker->GetPrincipal();
-      loadGroup = parentWorker->GetLoadGroup();
-    }
-    NS_ASSERTION(principal, "This should never be null here!");
+    MOZ_DIAGNOSTIC_ASSERT(principal);
     MOZ_ASSERT(NS_LoadGroupMatchesPrincipal(loadGroup, principal));
 
     // Figure out our base URI.
@@ -1137,121 +1142,32 @@ private:
       // Store the channel info if needed.
       mWorkerPrivate->InitChannelInfo(channel);
 
-      // Now to figure out which principal to give this worker.
-      WorkerPrivate* parent = mWorkerPrivate->GetParent();
+      // Our final channel principal should match the original principal
+      // in terms of the origin.
+      MOZ_DIAGNOSTIC_ASSERT(mWorkerPrivate->FinalChannelPrincipalIsValid(channel));
 
-      NS_ASSERTION(mWorkerPrivate->GetPrincipal() || parent,
-                   "Must have one of these!");
-
-      nsCOMPtr<nsIPrincipal> loadPrincipal = mWorkerPrivate->GetPrincipal() ?
-                                             mWorkerPrivate->GetPrincipal() :
-                                             parent->GetPrincipal();
-
-      nsIScriptSecurityManager* ssm = nsContentUtils::GetSecurityManager();
-      NS_ASSERTION(ssm, "Should never be null!");
-
-      nsCOMPtr<nsIPrincipal> channelPrincipal;
-      rv = ssm->GetChannelResultPrincipal(channel, getter_AddRefs(channelPrincipal));
+      // However, we must still override the principal since the nsIPrincipal
+      // URL may be different due to same-origin redirects.  Unfortunately this
+      // URL must exactly match the final worker script URL in order to
+      // properly set the referrer header on fetch/xhr requests.  If bug 1340694
+      // is ever fixed this can be removed.
+      rv = mWorkerPrivate->SetPrincipalFromChannel(channel);
       NS_ENSURE_SUCCESS(rv, rv);
-
-      nsCOMPtr<nsILoadGroup> channelLoadGroup;
-      rv = channel->GetLoadGroup(getter_AddRefs(channelLoadGroup));
-      NS_ENSURE_SUCCESS(rv, rv);
-      MOZ_ASSERT(channelLoadGroup);
-
-      // If the load principal is the system principal then the channel
-      // principal must also be the system principal (we do not allow chrome
-      // code to create workers with non-chrome scripts, and if we ever decide
-      // to change this we need to make sure we don't always set
-      // mPrincipalIsSystem to true in WorkerPrivate::GetLoadInfo()). Otherwise
-      // this channel principal must be same origin with the load principal (we
-      // check again here in case redirects changed the location of the script).
-      if (nsContentUtils::IsSystemPrincipal(loadPrincipal)) {
-        if (!nsContentUtils::IsSystemPrincipal(channelPrincipal)) {
-          // See if this is a resource URI. Since JSMs usually come from
-          // resource:// URIs we're currently considering all URIs with the
-          // URI_IS_UI_RESOURCE flag as valid for creating privileged workers.
-          bool isResource;
-          rv = NS_URIChainHasFlags(finalURI,
-                                   nsIProtocolHandler::URI_IS_UI_RESOURCE,
-                                   &isResource);
-          NS_ENSURE_SUCCESS(rv, rv);
-
-          if (isResource) {
-            // Assign the system principal to the resource:// worker only if it
-            // was loaded from code using the system principal.
-            channelPrincipal = loadPrincipal;
-          } else {
-            return NS_ERROR_DOM_BAD_URI;
-          }
-        }
-      }
-
-      // The principal can change, but it should still match the original
-      // load group's appId and browser element flag.
-      MOZ_ASSERT(NS_LoadGroupMatchesPrincipal(channelLoadGroup, channelPrincipal));
-
-      mWorkerPrivate->SetPrincipal(channelPrincipal, channelLoadGroup);
 
       // We did inherit CSP in bug 1223647. If we do not already have a CSP, we
       // should get it from the HTTP headers on the worker script.
       if (!mWorkerPrivate->GetCSP() && CSPService::sCSPEnabled) {
-        NS_ConvertASCIItoUTF16 cspHeaderValue(tCspHeaderValue);
-        NS_ConvertASCIItoUTF16 cspROHeaderValue(tCspROHeaderValue);
-
-        nsIPrincipal* principal = mWorkerPrivate->GetPrincipal();
-        MOZ_ASSERT(principal, "Should not be null");
-
-        nsCOMPtr<nsIContentSecurityPolicy> csp;
-        rv = principal->EnsureCSP(nullptr, getter_AddRefs(csp));
-
-        if (csp) {
-          // If there's a CSP header, apply it.
-          if (!cspHeaderValue.IsEmpty()) {
-            rv = CSP_AppendCSPFromHeader(csp, cspHeaderValue, false);
-            NS_ENSURE_SUCCESS(rv, rv);
-          }
-          // If there's a report-only CSP header, apply it.
-          if (!cspROHeaderValue.IsEmpty()) {
-            rv = CSP_AppendCSPFromHeader(csp, cspROHeaderValue, true);
-            NS_ENSURE_SUCCESS(rv, rv);
-          }
-
-          // Set evalAllowed, default value is set in GetAllowsEval
-          bool evalAllowed = false;
-          bool reportEvalViolations = false;
-          rv = csp->GetAllowsEval(&reportEvalViolations, &evalAllowed);
-          NS_ENSURE_SUCCESS(rv, rv);
-
-          mWorkerPrivate->SetCSP(csp);
-          mWorkerPrivate->SetEvalAllowed(evalAllowed);
-          mWorkerPrivate->SetReportCSPViolations(reportEvalViolations);
-
-          // Set ReferrerPolicy, default value is set in GetReferrerPolicy
-          bool hasReferrerPolicy = false;
-          uint32_t rp = mozilla::net::RP_Unset;
-          rv = csp->GetReferrerPolicy(&rp, &hasReferrerPolicy);
-          NS_ENSURE_SUCCESS(rv, rv);
-
-
-          if (hasReferrerPolicy) { //FIXME bug 1307366: move RP out of CSP code
-            mWorkerPrivate->SetReferrerPolicy(static_cast<net::ReferrerPolicy>(rp));
-          }
-        }
+        rv = mWorkerPrivate->SetCSPFromHeaderValues(tCspHeaderValue,
+                                                    tCspROHeaderValue);
+        NS_ENSURE_SUCCESS(rv, rv);
       }
+
+      mWorkerPrivate->SetReferrerPolicyFromHeaderValue(tRPHeaderCValue);
+
+      WorkerPrivate* parent = mWorkerPrivate->GetParent();
       if (parent) {
         // XHR Params Allowed
         mWorkerPrivate->SetXHRParamsAllowed(parent->XHRParamsAllowed());
-      }
-    }
-
-    NS_ConvertUTF8toUTF16 tRPHeaderValue(tRPHeaderCValue);
-    // If there's a Referrer-Policy header, apply it.
-    if (!tRPHeaderValue.IsEmpty()) {
-      net::ReferrerPolicy policy =
-        nsContentUtils::GetReferrerPolicyFromHeader(tRPHeaderValue);
-      if (policy != net::RP_Unset) {
-        mWorkerPrivate->SetReferrerPolicy(policy);
       }
     }
 
@@ -1262,7 +1178,10 @@ private:
   DataReceivedFromCache(uint32_t aIndex, const uint8_t* aString,
                         uint32_t aStringLen,
                         const mozilla::dom::ChannelInfo& aChannelInfo,
-                        UniquePtr<PrincipalInfo> aPrincipalInfo)
+                        UniquePtr<PrincipalInfo> aPrincipalInfo,
+                        const nsACString& aCSPHeaderValue,
+                        const nsACString& aCSPReportOnlyHeaderValue,
+                        const nsACString& aReferrerPolicyHeaderValue)
   {
     AssertIsOnMainThread();
     MOZ_ASSERT(aIndex < mLoadInfos.Length());
@@ -1271,6 +1190,7 @@ private:
 
     nsCOMPtr<nsIPrincipal> responsePrincipal =
       PrincipalInfoToPrincipal(*aPrincipalInfo);
+    MOZ_DIAGNOSTIC_ASSERT(responsePrincipal);
 
     nsIPrincipal* principal = mWorkerPrivate->GetPrincipal();
     if (!principal) {
@@ -1298,17 +1218,37 @@ private:
         mWorkerPrivate->SetBaseURI(finalURI);
       }
 
-      mozilla::DebugOnly<nsIPrincipal*> principal = mWorkerPrivate->GetPrincipal();
-      MOZ_ASSERT(principal);
-      nsILoadGroup* loadGroup = mWorkerPrivate->GetLoadGroup();
-      MOZ_ASSERT(loadGroup);
+#if defined(DEBUG) || !defined(RELEASE_OR_BETA)
+      nsIPrincipal* principal = mWorkerPrivate->GetPrincipal();
+      MOZ_DIAGNOSTIC_ASSERT(principal);
 
-      mozilla::DebugOnly<bool> equal = false;
-      MOZ_ASSERT(responsePrincipal && NS_SUCCEEDED(responsePrincipal->Equals(principal, &equal)));
-      MOZ_ASSERT(equal);
+      bool equal = false;
+      MOZ_ALWAYS_SUCCEEDS(responsePrincipal->Equals(principal, &equal));
+      MOZ_DIAGNOSTIC_ASSERT(equal);
+
+      nsCOMPtr<nsIContentSecurityPolicy> csp;
+      MOZ_ALWAYS_SUCCEEDS(responsePrincipal->GetCsp(getter_AddRefs(csp)));
+      MOZ_DIAGNOSTIC_ASSERT(!csp);
+#endif
 
       mWorkerPrivate->InitChannelInfo(aChannelInfo);
-      mWorkerPrivate->SetPrincipal(responsePrincipal, loadGroup);
+
+      nsILoadGroup* loadGroup = mWorkerPrivate->GetLoadGroup();
+      MOZ_DIAGNOSTIC_ASSERT(loadGroup);
+
+      // Override the principal on the WorkerPrivate.  This is only necessary
+      // in order to get a principal with exactly the correct URL.  The fetch
+      // referrer logic depends on the WorkerPrivate principal having a URL
+      // that matches the worker script URL.  If bug 1340694 is ever fixed
+      // this can be removed.
+      rv = mWorkerPrivate->SetPrincipalOnMainThread(responsePrincipal, loadGroup);
+      MOZ_DIAGNOSTIC_ASSERT(NS_SUCCEEDED(rv));
+
+      rv = mWorkerPrivate->SetCSPFromHeaderValues(aCSPHeaderValue,
+                                                  aCSPReportOnlyHeaderValue);
+      MOZ_DIAGNOSTIC_ASSERT(NS_SUCCEEDED(rv));
+
+      mWorkerPrivate->SetReferrerPolicyFromHeaderValue(aReferrerPolicyHeaderValue);
     }
 
     if (NS_SUCCEEDED(rv)) {
@@ -1717,6 +1657,16 @@ CacheScriptLoader::ResolvedCallback(JSContext* aCx,
     return;
   }
 
+  InternalHeaders* headers = response->GetInternalHeaders();
+
+  IgnoredErrorResult ignored;
+  headers->Get(NS_LITERAL_CSTRING("content-security-policy"),
+               mCSPHeaderValue, ignored);
+  headers->Get(NS_LITERAL_CSTRING("content-security-policy-report-only"),
+               mCSPReportOnlyHeaderValue, ignored);
+  headers->Get(NS_LITERAL_CSTRING("referrer-policy"),
+               mReferrerPolicyHeaderValue, ignored);
+
   nsCOMPtr<nsIInputStream> inputStream;
   response->GetBody(getter_AddRefs(inputStream));
   mChannelInfo = response->GetChannelInfo();
@@ -1728,7 +1678,9 @@ CacheScriptLoader::ResolvedCallback(JSContext* aCx,
   if (!inputStream) {
     mLoadInfo.mCacheStatus = ScriptLoadInfo::Cached;
     mRunnable->DataReceivedFromCache(mIndex, (uint8_t*)"", 0, mChannelInfo,
-                                     Move(mPrincipalInfo));
+                                     Move(mPrincipalInfo), mCSPHeaderValue,
+                                     mCSPReportOnlyHeaderValue,
+                                     mReferrerPolicyHeaderValue);
     return;
   }
 
@@ -1788,24 +1740,26 @@ CacheScriptLoader::OnStreamComplete(nsIStreamLoader* aLoader, nsISupports* aCont
 
   MOZ_ASSERT(mPrincipalInfo);
   mRunnable->DataReceivedFromCache(mIndex, aString, aStringLen, mChannelInfo,
-                                   Move(mPrincipalInfo));
+                                   Move(mPrincipalInfo), mCSPHeaderValue,
+                                   mCSPReportOnlyHeaderValue,
+                                   mReferrerPolicyHeaderValue);
   return NS_OK;
 }
 
 class ChannelGetterRunnable final : public WorkerMainThreadRunnable
 {
   const nsAString& mScriptURL;
-  nsIChannel** mChannel;
+  WorkerLoadInfo& mLoadInfo;
   nsresult mResult;
 
 public:
   ChannelGetterRunnable(WorkerPrivate* aParentWorker,
                         const nsAString& aScriptURL,
-                        nsIChannel** aChannel)
+                        WorkerLoadInfo& aLoadInfo)
     : WorkerMainThreadRunnable(aParentWorker,
                                NS_LITERAL_CSTRING("ScriptLoader :: ChannelGetter"))
     , mScriptURL(aScriptURL)
-    , mChannel(aChannel)
+    , mLoadInfo(aLoadInfo)
     , mResult(NS_ERROR_FAILURE)
   {
     MOZ_ASSERT(aParentWorker);
@@ -1817,8 +1771,12 @@ public:
   {
     AssertIsOnMainThread();
 
-    nsIPrincipal* principal = mWorkerPrivate->GetPrincipal();
-    MOZ_ASSERT(principal);
+    // Initialize the WorkerLoadInfo principal to our triggering principal
+    // before doing anything else.  Normally we do this in the WorkerPrivate
+    // Constructor, but we can't do so off the main thread when creating
+    // a nested worker.  So do it here instead.
+    mLoadInfo.mPrincipal = mWorkerPrivate->GetPrincipal();
+    MOZ_ASSERT(mLoadInfo.mPrincipal);
 
     // Figure out our base URI.
     nsCOMPtr<nsIURI> baseURI = mWorkerPrivate->GetBaseURI();
@@ -1827,22 +1785,25 @@ public:
     // May be null.
     nsCOMPtr<nsIDocument> parentDoc = mWorkerPrivate->GetDocument();
 
-    nsCOMPtr<nsILoadGroup> loadGroup = mWorkerPrivate->GetLoadGroup();
+    mLoadInfo.mLoadGroup = mWorkerPrivate->GetLoadGroup();
 
     nsCOMPtr<nsIChannel> channel;
     mResult =
-      scriptloader::ChannelFromScriptURLMainThread(principal, baseURI,
-                                                   parentDoc, loadGroup,
+      scriptloader::ChannelFromScriptURLMainThread(mLoadInfo.mPrincipal,
+                                                   baseURI, parentDoc,
+                                                   mLoadInfo.mLoadGroup,
                                                    mScriptURL,
                                                    // Nested workers are always dedicated.
                                                    nsIContentPolicy::TYPE_INTERNAL_WORKER,
                                                    // Nested workers use default uri encoding.
                                                    true,
                                                    getter_AddRefs(channel));
-    if (NS_SUCCEEDED(mResult)) {
-      channel.forget(mChannel);
-    }
+    NS_ENSURE_SUCCESS(mResult, true);
 
+    mResult = mLoadInfo.SetPrincipalFromChannel(channel);
+    NS_ENSURE_SUCCESS(mResult, true);
+
+    mLoadInfo.mChannel = channel.forget();
     return true;
   }
 
@@ -2157,7 +2118,7 @@ ChannelFromScriptURLMainThread(nsIPrincipal* aPrincipal,
                                nsIDocument* aParentDoc,
                                nsILoadGroup* aLoadGroup,
                                const nsAString& aScriptURL,
-                               nsContentPolicyType aContentPolicyType,
+                               nsContentPolicyType aMainScriptContentPolicyType,
                                bool aDefaultURIEncoding,
                                nsIChannel** aChannel)
 {
@@ -2170,20 +2131,21 @@ ChannelFromScriptURLMainThread(nsIPrincipal* aPrincipal,
 
   return ChannelFromScriptURL(aPrincipal, aBaseURI, aParentDoc, aLoadGroup,
                               ios, secMan, aScriptURL, true, WorkerScript,
-                              aContentPolicyType, nsIRequest::LOAD_NORMAL,
-                              aDefaultURIEncoding, aChannel);
+                              aMainScriptContentPolicyType,
+                              nsIRequest::LOAD_NORMAL, aDefaultURIEncoding,
+                              aChannel);
 }
 
 nsresult
 ChannelFromScriptURLWorkerThread(JSContext* aCx,
                                  WorkerPrivate* aParent,
                                  const nsAString& aScriptURL,
-                                 nsIChannel** aChannel)
+                                 WorkerLoadInfo& aLoadInfo)
 {
   aParent->AssertIsOnWorkerThread();
 
   RefPtr<ChannelGetterRunnable> getter =
-    new ChannelGetterRunnable(aParent, aScriptURL, aChannel);
+    new ChannelGetterRunnable(aParent, aScriptURL, aLoadInfo);
 
   ErrorResult rv;
   getter->Dispatch(Terminating, rv);
@@ -2235,9 +2197,9 @@ void ReportLoadError(ErrorResult& aRv, nsresult aLoadResult,
       // We don't want to throw a JS exception, because for toplevel script
       // loads that would get squelched.
       aRv.ThrowDOMException(NS_ERROR_DOM_NETWORK_ERR,
-        nsPrintfCString("Failed to load worker script at %s (nsresult = 0x%x)",
+        nsPrintfCString("Failed to load worker script at %s (nsresult = 0x%" PRIx32 ")",
                         NS_ConvertUTF16toUTF8(aScriptURL).get(),
-                        aLoadResult));
+                        static_cast<uint32_t>(aLoadResult)));
       return;
   }
 

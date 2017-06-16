@@ -37,8 +37,8 @@ struct MediaRawDataIPDL
   Shmem buffer;
 };
 
-// This protocol provides a way to use MediaDataDecoder/MediaDataDecoderCallback
-// across processes. The parent side currently is only implemented to work with
+// This protocol provides a way to use MediaDataDecoder across processes.
+// The parent side currently is only implemented to work with
 // Window Media Foundation, but can be extended easily to support other backends.
 // The child side runs in the content process, and the parent side runs in the
 // GPU process. We run a separate IPDL thread for both sides.
@@ -59,8 +59,7 @@ parent:
   async __delete__();
 
 child:
-
-  async InitComplete(bool hardware, nsCString hardwareReason);
+  async InitComplete(bool hardware, nsCString hardwareReason, uint32_t conversion);
   async InitFailed(nsresult reason);
 
   async FlushComplete();

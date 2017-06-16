@@ -165,8 +165,19 @@ public:
          ServiceWorkerUpdateFinishCallback* aCallback);
 
   void
+  UpdateInternal(nsIPrincipal* aPrincipal,
+                 const nsACString& aScope,
+                 ServiceWorkerUpdateFinishCallback* aCallback);
+
+  void
   SoftUpdate(const OriginAttributes& aOriginAttributes,
              const nsACString& aScope);
+
+  void
+  SoftUpdateInternal(const OriginAttributes& aOriginAttributes,
+                     const nsACString& aScope,
+                     ServiceWorkerUpdateFinishCallback* aCallback);
+
 
   void
   PropagateSoftUpdate(const OriginAttributes& aOriginAttributes,
@@ -272,6 +283,7 @@ public:
   void
   GetAllClients(nsIPrincipal* aPrincipal,
                 const nsCString& aScope,
+                uint64_t aServiceWorkerID,
                 bool aIncludeUncontrolled,
                 nsTArray<ServiceWorkerClientInfo>& aDocuments);
 

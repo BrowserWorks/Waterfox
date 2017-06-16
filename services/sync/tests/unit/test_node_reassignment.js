@@ -14,8 +14,6 @@ Cu.import("resource://testing-common/services/sync/rotaryengine.js");
 Cu.import("resource://testing-common/services/sync/utils.js");
 Cu.import("resource://gre/modules/PromiseUtils.jsm");
 
-Service.engineManager.clear();
-
 function run_test() {
   Log.repository.getLogger("Sync.AsyncResource").level = Log.Level.Trace;
   Log.repository.getLogger("Sync.ErrorHandler").level  = Log.Level.Trace;
@@ -25,9 +23,6 @@ function run_test() {
   Log.repository.getLogger("Sync.SyncScheduler").level = Log.Level.Trace;
   initTestLogging();
   validate_all_future_pings();
-  ensureLegacyIdentityManager();
-
-  Service.engineManager.register(RotaryEngine);
 
   // None of the failures in this file should result in a UI error.
   function onUIError() {
@@ -59,47 +54,24 @@ function handleReassign(handler, req, resp) {
   resp.bodyOutputStream.write(reassignBody, reassignBody.length);
 }
 
-/**
- * A node assignment handler.
- */
-function installNodeHandler(server, next) {
-  let newNodeBody = server.baseURI;
-  function handleNodeRequest(req, resp) {
-    _("Client made a request for a node reassignment.");
-    resp.setStatusLine(req.httpVersion, 200, "OK");
-    resp.setHeader("Content-Type", "text/plain");
-    resp.bodyOutputStream.write(newNodeBody, newNodeBody.length);
-    Utils.nextTick(next);
-  }
-  let nodePath = "/user/1.0/johndoe/node/weave";
-  server.server.registerPathHandler(nodePath, handleNodeRequest);
-  _("Registered node handler at " + nodePath);
-}
-
-function prepareServer() {
-  let deferred = PromiseUtils.defer();
-  configureIdentity({username: "johndoe"}).then(() => {
-    let server = new SyncServer();
-    server.registerUser("johndoe");
-    server.start();
-    Service.serverURL = server.baseURI;
-    Service.clusterURL = server.baseURI;
-    do_check_eq(Service.userAPIURI, server.baseURI + "user/1.0/");
-    deferred.resolve(server);
-  });
-  return deferred.promise;
+async function prepareServer() {
+  let server = new SyncServer();
+  server.registerUser("johndoe");
+  server.start();
+  await configureIdentity({username: "johndoe"}, server);
+  return server;
 }
 
 function getReassigned() {
   try {
     return Services.prefs.getBoolPref("services.sync.lastSyncReassigned");
   } catch (ex) {
-    if (ex.result == Cr.NS_ERROR_UNEXPECTED) {
-      return false;
+    if (ex.result != Cr.NS_ERROR_UNEXPECTED) {
+      do_throw("Got exception retrieving lastSyncReassigned: " +
+               Log.exceptionStr(ex));
     }
-    do_throw("Got exception retrieving lastSyncReassigned: " +
-             Log.exceptionStr(ex));
   }
+  return false;
 }
 
 /**
@@ -111,25 +83,25 @@ function getReassigned() {
 async function syncAndExpectNodeReassignment(server, firstNotification, between,
                                        secondNotification, url) {
   let deferred = PromiseUtils.defer();
+
+  let getTokenCount = 0;
+  let mockTSC = { // TokenServerClient
+    getTokenFromBrowserIDAssertion(uri, assertion, cb) {
+      getTokenCount++;
+      cb(null, {
+        endpoint: server.baseURI + "1.1/johndoe/"
+      });
+    },
+  };
+  Service.identity._tokenServerClient = mockTSC;
+
   function onwards() {
-    let nodeFetched = false;
     function onFirstSync() {
       _("First sync completed.");
       Svc.Obs.remove(firstNotification, onFirstSync);
       Svc.Obs.add(secondNotification, onSecondSync);
 
       do_check_eq(Service.clusterURL, "");
-
-      // Track whether we fetched node/weave. We want to wait for the second
-      // sync to finish so that we're cleaned up for the next test, so don't
-      // run_next_test in the node handler.
-      nodeFetched = false;
-
-      // Verify that the client requests a node reassignment.
-      // Install a node handler to watch for these requests.
-      installNodeHandler(server, function() {
-        nodeFetched = true;
-      });
 
       // Allow for tests to clean up error conditions.
       between();
@@ -143,7 +115,7 @@ async function syncAndExpectNodeReassignment(server, firstNotification, between,
       // before we proceed.
       waitForZeroTimer(function() {
         _("Second sync nextTick.");
-        do_check_true(nodeFetched);
+        do_check_eq(getTokenCount, 1);
         Service.startOver();
         server.stop(deferred.resolve);
       });
@@ -163,13 +135,14 @@ async function syncAndExpectNodeReassignment(server, firstNotification, between,
 }
 
 add_task(async function test_momentary_401_engine() {
+  enableValidationPrefs();
+
   _("Test a failure for engine URLs that's resolved by reassignment.");
   let server = await prepareServer();
   let john   = server.user("johndoe");
 
   _("Enabling the Rotary engine.");
-  let engine = Service.engineManager.get("rotary");
-  engine.enabled = true;
+  let { engine, tracker } = registerRotaryEngine();
 
   // We need the server to be correctly set up prior to experimenting. Do this
   // through a sync.
@@ -211,10 +184,15 @@ add_task(async function test_momentary_401_engine() {
                                       between,
                                       "weave:service:sync:finish",
                                       Service.storageURL + "rotary");
+
+  tracker.clearChangedIDs();
+  Service.engineManager.unregister(engine);
 });
 
 // This test ends up being a failing fetch *after we're already logged in*.
 add_task(async function test_momentary_401_info_collections() {
+  enableValidationPrefs();
+
   _("Test a failure for info/collections that's resolved by reassignment.");
   let server = await prepareServer();
 
@@ -238,6 +216,8 @@ add_task(async function test_momentary_401_info_collections() {
 });
 
 add_task(async function test_momentary_401_storage_loggedin() {
+  enableValidationPrefs();
+
   _("Test a failure for any storage URL, not just engine parts. " +
     "Resolved by reassignment.");
   let server = await prepareServer();
@@ -263,6 +243,8 @@ add_task(async function test_momentary_401_storage_loggedin() {
 });
 
 add_task(async function test_momentary_401_storage_loggedout() {
+  enableValidationPrefs();
+
   _("Test a failure for any storage URL, not just engine parts. " +
     "Resolved by reassignment.");
   let server = await prepareServer();
@@ -285,6 +267,8 @@ add_task(async function test_momentary_401_storage_loggedout() {
 });
 
 add_task(async function test_loop_avoidance_storage() {
+  enableValidationPrefs();
+
   _("Test that a repeated failure doesn't result in a sync loop " +
     "if node reassignment cannot resolve the failure.");
 
@@ -298,8 +282,18 @@ add_task(async function test_loop_avoidance_storage() {
   let secondNotification = "weave:service:login:error";
   let thirdNotification  = "weave:service:sync:finish";
 
-  let nodeFetched = false;
   let deferred = PromiseUtils.defer();
+
+  let getTokenCount = 0;
+  let mockTSC = { // TokenServerClient
+    getTokenFromBrowserIDAssertion(uri, assertion, cb) {
+      getTokenCount++;
+      cb(null, {
+        endpoint: server.baseURI + "1.1/johndoe/"
+      });
+    },
+  };
+  Service.identity._tokenServerClient = mockTSC;
 
   // Track the time. We want to make sure the duration between the first and
   // second sync is small, and then that the duration between second and third
@@ -315,17 +309,6 @@ add_task(async function test_loop_avoidance_storage() {
 
     // We got a 401 mid-sync, and set the pref accordingly.
     do_check_true(Services.prefs.getBoolPref("services.sync.lastSyncReassigned"));
-
-    // Track whether we fetched node/weave. We want to wait for the second
-    // sync to finish so that we're cleaned up for the next test, so don't
-    // run_next_test in the node handler.
-    nodeFetched = false;
-
-    // Verify that the client requests a node reassignment.
-    // Install a node handler to watch for these requests.
-    installNodeHandler(server, function() {
-      nodeFetched = true;
-    });
 
     // Update the timestamp.
     now = Date.now();
@@ -371,7 +354,7 @@ add_task(async function test_loop_avoidance_storage() {
     waitForZeroTimer(function() {
       _("Third sync nextTick.");
       do_check_false(getReassigned());
-      do_check_true(nodeFetched);
+      do_check_eq(getTokenCount, 2);
       Service.startOver();
       server.stop(deferred.resolve);
     });
@@ -385,15 +368,27 @@ add_task(async function test_loop_avoidance_storage() {
 });
 
 add_task(async function test_loop_avoidance_engine() {
+  enableValidationPrefs();
+
   _("Test that a repeated 401 in an engine doesn't result in a sync loop " +
     "if node reassignment cannot resolve the failure.");
   let server = await prepareServer();
   let john   = server.user("johndoe");
 
   _("Enabling the Rotary engine.");
-  let engine = Service.engineManager.get("rotary");
-  engine.enabled = true;
+  let { engine, tracker } = registerRotaryEngine();
   let deferred = PromiseUtils.defer();
+
+  let getTokenCount = 0;
+  let mockTSC = { // TokenServerClient
+    getTokenFromBrowserIDAssertion(uri, assertion, cb) {
+      getTokenCount++;
+      cb(null, {
+        endpoint: server.baseURI + "1.1/johndoe/"
+      });
+    },
+  };
+  Service.identity._tokenServerClient = mockTSC;
 
   // We need the server to be correctly set up prior to experimenting. Do this
   // through a sync.
@@ -435,8 +430,6 @@ add_task(async function test_loop_avoidance_engine() {
   let secondNotification = "weave:service:sync:finish";
   let thirdNotification  = "weave:service:sync:finish";
 
-  let nodeFetched = false;
-
   // Track the time. We want to make sure the duration between the first and
   // second sync is small, and then that the duration between second and third
   // is set to be large.
@@ -454,17 +447,6 @@ add_task(async function test_loop_avoidance_engine() {
 
     // We got a 401 mid-sync, and set the pref accordingly.
     do_check_true(Services.prefs.getBoolPref("services.sync.lastSyncReassigned"));
-
-    // Track whether we fetched node/weave. We want to wait for the second
-    // sync to finish so that we're cleaned up for the next test, so don't
-    // run_next_test in the node handler.
-    nodeFetched = false;
-
-    // Verify that the client requests a node reassignment.
-    // Install a node handler to watch for these requests.
-    installNodeHandler(server, function() {
-      nodeFetched = true;
-    });
 
     // Update the timestamp.
     now = Date.now();
@@ -511,7 +493,7 @@ add_task(async function test_loop_avoidance_engine() {
     waitForZeroTimer(function() {
       _("Third sync nextTick.");
       do_check_false(getReassigned());
-      do_check_true(nodeFetched);
+      do_check_eq(getTokenCount, 2);
       afterSuccessfulSync();
     });
   }
@@ -521,4 +503,7 @@ add_task(async function test_loop_avoidance_engine() {
   now = Date.now();
   Service.sync();
   await deferred.promise;
+
+  tracker.clearChangedIDs();
+  Service.engineManager.unregister(engine);
 });

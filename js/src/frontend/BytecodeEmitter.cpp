@@ -305,17 +305,6 @@ class TryFinallyControl : public BytecodeEmitter::NestableControl
     }
 };
 
-static bool
-ScopeKindIsInBody(ScopeKind kind)
-{
-    return kind == ScopeKind::Lexical ||
-           kind == ScopeKind::SimpleCatch ||
-           kind == ScopeKind::Catch ||
-           kind == ScopeKind::With ||
-           kind == ScopeKind::FunctionBodyVar ||
-           kind == ScopeKind::ParameterExpressionVar;
-}
-
 static inline void
 MarkAllBindingsClosedOver(LexicalScope::Data& data)
 {
@@ -389,7 +378,10 @@ class BytecodeEmitter::EmitterScope : public Nestable<BytecodeEmitter::EmitterSc
         nextFrameSlot_ = bi.nextFrameSlot();
         if (nextFrameSlot_ > bce->maxFixedSlots)
             bce->maxFixedSlots = nextFrameSlot_;
-        MOZ_ASSERT_IF(bce->sc->isFunctionBox() && bce->sc->asFunctionBox()->isGenerator(),
+        MOZ_ASSERT_IF(bce->sc->isFunctionBox() &&
+                      (bce->sc->asFunctionBox()->isStarGenerator() ||
+                       bce->sc->asFunctionBox()->isLegacyGenerator() ||
+                       bce->sc->asFunctionBox()->isAsync()),
                       bce->maxFixedSlots == 0);
     }
 
@@ -903,7 +895,7 @@ BytecodeEmitter::EmitterScope::enterLexical(BytecodeEmitter* bce, ScopeKind kind
     updateFrameFixedSlots(bce, bi);
 
     // Create and intern the VM scope.
-    auto createScope = [kind, bindings, firstFrameSlot](ExclusiveContext* cx,
+    auto createScope = [kind, bindings, firstFrameSlot](JSContext* cx,
                                                         HandleScope enclosing)
     {
         return LexicalScope::create(cx, kind, bindings, firstFrameSlot, enclosing);
@@ -957,7 +949,7 @@ BytecodeEmitter::EmitterScope::enterNamedLambda(BytecodeEmitter* bce, FunctionBo
     bi++;
     MOZ_ASSERT(!bi, "There should be exactly one binding in a NamedLambda scope");
 
-    auto createScope = [funbox](ExclusiveContext* cx, HandleScope enclosing) {
+    auto createScope = [funbox](JSContext* cx, HandleScope enclosing) {
         ScopeKind scopeKind =
             funbox->strict() ? ScopeKind::StrictNamedLambda : ScopeKind::NamedLambda;
         return LexicalScope::create(cx, scopeKind, funbox->namedLambdaBindings(),
@@ -1013,7 +1005,7 @@ BytecodeEmitter::EmitterScope::enterParameterExpressionVar(BytecodeEmitter* bce)
 
     // Create and intern the VM scope.
     uint32_t firstFrameSlot = frameSlotStart();
-    auto createScope = [firstFrameSlot](ExclusiveContext* cx, HandleScope enclosing) {
+    auto createScope = [firstFrameSlot](JSContext* cx, HandleScope enclosing) {
         return VarScope::create(cx, ScopeKind::ParameterExpressionVar,
                                 /* data = */ nullptr, firstFrameSlot,
                                 /* needsEnvironment = */ true, enclosing);
@@ -1107,7 +1099,7 @@ BytecodeEmitter::EmitterScope::enterFunction(BytecodeEmitter* bce, FunctionBox* 
     }
 
     // Create and intern the VM scope.
-    auto createScope = [funbox](ExclusiveContext* cx, HandleScope enclosing) {
+    auto createScope = [funbox](JSContext* cx, HandleScope enclosing) {
         RootedFunction fun(cx, funbox->function());
         return FunctionScope::create(cx, funbox->functionScopeBindings(),
                                      funbox->hasParameterExprs,
@@ -1161,7 +1153,7 @@ BytecodeEmitter::EmitterScope::enterFunctionExtraBodyVar(BytecodeEmitter* bce, F
         fallbackFreeNameLocation_ = Some(NameLocation::Dynamic());
 
     // Create and intern the VM scope.
-    auto createScope = [funbox, firstFrameSlot](ExclusiveContext* cx, HandleScope enclosing) {
+    auto createScope = [funbox, firstFrameSlot](JSContext* cx, HandleScope enclosing) {
         return VarScope::create(cx, ScopeKind::FunctionBodyVar,
                                 funbox->extraVarScopeBindings(), firstFrameSlot,
                                 funbox->needsExtraBodyVarEnvironmentRegardlessOfBindings(),
@@ -1229,7 +1221,7 @@ BytecodeEmitter::EmitterScope::enterGlobal(BytecodeEmitter* bce, GlobalSharedCon
         // lazily upon first access.
         fallbackFreeNameLocation_ = Some(NameLocation::Intrinsic());
 
-        auto createScope = [](ExclusiveContext* cx, HandleScope enclosing) {
+        auto createScope = [](JSContext* cx, HandleScope enclosing) {
             MOZ_ASSERT(!enclosing);
             return &cx->global()->emptyGlobalScope();
         };
@@ -1262,7 +1254,7 @@ BytecodeEmitter::EmitterScope::enterGlobal(BytecodeEmitter* bce, GlobalSharedCon
     else
         fallbackFreeNameLocation_ = Some(NameLocation::Dynamic());
 
-    auto createScope = [globalsc](ExclusiveContext* cx, HandleScope enclosing) {
+    auto createScope = [globalsc](JSContext* cx, HandleScope enclosing) {
         MOZ_ASSERT(!enclosing);
         return GlobalScope::create(cx, globalsc->scopeKind(), globalsc->bindings);
     };
@@ -1284,7 +1276,7 @@ BytecodeEmitter::EmitterScope::enterEval(BytecodeEmitter* bce, EvalSharedContext
 
     // Create the `var` scope. Note that there is also a lexical scope, created
     // separately in emitScript().
-    auto createScope = [evalsc](ExclusiveContext* cx, HandleScope enclosing) {
+    auto createScope = [evalsc](JSContext* cx, HandleScope enclosing) {
         ScopeKind scopeKind = evalsc->strict() ? ScopeKind::StrictEval : ScopeKind::Eval;
         return EvalScope::create(cx, scopeKind, evalsc->bindings, enclosing);
     };
@@ -1372,7 +1364,7 @@ BytecodeEmitter::EmitterScope::enterModule(BytecodeEmitter* bce, ModuleSharedCon
     }
 
     // Create and intern the VM scope.
-    auto createScope = [modulesc](ExclusiveContext* cx, HandleScope enclosing) {
+    auto createScope = [modulesc](JSContext* cx, HandleScope enclosing) {
         return ModuleScope::create(cx, modulesc->bindings, modulesc->module(), enclosing);
     };
     if (!internBodyScope(bce, createScope))
@@ -1392,7 +1384,7 @@ BytecodeEmitter::EmitterScope::enterWith(BytecodeEmitter* bce)
     // 'with' make all accesses dynamic and unanalyzable.
     fallbackFreeNameLocation_ = Some(NameLocation::Dynamic());
 
-    auto createScope = [](ExclusiveContext* cx, HandleScope enclosing) {
+    auto createScope = [](JSContext* cx, HandleScope enclosing) {
         return WithScope::create(cx, enclosing);
     };
     if (!internScope(bce, createScope))
@@ -1713,7 +1705,7 @@ class MOZ_STACK_CLASS TryEmitter
     }
 
   public:
-    bool emitFinally(Maybe<uint32_t> finallyPos = Nothing()) {
+    bool emitFinally(const Maybe<uint32_t>& finallyPos = Nothing()) {
         MOZ_ASSERT(hasFinally());
 
         if (state_ == Try) {
@@ -2144,7 +2136,7 @@ BytecodeEmitter::BytecodeEmitter(BytecodeEmitter* parent,
     scopeList(cx),
     tryNoteList(cx),
     scopeNoteList(cx),
-    yieldOffsetList(cx),
+    yieldAndAwaitOffsetList(cx),
     typesetCount(0),
     hasSingletons(false),
     hasTryFinally(false),
@@ -3011,7 +3003,8 @@ BytecodeEmitter::strictifySetNameOp(JSOp op)
 bool
 BytecodeEmitter::checkSideEffects(ParseNode* pn, bool* answer)
 {
-    JS_CHECK_RECURSION(cx, return false);
+    if (!CheckRecursionLimit(cx))
+        return false;
 
  restart:
 
@@ -3127,10 +3120,11 @@ BytecodeEmitter::checkSideEffects(ParseNode* pn, bool* answer)
         *answer = true;
         return true;
 
+      case PNK_INITIALYIELD:
       case PNK_YIELD_STAR:
       case PNK_YIELD:
       case PNK_AWAIT:
-        MOZ_ASSERT(pn->isArity(PN_BINARY));
+        MOZ_ASSERT(pn->isArity(PN_UNARY));
         *answer = true;
         return true;
 
@@ -3494,8 +3488,8 @@ BytecodeEmitter::needsImplicitThis()
 bool
 BytecodeEmitter::maybeSetDisplayURL()
 {
-    if (tokenStream()->hasDisplayURL()) {
-        if (!parser->ss->setDisplayURL(cx, tokenStream()->displayURL()))
+    if (tokenStream().hasDisplayURL()) {
+        if (!parser->ss->setDisplayURL(cx, tokenStream().displayURL()))
             return false;
     }
     return true;
@@ -3504,9 +3498,9 @@ BytecodeEmitter::maybeSetDisplayURL()
 bool
 BytecodeEmitter::maybeSetSourceMap()
 {
-    if (tokenStream()->hasSourceMapURL()) {
+    if (tokenStream().hasSourceMapURL()) {
         MOZ_ASSERT(!parser->ss->hasSourceMapURL());
-        if (!parser->ss->setSourceMapURL(cx, tokenStream()->sourceMapURL()))
+        if (!parser->ss->setSourceMapURL(cx, tokenStream().sourceMapURL()))
             return false;
     }
 
@@ -3532,35 +3526,34 @@ BytecodeEmitter::maybeSetSourceMap()
 }
 
 void
-BytecodeEmitter::tellDebuggerAboutCompiledScript(ExclusiveContext* cx)
+BytecodeEmitter::tellDebuggerAboutCompiledScript(JSContext* cx)
 {
     // Note: when parsing off thread the resulting scripts need to be handed to
-    // the debugger after rejoining to the main thread.
-    if (!cx->isJSContext())
+    // the debugger after rejoining to the active thread.
+    if (cx->helperThread())
         return;
 
     // Lazy scripts are never top level (despite always being invoked with a
     // nullptr parent), and so the hook should never be fired.
-    if (emitterMode != LazyFunction && !parent) {
-        Debugger::onNewScript(cx->asJSContext(), script);
-    }
+    if (emitterMode != LazyFunction && !parent)
+        Debugger::onNewScript(cx, script);
 }
 
-inline TokenStream*
+inline TokenStream&
 BytecodeEmitter::tokenStream()
 {
-    return &parser->tokenStream;
+    return parser->tokenStream;
 }
 
 bool
 BytecodeEmitter::reportError(ParseNode* pn, unsigned errorNumber, ...)
 {
-    TokenPos pos = pn ? pn->pn_pos : tokenStream()->currentToken().pos;
+    TokenPos pos = pn ? pn->pn_pos : tokenStream().currentToken().pos;
 
     va_list args;
     va_start(args, errorNumber);
-    bool result = tokenStream()->reportCompileErrorNumberVA(pos.begin, JSREPORT_ERROR,
-                                                            errorNumber, args);
+    bool result = tokenStream().reportCompileErrorNumberVA(nullptr, pos.begin, JSREPORT_ERROR,
+                                                           errorNumber, args);
     va_end(args);
     return result;
 }
@@ -3568,11 +3561,12 @@ BytecodeEmitter::reportError(ParseNode* pn, unsigned errorNumber, ...)
 bool
 BytecodeEmitter::reportExtraWarning(ParseNode* pn, unsigned errorNumber, ...)
 {
-    TokenPos pos = pn ? pn->pn_pos : tokenStream()->currentToken().pos;
+    TokenPos pos = pn ? pn->pn_pos : tokenStream().currentToken().pos;
 
     va_list args;
     va_start(args, errorNumber);
-    bool result = tokenStream()->reportExtraWarningErrorNumberVA(pos.begin, errorNumber, args);
+    bool result = tokenStream().reportExtraWarningErrorNumberVA(nullptr, pos.begin,
+                                                                errorNumber, args);
     va_end(args);
     return result;
 }
@@ -3580,12 +3574,12 @@ BytecodeEmitter::reportExtraWarning(ParseNode* pn, unsigned errorNumber, ...)
 bool
 BytecodeEmitter::reportStrictModeError(ParseNode* pn, unsigned errorNumber, ...)
 {
-    TokenPos pos = pn ? pn->pn_pos : tokenStream()->currentToken().pos;
+    TokenPos pos = pn ? pn->pn_pos : tokenStream().currentToken().pos;
 
     va_list args;
     va_start(args, errorNumber);
-    bool result = tokenStream()->reportStrictModeErrorNumberVA(pos.begin, sc->strict(),
-                                                               errorNumber, args);
+    bool result = tokenStream().reportStrictModeErrorNumberVA(nullptr, pos.begin, sc->strict(),
+                                                              errorNumber, args);
     va_end(args);
     return result;
 }
@@ -4093,6 +4087,29 @@ BytecodeEmitter::emitPropIncDec(ParseNode* pn)
 }
 
 bool
+BytecodeEmitter::emitGetNameAtLocationForCompoundAssignment(JSAtom* name, const NameLocation& loc)
+{
+    if (loc.kind() == NameLocation::Kind::Dynamic) {
+        // For dynamic accesses we need to emit GETBOUNDNAME instead of
+        // GETNAME for correctness: looking up @@unscopables on the
+        // environment chain (due to 'with' environments) must only happen
+        // once.
+        //
+        // GETBOUNDNAME uses the environment already pushed on the stack from
+        // the earlier BINDNAME.
+        if (!emit1(JSOP_DUP))                              // ENV ENV
+            return false;
+        if (!emitAtomOp(name, JSOP_GETBOUNDNAME))          // ENV V
+            return false;
+    } else {
+        if (!emitGetNameAtLocation(name, loc))             // ENV? V
+            return false;
+    }
+
+    return true;
+}
+
+bool
 BytecodeEmitter::emitNameIncDec(ParseNode* pn)
 {
     MOZ_ASSERT(pn->pn_kid->isKind(PNK_NAME));
@@ -4104,21 +4121,21 @@ BytecodeEmitter::emitNameIncDec(ParseNode* pn)
                                      bool emittedBindOp)
     {
         JSAtom* name = pn->pn_kid->name();
-        if (!bce->emitGetNameAtLocation(name, loc, false)) // SCOPE? V
+        if (!bce->emitGetNameAtLocationForCompoundAssignment(name, loc)) // ENV? V
             return false;
-        if (!bce->emit1(JSOP_POS))                         // SCOPE? N
+        if (!bce->emit1(JSOP_POS))                         // ENV? N
             return false;
-        if (post && !bce->emit1(JSOP_DUP))                 // SCOPE? N? N
+        if (post && !bce->emit1(JSOP_DUP))                 // ENV? N? N
             return false;
-        if (!bce->emit1(JSOP_ONE))                         // SCOPE? N? N 1
+        if (!bce->emit1(JSOP_ONE))                         // ENV? N? N 1
             return false;
-        if (!bce->emit1(binop))                            // SCOPE? N? N+1
+        if (!bce->emit1(binop))                            // ENV? N? N+1
             return false;
 
         if (post && emittedBindOp) {
-            if (!bce->emit2(JSOP_PICK, 2))                 // N? N+1 SCOPE?
+            if (!bce->emit2(JSOP_PICK, 2))                 // N? N+1 ENV?
                 return false;
-            if (!bce->emit1(JSOP_SWAP))                    // N? SCOPE? N+1
+            if (!bce->emit1(JSOP_SWAP))                    // N? ENV? N+1
                 return false;
         }
 
@@ -4735,7 +4752,9 @@ BytecodeEmitter::isRunOnceLambda()
 
     FunctionBox* funbox = sc->asFunctionBox();
     return !funbox->argumentsHasLocalBinding() &&
-           !funbox->isGenerator() &&
+           !funbox->isStarGenerator() &&
+           !funbox->isLegacyGenerator() &&
+           !funbox->isAsync() &&
            !funbox->function()->explicitName();
 }
 
@@ -4745,21 +4764,21 @@ BytecodeEmitter::emitYieldOp(JSOp op)
     if (op == JSOP_FINALYIELDRVAL)
         return emit1(JSOP_FINALYIELDRVAL);
 
-    MOZ_ASSERT(op == JSOP_INITIALYIELD || op == JSOP_YIELD);
+    MOZ_ASSERT(op == JSOP_INITIALYIELD || op == JSOP_YIELD || op == JSOP_AWAIT);
 
     ptrdiff_t off;
     if (!emitN(op, 3, &off))
         return false;
 
-    uint32_t yieldIndex = yieldOffsetList.length();
-    if (yieldIndex >= JS_BIT(24)) {
+    uint32_t yieldAndAwaitIndex = yieldAndAwaitOffsetList.length();
+    if (yieldAndAwaitIndex >= JS_BIT(24)) {
         reportError(nullptr, JSMSG_TOO_MANY_YIELDS);
         return false;
     }
 
-    SET_UINT24(code(off), yieldIndex);
+    SET_UINT24(code(off), yieldAndAwaitIndex);
 
-    if (!yieldOffsetList.append(offset()))
+    if (!yieldAndAwaitOffsetList.append(offset()))
         return false;
 
     return emit1(JSOP_DEBUGAFTERYIELD);
@@ -4812,6 +4831,8 @@ BytecodeEmitter::emitSetThis(ParseNode* pn)
 bool
 BytecodeEmitter::emitScript(ParseNode* body)
 {
+    AutoFrontendTraceLog traceLog(cx, TraceLogger_BytecodeEmission, tokenStream(), body);
+
     TDZCheckCache tdzCache(this);
     EmitterScope emitterScope(this);
     if (sc->isGlobalContext()) {
@@ -4879,6 +4900,7 @@ bool
 BytecodeEmitter::emitFunctionScript(ParseNode* body)
 {
     FunctionBox* funbox = sc->asFunctionBox();
+    AutoFrontendTraceLog traceLog(cx, TraceLogger_BytecodeEmission, tokenStream(), funbox);
 
     // The ordering of these EmitterScopes is important. The named lambda
     // scope needs to enclose the function scope needs to enclose the extra
@@ -5326,6 +5348,14 @@ bool
 BytecodeEmitter::wrapWithDestructuringIteratorCloseTryNote(int32_t iterDepth, InnerEmitter emitter)
 {
     MOZ_ASSERT(this->stackDepth >= iterDepth);
+
+    // Pad a nop at the beginning of the bytecode covered by the trynote so
+    // that when unwinding environments, we may unwind to the scope
+    // corresponding to the pc *before* the start, in case the first bytecode
+    // emitted by |emitter| is the start of an inner scope. See comment above
+    // UnwindEnvironmentToTryPc.
+    if (!emit1(JSOP_TRY_DESTRUCTURING_ITERCLOSE))
+        return false;
 
     ptrdiff_t start = offset();
     if (!emitter(this))
@@ -5981,19 +6011,8 @@ BytecodeEmitter::emitAssignment(ParseNode* lhs, JSOp op, ParseNode* rhs)
             // For compound assignments, first get the LHS value, then emit
             // the RHS and the op.
             if (op != JSOP_NOP) {
-                if (lhsLoc.kind() == NameLocation::Kind::Dynamic) {
-                    // For dynamic accesses we can do better than a GETNAME
-                    // since the assignment already emitted a BINDNAME on the
-                    // top of the stack. As an optimization, use that to get
-                    // the name.
-                    if (!bce->emit1(JSOP_DUP))
-                        return false;
-                    if (!bce->emitAtomOp(lhs, JSOP_GETXPROP))
-                        return false;
-                } else {
-                    if (!bce->emitGetNameAtLocation(lhs->name(), lhsLoc))
-                        return false;
-                }
+                if (!bce->emitGetNameAtLocationForCompoundAssignment(lhs->name(), lhsLoc))
+                    return false;
             }
 
             // Emit the RHS. If we emitted a BIND[G]NAME, then the scope is on
@@ -6162,7 +6181,7 @@ BytecodeEmitter::emitAssignment(ParseNode* lhs, JSOp op, ParseNode* rhs)
 }
 
 bool
-ParseNode::getConstantValue(ExclusiveContext* cx, AllowConstantObjects allowObjects,
+ParseNode::getConstantValue(JSContext* cx, AllowConstantObjects allowObjects,
                             MutableHandleValue vp, Value* compare, size_t ncompare,
                             NewObjectKind newKind)
 {
@@ -7784,7 +7803,8 @@ BytecodeEmitter::emitFunction(ParseNode* pn, bool needsProto)
 
             Rooted<JSObject*> sourceObject(cx, script->sourceObject());
             Rooted<JSScript*> script(cx, JSScript::Create(cx, options, sourceObject,
-                                                          funbox->bufStart, funbox->bufEnd));
+                                                          funbox->bufStart, funbox->bufEnd,
+                                                          funbox->preludeStart));
             if (!script)
                 return false;
 
@@ -8193,7 +8213,8 @@ BytecodeEmitter::emitReturn(ParseNode* pn)
     if (!updateSourceCoordNotes(pn->pn_pos.begin))
         return false;
 
-    if (sc->isFunctionBox() && sc->asFunctionBox()->isStarGenerator()) {
+    bool needsIteratorResult = sc->isFunctionBox() && sc->asFunctionBox()->needsIteratorResult();
+    if (needsIteratorResult) {
         if (!emitPrepareIteratorResult())
             return false;
     }
@@ -8208,7 +8229,7 @@ BytecodeEmitter::emitReturn(ParseNode* pn)
             return false;
     }
 
-    if (sc->isFunctionBox() && sc->asFunctionBox()->isStarGenerator()) {
+    if (needsIteratorResult) {
         if (!emitFinishIteratorResult(true))
             return false;
     }
@@ -8233,11 +8254,11 @@ BytecodeEmitter::emitReturn(ParseNode* pn)
      */
     ptrdiff_t top = offset();
 
-    bool isGenerator = sc->isFunctionBox() && sc->asFunctionBox()->isGenerator();
+    bool needsFinalYield = sc->isFunctionBox() && sc->asFunctionBox()->needsFinalYield();
     bool isDerivedClassConstructor =
         sc->isFunctionBox() && sc->asFunctionBox()->isDerivedClassConstructor();
 
-    if (!emit1((isGenerator || isDerivedClassConstructor) ? JSOP_SETRVAL : JSOP_RETURN))
+    if (!emit1((needsFinalYield || isDerivedClassConstructor) ? JSOP_SETRVAL : JSOP_RETURN))
         return false;
 
     // Make sure that we emit this before popping the blocks in prepareForNonLocalJump,
@@ -8252,7 +8273,7 @@ BytecodeEmitter::emitReturn(ParseNode* pn)
     if (!nle.prepareForNonLocalJumpToOutermost())
         return false;
 
-    if (isGenerator) {
+    if (needsFinalYield) {
         // We know that .generator is on the function scope, as we just exited
         // all nested scopes.
         NameLocation loc =
@@ -8275,44 +8296,76 @@ BytecodeEmitter::emitReturn(ParseNode* pn)
 }
 
 bool
-BytecodeEmitter::emitYield(ParseNode* pn)
+BytecodeEmitter::emitGetDotGenerator()
 {
-    MOZ_ASSERT(sc->isFunctionBox());
+    NameLocation loc = *locationOfNameBoundInFunctionScope(cx->names().dotGenerator);
+    return emitGetNameAtLocation(cx->names().dotGenerator, loc);
+}
 
-    if (pn->getOp() == JSOP_YIELD) {
-        if (sc->asFunctionBox()->isStarGenerator()) {
-            if (!emitPrepareIteratorResult())
-                return false;
-        }
-        if (pn->pn_left) {
-            if (!emitTree(pn->pn_left))
-                return false;
-        } else {
-            if (!emit1(JSOP_UNDEFINED))
-                return false;
-        }
-        if (sc->asFunctionBox()->isStarGenerator()) {
-            if (!emitFinishIteratorResult(false))
-                return false;
-        }
-    } else {
-        MOZ_ASSERT(pn->getOp() == JSOP_INITIALYIELD);
-    }
-
-    if (!emitTree(pn->pn_right))
+bool
+BytecodeEmitter::emitInitialYield(ParseNode* pn)
+{
+    if (!emitTree(pn->pn_kid))
         return false;
 
-    if (!emitYieldOp(pn->getOp()))
+    if (!emitYieldOp(JSOP_INITIALYIELD))
         return false;
 
-    if (pn->getOp() == JSOP_INITIALYIELD && !emit1(JSOP_POP))
+    if (!emit1(JSOP_POP))
         return false;
 
     return true;
 }
 
 bool
-BytecodeEmitter::emitYieldStar(ParseNode* iter, ParseNode* gen)
+BytecodeEmitter::emitYield(ParseNode* pn)
+{
+    MOZ_ASSERT(sc->isFunctionBox());
+    MOZ_ASSERT(pn->getOp() == JSOP_YIELD);
+
+    bool needsIteratorResult = sc->asFunctionBox()->needsIteratorResult();
+    if (needsIteratorResult) {
+        if (!emitPrepareIteratorResult())
+            return false;
+    }
+    if (pn->pn_kid) {
+        if (!emitTree(pn->pn_kid))
+            return false;
+    } else {
+        if (!emit1(JSOP_UNDEFINED))
+            return false;
+    }
+    if (needsIteratorResult) {
+        if (!emitFinishIteratorResult(false))
+            return false;
+    }
+
+    if (!emitGetDotGenerator())
+        return false;
+
+    if (!emitYieldOp(JSOP_YIELD))
+        return false;
+
+    return true;
+}
+
+bool
+BytecodeEmitter::emitAwait(ParseNode* pn)
+{
+    MOZ_ASSERT(sc->isFunctionBox());
+    MOZ_ASSERT(pn->getOp() == JSOP_AWAIT);
+
+    if (!emitTree(pn->pn_kid))
+        return false;
+    if (!emitGetDotGenerator())
+        return false;
+    if (!emitYieldOp(JSOP_AWAIT))
+        return false;
+    return true;
+}
+
+bool
+BytecodeEmitter::emitYieldStar(ParseNode* iter)
 {
     MOZ_ASSERT(sc->isFunctionBox());
     MOZ_ASSERT(sc->asFunctionBox()->isStarGenerator());
@@ -8342,7 +8395,7 @@ BytecodeEmitter::emitYieldStar(ParseNode* iter, ParseNode* gen)
     MOZ_ASSERT(this->stackDepth == startDepth);
 
     // Load the generator object.
-    if (!emitTree(gen))                                   // ITER RESULT GENOBJ
+    if (!emitGetDotGenerator())                           // ITER RESULT GENOBJ
         return false;
 
     // Yield RESULT as-is, without re-boxing.
@@ -8757,7 +8810,7 @@ BytecodeEmitter::emitDeleteExpression(ParseNode* node)
 }
 
 static const char *
-SelfHostedCallFunctionName(JSAtom* name, ExclusiveContext* cx)
+SelfHostedCallFunctionName(JSAtom* name, JSContext* cx)
 {
     if (name == cx->names().callFunction)
         return "callFunction";
@@ -8897,6 +8950,35 @@ BytecodeEmitter::emitSelfHostedAllowContentIter(ParseNode* pn)
 }
 
 bool
+BytecodeEmitter::emitSelfHostedDefineDataProperty(ParseNode* pn)
+{
+    // Only optimize when 3 arguments are passed (we use 4 to include |this|).
+    MOZ_ASSERT(pn->pn_count == 4);
+
+    ParseNode* funNode = pn->pn_head;  // The _DefineDataProperty node.
+
+    ParseNode* objNode = funNode->pn_next;
+    if (!emitTree(objNode))
+        return false;
+
+    ParseNode* idNode = objNode->pn_next;
+    if (!emitTree(idNode))
+        return false;
+
+    ParseNode* valNode = idNode->pn_next;
+    if (!emitTree(valNode))
+        return false;
+
+    // This will leave the object on the stack instead of pushing |undefined|,
+    // but that's fine because the self-hosted code doesn't use the return
+    // value.
+    if (!emit1(JSOP_INITELEM))
+        return false;
+
+    return true;
+}
+
+bool
 BytecodeEmitter::isRestParameter(ParseNode* pn, bool* result)
 {
     if (!sc->isFunctionBox()) {
@@ -9024,6 +9106,8 @@ BytecodeEmitter::emitCallOrNew(ParseNode* pn)
                 return emitSelfHostedForceInterpreter(pn);
             if (pn2->name() == cx->names().allowContentIter)
                 return emitSelfHostedAllowContentIter(pn);
+            if (pn2->name() == cx->names().defineDataPropertyIntrinsic && pn->pn_count == 4)
+                return emitSelfHostedDefineDataProperty(pn);
             // Fall through.
         }
         if (!emitGetName(pn2, callop))
@@ -10042,22 +10126,26 @@ BytecodeEmitter::emitFunctionBody(ParseNode* funBody)
     if (!emitTree(funBody))
         return false;
 
-    if (funbox->isGenerator()) {
+    if (funbox->needsFinalYield()) {
         // If we fall off the end of a generator, do a final yield.
-        if (funbox->isStarGenerator() && !emitPrepareIteratorResult())
-            return false;
+        bool needsIteratorResult = funbox->needsIteratorResult();
+        if (needsIteratorResult) {
+            if (!emitPrepareIteratorResult())
+                return false;
+        }
 
         if (!emit1(JSOP_UNDEFINED))
             return false;
 
-        if (sc->asFunctionBox()->isStarGenerator() && !emitFinishIteratorResult(true))
-            return false;
+        if (needsIteratorResult) {
+            if (!emitFinishIteratorResult(true))
+                return false;
+        }
 
         if (!emit1(JSOP_SETRVAL))
             return false;
 
-        NameLocation loc = *locationOfNameBoundInFunctionScope(cx->names().dotGenerator);
-        if (!emitGetNameAtLocation(cx->names().dotGenerator, loc))
+        if (!emitGetDotGenerator())
             return false;
 
         // No need to check for finally blocks, etc as in EmitReturn.
@@ -10220,7 +10308,8 @@ BytecodeEmitter::emitClass(ParseNode* pn)
 bool
 BytecodeEmitter::emitTree(ParseNode* pn, EmitLineNumberNote emitLineNote)
 {
-    JS_CHECK_RECURSION(cx, return false);
+    if (!CheckRecursionLimit(cx))
+        return false;
 
     EmitLevelManager elm(this);
 
@@ -10309,7 +10398,7 @@ BytecodeEmitter::emitTree(ParseNode* pn, EmitLineNumberNote emitLineNote)
         break;
 
       case PNK_YIELD_STAR:
-        if (!emitYieldStar(pn->pn_left, pn->pn_right))
+        if (!emitYieldStar(pn->pn_kid))
             return false;
         break;
 
@@ -10318,9 +10407,18 @@ BytecodeEmitter::emitTree(ParseNode* pn, EmitLineNumberNote emitLineNote)
             return false;
         break;
 
+      case PNK_INITIALYIELD:
+        if (!emitInitialYield(pn))
+            return false;
+        break;
+
       case PNK_YIELD:
-      case PNK_AWAIT:
         if (!emitYield(pn))
+            return false;
+        break;
+
+      case PNK_AWAIT:
+        if (!emitAwait(pn))
             return false;
         break;
 
@@ -10642,7 +10740,7 @@ BytecodeEmitter::emitTreeInBranch(ParseNode* pn)
 }
 
 static bool
-AllocSrcNote(ExclusiveContext* cx, SrcNotesVector& notes, unsigned* index)
+AllocSrcNote(JSContext* cx, SrcNotesVector& notes, unsigned* index)
 {
     // Start it off moderately large to avoid repeated resizings early on.
     // ~99% of cases fit within 256 bytes.
@@ -10996,7 +11094,7 @@ CGScopeNoteList::finish(ScopeNoteArray* array, uint32_t prologueLength)
 }
 
 void
-CGYieldOffsetList::finish(YieldOffsetArray& array, uint32_t prologueLength)
+CGYieldAndAwaitOffsetList::finish(YieldAndAwaitOffsetArray& array, uint32_t prologueLength)
 {
     MOZ_ASSERT(length() == array.length());
 

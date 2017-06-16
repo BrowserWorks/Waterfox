@@ -11,7 +11,7 @@ window.
   <title>Test named windows</title>
   <script type="application/javascript" src="/tests/SimpleTest/SimpleTest.js"></script>
   <script type="text/javascript" src="/tests/SimpleTest/SpawnTask.js"></script>
-  <script src="head.js" type="application/javascript;version=1.8"></script>
+  <script src="head.js" type="application/javascript"></script>
   <link rel="stylesheet" type="text/css" href="/tests/SimpleTest/test.css"/>
 </head>
 <body>
@@ -38,10 +38,9 @@ window.
      */
     function promiseEvent(target, eventName) {
       return new Promise(resolve => {
-        target.addEventListener(eventName, function onEvent(e) {
-          target.removeEventListener(eventName, onEvent, true);
+        target.addEventListener(eventName, function(e) {
           resolve(e);
-        }, true);
+        }, {capture: true, once: true});
       });
     }
 

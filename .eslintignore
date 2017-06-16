@@ -14,7 +14,6 @@ chrome/**
 config/**
 db/**
 docshell/**
-dom/**
 editor/**
 embedding/**
 extensions/**
@@ -24,7 +23,6 @@ hal/**
 image/**
 intl/**
 ipc/**
-js/**
 layout/**
 media/**
 memory/**
@@ -38,6 +36,7 @@ parser/**
 probes/**
 python/**
 rdf/**
+servo/**
 startupcache/**
 testing/**
 tools/update-packaging/**
@@ -56,19 +55,20 @@ b2g/locales/en-US/b2g-l10n.js
 # browser/ exclusions
 browser/app/**
 browser/branding/**/firefox-branding.js
-browser/base/content/browser-social.js
 browser/base/content/nsContextMenu.js
 browser/base/content/sanitizeDialog.js
 browser/base/content/test/general/file_csp_block_all_mixedcontent.html
 browser/base/content/test/urlbar/file_blank_but_not_blank.html
 browser/base/content/newtab/**
 browser/components/downloads/**
-browser/components/privatebrowsing/**
 browser/components/sessionstore/**
 browser/components/tabview/**
-# generated files in cld2
-browser/components/translation/cld2/cld-worker.js
-browser/extensions/pdfjs/content/**
+# generated & special files in cld2
+browser/components/translation/cld2/**
+# Screenshots is imported as a system add-on and has its own lint rules currently.
+browser/extensions/screenshots/**
+browser/extensions/pdfjs/content/build**
+browser/extensions/pdfjs/content/web**
 # generated or library files in pocket
 browser/extensions/pocket/content/panels/js/tmpl.js
 browser/extensions/pocket/content/panels/js/vendor/**
@@ -82,23 +82,42 @@ devtools/client/commandline/**
 devtools/client/debugger/**
 devtools/client/framework/**
 !devtools/client/framework/selection.js
-!devtools/client/framework/toolbox.js
-devtools/client/netmonitor/test/**
-devtools/client/netmonitor/har/test/**
+!devtools/client/framework/target*
+!devtools/client/framework/toolbox*
+devtools/client/inspector/markup/test/doc_markup_events_*.html
+devtools/client/inspector/rules/test/doc_media_queries.html
+devtools/client/memory/test/chrome/*.html
+devtools/client/performance/components/test/test_jit_optimizations_01.html
 devtools/client/projecteditor/**
+devtools/client/responsive.html/test/browser/touch.html
 devtools/client/responsivedesign/**
 devtools/client/scratchpad/**
 devtools/client/shadereditor/**
 devtools/client/shared/*.jsm
 devtools/client/shared/components/reps/reps.js
+devtools/client/shared/components/reps/test/mochitest/*.html
+!devtools/client/shared/components/reps/test/mochitest/test_reps_infinity.html
+!devtools/client/shared/components/reps/test/mochitest/test_reps_nan.html
+!devtools/client/shared/components/reps/test/mochitest/test_reps_promise.html
+!devtools/client/shared/components/reps/test/mochitest/test_reps_symbol.html
+!devtools/client/shared/components/reps/test/mochitest/test_reps_text-node.html
+devtools/client/shared/components/test/mochitest/*.html
+!devtools/client/shared/components/test/mochitest/test_stack-trace.html
+devtools/client/shared/shim/test/test_*.html
+devtools/client/shared/test/browser_toolbar_webconsole_errors_count.html
 devtools/client/shared/webgl-utils.js
 devtools/client/shared/widgets/*.jsm
+devtools/client/storage/test/*.html
+!devtools/client/storage/test/storage-cookies.html
+!devtools/client/storage/test/storage-overflow.html
+!devtools/client/storage/test/storage-search.html
+!devtools/client/storage/test/storage-unsecured-iframe.html
+!devtools/client/storage/test/storage-unsecured-iframe-usercontextid.html
 devtools/client/webaudioeditor/**
 devtools/client/webconsole/net/**
 devtools/client/webconsole/test/**
 devtools/client/webconsole/console-output.js
 devtools/client/webconsole/hudservice.js
-devtools/client/webconsole/utils.js
 devtools/client/webconsole/webconsole-connection-proxy.js
 devtools/client/webconsole/webconsole.js
 devtools/client/webide/**
@@ -108,13 +127,16 @@ devtools/server/actors/object.js
 devtools/server/actors/script.js
 devtools/server/actors/styleeditor.js
 devtools/server/actors/stylesheets.js
-devtools/server/tests/browser/**
-!devtools/server/tests/browser/browser_webextension_inspected_window.js
+devtools/server/tests/browser/storage-*.html
+!devtools/server/tests/browser/storage-unsecured-iframe.html
+devtools/server/tests/browser/stylesheets-nested-iframes.html
 devtools/server/tests/mochitest/**
 devtools/server/tests/unit/**
 devtools/shared/heapsnapshot/**
-devtools/shared/transport/tests/unit/**
-devtools/shared/webconsole/test/**
+devtools/shared/platform/content/test/test_clipboard.html
+devtools/shared/qrcode/tests/mochitest/test_decode.html
+devtools/shared/tests/mochitest/*.html
+devtools/shared/webconsole/test/test_*.html
 
 # Ignore devtools pre-processed files
 devtools/client/framework/toolbox-process-window.js
@@ -153,6 +175,88 @@ devtools/client/framework/test/code_ugly*
 devtools/server/tests/unit/babel_and_browserify_script_with_source_map.js
 devtools/server/tests/unit/setBreakpoint*
 
+# dom/ exclusions
+dom/animation/**
+dom/archivereader/**
+dom/asmjscache/**
+dom/audiochannel/**
+dom/base/**
+dom/battery/**
+dom/bindings/**
+dom/broadcastchannel/**
+dom/browser-element/**
+dom/cache/**
+dom/canvas/**
+dom/commandhandler/**
+dom/console/**
+dom/crypto/**
+dom/devicestorage/**
+dom/encoding/**
+dom/events/**
+dom/fetch/**
+dom/file/**
+dom/filehandle/**
+dom/filesystem/**
+dom/flyweb/**
+dom/gamepad/**
+dom/geolocation/**
+dom/grid/**
+dom/html/**
+dom/imptests/**
+dom/interfaces/**
+dom/ipc/**
+dom/json/**
+dom/jsurl/**
+dom/locales/**
+dom/manifest/**
+dom/mathml/**
+dom/media/**
+dom/messagechannel/**
+dom/network/**
+dom/notification/**
+dom/offline/**
+dom/performance/**
+dom/permission/**
+dom/plugins/**
+dom/power/**
+dom/presentation/**
+dom/promise/**
+dom/push/**
+dom/quota/**
+dom/res/**
+dom/secureelement/**
+dom/security/**
+dom/smil/**
+dom/storage/**
+dom/svg/**
+dom/system/**
+dom/tests/**
+dom/time/**
+dom/u2f/**
+dom/url/**
+dom/vr/**
+dom/webauthn/**
+dom/webbrowserpersist/**
+dom/webidl/**
+dom/workers/**
+dom/worklet/**
+dom/xbl/**
+dom/xhr/**
+dom/xml/**
+dom/xslt/**
+dom/xul/**
+
+# Exclude everything but self-hosted JS
+js/ductwork/**
+js/examples/**
+js/ipc/**
+js/public/**
+js/xpconnect/**
+js/src/devtools/**
+js/src/octane/**
+js/src/jit-test/**
+js/src/tests/**
+
 # mobile/android/ exclusions
 mobile/android/tests/
 
@@ -175,13 +279,19 @@ mobile/android/components/Snippets.js
 # Bug 1178739: Ignore this file as a quick fix for "Illegal yield expression"
 mobile/android/modules/HomeProvider.jsm
 
+# security/ exclusions (pref files).
+security/manager/ssl/security-prefs.js
+
+#NSS
+security/nss/**
+
 # services/ exclusions
 
 # Uses `#filter substitution`
 services/sync/modules/constants.js
+services/sync/services-sync.js
 
 # Third party services
-services/sync/tps/extensions/mozmill/resource/stdlib/json2.js
 services/common/kinto-http-client.js
 services/common/kinto-offline-client.js
 services/sync/tps/extensions/mozmill
@@ -202,6 +312,7 @@ toolkit/components/osfile/**
 
 # External code:
 toolkit/components/microformats/test/**
+toolkit/components/microformats/microformat-shiv.js
 toolkit/components/reader/Readability.js
 toolkit/components/reader/JSDOMParser.js
 
@@ -210,7 +321,6 @@ toolkit/content/widgets/wizard.xml
 toolkit/components/jsdownloads/src/DownloadIntegration.jsm
 toolkit/components/url-classifier/**
 toolkit/components/urlformatter/nsURLFormatter.js
-toolkit/identity/FirefoxAccounts.jsm
 toolkit/modules/AppConstants.jsm
 toolkit/mozapps/downloads/nsHelperAppDlg.js
 toolkit/mozapps/extensions/internal/AddonConstants.jsm
@@ -219,6 +329,3 @@ toolkit/webapps/**
 
 # Third party
 toolkit/modules/third_party/**
-
-#NSS
-security/nss/**

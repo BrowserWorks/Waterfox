@@ -19,16 +19,14 @@
 #include "mp4_demuxer/MP4Metadata.h"
 #include "mp4_demuxer/Stream.h"
 #include "MediaPrefs.h"
+#include "mp4parse.h"
 
 #include <limits>
 #include <stdint.h>
 #include <vector>
 
-#ifdef MOZ_RUST_MP4PARSE
-#include "mp4parse.h"
 
 struct FreeMP4Parser { void operator()(mp4parse_parser* aPtr) { mp4parse_free(aPtr); } };
-#endif
 
 using namespace stagefright;
 
@@ -81,7 +79,6 @@ public:
   explicit MP4MetadataStagefright(Stream* aSource);
   ~MP4MetadataStagefright();
 
-  static bool HasCompleteMetadata(Stream* aSource);
   static already_AddRefed<mozilla::MediaByteBuffer> Metadata(Stream* aSource);
   uint32_t GetNumberTracks(mozilla::TrackInfo::TrackType aType) const;
   mozilla::UniquePtr<mozilla::TrackInfo> GetTrackInfo(mozilla::TrackInfo::TrackType aType,
@@ -103,8 +100,6 @@ private:
   sp<MediaExtractor> mMetadataExtractor;
   bool mCanSeek;
 };
-
-#ifdef MOZ_RUST_MP4PARSE
 
 // Wrap an mp4_demuxer::Stream to remember the read offset.
 
@@ -131,7 +126,6 @@ public:
   explicit MP4MetadataRust(Stream* aSource);
   ~MP4MetadataRust();
 
-  static bool HasCompleteMetadata(Stream* aSource);
   static already_AddRefed<mozilla::MediaByteBuffer> Metadata(Stream* aSource);
   uint32_t GetNumberTracks(mozilla::TrackInfo::TrackType aType) const;
   mozilla::UniquePtr<mozilla::TrackInfo> GetTrackInfo(mozilla::TrackInfo::TrackType aType,
@@ -140,7 +134,7 @@ public:
 
   const CryptoFile& Crypto() const;
 
-  bool ReadTrackIndex(FallibleTArray<Index::Indice>& aDest, mozilla::TrackID aTrackID);
+  bool ReadTrackIndice(mp4parse_byte_data* aIndices, mozilla::TrackID aTrackID);
 
 private:
   void UpdateCrypto();
@@ -151,11 +145,9 @@ private:
   RustStreamAdaptor mRustSource;
   mozilla::UniquePtr<mp4parse_parser, FreeMP4Parser> mRustParser;
 };
-#endif
 
 MP4Metadata::MP4Metadata(Stream* aSource)
  : mStagefright(MakeUnique<MP4MetadataStagefright>(aSource))
-#ifdef MOZ_RUST_MP4PARSE
  , mRust(MakeUnique<MP4MetadataRust>(aSource))
  , mPreferRust(false)
  , mReportedAudioTrackTelemetry(false)
@@ -163,18 +155,11 @@ MP4Metadata::MP4Metadata(Stream* aSource)
 #ifndef RELEASE_OR_BETA
  , mRustTestMode(MediaPrefs::RustTestMode())
 #endif
-#endif
 {
 }
 
 MP4Metadata::~MP4Metadata()
 {
-}
-
-/*static*/ bool
-MP4Metadata::HasCompleteMetadata(Stream* aSource)
-{
-  return MP4MetadataStagefright::HasCompleteMetadata(aSource);
 }
 
 /*static*/ already_AddRefed<mozilla::MediaByteBuffer>
@@ -201,7 +186,6 @@ MP4Metadata::GetNumberTracks(mozilla::TrackInfo::TrackType aType) const
 {
   uint32_t numTracks = mStagefright->GetNumberTracks(aType);
 
-#ifdef MOZ_RUST_MP4PARSE
   if (!mRust) {
     return numTracks;
   }
@@ -227,12 +211,10 @@ MP4Metadata::GetNumberTracks(mozilla::TrackInfo::TrackType aType) const
     mPreferRust = true;
     return numTracksRust;
   }
-#endif // MOZ_RUST_MP4PARSE
 
   return numTracks;
 }
 
-#ifdef MOZ_RUST_MP4PARSE
 bool MP4Metadata::ShouldPreferRust() const {
   if (!mRust) {
     return false;
@@ -263,7 +245,6 @@ bool MP4Metadata::ShouldPreferRust() const {
   // Otherwise, fall back.
   return false;
 }
-#endif // MOZ_RUST_MP4PARSE
 
 mozilla::UniquePtr<mozilla::TrackInfo>
 MP4Metadata::GetTrackInfo(mozilla::TrackInfo::TrackType aType,
@@ -272,7 +253,6 @@ MP4Metadata::GetTrackInfo(mozilla::TrackInfo::TrackType aType,
   mozilla::UniquePtr<mozilla::TrackInfo> info =
       mStagefright->GetTrackInfo(aType, aTrackNumber);
 
-#ifdef MOZ_RUST_MP4PARSE
   if (!mRust) {
     return info;
   }
@@ -322,12 +302,9 @@ MP4Metadata::GetTrackInfo(mozilla::TrackInfo::TrackType aType,
   }
 #endif
 
-  if (!mPreferRust) {
-    return info;
+  if (mPreferRust) {
+    return infoRust;
   }
-  MOZ_ASSERT(infoRust);
-  return infoRust;
-#endif
 
   return info;
 }
@@ -342,8 +319,6 @@ const CryptoFile&
 MP4Metadata::Crypto() const
 {
   const CryptoFile& crypto = mStagefright->Crypto();
-
-#ifdef MOZ_RUST_MP4PARSE
   const CryptoFile& rustCrypto = mRust->Crypto();
 
 #ifndef RELEASE_OR_BETA
@@ -355,7 +330,6 @@ MP4Metadata::Crypto() const
   if (mPreferRust) {
     return rustCrypto;
   }
-#endif
 
   return crypto;
 }
@@ -363,13 +337,26 @@ MP4Metadata::Crypto() const
 bool
 MP4Metadata::ReadTrackIndex(FallibleTArray<Index::Indice>& aDest, mozilla::TrackID aTrackID)
 {
-#ifdef MOZ_RUST_MP4PARSE
-  if (mRust && mPreferRust && mRust->ReadTrackIndex(aDest, aTrackID)) {
-    return true;
+  bool ret = mStagefright->ReadTrackIndex(aDest, aTrackID);
+
+#ifndef RELEASE_OR_BETA
+  if (mRustTestMode && ret && mRust) {
+    mp4parse_byte_data data = {};
+    bool rustRet = mRust->ReadTrackIndice(&data, aTrackID);
+    MOZ_DIAGNOSTIC_ASSERT(rustRet);
+    MOZ_DIAGNOSTIC_ASSERT(data.length == aDest.Length());
+    for (uint32_t i = 0; i < data.length; i++) {
+      MOZ_DIAGNOSTIC_ASSERT(data.indices[i].start_offset == aDest[i].start_offset);
+      MOZ_DIAGNOSTIC_ASSERT(data.indices[i].end_offset == aDest[i].end_offset);
+      MOZ_DIAGNOSTIC_ASSERT(llabs(int64_t(data.indices[i].start_composition - aDest[i].start_composition)) <= 1);
+      MOZ_DIAGNOSTIC_ASSERT(llabs(int64_t(data.indices[i].end_composition - aDest[i].end_composition)) <= 1);
+      MOZ_DIAGNOSTIC_ASSERT(llabs(int64_t(data.indices[i].start_decode - aDest[i].start_decode)) <= 1);
+      MOZ_DIAGNOSTIC_ASSERT(data.indices[i].sync == aDest[i].sync);
+    }
   }
-  aDest.Clear();
 #endif
-  return mStagefright->ReadTrackIndex(aDest, aTrackID);
+
+  return ret;
 }
 
 static inline bool
@@ -391,6 +378,9 @@ ConvertIndex(FallibleTArray<Index::Indice>& aDest,
     indice.sync = s_indice.sync;
     // FIXME: Make this infallible after bug 968520 is done.
     MOZ_ALWAYS_TRUE(aDest.AppendElement(indice, mozilla::fallible));
+    MOZ_LOG(sLog, LogLevel::Debug, ("s_o: %" PRIu64 ", e_o: %" PRIu64 ", s_c: %" PRIu64 ", e_c: %" PRIu64 ", s_d: %" PRIu64 ", sync: %d\n",
+                                    indice.start_offset, indice.end_offset, indice.start_composition, indice.end_composition,
+                                    indice.start_decode, indice.sync));
   }
   return true;
 }
@@ -597,13 +587,6 @@ MP4MetadataStagefright::GetTrackNumber(mozilla::TrackID aTrackID)
   return -1;
 }
 
-/*static*/ bool
-MP4MetadataStagefright::HasCompleteMetadata(Stream* aSource)
-{
-  auto parser = mozilla::MakeUnique<MoofParser>(aSource, 0, false);
-  return parser->HasMetadata();
-}
-
 /*static*/ already_AddRefed<mozilla::MediaByteBuffer>
 MP4MetadataStagefright::Metadata(Stream* aSource)
 {
@@ -611,7 +594,6 @@ MP4MetadataStagefright::Metadata(Stream* aSource)
   return parser->Metadata();
 }
 
-#ifdef MOZ_RUST_MP4PARSE
 bool
 RustStreamAdaptor::Read(uint8_t* buffer, uintptr_t size, size_t* bytes_read)
 {
@@ -851,7 +833,7 @@ MP4MetadataRust::Crypto() const
 }
 
 bool
-MP4MetadataRust::ReadTrackIndex(FallibleTArray<Index::Indice>& aDest, mozilla::TrackID aTrackID)
+MP4MetadataRust::ReadTrackIndice(mp4parse_byte_data* aIndices, mozilla::TrackID aTrackID)
 {
   uint8_t fragmented = false;
   auto rv = mp4parse_is_fragmented(mRustParser.get(), aTrackID, &fragmented);
@@ -863,17 +845,12 @@ MP4MetadataRust::ReadTrackIndex(FallibleTArray<Index::Indice>& aDest, mozilla::T
     return true;
   }
 
-  // For non-fragmented mp4.
-  NS_WARNING("Not yet implemented");
+  rv = mp4parse_get_indice_table(mRustParser.get(), aTrackID, aIndices);
+  if (rv != MP4PARSE_OK) {
+    return false;
+  }
 
-  return false;
-}
-
-/*static*/ bool
-MP4MetadataRust::HasCompleteMetadata(Stream* aSource)
-{
-  MOZ_ASSERT(false, "Not yet implemented");
-  return false;
+  return true;
 }
 
 /*static*/ already_AddRefed<mozilla::MediaByteBuffer>
@@ -882,6 +859,5 @@ MP4MetadataRust::Metadata(Stream* aSource)
   MOZ_ASSERT(false, "Not yet implemented");
   return nullptr;
 }
-#endif
 
 } // namespace mp4_demuxer

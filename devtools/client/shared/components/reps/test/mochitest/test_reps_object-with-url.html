@@ -14,14 +14,15 @@ Test ObjectWithURL rep
 </head>
 <body>
 <pre id="test">
-<script src="head.js" type="application/javascript;version=1.8"></script>
-<script type="application/javascript;version=1.8">
+<script src="head.js" type="application/javascript"></script>
+<script type="application/javascript">
 window.onload = Task.async(function* () {
   try {
     let ReactDOM = browserRequire("devtools/client/shared/vendor/react-dom");
     let React = browserRequire("devtools/client/shared/vendor/react");
-    let { Rep } = browserRequire("devtools/client/shared/components/reps/rep");
-    let { ObjectWithURL } = browserRequire("devtools/client/shared/components/reps/object-with-url");
+
+    const { REPS } = browserRequire("devtools/client/shared/components/reps/reps");
+    let { Rep, ObjectWithURL } = REPS;
 
     let gripStub = {
       "type": "object",

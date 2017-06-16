@@ -3699,7 +3699,7 @@ MacroAssemblerARMCompat::handleFailureWithHandlerTail(void* handler)
     {
         Label skipProfilingInstrumentation;
         // Test if profiler enabled.
-        AbsoluteAddress addressOfEnabled(GetJitContext()->runtime->spsProfiler().addressOfEnabled());
+        AbsoluteAddress addressOfEnabled(GetJitContext()->runtime->geckoProfiler().addressOfEnabled());
         asMasm().branch32(Assembler::Equal, addressOfEnabled, Imm32(0),
                           &skipProfilingInstrumentation);
         profilerExitFrame();
@@ -4747,8 +4747,8 @@ MacroAssemblerARMCompat::atomicExchangeToTypedIntArray(Scalar::Type arrayType, c
 void
 MacroAssemblerARMCompat::profilerEnterFrame(Register framePtr, Register scratch)
 {
-    AbsoluteAddress activation(GetJitContext()->runtime->addressOfProfilingActivation());
-    loadPtr(activation, scratch);
+    asMasm().loadJSContext(scratch);
+    loadPtr(Address(scratch, offsetof(JSContext, profilingActivation_)), scratch);
     storePtr(framePtr, Address(scratch, JitActivation::offsetOfLastProfilingFrame()));
     storePtr(ImmPtr(nullptr), Address(scratch, JitActivation::offsetOfLastProfilingCallSite()));
 }
@@ -4841,8 +4841,6 @@ MacroAssembler::PushRegsInMask(LiveRegisterSet set)
 void
 MacroAssembler::storeRegsInMask(LiveRegisterSet set, Address dest, Register scratch)
 {
-    MOZ_ASSERT(!set.has(scratch));
-
     int32_t diffF = set.fpus().getPushSizeInBytes();
     int32_t diffG = set.gprs().size() * sizeof(intptr_t);
 

@@ -396,7 +396,7 @@
           if (aItem.hasAttribute("disabled") &&
               aItem.getAttribute("disabled") == "true")
             return false;
-          var style = document.defaultView.getComputedStyle(aItem, "");
+          var style = document.defaultView.getComputedStyle(aItem);
           return style.display != "none" && style.visibility == "visible";
         ]]>
         </body>
@@ -653,6 +653,28 @@
           delete this.mControl.mAddon;
           this.mControl.mInstall = this.mInstall;
           this.mControl.setAttribute("status", "installing");
+          let prompt = false;
+          try {
+            prompt = Services.prefs.getBoolPref("extensions.webextPermissionPrompts");
+          } catch (err) {}
+          if (prompt) {
+            this.mInstall.promptHandler = info => new Promise((resolve, reject) => {
+              let subject = {
+                wrappedJSObject: {
+                  target: window.QueryInterface(Ci.nsIInterfaceRequestor)
+                                .getInterface(Ci.nsIDocShell).chromeEventHandler,
+                  info: {
+                    addon: info.addon,
+                    icon: info.addon.iconURL,
+                    permissions: info.addon.userPermissions,
+                    resolve,
+                    reject,
+                  },
+                },
+              };
+              Services.obs.notifyObservers(subject, "webextension-permission-prompt", null);
+            });
+          }
           this.mInstall.install();
         ]]></body>
       </method>
@@ -759,7 +781,7 @@
 
       <method name="onUninstalled">
         <body><![CDATA[
-          this.parentNode.removeChild(this);
+          this.remove();
         ]]></body>
       </method>
     </implementation>
@@ -1086,7 +1108,13 @@
           return this.mAddon.userDisabled;
         ]]></getter>
         <setter><![CDATA[
-          this.mAddon.userDisabled = val;
+          if (val === true) {
+            gViewController.commands["cmd_disableItem"].doCommand(this.mAddon);
+          } else if (val === false) {
+            gViewController.commands["cmd_enableItem"].doCommand(this.mAddon);
+          } else {
+            this.mAddon.userDisabled = val;
+          }
         ]]></setter>
       </property>
 

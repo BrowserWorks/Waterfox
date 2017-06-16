@@ -450,7 +450,7 @@ nsMenuPopupFrame::LayoutPopup(nsBoxLayoutState& aState, nsIFrame* aParentMenu,
   if (mIsOpenChanged && !IsMenuList()) {
     nsIScrollableFrame *scrollframe = do_QueryFrame(nsBox::GetChildXULBox(this));
     if (scrollframe) {
-      nsWeakFrame weakFrame(this);
+      AutoWeakFrame weakFrame(this);
       scrollframe->ScrollTo(nsPoint(0,0), nsIScrollableFrame::INSTANT);
       if (!weakFrame.IsAlive()) {
         return;
@@ -892,7 +892,7 @@ nsMenuPopupFrame::ShowPopup(bool aIsContextMenu)
 
     nsMenuFrame* menuFrame = do_QueryFrame(GetParent());
     if (menuFrame) {
-      nsWeakFrame weakFrame(this);
+      AutoWeakFrame weakFrame(this);
       menuFrame->PopupOpened();
       if (!weakFrame.IsAlive())
         return;
@@ -1709,8 +1709,8 @@ nsMenuPopupFrame::GetConstraintRect(const LayoutDeviceIntRect& aAnchorRect,
   return screenRectPixels;
 }
 
-void nsMenuPopupFrame::CanAdjustEdges(int8_t aHorizontalSide,
-                                      int8_t aVerticalSide,
+void nsMenuPopupFrame::CanAdjustEdges(Side aHorizontalSide,
+                                      Side aVerticalSide,
                                       LayoutDeviceIntPoint& aChange)
 {
   int8_t popupAlign(mPopupAlignment);
@@ -2502,11 +2502,13 @@ nsMenuPopupFrame::ShouldFollowAnchor(nsRect& aRect)
   }
 
   nsIFrame* anchorFrame = mAnchorContent->GetPrimaryFrame();
-  if (anchorFrame) {
-    nsPresContext* rootPresContext = PresContext()->GetRootPresContext();
-    if (rootPresContext) {
-      aRect = ComputeAnchorRect(rootPresContext, anchorFrame);
-    }
+  if (!anchorFrame) {
+    return false;
+  }
+
+  nsPresContext* rootPresContext = PresContext()->GetRootPresContext();
+  if (rootPresContext) {
+    aRect = ComputeAnchorRect(rootPresContext, anchorFrame);
   }
 
   return true;

@@ -25,7 +25,7 @@ GMPProcessChild::~GMPProcessChild()
 }
 
 bool
-GMPProcessChild::Init()
+GMPProcessChild::Init(int aArgc, char* aArgv[])
 {
   nsAutoString pluginFilename;
 
@@ -56,22 +56,6 @@ void
 GMPProcessChild::CleanUp()
 {
   BackgroundHangMonitor::Shutdown();
-}
-
-GMPLoader* GMPProcessChild::mLoader = nullptr;
-
-/* static */
-void
-GMPProcessChild::SetGMPLoader(GMPLoader* aLoader)
-{
-  mLoader = aLoader;
-}
-
-/* static */
-GMPLoader*
-GMPProcessChild::GetGMPLoader()
-{
-  return mLoader;
 }
 
 } // namespace gmp

@@ -10,6 +10,7 @@
 #include "base/message_loop.h"          // for MessageLoop
 #include "base/process.h"               // for ProcessId
 #include "base/task.h"                  // for CancelableTask, DeleteTask, etc
+#include "mozilla/ClearOnShutdown.h"
 #include "mozilla/gfx/Point.h"                   // for IntSize
 #include "mozilla/Hal.h"                // for hal::SetCurrentThreadPriority()
 #include "mozilla/HalTypes.h"           // for hal::THREAD_PRIORITY_COMPOSITOR
@@ -23,6 +24,7 @@
 #include "mozilla/layers/PImageBridgeParent.h"
 #include "mozilla/layers/TextureHostOGL.h"  // for TextureHostOGL
 #include "mozilla/layers/Compositor.h"
+#include "mozilla/Monitor.h"
 #include "mozilla/mozalloc.h"           // for operator new, etc
 #include "mozilla/Unused.h"
 #include "nsDebug.h"                    // for NS_RUNTIMEABORT, etc
@@ -42,10 +44,20 @@ using namespace mozilla::media;
 
 std::map<base::ProcessId, ImageBridgeParent*> ImageBridgeParent::sImageBridges;
 
-MessageLoop* ImageBridgeParent::sMainLoop = nullptr;
+StaticAutoPtr<mozilla::Monitor> sImageBridgesLock;
 
 // defined in CompositorBridgeParent.cpp
 CompositorThreadHolder* GetCompositorThreadHolder();
+
+/* static */ void
+ImageBridgeParent::Setup()
+{
+  MOZ_ASSERT(NS_IsMainThread());
+  if (!sImageBridgesLock) {
+    sImageBridgesLock = new Monitor("ImageBridges");
+    mozilla::ClearOnShutdown(&sImageBridgesLock);
+  }
+}
 
 ImageBridgeParent::ImageBridgeParent(MessageLoop* aLoop,
                                      ProcessId aChildProcessId)
@@ -54,17 +66,18 @@ ImageBridgeParent::ImageBridgeParent(MessageLoop* aLoop,
   , mClosed(false)
 {
   MOZ_ASSERT(NS_IsMainThread());
-  sMainLoop = MessageLoop::current();
 
   // creates the map only if it has not been created already, so it is safe
   // with several bridges
-  sImageBridges[aChildProcessId] = this;
+  {
+    MonitorAutoLock lock(*sImageBridgesLock);
+    sImageBridges[aChildProcessId] = this;
+  }
   SetOtherProcessId(aChildProcessId);
 }
 
 ImageBridgeParent::~ImageBridgeParent()
 {
-  sImageBridges.erase(OtherPid());
 }
 
 static StaticRefPtr<ImageBridgeParent> sImageBridgeParentSingleton;
@@ -105,7 +118,10 @@ ImageBridgeParent::ActorDestroy(ActorDestroyReason aWhy)
   // Can't alloc/dealloc shmems from now on.
   mClosed = true;
   mCompositables.clear();
-
+  {
+    MonitorAutoLock lock(*sImageBridgesLock);
+    sImageBridges.erase(OtherPid());
+  }
   MessageLoop::current()->PostTask(NewRunnableMethod(this, &ImageBridgeParent::DeferredDestroy));
 
   // It is very important that this method gets called at shutdown (be it a clean
@@ -153,25 +169,28 @@ private:
 };
 
 mozilla::ipc::IPCResult
+ImageBridgeParent::RecvInitReadLocks(ReadLockArray&& aReadLocks)
+{
+  if (!AddReadLocks(Move(aReadLocks))) {
+    return IPC_FAIL_NO_REASON(this);
+  }
+  return IPC_OK();
+}
+
+mozilla::ipc::IPCResult
 ImageBridgeParent::RecvUpdate(EditArray&& aEdits, OpDestroyArray&& aToDestroy,
-                              const uint64_t& aFwdTransactionId,
-                              EditReplyArray* aReply)
+                              const uint64_t& aFwdTransactionId)
 {
   // This ensures that destroy operations are always processed. It is not safe
   // to early-return from RecvUpdate without doing so.
   AutoImageBridgeParentAsyncMessageSender autoAsyncMessageSender(this, &aToDestroy);
   UpdateFwdTransactionId(aFwdTransactionId);
+  AutoClearReadLocks clearLocks(mReadLocks);
 
-  EditReplyVector replyv;
   for (EditArray::index_type i = 0; i < aEdits.Length(); ++i) {
-    if (!ReceiveCompositableUpdate(aEdits[i], replyv)) {
+    if (!ReceiveCompositableUpdate(aEdits[i])) {
       return IPC_FAIL_NO_REASON(this);
     }
-  }
-
-  aReply->SetCapacity(replyv.size());
-  if (replyv.size() > 0) {
-    aReply->AppendElements(&replyv.front(), replyv.size());
   }
 
   if (!IsSameProcess()) {
@@ -181,19 +200,6 @@ ImageBridgeParent::RecvUpdate(EditArray&& aEdits, OpDestroyArray&& aToDestroy,
     LayerManagerComposite::PlatformSyncBeforeReplyUpdate();
   }
 
-  return IPC_OK();
-}
-
-mozilla::ipc::IPCResult
-ImageBridgeParent::RecvUpdateNoSwap(EditArray&& aEdits, OpDestroyArray&& aToDestroy,
-                                    const uint64_t& aFwdTransactionId)
-{
-  InfallibleTArray<EditReply> noReplies;
-  bool success = RecvUpdate(Move(aEdits), Move(aToDestroy), aFwdTransactionId, &noReplies);
-  MOZ_ASSERT(noReplies.Length() == 0, "RecvUpdateNoSwap requires a sync Update to carry Edits");
-  if (!success) {
-    return IPC_FAIL_NO_REASON(this);
-  }
   return IPC_OK();
 }
 
@@ -336,9 +342,11 @@ ImageBridgeParent::DeferredDestroy()
   mSelfRef = nullptr; // "this" ImageBridge may get deleted here.
 }
 
-ImageBridgeParent*
+RefPtr<ImageBridgeParent>
 ImageBridgeParent::GetInstance(ProcessId aId)
 {
+  MOZ_ASSERT(CompositorThreadHolder::IsInCompositorThread());
+  MonitorAutoLock lock(*sImageBridgesLock);
   NS_ASSERTION(sImageBridges.count(aId) == 1, "ImageBridgeParent for the process");
   return sImageBridges[aId];
 }
@@ -384,26 +392,6 @@ ImageBridgeParent::DeallocShmem(ipc::Shmem& aShmem)
 bool ImageBridgeParent::IsSameProcess() const
 {
   return OtherPid() == base::GetCurrentProcId();
-}
-
-/*static*/ void
-ImageBridgeParent::SetAboutToSendAsyncMessages(base::ProcessId aChildProcessId)
-{
-  ImageBridgeParent* imageBridge = ImageBridgeParent::GetInstance(aChildProcessId);
-  if (!imageBridge) {
-    return;
-  }
-  imageBridge->SetAboutToSendAsyncMessages();
-}
-
-/*static*/ void
-ImageBridgeParent::SendPendingAsyncMessages(base::ProcessId aChildProcessId)
-{
-  ImageBridgeParent* imageBridge = ImageBridgeParent::GetInstance(aChildProcessId);
-  if (!imageBridge) {
-    return;
-  }
-  imageBridge->SendPendingAsyncMessages();
 }
 
 void

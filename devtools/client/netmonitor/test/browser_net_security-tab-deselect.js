@@ -10,9 +10,10 @@
 
 add_task(function* () {
   let { tab, monitor } = yield initNetMonitor(CUSTOM_GET_URL);
-  let { EVENTS, NetMonitorView } = monitor.panelWin;
-  let { RequestsMenu, NetworkDetails } = NetMonitorView;
-  RequestsMenu.lazyUpdate = false;
+  let { document, gStore, windowRequire } = monitor.panelWin;
+  let Actions = windowRequire("devtools/client/netmonitor/actions/index");
+
+  gStore.dispatch(Actions.batchEnable(false));
 
   info("Performing requests.");
   let wait = waitForNetworkEvents(monitor, 2);
@@ -28,19 +29,20 @@ add_task(function* () {
   yield wait;
 
   info("Selecting secure request.");
-  RequestsMenu.selectedIndex = 0;
-
-  info("Selecting security tab.");
-  NetworkDetails.widget.selectedIndex = 5;
-
-  wait = monitor.panelWin.once(EVENTS.NETWORKDETAILSVIEW_POPULATED);
-  info("Selecting insecure request.");
-  RequestsMenu.selectedIndex = 1;
-
-  info("Waiting for security tab to be updated.");
+  wait = waitForDOM(document, ".tabs");
+  EventUtils.sendMouseEvent({ type: "mousedown" },
+    document.querySelectorAll(".request-list-item")[0]);
   yield wait;
 
-  is(NetworkDetails.widget.selectedIndex, 0,
+  info("Selecting security tab.");
+  EventUtils.sendMouseEvent({ type: "mousedown" },
+    document.querySelector("#security-tab"));
+
+  info("Selecting insecure request.");
+  EventUtils.sendMouseEvent({ type: "mousedown" },
+    document.querySelectorAll(".request-list-item")[1]);
+
+  ok(document.querySelector("#headers-tab[aria-selected=true]"),
     "Selected tab was reset when selected security tab was hidden.");
 
   return teardown(monitor);

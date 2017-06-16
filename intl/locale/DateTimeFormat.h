@@ -8,13 +8,12 @@
 #define mozilla_DateTimeFormat_h
 
 #include <time.h>
+#include "gtest/MozGtestFriend.h"
 #include "nsIScriptableDateFormat.h"
 #include "nsStringGlue.h"
 #include "prtime.h"
-
-#ifndef ENABLE_INTL_API
-#include "nsCOMPtr.h"
-#include "nsIUnicodeDecoder.h"
+#ifdef ENABLE_INTL_API
+#include "unicode/udat.h"
 #endif
 
 namespace mozilla {
@@ -46,21 +45,19 @@ private:
 
   static nsresult Initialize();
 
+  FRIEND_TEST(DateTimeFormat, FormatPRExplodedTime);
+  FRIEND_TEST(DateTimeFormat, DateFormatSelectors);
+
 #ifdef ENABLE_INTL_API
-  static nsCString* mLocale;
-#else
-  // performs a locale sensitive date formatting operation on the struct tm parameter
-  static nsresult FormatTMTime(const nsDateFormatSelector aDateFormatSelector,
-                               const nsTimeFormatSelector aTimeFormatSelector,
-                               const struct tm* aTmTime,
-                               nsAString& aStringOut);
-
-  static void LocalePreferred24hour();
-
-  static bool mLocalePreferred24hour;                       // true if 24 hour format is preferred by current locale
-  static bool mLocaleAMPMfirst;                             // true if AM/PM string is preferred before the time
-  static nsCOMPtr<nsIUnicodeDecoder> mDecoder;
+  // performs a locale sensitive date formatting operation on the UDate parameter
+  static nsresult FormatUDateTime(const nsDateFormatSelector aDateFormatSelector,
+                                  const nsTimeFormatSelector aTimeFormatSelector,
+                                  const UDate aUDateTime,
+                                  const PRTimeParameters* aTimeParameters,
+                                  nsAString& aStringOut);
 #endif
+
+  static nsCString* mLocale;
 };
 
 }

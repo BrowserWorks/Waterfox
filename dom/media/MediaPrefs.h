@@ -90,8 +90,12 @@ private:
   DECL_MEDIA_PREF("accessibility.monoaudio.enable",           MonoAudio, bool, false);
   DECL_MEDIA_PREF("media.resampling.enabled",                 AudioSinkResampling, bool, false);
   DECL_MEDIA_PREF("media.resampling.rate",                    AudioSinkResampleRate, uint32_t, 48000);
+#if defined(XP_WIN) || defined(XP_DARWIN) || defined(MOZ_PULSEAUDIO)
+  // libcubeb backend implement .get_preferred_channel_layout
+  DECL_MEDIA_PREF("media.forcestereo.enabled",                AudioSinkForceStereo, bool, false);
+#else
   DECL_MEDIA_PREF("media.forcestereo.enabled",                AudioSinkForceStereo, bool, true);
-
+#endif
   // VideoSink
   DECL_MEDIA_PREF("media.ruin-av-sync.enabled",               RuinAvSync, bool, false);
 
@@ -110,11 +114,13 @@ private:
 #ifdef MOZ_WIDGET_ANDROID
   DECL_MEDIA_PREF("media.android-media-codec.enabled",        PDMAndroidMediaCodecEnabled, bool, false);
   DECL_MEDIA_PREF("media.android-media-codec.preferred",      PDMAndroidMediaCodecPreferred, bool, false);
-  DECL_MEDIA_PREF("media.android-remote-codec.enabled",       PDMAndroidRemoteCodecEnabled, bool, false);
 #endif
 #ifdef MOZ_FFMPEG
   DECL_MEDIA_PREF("media.ffmpeg.enabled",                     PDMFFmpegEnabled, bool, true);
   DECL_MEDIA_PREF("media.libavcodec.allow-obsolete",          LibavcodecAllowObsolete, bool, false);
+#endif
+#if defined(MOZ_FFMPEG) || defined(MOZ_FFVPX)
+  DECL_MEDIA_PREF("media.ffmpeg.low-latency.enabled",         PDMFFmpegLowLatencyEnabled, bool, false);
 #endif
 #ifdef MOZ_FFVPX
   DECL_MEDIA_PREF("media.ffvpx.enabled",                      PDMFFVPXEnabled, bool, true);
@@ -134,6 +140,8 @@ private:
   DECL_MEDIA_PREF("media.gmp.decoder.enabled",                PDMGMPEnabled, bool, true);
   DECL_MEDIA_PREF("media.gmp.decoder.aac",                    GMPAACPreferred, uint32_t, 0);
   DECL_MEDIA_PREF("media.gmp.decoder.h264",                   GMPH264Preferred, uint32_t, 0);
+  DECL_MEDIA_PREF("media.eme.audio.blank",                    EMEBlankAudio, bool, false);
+  DECL_MEDIA_PREF("media.eme.video.blank",                    EMEBlankVideo, bool, false);
 
   // MediaDecoderStateMachine
   DECL_MEDIA_PREF("media.suspend-bkgnd-video.enabled",        MDSMSuspendBackgroundVideoEnabled, bool, false);
@@ -157,7 +165,7 @@ private:
   DECL_MEDIA_PREF("media.ogg.flac.enabled",                   FlacInOgg, bool, false);
   DECL_MEDIA_PREF("media.flac.enabled",                       FlacEnabled, bool, true);
 
-#if defined(MOZ_RUST_MP4PARSE) && !defined(RELEASE_OR_BETA)
+#if !defined(RELEASE_OR_BETA)
   DECL_MEDIA_PREF("media.rust.test_mode",                     RustTestMode, bool, false);
 #endif
 

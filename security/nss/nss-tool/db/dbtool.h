@@ -7,6 +7,7 @@
 
 #include <string>
 #include <vector>
+#include "argparse.h"
 
 class DBTool {
  public:
@@ -15,7 +16,10 @@ class DBTool {
   void Usage();
 
  private:
+  bool PathHasDBFiles(std::string path);
   void ListCertificates();
+  bool ImportCertificate(const ArgParser& parser);
+  bool ListKeys();
 };
 
 #endif  // dbtool_h__

@@ -6,6 +6,8 @@
 
 #include "TimeoutManager.h"
 #include "nsGlobalWindow.h"
+#include "mozilla/Logging.h"
+#include "mozilla/Telemetry.h"
 #include "mozilla/ThrottledEventQueue.h"
 #include "mozilla/TimeStamp.h"
 #include "nsITimeoutHandler.h"
@@ -14,6 +16,114 @@
 
 using namespace mozilla;
 using namespace mozilla::dom;
+
+static LazyLogModule gLog("Timeout");
+
+// Time between sampling timeout execution time.
+const uint32_t kTelemetryPeriodMS = 1000;
+
+class TimeoutTelemetry
+{
+public:
+  static TimeoutTelemetry& Get();
+  TimeoutTelemetry() : mLastCollection(TimeStamp::Now()) {}
+
+  void StartRecording(TimeStamp aNow);
+  void StopRecording();
+  void RecordExecution(TimeStamp aNow, Timeout* aTimeout, bool aIsBackground);
+  void MaybeCollectTelemetry(TimeStamp aNow);
+private:
+  struct TelemetryData
+  {
+    TimeDuration mForegroundTracking;
+    TimeDuration mForegroundNonTracking;
+    TimeDuration mBackgroundTracking;
+    TimeDuration mBackgroundNonTracking;
+  };
+
+  void Accumulate(Telemetry::HistogramID aId, TimeDuration aSample);
+
+  TelemetryData mTelemetryData;
+  TimeStamp mStart;
+  TimeStamp mLastCollection;
+};
+
+static TimeoutTelemetry gTimeoutTelemetry;
+
+/* static */ TimeoutTelemetry&
+TimeoutTelemetry::Get()
+{
+  return gTimeoutTelemetry;
+}
+
+void
+TimeoutTelemetry::StartRecording(TimeStamp aNow)
+{
+  mStart = aNow;
+}
+
+void
+TimeoutTelemetry::StopRecording()
+{
+  mStart = TimeStamp();
+}
+
+void
+TimeoutTelemetry::RecordExecution(TimeStamp aNow,
+                                  Timeout* aTimeout,
+                                  bool aIsBackground)
+{
+  if (!mStart) {
+    // If we've started a sync operation mStart might be null, in
+    // which case we should not record this piece of execution.
+    return;
+  }
+
+  TimeDuration duration = aNow - mStart;
+
+  if (aIsBackground) {
+    if (aTimeout->mIsTracking) {
+      mTelemetryData.mBackgroundTracking += duration;
+    } else {
+      mTelemetryData.mBackgroundNonTracking += duration;
+    }
+  } else {
+    if (aTimeout->mIsTracking) {
+      mTelemetryData.mForegroundTracking += duration;
+    } else {
+      mTelemetryData.mForegroundNonTracking += duration;
+    }
+  }
+}
+
+void
+TimeoutTelemetry::Accumulate(Telemetry::HistogramID aId, TimeDuration aSample)
+{
+  uint32_t sample = std::round(aSample.ToMilliseconds());
+  if (sample) {
+    Telemetry::Accumulate(aId, sample);
+  }
+}
+
+void
+TimeoutTelemetry::MaybeCollectTelemetry(TimeStamp aNow)
+{
+  if ((aNow - mLastCollection).ToMilliseconds() < kTelemetryPeriodMS) {
+    return;
+  }
+
+  Accumulate(Telemetry::TIMEOUT_EXECUTION_FG_TRACKING_MS,
+             mTelemetryData.mForegroundTracking);
+  Accumulate(Telemetry::TIMEOUT_EXECUTION_FG_MS,
+             mTelemetryData.mForegroundNonTracking);
+  Accumulate(Telemetry::TIMEOUT_EXECUTION_BG_TRACKING_MS,
+             mTelemetryData.mBackgroundTracking);
+  Accumulate(Telemetry::TIMEOUT_EXECUTION_BG_MS,
+             mTelemetryData.mBackgroundNonTracking);
+
+  mTelemetryData = TelemetryData();
+  mLastCollection = aNow;
+}
 
 static int32_t              gRunningTimeoutDepth       = 0;
 
@@ -26,6 +136,15 @@ static int32_t gMinTimeoutValue = 0;
 static int32_t gMinBackgroundTimeoutValue = 0;
 static int32_t gMinTrackingTimeoutValue = 0;
 static int32_t gMinTrackingBackgroundTimeoutValue = 0;
+static int32_t gTrackingTimeoutThrottlingDelay = 0;
+static bool    gAnnotateTrackingChannels = false;
+
+bool
+TimeoutManager::IsBackground() const
+{
+  return !mWindow.AsInner()->IsPlayingAudio() && mWindow.IsBackgroundInternal();
+}
+
 int32_t
 TimeoutManager::DOMMinTimeoutValue(bool aIsTracking) const {
   // First apply any back pressure delay that might be in effect.
@@ -33,12 +152,12 @@ TimeoutManager::DOMMinTimeoutValue(bool aIsTracking) const {
   // Don't use the background timeout value when the tab is playing audio.
   // Until bug 1336484 we only used to do this for pages that use Web Audio.
   // The original behavior was implemented in bug 11811073.
-  bool isBackground = !mWindow.AsInner()->IsPlayingAudio() &&
-    mWindow.IsBackgroundInternal();
-  auto minValue = aIsTracking ? (isBackground ? gMinTrackingBackgroundTimeoutValue
-                                              : gMinTrackingTimeoutValue)
-                              : (isBackground ? gMinBackgroundTimeoutValue
-                                              : gMinTimeoutValue);
+  bool isBackground = IsBackground();
+  bool throttleTracking = aIsTracking && mThrottleTrackingTimeouts;
+  auto minValue = throttleTracking ? (isBackground ? gMinTrackingBackgroundTimeoutValue
+                                                   : gMinTrackingTimeoutValue)
+                                   : (isBackground ? gMinBackgroundTimeoutValue
+                                                   : gMinTimeoutValue);
   return std::max(minValue, value);
 }
 
@@ -48,6 +167,9 @@ TimeoutManager::DOMMinTimeoutValue(bool aIsTracking) const {
 #define ALTERNATE_TIMEOUT_BUCKETING_STRATEGY         2 // Put every other timeout in the list of tracking timeouts
 #define RANDOM_TIMEOUT_BUCKETING_STRATEGY            3 // Put timeouts into either the normal or tracking timeouts list randomly
 static int32_t gTimeoutBucketingStrategy = 0;
+
+#define DEFAULT_TRACKING_TIMEOUT_THROTTLING_DELAY  -1  // Only positive integers cause us to introduce a delay for tracking
+                                                       // timeout throttling.
 
 // The number of nested timeouts before we start clamping. HTML5 says 1, WebKit
 // uses 5.
@@ -122,9 +244,22 @@ TimeoutManager::TimeoutManager(nsGlobalWindow& aWindow)
     mTimeoutFiringDepth(0),
     mRunningTimeout(nullptr),
     mIdleCallbackTimeoutCounter(1),
-    mBackPressureDelayMS(0)
+    mBackPressureDelayMS(0),
+    mThrottleTrackingTimeouts(gTrackingTimeoutThrottlingDelay <= 0)
 {
   MOZ_DIAGNOSTIC_ASSERT(aWindow.IsInnerWindow());
+
+  MOZ_LOG(gLog, LogLevel::Debug,
+          ("TimeoutManager %p created, tracking bucketing %s\n",
+           this, gAnnotateTrackingChannels ? "enabled" : "disabled"));
+}
+
+TimeoutManager::~TimeoutManager()
+{
+  MOZ_DIAGNOSTIC_ASSERT(!mThrottleTrackingTimeoutsTimer);
+
+  MOZ_LOG(gLog, LogLevel::Debug,
+          ("TimeoutManager %p destroyed\n", this));
 }
 
 /* static */
@@ -146,6 +281,12 @@ TimeoutManager::Initialize()
   Preferences::AddIntVarCache(&gTimeoutBucketingStrategy,
                               "dom.timeout_bucketing_strategy",
                               TRACKING_SEPARATE_TIMEOUT_BUCKETING_STRATEGY);
+  Preferences::AddIntVarCache(&gTrackingTimeoutThrottlingDelay,
+                              "dom.timeout.tracking_throttling_delay",
+                              DEFAULT_TRACKING_TIMEOUT_THROTTLING_DELAY);
+  Preferences::AddBoolVarCache(&gAnnotateTrackingChannels,
+                               "privacy.trackingprotection.annotate_channels",
+                               false);
 
   Preferences::AddUintVarCache(&gThrottledEventQueueBackPressure,
                                "dom.timeout.throttled_event_queue_back_pressure",
@@ -214,17 +355,33 @@ TimeoutManager::SetTimeout(nsITimeoutHandler* aHandler,
     uint32_t dummyLine = 0, dummyColumn = 0;
     aHandler->GetLocation(&filename, &dummyLine, &dummyColumn);
     timeout->mIsTracking = doc->IsScriptTracking(nsDependentCString(filename));
+
+    MOZ_LOG(gLog, LogLevel::Debug,
+            ("Classified timeout %p set from %s as %stracking\n",
+             timeout.get(), filename, timeout->mIsTracking ? "" : "non-"));
     break;
   }
   case ALL_NORMAL_TIMEOUT_BUCKETING_STRATEGY:
     // timeout->mIsTracking is already false!
     MOZ_DIAGNOSTIC_ASSERT(!timeout->mIsTracking);
+
+    MOZ_LOG(gLog, LogLevel::Debug,
+            ("Classified timeout %p unconditionally as normal\n",
+             timeout.get()));
     break;
   case ALTERNATE_TIMEOUT_BUCKETING_STRATEGY:
     timeout->mIsTracking = (mTimeoutIdCounter % 2) == 0;
+
+    MOZ_LOG(gLog, LogLevel::Debug,
+            ("Classified timeout %p as %stracking (alternating mode)\n",
+             timeout.get(), timeout->mIsTracking ? "" : "non-"));
     break;
   case RANDOM_TIMEOUT_BUCKETING_STRATEGY:
     timeout->mIsTracking = (rand() % 2) == 0;
+
+    MOZ_LOG(gLog, LogLevel::Debug,
+            ("Classified timeout %p as %stracking (random mode)\n",
+             timeout.get(), timeout->mIsTracking ? "" : "non-"));
     break;
   }
 
@@ -232,7 +389,8 @@ TimeoutManager::SetTimeout(nsITimeoutHandler* aHandler,
   uint32_t nestingLevel = sNestingLevel + 1;
   uint32_t realInterval = interval;
   if (aIsInterval || nestingLevel >= DOM_CLAMP_TIMEOUT_NESTING_LEVEL ||
-      mBackPressureDelayMS > 0 || mWindow.IsBackgroundInternal()) {
+      mBackPressureDelayMS > 0 || mWindow.IsBackgroundInternal() ||
+      timeout->mIsTracking) {
     // Don't allow timeouts less than DOMMinTimeoutValue() from
     // now...
     realInterval = std::max(realInterval,
@@ -302,6 +460,20 @@ TimeoutManager::SetTimeout(nsITimeoutHandler* aHandler,
   timeout->mTimeoutId = GetTimeoutId(aReason);
   *aReturn = timeout->mTimeoutId;
 
+  MOZ_LOG(gLog, LogLevel::Debug,
+          ("Set%s(TimeoutManager=%p, timeout=%p, delay=%i, "
+           "minimum=%i, throttling=%s, background=%d, realInterval=%i) "
+           "returned %stracking timeout ID %u\n",
+           aIsInterval ? "Interval" : "Timeout",
+           this, timeout.get(), interval,
+           DOMMinTimeoutValue(timeout->mIsTracking),
+           mThrottleTrackingTimeouts ? "yes"
+                                     : (mThrottleTrackingTimeoutsTimer ?
+                                          "pending" : "no"),
+           int(mWindow.IsBackgroundInternal()), realInterval,
+           timeout->mIsTracking ? "" : "non-",
+           timeout->mTimeoutId));
+
   return NS_OK;
 }
 
@@ -311,6 +483,11 @@ TimeoutManager::ClearTimeout(int32_t aTimerId, Timeout::Reason aReason)
   uint32_t timerId = (uint32_t)aTimerId;
 
   ForEachUnorderedTimeoutAbortable([&](Timeout* aTimeout) {
+    MOZ_LOG(gLog, LogLevel::Debug,
+            ("Clear%s(TimeoutManager=%p, timeout=%p, aTimerId=%u, ID=%u, tracking=%d)\n", aTimeout->mIsInterval ? "Interval" : "Timeout",
+             this, aTimeout, timerId, aTimeout->mTimeoutId,
+             int(aTimeout->mIsTracking)));
+
     if (aTimeout->mTimeoutId == timerId && aTimeout->mReason == aReason) {
       if (aTimeout->mRunning) {
         /* We're running from inside the aTimeout. Mark this
@@ -410,6 +587,8 @@ TimeoutManager::RunTimeout(Timeout* aTimeout)
           last_expired_tracking_timeout = timeout;
         }
 
+        numTimersToRun += 1;
+
         // Note that we have seen our target timer.  This means we can now
         // stop processing timers once we hit our threshold below.
         if (timeout == aTimeout) {
@@ -431,8 +610,6 @@ TimeoutManager::RunTimeout(Timeout* aTimeout)
             !mWindow.IsChromeWindow()) {
           break;
         }
-
-        numTimersToRun += 1;
       }
 
       expiredIter.UpdateIterator();
@@ -541,6 +718,11 @@ TimeoutManager::RunTimeout(Timeout* aTimeout)
 
       // This timeout is good to run
       bool timeout_was_cleared = mWindow.RunTimeoutHandler(timeout, scx);
+      MOZ_LOG(gLog, LogLevel::Debug,
+              ("Run%s(TimeoutManager=%p, timeout=%p, aTimeout=%p, tracking=%d) returned %d\n", timeout->mIsInterval ? "Interval" : "Timeout",
+               this, timeout, aTimeout,
+               int(aTimeout->mIsTracking),
+               !!timeout_was_cleared));
 
       if (timeout_was_cleared) {
         // Make sure the iterator isn't holding any Timeout objects alive.
@@ -656,6 +838,12 @@ TimeoutManager::MaybeApplyBackPressure()
   // Since the callback was scheduled successfully we can now persist the
   // backpressure value.
   mBackPressureDelayMS = CalculateNewBackPressureDelayMS(queue->Length());
+
+  MOZ_LOG(gLog, LogLevel::Debug,
+          ("Applying %dms of back pressure to TimeoutManager %p "
+           "because of a queue length of %u\n",
+           mBackPressureDelayMS, this,
+           queue->Length()));
 }
 
 void
@@ -668,8 +856,14 @@ TimeoutManager::CancelOrUpdateBackPressure(nsGlobalWindow* aWindow)
   // First, re-calculate the back pressure delay.
   RefPtr<ThrottledEventQueue> queue =
     do_QueryObject(mWindow.TabGroup()->EventTargetFor(TaskCategory::Timer));
-  int32_t newBackPressureDelayMS =
-    CalculateNewBackPressureDelayMS(queue ? queue->Length() : 0);
+  auto queueLength = queue ? queue->Length() : 0;
+  int32_t newBackPressureDelayMS = CalculateNewBackPressureDelayMS(queueLength);
+
+  MOZ_LOG(gLog, LogLevel::Debug,
+          ("Updating back pressure from %d to %dms for TimeoutManager %p "
+           "because of a queue length of %u\n",
+           mBackPressureDelayMS, newBackPressureDelayMS,
+           this, queueLength));
 
   // If the delay has increased, then simply apply it.  Increasing the delay
   // does not risk re-ordering timers with similar parameters.  We want to
@@ -934,6 +1128,9 @@ TimeoutManager::ClearAllTimeouts()
 {
   bool seenRunningTimeout = false;
 
+  MOZ_LOG(gLog, LogLevel::Debug,
+          ("ClearAllTimeouts(TimeoutManager=%p)\n", this));
+
   ForEachUnorderedTimeout([&](Timeout* aTimeout) {
     /* If RunTimeout() is higher up on the stack for this
        window, e.g. as a result of document.write from a timeout,
@@ -1011,6 +1208,19 @@ TimeoutManager::BeginRunningTimeout(Timeout* aTimeout)
   ++gRunningTimeoutDepth;
   ++mTimeoutFiringDepth;
 
+  if (!mWindow.IsChromeWindow()) {
+    TimeStamp now = TimeStamp::Now();
+    if (currentTimeout) {
+      // If we're already running a timeout and start running another
+      // one, record the fragment duration already collected.
+      TimeoutTelemetry::Get().RecordExecution(
+        now, currentTimeout, IsBackground());
+    }
+
+    TimeoutTelemetry::Get().MaybeCollectTelemetry(now);
+    TimeoutTelemetry::Get().StartRecording(now);
+  }
+
   return currentTimeout;
 }
 
@@ -1019,6 +1229,17 @@ TimeoutManager::EndRunningTimeout(Timeout* aTimeout)
 {
   --mTimeoutFiringDepth;
   --gRunningTimeoutDepth;
+
+  if (!mWindow.IsChromeWindow()) {
+    TimeStamp now = TimeStamp::Now();
+    TimeoutTelemetry::Get().RecordExecution(now, mRunningTimeout, IsBackground());
+
+    if (aTimeout) {
+      // If we were running a nested timeout, restart the measurement
+      // from here.
+      TimeoutTelemetry::Get().StartRecording(now);
+    }
+  }
 
   mRunningTimeout = aTimeout;
 }
@@ -1036,6 +1257,9 @@ TimeoutManager::UnmarkGrayTimers()
 void
 TimeoutManager::Suspend()
 {
+  MOZ_LOG(gLog, LogLevel::Debug,
+          ("Suspend(TimeoutManager=%p)\n", this));
+
   ForEachUnorderedTimeout([](Timeout* aTimeout) {
     // Leave the timers with the current time remaining.  This will
     // cause the timers to potentially fire when the window is
@@ -1056,6 +1280,9 @@ TimeoutManager::Suspend()
 void
 TimeoutManager::Resume()
 {
+  MOZ_LOG(gLog, LogLevel::Debug,
+          ("Resume(TimeoutManager=%p)\n", this));
+
   TimeStamp now = TimeStamp::Now();
   DebugOnly<bool> _seenDummyTimeout = false;
 
@@ -1105,6 +1332,9 @@ TimeoutManager::Resume()
 void
 TimeoutManager::Freeze()
 {
+  MOZ_LOG(gLog, LogLevel::Debug,
+          ("Freeze(TimeoutManager=%p)\n", this));
+
   DebugOnly<bool> _seenDummyTimeout = false;
 
   TimeStamp now = TimeStamp::Now();
@@ -1135,6 +1365,9 @@ TimeoutManager::Freeze()
 void
 TimeoutManager::Thaw()
 {
+  MOZ_LOG(gLog, LogLevel::Debug,
+          ("Thaw(TimeoutManager=%p)\n", this));
+
   TimeStamp now = TimeStamp::Now();
   DebugOnly<bool> _seenDummyTimeout = false;
 
@@ -1162,4 +1395,107 @@ TimeoutManager::IsTimeoutTracking(uint32_t aTimeoutId)
   return mTrackingTimeouts.ForEachAbortable([&](Timeout* aTimeout) {
       return aTimeout->mTimeoutId == aTimeoutId;
     });
+}
+
+namespace {
+
+class ThrottleTrackingTimeoutsCallback final : public nsITimerCallback
+{
+public:
+  explicit ThrottleTrackingTimeoutsCallback(nsGlobalWindow* aWindow)
+    : mWindow(aWindow)
+  {
+    MOZ_DIAGNOSTIC_ASSERT(aWindow->IsInnerWindow());
+  }
+
+  NS_DECL_ISUPPORTS
+  NS_DECL_NSITIMERCALLBACK
+
+private:
+  ~ThrottleTrackingTimeoutsCallback() {}
+
+private:
+  // The strong reference here keeps the Window and hence the TimeoutManager
+  // object itself alive.
+  RefPtr<nsGlobalWindow> mWindow;
+};
+
+NS_IMPL_ISUPPORTS(ThrottleTrackingTimeoutsCallback, nsITimerCallback)
+
+NS_IMETHODIMP
+ThrottleTrackingTimeoutsCallback::Notify(nsITimer* aTimer)
+{
+  mWindow->AsInner()->TimeoutManager().StartThrottlingTrackingTimeouts();
+  mWindow = nullptr;
+  return NS_OK;
+}
+
+}
+
+void
+TimeoutManager::StartThrottlingTrackingTimeouts()
+{
+  MOZ_ASSERT(NS_IsMainThread());
+  MOZ_DIAGNOSTIC_ASSERT(mThrottleTrackingTimeoutsTimer);
+
+  MOZ_LOG(gLog, LogLevel::Debug,
+          ("TimeoutManager %p started to throttle tracking timeouts\n", this));
+
+  MOZ_DIAGNOSTIC_ASSERT(!mThrottleTrackingTimeouts);
+  mThrottleTrackingTimeouts = true;
+  mThrottleTrackingTimeoutsTimer = nullptr;
+}
+
+void
+TimeoutManager::OnDocumentLoaded()
+{
+  if (gTrackingTimeoutThrottlingDelay <= 0) {
+    return;
+  }
+
+  MOZ_DIAGNOSTIC_ASSERT(!mThrottleTrackingTimeouts);
+
+  MOZ_LOG(gLog, LogLevel::Debug,
+          ("TimeoutManager %p delaying tracking timeout throttling by %dms\n",
+           this, gTrackingTimeoutThrottlingDelay));
+
+  mThrottleTrackingTimeoutsTimer =
+    do_CreateInstance("@mozilla.org/timer;1");
+  if (!mThrottleTrackingTimeoutsTimer) {
+    return;
+  }
+
+  nsCOMPtr<nsITimerCallback> callback =
+    new ThrottleTrackingTimeoutsCallback(&mWindow);
+
+  mThrottleTrackingTimeoutsTimer->InitWithCallback(callback,
+                                                   gTrackingTimeoutThrottlingDelay,
+                                                   nsITimer::TYPE_ONE_SHOT);
+}
+
+void
+TimeoutManager::BeginSyncOperation()
+{
+  // If we're beginning a sync operation, the currently running
+  // timeout will be put on hold. To not get into an inconsistent
+  // state, where the currently running timeout appears to take time
+  // equivalent to the period of us spinning up a new event loop,
+  // record what we have and stop recording until we reach
+  // EndSyncOperation.
+  if (!mWindow.IsChromeWindow()) {
+    if (mRunningTimeout) {
+      TimeoutTelemetry::Get().RecordExecution(
+        TimeStamp::Now(), mRunningTimeout, IsBackground());
+    }
+    TimeoutTelemetry::Get().StopRecording();
+  }
+}
+
+void
+TimeoutManager::EndSyncOperation()
+{
+  // If we're running a timeout, restart the measurement from here.
+  if (!mWindow.IsChromeWindow() && mRunningTimeout) {
+    TimeoutTelemetry::Get().StartRecording(TimeStamp::Now());
+  }
 }

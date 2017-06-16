@@ -254,11 +254,11 @@ NS_IMPL_ISUPPORTS(SVGLoadEventListener, nsIDOMEventListener)
 class SVGDrawingCallback : public gfxDrawingCallback {
 public:
   SVGDrawingCallback(SVGDocumentWrapper* aSVGDocumentWrapper,
-                     const IntRect& aViewport,
+                     const IntSize& aViewportSize,
                      const IntSize& aSize,
                      uint32_t aImageFlags)
     : mSVGDocumentWrapper(aSVGDocumentWrapper)
-    , mViewport(aViewport)
+    , mViewportSize(aViewportSize)
     , mSize(aSize)
     , mImageFlags(aImageFlags)
   { }
@@ -268,7 +268,7 @@ public:
                           const gfxMatrix& aTransform);
 private:
   RefPtr<SVGDocumentWrapper> mSVGDocumentWrapper;
-  const IntRect              mViewport;
+  const IntSize                mViewportSize;
   const IntSize                mSize;
   uint32_t                     mImageFlags;
 };
@@ -303,16 +303,15 @@ SVGDrawingCallback::operator()(gfxContext* aContext,
   }
   aContext->SetMatrix(
     aContext->CurrentMatrix().PreMultiply(matrix).
-                              Scale(double(mSize.width) / mViewport.width,
-                                    double(mSize.height) / mViewport.height));
+                              Scale(double(mSize.width) / mViewportSize.width,
+                                    double(mSize.height) / mViewportSize.height));
 
   nsPresContext* presContext = presShell->GetPresContext();
   MOZ_ASSERT(presContext, "pres shell w/out pres context");
 
-  nsRect svgRect(presContext->DevPixelsToAppUnits(mViewport.x),
-                 presContext->DevPixelsToAppUnits(mViewport.y),
-                 presContext->DevPixelsToAppUnits(mViewport.width),
-                 presContext->DevPixelsToAppUnits(mViewport.height));
+  nsRect svgRect(0, 0,
+                 presContext->DevPixelsToAppUnits(mViewportSize.width),
+                 presContext->DevPixelsToAppUnits(mViewportSize.height));
 
   uint32_t renderDocFlags = nsIPresShell::RENDER_IGNORE_VIEWPORT_SCROLLING;
   if (!(mImageFlags & imgIContainer::FLAG_SYNC_DECODE)) {
@@ -787,7 +786,7 @@ struct SVGDrawingParameters
     , viewportSize(aSize)
     , animationTime(aAnimationTime)
     , flags(aFlags)
-    , opacity(aSVGContext ? aSVGContext->GetGlobalOpacity() : aOpacity)
+    , opacity(aOpacity)
   {
     if (aSVGContext) {
       CSSIntSize sz = aSVGContext->GetViewportSize();
@@ -855,9 +854,8 @@ VectorImage::Draw(gfxContext* aContext,
     Maybe<SVGPreserveAspectRatio> aspectRatio =
       Some(SVGPreserveAspectRatio(SVG_PRESERVEASPECTRATIO_NONE,
                                   SVG_MEETORSLICE_UNKNOWN));
-    svgContext =
-      Some(SVGImageContext(aSVGContext->GetViewportSize(),
-                           aspectRatio));
+    svgContext = Some(SVGImageContext(*aSVGContext)); // copy
+    svgContext->SetPreserveAspectRatio(aspectRatio);
   } else {
     svgContext = aSVGContext;
   }
@@ -878,6 +876,13 @@ VectorImage::Draw(gfxContext* aContext,
   if (svgDrawable) {
     Show(svgDrawable, params);
     return DrawResult::SUCCESS;
+  }
+
+  Maybe<AutoSetRestoreSVGContextPaint> autoContextPaint;
+  if (aSVGContext &&
+      aSVGContext->GetContextPaint()) {
+    autoContextPaint.emplace(aSVGContext->GetContextPaint(),
+                             mSVGDocumentWrapper->GetDocument());
   }
 
   // We didn't get a hit in the surface cache, so we'll need to rerasterize.
@@ -927,7 +932,7 @@ VectorImage::CreateSurfaceAndShow(const SVGDrawingParameters& aParams, BackendTy
 
   RefPtr<gfxDrawingCallback> cb =
     new SVGDrawingCallback(mSVGDocumentWrapper,
-                           IntRect(IntPoint(0, 0), aParams.viewportSize),
+                           aParams.viewportSize,
                            aParams.size,
                            aParams.flags);
 
@@ -993,7 +998,9 @@ VectorImage::CreateSurfaceAndShow(const SVGDrawingParameters& aParams, BackendTy
                                          GetMaxSizedIntRect());
   } else {
     NotNull<RefPtr<VectorImage>> image = WrapNotNull(this);
-    NS_DispatchToMainThread(NS_NewRunnableFunction([=]() -> void {
+    NS_DispatchToMainThread(NS_NewRunnableFunction(
+                              "ProgressTracker::SyncNotifyProgress",
+                              [=]() -> void {
       RefPtr<ProgressTracker> tracker = image->GetProgressTracker();
       if (tracker) {
         tracker->SyncNotifyProgress(FLAG_FRAME_COMPLETE,

@@ -150,6 +150,13 @@ struct VRFrameInfo
   gfx::Matrix4x4 mRightProjection;
   gfx::Matrix4x4 mRightView;
 
+  /**
+   * In order to avoid leaking information related to the duration of
+   * the user's VR session, we re-base timestamps.
+   * mTimeStampOffset is added to the actual timestamp returned by the
+   * underlying VR platform API when returned through WebVR API's.
+   */
+  double mTimeStampOffset;
 };
 
 class VRFrameData final : public nsWrapperCache
@@ -274,6 +281,7 @@ public:
   virtual JSObject* WrapObject(JSContext* aCx, JS::Handle<JSObject*> aGivenProto) override;
 
   bool IsPresenting() const;
+  bool IsAnyPresenting() const;
   bool IsConnected() const;
 
   VRDisplayCapabilities* Capabilities();

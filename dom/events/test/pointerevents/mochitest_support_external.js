@@ -81,56 +81,60 @@ var MouseEventHelper = (function() {
   };
 }) ();
 
+function createMouseEvent(aEventType, aParams) {
+  var eventObj = {type: aEventType};
+
+  // Default to mouse.
+  eventObj.inputSource =
+    (aParams && "inputSource" in aParams) ? aParams.inputSource :
+                                          MouseEvent.MOZ_SOURCE_MOUSE;
+  // Compute pointerId
+  eventObj.id =
+    (eventObj.inputSource === MouseEvent.MOZ_SOURCE_MOUSE) ? MouseEventHelper.MOUSE_ID :
+                                                             MouseEventHelper.PEN_ID;
+  // Check or generate a |button| value.
+  var isButtonEvent = aEventType === "mouseup" || aEventType === "mousedown";
+
+  // Set |button| to the default value first.
+  eventObj.button = isButtonEvent ? MouseEventHelper.BUTTON_LEFT
+                                  : MouseEventHelper.BUTTON_NONE;
+
+  // |button| is passed, use and check it.
+  if (aParams && "button" in aParams) {
+    var hasButtonValue = (aParams.button !== MouseEventHelper.BUTTON_NONE);
+    ok(!isButtonEvent || hasButtonValue,
+       "Inappropriate |button| value caught.");
+    eventObj.button = aParams.button;
+  }
+
+  // Generate a |buttons| value and update buttons state
+  var buttonsMask = MouseEventHelper.computeButtonsMaskFromButton(eventObj.button);
+  switch(aEventType) {
+    case "mousedown":
+      MouseEventHelper.BUTTONS_STATE |= buttonsMask; // Set button flag.
+      break;
+    case "mouseup":
+      MouseEventHelper.BUTTONS_STATE &= ~buttonsMask; // Clear button flag.
+      break;
+  }
+  eventObj.buttons = MouseEventHelper.BUTTONS_STATE;
+
+  // Replace the button value for mousemove events.
+  // Since in widget level design, even when no button is pressed at all, the
+  // value of WidgetMouseEvent.button is still 0, which is the same value as
+  // the one for mouse left button.
+  if (aEventType === "mousemove") {
+    eventObj.button = MouseEventHelper.BUTTON_LEFT;
+  }
+  return eventObj;
+}
+
 // Helper function to send MouseEvent with different parameters
 function sendMouseEvent(int_win, elemId, mouseEventType, params) {
   var elem = int_win.document.getElementById(elemId);
-  if(!!elem) {
+  if (elem) {
     var rect = elem.getBoundingClientRect();
-    var eventObj = {type: mouseEventType};
-
-    // Default to mouse.
-    eventObj.inputSource =
-      (params && "inputSource" in params) ? params.inputSource :
-                                            MouseEvent.MOZ_SOURCE_MOUSE;
-    // Compute pointerId
-    eventObj.id =
-      (eventObj.inputSource === MouseEvent.MOZ_SOURCE_MOUSE) ? MouseEventHelper.MOUSE_ID :
-                                                               MouseEventHelper.PEN_ID;
-    // Check or generate a |button| value.
-    var isButtonEvent = mouseEventType === "mouseup" ||
-                        mouseEventType === "mousedown";
-
-    // Set |button| to the default value first.
-    eventObj.button = isButtonEvent ? MouseEventHelper.BUTTON_LEFT
-                                    : MouseEventHelper.BUTTON_NONE;
-
-    // |button| is passed, use and check it.
-    if (params && "button" in params) {
-      var hasButtonValue = (params.button !== MouseEventHelper.BUTTON_NONE);
-      ok(!isButtonEvent || hasButtonValue,
-         "Inappropriate |button| value caught.");
-      eventObj.button = params.button;
-    }
-
-    // Generate a |buttons| value and update buttons state
-    var buttonsMask = MouseEventHelper.computeButtonsMaskFromButton(eventObj.button);
-    switch(mouseEventType) {
-      case "mousedown":
-        MouseEventHelper.BUTTONS_STATE |= buttonsMask; // Set button flag.
-        break;
-      case "mouseup":
-        MouseEventHelper.BUTTONS_STATE &= ~buttonsMask; // Clear button flag.
-        break;
-    }
-    eventObj.buttons = MouseEventHelper.BUTTONS_STATE;
-
-    // Replace the button value for mousemove events.
-    // Since in widget level design, even when no button is pressed at all, the
-    // value of WidgetMouseEvent.button is still 0, which is the same value as
-    // the one for mouse left button.
-    if (mouseEventType === "mousemove") {
-      eventObj.button = MouseEventHelper.BUTTON_LEFT;
-    }
+    var eventObj = createMouseEvent(mouseEventType, params);
 
     // Default to the center of the target element but we can still send to a
     // position outside of the target element.
@@ -143,6 +147,13 @@ function sendMouseEvent(int_win, elemId, mouseEventType, params) {
   } else {
     is(!!elem, true, "Document should have element with id: " + elemId);
   }
+}
+
+// Helper function to send MouseEvent with position
+function sendMouseEventAtPoint(aWindow, aLeft, aTop, aMouseEventType, aParams) {
+  var eventObj = createMouseEvent(aMouseEventType, aParams);
+  console.log(eventObj);
+  synthesizeMouseAtPoint(aLeft, aTop, eventObj, aWindow);
 }
 
 // Touch Event Helper Object
@@ -200,14 +211,12 @@ function runTestInNewWindow(aFile) {
   // We start testing when receiving load event. Inject the mochitest helper js
   // to the test case after DOM elements are constructed and before the load
   // event is fired.
-  testWindow.addEventListener("DOMContentLoaded", function scriptInjector() {
-    testWindow.removeEventListener("DOMContentLoaded", scriptInjector);
-    const PARENT_ORIGIN = "http://mochi.test:8888/";
+  testWindow.addEventListener("DOMContentLoaded", function() {
     var e = testWindow.document.createElement('script');
     e.type = 'text/javascript';
     e.src = "mochitest_support_internal.js";
     testWindow.document.getElementsByTagName('head')[0].appendChild(e);
-  });
+  }, {once: true});
 
   window.addEventListener("message", function(aEvent) {
     switch(aEvent.data.type) {

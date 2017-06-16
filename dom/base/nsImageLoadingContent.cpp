@@ -26,6 +26,7 @@
 #include "nsThreadUtils.h"
 #include "nsNetUtil.h"
 #include "nsImageFrame.h"
+#include "nsSVGImageFrame.h"
 
 #include "nsIPresShell.h"
 
@@ -1194,8 +1195,9 @@ nsImageLoadingContent::CancelPendingEvent()
 RefPtr<imgRequestProxy>&
 nsImageLoadingContent::PrepareNextRequest(ImageLoadType aImageLoadType)
 {
-  nsImageFrame* frame = do_QueryFrame(GetOurPrimaryFrame());
-  if (frame) {
+  nsImageFrame* imageFrame = do_QueryFrame(GetOurPrimaryFrame());
+  nsSVGImageFrame* svgImageFrame = do_QueryFrame(GetOurPrimaryFrame());
+  if (imageFrame || svgImageFrame) {
     // Detect JavaScript-based animations created by changing the |src|
     // attribute on a timer.
     TimeStamp now = TimeStamp::Now();
@@ -1205,7 +1207,12 @@ nsImageLoadingContent::PrepareNextRequest(ImageLoadType aImageLoadType)
 
     // If the length of time between request changes is less than the threshold,
     // then force sync decoding to eliminate flicker from the animation.
-    frame->SetForceSyncDecoding(now - mMostRecentRequestChange < threshold);
+    bool forceSync = (now - mMostRecentRequestChange < threshold);
+    if (imageFrame) {
+      imageFrame->SetForceSyncDecoding(forceSync);
+    } else {
+      svgImageFrame->SetForceSyncDecoding(forceSync);
+    }
 
     mMostRecentRequestChange = now;
   }
@@ -1392,11 +1399,11 @@ nsImageLoadingContent::GetRegisteredFlagForRequest(imgIRequest* aRequest)
 {
   if (aRequest == mCurrentRequest) {
     return &mCurrentRequestRegistered;
-  } else if (aRequest == mPendingRequest) {
-    return &mPendingRequestRegistered;
-  } else {
-    return nullptr;
   }
+  if (aRequest == mPendingRequest) {
+    return &mPendingRequestRegistered;
+  }
+  return nullptr;
 }
 
 void

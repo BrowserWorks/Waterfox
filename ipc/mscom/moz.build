@@ -5,6 +5,9 @@
 # file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
 EXPORTS.mozilla.mscom += [
+    'Aggregation.h',
+    'AgileReference.h',
+    'AsyncInvoker.h',
     'COMApartmentRegion.h',
     'COMPtrHolder.h',
     'EnsureMTA.h',
@@ -14,31 +17,37 @@ EXPORTS.mozilla.mscom += [
     'Utils.h',
 ]
 
-SOURCES += [
-    'Utils.cpp',
-]
-
 UNIFIED_SOURCES += [
+    'AgileReference.cpp',
     'EnsureMTA.cpp',
     'MainThreadRuntime.cpp',
     'ProxyStream.cpp',
+    'Utils.cpp',
 ]
 
 if CONFIG['ACCESSIBILITY']:
+    DIRS += [
+        'oop',
+    ]
+
     EXPORTS.mozilla.mscom += [
         'ActivationContext.h',
         'DispatchForwarder.h',
+        'IHandlerPayload.h',
         'Interceptor.h',
         'InterceptorLog.h',
         'MainThreadHandoff.h',
         'MainThreadInvoker.h',
         'Registration.h',
+        'SpinEvent.h',
+        'StructStream.h',
         'WeakRef.h',
     ]
 
     SOURCES += [
         'Interceptor.cpp',
         'Registration.cpp',
+        'SpinEvent.cpp',
         'WeakRef.cpp',
     ]
 
@@ -48,6 +57,7 @@ if CONFIG['ACCESSIBILITY']:
         'InterceptorLog.cpp',
         'MainThreadHandoff.cpp',
         'MainThreadInvoker.cpp',
+        'StructStream.cpp',
     ]
 
 LOCAL_INCLUDES += [
@@ -58,3 +68,6 @@ LOCAL_INCLUDES += [
 include('/ipc/chromium/chromium-config.mozbuild')
 
 FINAL_LIBRARY = 'xul'
+
+with Files("**"):
+    BUG_COMPONENT = ("Core", "Disability Access APIs")

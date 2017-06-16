@@ -22,8 +22,6 @@ from mach.decorators import (
 
 from mozbuild.base import MachCommandBase
 
-ARTIFACT_URL = 'https://queue.taskcluster.net/v1/task/{}/artifacts/{}'
-
 
 class ShowTaskGraphSubCommand(SubCommand):
     """A SubCommand with TaskGraph-specific arguments"""
@@ -274,6 +272,41 @@ class MachCommands(MachCommandBase):
         try:
             self.setup_logging()
             return taskgraph.cron.taskgraph_cron(options)
+        except Exception:
+            traceback.print_exc()
+            sys.exit(1)
+
+    @SubCommand('taskgraph', 'add-talos',
+                description="Run the add-talos task")
+    @CommandArgument('--root', '-r',
+                     default='taskcluster/ci',
+                     help="root of the taskgraph definition relative to topsrcdir")
+    @CommandArgument('--decision-task-id',
+                     required=True,
+                     help="Id of the decision task that is part of the push to be talos'd")
+    @CommandArgument('--times',
+                     required=False,
+                     default=1,
+                     type=int,
+                     help="Number of times to add each job.")
+    def taskgraph_add_talos(self, **options):
+        """Add all talos jobs for a push."""
+
+        import taskgraph.action
+        try:
+            self.setup_logging()
+            return taskgraph.action.add_talos(options['decision_task_id'], options['times'])
+        except Exception:
+            traceback.print_exc()
+            sys.exit(1)
+
+    @SubCommand('taskgraph', 'action-callback',
+                description='Run action callback used by action tasks')
+    def action_callback(self, **options):
+        import actions
+        try:
+            self.setup_logging()
+            return actions.trigger_action_callback()
         except Exception:
             traceback.print_exc()
             sys.exit(1)

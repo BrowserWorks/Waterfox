@@ -166,6 +166,9 @@ GetPrefNameForFeature(int32_t aFeature)
     case nsIGfxInfo::FEATURE_CANVAS2D_ACCELERATION:
       name = BLACKLIST_PREF_BRANCH "canvas2d.acceleration";
       break;
+    case nsIGfxInfo::FEATURE_WEBGL2:
+      name = BLACKLIST_PREF_BRANCH "webgl2";
+      break;
     case nsIGfxInfo::FEATURE_VP8_HW_DECODE:
     case nsIGfxInfo::FEATURE_VP9_HW_DECODE:
     case nsIGfxInfo::FEATURE_DX_INTEROP2:
@@ -344,6 +347,8 @@ BlacklistFeatureToGfxFeature(const nsAString& aFeature)
     return nsIGfxInfo::FEATURE_WEBRTC_HW_ACCELERATION;
   else if (aFeature.EqualsLiteral("CANVAS2D_ACCELERATION"))
       return nsIGfxInfo::FEATURE_CANVAS2D_ACCELERATION;
+  else if (aFeature.EqualsLiteral("WEBGL2"))
+    return nsIGfxInfo::FEATURE_WEBGL2;
 
   // If we don't recognize the feature, it may be new, and something
   // this version doesn't understand.  So, nothing to do.  This is
@@ -973,6 +978,7 @@ GfxInfoBase::EvaluateDownloadedBlacklist(nsTArray<GfxDriverInfo>& aDriverInfo)
     nsIGfxInfo::FEATURE_STAGEFRIGHT,
     nsIGfxInfo::FEATURE_WEBRTC_HW_ACCELERATION,
     nsIGfxInfo::FEATURE_CANVAS2D_ACCELERATION,
+    nsIGfxInfo::FEATURE_WEBGL2,
     0
   };
 
@@ -1194,6 +1200,8 @@ GetLayersBackendName(layers::LayersBackend aBackend)
       return "d3d11";
     case layers::LayersBackend::LAYERS_CLIENT:
       return "client";
+    case layers::LayersBackend::LAYERS_WR:
+      return "webrender";
     case layers::LayersBackend::LAYERS_BASIC:
       return "basic";
     default:
@@ -1371,7 +1379,7 @@ GfxInfoBase::InitFeatureObject(JSContext* aCx,
                                JS::Handle<JSObject*> aContainer,
                                const char* aName,
                                int32_t aFeature,
-                               Maybe<mozilla::gfx::FeatureStatus> aFeatureStatus,
+                               const Maybe<mozilla::gfx::FeatureStatus>& aFeatureStatus,
                                JS::MutableHandle<JSObject*> aOutObj)
 {
   JS::Rooted<JSObject*> obj(aCx, JS_NewPlainObject(aCx));
@@ -1470,6 +1478,26 @@ GfxInfoBase::GetUsingGPUProcess(bool *aOutValue)
   }
 
   *aOutValue = !!gpu->GetGPUChild();
+  return NS_OK;
+}
+
+NS_IMETHODIMP
+GfxInfoBase::ControlGPUProcessForXPCShell(bool aEnable, bool *_retval)
+{
+  gfxPlatform::GetPlatform();
+
+  GPUProcessManager* gpm = GPUProcessManager::Get();
+  if (aEnable) {
+    if (!gfxConfig::IsEnabled(Feature::GPU_PROCESS)) {
+      gfxConfig::UserForceEnable(Feature::GPU_PROCESS, "xpcshell-test");
+    }
+    gpm->LaunchGPUProcess();
+    gpm->EnsureGPUReady();
+  } else {
+    gpm->KillProcess();
+  }
+
+  *_retval = true;
   return NS_OK;
 }
 

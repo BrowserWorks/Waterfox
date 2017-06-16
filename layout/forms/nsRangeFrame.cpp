@@ -119,13 +119,9 @@ nsRangeFrame::MakeAnonymousDiv(Element** aResult,
   RefPtr<Element> resultElement = doc->CreateHTMLElement(nsGkAtoms::div);
 
   // Associate the pseudo-element with the anonymous child.
-  RefPtr<nsStyleContext> newStyleContext =
-    PresContext()->StyleSet()->ResolvePseudoElementStyle(mContent->AsElement(),
-                                                         aPseudoType,
-                                                         StyleContext(),
-                                                         resultElement);
+  resultElement->SetPseudoElementType(aPseudoType);
 
-  if (!aElements.AppendElement(ContentInfo(resultElement, newStyleContext))) {
+  if (!aElements.AppendElement(resultElement)) {
     return NS_ERROR_OUT_OF_MEMORY;
   }
 
@@ -367,7 +363,7 @@ nsRangeFrame::Reflow(nsPresContext*           aPresContext,
 
   FinishAndStoreOverflow(&aDesiredSize);
 
-  aStatus = NS_FRAME_COMPLETE;
+  aStatus.Reset();
 
   NS_FRAME_SET_TRUNCATION(aStatus, aReflowInput, aDesiredSize);
 }
@@ -422,7 +418,7 @@ nsRangeFrame::ReflowAnonymousContent(nsPresContext*           aPresContext,
     ReflowOutput trackDesiredSize(aReflowInput);
     ReflowChild(trackFrame, aPresContext, trackDesiredSize,
                 trackReflowInput, trackX, trackY, 0, frameStatus);
-    MOZ_ASSERT(NS_FRAME_IS_FULLY_COMPLETE(frameStatus),
+    MOZ_ASSERT(frameStatus.IsFullyComplete(),
                "We gave our child unconstrained height, so it should be complete");
     FinishReflowChild(trackFrame, aPresContext, trackDesiredSize,
                       &trackReflowInput, trackX, trackY, 0);
@@ -444,7 +440,7 @@ nsRangeFrame::ReflowAnonymousContent(nsPresContext*           aPresContext,
     ReflowOutput thumbDesiredSize(aReflowInput);
     ReflowChild(thumbFrame, aPresContext, thumbDesiredSize,
                 thumbReflowInput, 0, 0, 0, frameStatus);
-    MOZ_ASSERT(NS_FRAME_IS_FULLY_COMPLETE(frameStatus),
+    MOZ_ASSERT(frameStatus.IsFullyComplete(),
                "We gave our child unconstrained height, so it should be complete");
     FinishReflowChild(thumbFrame, aPresContext, thumbDesiredSize,
                       &thumbReflowInput, 0, 0, 0);
@@ -470,7 +466,7 @@ nsRangeFrame::ReflowAnonymousContent(nsPresContext*           aPresContext,
     ReflowChild(rangeProgressFrame, aPresContext,
                 progressDesiredSize, progressReflowInput, 0, 0,
                 0, frameStatus);
-    MOZ_ASSERT(NS_FRAME_IS_FULLY_COMPLETE(frameStatus),
+    MOZ_ASSERT(frameStatus.IsFullyComplete(),
                "We gave our child unconstrained height, so it should be complete");
     FinishReflowChild(rangeProgressFrame, aPresContext,
                       progressDesiredSize, &progressReflowInput, 0, 0, 0);
@@ -562,7 +558,14 @@ nsRangeFrame::GetValueAtEventPoint(WidgetGUIEvent* aEvent)
                            &notUsedCanOverride);
     thumbSize.width = presContext->DevPixelsToAppUnits(size.width);
     thumbSize.height = presContext->DevPixelsToAppUnits(size.height);
-    MOZ_ASSERT(thumbSize.width > 0 && thumbSize.height > 0);
+    // For GTK, GetMinimumWidgetSize returns zero for the thumb dimension
+    // perpendicular to the orientation of the slider.  That's okay since we
+    // only care about the dimension in the direction of the slider when using
+    // |thumbSize| below, but it means this assertion need to check
+    // IsHorizontal().
+    MOZ_ASSERT((IsHorizontal() && thumbSize.width > 0) ||
+               (!IsHorizontal() && thumbSize.height > 0),
+               "The thumb is expected to take up some slider space");
   } else {
     nsIFrame* thumbFrame = mThumbDiv->GetPrimaryFrame();
     if (thumbFrame) { // diplay:none?

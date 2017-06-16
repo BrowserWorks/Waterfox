@@ -41,9 +41,7 @@
 namespace mozilla {
 namespace net {
 
-// Http2Session has multiple inheritance of things that implement
-// nsISupports, so this magic is taken from nsHttpPipeline that
-// implements some of the same abstract classes.
+// Http2Session has multiple inheritance of things that implement nsISupports
 NS_IMPL_ADDREF(Http2Session)
 NS_IMPL_RELEASE(Http2Session)
 NS_INTERFACE_MAP_BEGIN(Http2Session)
@@ -64,7 +62,7 @@ do {                             \
   return NS_ERROR_ILLEGAL_VALUE; \
   } while (0)
 
-Http2Session::Http2Session(nsISocketTransport *aSocketTransport, uint32_t version)
+Http2Session::Http2Session(nsISocketTransport *aSocketTransport, uint32_t version, bool attemptingEarlyData)
   : mSocketTransport(aSocketTransport)
   , mSegmentReader(nullptr)
   , mSegmentWriter(nullptr)
@@ -112,13 +110,14 @@ Http2Session::Http2Session(nsISocketTransport *aSocketTransport, uint32_t versio
   , mWaitingForSettingsAck(false)
   , mGoAwayOnPush(false)
   , mUseH2Deps(false)
+  , mAttemptingEarlyData(attemptingEarlyData)
 {
   MOZ_ASSERT(PR_GetCurrentThread() == gSocketThread);
 
   static uint64_t sSerial;
   mSerial = ++sSerial;
 
-  LOG3(("Http2Session::Http2Session %p serial=0x%X\n", this, mSerial));
+  LOG3(("Http2Session::Http2Session %p serial=0x%" PRIX64 "\n", this, mSerial));
 
   mInputFrameBuffer = MakeUnique<char[]>(mInputFrameBufferSize);
   mOutputQueueBuffer = MakeUnique<char[]>(mOutputQueueSize);
@@ -277,7 +276,7 @@ Http2Session::ReadTimeoutTick(PRIntervalTime now)
   }
 
   if (mPingSentEpoch) {
-    LOG3(("Http2Session::ReadTimeoutTick %p handle outstanding ping\n"));
+    LOG3(("Http2Session::ReadTimeoutTick %p handle outstanding ping\n", this));
     if ((now - mPingSentEpoch) >= gHttpHandler->SpdyPingTimeout()) {
       LOG3(("Http2Session::ReadTimeoutTick %p Ping Timer Exhaustion\n", this));
       mPingSentEpoch = 0;
@@ -406,7 +405,7 @@ Http2Session::AddStream(nsAHttpTransaction *aHttpTransaction,
 
   Http2Stream *stream = new Http2Stream(aHttpTransaction, this, aPriority);
 
-  LOG3(("Http2Session::AddStream session=%p stream=%p serial=%u "
+  LOG3(("Http2Session::AddStream session=%p stream=%p serial=%" PRIu64 " "
         "NextID=0x%X (tentative)", this, stream, mSerial, mNextStreamID));
 
   mStreamTransactionHash.Put(aHttpTransaction, stream);
@@ -501,6 +500,12 @@ Http2Session::SetWriteCallbacks()
 void
 Http2Session::RealignOutputQueue()
 {
+  if (mAttemptingEarlyData) {
+    // We can't realign right now, because we may need what's in there if early
+    // data fails.
+    return;
+  }
+
   mOutputQueueUsed -= mOutputQueueSent;
   memmove(mOutputQueueBuffer.get(),
           mOutputQueueBuffer.get() + mOutputQueueSent,
@@ -518,23 +523,35 @@ Http2Session::FlushOutputQueue()
   uint32_t countRead;
   uint32_t avail = mOutputQueueUsed - mOutputQueueSent;
 
+  if (!avail && mAttemptingEarlyData) {
+    // This is kind of a hack, but there are cases where we'll have already
+    // written the data we want whlie doing early data, but we get called again
+    // with a reader, and we need to avoid calling the reader when there's
+    // nothing for it to read.
+    return;
+  }
+
   rv = mSegmentReader->
     OnReadSegment(mOutputQueueBuffer.get() + mOutputQueueSent, avail,
                   &countRead);
-  LOG3(("Http2Session::FlushOutputQueue %p sz=%d rv=%x actual=%d",
-        this, avail, rv, countRead));
+  LOG3(("Http2Session::FlushOutputQueue %p sz=%d rv=%" PRIx32 " actual=%d",
+        this, avail, static_cast<uint32_t>(rv), countRead));
 
   // Dont worry about errors on write, we will pick this up as a read error too
   if (NS_FAILED(rv))
     return;
+
+  mOutputQueueSent += countRead;
+
+  if (mAttemptingEarlyData) {
+    return;
+  }
 
   if (countRead == avail) {
     mOutputQueueUsed = 0;
     mOutputQueueSent = 0;
     return;
   }
-
-  mOutputQueueSent += countRead;
 
   // If the output queue is close to filling up and we have sent out a good
   // chunk of data from the beginning then realign it.
@@ -552,6 +569,12 @@ Http2Session::DontReuse()
   mShouldGoAway = true;
   if (!mStreamTransactionHash.Count())
     Close(NS_OK);
+}
+
+uint32_t
+Http2Session::SpdyVersion()
+{
+  return HTTP_VERSION_2;
 }
 
 uint32_t
@@ -603,7 +626,7 @@ Http2Session::TryToActivate(Http2Stream *aStream)
 
   if (!RoomForMoreConcurrent()) {
     LOG3(("Http2Session::TryToActivate %p stream=%p no room for more concurrent "
-          "streams %d\n", this, aStream));
+          "streams\n", this, aStream));
     QueueStream(aStream);
     return false;
   }
@@ -1013,8 +1036,8 @@ Http2Session::CleanupStream(Http2Stream *aStream, nsresult aResult,
                             errorType aResetCode)
 {
   MOZ_ASSERT(PR_GetCurrentThread() == gSocketThread);
-  LOG3(("Http2Session::CleanupStream %p %p 0x%X %X\n",
-        this, aStream, aStream ? aStream->StreamID() : 0, aResult));
+  LOG3(("Http2Session::CleanupStream %p %p 0x%X %" PRIX32 "\n",
+        this, aStream, aStream ? aStream->StreamID() : 0, static_cast<uint32_t>(aResult)));
   if (!aStream) {
     return;
   }
@@ -1122,8 +1145,8 @@ void
 Http2Session::CloseStream(Http2Stream *aStream, nsresult aResult)
 {
   MOZ_ASSERT(PR_GetCurrentThread() == gSocketThread);
-  LOG3(("Http2Session::CloseStream %p %p 0x%x %X\n",
-        this, aStream, aStream->StreamID(), aResult));
+  LOG3(("Http2Session::CloseStream %p %p 0x%x %" PRIX32 "\n",
+        this, aStream, aStream->StreamID(), static_cast<uint32_t>(aResult)));
 
   MaybeDecrementConcurrent(aStream);
 
@@ -1467,7 +1490,7 @@ Http2Session::RecvSettings(Http2Session *self)
         self->mInputFrameFlags & kFlag_ACK));
 
   if ((self->mInputFrameFlags & kFlag_ACK) && self->mInputFrameDataSize) {
-    LOG3(("Http2Session::RecvSettings %p ACK with non zero payload is err\n"));
+    LOG3(("Http2Session::RecvSettings %p ACK with non zero payload is err\n", self));
     RETURN_SESSION_ERROR(self, PROTOCOL_ERROR);
   }
 
@@ -1978,8 +2001,8 @@ Http2Session::RecvWindowUpdate(Http2Session *self)
     }
 
     LOG3(("Http2Session::RecvWindowUpdate %p stream 0x%X window "
-          "%d increased by %d now %d.\n", self, self->mInputFrameID,
-          oldRemoteWindow, delta, oldRemoteWindow + delta));
+          "%" PRId64 " increased by %" PRIu32 " now %" PRId64 ".\n",
+          self, self->mInputFrameID, oldRemoteWindow, delta, oldRemoteWindow + delta));
 
   } else { // session window update
     if (delta == 0) {
@@ -2017,7 +2040,7 @@ Http2Session::RecvWindowUpdate(Http2Session *self)
       }
     }
     LOG3(("Http2Session::RecvWindowUpdate %p session window "
-          "%d increased by %d now %d.\n", self,
+          "%" PRId64 " increased by %d now %" PRId64 ".\n", self,
           oldRemoteWindow, delta, oldRemoteWindow + delta));
   }
 
@@ -2268,6 +2291,8 @@ Http2Session::OnTransportStatus(nsITransport* aTransport,
   case NS_NET_STATUS_RESOLVED_HOST:
   case NS_NET_STATUS_CONNECTING_TO:
   case NS_NET_STATUS_CONNECTED_TO:
+  case NS_NET_STATUS_TLS_HANDSHAKE_STARTING:
+  case NS_NET_STATUS_TLS_HANDSHAKE_ENDED:
   {
     Http2Stream *target = mStreamIDHash.Get(1);
     nsAHttpTransaction *transaction = target ? target->Transaction() : nullptr;
@@ -2322,8 +2347,8 @@ Http2Session::ReadSegmentsAgain(nsAHttpSegmentReader *reader,
   nsresult rv = ConfirmTLSProfile();
   if (NS_FAILED(rv)) {
     if (mGoAwayReason == INADEQUATE_SECURITY) {
-      LOG3(("Http2Session::ReadSegments %p returning INADEQUATE_SECURITY %x",
-            this, NS_ERROR_NET_INADEQUATE_SECURITY));
+      LOG3(("Http2Session::ReadSegments %p returning INADEQUATE_SECURITY %" PRIx32,
+            this, static_cast<uint32_t>(NS_ERROR_NET_INADEQUATE_SECURITY)));
       rv = NS_ERROR_NET_INADEQUATE_SECURITY;
     }
     return rv;
@@ -2340,9 +2365,40 @@ Http2Session::ReadSegmentsAgain(nsAHttpSegmentReader *reader,
   if (!stream) {
     LOG3(("Http2Session %p could not identify a stream to write; suspending.",
           this));
+    uint32_t availBeforeFlush = mOutputQueueUsed - mOutputQueueSent;
     FlushOutputQueue();
+    uint32_t availAfterFlush = mOutputQueueUsed - mOutputQueueSent;
+    if (availBeforeFlush != availAfterFlush) {
+      LOG3(("Http2Session %p ResumeRecv After early flush in ReadSegments", this));
+      Unused << ResumeRecv();
+    }
     SetWriteCallbacks();
-    return NS_BASE_STREAM_WOULD_BLOCK;
+    if (mAttemptingEarlyData) {
+      // We can still try to send our preamble as early-data
+      *countRead = mOutputQueueUsed - mOutputQueueSent;
+    }
+    return *countRead ? NS_OK : NS_BASE_STREAM_WOULD_BLOCK;
+  }
+
+  uint32_t earlyDataUsed = 0;
+  if (mAttemptingEarlyData) {
+    if (!stream->Do0RTT()) {
+      LOG3(("Http2Session %p will not get early data from Http2Stream %p 0x%X",
+            this, stream, stream->StreamID()));
+      FlushOutputQueue();
+      SetWriteCallbacks();
+      // We can still send our preamble
+      *countRead = mOutputQueueUsed - mOutputQueueSent;
+      return *countRead ? NS_OK : NS_BASE_STREAM_WOULD_BLOCK;
+    }
+
+    // Need to adjust this to only take as much as we can fit in with the
+    // preamble/settings/priority stuff
+    count -= (mOutputQueueUsed - mOutputQueueSent);
+
+    // Keep track of this to add it into countRead later, as
+    // stream->ReadSegments will likely change the value of mOutputQueueUsed.
+    earlyDataUsed = mOutputQueueUsed - mOutputQueueSent;
   }
 
   LOG3(("Http2Session %p will write from Http2Stream %p 0x%X "
@@ -2350,6 +2406,19 @@ Http2Session::ReadSegmentsAgain(nsAHttpSegmentReader *reader,
         stream->RequestBlockedOnRead(), stream->BlockedOnRwin()));
 
   rv = stream->ReadSegments(this, count, countRead);
+
+  if (earlyDataUsed) {
+    // Do this here because countRead could get reset somewhere down the rabbit
+    // hole of stream->ReadSegments, and we want to make sure we return the
+    // proper value to our caller.
+    *countRead += earlyDataUsed;
+  }
+
+  if (mAttemptingEarlyData && !m0RTTStreams.Contains(stream->StreamID())) {
+    LOG3(("Http2Session::ReadSegmentsAgain adding stream %d to m0RTTStreams\n",
+          stream->StreamID()));
+    m0RTTStreams.AppendElement(stream->StreamID());
+  }
 
   // Not every permutation of stream->ReadSegents produces data (and therefore
   // tries to flush the output queue) - SENDING_FIN_STREAM can be an example
@@ -2381,8 +2450,8 @@ Http2Session::ReadSegmentsAgain(nsAHttpSegmentReader *reader,
   }
 
   if (NS_FAILED(rv)) {
-    LOG3(("Http2Session::ReadSegments %p may return FAIL code %X",
-          this, rv));
+    LOG3(("Http2Session::ReadSegments %p may return FAIL code %" PRIX32,
+          this, static_cast<uint32_t>(rv)));
     if (rv == NS_BASE_STREAM_WOULD_BLOCK) {
       return rv;
     }
@@ -2563,8 +2632,8 @@ Http2Session::WriteSegmentsAgain(nsAHttpSegmentWriter *writer,
                      kFrameHeaderBytes - mInputFrameBufferUsed, countWritten);
 
     if (NS_FAILED(rv)) {
-      LOG3(("Http2Session %p buffering frame header read failure %x\n",
-            this, rv));
+      LOG3(("Http2Session %p buffering frame header read failure %" PRIx32 "\n",
+            this, static_cast<uint32_t>(rv)));
       // maybe just blocked reading from network
       if (rv == NS_BASE_STREAM_WOULD_BLOCK)
         rv = NS_OK;
@@ -2607,7 +2676,7 @@ Http2Session::WriteSegmentsAgain(nsAHttpSegmentWriter *writer,
 
     mPaddingLength = 0;
 
-    LOG3(("Http2Session::WriteSegments[%p::%x] Frame Header Read "
+    LOG3(("Http2Session::WriteSegments[%p::%" PRIu64 "] Frame Header Read "
           "type %X data len %u flags %x id 0x%X",
           this, mSerial, mInputFrameType, mInputFrameDataSize, mInputFrameFlags,
           mInputFrameID));
@@ -2663,8 +2732,8 @@ Http2Session::WriteSegmentsAgain(nsAHttpSegmentWriter *writer,
                      countWritten);
 
     if (NS_FAILED(rv)) {
-      LOG3(("Http2Session %p buffering data frame padding control read failure %x\n",
-            this, rv));
+      LOG3(("Http2Session %p buffering data frame padding control read failure %" PRIx32 "\n",
+            this, static_cast<uint32_t>(rv)));
       // maybe just blocked reading from network
       if (rv == NS_BASE_STREAM_WOULD_BLOCK)
         rv = NS_OK;
@@ -2774,8 +2843,8 @@ Http2Session::WriteSegmentsAgain(nsAHttpSegmentWriter *writer,
         ResetDownstreamState();
       LOG3(("Http2Session::WriteSegments session=%p id 0x%X "
             "needscleanup=%p. cleanup stream based on "
-            "stream->writeSegments returning code %x\n",
-            this, streamID, mNeedsCleanup, rv));
+            "stream->writeSegments returning code %" PRIx32 "\n",
+            this, streamID, mNeedsCleanup, static_cast<uint32_t>(rv)));
       MOZ_ASSERT(!mNeedsCleanup || mNeedsCleanup->StreamID() == streamID);
       CleanupStream(streamID, NS_OK, CANCEL_ERROR);
       mNeedsCleanup = nullptr;
@@ -2793,7 +2862,8 @@ Http2Session::WriteSegmentsAgain(nsAHttpSegmentWriter *writer,
     }
 
     if (NS_FAILED(rv)) {
-      LOG3(("Http2Session %p data frame read failure %x\n", this, rv));
+      LOG3(("Http2Session %p data frame read failure %" PRIx32 "\n", this,
+            static_cast<uint32_t>(rv)));
       // maybe just blocked reading from network
       if (rv == NS_BASE_STREAM_WOULD_BLOCK)
         rv = NS_OK;
@@ -2819,7 +2889,8 @@ Http2Session::WriteSegmentsAgain(nsAHttpSegmentWriter *writer,
     rv = NetworkRead(writer, trash, discardCount, countWritten);
 
     if (NS_FAILED(rv)) {
-      LOG3(("Http2Session %p discard frame read failure %x\n", this, rv));
+      LOG3(("Http2Session %p discard frame read failure %" PRIx32 "\n", this,
+            static_cast<uint32_t>(rv)));
       // maybe just blocked reading from network
       if (rv == NS_BASE_STREAM_WOULD_BLOCK)
         rv = NS_OK;
@@ -2858,8 +2929,8 @@ Http2Session::WriteSegmentsAgain(nsAHttpSegmentWriter *writer,
                    mInputFrameDataSize - mInputFrameDataRead, countWritten);
 
   if (NS_FAILED(rv)) {
-    LOG3(("Http2Session %p buffering control frame read failure %x\n",
-          this, rv));
+    LOG3(("Http2Session %p buffering control frame read failure %" PRIx32 "\n",
+          this, static_cast<uint32_t>(rv)));
     // maybe just blocked reading from network
     if (rv == NS_BASE_STREAM_WOULD_BLOCK)
       rv = NS_OK;
@@ -2901,6 +2972,58 @@ Http2Session::WriteSegments(nsAHttpSegmentWriter *writer,
 {
   bool again = false;
   return WriteSegmentsAgain(writer, count, countWritten, &again);
+}
+
+nsresult
+Http2Session::Finish0RTT(bool aRestart, bool aAlpnChanged)
+{
+  MOZ_ASSERT(mAttemptingEarlyData);
+  LOG3(("Http2Session::Finish0RTT %p aRestart=%d aAlpnChanged=%d", this,
+        aRestart, aAlpnChanged));
+
+  for (size_t i = 0; i < m0RTTStreams.Length(); ++i) {
+    // Instead of passing (aRestart, aAlpnChanged) here, we use aAlpnChanged for
+    // both arguments because as long as the alpn token stayed the same, we can
+    // just reuse what we have in our buffer to send instead of having to have
+    // the transaction rewind and read it all over again. We only need to rewind
+    // the transaction if we're switching to a new protocol, because our buffer
+    // won't get used in that case.
+    Http2Stream *stream = mStreamIDHash.Get(m0RTTStreams[i]);
+    if (stream) {
+      stream->Finish0RTT(aAlpnChanged, aAlpnChanged);
+    }
+  }
+
+  if (aRestart) {
+    // 0RTT failed
+    if (aAlpnChanged) {
+      // This is a slightly more involved case - we need to get all our streams/
+      // transactions back in the queue so they can restart as http/1
+
+      // These must be set this way to ensure we gracefully restart all streams
+      mGoAwayID = 0;
+      mCleanShutdown = true;
+
+      // Close takes care of the rest of our work for us. The reason code here
+      // doesn't matter, as we aren't actually going to send a GOAWAY frame, but
+      // we use NS_ERROR_NET_RESET as it's closest to the truth.
+      Close(NS_ERROR_NET_RESET);
+    } else {
+      // This is the easy case - early data failed, but we're speaking h2, so
+      // we just need to rewind to the beginning of the preamble and try again.
+      mOutputQueueSent = 0;
+    }
+  } else {
+    // 0RTT succeeded
+    // Make sure we look for any incoming data in repsonse to our early data.
+    ResumeRecv();
+  }
+
+  mAttemptingEarlyData = false;
+  m0RTTStreams.Clear();
+  RealignOutputQueue();
+
+  return NS_OK;
 }
 
 nsresult
@@ -2947,8 +3070,8 @@ Http2Session::ProcessSlowConsumer(Http2Stream *slowConsumer,
   mSegmentWriter = writer;
   nsresult rv = slowConsumer->WriteSegments(this, count, countWritten);
   mSegmentWriter = nullptr;
-  LOG3(("Http2Session::ProcessSlowConsumer Writesegments %p 0x%X rv %X %d\n",
-        this, slowConsumer->StreamID(), rv, *countWritten));
+  LOG3(("Http2Session::ProcessSlowConsumer Writesegments %p 0x%X rv %" PRIX32 " %d\n",
+        this, slowConsumer->StreamID(), static_cast<uint32_t>(rv), *countWritten));
   if (NS_SUCCEEDED(rv) && !*countWritten && slowConsumer->RecvdFin()) {
     rv = NS_BASE_STREAM_CLOSED;
   }
@@ -2990,7 +3113,7 @@ Http2Session::UpdateLocalStreamWindow(Http2Stream *stream, uint32_t bytes)
   int64_t  localWindow = stream->ClientReceiveWindow();
 
   LOG3(("Http2Session::UpdateLocalStreamWindow this=%p id=0x%X newbytes=%u "
-        "unacked=%llu localWindow=%lld\n",
+        "unacked=%" PRIu64 " localWindow=%" PRId64 "\n",
         this, stream->StreamID(), bytes, unacked, localWindow));
 
   if (!unacked)
@@ -3039,7 +3162,7 @@ Http2Session::UpdateLocalSessionWindow(uint32_t bytes)
   mLocalSessionWindow -= bytes;
 
   LOG3(("Http2Session::UpdateLocalSessionWindow this=%p newbytes=%u "
-        "localWindow=%lld\n", this, bytes, mLocalSessionWindow));
+        "localWindow=%" PRId64 "\n", this, bytes, mLocalSessionWindow));
 
   // Don't necessarily ack every data packet. Only do it
   // after a significant amount of data.
@@ -3092,7 +3215,7 @@ Http2Session::Close(nsresult aReason)
   if (mClosed)
     return;
 
-  LOG3(("Http2Session::Close %p %X", this, aReason));
+  LOG3(("Http2Session::Close %p %" PRIX32, this, static_cast<uint32_t>(aReason)));
 
   mClosed = true;
 
@@ -3111,7 +3234,9 @@ Http2Session::Close(nsresult aReason)
   } else {
     goAwayReason = INTERNAL_ERROR;
   }
-  GenerateGoAway(goAwayReason);
+  if (!mAttemptingEarlyData) {
+    GenerateGoAway(goAwayReason);
+  }
   mConnection = nullptr;
   mSegmentReader = nullptr;
   mSegmentWriter = nullptr;
@@ -3130,20 +3255,21 @@ Http2Session::CloseTransaction(nsAHttpTransaction *aTransaction,
                                nsresult aResult)
 {
   MOZ_ASSERT(PR_GetCurrentThread() == gSocketThread);
-  LOG3(("Http2Session::CloseTransaction %p %p %x", this, aTransaction, aResult));
+  LOG3(("Http2Session::CloseTransaction %p %p %" PRIx32, this, aTransaction,
+        static_cast<uint32_t>(aResult)));
 
   // Generally this arrives as a cancel event from the connection manager.
 
   // need to find the stream and call CleanupStream() on it.
   Http2Stream *stream = mStreamTransactionHash.Get(aTransaction);
   if (!stream) {
-    LOG3(("Http2Session::CloseTransaction %p %p %x - not found.",
-          this, aTransaction, aResult));
+    LOG3(("Http2Session::CloseTransaction %p %p %" PRIx32 " - not found.",
+          this, aTransaction, static_cast<uint32_t>(aResult)));
     return;
   }
   LOG3(("Http2Session::CloseTransaction probably a cancel. "
-        "this=%p, trans=%p, result=%x, streamID=0x%X stream=%p",
-        this, aTransaction, aResult, stream->StreamID(), stream));
+        "this=%p, trans=%p, result=%" PRIx32 ", streamID=0x%X stream=%p",
+        this, aTransaction, static_cast<uint32_t>(aResult), stream->StreamID(), stream));
   CleanupStream(stream, aResult, CANCEL_ERROR);
   ResumeRecv();
 }
@@ -3212,7 +3338,7 @@ Http2Session::OnReadSegment(const char *buf,
 nsresult
 Http2Session::CommitToSegmentSize(uint32_t count, bool forceCommitment)
 {
-  if (mOutputQueueUsed)
+  if (mOutputQueueUsed && !mAttemptingEarlyData)
     FlushOutputQueue();
 
   // would there be enough room to buffer this if needed?
@@ -3532,11 +3658,17 @@ Http2Session::ALPNCallback(nsISupports *securityInfo)
 nsresult
 Http2Session::ConfirmTLSProfile()
 {
-  if (mTLSProfileConfirmed)
+  if (mTLSProfileConfirmed) {
     return NS_OK;
+  }
 
   LOG3(("Http2Session::ConfirmTLSProfile %p mConnection=%p\n",
         this, mConnection.get()));
+
+  if (mAttemptingEarlyData) {
+    LOG3(("Http2Session::ConfirmTLSProfile %p temporarily passing due to early data\n", this));
+    return NS_OK;
+  }
 
   if (!gHttpHandler->EnforceHttp2TlsProfile()) {
     LOG3(("Http2Session::ConfirmTLSProfile %p passed due to configuration bypass\n", this));
@@ -3689,21 +3821,6 @@ Http2Session::TakeHttpConnection()
   return nullptr;
 }
 
-uint32_t
-Http2Session::CancelPipeline(nsresult reason)
-{
-  // we don't pipeline inside http/2, so this isn't an issue
-  return 0;
-}
-
-nsAHttpTransaction::Classifier
-Http2Session::Classification()
-{
-  if (!mConnection)
-    return nsAHttpTransaction::CLASS_GENERAL;
-  return mConnection->Classification();
-}
-
 void
 Http2Session::GetSecurityCallbacks(nsIInterfaceRequestor **aOut)
 {
@@ -3801,42 +3918,6 @@ Http2Session::TakeSubTransactions(
     iter.Remove();
   }
   return NS_OK;
-}
-
-nsresult
-Http2Session::AddTransaction(nsAHttpTransaction *)
-{
-  // This API is meant for pipelining, Http2Session's should be
-  // extended with AddStream()
-
-  MOZ_ASSERT(false,
-             "Http2Session::AddTransaction() should not be called");
-
-  return NS_ERROR_NOT_IMPLEMENTED;
-}
-
-uint32_t
-Http2Session::PipelineDepth()
-{
-  return IsDone() ? 0 : 1;
-}
-
-nsresult
-Http2Session::SetPipelinePosition(int32_t position)
-{
-  // This API is meant for pipelining, Http2Session's should be
-  // extended with AddStream()
-
-  MOZ_ASSERT(false,
-             "Http2Session::SetPipelinePosition() should not be called");
-
-  return NS_ERROR_NOT_IMPLEMENTED;
-}
-
-int32_t
-Http2Session::PipelinePosition()
-{
-  return 0;
 }
 
 //-----------------------------------------------------------------------------

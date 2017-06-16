@@ -35,9 +35,7 @@ this.SyncScheduler = function SyncScheduler(service) {
 SyncScheduler.prototype = {
   _log: Log.repository.getLogger("Sync.SyncScheduler"),
 
-  _fatalLoginStatus: [LOGIN_FAILED_NO_USERNAME,
-                      LOGIN_FAILED_NO_PASSWORD,
-                      LOGIN_FAILED_NO_PASSPHRASE,
+  _fatalLoginStatus: [LOGIN_FAILED_NO_PASSPHRASE,
                       LOGIN_FAILED_INVALID_PASSPHRASE,
                       LOGIN_FAILED_LOGIN_REJECTED],
 
@@ -49,14 +47,7 @@ SyncScheduler.prototype = {
   setDefaults: function setDefaults() {
     this._log.trace("Setting SyncScheduler policy values to defaults.");
 
-    let service = Cc["@mozilla.org/weave/service;1"]
-                    .getService(Ci.nsISupports)
-                    .wrappedJSObject;
-
-    let part = service.fxAccountsEnabled ? "fxa" : "sync11";
-    let prefSDInterval = "scheduler." + part + ".singleDeviceInterval";
-    this.singleDeviceInterval = getThrottledIntervalPreference(prefSDInterval);
-
+    this.singleDeviceInterval = getThrottledIntervalPreference("scheduler.fxa.singleDeviceInterval");
     this.idleInterval         = getThrottledIntervalPreference("scheduler.idleInterval");
     this.activeInterval       = getThrottledIntervalPreference("scheduler.activeInterval");
     this.immediateInterval    = getThrottledIntervalPreference("scheduler.immediateInterval");
@@ -66,6 +57,11 @@ SyncScheduler.prototype = {
     this.idle = false;
 
     this.hasIncomingItems = false;
+    // This is the last number of clients we saw when previously updating the
+    // client mode. If this != currentNumClients (obtained from prefs written
+    // by the clients engine) then we need to transition to and from
+    // single and multi-device mode.
+    this.numClientsLastSync = 0;
 
     this.clearSyncTriggers();
   },
@@ -99,11 +95,15 @@ SyncScheduler.prototype = {
     Svc.Prefs.set("globalScore", value);
   },
 
+  // The number of clients we have is maintained in preferences via the
+  // clients engine, and only updated after a successsful sync.
   get numClients() {
-    return Svc.Prefs.get("numClients", 0);
+    return Svc.Prefs.get("clients.devices.desktop", 0) +
+           Svc.Prefs.get("clients.devices.mobile", 0);
+
   },
   set numClients(value) {
-    Svc.Prefs.set("numClients", value);
+    throw new Error("Don't set numClients - the clients engine manages it.")
   },
 
   init: function init() {
@@ -340,16 +340,16 @@ SyncScheduler.prototype = {
   },
 
   /**
-   * Process the locally stored clients list to figure out what mode to be in
+   * Query the number of known clients to figure out what mode to be in
    */
   updateClientMode: function updateClientMode() {
     // Nothing to do if it's the same amount
-    let numClients = this.service.clientsEngine.stats.numClients;
-    if (this.numClients == numClients)
+    let numClients = this.numClients;
+    if (numClients == this.numClientsLastSync)
       return;
 
-    this._log.debug("Client count: " + this.numClients + " -> " + numClients);
-    this.numClients = numClients;
+    this._log.debug(`Client count: ${this.numClientsLastSync} -> ${numClients}`);
+    this.numClientsLastSync = numClients;
 
     if (numClients <= 1) {
       this._log.trace("Adjusting syncThreshold to SINGLE_USER_THRESHOLD");

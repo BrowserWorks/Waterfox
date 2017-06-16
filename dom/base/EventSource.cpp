@@ -129,7 +129,7 @@ public:
                                    uint32_t* aWriteCount);
   void ParseSegment(const char* aBuffer, uint32_t aLength);
   nsresult SetFieldAndClear();
-  nsresult ClearFields();
+  void ClearFields();
   nsresult ResetEvent();
   nsresult DispatchCurrentMessageEvent();
   nsresult ParseCharacter(char16_t aChr);
@@ -282,7 +282,7 @@ public:
   // Message related data members. May be set / initialized when initializing
   // EventSourceImpl on target thread but should only be used on target thread.
   nsString mLastEventID;
-  Message mCurrentMessage;
+  UniquePtr<Message> mCurrentMessage;
   nsDeque mMessagesToDispatch;
   ParserStatus mStatus;
   nsCOMPtr<nsIUnicodeDecoder> mUnicodeDecoder;
@@ -710,11 +710,11 @@ EventSourceImpl::StreamReaderFunc(nsIInputStream* aInputStream,
                                   uint32_t* aWriteCount)
 {
   EventSourceImpl* thisObject = static_cast<EventSourceImpl*>(aClosure);
-  thisObject->AssertIsOnTargetThread();
   if (!thisObject || !aWriteCount) {
     NS_WARNING("EventSource cannot read from stream: no aClosure or aWriteCount");
     return NS_ERROR_FAILURE;
   }
+  thisObject->AssertIsOnTargetThread();
   MOZ_ASSERT(!thisObject->IsShutDown());
   thisObject->ParseSegment((const char*)aFromRawSegment, aCount);
   *aWriteCount = aCount;
@@ -1440,12 +1440,10 @@ EventSourceImpl::DispatchCurrentMessageEvent()
 {
   AssertIsOnTargetThread();
   MOZ_ASSERT(!IsShutDown());
-  nsAutoPtr<Message> message(new Message());
-  *message = mCurrentMessage;
-
+  UniquePtr<Message> message(Move(mCurrentMessage));
   ClearFields();
 
-  if (message->mData.IsEmpty()) {
+  if (!message || message->mData.IsEmpty()) {
     return NS_OK;
   }
 
@@ -1463,7 +1461,7 @@ EventSourceImpl::DispatchCurrentMessageEvent()
   }
 
   size_t sizeBefore = mMessagesToDispatch.GetSize();
-  mMessagesToDispatch.Push(message.forget());
+  mMessagesToDispatch.Push(message.release());
   NS_ENSURE_TRUE(mMessagesToDispatch.GetSize() == sizeBefore + 1,
                  NS_ERROR_OUT_OF_MEMORY);
 
@@ -1485,11 +1483,11 @@ void
 EventSourceImpl::DispatchAllMessageEvents()
 {
   AssertIsOnTargetThread();
+  mGoingToDispatchAllMessages = false;
+
   if (IsClosed() || IsFrozen()) {
     return;
   }
-
-  mGoingToDispatchAllMessages = false;
 
   nsresult rv = mEventSource->CheckInnerWindowCorrectness();
   if (NS_FAILED(rv)) {
@@ -1510,9 +1508,7 @@ EventSourceImpl::DispatchAllMessageEvents()
   JSContext* cx = jsapi.cx();
 
   while (mMessagesToDispatch.GetSize() > 0) {
-    nsAutoPtr<Message>
-      message(static_cast<Message*>(mMessagesToDispatch.PopFront()));
-
+    UniquePtr<Message> message(static_cast<Message*>(mMessagesToDispatch.PopFront()));
     // Now we can turn our string into a jsval
     JS::Rooted<JS::Value> jsData(cx);
     {
@@ -1550,19 +1546,13 @@ EventSourceImpl::DispatchAllMessageEvents()
   }
 }
 
-nsresult
+void
 EventSourceImpl::ClearFields()
 {
   AssertIsOnTargetThread();
-  // mLastEventID and mReconnectionTime must be cached
-  mCurrentMessage.mEventName.Truncate();
-  mCurrentMessage.mLastEventID.Truncate();
-  mCurrentMessage.mData.Truncate();
-
+  mCurrentMessage = nullptr;
   mLastFieldName.Truncate();
   mLastFieldValue.Truncate();
-
-  return NS_OK;
 }
 
 nsresult
@@ -1574,7 +1564,9 @@ EventSourceImpl::SetFieldAndClear()
     mLastFieldValue.Truncate();
     return NS_OK;
   }
-
+  if (!mCurrentMessage) {
+    mCurrentMessage = MakeUnique<Message>();
+  }
   char16_t first_char;
   first_char = mLastFieldName.CharAt(0);
 
@@ -1585,20 +1577,20 @@ EventSourceImpl::SetFieldAndClear()
         // If the field name is "data" append the field value to the data
         // buffer, then append a single U+000A LINE FEED (LF) character
         // to the data buffer.
-        mCurrentMessage.mData.Append(mLastFieldValue);
-        mCurrentMessage.mData.Append(LF_CHAR);
+        mCurrentMessage->mData.Append(mLastFieldValue);
+        mCurrentMessage->mData.Append(LF_CHAR);
       }
       break;
 
     case char16_t('e'):
       if (mLastFieldName.EqualsLiteral("event")) {
-        mCurrentMessage.mEventName.Assign(mLastFieldValue);
+        mCurrentMessage->mEventName.Assign(mLastFieldValue);
       }
       break;
 
     case char16_t('i'):
       if (mLastFieldName.EqualsLiteral("id")) {
-        mCurrentMessage.mLastEventID.Assign(mLastFieldValue);
+        mCurrentMessage->mLastEventID.Assign(mLastFieldValue);
       }
       break;
 
@@ -2096,32 +2088,6 @@ EventSource::UpdateDontKeepAlive()
 
 NS_IMPL_CYCLE_COLLECTION_CLASS(EventSource)
 
-NS_IMPL_CYCLE_COLLECTION_CAN_SKIP_BEGIN(EventSource)
-  bool isBlack = tmp->IsBlack();
-  if (isBlack || tmp->mKeepingAlive) {
-    if (tmp->mListenerManager) {
-      tmp->mListenerManager->MarkForCC();
-    }
-    if (!isBlack && tmp->PreservingWrapper()) {
-      // This marks the wrapper black.
-      tmp->GetWrapper();
-    }
-    return true;
-  }
-NS_IMPL_CYCLE_COLLECTION_CAN_SKIP_END
-
-NS_IMPL_CYCLE_COLLECTION_CAN_SKIP_IN_CC_BEGIN(EventSource)
-  return tmp->IsBlack();
-NS_IMPL_CYCLE_COLLECTION_CAN_SKIP_IN_CC_END
-
-NS_IMPL_CYCLE_COLLECTION_CAN_SKIP_THIS_BEGIN(EventSource)
-  return tmp->IsBlack();
-NS_IMPL_CYCLE_COLLECTION_CAN_SKIP_THIS_END
-
-NS_IMPL_CYCLE_COLLECTION_TRACE_BEGIN_INHERITED(EventSource,
-                                               DOMEventTargetHelper)
-NS_IMPL_CYCLE_COLLECTION_TRACE_END
-
 NS_IMPL_CYCLE_COLLECTION_TRAVERSE_BEGIN_INHERITED(EventSource,
                                                   DOMEventTargetHelper)
 NS_IMPL_CYCLE_COLLECTION_TRAVERSE_END
@@ -2133,6 +2099,12 @@ NS_IMPL_CYCLE_COLLECTION_UNLINK_BEGIN_INHERITED(EventSource,
     MOZ_ASSERT(!tmp->mImpl);
   }
 NS_IMPL_CYCLE_COLLECTION_UNLINK_END
+
+bool
+EventSource::IsCertainlyAliveForCC() const
+{
+  return mKeepingAlive;
+}
 
 NS_INTERFACE_MAP_BEGIN_CYCLE_COLLECTION_INHERITED(EventSource)
 NS_INTERFACE_MAP_END_INHERITING(DOMEventTargetHelper)

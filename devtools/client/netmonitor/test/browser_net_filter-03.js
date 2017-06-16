@@ -27,10 +27,15 @@ add_task(function* () {
   // It seems that this test may be slow on Ubuntu builds running on ec2.
   requestLongerTimeout(2);
 
-  let { $, NetMonitorView } = monitor.panelWin;
-  let { RequestsMenu } = NetMonitorView;
+  let { document, gStore, windowRequire } = monitor.panelWin;
+  let Actions = windowRequire("devtools/client/netmonitor/actions/index");
+  let {
+    getDisplayedRequests,
+    getSelectedRequest,
+    getSortedRequests,
+  } = windowRequire("devtools/client/netmonitor/selectors/index");
 
-  RequestsMenu.lazyUpdate = false;
+  gStore.dispatch(Actions.batchEnable(false));
 
   // The test assumes that the first HTML request here has a longer response
   // body than the other HTML requests performed later during the test.
@@ -44,25 +49,28 @@ add_task(function* () {
   yield performRequestsInContent(requests);
   yield wait;
 
-  EventUtils.sendMouseEvent({ type: "mousedown" }, $("#details-pane-toggle"));
+  EventUtils.sendMouseEvent({ type: "mousedown" },
+    document.querySelectorAll(".request-list-item")[0]);
 
-  isnot(RequestsMenu.selectedItem, null,
+  isnot(getSelectedRequest(gStore.getState()), null,
     "There should be a selected item in the requests menu.");
-  is(RequestsMenu.selectedIndex, 0,
+  is(getSelectedIndex(gStore.getState()), 0,
     "The first item should be selected in the requests menu.");
-  is(NetMonitorView.detailsPaneHidden, false,
-    "The details pane should not be hidden after toggle button was pressed.");
+  is(!!document.querySelector(".network-details-panel"), true,
+    "The network details panel should be visible after toggle button was pressed.");
 
   testFilterButtons(monitor, "all");
   testContents([0, 1, 2, 3, 4, 5, 6], 7, 0);
 
   info("Sorting by size, ascending.");
-  EventUtils.sendMouseEvent({ type: "click" }, $("#requests-menu-size-button"));
+  EventUtils.sendMouseEvent({ type: "click" },
+    document.querySelector("#requests-list-size-button"));
   testFilterButtons(monitor, "all");
   testContents([6, 4, 5, 0, 1, 2, 3], 7, 6);
 
   info("Testing html filtering.");
-  EventUtils.sendMouseEvent({ type: "click" }, $("#requests-menu-filter-html-button"));
+  EventUtils.sendMouseEvent({ type: "click" },
+    document.querySelector(".requests-list-filter-html-button"));
   testFilterButtons(monitor, "html");
   testContents([6, 4, 5, 0, 1, 2, 3], 1, 6);
 
@@ -89,21 +97,30 @@ add_task(function* () {
   yield teardown(monitor);
 
   function resetSorting() {
-    EventUtils.sendMouseEvent({ type: "click" }, $("#requests-menu-waterfall-button"));
-    EventUtils.sendMouseEvent({ type: "click" }, $("#requests-menu-size-button"));
+    EventUtils.sendMouseEvent({ type: "click" },
+      document.querySelector("#requests-list-waterfall-button"));
+    EventUtils.sendMouseEvent({ type: "click" },
+      document.querySelector("#requests-list-size-button"));
+  }
+
+  function getSelectedIndex(state) {
+    if (!state.requests.selectedId) {
+      return -1;
+    }
+    return getSortedRequests(state).findIndex(r => r.id === state.requests.selectedId);
   }
 
   function testContents(order, visible, selection) {
-    isnot(RequestsMenu.selectedItem, null,
+    isnot(getSelectedRequest(gStore.getState()), null,
       "There should still be a selected item after filtering.");
-    is(RequestsMenu.selectedIndex, selection,
+    is(getSelectedIndex(gStore.getState()), selection,
       "The first item should be still selected after filtering.");
-    is(NetMonitorView.detailsPaneHidden, false,
-      "The details pane should still be visible after filtering.");
+    is(!!document.querySelector(".network-details-panel"), true,
+      "The network details panel should still be visible after filtering.");
 
-    is(RequestsMenu.items.length, order.length,
+    is(getSortedRequests(gStore.getState()).length, order.length,
       "There should be a specific amount of items in the requests menu.");
-    is(RequestsMenu.visibleItems.length, visible,
+    is(getDisplayedRequests(gStore.getState()).length, visible,
       "There should be a specific amount of visible items in the requests menu.");
   }
 });

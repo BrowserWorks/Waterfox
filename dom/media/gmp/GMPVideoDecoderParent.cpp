@@ -5,6 +5,7 @@
 
 #include "GMPVideoDecoderParent.h"
 #include "mozilla/Logging.h"
+#include "mozilla/SizePrintfMacros.h"
 #include "mozilla/Unused.h"
 #include "nsAutoRef.h"
 #include "nsThreadUtils.h"
@@ -14,6 +15,7 @@
 #include "GMPContentParent.h"
 #include "GMPMessageUtils.h"
 #include "mozilla/gmp/GMPTypes.h"
+#include "nsPrintfCString.h"
 
 namespace mozilla {
 
@@ -139,7 +141,7 @@ GMPVideoDecoderParent::Decode(GMPUniquePtr<GMPVideoEncodedFrame> aInputFrame,
                               const nsTArray<uint8_t>& aCodecSpecificInfo,
                               int64_t aRenderTimeMs)
 {
-  LOGV(("GMPVideoDecoderParent[%p]::Decode() timestamp=%lld keyframe=%d%s",
+  LOGV(("GMPVideoDecoderParent[%p]::Decode() timestamp=%" PRId64 " keyframe=%d%s",
         this, aInputFrame->TimeStamp(),
         aInputFrame->FrameType() == kGMPKeyFrame,
         CryptoInfo(aInputFrame).get()));
@@ -319,7 +321,7 @@ mozilla::ipc::IPCResult
 GMPVideoDecoderParent::RecvDecoded(const GMPVideoi420FrameData& aDecodedFrame)
 {
   --mFrameCount;
-  LOGV(("GMPVideoDecoderParent[%p]::RecvDecoded() timestamp=%lld frameCount=%d",
+  LOGV(("GMPVideoDecoderParent[%p]::RecvDecoded() timestamp=%" PRId64 " frameCount=%d",
     this, aDecodedFrame.mTimestamp(), mFrameCount));
 
   if (!mCallback) {
@@ -328,7 +330,8 @@ GMPVideoDecoderParent::RecvDecoded(const GMPVideoi420FrameData& aDecodedFrame)
 
   if (!GMPVideoi420FrameImpl::CheckFrameData(aDecodedFrame)) {
     LOGE(("GMPVideoDecoderParent[%p]::RecvDecoded() "
-       "timestamp=%lld decoded frame corrupt, ignoring"));
+          "timestamp=%" PRId64 " decoded frame corrupt, ignoring",
+          this, aDecodedFrame.mTimestamp()));
     return IPC_FAIL_NO_REASON(this);
   }
   auto f = new GMPVideoi420FrameImpl(aDecodedFrame, &mVideoHost);

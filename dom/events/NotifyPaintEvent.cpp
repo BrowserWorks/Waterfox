@@ -19,18 +19,20 @@ NotifyPaintEvent::NotifyPaintEvent(EventTarget* aOwner,
                                    nsPresContext* aPresContext,
                                    WidgetEvent* aEvent,
                                    EventMessage aEventMessage,
-                                   nsInvalidateRequestList* aInvalidateRequests,
-                                   uint64_t aTransactionId)
+                                   nsTArray<nsRect>* aInvalidateRequests,
+                                   uint64_t aTransactionId,
+                                   DOMHighResTimeStamp aTimeStamp)
   : Event(aOwner, aPresContext, aEvent)
 {
   if (mEvent) {
     mEvent->mMessage = aEventMessage;
   }
   if (aInvalidateRequests) {
-    mInvalidateRequests.AppendElements(Move(aInvalidateRequests->mRequests));
+    mInvalidateRequests.SwapElements(*aInvalidateRequests);
   }
 
   mTransactionId = aTransactionId;
+  mTimeStamp = aTimeStamp;
 }
 
 NS_INTERFACE_MAP_BEGIN(NotifyPaintEvent)
@@ -41,52 +43,35 @@ NS_IMPL_ADDREF_INHERITED(NotifyPaintEvent, Event)
 NS_IMPL_RELEASE_INHERITED(NotifyPaintEvent, Event)
 
 nsRegion
-NotifyPaintEvent::GetRegion()
+NotifyPaintEvent::GetRegion(SystemCallerGuarantee)
 {
   nsRegion r;
-  if (!nsContentUtils::IsCallerChrome()) {
-    return r;
-  }
   for (uint32_t i = 0; i < mInvalidateRequests.Length(); ++i) {
-    r.Or(r, mInvalidateRequests[i].mRect);
+    r.Or(r, mInvalidateRequests[i]);
     r.SimplifyOutward(10);
   }
   return r;
 }
 
-NS_IMETHODIMP
-NotifyPaintEvent::GetBoundingClientRect(nsIDOMClientRect** aResult)
-{
-  *aResult = BoundingClientRect().take();
-  return NS_OK;
-}
-
 already_AddRefed<DOMRect>
-NotifyPaintEvent::BoundingClientRect()
+NotifyPaintEvent::BoundingClientRect(SystemCallerGuarantee aGuarantee)
 {
   RefPtr<DOMRect> rect = new DOMRect(ToSupports(this));
 
   if (mPresContext) {
-    rect->SetLayoutRect(GetRegion().GetBounds());
+    rect->SetLayoutRect(GetRegion(aGuarantee).GetBounds());
   }
 
   return rect.forget();
 }
 
-NS_IMETHODIMP
-NotifyPaintEvent::GetClientRects(nsIDOMClientRectList** aResult)
-{
-  *aResult = ClientRects().take();
-  return NS_OK;
-}
-
 already_AddRefed<DOMRectList>
-NotifyPaintEvent::ClientRects()
+NotifyPaintEvent::ClientRects(SystemCallerGuarantee aGuarantee)
 {
   nsISupports* parent = ToSupports(this);
   RefPtr<DOMRectList> rectList = new DOMRectList(parent);
 
-  nsRegion r = GetRegion();
+  nsRegion r = GetRegion(aGuarantee);
   for (auto iter = r.RectIter(); !iter.Done(); iter.Next()) {
     RefPtr<DOMRect> rect = new DOMRect(parent);
     rect->SetLayoutRect(iter.Get());
@@ -96,26 +81,16 @@ NotifyPaintEvent::ClientRects()
   return rectList.forget();
 }
 
-NS_IMETHODIMP
-NotifyPaintEvent::GetPaintRequests(nsISupports** aResult)
-{
-  RefPtr<PaintRequestList> requests = PaintRequests();
-  requests.forget(aResult);
-  return NS_OK;
-}
-
 already_AddRefed<PaintRequestList>
-NotifyPaintEvent::PaintRequests()
+NotifyPaintEvent::PaintRequests(SystemCallerGuarantee)
 {
   Event* parent = this;
   RefPtr<PaintRequestList> requests = new PaintRequestList(parent);
 
-  if (nsContentUtils::IsCallerChrome()) {
-    for (uint32_t i = 0; i < mInvalidateRequests.Length(); ++i) {
-      RefPtr<PaintRequest> r = new PaintRequest(parent);
-      r->SetRequest(mInvalidateRequests[i]);
-      requests->Append(r);
-    }
+  for (uint32_t i = 0; i < mInvalidateRequests.Length(); ++i) {
+    RefPtr<PaintRequest> r = new PaintRequest(parent);
+    r->SetRequest(mInvalidateRequests[i]);
+    requests->Append(r);
   }
 
   return requests.forget();
@@ -134,8 +109,7 @@ NotifyPaintEvent::Serialize(IPC::Message* aMsg,
   uint32_t length = mInvalidateRequests.Length();
   IPC::WriteParam(aMsg, length);
   for (uint32_t i = 0; i < length; ++i) {
-    IPC::WriteParam(aMsg, mInvalidateRequests[i].mRect);
-    IPC::WriteParam(aMsg, mInvalidateRequests[i].mFlags);
+    IPC::WriteParam(aMsg, mInvalidateRequests[i]);
   }
 }
 
@@ -148,26 +122,24 @@ NotifyPaintEvent::Deserialize(const IPC::Message* aMsg, PickleIterator* aIter)
   NS_ENSURE_TRUE(IPC::ReadParam(aMsg, aIter, &length), false);
   mInvalidateRequests.SetCapacity(length);
   for (uint32_t i = 0; i < length; ++i) {
-    nsInvalidateRequestList::Request req;
-    NS_ENSURE_TRUE(IPC::ReadParam(aMsg, aIter, &req.mRect), false);
-    NS_ENSURE_TRUE(IPC::ReadParam(aMsg, aIter, &req.mFlags), false);
+    nsRect req;
+    NS_ENSURE_TRUE(IPC::ReadParam(aMsg, aIter, &req), false);
     mInvalidateRequests.AppendElement(req);
   }
 
   return true;
 }
 
-NS_IMETHODIMP
-NotifyPaintEvent::GetTransactionId(uint64_t* aTransactionId)
-{
-  *aTransactionId = mTransactionId;
-  return NS_OK;
-}
-
 uint64_t
-NotifyPaintEvent::TransactionId()
+NotifyPaintEvent::TransactionId(SystemCallerGuarantee)
 {
   return mTransactionId;
+}
+
+DOMHighResTimeStamp
+NotifyPaintEvent::PaintTimeStamp(SystemCallerGuarantee)
+{
+  return mTimeStamp;
 }
 
 } // namespace dom
@@ -181,11 +153,12 @@ NS_NewDOMNotifyPaintEvent(EventTarget* aOwner,
                           nsPresContext* aPresContext,
                           WidgetEvent* aEvent,
                           EventMessage aEventMessage,
-                          nsInvalidateRequestList* aInvalidateRequests,
-                          uint64_t aTransactionId)
+                          nsTArray<nsRect>* aInvalidateRequests,
+                          uint64_t aTransactionId,
+                          DOMHighResTimeStamp aTimeStamp)
 {
   RefPtr<NotifyPaintEvent> it =
     new NotifyPaintEvent(aOwner, aPresContext, aEvent, aEventMessage,
-                         aInvalidateRequests, aTransactionId);
+                         aInvalidateRequests, aTransactionId, aTimeStamp);
   return it.forget();
 }

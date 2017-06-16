@@ -122,7 +122,6 @@
 #include "mozAutoDocUpdate.h"
 
 #include "nsCSSParser.h"
-#include "prprf.h"
 #include "nsDOMMutationObserver.h"
 #include "nsWrapperCacheInlines.h"
 #include "xpcpublic.h"
@@ -164,11 +163,9 @@ nsIContent::DoGetID() const
 }
 
 const nsAttrValue*
-nsIContent::DoGetClasses() const
+Element::DoGetClasses() const
 {
-  MOZ_ASSERT(HasFlag(NODE_MAY_HAVE_CLASS), "Unexpected call");
-  MOZ_ASSERT(IsElement(), "Only elements can have classes");
-
+  MOZ_ASSERT(MayHaveClass(), "Unexpected call");
   if (IsSVGElement()) {
     const nsAttrValue* animClass =
       static_cast<const nsSVGElement*>(this)->GetAnimatedClassName();
@@ -177,7 +174,7 @@ nsIContent::DoGetClasses() const
     }
   }
 
-  return AsElement()->GetParsedAttr(nsGkAtoms::_class);
+  return GetParsedAttr(nsGkAtoms::_class);
 }
 
 NS_IMETHODIMP
@@ -602,12 +599,6 @@ Element::ClassList()
 }
 
 void
-Element::GetClassList(nsISupports** aClassList)
-{
-  NS_ADDREF(*aClassList = ClassList());
-}
-
-void
 Element::GetAttributeNames(nsTArray<nsString>& aResult)
 {
   uint32_t count = mAttrsAndChildren.AttrCount();
@@ -621,13 +612,6 @@ already_AddRefed<nsIHTMLCollection>
 Element::GetElementsByTagName(const nsAString& aLocalName)
 {
   return NS_GetContentList(this, kNameSpaceID_Unknown, aLocalName);
-}
-
-void
-Element::GetElementsByTagName(const nsAString& aLocalName,
-                              nsIDOMHTMLCollection** aResult)
-{
-  *aResult = GetElementsByTagName(aLocalName).take();
 }
 
 nsIFrame*
@@ -874,7 +858,7 @@ Element::ScrollByNoFlush(int32_t aDx, int32_t aDy)
     return false;
   }
 
-  nsWeakFrame weakRef(sf->GetScrolledFrame());
+  AutoWeakFrame weakRef(sf->GetScrolledFrame());
 
   CSSIntPoint before = sf->GetScrollPositionCSSPixels();
   sf->ScrollToCSSPixelsApproximate(CSSIntPoint(before.x + aDx, before.y + aDy));
@@ -1416,21 +1400,6 @@ Element::GetElementsByTagNameNS(const nsAString& aNamespaceURI,
   return NS_GetContentList(this, nameSpaceId, aLocalName);
 }
 
-nsresult
-Element::GetElementsByTagNameNS(const nsAString& namespaceURI,
-                                const nsAString& localName,
-                                nsIDOMHTMLCollection** aResult)
-{
-  mozilla::ErrorResult rv;
-  nsCOMPtr<nsIHTMLCollection> list =
-    GetElementsByTagNameNS(namespaceURI, localName, rv);
-  if (rv.Failed()) {
-    return rv.StealNSResult();
-  }
-  list.forget(aResult);
-  return NS_OK;
-}
-
 bool
 Element::HasAttributeNS(const nsAString& aNamespaceURI,
                         const nsAString& aLocalName) const
@@ -1452,15 +1421,6 @@ already_AddRefed<nsIHTMLCollection>
 Element::GetElementsByClassName(const nsAString& aClassNames)
 {
   return nsContentUtils::GetElementsByClassName(this, aClassNames);
-}
-
-nsresult
-Element::GetElementsByClassName(const nsAString& aClassNames,
-                                nsIDOMHTMLCollection** aResult)
-{
-  *aResult =
-    nsContentUtils::GetElementsByClassName(this, aClassNames).take();
-  return NS_OK;
 }
 
 /**
@@ -2023,6 +1983,12 @@ Element::GetInlineStyleDeclaration() const
   return nullptr;
 }
 
+const nsMappedAttributes*
+Element::GetMappedAttributes() const
+{
+  return mAttrsAndChildren.GetMapped();
+}
+
 nsresult
 Element::SetInlineStyleDeclaration(DeclarationBlock* aDeclaration,
                                    const nsAString* aSerialized,
@@ -2581,7 +2547,7 @@ Element::ParseAttribute(int32_t aNamespaceID,
 {
   if (aNamespaceID == kNameSpaceID_None) {
     if (aAttribute == nsGkAtoms::_class) {
-      SetFlags(NODE_MAY_HAVE_CLASS);
+      SetMayHaveClass();
       // Result should have been preparsed above.
       return true;
     }
@@ -3315,9 +3281,9 @@ Element::AttrValueToCORSMode(const nsAttrValue* aValue)
 }
 
 static const char*
-GetFullScreenError(nsIDocument* aDoc)
+GetFullScreenError(CallerType aCallerType)
 {
-  if (!nsContentUtils::IsRequestFullScreenAllowed()) {
+  if (!nsContentUtils::IsRequestFullScreenAllowed(aCallerType)) {
     return "FullscreenDeniedNotInputDriven";
   }
 
@@ -3334,7 +3300,7 @@ Element::RequestFullscreen(CallerType aCallerType, ErrorResult& aError)
   // spoof the browser chrome/window and phish logins etc.
   // Note that requests for fullscreen inside a web app's origin are exempt
   // from this restriction.
-  if (const char* error = GetFullScreenError(OwnerDoc())) {
+  if (const char* error = GetFullScreenError(aCallerType)) {
     OwnerDoc()->DispatchFullscreenError(error);
     return;
   }
@@ -3885,7 +3851,7 @@ Element::ClearDataset()
   slots->mDataset = nullptr;
 }
 
-nsDataHashtable<nsPtrHashKey<DOMIntersectionObserver>, int32_t>*
+nsDataHashtable<nsRefPtrHashKey<DOMIntersectionObserver>, int32_t>*
 Element::RegisteredIntersectionObservers()
 {
   nsDOMSlots* slots = DOMSlots();
@@ -3895,7 +3861,7 @@ Element::RegisteredIntersectionObservers()
 void
 Element::RegisterIntersectionObserver(DOMIntersectionObserver* aObserver)
 {
-  nsDataHashtable<nsPtrHashKey<DOMIntersectionObserver>, int32_t>* observers =
+  nsDataHashtable<nsRefPtrHashKey<DOMIntersectionObserver>, int32_t>* observers =
     RegisteredIntersectionObservers();
   if (observers->Contains(aObserver)) {
     return;
@@ -3906,7 +3872,7 @@ Element::RegisterIntersectionObserver(DOMIntersectionObserver* aObserver)
 void
 Element::UnregisterIntersectionObserver(DOMIntersectionObserver* aObserver)
 {
-  nsDataHashtable<nsPtrHashKey<DOMIntersectionObserver>, int32_t>* observers =
+  nsDataHashtable<nsRefPtrHashKey<DOMIntersectionObserver>, int32_t>* observers =
     RegisteredIntersectionObservers();
   observers->Remove(aObserver);
 }
@@ -3914,7 +3880,7 @@ Element::UnregisterIntersectionObserver(DOMIntersectionObserver* aObserver)
 bool
 Element::UpdateIntersectionObservation(DOMIntersectionObserver* aObserver, int32_t aThreshold)
 {
-  nsDataHashtable<nsPtrHashKey<DOMIntersectionObserver>, int32_t>* observers =
+  nsDataHashtable<nsRefPtrHashKey<DOMIntersectionObserver>, int32_t>* observers =
     RegisteredIntersectionObservers();
   if (!observers->Contains(aObserver)) {
     return false;

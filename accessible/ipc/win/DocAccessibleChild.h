@@ -29,6 +29,12 @@ public:
 
   virtual ipc::IPCResult
   RecvParentCOMProxy(const IAccessibleHolder& aParentCOMProxy) override;
+  virtual ipc::IPCResult
+    RecvEmulatedWindow(const WindowsHandle& aEmulatedWindowHandle,
+                       const IAccessibleHolder& aEmulatedWindowCOMProxy) override;
+
+  HWND GetEmulatedWindowHandle() const { return mEmulatedWindowHandle; }
+  IAccessible* GetEmulatedWindowIAccessible() const { return mEmulatedWindowProxy.get(); }
 
   IAccessible* GetParentIAccessible() const { return mParentProxy.get(); }
 
@@ -309,7 +315,9 @@ private:
 
   bool mIsRemoteConstructed;
   mscom::ProxyUniquePtr<IAccessible> mParentProxy;
+  mscom::ProxyUniquePtr<IAccessible> mEmulatedWindowProxy;
   nsTArray<UniquePtr<DeferredEvent>> mDeferredEvents;
+  HWND mEmulatedWindowHandle;
 };
 
 } // namespace a11y

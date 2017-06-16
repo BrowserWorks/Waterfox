@@ -367,6 +367,32 @@ add_task(function* enter_on_remove_bookmark_should_remove_bookmark() {
   });
 });
 
+add_task(function* mouse_hovering_panel_should_prevent_autoclose() {
+  if (AppConstants.platform != "win") {
+    // This test requires synthesizing native mouse movement which is
+    // best supported on Windows.
+    return;
+  }
+  yield test_bookmarks_popup({
+    isNewBookmark: true,
+    *popupShowFn(browser) {
+      yield new Promise(resolve => {
+        EventUtils.synthesizeNativeMouseMove(
+          document.documentElement,
+          editBookmarkPanelRemoveButtonRect.left,
+          editBookmarkPanelRemoveButtonRect.top,
+          resolve);
+      });
+      EventUtils.synthesizeKey("D", {accelKey: true}, window);
+    },
+    shouldAutoClose: false,
+    popupHideFn() {
+      document.getElementById("editBookmarkPanelRemoveButton").click();
+    },
+    isBookmarkRemoved: true,
+  });
+});
+
 add_task(function* ctrl_d_new_bookmark_mousedown_mouseout_no_autoclose() {
   yield test_bookmarks_popup({
     isNewBookmark: true,
@@ -390,32 +416,6 @@ add_task(function* ctrl_d_new_bookmark_mousedown_mouseout_no_autoclose() {
       EventUtils.synthesizeMouseAtCenter(document.documentElement, {type: "mousemove"});
       info("Waiting for mouseout event");
       yield mouseOutPromise;
-    },
-    shouldAutoClose: false,
-    popupHideFn() {
-      document.getElementById("editBookmarkPanelRemoveButton").click();
-    },
-    isBookmarkRemoved: true,
-  });
-});
-
-add_task(function* mouse_hovering_panel_should_prevent_autoclose() {
-  if (AppConstants.platform != "win") {
-    // This test requires synthesizing native mouse movement which is
-    // best supported on Windows.
-    return;
-  }
-  yield test_bookmarks_popup({
-    isNewBookmark: true,
-    *popupShowFn(browser) {
-      yield new Promise(resolve => {
-        EventUtils.synthesizeNativeMouseMove(
-          document.documentElement,
-          editBookmarkPanelRemoveButtonRect.left,
-          editBookmarkPanelRemoveButtonRect.top,
-          resolve);
-      });
-      EventUtils.synthesizeKey("D", {accelKey: true}, window);
     },
     shouldAutoClose: false,
     popupHideFn() {

@@ -19,7 +19,6 @@ Cu.import("resource://gre/modules/Log.jsm");
 Cu.import("resource://gre/modules/osfile.jsm");
 Cu.import("resource://services-common/observers.js");
 Cu.import("resource://services-sync/constants.js");
-Cu.import("resource://services-sync/identity.js");
 Cu.import("resource://services-sync/record.js");
 Cu.import("resource://services-sync/resource.js");
 Cu.import("resource://services-sync/util.js");
@@ -251,7 +250,20 @@ Tracker.prototype = {
           this.onEngineEnabledChanged(this.engine.enabled);
         }
     }
-  }
+  },
+
+  async finalize() {
+    // Stop listening for tracking and engine enabled change notifications.
+    // Important for tests where we unregister the engine during cleanup.
+    Svc.Obs.remove("weave:engine:start-tracking", this);
+    Svc.Obs.remove("weave:engine:stop-tracking", this);
+    Svc.Prefs.ignore("engine." + this.engine.prefName, this);
+
+    // Persist all pending tracked changes to disk, and wait for the final write
+    // to finish.
+    this._saveChangedIDs();
+    await this._storage.finalize();
+  },
 };
 
 
@@ -588,7 +600,8 @@ EngineManager.prototype = {
    */
   register(engineObject) {
     if (Array.isArray(engineObject)) {
-      return engineObject.map(this.register, this);
+      engineObject.map(this.register, this);
+      return;
     }
 
     try {
@@ -605,7 +618,6 @@ EngineManager.prototype = {
       name = name.name || "";
 
       this._log.error(`Could not initialize engine ${name}`, ex);
-      return engineObject;
     }
   },
 
@@ -614,12 +626,18 @@ EngineManager.prototype = {
     if (val instanceof Engine) {
       name = val.name;
     }
-    delete this._engines[name];
+    if (name in this._engines) {
+      let engine = this._engines[name];
+      delete this._engines[name];
+      Async.promiseSpinningly(engine.finalize());
+    }
   },
 
   clear() {
     for (let name in this._engines) {
+      let engine = this._engines[name];
       delete this._engines[name];
+      Async.promiseSpinningly(engine.finalize());
     }
   },
 };
@@ -638,6 +656,7 @@ this.Engine = function Engine(name, service) {
   let level = Svc.Prefs.get("log.logger.engine." + this.name, "Debug");
   this._log.level = Log.Level[level];
 
+  this._modified = this.emptyChangeset();
   this._tracker; // initialize tracker to load previously changed IDs
   this._log.debug("Engine initialized");
 }
@@ -645,6 +664,11 @@ Engine.prototype = {
   // _storeObj, and _trackerObj should to be overridden in subclasses
   _storeObj: Store,
   _trackerObj: Tracker,
+
+  // Override this method to return a new changeset type.
+  emptyChangeset() {
+    return new Changeset();
+  },
 
   // Local 'constant'.
   // Signal to the engine that processing further records is pointless.
@@ -727,7 +751,11 @@ Engine.prototype = {
    */
   getValidator() {
     return null;
-  }
+  },
+
+  async finalize() {
+    await this._tracker.finalize();
+  },
 };
 
 this.SyncEngine = function SyncEngine(name, service) {
@@ -895,12 +923,21 @@ SyncEngine.prototype = {
     return this._tracker.changedIDs;
   },
 
-  // Create a new record using the store and add in crypto fields.
+  // Create a new record using the store and add in metadata.
   _createRecord(id) {
     let record = this._store.createRecord(id, this.name);
     record.id = id;
     record.collection = this.name;
     return record;
+  },
+
+  // Creates a tombstone Sync record with additional metadata.
+  _createTombstone(id) {
+    let tombstone = new this._recordObj(this.name, id);
+    tombstone.id = id;
+    tombstone.collection = this.name;
+    tombstone.deleted = true;
+    return tombstone;
   },
 
   // Any setup that needs to happen at the beginning of each sync.
@@ -954,12 +991,14 @@ SyncEngine.prototype = {
     // the end of a sync, or after an error, we add all objects remaining in
     // this._modified to the tracker.
     this.lastSyncLocal = Date.now();
+    let initialChanges;
     if (this.lastSync) {
-      this._modified = this.pullNewChanges();
+      initialChanges = this.pullNewChanges();
     } else {
       this._log.debug("First sync, uploading all items");
-      this._modified = this.pullAllChanges();
+      initialChanges = this.pullAllChanges();
     }
+    this._modified.replace(initialChanges);
     // Clear the tracker now. If the sync fails we'll add the ones we failed
     // to upload back.
     this._tracker.clearChangedIDs();
@@ -1424,7 +1463,7 @@ SyncEngine.prototype = {
           localAge = this._tracker._now() - this._modified.getModifiedTimestamp(localDupeGUID);
           remoteIsNewer = remoteAge < localAge;
 
-          this._modified.swap(localDupeGUID, item.id);
+          this._modified.changeID(localDupeGUID, item.id);
         } else {
           locallyModified = false;
           localAge = null;
@@ -1579,10 +1618,12 @@ SyncEngine.prototype = {
           out.encrypt(this.service.collectionKeys.keyForCollection(this.name));
           ok = true;
         } catch (ex) {
-          if (Async.isShutdownException(ex)) {
+          this._log.warn("Error creating record", ex);
+          ++counts.failed;
+          if (Async.isShutdownException(ex) || !this.allowSkippedRecord) {
+            Observers.notify("weave:engine:sync:uploaded", counts, this.name);
             throw ex;
           }
-          this._log.warn("Error creating record", ex);
         }
         if (ok) {
           let { enqueued, error } = postQueue.enqueue(out);
@@ -1745,11 +1786,11 @@ SyncEngine.prototype = {
    * @return A `Changeset` object.
    */
   pullAllChanges() {
-    let changeset = new Changeset();
+    let changes = {};
     for (let id in this._store.getAllIDs()) {
-      changeset.set(id, 0);
+      changes[id] = 0;
     }
-    return changeset;
+    return changes;
   },
 
   /*
@@ -1760,7 +1801,7 @@ SyncEngine.prototype = {
    * @return A `Changeset` object.
    */
   pullNewChanges() {
-    return new Changeset(this.getChangedIDs());
+    return this.getChangedIDs();
   },
 
   /**
@@ -1782,9 +1823,9 @@ SyncEngine.prototype = {
  * data for each entry.
  */
 class Changeset {
-  // Creates a changeset with an initial set of tracked entries.
-  constructor(changes = {}) {
-    this.changes = changes;
+  // Creates an empty changeset.
+  constructor() {
+    this.changes = {};
   }
 
   // Returns the last modified time, in seconds, for an entry in the changeset.
@@ -1798,9 +1839,14 @@ class Changeset {
     this.changes[id] = change;
   }
 
-  // Adds multiple entries to the changeset.
+  // Adds multiple entries to the changeset, preserving existing entries.
   insert(changes) {
     Object.assign(this.changes, changes);
+  }
+
+  // Overwrites the existing set of tracked changes with new entries.
+  replace(changes) {
+    this.changes = changes;
   }
 
   // Indicates whether an entry is in the changeset.
@@ -1814,9 +1860,9 @@ class Changeset {
     delete this.changes[id];
   }
 
-  // Swaps two entries in the changeset. Used when reconciling duplicates that
-  // have local changes.
-  swap(oldID, newID) {
+  // Changes the ID of an entry in the changeset. Used when reconciling
+  // duplicates that have local changes.
+  changeID(oldID, newID) {
     this.changes[newID] = this.changes[oldID];
     delete this.changes[oldID];
   }

@@ -4,9 +4,8 @@
 
 # assemble package names, see convention at
 # http://developer.mozilla.org/index.php?title=En/Package_Filename_Convention
-# for (at least Firefox) releases we use a different format with directories,
-# e.g. win32/de/Firefox Setup 3.0.1.exe
-# the latter format is triggered with MOZ_PKG_PRETTYNAMES=1
+# Note that release packages are named during the post-build release
+# automation, so they aren't part of this file.
 
 ifndef PACKAGE_NAME_MK_INCLUDED
 PACKAGE_NAME_MK_INCLUDED := 1
@@ -31,11 +30,7 @@ MOZ_PKG_PLATFORM := win32
 endif
 endif
 ifeq ($(OS_ARCH),Darwin)
-ifdef UNIVERSAL_BINARY
 MOZ_PKG_PLATFORM := mac
-else
-MOZ_PKG_PLATFORM := mac
-endif
 endif
 ifeq ($(TARGET_OS),linux-gnu)
 MOZ_PKG_PLATFORM := linux-$(TARGET_CPU)
@@ -47,8 +42,6 @@ MOZ_PKG_PLATFORM := $(MOZ_PKG_PLATFORM)-$(MOZ_PKG_SPECIAL)
 endif
 
 MOZ_PKG_DIR = $(MOZ_APP_NAME)
-
-ifndef MOZ_PKG_PRETTYNAMES # standard package names
 
 ifndef MOZ_PKG_APPNAME
 MOZ_PKG_APPNAME = $(MOZ_APP_NAME)
@@ -83,49 +76,6 @@ PKG_SRCPACK_BASENAME = $(MOZ_PKG_APPNAME)-$(MOZ_PKG_VERSION).source
 PKG_BUNDLE_BASENAME = $(MOZ_PKG_APPNAME)-$(MOZ_PKG_VERSION)
 PKG_SRCPACK_PATH =
 
-else # "pretty" release package names
-
-ifndef MOZ_PKG_APPNAME
-MOZ_PKG_APPNAME = $(MOZ_APP_DISPLAYNAME)
-endif
-MOZ_PKG_APPNAME_LC = $(shell echo $(MOZ_PKG_APPNAME) | tr '[A-Z]' '[a-z]')
-
-ifndef MOZ_PKG_LONGVERSION
-MOZ_PKG_LONGVERSION = $(MOZ_PKG_VERSION)
-endif
-
-ifeq (,$(filter-out Darwin, $(OS_ARCH))) # Mac
-PKG_BASENAME = $(MOZ_PKG_APPNAME) $(MOZ_PKG_LONGVERSION)
-PKG_INST_BASENAME = $(MOZ_PKG_APPNAME) Setup $(MOZ_PKG_LONGVERSION)
-else
-ifeq (,$(filter-out WINNT, $(OS_ARCH))) # Windows
-PKG_BASENAME = $(MOZ_PKG_APPNAME_LC)-$(MOZ_PKG_VERSION)
-PKG_INST_BASENAME = $(MOZ_PKG_APPNAME) Setup $(MOZ_PKG_LONGVERSION)
-PKG_STUB_BASENAME = $(MOZ_PKG_APPNAME) Setup Stub $(MOZ_PKG_LONGVERSION)
-else # unix (actually, not Windows, Mac or OS/2)
-PKG_BASENAME = $(MOZ_PKG_APPNAME_LC)-$(MOZ_PKG_VERSION)
-PKG_INST_BASENAME = $(MOZ_PKG_APPNAME_LC)-setup-$(MOZ_PKG_VERSION)
-endif
-endif
-PKG_PATH = $(MOZ_PKG_PLATFORM)/$(AB_CD)/
-SDK_PATH = $(PKG_PATH)/sdk/
-CHECKSUMS_FILE_BASENAME = $(MOZ_PKG_APPNAME_LC)-$(MOZ_PKG_VERSION)
-MOZ_INFO_BASENAME = $(MOZ_PKG_APPNAME_LC)-$(MOZ_PKG_VERSION)
-PKG_INST_PATH = $(PKG_PATH)
-PKG_UPDATE_BASENAME = $(MOZ_PKG_APPNAME_LC)-$(MOZ_PKG_VERSION)
-PKG_UPDATE_PATH = update/$(PKG_PATH)
-COMPLETE_MAR = $(PKG_UPDATE_PATH)$(PKG_UPDATE_BASENAME).complete.mar
-# PARTIAL_MAR needs to be processed by $(wildcard) before you use it.
-PARTIAL_MAR = $(PKG_UPDATE_PATH)$(PKG_UPDATE_BASENAME).partial.*.mar
-PKG_LANGPACK_BASENAME = $(AB_CD)
-PKG_LANGPACK_PATH = $(MOZ_PKG_PLATFORM)/xpi/
-LANGPACK = $(PKG_LANGPACK_PATH)$(PKG_LANGPACK_BASENAME).xpi
-PKG_SRCPACK_BASENAME = $(MOZ_PKG_APPNAME_LC)-$(MOZ_PKG_VERSION).source
-PKG_BUNDLE_BASENAME = $(MOZ_PKG_APPNAME_LC)-$(MOZ_PKG_VERSION)
-PKG_SRCPACK_PATH = source/
-
-endif # MOZ_PKG_PRETTYNAMES
-
 # Symbol package naming
 SYMBOL_FULL_ARCHIVE_BASENAME = $(PKG_BASENAME).crashreporter-symbols-full
 SYMBOL_ARCHIVE_BASENAME = $(PKG_BASENAME).crashreporter-symbols
@@ -144,6 +94,7 @@ MOCHITEST_PACKAGE = $(PKG_BASENAME).mochitest.tests.zip
 REFTEST_PACKAGE = $(PKG_BASENAME).reftest.tests.zip
 WP_TEST_PACKAGE = $(PKG_BASENAME).web-platform.tests.zip
 TALOS_PACKAGE = $(PKG_BASENAME).talos.tests.zip
+AWSY_PACKAGE = $(PKG_BASENAME).awsy.tests.zip
 GTEST_PACKAGE = $(PKG_BASENAME).gtest.tests.zip
 
 ifneq (,$(wildcard $(DIST)/bin/application.ini))

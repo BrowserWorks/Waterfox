@@ -11,9 +11,9 @@
 "unpack": true,
 "algorithm": "sha512",
 "filename": "sixgill.tar.xz",
-"hg_id": "8cb9c3fb039a+ tip",
-"digest": "36dc644e24c0aa824975ad8f5c15714445d5cb064d823000c3cb637e885199414d7df551e6b99233f0656dcf5760918192ef04113c486af37f3c489bb93ad029",
-"size": 2631908
+"hg_id": "221d0d2eead9",
+"digest": "2e56a3cf84764b8e63720e5f961cff7ba8ba5cf2f353dac55c69486489bcd89f53a757e09469a07700b80cd09f09666c2db4ce375b67060ac3be967714597231",
+"size": 2629600
 },
 {
 "algorithm": "sha512",
@@ -24,9 +24,9 @@
 "size": 12072532
 },
 {
-"version": "rustc 1.14.0 (e8a012324 2016-12-16) repack",
-"size": 132388656,
-"digest": "46c2c5d048b6d9e9bbb163277a1ae8a3c37727ad8aa8dd661c2b95e2b68e4e85b20ae4fa0eadf3a37a3c09801964fd7107151909ad07c3a7b2fbf805c7035d97",
+"version": "rustc 1.15.1 (021bd294c 2017-02-08) repack",
+"size": 110077036,
+"digest": "8b99d058cc081f6ca2a3cc88c3ca9c15232961d2539774dacee35e2258955ad8fc4cb0af3b903a3e3f8a264ddecb3baae9256502ffc178a2823779284ace2bd8",
 "algorithm": "sha512",
 "filename": "rustc.tar.xz",
 "unpack": true

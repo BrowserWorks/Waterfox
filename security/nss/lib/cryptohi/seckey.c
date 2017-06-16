@@ -1260,6 +1260,19 @@ SECKEY_ConvertToPublicKey(SECKEYPrivateKey *privk)
                 break;
             return pubk;
             break;
+        case ecKey:
+            rv = PK11_ReadAttribute(privk->pkcs11Slot, privk->pkcs11ID,
+                                    CKA_EC_PARAMS, arena, &pubk->u.ec.DEREncodedParams);
+            if (rv != SECSuccess) {
+                break;
+            }
+            rv = PK11_ReadAttribute(privk->pkcs11Slot, privk->pkcs11ID,
+                                    CKA_EC_POINT, arena, &pubk->u.ec.publicValue);
+            if (rv != SECSuccess || pubk->u.ec.publicValue.len == 0) {
+                break;
+            }
+            pubk->u.ec.encoding = ECPoint_Undefined;
+            return pubk;
         default:
             break;
     }

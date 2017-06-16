@@ -24,7 +24,6 @@ interface IID;
 interface nsIBrowserDOMWindow;
 interface nsIMessageBroadcaster;
 interface nsIDOMCrypto;
-typedef any Transferable;
 
 // http://www.whatwg.org/specs/web-apps/current-work/
 [PrimaryGlobal, LegacyUnenumerableNamedProperties, NeedResolve]
@@ -85,7 +84,7 @@ typedef any Transferable;
   any showModalDialog(DOMString url, optional any argument, optional DOMString options = "");
 
   [Throws, CrossOriginCallable, NeedsSubjectPrincipal]
-  void postMessage(any message, DOMString targetOrigin, optional sequence<Transferable> transfer);
+  void postMessage(any message, DOMString targetOrigin, optional sequence<object> transfer = []);
 
   // also has obsolete members
 };
@@ -206,17 +205,6 @@ partial interface Window {
   [Throws, NeedsCallerType] attribute any outerWidth;
   [Throws, NeedsCallerType] attribute any outerHeight;
 };
-
-/**
- * Special function that gets the fill ratio from the compositor used for testing
- * and is an indicator that we're layerizing correctly.
- * This function will call the given callback current fill ratio for a
- * composited frame. We don't guarantee which frame fill ratios will be returned.
- */
-partial interface Window {
-  [ChromeOnly, Throws] void mozRequestOverfill(OverfillCallback callback);
-};
-callback OverfillCallback = void (unsigned long overfill);
 
 // https://dvcs.w3.org/hg/webperf/raw-file/tip/specs/RequestAnimationFrame/Overview.html
 partial interface Window {
@@ -483,18 +471,22 @@ partial interface Window {
   [Pref="dom.vr.enabled"]
   attribute EventHandler onvrdisplaydisconnect;
   [Pref="dom.vr.enabled"]
+  attribute EventHandler onvrdisplayactivate;
+  [Pref="dom.vr.enabled"]
+  attribute EventHandler onvrdisplaydeactivate;
+  [Pref="dom.vr.enabled"]
   attribute EventHandler onvrdisplaypresentchange;
 };
 
 // https://webaudio.github.io/web-audio-api/#widl-Window-audioWorklet
 partial interface Window {
-  [Pref="dom.audioWorklet.enabled", Throws, SameObject]
+  [Pref="dom.audioWorklet.enabled", Throws]
   readonly attribute Worklet audioWorklet;
 };
 
 // https://drafts.css-houdini.org/css-paint-api-1/#dom-window-paintworklet
 partial interface Window {
-    [Pref="dom.paintWorklet.enabled", Throws, SameObject]
+    [Pref="dom.paintWorklet.enabled", Throws]
     readonly attribute Worklet paintWorklet;
 };
 
@@ -526,4 +518,28 @@ callback IdleRequestCallback = void (IdleDeadline deadline);
  */
 partial interface Window {
   [ChromeOnly] readonly attribute boolean isSecureContextIfOpenerIgnored;
+};
+
+partial interface Window {
+  /**
+   * Returns a list of locales that the application should be localized to.
+   *
+   * The result is a sorted list of valid locale IDs and it should be
+   * used for all APIs that accept list of locales, like ECMA402 and L10n APIs.
+   *
+   * This API always returns at least one locale.
+   *
+   * Example: ["en-US", "de", "pl", "sr-Cyrl", "zh-Hans-HK"]
+   */
+  [Func="IsChromeOrXBL"]
+  sequence<DOMString> getAppLocales();
+
+#ifdef ENABLE_INTL_API
+  /**
+   * Getter funcion for IntlUtils, which provides helper functions for
+   * localization.
+   */
+  [Throws, Func="IsChromeOrXBL"]
+  readonly attribute IntlUtils intlUtils;
+#endif
 };

@@ -37,6 +37,9 @@ namespace mozilla {
 class JSGCThingParticipant: public nsCycleCollectionParticipant
 {
 public:
+  constexpr JSGCThingParticipant()
+    : nsCycleCollectionParticipant(false) {}
+
   NS_IMETHOD_(void) Root(void*) override
   {
     MOZ_ASSERT(false, "Don't call Root on GC things");
@@ -66,7 +69,7 @@ public:
 class JSZoneParticipant : public nsCycleCollectionParticipant
 {
 public:
-  constexpr JSZoneParticipant(): nsCycleCollectionParticipant()
+  constexpr JSZoneParticipant(): nsCycleCollectionParticipant(false)
   {
   }
 
@@ -144,7 +147,7 @@ protected:
   virtual ~CycleCollectedJSContext();
 
   MOZ_IS_CLASS_INIT
-  nsresult Initialize(JSContext* aParentContext,
+  nsresult Initialize(JSRuntime* aParentRuntime,
                       uint32_t aMaxBytes,
                       uint32_t aMaxNurseryBytes);
 

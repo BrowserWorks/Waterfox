@@ -63,6 +63,7 @@ from .data import (
     PreprocessedWebIDLFile,
     Program,
     RustLibrary,
+    HostRustLibrary,
     RustProgram,
     SharedLibrary,
     SimpleProgram,
@@ -153,13 +154,14 @@ class TreeMetadataEmitter(LoggingMixin):
             execution_time=self._emitter_time,
             object_count=self._object_count)
 
-    def emit(self, output):
+    def emit(self, output, emitfn=None):
         """Convert the BuildReader output into data structures.
 
         The return value from BuildReader.read_topsrcdir() (a generator) is
         typically fed into this function.
         """
         contexts = {}
+        emitfn = emitfn or self.emit_from_context
 
         def emit_objs(objs):
             for o in objs:
@@ -178,7 +180,7 @@ class TreeMetadataEmitter(LoggingMixin):
 
                 start = time.time()
                 # We need to expand the generator for the timings to work.
-                objs = list(self.emit_from_context(out))
+                objs = list(emitfn(out))
                 self._emitter_time += time.time() - start
 
                 for o in emit_objs(objs): yield o
@@ -413,7 +415,7 @@ class TreeMetadataEmitter(LoggingMixin):
                     '%s %s of crate %s refers to a non-existent path' % (description, dep_crate_name, crate_name),
                     context)
 
-    def _rust_library(self, context, libname, static_args):
+    def _rust_library(self, context, libname, static_args, cls=RustLibrary):
         # We need to note any Rust library for linking purposes.
         config, cargo_file = self._parse_cargo_file(context)
         crate_name = config['package']['name']
@@ -463,17 +465,48 @@ class TreeMetadataEmitter(LoggingMixin):
                      ' in [profile.%s] section') % (libname, profile_name),
                     context)
 
+            # gkrust and gkrust-gtest must have the exact same profile settings
+            # for our almost-workspaces configuration to work properly.
+            if libname in ('gkrust', 'gkrust-gtest'):
+                if profile_name == 'dev':
+                    expected_profile = {
+                        'opt-level': 1,
+                        'debug': True,
+                        'rpath': False,
+                        'lto': False,
+                        'debug-assertions': True,
+                        'codegen-units': 1,
+                        'panic': 'abort',
+                    }
+                else:
+                    expected_profile = {
+                        'opt-level': 2,
+                        'debug': True,
+                        'rpath': False,
+                        'lto': True,
+                        'debug-assertions': False,
+                        'panic': 'abort',
+                    }
+
+                if profile != expected_profile:
+                    raise SandboxValidationError(
+                        'Cargo profile.%s for %s is incorrect' % (profile_name, libname),
+                        context)
+
+        cargo_target_dir = context.get('RUST_LIBRARY_TARGET_DIR', '.')
+
         dependencies = set(config.get('dependencies', {}).iterkeys())
 
-        features = context.get('RUST_LIBRARY_FEATURES', [])
+        features = context.get(cls.FEATURES_VAR, [])
         unique_features = set(features)
         if len(features) != len(unique_features):
             raise SandboxValidationError(
                 'features for %s should not contain duplicates: %s' % (libname, features),
                 context)
 
-        return RustLibrary(context, libname, cargo_file, crate_type,
-                           dependencies, features, **static_args)
+        return cls(context, libname, cargo_file, crate_type, dependencies,
+                   features, cargo_target_dir, **static_args)
+
 
     def _handle_linkables(self, context, passthru, generated_files):
         linkables = []
@@ -553,7 +586,12 @@ class TreeMetadataEmitter(LoggingMixin):
             if host_libname == libname:
                 raise SandboxValidationError('LIBRARY_NAME and '
                     'HOST_LIBRARY_NAME must have a different value', context)
-            lib = HostLibrary(context, host_libname)
+
+            is_rust_library = context.get('IS_RUST_LIBRARY')
+            if is_rust_library:
+                lib = self._rust_library(context, host_libname, {}, cls=HostRustLibrary)
+            else:
+                lib = HostLibrary(context, host_libname)
             self._libs[host_libname].append(lib)
             self._linkage.append((context, lib, 'HOST_USE_LIBS'))
             host_linkables.append(lib)

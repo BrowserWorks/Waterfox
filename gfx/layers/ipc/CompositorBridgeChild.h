@@ -93,11 +93,6 @@ public:
   // process). This may only be called on the main thread.
   static bool CompositorIsInGPUProcess();
 
-  void AddOverfillObserver(ClientLayerManager* aLayerManager);
-
-  virtual mozilla::ipc::IPCResult
-  RecvClearCachedResources(const uint64_t& id) override;
-
   virtual mozilla::ipc::IPCResult
   RecvDidComposite(const uint64_t& aId, const uint64_t& aTransactionId,
                    const TimeStamp& aCompositeStart,
@@ -110,9 +105,6 @@ public:
   RecvCompositorUpdated(const uint64_t& aLayersId,
                         const TextureFactoryIdentifier& aNewIdentifier,
                         const uint64_t& aSeqNo) override;
-
-  virtual mozilla::ipc::IPCResult
-  RecvOverfill(const uint32_t &aOverfill) override;
 
   virtual mozilla::ipc::IPCResult
   RecvUpdatePluginConfigurations(const LayoutDeviceIntPoint& aContentOffset,
@@ -231,6 +223,14 @@ public:
 
   void WillEndTransaction();
 
+  PWebRenderBridgeChild* AllocPWebRenderBridgeChild(const wr::PipelineId& aPipelineId, TextureFactoryIdentifier*,
+                                                    uint32_t*) override;
+  bool DeallocPWebRenderBridgeChild(PWebRenderBridgeChild* aActor) override;
+
+  uint64_t DeviceResetSequenceNumber() const {
+    return mDeviceResetSequenceNumber;
+  }
+
 private:
   // Private destructor, to discourage deletion outside of Release():
   virtual ~CompositorBridgeChild();
@@ -304,9 +304,6 @@ private:
 
   DISALLOW_EVIL_CONSTRUCTORS(CompositorBridgeChild);
 
-  // When we receive overfill numbers, notify these client layer managers
-  AutoTArray<ClientLayerManager*,0> mOverfillObservers;
-
   // True until the beginning of the two-step shutdown sequence of this actor.
   bool mCanSend;
 
@@ -315,6 +312,11 @@ private:
    * It is incrementaed by UpdateFwdTransactionId() in each BeginTransaction() call.
    */
   uint64_t mFwdTransactionId;
+
+  /**
+   * Last sequence number recognized for a device reset.
+   */
+  uint64_t mDeviceResetSequenceNumber;
 
   /**
    * Hold TextureClients refs until end of their usages on host side.

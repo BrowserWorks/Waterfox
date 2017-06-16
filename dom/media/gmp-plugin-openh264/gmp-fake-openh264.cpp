@@ -205,7 +205,8 @@ class FakeVideoEncoder : public GMPVideoEncoder {
     }
     memcpy(f->Buffer(), &eframe, sizeof(eframe));
     if (frame_type  == kGMPKeyFrame) {
-      *((uint32_t*) f->Buffer() + sizeof(eframe)) = BIG_FRAME;
+      // set the size for the fake iframe
+      *((uint32_t*) (f->Buffer() + sizeof(eframe))) = BIG_FRAME;
     }
 
     f->SetEncodedWidth (inputImage->Width());
@@ -405,11 +406,13 @@ extern "C" {
     if (!strcmp (aApiName, GMP_API_VIDEO_DECODER)) {
       *aPluginApi = new FakeVideoDecoder (static_cast<GMPVideoHost*> (aHostAPI));
       return GMPNoErr;
-    } else if (!strcmp (aApiName, GMP_API_VIDEO_ENCODER)) {
+    }
+    if (!strcmp (aApiName, GMP_API_VIDEO_ENCODER)) {
       *aPluginApi = new FakeVideoEncoder (static_cast<GMPVideoHost*> (aHostAPI));
       return GMPNoErr;
 #if defined(GMP_FAKE_SUPPORT_DECRYPT)
-    } else if (!strcmp (aApiName, GMP_API_DECRYPTOR)) {
+    }
+    if (!strcmp (aApiName, GMP_API_DECRYPTOR)) {
       *aPluginApi = new FakeDecryptor();
       return GMPNoErr;
 #endif

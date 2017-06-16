@@ -14,6 +14,8 @@ Cu.import("resource://services-sync/util.js");
 Cu.import("resource://testing-common/services/sync/utils.js");
 
 add_task(async function test_locally_changed_keys() {
+  enableValidationPrefs();
+
   let hmacErrorCount = 0;
   function counting(f) {
     return function() {
@@ -80,7 +82,7 @@ add_task(async function test_locally_changed_keys() {
     do_check_true(serverKeys.upload(Service.resource(Service.cryptoKeysURL)).success);
 
     // Check that login works.
-    do_check_true(Service.login("johndoe"));
+    do_check_true(Service.login());
     do_check_true(Service.isLoggedIn);
 
     // Sync should upload records.

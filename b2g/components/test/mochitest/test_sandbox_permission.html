@@ -11,7 +11,7 @@ https://bugzilla.mozilla.org/show_bug.cgi?id=951997
 </head>
 <body>
 <a target="_blank" href="https://bugzilla.mozilla.org/show_bug.cgi?id=951997">Permission prompt web content test</a>
-<script type="application/javascript;version=1.8">
+<script type="application/javascript">
 
 "use strict";
 
@@ -50,10 +50,9 @@ function loadBrowser() {
   iframe.src = 'about:blank';
   document.body.appendChild(iframe);
 
-  iframe.addEventListener("load", function onLoad() {
-    iframe.removeEventListener("load", onLoad);
+  iframe.addEventListener("load", function() {
     runNext();
-  });
+  }, {once: true});
 }
 
 gScript.addMessageListener("permission-request", function (detail) {

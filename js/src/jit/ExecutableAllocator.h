@@ -177,7 +177,7 @@ class ExecutableAllocator
     // alloc() returns a pointer to some memory, and also (by reference) a
     // pointer to reference-counted pool. The caller owns a reference to the
     // pool; i.e. alloc() increments the count before returning the object.
-    void* alloc(size_t n, ExecutablePool** poolp, CodeKind type);
+    void* alloc(JSContext* cx, size_t n, ExecutablePool** poolp, CodeKind type);
 
     void releasePoolPages(ExecutablePool* pool);
 
@@ -226,7 +226,7 @@ class ExecutableAllocator
 #elif defined(JS_SIMULATOR_ARM) || defined(JS_SIMULATOR_MIPS32) || defined(JS_SIMULATOR_MIPS64)
     static void cacheFlush(void* code, size_t size)
     {
-        js::jit::Simulator::FlushICache(code, size);
+        js::jit::SimulatorProcess::FlushICache(code, size);
     }
 #elif defined(JS_CODEGEN_MIPS32) || defined(JS_CODEGEN_MIPS64)
     static void cacheFlush(void* code, size_t size)
@@ -259,7 +259,7 @@ class ExecutableAllocator
     {
         __clear_cache(code, reinterpret_cast<char*>(code) + size);
     }
-#elif defined(JS_CODEGEN_ARM) && defined(XP_IOS)
+#elif (defined(JS_CODEGEN_ARM) || defined(JS_CODEGEN_ARM64)) && defined(XP_IOS)
     static void cacheFlush(void* code, size_t size)
     {
         sys_icache_invalidate(code, size);
@@ -297,7 +297,7 @@ class ExecutableAllocator
                 : "r0", "r1", "r2");
         }
     }
-#elif defined(JS_CODEGEN_ARM64) && (defined(__linux__) || defined(ANDROID)) && defined(__GNUC__)
+#elif defined(JS_CODEGEN_ARM64)
     static void cacheFlush(void* code, size_t size)
     {
         vixl::CPU::EnsureIAndDCacheCoherency(code, size);

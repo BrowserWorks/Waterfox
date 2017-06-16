@@ -5,7 +5,6 @@
 
 Cu.import("resource://gre/modules/FxAccountsCommon.js");
 Cu.import("resource://gre/modules/FxAccountsOAuthGrantClient.jsm");
-Cu.import("resource://gre/modules/Services.jsm");
 
 const CLIENT_OPTIONS = {
   serverURL: "http://127.0.0.1:9010/v1",
@@ -143,7 +142,7 @@ add_test(function serverErrorResponse() {
 
 add_test(function networkErrorResponse() {
   let client = new FxAccountsOAuthGrantClient({
-    serverURL: "http://",
+    serverURL: "http://domain.dummy",
     client_id: "abc123"
   });
   Services.prefs.setBoolPref("identity.fxaccounts.skipDeviceRegistration", true);

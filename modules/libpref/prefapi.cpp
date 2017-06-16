@@ -26,9 +26,9 @@
 #include "PLDHashTable.h"
 #include "plbase64.h"
 #include "mozilla/Logging.h"
-#include "prprf.h"
 #include "mozilla/MemoryReporting.h"
 #include "mozilla/dom/PContent.h"
+#include "mozilla/dom/ContentPrefs.h"
 #include "nsQuickSort.h"
 #include "nsString.h"
 #include "nsPrintfCString.h"
@@ -480,13 +480,11 @@ pref_CompareStrings(const void *v1, const void *v2, void *unused)
     {
         if (!s2)
             return 0;
-        else
-            return -1;
+        return -1;
     }
-    else if (!s2)
+    if (!s2)
         return 1;
-    else
-        return strcmp(s1, s2);
+    return strcmp(s1, s2);
 }
 
 bool PREF_HasUserPref(const char *pref_name)
@@ -736,13 +734,62 @@ static PrefTypeFlags pref_SetValue(PrefValue* existingValue, PrefTypeFlags flags
     }
     return flags;
 }
+#ifdef DEBUG
+static pref_initPhase gPhase = START;
+
+static bool gWatchingPref = false;
+
+void
+pref_SetInitPhase(pref_initPhase phase)
+{
+    gPhase = phase;
+}
+
+void
+pref_SetWatchingPref(bool watching)
+{
+    gWatchingPref = watching;
+}
+
+
+struct StringComparator
+{
+    const char* mKey;
+    explicit StringComparator(const char* aKey) : mKey(aKey) {}
+    int operator()(const char* string) const {
+        return strcmp(mKey, string);
+    }
+};
+
+bool
+inInitArray(const char* key)
+{
+    size_t prefsLen;
+    size_t found;
+    const char** list = mozilla::dom::ContentPrefs::GetContentPrefs(&prefsLen);
+    return BinarySearchIf(list, 0, prefsLen,
+                          StringComparator(key), &found);
+}
+#endif
 
 PrefHashEntry* pref_HashTableLookup(const char *key)
 {
 #ifndef MOZ_B2G
     MOZ_ASSERT(NS_IsMainThread());
 #endif
-
+    MOZ_ASSERT((!XRE_IsContentProcess() || gPhase != START),
+               "pref access before commandline prefs set");
+    /* If you're hitting this assertion, you've added a pref access to start up.
+     * Consider moving it later or add it to the whitelist in ContentPrefs.cpp
+     * and get review from a DOM peer
+     */
+#ifdef DEBUG
+    if (XRE_IsContentProcess() && gPhase <= END_INIT_PREFS &&
+        !gWatchingPref && !inInitArray(key)) {
+      MOZ_CRASH_UNSAFE_PRINTF("accessing non-init pref %s before the rest of the prefs are sent",
+                              key);
+    }
+#endif
     return static_cast<PrefHashEntry*>(gHashTable->Search(key));
 }
 

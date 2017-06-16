@@ -14,13 +14,15 @@
 #include "nsPresContext.h"
 #include "nsRenderingContext.h"
 #include "nsCSSAnonBoxes.h"
-#include "mozilla/RestyleManagerHandle.h"
-#include "mozilla/RestyleManagerHandleInlines.h"
+#include "mozilla/RestyleManager.h"
+#include "mozilla/RestyleManagerInlines.h"
 #include "nsDisplayList.h"
 #include "mozilla/Likely.h"
 #include "SVGTextFrame.h"
+#include "nsStyleChangeList.h"
 #include "mozilla/StyleSetHandle.h"
 #include "mozilla/StyleSetHandleInlines.h"
+#include "mozilla/ServoStyleSet.h"
 
 #ifdef DEBUG
 #undef NOISY_PUSHING
@@ -350,7 +352,7 @@ ReparentChildListStyle(nsPresContext* aPresContext,
                        const nsFrameList::Slice& aFrames,
                        nsIFrame* aParentFrame)
 {
-  RestyleManagerHandle restyleManager = aPresContext->RestyleManager();
+  RestyleManager* restyleManager = aPresContext->RestyleManager();
 
   for (nsFrameList::Enumerator e(aFrames); !e.AtEnd(); e.Next()) {
     NS_ASSERTION(e.get()->GetParent() == aParentFrame, "Bogus parentage");
@@ -511,7 +513,7 @@ nsInlineFrame::DrainSelfOverflowListInternal(DrainFlags aFlags,
       }
       const bool doReparentSC =
         (aFlags & eInFirstLine) && !(aFlags & eForDestroy);
-      RestyleManagerHandle restyleManager = PresContext()->RestyleManager();
+      RestyleManager* restyleManager = PresContext()->RestyleManager();
       for (nsIFrame* f = firstChild; f; f = f->GetNextSibling()) {
         f->SetParent(this);
         if (doReparentSC) {
@@ -574,11 +576,11 @@ nsInlineFrame::ReflowFrames(nsPresContext* aPresContext,
                             ReflowOutput& aMetrics,
                             nsReflowStatus& aStatus)
 {
-  aStatus = NS_FRAME_COMPLETE;
+  aStatus.Reset();
 
   nsLineLayout* lineLayout = aReflowInput.mLineLayout;
   bool inFirstLine = aReflowInput.mLineLayout->GetInFirstLine();
-  RestyleManagerHandle restyleManager = aPresContext->RestyleManager();
+  RestyleManager* restyleManager = aPresContext->RestyleManager();
   WritingMode frameWM = aReflowInput.GetWritingMode();
   WritingMode lineWM = aReflowInput.mLineLayout->mRootSpan->mWritingMode;
   LogicalMargin framePadding = aReflowInput.ComputedLogicalBorderPadding();
@@ -687,8 +689,8 @@ nsInlineFrame::ReflowFrames(nsPresContext* aPresContext,
     if (!done) {
       bool reflowingFirstLetter = lineLayout->GetFirstLetterStyleOK();
       ReflowInlineFrame(aPresContext, aReflowInput, irs, frame, aStatus);
-      done = NS_INLINE_IS_BREAK(aStatus) || 
-             (!reflowingFirstLetter && NS_FRAME_IS_NOT_COMPLETE(aStatus));
+      done = aStatus.IsInlineBreak() ||
+             (!reflowingFirstLetter && aStatus.IsIncomplete());
       if (done) {
         if (!irs.mSetParentPointer) {
           break;
@@ -720,13 +722,14 @@ nsInlineFrame::ReflowFrames(nsPresContext* aPresContext,
 #endif
       if (nullptr == frame) {
         if (!isComplete) {
-          aStatus = NS_FRAME_NOT_COMPLETE;
+          aStatus.Reset();
+          aStatus.SetIncomplete();
         }
         break;
       }
       ReflowInlineFrame(aPresContext, aReflowInput, irs, frame, aStatus);
-      if (NS_INLINE_IS_BREAK(aStatus) || 
-          (!reflowingFirstLetter && NS_FRAME_IS_NOT_COMPLETE(aStatus))) {
+      if (aStatus.IsInlineBreak() ||
+          (!reflowingFirstLetter && aStatus.IsIncomplete())) {
         break;
       }
       irs.mPrevFrame = frame;
@@ -734,7 +737,7 @@ nsInlineFrame::ReflowFrames(nsPresContext* aPresContext,
     }
   }
 
-  NS_ASSERTION(!NS_FRAME_IS_COMPLETE(aStatus) || !GetOverflowFrames(),
+  NS_ASSERTION(!aStatus.IsComplete() || !GetOverflowFrames(),
                "We can't be complete AND have overflow frames!");
 
   // If after reflowing our children they take up no area then make
@@ -771,7 +774,7 @@ nsInlineFrame::ReflowFrames(nsPresContext* aPresContext,
    * chain.  For box-decoration-break:clone we always apply the end border and
    * padding since all continuations have them.
    */
-  if ((NS_FRAME_IS_COMPLETE(aStatus) &&
+  if ((aStatus.IsComplete() &&
        !LastInFlow()->GetNextContinuation() &&
        !FrameIsNonLastInIBSplit()) ||
       boxDecorationBreakClone) {
@@ -803,15 +806,16 @@ nsInlineFrame::ReflowInlineFrame(nsPresContext* aPresContext,
   bool reflowingFirstLetter = lineLayout->GetFirstLetterStyleOK();
   bool pushedFrame;
   lineLayout->ReflowFrame(aFrame, aStatus, nullptr, pushedFrame);
-  
-  if (NS_INLINE_IS_BREAK_BEFORE(aStatus)) {
+
+  if (aStatus.IsInlineBreakBefore()) {
     if (aFrame != mFrames.FirstChild()) {
       // Change break-before status into break-after since we have
       // already placed at least one child frame. This preserves the
       // break-type so that it can be propagated upward.
-      aStatus = NS_FRAME_NOT_COMPLETE |
-        NS_INLINE_BREAK | NS_INLINE_BREAK_AFTER |
-        (aStatus & NS_INLINE_BREAK_TYPE_MASK);
+      StyleClear oldBreakType = aStatus.BreakType();
+      aStatus.Reset();
+      aStatus.SetIncomplete();
+      aStatus.SetInlineLineBreakAfter(oldBreakType);
       PushFrames(aPresContext, aFrame, irs.mPrevFrame, irs);
     }
     else {
@@ -822,14 +826,14 @@ nsInlineFrame::ReflowInlineFrame(nsPresContext* aPresContext,
   }
 
   // Create a next-in-flow if needed.
-  if (!NS_FRAME_IS_FULLY_COMPLETE(aStatus)) {
+  if (!aStatus.IsFullyComplete()) {
     CreateNextInFlow(aFrame);
   }
 
-  if (NS_INLINE_IS_BREAK_AFTER(aStatus)) {
+  if (aStatus.IsInlineBreakAfter()) {
     nsIFrame* nextFrame = aFrame->GetNextSibling();
     if (nextFrame) {
-      NS_FRAME_SET_INCOMPLETE(aStatus);
+      aStatus.SetIncomplete();
       PushFrames(aPresContext, nextFrame, aFrame, irs);
     }
     else {
@@ -838,7 +842,7 @@ nsInlineFrame::ReflowInlineFrame(nsPresContext* aPresContext,
       nsInlineFrame* nextInFlow = static_cast<nsInlineFrame*>(GetNextInFlow());
       while (nextInFlow) {
         if (nextInFlow->mFrames.NotEmpty()) {
-          NS_FRAME_SET_INCOMPLETE(aStatus);
+          aStatus.SetIncomplete();
           break;
         }
         nextInFlow = static_cast<nsInlineFrame*>(nextInFlow->GetNextInFlow());
@@ -847,7 +851,7 @@ nsInlineFrame::ReflowInlineFrame(nsPresContext* aPresContext,
     return;
   }
 
-  if (!NS_FRAME_IS_FULLY_COMPLETE(aStatus) && !reflowingFirstLetter) {
+  if (!aStatus.IsFullyComplete() && !reflowingFirstLetter) {
     nsIFrame* nextFrame = aFrame->GetNextSibling();
     if (nextFrame) {
       PushFrames(aPresContext, nextFrame, aFrame, irs);
@@ -1018,6 +1022,65 @@ nsInlineFrame::AccessibleType()
   return a11y::eNoType;
 }
 #endif
+
+void
+nsInlineFrame::DoUpdateStyleOfOwnedAnonBoxes(ServoStyleSet& aStyleSet,
+                                             nsStyleChangeList& aChangeList,
+                                             nsChangeHint aHintForThisFrame)
+{
+  MOZ_ASSERT(GetStateBits() & NS_FRAME_OWNS_ANON_BOXES,
+             "Why did we get called?");
+  MOZ_ASSERT(GetStateBits() & NS_FRAME_PART_OF_IBSPLIT,
+             "Why did we have the NS_FRAME_OWNS_ANON_BOXES bit set?");
+  // Note: this assert _looks_ expensive, but it's cheap in all the cases when
+  // it passes!
+  MOZ_ASSERT(nsLayoutUtils::FirstContinuationOrIBSplitSibling(this) == this,
+             "Only the primary frame of the inline in a block-inside-inline "
+             "split should have NS_FRAME_OWNS_ANON_BOXES");
+  MOZ_ASSERT(mContent->GetPrimaryFrame() == this,
+             "We should be the primary frame for our element");
+
+  nsPresContext* presContext = PresContext();
+  // Get the FramePropertyTable up front, since we are likely to need it
+  // multiple times.  The other option would be to just call
+  // nsIFrame::Properties() every time we need to do a lookup, but that does
+  // more pointer-chasing.
+  FramePropertyTable* propTable = presContext->PropertyTable();
+  nsIFrame* blockFrame = propTable->Get(this, nsIFrame::IBSplitSibling());
+  MOZ_ASSERT(blockFrame, "Why did we have an IB split?");
+
+  nsIAtom* pseudo = blockFrame->StyleContext()->GetPseudo();
+  MOZ_ASSERT(pseudo == nsCSSAnonBoxes::mozAnonymousBlock ||
+             pseudo == nsCSSAnonBoxes::mozAnonymousPositionedBlock,
+             "Unexpected kind of style context");
+
+  // The anonymous block's style inherits from ours, and we already have our new
+  // style context.
+  RefPtr<nsStyleContext> newContext =
+    aStyleSet.ResolveAnonymousBoxStyle(pseudo, StyleContext());
+
+  // We're guaranteed that newContext only differs from the old style context on
+  // the block in things they might inherit from us.  And changehint processing
+  // guarantees walking the continuation and ib-sibling chains, so our existing
+  // changehint beign in aChangeList is good enough.  So we don't need to touch
+  // aChangeList at all here.
+
+  while (blockFrame) {
+    MOZ_ASSERT(!blockFrame->GetPrevContinuation(),
+               "Must be first continuation");
+    // We _could_ just walk along using GetNextContinuationWithSameStyle here,
+    // but it would involve going back to the first continuation every so often,
+    // which is a bit silly when we can just keep track of our first
+    // continuations.
+    for (nsIFrame* cont = blockFrame; cont; cont = cont->GetNextContinuation()) {
+      cont->SetStyleContext(newContext);
+    }
+
+    nsIFrame* nextInline = propTable->Get(blockFrame, nsIFrame::IBSplitSibling());
+    MOZ_ASSERT(nextInline, "There is always a trailing inline in an IB split");
+    blockFrame = propTable->Get(nextInline, nsIFrame::IBSplitSibling());
+  }
+}
 
 //////////////////////////////////////////////////////////////////////
 

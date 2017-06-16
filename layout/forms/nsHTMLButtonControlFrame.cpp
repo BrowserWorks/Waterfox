@@ -214,13 +214,13 @@ nsHTMLButtonControlFrame::Reflow(nsPresContext* aPresContext,
   // else, we ignore child overflow -- anything that overflows beyond our
   // own border-box will get clipped when painting.
 
-  aStatus = NS_FRAME_COMPLETE;
+  aStatus.Reset();
   FinishReflowWithAbsoluteFrames(aPresContext, aDesiredSize,
                                  aReflowInput, aStatus);
 
   // We're always complete and we don't support overflow containers
   // so we shouldn't have a next-in-flow ever.
-  aStatus = NS_FRAME_COMPLETE;
+  aStatus.Reset();
   MOZ_ASSERT(!GetNextInFlow());
 
   NS_FRAME_SET_TRUNCATION(aStatus, aReflowInput, aDesiredSize);
@@ -257,7 +257,7 @@ nsHTMLButtonControlFrame::ReflowButtonContents(nsPresContext* aPresContext,
   ReflowChild(aFirstKid, aPresContext,
               contentsDesiredSize, contentsReflowInput,
               wm, childPos, dummyContainerSize, 0, contentsReflowStatus);
-  MOZ_ASSERT(NS_FRAME_IS_COMPLETE(contentsReflowStatus),
+  MOZ_ASSERT(contentsReflowStatus.IsComplete(),
              "We gave button-contents frame unconstrained available height, "
              "so it should be complete");
 
@@ -335,6 +335,47 @@ nsHTMLButtonControlFrame::ReflowButtonContents(nsPresContext* aPresContext,
   }
 
   aButtonDesiredSize.SetOverflowAreasToDesiredBounds();
+}
+
+bool
+nsHTMLButtonControlFrame::GetVerticalAlignBaseline(mozilla::WritingMode aWM,
+                                                   nscoord* aBaseline) const
+{
+  nsIFrame* inner = mFrames.FirstChild();
+  if (MOZ_UNLIKELY(inner->GetWritingMode().IsOrthogonalTo(aWM))) {
+    return false;
+  }
+  if (!inner->GetVerticalAlignBaseline(aWM, aBaseline)) {
+    // <input type=color> has an empty block frame as inner frame
+    *aBaseline = inner->
+      SynthesizeBaselineBOffsetFromBorderBox(aWM, BaselineSharingGroup::eFirst);
+  }
+  nscoord innerBStart = inner->BStart(aWM, GetSize());
+  *aBaseline += innerBStart;
+  return true;
+}
+
+bool
+nsHTMLButtonControlFrame::GetNaturalBaselineBOffset(mozilla::WritingMode aWM,
+                                         BaselineSharingGroup aBaselineGroup,
+                                         nscoord* aBaseline) const
+{
+  nsIFrame* inner = mFrames.FirstChild();
+  if (MOZ_UNLIKELY(inner->GetWritingMode().IsOrthogonalTo(aWM))) {
+    return false;
+  }
+  if (!inner->GetNaturalBaselineBOffset(aWM, aBaselineGroup, aBaseline)) {
+    // <input type=color> has an empty block frame as inner frame
+    *aBaseline = inner->
+      SynthesizeBaselineBOffsetFromBorderBox(aWM, aBaselineGroup);
+  }
+  nscoord innerBStart = inner->BStart(aWM, GetSize());
+  if (aBaselineGroup == BaselineSharingGroup::eFirst) {
+    *aBaseline += innerBStart;
+  } else {
+    *aBaseline += BSize(aWM) - (innerBStart + inner->BSize(aWM));
+  }
+  return true;
 }
 
 nsresult nsHTMLButtonControlFrame::SetFormProperty(nsIAtom* aName, const nsAString& aValue)

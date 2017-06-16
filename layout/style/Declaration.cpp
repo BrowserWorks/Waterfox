@@ -8,10 +8,12 @@
  * stylesheet
  */
 
+#include "mozilla/css/Declaration.h"
+
 #include "mozilla/ArrayUtils.h"
 #include "mozilla/MemoryReporting.h"
+#include "mozilla/ServoStyleSet.h"
 
-#include "mozilla/css/Declaration.h"
 #include "mozilla/css/Rule.h"
 #include "nsPrintfCString.h"
 #include "gfxFontConstants.h"
@@ -1701,9 +1703,9 @@ Declaration::AppendVariableAndValueToString(const nsAString& aName,
 void
 Declaration::ToString(nsAString& aString) const
 {
-  // Someone cares about this declaration's contents, so don't let it
-  // change from under them.  See e.g. bug 338679.
-  SetImmutable();
+  // Tell the static analysis not to worry about thread-unsafe things here
+  // because because this function isn't reached during parallel style traversal.
+  MOZ_ASSERT(!ServoStyleSet::IsInServoTraversal());
 
   nsCSSCompressedDataBlock *systemFontData =
     GetPropertyIsImportantByID(eCSSProperty__x_system_font) ? mImportantData

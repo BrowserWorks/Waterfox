@@ -14,7 +14,7 @@
 
 <body>
   <pre id="test"></pre>
-  <script type="application/javascript;version=1.8">
+  <script type="application/javascript">
   /*globals SpecialPowers, SimpleTest, is, ok, */
   'use strict';
 
@@ -174,7 +174,7 @@
       document.body.appendChild(iframe);
     });
   }
-  debugger;
+
   window.onload = () => {
     enablePrefs()
       .then(createIframe)

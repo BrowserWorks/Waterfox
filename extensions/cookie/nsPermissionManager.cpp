@@ -22,7 +22,6 @@
 #include "nsILineInputStream.h"
 #include "nsAppDirectoryServiceDefs.h"
 #include "nsDirectoryServiceDefs.h"
-#include "prprf.h"
 #include "mozilla/storage.h"
 #include "mozilla/Attributes.h"
 #include "nsXULAppAPI.h"
@@ -814,18 +813,6 @@ nsPermissionManager::Init()
   // persistent storage - e.g. if there's no profile).
   // XXX should we tell the user about this?
   InitDB(false);
-
-  return NS_OK;
-}
-
-NS_IMETHODIMP
-nsPermissionManager::RefreshPermission() {
-  NS_ENSURE_TRUE(IsChildProcess(), NS_ERROR_FAILURE);
-
-  nsresult rv = RemoveAllFromMemory();
-  NS_ENSURE_SUCCESS(rv, rv);
-  rv = FetchPermissions();
-  NS_ENSURE_SUCCESS(rv, rv);
 
   return NS_OK;
 }

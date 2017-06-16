@@ -15,6 +15,7 @@
 #include "mozilla/dom/Animation.h"
 #include "mozilla/Attributes.h" // For MOZ_NON_OWNING_REF
 #include "mozilla/Assertions.h"
+#include "mozilla/TimingParams.h"
 #include "nsContentUtils.h"
 #include "nsCSSPseudoElements.h"
 #include "nsCycleCollectionParticipant.h"
@@ -23,6 +24,7 @@ class nsIFrame;
 class nsPresContext;
 
 namespace mozilla {
+enum class CSSPseudoElementType : uint8_t;
 
 namespace dom {
 class Element;
@@ -48,6 +50,26 @@ public:
     RemoveAllElementCollections();
 
     mPresContext = nullptr;
+  }
+
+  /**
+   * Stop animations on the element. This method takes the real element
+   * rather than the element for the generated content for animations on
+   * ::before and ::after.
+   */
+  void StopAnimationsForElement(dom::Element* aElement,
+                                CSSPseudoElementType aPseudoType)
+  {
+    MOZ_ASSERT(aElement);
+    AnimationCollection<AnimationType>* collection =
+      AnimationCollection<AnimationType>::GetAnimationCollection(aElement,
+                                                                 aPseudoType);
+    if (!collection) {
+      return;
+    }
+
+    nsAutoAnimationMutationBatch mb(aElement->OwnerDoc());
+    collection->Destroy();
   }
 
 protected:
@@ -127,8 +149,6 @@ public:
     aElement = mElement;
     aPseudoType = mPseudoType;
   }
-
-  nsPresContext* GetRenderedPresContext() const;
 
 private:
   dom::Element* MOZ_NON_OWNING_REF mElement;
@@ -249,6 +269,46 @@ ImplCycleCollectionTraverse(nsCycleCollectionTraversalCallback& aCallback,
                             uint32_t aFlags = 0)
 {
   aField.Traverse(&aCallback, aName);
+}
+
+// Return the TransitionPhase or AnimationPhase to use when the animation
+// doesn't have a target effect.
+template <typename PhaseType>
+PhaseType GetAnimationPhaseWithoutEffect(const dom::Animation& aAnimation)
+{
+  MOZ_ASSERT(!aAnimation.GetEffect(),
+             "Should only be called when we do not have an effect");
+
+  Nullable<TimeDuration> currentTime = aAnimation.GetCurrentTime();
+  if (currentTime.IsNull()) {
+    return PhaseType::Idle;
+  }
+
+  // If we don't have a target effect, the duration will be zero so the phase is
+  // 'before' if the current time is less than zero.
+  return currentTime.Value() < TimeDuration()
+         ? PhaseType::Before
+         : PhaseType::After;
+};
+
+inline TimingParams
+TimingParamsFromCSSParams(float aDuration, float aDelay,
+                          float aIterationCount,
+                          dom::PlaybackDirection aDirection,
+                          dom::FillMode aFillMode)
+{
+  MOZ_ASSERT(aIterationCount >= 0.0 && !IsNaN(aIterationCount),
+             "aIterations should be nonnegative & finite, as ensured by "
+             "CSSParser");
+
+  TimingParams timing;
+  timing.mDuration.emplace(StickyTimeDuration::FromMilliseconds(aDuration));
+  timing.mDelay = TimeDuration::FromMilliseconds(aDelay);
+  timing.mIterations = aIterationCount;
+  timing.mDirection = aDirection;
+  timing.mFill = aFillMode;
+
+  return timing;
 }
 
 } // namespace mozilla

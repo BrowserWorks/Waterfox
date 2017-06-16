@@ -4,8 +4,6 @@
 
 "use strict";
 
-const { Cu, Ci } = require("chrome");
-
 const { TargetFactory } = require("devtools/client/framework/target");
 const { DebuggerServer } = require("devtools/server/main");
 const { DebuggerClient } = require("devtools/shared/client/main");
@@ -21,20 +19,25 @@ const { Task } = require("devtools/shared/task");
  * ws:
  *    {Boolean} If true, connect via websocket instread of regular TCP connection.
  *
- * type: tab, process
- *    {String} The type of target to connect to.  Currently tabs and processes are supported types.
+ * type: tab, process, window
+ *    {String} The type of target to connect to.
  *
- * If type="tab":
+ * If type == "tab":
  * id:
  *    {Number} the tab outerWindowID
  * chrome: Optional
- *    {Boolean} Force the creation of a chrome target. Gives more privileges to the tab
- *    actor. Allows chrome execution in the webconsole and see chrome files in
- *    the debugger. (handy when contributing to firefox)
+ *    {Boolean} Force the creation of a chrome target. Gives more privileges to
+ *    the tab actor. Allows chrome execution in the webconsole and see chrome
+ *    files in the debugger. (handy when contributing to firefox)
  *
- * If type="process":
+ * If type == "process":
  * id:
- *    {Number} the process id to debug. Default to 0, which is the parent process.
+ *    {Number} the process id to debug. Default to 0, which is the parent
+ *    process.
+ *
+ * If type == "window":
+ * id:
+ *    {Number} the window outerWindowID
  *
  * @param {URL} url
  *        The url to fetch query params from.
@@ -59,16 +62,16 @@ exports.targetFromURL = Task.async(function* (url) {
   let form, isTabActor;
   if (type === "tab") {
     // Fetch target for a remote tab
-    id = parseInt(id);
+    id = parseInt(id, 10);
     if (isNaN(id)) {
-      throw new Error("targetFromURL, wrong tab id:'" + id + "', should be a number");
+      throw new Error(`targetFromURL, wrong tab id '${id}', should be a number`);
     }
     try {
       let response = yield client.getTab({ outerWindowID: id });
       form = response.tab;
     } catch (ex) {
       if (ex.error == "noTab") {
-        throw new Error("targetFromURL, tab with outerWindowID:'" + id + "' doesn't exist");
+        throw new Error(`targetFromURL, tab with outerWindowID '${id}' doesn't exist`);
       }
       throw ex;
     }
@@ -76,7 +79,7 @@ exports.targetFromURL = Task.async(function* (url) {
     // Fetch target for a remote chrome actor
     DebuggerServer.allowChromeProcess = true;
     try {
-      id = parseInt(id);
+      id = parseInt(id, 10);
       if (isNaN(id)) {
         id = 0;
       }
@@ -89,12 +92,31 @@ exports.targetFromURL = Task.async(function* (url) {
       }
     } catch (ex) {
       if (ex.error == "noProcess") {
-        throw new Error("targetFromURL, process with id:'" + id + "' doesn't exist");
+        throw new Error(`targetFromURL, process with id '${id}' doesn't exist`);
+      }
+      throw ex;
+    }
+  } else if (type == "window") {
+    // Fetch target for a remote window actor
+    DebuggerServer.allowChromeProcess = true;
+    try {
+      id = parseInt(id, 10);
+      if (isNaN(id)) {
+        throw new Error("targetFromURL, window requires id parameter");
+      }
+      let response = yield client.mainRoot.getWindow({
+        outerWindowID: id,
+      });
+      form = response.window;
+      chrome = true;
+    } catch (ex) {
+      if (ex.error == "notFound") {
+        throw new Error(`targetFromURL, window with id '${id}' doesn't exist`);
       }
       throw ex;
     }
   } else {
-    throw new Error("targetFromURL, unsupported type='" + type + "' parameter");
+    throw new Error(`targetFromURL, unsupported type '${type}' parameter`);
   }
 
   return TargetFactory.forRemoteTab({ client, form, chrome, isTabActor });
@@ -114,7 +136,7 @@ function* createClient(params) {
       DebuggerServer.init();
       DebuggerServer.addBrowserActors();
     }
-    transport = DebuggerServer.connectPipe()
+    transport = DebuggerServer.connectPipe();
   }
   return new DebuggerClient(transport);
 }

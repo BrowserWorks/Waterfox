@@ -1,5 +1,5 @@
 # DO NOT EDIT! This is a auto-generated temporary list for Stylo testing
-fails == 1031934.html 1031934.html
+== 1031934.html 1031934.html
 == 1220621-1a.html 1220621-1a.html
 == 1220621-1b.html 1220621-1b.html
 == 1220621-1c.html 1220621-1c.html
@@ -8,3 +8,5 @@ fails == 1031934.html 1031934.html
 == 1220621-1f.html 1220621-1f.html
 == 1220621-2a.html 1220621-2a.html
 == 1220621-2b.html 1220621-2b.html
+== dynamic-text-overflow-table-cell.html dynamic-text-overflow-table-cell.html
+== dynamic-text-indent-table-cell.html dynamic-text-indent-table-cell.html

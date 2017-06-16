@@ -4,6 +4,9 @@
 # License, v. 2.0. If a copy of the MPL was not distributed with this
 # file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
+with Files("**"):
+    BUG_COMPONENT = ("Core", "DOM")
+
 TEST_DIRS += ['test']
 
 XPIDL_SOURCES += [
@@ -154,7 +157,7 @@ EXPORTS.mozilla.dom += [
     'Comment.h',
     'CustomElementRegistry.h',
     'DirectionalityUtils.h',
-    'Dispatcher.h',
+    'DispatcherTrait.h',
     'DocGroup.h',
     'DocumentFragment.h',
     'DocumentType.h',
@@ -205,12 +208,18 @@ EXPORTS.mozilla.dom += [
     'TabGroup.h',
     'Text.h',
     'Timeout.h',
+    'TimeoutHandler.h',
     'TimeoutManager.h',
     'TreeWalker.h',
     'WebKitCSSMatrix.h',
     'WebSocket.h',
     'WindowOrientationObserver.h',
 ]
+
+if CONFIG['FUZZING']:
+    EXPORTS.mozilla.dom += [
+        'FuzzingFunctions.h',
+    ]
 
 UNIFIED_SOURCES += [
     'AnonymousContent.cpp',
@@ -225,7 +234,7 @@ UNIFIED_SOURCES += [
     'Crypto.cpp',
     'CustomElementRegistry.cpp',
     'DirectionalityUtils.cpp',
-    'Dispatcher.cpp',
+    'DispatcherTrait.cpp',
     'DocGroup.cpp',
     'DocumentFragment.cpp',
     'DocumentType.cpp',
@@ -345,6 +354,7 @@ UNIFIED_SOURCES += [
     'TextInputProcessor.cpp',
     'ThirdPartyUtil.cpp',
     'Timeout.cpp',
+    'TimeoutHandler.cpp',
     'TimeoutManager.cpp',
     'TreeWalker.cpp',
     'WebKitCSSMatrix.cpp',
@@ -356,6 +366,19 @@ UNIFIED_SOURCES += [
 if CONFIG['MOZ_WEBRTC']:
     UNIFIED_SOURCES += [
         'nsDOMDataChannel.cpp',
+    ]
+
+if CONFIG['FUZZING']:
+    UNIFIED_SOURCES += [
+        'FuzzingFunctions.cpp',
+    ]
+
+if CONFIG['ENABLE_INTL_API']:
+    UNIFIED_SOURCES += [
+        'IntlUtils.cpp',
+    ]
+    EXPORTS.mozilla.dom += [
+        'IntlUtils.h',
     ]
 
 # these files couldn't be in UNIFIED_SOURCES for now for reasons given below:
@@ -389,6 +412,8 @@ EXTRA_COMPONENTS += [
     'contentAreaDropListener.manifest',
     'messageWakeupService.js',
     'messageWakeupService.manifest',
+    'ProcessSelector.js',
+    'ProcessSelector.manifest',
     'SlowScriptDebug.js',
     'SlowScriptDebug.manifest',
 ]

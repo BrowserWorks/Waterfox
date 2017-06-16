@@ -8,6 +8,7 @@
 #include "gfxConfig.h"
 #include "gfxCrashReporterUtils.h"
 #include "gfxUtils.h"
+#include "mozilla/layers/CompositorThread.h"
 #include "mozilla/Preferences.h"
 #include "mozilla/Assertions.h"
 #include "mozilla/Telemetry.h"
@@ -50,7 +51,8 @@ static const char* sEGLExtensionNames[] = {
     "EGL_ANDROID_native_fence_sync",
     "EGL_ANDROID_image_crop",
     "EGL_ANGLE_platform_angle",
-    "EGL_ANGLE_platform_angle_d3d"
+    "EGL_ANGLE_platform_angle_d3d",
+    "EGL_ANGLE_d3d_share_handle_client_buffer"
 };
 
 #if defined(ANDROID)
@@ -148,6 +150,14 @@ static bool
 IsAccelAngleSupported(const nsCOMPtr<nsIGfxInfo>& gfxInfo,
                       nsACString* const out_failureId)
 {
+    if (CompositorThreadHolder::IsInCompositorThread()) {
+        // We can only enter here with WebRender, so assert that this is a
+        // WebRender-enabled build.
+#ifndef MOZ_ENABLE_WEBRENDER
+        MOZ_ASSERT(false);
+#endif
+        return true;
+    }
     int32_t angleSupport;
     nsCString failureId;
     gfxUtils::ThreadSafeGetFeatureStatus(gfxInfo,
@@ -214,7 +224,7 @@ public:
             tokenizer.CheckWhite() &&
             tokenizer.Check(Tokenizer::TOKEN_INTEGER, intToken)) {
             *mFailureId = "FAILURE_ID_ANGLE_ID_";
-            mFailureId->AppendPrintf("%i", intToken.AsInteger());
+            mFailureId->AppendPrintf("%" PRIu64, intToken.AsInteger());
         } else {
             *mFailureId = "FAILURE_ID_ANGLE_UNKNOWN";
         }
@@ -405,6 +415,7 @@ GLLibraryEGL::EnsureInitialized(bool forceAccel, nsACString* const out_failureId
         SYMBOL(BindTexImage),
         SYMBOL(ReleaseTexImage),
         SYMBOL(QuerySurface),
+        SYMBOL(CreatePbufferFromClientBuffer),
         { nullptr, { nullptr } }
     };
 

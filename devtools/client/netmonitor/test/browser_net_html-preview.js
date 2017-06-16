@@ -11,10 +11,10 @@ add_task(function* () {
   let { tab, monitor } = yield initNetMonitor(CONTENT_TYPE_URL);
   info("Starting test... ");
 
-  let { document, NetMonitorView } = monitor.panelWin;
-  let { RequestsMenu } = NetMonitorView;
+  let { document, gStore, windowRequire } = monitor.panelWin;
+  let Actions = windowRequire("devtools/client/netmonitor/actions/index");
 
-  RequestsMenu.lazyUpdate = false;
+  gStore.dispatch(Actions.batchEnable(false));
 
   let wait = waitForNetworkEvents(monitor, 6);
   yield ContentTask.spawn(tab.linkedBrowser, {}, function* () {
@@ -22,25 +22,26 @@ add_task(function* () {
   });
   yield wait;
 
-  EventUtils.sendMouseEvent({ type: "mousedown" },
-    document.getElementById("details-pane-toggle"));
+  EventUtils.sendMouseEvent({ type: "click" },
+    document.querySelector(".network-details-panel-toggle"));
 
-  is(document.querySelector("#event-details-pane").selectedIndex, 0,
-    "The first tab in the details pane should be selected.");
-  is(document.querySelector("#preview-tab").hidden, true,
+  ok(document.querySelector("#headers-tab[aria-selected=true]"),
+    "The headers tab in the details panel should be selected.");
+  ok(!document.querySelector("#preview-tab"),
     "The preview tab should be hidden for non html responses.");
-  is(document.querySelector("#preview-tabpanel").hidden, false,
-    "The preview tabpanel is not hidden for non html responses.");
+  ok(!document.querySelector("#preview-panel"),
+    "The preview panel is hidden for non html responses.");
 
-  RequestsMenu.selectedIndex = 4;
-  NetMonitorView.toggleDetailsPane({ visible: true, animated: false }, 6);
+  EventUtils.sendMouseEvent({ type: "mousedown" },
+    document.querySelectorAll(".request-list-item")[4]);
+  document.querySelector("#preview-tab").click();
 
-  is(document.querySelector("#event-details-pane").selectedIndex, 6,
-    "The sixth tab in the details pane should be selected.");
-  is(document.querySelector("#preview-tab").hidden, false,
-    "The preview tab should be visible now.");
+  ok(document.querySelector("#preview-tab[aria-selected=true]"),
+    "The preview tab in the details panel should be selected.");
+  ok(document.querySelector("#preview-panel"),
+    "The preview panel should be visible now.");
 
-  let iframe = document.querySelector("#preview-tabpanel iframe");
+  let iframe = document.querySelector("#preview-panel iframe");
   yield once(iframe, "DOMContentLoaded");
 
   ok(iframe,
@@ -50,14 +51,15 @@ add_task(function* () {
   is(iframe.contentDocument.querySelector("blink").textContent, "Not Found",
     "The iframe's content document should be loaded and correct.");
 
-  RequestsMenu.selectedIndex = 5;
+  EventUtils.sendMouseEvent({ type: "mousedown" },
+    document.querySelectorAll(".request-list-item")[5]);
 
-  is(document.querySelector("#event-details-pane").selectedIndex, 0,
-    "The first tab in the details pane should be selected again.");
-  is(document.querySelector("#preview-tab").hidden, true,
+  ok(document.querySelector("#headers-tab[aria-selected=true]"),
+    "The headers tab in the details panel should be selected again.");
+  ok(!document.querySelector("#preview-tab"),
     "The preview tab should be hidden again for non html responses.");
-  is(document.querySelector("#preview-tabpanel").hidden, false,
-    "The preview tabpanel is not hidden again for non html responses.");
+  ok(!document.querySelector("#preview-panel"),
+    "The preview panel is hidden again for non html responses.");
 
   yield teardown(monitor);
 });

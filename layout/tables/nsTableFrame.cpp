@@ -40,12 +40,14 @@
 #include "nsFrameManager.h"
 #include "nsError.h"
 #include "nsCSSFrameConstructor.h"
+#include "mozilla/ServoStyleSet.h"
 #include "mozilla/StyleSetHandle.h"
 #include "mozilla/StyleSetHandleInlines.h"
 #include "nsDisplayList.h"
 #include "nsIScrollableFrame.h"
 #include "nsCSSProps.h"
 #include "RestyleTracker.h"
+#include "nsStyleChangeList.h"
 #include <algorithm>
 
 using namespace mozilla;
@@ -514,30 +516,49 @@ nsTableFrame::ResetRowIndices(const nsFrameList::Slice& aRowGroupsToExclude)
 {
   // Iterate over the row groups and adjust the row indices of all rows
   // omit the rowgroups that will be inserted later
+  mDeletedRowIndexRanges.clear();
+
   RowGroupArray rowGroups;
   OrderRowGroups(rowGroups);
 
-  int32_t rowIndex = 0;
   nsTHashtable<nsPtrHashKey<nsTableRowGroupFrame> > excludeRowGroups;
   nsFrameList::Enumerator excludeRowGroupsEnumerator(aRowGroupsToExclude);
   while (!excludeRowGroupsEnumerator.AtEnd()) {
     excludeRowGroups.PutEntry(static_cast<nsTableRowGroupFrame*>(excludeRowGroupsEnumerator.get()));
+#ifdef DEBUG
+    {
+      // Check to make sure that the row indices of all rows in excluded row
+      // groups are '0' (i.e. the initial value since they haven't been added yet)
+      const nsFrameList& rowFrames =
+        excludeRowGroupsEnumerator.get()->PrincipalChildList();
+      for (nsFrameList::Enumerator rows(rowFrames); !rows.AtEnd(); rows.Next()) {
+        nsTableRowFrame* row = static_cast<nsTableRowFrame*>(rows.get());
+        MOZ_ASSERT(row->GetRowIndex() == 0,
+                   "exclusions cannot be used for rows that were already added,"
+                   "because we'd need to process mDeletedRowIndexRanges");
+      }
+    }
+#endif
     excludeRowGroupsEnumerator.Next();
   }
 
+  int32_t rowIndex = 0;
   for (uint32_t rgIdx = 0; rgIdx < rowGroups.Length(); rgIdx++) {
     nsTableRowGroupFrame* rgFrame = rowGroups[rgIdx];
     if (!excludeRowGroups.GetEntry(rgFrame)) {
       const nsFrameList& rowFrames = rgFrame->PrincipalChildList();
       for (nsFrameList::Enumerator rows(rowFrames); !rows.AtEnd(); rows.Next()) {
-        if (mozilla::StyleDisplay::TableRow == rows.get()->StyleDisplay()->mDisplay) {
-          ((nsTableRowFrame *)rows.get())->SetRowIndex(rowIndex);
+        if (mozilla::StyleDisplay::TableRow ==
+            rows.get()->StyleDisplay()->mDisplay) {
+          nsTableRowFrame* row = static_cast<nsTableRowFrame*>(rows.get());
+          row->SetRowIndex(rowIndex);
           rowIndex++;
         }
       }
     }
   }
 }
+
 void
 nsTableFrame::InsertColGroups(int32_t                   aStartColIndex,
                               const nsFrameList::Slice& aColGroups)
@@ -916,19 +937,31 @@ nsTableFrame::InsertRows(nsTableRowGroupFrame*       aRowGroupFrame,
   nsTableCellMap* cellMap = GetCellMap();
   if (cellMap) {
     TableArea damageArea(0, 0, 0, 0);
+    bool shouldRecalculateIndex = !IsDeletedRowIndexRangesEmpty();
+    if (shouldRecalculateIndex) {
+      ResetRowIndices(nsFrameList::Slice(mFrames, nullptr, nullptr));
+    }
     int32_t origNumRows = cellMap->GetRowCount();
     int32_t numNewRows = aRowFrames.Length();
     cellMap->InsertRows(aRowGroupFrame, aRowFrames, aRowIndex, aConsiderSpans, damageArea);
     MatchCellMapToColCache(cellMap);
-    if (aRowIndex < origNumRows) {
-      AdjustRowIndices(aRowIndex, numNewRows);
+
+    // Perform row index adjustment only if row indices were not
+    // reset above
+    if (!shouldRecalculateIndex) {
+      if (aRowIndex < origNumRows) {
+        AdjustRowIndices(aRowIndex, numNewRows);
+      }
+
+      // assign the correct row indices to the new rows. If they were recalculated
+      // above it may not have been done correctly because each row is constructed
+      // with index 0
+      for (int32_t rowB = 0; rowB < numNewRows; rowB++) {
+        nsTableRowFrame* rowFrame = aRowFrames.ElementAt(rowB);
+        rowFrame->SetRowIndex(aRowIndex + rowB);
+      }
     }
-    // assign the correct row indices to the new rows. If they were adjusted above
-    // it may not have been done correctly because each row is constructed with index 0
-    for (int32_t rowB = 0; rowB < numNewRows; rowB++) {
-      nsTableRowFrame* rowFrame = aRowFrames.ElementAt(rowB);
-      rowFrame->SetRowIndex(aRowIndex + rowB);
-    }
+
     if (IsBorderCollapse()) {
       AddBCDamageArea(damageArea);
     }
@@ -941,11 +974,85 @@ nsTableFrame::InsertRows(nsTableRowGroupFrame*       aRowGroupFrame,
   return numColsToAdd;
 }
 
+void
+nsTableFrame::AddDeletedRowIndex(int32_t aDeletedRowStoredIndex)
+{
+  if (mDeletedRowIndexRanges.size() == 0) {
+    mDeletedRowIndexRanges.insert(std::pair<int32_t, int32_t>
+                                    (aDeletedRowStoredIndex,
+                                     aDeletedRowStoredIndex));
+    return;
+  }
+
+  // Find the position of the current deleted row's stored index
+  // among the previous deleted row index ranges and merge ranges if
+  // they are consecutive, else add a new (disjoint) range to the map.
+  // Call to mDeletedRowIndexRanges.upper_bound is
+  // O(log(mDeletedRowIndexRanges.size())) therefore call to
+  // AddDeletedRowIndex is also ~O(log(mDeletedRowIndexRanges.size()))
+
+  // greaterIter = will point to smallest range in the map with lower value
+  //              greater than the aDeletedRowStoredIndex.
+  //              If no such value exists, point to end of map.
+  // smallerIter = will point to largest range in the map with higher value
+  //              smaller than the aDeletedRowStoredIndex
+  //              If no such value exists, point to beginning of map.
+  // i.e. when both values exist below is true:
+  // smallerIter->second < aDeletedRowStoredIndex < greaterIter->first
+  auto greaterIter = mDeletedRowIndexRanges.upper_bound(aDeletedRowStoredIndex);
+  auto smallerIter = greaterIter;
+  if (smallerIter != mDeletedRowIndexRanges.begin()) {
+    smallerIter--;
+  }
+
+  if (smallerIter->second == aDeletedRowStoredIndex - 1) {
+    if (greaterIter != mDeletedRowIndexRanges.end() &&
+        greaterIter->first == aDeletedRowStoredIndex + 1) {
+      // merge current index with smaller and greater range as they are consecutive
+      smallerIter->second = greaterIter->second;
+      mDeletedRowIndexRanges.erase(greaterIter);
+    }
+    else {
+      // add aDeletedRowStoredIndex in the smaller range as it is consecutive
+      smallerIter->second = aDeletedRowStoredIndex;
+    }
+  } else if (greaterIter != mDeletedRowIndexRanges.end() &&
+             greaterIter->first == aDeletedRowStoredIndex + 1) {
+    // add aDeletedRowStoredIndex in the greater range as it is consecutive
+    mDeletedRowIndexRanges.insert(std::pair<int32_t, int32_t>
+                                   (aDeletedRowStoredIndex,
+                                    greaterIter->second));
+    mDeletedRowIndexRanges.erase(greaterIter);
+  } else {
+    // add new range as aDeletedRowStoredIndex is disjoint from existing ranges
+    mDeletedRowIndexRanges.insert(std::pair<int32_t, int32_t>
+                                   (aDeletedRowStoredIndex,
+                                    aDeletedRowStoredIndex));
+  }
+}
+
+int32_t
+nsTableFrame::GetAdjustmentForStoredIndex(int32_t aStoredIndex)
+{
+  if (mDeletedRowIndexRanges.size() == 0)
+    return 0;
+
+  int32_t adjustment = 0;
+
+  // O(log(mDeletedRowIndexRanges.size()))
+  auto endIter = mDeletedRowIndexRanges.upper_bound(aStoredIndex);
+  for (auto iter = mDeletedRowIndexRanges.begin(); iter != endIter; ++iter) {
+    adjustment += iter->second - iter->first + 1;
+  }
+
+  return adjustment;
+}
+
 // this cannot extend beyond a single row group
 void
 nsTableFrame::RemoveRows(nsTableRowFrame& aFirstRowFrame,
-                              int32_t          aNumRowsToRemove,
-                              bool             aConsiderSpans)
+                         int32_t          aNumRowsToRemove,
+                         bool             aConsiderSpans)
 {
 #ifdef TBD_OPTIMIZATION
   // decide if we need to rebalance. we have to do this here because the row group
@@ -971,13 +1078,19 @@ nsTableFrame::RemoveRows(nsTableRowFrame& aFirstRowFrame,
   nsTableCellMap* cellMap = GetCellMap();
   if (cellMap) {
     TableArea damageArea(0, 0, 0, 0);
+
+    // Mark rows starting from aFirstRowFrame to the next 'aNumRowsToRemove-1'
+    // number of rows as deleted.
+    nsTableRowGroupFrame* parentFrame = aFirstRowFrame.GetTableRowGroupFrame();
+    parentFrame->MarkRowsAsDeleted(aFirstRowFrame, aNumRowsToRemove);
+
     cellMap->RemoveRows(firstRowIndex, aNumRowsToRemove, aConsiderSpans, damageArea);
     MatchCellMapToColCache(cellMap);
     if (IsBorderCollapse()) {
       AddBCDamageArea(damageArea);
     }
   }
-  AdjustRowIndices(firstRowIndex, -aNumRowsToRemove);
+
 #ifdef DEBUG_TABLE_CELLMAP
   printf("=== removeRowsAfter\n");
   Dump(true, true, true);
@@ -1844,7 +1957,7 @@ nsTableFrame::Reflow(nsPresContext*           aPresContext,
   bool isPaginated = aPresContext->IsPaginated();
   WritingMode wm = aReflowInput.GetWritingMode();
 
-  aStatus = NS_FRAME_COMPLETE;
+  aStatus.Reset();
   if (!GetPrevInFlow() && !mTableLayoutStrategy) {
     NS_ERROR("strategy should have been created in Init");
     return;
@@ -1929,7 +2042,7 @@ nsTableFrame::Reflow(nsPresContext*           aPresContext,
     }
 
     // XXXldb Are all these conditions correct?
-    if (needToInitiateSpecialReflow && NS_FRAME_IS_COMPLETE(aStatus)) {
+    if (needToInitiateSpecialReflow && aStatus.IsComplete()) {
       // XXXldb Do we need to set the IsBResize flag on any reflow states?
 
       ReflowInput &mutable_rs =
@@ -1942,7 +2055,7 @@ nsTableFrame::Reflow(nsPresContext*           aPresContext,
       ReflowTable(aDesiredSize, aReflowInput, aReflowInput.AvailableBSize(),
                   lastChildReflowed, aStatus);
 
-      if (lastChildReflowed && NS_FRAME_IS_NOT_COMPLETE(aStatus)) {
+      if (lastChildReflowed && aStatus.IsIncomplete()) {
         // if there is an incomplete child, then set the desired bsize
         // to include it but not the next one
         LogicalMargin borderPadding = GetChildAreaOffset(wm, &aReflowInput);
@@ -2047,7 +2160,7 @@ nsTableFrame::FixupPositionedTableParts(nsPresContext*           aPresContext,
     ReflowInput reflowInput(aPresContext, positionedPart,
                                   aReflowInput.mRenderingContext, availSize,
                                   ReflowInput::DUMMY_PARENT_REFLOW_STATE);
-    nsReflowStatus reflowStatus = NS_FRAME_COMPLETE;
+    nsReflowStatus reflowStatus;
 
     // Reflow absolutely-positioned descendants of the positioned part.
     // FIXME: Unconditionally using NS_UNCONSTRAINEDSIZE for the bsize and
@@ -3022,7 +3135,7 @@ nsTableFrame::ReflowChildren(TableReflowInput& aReflowInput,
                              nsIFrame*&          aLastChildReflowed,
                              nsOverflowAreas&    aOverflowAreas)
 {
-  aStatus = NS_FRAME_COMPLETE;
+  aStatus.Reset();
   aLastChildReflowed = nullptr;
 
   nsIFrame* prevKidFrame = nullptr;
@@ -3098,7 +3211,8 @@ nsTableFrame::ReflowChildren(TableReflowInput& aReflowInput,
           tfoot->SetRepeatable(false);
         }
         PushChildren(rowGroups, childX);
-        aStatus = NS_FRAME_NOT_COMPLETE;
+        aStatus.Reset();
+        aStatus.SetIncomplete();
         break;
       }
 
@@ -3163,20 +3277,20 @@ nsTableFrame::ReflowChildren(TableReflowInput& aReflowInput,
           childX = rowGroups.Length();
         }
       }
-      if (isPaginated && !NS_FRAME_IS_FULLY_COMPLETE(aStatus) &&
+      if (isPaginated && !aStatus.IsFullyComplete() &&
           ShouldAvoidBreakInside(aReflowInput.reflowInput)) {
-        aStatus = NS_INLINE_LINE_BREAK_BEFORE();
+        aStatus.SetInlineLineBreakBeforeAndReset();
         break;
       }
       // see if the rowgroup did not fit on this page might be pushed on
       // the next page
       if (isPaginated &&
-          (NS_INLINE_IS_BREAK_BEFORE(aStatus) ||
-           (NS_FRAME_IS_COMPLETE(aStatus) &&
+          (aStatus.IsInlineBreakBefore() ||
+           (aStatus.IsComplete() &&
             (NS_UNCONSTRAINEDSIZE != kidReflowInput.AvailableHeight()) &&
             kidReflowInput.AvailableHeight() < desiredSize.Height()))) {
         if (ShouldAvoidBreakInside(aReflowInput.reflowInput)) {
-          aStatus = NS_INLINE_LINE_BREAK_BEFORE();
+          aStatus.SetInlineLineBreakBeforeAndReset();
           break;
         }
         // if we are on top of the page place with dataloss
@@ -3194,7 +3308,8 @@ nsTableFrame::ReflowChildren(TableReflowInput& aReflowInput,
               else if (tfoot && tfoot->IsRepeatable()) {
                 tfoot->SetRepeatable(false);
               }
-              aStatus = NS_FRAME_NOT_COMPLETE;
+              aStatus.Reset();
+              aStatus.SetIncomplete();
               PushChildren(rowGroups, childX + 1);
               aLastChildReflowed = kidFrame;
               break;
@@ -3209,7 +3324,8 @@ nsTableFrame::ReflowChildren(TableReflowInput& aReflowInput,
             else if (tfoot && tfoot->IsRepeatable()) {
               tfoot->SetRepeatable(false);
             }
-            aStatus = NS_FRAME_NOT_COMPLETE;
+            aStatus.Reset();
+            aStatus.SetIncomplete();
             PushChildren(rowGroups, childX);
             aLastChildReflowed = prevKidFrame;
             break;
@@ -3233,7 +3349,7 @@ nsTableFrame::ReflowChildren(TableReflowInput& aReflowInput,
 
       pageBreak = false;
       // see if there is a page break after this row group or before the next one
-      if (NS_FRAME_IS_COMPLETE(aStatus) && isPaginated &&
+      if (aStatus.IsComplete() && isPaginated &&
           (NS_UNCONSTRAINEDSIZE != kidReflowInput.AvailableHeight())) {
         nsIFrame* nextKid =
           (childX + 1 < rowGroups.Length()) ? rowGroups[childX + 1] : nullptr;
@@ -3249,11 +3365,11 @@ nsTableFrame::ReflowChildren(TableReflowInput& aReflowInput,
       // Remember where we just were in case we end up pushing children
       prevKidFrame = kidFrame;
 
-      MOZ_ASSERT(!NS_FRAME_IS_NOT_COMPLETE(aStatus) || isPaginated,
+      MOZ_ASSERT(!aStatus.IsIncomplete() || isPaginated,
                  "Table contents should only fragment in paginated contexts");
 
       // Special handling for incomplete children
-      if (isPaginated && NS_FRAME_IS_NOT_COMPLETE(aStatus)) {
+      if (isPaginated && aStatus.IsIncomplete()) {
         nsIFrame* kidNextInFlow = kidFrame->GetNextInFlow();
         if (!kidNextInFlow) {
           // The child doesn't have a next-in-flow so create a continuing
@@ -4858,7 +4974,7 @@ public:
     return NS_OK;
   }
 private:
-  nsWeakFrame mFrame;
+  WeakFrame mFrame;
 };
 
 bool
@@ -7560,4 +7676,44 @@ nsTableFrame::InvalidateTableFrame(nsIFrame* aFrame,
     parent->InvalidateFrameWithRect(aOrigRect);
     parent->InvalidateFrame();
   }
+}
+
+void
+nsTableFrame::DoUpdateStyleOfOwnedAnonBoxes(ServoStyleSet& aStyleSet,
+                                            nsStyleChangeList& aChangeList,
+                                            nsChangeHint aHintForThisFrame)
+{
+  nsIFrame* wrapper = GetParent();
+
+  MOZ_ASSERT(wrapper->StyleContext()->GetPseudo() ==
+               nsCSSAnonBoxes::tableWrapper,
+             "What happened to our parent?");
+
+  RefPtr<nsStyleContext> newContext =
+    aStyleSet.ResolveAnonymousBoxStyle(nsCSSAnonBoxes::tableWrapper,
+                                       StyleContext());
+
+  // Figure out whether we have an actual change.  It's important that we do
+  // this, even though all the wrapper's changes are due to properties it
+  // inherits from us, because it's possible that no one ever asked us for those
+  // style structs and hence changes to them aren't reflected in
+  // aHintForThisFrame at all.
+  uint32_t equalStructs, samePointerStructs; // Not used, actually.
+  nsChangeHint wrapperHint = wrapper->StyleContext()->CalcStyleDifference(
+    newContext,
+    // The wrapper is not our descendant, so just be pessimistic about which
+    // things it needs to care about.
+    nsChangeHint_Hints_NotHandledForDescendants,
+    &equalStructs,
+    &samePointerStructs);
+  if (wrapperHint) {
+    aChangeList.AppendChange(wrapper, wrapper->GetContent(), wrapperHint);
+  }
+
+  for (nsIFrame* cur = wrapper; cur; cur = cur->GetNextContinuation()) {
+    cur->SetStyleContext(newContext);
+  }
+
+  MOZ_ASSERT(!(wrapper->GetStateBits() & NS_FRAME_OWNS_ANON_BOXES),
+             "Wrapper frame doesn't have any anon boxes of its own!");
 }

@@ -66,6 +66,9 @@ skip-if(d2d) == feGaussianBlur-cap-large-directional-radius-on-software.html feG
 # no tests for feTurbulence
 
 == filter-clipped-rect-01.svg pass.svg
+== filter-in-pattern-01.svg pass.svg
+fuzzy(5,67) != filter-in-pattern-02.svg filter-in-pattern-02-ref.svg
+random-if(winWidget) == filter-in-mask.svg pass.svg # bug 1356139
 == filter-inner-svg-01.svg pass.svg
 == filter-inner-svg-02.svg pass.svg
 == filter-inner-svg-03.svg pass.svg
@@ -83,6 +86,7 @@ fails == filter-marked-line-01.svg pass.svg # bug 477704
 == filter-nested-filtering-02.svg pass.svg
 == filter-patterned-rect-01.svg pass.svg
 == filter-patterned-rect-02.svg pass.svg
+== filter-transform-01.svg pass.svg
 
 == feColorMatrix-saturate-01.svg pass.svg
 
@@ -119,6 +123,7 @@ fuzzy(2,2659) skip-if(d2d) == feSpecularLighting-1.svg feSpecularLighting-1-ref.
 == fePointLight-zoomed-page.svg fePointLight-zoomed-page-ref.svg
 
 == feTurbulence-offset.svg feTurbulence-offset-ref.svg
+fuzzy(1,10000) == feTurbulence-zero-baseFreq.svg feTurbulence-zero-baseFreq-ref.svg
 
 == outside-sourcegraphic-1.svg outside-sourcegraphic-ref.svg
 == outside-sourcegraphic-2.svg outside-sourcegraphic-ref.svg

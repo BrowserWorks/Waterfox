@@ -9,6 +9,7 @@ include protocol PBrowser;
 include protocol PContent;
 include protocol PJavaScript;
 include protocol PFileDescriptorSet;
+include protocol PMemoryStream;
 include protocol PSendStream;
 
 include DOMTypes;
@@ -34,12 +35,11 @@ namespace dom {
  */
 nested(upto inside_cpow) sync protocol PContentBridge
 {
-    bridges PContent, PContent;
-
     manages PBlob;
     manages PBrowser;
     manages PFileDescriptorSet;
     manages PJavaScript;
+    manages PMemoryStream;
     manages PSendStream;
 
 parent:
@@ -50,6 +50,8 @@ parent:
     async PJavaScript();
 
     async PSendStream();
+
+    async PMemoryStream(uint64_t aSize);
 
 both:
     // Both the parent and the child can construct the PBrowser.

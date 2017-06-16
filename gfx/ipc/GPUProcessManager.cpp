@@ -3,9 +3,13 @@
 /* This Source Code Form is subject to the terms of the Mozilla Public
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
+
 #include "GPUProcessManager.h"
+
+#include "gfxPrefs.h"
 #include "GPUProcessHost.h"
 #include "GPUProcessListener.h"
+#include "mozilla/MemoryReportingProcess.h"
 #include "mozilla/Sprintf.h"
 #include "mozilla/StaticPtr.h"
 #include "mozilla/dom/ContentParent.h"
@@ -152,6 +156,8 @@ GPUProcessManager::DisableGPUProcess(const char* aMessage)
 
   gfxConfig::SetFailed(Feature::GPU_PROCESS, FeatureStatus::Failed, aMessage);
   gfxCriticalNote << aMessage;
+
+  gfxPlatform::NotifyGPUProcessDisabled();
 
   DestroyProcess();
   ShutdownVsyncIOThread();
@@ -897,6 +903,62 @@ GPUProcessManager::NotifyGpuObservers(const char* aTopic)
   nsCString topic(aTopic);
   mGPUChild->SendNotifyGpuObservers(topic);
   return true;
+}
+
+class GPUMemoryReporter : public MemoryReportingProcess
+{
+public:
+  NS_INLINE_DECL_THREADSAFE_REFCOUNTING(GPUMemoryReporter, override)
+
+  bool IsAlive() const override {
+    if (GPUProcessManager* gpm = GPUProcessManager::Get()) {
+      return !!gpm->GetGPUChild();
+    }
+    return false;
+  }
+
+  bool SendRequestMemoryReport(const uint32_t& aGeneration,
+                               const bool& aAnonymize,
+                               const bool& aMinimizeMemoryUsage,
+                               const dom::MaybeFileDesc& aDMDFile) override
+  {
+    GPUChild* child = GetChild();
+    if (!child) {
+      return false;
+    }
+
+    return child->SendRequestMemoryReport(
+      aGeneration, aAnonymize, aMinimizeMemoryUsage, aDMDFile);
+  }
+
+  int32_t Pid() const override {
+    if (GPUChild* child = GetChild()) {
+      return (int32_t)child->OtherPid();
+    }
+    return 0;
+  }
+
+private:
+  GPUChild* GetChild() const {
+    if (GPUProcessManager* gpm = GPUProcessManager::Get()) {
+      if (GPUChild* child = gpm->GetGPUChild()) {
+        return child;
+      }
+    }
+    return nullptr;
+  }
+
+protected:
+  ~GPUMemoryReporter() = default;
+};
+
+RefPtr<MemoryReportingProcess>
+GPUProcessManager::GetProcessMemoryReporter()
+{
+  if (!EnsureGPUReady()) {
+    return nullptr;
+  }
+  return new GPUMemoryReporter();
 }
 
 } // namespace gfx

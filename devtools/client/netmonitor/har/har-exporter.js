@@ -2,21 +2,13 @@
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
 
-/* eslint-disable mozilla/reject-some-requires */
-
 "use strict";
 
-const { Cc, Ci } = require("chrome");
 const Services = require("Services");
-const { XPCOMUtils } = require("resource://gre/modules/XPCOMUtils.jsm");
-const { resolve } = require("promise");
-const { HarUtils } = require("./har-utils.js");
-const { HarBuilder } = require("./har-builder.js");
-
-XPCOMUtils.defineLazyGetter(this, "clipboardHelper", function () {
-  return Cc["@mozilla.org/widget/clipboardhelper;1"]
-    .getService(Ci.nsIClipboardHelper);
-});
+const FileSaver = require("devtools/client/shared/file-saver");
+const JSZip = require("devtools/client/shared/vendor/jszip");
+const clipboardHelper = require("devtools/shared/platform/clipboard");
+const { HarBuilder } = require("./har-builder");
 
 var uid = 1;
 
@@ -46,8 +38,7 @@ const HarExporter = {
    *   are also included in the HAR file (can produce significantly bigger
    *   amount of data).
    *
-   * - items {Array}: List of Network requests to be exported. It is possible
-   *   to use directly: NetMonitorView.RequestsMenu.items
+   * - items {Array}: List of Network requests to be exported.
    *
    * - jsonp {Boolean}: If set to true the export format is HARP (support
    *   for JSONP syntax).
@@ -71,31 +62,48 @@ const HarExporter = {
    * - forceExport {Boolean}: The result HAR file is created even if
    *   there are no HTTP entries.
    */
-  save: function (options) {
+  async save(options) {
     // Set default options related to save operation.
-    options.defaultFileName = Services.prefs.getCharPref(
+    let defaultFileName = Services.prefs.getCharPref(
       "devtools.netmonitor.har.defaultFileName");
-    options.compress = Services.prefs.getBoolPref(
+    let compress = Services.prefs.getBoolPref(
       "devtools.netmonitor.har.compress");
 
-    // Get target file for exported data. Bail out, if the user
-    // presses cancel.
-    let file = HarUtils.getTargetFile(options.defaultFileName,
-      options.jsonp, options.compress);
+    trace.log("HarExporter.save; " + defaultFileName, options);
 
-    if (!file) {
-      return resolve();
+    let data = await this.fetchHarData(options);
+    let fileName = this.getHarFileName(defaultFileName, options.jsonp, compress);
+
+    if (compress) {
+      data = await JSZip().file(fileName, data).generateAsync({
+        compression: "DEFLATE",
+        platform: Services.appinfo.OS === "WINNT" ? "DOS" : "UNIX",
+        type: "blob",
+      });
     }
 
-    trace.log("HarExporter.save; " + options.defaultFileName, options);
+    fileName = `${fileName}${compress ? ".zip" : ""}`;
+    let blob = compress ? data : new Blob([data], { type: "application/json" });
 
-    return this.fetchHarData(options).then(jsonString => {
-      if (!HarUtils.saveToFile(file, jsonString, options.compress)) {
-        let msg = "Failed to save HAR file at: " + options.defaultFileName;
-        console.error(msg);
-      }
-      return jsonString;
-    });
+    FileSaver.saveAs(blob, fileName, document);
+  },
+
+  formatDate(date) {
+    let year = String(date.getFullYear() % 100).padStart(2, "0");
+    let month = String(date.getMonth() + 1).padStart(2, "0");
+    let day = String(date.getDate()).padStart(2, "0");
+    let hour = String(date.getHours()).padStart(2, "0");
+    let minutes = String(date.getMinutes()).padStart(2, "0");
+    let seconds = String(date.getSeconds()).padStart(2, "0");
+
+    return `${year}-${month}-${day} ${hour}-${minutes}-${seconds}`;
+  },
+
+  getHarFileName(defaultFileName, jsonp, compress) {
+    let name = defaultFileName.replace(/%date/g, this.formatDate(new Date()));
+    name = name.replace(/\:/gm, "-", "");
+    name = name.replace(/\//gm, "_", "");
+    return `${name}.${jsonp ? "harp" : "har"}`;
   },
 
   /**
@@ -133,12 +141,12 @@ const HarExporter = {
       // Do not export an empty HAR file, unless the user
       // explicitly says so (using the forceExport option).
       if (!har.log.entries.length && !options.forceExport) {
-        return resolve();
+        return Promise.resolve();
       }
 
       let jsonString = this.stringify(har);
       if (!jsonString) {
-        return resolve();
+        return Promise.resolve();
       }
 
       // If JSONP is wanted, wrap the string in a function call

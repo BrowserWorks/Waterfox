@@ -176,7 +176,7 @@ class FunctionCompiler
                      const ValTypeVector& locals,
                      MIRGenerator& mirGen)
       : env_(env),
-        iter_(env, decoder, func.lineOrBytecode()),
+        iter_(env, decoder),
         func_(func),
         locals_(locals),
         lastReadCallSite_(0),
@@ -336,18 +336,18 @@ class FunctionCompiler
     {
         if (inDeadCode())
             return nullptr;
-        MConstant* constant = MConstant::NewRawFloat32(alloc(), f);
-        curBlock_->add(constant);
-        return constant;
+        auto* cst = MWasmFloatConstant::NewFloat32(alloc(), f);
+        curBlock_->add(cst);
+        return cst;
     }
 
     MDefinition* constant(double d)
     {
         if (inDeadCode())
             return nullptr;
-        MConstant* constant = MConstant::NewRawDouble(alloc(), d);
-        curBlock_->add(constant);
-        return constant;
+        auto* cst = MWasmFloatConstant::NewDouble(alloc(), d);
+        curBlock_->add(cst);
+        return cst;
     }
 
     MDefinition* constant(int64_t i)
@@ -719,74 +719,74 @@ class FunctionCompiler
     }
 
   public:
-    MDefinition* load(MDefinition* base, MemoryAccessDesc access, ValType result)
+    MDefinition* load(MDefinition* base, MemoryAccessDesc* access, ValType result)
     {
         if (inDeadCode())
             return nullptr;
 
         MInstruction* load = nullptr;
-        if (access.isPlainAsmJS()) {
-            MOZ_ASSERT(access.offset() == 0);
-            load = MAsmJSLoadHeap::New(alloc(), base, access.type());
+        if (access->isPlainAsmJS()) {
+            MOZ_ASSERT(access->offset() == 0);
+            load = MAsmJSLoadHeap::New(alloc(), base, access->type());
         } else {
-            checkOffsetAndBounds(&access, &base);
-            load = MWasmLoad::New(alloc(), base, access, ToMIRType(result));
+            checkOffsetAndBounds(access, &base);
+            load = MWasmLoad::New(alloc(), base, *access, ToMIRType(result));
         }
 
         curBlock_->add(load);
         return load;
     }
 
-    void store(MDefinition* base, MemoryAccessDesc access, MDefinition* v)
+    void store(MDefinition* base, MemoryAccessDesc* access, MDefinition* v)
     {
         if (inDeadCode())
             return;
 
         MInstruction* store = nullptr;
-        if (access.isPlainAsmJS()) {
-            MOZ_ASSERT(access.offset() == 0);
-            store = MAsmJSStoreHeap::New(alloc(), base, access.type(), v);
+        if (access->isPlainAsmJS()) {
+            MOZ_ASSERT(access->offset() == 0);
+            store = MAsmJSStoreHeap::New(alloc(), base, access->type(), v);
         } else {
-            checkOffsetAndBounds(&access, &base);
-            store = MWasmStore::New(alloc(), base, access, v);
+            checkOffsetAndBounds(access, &base);
+            store = MWasmStore::New(alloc(), base, *access, v);
         }
 
         curBlock_->add(store);
     }
 
-    MDefinition* atomicCompareExchangeHeap(MDefinition* base, MemoryAccessDesc access,
+    MDefinition* atomicCompareExchangeHeap(MDefinition* base, MemoryAccessDesc* access,
                                            MDefinition* oldv, MDefinition* newv)
     {
         if (inDeadCode())
             return nullptr;
 
-        checkOffsetAndBounds(&access, &base);
-        auto* cas = MAsmJSCompareExchangeHeap::New(alloc(), base, access, oldv, newv, tlsPointer_);
+        checkOffsetAndBounds(access, &base);
+        auto* cas = MAsmJSCompareExchangeHeap::New(alloc(), base, *access, oldv, newv, tlsPointer_);
         curBlock_->add(cas);
         return cas;
     }
 
-    MDefinition* atomicExchangeHeap(MDefinition* base, MemoryAccessDesc access,
+    MDefinition* atomicExchangeHeap(MDefinition* base, MemoryAccessDesc* access,
                                     MDefinition* value)
     {
         if (inDeadCode())
             return nullptr;
 
-        checkOffsetAndBounds(&access, &base);
-        auto* cas = MAsmJSAtomicExchangeHeap::New(alloc(), base, access, value, tlsPointer_);
+        checkOffsetAndBounds(access, &base);
+        auto* cas = MAsmJSAtomicExchangeHeap::New(alloc(), base, *access, value, tlsPointer_);
         curBlock_->add(cas);
         return cas;
     }
 
     MDefinition* atomicBinopHeap(js::jit::AtomicOp op,
-                                 MDefinition* base, MemoryAccessDesc access,
+                                 MDefinition* base, MemoryAccessDesc* access,
                                  MDefinition* v)
     {
         if (inDeadCode())
             return nullptr;
 
-        checkOffsetAndBounds(&access, &base);
-        auto* binop = MAsmJSAtomicBinopHeap::New(alloc(), op, base, access, v, tlsPointer_);
+        checkOffsetAndBounds(access, &base);
+        auto* binop = MAsmJSAtomicBinopHeap::New(alloc(), op, base, *access, v, tlsPointer_);
         curBlock_->add(binop);
         return binop;
     }
@@ -796,7 +796,7 @@ class FunctionCompiler
         if (inDeadCode())
             return nullptr;
 
-        auto* load = MWasmLoadGlobalVar::New(alloc(), type, globalDataOffset, isConst);
+        auto* load = MWasmLoadGlobalVar::New(alloc(), type, globalDataOffset, isConst, tlsPointer_);
         curBlock_->add(load);
         return load;
     }
@@ -805,7 +805,7 @@ class FunctionCompiler
     {
         if (inDeadCode())
             return;
-        curBlock_->add(MWasmStoreGlobalVar::New(alloc(), globalDataOffset, v));
+        curBlock_->add(MWasmStoreGlobalVar::New(alloc(), globalDataOffset, v, tlsPointer_));
     }
 
     void addInterruptCheck()
@@ -1509,7 +1509,7 @@ class FunctionCompiler
     uint32_t readCallSiteLineOrBytecode() {
         if (!func_.callSiteLineNums().empty())
             return func_.callSiteLineNums()[lastReadCallSite_++];
-        return iter_.trapOffset().bytecodeOffset;
+        return iter_.errorOffset();
     }
 
     bool done() const { return iter_.done(); }
@@ -2284,7 +2284,7 @@ EmitLoad(FunctionCompiler& f, ValType type, Scalar::Type viewType)
         return false;
 
     MemoryAccessDesc access(viewType, addr.align, addr.offset, f.trapIfNotAsmJS());
-    f.iter().setResult(f.load(addr.base, access, type));
+    f.iter().setResult(f.load(addr.base, &access, type));
     return true;
 }
 
@@ -2298,7 +2298,7 @@ EmitStore(FunctionCompiler& f, ValType resultType, Scalar::Type viewType)
 
     MemoryAccessDesc access(viewType, addr.align, addr.offset, f.trapIfNotAsmJS());
 
-    f.store(addr.base, access, value);
+    f.store(addr.base, &access, value);
     return true;
 }
 
@@ -2312,7 +2312,7 @@ EmitTeeStore(FunctionCompiler& f, ValType resultType, Scalar::Type viewType)
 
     MemoryAccessDesc access(viewType, addr.align, addr.offset, f.trapIfNotAsmJS());
 
-    f.store(addr.base, access, value);
+    f.store(addr.base, &access, value);
     return true;
 }
 
@@ -2333,7 +2333,7 @@ EmitTeeStoreWithCoercion(FunctionCompiler& f, ValType resultType, Scalar::Type v
 
     MemoryAccessDesc access(viewType, addr.align, addr.offset, f.trapIfNotAsmJS());
 
-    f.store(addr.base, access, value);
+    f.store(addr.base, &access, value);
     return true;
 }
 
@@ -2406,7 +2406,7 @@ EmitAtomicsLoad(FunctionCompiler& f)
     MemoryAccessDesc access(viewType, addr.align, addr.offset, Some(f.trapOffset()), 0,
                             MembarBeforeLoad, MembarAfterLoad);
 
-    f.iter().setResult(f.load(addr.base, access, ValType::I32));
+    f.iter().setResult(f.load(addr.base, &access, ValType::I32));
     return true;
 }
 
@@ -2422,7 +2422,7 @@ EmitAtomicsStore(FunctionCompiler& f)
     MemoryAccessDesc access(viewType, addr.align, addr.offset, Some(f.trapOffset()), 0,
                             MembarBeforeStore, MembarAfterStore);
 
-    f.store(addr.base, access, value);
+    f.store(addr.base, &access, value);
     f.iter().setResult(value);
     return true;
 }
@@ -2439,7 +2439,7 @@ EmitAtomicsBinOp(FunctionCompiler& f)
 
     MemoryAccessDesc access(viewType, addr.align, addr.offset, Some(f.trapOffset()));
 
-    f.iter().setResult(f.atomicBinopHeap(op, addr.base, access, value));
+    f.iter().setResult(f.atomicBinopHeap(op, addr.base, &access, value));
     return true;
 }
 
@@ -2455,7 +2455,7 @@ EmitAtomicsCompareExchange(FunctionCompiler& f)
 
     MemoryAccessDesc access(viewType, addr.align, addr.offset, Some(f.trapOffset()));
 
-    f.iter().setResult(f.atomicCompareExchangeHeap(addr.base, access, oldValue, newValue));
+    f.iter().setResult(f.atomicCompareExchangeHeap(addr.base, &access, oldValue, newValue));
     return true;
 }
 
@@ -2470,7 +2470,7 @@ EmitAtomicsExchange(FunctionCompiler& f)
 
     MemoryAccessDesc access(viewType, addr.align, addr.offset, Some(f.trapOffset()));
 
-    f.iter().setResult(f.atomicExchangeHeap(addr.base, access, value));
+    f.iter().setResult(f.atomicExchangeHeap(addr.base, &access, value));
     return true;
 }
 
@@ -2693,7 +2693,7 @@ EmitSimdLoad(FunctionCompiler& f, ValType resultType, unsigned numElems)
 
     MemoryAccessDesc access(viewType, addr.align, addr.offset, Some(f.trapOffset()), numElems);
 
-    f.iter().setResult(f.load(addr.base, access, resultType));
+    f.iter().setResult(f.load(addr.base, &access, resultType));
     return true;
 }
 
@@ -2713,7 +2713,7 @@ EmitSimdStore(FunctionCompiler& f, ValType resultType, unsigned numElems)
 
     MemoryAccessDesc access(viewType, addr.align, addr.offset, Some(f.trapOffset()), numElems);
 
-    f.store(addr.base, access, value);
+    f.store(addr.base, &access, value);
     return true;
 }
 
@@ -3618,7 +3618,7 @@ wasm::IonCompileFunction(CompileTask* task, FuncCompileUnit* unit, UniqueChars* 
     const ModuleEnvironment& env = task->env();
     uint32_t bodySize = func.bytes().length();
 
-    Decoder d(func.bytes(), error);
+    Decoder d(func.bytes().begin(), func.bytes().end(), func.lineOrBytecode(), error);
 
     if (!env.isAsmJS()) {
         if (!ValidateFunctionBody(task->env(), func.index(), bodySize, d))
@@ -3645,17 +3645,11 @@ wasm::IonCompileFunction(CompileTask* task, FuncCompileUnit* unit, UniqueChars* 
                      IonOptimizations.get(OptimizationLevel::Wasm));
     mir.initMinWasmHeapLength(env.minMemoryLength);
 
-    // Capture the prologue's trap site before decoding the function.
-
-    TrapOffset prologueTrapOffset;
-
     // Build MIR graph
     {
         FunctionCompiler f(env, d, func, locals, mir);
         if (!f.init())
             return false;
-
-        prologueTrapOffset = f.iter().trapOffset();
 
         if (!f.startBlock())
             return false;
@@ -3695,6 +3689,7 @@ wasm::IonCompileFunction(CompileTask* task, FuncCompileUnit* unit, UniqueChars* 
 
         CodeGenerator codegen(&mir, lir, &task->masm());
 
+        TrapOffset prologueTrapOffset(func.lineOrBytecode());
         FuncOffsets offsets;
         if (!codegen.generateWasm(sigId, prologueTrapOffset, &offsets))
             return false;

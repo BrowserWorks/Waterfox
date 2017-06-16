@@ -10,12 +10,15 @@ function run_test() {
 
 function PetrolEngine() {}
 PetrolEngine.prototype.name = "petrol";
+PetrolEngine.prototype.finalize = async function() {};
 
 function DieselEngine() {}
 DieselEngine.prototype.name = "diesel";
+DieselEngine.prototype.finalize = async function() {};
 
 function DummyEngine() {}
 DummyEngine.prototype.name = "dummy";
+DummyEngine.prototype.finalize = async function() {};
 
 function ActualEngine() {}
 ActualEngine.prototype = {__proto__: Engine.prototype,

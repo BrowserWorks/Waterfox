@@ -4,21 +4,17 @@
 
 "use strict";
 
-const { defer, all } = require("promise");
-const { LocalizationHelper } = require("devtools/shared/l10n");
 const Services = require("Services");
 const appInfo = Services.appinfo;
+const { LocalizationHelper } = require("devtools/shared/l10n");
 const { CurlUtils } = require("devtools/client/shared/curl");
 const {
   getFormDataSections,
   getUrlQuery,
   parseQueryString,
-} = require("devtools/client/netmonitor/request-utils");
+} = require("devtools/client/netmonitor/utils/request-utils");
 
-loader.lazyGetter(this, "L10N", () => {
-  return new LocalizationHelper("devtools/client/locales/har.properties");
-});
-
+const L10N = new LocalizationHelper("devtools/client/locales/har.properties");
 const HAR_VERSION = "1.1";
 
 /**
@@ -30,8 +26,7 @@ const HAR_VERSION = "1.1";
  *
  * The following options are supported:
  *
- * - items {Array}: List of Network requests to be exported. It is possible
- *   to use directly: NetMonitorView.RequestsMenu.items
+ * - items {Array}: List of Network requests to be exported.
  *
  * - id {String}: ID of the exported page.
  *
@@ -69,10 +64,7 @@ HarBuilder.prototype = {
 
     // Some data needs to be fetched from the backend during the
     // build process, so wait till all is done.
-    let { resolve, promise } = defer();
-    all(this.promises).then(results => resolve({ log: log }));
-
-    return promise;
+    return Promise.all(this.promises).then(() => ({ log }));
   },
 
   // Helpers

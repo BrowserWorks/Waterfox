@@ -16,6 +16,8 @@
 #include <algorithm>
 #include "mozilla/AutoRestore.h"
 #include "RestyleTracker.h"
+#include "nsIPresShell.h"
+#include "nsIPresShellInlines.h"
 
 using namespace mozilla;
 using namespace mozilla::dom;
@@ -323,7 +325,7 @@ nsSMILAnimationController::DoSample(bool aSkipUnchangedContainers)
   mResampleNeeded = false;
 
   if (mDocument->IsStyledByServo()) {
-    NS_ERROR("stylo: SMIL animations not supported yet");
+    NS_WARNING("stylo: SMIL animations not supported yet");
     return;
   }
 
@@ -797,5 +799,7 @@ nsSMILAnimationController::GetRefreshDriver()
 void
 nsSMILAnimationController::FlagDocumentNeedsFlush()
 {
-  mDocument->SetNeedStyleFlush();
+  if (nsIPresShell* shell = mDocument->GetShell()) {
+    shell->SetNeedStyleFlush();
+  }
 }

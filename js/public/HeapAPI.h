@@ -106,20 +106,13 @@ struct Zone
     JSTracer* const barrierTracer_;     // A pointer to the JSRuntime's |gcMarker|.
 
   public:
-    // Stack GC roots for Rooted GC pointers.
-    js::RootedListHeads stackRoots_;
-    template <typename T> friend class JS::Rooted;
-
     bool needsIncrementalBarrier_;
 
     Zone(JSRuntime* runtime, JSTracer* barrierTracerArg)
       : runtime_(runtime),
         barrierTracer_(barrierTracerArg),
         needsIncrementalBarrier_(false)
-    {
-        for (auto& stackRootPtr : stackRoots_)
-            stackRootPtr = nullptr;
-    }
+    {}
 
     bool needsIncrementalBarrier() const {
         return needsIncrementalBarrier_;
@@ -131,7 +124,7 @@ struct Zone
         return barrierTracer_;
     }
 
-    JSRuntime* runtimeFromMainThread() const {
+    JSRuntime* runtimeFromActiveCooperatingThread() const {
         MOZ_ASSERT(js::CurrentThreadCanAccessRuntime(runtime_));
         return runtime_;
     }
@@ -302,15 +295,6 @@ GetGCThingZone(const uintptr_t addr)
 
 }
 
-static MOZ_ALWAYS_INLINE JS::shadow::Runtime*
-GetCellRuntime(const Cell* cell)
-{
-    MOZ_ASSERT(cell);
-    const uintptr_t addr = uintptr_t(cell);
-    const uintptr_t rt_addr = (addr & ~ChunkMask) | ChunkRuntimeOffset;
-    return *reinterpret_cast<JS::shadow::Runtime**>(rt_addr);
-}
-
 static MOZ_ALWAYS_INLINE bool
 CellIsMarkedGray(const Cell* cell)
 {
@@ -325,6 +309,11 @@ CellIsMarkedGray(const Cell* cell)
 
 extern JS_PUBLIC_API(bool)
 CellIsMarkedGrayIfKnown(const Cell* cell);
+
+#ifdef DEBUG
+extern JS_PUBLIC_API(bool)
+CellIsNotGray(const Cell* cell);
+#endif
 
 } /* namespace detail */
 
@@ -379,14 +368,15 @@ namespace js {
 namespace gc {
 
 static MOZ_ALWAYS_INLINE bool
-IsIncrementalBarrierNeededOnTenuredGCThing(JS::shadow::Runtime* rt, const JS::GCCellPtr thing)
+IsIncrementalBarrierNeededOnTenuredGCThing(const JS::GCCellPtr thing)
 {
     MOZ_ASSERT(thing);
     MOZ_ASSERT(!js::gc::IsInsideNursery(thing.asCell()));
 
-    // TODO: I'd like to assert !isHeapBusy() here but this gets called while we
-    // are tracing the heap, e.g. during memory reporting (see bug 1313318).
-    MOZ_ASSERT(!rt->isHeapCollecting());
+    // TODO: I'd like to assert !CurrentThreadIsHeapBusy() here but this gets
+    // called while we are tracing the heap, e.g. during memory reporting
+    // (see bug 1313318).
+    MOZ_ASSERT(!JS::CurrentThreadIsHeapCollecting());
 
     JS::Zone* zone = JS::GetTenuredGCThingZone(thing);
     return JS::shadow::Zone::asShadowZone(zone)->needsIncrementalBarrier();

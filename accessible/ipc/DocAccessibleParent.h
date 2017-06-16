@@ -28,11 +28,21 @@ class DocAccessibleParent : public ProxyAccessible,
 {
 public:
   DocAccessibleParent() :
-    ProxyAccessible(this), mParentDoc(nullptr),
+    ProxyAccessible(this), mParentDoc(kNoParentDoc),
     mTopLevel(false), mShutdown(false)
-  { MOZ_COUNT_CTOR_INHERITED(DocAccessibleParent, ProxyAccessible); }
+#if defined(XP_WIN)
+                                      , mEmulatedWindowHandle(nullptr)
+#endif // defined(XP_WIN)
+  {
+    MOZ_COUNT_CTOR_INHERITED(DocAccessibleParent, ProxyAccessible);
+    sMaxDocID++;
+    mActorID = sMaxDocID;
+    MOZ_ASSERT(!LiveDocs().Get(mActorID));
+    LiveDocs().Put(mActorID, this);
+  }
   ~DocAccessibleParent()
   {
+    LiveDocs().Remove(mActorID);
     MOZ_COUNT_DTOR_INHERITED(DocAccessibleParent, ProxyAccessible);
     MOZ_ASSERT(mChildDocs.Length() == 0);
     MOZ_ASSERT(!ParentDoc());
@@ -99,7 +109,7 @@ public:
   void Destroy();
   virtual void ActorDestroy(ActorDestroyReason aWhy) override
   {
-    MOZ_DIAGNOSTIC_ASSERT(CheckDocTree());
+    MOZ_ASSERT(CheckDocTree());
     if (!mShutdown)
       Destroy();
   }
@@ -108,7 +118,8 @@ public:
    * Return the main processes representation of the parent document (if any)
    * of the document this object represents.
    */
-  DocAccessibleParent* ParentDoc() const { return mParentDoc; }
+  DocAccessibleParent* ParentDoc() const;
+  static const uint64_t kNoParentDoc = UINT64_MAX;
 
   /*
    * Called when a document in a content process notifies the main process of a
@@ -123,9 +134,14 @@ public:
    */
   void RemoveChildDoc(DocAccessibleParent* aChildDoc)
   {
-    aChildDoc->Parent()->ClearChildDoc(aChildDoc);
-    mChildDocs.RemoveElement(aChildDoc);
-    aChildDoc->mParentDoc = nullptr;
+    ProxyAccessible* parent = aChildDoc->Parent();
+    MOZ_ASSERT(parent);
+    if (parent) {
+      aChildDoc->Parent()->ClearChildDoc(aChildDoc);
+    }
+    DebugOnly<bool> result = mChildDocs.RemoveElement(aChildDoc->mActorID);
+    aChildDoc->mParentDoc = kNoParentDoc;
+    MOZ_ASSERT(result);
     MOZ_ASSERT(aChildDoc->mChildDocs.Length() == 0);
   }
 
@@ -152,13 +168,23 @@ public:
 
   size_t ChildDocCount() const { return mChildDocs.Length(); }
   const DocAccessibleParent* ChildDocAt(size_t aIdx) const
-    { return mChildDocs[aIdx]; }
+  { return const_cast<DocAccessibleParent*>(this)->ChildDocAt(aIdx); }
+  DocAccessibleParent* ChildDocAt(size_t aIdx)
+    { return LiveDocs().Get(mChildDocs[aIdx]); }
 
 #if defined(XP_WIN)
-  void SetCOMProxy(const RefPtr<IAccessible>& aCOMProxy);
+  void MaybeInitWindowEmulation();
+  void SendParentCOMProxy();
 
   virtual mozilla::ipc::IPCResult RecvGetWindowedPluginIAccessible(
       const WindowsHandle& aHwnd, IAccessibleHolder* aPluginCOMProxy) override;
+
+  /**
+   * Set emulated native window handle for a document.
+   * @param aWindowHandle emulated native window handle
+   */
+  void SetEmulatedWindowHandle(HWND aWindowHandle);
+  HWND GetEmulatedWindowHandle() const { return mEmulatedWindowHandle; }
 #endif
 
 private:
@@ -192,16 +218,30 @@ private:
   MOZ_MUST_USE bool CheckDocTree() const;
   xpcAccessibleGeneric* GetXPCAccessible(ProxyAccessible* aProxy);
 
-  nsTArray<DocAccessibleParent*> mChildDocs;
-  DocAccessibleParent* mParentDoc;
+  nsTArray<uint64_t> mChildDocs;
+  uint64_t mParentDoc;
+
+#if defined(XP_WIN)
+  // The handle associated with the emulated window that contains this document
+  HWND mEmulatedWindowHandle;
+#endif
 
   /*
    * Conceptually this is a map from IDs to proxies, but we store the ID in the
    * proxy object so we can't use a real map.
    */
   nsTHashtable<ProxyEntry> mAccessibles;
+  uint64_t mActorID;
   bool mTopLevel;
   bool mShutdown;
+
+  static uint64_t sMaxDocID;
+  static nsDataHashtable<nsUint64HashKey, DocAccessibleParent*>&
+    LiveDocs()
+    {
+      static nsDataHashtable<nsUint64HashKey, DocAccessibleParent*> sLiveDocs;
+      return sLiveDocs;
+    }
 };
 
 }

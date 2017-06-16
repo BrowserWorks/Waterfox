@@ -2235,8 +2235,8 @@ var gCSSProperties = {
     domProp: "backgroundColor",
     inherited: false,
     type: CSS_TYPE_LONGHAND,
-    initial_values: [ "transparent", "rgba(255, 127, 15, 0)", "hsla(240, 97%, 50%, 0.0)", "rgba(0, 0, 0, 0)", "rgba(255,255,255,-3.7)" ],
-    other_values: [ "green", "rgb(255, 0, 128)", "#fc2", "#96ed2a", "black", "rgba(255,255,0,3)", "hsl(240, 50%, 50%)", "rgb(50%, 50%, 50%)", "-moz-default-background-color", "rgb(100, 100.0, 100)" ],
+    initial_values: [ "transparent", "rgba(0, 0, 0, 0)" ],
+    other_values: [ "green", "rgb(255, 0, 128)", "#fc2", "#96ed2a", "black", "rgba(255,255,0,3)", "hsl(240, 50%, 50%)", "rgb(50%, 50%, 50%)", "-moz-default-background-color", "rgb(100, 100.0, 100)", "rgba(255, 127, 15, 0)", "hsla(240, 97%, 50%, 0.0)", "rgba(255,255,255,-3.7)" ],
     invalid_values: [ "#0", "#00", "#00000", "#0000000", "#000000000", "rgb(100, 100%, 100)" ],
     quirks_values: { "000000": "#000000", "96ed2a": "#96ed2a" },
   },
@@ -3437,7 +3437,55 @@ var gCSSProperties = {
     invalid_values: [ "none" ],
     quirks_values: { "5": "5px" },
   },
-
+  "object-fit": {
+    domProp: "objectFit",
+    inherited: false,
+    type: CSS_TYPE_LONGHAND,
+    initial_values: [ "fill" ],
+    other_values: [ "contain", "cover", "none", "scale-down" ],
+    invalid_values: [ "auto", "5px", "100%" ]
+  },
+  "object-position": {
+    domProp: "objectPosition",
+    inherited: false,
+    type: CSS_TYPE_LONGHAND,
+    initial_values: [ "50% 50%", "50%", "center", "center center" ],
+    other_values: [
+      "calc(20px)",
+      "calc(20px) 10px",
+      "10px calc(20px)",
+      "calc(20px) 25%",
+      "25% calc(20px)",
+      "calc(20px) calc(20px)",
+      "calc(20px + 1em) calc(20px / 2)",
+      "calc(20px + 50%) calc(50% - 10px)",
+      "calc(-20px) calc(-50%)",
+      "calc(-20%) calc(-50%)",
+      "0px 0px",
+      "right 20px top 60px",
+      "right 20px bottom 60px",
+      "left 20px top 60px",
+      "left 20px bottom 60px",
+      "right -50px top -50px",
+      "left -50px bottom -50px",
+      "right 20px top -50px",
+      "right -20px top 50px",
+      "right 3em bottom 10px",
+      "bottom 3em right 10px",
+      "top 3em right 10px",
+      "left 15px",
+      "10px top",
+      "left top 15px",
+      "left 10px top",
+      "left 20%",
+      "right 20%"
+    ],
+    invalid_values: [ "center 10px center 4px", "center 10px center",
+                      "top 20%", "bottom 20%", "50% left", "top 50%",
+                      "50% bottom 10%", "right 10% 50%", "left right",
+                      "top bottom", "left 10% right",
+                      "top 20px bottom 20px", "left left", "20 20" ]
+  },
   "opacity": {
     domProp: "opacity",
     inherited: false,
@@ -3920,8 +3968,8 @@ var gCSSProperties = {
     inherited: false,
     type: CSS_TYPE_LONGHAND,
     initial_values: [ "normal" ],
-    other_values: [ "embed", "bidi-override", "isolate", "plaintext", "isolate-override", "-moz-isolate", "-moz-plaintext", "-moz-isolate-override" ],
-    invalid_values: [ "auto", "none" ]
+    other_values: [ "embed", "bidi-override", "isolate", "plaintext", "isolate-override" ],
+    invalid_values: [ "auto", "none", "-moz-isolate", "-moz-plaintext", "-moz-isolate-override" ]
   },
   "vertical-align": {
     domProp: "verticalAlign",
@@ -5570,6 +5618,17 @@ if (IsCSSPropertyPrefEnabled("layout.css.text-combine-upright.enabled")) {
   }
 }
 
+if (IsCSSPropertyPrefEnabled("layout.css.text-justify.enabled")) {
+  gCSSProperties["text-justify"] = {
+    domProp: "textJustify",
+    inherited: true,
+    type: CSS_TYPE_LONGHAND,
+    initial_values: [ "auto" ],
+    other_values: [ "none", "inter-word", "inter-character", "distribute" ],
+    invalid_values: []
+  };
+}
+
 if (IsCSSPropertyPrefEnabled("layout.css.font-variations.enabled")) {
   gCSSProperties["font-variation-settings"] = {
     domProp: "fontVariationSettings",
@@ -5613,9 +5672,19 @@ if (IsCSSPropertyPrefEnabled("svg.transform-box.enabled")) {
     type: CSS_TYPE_LONGHAND,
     initial_values: [ "border-box" ],
     other_values: [ "fill-box", "view-box" ],
-    invalid_values: []
+    invalid_values: ["content-box", "padding-box", "stroke-box", "margin-box"]
   };
 }
+
+var basicShapeSVGBoxValues = [
+  "fill-box",
+  "stroke-box",
+  "view-box",
+
+  "polygon(evenodd, 20pt 20cm) fill-box",
+  "polygon(evenodd, 20ex 20pc) stroke-box",
+  "polygon(evenodd, 20rem 20in) view-box",
+];
 
 var basicShapeOtherValues = [
   "polygon(20px 20px)",
@@ -5793,15 +5862,7 @@ if (IsCSSPropertyPrefEnabled("layout.css.clip-path-shapes.enabled")) {
     other_values: [
       // SVG reference clip-path
       "url(#my-clip-path)",
-
-      "fill-box",
-      "stroke-box",
-      "view-box",
-
-      "polygon(evenodd, 20pt 20cm) fill-box",
-      "polygon(evenodd, 20ex 20pc) stroke-box",
-      "polygon(evenodd, 20rem 20in) view-box",
-    ].concat(basicShapeOtherValues),
+    ].concat(basicShapeSVGBoxValues).concat(basicShapeOtherValues),
     invalid_values: basicShapeInvalidValues,
     unbalanced_values: basicShapeUnbalancedValues,
   };
@@ -5816,7 +5877,7 @@ if (IsCSSPropertyPrefEnabled("layout.css.shape-outside.enabled")) {
     other_values: [
       "url(#my-shape-outside)",
     ].concat(basicShapeOtherValues),
-    invalid_values: basicShapeInvalidValues,
+    invalid_values: basicShapeSVGBoxValues.concat(basicShapeInvalidValues),
     unbalanced_values: basicShapeUnbalancedValues,
   };
 }
@@ -6777,58 +6838,6 @@ if (IsCSSPropertyPrefEnabled("layout.css.background-blend-mode.enabled")) {
     other_values: [ "multiply", "screen", "overlay", "darken", "lighten", "color-dodge", "color-burn",
       "hard-light", "soft-light", "difference", "exclusion", "hue", "saturation", "color", "luminosity" ],
     invalid_values: ["none", "10px", "multiply multiply"]
-  };
-}
-
-if (IsCSSPropertyPrefEnabled("layout.css.object-fit-and-position.enabled")) {
-  gCSSProperties["object-fit"] = {
-    domProp: "objectFit",
-    inherited: false,
-    type: CSS_TYPE_LONGHAND,
-    initial_values: [ "fill" ],
-    other_values: [ "contain", "cover", "none", "scale-down" ],
-    invalid_values: [ "auto", "5px", "100%" ]
-  };
-  gCSSProperties["object-position"] = {
-    domProp: "objectPosition",
-    inherited: false,
-    type: CSS_TYPE_LONGHAND,
-    initial_values: [ "50% 50%", "50%", "center", "center center" ],
-    other_values: [
-      "calc(20px)",
-      "calc(20px) 10px",
-      "10px calc(20px)",
-      "calc(20px) 25%",
-      "25% calc(20px)",
-      "calc(20px) calc(20px)",
-      "calc(20px + 1em) calc(20px / 2)",
-      "calc(20px + 50%) calc(50% - 10px)",
-      "calc(-20px) calc(-50%)",
-      "calc(-20%) calc(-50%)",
-      "0px 0px",
-      "right 20px top 60px",
-      "right 20px bottom 60px",
-      "left 20px top 60px",
-      "left 20px bottom 60px",
-      "right -50px top -50px",
-      "left -50px bottom -50px",
-      "right 20px top -50px",
-      "right -20px top 50px",
-      "right 3em bottom 10px",
-      "bottom 3em right 10px",
-      "top 3em right 10px",
-      "left 15px",
-      "10px top",
-      "left top 15px",
-      "left 10px top",
-      "left 20%",
-      "right 20%"
-    ],
-    invalid_values: [ "center 10px center 4px", "center 10px center",
-                      "top 20%", "bottom 20%", "50% left", "top 50%",
-                      "50% bottom 10%", "right 10% 50%", "left right",
-                      "top bottom", "left 10% right",
-                      "top 20px bottom 20px", "left left", "20 20" ]
   };
 }
 

@@ -21,13 +21,15 @@
 #include "nsMemoryInfoDumper.h"
 #endif
 #include "mozilla/Attributes.h"
+#include "mozilla/MemoryReportingProcess.h"
 #include "mozilla/PodOperations.h"
 #include "mozilla/Preferences.h"
 #include "mozilla/Services.h"
 #include "mozilla/Telemetry.h"
 #include "mozilla/UniquePtrExtensions.h"
-#include "mozilla/dom/PMemoryReportRequestParent.h" // for dom::MemoryReport
+#include "mozilla/dom/MemoryReportTypes.h"
 #include "mozilla/dom/ContentParent.h"
+#include "mozilla/gfx/GPUProcessManager.h"
 #include "mozilla/ipc/FileDescriptorUtils.h"
 
 #ifdef XP_WIN
@@ -1562,6 +1564,12 @@ nsMemoryReporterManager::Init()
   RegisterStrongReporter(new DeadlockDetectorReporter());
 #endif
 
+#ifdef MOZ_GECKO_PROFILER
+  // We have to register this here rather than in profiler_init() because
+  // profiler_init() runs prior to nsMemoryReporterManager's creation.
+  RegisterStrongReporter(new GeckoProfilerReporter());
+#endif
+
 #ifdef MOZ_DMD
   RegisterStrongReporter(new mozilla::dmd::DMDReporter());
 #endif
@@ -1714,7 +1722,15 @@ nsMemoryReporterManager::StartGettingReports()
     for (size_t i = 0; i < childWeakRefs.Length(); ++i) {
       s->mChildrenPending.AppendElement(childWeakRefs[i]);
     }
+  }
 
+  if (gfx::GPUProcessManager* gpu = gfx::GPUProcessManager::Get()) {
+    if (RefPtr<MemoryReportingProcess> proc = gpu->GetProcessMemoryReporter()) {
+      s->mChildrenPending.AppendElement(proc.forget());
+    }
+  }
+
+  if (!s->mChildrenPending.IsEmpty()) {
     nsCOMPtr<nsITimer> timer = do_CreateInstance(NS_TIMER_CONTRACTID);
     // Don't use NS_ENSURE_* here; can't return until the report is finished.
     if (NS_WARN_IF(!timer)) {
@@ -1898,7 +1914,7 @@ nsMemoryReporterManager::HandleChildReport(
 }
 
 /* static */ bool
-nsMemoryReporterManager::StartChildReport(mozilla::dom::ContentParent* aChild,
+nsMemoryReporterManager::StartChildReport(mozilla::MemoryReportingProcess* aChild,
                                           const PendingProcessesState* aState)
 {
   if (!aChild->IsAlive()) {
@@ -1924,7 +1940,7 @@ nsMemoryReporterManager::StartChildReport(mozilla::dom::ContentParent* aChild,
     }
   }
 #endif
-  return aChild->SendPMemoryReportRequestConstructor(
+  return aChild->SendRequestMemoryReport(
     aState->mGeneration, aState->mAnonymize, aState->mMinimize, dmdFileDesc);
 }
 
@@ -1950,7 +1966,7 @@ nsMemoryReporterManager::EndProcessReport(uint32_t aGeneration, bool aSuccess)
   while (s->mNumProcessesRunning < s->mConcurrencyLimit &&
          !s->mChildrenPending.IsEmpty()) {
     // Pop last element from s->mChildrenPending
-    RefPtr<ContentParent> nextChild;
+    RefPtr<MemoryReportingProcess> nextChild;
     nextChild.swap(s->mChildrenPending.LastElement());
     s->mChildrenPending.TruncateLength(s->mChildrenPending.Length() - 1);
     // Start report (if the child is still alive).

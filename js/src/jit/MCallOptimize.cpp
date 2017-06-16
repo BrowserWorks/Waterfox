@@ -11,6 +11,7 @@
 #include "jsstr.h"
 
 #include "builtin/AtomicsObject.h"
+#include "builtin/Intl.h"
 #include "builtin/SIMD.h"
 #include "builtin/TestingFunctions.h"
 #include "builtin/TypedObject.h"
@@ -106,6 +107,16 @@ IonBuilder::inlineNativeCall(CallInfo& callInfo, JSFunction* target)
         return inlineAtomicsBinop(callInfo, inlNative);
       case InlinableNative::AtomicsIsLockFree:
         return inlineAtomicsIsLockFree(callInfo);
+
+      // Intl natives.
+      case InlinableNative::IntlIsCollator:
+        return inlineHasClass(callInfo, &CollatorObject::class_);
+      case InlinableNative::IntlIsDateTimeFormat:
+        return inlineHasClass(callInfo, &DateTimeFormatObject::class_);
+      case InlinableNative::IntlIsNumberFormat:
+        return inlineHasClass(callInfo, &NumberFormatObject::class_);
+      case InlinableNative::IntlIsPluralRules:
+        return inlineHasClass(callInfo, &PluralRulesObject::class_);
 
       // Math natives.
       case InlinableNative::MathAbs:
@@ -288,8 +299,6 @@ IonBuilder::inlineNativeCall(CallInfo& callInfo, JSFunction* target)
         return inlineHasClass(callInfo, &SetIteratorObject::class_);
       case InlinableNative::IntrinsicIsStringIterator:
         return inlineHasClass(callInfo, &StringIteratorObject::class_);
-      case InlinableNative::IntrinsicDefineDataProperty:
-        return inlineDefineDataProperty(callInfo);
       case InlinableNative::IntrinsicObjectHasPrototype:
         return inlineObjectHasPrototype(callInfo);
 
@@ -443,7 +452,7 @@ IonBuilder::inlineMathFunction(CallInfo& callInfo, MMathFunction::Function funct
     if (!IsNumberType(callInfo.getArg(0)->type()))
         return InliningStatus_NotInlined;
 
-    const MathCache* cache = GetJSContextFromMainThread()->caches.maybeGetMathCache();
+    const MathCache* cache = TlsContext.get()->caches().maybeGetMathCache();
 
     callInfo.fun()->setImplicitlyUsedUnchecked();
     callInfo.thisArg()->setImplicitlyUsedUnchecked();
@@ -506,6 +515,10 @@ IonBuilder::inlineArray(CallInfo& callInfo)
                                             arg);
             current->add(ins);
             current->push(ins);
+
+            // This may throw, so we need a resume point.
+            MOZ_TRY(resumeAfter(ins));
+
             return InliningStatus_Inlined;
         }
 
@@ -2107,38 +2120,6 @@ IonBuilder::inlineObjectCreate(CallInfo& callInfo)
     MOZ_TRY(newObjectTryTemplateObject(&emitted, templateObject));
 
     MOZ_ASSERT(emitted);
-    return InliningStatus_Inlined;
-}
-
-IonBuilder::InliningResult
-IonBuilder::inlineDefineDataProperty(CallInfo& callInfo)
-{
-    MOZ_ASSERT(!callInfo.constructing());
-
-    // Only handle definitions of plain data properties.
-    if (callInfo.argc() != 3)
-        return InliningStatus_NotInlined;
-
-    MDefinition* obj = convertUnboxedObjects(callInfo.getArg(0));
-    MDefinition* id = callInfo.getArg(1);
-    MDefinition* value = callInfo.getArg(2);
-
-    bool hasExtraIndexedProperty;
-    MOZ_TRY_VAR(hasExtraIndexedProperty, ElementAccessHasExtraIndexedProperty(this, obj));
-    if (hasExtraIndexedProperty)
-        return InliningStatus_NotInlined;
-
-    // setElemTryDense will push the value as the result of the define instead
-    // of |undefined|, but this is fine if the rval is ignored (as it should be
-    // in self hosted code.)
-    MOZ_ASSERT(*GetNextPc(pc) == JSOP_POP);
-
-    bool emitted = false;
-    MOZ_TRY(setElemTryDense(&emitted, obj, id, value, /* writeHole = */ true));
-    if (!emitted)
-        return InliningStatus_NotInlined;
-
-    callInfo.setImplicitlyUsedUnchecked();
     return InliningStatus_Inlined;
 }
 

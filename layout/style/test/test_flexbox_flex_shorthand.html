@@ -17,7 +17,7 @@ https://bugzilla.mozilla.org/show_bug.cgi?id=696253
   </div>
 </div>
 <pre id="test">
-<script type="application/javascript;version=1.7">
+<script type="application/javascript">
 "use strict";
 
 /** Test for Bug 696253 **/
@@ -258,7 +258,7 @@ function runFlexShorthandTest(aFlexShorthandTestcase)
      gFlexShorthandDefaults[aSubPropName];
 
     // Compare computed value against expected computed value (from testcase)
-    is(window.getComputedStyle(elem, null).getPropertyValue(aSubPropName),
+    is(window.getComputedStyle(elem).getPropertyValue(aSubPropName),
        expectedVal,
        "Computed value of subproperty \"" + aSubPropName + "\" when we set \"" +
        gFlexPropName + ": " + aFlexShorthandTestcase[gFlexPropName] + "\"");

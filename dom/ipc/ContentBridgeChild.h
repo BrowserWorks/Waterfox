@@ -17,12 +17,12 @@ class ContentBridgeChild final : public PContentBridgeChild
                                , public nsIContentChild
 {
 public:
-  explicit ContentBridgeChild(Transport* aTransport);
+  explicit ContentBridgeChild();
 
   NS_DECL_ISUPPORTS
 
-  static ContentBridgeChild*
-  Create(Transport* aTransport, ProcessId aOtherProcess);
+  static void
+  Create(Endpoint<PContentBridgeChild>&& aEndpoint);
 
   virtual void ActorDestroy(ActorDestroyReason aWhy) override;
   void DeferredDestroy();
@@ -35,6 +35,9 @@ public:
   virtual PBlobChild*
   SendPBlobConstructor(PBlobChild* actor,
                        const BlobConstructorParams& aParams) override;
+
+  virtual PMemoryStreamChild*
+  SendPMemoryStreamConstructor(const uint64_t& aSize) override;
 
   jsipc::CPOWManager* GetCPOWManager() override;
 
@@ -75,6 +78,10 @@ protected:
   virtual PBlobChild* AllocPBlobChild(const BlobConstructorParams& aParams) override;
   virtual bool DeallocPBlobChild(PBlobChild*) override;
 
+  virtual PMemoryStreamChild*
+  AllocPMemoryStreamChild(const uint64_t& aSize) override;
+  virtual bool DeallocPMemoryStreamChild(PMemoryStreamChild*) override;
+
   virtual mozilla::ipc::PSendStreamChild* AllocPSendStreamChild() override;
 
   virtual bool
@@ -90,7 +97,6 @@ protected:
 
 protected: // members
   RefPtr<ContentBridgeChild> mSelfRef;
-  Transport* mTransport; // owned
 };
 
 } // namespace dom

@@ -23,6 +23,7 @@ namespace jit {
     _(GuardType)                          \
     _(GuardClass)                         \
     _(GuardIsProxy)                       \
+    _(GuardIsCrossCompartmentWrapper)     \
     _(GuardNotDOMProxy)                   \
     _(GuardMagicValue)                    \
     _(GuardNoUnboxedExpando)              \
@@ -32,19 +33,40 @@ namespace jit {
     _(GuardAndGetIndexFromString)         \
     _(LoadProto)                          \
     _(LoadEnclosingEnvironment)           \
+    _(LoadWrapperTarget)                  \
     _(LoadDOMExpandoValue)                \
     _(LoadDOMExpandoValueIgnoreGeneration)\
     _(LoadUndefinedResult)                \
+    _(LoadBooleanResult)                  \
     _(LoadInt32ArrayLengthResult)         \
     _(LoadUnboxedArrayLengthResult)       \
     _(LoadArgumentsObjectLengthResult)    \
+    _(LoadFunctionLengthResult)           \
     _(LoadStringLengthResult)             \
     _(LoadStringCharResult)               \
     _(LoadArgumentsObjectArgResult)       \
     _(LoadDenseElementResult)             \
     _(LoadDenseElementHoleResult)         \
+    _(LoadDenseElementExistsResult)       \
+    _(LoadDenseElementHoleExistsResult)   \
     _(LoadUnboxedArrayElementResult)      \
-    _(LoadTypedElementResult)
+    _(LoadTypedElementResult)             \
+    _(WrapResult)
+
+// Represents a Value on the Baseline frame's expression stack. Slot 0 is the
+// value on top of the stack (the most recently pushed value), slot 1 is the
+// value pushed before that, etc.
+class BaselineFrameSlot
+{
+    uint32_t slot_;
+
+  public:
+    explicit BaselineFrameSlot(uint32_t slot) : slot_(slot) {}
+    uint32_t slot() const { return slot_; }
+
+    bool operator==(const BaselineFrameSlot& other) const { return slot_ == other.slot_; }
+    bool operator!=(const BaselineFrameSlot& other) const { return slot_ != other.slot_; }
+};
 
 // OperandLocation represents the location of an OperandId. The operand is
 // either in a register or on the stack, and is either boxed or unboxed.
@@ -54,9 +76,11 @@ class OperandLocation
     enum Kind {
         Uninitialized = 0,
         PayloadReg,
+        DoubleReg,
         ValueReg,
         PayloadStack,
         ValueStack,
+        BaselineFrame,
         Constant,
     };
 
@@ -68,12 +92,14 @@ class OperandLocation
             Register reg;
             JSValueType type;
         } payloadReg;
+        FloatRegister doubleReg;
         ValueOperand valueReg;
         struct {
             uint32_t stackPushed;
             JSValueType type;
         } payloadStack;
         uint32_t valueStackPushed;
+        BaselineFrameSlot baselineFrameSlot;
         Value constant;
 
         Data() : valueStackPushed(0) {}
@@ -97,6 +123,10 @@ class OperandLocation
         MOZ_ASSERT(kind_ == PayloadReg);
         return data_.payloadReg.reg;
     }
+    FloatRegister doubleReg() const {
+        MOZ_ASSERT(kind_ == DoubleReg);
+        return data_.doubleReg;
+    }
     uint32_t payloadStack() const {
         MOZ_ASSERT(kind_ == PayloadStack);
         return data_.payloadStack.stackPushed;
@@ -115,11 +145,19 @@ class OperandLocation
         MOZ_ASSERT(kind_ == Constant);
         return data_.constant;
     }
+    BaselineFrameSlot baselineFrameSlot() const {
+        MOZ_ASSERT(kind_ == BaselineFrame);
+        return data_.baselineFrameSlot;
+    }
 
     void setPayloadReg(Register reg, JSValueType type) {
         kind_ = PayloadReg;
         data_.payloadReg.reg = reg;
         data_.payloadReg.type = type;
+    }
+    void setDoubleReg(FloatRegister reg) {
+        kind_ = DoubleReg;
+        data_.doubleReg = reg;
     }
     void setValueReg(ValueOperand reg) {
         kind_ = ValueReg;
@@ -137,6 +175,10 @@ class OperandLocation
     void setConstant(const Value& v) {
         kind_ = Constant;
         data_.constant = v;
+    }
+    void setBaselineFrame(BaselineFrameSlot slot) {
+        kind_ = BaselineFrame;
+        data_.baselineFrameSlot = slot;
     }
 
     bool isInRegister() const { return kind_ == PayloadReg || kind_ == ValueReg; }
@@ -263,6 +305,8 @@ class MOZ_RAII CacheRegisterAllocator
     }
     void initAvailableRegsAfterSpill();
 
+    void fixupAliasedInputs(MacroAssembler& masm);
+
     OperandLocation operandLocation(size_t i) const {
         return operandLocations_[i];
     }
@@ -281,9 +325,17 @@ class MOZ_RAII CacheRegisterAllocator
         origInputLocations_[i].setPayloadReg(reg, type);
         operandLocations_[i].setPayloadReg(reg, type);
     }
+    void initInputLocation(size_t i, FloatRegister reg) {
+        origInputLocations_[i].setDoubleReg(reg);
+        operandLocations_[i].setDoubleReg(reg);
+    }
     void initInputLocation(size_t i, const Value& v) {
         origInputLocations_[i].setConstant(v);
         operandLocations_[i].setConstant(v);
+    }
+    void initInputLocation(size_t i, BaselineFrameSlot slot) {
+        origInputLocations_[i].setBaselineFrame(slot);
+        operandLocations_[i].setBaselineFrame(slot);
     }
 
     void initInputLocation(size_t i, const TypedOrValueRegister& reg);
@@ -323,6 +375,7 @@ class MOZ_RAII CacheRegisterAllocator
     void releaseRegister(Register reg) {
         MOZ_ASSERT(currentOpRegs_.has(reg));
         availableRegs_.add(reg);
+        currentOpRegs_.take(reg);
     }
     void releaseValueRegister(ValueOperand reg) {
 #ifdef JS_NUNBOX32
@@ -337,11 +390,15 @@ class MOZ_RAII CacheRegisterAllocator
     // called after all registers have been allocated.
     void discardStack(MacroAssembler& masm);
 
+    Address addressOf(MacroAssembler& masm, BaselineFrameSlot slot) const;
+
     // Returns the register for the given operand. If the operand is currently
     // not in a register, it will load it into one.
     ValueOperand useValueRegister(MacroAssembler& masm, ValOperandId val);
     ValueOperand useFixedValueRegister(MacroAssembler& masm, ValOperandId valId, ValueOperand reg);
     Register useRegister(MacroAssembler& masm, TypedOperandId typedId);
+
+    ConstantOrRegister useConstantOrRegister(MacroAssembler& masm, ValOperandId val);
 
     // Allocates an output register for the given operand.
     Register defineRegister(MacroAssembler& masm, TypedOperandId typedId);
@@ -486,6 +543,12 @@ class MOZ_RAII CacheIRCompiler
     CacheRegisterAllocator allocator;
     Vector<FailurePath, 4, SystemAllocPolicy> failurePaths;
 
+    // Float registers that are live. Registers not in this set can be
+    // clobbered and don't need to be saved before performing a VM call.
+    // Doing this for non-float registers is a bit more complicated because
+    // the IC register allocator allocates GPRs.
+    LiveFloatRegisterSet liveFloatRegs_;
+
     Maybe<TypedOrValueRegister> outputUnchecked_;
     Mode mode_;
 
@@ -497,6 +560,7 @@ class MOZ_RAII CacheIRCompiler
         reader(writer),
         writer_(writer),
         allocator(writer_),
+        liveFloatRegs_(FloatRegisterSet::All()),
         mode_(mode)
     {
         MOZ_ASSERT(!writer.failed());
@@ -505,9 +569,18 @@ class MOZ_RAII CacheIRCompiler
     MOZ_MUST_USE bool addFailurePath(FailurePath** failure);
     MOZ_MUST_USE bool emitFailurePath(size_t i);
 
+    // Returns the set of volatile float registers that are live. These
+    // registers need to be saved when making non-GC calls with callWithABI.
+    FloatRegisterSet liveVolatileFloatRegs() const {
+        return FloatRegisterSet::Intersect(liveFloatRegs_.set(), FloatRegisterSet::Volatile());
+    }
+
     void emitLoadTypedObjectResultShared(const Address& fieldAddr, Register scratch,
                                          TypedThingLayout layout, uint32_t typeDescr,
                                          const AutoOutputRegister& output);
+
+    void emitStoreTypedObjectReferenceProp(ValueOperand val, ReferenceTypeDescr::Type type,
+                                           const Address& dest, Register scratch);
 
 #define DEFINE_SHARED_OP(op) MOZ_MUST_USE bool emit##op();
     CACHE_IR_SHARED_OPS(DEFINE_SHARED_OP)

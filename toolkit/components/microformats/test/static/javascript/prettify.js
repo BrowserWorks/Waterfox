@@ -502,7 +502,7 @@ var REGEXP_PRECEDER_PATTERN = '(?:^^\\.?|[+-]|\\!|\\!=|\\!==|\\#|\\%|\\%=|&|&&|&
     if (node.currentStyle) {
       whitespace = node.currentStyle.whiteSpace;
     } else if (window.getComputedStyle) {
-      whitespace = document.defaultView.getComputedStyle(node, null)
+      whitespace = document.defaultView.getComputedStyle(node)
           .getPropertyValue('white-space');
     }
     var isPreformatted = whitespace && 'pre' === whitespace.substring(0, 3);
@@ -917,7 +917,7 @@ var REGEXP_PRECEDER_PATTERN = '(?:^^\\.?|[+-]|\\!|\\!=|\\!==|\\#|\\%|\\%=|&|&&|&
     if (node.currentStyle) {
       whitespace = node.currentStyle.whiteSpace;
     } else if (window.getComputedStyle) {
-      whitespace = document.defaultView.getComputedStyle(node, null)
+      whitespace = document.defaultView.getComputedStyle(node)
           .getPropertyValue('white-space');
     }
     // If it's preformatted, then we need to split lines on line breaks
@@ -940,7 +940,7 @@ var REGEXP_PRECEDER_PATTERN = '(?:^^\\.?|[+-]|\\!|\\!=|\\!==|\\#|\\%|\\%=|&|&&|&
             breakAfter(node);
             // Discard the <BR> since it is now flush against a </LI>.
             if (node.parentNode) {
-              node.parentNode.removeChild(node);
+              node.remove();
             }
           } else {
             for (var child = node.firstChild; child; child = child.nextSibling) {
@@ -964,7 +964,7 @@ var REGEXP_PRECEDER_PATTERN = '(?:^^\\.?|[+-]|\\!|\\!=|\\!==|\\#|\\%|\\%=|&|&&|&
               breakAfter(node);
               if (!firstLine) {
                 // Don't leave blank text nodes in the DOM.
-                node.parentNode.removeChild(node);
+                node.remove();
               }
             }
           }

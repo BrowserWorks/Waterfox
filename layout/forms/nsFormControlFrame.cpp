@@ -49,7 +49,11 @@ nsFormControlFrame::GetMinISize(nsRenderingContext *aRenderingContext)
 {
   nscoord result;
   DISPLAY_MIN_WIDTH(this, result);
-  result = GetIntrinsicISize();
+#if !defined(MOZ_WIDGET_ANDROID) && !defined(MOZ_WIDGET_GONK)
+  result = StyleDisplay()->mAppearance == NS_THEME_NONE ? 0 : DefaultSize();
+#else
+  result = DefaultSize();
+#endif
   return result;
 }
 
@@ -58,13 +62,17 @@ nsFormControlFrame::GetPrefISize(nsRenderingContext *aRenderingContext)
 {
   nscoord result;
   DISPLAY_PREF_WIDTH(this, result);
-  result = GetIntrinsicISize();
+#if !defined(MOZ_WIDGET_ANDROID) && !defined(MOZ_WIDGET_GONK)
+  result = StyleDisplay()->mAppearance == NS_THEME_NONE ? 0 : DefaultSize();
+#else
+  result = DefaultSize();
+#endif
   return result;
 }
 
 /* virtual */
 LogicalSize
-nsFormControlFrame::ComputeAutoSize(nsRenderingContext* aRenderingContext,
+nsFormControlFrame::ComputeAutoSize(nsRenderingContext* aRC,
                                     WritingMode         aWM,
                                     const LogicalSize&  aCBSize,
                                     nscoord             aAvailableISize,
@@ -73,27 +81,18 @@ nsFormControlFrame::ComputeAutoSize(nsRenderingContext* aRenderingContext,
                                     const LogicalSize&  aPadding,
                                     ComputeSizeFlags    aFlags)
 {
-  const WritingMode wm = GetWritingMode();
-  LogicalSize result(wm, GetIntrinsicISize(), GetIntrinsicBSize());
-  return result.ConvertTo(aWM, wm);
-}
-
-nscoord
-nsFormControlFrame::GetIntrinsicISize()
-{
-  // Provide a reasonable default for sites that use an "auto" height.
-  // Note that if you change this, you should change the values in forms.css
-  // as well.  This is the 13px default width minus the 2px default border.
-  return nsPresContext::CSSPixelsToAppUnits(13 - 2 * 2);
-}
-
-nscoord
-nsFormControlFrame::GetIntrinsicBSize()
-{
-  // Provide a reasonable default for sites that use an "auto" height.
-  // Note that if you change this, you should change the values in forms.css
-  // as well. This is the 13px default width minus the 2px default border.
-  return nsPresContext::CSSPixelsToAppUnits(13 - 2 * 2);
+  LogicalSize size(aWM, 0, 0);
+#if !defined(MOZ_WIDGET_ANDROID) && !defined(MOZ_WIDGET_GONK)
+  if (StyleDisplay()->mAppearance == NS_THEME_NONE) {
+    return size;
+  }
+#endif
+  // Note: this call always set the BSize to NS_UNCONSTRAINEDSIZE.
+  size = nsAtomicContainerFrame::ComputeAutoSize(aRC, aWM, aCBSize,
+                                                 aAvailableISize, aMargin,
+                                                 aBorder, aPadding, aFlags);
+  size.BSize(aWM) = DefaultSize();
+  return size;
 }
 
 nscoord
@@ -142,7 +141,7 @@ nsFormControlFrame::Reflow(nsPresContext*          aPresContext,
     RegUnRegAccessKey(static_cast<nsIFrame*>(this), true);
   }
 
-  aStatus = NS_FRAME_COMPLETE;
+  aStatus.Reset();
   aDesiredSize.SetSize(aReflowInput.GetWritingMode(),
                        aReflowInput.ComputedSizeWithBorderPadding());
 

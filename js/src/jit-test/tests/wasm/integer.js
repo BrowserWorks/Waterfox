@@ -1,5 +1,3 @@
-load(libdir + "wasm.js");
-
 assertEq(wasmEvalText('(module (func (result i32) (i32.const -1)) (export "" 0))').exports[""](), -1);
 assertEq(wasmEvalText('(module (func (result i32) (i32.const -2147483648)) (export "" 0))').exports[""](), -2147483648);
 assertEq(wasmEvalText('(module (func (result i32) (i32.const 4294967295)) (export "" 0))').exports[""](), -1);
@@ -124,8 +122,11 @@ testBinary32('rem_u', 41, 8, 1);
 testBinary32('and', 42, 6, 2);
 testBinary32('or', 42, 6, 46);
 testBinary32('xor', 42, 2, 40);
+testBinary32('shl', 40, 0, 40);
 testBinary32('shl', 40, 2, 160);
+testBinary32('shr_s', -40, 0, -40);
 testBinary32('shr_s', -40, 2, -10);
+testBinary32('shr_u', -40, 0, -40);
 testBinary32('shr_u', -40, 2, 1073741814);
 
 testTrap32('div_s', 42, 0, /integer divide by zero/);
@@ -221,13 +222,16 @@ assertEq(testTrunc(13.37), 1);
     testBinary64('shl', 1, 63, "0x8000000000000000");
     testBinary64('shl', 1, 64, 1);
     testBinary64('shl', 40, 2, 160);
+    testBinary64('shl', 40, 0, 40);
 
+    testBinary64('shr_s', -40, 0, -40);
     testBinary64('shr_s', -40, 2, -10);
     testBinary64('shr_s', "0xff00ff0000000", 28, 0xff00ff);
     testBinary64('shr_s', "0xff00ff0000000", 30, 0x3fc03f);
     testBinary64('shr_s', "0xff00ff0000000", 31, 0x1fe01f);
     testBinary64('shr_s', "0xff00ff0000000", 32, 0x0ff00f);
 
+    testBinary64('shr_u', -40, 0, -40);
     testBinary64('shr_u', -40, 2, "0x3ffffffffffffff6");
     testBinary64('shr_u', "0x8ffff00ff0000000", 30, "0x23fffc03f");
     testBinary64('shr_u', "0x8ffff00ff0000000", 31, "0x11fffe01f");

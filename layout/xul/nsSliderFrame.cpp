@@ -355,14 +355,14 @@ nsSliderFrame::BuildDisplayListForChildren(nsDisplayListBuilder*   aBuilder,
     // that the event region that gets created for the thumb is included in
     // the nsDisplayOwnLayer contents.
 
-    uint32_t flags = 0;
+    uint32_t flags = aBuilder->GetCurrentScrollbarFlags();
     mozilla::layers::FrameMetrics::ViewID scrollTargetId =
-      mozilla::layers::FrameMetrics::NULL_SCROLL_ID;
-    aBuilder->GetScrollbarInfo(&scrollTargetId, &flags);
+      aBuilder->GetCurrentScrollbarTarget();
     bool thumbGetsLayer = (scrollTargetId != layers::FrameMetrics::NULL_SCROLL_ID);
     nsLayoutUtils::SetScrollbarThumbLayerization(thumb, thumbGetsLayer);
 
     if (thumbGetsLayer) {
+      nsDisplayListBuilder::AutoContainerASRTracker contASRTracker(aBuilder);
       nsDisplayListCollection tempLists;
       nsBoxFrame::BuildDisplayListForChildren(aBuilder, aDirtyRect, tempLists);
 
@@ -377,8 +377,12 @@ nsSliderFrame::BuildDisplayListForChildren(nsDisplayListBuilder*   aBuilder,
       masterList.AppendToTop(tempLists.Outlines());
 
       // Wrap the list to make it its own layer.
+      const ActiveScrolledRoot* ownLayerASR = contASRTracker.GetContainerASR();
+      DisplayListClipState::AutoSaveRestore ownLayerClipState(aBuilder);
+      ownLayerClipState.ClearUpToASR(ownLayerASR);
       aLists.Content()->AppendNewToTop(new (aBuilder)
-        nsDisplayOwnLayer(aBuilder, this, &masterList, flags, scrollTargetId,
+        nsDisplayOwnLayer(aBuilder, this, &masterList, ownLayerASR,
+                          flags, scrollTargetId,
                           GetThumbRatio()));
 
       return;
@@ -605,7 +609,7 @@ nsSliderFrame::HandleEvent(nsPresContext* aPresContext,
         (uint32_t) ScrollInputMethod::MainThreadScrollbarTrackClick);
 
     // set it
-    nsWeakFrame weakFrame(this);
+    AutoWeakFrame weakFrame(this);
     // should aMaySnap be true here?
     SetCurrentThumbPosition(scrollbar, pos - thumbLength/2, false, false);
     NS_ENSURE_TRUE(weakFrame.IsAlive(), NS_OK);
@@ -872,7 +876,7 @@ nsSliderFrame::SetCurrentPositionInternal(nsIContent* aScrollbar, int32_t aNewPo
 {
   nsCOMPtr<nsIContent> scrollbar = aScrollbar;
   nsIFrame* scrollbarBox = GetScrollbar();
-  nsWeakFrame weakFrame(this);
+  AutoWeakFrame weakFrame(this);
 
   mUserChanged = true;
 
@@ -989,36 +993,36 @@ ScrollFrameWillBuildScrollInfoLayer(nsIFrame* aScrollFrame)
   return false;
 }
 
-bool
+void
 nsSliderFrame::StartAPZDrag(WidgetGUIEvent* aEvent)
 {
   if (!aEvent->mFlags.mHandledByAPZ) {
-    return false;
+    return;
   }
 
   if (!gfxPlatform::GetPlatform()->SupportsApzDragInput()) {
-    return false;
+    return;
   }
 
   nsContainerFrame* scrollFrame = GetScrollbar()->GetParent();
   if (!scrollFrame) {
-    return false;
+    return;
   }
 
   nsIContent* scrollableContent = scrollFrame->GetContent();
   if (!scrollableContent) {
-    return false;
+    return;
   }
 
   nsIScrollableFrame* scrollFrameAsScrollable = do_QueryFrame(scrollFrame);
   if (!scrollFrameAsScrollable) {
-    return false;
+    return;
   }
 
   // APZ dragging requires the scrollbar to be layerized, which doesn't
   // happen for scroll info layers.
   if (ScrollFrameWillBuildScrollInfoLayer(scrollFrame)) {
-    return false;
+    return;
   }
 
   mozilla::layers::FrameMetrics::ViewID scrollTargetId;
@@ -1026,7 +1030,7 @@ nsSliderFrame::StartAPZDrag(WidgetGUIEvent* aEvent)
   bool hasAPZView = hasID && (scrollTargetId != layers::FrameMetrics::NULL_SCROLL_ID);
 
   if (!hasAPZView) {
-    return false;
+    return;
   }
 
   nsIFrame* scrollbarBox = GetScrollbar();
@@ -1051,8 +1055,14 @@ nsSliderFrame::StartAPZDrag(WidgetGUIEvent* aEvent)
                                                    AsyncDragMetrics::VERTICAL);
 
   if (!nsLayoutUtils::HasDisplayPort(scrollableContent)) {
-    return false;
+    return;
   }
+
+  // It's important to set this before calling nsIWidget::StartAsyncScrollbarDrag(),
+  // because in some configurations, that can call AsyncScrollbarDragRejected()
+  // synchronously, which clears the flag (and we want it to stay cleared in
+  // that case).
+  mScrollingWithAPZ = true;
 
   // When we start an APZ drag, we wont get mouse events for the drag.
   // APZ will consume them all and only notify us of the new scroll position.
@@ -1065,7 +1075,6 @@ nsSliderFrame::StartAPZDrag(WidgetGUIEvent* aEvent)
   if (!waitForRefresh) {
     widget->StartAsyncScrollbarDrag(dragMetrics);
   }
-  return true;
 }
 
 nsresult
@@ -1135,16 +1144,15 @@ nsSliderFrame::StartDrag(nsIDOMEvent* aEvent)
 
   mDragStart = pos - mThumbStart;
 
-  mScrollingWithAPZ = StartAPZDrag(event);
+  mScrollingWithAPZ = false;
+  StartAPZDrag(event);  // sets mScrollingWithAPZ=true if appropriate
 
 #ifdef DEBUG_SLIDER
   printf("Pressed mDragStart=%d\n",mDragStart);
 #endif
 
-  if (!mScrollingWithAPZ && !mSuppressionActive) {
-    MOZ_ASSERT(PresContext()->PresShell());
-    APZCCallbackHelper::SuppressDisplayport(true, PresContext()->PresShell());
-    mSuppressionActive = true;
+  if (!mScrollingWithAPZ) {
+    SuppressDisplayport();
   }
 
   return NS_OK;
@@ -1158,11 +1166,7 @@ nsSliderFrame::StopDrag()
 
   mScrollingWithAPZ = false;
 
-  if (mSuppressionActive) {
-    MOZ_ASSERT(PresContext()->PresShell());
-    APZCCallbackHelper::SuppressDisplayport(false, PresContext()->PresShell());
-    mSuppressionActive = false;
-  }
+  UnsuppressDisplayport();
 
 #ifdef MOZ_WIDGET_GTK
   nsIFrame* thumbFrame = mFrames.FirstChild();
@@ -1532,6 +1536,37 @@ nsSliderFrame::GetThumbRatio() const
   // is in the scrollframe's parent's space whereas the scrolled CSS pixels
   // are in the scrollframe's space).
   return mRatio / mozilla::AppUnitsPerCSSPixel();
+}
+
+void
+nsSliderFrame::AsyncScrollbarDragRejected()
+{
+  mScrollingWithAPZ = false;
+  // Only suppress the displayport if we're still dragging the thumb.
+  // Otherwise, no one will unsuppress it.
+  if (isDraggingThumb()) {
+    SuppressDisplayport();
+  }
+}
+
+void
+nsSliderFrame::SuppressDisplayport()
+{
+  if (!mSuppressionActive) {
+    MOZ_ASSERT(PresContext()->PresShell());
+    APZCCallbackHelper::SuppressDisplayport(true, PresContext()->PresShell());
+    mSuppressionActive = true;
+  }
+}
+
+void
+nsSliderFrame::UnsuppressDisplayport()
+{
+  if (mSuppressionActive) {
+    MOZ_ASSERT(PresContext()->PresShell());
+    APZCCallbackHelper::SuppressDisplayport(false, PresContext()->PresShell());
+    mSuppressionActive = false;
+  }
 }
 
 NS_IMPL_ISUPPORTS(nsSliderMediator,

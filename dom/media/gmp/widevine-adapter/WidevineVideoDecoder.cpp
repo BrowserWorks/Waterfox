@@ -5,10 +5,10 @@
 
 #include "WidevineVideoDecoder.h"
 
-#include "mp4_demuxer/AnnexB.h"
 #include "WidevineUtils.h"
 #include "WidevineVideoFrame.h"
 #include "mozilla/Move.h"
+#include <inttypes.h>
 
 using namespace cdm;
 
@@ -18,7 +18,6 @@ WidevineVideoDecoder::WidevineVideoDecoder(GMPVideoHost* aVideoHost,
                                            RefPtr<CDMWrapper> aCDMWrapper)
   : mVideoHost(aVideoHost)
   , mCDMWrapper(Move(aCDMWrapper))
-  , mExtraData(new MediaByteBuffer())
   , mSentInput(false)
   , mCodecType(kGMPVideoCodecInvalid)
   , mReturnOutputCallDepth(0)
@@ -27,7 +26,7 @@ WidevineVideoDecoder::WidevineVideoDecoder(GMPVideoHost* aVideoHost,
 {
   // Expect to start with a CDM wrapper, will release it in DecodingComplete().
   MOZ_ASSERT(mCDMWrapper);
-  Log("WidevineVideoDecoder created this=%p", this);
+  CDM_LOG("WidevineVideoDecoder created this=%p", this);
 
   // Corresponding Release is in DecodingComplete().
   AddRef();
@@ -35,7 +34,7 @@ WidevineVideoDecoder::WidevineVideoDecoder(GMPVideoHost* aVideoHost,
 
 WidevineVideoDecoder::~WidevineVideoDecoder()
 {
-  Log("WidevineVideoDecoder destroyed this=%p", this);
+  CDM_LOG("WidevineVideoDecoder destroyed this=%p", this);
 }
 
 static
@@ -80,19 +79,19 @@ WidevineVideoDecoder::InitDecode(const GMPVideoCodec& aCodecSettings,
   }
   config.format = kYv12;
   config.coded_size = mCodedSize = Size(aCodecSettings.mWidth, aCodecSettings.mHeight);
+  nsTArray<uint8_t> extraData;
   if (aCodecSpecificLength > 0) {
     // The first byte is the WebRTC packetization mode, which can be ignored.
-    mExtraData->AppendElements(aCodecSpecific + 1, aCodecSpecificLength);
-    config.extra_data = mExtraData->Elements();
-    config.extra_data_size = mExtraData->Length();
+    extraData.AppendElements(aCodecSpecific + 1, aCodecSpecificLength - 1);
+    config.extra_data = extraData.Elements();
+    config.extra_data_size = extraData.Length();
   }
   Status rv = CDM()->InitializeVideoDecoder(config);
   if (rv != kSuccess) {
     mCallback->Error(ToGMPErr(rv));
     return;
   }
-  Log("WidevineVideoDecoder::InitDecode() rv=%d", rv);
-  mAnnexB = mp4_demuxer::AnnexB::ConvertExtraDataToAnnexB(mExtraData);
+  CDM_LOG("WidevineVideoDecoder::InitDecode() rv=%d", rv);
 }
 
 void
@@ -113,35 +112,16 @@ WidevineVideoDecoder::Decode(GMPVideoEncodedFrame* aInputFrame,
   mSentInput = true;
   InputBuffer sample;
 
-  RefPtr<MediaRawData> raw(
-    new MediaRawData(aInputFrame->Buffer(), aInputFrame->Size()));
-  if (aInputFrame->Size() && !raw->Data()) {
-    // OOM.
-    mCallback->Error(GMPAllocErr);
-    return;
-  }
-  raw->mExtraData = mExtraData;
-  raw->mKeyframe = (aInputFrame->FrameType() == kGMPKeyFrame);
-  if (mCodecType == kGMPVideoCodecH264) {
-    // Convert input from AVCC, which GMPAPI passes in, to AnnexB, which
-    // Chromium uses internally.
-    mp4_demuxer::AnnexB::ConvertSampleToAnnexB(raw);
-  }
-
   const GMPEncryptedBufferMetadata* crypto = aInputFrame->GetDecryptionData();
   nsTArray<SubsampleEntry> subsamples;
-  InitInputBuffer(crypto, aInputFrame->TimeStamp(), raw->Data(), raw->Size(), sample, subsamples);
-
-  // For keyframes, ConvertSampleToAnnexB will stick the AnnexB extra data
-  // at the start of the input. So we need to account for that as clear data
-  // in the subsamples.
-  if (raw->mKeyframe && !subsamples.IsEmpty() && mCodecType == kGMPVideoCodecH264) {
-    subsamples[0].clear_bytes += mAnnexB->Length();
-  }
+  InitInputBuffer(crypto, aInputFrame->TimeStamp(),
+                  aInputFrame->Buffer(), aInputFrame->Size(),
+                  sample, subsamples);
 
   WidevineVideoFrame frame;
   Status rv = CDM()->DecryptAndDecodeFrame(sample, &frame);
-  Log("WidevineVideoDecoder::Decode(timestamp=%lld) rv=%d", sample.timestamp, rv);
+  CDM_LOG("WidevineVideoDecoder::Decode(timestamp=%" PRId64 ") rv=%d",
+          sample.timestamp, rv);
 
   // Destroy frame, so that the shmem is now free to be used to return
   // output to the Gecko process.
@@ -150,6 +130,7 @@ WidevineVideoDecoder::Decode(GMPVideoEncodedFrame* aInputFrame,
 
   if (rv == kSuccess || rv == kNoKey) {
     if (rv == kNoKey) {
+      CDM_LOG("NoKey for sample at time=%" PRId64 "!", sample.timestamp);
       // Somehow our key became unusable. Typically this would happen when
       // a stream requires output protection, and the configuration changed
       // such that output protection is no longer available. For example, a
@@ -157,10 +138,14 @@ WidevineVideoDecoder::Decode(GMPVideoEncodedFrame* aInputFrame,
       // key status changing to "output-restricted", and is supposed to switch
       // to a stream that doesn't require OP. In order to keep the playback
       // pipeline rolling, just output a black frame. See bug 1343140.
-      frame.InitToBlack(mCodedSize.width, mCodedSize.height, sample.timestamp);
+      if (!frame.InitToBlack(mCodedSize.width, mCodedSize.height,
+                             sample.timestamp)) {
+        mCallback->Error(GMPDecodeErr);
+        return;
+      }
     }
     if (!ReturnOutput(frame)) {
-      Log("WidevineVideoDecoder::Decode() Failed in ReturnOutput()");
+      CDM_LOG("WidevineVideoDecoder::Decode() Failed in ReturnOutput()");
       mCallback->Error(GMPDecodeErr);
       return;
     }
@@ -179,7 +164,8 @@ WidevineVideoDecoder::Decode(GMPVideoEncodedFrame* aInputFrame,
   } else {
     mCallback->Error(ToGMPErr(rv));
   }
-  // Finish a drain if pending and we have no pending ReturnOutput calls on the stack.
+  // Finish a drain if pending and we have no pending ReturnOutput calls on the
+  // stack.
   if (mDrainPending && mReturnOutputCallDepth == 0) {
     Drain();
   }
@@ -208,12 +194,10 @@ private:
 // Util class to make sure GMP frames are freed. Holds a GMPVideoi420Frame*
 // and will destroy it when the helper is destroyed unless the held frame
 // if forgotten with ForgetFrame.
-class FrameDestroyerHelper {
+class FrameDestroyerHelper
+{
 public:
-  explicit FrameDestroyerHelper(GMPVideoi420Frame*& frame)
-    : frame(frame)
-  {
-  }
+  explicit FrameDestroyerHelper(GMPVideoi420Frame*& frame) : frame(frame) { }
 
   // RAII, destroy frame if held.
   ~FrameDestroyerHelper()
@@ -260,7 +244,7 @@ WidevineVideoDecoder::ReturnOutput(WidevineVideoFrame& aCDMFrame)
     GMPVideoFrame* f = nullptr;
     auto err = mVideoHost->CreateFrame(kGMPI420VideoFrame, &f);
     if (GMP_FAILED(err) || !f) {
-      Log("Failed to create i420 frame!\n");
+      CDM_LOG("Failed to create i420 frame!\n");
       return false;
     }
     auto gmpFrame = static_cast<GMPVideoi420Frame*>(f);
@@ -280,11 +264,13 @@ WidevineVideoDecoder::ReturnOutput(WidevineVideoFrame& aCDMFrame)
                                      yStride,
                                      uStride,
                                      vStride);
-    // Assert possible reentrant calls or resets haven't altered level unexpectedly.
+    // Assert possible reentrant calls or resets haven't altered level
+    // unexpectedly.
     MOZ_ASSERT(mReturnOutputCallDepth == 1);
     ENSURE_GMP_SUCCESS(err, false);
 
-    // If a reset started we need to dump the current frame and complete the reset.
+    // If a reset started we need to dump the current frame and complete the
+    // reset.
     if (mResetInProgress) {
       MOZ_ASSERT(mCDMWrapper);
       MOZ_ASSERT(mFrameAllocationQueue.empty());
@@ -339,7 +325,7 @@ WidevineVideoDecoder::ReturnOutput(WidevineVideoFrame& aCDMFrame)
 void
 WidevineVideoDecoder::Reset()
 {
-  Log("WidevineVideoDecoder::Reset() mSentInput=%d", mSentInput);
+  CDM_LOG("WidevineVideoDecoder::Reset() mSentInput=%d", mSentInput);
   // We shouldn't reset if a drain is pending.
   MOZ_ASSERT(!mDrainPending);
   mResetInProgress = true;
@@ -368,9 +354,9 @@ WidevineVideoDecoder::CompleteReset()
 void
 WidevineVideoDecoder::Drain()
 {
-  Log("WidevineVideoDecoder::Drain()");
+  CDM_LOG("WidevineVideoDecoder::Drain()");
   if (mReturnOutputCallDepth > 0) {
-    Log("Drain call is reentrant, postponing drain");
+    CDM_LOG("Drain call is reentrant, postponing drain");
     mDrainPending = true;
     return;
   }
@@ -380,13 +366,13 @@ WidevineVideoDecoder::Drain()
     WidevineVideoFrame frame;
     InputBuffer sample;
     Status rv = CDM()->DecryptAndDecodeFrame(sample, &frame);
-    Log("WidevineVideoDecoder::Drain();  DecryptAndDecodeFrame() rv=%d", rv);
+    CDM_LOG("WidevineVideoDecoder::Drain();  DecryptAndDecodeFrame() rv=%d", rv);
     if (frame.Format() == kUnknownVideoFormat) {
       break;
     }
     if (rv == kSuccess) {
       if (!ReturnOutput(frame)) {
-        Log("WidevineVideoDecoder::Decode() Failed in ReturnOutput()");
+        CDM_LOG("WidevineVideoDecoder::Decode() Failed in ReturnOutput()");
       }
     }
   }
@@ -401,14 +387,14 @@ WidevineVideoDecoder::Drain()
 void
 WidevineVideoDecoder::DecodingComplete()
 {
-  Log("WidevineVideoDecoder::DecodingComplete()");
+  CDM_LOG("WidevineVideoDecoder::DecodingComplete()");
 
   if (mCDMWrapper) {
     // mCallback will be null if the decoder has not been fully initialized.
     if (mCallback) {
       CDM()->DeinitializeDecoder(kStreamTypeVideo);
     } else {
-      Log("WideVineDecoder::DecodingComplete() Decoder was not fully initialized!");
+      CDM_LOG("WideVineDecoder::DecodingComplete() Decoder was not fully initialized!");
     }
 
     mCDMWrapper = nullptr;

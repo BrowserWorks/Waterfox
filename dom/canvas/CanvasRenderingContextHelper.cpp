@@ -53,7 +53,7 @@ CanvasRenderingContextHelper::ToBlob(JSContext* aCx,
 
       RefPtr<Blob> newBlob = Blob::Create(mGlobal, blob->Impl());
 
-      mBlobCallback->Call(*newBlob, rv);
+      mBlobCallback->Call(newBlob, rv);
 
       mGlobal = nullptr;
       mBlobCallback = nullptr;

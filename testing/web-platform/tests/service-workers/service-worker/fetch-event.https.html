@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <script src="/resources/testharness.js"></script>
 <script src="/resources/testharnessreport.js"></script>
-<script src="resources/get-host-info.sub.js"></script>
+<script src="/common/get-host-info.sub.js"></script>
 <script src="resources/test-helpers.sub.js"></script>
 <body>
 <script>
@@ -322,7 +322,7 @@ async_test(function(t) {
           return service_worker_unregister_and_done(t, scope);
         })
       .catch(unreached_rejection(t));
-  }, 'Service Worker responds to fetch event with the referrer URL');
+  }, 'Service Worker responds to fetch event with the referrer policy');
 
 async_test(function(t) {
     var scope = 'resources/simple.html?clientId';

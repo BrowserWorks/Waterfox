@@ -4,6 +4,9 @@
 # License, v. 2.0. If a copy of the MPL was not distributed with this
 # file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
+with Files("**"):
+    BUG_COMPONENT = ("Core", "DOM: Content Processes")
+
 XPIDL_SOURCES += [
     'nsIHangReport.idl',
 ]
@@ -20,12 +23,12 @@ EXPORTS.mozilla.dom += [
     'ContentBridgeParent.h',
     'ContentChild.h',
     'ContentParent.h',
+    'ContentPrefs.h',
     'ContentProcess.h',
     'ContentProcessManager.h',
     'CPOWManagerGetter.h',
-    'CrashReporterChild.h',
-    'CrashReporterParent.h',
     'FilePickerParent.h',
+    'MemoryReportRequest.h',
     'nsIContentChild.h',
     'nsIContentParent.h',
     'PermissionMessageUtils.h',
@@ -33,11 +36,13 @@ EXPORTS.mozilla.dom += [
     'TabContext.h',
     'TabMessageUtils.h',
     'TabParent.h',
+    'TelemetryScrollProbe.h',
     'URLClassifierChild.h',
     'URLClassifierParent.h',
 ]
 
 EXPORTS.mozilla += [
+    'PreallocatedProcessManager.h',
     'ProcessHangMonitor.h',
     'ProcessHangMonitorIPC.h',
     'ProcessPriorityManager.h',
@@ -48,14 +53,16 @@ UNIFIED_SOURCES += [
     'ContentBridgeChild.cpp',
     'ContentBridgeParent.cpp',
     'ContentParent.cpp',
+    'ContentPrefs.cpp',
     'ContentProcess.cpp',
     'ContentProcessManager.cpp',
-    'CrashReporterParent.cpp',
     'DatePickerParent.cpp',
     'FilePickerParent.cpp',
+    'MemoryReportRequest.cpp',
     'nsIContentChild.cpp',
     'nsIContentParent.cpp',
     'PermissionMessageUtils.cpp',
+    'PreallocatedProcessManager.cpp',
     'ProcessPriorityManager.cpp',
     'ScreenManagerParent.cpp',
     'StructuredCloneData.cpp',
@@ -63,21 +70,20 @@ UNIFIED_SOURCES += [
     'TabContext.cpp',
     'TabMessageUtils.cpp',
     'TabParent.cpp',
+    'TelemetryScrollProbe.cpp',
     'URLClassifierChild.cpp',
     'URLClassifierParent.cpp',
 ]
 
-# CrashReporterChild.cpp cannot be compiled in unified mode because of name clashes
-# in OS X headers.
 # ContentChild.cpp cannot be compiled in unified mode on  linux due to Time conflict
 SOURCES += [
     'ContentChild.cpp',
-    'CrashReporterChild.cpp',
     'ProcessHangMonitor.cpp',
 ]
 
 IPDL_SOURCES += [
     'DOMTypes.ipdlh',
+    'MemoryReportTypes.ipdlh',
     'PBrowser.ipdl',
     'PBrowserOrId.ipdlh',
     'PColorPicker.ipdl',
@@ -85,17 +91,16 @@ IPDL_SOURCES += [
     'PContentBridge.ipdl',
     'PContentPermission.ipdlh',
     'PContentPermissionRequest.ipdl',
-    'PCrashReporter.ipdl',
     'PCycleCollectWithLogs.ipdl',
     'PDatePicker.ipdl',
     'PDocumentRenderer.ipdl',
     'PFilePicker.ipdl',
-    'PMemoryReportRequest.ipdl',
     'PPluginWidget.ipdl',
     'PProcessHangMonitor.ipdl',
     'PScreenManager.ipdl',
     'PTabContext.ipdlh',
     'PURLClassifier.ipdl',
+    'PURLClassifierInfo.ipdlh',
     'ServiceWorkerConfiguration.ipdlh',
 ]
 

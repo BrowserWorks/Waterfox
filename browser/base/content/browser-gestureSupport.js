@@ -537,7 +537,7 @@ var gGestureSupport = {
       return;
 
     let contentElement = content.document.body.firstElementChild;
-    let transformValue = content.window.getComputedStyle(contentElement, null)
+    let transformValue = content.window.getComputedStyle(contentElement)
                                        .transform;
 
     if (transformValue == "none") {
@@ -918,7 +918,7 @@ var gHistorySwipeAnimation = {
     this._prevBox = null;
     this._nextBox = null;
     if (this._container)
-      this._container.parentNode.removeChild(this._container);
+      this._container.remove();
     this._container = null;
     this._boxWidth = -1;
     this._boxHeight = -1;

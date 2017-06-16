@@ -1,5 +1,3 @@
-load(libdir + "wasm.js");
-
 const LinkError = WebAssembly.LinkError;
 
 // ----------------------------------------------------------------------------
@@ -420,7 +418,7 @@ assertErrorMessage(() => i2v(4), Error, signatureMismatch);
 assertErrorMessage(() => i2v(5), Error, signatureMismatch);
 
 {
-    enableSPSProfiling();
+    enableGeckoProfiling();
 
     var stack;
     wasmFullPass(
@@ -437,7 +435,7 @@ assertErrorMessage(() => i2v(5), Error, signatureMismatch);
         {"":{f:() => { stack = new Error().stack }}}
     );
 
-    disableSPSProfiling();
+    disableGeckoProfiling();
 
     var inner = stack.indexOf("wasm-function[1]");
     var outer = stack.indexOf("wasm-function[3]");

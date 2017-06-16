@@ -111,7 +111,6 @@ extern nsresult nsStringInputStreamConstructor(nsISupports*, REFNSIID, void**);
 #include "SpecialSystemDirectory.h"
 
 #if defined(XP_WIN)
-#include "mozilla/WindowsVersion.h"
 #include "nsWindowsRegKey.h"
 #endif
 
@@ -131,6 +130,7 @@ extern nsresult nsStringInputStreamConstructor(nsISupports*, REFNSIID, void**);
 #include "mozilla/Services.h"
 #include "mozilla/Omnijar.h"
 #include "mozilla/HangMonitor.h"
+#include "mozilla/SystemGroup.h"
 #include "mozilla/Telemetry.h"
 #include "mozilla/BackgroundHangMonitor.h"
 
@@ -471,13 +471,6 @@ NS_IMPL_ISUPPORTS(VPXReporter, nsIMemoryReporter)
 CountingAllocatorBase<VPXReporter>::sAmount(0);
 #endif /* MOZ_VPX */
 
-static double
-TimeSinceProcessCreation()
-{
-  bool ignore;
-  return (TimeStamp::Now() - TimeStamp::ProcessCreation(ignore)).ToMilliseconds();
-}
-
 static bool sInitializedJS = false;
 
 // Note that on OSX, aBinDirectory will point to .app/Contents/Resources/browser
@@ -501,10 +494,6 @@ NS_InitXPCOM2(nsIServiceManager** aResult,
 
   mozilla::LogModule::Init();
 
-  JS_SetCurrentEmbedderTimeFunction(TimeSinceProcessCreation);
-
-  char aLocal;
-  profiler_init(&aLocal);
   nsresult rv = NS_OK;
 
   // We are not shutting down
@@ -563,6 +552,9 @@ NS_InitXPCOM2(nsIServiceManager** aResult,
     return rv;
   }
 
+  // Init the SystemGroup for dispatching main thread runnables.
+  SystemGroup::InitStatic();
+
   // Set up the timer globals/timer thread
   rv = nsTimerImpl::Startup();
   if (NS_WARN_IF(NS_FAILED(rv))) {
@@ -582,8 +574,6 @@ NS_InitXPCOM2(nsIServiceManager** aResult,
 #endif
 
   NS_StartupLocalFile();
-
-  StartupSpecialSystemDirectory();
 
   nsDirectoryService::RealInit();
 
@@ -790,13 +780,13 @@ NS_InitMinimalXPCOM()
   NS_InitAtomTable();
   mozilla::LogModule::Init();
 
-  char aLocal;
-  profiler_init(&aLocal);
-
   nsresult rv = nsThreadManager::get().Init();
   if (NS_WARN_IF(NS_FAILED(rv))) {
     return rv;
   }
+
+  // Init the SystemGroup for dispatching main thread runnables.
+  SystemGroup::InitStatic();
 
   // Set up the timer globals/timer thread.
   rv = nsTimerImpl::Startup();
@@ -1041,7 +1031,7 @@ ShutdownXPCOM(nsIServiceManager* aServMgr)
     NS_WARNING("Component Manager was never created ...");
   }
 
-#ifdef MOZ_ENABLE_PROFILER_SPS
+#ifdef MOZ_GECKO_PROFILER
   // In optimized builds we don't do shutdown collections by default, so
   // uncollected (garbage) objects may keep the nsXPConnect singleton alive,
   // and its XPCJSContext along with it. However, we still destroy various
@@ -1077,6 +1067,9 @@ ShutdownXPCOM(nsIServiceManager* aServMgr)
   nsComponentManagerImpl::gComponentManager = nullptr;
   nsCategoryManager::Destroy();
 
+  // Shut down SystemGroup for main thread dispatching.
+  SystemGroup::Shutdown();
+
   NS_ShutdownAtomTable();
 
   NS_IF_RELEASE(gDebug);
@@ -1103,8 +1096,6 @@ ShutdownXPCOM(nsIServiceManager* aServMgr)
   sMainHangMonitor = nullptr;
 
   BackgroundHangMonitor::Shutdown();
-
-  profiler_shutdown();
 
   NS_LogTerm();
 

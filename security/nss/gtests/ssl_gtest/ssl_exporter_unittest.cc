@@ -14,7 +14,8 @@ namespace nss_test {
 static const char* kExporterLabel = "EXPORTER-duck";
 static const uint8_t kExporterContext[] = {0x12, 0x34, 0x56};
 
-static void ExportAndCompare(TlsAgent* client, TlsAgent* server, bool context) {
+static void ExportAndCompare(std::shared_ptr<TlsAgent>& client,
+                             std::shared_ptr<TlsAgent>& server, bool context) {
   static const size_t exporter_len = 10;
   uint8_t client_value[exporter_len] = {0};
   EXPECT_EQ(SECSuccess,
@@ -90,13 +91,15 @@ int32_t RegularExporterShouldFail(TlsAgent* agent, const SECItem* srvNameArr,
 
 TEST_P(TlsConnectTls13, EarlyExporter) {
   SetupForZeroRtt();
+  client_->SetExpectedAlertSentCount(1);
+  server_->SetExpectedAlertReceivedCount(1);
   client_->Set0RttEnabled(true);
   server_->Set0RttEnabled(true);
   ExpectResumption(RESUME_TICKET);
 
   client_->Handshake();  // Send ClientHello.
   uint8_t client_value[10] = {0};
-  RegularExporterShouldFail(client_, nullptr, 0);
+  RegularExporterShouldFail(client_.get(), nullptr, 0);
   EXPECT_EQ(SECSuccess,
             SSL_ExportEarlyKeyingMaterial(
                 client_->ssl_fd(), kExporterLabel, strlen(kExporterLabel),

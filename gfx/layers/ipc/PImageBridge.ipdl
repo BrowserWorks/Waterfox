@@ -38,10 +38,12 @@ child:
 parent:
   async ImageBridgeThreadId(PlatformThreadId aTreahdId);
 
-  sync Update(CompositableOperation[] ops, OpDestroy[] toDestroy, uint64_t fwdTransactionId)
-    returns (EditReply[] reply);
+  // Creates a set of mappings between TextureReadLocks and an associated
+  // ReadLockHandle that can be used in Update, and persist until the
+  // next Update call.
+  async InitReadLocks(ReadLockInit[] locks);
 
-  async UpdateNoSwap(CompositableOperation[] ops, OpDestroy[] toDestroy, uint64_t fwdTransactionId);
+  async Update(CompositableOperation[] ops, OpDestroy[] toDestroy, uint64_t fwdTransactionId);
 
   // First step of the destruction sequence. This puts ImageBridge
   // in a state in which it can't send asynchronous messages

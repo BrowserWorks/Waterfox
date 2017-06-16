@@ -3,25 +3,27 @@
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
 
-/* *************** SPS Sampler Information ****************
+/* *************** Gecko Profiler Information ****************
  *
- * SPS is an always on profiler that takes fast and low overheads samples
- * of the program execution using only userspace functionity for portability.
- * The goal of this module is to provide performance data in a generic
- * cross platform way without requiring custom tools or kernel support.
+ * The Gecko Profiler is an always-on profiler that takes fast and low
+ * overheads samples of the program execution using only userspace
+ * functionality for portability. The goal of this module is to provide
+ * performance data in a generic cross platform way without requiring custom
+ * tools or kernel support.
  *
- * Non goals: Support features that are platform specific or replace
- *            platform specific profilers.
+ * Non goals: Support features that are platform specific or replace platform
+ *            specific profilers.
  *
- * Samples are collected to form a timeline with optional timeline event (markers)
- * used for filtering.
+ * Samples are collected to form a timeline with optional timeline event
+ * (markers) used for filtering.
  *
- * SPS collects samples in a platform independant way by using a speudo stack abstraction
- * of the real program stack by using 'sample stack frames'. When a sample is collected
- * all active sample stack frames and the program counter are recorded.
+ * The profiler collects samples in a platform independant way by using a
+ * speudo stack abstraction of the real program stack by using 'sample stack
+ * frames'. When a sample is collected all active sample stack frames and the
+ * program counter are recorded.
  */
 
-/* *************** SPS Sampler File Format ****************
+/* *************** Gecko Profiler File Format ****************
  *
  * Simple new line seperated tag format:
  * S      -> BOF tags EOF
@@ -52,6 +54,7 @@
 #include <stdint.h>
 #include <stdarg.h>
 
+#include "MainThreadUtils.h"
 #include "mozilla/Assertions.h"
 #include "mozilla/Attributes.h"
 #include "js/TypeDecls.h"
@@ -88,7 +91,7 @@ struct ProfilerBacktraceDestructor
 using UniqueProfilerBacktrace =
   mozilla::UniquePtr<ProfilerBacktrace, ProfilerBacktraceDestructor>;
 
-#if !defined(MOZ_ENABLE_PROFILER_SPS)
+#if !defined(MOZ_GECKO_PROFILER)
 
 // Use these for functions below that must be visible whether the profiler is
 // enabled or not. When the profiler is disabled they are static inline
@@ -119,7 +122,7 @@ using UniqueProfilerBacktrace =
 #define PROFILER_MARKER(info) do {} while (0)
 #define PROFILER_MARKER_PAYLOAD(info, payload) do { mozilla::UniquePtr<ProfilerMarkerPayload> payloadDeletor(payload); } while (0)
 
-#else   // defined(MOZ_ENABLE_PROFILER_SPS)
+#else   // defined(MOZ_GECKO_PROFILER)
 
 #define PROFILER_FUNC(decl, rv)  decl;
 #define PROFILER_FUNC_VOID(decl) void decl;
@@ -136,7 +139,7 @@ using UniqueProfilerBacktrace =
 #define PROFILER_MARKER(info) profiler_add_marker(info)
 #define PROFILER_MARKER_PAYLOAD(info, payload) profiler_add_marker(info, payload)
 
-#endif  // defined(MOZ_ENABLE_PROFILER_SPS)
+#endif  // defined(MOZ_GECKO_PROFILER)
 
 // These functions are defined whether the profiler is enabled or not.
 
@@ -158,15 +161,17 @@ PROFILER_FUNC_VOID(profiler_shutdown())
 
 // Start the profiler with the selected options. The samples will be
 // recorded in a circular buffer.
-//   "aProfileEntries" is an abstract size indication of how big
+//   "aEntries" is an abstract size indication of how big
 //       the profile's circular buffer should be. Multiply by 4
 //       words to get the cost.
 //   "aInterval" the sampling interval. The profiler will do its
 //       best to sample at this interval. The profiler visualization
 //       should represent the actual sampling accuracy.
-PROFILER_FUNC_VOID(profiler_start(int aProfileEntries, double aInterval,
-                              const char** aFeatures, uint32_t aFeatureCount,
-                              const char** aThreadNameFilters, uint32_t aFilterCount))
+PROFILER_FUNC_VOID(profiler_start(int aEntries, double aInterval,
+                                  const char** aFeatures,
+                                  uint32_t aFeatureCount,
+                                  const char** aThreadNameFilters,
+                                  uint32_t aFilterCount))
 
 // Stop the profiler and discard the profile. Call 'profiler_save' before this
 // to retrieve the profile.
@@ -187,7 +192,7 @@ PROFILER_FUNC_VOID(profiler_get_backtrace_noalloc(char *output,
                                                   size_t outputSize))
 
 // Free a ProfilerBacktrace returned by profiler_get_backtrace()
-#if !defined(MOZ_ENABLE_PROFILER_SPS)
+#if !defined(MOZ_GECKO_PROFILER)
 inline void ProfilerBacktraceDestructor::operator()(ProfilerBacktrace* aBacktrace) {}
 #endif
 
@@ -197,9 +202,6 @@ PROFILER_FUNC(bool profiler_is_active(), false)
 // Supported:
 //  * gpu
 PROFILER_FUNC(bool profiler_feature_active(const char*), false)
-
-// Internal-only. Used by the event tracer.
-PROFILER_FUNC_VOID(profiler_responsiveness(const mozilla::TimeStamp& aTime))
 
 // Internal-only.
 PROFILER_FUNC_VOID(profiler_set_frame_number(int frameNumber))
@@ -234,7 +236,7 @@ PROFILER_FUNC_VOID(profiler_save_profile_to_file(const char* aFilename))
 PROFILER_FUNC(const char** profiler_get_features(), nullptr)
 
 PROFILER_FUNC_VOID(profiler_get_buffer_info_helper(uint32_t* aCurrentPosition,
-                                                   uint32_t* aTotalSize,
+                                                   uint32_t* aEntries,
                                                    uint32_t* aGeneration))
 
 // Get information about the current buffer status.
@@ -245,14 +247,14 @@ PROFILER_FUNC_VOID(profiler_get_buffer_info_helper(uint32_t* aCurrentPosition,
 // for how fast the buffer is being written to, and how much
 // data is visible.
 static inline void profiler_get_buffer_info(uint32_t* aCurrentPosition,
-                                            uint32_t* aTotalSize,
+                                            uint32_t* aEntries,
                                             uint32_t* aGeneration)
 {
   *aCurrentPosition = 0;
-  *aTotalSize = 0;
+  *aEntries = 0;
   *aGeneration = 0;
 
-  profiler_get_buffer_info_helper(aCurrentPosition, aTotalSize, aGeneration);
+  profiler_get_buffer_info_helper(aCurrentPosition, aEntries, aGeneration);
 }
 
 // Lock the profiler. When locked the profiler is (1) stopped,
@@ -268,19 +270,18 @@ PROFILER_FUNC_VOID(profiler_register_thread(const char* name,
                                             void* guessStackTop))
 PROFILER_FUNC_VOID(profiler_unregister_thread())
 
-// These functions tell the profiler that a thread went to sleep so that we can avoid
-// sampling it while it's sleeping. Calling profiler_sleep_start() twice without
-// profiler_sleep_end() is an error.
-PROFILER_FUNC_VOID(profiler_sleep_start())
-PROFILER_FUNC_VOID(profiler_sleep_end())
-PROFILER_FUNC(bool profiler_is_sleeping(), false)
+// These functions tell the profiler that a thread went to sleep so that we can
+// avoid sampling it while it's sleeping. Calling profiler_thread_sleep()
+// twice without an intervening profiler_thread_wake() is an error.
+PROFILER_FUNC_VOID(profiler_thread_sleep())
+PROFILER_FUNC_VOID(profiler_thread_wake())
+PROFILER_FUNC(bool profiler_thread_is_sleeping(), false)
 
 // Call by the JSRuntime's operation callback. This is used to enable
 // profiling on auxilerary threads.
 PROFILER_FUNC_VOID(profiler_js_operation_callback())
 
 PROFILER_FUNC(double profiler_time(), 0)
-PROFILER_FUNC(double profiler_time(const mozilla::TimeStamp& aTime), 0)
 
 PROFILER_FUNC(bool profiler_in_privacy_mode(), false)
 
@@ -289,7 +290,7 @@ PROFILER_FUNC_VOID(profiler_log(const char *fmt, va_list args))
 
 // End of the functions defined whether the profiler is enabled or not.
 
-#if defined(MOZ_ENABLE_PROFILER_SPS)
+#if defined(MOZ_GECKO_PROFILER)
 
 #include <stdlib.h>
 #include <signal.h>
@@ -299,24 +300,37 @@ PROFILER_FUNC_VOID(profiler_log(const char *fmt, va_list args))
 #include "nscore.h"
 #include "PseudoStack.h"
 #include "ProfilerBacktrace.h"
+#include "nsIMemoryReporter.h"
 
 // Make sure that we can use std::min here without the Windows headers messing with us.
 #ifdef min
 #undef min
 #endif
 
-class GeckoSampler;
+class Sampler;
 class nsISupports;
 class ProfilerMarkerPayload;
 
-extern MOZ_THREAD_LOCAL(PseudoStack *) tlsPseudoStack;
-extern MOZ_THREAD_LOCAL(GeckoSampler *) tlsTicker;
+// Each thread gets its own PseudoStack on thread creation, which is then
+// destroyed on thread destruction. (GeckoProfilerInitRAII handles this for the
+// main thread and AutoProfileRegister handles it for others threads.)
+// tlsPseudoStack is the owning reference. Other non-owning references to it
+// are handed out as follows.
+//
+// - ThreadInfo has a long-lived one, which we must ensure is nulled or
+//   destroyed before the PseudoStack is destroyed.
+//
+// - profiler_call_{enter,exit}() call pairs temporarily get one. RAII classes
+//   ensure these calls are balanced, and they occur on the thread itself,
+//   which means they are necessarily bounded by the lifetime of the thread,
+//   which ensures they can't be used after the PseudoStack is destroyed.
+//
+extern MOZ_THREAD_LOCAL(PseudoStack*) tlsPseudoStack;
+
 extern bool stack_key_initialized;
 
 #ifndef SAMPLE_FUNCTION_NAME
-# ifdef __GNUC__
-#  define SAMPLE_FUNCTION_NAME __FUNCTION__
-# elif defined(_MSC_VER)
+# if defined(__GNUC__) || defined(_MSC_VER)
 #  define SAMPLE_FUNCTION_NAME __FUNCTION__
 # else
 #  define SAMPLE_FUNCTION_NAME __func__  // defined in C99, supported in various C++ compilers. Just raw function name.
@@ -330,6 +344,8 @@ profiler_call_enter(const char* aInfo,
                     js::ProfileEntry::Category aCategory,
                     void *aFrameAddress, bool aCopy, uint32_t line)
 {
+  // This function runs both on and off the main thread.
+
   // check if we've been initialized to avoid calling pthread_getspecific
   // with a null tlsStack which will return undefined results.
   if (!stack_key_initialized)
@@ -356,11 +372,13 @@ profiler_call_enter(const char* aInfo,
 static inline void
 profiler_call_exit(void* aHandle)
 {
+  // This function runs both on and off the main thread.
+
   if (!aHandle)
     return;
 
   PseudoStack *stack = (PseudoStack*)aHandle;
-  stack->popAndMaybeDelete();
+  stack->pop();
 }
 
 void profiler_add_marker(const char *aMarker,
@@ -369,7 +387,10 @@ void profiler_add_marker(const char *aMarker,
 MOZ_EXPORT  // XXX: should this be 'extern "C"' as well?
 void profiler_save_profile_to_file_async(double aSinceTime,
                                          const char* aFileName);
-void profiler_get_gatherer(nsISupports** aRetVal);
+
+void profiler_will_gather_OOP_profile();
+void profiler_gathered_OOP_profile();
+void profiler_OOP_exit_profile(const nsCString& aProfile);
 
 #define SAMPLER_APPEND_LINE_NUMBER_PASTE(id, line) id ## line
 #define SAMPLER_APPEND_LINE_NUMBER_EXPAND(id, line) SAMPLER_APPEND_LINE_NUMBER_PASTE(id, line)
@@ -413,14 +434,14 @@ void profiler_get_gatherer(nsISupports** aRetVal);
 #endif
 
 #if !defined(PLATFORM_LIKELY_MEMORY_CONSTRAINED) && !defined(ARCH_ARMV6)
-# define PROFILE_DEFAULT_ENTRY 1000000
+# define PROFILE_DEFAULT_ENTRIES 1000000
 #else
-# define PROFILE_DEFAULT_ENTRY 100000
+# define PROFILE_DEFAULT_ENTRIES 100000
 #endif
 
 // In the case of profiler_get_backtrace we know that we only need enough space
 // for a single backtrace.
-#define GET_BACKTRACE_DEFAULT_ENTRY 1000
+#define GET_BACKTRACE_DEFAULT_ENTRIES 1000
 
 #if defined(PLATFORM_LIKELY_MEMORY_CONSTRAINED)
 /* A 1ms sampling interval has been shown to be a large perf hit
@@ -429,20 +450,10 @@ void profiler_get_gatherer(nsISupports** aRetVal);
  * important case, b2g, there are also many gecko processes which
  * magnify these effects. */
 # define PROFILE_DEFAULT_INTERVAL 10
-#elif defined(ANDROID)
-// We use a lower frequency on Android, in order to make things work
-// more smoothly on phones.  This value can be adjusted later with
-// some libunwind optimizations.
-// In one sample measurement on Galaxy Nexus, out of about 700 backtraces,
-// 60 of them took more than 25ms, and the average and standard deviation
-// were 6.17ms and 9.71ms respectively.
-
-// For now since we don't support stackwalking let's use 1ms since it's fast
-// enough.
-#define PROFILE_DEFAULT_INTERVAL 1
 #else
 #define PROFILE_DEFAULT_INTERVAL 1
 #endif
+
 #define PROFILE_DEFAULT_FEATURES NULL
 #define PROFILE_DEFAULT_FEATURE_COUNT 0
 
@@ -503,12 +514,29 @@ private:
 inline PseudoStack*
 profiler_get_pseudo_stack(void)
 {
+  // This function runs both on and off the main thread.
+
   if (!stack_key_initialized)
     return nullptr;
   return tlsPseudoStack.get();
 }
 
-#endif  // defined(MOZ_ENABLE_PROFILER_SPS)
+class GeckoProfilerReporter final : public nsIMemoryReporter
+{
+public:
+  NS_DECL_ISUPPORTS
+
+  GeckoProfilerReporter() {}
+
+  NS_IMETHOD
+  CollectReports(nsIHandleReportCallback* aHandleReport,
+                 nsISupports* aData, bool aAnonymize) override;
+
+private:
+  ~GeckoProfilerReporter() {}
+};
+
+#endif  // defined(MOZ_GECKO_PROFILER)
 
 namespace mozilla {
 
@@ -522,33 +550,33 @@ public:
   }
 };
 
-class MOZ_RAII GeckoProfilerSleepRAII {
+class MOZ_RAII GeckoProfilerThreadSleepRAII {
 public:
-  GeckoProfilerSleepRAII() {
-    profiler_sleep_start();
+  GeckoProfilerThreadSleepRAII() {
+    profiler_thread_sleep();
   }
-  ~GeckoProfilerSleepRAII() {
-    profiler_sleep_end();
+  ~GeckoProfilerThreadSleepRAII() {
+    profiler_thread_wake();
   }
 };
 
 /**
- * Temporarily wake up the profiler while servicing events such as
+ * Temporarily wake up the profiling of a thread while servicing events such as
  * Asynchronous Procedure Calls (APCs).
  */
-class MOZ_RAII GeckoProfilerWakeRAII {
+class MOZ_RAII GeckoProfilerThreadWakeRAII {
 public:
-  GeckoProfilerWakeRAII()
-    : mIssuedWake(profiler_is_sleeping())
+  GeckoProfilerThreadWakeRAII()
+    : mIssuedWake(profiler_thread_is_sleeping())
   {
     if (mIssuedWake) {
-      profiler_sleep_end();
+      profiler_thread_wake();
     }
   }
-  ~GeckoProfilerWakeRAII() {
+  ~GeckoProfilerThreadWakeRAII() {
     if (mIssuedWake) {
-      MOZ_ASSERT(!profiler_is_sleeping());
-      profiler_sleep_start();
+      MOZ_ASSERT(!profiler_thread_is_sleeping());
+      profiler_thread_sleep();
     }
   }
 private:

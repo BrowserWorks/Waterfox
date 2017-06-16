@@ -5,29 +5,34 @@
 "use strict";
 
 const {
-  OPEN_SIDEBAR,
+  ACTIVITY_TYPE,
+  OPEN_NETWORK_DETAILS,
   OPEN_STATISTICS,
+  SELECT_DETAILS_PANEL_TAB,
   WATERFALL_RESIZE,
 } = require("../constants");
 
 /**
- * Change sidebar open state.
+ * Change network details panel.
  *
- * @param {boolean} open - open state
+ * @param {boolean} open - expected network details panel open state
  */
-function openSidebar(open) {
+function openNetworkDetails(open) {
   return {
-    type: OPEN_SIDEBAR,
+    type: OPEN_NETWORK_DETAILS,
     open,
   };
 }
 
 /**
- * Change performance statistics view open state.
+ * Change performance statistics panel open state.
  *
- * @param {boolean} visible - expected sidebar open state
+ * @param {boolean} visible - expected performance statistics panel open state
  */
 function openStatistics(open) {
+  if (open) {
+    window.NetMonitorController.triggerActivity(ACTIVITY_TYPE.RELOAD.WITH_CACHE_ENABLED);
+  }
   return {
     type: OPEN_STATISTICS,
     open,
@@ -45,23 +50,38 @@ function resizeWaterfall(width) {
 }
 
 /**
- * Toggle sidebar open state.
+ * Change the selected tab for network details panel.
+ *
+ * @param {string} id - tab id to be selected
  */
-function toggleSidebar() {
-  return (dispatch, getState) => dispatch(openSidebar(!getState().ui.sidebarOpen));
+function selectDetailsPanelTab(id) {
+  return {
+    type: SELECT_DETAILS_PANEL_TAB,
+    id,
+  };
 }
 
 /**
- * Toggle to show/hide performance statistics view.
+ * Toggle network details panel.
+ */
+function toggleNetworkDetails() {
+  return (dispatch, getState) =>
+    dispatch(openNetworkDetails(!getState().ui.networkDetailsOpen));
+}
+
+/**
+ * Toggle performance statistics panel.
  */
 function toggleStatistics() {
-  return (dispatch, getState) => dispatch(openStatistics(!getState().ui.statisticsOpen));
+  return (dispatch, getState) =>
+    dispatch(openStatistics(!getState().ui.statisticsOpen));
 }
 
 module.exports = {
-  openSidebar,
+  openNetworkDetails,
   openStatistics,
   resizeWaterfall,
-  toggleSidebar,
+  selectDetailsPanelTab,
+  toggleNetworkDetails,
   toggleStatistics,
 };

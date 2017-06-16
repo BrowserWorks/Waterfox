@@ -20,7 +20,7 @@
 #include <set>
 #include <algorithm>
 #include "resource.h"
-#include "client/windows/sender/crash_report_sender.h"
+#include "windows/sender/crash_report_sender.h"
 #include "common/windows/string_utils-inl.h"
 
 #define CRASH_REPORTER_VALUE L"Enabled"
@@ -1545,24 +1545,48 @@ void UIPruneSavedDumps(const std::string& directory)
   }
 }
 
-void UIRunMinidumpAnalyzer(const string& exename, const string& filename)
+bool UIRunProgram(const string& exename,
+                  const std::vector<std::string>& args,
+                  bool wait)
 {
-  wstring cmdLine;
+  wstring cmdLine = L"\"" + UTF8ToWide(exename) + L"\" ";
 
-  cmdLine += L"\"" + UTF8ToWide(exename) + L"\" ";
-  cmdLine += L"\"" + UTF8ToWide(filename) + L"\" ";
+  for (auto arg : args) {
+    cmdLine += L"\"" + UTF8ToWide(arg) + L"\" ";
+  }
 
   STARTUPINFO si = {};
+  si.cb = sizeof(si);
   PROCESS_INFORMATION pi = {};
 
-  si.cb = sizeof(si);
-  si.dwFlags = STARTF_USESHOWWINDOW;
-  si.wShowWindow = SW_SHOWNORMAL;
-
-  if (CreateProcess(nullptr, (LPWSTR)cmdLine.c_str(), nullptr, nullptr, FALSE,
-                    0, nullptr, nullptr, &si, &pi)) {
-    WaitForSingleObject(pi.hProcess, INFINITE);
-    CloseHandle(pi.hProcess);
-    CloseHandle(pi.hThread);
+  if (!CreateProcess(/* lpApplicationName */ nullptr,
+                     (LPWSTR)cmdLine.c_str(),
+                     /* lpProcessAttributes */ nullptr,
+                     /* lpThreadAttributes */ nullptr,
+                     /* bInheritHandles */ false,
+                     NORMAL_PRIORITY_CLASS | CREATE_NO_WINDOW,
+                     /* lpEnvironment */ nullptr,
+                     /* lpCurrentDirectory */ nullptr,
+                     &si, &pi)) {
+    return false;
   }
+
+  if (wait) {
+    WaitForSingleObject(pi.hProcess, INFINITE);
+  }
+
+  CloseHandle(pi.hProcess);
+  CloseHandle(pi.hThread);
+  return true;
+}
+
+string
+UIGetEnv(const string name)
+{
+  const wchar_t *var = _wgetenv(UTF8ToWide(name).c_str());
+  if (var && *var) {
+    return WideToUTF8(var);
+  }
+
+  return "";
 }

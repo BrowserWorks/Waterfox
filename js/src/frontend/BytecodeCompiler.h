@@ -13,6 +13,7 @@
 
 #include "vm/Scope.h"
 #include "vm/String.h"
+#include "vm/TraceLogging.h"
 
 class JSLinearString;
 
@@ -26,15 +27,19 @@ struct SourceCompressionTask;
 
 namespace frontend {
 
+class TokenStream;
+class FunctionBox;
+class ParseNode;
+
 JSScript*
-CompileGlobalScript(ExclusiveContext* cx, LifoAlloc& alloc, ScopeKind scopeKind,
+CompileGlobalScript(JSContext* cx, LifoAlloc& alloc, ScopeKind scopeKind,
                     const ReadOnlyCompileOptions& options,
                     SourceBufferHolder& srcBuf,
                     SourceCompressionTask* extraSct = nullptr,
                     ScriptSourceObject** sourceObjectOut = nullptr);
 
 JSScript*
-CompileEvalScript(ExclusiveContext* cx, LifoAlloc& alloc,
+CompileEvalScript(JSContext* cx, LifoAlloc& alloc,
                   HandleObject scopeChain, HandleScope enclosingScope,
                   const ReadOnlyCompileOptions& options,
                   SourceBufferHolder& srcBuf,
@@ -46,7 +51,7 @@ CompileModule(JSContext* cx, const ReadOnlyCompileOptions& options,
               SourceBufferHolder& srcBuf);
 
 ModuleObject*
-CompileModule(ExclusiveContext* cx, const ReadOnlyCompileOptions& options,
+CompileModule(JSContext* cx, const ReadOnlyCompileOptions& options,
               SourceBufferHolder& srcBuf, LifoAlloc& alloc,
               ScriptSourceObject** sourceObjectOut = nullptr);
 
@@ -69,20 +74,20 @@ MOZ_MUST_USE bool
 CompileStandaloneFunction(JSContext* cx, MutableHandleFunction fun,
                           const ReadOnlyCompileOptions& options,
                           JS::SourceBufferHolder& srcBuf,
-                          mozilla::Maybe<uint32_t> parameterListEnd,
+                          const mozilla::Maybe<uint32_t>& parameterListEnd,
                           HandleScope enclosingScope = nullptr);
 
 MOZ_MUST_USE bool
 CompileStandaloneGenerator(JSContext* cx, MutableHandleFunction fun,
                            const ReadOnlyCompileOptions& options,
                            JS::SourceBufferHolder& srcBuf,
-                           mozilla::Maybe<uint32_t> parameterListEnd);
+                           const mozilla::Maybe<uint32_t>& parameterListEnd);
 
 MOZ_MUST_USE bool
 CompileStandaloneAsyncFunction(JSContext* cx, MutableHandleFunction fun,
                                const ReadOnlyCompileOptions& options,
                                JS::SourceBufferHolder& srcBuf,
-                               mozilla::Maybe<uint32_t> parameterListEnd);
+                               const mozilla::Maybe<uint32_t>& parameterListEnd);
 
 MOZ_MUST_USE bool
 CompileAsyncFunctionBody(JSContext* cx, MutableHandleFunction fun,
@@ -90,8 +95,8 @@ CompileAsyncFunctionBody(JSContext* cx, MutableHandleFunction fun,
                          Handle<PropertyNameVector> formals, JS::SourceBufferHolder& srcBuf);
 
 ScriptSourceObject*
-CreateScriptSourceObject(ExclusiveContext* cx, const ReadOnlyCompileOptions& options,
-                         mozilla::Maybe<uint32_t> parameterListEnd = mozilla::Nothing());
+CreateScriptSourceObject(JSContext* cx, const ReadOnlyCompileOptions& options,
+                         const mozilla::Maybe<uint32_t>& parameterListEnd = mozilla::Nothing());
 
 /*
  * True if str consists of an IdentifierStart character, followed by one or
@@ -109,6 +114,8 @@ IsIdentifier(JSLinearString* str);
  * As above, but taking chars + length.
  */
 bool
+IsIdentifier(const char* chars, size_t length);
+bool
 IsIdentifier(const char16_t* chars, size_t length);
 
 /* True if str is a keyword. Defined in TokenStream.cpp. */
@@ -118,6 +125,29 @@ IsKeyword(JSLinearString* str);
 /* Trace all GC things reachable from parser. Defined in Parser.cpp. */
 void
 TraceParser(JSTracer* trc, JS::AutoGCRooter* parser);
+
+class MOZ_STACK_CLASS AutoFrontendTraceLog
+{
+#ifdef JS_TRACE_LOGGING
+    TraceLoggerThread* logger_;
+    mozilla::Maybe<TraceLoggerEvent> frontendEvent_;
+    mozilla::Maybe<AutoTraceLog> frontendLog_;
+    mozilla::Maybe<AutoTraceLog> typeLog_;
+#endif
+
+  public:
+    AutoFrontendTraceLog(JSContext* cx, const TraceLoggerTextId id,
+                         const char* filename, size_t line, size_t column);
+
+    AutoFrontendTraceLog(JSContext* cx, const TraceLoggerTextId id,
+                         const TokenStream& tokenStream);
+
+    AutoFrontendTraceLog(JSContext* cx, const TraceLoggerTextId id,
+                         const TokenStream& tokenStream, FunctionBox* funbox);
+
+    AutoFrontendTraceLog(JSContext* cx, const TraceLoggerTextId id,
+                         const TokenStream& tokenStream, ParseNode* pn);
+};
 
 } /* namespace frontend */
 } /* namespace js */

@@ -9,7 +9,6 @@
 #include "nsSystemInfo.h"
 #include "prsystem.h"
 #include "prio.h"
-#include "prprf.h"
 #include "mozilla/SSE.h"
 #include "mozilla/arm.h"
 #include "mozilla/Sprintf.h"
@@ -76,6 +75,8 @@ NS_EXPORT int android_sdk_version;
 // so we must call it before going multithreaded, but nsSystemInfo::Init
 // only happens well after that point.
 uint32_t nsSystemInfo::gUserUmask = 0;
+
+using namespace mozilla::dom;
 
 #if defined (XP_LINUX) && !defined (ANDROID)
 static void

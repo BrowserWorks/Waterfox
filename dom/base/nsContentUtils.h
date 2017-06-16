@@ -503,6 +503,12 @@ public:
   // aWindow can be either outer or inner window.
   static bool CanCallerAccess(nsPIDOMWindowInner* aWindow);
 
+  // Check if the principal is chrome or an addon with the permission.
+  static bool PrincipalHasPermission(nsIPrincipal* aPrincipal, const nsAString& aPerm);
+
+  // Check if the JS caller is chrome or an addon with the permission.
+  static bool CallerHasPermission(JSContext* aCx, const nsAString& aPerm);
+
   /**
    * GetDocumentFromCaller gets its document by looking at the last called
    * function and finding the document that the function itself relates to.
@@ -541,6 +547,10 @@ public:
   {
     return sSecurityManager;
   }
+
+  // Returns the subject principal from the JSContext. May only be called
+  // from the main thread and assumes an existing compartment.
+  static nsIPrincipal* SubjectPrincipal(JSContext* aCx);
 
   // Returns the subject principal. Guaranteed to return non-null. May only
   // be called when nsContentUtils is initialized.
@@ -786,11 +796,13 @@ public:
   static bool IsDraggableLink(const nsIContent* aContent);
 
   /**
-   * Convenience method to create a new nodeinfo that differs only by name
-   * from aNodeInfo.
+   * Convenience method to create a new nodeinfo that differs only by prefix and
+   * name from aNodeInfo. The new nodeinfo's name is set to aName, and prefix is
+   * set to null.
    */
-  static nsresult NameChanged(mozilla::dom::NodeInfo* aNodeInfo, nsIAtom* aName,
-                              mozilla::dom::NodeInfo** aResult);
+  static nsresult QNameChanged(mozilla::dom::NodeInfo* aNodeInfo,
+                               nsIAtom* aName,
+                               mozilla::dom::NodeInfo** aResult);
 
   /**
    * Returns the appropriate event argument names for the specified
@@ -890,6 +902,37 @@ public:
                                               uint32_t aColumnNumber = 0,
                                               MissingErrorLocationMode aLocationMode
                                                 = eUSE_CALLING_LOCATION);
+
+  /**
+   * Report a non-localized error message to the error console base on the
+   * innerWindowID.
+   *   @param aErrorText the error message
+   *   @param aErrorFlags See nsIScriptError.
+   *   @param aCategory Name of module reporting error.
+   *   @param [aInnerWindowID] Inner window ID for document which triggered the
+   *          message.
+   *   @param [aURI=nullptr] (Optional) URI of resource containing error.
+   *   @param [aSourceLine=EmptyString()] (Optional) The text of the line that
+              contains the error (may be empty).
+   *   @param [aLineNumber=0] (Optional) Line number within resource
+              containing error.
+   *   @param [aColumnNumber=0] (Optional) Column number within resource
+              containing error.
+              If aURI is null, then aDocument->GetDocumentURI() is used.
+   *   @param [aLocationMode] (Optional) Specifies the behavior if
+              error location information is omitted.
+   */
+  static nsresult ReportToConsoleByWindowID(const nsAString& aErrorText,
+                                            uint32_t aErrorFlags,
+                                            const nsACString& aCategory,
+                                            uint64_t aInnerWindowID,
+                                            nsIURI* aURI = nullptr,
+                                            const nsAFlatString& aSourceLine
+                                              = EmptyString(),
+                                            uint32_t aLineNumber = 0,
+                                            uint32_t aColumnNumber = 0,
+                                            MissingErrorLocationMode aLocationMode
+                                              = eUSE_CALLING_LOCATION);
 
   /**
    * Report a localized error message to the error console.
@@ -2010,7 +2053,7 @@ public:
    * a mouse-click or key press), unless this check has been disabled by
    * setting the pref "full-screen-api.allow-trusted-requests-only" to false.
    */
-  static bool IsRequestFullScreenAllowed();
+  static bool IsRequestFullScreenAllowed(mozilla::dom::CallerType aCallerType);
 
   /**
    * Returns true if calling execCommand with 'cut' or 'copy' arguments
@@ -2023,10 +2066,10 @@ public:
 
   /**
    * Returns true if calling execCommand with 'cut' or 'copy' arguments is
-   * allowed in the current context. These are only allowed if the user initiated
-   * them (like with a mouse-click or key press).
+   * allowed for the given subject principal. These are only allowed if the user
+   * initiated them (like with a mouse-click or key press).
    */
-  static bool IsCutCopyAllowed();
+  static bool IsCutCopyAllowed(nsIPrincipal* aSubjectPrincipal);
 
   /*
    * Returns true if the performance timing APIs are enabled.
@@ -2454,9 +2497,14 @@ public:
   static bool IsForbiddenResponseHeader(const nsACString& aHeader);
 
   /**
-   * Returns the inner window ID for the window associated with a request,
+   * Returns the inner window ID for the window associated with a request.
    */
   static uint64_t GetInnerWindowID(nsIRequest* aRequest);
+
+  /**
+   * Returns the inner window ID for the window associated with a load group.
+   */
+  static uint64_t GetInnerWindowID(nsILoadGroup* aLoadGroup);
 
   /**
    * If the hostname for aURI is an IPv6 it encloses it in brackets,
@@ -2753,6 +2801,14 @@ public:
                                         nsIPrincipal** aLoadingPrincipal,
                                         nsContentPolicyType& aContentPolicyType);
 
+  static nsresult
+  CreateJSValueFromSequenceOfObject(JSContext* aCx,
+                                    const mozilla::dom::Sequence<JSObject*>& aTransfer,
+                                    JS::MutableHandle<JS::Value> aValue);
+
+  static bool
+  IsWebComponentsEnabled() { return sIsWebComponentsEnabled; }
+
 private:
   static bool InitializeEventTable();
 
@@ -2779,7 +2835,8 @@ private:
 
   static void DropFragmentParsers();
 
-  static bool MatchClassNames(nsIContent* aContent, int32_t aNamespaceID,
+  static bool MatchClassNames(mozilla::dom::Element* aElement,
+                              int32_t aNamespaceID,
                               nsIAtom* aAtom, void* aData);
   static void DestroyClassNameArray(void* aData);
   static void* AllocClassMatchingInfo(nsINode* aRootNode,
@@ -2858,6 +2915,7 @@ private:
   static bool sIsUserTimingLoggingEnabled;
   static bool sIsFrameTimingPrefEnabled;
   static bool sIsExperimentalAutocompleteEnabled;
+  static bool sIsWebComponentsEnabled;
   static bool sEncodeDecodeURLHash;
   static bool sGettersDecodeURLHash;
   static bool sPrivacyResistFingerprinting;

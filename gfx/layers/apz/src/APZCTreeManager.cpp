@@ -53,10 +53,12 @@ typedef mozilla::gfx::Point Point;
 typedef mozilla::gfx::Point4D Point4D;
 typedef mozilla::gfx::Matrix4x4 Matrix4x4;
 
+typedef CompositorBridgeParent::LayerTreeState LayerTreeState;
+
 float APZCTreeManager::sDPI = 160.0;
 
 struct APZCTreeManager::TreeBuildingState {
-  TreeBuildingState(const CompositorBridgeParent::LayerTreeState* const aLayerTreeState,
+  TreeBuildingState(const LayerTreeState* const aLayerTreeState,
                     bool aIsFirstPaint, uint64_t aOriginatingLayersId,
                     APZTestData* aTestData, uint32_t aPaintSequence)
     : mLayerTreeState(aLayerTreeState)
@@ -67,7 +69,7 @@ struct APZCTreeManager::TreeBuildingState {
   }
 
   // State that doesn't change as we recurse in the tree building
-  const CompositorBridgeParent::LayerTreeState* const mLayerTreeState;
+  const LayerTreeState* const mLayerTreeState;
   const bool mIsFirstPaint;
   const uint64_t mOriginatingLayersId;
   const APZPaintLogHelper mPaintLogger;
@@ -226,13 +228,13 @@ APZCTreeManager::UpdateHitTestingTree(uint64_t aRootLayerTreeId,
   // the layers id that originated this update.
   APZTestData* testData = nullptr;
   if (gfxPrefs::APZTestLoggingEnabled()) {
-    if (CompositorBridgeParent::LayerTreeState* state = CompositorBridgeParent::GetIndirectShadowTree(aOriginatingLayersId)) {
+    if (LayerTreeState* state = CompositorBridgeParent::GetIndirectShadowTree(aOriginatingLayersId)) {
       testData = &state->mApzTestData;
       testData->StartNewPaint(aPaintSequenceNumber);
     }
   }
 
-  const CompositorBridgeParent::LayerTreeState* treeState =
+  const LayerTreeState* treeState =
     CompositorBridgeParent::GetIndirectShadowTree(aRootLayerTreeId);
   MOZ_ASSERT(treeState);
   TreeBuildingState state(treeState, aIsFirstPaint, aOriginatingLayersId,
@@ -439,11 +441,20 @@ APZCTreeManager::StartScrollbarDrag(const ScrollableLayerGuid& aGuid,
 
   RefPtr<AsyncPanZoomController> apzc = GetTargetAPZC(aGuid);
   if (!apzc) {
+    NotifyScrollbarDragRejected(aGuid);
     return;
   }
 
   uint64_t inputBlockId = aDragMetrics.mDragStartSequenceNumber;
   mInputQueue->ConfirmDragBlock(inputBlockId, apzc, aDragMetrics);
+}
+
+void
+APZCTreeManager::NotifyScrollbarDragRejected(const ScrollableLayerGuid& aGuid) const
+{
+  const LayerTreeState* state = CompositorBridgeParent::GetIndirectShadowTree(aGuid.mLayersId);
+  MOZ_ASSERT(state && state->mController);
+  state->mController->NotifyAsyncScrollbarDragRejected(aGuid.mScrollId);
 }
 
 HitTestingTreeNode*
@@ -462,7 +473,7 @@ APZCTreeManager::PrepareNodeForLayer(const LayerMetricsWrapper& aLayer,
     needsApzc = false;
   }
 
-  const CompositorBridgeParent::LayerTreeState* state = CompositorBridgeParent::GetIndirectShadowTree(aLayersId);
+  const LayerTreeState* state = CompositorBridgeParent::GetIndirectShadowTree(aLayersId);
   if (!(state && state->mController.get())) {
     needsApzc = false;
   }
@@ -690,7 +701,7 @@ APZCTreeManager::FlushApzRepaints(uint64_t aLayersId)
   // ensure any pending paints were flushed. Now, paints are flushed
   // immediately, so it is safe to simply send a notification now.
   APZCTM_LOG("Flushing repaints for layers id %" PRIu64, aLayersId);
-  const CompositorBridgeParent::LayerTreeState* state =
+  const LayerTreeState* state =
     CompositorBridgeParent::GetIndirectShadowTree(aLayersId);
   MOZ_ASSERT(state && state->mController);
   state->mController->DispatchToRepaintThread(NewRunnableMethod(
@@ -836,8 +847,8 @@ APZCTreeManager::ReceiveInputEvent(InputData& aEvent,
       }
 
       // If/when we enable support for pan inputs off-main-thread, we'll need
-      // to duplicate this EventStateManager code or something. See the other
-      // call to GetUserPrefsForWheelEvent in this file for why these fields
+      // to duplicate this EventStateManager code or something. See the call to
+      // GetUserPrefsForWheelEvent in IAPZCTreeManager.cpp for why these fields
       // are stored separately.
       MOZ_ASSERT(NS_IsMainThread());
       WidgetWheelEvent wheelEvent = panInput.ToWidgetWheelEvent(nullptr);
@@ -1782,10 +1793,19 @@ APZCTreeManager::GetAPZCAtPoint(HitTestingTreeNode* aNode,
 
   if (*aOutHitResult != HitNothing) {
       MOZ_ASSERT(resultNode);
-      if (aOutHitScrollbar) {
-        for (HitTestingTreeNode* n = resultNode; n; n = n->GetParent()) {
-          if (n->IsScrollbarNode()) {
+      for (HitTestingTreeNode* n = resultNode; n; n = n->GetParent()) {
+        if (n->IsScrollbarNode()) {
+          if (aOutHitScrollbar) {
             *aOutHitScrollbar = true;
+          }
+          // If we hit a scrollbar, target the APZC for the content scrolled
+          // by the scrollbar. (The scrollbar itself doesn't scroll with the
+          // scrolled content, so it doesn't carry the scrolled content's
+          // scroll metadata).
+          ScrollableLayerGuid guid(n->GetLayersId(), 0, n->GetScrollTargetId());
+          if (RefPtr<HitTestingTreeNode> scrollTarget = GetTargetNode(guid, &GuidComparatorIgnoringPresShell)) {
+            MOZ_ASSERT(scrollTarget->GetApzc());
+            return scrollTarget->GetApzc();
           }
         }
       }

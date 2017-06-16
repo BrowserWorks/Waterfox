@@ -14,6 +14,7 @@ include protocol PBrowser;
 include protocol PCompositorWidget;
 include protocol PLayerTransaction;
 include protocol PTexture;
+include protocol PWebRenderBridge;
 include "mozilla/GfxMessageUtils.h";
 
 using struct mozilla::null_t from "ipc/IPCMessageUtils.h";
@@ -33,6 +34,7 @@ using class mozilla::TimeStamp from "mozilla/TimeStamp.h";
 using class mozilla::layers::FrameUniformityData from "mozilla/layers/FrameUniformityData.h";
 using mozilla::layers::TextureFlags from "mozilla/layers/CompositorTypes.h";
 using mozilla::layers::CompositorOptions from "mozilla/layers/CompositorOptions.h";
+using mozilla::wr::PipelineId from "mozilla/webrender/WebRenderTypes.h";
 
 namespace mozilla {
 namespace layers {
@@ -71,6 +73,7 @@ sync protocol PCompositorBridge
   manages PLayerTransaction;
   manages PTexture;
   manages PCompositorWidget;
+  manages PWebRenderBridge;
 
 child:
   // The child should invalidate retained layers. This is used for local
@@ -94,9 +97,6 @@ child:
   // if there was no transaction since the last composite.
   async DidComposite(uint64_t id, uint64_t transactionId,
                      TimeStamp compositeStart, TimeStamp compositeEnd);
-
-  // The parent sends the child the requested fill ratio numbers.
-  async Overfill(uint32_t aOverfill);
 
   /**
    * Parent informs the child that the graphics objects are ready for
@@ -129,12 +129,6 @@ child:
    */
   async HideAllPlugins(uintptr_t aParentWidget);
 
-  /**
-   * Drop any buffers that might be retained on the child compositor
-   * side.
-   */
-  async ClearCachedResources(uint64_t id);
-
   async ParentAsyncMessages(AsyncParentMessageData[] aMessages);
 
   async ObserveLayerUpdate(uint64_t aLayersId, uint64_t aEpoch, bool aActive);
@@ -162,10 +156,7 @@ parent:
 
   // Confirmation that the child has invalidated all its layers, and will not
   // request layers against an old compositor.
-  async AcknowledgeCompositorUpdate(uint64_t id);
-
-  // Child sends the parent a request for fill ratio numbers.
-  async RequestOverfill();
+  async AcknowledgeCompositorUpdate(uint64_t aLayersId, uint64_t aSeqNo);
 
   // Child requests frame uniformity measurements
   sync GetFrameUniformity() returns (FrameUniformityData data);
@@ -249,6 +240,10 @@ parent:
   async PTexture(SurfaceDescriptor aSharedData, LayersBackend aBackend, TextureFlags aTextureFlags, uint64_t id, uint64_t aSerial);
 
   sync SyncWithCompositor();
+
+  // The pipelineId is the same as the layersId
+  sync PWebRenderBridge(PipelineId pipelineId)
+    returns (TextureFactoryIdentifier textureFactoryIdentifier, uint32_t idNamespace); //XXX: use the WrIdNamespace type
 
 child:
   // Send back Compositor Frame Metrics from APZCs so tiled layers can

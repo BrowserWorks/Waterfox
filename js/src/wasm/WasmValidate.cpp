@@ -34,7 +34,7 @@ using mozilla::CheckedInt;
 // Decoder implementation.
 
 bool
-Decoder::fail(const char* msg, ...)
+Decoder::failf(const char* msg, ...)
 {
     va_list ap;
     va_start(ap, msg);
@@ -43,14 +43,14 @@ Decoder::fail(const char* msg, ...)
     if (!str)
         return false;
 
-    return fail(Move(str));
+    return fail(str.get());
 }
 
 bool
-Decoder::fail(UniqueChars msg)
+Decoder::fail(size_t errorOffset, const char* msg)
 {
     MOZ_ASSERT(error_);
-    UniqueChars strWithOffset(JS_smprintf("at offset %" PRIuSIZE ": %s", currentOffset(), msg.get()));
+    UniqueChars strWithOffset(JS_smprintf("at offset %" PRIuSIZE ": %s", errorOffset, msg));
     if (!strWithOffset)
         return false;
 
@@ -110,7 +110,7 @@ Decoder::startSection(SectionId id, ModuleEnvironment* env, uint32_t* sectionSta
     return true;
 
   fail:
-    return fail("failed to start %s section", sectionName);
+    return failf("failed to start %s section", sectionName);
 }
 
 bool
@@ -119,7 +119,7 @@ Decoder::finishSection(uint32_t sectionStart, uint32_t sectionSize, const char* 
     if (resilientMode_)
         return true;
     if (sectionSize != (cur_ - beg_) - sectionStart)
-        return fail("byte size mismatch in %s section", sectionName);
+        return failf("byte size mismatch in %s section", sectionName);
     return true;
 }
 
@@ -618,8 +618,8 @@ DecodePreamble(Decoder& d)
         return d.fail("failed to match magic number");
 
     if (!d.readFixedU32(&u32) || u32 != EncodingVersion) {
-        return d.fail("binary version 0x%" PRIx32 " does not match expected version 0x%" PRIx32,
-                      u32, EncodingVersion);
+        return d.failf("binary version 0x%" PRIx32 " does not match expected version 0x%" PRIx32,
+                       u32, EncodingVersion);
     }
 
     return true;
@@ -735,7 +735,7 @@ DecodeLimits(Decoder& d, Limits* limits)
         return d.fail("expected flags");
 
     if (flags & ~uint32_t(0x1))
-        return d.fail("unexpected bits set in flags: %" PRIu32, (flags & ~uint32_t(0x1)));
+        return d.failf("unexpected bits set in flags: %" PRIu32, (flags & ~uint32_t(0x1)));
 
     if (!d.readVarU32(&limits->initial))
         return d.fail("expected initial length");
@@ -746,9 +746,9 @@ DecodeLimits(Decoder& d, Limits* limits)
             return d.fail("expected maximum length");
 
         if (limits->initial > maximum) {
-            return d.fail("memory size minimum must not be greater than maximum; "
-                          "maximum length %" PRIu32 " is less than initial length %" PRIu32,
-                          maximum, limits->initial);
+            return d.failf("memory size minimum must not be greater than maximum; "
+                           "maximum length %" PRIu32 " is less than initial length %" PRIu32,
+                           maximum, limits->initial);
         }
 
         limits->maximum.emplace(maximum);
@@ -771,7 +771,7 @@ DecodeTableLimits(Decoder& d, TableDescVector* tables)
     if (!DecodeLimits(d, &limits))
         return false;
 
-    if (limits.initial > MaxTableLength)
+    if (limits.initial > MaxTableInitialLength)
         return d.fail("too many table elements");
 
     if (tables->length())
@@ -829,20 +829,24 @@ DecodeMemoryLimits(Decoder& d, ModuleEnvironment* env)
     if (!DecodeLimits(d, &memory))
         return false;
 
-    CheckedInt<uint32_t> initialBytes = memory.initial;
-    initialBytes *= PageSize;
-    if (!initialBytes.isValid() || initialBytes.value() > uint32_t(INT32_MAX))
+    if (memory.initial > MaxMemoryInitialPages)
         return d.fail("initial memory size too big");
 
+    CheckedInt<uint32_t> initialBytes = memory.initial;
+    initialBytes *= PageSize;
+    MOZ_ASSERT(initialBytes.isValid());
     memory.initial = initialBytes.value();
 
     if (memory.maximum) {
-        CheckedInt<uint32_t> maximumBytes = *memory.maximum;
-        maximumBytes *= PageSize;
-        if (!maximumBytes.isValid())
+        if (*memory.maximum > MaxMemoryMaximumPages)
             return d.fail("maximum memory size too big");
 
-        memory.maximum = Some(maximumBytes.value());
+        CheckedInt<uint32_t> maximumBytes = *memory.maximum;
+        maximumBytes *= PageSize;
+
+        // Clamp the maximum memory value to UINT32_MAX; it's not semantically
+        // visible since growing will fail for values greater than INT32_MAX.
+        memory.maximum = Some(maximumBytes.isValid() ? maximumBytes.value() : UINT32_MAX);
     }
 
     env->memoryUsage = MemoryUsage::Unshared;
@@ -1316,7 +1320,7 @@ DecodeElemSection(Decoder& d, ModuleEnvironment* env)
         if (!d.readVarU32(&numElems))
             return d.fail("expected segment size");
 
-        if (numElems > MaxTableLength)
+        if (numElems > MaxTableInitialLength)
             return d.fail("too many table elements");
 
         Uint32Vector elemFuncIndices;
@@ -1462,6 +1466,9 @@ DecodeDataSection(Decoder& d, ModuleEnvironment* env)
         if (!d.readVarU32(&seg.length))
             return d.fail("expected segment size");
 
+        if (seg.length > MaxMemoryInitialPages * PageSize)
+            return d.fail("segment size too big");
+
         seg.bytecodeOffset = d.currentOffset();
 
         if (!d.readBytes(seg.length))
@@ -1577,7 +1584,7 @@ wasm::DecodeModuleTail(Decoder& d, ModuleEnvironment* env)
 bool
 wasm::Validate(const ShareableBytes& bytecode, UniqueChars* error)
 {
-    Decoder d(bytecode.begin(), bytecode.end(), error);
+    Decoder d(bytecode.bytes, error);
 
     ModuleEnvironment env;
     if (!DecodeModuleEnvironment(d, &env))

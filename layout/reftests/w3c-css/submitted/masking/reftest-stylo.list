@@ -68,7 +68,7 @@ fails == mask-size-auto-auto.html mask-size-auto-auto.html
 fails == mask-size-auto-length.html mask-size-auto-length.html
 fails == mask-size-auto-percent.html mask-size-auto-percent.html
 fails == mask-size-contain-clip-border.html mask-size-contain-clip-border.html
-# == mask-size-contain-clip-padding.html mask-size-contain-clip-padding.html
+fails == mask-size-contain-clip-padding.html mask-size-contain-clip-padding.html
 fails == mask-size-contain-position-fifty-fifty.html mask-size-contain-position-fifty-fifty.html
 fails == mask-size-contain.html mask-size-contain.html
 fails == mask-size-cover.html mask-size-cover.html
@@ -99,7 +99,7 @@ fails == clip-path-strokeBox-1a.html clip-path-strokeBox-1a.html
 fails == clip-path-strokeBox-1b.html clip-path-strokeBox-1b.html
 fails == clip-path-viewBox-1a.html clip-path-viewBox-1a.html
 fails == clip-path-viewBox-1b.html clip-path-viewBox-1b.html
-# fuzzy(64,370) == clip-path-viewBox-1c.html clip-path-viewBox-1c.html
+fails == clip-path-viewBox-1c.html clip-path-viewBox-1c.html
 == clip-path-geometryBox-2.html clip-path-geometryBox-2.html
 
 fails == clip-path-localRef-1.html clip-path-localRef-1.html
@@ -111,4 +111,4 @@ fails == mask-opacity-1a.html mask-opacity-1a.html
 fails == mask-opacity-1b.html mask-opacity-1b.html
 fuzzy(1,5000) == mask-opacity-1c.html mask-opacity-1c.html
 
-fails == clip-path-mix-blend-mode-1.html clip-path-mix-blend-mode-1.html
+== clip-path-mix-blend-mode-1.html clip-path-mix-blend-mode-1.html

@@ -20,6 +20,7 @@ EXPORTS += [
     'nsSVGEffects.h',
     'nsSVGFilterInstance.h',
     'nsSVGForeignObjectFrame.h',
+    'nsSVGImageFrame.h',
     'nsSVGIntegrationUtils.h',
     'nsSVGUtils.h',
     'SVGImageContext.h',
@@ -60,6 +61,7 @@ UNIFIED_SOURCES += [
     'SVGFELeafFrame.cpp',
     'SVGFEUnstyledLeafFrame.cpp',
     'SVGGeometryFrame.cpp',
+    'SVGImageContext.cpp',
     'SVGTextFrame.cpp',
     'SVGViewFrame.cpp',
 ]

@@ -151,6 +151,8 @@ uint32_t nsChildView::sLastInputEventCount = 0;
 
 static uint32_t gNumberOfWidgetsNeedingEventThread = 0;
 
+static bool sIsTabletPointerActivated = false;
+
 @interface ChildView(Private)
 
 // sets up our view, attaching it to its owning gecko view
@@ -162,7 +164,8 @@ static uint32_t gNumberOfWidgetsNeedingEventThread = 0;
                         toGeckoEvent:(WidgetWheelEvent*)outWheelEvent;
 - (void) convertCocoaMouseEvent:(NSEvent*)aMouseEvent
                    toGeckoEvent:(WidgetInputEvent*)outGeckoEvent;
-
+- (void) convertCocoaTabletPointerEvent:(NSEvent*)aMouseEvent
+                           toGeckoEvent:(WidgetMouseEvent*)outGeckoEvent;
 - (NSMenu*)contextMenu;
 
 - (BOOL)isRectObscuredBySubview:(NSRect)inRect;
@@ -198,6 +201,7 @@ static uint32_t gNumberOfWidgetsNeedingEventThread = 0;
 #endif
 
 - (LayoutDeviceIntPoint)convertWindowCoordinates:(NSPoint)aPoint;
+- (LayoutDeviceIntPoint)convertWindowCoordinatesRoundDown:(NSPoint)aPoint;
 - (IAPZCTreeManager*)apzctm;
 
 - (BOOL)inactiveWindowAcceptsMouseEvent:(NSEvent*)aEvent;
@@ -279,7 +283,8 @@ public:
   {
     // Contrary to CompositorOGL, we allow unaccelerated OpenGL contexts to be
     // used. BasicCompositor only requires very basic GL functionality.
-    RefPtr<GLContext> context = gl::GLContextProvider::CreateForWindow(aWindow, false);
+    bool forWebRender = false;
+    RefPtr<GLContext> context = gl::GLContextProvider::CreateForWindow(aWindow, forWebRender, false);
     return context ? MakeUnique<GLPresenter>(context) : nullptr;
   }
 
@@ -2024,7 +2029,8 @@ bool
 nsChildView::PreRender(WidgetRenderingContext* aContext)
 {
   UniquePtr<GLManager> manager(GLManager::CreateGLManager(aContext->mLayerManager));
-  if (!manager) {
+  gl::GLContext* gl = manager ? manager->gl() : aContext->mGL;
+  if (!gl) {
     return true;
   }
 
@@ -2033,7 +2039,7 @@ nsChildView::PreRender(WidgetRenderingContext* aContext)
   // composition is done, thus keeping the GL context locked forever.
   mViewTearDownLock.Lock();
 
-  NSOpenGLContext *glContext = GLContextCGL::Cast(manager->gl())->GetNSOpenGLContext();
+  NSOpenGLContext *glContext = GLContextCGL::Cast(gl)->GetNSOpenGLContext();
 
   if (![(ChildView*)mView preRender:glContext]) {
     mViewTearDownLock.Unlock();
@@ -2046,10 +2052,11 @@ void
 nsChildView::PostRender(WidgetRenderingContext* aContext)
 {
   UniquePtr<GLManager> manager(GLManager::CreateGLManager(aContext->mLayerManager));
-  if (!manager) {
+  gl::GLContext* gl = manager ? manager->gl() : aContext->mGL;
+  if (!gl) {
     return;
   }
-  NSOpenGLContext *glContext = GLContextCGL::Cast(manager->gl())->GetNSOpenGLContext();
+  NSOpenGLContext *glContext = GLContextCGL::Cast(gl)->GetNSOpenGLContext();
   [(ChildView*)mView postRender:glContext];
   mViewTearDownLock.Unlock();
 }
@@ -2848,14 +2855,15 @@ nsChildView::DispatchAPZWheelInputEvent(InputData& aEvent, bool aCanTriggerSwipe
   if (mAPZC) {
     uint64_t inputBlockId = 0;
     ScrollableLayerGuid guid;
+    nsEventStatus result = nsEventStatus_eIgnore;
 
-    nsEventStatus result = mAPZC->ReceiveInputEvent(aEvent, &guid, &inputBlockId);
-    if (result == nsEventStatus_eConsumeNoDefault) {
-      return;
-    }
-
-    switch(aEvent.mInputType) {
+    switch (aEvent.mInputType) {
       case PANGESTURE_INPUT: {
+        result = mAPZC->ReceiveInputEvent(aEvent, &guid, &inputBlockId);
+        if (result == nsEventStatus_eConsumeNoDefault) {
+          return;
+        }
+
         PanGestureInput& panInput = aEvent.AsPanGestureInput();
 
         event = panInput.ToWidgetWheelEvent(this);
@@ -2889,7 +2897,16 @@ nsChildView::DispatchAPZWheelInputEvent(InputData& aEvent, bool aCanTriggerSwipe
         break;
       }
       case SCROLLWHEEL_INPUT: {
+        // For wheel events on OS X, send it to APZ using the WidgetInputEvent
+        // variant of ReceiveInputEvent, because the IAPZCTreeManager version of
+        // that function has special handling (for delta multipliers etc.) that
+        // we need to run. Using the InputData variant would bypass that and
+        // go straight to the APZCTreeManager subclass.
         event = aEvent.AsScrollWheelInput().ToWidgetWheelEvent(this);
+        result = mAPZC->ReceiveInputEvent(event, &guid, &inputBlockId);
+        if (result == nsEventStatus_eConsumeNoDefault) {
+          return;
+        }
         break;
       };
       default:
@@ -2976,7 +2993,7 @@ public:
   explicit AutoBackgroundSetter(NSView* aView) {
     if (nsCocoaFeatures::OnElCapitanOrLater() &&
         [[aView window] isKindOfClass:[ToolbarWindow class]]) {
-      mWindow = (ToolbarWindow*)[aView window];
+      mWindow = [(ToolbarWindow*)[aView window] retain];
       [mWindow setTemporaryBackgroundColor];
     } else {
       mWindow = nullptr;
@@ -2986,11 +3003,12 @@ public:
   ~AutoBackgroundSetter() {
     if (mWindow) {
       [mWindow restoreBackgroundColor];
+      [mWindow release];
     }
   }
 
 private:
-  ToolbarWindow* mWindow;
+  ToolbarWindow* mWindow; // strong
 };
 
 void
@@ -3192,38 +3210,27 @@ NSEvent* gLastDragMouseDownEvent = nil;
   if (!initialized) {
     // Inform the OS about the types of services (from the "Services" menu)
     // that we can handle.
-
-    NSArray* sendTypes =
-      [[NSArray alloc] initWithObjects:NSPasteboardTypeString,
-                                       NSPasteboardTypeHTML,
-                                       nil];
-    NSArray* returnTypes =
-      [[NSArray alloc] initWithObjects:NSPasteboardTypeString,
-                                       NSPasteboardTypeHTML,
-                                       nil];
-
-    [NSApp registerServicesMenuSendTypes:sendTypes returnTypes:returnTypes];
-
-    [sendTypes release];
-    [returnTypes release];
-
+    NSArray* types = @[[UTIHelper stringFromPboardType:NSPasteboardTypeString],
+                       [UTIHelper stringFromPboardType:NSPasteboardTypeHTML]];
+    [NSApp registerServicesMenuSendTypes:types returnTypes:types];
     initialized = YES;
   }
 }
 
 + (void)registerViewForDraggedTypes:(NSView*)aView
 {
-  [aView registerForDraggedTypes:[NSArray arrayWithObjects:
-                                    NSFilenamesPboardType,
-                                    NSPasteboardTypeString,
-                                    NSPasteboardTypeHTML,
-                                    NSURLPboardType,
-                                    kPasteboardTypeFileURLPromise,
-                                    kWildcardPboardType,
-                                    kCorePboardType_url,
-                                    kCorePboardType_urld,
-                                    kCorePboardType_urln,
-                                    nil]];
+  [aView registerForDraggedTypes:
+    [NSArray arrayWithObjects:
+      [UTIHelper stringFromPboardType:NSFilenamesPboardType],
+      [UTIHelper stringFromPboardType:kMozFileUrlsPboardType],
+      [UTIHelper stringFromPboardType:NSPasteboardTypeString],
+      [UTIHelper stringFromPboardType:NSPasteboardTypeHTML],
+      [UTIHelper stringFromPboardType:(NSString*)kPasteboardTypeFileURLPromise],
+      [UTIHelper stringFromPboardType:kMozWildcardPboardType],
+      [UTIHelper stringFromPboardType:kPublicUrlPboardType],
+      [UTIHelper stringFromPboardType:kPublicUrlNamePboardType],
+      [UTIHelper stringFromPboardType:kUrlsWithTitlesPboardType],
+      nil]];
 }
 
 // initWithFrame:geckoChild:
@@ -4834,16 +4841,20 @@ AccumulateIntegerDelta(NSEvent* aEvent)
 static gfx::IntPoint
 GetIntegerDeltaForEvent(NSEvent* aEvent)
 {
-  if (nsCocoaFeatures::OnSierraOrLater()) {
+  if (nsCocoaFeatures::OnSierraOrLater() && [aEvent hasPreciseScrollingDeltas]) {
+    // Pixel scroll events (events with hasPreciseScrollingDeltas == YES)
+    // carry pixel deltas in the scrollingDeltaX/Y fields and line scroll
+    // information in the deltaX/Y fields.
+    // Prior to 10.12, these line scroll fields would be zero for most pixel
+    // scroll events and non-zero for some, whenever at least a full line
+    // worth of pixel scrolling had accumulated. That's the behavior we want.
+    // Starting with 10.12 however, pixel scroll events no longer accumulate
+    // deltaX and deltaY; they just report floating point values for every
+    // single event. So we need to do our own accumulation.
     return AccumulateIntegerDelta(aEvent);
   }
 
-  // Pre-10.12, deltaX/deltaY had the accumulation behavior that we want, and
-  // it worked more reliably than doing it on our own, so use it on pre-10.12
-  // versions. For example, with a traditional USB mouse, the first wheel
-  // "tick" would always senda line scroll of at least one line, but with our
-  // own accumulation you sometimes need to do multiple wheel ticks before one
-  // line has been accumulated.
+  // For line scrolls, or pre-10.12, just use the rounded up value of deltaX / deltaY.
   return gfx::IntPoint(RoundUp([aEvent deltaX]), RoundUp([aEvent deltaY]));
 }
 
@@ -4891,8 +4902,12 @@ GetIntegerDeltaForEvent(NSEvent* aEvent)
 
   NSPoint locationInWindow = nsCocoaUtils::EventLocationForWindow(theEvent, [self window]);
 
+  // Use convertWindowCoordinatesRoundDown when converting the position to
+  // integer screen pixels in order to ensure that coordinates which are just
+  // inside the right / bottom edges of the window don't end up outside of the
+  // window after rounding.
   ScreenPoint position = ViewAs<ScreenPixel>(
-    [self convertWindowCoordinates:locationInWindow],
+    [self convertWindowCoordinatesRoundDown:locationInWindow],
     PixelCastJustification::LayoutDeviceIsScreenForUntransformedEvent);
 
   bool usePreciseDeltas = nsCocoaUtils::HasPreciseScrollingDeltas(theEvent) &&
@@ -5183,9 +5198,10 @@ GetIntegerDeltaForEvent(NSEvent* aEvent)
     case NSOtherMouseDown:
     case NSOtherMouseUp:
     case NSOtherMouseDragged:
+    case NSMouseMoved:
       if ([aMouseEvent subtype] == NSTabletPointEventSubtype) {
-        mouseEvent->pressure = [aMouseEvent pressure];
-        MOZ_ASSERT(mouseEvent->pressure >= 0.0 && mouseEvent->pressure <= 1.0);
+        [self convertCocoaTabletPointerEvent:aMouseEvent
+                                toGeckoEvent:mouseEvent->AsMouseEvent()];
       }
       break;
 
@@ -5195,6 +5211,32 @@ GetIntegerDeltaForEvent(NSEvent* aEvent)
   }
 
   NS_OBJC_END_TRY_ABORT_BLOCK;
+}
+
+- (void) convertCocoaTabletPointerEvent:(NSEvent*)aPointerEvent
+                           toGeckoEvent:(WidgetMouseEvent*)aOutGeckoEvent
+{
+  NS_OBJC_BEGIN_TRY_ABORT_BLOCK_RETURN
+  if (!aOutGeckoEvent || !sIsTabletPointerActivated) {
+    return;
+  }
+  if ([aPointerEvent type] != NSMouseMoved) {
+    aOutGeckoEvent->pressure = [aPointerEvent pressure];
+    MOZ_ASSERT(aOutGeckoEvent->pressure >= 0.0 &&
+               aOutGeckoEvent->pressure <= 1.0);
+  }
+  aOutGeckoEvent->inputSource = nsIDOMMouseEvent::MOZ_SOURCE_PEN;
+  aOutGeckoEvent->tiltX = lround([aPointerEvent tilt].x * 90);
+  aOutGeckoEvent->tiltY = lround([aPointerEvent tilt].y * 90);
+
+  NS_OBJC_END_TRY_ABORT_BLOCK;
+}
+
+- (void)tabletProximity:(NSEvent *)theEvent
+{
+  NS_OBJC_BEGIN_TRY_ABORT_BLOCK_RETURN
+  sIsTabletPointerActivated = [theEvent isEnteringProximity];
+  NS_OBJC_END_TRY_ABORT_BLOCK
 }
 
 - (BOOL)shouldZoomOnDoubleClick
@@ -5622,6 +5664,16 @@ GetIntegerDeltaForEvent(NSEvent* aEvent)
   return mGeckoChild->CocoaPointsToDevPixels(localPoint);
 }
 
+- (LayoutDeviceIntPoint)convertWindowCoordinatesRoundDown:(NSPoint)aPoint
+{
+  if (!mGeckoChild) {
+    return LayoutDeviceIntPoint(0, 0);
+  }
+
+  NSPoint localPoint = [self convertPoint:aPoint fromView:nil];
+  return mGeckoChild->CocoaPointsToDevPixelsRoundDown(localPoint);
+}
+
 - (IAPZCTreeManager*)apzctm
 {
   return mGeckoChild ? mGeckoChild->APZCTM() : nullptr;
@@ -5929,27 +5981,43 @@ provideDataForType:(NSString*)aType
     unsigned int typeCount = [pasteboardOutputDict count];
     NSMutableArray* types = [NSMutableArray arrayWithCapacity:typeCount + 1];
     [types addObjectsFromArray:[pasteboardOutputDict allKeys]];
-    [types addObject:kWildcardPboardType];
+    [types addObject:[UTIHelper stringFromPboardType:kMozWildcardPboardType]];
     for (unsigned int k = 0; k < typeCount; k++) {
       NSString* curType = [types objectAtIndex:k];
-      if ([curType isEqualToString:NSPasteboardTypeString] ||
-          [curType isEqualToString:kCorePboardType_url] ||
-          [curType isEqualToString:kCorePboardType_urld] ||
-          [curType isEqualToString:kCorePboardType_urln]) {
+      if ([curType isEqualToString:
+            [UTIHelper stringFromPboardType:NSPasteboardTypeString]] ||
+          [curType isEqualToString:
+            [UTIHelper stringFromPboardType:kPublicUrlPboardType]] ||
+          [curType isEqualToString:
+            [UTIHelper stringFromPboardType:kPublicUrlNamePboardType]] ||
+          [curType isEqualToString:
+            [UTIHelper stringFromPboardType:(NSString*)kUTTypeFileURL]]) {
         [aPasteboard setString:[pasteboardOutputDict valueForKey:curType]
                        forType:curType];
-      } else if ([curType isEqualToString:NSPasteboardTypeHTML]) {
+      } else if ([curType isEqualToString:
+                   [UTIHelper stringFromPboardType:
+                     kUrlsWithTitlesPboardType]]) {
+        [aPasteboard setPropertyList:[pasteboardOutputDict valueForKey:curType]
+                       forType:curType];
+      } else if ([curType isEqualToString:
+                   [UTIHelper stringFromPboardType:NSPasteboardTypeHTML]]) {
         [aPasteboard setString:
           (nsClipboard::WrapHtmlForSystemPasteboard(
             [pasteboardOutputDict valueForKey:curType]))
                       forType:curType];
-      } else if ([curType isEqualToString:NSPasteboardTypeTIFF] ||
-                 [curType isEqualToString:kCustomTypesPboardType]) {
+      } else if ([curType isEqualToString:
+                   [UTIHelper stringFromPboardType:NSPasteboardTypeTIFF]] ||
+                 [curType isEqualToString:
+                   [UTIHelper stringFromPboardType:kMozCustomTypesPboardType]]) {
         [aPasteboard setData:[pasteboardOutputDict valueForKey:curType]
                      forType:curType];
-      } else if (
-        [curType isEqualToString:(NSString*)kPasteboardTypeFileURLPromise] ||
-        [curType isEqualToString:NSFilenamesPboardType]) {
+      } else if ([curType isEqualToString:
+                   [UTIHelper stringFromPboardType:kMozFileUrlsPboardType]]) {
+        [aPasteboard writeObjects:[pasteboardOutputDict valueForKey:curType]];
+      } else if ([curType isEqualToString:
+                   [UTIHelper stringFromPboardType:
+                     (NSString*)kPasteboardTypeFileURLPromise]]) {
+
 
         nsCOMPtr<nsIFile> targFile;
         NS_NewLocalFile(EmptyString(), true, getter_AddRefs(targFile));
@@ -6047,14 +6115,15 @@ provideDataForType:(NSString*)aType
   // or HTML from us or no data at all AND when the service will either not
   // send back any data to us or will send a string or HTML back to us.
 
-#define IsSupportedType(typeStr) \
-  ([typeStr isEqualToString:NSPasteboardTypeString] || \
-   [typeStr isEqualToString:NSPasteboardTypeHTML])
-
   id result = nil;
 
-  if ((!sendType || IsSupportedType(sendType)) &&
-      (!returnType || IsSupportedType(returnType))) {
+  NSString* stringType =
+    [UTIHelper stringFromPboardType:NSPasteboardTypeString];
+  NSString* htmlType = [UTIHelper stringFromPboardType:NSPasteboardTypeHTML];
+  if ((!sendType || [sendType isEqualToString:stringType] ||
+        [sendType isEqualToString:htmlType]) &&
+      (!returnType || [returnType isEqualToString:stringType] ||
+        [returnType isEqualToString:htmlType])) {
     if (mGeckoChild) {
       // Assume that this object will be able to handle this request.
       result = self;
@@ -6082,8 +6151,6 @@ provideDataForType:(NSString*)aType
     }
   }
 
-#undef IsSupportedType
-
   // Give the superclass a chance if this object will not handle this request.
   if (!result)
     result = [super validRequestorForSendType:sendType returnType:returnType];
@@ -6101,9 +6168,14 @@ provideDataForType:(NSString*)aType
   nsAutoRetainCocoaObject kungFuDeathGrip(self);
 
   // Make sure that the service will accept strings or HTML.
-  if ([types containsObject:NSPasteboardTypeString] == NO &&
-      [types containsObject:NSPasteboardTypeHTML] == NO)
+  if (![types containsObject:
+         [UTIHelper stringFromPboardType:NSStringPboardType]] &&
+      ![types containsObject:
+         [UTIHelper stringFromPboardType:NSPasteboardTypeString]] &&
+      ![types containsObject:
+         [UTIHelper stringFromPboardType:NSPasteboardTypeHTML]]) {
     return NO;
+  }
 
   // Bail out if there is no Gecko object.
   if (!mGeckoChild)
@@ -6129,22 +6201,28 @@ provideDataForType:(NSString*)aType
     NSString* currentKey = [declaredTypes objectAtIndex:i];
     id currentValue = [pasteboardOutputDict valueForKey:currentKey];
 
-    if ([currentKey isEqualToString:NSPasteboardTypeString] ||
-        [currentKey isEqualToString:kCorePboardType_url] ||
-        [currentKey isEqualToString:kCorePboardType_urld] ||
-        [currentKey isEqualToString:kCorePboardType_urln]) {
+    if ([currentKey isEqualToString:
+          [UTIHelper stringFromPboardType:NSPasteboardTypeString]] ||
+        [currentKey isEqualToString:
+          [UTIHelper stringFromPboardType:kPublicUrlPboardType]] ||
+        [currentKey isEqualToString:
+          [UTIHelper stringFromPboardType:kPublicUrlNamePboardType]]) {
       [pboard setString:currentValue forType:currentKey];
-    } else if ([currentKey isEqualToString:NSPasteboardTypeHTML]) {
+    } else if ([currentKey isEqualToString:
+                 [UTIHelper stringFromPboardType:NSPasteboardTypeHTML]]) {
       [pboard setString:(nsClipboard::WrapHtmlForSystemPasteboard(currentValue))
                 forType:currentKey];
-    } else if ([currentKey isEqualToString:NSPasteboardTypeTIFF]) {
+    } else if ([currentKey isEqualToString:
+                 [UTIHelper stringFromPboardType:NSPasteboardTypeTIFF]]) {
       [pboard setData:currentValue forType:currentKey];
     } else if ([currentKey isEqualToString:
-                 (NSString*)kPasteboardTypeFileURLPromise]) {
+                 [UTIHelper stringFromPboardType:
+                   (NSString*)kPasteboardTypeFileURLPromise]] ||
+               [currentKey isEqualToString:
+                 [UTIHelper stringFromPboardType:kUrlsWithTitlesPboardType]]) {
       [pboard setPropertyList:currentValue forType:currentKey];
     }
   }
-
   return YES;
 
   NS_OBJC_END_TRY_ABORT_BLOCK_RETURN(NO);

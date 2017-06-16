@@ -9,6 +9,7 @@
 
 #include "mozilla/Attributes.h"
 #include "mozilla/dom/Event.h"
+#include "mozilla/dom/BindingDeclarations.h"
 #include "mozilla/dom/NotifyPaintEventBinding.h"
 #include "nsIDOMNotifyPaintEvent.h"
 #include "nsPresContext.h"
@@ -29,8 +30,9 @@ public:
                    nsPresContext* aPresContext,
                    WidgetEvent* aEvent,
                    EventMessage aEventMessage,
-                   nsInvalidateRequestList* aInvalidateRequests,
-                   uint64_t aTransactionId);
+                   nsTArray<nsRect>* aInvalidateRequests,
+                   uint64_t aTransactionId,
+                   DOMHighResTimeStamp aTimeStamp);
 
   NS_DECL_ISUPPORTS_INHERITED
 
@@ -50,22 +52,25 @@ public:
     return NotifyPaintEventBinding::Wrap(aCx, this, aGivenProto);
   }
 
-  already_AddRefed<DOMRectList> ClientRects();
+  already_AddRefed<DOMRectList> ClientRects(SystemCallerGuarantee aGuarantee);
 
-  already_AddRefed<DOMRect> BoundingClientRect();
+  already_AddRefed<DOMRect> BoundingClientRect(SystemCallerGuarantee aGuarantee);
 
-  already_AddRefed<PaintRequestList> PaintRequests();
+  already_AddRefed<PaintRequestList> PaintRequests(SystemCallerGuarantee);
 
-  uint64_t TransactionId();
+  uint64_t TransactionId(SystemCallerGuarantee);
+
+  DOMHighResTimeStamp PaintTimeStamp(SystemCallerGuarantee);
 
 protected:
   ~NotifyPaintEvent() {}
 
 private:
-  nsRegion GetRegion();
+  nsRegion GetRegion(SystemCallerGuarantee);
 
-  nsTArray<nsInvalidateRequestList::Request> mInvalidateRequests;
+  nsTArray<nsRect> mInvalidateRequests;
   uint64_t mTransactionId;
+  DOMHighResTimeStamp mTimeStamp;
 };
 
 } // namespace dom
@@ -78,8 +83,8 @@ NS_NewDOMNotifyPaintEvent(mozilla::dom::EventTarget* aOwner,
                           mozilla::WidgetEvent* aEvent,
                           mozilla::EventMessage aEventMessage =
                             mozilla::eVoidEvent,
-                          nsInvalidateRequestList* aInvalidateRequests =
-                            nullptr,
-                          uint64_t aTransactionId = 0);
+                          nsTArray<nsRect>* aInvalidateRequests = nullptr,
+                          uint64_t aTransactionId = 0,
+                          DOMHighResTimeStamp aTimeStamp = 0);
 
 #endif // mozilla_dom_NotifyPaintEvent_h_

@@ -70,6 +70,23 @@ this.CommonUtils = {
   },
 
   /**
+   * Checks elements in two arrays for equality, as determined by the `===`
+   * operator. This function does not perform a deep comparison; see Sync's
+   * `Util.deepEquals` for that.
+   */
+  arrayEqual(a, b) {
+    if (a.length !== b.length) {
+      return false;
+    }
+    for (let i = 0; i < a.length; i++) {
+      if (a[i] !== b[i]) {
+        return false;
+      }
+    }
+    return true;
+  },
+
+  /**
    * Encode byte string as base64URL (RFC 4648).
    *
    * @param bytes
@@ -132,20 +149,6 @@ this.CommonUtils = {
   },
 
   /**
-   * Spin the event loop and return once the next tick is executed.
-   *
-   * This is an evil function and should not be used in production code. It
-   * exists in this module for ease-of-use.
-   */
-  waitForNextTick: function waitForNextTick() {
-    let cb = Async.makeSyncCallback();
-    this.nextTick(cb);
-    Async.waitForSyncCallback(cb);
-
-
-  },
-
-  /**
    * Return a timer that is scheduled to call the callback after waiting the
    * provided time or as soon as possible. The timer will be set as a property
    * of the provided object with the given timer name.
@@ -158,7 +161,7 @@ this.CommonUtils = {
     // Delay an existing timer if it exists
     if (name in thisObj && thisObj[name] instanceof Ci.nsITimer) {
       thisObj[name].delay = wait;
-      return;
+      return thisObj[name];
     }
 
     // Create a special timer that we can add extra properties

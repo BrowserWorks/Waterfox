@@ -44,6 +44,8 @@ NS_GENERIC_FACTORY_CONSTRUCTOR(nsEntityConverter)
 NS_GENERIC_FACTORY_CONSTRUCTOR(nsSaveAsCharset)
 NS_GENERIC_FACTORY_CONSTRUCTOR(nsUnicodeNormalizer)
 
+NS_DEFINE_NAMED_CID(MOZ_LOCALESERVICE_CID);
+NS_DEFINE_NAMED_CID(MOZ_OSPREFERENCES_CID);
 NS_DEFINE_NAMED_CID(NS_LBRK_CID);
 NS_DEFINE_NAMED_CID(NS_WBRK_CID);
 NS_DEFINE_NAMED_CID(NS_SEMANTICUNITSCANNER_CID);
@@ -70,6 +72,8 @@ NS_DEFINE_NAMED_CID(NS_COLLATION_CID);
 #endif
 
 static const mozilla::Module::CIDEntry kIntlCIDs[] = {
+    { &kMOZ_LOCALESERVICE_CID, false, nullptr, mozilla::intl::LocaleServiceConstructor },
+    { &kMOZ_OSPREFERENCES_CID, false, nullptr, mozilla::intl::OSPreferencesConstructor },
     { &kNS_LBRK_CID, false, nullptr, nsJISx4051LineBreakerConstructor },
     { &kNS_WBRK_CID, false, nullptr, nsSampleWordBreakerConstructor },
     { &kNS_SEMANTICUNITSCANNER_CID, false, nullptr, nsSemanticUnitScannerConstructor },
@@ -98,6 +102,8 @@ static const mozilla::Module::CIDEntry kIntlCIDs[] = {
 };
 
 static const mozilla::Module::ContractIDEntry kIntlContracts[] = {
+    { MOZ_LOCALESERVICE_CONTRACTID, &kMOZ_LOCALESERVICE_CID },
+    { MOZ_OSPREFERENCES_CONTRACTID, &kMOZ_OSPREFERENCES_CID },
     { NS_LBRK_CONTRACTID, &kNS_LBRK_CID },
     { NS_WBRK_CONTRACTID, &kNS_WBRK_CID },
     { NS_SEMANTICUNITSCANNER_CONTRACTID, &kNS_SEMANTICUNITSCANNER_CID },

@@ -423,6 +423,7 @@ class MessageChannel : HasResultCodes
 
     bool WasTransactionCanceled(int transaction);
     bool ShouldDeferMessage(const Message& aMsg);
+    bool ShouldDeferInterruptMessage(const Message& aMsg, size_t aStackDepth);
     void OnMessageReceivedFromLink(Message&& aMsg);
     void OnChannelErrorFromLink();
 
@@ -435,6 +436,7 @@ class MessageChannel : HasResultCodes
     // Can be run on either thread
     void AssertWorkerThread() const
     {
+        MOZ_ASSERT(mWorkerLoopID != -1, "Channel hasn't been opened yet");
         MOZ_RELEASE_ASSERT(mWorkerLoopID == MessageLoop::current()->id(),
                            "not on worker thread!");
     }
@@ -444,6 +446,7 @@ class MessageChannel : HasResultCodes
     // NOT our worker thread.
     void AssertLinkThread() const
     {
+        MOZ_ASSERT(mWorkerLoopID != -1, "Channel hasn't been opened yet");
         MOZ_RELEASE_ASSERT(mWorkerLoopID != MessageLoop::current()->id(),
                            "on worker thread but should not be!");
     }
@@ -455,9 +458,7 @@ class MessageChannel : HasResultCodes
         public nsIRunnablePriority
     {
     public:
-        explicit MessageTask(MessageChannel* aChannel, Message&& aMessage)
-          : mChannel(aChannel), mMessage(Move(aMessage)), mScheduled(false)
-        {}
+        explicit MessageTask(MessageChannel* aChannel, Message&& aMessage);
 
         NS_DECL_ISUPPORTS_INHERITED
 

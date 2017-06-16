@@ -391,13 +391,18 @@ function finish() {
 SimpleTest.waitForExplicitFinish();
 addLoadEvent(function() {
   var tests = [
-    testAudioContext,
     testOfflineAudioContext,
     testScriptProcessNodeSuspended,
     testMultiContextOutput,
     testMultiContextInput,
     testSuspendResumeEventLoop
   ];
+
+  // See Bug 1305136, many intermittent failures on Linux
+  if (!navigator.platform.startsWith("Linux")) {
+    tests.push(testAudioContext);
+  }
+
   remaining = tests.length;
   tests.forEach(function(f) { f() });
 });

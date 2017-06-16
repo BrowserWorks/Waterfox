@@ -3,6 +3,8 @@
    - License, v. 2.0. If a copy of the MPL was not distributed with this
    - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
 
+<!-- This files relies on these specific Chrome/XBL globals -->
+<!-- globals PopupBoxObject -->
 
 <bindings id="popupBindings"
    xmlns="http://www.mozilla.org/xbl"
@@ -670,7 +672,7 @@
         <body>
         <![CDATA[
           if (this._scrollTimer) {
-            this.ownerDocument.defaultView.clearInterval(this._scrollTimer);
+            this.ownerGlobal.clearInterval(this._scrollTimer);
             this._scrollTimer = 0;
           }
         ]]>
@@ -722,7 +724,7 @@
         // the dropdown was opened via the keyboard.
         if (!(event.buttons & 1)) {
           this._draggingState = this.NOT_DRAGGING;
-          menupopup.releaseCapture();
+          this.releaseCapture();
           return;
         }
 
@@ -744,7 +746,7 @@
             let scrollAmount = event.screenY <= popupRect.top ? -1 : 1;
             this.scrollBox.scrollByIndex(scrollAmount);
 
-            let win = this.ownerDocument.defaultView;
+            let win = this.ownerGlobal;
             this._scrollTimer = win.setInterval(() => {
               this.scrollBox.scrollByIndex(scrollAmount);
             }, this.AUTOSCROLL_INTERVAL);

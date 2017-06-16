@@ -23,14 +23,70 @@ var currentMenulist = null;
 var currentZoom = 1;
 var closedWithEnter = false;
 var selectRect;
+var customStylingEnabled = Services.prefs.getBoolPref("dom.forms.select.customstyling");
+var usedSelectBackgroundColor;
 
 this.SelectParentHelper = {
-  populate(menulist, items, selectedIndex, zoom) {
+  populate(menulist, items, selectedIndex, zoom, uaBackgroundColor, uaColor,
+           uaSelectBackgroundColor, uaSelectColor, selectBackgroundColor, selectColor,
+           selectTextShadow) {
     // Clear the current contents of the popup
     menulist.menupopup.textContent = "";
+    let stylesheet = menulist.querySelector("#ContentSelectDropdownScopedStylesheet");
+    if (stylesheet) {
+      stylesheet.remove();
+    }
+
+    let doc = menulist.ownerDocument;
+    let sheet;
+    if (customStylingEnabled) {
+      stylesheet = doc.createElementNS("http://www.w3.org/1999/xhtml", "style");
+      stylesheet.setAttribute("id", "ContentSelectDropdownScopedStylesheet");
+      stylesheet.scoped = true;
+      stylesheet.hidden = true;
+      stylesheet = menulist.appendChild(stylesheet);
+      sheet = stylesheet.sheet;
+    }
+
+    let ruleBody = "";
+
+    // Some webpages set the <select> backgroundColor to transparent,
+    // but they don't intend to change the popup to transparent.
+    if (customStylingEnabled &&
+        selectBackgroundColor != uaSelectBackgroundColor &&
+        selectBackgroundColor != "rgba(0, 0, 0, 0)") {
+      ruleBody = `background-image: linear-gradient(${selectBackgroundColor}, ${selectBackgroundColor});`;
+      usedSelectBackgroundColor = selectBackgroundColor;
+    } else {
+      usedSelectBackgroundColor = uaSelectBackgroundColor;
+    }
+
+    if (customStylingEnabled &&
+        selectColor != uaSelectColor &&
+        selectColor != selectBackgroundColor &&
+        (selectBackgroundColor != "rgba(0, 0, 0, 0)" ||
+         selectColor != uaSelectBackgroundColor)) {
+      ruleBody += `color: ${selectColor};`;
+    }
+
+    if (customStylingEnabled &&
+        selectTextShadow != "none") {
+      ruleBody += `text-shadow: ${selectTextShadow};`;
+    }
+
+    if (ruleBody) {
+      sheet.insertRule(`menupopup {
+        ${ruleBody}
+      }`, 0);
+      menulist.menupopup.setAttribute("customoptionstyling", "true");
+    } else {
+      menulist.menupopup.removeAttribute("customoptionstyling");
+    }
+
     currentZoom = zoom;
     currentMenulist = menulist;
-    populateChildren(menulist, items, selectedIndex, zoom);
+    populateChildren(menulist, items, selectedIndex, zoom,
+                     uaBackgroundColor, uaColor, sheet);
   },
 
   open(browser, menulist, rect, isOpenedViaTouch) {
@@ -40,7 +96,7 @@ this.SelectParentHelper = {
     selectRect = rect;
     this._registerListeners(browser, menulist.menupopup);
 
-    let win = browser.ownerDocument.defaultView;
+    let win = browser.ownerGlobal;
 
     // Set the maximum height to show exactly MAX_ROWS items.
     let menupopup = menulist.menupopup;
@@ -137,9 +193,25 @@ this.SelectParentHelper = {
         return;
       }
 
+      let scrollBox = currentMenulist.menupopup.scrollBox;
+      let scrollTop = scrollBox.scrollTop;
+
       let options = msg.data.options;
       let selectedIndex = msg.data.selectedIndex;
-      this.populate(currentMenulist, options, selectedIndex, currentZoom);
+      let uaBackgroundColor = msg.data.uaBackgroundColor;
+      let uaColor = msg.data.uaColor;
+      let uaSelectBackgroundColor = msg.data.uaSelectBackgroundColor;
+      let uaSelectColor = msg.data.uaSelectColor;
+      let selectBackgroundColor = msg.data.selectBackgroundColor;
+      let selectColor = msg.data.selectColor;
+      let selectTextShadow = msg.data.selectTextShadow;
+      this.populate(currentMenulist, options, selectedIndex,
+                    currentZoom, uaBackgroundColor, uaColor,
+                    uaSelectBackgroundColor, uaSelectColor,
+                    selectBackgroundColor, selectColor, selectTextShadow);
+
+      // Restore scroll position to what it was prior to the update.
+      scrollBox.scrollTop = scrollTop;
     }
   },
 
@@ -148,9 +220,9 @@ this.SelectParentHelper = {
     popup.addEventListener("popuphidden", this);
     popup.addEventListener("mouseover", this);
     popup.addEventListener("mouseout", this);
-    browser.ownerDocument.defaultView.addEventListener("mouseup", this, true);
-    browser.ownerDocument.defaultView.addEventListener("keydown", this, true);
-    browser.ownerDocument.defaultView.addEventListener("fullscreen", this, true);
+    browser.ownerGlobal.addEventListener("mouseup", this, true);
+    browser.ownerGlobal.addEventListener("keydown", this, true);
+    browser.ownerGlobal.addEventListener("fullscreen", this, true);
     browser.messageManager.addMessageListener("Forms:UpdateDropDown", this);
   },
 
@@ -159,24 +231,24 @@ this.SelectParentHelper = {
     popup.removeEventListener("popuphidden", this);
     popup.removeEventListener("mouseover", this);
     popup.removeEventListener("mouseout", this);
-    browser.ownerDocument.defaultView.removeEventListener("mouseup", this, true);
-    browser.ownerDocument.defaultView.removeEventListener("keydown", this, true);
-    browser.ownerDocument.defaultView.removeEventListener("fullscreen", this, true);
+    browser.ownerGlobal.removeEventListener("mouseup", this, true);
+    browser.ownerGlobal.removeEventListener("keydown", this, true);
+    browser.ownerGlobal.removeEventListener("fullscreen", this, true);
     browser.messageManager.removeMessageListener("Forms:UpdateDropDown", this);
   },
 
 };
 
 function populateChildren(menulist, options, selectedIndex, zoom,
+                          uaBackgroundColor, uaColor, sheet,
                           parentElement = null, isGroupDisabled = false,
-                          adjustedTextSize = -1, addSearch = true) {
+                          adjustedTextSize = -1, addSearch = true, nthChildIndex = 1) {
   let element = menulist.menupopup;
+  let win = element.ownerGlobal;
 
   // -1 just means we haven't calculated it yet. When we recurse through this function
   // we will pass in adjustedTextSize to save on recalculations.
   if (adjustedTextSize == -1) {
-    let win = element.ownerDocument.defaultView;
-
     // Grab the computed text size and multiply it by the remote browser's fullZoom to ensure
     // the popup's text size is matched with the content's. We can't just apply a CSS transform
     // here as the popup's preferred size is calculated pre-transform.
@@ -197,7 +269,46 @@ function populateChildren(menulist, options, selectedIndex, zoom,
     item.hiddenByContent = item.hidden;
     item.setAttribute("tooltiptext", option.tooltip);
 
+    let ruleBody = "";
+    if (customStylingEnabled &&
+        option.backgroundColor &&
+        option.backgroundColor != "rgba(0, 0, 0, 0)" &&
+        option.backgroundColor != usedSelectBackgroundColor) {
+      ruleBody = `background-color: ${option.backgroundColor};`;
+    }
+
+    if (customStylingEnabled &&
+        option.color &&
+        option.color != uaColor) {
+      ruleBody += `color: ${option.color};`;
+    }
+
+    if (customStylingEnabled &&
+        option.textShadow) {
+      ruleBody += `text-shadow: ${option.textShadow};`;
+    }
+
+    if (ruleBody) {
+      sheet.insertRule(`menupopup > :nth-child(${nthChildIndex}):not([_moz-menuactive="true"]) {
+        ${ruleBody}
+      }`, 0);
+
+      if (option.textShadow) {
+        // Need to explicitly disable the possibly inherited
+        // text-shadow rule when _moz-menuactive=true since
+        // _moz-menuactive=true disables custom option styling.
+        sheet.insertRule(`menupopup > :nth-child(${nthChildIndex})[_moz-menuactive="true"] {
+          text-shadow: none;
+        }`, 0);
+      }
+
+      item.setAttribute("customoptionstyling", "true");
+    } else {
+      item.removeAttribute("customoptionstyling");
+    }
+
     element.appendChild(item);
+    nthChildIndex++;
 
     // A disabled optgroup disables all of its child options.
     let isDisabled = isGroupDisabled || option.disabled;
@@ -206,8 +317,10 @@ function populateChildren(menulist, options, selectedIndex, zoom,
     }
 
     if (isOptGroup) {
-      populateChildren(menulist, option.children, selectedIndex, zoom,
-                       item, isDisabled, adjustedTextSize, false);
+      nthChildIndex =
+        populateChildren(menulist, option.children, selectedIndex, zoom,
+                         uaBackgroundColor, uaColor, sheet,
+                         item, isDisabled, adjustedTextSize, false, nthChildIndex);
     } else {
       if (option.index == selectedIndex) {
         // We expect the parent element of the popup to be a <xul:menulist> that
@@ -283,6 +396,7 @@ function populateChildren(menulist, options, selectedIndex, zoom,
     element.insertBefore(searchbox, element.childNodes[0]);
   }
 
+  return nthChildIndex;
 }
 
 function onSearchInput() {

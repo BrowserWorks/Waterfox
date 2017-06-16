@@ -69,6 +69,8 @@ parser.add_argument('--skip-tests', '--skip', type=str, metavar='TESTSUITE',
 parser.add_argument('--build-only', '--build',
                     dest='skip_tests', action='store_const', const='all',
                     help="only do a build, do not run any tests")
+parser.add_argument('--noconf', action='store_true',
+                    help="skip running configure when doing a build")
 parser.add_argument('--nobuild', action='store_true',
                     help='Do not do a build. Rerun tests on existing build.')
 parser.add_argument('variant', type=str,
@@ -146,7 +148,7 @@ OUTDIR = os.path.join(OBJDIR, "out")
 POBJDIR = posixpath.join(PDIR.source, args.objdir)
 AUTOMATION = env.get('AUTOMATION', False)
 MAKE = env.get('MAKE', 'make')
-MAKEFLAGS = env.get('MAKEFLAGS', '-j6')
+MAKEFLAGS = env.get('MAKEFLAGS', '-j6' + ('' if AUTOMATION else ' -s'))
 UNAME_M = subprocess.check_output(['uname', '-m']).strip()
 
 CONFIGURE_ARGS = variant['configure-args']
@@ -309,9 +311,12 @@ if not args.nobuild:
         shutil.copyfile(configure + ".in", configure)
         os.chmod(configure, 0755)
 
-    # Run configure; make
-    run_command(['sh', '-c', posixpath.join(PDIR.js_src, 'configure') + ' ' + CONFIGURE_ARGS], check=True)
-    run_command('%s -s -w %s' % (MAKE, MAKEFLAGS), shell=True, check=True)
+    # Run configure
+    if not args.noconf:
+        run_command(['sh', '-c', posixpath.join(PDIR.js_src, 'configure') + ' ' + CONFIGURE_ARGS], check=True)
+
+    # Run make
+    run_command('%s -w %s' % (MAKE, MAKEFLAGS), shell=True, check=True)
 
 COMMAND_PREFIX = []
 # On Linux, disable ASLR to make shell builds a bit more reproducible.

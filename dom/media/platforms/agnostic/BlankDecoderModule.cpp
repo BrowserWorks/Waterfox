@@ -5,72 +5,89 @@
  * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
 
 #include "ImageContainer.h"
+#include "MP4Decoder.h"
 #include "MediaDecoderReader.h"
 #include "MediaInfo.h"
-#include "mozilla/CheckedInt.h"
-#include "mozilla/mozalloc.h" // for operator new, and new (fallible)
-#include "mozilla/RefPtr.h"
-#include "mozilla/TaskQueue.h"
-#include "mp4_demuxer/AnnexB.h"
-#include "mp4_demuxer/H264.h"
-#include "MP4Decoder.h"
-#include "nsAutoPtr.h"
-#include "nsRect.h"
 #include "PlatformDecoderModule.h"
 #include "ReorderQueue.h"
 #include "TimeUnits.h"
 #include "VideoUtils.h"
+#include "mozilla/CheckedInt.h"
+#include "mozilla/RefPtr.h"
+#include "mozilla/TaskQueue.h"
+#include "mozilla/mozalloc.h" // for operator new, and new (fallible)
+#include "mp4_demuxer/AnnexB.h"
+#include "mp4_demuxer/H264.h"
+#include "nsAutoPtr.h"
+#include "nsRect.h"
 
 namespace mozilla {
 
 // Decoder that uses a passed in object's Create function to create blank
 // MediaData objects.
 template<class BlankMediaDataCreator>
-class BlankMediaDataDecoder : public MediaDataDecoder {
+class BlankMediaDataDecoder : public MediaDataDecoder
+{
 public:
-
   BlankMediaDataDecoder(BlankMediaDataCreator* aCreator,
                         const CreateDecoderParams& aParams)
     : mCreator(aCreator)
-    , mCallback(aParams.mCallback)
-    , mMaxRefFrames(aParams.mConfig.GetType() == TrackInfo::kVideoTrack &&
-                    MP4Decoder::IsH264(aParams.mConfig.mMimeType)
-                    ? mp4_demuxer::AnnexB::HasSPS(aParams.VideoConfig().mExtraData)
-                      ? mp4_demuxer::H264::ComputeMaxRefFrames(aParams.VideoConfig().mExtraData)
-                      : 16
-                    : 0)
+    , mIsH264(MP4Decoder::IsH264(aParams.mConfig.mMimeType))
+    , mMaxRefFrames(
+        mIsH264
+        ? mp4_demuxer::AnnexB::HasSPS(aParams.VideoConfig().mExtraData)
+          ? mp4_demuxer::H264::ComputeMaxRefFrames(
+              aParams.VideoConfig().mExtraData)
+          : 16
+        : 0)
     , mType(aParams.mConfig.GetType())
   {
   }
 
-  RefPtr<InitPromise> Init() override {
+  RefPtr<InitPromise> Init() override
+  {
     return InitPromise::CreateAndResolve(mType, __func__);
   }
 
-  void Shutdown() override {}
+  RefPtr<ShutdownPromise> Shutdown() override
+  {
+    return ShutdownPromise::CreateAndResolve(true, __func__);
+  }
 
-  void Input(MediaRawData* aSample) override
+  RefPtr<DecodePromise> Decode(MediaRawData* aSample) override
   {
     RefPtr<MediaData> data =
       mCreator->Create(media::TimeUnit::FromMicroseconds(aSample->mTime),
                        media::TimeUnit::FromMicroseconds(aSample->mDuration),
                        aSample->mOffset);
 
-    OutputFrame(data);
-  }
-
-  void Flush() override
-  {
-    mReorderQueue.Clear();
-  }
-
-  void Drain() override
-  {
-    while (!mReorderQueue.IsEmpty()) {
-      mCallback->Output(mReorderQueue.Pop().get());
+    if (!data) {
+      return DecodePromise::CreateAndReject(NS_ERROR_OUT_OF_MEMORY, __func__);
     }
 
-    mCallback->DrainComplete();
+    // Frames come out in DTS order but we need to output them in PTS order.
+    mReorderQueue.Push(data);
+
+    if (mReorderQueue.Length() > mMaxRefFrames) {
+      return DecodePromise::CreateAndResolve(
+        DecodedData{ mReorderQueue.Pop().get() }, __func__);
+    }
+    return DecodePromise::CreateAndResolve(DecodedData(), __func__);
+  }
+
+  RefPtr<DecodePromise> Drain() override
+  {
+    DecodedData samples;
+    while (!mReorderQueue.IsEmpty()) {
+      samples.AppendElement(mReorderQueue.Pop().get());
+    }
+    return DecodePromise::CreateAndResolve(samples, __func__);
+  }
+
+  RefPtr<FlushPromise> Flush() override
+  {
+    mReorderQueue.Clear();
+    return FlushPromise::CreateAndResolve(true, __func__);
   }
 
   const char* GetDescriptionName() const override
@@ -78,32 +95,23 @@ public:
     return "blank media data decoder";
   }
 
-private:
-  void OutputFrame(MediaData* aData)
+  ConversionRequired NeedsConversion() const override
   {
-    if (!aData) {
-      mCallback->Error(MediaResult(NS_ERROR_OUT_OF_MEMORY, __func__));
-      return;
-    }
-
-    // Frames come out in DTS order but we need to output them in PTS order.
-    mReorderQueue.Push(aData);
-
-    while (mReorderQueue.Length() > mMaxRefFrames) {
-      mCallback->Output(mReorderQueue.Pop().get());
-    }
-    mCallback->InputExhausted();
+    return mIsH264
+           ? ConversionRequired::kNeedAVCC
+           : ConversionRequired::kNeedNone;
   }
 
 private:
   nsAutoPtr<BlankMediaDataCreator> mCreator;
-  MediaDataDecoderCallback* mCallback;
+  const bool mIsH264;
   const uint32_t mMaxRefFrames;
   ReorderQueue mReorderQueue;
   TrackInfo::TrackType mType;
 };
 
-class BlankVideoDataCreator {
+class BlankVideoDataCreator
+{
 public:
   BlankVideoDataCreator(uint32_t aFrameWidth,
                         uint32_t aFrameHeight,
@@ -116,8 +124,9 @@ public:
     mPicture = gfx::IntRect(0, 0, mFrameWidth, mFrameHeight);
   }
 
-  already_AddRefed<MediaData>
-  Create(const media::TimeUnit& aDTS, const media::TimeUnit& aDuration, int64_t aOffsetInStream)
+  already_AddRefed<MediaData> Create(const media::TimeUnit& aDTS,
+                                     const media::TimeUnit& aDuration,
+                                     int64_t aOffsetInStream)
   {
     // Create a fake YUV buffer in a 420 format. That is, an 8bpp Y plane,
     // with a U and V plane that are half the size of the Y plane, i.e 8 bit,
@@ -137,17 +146,17 @@ public:
 
     // Cb plane.
     buffer.mPlanes[1].mData = frame.get() + sizeY;
-    buffer.mPlanes[1].mStride = mFrameWidth / 2;
-    buffer.mPlanes[1].mHeight = mFrameHeight / 2;
-    buffer.mPlanes[1].mWidth = mFrameWidth / 2;
+    buffer.mPlanes[1].mStride = (mFrameWidth + 1) / 2;
+    buffer.mPlanes[1].mHeight = (mFrameHeight + 1) / 2;
+    buffer.mPlanes[1].mWidth = (mFrameWidth + 1) / 2;
     buffer.mPlanes[1].mOffset = 0;
     buffer.mPlanes[1].mSkip = 0;
 
     // Cr plane.
     buffer.mPlanes[2].mData = frame.get() + sizeY;
-    buffer.mPlanes[2].mStride = mFrameWidth / 2;
-    buffer.mPlanes[2].mHeight = mFrameHeight / 2;
-    buffer.mPlanes[2].mWidth = mFrameWidth / 2;
+    buffer.mPlanes[2].mStride = (mFrameWidth + 1) / 2;
+    buffer.mPlanes[2].mHeight = (mFrameHeight + 1) / 2;
+    buffer.mPlanes[2].mWidth = (mFrameWidth + 1) / 2;
     buffer.mPlanes[2].mOffset = 0;
     buffer.mPlanes[2].mSkip = 0;
 
@@ -174,7 +183,8 @@ private:
   RefPtr<layers::ImageContainer> mImageContainer;
 };
 
-class BlankAudioDataCreator {
+class BlankAudioDataCreator
+{
 public:
   BlankAudioDataCreator(uint32_t aChannelCount, uint32_t aSampleRate)
     : mFrameSum(0), mChannelCount(aChannelCount), mSampleRate(aSampleRate)
@@ -189,10 +199,10 @@ public:
     // rounding errors, so we get a consistent tone.
     CheckedInt64 frames =
       UsecsToFrames(aDuration.ToMicroseconds()+1, mSampleRate);
-    if (!frames.isValid() ||
-        !mChannelCount ||
-        !mSampleRate ||
-        frames.value() > (UINT32_MAX / mChannelCount)) {
+    if (!frames.isValid()
+        || !mChannelCount
+        || !mSampleRate
+        || frames.value() > (UINT32_MAX / mChannelCount)) {
       return nullptr;
     }
     AlignedAudioBuffer samples(frames.value() * mChannelCount);
@@ -224,12 +234,14 @@ private:
   uint32_t mSampleRate;
 };
 
-class BlankDecoderModule : public PlatformDecoderModule {
+class BlankDecoderModule : public PlatformDecoderModule
+{
 public:
 
   // Decode thread.
   already_AddRefed<MediaDataDecoder>
-  CreateVideoDecoder(const CreateDecoderParams& aParams) override {
+  CreateVideoDecoder(const CreateDecoderParams& aParams) override
+  {
     const VideoInfo& config = aParams.VideoConfig();
     BlankVideoDataCreator* creator = new BlankVideoDataCreator(
       config.mDisplay.width, config.mDisplay.height, aParams.mImageContainer);
@@ -240,7 +252,8 @@ public:
 
   // Decode thread.
   already_AddRefed<MediaDataDecoder>
-  CreateAudioDecoder(const CreateDecoderParams& aParams) override {
+  CreateAudioDecoder(const CreateDecoderParams& aParams) override
+  {
     const AudioInfo& config = aParams.AudioConfig();
     BlankAudioDataCreator* creator = new BlankAudioDataCreator(
       config.mChannels, config.mRate);
@@ -250,23 +263,11 @@ public:
     return decoder.forget();
   }
 
-  bool
-  SupportsMimeType(const nsACString& aMimeType,
-                   DecoderDoctorDiagnostics* aDiagnostics) const override
+  bool SupportsMimeType(const nsACString& aMimeType,
+                        DecoderDoctorDiagnostics* aDiagnostics) const override
   {
     return true;
   }
-
-  ConversionRequired
-  DecoderNeedsConversion(const TrackInfo& aConfig) const override
-  {
-    if (aConfig.IsVideo() && MP4Decoder::IsH264(aConfig.mMimeType)) {
-      return ConversionRequired::kNeedAVCC;
-    } else {
-      return ConversionRequired::kNeedNone;
-    }
-  }
-
 };
 
 already_AddRefed<PlatformDecoderModule> CreateBlankDecoderModule()

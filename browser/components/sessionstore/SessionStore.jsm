@@ -3214,9 +3214,10 @@ var SessionStoreInternal = {
       let forceNotRemote = !winData.tabs[t].pinned;
       let tab = reuseExisting ? tabbrowser.tabs[t] :
                                 tabbrowser.addTab("about:blank",
-                                                  {skipAnimation: true,
-                                                   forceNotRemote,
-                                                   userContextId});
+                                                  { skipAnimation: true,
+                                                    forceNotRemote,
+                                                    userContextId,
+                                                    skipBackgroundNotify: true });
 
       // If we inserted a new tab because the userContextId didn't match with the
       // open tab, even though `t < openTabCount`, we need to remove that open tab
@@ -3678,7 +3679,8 @@ var SessionStoreInternal = {
     }
 
     browser.messageManager.sendAsyncMessage("SessionStore:restoreTabContent",
-      {loadArguments: aLoadArguments, isRemotenessUpdate});
+      {loadArguments: aLoadArguments, isRemotenessUpdate,
+       requestTime: Services.telemetry.msSystemNow()});
   },
 
   /**
@@ -4034,7 +4036,7 @@ var SessionStoreInternal = {
     argString.data = "";
 
     // Build feature string
-    let features = "chrome,dialog=no,macsuppressanimation,all";
+    let features = "chrome,dialog=no,suppressanimation,all";
     let winState = aState.windows[0];
     WINDOW_ATTRIBUTES.forEach(function(aFeature) {
       // Use !isNaN as an easy way to ignore sizemode and check for numbers
@@ -4216,9 +4218,12 @@ var SessionStoreInternal = {
    * @returns boolean
    */
   _shouldSaveTab: function ssi_shouldSaveTab(aTabState) {
-    // If the tab has one of the following transient about: history entry,
-    // then we don't actually want to write this tab's data to disk.
+    // If the tab has one of the following transient about: history entry, no
+    // userTypedValue, and no customizemode attribute, then we don't actually
+    // want to write this tab's data to disk.
     return aTabState.userTypedValue ||
+           (aTabState.attributes &&
+            aTabState.attributes.customizemode == "true") ||
            (aTabState.entries.length &&
             !(aTabState.entries[0].url == "about:printpreview" ||
               aTabState.entries[0].url == "about:privatebrowsing"));

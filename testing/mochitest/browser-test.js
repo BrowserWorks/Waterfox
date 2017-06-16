@@ -16,13 +16,11 @@ const SIMPLETEST_OVERRIDES =
 
 // non-android is bootstrapped by marionette
 if (Services.appinfo.OS == 'Android') {
-  window.addEventListener("load", function testOnLoad() {
-    window.removeEventListener("load", testOnLoad);
-    window.addEventListener("MozAfterPaint", function testOnMozAfterPaint() {
-      window.removeEventListener("MozAfterPaint", testOnMozAfterPaint);
+  window.addEventListener("load", function() {
+    window.addEventListener("MozAfterPaint", function() {
       setTimeout(testInit, 0);
-    });
-  });
+    }, {once: true});
+  }, {once: true});
 } else {
   setTimeout(testInit, 0);
 }
@@ -96,8 +94,8 @@ function testInit() {
     };
 
     var listener = 'data:,function doLoad(e) { var data=e.detail&&e.detail.data;removeEventListener("contentEvent", function (e) { doLoad(e); }, false, true);sendAsyncMessage("chromeEvent", {"data":data}); };addEventListener("contentEvent", function (e) { doLoad(e); }, false, true);';
-    messageManager.loadFrameScript(listener, true);
     messageManager.addMessageListener("chromeEvent", messageHandler);
+    messageManager.loadFrameScript(listener, true);
   }
   if (gConfig.e10s) {
     e10s_init();

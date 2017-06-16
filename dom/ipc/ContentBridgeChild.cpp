@@ -22,8 +22,7 @@ namespace dom {
 NS_IMPL_ISUPPORTS(ContentBridgeChild,
                   nsIContentChild)
 
-ContentBridgeChild::ContentBridgeChild(Transport* aTransport)
-  : mTransport(aTransport)
+ContentBridgeChild::ContentBridgeChild()
 {}
 
 ContentBridgeChild::~ContentBridgeChild()
@@ -36,17 +35,14 @@ ContentBridgeChild::ActorDestroy(ActorDestroyReason aWhy)
   MessageLoop::current()->PostTask(NewRunnableMethod(this, &ContentBridgeChild::DeferredDestroy));
 }
 
-/*static*/ ContentBridgeChild*
-ContentBridgeChild::Create(Transport* aTransport, ProcessId aOtherPid)
+/*static*/ void
+ContentBridgeChild::Create(Endpoint<PContentBridgeChild>&& aEndpoint)
 {
-  RefPtr<ContentBridgeChild> bridge =
-    new ContentBridgeChild(aTransport);
+  RefPtr<ContentBridgeChild> bridge = new ContentBridgeChild();
   bridge->mSelfRef = bridge;
 
-  DebugOnly<bool> ok = bridge->Open(aTransport, aOtherPid, XRE_GetIOMessageLoop());
+  DebugOnly<bool> ok = aEndpoint.Bind(bridge);
   MOZ_ASSERT(ok);
-
-  return bridge;
 }
 
 void
@@ -70,6 +66,12 @@ ContentBridgeChild::SendPBlobConstructor(PBlobChild* actor,
                                          const BlobConstructorParams& params)
 {
   return PContentBridgeChild::SendPBlobConstructor(actor, params);
+}
+
+PMemoryStreamChild*
+ContentBridgeChild::SendPMemoryStreamConstructor(const uint64_t& aSize)
+{
+  return PContentBridgeChild::SendPMemoryStreamConstructor(aSize);
 }
 
 bool
@@ -170,6 +172,18 @@ bool
 ContentBridgeChild::DeallocPBlobChild(PBlobChild* aActor)
 {
   return nsIContentChild::DeallocPBlobChild(aActor);
+}
+
+PMemoryStreamChild*
+ContentBridgeChild::AllocPMemoryStreamChild(const uint64_t& aSize)
+{
+  return nsIContentChild::AllocPMemoryStreamChild(aSize);
+}
+
+bool
+ContentBridgeChild::DeallocPMemoryStreamChild(PMemoryStreamChild* aActor)
+{
+  return nsIContentChild::DeallocPMemoryStreamChild(aActor);
 }
 
 PSendStreamChild*

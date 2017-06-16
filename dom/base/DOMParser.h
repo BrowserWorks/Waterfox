@@ -82,7 +82,10 @@ public:
   }
 
 private:
-  explicit DOMParser(nsISupports* aOwner) : mOwner(aOwner), mAttemptedInit(false)
+  explicit DOMParser(nsISupports* aOwner)
+    : mOwner(aOwner)
+    , mAttemptedInit(false)
+    , mOriginalPrincipalWasSystem(false)
   {
     MOZ_ASSERT(aOwner);
   }
@@ -112,12 +115,12 @@ private:
 
   nsCOMPtr<nsISupports> mOwner;
   nsCOMPtr<nsIPrincipal> mPrincipal;
-  nsCOMPtr<nsIPrincipal> mOriginalPrincipal;
   nsCOMPtr<nsIURI> mDocumentURI;
   nsCOMPtr<nsIURI> mBaseURI;
   nsWeakPtr mScriptHandlingObject;
-  
+
   bool mAttemptedInit;
+  bool mOriginalPrincipalWasSystem;
 };
 
 } // namespace dom

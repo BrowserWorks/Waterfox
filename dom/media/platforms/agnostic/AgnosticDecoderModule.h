@@ -5,21 +5,16 @@
 
 namespace mozilla {
 
-class AgnosticDecoderModule : public PlatformDecoderModule {
+class AgnosticDecoderModule : public PlatformDecoderModule
+{
 public:
   AgnosticDecoderModule() = default;
-  virtual ~AgnosticDecoderModule() = default;
 
   bool SupportsMimeType(const nsACString& aMimeType,
                         DecoderDoctorDiagnostics* aDiagnostics) const override;
 
-  ConversionRequired
-  DecoderNeedsConversion(const TrackInfo& aConfig) const override
-  {
-    return ConversionRequired::kNeedNone;
-  }
-
 protected:
+  virtual ~AgnosticDecoderModule() = default;
   // Decode thread.
   already_AddRefed<MediaDataDecoder>
   CreateVideoDecoder(const CreateDecoderParams& aParams) override;

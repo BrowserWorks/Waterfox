@@ -22,7 +22,7 @@ function test() {
 
   sanitizeCache();
 
-  let nrEntriesR1 = getStorageEntryCount("regular", function(nrEntriesR1) {
+  getStorageEntryCount("regular", function(nrEntriesR1) {
     is(nrEntriesR1, 0, "Disk cache reports 0KB and has no entries");
 
     get_cache_for_private_window();
@@ -85,17 +85,15 @@ function getStorageEntryCount(device, goon) {
 
   var visitor = {
     entryCount: 0,
-    onCacheStorageInfo: function (aEntryCount, aConsumption) {
+    onCacheStorageInfo(aEntryCount, aConsumption) {
     },
-    onCacheEntryInfo: function(uri)
-    {
+    onCacheEntryInfo(uri) {
       var urispec = uri.asciiSpec;
       info(device + ":" + urispec + "\n");
       if (urispec.match(/^http:\/\/example.org\//))
         ++this.entryCount;
     },
-    onCacheEntryVisitCompleted: function()
-    {
+    onCacheEntryVisitCompleted() {
       goon(this.entryCount);
     }
   };
@@ -103,7 +101,7 @@ function getStorageEntryCount(device, goon) {
   storage.asyncVisitStorage(visitor, true);
 }
 
-function get_cache_for_private_window () {
+function get_cache_for_private_window() {
   let win = whenNewWindowLoaded({private: true}, function() {
 
     executeSoon(function() {
@@ -114,9 +112,7 @@ function get_cache_for_private_window () {
       win.gBrowser.selectedTab = tab;
       let newTabBrowser = win.gBrowser.getBrowserForTab(tab);
 
-      newTabBrowser.addEventListener("load", function eventHandler() {
-        newTabBrowser.removeEventListener("load", eventHandler, true);
-
+      newTabBrowser.addEventListener("load", function() {
         executeSoon(function() {
 
           getStorageEntryCount("private", function(nrEntriesP) {
@@ -132,7 +128,7 @@ function get_cache_for_private_window () {
             });
           });
         });
-      }, true);
+      }, {capture: true, once: true});
     });
   });
 }

@@ -16,6 +16,7 @@
 #include "mozilla/ipc/FileDescriptorSetChild.h"
 #include "mozilla/ipc/InputStreamUtils.h"
 #include "mozilla/ipc/SendStream.h"
+#include "mozilla/dom/ipc/MemoryStreamChild.h"
 
 #include "nsPrintfCString.h"
 #include "xpcpublic.h"
@@ -98,6 +99,19 @@ nsIContentChild::RecvPBrowserConstructor(PBrowserChild* aActor,
   return IPC_OK();
 }
 
+PMemoryStreamChild*
+nsIContentChild::AllocPMemoryStreamChild(const uint64_t& aSize)
+{
+  return new MemoryStreamChild();
+}
+
+bool
+nsIContentChild::DeallocPMemoryStreamChild(PMemoryStreamChild* aActor)
+{
+  delete aActor;
+  return true;
+}
+
 PBlobChild*
 nsIContentChild::AllocPBlobChild(const BlobConstructorParams& aParams)
 {
@@ -167,12 +181,12 @@ nsIContentChild::RecvAsyncMessage(const nsString& aMsg,
                                   const IPC::Principal& aPrincipal,
                                   const ClonedMessageData& aData)
 {
+  CrossProcessCpowHolder cpows(this, aCpows);
   RefPtr<nsFrameMessageManager> cpm = nsFrameMessageManager::GetChildProcessManager();
   if (cpm) {
     ipc::StructuredCloneData data;
     ipc::UnpackClonedMessageDataForChild(aData, data);
 
-    CrossProcessCpowHolder cpows(this, aCpows);
     cpm->ReceiveMessage(static_cast<nsIContentFrameMessageManager*>(cpm.get()), nullptr,
                         aMsg, false, &data, &cpows, aPrincipal, nullptr);
   }

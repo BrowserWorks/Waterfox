@@ -1461,7 +1461,7 @@ TabClient.prototype = {
   }),
 
   attachWorker: function (workerActor, onResponse) {
-    this.client.attachWorker(workerActor, onResponse);
+    return this.client.attachWorker(workerActor, onResponse);
   },
 
   /**
@@ -1737,6 +1737,27 @@ RootClient.prototype = {
         throw new Error("Unsupported argument given to getTab request");
       }
     }
+
+    return this.request(packet);
+  },
+
+  /**
+   * Fetch the WindowActor for a specific window, like a browser window in
+   * Firefox, but it can be used to reach any window in the process.
+   *
+   * @param number outerWindowID
+   *        The outerWindowID of the top level window you are looking for.
+   */
+  getWindow: function ({ outerWindowID }) {
+    if (!outerWindowID) {
+      throw new Error("Must specify outerWindowID");
+    }
+
+    let packet = {
+      to: this.actor,
+      type: "getWindow",
+      outerWindowID,
+    };
 
     return this.request(packet);
   },

@@ -7,15 +7,13 @@
 this.EXPORTED_SYMBOLS = ["AddonBlocklistClient",
                          "GfxBlocklistClient",
                          "OneCRLBlocklistClient",
-                         "PluginBlocklistClient",
                          "PinningBlocklistClient",
-                         "FILENAME_ADDONS_JSON",
-                         "FILENAME_GFX_JSON",
-                         "FILENAME_PLUGINS_JSON"];
+                         "PluginBlocklistClient"];
 
 const { classes: Cc, interfaces: Ci, utils: Cu } = Components;
 
 Cu.import("resource://gre/modules/Services.jsm");
+Cu.import("resource://gre/modules/XPCOMUtils.jsm");
 const { Task } = Cu.import("resource://gre/modules/Task.jsm", {});
 const { OS } = Cu.import("resource://gre/modules/osfile.jsm", {});
 Cu.importGlobalProperties(["fetch"]);
@@ -25,6 +23,9 @@ const { KintoHttpClient } = Cu.import("resource://services-common/kinto-http-cli
 const { FirefoxAdapter } = Cu.import("resource://services-common/kinto-storage-adapter.js", {});
 const { CanonicalJSON } = Components.utils.import("resource://gre/modules/CanonicalJSON.jsm", {});
 
+XPCOMUtils.defineLazyModuleGetter(this, "FileUtils", "resource://gre/modules/FileUtils.jsm");
+
+const KEY_APPDIR                             = "XCurProcD";
 const PREF_SETTINGS_SERVER                   = "services.settings.server";
 const PREF_BLOCKLIST_BUCKET                  = "services.blocklist.bucket";
 const PREF_BLOCKLIST_ONECRL_COLLECTION       = "services.blocklist.onecrl.collection";
@@ -48,9 +49,6 @@ const INVALID_SIGNATURE = "Invalid content/signature";
 // filename, even though it isn't descriptive of who is using it.
 this.KINTO_STORAGE_PATH    = "kinto.sqlite";
 
-this.FILENAME_ADDONS_JSON  = "blocklist-addons.json";
-this.FILENAME_GFX_JSON     = "blocklist-gfx.json";
-this.FILENAME_PLUGINS_JSON = "blocklist-plugins.json";
 
 
 function mergeChanges(collection, localRecords, changes) {
@@ -64,41 +62,28 @@ function mergeChanges(collection, localRecords, changes) {
     // Filter out deleted records.
     .filter((record) => record.deleted != true)
     // Sort list by record id.
-    .sort((a, b) => a.id < b.id ? -1 : a.id > b.id ? 1 : 0);
+    .sort((a, b) => {
+      if (a.id < b.id) {
+        return -1;
+      }
+      return a.id > b.id ? 1 : 0;
+    });
 }
 
 
-function fetchCollectionMetadata(collection) {
-  const client = new KintoHttpClient(collection.api.remote);
+function fetchCollectionMetadata(remote, collection) {
+  const client = new KintoHttpClient(remote);
   return client.bucket(collection.bucket).collection(collection.name).getData()
     .then(result => {
       return result.signature;
     });
 }
 
-function fetchRemoteCollection(collection) {
-  const client = new KintoHttpClient(collection.api.remote);
+function fetchRemoteCollection(remote, collection) {
+  const client = new KintoHttpClient(remote);
   return client.bucket(collection.bucket)
            .collection(collection.name)
            .listRecords({sort: "id"});
-}
-
-/**
- * Helper to instantiate a Kinto client based on preferences for remote server
- * URL and bucket name. It uses the `FirefoxAdapter` which relies on SQLite to
- * persist the local DB.
- */
-function kintoClient(connection, bucket) {
-  const remote = Services.prefs.getCharPref(PREF_SETTINGS_SERVER);
-
-  const config = {
-    remote,
-    bucket,
-    adapter: FirefoxAdapter,
-    adapterOptions: {sqliteHandle: connection},
-  };
-
-  return new Kinto(config);
 }
 
 
@@ -110,12 +95,42 @@ class BlocklistClient {
     this.processCallback = processCallback;
     this.bucketName = bucketName;
     this.signerName = signerName;
+
+    this._kinto = new Kinto({
+      bucket: bucketName,
+      adapter: FirefoxAdapter,
+    });
   }
 
-  validateCollectionSignature(payload, collection, ignoreLocal) {
+  get filename() {
+    return `${this.bucketName}/${this.collectionName}.json`;
+  }
+
+  /**
+   * Load the the JSON file distributed with the release for this blocklist.
+   *
+   * For Bug 1257565 this method will have to try to load the file from the profile,
+   * in order to leverage the updateJSONBlocklist() below, which writes a new
+   * dump each time the collection changes.
+   */
+  loadDumpFile() {
+    const fileURI = `resource://app/defaults/${this.filename}`;
+    return Task.spawn(function* loadFile() {
+      const response = yield fetch(fileURI);
+      if (!response.ok) {
+        throw new Error(`Could not read from '${fileURI}'`);
+      }
+      // Will be rejected if JSON is invalid.
+      return yield response.json();
+    });
+  }
+
+  validateCollectionSignature(remote, payload, collection, options = {}) {
+    const {ignoreLocal} = options;
+
     return Task.spawn((function* () {
       // this is a content-signature field from an autograph response.
-      const {x5u, signature} = yield fetchCollectionMetadata(collection);
+      const {x5u, signature} = yield fetchCollectionMetadata(remote, collection);
       const certChain = yield fetch(x5u).then((res) => res.text());
 
       const verifier = Cc["@mozilla.org/security/contentsignatureverifier;1"]
@@ -151,42 +166,68 @@ class BlocklistClient {
   /**
    * Synchronize from Kinto server, if necessary.
    *
-   * @param {int}  lastModified the lastModified date (on the server) for
-                                the remote collection.
-   * @param {Date} serverTime   the current date return by the server.
-   * @return {Promise}          which rejects on sync or process failure.
+   * @param {int}  lastModified     the lastModified date (on the server) for
+                                    the remote collection.
+   * @param {Date} serverTime       the current date return by the server.
+   * @param {Object} options        additional advanced options.
+   * @param {bool} options.loadDump load initial dump from disk on first sync (default: true)
+   * @return {Promise}              which rejects on sync or process failure.
    */
-  maybeSync(lastModified, serverTime) {
-    const opts = {};
+  maybeSync(lastModified, serverTime, options = {loadDump: true}) {
+    const {loadDump} = options;
+    const remote = Services.prefs.getCharPref(PREF_SETTINGS_SERVER);
     const enforceCollectionSigning =
       Services.prefs.getBoolPref(PREF_BLOCKLIST_ENFORCE_SIGNING);
 
     // if there is a signerName and collection signing is enforced, add a
     // hook for incoming changes that validates the signature
+    let hooks;
     if (this.signerName && enforceCollectionSigning) {
-      opts.hooks = {
-        "incoming-changes": [this.validateCollectionSignature.bind(this)]
+      hooks = {
+        "incoming-changes": [(payload, collection) => {
+          return this.validateCollectionSignature(remote, payload, collection);
+        }]
       }
     }
 
-
     return Task.spawn((function* syncCollection() {
-      let connection;
+      let sqliteHandle;
       try {
-        connection = yield FirefoxAdapter.openConnection({path: KINTO_STORAGE_PATH});
-        const db = kintoClient(connection, this.bucketName);
-        const collection = db.collection(this.collectionName, opts);
+        // Synchronize remote data into a local Sqlite DB.
+        sqliteHandle = yield FirefoxAdapter.openConnection({path: KINTO_STORAGE_PATH});
+        const options = {
+          hooks,
+          adapterOptions: {sqliteHandle},
+        };
+        const collection = this._kinto.collection(this.collectionName, options);
 
-        const collectionLastModified = yield collection.db.getLastModified();
+        let collectionLastModified = yield collection.db.getLastModified();
+
+        // If there is no data currently in the collection, attempt to import
+        // initial data from the application defaults.
+        // This allows to avoid synchronizing the whole collection content on
+        // cold start.
+        if (!collectionLastModified && loadDump) {
+          try {
+            const initialData = yield this.loadDumpFile();
+            yield collection.db.loadDump(initialData.data);
+            collectionLastModified = yield collection.db.getLastModified();
+          } catch (e) {
+            // Report but go-on.
+            Cu.reportError(e);
+          }
+        }
+
         // If the data is up to date, there's no need to sync. We still need
         // to record the fact that a check happened.
         if (lastModified <= collectionLastModified) {
           this.updateLastCheck(serverTime);
           return;
         }
+
         // Fetch changes from server.
         try {
-          const {ok} = yield collection.sync();
+          const {ok} = yield collection.sync({remote});
           if (!ok) {
             throw new Error("Sync failed");
           }
@@ -196,8 +237,8 @@ class BlocklistClient {
             // local data has been modified in some way.
             // We will attempt to fix this by retrieving the whole
             // remote collection.
-            const payload = yield fetchRemoteCollection(collection);
-            yield this.validateCollectionSignature(payload, collection, true);
+            const payload = yield fetchRemoteCollection(remote, collection);
+            yield this.validateCollectionSignature(remote, payload, collection, {ignoreLocal: true});
             // if the signature is good (we haven't thrown), and the remote
             // last_modified is newer than the local last_modified, replace the
             // local data
@@ -218,7 +259,7 @@ class BlocklistClient {
         // Track last update.
         this.updateLastCheck(serverTime);
       } finally {
-        yield connection.close();
+        yield sqliteHandle.close();
       }
     }).bind(this));
   }
@@ -315,10 +356,13 @@ function* updatePinningList(records) {
 function* updateJSONBlocklist(filename, records) {
   // Write JSON dump for synchronous load at startup.
   const path = OS.Path.join(OS.Constants.Path.profileDir, filename);
+  const blocklistFolder = OS.Path.dirname(path);
+
+  yield OS.File.makeDir(blocklistFolder, {from: OS.Constants.Path.profileDir});
+
   const serialized = JSON.stringify({data: records}, null, 2);
   try {
     yield OS.File.writeAtomic(path, serialized, {tmpPath: path + ".tmp"});
-
     // Notify change to `nsBlocklistService`
     const eventData = {filename};
     Services.cpmm.sendAsyncMessage("Blocklist:reload-from-disk", eventData);
@@ -338,21 +382,21 @@ this.OneCRLBlocklistClient = new BlocklistClient(
 this.AddonBlocklistClient = new BlocklistClient(
   Services.prefs.getCharPref(PREF_BLOCKLIST_ADDONS_COLLECTION),
   PREF_BLOCKLIST_ADDONS_CHECKED_SECONDS,
-  updateJSONBlocklist.bind(undefined, FILENAME_ADDONS_JSON),
+  (records) => updateJSONBlocklist(this.AddonBlocklistClient.filename, records),
   Services.prefs.getCharPref(PREF_BLOCKLIST_BUCKET)
 );
 
 this.GfxBlocklistClient = new BlocklistClient(
   Services.prefs.getCharPref(PREF_BLOCKLIST_GFX_COLLECTION),
   PREF_BLOCKLIST_GFX_CHECKED_SECONDS,
-  updateJSONBlocklist.bind(undefined, FILENAME_GFX_JSON),
+  (records) => updateJSONBlocklist(this.GfxBlocklistClient.filename, records),
   Services.prefs.getCharPref(PREF_BLOCKLIST_BUCKET)
 );
 
 this.PluginBlocklistClient = new BlocklistClient(
   Services.prefs.getCharPref(PREF_BLOCKLIST_PLUGINS_COLLECTION),
   PREF_BLOCKLIST_PLUGINS_CHECKED_SECONDS,
-  updateJSONBlocklist.bind(undefined, FILENAME_PLUGINS_JSON),
+  (records) => updateJSONBlocklist(this.PluginBlocklistClient.filename, records),
   Services.prefs.getCharPref(PREF_BLOCKLIST_BUCKET)
 );
 

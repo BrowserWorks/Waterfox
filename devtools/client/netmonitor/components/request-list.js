@@ -4,22 +4,30 @@
 
 "use strict";
 
-const { createFactory, PropTypes, DOM } = require("devtools/client/shared/vendor/react");
-const { div } = DOM;
-const { connect } = require("devtools/client/shared/vendor/react-redux");
-const RequestListHeader = createFactory(require("./request-list-header"));
-const RequestListEmptyNotice = createFactory(require("./request-list-empty"));
+const {
+  createFactory,
+  DOM,
+  PropTypes,
+} = require("devtools/client/shared/vendor/react");
+
+// Components
 const RequestListContent = createFactory(require("./request-list-content"));
+const RequestListEmptyNotice = createFactory(require("./request-list-empty"));
+const RequestListHeader = createFactory(require("./request-list-header"));
+
+const { div } = DOM;
 
 /**
- * Renders the request list - header, empty text, the actual content with rows
+ * Request panel component
  */
-const RequestList = function ({ isEmpty }) {
-  return div({ className: "request-list-container" },
-    RequestListHeader(),
-    isEmpty ? RequestListEmptyNotice() : RequestListContent()
+function RequestList({ isEmpty }) {
+  return (
+    div({ className: "request-list-container" },
+      RequestListHeader(),
+      isEmpty ? RequestListEmptyNotice() : RequestListContent(),
+    )
   );
-};
+}
 
 RequestList.displayName = "RequestList";
 
@@ -27,8 +35,4 @@ RequestList.propTypes = {
   isEmpty: PropTypes.bool.isRequired,
 };
 
-module.exports = connect(
-  state => ({
-    isEmpty: state.requests.requests.isEmpty()
-  })
-)(RequestList);
+module.exports = RequestList;

@@ -13,6 +13,8 @@
       'sources': [
         'pk11_aeskeywrap_unittest.cc',
         'pk11_chacha20poly1305_unittest.cc',
+        'pk11_curve25519_unittest.cc',
+        'pk11_ecdsa_unittest.cc',
         'pk11_pbkdf2_unittest.cc',
         'pk11_prf_unittest.cc',
         'pk11_prng_unittest.cc',
@@ -21,17 +23,31 @@
       ],
       'dependencies': [
         '<(DEPTH)/exports.gyp:nss_exports',
-        '<(DEPTH)/lib/freebl/freebl.gyp:<(freebl_name)',
+        '<(DEPTH)/lib/util/util.gyp:nssutil3',
         '<(DEPTH)/gtests/google_test/google_test.gyp:gtest',
+      ],
+      'conditions': [
+        [ 'test_build==1', {
+          'dependencies': [
+            '<(DEPTH)/lib/nss/nss.gyp:nss_static',
+            '<(DEPTH)/lib/pk11wrap/pk11wrap.gyp:pk11wrap_static',
+            '<(DEPTH)/lib/cryptohi/cryptohi.gyp:cryptohi',
+            '<(DEPTH)/lib/certhigh/certhigh.gyp:certhi',
+            '<(DEPTH)/lib/certdb/certdb.gyp:certdb',
+            '<(DEPTH)/lib/base/base.gyp:nssb',
+            '<(DEPTH)/lib/dev/dev.gyp:nssdev',
+            '<(DEPTH)/lib/pki/pki.gyp:nsspki',
+            '<(DEPTH)/lib/ssl/ssl.gyp:ssl',
+          ],
+        }, {
+          'dependencies': [
+            '<(DEPTH)/lib/nss/nss.gyp:nss3',
+            '<(DEPTH)/lib/ssl/ssl.gyp:ssl3',
+          ],
+        }],
       ],
     }
   ],
-  'target_defaults': {
-    'include_dirs': [
-      '../../gtests/google_test/gtest/include',
-      '../../gtests/common'
-    ]
-  },
   'variables': {
     'module': 'nss'
   }

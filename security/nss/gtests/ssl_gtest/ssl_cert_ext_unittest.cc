@@ -23,9 +23,10 @@ namespace nss_test {
 // by the relevant callbacks on the client.
 class SignedCertificateTimestampsExtractor {
  public:
-  SignedCertificateTimestampsExtractor(TlsAgent* client) : client_(client) {
-    client_->SetAuthCertificateCallback(
-        [&](TlsAgent* agent, bool checksig, bool isServer) -> SECStatus {
+  SignedCertificateTimestampsExtractor(std::shared_ptr<TlsAgent>& client)
+      : client_(client) {
+    client->SetAuthCertificateCallback(
+        [this](TlsAgent* agent, bool checksig, bool isServer) -> SECStatus {
           const SECItem* scts = SSL_PeerSignedCertTimestamps(agent->ssl_fd());
           EXPECT_TRUE(scts);
           if (!scts) {
@@ -34,7 +35,7 @@ class SignedCertificateTimestampsExtractor {
           auth_timestamps_.reset(new DataBuffer(scts->data, scts->len));
           return SECSuccess;
         });
-    client_->SetHandshakeCallback([&](TlsAgent* agent) {
+    client->SetHandshakeCallback([this](TlsAgent* agent) {
       const SECItem* scts = SSL_PeerSignedCertTimestamps(agent->ssl_fd());
       ASSERT_TRUE(scts);
       handshake_timestamps_.reset(new DataBuffer(scts->data, scts->len));
@@ -48,12 +49,13 @@ class SignedCertificateTimestampsExtractor {
     EXPECT_TRUE(handshake_timestamps_);
     EXPECT_EQ(timestamps, *handshake_timestamps_);
 
-    const SECItem* current = SSL_PeerSignedCertTimestamps(client_->ssl_fd());
+    const SECItem* current =
+        SSL_PeerSignedCertTimestamps(client_.lock()->ssl_fd());
     EXPECT_EQ(timestamps, DataBuffer(current->data, current->len));
   }
 
  private:
-  TlsAgent* client_;
+  std::weak_ptr<TlsAgent> client_;
   std::unique_ptr<DataBuffer> auth_timestamps_;
   std::unique_ptr<DataBuffer> handshake_timestamps_;
 };
@@ -62,10 +64,22 @@ static const uint8_t kSctValue[] = {0x01, 0x23, 0x45, 0x67, 0x89};
 static const SECItem kSctItem = {siBuffer, const_cast<uint8_t*>(kSctValue),
                                  sizeof(kSctValue)};
 static const DataBuffer kSctBuffer(kSctValue, sizeof(kSctValue));
+static const SSLExtraServerCertData kExtraSctData = {ssl_auth_null, nullptr,
+                                                     nullptr, &kSctItem};
 
 // Test timestamps extraction during a successful handshake.
-TEST_P(TlsConnectGeneric, SignedCertificateTimestampsHandshake) {
+TEST_P(TlsConnectGenericPre13, SignedCertificateTimestampsLegacy) {
   EnsureTlsSetup();
+
+  // We have to use the legacy API consistently here for configuring certs.
+  // Also, this doesn't work in TLS 1.3 because this only configures the SCT for
+  // RSA decrypt and PKCS#1 signing, not PSS.
+  ScopedCERTCertificate cert;
+  ScopedSECKEYPrivateKey priv;
+  ASSERT_TRUE(TlsAgent::LoadCertificate(TlsAgent::kServerRsa, &cert, &priv));
+  EXPECT_EQ(SECSuccess, SSL_ConfigSecureServerWithCertChain(
+                            server_->ssl_fd(), cert.get(), nullptr, priv.get(),
+                            ssl_kea_rsa));
   EXPECT_EQ(SECSuccess, SSL_SetSignedCertTimestamps(server_->ssl_fd(),
                                                     &kSctItem, ssl_kea_rsa));
   EXPECT_EQ(SECSuccess,
@@ -78,13 +92,10 @@ TEST_P(TlsConnectGeneric, SignedCertificateTimestampsHandshake) {
   timestamps_extractor.assertTimestamps(kSctBuffer);
 }
 
-TEST_P(TlsConnectGeneric, SignedCertificateTimestampsConfig) {
-  static const SSLExtraServerCertData kExtraData = {ssl_auth_rsa_sign, nullptr,
-                                                    nullptr, &kSctItem};
-
+TEST_P(TlsConnectGeneric, SignedCertificateTimestampsSuccess) {
   EnsureTlsSetup();
   EXPECT_TRUE(
-      server_->ConfigServerCert(TlsAgent::kServerRsa, true, &kExtraData));
+      server_->ConfigServerCert(TlsAgent::kServerRsa, true, &kExtraSctData));
   EXPECT_EQ(SECSuccess,
             SSL_OptionSet(client_->ssl_fd(), SSL_ENABLE_SIGNED_CERT_TIMESTAMPS,
                           PR_TRUE));
@@ -99,8 +110,8 @@ TEST_P(TlsConnectGeneric, SignedCertificateTimestampsConfig) {
 // when the client / the server / both have not enabled the feature.
 TEST_P(TlsConnectGeneric, SignedCertificateTimestampsInactiveClient) {
   EnsureTlsSetup();
-  EXPECT_EQ(SECSuccess, SSL_SetSignedCertTimestamps(server_->ssl_fd(),
-                                                    &kSctItem, ssl_kea_rsa));
+  EXPECT_TRUE(
+      server_->ConfigServerCert(TlsAgent::kServerRsa, true, &kExtraSctData));
   SignedCertificateTimestampsExtractor timestamps_extractor(client_);
 
   Connect();
@@ -141,8 +152,8 @@ static const SECItem kOcspItems[] = {
     {siBuffer, const_cast<uint8_t*>(kOcspValue2), sizeof(kOcspValue2)}};
 static const SECItemArray kOcspResponses = {const_cast<SECItem*>(kOcspItems),
                                             PR_ARRAY_SIZE(kOcspItems)};
-const static SSLExtraServerCertData kOcspExtraData = {
-    ssl_auth_rsa_sign, nullptr, &kOcspResponses, nullptr};
+const static SSLExtraServerCertData kOcspExtraData = {ssl_auth_null, nullptr,
+                                                      &kOcspResponses, nullptr};
 
 TEST_P(TlsConnectGeneric, NoOcsp) {
   EnsureTlsSetup();
@@ -176,8 +187,8 @@ TEST_P(TlsConnectGenericPre13, OcspMangled) {
       server_->ConfigServerCert(TlsAgent::kServerRsa, true, &kOcspExtraData));
 
   static const uint8_t val[] = {1};
-  auto replacer = new TlsExtensionReplacer(ssl_cert_status_xtn,
-                                           DataBuffer(val, sizeof(val)));
+  auto replacer = std::make_shared<TlsExtensionReplacer>(
+      ssl_cert_status_xtn, DataBuffer(val, sizeof(val)));
   server_->SetPacketFilter(replacer);
   ConnectExpectFail();
   client_->CheckErrorCode(SSL_ERROR_RX_MALFORMED_SERVER_HELLO);
@@ -188,7 +199,8 @@ TEST_P(TlsConnectGeneric, OcspSuccess) {
   EnsureTlsSetup();
   EXPECT_EQ(SECSuccess, SSL_OptionSet(client_->ssl_fd(),
                                       SSL_ENABLE_OCSP_STAPLING, PR_TRUE));
-  auto capture_ocsp = new TlsExtensionCapture(ssl_cert_status_xtn);
+  auto capture_ocsp =
+      std::make_shared<TlsExtensionCapture>(ssl_cert_status_xtn);
   server_->SetPacketFilter(capture_ocsp);
 
   // The value should be available during the AuthCertificateCallback
@@ -209,6 +221,37 @@ TEST_P(TlsConnectGeneric, OcspSuccess) {
   // In TLS 1.3, the server doesn't provide a visible ServerHello extension.
   // For earlier versions, the extension is just empty.
   EXPECT_EQ(0U, capture_ocsp->extension().len());
+}
+
+TEST_P(TlsConnectGeneric, OcspHugeSuccess) {
+  EnsureTlsSetup();
+  EXPECT_EQ(SECSuccess, SSL_OptionSet(client_->ssl_fd(),
+                                      SSL_ENABLE_OCSP_STAPLING, PR_TRUE));
+
+  uint8_t hugeOcspValue[16385];
+  memset(hugeOcspValue, 0xa1, sizeof(hugeOcspValue));
+  const SECItem hugeOcspItems[] = {
+      {siBuffer, const_cast<uint8_t*>(hugeOcspValue), sizeof(hugeOcspValue)}};
+  const SECItemArray hugeOcspResponses = {const_cast<SECItem*>(hugeOcspItems),
+                                          PR_ARRAY_SIZE(hugeOcspItems)};
+  const SSLExtraServerCertData hugeOcspExtraData = {
+      ssl_auth_null, nullptr, &hugeOcspResponses, nullptr};
+
+  // The value should be available during the AuthCertificateCallback
+  client_->SetAuthCertificateCallback([&](TlsAgent* agent, bool checksig,
+                                          bool isServer) -> SECStatus {
+    const SECItemArray* ocsp = SSL_PeerStapledOCSPResponses(agent->ssl_fd());
+    if (!ocsp) {
+      return SECFailure;
+    }
+    EXPECT_EQ(1U, ocsp->len) << "We only provide the first item";
+    EXPECT_EQ(0, SECITEM_CompareItem(&hugeOcspItems[0], &ocsp->items[0]));
+    return SECSuccess;
+  });
+  EXPECT_TRUE(server_->ConfigServerCert(TlsAgent::kServerRsa, true,
+                                        &hugeOcspExtraData));
+
+  Connect();
 }
 
 }  // namespace nspr_test

@@ -4,6 +4,8 @@
 
 'use strict';
 
+const { classes: Cc, interfaces: Ci, utils: Cu, results: Cr } = Components;
+
 class Viewport {
   constructor() {
     this._viewerContainer = document.getElementById('viewerContainer');
@@ -36,8 +38,10 @@ class Viewport {
     this.onZoomChanged = null;
     this.onDimensionChanged = null;
     this.onPageChanged = null;
+    this.onPasswordRequest = null;
 
     this._viewportController.addEventListener('scroll', this);
+    this._viewportController.addEventListener('copy', this);
     window.addEventListener('resize', this);
   }
 
@@ -123,14 +127,14 @@ class Viewport {
   }
 
   _getScrollbarWidth() {
-    var div = document.createElement('div');
+    let div = document.createElement('div');
     div.style.visibility = 'hidden';
     div.style.overflow = 'scroll';
     div.style.width = '50px';
     div.style.height = '50px';
     div.style.position = 'absolute';
     document.body.appendChild(div);
-    var result = div.offsetWidth - div.clientWidth;
+    let result = div.offsetWidth - div.clientWidth;
     div.remove();
     return result;
   }
@@ -456,7 +460,13 @@ class Viewport {
       type: 'viewport',
       xOffset: this._runtimePosition.x,
       yOffset: this._runtimePosition.y,
-      zoom: this._zoom
+      zoom: this._zoom,
+      // FIXME Since Chromium improves pinch-zoom for PDF. PostMessage of type
+      //       viewport takes an addition parameter pinchPhase. We workaround
+      //       here by adding a pinchPhase of value 0 to make sure that viewing
+      //       pdf works normally. More details about pinch-zoom please refer
+      //       to chromium revision: 6e1abbfb2450eedddb1ab128be1b31cc93104e41
+      pinchPhase: 0
     });
 
     let newPage = this._getMostVisiblePage();
@@ -466,6 +476,22 @@ class Viewport {
         this.onPageChanged(newPage);
       }
     }
+  }
+
+  _copyToClipboard(text) {
+    if (!text) {
+      return;
+    }
+    const gClipboardHelper = Cc["@mozilla.org/widget/clipboardhelper;1"]
+                                .getService(Ci.nsIClipboardHelper);
+    gClipboardHelper.copyString(text);
+  }
+
+  verifyPassword(password) {
+    this._doAction({
+      type: 'getPasswordComplete',
+      password: password
+    });
   }
 
   handleEvent(evt) {
@@ -480,6 +506,12 @@ class Viewport {
             this._runtimePosition.y != position.y) {
           this._refresh();
         }
+        break;
+      case 'copy':
+        this._doAction({
+          type: 'getSelectedText'
+        })
+        evt.preventDefault();
         break;
     }
   }
@@ -590,6 +622,14 @@ class Viewport {
         break;
       case 'fullscreenChange':
         this._handleFullscreenChange(message.fullscreen);
+        break;
+      case 'getPassword':
+        this.onPasswordRequest && this.onPasswordRequest();
+        break;
+      case 'getSelectedTextReply':
+        // For now this message is used only by text copy so we handle just
+        // that case.
+        this._copyToClipboard(message.selectedText);
         break;
     }
   }

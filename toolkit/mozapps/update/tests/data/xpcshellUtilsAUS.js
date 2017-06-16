@@ -36,8 +36,8 @@ const { classes: Cc, interfaces: Ci, manager: Cm, results: Cr,
 
 /* global INSTALL_LOCALE, MOZ_APP_NAME, BIN_SUFFIX, MOZ_APP_VENDOR */
 /* global MOZ_APP_BASENAME, APP_BIN_SUFFIX, APP_INFO_NAME, APP_INFO_VENDOR */
-/* global IS_WIN, IS_MACOSX, IS_UNIX, IS_ANDROID, IS_TOOLKIT_GONK */
-/* global MOZ_VERIFY_MAR_SIGNATURE, MOZ_VERIFY_MAR_SIGNATURE, IS_AUTHENTICODE_CHECK_ENABLED */
+/* global IS_WIN, IS_MACOSX, IS_UNIX, MOZ_VERIFY_MAR_SIGNATURE */
+/* global IS_AUTHENTICODE_CHECK_ENABLED */
 load("../data/xpcshellConstantsPP.js");
 
 function getLogSuffix() {
@@ -46,9 +46,6 @@ function getLogSuffix() {
   }
   if (IS_MACOSX) {
     return "_mac";
-  }
-  if (IS_TOOLKIT_GONK) {
-    return "_gonk";
   }
   return "_linux";
 }
@@ -70,11 +67,6 @@ const COMPARE_LOG_SUFFIX = getLogSuffix();
 const LOG_COMPLETE_SUCCESS = "complete_log_success" + COMPARE_LOG_SUFFIX;
 const LOG_PARTIAL_SUCCESS = "partial_log_success" + COMPARE_LOG_SUFFIX;
 const LOG_PARTIAL_FAILURE = "partial_log_failure" + COMPARE_LOG_SUFFIX;
-// Gonk sorts differently when applying and staging an update.
-const LOG_COMPLETE_SUCCESS_STAGE = LOG_COMPLETE_SUCCESS +
-                                   (IS_TOOLKIT_GONK ? "_stage" : "");
-const LOG_PARTIAL_SUCCESS_STAGE = LOG_PARTIAL_SUCCESS +
-                                  (IS_TOOLKIT_GONK ? "_stage" : "");
 const LOG_REPLACE_SUCCESS = "replace_log_success";
 
 const USE_EXECV = IS_UNIX && !IS_MACOSX;
@@ -165,16 +157,12 @@ var gGREDirOrig;
 var gGREBinDirOrig;
 var gAppDirOrig;
 
-var gApplyToDirOverride;
-
-var gServiceLaunchedCallbackLog = null;
-var gServiceLaunchedCallbackArgs = null;
-
 // Variables are used instead of contants so tests can override these values if
 // necessary.
 var gCallbackBinFile = "callback_app" + BIN_SUFFIX;
 var gCallbackArgs = ["./", "callback.log", "Test Arg 2", "Test Arg 3"];
 var gPostUpdateBinFile = "postup_app" + BIN_SUFFIX;
+var gSvcOriginalLogContents;
 var gUseTestAppDir = true;
 // Some update staging failures can remove the update. This allows tests to
 // specify that the status file and the active update should not be checked
@@ -191,6 +179,7 @@ var gEnvXPCOMDebugBreak;
 var gEnvXPCOMMemLeakLog;
 var gEnvDyldLibraryPath;
 var gEnvLdLibraryPath;
+var gASanOptions;
 
 // Set to true to log additional information for debugging. To log additional
 // information for an individual test set DEBUG_AUS_TEST to true in the test's
@@ -840,6 +829,9 @@ function setupTestCommon() {
   // adjustGeneralPaths registers a cleanup function that calls end_test when
   // it is defined as a function.
   adjustGeneralPaths();
+  // Logged once here instead of in the mock directory provider to lessen test
+  // log spam.
+  debugDump("Updates Directory (UpdRootD) Path: " + getMockUpdRootD().path);
 
   // This prevents a warning about not being able to find the greprefs.js file
   // from being logged.
@@ -927,9 +919,9 @@ function cleanupTestCommon() {
     }
   }
 
-  // The updates directory is located outside of the application directory on
-  // Windows, Mac OS X, and GONK and needs to be removed.
-  if (IS_WIN || IS_MACOSX || IS_TOOLKIT_GONK) {
+  // The updates directory is located outside of the application directory and
+  // needs to be removed on Windows and Mac OS X.
+  if (IS_WIN || IS_MACOSX) {
     let updatesDir = getMockUpdRootD();
     // Try to remove the directory used to apply updates. Since the test has
     // already finished this is non-fatal for the test.
@@ -1011,7 +1003,7 @@ function setDefaultPrefs() {
     // Enable Update logging
     Services.prefs.setBoolPref(PREF_APP_UPDATE_LOG, true);
   } else {
-    // Some apps (e.g. gonk) set this preference to true by default
+    // Some apps set this preference to true by default
     Services.prefs.setBoolPref(PREF_APP_UPDATE_LOG, false);
   }
   // In case telemetry is enabled for xpcshell tests.
@@ -1135,18 +1127,6 @@ function getAppVersion() {
                   getService(Ci.nsIINIParserFactory).
                   createINIParser(iniFile);
   return iniParser.getString("App", "Version");
-}
-
-/**
- * Override the apply-to directory parameter to be passed to the updater.
- * This ought to cause the updater to fail when using any value that isn't the
- * default, automatically computed one.
- *
- * @param dir
- *        Complete string to use as the apply-to directory parameter.
- */
-function overrideApplyToDir(dir) {
-  gApplyToDirOverride = dir;
 }
 
 /**
@@ -1410,12 +1390,6 @@ function getMockUpdRootD() {
     return getMockUpdRootDMac();
   }
 
-  // The gonk updates directory is under /data/local but for the updater tests
-  // we use the following directory so the tests can run in parallel.
-  if (IS_TOOLKIT_GONK) {
-    return do_get_file(gTestID + "/", true);
-  }
-
   return getApplyDirFile(DIR_MACOS, true);
 }
 
@@ -1466,7 +1440,6 @@ function getMockUpdRootDWin() {
   let updatesDir = Cc["@mozilla.org/file/local;1"].
                    createInstance(Ci.nsILocalFile);
   updatesDir.initWithPath(localAppDataDir.path + "\\" + relPathUpdates);
-  debugDump("returning UpdRootD Path: " + updatesDir.path);
   return updatesDir;
 }
 
@@ -1506,7 +1479,6 @@ function getMockUpdRootDMac() {
   let updatesDir = Cc["@mozilla.org/file/local;1"].
                    createInstance(Ci.nsILocalFile);
   updatesDir.initWithPath(pathUpdates);
-  debugDump("returning UpdRootD Path: " + updatesDir.path);
   return updatesDir;
 }
 
@@ -1659,9 +1631,17 @@ function logUpdateLog(aLogLeafName) {
 }
 
 /**
- * Launches the updater binary or the service to apply an update for updater
- * tests. For non-service tests runUpdateUsingUpdater will be called and for
- * service tests runUpdateUsingService will be called.
+ * Gets the maintenance service log contents.
+ */
+function readServiceLogFile() {
+  let file = getMaintSvcDir();
+  file.append("logs");
+  file.append("maintenanceservice.log");
+  return readFile(file);
+}
+
+/**
+ * Launches the updater binary to apply an update for updater tests.
  *
  * @param   aExpectedStatus
  *          The expected value of update.status when the test finishes. For
@@ -1676,96 +1656,88 @@ function logUpdateLog(aLogLeafName) {
  *          tests.
  * @param   aCheckSvcLog
  *          Whether the service log should be checked for service tests.
+ * @param   aPatchDirPath (optional)
+ *          When specified the patch directory path to use for invalid argument
+ *          tests otherwise the normal path will be used.
+ * @param   aInstallDirPath (optional)
+ *          When specified the install directory path to use for invalid
+ *          argument tests otherwise the normal path will be used.
+ * @param   aApplyToDirPath (optional)
+ *          When specified the apply to / working directory path to use for
+ *          invalid argument tests otherwise the normal path will be used.
+ * @param   aCallbackPath (optional)
+ *          When specified the callback path to use for invalid argument tests
+ *          otherwise the normal path will be used.
  */
-function runUpdate(aExpectedStatus, aSwitchApp, aExpectedExitValue,
-                   aCheckSvcLog) {
-  if (IS_SERVICE_TEST) {
-    let expectedStatus = aExpectedStatus;
-    if (aExpectedStatus == STATE_PENDING) {
-      expectedStatus = STATE_PENDING_SVC;
-    } else if (aExpectedStatus == STATE_APPLIED) {
-      expectedStatus = STATE_APPLIED_SVC;
-    }
-    runUpdateUsingService(expectedStatus, aSwitchApp, aCheckSvcLog);
-  } else {
-    runUpdateUsingUpdater(aExpectedStatus, aSwitchApp, aExpectedExitValue);
-  }
-}
+function runUpdate(aExpectedStatus, aSwitchApp, aExpectedExitValue, aCheckSvcLog,
+                   aPatchDirPath, aInstallDirPath, aApplyToDirPath,
+                   aCallbackPath) {
+  let isInvalidArgTest = !!aPatchDirPath || !!aInstallDirPath ||
+                         !!aApplyToDirPath || aCallbackPath;
 
-/**
- * Launches the updater binary or the service to apply an update for updater
- * tests. When completed runUpdateFinished will be called.
- *
- * @param   aExpectedStatus
- *          The expected value of update.status when the test finishes.
- * @param   aSwitchApp
- *          If true the update should switch the application with an updated
- *          staged application and if false the update should be applied to the
- *          installed application.
- * @param   aExpectedExitValue
- *          The expected exit value from the updater binary.
- */
-function runUpdateUsingUpdater(aExpectedStatus, aSwitchApp, aExpectedExitValue) {
+  let svcOriginalLog;
+  if (IS_SERVICE_TEST) {
+    copyFileToTestAppDir(FILE_MAINTENANCE_SERVICE_BIN, false);
+    copyFileToTestAppDir(FILE_MAINTENANCE_SERVICE_INSTALLER_BIN, false);
+    if (aCheckSvcLog) {
+      svcOriginalLog = readServiceLogFile();
+    }
+  }
+
   // Copy the updater binary to the directory where it will apply updates.
   let updateBin = copyTestUpdaterForRunUsingUpdater();
   Assert.ok(updateBin.exists(),
             MSG_SHOULD_EXIST + getMsgPath(updateBin.path));
 
-  let updatesDir = getUpdatesPatchDir();
-  let updatesDirPath = updatesDir.path;
-
-  let applyToDir = getApplyDirFile(null, true);
-  let applyToDirPath = applyToDir.path;
-
-  let stageDir = getStageDirFile(null, true);
-  let stageDirPath = stageDir.path;
-
-  if (IS_WIN) {
-    // Convert to native path
-    updatesDirPath = updatesDirPath.replace(/\//g, "\\");
-    applyToDirPath = applyToDirPath.replace(/\//g, "\\");
-    stageDirPath = stageDirPath.replace(/\//g, "\\");
-  }
+  let updatesDirPath = aPatchDirPath || getUpdatesPatchDir().path;
+  let installDirPath = aInstallDirPath || getApplyDirFile(null, true).path;
+  let applyToDirPath = aApplyToDirPath || getApplyDirFile(null, true).path;
+  let stageDirPath = aApplyToDirPath || getStageDirFile(null, true).path;
 
   let callbackApp = getApplyDirFile(DIR_RESOURCES + gCallbackBinFile);
   callbackApp.permissions = PERMS_DIRECTORY;
 
   setAppBundleModTime();
 
-  let args = [updatesDirPath, applyToDirPath];
+  let args = [updatesDirPath, installDirPath];
   if (aSwitchApp) {
-    args[2] = gApplyToDirOverride || stageDirPath;
+    args[2] = stageDirPath;
     args[3] = "0/replace";
   } else {
-    args[2] = gApplyToDirOverride || applyToDirPath;
+    args[2] = applyToDirPath;
     args[3] = "0";
   }
-  args = args.concat([callbackApp.parent.path, callbackApp.path]);
-  args = args.concat(gCallbackArgs);
-  debugDump("running the updater: " + updateBin.path + " " + args.join(" "));
 
-  // See bug 1279108.
-  // nsIProcess doesn't have an API to pass a separate environment to the
-  // subprocess, so we need to alter the environment of the current process
-  // before launching the updater binary.
-  let asan_options = null;
-  if (gEnv.exists("ASAN_OPTIONS")) {
-    asan_options = gEnv.get("ASAN_OPTIONS");
-    gEnv.set("ASAN_OPTIONS", asan_options + ":detect_leaks=0");
-  } else {
-    gEnv.set("ASAN_OPTIONS", "detect_leaks=0");
+  let launchBin = IS_SERVICE_TEST && isInvalidArgTest ? callbackApp : updateBin;
+
+  if (!isInvalidArgTest) {
+    args = args.concat([callbackApp.parent.path, callbackApp.path]);
+    args = args.concat(gCallbackArgs);
+  } else if (IS_SERVICE_TEST) {
+    args = ["launch-service", updateBin.path].concat(args);
+  } else if (aCallbackPath) {
+    args = args.concat([callbackApp.parent.path, aCallbackPath]);
   }
+
+  debugDump("launching the program: " + launchBin.path + " " + args.join(" "));
+
+  if (aSwitchApp && !isInvalidArgTest) {
+    // We want to set the env vars again
+    gShouldResetEnv = undefined;
+  }
+
+  setEnvironment();
 
   let process = Cc["@mozilla.org/process/util;1"].
                 createInstance(Ci.nsIProcess);
-  process.init(updateBin);
+  process.init(launchBin);
   process.run(true, args, args.length);
 
-  // Restore previous ASAN_OPTIONS if there were any.
-  gEnv.set("ASAN_OPTIONS", asan_options ? asan_options : "");
+  resetEnvironment();
 
   let status = readStatusFile();
-  if (process.exitValue != aExpectedExitValue || status != aExpectedStatus) {
+  if ((!IS_SERVICE_TEST && process.exitValue != aExpectedExitValue) ||
+      status != aExpectedStatus) {
     if (process.exitValue != aExpectedExitValue) {
       logTestInfo("updater exited with unexpected value! Got: " +
                   process.exitValue + ", Expected: " + aExpectedExitValue);
@@ -1776,10 +1748,25 @@ function runUpdateUsingUpdater(aExpectedStatus, aSwitchApp, aExpectedExitValue) 
     }
     logUpdateLog(FILE_LAST_UPDATE_LOG);
   }
-  Assert.equal(process.exitValue, aExpectedExitValue,
-               "the process exit value" + MSG_SHOULD_EQUAL);
+
+  if (!IS_SERVICE_TEST) {
+    Assert.equal(process.exitValue, aExpectedExitValue,
+                 "the process exit value" + MSG_SHOULD_EQUAL);
+  }
   Assert.equal(status, aExpectedStatus,
                "the update status" + MSG_SHOULD_EQUAL);
+
+  if (IS_SERVICE_TEST && aCheckSvcLog) {
+    let contents = readServiceLogFile();
+    Assert.notEqual(contents, svcOriginalLog,
+                    "the contents of the maintenanceservice.log should not " +
+                    "be the same as the original contents");
+    if (!isInvalidArgTest) {
+      Assert.notEqual(contents.indexOf(LOG_SVC_SUCCESSFUL_LAUNCH), -1,
+                      "the contents of the maintenanceservice.log should " +
+                      "contain the successful launch string");
+    }
+  }
 
   do_execute_soon(runUpdateFinished);
 }
@@ -1903,12 +1890,15 @@ const gUpdateStagedObserver = {
 
 /**
  * Stages an update using nsIUpdateProcessor:processUpdate for updater tests.
+ *
+ * @param   aCheckSvcLog
+ *          Whether the service log should be checked for service tests.
  */
-function stageUpdate() {
+function stageUpdate(aCheckSvcLog) {
   debugDump("start - attempting to stage update");
 
-  if (IS_TOOLKIT_GONK) {
-    copyTestUpdaterToBinDir();
+  if (IS_SERVICE_TEST && aCheckSvcLog) {
+    gSvcOriginalLogContents = readServiceLogFile();
   }
 
   Services.obs.addObserver(gUpdateStagedObserver, "update-staged", false);
@@ -1987,6 +1977,16 @@ function checkUpdateStagedState(aUpdateState) {
   } else {
     Assert.ok(!stageDir.exists(),
               MSG_SHOULD_NOT_EXIST + getMsgPath(stageDir.path));
+  }
+
+  if (IS_SERVICE_TEST && gSvcOriginalLogContents !== undefined) {
+    let contents = readServiceLogFile();
+    Assert.notEqual(contents, gSvcOriginalLogContents,
+                    "the contents of the maintenanceservice.log should not " +
+                    "be the same as the original contents");
+    Assert.notEqual(contents.indexOf(LOG_SVC_SUCCESSFUL_LAUNCH), -1,
+                    "the contents of the maintenanceservice.log should " +
+                    "contain the successful launch string");
   }
 
   do_execute_soon(stageUpdateFinished);
@@ -2132,7 +2132,7 @@ function setupAppFiles() {
                    inGreDir: true}];
 
   // On Linux the updater.png must also be copied
-  if (IS_UNIX && !IS_MACOSX && !IS_TOOLKIT_GONK) {
+  if (IS_UNIX && !IS_MACOSX) {
     appFiles.push({relPath: "icons/updater.png",
                    inGreDir: true});
   }
@@ -2217,8 +2217,7 @@ function copyFileToTestAppDir(aFileRelPath, aInGreDir) {
   let shouldSymlink = (pathParts[pathParts.length - 1] == "XUL" ||
                        fileRelPath.substr(fileRelPath.length - 3) == ".so" ||
                        fileRelPath.substr(fileRelPath.length - 6) == ".dylib");
-  // The tests don't support symlinks on gonk.
-  if (!shouldSymlink || IS_TOOLKIT_GONK) {
+  if (!shouldSymlink) {
     if (!destFile.exists()) {
       try {
         srcFile.copyToFollowingLinks(destFile.parent, destFile.leafName);
@@ -2378,157 +2377,6 @@ function waitForApplicationStop(aApplication) {
                aApplication);
 }
 
-/**
- * Helper function for updater tests for launching the updater using the
- * maintenance service to apply a mar file. When complete runUpdateFinished
- * will be called.
- *
- * @param   aExpectedStatus
- *          The expected value of update.status when the test finishes.
- * @param   aSwitchApp
- *          If true the update should switch the application with an updated
- *          staged application and if false the update should be applied to the
- *          installed application.
- * @param   aCheckSvcLog
- *          Whether the service log should be checked.
- */
-function runUpdateUsingService(aExpectedStatus, aSwitchApp, aCheckSvcLog) {
-  if (!IS_WIN) {
-    do_throw("Windows only function called by a different platform!");
-  }
-
-  let svcOriginalLog;
-
-  // Check the service logs for a successful update
-  function checkServiceLogs(aOriginalContents) {
-    let contents = readServiceLogFile();
-    Assert.notEqual(contents, aOriginalContents,
-                    "the contents of the maintenanceservice.log should not " +
-                    "be the same as the original contents");
-    Assert.notEqual(contents.indexOf(LOG_SVC_SUCCESSFUL_LAUNCH), -1,
-                    "the contents of the maintenanceservice.log should " +
-                    "contain the successful launch string");
-  }
-
-  function readServiceLogFile() {
-    let file = getMaintSvcDir();
-    file.append("logs");
-    file.append("maintenanceservice.log");
-    return readFile(file);
-  }
-
-  function checkServiceUpdateFinished() {
-    waitForApplicationStop(FILE_MAINTENANCE_SERVICE_BIN);
-    waitForApplicationStop(FILE_UPDATER_BIN);
-
-    // Wait for the expected status
-    let status;
-    try {
-      status = readStatusFile();
-    } catch (e) {
-      do_execute_soon(checkServiceUpdateFinished);
-      return;
-    }
-    // The status will probably always be equal to STATE_APPLYING but there is a
-    // race condition where it would be possible on slower machines where status
-    // could be equal to STATE_PENDING_SVC.
-    if (status == STATE_APPLYING) {
-      debugDump("still waiting to see the " + aExpectedStatus +
-                " status, got " + status + " for now...");
-      do_execute_soon(checkServiceUpdateFinished);
-      return;
-    }
-
-    // Make sure all of the logs are written out.
-    waitForServiceStop(false);
-    resetEnvironment();
-
-    if (status != aExpectedStatus) {
-      logTestInfo("update status is not the expected status! Got: " + status +
-                  ", Expected: " + aExpectedStatus);
-      logTestInfo("update.status contents: " + readStatusFile());
-      logUpdateLog(FILE_UPDATE_LOG);
-    }
-    Assert.equal(status, aExpectedStatus,
-                 "the update status" + MSG_SHOULD_EQUAL);
-
-    if (aCheckSvcLog) {
-      checkServiceLogs(svcOriginalLog);
-    }
-
-    do_execute_soon(runUpdateFinished);
-  }
-
-  // Make sure the service from the previous test is already stopped.
-  waitForServiceStop(true);
-
-  // Prevent the cleanup function from begin run more than once
-  if (gRegisteredServiceCleanup === undefined) {
-    gRegisteredServiceCleanup = true;
-
-    do_register_cleanup(function RUUS_cleanup() {
-      resetEnvironment();
-
-      // This will delete the app arguments log file if it exists.
-      try {
-        getAppArgsLogPath();
-      } catch (e) {
-        logTestInfo("unable to remove file during cleanup. Exception: " + e);
-      }
-    });
-  }
-
-  if (aCheckSvcLog) {
-    svcOriginalLog = readServiceLogFile();
-  }
-
-  let appArgsLogPath = getAppArgsLogPath();
-  gServiceLaunchedCallbackLog = appArgsLogPath.replace(/^"|"$/g, "");
-
-  gServiceLaunchedCallbackArgs = [
-    "-no-remote",
-    "-test-process-updates",
-    "-dump-args",
-    appArgsLogPath
-  ];
-
-  if (aSwitchApp) {
-    // We want to set the env vars again
-    gShouldResetEnv = undefined;
-  }
-
-  setEnvironment();
-
-  let updater = getTestDirFile(FILE_UPDATER_BIN);
-  if (!updater.exists()) {
-    do_throw("Unable to find the updater binary!");
-  }
-  let testBinDir = getGREBinDir();
-  updater.copyToFollowingLinks(testBinDir, updater.leafName);
-
-  // The service will execute maintenanceservice_installer.exe and
-  // will copy maintenanceservice.exe out of the same directory from
-  // the installation directory.  So we need to make sure both of those
-  // bins always exist in the installation directory.
-  copyFileToTestAppDir(FILE_MAINTENANCE_SERVICE_BIN, false);
-  copyFileToTestAppDir(FILE_MAINTENANCE_SERVICE_INSTALLER_BIN, false);
-
-  let launchBin = getLaunchBin();
-  let args = getProcessArgs(["-dump-args", appArgsLogPath]);
-
-  let process = Cc["@mozilla.org/process/util;1"].
-                createInstance(Ci.nsIProcess);
-  process.init(launchBin);
-  debugDump("launching " + launchBin.path + " " + args.join(" "));
-  // Firefox does not wait for the service command to finish, but
-  // we still launch the process sync to avoid intermittent failures with
-  // the log file not being written out yet.
-  // We will rely on watching the update.status file and waiting for the service
-  // to stop to know the service command is done.
-  process.run(true, args, args.length);
-
-  do_execute_soon(checkServiceUpdateFinished);
-}
 
 /**
  * Gets the platform specific shell binary that is launched using nsIProcess and
@@ -2578,7 +2426,7 @@ function lockDirectory(aDirPath) {
   const FILE_FLAG_BACKUP_SEMANTICS = 0x02000000;
   const INVALID_HANDLE_VALUE = LPVOID(0xffffffff);
   let kernel32 = ctypes.open("kernel32");
-  let CreateFile = kernel32.declare("CreateFileW", ctypes.default_abi,
+  let CreateFile = kernel32.declare("CreateFileW", ctypes.winapi_abi,
                                     LPVOID, LPCWSTR, DWORD, DWORD,
                                     LPVOID, DWORD, DWORD, LPVOID);
   gHandle = CreateFile(aDirPath, GENERIC_READ,
@@ -2661,7 +2509,8 @@ function waitForHelperSleep() {
       do_throw("Exceeded MAX_TIMEOUT_RUNS while waiting for the helper to " +
                "finish its operation. Path: " + output.path);
     }
-    do_execute_soon(waitForHelperSleep);
+    // Uses do_timeout instead of do_execute_soon to lessen log spew.
+    do_timeout(FILE_IN_USE_TIMEOUT_MS, waitForHelperSleep);
     return;
   }
   try {
@@ -2672,7 +2521,8 @@ function waitForHelperSleep() {
                "message file to no longer be in use. Path: " + output.path);
     }
     debugDump("failed to remove file. Path: " + output.path);
-    do_execute_soon(waitForHelperSleep);
+    // Uses do_timeout instead of do_execute_soon to lessen log spew.
+    do_timeout(FILE_IN_USE_TIMEOUT_MS, waitForHelperSleep);
     return;
   }
   waitForHelperSleepFinished();
@@ -2688,7 +2538,8 @@ function waitForHelperFinished() {
   // this test can fail intermittently on Windows debug builds.
   let output = getApplyDirFile(DIR_RESOURCES + "output", true);
   if (readFile(output) != "finished\n") {
-    do_execute_soon(waitForHelperFinished);
+    // Uses do_timeout instead of do_execute_soon to lessen log spew.
+    do_timeout(FILE_IN_USE_TIMEOUT_MS, waitForHelperFinished);
     return;
   }
   // Give the lock file process time to unlock the file before deleting the
@@ -2737,8 +2588,12 @@ function waitForHelperExit() {
  * @param   aPostUpdateAsync
  *          When null the updater.ini is not created otherwise this parameter
  *          is passed to createUpdaterINI.
+ * @param   aPostUpdateExeRelPathPrefix
+ *          When aPostUpdateAsync null this value is ignored otherwise it is
+ *          passed to createUpdaterINI.
  */
-function setupUpdaterTest(aMarFile, aPostUpdateAsync) {
+function setupUpdaterTest(aMarFile, aPostUpdateAsync,
+                          aPostUpdateExeRelPathPrefix = "") {
   let updatesPatchDir = getUpdatesPatchDir();
   if (!updatesPatchDir.exists()) {
     updatesPatchDir.create(Ci.nsIFile.DIRECTORY_TYPE, PERMS_DIRECTORY);
@@ -2823,15 +2678,10 @@ function setupUpdaterTest(aMarFile, aPostUpdateAsync) {
   setupActiveUpdate();
 
   if (aPostUpdateAsync !== null) {
-    createUpdaterINI(aPostUpdateAsync);
+    createUpdaterINI(aPostUpdateAsync, aPostUpdateExeRelPathPrefix);
   }
 
-  if (IS_TOOLKIT_GONK) {
-    // Gonk doesn't use the app files in any of the tests.
-    do_execute_soon(setupUpdaterTestFinished);
-  } else {
-    setupAppFilesAsync();
-  }
+  setupAppFilesAsync();
 }
 
 /**
@@ -2851,8 +2701,10 @@ function createUpdateSettingsINI() {
  *          True or undefined if the post update process should be async. If
  *          undefined ExeAsync will not be added to the updater.ini file in
  *          order to test the default launch behavior which is async.
+ * @param   aExeRelPathPrefix
+ *          A string to prefix the ExeRelPath values in the updater.ini.
  */
-function createUpdaterINI(aIsExeAsync) {
+function createUpdaterINI(aIsExeAsync, aExeRelPathPrefix) {
   let exeArg = "ExeArg=post-update-async\n";
   let exeAsync = "";
   if (aIsExeAsync !== undefined) {
@@ -2864,16 +2716,23 @@ function createUpdaterINI(aIsExeAsync) {
     }
   }
 
+  if (aExeRelPathPrefix && IS_WIN) {
+    aExeRelPathPrefix = aExeRelPathPrefix.replace("/", "\\");
+  }
+
+  let exeRelPathMac = "ExeRelPath=" + aExeRelPathPrefix + DIR_RESOURCES +
+                      gPostUpdateBinFile + "\n";
+  let exeRelPathWin = "ExeRelPath=" + aExeRelPathPrefix + gPostUpdateBinFile + "\n";
   let updaterIniContents = "[Strings]\n" +
                            "Title=Update Test\n" +
                            "Info=Running update test " + gTestID + "\n\n" +
                            "[PostUpdateMac]\n" +
-                           "ExeRelPath=" + DIR_RESOURCES + gPostUpdateBinFile + "\n" +
+                           exeRelPathMac +
                            exeArg +
                            exeAsync +
                            "\n" +
                            "[PostUpdateWin]\n" +
-                           "ExeRelPath=" + gPostUpdateBinFile + "\n" +
+                           exeRelPathWin +
                            exeArg +
                            exeAsync;
   let updaterIni = getApplyDirFile(DIR_RESOURCES + FILE_UPDATER_INI, true);
@@ -3332,31 +3191,6 @@ function checkFilesAfterUpdateCommon(aGetFileFunc, aStageDirExists,
     applyToDir = getApplyDirFile(null, true);
     checkFilesInDirRecursive(stageDir, checkForBackupFiles);
   }
-
-  debugDump("testing patch files should not be left behind");
-  let updatesDir = getUpdatesPatchDir();
-  let entries = updatesDir.QueryInterface(Ci.nsIFile).directoryEntries;
-  while (entries.hasMoreElements()) {
-    let entry = entries.getNext().QueryInterface(Ci.nsIFile);
-    Assert.notEqual(getFileExtension(entry), "patch",
-                    "the file's extension should not equal patch" +
-                    getMsgPath(entry.path));
-  }
-}
-
-/**
- * Calls the appropriate callback log check for service and non-service tests.
- */
-function checkCallbackLog() {
-  if (IS_SERVICE_TEST) {
-    // Prevent this check from being repeatedly logged in the xpcshell log by
-    // checking it here instead of in checkCallbackServiceLog.
-    Assert.ok(!!gServiceLaunchedCallbackLog,
-              "gServiceLaunchedCallbackLog should be defined");
-    checkCallbackServiceLog();
-  } else {
-    checkCallbackAppLog();
-  }
 }
 
 /**
@@ -3364,10 +3198,11 @@ function checkCallbackLog() {
  * updater callback application log which should contain the arguments passed to
  * the callback application.
  */
-function checkCallbackAppLog() {
+function checkCallbackLog() {
   let appLaunchLog = getApplyDirFile(DIR_RESOURCES + gCallbackArgs[1], true);
   if (!appLaunchLog.exists()) {
-    do_execute_soon(checkCallbackAppLog);
+    // Uses do_timeout instead of do_execute_soon to lessen log spew.
+    do_timeout(FILE_IN_USE_TIMEOUT_MS, checkCallbackLog);
     return;
   }
 
@@ -3403,7 +3238,8 @@ function checkCallbackAppLog() {
       // This should never happen!
       do_throw("Unable to find incorrect callback log contents!");
     }
-    do_execute_soon(checkCallbackAppLog);
+    // Uses do_timeout instead of do_execute_soon to lessen log spew.
+    do_timeout(FILE_IN_USE_TIMEOUT_MS, checkCallbackLog);
     return;
   }
   Assert.ok(true, "the callback log contents" + MSG_SHOULD_EQUAL);
@@ -3462,50 +3298,6 @@ function checkPostUpdateAppLog() {
   }
 
   do_execute_soon(checkPostUpdateAppLogFinished);
-}
-
-/**
- * Helper function for updater service tests for verifying the contents of the
- * updater callback application log which should contain the arguments passed to
- * the callback application.
- */
-function checkCallbackServiceLog() {
-  let expectedLogContents = gServiceLaunchedCallbackArgs.join("\n") + "\n";
-  let logFile = Cc["@mozilla.org/file/local;1"].createInstance(Ci.nsILocalFile);
-  logFile.initWithPath(gServiceLaunchedCallbackLog);
-  let logContents = readFile(logFile);
-  // It is possible for the log file contents check to occur before the log file
-  // contents are completely written so wait until the contents are the expected
-  // value. If the contents are never the expected value then the test will
-  // fail by timing out after gTimeoutRuns is greater than MAX_TIMEOUT_RUNS or
-  // the test harness times out the test.
-  if (logContents != expectedLogContents) {
-    gFileInUseTimeoutRuns++;
-    if (gFileInUseTimeoutRuns > FILE_IN_USE_MAX_TIMEOUT_RUNS) {
-      if (logContents == null) {
-        if (logFile.exists()) {
-          logTestInfo("callback service log exists but readFile returned null");
-        } else {
-          logTestInfo("callback service log does not exist");
-        }
-      } else {
-        logTestInfo("callback service log contents are not correct");
-        let aryLog = logContents.split("\n");
-        // xpcshell tests won't display the entire contents so log each line.
-        logTestInfo("contents of " + logFile.path + ":");
-        for (let i = 0; i < aryLog.length; ++i) {
-          logTestInfo(aryLog[i]);
-        }
-      }
-      // This should never happen!
-      do_throw("Unable to find incorrect service callback log contents!");
-    }
-    do_timeout(FILE_IN_USE_TIMEOUT_MS, checkCallbackServiceLog);
-    return;
-  }
-  Assert.ok(true, "the callback service log contents" + MSG_SHOULD_EQUAL);
-
-  waitForFilesInUse();
 }
 
 /**
@@ -3958,7 +3750,7 @@ function adjustGeneralPaths() {
       try {
         debugDump("start - closing handle");
         let kernel32 = ctypes.open("kernel32");
-        let CloseHandle = kernel32.declare("CloseHandle", ctypes.default_abi,
+        let CloseHandle = kernel32.declare("CloseHandle", ctypes.winapi_abi,
                                            ctypes.bool, /* return*/
                                            ctypes.voidptr_t /* handle*/);
         if (!CloseHandle(gHandle)) {
@@ -4054,20 +3846,27 @@ function runUpdateUsingApp(aExpectedStatus) {
                  aExpectedStatus +
                  ", current status: " + status);
       } else {
-        do_execute_soon(afterAppExits);
+        do_timeout(FILE_IN_USE_TIMEOUT_MS, afterAppExits);
       }
       return;
     }
 
-    // Don't proceed until the update log has been created.
-    let log = getUpdateLog(FILE_UPDATE_LOG);
-    if (!log.exists()) {
-      if (gTimeoutRuns > MAX_TIMEOUT_RUNS) {
-        do_throw("Exceeded MAX_TIMEOUT_RUNS while waiting for the update log " +
-                 "to be created. Path: " + log.path);
+    // Don't check for an update log when the code in nsUpdateDriver.cpp skips
+    // updating.
+    if (aExpectedStatus != STATE_PENDING &&
+        aExpectedStatus != STATE_PENDING_SVC &&
+        aExpectedStatus != STATE_APPLIED &&
+        aExpectedStatus != STATE_APPLIED_SVC) {
+      // Don't proceed until the update log has been created.
+      let log = getUpdateLog(FILE_UPDATE_LOG);
+      if (!log.exists()) {
+        if (gTimeoutRuns > MAX_TIMEOUT_RUNS) {
+          do_throw("Exceeded MAX_TIMEOUT_RUNS while waiting for the update " +
+                   "log to be created. Path: " + log.path);
+        }
+        do_timeout(FILE_IN_USE_TIMEOUT_MS, afterAppExits);
+        return;
       }
-      do_execute_soon(afterAppExits);
-      return;
     }
 
     do_execute_soon(runUpdateFinished);
@@ -4105,6 +3904,14 @@ function setEnvironment() {
   }
 
   gShouldResetEnv = true;
+
+  // See bug 1279108.
+  if (gEnv.exists("ASAN_OPTIONS")) {
+    gASanOptions = gEnv.get("ASAN_OPTIONS");
+    gEnv.set("ASAN_OPTIONS", gASanOptions + ":detect_leaks=0");
+  } else {
+    gEnv.set("ASAN_OPTIONS", "detect_leaks=0");
+  }
 
   if (IS_WIN && !gEnv.exists("XRE_NO_WINDOWS_CRASH_DIALOG")) {
     gAddedEnvXRENoWindowsCrashDialog = true;
@@ -4169,8 +3976,10 @@ function setEnvironment() {
 
   gEnv.set("XPCOM_DEBUG_BREAK", "warn");
 
-  debugDump("setting MOZ_NO_SERVICE_FALLBACK environment variable to 1");
-  gEnv.set("MOZ_NO_SERVICE_FALLBACK", "1");
+  if (IS_SERVICE_TEST) {
+    debugDump("setting MOZ_NO_SERVICE_FALLBACK environment variable to 1");
+    gEnv.set("MOZ_NO_SERVICE_FALLBACK", "1");
+  }
 }
 
 /**
@@ -4184,6 +3993,9 @@ function resetEnvironment() {
   }
 
   gShouldResetEnv = false;
+
+  // Restore previous ASAN_OPTIONS if there were any.
+  gEnv.set("ASAN_OPTIONS", gASanOptions ? gASanOptions : "");
 
   if (gEnvXPCOMMemLeakLog) {
     debugDump("setting the XPCOM_MEM_LEAK_LOG environment variable back to " +
@@ -4226,6 +4038,8 @@ function resetEnvironment() {
     gEnv.set("XRE_NO_WINDOWS_CRASH_DIALOG", "");
   }
 
-  debugDump("removing MOZ_NO_SERVICE_FALLBACK environment variable");
-  gEnv.set("MOZ_NO_SERVICE_FALLBACK", "");
+  if (IS_SERVICE_TEST) {
+    debugDump("removing MOZ_NO_SERVICE_FALLBACK environment variable");
+    gEnv.set("MOZ_NO_SERVICE_FALLBACK", "");
+  }
 }

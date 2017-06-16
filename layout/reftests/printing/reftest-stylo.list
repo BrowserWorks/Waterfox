@@ -20,17 +20,17 @@ fails == 626395-1b.html 626395-1b.html
 fails == 626395-2b.html 626395-2b.html
 == 626395-2c.html 626395-2c.html
 fails == 626395-2d.html 626395-2d.html
-# == 652178-1.html 652178-1.html
+== 652178-1.html 652178-1.html
 fails == 115199-1.html 115199-1.html
 == 115199-2a.html 115199-2a.html
 == 115199-2b.html 115199-2b.html
-# == 652178-1.html 652178-1.html
+== 652178-1.html 652178-1.html
 == 745025-1.html 745025-1.html
 fails == 820496-1.html 820496-1.html
 
 # NOTE: These tests don't yet rigorously test what they're
 # trying to test (shrink-to-fit behavior), due to bug 967311.
-fails == 960822.html 960822.html
-fails == 966419-1.html 966419-1.html
-fails == 966419-2.html 966419-2.html
-# asserts(3) HTTP(..) fails 1108104.html 1108104-ref.html
+== 960822.html 960822.html
+== 966419-1.html 966419-1.html
+== 966419-2.html 966419-2.html
+fails HTTP(..) == 1108104.html 1108104-ref.html

@@ -75,7 +75,12 @@ gfxAlphaBoxBlur::InitDrawTarget(const DrawTarget* aReferenceDT,
   // Check if the backend has an accelerated DrawSurfaceWithShadow.
   // Currently, only D2D1.1 supports this.
   // Otherwise, DrawSurfaceWithShadow only supports square blurs without spread.
+  // When blurring small draw targets such as short spans text, the cost of
+  // creating and flushing an accelerated draw target may exceed the speedup
+  // gained from the faster blur, so we also make sure the blurred data exceeds
+  // a sufficient number of pixels to offset this cost.
   if (aBlurRadius.IsSquare() && aSpreadRadius.IsEmpty() &&
+      blurDataSize >= 8192 &&
       backend == BackendType::DIRECT2D1_1) {
     mAccelerated = true;
     mDrawTarget =
@@ -552,8 +557,14 @@ GetBlur(gfxContext* aDestinationCtx,
   // We can get seams using the min size rect when drawing to the destination rect
   // if we have a non-pixel aligned destination transformation. In those cases,
   // fallback to just rendering the destination rect.
+  // During printing, we record all the Moz 2d commands and replay them on the parent side
+  // with Cairo. Cairo printing uses StretchDIBits to stretch the surface. However,
+  // since our source image is only 1px for some parts, we make thousands of calls.
+  // Instead just render the blur ourself here as one image and send it over for printing.
+  // TODO: May need to change this with the blob renderer in WR since it also records.
   Matrix destMatrix = ToMatrix(aDestinationCtx->CurrentMatrix());
-  bool useDestRect = !destMatrix.IsRectilinear() || destMatrix.HasNonIntegerTranslation();
+  bool useDestRect = !destMatrix.IsRectilinear() || destMatrix.HasNonIntegerTranslation() ||
+                     aDestinationCtx->GetDrawTarget()->IsRecording();
   if (useDestRect) {
     minSize = aRectSize;
   }

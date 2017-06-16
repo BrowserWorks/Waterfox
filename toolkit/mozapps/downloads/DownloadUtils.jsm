@@ -349,7 +349,7 @@ this.DownloadUtils = {
     let today = new Date(aNow.getFullYear(), aNow.getMonth(), aNow.getDate());
 
     // Get locale to use for date/time formatting
-    // TODO: Remove Intl fallback when bug 1215247 is fixed.
+    // TODO: Remove Intl fallback when no longer needed (bug 1344543).
     const locale = typeof Intl === "undefined"
                    ? undefined
                    : Cc["@mozilla.org/chrome/chrome-registry;1"]
@@ -493,7 +493,7 @@ this.DownloadUtils = {
       aBytes = getLocaleNumberFormat(fractionDigits)
                  .format(aBytes);
     } else {
-      // FIXME: Fall back to the old hack, will be fixed in bug 1200494.
+      // FIXME: Fall back to the old hack, will be fixed in bug 1344543.
       aBytes = aBytes.toFixed(fractionDigits);
       if (gDecimalSymbol != ".") {
         aBytes = aBytes.replace(".", gDecimalSymbol);

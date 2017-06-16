@@ -7,6 +7,7 @@
 #include "GetFilesHelper.h"
 #include "mozilla/dom/ContentChild.h"
 #include "mozilla/dom/ContentParent.h"
+#include "mozilla/dom/FileBlobImpl.h"
 #include "nsProxyRelease.h"
 
 namespace mozilla {
@@ -383,7 +384,7 @@ GetFilesHelperBase::ExploreDirectory(const nsAString& aDOMPath, nsIFile* aFile)
     domPath.Append(leafName);
 
     if (isFile) {
-      RefPtr<BlobImpl> blobImpl = new BlobImplFile(currFile);
+      RefPtr<BlobImpl> blobImpl = new FileBlobImpl(currFile);
       blobImpl->SetDOMPath(domPath);
 
       if (!mTargetBlobImplArray.AppendElement(blobImpl, fallible)) {
@@ -429,18 +430,14 @@ GetFilesHelperBase::AddExploredDirectory(nsIFile* aDir)
     return rv;
   }
 
-  nsAutoCString path;
-
+  nsAutoString path;
   if (!isLink) {
-    nsAutoString path16;
-    rv = aDir->GetPath(path16);
+    rv = aDir->GetPath(path);
     if (NS_WARN_IF(NS_FAILED(rv))) {
       return rv;
     }
-
-    path = NS_ConvertUTF16toUTF8(path16);
   } else {
-    rv = aDir->GetNativeTarget(path);
+    rv = aDir->GetTarget(path);
     if (NS_WARN_IF(NS_FAILED(rv))) {
       return rv;
     }
@@ -463,8 +460,8 @@ GetFilesHelperBase::ShouldFollowSymLink(nsIFile* aDir)
   MOZ_ASSERT(isLink && isDir, "Why are we here?");
 #endif
 
-  nsAutoCString targetPath;
-  if (NS_WARN_IF(NS_FAILED(aDir->GetNativeTarget(targetPath)))) {
+  nsAutoString targetPath;
+  if (NS_WARN_IF(NS_FAILED(aDir->GetTarget(targetPath)))) {
     return false;
   }
 

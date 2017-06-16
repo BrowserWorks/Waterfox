@@ -10,10 +10,8 @@ const {
   DOM,
   PropTypes,
 } = require("devtools/client/shared/vendor/react");
-const { connect } = require("devtools/client/shared/vendor/react-redux");
-const { L10N } = require("../../l10n");
-const { getSelectedRequest } = require("../../selectors/index");
-const { formDataURI, getUrlBaseName } = require("../../request-utils");
+const { L10N } = require("../../utils/l10n");
+const { formDataURI, getUrlBaseName } = require("../../utils/request-utils");
 
 // Components
 const PropertiesView = createFactory(require("./properties-view"));
@@ -34,10 +32,7 @@ const ResponsePanel = createClass({
   displayName: "ResponsePanel",
 
   propTypes: {
-    encoding: PropTypes.string,
-    mimeType: PropTypes.string,
-    response: PropTypes.string,
-    url: PropTypes.string,
+    request: PropTypes.object.isRequired,
   },
 
   getInitialState() {
@@ -115,11 +110,13 @@ const ResponsePanel = createClass({
   },
 
   render() {
-    const { encoding, mimeType, response, url } = this.props;
+    let { responseContent, url } = this.props.request;
 
-    if (!mimeType || !url || typeof response !== "string") {
+    if (!responseContent || typeof responseContent.content.text !== "string") {
       return null;
     }
+
+    let { encoding, mimeType, text } = responseContent.content;
 
     if (mimeType.includes("image/")) {
       let { width, height } = this.state.imageDimensions;
@@ -128,7 +125,7 @@ const ResponsePanel = createClass({
         div({ className: "panel-container response-image-box devtools-monospace" },
           img({
             className: "response-image",
-            src: formDataURI(mimeType, encoding, response),
+            src: formDataURI(mimeType, encoding, text),
             onLoad: this.updateImageDimemsions,
           }),
           div({ className: "response-summary" },
@@ -148,7 +145,7 @@ const ResponsePanel = createClass({
     }
 
     // Display Properties View
-    let { json, jsonpCallback, error } = this.isJSON(mimeType, response) || {};
+    let { json, jsonpCallback, error } = this.isJSON(mimeType, text) || {};
     let object = {};
     let sectionName;
 
@@ -164,7 +161,7 @@ const ResponsePanel = createClass({
 
       object[sectionName] = {
         EDITOR_CONFIG: {
-          text: response,
+          text,
           mode: mimeType.replace(/;.+/, ""),
         },
       };
@@ -185,24 +182,4 @@ const ResponsePanel = createClass({
   }
 });
 
-module.exports = connect(
-  (state) => {
-    const selectedRequest = getSelectedRequest(state);
-
-    if (selectedRequest) {
-      const { responseContent, url } = selectedRequest;
-      if (responseContent) {
-        const { encoding, mimeType, text } = responseContent.content;
-
-        return {
-          encoding,
-          mimeType,
-          response: text,
-          url,
-        };
-      }
-    }
-
-    return {};
-  },
-)(ResponsePanel);
+module.exports = ResponsePanel;

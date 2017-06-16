@@ -190,7 +190,9 @@
           let changed = val.toFixed(2) != this._fullZoom.toFixed(2);
 
           this._fullZoom = val;
-          this.messageManager.sendAsyncMessage("FullZoom", {value: val});
+          try {
+            this.messageManager.sendAsyncMessage("FullZoom", {value: val});
+          } catch (ex) {}
 
           if (changed) {
             let event = new Event("FullZoomChange", {bubbles: true});
@@ -208,7 +210,9 @@
           let changed = val.toFixed(2) != this._textZoom.toFixed(2);
 
           this._textZoom = val;
-          this.messageManager.sendAsyncMessage("TextZoom", {value: val});
+          try {
+            this.messageManager.sendAsyncMessage("TextZoom", {value: val});
+          } catch (ex) {}
 
           if (changed) {
             let event = new Event("TextZoomChange", {bubbles: true});
@@ -471,7 +475,10 @@
 
               let zoom = Services.prefs.getBoolPref("browser.zoom.full") ||
                          this.isSyntheticDocument ? this._fullZoom : this._textZoom;
-              this._selectParentHelper.populate(menulist, data.options, data.selectedIndex, zoom);
+              this._selectParentHelper.populate(menulist, data.options, data.selectedIndex,
+                                                zoom, data.uaBackgroundColor, data.uaColor,
+                                                data.uaSelectBackgroundColor, data.uaSelectColor,
+                                                data.selectBackgroundColor, data.selectColor, data.selectTextShadow);
               this._selectParentHelper.open(this, menulist, data.rect, data.isOpenedViaTouch);
               break;
             }

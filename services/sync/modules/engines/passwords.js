@@ -81,7 +81,7 @@ PasswordEngine.prototype = {
   _findDupe(item) {
     let login = this._store._nsLoginInfoFromRecord(item);
     if (!login) {
-      return;
+      return null;
     }
 
     let logins = Services.logins.findLogins({}, login.hostname, login.formSubmitURL, login.httpRealm);
@@ -94,7 +94,17 @@ PasswordEngine.prototype = {
         return local.guid;
       }
     }
+
+    return null;
   },
+
+  pullAllChanges() {
+    let changes = {};
+    for (let [id, info] of Object.entries(this._store.getAllIDs())) {
+      changes[id] = info.timePasswordChanged / 1000;
+    }
+    return changes;
+  }
 };
 
 function PasswordStore(name, engine) {

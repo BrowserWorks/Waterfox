@@ -420,7 +420,8 @@ RunStatsQuery(
 
   if (NS_FAILED(rv)) {
     return rv;
-  } else if (!stsThread) {
+  }
+  if (!stsThread) {
     return NS_ERROR_FAILURE;
   }
 
@@ -542,7 +543,8 @@ RunLogQuery(const nsCString& aPattern,
 
   if (NS_FAILED(rv)) {
     return rv;
-  } else if (!stsThread) {
+  }
+  if (!stsThread) {
     return NS_ERROR_FAILURE;
   }
 
@@ -1102,9 +1104,9 @@ static void StoreLongTermICEStatisticsImpl_m(
     streamResults[streamId].candidateTypeBitpattern |= candBitmask;
   }
 
-  for (auto i = streamResults.begin(); i != streamResults.end(); ++i) {
-    Telemetry::RecordWebrtcIceCandidates(i->second.candidateTypeBitpattern,
-                                         i->second.streamSucceeded);
+  for (auto& streamResult : streamResults) {
+    Telemetry::RecordWebrtcIceCandidates(streamResult.second.candidateTypeBitpattern,
+                                         streamResult.second.streamSucceeded);
   }
 
   // Beyond ICE, accumulate telemetry for various PER_CALL settings here.

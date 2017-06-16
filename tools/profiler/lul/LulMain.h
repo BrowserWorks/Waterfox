@@ -7,8 +7,9 @@
 #ifndef LulMain_h
 #define LulMain_h
 
-#include "LulPlatformMacros.h"
+#include "PlatformMacros.h"
 #include "mozilla/Atomics.h"
+#include "mozilla/MemoryReporting.h"
 
 // LUL: A Lightweight Unwind Library.
 // This file provides the end-user (external) interface for LUL.
@@ -140,14 +141,14 @@ private:
 // The registers, with validity tags, that will be unwound.
 
 struct UnwindRegs {
-#if defined(LUL_ARCH_arm)
+#if defined(GP_ARCH_arm)
   TaggedUWord r7;
   TaggedUWord r11;
   TaggedUWord r12;
   TaggedUWord r13;
   TaggedUWord r14;
   TaggedUWord r15;
-#elif defined(LUL_ARCH_x64) || defined(LUL_ARCH_x86)
+#elif defined(GP_ARCH_amd64) || defined(GP_ARCH_x86)
   TaggedUWord xbp;
   TaggedUWord xsp;
   TaggedUWord xip;
@@ -352,6 +353,8 @@ public:
   // Possibly show the statistics.  This may not be called from any
   // registered sampling thread, since it involves I/O.
   void MaybeShowStats();
+
+  size_t SizeOfIncludingThis(mozilla::MallocSizeOf) const;
 
 private:
   // The statistics counters at the point where they were last printed.

@@ -1495,7 +1495,7 @@ HTMLEditor::PasteTransferable(nsITransferable* aTransferable)
 NS_IMETHODIMP
 HTMLEditor::PasteNoFormatting(int32_t aSelectionType)
 {
-  if (!FireClipboardEvent(ePaste, aSelectionType)) {
+  if (!FireClipboardEvent(ePasteNoFormatting, aSelectionType)) {
     return NS_OK;
   }
 
@@ -2383,27 +2383,26 @@ HTMLEditor::ReplaceOrphanedStructure(
   }
 
   // If we found substructure, paste it instead of its descendants.
-  // Only replace with the substructure if all the nodes in the list are
-  // descendants.
-  bool shouldReplaceNodes = true;
-  for (uint32_t i = 0; i < aNodeArray.Length(); i++) {
+  // Postprocess list to remove any descendants of this node so that we don't
+  // insert them twice.
+  uint32_t removedCount = 0;
+  uint32_t originalLength = aNodeArray.Length();
+  for (uint32_t i = 0; i < originalLength; i++) {
     uint32_t idx = aStartOrEnd == StartOrEnd::start ?
-      i : (aNodeArray.Length() - i - 1);
+      (i - removedCount) : (originalLength - i - 1);
     OwningNonNull<nsINode> endpoint = aNodeArray[idx];
-    if (!EditorUtils::IsDescendantOf(endpoint, replaceNode)) {
-      shouldReplaceNodes = false;
-      break;
+    if (endpoint == replaceNode ||
+        EditorUtils::IsDescendantOf(endpoint, replaceNode)) {
+      aNodeArray.RemoveElementAt(idx);
+      removedCount++;
     }
   }
 
-  if (shouldReplaceNodes) {
-    // Now replace the removed nodes with the structural parent
-    aNodeArray.Clear();
-    if (aStartOrEnd == StartOrEnd::end) {
-      aNodeArray.AppendElement(*replaceNode);
-    } else {
-      aNodeArray.InsertElementAt(0, *replaceNode);
-    }
+  // Now replace the removed nodes with the structural parent
+  if (aStartOrEnd == StartOrEnd::end) {
+    aNodeArray.AppendElement(*replaceNode);
+  } else {
+    aNodeArray.InsertElementAt(0, *replaceNode);
   }
 }
 

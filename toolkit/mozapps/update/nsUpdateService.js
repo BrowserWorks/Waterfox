@@ -958,7 +958,7 @@ function shouldUseService() {
     try {
       try {
         let GetVersionEx = kernel32.declare("GetVersionExW",
-                                            ctypes.default_abi,
+                                            ctypes.winapi_abi,
                                             BOOL,
                                             OSVERSIONINFOEXW.ptr);
         let winVer = OSVERSIONINFOEXW();
@@ -1956,6 +1956,23 @@ UpdateService.prototype = {
       LOG("UpdateService:_postUpdateProcessing - no status, no update");
       cleanupActiveUpdate();
       return;
+    }
+
+    // Handle the case when the update is the same or older than the current
+    // version and nsUpdateDriver.cpp skipped updating due to the version being
+    // older than the current version.
+    if (update && update.appVersion &&
+        (status == STATE_PENDING || status == STATE_PENDING_SERVICE ||
+         status == STATE_APPLIED || status == STATE_APPLIED_SERVICE ||
+         status == STATE_PENDING_ELEVATE)) {
+      if (Services.vc.compare(update.appVersion, Services.appinfo.version) < 0 ||
+          Services.vc.compare(update.appVersion, Services.appinfo.version) == 0 &&
+          update.buildID == Services.appinfo.appBuildID) {
+        LOG("UpdateService:_postUpdateProcessing - removing update for older " +
+            "or same application version");
+        cleanupActiveUpdate();
+        return;
+      }
     }
 
     if (AppConstants.platform == "gonk") {
@@ -3100,6 +3117,9 @@ UpdateManager.prototype = {
       if (!handleUpdateFailure(update, parts[1])) {
         handleFallbackToCompleteUpdate(update, true);
       }
+
+      update.QueryInterface(Ci.nsIWritablePropertyBag);
+      update.setProperty("stagingFailed", "true");
     }
     if (update.state == STATE_APPLIED && shouldUseService()) {
       writeStatusFile(getUpdatesDir(), update.state = STATE_APPLIED_SERVICE);

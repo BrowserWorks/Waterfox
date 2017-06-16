@@ -35,13 +35,6 @@
 #endif
 
 
-#define HB_SHAPER_IMPLEMENT(shaper) \
-	HB_SHAPER_DATA_ENSURE_DECLARE(shaper, face) \
-	HB_SHAPER_DATA_ENSURE_DECLARE(shaper, font)
-#include "hb-shaper-list.hh"
-#undef HB_SHAPER_IMPLEMENT
-
-
 static void
 hb_shape_plan_plan (hb_shape_plan_t    *shape_plan,
 		    const hb_feature_t *user_features,
@@ -438,11 +431,12 @@ static inline hb_bool_t
 hb_non_global_user_features_present (const hb_feature_t *user_features,
 				     unsigned int        num_user_features)
 {
-  while (num_user_features)
+  while (num_user_features) {
     if (user_features->start != 0 || user_features->end != (unsigned int) -1)
       return true;
-    else
-      num_user_features--, user_features++;
+    num_user_features--;
+    user_features++;
+  }
   return false;
 }
 

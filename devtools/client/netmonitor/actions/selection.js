@@ -4,20 +4,13 @@
 
 "use strict";
 
-const { getDisplayedRequests } = require("../selectors/index");
-const { SELECT_REQUEST, PRESELECT_REQUEST } = require("../constants");
+const { SELECT_REQUEST } = require("../constants");
+const {
+  getDisplayedRequests,
+  getSortedRequests,
+} = require("../selectors/index");
 
-/**
- * When a new request with a given id is added in future, select it immediately.
- * Used by the "Edit and Resend" feature, where we know in advance the ID of the
- * request, at a time when it wasn't sent yet.
- */
-function preselectRequest(id) {
-  return {
-    type: PRESELECT_REQUEST,
-    id
-  };
-}
+const PAGE_SIZE_ITEM_COUNT_RATIO = 5;
 
 /**
  * Select request with a given id.
@@ -25,11 +18,23 @@ function preselectRequest(id) {
 function selectRequest(id) {
   return {
     type: SELECT_REQUEST,
-    id
+    id,
   };
 }
 
-const PAGE_SIZE_ITEM_COUNT_RATIO = 5;
+/**
+ * Select request with a given index (sorted order)
+ */
+function selectRequestByIndex(index) {
+  return (dispatch, getState) => {
+    const requests = getSortedRequests(getState());
+    let itemId;
+    if (index >= 0 && index < requests.size) {
+      itemId = requests.get(index).id;
+    }
+    dispatch(selectRequest(itemId));
+  };
+}
 
 /**
  * Move the selection up to down according to the "delta" parameter. Possible values:
@@ -61,7 +66,7 @@ function selectDelta(delta) {
 }
 
 module.exports = {
-  preselectRequest,
   selectRequest,
+  selectRequestByIndex,
   selectDelta,
 };

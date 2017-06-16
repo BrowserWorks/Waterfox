@@ -259,11 +259,11 @@ class DirectoryLockImpl final
 
 public:
   DirectoryLockImpl(QuotaManager* aQuotaManager,
-                    Nullable<PersistenceType> aPersistenceType,
+                    const Nullable<PersistenceType>& aPersistenceType,
                     const nsACString& aGroup,
                     const OriginScope& aOriginScope,
-                    Nullable<bool> aIsApp,
-                    Nullable<Client::Type> aClientType,
+                    const Nullable<bool>& aIsApp,
+                    const Nullable<Client::Type>& aClientType,
                     bool aExclusive,
                     bool aInternal,
                     OpenDirectoryListener* aOpenListener);
@@ -920,7 +920,7 @@ public:
   }
 
 protected:
-  NormalOriginOperationBase(Nullable<PersistenceType> aPersistenceType,
+  NormalOriginOperationBase(const Nullable<PersistenceType>& aPersistenceType,
                             const OriginScope& aOriginScope,
                             bool aExclusive)
     : mPersistenceType(aPersistenceType)
@@ -1285,7 +1285,7 @@ ReportInternalError(const char* aFile, uint32_t aLine, const char* aStr)
 
   nsContentUtils::LogSimpleConsoleError(
     NS_ConvertUTF8toUTF16(nsPrintfCString(
-                          "Quota %s: %s:%lu", aStr, aFile, aLine)),
+                          "Quota %s: %s:%" PRIu32, aStr, aFile, aLine)),
     "quota");
 }
 
@@ -2116,11 +2116,11 @@ DeallocPQuotaParent(PQuotaParent* aActor)
  ******************************************************************************/
 
 DirectoryLockImpl::DirectoryLockImpl(QuotaManager* aQuotaManager,
-                                     Nullable<PersistenceType> aPersistenceType,
+                                     const Nullable<PersistenceType>& aPersistenceType,
                                      const nsACString& aGroup,
                                      const OriginScope& aOriginScope,
-                                     Nullable<bool> aIsApp,
-                                     Nullable<Client::Type> aClientType,
+                                     const Nullable<bool>& aIsApp,
+                                     const Nullable<Client::Type>& aClientType,
                                      bool aExclusive,
                                      bool aInternal,
                                      OpenDirectoryListener* aOpenListener)
@@ -2457,6 +2457,18 @@ ShutdownObserver::Observe(nsISupports* aSubject,
   MOZ_ASSERT(NS_IsMainThread());
   MOZ_ASSERT(!strcmp(aTopic, PROFILE_BEFORE_CHANGE_QM_OBSERVER_ID));
   MOZ_ASSERT(gInstance);
+
+  nsCOMPtr<nsIObserverService> observerService =
+    mozilla::services::GetObserverService();
+  if (NS_WARN_IF(!observerService)) {
+    return NS_ERROR_FAILURE;
+  }
+
+  // Unregister ourselves from the observer service first to make sure the
+  // nested event loop below will not cause re-entrancy issues.
+  Unused <<
+    observerService->RemoveObserver(this,
+                                    PROFILE_BEFORE_CHANGE_QM_OBSERVER_ID);
 
   QuotaManagerService* qms = QuotaManagerService::Get();
   MOZ_ASSERT(qms);
@@ -2808,11 +2820,11 @@ QuotaManager::IsShuttingDown()
 }
 
 auto
-QuotaManager::CreateDirectoryLock(Nullable<PersistenceType> aPersistenceType,
+QuotaManager::CreateDirectoryLock(const Nullable<PersistenceType>& aPersistenceType,
                                   const nsACString& aGroup,
                                   const OriginScope& aOriginScope,
-                                  Nullable<bool> aIsApp,
-                                  Nullable<Client::Type> aClientType,
+                                  const Nullable<bool>& aIsApp,
+                                  const Nullable<Client::Type>& aClientType,
                                   bool aExclusive,
                                   bool aInternal,
                                   OpenDirectoryListener* aOpenListener)
@@ -4334,7 +4346,7 @@ QuotaManager::EnsureStorageIsInitialized()
       // Set the page size first.
       if (kSQLitePageSizeOverride) {
         rv = connection->ExecuteSimpleSQL(
-          nsPrintfCString("PRAGMA page_size = %lu;", kSQLitePageSizeOverride)
+          nsPrintfCString("PRAGMA page_size = %" PRIu32 ";", kSQLitePageSizeOverride)
         );
         if (NS_WARN_IF(NS_FAILED(rv))) {
           return rv;
@@ -4422,9 +4434,9 @@ QuotaManager::OpenDirectory(PersistenceType aPersistenceType,
 }
 
 void
-QuotaManager::OpenDirectoryInternal(Nullable<PersistenceType> aPersistenceType,
+QuotaManager::OpenDirectoryInternal(const Nullable<PersistenceType>& aPersistenceType,
                                     const OriginScope& aOriginScope,
-                                    Nullable<Client::Type> aClientType,
+                                    const Nullable<Client::Type>& aClientType,
                                     bool aExclusive,
                                     OpenDirectoryListener* aOpenListener)
 {

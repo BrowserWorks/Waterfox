@@ -55,8 +55,8 @@
 #include "mozilla/DeclarationBlock.h"
 #include "mozilla/DeclarationBlockInlines.h"
 #include "mozilla/Unused.h"
-#include "mozilla/RestyleManagerHandle.h"
-#include "mozilla/RestyleManagerHandleInlines.h"
+#include "mozilla/RestyleManager.h"
+#include "mozilla/RestyleManagerInlines.h"
 
 using namespace mozilla;
 using namespace mozilla::dom;
@@ -930,7 +930,7 @@ nsSVGElement::WalkAnimatedContentStyleRules(nsRuleWalker* aRuleWalker)
   // whether this is a "no-animation restyle". (This should match the check
   // in nsHTMLCSSStyleSheet::RulesMatching(), where we determine whether to
   // apply the SMILOverrideStyle.)
-  RestyleManagerHandle restyleManager =
+  RestyleManager* restyleManager =
     aRuleWalker->PresContext()->RestyleManager();
   MOZ_ASSERT(restyleManager->IsGecko(),
              "stylo: Servo-backed style system should not be calling "
@@ -1131,16 +1131,39 @@ nsSVGElement::ClassName()
 }
 
 bool
-nsSVGElement::IsFocusableInternal(int32_t* aTabIndex, bool)
+nsSVGElement::IsSVGFocusable(bool* aIsFocusable, int32_t* aTabIndex)
 {
-  int32_t index = TabIndex();
+  nsIDocument* doc = GetComposedDoc();
+  if (!doc || doc->HasFlag(NODE_IS_EDITABLE)) {
+    // In designMode documents we only allow focusing the document.
+    if (aTabIndex) {
+      *aTabIndex = -1;
+    }
 
-  if (index == -1) {
-    return false;
+    *aIsFocusable = false;
+
+    return true;
   }
 
-  *aTabIndex = index;
-  return true;
+  int32_t tabIndex = TabIndex();
+
+  if (aTabIndex) {
+    *aTabIndex = tabIndex;
+  }
+
+  // If a tabindex is specified at all, or the default tabindex is 0, we're focusable
+  *aIsFocusable =
+    tabIndex >= 0 || HasAttr(kNameSpaceID_None, nsGkAtoms::tabindex);
+
+  return false;
+}
+
+bool
+nsSVGElement::IsFocusableInternal(int32_t* aTabIndex, bool aWithMouse)
+{
+  bool isFocusable = false;
+  IsSVGFocusable(&isFocusable, aTabIndex);
+  return isFocusable;
 }
 
 //------------------------------------------------------------------------

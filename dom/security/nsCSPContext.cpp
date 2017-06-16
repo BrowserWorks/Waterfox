@@ -1013,7 +1013,7 @@ nsCSPContext::SendReports(nsISupports* aBlockedContentSource,
 
     if (NS_FAILED(rv)) {
       const char16_t* params[] = { reportURIs[r].get() };
-      CSPCONTEXTLOG(("AsyncOpen failed for report URI %s", params[0]));
+      CSPCONTEXTLOG(("AsyncOpen failed for report URI %s", NS_ConvertUTF16toUTF8(params[0]).get()));
       logToConsole(u"triedToSendReport", params, ArrayLength(params),
                    aSourceFile, aScriptSample, aLineNum, 0, nsIScriptError::errorFlag);
     } else {
@@ -1228,6 +1228,10 @@ nsCSPContext::PermitsAncestry(nsIDocShell* aDocShell, bool* outPermitsAncestry)
   // iterate through each docShell parent item
   while (NS_SUCCEEDED(treeItem->GetParent(getter_AddRefs(parentTreeItem))) &&
          parentTreeItem != nullptr) {
+    // stop when reaching chrome
+    if (parentTreeItem->ItemType() == nsIDocShellTreeItem::typeChrome) {
+      break;
+    }
 
     nsIDocument* doc = parentTreeItem->GetDocument();
     NS_ASSERTION(doc, "Could not get nsIDocument from nsIDocShellTreeItem in nsCSPContext::PermitsAncestry");
@@ -1236,12 +1240,6 @@ nsCSPContext::PermitsAncestry(nsIDocShell* aDocShell, bool* outPermitsAncestry)
     currentURI = doc->GetDocumentURI();
 
     if (currentURI) {
-      // stop when reaching chrome
-      bool isChrome = false;
-      rv = currentURI->SchemeIs("chrome", &isChrome);
-      NS_ENSURE_SUCCESS(rv, rv);
-      if (isChrome) { break; }
-
       // delete the userpass from the URI.
       rv = currentURI->CloneIgnoringRef(getter_AddRefs(uriClone));
       NS_ENSURE_SUCCESS(rv, rv);
@@ -1374,7 +1372,7 @@ nsCSPContext::GetCSPSandboxFlags(uint32_t* aOutSandboxFlags)
       mPolicies[i]->toString(policy);
 
       CSPCONTEXTLOG(("nsCSPContext::GetCSPSandboxFlags, report only policy, ignoring sandbox in: %s",
-                    policy.get()));
+                     NS_ConvertUTF16toUTF8(policy).get()));
 
       const char16_t* params[] = { policy.get() };
       logToConsole(u"ignoringReportOnlyDirective", params, ArrayLength(params),

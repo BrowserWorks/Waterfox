@@ -401,8 +401,10 @@ static PRStatus
 rng_init(void)
 {
     PRUint8 bytes[PRNG_SEEDLEN * 2]; /* entropy + nonce */
+#ifndef UNSAFE_RNG_NO_URANDOM_SEED
     unsigned int numBytes;
     SECStatus rv = SECSuccess;
+#endif
 
     if (globalrng == NULL) {
         /* bytes needs to have enough space to hold
@@ -419,6 +421,7 @@ rng_init(void)
             return PR_FAILURE;
         }
 
+#ifndef UNSAFE_RNG_NO_URANDOM_SEED
         /* Try to get some seed data for the RNG */
         numBytes = (unsigned int)RNG_SystemRNG(bytes, sizeof bytes);
         PORT_Assert(numBytes == 0 || numBytes == sizeof bytes);
@@ -438,10 +441,11 @@ rng_init(void)
             globalrng = NULL;
             return PR_FAILURE;
         }
-
         if (rv != SECSuccess) {
             return PR_FAILURE;
         }
+#endif
+
         /* the RNG is in a valid state */
         globalrng->isValid = PR_TRUE;
         globalrng->isKatTest = PR_FALSE;

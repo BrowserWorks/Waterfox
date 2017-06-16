@@ -4,6 +4,12 @@
 # License, v. 2.0. If a copy of the MPL was not distributed with this
 # file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
+with Files('*Text*'):
+    BUG_COMPONENT = ('Core', 'Graphics: Text')
+
+with Files('*DWrite*'):
+    BUG_COMPONENT = ('Core', 'Graphics: Text')
+
 EXPORTS += [
     'ContextStateTracker.h',
     'DrawMode.h',
@@ -24,7 +30,6 @@ EXPORTS += [
     'gfxFontFeatures.h',
     'gfxFontInfoLoader.h',
     'gfxFontPrefLangList.h',
-    'gfxFontTest.h',
     'gfxFontUtils.h',
     'gfxFontVariations.h',
     'gfxGradientCache.h',
@@ -173,7 +178,8 @@ SOURCES += [
     # we could consider removing soon (affects Ubuntus older than 10.04 LTS)
     # which currently prevent it from joining UNIFIED_SOURCES.
     'gfxDrawable.cpp',
-    # gfxPlatform.cpp includes mac system header conflicting with point/size
+    # gfxFontUtils.cpp and gfxPlatform.cpp include mac system header conflicting with point/size
+    'gfxFontUtils.cpp',
     'gfxPlatform.cpp',
     'gfxPrefs.cpp',
     'PrintTarget.cpp',
@@ -191,8 +197,6 @@ UNIFIED_SOURCES += [
     'gfxFontFeatures.cpp',
     'gfxFontInfoLoader.cpp',
     'gfxFontMissingGlyphs.cpp',
-    'gfxFontTest.cpp',
-    'gfxFontUtils.cpp',
     'gfxGlyphExtents.cpp',
     'gfxGradientCache.cpp',
     'gfxGraphiteShaper.cpp',
@@ -243,11 +247,6 @@ include('/ipc/chromium/chromium-config.mozbuild')
 
 FINAL_LIBRARY = 'xul'
 
-GENERATED_FILES = [
-    'DeprecatedPremultiplyTables.h',
-]
-GENERATED_FILES['DeprecatedPremultiplyTables.h'].script = 'genTables.py:generate'
-
 LOCAL_INCLUDES += [
     '/dom/base',
     '/dom/workers',
@@ -274,7 +273,6 @@ if CONFIG['MOZ_WIDGET_TOOLKIT'] in ('gtk2', 'gtk3'):
     CXXFLAGS += CONFIG['MOZ_PANGO_CFLAGS']
 
 LOCAL_INCLUDES += CONFIG['SKIA_INCLUDES']
-LOCAL_INCLUDES += ['/media/libyuv/include']
 
 DEFINES['GRAPHITE2_STATIC'] = True
 

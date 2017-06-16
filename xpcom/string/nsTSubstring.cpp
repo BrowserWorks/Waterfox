@@ -7,6 +7,7 @@
 #include "mozilla/CheckedInt.h"
 #include "mozilla/double-conversion.h"
 #include "mozilla/MemoryReporting.h"
+#include "mozilla/Printf.h"
 
 using double_conversion::DoubleToStringConverter;
 
@@ -22,6 +23,8 @@ nsTSubstring_CharT::nsTSubstring_CharT(char_type* aData, size_type aLength,
     mLength(aLength),
     mFlags(aFlags)
 {
+  MOZ_RELEASE_ASSERT(CheckCapacity(aLength), "String is too large.");
+
   if (aFlags & F_OWNED) {
     STRING_STAT_INCREMENT(Adopt);
     MOZ_LOG_CTOR(mData, "StringAdopt", 1);
@@ -38,6 +41,20 @@ AsFixedString(const nsTSubstring_CharT* aStr)
   return static_cast<const nsTFixedString_CharT*>(aStr);
 }
 
+
+nsTSubstring_CharT::char_type
+nsTSubstring_CharT::First() const
+{
+  MOZ_RELEASE_ASSERT(mLength > 0, "|First()| called on an empty string");
+  return mData[0];
+}
+
+nsTSubstring_CharT::char_type
+nsTSubstring_CharT::Last() const
+{
+  MOZ_RELEASE_ASSERT(mLength > 0, "|Last()| called on an empty string");
+  return mData[mLength - 1];
+}
 
 /**
  * this function is called to prepare mData for writing.  the given capacity
@@ -906,29 +923,36 @@ nsTSubstring_CharT::StripChars(const char_type* aChars, uint32_t aOffset)
   mLength = to - mData;
 }
 
-int
-nsTSubstring_CharT::AppendFunc(void* aArg, const char* aStr, uint32_t aLen)
+struct MOZ_STACK_CLASS PrintfAppend_CharT : public mozilla::PrintfTarget
 {
-  self_type* self = static_cast<self_type*>(aArg);
-
-  // NSPR sends us the final null terminator even though we don't want it
-  if (aLen && aStr[aLen - 1] == '\0') {
-    --aLen;
+  explicit PrintfAppend_CharT(nsTSubstring_CharT* aString)
+    : mString(aString)
+  {
   }
 
-  self->AppendASCII(aStr, aLen);
+  bool append(const char* aStr, size_t aLen) override {
+    if (aLen == 0) {
+      return true;
+    }
 
-  return aLen;
-}
+    mString->AppendASCII(aStr, aLen);
+    return true;
+  }
+
+private:
+
+  nsTSubstring_CharT* mString;
+};
 
 void
 nsTSubstring_CharT::AppendPrintf(const char* aFormat, ...)
 {
+  PrintfAppend_CharT appender(this);
   va_list ap;
   va_start(ap, aFormat);
-  uint32_t r = PR_vsxprintf(AppendFunc, this, aFormat, ap);
-  if (r == (uint32_t)-1) {
-    MOZ_CRASH("Allocation or other failure in PR_vsxprintf");
+  bool r = appender.vprint(aFormat, ap);
+  if (!r) {
+    MOZ_CRASH("Allocation or other failure in PrintfTarget::print");
   }
   va_end(ap);
 }
@@ -936,9 +960,10 @@ nsTSubstring_CharT::AppendPrintf(const char* aFormat, ...)
 void
 nsTSubstring_CharT::AppendPrintf(const char* aFormat, va_list aAp)
 {
-  uint32_t r = PR_vsxprintf(AppendFunc, this, aFormat, aAp);
-  if (r == (uint32_t)-1) {
-    MOZ_CRASH("Allocation or other failure in PR_vsxprintf");
+  PrintfAppend_CharT appender(this);
+  bool r = appender.vprint(aFormat, aAp);
+  if (!r) {
+    MOZ_CRASH("Allocation or other failure in PrintfTarget::print");
   }
 }
 
@@ -1085,3 +1110,12 @@ nsTSubstring_CharT::SizeOfIncludingThisEvenIfShared(
   return aMallocSizeOf(this) + SizeOfExcludingThisEvenIfShared(aMallocSizeOf);
 }
 
+nsTSubstringSplitter_CharT nsTSubstring_CharT::Split(const nsTSubstring_CharT::char_type aChar)
+{
+  return nsTSubstringSplitter_CharT(this, aChar);
+}
+
+const nsTSubstring_CharT& nsTSubstringSplitter_CharT::nsTSubstringSplit_Iter::operator* () const
+{
+   return mObj.Get(mPos);
+}

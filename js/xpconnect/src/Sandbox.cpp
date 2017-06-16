@@ -20,7 +20,7 @@
 #include "nsJSUtils.h"
 #include "nsNetUtil.h"
 #include "nsNullPrincipal.h"
-#include "nsPrincipal.h"
+#include "nsExpandedPrincipal.h"
 #include "WrapperFactory.h"
 #include "xpcprivate.h"
 #include "xpc_make_class.h"
@@ -197,6 +197,7 @@ SandboxImport(JSContext* cx, unsigned argc, Value* vp)
             return false;
         }
     }
+    JS_MarkCrossZoneIdValue(cx, StringValue(funname));
 
     RootedId id(cx);
     if (!JS_StringToId(cx, funname, &id))
@@ -288,9 +289,12 @@ SandboxFetch(JSContext* cx, JS::HandleObject scope, const CallArgs& args)
     if (!global) {
         return false;
     }
+    dom::CallerType callerType = nsContentUtils::IsSystemCaller(cx) ?
+        dom::CallerType::System : dom::CallerType::NonSystem;
     ErrorResult rv;
     RefPtr<dom::Promise> response =
-        FetchRequest(global, Constify(request), Constify(options), rv);
+        FetchRequest(global, Constify(request), Constify(options),
+                     callerType, rv);
     if (rv.MaybeSetPendingException(cx)) {
         return false;
     }
@@ -1063,11 +1067,11 @@ xpc::CreateSandboxObject(JSContext* cx, MutableHandleValue vp, nsISupports* prin
         creationOptions.setSharedMemoryAndAtomicsEnabled(true);
 
     if (options.sameZoneAs)
-        creationOptions.setSameZoneAs(js::UncheckedUnwrap(options.sameZoneAs));
+        creationOptions.setExistingZone(js::UncheckedUnwrap(options.sameZoneAs));
     else if (options.freshZone)
-        creationOptions.setZone(JS::FreshZone);
+        creationOptions.setNewZoneInSystemZoneGroup();
     else
-        creationOptions.setZone(JS::SystemZone);
+        creationOptions.setSystemZone();
 
     creationOptions.setInvisibleToDebugger(options.invisibleToDebugger)
                    .setTrace(TraceXPCGlobal);

@@ -30,8 +30,6 @@ MOZ_XULRUNNER=
 MOZ_CAPTURE=1
 MOZ_RAW=1
 
-MOZ_RUST_MP4PARSE=1
-
 # use custom widget for html:select
 MOZ_USE_NATIVE_POPUP_WINDOWS=1
 
@@ -47,9 +45,6 @@ if test "$MOZ_NATIVE_DEVICES"; then
   MOZ_INSTALL_TRACKING=1
 fi
 fi
-
-# Mark as WebGL conformant
-MOZ_WEBGL_CONFORMANT=1
 
 # Use the low-memory GC tuning.
 export JS_GC_SMALL_CHUNK_SIZE=1

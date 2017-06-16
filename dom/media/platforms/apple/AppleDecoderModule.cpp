@@ -23,13 +23,9 @@ bool AppleDecoderModule::sIsVTAvailable = false;
 bool AppleDecoderModule::sIsVTHWAvailable = false;
 bool AppleDecoderModule::sCanUseHardwareVideoDecoder = true;
 
-AppleDecoderModule::AppleDecoderModule()
-{
-}
+AppleDecoderModule::AppleDecoderModule() { }
 
-AppleDecoderModule::~AppleDecoderModule()
-{
-}
+AppleDecoderModule::~AppleDecoderModule() { }
 
 /* static */
 void
@@ -74,7 +70,6 @@ AppleDecoderModule::CreateVideoDecoder(const CreateDecoderParams& aParams)
   RefPtr<MediaDataDecoder> decoder =
     new AppleVTDecoder(aParams.VideoConfig(),
                        aParams.mTaskQueue,
-                       aParams.mCallback,
                        aParams.mImageContainer);
   return decoder.forget();
 }
@@ -83,9 +78,7 @@ already_AddRefed<MediaDataDecoder>
 AppleDecoderModule::CreateAudioDecoder(const CreateDecoderParams& aParams)
 {
   RefPtr<MediaDataDecoder> decoder =
-    new AppleATDecoder(aParams.AudioConfig(),
-                       aParams.mTaskQueue,
-                       aParams.mCallback);
+    new AppleATDecoder(aParams.AudioConfig(), aParams.mTaskQueue);
   return decoder.forget();
 }
 
@@ -98,16 +91,6 @@ AppleDecoderModule::SupportsMimeType(const nsACString& aMimeType,
            aMimeType.EqualsLiteral("audio/mp4a-latm"))) ||
     (sIsVTAvailable && (aMimeType.EqualsLiteral("video/mp4") ||
                         aMimeType.EqualsLiteral("video/avc")));
-}
-
-PlatformDecoderModule::ConversionRequired
-AppleDecoderModule::DecoderNeedsConversion(const TrackInfo& aConfig) const
-{
-  if (aConfig.IsVideo()) {
-    return ConversionRequired::kNeedAVCC;
-  } else {
-    return ConversionRequired::kNeedNone;
-  }
 }
 
 } // namespace mozilla

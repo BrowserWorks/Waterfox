@@ -7,6 +7,7 @@
 #include "FlacDemuxer.h"
 
 #include "mozilla/Maybe.h"
+#include "mozilla/SizePrintfMacros.h"
 #include "mp4_demuxer/BitReader.h"
 #include "nsAutoPtr.h"
 #include "prenv.h"
@@ -41,7 +42,8 @@ namespace flac {
 #define FLAC_MAX_FRAME_SIZE (FLAC_MAX_FRAME_HEADER_SIZE \
                              +FLAC_MAX_BLOCKSIZE*FLAC_MAX_CHANNELS*3)
 
-class FrameHeader {
+class FrameHeader
+{
 public:
   const AudioInfo& Info() const { return mInfo; }
 
@@ -124,9 +126,8 @@ public:
     // 1- coded sample number if blocksize is variable or
     // 2- coded frame number if blocksize is known.
     // A frame is made of Blocksize sample.
-    mIndex = mVariableBlockSize
-      ? frame_or_sample_num
-      : frame_or_sample_num * mBlocksize;
+    mIndex = mVariableBlockSize ? frame_or_sample_num
+                                : frame_or_sample_num * mBlocksize;
 
     // Sample rate.
     if (sr_code < 12) {
@@ -160,7 +161,8 @@ public:
 
 private:
   friend class Frame;
-  enum {
+  enum
+  {
     FLAC_CHMODE_INDEPENDENT = 0,
     FLAC_CHMODE_LEFT_SIDE,
     FLAC_CHMODE_RIGHT_SIDE,
@@ -181,7 +183,8 @@ private:
 };
 
 const int FrameHeader::FlacSampleRateTable[16] =
-{ 0,
+{
+  0,
   88200, 176400, 192000,
   8000, 16000, 22050, 24000, 32000, 44100, 48000, 96000,
   0, 0, 0, 0
@@ -233,7 +236,8 @@ const uint8_t FrameHeader::CRC8Table[256] =
 
 // flac::Frame - Frame meta container used to parse and hold a frame
 // header and side info.
-class Frame {
+class Frame
+{
 public:
 
   // The FLAC signature is made of 14 bits set to 1; however the 15th bit is
@@ -385,7 +389,8 @@ private:
 
 };
 
-class FrameParser {
+class FrameParser
+{
 public:
 
   // Returns the currently parsed frame. Reset via EndFrameSession.
@@ -564,9 +569,7 @@ private:
 
 // FlacDemuxer
 
-FlacDemuxer::FlacDemuxer(MediaResource* aSource)
-  : mSource(aSource)
-{}
+FlacDemuxer::FlacDemuxer(MediaResource* aSource) : mSource(aSource) { }
 
 bool
 FlacDemuxer::InitInternal()
@@ -639,7 +642,8 @@ FlacTrackDemuxer::Init()
 
   // First check if we have a valid Flac start.
   char buffer[BUFFER_SIZE];
-  const uint8_t* ubuffer = reinterpret_cast<uint8_t*>(buffer); // only needed due to type constraints of ReadAt.
+  const uint8_t* ubuffer = // only needed due to type constraints of ReadAt.
+    reinterpret_cast<uint8_t*>(buffer);
   int64_t offset = 0;
 
   do {
@@ -735,7 +739,7 @@ FlacTrackDemuxer::Seek(const TimeUnit& aTime)
 TimeUnit
 FlacTrackDemuxer::FastSeek(const TimeUnit& aTime)
 {
-  LOG("FastSeek(%f) avgFrameLen=%f mParsedFramesDuration=%f offset=%lld",
+  LOG("FastSeek(%f) avgFrameLen=%f mParsedFramesDuration=%f offset=%" PRId64,
       aTime.ToSeconds(), AverageFrameLength(),
       mParsedFramesDuration.ToSeconds(), GetResourceOffset());
 
@@ -763,7 +767,8 @@ FlacTrackDemuxer::FastSeek(const TimeUnit& aTime)
   int64_t pivot =
     aTime.ToSeconds() * AverageFrameLength() + mParser->FirstFrame().Offset();
 
-  // Time in seconds where we can stop seeking and will continue using ScanUntil.
+  // Time in seconds where we can stop seeking and will continue using
+  // ScanUntil.
   static const int GAP_THRESHOLD = 5;
   int64_t first = mParser->FirstFrame().Offset();
   int64_t last = mSource.GetLength();
@@ -781,7 +786,7 @@ FlacTrackDemuxer::FastSeek(const TimeUnit& aTime)
     }
     timeSeekedTo = frame.Time();
 
-    LOGV("FastSeek: interation:%u found:%f @ %lld",
+    LOGV("FastSeek: interation:%u found:%f @ %" PRId64,
          iterations, timeSeekedTo.ToSeconds(), frame.Offset());
 
     if (lastFoundOffset && lastFoundOffset.ref() == frame.Offset()) {
@@ -818,7 +823,7 @@ FlacTrackDemuxer::FastSeek(const TimeUnit& aTime)
 TimeUnit
 FlacTrackDemuxer::ScanUntil(const TimeUnit& aTime)
 {
-  LOG("ScanUntil(%f avgFrameLen=%f mParsedFramesDuration=%f offset=%lld",
+  LOG("ScanUntil(%f avgFrameLen=%f mParsedFramesDuration=%f offset=%" PRId64,
       aTime.ToSeconds(), AverageFrameLength(),
       mParsedFramesDuration.ToSeconds(), mParser->CurrentFrame().Offset());
 
@@ -848,8 +853,8 @@ FlacTrackDemuxer::ScanUntil(const TimeUnit& aTime)
 RefPtr<FlacTrackDemuxer::SamplesPromise>
 FlacTrackDemuxer::GetSamples(int32_t aNumSamples)
 {
-  LOGV("GetSamples(%d) Begin offset=%lld mParsedFramesDuration=%f"
-       " mTotalFrameLen=%llu",
+  LOGV("GetSamples(%d) Begin offset=%" PRId64 " mParsedFramesDuration=%f"
+       " mTotalFrameLen=%" PRIu64,
        aNumSamples, GetResourceOffset(), mParsedFramesDuration.ToSeconds(),
        mTotalFrameLen);
 
@@ -868,8 +873,8 @@ FlacTrackDemuxer::GetSamples(int32_t aNumSamples)
     frames->mSamples.AppendElement(frame);
   }
 
-  LOGV("GetSamples() End mSamples.Length=%u aNumSamples=%d offset=%lld"
-       " mParsedFramesDuration=%f mTotalFrameLen=%llu",
+  LOGV("GetSamples() End mSamples.Length=%" PRIuSIZE " aNumSamples=%d offset=%" PRId64
+       " mParsedFramesDuration=%f mTotalFrameLen=%" PRIu64,
        frames->mSamples.Length(), aNumSamples, GetResourceOffset(),
        mParsedFramesDuration.ToSeconds(), mTotalFrameLen);
 
@@ -926,8 +931,8 @@ FlacTrackDemuxer::GetBuffered()
 const flac::Frame&
 FlacTrackDemuxer::FindNextFrame()
 {
-  LOGV("FindNext() Begin offset=%lld mParsedFramesDuration=%f"
-       " mTotalFrameLen=%llu",
+  LOGV("FindNext() Begin offset=%" PRId64 " mParsedFramesDuration=%f"
+       " mTotalFrameLen=%" PRIu64,
        GetResourceOffset(), mParsedFramesDuration.ToSeconds(), mTotalFrameLen);
 
   if (mParser->FindNextFrame(mSource)) {
@@ -942,8 +947,8 @@ FlacTrackDemuxer::FindNextFrame()
                          - mParser->FirstFrame().Offset()
                          + mParser->CurrentFrame().Size());
 
-    LOGV("FindNext() End time=%f offset=%lld mParsedFramesDuration=%f"
-         " mTotalFrameLen=%llu",
+    LOGV("FindNext() End time=%f offset=%" PRId64 " mParsedFramesDuration=%f"
+         " mTotalFrameLen=%" PRIu64,
          mParser->CurrentFrame().Time().ToSeconds(), GetResourceOffset(),
          mParsedFramesDuration.ToSeconds(), mTotalFrameLen);
   }
@@ -959,7 +964,7 @@ FlacTrackDemuxer::GetNextFrame(const flac::Frame& aFrame)
     return nullptr;
   }
 
-  LOG("GetNextFrame() Begin(time=%f offset=%lld size=%u)",
+  LOG("GetNextFrame() Begin(time=%f offset=%" PRId64 " size=%u)",
       aFrame.Time().ToSeconds(), aFrame.Offset(), aFrame.Size());
 
   const int64_t offset = aFrame.Offset();
@@ -976,7 +981,7 @@ FlacTrackDemuxer::GetNextFrame(const flac::Frame& aFrame)
 
   const uint32_t read = Read(frameWriter->Data(), offset, size);
   if (read != size) {
-    LOG("GetNextFrame() Exit read=%u frame->Size=%u", read, frame->Size());
+    LOG("GetNextFrame() Exit read=%u frame->Size=%" PRIuSIZE, read, frame->Size());
     return nullptr;
   }
 

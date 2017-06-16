@@ -54,47 +54,105 @@ add_task(function* () {
   sss.processHeader(Ci.nsISiteSecurityService.HEADER_HPKP, uri,
                     GOOD_MAX_AGE + VALID_PIN + BACKUP_PIN, sslStatus, 0);
 
-  Assert.ok(sss.isSecureHost(Ci.nsISiteSecurityService.HEADER_HSTS,
-                             "a.pinning2.example.com", 0),
+  Assert.ok(sss.isSecureURI(Ci.nsISiteSecurityService.HEADER_HSTS, uri, 0),
             "a.pinning2.example.com should be HSTS");
-  Assert.ok(sss.isSecureHost(Ci.nsISiteSecurityService.HEADER_HPKP,
-                             "a.pinning2.example.com", 0),
+  Assert.ok(sss.isSecureURI(Ci.nsISiteSecurityService.HEADER_HPKP, uri, 0),
             "a.pinning2.example.com should be HPKP");
 
   yield ForgetAboutSite.removeDataFromDomain("a.pinning2.example.com");
 
-  Assert.ok(!sss.isSecureHost(Ci.nsISiteSecurityService.HEADER_HSTS,
-                              "a.pinning2.example.com", 0),
+  Assert.ok(!sss.isSecureURI(Ci.nsISiteSecurityService.HEADER_HSTS, uri, 0),
             "a.pinning2.example.com should not be HSTS now");
-  Assert.ok(!sss.isSecureHost(Ci.nsISiteSecurityService.HEADER_HPKP,
-                              "a.pinning2.example.com", 0),
+  Assert.ok(!sss.isSecureURI(Ci.nsISiteSecurityService.HEADER_HPKP, uri, 0),
             "a.pinning2.example.com should not be HPKP now");
 });
 
-// TODO (bug 1290529): the platform does not support this yet.
 // Test the case of processing HSTS and HPKP headers for a.pinning2.example.com,
 // using "Forget About Site" on example.com, and then checking that the platform
-// doesn't consider the subdomain to be HSTS or HPKP any longer.
+// doesn't consider the subdomain to be HSTS or HPKP any longer. Also test that
+// unrelated sites don't also get removed.
 add_task(function* () {
   sss.processHeader(Ci.nsISiteSecurityService.HEADER_HSTS, uri, GOOD_MAX_AGE,
                     sslStatus, 0);
   sss.processHeader(Ci.nsISiteSecurityService.HEADER_HPKP, uri,
                     GOOD_MAX_AGE + VALID_PIN + BACKUP_PIN, sslStatus, 0);
 
-  Assert.ok(sss.isSecureHost(Ci.nsISiteSecurityService.HEADER_HSTS,
-                             "a.pinning2.example.com", 0),
+  Assert.ok(sss.isSecureURI(Ci.nsISiteSecurityService.HEADER_HSTS, uri, 0),
             "a.pinning2.example.com should be HSTS (subdomain case)");
-  Assert.ok(sss.isSecureHost(Ci.nsISiteSecurityService.HEADER_HPKP,
-                             "a.pinning2.example.com", 0),
+  Assert.ok(sss.isSecureURI(Ci.nsISiteSecurityService.HEADER_HPKP, uri, 0),
             "a.pinning2.example.com should be HPKP (subdomain case)");
+
+  // Add an unrelated site to HSTS.  Not HPKP because we have no valid keys for
+  // example.org.
+  let unrelatedURI = Services.io.newURI("https://example.org");
+  sss.processHeader(Ci.nsISiteSecurityService.HEADER_HSTS, unrelatedURI,
+                    GOOD_MAX_AGE, sslStatus, 0);
+  Assert.ok(sss.isSecureURI(Ci.nsISiteSecurityService.HEADER_HSTS,
+                             unrelatedURI, 0), "example.org should be HSTS");
 
   yield ForgetAboutSite.removeDataFromDomain("example.com");
 
-  // TODO (bug 1290529):
-  // Assert.ok(!sss.isSecureHost(Ci.nsISiteSecurityService.HEADER_HSTS,
-  //                             "a.pinning2.example.com", 0),
-  //           "a.pinning2.example.com should not be HSTS now (subdomain case)");
-  // Assert.ok(!sss.isSecureHost(Ci.nsISiteSecurityService.HEADER_HPKP,
-  //                             "a.pinning2.example.com", 0),
-  //           "a.pinning2.example.com should not be HPKP now (subdomain case)");
+  Assert.ok(!sss.isSecureURI(Ci.nsISiteSecurityService.HEADER_HSTS, uri, 0),
+            "a.pinning2.example.com should not be HSTS now (subdomain case)");
+  Assert.ok(!sss.isSecureURI(Ci.nsISiteSecurityService.HEADER_HPKP, uri, 0),
+            "a.pinning2.example.com should not be HPKP now (subdomain case)");
+
+  Assert.ok(sss.isSecureURI(Ci.nsISiteSecurityService.HEADER_HSTS,
+                             unrelatedURI, 0),
+            "example.org should still be HSTS");
+});
+
+// Test the case of processing HSTS and HPKP headers for a.pinning2.example.com
+// with various originAttributes, using "Forget About Site" on example.com, and
+// then checking that the platform doesn't consider the subdomain to be HSTS or
+// HPKP for any originAttributes any longer. Also test that unrelated sites
+// don't also get removed.
+add_task(function* () {
+  let originAttributesList = [
+    {},
+    { userContextId: 1 },
+    { firstPartyDomain: "foo.com" },
+    { userContextId: 1, firstPartyDomain: "foo.com" },
+  ];
+
+  let unrelatedURI = Services.io.newURI("https://example.org");
+
+  for (let originAttributes of originAttributesList) {
+    sss.processHeader(Ci.nsISiteSecurityService.HEADER_HSTS, uri, GOOD_MAX_AGE,
+                      sslStatus, 0, originAttributes);
+    sss.processHeader(Ci.nsISiteSecurityService.HEADER_HPKP, uri,
+                      GOOD_MAX_AGE + VALID_PIN + BACKUP_PIN, sslStatus, 0,
+                      originAttributes);
+
+    Assert.ok(sss.isSecureURI(Ci.nsISiteSecurityService.HEADER_HSTS, uri,
+                               0, originAttributes),
+              "a.pinning2.example.com should be HSTS (originAttributes case)");
+    Assert.ok(sss.isSecureURI(Ci.nsISiteSecurityService.HEADER_HPKP, uri,
+                               0, originAttributes),
+              "a.pinning2.example.com should be HPKP (originAttributes case)");
+
+    // Add an unrelated site to HSTS.  Not HPKP because we have no valid keys.
+    sss.processHeader(Ci.nsISiteSecurityService.HEADER_HSTS, unrelatedURI,
+                      GOOD_MAX_AGE, sslStatus, 0, originAttributes);
+    Assert.ok(sss.isSecureURI(Ci.nsISiteSecurityService.HEADER_HSTS,
+                              unrelatedURI, 0, originAttributes),
+              "example.org should be HSTS (originAttributes case)");
+  }
+
+  yield ForgetAboutSite.removeDataFromDomain("example.com");
+
+  for (let originAttributes of originAttributesList) {
+    Assert.ok(!sss.isSecureURI(Ci.nsISiteSecurityService.HEADER_HSTS, uri,
+                                0, originAttributes),
+              "a.pinning2.example.com should not be HSTS now " +
+              "(originAttributes case)");
+    Assert.ok(!sss.isSecureURI(Ci.nsISiteSecurityService.HEADER_HPKP, uri,
+                                0, originAttributes),
+              "a.pinning2.example.com should not be HPKP now " +
+              "(originAttributes case)");
+
+    Assert.ok(sss.isSecureURI(Ci.nsISiteSecurityService.HEADER_HSTS,
+                              unrelatedURI, 0, originAttributes),
+              "example.org should still be HSTS (originAttributes case)");
+  }
 });

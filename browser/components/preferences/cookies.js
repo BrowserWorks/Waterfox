@@ -10,6 +10,8 @@ Components.utils.import("resource://gre/modules/PluralForm.jsm");
 Components.utils.import("resource://gre/modules/Services.jsm")
 Components.utils.import("resource://gre/modules/XPCOMUtils.jsm");
 
+XPCOMUtils.defineLazyModuleGetter(this, "SiteDataManager",
+                                  "resource:///modules/SiteDataManager.jsm");
 XPCOMUtils.defineLazyModuleGetter(this, "ContextualIdentityService",
                                   "resource://gre/modules/ContextualIdentityService.jsm");
 
@@ -29,6 +31,11 @@ var gCookiesWindow = {
 
     this._bundle = document.getElementById("bundlePreferences");
     this._tree = document.getElementById("cookiesList");
+
+    let removeAllCookies = document.getElementById("removeAllCookies");
+    removeAllCookies.setAttribute("accesskey", this._bundle.getString("removeAllCookies.accesskey"));
+    let removeSelectedCookies = document.getElementById("removeSelectedCookies");
+    removeSelectedCookies.setAttribute("accesskey", this._bundle.getString("removeSelectedCookies.accesskey"));
 
     this._populateList(true);
 
@@ -76,21 +83,12 @@ var gCookiesWindow = {
                                                aCookieB.originAttributes);
   },
 
-  _isPrivateCookie(aCookie) {
-      let { userContextId } = aCookie.originAttributes;
-      if (!userContextId) {
-        // Default identity is public.
-        return false;
-      }
-      return !ContextualIdentityService.getIdentityFromId(userContextId).public;
-  },
-
   observe(aCookie, aTopic, aData) {
     if (aTopic != "cookie-changed")
       return;
 
     if (aCookie instanceof Components.interfaces.nsICookie) {
-      if (this._isPrivateCookie(aCookie)) {
+      if (SiteDataManager.isPrivateCookie(aCookie)) {
         return;
       }
 
@@ -484,7 +482,7 @@ var gCookiesWindow = {
     while (e.hasMoreElements()) {
       var cookie = e.getNext();
       if (cookie && cookie instanceof Components.interfaces.nsICookie) {
-        if (this._isPrivateCookie(cookie)) {
+        if (SiteDataManager.isPrivateCookie(cookie)) {
           continue;
         }
 
@@ -571,7 +569,7 @@ var gCookiesWindow = {
       }
     }
 
-    let buttonLabel = this._bundle.getString("removeSelectedCookies");
+    let buttonLabel = this._bundle.getString("removeSelectedCookies.label");
     let removeSelectedCookies = document.getElementById("removeSelectedCookies");
     removeSelectedCookies.label = PluralForm.get(selectedCookieCount, buttonLabel)
                                             .replace("#1", selectedCookieCount);
@@ -877,7 +875,17 @@ var gCookiesWindow = {
   },
 
   _updateRemoveAllButton: function gCookiesWindow__updateRemoveAllButton() {
-    document.getElementById("removeAllCookies").disabled = this._view._rowCount == 0;
+    let removeAllCookies = document.getElementById("removeAllCookies");
+    removeAllCookies.disabled = this._view._rowCount == 0;
+
+    let labelStringID = "removeAllCookies.label";
+    let accessKeyStringID = "removeAllCookies.accesskey";
+    if (this._view._filtered) {
+      labelStringID = "removeAllShownCookies.label";
+      accessKeyStringID = "removeAllShownCookies.accesskey";
+    }
+    removeAllCookies.setAttribute("label", this._bundle.getString(labelStringID));
+    removeAllCookies.setAttribute("accesskey", this._bundle.getString(accessKeyStringID));
   },
 
   filter() {

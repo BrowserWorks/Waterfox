@@ -136,11 +136,21 @@ ImageListener::OnStopRequest(nsIRequest* aRequest, nsISupports* aCtxt, nsresult 
 }
 
 ImageDocument::ImageDocument()
-  : MediaDocument(),
-    mOriginalZoomLevel(1.0)
+  : MediaDocument()
+  , mVisibleWidth(0.0)
+  , mVisibleHeight(0.0)
+  , mImageWidth(0)
+  , mImageHeight(0)
+  , mResizeImageByDefault(false)
+  , mClickResizingEnabled(false)
+  , mImageIsOverflowingHorizontally(false)
+  , mImageIsOverflowingVertically(false)
+  , mImageIsResized(false)
+  , mShouldResize(false)
+  , mFirstResize(false)
+  , mObservingImageLoader(false)
+  , mOriginalZoomLevel(1.0)
 {
-  // NOTE! nsDocument::operator new() zeroes out all members, so don't
-  // bother initializing members to 0.
 }
 
 ImageDocument::~ImageDocument()
@@ -540,10 +550,20 @@ ImageDocument::SetModeClass(eModeClasses mode)
 nsresult
 ImageDocument::OnSizeAvailable(imgIRequest* aRequest, imgIContainer* aImage)
 {
+  int32_t oldWidth = mImageWidth;
+  int32_t oldHeight = mImageHeight;
+
   // Styles have not yet been applied, so we don't know the final size. For now,
   // default to the image's intrinsic size.
   aImage->GetWidth(&mImageWidth);
   aImage->GetHeight(&mImageHeight);
+
+  // Multipart images send size available for each part; ignore them if it
+  // doesn't change our size. (We may not even support changing size in
+  // multipart images in the future.)
+  if (oldWidth == mImageWidth && oldHeight == mImageHeight) {
+    return NS_OK;
+  }
 
   nsCOMPtr<nsIRunnable> runnable =
     NewRunnableMethod(this, &ImageDocument::DefaultCheckOverflowing);

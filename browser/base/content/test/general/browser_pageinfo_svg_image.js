@@ -2,13 +2,12 @@ function test() {
   waitForExplicitFinish();
 
   gBrowser.selectedTab = gBrowser.addTab();
-  gBrowser.selectedBrowser.addEventListener("load", function loadListener() {
-    gBrowser.selectedBrowser.removeEventListener("load", loadListener, true);
+
+  gBrowser.selectedBrowser.addEventListener("load", function() {
     var pageInfo = BrowserPageInfo(gBrowser.selectedBrowser.currentURI.spec,
                                    "mediaTab");
 
-    pageInfo.addEventListener("load", function loadListener2() {
-      pageInfo.removeEventListener("load", loadListener2, true);
+    pageInfo.addEventListener("load", function() {
       pageInfo.onFinished.push(function() {
         executeSoon(function() {
           var imageTree = pageInfo.document.getElementById("imagetree");
@@ -30,8 +29,8 @@ function test() {
           finish();
         });
       });
-    }, true);
-  }, true);
+    }, {capture: true, once: true});
+  }, {capture: true, once: true});
 
   content.location =
     "https://example.com/browser/browser/base/content/test/general/svg_image.html";

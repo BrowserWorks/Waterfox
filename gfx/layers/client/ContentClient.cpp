@@ -63,6 +63,7 @@ ContentClient::CreateContentClient(CompositableForwarder* aForwarder)
   if (backend != LayersBackend::LAYERS_OPENGL &&
       backend != LayersBackend::LAYERS_D3D9 &&
       backend != LayersBackend::LAYERS_D3D11 &&
+      backend != LayersBackend::LAYERS_WR &&
       backend != LayersBackend::LAYERS_BASIC) {
     return nullptr;
   }
@@ -82,9 +83,7 @@ ContentClient::CreateContentClient(CompositableForwarder* aForwarder)
       !gfxVars::UseXRender())
 #endif
   {
-    useDoubleBuffering = (LayerManagerComposite::SupportsDirectTexturing() &&
-                         backend != LayersBackend::LAYERS_D3D9) ||
-                         backend == LayersBackend::LAYERS_BASIC;
+    useDoubleBuffering = backend == LayersBackend::LAYERS_BASIC;
   }
 
   if (useDoubleBuffering || gfxEnv::ForceDoubleBuffering()) {
@@ -321,6 +320,7 @@ ContentClientRemoteBuffer::CreateBackBuffer(const IntRect& aBufferRect)
     AbortTextureClientCreation();
     return;
   }
+  mTextureClient->EnableBlockingReadLock();
 
   if (mTextureFlags & TextureFlags::COMPONENT_ALPHA) {
     mTextureClientOnWhite = mTextureClient->CreateSimilar(
@@ -332,6 +332,9 @@ ContentClientRemoteBuffer::CreateBackBuffer(const IntRect& aBufferRect)
       AbortTextureClientCreation();
       return;
     }
+    // We don't enable the readlock for the white buffer since we always
+    // use them together and waiting on the lock for the black
+    // should be sufficient.
   }
 }
 
@@ -409,16 +412,50 @@ ContentClientRemoteBuffer::Updated(const nsIntRegion& aRegionToDraw,
     t->mPictureRect = nsIntRect(0, 0, size.width, size.height);
     GetForwarder()->UseTextures(this, textures);
   }
+  // This forces a synchronous transaction, so we can swap buffers now
+  // and know that we'll have sole ownership of the old front buffer
+  // by the time we paint next.
   mForwarder->UpdateTextureRegion(this,
                                   ThebesBufferData(BufferRect(),
                                                    BufferRotation()),
                                   updatedRegion);
+  SwapBuffers(updatedRegion);
 }
 
 void
 ContentClientRemoteBuffer::SwapBuffers(const nsIntRegion& aFrontUpdatedRegion)
 {
   mFrontAndBackBufferDiffer = true;
+}
+
+bool
+ContentClientRemoteBuffer::LockBuffers()
+{
+  if (mTextureClient) {
+    bool locked = mTextureClient->Lock(OpenMode::OPEN_READ_WRITE);
+    if (!locked) {
+      return false;
+    }
+  }
+  if (mTextureClientOnWhite) {
+    bool locked = mTextureClientOnWhite->Lock(OpenMode::OPEN_READ_WRITE);
+    if (!locked) {
+      UnlockBuffers();
+      return false;
+    }
+  }
+  return true;
+}
+
+void
+ContentClientRemoteBuffer::UnlockBuffers()
+{
+  if (mTextureClient && mTextureClient->IsLocked()) {
+    mTextureClient->Unlock();
+  }
+  if (mTextureClientOnWhite && mTextureClientOnWhite->IsLocked()) {
+    mTextureClientOnWhite->Unlock();
+  }
 }
 
 void
@@ -524,15 +561,6 @@ ContentClientDoubleBuffered::BeginPaint()
 void
 ContentClientDoubleBuffered::FinalizeFrame(const nsIntRegion& aRegionToDraw)
 {
-  if (mTextureClient) {
-    DebugOnly<bool> locked = mTextureClient->Lock(OpenMode::OPEN_READ_WRITE);
-    MOZ_ASSERT(locked);
-  }
-  if (mTextureClientOnWhite) {
-    DebugOnly<bool> locked = mTextureClientOnWhite->Lock(OpenMode::OPEN_READ_WRITE);
-    MOZ_ASSERT(locked);
-  }
-
   if (!mFrontAndBackBufferDiffer) {
     MOZ_ASSERT(!mDidSelfCopy, "If we have to copy the world, then our buffers are different, right?");
     return;
@@ -648,19 +676,6 @@ ContentClientDoubleBuffered::UpdateDestinationFrom(const RotatedBuffer& aSource,
       destDT->Flush();
       ReturnDrawTargetToBuffer(destDT);
     }
-  }
-}
-
-void
-ContentClientSingleBuffered::FinalizeFrame(const nsIntRegion& aRegionToDraw)
-{
-  if (mTextureClient) {
-    DebugOnly<bool> locked = mTextureClient->Lock(OpenMode::OPEN_READ_WRITE);
-    MOZ_ASSERT(locked);
-  }
-  if (mTextureClientOnWhite) {
-    DebugOnly<bool> locked = mTextureClientOnWhite->Lock(OpenMode::OPEN_READ_WRITE);
-    MOZ_ASSERT(locked);
   }
 }
 

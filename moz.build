@@ -22,9 +22,15 @@ DIRS += [
     'config',
     'python',
     'taskcluster',
+    'testing/mozbase',
 ]
 
 if not CONFIG['JS_STANDALONE']:
+    # These python manifests are included here so they get picked up without an objdir
+    PYTHON_UNITTEST_MANIFESTS += [
+        'testing/marionette/harness/marionette_harness/tests/harness_unit/python.ini',
+    ]
+
     CONFIGURE_SUBST_FILES += [
         'tools/update-packaging/Makefile',
     ]

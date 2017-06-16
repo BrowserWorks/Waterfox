@@ -1359,6 +1359,7 @@ var BookmarkingUI = {
       return;
     }
 
+    this._initMobileBookmarks(document.getElementById("BMB_mobileBookmarks"));
     this._initRecentBookmarks(document.getElementById("BMB_recentBookmarks"),
                               "subviewbutton");
 
@@ -1396,6 +1397,28 @@ var BookmarkingUI = {
   },
 
   RECENTLY_BOOKMARKED_PREF: "browser.bookmarks.showRecentlyBookmarked",
+
+  // Set by sync after syncing bookmarks successfully once.
+  MOBILE_BOOKMARKS_PREF: "browser.bookmarks.showMobileBookmarks",
+
+  _shouldShowMobileBookmarks() {
+    try {
+      return Services.prefs.getBoolPref(this.MOBILE_BOOKMARKS_PREF);
+    } catch (e) {}
+    // No pref set (or invalid pref set), look for a mobile bookmarks left pane query.
+    const organizerQueryAnno = "PlacesOrganizer/OrganizerQuery";
+    const mobileBookmarksAnno = "MobileBookmarks";
+    let shouldShow = PlacesUtils.annotations.getItemsWithAnnotation(organizerQueryAnno, {}).filter(
+      id => PlacesUtils.annotations.getItemAnnotation(id, organizerQueryAnno) == mobileBookmarksAnno
+    ).length > 0;
+    // Sync will change this pref if/when it adds a mobile bookmarks query.
+    Services.prefs.setBoolPref(this.MOBILE_BOOKMARKS_PREF, shouldShow);
+    return shouldShow;
+  },
+
+  _initMobileBookmarks(mobileMenuItem) {
+    mobileMenuItem.hidden = !this._shouldShowMobileBookmarks();
+  },
 
   _initRecentBookmarks(aHeaderItem, aExtraCSSClass) {
     this._populateRecentBookmarks(aHeaderItem, aExtraCSSClass);
@@ -1727,6 +1750,7 @@ var BookmarkingUI = {
 
     this._updateBookmarkPageMenuItem();
     PlacesCommandHook.updateBookmarkAllTabsCommand();
+    this._initMobileBookmarks(document.getElementById("menu_mobileBookmarks"));
     this._initRecentBookmarks(document.getElementById("menu_recentBookmarks"));
   },
 

@@ -1,34 +1,19 @@
-var Debugger =
-/******/ (function(modules) { // webpackBootstrap
+(function webpackUniversalModuleDefinition(root, factory) {
+	if(typeof exports === 'object' && typeof module === 'object')
+		module.exports = factory();
+	else if(typeof define === 'function' && define.amd)
+		define([], factory);
+	else {
+		var a = factory();
+		for(var i in a) (typeof exports === 'object' ? exports : root)[i] = a[i];
+	}
+})(this, function() {
+return /******/ (function(modules) { // webpackBootstrap
 /******/ 	// The module cache
 /******/ 	var installedModules = {};
 /******/
 /******/ 	// The require function
 /******/ 	function __webpack_require__(moduleId) {
-/******/ 		// SingleModulePlugin
-/******/ 		const smpCache = this.smpCache = this.smpCache || {};
-/******/ 		const smpMap = this.smpMap = this.smpMap || new Map();
-/******/ 		function sanitizeString(text) {
-/******/ 		   return text.replace(/__webpack_require__\(\d+\)/g,"");
-/******/ 		}
-/******/ 		function getModuleBody(id) {
-/******/ 		  if (smpCache.hasOwnProperty(id)) {
-/******/ 		    return smpCache[id];
-/******/ 		  }
-/******/
-/******/ 		  const body = sanitizeString(String(modules[id]));
-/******/ 		  smpCache[id] = body;
-/******/ 		  return body;
-/******/ 		}
-/******/ 		if (!installedModules[moduleId]) {
-/******/ 			const body = getModuleBody(moduleId);
-/******/ 			if (smpMap.has(body)) {
-/******/ 				installedModules[moduleId] = installedModules[smpMap.get(body)];
-/******/ 			}
-/******/ 			else {
-/******/ 				smpMap.set(body, moduleId)
-/******/ 			}
-/******/ 		}
 /******/
 /******/ 		// Check if module is in cache
 /******/ 		if(installedModules[moduleId])
@@ -70,7 +55,7 @@ var Debugger =
 /***/ 0:
 /***/ function(module, exports, __webpack_require__) {
 
-	module.exports = __webpack_require__(556);
+	module.exports = __webpack_require__(814);
 
 
 /***/ },
@@ -92,7 +77,7 @@ var Debugger =
 
 /***/ },
 
-/***/ 118:
+/***/ 127:
 /***/ function(module, exports) {
 
 	function networkRequest(url, opts) {
@@ -128,257 +113,14 @@ var Debugger =
 
 /***/ },
 
-/***/ 233:
+/***/ 223:
 /***/ function(module, exports) {
 
-	var _slicedToArray = function () { function sliceIterator(arr, i) { var _arr = []; var _n = true; var _d = false; var _e = undefined; try { for (var _i = arr[Symbol.iterator](), _s; !(_n = (_s = _i.next()).done); _n = true) { _arr.push(_s.value); if (i && _arr.length === i) break; } } catch (err) { _d = true; _e = err; } finally { try { if (!_n && _i["return"]) _i["return"](); } finally { if (_d) throw _e; } } return _arr; } return function (arr, i) { if (Array.isArray(arr)) { return arr; } else if (Symbol.iterator in Object(arr)) { return sliceIterator(arr, i); } else { throw new TypeError("Invalid attempt to destructure non-iterable instance"); } }; }();
+	"use strict";
 	
-	function _toConsumableArray(arr) { if (Array.isArray(arr)) { for (var i = 0, arr2 = Array(arr.length); i < arr.length; i++) { arr2[i] = arr[i]; } return arr2; } else { return Array.from(arr); } }
-	
-	/* -*- indent-tabs-mode: nil; js-indent-level: 2 -*- */
-	/* vim: set ft=javascript ts=2 et sw=2 tw=80: */
-	/* This Source Code Form is subject to the terms of the Mozilla Public
-	 * License, v. 2.0. If a copy of the MPL was not distributed with this
-	 * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
-	
-	/**
-	 * Utils for utils, by utils
-	 * @module utils/utils
-	 */
-	
-	/**
-	 * @memberof utils/utils
-	 * @static
-	 */
-	function handleError(err) {
-	  console.log("ERROR: ", err);
-	}
-	
-	/**
-	 * @memberof utils/utils
-	 * @static
-	 */
-	function promisify(context, method) {
-	  for (var _len = arguments.length, args = Array(_len > 2 ? _len - 2 : 0), _key = 2; _key < _len; _key++) {
-	    args[_key - 2] = arguments[_key];
-	  }
-	
-	  return new Promise((resolve, reject) => {
-	    args.push(response => {
-	      if (response.error) {
-	        reject(response);
-	      } else {
-	        resolve(response);
-	      }
-	    });
-	    method.apply(context, args);
-	  });
-	}
-	
-	/**
-	 * @memberof utils/utils
-	 * @static
-	 */
-	function truncateStr(str, size) {
-	  if (str.length > size) {
-	    return `${ str.slice(0, size) }...`;
-	  }
-	  return str;
-	}
-	
-	/**
-	 * @memberof utils/utils
-	 * @static
-	 */
-	function endTruncateStr(str, size) {
-	  if (str.length > size) {
-	    return `...${ str.slice(str.length - size) }`;
-	  }
-	  return str;
-	}
-	
-	var msgId = 1;
-	/**
-	 * @memberof utils/utils
-	 * @static
-	 */
-	function workerTask(worker, method) {
-	  return function () {
-	    for (var _len2 = arguments.length, args = Array(_len2), _key2 = 0; _key2 < _len2; _key2++) {
-	      args[_key2] = arguments[_key2];
-	    }
-	
-	    return new Promise((resolve, reject) => {
-	      var id = msgId++;
-	      worker.postMessage({ id, method, args });
-	
-	      var listener = (_ref) => {
-	        var result = _ref.data;
-	
-	        if (result.id !== id) {
-	          return;
-	        }
-	
-	        worker.removeEventListener("message", listener);
-	        if (result.error) {
-	          reject(result.error);
-	        } else {
-	          resolve(result.response);
-	        }
-	      };
-	
-	      worker.addEventListener("message", listener);
-	    });
-	  };
-	}
-	
-	/**
-	 * Interleaves two arrays element by element, returning the combined array, like
-	 * a zip. In the case of arrays with different sizes, undefined values will be
-	 * interleaved at the end along with the extra values of the larger array.
-	 *
-	 * @param Array a
-	 * @param Array b
-	 * @returns Array
-	 *          The combined array, in the form [a1, b1, a2, b2, ...]
-	 * @memberof utils/utils
-	 * @static
-	 */
-	function zip(a, b) {
-	  if (!b) {
-	    return a;
-	  }
-	  if (!a) {
-	    return b;
-	  }
-	  var pairs = [];
-	  for (var i = 0, aLength = a.length, bLength = b.length; i < aLength || i < bLength; i++) {
-	    pairs.push([a[i], b[i]]);
-	  }
-	  return pairs;
-	}
-	
-	/**
-	 * Converts an object into an array with 2-element arrays as key/value
-	 * pairs of the object. `{ foo: 1, bar: 2}` would become
-	 * `[[foo, 1], [bar 2]]` (order not guaranteed);
-	 *
-	 * @returns array
-	 * @memberof utils/utils
-	 * @static
-	 */
-	function entries(obj) {
-	  return Object.keys(obj).map(k => [k, obj[k]]);
-	}
-	
-	/**
-	 * @memberof utils/utils
-	 * @static
-	 */
-	function mapObject(obj, iteratee) {
-	  return toObject(entries(obj).map((_ref2) => {
-	    var _ref3 = _slicedToArray(_ref2, 2),
-	        key = _ref3[0],
-	        value = _ref3[1];
-	
-	    return [key, iteratee(key, value)];
-	  }));
-	}
-	
-	/**
-	 * Takes an array of 2-element arrays as key/values pairs and
-	 * constructs an object using them.
-	 * @memberof utils/utils
-	 * @static
-	 */
-	function toObject(arr) {
-	  var obj = {};
-	  for (var pair of arr) {
-	    obj[pair[0]] = pair[1];
-	  }
-	  return obj;
-	}
-	
-	/**
-	 * Composes the given functions into a single function, which will
-	 * apply the results of each function right-to-left, starting with
-	 * applying the given arguments to the right-most function.
-	 * `compose(foo, bar, baz)` === `args => foo(bar(baz(args)`
-	 *
-	 * @param ...function funcs
-	 * @returns function
-	 * @memberof utils/utils
-	 * @static
-	 */
-	function compose() {
-	  for (var _len3 = arguments.length, funcs = Array(_len3), _key3 = 0; _key3 < _len3; _key3++) {
-	    funcs[_key3] = arguments[_key3];
-	  }
-	
-	  return function () {
-	    for (var _len4 = arguments.length, args = Array(_len4), _key4 = 0; _key4 < _len4; _key4++) {
-	      args[_key4] = arguments[_key4];
-	    }
-	
-	    var initialValue = funcs[funcs.length - 1].apply(null, args);
-	    var leftFuncs = funcs.slice(0, -1);
-	    return leftFuncs.reduceRight((composed, f) => f(composed), initialValue);
-	  };
-	}
-	
-	/**
-	 * @memberof utils/utils
-	 * @static
-	 */
-	function updateObj(obj, fields) {
-	  return Object.assign({}, obj, fields);
-	}
-	
-	/**
-	 * @memberof utils/utils
-	 * @static
-	 */
-	function throttle(func, ms) {
-	  var timeout = void 0,
-	      _this = void 0;
-	  return function () {
-	    for (var _len5 = arguments.length, args = Array(_len5), _key5 = 0; _key5 < _len5; _key5++) {
-	      args[_key5] = arguments[_key5];
-	    }
-	
-	    _this = this;
-	    if (!timeout) {
-	      timeout = setTimeout(() => {
-	        func.apply.apply(func, [_this].concat(_toConsumableArray(args)));
-	        timeout = null;
-	      }, ms);
-	    }
-	  };
-	}
-	
-	module.exports = {
-	  handleError,
-	  promisify,
-	  truncateStr,
-	  endTruncateStr,
-	  workerTask,
-	  zip,
-	  entries,
-	  toObject,
-	  mapObject,
-	  compose,
-	  updateObj,
-	  throttle
-	};
-
-/***/ },
-
-/***/ 235:
-/***/ function(module, exports) {
-
 	function assert(condition, message) {
 	  if (!condition) {
-	    throw new Error(`Assertion failure: ${ message }`);
+	    throw new Error(`Assertion failure: ${message}`);
 	  }
 	}
 	
@@ -386,20 +128,20 @@ var Debugger =
 
 /***/ },
 
-/***/ 244:
+/***/ 233:
 /***/ function(module, exports, __webpack_require__) {
 
-	
+	"use strict";
 	
 	/**
 	 * Utils for working with Source URLs
 	 * @module utils/source
 	 */
 	
-	var _require = __webpack_require__(233),
+	var _require = __webpack_require__(234),
 	    endTruncateStr = _require.endTruncateStr;
 	
-	var _require2 = __webpack_require__(245),
+	var _require2 = __webpack_require__(235),
 	    basename = _require2.basename;
 	
 	/**
@@ -447,7 +189,7 @@ var Debugger =
 	 * @static
 	 */
 	function getPrettySourceURL(url) {
-	  return `${ url }:formatted`;
+	  return `${url}:formatted`;
 	}
 	
 	/**
@@ -456,6 +198,12 @@ var Debugger =
 	 */
 	function getRawSourceURL(url) {
 	  return url.replace(/:formatted$/, "");
+	}
+	
+	function getFilenameFromURL(url) {
+	  url = getRawSourceURL(url || "");
+	  var name = basename(url) || "(index)";
+	  return endTruncateStr(name, 50);
 	}
 	
 	/**
@@ -471,12 +219,88 @@ var Debugger =
 	
 	  if (!url) {
 	    var sourceId = id.split("/")[1];
-	    return `SOURCE${ sourceId }`;
+	    return `SOURCE${sourceId}`;
 	  }
 	
-	  url = getRawSourceURL(url || "");
-	  var name = basename(url) || "(index)";
-	  return endTruncateStr(name, 50);
+	  return getFilenameFromURL(url);
+	}
+	
+	var contentTypeModeMap = {
+	  "text/javascript": { name: "javascript" },
+	  "text/typescript": { name: "javascript", typescript: true },
+	  "text/coffeescript": "coffeescript",
+	  "text/typescript-jsx": {
+	    name: "jsx",
+	    base: { name: "javascript", typescript: true }
+	  },
+	  "text/jsx": "jsx",
+	  "text/x-elm": "elm",
+	  "text/wasm": { name: "text" },
+	  "html": { name: "htmlmixed" }
+	};
+	
+	/**
+	 *
+	 * Returns Code Mirror mode for source content type
+	 * @param contentType
+	 * @return String
+	 * @memberof utils/source
+	 * @static
+	 */
+	
+	function getMode(sourceText) {
+	  var contentType = sourceText.contentType,
+	      text = sourceText.text;
+	
+	  // //  or /*  */
+	
+	  if (text.match(/^\s*(\/\/ @flow|\/\* @flow \*\/)/)) {
+	    return contentTypeModeMap["text/typescript"];
+	  }
+	
+	  if (/script|elm|jsx|wasm/.test(contentType)) {
+	    if (contentType in contentTypeModeMap) {
+	      return contentTypeModeMap[contentType];
+	    }
+	
+	    return contentTypeModeMap["text/javascript"];
+	  }
+	
+	  // Use HTML mode for files in which the first non whitespace
+	  // character is `<` regardless of extension.
+	  if (text.match(/^\s*</)) {
+	    return { name: "htmlmixed" };
+	  }
+	
+	  return { name: "text" };
+	}
+	
+	function getContentType(url) {
+	  if (isJavaScript(url)) {
+	    return "text/javascript";
+	  }
+	
+	  if (url.match(/ts$/)) {
+	    return "text/typescript";
+	  }
+	
+	  if (url.match(/tsx$/)) {
+	    return "text/typescript-jsx";
+	  }
+	
+	  if (url.match(/jsx$/)) {
+	    return "text/jsx";
+	  }
+	
+	  if (url.match(/coffee$/)) {
+	    return "text/coffeescript";
+	  }
+	
+	  if (url.match(/elm$/)) {
+	    return "text/elm";
+	  }
+	
+	  return "text/plain";
 	}
 	
 	module.exports = {
@@ -484,14 +308,158 @@ var Debugger =
 	  isPretty,
 	  getPrettySourceURL,
 	  getRawSourceURL,
-	  getFilename
+	  getFilename,
+	  getFilenameFromURL,
+	  getMode,
+	  getContentType
 	};
 
 /***/ },
 
-/***/ 245:
+/***/ 234:
 /***/ function(module, exports) {
 
+	"use strict";
+	
+	function _toConsumableArray(arr) { if (Array.isArray(arr)) { for (var i = 0, arr2 = Array(arr.length); i < arr.length; i++) { arr2[i] = arr[i]; } return arr2; } else { return Array.from(arr); } }
+	
+	/* -*- indent-tabs-mode: nil; js-indent-level: 2 -*- */
+	/* vim: set ft=javascript ts=2 et sw=2 tw=80: */
+	/* This Source Code Form is subject to the terms of the Mozilla Public
+	 * License, v. 2.0. If a copy of the MPL was not distributed with this
+	 * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
+	
+	/**
+	 * Utils for utils, by utils
+	 * @module utils/utils
+	 */
+	
+	/**
+	 * @memberof utils/utils
+	 * @static
+	 */
+	function handleError(err) {
+	  console.log("ERROR: ", err);
+	}
+	
+	/**
+	 * @memberof utils/utils
+	 * @static
+	 */
+	function promisify(context, method) {
+	  for (var _len = arguments.length, args = Array(_len > 2 ? _len - 2 : 0), _key = 2; _key < _len; _key++) {
+	    args[_key - 2] = arguments[_key];
+	  }
+	
+	  return new Promise((resolve, reject) => {
+	    args.push(response => {
+	      if (response.error) {
+	        reject(response);
+	      } else {
+	        resolve(response);
+	      }
+	    });
+	    method.apply(context, args);
+	  });
+	}
+	
+	/**
+	 * @memberof utils/utils
+	 * @static
+	 */
+	function endTruncateStr(str, size) {
+	  if (str.length > size) {
+	    return `...${str.slice(str.length - size)}`;
+	  }
+	  return str;
+	}
+	
+	var msgId = 1;
+	/**
+	 * @memberof utils/utils
+	 * @static
+	 */
+	function workerTask(worker, method) {
+	  return function () {
+	    for (var _len2 = arguments.length, args = Array(_len2), _key2 = 0; _key2 < _len2; _key2++) {
+	      args[_key2] = arguments[_key2];
+	    }
+	
+	    return new Promise((resolve, reject) => {
+	      var id = msgId++;
+	      worker.postMessage({ id, method, args });
+	
+	      var listener = (_ref) => {
+	        var result = _ref.data;
+	
+	        if (result.id !== id) {
+	          return;
+	        }
+	
+	        worker.removeEventListener("message", listener);
+	        if (result.error) {
+	          reject(result.error);
+	        } else {
+	          resolve(result.response);
+	        }
+	      };
+	
+	      worker.addEventListener("message", listener);
+	    });
+	  };
+	}
+	
+	/**
+	 * @memberof utils/utils
+	 * @static
+	 */
+	function updateObj(obj, fields) {
+	  return Object.assign({}, obj, fields);
+	}
+	
+	/**
+	 * @memberof utils/utils
+	 * @static
+	 */
+	function throttle(func, ms) {
+	  var timeout = void 0,
+	      _this = void 0;
+	  return function () {
+	    for (var _len3 = arguments.length, args = Array(_len3), _key3 = 0; _key3 < _len3; _key3++) {
+	      args[_key3] = arguments[_key3];
+	    }
+	
+	    _this = this;
+	    if (!timeout) {
+	      timeout = setTimeout(() => {
+	        func.apply.apply(func, [_this].concat(_toConsumableArray(args)));
+	        timeout = null;
+	      }, ms);
+	    }
+	  };
+	}
+	
+	function waitForMs(ms) {
+	  return new Promise(resolve => setTimeout(resolve, ms));
+	}
+	
+	module.exports = {
+	  handleError,
+	  promisify,
+	  endTruncateStr,
+	  workerTask,
+	  updateObj,
+	  throttle,
+	  waitForMs
+	};
+
+/***/ },
+
+/***/ 235:
+/***/ function(module, exports) {
+
+	"use strict";
+	
 	function basename(path) {
 	  return path.split("/").pop();
 	}
@@ -510,7 +478,7 @@ var Debugger =
 	}
 	
 	function join(base, dir) {
-	  return `${ base }/${ dir }`;
+	  return `${base}/${dir}`;
 	}
 	
 	module.exports = {
@@ -519,10 +487,12 @@ var Debugger =
 
 /***/ },
 
-/***/ 258:
+/***/ 247:
 /***/ function(module, exports, __webpack_require__) {
 
-	var md5 = __webpack_require__(259);
+	"use strict";
+	
+	var md5 = __webpack_require__(248);
 	
 	function originalToGeneratedId(originalId) {
 	  var match = originalId.match(/(.*)\/originalSource/);
@@ -530,7 +500,7 @@ var Debugger =
 	}
 	
 	function generatedToOriginalId(generatedId, url) {
-	  return `${ generatedId }/originalSource-${ md5(url) }`;
+	  return `${generatedId}/originalSource-${md5(url)}`;
 	}
 	
 	function isOriginalId(id) {
@@ -547,14 +517,14 @@ var Debugger =
 
 /***/ },
 
-/***/ 259:
+/***/ 248:
 /***/ function(module, exports, __webpack_require__) {
 
 	(function(){
-	  var crypt = __webpack_require__(260),
-	      utf8 = __webpack_require__(261).utf8,
-	      isBuffer = __webpack_require__(262),
-	      bin = __webpack_require__(261).bin,
+	  var crypt = __webpack_require__(249),
+	      utf8 = __webpack_require__(250).utf8,
+	      isBuffer = __webpack_require__(251),
+	      bin = __webpack_require__(250).bin,
 	
 	  // The core
 	  md5 = function (message, options) {
@@ -714,7 +684,7 @@ var Debugger =
 
 /***/ },
 
-/***/ 260:
+/***/ 249:
 /***/ function(module, exports) {
 
 	(function() {
@@ -817,7 +787,7 @@ var Debugger =
 
 /***/ },
 
-/***/ 261:
+/***/ 250:
 /***/ function(module, exports) {
 
 	var charenc = {
@@ -857,7 +827,7 @@ var Debugger =
 
 /***/ },
 
-/***/ 262:
+/***/ 251:
 /***/ function(module, exports) {
 
 	/*!
@@ -885,7 +855,7 @@ var Debugger =
 
 /***/ },
 
-/***/ 283:
+/***/ 334:
 /***/ function(module, exports, __webpack_require__) {
 
 	// Copyright Joyent, Inc. and other Node contributors.
@@ -911,8 +881,8 @@ var Debugger =
 	
 	'use strict';
 	
-	var punycode = __webpack_require__(284);
-	var util = __webpack_require__(285);
+	var punycode = __webpack_require__(335);
+	var util = __webpack_require__(336);
 	
 	exports.parse = urlParse;
 	exports.resolve = urlResolve;
@@ -987,7 +957,7 @@ var Debugger =
 	      'gopher:': true,
 	      'file:': true
 	    },
-	    querystring = __webpack_require__(286);
+	    querystring = __webpack_require__(337);
 	
 	function urlParse(url, parseQueryString, slashesDenoteHost) {
 	  if (url && util.isObject(url) && url instanceof Url) return url;
@@ -1624,7 +1594,7 @@ var Debugger =
 
 /***/ },
 
-/***/ 284:
+/***/ 335:
 /***/ function(module, exports, __webpack_require__) {
 
 	var __WEBPACK_AMD_DEFINE_RESULT__;/* WEBPACK VAR INJECTION */(function(module, global) {/*! https://mths.be/punycode v1.3.2 by @mathias */
@@ -2160,7 +2130,7 @@ var Debugger =
 
 /***/ },
 
-/***/ 285:
+/***/ 336:
 /***/ function(module, exports) {
 
 	'use strict';
@@ -2183,18 +2153,18 @@ var Debugger =
 
 /***/ },
 
-/***/ 286:
+/***/ 337:
 /***/ function(module, exports, __webpack_require__) {
 
 	'use strict';
 	
-	exports.decode = exports.parse = __webpack_require__(287);
-	exports.encode = exports.stringify = __webpack_require__(288);
+	exports.decode = exports.parse = __webpack_require__(338);
+	exports.encode = exports.stringify = __webpack_require__(339);
 
 
 /***/ },
 
-/***/ 287:
+/***/ 338:
 /***/ function(module, exports) {
 
 	// Copyright Joyent, Inc. and other Node contributors.
@@ -2281,7 +2251,7 @@ var Debugger =
 
 /***/ },
 
-/***/ 288:
+/***/ 339:
 /***/ function(module, exports) {
 
 	// Copyright Joyent, Inc. and other Node contributors.
@@ -2352,9 +2322,11 @@ var Debugger =
 
 /***/ },
 
-/***/ 556:
+/***/ 814:
 /***/ function(module, exports, __webpack_require__) {
 
+	"use strict";
+	
 	var _resolveAndFetch = (() => {
 	  var _ref = _asyncToGenerator(function* (generatedSource) {
 	    // Fetch the sourcemap over the network and create it.
@@ -2470,7 +2442,7 @@ var Debugger =
 	
 	    return {
 	      text,
-	      contentType: isJavaScript(originalSource.url || "") ? "text/javascript" : "text/plain"
+	      contentType: getContentType(originalSource.url || "")
 	    };
 	  });
 	
@@ -2486,23 +2458,23 @@ var Debugger =
 	 * @module utils/source-map-worker
 	 */
 	
-	var networkRequest = __webpack_require__(118);
+	var networkRequest = __webpack_require__(127);
 	
-	var _require = __webpack_require__(283),
+	var _require = __webpack_require__(334),
 	    parse = _require.parse;
 	
-	var path = __webpack_require__(245);
+	var path = __webpack_require__(235);
 	
-	var _require2 = __webpack_require__(557),
+	var _require2 = __webpack_require__(815),
 	    SourceMapConsumer = _require2.SourceMapConsumer,
 	    SourceMapGenerator = _require2.SourceMapGenerator;
 	
-	var _require3 = __webpack_require__(244),
-	    isJavaScript = _require3.isJavaScript;
+	var _require3 = __webpack_require__(233),
+	    getContentType = _require3.getContentType;
 	
-	var assert = __webpack_require__(235);
+	var assert = __webpack_require__(223);
 	
-	var _require4 = __webpack_require__(258),
+	var _require4 = __webpack_require__(247),
 	    originalToGeneratedId = _require4.originalToGeneratedId,
 	    generatedToOriginalId = _require4.generatedToOriginalId,
 	    isGeneratedId = _require4.isGeneratedId,
@@ -2538,11 +2510,11 @@ var Debugger =
 	        _parse$host = _parse.host,
 	        host = _parse$host === undefined ? "" : _parse$host;
 	
-	    return `${ protocol }//${ host }${ sourceMapURL }`;
+	    return `${protocol}//${host}${sourceMapURL}`;
 	  }
 	  // Otherwise, it's a relative path and should be resolved relative
 	  // to the source.
-	  return `${ path.dirname(url) }/${ sourceMapURL }`;
+	  return `${path.dirname(url)}/${sourceMapURL}`;
 	}
 	
 	/**
@@ -2630,7 +2602,7 @@ var Debugger =
 
 /***/ },
 
-/***/ 557:
+/***/ 815:
 /***/ function(module, exports, __webpack_require__) {
 
 	/*
@@ -2638,14 +2610,14 @@ var Debugger =
 	 * Licensed under the New BSD license. See LICENSE.txt or:
 	 * http://opensource.org/licenses/BSD-3-Clause
 	 */
-	exports.SourceMapGenerator = __webpack_require__(558).SourceMapGenerator;
-	exports.SourceMapConsumer = __webpack_require__(564).SourceMapConsumer;
-	exports.SourceNode = __webpack_require__(567).SourceNode;
+	exports.SourceMapGenerator = __webpack_require__(816).SourceMapGenerator;
+	exports.SourceMapConsumer = __webpack_require__(822).SourceMapConsumer;
+	exports.SourceNode = __webpack_require__(825).SourceNode;
 
 
 /***/ },
 
-/***/ 558:
+/***/ 816:
 /***/ function(module, exports, __webpack_require__) {
 
 	/* -*- Mode: js; js-indent-level: 2; -*- */
@@ -2655,10 +2627,10 @@ var Debugger =
 	 * http://opensource.org/licenses/BSD-3-Clause
 	 */
 	
-	var base64VLQ = __webpack_require__(559);
-	var util = __webpack_require__(561);
-	var ArraySet = __webpack_require__(562).ArraySet;
-	var MappingList = __webpack_require__(563).MappingList;
+	var base64VLQ = __webpack_require__(817);
+	var util = __webpack_require__(819);
+	var ArraySet = __webpack_require__(820).ArraySet;
+	var MappingList = __webpack_require__(821).MappingList;
 	
 	/**
 	 * An instance of the SourceMapGenerator represents a source map which is
@@ -3056,7 +3028,7 @@ var Debugger =
 
 /***/ },
 
-/***/ 559:
+/***/ 817:
 /***/ function(module, exports, __webpack_require__) {
 
 	/* -*- Mode: js; js-indent-level: 2; -*- */
@@ -3096,7 +3068,7 @@ var Debugger =
 	 * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 	 */
 	
-	var base64 = __webpack_require__(560);
+	var base64 = __webpack_require__(818);
 	
 	// A single base 64 digit can contain 6 bits of data. For the base 64 variable
 	// length quantities we use in the source map spec, the first bit is the sign,
@@ -3203,7 +3175,7 @@ var Debugger =
 
 /***/ },
 
-/***/ 560:
+/***/ 818:
 /***/ function(module, exports) {
 
 	/* -*- Mode: js; js-indent-level: 2; -*- */
@@ -3277,7 +3249,7 @@ var Debugger =
 
 /***/ },
 
-/***/ 561:
+/***/ 819:
 /***/ function(module, exports) {
 
 	/* -*- Mode: js; js-indent-level: 2; -*- */
@@ -3701,7 +3673,7 @@ var Debugger =
 
 /***/ },
 
-/***/ 562:
+/***/ 820:
 /***/ function(module, exports, __webpack_require__) {
 
 	/* -*- Mode: js; js-indent-level: 2; -*- */
@@ -3711,7 +3683,7 @@ var Debugger =
 	 * http://opensource.org/licenses/BSD-3-Clause
 	 */
 	
-	var util = __webpack_require__(561);
+	var util = __webpack_require__(819);
 	var has = Object.prototype.hasOwnProperty;
 	
 	/**
@@ -3812,7 +3784,7 @@ var Debugger =
 
 /***/ },
 
-/***/ 563:
+/***/ 821:
 /***/ function(module, exports, __webpack_require__) {
 
 	/* -*- Mode: js; js-indent-level: 2; -*- */
@@ -3822,7 +3794,7 @@ var Debugger =
 	 * http://opensource.org/licenses/BSD-3-Clause
 	 */
 	
-	var util = __webpack_require__(561);
+	var util = __webpack_require__(819);
 	
 	/**
 	 * Determine whether mappingB is after mappingA with respect to generated
@@ -3898,7 +3870,7 @@ var Debugger =
 
 /***/ },
 
-/***/ 564:
+/***/ 822:
 /***/ function(module, exports, __webpack_require__) {
 
 	/* -*- Mode: js; js-indent-level: 2; -*- */
@@ -3908,11 +3880,11 @@ var Debugger =
 	 * http://opensource.org/licenses/BSD-3-Clause
 	 */
 	
-	var util = __webpack_require__(561);
-	var binarySearch = __webpack_require__(565);
-	var ArraySet = __webpack_require__(562).ArraySet;
-	var base64VLQ = __webpack_require__(559);
-	var quickSort = __webpack_require__(566).quickSort;
+	var util = __webpack_require__(819);
+	var binarySearch = __webpack_require__(823);
+	var ArraySet = __webpack_require__(820).ArraySet;
+	var base64VLQ = __webpack_require__(817);
+	var quickSort = __webpack_require__(824).quickSort;
 	
 	function SourceMapConsumer(aSourceMap) {
 	  var sourceMap = aSourceMap;
@@ -4987,7 +4959,7 @@ var Debugger =
 
 /***/ },
 
-/***/ 565:
+/***/ 823:
 /***/ function(module, exports) {
 
 	/* -*- Mode: js; js-indent-level: 2; -*- */
@@ -5105,7 +5077,7 @@ var Debugger =
 
 /***/ },
 
-/***/ 566:
+/***/ 824:
 /***/ function(module, exports) {
 
 	/* -*- Mode: js; js-indent-level: 2; -*- */
@@ -5226,7 +5198,7 @@ var Debugger =
 
 /***/ },
 
-/***/ 567:
+/***/ 825:
 /***/ function(module, exports, __webpack_require__) {
 
 	/* -*- Mode: js; js-indent-level: 2; -*- */
@@ -5236,8 +5208,8 @@ var Debugger =
 	 * http://opensource.org/licenses/BSD-3-Clause
 	 */
 	
-	var SourceMapGenerator = __webpack_require__(558).SourceMapGenerator;
-	var util = __webpack_require__(561);
+	var SourceMapGenerator = __webpack_require__(816).SourceMapGenerator;
+	var util = __webpack_require__(819);
 	
 	// Matches a Windows-style `\r\n` newline or a `\n` newline used by all other
 	// operating systems these days (capturing the result).
@@ -5640,5 +5612,7 @@ var Debugger =
 
 /***/ }
 
-/******/ });
+/******/ })
+});
+;
 //# sourceMappingURL=source-map-worker.js.map

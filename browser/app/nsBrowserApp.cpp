@@ -21,7 +21,6 @@
 
 #include "nsCOMPtr.h"
 #include "nsIFile.h"
-#include "nsStringGlue.h"
 
 #ifdef XP_WIN
 #ifdef MOZ_ASAN
@@ -40,7 +39,7 @@
 #include "nsXPCOMPrivate.h" // for MAXPATHLEN and XPCOM_DLL
 
 #include "mozilla/Sprintf.h"
-#include "mozilla/Telemetry.h"
+#include "mozilla/StartupTimeline.h"
 #include "mozilla/WindowsDllBlocklist.h"
 
 #ifdef LIBFUZZER
@@ -217,6 +216,8 @@ static int do_main(int argc, char* argv[], char* envp[])
 #if defined(XP_WIN) && defined(MOZ_SANDBOX)
   sandbox::BrokerServices* brokerServices =
     sandboxing::GetInitializedBrokerServices();
+  sandboxing::PermissionsService* permissionsService =
+    sandboxing::GetPermissionsService();
 #if defined(MOZ_CONTENT_SANDBOX)
   if (!brokerServices) {
     Output("Couldn't initialize the broker services.\n");
@@ -224,6 +225,7 @@ static int do_main(int argc, char* argv[], char* envp[])
   }
 #endif
   config.sandboxBrokerServices = brokerServices;
+  config.sandboxPermissionsService = permissionsService;
 #endif
 
 #ifdef LIBFUZZER

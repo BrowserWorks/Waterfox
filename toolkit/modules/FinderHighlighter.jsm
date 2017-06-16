@@ -119,7 +119,7 @@ function mockAnonymousContentNode(domNode) {
     },
     remove() {
       try {
-        domNode.parentNode.removeChild(domNode);
+        domNode.remove();
       } catch (ex) {}
     },
     setAnimationForElement(id, keyframes, duration) {
@@ -281,7 +281,7 @@ FinderHighlighter.prototype = {
   highlightRange(range) {
     let node = range.startContainer;
     let editableNode = this._getEditableNode(node);
-    let window = node.ownerDocument.defaultView;
+    let window = node.ownerGlobal;
     let controller = this.finder._getSelectionController(window);
     if (editableNode) {
       controller = editableNode.editor.selectionController;
@@ -431,6 +431,10 @@ FinderHighlighter.prototype = {
       return;
     }
 
+    dict.animateOutline = true;
+    // Immediately finish running animations, if any.
+    this._finishOutlineAnimations(dict);
+
     if (foundRange !== dict.currentFoundRange || data.findAgain) {
       dict.previousFoundRange = dict.currentFoundRange;
       dict.currentFoundRange = foundRange;
@@ -439,22 +443,6 @@ FinderHighlighter.prototype = {
         this.show(window);
       else
         this._maybeCreateModalHighlightNodes(window);
-    }
-
-    let outlineNode = dict.modalHighlightOutline;
-    if (outlineNode && !this._isPageTooBig(dict)) {
-      let animation;
-      if (dict.animations) {
-        for (animation of dict.animations)
-          animation.finish();
-      }
-      dict.animations = [];
-      for (let i = dict.previousRangeRectsAndTexts.rectList.length - 1; i >= 0; --i) {
-        animation = outlineNode.setAnimationForElement(kModalOutlineId + i,
-          Cu.cloneInto(kModalOutlineAnim.keyframes, window), kModalOutlineAnim.duration);
-        animation.onfinish = function(idx) { dict.animations.splice(idx, 1); }.bind(null, i);
-        dict.animations.push(animation);
-      }
     }
 
     if (this._highlightAll)
@@ -470,10 +458,7 @@ FinderHighlighter.prototype = {
       return;
 
     let dict = this.getForWindow(window.top);
-    if (dict.animations) {
-      for (let animation of dict.animations)
-        animation.finish();
-    }
+    this._finishOutlineAnimations(dict);
     dict.dynamicRangesSet.clear();
     dict.frames.clear();
     dict.modalHighlightRectsMap.clear();
@@ -491,12 +476,10 @@ FinderHighlighter.prototype = {
     if (!window || !window.top)
       return;
     this.hide(window);
-    let dict = this.getForWindow(window);
     this.clear(window);
-    dict.currentFoundRange = dict.lastIteratorParams = dict.previousFoundRange =
-      dict.previousUpdatedRange = null;
-
     this._removeRangeOutline(window);
+
+    gWindows.delete(window.top);
   },
 
   /**
@@ -654,7 +637,7 @@ FinderHighlighter.prototype = {
     let node = range.startContainer;
     while (node.nodeType != 1)
       node = node.parentNode;
-    let style = node.ownerDocument.defaultView.getComputedStyle(node, "");
+    let style = node.ownerGlobal.getComputedStyle(node);
     let props = {};
     for (let prop of kFontPropsCamelCase) {
       if (prop in style && style[prop])
@@ -783,7 +766,7 @@ FinderHighlighter.prototype = {
     }
 
     do {
-      let style = window.getComputedStyle(node, null);
+      let style = window.getComputedStyle(node);
       if (kFixed.has(style.position) || kFixed.has(style.overflow) ||
           kFixed.has(style.overflowX) || kFixed.has(style.overflowY)) {
         return true;
@@ -804,7 +787,7 @@ FinderHighlighter.prototype = {
    * @return {Set}         Set of rects that were found for the range
    */
   _getRangeRectsAndTexts(range, dict = null) {
-    let window = range.startContainer.ownerDocument.defaultView;
+    let window = range.startContainer.ownerGlobal;
     let bounds;
     // If the window is part of a frameset, try to cache the bounds query.
     if (dict && dict.frames.has(window)) {
@@ -848,7 +831,7 @@ FinderHighlighter.prototype = {
    * @return {Set}         Set of rects that were found for the range
    */
   _updateRangeRects(range, checkIfDynamic = true, dict = null) {
-    let window = range.startContainer.ownerDocument.defaultView;
+    let window = range.startContainer.ownerGlobal;
     let rectsAndTexts = this._getRangeRectsAndTexts(range, dict);
 
     // Only fetch the rect at this point, if not passed in as argument.
@@ -897,7 +880,7 @@ FinderHighlighter.prototype = {
     // Text color in the outline is determined by kModalStyles.
     delete fontStyle.color;
 
-    let rectsAndTexts = this._getRangeRectsAndTexts(range);
+    let rectsAndTexts = this._updateRangeRects(range, true, dict);
     let outlineAnonNode = dict.modalHighlightOutline;
     let rectCount = rectsAndTexts.rectList.length;
     let previousRectCount = dict.previousRangeRectsAndTexts.rectList.length;
@@ -911,7 +894,7 @@ FinderHighlighter.prototype = {
       rectCount != 1);
     dict.previousRangeRectsAndTexts = rectsAndTexts;
 
-    let window = range.startContainer.ownerDocument.defaultView.top;
+    let window = range.startContainer.ownerGlobal.top;
     let document = window.document;
     // First see if we need to and can remove the previous outline nodes.
     if (rebuildOutline)
@@ -1003,7 +986,32 @@ FinderHighlighter.prototype = {
         document.insertAnonymousContent(outlineBox);
     }
 
+    if (dict.animateOutline && !this._isPageTooBig(dict)) {
+      let animation;
+      dict.animations = new Set();
+      for (let i = rectsAndTexts.rectList.length - 1; i >= 0; --i) {
+        animation = dict.modalHighlightOutline.setAnimationForElement(kModalOutlineId + i,
+          Cu.cloneInto(kModalOutlineAnim.keyframes, window), kModalOutlineAnim.duration);
+        animation.onfinish = function() { dict.animations.delete(this); };
+        dict.animations.add(animation);
+      }
+    }
+    dict.animateOutline = false;
+
     dict.previousUpdatedRange = range;
+  },
+
+  /**
+   * Finish any currently playing animations on the found range outline node.
+   *
+   * @param {Object} dict Dictionary of properties belonging to the currently
+   *                      active window
+   */
+  _finishOutlineAnimations(dict) {
+    if (!dict.animations)
+      return;
+    for (let animation of dict.animations)
+      animation.finish();
   },
 
   /**
@@ -1266,7 +1274,7 @@ FinderHighlighter.prototype = {
     let target = this.iterator._getDocShell(window).chromeEventHandler;
     target.addEventListener("MozAfterPaint", dict.highlightListeners[0]);
     target.addEventListener("resize", dict.highlightListeners[1]);
-    target.addEventListener("scroll", dict.highlightListeners[2]);
+    target.addEventListener("scroll", dict.highlightListeners[2], { capture: true, passive: true });
     target.addEventListener("click", dict.highlightListeners[3]);
     target.addEventListener("selectstart", dict.highlightListeners[4]);
   },
@@ -1285,7 +1293,7 @@ FinderHighlighter.prototype = {
     let target = this.iterator._getDocShell(window).chromeEventHandler;
     target.removeEventListener("MozAfterPaint", dict.highlightListeners[0]);
     target.removeEventListener("resize", dict.highlightListeners[1]);
-    target.removeEventListener("scroll", dict.highlightListeners[2]);
+    target.removeEventListener("scroll", dict.highlightListeners[2], { capture: true, passive: true });
     target.removeEventListener("click", dict.highlightListeners[3]);
     target.removeEventListener("selectstart", dict.highlightListeners[4]);
 

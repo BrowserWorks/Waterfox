@@ -8,8 +8,7 @@
 #define mozilla_ThreadStackHelper_h
 
 #include "mozilla/ThreadHangStats.h"
-
-#include "GeckoProfiler.h"
+#include "js/ProfilingStack.h"
 
 #include <stddef.h>
 
@@ -25,7 +24,7 @@
 
 // Support pseudostack on these platforms.
 #if defined(XP_LINUX) || defined(XP_WIN) || defined(XP_MACOSX)
-#  ifdef MOZ_ENABLE_PROFILER_SPS
+#  ifdef MOZ_GECKO_PROFILER
 #    define MOZ_THREADSTACKHELPER_PSEUDO
 #  endif
 #endif
@@ -79,7 +78,7 @@ private:
   void FillStackBuffer();
   void FillThreadContext(void* aContext = nullptr);
 #ifdef MOZ_THREADSTACKHELPER_PSEUDO
-  const char* AppendJSEntry(const volatile StackEntry* aEntry,
+  const char* AppendJSEntry(const volatile js::ProfileEntry* aEntry,
                             intptr_t& aAvailableBufferSize,
                             const char* aPrevLabel);
 #endif

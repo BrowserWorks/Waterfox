@@ -17,6 +17,7 @@
 #include "GeckoChildProcessHost.h"
 #include "mozilla/Preferences.h"
 #include "mozilla/ClearOnShutdown.h"
+#include "mozilla/SizePrintfMacros.h"
 #include "mozilla/SyncRunnable.h"
 #include "nsXPCOMPrivate.h"
 #include "mozilla/Services.h"
@@ -447,7 +448,7 @@ GeckoMediaPluginServiceParent::UnloadPlugins()
     Swap(plugins, mPlugins);
   }
 
-  LOGD(("%s::%s plugins:%u", __CLASS__, __FUNCTION__,
+  LOGD(("%s::%s plugins:%" PRIuSIZE, __CLASS__, __FUNCTION__,
         plugins.Length()));
 #ifdef DEBUG
   for (const auto& plugin : plugins) {
@@ -831,7 +832,8 @@ GeckoMediaPluginServiceParent::AddOnGMPThread(nsString aDirectory)
   nsCOMPtr<nsIFile> directory;
   nsresult rv = NS_NewLocalFile(aDirectory, false, getter_AddRefs(directory));
   if (NS_WARN_IF(NS_FAILED(rv))) {
-    LOGD(("%s::%s: failed to create nsIFile for dir=%s rv=%x", __CLASS__, __FUNCTION__, dir.get(), rv));
+    LOGD(("%s::%s: failed to create nsIFile for dir=%s rv=%" PRIx32,
+          __CLASS__, __FUNCTION__, dir.get(), static_cast<uint32_t>(rv)));
     return GenericPromise::CreateAndReject(NS_ERROR_FAILURE, __func__);
   }
 
@@ -1478,7 +1480,7 @@ void
 GeckoMediaPluginServiceParent::ClearRecentHistoryOnGMPThread(PRTime aSince)
 {
   MOZ_ASSERT(NS_GetCurrentThread() == mGMPThread);
-  LOGD(("%s::%s: since=%lld", __CLASS__, __FUNCTION__, (int64_t)aSince));
+  LOGD(("%s::%s: since=%" PRId64, __CLASS__, __FUNCTION__, (int64_t)aSince));
 
   struct MTimeFilter : public DirectoryFilter {
     explicit MTimeFilter(PRTime aSince)
@@ -1675,6 +1677,7 @@ GMPServiceParent::RecvLaunchGMP(const nsCString& aNodeId,
                                 uint32_t* aOutPluginId,
                                 ProcessId* aOutProcessId,
                                 nsCString* aOutDisplayName,
+                                Endpoint<PGMPContentParent>* aOutEndpoint,
                                 nsresult* aOutRv)
 {
   if (mService->IsShuttingDown()) {
@@ -1698,10 +1701,27 @@ GMPServiceParent::RecvLaunchGMP(const nsCString& aNodeId,
 
   *aOutDisplayName = gmp->GetDisplayName();
 
-  if (!(aAlreadyBridgedTo.Contains(*aOutProcessId) || gmp->Bridge(this))) {
+  if (aAlreadyBridgedTo.Contains(*aOutProcessId)) {
+    *aOutRv = NS_OK;
+    return IPC_OK();
+  }
+
+  Endpoint<PGMPContentParent> parent;
+  Endpoint<PGMPContentChild> child;
+  if (NS_FAILED(PGMPContent::CreateEndpoints(OtherPid(), *aOutProcessId,
+                                             &parent, &child))) {
     *aOutRv = NS_ERROR_FAILURE;
     return IPC_OK();
   }
+
+  *aOutEndpoint = Move(parent);
+
+  if (!gmp->SendInitGMPContentChild(Move(child))) {
+    *aOutRv = NS_ERROR_FAILURE;
+    return IPC_OK();
+  }
+
+  gmp->IncrementGMPContentChildCount();
 
   *aOutRv = NS_OK;
   return IPC_OK();
@@ -1776,58 +1796,58 @@ class OpenPGMPServiceParent : public mozilla::Runnable
 {
 public:
   OpenPGMPServiceParent(GMPServiceParent* aGMPServiceParent,
-                        mozilla::ipc::Transport* aTransport,
-                        base::ProcessId aOtherPid,
+                        ipc::Endpoint<PGMPServiceParent>&& aEndpoint,
                         bool* aResult)
     : mGMPServiceParent(aGMPServiceParent),
-      mTransport(aTransport),
-      mOtherPid(aOtherPid),
+      mEndpoint(Move(aEndpoint)),
       mResult(aResult)
   {
   }
 
   NS_IMETHOD Run() override
   {
-    *mResult = mGMPServiceParent->Open(mTransport, mOtherPid,
-                                       XRE_GetIOMessageLoop(), ipc::ParentSide);
+    *mResult = mEndpoint.Bind(mGMPServiceParent);
     return NS_OK;
   }
 
 private:
   GMPServiceParent* mGMPServiceParent;
-  mozilla::ipc::Transport* mTransport;
-  base::ProcessId mOtherPid;
+  ipc::Endpoint<PGMPServiceParent> mEndpoint;
   bool* mResult;
 };
 
 /* static */
-PGMPServiceParent*
-GMPServiceParent::Create(Transport* aTransport, ProcessId aOtherPid)
+bool
+GMPServiceParent::Create(Endpoint<PGMPServiceParent>&& aGMPService)
 {
   RefPtr<GeckoMediaPluginServiceParent> gmp =
     GeckoMediaPluginServiceParent::GetSingleton();
 
   if (gmp->mShuttingDown) {
     // Shutdown is initiated. There is no point creating a new actor.
-    return nullptr;
+    return false;
   }
 
   nsCOMPtr<nsIThread> gmpThread;
   nsresult rv = gmp->GetThread(getter_AddRefs(gmpThread));
-  NS_ENSURE_SUCCESS(rv, nullptr);
+  NS_ENSURE_SUCCESS(rv, false);
 
   nsAutoPtr<GMPServiceParent> serviceParent(new GMPServiceParent(gmp));
-
   bool ok;
   rv = gmpThread->Dispatch(new OpenPGMPServiceParent(serviceParent,
-                                                     aTransport,
-                                                     aOtherPid, &ok),
+                                                     Move(aGMPService),
+                                                     &ok),
                            NS_DISPATCH_SYNC);
+
   if (NS_FAILED(rv) || !ok) {
-    return nullptr;
+    return false;
   }
 
-  return serviceParent.forget();
+  // Now that the service parent is set up, it will be destroyed by
+  // ActorDestroy.
+  Unused << serviceParent.forget();
+
+  return true;
 }
 
 } // namespace gmp

@@ -188,8 +188,8 @@ function* webdriverClickElement (el, a11y) {
   yield interaction.flushEventLoop(win);
 
   // step 10
-  // TODO(ato): if the click causes navigation,
-  // run post-navigation checks
+  // if the click causes navigation, the post-navigation checks are
+  // handled by the load listener in listener.js
 }
 
 function* seleniumClickElement (el, a11y) {
@@ -291,16 +291,22 @@ interaction.selectOption = function (el) {
  *
  * @return {Promise}
  *     Promise is accepted once event queue is flushed, or rejected if
- *     |win| is unloaded before the queue can be flushed.
+ *     |win| has closed or been unloaded before the queue can be flushed.
  */
 interaction.flushEventLoop = function* (win) {
-  let unloadEv;
-  return new Promise((resolve, reject) => {
-    unloadEv = reject;
-    win.addEventListener("unload", unloadEv, {once: true});
-    win.requestAnimationFrame(resolve);
-  }).then(() => {
-    win.removeEventListener("unload", unloadEv);
+  return new Promise(resolve => {
+    let handleEvent = event => {
+      win.removeEventListener("beforeunload", this);
+      resolve();
+    };
+
+    if (win.closed) {
+      resolve();
+      return;
+    }
+
+    win.addEventListener("beforeunload", handleEvent, false);
+    win.requestAnimationFrame(handleEvent);
   });
 };
 
@@ -312,11 +318,14 @@ interaction.flushEventLoop = function* (win) {
  * @param {string} path
  *     Full path to file.
  */
-interaction.uploadFile = function (el, path) {
-  let file;
-  try {
-    file = File.createFromFileName(path);
-  } catch (e) {
+interaction.uploadFile = function* (el, path) {
+  let file = yield File.createFromFileName(path).then(file => {
+    return file;
+  }, () => {
+    return null;
+  });
+
+  if (!file) {
     throw new InvalidArgumentError("File not found: " + path);
   }
 
@@ -451,5 +460,5 @@ interaction.isElementSelected = function (el, strict = false) {
 };
 
 function getWindow(el) {
-  return el.ownerDocument.defaultView;
+  return el.ownerGlobal;
 }

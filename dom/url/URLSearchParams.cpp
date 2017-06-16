@@ -327,7 +327,7 @@ URLSearchParams::WrapObject(JSContext* aCx, JS::Handle<JSObject*> aGivenProto)
 
 /* static */ already_AddRefed<URLSearchParams>
 URLSearchParams::Constructor(const GlobalObject& aGlobal,
-                             const USVStringSequenceSequenceOrUSVString& aInit,
+                             const USVStringSequenceSequenceOrUSVStringUSVStringRecordOrUSVString& aInit,
                              ErrorResult& aRv)
 {
   RefPtr<URLSearchParams> sp =
@@ -350,6 +350,12 @@ URLSearchParams::Constructor(const GlobalObject& aGlobal,
         return nullptr;
       }
       sp->Append(item[0], item[1]);
+    }
+  } else if (aInit.IsUSVStringUSVStringRecord()) {
+    const Record<nsString, nsString>& record =
+      aInit.GetAsUSVStringUSVStringRecord();
+    for (auto& entry : record.Entries()) {
+      sp->Append(entry.mKey, entry.mValue);
     }
   } else {
     MOZ_CRASH("This should not happen.");
@@ -442,6 +448,15 @@ URLSearchParams::GetValueAtIndex(uint32_t aIndex) const
   return mParams->GetValueAtIndex(aIndex);
 }
 
+void
+URLSearchParams::Sort(ErrorResult& aRv)
+{
+  aRv = mParams->Sort();
+  if (!aRv.Failed()) {
+    NotifyObserver();
+  }
+}
+
 // Helper functions for structured cloning
 inline bool
 ReadString(JSStructuredCloneReader* aReader, nsString& aString)
@@ -464,6 +479,39 @@ ReadString(JSStructuredCloneReader* aReader, nsString& aString)
   }
 
   return true;
+}
+
+nsresult
+URLParams::Sort()
+{
+  // Unfortunately we cannot use nsTArray<>.Sort() because it doesn't keep the
+  // correct order of the values for equal keys.
+
+  // Let's sort the keys, without duplicates.
+  FallibleTArray<nsString> keys;
+  for (const Param& param : mParams) {
+    if (!keys.Contains(param.mKey) &&
+        !keys.InsertElementSorted(param.mKey, fallible)) {
+      return NS_ERROR_OUT_OF_MEMORY;
+    }
+  }
+
+  FallibleTArray<Param> params;
+
+  // Here we recreate the array starting from the sorted keys.
+  for (uint32_t keyId = 0, keysLength = keys.Length(); keyId < keysLength;
+       ++keyId) {
+    const nsString& key = keys[keyId];
+    for (const Param& param : mParams) {
+      if (param.mKey.Equals(key) &&
+          !params.AppendElement(param, fallible)) {
+        return NS_ERROR_OUT_OF_MEMORY;
+      }
+    }
+  }
+
+  mParams.SwapElements(params);
+  return NS_OK;
 }
 
 inline bool
@@ -528,9 +576,10 @@ URLSearchParams::ReadStructuredClone(JSStructuredCloneReader* aReader)
 
 NS_IMETHODIMP
 URLSearchParams::GetSendInfo(nsIInputStream** aBody, uint64_t* aContentLength,
-                             nsACString& aContentType, nsACString& aCharset)
+                             nsACString& aContentTypeWithCharset,
+                             nsACString& aCharset)
 {
-  aContentType.AssignLiteral("application/x-www-form-urlencoded");
+  aContentTypeWithCharset.AssignLiteral("application/x-www-form-urlencoded;charset=UTF-8");
   aCharset.AssignLiteral("UTF-8");
 
   nsAutoString serialized;

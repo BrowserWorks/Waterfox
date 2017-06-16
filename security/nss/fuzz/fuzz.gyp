@@ -5,9 +5,6 @@
   'includes': [
     '../coreconf/config.gypi',
   ],
-  'variables': {
-    'use_fuzzing_engine': '<!(test -f /usr/lib/libFuzzingEngine.a && echo 1 || echo 0)',
-  },
   'target_defaults': {
     'variables': {
       'debug_optimization_level': '2',
@@ -32,38 +29,21 @@
         '<(DEPTH)/lib/certdb/certdb.gyp:certdb',
         '<(DEPTH)/lib/certhigh/certhigh.gyp:certhi',
         '<(DEPTH)/lib/cryptohi/cryptohi.gyp:cryptohi',
+        '<(DEPTH)/lib/ssl/ssl.gyp:ssl',
         '<(DEPTH)/lib/base/base.gyp:nssb',
         '<(DEPTH)/lib/dev/dev.gyp:nssdev',
         '<(DEPTH)/lib/pki/pki.gyp:nsspki',
         '<(DEPTH)/lib/util/util.gyp:nssutil',
         '<(DEPTH)/lib/nss/nss.gyp:nss_static',
-        '<(DEPTH)/lib/pk11wrap/pk11wrap.gyp:pk11wrap',
         '<(DEPTH)/lib/pkcs7/pkcs7.gyp:pkcs7',
+        # This is a static build of pk11wrap, softoken, and freebl.
+        '<(DEPTH)/lib/pk11wrap/pk11wrap.gyp:pk11wrap_static',
       ],
       'conditions': [
-        ['use_fuzzing_engine==0', {
+        ['fuzz_oss==0', {
           'type': 'static_library',
           'sources': [
-            'libFuzzer/FuzzerCrossOver.cpp',
-            'libFuzzer/FuzzerDriver.cpp',
-            'libFuzzer/FuzzerExtFunctionsDlsym.cpp',
-            'libFuzzer/FuzzerExtFunctionsWeak.cpp',
-            'libFuzzer/FuzzerExtFunctionsWeakAlias.cpp',
-            'libFuzzer/FuzzerIO.cpp',
-            'libFuzzer/FuzzerIOPosix.cpp',
-            'libFuzzer/FuzzerIOWindows.cpp',
-            'libFuzzer/FuzzerLoop.cpp',
-            'libFuzzer/FuzzerMain.cpp',
-            'libFuzzer/FuzzerMerge.cpp',
-            'libFuzzer/FuzzerMutate.cpp',
-            'libFuzzer/FuzzerSHA1.cpp',
-            'libFuzzer/FuzzerTracePC.cpp',
-            'libFuzzer/FuzzerTraceState.cpp',
-            'libFuzzer/FuzzerUtil.cpp',
-            'libFuzzer/FuzzerUtilDarwin.cpp',
-            'libFuzzer/FuzzerUtilLinux.cpp',
-            'libFuzzer/FuzzerUtilPosix.cpp',
-            'libFuzzer/FuzzerUtilWindows.cpp',
+            '<!@(ls <(DEPTH)/fuzz/libFuzzer/*.cpp)',
           ],
           'cflags/': [
             ['exclude', '-fsanitize-coverage'],
@@ -73,25 +53,46 @@
               ['exclude', '-fsanitize-coverage'],
             ],
           },
-          'direct_dependent_settings': {
-            'include_dirs': [
-              'libFuzzer',
-            ],
-          },
         }, {
           'type': 'none',
-          'direct_dependent_settings': {
+          'all_dependent_settings': {
             'libraries': ['-lFuzzingEngine'],
           }
         }]
       ],
     },
     {
+      'target_name': 'nssfuzz-mpi-base',
+      'type': 'none',
+      'dependencies': [
+        '<(DEPTH)/exports.gyp:nss_exports',
+        'fuzz_base',
+      ],
+      'direct_dependent_settings': {
+        'include_dirs': [
+          '<(DEPTH)/lib/freebl/mpi',
+        ],
+        'sources': [
+          'mpi_helper.cc',
+        ],
+        'conditions': [
+          [ 'fuzz_oss==1', {
+            'libraries': [
+              '/usr/lib/x86_64-linux-gnu/libcrypto.a',
+            ],
+          }, {
+            'libraries': [
+              '-lcrypto',
+            ],
+          }],
+        ],
+      },
+    },
+    {
       'target_name': 'nssfuzz-pkcs8',
       'type': 'executable',
       'sources': [
         'asn1_mutators.cc',
-        'initialize.cc',
         'pkcs8_target.cc',
       ],
       'dependencies': [
@@ -104,7 +105,6 @@
       'type': 'executable',
       'sources': [
         'asn1_mutators.cc',
-        'initialize.cc',
         'quickder_target.cc',
       ],
       'dependencies': [
@@ -113,11 +113,10 @@
       ],
     },
     {
-      'target_name': 'nssfuzz-hash',
+      'target_name': 'nssfuzz-certDN',
       'type': 'executable',
       'sources': [
-        'hash_target.cc',
-        'initialize.cc',
+        'certDN_target.cc',
       ],
       'dependencies': [
         '<(DEPTH)/exports.gyp:nss_exports',
@@ -125,12 +124,178 @@
       ],
     },
     {
+      'target_name': 'nssfuzz-mpi-add',
+      'type': 'executable',
+      'sources': [
+        'mpi_add_target.cc',
+      ],
+      'dependencies': [
+        '<(DEPTH)/exports.gyp:nss_exports',
+        'nssfuzz-mpi-base',
+      ],
+    },
+    {
+      'target_name': 'nssfuzz-mpi-sub',
+      'type': 'executable',
+      'sources': [
+        'mpi_sub_target.cc',
+      ],
+      'dependencies': [
+        '<(DEPTH)/exports.gyp:nss_exports',
+        'nssfuzz-mpi-base',
+      ],
+    },
+    {
+      'target_name': 'nssfuzz-mpi-sqr',
+      'type': 'executable',
+      'sources': [
+        'mpi_sqr_target.cc',
+      ],
+      'dependencies': [
+        '<(DEPTH)/exports.gyp:nss_exports',
+        'nssfuzz-mpi-base',
+      ],
+    },
+    {
+      'target_name': 'nssfuzz-mpi-div',
+      'type': 'executable',
+      'sources': [
+        'mpi_div_target.cc',
+      ],
+      'dependencies': [
+        '<(DEPTH)/exports.gyp:nss_exports',
+        'nssfuzz-mpi-base',
+      ],
+    },
+    {
+      'target_name': 'nssfuzz-mpi-mod',
+      'type': 'executable',
+      'sources': [
+        'mpi_mod_target.cc',
+      ],
+      'dependencies': [
+        '<(DEPTH)/exports.gyp:nss_exports',
+        'nssfuzz-mpi-base',
+      ],
+    },
+    {
+      'target_name': 'nssfuzz-mpi-sqrmod',
+      'type': 'executable',
+      'sources': [
+        'mpi_sqrmod_target.cc',
+      ],
+      'dependencies': [
+        '<(DEPTH)/exports.gyp:nss_exports',
+        'nssfuzz-mpi-base',
+      ],
+    },
+    {
+      'target_name': 'nssfuzz-mpi-addmod',
+      'type': 'executable',
+      'sources': [
+        'mpi_addmod_target.cc',
+      ],
+      'dependencies': [
+        '<(DEPTH)/exports.gyp:nss_exports',
+        'nssfuzz-mpi-base',
+      ],
+    },
+    {
+      'target_name': 'nssfuzz-mpi-submod',
+      'type': 'executable',
+      'sources': [
+        'mpi_submod_target.cc',
+      ],
+      'dependencies': [
+        '<(DEPTH)/exports.gyp:nss_exports',
+        'nssfuzz-mpi-base',
+      ],
+    },
+    {
+      'target_name': 'nssfuzz-mpi-mulmod',
+      'type': 'executable',
+      'sources': [
+        'mpi_mulmod_target.cc',
+      ],
+      'dependencies': [
+        '<(DEPTH)/exports.gyp:nss_exports',
+        'nssfuzz-mpi-base',
+      ],
+    },
+    {
+      'target_name': 'nssfuzz-mpi-expmod',
+      'type': 'executable',
+      'sources': [
+        'mpi_expmod_target.cc',
+      ],
+      'dependencies': [
+        '<(DEPTH)/exports.gyp:nss_exports',
+        'nssfuzz-mpi-base',
+      ],
+    },
+    {
+      'target_name': 'nssfuzz-mpi-invmod',
+      'type': 'executable',
+      'sources': [
+        'mpi_invmod_target.cc',
+      ],
+      'dependencies': [
+        '<(DEPTH)/exports.gyp:nss_exports',
+        'nssfuzz-mpi-base',
+      ],
+      'include_dirs': [
+        '<(DEPTH)/lib/freebl',
+      ],
+    },
+    {
+      'target_name': 'nssfuzz-tls-client',
+      'type': 'executable',
+      'sources': [
+        'tls_client_config.cc',
+        'tls_client_socket.cc',
+        'tls_client_target.cc',
+      ],
+      'dependencies': [
+        '<(DEPTH)/cpputil/cpputil.gyp:cpputil',
+        '<(DEPTH)/exports.gyp:nss_exports',
+        'fuzz_base',
+      ],
+      'include_dirs': [
+        '<(DEPTH)/lib/freebl',
+      ],
+      'conditions': [
+        [ 'fuzz_tls==1', {
+          'defines': [
+            'UNSAFE_FUZZER_MODE',
+          ],
+        }],
+      ],
+    },
+    {
       'target_name': 'nssfuzz',
       'type': 'none',
       'dependencies': [
-        'nssfuzz-hash',
+        'nssfuzz-certDN',
         'nssfuzz-pkcs8',
         'nssfuzz-quickder',
+        'nssfuzz-tls-client',
+      ],
+      'conditions': [
+        ['OS=="linux"', {
+          'dependencies': [
+            'nssfuzz-mpi-add',
+            'nssfuzz-mpi-addmod',
+            'nssfuzz-mpi-div',
+            'nssfuzz-mpi-expmod',
+            'nssfuzz-mpi-invmod',
+            'nssfuzz-mpi-mod',
+            'nssfuzz-mpi-mulmod',
+            'nssfuzz-mpi-sqr',
+            'nssfuzz-mpi-sqrmod',
+            'nssfuzz-mpi-sub',
+            'nssfuzz-mpi-submod',
+          ],
+        }],
       ],
     }
   ],

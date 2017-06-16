@@ -4,19 +4,20 @@
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
 
-#include "GMPDecoderModule.h"
 #include "DecoderDoctorDiagnostics.h"
-#include "GMPVideoDecoder.h"
+#include "GMPDecoderModule.h"
+#include "GMPService.h"
 #include "GMPUtils.h"
+#include "GMPVideoDecoder.h"
+#include "MP4Decoder.h"
 #include "MediaDataDecoderProxy.h"
 #include "MediaPrefs.h"
-#include "VideoUtils.h"
-#include "mozIGeckoMediaPluginService.h"
-#include "nsServiceManagerUtils.h"
-#include "mozilla/StaticMutex.h"
-#include "gmp-video-decode.h"
-#include "MP4Decoder.h"
 #include "VPXDecoder.h"
+#include "VideoUtils.h"
+#include "gmp-video-decode.h"
+#include "mozIGeckoMediaPluginService.h"
+#include "mozilla/StaticMutex.h"
+#include "nsServiceManagerUtils.h"
 #ifdef XP_WIN
 #include "WMFDecoderModule.h"
 #endif
@@ -32,9 +33,10 @@ GMPDecoderModule::~GMPDecoderModule()
 }
 
 static already_AddRefed<MediaDataDecoderProxy>
-CreateDecoderWrapper(MediaDataDecoderCallback* aCallback)
+CreateDecoderWrapper()
 {
-  RefPtr<gmp::GeckoMediaPluginService> s(gmp::GeckoMediaPluginService::GetGeckoMediaPluginService());
+  RefPtr<gmp::GeckoMediaPluginService> s(
+    gmp::GeckoMediaPluginService::GetGeckoMediaPluginService());
   if (!s) {
     return nullptr;
   }
@@ -42,21 +44,22 @@ CreateDecoderWrapper(MediaDataDecoderCallback* aCallback)
   if (!thread) {
     return nullptr;
   }
-  RefPtr<MediaDataDecoderProxy> decoder(new MediaDataDecoderProxy(thread.forget(), aCallback));
+  RefPtr<MediaDataDecoderProxy> decoder(
+    new MediaDataDecoderProxy(thread.forget()));
   return decoder.forget();
 }
 
 already_AddRefed<MediaDataDecoder>
 GMPDecoderModule::CreateVideoDecoder(const CreateDecoderParams& aParams)
 {
-  if (!MP4Decoder::IsH264(aParams.mConfig.mMimeType) &&
-      !VPXDecoder::IsVP8(aParams.mConfig.mMimeType) &&
-      !VPXDecoder::IsVP9(aParams.mConfig.mMimeType)) {
+  if (!MP4Decoder::IsH264(aParams.mConfig.mMimeType)
+      && !VPXDecoder::IsVP8(aParams.mConfig.mMimeType)
+      && !VPXDecoder::IsVP9(aParams.mConfig.mMimeType)) {
     return nullptr;
   }
 
-  RefPtr<MediaDataDecoderProxy> wrapper = CreateDecoderWrapper(aParams.mCallback);
-  auto params = GMPVideoDecoderParams(aParams).WithCallback(wrapper);
+  RefPtr<MediaDataDecoderProxy> wrapper = CreateDecoderWrapper();
+  auto params = GMPVideoDecoderParams(aParams);
   wrapper->SetProxyTarget(new GMPVideoDecoder(params));
   return wrapper.forget();
 }
@@ -65,17 +68,6 @@ already_AddRefed<MediaDataDecoder>
 GMPDecoderModule::CreateAudioDecoder(const CreateDecoderParams& aParams)
 {
   return nullptr;
-}
-
-PlatformDecoderModule::ConversionRequired
-GMPDecoderModule::DecoderNeedsConversion(const TrackInfo& aConfig) const
-{
-  // GMPVideoCodecType::kGMPVideoCodecH264 specifies that encoded frames must be in AVCC format.
-  if (aConfig.IsVideo() && MP4Decoder::IsH264(aConfig.mMimeType)) {
-    return ConversionRequired::kNeedAVCC;
-  } else {
-    return ConversionRequired::kNeedNone;
-  }
 }
 
 /* static */

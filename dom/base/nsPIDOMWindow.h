@@ -12,8 +12,8 @@
 
 #include "nsCOMPtr.h"
 #include "nsTArray.h"
-#include "mozilla/dom/Dispatcher.h"
 #include "mozilla/dom/EventTarget.h"
+#include "mozilla/TaskCategory.h"
 #include "js/TypeDecls.h"
 #include "nsRefPtrHashtable.h"
 
@@ -29,6 +29,7 @@ class nsICSSDeclaration;
 class nsIDocShell;
 class nsIDocShellLoadInfo;
 class nsIDocument;
+class nsIEventTarget;
 class nsIIdleObserver;
 class nsIPrincipal;
 class nsIScriptTimeoutHandler;
@@ -605,7 +606,7 @@ public:
   mozilla::dom::DocGroup* GetDocGroup() const;
 
   virtual nsIEventTarget*
-  EventTargetFor(mozilla::dom::TaskCategory aCategory) const = 0;
+  EventTargetFor(mozilla::TaskCategory aCategory) const = 0;
 
 protected:
   // The nsPIDOMWindow constructor. The aOuterWindow argument should
@@ -736,6 +737,10 @@ protected:
   bool mServiceWorkersTestingEnabled;
 
   mozilla::dom::LargeAllocStatus mLargeAllocStatus; // Outer window only
+
+  // When there is any created alive media component, we can consider to resume
+  // the media content in the window.
+  bool mShouldResumeOnFirstActiveMediaComponent;
 };
 
 #define NS_PIDOMWINDOWINNER_IID \
@@ -898,6 +903,7 @@ protected:
   void RefreshMediaElementsVolume();
   void RefreshMediaElementsSuspend(SuspendTypes aSuspend);
   bool IsDisposableSuspend(SuspendTypes aSuspend) const;
+  void MaybeNotifyMediaResumedFromBlock(SuspendTypes aSuspend);
 
 public:
   NS_DECLARE_STATIC_IID_ACCESSOR(NS_PIDOMWINDOWOUTER_IID)
@@ -963,12 +969,18 @@ public:
   float GetAudioVolume() const;
   nsresult SetAudioVolume(float aVolume);
 
+  void NotifyCreatedNewMediaComponent();
+  void MaybeActiveMediaComponents();
+
   void SetServiceWorkersTestingEnabled(bool aEnabled);
   bool GetServiceWorkersTestingEnabled();
 
   float GetDevicePixelRatio(mozilla::dom::CallerType aCallerType);
 
   void SetLargeAllocStatus(mozilla::dom::LargeAllocStatus aStatus);
+
+  bool IsTopLevelWindow();
+  bool HadOriginalOpener() const;
 };
 
 NS_DEFINE_STATIC_IID_ACCESSOR(nsPIDOMWindowOuter, NS_PIDOMWINDOWOUTER_IID)

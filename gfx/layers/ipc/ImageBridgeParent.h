@@ -43,13 +43,17 @@ class ImageBridgeParent final : public PImageBridgeParent,
 public:
   typedef InfallibleTArray<CompositableOperation> EditArray;
   typedef InfallibleTArray<OpDestroy> OpDestroyArray;
-  typedef InfallibleTArray<EditReply> EditReplyArray;
 
 protected:
   ImageBridgeParent(MessageLoop* aLoop, ProcessId aChildProcessId);
 
 public:
   ~ImageBridgeParent();
+
+  /**
+   * Creates the globals of ImageBridgeParent.
+   */
+  static void Setup();
 
   static ImageBridgeParent* CreateSameProcess();
   static bool CreateForGPUProcess(Endpoint<PImageBridgeParent>&& aEndpoint);
@@ -71,11 +75,9 @@ public:
 
   // PImageBridge
   virtual mozilla::ipc::IPCResult RecvImageBridgeThreadId(const PlatformThreadId& aThreadId) override;
+  virtual mozilla::ipc::IPCResult RecvInitReadLocks(ReadLockArray&& aReadLocks) override;
   virtual mozilla::ipc::IPCResult RecvUpdate(EditArray&& aEdits, OpDestroyArray&& aToDestroy,
-                                          const uint64_t& aFwdTransactionId,
-                                          EditReplyArray* aReply) override;
-  virtual mozilla::ipc::IPCResult RecvUpdateNoSwap(EditArray&& aEdits, OpDestroyArray&& aToDestroy,
-                                                const uint64_t& aFwdTransactionId) override;
+                                          const uint64_t& aFwdTransactionId) override;
 
   virtual PTextureParent* AllocPTextureParent(const SurfaceDescriptor& aSharedData,
                                               const LayersBackend& aLayersBackend,
@@ -109,13 +111,7 @@ public:
 
   virtual bool IsSameProcess() const override;
 
-  using CompositableParentManager::SetAboutToSendAsyncMessages;
-  static void SetAboutToSendAsyncMessages(base::ProcessId aChildProcessId);
-
-  using CompositableParentManager::SendPendingAsyncMessages;
-  static void SendPendingAsyncMessages(base::ProcessId aChildProcessId);
-
-  static ImageBridgeParent* GetInstance(ProcessId aId);
+  static RefPtr<ImageBridgeParent> GetInstance(ProcessId aId);
 
   static bool NotifyImageComposites(nsTArray<ImageCompositeNotificationInfo>& aNotifications);
 
@@ -142,8 +138,6 @@ private:
    * Map of all living ImageBridgeParent instances
    */
   static std::map<base::ProcessId, ImageBridgeParent*> sImageBridges;
-
-  static MessageLoop* sMainLoop;
 
   RefPtr<CompositorThreadHolder> mCompositorThreadHolder;
 };

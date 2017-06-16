@@ -45,6 +45,11 @@ class TiledContentHost;
 class CompositableParentManager;
 struct EffectChain;
 
+struct ImageCompositeNotificationInfo {
+  base::ProcessId mImageBridgeProcessId;
+  ImageCompositeNotification mNotification;
+};
+
 struct AsyncCompositableRef
 {
   AsyncCompositableRef()
@@ -100,13 +105,11 @@ public:
 
   /**
    * Update the content host.
-   * aUpdated is the region which should be updated
-   * aUpdatedRegionBack is the region in aNewBackResult which has been updated
+   * aUpdated is the region which should be updated.
    */
   virtual bool UpdateThebes(const ThebesBufferData& aData,
                             const nsIntRegion& aUpdated,
-                            const nsIntRegion& aOldValidRegionBack,
-                            nsIntRegion* aUpdatedRegionBack)
+                            const nsIntRegion& aOldValidRegionBack)
   {
     NS_ERROR("should be implemented or not used");
     return false;
@@ -120,8 +123,6 @@ public:
   virtual TextureHost* GetAsTextureHost(gfx::IntRect* aPictureRect = nullptr) {
     return nullptr;
   }
-
-  virtual LayerRenderState GetRenderState() = 0;
 
   virtual gfx::IntSize GetImageSize() const
   {
@@ -205,9 +206,6 @@ public:
   virtual void UseTextureHost(const nsTArray<TimedTexture>& aTextures);
   virtual void UseComponentAlphaTextures(TextureHost* aTextureOnBlack,
                                          TextureHost* aTextureOnWhite);
-  virtual void UseOverlaySource(OverlaySource aOverlay,
-                                const gfx::IntRect& aPictureRect) { }
-
   virtual void RemoveTextureHost(TextureHost* aTexture);
 
   // Called every time this is composited
@@ -235,6 +233,11 @@ public:
   /// This is a good place to clear all potential gpu resources before the widget
   /// is is destroyed.
   virtual void CleanupResources() {}
+
+  virtual void BindTextureSource() {}
+
+protected:
+  HostLayerManager* GetLayerManager() const;
 
 protected:
   TextureInfo mTextureInfo;

@@ -22,6 +22,7 @@ const DEBUGGERLOG_PREF = "devtools.debugger.log";
 const CACHES_ON_HTTP_PREF = "dom.caches.testing.enabled";
 const PATH = "browser/devtools/client/storage/test/";
 const MAIN_DOMAIN = "http://test1.example.org/" + PATH;
+const MAIN_DOMAIN_WITH_PORT = "http://test1.example.org:8000/" + PATH;
 const ALT_DOMAIN = "http://sectest1.example.org/" + PATH;
 const ALT_DOMAIN_SECURED = "https://sectest1.example.org:443/" + PATH;
 
@@ -49,16 +50,15 @@ registerCleanupFunction(() => {
 
 /**
  * This generator function opens the given url in a new tab, then sets up the
- * page by waiting for all cookies, indexedDB items etc. to be created; Then
- * opens the storage inspector and waits for the storage tree and table to be
- * populated.
+ * page by waiting for all cookies, indexedDB items etc.
  *
  * @param url {String} The url to be opened in the new tab
+ * @param options {Object} The tab options for the new tab
  *
- * @return {Promise} A promise that resolves after storage inspector is ready
+ * @return {Promise} A promise that resolves after the tab is ready
  */
-function* openTabAndSetupStorage(url) {
-  let tab = yield addTab(url);
+function* openTab(url, options = {}) {
+  let tab = yield addTab(url, options);
   let content = tab.linkedBrowser.contentWindow;
 
   gWindow = content.wrappedJSObject;
@@ -107,6 +107,24 @@ function* openTabAndSetupStorage(url) {
       }
     }
   });
+
+  return tab;
+}
+
+/**
+ * This generator function opens the given url in a new tab, then sets up the
+ * page by waiting for all cookies, indexedDB items etc. to be created; Then
+ * opens the storage inspector and waits for the storage tree and table to be
+ * populated.
+ *
+ * @param url {String} The url to be opened in the new tab
+ * @param options {Object} The tab options for the new tab
+ *
+ * @return {Promise} A promise that resolves after storage inspector is ready
+ */
+function* openTabAndSetupStorage(url, options = {}) {
+  // open tab
+  yield openTab(url, options);
 
   // open storage inspector
   return yield openStoragePanel();
@@ -204,46 +222,50 @@ function forceCollections() {
 function* finishTests() {
   // Bug 1233497 makes it so that we can no longer yield CPOWs from Tasks.
   // We work around this by calling clear() via a ContentTask instead.
-  yield ContentTask.spawn(gBrowser.selectedBrowser, null, function* () {
-    /**
-     * Get all windows including frames recursively.
-     *
-     * @param {Window} [baseWindow]
-     *        The base window at which to start looking for child windows
-     *        (optional).
-     * @return {Set}
-     *         A set of windows.
-     */
-    function getAllWindows(baseWindow) {
-      let windows = new Set();
+  while (gBrowser.tabs.length > 1) {
+    yield ContentTask.spawn(gBrowser.selectedBrowser, null, function* () {
+      /**
+       * Get all windows including frames recursively.
+       *
+       * @param {Window} [baseWindow]
+       *        The base window at which to start looking for child windows
+       *        (optional).
+       * @return {Set}
+       *         A set of windows.
+       */
+      function getAllWindows(baseWindow) {
+        let windows = new Set();
 
-      let _getAllWindows = function (win) {
-        windows.add(win.wrappedJSObject);
+        let _getAllWindows = function (win) {
+          windows.add(win.wrappedJSObject);
 
-        for (let i = 0; i < win.length; i++) {
-          _getAllWindows(win[i]);
+          for (let i = 0; i < win.length; i++) {
+            _getAllWindows(win[i]);
+          }
+        };
+        _getAllWindows(baseWindow);
+
+        return windows;
+      }
+
+      let windows = getAllWindows(content);
+      for (let win of windows) {
+        // Some windows (e.g., about: URLs) don't have storage available
+        try {
+          win.localStorage.clear();
+          win.sessionStorage.clear();
+        } catch (ex) {
+          // ignore
         }
-      };
-      _getAllWindows(baseWindow);
 
-      return windows;
-    }
-
-    let windows = getAllWindows(content);
-    for (let win of windows) {
-      // Some windows (e.g., about: URLs) don't have storage available
-      try {
-        win.localStorage.clear();
-        win.sessionStorage.clear();
-      } catch (ex) {
-        // ignore
+        if (win.clear) {
+          yield win.clear();
+        }
       }
+    });
 
-      if (win.clear) {
-        yield win.clear();
-      }
-    }
-  });
+    yield closeTabAndToolbox(gBrowser.selectedTab);
+  }
 
   Services.cookies.removeAll();
   forceCollections();

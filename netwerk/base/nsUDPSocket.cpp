@@ -7,6 +7,7 @@
 #include "mozilla/EndianUtils.h"
 #include "mozilla/dom/TypedArray.h"
 #include "mozilla/HoldDropJSObjects.h"
+#include "mozilla/SizePrintfMacros.h"
 #include "mozilla/Telemetry.h"
 
 #include "nsSocketTransport2.h"
@@ -472,12 +473,6 @@ nsUDPSocket::OnSocketReady(PRFileDesc *fd, int16_t outFlags)
   // support the maximum size of jumbo frames
   char buff[9216];
   count = PR_RecvFrom(mFD, buff, sizeof(buff), 0, &prClientAddr, PR_INTERVAL_NO_WAIT);
-
-  if (count < 1) {
-    NS_WARNING("error of recvfrom on UDP socket");
-    mCondition = NS_ERROR_UNEXPECTED;
-    return;
-  }
   mByteReadCount += count;
 
   FallibleTArray<uint8_t> data;
@@ -663,7 +658,8 @@ nsUDPSocket::InitWithAddress(const NetAddr *aAddr, nsIPrincipal *aPrincipal,
   PR_SetSocketOption(mFD, &opt);
 
   PRNetAddr addr;
-  PR_InitializeNetAddr(PR_IpAddrAny, 0, &addr);
+  // Temporary work around for IPv6 until bug 1330490 is fixed
+  memset(&addr, 0, sizeof(addr));
   NetAddrToPRNetAddr(aAddr, &addr);
 
   if (PR_Bind(mFD, &addr) != PR_SUCCESS)
@@ -720,6 +716,7 @@ nsUDPSocket::Connect(const NetAddr *aAddr)
   }
 
   PRNetAddr prAddr;
+  memset(&prAddr, 0, sizeof(prAddr));
   NetAddrToPRNetAddr(aAddr, &prAddr);
 
   if (PR_Connect(mFD, &prAddr, PR_INTERVAL_NO_WAIT) != PR_SUCCESS) {
@@ -1036,7 +1033,7 @@ SocketListenerProxyBackground::OnPacketReceivedRunnable::Run()
 
   FallibleTArray<uint8_t>& data = mMessage->GetDataAsTArray();
 
-  UDPSOCKET_LOG(("%s [this=%p], len %u", __FUNCTION__, this, data.Length()));
+  UDPSOCKET_LOG(("%s [this=%p], len %" PRIuSIZE, __FUNCTION__, this, data.Length()));
   nsCOMPtr<nsIUDPMessage> message = new UDPMessageProxy(&netAddr,
                                                         outputStream,
                                                         data);
@@ -1192,8 +1189,11 @@ nsUDPSocket::Send(const nsACString &aHost, uint16_t aPort,
                   const uint8_t *aData, uint32_t aDataLength,
                   uint32_t *_retval)
 {
-  NS_ENSURE_ARG(aData);
   NS_ENSURE_ARG_POINTER(_retval);
+  if (!((aData && aDataLength > 0) ||
+        (!aData && !aDataLength))) {
+    return NS_ERROR_INVALID_ARG;
+  }
 
   *_retval = 0;
 

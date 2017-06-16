@@ -8,14 +8,7 @@
 #include "MediaStreamListener.h"
 #include "mozilla/Logging.h"
 #include "VideoUtils.h"
-
-#undef LOG
-#ifdef MOZ_WIDGET_GONK
-#include <android/log.h>
-#define LOG(args...) __android_log_print(ANDROID_LOG_INFO, "MediaEncoder", ## args);
-#else
-#define LOG(args, ...)
-#endif
+#include "mozilla/Logging.h"
 
 namespace mozilla {
 
@@ -78,7 +71,7 @@ AudioTrackEncoder::NotifyQueuedTrackChanges(MediaStreamGraph* aGraph,
       if (!chunk.IsNull()) {
         nsresult rv = Init(chunk.mChannelData.Length(), aGraph->GraphRate());
         if (NS_FAILED(rv)) {
-          LOG("[AudioTrackEncoder]: Fail to initialize the encoder!");
+          TRACK_LOG(LogLevel::Error, ("[AudioTrackEncoder]: Fail to initialize the encoder!"));
           NotifyCancel();
         }
         break;
@@ -91,7 +84,7 @@ AudioTrackEncoder::NotifyQueuedTrackChanges(MediaStreamGraph* aGraph,
     if (!mInitialized &&
         (mNotInitDuration / aGraph->GraphRate() > INIT_FAILED_DURATION) &&
         mInitCounter > 1) {
-      LOG("[AudioTrackEncoder]: Initialize failed for 30s.");
+      TRACK_LOG(LogLevel::Warning, ("[AudioTrackEncoder]: Initialize failed for 30s."));
       NotifyEndOfStream();
       return;
     }
@@ -103,7 +96,7 @@ AudioTrackEncoder::NotifyQueuedTrackChanges(MediaStreamGraph* aGraph,
 
   // The stream has stopped and reached the end of track.
   if (aTrackEvents == TrackEventCommand::TRACK_EVENT_ENDED) {
-    LOG("[AudioTrackEncoder]: Receive TRACK_EVENT_ENDED .");
+    TRACK_LOG(LogLevel::Info, ("[AudioTrackEncoder]: Receive TRACK_EVENT_ENDED ."));
     NotifyEndOfStream();
   }
 }
@@ -150,10 +143,12 @@ AudioTrackEncoder::InterleaveTrackData(AudioChunk& aChunk,
                                        uint32_t aOutputChannels,
                                        AudioDataValue* aOutput)
 {
+  uint32_t numChannelsToCopy = std::min(aOutputChannels,
+                                        static_cast<uint32_t>(aChunk.mChannelData.Length()));
   switch(aChunk.mBufferFormat) {
     case AUDIO_FORMAT_S16: {
       AutoTArray<const int16_t*, 2> array;
-      array.SetLength(aOutputChannels);
+      array.SetLength(numChannelsToCopy);
       for (uint32_t i = 0; i < array.Length(); i++) {
         array[i] = static_cast<const int16_t*>(aChunk.mChannelData[i]);
       }
@@ -162,7 +157,7 @@ AudioTrackEncoder::InterleaveTrackData(AudioChunk& aChunk,
     }
     case AUDIO_FORMAT_FLOAT32: {
       AutoTArray<const float*, 2> array;
-      array.SetLength(aOutputChannels);
+      array.SetLength(numChannelsToCopy);
       for (uint32_t i = 0; i < array.Length(); i++) {
         array[i] = static_cast<const float*>(aChunk.mChannelData[i]);
       }
@@ -216,7 +211,7 @@ VideoTrackEncoder::Init(const VideoSegment& aSegment)
                         intrinsicSize.width, intrinsicSize.height);
 
      if (NS_FAILED(rv)) {
-       LOG("[VideoTrackEncoder]: Fail to initialize the encoder!");
+       TRACK_LOG(LogLevel::Error, ("[VideoTrackEncoder]: Fail to initialize the encoder!"));
        NotifyCancel();
      }
      break;
@@ -228,7 +223,7 @@ VideoTrackEncoder::Init(const VideoSegment& aSegment)
   mNotInitDuration += aSegment.GetDuration();
   if ((mNotInitDuration / mTrackRate > INIT_FAILED_DURATION) &&
       mInitCounter > 1) {
-    LOG("[VideoTrackEncoder]: Initialize failed for %ds.", INIT_FAILED_DURATION);
+    TRACK_LOG(LogLevel::Debug, ("[VideoTrackEncoder]: Initialize failed for %ds.", INIT_FAILED_DURATION));
     NotifyEndOfStream();
     return;
   }
@@ -274,7 +269,7 @@ VideoTrackEncoder::NotifyQueuedTrackChanges(MediaStreamGraph* aGraph,
 
   // The stream has stopped and reached the end of track.
   if (aTrackEvents == TrackEventCommand::TRACK_EVENT_ENDED) {
-    LOG("[VideoTrackEncoder]: Receive TRACK_EVENT_ENDED .");
+    TRACK_LOG(LogLevel::Info, ("[VideoTrackEncoder]: Receive TRACK_EVENT_ENDED ."));
     NotifyEndOfStream();
   }
 
@@ -312,7 +307,7 @@ VideoTrackEncoder::AppendVideoSegment(const VideoSegment& aSegment)
       chunk.mDuration = 0;
 
       TRACK_LOG(LogLevel::Verbose,
-                ("[VideoTrackEncoder]: Got first video chunk after %lld ticks.",
+                ("[VideoTrackEncoder]: Got first video chunk after %" PRId64 " ticks.",
                  nullDuration));
       // Adapt to the time before the first frame. This extends the first frame
       // from [start, end] to [0, end], but it'll do for now.
@@ -336,14 +331,14 @@ VideoTrackEncoder::AppendVideoSegment(const VideoSegment& aSegment)
 
       if (mLastChunk.mDuration < mTrackRate) {
         TRACK_LOG(LogLevel::Verbose,
-                  ("[VideoTrackEncoder]: Ignoring dupe/null chunk of duration "
-                   "%lld", chunk.mDuration));
+                  ("[VideoTrackEncoder]: Ignoring dupe/null chunk of duration %" PRId64,
+                   chunk.mDuration));
         continue;
       }
 
       TRACK_LOG(LogLevel::Verbose,
-                ("[VideoTrackEncoder]: Chunk >1 second. duration=%lld, "
-                 "trackRate=%lld", mLastChunk.mDuration, mTrackRate));
+                ("[VideoTrackEncoder]: Chunk >1 second. duration=%" PRId64 ", "
+                 "trackRate=%" PRId32, mLastChunk.mDuration, mTrackRate));
 
       // If we have gotten dupes for over a second, we force send one
       // to the encoder to make sure there is some output.
@@ -389,7 +384,7 @@ VideoTrackEncoder::AppendVideoSegment(const VideoSegment& aSegment)
         // used to trigger the 1-second frame above. This could happen due to
         // drift or underruns in the graph.
         TRACK_LOG(LogLevel::Warning,
-                  ("[VideoTrackEncoder]: Underrun detected. Diff=%lld",
+                  ("[VideoTrackEncoder]: Underrun detected. Diff=%" PRId64,
                    duration.value()));
         chunk.mTimeStamp = mLastChunk.mTimeStamp;
       } else {

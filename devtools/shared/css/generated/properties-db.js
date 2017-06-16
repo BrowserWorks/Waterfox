@@ -3045,6 +3045,7 @@ exports.CSS_PROPERTIES = {
       "text-emphasis-style",
       "-webkit-text-fill-color",
       "text-indent",
+      "text-justify",
       "text-orientation",
       "text-overflow",
       "text-rendering",
@@ -9078,9 +9079,6 @@ exports.CSS_PROPERTIES = {
     ],
     "supports": [],
     "values": [
-      "-moz-isolate",
-      "-moz-isolate-override",
-      "-moz-plaintext",
       "bidi-override",
       "embed",
       "inherit",
@@ -9426,14 +9424,6 @@ exports.PREFERENCES = [
     "layout.css.mix-blend-mode.enabled"
   ],
   [
-    "object-fit",
-    "layout.css.object-fit-and-position.enabled"
-  ],
-  [
-    "object-position",
-    "layout.css.object-fit-and-position.enabled"
-  ],
-  [
     "-moz-osx-font-smoothing",
     "layout.css.osx-font-smoothing.enabled"
   ],
@@ -9488,6 +9478,10 @@ exports.PREFERENCES = [
   [
     "-webkit-text-fill-color",
     "layout.css.prefixes.webkit"
+  ],
+  [
+    "text-justify",
+    "layout.css.text-justify.enabled"
   ],
   [
     "-webkit-text-stroke",

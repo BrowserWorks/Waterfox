@@ -27,16 +27,6 @@ LOCAL_INCLUDES += [
     '/xpcom/base',
 ]
 
-# We link GMPLoader into plugin-container on desktop so that its code is
-# covered by the desktop DRM vendor's voucher.
-if CONFIG['OS_ARCH'] != 'Linux':
-    SOURCES += [
-        '../../dom/media/gmp/GMPLoader.cpp',
-    ]
-    USE_LIBS += [
-        'rlz',
-    ]
-
 # DELAYLOAD_DLLS in this block ensures that the DLL blocklist is functional
 if CONFIG['OS_ARCH'] == 'WINNT':
     DELAYLOAD_DLLS += [
@@ -99,3 +89,6 @@ if CONFIG['GNU_CXX']:
     CXXFLAGS += ['-Wshadow']
 
 DEFINES['MOZ_PLUGIN_CONTAINER'] = 1;
+
+with Files("**"):
+    BUG_COMPONENT = ("Core", "DOM: Content Processes")

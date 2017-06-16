@@ -10,6 +10,7 @@
 #include <math.h>
 
 #include "DrawMode.h"
+#include "DrawResult.h"
 #include "gfx2DGlue.h"
 #include "gfxMatrix.h"
 #include "gfxPoint.h"
@@ -195,10 +196,9 @@ public:
 
   /**
    * Gets the nearest nsSVGInnerSVGFrame or nsSVGOuterSVGFrame frame. aFrame
-   * must be an SVG frame. If aFrame is of type nsGkAtoms::svgOuterSVGFrame,
-   * returns nullptr.
+   * must be an SVG frame.
    */
-  static nsSVGDisplayContainerFrame* GetNearestSVGViewport(nsIFrame *aFrame);
+  static nsIFrame* GetNearestSVGViewport(nsIFrame *aFrame);
 
   /**
    * Returns the frame's post-filter visual overflow rect when passed the
@@ -596,6 +596,15 @@ public:
 
   static float
   ComputeOpacity(nsIFrame* aFrame, bool aHandleOpacity);
+
+  /**
+   * SVG frames expect to paint in SVG user units, which are equal to CSS px
+   * units. This method provides a transform matrix to multiply onto a
+   * gfxContext's current transform to convert the context's current units from
+   * its usual dev pixels to SVG user units/CSS px to keep the SVG code happy.
+   */
+  static gfxMatrix
+  GetCSSPxToDevPxMatrix(nsIFrame* aNonSVGFrame);
 };
 
 #endif

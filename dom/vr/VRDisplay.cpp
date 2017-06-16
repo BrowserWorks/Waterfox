@@ -464,9 +464,12 @@ VRDisplay::RequestPresent(const nsTArray<VRLayer>& aLayers, ErrorResult& aRv)
   nsCOMPtr<nsIObserverService> obs = services::GetObserverService();
   NS_ENSURE_TRUE(obs, nullptr);
 
-  if (mClient->GetIsPresenting()) {
+  if (!IsPresenting() && IsAnyPresenting()) {
     // Only one presentation allowed per VRDisplay
     // on a first-come-first-serve basis.
+    // If this Javascript context is presenting, then we can replace our
+    // presentation with a new one containing new layers but we should never
+    // replace the presentation of another context.
     promise->MaybeRejectWithUndefined();
   } else {
     mPresentation = mClient->BeginPresentation(aLayers);
@@ -583,6 +586,14 @@ VRDisplay::IsPresenting() const
   // IsPresenting returns true only if this Javascript context is presenting
   // and will return false if another context is presenting.
   return mPresentation != nullptr;
+}
+
+bool
+VRDisplay::IsAnyPresenting() const
+{
+  // IsAnyPresenting returns true if any Javascript context is presenting
+  // even if this context is not presenting.
+  return IsPresenting() || mClient->GetIsPresenting();
 }
 
 bool
@@ -742,6 +753,23 @@ VRFrameInfo::Update(const gfx::VRDisplayInfo& aInfo,
                     float aDepthFar)
 {
   mVRState = aState;
+  if (mTimeStampOffset == 0.0f) {
+    /**
+     * A mTimeStampOffset value of 0.0f indicates that this is the first iteration
+     * and an offset has not yet been set.
+     *
+     * Generate a value for mTimeStampOffset such that if aState.timestamp is
+     * monotonically increasing, aState.timestamp + mTimeStampOffset will never
+     * be a negative number and will start at a pseudo-random offset
+     * between 1000.0f and 11000.0f seconds.
+     *
+     * We use a pseudo random offset rather than 0.0f just to discourage users
+     * from making the assumption that the timestamp returned in the WebVR API
+     * has a base of 0, which is not necessarily true in all UA's.
+     */
+    mTimeStampOffset = float(rand()) / RAND_MAX * 10000.0f + 1000.0f - aState.timestamp;
+  }
+  mVRState.timestamp = aState.timestamp + mTimeStampOffset;
 
   gfx::Quaternion qt;
   if (mVRState.flags & gfx::VRDisplayCapabilityFlags::Cap_Orientation) {
@@ -779,6 +807,7 @@ VRFrameInfo::Update(const gfx::VRDisplayInfo& aInfo,
 }
 
 VRFrameInfo::VRFrameInfo()
+ : mTimeStampOffset(0.0f)
 {
   mVRState.Clear();
 }

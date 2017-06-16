@@ -12,6 +12,10 @@
 <script>
 "use strict";
 
+if (AppConstants.platform === "android") {
+  SimpleTest.requestLongerTimeout(3);
+}
+
 let extension;
 add_task(function* setup() {
   // SelfSupport has a tendency to fire when running this test alone, without
@@ -66,7 +70,7 @@ add_task(function* test_webRequest_links() {
   addStylesheet("file_style_redirect.css");
   yield extension.awaitMessage("done");
 
-  let style = window.getComputedStyle(document.getElementById("test"), null);
+  let style = window.getComputedStyle(document.getElementById("test"));
   is(style.getPropertyValue("color"), "rgb(255, 0, 0)", "Good CSS loaded");
 });
 

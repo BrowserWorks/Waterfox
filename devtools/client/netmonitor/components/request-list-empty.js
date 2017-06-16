@@ -1,15 +1,20 @@
 /* This Source Code Form is subject to the terms of the Mozilla Public
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
-/* globals NetMonitorView */
 
 "use strict";
 
-const { createClass, PropTypes, DOM } = require("devtools/client/shared/vendor/react");
-const { L10N } = require("../l10n");
-const { div, span, button } = DOM;
+const {
+  createClass,
+  DOM,
+  PropTypes,
+} = require("devtools/client/shared/vendor/react");
 const { connect } = require("devtools/client/shared/vendor/react-redux");
 const Actions = require("../actions/index");
+const { ACTIVITY_TYPE } = require("../constants");
+const { L10N } = require("../utils/l10n");
+
+const { button, div, span } = DOM;
 
 /**
  * UI displayed when the request list is empty. Contains instructions on reloading
@@ -26,15 +31,13 @@ const RequestListEmptyNotice = createClass({
   render() {
     return div(
       {
-        id: "requests-menu-empty-notice",
         className: "request-list-empty-notice",
       },
-      div({ id: "notice-reload-message" },
+      div({ className: "notice-reload-message" },
         span(null, L10N.getStr("netmonitor.reloadNotice1")),
         button(
           {
-            id: "requests-menu-reload-notice-button",
-            className: "devtools-toolbarbutton",
+            className: "devtools-toolbarbutton requests-list-reload-notice-button",
             "data-standalone": true,
             onClick: this.props.onReloadClick,
           },
@@ -42,12 +45,11 @@ const RequestListEmptyNotice = createClass({
         ),
         span(null, L10N.getStr("netmonitor.reloadNotice3"))
       ),
-      div({ id: "notice-perf-message" },
+      div({ className: "notice-perf-message" },
         span(null, L10N.getStr("netmonitor.perfNotice1")),
         button({
-          id: "requests-menu-perf-notice-button",
           title: L10N.getStr("netmonitor.perfNotice3"),
-          className: "devtools-button",
+          className: "devtools-button requests-list-perf-notice-button",
           "data-standalone": true,
           onClick: this.props.onPerfClick,
         }),
@@ -60,7 +62,9 @@ const RequestListEmptyNotice = createClass({
 module.exports = connect(
   undefined,
   dispatch => ({
-    onPerfClick: e => dispatch(Actions.openStatistics(true)),
-    onReloadClick: e => NetMonitorView.reloadPage(),
+    onPerfClick: () => dispatch(Actions.openStatistics(true)),
+    onReloadClick: () =>
+      window.NetMonitorController
+        .triggerActivity(ACTIVITY_TYPE.RELOAD.WITH_CACHE_DEFAULT),
   })
 )(RequestListEmptyNotice);

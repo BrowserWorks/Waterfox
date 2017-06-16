@@ -8,16 +8,17 @@ import android.net.Uri;
 import android.support.annotation.VisibleForTesting;
 
 import org.mozilla.gecko.background.common.log.Logger;
+import org.mozilla.gecko.sync.CollectionConcurrentModificationException;
 import org.mozilla.gecko.sync.InfoConfiguration;
-import org.mozilla.gecko.sync.Server11RecordPostFailedException;
-import org.mozilla.gecko.sync.net.SyncResponse;
-import org.mozilla.gecko.sync.net.SyncStorageResponse;
-import org.mozilla.gecko.sync.repositories.Server11RepositorySession;
+import org.mozilla.gecko.sync.Server15PreviousPostFailedException;
+import org.mozilla.gecko.sync.net.AuthHeaderProvider;
+import org.mozilla.gecko.sync.repositories.RepositorySession;
 import org.mozilla.gecko.sync.repositories.delegates.RepositorySessionStoreDelegate;
 import org.mozilla.gecko.sync.repositories.domain.Record;
 
 import java.util.ArrayList;
 import java.util.concurrent.Executor;
+import java.util.concurrent.ExecutorService;
 import java.util.concurrent.atomic.AtomicLong;
 
 /**
@@ -38,13 +39,18 @@ import java.util.concurrent.atomic.AtomicLong;
  *
  * Once we go past using one batch this uploader is no longer "atomic". Partial state is exposed
  * to other clients after our first batch is committed and before our last batch is committed.
- * However, our per-batch limits are high, X-I-U-S mechanics help protect downloading clients
- * (as long as they implement X-I-U-S) with 412 error codes in case of interleaving upload and download,
- * and most mobile clients will not be uploading large-enough amounts of data (especially structured
- * data, such as bookmarks).
+ * However, our per-batch limits are (hopefully) high, X-I-U-S mechanics help protect downloading clients
+ * (as long as they implement X-I-U-S) with 412 error codes in case of interleaving upload and download.
  *
  * Last-Modified header returned with the first batch payload POST success is maintained for a batch,
  * to guard against concurrent-modification errors (different uploader commits before we're done).
+ *
+ * Implementation notes:
+ * - RecordsChannel (via RepositorySession) delivers a stream of records for upload via {@link #process(Record)}
+ * - UploaderMeta is used to track batch-level information necessary for processing outgoing records
+ * - PayloadMeta is used to track payload-level information necessary for processing outgoing records
+ * - BatchMeta within PayloadDispatcher acts as a shared whiteboard which is used for tracking
+ *   information across batches (last-modified, batching mode) as well as batch side-effects (stored guids)
  *
  * Non-batching mode notes:
  * We also support Sync servers which don't enable batching for uploads. In this case, we respect
@@ -56,29 +62,8 @@ import java.util.concurrent.atomic.AtomicLong;
 public class BatchingUploader {
     private static final String LOG_TAG = "BatchingUploader";
 
-    private final Uri collectionUri;
-
-    private volatile boolean recordUploadFailed = false;
-
-    private final BatchMeta batchMeta;
-    private final Payload payload;
-
-    // Accessed by synchronously running threads, OK to not synchronize and just make it volatile.
-    private volatile Boolean inBatchingMode;
-
-    // Used to ensure we have thread-safe access to the following:
-    // - byte and record counts in both Payload and BatchMeta objects
-    // - buffers in the Payload object
-    private final Object payloadLock = new Object();
-
-    protected Executor workQueue;
-    protected final RepositorySessionStoreDelegate sessionStoreDelegate;
-    protected final Server11RepositorySession repositorySession;
-
-    protected AtomicLong uploadTimestamp = new AtomicLong(0);
-
-    protected static final int PER_RECORD_OVERHEAD_BYTE_COUNT = RecordUploadRunnable.RECORD_SEPARATOR.length;
-    protected static final int PER_PAYLOAD_OVERHEAD_BYTE_COUNT = RecordUploadRunnable.RECORDS_END.length;
+    private static final int PER_RECORD_OVERHEAD_BYTE_COUNT = RecordUploadRunnable.RECORD_SEPARATOR.length;
+    /* package-local */ static final int PER_PAYLOAD_OVERHEAD_BYTE_COUNT = RecordUploadRunnable.RECORDS_END.length;
 
     // Sanity check. RECORD_SEPARATOR and RECORD_START are assumed to be of the same length.
     static {
@@ -87,22 +72,63 @@ public class BatchingUploader {
         }
     }
 
-    public BatchingUploader(final Server11RepositorySession repositorySession, final Executor workQueue, final RepositorySessionStoreDelegate sessionStoreDelegate) {
-        this.repositorySession = repositorySession;
-        this.workQueue = workQueue;
-        this.sessionStoreDelegate = sessionStoreDelegate;
-        this.collectionUri = Uri.parse(repositorySession.getServerRepository().collectionURI().toString());
+    // Accessed by the record consumer thread pool.
+    private final ExecutorService executor;
+    // Will be re-created, so mark it as volatile.
+    private volatile Payload payload;
 
-        InfoConfiguration config = repositorySession.getServerRepository().getInfoConfiguration();
-        this.batchMeta = new BatchMeta(
-                payloadLock, config.maxTotalBytes, config.maxTotalRecords,
-                repositorySession.getServerRepository().getCollectionLastModified()
-        );
-        this.payload = new Payload(payloadLock, config.maxPostBytes, config.maxPostRecords);
+    // Accessed by both the record consumer thread pool and the network worker thread(s).
+    /* package-local */ final Uri collectionUri;
+    /* package-local */ final RepositorySessionStoreDelegate sessionStoreDelegate;
+    /* package-local */ @VisibleForTesting final PayloadDispatcher payloadDispatcher;
+    /* package-local */ final AuthHeaderProvider authHeaderProvider;
+    private final RepositorySession repositorySession;
+    // Will be re-created, so mark it as volatile.
+    private volatile UploaderMeta uploaderMeta;
+
+    // Used to ensure we have thread-safe access to the following:
+    // - byte and record counts in both Payload and BatchMeta objects
+    // - buffers in the Payload object
+    private final Object payloadLock = new Object();
+
+    public BatchingUploader(
+            final RepositorySession repositorySession, final ExecutorService workQueue,
+            final RepositorySessionStoreDelegate sessionStoreDelegate, final Uri baseCollectionUri,
+            final Long localCollectionLastModified, final InfoConfiguration infoConfiguration,
+            final AuthHeaderProvider authHeaderProvider) {
+        this.repositorySession = repositorySession;
+        this.sessionStoreDelegate = sessionStoreDelegate;
+        this.collectionUri = baseCollectionUri;
+        this.authHeaderProvider = authHeaderProvider;
+
+        this.uploaderMeta = new UploaderMeta(
+                payloadLock, infoConfiguration.maxTotalBytes, infoConfiguration.maxTotalRecords);
+        this.payload = new Payload(
+                payloadLock, infoConfiguration.maxPostBytes, infoConfiguration.maxPostRecords);
+
+        this.payloadDispatcher = createPayloadDispatcher(workQueue, localCollectionLastModified);
+
+        this.executor = workQueue;
     }
 
+    // Called concurrently from the threads running off of a record consumer thread pool.
     public void process(final Record record) {
         final String guid = record.guid;
+
+        // If store failed entirely, just bail out. We've already told our delegate that we failed.
+        if (payloadDispatcher.storeFailed) {
+            return;
+        }
+
+        // If a record or a payload failed, we won't let subsequent requests proceed.'
+        // This means that we may bail much earlier.
+        if (payloadDispatcher.recordUploadFailed) {
+            sessionStoreDelegate.deferredStoreDelegate(executor).onRecordStoreFailed(
+                    new Server15PreviousPostFailedException(), guid
+            );
+            return;
+        }
+
         final byte[] recordBytes = record.toJSONBytes();
         final long recordDeltaByteCount = recordBytes.length + PER_RECORD_OVERHEAD_BYTE_COUNT;
 
@@ -115,7 +141,7 @@ public class BatchingUploader {
         }
 
         synchronized (payloadLock) {
-            final boolean canFitRecordIntoBatch = batchMeta.canFit(recordDeltaByteCount);
+            final boolean canFitRecordIntoBatch = uploaderMeta.canFit(recordDeltaByteCount);
             final boolean canFitRecordIntoPayload = payload.canFit(recordDeltaByteCount);
 
             // Record fits!
@@ -139,7 +165,6 @@ public class BatchingUploader {
                 flush(true, false);
 
                 Logger.debug(LOG_TAG, "Recording the incoming record into a new batch");
-                batchMeta.reset();
 
                 // Keep track of the overflow record.
                 addAndFlushIfNecessary(recordDeltaByteCount, recordBytes, guid);
@@ -150,12 +175,11 @@ public class BatchingUploader {
     // Convenience function used from the process method; caller must hold a payloadLock.
     private void addAndFlushIfNecessary(long byteCount, byte[] recordBytes, String guid) {
         boolean isPayloadFull = payload.addAndEstimateIfFull(byteCount, recordBytes, guid);
-        boolean isBatchFull = batchMeta.addAndEstimateIfFull(byteCount);
+        boolean isBatchFull = uploaderMeta.addAndEstimateIfFull(byteCount);
 
         // Preemptive commit batch or upload a payload if they're estimated to be full.
         if (isBatchFull) {
             flush(true, false);
-            batchMeta.reset();
         } else if (isPayloadFull) {
             flush(false, false);
         }
@@ -164,134 +188,34 @@ public class BatchingUploader {
     public void noMoreRecordsToUpload() {
         Logger.debug(LOG_TAG, "Received 'no more records to upload' signal.");
 
-        // Run this after the last payload succeeds, so that we know for sure if we're in a batching
-        // mode and need to commit with a potentially empty payload.
-        workQueue.execute(new Runnable() {
+        // If we have any pending records in the Payload, flush them!
+        if (!payload.isEmpty()) {
+            flush(true, true);
+            return;
+        }
+
+        // If we don't have any pending records, we still might need to send an empty "commit"
+        // payload if we are in the batching mode.
+        // The dispatcher will run the final flush on its executor if necessary after all payloads
+        // succeed and it knows for sure if we're in a batching mode.
+        payloadDispatcher.finalizeQueue(uploaderMeta.needToCommit(), new Runnable() {
             @Override
             public void run() {
-                commitIfNecessaryAfterLastPayload();
+                flush(true, true);
             }
         });
     }
 
-    @VisibleForTesting
-    protected void commitIfNecessaryAfterLastPayload() {
-        // Must be called after last payload upload finishes.
-        synchronized (payload) {
-            // If we have any pending records in the Payload, flush them!
-            if (!payload.isEmpty()) {
-                flush(true, true);
-
-            // If we have an empty payload but need to commit the batch in the batching mode, flush!
-            } else if (batchMeta.needToCommit() && Boolean.TRUE.equals(inBatchingMode)) {
-                flush(true, true);
-
-            // Otherwise, we're done.
-            } else {
-                finished(uploadTimestamp);
-            }
-        }
+    /* package-local */ void finished(AtomicLong lastModifiedTimestamp) {
+        sessionStoreDelegate.deferredStoreDelegate(executor).onStoreCompleted(lastModifiedTimestamp.get());
     }
 
-    /**
-     * We've been told by our upload delegate that a payload succeeded.
-     * Depending on the type of payload and batch mode status, inform our delegate of progress.
-     *
-     * @param response success response to our commit post
-     * @param isCommit was this a commit upload?
-     * @param isLastPayload was this a very last payload we'll upload?
-     */
-    public void payloadSucceeded(final SyncStorageResponse response, final boolean isCommit, final boolean isLastPayload) {
-        // Sanity check.
-        if (inBatchingMode == null) {
-            throw new IllegalStateException("Can't process payload success until we know if we're in a batching mode");
-        }
-
-        // We consider records to have been committed if we're not in a batching mode or this was a commit.
-        // If records have been committed, notify our store delegate.
-        if (!inBatchingMode || isCommit) {
-            for (String guid : batchMeta.getSuccessRecordGuids()) {
-                sessionStoreDelegate.onRecordStoreSucceeded(guid);
-            }
-        }
-
-        // If this was our very last commit, we're done storing records.
-        // Get Last-Modified timestamp from the response, and pass it upstream.
-        if (isLastPayload) {
-            finished(response.normalizedTimestampForHeader(SyncResponse.X_LAST_MODIFIED));
-        }
-    }
-
-    public void lastPayloadFailed() {
-        finished(uploadTimestamp);
-    }
-
-    private void finished(long lastModifiedTimestamp) {
-        bumpTimestampTo(uploadTimestamp, lastModifiedTimestamp);
-        finished(uploadTimestamp);
-    }
-
-    private void finished(AtomicLong lastModifiedTimestamp) {
-        repositorySession.storeDone(lastModifiedTimestamp.get());
-    }
-
-    public BatchMeta getCurrentBatch() {
-        return batchMeta;
-    }
-
-    public void setInBatchingMode(boolean inBatchingMode) {
-        this.inBatchingMode = inBatchingMode;
-
+    // Will be called from a thread dispatched by PayloadDispatcher.
+    // NB: Access to `uploaderMeta.isUnlimited` is guarded by the payloadLock.
+    /* package-local */ void setUnlimitedMode(boolean isUnlimited) {
         // If we know for sure that we're not in a batching mode,
         // consider our batch to be of unlimited size.
-        this.batchMeta.setIsUnlimited(!inBatchingMode);
-    }
-
-    public Boolean getInBatchingMode() {
-        return inBatchingMode;
-    }
-
-    public void setLastModified(final Long lastModified, final boolean isCommit) throws BatchingUploaderException {
-        // Sanity check.
-        if (inBatchingMode == null) {
-            throw new IllegalStateException("Can't process Last-Modified before we know we're in a batching mode.");
-        }
-
-        // In non-batching mode, every time we receive a Last-Modified timestamp, we expect it to change
-        // since records are "committed" (become visible to other clients) on every payload.
-        // In batching mode, we only expect Last-Modified to change when we commit a batch.
-        batchMeta.setLastModified(lastModified, isCommit || !inBatchingMode);
-    }
-
-    public void recordSucceeded(final String recordGuid) {
-        Logger.debug(LOG_TAG, "Record store succeeded: " + recordGuid);
-        batchMeta.recordSucceeded(recordGuid);
-    }
-
-    public void recordFailed(final String recordGuid) {
-        recordFailed(new Server11RecordPostFailedException(), recordGuid);
-    }
-
-    public void recordFailed(final Exception e, final String recordGuid) {
-        Logger.debug(LOG_TAG, "Record store failed for guid " + recordGuid + " with exception: " + e.toString());
-        recordUploadFailed = true;
-        sessionStoreDelegate.onRecordStoreFailed(e, recordGuid);
-    }
-
-    public Server11RepositorySession getRepositorySession() {
-        return repositorySession;
-    }
-
-    private static void bumpTimestampTo(final AtomicLong current, long newValue) {
-        while (true) {
-            long existing = current.get();
-            if (existing > newValue) {
-                return;
-            }
-            if (current.compareAndSet(existing, newValue)) {
-                return;
-            }
-        }
+        this.uploaderMeta.setIsUnlimited(isUnlimited);
     }
 
     private void flush(final boolean isCommit, final boolean isLastPayload) {
@@ -306,39 +230,36 @@ public class BatchingUploader {
             outgoingGuids = payload.getRecordGuidsBuffer();
             byteCount = payload.getByteCount();
         }
+        payload = payload.nextPayload();
 
-        workQueue.execute(new RecordUploadRunnable(
-                new BatchingAtomicUploaderMayUploadProvider(),
-                collectionUri,
-                batchMeta,
-                new PayloadUploadDelegate(this, outgoingGuids, isCommit, isLastPayload),
-                outgoing,
-                byteCount,
-                isCommit
-        ));
+        payloadDispatcher.queue(outgoing, outgoingGuids, byteCount, isCommit, isLastPayload);
 
-        payload.reset();
+        if (isCommit && !isLastPayload) {
+            uploaderMeta = uploaderMeta.nextUploaderMeta();
+        }
     }
 
-    private class BatchingAtomicUploaderMayUploadProvider implements MayUploadProvider {
-        public boolean mayUpload() {
-            return !recordUploadFailed;
-        }
+    /**
+     * Allows tests to define their own PayloadDispatcher.
+     */
+    @VisibleForTesting
+    PayloadDispatcher createPayloadDispatcher(ExecutorService workQueue, Long localCollectionLastModified) {
+        return new PayloadDispatcher(workQueue, this, localCollectionLastModified);
     }
 
     public static class BatchingUploaderException extends Exception {
         private static final long serialVersionUID = 1L;
     }
-    public static class RecordTooLargeToUpload extends BatchingUploaderException {
+    /* package-local */ static class LastModifiedDidNotChange extends BatchingUploaderException {
         private static final long serialVersionUID = 1L;
     }
-    public static class LastModifiedDidNotChange extends BatchingUploaderException {
+    /* package-local */ static class LastModifiedChangedUnexpectedly extends BatchingUploaderException {
         private static final long serialVersionUID = 1L;
     }
-    public static class LastModifiedChangedUnexpectedly extends BatchingUploaderException {
-        private static final long serialVersionUID = 1L;
-    }
-    public static class TokenModifiedException extends BatchingUploaderException {
+    /* package-local */ static class TokenModifiedException extends BatchingUploaderException {
         private static final long serialVersionUID = 1L;
     };
+    private static class RecordTooLargeToUpload extends BatchingUploaderException {
+        private static final long serialVersionUID = 1L;
+    }
 }

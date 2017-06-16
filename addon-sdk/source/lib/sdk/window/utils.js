@@ -213,10 +213,9 @@ function onFocus(window) {
     resolve(window);
   }
   else {
-    window.addEventListener("focus", function focusListener() {
-      window.removeEventListener("focus", focusListener, true);
+    window.addEventListener("focus", function() {
       resolve(window);
-    }, true);
+    }, {capture: true, once: true});
   }
 
   return promise;
@@ -416,7 +415,7 @@ function getOwnerBrowserWindow(node) {
   /**
   Takes DOM node and returns browser window that contains it.
   **/
-  let window = getToplevelWindow(node.ownerDocument.defaultView);
+  let window = getToplevelWindow(node.ownerGlobal);
   // If anchored window is browser then it's target browser window.
   return isBrowser(window) ? window : null;
 }

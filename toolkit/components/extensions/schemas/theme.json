@@ -1,0 +1,88 @@
+// This Source Code Form is subject to the terms of the Mozilla Public
+// License, v. 2.0. If a copy of the MPL was not distributed with this
+// file, You can obtain one at http://mozilla.org/MPL/2.0/.
+
+[
+  {
+    "namespace": "manifest",
+    "types": [
+      {
+        "id": "ThemeType",
+        "type": "object",
+        "properties": {
+          "images": {
+            "type": "object",
+            "optional": true,
+            "properties": {
+              "headerURL": {
+                "type": "string",
+                "optional": true
+              },
+              "theme_frame": {
+                "type": "string",
+                "optional": true
+              }
+            }
+          },
+          "colors": {
+            "type": "object",
+            "optional": true,
+            "properties": {
+              "accentcolor": {
+                "type": "string",
+                "optional": true
+              },
+              "frame": {
+                "type": "array",
+                "items": {
+                  "type": "number"
+                },
+                "optional": true
+              },
+              "tab_text": {
+                "type": "array",
+                "items": {
+                  "type": "number"
+                },
+                "optional": true
+              },
+              "textcolor": {
+                "type": "string",
+                "optional": true
+              }
+            }
+          }
+        }
+      },
+      {
+        "$extend": "WebExtensionManifest",
+        "properties": {
+          "theme": {
+            "optional": true,
+            "$ref": "ThemeType"
+          }
+        }
+      }
+    ]
+  },
+  {
+    "namespace": "theme",
+    "description": "The theme API allows customizing of visual elements of the browser.",
+    "permissions": ["manifest:theme"],
+    "functions": [
+      {
+        "name": "update",
+        "type": "function",
+        "async": true,
+        "description": "Make complete or partial updates to the theme. Resolves when the update has completed.",
+        "parameters": [
+          {
+            "name": "details",
+            "$ref": "manifest.ThemeType",
+            "description": "The properties of the theme to update."
+          }
+        ]
+      }
+    ]
+  }
+]

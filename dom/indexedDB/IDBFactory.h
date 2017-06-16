@@ -8,6 +8,7 @@
 #define mozilla_dom_idbfactory_h__
 
 #include "mozilla/Attributes.h"
+#include "mozilla/dom/BindingDeclarations.h"
 #include "mozilla/dom/StorageTypeBinding.h"
 #include "nsAutoPtr.h"
 #include "nsCOMPtr.h"
@@ -17,6 +18,7 @@
 #include "nsTArray.h"
 #include "nsWrapperCache.h"
 
+class nsIEventTarget;
 class nsIPrincipal;
 class nsPIDOMWindowInner;
 struct PRThread;
@@ -38,6 +40,7 @@ struct IDBOpenDBOptions;
 class IDBOpenDBRequest;
 template <typename> class Optional;
 class TabChild;
+enum class CallerType : uint32_t;
 
 namespace indexedDB {
 class BackgroundFactoryChild;
@@ -70,6 +73,11 @@ class IDBFactory final
   nsTArray<nsAutoPtr<PendingRequestInfo>> mPendingRequests;
 
   indexedDB::BackgroundFactoryChild* mBackgroundActor;
+
+  // A DocGroup-specific EventTarget if created by CreateForWindow().
+  // Otherwise, it must either be set to SystemGroup on main thread or
+  // NS_GetCurrentThread() off main thread.
+  nsCOMPtr<nsIEventTarget> mEventTarget;
 
 #ifdef DEBUG
   PRThread* mOwningThread;
@@ -115,6 +123,14 @@ public:
   AssertIsOnOwningThread() const
   { }
 #endif
+
+  nsIEventTarget*
+  EventTarget() const
+  {
+    AssertIsOnOwningThread();
+    MOZ_RELEASE_ASSERT(mEventTarget);
+    return mEventTarget;
+  }
 
   void
   ClearBackgroundActor()
@@ -162,18 +178,21 @@ public:
   Open(JSContext* aCx,
        const nsAString& aName,
        uint64_t aVersion,
+       CallerType aCallerType,
        ErrorResult& aRv);
 
   already_AddRefed<IDBOpenDBRequest>
   Open(JSContext* aCx,
        const nsAString& aName,
        const IDBOpenDBOptions& aOptions,
+       CallerType aCallerType,
        ErrorResult& aRv);
 
   already_AddRefed<IDBOpenDBRequest>
   DeleteDatabase(JSContext* aCx,
                  const nsAString& aName,
                  const IDBOpenDBOptions& aOptions,
+                 CallerType aCallerType,
                  ErrorResult& aRv);
 
   int16_t
@@ -187,6 +206,7 @@ public:
                    nsIPrincipal* aPrincipal,
                    const nsAString& aName,
                    uint64_t aVersion,
+                   SystemCallerGuarantee,
                    ErrorResult& aRv);
 
   already_AddRefed<IDBOpenDBRequest>
@@ -194,6 +214,7 @@ public:
                    nsIPrincipal* aPrincipal,
                    const nsAString& aName,
                    const IDBOpenDBOptions& aOptions,
+                   SystemCallerGuarantee,
                    ErrorResult& aRv);
 
   already_AddRefed<IDBOpenDBRequest>
@@ -201,6 +222,7 @@ public:
                      nsIPrincipal* aPrincipal,
                      const nsAString& aName,
                      const IDBOpenDBOptions& aOptions,
+                     SystemCallerGuarantee,
                      ErrorResult& aRv);
 
   NS_DECL_CYCLE_COLLECTING_ISUPPORTS
@@ -238,6 +260,7 @@ private:
                const Optional<uint64_t>& aVersion,
                const Optional<StorageType>& aStorageType,
                bool aDeleting,
+               CallerType aCallerType,
                ErrorResult& aRv);
 
   nsresult

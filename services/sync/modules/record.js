@@ -783,12 +783,22 @@ Collection.prototype = {
 
     this._onRecord = onRecord;
 
-    this._onProgress = function() {
-      let newline;
+    this._onProgress = function(httpChannel) {
+      let newline, length = 0, contentLength = "unknown";
+
+      try {
+          // Content-Length of the value of this response header
+          contentLength = httpChannel.getResponseHeader("Content-Length");
+      } catch (ex) { }
+
       while ((newline = this._data.indexOf("\n")) > 0) {
         // Split the json record from the rest of the data
         let json = this._data.slice(0, newline);
         this._data = this._data.slice(newline + 1);
+
+        length += json.length;
+        coll._log.trace("Record: Content-Length = " + contentLength +
+                        ", ByteCount = " + length);
 
         // Deserialize a record from json and give it to the callback
         let record = new coll._recordObj();
@@ -992,14 +1002,16 @@ PostQueue.prototype = {
       this.log.trace("Server error response during a batch", response);
       // not clear what we should do here - we expect the consumer of this to
       // abort by throwing in the postCallback below.
-      return this.postCallback(response, !finalBatchPost);
+      this.postCallback(response, !finalBatchPost);
+      return;
     }
 
     if (finalBatchPost) {
       this.log.trace("Committed batch", this.batchID);
       this.batchID = undefined; // we are now in "first post for the batch" state.
       this.lastModified = response.headers["x-last-modified"];
-      return this.postCallback(response, false);
+      this.postCallback(response, false);
+      return;
     }
 
     if (response.status != 202) {
@@ -1008,7 +1020,8 @@ PostQueue.prototype = {
       }
       this.batchID = null; // no batch semantics are in place.
       this.lastModified = response.headers["x-last-modified"];
-      return this.postCallback(response, false);
+      this.postCallback(response, false);
+      return;
     }
 
     // this response is saying the server has batch semantics - we should

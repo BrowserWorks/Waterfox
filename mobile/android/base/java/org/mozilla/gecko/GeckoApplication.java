@@ -44,6 +44,7 @@ public class GeckoApplication extends Application
 
     private boolean mInBackground;
     private boolean mPausedGecko;
+    private boolean mIsInitialResume;
 
     private LightweightTheme mLightweightTheme;
 
@@ -124,18 +125,21 @@ public class GeckoApplication extends Application
                     db.expireHistory(getContentResolver(), BrowserContract.ExpirePriority.NORMAL);
                 }
             });
+
+            GeckoNetworkManager.getInstance().stop();
         }
-        GeckoNetworkManager.getInstance().stop();
     }
 
     public void onActivityResume(GeckoActivityStatus activity) {
-        if (mPausedGecko) {
+        if (mIsInitialResume) {
+            GeckoBatteryManager.getInstance().start(this);
+            GeckoNetworkManager.getInstance().start(this);
+            mIsInitialResume = false;
+        } else if (mPausedGecko) {
             GeckoThread.onResume();
             mPausedGecko = false;
+            GeckoNetworkManager.getInstance().start(this);
         }
-
-        GeckoBatteryManager.getInstance().start(this);
-        GeckoNetworkManager.getInstance().start(this);
 
         mInBackground = false;
     }
@@ -156,12 +160,13 @@ public class GeckoApplication extends Application
             Log.e(LOG_TAG, "Got exception applying PRNGFixes! Cryptographic data produced on this device may be weak. Ignoring.", e);
         }
 
+        mIsInitialResume = true;
+
         mRefWatcher = LeakCanary.install(this);
 
         final Context context = getApplicationContext();
         GeckoAppShell.setApplicationContext(context);
         HardwareUtils.init(context);
-        Clipboard.init(context);
         FilePicker.init(context);
         DownloadsIntegration.init();
         HomePanelsManager.getInstance().init(context);
@@ -203,10 +208,6 @@ public class GeckoApplication extends Application
                     }
                 }
             });
-        }
-
-        if (AppConstants.MOZ_ANDROID_DOWNLOAD_CONTENT_SERVICE) {
-            DownloadContentService.startStudy(this);
         }
 
         GeckoAccessibility.setAccessibilityManagerListeners(this);

@@ -574,7 +574,8 @@ nsStyleOutline::CalcDifference(const nsStyleOutline& aNewData) const
       (mActualOutlineWidth > 0 &&
        mOutlineOffset != aNewData.mOutlineOffset)) {
     return nsChangeHint_UpdateOverflow |
-           nsChangeHint_SchedulePaint;
+           nsChangeHint_SchedulePaint |
+           nsChangeHint_RepaintFrame;
   }
 
   if (mOutlineStyle != aNewData.mOutlineStyle ||
@@ -1206,10 +1207,34 @@ nsStyleSVGReset::CalcDifference(const nsStyleSVGReset& aNewData) const
     hint |= nsChangeHint_RepaintFrame;
   }
 
+  if (HasMask() != aNewData.HasMask()) {
+    // A change from/to being a containing block for position:fixed.
+    hint |= nsChangeHint_UpdateContainingBlock;
+  }
+
   hint |= mMask.CalcDifference(aNewData.mMask,
                                nsStyleImageLayers::LayerType::Mask);
 
   return hint;
+}
+
+bool
+nsStyleSVGReset::HasMask() const
+{
+  for (uint32_t i = 0; i < mMask.mImageCount; i++) {
+    // mMask.mLayers[i].mSourceURI can be nullptr if mask-image prop value is
+    // <element-reference> or <gradient>.
+    // mMask.mLayers[i].mImage can be empty if mask-image prop value is a
+    // reference to SVG mask element.
+    //
+    // So we need to test both mSourceURI and mImage.
+    if ((mMask.mLayers[i].mSourceURI && mMask.mLayers[i].mSourceURI->GetURI()) ||
+        !mMask.mLayers[i].mImage.IsEmpty()) {
+      return true;
+    }
+  }
+
+  return false;
 }
 
 // nsStyleSVGPaint implementation
@@ -2054,10 +2079,29 @@ CachedBorderImageData::GetCachedSVGViewportSize()
   return mCachedSVGViewportSize;
 }
 
+struct PurgeCachedImagesTask : mozilla::Runnable
+{
+  NS_IMETHOD Run() final
+  {
+    mSubImages.Clear();
+    return NS_OK;
+  }
+
+  nsCOMArray<imgIContainer> mSubImages;
+};
+
 void
 CachedBorderImageData::PurgeCachedImages()
 {
-  mSubImages.Clear();
+  if (ServoStyleSet::IsInServoTraversal()) {
+    RefPtr<PurgeCachedImagesTask> task = new PurgeCachedImagesTask();
+    task->mSubImages.SwapElements(mSubImages);
+    // This will run the task immediately if we're already on the main thread,
+    // but that is fine.
+    NS_DispatchToMainThread(task.forget());
+  } else {
+    mSubImages.Clear();
+  }
 }
 
 void
@@ -2564,24 +2608,6 @@ nsStyleImageLayers::CalcDifference(const nsStyleImageLayers& aNewLayers,
   }
 
   return hint;
-}
-
-bool
-nsStyleImageLayers::HasLayerWithImage() const
-{
-  for (uint32_t i = 0; i < mImageCount; i++) {
-    // mLayers[i].mSourceURI can be nullptr if mask-image prop value is
-    // <element-reference> or <gradient>
-    // mLayers[i].mImage can be empty if mask-image prop value is a reference
-    // to SVG mask element.
-    // So we need to test both mSourceURI and mImage.
-    if ((mLayers[i].mSourceURI && mLayers[i].mSourceURI->GetURI()) ||
-        !mLayers[i].mImage.IsEmpty()) {
-      return true;
-    }
-  }
-
-  return false;
 }
 
 nsStyleImageLayers&
@@ -3306,6 +3332,31 @@ nsStyleDisplay::nsStyleDisplay(const nsStyleDisplay& aSource)
   MOZ_COUNT_CTOR(nsStyleDisplay);
 }
 
+nsStyleDisplay::~nsStyleDisplay()
+{
+  // We don't allow releasing nsCSSValues with refcounted data in the Servo
+  // traversal, since the refcounts aren't threadsafe. Since Servo may trigger
+  // the deallocation of style structs during styling, we need to handle it
+  // here.
+  if (mSpecifiedTransform && ServoStyleSet::IsInServoTraversal()) {
+    // The default behavior of NS_ReleaseOnMainThread is to only proxy the
+    // release if we're not already on the main thread. This is a nice
+    // optimization for the cases we happen to be doing a sequential traversal
+    // (i.e. a single-core machine), but it trips our assertions which check
+    // whether we're in a Servo traversal, parallel or not. So we
+    // unconditionally proxy in debug builds.
+    bool alwaysProxy =
+#ifdef DEBUG
+      true;
+#else
+      false;
+#endif
+    NS_ReleaseOnMainThread(mSpecifiedTransform.forget(), alwaysProxy);
+  }
+
+  MOZ_COUNT_DTOR(nsStyleDisplay);
+}
+
 nsChangeHint
 nsStyleDisplay::CalcDifference(const nsStyleDisplay& aNewData) const
 {
@@ -3566,6 +3617,8 @@ nsStyleVisibility::CalcDifference(const nsStyleVisibility& aNewData) const
     // It's important that a change in mWritingMode results in frame
     // reconstruction, because it may affect intrinsic size (see
     // nsSubDocumentFrame::GetIntrinsicISize/BSize).
+    // Also, the used writing-mode value is now a field on nsIFrame and some
+    // classes (e.g. table rows/cells) copy their value from an ancestor.
     hint |= nsChangeHint_ReconstructFrame;
   } else {
     if ((mImageOrientation != aNewData.mImageOrientation)) {
@@ -3599,9 +3652,11 @@ nsStyleContentData::~nsStyleContentData()
   MOZ_COUNT_DTOR(nsStyleContentData);
 
   if (mType == eStyleContentType_Image) {
+    MOZ_ASSERT(NS_IsMainThread());
     mContent.mImage->Release();
   } else if (mType == eStyleContentType_Counter ||
              mType == eStyleContentType_Counters) {
+    MOZ_ASSERT(NS_IsMainThread());
     mContent.mCounters->Release();
   } else if (mContent.mString) {
     free(mContent.mString);
@@ -3798,6 +3853,7 @@ nsStyleText::nsStyleText(const nsPresContext* aContext)
   , mTextAlignLast(NS_STYLE_TEXT_ALIGN_AUTO)
   , mTextAlignTrue(false)
   , mTextAlignLastTrue(false)
+  , mTextJustify(StyleTextJustify::Auto)
   , mTextTransform(NS_STYLE_TEXT_TRANSFORM_NONE)
   , mWhiteSpace(NS_STYLE_WHITESPACE_NORMAL)
   , mWordBreak(NS_STYLE_WORDBREAK_NORMAL)
@@ -3834,6 +3890,7 @@ nsStyleText::nsStyleText(const nsStyleText& aSource)
   , mTextAlignLast(aSource.mTextAlignLast)
   , mTextAlignTrue(false)
   , mTextAlignLastTrue(false)
+  , mTextJustify(aSource.mTextJustify)
   , mTextTransform(aSource.mTextTransform)
   , mWhiteSpace(aSource.mWhiteSpace)
   , mWordBreak(aSource.mWordBreak)
@@ -3896,6 +3953,7 @@ nsStyleText::CalcDifference(const nsStyleText& aNewData) const
       (mLetterSpacing != aNewData.mLetterSpacing) ||
       (mLineHeight != aNewData.mLineHeight) ||
       (mTextIndent != aNewData.mTextIndent) ||
+      (mTextJustify != aNewData.mTextJustify) ||
       (mWordSpacing != aNewData.mWordSpacing) ||
       (mTabSize != aNewData.mTabSize)) {
     return NS_STYLE_HINT_REFLOW;

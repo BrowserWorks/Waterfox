@@ -409,13 +409,14 @@ gfxPlatformGtk::GetDPIScale()
     // scale on WINNT and at this ratio the advantages of larger rendering
     // outweigh the disadvantages from scaling and pixel mis-alignment.
     int32_t dpi = GetDPI();
-    if (dpi < 144) {
+    if (dpi < 132) {
         return 1.0;
-    } else if (dpi < 168) {
-        return 1.5;
-    } else {
-        return round(dpi/96.0);
     }
+    if (dpi < 168) {
+        return 1.5;
+    }
+    return round(dpi/96.0);
+
 }
 
 bool
@@ -735,8 +736,10 @@ public:
         ScopedXFree<GLXFBConfig> cfgs;
         GLXFBConfig config;
         int visid;
+        bool forWebRender = false;
         if (!gl::GLContextGLX::FindFBConfigForWindow(mXDisplay, screen, root,
-                                                     &cfgs, &config, &visid)) {
+                                                     &cfgs, &config, &visid,
+                                                     forWebRender)) {
           lock.NotifyAll();
           return;
         }

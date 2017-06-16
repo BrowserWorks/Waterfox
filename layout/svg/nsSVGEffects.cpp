@@ -7,8 +7,8 @@
 #include "nsSVGEffects.h"
 
 // Keep others in (case-insensitive) order:
-#include "mozilla/RestyleManagerHandle.h"
-#include "mozilla/RestyleManagerHandleInlines.h"
+#include "mozilla/RestyleManager.h"
+#include "mozilla/RestyleManagerInlines.h"
 #include "nsCSSFrameConstructor.h"
 #include "nsISupportsImpl.h"
 #include "nsSVGClipPathFrame.h"
@@ -588,7 +588,7 @@ nsSVGEffects::GetEffectProperties(nsIFrame* aFrame)
   }
 
   MOZ_ASSERT(style->mMask.mImageCount > 0);
-  result.mMask = style->mMask.HasLayerWithImage()
+  result.mMask = style->HasMask()
                  ? GetOrCreateMaskProperty(aFrame) : nullptr;
 
   return result;

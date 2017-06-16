@@ -14,7 +14,10 @@
 namespace mozilla {
 namespace ipc {
 class CrashReporterHost;
-} // namespace
+} // namespace ipc
+namespace dom {
+class MemoryReportRequestHost;
+} // namespace dom
 namespace gfx {
 
 class GPUProcessHost;
@@ -23,6 +26,8 @@ class GPUChild final
   : public PGPUChild,
     public gfxVarReceiver
 {
+  typedef mozilla::dom::MemoryReportRequestHost MemoryReportRequestHost;
+
 public:
   explicit GPUChild(GPUProcessHost* aHost);
   ~GPUChild();
@@ -37,21 +42,29 @@ public:
   // PGPUChild overrides.
   mozilla::ipc::IPCResult RecvInitComplete(const GPUDeviceData& aData) override;
   mozilla::ipc::IPCResult RecvReportCheckerboard(const uint32_t& aSeverity, const nsCString& aLog) override;
-  mozilla::ipc::IPCResult RecvInitCrashReporter(Shmem&& shmem) override;
-  mozilla::ipc::IPCResult RecvAccumulateChildHistogram(InfallibleTArray<Accumulation>&& aAccumulations) override;
-  mozilla::ipc::IPCResult RecvAccumulateChildKeyedHistogram(InfallibleTArray<KeyedAccumulation>&& aAccumulations) override;
+  mozilla::ipc::IPCResult RecvInitCrashReporter(Shmem&& shmem, const NativeThreadId& aThreadId) override;
+  mozilla::ipc::IPCResult RecvAccumulateChildHistograms(InfallibleTArray<Accumulation>&& aAccumulations) override;
+  mozilla::ipc::IPCResult RecvAccumulateChildKeyedHistograms(InfallibleTArray<KeyedAccumulation>&& aAccumulations) override;
   mozilla::ipc::IPCResult RecvUpdateChildScalars(InfallibleTArray<ScalarAction>&& aScalarActions) override;
   mozilla::ipc::IPCResult RecvUpdateChildKeyedScalars(InfallibleTArray<KeyedScalarAction>&& aScalarActions) override;
   void ActorDestroy(ActorDestroyReason aWhy) override;
   mozilla::ipc::IPCResult RecvGraphicsError(const nsCString& aError) override;
   mozilla::ipc::IPCResult RecvNotifyUiObservers(const nsCString& aTopic) override;
   mozilla::ipc::IPCResult RecvNotifyDeviceReset() override;
+  mozilla::ipc::IPCResult RecvAddMemoryReport(const MemoryReport& aReport) override;
+  mozilla::ipc::IPCResult RecvFinishMemoryReport(const uint32_t& aGeneration) override;
+
+  bool SendRequestMemoryReport(const uint32_t& aGeneration,
+                               const bool& aAnonymize,
+                               const bool& aMinimizeMemoryUsage,
+                               const MaybeFileDesc& aDMDFile);
 
   static void Destroy(UniquePtr<GPUChild>&& aChild);
 
 private:
   GPUProcessHost* mHost;
   UniquePtr<ipc::CrashReporterHost> mCrashReporter;
+  UniquePtr<MemoryReportRequestHost> mMemoryReportRequest;
   bool mGPUReady;
 };
 

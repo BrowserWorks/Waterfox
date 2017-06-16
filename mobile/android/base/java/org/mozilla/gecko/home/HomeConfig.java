@@ -18,8 +18,9 @@ import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
 import org.mozilla.gecko.annotation.RobocopTarget;
-import org.mozilla.gecko.GeckoAppShell;
+import org.mozilla.gecko.EventDispatcher;
 import org.mozilla.gecko.R;
+import org.mozilla.gecko.util.GeckoBundle;
 import org.mozilla.gecko.util.ThreadUtils;
 
 import android.content.Context;
@@ -1151,9 +1152,9 @@ public final class HomeConfig {
         private final List<String> mConfigOrder;
         private final Thread mOriginalThread;
 
-        // Each Pair represents parameters to a GeckoAppShell.notifyObservers call;
-        // the first String is the observer topic and the second string is the notification data.
-        private List<Pair<String, String>> mNotificationQueue;
+        // Each Pair represents parameters to a EventDispatcher.dispatch call;
+        // the String is the event name and the GeckoBundle is the event data.
+        private List<Pair<String, GeckoBundle>> mNotificationQueue;
         private PanelConfig mDefaultPanel;
         private int mEnabledCount;
 
@@ -1377,8 +1378,10 @@ public final class HomeConfig {
                 installed = true;
 
                 // Add an event to the queue if a new panel is successfully installed.
-                mNotificationQueue.add(new Pair<String, String>(
-                        "HomePanels:Installed", panelConfig.getId()));
+                final GeckoBundle data = new GeckoBundle(1);
+                data.putString("id", panelConfig.getId());
+                mNotificationQueue.add(new Pair<String, GeckoBundle>(
+                        "HomePanels:Installed", data));
             }
 
             mHasChanged = true;
@@ -1414,7 +1417,10 @@ public final class HomeConfig {
             }
 
             // Add an event to the queue if a panel is successfully uninstalled.
-            mNotificationQueue.add(new Pair<String, String>("HomePanels:Uninstalled", panelId));
+            final GeckoBundle data = new GeckoBundle(1);
+            data.putString("id", panelId);
+            mNotificationQueue.add(new Pair<String, GeckoBundle>(
+                    "HomePanels:Uninstalled", data));
 
             mHasChanged = true;
             return true;
@@ -1488,7 +1494,7 @@ public final class HomeConfig {
 
             // Copy the event queue to a new list, so that we only modify mNotificationQueue on
             // the original thread where it was created.
-            final List<Pair<String, String>> copiedQueue = mNotificationQueue;
+            final List<Pair<String, GeckoBundle>> copiedQueue = mNotificationQueue;
             mNotificationQueue = new ArrayList<>();
 
             ThreadUtils.getBackgroundHandler().post(new Runnable() {
@@ -1541,9 +1547,10 @@ public final class HomeConfig {
             return mConfigMap.isEmpty();
         }
 
-        private void sendNotificationsToGecko(List<Pair<String, String>> notifications) {
-            for (Pair<String, String> p : notifications) {
-                GeckoAppShell.notifyObservers(p.first, p.second);
+        private void sendNotificationsToGecko(List<Pair<String, GeckoBundle>> notifications) {
+            final EventDispatcher dispatcher = EventDispatcher.getInstance();
+            for (final Pair<String, GeckoBundle> p : notifications) {
+                dispatcher.dispatch(p.first, p.second);
             }
         }
 
@@ -1596,7 +1603,7 @@ public final class HomeConfig {
     // configuration. Because they don't consider the active configuration, it
     // is only sensible to do this for built-in panels (and not for dynamic
     // panels).
-    private static final String TOP_SITES_PANEL_ID = "4becc86b-41eb-429a-a042-88fe8b5a094e";
+    /* package-private */ static final String TOP_SITES_PANEL_ID = "4becc86b-41eb-429a-a042-88fe8b5a094e";
     private static final String BOOKMARKS_PANEL_ID = "7f6d419a-cd6c-4e34-b26f-f68b1b551907";
     private static final String HISTORY_PANEL_ID = "f134bf20-11f7-4867-ab8b-e8e705d7fbe8";
     private static final String COMBINED_HISTORY_PANEL_ID = "4d716ce2-e063-486d-9e7c-b190d7b04dc6";

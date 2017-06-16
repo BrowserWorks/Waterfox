@@ -224,10 +224,13 @@ function WebConsoleFrame(webConsoleOwner) {
   this._outputTimer = Cc["@mozilla.org/timer;1"].createInstance(Ci.nsITimer);
   this._outputTimerInitialized = false;
 
-  let require = BrowserLoaderModule.BrowserLoader({
+  let toolbox = gDevTools.getToolbox(this.owner.target);
+  let {require} = BrowserLoaderModule.BrowserLoader({
     window: this.window,
-    useOnlyShared: true
-  }).require;
+    useOnlyShared: true,
+    // The toolbox isn't available for the browser console.
+    commonLibRequire: toolbox ? toolbox.browserRequire : null,
+  });
 
   this.React = require("devtools/client/shared/vendor/react");
   this.ReactDOM = require("devtools/client/shared/vendor/react-dom");
@@ -861,7 +864,7 @@ WebConsoleFrame.prototype = {
     tempLabel.textContent = "x";
     doc.documentElement.appendChild(tempLabel);
     this._inputCharWidth = tempLabel.offsetWidth;
-    tempLabel.parentNode.removeChild(tempLabel);
+    tempLabel.remove();
     // Calculate the width of the chevron placed at the beginning of the input
     // box. Remove 4 more pixels to accomodate the padding of the popup.
     this._chevronWidth = +doc.defaultView.getComputedStyle(this.inputNode)

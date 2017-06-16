@@ -966,14 +966,14 @@ var MenuWrapper = Class({
       if (toplevel.length == 0) {
         let separator = this.separator;
         if (separator)
-          separator.parentNode.removeChild(separator);
+          separator.remove();
       }
     }
     else if (parent == this.overflowPopup) {
       // If there are no more items then remove the overflow menu and separator
       if (parent.childNodes.length == 0) {
         let separator = this.separator;
-        separator.parentNode.removeChild(separator);
+        separator.remove();
         this.contextMenu.removeChild(parent.parentNode);
       }
     }
@@ -996,7 +996,7 @@ var MenuWrapper = Class({
         this.populate(this.items);
       }
 
-      let mainWindow = event.target.ownerDocument.defaultView;
+      let mainWindow = event.target.ownerGlobal;
       this.contextMenuContentData = mainWindow.gContextMenuContentData
       if (!(self.id in this.contextMenuContentData.addonInfo)) {
         console.warn("No context menu state data was provided.");

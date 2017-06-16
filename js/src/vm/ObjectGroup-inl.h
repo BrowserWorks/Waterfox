@@ -15,7 +15,7 @@ inline bool
 ObjectGroup::needsSweep()
 {
     // Note: this can be called off thread during compacting GCs, in which case
-    // nothing will be running on the main thread.
+    // nothing will be running on the active thread.
     return generation() != zoneFromAnyThread()->types.generation;
 }
 
@@ -88,7 +88,7 @@ ObjectGroup::fromAllocationSite()
 }
 
 inline void
-ObjectGroup::setShouldPreTenure(ExclusiveContext* cx)
+ObjectGroup::setShouldPreTenure(JSContext* cx)
 {
     MOZ_ASSERT(canPreTenure());
     setFlags(cx, OBJECT_FLAG_PRE_TENURE);

@@ -22,6 +22,7 @@
 #include "nsCSSPseudoClasses.h"
 #include "nsCSSPseudoElements.h"
 #include "nsCSSRendering.h"
+#include "nsGenericHTMLFrameElement.h"
 #include "mozilla/dom/Attr.h"
 #include "nsDOMClassInfo.h"
 #include "mozilla/EventListenerManager.h"
@@ -285,6 +286,7 @@ nsLayoutStatics::Initialize()
   nsApplicationCacheService::AppClearDataObserverInit();
 
   HTMLVideoElement::Init();
+  nsGenericHTMLFrameElement::InitStatics();
 
 #ifdef MOZ_XUL
   nsMenuBarListener::InitializeStatics();

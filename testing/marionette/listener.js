@@ -74,8 +74,6 @@ var asyncTestTimeoutId;
 var inactivityTimeoutId = null;
 
 var originalOnError;
-//timer for doc changes
-var checkTimer = Cc["@mozilla.org/timer;1"].createInstance(Ci.nsITimer);
 //timer for readystate
 var readyStateTimer = Cc["@mozilla.org/timer;1"].createInstance(Ci.nsITimer);
 // Send move events about this often
@@ -93,6 +91,10 @@ var importedScripts = new evaluate.ScriptStorageServiceClient(syncChrome);
 
 Cu.import("resource://gre/modules/Log.jsm");
 var logger = Log.repository.getLogger("Marionette");
+// Append only once to avoid duplicated output after listener.js gets reloaded
+if (logger.ownAppenders.length == 0) {
+  logger.addAppender(new Log.DumpAppender());
+}
 logger.debug("loaded listener.js");
 
 var modalHandler = function() {
@@ -117,8 +119,11 @@ var sandboxName = "default";
  */
 var loadListener = {
   command_id: null,
+  seenBeforeUnload: false,
+  seenUnload: false,
   timeout: null,
-  timer: null,
+  timerPageLoad: null,
+  timerPageUnload: null,
 
   /**
    * Start listening for page unload/load events.
@@ -136,48 +141,89 @@ var loadListener = {
     this.command_id = command_id;
     this.timeout = timeout;
 
+    this.seenBeforeUnload = false;
+    this.seenUnload = false;
+
+    this.timerPageLoad = Cc["@mozilla.org/timer;1"].createInstance(Ci.nsITimer);
+    this.timerPageUnload = null;
+
     // In case of a remoteness change, only wait the remaining time
     timeout = startTime + timeout - new Date().getTime();
 
     if (timeout <= 0) {
-      this.notify();
+      this.notify(this.timerPageLoad);
       return;
     }
-
-    this.timer = Cc["@mozilla.org/timer;1"].createInstance(Ci.nsITimer);
-    this.timer.initWithCallback(this, timeout, Ci.nsITimer.TYPE_ONE_SHOT);
 
     if (waitForUnloaded) {
       addEventListener("hashchange", this, false);
       addEventListener("pagehide", this, false);
+
+      // The events can only be received when the event listeners are
+      // added to the currently selected frame.
+      curContainer.frame.addEventListener("beforeunload", this, false);
+      curContainer.frame.addEventListener("unload", this, false);
+
+      Services.obs.addObserver(this, "outer-window-destroyed", false);
     } else {
       addEventListener("DOMContentLoaded", loadListener, false);
       addEventListener("pageshow", loadListener, false);
     }
+
+    this.timerPageLoad.initWithCallback(this, timeout, Ci.nsITimer.TYPE_ONE_SHOT);
   },
 
   /**
    * Stop listening for page unload/load events.
    */
   stop: function () {
-    if (this.timer) {
-      this.timer.cancel();
-      this.timer = null;
+    if (this.timerPageLoad) {
+      this.timerPageLoad.cancel();
+    }
+
+    if (this.timerPageUnload) {
+      this.timerPageUnload.cancel();
     }
 
     removeEventListener("hashchange", this);
     removeEventListener("pagehide", this);
     removeEventListener("DOMContentLoaded", this);
     removeEventListener("pageshow", this);
+
+    // If the original content window, where the navigation was triggered,
+    // doesn't exist anymore, exceptions can be silently ignored.
+    try {
+      curContainer.frame.removeEventListener("beforeunload", this);
+      curContainer.frame.removeEventListener("unload", this);
+    } catch (e if e.name == "TypeError") {}
+
+    // In the case when the observer was added before a remoteness change,
+    // it will no longer be available. Exceptions can be silently ignored.
+    try {
+      Services.obs.removeObserver(this, "outer-window-destroyed");
+    } catch (e) {}
   },
 
   /**
    * Callback for registered DOM events.
    */
   handleEvent: function (event) {
+    let location = event.target.baseURI || event.target.location.href;
+    logger.debug(`Received DOM event "${event.type}" for "${location}"`);
+
     switch (event.type) {
+      case "beforeunload":
+        this.seenBeforeUnload = true;
+        break;
+
+      case "unload":
+        this.seenUnload = true;
+        break;
+
       case "pagehide":
-        if (event.originalTarget === curContainer.frame.document) {
+        if (event.target === curContainer.frame.document) {
+          this.seenUnload = true;
+
           removeEventListener("hashchange", this);
           removeEventListener("pagehide", this);
 
@@ -188,30 +234,34 @@ var loadListener = {
         break;
 
       case "hashchange":
-        this.stop();
-        sendOk(this.command_id);
+        if (event.target === curContainer.frame) {
+          this.stop();
+          sendOk(this.command_id);
+        }
         break;
 
       case "DOMContentLoaded":
-        if (event.originalTarget.baseURI.startsWith("about:certerror")) {
+        if (event.target.baseURI.startsWith("about:certerror")) {
           this.stop();
           sendError(new InsecureCertificateError(), this.command_id);
 
-        } else if (/about:.*(error)\?/.exec(event.originalTarget.baseURI)) {
+        } else if (/about:.*(error)\?/.exec(event.target.baseURI)) {
           this.stop();
           sendError(new UnknownError("Reached error page: " +
-              event.originalTarget.baseURI), this.command_id);
+              event.target.baseURI), this.command_id);
 
-        // Special-case about:blocked pages which should be treated as non-error
-        // pages but do not raise a pageshow event.
-        } else if (/about:blocked\?/.exec(event.originalTarget.baseURI)) {
+        // Return early with a page load strategy of eager, and also special-case
+        // about:blocked pages which should be treated as non-error pages but do
+        // not raise a pageshow event.
+        } else if (capabilities.get("pageLoadStrategy") === session.PageLoadStrategy.Eager ||
+            /about:blocked\?/.exec(event.target.baseURI)) {
           this.stop();
           sendOk(this.command_id);
         }
         break;
 
       case "pageshow":
-        if (event.originalTarget === curContainer.frame.document) {
+        if (event.target === curContainer.frame.document) {
           this.stop();
           sendOk(this.command_id);
         }
@@ -223,9 +273,54 @@ var loadListener = {
    * Callback for navigation timeout timer.
    */
   notify: function (timer) {
-    this.stop();
-    sendError(new TimeoutError("Timeout loading page after " + this.timeout + "ms"),
-              this.command_id);
+    switch (timer) {
+      case this.timerPageUnload:
+        // In the case when a document has a beforeunload handler registered,
+        // the currently active command will return immediately due to the
+        // modal dialog observer in proxy.js.
+        // Otherwise the timeout waiting for the document to start navigating
+        // is increased by 5000 ms to ensure a possible load event is not missed.
+        // In the common case such an event should occur pretty soon after
+        // beforeunload, and we optimise for this.
+        if (this.seenBeforeUnload) {
+          this.seenBeforeUnload = null;
+          this.timerPageUnload.initWithCallback(this, 5000, Ci.nsITimer.TYPE_ONE_SHOT)
+
+        // If no page unload has been detected, ensure to properly stop the load
+        // listener, and return from the currently active command.
+        } else if (!this.seenUnload) {
+          logger.debug("Canceled page load listener because no navigation " +
+              "has been detected");
+          this.stop();
+          sendOk(this.command_id);
+        }
+        break;
+
+    case this.timerPageLoad:
+      this.stop();
+      sendError(new TimeoutError(`Timeout loading page after ${this.timeout}ms`),
+          this.command_id);
+      break;
+    }
+  },
+
+  observe: function (subject, topic, data) {
+    const winID = subject.QueryInterface(Components.interfaces.nsISupportsPRUint64).data;
+    const curWinID = curContainer.frame.QueryInterface(Ci.nsIInterfaceRequestor)
+        .getInterface(Ci.nsIDOMWindowUtils).outerWindowID;
+
+    logger.debug(`Received observer notification "${topic}" for "${winID}"`);
+
+    switch (topic) {
+      // In the case when the currently selected frame is about to close,
+      // there will be no further load events. Stop listening immediately.
+      case "outer-window-destroyed":
+        if (curWinID === winID) {
+          this.stop();
+          sendOk(this.command_id);
+        }
+        break;
+    }
   },
 
   /**
@@ -251,41 +346,48 @@ var loadListener = {
    * @param {number} command_id
    *     ID of the currently handled message between the driver and listener.
    * @param {number} pageTimeout
-   *     Timeout in milliseconds the method has to wait for the page being finished loading.
+   *     Timeout in milliseconds the method has to wait for the page finished loading.
+   * @param {boolean=} loadEventExpected
+   *     Optional flag, which indicates that navigate has to wait for the page
+   *     finished loading.
    * @param {string=} url
    *     Optional URL, which is used to check if a page load is expected.
    */
-  navigate: function (trigger, command_id, timeout, url = undefined) {
-    let loadEventExpected = true;
+  navigate: function (trigger, command_id, timeout, loadEventExpected = true,
+      useUnloadTimer = false) {
 
-    if (typeof url == "string") {
-      try {
-        let requestedURL = new URL(url).toString();
-        loadEventExpected = navigate.isLoadEventExpected(requestedURL);
-      } catch (e) {
-        sendError(new InvalidArgumentError("Malformed URL: " + e.message), command_id);
-        return;
-      }
-    }
+    // Only wait if the page load strategy is not `none`
+    loadEventExpected = loadEventExpected &&
+        capabilities.get("pageLoadStrategy") !== session.PageLoadStrategy.None;
 
     if (loadEventExpected) {
       let startTime = new Date().getTime();
       this.start(command_id, timeout, startTime, true);
     }
 
-    try {
-      trigger();
-    } catch (e) {
+    return Task.spawn(function* () {
+      yield trigger();
+
+    }).then(val => {
+     if (!loadEventExpected) {
+        sendOk(command_id);
+        return;
+      }
+
+      // If requested setup a timer to detect a possible page load
+      if (useUnloadTimer) {
+        this.timerPageUnload = Cc["@mozilla.org/timer;1"].createInstance(Ci.nsITimer);
+        this.timerPageUnload.initWithCallback(this, 200, Ci.nsITimer.TYPE_ONE_SHOT);
+      }
+
+    }).catch(err => {
       if (loadEventExpected) {
         this.stop();
       }
-      sendError(new UnknownCommandError(e.message), command_id);
-      return;
-    }
 
-    if (!loadEventExpected) {
-      sendOk(command_id);
-    }
+      sendError(err, command_id);
+      return;
+    });
   },
 }
 
@@ -398,7 +500,6 @@ function removeMessageListenerId(messageName, handler) {
 var getTitleFn = dispatch(getTitle);
 var getPageSourceFn = dispatch(getPageSource);
 var getActiveElementFn = dispatch(getActiveElement);
-var clickElementFn = dispatch(clickElement);
 var getElementAttributeFn = dispatch(getElementAttribute);
 var getElementPropertyFn = dispatch(getElementProperty);
 var getElementTextFn = dispatch(getElementText);
@@ -453,7 +554,7 @@ function startListeners() {
   addMessageListenerId("Marionette:findElementContent", findElementContentFn);
   addMessageListenerId("Marionette:findElementsContent", findElementsContentFn);
   addMessageListenerId("Marionette:getActiveElement", getActiveElementFn);
-  addMessageListenerId("Marionette:clickElement", clickElementFn);
+  addMessageListenerId("Marionette:clickElement", clickElement);
   addMessageListenerId("Marionette:getElementAttribute", getElementAttributeFn);
   addMessageListenerId("Marionette:getElementProperty", getElementPropertyFn);
   addMessageListenerId("Marionette:getElementText", getElementTextFn);
@@ -558,7 +659,7 @@ function deleteSession(msg) {
   removeMessageListenerId("Marionette:findElementContent", findElementContentFn);
   removeMessageListenerId("Marionette:findElementsContent", findElementsContentFn);
   removeMessageListenerId("Marionette:getActiveElement", getActiveElementFn);
-  removeMessageListenerId("Marionette:clickElement", clickElementFn);
+  removeMessageListenerId("Marionette:clickElement", clickElement);
   removeMessageListenerId("Marionette:getElementAttribute", getElementAttributeFn);
   removeMessageListenerId("Marionette:getElementProperty", getElementPropertyFn);
   removeMessageListenerId("Marionette:getElementText", getElementTextFn);
@@ -669,13 +770,6 @@ function resetValues() {
 }
 
 /**
- * Dump a logline to stdout. Prepends logline with a timestamp.
- */
-function dumpLog(logline) {
-  dump(Date.now() + " Marionette: " + logline);
-}
-
-/**
  * Check if our context was interrupted
  */
 function wasInterrupted() {
@@ -778,8 +872,10 @@ function setTestName(msg) {
  */
 function emitTouchEvent(type, touch) {
   if (!wasInterrupted()) {
-    let loggingInfo = "emitting Touch event of type " + type + " to element with id: " + touch.target.id + " and tag name: " + touch.target.tagName + " at coordinates (" + touch.clientX + ", " + touch.clientY + ") relative to the viewport";
-    dumpLog(loggingInfo);
+    logger.info(`Emitting Touch event of type ${type} to element with id: ${touch.target.id} ` +
+                `and tag name: ${touch.target.tagName} at coordinates (${touch.clientX}, ` +
+                `${touch.clientY}) relative to the viewport`);
+
     var docShell = curContainer.frame.document.defaultView.
                    QueryInterface(Components.interfaces.nsIInterfaceRequestor).
                    getInterface(Components.interfaces.nsIWebNavigation).
@@ -1022,7 +1118,8 @@ function setDispatch(batches, touches, batchIndex=0) {
   }
 
   if (maxTime != 0) {
-    checkTimer.initWithCallback(function() {
+    let timer = Cc["@mozilla.org/timer;1"].createInstance(Ci.nsITimer);
+    timer.initWithCallback(function() {
       setDispatch(batches, touches, batchIndex);
     }, maxTime, Ci.nsITimer.TYPE_ONE_SHOT);
   } else {
@@ -1097,14 +1194,30 @@ function waitForPageLoaded(msg) {
  */
 function get(msg) {
   let {command_id, pageTimeout, url} = msg.json;
+  let loadEventExpected = true;
 
-  // We need to move to the top frame before navigating
-  sendSyncMessage("Marionette:switchedToFrame", {frameValue: null});
-  curContainer.frame = content;
+  try {
+    if (typeof url == "string") {
+      try {
+        let requestedURL = new URL(url).toString();
+        loadEventExpected = navigate.isLoadEventExpected(requestedURL);
+      } catch (e) {
+        sendError(new InvalidArgumentError("Malformed URL: " + e.message), command_id);
+        return;
+      }
+    }
 
-  loadListener.navigate(() => {
-    curContainer.frame.location = url;
-  }, command_id, pageTimeout, url);
+    // We need to move to the top frame before navigating
+    sendSyncMessage("Marionette:switchedToFrame", {frameValue: null});
+    curContainer.frame = content;
+
+    loadListener.navigate(() => {
+      curContainer.frame.location = url;
+    }, command_id, pageTimeout, loadEventExpected);
+
+  } catch (e) {
+    sendError(e, command_id);
+  }
 }
 
 /**
@@ -1119,9 +1232,14 @@ function get(msg) {
 function goBack(msg) {
   let {command_id, pageTimeout} = msg.json;
 
-  loadListener.navigate(() => {
-    curContainer.frame.history.back();
-  }, command_id, pageTimeout);
+  try {
+    loadListener.navigate(() => {
+      curContainer.frame.history.back();
+    }, command_id, pageTimeout);
+
+  } catch (e) {
+    sendError(e, command_id);
+  }
 }
 
 /**
@@ -1136,9 +1254,14 @@ function goBack(msg) {
 function goForward(msg) {
   let {command_id, pageTimeout} = msg.json;
 
-  loadListener.navigate(() => {
-    curContainer.frame.history.forward();
-  }, command_id, pageTimeout);
+  try {
+    loadListener.navigate(() => {
+      curContainer.frame.history.forward();
+    }, command_id, pageTimeout);
+
+  } catch (e) {
+    sendError(e, command_id);
+  }
 }
 
 /**
@@ -1152,13 +1275,18 @@ function goForward(msg) {
 function refresh(msg) {
   let {command_id, pageTimeout} = msg.json;
 
-  // We need to move to the top frame before navigating
-  sendSyncMessage("Marionette:switchedToFrame", {frameValue: null});
-  curContainer.frame = content;
+  try {
+    // We need to move to the top frame before navigating
+    sendSyncMessage("Marionette:switchedToFrame", {frameValue: null});
+    curContainer.frame = content;
 
-  loadListener.navigate(() => {
-    curContainer.frame.location.reload(true);
-  }, command_id, pageTimeout);
+    loadListener.navigate(() => {
+      curContainer.frame.location.reload(true);
+    }, command_id, pageTimeout);
+
+  } catch (e) {
+    sendError(e, command_id);
+  }
 }
 
 /**
@@ -1231,15 +1359,36 @@ function getActiveElement() {
 /**
  * Send click event to element.
  *
+ * @param {number} command_id
+ *     ID of the currently handled message between the driver and listener.
  * @param {WebElement} id
  *     Reference to the web element to click.
+ * @param {number} pageTimeout
+ *     Timeout in milliseconds the method has to wait for the page being finished loading.
  */
-function clickElement(id) {
-  let el = seenEls.get(id, curContainer);
-  return interaction.clickElement(
-      el,
-      capabilities.get("moz:accessibilityChecks"),
-      capabilities.get("specificationLevel") >= 1);
+function clickElement(msg) {
+  let {command_id, id, pageTimeout} = msg.json;
+
+  try {
+    let loadEventExpected = true;
+
+    let target = getElementAttribute(id, "target");
+
+    if (target === "_blank") {
+      loadEventExpected = false;
+    }
+
+    loadListener.navigate(() => {
+      return interaction.clickElement(
+        seenEls.get(id, curContainer),
+        capabilities.get("moz:accessibilityChecks"),
+        capabilities.get("specificationLevel") >= 1
+      );
+    }, command_id, pageTimeout, loadEventExpected, true);
+
+  } catch (e) {
+    sendError(e, command_id);
+  }
 }
 
 function getElementAttribute(id, name) {
@@ -1314,7 +1463,7 @@ function isElementDisplayed(id) {
  */
 function getElementValueOfCssProperty(id, prop) {
   let el = seenEls.get(id, curContainer);
-  let st = curContainer.frame.document.defaultView.getComputedStyle(el, null);
+  let st = curContainer.frame.document.defaultView.getComputedStyle(el);
   return st.getPropertyValue(prop);
 }
 
@@ -1454,21 +1603,10 @@ function switchToShadowRoot(id) {
  */
 function switchToFrame(msg) {
   let command_id = msg.json.command_id;
-  function checkLoad() {
-    let errorRegex = /about:.+(error)|(blocked)\?/;
-    if (curContainer.frame.document.readyState == "complete") {
-      sendOk(command_id);
-      return;
-    } else if (curContainer.frame.document.readyState == "interactive" &&
-        errorRegex.exec(curContainer.frame.document.baseURI)) {
-      sendError(new UnknownError("Error loading page"), command_id);
-      return;
-    }
-    checkTimer.initWithCallback(checkLoad, 100, Ci.nsITimer.TYPE_ONE_SHOT);
-  }
   let foundFrame = null;
   let frames = [];
   let parWindow = null;
+
   // Check of the curContainer.frame reference is dead
   try {
     frames = curContainer.frame.frames;
@@ -1493,7 +1631,7 @@ function switchToFrame(msg) {
       curContainer.frame.focus();
     }
 
-    checkTimer.initWithCallback(checkLoad, 100, Ci.nsITimer.TYPE_ONE_SHOT);
+    sendOk(command_id);
     return;
   }
 
@@ -1543,11 +1681,12 @@ function switchToFrame(msg) {
           // context so should treat it accordingly.
           sendSyncMessage("Marionette:switchedToFrame", { frameValue: null});
           curContainer.frame = content;
+
           if(msg.json.focus == true) {
             curContainer.frame.focus();
           }
 
-          checkTimer.initWithCallback(checkLoad, 100, Ci.nsITimer.TYPE_ONE_SHOT);
+          sendOk(command_id);
           return;
         }
       } catch (e) {
@@ -1574,21 +1713,22 @@ function switchToFrame(msg) {
       curContainer.frame.wrappedJSObject, seenEls)[element.Key];
   sendSyncMessage("Marionette:switchedToFrame", {frameValue: frameValue});
 
-  let rv = null;
   if (curContainer.frame.contentWindow === null) {
     // The frame we want to switch to is a remote/OOP frame;
     // notify our parent to handle the switch
     curContainer.frame = content;
-    rv = {win: parWindow, frame: foundFrame};
+    let rv = {win: parWindow, frame: foundFrame};
+    sendResponse(rv, command_id);
+
   } else {
     curContainer.frame = curContainer.frame.contentWindow;
+
     if (msg.json.focus) {
       curContainer.frame.focus();
     }
-    checkTimer.initWithCallback(checkLoad, 100, Ci.nsITimer.TYPE_ONE_SHOT);
-  }
 
-  sendResponse(rv, command_id);
+    sendOk(command_id);
+  }
 }
 
 function addCookie(cookie) {

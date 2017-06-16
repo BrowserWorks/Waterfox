@@ -12,6 +12,7 @@ toolkit.jar:
     content/extensions/schemas/experiments.json
     content/extensions/schemas/extension.json
     content/extensions/schemas/extension_types.json
+    content/extensions/schemas/extension_protocol_handlers.json
     content/extensions/schemas/i18n.json
 #ifndef ANDROID
     content/extensions/schemas/identity.json
@@ -21,9 +22,12 @@ toolkit.jar:
     content/extensions/schemas/manifest.json
     content/extensions/schemas/native_host_manifest.json
     content/extensions/schemas/notifications.json
+    content/extensions/schemas/privacy.json
     content/extensions/schemas/runtime.json
     content/extensions/schemas/storage.json
     content/extensions/schemas/test.json
+    content/extensions/schemas/theme.json
     content/extensions/schemas/top_sites.json
+    content/extensions/schemas/types.json
     content/extensions/schemas/web_navigation.json
     content/extensions/schemas/web_request.json

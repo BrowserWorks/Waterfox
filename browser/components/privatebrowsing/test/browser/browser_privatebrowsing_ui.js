@@ -14,9 +14,7 @@ function test() {
   let cmd;
 
   function doTest(aIsPrivateMode, aWindow, aCallback) {
-    aWindow.gBrowser.selectedBrowser.addEventListener("load", function onLoad() {
-      aWindow.gBrowser.selectedBrowser.removeEventListener("load", onLoad, true);
-
+    aWindow.gBrowser.selectedBrowser.addEventListener("load", function() {
       ok(aWindow.gPrivateBrowsingUI, "The gPrivateBrowsingUI object exists");
 
       pbMenuItem = aWindow.document.getElementById("menu_newPrivateWindow");
@@ -32,25 +30,24 @@ function test() {
         aIsPrivateMode + ")");
 
       aCallback();
-    }, true);
+    }, {capture: true, once: true});
 
     aWindow.gBrowser.selectedBrowser.loadURI(testURI);
-  };
+  }
 
   function openPrivateBrowsingModeByUI(aWindow, aCallback) {
     Services.obs.addObserver(function observer(aSubject, aTopic, aData) {
       aSubject.addEventListener("load", function() {
-        aSubject.removeEventListener("load", arguments.callee);
-          Services.obs.removeObserver(observer, "domwindowopened");
+        Services.obs.removeObserver(observer, "domwindowopened");
           windowsToClose.push(aSubject);
           aCallback(aSubject);
-      });
+      }, {once: true});
     }, "domwindowopened", false);
 
     cmd = aWindow.document.getElementById("Tools:PrivateBrowsing");
     var func = new Function("", cmd.getAttribute("oncommand"));
     func.call(cmd);
-  };
+  }
 
   function testOnWindow(aOptions, aCallback) {
     whenNewWindowLoaded(aOptions, function(aWin) {
@@ -60,7 +57,7 @@ function test() {
       // call whenNewWindowLoaded() instead of testOnWindow() on your test.
       executeSoon(() => aCallback(aWin));
     });
-  };
+  }
 
    // this function is called after calling finish() on the test.
   registerCleanupFunction(function() {

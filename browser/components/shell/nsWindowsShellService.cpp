@@ -5,6 +5,7 @@
 
 #include "nsWindowsShellService.h"
 
+#include "city.h"
 #include "imgIContainer.h"
 #include "imgIRequest.h"
 #include "mozilla/gfx/2D.h"
@@ -66,6 +67,8 @@
 
 #define NS_TASKBAR_CONTRACTID "@mozilla.org/windows-taskbar;1"
 
+#define APP_REG_NAME_BASE L"Firefox-"
+
 using mozilla::IsWin8OrLater;
 using namespace mozilla;
 using namespace mozilla::gfx;
@@ -90,132 +93,11 @@ OpenKeyForReading(HKEY aKeyRoot, const nsAString& aKeyName, HKEY* aKey)
   return NS_OK;
 }
 
-///////////////////////////////////////////////////////////////////////////////
-// Default Browser Registry Settings
-//
-// The setting of these values are made by an external binary since writing
-// these values may require elevation.
-//
-// - File Extension Mappings
-//   -----------------------
-//   The following file extensions:
-//    .htm .html .shtml .xht .xhtml 
-//   are mapped like so:
-//
-//   HKCU\SOFTWARE\Classes\.<ext>\      (default)         REG_SZ     FirefoxHTML
-//
-//   as aliases to the class:
-//
-//   HKCU\SOFTWARE\Classes\FirefoxHTML\
-//     DefaultIcon                      (default)         REG_SZ     <apppath>,1
-//     shell\open\command               (default)         REG_SZ     <apppath> -osint -url "%1"
-//     shell\open\ddeexec               (default)         REG_SZ     <empty string>
-//
-// - Windows Vista and above Protocol Handler
-//
-//   HKCU\SOFTWARE\Classes\FirefoxURL\  (default)         REG_SZ     <appname> URL
-//                                      EditFlags         REG_DWORD  2
-//                                      FriendlyTypeName  REG_SZ     <appname> URL
-//     DefaultIcon                      (default)         REG_SZ     <apppath>,1
-//     shell\open\command               (default)         REG_SZ     <apppath> -osint -url "%1"
-//     shell\open\ddeexec               (default)         REG_SZ     <empty string>
-//
-// - Protocol Mappings
-//   -----------------
-//   The following protocols:
-//    HTTP, HTTPS, FTP
-//   are mapped like so:
-//
-//   HKCU\SOFTWARE\Classes\<protocol>\
-//     DefaultIcon                      (default)         REG_SZ     <apppath>,1
-//     shell\open\command               (default)         REG_SZ     <apppath> -osint -url "%1"
-//     shell\open\ddeexec               (default)         REG_SZ     <empty string>
-//
-// - Windows Start Menu (XP SP1 and newer)
-//   -------------------------------------------------
-//   The following keys are set to make Firefox appear in the Start Menu as the
-//   browser:
-//   
-//   HKCU\SOFTWARE\Clients\StartMenuInternet\FIREFOX.EXE\
-//                                      (default)         REG_SZ     <appname>
-//     DefaultIcon                      (default)         REG_SZ     <apppath>,0
-//     InstallInfo                      HideIconsCommand  REG_SZ     <uninstpath> /HideShortcuts
-//     InstallInfo                      IconsVisible      REG_DWORD  1
-//     InstallInfo                      ReinstallCommand  REG_SZ     <uninstpath> /SetAsDefaultAppGlobal
-//     InstallInfo                      ShowIconsCommand  REG_SZ     <uninstpath> /ShowShortcuts
-//     shell\open\command               (default)         REG_SZ     <apppath>
-//     shell\properties                 (default)         REG_SZ     <appname> &Options
-//     shell\properties\command         (default)         REG_SZ     <apppath> -preferences
-//     shell\safemode                   (default)         REG_SZ     <appname> &Safe Mode
-//     shell\safemode\command           (default)         REG_SZ     <apppath> -safe-mode
-//
-
-// The values checked are all default values so the value name is not needed.
-typedef struct {
-  const char* keyName;
-  const char* valueData;
-  const char* oldValueData;
-} SETTING;
-
-#define APP_REG_NAME L"Firefox"
-#define VAL_FILE_ICON "%APPPATH%,1"
-#define VAL_OPEN "\"%APPPATH%\" -osint -url \"%1\""
-#define OLD_VAL_OPEN "\"%APPPATH%\" -requestPending -osint -url \"%1\""
-#define DI "\\DefaultIcon"
-#define SOC "\\shell\\open\\command"
-#define SOD "\\shell\\open\\ddeexec"
-// Used for updating the FTP protocol handler's shell open command under HKCU.
-#define FTP_SOC L"Software\\Classes\\ftp\\shell\\open\\command"
-
-#define MAKE_KEY_NAME1(PREFIX, MID) \
-  PREFIX MID
-
-// The DefaultIcon registry key value should never be used when checking if
-// Firefox is the default browser for file handlers since other applications
-// (e.g. MS Office) may modify the DefaultIcon registry key value to add Icon
-// Handlers. see http://msdn2.microsoft.com/en-us/library/aa969357.aspx for
-// more info. The FTP protocol is not checked so advanced users can set the FTP
-// handler to another application and still have Firefox check if it is the
-// default HTTP and HTTPS handler.
-// *** Do not add additional checks here unless you skip them when aForAllTypes
-// is false below***.
-static SETTING gSettings[] = {
-  // File Handler Class
-  // ***keep this as the first entry because when aForAllTypes is not set below
-  // it will skip over this check.***
-  { MAKE_KEY_NAME1("FirefoxHTML", SOC), VAL_OPEN, OLD_VAL_OPEN },
-
-  // Protocol Handler Class - for Vista and above
-  { MAKE_KEY_NAME1("FirefoxURL", SOC), VAL_OPEN, OLD_VAL_OPEN },
-
-  // Protocol Handlers
-  { MAKE_KEY_NAME1("HTTP", DI), VAL_FILE_ICON },
-  { MAKE_KEY_NAME1("HTTP", SOC), VAL_OPEN, OLD_VAL_OPEN },
-  { MAKE_KEY_NAME1("HTTPS", DI), VAL_FILE_ICON },
-  { MAKE_KEY_NAME1("HTTPS", SOC), VAL_OPEN, OLD_VAL_OPEN }
-};
-
-// The settings to disable DDE are separate from the default browser settings
-// since they are only checked when Firefox is the default browser and if they
-// are incorrect they are fixed without notifying the user.
-static SETTING gDDESettings[] = {
-  // File Handler Class
-  { MAKE_KEY_NAME1("Software\\Classes\\FirefoxHTML", SOD) },
-
-  // Protocol Handler Class - for Vista and above
-  { MAKE_KEY_NAME1("Software\\Classes\\FirefoxURL", SOD) },
-
-  // Protocol Handlers
-  { MAKE_KEY_NAME1("Software\\Classes\\FTP", SOD) },
-  { MAKE_KEY_NAME1("Software\\Classes\\HTTP", SOD) },
-  { MAKE_KEY_NAME1("Software\\Classes\\HTTPS", SOD) }
-};
-
 nsresult
 GetHelperPath(nsAutoString& aPath)
 {
   nsresult rv;
-  nsCOMPtr<nsIProperties> directoryService = 
+  nsCOMPtr<nsIProperties> directoryService =
     do_GetService(NS_DIRECTORY_SERVICE_CONTRACTID, &rv);
   NS_ENSURE_SUCCESS(rv, rv);
 
@@ -327,8 +209,8 @@ nsWindowsShellService::ShortcutMaintenance()
 }
 
 static bool
-IsAARDefault(const RefPtr<IApplicationAssociationRegistration>& pAAR,
-             LPCWSTR aClassName)
+IsPathDefaultForClass(const RefPtr<IApplicationAssociationRegistration>& pAAR,
+                      wchar_t *exePath, LPCWSTR aClassName)
 {
   // Make sure the Prog ID matches what we have
   LPWSTR registeredApp;
@@ -341,66 +223,67 @@ IsAARDefault(const RefPtr<IApplicationAssociationRegistration>& pAAR,
   }
 
   LPCWSTR progID = isProtocol ? L"FirefoxURL" : L"FirefoxHTML";
-  bool isDefault = !wcsicmp(registeredApp, progID);
+  bool isDefault = !wcsnicmp(registeredApp, progID, wcslen(progID));
+
+  nsAutoString regAppName(registeredApp);
   CoTaskMemFree(registeredApp);
+
+  if (isDefault) {
+    // Make sure the application path for this progID is this installation.
+    regAppName.AppendLiteral("\\shell\\open\\command");
+    HKEY theKey;
+    nsresult rv = OpenKeyForReading(HKEY_CLASSES_ROOT, regAppName, &theKey);
+    if (NS_FAILED(rv)) {
+      return false;
+    }
+
+    wchar_t cmdFromReg[MAX_BUF] = L"";
+    DWORD len = sizeof(cmdFromReg);
+    DWORD res = ::RegQueryValueExW(theKey, nullptr, nullptr, nullptr,
+                                   (LPBYTE)cmdFromReg, &len);
+    ::RegCloseKey(theKey);
+    if (REG_FAILED(res)) {
+      return false;
+    }
+
+    wchar_t fullCmd[MAX_BUF] = L"";
+    _snwprintf(fullCmd, MAX_BUF, L"\"%s\" -osint -url \"%%1\"", exePath);
+
+    isDefault = _wcsicmp(fullCmd, cmdFromReg) == 0;
+  }
 
   return isDefault;
 }
 
-static void
-IsDefaultBrowserWin8(bool aCheckAllTypes, bool* aIsDefaultBrowser)
+static nsresult
+GetAppRegName(nsAutoString &aAppRegName)
 {
-  RefPtr<IApplicationAssociationRegistration> pAAR;
-  HRESULT hr = CoCreateInstance(CLSID_ApplicationAssociationRegistration,
-                                nullptr,
-                                CLSCTX_INPROC,
-                                IID_IApplicationAssociationRegistration,
-                                getter_AddRefs(pAAR));
-  if (FAILED(hr)) {
-    return;
-  }
+  nsresult rv;
+  nsCOMPtr<nsIProperties> dirSvc =
+    do_GetService(NS_DIRECTORY_SERVICE_CONTRACTID, &rv);
+  NS_ENSURE_SUCCESS(rv, rv);
 
-  bool res = IsAARDefault(pAAR, L"http");
-  if (*aIsDefaultBrowser) {
-    *aIsDefaultBrowser = res;
-  }
-  res = IsAARDefault(pAAR, L".html");
-  if (*aIsDefaultBrowser && aCheckAllTypes) {
-    *aIsDefaultBrowser = res;
-  }
-}
+  nsCOMPtr<nsIFile> exeFile;
+  rv = dirSvc->Get(XRE_EXECUTABLE_FILE,
+                   NS_GET_IID(nsIFile),
+                   getter_AddRefs(exeFile));
+  NS_ENSURE_SUCCESS(rv, rv);
 
-/*
- * Query's the AAR for the default status.
- * This only checks for FirefoxURL and if aCheckAllTypes is set, then
- * it also checks for FirefoxHTML.  Note that those ProgIDs are shared
- * by all Firefox browsers.
-*/
-bool
-nsWindowsShellService::IsDefaultBrowserVista(bool aCheckAllTypes,
-                                             bool* aIsDefaultBrowser)
-{
-  RefPtr<IApplicationAssociationRegistration> pAAR;
-  HRESULT hr = CoCreateInstance(CLSID_ApplicationAssociationRegistration,
-                                nullptr,
-                                CLSCTX_INPROC,
-                                IID_IApplicationAssociationRegistration,
-                                getter_AddRefs(pAAR));
-  if (FAILED(hr)) {
-    return false;
-  }
+  nsCOMPtr<nsIFile> appDir;
+  rv = exeFile->GetParent(getter_AddRefs(appDir));
+  NS_ENSURE_SUCCESS(rv, rv);
 
-  if (aCheckAllTypes) {
-    BOOL res;
-    hr = pAAR->QueryAppIsDefaultAll(AL_EFFECTIVE,
-                                    APP_REG_NAME,
-                                    &res);
-    *aIsDefaultBrowser = res;
-  } else if (!IsWin8OrLater()) {
-    *aIsDefaultBrowser = IsAARDefault(pAAR, L"http");
-  }
+  nsAutoString appDirStr;
+  rv = appDir->GetPath(appDirStr);
+  NS_ENSURE_SUCCESS(rv, rv);
 
-  return true;
+  aAppRegName = APP_REG_NAME_BASE;
+  uint64_t hash = CityHash64(static_cast<const char *>(appDirStr.get()),
+                             appDirStr.Length() * sizeof(nsAutoString::char_type));
+  aAppRegName.AppendInt((int)(hash >> 32), 16);
+  aAppRegName.AppendInt((int)hash, 16);
+
+  return rv;
 }
 
 NS_IMETHODIMP
@@ -408,223 +291,35 @@ nsWindowsShellService::IsDefaultBrowser(bool aStartupCheck,
                                         bool aForAllTypes,
                                         bool* aIsDefaultBrowser)
 {
-  // Assume we're the default unless one of the several checks below tell us
-  // otherwise.
-  *aIsDefaultBrowser = true;
+  mozilla::Unused << aStartupCheck;
 
-  wchar_t exePath[MAX_BUF];
-  if (!::GetModuleFileNameW(0, exePath, MAX_BUF))
-    return NS_ERROR_FAILURE;
+  *aIsDefaultBrowser = false;
 
+  RefPtr<IApplicationAssociationRegistration> pAAR;
+  HRESULT hr = CoCreateInstance(CLSID_ApplicationAssociationRegistration,
+                                nullptr,
+                                CLSCTX_INPROC,
+                                IID_IApplicationAssociationRegistration,
+                                getter_AddRefs(pAAR));
+  if (FAILED(hr)) {
+    return NS_OK;
+  }
+
+  wchar_t exePath[MAX_BUF] = L"";
+  if (!::GetModuleFileNameW(0, exePath, MAX_BUF)) {
+    return NS_OK;
+  }
   // Convert the path to a long path since GetModuleFileNameW returns the path
   // that was used to launch Firefox which is not necessarily a long path.
-  if (!::GetLongPathNameW(exePath, exePath, MAX_BUF))
-    return NS_ERROR_FAILURE;
-
-  nsAutoString appLongPath(exePath);
-
-  HKEY theKey;
-  DWORD res;
-  nsresult rv;
-  wchar_t currValue[MAX_BUF];
-
-  SETTING* settings = gSettings;
-  if (!aForAllTypes && IsWin8OrLater()) {
-    // Skip over the file handler check
-    settings++;
+  if (!::GetLongPathNameW(exePath, exePath, MAX_BUF)) {
+    return NS_OK;
   }
 
-  SETTING* end = gSettings + sizeof(gSettings) / sizeof(SETTING);
-
-  for (; settings < end; ++settings) {
-    NS_ConvertUTF8toUTF16 keyName(settings->keyName);
-    NS_ConvertUTF8toUTF16 valueData(settings->valueData);
-    int32_t offset = valueData.Find("%APPPATH%");
-    valueData.Replace(offset, 9, appLongPath);
-
-    rv = OpenKeyForReading(HKEY_CLASSES_ROOT, keyName, &theKey);
-    if (NS_FAILED(rv)) {
-      *aIsDefaultBrowser = false;
-      return NS_OK;
-    }
-
-    ::ZeroMemory(currValue, sizeof(currValue));
-    DWORD len = sizeof currValue;
-    res = ::RegQueryValueExW(theKey, L"", nullptr, nullptr,
-                             (LPBYTE)currValue, &len);
-    // Close the key that was opened.
-    ::RegCloseKey(theKey);
-    if (REG_FAILED(res) ||
-        _wcsicmp(valueData.get(), currValue)) {
-      // Key wasn't set or was set to something other than our registry entry.
-      NS_ConvertUTF8toUTF16 oldValueData(settings->oldValueData);
-      offset = oldValueData.Find("%APPPATH%");
-      oldValueData.Replace(offset, 9, appLongPath);
-      // The current registry value doesn't match the current or the old format.
-      if (_wcsicmp(oldValueData.get(), currValue)) {
-        *aIsDefaultBrowser = false;
-        return NS_OK;
-      }
-
-      res = ::RegOpenKeyExW(HKEY_CLASSES_ROOT, keyName.get(),
-                            0, KEY_SET_VALUE, &theKey);
-      if (REG_FAILED(res)) {
-        // If updating the open command fails try to update it using the helper
-        // application when setting Firefox as the default browser.
-        *aIsDefaultBrowser = false;
-        return NS_OK;
-      }
-
-      res = ::RegSetValueExW(theKey, L"", 0, REG_SZ,
-                             (const BYTE *) valueData.get(),
-                             (valueData.Length() + 1) * sizeof(char16_t));
-      // Close the key that was created.
-      ::RegCloseKey(theKey);
-      if (REG_FAILED(res)) {
-        // If updating the open command fails try to update it using the helper
-        // application when setting Firefox as the default browser.
-        *aIsDefaultBrowser = false;
-        return NS_OK;
-      }
-    }
-  }
-
-  // Only check if Firefox is the default browser on Vista and above if the
-  // previous checks show that Firefox is the default browser.
-  if (*aIsDefaultBrowser) {
-    IsDefaultBrowserVista(aForAllTypes, aIsDefaultBrowser);
-    if (IsWin8OrLater()) {
-      IsDefaultBrowserWin8(aForAllTypes, aIsDefaultBrowser);
-    }
-  }
-
-  // To handle the case where DDE isn't disabled due for a user because there
-  // account didn't perform a Firefox update this will check if Firefox is the
-  // default browser and if dde is disabled for each handler
-  // and if it isn't disable it. When Firefox is not the default browser the
-  // helper application will disable dde for each handler.
+  *aIsDefaultBrowser = IsPathDefaultForClass(pAAR, exePath, L"http");
   if (*aIsDefaultBrowser && aForAllTypes) {
-    // Check ftp settings
-
-    end = gDDESettings + sizeof(gDDESettings) / sizeof(SETTING);
-
-    for (settings = gDDESettings; settings < end; ++settings) {
-      NS_ConvertUTF8toUTF16 keyName(settings->keyName);
-
-      rv = OpenKeyForReading(HKEY_CURRENT_USER, keyName, &theKey);
-      if (NS_FAILED(rv)) {
-        ::RegCloseKey(theKey);
-        // If disabling DDE fails try to disable it using the helper
-        // application when setting Firefox as the default browser.
-        *aIsDefaultBrowser = false;
-        return NS_OK;
-      }
-
-      ::ZeroMemory(currValue, sizeof(currValue));
-      DWORD len = sizeof currValue;
-      res = ::RegQueryValueExW(theKey, L"", nullptr, nullptr,
-                               (LPBYTE)currValue, &len);
-      // Close the key that was opened.
-      ::RegCloseKey(theKey);
-      if (REG_FAILED(res) || char16_t('\0') != *currValue) {
-        // Key wasn't set or was set to something other than our registry entry.
-        // Delete the key along with all of its childrean and then recreate it.
-        ::SHDeleteKeyW(HKEY_CURRENT_USER, keyName.get());
-        res = ::RegCreateKeyExW(HKEY_CURRENT_USER, keyName.get(), 0, nullptr,
-                                REG_OPTION_NON_VOLATILE, KEY_SET_VALUE,
-                                nullptr, &theKey, nullptr);
-        if (REG_FAILED(res)) {
-          // If disabling DDE fails try to disable it using the helper
-          // application when setting Firefox as the default browser.
-          *aIsDefaultBrowser = false;
-          return NS_OK;
-        }
-
-        res = ::RegSetValueExW(theKey, L"", 0, REG_SZ, (const BYTE *) L"",
-                               sizeof(char16_t));
-        // Close the key that was created.
-        ::RegCloseKey(theKey);
-        if (REG_FAILED(res)) {
-          // If disabling DDE fails try to disable it using the helper
-          // application when setting Firefox as the default browser.
-          *aIsDefaultBrowser = false;
-          return NS_OK;
-        }
-      }
-    }
-
-    // Update the FTP protocol handler's shell open command if it is the old
-    // format.
-    res = ::RegOpenKeyExW(HKEY_CURRENT_USER, FTP_SOC, 0, KEY_ALL_ACCESS,
-                          &theKey);
-    // Don't update the FTP protocol handler's shell open command when opening
-    // its registry key fails under HKCU since it most likely doesn't exist.
-    if (NS_FAILED(rv)) {
-      return NS_OK;
-    }
-
-    NS_ConvertUTF8toUTF16 oldValueOpen(OLD_VAL_OPEN);
-    int32_t offset = oldValueOpen.Find("%APPPATH%");
-    oldValueOpen.Replace(offset, 9, appLongPath);
-
-    ::ZeroMemory(currValue, sizeof(currValue));
-    DWORD len = sizeof currValue;
-    res = ::RegQueryValueExW(theKey, L"", nullptr, nullptr, (LPBYTE)currValue,
-                             &len);
-
-    // Don't update the FTP protocol handler's shell open command when the
-    // current registry value doesn't exist or matches the old format.
-    if (REG_FAILED(res) ||
-        _wcsicmp(oldValueOpen.get(), currValue)) {
-      ::RegCloseKey(theKey);
-      return NS_OK;
-    }
-
-    NS_ConvertUTF8toUTF16 valueData(VAL_OPEN);
-    valueData.Replace(offset, 9, appLongPath);
-    res = ::RegSetValueExW(theKey, L"", 0, REG_SZ,
-                           (const BYTE *) valueData.get(),
-                           (valueData.Length() + 1) * sizeof(char16_t));
-    // Close the key that was created.
-    ::RegCloseKey(theKey);
-    // If updating the FTP protocol handlers shell open command fails try to
-    // update it using the helper application when setting Firefox as the
-    // default browser.
-    if (REG_FAILED(res)) {
-      *aIsDefaultBrowser = false;
-    }
+    *aIsDefaultBrowser = IsPathDefaultForClass(pAAR, exePath, L".html");
   }
-
   return NS_OK;
-}
-
-static nsresult
-DynSHOpenWithDialog(HWND hwndParent, const OPENASINFO *poainfo)
-{
-  // shell32.dll is in the knownDLLs list so will always be loaded from the
-  // system32 directory.
-  static const wchar_t kSehllLibraryName[] =  L"shell32.dll";
-  HMODULE shellDLL = ::LoadLibraryW(kSehllLibraryName);
-  if (!shellDLL) {
-    return NS_ERROR_FAILURE;
-  }
-
-  decltype(SHOpenWithDialog)* SHOpenWithDialogFn =
-    (decltype(SHOpenWithDialog)*) GetProcAddress(shellDLL, "SHOpenWithDialog");
-
-  if (!SHOpenWithDialogFn) {
-    return NS_ERROR_FAILURE;
-  }
-
-  nsresult rv;
-  HRESULT hr = SHOpenWithDialogFn(hwndParent, poainfo);
-  if (SUCCEEDED(hr) || (hr == HRESULT_FROM_WIN32(ERROR_CANCELLED))) {
-    rv = NS_OK;
-  } else {
-    rv = NS_ERROR_FAILURE;
-  }
-  FreeLibrary(shellDLL);
-  return rv;
 }
 
 nsresult
@@ -637,7 +332,9 @@ nsWindowsShellService::LaunchControlPanelDefaultsSelectionUI()
                                 IID_IApplicationAssociationRegistrationUI,
                                 (void**)&pAARUI);
   if (SUCCEEDED(hr)) {
-    hr = pAARUI->LaunchAdvancedAssociationUI(APP_REG_NAME);
+    nsAutoString appRegName;
+    GetAppRegName(appRegName);
+    hr = pAARUI->LaunchAdvancedAssociationUI(appRegName.get());
     pAARUI->Release();
   }
   return SUCCEEDED(hr) ? NS_OK : NS_ERROR_FAILURE;
@@ -646,11 +343,6 @@ nsWindowsShellService::LaunchControlPanelDefaultsSelectionUI()
 nsresult
 nsWindowsShellService::LaunchControlPanelDefaultPrograms()
 {
-  // This Default Programs feature is Win7+ only.
-  if (!IsWin7OrLater()) {
-    return NS_ERROR_FAILURE;
-  }
-
   // Build the path control.exe path safely
   WCHAR controlEXEPath[MAX_PATH + 1] = { '\0' };
   if (!GetSystemDirectoryW(controlEXEPath, MAX_PATH)) {
@@ -664,14 +356,17 @@ nsWindowsShellService::LaunchControlPanelDefaultPrograms()
     return NS_ERROR_FAILURE;
   }
 
-  WCHAR params[] = L"control.exe /name Microsoft.DefaultPrograms /page "
-    "pageDefaultProgram\\pageAdvancedSettings?pszAppName=" APP_REG_NAME;
+  nsAutoString params(NS_LITERAL_STRING("control.exe /name Microsoft.DefaultPrograms "
+    "/page pageDefaultProgram\\pageAdvancedSettings?pszAppName="));
+  nsAutoString appRegName;
+  GetAppRegName(appRegName);
+  params.Append(appRegName);
   STARTUPINFOW si = {sizeof(si), 0};
   si.dwFlags = STARTF_USESHOWWINDOW;
   si.wShowWindow = SW_SHOWDEFAULT;
   PROCESS_INFORMATION pi = {0};
-  if (!CreateProcessW(controlEXEPath, params, nullptr, nullptr, FALSE,
-                      0, nullptr, nullptr, &si, &pi)) {
+  if (!CreateProcessW(controlEXEPath, static_cast<LPWSTR>(params.get()), nullptr,
+                      nullptr, FALSE, 0, nullptr, nullptr, &si, &pi)) {
     return NS_ERROR_FAILURE;
   }
   CloseHandle(pi.hProcess);
@@ -800,10 +495,15 @@ nsWindowsShellService::LaunchHTTPHandlerPane()
   OPENASINFO info;
   info.pcszFile = L"http";
   info.pcszClass = nullptr;
-  info.oaifInFlags = OAIF_FORCE_REGISTRATION | 
+  info.oaifInFlags = OAIF_FORCE_REGISTRATION |
                      OAIF_URL_PROTOCOL |
                      OAIF_REGISTER_EXT;
-  return DynSHOpenWithDialog(nullptr, &info);
+
+  HRESULT hr = SHOpenWithDialog(nullptr, &info);
+  if (SUCCEEDED(hr) || (hr == HRESULT_FROM_WIN32(ERROR_CANCELLED))) {
+    return NS_OK;
+  }
+  return NS_ERROR_FAILURE;
 }
 
 NS_IMETHODIMP
@@ -954,7 +654,7 @@ WriteBitmap(nsIFile* aFile, imgIContainer* aImage)
 }
 
 NS_IMETHODIMP
-nsWindowsShellService::SetDesktopBackground(nsIDOMElement* aElement, 
+nsWindowsShellService::SetDesktopBackground(nsIDOMElement* aElement,
                                             int32_t aPosition)
 {
   nsresult rv;
@@ -964,7 +664,7 @@ nsWindowsShellService::SetDesktopBackground(nsIDOMElement* aElement,
   if (!imgElement) {
     // XXX write background loading stuff!
     return NS_ERROR_NOT_AVAILABLE;
-  } 
+  }
   else {
     nsCOMPtr<nsIImageLoadingContent> imageContent =
       do_QueryInterface(aElement, &rv);
@@ -991,7 +691,7 @@ nsWindowsShellService::SetDesktopBackground(nsIDOMElement* aElement,
   rv = bundleService->CreateBundle(SHELLSERVICE_PROPERTIES,
                                    getter_AddRefs(shellBundle));
   NS_ENSURE_SUCCESS(rv, rv);
- 
+
   // e.g. "Desktop Background.bmp"
   nsString fileLeafName;
   rv = shellBundle->GetStringFromName
@@ -1079,12 +779,12 @@ nsWindowsShellService::OpenApplication(int32_t aApplication)
   }
 
   // The Default Client section of the Windows Registry looks like this:
-  // 
+  //
   // Clients\aClient\
   //  e.g. aClient = "Mail"...
   //        \Mail\(default) = Client Subkey Name
   //             \Client Subkey Name
-  //             \Client Subkey Name\shell\open\command\ 
+  //             \Client Subkey Name\shell\open\command\
   //             \Client Subkey Name\shell\open\command\(default) = path to exe
   //
 
@@ -1124,7 +824,7 @@ nsWindowsShellService::OpenApplication(int32_t aApplication)
   // Close the key we opened.
   ::RegCloseKey(theKey);
 
-  // Look for any embedded environment variables and substitute their 
+  // Look for any embedded environment variables and substitute their
   // values, as |::CreateProcessW| is unable to do this.
   nsAutoString path(buf);
   int32_t end = path.Length();
@@ -1132,7 +832,7 @@ nsWindowsShellService::OpenApplication(int32_t aApplication)
   ::ZeroMemory(buf, sizeof(buf));
   do {
     cursor = path.FindChar('%', cursor);
-    if (cursor < 0) 
+    if (cursor < 0)
       break;
 
     temp = path.FindChar('%', cursor + 1);
@@ -1142,7 +842,7 @@ nsWindowsShellService::OpenApplication(int32_t aApplication)
 
     ::GetEnvironmentVariableW(nsAutoString(Substring(path, cursor, temp - cursor)).get(),
                               buf, sizeof(buf));
-    
+
     // "+ 2" is to subtract the extra characters used to delimit the environment
     // variable ('%').
     path.Replace((cursor - 1), temp - cursor + 2, nsDependentString(buf));
@@ -1218,15 +918,15 @@ nsWindowsShellService::OpenApplicationWithURI(nsIFile* aApplication,
                                               const nsACString& aURI)
 {
   nsresult rv;
-  nsCOMPtr<nsIProcess> process = 
+  nsCOMPtr<nsIProcess> process =
     do_CreateInstance("@mozilla.org/process/util;1", &rv);
   if (NS_FAILED(rv))
     return rv;
-  
+
   rv = process->Init(aApplication);
   if (NS_FAILED(rv))
     return rv;
-  
+
   const nsCString spec(aURI);
   const char* specStr = spec.get();
   return process->Run(false, &specStr, 1);

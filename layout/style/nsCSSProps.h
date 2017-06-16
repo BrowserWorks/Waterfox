@@ -847,8 +847,10 @@ public:
   static const KTableEntry kTextEmphasisPositionKTable[];
   static const KTableEntry kTextEmphasisStyleFillKTable[];
   static const KTableEntry kTextEmphasisStyleShapeKTable[];
+  static const KTableEntry kTextJustifyKTable[];
   static const KTableEntry kTextOrientationKTable[];
   static const KTableEntry kTextOverflowKTable[];
+  static const KTableEntry kTextSizeAdjustKTable[];
   static const KTableEntry kTextTransformKTable[];
   static const KTableEntry kTouchActionKTable[];
   static const KTableEntry kTopLayerKTable[];

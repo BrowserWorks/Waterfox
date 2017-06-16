@@ -78,6 +78,7 @@ enum class DeclarationKind : uint8_t
     Const,
     Import,
     BodyLevelFunction,
+    ModuleBodyLevelFunction,
     LexicalFunction,
     VarForAnnexBLexicalFunction,
     SimpleCatchParameter,
@@ -95,6 +96,7 @@ DeclarationKindToBindingKind(DeclarationKind kind)
 
       case DeclarationKind::Var:
       case DeclarationKind::BodyLevelFunction:
+      case DeclarationKind::ModuleBodyLevelFunction:
       case DeclarationKind::VarForAnnexBLexicalFunction:
       case DeclarationKind::ForOfVar:
         return BindingKind::Var;
@@ -124,6 +126,7 @@ DeclarationKindIsLexical(DeclarationKind kind)
 // Used in Parser to track declared names.
 class DeclaredNameInfo
 {
+    uint32_t pos_;
     DeclarationKind kind_;
 
     // If the declared name is a binding, whether the binding is closed
@@ -132,8 +135,9 @@ class DeclaredNameInfo
     bool closedOver_;
 
   public:
-    explicit DeclaredNameInfo(DeclarationKind kind)
-      : kind_(kind),
+    explicit DeclaredNameInfo(DeclarationKind kind, uint32_t pos)
+      : pos_(pos),
+        kind_(kind),
         closedOver_(false)
     { }
 
@@ -142,6 +146,12 @@ class DeclaredNameInfo
 
     DeclarationKind kind() const {
         return kind_;
+    }
+
+    static const uint32_t npos = uint32_t(-1);
+
+    uint32_t pos() const {
+        return pos_;
     }
 
     void alterKind(DeclarationKind kind) {

@@ -102,13 +102,15 @@
           "urls": {
             "type": "array",
             "description": "A list of URLs or URL patterns. Requests that cannot match any of the URLs will be filtered out.",
-            "items": { "type": "string" }
+            "items": { "type": "string" },
+            "minItems": 1
           },
           "types": {
             "type": "array",
             "optional": true,
             "description": "A list of request types. Requests that cannot match any of the types will be filtered out.",
-            "items": { "$ref": "ResourceType" }
+            "items": { "$ref": "ResourceType" },
+            "minItems": 1
           },
           "tabId": { "type": "integer", "optional": true },
           "windowId": { "type": "integer", "optional": true }
@@ -217,6 +219,8 @@
               "method": {"type": "string", "description": "Standard HTTP method."},
               "frameId": {"type": "integer", "description": "The value 0 indicates that the request happens in the main frame; a positive value indicates the ID of a subframe in which the request happens. If the document of a (sub-)frame is loaded (<code>type</code> is <code>main_frame</code> or <code>sub_frame</code>), <code>frameId</code> indicates the ID of this frame, not the ID of the outer frame. Frame IDs are unique within a tab."},
               "parentFrameId": {"type": "integer", "description": "ID of frame that wraps the frame which sent the request. Set to -1 if no parent frame exists."},
+              "originUrl": {"type": "string", "optional": true, "description": "URL of the resource that triggered this request."},
+              "documentUrl": {"type": "string", "optional": true, "description": "URL of the page into which the requested resource will be loaded."},
               "requestBody": {
                 "type": "object",
                 "optional": true,
@@ -283,6 +287,8 @@
               "method": {"type": "string", "description": "Standard HTTP method."},
               "frameId": {"type": "integer", "description": "The value 0 indicates that the request happens in the main frame; a positive value indicates the ID of a subframe in which the request happens. If the document of a (sub-)frame is loaded (<code>type</code> is <code>main_frame</code> or <code>sub_frame</code>), <code>frameId</code> indicates the ID of this frame, not the ID of the outer frame. Frame IDs are unique within a tab."},
               "parentFrameId": {"type": "integer", "description": "ID of frame that wraps the frame which sent the request. Set to -1 if no parent frame exists."},
+              "originUrl": {"type": "string", "optional": true, "description": "URL of the resource that triggered this request."},
+              "documentUrl": {"type": "string", "optional": true, "description": "URL of the page into which the requested resource will be loaded."},
               "tabId": {"type": "integer", "description": "The ID of the tab in which the request takes place. Set to -1 if the request isn't related to a tab."},
               "type": {"$ref": "ResourceType", "description": "How the requested resource will be used."},
               "timeStamp": {"type": "number", "description": "The time when this signal is triggered, in milliseconds since the epoch."},
@@ -326,6 +332,8 @@
               "method": {"type": "string", "description": "Standard HTTP method."},
               "frameId": {"type": "integer", "description": "The value 0 indicates that the request happens in the main frame; a positive value indicates the ID of a subframe in which the request happens. If the document of a (sub-)frame is loaded (<code>type</code> is <code>main_frame</code> or <code>sub_frame</code>), <code>frameId</code> indicates the ID of this frame, not the ID of the outer frame. Frame IDs are unique within a tab."},
               "parentFrameId": {"type": "integer", "description": "ID of frame that wraps the frame which sent the request. Set to -1 if no parent frame exists."},
+              "originUrl": {"type": "string", "optional": true, "description": "URL of the resource that triggered this request."},
+              "documentUrl": {"type": "string", "optional": true, "description": "URL of the page into which the requested resource will be loaded."},
               "tabId": {"type": "integer", "description": "The ID of the tab in which the request takes place. Set to -1 if the request isn't related to a tab."},
               "type": {"$ref": "ResourceType", "description": "How the requested resource will be used."},
               "timeStamp": {"type": "number", "description": "The time when this signal is triggered, in milliseconds since the epoch."},
@@ -364,6 +372,8 @@
               "method": {"type": "string", "description": "Standard HTTP method."},
               "frameId": {"type": "integer", "description": "The value 0 indicates that the request happens in the main frame; a positive value indicates the ID of a subframe in which the request happens. If the document of a (sub-)frame is loaded (<code>type</code> is <code>main_frame</code> or <code>sub_frame</code>), <code>frameId</code> indicates the ID of this frame, not the ID of the outer frame. Frame IDs are unique within a tab."},
               "parentFrameId": {"type": "integer", "description": "ID of frame that wraps the frame which sent the request. Set to -1 if no parent frame exists."},
+              "originUrl": {"type": "string", "optional": true, "description": "URL of the resource that triggered this request."},
+              "documentUrl": {"type": "string", "optional": true, "description": "URL of the page into which the requested resource will be loaded."},
               "tabId": {"type": "integer", "description": "The ID of the tab in which the request takes place. Set to -1 if the request isn't related to a tab."},
               "type": {"$ref": "ResourceType", "description": "How the requested resource will be used."},
               "timeStamp": {"type": "number", "description": "The time when this signal is triggered, in milliseconds since the epoch."},
@@ -397,7 +407,6 @@
       },
       {
         "name": "onAuthRequired",
-        "unsupported": true,
         "type": "function",
         "description": "Fired when an authentication failure is received. The listener has three options: it can provide authentication credentials, it can cancel the request and display the error page, or it can take no action on the challenge. If bad user credentials are provided, this may be called multiple times for the same request.",
         "parameters": [
@@ -410,6 +419,8 @@
               "method": {"type": "string", "description": "Standard HTTP method."},
               "frameId": {"type": "integer", "description": "The value 0 indicates that the request happens in the main frame; a positive value indicates the ID of a subframe in which the request happens. If the document of a (sub-)frame is loaded (<code>type</code> is <code>main_frame</code> or <code>sub_frame</code>), <code>frameId</code> indicates the ID of this frame, not the ID of the outer frame. Frame IDs are unique within a tab."},
               "parentFrameId": {"type": "integer", "description": "ID of frame that wraps the frame which sent the request. Set to -1 if no parent frame exists."},
+              "originUrl": {"type": "string", "optional": true, "description": "URL of the resource that triggered this request."},
+              "documentUrl": {"type": "string", "optional": true, "description": "URL of the page into which the requested resource will be loaded."},
               "tabId": {"type": "integer", "description": "The ID of the tab in which the request takes place. Set to -1 if the request isn't related to a tab."},
               "type": {"$ref": "ResourceType", "description": "How the requested resource will be used."},
               "timeStamp": {"type": "number", "description": "The time when this signal is triggered, in milliseconds since the epoch."},
@@ -467,6 +478,8 @@
               "method": {"type": "string", "description": "Standard HTTP method."},
               "frameId": {"type": "integer", "description": "The value 0 indicates that the request happens in the main frame; a positive value indicates the ID of a subframe in which the request happens. If the document of a (sub-)frame is loaded (<code>type</code> is <code>main_frame</code> or <code>sub_frame</code>), <code>frameId</code> indicates the ID of this frame, not the ID of the outer frame. Frame IDs are unique within a tab."},
               "parentFrameId": {"type": "integer", "description": "ID of frame that wraps the frame which sent the request. Set to -1 if no parent frame exists."},
+              "originUrl": {"type": "string", "optional": true, "description": "URL of the resource that triggered this request."},
+              "documentUrl": {"type": "string", "optional": true, "description": "URL of the page into which the requested resource will be loaded."},
               "tabId": {"type": "integer", "description": "The ID of the tab in which the request takes place. Set to -1 if the request isn't related to a tab."},
               "type": {"$ref": "ResourceType", "description": "How the requested resource will be used."},
               "timeStamp": {"type": "number", "description": "The time when this signal is triggered, in milliseconds since the epoch."},
@@ -509,6 +522,8 @@
               "method": {"type": "string", "description": "Standard HTTP method."},
               "frameId": {"type": "integer", "description": "The value 0 indicates that the request happens in the main frame; a positive value indicates the ID of a subframe in which the request happens. If the document of a (sub-)frame is loaded (<code>type</code> is <code>main_frame</code> or <code>sub_frame</code>), <code>frameId</code> indicates the ID of this frame, not the ID of the outer frame. Frame IDs are unique within a tab."},
               "parentFrameId": {"type": "integer", "description": "ID of frame that wraps the frame which sent the request. Set to -1 if no parent frame exists."},
+              "originUrl": {"type": "string", "optional": true, "description": "URL of the resource that triggered this request."},
+              "documentUrl": {"type": "string", "optional": true, "description": "URL of the page into which the requested resource will be loaded."},
               "tabId": {"type": "integer", "description": "The ID of the tab in which the request takes place. Set to -1 if the request isn't related to a tab."},
               "type": {"$ref": "ResourceType", "description": "How the requested resource will be used."},
               "timeStamp": {"type": "number", "description": "The time when this signal is triggered, in milliseconds since the epoch."},
@@ -552,6 +567,8 @@
               "method": {"type": "string", "description": "Standard HTTP method."},
               "frameId": {"type": "integer", "description": "The value 0 indicates that the request happens in the main frame; a positive value indicates the ID of a subframe in which the request happens. If the document of a (sub-)frame is loaded (<code>type</code> is <code>main_frame</code> or <code>sub_frame</code>), <code>frameId</code> indicates the ID of this frame, not the ID of the outer frame. Frame IDs are unique within a tab."},
               "parentFrameId": {"type": "integer", "description": "ID of frame that wraps the frame which sent the request. Set to -1 if no parent frame exists."},
+              "originUrl": {"type": "string", "optional": true, "description": "URL of the resource that triggered this request."},
+              "documentUrl": {"type": "string", "optional": true, "description": "URL of the page into which the requested resource will be loaded."},
               "tabId": {"type": "integer", "description": "The ID of the tab in which the request takes place. Set to -1 if the request isn't related to a tab."},
               "type": {"$ref": "ResourceType", "description": "How the requested resource will be used."},
               "timeStamp": {"type": "number", "description": "The time when this signal is triggered, in milliseconds since the epoch."},
@@ -594,6 +611,8 @@
               "method": {"type": "string", "description": "Standard HTTP method."},
               "frameId": {"type": "integer", "description": "The value 0 indicates that the request happens in the main frame; a positive value indicates the ID of a subframe in which the request happens. If the document of a (sub-)frame is loaded (<code>type</code> is <code>main_frame</code> or <code>sub_frame</code>), <code>frameId</code> indicates the ID of this frame, not the ID of the outer frame. Frame IDs are unique within a tab."},
               "parentFrameId": {"type": "integer", "description": "ID of frame that wraps the frame which sent the request. Set to -1 if no parent frame exists."},
+              "originUrl": {"type": "string", "optional": true, "description": "URL of the resource that triggered this request."},
+              "documentUrl": {"type": "string", "optional": true, "description": "URL of the page into which the requested resource will be loaded."},
               "tabId": {"type": "integer", "description": "The ID of the tab in which the request takes place. Set to -1 if the request isn't related to a tab."},
               "type": {"$ref": "ResourceType", "description": "How the requested resource will be used."},
               "timeStamp": {"type": "number", "description": "The time when this signal is triggered, in milliseconds since the epoch."},

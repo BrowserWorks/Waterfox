@@ -369,7 +369,7 @@ nsSVGOuterSVGFrame::Reflow(nsPresContext*           aPresContext,
 
   NS_PRECONDITION(mState & NS_FRAME_IN_REFLOW, "frame is not in reflow");
 
-  aStatus = NS_FRAME_COMPLETE;
+  aStatus.Reset();
 
   aDesiredSize.Width()  = aReflowInput.ComputedWidth() +
                           aReflowInput.ComputedPhysicalBorderPadding().LeftRight();
@@ -626,7 +626,7 @@ nsDisplayOuterSVG::Paint(nsDisplayListBuilder* aBuilder,
   aContext->ThebesContext()->Save();
   // We include the offset of our frame and a scale from device pixels to user
   // units (i.e. CSS px) in the matrix that we pass to our children):
-  gfxMatrix tm = nsSVGIntegrationUtils::GetCSSPxToDevPxMatrix(mFrame) *
+  gfxMatrix tm = nsSVGUtils::GetCSSPxToDevPxMatrix(mFrame) *
                    gfxMatrix::Translation(devPixelOffset);
   DrawResult result =
     nsSVGUtils::PaintFrameWithEffects(mFrame, *aContext->ThebesContext(), tm,

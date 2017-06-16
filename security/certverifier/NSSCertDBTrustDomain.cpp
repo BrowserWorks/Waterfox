@@ -30,7 +30,6 @@
 #include "pkix/pkixnss.h"
 #include "prerror.h"
 #include "prmem.h"
-#include "prprf.h"
 #include "secerr.h"
 
 #include "CNNICHashWhitelist.inc"
@@ -244,7 +243,11 @@ NSSCertDBTrustDomain::GetCertTrust(EndEntityOrCA endEntityOrCA,
     // For TRUST, we only use the CERTDB_TRUSTED_CA bit, because Gecko hasn't
     // needed to consider end-entity certs to be their own trust anchors since
     // Gecko implemented nsICertOverrideService.
-    if (flags & CERTDB_TRUSTED_CA) {
+    // Of course, for this to work as expected, we need to make sure we're
+    // inquiring about the trust of a CA and not an end-entity. If an end-entity
+    // has the CERTDB_TRUSTED_CA bit set, Gecko does not consider it to be a
+    // trust anchor; it must inherit its trust.
+    if (flags & CERTDB_TRUSTED_CA && endEntityOrCA == EndEntityOrCA::MustBeCA) {
       if (policy.IsAnyPolicy()) {
         trustLevel = TrustLevel::TrustAnchor;
         return Success;
@@ -438,7 +441,7 @@ NSSCertDBTrustDomain::CheckRevocation(EndEntityOrCA endEntityOrCA,
     // able to fetch a more recent one.
     MOZ_LOG(gCertVerifierLog, LogLevel::Debug,
            ("NSSCertDBTrustDomain: cached OCSP response: error %d",
-           cachedResponseResult));
+            static_cast<int>(cachedResponseResult)));
     // When a good cached response has expired, it is more convenient
     // to convert that to an error code and just deal with
     // cachedResponseResult from here on out.
@@ -868,8 +871,8 @@ NSSCertDBTrustDomain::IsChainValid(const DERArray& certArray, Time time)
       (mPinningMode == CertVerifier::pinningEnforceTestMode);
     bool chainHasValidPins;
     nsresult nsrv = PublicKeyPinningService::ChainHasValidPins(
-      certList, mHostname, time, enforceTestMode, chainHasValidPins,
-      mPinningTelemetryInfo);
+      certList, mHostname, time, enforceTestMode, mOriginAttributes,
+      chainHasValidPins, mPinningTelemetryInfo);
     if (NS_FAILED(nsrv)) {
       return Result::FATAL_ERROR_LIBRARY_FAILURE;
     }
@@ -1096,6 +1099,8 @@ InitializeNSS(const char* dir, bool readOnly, bool loadPKCS11Modules)
   if (!loadPKCS11Modules) {
     flags |= NSS_INIT_NOMODDB;
   }
+  MOZ_LOG(gCertVerifierLog, LogLevel::Debug,
+          ("InitializeNSS(%s, %d, %d)", dir, readOnly, loadPKCS11Modules));
   return ::NSS_Initialize(dir, "", "", SECMOD_DB, flags);
 }
 

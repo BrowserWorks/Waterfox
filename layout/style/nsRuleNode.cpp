@@ -9,6 +9,8 @@
  * responsible for converting the rules' information into computed style
  */
 
+#include "nsRuleNode.h"
+
 #include <algorithm>
 #include <functional>
 
@@ -26,7 +28,6 @@
 #include "mozilla/TypeTraits.h"
 
 #include "nsAlgorithm.h" // for clamped()
-#include "nsRuleNode.h"
 #include "nscore.h"
 #include "nsIWidget.h"
 #include "nsIPresShell.h"
@@ -140,9 +141,8 @@ CreateStyleImageRequest(nsPresContext* aPresContext, const nsCSSValue& aValue,
   return request.forget();
 }
 
-template<typename ReferenceBox>
 static void
-SetStyleShapeSourceToCSSValue(StyleShapeSource<ReferenceBox>* aShapeSource,
+SetStyleShapeSourceToCSSValue(StyleShapeSource* aShapeSource,
                               const nsCSSValue* aValue,
                               nsStyleContext* aStyleContext,
                               nsPresContext* aPresContext,
@@ -1449,6 +1449,7 @@ struct SetEnumValueHelper
   DEFINE_ENUM_CLASS_SETTER(StyleFloat, None, InlineEnd)
   DEFINE_ENUM_CLASS_SETTER(StyleFloatEdge, ContentBox, MarginBox)
   DEFINE_ENUM_CLASS_SETTER(StyleHyphens, None, Auto)
+  DEFINE_ENUM_CLASS_SETTER(StyleTextJustify, None, InterCharacter)
   DEFINE_ENUM_CLASS_SETTER(StyleUserFocus, None, SelectMenu)
   DEFINE_ENUM_CLASS_SETTER(StyleUserSelect, None, MozText)
   DEFINE_ENUM_CLASS_SETTER(StyleUserInput, None, Auto)
@@ -2354,44 +2355,25 @@ UnsetPropertiesWithoutFlags(const nsStyleStructID aSID,
   }
 }
 
-/**
- * We allocate arrays of CSS values with alloca.  (These arrays are a
- * fixed size per style struct, but we don't want to waste the
- * allocation and construction/destruction costs of the big structs when
- * we're handling much smaller ones.)  Since the lifetime of an alloca
- * allocation is the life of the calling function, the caller must call
- * alloca.  However, to ensure that constructors and destructors are
- * balanced, we do the constructor and destructor calling from this RAII
- * class, AutoCSSValueArray.
- */
-struct AutoCSSValueArray {
-  /**
-   * aStorage must be the result of alloca(aCount * sizeof(nsCSSValue))
-   */
-  AutoCSSValueArray(void* aStorage, size_t aCount) {
-    MOZ_ASSERT(size_t(aStorage) % NS_ALIGNMENT_OF(nsCSSValue) == 0,
-               "bad alignment from alloca");
-    mCount = aCount;
-    // Don't use placement new[], since it might store extra data
-    // for the count (on Windows!).
-    mArray = static_cast<nsCSSValue*>(aStorage);
-    for (size_t i = 0; i < mCount; ++i) {
-      new (KnownNotNull, mArray + i) nsCSSValue();
-    }
+AutoCSSValueArray::AutoCSSValueArray(void* aStorage, size_t aCount)
+{
+  MOZ_ASSERT(size_t(aStorage) % NS_ALIGNMENT_OF(nsCSSValue) == 0,
+             "bad alignment from alloca");
+  mCount = aCount;
+  // Don't use placement new[], since it might store extra data
+  // for the count (on Windows!).
+  mArray = static_cast<nsCSSValue*>(aStorage);
+  for (size_t i = 0; i < mCount; ++i) {
+    new (KnownNotNull, mArray + i) nsCSSValue();
   }
+}
 
-  ~AutoCSSValueArray() {
-    for (size_t i = 0; i < mCount; ++i) {
-      mArray[i].~nsCSSValue();
-    }
+AutoCSSValueArray::~AutoCSSValueArray()
+{
+  for (size_t i = 0; i < mCount; ++i) {
+    mArray[i].~nsCSSValue();
   }
-
-  nsCSSValue* get() { return mArray; }
-
-private:
-  nsCSSValue *mArray;
-  size_t mCount;
-};
+}
 
 /* static */ bool
 nsRuleNode::ResolveVariableReferences(const nsStyleStructID aSID,
@@ -2571,9 +2553,23 @@ nsRuleNode::WalkRuleTree(const nsStyleStructID aSID,
   if (!highestNode)
     highestNode = rootNode;
 
-  if (!ruleData.mConditions.CacheableWithoutDependencies())
-    detail = eRulePartialMixed; // Treat as though some data is specified to avoid
-                                // the optimizations and force data computation.
+  MOZ_ASSERT(!(aSID == eStyleStruct_Variables && startStruct),
+             "if we start caching Variables structs in the rule tree, then "
+             "not forcing detail to eRulePartialMixed just below is no "
+             "longer valid");
+
+  if (!ruleData.mConditions.CacheableWithoutDependencies() &&
+      aSID != eStyleStruct_Variables) {
+    // Treat as though some data is specified to avoid the optimizations and
+    // force data computation.
+    //
+    // We don't need to do this for Variables structs since we know those are
+    // never cached in the rule tree, and it avoids wasteful computation of a
+    // new Variables struct when we have no additional variable declarations,
+    // which otherwise could happen when there is an AnimValuesStyleRule
+    // (which calls SetUncacheable for style contexts with pseudo data).
+    detail = eRulePartialMixed;
+  }
 
   if (detail == eRuleNone && startStruct) {
     // We specified absolutely no rule information, but a parent rule in the tree
@@ -4895,6 +4891,12 @@ nsRuleNode::ComputeTextData(void* aStartStruct,
              SETCOORD_UNSET_INHERIT,
            aContext, mPresContext, conditions);
 
+  // text-justify: enum, inherit, initial
+  SetValue(*aRuleData->ValueForTextJustify(), text->mTextJustify, conditions,
+           SETVAL_ENUMERATED | SETVAL_UNSET_INHERIT,
+           parentText->mTextJustify,
+           StyleTextJustify::Auto);
+
   // text-transform: enum, inherit, initial
   SetValue(*aRuleData->ValueForTextTransform(), text->mTextTransform, conditions,
            SETVAL_ENUMERATED | SETVAL_UNSET_INHERIT,
@@ -4952,13 +4954,12 @@ nsRuleNode::ComputeTextData(void* aStartStruct,
            parentText->mRubyPosition,
            NS_STYLE_RUBY_POSITION_OVER);
 
-  // text-size-adjust: none, auto, inherit, initial
-  SetValue(*aRuleData->ValueForTextSizeAdjust(), text->mTextSizeAdjust,
-           conditions, SETVAL_UNSET_INHERIT,
+  // text-size-adjust: enum, inherit, initial
+  SetValue(*aRuleData->ValueForTextSizeAdjust(),
+           text->mTextSizeAdjust, conditions,
+           SETVAL_ENUMERATED | SETVAL_UNSET_INHERIT,
            parentText->mTextSizeAdjust,
-           /* initial */ NS_STYLE_TEXT_SIZE_ADJUST_AUTO,
-           /* auto */ NS_STYLE_TEXT_SIZE_ADJUST_AUTO,
-           /* none */ NS_STYLE_TEXT_SIZE_ADJUST_NONE, Unused, Unused);
+           NS_STYLE_TEXT_SIZE_ADJUST_AUTO);
 
   // text-combine-upright: enum, inherit, initial
   SetValue(*aRuleData->ValueForTextCombineUpright(),
@@ -6636,19 +6637,19 @@ nsRuleNode::ComputeDisplayData(void* aStartStruct,
     case eCSSUnit_None:
     case eCSSUnit_Initial:
     case eCSSUnit_Unset:
-      display->mShapeOutside = StyleShapeOutside();
+      display->mShapeOutside = StyleShapeSource();
       break;
     case eCSSUnit_Inherit:
       conditions.SetUncacheable();
       display->mShapeOutside = parentDisplay->mShapeOutside;
       break;
     case eCSSUnit_URL: {
-      display->mShapeOutside = StyleShapeOutside();
+      display->mShapeOutside = StyleShapeSource();
       display->mShapeOutside.SetURL(shapeOutsideValue->GetURLStructValue());
       break;
     }
     case eCSSUnit_Array: {
-      display->mShapeOutside = StyleShapeOutside();
+      display->mShapeOutside = StyleShapeSource();
       SetStyleShapeSourceToCSSValue(&display->mShapeOutside, shapeOutsideValue,
                                     aContext, mPresContext, conditions);
       break;
@@ -9859,10 +9860,9 @@ GetStyleBasicShapeFromCSSValue(const nsCSSValue& aValue,
   return basicShape.forget();
 }
 
-template<typename ReferenceBox>
 static void
 SetStyleShapeSourceToCSSValue(
-  StyleShapeSource<ReferenceBox>* aShapeSource,
+  StyleShapeSource* aShapeSource,
   const nsCSSValue* aValue,
   nsStyleContext* aStyleContext,
   nsPresContext* aPresContext,
@@ -9875,13 +9875,13 @@ SetStyleShapeSourceToCSSValue(
   MOZ_ASSERT(array->Count() == 1 || array->Count() == 2,
              "Expect one or both of a shape function and a reference box");
 
-  ReferenceBox referenceBox = ReferenceBox::NoBox;
+  StyleGeometryBox referenceBox = StyleGeometryBox::NoBox;
   RefPtr<StyleBasicShape> basicShape;
 
   for (size_t i = 0; i < array->Count(); ++i) {
     const nsCSSValue& item = array->Item(i);
     if (item.GetUnit() == eCSSUnit_Enumerated) {
-      referenceBox = static_cast<ReferenceBox>(item.GetIntValue());
+      referenceBox = static_cast<StyleGeometryBox>(item.GetIntValue());
     } else if (item.GetUnit() == eCSSUnit_Function) {
       basicShape = GetStyleBasicShapeFromCSSValue(item, aStyleContext,
                                                   aPresContext, aConditions);
@@ -10006,19 +10006,19 @@ nsRuleNode::ComputeSVGResetData(void* aStartStruct,
     case eCSSUnit_None:
     case eCSSUnit_Initial:
     case eCSSUnit_Unset:
-      svgReset->mClipPath = StyleClipPath();
+      svgReset->mClipPath = StyleShapeSource();
       break;
     case eCSSUnit_Inherit:
       conditions.SetUncacheable();
       svgReset->mClipPath = parentSVGReset->mClipPath;
       break;
     case eCSSUnit_URL: {
-      svgReset->mClipPath = StyleClipPath();
+      svgReset->mClipPath = StyleShapeSource();
       svgReset->mClipPath.SetURL(clipPathValue->GetURLStructValue());
       break;
     }
     case eCSSUnit_Array: {
-      svgReset->mClipPath = StyleClipPath();
+      svgReset->mClipPath = StyleShapeSource();
       SetStyleShapeSourceToCSSValue(&svgReset->mClipPath, clipPathValue, aContext,
                                     mPresContext, conditions);
       break;

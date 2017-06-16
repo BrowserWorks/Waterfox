@@ -29,6 +29,7 @@
 
 #include "js/StructuredClone.h"
 
+#include "mozilla/CheckedInt.h"
 #include "mozilla/EndianUtils.h"
 #include "mozilla/FloatingPoint.h"
 
@@ -39,6 +40,7 @@
 #include "jsdate.h"
 #include "jswrapper.h"
 
+#include "builtin/DataViewObject.h"
 #include "builtin/MapObject.h"
 #include "js/Date.h"
 #include "js/GCHashTable.h"
@@ -812,6 +814,18 @@ void
 swapFromLittleEndianInPlace(uint8_t* ptr, size_t nelems)
 {}
 
+// Data is packed into an integral number of uint64_t words. Compute the
+// padding required to finish off the final word.
+static size_t
+ComputePadding(size_t nelems, size_t elemSize)
+{
+    // We want total length mod 8, where total length is nelems * sizeof(T),
+    // but that might overflow. So reduce nelems to nelems mod 8, since we are
+    // going to be doing a mod 8 later anyway.
+    size_t leftoverLength = (nelems % sizeof(uint64_t)) * elemSize;
+    return (-leftoverLength) & (sizeof(uint64_t) - 1);
+}
+
 template <class T>
 bool
 SCInput::readArray(T* p, size_t nelems)
@@ -822,20 +836,18 @@ SCInput::readArray(T* p, size_t nelems)
     JS_STATIC_ASSERT(sizeof(uint64_t) % sizeof(T) == 0);
 
     /*
-     * Fail if nelems is so huge as to make JS_HOWMANY overflow or if nwords is
-     * larger than the remaining data.
+     * Fail if nelems is so huge that computing the full size will overflow.
      */
-    size_t nwords = JS_HOWMANY(nelems, sizeof(uint64_t) / sizeof(T));
-    if (nelems + sizeof(uint64_t) / sizeof(T) - 1 < nelems)
+    mozilla::CheckedInt<size_t> size = mozilla::CheckedInt<size_t>(nelems) * sizeof(T);
+    if (!size.isValid())
         return reportTruncated();
 
-    size_t size = sizeof(T) * nelems;
-    if (!point.readBytes(reinterpret_cast<char*>(p), size))
+    if (!point.readBytes(reinterpret_cast<char*>(p), size.value()))
         return false;
 
     swapFromLittleEndianInPlace(p, nelems);
 
-    point += sizeof(uint64_t) * nwords - size;
+    point += ComputePadding(nelems, sizeof(T));
 
     return true;
 }
@@ -918,20 +930,6 @@ SCOutput::writeDouble(double d)
     return write(BitwiseCast<uint64_t>(CanonicalizeNaN(d)));
 }
 
-template <typename T>
-static T
-swapToLittleEndian(T value)
-{
-    return NativeEndian::swapToLittleEndian(value);
-}
-
-template <>
-uint8_t
-swapToLittleEndian(uint8_t value)
-{
-    return value;
-}
-
 template <class T>
 bool
 SCOutput::writeArray(const T* p, size_t nelems)
@@ -942,25 +940,36 @@ SCOutput::writeArray(const T* p, size_t nelems)
     if (nelems == 0)
         return true;
 
-    if (nelems + sizeof(uint64_t) / sizeof(T) - 1 < nelems) {
-        ReportAllocationOverflow(context());
-        return false;
-    }
-
     for (size_t i = 0; i < nelems; i++) {
-        T value = swapToLittleEndian(p[i]);
+        T value = NativeEndian::swapToLittleEndian(p[i]);
         if (!buf.WriteBytes(reinterpret_cast<char*>(&value), sizeof(value)))
             return false;
     }
 
+    // Zero-pad to 8 bytes boundary.
+    size_t padbytes = ComputePadding(nelems, sizeof(T));
+    char zeroes[sizeof(uint64_t)] = { 0 };
+    if (!buf.WriteBytes(zeroes, padbytes))
+        return false;
+
+    return true;
+}
+
+template <>
+bool
+SCOutput::writeArray<uint8_t>(const uint8_t* p, size_t nelems)
+{
+    if (nelems == 0)
+        return true;
+
+    if (!buf.WriteBytes(reinterpret_cast<const char*>(p), nelems))
+        return false;
+
     // zero-pad to 8 bytes boundary
-    size_t nwords = JS_HOWMANY(nelems, sizeof(uint64_t) / sizeof(T));
-    size_t padbytes = sizeof(uint64_t) * nwords - sizeof(T) * nelems;
-    char zero = 0;
-    for (size_t i = 0; i < padbytes; i++) {
-        if (!buf.WriteBytes(&zero, sizeof(zero)))
-            return false;
-    }
+    size_t padbytes = ComputePadding(nelems, 1);
+    char zeroes[sizeof(uint64_t)] = { 0 };
+    if (!buf.WriteBytes(zeroes, padbytes))
+        return false;
 
     return true;
 }
@@ -1413,6 +1422,7 @@ JSStructuredCloneWriter::traverseSavedFrame(HandleObject obj)
 
     RootedValue val(context());
 
+    context()->markAtom(savedFrame->getSource());
     val = StringValue(savedFrame->getSource());
     if (!startWrite(val))
         return false;
@@ -1426,11 +1436,13 @@ JSStructuredCloneWriter::traverseSavedFrame(HandleObject obj)
         return false;
 
     auto name = savedFrame->getFunctionDisplayName();
+    context()->markAtom(name);
     val = name ? StringValue(name) : NullValue();
     if (!startWrite(val))
         return false;
 
     auto cause = savedFrame->getAsyncCause();
+    context()->markAtom(cause);
     val = cause ? StringValue(cause) : NullValue();
     if (!startWrite(val))
         return false;
@@ -2406,6 +2418,7 @@ JSStructuredCloneReader::readSavedFrame(uint32_t principalsTag)
         if (!atomName)
             return nullptr;
     }
+
     savedFrame->initFunctionDisplayName(atomName);
 
     RootedValue cause(context());
@@ -2541,7 +2554,7 @@ JS_ReadStructuredClone(JSContext* cx, JSStructuredCloneData& buf,
                        const JSStructuredCloneCallbacks* optionalCallbacks,
                        void* closure)
 {
-    AssertHeapIsIdle(cx);
+    AssertHeapIsIdle();
     CHECK_REQUEST(cx);
 
     if (version > JS_STRUCTURED_CLONE_VERSION) {
@@ -2559,7 +2572,7 @@ JS_WriteStructuredClone(JSContext* cx, HandleValue value, JSStructuredCloneData*
                         const JSStructuredCloneCallbacks* optionalCallbacks,
                         void* closure, HandleValue transferable)
 {
-    AssertHeapIsIdle(cx);
+    AssertHeapIsIdle();
     CHECK_REQUEST(cx);
     assertSameCompartment(cx, value);
 
@@ -2581,7 +2594,7 @@ JS_StructuredClone(JSContext* cx, HandleValue value, MutableHandleValue vp,
                    const JSStructuredCloneCallbacks* optionalCallbacks,
                    void* closure)
 {
-    AssertHeapIsIdle(cx);
+    AssertHeapIsIdle();
     CHECK_REQUEST(cx);
 
     // Strings are associated with zones, not compartments,

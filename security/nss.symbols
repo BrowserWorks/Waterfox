@@ -181,7 +181,6 @@ HASH_HashBuf
 HASH_ResultLenByOidTag
 HASH_Update
 NSSBase64_DecodeBuffer
-NSSBase64_EncodeItem
 NSSBase64_EncodeItem_Util
 NSS_CMSContentInfo_GetContent
 NSS_CMSContentInfo_SetContent_Data
@@ -378,6 +377,7 @@ PK11_GetSlotSeries
 PK11_GetSymKeyNickname
 PK11_GetTokenInfo
 PK11_GetTokenName
+PK11_HasAttributeSet
 PK11_HashBuf
 PK11_HasRootCerts
 PK11_ImportCert

@@ -293,7 +293,6 @@ public:
   {
   public:
     virtual void Disconnect() = 0;
-    virtual void AssertIsDead() = 0;
 
   protected:
     Request() : mComplete(false), mDisconnected(false) {}
@@ -352,7 +351,9 @@ protected:
                   const char* aCallSite)
       : mResponseTarget(aResponseTarget)
       , mCallSite(aCallSite)
-    { }
+    {
+      MOZ_ASSERT(aResponseTarget);
+    }
 
 #ifdef PROMISE_DEBUG
     ~ThenValueBase()
@@ -362,7 +363,7 @@ protected:
     }
 #endif
 
-    void AssertIsDead() override
+    void AssertIsDead()
     {
       PROMISE_ASSERT(mMagic1 == sMagic && mMagic2 == sMagic);
       // We want to assert that this ThenValues is dead - that is to say, that
@@ -424,21 +425,15 @@ protected:
       }
 
       // Invoke the resolve or reject method.
-      RefPtr<MozPromise> p = DoResolveOrRejectInternal(aValue);
+      RefPtr<MozPromise> result = DoResolveOrRejectInternal(aValue);
 
       // If there's a completion promise, resolve it appropriately with the
       // result of the method.
-      //
-      // We jump through some hoops to cast to MozPromise::Private here. This
-      // can go away when we can just declare mCompletionPromise as
-      // MozPromise::Private. See the declaration below.
-      RefPtr<MozPromise::Private> completionPromise =
-        dont_AddRef(static_cast<MozPromise::Private*>(mCompletionPromise.forget().take()));
-      if (completionPromise) {
-        if (p) {
-          p->ChainTo(completionPromise.forget(), "<chained completion promise>");
+      if (RefPtr<Private> p = mCompletionPromise.forget()) {
+        if (result) {
+          result->ChainTo(p.forget(), "<chained completion promise>");
         } else {
-          completionPromise->ResolveOrReject(aValue, "<completion of non-promise-returning method>");
+          p->ResolveOrReject(aValue, "<completion of non-promise-returning method>");
         }
       }
     }
@@ -447,11 +442,7 @@ protected:
 #ifdef PROMISE_DEBUG
     uint32_t mMagic1 = sMagic;
 #endif
-    // Declaring RefPtr<MozPromise::Private> here causes build failures
-    // on MSVC because MozPromise::Private is only forward-declared at this
-    // point. This hack can go away when we inline-declare MozPromise::Private,
-    // which is blocked on the B2G ICS compiler being too old.
-    RefPtr<MozPromise> mCompletionPromise;
+    RefPtr<Private> mCompletionPromise;
 #ifdef PROMISE_DEBUG
     uint32_t mMagic2 = sMagic;
 #endif
@@ -705,8 +696,8 @@ public:
                     const char* aCallSite)
   {
     PROMISE_ASSERT(mMagic1 == sMagic && mMagic2 == sMagic && mMagic3 == sMagic && mMagic4 == mMutex.mLock);
+    MOZ_ASSERT(aResponseThread);
     MutexAutoLock lock(mMutex);
-    MOZ_ASSERT(aResponseThread->IsDispatchReliable());
     MOZ_DIAGNOSTIC_ASSERT(!IsExclusive || !mHaveRequest);
     mHaveRequest = true;
     PROMISE_LOG("%s invoking Then() [this=%p, aThenValue=%p, isPending=%d]",
@@ -739,7 +730,10 @@ private:
       : mResponseThread(aResponseThread)
       , mCallSite(aCallSite)
       , mThenValue(aThenValue)
-      , mReceiver(aReceiver) {}
+      , mReceiver(aReceiver)
+    {
+      MOZ_ASSERT(aResponseThread);
+    }
 
     ThenCommand(ThenCommand&& aOther) = default;
 
@@ -759,7 +753,7 @@ private:
     {
       RefPtr<ThenValueBase> thenValue = mThenValue.forget();
       // mCompletionPromise must be created before ThenInternal() to avoid race.
-      RefPtr<MozPromise> p = new MozPromise::Private(
+      RefPtr<MozPromise::Private> p = new MozPromise::Private(
         "<completion promise>", true /* aIsCompletionPromise */);
       thenValue->mCompletionPromise = p;
       // Note ThenInternal() might nullify mCompletionPromise before return.
@@ -927,7 +921,9 @@ protected:
 #ifdef PROMISE_DEBUG
   uint32_t mMagic1 = sMagic;
 #endif
-  nsTArray<RefPtr<ThenValueBase>> mThenValues;
+  // Try shows we never have more than 3 elements when IsExclusive is false.
+  // So '3' is a good value to avoid heap allocation in most cases.
+  AutoTArray<RefPtr<ThenValueBase>, IsExclusive ? 1 : 3> mThenValues;
 #ifdef PROMISE_DEBUG
   uint32_t mMagic2 = sMagic;
 #endif
@@ -1046,7 +1042,7 @@ public:
     return p.forget();
   }
 
-  void Resolve(typename PromiseType::ResolveValueType aResolveValue,
+  void Resolve(const typename PromiseType::ResolveValueType& aResolveValue,
                const char* aMethodName)
   {
     if (mMonitor) {
@@ -1056,17 +1052,33 @@ public:
     mPromise->Resolve(aResolveValue, aMethodName);
     mPromise = nullptr;
   }
+  void Resolve(typename PromiseType::ResolveValueType&& aResolveValue,
+               const char* aMethodName)
+  {
+    if (mMonitor) {
+      mMonitor->AssertCurrentThreadOwns();
+    }
+    MOZ_ASSERT(mPromise);
+    mPromise->Resolve(Move(aResolveValue), aMethodName);
+    mPromise = nullptr;
+  }
 
-
-  void ResolveIfExists(typename PromiseType::ResolveValueType aResolveValue,
+  void ResolveIfExists(const typename PromiseType::ResolveValueType& aResolveValue,
                        const char* aMethodName)
   {
     if (!IsEmpty()) {
       Resolve(aResolveValue, aMethodName);
     }
   }
+  void ResolveIfExists(typename PromiseType::ResolveValueType&& aResolveValue,
+                       const char* aMethodName)
+  {
+    if (!IsEmpty()) {
+      Resolve(Move(aResolveValue), aMethodName);
+    }
+  }
 
-  void Reject(typename PromiseType::RejectValueType aRejectValue,
+  void Reject(const typename PromiseType::RejectValueType& aRejectValue,
               const char* aMethodName)
   {
     if (mMonitor) {
@@ -1076,13 +1088,29 @@ public:
     mPromise->Reject(aRejectValue, aMethodName);
     mPromise = nullptr;
   }
+  void Reject(typename PromiseType::RejectValueType&& aRejectValue,
+              const char* aMethodName)
+  {
+    if (mMonitor) {
+      mMonitor->AssertCurrentThreadOwns();
+    }
+    MOZ_ASSERT(mPromise);
+    mPromise->Reject(Move(aRejectValue), aMethodName);
+    mPromise = nullptr;
+  }
 
-
-  void RejectIfExists(typename PromiseType::RejectValueType aRejectValue,
+  void RejectIfExists(const typename PromiseType::RejectValueType& aRejectValue,
                       const char* aMethodName)
   {
     if (!IsEmpty()) {
       Reject(aRejectValue, aMethodName);
+    }
+  }
+  void RejectIfExists(typename PromiseType::RejectValueType&& aRejectValue,
+                      const char* aMethodName)
+  {
+    if (!IsEmpty()) {
+      Reject(Move(aRejectValue), aMethodName);
     }
   }
 
@@ -1221,6 +1249,8 @@ InvokeAsyncImpl(AbstractThread* aTarget, ThisType* aThisVal,
                 RefPtr<PromiseType>(ThisType::*aMethod)(ArgTypes...),
                 ActualArgTypes&&... aArgs)
 {
+  MOZ_ASSERT(aTarget);
+
   typedef RefPtr<PromiseType>(ThisType::*MethodType)(ArgTypes...);
   typedef detail::MethodCall<PromiseType, MethodType, ThisType, Storages...> MethodCallType;
   typedef detail::ProxyRunnable<PromiseType, MethodType, ThisType, Storages...> ProxyRunnableType;
@@ -1229,7 +1259,6 @@ InvokeAsyncImpl(AbstractThread* aTarget, ThisType* aThisVal,
     new MethodCallType(aMethod, aThisVal, Forward<ActualArgTypes>(aArgs)...);
   RefPtr<typename PromiseType::Private> p = new (typename PromiseType::Private)(aCallerName);
   RefPtr<ProxyRunnableType> r = new ProxyRunnableType(p, methodCall);
-  MOZ_ASSERT(aTarget->IsDispatchReliable());
   aTarget->Dispatch(r.forget());
   return p.forget();
 }
@@ -1342,6 +1371,7 @@ InvokeAsync(AbstractThread* aTarget, const char* aCallerName,
                 && IsMozPromise<typename RemoveSmartPointer<
                                            decltype(aFunction())>::Type>::value,
                 "Function object must return RefPtr<MozPromise>");
+  MOZ_ASSERT(aTarget);
   typedef typename RemoveSmartPointer<decltype(aFunction())>::Type PromiseType;
   typedef detail::ProxyFunctionRunnable<Function, PromiseType> ProxyRunnableType;
 
@@ -1349,7 +1379,6 @@ InvokeAsync(AbstractThread* aTarget, const char* aCallerName,
     new (typename PromiseType::Private)(aCallerName);
   RefPtr<ProxyRunnableType> r =
     new ProxyRunnableType(p, Forward<Function>(aFunction));
-  MOZ_ASSERT(aTarget->IsDispatchReliable());
   aTarget->Dispatch(r.forget());
   return p.forget();
 }

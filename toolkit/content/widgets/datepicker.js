@@ -2,6 +2,10 @@
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
 
+/* import-globals-from datekeeper.js */
+/* import-globals-from calendar.js */
+/* import-globals-from spinner.js */
+
 "use strict";
 
 function DatePicker(context) {
@@ -20,6 +24,10 @@ function DatePicker(context) {
      *           {Number} year [optional]
      *           {Number} month [optional]
      *           {Number} date [optional]
+     *           {Number} firstDayOfWeek
+     *           {Array<Number>} weekends
+     *           {Array<String>} monthStrings
+     *           {Array<String>} weekdayStrings
      *           {String} locale [optional]: User preferred locale
      *         }
      */
@@ -38,16 +46,17 @@ function DatePicker(context) {
       const { year = now.getFullYear(),
               month = now.getMonth(),
               day = now.getDate(),
+              firstDayOfWeek,
+              weekends,
+              monthStrings,
+              weekdayStrings,
               locale } = this.props;
-
-      // TODO: Use calendar info API to get first day of week & weekends
-      //       (Bug 1287503)
       const dateKeeper = new DateKeeper({
         year, month, day
       }, {
-        calViewSize: CAL_VIEW_SIZE,
-        firstDayOfWeek: 0,
-        weekends: [0]
+        firstDayOfWeek,
+        weekends,
+        calViewSize: CAL_VIEW_SIZE
       });
 
       this.state = {
@@ -57,9 +66,11 @@ function DatePicker(context) {
         isYearSet: false,
         isMonthSet: false,
         isDateSet: false,
+        datetimeOrders: new Intl.DateTimeFormat(locale)
+                          .formatToParts(new Date(0)).map(part => part.type),
         getDayString: new Intl.NumberFormat(locale).format,
-        // TODO: use calendar terms when available (Bug 1287677)
-        getWeekHeaderString: weekday => ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"][weekday],
+        getWeekHeaderString: weekday => weekdayStrings[weekday],
+        getMonthString: month => monthStrings[month],
         setValue: ({ dateValue, selectionValue }) => {
           dateKeeper.setValue(dateValue);
           this.state.selectionValue = selectionValue;
@@ -104,6 +115,8 @@ function DatePicker(context) {
         monthYear: new MonthYear({
           setYear: this.state.setYear,
           setMonth: this.state.setMonth,
+          getMonthString: this.state.getMonthString,
+          datetimeOrders: this.state.datetimeOrders,
           locale: this.state.locale
         }, {
           monthYear: this.context.monthYear,
@@ -280,28 +293,36 @@ function DatePicker(context) {
    *          {String} locale
    *          {Function} setYear
    *          {Function} setMonth
+   *          {Function} getMonthString
+   *          {Array<String>} datetimeOrders
    *        }
    * @param {DOMElement} context
    */
   function MonthYear(options, context) {
     const spinnerSize = 5;
-    const monthFormat = new Intl.DateTimeFormat(options.locale, { month: "short" }).format;
     const yearFormat = new Intl.DateTimeFormat(options.locale, { year: "numeric" }).format;
     const dateFormat = new Intl.DateTimeFormat(options.locale, { year: "numeric", month: "long" }).format;
+    const spinnerOrder =
+      options.datetimeOrders.indexOf("month") < options.datetimeOrders.indexOf("year") ?
+      "order-month-year" : "order-year-month";
+
+    context.monthYearView.classList.add(spinnerOrder);
 
     this.context = context;
     this.state = { dateFormat };
     this.props = {};
     this.components = {
       month: new Spinner({
+        id: "spinner-month",
         setValue: month => {
           this.state.isMonthSet = true;
           options.setMonth(month);
         },
-        getDisplayString: month => monthFormat(new Date(0, month)),
+        getDisplayString: options.getMonthString,
         viewportSize: spinnerSize
       }, context.monthYearView),
       year: new Spinner({
+        id: "spinner-year",
         setValue: year => {
           this.state.isYearSet = true;
           options.setYear(year);

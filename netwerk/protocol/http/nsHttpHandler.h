@@ -27,7 +27,7 @@ class nsIIOService;
 class nsIRequestContextService;
 class nsISiteSecurityService;
 class nsIStreamConverterService;
-class nsITimer;
+class nsIThrottlingService;
 class nsIUUIDGenerator;
 
 
@@ -81,6 +81,7 @@ public:
     nsHttpVersion  ProxyHttpVersion()        { return mProxyHttpVersion; }
     uint8_t        ReferrerLevel()           { return mReferrerLevel; }
     bool           SpoofReferrerSource()     { return mSpoofReferrerSource; }
+    bool           HideOnionReferrerSource() { return mHideOnionReferrerSource; }
     uint8_t        ReferrerTrimmingPolicy()  { return mReferrerTrimmingPolicy; }
     uint8_t        ReferrerXOriginTrimmingPolicy() {
         return mReferrerXOriginTrimmingPolicy;
@@ -100,7 +101,6 @@ public:
     uint8_t        GetQoSBits()              { return mQoSBits; }
     uint16_t       GetIdleSynTimeout()       { return mIdleSynTimeout; }
     bool           FastFallbackToIPv4()      { return mFastFallbackToIPv4; }
-    bool           ProxyPipelining()         { return mProxyPipelining; }
     uint32_t       MaxSocketCount();
     bool           EnforceAssocReq()         { return mEnforceAssocReq; }
 
@@ -251,9 +251,10 @@ public:
 
     already_AddRefed<AltSvcMapping> GetAltServiceMapping(const nsACString &scheme,
                                                          const nsACString &host,
-                                                         int32_t port, bool pb)
+                                                         int32_t port, bool pb,
+                                                         const OriginAttributes &originAttributes)
     {
-        return mConnMgr->GetAltServiceMapping(scheme, host, port, pb);
+        return mConnMgr->GetAltServiceMapping(scheme, host, port, pb, originAttributes);
     }
 
     //
@@ -264,6 +265,7 @@ public:
     nsresult GetIOService(nsIIOService** service);
     nsICookieService * GetCookieService(); // not addrefed
     nsISiteSecurityService * GetSSService();
+    nsIThrottlingService * GetThrottlingService();
 
     // callable from socket thread only
     uint32_t Get32BitsOfPseudoRandom();
@@ -315,38 +317,9 @@ public:
     static nsresult GenerateHostPort(const nsCString& host, int32_t port,
                                      nsACString& hostLine);
 
-    bool GetPipelineAggressive()     { return mPipelineAggressive; }
-    void GetMaxPipelineObjectSize(int64_t *outVal)
-    {
-        *outVal = mMaxPipelineObjectSize;
-    }
-
-    bool GetPipelineEnabled()
-    {
-        return mCapabilities & NS_HTTP_ALLOW_PIPELINING;
-    }
-
-    bool GetPipelineRescheduleOnTimeout()
-    {
-        return mPipelineRescheduleOnTimeout;
-    }
-
-    PRIntervalTime GetPipelineRescheduleTimeout()
-    {
-        return mPipelineRescheduleTimeout;
-    }
-
-    PRIntervalTime GetPipelineTimeout()   { return mPipelineReadTimeout; }
 
     SpdyInformation *SpdyInfo() { return &mSpdyInfo; }
     bool IsH2MandatorySuiteEnabled() { return mH2MandatorySuiteEnabled; }
-
-    // Returns true if content-signature test pref is set such that they are
-    // NOT enforced on remote newtabs.
-    bool NewTabContentSignaturesDisabled()
-    {
-      return mNewTabContentSignaturesDisabled;
-    }
 
     // returns true in between Init and Shutdown states
     bool Active() { return mHandlerActive; }
@@ -397,7 +370,6 @@ private:
 
     void     NotifyObservers(nsIHttpChannel *chan, const char *event);
 
-    static void TimerCallback(nsITimer * aTimer, void * aClosure);
 private:
 
     // cached services
@@ -405,6 +377,7 @@ private:
     nsMainThreadPtrHandle<nsIStreamConverterService> mStreamConvSvc;
     nsMainThreadPtrHandle<nsICookieService>          mCookieService;
     nsMainThreadPtrHandle<nsISiteSecurityService>    mSSService;
+    nsMainThreadPtrHandle<nsIThrottlingService>      mThrottlingService;
 
     // the authentication credentials cache
     nsHttpAuthCache mAuthCache;
@@ -422,12 +395,12 @@ private:
     uint32_t mCapabilities;
     uint8_t  mReferrerLevel;
     uint8_t  mSpoofReferrerSource;
+    uint8_t  mHideOnionReferrerSource;
     uint8_t  mReferrerTrimmingPolicy;
     uint8_t  mReferrerXOriginTrimmingPolicy;
     uint8_t  mReferrerXOriginPolicy;
 
     bool mFastFallbackToIPv4;
-    bool mProxyPipelining;
     PRIntervalTime mIdleTimeout;
     PRIntervalTime mSpdyTimeout;
     PRIntervalTime mResponseTimeout;
@@ -438,18 +411,9 @@ private:
     uint16_t mIdleSynTimeout;
 
     bool     mH2MandatorySuiteEnabled;
-    bool     mPipeliningEnabled;
     uint16_t mMaxConnections;
     uint8_t  mMaxPersistentConnectionsPerServer;
     uint8_t  mMaxPersistentConnectionsPerProxy;
-    uint16_t mMaxPipelinedRequests;
-    uint16_t mMaxOptimisticPipelinedRequests;
-    bool     mPipelineAggressive;
-    int64_t  mMaxPipelineObjectSize;
-    bool     mPipelineRescheduleOnTimeout;
-    PRIntervalTime mPipelineRescheduleTimeout;
-    PRIntervalTime mPipelineReadTimeout;
-    nsCOMPtr<nsITimer> mPipelineTestTimer;
 
     uint8_t  mRedirectionLimit;
 
@@ -461,7 +425,6 @@ private:
 
     uint8_t  mQoSBits;
 
-    bool mPipeliningOverSSL;
     bool mEnforceAssocReq;
 
     nsCString mAccept;
@@ -582,9 +545,6 @@ private:
     FrameCheckLevel mEnforceH1Framing;
 
     nsCOMPtr<nsIRequestContextService> mRequestContextService;
-
-    // True if remote newtab content-signature disabled because of the channel.
-    bool mNewTabContentSignaturesDisabled;
 
     // If it is set to false, headers with empty value will not appear in the
     // header array - behavior as it used to be. If it is true: empty headers
