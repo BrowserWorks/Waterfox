@@ -1,0 +1,56 @@
+diff --git a/browser/base/content/browser-kde.xul b/browser/base/content/browser-kde.xul
+index 7c0a4b724384..dd0bdbf6c6df 100644
+--- a/browser/base/content/browser-kde.xul
++++ b/browser/base/content/browser-kde.xul
+@@ -87,6 +87,8 @@
+       <menuitem id="context_reloadTab" label="&reloadTab.label;" accesskey="&reloadTab.accesskey;"
+                 oncommand="gBrowser.reloadTab(TabContextMenu.contextTab);"/>
+       <menuitem id="context_toggleMuteTab" oncommand="TabContextMenu.contextTab.toggleMuteAudio();"/>
++      <menuitem id="context_duplicateTab" label="Duplicate Tab" accesskey="D"
++                oncommand="duplicateTabIn(TabContextMenu.contextTab, 'tab');"/>
+       <menuseparator/>
+       <menuitem id="context_pinTab" label="&pinTab.label;"
+                 accesskey="&pinTab.accesskey;"
+@@ -232,42 +234,6 @@
+       </hbox>
+     </panel>
+ 
+-    <!-- UI tour experience -->
+-    <panel id="UITourTooltip"
+-           type="arrow"
+-           hidden="true"
+-           noautofocus="true"
+-           noautohide="true"
+-           align="start"
+-           orient="vertical"
+-           role="alert">
+-     <vbox>
+-      <hbox id="UITourTooltipBody">
+-        <image id="UITourTooltipIcon"/>
+-        <vbox flex="1">
+-          <hbox id="UITourTooltipTitleContainer">
+-            <label id="UITourTooltipTitle" flex="1"/>
+-            <toolbarbutton id="UITourTooltipClose" class="close-icon"
+-                           tooltiptext="&uiTour.infoPanel.close;"/>
+-          </hbox>
+-          <description id="UITourTooltipDescription" flex="1"/>
+-        </vbox>
+-      </hbox>
+-      <hbox id="UITourTooltipButtons" flex="1" align="center"/>
+-     </vbox>
+-    </panel>
+-    <!-- type="default" forces frames to be created so that the panel's size can be determined -->
+-    <panel id="UITourHighlightContainer"
+-           type="default"
+-           hidden="true"
+-           noautofocus="true"
+-           noautohide="true"
+-           flip="none"
+-           consumeoutsideclicks="false"
+-           mousethrough="always">
+-      <box id="UITourHighlight"></box>
+-    </panel>
+-
+     <panel id="social-share-panel"
+            class="social-panel"
+            type="arrow"
