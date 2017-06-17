@@ -1,5 +1,5 @@
 # Waterfox KDE Plasma Edition quick build script
-# Version: 1.0
+# Version: 1.0.1
 
 #!/bin/bash
 
@@ -47,8 +47,7 @@ function ApplyKDE(){
         cd $SourceDir
         patch -Np1 -i $SourceDir/_Plasma_Build/mozilla-kde-$VERSION.patch
         patch -Np1 -i $SourceDir/_Plasma_Build/firefox-kde-$VERSION.patch
-        patch -Np1 -i $SourceDir/_Plasma_Build/fix_kde_jar.mn.patch
-        patch -Np1 -i $SourceDir/_Plasma_Build/fix_browser_kde.xul.patch
+        patch -Np1 -i $SourceDir/_Plasma_Build/fix_waterfox_browser-kde_xul.patch
         patch -Np1 -i $SourceDir/_Plasma_Build/pgo_fix_missing_kdejs.patch
         patch -Np1 -i $SourceDir/_Plasma_Build/fix-wifi-scanner.diff
 				echo >> "$SourceDir/KDE_lock"
@@ -84,10 +83,12 @@ echo "Do you wish to package Waterfox now?"
 select yn in "Yes" "No" "Quit"; do
     case $yn in
         Yes )
+	./mach package
+	
 	# Include kde.js
 	mkdir -p $SourceDir/objdir/dist/waterfox/browser/defaults/preferences/
 	cp -R $SourceDir/_Plasma_Build/kde.js $SourceDir/objdir/dist/waterfox/browser/defaults/preferences/
-	./mach package
+
 	break;;
         No ) break;;
         "Quit" )
