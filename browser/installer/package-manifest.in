@@ -787,10 +787,6 @@ bin/libfreebl_32int64_3.so
 #endif
 #endif
 
-; [ Ping Sender ]
-;
-@BINPATH@/pingsender@BIN_SUFFIX@
-
 @RESPATH@/components/dom_audiochannel.xpt
 
 ; Shutdown Terminator
