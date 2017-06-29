@@ -468,6 +468,7 @@ public:
 
     Plane mPlanes[3];
     YUVColorSpace mYUVColorSpace = YUVColorSpace::BT601;
+    uint32_t mBitDepth = 8;
   };
 
   class Listener
