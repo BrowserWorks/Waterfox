@@ -1,108 +1,143 @@
 # HG changeset patch
 # User Andrew Osmond <aosmond@mozilla.com>
-# Date 1475075499 14400
-#      Wed Sep 28 11:11:39 2016 -0400
-# Node ID 1dc81dc426bd727c3931ec1d7b0e1143767b1810
-# Parent  43fc5210412652904115194a18d745bba4b215b7
-Bug 1294490 - Part 5. Add --with-system-webp switch to build.
+# Date 1475075501 14400
+#      Wed Sep 28 11:11:41 2016 -0400
+# Node ID 6794567d5ada22acb51afc9c949673b13fd281da
+# Parent  1661fbc97f7a5c5dd248907dce5c404409a30bc1
+Bug 1294490 - Part 6. Detect WebP MIME type from content sniffing.
 
-diff --git a/config/external/moz.build b/config/external/moz.build
---- a/config/external/moz.build
-+++ b/config/external/moz.build
-@@ -31,17 +31,18 @@ if CONFIG['MOZ_WEBM_ENCODER']:
-     external_dirs += ['media/libmkv']
+diff --git a/image/imgLoader.cpp b/image/imgLoader.cpp
+--- a/image/imgLoader.cpp
++++ b/image/imgLoader.cpp
+@@ -2510,16 +2510,21 @@ imgLoader::GetMimeTypeFromContent(const 
+     aContentType.AssignLiteral(IMAGE_BMP);
  
- if not CONFIG['MOZ_SYSTEM_LIBVPX']:
-     external_dirs += ['media/libvpx']
+   // ICOs always begin with a 2-byte 0 followed by a 2-byte 1.
+   // CURs begin with 2-byte 0 followed by 2-byte 2.
+   } else if (aLength >= 4 && (!memcmp(aContents, "\000\000\001\000", 4) ||
+                               !memcmp(aContents, "\000\000\002\000", 4))) {
+     aContentType.AssignLiteral(IMAGE_ICO);
  
- if not CONFIG['MOZ_SYSTEM_PNG']:
-     external_dirs += ['media/libpng']
- 
--external_dirs += ['media/libwebp']
-+if not CONFIG['MOZ_SYSTEM_WEBP']:
-+    external_dirs += ['media/libwebp']
- 
- if CONFIG['CPU_ARCH'] == 'arm':
-     external_dirs += ['media/openmax_dl']
- 
- if CONFIG['MOZ_WEBSPEECH_POCKETSPHINX']:
-     external_dirs += [
-         'media/sphinxbase',
-         'media/pocketsphinx',
-diff --git a/config/system-headers b/config/system-headers
---- a/config/system-headers
-+++ b/config/system-headers
-@@ -1249,16 +1249,22 @@ zmouse.h
- soundtouch/SoundTouch.h
- soundtouch/SoundTouchFactory.h
- #if MOZ_LIBAV_FFT==1
- libavcodec/avfft.h
- #endif
- #if MOZ_SYSTEM_PNG==1
- png.h
- #endif
-+#if MOZ_SYSTEM_WEBP==1
-+webp/decode.h
-+webp/demux.h
-+webp/mux_types.h
-+webp/types.h
-+#endif
- #if MOZ_SYSTEM_ZLIB==1
- zlib.h
- #endif
- #ifdef MOZ_ENABLE_STARTUP_NOTIFICATION
- libsn/sn.h
- libsn/sn-common.h
- libsn/sn-launchee.h
- libsn/sn-launcher.h
-diff --git a/toolkit/library/moz.build b/toolkit/library/moz.build
---- a/toolkit/library/moz.build
-+++ b/toolkit/library/moz.build
-@@ -226,16 +226,19 @@ if CONFIG['SERVO_TARGET_DIR']:
-         OS_LIBS += ['-L%s' % CONFIG['SERVO_TARGET_DIR'], '-lgeckoservo']
- 
- if CONFIG['MOZ_SYSTEM_JPEG']:
-     OS_LIBS += CONFIG['MOZ_JPEG_LIBS']
- 
- if CONFIG['MOZ_SYSTEM_PNG']:
-     OS_LIBS += CONFIG['MOZ_PNG_LIBS']
- 
-+if CONFIG['MOZ_SYSTEM_WEBP']:
-+    OS_LIBS += CONFIG['MOZ_WEBP_LIBS']
++  // WebPs always begin with RIFF, a 32-bit length, and WEBP.
++  } else if (aLength >= 12 && !memcmp(aContents, "RIFF", 4) &&
++                              !memcmp(aContents + 8, "WEBP", 4)) {
++    aContentType.AssignLiteral(IMAGE_WEBP);
 +
- if CONFIG['MOZ_SYSTEM_HUNSPELL']:
-     OS_LIBS += CONFIG['MOZ_HUNSPELL_LIBS']
+   } else {
+     /* none of the above?  I give up */
+     return NS_ERROR_NOT_AVAILABLE;
+   }
  
- if CONFIG['MOZ_SYSTEM_LIBEVENT']:
-     OS_LIBS += CONFIG['MOZ_LIBEVENT_LIBS']
+   return NS_OK;
+ }
  
- if CONFIG['MOZ_SYSTEM_LIBVPX']:
-     OS_LIBS += CONFIG['MOZ_LIBVPX_LIBS']
-diff --git a/toolkit/moz.configure b/toolkit/moz.configure
---- a/toolkit/moz.configure
-+++ b/toolkit/moz.configure
-@@ -956,16 +956,24 @@ def skia_includes(skia, skia_gpu):
-             '/gfx/skia/skia/include/gpu',
-             '/gfx/skia/skia/include/utils',
-         ]
- 
-     return includes
- 
- set_config('SKIA_INCLUDES', skia_includes)
- 
-+option('--with-system-webp',
-+       help='Use system libwebp (located with pkgconfig)')
+diff --git a/image/test/gtest/TestLoader.cpp b/image/test/gtest/TestLoader.cpp
+new file mode 100644
+--- /dev/null
++++ b/image/test/gtest/TestLoader.cpp
+@@ -0,0 +1,84 @@
++/* -*- Mode: C++; tab-width: 8; indent-tabs-mode: nil; c-basic-offset: 2 -*- */
++/* vim: set ts=8 sts=2 et sw=2 tw=80: */
++/* This Source Code Form is subject to the terms of the Mozilla Public
++ * License, v. 2.0. If a copy of the MPL was not distributed with this
++ * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
 +
-+system_webp = pkg_check_modules('MOZ_WEBP', 'libwebp >= 0.6.0 libwebpdemux >= 0.6.0',
-+                                when='--with-system-webp')
++#include "gtest/gtest.h"
 +
-+set_config('MOZ_SYSTEM_WEBP', depends_if(system_webp)(lambda _: True))
++#include "Common.h"
++#include "imgLoader.h"
++#include "nsMimeTypes.h"
++#include "nsString.h"
 +
- # Mortar
- # ==============================================================
- option('--enable-mortar', help='Enable mortar extension')
++using namespace mozilla;
++using namespace mozilla::image;
++
++static void
++CheckMimeType(const char* aContents, size_t aLength, const char* aExpected)
++{
++  nsAutoCString detected;
++  nsresult rv = imgLoader::GetMimeTypeFromContent(aContents, aLength, detected);
++  if (aExpected) {
++    ASSERT_TRUE(NS_SUCCEEDED(rv));
++    EXPECT_TRUE(detected.EqualsASCII(aExpected));
++  } else {
++    ASSERT_TRUE(NS_FAILED(rv));
++    EXPECT_TRUE(detected.IsEmpty());
++  }
++}
++
++class ImageLoader : public ::testing::Test
++{
++protected:
++  AutoInitializeImageLib mInit;
++};
++
++TEST_F(ImageLoader, DetectGIF)
++{
++  const char buffer[] = "GIF87a";
++  CheckMimeType(buffer, sizeof(buffer), IMAGE_GIF);
++}
++
++TEST_F(ImageLoader, DetectPNG)
++{
++  const char buffer[] = "\x89\x50\x4E\x47\x0D\x0A\x1A\x0A";
++  CheckMimeType(buffer, sizeof(buffer), IMAGE_PNG);
++}
++
++TEST_F(ImageLoader, DetectJPEG)
++{
++  const char buffer[] = "\xFF\xD8\xFF";
++  CheckMimeType(buffer, sizeof(buffer), IMAGE_JPEG);
++}
++
++TEST_F(ImageLoader, DetectART)
++{
++  const char buffer[] = "\x4A\x47\xFF\xFF\x00";
++  CheckMimeType(buffer, sizeof(buffer), IMAGE_ART);
++}
++
++TEST_F(ImageLoader, DetectBMP)
++{
++  const char buffer[] = "BM";
++  CheckMimeType(buffer, sizeof(buffer), IMAGE_BMP);
++}
++
++TEST_F(ImageLoader, DetectICO)
++{
++  const char buffer[] = "\x00\x00\x01\x00";
++  CheckMimeType(buffer, sizeof(buffer), IMAGE_ICO);
++}
++
++TEST_F(ImageLoader, DetectWebP)
++{
++  const char buffer[] = "RIFF\xFF\xFF\xFF\xFFWEBPVP8L";
++  CheckMimeType(buffer, sizeof(buffer), IMAGE_WEBP);
++}
++
++TEST_F(ImageLoader, DetectNone)
++{
++  const char buffer[] = "abcdefghijklmnop";
++  CheckMimeType(buffer, sizeof(buffer), nullptr);
++}
++
+diff --git a/image/test/gtest/moz.build b/image/test/gtest/moz.build
+--- a/image/test/gtest/moz.build
++++ b/image/test/gtest/moz.build
+@@ -8,16 +8,17 @@ Library('imagetest')
  
- set_config('MOZ_MORTAR', True, when='--enable-mortar')
+ UNIFIED_SOURCES = [
+     'Common.cpp',
+     'TestADAM7InterpolatingFilter.cpp',
+     'TestCopyOnWrite.cpp',
+     'TestDecoders.cpp',
+     'TestDecodeToSurface.cpp',
+     'TestDeinterlacingFilter.cpp',
++    'TestLoader.cpp',
+     'TestMetadata.cpp',
+     'TestRemoveFrameRectFilter.cpp',
+     'TestSourceBuffer.cpp',
+     'TestStreamingLexer.cpp',
+     'TestSurfaceSink.cpp',
+ ]
  
- # Marionette is a Web Driver / Selenium comamnd server and client automation
- # driver for Mozilla's Gecko engine.  For more, see
+ if CONFIG['MOZ_ENABLE_SKIA']:
