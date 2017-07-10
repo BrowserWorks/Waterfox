@@ -1257,6 +1257,12 @@ libavcodec/avfft.h
 #if MOZ_SYSTEM_PNG==1
 png.h
 #endif
+#if MOZ_SYSTEM_WEBP==1
+webp/decode.h
+webp/demux.h
+webp/mux_types.h
+webp/types.h
+#endif
 #if MOZ_SYSTEM_ZLIB==1
 zlib.h
 #endif

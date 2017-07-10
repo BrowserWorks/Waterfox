@@ -1,822 +1,108 @@
 # HG changeset patch
 # User Andrew Osmond <aosmond@mozilla.com>
-# Date 1475086956 14400
-#      Wed Sep 28 14:22:36 2016 -0400
-# Node ID 4c6514d1214b1681da8ef18029cbdedb27128cfc
-# Parent  a630dec8de0565242a4a254e35015e6682c83f05
-Bug 1294490 - Part 3. Implement WebP decoder.
+# Date 1475075499 14400
+#      Wed Sep 28 11:11:39 2016 -0400
+# Node ID 1dc81dc426bd727c3931ec1d7b0e1143767b1810
+# Parent  43fc5210412652904115194a18d745bba4b215b7
+Bug 1294490 - Part 5. Add --with-system-webp switch to build.
 
-diff --git a/gfx/thebes/gfxPrefs.h b/gfx/thebes/gfxPrefs.h
---- a/gfx/thebes/gfxPrefs.h
-+++ b/gfx/thebes/gfxPrefs.h
-@@ -445,16 +445,17 @@ private:
-   DECL_GFX_PREF(Once, "image.mem.decode_bytes_at_a_time",      ImageMemDecodeBytesAtATime, uint32_t, 200000);
-   DECL_GFX_PREF(Live, "image.mem.discardable",                 ImageMemDiscardable, bool, false);
-   DECL_GFX_PREF(Live, "image.mem.shared",                      ImageMemShared, bool, false);
-   DECL_GFX_PREF(Once, "image.mem.surfacecache.discard_factor", ImageMemSurfaceCacheDiscardFactor, uint32_t, 1);
-   DECL_GFX_PREF(Once, "image.mem.surfacecache.max_size_kb",    ImageMemSurfaceCacheMaxSizeKB, uint32_t, 100 * 1024);
-   DECL_GFX_PREF(Once, "image.mem.surfacecache.min_expiration_ms", ImageMemSurfaceCacheMinExpirationMS, uint32_t, 60*1000);
-   DECL_GFX_PREF(Once, "image.mem.surfacecache.size_factor",    ImageMemSurfaceCacheSizeFactor, uint32_t, 64);
-   DECL_GFX_PREF(Once, "image.multithreaded_decoding.limit",    ImageMTDecodingLimit, int32_t, -1);
-+  DECL_GFX_PREF(Live, "image.webp.enabled",                    ImageWebPEnabled, bool, false);
+diff --git a/config/external/moz.build b/config/external/moz.build
+--- a/config/external/moz.build
++++ b/config/external/moz.build
+@@ -31,17 +31,18 @@ if CONFIG['MOZ_WEBM_ENCODER']:
+     external_dirs += ['media/libmkv']
  
-   DECL_GFX_PREF(Once, "layers.acceleration.disabled",          LayersAccelerationDisabledDoNotUseDirectly, bool, false);
-   DECL_GFX_PREF(Live, "layers.acceleration.draw-fps",          LayersDrawFPS, bool, false);
-   DECL_GFX_PREF(Live, "layers.acceleration.draw-fps.print-histogram",  FPSPrintHistogram, bool, false);
-   DECL_GFX_PREF(Live, "layers.acceleration.draw-fps.write-to-file", WriteFPSToFile, bool, false);
-   DECL_GFX_PREF(Once, "layers.acceleration.force-enabled",     LayersAccelerationForceEnabledDoNotUseDirectly, bool, false);
-   DECL_GFX_PREF(Live, "layers.advanced.border-layers",         LayersAllowBorderLayers, bool, false);
-   DECL_GFX_PREF(Live, "layers.advanced.text-layers",           LayersAllowTextLayers, bool, false);
-diff --git a/image/DecoderFactory.cpp b/image/DecoderFactory.cpp
---- a/image/DecoderFactory.cpp
-+++ b/image/DecoderFactory.cpp
-@@ -1,27 +1,29 @@
- /* -*- Mode: C++; tab-width: 2; indent-tabs-mode: nil; c-basic-offset: 2 -*- */
- /* This Source Code Form is subject to the terms of the Mozilla Public
-  * License, v. 2.0. If a copy of the MPL was not distributed with this
-  * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
+ if not CONFIG['MOZ_SYSTEM_LIBVPX']:
+     external_dirs += ['media/libvpx']
  
- #include "DecoderFactory.h"
+ if not CONFIG['MOZ_SYSTEM_PNG']:
+     external_dirs += ['media/libpng']
  
-+#include "gfxPrefs.h"
- #include "nsMimeTypes.h"
- #include "mozilla/RefPtr.h"
+-external_dirs += ['media/libwebp']
++if not CONFIG['MOZ_SYSTEM_WEBP']:
++    external_dirs += ['media/libwebp']
  
- #include "AnimationSurfaceProvider.h"
- #include "Decoder.h"
- #include "IDecodingTask.h"
- #include "nsPNGDecoder.h"
- #include "nsGIFDecoder2.h"
- #include "nsJPEGDecoder.h"
- #include "nsBMPDecoder.h"
- #include "nsICODecoder.h"
- #include "nsIconDecoder.h"
-+#include "nsWebPDecoder.h"
+ if CONFIG['CPU_ARCH'] == 'arm':
+     external_dirs += ['media/openmax_dl']
  
- namespace mozilla {
+ if CONFIG['MOZ_WEBSPEECH_POCKETSPHINX']:
+     external_dirs += [
+         'media/sphinxbase',
+         'media/pocketsphinx',
+diff --git a/config/system-headers b/config/system-headers
+--- a/config/system-headers
++++ b/config/system-headers
+@@ -1249,16 +1249,22 @@ zmouse.h
+ soundtouch/SoundTouch.h
+ soundtouch/SoundTouchFactory.h
+ #if MOZ_LIBAV_FFT==1
+ libavcodec/avfft.h
+ #endif
+ #if MOZ_SYSTEM_PNG==1
+ png.h
+ #endif
++#if MOZ_SYSTEM_WEBP==1
++webp/decode.h
++webp/demux.h
++webp/mux_types.h
++webp/types.h
++#endif
+ #if MOZ_SYSTEM_ZLIB==1
+ zlib.h
+ #endif
+ #ifdef MOZ_ENABLE_STARTUP_NOTIFICATION
+ libsn/sn.h
+ libsn/sn-common.h
+ libsn/sn-launchee.h
+ libsn/sn-launcher.h
+diff --git a/toolkit/library/moz.build b/toolkit/library/moz.build
+--- a/toolkit/library/moz.build
++++ b/toolkit/library/moz.build
+@@ -226,16 +226,19 @@ if CONFIG['SERVO_TARGET_DIR']:
+         OS_LIBS += ['-L%s' % CONFIG['SERVO_TARGET_DIR'], '-lgeckoservo']
  
- using namespace gfx;
+ if CONFIG['MOZ_SYSTEM_JPEG']:
+     OS_LIBS += CONFIG['MOZ_JPEG_LIBS']
  
- namespace image {
+ if CONFIG['MOZ_SYSTEM_PNG']:
+     OS_LIBS += CONFIG['MOZ_PNG_LIBS']
  
- /* static */ DecoderType
-@@ -60,18 +62,22 @@ DecoderFactory::GetDecoderType(const cha
-   } else if (!strcmp(aMimeType, IMAGE_ICO)) {
-     type = DecoderType::ICO;
-   } else if (!strcmp(aMimeType, IMAGE_ICO_MS)) {
-     type = DecoderType::ICO;
++if CONFIG['MOZ_SYSTEM_WEBP']:
++    OS_LIBS += CONFIG['MOZ_WEBP_LIBS']
++
+ if CONFIG['MOZ_SYSTEM_HUNSPELL']:
+     OS_LIBS += CONFIG['MOZ_HUNSPELL_LIBS']
  
-   // Icon
-   } else if (!strcmp(aMimeType, IMAGE_ICON_MS)) {
-     type = DecoderType::ICON;
-+
-+  // WebP
-+  } else if (!strcmp(aMimeType, IMAGE_WEBP) &&
-+             gfxPrefs::ImageWebPEnabled()) {
-+    type = DecoderType::WEBP;
-   }
--
-   return type;
- }
+ if CONFIG['MOZ_SYSTEM_LIBEVENT']:
+     OS_LIBS += CONFIG['MOZ_LIBEVENT_LIBS']
  
- /* static */ already_AddRefed<Decoder>
- DecoderFactory::GetDecoder(DecoderType aType,
-                            RasterImage* aImage,
-                            bool aIsRedecode)
- {
-@@ -95,16 +101,19 @@ DecoderFactory::GetDecoder(DecoderType a
-       decoder = new nsBMPDecoder(aImage);
-       break;
-     case DecoderType::ICO:
-       decoder = new nsICODecoder(aImage);
-       break;
-     case DecoderType::ICON:
-       decoder = new nsIconDecoder(aImage);
-       break;
-+    case DecoderType::WEBP:
-+      decoder = new nsWebPDecoder(aImage);
-+      break;
-     default:
-       MOZ_ASSERT_UNREACHABLE("Unknown decoder type");
-   }
+ if CONFIG['MOZ_SYSTEM_LIBVPX']:
+     OS_LIBS += CONFIG['MOZ_LIBVPX_LIBS']
+diff --git a/toolkit/moz.configure b/toolkit/moz.configure
+--- a/toolkit/moz.configure
++++ b/toolkit/moz.configure
+@@ -956,16 +956,24 @@ def skia_includes(skia, skia_gpu):
+             '/gfx/skia/skia/include/gpu',
+             '/gfx/skia/skia/include/utils',
+         ]
  
-   return decoder.forget();
- }
+     return includes
  
- /* static */ already_AddRefed<IDecodingTask>
-@@ -164,17 +173,18 @@ DecoderFactory::CreateAnimationDecoder(D
-                                        const IntSize& aIntrinsicSize,
-                                        DecoderFlags aDecoderFlags,
-                                        SurfaceFlags aSurfaceFlags)
- {
-   if (aType == DecoderType::UNKNOWN) {
-     return nullptr;
-   }
+ set_config('SKIA_INCLUDES', skia_includes)
  
--  MOZ_ASSERT(aType == DecoderType::GIF || aType == DecoderType::PNG,
-+  MOZ_ASSERT(aType == DecoderType::GIF || aType == DecoderType::PNG ||
-+             aType == DecoderType::WEBP,
-              "Calling CreateAnimationDecoder for non-animating DecoderType");
++option('--with-system-webp',
++       help='Use system libwebp (located with pkgconfig)')
++
++system_webp = pkg_check_modules('MOZ_WEBP', 'libwebp >= 0.6.0 libwebpdemux >= 0.6.0',
++                                when='--with-system-webp')
++
++set_config('MOZ_SYSTEM_WEBP', depends_if(system_webp)(lambda _: True))
++
+ # Mortar
+ # ==============================================================
+ option('--enable-mortar', help='Enable mortar extension')
  
-   // Create an anonymous decoder. Interaction with the SurfaceCache and the
-   // owning RasterImage will be mediated by AnimationSurfaceProvider.
-   RefPtr<Decoder> decoder = GetDecoder(aType, nullptr, /* aIsRedecode = */ true);
-   MOZ_ASSERT(decoder, "Should have a decoder now");
+ set_config('MOZ_MORTAR', True, when='--enable-mortar')
  
-   // Initialize the decoder.
-diff --git a/image/DecoderFactory.h b/image/DecoderFactory.h
---- a/image/DecoderFactory.h
-+++ b/image/DecoderFactory.h
-@@ -31,16 +31,17 @@ class SourceBuffer;
- enum class DecoderType
- {
-   PNG,
-   GIF,
-   JPEG,
-   BMP,
-   ICO,
-   ICON,
-+  WEBP,
-   UNKNOWN
- };
- 
- class DecoderFactory
- {
- public:
-   /// @return the type of decoder which is appropriate for @aMimeType.
-   static DecoderType GetDecoderType(const char* aMimeType);
-diff --git a/image/build/nsImageModule.cpp b/image/build/nsImageModule.cpp
---- a/image/build/nsImageModule.cpp
-+++ b/image/build/nsImageModule.cpp
-@@ -77,16 +77,17 @@ static const mozilla::Module::CategoryEn
-   { "Gecko-Content-Viewers", IMAGE_ICO, "@mozilla.org/content/document-loader-factory;1" },
-   { "Gecko-Content-Viewers", IMAGE_ICO_MS, "@mozilla.org/content/document-loader-factory;1" },
-   { "Gecko-Content-Viewers", IMAGE_BMP, "@mozilla.org/content/document-loader-factory;1" },
-   { "Gecko-Content-Viewers", IMAGE_BMP_MS, "@mozilla.org/content/document-loader-factory;1" },
-   { "Gecko-Content-Viewers", IMAGE_ICON_MS, "@mozilla.org/content/document-loader-factory;1" },
-   { "Gecko-Content-Viewers", IMAGE_PNG, "@mozilla.org/content/document-loader-factory;1" },
-   { "Gecko-Content-Viewers", IMAGE_APNG, "@mozilla.org/content/document-loader-factory;1" },
-   { "Gecko-Content-Viewers", IMAGE_X_PNG, "@mozilla.org/content/document-loader-factory;1" },
-+  { "Gecko-Content-Viewers", IMAGE_WEBP, "@mozilla.org/content/document-loader-factory;1" },
-   { "content-sniffing-services", "@mozilla.org/image/loader;1", "@mozilla.org/image/loader;1" },
-   { nullptr }
- };
- 
- static bool sInitialized = false;
- nsresult
- mozilla::image::EnsureModuleInitialized()
- {
-diff --git a/image/decoders/moz.build b/image/decoders/moz.build
---- a/image/decoders/moz.build
-+++ b/image/decoders/moz.build
-@@ -23,16 +23,17 @@ UNIFIED_SOURCES += [
-     'EXIF.cpp',
-     'iccjpeg.c',
-     'nsBMPDecoder.cpp',
-     'nsGIFDecoder2.cpp',
-     'nsICODecoder.cpp',
-     'nsIconDecoder.cpp',
-     'nsJPEGDecoder.cpp',
-     'nsPNGDecoder.cpp',
-+    'nsWebPDecoder.cpp',
- ]
- 
- include('/ipc/chromium/chromium-config.mozbuild')
- 
- LOCAL_INCLUDES += [
-     # Access to Skia headers for Downscaler.
-     '/gfx/2d',
-     # Decoders need ImageLib headers.
-diff --git a/image/decoders/nsWebPDecoder.cpp b/image/decoders/nsWebPDecoder.cpp
-new file mode 100644
---- /dev/null
-+++ b/image/decoders/nsWebPDecoder.cpp
-@@ -0,0 +1,467 @@
-+/* -*- Mode: C++; tab-width: 2; indent-tabs-mode: nil; c-basic-offset: 2 -*-
-+ *
-+ * This Source Code Form is subject to the terms of the Mozilla Public
-+ * License, v. 2.0. If a copy of the MPL was not distributed with this
-+ * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
-+
-+#include "ImageLogging.h" // Must appear first
-+#include "nsWebPDecoder.h"
-+
-+#include "RasterImage.h"
-+#include "SurfacePipeFactory.h"
-+
-+using namespace mozilla::gfx;
-+
-+namespace mozilla {
-+namespace image {
-+
-+static LazyLogModule sWebPLog("WebPDecoder");
-+
-+nsWebPDecoder::nsWebPDecoder(RasterImage* aImage)
-+  : Decoder(aImage)
-+  , mLexer(Transition::ToUnbuffered(State::FINISHED_WEBP_DATA,
-+                                    State::WEBP_DATA,
-+                                    SIZE_MAX),
-+           Transition::TerminateSuccess())
-+  , mDecoder(nullptr)
-+  , mBlend(BlendMethod::OVER)
-+  , mDisposal(DisposalMethod::KEEP)
-+  , mTimeout(FrameTimeout::Forever())
-+  , mFormat(SurfaceFormat::B8G8R8X8)
-+  , mLastRow(0)
-+  , mCurrentFrame(0)
-+{
-+  MOZ_LOG(sWebPLog, LogLevel::Debug,
-+      ("[this=%p] nsWebPDecoder::nsWebPDecoder", this));
-+}
-+
-+nsWebPDecoder::~nsWebPDecoder()
-+{
-+  MOZ_LOG(sWebPLog, LogLevel::Debug,
-+      ("[this=%p] nsWebPDecoder::~nsWebPDecoder", this));
-+  WebPIDelete(mDecoder);
-+}
-+
-+LexerResult
-+nsWebPDecoder::DoDecode(SourceBufferIterator& aIterator, IResumable* aOnResume)
-+{
-+  MOZ_ASSERT(!HasError(), "Shouldn't call DoDecode after error!");
-+
-+  return mLexer.Lex(aIterator, aOnResume,
-+                    [=](State aState, const char* aData, size_t aLength) {
-+    switch (aState) {
-+      case State::WEBP_DATA:
-+        if (!HasSize()) {
-+          return ReadHeader(aData, aLength);
-+        }
-+        return ReadPayload(aData, aLength);
-+      case State::FINISHED_WEBP_DATA:
-+        return FinishedData();
-+    }
-+    MOZ_CRASH("Unknown State");
-+  });
-+}
-+
-+nsresult
-+nsWebPDecoder::CreateFrame(const nsIntRect& aFrameRect)
-+{
-+  MOZ_ASSERT(HasSize());
-+  MOZ_ASSERT(!mDecoder);
-+
-+  MOZ_LOG(sWebPLog, LogLevel::Debug,
-+      ("[this=%p] nsWebPDecoder::CreateFrame -- frame %u, %d x %d\n",
-+       this, mCurrentFrame, aFrameRect.width, aFrameRect.height));
-+
-+  // If this is our first frame in an animation and it doesn't cover the
-+  // full frame, then we are transparent even if there is no alpha
-+  if (mCurrentFrame == 0 && !aFrameRect.IsEqualEdges(FullFrame())) {
-+    MOZ_ASSERT(HasAnimation());
-+    PostHasTransparency();
-+  }
-+
-+  WebPInitDecBuffer(&mBuffer);
-+  mBuffer.colorspace = MODE_RGBA;
-+
-+  mDecoder = WebPINewDecoder(&mBuffer);
-+  if (!mDecoder) {
-+    MOZ_LOG(sWebPLog, LogLevel::Error,
-+        ("[this=%p] nsWebPDecoder::CreateFrame -- create decoder error\n",
-+         this));
-+    return NS_ERROR_FAILURE;
-+  }
-+
-+  Maybe<SurfacePipe> pipe = SurfacePipeFactory::CreateSurfacePipe(this,
-+      mCurrentFrame, Size(), OutputSize(), aFrameRect,
-+      mFormat, SurfacePipeFlags());
-+  if (!pipe) {
-+    MOZ_LOG(sWebPLog, LogLevel::Error,
-+        ("[this=%p] nsWebPDecoder::CreateFrame -- no pipe\n", this));
-+    return NS_ERROR_FAILURE;
-+  }
-+
-+  mPipe = Move(*pipe);
-+  return NS_OK;
-+}
-+
-+void
-+nsWebPDecoder::EndFrame()
-+{
-+  MOZ_ASSERT(HasSize());
-+  MOZ_ASSERT(mDecoder);
-+
-+  auto opacity = mFormat == SurfaceFormat::B8G8R8A8
-+                 ? Opacity::SOME_TRANSPARENCY : Opacity::FULLY_OPAQUE;
-+
-+  MOZ_LOG(sWebPLog, LogLevel::Debug,
-+      ("[this=%p] nsWebPDecoder::EndFrame -- frame %u, opacity %d, "
-+       "disposal %d, timeout %d, blend %d\n",
-+       this, mCurrentFrame, (int)opacity, (int)mDisposal,
-+       mTimeout.AsEncodedValueDeprecated(), (int)mBlend));
-+
-+  PostFrameStop(opacity, mDisposal, mTimeout, mBlend);
-+  WebPIDelete(mDecoder);
-+  mDecoder = nullptr;
-+  mLastRow = 0;
-+  ++mCurrentFrame;
-+}
-+
-+nsresult
-+nsWebPDecoder::GetDataBuffer(const uint8_t*& aData, size_t& aLength)
-+{
-+  if (!mData.empty() && mData.begin() != aData) {
-+    if (!mData.append(aData, aLength)) {
-+      MOZ_LOG(sWebPLog, LogLevel::Error,
-+          ("[this=%p] nsWebPDecoder::GetDataBuffer -- oom, append %zu on %zu\n",
-+           this, aLength, mData.length()));
-+      return NS_ERROR_OUT_OF_MEMORY;
-+    }
-+    aData = mData.begin();
-+    aLength = mData.length();
-+  }
-+  return NS_OK;
-+}
-+
-+nsresult
-+nsWebPDecoder::SaveDataBuffer(const uint8_t* aData, size_t aLength)
-+{
-+  if (mData.empty() && !mData.append(aData, aLength)) {
-+    MOZ_LOG(sWebPLog, LogLevel::Error,
-+        ("[this=%p] nsWebPDecoder::SaveDataBuffer -- oom, append %zu on %zu\n",
-+         this, aLength, mData.length()));
-+    return NS_ERROR_OUT_OF_MEMORY;
-+  }
-+  return NS_OK;
-+}
-+
-+LexerTransition<nsWebPDecoder::State>
-+nsWebPDecoder::ReadHeader(const char* aData, size_t aLength)
-+{
-+  MOZ_LOG(sWebPLog, LogLevel::Debug,
-+      ("[this=%p] nsWebPDecoder::ReadHeader -- %zu bytes\n", this, aLength));
-+
-+  // XXX(aosmond): In an ideal world, we could request the lexer to do this
-+  // buffering for us (and in turn the underlying SourceBuffer). That way we
-+  // could avoid extra copies during the decode and just do
-+  // SourceBuffer::Compact on each iteration. For a typical WebP image we
-+  // can hope that we will get the full header in the first packet, but
-+  // for animated images we will end up buffering the whole stream if it
-+  // not already fully received and contiguous.
-+  auto data = (const uint8_t*)aData;
-+  size_t length = aLength;
-+  if (NS_FAILED(GetDataBuffer(data, length))) {
-+    return Transition::TerminateFailure();
-+  }
-+
-+  WebPBitstreamFeatures features;
-+  VP8StatusCode status = WebPGetFeatures(data, length, &features);
-+  switch (status) {
-+    case VP8_STATUS_OK:
-+      break;
-+    case VP8_STATUS_NOT_ENOUGH_DATA:
-+      if (NS_FAILED(SaveDataBuffer(data, length))) {
-+        return Transition::TerminateFailure();
-+      }
-+      return Transition::ContinueUnbuffered(State::WEBP_DATA);
-+    default:
-+      MOZ_LOG(sWebPLog, LogLevel::Error,
-+          ("[this=%p] nsWebPDecoder::ReadHeader -- parse error %d\n",
-+           this, status));
-+      return Transition::TerminateFailure();
-+  }
-+
-+  if (features.has_animation) {
-+    // A metadata decode expects to get the correct first frame timeout which
-+    // sadly is not provided by the normal WebP header parsing.
-+    WebPDemuxState state;
-+    WebPData fragment;
-+    fragment.bytes = data;
-+    fragment.size = length;
-+    WebPDemuxer* demuxer = WebPDemuxPartial(&fragment, &state);
-+    if (!demuxer || state == WEBP_DEMUX_PARSE_ERROR) {
-+      MOZ_LOG(sWebPLog, LogLevel::Error,
-+          ("[this=%p] nsWebPDecoder::ReadHeader -- demux parse error\n", this));
-+      WebPDemuxDelete(demuxer);
-+      return Transition::TerminateFailure();
-+    }
-+
-+    WebPIterator iter;
-+    if (!WebPDemuxGetFrame(demuxer, 1, &iter)) {
-+      WebPDemuxDelete(demuxer);
-+      if (state == WEBP_DEMUX_DONE) {
-+        MOZ_LOG(sWebPLog, LogLevel::Error,
-+            ("[this=%p] nsWebPDecoder::ReadHeader -- demux parse error\n",
-+             this));
-+        return Transition::TerminateFailure();
-+      }
-+      if (NS_FAILED(SaveDataBuffer(data, length))) {
-+        return Transition::TerminateFailure();
-+      }
-+      return Transition::ContinueUnbuffered(State::WEBP_DATA);
-+    }
-+
-+    PostIsAnimated(FrameTimeout::FromRawMilliseconds(iter.duration));
-+    WebPDemuxReleaseIterator(&iter);
-+    WebPDemuxDelete(demuxer);
-+  }
-+
-+  MOZ_LOG(sWebPLog, LogLevel::Debug,
-+      ("[this=%p] nsWebPDecoder::ReadHeader -- %d x %d, alpha %d, "
-+       "animation %d, format %d, metadata decode %d, first frame decode %d\n",
-+       this, features.width, features.height, features.has_alpha,
-+       features.has_animation, features.format, IsMetadataDecode(),
-+       IsFirstFrameDecode()));
-+
-+  PostSize(features.width, features.height);
-+  if (features.has_alpha) {
-+    mFormat = SurfaceFormat::B8G8R8A8;
-+    PostHasTransparency();
-+  }
-+
-+  if (IsMetadataDecode()) {
-+    return Transition::TerminateSuccess();
-+  }
-+
-+  auto transition = ReadPayload((const char*)data, length);
-+  if (!features.has_animation) {
-+    mData.clearAndFree();
-+  }
-+  return transition;
-+}
-+
-+LexerTransition<nsWebPDecoder::State>
-+nsWebPDecoder::ReadPayload(const char* aData, size_t aLength)
-+{
-+  auto data = (const uint8_t*)aData;
-+  if (!HasAnimation()) {
-+    auto rv = ReadSingle(data, aLength, true, FullFrame());
-+    if (rv.NextStateIsTerminal() &&
-+        rv.NextStateAsTerminal() == TerminalState::SUCCESS) {
-+      PostDecodeDone();
-+    }
-+    return rv;
-+  }
-+  return ReadMultiple(data, aLength);
-+}
-+
-+LexerTransition<nsWebPDecoder::State>
-+nsWebPDecoder::ReadSingle(const uint8_t* aData, size_t aLength, bool aAppend, const IntRect& aFrameRect)
-+{
-+  MOZ_ASSERT(!IsMetadataDecode());
-+  MOZ_ASSERT(aData);
-+  MOZ_ASSERT(aLength > 0);
-+
-+  MOZ_LOG(sWebPLog, LogLevel::Debug,
-+      ("[this=%p] nsWebPDecoder::ReadSingle -- %zu bytes\n", this, aLength));
-+
-+  if (!mDecoder && NS_FAILED(CreateFrame(aFrameRect))) {
-+    return Transition::TerminateFailure();
-+  }
-+
-+  // XXX(aosmond): The demux API can be used for single images according to the
-+  // documentation. If WebPIAppend is not any more efficient in its buffering
-+  // than what we do for animated images, we should just combine the use cases.
-+  bool complete;
-+  VP8StatusCode status;
-+  if (aAppend) {
-+    status = WebPIAppend(mDecoder, aData, aLength);
-+  } else {
-+    status = WebPIUpdate(mDecoder, aData, aLength);
-+  }
-+  switch (status) {
-+    case VP8_STATUS_OK:
-+      complete = true;
-+      break;
-+    case VP8_STATUS_SUSPENDED:
-+      complete = false;
-+      break;
-+    default:
-+      MOZ_LOG(sWebPLog, LogLevel::Error,
-+          ("[this=%p] nsWebPDecoder::ReadSingle -- append error %d\n",
-+           this, status));
-+      return Transition::TerminateFailure();
-+  }
-+
-+  int lastRow = -1;
-+  int width = 0;
-+  int height = 0;
-+  int stride = 0;
-+  const uint8_t* rowStart = WebPIDecGetRGB(mDecoder, &lastRow, &width, &height, &stride);
-+  if (!rowStart || lastRow == -1) {
-+    return Transition::ContinueUnbuffered(State::WEBP_DATA);
-+  }
-+
-+  if (width <= 0 || height <= 0 || stride <= 0) {
-+    MOZ_LOG(sWebPLog, LogLevel::Error,
-+        ("[this=%p] nsWebPDecoder::ReadSingle -- bad (w,h,s) = (%d, %d, %d)\n",
-+         this, width, height, stride));
-+    return Transition::TerminateFailure();
-+  }
-+
-+  for (int row = mLastRow; row < lastRow; row++) {
-+    const uint8_t* src = rowStart + row * stride;
-+    auto result = mPipe.WritePixelsToRow<uint32_t>([&]() -> NextPixel<uint32_t> {
-+      MOZ_ASSERT(mFormat == SurfaceFormat::B8G8R8A8 || src[3] == 0xFF);
-+      const uint32_t pixel = gfxPackedPixel(src[3], src[0], src[1], src[2]);
-+      src += 4;
-+      return AsVariant(pixel);
-+    });
-+    MOZ_ASSERT(result != WriteState::FAILURE);
-+    MOZ_ASSERT_IF(result == WriteState::FINISHED, complete && row == lastRow - 1);
-+
-+    if (result == WriteState::FAILURE) {
-+      MOZ_LOG(sWebPLog, LogLevel::Error,
-+          ("[this=%p] nsWebPDecoder::ReadSingle -- write pixels error\n",
-+           this));
-+      return Transition::TerminateFailure();
-+    }
-+  }
-+
-+  if (mLastRow != lastRow) {
-+    mLastRow = lastRow;
-+
-+    Maybe<SurfaceInvalidRect> invalidRect = mPipe.TakeInvalidRect();
-+    if (invalidRect) {
-+      PostInvalidation(invalidRect->mInputSpaceRect,
-+          Some(invalidRect->mOutputSpaceRect));
-+    }
-+  }
-+
-+  if (!complete) {
-+    return Transition::ContinueUnbuffered(State::WEBP_DATA);
-+  }
-+
-+  EndFrame();
-+  return Transition::TerminateSuccess();
-+}
-+
-+LexerTransition<nsWebPDecoder::State>
-+nsWebPDecoder::ReadMultiple(const uint8_t* aData, size_t aLength)
-+{
-+  MOZ_ASSERT(!IsMetadataDecode());
-+  MOZ_ASSERT(aData);
-+
-+  MOZ_LOG(sWebPLog, LogLevel::Debug,
-+      ("[this=%p] nsWebPDecoder::ReadMultiple -- %zu bytes\n", this, aLength));
-+
-+  auto data = aData;
-+  size_t length = aLength;
-+  if (NS_FAILED(GetDataBuffer(data, length))) {
-+    return Transition::TerminateFailure();
-+  }
-+
-+  WebPDemuxState state;
-+  WebPData fragment;
-+  fragment.bytes = data;
-+  fragment.size = length;
-+  WebPDemuxer* demuxer = WebPDemuxPartial(&fragment, &state);
-+  if (!demuxer) {
-+    MOZ_LOG(sWebPLog, LogLevel::Error,
-+        ("[this=%p] nsWebPDecoder::ReadMultiple -- create demuxer error\n",
-+         this));
-+    return Transition::TerminateFailure();
-+  }
-+
-+  if (state == WEBP_DEMUX_PARSE_ERROR) {
-+    MOZ_LOG(sWebPLog, LogLevel::Error,
-+        ("[this=%p] nsWebPDecoder::ReadMultiple -- demuxer parse error\n",
-+         this));
-+    WebPDemuxDelete(demuxer);
-+    return Transition::TerminateFailure();
-+  }
-+
-+  bool complete = false;
-+  WebPIterator iter;
-+  auto rv = Transition::ContinueUnbuffered(State::WEBP_DATA);
-+  if (WebPDemuxGetFrame(demuxer, mCurrentFrame + 1, &iter)) {
-+    switch (iter.blend_method) {
-+      case WEBP_MUX_BLEND:
-+        mBlend = BlendMethod::OVER;
-+        break;
-+      case WEBP_MUX_NO_BLEND:
-+        mBlend = BlendMethod::SOURCE;
-+        break;
-+      default:
-+        MOZ_ASSERT_UNREACHABLE("Unhandled blend method");
-+        break;
-+    }
-+
-+    switch (iter.dispose_method) {
-+      case WEBP_MUX_DISPOSE_NONE:
-+        mDisposal = DisposalMethod::KEEP;
-+        break;
-+      case WEBP_MUX_DISPOSE_BACKGROUND:
-+        mDisposal = DisposalMethod::CLEAR;
-+        break;
-+      default:
-+        MOZ_ASSERT_UNREACHABLE("Unhandled dispose method");
-+        break;
-+    }
-+
-+    mFormat = iter.has_alpha ? SurfaceFormat::B8G8R8A8 : SurfaceFormat::B8G8R8X8;
-+    mTimeout = FrameTimeout::FromRawMilliseconds(iter.duration);
-+    nsIntRect frameRect(iter.x_offset, iter.y_offset, iter.width, iter.height);
-+
-+    rv = ReadSingle(iter.fragment.bytes, iter.fragment.size, false, frameRect);
-+    complete = state == WEBP_DEMUX_DONE && !WebPDemuxNextFrame(&iter);
-+    WebPDemuxReleaseIterator(&iter);
-+  }
-+
-+  if (rv.NextStateIsTerminal()) {
-+    if (rv.NextStateAsTerminal() == TerminalState::SUCCESS) {
-+      // If we extracted one frame, and it is not the last, we need to yield to
-+      // the lexer to allow the upper layers to acknowledge the frame.
-+      if (!complete && !IsFirstFrameDecode()) {
-+        // The resume point is determined by whether or not we had to buffer.
-+        // If we have yet to buffer, we want to resume at the same point,
-+        // otherwise our internal buffer has everything we need and we want
-+        // to resume having consumed all of the current fragment.
-+        rv = Transition::ContinueUnbufferedAfterYield(State::WEBP_DATA,
-+                 mData.empty() ? 0 : aLength);
-+      } else {
-+        uint32_t loopCount = WebPDemuxGetI(demuxer, WEBP_FF_LOOP_COUNT);
-+
-+        MOZ_LOG(sWebPLog, LogLevel::Debug,
-+          ("[this=%p] nsWebPDecoder::ReadMultiple -- loop count %u\n",
-+           this, loopCount));
-+        PostDecodeDone(loopCount - 1);
-+      }
-+    }
-+  } else if (NS_FAILED(SaveDataBuffer(data, length))) {
-+    rv = Transition::TerminateFailure();
-+  }
-+
-+  WebPDemuxDelete(demuxer);
-+  return rv;
-+}
-+
-+LexerTransition<nsWebPDecoder::State>
-+nsWebPDecoder::FinishedData()
-+{
-+  // Since we set up an unbuffered read for SIZE_MAX bytes, if we actually read
-+  // all that data something is really wrong.
-+  MOZ_ASSERT_UNREACHABLE("Read the entire address space?");
-+  return Transition::TerminateFailure();
-+}
-+
-+} // namespace image
-+} // namespace mozilla
-diff --git a/image/decoders/nsWebPDecoder.h b/image/decoders/nsWebPDecoder.h
-new file mode 100644
---- /dev/null
-+++ b/image/decoders/nsWebPDecoder.h
-@@ -0,0 +1,91 @@
-+/* -*- Mode: C++; tab-width: 2; indent-tabs-mode: nil; c-basic-offset: 2 -*-
-+ *
-+ * This Source Code Form is subject to the terms of the Mozilla Public
-+ * License, v. 2.0. If a copy of the MPL was not distributed with this
-+ * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
-+
-+#ifndef mozilla_image_decoders_nsWebPDecoder_h
-+#define mozilla_image_decoders_nsWebPDecoder_h
-+
-+#include "Decoder.h"
-+#include "webp/demux.h"
-+#include "StreamingLexer.h"
-+#include "SurfacePipe.h"
-+
-+namespace mozilla {
-+namespace image {
-+class RasterImage;
-+
-+class nsWebPDecoder : public Decoder
-+{
-+public:
-+  virtual ~nsWebPDecoder();
-+
-+protected:
-+  LexerResult DoDecode(SourceBufferIterator& aIterator,
-+                       IResumable* aOnResume) override;
-+
-+private:
-+  friend class DecoderFactory;
-+
-+  // Decoders should only be instantiated via DecoderFactory.
-+  explicit nsWebPDecoder(RasterImage* aImage);
-+
-+  enum class State
-+  {
-+    WEBP_DATA,
-+    FINISHED_WEBP_DATA
-+  };
-+
-+  LexerTransition<State> ReadHeader(const char* aData, size_t aLength);
-+  LexerTransition<State> ReadPayload(const char* aData, size_t aLength);
-+  LexerTransition<State> FinishedData();
-+
-+  nsresult CreateFrame(const nsIntRect& aFrameRect);
-+  void EndFrame();
-+
-+  nsresult GetDataBuffer(const uint8_t*& aData, size_t& aLength);
-+  nsresult SaveDataBuffer(const uint8_t* aData, size_t aLength);
-+
-+  LexerTransition<State> ReadSingle(const uint8_t* aData, size_t aLength,
-+                                    bool aAppend, const IntRect& aFrameRect);
-+
-+  LexerTransition<State> ReadMultiple(const uint8_t* aData, size_t aLength);
-+
-+  StreamingLexer<State> mLexer;
-+
-+  /// The SurfacePipe used to write to the output surface.
-+  SurfacePipe mPipe;
-+
-+  /// The buffer used to accumulate data until the complete WebP header is received.
-+  Vector<uint8_t> mData;
-+
-+  /// The libwebp output buffer descriptor pointing to the decoded data.
-+  WebPDecBuffer mBuffer;
-+
-+  /// The libwebp incremental decoder descriptor, wraps mBuffer.
-+  WebPIDecoder* mDecoder;
-+
-+  /// Blend method for the current frame.
-+  BlendMethod mBlend;
-+
-+  /// Disposal method for the current frame.
-+  DisposalMethod mDisposal;
-+
-+  /// Frame timeout for the current frame;
-+  FrameTimeout mTimeout;
-+
-+  /// Surface format for the current frame.
-+  gfx::SurfaceFormat mFormat;
-+
-+  /// The last row of decoded pixels written to mPipe.
-+  int mLastRow;
-+
-+  /// Number of decoded frames.
-+  uint32_t mCurrentFrame;
-+};
-+
-+} // namespace image
-+} // namespace mozilla
-+
-+#endif // mozilla_image_decoders_nsWebPDecoder_h
-diff --git a/modules/libpref/init/all.js b/modules/libpref/init/all.js
---- a/modules/libpref/init/all.js
-+++ b/modules/libpref/init/all.js
-@@ -4516,16 +4516,19 @@ pref("image.mem.surfacecache.size_factor
- // of the data, and so forth. The default should be a good balance for desktop
- // and laptop systems, where we never discard visible images.
- pref("image.mem.surfacecache.discard_factor", 1);
- 
- // How many threads we'll use for multithreaded decoding. If < 0, will be
- // automatically determined based on the system's number of cores.
- pref("image.multithreaded_decoding.limit", -1);
- 
-+// Whether we attempt to decode WebP images or not.
-+pref("image.webp.enabled", false);
-+
- // Limit for the canvas image cache. 0 means we don't limit the size of the
- // cache.
- pref("canvas.image.cache.limit", 0);
- 
- // WebGL prefs
- #ifdef ANDROID
- // Disable MSAA on mobile.
- pref("gl.msaa-level", 0);
-diff --git a/netwerk/mime/nsMimeTypes.h b/netwerk/mime/nsMimeTypes.h
---- a/netwerk/mime/nsMimeTypes.h
-+++ b/netwerk/mime/nsMimeTypes.h
-@@ -108,16 +108,17 @@
- #define IMAGE_BMP                           "image/bmp"
- #define IMAGE_BMP_MS                        "image/x-ms-bmp"
- #define IMAGE_ICO                           "image/x-icon"
- #define IMAGE_ICO_MS                        "image/vnd.microsoft.icon"
- #define IMAGE_ICON_MS                       "image/icon"
- #define IMAGE_MNG                           "video/x-mng"
- #define IMAGE_JNG                           "image/x-jng"
- #define IMAGE_SVG_XML                       "image/svg+xml"
-+#define IMAGE_WEBP                          "image/webp"
- 
- #define MESSAGE_EXTERNAL_BODY               "message/external-body"
- #define MESSAGE_NEWS                        "message/news"
- #define MESSAGE_RFC822                      "message/rfc822"
- 
- #define MULTIPART_ALTERNATIVE               "multipart/alternative"
- #define MULTIPART_APPLEDOUBLE               "multipart/appledouble"
- #define MULTIPART_DIGEST                    "multipart/digest"
-diff --git a/uriloader/exthandler/nsExternalHelperAppService.cpp b/uriloader/exthandler/nsExternalHelperAppService.cpp
---- a/uriloader/exthandler/nsExternalHelperAppService.cpp
-+++ b/uriloader/exthandler/nsExternalHelperAppService.cpp
-@@ -585,16 +585,17 @@ static const nsExtraMimeTypeEntry extraM
-   { IMAGE_GIF, "gif", "GIF Image" },
-   { IMAGE_ICO, "ico,cur", "ICO Image" },
-   { IMAGE_JPEG, "jpeg,jpg,jfif,pjpeg,pjp", "JPEG Image" },
-   { IMAGE_PNG, "png", "PNG Image" },
-   { IMAGE_APNG, "apng", "APNG Image" },
-   { IMAGE_TIFF, "tiff,tif", "TIFF Image" },
-   { IMAGE_XBM, "xbm", "XBM Image" },
-   { IMAGE_SVG_XML, "svg", "Scalable Vector Graphics" },
-+  { IMAGE_WEBP, "webp", "WebP Image" },
-   { MESSAGE_RFC822, "eml", "RFC-822 data" },
-   { TEXT_PLAIN, "txt,text", "Text File" },
-   { APPLICATION_JSON, "json", "JavaScript Object Notation" },
-   { TEXT_VTT, "vtt", "Web Video Text Tracks" },
-   { TEXT_CACHE_MANIFEST, "appcache", "Application Cache Manifest" },
-   { TEXT_HTML, "html,htm,shtml,ehtml", "HyperText Markup Language" },
-   { "application/xhtml+xml", "xhtml,xht", "Extensible HyperText Markup Language" },
-   { APPLICATION_MATHML_XML, "mml", "Mathematical Markup Language" },
+ # Marionette is a Web Driver / Selenium comamnd server and client automation
+ # driver for Mozilla's Gecko engine.  For more, see
