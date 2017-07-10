@@ -516,6 +516,11 @@ ImageTestCase GreenIconTestCase()
                        TEST_CASE_IS_TRANSPARENT);
 }
 
+ImageTestCase GreenWebPTestCase()
+{
+  return ImageTestCase("green.webp", "image/webp", IntSize(100, 100));
+}
+
 ImageTestCase GreenFirstFrameAnimatedGIFTestCase()
 {
   return ImageTestCase("first-frame-green.gif", "image/gif", IntSize(100, 100),
@@ -526,6 +531,12 @@ ImageTestCase GreenFirstFrameAnimatedPNGTestCase()
 {
   return ImageTestCase("first-frame-green.png", "image/png", IntSize(100, 100),
                        TEST_CASE_IS_TRANSPARENT | TEST_CASE_IS_ANIMATED);
+}
+
+ImageTestCase GreenFirstFrameAnimatedWebPTestCase()
+{
+  return ImageTestCase("first-frame-green.webp", "image/webp", IntSize(100, 100),
+                       TEST_CASE_IS_ANIMATED);
 }
 
 ImageTestCase CorruptTestCase()
@@ -662,6 +673,12 @@ ImageTestCase DownscaledIconTestCase()
 {
   return ImageTestCase("downscaled.icon", "image/icon", IntSize(100, 100),
                        IntSize(20, 20), TEST_CASE_IS_TRANSPARENT);
+}
+
+ImageTestCase DownscaledWebPTestCase()
+{
+  return ImageTestCase("downscaled.webp", "image/webp", IntSize(100, 100),
+                       IntSize(20, 20));
 }
 
 ImageTestCase DownscaledTransparentICOWithANDMaskTestCase()
