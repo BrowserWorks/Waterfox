@@ -4544,7 +4544,7 @@ pref("image.mem.surfacecache.discard_factor", 1);
 pref("image.multithreaded_decoding.limit", -1);
 
 // Whether we attempt to decode WebP images or not.
-pref("image.webp.enabled", false);
+pref("image.webp.enabled", true);
 
 // Limit for the canvas image cache. 0 means we don't limit the size of the
 // cache.
