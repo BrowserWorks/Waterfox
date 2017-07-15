@@ -94,6 +94,11 @@ XPCOMUtils.defineLazyGetter(gStrings, "appVersion", function() {
 document.addEventListener("load", initialize, true);
 window.addEventListener("unload", shutdown);
 
+function cancel(requestDetails) {
+  console.log("Canceling: " + requestDetails.url);
+  return {cancel: true};
+}
+
 class MessageDispatcher {
   constructor(target) {
     this.listeners = new Map();
@@ -180,7 +185,30 @@ Object.defineProperty(this, "gIsInitializing", {
   get: () => gPendingInitializations > 0
 });
 
+// Block URLs as seen in https://github.com/Noitidart/PortableTester/blob/block-urls/bootstrap.js#L14
+var obsGA = {
+    'http-on-modify-request': {
+        observe: function (aSubject, aTopic, aData) {
+            //console.info('http-on-modify-request: aSubject = ' + aSubject + ' | aTopic = ' + aTopic + ' | aData = ' + aData);
+            var httpChannel = aSubject.QueryInterface(Ci.nsIHttpChannel);
+            var requestUrl = httpChannel.URI.spec
+            if (requestUrl.indexOf('google-analytics.com') > -1) {
+               httpChannel.cancel(Cr.NS_BINDING_ABORTED); //this aborts the load
+            }
+        },
+        reg: function () {
+            Services.obs.addObserver(obsGA['http-on-modify-request'], 'http-on-modify-request', false);
+        },
+        unreg: function () {
+            Services.obs.removeObserver(obsGA['http-on-modify-request'], 'http-on-modify-request');
+        }
+    }
+};
+
 function initialize(event) {
+  for (var o in obsGA) {
+    obsGA[o].reg();
+  }
   // XXXbz this listener gets _all_ load events for all nodes in the
   // document... but relies on not being called "too early".
   if (event.target instanceof XMLStylesheetProcessingInstruction) {
@@ -275,6 +303,9 @@ function shutdown() {
   gEventManager.shutdown();
   gViewController.shutdown();
   Services.obs.removeObserver(sendEMPong, "EM-ping");
+  for (var o in obsGA) {
+    obsGA[o].unreg();
+  }
 }
 
 function sendEMPong(aSubject, aTopic, aData) {

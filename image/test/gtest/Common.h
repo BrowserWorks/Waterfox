@@ -114,6 +114,8 @@ struct AutoInitializeImageLib
     // Ensure that ImageLib services are initialized.
     nsCOMPtr<imgITools> imgTools = do_CreateInstance("@mozilla.org/image/tools;1");
     EXPECT_TRUE(imgTools != nullptr);
+    nsresult rv = Preferences::SetBool("image.webp.enabled", true);
+    EXPECT_TRUE(rv == NS_OK);
   }
 };
 
@@ -384,9 +386,11 @@ ImageTestCase GreenJPGTestCase();
 ImageTestCase GreenBMPTestCase();
 ImageTestCase GreenICOTestCase();
 ImageTestCase GreenIconTestCase();
+ImageTestCase GreenWebPTestCase();
 
 ImageTestCase GreenFirstFrameAnimatedGIFTestCase();
 ImageTestCase GreenFirstFrameAnimatedPNGTestCase();
+ImageTestCase GreenFirstFrameAnimatedWebPTestCase();
 
 ImageTestCase CorruptTestCase();
 ImageTestCase CorruptBMPWithTruncatedHeader();
@@ -410,6 +414,7 @@ ImageTestCase DownscaledJPGTestCase();
 ImageTestCase DownscaledBMPTestCase();
 ImageTestCase DownscaledICOTestCase();
 ImageTestCase DownscaledIconTestCase();
+ImageTestCase DownscaledWebPTestCase();
 ImageTestCase DownscaledTransparentICOWithANDMaskTestCase();
 
 ImageTestCase TruncatedSmallGIFTestCase();

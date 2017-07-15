@@ -956,6 +956,14 @@ def skia_includes(skia, skia_gpu):
 
 set_config('SKIA_INCLUDES', skia_includes)
 
+option('--with-system-webp',
+       help='Use system libwebp (located with pkgconfig)')
+
+system_webp = pkg_check_modules('MOZ_WEBP', 'libwebp >= 0.6.0 libwebpdemux >= 0.6.0',
+                                when='--with-system-webp')
+
+set_config('MOZ_SYSTEM_WEBP', depends_if(system_webp)(lambda _: True))
+
 # Mortar
 # ==============================================================
 option('--enable-mortar', help='Enable mortar extension')

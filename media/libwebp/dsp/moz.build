@@ -1,0 +1,53 @@
+# -*- Mode: python; indent-tabs-mode: nil; tab-width: 40 -*-
+# vim: set filetype=python:
+# This Source Code Form is subject to the terms of the Mozilla Public
+# License, v. 2.0. If a copy of the MPL was not distributed with this
+# file, You can obtain one at http://mozilla.org/MPL/2.0/.
+
+with Files('**'):
+    BUG_COMPONENT = ('Core', 'ImageLib')
+
+SOURCES += [
+    'alpha_processing.c',
+    'alpha_processing_sse2.c',
+    'alpha_processing_sse41.c',
+    'dec.c',
+    'dec_clip_tables.c',
+    'dec_neon.c',
+    'dec_sse2.c',
+    'dec_sse41.c',
+    'filters.c',
+    'filters_sse2.c',
+    'lossless.c',
+    'lossless_neon.c',
+    'lossless_sse2.c',
+    'rescaler.c',
+    'rescaler_neon.c',
+    'rescaler_sse2.c',
+    'upsampling.c',
+    'upsampling_neon.c',
+    'upsampling_sse2.c',
+    'yuv.c',
+    'yuv_sse2.c',
+]
+
+if CONFIG['CPU_ARCH'] == 'arm' and CONFIG['BUILD_ARM_NEON']:
+    SOURCES['dec_neon.c'].flags += CONFIG['NEON_FLAGS']
+    SOURCES['lossless_neon.c'].flags += CONFIG['NEON_FLAGS']
+    SOURCES['rescaler_neon.c'].flags += CONFIG['NEON_FLAGS']
+    SOURCES['upsampling_neon.c'].flags += CONFIG['NEON_FLAGS']
+elif CONFIG['INTEL_ARCHITECTURE']:
+    SOURCES['alpha_processing_sse2.c'].flags += CONFIG['SSE2_FLAGS']
+    SOURCES['alpha_processing_sse41.c'].flags += CONFIG['SSE2_FLAGS']
+    SOURCES['dec_sse2.c'].flags += CONFIG['SSE2_FLAGS']
+    SOURCES['dec_sse41.c'].flags += CONFIG['SSE2_FLAGS']
+    SOURCES['filters_sse2.c'].flags += CONFIG['SSE2_FLAGS']
+    SOURCES['lossless_sse2.c'].flags += CONFIG['SSE2_FLAGS']
+    SOURCES['rescaler_sse2.c'].flags += CONFIG['SSE2_FLAGS']
+    SOURCES['upsampling_sse2.c'].flags += CONFIG['SSE2_FLAGS']
+    SOURCES['yuv_sse2.c'].flags += CONFIG['SSE2_FLAGS']
+
+FINAL_LIBRARY = 'gkmedias'
+
+# We allow warnings for third-party code that can be updated from upstream.
+ALLOW_COMPILER_WARNINGS = True
