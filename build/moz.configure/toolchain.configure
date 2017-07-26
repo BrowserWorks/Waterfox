@@ -371,10 +371,10 @@ def check_compiler(compiler, language, target):
             append_flag('-std=c++14')
 
     # We force clang-cl to emulate Visual C++ 2015 Update 3.
-    if info.type == 'clang-cl' and info.version != '19.00.24213':
+    if info.type == 'clang-cl' and info.version != '19.00.24210':
         # This flag is a direct clang-cl flag that doesn't need -Xclang,
         # add it directly.
-        flags.append('-fms-compatibility-version=19.00.24213')
+        flags.append('-fms-compatibility-version=19.00.24210')
 
     # Check compiler target
     # --------------------------------------------------------------------
@@ -714,7 +714,7 @@ def compiler(language, host_or_target, c_compiler=None, other_compiler=None,
                 'Only clang/llvm 3.6 or newer is supported.')
 
         if info.type == 'msvc':
-            if info.version < '19.00.24213':
+            if info.version < '19.00.24210':
                 raise FatalCheckError(
                     'This version (%s) of the MSVC compiler is not '
                     'supported.\n'
