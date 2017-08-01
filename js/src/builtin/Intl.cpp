@@ -4096,9 +4096,7 @@ js::intl_toLocaleLowerCase(JSContext* cx, unsigned argc, Value* vp)
     MOZ_ASSERT(args[0].isString());
     MOZ_ASSERT(args[1].isString());
 
-    RootedLinearString linear(cx, args[0].toString()->ensureLinear(cx));
-    if (!linear)
-        return false;
+    RootedString string(cx, args[0].toString());
 
     RootedLinearString locale(cx, args[1].toString()->ensureLinear(cx));
     if (!locale)
@@ -4106,7 +4104,7 @@ js::intl_toLocaleLowerCase(JSContext* cx, unsigned argc, Value* vp)
 
     // Call String.prototype.toLowerCase() for language independent casing.
     if (!HasLanguageDependentCasing(locale)) {
-        JSString* str = js::StringToLowerCase(cx, linear);
+        JSString* str = js::StringToLowerCase(cx, string);
         if (!str)
             return false;
 
@@ -4115,7 +4113,7 @@ js::intl_toLocaleLowerCase(JSContext* cx, unsigned argc, Value* vp)
     }
 
     AutoStableStringChars inputChars(cx);
-    if (!inputChars.initTwoByte(cx, linear))
+    if (!inputChars.initTwoByte(cx, string))
         return false;
     mozilla::Range<const char16_t> input = inputChars.twoByteRange();
 
@@ -4142,9 +4140,7 @@ js::intl_toLocaleUpperCase(JSContext* cx, unsigned argc, Value* vp)
     MOZ_ASSERT(args[0].isString());
     MOZ_ASSERT(args[1].isString());
 
-    RootedLinearString linear(cx, args[0].toString()->ensureLinear(cx));
-    if (!linear)
-        return false;
+    RootedString string(cx, args[0].toString());
 
     RootedLinearString locale(cx, args[1].toString()->ensureLinear(cx));
     if (!locale)
@@ -4152,7 +4148,7 @@ js::intl_toLocaleUpperCase(JSContext* cx, unsigned argc, Value* vp)
 
     // Call String.prototype.toUpperCase() for language independent casing.
     if (!HasLanguageDependentCasing(locale)) {
-        JSString* str = js::StringToUpperCase(cx, linear);
+        JSString* str = js::StringToUpperCase(cx, string);
         if (!str)
             return false;
 
@@ -4161,7 +4157,7 @@ js::intl_toLocaleUpperCase(JSContext* cx, unsigned argc, Value* vp)
     }
 
     AutoStableStringChars inputChars(cx);
-    if (!inputChars.initTwoByte(cx, linear))
+    if (!inputChars.initTwoByte(cx, string))
         return false;
     mozilla::Range<const char16_t> input = inputChars.twoByteRange();
 
