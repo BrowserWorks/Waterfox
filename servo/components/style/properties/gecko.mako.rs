@@ -2081,7 +2081,7 @@ fn static_assert() {
             return (parent_size, parent_unconstrained_size)
         }
 
-        /// XXXManishearth this should also handle text zoom
+        // XXXManishearth this should also handle text zoom
         let min = Au(parent.gecko.mScriptMinSize);
 
         let scale = (parent.gecko.mScriptSizeMultiplier as f32).powi(delta as i32);
