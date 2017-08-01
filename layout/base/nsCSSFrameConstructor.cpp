@@ -6080,7 +6080,8 @@ nsCSSFrameConstructor::AddFrameConstructionItemsInternal(nsFrameConstructorState
       aState.mFrameManager->RegisterDisplayContentsStyleFor(aContent,
                                                             styleContext);
     } else {
-      aState.mFrameManager->ChangeDisplayContents(aContent, styleContext);
+      aState.mFrameManager->ChangeRegisteredDisplayContentsStyleFor(aContent,
+                                                                    styleContext);
     }
 
     TreeMatchContext::AutoAncestorPusher ancestorPusher(aState.mTreeMatchContext);
@@ -9506,9 +9507,9 @@ nsCSSFrameConstructor::MaybeRecreateFramesForElement(Element* aElement)
                     LazyComputeBehavior::Assert);
 
   if (oldDisplay == StyleDisplay::None) {
-    ChangeUndisplayedContent(aElement, newContext);
+    ChangeRegisteredDisplayNoneStyleFor(aElement, newContext);
   } else {
-    ChangeDisplayContents(aElement, newContext);
+    ChangeRegisteredDisplayContentsStyleFor(aElement, newContext);
   }
 
   const nsStyleDisplay* disp = newContext->StyleDisplay();
