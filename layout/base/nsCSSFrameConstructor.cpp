@@ -8494,7 +8494,7 @@ nsCSSFrameConstructor::ContentRemoved(nsIContent* aContainer,
   if (!childFrame || childFrame->GetContent() != aChild) {
     // XXXbz the GetContent() != aChild check is needed due to bug 135040.
     // Remove it once that's fixed.
-    ClearUndisplayedContentIn(aChild, aContainer);
+    UnregisterDisplayNoneStyleFor(aChild, aContainer);
   }
   MOZ_ASSERT(!childFrame || !GetDisplayContentsStyleFor(aChild),
              "display:contents nodes shouldn't have a frame");
@@ -8529,7 +8529,7 @@ nsCSSFrameConstructor::ContentRemoved(nsIContent* aContainer,
         }
       }
     }
-    ClearDisplayContentsIn(aChild, aContainer);
+    UnregisterDisplayContentsStyleFor(aChild, aContainer);
   }
 
 #ifdef MOZ_XUL
@@ -8682,7 +8682,7 @@ nsCSSFrameConstructor::ContentRemoved(nsIContent* aContainer,
       if (!childFrame || childFrame->GetContent() != aChild) {
         // XXXbz the GetContent() != aChild check is needed due to bug 135040.
         // Remove it once that's fixed.
-        ClearUndisplayedContentIn(aChild, aContainer);
+        UnregisterDisplayNoneStyleFor(aChild, aContainer);
         return;
       }
       parentFrame = childFrame->GetParent();
