@@ -136,6 +136,7 @@ public:
   virtual nsresult AppendText(const char16_t* aBuffer, uint32_t aLength,
                               bool aNotify) override;
   virtual bool TextIsOnlyWhitespace() override;
+  virtual bool ThreadSafeTextIsOnlyWhitespace() const final;
   virtual bool HasTextForTranslation() override;
   virtual void AppendTextTo(nsAString& aResult) override;
   MOZ_MUST_USE
@@ -161,15 +162,13 @@ public:
   virtual bool IsNodeOfType(uint32_t aFlags) const override;
   virtual bool IsLink(nsIURI** aURI) const override;
 
-  virtual mozilla::dom::CustomElementData* GetCustomElementData() const override;
-  virtual void SetCustomElementData(mozilla::dom::CustomElementData* aData) override;
-
   NS_IMETHOD WalkContentStyleRules(nsRuleWalker* aRuleWalker) override;
   NS_IMETHOD_(bool) IsAttributeMapped(const nsIAtom* aAttribute) const;
   virtual nsChangeHint GetAttributeChangeHint(const nsIAtom* aAttribute,
                                               int32_t aModType) const;
 
-  virtual nsresult Clone(mozilla::dom::NodeInfo *aNodeInfo, nsINode **aResult) const override
+  virtual nsresult Clone(mozilla::dom::NodeInfo *aNodeInfo, nsINode **aResult,
+                         bool aPreallocateChildren) const override
   {
     nsCOMPtr<nsINode> result = CloneDataNode(aNodeInfo, true);
     result.forget(aResult);

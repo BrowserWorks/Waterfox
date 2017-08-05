@@ -15,14 +15,31 @@ https://bugzilla.mozilla.org/show_bug.cgi?id=1180921
   const Cc = Components.classes;
   const Ci = Components.interfaces;
   const Cu = Components.utils;
-  Cu.import("resource://gre/modules/Services.jsm");
+  let module = Cu.import("resource://gre/modules/Services.jsm", window);
   let ssm = Services.scriptSecurityManager;
-  let aps = Cc["@mozilla.org/addons/policy-service;1"].getService(Ci.nsIAddonPolicyService).wrappedJSObject;
+
+  function StubPolicy(id, subdomain) {
+    /* globals MatchPatternSet */
+    return new module.WebExtensionPolicy({
+      id,
+      mozExtensionHostname: id,
+      baseURL: `file:///{id}`,
+
+      allowedOrigins: new MatchPatternSet([`*://${subdomain}.example.org/*`]),
+      localizeCallback(string) {},
+    });
+  }
+
+  /* globals WebExtensionPolicy */
+  let policyA = StubPolicy("addona", "test1");
+  let policyB = StubPolicy("addonb", "test2");
+  policyA.active = true;
+  policyB.active = true;
 
   SimpleTest.waitForExplicitFinish();
   SimpleTest.registerCleanupFunction(function() {
-    aps.setAddonLoadURICallback('addonA', null);
-    aps.setAddonLoadURICallback('addonB', null);
+    policyA.active = false;
+    policyB.active = false;
   });
 
   function tryLoad(sb, uri) {
@@ -39,42 +56,26 @@ https://bugzilla.mozilla.org/show_bug.cgi?id=1180921
     return p;
   }
 
-  let exampleCom_addonA = new Cu.Sandbox(ssm.createCodebasePrincipal(Services.io.newURI('http://example.com'), {addonId: 'addonA'}),
-                                         {wantGlobalProperties: ['XMLHttpRequest']});
-  let nullPrin_addonA = new Cu.Sandbox(ssm.createNullPrincipal({addonId: 'addonA'}),
-                                       {wantGlobalProperties: ['XMLHttpRequest']});
-  let exampleCom_addonB = new Cu.Sandbox(ssm.createCodebasePrincipal(Services.io.newURI('http://example.com'), {addonId: 'addonB'}),
-                                         {wantGlobalProperties: ['XMLHttpRequest']});
+  let addonA = new Cu.Sandbox(ssm.createCodebasePrincipal(Services.io.newURI("moz-extension://addonA/"), {}),
+                              {wantGlobalProperties: ["XMLHttpRequest"]});
+  let addonB = new Cu.Sandbox(ssm.createCodebasePrincipal(Services.io.newURI("moz-extension://addonB/"), {}),
+                              {wantGlobalProperties: ["XMLHttpRequest"]});
 
-  function uriForDomain(d) { return d + '/tests/caps/tests/mochitest/file_data.txt' }
+  function uriForDomain(d) { return d + "/tests/caps/tests/mochitest/file_data.txt" }
 
-  tryLoad(exampleCom_addonA, uriForDomain('http://example.com'))
+  tryLoad(addonA, uriForDomain("http://test4.example.org"))
   .then(function(success) {
-    ok(success, "same-origin load should succeed for addon A");
-    return tryLoad(nullPrin_addonA, uriForDomain('http://example.com'));
-  }).then(function(success) {
-    ok(!success, "null-principal load should fail for addon A");
-    return tryLoad(exampleCom_addonB, uriForDomain('http://example.com'));
-  }).then(function(success) {
-    ok(success, "same-origin load should succeed for addon B");
-    return tryLoad(exampleCom_addonA, uriForDomain('http://test1.example.org'));
-  }).then(function(success) {
     ok(!success, "cross-origin load should fail for addon A");
-    aps.setAddonLoadURICallback('addonA', function(uri) { return /test1/.test(uri.host); });
-    aps.setAddonLoadURICallback('addonB', function(uri) { return /test2/.test(uri.host); });
-    return tryLoad(exampleCom_addonA, uriForDomain('http://test1.example.org'));
+    return tryLoad(addonA, uriForDomain("http://test1.example.org"));
   }).then(function(success) {
     ok(success, "whitelisted cross-origin load of test1 should succeed for addon A");
-    return tryLoad(nullPrin_addonA, uriForDomain('http://test1.example.org'));
-  }).then(function(success) {
-    ok(!success, "whitelisted null principal load of test1 should still fail for addon A");
-    return tryLoad(exampleCom_addonB, uriForDomain('http://test1.example.org'));
+    return tryLoad(addonB, uriForDomain("http://test1.example.org"));
   }).then(function(success) {
     ok(!success, "non-whitelisted cross-origin load of test1 should fail for addon B");
-    return tryLoad(exampleCom_addonB, uriForDomain('http://test2.example.org'));
+    return tryLoad(addonB, uriForDomain("http://test2.example.org"));
   }).then(function(success) {
     ok(success, "whitelisted cross-origin load of test2 should succeed for addon B");
-    return tryLoad(exampleCom_addonA, uriForDomain('http://test2.example.org'));
+    return tryLoad(addonA, uriForDomain("http://test2.example.org"));
   }).then(function(success) {
     ok(!success, "non-whitelisted cross-origin load of test2 should fail for addon A");
     SimpleTest.finish();

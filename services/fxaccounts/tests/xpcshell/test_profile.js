@@ -3,7 +3,6 @@
 
 "use strict";
 
-Cu.import("resource://gre/modules/Promise.jsm");
 Cu.import("resource://gre/modules/FxAccountsCommon.js");
 Cu.import("resource://gre/modules/FxAccountsProfileClient.jsm");
 Cu.import("resource://gre/modules/FxAccountsProfile.jsm");
@@ -356,7 +355,7 @@ add_task(function* fetchAndCacheProfileBeforeThresholdOnNotification() {
   yield profile.getProfile();
   do_check_eq(numFetches, 1);
 
-  Services.obs.notifyObservers(null, ON_PROFILE_CHANGE_NOTIFICATION, null);
+  Services.obs.notifyObservers(null, ON_PROFILE_CHANGE_NOTIFICATION);
 
   yield profile.getProfile();
   do_check_eq(numFetches, 2);
@@ -473,6 +472,6 @@ function makeObserver(aObserveTopic, aObserveFunc) {
     Services.obs.removeObserver(callback, aObserveTopic);
   }
 
-  Services.obs.addObserver(callback, aObserveTopic, false);
+  Services.obs.addObserver(callback, aObserveTopic);
   return removeMe;
 }

@@ -14,6 +14,7 @@
 #include "mozilla/Attributes.h"
 #include "mozilla/DebugOnly.h"
 #include "mozilla/PodOperations.h"
+#include "mozilla/Unused.h"
 
 #include <stdarg.h>
 #include <stddef.h>
@@ -25,8 +26,10 @@
 #include "frontend/TokenKind.h"
 #include "js/UniquePtr.h"
 #include "js/Vector.h"
-#include "vm/RegExpObject.h"
+#include "vm/ErrorReporting.h"
+#include "vm/RegExpShared.h"
 #include "vm/String.h"
+#include "vm/Unicode.h"
 
 struct KeywordInfo;
 
@@ -93,7 +96,7 @@ enum class InvalidEscapeType {
     Octal
 };
 
-class TokenStream;
+class TokenStreamAnyChars;
 
 struct Token
 {
@@ -161,7 +164,7 @@ struct Token
         // gotten with None, but we expect Operand.
         OperandIsNone,
     };
-    friend class TokenStream;
+    friend class TokenStreamAnyChars;
 
   public:
     TokenKind           type;           // char value or above enumerator
@@ -197,7 +200,7 @@ struct Token
         u.atom = atom;
     }
 
-    void setRegExpFlags(js::RegExpFlag flags) {
+    void setRegExpFlags(RegExpFlag flags) {
         MOZ_ASSERT(type == TOK_REGEXP);
         MOZ_ASSERT((flags & AllFlags) == flags);
         u.reflags = flags;
@@ -223,7 +226,7 @@ struct Token
         return u.atom;
     }
 
-    js::RegExpFlag regExpFlags() const {
+    RegExpFlag regExpFlags() const {
         MOZ_ASSERT(type == TOK_REGEXP);
         MOZ_ASSERT((u.reflags & AllFlags) == u.reflags);
         return u.reflags;
@@ -240,22 +243,14 @@ struct Token
     }
 };
 
-class CompileError : public JSErrorReport {
-  public:
-    void throwError(JSContext* cx);
-};
+extern TokenKind
+ReservedWordTokenKind(PropertyName* str);
 
 extern const char*
 ReservedWordToCharZ(PropertyName* str);
 
-extern MOZ_MUST_USE bool
-IsFutureReservedWord(JSLinearString* str);
-
-extern MOZ_MUST_USE bool
-IsReservedWordLiteral(JSLinearString* str);
-
-extern MOZ_MUST_USE bool
-IsStrictReservedWord(JSLinearString* str);
+extern const char*
+ReservedWordToCharZ(TokenKind tt);
 
 // Ideally, tokenizing would be entirely independent of context.  But the
 // strict mode flag, which is in SharedContext, affects tokenizing, and
@@ -269,53 +264,10 @@ class StrictModeGetter {
     virtual bool strictMode() = 0;
 };
 
-// TokenStream is the lexical scanner for Javascript source text.
-//
-// It takes a buffer of char16_t characters and linearly scans it into |Token|s.
-// Internally the class uses a four element circular buffer |tokens| of
-// |Token|s. As an index for |tokens|, the member |cursor| points to the
-// current token.
-// Calls to getToken() increase |cursor| by one and return the new current
-// token. If a TokenStream was just created, the current token is initialized
-// with random data (i.e. not initialized). It is therefore important that
-// one of the first four member functions listed below is called first.
-// The circular buffer lets us go back up to two tokens from the last
-// scanned token. Internally, the relative number of backward steps that were
-// taken (via ungetToken()) after the last token was scanned is stored in
-// |lookahead|.
-//
-// The following table lists in which situations it is safe to call each listed
-// function. No checks are made by the functions in non-debug builds.
-//
-// Function Name     | Precondition; changes to |lookahead|
-// ------------------+---------------------------------------------------------
-// getToken          | none; if |lookahead > 0| then |lookahead--|
-// peekToken         | none; if |lookahead == 0| then |lookahead == 1|
-// peekTokenSameLine | none; if |lookahead == 0| then |lookahead == 1|
-// matchToken        | none; if |lookahead > 0| and the match succeeds then
-//                   |       |lookahead--|
-// consumeKnownToken | none; if |lookahead > 0| then |lookahead--|
-// ungetToken        | 0 <= |lookahead| <= |maxLookahead - 1|; |lookahead++|
-//
-// The behavior of the token scanning process (see getTokenInternal()) can be
-// modified by calling one of the first four above listed member functions with
-// an optional argument of type Modifier.  However, the modifier will be
-// ignored unless |lookahead == 0| holds.  Due to constraints of the grammar,
-// this turns out not to be a problem in practice. See the
-// mozilla.dev.tech.js-engine.internals thread entitled 'Bug in the scanner?'
-// for more details:
-// https://groups.google.com/forum/?fromgroups=#!topic/mozilla.dev.tech.js-engine.internals/2JLH5jRcr7E).
-//
-// The methods seek() and tell() allow to rescan from a previous visited
-// location of the buffer.
-//
-class MOZ_STACK_CLASS TokenStream
+class TokenStreamAnyChars
 {
-    // Unicode separators that are treated as line terminators, in addition to \n, \r.
-    enum {
-        LINE_SEPARATOR = 0x2028,
-        PARA_SEPARATOR = 0x2029
-    };
+  protected:
+    TokenStreamAnyChars(JSContext* cx, const ReadOnlyCompileOptions& options, StrictModeGetter* smg);
 
     static const size_t ntokens = 4;                // 1 current + 2 lookahead, rounded
                                                     // to power of 2 to avoid divmod by 3
@@ -323,27 +275,20 @@ class MOZ_STACK_CLASS TokenStream
     static const unsigned ntokensMask = ntokens - 1;
 
   public:
-    typedef Vector<char16_t, 32> CharBuffer;
-
-    TokenStream(JSContext* cx, const ReadOnlyCompileOptions& options,
-                const char16_t* base, size_t length, StrictModeGetter* smg);
-
-    ~TokenStream();
-
-    MOZ_MUST_USE bool checkOptions();
-
     // Accessors.
     const Token& currentToken() const { return tokens[cursor]; }
     bool isCurrentTokenType(TokenKind type) const {
         return currentToken().type == type;
     }
-    const CharBuffer& getTokenbuf() const { return tokenbuf; }
+
     const char* getFilename() const { return filename; }
     bool getMutedErrors() const { return mutedErrors; }
     JSVersion versionNumber() const { return VersionNumber(options().version); }
     JSVersion versionWithFlags() const { return options().version; }
 
-  private:
+    MOZ_MUST_USE bool checkOptions();
+
+  protected:
     PropertyName* reservedWordToPropertyName(TokenKind tt) const;
 
   public:
@@ -353,6 +298,16 @@ class MOZ_STACK_CLASS TokenStream
 
         MOZ_ASSERT(TokenKindIsPossibleIdentifierName(currentToken().type));
         return reservedWordToPropertyName(currentToken().type);
+    }
+
+    bool currentNameHasEscapes() const {
+        if (isCurrentTokenType(TOK_NAME)) {
+            TokenPos pos = currentToken().pos;
+            return (pos.end - pos.begin) != currentToken().name()->length();
+        }
+
+        MOZ_ASSERT(TokenKindIsPossibleIdentifierName(currentToken().type));
+        return false;
     }
 
     PropertyName* nextName() const {
@@ -380,76 +335,11 @@ class MOZ_STACK_CLASS TokenStream
         invalidTemplateEscapeType = InvalidEscapeType::None;
     }
 
-    // If there is an invalid escape in a template, report it and return false,
-    // otherwise return true.
-    bool checkForInvalidTemplateEscapeError() {
-        if (invalidTemplateEscapeType == InvalidEscapeType::None)
-            return true;
-
-        reportInvalidEscapeError(invalidTemplateEscapeOffset, invalidTemplateEscapeType);
-        return false;
-    }
-
-    // TokenStream-specific error reporters.
-    bool reportError(unsigned errorNumber, ...);
-    bool reportErrorNoOffset(unsigned errorNumber, ...);
-
-    // Report the given error at the current offset.
-    void error(unsigned errorNumber, ...);
-
-    // Report the given error at the given offset.
-    void errorAt(uint32_t offset, unsigned errorNumber, ...);
-
-    // Warn at the current offset.
-    MOZ_MUST_USE bool warning(unsigned errorNumber, ...);
-
     static const uint32_t NoOffset = UINT32_MAX;
 
-    // General-purpose error reporters.  You should avoid calling these
-    // directly, and instead use the more succinct alternatives (error(),
-    // warning(), &c.) in TokenStream, Parser, and BytecodeEmitter.
-    bool reportCompileErrorNumberVA(UniquePtr<JSErrorNotes> notes, uint32_t offset, unsigned flags,
-                                    unsigned errorNumber, va_list args);
-    bool reportStrictModeErrorNumberVA(UniquePtr<JSErrorNotes> notes, uint32_t offset,
-                                       bool strictMode, unsigned errorNumber, va_list args);
-    bool reportExtraWarningErrorNumberVA(UniquePtr<JSErrorNotes> notes, uint32_t offset,
-                                         unsigned errorNumber, va_list args);
-
-    // asm.js reporter
-    void reportAsmJSError(uint32_t offset, unsigned errorNumber, ...);
-
-    JSAtom* getRawTemplateStringAtom() {
-        MOZ_ASSERT(currentToken().type == TOK_TEMPLATE_HEAD ||
-                   currentToken().type == TOK_NO_SUBS_TEMPLATE);
-        const char16_t* cur = userbuf.rawCharPtrAt(currentToken().pos.begin + 1);
-        const char16_t* end;
-        if (currentToken().type == TOK_TEMPLATE_HEAD) {
-            // Of the form    |`...${|   or   |}...${|
-            end = userbuf.rawCharPtrAt(currentToken().pos.end - 2);
-        } else {
-            // NO_SUBS_TEMPLATE is of the form   |`...`|   or   |}...`|
-            end = userbuf.rawCharPtrAt(currentToken().pos.end - 1);
-        }
-
-        CharBuffer charbuf(cx);
-        while (cur < end) {
-            int32_t ch = *cur;
-            if (ch == '\r') {
-                ch = '\n';
-                if ((cur + 1 < end) && (*(cur + 1) == '\n'))
-                    cur++;
-            }
-            if (!charbuf.append(ch))
-                return nullptr;
-            cur++;
-        }
-        return AtomizeChars(cx, charbuf.begin(), charbuf.length());
-    }
-
-  private:
-    // These are private because they should only be called by the tokenizer
+  protected:
+    // This is protected because it should only be called by the tokenizer
     // while tokenizing not by, for example, BytecodeEmitter.
-    bool reportStrictModeError(unsigned errorNumber, ...);
     bool strictMode() const { return strictModeGetter && strictModeGetter->strictMode(); }
 
     void setInvalidTemplateEscape(uint32_t offset, InvalidEscapeType type) {
@@ -459,29 +349,11 @@ class MOZ_STACK_CLASS TokenStream
         invalidTemplateEscapeOffset = offset;
         invalidTemplateEscapeType = type;
     }
-    void reportInvalidEscapeError(uint32_t offset, InvalidEscapeType type) {
-        switch (type) {
-            case InvalidEscapeType::None:
-                MOZ_ASSERT_UNREACHABLE("unexpected InvalidEscapeType");
-                return;
-            case InvalidEscapeType::Hexadecimal:
-                errorAt(offset, JSMSG_MALFORMED_ESCAPE, "hexadecimal");
-                return;
-            case InvalidEscapeType::Unicode:
-                errorAt(offset, JSMSG_MALFORMED_ESCAPE, "Unicode");
-                return;
-            case InvalidEscapeType::UnicodeOverflow:
-                errorAt(offset, JSMSG_UNICODE_OVERFLOW, "escape sequence");
-                return;
-            case InvalidEscapeType::Octal:
-                errorAt(offset, JSMSG_DEPRECATED_OCTAL);
-                return;
-        }
-    }
 
-    static JSAtom* atomize(JSContext* cx, CharBuffer& cb);
-    MOZ_MUST_USE bool putIdentInTokenbuf(const char16_t* identStart);
+    uint32_t invalidTemplateEscapeOffset = 0;
+    InvalidEscapeType invalidTemplateEscapeType = InvalidEscapeType::None;
 
+  protected:
     struct Flags
     {
         bool isEOF:1;           // Hit end of file.
@@ -489,15 +361,11 @@ class MOZ_STACK_CLASS TokenStream
         bool sawOctalEscape:1;  // Saw an octal character escape.
         bool hadError:1;        // Hit a syntax error, at start or during a
                                 // token.
-        bool hitOOM:1;          // Hit OOM.
 
         Flags()
-          : isEOF(), isDirtyLine(), sawOctalEscape(), hadError(), hitOOM()
+          : isEOF(), isDirtyLine(), sawOctalEscape(), hadError()
         {}
     };
-
-    uint32_t invalidTemplateEscapeOffset = 0;
-    InvalidEscapeType invalidTemplateEscapeType = InvalidEscapeType::None;
 
   public:
     typedef Token::Modifier Modifier;
@@ -569,182 +437,11 @@ class MOZ_STACK_CLASS TokenStream
 #endif
     }
 
-    // Advance to the next token.  If the token stream encountered an error,
-    // return false.  Otherwise return true and store the token kind in |*ttp|.
-    MOZ_MUST_USE bool getToken(TokenKind* ttp, Modifier modifier = None) {
-        // Check for a pushed-back token resulting from mismatching lookahead.
-        if (lookahead != 0) {
-            MOZ_ASSERT(!flags.hadError);
-            lookahead--;
-            cursor = (cursor + 1) & ntokensMask;
-            TokenKind tt = currentToken().type;
-            MOZ_ASSERT(tt != TOK_EOL);
-            verifyConsistentModifier(modifier, currentToken());
-            *ttp = tt;
-            return true;
-        }
-
-        return getTokenInternal(ttp, modifier);
-    }
-
-    // Push the last scanned token back into the stream.
-    void ungetToken() {
-        MOZ_ASSERT(lookahead < maxLookahead);
-        lookahead++;
-        cursor = (cursor - 1) & ntokensMask;
-    }
-
-    MOZ_MUST_USE bool peekToken(TokenKind* ttp, Modifier modifier = None) {
-        if (lookahead > 0) {
-            MOZ_ASSERT(!flags.hadError);
-            verifyConsistentModifier(modifier, nextToken());
-            *ttp = nextToken().type;
-            return true;
-        }
-        if (!getTokenInternal(ttp, modifier))
-            return false;
-        ungetToken();
-        return true;
-    }
-
-    MOZ_MUST_USE bool peekTokenPos(TokenPos* posp, Modifier modifier = None) {
-        if (lookahead == 0) {
-            TokenKind tt;
-            if (!getTokenInternal(&tt, modifier))
-                return false;
-            ungetToken();
-            MOZ_ASSERT(hasLookahead());
-        } else {
-            MOZ_ASSERT(!flags.hadError);
-            verifyConsistentModifier(modifier, nextToken());
-        }
-        *posp = nextToken().pos;
-        return true;
-    }
-
-    MOZ_MUST_USE bool peekOffset(uint32_t* offset, Modifier modifier = None) {
-        TokenPos pos;
-        if (!peekTokenPos(&pos, modifier))
-            return false;
-        *offset = pos.begin;
-        return true;
-    }
-
-    // This is like peekToken(), with one exception:  if there is an EOL
-    // between the end of the current token and the start of the next token, it
-    // return true and store TOK_EOL in |*ttp|.  In that case, no token with
-    // TOK_EOL is actually created, just a TOK_EOL TokenKind is returned, and
-    // currentToken() shouldn't be consulted.  (This is the only place TOK_EOL
-    // is produced.)
-    MOZ_ALWAYS_INLINE MOZ_MUST_USE bool
-    peekTokenSameLine(TokenKind* ttp, Modifier modifier = None) {
-        const Token& curr = currentToken();
-
-        // If lookahead != 0, we have scanned ahead at least one token, and
-        // |lineno| is the line that the furthest-scanned token ends on.  If
-        // it's the same as the line that the current token ends on, that's a
-        // stronger condition than what we are looking for, and we don't need
-        // to return TOK_EOL.
-        if (lookahead != 0) {
-            bool onThisLine;
-            if (!srcCoords.isOnThisLine(curr.pos.end, lineno, &onThisLine))
-                return reportError(JSMSG_OUT_OF_MEMORY);
-            if (onThisLine) {
-                MOZ_ASSERT(!flags.hadError);
-                verifyConsistentModifier(modifier, nextToken());
-                *ttp = nextToken().type;
-                return true;
-            }
-        }
-
-        // The above check misses two cases where we don't have to return
-        // TOK_EOL.
-        // - The next token starts on the same line, but is a multi-line token.
-        // - The next token starts on the same line, but lookahead==2 and there
-        //   is a newline between the next token and the one after that.
-        // The following test is somewhat expensive but gets these cases (and
-        // all others) right.
-        TokenKind tmp;
-        if (!getToken(&tmp, modifier))
-            return false;
-        const Token& next = currentToken();
-        ungetToken();
-
-        *ttp = srcCoords.lineNum(curr.pos.end) == srcCoords.lineNum(next.pos.begin)
-             ? next.type
-             : TOK_EOL;
-        return true;
-    }
-
-    // Get the next token from the stream if its kind is |tt|.
-    MOZ_MUST_USE bool matchToken(bool* matchedp, TokenKind tt, Modifier modifier = None) {
-        TokenKind token;
-        if (!getToken(&token, modifier))
-            return false;
-        if (token == tt) {
-            *matchedp = true;
-        } else {
-            ungetToken();
-            *matchedp = false;
-        }
-        return true;
-    }
-
-    void consumeKnownToken(TokenKind tt, Modifier modifier = None) {
-        bool matched;
-        MOZ_ASSERT(hasLookahead());
-        MOZ_ALWAYS_TRUE(matchToken(&matched, tt, modifier));
-        MOZ_ALWAYS_TRUE(matched);
-    }
-
-    MOZ_MUST_USE bool nextTokenEndsExpr(bool* endsExpr) {
-        TokenKind tt;
-        if (!peekToken(&tt))
-            return false;
-        *endsExpr = isExprEnding[tt];
-        return true;
-    }
-
-    class MOZ_STACK_CLASS Position {
-      public:
-        // The Token fields may contain pointers to atoms, so for correct
-        // rooting we must ensure collection of atoms is disabled while objects
-        // of this class are live.  Do this by requiring a dummy AutoKeepAtoms
-        // reference in the constructor.
-        //
-        // This class is explicity ignored by the analysis, so don't add any
-        // more pointers to GC things here!
-        explicit Position(AutoKeepAtoms&) { }
-      private:
-        Position(const Position&) = delete;
-        friend class TokenStream;
-        const char16_t* buf;
-        Flags flags;
-        unsigned lineno;
-        size_t linebase;
-        size_t prevLinebase;
-        Token currentToken;
-        unsigned lookahead;
-        Token lookaheadTokens[maxLookahead];
-    };
-
-    MOZ_MUST_USE bool advance(size_t position);
-    void tell(Position*);
-    void seek(const Position& pos);
-    MOZ_MUST_USE bool seek(const Position& pos, const TokenStream& other);
 #ifdef DEBUG
     inline bool debugHasNoLookahead() const {
         return lookahead == 0;
     }
 #endif
-
-    const char16_t* rawCharPtrAt(size_t offset) const {
-        return userbuf.rawCharPtrAt(offset);
-    }
-
-    const char16_t* rawLimit() const {
-        return userbuf.limit();
-    }
 
     bool hasDisplayURL() const {
         return displayURL_ != nullptr;
@@ -846,6 +543,374 @@ class MOZ_STACK_CLASS TokenStream
         return options_;
     }
 
+    /**
+     * Fill in |err|, excepting line-of-context-related fields.  If the token
+     * stream has location information, use that and return true.  If it does
+     * not, use the caller's location information and return false.
+     */
+    bool fillExcludingContext(ErrorMetadata* err, uint32_t offset);
+
+    void updateFlagsForEOL();
+
+    const Token& nextToken() const {
+        MOZ_ASSERT(hasLookahead());
+        return tokens[(cursor + 1) & ntokensMask];
+    }
+
+    bool hasLookahead() const { return lookahead > 0; }
+
+  public:
+    MOZ_MUST_USE bool compileWarning(ErrorMetadata&& metadata, UniquePtr<JSErrorNotes> notes,
+                                     unsigned flags, unsigned errorNumber, va_list args);
+
+    void reportErrorNoOffset(unsigned errorNumber, ...);
+
+    // Compute error metadata for an error at no offset.
+    void computeErrorMetadataNoOffset(ErrorMetadata* err);
+
+  protected:
+    // Options used for parsing/tokenizing.
+    const ReadOnlyCompileOptions& options_;
+
+    Token               tokens[ntokens];    // circular token buffer
+    unsigned            cursor;             // index of last parsed token
+    unsigned            lookahead;          // count of lookahead tokens
+    unsigned            lineno;             // current line number
+    Flags               flags;              // flags -- see above
+    size_t              linebase;           // start of current line
+    size_t              prevLinebase;       // start of previous line;  size_t(-1) if on the first line
+    const char*         filename;           // input filename or null
+    UniqueTwoByteChars  displayURL_;        // the user's requested source URL or null
+    UniqueTwoByteChars  sourceMapURL_;      // source map's filename or null
+    uint8_t             isExprEnding[TOK_LIMIT];// which tokens definitely terminate exprs?
+    JSContext* const    cx;
+    bool                mutedErrors;
+    StrictModeGetter*   strictModeGetter;  // used to test for strict mode
+};
+
+// TokenStream is the lexical scanner for Javascript source text.
+//
+// It takes a buffer of char16_t characters and linearly scans it into |Token|s.
+// Internally the class uses a four element circular buffer |tokens| of
+// |Token|s. As an index for |tokens|, the member |cursor| points to the
+// current token.
+// Calls to getToken() increase |cursor| by one and return the new current
+// token. If a TokenStream was just created, the current token is initialized
+// with random data (i.e. not initialized). It is therefore important that
+// one of the first four member functions listed below is called first.
+// The circular buffer lets us go back up to two tokens from the last
+// scanned token. Internally, the relative number of backward steps that were
+// taken (via ungetToken()) after the last token was scanned is stored in
+// |lookahead|.
+//
+// The following table lists in which situations it is safe to call each listed
+// function. No checks are made by the functions in non-debug builds.
+//
+// Function Name     | Precondition; changes to |lookahead|
+// ------------------+---------------------------------------------------------
+// getToken          | none; if |lookahead > 0| then |lookahead--|
+// peekToken         | none; if |lookahead == 0| then |lookahead == 1|
+// peekTokenSameLine | none; if |lookahead == 0| then |lookahead == 1|
+// matchToken        | none; if |lookahead > 0| and the match succeeds then
+//                   |       |lookahead--|
+// consumeKnownToken | none; if |lookahead > 0| then |lookahead--|
+// ungetToken        | 0 <= |lookahead| <= |maxLookahead - 1|; |lookahead++|
+//
+// The behavior of the token scanning process (see getTokenInternal()) can be
+// modified by calling one of the first four above listed member functions with
+// an optional argument of type Modifier.  However, the modifier will be
+// ignored unless |lookahead == 0| holds.  Due to constraints of the grammar,
+// this turns out not to be a problem in practice. See the
+// mozilla.dev.tech.js-engine.internals thread entitled 'Bug in the scanner?'
+// for more details:
+// https://groups.google.com/forum/?fromgroups=#!topic/mozilla.dev.tech.js-engine.internals/2JLH5jRcr7E).
+//
+// The methods seek() and tell() allow to rescan from a previous visited
+// location of the buffer.
+//
+class MOZ_STACK_CLASS TokenStream final : public TokenStreamAnyChars
+{
+  public:
+    using CharT = char16_t;
+    using CharBuffer = Vector<CharT, 32>;
+
+    TokenStream(JSContext* cx, const ReadOnlyCompileOptions& options,
+                const CharT* base, size_t length, StrictModeGetter* smg);
+
+    const CharBuffer& getTokenbuf() const { return tokenbuf; }
+
+    // If there is an invalid escape in a template, report it and return false,
+    // otherwise return true.
+    bool checkForInvalidTemplateEscapeError() {
+        if (invalidTemplateEscapeType == InvalidEscapeType::None)
+            return true;
+
+        reportInvalidEscapeError(invalidTemplateEscapeOffset, invalidTemplateEscapeType);
+        return false;
+    }
+
+    // TokenStream-specific error reporters.
+    void reportError(unsigned errorNumber, ...);
+
+    // Report the given error at the current offset.
+    void error(unsigned errorNumber, ...);
+
+    // Report the given error at the given offset.
+    void errorAt(uint32_t offset, unsigned errorNumber, ...);
+
+    // Warn at the current offset.
+    MOZ_MUST_USE bool warning(unsigned errorNumber, ...);
+
+  private:
+    // Compute a line of context for an otherwise-filled-in |err| at the given
+    // offset in this token stream.  (This function basically exists to make
+    // |computeErrorMetadata| more readable and shouldn't be called elsewhere.)
+    MOZ_MUST_USE bool computeLineOfContext(ErrorMetadata* err, uint32_t offset);
+
+  public:
+    // Compute error metadata for an error at the given offset.
+    MOZ_MUST_USE bool computeErrorMetadata(ErrorMetadata* err, uint32_t offset);
+
+    // General-purpose error reporters.  You should avoid calling these
+    // directly, and instead use the more succinct alternatives (error(),
+    // warning(), &c.) in TokenStream, Parser, and BytecodeEmitter.
+    bool reportStrictModeErrorNumberVA(UniquePtr<JSErrorNotes> notes, uint32_t offset,
+                                       bool strictMode, unsigned errorNumber, va_list args);
+    bool reportExtraWarningErrorNumberVA(UniquePtr<JSErrorNotes> notes, uint32_t offset,
+                                         unsigned errorNumber, va_list args);
+
+    JSAtom* getRawTemplateStringAtom() {
+        MOZ_ASSERT(currentToken().type == TOK_TEMPLATE_HEAD ||
+                   currentToken().type == TOK_NO_SUBS_TEMPLATE);
+        const CharT* cur = userbuf.rawCharPtrAt(currentToken().pos.begin + 1);
+        const CharT* end;
+        if (currentToken().type == TOK_TEMPLATE_HEAD) {
+            // Of the form    |`...${|   or   |}...${|
+            end = userbuf.rawCharPtrAt(currentToken().pos.end - 2);
+        } else {
+            // NO_SUBS_TEMPLATE is of the form   |`...`|   or   |}...`|
+            end = userbuf.rawCharPtrAt(currentToken().pos.end - 1);
+        }
+
+        CharBuffer charbuf(cx);
+        while (cur < end) {
+            CharT ch = *cur;
+            if (ch == '\r') {
+                ch = '\n';
+                if ((cur + 1 < end) && (*(cur + 1) == '\n'))
+                    cur++;
+            }
+            if (!charbuf.append(ch))
+                return nullptr;
+            cur++;
+        }
+        return AtomizeChars(cx, charbuf.begin(), charbuf.length());
+    }
+
+  private:
+    // This is private because it should only be called by the tokenizer while
+    // tokenizing not by, for example, BytecodeEmitter.
+    bool reportStrictModeError(unsigned errorNumber, ...);
+
+    void reportInvalidEscapeError(uint32_t offset, InvalidEscapeType type) {
+        switch (type) {
+            case InvalidEscapeType::None:
+                MOZ_ASSERT_UNREACHABLE("unexpected InvalidEscapeType");
+                return;
+            case InvalidEscapeType::Hexadecimal:
+                errorAt(offset, JSMSG_MALFORMED_ESCAPE, "hexadecimal");
+                return;
+            case InvalidEscapeType::Unicode:
+                errorAt(offset, JSMSG_MALFORMED_ESCAPE, "Unicode");
+                return;
+            case InvalidEscapeType::UnicodeOverflow:
+                errorAt(offset, JSMSG_UNICODE_OVERFLOW, "escape sequence");
+                return;
+            case InvalidEscapeType::Octal:
+                errorAt(offset, JSMSG_DEPRECATED_OCTAL);
+                return;
+        }
+    }
+
+    static JSAtom* atomize(JSContext* cx, CharBuffer& cb);
+    MOZ_MUST_USE bool putIdentInTokenbuf(const CharT* identStart);
+
+  public:
+    // Advance to the next token.  If the token stream encountered an error,
+    // return false.  Otherwise return true and store the token kind in |*ttp|.
+    MOZ_MUST_USE bool getToken(TokenKind* ttp, Modifier modifier = None) {
+        // Check for a pushed-back token resulting from mismatching lookahead.
+        if (lookahead != 0) {
+            MOZ_ASSERT(!flags.hadError);
+            lookahead--;
+            cursor = (cursor + 1) & ntokensMask;
+            TokenKind tt = currentToken().type;
+            MOZ_ASSERT(tt != TOK_EOL);
+            verifyConsistentModifier(modifier, currentToken());
+            *ttp = tt;
+            return true;
+        }
+
+        return getTokenInternal(ttp, modifier);
+    }
+
+    // Push the last scanned token back into the stream.
+    void ungetToken() {
+        MOZ_ASSERT(lookahead < maxLookahead);
+        lookahead++;
+        cursor = (cursor - 1) & ntokensMask;
+    }
+
+    MOZ_MUST_USE bool peekToken(TokenKind* ttp, Modifier modifier = None) {
+        if (lookahead > 0) {
+            MOZ_ASSERT(!flags.hadError);
+            verifyConsistentModifier(modifier, nextToken());
+            *ttp = nextToken().type;
+            return true;
+        }
+        if (!getTokenInternal(ttp, modifier))
+            return false;
+        ungetToken();
+        return true;
+    }
+
+    MOZ_MUST_USE bool peekTokenPos(TokenPos* posp, Modifier modifier = None) {
+        if (lookahead == 0) {
+            TokenKind tt;
+            if (!getTokenInternal(&tt, modifier))
+                return false;
+            ungetToken();
+            MOZ_ASSERT(hasLookahead());
+        } else {
+            MOZ_ASSERT(!flags.hadError);
+            verifyConsistentModifier(modifier, nextToken());
+        }
+        *posp = nextToken().pos;
+        return true;
+    }
+
+    MOZ_MUST_USE bool peekOffset(uint32_t* offset, Modifier modifier = None) {
+        TokenPos pos;
+        if (!peekTokenPos(&pos, modifier))
+            return false;
+        *offset = pos.begin;
+        return true;
+    }
+
+    // This is like peekToken(), with one exception:  if there is an EOL
+    // between the end of the current token and the start of the next token, it
+    // return true and store TOK_EOL in |*ttp|.  In that case, no token with
+    // TOK_EOL is actually created, just a TOK_EOL TokenKind is returned, and
+    // currentToken() shouldn't be consulted.  (This is the only place TOK_EOL
+    // is produced.)
+    MOZ_ALWAYS_INLINE MOZ_MUST_USE bool
+    peekTokenSameLine(TokenKind* ttp, Modifier modifier = None) {
+        const Token& curr = currentToken();
+
+        // If lookahead != 0, we have scanned ahead at least one token, and
+        // |lineno| is the line that the furthest-scanned token ends on.  If
+        // it's the same as the line that the current token ends on, that's a
+        // stronger condition than what we are looking for, and we don't need
+        // to return TOK_EOL.
+        if (lookahead != 0) {
+            bool onThisLine;
+            if (!srcCoords.isOnThisLine(curr.pos.end, lineno, &onThisLine)) {
+                reportError(JSMSG_OUT_OF_MEMORY);
+                return false;
+            }
+
+            if (onThisLine) {
+                MOZ_ASSERT(!flags.hadError);
+                verifyConsistentModifier(modifier, nextToken());
+                *ttp = nextToken().type;
+                return true;
+            }
+        }
+
+        // The above check misses two cases where we don't have to return
+        // TOK_EOL.
+        // - The next token starts on the same line, but is a multi-line token.
+        // - The next token starts on the same line, but lookahead==2 and there
+        //   is a newline between the next token and the one after that.
+        // The following test is somewhat expensive but gets these cases (and
+        // all others) right.
+        TokenKind tmp;
+        if (!getToken(&tmp, modifier))
+            return false;
+        const Token& next = currentToken();
+        ungetToken();
+
+        *ttp = srcCoords.lineNum(curr.pos.end) == srcCoords.lineNum(next.pos.begin)
+             ? next.type
+             : TOK_EOL;
+        return true;
+    }
+
+    // Get the next token from the stream if its kind is |tt|.
+    MOZ_MUST_USE bool matchToken(bool* matchedp, TokenKind tt, Modifier modifier = None) {
+        TokenKind token;
+        if (!getToken(&token, modifier))
+            return false;
+        if (token == tt) {
+            *matchedp = true;
+        } else {
+            ungetToken();
+            *matchedp = false;
+        }
+        return true;
+    }
+
+    void consumeKnownToken(TokenKind tt, Modifier modifier = None) {
+        bool matched;
+        MOZ_ASSERT(hasLookahead());
+        MOZ_ALWAYS_TRUE(matchToken(&matched, tt, modifier));
+        MOZ_ALWAYS_TRUE(matched);
+    }
+
+    MOZ_MUST_USE bool nextTokenEndsExpr(bool* endsExpr) {
+        TokenKind tt;
+        if (!peekToken(&tt))
+            return false;
+        *endsExpr = isExprEnding[tt];
+        return true;
+    }
+
+    class MOZ_STACK_CLASS Position {
+      public:
+        // The Token fields may contain pointers to atoms, so for correct
+        // rooting we must ensure collection of atoms is disabled while objects
+        // of this class are live.  Do this by requiring a dummy AutoKeepAtoms
+        // reference in the constructor.
+        //
+        // This class is explicity ignored by the analysis, so don't add any
+        // more pointers to GC things here!
+        explicit Position(AutoKeepAtoms&) { }
+      private:
+        Position(const Position&) = delete;
+        friend class TokenStream;
+        const CharT* buf;
+        Flags flags;
+        unsigned lineno;
+        size_t linebase;
+        size_t prevLinebase;
+        Token currentToken;
+        unsigned lookahead;
+        Token lookaheadTokens[maxLookahead];
+    };
+
+    MOZ_MUST_USE bool advance(size_t position);
+    void tell(Position*);
+    void seek(const Position& pos);
+    MOZ_MUST_USE bool seek(const Position& pos, const TokenStream& other);
+
+    const CharT* rawCharPtrAt(size_t offset) const {
+        return userbuf.rawCharPtrAt(offset);
+    }
+
+    const CharT* rawLimit() const {
+        return userbuf.limit();
+    }
+
   private:
     // This is the low-level interface to the JS source code buffer.  It just
     // gets raw chars, basically.  TokenStreams functions are layered on top
@@ -859,7 +924,7 @@ class MOZ_STACK_CLASS TokenStream
     // begins, the offset of |buf[0]|.
     class TokenBuf {
       public:
-        TokenBuf(JSContext* cx, const char16_t* buf, size_t length, size_t startOffset)
+        TokenBuf(JSContext* cx, const CharT* buf, size_t length, size_t startOffset)
           : base_(buf),
             startOffset_(startOffset),
             limit_(buf + length),
@@ -882,25 +947,25 @@ class MOZ_STACK_CLASS TokenStream
             return startOffset_ + mozilla::PointerRangeSize(base_, ptr);
         }
 
-        const char16_t* rawCharPtrAt(size_t offset) const {
+        const CharT* rawCharPtrAt(size_t offset) const {
             MOZ_ASSERT(startOffset_ <= offset);
             MOZ_ASSERT(offset - startOffset_ <= mozilla::PointerRangeSize(base_, limit_));
             return base_ + (offset - startOffset_);
         }
 
-        const char16_t* limit() const {
+        const CharT* limit() const {
             return limit_;
         }
 
-        char16_t getRawChar() {
+        CharT getRawChar() {
             return *ptr++;      // this will nullptr-crash if poisoned
         }
 
-        char16_t peekRawChar() const {
+        CharT peekRawChar() const {
             return *ptr;        // this will nullptr-crash if poisoned
         }
 
-        bool matchRawChar(char16_t c) {
+        bool matchRawChar(CharT c) {
             if (*ptr == c) {    // this will nullptr-crash if poisoned
                 ptr++;
                 return true;
@@ -908,7 +973,7 @@ class MOZ_STACK_CLASS TokenStream
             return false;
         }
 
-        bool matchRawCharBackwards(char16_t c) {
+        bool matchRawCharBackwards(CharT c) {
             MOZ_ASSERT(ptr);     // make sure it hasn't been poisoned
             if (*(ptr - 1) == c) {
                 ptr--;
@@ -922,13 +987,13 @@ class MOZ_STACK_CLASS TokenStream
             ptr--;
         }
 
-        const char16_t* addressOfNextRawChar(bool allowPoisoned = false) const {
+        const CharT* addressOfNextRawChar(bool allowPoisoned = false) const {
             MOZ_ASSERT_IF(!allowPoisoned, ptr);     // make sure it hasn't been poisoned
             return ptr;
         }
 
         // Use this with caution!
-        void setAddressOfNextRawChar(const char16_t* a, bool allowPoisoned = false) {
+        void setAddressOfNextRawChar(const CharT* a, bool allowPoisoned = false) {
             MOZ_ASSERT_IF(!allowPoisoned, a);
             ptr = a;
         }
@@ -941,7 +1006,10 @@ class MOZ_STACK_CLASS TokenStream
 #endif
 
         static bool isRawEOLChar(int32_t c) {
-            return c == '\n' || c == '\r' || c == LINE_SEPARATOR || c == PARA_SEPARATOR;
+            return c == '\n' ||
+                   c == '\r' ||
+                   c == unicode::LINE_SEPARATOR ||
+                   c == unicode::PARA_SEPARATOR;
         }
 
         // Returns the offset of the next EOL, but stops once 'max' characters
@@ -949,18 +1017,23 @@ class MOZ_STACK_CLASS TokenStream
         size_t findEOLMax(size_t start, size_t max);
 
       private:
-        const char16_t* base_;          // base of buffer
+        const CharT* base_;          // base of buffer
         uint32_t startOffset_;          // offset of base_[0]
-        const char16_t* limit_;         // limit for quick bounds check
-        const char16_t* ptr;            // next char to get
+        const CharT* limit_;         // limit for quick bounds check
+        const CharT* ptr;            // next char to get
     };
 
     MOZ_MUST_USE bool getTokenInternal(TokenKind* ttp, Modifier modifier);
 
     MOZ_MUST_USE bool getStringOrTemplateToken(int untilChar, Token** tp);
 
-    int32_t getChar();
+    // Try to get the next character, normalizing '\r', '\r\n', and '\n' into
+    // '\n'.  Also updates internal line-counter state.  Return true on success
+    // and store the character in |*c|.  Return false and leave |*c| undefined
+    // on failure.
+    MOZ_MUST_USE bool getChar(int32_t* cp);
     int32_t getCharIgnoreEOL();
+
     void ungetChar(int32_t c);
     void ungetCharIgnoreEOL(int32_t c);
     Token* newToken(ptrdiff_t adjust);
@@ -969,13 +1042,13 @@ class MOZ_STACK_CLASS TokenStream
     uint32_t matchUnicodeEscapeIdStart(uint32_t* codePoint);
     bool matchUnicodeEscapeIdent(uint32_t* codePoint);
     bool matchTrailForLeadSurrogate(char16_t lead, char16_t* trail, uint32_t* codePoint);
-    bool peekChars(int n, char16_t* cp);
+    bool peekChars(int n, CharT* cp);
 
     MOZ_MUST_USE bool getDirectives(bool isMultiline, bool shouldWarnDeprecated);
     MOZ_MUST_USE bool getDirective(bool isMultiline, bool shouldWarnDeprecated,
                                    const char* directive, uint8_t directiveLength,
                                    const char* errorMsgPragma,
-                                   UniquePtr<char16_t[], JS::FreePolicy>* destination);
+                                   UniquePtr<CharT[], JS::FreePolicy>* destination);
     MOZ_MUST_USE bool getDisplayURL(bool isMultiline, bool shouldWarnDeprecated);
     MOZ_MUST_USE bool getSourceMappingURL(bool isMultiline, bool shouldWarnDeprecated);
 
@@ -987,12 +1060,14 @@ class MOZ_STACK_CLASS TokenStream
     }
 
     void consumeKnownChar(int32_t expect) {
-        mozilla::DebugOnly<int32_t> c = getChar();
+        int32_t c;
+        MOZ_ALWAYS_TRUE(getChar(&c));
         MOZ_ASSERT(c == expect);
     }
 
     MOZ_MUST_USE bool peekChar(int32_t* c) {
-        *c = getChar();
+        if (!getChar(c))
+            return false;
         ungetChar(*c);
         return true;
     }
@@ -1012,35 +1087,10 @@ class MOZ_STACK_CLASS TokenStream
         }
     }
 
-    void updateLineInfoForEOL();
-    void updateFlagsForEOL();
+    MOZ_MUST_USE MOZ_ALWAYS_INLINE bool updateLineInfoForEOL();
 
-    const Token& nextToken() const {
-        MOZ_ASSERT(hasLookahead());
-        return tokens[(cursor + 1) & ntokensMask];
-    }
-
-    bool hasLookahead() const { return lookahead > 0; }
-
-    // Options used for parsing/tokenizing.
-    const ReadOnlyCompileOptions& options_;
-
-    Token               tokens[ntokens];    // circular token buffer
-    unsigned            cursor;             // index of last parsed token
-    unsigned            lookahead;          // count of lookahead tokens
-    unsigned            lineno;             // current line number
-    Flags               flags;              // flags -- see above
-    size_t              linebase;           // start of current line
-    size_t              prevLinebase;       // start of previous line;  size_t(-1) if on the first line
     TokenBuf            userbuf;            // user input buffer
-    const char*         filename;           // input filename or null
-    UniqueTwoByteChars  displayURL_;        // the user's requested source URL or null
-    UniqueTwoByteChars  sourceMapURL_;      // source map's filename or null
     CharBuffer          tokenbuf;           // current token string buffer
-    uint8_t             isExprEnding[TOK_LIMIT];// which tokens definitely terminate exprs?
-    JSContext* const    cx;
-    bool                mutedErrors;
-    StrictModeGetter*   strictModeGetter;  // used to test for strict mode
 };
 
 extern const char*

@@ -148,7 +148,7 @@ function testCreateEvent()
 {
   var evt;
   try {
-    evt = document.createEvent("TimeEvents");
+    evt = document.createEvent("TimeEvent");
   } catch (e) {
     ok(false, "Failed to create TimeEvent via script: " + e);
     return;
@@ -321,14 +321,6 @@ d.addEventListener("zoom", function(e) {
   is(e.type, expectedEvents[0]);
   expectedEvents.shift();
 });
-
-var zoomEvent = document.createEvent("svgzoomevent");
-zoomEvent.initEvent("zoom", true, true);
-d.dispatchEvent(zoomEvent);
-zoomEvent = document.createEvent("svgzoomevent");
-zoomEvent.initEvent("SVGZoom", true, true);
-d.dispatchEvent(zoomEvent);
-is(expectedEvents.length, 0, "Got all the expected events.");
 
 ]]>
 </script>

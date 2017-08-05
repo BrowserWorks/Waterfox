@@ -2,6 +2,59 @@
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
 
+%ifdef MOZ_PHOTON_THEME
+%ifdef CAN_DRAW_IN_TITLEBAR
+/* Add space for dragging the window */
+%ifdef MENUBAR_CAN_AUTOHIDE
+:root[tabsintitlebar][sizemode=normal] #toolbar-menubar[autohide=true] ~ #TabsToolbar {
+  padding-inline-start: 40px;
+}
+%else
+:root[tabsintitlebar][sizemode=normal] #TabsToolbar {
+  padding-inline-start: 40px;
+}
+%endif
+%endif
+
+/* Go button */
+.urlbar-go-button {
+  padding: 0 3px;
+  list-style-image: url("chrome://browser/skin/reload-stop-go.png");
+}
+
+.urlbar-go-button {
+  -moz-image-region: rect(0, 42px, 14px, 28px);
+}
+
+.urlbar-go-button:hover {
+  -moz-image-region: rect(14px, 42px, 28px, 28px);
+}
+
+.urlbar-go-button:hover:active {
+  -moz-image-region: rect(28px, 42px, 42px, 28px);
+}
+
+.urlbar-go-button:-moz-locale-dir(rtl) {
+  transform: scaleX(-1);
+}
+
+@media (min-resolution: 1.1dppx) {
+  .urlbar-go-button {
+    list-style-image: url("chrome://browser/skin/reload-stop-go@2x.png");
+    -moz-image-region: rect(0, 84px, 28px, 56px);
+    width: 20px;
+  }
+
+  .urlbar-go-button:hover {
+    -moz-image-region: rect(28px, 84px, 56px, 56px);
+  }
+
+  .urlbar-go-button:hover:active {
+    -moz-image-region: rect(56px, 84px, 84px, 56px);
+  }
+}
+%endif
+
 /* Zoom button */
 #urlbar-zoom-button {
   margin: 0 3px;
@@ -31,4 +84,52 @@
 
 #urlbar-zoom-button > .toolbarbutton-icon {
   display: none;
+}
+
+/* Page action button */
+#urlbar-page-action-button {
+  -moz-appearance: none;
+  border-style: none;
+  list-style-image: url("chrome://browser/skin/page-action.svg");
+  margin: 0;
+  padding: 0 6px;
+  color: inherit;
+  -moz-context-properties: fill;
+  fill: currentColor;
+}
+
+#urlbar-page-action-button > .toolbarbutton-icon {
+  width: 16px;
+}
+
+#page-action-bookmark-button {
+  list-style-image: url("chrome://browser/skin/bookmark-hollow.svg");
+}
+
+#page-action-bookmark-button[starred] {
+  list-style-image: url("chrome://browser/skin/bookmark.svg");
+}
+
+#page-action-copy-url-button {
+  list-style-image: url("chrome://browser/skin/link.svg");
+}
+
+#page-action-email-link-button {
+  list-style-image: url("chrome://browser/skin/email-link.svg");
+}
+
+#page-action-send-to-device-button {
+  list-style-image: url("chrome://browser/skin/device-mobile.svg");
+}
+
+.page-action-sendToDevice-device[clientType=mobile] {
+  list-style-image: url("chrome://browser/skin/device-mobile.svg");
+}
+
+.page-action-sendToDevice-device[clientType=desktop] {
+  list-style-image: url("chrome://browser/skin/device-desktop.svg");
+}
+
+#page-action-sendToDevice-fxa-button {
+  list-style-image: url("chrome://browser/skin/sync.svg");
 }

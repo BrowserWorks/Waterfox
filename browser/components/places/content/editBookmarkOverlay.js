@@ -3,8 +3,6 @@
  * You can obtain one at http://mozilla.org/MPL/2.0/. */
 
 Components.utils.import("resource://gre/modules/XPCOMUtils.jsm");
-XPCOMUtils.defineLazyModuleGetter(this, "Task",
-                                  "resource://gre/modules/Task.jsm");
 
 const LAST_USED_ANNO = "bookmarkPropertiesDialog/folderLastUsed";
 const MAX_FOLDER_ITEM_IN_MENU_LIST = 5;
@@ -57,12 +55,14 @@ var gEditItemOverlay = {
       }
     }
     let focusedElement = aInitInfo.focusedElement;
+    let onPanelReady = aInitInfo.onPanelReady;
 
     return this._paneInfo = { itemId, itemGuid, isItem,
                               isURI, uri, title,
                               isBookmark, isFolderShortcut, isParentReadOnly,
                               bulkTagging, uris,
-                              visibleRows, postData, isTag, focusedElement };
+                              visibleRows, postData, isTag, focusedElement,
+                              onPanelReady };
   },
 
   get initialized() {
@@ -131,7 +131,7 @@ var gEditItemOverlay = {
                         PlacesUIUtils.getItemDescription(this._paneInfo.itemId));
   },
 
-  _initKeywordField: Task.async(function* (newKeyword = "") {
+  async _initKeywordField(newKeyword = "") {
     if (!this._paneInfo.isBookmark) {
       throw new Error("_initKeywordField called unexpectedly");
     }
@@ -144,7 +144,7 @@ var gEditItemOverlay = {
 
     if (!newKeyword) {
       let entries = [];
-      yield PlacesUtils.keywords.fetch({ url: this._paneInfo.uri.spec },
+      await PlacesUtils.keywords.fetch({ url: this._paneInfo.uri.spec },
                                        e => entries.push(e));
       if (entries.length > 0) {
         // We show an existing keyword if either POST data was not provided, or
@@ -162,16 +162,16 @@ var gEditItemOverlay = {
         }
       }
     }
-  }),
+  },
 
-  _initLoadInSidebar: Task.async(function* () {
+  async _initLoadInSidebar() {
     if (!this._paneInfo.isBookmark)
       throw new Error("_initLoadInSidebar called unexpectedly");
 
     this._loadInSidebarCheckbox.checked =
       PlacesUtils.annotations.itemHasAnnotation(
         this._paneInfo.itemId, PlacesUIUtils.LOAD_IN_SIDEBAR_ANNO);
-  }),
+  },
 
   /**
    * Initialize the panel.
@@ -214,7 +214,8 @@ var gEditItemOverlay = {
 
     let { itemId, isItem, isURI,
           isBookmark, bulkTagging, uris,
-          visibleRows, focusedElement } = this._setPaneInfo(aInfo);
+          visibleRows, focusedElement,
+          onPanelReady } = this._setPaneInfo(aInfo);
 
     let showOrCollapse =
       (rowId, isAppropriateForInput, nameInHiddenRows = null) => {
@@ -281,31 +282,39 @@ var gEditItemOverlay = {
 
     // Observe changes.
     if (!this._observersAdded) {
-      PlacesUtils.bookmarks.addObserver(this, false);
+      PlacesUtils.bookmarks.addObserver(this);
       window.addEventListener("unload", this);
       this._observersAdded = true;
     }
 
-    // The focusedElement possible values are:
-    //  * preferred: focus the field that the user touched first the last
-    //    time the pane was shown (either namePicker or tagsField)
-    //  * first: focus the first non collapsed textbox
-    // Note: since all controls are collapsed by default, we don't get the
-    // default XUL dialog behavior, that selects the first control, so we set
-    // the focus explicitly.
-    // Note: If focusedElement === "preferred", this file expects gPrefService
-    // to be defined in the global scope.
-    let elt;
-    if (focusedElement === "preferred") {
-      /* eslint-disable no-undef */
-      elt = this._element(gPrefService.getCharPref("browser.bookmarks.editDialog.firstEditField"));
-      /* eslint-enable no-undef */
-    } else if (focusedElement === "first") {
-      elt = document.querySelector("textbox:not([collapsed=true])");
-    }
-    if (elt) {
-      elt.focus();
-      elt.select();
+    let focusElement = () => {
+      // The focusedElement possible values are:
+      //  * preferred: focus the field that the user touched first the last
+      //    time the pane was shown (either namePicker or tagsField)
+      //  * first: focus the first non collapsed textbox
+      // Note: since all controls are collapsed by default, we don't get the
+      // default XUL dialog behavior, that selects the first control, so we set
+      // the focus explicitly.
+      // Note: If focusedElement === "preferred", this file expects gPrefService
+      // to be defined in the global scope.
+      let elt;
+      if (focusedElement === "preferred") {
+        /* eslint-disable no-undef */
+        elt = this._element(gPrefService.getCharPref("browser.bookmarks.editDialog.firstEditField"));
+        /* eslint-enable no-undef */
+      } else if (focusedElement === "first") {
+        elt = document.querySelector("textbox:not([collapsed=true])");
+      }
+      if (elt) {
+        elt.focus();
+        elt.select();
+      }
+    };
+
+    if (onPanelReady) {
+      onPanelReady(focusElement);
+    } else {
+      focusElement();
     }
   },
 
@@ -339,10 +348,23 @@ var gEditItemOverlay = {
     if (aElement.value != aValue) {
       aElement.value = aValue;
 
-      // Clear the undo stack
-      let editor = aElement.editor;
-      if (editor)
-        editor.transactionManager.clear();
+      // Clear the editor's undo stack
+      let transactionManager;
+      try {
+        transactionManager = aElement.editor.transactionManager;
+      } catch (e) {
+        // When retrieving the transaction manager, editor may be null resulting
+        // in a TypeError. Additionally, the transaction manager may not
+        // exist yet, which causes access to it to throw NS_ERROR_FAILURE.
+        // In either event, the transaction manager doesn't exist it, so we
+        // don't need to worry about clearing it.
+        if (!(e instanceof TypeError) && e.result != Cr.NS_ERROR_FAILURE) {
+          throw e;
+        }
+      }
+      if (transactionManager) {
+        transactionManager.clear();
+      }
     }
   },
 
@@ -495,7 +517,7 @@ var gEditItemOverlay = {
   },
 
   // Adds and removes tags for one or more uris.
-  _setTagsFromTagsInputField: Task.async(function* (aCurrentTags, aURIs) {
+  async _setTagsFromTagsInputField(aCurrentTags, aURIs) {
     let { removedTags, newTags } = this._getTagsChanges(aCurrentTags);
     if (removedTags.length + newTags.length == 0)
       return false;
@@ -514,13 +536,13 @@ var gEditItemOverlay = {
       return true;
     }
 
-    let setTags = function* () {
+    let setTags = async function() {
       if (newTags.length > 0) {
-        yield PlacesTransactions.Tag({ urls: aURIs, tags: newTags })
+        await PlacesTransactions.Tag({ urls: aURIs, tags: newTags })
                                 .transact();
       }
       if (removedTags.length > 0) {
-        yield PlacesTransactions.Untag({ urls: aURIs, tags: removedTags })
+        await PlacesTransactions.Untag({ urls: aURIs, tags: removedTags })
                           .transact();
       }
     };
@@ -531,17 +553,17 @@ var gEditItemOverlay = {
     if (window.document.documentElement.id == "places")
       PlacesTransactions.batch(setTags).catch(Components.utils.reportError);
     else
-      Task.spawn(setTags).catch(Components.utils.reportError);
+      setTags().catch(Components.utils.reportError);
     return true;
-  }),
+  },
 
-  _updateTags: Task.async(function*() {
+  async _updateTags() {
     let uris = this._paneInfo.bulkTagging ?
                  this._paneInfo.uris : [this._paneInfo.uri];
     let currentTags = this._paneInfo.bulkTagging ?
-                        yield this._getCommonTags() :
+                        await this._getCommonTags() :
                         PlacesUtils.tagging.getTagsForURI(uris[0]);
-    let anyChanges = yield this._setTagsFromTagsInputField(currentTags, uris);
+    let anyChanges = await this._setTagsFromTagsInputField(currentTags, uris);
     if (!anyChanges)
       return false;
 
@@ -555,7 +577,7 @@ var gEditItemOverlay = {
                     PlacesUtils.tagging.getTagsForURI(this._paneInfo.uri);
     this._initTextField(this._tagsField, currentTags.join(", "), false);
     return true;
-  }),
+  },
 
   /**
    * Stores the first-edit field for this dialog, if the passed-in field
@@ -597,13 +619,13 @@ var gEditItemOverlay = {
         PlacesUtils.transactionManager.doTransaction(txn);
         return;
       }
-      Task.spawn(function* () {
+      (async function() {
         let guid = this._paneInfo.isTag
-                    ? (yield PlacesUtils.promiseItemGuid(this._paneInfo.itemId))
+                    ? (await PlacesUtils.promiseItemGuid(this._paneInfo.itemId))
                     : this._paneInfo.itemGuid;
         PlacesTransactions.EditTitle({ guid, title: newTitle })
                           .transact().catch(Components.utils.reportError);
-      }).catch(Components.utils.reportError);
+      })().catch(Components.utils.reportError);
     }
   },
 
@@ -678,7 +700,7 @@ var gEditItemOverlay = {
     if (!this.initialized || !this._paneInfo.isBookmark)
       return;
 
-    let annotation = { name : PlacesUIUtils.LOAD_IN_SIDEBAR_ANNO };
+    let annotation = { name: PlacesUIUtils.LOAD_IN_SIDEBAR_ANNO };
     if (this._loadInSidebarCheckbox.checked)
       annotation.value = true;
 
@@ -777,11 +799,11 @@ var gEditItemOverlay = {
     if (PlacesUtils.bookmarks.getFolderIdForItem(this._paneInfo.itemId) != containerId &&
         this._paneInfo.itemId != containerId) {
       if (PlacesUIUtils.useAsyncTransactions) {
-        Task.spawn(function* () {
-          let newParentGuid = yield PlacesUtils.promiseItemGuid(containerId);
+        (async () => {
+          let newParentGuid = await PlacesUtils.promiseItemGuid(containerId);
           let guid = this._paneInfo.itemGuid;
-          yield PlacesTransactions.Move({ guid, newParentGuid }).transact();
-        }.bind(this));
+          await PlacesTransactions.Move({ guid, newParentGuid }).transact();
+        })();
       } else {
         let txn = new PlacesMoveItemTransaction(this._paneInfo.itemId,
                                                 containerId,
@@ -800,7 +822,7 @@ var gEditItemOverlay = {
 
       // Auto-show the bookmarks toolbar when adding / moving an item there.
       if (containerId == PlacesUtils.toolbarFolderId) {
-        Services.obs.notifyObservers(null, "autoshow-bookmarks-toolbar", null);
+        Services.obs.notifyObservers(null, "autoshow-bookmarks-toolbar");
       }
     }
 
@@ -833,7 +855,7 @@ var gEditItemOverlay = {
     folderItem.doCommand();
   },
 
-  _markFolderAsRecentlyUsed: Task.async(function* (aFolderId) {
+  async _markFolderAsRecentlyUsed(aFolderId) {
     if (!PlacesUIUtils.useAsyncTransactions) {
       let txns = [];
 
@@ -862,7 +884,7 @@ var gEditItemOverlay = {
     let guids = [];
     while (this._recentFolders.length > MAX_FOLDER_ITEM_IN_MENU_LIST) {
       let folderId = this._recentFolders.pop().folderId;
-      let guid = yield PlacesUtils.promiseItemGuid(folderId);
+      let guid = await PlacesUtils.promiseItemGuid(folderId);
       guids.push(guid);
     }
     if (guids.length > 0) {
@@ -873,10 +895,10 @@ var gEditItemOverlay = {
 
     // Mark folder as recently used
     let annotation = this._getLastUsedAnnotationObject(true);
-    let guid = yield PlacesUtils.promiseItemGuid(aFolderId);
+    let guid = await PlacesUtils.promiseItemGuid(aFolderId);
     PlacesTransactions.Annotate({ guid, annotation })
                       .transact().catch(Components.utils.reportError);
-  }),
+  },
 
   /**
    * Returns an object which could then be used to set/unset the
@@ -892,7 +914,7 @@ var gEditItemOverlay = {
              value: aLastUsed ? new Date().getTime() : null };
   },
 
-  _rebuildTagsSelectorList: Task.async(function* () {
+  async _rebuildTagsSelectorList() {
     let tagsSelector = this._element("tagsSelector");
     let tagsSelectorRow = this._element("tagsSelectorRow");
     if (tagsSelectorRow.collapsed)
@@ -933,9 +955,9 @@ var gEditItemOverlay = {
       tagsSelector.selectedIndex = selectedIndex;
       tagsSelector.ensureIndexIsVisible(selectedIndex);
     }
-  }),
+  },
 
-  toggleTagsSelector: Task.async(function* () {
+  async toggleTagsSelector() {
     var tagsSelector = this._element("tagsSelector");
     var tagsSelectorRow = this._element("tagsSelectorRow");
     var expander = this._element("tagsSelectorExpander");
@@ -944,7 +966,7 @@ var gEditItemOverlay = {
       expander.setAttribute("tooltiptext",
                             expander.getAttribute("tooltiptextup"));
       tagsSelectorRow.collapsed = false;
-      yield this._rebuildTagsSelectorList();
+      await this._rebuildTagsSelectorList();
 
       // This is a no-op if we've added the listener.
       tagsSelector.addEventListener("CheckboxStateChange", this);
@@ -954,7 +976,7 @@ var gEditItemOverlay = {
                             expander.getAttribute("tooltiptextdown"));
       tagsSelectorRow.collapsed = true;
     }
-  }),
+  },
 
   /**
    * Splits "tagsField" element value, returning an array of valid tag strings.
@@ -968,7 +990,7 @@ var gEditItemOverlay = {
                .filter(tag => tag.length > 0); // Kill empty tags.
   },
 
-  newFolder: Task.async(function* () {
+  async newFolder() {
     let ip = this._folderTree.insertionPoint;
 
     // default to the bookmarks menu folder
@@ -981,8 +1003,8 @@ var gEditItemOverlay = {
     // XXXmano: add a separate "New Folder" string at some point...
     let title = this._element("newFolderButton").label;
     if (PlacesUIUtils.useAsyncTransactions) {
-      let parentGuid = yield ip.promiseGuid();
-      yield PlacesTransactions.NewFolder({ parentGuid, title, index: ip.index })
+      let parentGuid = await ip.promiseGuid();
+      await PlacesTransactions.NewFolder({ parentGuid, title, index: ip.index })
                               .transact().catch(Components.utils.reportError);
     } else {
       let txn = new PlacesCreateFolderTransaction(title, ip.itemId, ip.index);
@@ -995,7 +1017,7 @@ var gEditItemOverlay = {
     this._folderTree.selectItems([this._lastNewItem]);
     this._folderTree.startEditing(this._folderTree.view.selection.currentIndex,
                                   this._folderTree.columns.getFirstColumn());
-  }),
+  },
 
   // nsIDOMEventListener
   handleEvent(aEvent) {
@@ -1024,7 +1046,7 @@ var gEditItemOverlay = {
     }
   },
 
-  _initTagsField: Task.async(function* () {
+  async _initTagsField() {
     let tags;
     if (this._paneInfo.isURI)
       tags = PlacesUtils.tagging.getTagsForURI(this._paneInfo.uri);
@@ -1034,7 +1056,7 @@ var gEditItemOverlay = {
       throw new Error("_promiseTagsStr called unexpectedly");
 
     this._initTextField(this._tagsField, tags.join(", "));
-  }),
+  },
 
   _onTagsChange(aItemId) {
     let paneInfo = this._paneInfo;
@@ -1128,8 +1150,8 @@ var gEditItemOverlay = {
   onItemMoved(aItemId, aOldParent, aOldIndex,
               aNewParent, aNewIndex, aItemType) {
     if (!this._paneInfo.isItem ||
-        !this._paneInfo.visibleRows.has("folderPicker") ||
-        this._paneInfo.itemId != aItemOd ||
+        !this._paneInfo.visibleRows.has("folderRow") ||
+        this._paneInfo.itemId != aItemId ||
         aNewParent == this._getFolderIdFromMenuList()) {
       return;
     }

@@ -4,16 +4,17 @@
  * License, v. 2.0. If a copy of the MPL was not distributed with this file,
  * You can obtain one at http://mozilla.org/MPL/2.0/. */
 
-include protocol PBlob;
 include protocol PBrowser;
 include protocol PContent;
 include protocol PJavaScript;
 include protocol PFileDescriptorSet;
-include protocol PMemoryStream;
-include protocol PSendStream;
+include protocol PChildToParentStream;
+include protocol PParentToChildStream;
+include protocol PIPCBlobInputStream;
 
 include DOMTypes;
 include JavaScriptTypes;
+include ProtocolTypes;
 include PTabContext;
 
 using class IPC::Principal from "mozilla/dom/PermissionMessageUtils.h";
@@ -35,12 +36,27 @@ namespace dom {
  */
 nested(upto inside_cpow) sync protocol PContentBridge
 {
-    manages PBlob;
     manages PBrowser;
     manages PFileDescriptorSet;
     manages PJavaScript;
-    manages PMemoryStream;
-    manages PSendStream;
+    manages PChildToParentStream;
+    manages PParentToChildStream;
+    manages PIPCBlobInputStream;
+
+child:
+    async PParentToChildStream();
+
+child:
+   /**
+     * Sending an activate message moves focus to the child.
+     */
+    async Activate(PBrowser aTab);
+
+    async Deactivate(PBrowser aTab);
+
+    async ParentActivated(PBrowser aTab, bool aActivated);
+
+    async PIPCBlobInputStream(nsID aID, uint64_t aSize);
 
 parent:
     sync SyncMessage(nsString aMessage, ClonedMessageData aData,
@@ -49,17 +65,14 @@ parent:
 
     async PJavaScript();
 
-    async PSendStream();
-
-    async PMemoryStream(uint64_t aSize);
+    async PChildToParentStream();
 
 both:
     // Both the parent and the child can construct the PBrowser.
     // See the comment in PContent::PBrowser().
-    async PBrowser(TabId tabId, IPCTabContext context, uint32_t chromeFlags,
+    async PBrowser(TabId tabId, TabId sameTabGroupAs,
+                   IPCTabContext context, uint32_t chromeFlags,
                    ContentParentId cpId, bool isForBrowser);
-
-    async PBlob(BlobConstructorParams params);
 
     async PFileDescriptorSet(FileDescriptor fd);
 

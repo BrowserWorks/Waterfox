@@ -40,7 +40,7 @@ WebGLContext::GetExtensionString(WebGLExtensionID ext)
         WEBGL_EXTENSION_IDENTIFIER(EXT_sRGB)
         WEBGL_EXTENSION_IDENTIFIER(EXT_texture_filter_anisotropic)
         WEBGL_EXTENSION_IDENTIFIER(EXT_disjoint_timer_query)
-        WEBGL_EXTENSION_IDENTIFIER(MOZ_debug_get)
+        WEBGL_EXTENSION_IDENTIFIER(MOZ_debug)
         WEBGL_EXTENSION_IDENTIFIER(OES_element_index_uint)
         WEBGL_EXTENSION_IDENTIFIER(OES_standard_derivatives)
         WEBGL_EXTENSION_IDENTIFIER(OES_texture_float)
@@ -55,6 +55,7 @@ WebGLContext::GetExtensionString(WebGLExtensionID ext)
         WEBGL_EXTENSION_IDENTIFIER(WEBGL_compressed_texture_etc1)
         WEBGL_EXTENSION_IDENTIFIER(WEBGL_compressed_texture_pvrtc)
         WEBGL_EXTENSION_IDENTIFIER(WEBGL_compressed_texture_s3tc)
+        WEBGL_EXTENSION_IDENTIFIER(WEBGL_compressed_texture_s3tc_srgb)
         WEBGL_EXTENSION_IDENTIFIER(WEBGL_debug_renderer_info)
         WEBGL_EXTENSION_IDENTIFIER(WEBGL_debug_shaders)
         WEBGL_EXTENSION_IDENTIFIER(WEBGL_depth_texture)
@@ -91,7 +92,7 @@ bool WebGLContext::IsExtensionSupported(dom::CallerType callerType,
 
     if (allowPrivilegedExts) {
         switch (ext) {
-        case WebGLExtensionID::MOZ_debug_get:
+        case WebGLExtensionID::MOZ_debug:
             return true;
         case WebGLExtensionID::WEBGL_debug_renderer_info:
             return true;
@@ -139,13 +140,10 @@ WebGLContext::IsExtensionSupported(WebGLExtensionID ext) const
     case WebGLExtensionID::WEBGL_compressed_texture_pvrtc:
         return gl->IsExtensionSupported(gl::GLContext::IMG_texture_compression_pvrtc);
     case WebGLExtensionID::WEBGL_compressed_texture_s3tc:
-        if (gl->IsExtensionSupported(gl::GLContext::EXT_texture_compression_s3tc))
-            return true;
-
-        return gl->IsExtensionSupported(gl::GLContext::EXT_texture_compression_dxt1) &&
-               gl->IsExtensionSupported(gl::GLContext::ANGLE_texture_compression_dxt3) &&
-               gl->IsExtensionSupported(gl::GLContext::ANGLE_texture_compression_dxt5);
-
+        return WebGLExtensionCompressedTextureS3TC::IsSupported(this);
+    case WebGLExtensionID::WEBGL_compressed_texture_s3tc_srgb:
+        return WebGLExtensionCompressedTextureS3TC::IsSupported(this) &&
+               gl->IsExtensionSupported(gl::GLContext::EXT_texture_sRGB);
     case WebGLExtensionID::WEBGL_debug_renderer_info:
         return Preferences::GetBool("webgl.enable-debug-renderer-info", false);
 
@@ -381,8 +379,8 @@ WebGLContext::EnableExtension(WebGLExtensionID ext)
         break;
 
     // MOZ_
-    case WebGLExtensionID::MOZ_debug_get:
-        obj = new WebGLExtensionDebugGet(this);
+    case WebGLExtensionID::MOZ_debug:
+        obj = new WebGLExtensionMOZDebug(this);
         break;
 
     // OES_
@@ -429,6 +427,9 @@ WebGLContext::EnableExtension(WebGLExtensionID ext)
         break;
     case WebGLExtensionID::WEBGL_compressed_texture_s3tc:
         obj = new WebGLExtensionCompressedTextureS3TC(this);
+        break;
+    case WebGLExtensionID::WEBGL_compressed_texture_s3tc_srgb:
+        obj = new WebGLExtensionCompressedTextureS3TC_SRGB(this);
         break;
     case WebGLExtensionID::WEBGL_debug_renderer_info:
         obj = new WebGLExtensionDebugRendererInfo(this);

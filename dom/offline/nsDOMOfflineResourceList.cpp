@@ -17,6 +17,7 @@
 #include "nsIInterfaceRequestorUtils.h"
 #include "nsIOfflineCacheUpdate.h"
 #include "nsContentUtils.h"
+#include "nsILoadContext.h"
 #include "nsIObserverService.h"
 #include "nsIScriptGlobalObject.h"
 #include "nsIWebNavigation.h"
@@ -815,8 +816,7 @@ nsDOMOfflineResourceList::CacheKeys()
   nsAutoCString originSuffix;
   if (loadContext) {
     mozilla::OriginAttributes oa;
-    bool ok = loadContext->GetOriginAttributes(oa);
-    NS_ENSURE_TRUE(ok, NS_ERROR_UNEXPECTED);
+    loadContext->GetOriginAttributes(oa);
 
     oa.CreateSuffix(originSuffix);
   }

@@ -24,8 +24,6 @@ namespace nss_test {
 
 TEST_P(TlsConnectTls13, ZeroRtt) {
   SetupForZeroRtt();
-  client_->SetExpectedAlertSentCount(1);
-  server_->SetExpectedAlertReceivedCount(1);
   client_->Set0RttEnabled(true);
   server_->Set0RttEnabled(true);
   ExpectResumption(RESUME_TICKET);
@@ -105,8 +103,6 @@ TEST_P(TlsConnectTls13, TestTls13ZeroRttAlpn) {
   EnableAlpn();
   SetupForZeroRtt();
   EnableAlpn();
-  client_->SetExpectedAlertSentCount(1);
-  server_->SetExpectedAlertReceivedCount(1);
   client_->Set0RttEnabled(true);
   server_->Set0RttEnabled(true);
   ExpectResumption(RESUME_TICKET);
@@ -159,6 +155,7 @@ TEST_P(TlsConnectTls13, TestTls13ZeroRttNoAlpnServer) {
     client_->CheckAlpn(SSL_NEXT_PROTO_EARLY_VALUE, "a");
     EXPECT_EQ(SECSuccess, SSLInt_Set0RttAlpn(client_->ssl_fd(), b, sizeof(b)));
     client_->CheckAlpn(SSL_NEXT_PROTO_EARLY_VALUE, "b");
+    ExpectAlert(client_, kTlsAlertIllegalParameter);
     return true;
   });
   Handshake();
@@ -178,6 +175,7 @@ TEST_P(TlsConnectTls13, TestTls13ZeroRttNoAlpnClient) {
     PRUint8 b[] = {'b'};
     EXPECT_EQ(SECSuccess, SSLInt_Set0RttAlpn(client_->ssl_fd(), b, 1));
     client_->CheckAlpn(SSL_NEXT_PROTO_EARLY_VALUE, "b");
+    ExpectAlert(client_, kTlsAlertIllegalParameter);
     return true;
   });
   Handshake();
@@ -228,6 +226,10 @@ TEST_P(TlsConnectTls13, TestTls13ZeroRttDowngrade) {
   // client sends end_of_early_data only after reading the server's flight.
   client_->Set0RttEnabled(true);
 
+  client_->ExpectSendAlert(kTlsAlertIllegalParameter);
+  if (variant_ == ssl_variant_stream) {
+    server_->ExpectSendAlert(kTlsAlertUnexpectedMessage);
+  }
   client_->Handshake();
   server_->Handshake();
   ASSERT_TRUE_WAIT(
@@ -235,7 +237,7 @@ TEST_P(TlsConnectTls13, TestTls13ZeroRttDowngrade) {
 
   // DTLS will timeout as we bump the epoch when installing the early app data
   // cipher suite. Thus the encrypted alert will be ignored.
-  if (mode_ == STREAM) {
+  if (variant_ == ssl_variant_stream) {
     // The client sends an encrypted alert message.
     ASSERT_TRUE_WAIT(
         (server_->error_code() == SSL_ERROR_RX_UNEXPECTED_APPLICATION_DATA),
@@ -265,7 +267,13 @@ TEST_P(TlsConnectTls13, TestTls13ZeroRttDowngradeEarlyData) {
   // Send the early data xtn in the CH, followed by early app data. The server
   // will fail right after sending its flight, when receiving the early data.
   client_->Set0RttEnabled(true);
-  ZeroRttSendReceive(true, false);
+  ZeroRttSendReceive(true, false, [this]() {
+    client_->ExpectSendAlert(kTlsAlertIllegalParameter);
+    if (variant_ == ssl_variant_stream) {
+      server_->ExpectSendAlert(kTlsAlertUnexpectedMessage);
+    }
+    return true;
+  });
 
   client_->Handshake();
   server_->Handshake();
@@ -274,11 +282,120 @@ TEST_P(TlsConnectTls13, TestTls13ZeroRttDowngradeEarlyData) {
 
   // DTLS will timeout as we bump the epoch when installing the early app data
   // cipher suite. Thus the encrypted alert will be ignored.
-  if (mode_ == STREAM) {
+  if (variant_ == ssl_variant_stream) {
     // The server sends an alert when receiving the early app data record.
     ASSERT_TRUE_WAIT(
         (server_->error_code() == SSL_ERROR_RX_UNEXPECTED_APPLICATION_DATA),
         2000);
+  }
+}
+
+static void CheckEarlyDataLimit(const std::shared_ptr<TlsAgent>& agent,
+                                size_t expected_size) {
+  SSLPreliminaryChannelInfo preinfo;
+  SECStatus rv =
+      SSL_GetPreliminaryChannelInfo(agent->ssl_fd(), &preinfo, sizeof(preinfo));
+  EXPECT_EQ(SECSuccess, rv);
+  EXPECT_EQ(expected_size, static_cast<size_t>(preinfo.maxEarlyDataSize));
+}
+
+TEST_P(TlsConnectTls13, SendTooMuchEarlyData) {
+  const char* big_message = "0123456789abcdef";
+  const size_t short_size = strlen(big_message) - 1;
+  const PRInt32 short_length = static_cast<PRInt32>(short_size);
+  SSLInt_SetMaxEarlyDataSize(static_cast<PRUint32>(short_size));
+  SetupForZeroRtt();
+
+  client_->Set0RttEnabled(true);
+  server_->Set0RttEnabled(true);
+  ExpectResumption(RESUME_TICKET);
+
+  ExpectAlert(client_, kTlsAlertEndOfEarlyData);
+  client_->Handshake();
+  CheckEarlyDataLimit(client_, short_size);
+
+  PRInt32 sent;
+  // Writing more than the limit will succeed in TLS, but fail in DTLS.
+  if (variant_ == ssl_variant_stream) {
+    sent = PR_Write(client_->ssl_fd(), big_message,
+                    static_cast<PRInt32>(strlen(big_message)));
+  } else {
+    sent = PR_Write(client_->ssl_fd(), big_message,
+                    static_cast<PRInt32>(strlen(big_message)));
+    EXPECT_GE(0, sent);
+    EXPECT_EQ(PR_WOULD_BLOCK_ERROR, PORT_GetError());
+
+    // Try an exact-sized write now.
+    sent = PR_Write(client_->ssl_fd(), big_message, short_length);
+  }
+  EXPECT_EQ(short_length, sent);
+
+  // Even a single octet write should now fail.
+  sent = PR_Write(client_->ssl_fd(), big_message, 1);
+  EXPECT_GE(0, sent);
+  EXPECT_EQ(PR_WOULD_BLOCK_ERROR, PORT_GetError());
+
+  // Process the ClientHello and read 0-RTT.
+  server_->Handshake();
+  CheckEarlyDataLimit(server_, short_size);
+
+  std::vector<uint8_t> buf(short_size + 1);
+  PRInt32 read = PR_Read(server_->ssl_fd(), buf.data(), buf.capacity());
+  EXPECT_EQ(short_length, read);
+  EXPECT_EQ(0, memcmp(big_message, buf.data(), short_size));
+
+  // Second read fails.
+  read = PR_Read(server_->ssl_fd(), buf.data(), buf.capacity());
+  EXPECT_EQ(SECFailure, read);
+  EXPECT_EQ(PR_WOULD_BLOCK_ERROR, PORT_GetError());
+
+  Handshake();
+  ExpectEarlyDataAccepted(true);
+  CheckConnected();
+  SendReceive();
+}
+
+TEST_P(TlsConnectTls13, ReceiveTooMuchEarlyData) {
+  const size_t limit = 5;
+  SSLInt_SetMaxEarlyDataSize(limit);
+  SetupForZeroRtt();
+
+  client_->Set0RttEnabled(true);
+  server_->Set0RttEnabled(true);
+  ExpectResumption(RESUME_TICKET);
+
+  client_->ExpectSendAlert(kTlsAlertEndOfEarlyData);
+  client_->Handshake();  // Send ClientHello
+  CheckEarlyDataLimit(client_, limit);
+
+  // Lift the limit on the client.
+  EXPECT_EQ(SECSuccess,
+            SSLInt_SetSocketMaxEarlyDataSize(client_->ssl_fd(), 1000));
+
+  // Send message
+  const char* message = "0123456789abcdef";
+  const PRInt32 message_len = static_cast<PRInt32>(strlen(message));
+  EXPECT_EQ(message_len, PR_Write(client_->ssl_fd(), message, message_len));
+
+  if (variant_ == ssl_variant_stream) {
+    // This error isn't fatal for DTLS.
+    ExpectAlert(server_, kTlsAlertUnexpectedMessage);
+  }
+  server_->Handshake();  // Process ClientHello, send server flight.
+  server_->Handshake();  // Just to make sure that we don't read ahead.
+  CheckEarlyDataLimit(server_, limit);
+
+  // Attempt to read early data.
+  std::vector<uint8_t> buf(strlen(message) + 1);
+  EXPECT_GT(0, PR_Read(server_->ssl_fd(), buf.data(), buf.capacity()));
+  if (variant_ == ssl_variant_stream) {
+    server_->CheckErrorCode(SSL_ERROR_TOO_MUCH_EARLY_DATA);
+  }
+
+  client_->Handshake();  // Process the handshake.
+  client_->Handshake();  // Process the alert.
+  if (variant_ == ssl_variant_stream) {
+    client_->CheckErrorCode(SSL_ERROR_HANDSHAKE_UNEXPECTED_ALERT);
   }
 }
 

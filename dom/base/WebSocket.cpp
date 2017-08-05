@@ -10,6 +10,7 @@
 
 #include "jsapi.h"
 #include "jsfriendapi.h"
+#include "mozilla/CheckedInt.h"
 #include "mozilla/DOMEventTargetHelper.h"
 #include "mozilla/net/WebSocketChannel.h"
 #include "mozilla/dom/File.h"
@@ -63,6 +64,11 @@
 #include "nsProxyRelease.h"
 #include "nsWeakReference.h"
 
+#define OPEN_EVENT_STRING NS_LITERAL_STRING("open")
+#define MESSAGE_EVENT_STRING NS_LITERAL_STRING("message")
+#define ERROR_EVENT_STRING NS_LITERAL_STRING("error")
+#define CLOSE_EVENT_STRING NS_LITERAL_STRING("close")
+
 using namespace mozilla::net;
 using namespace mozilla::dom::workers;
 
@@ -82,8 +88,7 @@ public:
   NS_DECL_NSIOBSERVER
   NS_DECL_NSIREQUEST
   NS_DECL_THREADSAFE_ISUPPORTS
-  NS_DECL_NSIEVENTTARGET
-  using nsIEventTarget::Dispatch;
+  NS_DECL_NSIEVENTTARGET_FULL
 
   explicit WebSocketImpl(WebSocket* aWebSocket)
   : mWebSocket(aWebSocket)
@@ -610,6 +615,10 @@ WebSocketImpl::Disconnect()
 
   AssertIsOnTargetThread();
 
+  // DontKeepAliveAnyMore() and DisconnectInternal() can release the object. So
+  // hold a reference to this until the end of the method.
+  RefPtr<WebSocketImpl> kungfuDeathGrip = this;
+
   // Disconnect can be called from some control event (such as Notify() of
   // WorkerHolder). This will be schedulated before any other sync/async
   // runnable. In order to prevent some double Disconnect() calls, we use this
@@ -630,10 +639,6 @@ WebSocketImpl::Disconnect()
     // where to, exactly?
     rv.SuppressException();
   }
-
-  // DontKeepAliveAnyMore() can release the object. So hold a reference to this
-  // until the end of the method.
-  RefPtr<WebSocketImpl> kungfuDeathGrip = this;
 
   NS_ReleaseOnMainThread(mChannel.forget());
   NS_ReleaseOnMainThread(mService.forget());
@@ -781,7 +786,7 @@ WebSocketImpl::OnStart(nsISupports* aContext)
   RefPtr<WebSocket> webSocket = mWebSocket;
 
   // Call 'onopen'
-  rv = webSocket->CreateAndDispatchSimpleEvent(NS_LITERAL_STRING("open"));
+  rv = webSocket->CreateAndDispatchSimpleEvent(OPEN_EVENT_STRING);
   if (NS_FAILED(rv)) {
     NS_WARNING("Failed to dispatch the open event");
   }
@@ -1634,13 +1639,12 @@ WebSocketImpl::Init(JSContext* aCx,
       nsCOMPtr<nsPIDOMWindowInner> innerWindow;
 
       while (true) {
-        bool isNullPrincipal = true;
         if (principal) {
+          bool isNullPrincipal = true;
           isNullPrincipal = principal->GetIsNullPrincipal();
-        }
-
-        if (!isNullPrincipal) {
-          break;
+          if (isNullPrincipal || nsContentUtils::IsSystemPrincipal(principal)) {
+            break;
+          }
         }
 
         if (!innerWindow) {
@@ -1681,7 +1685,10 @@ WebSocketImpl::Init(JSContext* aCx,
             return NS_ERROR_DOM_SECURITY_ERR;
           }
 
-          MOZ_ASSERT(currentInnerWindow != innerWindow);
+          if (currentInnerWindow == innerWindow) {
+            // The opener may be the same outer window as the parent.
+            break;
+          }
         }
 
         innerWindow = currentInnerWindow;
@@ -1882,7 +1889,7 @@ WebSocketImpl::DispatchConnectionCloseEvents()
   // Call 'onerror' if needed
   if (mFailed) {
     nsresult rv =
-      webSocket->CreateAndDispatchSimpleEvent(NS_LITERAL_STRING("error"));
+      webSocket->CreateAndDispatchSimpleEvent(ERROR_EVENT_STRING);
     if (NS_FAILED(rv)) {
       NS_WARNING("Failed to dispatch the error event");
     }
@@ -1994,7 +2001,7 @@ WebSocket::CreateAndDispatchMessageEvent(const nsACString& aData,
 
   RefPtr<MessageEvent> event = new MessageEvent(this, nullptr, nullptr);
 
-  event->InitMessageEvent(nullptr, NS_LITERAL_STRING("message"), false, false,
+  event->InitMessageEvent(nullptr, MESSAGE_EVENT_STRING, false, false,
                           jsData, mImpl->mUTF16Origin, EmptyString(), nullptr,
                           Sequence<OwningNonNull<MessagePort>>());
   event->SetTrusted(true);
@@ -2031,7 +2038,7 @@ WebSocket::CreateAndDispatchCloseEvent(bool aWasClean,
   init.mReason = aReason;
 
   RefPtr<CloseEvent> event =
-    CloseEvent::Constructor(this, NS_LITERAL_STRING("close"), init);
+    CloseEvent::Constructor(this, CLOSE_EVENT_STRING, init);
   event->SetTrusted(true);
 
   return DispatchDOMEvent(nullptr, event, nullptr, nullptr);
@@ -2151,10 +2158,10 @@ WebSocket::UpdateMustKeepAlive()
     {
       case CONNECTING:
       {
-        if (mListenerManager->HasListenersFor(nsGkAtoms::onopen) ||
-            mListenerManager->HasListenersFor(nsGkAtoms::onmessage) ||
-            mListenerManager->HasListenersFor(nsGkAtoms::onerror) ||
-            mListenerManager->HasListenersFor(nsGkAtoms::onclose)) {
+        if (mListenerManager->HasListenersFor(OPEN_EVENT_STRING) ||
+            mListenerManager->HasListenersFor(MESSAGE_EVENT_STRING) ||
+            mListenerManager->HasListenersFor(ERROR_EVENT_STRING) ||
+            mListenerManager->HasListenersFor(CLOSE_EVENT_STRING)) {
           shouldKeepAlive = true;
         }
       }
@@ -2163,9 +2170,9 @@ WebSocket::UpdateMustKeepAlive()
       case OPEN:
       case CLOSING:
       {
-        if (mListenerManager->HasListenersFor(nsGkAtoms::onmessage) ||
-            mListenerManager->HasListenersFor(nsGkAtoms::onerror) ||
-            mListenerManager->HasListenersFor(nsGkAtoms::onclose) ||
+        if (mListenerManager->HasListenersFor(MESSAGE_EVENT_STRING) ||
+            mListenerManager->HasListenersFor(ERROR_EVENT_STRING) ||
+            mListenerManager->HasListenersFor(CLOSE_EVENT_STRING) ||
             mOutgoingBufferedAmount != 0) {
           shouldKeepAlive = true;
         }
@@ -2481,7 +2488,14 @@ WebSocket::Send(nsIInputStream* aMsgStream,
   }
 
   // Always increment outgoing buffer len, even if closed
-  mOutgoingBufferedAmount += aMsgLength;
+  CheckedUint32 size = mOutgoingBufferedAmount;
+  size += aMsgLength;
+  if (!size.isValid()) {
+    aRv.Throw(NS_ERROR_OUT_OF_MEMORY);
+    return;
+  }
+
+  mOutgoingBufferedAmount = size.value();
 
   if (readyState == CLOSING ||
       readyState == CLOSED) {

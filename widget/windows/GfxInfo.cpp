@@ -221,6 +221,39 @@ static nsresult GetKeyValue(const WCHAR* keyLocation, const WCHAR* keyName, nsAS
   return retval;
 }
 
+static nsresult GetKeyValues(const WCHAR* keyLocation, const WCHAR* keyName, nsTArray<nsString>& destStrings)
+{
+  // First ask for the size of the value
+  DWORD size;
+  LONG rv = RegGetValueW(HKEY_LOCAL_MACHINE, keyLocation, keyName, RRF_RT_REG_MULTI_SZ, nullptr, nullptr, &size);
+  if (rv != ERROR_SUCCESS) {
+    return NS_ERROR_FAILURE;
+  }
+
+  // Create a buffer with the proper size and retrieve the value
+  WCHAR* wCharValue = new WCHAR[size / sizeof(WCHAR)];
+  rv = RegGetValueW(HKEY_LOCAL_MACHINE, keyLocation, keyName, RRF_RT_REG_MULTI_SZ, nullptr, (LPBYTE)wCharValue, &size);
+  if (rv != ERROR_SUCCESS) {
+    delete[] wCharValue;
+    return NS_ERROR_FAILURE;
+  }
+
+  // The value is a sequence of null-terminated strings, usually terminated by an empty string (\0).
+  // RegGetValue ensures that the value is properly terminated with a null character.
+  DWORD i = 0;
+  DWORD strLen = size / sizeof(WCHAR);
+  while (i < strLen) {
+    nsString value(wCharValue + i);
+    if (!value.IsEmpty()) {
+      destStrings.AppendElement(value);
+    }
+    i += value.Length() + 1;
+  }
+  delete[] wCharValue;
+
+  return NS_OK;
+}
+
 // The device ID is a string like PCI\VEN_15AD&DEV_0405&SUBSYS_040515AD
 // this function is used to extract the id's out of it
 uint32_t
@@ -417,11 +450,14 @@ GfxInfo::Init()
   adapterDeviceID[0] = ParseIDFromDeviceID(mDeviceID[0], "&DEV_", 4);
   adapterSubsysID[0] = ParseIDFromDeviceID(mDeviceID[0],  "&SUBSYS_", 8);
 
-  mAdapterVendorID[0].AppendPrintf("0x%04x", adapterVendorID[0]);
-  mAdapterDeviceID[0].AppendPrintf("0x%04x", adapterDeviceID[0]);
-  mAdapterSubsysID[0].AppendPrintf("%08x", adapterSubsysID[0]);
+  // Sometimes we don't get the valid device using this method.  For now,
+  // allow zero vendor or device as valid, as long as the other value is
+  // non-zero.
+  bool foundValidDevice = (adapterVendorID[0] != 0 ||
+                           adapterDeviceID[0] != 0);
 
-  // We now check for second display adapter.
+  // We now check for second display adapter.  If we didn't find the valid
+  // device using the original approach, we will try the alternative.
 
   // Device interface class for display adapters.
   CLSID GUID_DISPLAY_DEVICE_ARRIVAL;
@@ -470,8 +506,11 @@ GfxInfo::Init()
             deviceID2 = value;
             adapterVendorID[1] = ParseIDFromDeviceID(deviceID2, "VEN_", 4);
             adapterDeviceID[1] = ParseIDFromDeviceID(deviceID2, "&DEV_", 4);
-            if (adapterVendorID[0] == adapterVendorID[1] &&
-                adapterDeviceID[0] == adapterDeviceID[1]) {
+            // Skip the devices we already considered, as well as any
+            // "zero" ones.
+            if ((adapterVendorID[0] == adapterVendorID[1] &&
+                 adapterDeviceID[0] == adapterDeviceID[1]) ||
+                (adapterVendorID[1] == 0 && adapterDeviceID[1] == 0)) {
               RegCloseKey(key);
               continue;
             }
@@ -509,6 +548,21 @@ GfxInfo::Init()
             }
             RegCloseKey(key);
             if (result == ERROR_SUCCESS) {
+              // If we didn't find a valid device with the original method
+              // take this one, and continue looking for the second GPU.
+              if (!foundValidDevice) {
+                foundValidDevice = true;
+                adapterVendorID[0] = adapterVendorID[1];
+                adapterDeviceID[0] = adapterDeviceID[1];
+                mDeviceString[0] = value;
+                mDeviceID[0] = deviceID2;
+                mDeviceKey[0] = driverKey2;
+                mDriverVersion[0] = driverVersion2;
+                mDriverDate[0] = driverDate2;
+                adapterSubsysID[0] = ParseIDFromDeviceID(mDeviceID[0], "&SUBSYS_", 8);
+                continue;
+              }
+
               mHasDualGPU = true;
               mDeviceString[1] = value;
               mDeviceID[1] = deviceID2;
@@ -528,6 +582,10 @@ GfxInfo::Init()
       SetupDiDestroyDeviceInfoList(devinfo);
     }
   }
+
+  mAdapterVendorID[0].AppendPrintf("0x%04x", adapterVendorID[0]);
+  mAdapterDeviceID[0].AppendPrintf("0x%04x", adapterDeviceID[0]);
+  mAdapterSubsysID[0].AppendPrintf("%08x", adapterSubsysID[0]);
 
   // Sometimes, the enumeration is not quite right and the two adapters
   // end up being swapped.  Actually enumerate the adapters that come
@@ -576,17 +634,37 @@ GfxInfo::Init()
              driverNumericVersion = 0, knownSafeMismatchVersion = 0;
 
     // Only parse the DLL version for those found in the driver list
-    nsAutoString elligibleDLLs;
-    if (NS_SUCCEEDED(GetAdapterDriver(elligibleDLLs))) {
-      if (FindInReadable(dllFileName, elligibleDLLs)) {
+    nsAutoString eligibleDLLs;
+    if (NS_SUCCEEDED(GetAdapterDriver(eligibleDLLs))) {
+      if (FindInReadable(dllFileName, eligibleDLLs)) {
         dllFileName += NS_LITERAL_STRING(".dll");
         gfxWindowsPlatform::GetDLLVersion(dllFileName.get(), dllVersion);
         ParseDriverVersion(dllVersion, &dllNumericVersion);
       }
-      if (FindInReadable(dllFileName2, elligibleDLLs)) {
+      if (FindInReadable(dllFileName2, eligibleDLLs)) {
         dllFileName2 += NS_LITERAL_STRING(".dll");
         gfxWindowsPlatform::GetDLLVersion(dllFileName2.get(), dllVersion2);
         ParseDriverVersion(dllVersion2, &dllNumericVersion2);
+      }
+    }
+
+    // Sometimes the DLL is not in the System32 nor SysWOW64 directories. But UserModeDriverName
+    // (or UserModeDriverNameWow, if available) might provide the full path to the DLL in some
+    // DriverStore FileRepository.
+    if (dllNumericVersion == 0 && dllNumericVersion2 == 0) {
+      nsTArray<nsString> eligibleDLLpaths;
+      const WCHAR* keyLocation = mDeviceKey[mActiveGPUIndex].get();
+      GetKeyValues(keyLocation, L"UserModeDriverName", eligibleDLLpaths);
+      GetKeyValues(keyLocation, L"UserModeDriverNameWow", eligibleDLLpaths);
+      size_t length = eligibleDLLpaths.Length();
+      for (size_t i=0; i<length && dllNumericVersion == 0 && dllNumericVersion2 == 0; ++i) {
+        if (FindInReadable(dllFileName, eligibleDLLpaths[i])) {
+          gfxWindowsPlatform::GetDLLVersion(eligibleDLLpaths[i].get(), dllVersion);
+          ParseDriverVersion(dllVersion, &dllNumericVersion);
+        } else if (FindInReadable(dllFileName2, eligibleDLLpaths[i])) {
+          gfxWindowsPlatform::GetDLLVersion(eligibleDLLpaths[i].get(), dllVersion2);
+          ParseDriverVersion(dllVersion2, &dllNumericVersion2);
+        }
       }
     }
 
@@ -602,7 +680,11 @@ GfxInfo::Init()
       if (driverNumericVersion < knownSafeMismatchVersion ||
           std::max(dllNumericVersion, dllNumericVersion2) < knownSafeMismatchVersion) {
         mHasDriverVersionMismatch = true;
-        gfxCriticalNoteOnce << "Mismatched driver versions between the registry " << NS_ConvertUTF16toUTF8(mDriverVersion[mActiveGPUIndex]).get() << " and DLL(s) " << NS_ConvertUTF16toUTF8(dllVersion).get() << ", " << NS_ConvertUTF16toUTF8(dllVersion2).get() << " reported.";
+        gfxCriticalNoteOnce << "Mismatched driver versions between the registry "
+                            << NS_ConvertUTF16toUTF8(mDriverVersion[mActiveGPUIndex]).get()
+                            << " and DLL(s) "
+                            << NS_ConvertUTF16toUTF8(dllVersion).get() << ", "
+                            << NS_ConvertUTF16toUTF8(dllVersion2).get() << " reported.";
       }
     } else if (dllNumericVersion == 0 && dllNumericVersion2 == 0) {
       // Leave it as an asserting error for now, to see if we can find
@@ -1236,6 +1318,17 @@ GfxInfo::GetGfxDriverInfo()
       (nsAString&) GfxDriverInfo::GetDeviceVendor(VendorAMD), GfxDriverInfo::allDevices,
       nsIGfxInfo::FEATURE_DX_INTEROP2, nsIGfxInfo::FEATURE_BLOCKED_DRIVER_VERSION,
       DRIVER_LESS_THAN, GfxDriverInfo::allDriverVersions, "DX_INTEROP2_AMD_CRASH");
+
+    ////////////////////////////////////
+    // FEATURE_D3D11_KEYED_MUTEX
+
+    // bug 1359416
+    APPEND_TO_DRIVER_BLOCKLIST2(OperatingSystem::Windows,
+      (nsAString&) GfxDriverInfo::GetDeviceVendor(VendorIntel),
+      (GfxDeviceFamily*) GfxDriverInfo::GetDeviceFamily(IntelHDGraphicsToSandyBridge),
+      nsIGfxInfo::FEATURE_D3D11_KEYED_MUTEX, nsIGfxInfo::FEATURE_BLOCKED_DEVICE,
+      DRIVER_LESS_THAN, GfxDriverInfo::allDriverVersions, "FEATURE_FAILURE_BUG_1359416");
+
   }
   return *mDriverInfo;
 }

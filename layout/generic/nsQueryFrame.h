@@ -58,17 +58,25 @@ class nsQueryFrame
 {
 public:
   enum FrameIID {
-#define FRAME_ID(classname) classname##_id,
+#define FRAME_ID(classname, ...) classname##_id,
+#define ABSTRACT_FRAME_ID(classname) classname##_id,
 #include "nsFrameIdList.h"
 #undef FRAME_ID
+#undef ABSTRACT_FRAME_ID
 
-    // The PresArena implementation uses this bit to distinguish objects
-    // allocated by size from objects allocated by type ID (that is, frames
-    // using AllocateByFrameID, and other objects using AllocateByObjectID).
-    // It should not collide with any frame ID (above) or Object ID (in
-    // nsPresArena.h).  It is not 0x80000000 to avoid the question of
-    // whether enumeration constants are signed.
-    NON_FRAME_MARKER = 0x20000000
+    // This marker allows mozilla::ArenaObjectID to "extend" this enum
+    // with additional sequential values for use in nsPresArena and
+    // nsIPresShell::{Allocate,Free}ByObjectId
+    NON_FRAME_MARKER
+  };
+
+  // A strict subset of FrameIID above for frame classes that we instantiate.
+  enum class ClassID : uint8_t {
+#define FRAME_ID(classname, ...) classname##_id,
+#define ABSTRACT_FRAME_ID(classname)
+#include "nsFrameIdList.h"
+#undef FRAME_ID
+#undef ABSTRACT_FRAME_ID
   };
 
   virtual void* QueryFrame(FrameIID id) = 0;

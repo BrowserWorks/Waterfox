@@ -4,14 +4,19 @@
 # License, v. 2.0. If a copy of the MPL was not distributed with this
 # file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
+with Files('**'):
+    BUG_COMPONENT = ('Toolkit', 'WebExtensions: General')
+
 EXTRA_JS_MODULES += [
     'Extension.jsm',
     'ExtensionAPI.jsm',
     'ExtensionChild.jsm',
+    'ExtensionChildDevToolsUtils.jsm',
     'ExtensionCommon.jsm',
     'ExtensionContent.jsm',
-    'ExtensionManagement.jsm',
+    'ExtensionPageChild.jsm',
     'ExtensionParent.jsm',
+    'ExtensionPermissions.jsm',
     'ExtensionPreferencesManager.jsm',
     'ExtensionSettingsStore.jsm',
     'ExtensionStorage.jsm',
@@ -21,10 +26,12 @@ EXTRA_JS_MODULES += [
     'LegacyExtensionsUtils.jsm',
     'MessageChannel.jsm',
     'NativeMessaging.jsm',
+    'ProxyScriptContext.jsm',
     'Schemas.jsm',
 ]
 
-EXTRA_PP_COMPONENTS += [
+EXTRA_COMPONENTS += [
+    'extension-process-script.js',
     'extensions-toolkit.manifest',
 ]
 
@@ -33,7 +40,36 @@ TESTING_JS_MODULES += [
     'ExtensionXPCShellUtils.jsm',
 ]
 
-DIRS += ['schemas']
+DIRS += [
+    'schemas',
+    'webrequest',
+]
+
+XPIDL_SOURCES += [
+    'mozIExtensionProcessScript.idl',
+]
+
+XPIDL_MODULE = 'webextensions'
+
+EXPORTS.mozilla = [
+    'ExtensionPolicyService.h',
+]
+
+EXPORTS.mozilla.extensions = [
+    'MatchGlob.h',
+    'MatchPattern.h',
+    'WebExtensionContentScript.h',
+    'WebExtensionPolicy.h',
+]
+
+UNIFIED_SOURCES += [
+    'ExtensionPolicyService.cpp',
+    'MatchPattern.cpp',
+    'WebExtensionPolicy.cpp',
+]
+
+FINAL_LIBRARY = 'xul'
+
 
 JAR_MANIFESTS += ['jar.mn']
 
@@ -48,5 +84,8 @@ MOCHITEST_MANIFESTS += [
 MOCHITEST_CHROME_MANIFESTS += ['test/mochitest/chrome.ini']
 XPCSHELL_TESTS_MANIFESTS += [
     'test/xpcshell/native_messaging.ini',
+    'test/xpcshell/xpcshell-remote.ini',
     'test/xpcshell/xpcshell.ini',
 ]
+
+include('/ipc/chromium/chromium-config.mozbuild')

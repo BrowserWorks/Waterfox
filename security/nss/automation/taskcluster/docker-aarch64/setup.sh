@@ -21,10 +21,12 @@ apt_packages=()
 apt_packages+=('build-essential')
 apt_packages+=('ca-certificates')
 apt_packages+=('curl')
+apt_packages+=('libxml2-utils')
 apt_packages+=('zlib1g-dev')
 apt_packages+=('ninja-build')
 apt_packages+=('gyp')
 apt_packages+=('mercurial')
+apt_packages+=('locales')
 
 # Install packages.
 apt-get install -y --no-install-recommends ${apt_packages[@]}

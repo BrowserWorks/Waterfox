@@ -416,8 +416,10 @@ public:
   ~AutoStyleNewChildren()
   {
     nsIPresShell* presShell = mElement->OwnerDoc()->GetShell();
-    ServoStyleSet* servoSet = presShell ? presShell->StyleSet()->GetAsServo() : nullptr;
-    if (servoSet) {
+    if (!presShell || !presShell->DidInitialize()) {
+      return;
+    }
+    if (ServoStyleSet* servoSet = presShell->StyleSet()->GetAsServo()) {
       // In general the element is always styled by the time we're applying XBL
       // bindings, because we need to style the element to know what the binding
       // URI is. However, programmatic consumers of the XBL service (like the
@@ -788,7 +790,7 @@ nsXBLService::GetBinding(nsIContent* aBoundElement, nsIURI* aURI,
   }
 
   // Our prototype binding must have all its resources loaded.
-  bool ready = protoBinding->LoadResources();
+  bool ready = protoBinding->LoadResources(aBoundElement);
   if (!ready) {
     // Add our bound element to the protos list of elts that should
     // be notified when the stylesheets and scripts finish loading.
@@ -949,9 +951,16 @@ nsXBLService::LoadBindingDocumentInfo(nsIContent* aBoundElement,
   bool useXULCache = cache && cache->IsEnabled();
 
   if (!info && useXULCache) {
+    // Assume Gecko style backend for the XBL document without a bound
+    // document. The only case is loading platformHTMLBindings.xml which
+    // doesn't have any style sheets or style attributes.
+    StyleBackendType styleBackend
+      = aBoundDocument ? aBoundDocument->GetStyleBackendType()
+                       : StyleBackendType::Gecko;
+
     // This cache crosses the entire product, so that any XBL bindings that are
     // part of chrome will be reused across all XUL documents.
-    info = cache->GetXBLDocumentInfo(documentURI);
+    info = cache->GetXBLDocumentInfo(documentURI, styleBackend);
   }
 
   bool useStartupCache = useXULCache && IsChromeOrResourceURI(documentURI);
@@ -959,7 +968,8 @@ nsXBLService::LoadBindingDocumentInfo(nsIContent* aBoundElement,
   if (!info) {
     // Next, look in the startup cache
     if (!info && useStartupCache) {
-      rv = nsXBLDocumentInfo::ReadPrototypeBindings(documentURI, getter_AddRefs(info));
+      rv = nsXBLDocumentInfo::ReadPrototypeBindings(documentURI, getter_AddRefs(info),
+                                                    aBoundDocument);
       if (NS_SUCCEEDED(rv)) {
         cache->PutXBLDocumentInfo(info);
       }
@@ -1014,6 +1024,12 @@ nsXBLService::LoadBindingDocumentInfo(nsIContent* aBoundElement,
     bindingManager->PutXBLDocumentInfo(info);
   }
 
+  MOZ_ASSERT(!aBoundDocument || !info ||
+             aBoundDocument->GetStyleBackendType() ==
+               info->GetDocument()->GetStyleBackendType(),
+             "Style backend type mismatched between the bound document and "
+             "the XBL document loaded.");
+
   info.forget(aResult);
 
   return NS_OK;
@@ -1044,6 +1060,11 @@ nsXBLService::FetchBindingDocument(nsIContent* aBoundElement, nsIDocument* aBoun
   nsCOMPtr<nsIDocument> doc;
   rv = NS_NewXMLDocument(getter_AddRefs(doc));
   NS_ENSURE_SUCCESS(rv, rv);
+
+  // Set the style backend type before loading the XBL document. Assume
+  // gecko if there's no bound document.
+  doc->SetStyleBackendType(aBoundDocument ? aBoundDocument->GetStyleBackendType()
+                                          : StyleBackendType::Gecko);
 
   nsCOMPtr<nsIXMLContentSink> xblSink;
   rv = NS_NewXBLContentSink(getter_AddRefs(xblSink), doc, aDocumentURI, nullptr);

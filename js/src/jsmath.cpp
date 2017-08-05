@@ -66,8 +66,23 @@
 #  define GETRANDOM_NR 318
 # elif defined(__i386__)
 #  define GETRANDOM_NR 355
+# elif defined(__aarch64__)
+#  define GETRANDOM_NR 278
 # elif defined(__arm__)
 #  define GETRANDOM_NR 384
+// Added other architectures:
+# elif defined(__ppc64le__)
+#  define GETRANDOM_NR 359
+# elif defined(__PPC64LE__)
+#  define GETRANDOM_NR 359
+# elif defined(__ppc64__)
+#  define GETRANDOM_NR 359
+# elif defined(__PPC64__)
+#  define GETRANDOM_NR 359
+# elif defined(__s390x__)
+#  define GETRANDOM_NR 349
+# elif defined(__s390__)
+#  define GETRANDOM_NR 349
 # endif
 
 # if defined(SYS_getrandom)

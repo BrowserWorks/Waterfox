@@ -67,10 +67,12 @@ describe("ConsoleAPICall component:", () => {
     });
 
     it("renders repeat node", () => {
-      const message =
-        stubPreparedMessages.get("console.log('foobar', 'test')")
-        .set("repeat", 107);
-      const wrapper = render(ConsoleApiCall({ message, serviceContainer }));
+      const message = stubPreparedMessages.get("console.log('foobar', 'test')");
+      const wrapper = render(ConsoleApiCall({
+        message,
+        serviceContainer,
+        repeat: 107
+      }));
 
       expect(wrapper.find(".message-repeats").text()).toBe("107");
       expect(wrapper.find(".message-repeats").prop("title")).toBe("107 repeats");
@@ -92,13 +94,26 @@ describe("ConsoleAPICall component:", () => {
       expect(wrapper.find(".indent").prop("style").width).toBe(`0`);
     });
 
-    it("renders a timestamp", () => {
+    it("renders a timestamp when passed a truthy timestampsVisible prop", () => {
       const message = stubPreparedMessages.get("console.log('foobar', 'test')");
-      const wrapper = render(ConsoleApiCall({ message, serviceContainer }));
-      const L10n = require("devtools/client/webconsole/new-console-output/test/fixtures/L10n");
-      const { timestampString } = new L10n();
+      const wrapper = render(ConsoleApiCall({
+        message,
+        serviceContainer,
+        timestampsVisible: true,
+      }));
+      const { timestampString } = require("devtools/client/webconsole/webconsole-l10n");
 
       expect(wrapper.find(".timestamp").text()).toBe(timestampString(message.timeStamp));
+    });
+
+    it("does not render a timestamp when not asked to", () => {
+      const message = stubPreparedMessages.get("console.log('foobar', 'test')");
+      const wrapper = render(ConsoleApiCall({
+        message,
+        serviceContainer,
+      }));
+
+      expect(wrapper.find(".timestamp").length).toBe(0);
     });
   });
 
@@ -129,6 +144,12 @@ describe("ConsoleAPICall component:", () => {
 
       expect(wrapper.find(".message-body").text()).toBe("");
     });
+    it("shows an error if called again", () => {
+      const message = stubPreparedMessages.get("timerAlreadyExists");
+      const wrapper = render(ConsoleApiCall({ message, serviceContainer }));
+
+      expect(wrapper.find(".message-body").text()).toBe("Timer “bar” already exists.");
+    });
   });
 
   describe("console.timeEnd", () => {
@@ -138,6 +159,12 @@ describe("ConsoleAPICall component:", () => {
 
       expect(wrapper.find(".message-body").text()).toBe(message.messageText);
       expect(wrapper.find(".message-body").text()).toMatch(/^bar: \d+(\.\d+)?ms$/);
+    });
+    it("shows an error if the timer doesn't exist", () => {
+      const message = stubPreparedMessages.get("timerDoesntExist");
+      const wrapper = render(ConsoleApiCall({ message, serviceContainer }));
+
+      expect(wrapper.find(".message-body").text()).toBe("Timer “bar” doesn’t exist.");
     });
   });
 
@@ -180,8 +207,32 @@ describe("ConsoleAPICall component:", () => {
       const message = stubPreparedMessages.get("console.group('bar')");
       const wrapper = render(ConsoleApiCall({ message, serviceContainer, open: true }));
 
-      expect(wrapper.find(".message-body").text()).toBe(message.messageText);
+      expect(wrapper.find(".message-body").text()).toBe("bar");
       expect(wrapper.find(".theme-twisty.open").length).toBe(1);
+    });
+
+    it("renders group with custom style", () => {
+      const message = stubPreparedMessages.get("console.group(%cfoo%cbar)");
+      const wrapper = render(ConsoleApiCall({ message, serviceContainer }));
+
+      const elements = wrapper.find(".objectBox-string");
+      expect(elements.text()).toBe("foobar");
+      expect(elements.length).toBe(2);
+
+      const firstElementStyle = elements.eq(0).prop("style");
+      // Allowed styles are applied accordingly on the first element.
+      expect(firstElementStyle.color).toBe(`blue`);
+      expect(firstElementStyle["font-size"]).toBe(`1.3em`);
+      // Forbidden styles are not applied.
+      expect(firstElementStyle["background-image"]).toBe(undefined);
+      expect(firstElementStyle.position).toBe(undefined);
+      expect(firstElementStyle.top).toBe(undefined);
+
+      const secondElementStyle = elements.eq(1).prop("style");
+      // Allowed styles are applied accordingly on the second element.
+      expect(secondElementStyle.color).toBe(`red`);
+      // Forbidden styles are not applied.
+      expect(secondElementStyle.background).toBe(undefined);
     });
 
     it("toggle the group when the collapse button is clicked", () => {
@@ -235,8 +286,32 @@ describe("ConsoleAPICall component:", () => {
       const message = stubPreparedMessages.get("console.groupCollapsed('foo')");
       const wrapper = render(ConsoleApiCall({ message, serviceContainer, open: false}));
 
-      expect(wrapper.find(".message-body").text()).toBe(message.messageText);
+      expect(wrapper.find(".message-body").text()).toBe("foo");
       expect(wrapper.find(".theme-twisty:not(.open)").length).toBe(1);
+    });
+
+    it("renders group with custom style", () => {
+      const message = stubPreparedMessages.get("console.groupCollapsed(%cfoo%cbaz)");
+      const wrapper = render(ConsoleApiCall({ message, serviceContainer }));
+
+      const elements = wrapper.find(".objectBox-string");
+      expect(elements.text()).toBe("foobaz");
+      expect(elements.length).toBe(2);
+
+      const firstElementStyle = elements.eq(0).prop("style");
+      // Allowed styles are applied accordingly on the first element.
+      expect(firstElementStyle.color).toBe(`blue`);
+      expect(firstElementStyle["font-size"]).toBe(`1.3em`);
+      // Forbidden styles are not applied.
+      expect(firstElementStyle["background-image"]).toBe(undefined);
+      expect(firstElementStyle.position).toBe(undefined);
+      expect(firstElementStyle.top).toBe(undefined);
+
+      const secondElementStyle = elements.eq(1).prop("style");
+      // Allowed styles are applied accordingly on the second element.
+      expect(secondElementStyle.color).toBe(`red`);
+      // Forbidden styles are not applied.
+      expect(secondElementStyle.background).toBe(undefined);
     });
   });
 

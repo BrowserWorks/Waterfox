@@ -7,12 +7,13 @@ Support for running spidermonkey jobs via dedicated scripts
 
 from __future__ import absolute_import, print_function, unicode_literals
 
-from voluptuous import Schema, Required, Optional, Any
+from taskgraph.util.schema import Schema
+from voluptuous import Required, Any
 
 from taskgraph.transforms.job import run_job_using
 from taskgraph.transforms.job.common import (
     docker_worker_add_public_artifacts,
-    docker_worker_support_vcs_checkout,
+    support_vcs_checkout,
 )
 
 sm_run_schema = Schema({
@@ -20,17 +21,14 @@ sm_run_schema = Schema({
 
     # The SPIDERMONKEY_VARIANT
     Required('spidermonkey-variant'): basestring,
-
-    # The tooltool manifest to use; default from sm-tooltool-config.sh  is used
-    # if omitted
-    Optional('tooltool-manifest'): basestring,
 })
 
 
-@run_job_using("docker-worker", "spidermonkey")
-@run_job_using("docker-worker", "spidermonkey-package")
-@run_job_using("docker-worker", "spidermonkey-mozjs-crate")
-def docker_worker_spidermonkey(config, job, taskdesc, schema=sm_run_schema):
+@run_job_using("docker-worker", "spidermonkey", schema=sm_run_schema)
+@run_job_using("docker-worker", "spidermonkey-package", schema=sm_run_schema)
+@run_job_using("docker-worker", "spidermonkey-mozjs-crate",
+               schema=sm_run_schema)
+def docker_worker_spidermonkey(config, job, taskdesc):
     run = job['run']
 
     worker = taskdesc['worker']
@@ -47,7 +45,7 @@ def docker_worker_spidermonkey(config, job, taskdesc, schema=sm_run_schema):
 
     docker_worker_add_public_artifacts(config, job, taskdesc)
 
-    env = worker['env']
+    env = worker.setdefault('env', {})
     env.update({
         'MOZHARNESS_DISABLE': 'true',
         'SPIDERMONKEY_VARIANT': run['spidermonkey-variant'],
@@ -63,10 +61,8 @@ def docker_worker_spidermonkey(config, job, taskdesc, schema=sm_run_schema):
         'mount-point': '/home/worker/tooltool-cache',
     })
     env['TOOLTOOL_CACHE'] = '/home/worker/tooltool-cache'
-    if run.get('tooltool-manifest'):
-        env['TOOLTOOL_MANIFEST'] = run['tooltool-manifest']
 
-    docker_worker_support_vcs_checkout(config, job, taskdesc)
+    support_vcs_checkout(config, job, taskdesc)
 
     script = "build-sm.sh"
     if run['using'] == 'spidermonkey-package':

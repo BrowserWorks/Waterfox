@@ -22,13 +22,13 @@ var isOk;
 
 var level = Ci.nsIAuthPrompt2.LEVEL_NONE;
 var authinfo = {
-  username : "",
-  password : "",
-  domain   : "",
+  username: "",
+  password: "",
+  domain: "",
 
-  flags : Ci.nsIAuthInformation.AUTH_HOST,
-  authenticationScheme : "basic",
-  realm : ""
+  flags: Ci.nsIAuthInformation.AUTH_HOST,
+  authenticationScheme: "basic",
+  realm: ""
 };
 
 // Force parent to not look for tab-modal prompts, as they're not used for auth prompts.
@@ -123,26 +123,26 @@ let prompterParent = runInParent(() => {
 
 let prompter2 = new PrompterProxy(prompterParent);
 
-add_task(function* test_accept() {
+add_task(async function test_accept() {
   state = {
-    msg         : "http://example.com is requesting your username and password. The site says: “some realm”",
-    title       : "Authentication Required",
-    textValue   : "inuser",
-    passValue   : "inpass",
-    iconClass   : "authentication-icon question-icon",
-    titleHidden : true,
-    textHidden  : false,
-    passHidden  : false,
-    checkHidden : true,
-    checkMsg    : "",
-    checked     : false,
-    focused     : "textField",
-    defButton   : "button0",
+    msg: "http://example.com is requesting your username and password. The site says: “some realm”",
+    title: "Authentication Required",
+    textValue: "inuser",
+    passValue: "inpass",
+    iconClass: "authentication-icon question-icon",
+    titleHidden: true,
+    textHidden: false,
+    passHidden: false,
+    checkHidden: true,
+    checkMsg: "",
+    checked: false,
+    focused: "textField",
+    defButton: "button0",
   };
   action = {
-    buttonClick : "ok",
-    textField   : "outuser",
-    passField   : "outpass",
+    buttonClick: "ok",
+    textField: "outuser",
+    passField: "outpass",
   };
   authinfo.username = "inuser";
   authinfo.password = "inpass";
@@ -153,58 +153,58 @@ add_task(function* test_accept() {
   // we can't send a channel in a message, we instead send the channel name that
   // already exists in the chromeScript.
   isOk = prompter2.promptAuth("channel1", level, authinfo);
-  yield promptDone;
+  await promptDone;
 
   ok(isOk, "Checking dialog return value (accept)");
   is(authinfo.username, "outuser", "Checking returned username");
   is(authinfo.password, "outpass", "Checking returned password");
 });
 
-add_task(function* test_cancel() {
+add_task(async function test_cancel() {
   state = {
-    msg         : "http://example.com is requesting your username and password. The site says: “some realm”",
-    title       : "Authentication Required",
-    textValue   : "outuser",
-    passValue   : "outpass",
-    iconClass   : "authentication-icon question-icon",
-    titleHidden : true,
-    textHidden  : false,
-    passHidden  : false,
-    checkHidden : true,
-    checkMsg    : "",
-    checked     : false,
-    focused     : "textField",
-    defButton   : "button0",
+    msg: "http://example.com is requesting your username and password. The site says: “some realm”",
+    title: "Authentication Required",
+    textValue: "outuser",
+    passValue: "outpass",
+    iconClass: "authentication-icon question-icon",
+    titleHidden: true,
+    textHidden: false,
+    passHidden: false,
+    checkHidden: true,
+    checkMsg: "",
+    checked: false,
+    focused: "textField",
+    defButton: "button0",
   };
   action = {
-    buttonClick : "cancel",
+    buttonClick: "cancel",
   };
   promptDone = handlePrompt(state, action);
   isOk = prompter2.promptAuth("channel1", level, authinfo);
-  yield promptDone;
+  await promptDone;
 
   ok(!isOk, "Checking dialog return value (cancel)");
 });
 
-add_task(function* test_pwonly() {
+add_task(async function test_pwonly() {
   // test filling in password-only login
   state = {
-    msg         : "http://example.com is requesting your username and password. The site says: “http://example.com”",
-    title       : "Authentication Required",
-    textValue   : "",
-    passValue   : "examplepass",
-    iconClass   : "authentication-icon question-icon",
-    titleHidden : true,
-    textHidden  : false,
-    passHidden  : false,
-    checkHidden : true,
-    checkMsg    : "",
-    checked     : false,
-    focused     : "textField",
-    defButton   : "button0",
+    msg: "http://example.com is requesting your username and password. The site says: “http://example.com”",
+    title: "Authentication Required",
+    textValue: "",
+    passValue: "examplepass",
+    iconClass: "authentication-icon question-icon",
+    titleHidden: true,
+    textHidden: false,
+    passHidden: false,
+    checkHidden: true,
+    checkMsg: "",
+    checked: false,
+    focused: "textField",
+    defButton: "button0",
   };
   action = {
-    buttonClick : "ok",
+    buttonClick: "ok",
   };
   authinfo.username = "";
   authinfo.password = "";
@@ -212,33 +212,33 @@ add_task(function* test_pwonly() {
 
   promptDone = handlePrompt(state, action);
   isOk = prompter2.promptAuth("channel1", level, authinfo);
-  yield promptDone;
+  await promptDone;
 
   ok(isOk, "Checking dialog return value (accept)");
   is(authinfo.username, "", "Checking returned username");
   is(authinfo.password, "examplepass", "Checking returned password");
 });
 
-add_task(function* test_multipleExisting() {
+add_task(async function test_multipleExisting() {
   // test filling in existing login (undetermined from multiple selection)
   // user2name/user2pass would also be valid to fill here.
   state = {
-    msg         : "http://example2.com is requesting your username and password. The site says: “http://example2.com”",
-    title       : "Authentication Required",
-    textValue   : "user1name",
-    passValue   : "user1pass",
-    iconClass   : "authentication-icon question-icon",
-    titleHidden : true,
-    textHidden  : false,
-    passHidden  : false,
-    checkHidden : true,
-    checkMsg    : "",
-    checked     : false,
-    focused     : "textField",
-    defButton   : "button0",
+    msg: "http://example2.com is requesting your username and password. The site says: “http://example2.com”",
+    title: "Authentication Required",
+    textValue: "user1name",
+    passValue: "user1pass",
+    iconClass: "authentication-icon question-icon",
+    titleHidden: true,
+    textHidden: false,
+    passHidden: false,
+    checkHidden: true,
+    checkMsg: "",
+    checked: false,
+    focused: "textField",
+    defButton: "button0",
   };
   action = {
-    buttonClick : "ok",
+    buttonClick: "ok",
   };
   authinfo.username = "";
   authinfo.password = "";
@@ -246,36 +246,36 @@ add_task(function* test_multipleExisting() {
 
   promptDone = handlePrompt(state, action);
   isOk = prompter2.promptAuth("channel2", level, authinfo);
-  yield promptDone;
+  await promptDone;
 
   ok(isOk, "Checking dialog return value (accept)");
   ok(authinfo.username == "user1name" || authinfo.username == "user2name", "Checking returned username");
   ok(authinfo.password == "user1pass" || authinfo.password == "user2pass", "Checking returned password");
 });
 
-add_task(function* test_multipleExisting2() {
+add_task(async function test_multipleExisting2() {
   // test filling in existing login (undetermined --> user1)
   // user2name/user2pass would also be valid to fill here.
   state = {
-    msg         : "http://example2.com is requesting your username and password. The site says: “http://example2.com”",
-    title       : "Authentication Required",
-    textValue   : "user1name",
-    passValue   : "user1pass",
-    iconClass   : "authentication-icon question-icon",
-    titleHidden : true,
-    textHidden  : false,
-    passHidden  : false,
-    checkHidden : true,
-    checkMsg    : "",
-    checked     : false,
-    focused     : "textField",
-    defButton   : "button0",
+    msg: "http://example2.com is requesting your username and password. The site says: “http://example2.com”",
+    title: "Authentication Required",
+    textValue: "user1name",
+    passValue: "user1pass",
+    iconClass: "authentication-icon question-icon",
+    titleHidden: true,
+    textHidden: false,
+    passHidden: false,
+    checkHidden: true,
+    checkMsg: "",
+    checked: false,
+    focused: "textField",
+    defButton: "button0",
   };
   // enter one of the known logins, test 504+505 exercise the two possible states.
   action = {
-    buttonClick : "ok",
-    textField   : "user1name",
-    passField   : "user1pass",
+    buttonClick: "ok",
+    textField: "user1name",
+    passField: "user1pass",
   };
   authinfo.username = "";
   authinfo.password = "";
@@ -283,36 +283,36 @@ add_task(function* test_multipleExisting2() {
 
   promptDone = handlePrompt(state, action);
   isOk = prompter2.promptAuth("channel2", level, authinfo);
-  yield promptDone;
+  await promptDone;
 
   ok(isOk, "Checking dialog return value (accept)");
   is(authinfo.username, "user1name", "Checking returned username");
   is(authinfo.password, "user1pass", "Checking returned password");
 });
 
-add_task(function* test_multipleExisting3() {
+add_task(async function test_multipleExisting3() {
   // test filling in existing login (undetermined --> user2)
   // user2name/user2pass would also be valid to fill here.
   state = {
-    msg         : "http://example2.com is requesting your username and password. The site says: “http://example2.com”",
-    title       : "Authentication Required",
-    textValue   : "user1name",
-    passValue   : "user1pass",
-    iconClass   : "authentication-icon question-icon",
-    titleHidden : true,
-    textHidden  : false,
-    passHidden  : false,
-    checkHidden : true,
-    checkMsg    : "",
-    checked     : false,
-    focused     : "textField",
-    defButton   : "button0",
+    msg: "http://example2.com is requesting your username and password. The site says: “http://example2.com”",
+    title: "Authentication Required",
+    textValue: "user1name",
+    passValue: "user1pass",
+    iconClass: "authentication-icon question-icon",
+    titleHidden: true,
+    textHidden: false,
+    passHidden: false,
+    checkHidden: true,
+    checkMsg: "",
+    checked: false,
+    focused: "textField",
+    defButton: "button0",
   };
   // enter one of the known logins, test 504+505 exercise the two possible states.
   action = {
-    buttonClick : "ok",
-    textField   : "user2name",
-    passField   : "user2pass",
+    buttonClick: "ok",
+    textField: "user2name",
+    passField: "user2pass",
   };
   authinfo.username = "";
   authinfo.password = "";
@@ -320,36 +320,36 @@ add_task(function* test_multipleExisting3() {
 
   promptDone = handlePrompt(state, action);
   isOk = prompter2.promptAuth("channel2", level, authinfo);
-  yield promptDone;
+  await promptDone;
 
   ok(isOk, "Checking dialog return value (accept)");
   is(authinfo.username, "user2name", "Checking returned username");
   is(authinfo.password, "user2pass", "Checking returned password");
 });
 
-add_task(function* test_changingMultiple() {
+add_task(async function test_changingMultiple() {
   // test changing a password (undetermined --> user2 w/ newpass)
   // user2name/user2pass would also be valid to fill here.
   state = {
-    msg         : "http://example2.com is requesting your username and password. The site says: “http://example2.com”",
-    title       : "Authentication Required",
-    textValue   : "user1name",
-    passValue   : "user1pass",
-    iconClass   : "authentication-icon question-icon",
-    titleHidden : true,
-    textHidden  : false,
-    passHidden  : false,
-    checkHidden : true,
-    checkMsg    : "",
-    checked     : false,
-    focused     : "textField",
-    defButton   : "button0",
+    msg: "http://example2.com is requesting your username and password. The site says: “http://example2.com”",
+    title: "Authentication Required",
+    textValue: "user1name",
+    passValue: "user1pass",
+    iconClass: "authentication-icon question-icon",
+    titleHidden: true,
+    textHidden: false,
+    passHidden: false,
+    checkHidden: true,
+    checkMsg: "",
+    checked: false,
+    focused: "textField",
+    defButton: "button0",
   };
   // force to user2, and change the password
   action = {
-    buttonClick : "ok",
-    textField   : "user2name",
-    passField   : "NEWuser2pass",
+    buttonClick: "ok",
+    textField: "user2name",
+    passField: "NEWuser2pass",
   };
   authinfo.username = "";
   authinfo.password = "";
@@ -357,36 +357,36 @@ add_task(function* test_changingMultiple() {
 
   promptDone = handlePrompt(state, action);
   isOk = prompter2.promptAuth("channel2", level, authinfo);
-  yield promptDone;
+  await promptDone;
 
   ok(isOk, "Checking dialog return value (accept)");
   is(authinfo.username, "user2name", "Checking returned username");
   is(authinfo.password, "NEWuser2pass", "Checking returned password");
 });
 
-add_task(function* test_changingMultiple2() {
+add_task(async function test_changingMultiple2() {
   // test changing a password (undetermined --> user2 w/ origpass)
   // user2name/user2pass would also be valid to fill here.
   state = {
-    msg         : "http://example2.com is requesting your username and password. The site says: “http://example2.com”",
-    title       : "Authentication Required",
-    textValue   : "user1name",
-    passValue   : "user1pass",
-    iconClass   : "authentication-icon question-icon",
-    titleHidden : true,
-    textHidden  : false,
-    passHidden  : false,
-    checkHidden : true,
-    checkMsg    : "",
-    checked     : false,
-    focused     : "textField",
-    defButton   : "button0",
+    msg: "http://example2.com is requesting your username and password. The site says: “http://example2.com”",
+    title: "Authentication Required",
+    textValue: "user1name",
+    passValue: "user1pass",
+    iconClass: "authentication-icon question-icon",
+    titleHidden: true,
+    textHidden: false,
+    passHidden: false,
+    checkHidden: true,
+    checkMsg: "",
+    checked: false,
+    focused: "textField",
+    defButton: "button0",
   };
   // force to user2, and change the password back
   action = {
-    buttonClick : "ok",
-    textField   : "user2name",
-    passField   : "user2pass",
+    buttonClick: "ok",
+    textField: "user2name",
+    passField: "user2pass",
   };
   authinfo.username = "";
   authinfo.password = "";
@@ -394,7 +394,7 @@ add_task(function* test_changingMultiple2() {
 
   promptDone = handlePrompt(state, action);
   isOk = prompter2.promptAuth("channel2", level, authinfo);
-  yield promptDone;
+  await promptDone;
 
   ok(isOk, "Checking dialog return value (accept)");
   is(authinfo.username, "user2name", "Checking returned username");

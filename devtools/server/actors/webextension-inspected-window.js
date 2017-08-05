@@ -8,7 +8,10 @@ const protocol = require("devtools/shared/protocol");
 
 const {Ci, Cu, Cr} = require("chrome");
 
+const {DebuggerServer} = require("devtools/server/main");
 const Services = require("Services");
+
+loader.lazyGetter(this, "NodeActor", () => require("devtools/server/actors/inspector").NodeActor, true);
 
 const {
   XPCOMUtils,
@@ -68,7 +71,7 @@ CustomizedReload.prototype = {
           if (this.injectedScript) {
             // Listen to the newly created document elements only if there is an
             // injectedScript to evaluate.
-            Services.obs.addObserver(this, "document-element-inserted", false);
+            Services.obs.addObserver(this, "document-element-inserted");
           }
 
           // Watch the loading progress and clear the current CustomizedReload once the
@@ -197,6 +200,7 @@ var WebExtensionInspectedWindowActor = protocol.ActorClassWithSpec(
 
     destroy(conn) {
       protocol.Actor.prototype.destroy.call(this, conn);
+
       if (this.customizedReload) {
         this.customizedReload.stop(
           new Error("WebExtensionInspectedWindowActor destroyed")
@@ -230,6 +234,58 @@ var WebExtensionInspectedWindowActor = protocol.ActorClassWithSpec(
 
     get webNavigation() {
       return this.tabActor.webNavigation;
+    },
+
+    createEvalBindings(dbgWindow, options) {
+      const bindings = Object.create(null);
+
+      let selectedDOMNode;
+
+      if (options.toolboxSelectedNodeActorID) {
+        let actor = DebuggerServer.searchAllConnectionsForActor(
+          options.toolboxSelectedNodeActorID
+        );
+        if (actor && actor instanceof NodeActor) {
+          selectedDOMNode = actor.rawNode;
+        }
+      }
+
+      Object.defineProperty(bindings, "$0", {
+        enumerable: true,
+        configurable: true,
+        get: () => {
+          if (selectedDOMNode && !Cu.isDeadWrapper(selectedDOMNode)) {
+            return dbgWindow.makeDebuggeeValue(selectedDOMNode);
+          }
+
+          return undefined;
+        },
+      });
+
+      // This function is used by 'eval' and 'reload' requests, but only 'eval'
+      // passes 'toolboxConsoleActor' from the client side in order to set
+      // the 'inspect' binding.
+      Object.defineProperty(bindings, "inspect", {
+        enumerable: true,
+        configurable: true,
+        value: dbgWindow.makeDebuggeeValue((object) => {
+          const dbgObj = dbgWindow.makeDebuggeeValue(object);
+
+          let consoleActor = DebuggerServer.searchAllConnectionsForActor(
+            options.toolboxConsoleActorID
+          );
+          if (consoleActor) {
+            consoleActor.inspectObject(dbgObj,
+                                       "webextension-devtools-inspectedWindow-eval");
+          } else {
+            // TODO(rpl): evaluate if it would be better to raise an exception
+            // to the caller code instead.
+            console.error("Toolbox Console RDP Actor not found");
+          }
+        }),
+      });
+
+      return bindings;
     },
 
     /**
@@ -290,7 +346,7 @@ var WebExtensionInspectedWindowActor = protocol.ActorClassWithSpec(
                 })
                 .catch(err => {
                   delete this.customizedReload;
-                  throw err;
+                  console.error(err);
                 });
           } catch (err) {
             // Cancel the customized reload (if any) on exception during the
@@ -315,7 +371,7 @@ var WebExtensionInspectedWindowActor = protocol.ActorClassWithSpec(
       // Execute the reload in a dispatched runnable, so that we can
       // return the reply to the caller before the reload is actually
       // started.
-      Services.tm.currentThread.dispatch(delayedReload, 0);
+      Services.tm.dispatchToMainThread(delayedReload);
 
       return {};
     },
@@ -351,19 +407,7 @@ var WebExtensionInspectedWindowActor = protocol.ActorClassWithSpec(
      */
     eval(callerInfo, expression, options, customTargetWindow) {
       const window = customTargetWindow || this.window;
-
-      if (Object.keys(options).length > 0) {
-        return {
-          exceptionInfo: {
-            isError: true,
-            code: "E_PROTOCOLERROR",
-            description: "Inspector protocol error: %s",
-            details: [
-              "The inspectedWindow.eval options are currently not supported",
-            ],
-          },
-        };
-      }
+      options = options || {};
 
       if (!window) {
         return {
@@ -394,14 +438,31 @@ var WebExtensionInspectedWindowActor = protocol.ActorClassWithSpec(
         };
       }
 
+      // Raise an error on the unsupported options.
+      if (options.frameURL || options.contextSecurityOrigin ||
+          options.useContentScriptContext) {
+        return {
+          exceptionInfo: {
+            isError: true,
+            code: "E_PROTOCOLERROR",
+            description: "Inspector protocol error: %s",
+            details: [
+              "The inspectedWindow.eval options are currently not supported",
+            ],
+          },
+        };
+      }
+
       const dbgWindow = this.dbg.makeGlobalObjectReference(window);
 
       let evalCalledFrom = callerInfo.url;
       if (callerInfo.lineNumber) {
         evalCalledFrom += `:${callerInfo.lineNumber}`;
       }
-      // TODO(rpl): add $0 and inspect(...) bindings (Bug 1300590)
-      const result = dbgWindow.executeInGlobalWithBindings(expression, {}, {
+
+      const bindings = this.createEvalBindings(dbgWindow, options);
+
+      const result = dbgWindow.executeInGlobalWithBindings(expression, bindings, {
         url: `debugger eval called from ${evalCalledFrom} - eval code`,
       });
 

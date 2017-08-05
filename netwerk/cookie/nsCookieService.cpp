@@ -273,6 +273,11 @@ LogCookie(nsCookie *aCookie)
 
     MOZ_LOG(gCookieLog, LogLevel::Debug,("is secure: %s\n", aCookie->IsSecure() ? "true" : "false"));
     MOZ_LOG(gCookieLog, LogLevel::Debug,("is httpOnly: %s\n", aCookie->IsHttpOnly() ? "true" : "false"));
+
+    nsAutoCString suffix;
+    aCookie->OriginAttributesRef().CreateSuffix(suffix);
+    MOZ_LOG(gCookieLog, LogLevel::Debug,("origin attributes: %s\n",
+            suffix.IsEmpty() ? "{empty}" : suffix.get()));
   }
 }
 
@@ -329,10 +334,9 @@ LogSuccess(bool aSetCookie, nsIURI *aHostURI, const nsAFlatCString &aCookieStrin
   PR_BEGIN_MACRO                                                             \
   nsresult __rv = res; /* Do not evaluate |res| more than once! */           \
   if (NS_FAILED(__rv)) {                                                     \
-    char *msg = mozilla::Smprintf("NS_ASSERT_SUCCESS(%s) failed with result 0x%" PRIX32, \
+    SmprintfPointer msg = mozilla::Smprintf("NS_ASSERT_SUCCESS(%s) failed with result 0x%" PRIX32, \
                            #res, static_cast<uint32_t>(__rv));               \
-    NS_ASSERTION(NS_SUCCEEDED(__rv), msg);                                   \
-    mozilla::SmprintfFree(msg);                                                    \
+    NS_ASSERTION(NS_SUCCEEDED(__rv), msg.get());                             \
   }                                                                          \
   PR_END_MACRO
 #else
@@ -2007,11 +2011,8 @@ nsCookieService::GetCookieStringCommon(nsIURI *aHostURI,
     NS_GetOriginAttributes(aChannel, attrs);
   }
 
-  bool isPrivate = aChannel && NS_UsePrivateBrowsing(aChannel);
-
   nsAutoCString result;
-  GetCookieStringInternal(aHostURI, isForeign, aHttpBound, attrs,
-                          isPrivate, result);
+  GetCookieStringInternal(aHostURI, isForeign, aHttpBound, attrs, result);
   *aCookie = result.IsEmpty() ? nullptr : ToNewCString(result);
   return NS_OK;
 }
@@ -2080,13 +2081,10 @@ nsCookieService::SetCookieStringCommon(nsIURI *aHostURI,
     NS_GetOriginAttributes(aChannel, attrs);
   }
 
-  bool isPrivate = aChannel && NS_UsePrivateBrowsing(aChannel);
-
   nsDependentCString cookieString(aCookieHeader);
   nsDependentCString serverTime(aServerTime ? aServerTime : "");
   SetCookieStringInternal(aHostURI, isForeign, cookieString,
-                          serverTime, aFromHttp, attrs,
-                          isPrivate, aChannel);
+                          serverTime, aFromHttp, attrs, aChannel);
   return NS_OK;
 }
 
@@ -2097,7 +2095,6 @@ nsCookieService::SetCookieStringInternal(nsIURI                 *aHostURI,
                                          const nsCString        &aServerTime,
                                          bool                    aFromHttp,
                                          const OriginAttributes &aOriginAttrs,
-                                         bool                    aIsPrivate,
                                          nsIChannel             *aChannel)
 {
   NS_ASSERTION(aHostURI, "null host!");
@@ -2108,7 +2105,7 @@ nsCookieService::SetCookieStringInternal(nsIURI                 *aHostURI,
   }
 
   AutoRestore<DBState*> savePrevDBState(mDBState);
-  mDBState = aIsPrivate ? mPrivateDBState : mDefaultDBState;
+  mDBState = (aOriginAttrs.mPrivateBrowsingId > 0) ? mPrivateDBState : mDefaultDBState;
 
   // get the base domain for the host URI.
   // e.g. for "www.bbc.co.uk", this would be "bbc.co.uk".
@@ -2269,6 +2266,27 @@ nsCookieService::CreatePurgeList(nsICookie2* aCookie)
 
 /******************************************************************************
  * nsCookieService:
+ * public transaction helper impl
+ ******************************************************************************/
+
+NS_IMETHODIMP
+nsCookieService::RunInTransaction(nsICookieTransactionCallback* aCallback)
+{
+  NS_ENSURE_ARG(aCallback);
+  if (NS_WARN_IF(!mDefaultDBState->dbConn)) {
+    return NS_ERROR_NOT_AVAILABLE;
+  }
+  mozStorageTransaction transaction(mDefaultDBState->dbConn, true);
+
+  if (NS_FAILED(aCallback->Callback())) {
+    Unused << transaction.Rollback();
+    return NS_ERROR_FAILURE;
+  }
+  return NS_OK;
+}
+
+/******************************************************************************
+ * nsCookieService:
  * pref observer impl
  ******************************************************************************/
 
@@ -2358,6 +2376,31 @@ nsCookieService::GetEnumerator(nsISimpleEnumerator **aEnumerator)
     const nsCookieEntry::ArrayType& cookies = iter.Get()->GetCookies();
     for (nsCookieEntry::IndexType i = 0; i < cookies.Length(); ++i) {
       cookieList.AppendObject(cookies[i]);
+    }
+  }
+
+  return NS_NewArrayEnumerator(aEnumerator, cookieList);
+}
+
+NS_IMETHODIMP
+nsCookieService::GetSessionEnumerator(nsISimpleEnumerator **aEnumerator)
+{
+  if (!mDBState) {
+    NS_WARNING("No DBState! Profile already closed?");
+    return NS_ERROR_NOT_AVAILABLE;
+  }
+
+  EnsureReadComplete();
+
+  nsCOMArray<nsICookie> cookieList(mDBState->cookieCount);
+  for (auto iter = mDBState->hostTable.Iter(); !iter.Done(); iter.Next()) {
+    const nsCookieEntry::ArrayType& cookies = iter.Get()->GetCookies();
+    for (nsCookieEntry::IndexType i = 0; i < cookies.Length(); ++i) {
+      nsCookie* cookie = cookies[i];
+      // Filter out non-session cookies.
+      if (cookie->IsSession()) {
+        cookieList.AppendObject(cookie);
+      }
     }
   }
 
@@ -2704,6 +2747,7 @@ nsCookieService::AsyncReadComplete()
   NS_ASSERTION(mDefaultDBState->pendingRead, "no pending read");
   NS_ASSERTION(mDefaultDBState->readListener, "no read listener");
 
+  mozStorageTransaction transaction(mDefaultDBState->dbConn, false);
   // Merge the data read on the background thread with the data synchronously
   // read on the main thread. Note that transactions on the cookie table may
   // have occurred on the main thread since, making the background data stale.
@@ -2718,10 +2762,16 @@ nsCookieService::AsyncReadComplete()
 
     AddCookieToList(tuple.key, tuple.cookie, mDefaultDBState, nullptr, false);
   }
+  DebugOnly<nsresult> rv = transaction.Commit();
+  MOZ_ASSERT(NS_SUCCEEDED(rv));
 
   mDefaultDBState->stmtReadDomain = nullptr;
   mDefaultDBState->pendingRead = nullptr;
   mDefaultDBState->readListener = nullptr;
+
+  // Close sync connection asynchronously: if we let destructor close, it may
+  // cause an expensive fsync operation on the main-thread.
+  mDefaultDBState->syncConn->AsyncClose(nullptr);
   mDefaultDBState->syncConn = nullptr;
   mDefaultDBState->hostArray.Clear();
   mDefaultDBState->readSet.Clear();
@@ -2842,11 +2892,14 @@ nsCookieService::EnsureReadDomain(const nsCookieKey &aKey)
                                          aKey.mOriginAttributes));
   }
 
+  mozStorageTransaction transaction(mDefaultDBState->dbConn, false);
   // Add the cookies to the table in a single operation. This makes sure that
   // either all the cookies get added, or in the case of corruption, none.
   for (uint32_t i = 0; i < array.Length(); ++i) {
     AddCookieToList(aKey, array[i], mDefaultDBState, nullptr, false);
   }
+  rv = transaction.Commit();
+  MOZ_ASSERT(NS_SUCCEEDED(rv));
 
   // Add it to the hashset of read entries, so we don't read it again.
   mDefaultDBState->readSet.PutEntry(aKey);
@@ -2934,6 +2987,7 @@ nsCookieService::EnsureReadComplete()
     tuple->cookie = GetCookieFromRow(stmt, attrs);
   }
 
+  mozStorageTransaction transaction(mDefaultDBState->dbConn, false);
   // Add the cookies to the table in a single operation. This makes sure that
   // either all the cookies get added, or in the case of corruption, none.
   for (uint32_t i = 0; i < array.Length(); ++i) {
@@ -2941,6 +2995,8 @@ nsCookieService::EnsureReadComplete()
     AddCookieToList(tuple.key, tuple.cookie, mDefaultDBState, nullptr,
       false);
   }
+  rv = transaction.Commit();
+  MOZ_ASSERT(NS_SUCCEEDED(rv));
 
   mDefaultDBState->syncConn = nullptr;
   mDefaultDBState->readSet.Clear();
@@ -3204,7 +3260,6 @@ nsCookieService::GetCookieStringInternal(nsIURI *aHostURI,
                                          bool aIsForeign,
                                          bool aHttpBound,
                                          const OriginAttributes& aOriginAttrs,
-                                         bool aIsPrivate,
                                          nsCString &aCookieString)
 {
   NS_ASSERTION(aHostURI, "null host!");
@@ -3215,7 +3270,7 @@ nsCookieService::GetCookieStringInternal(nsIURI *aHostURI,
   }
 
   AutoRestore<DBState*> savePrevDBState(mDBState);
-  mDBState = aIsPrivate ? mPrivateDBState : mDefaultDBState;
+  mDBState = (aOriginAttrs.mPrivateBrowsingId > 0) ? mPrivateDBState : mDefaultDBState;
 
   // get the base domain, host, and path from the URI.
   // e.g. for "www.bbc.co.uk", the base domain would be "bbc.co.uk".
@@ -4878,6 +4933,7 @@ nsCookieService::RemoveCookiesWithOriginAttributes(
     return NS_ERROR_NOT_AVAILABLE;
   }
 
+  mozStorageTransaction transaction(mDBState->dbConn, false);
   // Iterate the hash table of nsCookieEntry.
   for (auto iter = mDBState->hostTable.Iter(); !iter.Done(); iter.Next()) {
     nsCookieEntry* entry = iter.Get();
@@ -4910,6 +4966,8 @@ nsCookieService::RemoveCookiesWithOriginAttributes(
       NS_ENSURE_SUCCESS(rv, rv);
     }
   }
+  DebugOnly<nsresult> rv = transaction.Commit();
+  MOZ_ASSERT(NS_SUCCEEDED(rv));
 
   return NS_OK;
 }

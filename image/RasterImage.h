@@ -160,11 +160,12 @@ public:
   NS_DECL_IMGICONTAINERDEBUG
 #endif
 
+  nsresult GetNativeSizes(nsTArray<gfx::IntSize>& aNativeSizes) const override;
   virtual nsresult StartAnimation() override;
   virtual nsresult StopAnimation() override;
 
   // Methods inherited from Image
-  virtual void OnSurfaceDiscarded() override;
+  virtual void OnSurfaceDiscarded(const SurfaceKey& aSurfaceKey) override;
 
   virtual size_t SizeOfSourceWithComputedFallback(MallocSizeOf aMallocSizeOf)
     const override;
@@ -320,7 +321,9 @@ private:
   // never unlock so that animated images always have their lock count >= 1. In
   // that case we use our animation consumers count as a proxy for lock count.
   bool IsUnlocked() {
-    return (mLockCount == 0 || (mAnimationState && mAnimationConsumers == 0));
+    return (mLockCount == 0 ||
+            (!gfxPrefs::ImageMemAnimatedDiscardable() &&
+             (mAnimationState && mAnimationConsumers == 0)));
   }
 
   //////////////////////////////////////////////////////////////////////////////
@@ -378,8 +381,11 @@ private:
    */
   void RecoverFromInvalidFrames(const nsIntSize& aSize, uint32_t aFlags);
 
+  void OnSurfaceDiscardedInternal(bool aAnimatedFramesDiscarded);
+
 private: // data
   nsIntSize                  mSize;
+  nsTArray<nsIntSize>        mNativeSizes;
   Orientation                mOrientation;
 
   /// If this has a value, we're waiting for SetSize() to send the load event.

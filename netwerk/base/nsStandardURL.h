@@ -16,8 +16,8 @@
 #include "nsURLHelper.h"
 #include "nsIClassInfo.h"
 #include "nsISizeOf.h"
-#include "prclist.h"
 #include "mozilla/Attributes.h"
+#include "mozilla/LinkedList.h"
 #include "mozilla/MemoryReporting.h"
 #include "nsIIPCSerializableURI.h"
 #include "nsISensitiveInfoHiddenURI.h"
@@ -48,6 +48,9 @@ class nsStandardURL : public nsIFileURL
                     , public nsISizeOf
                     , public nsIIPCSerializableURI
                     , public nsISensitiveInfoHiddenURI
+#ifdef DEBUG_DUMP_URLS_AT_SHUTDOWN
+                    , public LinkedListElement<nsStandardURL>
+#endif
 {
 protected:
     virtual ~nsStandardURL();
@@ -139,12 +142,14 @@ public: /* internal -- HPUX compiler can't handle this being private */
                                         nsAFlatCString &buf);
     private:
         bool InitUnicodeEncoder();
-        
+
         const char* mCharset;  // Caller should keep this alive for
                                // the life of the segment encoder
         mozilla::UniquePtr<nsNCRFallbackEncoderWrapper> mEncoder;
     };
     friend class nsSegmentEncoder;
+
+    static nsresult NormalizeIPv4(const nsCSubstring &host, nsCString &result);
 
 protected:
     // enum used in a few places to specify how .ref attribute should be handled
@@ -187,8 +192,6 @@ private:
 
     bool     ValidIPv6orHostname(const char *host, uint32_t aLen);
     static bool     IsValidOfBase(unsigned char c, const uint32_t base);
-    static nsresult ParseIPv4Number(nsCString &input, uint32_t &number);
-    static nsresult NormalizeIPv4(const nsCSubstring &host, nsCString &result);
     nsresult NormalizeIDN(const nsCSubstring &host, nsCString &result);
     void     CoalescePath(netCoalesceFlags coalesceFlag, char *path);
 
@@ -304,7 +307,6 @@ private:
 
 public:
 #ifdef DEBUG_DUMP_URLS_AT_SHUTDOWN
-    PRCList mDebugCList;
     void PrintSpec() const { printf("  %s\n", mSpec.get()); }
 #endif
 

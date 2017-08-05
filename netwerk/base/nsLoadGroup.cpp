@@ -21,6 +21,7 @@
 #include "nsIRequestContext.h"
 #include "CacheObserver.h"
 #include "MainThreadUtils.h"
+#include "mozilla/Unused.h"
 
 #include "mozilla/net/NeckoChild.h"
 
@@ -126,17 +127,11 @@ nsLoadGroup::~nsLoadGroup()
     mDefaultLoadRequest = nullptr;
 
     if (mRequestContext) {
-        nsID rcid;
+        uint64_t rcid;
         mRequestContext->GetID(&rcid);
 
         if (IsNeckoChild() && gNeckoChild) {
-            char rcid_str[NSID_LENGTH];
-            rcid.ToProvidedString(rcid_str);
-
-            nsCString rcid_nscs;
-            rcid_nscs.AssignASCII(rcid_str);
-
-            gNeckoChild->SendRemoveRequestContext(rcid_nscs);
+            gNeckoChild->SendRemoveRequestContext(rcid);
         } else {
             mRequestContextService->RemoveRequestContext(rcid);
         }
@@ -702,7 +697,7 @@ nsLoadGroup::SetNotificationCallbacks(nsIInterfaceRequestor *aCallbacks)
 }
 
 NS_IMETHODIMP
-nsLoadGroup::GetRequestContextID(nsID *aRCID)
+nsLoadGroup::GetRequestContextID(uint64_t *aRCID)
 {
     if (!mRequestContext) {
         return NS_ERROR_NOT_AVAILABLE;
@@ -830,7 +825,13 @@ nsLoadGroup::SetUserAgentOverrideCache(const nsACString & aUserAgentOverrideCach
 void
 nsLoadGroup::TelemetryReport()
 {
-    if (mDefaultLoadIsTimed) {
+    nsresult defaultStatus = NS_ERROR_INVALID_ARG;
+    // We should only report HTTP_PAGE_* telemetry if the defaultRequest was
+    // actually successful.
+    if (mDefaultLoadRequest) {
+        mDefaultLoadRequest->GetStatus(&defaultStatus);
+    }
+    if (mDefaultLoadIsTimed && NS_SUCCEEDED(defaultStatus)) {
         Telemetry::Accumulate(Telemetry::HTTP_REQUEST_PER_PAGE, mTimedRequests);
         if (mTimedRequests) {
             Telemetry::Accumulate(Telemetry::HTTP_REQUEST_PER_PAGE_FROM_CACHE,
@@ -1072,11 +1073,7 @@ nsresult nsLoadGroup::Init()
 {
     mRequestContextService = do_GetService("@mozilla.org/network/request-context-service;1");
     if (mRequestContextService) {
-        nsID requestContextID;
-        if (NS_SUCCEEDED(mRequestContextService->NewRequestContextID(&requestContextID))) {
-            mRequestContextService->GetRequestContext(requestContextID,
-                                                      getter_AddRefs(mRequestContext));
-        }
+        Unused << mRequestContextService->NewRequestContext(getter_AddRefs(mRequestContext));
     }
 
     return NS_OK;

@@ -381,7 +381,7 @@
     {
       this.txt = null;
       this.eventSeq = [
-        new invokerChecker(EVENT_HIDE, function() { return this.txt; }.bind(this))
+        new invokerChecker(EVENT_HIDE, () => { return this.txt; })
       ];
 
       this.invoke = function hideNDestroyDoc_invoke()
@@ -405,7 +405,7 @@
     {
       this.target = null;
       this.eventSeq = [
-        new invokerChecker(EVENT_HIDE, function() { return this.target; }.bind(this))
+        new invokerChecker(EVENT_HIDE, () => { return this.target; })
       ];
 
       this.invoke = function hideHideNDestroyDoc_invoke()
@@ -414,8 +414,8 @@
         var l1 = doc.firstChild;
         this.target = l1.firstChild;
         var l2 = doc.lastChild;
-        l1.DOMNode.removeChild(l1.DOMNode.firstChild);
-        l2.DOMNode.removeChild(l2.DOMNode.firstChild);
+        l1.DOMNode.firstChild.remove();
+        l2.DOMNode.firstChild.remove();
       }
 
       this.check = function hideHideNDestroyDoc_check()

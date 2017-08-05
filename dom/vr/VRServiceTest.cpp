@@ -28,6 +28,7 @@ NS_IMPL_RELEASE_INHERITED(VRMockDisplay, DOMEventTargetHelper)
 
 VRMockDisplay::VRMockDisplay(const nsCString& aID, uint32_t aDeviceID)
  : mDeviceID(aDeviceID)
+ , mTimestamp(TimeStamp::Now())
 {
   mDisplayInfo.mDisplayName = aID;
   mDisplayInfo.mType = VRDeviceType::Puppet;
@@ -77,6 +78,8 @@ VRMockDisplay::SetPose(const Nullable<Float32Array>& aPosition,
                        const Nullable<Float32Array>& aAngularVelocity,
                        const Nullable<Float32Array>& aAngularAcceleration)
 {
+  mSensorState.Clear();
+  mSensorState.timestamp = (TimeStamp::Now() - mTimestamp).ToSeconds();
   mSensorState.flags = VRDisplayCapabilityFlags::Cap_Orientation |
                        VRDisplayCapabilityFlags::Cap_Position |
                        VRDisplayCapabilityFlags::Cap_AngularAcceleration |
@@ -209,6 +212,7 @@ VRMockController::NewPoseMove(const Nullable<Float32Array>& aPosition,
     poseState.orientation[1] = value.Data()[1];
     poseState.orientation[2] = value.Data()[2];
     poseState.orientation[3] = value.Data()[3];
+    poseState.isOrientationValid = true;
   }
   if (!aPosition.IsNull()) {
     const Float32Array& value = aPosition.Value();
@@ -217,6 +221,7 @@ VRMockController::NewPoseMove(const Nullable<Float32Array>& aPosition,
     poseState.position[0] = value.Data()[0];
     poseState.position[1] = value.Data()[1];
     poseState.position[2] = value.Data()[2];
+    poseState.isPositionValid = true;
   }
   if (!aAngularVelocity.IsNull()) {
     const Float32Array& value = aAngularVelocity.Value();
@@ -319,7 +324,7 @@ VRServiceTest::AttachVRDisplay(const nsAString& aID, ErrorResult& aRv)
   }
 
   gfx::VRManagerChild* vm = gfx::VRManagerChild::Get();
-  vm->CreateVRServiceTestDisplay(nsCString(ToNewUTF8String(aID)), p);
+  vm->CreateVRServiceTestDisplay(NS_ConvertUTF16toUTF8(aID), p);
 
   return p.forget();
 }
@@ -339,7 +344,7 @@ VRServiceTest::AttachVRController(const nsAString& aID, ErrorResult& aRv)
   }
 
   gfx::VRManagerChild* vm = gfx::VRManagerChild::Get();
-  vm->CreateVRServiceTestController(nsCString(ToNewUTF8String(aID)), p);
+  vm->CreateVRServiceTestController(NS_ConvertUTF16toUTF8(aID), p);
 
   return p.forget();
 }

@@ -65,24 +65,24 @@ public:
     JSScript* GetScript(nsIURI* aURI);
     nsresult PutScript(nsIURI* aURI, JS::Handle<JSScript*> aScriptObject);
 
-    nsXBLDocumentInfo* GetXBLDocumentInfo(nsIURI* aURL) {
-        return mXBLDocTable.GetWeak(aURL);
-    }
+    nsXBLDocumentInfo* GetXBLDocumentInfo(nsIURI* aURL,
+                                          mozilla::StyleBackendType aType);
+
     nsresult PutXBLDocumentInfo(nsXBLDocumentInfo* aDocumentInfo);
 
     /**
      * Get a style sheet by URI. If the style sheet is not in the cache,
      * returns nullptr.
      */
-    mozilla::StyleSheet* GetStyleSheet(nsIURI* aURI) {
-        return mStyleSheetTable.GetWeak(aURI);
-    }
+    mozilla::StyleSheet* GetStyleSheet(nsIURI* aURI,
+                                       mozilla::StyleBackendType aType);
 
     /**
      * Store a style sheet in the cache. The key, style sheet's URI is obtained
      * from the style sheet itself.
      */
-    nsresult PutStyleSheet(mozilla::StyleSheet* aStyleSheet);
+    nsresult PutStyleSheet(mozilla::StyleSheet* aStyleSheet,
+                           mozilla::StyleBackendType aType);
 
     /**
      * Write the XUL prototype document to a cache file. The proto must be
@@ -122,10 +122,25 @@ protected:
 
     void FlushSkinFiles();
 
+    using StyleSheetTable = nsRefPtrHashtable<nsURIHashKey, mozilla::StyleSheet>;
+    using XBLDocTable = nsRefPtrHashtable<nsURIHashKey, nsXBLDocumentInfo>;
+
+    StyleSheetTable& StyleSheetTableFor(mozilla::StyleBackendType aType) {
+      return aType == mozilla::StyleBackendType::Gecko ? mGeckoStyleSheetTable
+                                                       : mServoStyleSheetTable;
+    }
+
+    XBLDocTable& XBLDocTableFor(mozilla::StyleBackendType aType) {
+      return aType == mozilla::StyleBackendType::Gecko ? mGeckoXBLDocTable
+                                                       : mServoXBLDocTable;
+    }
+
     nsRefPtrHashtable<nsURIHashKey,nsXULPrototypeDocument>   mPrototypeTable; // owns the prototypes
-    nsRefPtrHashtable<nsURIHashKey,mozilla::StyleSheet>      mStyleSheetTable;
+    StyleSheetTable                                          mGeckoStyleSheetTable;
+    StyleSheetTable                                          mServoStyleSheetTable;
     nsJSThingHashtable<nsURIHashKey, JSScript*>              mScriptTable;
-    nsRefPtrHashtable<nsURIHashKey,nsXBLDocumentInfo>        mXBLDocTable;
+    XBLDocTable                                              mGeckoXBLDocTable;
+    XBLDocTable                                              mServoXBLDocTable;
 
     // URIs already written to the startup cache, to prevent double-caching.
     nsTHashtable<nsURIHashKey>                               mStartupCacheURITable;

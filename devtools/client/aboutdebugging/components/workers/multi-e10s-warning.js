@@ -19,15 +19,14 @@ loader.lazyImporter(this, "PrivateBrowsingUtils",
 loader.lazyRequireGetter(this, "DebuggerClient",
   "devtools/shared/client/main", true);
 
+const Strings = Services.strings.createBundle("chrome://devtools/locale/aboutdebugging.properties");
 const MULTI_OPT_OUT_PREF = "dom.ipc.multiOptOut";
 
 module.exports = createClass({
   displayName: "multiE10SWarning",
 
   onUpdatePreferenceClick() {
-    // Hardcoded string for Beta 54
-    // see (https://bugzilla.mozilla.org/show_bug.cgi?id=1345932#c44)
-    let message = "Opt out of multiple processes?";
+    let message = Strings.GetStringFromName("multiProcessWarningConfirmUpdate2");
     if (window.confirm(message)) {
       // Disable multi until at least the next experiment.
       Services.prefs.setIntPref(MULTI_OPT_OUT_PREF,
@@ -38,15 +37,6 @@ module.exports = createClass({
   },
 
   render() {
-    // Hardcoded strings for Beta 54
-    // see (https://bugzilla.mozilla.org/show_bug.cgi?id=1345932#c44)
-    let multiProcessWarningTitle = "Service Worker debugging is not compatible with " +
-                                   "multiple content processes at the moment.";
-    let multiProcessWarningMessage = `The preference “dom.ipc.multiOptOut” can be ` +
-                                     `modified to force a single content process ` +
-                                     `for the current version.`;
-    let multiProcessWarningUpdateLink = "Opt out of multiple content processes";
-
     return dom.div(
       {
         className: "service-worker-multi-process"
@@ -54,18 +44,18 @@ module.exports = createClass({
       dom.div(
         {},
         dom.div({ className: "warning" }),
-        dom.b({}, multiProcessWarningTitle)
+        dom.b({}, Strings.GetStringFromName("multiProcessWarningTitle"))
       ),
       dom.div(
         {},
-        multiProcessWarningMessage
+        Strings.GetStringFromName("multiProcessWarningMessage2")
       ),
       dom.button(
         {
           className: "update-button",
           onClick: this.onUpdatePreferenceClick,
         },
-        multiProcessWarningUpdateLink
+        Strings.GetStringFromName("multiProcessWarningUpdateLink2")
       )
     );
   },

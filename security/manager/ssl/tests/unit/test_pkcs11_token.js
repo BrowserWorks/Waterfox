@@ -101,7 +101,7 @@ function run_test() {
 
   let initialPW = "foo 1234567890`~!@#$%^&*()-_=+{[}]|\\:;'\",<.>/? 一二三";
   token.initPassword(initialPW);
-  token.login(/*force*/ false);
+  token.login(/* force */ false);
   ok(token.isLoggedIn(), "Token should now be logged into");
 
   checkPasswordFeaturesAndResetPassword(token, initialPW);
@@ -116,8 +116,6 @@ function run_test() {
 
   ok(!token.isHardwareToken(),
      "The internal token should not be considered a hardware token");
-  ok(token.isFriendly(),
-     "The internal token should always be considered friendly");
   ok(token.needsLogin(),
      "The internal token should always need authentication");
 }

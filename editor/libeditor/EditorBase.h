@@ -7,7 +7,6 @@
 #define mozilla_EditorBase_h
 
 #include "mozilla/Assertions.h"         // for MOZ_ASSERT, etc.
-#include "mozilla/FlushType.h"          // for FlushType enum
 #include "mozilla/OwningNonNull.h"      // for OwningNonNull
 #include "mozilla/SelectionState.h"     // for RangeUpdater, etc.
 #include "mozilla/StyleSheet.h"   // for StyleSheet
@@ -16,10 +15,8 @@
 #include "nsCOMPtr.h"                   // for already_AddRefed, nsCOMPtr
 #include "nsCycleCollectionParticipant.h"
 #include "nsGkAtoms.h"
-#include "nsIEditor.h"                  // for nsIEditor::EDirection, etc.
-#include "nsIEditorIMESupport.h"        // for NS_DECL_NSIEDITORIMESUPPORT, etc.
+#include "nsIEditor.h"                  // for nsIEditor, etc.
 #include "nsIObserver.h"                // for NS_DECL_NSIOBSERVER, etc.
-#include "nsIPhonetic.h"                // for NS_DECL_NSIPHONETIC, etc.
 #include "nsIPlaintextEditor.h"         // for nsIPlaintextEditor, etc.
 #include "nsISelectionController.h"     // for nsISelectionController constants
 #include "nsISupportsImpl.h"            // for EditorBase::Release, etc.
@@ -75,6 +72,7 @@ enum class EditAction : int32_t
   setTextProperty    = 2003,
   removeTextProperty = 2004,
   outputText         = 2005,
+  setText            = 2006,
 
   // html only action
   insertBreak         = 3000,
@@ -112,13 +110,17 @@ class CreateElementTransaction;
 class DeleteNodeTransaction;
 class DeleteTextTransaction;
 class EditAggregateTransaction;
+class EditTransactionBase;
 class ErrorResult;
+class HTMLEditor;
 class InsertNodeTransaction;
 class InsertTextTransaction;
 class JoinNodeTransaction;
 class RemoveStyleSheetTransaction;
+class SetTextTransaction;
 class SplitNodeTransaction;
 class TextComposition;
+class TextEditor;
 struct EditorDOMPoint;
 
 namespace dom {
@@ -143,9 +145,8 @@ struct IMEState;
  * delegate the actual commands to the editor independent of the XPFE
  * implementation.
  */
-class EditorBase : public nsIEditorIMESupport
+class EditorBase : public nsIEditor
                  , public nsSupportsWeakReference
-                 , public nsIPhonetic
 {
 public:
   typedef dom::Element Element;
@@ -163,6 +164,11 @@ public:
    * interfaces is done after the construction of the editor class.
    */
   EditorBase();
+
+  virtual TextEditor* AsTextEditor() = 0;
+  virtual const TextEditor* AsTextEditor() const = 0;
+  virtual HTMLEditor* AsHTMLEditor() = 0;
+  virtual const HTMLEditor* AsHTMLEditor() const = 0;
 
 protected:
   /**
@@ -190,12 +196,6 @@ public:
   // nsIEditor methods
   NS_DECL_NSIEDITOR
 
-  // nsIEditorIMESupport methods
-  NS_DECL_NSIEDITORIMESUPPORT
-
-  // nsIPhonetic
-  NS_DECL_NSIPHONETIC
-
 public:
   virtual bool IsModifiableNode(nsINode* aNode);
 
@@ -206,6 +206,10 @@ public:
   nsresult InsertTextIntoTextNodeImpl(const nsAString& aStringToInsert,
                                       Text& aTextNode, int32_t aOffset,
                                       bool aSuppressIME = false);
+
+  nsresult SetTextImpl(const nsAString& aString,
+                       Text& aTextNode);
+
   NS_IMETHOD DeleteSelectionImpl(EDirection aAction,
                                  EStripWrappers aStripWrappers);
 
@@ -306,24 +310,47 @@ protected:
   /**
    * Create a transaction for removing aNode from its parent.
    */
-  nsresult CreateTxnForDeleteNode(nsINode* aNode,
-                                  DeleteNodeTransaction** aTransaction);
+  already_AddRefed<DeleteNodeTransaction>
+    CreateTxnForDeleteNode(nsINode* aNode);
 
-  nsresult CreateTxnForDeleteSelection(
-             EDirection aAction,
-             EditAggregateTransaction** aTransaction,
-             nsINode** aNode,
-             int32_t* aOffset,
-             int32_t* aLength);
+  /**
+   * Create an aggregate transaction for delete selection.  The result may
+   * include DeleteNodeTransactions and/or DeleteTextTransactions as its
+   * children.
+   *
+   * @param aAction             The action caused removing the selection.
+   * @param aRemovingNode       The node to be removed.
+   * @param aOffset             The start offset of the range in aRemovingNode.
+   * @param aLength             The length of the range in aRemovingNode.
+   * @return                    If it can remove the selection, returns an
+   *                            aggregate transaction which has some
+   *                            DeleteNodeTransactions and/or
+   *                            DeleteTextTransactions as its children.
+   */
+  already_AddRefed<EditAggregateTransaction>
+    CreateTxnForDeleteSelection(EDirection aAction,
+                                nsINode** aNode,
+                                int32_t* aOffset,
+                                int32_t* aLength);
 
-  nsresult CreateTxnForDeleteInsertionPoint(
-             nsRange* aRange,
-             EDirection aAction,
-             EditAggregateTransaction* aTransaction,
-             nsINode** aNode,
-             int32_t* aOffset,
-             int32_t* aLength);
-
+  /**
+   * Create a transaction for removing the nodes and/or text in aRange.
+   *
+   * @param aRangeToDelete      The range to be removed.
+   * @param aAction             The action caused removing the range.
+   * @param aRemovingNode       The node to be removed.
+   * @param aOffset             The start offset of the range in aRemovingNode.
+   * @param aLength             The length of the range in aRemovingNode.
+   * @return                    The transaction to remove the range.  Its type
+   *                            is DeleteNodeTransaction or
+   *                            DeleteTextTransaction.
+   */
+  already_AddRefed<EditTransactionBase>
+    CreateTxnForDeleteRange(nsRange* aRangeToDelete,
+                            EDirection aAction,
+                            nsINode** aRemovingNode,
+                            int32_t* aOffset,
+                            int32_t* aLength);
 
   /**
    * Create a transaction for inserting aStringToInsert into aTextNode.  Never
@@ -332,6 +359,9 @@ protected:
   already_AddRefed<mozilla::InsertTextTransaction>
     CreateTxnForInsertText(const nsAString& aStringToInsert, Text& aTextNode,
                            int32_t aOffset);
+
+  already_AddRefed<SetTextTransaction>
+    CreateTxnForSetText(const nsAString& aString, Text& aTextNode);
 
   /**
    * Never returns null.
@@ -463,6 +493,7 @@ protected:
    */
   bool EnsureComposition(WidgetCompositionEvent* aCompositionEvent);
 
+  already_AddRefed<nsISelectionController> GetSelectionController();
   nsresult GetSelection(SelectionType aSelectionType,
                         nsISelection** aSelection);
 
@@ -931,11 +962,6 @@ public:
 
   virtual nsresult InsertFromDrop(nsIDOMEvent* aDropEvent) = 0;
 
-  virtual already_AddRefed<nsIDOMNode> FindUserSelectAllNode(nsIDOMNode* aNode)
-  {
-    return nullptr;
-  }
-
   /**
    * GetIMESelectionStartOffsetIn() returns the start offset of IME selection in
    * the aTextNode.  If there is no IME selection, returns -1.
@@ -957,14 +983,6 @@ public:
    * nsCaret.  Therefore, this is stateless.
    */
   void HideCaret(bool aHide);
-
-  void FlushFrames()
-  {
-    nsCOMPtr<nsIDocument> doc = GetDocument();
-    if (doc) {
-      doc->FlushPendingNotifications(FlushType::Frames);
-    }
-  }
 
 protected:
   enum Tristate
@@ -997,7 +1015,6 @@ protected:
   nsIAtom* mPlaceHolderName;
   // Saved selection state for placeholder transaction batching.
   mozilla::UniquePtr<SelectionState> mSelState;
-  nsString* mPhonetic;
   // IME composition this is not null between compositionstart and
   // compositionend.
   RefPtr<TextComposition> mComposition;
@@ -1056,6 +1073,8 @@ protected:
   bool mIsInEditAction;
   // Whether caret is hidden forcibly.
   bool mHidingCaret;
+  // Whether spellchecker dictionary is initialized after focused.
+  bool mSpellCheckerDictionaryUpdated;
 
   friend bool NSCanUnload(nsISupports* serviceMgr);
   friend class AutoRules;

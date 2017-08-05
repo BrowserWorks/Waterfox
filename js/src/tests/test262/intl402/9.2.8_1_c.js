@@ -1,4 +1,3 @@
-// |reftest| skip-if(!this.hasOwnProperty('Intl')) -- needs Intl
 // Copyright 2012 Mozilla Corporation. All rights reserved.
 // This code is governed by the BSD license found in the LICENSE file.
 
@@ -19,17 +18,9 @@ testWithIntlConstructors(function (Constructor) {
     
     var invalidValues = [null, 0, 5, NaN, true, false, "invalid"];
     invalidValues.forEach(function (value) {
-        var error;
-        try {
+        assert.throws(RangeError, function() {
             var supported = Constructor.supportedLocalesOf([defaultLocale], {localeMatcher: value});
-        } catch (e) {
-            error = e;
-        }
-        if (error === undefined) {
-            $ERROR("Invalid localeMatcher value " + value + " was not rejected.");
-        } else if (error.name !== "RangeError") {
-            $ERROR("Invalid localeMatcher value " + value + " was rejected with wrong error " + error.name + ".");
-        }
+        }, "Invalid localeMatcher value " + value + " was not rejected.");
     });
     
     return true;

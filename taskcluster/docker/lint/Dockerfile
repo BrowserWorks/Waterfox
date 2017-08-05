@@ -5,8 +5,8 @@ RUN useradd -d /home/worker -s /bin/bash -m worker
 WORKDIR /home/worker
 
 RUN mkdir /build
-# %include taskcluster/docker/recipes/tooltool.py
-ADD topsrcdir/taskcluster/docker/recipes/tooltool.py /build/tooltool.py
+# %include python/mozbuild/mozbuild/action/tooltool.py
+ADD topsrcdir/python/mozbuild/mozbuild/action/tooltool.py /build/tooltool.py
 
 # %include testing/mozharness/external_tools/robustcheckout.py
 ADD topsrcdir/testing/mozharness/external_tools/robustcheckout.py /usr/local/mercurial/robustcheckout.py
@@ -17,8 +17,10 @@ ADD topsrcdir/taskcluster/docker/recipes/install-node.sh /build/install-node.sh
 # %include taskcluster/docker/recipes/install-mercurial.sh
 ADD topsrcdir/taskcluster/docker/recipes/install-mercurial.sh /build/install-mercurial.sh
 ADD system-setup.sh /tmp/system-setup.sh
-# %include tools/lint/flake8/flake8_requirements.txt
-ADD topsrcdir/tools/lint/flake8/flake8_requirements.txt /tmp/flake8_requirements.txt
+# %include tools/lint/flake8_/flake8_requirements.txt
+ADD topsrcdir/tools/lint/flake8_/flake8_requirements.txt /tmp/flake8_requirements.txt
+# %include tools/lint/tox/tox_requirements.txt
+ADD topsrcdir/tools/lint/tox/tox_requirements.txt /tmp/tox_requirements.txt
 RUN bash /tmp/system-setup.sh
 
 # %include taskcluster/docker/recipes/run-task

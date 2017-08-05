@@ -34,6 +34,8 @@ esac
 
 echo ""
 echo "Removing node_modules and npm_shrinkwrap.json..."
+# Move to the top-level directory.
+cd ../../../
 rm -rf node_modules/
 rm npm-shrinkwrap.json
 
@@ -63,8 +65,11 @@ echo "Uploading eslint.tar.gz to tooltool..."
 ./tooltool.py upload --authentication-file=~/.tooltool-token --message "node_modules folder update for tools/lint/eslint"
 
 echo "Cleaning up..."
+mv manifest.tt tools/lint/eslint/manifest.tt
 rm eslint.tar.gz
 rm tooltool.py
+
+cd $DIR
 
 echo ""
 echo "Update complete, please commit and check in your changes."

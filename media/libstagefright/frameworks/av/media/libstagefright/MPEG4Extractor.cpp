@@ -205,7 +205,7 @@ static void hexdump(const void *_data, size_t size) {
     const uint8_t *data = (const uint8_t *)_data;
     size_t offset = 0;
     while (offset < size) {
-        printf("0x%04x  ", offset);
+        printf("0x%04x  ", static_cast<unsigned int>(offset));
 
         size_t n = size - offset;
         if (n > 16) {
@@ -411,7 +411,7 @@ status_t MPEG4Extractor::readMetaData() {
         // The parseChunk function returns UNKNOWN_ERROR to skip
         // some boxes we don't want to handle. Filter that error
         // code but return others so e.g. I/O errors propagate.
-        if (err != OK && err != (status_t) UNKNOWN_ERROR) {
+        if (err != OK && err != static_cast<status_t>(UNKNOWN_ERROR)) {
           ALOGW("Error %d parsing chunck at offset %lld looking for first track",
               err, (long long)offset);
           break;
@@ -627,7 +627,7 @@ status_t MPEG4Extractor::parseDrmSINF(off64_t *offset, off64_t data_offset) {
         return ERROR_MALFORMED;
     }
 
-    return UNKNOWN_ERROR;  // Return a dummy error.
+    return static_cast<status_t>(UNKNOWN_ERROR);  // Return a dummy error.
 }
 
 struct PathAdder {
@@ -845,7 +845,7 @@ status_t MPEG4Extractor::parseChunk(off64_t *offset, int depth) {
                 mInitCheck = OK;
 
                 if (!mIsDrm) {
-                    return UNKNOWN_ERROR;  // Return a dummy error.
+                    return static_cast<status_t>(UNKNOWN_ERROR);  // Return a dummy error.
                 } else {
                     return OK;
                 }
@@ -900,7 +900,7 @@ status_t MPEG4Extractor::parseChunk(off64_t *offset, int depth) {
                 }
                 entriesoffset += 4; // ignore media_rate_integer and media_rate_fraction.
                 if (media_time == -1 && i) {
-                    ALOGW("ignoring invalid empty edit", i);
+                    ALOGW("ignoring invalid empty edit");
                     break;
                 } else if (media_time == -1) {
                     // Starting offsets for tracks (streams) are represented by an initial empty edit.
@@ -1675,7 +1675,7 @@ status_t MPEG4Extractor::parseChunk(off64_t *offset, int depth) {
         case FOURCC('a', 'v', 'c', 'C'):
         {
             if (chunk_data_size < 7) {
-              ALOGE("short avcC chunk (%d bytes)", chunk_data_size);
+              ALOGE("short avcC chunk (%" PRId64 " bytes)", int64_t(chunk_data_size));
               return ERROR_MALFORMED;
             }
 
@@ -1715,7 +1715,7 @@ status_t MPEG4Extractor::parseChunk(off64_t *offset, int depth) {
             char buffer[23];
             if (chunk_data_size != 7 &&
                 chunk_data_size != 23) {
-                ALOGE("Incorrect D263 box size %lld", chunk_data_size);
+                ALOGE("Incorrect D263 box size %" PRId64, chunk_data_size);
                 return ERROR_MALFORMED;
             }
 
@@ -1979,7 +1979,7 @@ status_t MPEG4Extractor::parseChunk(off64_t *offset, int depth) {
         {
             parseSegmentIndex(data_offset, chunk_data_size);
             *offset += chunk_size;
-            return UNKNOWN_ERROR; // stop parsing after sidx
+            return static_cast<status_t>(UNKNOWN_ERROR); // stop parsing after sidx
         }
 
         case FOURCC('w', 'a', 'v', 'e'):

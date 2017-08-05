@@ -89,12 +89,8 @@
       <property name="scrollIncrement" readonly="true">
         <getter><![CDATA[
           if (this._scrollIncrement === null) {
-            try {
-              this._scrollIncrement = this._prefBranch
-                                          .getIntPref("toolkit.scrollbox.scrollIncrement");
-            } catch (ex) {
-              this._scrollIncrement = 20;
-            }
+            this._scrollIncrement = this._prefBranch
+                                        .getIntPref("toolkit.scrollbox.scrollIncrement", 20);
           }
           return this._scrollIncrement;
         ]]></getter>
@@ -107,12 +103,8 @@
             if (this.hasAttribute("smoothscroll")) {
               this._smoothScroll = (this.getAttribute("smoothscroll") == "true");
             } else {
-              try {
-                this._smoothScroll = this._prefBranch
-                                         .getBoolPref("toolkit.scrollbox.smoothScroll");
-              } catch (ex) {
-                this._smoothScroll = true;
-              }
+              this._smoothScroll = this._prefBranch
+                                       .getBoolPref("toolkit.scrollbox.smoothScroll", true);
             }
           }
           return this._smoothScroll;
@@ -193,14 +185,11 @@
           return innerRect;
         ]]></getter>
       </property>
-      <property name="scrollboxPaddingStart" readonly="true">
-        <getter><![CDATA[
-          var ltr = (window.getComputedStyle(this).direction == "ltr");
-          var paddingStartName = ltr ? "padding-left" : "padding-right";
-          var scrollboxStyle = window.getComputedStyle(this._scrollbox);
-          return parseFloat(scrollboxStyle.getPropertyValue(paddingStartName));
-        ]]></getter>
-      </property>
+      <field name="scrollboxPaddingStart"><![CDATA[
+        parseFloat(window.getComputedStyle(this._scrollbox)[
+          this._isRTLScrollbox ? "paddingRight" : "paddingLeft"
+        ]);
+      ]]></field>
       <property name="scrollPosition">
         <getter><![CDATA[
           return this.orient == "vertical" ?
@@ -216,12 +205,9 @@
         ]]></setter>
       </property>
 
-      <property name="_startEndProps" readonly="true">
-        <getter><![CDATA[
-          return this.orient == "vertical" ?
-                 ["top", "bottom"] : ["left", "right"];
-        ]]></getter>
-      </property>
+      <field name="_startEndProps"><![CDATA[
+        this.orient == "vertical" ? ["top", "bottom"] : ["left", "right"];
+      ]]></field>
 
       <field name="_isRTLScrollbox"><![CDATA[
         this.orient != "vertical" &&
@@ -230,10 +216,39 @@
 
       <field name="_scrollTarget">null</field>
 
+      <method name="_boundsWithoutFlushing">
+        <parameter name="element"/>
+        <body><![CDATA[
+          if (!("_DOMWindowUtils" in this)) {
+            try {
+              this._DOMWindowUtils =
+                window.QueryInterface(Components.interfaces.nsIInterfaceRequestor)
+                      .getInterface(Components.interfaces.nsIDOMWindowUtils);
+            } catch (e) {
+              // Can't access nsIDOMWindowUtils if we're unprivileged.
+              this._DOMWindowUtils = null;
+            }
+          }
+
+          return this._DOMWindowUtils ?
+                 this._DOMWindowUtils.getBoundsWithoutFlushing(element) :
+                 element.getBoundingClientRect();
+        ]]></body>
+      </method>
+
       <method name="_canScrollToElement">
         <parameter name="element"/>
         <body><![CDATA[
-          return window.getComputedStyle(element).display != "none";
+          if (element.hidden) {
+            return false;
+          }
+
+          // See if the element is hidden via CSS without the hidden attribute.
+          // If we get only zeros for the client rect, this means the element
+          // is hidden. As a performance optimization, we don't flush layout
+          // here which means that on the fly changes aren't fully supported.
+          let rect = this._boundsWithoutFlushing(element);
+          return !!(rect.top || rect.left || rect.width || rect.height);
         ]]></body>
       </method>
 
@@ -620,27 +635,28 @@
       </method>
 
       <method name="_updateScrollButtonsDisabledState">
+        <parameter name="aScrolling"/>
         <body><![CDATA[
-          var scrolledToStart = false;
-          var scrolledToEnd = false;
+          let scrolledToStart;
+          let scrolledToEnd;
 
+          // Avoid flushing layout when not overflowing or when scrolling.
           if (this.hasAttribute("notoverflowing")) {
             scrolledToStart = true;
             scrolledToEnd = true;
+          } else if (aScrolling) {
+            scrolledToStart = false;
+            scrolledToEnd = false;
           } else if (this.scrollPosition == 0) {
             // In the RTL case, this means the _last_ element in the
             // scrollbox is visible
-            if (this._isRTLScrollbox)
-              scrolledToEnd = true;
-            else
-              scrolledToStart = true;
+            scrolledToEnd = this._isRTLScrollbox;
+            scrolledToStart = !this._isRTLScrollbox;
           } else if (this.scrollClientSize + this.scrollPosition == this.scrollSize) {
             // In the RTL case, this means the _first_ element in the
             // scrollbox is visible
-            if (this._isRTLScrollbox)
-              scrolledToStart = true;
-            else
-              scrolledToEnd = true;
+            scrolledToStart = this._isRTLScrollbox;
+            scrolledToEnd = !this._isRTLScrollbox;
           }
 
           if (scrolledToEnd)
@@ -766,10 +782,6 @@
           // See bug 341047 and comments in overflow handler as to why
           // try..catch is needed here
           this._updateScrollButtonsDisabledState();
-
-          let childNodes = this._getScrollableElements();
-          if (childNodes && childNodes.length)
-            this.ensureElementIsVisible(childNodes[0], false);
         } catch (e) {
           this.removeAttribute("notoverflowing");
         }
@@ -807,7 +819,29 @@
         }
       ]]></handler>
 
-      <handler event="scroll" action="this._updateScrollButtonsDisabledState()"/>
+      <handler event="scroll"><![CDATA[
+        if (!this._delayedUpdateScrollButtonsTimer) {
+          // This is the beginning of a scrolling animation. We need to update
+          // scroll buttons now in case we were scrolled to the start or to the
+          // end before we started scrolling.
+          this._updateScrollButtonsDisabledState(true);
+        } else {
+          // We're in the middle of the scrolling animation. We'll restart the
+          // delayed update request so that we only update the scroll buttons
+          // a second time once we're done scrolling.
+          window.clearTimeout(this._delayedUpdateScrollButtonsTimer);
+        }
+
+        // Try to detect the end of the scrolling animation to update the
+        // scroll buttons again. To avoid false positives, this timeout needs
+        // to be big enough to account for intermediate frames that don't move
+        // the scroll position in case we're scrolling slowly.
+        this._delayedUpdateScrollButtonsTimer = setTimeout(() => {
+          // Scrolling animation has finished.
+          this._delayedUpdateScrollButtonsTimer = 0;
+          this._updateScrollButtonsDisabledState();
+        }, 200);
+      ]]></handler>
     </handlers>
   </binding>
 
@@ -848,11 +882,9 @@
     </content>
     <implementation implements="nsITimerCallback, nsIDOMEventListener">
       <constructor><![CDATA[
-        try {
-          this._scrollDelay = this._prefBranch
-                                  .getIntPref("toolkit.scrollbox.clickToScroll.scrollDelay");
-        } catch (ex) {
-        }
+        this._scrollDelay =
+          this._prefBranch.getIntPref("toolkit.scrollbox.clickToScroll.scrollDelay",
+                                      this._scrollDelay);
       ]]></constructor>
 
       <destructor><![CDATA[

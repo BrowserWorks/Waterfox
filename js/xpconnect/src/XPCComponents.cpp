@@ -1707,12 +1707,10 @@ nsXPCComponents_Exception::HasInstance(nsIXPConnectWrappedNative* wrapper,
 {
     using namespace mozilla::dom;
 
-    RootedValue v(cx, val);
     if (bp) {
-        Exception* e;
-        *bp = (v.isObject() &&
-               NS_SUCCEEDED(UNWRAP_OBJECT(Exception, &v.toObject(), e))) ||
-              JSValIsInterfaceOfType(cx, v, NS_GET_IID(nsIException));
+        *bp = (val.isObject() &&
+               IS_INSTANCE_OF(Exception, &val.toObject())) ||
+              JSValIsInterfaceOfType(cx, val, NS_GET_IID(nsIException));
     }
     return NS_OK;
 }
@@ -2533,7 +2531,7 @@ nsXPCComponents_Utils::ImportGlobalProperties(HandleValue aPropertyList,
 
     // Don't allow doing this if the global is a Window
     nsGlobalWindow* win;
-    if (NS_SUCCEEDED(UNWRAP_OBJECT(Window, global, win))) {
+    if (NS_SUCCEEDED(UNWRAP_OBJECT(Window, &global, win))) {
         return NS_ERROR_NOT_AVAILABLE;
     }
 
@@ -2572,7 +2570,7 @@ nsXPCComponents_Utils::GetWeakReference(HandleValue object, JSContext* cx,
 NS_IMETHODIMP
 nsXPCComponents_Utils::ForceGC()
 {
-    JSContext* cx = nsXPConnect::GetContextInstance()->Context();
+    JSContext* cx = XPCJSContext::Get()->Context();
     PrepareForFullGC(cx);
     GCForReason(cx, GC_NORMAL, gcreason::COMPONENT_UTILS);
     return NS_OK;
@@ -2841,10 +2839,11 @@ nsXPCComponents_Utils::IsDeadWrapper(HandleValue obj, bool* out)
     if (obj.isPrimitive())
         return NS_ERROR_INVALID_ARG;
 
-    // Make sure to unwrap first. Once a proxy is nuked, it ceases to be a
-    // wrapper, meaning that, if passed to another compartment, we'll generate
-    // a CCW for it. Make sure that IsDeadWrapper sees through the confusion.
-    *out = JS_IsDeadWrapper(js::CheckedUnwrap(&obj.toObject()));
+    // We should never have cross-compartment wrappers for dead wrappers.
+    MOZ_ASSERT_IF(js::IsCrossCompartmentWrapper(&obj.toObject()),
+                  !JS_IsDeadWrapper(js::UncheckedUnwrap(&obj.toObject())));
+
+    *out = JS_IsDeadWrapper(&obj.toObject());
     return NS_OK;
 }
 
@@ -2916,7 +2915,7 @@ nsXPCComponents_Utils::SetWantXrays(HandleValue vscope, JSContext* cx)
 NS_IMETHODIMP
 nsXPCComponents_Utils::ForcePermissiveCOWs(JSContext* cx)
 {
-    CrashIfNotInAutomation();
+    xpc::CrashIfNotInAutomation();
     CompartmentPrivate::Get(CurrentGlobalOrNull(cx))->forcePermissiveCOWs = true;
     return NS_OK;
 }
@@ -2927,7 +2926,7 @@ nsXPCComponents_Utils::ForcePrivilegedComponentsForScope(HandleValue vscope,
 {
     if (!vscope.isObject())
         return NS_ERROR_INVALID_ARG;
-    CrashIfNotInAutomation();
+    xpc::CrashIfNotInAutomation();
     JSObject* scopeObj = js::UncheckedUnwrap(&vscope.toObject());
     XPCWrappedNativeScope* scope = ObjectScope(scopeObj);
     scope->ForcePrivilegedComponents();
@@ -3009,6 +3008,22 @@ nsXPCComponents_Utils::SetGCZeal(int32_t aValue, JSContext* cx)
 #ifdef JS_GC_ZEAL
     JS_SetGCZeal(cx, uint8_t(aValue), JS_DEFAULT_ZEAL_FREQ);
 #endif
+    return NS_OK;
+}
+
+NS_IMETHODIMP
+nsXPCComponents_Utils::GetIsInAutomation(bool* aResult)
+{
+    NS_ENSURE_ARG_POINTER(aResult);
+
+    *aResult = xpc::IsInAutomation();
+    return NS_OK;
+}
+
+NS_IMETHODIMP
+nsXPCComponents_Utils::CrashIfNotInAutomation()
+{
+    xpc::CrashIfNotInAutomation();
     return NS_OK;
 }
 
@@ -3356,8 +3371,7 @@ nsXPCComponents_Utils::AllowCPOWsInAddon(const nsACString& addonIdStr,
 NS_IMETHODIMP
 nsXPCComponents_Utils::Now(double* aRetval)
 {
-    bool isInconsistent = false;
-    TimeStamp start = TimeStamp::ProcessCreation(isInconsistent);
+    TimeStamp start = TimeStamp::ProcessCreation();
     *aRetval = (TimeStamp::Now() - start).ToMilliseconds();
     return NS_OK;
 }

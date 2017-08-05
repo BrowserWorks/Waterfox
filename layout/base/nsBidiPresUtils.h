@@ -40,31 +40,33 @@ namespace mozilla {
  */
 struct nsFrameContinuationState : public nsVoidPtrHashKey
 {
-  explicit nsFrameContinuationState(const void *aFrame) : nsVoidPtrHashKey(aFrame) {}
+  explicit nsFrameContinuationState(const void *aFrame)
+    : nsVoidPtrHashKey(aFrame)
+  {}
 
   /**
    * The first visual frame in the continuation chain containing this frame, or
    * nullptr if this frame is the first visual frame in the chain.
    */
-  nsIFrame* mFirstVisualFrame;
+  nsIFrame* mFirstVisualFrame { nullptr };
 
   /**
    * The number of frames in the continuation chain containing this frame, if
    * this frame is the first visual frame of the chain, or 0 otherwise.
    */
-  uint32_t mFrameCount;
+  uint32_t mFrameCount { 0 };
 
   /**
    * TRUE if this frame is the first visual frame of its continuation chain on
    * this line and the chain has some frames on the previous lines.
    */
-  bool mHasContOnPrevLines;
+  bool mHasContOnPrevLines { false };
 
   /**
    * TRUE if this frame is the first visual frame of its continuation chain on
    * this line and the chain has some frames left for next lines.
    */
-  bool mHasContOnNextLines;
+  bool mHasContOnNextLines { false };
 };
 
 /*
@@ -398,6 +400,23 @@ private:
   static void TraverseFrames(nsBlockInFlowLineIterator* aLineIter,
                              nsIFrame*                  aCurrentFrame,
                              BidiParagraphData*         aBpd);
+
+  /**
+   * Perform a recursive "pre-traversal" of the child frames of a block or
+   * inline container frame, to determine whether full bidi resolution is
+   * actually needed.
+   * This explores the same frames as TraverseFrames (above), but is less
+   * expensive and may allow us to avoid performing the full TraverseFrames
+   * operation.
+   * @param   aFirstChild  frame to start traversal from
+   * @param[in/out]  aCurrContent  the content node that we've most recently
+   *          scanned for RTL characters (so that when descendant frames refer
+   *          to the same content, we can avoid repeatedly scanning it).
+   * @return  true if it finds that bidi is (or may be) required,
+   *          false if no potentially-bidi content is present.
+   */
+  static bool ChildListMayRequireBidi(nsIFrame*    aFirstChild,
+                                      nsIContent** aCurrContent);
 
   /**
    * Position ruby content frames (ruby base/text frame).

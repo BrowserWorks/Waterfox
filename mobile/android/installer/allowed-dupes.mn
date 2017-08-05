@@ -33,9 +33,11 @@ chrome/en-US/locale/en-US/browser/overrides/global/mozilla.dtd
 chrome/en-US/locale/en-US/browser/overrides/intl.css
 chrome/en-US/locale/en-US/browser/region.properties
 chrome/en-US/locale/en-US/browser/webcompatReporter.properties
+chrome/en-US/locale/en-US/browser/searchplugins/list.json
 chrome/en-US/locale/en-US/browser/searchplugins/amazon-co-uk.xml
 chrome/en-US/locale/en-US/browser/searchplugins/amazon-de.xml
 chrome/en-US/locale/en-US/browser/searchplugins/amazon-en-GB.xml
+chrome/en-US/locale/en-US/browser/searchplugins/amazon-fr.xml
 chrome/en-US/locale/en-US/browser/searchplugins/amazon-in.xml
 chrome/en-US/locale/en-US/browser/searchplugins/amazondotcom.xml
 chrome/en-US/locale/en-US/browser/searchplugins/bolcom-fy-NL.xml
@@ -45,7 +47,6 @@ chrome/en-US/locale/en-US/browser/searchplugins/duckduckgo.xml
 chrome/en-US/locale/en-US/browser/searchplugins/google-nocodes.xml
 chrome/en-US/locale/en-US/browser/searchplugins/google.xml
 chrome/en-US/locale/en-US/browser/searchplugins/gulesider-mobile-NO.xml
-chrome/en-US/locale/en-US/browser/searchplugins/list.txt
 chrome/en-US/locale/en-US/browser/searchplugins/qwant.xml
 chrome/en-US/locale/en-US/browser/searchplugins/rediff.xml
 chrome/en-US/locale/en-US/browser/searchplugins/twitter.xml
@@ -53,6 +54,7 @@ chrome/en-US/locale/en-US/browser/searchplugins/wikipedia.xml
 chrome/en-US/locale/en-US/browser/searchplugins/wikipedia-es.xml
 chrome/en-US/locale/en-US/browser/searchplugins/wikipedia-fr.xml
 chrome/en-US/locale/en-US/browser/searchplugins/wikipedia-hi.xml
+chrome/en-US/locale/en-US/browser/searchplugins/wikipedia-pt.xml
 chrome/en-US/locale/en-US/browser/searchplugins/yahoo.xml
 chrome/en-US/locale/en-US/browser/searchplugins/yahoo-de.xml
 chrome/en-US/locale/en-US/browser/searchplugins/yahoo-en-GB.xml

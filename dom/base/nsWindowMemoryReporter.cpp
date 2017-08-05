@@ -400,6 +400,12 @@ CollectWindowReports(nsGlobalWindow *aWindow,
   aWindowTotalSizes->mLayoutPresContextSize +=
     windowSizes.mLayoutPresContextSize;
 
+  REPORT_SIZE("/layout/frame-properties", windowSizes.mLayoutFramePropertiesSize,
+         "Memory used for frame properties attached to frames "
+         "within a window.");
+  aWindowTotalSizes->mLayoutFramePropertiesSize +=
+    windowSizes.mLayoutFramePropertiesSize;
+
   // There are many different kinds of frames, but it is very likely
   // that only a few matter.  Implement a cutoff so we don't bloat
   // about:memory with many uninteresting entries.
@@ -407,7 +413,7 @@ CollectWindowReports(nsGlobalWindow *aWindow,
     js::MemoryReportingSundriesThreshold();
 
   size_t frameSundriesSize = 0;
-#define FRAME_ID(classname)                                             \
+#define FRAME_ID(classname, ...)                                        \
   {                                                                     \
     size_t frameSize                                                    \
       = windowSizes.mArenaStats.FRAME_ID_STAT_FIELD(classname);         \
@@ -421,8 +427,10 @@ CollectWindowReports(nsGlobalWindow *aWindow,
     aWindowTotalSizes->mArenaStats.FRAME_ID_STAT_FIELD(classname)       \
       += frameSize;                                                     \
   }
+#define ABSTRACT_FRAME_ID(...)
 #include "nsFrameIdList.h"
 #undef FRAME_ID
+#undef ABSTRACT_FRAME_ID
 
   if (frameSundriesSize > 0) {
     REPORT_SIZE("/layout/frames/sundries", frameSundriesSize,
@@ -563,11 +571,16 @@ nsWindowMemoryReporter::CollectReports(nsIHandleReportCallback* aHandleReport,
   REPORT("window-objects/layout/pres-contexts", windowTotalSizes.mLayoutPresContextSize,
          "This is the sum of all windows' 'layout/pres-contexts' numbers.");
 
+  REPORT("window-objects/layout/frame-properties", windowTotalSizes.mLayoutFramePropertiesSize,
+         "This is the sum of all windows' 'layout/frame-properties' numbers.");
+
   size_t frameTotal = 0;
-#define FRAME_ID(classname)                \
+#define FRAME_ID(classname, ...)                \
   frameTotal += windowTotalSizes.mArenaStats.FRAME_ID_STAT_FIELD(classname);
+#define ABSTRACT_FRAME_ID(...)
 #include "nsFrameIdList.h"
 #undef FRAME_ID
+#undef ABSTRACT_FRAME_ID
 
   REPORT("window-objects/layout/frames", frameTotal,
          "Memory used for layout frames within windows. "

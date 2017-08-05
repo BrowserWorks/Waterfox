@@ -112,7 +112,7 @@ function installSearchResult(aCallback) {
     item.mInstall.addListener({
       onInstallEnded() {
         executeSoon(aCallback);
-      }
+      },
     });
   });
 }

@@ -22,6 +22,7 @@
 #include "mozilla/Compression.h"
 #include "mozilla/MathAlgorithms.h"
 #include "mozilla/Maybe.h"
+#include "mozilla/Unused.h"
 
 #include "jsmath.h"
 #include "jsprf.h"
@@ -35,6 +36,7 @@
 #include "gc/Policy.h"
 #include "jit/AtomicOperations.h"
 #include "js/MemoryMetrics.h"
+#include "vm/ErrorReporting.h"
 #include "vm/SelfHosting.h"
 #include "vm/StringBuffer.h"
 #include "vm/Time.h"
@@ -69,6 +71,7 @@ using mozilla::PodCopy;
 using mozilla::PodEqual;
 using mozilla::PodZero;
 using mozilla::PositiveInfinity;
+using mozilla::Unused;
 using JS::AsmJSOption;
 using JS::GenericNaN;
 
@@ -322,7 +325,7 @@ struct js::AsmJSMetadata : Metadata, AsmJSMetadataCacheablePod
     // Function constructor, this will be the first character in the function
     // source. Otherwise, it will be the opening parenthesis of the arguments
     // list.
-    uint32_t                preludeStart;
+    uint32_t                toStringStart;
     uint32_t                srcStart;
     uint32_t                srcBodyStart;
     bool                    strict;
@@ -335,8 +338,8 @@ struct js::AsmJSMetadata : Metadata, AsmJSMetadataCacheablePod
         return srcStart + srcLengthWithRightBrace;
     }
 
-    AsmJSMetadata()
-      : Metadata(ModuleKind::AsmJS),
+    explicit AsmJSMetadata(UniqueMetadataTier tier)
+      : Metadata(Move(tier), ModuleKind::AsmJS),
         cacheResult(CacheResult::Miss),
         srcStart(0),
         srcBodyStart(0),
@@ -1736,20 +1739,51 @@ class MOZ_STACK_CLASS ModuleValidator
     ~ModuleValidator() {
         if (errorString_) {
             MOZ_ASSERT(errorOffset_ != UINT32_MAX);
-            tokenStream().reportAsmJSError(errorOffset_,
-                                           JSMSG_USE_ASM_TYPE_FAIL,
-                                           errorString_.get());
+            typeFailure(errorOffset_, errorString_.get());
         }
         if (errorOverRecursed_)
             ReportOverRecursed(cx_);
     }
 
+  private:
+    void typeFailure(uint32_t offset, ...) {
+        va_list args;
+        va_start(args, offset);
+
+        TokenStream& ts = tokenStream();
+        ErrorMetadata metadata;
+        if (ts.computeErrorMetadata(&metadata, offset)) {
+            if (ts.options().throwOnAsmJSValidationFailureOption) {
+                ReportCompileError(cx_, Move(metadata), nullptr, JSREPORT_ERROR,
+                                   JSMSG_USE_ASM_TYPE_FAIL, args);
+            } else {
+                // asm.js type failure is indicated by calling one of the fail*
+                // functions below.  These functions always return false to
+                // halt asm.js parsing.  Whether normal parsing is attempted as
+                // fallback, depends whether an exception is also set.
+                //
+                // If warning succeeds, no exception is set.  If warning fails,
+                // an exception is set and execution will halt.  Thus it's safe
+                // and correct to ignore the return value here.
+                Unused << ts.compileWarning(Move(metadata), nullptr, JSREPORT_WARNING,
+                                            JSMSG_USE_ASM_TYPE_FAIL, args);
+            }
+        }
+
+        va_end(args);
+    }
+
+  public:
     bool init() {
-        asmJSMetadata_ = cx_->new_<AsmJSMetadata>();
+        auto tierMetadata = js::MakeUnique<MetadataTier>(Tier::Ion);
+        if (!tierMetadata)
+            return false;
+
+        asmJSMetadata_ = cx_->new_<AsmJSMetadata>(Move(tierMetadata));
         if (!asmJSMetadata_)
             return false;
 
-        asmJSMetadata_->preludeStart = moduleFunctionNode_->pn_funbox->preludeStart;
+        asmJSMetadata_->toStringStart = moduleFunctionNode_->pn_funbox->toStringStart;
         asmJSMetadata_->srcStart = moduleFunctionNode_->pn_body->pn_pos.begin;
         asmJSMetadata_->srcBodyStart = parser_.tokenStream.currentToken().pos.end;
         asmJSMetadata_->strict = parser_.pc->sc()->strict() &&
@@ -2238,12 +2272,12 @@ class MOZ_STACK_CLASS ModuleValidator
         return failOffset(pn->pn_pos.begin, str);
     }
 
-    bool failfVAOffset(uint32_t offset, const char* fmt, va_list ap) {
+    bool failfVAOffset(uint32_t offset, const char* fmt, va_list ap) MOZ_FORMAT_PRINTF(3, 0) {
         MOZ_ASSERT(!hasAlreadyFailed());
         MOZ_ASSERT(errorOffset_ == UINT32_MAX);
         MOZ_ASSERT(fmt);
         errorOffset_ = offset;
-        errorString_.reset(JS_vsmprintf(fmt, ap));
+        errorString_ = JS_vsmprintf(fmt, ap);
         return false;
     }
 
@@ -7044,7 +7078,7 @@ ParseFunction(ModuleValidator& m, ParseNode** fnOut, unsigned* line)
     TokenStream& tokenStream = m.tokenStream();
 
     tokenStream.consumeKnownToken(TOK_FUNCTION, TokenStream::Operand);
-    uint32_t preludeStart = tokenStream.currentToken().pos.begin;
+    uint32_t toStringStart = tokenStream.currentToken().pos.begin;
     *line = tokenStream.srcCoords.lineNum(tokenStream.currentToken().pos.end);
 
     TokenKind tk;
@@ -7057,7 +7091,7 @@ ParseFunction(ModuleValidator& m, ParseNode** fnOut, unsigned* line)
     if (!name)
         return false;
 
-    ParseNode* fn = m.parser().handler.newFunctionStatement();
+    ParseNode* fn = m.parser().handler.newFunctionStatement(m.parser().pos());
     if (!fn)
         return false;
 
@@ -7067,8 +7101,8 @@ ParseFunction(ModuleValidator& m, ParseNode** fnOut, unsigned* line)
 
     ParseContext* outerpc = m.parser().pc;
     Directives directives(outerpc);
-    FunctionBox* funbox = m.parser().newFunctionBox(fn, fun, preludeStart, directives, NotGenerator,
-                                                    SyncFunction, /* tryAnnexB = */ false);
+    FunctionBox* funbox = m.parser().newFunctionBox(fn, fun, toStringStart, directives,
+                                                    NotGenerator, SyncFunction);
     if (!funbox)
         return false;
     funbox->initWithEnclosingParseContext(outerpc, frontend::Statement);
@@ -7476,8 +7510,11 @@ static bool
 HasPureCoercion(JSContext* cx, HandleValue v)
 {
     // Unsigned SIMD types are not allowed in function signatures.
-    if (IsVectorObject<Int32x4>(v) || IsVectorObject<Float32x4>(v) || IsVectorObject<Bool32x4>(v))
+    if (IsVectorObject<Int32x4>(v) || IsVectorObject<Int16x8>(v) ||  IsVectorObject<Int8x16>(v) ||
+        IsVectorObject<Bool32x4>(v) || IsVectorObject<Bool16x8>(v) ||
+        IsVectorObject<Bool8x16>(v) || IsVectorObject<Float32x4>(v)) {
         return true;
+    }
 
     // Ideally, we'd reject all non-SIMD non-primitives, but Emscripten has a
     // bug that generates code that passes functions for some imports. To avoid
@@ -8035,12 +8072,7 @@ TryInstantiate(JSContext* cx, CallArgs args, Module& module, const AsmJSMetadata
     if (!module.instantiate(cx, funcs, table, memory, valImports, nullptr, instanceObj))
         return false;
 
-    RootedValue exportObjVal(cx);
-    if (!JS_GetProperty(cx, instanceObj, InstanceExportField, &exportObjVal))
-        return false;
-
-    MOZ_RELEASE_ASSERT(exportObjVal.isObject());
-    exportObj.set(&exportObjVal.toObject());
+    exportObj.set(&instanceObj->exportsObj());
     return true;
 }
 
@@ -8064,7 +8096,7 @@ HandleInstantiationFailure(JSContext* cx, CallArgs args, const AsmJSMetadata& me
         return false;
     }
 
-    uint32_t begin = metadata.preludeStart;
+    uint32_t begin = metadata.toStringStart;
     uint32_t end = metadata.srcEndAfterCurly();
     Rooted<JSFlatString*> src(cx, source->substringDontDeflate(cx, begin, end));
     if (!src)
@@ -8459,11 +8491,10 @@ StoreAsmJSModuleInCache(AsmJSParser& parser, Module& module, JSContext* cx)
 
     const char16_t* begin = parser.tokenStream.rawCharPtrAt(ModuleChars::beginOffset(parser));
     const char16_t* end = parser.tokenStream.rawCharPtrAt(ModuleChars::endOffset(parser));
-    bool installed = parser.options().installedFile;
 
     ScopedCacheEntryOpenedForWrite entry(cx, serializedSize);
     JS::AsmJSCacheResult openResult =
-        open(cx->global(), installed, begin, end, serializedSize, &entry.memory, &entry.handle);
+        open(cx->global(), begin, end, serializedSize, &entry.memory, &entry.handle);
     if (openResult != JS::AsmJSCache_Success)
         return openResult;
 
@@ -8519,7 +8550,11 @@ LookupAsmJSModuleInCache(JSContext* cx, AsmJSParser& parser, bool* loadedFromCac
     if (!Module::assumptionsMatch(assumptions, cursor, remain))
         return true;
 
-    MutableAsmJSMetadata asmJSMetadata = cx->new_<AsmJSMetadata>();
+    auto tierMetadata = js::MakeUnique<MetadataTier>(Tier::Ion);
+    if (!tierMetadata)
+        return false;
+
+    MutableAsmJSMetadata asmJSMetadata = cx->new_<AsmJSMetadata>(Move(tierMetadata));
     if (!asmJSMetadata)
         return false;
 
@@ -8547,7 +8582,7 @@ LookupAsmJSModuleInCache(JSContext* cx, AsmJSParser& parser, bool* loadedFromCac
         return true;
 
     // See AsmJSMetadata comment as well as ModuleValidator::init().
-    asmJSMetadata->preludeStart = parser.pc->functionBox()->preludeStart;
+    asmJSMetadata->toStringStart = parser.pc->functionBox()->toStringStart;
     asmJSMetadata->srcStart = parser.pc->functionBox()->functionNode->pn_body->pn_pos.begin;
     asmJSMetadata->srcBodyStart = parser.tokenStream.currentToken().pos.end;
     asmJSMetadata->strict = parser.pc->sc()->strict() && !parser.pc->sc()->hasExplicitUseStrict();
@@ -8558,7 +8593,7 @@ LookupAsmJSModuleInCache(JSContext* cx, AsmJSParser& parser, bool* loadedFromCac
 
     int64_t after = PRMJ_Now();
     int ms = (after - before) / PRMJ_USEC_PER_MSEC;
-    *compilationTimeReport = UniqueChars(JS_smprintf("loaded from cache in %dms", ms));
+    *compilationTimeReport = JS_smprintf("loaded from cache in %dms", ms);
     if (!*compilationTimeReport)
         return false;
 
@@ -8659,7 +8694,7 @@ BuildConsoleMessage(JSContext* cx, unsigned time, JS::AsmJSCacheResult cacheResu
         break;
     }
 
-    return UniqueChars(JS_smprintf("total compilation time %dms; %s", time, cacheString));
+    return JS_smprintf("total compilation time %dms; %s", time, cacheString);
 #else
     return DuplicateString("");
 #endif
@@ -8848,7 +8883,7 @@ js::AsmJSModuleToString(JSContext* cx, HandleFunction fun, bool addParenToLambda
     MOZ_ASSERT(IsAsmJSModule(fun));
 
     const AsmJSMetadata& metadata = AsmJSModuleFunctionToModule(fun).metadata().asAsmJS();
-    uint32_t begin = metadata.preludeStart;
+    uint32_t begin = metadata.toStringStart;
     uint32_t end = metadata.srcEndAfterCurly();
     ScriptSource* source = metadata.scriptSource.get();
 

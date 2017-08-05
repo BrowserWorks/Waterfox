@@ -559,12 +559,15 @@ function StringIteratorNext() {
     if (first >= 0xD800 && first <= 0xDBFF && index + 1 < size) {
         var second = callFunction(std_String_charCodeAt, S, index + 1);
         if (second >= 0xDC00 && second <= 0xDFFF) {
+            first = (first - 0xD800) * 0x400 + (second - 0xDC00) + 0x10000;
             charCount = 2;
         }
     }
 
     UnsafeSetReservedSlot(this, ITERATOR_SLOT_NEXT_INDEX, index + charCount);
-    result.value = callFunction(String_substring, S, index, index + charCount);
+
+    // Communicate |first|'s possible range to the compiler.
+    result.value = callFunction(std_String_fromCodePoint, null, first & 0x1fffff);
 
     return result;
 }
@@ -599,6 +602,88 @@ function String_localeCompare(that) {
 
     // Step 7.
     return intl_CompareStrings(collator, S, That);
+}
+
+/**
+ * 13.1.2 String.prototype.toLocaleLowerCase ( [ locales ] )
+ *
+ * ES2017 Intl draft rev 94045d234762ad107a3d09bb6f7381a65f1a2f9b
+ */
+function String_toLocaleLowerCase() {
+    // Step 1.
+    RequireObjectCoercible(this);
+
+    // Step 2.
+    var string = ToString(this);
+
+    // Handle the common cases (no locales argument or a single string
+    // argument) first.
+    var locales = arguments.length > 0 ? arguments[0] : undefined;
+    var requestedLocale;
+    if (locales === undefined) {
+        // Steps 3, 6.
+        requestedLocale = undefined;
+    } else if (typeof locales === "string") {
+        // Steps 3, 5.
+        requestedLocale = ValidateAndCanonicalizeLanguageTag(locales);
+    } else {
+        // Step 3.
+        var requestedLocales = CanonicalizeLocaleList(locales);
+
+        // Steps 4-6.
+        requestedLocale = requestedLocales.length > 0 ? requestedLocales[0] : undefined;
+    }
+
+    // Trivial case: When the input is empty, directly return the empty string.
+    if (string.length === 0)
+        return "";
+
+    if (requestedLocale === undefined)
+        requestedLocale = DefaultLocale();
+
+    // Steps 7-16.
+    return intl_toLocaleLowerCase(string, requestedLocale);
+}
+
+/**
+ * 13.1.3 String.prototype.toLocaleUpperCase ( [ locales ] )
+ *
+ * ES2017 Intl draft rev 94045d234762ad107a3d09bb6f7381a65f1a2f9b
+ */
+function String_toLocaleUpperCase() {
+    // Step 1.
+    RequireObjectCoercible(this);
+
+    // Step 2.
+    var string = ToString(this);
+
+    // Handle the common cases (no locales argument or a single string
+    // argument) first.
+    var locales = arguments.length > 0 ? arguments[0] : undefined;
+    var requestedLocale;
+    if (locales === undefined) {
+        // Steps 3, 6.
+        requestedLocale = undefined;
+    } else if (typeof locales === "string") {
+        // Steps 3, 5.
+        requestedLocale = ValidateAndCanonicalizeLanguageTag(locales);
+    } else {
+        // Step 3.
+        var requestedLocales = CanonicalizeLocaleList(locales);
+
+        // Steps 4-6.
+        requestedLocale = requestedLocales.length > 0 ? requestedLocales[0] : undefined;
+    }
+
+    // Trivial case: When the input is empty, directly return the empty string.
+    if (string.length === 0)
+        return "";
+
+    if (requestedLocale === undefined)
+        requestedLocale = DefaultLocale();
+
+    // Steps 7-16.
+    return intl_toLocaleUpperCase(string, requestedLocale);
 }
 
 /* ES6 Draft May 22, 2014 21.1.2.4 */
@@ -869,14 +954,28 @@ function String_static_toLocaleLowerCase(string) {
     WarnDeprecatedStringMethod(STRING_GENERICS_TO_LOCALE_LOWER_CASE, "toLocaleLowerCase");
     if (arguments.length < 1)
         ThrowTypeError(JSMSG_MISSING_FUN_ARG, 0, "String.toLocaleLowerCase");
+/* eslint-disable no-unreachable */
+#if EXPOSE_INTL_API
+    var locales = arguments.length > 1 ? arguments[1] : undefined;
+    return callFunction(String_toLocaleLowerCase, string, locales);
+#else
     return callFunction(std_String_toLocaleLowerCase, string);
+#endif
+/* eslint-enable no-unreachable */
 }
 
 function String_static_toLocaleUpperCase(string) {
     WarnDeprecatedStringMethod(STRING_GENERICS_TO_LOCALE_UPPER_CASE, "toLocaleUpperCase");
     if (arguments.length < 1)
         ThrowTypeError(JSMSG_MISSING_FUN_ARG, 0, "String.toLocaleUpperCase");
+/* eslint-disable no-unreachable */
+#if EXPOSE_INTL_API
+    var locales = arguments.length > 1 ? arguments[1] : undefined;
+    return callFunction(String_toLocaleUpperCase, string, locales);
+#else
     return callFunction(std_String_toLocaleUpperCase, string);
+#endif
+/* eslint-enable no-unreachable */
 }
 
 #if EXPOSE_INTL_API

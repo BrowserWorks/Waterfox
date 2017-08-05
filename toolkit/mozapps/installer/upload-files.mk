@@ -76,6 +76,13 @@ ifdef WIN_UCRT_REDIST_DIR
   JSSHELL_BINS += ucrtbase.dll
 endif
 
+ifdef LLVM_SYMBOLIZER
+  JSSHELL_BINS += $(notdir $(LLVM_SYMBOLIZER))
+endif
+ifdef MOZ_CLANG_RT_ASAN_LIB_PATH
+  JSSHELL_BINS += $(notdir $(MOZ_CLANG_RT_ASAN_LIB_PATH))
+endif
+
 MAKE_JSSHELL  = $(call py_action,zip,-C $(DIST)/bin --strip $(abspath $(PKG_JSSHELL)) $(JSSHELL_BINS))
 
 JARLOG_DIR = $(topobjdir)/jarlog/
@@ -120,8 +127,8 @@ endif
 
 ifeq ($(MOZ_PKG_FORMAT),SFX7Z)
   PKG_SUFFIX	= .exe
-  INNER_MAKE_PACKAGE = $(call py_action,7z_exe_archive,'$(MOZ_PKG_DIR)' '$(MOZ_INSTALLER_PATH)/app.tag' '$(MOZ_SFX_PACKAGE)' '$(PACKAGE)')
-  INNER_UNMAKE_PACKAGE = $(call py_action,7z_exe_extract,$(UNPACKAGE) $(MOZ_PKG_DIR))
+  INNER_MAKE_PACKAGE = $(call py_action,exe_7z_archive,'$(MOZ_PKG_DIR)' '$(MOZ_INSTALLER_PATH)/app.tag' '$(MOZ_SFX_PACKAGE)' '$(PACKAGE)')
+  INNER_UNMAKE_PACKAGE = $(call py_action,exe_7z_extract,$(UNPACKAGE) $(MOZ_PKG_DIR))
 endif
 
 #Create an RPM file
@@ -210,30 +217,12 @@ ifeq ($(MOZ_PKG_FORMAT),DMG)
   PKG_DMG_SOURCE = $(MOZ_PKG_DIR)
   INNER_MAKE_PACKAGE	= $(call py_action,make_dmg,'$(PKG_DMG_SOURCE)' '$(PACKAGE)')
   INNER_UNMAKE_PACKAGE	= \
-    set -ex; \
-    rm -rf $(ABS_DIST)/unpack.tmp; \
-    mkdir -p $(ABS_DIST)/unpack.tmp; \
-    $(_ABS_MOZSRCDIR)/build/package/mac_osx/unpack-diskimage $(UNPACKAGE) /tmp/$(MOZ_PKG_APPNAME)-unpack $(ABS_DIST)/unpack.tmp; \
-    rsync -a '$(ABS_DIST)/unpack.tmp/$(_APPNAME)' $(MOZ_PKG_DIR); \
-    if test -n '$(MOZ_PKG_MAC_DSSTORE)' ; then \
-      mkdir -p '$(dir $(MOZ_PKG_MAC_DSSTORE))'; \
-      rsync -a '$(ABS_DIST)/unpack.tmp/.DS_Store' '$(MOZ_PKG_MAC_DSSTORE)'; \
-    fi; \
-    if test -n '$(MOZ_PKG_MAC_BACKGROUND)' ; then \
-      mkdir -p '$(dir $(MOZ_PKG_MAC_BACKGROUND))'; \
-      rsync -a '$(ABS_DIST)/unpack.tmp/.background/$(notdir $(MOZ_PKG_MAC_BACKGROUND))' '$(MOZ_PKG_MAC_BACKGROUND)'; \
-    fi; \
-    if test -n '$(MOZ_PKG_MAC_ICON)' ; then \
-      mkdir -p '$(dir $(MOZ_PKG_MAC_ICON))'; \
-      rsync -a '$(ABS_DIST)/unpack.tmp/.VolumeIcon.icns' '$(MOZ_PKG_MAC_ICON)'; \
-    fi; \
-    rm -rf $(ABS_DIST)/unpack.tmp; \
-    if test -n '$(MOZ_PKG_MAC_RSRC)' ; then \
-      cp $(UNPACKAGE) $(MOZ_PKG_APPNAME).tmp.dmg && \
-      hdiutil unflatten $(MOZ_PKG_APPNAME).tmp.dmg && \
-      { /Developer/Tools/DeRez -skip plst -skip blkx $(MOZ_PKG_APPNAME).tmp.dmg > '$(MOZ_PKG_MAC_RSRC)' || { rm -f $(MOZ_PKG_APPNAME).tmp.dmg && false; }; } && \
-      rm -f $(MOZ_PKG_APPNAME).tmp.dmg; \
-    fi
+    $(call py_action,unpack_dmg, \
+        $(if $(MOZ_PKG_MAC_DSSTORE),--dsstore '$(MOZ_PKG_MAC_DSSTORE)') \
+        $(if $(MOZ_PKG_MAC_BACKGROUND),--background '$(MOZ_PKG_MAC_BACKGROUND)') \
+        $(if $(MOZ_PKG_MAC_ICON),--icon '$(MOZ_PKG_MAC_ICON)') \
+        $(UNPACKAGE) $(MOZ_PKG_DIR) \
+        )
 endif
 
 ifdef MOZ_INTERNAL_SIGNING_FORMAT
@@ -250,19 +239,15 @@ endif
 
 ifdef MOZ_SIGN_PREPARED_PACKAGE_CMD
   ifeq (Darwin, $(OS_ARCH))
-    MAKE_PACKAGE    = $(or $(call MAKE_SIGN_EME_VOUCHER,$(MOZ_PKG_DIR)$(_BINPATH)/$(MOZ_CHILD_PROCESS_NAME).app/Contents/MacOS,$(MOZ_PKG_DIR)$(_RESPATH)),true) \
-                      && (cd $(MOZ_PKG_DIR)$(_RESPATH) && $(CREATE_PRECOMPLETE_CMD)) \
-                      && cd ./$(PKG_DMG_SOURCE) && $(MOZ_SIGN_PREPARED_PACKAGE_CMD) $(MOZ_MACBUNDLE_NAME) \
+    MAKE_PACKAGE    = cd ./$(PKG_DMG_SOURCE) && $(MOZ_SIGN_PREPARED_PACKAGE_CMD) $(MOZ_MACBUNDLE_NAME) \
                       && cd $(PACKAGE_BASE_DIR) && $(INNER_MAKE_PACKAGE)
   else
     MAKE_PACKAGE    = $(MOZ_SIGN_PREPARED_PACKAGE_CMD) $(MOZ_PKG_DIR) \
-                      && $(or $(call MAKE_SIGN_EME_VOUCHER,$(MOZ_PKG_DIR)),true) \
-                      && (cd $(MOZ_PKG_DIR)$(_RESPATH) && $(CREATE_PRECOMPLETE_CMD)) \
                       && $(INNER_MAKE_PACKAGE)
   endif #Darwin
 
 else
-  MAKE_PACKAGE    = (cd $(MOZ_PKG_DIR)$(_RESPATH) && $(CREATE_PRECOMPLETE_CMD)) && $(INNER_MAKE_PACKAGE)
+  MAKE_PACKAGE    = $(INNER_MAKE_PACKAGE)
 endif
 
 ifdef MOZ_SIGN_PACKAGE_CMD
@@ -350,6 +335,9 @@ endif
 
 ifneq (android,$(MOZ_WIDGET_TOOLKIT))
   OPTIMIZEJARS = 1
+  ifneq (gonk,$(MOZ_WIDGET_TOOLKIT))
+    DISABLE_JAR_COMPRESSION = 1
+  endif
 endif
 
 # A js binary is needed to perform verification of JavaScript minification.
@@ -423,6 +411,10 @@ UPLOAD_FILES= \
 ifdef MOZ_CODE_COVERAGE
   UPLOAD_FILES += \
     $(call QUOTED_WILDCARD,$(DIST)/$(PKG_PATH)$(CODE_COVERAGE_ARCHIVE_BASENAME).zip)
+endif
+
+ifdef MOZ_STYLO
+  UPLOAD_FILES += $(call QUOTED_WILDCARD,$(DIST)/$(PKG_PATH)$(STYLO_BINDINGS_PACKAGE))
 endif
 
 SIGN_CHECKSUM_CMD=

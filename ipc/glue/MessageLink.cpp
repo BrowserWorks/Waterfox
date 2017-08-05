@@ -18,6 +18,7 @@
 #include "nsExceptionHandler.h"
 #endif
 #include "nsISupportsImpl.h"
+#include "nsPrintfCString.h"
 #include "nsXULAppAPI.h"
 
 using namespace mozilla;
@@ -282,7 +283,7 @@ ProcessLink::OnChannelOpened()
         mExistingListener = mTransport->set_listener(this);
 #ifdef DEBUG
         if (mExistingListener) {
-            queue<Message> pending;
+            std::queue<Message> pending;
             mExistingListener->GetQueuedMessages(pending);
             MOZ_ASSERT(pending.empty());
         }
@@ -299,7 +300,7 @@ ProcessLink::OnTakeConnectedChannel()
 {
     AssertIOThread();
 
-    queue<Message> pending;
+    std::queue<Message> pending;
     {
         MonitorAutoLock lock(*mChan->mMonitor);
 

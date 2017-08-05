@@ -161,9 +161,8 @@ class nsMenuPopupFrame final : public nsBoxFrame, public nsMenuParent,
                                public nsIReflowCallback
 {
 public:
-  NS_DECL_QUERYFRAME_TARGET(nsMenuPopupFrame)
   NS_DECL_QUERYFRAME
-  NS_DECL_FRAMEARENA_HELPERS
+  NS_DECL_FRAMEARENA_HELPERS(nsMenuPopupFrame)
 
   explicit nsMenuPopupFrame(nsStyleContext* aContext);
 
@@ -225,6 +224,8 @@ public:
 
   virtual void DestroyFrom(nsIFrame* aDestructRoot) override;
 
+  bool HasRemoteContent() const;
+
   // returns true if the popup is a panel with the noautohide attribute set to
   // true. These panels do not roll up automatically.
   bool IsNoAutoHide() const;
@@ -234,7 +235,10 @@ public:
     return PopupLevel(IsNoAutoHide()); 
   }
 
-  void EnsureWidget();
+  // Ensure that a widget has already been created for this view, and create
+  // one if it hasn't. If aRecreate is true, destroys any existing widget and
+  // creates a new one, regardless of whether one has already been created.
+  void EnsureWidget(bool aRecreate = false);
 
   nsresult CreateWidgetForView(nsView* aView);
   uint8_t GetShadowStyle();
@@ -242,7 +246,7 @@ public:
   virtual void SetInitialChildList(ChildListID  aListID,
                                    nsFrameList& aChildList) override;
 
-  virtual bool IsLeaf() const override;
+  virtual bool IsLeafDynamic() const override;
 
   // layout, position and display the popup as needed
   void LayoutPopup(nsBoxLayoutState& aState, nsIFrame* aParentMenu,
@@ -336,8 +340,6 @@ public:
   static bool IsWithinIncrementalTime(DOMTimeStamp time) {
     return !sTimeoutOfIncrementalSearch || time - sLastKeyTime <= sTimeoutOfIncrementalSearch;
   }
-
-  virtual nsIAtom* GetType() const override { return nsGkAtoms::menuPopupFrame; }
 
 #ifdef DEBUG_FRAME_DUMP
   virtual nsresult GetFrameName(nsAString& aResult) const override
@@ -533,6 +535,9 @@ protected:
   // view, and is initially hidden.
   void CreatePopupView();
 
+  nsView* GetViewInternal() const override { return mView; }
+  void SetViewInternal(nsView* aView) override { mView = aView; }
+
   // Returns true if the popup should try to remain at the same relative
   // location as the anchor while it is open. If the anchor becomes hidden
   // either directly or indirectly because a parent popup or other element
@@ -555,6 +560,7 @@ protected:
   nsCOMPtr<nsIContent> mTriggerContent;
 
   nsMenuFrame* mCurrentMenu; // The current menu that is active.
+  nsView* mView;
 
   RefPtr<nsXULPopupShownEvent> mPopupShownDispatcher;
 

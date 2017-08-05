@@ -81,6 +81,23 @@ function isRenderedTree(actual, expectedDescription, msg) {
   is(actual, expected, msg);
 }
 
+function isAccessibleTree(tree, options = {}) {
+  const treeNode = tree.refs.tree;
+  is(treeNode.getAttribute("tabindex"), "0", "Tab index is set");
+  is(treeNode.getAttribute("role"), "tree", "Tree semantics is present");
+  if (options.hasActiveDescendant) {
+    ok(treeNode.hasAttribute("aria-activedescendant"),
+       "Tree has an active descendant set");
+  }
+
+  const treeNodes = [...treeNode.querySelectorAll(".tree-node")];
+  for (let node of treeNodes) {
+    ok(node.id, "TreeNode has an id");
+    is(node.getAttribute("role"), "treeitem", "Tree item semantics is present");
+    ok(node.hasAttribute("aria-level"), "Aria level attribute is set");
+  }
+}
+
 // Encoding of the following tree/forest:
 //
 // A
@@ -193,4 +210,26 @@ function shallowRenderComponent(component, props) {
   const renderer = TestUtils.createRenderer();
   renderer.render(el, {});
   return renderer.getRenderOutput();
+}
+
+/**
+ * Creates a React Component for testing
+ *
+ * @param {string} factory - factory object of the component to be created
+ * @param {object} props - React props for the component
+ * @returns {object} - container Node, Object with React component
+ * and querySelector function with $ as name.
+ */
+async function createComponentTest(factory, props) {
+  const container = document.createElement("div");
+  document.body.appendChild(container);
+
+  const component = ReactDOM.render(factory(props), container);
+  await forceRender(component);
+
+  return {
+    container,
+    component,
+    $: (s) => container.querySelector(s),
+  };
 }

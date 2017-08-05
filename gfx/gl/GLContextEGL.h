@@ -23,7 +23,6 @@ class GLContextEGL : public GLContext
     static already_AddRefed<GLContextEGL>
     CreateGLContext(CreateContextFlags flags,
                     const SurfaceCaps& caps,
-                    GLContextEGL* shareContext,
                     bool isOffscreen,
                     EGLConfig config,
                     EGLSurface surface,
@@ -33,7 +32,6 @@ public:
     MOZ_DECLARE_REFCOUNTED_VIRTUAL_TYPENAME(GLContextEGL, override)
     GLContextEGL(CreateContextFlags flags,
                  const SurfaceCaps& caps,
-                 GLContext* shareContext,
                  bool isOffscreen,
                  EGLConfig config,
                  EGLSurface surface,
@@ -58,10 +56,6 @@ public:
         mIsDoubleBuffered = aIsDB;
     }
 
-    virtual bool SupportsRobustness() const override {
-        return sEGLLibrary.HasRobustness();
-    }
-
     virtual bool IsANGLE() const override {
         return sEGLLibrary.IsANGLE();
     }
@@ -75,6 +69,9 @@ public:
     virtual bool ReleaseTexImage() override;
 
     void SetEGLSurfaceOverride(EGLSurface surf);
+    EGLSurface GetEGLSurfaceOverride() {
+        return mSurfaceOverride;
+    }
 
     virtual bool MakeCurrentImpl(bool aForce) override;
 

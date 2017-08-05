@@ -26,6 +26,7 @@ using namespace js;
 
 using mozilla::IsSame;
 using mozilla::PodCopy;
+using mozilla::PodEqual;
 using mozilla::RangedPtr;
 using mozilla::RoundUpPow2;
 
@@ -207,6 +208,7 @@ JSString::dumpRepresentationHeader(FILE* fp, int indent, const char* subclass) c
     if (flags & ATOM_BIT)               fputs(" ATOM", fp);
     if (isPermanentAtom())              fputs(" PERMANENT", fp);
     if (flags & LATIN1_CHARS_BIT)       fputs(" LATIN1", fp);
+    if (flags & INDEX_VALUE_BIT)        fprintf(fp, " INDEX_VALUE(%u)", getIndexValue());
     fputc('\n', fp);
 }
 
@@ -716,7 +718,9 @@ JSDependentString::dumpRepresentation(FILE* fp, int indent) const
     dumpRepresentationHeader(fp, indent, "JSDependentString");
     indent += 2;
 
-    fprintf(fp, "%*soffset: %" PRIuSIZE "\n", indent, "", baseOffset());
+    if (mozilla::Maybe<size_t> offset = baseOffset())
+        fprintf(fp, "%*soffset: %" PRIuSIZE "\n", indent, "", *offset);
+
     fprintf(fp, "%*sbase: ", indent, "");
     base()->dumpRepresentation(fp, indent);
 }
@@ -862,6 +866,9 @@ StaticStrings::init(JSContext* cx)
             HashNumber hash = mozilla::HashString(buffer, 3);
             intStaticTable[i] = s->morphAtomizedStringIntoPermanentAtom(hash);
         }
+
+        // Static string initialization can not race, so allow even without the lock.
+        intStaticTable[i]->maybeInitializeIndex(i, true);
     }
 
     return true;
@@ -1412,6 +1419,69 @@ NewStringCopyUTF8N(JSContext* cx, const JS::UTF8Chars utf8)
 
 template JSFlatString*
 NewStringCopyUTF8N<CanGC>(JSContext* cx, const JS::UTF8Chars utf8);
+
+MOZ_ALWAYS_INLINE JSString*
+ExternalStringCache::lookup(const char16_t* chars, size_t len) const
+{
+    AutoCheckCannotGC nogc;
+
+    for (size_t i = 0; i < NumEntries; i++) {
+        JSString* str = entries_[i];
+        if (!str || str->length() != len)
+            continue;
+
+        const char16_t* strChars = str->asLinear().nonInlineTwoByteChars(nogc);
+        if (chars == strChars) {
+            // Note that we don't need an incremental barrier here or below.
+            // The cache is purged on GC so any string we get from the cache
+            // must have been allocated after the GC started.
+            return str;
+        }
+
+        // Compare the chars. Don't do this for long strings as it will be
+        // faster to allocate a new external string.
+        static const size_t MaxLengthForCharComparison = 100;
+        if (len <= MaxLengthForCharComparison && PodEqual(chars, strChars, len))
+            return str;
+    }
+
+    return nullptr;
+}
+
+MOZ_ALWAYS_INLINE void
+ExternalStringCache::put(JSString* str)
+{
+    MOZ_ASSERT(str->isExternal());
+
+    for (size_t i = NumEntries - 1; i > 0; i--)
+        entries_[i] = entries_[i - 1];
+
+    entries_[0] = str;
+}
+
+JSString*
+NewMaybeExternalString(JSContext* cx, const char16_t* s, size_t n, const JSStringFinalizer* fin,
+                       bool* allocatedExternal)
+{
+    if (JSString* str = TryEmptyOrStaticString(cx, s, n)) {
+        *allocatedExternal = false;
+        return str;
+    }
+
+    ExternalStringCache& cache = cx->zone()->externalStringCache();
+    if (JSString* str = cache.lookup(s, n)) {
+        *allocatedExternal = false;
+        return str;
+    }
+
+    JSString* str = JSExternalString::new_(cx, s, n, fin);
+    if (!str)
+        return nullptr;
+
+    *allocatedExternal = true;
+    cache.put(str);
+    return str;
+}
 
 } /* namespace js */
 

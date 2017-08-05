@@ -47,20 +47,20 @@ class nsBulletFrame final : public nsFrame {
   typedef mozilla::image::DrawResult DrawResult;
 
 public:
-  NS_DECL_FRAMEARENA_HELPERS
+  NS_DECL_FRAMEARENA_HELPERS(nsBulletFrame)
 #ifdef DEBUG
-  NS_DECL_QUERYFRAME_TARGET(nsBulletFrame)
   NS_DECL_QUERYFRAME
 #endif
 
   explicit nsBulletFrame(nsStyleContext* aContext)
-    : nsFrame(aContext)
+    : nsFrame(aContext, kClassID)
     , mPadding(GetWritingMode())
     , mIntrinsicSize(GetWritingMode())
     , mOrdinal(0)
     , mRequestRegistered(false)
     , mBlockingOnload(false)
-  { }
+  {}
+
   virtual ~nsBulletFrame();
 
   NS_IMETHOD Notify(imgIRequest* aRequest, int32_t aType, const nsIntRect* aData);
@@ -72,7 +72,6 @@ public:
   virtual void BuildDisplayList(nsDisplayListBuilder*   aBuilder,
                                 const nsRect&           aDirtyRect,
                                 const nsDisplayListSet& aLists) override;
-  virtual nsIAtom* GetType() const override;
   virtual void DidSetStyleContext(nsStyleContext* aOldStyleContext) override;
 #ifdef DEBUG_FRAME_DUMP
   virtual nsresult GetFrameName(nsAString& aResult) const override;

@@ -269,10 +269,14 @@ nsresult nsJSThunk::EvaluateScript(nsIChannel *aChannel,
     JS::CompileOptions options(cx);
     options.setFileAndLine(mURL.get(), 1)
            .setVersion(JSVERSION_DEFAULT);
-    nsJSUtils::EvaluateOptions evalOptions(cx);
-    evalOptions.setCoerceToString(true);
-    rv = nsJSUtils::EvaluateString(cx, NS_ConvertUTF8toUTF16(script),
-                                   globalJSObject, options, evalOptions, &v);
+    {
+        nsJSUtils::ExecutionContext exec(cx, globalJSObject);
+        exec.SetCoerceToString(true);
+        exec.CompileAndExec(options, NS_ConvertUTF8toUTF16(script));
+        rv = exec.ExtractReturnValue(&v);
+    }
+
+    js::AssertSameCompartment(cx, v);
 
     if (NS_FAILED(rv) || !(v.isString() || v.isUndefined())) {
         return NS_ERROR_MALFORMED_URI;
@@ -290,7 +294,7 @@ nsresult nsJSThunk::EvaluateScript(nsIChannel *aChannel,
         uint32_t bytesLen;
         NS_NAMED_LITERAL_CSTRING(isoCharset, "ISO-8859-1");
         NS_NAMED_LITERAL_CSTRING(utf8Charset, "UTF-8");
-        const nsCString *charset;
+        const nsLiteralCString *charset;
         if (IsISO88591(result)) {
             // For compatibility, if the result is ISO-8859-1, we use
             // ISO-8859-1, so that people can compatibly create images
@@ -436,6 +440,12 @@ nsresult nsJSChannel::Init(nsIURI* aURI, nsILoadInfo* aLoadInfo)
     }
 
     return rv;
+}
+
+NS_IMETHODIMP
+nsJSChannel::GetIsDocument(bool *aIsDocument)
+{
+  return NS_GetIsDocumentChannel(this, aIsDocument);
 }
 
 //
@@ -620,9 +630,11 @@ nsJSChannel::AsyncOpen(nsIStreamListener *aListener, nsISupports *aContext)
     mPopupState = win->GetPopupControlState();
 
     void (nsJSChannel::*method)();
+    const char* name;
     if (mIsAsync) {
         // post an event to do the rest
         method = &nsJSChannel::EvaluateScript;
+        name = "nsJSChannel::EvaluateScript";
     } else {
         EvaluateScript();
         if (mOpenedStreamChannel) {
@@ -647,10 +659,11 @@ nsJSChannel::AsyncOpen(nsIStreamListener *aListener, nsISupports *aContext)
         // We're returning success from asyncOpen2(), but we didn't open a
         // stream channel.  We'll have to notify ourselves, but make sure to do
         // it asynchronously.
-        method = &nsJSChannel::NotifyListener;            
+        method = &nsJSChannel::NotifyListener;
+        name = "nsJSChannel::NotifyListener";
     }
 
-    nsresult rv = NS_DispatchToCurrentThread(mozilla::NewRunnableMethod(this, method));
+    nsresult rv = NS_DispatchToCurrentThread(mozilla::NewRunnableMethod(name, this, method));
 
     if (NS_FAILED(rv)) {
         loadGroup->RemoveRequest(this, nullptr, rv);

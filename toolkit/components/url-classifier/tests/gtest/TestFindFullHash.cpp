@@ -123,7 +123,7 @@ void PopulateDuration(Duration& aDest, const MyDuration& aSrc)
 // The expected match data.
 static MyDuration EXPECTED_MIN_WAIT_DURATION = { 12, 10 };
 static MyDuration EXPECTED_NEG_CACHE_DURATION = { 120, 9 };
-static const struct {
+static const struct ExpectedMatch {
   nsCString mCompleteHash;
   ThreatType mThreatType;
   MyDuration mPerHashCacheDuration;
@@ -159,7 +159,7 @@ public:
   OnResponseParsed(uint32_t aMinWaitDuration,
                    uint32_t aNegCacheDuration) override
   {
-    VerifyDuration(aMinWaitDuration, EXPECTED_MIN_WAIT_DURATION);
+    VerifyDuration(aMinWaitDuration / 1000, EXPECTED_MIN_WAIT_DURATION);
     VerifyDuration(aNegCacheDuration, EXPECTED_NEG_CACHE_DURATION);
 
     return NS_OK;
@@ -191,7 +191,7 @@ private:
   void
   VerifyDuration(uint32_t aToVerify, const MyDuration& aExpected)
   {
-    ASSERT_TRUE(aToVerify == (aExpected.mSecs * 1000));
+    ASSERT_TRUE(aToVerify == aExpected.mSecs);
   }
 
   ~MyParseCallback() {}

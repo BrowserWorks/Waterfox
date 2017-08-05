@@ -269,7 +269,7 @@ impl FontCache {
                 });
             }
             Source::Local(ref font) => {
-                let font_face_name = LowercaseString::new(&font.0);
+                let font_face_name = LowercaseString::new(&font.name);
                 let templates = &mut self.web_families.get_mut(&family_name).unwrap();
                 let mut found = false;
                 for_each_variation(&font_face_name, |path| {
@@ -348,9 +348,9 @@ impl FontCache {
             font_key = Some(*webrender_fonts.entry(template.identifier.clone()).or_insert_with(|| {
                 let font_key = webrender_api.generate_font_key();
                 match (template.bytes_if_in_memory(), template.native_font()) {
-                    (Some(bytes), _) => webrender_api.add_raw_font(font_key, bytes),
+                    (Some(bytes), _) => webrender_api.add_raw_font(font_key, bytes, 0),
                     (None, Some(native_font)) => webrender_api.add_native_font(font_key, native_font),
-                    (None, None) => webrender_api.add_raw_font(font_key, template.bytes().clone()),
+                    (None, None) => webrender_api.add_raw_font(font_key, template.bytes().clone(), 0),
                 }
                 font_key
             }));
@@ -464,7 +464,7 @@ impl FontCacheThread {
     }
 
     pub fn add_web_font(&self, family: FamilyName, sources: EffectiveSources, sender: IpcSender<()>) {
-        self.chan.send(Command::AddWebFont(LowercaseString::new(&family.0), sources, sender)).unwrap();
+        self.chan.send(Command::AddWebFont(LowercaseString::new(&family.name), sources, sender)).unwrap();
     }
 
     pub fn exit(&self) {

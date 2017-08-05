@@ -9,6 +9,9 @@ import os
 import platform
 import shutil
 import subprocess
+import sys
+
+from mozbuild.util import ensureParentDir
 
 is_linux = platform.system() == 'Linux'
 
@@ -29,8 +32,8 @@ def chmod(dir):
 
 def rsync(source, dest):
     'rsync the contents of directory source into directory dest'
-    # Ensure a trailing slash so rsync copies the *contents* of source.
-    if not source.endswith('/'):
+    # Ensure a trailing slash on directories so rsync copies the *contents* of source.
+    if not source.endswith('/') and os.path.isdir(source):
         source += '/'
     subprocess.check_call(['rsync', '-a', '--copy-unsafe-links',
                            source, dest])
@@ -94,6 +97,10 @@ def create_dmg_from_staged(stagedir, output_dmg, tmpdir, volume_name):
                                '-imagekey', 'bzip2-level=9',
                                '-ov', hybrid, '-o', output_dmg])
     else:
+        # The dmg tool doesn't create the destination directories, and silently
+        # returns success if the parent directory doesn't exist.
+        ensureParentDir(output_dmg)
+
         hfs = os.path.join(tmpdir, 'staged.hfs')
         subprocess.check_call([
             buildconfig.substs['HFS_TOOL'], hfs, 'addall', stagedir])
@@ -150,3 +157,53 @@ def create_dmg(source_directory, output_dmg, volume_name, extra_files):
         set_folder_icon(stagedir, tmpdir)
         chmod(stagedir)
         create_dmg_from_staged(stagedir, output_dmg, tmpdir, volume_name)
+
+
+def extract_dmg_contents(dmgfile, destdir):
+    import buildconfig
+    if is_linux:
+        with mozfile.TemporaryDirectory() as tmpdir:
+            hfs_file = os.path.join(tmpdir, 'firefox.hfs')
+            subprocess.check_call([
+                    buildconfig.substs['DMG_TOOL'],
+                    'extract',
+                    dmgfile,
+                    hfs_file
+                ],
+                # dmg is seriously chatty
+                stdout=open(os.devnull, 'wb'))
+            subprocess.check_call([
+                buildconfig.substs['HFS_TOOL'], hfs_file, 'extractall', '/', destdir])
+    else:
+        unpack_diskimage = os.path.join(buildconfig.topsrcdir, 'build', 'package',
+                                        'mac_osx', 'unpack-diskimage')
+        unpack_mountpoint = os.path.join(
+            '/tmp', '{}-unpack'.format(buildconfig.substs['MOZ_APP_NAME']))
+        subprocess.check_call([unpack_diskimage, dmgfile, unpack_mountpoint,
+                               destdir])
+
+
+def extract_dmg(dmgfile, output, dsstore=None, icon=None, background=None):
+    if platform.system() not in ('Darwin', 'Linux'):
+        raise Exception("Don't know how to extract a DMG on '%s'" % platform.system())
+
+    if is_linux:
+        check_tools('DMG_TOOL', 'MKFSHFS', 'HFS_TOOL')
+
+    with mozfile.TemporaryDirectory() as tmpdir:
+        extract_dmg_contents(dmgfile, tmpdir)
+        if os.path.islink(os.path.join(tmpdir, ' ')):
+            # Rsync will fail on the presence of this symlink
+            os.remove(os.path.join(tmpdir, ' '))
+        rsync(tmpdir, output)
+
+        if dsstore:
+            mkdir(os.path.dirname(dsstore))
+            rsync(os.path.join(tmpdir, '.DS_Store'), dsstore)
+        if background:
+            mkdir(os.path.dirname(background))
+            rsync(os.path.join(tmpdir, '.background', os.path.basename(background)),
+                  background)
+        if icon:
+            mkdir(os.path.dirname(icon))
+            rsync(os.path.join(tmpdir, '.VolumeIcon.icns'), icon)

@@ -1050,7 +1050,7 @@ exports.testSidebarGettersAndSettersAfterDestroy = function(assert) {
   assert.equal(sidebar.id, undefined, 'sidebar after destroy has no id');
 
   assert.throws(() => sidebar.id = 'foo-tang',
-    /^setting a property that has only a getter/,
+    /^setting getter-only property/,
     'id cannot be set at runtime');
 
   assert.equal(sidebar.id, undefined, 'sidebar after destroy has no id');
@@ -1244,7 +1244,7 @@ exports.testShowToOpenXToClose = function*(assert) {
 
   assert.ok(isChecked(menuitem), 'menuitem is checked');
 
-  let closeButton = window.document.querySelector('#sidebar-header > toolbarbutton.close-icon');
+  let closeButton = window.document.querySelector('#sidebar-close');
   simulateCommand(closeButton);
 
   yield hidden.promise;

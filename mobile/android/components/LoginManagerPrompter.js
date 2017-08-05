@@ -129,7 +129,7 @@ LoginManagerPrompter.prototype = {
   promptToSavePassword : function (aLogin) {
     this._showSaveLoginNotification(aLogin);
       Services.telemetry.getHistogramById("PWMGR_PROMPT_REMEMBER_ACTION").add(PROMPT_DISPLAYED);
-    Services.obs.notifyObservers(aLogin, "passwordmgr-prompt-save", null);
+    Services.obs.notifyObservers(aLogin, "passwordmgr-prompt-save");
   },
 
   /*
@@ -294,7 +294,7 @@ LoginManagerPrompter.prototype = {
     const buttonFlags = Ci.nsIPrompt.STD_YES_NO_BUTTONS;
 
     var usernames = logins.map(l => l.username);
-    var dialogText  = this._getLocalizedString("userSelectText");
+    var dialogText  = this._getLocalizedString("userSelectText2");
     var dialogTitle = this._getLocalizedString("passwordChangeTitle");
     var selectedIndex = { value: null };
 

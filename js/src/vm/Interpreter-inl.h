@@ -258,6 +258,39 @@ GetEnvironmentName(JSContext* cx, HandleObject envChain, HandlePropertyName name
 }
 
 inline bool
+HasOwnProperty(JSContext* cx, HandleValue val, HandleValue idValue, bool* result)
+{
+
+    // As an optimization, provide a fast path when rooting is not necessary and
+    // we can safely retrieve the object's shape.
+    jsid id;
+    if (val.isObject() && ValueToId<NoGC>(cx, idValue, &id)) {
+        JSObject* obj = &val.toObject();
+        PropertyResult prop;
+        if (obj->isNative() &&
+            NativeLookupOwnProperty<NoGC>(cx, &obj->as<NativeObject>(), id, &prop))
+        {
+            *result = prop.isFound();
+            return true;
+        }
+    }
+
+    // Step 1.
+    RootedId key(cx);
+    if (!ToPropertyKey(cx, idValue, &key))
+        return false;
+
+    // Step 2.
+    RootedObject obj(cx, ToObject(cx, val));
+    if (!obj)
+        return false;
+
+    // Step 3.
+    return HasOwnProperty(cx, obj, key, result);
+}
+
+
+inline bool
 GetIntrinsicOperation(JSContext* cx, jsbytecode* pc, MutableHandleValue vp)
 {
     RootedPropertyName name(cx, cx->currentScript()->getName(pc));
@@ -365,7 +398,7 @@ InitGlobalLexicalOperation(JSContext* cx, LexicalEnvironmentObject* lexicalEnvAr
     Rooted<LexicalEnvironmentObject*> lexicalEnv(cx, lexicalEnvArg);
     RootedShape shape(cx, lexicalEnv->lookup(cx, script->getName(pc)));
     MOZ_ASSERT(shape);
-    lexicalEnv->setSlot(shape->slot(), value);
+    lexicalEnv->setSlotWithType(cx, shape, value);
 }
 
 inline bool
@@ -604,13 +637,6 @@ TypeOfOperation(const Value& v, JSRuntime* rt)
     return TypeName(type, *rt->commonNames);
 }
 
-static inline JSString*
-TypeOfObjectOperation(JSObject* obj, JSRuntime* rt)
-{
-    JSType type = js::TypeOfObject(obj);
-    return TypeName(type, *rt->commonNames);
-}
-
 static MOZ_ALWAYS_INLINE bool
 InitElemOperation(JSContext* cx, jsbytecode* pc, HandleObject obj, HandleValue idval, HandleValue val)
 {
@@ -661,25 +687,6 @@ InitArrayElemOperation(JSContext* cx, jsbytecode* pc, HandleObject obj, uint32_t
             return false;
     }
 
-    return true;
-}
-
-static MOZ_ALWAYS_INLINE bool
-ProcessCallSiteObjOperation(JSContext* cx, RootedObject& cso, RootedObject& raw,
-                            RootedValue& rawValue)
-{
-    bool extensible;
-    if (!IsExtensible(cx, cso, &extensible))
-        return false;
-    if (extensible) {
-        JSAtom* name = cx->names().raw;
-        if (!DefineProperty(cx, cso, name->asPropertyName(), rawValue, nullptr, nullptr, 0))
-            return false;
-        if (!FreezeObject(cx, raw))
-            return false;
-        if (!FreezeObject(cx, cso))
-            return false;
-    }
     return true;
 }
 

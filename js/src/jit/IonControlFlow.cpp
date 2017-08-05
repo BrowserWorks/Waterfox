@@ -336,7 +336,6 @@ ControlFlowGenerator::snoopControlFlow(JSOp op)
       case JSOP_TRY:
         return processTry();
 
-      case JSOP_OPTIMIZE_SPREADCALL:
       case JSOP_THROWMSG:
         // Not implemented yet.
         return ControlStatus::Abort;
@@ -937,7 +936,7 @@ ControlFlowGenerator::processWhileOrForInLoop(jssrcnote* sn)
 
     size_t stackPhiCount;
     if (SN_TYPE(sn) == SRC_FOR_OF)
-        stackPhiCount = 3;
+        stackPhiCount = 2;
     else if (SN_TYPE(sn) == SRC_FOR_IN)
         stackPhiCount = 1;
     else

@@ -657,6 +657,15 @@ nsStyleUtil::AppendStepsTimingFunction(nsTimingFunction::Type aType,
 }
 
 /* static */ void
+nsStyleUtil::AppendFramesTimingFunction(uint32_t aFrames,
+                                        nsAString& aResult)
+{
+  aResult.AppendLiteral("frames(");
+  aResult.AppendInt(aFrames);
+  aResult.AppendLiteral(")");
+}
+
+/* static */ void
 nsStyleUtil::AppendCubicBezierTimingFunction(float aX1, float aY1,
                                              float aX2, float aY2,
                                              nsAString& aResult)
@@ -730,6 +739,26 @@ nsStyleUtil::IsSignificantChild(nsIContent* aChild, bool aTextIsSignificant,
   return aTextIsSignificant && isText && aChild->TextLength() != 0 &&
          (aWhitespaceIsSignificant ||
           !aChild->TextIsOnlyWhitespace());
+}
+
+/* static */ bool
+nsStyleUtil::ThreadSafeIsSignificantChild(const nsIContent* aChild,
+                                          bool aTextIsSignificant,
+                                          bool aWhitespaceIsSignificant)
+{
+  NS_ASSERTION(!aWhitespaceIsSignificant || aTextIsSignificant,
+               "Nonsensical arguments");
+
+  bool isText = aChild->IsNodeOfType(nsINode::eTEXT);
+
+  if (!isText && !aChild->IsNodeOfType(nsINode::eCOMMENT) &&
+      !aChild->IsNodeOfType(nsINode::ePROCESSING_INSTRUCTION)) {
+    return true;
+  }
+
+  return aTextIsSignificant && isText && aChild->TextLength() != 0 &&
+         (aWhitespaceIsSignificant ||
+          !aChild->ThreadSafeTextIsOnlyWhitespace());
 }
 
 // For a replaced element whose concrete object size is no larger than the

@@ -1,7 +1,6 @@
 /* Any copyright is dedicated to the Public Domain.
    http://creativecommons.org/publicdomain/zero/1.0/ */
 
-Cu.import("resource://gre/modules/PlacesUtils.jsm");
 const {
   // `fetchGuidsWithAnno` isn't exported, but we can still access it here via a
   // backstage pass.
@@ -14,7 +13,6 @@ Cu.import("resource://services-sync/engines.js");
 Cu.import("resource://services-sync/service.js");
 Cu.import("resource://services-sync/util.js");
 Cu.import("resource://gre/modules/osfile.jsm");
-Cu.import("resource://gre/modules/Task.jsm");
 Cu.import("resource://testing-common/PlacesTestUtils.jsm");
 Cu.import("resource:///modules/PlacesUIUtils.jsm");
 
@@ -42,6 +40,7 @@ async function resetTracker() {
 
 async function cleanup() {
   engine.lastSync = 0;
+  engine._needWeakReupload.clear()
   store.wipe();
   await resetTracker();
   await stopTracking();
@@ -136,6 +135,165 @@ async function insertBookmarksToMigrate() {
 
   await PlacesUtils.bookmarks.remove(exampleBmk.guid);
 }
+
+// `PlacesUtils.annotations.setItemAnnotation` prevents us from setting
+// annotations on nonexistent items, so this test helper writes to the DB
+// directly.
+function setAnnoUnchecked(itemId, name, value, type) {
+  return PlacesUtils.withConnectionWrapper(
+    "test_bookmark_tracker: setItemAnnoUnchecked", async function(db) {
+      await db.executeCached(`
+        INSERT OR IGNORE INTO moz_anno_attributes (name)
+        VALUES (:name)`,
+        { name });
+
+      let annoIds = await db.executeCached(`
+        SELECT a.id, a.dateAdded
+        FROM moz_items_annos a WHERE a.item_id = :itemId`,
+        { itemId });
+
+      let annoId;
+      let dateAdded;
+      let lastModified = PlacesUtils.toPRTime(Date.now());
+
+      if (annoIds.length) {
+        annoId = annoIds[0].getResultByName("id");
+        dateAdded = annoIds[0].getResultByName("dateAdded");
+      } else {
+        annoId = null;
+        dateAdded = lastModified;
+      }
+
+      await db.executeCached(`
+        INSERT OR REPLACE INTO moz_items_annos (id, item_id, anno_attribute_id,
+          content, flags, expiration, type, dateAdded, lastModified)
+        VALUES (:annoId, :itemId, (SELECT id FROM moz_anno_attributes
+                                   WHERE name = :name),
+                :value, 0, :expiration, :type, :dateAdded, :lastModified)`,
+        { annoId, itemId, name, value, type,
+          expiration: PlacesUtils.annotations.EXPIRE_NEVER,
+          dateAdded, lastModified });
+    }
+  );
+}
+
+add_task(async function test_leftPaneFolder() {
+  _("Ensure we never track left pane roots");
+
+  try {
+    await startTracking();
+
+    // Creates the organizer queries as a side effect.
+    let leftPaneId = PlacesUIUtils.maybeRebuildLeftPane();
+    _(`Left pane root ID: ${leftPaneId}`);
+
+    {
+      let changes = await tracker.promiseChangedIDs();
+      deepEqual(changes, {}, "New left pane queries should not be tracked");
+      do_check_eq(tracker.score, SCORE_INCREMENT_XLARGE);
+    }
+
+    _("Reset synced bookmarks to simulate a disconnect");
+    await PlacesSyncUtils.bookmarks.reset();
+
+    {
+      let changes = await tracker.promiseChangedIDs();
+      deepEqual(Object.keys(changes).sort(), ["menu", "mobile", "toolbar", "unfiled"],
+        "Left pane queries should not be tracked after reset");
+      do_check_eq(tracker.score, SCORE_INCREMENT_XLARGE);
+      await PlacesTestUtils.markBookmarksAsSynced();
+    }
+
+    // The following tests corrupt the left pane queries in different ways.
+    // `PlacesUIUtils.maybeRebuildLeftPane` will rebuild the entire root, but
+    // none of those changes should be tracked by Sync.
+
+    _("Annotate unrelated folder as left pane root");
+    {
+      let folder = await PlacesUtils.bookmarks.insert({
+        parentGuid: PlacesUtils.bookmarks.rootGuid,
+        type: PlacesUtils.bookmarks.TYPE_FOLDER,
+        title: "Fake left pane root",
+      });
+      let folderId = await PlacesUtils.promiseItemId(folder.guid);
+      await setAnnoUnchecked(folderId, PlacesUIUtils.ORGANIZER_FOLDER_ANNO, 0,
+                             PlacesUtils.annotations.TYPE_INT32);
+
+      leftPaneId = PlacesUIUtils.maybeRebuildLeftPane();
+      _(`Left pane root ID after deleting unrelated folder: ${leftPaneId}`);
+
+      let changes = await tracker.promiseChangedIDs();
+      deepEqual(changes, {},
+        "Should not track left pane items after deleting unrelated folder");
+    }
+
+    _("Corrupt organizer left pane version");
+    {
+      await setAnnoUnchecked(leftPaneId, PlacesUIUtils.ORGANIZER_FOLDER_ANNO,
+                             -1, PlacesUtils.annotations.TYPE_INT32);
+
+      leftPaneId = PlacesUIUtils.maybeRebuildLeftPane();
+      _(`Left pane root ID after restoring version: ${leftPaneId}`);
+
+      let changes = await tracker.promiseChangedIDs();
+      deepEqual(changes, {},
+        "Should not track left pane items after restoring version");
+    }
+
+    _("Set left pane anno on nonexistent item");
+    {
+      await setAnnoUnchecked(999, PlacesUIUtils.ORGANIZER_QUERY_ANNO,
+                             "Tags", PlacesUtils.annotations.TYPE_STRING);
+
+      leftPaneId = PlacesUIUtils.maybeRebuildLeftPane();
+      _(`Left pane root ID after detecting nonexistent item: ${leftPaneId}`);
+
+      let changes = await tracker.promiseChangedIDs();
+      deepEqual(changes, {},
+        "Should not track left pane items after detecting nonexistent item");
+    }
+
+    _("Move query out of left pane root");
+    {
+      let queryId = await PlacesUIUtils.leftPaneQueries.Downloads;
+      let queryGuid = await PlacesUtils.promiseItemGuid(queryId);
+      await PlacesUtils.bookmarks.update({
+        guid: queryGuid,
+        parentGuid: PlacesUtils.bookmarks.rootGuid,
+        index: PlacesUtils.bookmarks.DEFAULT_INDEX,
+      });
+
+      leftPaneId = PlacesUIUtils.maybeRebuildLeftPane();
+      _(`Left pane root ID after restoring moved query: ${leftPaneId}`);
+
+      let changes = await tracker.promiseChangedIDs();
+      deepEqual(changes, {},
+        "Should not track left pane items after restoring moved query");
+    }
+
+    _("Add duplicate query");
+    {
+      let leftPaneGuid = await PlacesUtils.promiseItemGuid(leftPaneId);
+      let query = await PlacesUtils.bookmarks.insert({
+        parentGuid: leftPaneGuid,
+        url: `place:folder=TAGS`,
+      });
+      let queryId = await PlacesUtils.promiseItemId(query.guid);
+      await setAnnoUnchecked(queryId, PlacesUIUtils.ORGANIZER_QUERY_ANNO,
+                             "Tags", PlacesUtils.annotations.TYPE_STRING);
+
+      leftPaneId = PlacesUIUtils.maybeRebuildLeftPane();
+      _(`Left pane root ID after removing dupe query: ${leftPaneId}`);
+
+      let changes = await tracker.promiseChangedIDs();
+      deepEqual(changes, {},
+        "Should not track left pane items after removing dupe query");
+    }
+  } finally {
+    _("Clean up.");
+    await cleanup();
+  }
+});
 
 add_task(async function test_tracking() {
   _("Test starting and stopping the tracker");
@@ -1525,11 +1683,6 @@ add_task(async function test_onItemDeleted_tree() {
   }
 });
 
-async function ensureMobileQuery() {
-  tracker._ensureMobileQuery();
-  await PlacesTestUtils.promiseAsyncUpdates();
-}
-
 add_task(async function test_mobile_query() {
   _("Ensure we correctly create the mobile query");
 
@@ -1539,7 +1692,6 @@ add_task(async function test_mobile_query() {
     // Creates the organizer queries as a side effect.
     let leftPaneId = PlacesUIUtils.leftPaneFolderId;
     _(`Left pane root ID: ${leftPaneId}`);
-    await PlacesTestUtils.promiseAsyncUpdates();
 
     let allBookmarksGuids = await fetchGuidsWithAnno("PlacesOrganizer/OrganizerQuery",
                                                      "AllBookmarks");
@@ -1547,7 +1699,7 @@ add_task(async function test_mobile_query() {
     let allBookmarkGuid = allBookmarksGuids[0];
 
     _("Try creating query after organizer is ready");
-    await ensureMobileQuery();
+    tracker._ensureMobileQuery();
     let queryGuids = await fetchGuidsWithAnno("PlacesOrganizer/OrganizerQuery",
                                               "MobileBookmarks");
     equal(queryGuids.length, 0, "Should not create query without any mobile bookmarks");
@@ -1557,7 +1709,7 @@ add_task(async function test_mobile_query() {
       parentGuid: PlacesUtils.bookmarks.mobileGuid,
       url: "https://mozilla.org",
     });
-    await ensureMobileQuery();
+    tracker._ensureMobileQuery();
     queryGuids = await fetchGuidsWithAnno("PlacesOrganizer/OrganizerQuery",
                                           "MobileBookmarks");
     equal(queryGuids.length, 1, "Should create query once mobile bookmarks exist");
@@ -1578,7 +1730,7 @@ add_task(async function test_mobile_query() {
       guid: queryGuid,
       title: "renamed query",
     });
-    await ensureMobileQuery();
+    tracker._ensureMobileQuery();
     let rootInfo = await PlacesUtils.bookmarks.fetch(PlacesUtils.bookmarks.mobileGuid);
     equal(rootInfo.title, "Mobile Bookmarks", "Should fix root title");
     queryInfo = await PlacesUtils.bookmarks.fetch(queryGuid);
@@ -1589,14 +1741,13 @@ add_task(async function test_mobile_query() {
       guid: queryGuid,
       url: "place:folder=BOOKMARKS_MENU",
     });
-    await ensureMobileQuery();
+    tracker._ensureMobileQuery();
     queryInfo = await PlacesUtils.bookmarks.fetch(queryGuid);
     equal(queryInfo.url.href, `place:folder=${PlacesUtils.mobileFolderId}`,
       "Should fix query URL to point to mobile root");
 
     _("We shouldn't track the query or the left pane root");
     await verifyTrackedItems([mozBmk.guid, "mobile"]);
-    do_check_eq(tracker.score, SCORE_INCREMENT_XLARGE * 5);
   } finally {
     _("Clean up.");
     await cleanup();

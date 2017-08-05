@@ -18,6 +18,7 @@ using struct mozilla::void_t from "ipc/IPCMessageUtils.h";
 using class mozilla::layers::APZTestData from "mozilla/layers/APZTestData.h";
 using mozilla::layers::FrameMetrics::ViewID from "FrameMetrics.h";
 using struct mozilla::layers::ScrollableLayerGuid from "FrameMetrics.h";
+using struct mozilla::layers::TextureFactoryIdentifier from "mozilla/layers/CompositorTypes.h";
 using mozilla::layers::LayersBackend from "mozilla/layers/LayersTypes.h";
 using mozilla::layers::LayerHandle from "mozilla/layers/LayersTypes.h";
 using mozilla::layers::CompositableHandle from "mozilla/layers/LayersTypes.h";
@@ -70,6 +71,10 @@ parent:
   async ReleaseLayer(LayerHandle layer);
   async ReleaseCompositable(CompositableHandle compositable);
 
+  // Tell the compositor to notify APZ that a layer has been confirmed for an
+  // input event.
+  async SetConfirmedTargetAPZC(uint64_t aInputBlockId, ScrollableLayerGuid[] aTargets);
+
   // Testing APIs
 
   // Enter test mode, set the sample time to sampleTime, and resample
@@ -81,7 +86,7 @@ parent:
   // Returns the value of the opacity applied to the layer by animation.
   // |hasAnimationOpacity| is true if the layer has an opacity value
   // specified by animation. If it's false, |opacity| value is indefinite.
-  sync GetAnimationOpacity(LayerHandle layer) returns (float opacity,
+  sync GetAnimationOpacity(uint64_t aCompositorAnimationsId) returns (float opacity,
                                                   bool hasAnimationOpacity);
 
   // Returns the value of the transform applied to the layer by animation after
@@ -89,7 +94,7 @@ parent:
   // of the corresponding frame and transform origin and after converting to CSS
   // pixels. If the layer is not transformed by animation, the return value will
   // be void_t.
-  sync GetAnimationTransform(LayerHandle layer) returns (MaybeTransform transform);
+  sync GetAnimationTransform(uint64_t aCompositorAnimationId) returns (MaybeTransform transform);
 
   // The next time the layer tree is composited, add this async scroll offset in
   // CSS pixels for the given ViewID.
@@ -118,11 +123,14 @@ parent:
   // Query a named property from the last frame
   sync RequestProperty(nsString property) returns (float value);
 
-  // Tell the compositor to notify APZ that a layer has been confirmed for an
-  // input event.
-  async SetConfirmedTargetAPZC(uint64_t aInputBlockId, ScrollableLayerGuid[] aTargets);
+  // Return the TextureFactoryIdentifier for this compositor.
+  sync GetTextureFactoryIdentifier() returns (TextureFactoryIdentifier aIdentifier);
+
+  async RecordPaintTimes(PaintTiming timing);
 
   async Shutdown();
+  sync ShutdownSync();
+
 child:
   async __delete__();
 };

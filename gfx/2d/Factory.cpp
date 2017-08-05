@@ -24,6 +24,7 @@
 #if defined(WIN32)
 #include "ScaledFontWin.h"
 #include "NativeFontResourceGDI.h"
+#include "UnscaledFontGDI.h"
 #endif
 
 #ifdef XP_DARWIN
@@ -34,6 +35,7 @@
 #ifdef MOZ_WIDGET_GTK
 #include "ScaledFontFontconfig.h"
 #include "NativeFontResourceFontconfig.h"
+#include "UnscaledFontFreeType.h"
 #endif
 
 #ifdef WIN32
@@ -56,6 +58,13 @@
 #include "Logging.h"
 
 #include "mozilla/CheckedInt.h"
+
+#ifdef MOZ_ENABLE_FREETYPE
+#include "ft2build.h"
+#include FT_FREETYPE_H
+
+#include "mozilla/Mutex.h"
+#endif
 
 #if defined(MOZ_LOGGING)
 GFX2D_API mozilla::LogModule*
@@ -153,6 +162,30 @@ HasCPUIDBit(unsigned int level, CPUIDRegister reg, unsigned int bit)
 #endif
 #endif
 
+#ifdef MOZ_ENABLE_FREETYPE
+extern "C" {
+
+FT_Face
+mozilla_NewFTFace(FT_Library aFTLibrary, const char* aFileName, int aFaceIndex)
+{
+  return mozilla::gfx::Factory::NewFTFace(aFTLibrary, aFileName, aFaceIndex);
+}
+
+FT_Face
+mozilla_NewFTFaceFromData(FT_Library aFTLibrary, const uint8_t* aData, size_t aDataSize, int aFaceIndex)
+{
+  return mozilla::gfx::Factory::NewFTFaceFromData(aFTLibrary, aData, aDataSize, aFaceIndex);
+}
+
+void
+mozilla_ReleaseFTFace(FT_Face aFace)
+{
+  mozilla::gfx::Factory::ReleaseFTFace(aFace);
+}
+
+}
+#endif
+
 namespace mozilla {
 namespace gfx {
 
@@ -161,6 +194,7 @@ int32_t LoggingPrefs::sGfxLogLevel = LOG_DEFAULT;
 
 #ifdef MOZ_ENABLE_FREETYPE
 FT_Library Factory::mFTLibrary = nullptr;
+Mutex* Factory::mFTLock = nullptr;
 #endif
 
 #ifdef WIN32
@@ -190,6 +224,10 @@ Factory::Init(const Config& aConfig)
   if (sConfig->mMaxTextureSize < kMinSizePref) {
     sConfig->mMaxTextureSize = kMinSizePref;
   }
+
+#ifdef MOZ_ENABLE_FREETYPE
+  mFTLock = new Mutex("Factory::mFTLock");
+#endif
 }
 
 void
@@ -202,8 +240,10 @@ Factory::ShutDown()
   }
 
 #ifdef MOZ_ENABLE_FREETYPE
-  if (mFTLibrary) {
-    mFTLibrary = nullptr;
+  mFTLibrary = nullptr;
+  if (mFTLock) {
+    delete mFTLock;
+    mFTLock = nullptr;
   }
 #endif
 }
@@ -470,31 +510,33 @@ Factory::GetMaxSurfaceSize(BackendType aType)
 }
 
 already_AddRefed<ScaledFont>
-Factory::CreateScaledFontForNativeFont(const NativeFont &aNativeFont, Float aSize)
+Factory::CreateScaledFontForNativeFont(const NativeFont &aNativeFont,
+                                       const RefPtr<UnscaledFont>& aUnscaledFont,
+                                       Float aSize)
 {
   switch (aNativeFont.mType) {
 #ifdef WIN32
   case NativeFontType::DWRITE_FONT_FACE:
     {
-      return MakeAndAddRef<ScaledFontDWrite>(static_cast<IDWriteFontFace*>(aNativeFont.mFont), aSize);
+      return MakeAndAddRef<ScaledFontDWrite>(static_cast<IDWriteFontFace*>(aNativeFont.mFont), aUnscaledFont, aSize);
     }
 #if defined(USE_CAIRO) || defined(USE_SKIA)
   case NativeFontType::GDI_FONT_FACE:
     {
-      return MakeAndAddRef<ScaledFontWin>(static_cast<LOGFONT*>(aNativeFont.mFont), aSize);
+      return MakeAndAddRef<ScaledFontWin>(static_cast<LOGFONT*>(aNativeFont.mFont), aUnscaledFont, aSize);
     }
 #endif
 #endif
 #ifdef XP_DARWIN
   case NativeFontType::MAC_FONT_FACE:
     {
-      return MakeAndAddRef<ScaledFontMac>(static_cast<CGFontRef>(aNativeFont.mFont), aSize);
+      return MakeAndAddRef<ScaledFontMac>(static_cast<CGFontRef>(aNativeFont.mFont), aUnscaledFont, aSize);
     }
 #endif
 #if defined(USE_CAIRO) || defined(USE_SKIA_FREETYPE)
   case NativeFontType::CAIRO_FONT_FACE:
     {
-      return MakeAndAddRef<ScaledFontCairo>(static_cast<cairo_scaled_font_t*>(aNativeFont.mFont), aSize);
+      return MakeAndAddRef<ScaledFontCairo>(static_cast<cairo_scaled_font_t*>(aNativeFont.mFont), aUnscaledFont, aSize);
     }
 #endif
   default:
@@ -504,10 +546,7 @@ Factory::CreateScaledFontForNativeFont(const NativeFont &aNativeFont, Float aSiz
 }
 
 already_AddRefed<NativeFontResource>
-Factory::CreateNativeFontResource(uint8_t *aData, uint32_t aSize,
-                                  uint32_t aVariationCount,
-                                  const ScaledFont::VariationSetting* aVariations,
-                                  FontType aType)
+Factory::CreateNativeFontResource(uint8_t *aData, uint32_t aSize, FontType aType, void* aFontContext)
 {
   switch (aType) {
 #ifdef WIN32
@@ -527,14 +566,13 @@ Factory::CreateNativeFontResource(uint8_t *aData, uint32_t aSize,
         return NativeFontResourceDWrite::Create(aData, aSize,
                                                 /* aNeedsCairo = */ true);
       } else {
-        return NativeFontResourceGDI::Create(aData, aSize,
-                                             /* aNeedsCairo = */ true);
+        return NativeFontResourceGDI::Create(aData, aSize);
       }
 #elif defined(XP_DARWIN)
-      return NativeFontResourceMac::Create(aData, aSize,
-                                           aVariationCount, aVariations);
+      return NativeFontResourceMac::Create(aData, aSize);
 #elif defined(MOZ_WIDGET_GTK)
-      return NativeFontResourceFontconfig::Create(aData, aSize);
+      return NativeFontResourceFontconfig::Create(aData, aSize,
+                                                  static_cast<FT_Library>(aFontContext));
 #else
       gfxWarning() << "Unable to create cairo scaled font from truetype data";
       return nullptr;
@@ -546,33 +584,36 @@ Factory::CreateNativeFontResource(uint8_t *aData, uint32_t aSize,
   }
 }
 
-already_AddRefed<ScaledFont>
-Factory::CreateScaledFontFromFontDescriptor(FontType aType, const uint8_t* aData, uint32_t aDataLength, Float aSize)
+already_AddRefed<UnscaledFont>
+Factory::CreateUnscaledFontFromFontDescriptor(FontType aType, const uint8_t* aData, uint32_t aDataLength)
 {
   switch (aType) {
 #ifdef WIN32
   case FontType::GDI:
-    return ScaledFontWin::CreateFromFontDescriptor(aData, aDataLength, aSize);
+    return UnscaledFontGDI::CreateFromFontDescriptor(aData, aDataLength);
 #endif
 #ifdef MOZ_WIDGET_GTK
   case FontType::FONTCONFIG:
-    return ScaledFontFontconfig::CreateFromFontDescriptor(aData, aDataLength, aSize);
+    return UnscaledFontFontconfig::CreateFromFontDescriptor(aData, aDataLength);
 #endif
   default:
-    gfxWarning() << "Invalid type specified for ScaledFont font descriptor";
+    gfxWarning() << "Invalid type specified for UnscaledFont font descriptor";
     return nullptr;
   }
 }
 
 already_AddRefed<ScaledFont>
-Factory::CreateScaledFontWithCairo(const NativeFont& aNativeFont, Float aSize, cairo_scaled_font_t* aScaledFont)
+Factory::CreateScaledFontWithCairo(const NativeFont& aNativeFont,
+                                   const RefPtr<UnscaledFont>& aUnscaledFont,
+                                   Float aSize,
+                                   cairo_scaled_font_t* aScaledFont)
 {
 #ifdef USE_CAIRO
   // In theory, we could pull the NativeFont out of the cairo_scaled_font_t*,
   // but that would require a lot of code that would be otherwise repeated in
   // various backends.
   // Therefore, we just reuse CreateScaledFontForNativeFont's implementation.
-  RefPtr<ScaledFont> font = CreateScaledFontForNativeFont(aNativeFont, aSize);
+  RefPtr<ScaledFont> font = CreateScaledFontForNativeFont(aNativeFont, aUnscaledFont, aSize);
   static_cast<ScaledFontBase*>(font.get())->SetCairoScaledFont(aScaledFont);
   return font.forget();
 #else
@@ -582,9 +623,10 @@ Factory::CreateScaledFontWithCairo(const NativeFont& aNativeFont, Float aSize, c
 
 #ifdef MOZ_WIDGET_GTK
 already_AddRefed<ScaledFont>
-Factory::CreateScaledFontForFontconfigFont(cairo_scaled_font_t* aScaledFont, FcPattern* aPattern, Float aSize)
+Factory::CreateScaledFontForFontconfigFont(cairo_scaled_font_t* aScaledFont, FcPattern* aPattern,
+                                           const RefPtr<UnscaledFont>& aUnscaledFont, Float aSize)
 {
-  return MakeAndAddRef<ScaledFontFontconfig>(aScaledFont, aPattern, aSize);
+  return MakeAndAddRef<ScaledFontFontconfig>(aScaledFont, aPattern, aUnscaledFont, aSize);
 }
 #endif
 
@@ -618,6 +660,67 @@ Factory::GetFTLibrary()
 {
   MOZ_ASSERT(mFTLibrary);
   return mFTLibrary;
+}
+
+FT_Library
+Factory::NewFTLibrary()
+{
+  FT_Library library;
+  if (FT_Init_FreeType(&library) != FT_Err_Ok) {
+    return nullptr;
+  }
+  return library;
+}
+
+void
+Factory::ReleaseFTLibrary(FT_Library aFTLibrary)
+{
+  FT_Done_FreeType(aFTLibrary);
+}
+
+FT_Face
+Factory::NewFTFace(FT_Library aFTLibrary, const char* aFileName, int aFaceIndex)
+{
+  MOZ_ASSERT(mFTLock);
+  MutexAutoLock lock(*mFTLock);
+  if (!aFTLibrary) {
+    aFTLibrary = mFTLibrary;
+  }
+  FT_Face face;
+  if (FT_New_Face(aFTLibrary, aFileName, aFaceIndex, &face) != FT_Err_Ok) {
+    return nullptr;
+  }
+  return face;
+}
+
+FT_Face
+Factory::NewFTFaceFromData(FT_Library aFTLibrary, const uint8_t* aData, size_t aDataSize, int aFaceIndex)
+{
+  MOZ_ASSERT(mFTLock);
+  MutexAutoLock lock(*mFTLock);
+  if (!aFTLibrary) {
+    aFTLibrary = mFTLibrary;
+  }
+  FT_Face face;
+  if (FT_New_Memory_Face(aFTLibrary, aData, aDataSize, aFaceIndex, &face) != FT_Err_Ok) {
+    return nullptr;
+  }
+  return face;
+}
+
+void
+Factory::ReleaseFTFace(FT_Face aFace)
+{
+  // May be called during shutdown when the lock is already destroyed.
+  // However, there are no other threads using the face by this point,
+  // so it is safe to skip locking if the lock is not around.
+  if (mFTLock) {
+    mFTLock->Lock();
+  }
+  FT_Done_Face(aFace);
+  if (mFTLock) {
+    mFTLock->Unlock();
+  }
 }
 #endif
 
@@ -754,11 +857,12 @@ Factory::D2DCleanup()
 already_AddRefed<ScaledFont>
 Factory::CreateScaledFontForDWriteFont(IDWriteFontFace* aFontFace,
                                        const gfxFontStyle* aStyle,
+                                       const RefPtr<UnscaledFont>& aUnscaledFont,
                                        float aSize,
                                        bool aUseEmbeddedBitmap,
                                        bool aForceGDIMode)
 {
-  return MakeAndAddRef<ScaledFontDWrite>(aFontFace, aSize,
+  return MakeAndAddRef<ScaledFontDWrite>(aFontFace, aUnscaledFont, aSize,
                                          aUseEmbeddedBitmap, aForceGDIMode,
                                          aStyle);
 }

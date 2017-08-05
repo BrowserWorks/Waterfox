@@ -18,14 +18,14 @@ from taskgraph.util.schema import (
     validate_schema,
     optionally_keyed_by,
     resolve_keyed_by,
+    Schema,
 )
 from taskgraph.util.treeherder import split_symbol, join_symbol
+from taskgraph.transforms.job import job_description_schema
 from voluptuous import (
     Any,
-    Extra,
     Optional,
     Required,
-    Schema,
 )
 
 
@@ -37,6 +37,10 @@ taskref_or_string = Any(
     basestring,
     {Required('task-reference'): basestring})
 
+# Voluptuous uses marker objects as dictionary *keys*, but they are not
+# comparable, so we cast all of the keys back to regular strings
+job_description_schema = {str(k): v for k, v in job_description_schema.schema.iteritems()}
+
 l10n_description_schema = Schema({
     # Name for this job, inferred from the dependent job before validation
     Required('name'): basestring,
@@ -47,8 +51,8 @@ l10n_description_schema = Schema({
     # max run time of the task
     Required('run-time'): _by_platform(int),
 
-    # Data used by chain of trust (see `chain_of_trust` in this file)
-    Optional('chainOfTrust'): {Extra: object},
+    # Locales not to repack for
+    Required('ignore-locales'): _by_platform([basestring]),
 
     # All l10n jobs use mozharness
     Required('mozharness'): {
@@ -78,6 +82,8 @@ l10n_description_schema = Schema({
     # Description of the localized task
     Required('description'): _by_platform(basestring),
 
+    Optional('run-on-projects'): job_description_schema['run-on-projects'],
+
     # task object of the dependent task
     Required('dependent-task'): object,
 
@@ -101,17 +107,6 @@ l10n_description_schema = Schema({
         # Tier this task is
         Required('tier'): _by_platform(int),
     },
-    Required('attributes'): {
-        # Is this a nightly task, inferred from dependent job before validation
-        Optional('nightly'): bool,
-
-        # build_platform of this task, inferred from dependent job before validation
-        Required('build_platform'): basestring,
-
-        # build_type for this task, inferred from dependent job before validation
-        Required('build_type'): basestring,
-        Extra: object,
-    },
 
     # Extra environment values to pass to the worker
     Optional('env'): _by_platform({basestring: taskref_or_string}),
@@ -126,7 +121,11 @@ l10n_description_schema = Schema({
     # Run the task when the listed files change (if present).
     Optional('when'): {
         'files-changed': [basestring]
-    }
+    },
+
+    # passed through directly to the job description
+    Optional('attributes'): job_description_schema['attributes'],
+    Optional('extra'): job_description_schema['extra'],
 })
 
 transforms = TransformSequence()
@@ -154,11 +153,11 @@ def _parse_locales_file(locales_file, platform=None):
     return locales
 
 
-def _remove_ja_jp_mac_locale(locales):
+def _remove_locales(locales, to_remove=None):
     # ja-JP-mac is a mac-only locale, but there are no mac builds being repacked,
     # so just omit it unconditionally
     return {
-        locale: revision for locale, revision in locales.items() if locale != 'ja-JP-mac'
+        locale: revision for locale, revision in locales.items() if locale not in to_remove
     }
 
 
@@ -229,6 +228,7 @@ def handle_keyed_by(config, jobs):
         "run-time",
         "tooltool",
         "env",
+        "ignore-locales",
         "mozharness.config",
         "mozharness.options",
         "mozharness.actions",
@@ -250,7 +250,8 @@ def handle_keyed_by(config, jobs):
 def all_locales_attribute(config, jobs):
     for job in jobs:
         locales_with_changesets = _parse_locales_file(job["locales-file"])
-        locales_with_changesets = _remove_ja_jp_mac_locale(locales_with_changesets)
+        locales_with_changesets = _remove_locales(locales_with_changesets,
+                                                  to_remove=job['ignore-locales'])
 
         locales = sorted(locales_with_changesets.keys())
         attributes = job.setdefault('attributes', {})
@@ -328,11 +329,9 @@ def mh_options_replace_project(config, jobs):
 @transforms.add
 def chain_of_trust(config, jobs):
     for job in jobs:
-        job.setdefault('chainOfTrust', {})
-        job['chainOfTrust'].setdefault('inputs', {})
-        job['chainOfTrust']['inputs']['docker-image'] = {
-            "task-reference": "<docker-image>"
-        }
+        # add the docker image to the chain of trust inputs in task.extra
+        cot = job.setdefault('extra', {}).setdefault('chainOfTrust', {})
+        cot.setdefault('inputs', {})['docker-image'] = {"task-reference": "<docker-image>"}
         yield job
 
 
@@ -349,14 +348,11 @@ def make_job_description(config, jobs):
         job_description = {
             'name': job['name'],
             'worker': {
-                'implementation': 'docker-worker',
                 'docker-image': {'in-tree': 'desktop-build'},
                 'max-run-time': job['run-time'],
                 'chain-of-trust': True,
             },
-            'extra': {
-                'chainOfTrust': job['chainOfTrust'],
-            },
+            'extra': job['extra'],
             'worker-type': job['worker-type'],
             'description': job['description'],
             'run': {
@@ -376,7 +372,7 @@ def make_job_description(config, jobs):
                 'symbol': job['treeherder']['symbol'],
                 'platform': job['treeherder']['platform'],
             },
-            'run-on-projects': [],
+            'run-on-projects': job.get('run-on-projects') if job.get('run-on-projects') else [],
         }
 
         if job.get('index'):

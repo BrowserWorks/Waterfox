@@ -31,7 +31,6 @@ import org.mozilla.gecko.widget.themed.ThemedLinearLayout;
 import org.mozilla.gecko.widget.themed.ThemedTextView;
 
 import android.content.Context;
-import android.os.SystemClock;
 import android.support.annotation.NonNull;
 import android.support.v4.view.ViewCompat;
 import android.text.Spannable;
@@ -444,16 +443,6 @@ public class ToolbarDisplayLayout extends ThemedLinearLayout {
         }
 
         mUiMode = uiMode;
-
-        // The "Throbber start" and "Throbber stop" log messages in this method
-        // are needed by S1/S2 tests (http://mrcote.info/phonedash/#).
-        // See discussion in Bug 804457. Bug 805124 tracks paring these down.
-        if (mUiMode == UIMode.PROGRESS) {
-            Log.i(LOGTAG, "zerdatime " + SystemClock.uptimeMillis() + " - Throbber start");
-        } else {
-            Log.i(LOGTAG, "zerdatime " + SystemClock.uptimeMillis() + " - Throbber stop");
-        }
-
         updatePageActions();
     }
 

@@ -116,8 +116,8 @@ nsresult AndroidMediaReader::ResetDecode(TrackSet aTracks)
   return MediaDecoderReader::ResetDecode(aTracks);
 }
 
-bool AndroidMediaReader::DecodeVideoFrame(bool &aKeyframeSkip,
-                                          int64_t aTimeThreshold)
+bool AndroidMediaReader::DecodeVideoFrame(bool& aKeyframeSkip,
+                                          const media::TimeUnit& aTimeThreshold)
 {
   // Record number of frames decoded and parsed. Automatically update the
   // stats counters using the AutoNotifyDecoded stack-based class.
@@ -141,8 +141,9 @@ bool AndroidMediaReader::DecodeVideoFrame(bool &aKeyframeSkip,
       if (mLastVideoFrame) {
         int64_t durationUs;
         mPlugin->GetDuration(mPlugin, &durationUs);
-        durationUs = std::max<int64_t>(durationUs - mLastVideoFrame->mTime, 0);
-        mLastVideoFrame->UpdateDuration(durationUs);
+        durationUs = std::max<int64_t>(
+          durationUs - mLastVideoFrame->mTime.ToMicroseconds(), 0);
+        mLastVideoFrame->UpdateDuration(TimeUnit::FromMicroseconds(durationUs));
         mVideoQueue.Push(mLastVideoFrame);
         mLastVideoFrame = nullptr;
       }
@@ -175,11 +176,11 @@ bool AndroidMediaReader::DecodeVideoFrame(bool &aKeyframeSkip,
     if (currentImage) {
       v = VideoData::CreateFromImage(mInfo.mVideo.mDisplay,
                                      pos,
-                                     frame.mTimeUs,
-                                     1, // We don't know the duration yet.
+                                     TimeUnit::FromMicroseconds(frame.mTimeUs),
+                                     TimeUnit::FromMicroseconds(1), // We don't know the duration yet.
                                      currentImage,
                                      frame.mKeyFrame,
-                                     -1);
+                                     TimeUnit::FromMicroseconds(-1));
     } else {
       // Assume YUV
       VideoData::YCbCrBuffer b;
@@ -220,11 +221,11 @@ bool AndroidMediaReader::DecodeVideoFrame(bool &aKeyframeSkip,
       v = VideoData::CreateAndCopyData(mInfo.mVideo,
                                        mDecoder->GetImageContainer(),
                                        pos,
-                                       frame.mTimeUs,
-                                       1, // We don't know the duration yet.
+                                       TimeUnit::FromMicroseconds(frame.mTimeUs),
+                                       TimeUnit::FromMicroseconds(1), // We don't know the duration yet.
                                        b,
                                        frame.mKeyFrame,
-                                       -1,
+                                       TimeUnit::FromMicroseconds(-1),
                                        picture);
     }
 
@@ -247,7 +248,7 @@ bool AndroidMediaReader::DecodeVideoFrame(bool &aKeyframeSkip,
     // Calculate the duration as the timestamp of the current frame minus the
     // timestamp of the previous frame. We can then return the previously
     // decoded frame, and it will have a valid timestamp.
-    int64_t duration = v->mTime - mLastVideoFrame->mTime;
+    auto duration = v->mTime - mLastVideoFrame->mTime;
     mLastVideoFrame->UpdateDuration(duration);
 
     // We have the start time of the next frame, so we can push the previous
@@ -318,9 +319,9 @@ AndroidMediaReader::Seek(const SeekTarget& aTarget)
     mVideoSeekTimeUs = aTarget.GetTime().ToMicroseconds();
 
     RefPtr<AndroidMediaReader> self = this;
-    DecodeToFirstVideoData()->Then(OwnerThread(), __func__, [self] (MediaData* v) {
+    DecodeToFirstVideoData()->Then(OwnerThread(), __func__, [self] (RefPtr<MediaData> v) {
       self->mSeekRequest.Complete();
-      self->mAudioSeekTimeUs = v->mTime;
+      self->mAudioSeekTimeUs = v->mTime.ToMicroseconds();
       self->mSeekPromise.Resolve(media::TimeUnit::FromMicroseconds(self->mAudioSeekTimeUs), __func__);
     }, [self, aTarget] () {
       self->mSeekRequest.Complete();

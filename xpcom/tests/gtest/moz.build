@@ -6,7 +6,7 @@
 
 UNIFIED_SOURCES += [
     'Helpers.cpp',
-    'TestArray.cpp',
+    'TestArenaAllocator.cpp',
     'TestAtoms.cpp',
     'TestAutoPtr.cpp',
     'TestAutoRef.cpp',
@@ -21,6 +21,7 @@ UNIFIED_SOURCES += [
     'TestFile.cpp',
     'TestGCPostBarriers.cpp',
     'TestID.cpp',
+    'TestMultiplexInputStream.cpp',
     'TestNsDeque.cpp',
     'TestNSPRLogModulesParser.cpp',
     'TestObserverArray.cpp',
@@ -29,6 +30,7 @@ UNIFIED_SOURCES += [
     'TestPLDHash.cpp',
     'TestPriorityQueue.cpp',
     'TestRacingServiceManager.cpp',
+    'TestRWLock.cpp',
     'TestSlicedInputStream.cpp',
     'TestSnappyStreams.cpp',
     'TestStateWatching.cpp',
@@ -38,6 +40,7 @@ UNIFIED_SOURCES += [
     'TestSynchronization.cpp',
     'TestTArray.cpp',
     'TestTArray2.cpp',
+    'TestTaskQueue.cpp',
     'TestTextFormatter.cpp',
     'TestThreadPool.cpp',
     'TestThreadPoolListener.cpp',
@@ -62,6 +65,9 @@ if CONFIG['WRAP_STL_INCLUDES'] and not CONFIG['CLANG_CL']:
     UNIFIED_SOURCES += [
         'TestSTLWrappers.cpp',
     ]
+
+if CONFIG['MOZ_CODE_COVERAGE']:
+    DEFINES['MOZ_CODE_COVERAGE'] = True
 
 # Compile TestAllocReplacement separately so Windows headers don't pollute
 # the global namespace for other files.

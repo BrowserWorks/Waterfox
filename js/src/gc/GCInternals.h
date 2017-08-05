@@ -85,15 +85,15 @@ class MOZ_RAII AutoStopVerifyingBarriers
         // inside of an outer minor GC. This is not allowed by the
         // gc::Statistics phase tree. So we pause the "real" GC, if in fact one
         // is in progress.
-        gcstats::Phase outer = gc->stats().currentPhase();
-        if (outer != gcstats::PHASE_NONE)
+        gcstats::PhaseKind outer = gc->stats().currentPhaseKind();
+        if (outer != gcstats::PhaseKind::NONE)
             gc->stats().endPhase(outer);
-        MOZ_ASSERT(gc->stats().currentPhase() == gcstats::PHASE_NONE);
+        MOZ_ASSERT(gc->stats().currentPhaseKind() == gcstats::PhaseKind::NONE);
 
         if (restartPreVerifier)
             gc->startVerifyPreBarriers();
 
-        if (outer != gcstats::PHASE_NONE)
+        if (outer != gcstats::PhaseKind::NONE)
             gc->stats().beginPhase(outer);
     }
 };
@@ -120,6 +120,7 @@ struct MovingTracer : JS::CallbackTracer
     void onLazyScriptEdge(LazyScript** lazyp) override;
     void onBaseShapeEdge(BaseShape** basep) override;
     void onScopeEdge(Scope** basep) override;
+    void onRegExpSharedEdge(RegExpShared** sharedp) override;
     void onChild(const JS::GCCellPtr& thing) override {
         MOZ_ASSERT(!RelocationOverlay::isCellForwarded(thing.asCell()));
     }
@@ -127,6 +128,10 @@ struct MovingTracer : JS::CallbackTracer
 #ifdef DEBUG
     TracerKind getTracerKind() const override { return TracerKind::Moving; }
 #endif
+
+  private:
+    template <typename T>
+    void updateEdge(T** thingp);
 };
 
 // Structure for counting how many times objects in a particular group have

@@ -1,4 +1,3 @@
-// |reftest| skip-if(!this.hasOwnProperty('Intl')) -- needs Intl
 // Copyright 2012 Mozilla Corporation. All rights reserved.
 // This code is governed by the BSD license found in the LICENSE file.
 
@@ -13,12 +12,8 @@ author: Norbert Lindenberg
 var obj = new Intl.NumberFormat();
 
 var actualPrototype = Object.getPrototypeOf(obj);
-if (actualPrototype !== Intl.NumberFormat.prototype) {
-    $ERROR("Prototype of object constructed by Intl.NumberFormat isn't Intl.NumberFormat.prototype; got " + actualPrototype);
-}
+assert.sameValue(actualPrototype, Intl.NumberFormat.prototype, "Prototype of object constructed by Intl.NumberFormat isn't Intl.NumberFormat.prototype.");
 
-if (!Object.isExtensible(obj)) {
-    $ERROR("Object constructed by Intl.NumberFormat must be extensible.");
-}
+assert(Object.isExtensible(obj), "Object constructed by Intl.NumberFormat must be extensible.");
 
 reportCompare(0, 0);

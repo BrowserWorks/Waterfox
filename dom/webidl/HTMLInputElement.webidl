@@ -117,10 +117,9 @@ interface HTMLInputElement : HTMLElement {
   void select();
 
   [Throws]
-           // TODO: unsigned vs signed
-           attribute long? selectionStart;
+           attribute unsigned long? selectionStart;
   [Throws]
-           attribute long? selectionEnd;
+           attribute unsigned long? selectionEnd;
   [Throws]
            attribute DOMString? selectionDirection;
   [Throws]
@@ -128,6 +127,8 @@ interface HTMLInputElement : HTMLElement {
   [Throws]
   void setRangeText(DOMString replacement, unsigned long start,
     unsigned long end, optional SelectionMode selectionMode = "preserve");
+  [Throws]
+  void setSelectionRange(unsigned long start, unsigned long end, optional DOMString direction);
 
   // also has obsolete members
 };
@@ -142,9 +143,6 @@ partial interface HTMLInputElement {
 // Mozilla extensions
 
 partial interface HTMLInputElement {
-  [Throws]
-  void setSelectionRange(long start, long end, optional DOMString direction);
-
   [GetterThrows, ChromeOnly]
   readonly attribute nsIControllers        controllers;
   // Binaryname because we have a FragmentOrElement function named "TextLength()".
@@ -219,14 +217,7 @@ partial interface HTMLInputElement {
   void chooseDirectory();
 };
 
-[NoInterfaceObject]
-interface MozPhonetic {
-  [Pure, ChromeOnly]
-  readonly attribute DOMString phonetic;
-};
-
 HTMLInputElement implements MozImageLoadingContent;
-HTMLInputElement implements MozPhonetic;
 
 // Webkit/Blink
 partial interface HTMLInputElement {
@@ -263,4 +254,12 @@ partial interface HTMLInputElement {
 
   [Pref="dom.forms.datetime", Func="IsChromeOrXBL"]
   void closeDateTimePicker();
+
+  [Pref="dom.forms.datetime", Func="IsChromeOrXBL"]
+  void setFocusState(boolean aIsFocused);
+};
+
+partial interface HTMLInputElement {
+  [ChromeOnly]
+  attribute DOMString previewValue;
 };

@@ -20,6 +20,7 @@ with Files('AccessibleCaret*'):
     BUG_COMPONENT = ('Core', 'Selection')
 
 XPIDL_SOURCES += [
+    'nsILayoutHistoryState.idl',
     'nsIPreloadedStyleSheet.idl',
     'nsIStyleSheetService.idl',
 ]
@@ -33,7 +34,7 @@ XPIDL_MODULE = 'layout_base'
 
 EXPORTS += [
     'CaretAssociationHint.h',
-    'FramePropertyTable.h',
+    'FrameProperties.h',
     'LayoutLogging.h',
     'nsArenaMemoryStats.h',
     'nsBidi.h',
@@ -47,7 +48,6 @@ EXPORTS += [
     'nsFrameTraversal.h',
     'nsIFrameTraversal.h',
     'nsILayoutDebugger.h',
-    'nsILayoutHistoryState.h',
     'nsIPercentBSizeObserver.h',
     'nsIPresShell.h',
     'nsIPresShellInlines.h',
@@ -87,7 +87,6 @@ UNIFIED_SOURCES += [
     'AccessibleCaret.cpp',
     'AccessibleCaretEventHub.cpp',
     'AccessibleCaretManager.cpp',
-    'FramePropertyTable.cpp',
     'GeckoRestyleManager.cpp',
     'GeometryUtils.cpp',
     'LayoutLogging.cpp',
@@ -104,6 +103,7 @@ UNIFIED_SOURCES += [
     'nsLayoutDebugger.cpp',
     'nsLayoutHistoryState.cpp',
     'nsLayoutUtils.cpp',
+    'nsPresArena.cpp',
     'nsPresContext.cpp',
     'nsQuoteList.cpp',
     'nsStyleChangeList.cpp',
@@ -136,10 +136,8 @@ else:
         'nsBidi_noICU.cpp',
     ]
 
-# nsPresArena.cpp needs to be built separately because it uses plarena.h.
 # nsRefreshDriver.cpp needs to be built separately because of name clashes in the OS X headers
 SOURCES += [
-    'nsPresArena.cpp',
     'nsRefreshDriver.cpp',
 ]
 

@@ -13,8 +13,6 @@ Cu.import("resource://gre/modules/XPCOMUtils.jsm");
 Cu.import("resource://gre/modules/RemoteWebProgress.jsm");
 Cu.import("resource://gre/modules/Services.jsm");
 
-XPCOMUtils.defineLazyModuleGetter(this, "BrowserUtils",
-                                  "resource://gre/modules/BrowserUtils.jsm");
 XPCOMUtils.defineLazyModuleGetter(this, "NetUtil",
                                   "resource://gre/modules/NetUtil.jsm");
 XPCOMUtils.defineLazyModuleGetter(this, "Prefetcher",
@@ -140,8 +138,8 @@ var ContentPolicyParent = {
         continue;
       }
       try {
-        let contentLocation = BrowserUtils.makeURI(aData.contentLocation);
-        let requestOrigin = aData.requestOrigin ? BrowserUtils.makeURI(aData.requestOrigin) : null;
+        let contentLocation = Services.io.newURI(aData.contentLocation);
+        let requestOrigin = aData.requestOrigin ? Services.io.newURI(aData.requestOrigin) : null;
 
         let result = Prefetcher.withPrefetching(aData.prefetched, aObjects, () => {
           return policy.shouldLoad(aData.contentType,
@@ -228,7 +226,7 @@ var AboutProtocolParent = {
   },
 
   getURIFlags(msg) {
-    let uri = BrowserUtils.makeURI(msg.data.uri);
+    let uri = Services.io.newURI(msg.data.uri);
     let contractID = msg.data.contractID;
     let module = Cc[contractID].getService(Ci.nsIAboutModule);
     try {
@@ -248,7 +246,7 @@ var AboutProtocolParent = {
       };
     }
 
-    let uri = BrowserUtils.makeURI(msg.data.uri);
+    let uri = Services.io.newURI(msg.data.uri);
     let channelParams;
     if (msg.data.contentPolicyType === Ci.nsIContentPolicy.TYPE_DOCUMENT) {
       // For TYPE_DOCUMENT loads, we cannot recreate the loadinfo here in the
@@ -834,7 +832,7 @@ ContentDocumentInterposition.methods.importNode =
   };
 
 // This interposition ensures that calling browser.docShell from an
-// add-on returns a CPOW around the dochell.
+// add-on returns a CPOW around the docshell.
 var RemoteBrowserElementInterposition = new Interposition("RemoteBrowserElementInterposition",
                                                           EventTargetInterposition);
 
@@ -1062,6 +1060,10 @@ var RemoteAddonsParent = {
     mm.addMessageListener("Addons:RegisterGlobal", this);
 
     Services.ppmm.initialProcessData.remoteAddonsParentInitted = true;
+
+    Services.ppmm.loadProcessScript("data:,new " + function() {
+      Components.utils.import("resource://gre/modules/RemoteAddonsChild.jsm");
+    }, true);
 
     this.globalToBrowser = new WeakMap();
     this.browserToGlobal = new WeakMap();

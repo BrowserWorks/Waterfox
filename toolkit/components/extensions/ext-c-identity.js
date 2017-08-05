@@ -1,9 +1,8 @@
 /* -*- Mode: indent-tabs-mode: nil; js-indent-level: 2 -*- */
 /* vim: set sts=2 sw=2 et tw=80: */
-/* global redirectDomain */
 "use strict";
 
-const {classes: Cc, interfaces: Ci, utils: Cu, results: Cr, Constructor: CC} = Components;
+var {Constructor: CC} = Components;
 
 XPCOMUtils.defineLazyModuleGetter(this, "Services",
                                   "resource://gre/modules/Services.jsm");
@@ -13,21 +12,21 @@ XPCOMUtils.defineLazyPreferenceGetter(this, "redirectDomain",
                                       "extensions.webextensions.identity.redirectDomain");
 
 let CryptoHash = CC("@mozilla.org/security/hash;1", "nsICryptoHash", "initWithString");
+
 Cu.importGlobalProperties(["URL", "XMLHttpRequest", "TextEncoder"]);
 
-Cu.import("resource://gre/modules/ExtensionUtils.jsm");
-const {
+var {
   promiseDocumentLoaded,
 } = ExtensionUtils;
 
-function computeHash(str) {
+const computeHash = str => {
   let byteArr = new TextEncoder().encode(str);
   let hash = new CryptoHash("sha1");
   hash.update(byteArr, byteArr.length);
   return CommonUtils.bytesAsHex(hash.finish(false));
-}
+};
 
-function checkRedirected(url, redirectURI) {
+const checkRedirected = (url, redirectURI) => {
   return new Promise((resolve, reject) => {
     let xhr = new XMLHttpRequest();
     xhr.open("HEAD", url);
@@ -58,14 +57,14 @@ function checkRedirected(url, redirectURI) {
     };
     xhr.send();
   });
-}
+};
 
-function openOAuthWindow(details, redirectURI) {
+const openOAuthWindow = (details, redirectURI) => {
   let args = Cc["@mozilla.org/array;1"].createInstance(Ci.nsIMutableArray);
   let supportsStringPrefURL = Cc["@mozilla.org/supports-string;1"]
                                 .createInstance(Ci.nsISupportsString);
   supportsStringPrefURL.data = details.url;
-  args.appendElement(supportsStringPrefURL, /* weak =*/ false);
+  args.appendElement(supportsStringPrefURL);
 
   let window = Services.ww.openWindow(null,
                                       Services.prefs.getCharPref("browser.chromeURL"),
@@ -102,55 +101,57 @@ function openOAuthWindow(details, redirectURI) {
       window.addEventListener("unload", unloadlistener);
     });
   });
-}
+};
 
-extensions.registerSchemaAPI("identity", "addon_child", context => {
-  let {extension} = context;
-  return {
-    identity: {
-      launchWebAuthFlow: function(details) {
-        // In OAuth2 the url should have a redirect_uri param, parse the url and grab it
-        let url, redirectURI;
-        try {
-          url = new URL(details.url);
-        } catch (e) {
-          return Promise.reject({message: "details.url is invalid"});
-        }
-        try {
-          redirectURI = new URL(url.searchParams.get("redirect_uri"));
-          if (!redirectURI) {
-            return Promise.reject({message: "redirect_uri is missing"});
+this.identity = class extends ExtensionAPI {
+  getAPI(context) {
+    let {extension} = context;
+    return {
+      identity: {
+        launchWebAuthFlow: function(details) {
+          // In OAuth2 the url should have a redirect_uri param, parse the url and grab it
+          let url, redirectURI;
+          try {
+            url = new URL(details.url);
+          } catch (e) {
+            return Promise.reject({message: "details.url is invalid"});
           }
-        } catch (e) {
-          return Promise.reject({message: "redirect_uri is invalid"});
-        }
-        if (!redirectURI.href.startsWith(this.getRedirectURL())) {
-          // Any url will work, but we suggest addons use getRedirectURL.
-          Services.console.logStringMessage("WebExtensions: redirect_uri should use browser.identity.getRedirectURL");
-        }
-
-        // If the request is automatically redirected the user has already
-        // authorized and we do not want to show the window.
-        return checkRedirected(details.url, redirectURI).catch((requestError) => {
-          // requestError is zero or xhr.status
-          if (requestError !== 0) {
-            Cu.reportError(`browser.identity auth check failed with ${requestError}`);
-            return Promise.reject({message: "Invalid request"});
+          try {
+            redirectURI = new URL(url.searchParams.get("redirect_uri"));
+            if (!redirectURI) {
+              return Promise.reject({message: "redirect_uri is missing"});
+            }
+          } catch (e) {
+            return Promise.reject({message: "redirect_uri is invalid"});
           }
-          if (!details.interactive) {
-            return Promise.reject({message: `Requires user interaction`});
+          if (!redirectURI.href.startsWith(this.getRedirectURL())) {
+            // Any url will work, but we suggest addons use getRedirectURL.
+            Services.console.logStringMessage("WebExtensions: redirect_uri should use browser.identity.getRedirectURL");
           }
 
-          return openOAuthWindow(details, redirectURI);
-        });
+          // If the request is automatically redirected the user has already
+          // authorized and we do not want to show the window.
+          return checkRedirected(details.url, redirectURI).catch((requestError) => {
+            // requestError is zero or xhr.status
+            if (requestError !== 0) {
+              Cu.reportError(`browser.identity auth check failed with ${requestError}`);
+              return Promise.reject({message: "Invalid request"});
+            }
+            if (!details.interactive) {
+              return Promise.reject({message: `Requires user interaction`});
+            }
+
+            return openOAuthWindow(details, redirectURI);
+          });
+        },
+
+        getRedirectURL: function(path = "") {
+          let hash = computeHash(extension.id);
+          let url = new URL(`https://${hash}.${redirectDomain}/`);
+          url.pathname = path;
+          return url.href;
+        },
       },
-
-      getRedirectURL: function(path = "") {
-        let hash = computeHash(extension.id);
-        let url = new URL(`https://${hash}.${redirectDomain}/`);
-        url.pathname = path;
-        return url.href;
-      },
-    },
-  };
-});
+    };
+  }
+};

@@ -5,7 +5,6 @@
 
 package org.mozilla.gecko;
 
-import android.content.Context;
 import android.text.TextUtils;
 import android.util.Log;
 import android.view.View;
@@ -36,12 +35,16 @@ public class DoorHangerPopup extends AnchoredPopup
     // Whether or not the doorhanger popup is disabled.
     private boolean mDisabled;
 
-    public DoorHangerPopup(Context context) {
-        super(context);
+    private final GeckoApp geckoApp;
+
+    public DoorHangerPopup(GeckoApp geckoApp) {
+        super(geckoApp);
+
+        this.geckoApp = geckoApp;
 
         mDoorHangers = new HashSet<DoorHanger>();
 
-        GeckoApp.getEventDispatcher().registerUiThreadListener(this,
+        geckoApp.getAppEventDispatcher().registerUiThreadListener(this,
             "Doorhanger:Add",
             "Doorhanger:Remove");
         Tabs.registerOnTabsChangedListener(this);
@@ -50,7 +53,7 @@ public class DoorHangerPopup extends AnchoredPopup
     }
 
     void destroy() {
-        GeckoApp.getEventDispatcher().unregisterUiThreadListener(this,
+        geckoApp.getAppEventDispatcher().unregisterUiThreadListener(this,
             "Doorhanger:Add",
             "Doorhanger:Remove");
         Tabs.unregisterOnTabsChangedListener(this);

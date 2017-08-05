@@ -90,6 +90,13 @@ createStorageSpec({
   methods: Object.assign({},
     editRemoveMethods,
     {
+      addItem: {
+        request: {
+          guid: Arg(0, "string"),
+        },
+        response: {}
+      }
+    }, {
       removeAll: {
         request: {
           host: Arg(0, "string"),
@@ -110,6 +117,15 @@ types.addDictType("storageobject", {
 // Common methods for local/session storage
 const storageMethods = Object.assign({},
   editRemoveMethods,
+  {
+    addItem: {
+      request: {
+        guid: Arg(0, "string"),
+        host: Arg(1, "nullable:string")
+      },
+      response: {}
+    }
+  },
   {
     removeAll: {
       request: {

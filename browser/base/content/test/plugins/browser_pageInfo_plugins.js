@@ -23,7 +23,7 @@ function pageLoad() {
 }
 
 function doOnOpenPageInfo(continuation) {
-  Services.obs.addObserver(pageInfoObserve, "page-info-dialog-loaded", false);
+  Services.obs.addObserver(pageInfoObserve, "page-info-dialog-loaded");
   gNextTest = continuation;
   // An explanation: it looks like the test harness complains about leaked
   // windows if we don't keep a reference to every window we've opened.
@@ -57,7 +57,7 @@ function test() {
   Services.prefs.setBoolPref("plugins.click_to_play", true);
   setTestPluginEnabledState(Ci.nsIPluginTag.STATE_CLICKTOPLAY);
   setTestPluginEnabledState(Ci.nsIPluginTag.STATE_ENABLED, "Second Test Plug-in");
-  gBrowser.selectedTab = gBrowser.addTab();
+  gBrowser.selectedTab = BrowserTestUtils.addTab(gBrowser);
   gTestBrowser = gBrowser.selectedBrowser;
   gPermissionManager.remove(makeURI("http://127.0.0.1:8888/"), gTestPermissionString);
   gPermissionManager.remove(makeURI("http://127.0.0.1:8888/"), gSecondTestPermissionString);

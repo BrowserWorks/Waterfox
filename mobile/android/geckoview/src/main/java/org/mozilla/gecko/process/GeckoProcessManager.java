@@ -5,6 +5,8 @@
 package org.mozilla.gecko.process;
 
 import org.mozilla.gecko.GeckoAppShell;
+import org.mozilla.gecko.IGeckoEditableParent;
+import org.mozilla.gecko.annotation.WrapForJNI;
 import org.mozilla.gecko.mozglue.GeckoLoader;
 import org.mozilla.gecko.util.ThreadUtils;
 
@@ -25,12 +27,21 @@ import java.util.Collections;
 import java.util.concurrent.TimeUnit;
 import java.util.Map;
 
-public final class GeckoProcessManager {
+public final class GeckoProcessManager extends IProcessManager.Stub {
     private static final String LOGTAG = "GeckoProcessManager";
     private static final GeckoProcessManager INSTANCE = new GeckoProcessManager();
 
     public static GeckoProcessManager getInstance() {
         return INSTANCE;
+    }
+
+    @WrapForJNI(stubName = "GetEditableParent")
+    private static native IGeckoEditableParent nativeGetEditableParent(long contentId,
+                                                                       long tabId);
+
+    @Override // IProcessManager
+    public IGeckoEditableParent getEditableParent(final long contentId, final long tabId) {
+        return nativeGetEditableParent(contentId, tabId);
     }
 
     private static final class ChildConnection implements ServiceConnection, IBinder.DeathRecipient {
@@ -48,7 +59,7 @@ public final class GeckoProcessManager {
 
         void waitForChild() {
             ThreadUtils.assertNotOnUiThread();
-            synchronized(this) {
+            synchronized (this) {
                 if (mWait) {
                     try {
                         this.wait(5000); // 5 seconds
@@ -76,7 +87,7 @@ public final class GeckoProcessManager {
             } catch (final RemoteException e) {
                 Log.e(LOGTAG, "Failed to get child " + mType + " process PID. Process may have died.", e);
             }
-            synchronized(this) {
+            synchronized (this) {
                 if (mWait) {
                     mWait = false;
                     this.notifyAll();
@@ -86,10 +97,10 @@ public final class GeckoProcessManager {
 
         @Override
         public void onServiceDisconnected(ComponentName name) {
-            synchronized(INSTANCE.mConnections) {
+            synchronized (INSTANCE.mConnections) {
                 INSTANCE.mConnections.remove(mType);
             }
-            synchronized(this) {
+            synchronized (this) {
                 if (mWait) {
                     mWait = false;
                     this.notifyAll();
@@ -99,11 +110,11 @@ public final class GeckoProcessManager {
 
         @Override
         public void binderDied() {
-            Log.e(LOGTAG,"Binder died. Attempt to unbind service: " + mType + " " + mPid);
+            Log.e(LOGTAG, "Binder died. Attempt to unbind service: " + mType + " " + mPid);
             try {
                 GeckoAppShell.getApplicationContext().unbindService(this);
             } catch (final java.lang.IllegalArgumentException e) {
-                Log.e(LOGTAG,"Looks like connection was already unbound", e);
+                Log.e(LOGTAG, "Looks like connection was already unbound", e);
             }
         }
     }
@@ -116,7 +127,7 @@ public final class GeckoProcessManager {
 
     public int start(String type, String[] args, int crashFd, int ipcFd) {
         ChildConnection connection = null;
-        synchronized(mConnections) {
+        synchronized (mConnections) {
             connection = mConnections.get(type);
         }
         if (connection != null) {
@@ -150,12 +161,12 @@ public final class GeckoProcessManager {
                 crashPfd = ParcelFileDescriptor.fromFd(crashFd);
             }
             ParcelFileDescriptor ipcPfd = ParcelFileDescriptor.fromFd(ipcFd);
-            connection.mChild.start(args, crashPfd, ipcPfd);
+            connection.mChild.start(this, args, crashPfd, ipcPfd);
             if (crashPfd != null) {
                 crashPfd.close();
             }
             ipcPfd.close();
-            synchronized(mConnections) {
+            synchronized (mConnections) {
                 mConnections.put(type, connection);
             }
             return connection.mPid;

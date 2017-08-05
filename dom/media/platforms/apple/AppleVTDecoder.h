@@ -32,9 +32,9 @@ public:
     bool is_sync_point;
 
     explicit AppleFrameRef(const MediaRawData& aSample)
-      : decode_timestamp(media::TimeUnit::FromMicroseconds(aSample.mTimecode))
-      , composition_timestamp(media::TimeUnit::FromMicroseconds(aSample.mTime))
-      , duration(media::TimeUnit::FromMicroseconds(aSample.mDuration))
+      : decode_timestamp(aSample.mTimecode)
+      , composition_timestamp(aSample.mTime)
+      , duration(aSample.mDuration)
       , byte_offset(aSample.mOffset)
       , is_sync_point(aSample.mKeyframe)
     {

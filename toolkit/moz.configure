@@ -38,7 +38,7 @@ imply_option('--enable-profiling', jprof)
 @depends(target)
 def gecko_profiler(target):
     if target.os == 'Android':
-        return target.cpu in ('arm', 'x86')
+        return target.cpu in ('aarch64', 'arm', 'x86')
     elif target.kernel == 'Linux':
         return target.cpu in ('x86', 'x86_64')
     return target.os in ('OSX', 'WINNT')
@@ -65,7 +65,7 @@ set_config('MOZ_DMD', dmd)
 set_define('MOZ_DMD', dmd)
 add_old_configure_assignment('MOZ_DMD', dmd)
 imply_option('--enable-profiling', dmd)
-# --enable-jemalloc is implied below.
+imply_option('--enable-jemalloc', dmd)
 imply_option('--enable-replace-malloc', dmd)
 
 # JACK cubeb backend
@@ -117,12 +117,12 @@ set_config('L10NBASEDIR', l10n_base)
 # `choices` depending on the target, but that doesn't pan out for the same
 # reason.
 option('--enable-default-toolkit', nargs=1,
-       choices=('cairo-windows', 'cairo-gtk3', 'cairo-cocoa', 'cairo-uikit',
-                'cairo-android', 'cairo-gonk'),
+       choices=('cairo-windows', 'cairo-gtk3', 'cairo-gtk3-wayland',
+                'cairo-cocoa', 'cairo-uikit', 'cairo-android'),
        help='Select default toolkit')
 
-@depends('--enable-default-toolkit', target)
-def toolkit(value, target):
+@depends('--enable-default-toolkit', target, '--help')
+def toolkit(value, target, _):
     # Define possible choices for each platform. The default is the first one
     # listed when there are several.
     os = target.os
@@ -140,7 +140,7 @@ def toolkit(value, target):
         else:
             platform_choices = ('cairo-android',)
     else:
-        platform_choices = ('cairo-gtk3',)
+        platform_choices = ('cairo-gtk3', 'cairo-gtk3-wayland')
 
     if value:
         if value[0] not in platform_choices:
@@ -150,11 +150,16 @@ def toolkit(value, target):
 
     return platform_choices[0]
 
+@depends(toolkit)
+def wayland(toolkit):
+    return toolkit == 'cairo-gtk3-wayland'
 
 @depends(toolkit)
 def toolkit(toolkit):
     if toolkit == 'cairo-gtk2-x11':
         widget_toolkit = 'gtk2'
+    elif toolkit == 'cairo-gtk3-wayland' :
+        widget_toolkit = 'gtk3'
     else:
         widget_toolkit = toolkit.replace('cairo-', '')
     return widget_toolkit
@@ -199,6 +204,14 @@ set_config('MOZ_X11', x11)
 set_define('MOZ_X11', x11)
 add_old_configure_assignment('MOZ_X11', x11)
 
+# Wayland support
+# ==============================================================
+wayland_headers = pkg_check_modules('MOZ_WAYLAND', 'gtk+-wayland-3.0 >= 3.22',
+                                    when=wayland)
+
+set_config('MOZ_WAYLAND', depends_if(wayland_headers)(lambda _: True))
+set_define('MOZ_WAYLAND', depends_if(wayland_headers)(lambda _: True))
+
 # GL Provider
 # ==============================================================
 option('--with-gl-provider', nargs=1, help='Set GL provider backend type')
@@ -237,7 +250,7 @@ set_define(gl_provider_define, True)
 # ==============================================================
 @depends(toolkit)
 def pdf_printing(toolkit):
-    if toolkit in ('windows', 'gtk2', 'gtk3', 'android', 'gonk'):
+    if toolkit in ('windows', 'gtk2', 'gtk3', 'android'):
         return True
 
 @depends(pdf_printing)
@@ -259,8 +272,8 @@ option(env='MOZ_INSTRUMENT_EVENT_LOOP',
 
 @depends('MOZ_INSTRUMENT_EVENT_LOOP', toolkit)
 def instrument_event_loop(value, toolkit):
-    if value or (toolkit in ('windows', 'gtk2', 'gtk3', 'cocoa', 'android',
-                             'gonk') and value.origin == 'default'):
+    if value or (toolkit in ('windows', 'gtk2', 'gtk3', 'cocoa', 'android') and
+                 value.origin == 'default'):
         return True
 
 set_config('MOZ_INSTRUMENT_EVENT_LOOP', instrument_event_loop)
@@ -337,11 +350,11 @@ def ft2_info(freetype2_combined_info, tree_freetype, build_env):
     if freetype2_combined_info:
         return freetype2_combined_info
 
-set_config('FT2_LIBS', delayed_getattr(ft2_info, 'libs'))
+set_config('FT2_LIBS', ft2_info.libs)
 add_old_configure_assignment('FT2_LIBS',
-                             delayed_getattr(ft2_info, 'libs'))
+                             ft2_info.libs)
 add_old_configure_assignment('FT2_CFLAGS',
-                             delayed_getattr(ft2_info, 'cflags'))
+                             ft2_info.cflags)
 
 # Apple platform decoder support
 # ==============================================================
@@ -391,6 +404,22 @@ def ffmpeg(value, target):
 set_config('MOZ_FFMPEG', ffmpeg)
 set_define('MOZ_FFMPEG', ffmpeg)
 imply_option('--enable-fmp4', ffmpeg, '--enable-ffmpeg')
+
+# Libaom AV1 Video Codec Support
+# ==============================================================
+option('--enable-av1',
+        help='Enable libaom for av1 video support')
+
+@depends('--enable-av1', target, milestone)
+def av1(value, target, milestone):
+    enabled = bool(value)
+    if value.origin == 'default' and milestone.is_nightly:
+        enabled = target.os not in ('Android', 'WINNT')
+    if enabled:
+        return True
+
+set_config('MOZ_AV1', av1)
+set_define('MOZ_AV1', av1)
 
 # Built-in fragmented MP4 support.
 # ==============================================================
@@ -507,12 +536,37 @@ project_flag('MOZ_SERVICES_HEALTHREPORT',
 project_flag('MOZ_SERVICES_SYNC',
              help='Build Sync Services if required')
 
-project_flag('MOZ_SERVICES_CLOUDSYNC',
-             help='Build Services/CloudSync if required')
-
 project_flag('MOZ_ANDROID_HISTORY',
              help='Enable Android History instead of Places',
              set_as_define=True)
+
+project_flag('MOZ_ALLOW_LEGACY_EXTENSIONS',
+             help='Allow legacy browser extensions',
+             default=True, set_as_define=True)
+
+option(env='MOZ_PHOTON_ANIMATIONS',
+       help='Enable Photon UI animations',
+       default=milestone.is_nightly)
+
+@depends('MOZ_PHOTON_ANIMATIONS')
+def photon_animations(value):
+    if value:
+        return bool(value)
+
+set_config('MOZ_PHOTON_ANIMATIONS', photon_animations)
+set_define('MOZ_PHOTON_ANIMATIONS', photon_animations)
+
+option(env='MOZ_PHOTON_THEME',
+       help='Enable Photon theme',
+       default=milestone.is_nightly)
+
+@depends('MOZ_PHOTON_THEME')
+def photon_theme(value):
+    if value:
+        return bool(value)
+
+set_config('MOZ_PHOTON_THEME', photon_theme)
+set_define('MOZ_PHOTON_THEME', photon_theme)
 
 @depends('MOZ_PLACES', 'MOZ_ANDROID_HISTORY')
 def check_places_and_android_history(places, android_history):
@@ -562,28 +616,52 @@ id_and_secret_keyfile('Bing API')
 
 simple_keyfile('Adjust SDK')
 
+id_and_secret_keyfile('Leanplum SDK')
+
 # Servo integration
 # ==============================================================
-option('--enable-stylo', env='STYLO_ENABLED', nargs=0,
-       help='Enables experimental integration with the servo style system. '
-            'This requires either building servo within Gecko\'s cargo phase '
-            'or passing --with-servo')
+option('--enable-stylo', nargs='?', choices=('build',),
+       help='Include Stylo in the build and/or enable it at runtime')
+
+@depends('--enable-stylo')
+def stylo_config(value):
+    build_stylo = None
+    enable_stylo = None
+
+    # The default is to not build Stylo at all.
+    if value.origin == 'default':
+        pass
+    elif value == 'build':
+        build_stylo = True
+    elif bool(value):
+        build_stylo = True
+        enable_stylo = True
+
+    return namespace(
+        build = build_stylo,
+        enable = enable_stylo,
+    )
 
 # We support setting up the appropriate options for Stylo's build-time
 # bindings generation via setting LLVM_CONFIG or by providing explicit
 # configure options.  The Windows installer of LLVM/Clang doesn't provide
 # llvm-config, so we need both methods to support all of our tier-1
 # platforms.
-llvm_config = check_prog('LLVM_CONFIG', ('llvm-config',),
+llvm_config = check_prog('LLVM_CONFIG', ('llvm-config-4.0',
+                                         'llvm-config40',
+                                         'llvm-config-3.9',
+                                         'llvm-config39',
+                                         'llvm-config',),
+                         when=stylo_config.build,
                          what='llvm-config', allow_missing=True)
 
 option('--disable-stylo-build-bindgen',
        help='Enable build-time bindgen for Stylo')
 
 option('--with-libclang-path', nargs=1,
-       help='Absolute path to Clang/LLVM libraries for Stylo (at least version 3.9.0')
+       help='Absolute path to Clang/LLVM libraries for Stylo (version 3.9.x')
 option('--with-clang-path', nargs=1,
-       help='Absolute path to a Clang binary for Stylo bindgen (at least version 3.9.0)')
+       help='Absolute path to a Clang binary for Stylo bindgen (version 3.9.x)')
 
 def invoke_llvm_config(llvm_config, *options):
     '''Invoke llvm_config with the given options and return the first line of
@@ -597,21 +675,23 @@ def check_minimum_llvm_config_version(llvm_config):
     min_version = Version('3.9.0')
     if version < min_version:
         die(dedent('''\
-        llvm installation {} is too old.
+        llvm installation {} is incompatible with Stylo bindgen.
 
-        To compile Stylo, please install at least version {} of
+        To compile Stylo, please install version {} or greater of
         Clang + LLVM and ensure that the 'llvm-config' from that
         installation is first on your path.
 
         You can verify this by typing 'llvm-config --version'.
         '''.format(version, min_version)))
 
-@depends('--enable-stylo', '--enable-stylo-build-bindgen',
-         llvm_config, '--with-libclang-path', '--with-clang-path')
+@depends(stylo_config, '--enable-stylo-build-bindgen',
+         llvm_config, '--with-libclang-path', '--with-clang-path',
+         host)
 @imports(_from='textwrap', _import='dedent')
-def bindgen_config_paths(stylo_enabled, bindgen_enabled,
-                         llvm_config, libclang_path, clang_path):
-    if not stylo_enabled:
+def bindgen_config_paths(stylo_config, bindgen_enabled,
+                         llvm_config, libclang_path, clang_path,
+                         host):
+    if not stylo_config.build:
         return None
 
     if not bindgen_enabled:
@@ -623,10 +703,12 @@ def bindgen_config_paths(stylo_enabled, bindgen_enabled,
             return None
 
         check_minimum_llvm_config_version(llvm_config)
+        libclang_arg = '--bindir' if host.os == 'WINNT' else '--libdir'
+        clang_path = os.path.join(invoke_llvm_config(llvm_config, '--bindir'),
+                                  'clang')
         return namespace(
-            libclang_path=invoke_llvm_config(llvm_config, '--libdir'),
-            clang_path=os.path.join(invoke_llvm_config(llvm_config, '--bindir'),
-                                    'clang'),
+            libclang_path=normsep(invoke_llvm_config(llvm_config, libclang_arg)),
+            clang_path=normsep(clang_path),
         )
 
     if (not libclang_path and clang_path) or \
@@ -640,47 +722,38 @@ def bindgen_config_paths(stylo_enabled, bindgen_enabled,
         clang_path=clang_path[0],
     )
 
-@depends('--enable-stylo', bindgen_config_paths, '--enable-stylo-build-bindgen')
+@depends(stylo_config, bindgen_config_paths, '--enable-stylo-build-bindgen')
 @imports(_from='textwrap', _import='dedent')
-def stylo(stylo_enabled, bindgen_config_paths, bindgen_enabled):
-    if not stylo_enabled:
+def stylo(stylo_config, bindgen_config_paths, bindgen_enabled):
+    if not stylo_config.build:
         return None
     elif not bindgen_enabled:
         return namespace(
-            enabled=bool(stylo_enabled)
+            build=bool(stylo_config.build)
         )
     elif not bindgen_config_paths:
         die(dedent('''\
         Could not find LLVM/Clang installation for compiling stylo build-time
-        bindgen.  Please put 'llvm-config' in your PATH, specify the
-        'LLVM_CONFIG' environment variable, or pass the '--with-libclang-path'
-        and '--with-clang-path' options to configure.'''))
+        bindgen.  Please specify the 'LLVM_CONFIG' environment variable
+        (recommended), pass the '--with-libclang-path' and '--with-clang-path'
+        options to configure, or put 'llvm-config' in your PATH.  Altering your
+        PATH may expose 'clang' as well, potentially altering your compiler,
+        which may not be what you intended.'''))
 
     return namespace(
-        enabled=bool(stylo_enabled),
+        build=bool(stylo_config.build),
         libclang_path=bindgen_config_paths.libclang_path,
         clang_path=bindgen_config_paths.clang_path,
         bindgen_enabled=bool(bindgen_enabled),
     )
 
-set_config('MOZ_STYLO', delayed_getattr(stylo, 'enabled'))
-set_define('MOZ_STYLO', delayed_getattr(stylo, 'enabled'))
+set_config('MOZ_STYLO', stylo.build)
+set_define('MOZ_STYLO', stylo.build)
+set_define('MOZ_STYLO_ENABLE', stylo_config.enable)
 
-set_config('MOZ_LIBCLANG_PATH', delayed_getattr(stylo, 'libclang_path'))
-set_config('MOZ_CLANG_PATH', delayed_getattr(stylo, 'clang_path'))
-set_config('MOZ_STYLO_BINDGEN', delayed_getattr(stylo, 'bindgen_enabled'))
-
-@depends(stylo, target, dmd)
-def jemalloc(stylo, target, dmd):
-    if stylo and target.kernel in ('Darwin', 'Linux', 'WINNT'):
-        # Avoid a moving performance target if the default allocator
-        # is changed on Tier1 platforms (see bug 1291356).
-        return 'moz'
-    elif dmd:
-        return True
-
-imply_option('--enable-jemalloc', jemalloc,
-             reason='--enable-dmd or --enable-stylo')
+set_config('MOZ_LIBCLANG_PATH', stylo.libclang_path)
+set_config('MOZ_CLANG_PATH', stylo.clang_path)
+set_config('MOZ_STYLO_BINDGEN', stylo.bindgen_enabled)
 
 option('--with-servo', env='SERVO_TARGET_DIR', nargs=1,
        help='Absolute path of the target directory where libgeckoservo can '
@@ -693,12 +766,34 @@ def servo_target_dir(value):
 set_config('SERVO_TARGET_DIR', servo_target_dir)
 
 # WebRender integration
-option('--enable-webrender', help='Include WebRender')
+option('--enable-webrender', nargs='?', choices=('build',),
+       help='Include WebRender in the build and/or enable it at runtime')
 
-set_config('MOZ_ENABLE_WEBRENDER',
-           depends_if('--enable-webrender')(lambda _: True))
-set_define('MOZ_ENABLE_WEBRENDER',
-           depends_if('--enable-webrender')(lambda _: True))
+@depends('--enable-webrender', milestone)
+def webrender(value, milestone):
+    build_webrender = None
+    enable_webrender = None
+
+    if value.origin == 'default':
+        # if nothing is specified, default to just building on Nightly
+        build_webrender = milestone.is_nightly
+    elif value == 'build':
+        # if explicitly set to 'build', then we build but don't enable
+        build_webrender = True
+    elif bool(value):
+        # if set to true, then build and enable
+        build_webrender = True
+        enable_webrender = True
+
+    # in all other cases, don't build it or enable it (defaults are fine)
+    return namespace(
+        build = build_webrender,
+        enable = enable_webrender,
+    )
+
+set_config('MOZ_BUILD_WEBRENDER', webrender.build)
+set_define('MOZ_BUILD_WEBRENDER', webrender.build)
+set_config('MOZ_ENABLE_WEBRENDER', webrender.enable)
 
 # Printing
 # ==============================================================
@@ -791,13 +886,14 @@ include('nss.configure')
 
 # Network protocol support
 # ==============================================================
-@depends(check_build_environment, '--help')
+@depends(check_build_environment, toolkit_gtk, '--help')
 @imports('os')
 @imports(_from='__builtin__', _import='sorted')
-def all_necko_protocols(build_env, _):
+def all_necko_protocols(build_env, toolkit_gtk, _):
     basedir = os.path.join(build_env.topsrcdir, 'netwerk', 'protocol')
     return tuple(sorted(p for p in os.listdir(basedir)
-                        if os.path.isdir(os.path.join(basedir, p))))
+                        if (os.path.isdir(os.path.join(basedir, p)) and
+                            (p != 'gio' or toolkit_gtk))))
 
 default_necko_protocols = all_necko_protocols
 
@@ -970,34 +1066,33 @@ option('--enable-mortar', help='Enable mortar extension')
 
 set_config('MOZ_MORTAR', True, when='--enable-mortar')
 
-# Marionette is a Web Driver / Selenium comamnd server and client automation
-# driver for Mozilla's Gecko engine.  For more, see
-# https://developer.mozilla.org/en-US/docs/Mozilla/QA/Marionette.
+# Marionette remote protocol
+# ==============================================================
 #
-# Marionette isn't really a toolkit feature, it's a Gecko engine feature, but
-# it's enabled based on the toolkit (and target), so here it lives.
+# Marionette is the Gecko remote protocol used for various remote control,
+# automation, and testing purposes throughout Gecko, Firefox, and Fennec.
+# Marionette lives in ../testing/marionette.
+#
+# Marionette is not really a toolkit feature, as much as a Gecko engine
+# feature.  But it is enabled based on the toolkit (and target), so here
+# it lives.
+#
+# It also backs ../testing/geckodriver, which is Mozilla's WebDriver
+# implementation.
+#
+# For more information, see
+# https://developer.mozilla.org/en-US/docs/Mozilla/QA/Marionette.
 
-@depends(target, toolkit)
-def marionette_default(target, toolkit):
-    # By default, enable Marionette if not Android and not gonk.
-    #
-    # None means "don't set anything", which allows to override with
-    # --enable-marionette.  False means --disable-marionette, which
-    # cannot be overridden with --enable-marionette.  We want to allow
-    # overrides.
-    if target.os == 'Android':
-        return None
+@depends(target)
+def marionette(target):
+    """Enable Marionette by default, except on Android."""
+    if target.os != 'Android':
+        return True
 
-    if toolkit == 'gonk':
-        return None
-
-    return True
-
-imply_option('--enable-marionette', marionette_default,
-             reason='not Android and not gonk')
+imply_option('--enable-marionette', marionette, reason='Not Android')
 
 option('--enable-marionette',
-       help='Enable internal Marionette command server')
+       help='Enable Marionette remote protocol')
 
 @depends('--enable-marionette')
 def marionette(value):
@@ -1005,3 +1100,35 @@ def marionette(value):
         return True
 
 set_config('ENABLE_MARIONETTE', marionette)
+
+# geckodriver WebDriver implementation
+# ==============================================================
+option('--enable-geckodriver', help='Enable WebDriver implementation')
+
+@depends('--enable-geckodriver',
+         'MOZ_AUTOMATION',
+         compile_environment,
+         cross_compiling,
+         hazard_analysis,
+         target)
+def geckodriver(enable, automation, compile_env, cross_compile, hazard, target):
+    """
+    geckodriver is implied on supported platforms when MOZ_AUTOMATION
+    is set, but we also provide the --enable-geckodriver option for
+    developers to use.
+
+    At the present time, we want individual developers to be able to
+    opt-in to building geckodriver locally, and for it to be enabled by
+    default on supported CI build platforms.
+    """
+    if enable:
+        return True
+
+    if enable.origin == 'default':
+        linux32 = target.kernel == 'Linux' and target.cpu == 'x86'
+        broken_platforms = cross_compile or linux32 or hazard
+
+        if automation and compile_env and not broken_platforms:
+            return True
+
+set_config('ENABLE_GECKODRIVER', geckodriver)

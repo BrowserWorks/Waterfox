@@ -102,11 +102,11 @@ function check(entries) {
   ok(foundGCs > 0, "saw at least one GC");
 }
 
-add_task(function* test() {
+add_task(async function test() {
   let multiprocess = Services.appinfo.browserTabsRemoteAutostart;
 
   // Set these prefs to ensure that we get measurements.
-  yield SpecialPowers.pushPrefEnv({"set": [["javascript.options.mem.notify", true]]});
+  await SpecialPowers.pushPrefEnv({"set": [["javascript.options.mem.notify", true]]});
 
   function runRemote(f) {
     gBrowser.selectedBrowser.messageManager.loadFrameScript(`data:,(${f})()`, false);
@@ -151,7 +151,7 @@ add_task(function* test() {
       Services.obs.removeObserver(obs, "garbage-collection-statistics");
       resolve();
     }
-    Services.obs.addObserver(obs, "garbage-collection-statistics", false);
+    Services.obs.addObserver(obs, "garbage-collection-statistics");
   });
 
   let remotePromise;
@@ -175,7 +175,7 @@ add_task(function* test() {
 
   info("Waiting for GCs");
 
-  yield Promise.all([localPromise, remotePromise]);
+  await Promise.all([localPromise, remotePromise]);
 
   let localEntries = GCTelemetry.entries("main", true);
   let remoteEntries = multiprocess ? GCTelemetry.entries("content", true) : localEntries;

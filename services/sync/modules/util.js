@@ -2,22 +2,19 @@
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
 
-this.EXPORTED_SYMBOLS = ["XPCOMUtils", "Services", "Utils", "Async", "Svc", "Str"];
+this.EXPORTED_SYMBOLS = ["Utils", "Svc"];
 
 var {classes: Cc, interfaces: Ci, results: Cr, utils: Cu} = Components;
 
-Cu.import("resource://gre/modules/Log.jsm");
 Cu.import("resource://services-common/observers.js");
-Cu.import("resource://services-common/stringbundle.js");
 Cu.import("resource://services-common/utils.js");
-Cu.import("resource://services-common/async.js", this);
 Cu.import("resource://services-crypto/utils.js");
 Cu.import("resource://services-sync/constants.js");
 Cu.import("resource://gre/modules/Preferences.jsm");
-Cu.import("resource://gre/modules/Services.jsm", this);
-Cu.import("resource://gre/modules/XPCOMUtils.jsm", this);
-Cu.import("resource://gre/modules/osfile.jsm", this);
-Cu.import("resource://gre/modules/Task.jsm", this);
+Cu.import("resource://gre/modules/Services.jsm");
+Cu.import("resource://gre/modules/XPCOMUtils.jsm");
+XPCOMUtils.defineLazyModuleGetter(this, "OS",
+                                  "resource://gre/modules/osfile.jsm");
 
 // FxAccountsCommon.js doesn't use a "namespace", so create one here.
 XPCOMUtils.defineLazyGetter(this, "FxAccountsCommon", function() {
@@ -57,7 +54,6 @@ this.Utils = {
   makeHMACHasher: CryptoUtils.makeHMACHasher,
   hkdfExpand: CryptoUtils.hkdfExpand,
   pbkdf2Generate: CryptoUtils.pbkdf2Generate,
-  deriveKeyFromPassphrase: CryptoUtils.deriveKeyFromPassphrase,
   getHTTPMACSHA1Header: CryptoUtils.getHTTPMACSHA1Header,
 
   /**
@@ -217,11 +213,6 @@ this.Utils = {
     }
   },
 
-  lazyStrings: function Weave_lazyStrings(name) {
-    let bundle = "chrome://weave/locale/services/" + name + ".properties";
-    return () => new StringBundle(bundle);
-  },
-
   deepEquals: function eq(a, b) {
     // If they're triple equals, then it must be equals!
     if (a === b)
@@ -296,39 +287,6 @@ this.Utils = {
            .slice(0, SYNC_KEY_DECODED_LENGTH);
   },
 
-  base64Key: function base64Key(keyData) {
-    return btoa(keyData);
-  },
-
-  /**
-   * N.B., salt should be base64 encoded, even though we have to decode
-   * it later!
-   */
-  derivePresentableKeyFromPassphrase : function derivePresentableKeyFromPassphrase(passphrase, salt, keyLength, forceJS) {
-    let k = CryptoUtils.deriveKeyFromPassphrase(passphrase, salt, keyLength,
-                                                forceJS);
-    return Utils.encodeKeyBase32(k);
-  },
-
-  /**
-   * N.B., salt should be base64 encoded, even though we have to decode
-   * it later!
-   */
-  deriveEncodedKeyFromPassphrase : function deriveEncodedKeyFromPassphrase(passphrase, salt, keyLength, forceJS) {
-    let k = CryptoUtils.deriveKeyFromPassphrase(passphrase, salt, keyLength,
-                                                forceJS);
-    return Utils.base64Key(k);
-  },
-
-  /**
-   * Take a base64-encoded 128-bit AES key, returning it as five groups of five
-   * uppercase alphanumeric characters, separated by hyphens.
-   * A.K.A. base64-to-base32 encoding.
-   */
-  presentEncodedKeyAsSyncKey : function presentEncodedKeyAsSyncKey(encodedKey) {
-    return Utils.encodeKeyBase32(atob(encodedKey));
-  },
-
   jsonFilePath(filePath) {
     return OS.Path.normalize(OS.Path.join(OS.Constants.Path.profileDir, "weave", filePath + ".json"));
   },
@@ -346,7 +304,7 @@ this.Utils = {
    *        Function to process json object as its first argument. If the file
    *        could not be loaded, the first argument will be undefined.
    */
-  jsonLoad: Task.async(function*(filePath, that, callback) {
+  async jsonLoad(filePath, that, callback) {
     let path = Utils.jsonFilePath(filePath);
 
     if (that._log) {
@@ -356,7 +314,7 @@ this.Utils = {
     let json;
 
     try {
-      json = yield CommonUtils.readJSON(path);
+      json = await CommonUtils.readJSON(path);
     } catch (e) {
       if (e instanceof OS.File.Error && e.becauseNoSuchFile) {
         // Ignore non-existent files, but explicitly return null.
@@ -370,7 +328,7 @@ this.Utils = {
       callback.call(that, json);
     }
     return json;
-  }),
+  },
 
   /**
    * Save a json-able object to disk in the profile directory.
@@ -388,14 +346,14 @@ this.Utils = {
    *        constant on error or null if no error was encountered (and
    *        the file saved successfully).
    */
-  jsonSave: Task.async(function*(filePath, that, obj, callback) {
+  async jsonSave(filePath, that, obj, callback) {
     let path = OS.Path.join(OS.Constants.Path.profileDir, "weave",
                             ...(filePath + ".json").split("/"));
     let dir = OS.Path.dirname(path);
     let error = null;
 
     try {
-      yield OS.File.makeDir(dir, { from: OS.Constants.Path.profileDir });
+      await OS.File.makeDir(dir, { from: OS.Constants.Path.profileDir });
 
       if (that._log) {
         that._log.trace("Saving json to disk: " + path);
@@ -403,7 +361,7 @@ this.Utils = {
 
       let json = typeof obj == "function" ? obj.call(that) : obj;
 
-      yield CommonUtils.writeJSON(json, path);
+      await CommonUtils.writeJSON(json, path);
     } catch (e) {
       error = e
     }
@@ -411,7 +369,7 @@ this.Utils = {
     if (typeof callback == "function") {
       callback.call(that, error);
     }
-  }),
+  },
 
   /**
    * Move a json file in the profile directory. Will fail if a file exists at the
@@ -459,36 +417,12 @@ this.Utils = {
     return OS.File.remove(path, { ignoreAbsent: true });
   },
 
-  getErrorString: function Utils_getErrorString(error, args) {
-    try {
-      return Str.errors.get(error, args || null);
-    } catch (e) {}
-
-    // basically returns "Unknown Error"
-    return Str.errors.get("error.reason.unknown");
-  },
-
-  /**
-   * Generate 26 characters.
-   */
-  generatePassphrase: function generatePassphrase() {
-    // Note that this is a different base32 alphabet to the one we use for
-    // other tasks. It's lowercase, uses different letters, and needs to be
-    // decoded with decodeKeyBase32, not just decodeBase32.
-    return Utils.encodeKeyBase32(CryptoUtils.generateRandomBytes(16));
-  },
-
   /**
    * The following are the methods supported for UI use:
    *
    * * isPassphrase:
    *     determines whether a string is either a normalized or presentable
    *     passphrase.
-   * * hyphenatePassphrase:
-   *     present a normalized passphrase for display. This might actually
-   *     perform work beyond just hyphenation; sorry.
-   * * hyphenatePartialPassphrase:
-   *     present a fragment of a normalized passphrase for display.
    * * normalizePassphrase:
    *     take a presentable passphrase and reduce it to a normalized
    *     representation for storage. normalizePassphrase can safely be called
@@ -500,40 +434,6 @@ this.Utils = {
       return /^[abcdefghijkmnpqrstuvwxyz23456789]{26}$/.test(Utils.normalizePassphrase(s));
     }
     return false;
-  },
-
-  /**
-   * Hyphenate a passphrase (26 characters) into groups.
-   * abbbbccccddddeeeeffffggggh
-   * =>
-   * a-bbbbc-cccdd-ddeee-effff-ggggh
-   */
-  hyphenatePassphrase: function hyphenatePassphrase(passphrase) {
-    // For now, these are the same.
-    return Utils.hyphenatePartialPassphrase(passphrase, true);
-  },
-
-  hyphenatePartialPassphrase: function hyphenatePartialPassphrase(passphrase, omitTrailingDash) {
-    if (!passphrase)
-      return null;
-
-    // Get the raw data input. Just base32.
-    let data = passphrase.toLowerCase().replace(/[^abcdefghijkmnpqrstuvwxyz23456789]/g, "");
-
-    // This is the neatest way to do this.
-    if ((data.length == 1) && !omitTrailingDash)
-      return data + "-";
-
-    // Hyphenate it.
-    let y = data.substr(0, 1);
-    let z = data.substr(1).replace(/(.{1,5})/g, "-$1");
-
-    // Correct length? We're done.
-    if ((z.length == 30) || omitTrailingDash)
-      return y + z;
-
-    // Add a trailing dash if appropriate.
-    return (y + z.replace(/([^-]{5})$/, "$1-")).substr(0, SYNC_KEY_HYPHENATED_LENGTH);
   },
 
   normalizePassphrase: function normalizePassphrase(pp) {
@@ -569,7 +469,8 @@ this.Utils = {
   arraySub: function arraySub(minuend, subtrahend) {
     if (!minuend.length || !subtrahend.length)
       return minuend;
-    return minuend.filter(i => subtrahend.indexOf(i) == -1);
+    let setSubtrahend = new Set(subtrahend);
+    return minuend.filter(i => !setSubtrahend.has(i));
   },
 
   /**
@@ -683,25 +584,20 @@ this.Utils = {
       user = env.get("USERNAME");
     }
 
-    let brand = new StringBundle("chrome://branding/locale/brand.properties");
-    let brandName = brand.get("brandShortName");
-
-    let appName;
-    try {
-      let syncStrings = new StringBundle("chrome://browser/locale/sync.properties");
-      appName = syncStrings.getFormattedString("sync.defaultAccountApplication", [brandName]);
-    } catch (ex) {}
-    appName = appName || brandName;
+    let brand = Services.strings.createBundle(
+      "chrome://branding/locale/brand.properties");
+    let brandName = brand.GetStringFromName("brandShortName");
 
     let system =
       // 'device' is defined on unix systems
       Cc["@mozilla.org/system-info;1"].getService(Ci.nsIPropertyBag2).get("device") ||
       // hostname of the system, usually assigned by the user or admin
-      Cc["@mozilla.org/system-info;1"].getService(Ci.nsIPropertyBag2).get("host") ||
+      Cc["@mozilla.org/network/dns-service;1"].getService(Ci.nsIDNSService).myHostName ||
       // fall back on ua info string
       Cc["@mozilla.org/network/protocol;1?name=http"].getService(Ci.nsIHttpProtocolHandler).oscpu;
 
-    return Str.sync.get("client.name2", [user, appName, system]);
+    let syncStrings = Services.strings.createBundle("chrome://weave/locale/sync.properties");
+    return syncStrings.formatStringFromName("client.name2", [user, brandName, system], 3);
   },
 
   getDeviceName() {
@@ -743,35 +639,7 @@ XPCOMUtils.defineLazyGetter(Utils, "_utf8Converter", function() {
  */
 this.Svc = {};
 Svc.Prefs = new Preferences(PREFS_BRANCH);
-Svc.DefaultPrefs = new Preferences({branch: PREFS_BRANCH, defaultBranch: true});
 Svc.Obs = Observers;
-
-var _sessionCID = Services.appinfo.ID == SEAMONKEY_ID ?
-  "@mozilla.org/suite/sessionstore;1" :
-  "@mozilla.org/browser/sessionstore;1";
-
-[
- ["Idle", "@mozilla.org/widget/idleservice;1", "nsIIdleService"],
- ["Session", _sessionCID, "nsISessionStore"]
-].forEach(function([name, contract, iface]) {
-  XPCOMUtils.defineLazyServiceGetter(Svc, name, contract, iface);
-});
-
-XPCOMUtils.defineLazyModuleGetter(Svc, "FormHistory", "resource://gre/modules/FormHistory.jsm");
-
-Svc.__defineGetter__("Crypto", function() {
-  let cryptoSvc;
-  let ns = {};
-  Cu.import("resource://services-crypto/WeaveCrypto.js", ns);
-  cryptoSvc = new ns.WeaveCrypto();
-  delete Svc.Crypto;
-  return Svc.Crypto = cryptoSvc;
-});
-
-this.Str = {};
-["errors", "sync"].forEach(function(lazy) {
-  XPCOMUtils.defineLazyGetter(Str, lazy, Utils.lazyStrings(lazy));
-});
 
 Svc.Obs.add("xpcom-shutdown", function() {
   for (let name in Svc)

@@ -79,16 +79,16 @@ static nsresult MacErrorMapper(OSErr inErr);
 using namespace mozilla;
 
 #define ENSURE_STAT_CACHE()                     \
-    PR_BEGIN_MACRO                              \
+    do {                                        \
         if (!FillStatCache())                   \
              return NSRESULT_FOR_ERRNO();       \
-    PR_END_MACRO
+    } while(0)
 
 #define CHECK_mPath()                           \
-    PR_BEGIN_MACRO                              \
+    do {                                        \
         if (mPath.IsEmpty())                    \
             return NS_ERROR_NOT_INITIALIZED;    \
-    PR_END_MACRO
+    } while(0)
 
 /* directory enumerator */
 class nsDirEnumeratorUnix final
@@ -722,7 +722,7 @@ nsLocalFile::CopyDirectoryTo(nsIFile* aNewParent)
   }
 
   bool hasMore = false;
-  while (dirIterator->HasMoreElements(&hasMore), hasMore) {
+  while (NS_SUCCEEDED(dirIterator->HasMoreElements(&hasMore)) && hasMore) {
     nsCOMPtr<nsISupports> supports;
     nsCOMPtr<nsIFile> entry;
     rv = dirIterator->GetNext(getter_AddRefs(supports));
@@ -1050,7 +1050,7 @@ nsLocalFile::Remove(bool aRecursive)
     }
 
     bool more;
-    while (dir->HasMoreElements(&more), more) {
+    while (NS_SUCCEEDED(dir->HasMoreElements(&more)) && more) {
       nsCOMPtr<nsISupports> item;
       rv = dir->GetNext(getter_AddRefs(item));
       if (NS_FAILED(rv)) {
@@ -1753,16 +1753,14 @@ nsLocalFile::GetNativeTarget(nsACString& aResult)
   }
 
   int32_t size = (int32_t)symStat.st_size;
-  char* target = (char*)moz_xmalloc(size + 1);
-  if (!target) {
+  nsAutoCString target;
+  if (!target.SetLength(size, mozilla::fallible)) {
     return NS_ERROR_OUT_OF_MEMORY;
   }
 
-  if (readlink(mPath.get(), target, (size_t)size) < 0) {
-    free(target);
+  if (readlink(mPath.get(), target.BeginWriting(), (size_t)size) < 0) {
     return NSRESULT_FOR_ERRNO();
   }
-  target[size] = '\0';
 
   nsresult rv = NS_OK;
   nsCOMPtr<nsIFile> self(this);
@@ -1778,7 +1776,7 @@ nsLocalFile::GetNativeTarget(nsACString& aResult)
       if (NS_FAILED(rv = self->GetParent(getter_AddRefs(parent)))) {
         break;
       }
-      if (NS_FAILED(rv = parent->AppendRelativeNativePath(nsDependentCString(target)))) {
+      if (NS_FAILED(rv = parent->AppendRelativeNativePath(target))) {
         break;
       }
       if (NS_FAILED(rv = parent->GetNativePath(aResult))) {
@@ -1803,25 +1801,20 @@ nsLocalFile::GetNativeTarget(nsACString& aResult)
     }
 
     int32_t newSize = (int32_t)symStat.st_size;
-    if (newSize > size) {
-      char* newTarget = (char*)moz_xrealloc(target, newSize + 1);
-      if (!newTarget) {
-        rv = NS_ERROR_OUT_OF_MEMORY;
-        break;
-      }
-      target = newTarget;
-      size = newSize;
+    size = newSize;
+    nsAutoCString newTarget;
+    if (!newTarget.SetLength(size, mozilla::fallible)) {
+      rv = NS_ERROR_OUT_OF_MEMORY;
+      break;
     }
 
-    int32_t linkLen = readlink(flatRetval.get(), target, size);
+    int32_t linkLen = readlink(flatRetval.get(), newTarget.BeginWriting(), size);
     if (linkLen == -1) {
       rv = NSRESULT_FOR_ERRNO();
       break;
     }
-    target[linkLen] = '\0';
+    target = newTarget;
   }
-
-  free(target);
 
   if (NS_FAILED(rv)) {
     aResult.Truncate();

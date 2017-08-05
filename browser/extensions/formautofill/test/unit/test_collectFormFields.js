@@ -10,10 +10,18 @@ const TESTCASES = [
   {
     description: "Form without autocomplete property",
     document: `<form><input id="given-name"><input id="family-name">
-               <input id="street-addr"><input id="city"><input id="country">
+               <input id="street-addr"><input id="city"><select id="country"></select>
                <input id='email'><input id="tel"></form>`,
-    returnedFormat: [],
-    fieldDetails: [],
+    fieldDetails: [
+      {"section": "", "addressType": "", "contactType": "", "fieldName": "given-name"},
+      {"section": "", "addressType": "", "contactType": "", "fieldName": "family-name"},
+      {"section": "", "addressType": "", "contactType": "", "fieldName": "address-line1"},
+      {"section": "", "addressType": "", "contactType": "", "fieldName": "address-level2"},
+      {"section": "", "addressType": "", "contactType": "", "fieldName": "country"},
+      {"section": "", "addressType": "", "contactType": "", "fieldName": "email"},
+      {"section": "", "addressType": "", "contactType": "", "fieldName": "tel"},
+    ],
+    ids: ["given-name", "family-name", "street-addr", "city", "country", "email", "tel"],
   },
   {
     description: "Form with autocomplete properties and 1 token",
@@ -21,22 +29,17 @@ const TESTCASES = [
                <input id="family-name" autocomplete="family-name">
                <input id="street-addr" autocomplete="street-address">
                <input id="city" autocomplete="address-level2">
-               <input id="country" autocomplete="country">
+               <select id="country" autocomplete="country"></select>
                <input id="email" autocomplete="email">
                <input id="tel" autocomplete="tel"></form>`,
-    returnedFormat: [
-      {"section": "", "addressType": "", "contactType": "", "fieldName": "street-address", "index": 0},
-      {"section": "", "addressType": "", "contactType": "", "fieldName": "address-level2", "index": 1},
-      {"section": "", "addressType": "", "contactType": "", "fieldName": "country", "index": 2},
-      {"section": "", "addressType": "", "contactType": "", "fieldName": "email", "index": 3},
-      {"section": "", "addressType": "", "contactType": "", "fieldName": "tel", "index": 4},
-    ],
     fieldDetails: [
-      {"section": "", "addressType": "", "contactType": "", "fieldName": "street-address", "element": {}},
-      {"section": "", "addressType": "", "contactType": "", "fieldName": "address-level2", "element": {}},
-      {"section": "", "addressType": "", "contactType": "", "fieldName": "country", "element": {}},
-      {"section": "", "addressType": "", "contactType": "", "fieldName": "email", "element": {}},
-      {"section": "", "addressType": "", "contactType": "", "fieldName": "tel", "element": {}},
+      {"section": "", "addressType": "", "contactType": "", "fieldName": "given-name"},
+      {"section": "", "addressType": "", "contactType": "", "fieldName": "family-name"},
+      {"section": "", "addressType": "", "contactType": "", "fieldName": "street-address"},
+      {"section": "", "addressType": "", "contactType": "", "fieldName": "address-level2"},
+      {"section": "", "addressType": "", "contactType": "", "fieldName": "country"},
+      {"section": "", "addressType": "", "contactType": "", "fieldName": "email"},
+      {"section": "", "addressType": "", "contactType": "", "fieldName": "tel"},
     ],
   },
   {
@@ -48,19 +51,14 @@ const TESTCASES = [
                <input id="country" autocomplete="shipping country">
                <input id='email' autocomplete="shipping email">
                <input id="tel" autocomplete="shipping tel"></form>`,
-    returnedFormat: [
-      {"section": "", "addressType": "shipping", "contactType": "", "fieldName": "street-address", "index": 0},
-      {"section": "", "addressType": "shipping", "contactType": "", "fieldName": "address-level2", "index": 1},
-      {"section": "", "addressType": "shipping", "contactType": "", "fieldName": "country", "index": 2},
-      {"section": "", "addressType": "shipping", "contactType": "", "fieldName": "email", "index": 3},
-      {"section": "", "addressType": "shipping", "contactType": "", "fieldName": "tel", "index": 4},
-    ],
     fieldDetails: [
-      {"section": "", "addressType": "shipping", "contactType": "", "fieldName": "street-address", "element": {}},
-      {"section": "", "addressType": "shipping", "contactType": "", "fieldName": "address-level2", "element": {}},
-      {"section": "", "addressType": "shipping", "contactType": "", "fieldName": "country", "element": {}},
-      {"section": "", "addressType": "shipping", "contactType": "", "fieldName": "email", "element": {}},
-      {"section": "", "addressType": "shipping", "contactType": "", "fieldName": "tel", "element": {}},
+      {"section": "", "addressType": "shipping", "contactType": "", "fieldName": "given-name"},
+      {"section": "", "addressType": "shipping", "contactType": "", "fieldName": "family-name"},
+      {"section": "", "addressType": "shipping", "contactType": "", "fieldName": "street-address"},
+      {"section": "", "addressType": "shipping", "contactType": "", "fieldName": "address-level2"},
+      {"section": "", "addressType": "shipping", "contactType": "", "fieldName": "country"},
+      {"section": "", "addressType": "shipping", "contactType": "", "fieldName": "email"},
+      {"section": "", "addressType": "shipping", "contactType": "", "fieldName": "tel"},
     ],
   },
   {
@@ -68,23 +66,18 @@ const TESTCASES = [
     document: `<form><input id="given-name" autocomplete="shipping given-name">
                <input id="family-name" autocomplete="shipping family-name">
                <input id="street-addr" autocomplete="shipping street-address">
-               <input id="city" autocomplete="shipping address-level2">
-               <input id="country" autocomplete="shipping country">
+               <input autocomplete="shipping address-level2">
+               <select autocomplete="shipping country"></select>
                <input id='email' autocomplete="shipping email">
                <input id="tel" autocomplete="shipping tel"></form>`,
-    returnedFormat: [
-      {"section": "", "addressType": "shipping", "contactType": "", "fieldName": "street-address", "index": 0},
-      {"section": "", "addressType": "shipping", "contactType": "", "fieldName": "address-level2", "index": 1},
-      {"section": "", "addressType": "shipping", "contactType": "", "fieldName": "country", "index": 2},
-      {"section": "", "addressType": "shipping", "contactType": "", "fieldName": "email", "index": 3},
-      {"section": "", "addressType": "shipping", "contactType": "", "fieldName": "tel", "index": 4},
-    ],
     fieldDetails: [
-      {"section": "", "addressType": "shipping", "contactType": "", "fieldName": "street-address", "element": {}},
-      {"section": "", "addressType": "shipping", "contactType": "", "fieldName": "address-level2", "element": {}},
-      {"section": "", "addressType": "shipping", "contactType": "", "fieldName": "country", "element": {}},
-      {"section": "", "addressType": "shipping", "contactType": "", "fieldName": "email", "element": {}},
-      {"section": "", "addressType": "shipping", "contactType": "", "fieldName": "tel", "element": {}},
+      {"section": "", "addressType": "shipping", "contactType": "", "fieldName": "given-name"},
+      {"section": "", "addressType": "shipping", "contactType": "", "fieldName": "family-name"},
+      {"section": "", "addressType": "shipping", "contactType": "", "fieldName": "street-address"},
+      {"section": "", "addressType": "shipping", "contactType": "", "fieldName": "address-level2"},
+      {"section": "", "addressType": "shipping", "contactType": "", "fieldName": "country"},
+      {"section": "", "addressType": "shipping", "contactType": "", "fieldName": "email"},
+      {"section": "", "addressType": "shipping", "contactType": "", "fieldName": "tel"},
     ],
   },
 ];
@@ -98,13 +91,28 @@ for (let tc of TESTCASES) {
       let doc = MockDocument.createTestDocument("http://localhost:8080/test/",
                                                 testcase.document);
       let form = doc.querySelector("form");
-      let handler = new FormAutofillHandler(form);
+      let formLike = FormLikeFactory.createFromForm(form);
 
-      Assert.deepEqual(handler.collectFormFields(), testcase.returnedFormat,
-                         "Check the format of form autofill were returned correctly");
+      testcase.fieldDetails.forEach((detail, index) => {
+        let elementRef;
+        if (testcase.ids && testcase.ids[index]) {
+          elementRef = doc.getElementById(testcase.ids[index]);
+        } else {
+          elementRef = doc.querySelector("*[autocomplete*='" + detail.fieldName + "']");
+        }
+        detail.elementWeakRef = Cu.getWeakReference(elementRef);
+      });
+      let handler = new FormAutofillHandler(formLike);
 
-      Assert.deepEqual(handler.fieldDetails, testcase.fieldDetails,
-                         "Check the fieldDetails were set correctly");
+      handler.collectFormFields();
+
+      handler.fieldDetails.forEach((detail, index) => {
+        Assert.equal(detail.section, testcase.fieldDetails[index].section);
+        Assert.equal(detail.addressType, testcase.fieldDetails[index].addressType);
+        Assert.equal(detail.contactType, testcase.fieldDetails[index].contactType);
+        Assert.equal(detail.fieldName, testcase.fieldDetails[index].fieldName);
+        Assert.equal(detail.elementWeakRef.get(), testcase.fieldDetails[index].elementWeakRef.get());
+      });
     });
   })();
 }

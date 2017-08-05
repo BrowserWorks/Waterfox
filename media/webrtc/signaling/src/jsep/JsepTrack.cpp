@@ -126,7 +126,7 @@ JsepTrack::AddToAnswer(const SdpMediaSection& offer,
   AddToMsection(codecs.values, answer);
 
   if (mDirection == sdp::kSend) {
-    std::vector<JsConstraints> constraints;
+    std::vector<JsConstraints> constraints(mJsEncodeConstraints);
     std::vector<SdpRidAttributeList::Rid> rids;
     GetRids(offer, sdp::kRecv, &rids);
     NegotiateRids(rids, &constraints);
@@ -275,9 +275,19 @@ JsepTrack::CreateEncodings(
     rids.push_back(SdpRidAttributeList::Rid());
   }
 
-  // For each rid in the remote, make sure we have an encoding, and configure
+  size_t max_streams = 1;
+
+  if (mJsEncodeConstraints.size()) {
+    max_streams = std::min(rids.size(), mJsEncodeConstraints.size());
+  }
+  // Drop SSRCs if less RIDs were offered than we have encoding constraints
+  if (mSsrcs.size() > max_streams) {
+    mSsrcs.resize(max_streams);
+  }
+
+  // For each stream make sure we have an encoding, and configure
   // that encoding appropriately.
-  for (size_t i = 0; i < rids.size(); ++i) {
+  for (size_t i = 0; i < max_streams; ++i) {
     if (i == negotiatedDetails->mEncodings.values.size()) {
       negotiatedDetails->mEncodings.values.push_back(new JsepTrackEncoding);
     }
@@ -466,7 +476,15 @@ JsepTrack::Negotiate(const SdpMediaSection& answer,
 
   if (answer.GetAttributeList().HasAttribute(SdpAttribute::kExtmapAttribute)) {
     for (auto& extmapAttr : answer.GetAttributeList().GetExtmap().mExtmaps) {
-      negotiatedDetails->mExtmap[extmapAttr.extensionname] = extmapAttr;
+      SdpDirectionAttribute::Direction direction = extmapAttr.direction;
+      if (&remote == &answer) {
+        // Answer is remote, we need to flip this.
+        direction = reverse(direction);
+      }
+
+      if (direction & mDirection) {
+        negotiatedDetails->mExtmap[extmapAttr.extensionname] = extmapAttr;
+      }
     }
   }
 

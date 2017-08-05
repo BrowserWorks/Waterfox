@@ -11,6 +11,7 @@
 enum RTCStatsType {
   "inbound-rtp",
   "outbound-rtp",
+  "csrc",
   "session",
   "track",
   "transport",
@@ -34,11 +35,17 @@ dictionary RTCRTPStreamStats : RTCStats {
   DOMString transportId;
   DOMString codecId;
 
-  // Video encoder/decoder measurements (absent for rtcp)
+  // Video encoder/decoder measurements, not present in RTCP case
   double bitrateMean;
   double bitrateStdDev;
   double framerateMean;
   double framerateStdDev;
+
+  // Local only measurements, RTCP related but not communicated via RTCP. Not
+  // present in RTCP case.
+  unsigned long firCount;
+  unsigned long pliCount;
+  unsigned long nackCount;
 };
 
 dictionary RTCInboundRTPStreamStats : RTCRTPStreamStats {
@@ -48,9 +55,9 @@ dictionary RTCInboundRTPStreamStats : RTCRTPStreamStats {
   unsigned long packetsLost;
   long mozAvSyncDelay;
   long mozJitterBufferDelay;
-  long mozRtt;
+  long roundTripTime;
 
-  // Video decoder measurement (absent in rtcp case)
+  // Video decoder measurement, not present in RTCP case
   unsigned long discardedPackets;
 };
 
@@ -59,8 +66,9 @@ dictionary RTCOutboundRTPStreamStats : RTCRTPStreamStats {
   unsigned long long bytesSent;
   double targetBitrate;  // config encoder bitrate target of this SSRC in bits/s
 
-  // Video encoder measurement (absent in rtcp case)
+  // Video encoder measurements, not present in RTCP case
   unsigned long droppedFrames;
+  unsigned long framesEncoded;
 };
 
 dictionary RTCMediaStreamTrackStats : RTCStats {
@@ -86,6 +94,11 @@ dictionary RTCMediaStreamTrackStats : RTCStats {
 dictionary RTCMediaStreamStats : RTCStats {
   DOMString streamIdentifier;     // stream.id property
   sequence<DOMString> trackIds;   // Note: stats object ids, not track.id
+};
+
+dictionary RTCRTPContributingSourceStats : RTCStats {
+  unsigned long contributorSsrc;
+  DOMString     inboundRtpStreamId;
 };
 
 dictionary RTCTransportStats: RTCStats {
@@ -150,22 +163,23 @@ dictionary RTCCodecStats : RTCStats {
 // to be received from c++
 
 dictionary RTCStatsReportInternal {
-  DOMString                           pcid = "";
-  sequence<RTCInboundRTPStreamStats>  inboundRTPStreamStats;
-  sequence<RTCOutboundRTPStreamStats> outboundRTPStreamStats;
-  sequence<RTCMediaStreamTrackStats>  mediaStreamTrackStats;
-  sequence<RTCMediaStreamStats>       mediaStreamStats;
-  sequence<RTCTransportStats>         transportStats;
-  sequence<RTCIceComponentStats>      iceComponentStats;
-  sequence<RTCIceCandidatePairStats>  iceCandidatePairStats;
-  sequence<RTCIceCandidateStats>      iceCandidateStats;
-  sequence<RTCCodecStats>             codecStats;
-  DOMString                           localSdp;
-  DOMString                           remoteSdp;
-  DOMHighResTimeStamp                 timestamp;
-  unsigned long                       iceRestarts;
-  unsigned long                       iceRollbacks;
-  boolean                             closed; // Is the PC now closed
+  DOMString                               pcid = "";
+  sequence<RTCInboundRTPStreamStats>      inboundRTPStreamStats;
+  sequence<RTCOutboundRTPStreamStats>     outboundRTPStreamStats;
+  sequence<RTCRTPContributingSourceStats> rtpContributingSourceStats;
+  sequence<RTCMediaStreamTrackStats>      mediaStreamTrackStats;
+  sequence<RTCMediaStreamStats>           mediaStreamStats;
+  sequence<RTCTransportStats>             transportStats;
+  sequence<RTCIceComponentStats>          iceComponentStats;
+  sequence<RTCIceCandidatePairStats>      iceCandidatePairStats;
+  sequence<RTCIceCandidateStats>          iceCandidateStats;
+  sequence<RTCCodecStats>                 codecStats;
+  DOMString                               localSdp;
+  DOMString                               remoteSdp;
+  DOMHighResTimeStamp                     timestamp;
+  unsigned long                           iceRestarts;
+  unsigned long                           iceRollbacks;
+  boolean                                 closed; // Is the PC now closed
 };
 
 [Pref="media.peerconnection.enabled",

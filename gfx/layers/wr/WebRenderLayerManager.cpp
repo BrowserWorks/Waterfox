@@ -5,24 +5,19 @@
 
 #include "WebRenderLayerManager.h"
 
-#include "apz/src/AsyncPanZoomController.h"
 #include "gfxPrefs.h"
+#include "GeckoProfiler.h"
 #include "LayersLogging.h"
-#include "mozilla/dom/TabChild.h"
-#include "mozilla/layers/APZCTreeManager.h"
-#include "mozilla/layers/AsyncCompositionManager.h"
 #include "mozilla/layers/CompositorBridgeChild.h"
+#include "mozilla/layers/StackingContextHelper.h"
 #include "mozilla/layers/TextureClient.h"
 #include "mozilla/layers/WebRenderBridgeChild.h"
-#include "mozilla/widget/PlatformWidgetTypes.h"
-#include "nsThreadUtils.h"
-#include "TreeTraversal.h"
-#include "WebRenderBorderLayer.h"
 #include "WebRenderCanvasLayer.h"
 #include "WebRenderColorLayer.h"
 #include "WebRenderContainerLayer.h"
 #include "WebRenderImageLayer.h"
 #include "WebRenderPaintedLayer.h"
+#include "WebRenderPaintedLayerBlob.h"
 #include "WebRenderTextLayer.h"
 #include "WebRenderDisplayItemLayer.h"
 
@@ -32,174 +27,13 @@ using namespace gfx;
 
 namespace layers {
 
-WebRenderLayerManager*
-WebRenderLayer::WrManager()
-{
-  return static_cast<WebRenderLayerManager*>(GetLayer()->Manager());
-}
-
-WebRenderBridgeChild*
-WebRenderLayer::WrBridge()
-{
-  return WrManager()->WrBridge();
-}
-
-Rect
-WebRenderLayer::RelativeToVisible(Rect aRect)
-{
-  IntRect bounds = GetLayer()->GetVisibleRegion().GetBounds().ToUnknownRect();
-  aRect.MoveBy(-bounds.x, -bounds.y);
-  return aRect;
-}
-
-Rect
-WebRenderLayer::RelativeToTransformedVisible(Rect aRect)
-{
-  IntRect bounds = GetLayer()->GetVisibleRegion().GetBounds().ToUnknownRect();
-  Rect transformed = GetLayer()->GetTransform().TransformBounds(IntRectToRect(bounds));
-  aRect.MoveBy(-transformed.x, -transformed.y);
-  return aRect;
-}
-
-Rect
-WebRenderLayer::ParentStackingContextBounds(size_t aScrollMetadataIndex)
-{
-  // Walk up to find the parent stacking context. This will be created either
-  // by the nearest scrollable metrics, or by the parent layer which must be a
-  // ContainerLayer.
-  Layer* layer = GetLayer();
-  for (size_t i = aScrollMetadataIndex + 1; i < layer->GetScrollMetadataCount(); i++) {
-    if (layer->GetFrameMetrics(i).IsScrollable()) {
-      return layer->GetFrameMetrics(i).GetCompositionBounds().ToUnknownRect();
-    }
-  }
-  if (layer->GetParent()) {
-    return IntRectToRect(layer->GetParent()->GetVisibleRegion().GetBounds().ToUnknownRect());
-  }
-  return Rect();
-}
-
-Rect
-WebRenderLayer::RelativeToParent(Rect aRect)
-{
-  Rect parentBounds = ParentStackingContextBounds(-1);
-  aRect.MoveBy(-parentBounds.x, -parentBounds.y);
-  return aRect;
-}
-
-Point
-WebRenderLayer::GetOffsetToParent()
-{
-  Rect parentBounds = ParentStackingContextBounds(-1);
-  return parentBounds.TopLeft();
-}
-
-Rect
-WebRenderLayer::VisibleBoundsRelativeToParent()
-{
-  return RelativeToParent(IntRectToRect(GetLayer()->GetVisibleRegion().GetBounds().ToUnknownRect()));
-}
-
-Rect
-WebRenderLayer::TransformedVisibleBoundsRelativeToParent()
-{
-  IntRect bounds = GetLayer()->GetVisibleRegion().GetBounds().ToUnknownRect();
-  Rect transformed = GetLayer()->GetTransform().TransformBounds(IntRectToRect(bounds));
-  return RelativeToParent(transformed);
-}
-
-Maybe<WrImageMask>
-WebRenderLayer::buildMaskLayer() {
-  Maybe<WrImageMask> mask = Nothing();
-  WrImageMask imageMask;
-  Layer* maskLayer = GetLayer()->GetMaskLayer();
-
-  if (maskLayer) {
-    RefPtr<SourceSurface> surface = WebRenderLayer::ToWebRenderLayer(maskLayer)->GetAsSourceSurface();
-    if (surface) {
-      Matrix transform;
-      Matrix4x4 effectiveTransform = maskLayer->GetEffectiveTransform();
-      DebugOnly<bool> maskIs2D = effectiveTransform.CanDraw2D(&transform);
-      NS_ASSERTION(maskIs2D, "How did we end up with a 3D transform here?!");
-      //XXX: let's assert that the mask transform is the same as the layer transform
-      //transform.PostTranslate(-aDeviceOffset.x, -aDeviceOffset.y);
-      {
-          RefPtr<DataSourceSurface> dataSurface = surface->GetDataSurface();
-          DataSourceSurface::ScopedMap map(dataSurface, DataSourceSurface::MapType::READ);
-          gfx::IntSize size = surface->GetSize();
-          MOZ_RELEASE_ASSERT(surface->GetFormat() == SurfaceFormat::A8, "bad format");
-          wr::ByteBuffer buf(size.height * map.GetStride(), map.GetData());
-          WrImageKey maskKey;
-          maskKey.mNamespace = WrBridge()->GetNamespace();
-          maskKey.mHandle = WrBridge()->GetNextResourceId();
-          WrBridge()->SendAddImage(maskKey, size, map.GetStride(), SurfaceFormat::A8, buf);
-
-          imageMask.image = maskKey;
-          imageMask.rect = wr::ToWrRect(Rect(0, 0, size.width, size.height));
-          imageMask.repeat = false;
-          WrManager()->AddImageKeyForDiscard(maskKey);
-          mask = Some(imageMask);
-      }
-    }
-  }
-  return mask;
-}
-
-
-
-
-WrScrollFrameStackingContextGenerator::WrScrollFrameStackingContextGenerator(
-        WebRenderLayer* aLayer)
-  : mLayer(aLayer)
-{
-  Matrix4x4 identity;
-  Layer* layer = mLayer->GetLayer();
-  for (size_t i = layer->GetScrollMetadataCount(); i > 0; i--) {
-    const FrameMetrics& fm = layer->GetFrameMetrics(i - 1);
-    if (!fm.IsScrollable()) {
-      continue;
-    }
-    Rect bounds = fm.GetCompositionBounds().ToUnknownRect();
-    Rect overflow = (fm.GetExpandedScrollableRect() * fm.LayersPixelsPerCSSPixel()).ToUnknownRect();
-    Point scrollPos = (fm.GetScrollOffset() * fm.LayersPixelsPerCSSPixel()).ToUnknownPoint();
-    Rect parentBounds = mLayer->ParentStackingContextBounds(i);
-    bounds.MoveBy(-parentBounds.x, -parentBounds.y);
-    // Subtract the MT scroll position from the overflow here so that the WR
-    // scroll offset (which is the APZ async scroll component) always fits in
-    // the available overflow. If we didn't do this and WR did bounds checking
-    // on the scroll offset, we'd fail those checks.
-    overflow.MoveBy(bounds.x - scrollPos.x, bounds.y - scrollPos.y);
-    if (gfxPrefs::LayersDump()) {
-      printf_stderr("Pushing stacking context id %" PRIu64 " with bounds=%s, overflow=%s\n",
-        fm.GetScrollId(), Stringify(bounds).c_str(), Stringify(overflow).c_str());
-    }
-
-/*    mLayer->WrBridge()->AddWebRenderCommand(
-      OpDPPushScrollLayer(wr::ToWrRect(bounds),
-                          wr::ToWrRect(overflow),
-                          Nothing(),
-                          fm.GetScrollId()));*/
-  }
-}
-
-WrScrollFrameStackingContextGenerator::~WrScrollFrameStackingContextGenerator()
-{
-  Layer* layer = mLayer->GetLayer();
-  for (size_t i = 0; i < layer->GetScrollMetadataCount(); i++) {
-    const FrameMetrics& fm = layer->GetFrameMetrics(i);
-    if (!fm.IsScrollable()) {
-      continue;
-    }
-    if (gfxPrefs::LayersDump()) printf_stderr("Popping stacking context id %" PRIu64"\n", fm.GetScrollId());
-//    mLayer->WrBridge()->AddWebRenderCommand(OpDPPopStackingContext());
-  }
-}
-
-
 WebRenderLayerManager::WebRenderLayerManager(nsIWidget* aWidget)
   : mWidget(aWidget)
   , mLatestTransactionId(0)
+  , mNeedsComposite(false)
+  , mIsFirstPaint(false)
   , mTarget(nullptr)
+  , mPaintSequenceNumber(0)
 {
   MOZ_COUNT_CTOR(WebRenderLayerManager);
 }
@@ -218,14 +52,15 @@ WebRenderLayerManager::Initialize(PCompositorBridgeChild* aCBChild,
   MOZ_ASSERT(mWrChild == nullptr);
   MOZ_ASSERT(aTextureFactoryIdentifier);
 
+  LayoutDeviceIntSize size = mWidget->GetClientSize();
   TextureFactoryIdentifier textureFactoryIdentifier;
   uint32_t id_namespace;
   PWebRenderBridgeChild* bridge = aCBChild->SendPWebRenderBridgeConstructor(aLayersId,
+                                                                            size,
                                                                             &textureFactoryIdentifier,
                                                                             &id_namespace);
   MOZ_ASSERT(bridge);
   mWrChild = static_cast<WebRenderBridgeChild*>(bridge);
-  LayoutDeviceIntSize size = mWidget->GetClientSize();
   WrBridge()->SendCreate(size.ToUnknownSize());
   WrBridge()->IdentifyTextureHost(textureFactoryIdentifier);
   WrBridge()->SetNamespace(id_namespace);
@@ -241,6 +76,7 @@ WebRenderLayerManager::Destroy()
 
   LayerManager::Destroy();
   DiscardImages();
+  DiscardCompositorAnimations();
   WrBridge()->Destroy();
 
   if (mTransactionIdAllocator) {
@@ -250,11 +86,16 @@ WebRenderLayerManager::Destroy()
     RefPtr<TransactionIdAllocator> allocator = mTransactionIdAllocator;
     uint64_t id = mLatestTransactionId;
 
-    RefPtr<Runnable> task = NS_NewRunnableFunction([allocator, id] () -> void {
+    RefPtr<Runnable> task = NS_NewRunnableFunction(
+      "TransactionIdAllocator::NotifyTransactionCompleted",
+      [allocator, id] () -> void {
       allocator->NotifyTransactionCompleted(id);
     });
     NS_DispatchToMainThread(task.forget());
   }
+
+  // Forget the widget pointer in case we outlive our owning widget.
+  mWidget = nullptr;
 }
 
 WebRenderLayerManager::~WebRenderLayerManager()
@@ -266,7 +107,7 @@ WebRenderLayerManager::~WebRenderLayerManager()
 CompositorBridgeChild*
 WebRenderLayerManager::GetCompositorBridgeChild()
 {
-  return mWidget ? mWidget->GetRemoteRenderer() : nullptr;
+  return WrBridge()->GetCompositorBridgeChild();
 }
 
 int32_t
@@ -285,13 +126,43 @@ WebRenderLayerManager::BeginTransactionWithTarget(gfxContext* aTarget)
 bool
 WebRenderLayerManager::BeginTransaction()
 {
+  // Increment the paint sequence number even if test logging isn't
+  // enabled in this process; it may be enabled in the parent process,
+  // and the parent process expects unique sequence numbers.
+  ++mPaintSequenceNumber;
+  if (gfxPrefs::APZTestLoggingEnabled()) {
+    mApzTestData.StartNewPaint(mPaintSequenceNumber);
+  }
   return true;
 }
 
 bool
 WebRenderLayerManager::EndEmptyTransaction(EndTransactionFlags aFlags)
 {
-  return false;
+  if (!mRoot) {
+    return false;
+  }
+
+  // We might used painted layer images so don't delete them yet.
+  return EndTransactionInternal(nullptr, nullptr, aFlags);
+}
+
+/*static*/ int32_t
+PopulateScrollData(WebRenderScrollData& aTarget, Layer* aLayer)
+{
+  MOZ_ASSERT(aLayer);
+
+  // We want to allocate a WebRenderLayerScrollData object for this layer,
+  // but don't keep a pointer to it since it might get memmove'd during the
+  // recursion below. Instead keep the index and get the pointer later.
+  size_t index = aTarget.AddNewLayerData();
+
+  int32_t descendants = 0;
+  for (Layer* child = aLayer->GetLastChild(); child; child = child->GetPrevSibling()) {
+    descendants += PopulateScrollData(aTarget, child);
+  }
+  aTarget.GetLayerDataMutable(index)->Initialize(aTarget, aLayer, descendants);
+  return descendants + 1;
 }
 
 void
@@ -300,9 +171,19 @@ WebRenderLayerManager::EndTransaction(DrawPaintedLayerCallback aCallback,
                                       EndTransactionFlags aFlags)
 {
   DiscardImages();
+  WrBridge()->RemoveExpiredFontKeys();
+  EndTransactionInternal(aCallback, aCallbackData, aFlags);
+}
 
+bool
+WebRenderLayerManager::EndTransactionInternal(DrawPaintedLayerCallback aCallback,
+                                              void* aCallbackData,
+                                              EndTransactionFlags aFlags)
+{
+  GeckoProfilerTracingRAII tracer("Paint", "RenderLayers");
   mPaintedLayerCallback = aCallback;
   mPaintedLayerCallbackData = aCallbackData;
+  mTransactionIncomplete = false;
 
   if (gfxPrefs::LayersDump()) {
     this->Dump();
@@ -313,21 +194,63 @@ WebRenderLayerManager::EndTransaction(DrawPaintedLayerCallback aCallback,
 
   LayoutDeviceIntSize size = mWidget->GetClientSize();
   if (!WrBridge()->DPBegin(size.ToUnknownSize())) {
-    return;
+    return false;
+  }
+  DiscardCompositorAnimations();
+  mRoot->StartPendingAnimations(mAnimationReadyTime);
+
+  StackingContextHelper sc;
+  WrSize contentSize { (float)size.width, (float)size.height };
+  wr::DisplayListBuilder builder(WrBridge()->GetPipeline(), contentSize);
+  WebRenderLayer::ToWebRenderLayer(mRoot)->RenderLayer(builder, sc);
+  WrBridge()->ClearReadLocks();
+
+  // We can't finish this transaction so return. This usually
+  // happens in an empty transaction where we can't repaint a painted layer.
+  // In this case, leave the transaction open and let a full transaction happen.
+  if (mTransactionIncomplete) {
+    DiscardLocalImages();
+    return false;
   }
 
-  WebRenderLayer::ToWebRenderLayer(mRoot)->RenderLayer();
+  WebRenderScrollData scrollData;
+  if (AsyncPanZoomEnabled()) {
+    if (mIsFirstPaint) {
+      scrollData.SetIsFirstPaint();
+      mIsFirstPaint = false;
+    }
+    scrollData.SetPaintSequenceNumber(mPaintSequenceNumber);
+    if (mRoot) {
+      PopulateScrollData(scrollData, mRoot.get());
+    }
+  }
 
   bool sync = mTarget != nullptr;
   mLatestTransactionId = mTransactionIdAllocator->GetTransactionId();
 
-  WrBridge()->DPEnd(size.ToUnknownSize(), sync, mLatestTransactionId);
+  {
+    GeckoProfilerTracingRAII
+      tracer("Paint", sync ? "ForwardDPTransactionSync":"ForwardDPTransaction");
+    WrBridge()->DPEnd(builder, size.ToUnknownSize(), sync, mLatestTransactionId, scrollData);
+  }
 
   MakeSnapshotIfRequired(size);
+  mNeedsComposite = false;
+
+  ClearDisplayItemLayers();
 
   // this may result in Layers being deleted, which results in
   // PLayer::Send__delete__() and DeallocShmem()
   mKeepAlive.Clear();
+  ClearMutatedLayers();
+
+  return true;
+}
+
+bool
+WebRenderLayerManager::AsyncPanZoomEnabled() const
+{
+  return mWidget->AsyncPanZoomEnabled();
 }
 
 void
@@ -346,7 +269,7 @@ WebRenderLayerManager::MakeSnapshotIfRequired(LayoutDeviceIntSize aSize)
                                             SurfaceFormat::B8G8R8A8,
                                             aSize.ToUnknownSize(),
                                             BackendType::SKIA,
-                                            TextureFlags::DEFAULT);
+                                            TextureFlags::SNAPSHOT);
   if (!texture) {
     return;
   }
@@ -401,10 +324,69 @@ WebRenderLayerManager::AddImageKeyForDiscard(wr::ImageKey key)
 void
 WebRenderLayerManager::DiscardImages()
 {
-  for (auto key : mImageKeys) {
+  if (WrBridge()->IPCOpen()) {
+    for (auto key : mImageKeys) {
       WrBridge()->SendDeleteImage(key);
+    }
   }
   mImageKeys.clear();
+}
+
+void
+WebRenderLayerManager::AddCompositorAnimationsIdForDiscard(uint64_t aId)
+{
+  mDiscardedCompositorAnimationsIds.AppendElement(aId);
+}
+
+void
+WebRenderLayerManager::DiscardCompositorAnimations()
+{
+  if (WrBridge()->IPCOpen() && !mDiscardedCompositorAnimationsIds.IsEmpty()) {
+    WrBridge()->
+      SendDeleteCompositorAnimations(mDiscardedCompositorAnimationsIds);
+  }
+  mDiscardedCompositorAnimationsIds.Clear();
+}
+
+void
+WebRenderLayerManager::DiscardLocalImages()
+{
+  // Removes images but doesn't tell the parent side about them
+  // This is useful in empty / failed transactions where we created
+  // image keys but didn't tell the parent about them yet.
+  mImageKeys.clear();
+}
+
+void
+WebRenderLayerManager::Mutated(Layer* aLayer)
+{
+  LayerManager::Mutated(aLayer);
+  AddMutatedLayer(aLayer);
+}
+
+void
+WebRenderLayerManager::MutatedSimple(Layer* aLayer)
+{
+  LayerManager::Mutated(aLayer);
+  AddMutatedLayer(aLayer);
+}
+
+void
+WebRenderLayerManager::AddMutatedLayer(Layer* aLayer)
+{
+  mMutatedLayers.AppendElement(aLayer);
+}
+
+void
+WebRenderLayerManager::ClearMutatedLayers()
+{
+  mMutatedLayers.Clear();
+}
+
+bool
+WebRenderLayerManager::IsMutatedLayer(Layer* aLayer)
+{
+  return mMutatedLayers.Contains(aLayer);
 }
 
 void
@@ -425,6 +407,12 @@ WebRenderLayerManager::DidComposite(uint64_t aTransactionId,
                                     const mozilla::TimeStamp& aCompositeEnd)
 {
   MOZ_ASSERT(mWidget);
+
+  // Notifying the observers may tick the refresh driver which can cause
+  // a lot of different things to happen that may affect the lifetime of
+  // this layer manager. So let's make sure this object stays alive until
+  // the end of the method invocation.
+  RefPtr<WebRenderLayerManager> selfRef = this;
 
   // |aTransactionId| will be > 0 if the compositor is acknowledging a shadow
   // layers transaction.
@@ -495,6 +483,43 @@ WebRenderLayerManager::RemoveDidCompositeObserver(DidCompositeObserver* aObserve
 }
 
 void
+WebRenderLayerManager::FlushRendering()
+{
+  CompositorBridgeChild* cBridge = GetCompositorBridgeChild();
+  if (!cBridge) {
+    return;
+  }
+  MOZ_ASSERT(mWidget);
+
+  if (mWidget->SynchronouslyRepaintOnResize() || gfxPrefs::LayersForceSynchronousResize()) {
+    cBridge->SendFlushRendering();
+  } else {
+    cBridge->SendFlushRenderingAsync();
+  }
+}
+
+void
+WebRenderLayerManager::WaitOnTransactionProcessed()
+{
+  CompositorBridgeChild* bridge = GetCompositorBridgeChild();
+  if (bridge) {
+    bridge->SendWaitOnTransactionProcessed();
+  }
+}
+
+void
+WebRenderLayerManager::SendInvalidRegion(const nsIntRegion& aRegion)
+{
+  // XXX Webrender does not support invalid region yet.
+}
+
+void
+WebRenderLayerManager::Composite()
+{
+  WrBridge()->SendForceComposite();
+}
+
+void
 WebRenderLayerManager::SetRoot(Layer* aLayer)
 {
   mRoot = aLayer;
@@ -503,7 +528,11 @@ WebRenderLayerManager::SetRoot(Layer* aLayer)
 already_AddRefed<PaintedLayer>
 WebRenderLayerManager::CreatePaintedLayer()
 {
-  return MakeAndAddRef<WebRenderPaintedLayer>(this);
+  if (gfxPrefs::WebRenderBlobImages()) {
+    return MakeAndAddRef<WebRenderPaintedLayerBlob>(this);
+  } else {
+    return MakeAndAddRef<WebRenderPaintedLayer>(this);
+  }
 }
 
 already_AddRefed<ContainerLayer>
@@ -551,7 +580,7 @@ WebRenderLayerManager::CreateTextLayer()
 already_AddRefed<BorderLayer>
 WebRenderLayerManager::CreateBorderLayer()
 {
-  return MakeAndAddRef<WebRenderBorderLayer>(this);
+  return nullptr;
 }
 
 already_AddRefed<DisplayItemLayer>

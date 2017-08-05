@@ -8,8 +8,12 @@
 
 #include "nsTArray.h"
 #include "MediaDataDemuxer.h"
+#include "MediaResource.h"
 #include "NesteggPacketHolder.h"
 #include "mozilla/Move.h"
+
+#include <deque>
+#include <stdint.h>
 
 typedef struct nestegg nestegg;
 
@@ -257,8 +261,7 @@ private:
   int64_t mLastWebMBlockOffset;
   const bool mIsMediaSource;
 
-  Maybe<uint32_t> mLastSeenFrameWidth;
-  Maybe<uint32_t> mLastSeenFrameHeight;
+  Maybe<nsIntSize> mLastSeenFrameSize;
   // This will be populated only if a resolution change occurs, otherwise it
   // will be left as null so the original metadata is used
   RefPtr<TrackInfoSharedPtr> mSharedVideoTrackInfo;

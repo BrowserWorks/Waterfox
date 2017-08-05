@@ -8,6 +8,7 @@
 #ifndef mozilla_net_HttpBaseChannel_h
 #define mozilla_net_HttpBaseChannel_h
 
+#include "mozilla/Atomics.h"
 #include "nsHttp.h"
 #include "nsAutoPtr.h"
 #include "nsHashPropertyBag.h"
@@ -110,10 +111,11 @@ public:
 
   HttpBaseChannel();
 
-  virtual nsresult Init(nsIURI *aURI, uint32_t aCaps, nsProxyInfo *aProxyInfo,
-                        uint32_t aProxyResolveFlags,
-                        nsIURI *aProxyURI,
-                        const nsID& aChannelId);
+  virtual MOZ_MUST_USE nsresult Init(nsIURI *aURI, uint32_t aCaps,
+                                     nsProxyInfo *aProxyInfo,
+                                     uint32_t aProxyResolveFlags,
+                                     nsIURI *aProxyURI,
+                                     uint64_t aChannelId);
 
   // nsIRequest
   NS_IMETHOD GetName(nsACString& aName) override;
@@ -133,6 +135,7 @@ public:
   NS_IMETHOD SetOwner(nsISupports *aOwner) override;
   NS_IMETHOD GetLoadInfo(nsILoadInfo **aLoadInfo) override;
   NS_IMETHOD SetLoadInfo(nsILoadInfo *aLoadInfo) override;
+  NS_IMETHOD GetIsDocument(bool *aIsDocument) override;
   NS_IMETHOD GetNotificationCallbacks(nsIInterfaceRequestor **aCallbacks) override;
   NS_IMETHOD SetNotificationCallbacks(nsIInterfaceRequestor *aCallbacks) override;
   NS_IMETHOD GetContentType(nsACString& aContentType) override;
@@ -192,18 +195,20 @@ public:
   NS_IMETHOD GetResponseStatusText(nsACString& aValue) override;
   NS_IMETHOD GetRequestSucceeded(bool *aValue) override;
   NS_IMETHOD RedirectTo(nsIURI *newURI) override;
-  NS_IMETHOD GetRequestContextID(nsID *aRCID) override;
+  NS_IMETHOD GetRequestContextID(uint64_t *aRCID) override;
   NS_IMETHOD GetTransferSize(uint64_t *aTransferSize) override;
   NS_IMETHOD GetDecodedBodySize(uint64_t *aDecodedBodySize) override;
   NS_IMETHOD GetEncodedBodySize(uint64_t *aEncodedBodySize) override;
-  NS_IMETHOD SetRequestContextID(const nsID aRCID) override;
+  NS_IMETHOD SetRequestContextID(uint64_t aRCID) override;
   NS_IMETHOD GetIsMainDocumentChannel(bool* aValue) override;
   NS_IMETHOD SetIsMainDocumentChannel(bool aValue) override;
   NS_IMETHOD GetProtocolVersion(nsACString & aProtocolVersion) override;
-  NS_IMETHOD GetChannelId(nsACString& aChannelId) override;
-  NS_IMETHOD SetChannelId(const nsACString& aChannelId) override;
+  NS_IMETHOD GetChannelId(uint64_t *aChannelId) override;
+  NS_IMETHOD SetChannelId(uint64_t aChannelId) override;
   NS_IMETHOD GetTopLevelContentWindowId(uint64_t *aContentWindowId) override;
   NS_IMETHOD SetTopLevelContentWindowId(uint64_t aContentWindowId) override;
+  NS_IMETHOD GetTopLevelOuterContentWindowId(uint64_t *aWindowId) override;
+  NS_IMETHOD SetTopLevelOuterContentWindowId(uint64_t aWindowId) override;
   NS_IMETHOD GetIsTrackingResource(bool* aIsTrackingResource) override;
 
   // nsIHttpChannelInternal
@@ -231,7 +236,7 @@ public:
   NS_IMETHOD GetBeConservative(bool *aBeConservative) override;
   NS_IMETHOD SetBeConservative(bool aBeConservative) override;
   NS_IMETHOD GetApiRedirectToURI(nsIURI * *aApiRedirectToURI) override;
-  virtual nsresult AddSecurityMessage(const nsAString &aMessageTag, const nsAString &aMessageCategory);
+  virtual MOZ_MUST_USE nsresult AddSecurityMessage(const nsAString &aMessageTag, const nsAString &aMessageCategory);
   NS_IMETHOD TakeAllSecurityMessages(nsCOMArray<nsISecurityConsoleMessage> &aMessages) override;
   NS_IMETHOD GetResponseTimeoutEnabled(bool *aEnable) override;
   NS_IMETHOD SetResponseTimeoutEnabled(bool aEnable) override;
@@ -255,6 +260,8 @@ public:
   NS_IMETHOD GetConnectionInfoHashKey(nsACString& aConnectionInfoHashKey) override;
   NS_IMETHOD GetIntegrityMetadata(nsAString& aIntegrityMetadata) override;
   NS_IMETHOD SetIntegrityMetadata(const nsAString& aIntegrityMetadata) override;
+  NS_IMETHOD GetLastRedirectFlags(uint32_t *aValue) override;
+  NS_IMETHOD SetLastRedirectFlags(uint32_t aValue) override;
 
   inline void CleanRedirectCacheChainIfNecessary()
   {
@@ -312,7 +319,7 @@ public:
     private:
         virtual ~nsContentEncodings();
 
-        nsresult PrepareForNext(void);
+        MOZ_MUST_USE nsresult PrepareForNext(void);
 
         // We do not own the buffer.  The channel owns it.
         const char* mEncodingHeader;
@@ -332,9 +339,10 @@ public:
     const NetAddr& GetSelfAddr() { return mSelfAddr; }
     const NetAddr& GetPeerAddr() { return mPeerAddr; }
 
-    nsresult OverrideSecurityInfo(nsISupports* aSecurityInfo);
+    MOZ_MUST_USE nsresult OverrideSecurityInfo(nsISupports* aSecurityInfo);
 
 public: /* Necko internal use only... */
+    int64_t GetAltDataLength() { return mAltDataLength; }
     bool IsNavigation();
 
     // Return whether upon a redirect code of httpStatus for method, the
@@ -344,16 +352,23 @@ public: /* Necko internal use only... */
 
     // Like nsIEncodedChannel::DoApplyConversions except context is set to
     // mListenerContext.
-    nsresult DoApplyContentConversions(nsIStreamListener *aNextListener,
-                                       nsIStreamListener **aNewNextListener);
+    MOZ_MUST_USE nsresult
+    DoApplyContentConversions(nsIStreamListener *aNextListener,
+                              nsIStreamListener **aNewNextListener);
 
-    // Callback on main thread when NS_AsyncCopy() is finished populating
-    // the new mUploadStream.
-    void EnsureUploadStreamIsCloneableComplete(nsresult aStatus);
+    // Callback on STS thread called by CopyComplete when NS_AsyncCopy()
+    // is finished. This function works as a proxy function to dispatch
+    // |EnsureUploadStreamIsCloneableComplete| to main thread.
+    virtual void OnCopyComplete(nsresult aStatus);
 
     void SetIsTrackingResource()
     {
       mIsTrackingResource = true;
+    }
+
+    const uint64_t& ChannelId() const
+    {
+      return mChannelId;
     }
 
 protected:
@@ -375,10 +390,9 @@ protected:
   nsPIDOMWindowInner* GetInnerDOMWindow();
 
   void AddCookiesToRequest();
-  virtual nsresult SetupReplacementChannel(nsIURI *,
-                                           nsIChannel *,
-                                           bool preserveMethod,
-                                           uint32_t redirectFlags);
+  virtual MOZ_MUST_USE nsresult
+  SetupReplacementChannel(nsIURI *, nsIChannel *, bool preserveMethod,
+                          uint32_t redirectFlags);
 
   // bundle calling OMR observers and marking flag into one function
   inline void CallOnModifyRequestObservers() {
@@ -402,11 +416,15 @@ protected:
   // GetPrincipal Returns the channel's URI principal.
   nsIPrincipal *GetURIPrincipal();
 
-  bool BypassServiceWorker() const;
+  MOZ_MUST_USE bool BypassServiceWorker() const;
 
   // Returns true if this channel should intercept the network request and prepare
   // for a possible synthesized response instead.
   bool ShouldIntercept(nsIURI* aURI = nullptr);
+
+  // Callback on main thread when NS_AsyncCopy() is finished populating
+  // the new mUploadStream.
+  void EnsureUploadStreamIsCloneableComplete(nsresult aStatus);
 
 #ifdef DEBUG
   // Check if mPrivateBrowsingId matches between LoadInfo and LoadContext.
@@ -438,6 +456,10 @@ private:
   void ReleaseMainThreadOnlyReferences();
 
 protected:
+  // Use Release-Acquire ordering to ensure the OMT ODA is ignored while channel
+  // is canceled on main thread.
+  Atomic<bool, ReleaseAcquire> mCanceled;
+
   nsTArray<Pair<nsString, nsString>> mSecurityConsoleMessages;
 
   nsCOMPtr<nsIStreamListener>       mListener;
@@ -481,7 +503,6 @@ protected:
   uint8_t                           mRedirectionLimit;
 
   uint32_t                          mApplyConversion            : 1;
-  uint32_t                          mCanceled                   : 1;
   uint32_t                          mIsPending                  : 1;
   uint32_t                          mWasOpened                  : 1;
   // if 1 all "http-on-{opening|modify|etc}-request" observers have been called
@@ -552,6 +573,12 @@ protected:
   TimeStamp                         mAsyncOpenTime;
   TimeStamp                         mCacheReadStart;
   TimeStamp                         mCacheReadEnd;
+  TimeStamp                         mLaunchServiceWorkerStart;
+  TimeStamp                         mLaunchServiceWorkerEnd;
+  TimeStamp                         mDispatchFetchEventStart;
+  TimeStamp                         mDispatchFetchEventEnd;
+  TimeStamp                         mHandleFetchEventStart;
+  TimeStamp                         mHandleFetchEventEnd;
   // copied from the transaction before we null out mTransaction
   // so that the timing can still be queried from OnStopRequest
   TimingStruct                      mTransactionTimings;
@@ -579,12 +606,15 @@ protected:
   // The network interface id that's associated with this channel.
   nsCString mNetworkInterfaceId;
 
-  nsID mRequestContextID;
+  uint64_t mRequestContextID;
   bool EnsureRequestContextID();
 
   // ID of the top-level document's inner window this channel is being
   // originated from.
   uint64_t mContentWindowId;
+
+  uint64_t mTopLevelOuterContentWindowId;
+  void EnsureTopLevelOuterContentWindowId();
 
   bool                              mRequireCORSPreflight;
   nsTArray<nsCString>               mUnsafeHeaders;
@@ -595,11 +625,17 @@ protected:
   nsCString mPreferredCachedAltDataType;
   // Holds the name of the alternative data type the channel returned.
   nsCString mAvailableCachedAltDataType;
+  int64_t   mAltDataLength;
 
   bool mForceMainDocumentChannel;
   bool mIsTrackingResource;
 
-  nsID mChannelId;
+  uint64_t mChannelId;
+
+  // If this channel was created as the result of a redirect, then this value
+  // will reflect the redirect flags passed to the SetupReplacementChannel()
+  // method.
+  uint32_t mLastRedirectFlags;
 
   nsString mIntegrityMetadata;
 
@@ -626,7 +662,7 @@ public:
 
   // Aborts channel: calls OnStart/Stop with provided status, removes channel
   // from loadGroup.
-  nsresult AsyncAbort(nsresult status);
+  MOZ_MUST_USE nsresult AsyncAbort(nsresult status);
 
   // Does most the actual work.
   void HandleAsyncAbort();
@@ -634,8 +670,8 @@ public:
   // AsyncCall calls a member function asynchronously (via an event).
   // retval isn't refcounted and is set only when event was successfully
   // posted, the event is returned for the purpose of cancelling when needed
-  nsresult AsyncCall(void (T::*funcPtr)(),
-                     nsRunnableMethod<T> **retval = nullptr);
+  MOZ_MUST_USE virtual nsresult AsyncCall(void (T::*funcPtr)(),
+                                          nsRunnableMethod<T> **retval = nullptr);
 private:
   T *mThis;
 
@@ -645,7 +681,7 @@ protected:
 };
 
 template <class T>
-nsresult HttpAsyncAborter<T>::AsyncAbort(nsresult status)
+MOZ_MUST_USE nsresult HttpAsyncAborter<T>::AsyncAbort(nsresult status)
 {
   MOZ_LOG(gHttpLog, LogLevel::Debug,
          ("HttpAsyncAborter::AsyncAbort [this=%p status=%" PRIx32 "]\n",

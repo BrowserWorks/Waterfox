@@ -13,10 +13,12 @@ A script publish a release to Balrog.
 
 import os
 import sys
+from datetime import datetime, timedelta
 
 sys.path.insert(1, os.path.dirname(os.path.dirname(sys.path[0])))
 from mozharness.base.vcs.vcsbase import MercurialScript
 from mozharness.mozilla.buildbot import BuildbotMixin
+from mozharness.base.log import FATAL
 
 # PublishBalrog {{{1
 
@@ -74,7 +76,7 @@ class PublishBalrog(MercurialScript, BuildbotMixin):
         :return: list
          """
         return [(n, c) for n, c in self.config["update_channels"].items() if
-            n in self.config["channels"]]
+                n in self.config["channels"]]
 
     def query_repos(self):
         """Build a list of repos to clone."""
@@ -84,7 +86,6 @@ class PublishBalrog(MercurialScript, BuildbotMixin):
         super(PublishBalrog, self).pull(
             repos=self.query_repos())
 
-
     def submit_to_balrog(self):
         for _, channel_config in self.query_channel_configs():
             self._submit_to_balrog(channel_config)
@@ -93,7 +94,7 @@ class PublishBalrog(MercurialScript, BuildbotMixin):
         dirs = self.query_abs_dirs()
         auth = os.path.join(os.getcwd(), self.config['credentials_file'])
         cmd = [
-            self.query_exe("python"),
+            sys.executable,
             os.path.join(dirs["abs_tools_dir"],
                          "scripts/build-promotion/balrog-release-shipper.py")]
         cmd.extend([
@@ -106,13 +107,22 @@ class PublishBalrog(MercurialScript, BuildbotMixin):
             "--verbose",
         ])
         for r in channel_config["publish_rules"]:
-            cmd.extend(["--rules", r])
-        if self.config.get("schedule_at"):
+            cmd.extend(["--rules", str(r)])
+        if channel_config.get("schedule_asap"):
+            # RC releases going to the beta channel have no ETA set for the
+            # RC-to-beta push. The corresponding task is scheduled after we
+            # resolve the push-to-beta human decision task, so we can schedule
+            # it ASAP plus some additional 30m to avoid retry() to fail.
+            schedule_at = datetime.utcnow() + timedelta(minutes=30)
+            cmd.extend(["--schedule-at", schedule_at.isoformat()])
+        elif self.config.get("schedule_at"):
             cmd.extend(["--schedule-at", self.config["schedule_at"]])
         if self.config.get("background_rate"):
             cmd.extend(["--background-rate", str(self.config["background_rate"])])
 
-        self.retry(lambda: self.run_command(cmd, halt_on_failure=True))
+        self.retry(lambda: self.run_command(cmd, halt_on_failure=True),
+                   error_level=FATAL)
+
 
 # __main__ {{{1
 if __name__ == '__main__':

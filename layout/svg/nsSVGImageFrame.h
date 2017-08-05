@@ -12,6 +12,7 @@
 #include "mozilla/gfx/2D.h"
 #include "imgIContainer.h"
 #include "nsContainerFrame.h"
+#include "nsIDOMMutationEvent.h"
 #include "nsIImageLoadingContent.h"
 #include "nsLayoutUtils.h"
 #include "imgINotificationObserver.h"
@@ -49,15 +50,16 @@ private:
   nsSVGImageFrame *mFrame;
 };
 
-class nsSVGImageFrame : public SVGGeometryFrame
-                      , public nsIReflowCallback
+class nsSVGImageFrame final
+  : public SVGGeometryFrame
+  , public nsIReflowCallback
 {
   friend nsIFrame*
   NS_NewSVGImageFrame(nsIPresShell* aPresShell, nsStyleContext* aContext);
 
 protected:
   explicit nsSVGImageFrame(nsStyleContext* aContext)
-    : SVGGeometryFrame(aContext)
+    : SVGGeometryFrame(aContext, kClassID)
     , mReflowCallbackPosted(false)
     , mForceSyncDecoding(false)
   {
@@ -67,14 +69,14 @@ protected:
   virtual ~nsSVGImageFrame();
 
 public:
-  NS_DECL_QUERYFRAME_TARGET(nsSVGImageFrame)
   NS_DECL_QUERYFRAME
-  NS_DECL_FRAMEARENA_HELPERS
+  NS_DECL_FRAMEARENA_HELPERS(nsSVGImageFrame)
 
-  // nsISVGChildFrame interface:
-  virtual DrawResult PaintSVG(gfxContext& aContext,
-                              const gfxMatrix& aTransform,
-                              const nsIntRect* aDirtyRect = nullptr) override;
+  // nsSVGDisplayableFrame interface:
+  virtual void PaintSVG(gfxContext& aContext,
+                        const gfxMatrix& aTransform,
+                        imgDrawingParams& aImgParams,
+                        const nsIntRect* aDirtyRect = nullptr) override;
   virtual nsIFrame* GetFrameForPoint(const gfxPoint& aPoint) override;
   virtual void ReflowSVG() override;
 
@@ -93,13 +95,6 @@ public:
                     nsContainerFrame* aParent,
                     nsIFrame*         aPrevInFlow) override;
   virtual void DestroyFrom(nsIFrame* aDestructRoot) override;
-
-  /**
-   * Get the "type" of the frame
-   *
-   * @see nsGkAtoms::svgImageFrame
-   */
-  virtual nsIAtom* GetType() const override;
 
 #ifdef DEBUG_FRAME_DUMP
   virtual nsresult GetFrameName(nsAString& aResult) const override

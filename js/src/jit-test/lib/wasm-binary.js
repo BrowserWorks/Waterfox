@@ -28,6 +28,11 @@ const dataId           = 11;
 // User-defined section names
 const nameName         = "name";
 
+// Name section name types
+const nameTypeModule   = 0;
+const nameTypeFunction = 1;
+const nameTypeLocal    = 2;
+
 // Type codes
 const I32Code          = 0x7f;
 const I64Code          = 0x7e;
@@ -84,6 +89,8 @@ const I64TruncSF32Code = 0xae;
 const I64TruncUF32Code = 0xaf;
 const I64TruncSF64Code = 0xb0;
 const I64TruncUF64Code = 0xb1;
+
+const FirstInvalidOpcode = 0xc0;
 
 // DefinitionKind
 const FunctionCode     = 0x00;

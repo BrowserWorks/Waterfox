@@ -10,7 +10,7 @@
 #include "nsSVGElement.h"
 #include "nsCOMPtr.h"
 #include "nsSVGString.h"
-#include "nsScriptElement.h"
+#include "mozilla/dom/ScriptElement.h"
 
 class nsIDocument;
 
@@ -24,7 +24,7 @@ namespace dom {
 typedef nsSVGElement SVGScriptElementBase;
 
 class SVGScriptElement final : public SVGScriptElementBase,
-                               public nsScriptElement
+                               public ScriptElement
 {
 protected:
   friend nsresult (::NS_NewSVGScriptElement(nsIContent **aResult,
@@ -47,7 +47,7 @@ public:
   virtual void FreezeUriAsyncDefer() override;
   virtual CORSMode GetCORSMode() const override;
 
-  // nsScriptElement
+  // ScriptElement
   virtual bool HasScriptContent() override;
 
   // nsIContent specializations:
@@ -55,13 +55,16 @@ public:
                               nsIContent* aBindingParent,
                               bool aCompileEventHandlers) override;
   virtual nsresult AfterSetAttr(int32_t aNamespaceID, nsIAtom* aName,
-                                const nsAttrValue* aValue, bool aNotify) override;
+                                const nsAttrValue* aValue,
+                                const nsAttrValue* aOldValue,
+                                bool aNotify) override;
   virtual bool ParseAttribute(int32_t aNamespaceID,
                               nsIAtom* aAttribute,
                               const nsAString& aValue,
                               nsAttrValue& aResult) override;
 
-  virtual nsresult Clone(mozilla::dom::NodeInfo *aNodeInfo, nsINode **aResult) const override;
+  virtual nsresult Clone(mozilla::dom::NodeInfo *aNodeInfo, nsINode **aResult,
+                         bool aPreallocateChildren) const override;
 
   // WebIDL
   void GetType(nsAString & aType);

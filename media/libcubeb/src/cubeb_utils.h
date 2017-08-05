@@ -8,6 +8,10 @@
 #if !defined(CUBEB_UTILS)
 #define CUBEB_UTILS
 
+#include "cubeb/cubeb.h"
+
+#ifdef __cplusplus
+
 #include <stdint.h>
 #include <string.h>
 #include <assert.h>
@@ -122,6 +126,11 @@ public:
   T * data() const
   {
     return data_;
+  }
+
+  T * end() const
+  {
+    return data_ + length_;
   }
 
   const T& at(size_t index) const
@@ -259,6 +268,85 @@ private:
   size_t length_;
 };
 
+struct auto_array_wrapper {
+  virtual void push(void * elements, size_t length) = 0;
+  virtual size_t length() = 0;
+  virtual void push_silence(size_t length) = 0;
+  virtual bool pop(size_t length) = 0;
+  virtual void * data() = 0;
+  virtual void * end() = 0;
+  virtual void clear() = 0;
+  virtual bool reserve(size_t capacity) = 0;
+  virtual void set_length(size_t length) = 0;
+  virtual ~auto_array_wrapper() {}
+};
+
+template <typename T>
+struct auto_array_wrapper_impl : public auto_array_wrapper {
+  auto_array_wrapper_impl() {}
+
+  explicit auto_array_wrapper_impl(uint32_t size)
+    : ar(size)
+  {}
+
+  void push(void * elements, size_t length) override {
+    ar.push(static_cast<T *>(elements), length);
+  }
+
+  size_t length() override {
+    return ar.length();
+  }
+
+  void push_silence(size_t length) override {
+    ar.push_silence(length);
+  }
+
+  bool pop(size_t length) override {
+    return ar.pop(nullptr, length);
+  }
+
+  void * data() override {
+    return ar.data();
+  }
+
+  void * end() override {
+    return ar.end();
+  }
+
+  void clear() override {
+    ar.clear();
+  }
+
+  bool reserve(size_t capacity) override {
+    return ar.reserve(capacity);
+  }
+
+  void set_length(size_t length) override {
+    ar.set_length(length);
+  }
+
+  ~auto_array_wrapper_impl() {
+    ar.clear();
+  }
+
+private:
+  auto_array<T> ar;
+};
+
 using auto_lock = std::lock_guard<owned_critical_section>;
+#endif // __cplusplus
+
+// C language helpers
+
+#ifdef __cplusplus
+extern "C" {
+#endif
+
+int cubeb_utils_default_device_collection_destroy(cubeb * context,
+                                                  cubeb_device_collection * collection);
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif /* CUBEB_UTILS */

@@ -18,11 +18,13 @@ namespace jit {
     _(TypeMonitor_SingleObject)                  \
     _(TypeMonitor_ObjectGroup)                   \
     _(TypeMonitor_PrimitiveSet)                  \
+    _(TypeMonitor_AnyValue)                      \
                                                  \
     _(TypeUpdate_Fallback)                       \
     _(TypeUpdate_SingleObject)                   \
     _(TypeUpdate_ObjectGroup)                    \
     _(TypeUpdate_PrimitiveSet)                   \
+    _(TypeUpdate_AnyValue)                       \
                                                  \
     _(NewArray_Fallback)                         \
     _(NewObject_Fallback)                        \
@@ -52,6 +54,7 @@ namespace jit {
     _(SetElem_Fallback)                          \
                                                  \
     _(In_Fallback)                               \
+    _(HasOwn_Fallback)                           \
                                                  \
     _(GetName_Fallback)                          \
                                                  \
@@ -73,7 +76,6 @@ namespace jit {
     _(InstanceOf_Function)                       \
                                                  \
     _(TypeOf_Fallback)                           \
-    _(TypeOf_Typed)                              \
                                                  \
     _(Rest_Fallback)                             \
                                                  \

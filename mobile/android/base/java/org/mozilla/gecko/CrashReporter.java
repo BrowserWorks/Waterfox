@@ -12,16 +12,22 @@ import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileOutputStream;
 import java.io.FileReader;
+import java.io.FileWriter;
 import java.io.InputStreamReader;
 import java.io.IOException;
 import java.io.OutputStream;
 import java.net.HttpURLConnection;
+import java.net.URI;
+import java.net.URISyntaxException;
 import java.net.URL;
+import java.net.URLDecoder;
 import java.nio.channels.Channels;
 import java.nio.channels.FileChannel;
+import java.security.MessageDigest;
 import java.util.zip.GZIPOutputStream;
 
 import org.mozilla.gecko.AppConstants.Versions;
+import org.mozilla.gecko.util.ProxySelector;
 
 import android.annotation.SuppressLint;
 import android.app.AlertDialog;
@@ -138,6 +144,7 @@ public class CrashReporter extends AppCompatActivity
         mPendingExtrasFile = new File(pendingDir, extrasFile.getName());
         moveFile(extrasFile, mPendingExtrasFile);
 
+        computeMinidumpHash(mPendingExtrasFile, mPendingMinidumpFile);
         mExtrasStringMap = new HashMap<String, String>();
         readStringsFromFile(mPendingExtrasFile.getPath(), mExtrasStringMap);
 
@@ -267,6 +274,46 @@ public class CrashReporter extends AppCompatActivity
         backgroundSendReport();
     }
 
+    private void computeMinidumpHash(File extraFile, File minidump) {
+        try {
+            FileInputStream stream = new FileInputStream(minidump);
+            MessageDigest md = MessageDigest.getInstance("SHA-256");
+
+            try {
+                byte[] buffer = new byte[4096];
+                int readBytes;
+
+                while ((readBytes = stream.read(buffer)) != -1) {
+                    md.update(buffer, 0, readBytes);
+                }
+            } finally {
+              stream.close();
+            }
+
+            byte[] digest = md.digest();
+            StringBuilder hash = new StringBuilder(84);
+
+            hash.append("MinidumpSha256Hash=");
+
+            for (int i = 0; i < digest.length; i++) {
+              hash.append(Integer.toHexString((digest[i] & 0xf0) >> 4));
+              hash.append(Integer.toHexString(digest[i] & 0x0f));
+            }
+
+            hash.append('\n');
+
+            FileWriter writer = new FileWriter(extraFile, /* append */ true);
+
+            try {
+                writer.write(hash.toString());
+            } finally {
+                writer.close();
+            }
+        } catch (Exception e) {
+            Log.e(LOGTAG, "exception while computing the minidump hash: ", e);
+        }
+    }
+
     private boolean readStringsFromFile(String filePath, Map<String, String> stringMap) {
         try {
             BufferedReader reader = new BufferedReader(new FileReader(filePath));
@@ -365,8 +412,11 @@ public class CrashReporter extends AppCompatActivity
 
         Log.i(LOGTAG, "server url: " + spec);
         try {
-            URL url = new URL(spec);
-            HttpURLConnection conn = (HttpURLConnection)url.openConnection();
+            final URL url = new URL(URLDecoder.decode(spec, "UTF-8"));
+            final URI uri = new URI(url.getProtocol(), url.getUserInfo(),
+                                    url.getHost(), url.getPort(),
+                                    url.getPath(), url.getQuery(), url.getRef());
+            HttpURLConnection conn = (HttpURLConnection)ProxySelector.openConnectionWithProxy(uri);
             conn.setRequestMethod("POST");
             String boundary = generateBoundary();
             conn.setDoOutput(true);
@@ -455,6 +505,8 @@ public class CrashReporter extends AppCompatActivity
             }
         } catch (IOException e) {
             Log.e(LOGTAG, "exception during send: ", e);
+        } catch (URISyntaxException e) {
+            Log.e(LOGTAG, "exception during new URI: ", e);
         }
 
         doFinish();

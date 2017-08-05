@@ -16,11 +16,21 @@ module.exports = createClass({
 
   propTypes: {
     highlighterSettings: PropTypes.shape(Types.highlighterSettings).isRequired,
+    onToggleShowGridAreas: PropTypes.func.isRequired,
     onToggleShowGridLineNumbers: PropTypes.func.isRequired,
     onToggleShowInfiniteLines: PropTypes.func.isRequired,
   },
 
   mixins: [ addons.PureRenderMixin ],
+
+  onShowGridAreasCheckboxClick() {
+    let {
+      highlighterSettings,
+      onToggleShowGridAreas,
+    } = this.props;
+
+    onToggleShowGridAreas(!highlighterSettings.showGridAreasOverlay);
+  },
 
   onShowGridLineNumbersCheckboxClick() {
     let {
@@ -56,11 +66,14 @@ module.exports = createClass({
       dom.ul(
         {},
         dom.li(
-          {},
+          {
+            className: "grid-settings-item",
+          },
           dom.label(
             {},
             dom.input(
               {
+                id: "grid-setting-extend-grid-lines",
                 type: "checkbox",
                 checked: highlighterSettings.showInfiniteLines,
                 onChange: this.onShowInfiniteLinesCheckboxClick,
@@ -70,17 +83,37 @@ module.exports = createClass({
           )
         ),
         dom.li(
-          {},
+          {
+            className: "grid-settings-item",
+          },
           dom.label(
             {},
             dom.input(
               {
+                id: "grid-setting-show-grid-line-numbers",
                 type: "checkbox",
                 checked: highlighterSettings.showGridLineNumbers,
                 onChange: this.onShowGridLineNumbersCheckboxClick,
               }
             ),
             getStr("layout.displayNumbersOnLines")
+          )
+        ),
+        dom.li(
+          {
+            className: "grid-settings-item",
+          },
+          dom.label(
+           {},
+           dom.input(
+             {
+               id: "grid-setting-show-grid-areas",
+               type: "checkbox",
+               checked: highlighterSettings.showGridAreasOverlay,
+               onChange: this.onShowGridAreasCheckboxClick,
+             }
+           ),
+           getStr("layout.displayGridAreas")
           )
         )
       )

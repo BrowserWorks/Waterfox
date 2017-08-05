@@ -7,20 +7,13 @@
                   android:title="@string/pref_category_accessibility"
                   android:enabled="false">
 
-    <org.mozilla.gecko.preferences.FontSizePreference
-                    android:key="font.size.inflation.minTwips"
-                    android:title="@string/pref_text_size"
-                    android:positiveButtonText="@string/pref_font_size_set"
-                    android:negativeButtonText="@string/button_cancel"
-                    android:persistent="false" />
+    <SwitchPreference android:key="android.not_a_preference.font.size.use_system_font_size"
+                      android:title="@string/pref_use_system_font_size"
+                      android:summary="@string/pref_use_system_font_size_summary" />
 
     <SwitchPreference android:key="browser.ui.zoom.force-user-scalable"
                       android:title="@string/pref_zoom_force_enabled"
                       android:summary="@string/pref_zoom_force_enabled_summary" />
-
-    <SwitchPreference android:key="ui.zoomedview.enabled"
-                      android:title="@string/pref_magnifying_glass_enabled"
-                      android:summary="@string/pref_magnifying_glass_enabled_summary" />
 
     <SwitchPreference android:key="android.not_a_preference.voice_input_enabled"
                       android:title="@string/pref_voice_input"

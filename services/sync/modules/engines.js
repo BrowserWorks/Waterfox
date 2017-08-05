@@ -13,10 +13,11 @@ this.EXPORTED_SYMBOLS = [
 
 var {classes: Cc, interfaces: Ci, results: Cr, utils: Cu} = Components;
 
-Cu.import("resource://services-common/async.js");
+Cu.import("resource://gre/modules/XPCOMUtils.jsm");
+Cu.import("resource://gre/modules/Services.jsm");
 Cu.import("resource://gre/modules/JSONFile.jsm");
 Cu.import("resource://gre/modules/Log.jsm");
-Cu.import("resource://gre/modules/osfile.jsm");
+Cu.import("resource://services-common/async.js");
 Cu.import("resource://services-common/observers.js");
 Cu.import("resource://services-sync/constants.js");
 Cu.import("resource://services-sync/record.js");
@@ -25,6 +26,8 @@ Cu.import("resource://services-sync/util.js");
 
 XPCOMUtils.defineLazyModuleGetter(this, "fxAccounts",
   "resource://gre/modules/FxAccounts.jsm");
+XPCOMUtils.defineLazyModuleGetter(this, "OS",
+                                  "resource://gre/modules/osfile.jsm");
 
 /*
  * Trackers are associated with a single engine and deal with
@@ -763,6 +766,22 @@ this.SyncEngine = function SyncEngine(name, service) {
 
   this.loadToFetch();
   this.loadPreviousFailed();
+  // The set of records needing a weak reupload.
+  // The difference between this and a "normal" reupload is that these records
+  // are only tracked in memory, and if the reupload attempt fails (shutdown,
+  // 412, etc), we abort uploading the "weak" set.
+  //
+  // The rationale here is for the cases where we receive a record from the
+  // server that we know is wrong in some (small) way. For example, the
+  // dateAdded field on bookmarks -- maybe we have a better date, or the server
+  // record is entirely missing the date, etc.
+  //
+  // In these cases, we fix our local copy of the record, and mark it for
+  // weak reupload. A normal ("strong") reupload is problematic here because
+  // in the case of a conflict from the server, there's a window where our
+  // record would be marked as modified more recently than a change that occurs
+  // on another device change, and we lose data from the user.
+  this._needWeakReupload = new Set();
 }
 
 // Enumeration to define approaches to handling bad records.
@@ -795,7 +814,6 @@ SyncEngine.prototype = {
   // How many records to pull at one time when specifying IDs. This is to avoid
   // URI length limitations.
   guidFetchBatchSize: DEFAULT_GUID_FETCH_BATCH_SIZE,
-  mobileGUIDFetchBatchSize: DEFAULT_MOBILE_GUID_FETCH_BATCH_SIZE,
 
   // How many records to process in a single batch.
   applyIncomingBatchSize: DEFAULT_STORE_BATCH_SIZE,
@@ -915,6 +933,14 @@ SyncEngine.prototype = {
     Svc.Prefs.set(this.name + ".lastSyncLocal", value.toString());
   },
 
+  get maxRecordPayloadBytes() {
+    let serverConfiguration = this.service.serverConfiguration;
+    if (serverConfiguration && serverConfiguration.max_record_payload_bytes) {
+      return serverConfiguration.max_record_payload_bytes;
+    }
+    return DEFAULT_MAX_RECORD_PAYLOAD_BYTES;
+  },
+
   /*
    * Returns a changeset for this sync. Engine implementations can override this
    * method to bypass the tracker for certain or all changed items.
@@ -944,7 +970,7 @@ SyncEngine.prototype = {
   _syncStartup() {
 
     // Determine if we need to wipe on outdated versions
-    let metaGlobal = this.service.recordManager.get(this.metaURL);
+    let metaGlobal = Async.promiseSpinningly(this.service.recordManager.get(this.metaURL));
     let engines = metaGlobal.payload.engines || {};
     let engineData = engines[this.name] || {};
 
@@ -1008,6 +1034,7 @@ SyncEngine.prototype = {
 
     // Keep track of what to delete at the end of sync
     this._delete = {};
+    this._needWeakReupload.clear();
   },
 
   /**
@@ -1028,7 +1055,6 @@ SyncEngine.prototype = {
 
     // Figure out how many total items to fetch this sync; do less on mobile.
     let batchSize = this.downloadLimit || Infinity;
-    let isMobile = (Svc.Prefs.get("client.type") == "mobile");
 
     if (!newitems) {
       newitems = this.itemSource();
@@ -1038,9 +1064,6 @@ SyncEngine.prototype = {
       newitems.sort = this._defaultSort;
     }
 
-    if (isMobile) {
-      batchSize = MOBILE_BATCH_SIZE;
-    }
     newitems.newer = this.lastSync;
     newitems.full  = true;
     newitems.limit = batchSize;
@@ -1208,7 +1231,7 @@ SyncEngine.prototype = {
 
     // Only bother getting data from the server if there's new things
     if (this.lastModified == null || this.lastModified > this.lastSync) {
-      let resp = newitems.getBatched();
+      let resp = Async.promiseSpinningly(newitems.getBatched());
       doApplyBatchAndPersistFailed.call(this);
       if (!resp.success) {
         resp.failureCode = ENGINE_DOWNLOAD_FAIL;
@@ -1231,7 +1254,7 @@ SyncEngine.prototype = {
       // index: Orders by the sortindex descending (highest weight first).
       guidColl.sort  = "index";
 
-      let guids = guidColl.get();
+      let guids = Async.promiseSpinningly(guidColl.get());
       if (!guids.success)
         throw guids;
 
@@ -1253,8 +1276,7 @@ SyncEngine.prototype = {
     // Process any backlog of GUIDs.
     // At this point we impose an upper limit on the number of items to fetch
     // in a single request, even for desktop, to avoid hitting URI limits.
-    batchSize = isMobile ? this.mobileGUIDFetchBatchSize :
-                           this.guidFetchBatchSize;
+    batchSize = this.guidFetchBatchSize;
 
     while (fetchBatch.length && !aborting) {
       // Reuse the original query, but get rid of the restricting params
@@ -1264,7 +1286,7 @@ SyncEngine.prototype = {
       newitems.ids = fetchBatch.slice(0, batchSize);
 
       // Reuse the existing record handler set earlier
-      let resp = newitems.get();
+      let resp = Async.promiseSpinningly(newitems.get());
       if (!resp.success) {
         resp.failureCode = ENGINE_DOWNLOAD_FAIL;
         throw resp;
@@ -1333,6 +1355,13 @@ SyncEngine.prototype = {
    */
   _findDupe(item) {
     // By default, assume there's no dupe items for the engine
+  },
+
+  /**
+   * Called before a remote record is discarded due to failed reconciliation.
+   * Used by bookmark sync to merge folder child orders.
+   */
+  beforeRecordDiscard(localRecord, remoteRecord, remoteIsNewer) {
   },
 
   // Called when the server has a record marked as deleted, but locally we've
@@ -1544,6 +1573,9 @@ SyncEngine.prototype = {
     // opportunity to merge the records. Bug 720592 tracks this feature.
     this._log.warn("DATA LOSS: Both local and remote changes to record: " +
                    item.id);
+    if (!remoteIsNewer) {
+      this.beforeRecordDiscard(localRecord, item, remoteIsNewer);
+    }
     return remoteIsNewer;
   },
 
@@ -1551,15 +1583,15 @@ SyncEngine.prototype = {
   _uploadOutgoing() {
     this._log.trace("Uploading local changes to server.");
 
+    // collection we'll upload
+    let up = new Collection(this.engineURL, null, this.service);
     let modifiedIDs = this._modified.ids();
+    let counts = { failed: 0, sent: 0 };
     if (modifiedIDs.length) {
       this._log.trace("Preparing " + modifiedIDs.length +
                       " outgoing records");
 
-      let counts = { sent: modifiedIDs.length, failed: 0 };
-
-      // collection we'll upload
-      let up = new Collection(this.engineURL, null, this.service);
+      counts.sent = modifiedIDs.length;
 
       let failed = [];
       let successful = [];
@@ -1616,6 +1648,13 @@ SyncEngine.prototype = {
             this._log.trace("Outgoing: " + out);
 
           out.encrypt(this.service.collectionKeys.keyForCollection(this.name));
+          let payloadLength = JSON.stringify(out.payload).length;
+          if (payloadLength > this.maxRecordPayloadBytes) {
+            if (this.allowSkippedRecord) {
+              this._modified.delete(id); // Do not attempt to sync that record again
+            }
+            throw new Error(`Payload too big: ${payloadLength} bytes`);
+          }
           ok = true;
         } catch (ex) {
           this._log.warn("Error creating record", ex);
@@ -1625,6 +1664,7 @@ SyncEngine.prototype = {
             throw ex;
           }
         }
+        this._needWeakReupload.delete(id);
         if (ok) {
           let { enqueued, error } = postQueue.enqueue(out);
           if (!enqueued) {
@@ -1639,8 +1679,68 @@ SyncEngine.prototype = {
         this._store._sleep(0);
       }
       postQueue.flush(true);
+    }
+
+    if (this._needWeakReupload.size) {
+      try {
+        const { sent, failed } = this._weakReupload(up);
+        counts.sent += sent;
+        counts.failed += failed;
+      } catch (e) {
+        if (Async.isShutdownException(e)) {
+          throw e;
+        }
+        this._log.warn("Weak reupload failed", e);
+      }
+    }
+    if (counts.sent || counts.failed) {
       Observers.notify("weave:engine:sync:uploaded", counts, this.name);
     }
+  },
+
+  _weakReupload(collection) {
+    const counts = { sent: 0, failed: 0 };
+    let pendingSent = 0;
+    let postQueue = collection.newPostQueue(this._log, this.lastSync, (resp, batchOngoing = false) => {
+      if (!resp.success) {
+        this._needWeakReupload.clear();
+        this._log.warn("Uploading records (weak) failed: " + resp);
+        resp.failureCode = resp.status == 412 ? ENGINE_BATCH_INTERRUPTED : ENGINE_UPLOAD_FAIL;
+        throw resp;
+      }
+      if (!batchOngoing) {
+        counts.sent += pendingSent;
+        pendingSent = 0;
+      }
+    });
+
+    let pendingWeakReupload = this.buildWeakReuploadMap(this._needWeakReupload);
+    for (let [id, encodedRecord] of pendingWeakReupload) {
+      try {
+        this._log.trace("Outgoing (weak)", encodedRecord);
+        encodedRecord.encrypt(this.service.collectionKeys.keyForCollection(this.name));
+      } catch (ex) {
+        if (Async.isShutdownException(ex)) {
+          throw ex;
+        }
+        this._log.warn(`Failed to encrypt record "${id}" during weak reupload`, ex);
+        ++counts.failed;
+        continue;
+      }
+      // Note that general errors (network error, 412, etc.) will throw here.
+      // `enqueued` is only false if the specific item failed to enqueue, but
+      // other items should be/are fine. For example, enqueued will be false if
+      // it is larger than the max post or WBO size.
+      let { enqueued } = postQueue.enqueue(encodedRecord);
+      if (!enqueued) {
+        ++counts.failed;
+      } else {
+        ++pendingSent;
+      }
+      this._store._sleep(0);
+    }
+    postQueue.flush(true);
+    return counts;
   },
 
   _onRecordsWritten(succeeded, failed) {
@@ -1657,7 +1757,7 @@ SyncEngine.prototype = {
     let doDelete = Utils.bind2(this, function(key, val) {
       let coll = new Collection(this.engineURL, this._recordObj, this.service);
       coll[key] = val;
-      coll.delete();
+      Async.promiseSpinningly(coll.delete());
     });
 
     for (let [key, val] of Object.entries(this._delete)) {
@@ -1678,6 +1778,7 @@ SyncEngine.prototype = {
   },
 
   _syncCleanup() {
+    this._needWeakReupload.clear();
     if (!this._modified) {
       return;
     }
@@ -1722,7 +1823,7 @@ SyncEngine.prototype = {
     // Any failure fetching/decrypting will just result in false
     try {
       this._log.trace("Trying to decrypt a record from the server..");
-      test.get();
+      Async.promiseSpinningly(test.get());
     } catch (ex) {
       if (Async.isShutdownException(ex)) {
         throw ex;
@@ -1740,14 +1841,14 @@ SyncEngine.prototype = {
   },
 
   wipeServer() {
-    let response = this.service.resource(this.engineURL).delete();
+    let response = Async.promiseSpinningly(this.service.resource(this.engineURL).delete());
     if (response.status != 200 && response.status != 404) {
       throw response;
     }
     this._resetClient();
   },
 
-  removeClientData() {
+  async removeClientData() {
     // Implement this method in engines that store client specific data
     // on the server.
   },
@@ -1814,6 +1915,27 @@ SyncEngine.prototype = {
       this._tracker.addChangedID(id, change);
     }
   },
+
+  /**
+   * Returns a map of (id, unencrypted record) that will be used to perform
+   * the weak reupload. Subclasses may override this to filter out items we
+   * shouldn't upload as part of a weak reupload (items that have changed,
+   * for example).
+   */
+  buildWeakReuploadMap(idSet) {
+    let result = new Map();
+    for (let id of idSet) {
+      try {
+        result.set(id, this._createRecord(id));
+      } catch (ex) {
+        if (Async.isShutdownException(ex)) {
+          throw ex;
+        }
+        this._log.warn("createRecord failed during weak reupload", ex);
+      }
+    }
+    return result;
+  }
 };
 
 /**

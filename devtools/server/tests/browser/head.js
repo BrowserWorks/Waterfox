@@ -41,7 +41,7 @@ waitForExplicitFinish();
  */
 var addTab = Task.async(function* (url) {
   info(`Adding a new tab with URL: ${url}`);
-  let tab = gBrowser.selectedTab = gBrowser.addTab(url);
+  let tab = gBrowser.selectedTab = BrowserTestUtils.addTab(gBrowser, url);
   yield BrowserTestUtils.browserLoaded(tab.linkedBrowser);
 
   info(`Tab added and URL ${url} loaded`);
@@ -63,6 +63,21 @@ function* initAnimationsFrontForUrl(url) {
   let animations = AnimationsFront(client, form);
 
   return {inspector, walker, animations, client};
+}
+
+function* initLayoutFrontForUrl(url) {
+  const {InspectorFront} = require("devtools/shared/fronts/inspector");
+
+  yield addTab(url);
+
+  initDebuggerServer();
+  let client = new DebuggerClient(DebuggerServer.connectPipe());
+  let form = yield connectDebuggerClient(client);
+  let inspector = InspectorFront(client, form);
+  let walker = yield inspector.getWalker();
+  let layout = yield walker.getLayoutInspector();
+
+  return {inspector, walker, layout, client};
 }
 
 function initDebuggerServer() {

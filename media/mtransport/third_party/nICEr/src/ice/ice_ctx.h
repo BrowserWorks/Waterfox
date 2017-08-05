@@ -167,18 +167,17 @@ struct nr_ice_ctx_ {
 
 int nr_ice_ctx_create(char *label, UINT4 flags, nr_ice_ctx **ctxp);
 int nr_ice_ctx_create_with_credentials(char *label, UINT4 flags, char* ufrag, char* pwd, nr_ice_ctx **ctxp);
-#define NR_ICE_CTX_FLAGS_OFFERER                           1
-#define NR_ICE_CTX_FLAGS_ANSWERER                          (1<<1)
-#define NR_ICE_CTX_FLAGS_AGGRESSIVE_NOMINATION             (1<<2)
-#define NR_ICE_CTX_FLAGS_LITE                              (1<<3)
-#define NR_ICE_CTX_FLAGS_RELAY_ONLY                        (1<<4)
-#define NR_ICE_CTX_FLAGS_HIDE_HOST_CANDIDATES              (1<<5)
-#define NR_ICE_CTX_FLAGS_ONLY_DEFAULT_ADDRS                (1<<6)
-#define NR_ICE_CTX_FLAGS_ONLY_PROXY                        (1<<7)
+#define NR_ICE_CTX_FLAGS_AGGRESSIVE_NOMINATION             (1)
+#define NR_ICE_CTX_FLAGS_LITE                              (1<<1)
+#define NR_ICE_CTX_FLAGS_RELAY_ONLY                        (1<<2)
+#define NR_ICE_CTX_FLAGS_HIDE_HOST_CANDIDATES              (1<<3)
+#define NR_ICE_CTX_FLAGS_ONLY_DEFAULT_ADDRS                (1<<4)
+#define NR_ICE_CTX_FLAGS_ONLY_PROXY                        (1<<5)
 
 void nr_ice_ctx_add_flags(nr_ice_ctx *ctx, UINT4 flags);
 void nr_ice_ctx_remove_flags(nr_ice_ctx *ctx, UINT4 flags);
 int nr_ice_ctx_destroy(nr_ice_ctx **ctxp);
+int nr_ice_set_local_addresses(nr_ice_ctx *ctx, nr_local_addr* stun_addrs, int stun_addr_ct);
 int nr_ice_gather(nr_ice_ctx *ctx, NR_async_cb done_cb, void *cb_arg);
 int nr_ice_add_candidate(nr_ice_ctx *ctx, nr_ice_candidate *cand);
 void nr_ice_gather_finished_cb(NR_SOCKET s, int h, void *cb_arg);

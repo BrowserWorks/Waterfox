@@ -9,6 +9,7 @@
 #include "nsContentUtils.h"
 #include "mozilla/dom/SVGScriptElement.h"
 #include "mozilla/dom/SVGScriptElementBinding.h"
+#include "nsIScriptError.h"
 
 NS_IMPL_NS_NEW_NAMESPACED_SVG_ELEMENT_CHECK_PARSER(Script)
 
@@ -42,7 +43,7 @@ NS_IMPL_ISUPPORTS_INHERITED(SVGScriptElement, SVGScriptElementBase,
 SVGScriptElement::SVGScriptElement(already_AddRefed<mozilla::dom::NodeInfo>& aNodeInfo,
                                    FromParser aFromParser)
   : SVGScriptElementBase(aNodeInfo)
-  , nsScriptElement(aFromParser)
+  , ScriptElement(aFromParser)
 {
   AddMutationObserver(this);
 }
@@ -55,7 +56,8 @@ SVGScriptElement::~SVGScriptElement()
 // nsIDOMNode methods
 
 nsresult
-SVGScriptElement::Clone(mozilla::dom::NodeInfo *aNodeInfo, nsINode **aResult) const
+SVGScriptElement::Clone(mozilla::dom::NodeInfo *aNodeInfo, nsINode **aResult,
+                        bool aPreallocateChildren) const
 {
   *aResult = nullptr;
 
@@ -64,7 +66,7 @@ SVGScriptElement::Clone(mozilla::dom::NodeInfo *aNodeInfo, nsINode **aResult) co
 
   nsCOMPtr<nsINode> kungFuDeathGrip = it;
   nsresult rv1 = it->Init();
-  nsresult rv2 = const_cast<SVGScriptElement*>(this)->CopyInnerTo(it);
+  nsresult rv2 = const_cast<SVGScriptElement*>(this)->CopyInnerTo(it, aPreallocateChildren);
   NS_ENSURE_SUCCESS(rv1, rv1);
   NS_ENSURE_SUCCESS(rv2, rv2);
 
@@ -147,9 +149,11 @@ SVGScriptElement::FreezeUriAsyncDefer()
       mStringAttributes[XLINK_HREF].IsExplicitlySet()) {
     // variation of this code in nsHTMLScriptElement - check if changes
     // need to be transfered when modifying
+    bool isHref = false;
     nsAutoString src;
     if (mStringAttributes[HREF].IsExplicitlySet()) {
       mStringAttributes[HREF].GetAnimValue(src, this);
+      isHref = true;
     } else {
       mStringAttributes[XLINK_HREF].GetAnimValue(src, this);
     }
@@ -158,6 +162,24 @@ SVGScriptElement::FreezeUriAsyncDefer()
     if (!src.IsEmpty()) {
       nsCOMPtr<nsIURI> baseURI = GetBaseURI();
       NS_NewURI(getter_AddRefs(mUri), src, nullptr, baseURI);
+
+      if (!mUri) {
+        const char16_t* params[] = { isHref ? u"href" : u"xlink:href", src.get() };
+
+        nsContentUtils::ReportToConsole(nsIScriptError::warningFlag,
+          NS_LITERAL_CSTRING("SVG"), OwnerDoc(),
+          nsContentUtils::eDOM_PROPERTIES, "ScriptSourceInvalidUri",
+          params, ArrayLength(params), nullptr,
+          EmptyString(), GetScriptLineNumber());
+      }
+    } else {
+      const char16_t* params[] = { isHref ? u"href" : u"xlink:href" };
+
+      nsContentUtils::ReportToConsole(nsIScriptError::warningFlag,
+        NS_LITERAL_CSTRING("SVG"), OwnerDoc(),
+        nsContentUtils::eDOM_PROPERTIES, "ScriptSourceEmpty",
+        params, ArrayLength(params), nullptr,
+        EmptyString(), GetScriptLineNumber());
     }
 
     // At this point mUri will be null for invalid URLs.
@@ -168,7 +190,7 @@ SVGScriptElement::FreezeUriAsyncDefer()
 }
 
 //----------------------------------------------------------------------
-// nsScriptElement methods
+// ScriptElement methods
 
 bool
 SVGScriptElement::HasScriptContent()
@@ -211,7 +233,8 @@ SVGScriptElement::BindToTree(nsIDocument* aDocument, nsIContent* aParent,
 
 nsresult
 SVGScriptElement::AfterSetAttr(int32_t aNamespaceID, nsIAtom* aName,
-                               const nsAttrValue* aValue, bool aNotify)
+                               const nsAttrValue* aValue,
+                               const nsAttrValue* aOldValue, bool aNotify)
 {
   if ((aNamespaceID == kNameSpaceID_XLink ||
        aNamespaceID == kNameSpaceID_None) &&
@@ -219,7 +242,7 @@ SVGScriptElement::AfterSetAttr(int32_t aNamespaceID, nsIAtom* aName,
     MaybeProcessScript();
   }
   return SVGScriptElementBase::AfterSetAttr(aNamespaceID, aName,
-                                            aValue, aNotify);
+                                            aValue, aOldValue, aNotify);
 }
 
 bool

@@ -23,14 +23,11 @@ function checkInstallConfirmation(...urls) {
   let observer = {
     observe(aSubject, aTopic, aData) {
       var installInfo = aSubject.wrappedJSObject;
-      if (gTestInWindow)
-        is(installInfo.browser, null, "Notification should have a null browser");
-      else
-        isnot(installInfo.browser, null, "Notification should have non-null browser");
+      isnot(installInfo.browser, null, "Notification should have non-null browser");
       notificationCount++;
     }
   };
-  Services.obs.addObserver(observer, "addon-install-started", false);
+  Services.obs.addObserver(observer, "addon-install-started");
 
   let windows = new Set();
 

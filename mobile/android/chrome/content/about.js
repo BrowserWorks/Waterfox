@@ -3,7 +3,7 @@
  * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
 
 var Ci = Components.interfaces, Cc = Components.classes, Cu = Components.utils, Cr = Components.results;
-Cu.import("resource://gre/modules/XPCOMUtils.jsm");
+Cu.import("resource://gre/modules/Messaging.jsm");
 Cu.import("resource://gre/modules/Services.jsm");
 
 function init() {
@@ -59,39 +59,30 @@ function init() {
   } catch (ex) {}
 
 #ifdef MOZ_UPDATER
-  let Updater = {
-    update: null,
-
-    init: function() {
-      Services.obs.addObserver(this, "Update:CheckResult", false);
-    },
-
-    observe: function(aSubject, aTopic, aData) {
-      if (aTopic == "Update:CheckResult") {
-        showUpdateMessage(aData);
-      }
-    },
-  };
-
-  Updater.init();
+  function expectUpdateResult() {
+    EventDispatcher.instance.registerListener(function listener(event, data, callback) {
+      EventDispatcher.instance.unregisterListener(listener, event);
+      showUpdateMessage(data.result);
+    }, "Update:CheckResult");
+  }
 
   function checkForUpdates() {
     showCheckingMessage();
+    expectUpdateResult();
 
-    let window = Services.wm.getMostRecentWindow("navigator:browser");
-    window.WindowEventDispatcher.sendRequest({ type: "Update:Check" });
+    EventDispatcher.instance.sendRequest({ type: "Update:Check" });
   }
 
   function downloadUpdate() {
-    let window = Services.wm.getMostRecentWindow("navigator:browser");
-    window.WindowEventDispatcher.sendRequest({ type: "Update:Download" });
+    expectUpdateResult();
+
+    EventDispatcher.instance.sendRequest({ type: "Update:Download" });
   }
 
   function installUpdate() {
     showCheckAction();
 
-    let window = Services.wm.getMostRecentWindow("navigator:browser");
-    window.WindowEventDispatcher.sendRequest({ type: "Update:Install" });
+    EventDispatcher.instance.sendRequest({ type: "Update:Install" });
   }
 
   let updateLink = document.getElementById("updateLink");
@@ -142,6 +133,7 @@ function init() {
         break;
       case "DOWNLOADING":
         downloadingSpan.style.display = "block";
+        expectUpdateResult();
         break;
       case "DOWNLOADED":
         downloadedSpan.style.display = "block";

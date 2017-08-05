@@ -12,12 +12,10 @@ Cu.import("resource://gre/modules/AppConstants.jsm");
 Cu.import("resource://gre/modules/XPCOMUtils.jsm");
 Cu.import("resource://gre/modules/Services.jsm");
 Cu.import("resource://gre/modules/Timer.jsm");
-Cu.import("resource://gre/modules/LoginManagerContent.jsm"); /* global UserAutoCompleteResult */
+Cu.import("resource://gre/modules/LoginManagerContent.jsm");
 
 XPCOMUtils.defineLazyModuleGetter(this, "Promise",
                                   "resource://gre/modules/Promise.jsm");
-XPCOMUtils.defineLazyModuleGetter(this, "Task",
-                                  "resource://gre/modules/Task.jsm");
 XPCOMUtils.defineLazyModuleGetter(this, "BrowserUtils",
                                   "resource://gre/modules/BrowserUtils.jsm");
 XPCOMUtils.defineLazyModuleGetter(this, "LoginHelper",
@@ -91,24 +89,23 @@ LoginManager.prototype = {
 
     // Preferences. Add observer so we get notified of changes.
     this._prefBranch = Services.prefs.getBranch("signon.");
-    this._prefBranch.addObserver("rememberSignons", this._observer, false);
+    this._prefBranch.addObserver("rememberSignons", this._observer);
 
     this._remember = this._prefBranch.getBoolPref("rememberSignons");
     this._autoCompleteLookupPromise = null;
 
     // Form submit observer checks forms for new logins and pw changes.
-    Services.obs.addObserver(this._observer, "xpcom-shutdown", false);
+    Services.obs.addObserver(this._observer, "xpcom-shutdown");
 
     if (Services.appinfo.processType ===
         Services.appinfo.PROCESS_TYPE_DEFAULT) {
-      Services.obs.addObserver(this._observer, "passwordmgr-storage-replace",
-                               false);
+      Services.obs.addObserver(this._observer, "passwordmgr-storage-replace");
 
       // Initialize storage so that asynchronous data loading can start.
       this._initStorage();
     }
 
-    Services.obs.addObserver(this._observer, "gather-telemetry", false);
+    Services.obs.addObserver(this._observer, "gather-telemetry");
   },
 
 
@@ -166,13 +163,13 @@ LoginManager.prototype = {
         delete this._pwmgr._prefBranch;
         this._pwmgr = null;
       } else if (topic == "passwordmgr-storage-replace") {
-        Task.spawn(function* () {
-          yield this._pwmgr._storage.terminate();
+        (async () => {
+          await this._pwmgr._storage.terminate();
           this._pwmgr._initStorage();
-          yield this._pwmgr.initializationPromise;
+          await this._pwmgr.initializationPromise;
           Services.obs.notifyObservers(null,
-                       "passwordmgr-storage-replace-complete", null);
-        }.bind(this));
+                       "passwordmgr-storage-replace-complete");
+        })();
       } else if (topic == "gather-telemetry") {
         // When testing, the "data" parameter is a string containing the
         // reference time in milliseconds for time-based statistics.

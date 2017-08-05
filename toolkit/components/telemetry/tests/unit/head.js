@@ -6,7 +6,6 @@ var { classes: Cc, utils: Cu, interfaces: Ci, results: Cr } = Components;
 Cu.import("resource://gre/modules/TelemetryController.jsm", this);
 Cu.import("resource://gre/modules/Services.jsm", this);
 Cu.import("resource://gre/modules/PromiseUtils.jsm", this);
-Cu.import("resource://gre/modules/Task.jsm", this);
 Cu.import("resource://gre/modules/FileUtils.jsm", this);
 Cu.import("resource://gre/modules/XPCOMUtils.jsm", this);
 Cu.import("resource://testing-common/httpd.js", this);
@@ -22,7 +21,6 @@ XPCOMUtils.defineLazyModuleGetter(this, "TelemetrySend",
 const gIsWindows = AppConstants.platform == "win";
 const gIsMac = AppConstants.platform == "macosx";
 const gIsAndroid = AppConstants.platform == "android";
-const gIsGonk = AppConstants.platform == "gonk";
 const gIsLinux = AppConstants.platform == "linux";
 
 const Telemetry = Cc["@mozilla.org/base/telemetry;1"].getService(Ci.nsITelemetry);
@@ -88,22 +86,21 @@ const PingServer = {
     const deferred = this._defers[this._currentDeferred++];
     // Send the ping to the consumer on the next tick, so that the completion gets
     // signaled to Telemetry.
-    return new Promise(r => Services.tm.currentThread.dispatch(() => r(deferred.promise),
-                                                               Ci.nsIThread.DISPATCH_NORMAL));
+    return new Promise(r => Services.tm.dispatchToMainThread(() => r(deferred.promise)));
   },
 
   promiseNextPing() {
     return this.promiseNextRequest().then(request => decodeRequestPayload(request));
   },
 
-  promiseNextRequests: Task.async(function*(count) {
+  async promiseNextRequests(count) {
     let results = [];
     for (let i = 0; i < count; ++i) {
-      results.push(yield this.promiseNextRequest());
+      results.push(await this.promiseNextRequest());
     }
 
     return results;
-  }),
+  },
 
   promiseNextPings(count) {
     return this.promiseNextRequests(count).then(requests => {
@@ -235,7 +232,7 @@ function fakeMonotonicNow(ms) {
 // Fake the timeout functions for TelemetryController sending.
 function fakePingSendTimer(set, clear) {
   let module = Cu.import("resource://gre/modules/TelemetrySend.jsm", {});
-  let obj = Cu.cloneInto({set, clear}, module, {cloneFunctions:true});
+  let obj = Cu.cloneInto({set, clear}, module, {cloneFunctions: true});
   module.Policy.setSchedulerTickTimeout = obj.set;
   module.Policy.clearSchedulerTickTimeout = obj.clear;
 }
@@ -310,9 +307,18 @@ if (runningInParent) {
   Services.prefs.setBoolPref("datareporting.policy.dataSubmissionPolicyBypassNotification", true);
   // FHR uploads should be enabled.
   Services.prefs.setBoolPref("datareporting.healthreport.uploadEnabled", true);
+  // Many tests expect the shutdown and the new-profile to not be sent on shutdown
+  // and will fail if receive an unexpected ping. Let's globally disable these features:
+  // the relevant tests will enable these prefs when needed.
+  Services.prefs.setBoolPref("toolkit.telemetry.shutdownPingSender.enabled", false);
+  Services.prefs.setBoolPref("toolkit.telemetry.newProfilePing.enabled", false);
+  // Ensure browser experiments are also disabled, to avoid network activity
+  // when toggling PREF_ENABLED.
+  Services.prefs.setBoolPref("experiments.enabled", false);
+
 
   fakePingSendTimer((callback, timeout) => {
-    Services.tm.mainThread.dispatch(() => callback(), Ci.nsIThread.DISPATCH_NORMAL);
+    Services.tm.dispatchToMainThread(() => callback());
   },
   () => {});
 

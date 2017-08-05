@@ -9,6 +9,7 @@
 
 #include <functional>
 #include <memory>
+#include <set>
 #include <vector>
 
 #include "test_io.h"
@@ -232,24 +233,6 @@ class TlsConversationRecorder : public TlsRecordFilter {
   DataBuffer& buffer_;
 };
 
-// Records an alert.  If an alert has already been recorded, it won't save the
-// new alert unless the old alert is a warning and the new one is fatal.
-class TlsAlertRecorder : public TlsRecordFilter {
- public:
-  TlsAlertRecorder() : level_(255), description_(255) {}
-
-  virtual PacketFilter::Action FilterRecord(const TlsRecordHeader& header,
-                                            const DataBuffer& input,
-                                            DataBuffer* output);
-
-  uint8_t level() const { return level_; }
-  uint8_t description() const { return description_; }
-
- private:
-  uint8_t level_;
-  uint8_t description_;
-};
-
 // Runs multiple packet filters in series.
 class ChainedPacketFilter : public PacketFilter {
  public:
@@ -268,7 +251,21 @@ class ChainedPacketFilter : public PacketFilter {
   std::vector<std::shared_ptr<PacketFilter>> filters_;
 };
 
+typedef std::function<bool(TlsParser* parser, const TlsVersioned& header)>
+    TlsExtensionFinder;
+
 class TlsExtensionFilter : public TlsHandshakeFilter {
+ public:
+  TlsExtensionFilter() : handshake_types_() {
+    handshake_types_.insert(kTlsHandshakeClientHello);
+    handshake_types_.insert(kTlsHandshakeServerHello);
+  }
+
+  TlsExtensionFilter(const std::set<uint8_t>& types)
+      : handshake_types_(types) {}
+
+  static bool FindExtensions(TlsParser* parser, const HandshakeHeader& header);
+
  protected:
   PacketFilter::Action FilterHandshake(const HandshakeHeader& header,
                                        const DataBuffer& input,
@@ -278,15 +275,12 @@ class TlsExtensionFilter : public TlsHandshakeFilter {
                                                const DataBuffer& input,
                                                DataBuffer* output) = 0;
 
- public:
-  static bool FindClientHelloExtensions(TlsParser* parser,
-                                        const TlsVersioned& header);
-  static bool FindServerHelloExtensions(TlsParser* parser);
-
  private:
   PacketFilter::Action FilterExtensions(TlsParser* parser,
                                         const DataBuffer& input,
                                         DataBuffer* output);
+
+  std::set<uint8_t> handshake_types_;
 };
 
 class TlsExtensionCapture : public TlsExtensionFilter {
@@ -394,6 +388,27 @@ class TlsInspectorClientHelloVersionSetter : public TlsHandshakeFilter {
 
  private:
   uint16_t version_;
+};
+
+// Damages the last byte of a handshake message.
+class TlsLastByteDamager : public TlsHandshakeFilter {
+ public:
+  TlsLastByteDamager(uint8_t type) : type_(type) {}
+  PacketFilter::Action FilterHandshake(
+      const TlsHandshakeFilter::HandshakeHeader& header,
+      const DataBuffer& input, DataBuffer* output) override {
+    if (header.handshake_type() != type_) {
+      return KEEP;
+    }
+
+    *output = input;
+
+    output->data()[output->len() - 1]++;
+    return CHANGE;
+  }
+
+ private:
+  uint8_t type_;
 };
 
 }  // namespace nss_test

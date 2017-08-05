@@ -9,7 +9,7 @@
 
 #include "mozilla/AddonPathService.h"
 #include "mozilla/BasicEvents.h"
-#include "mozilla/CycleCollectedJSContext.h"
+#include "mozilla/CycleCollectedJSRuntime.h"
 #include "mozilla/DOMEventTargetHelper.h"
 #include "mozilla/EventDispatcher.h"
 #include "mozilla/EventListenerManager.h"
@@ -34,7 +34,7 @@
 #include "EventListenerService.h"
 #include "GeckoProfiler.h"
 #ifdef MOZ_GECKO_PROFILER
-#include "ProfilerMarkers.h"
+#include "ProfilerMarkerPayload.h"
 #endif
 #include "nsCOMArray.h"
 #include "nsCOMPtr.h"
@@ -42,7 +42,6 @@
 #include "nsDOMCID.h"
 #include "nsError.h"
 #include "nsGkAtoms.h"
-#include "nsHtml5Atoms.h"
 #include "nsIContent.h"
 #include "nsIContentSecurityPolicy.h"
 #include "nsIDocument.h"
@@ -424,8 +423,12 @@ EventListenerManager::AddEventListenerInternal(
     ProcessApzAwareEventListenerAdd();
   }
 
-  if (aTypeAtom && mTarget) {
-    mTarget->EventListenerAdded(aTypeAtom);
+  if (mTarget) {
+    if (aTypeAtom) {
+      mTarget->EventListenerAdded(aTypeAtom);
+    } else if (!aTypeString.IsEmpty()) {
+      mTarget->EventListenerAdded(aTypeString);
+    }
   }
 
   if (mIsMainThreadELM && mTarget) {
@@ -511,6 +514,7 @@ EventListenerManager::EnableDevice(EventMessage aEventMessage)
       // Falls back to SENSOR_ROTATION_VECTOR and SENSOR_ORIENTATION if
       // unavailable on device.
       window->EnableDeviceSensor(SENSOR_GAME_ROTATION_VECTOR);
+      window->EnableDeviceSensor(SENSOR_ROTATION_VECTOR);
 #else
       window->EnableDeviceSensor(SENSOR_ORIENTATION);
 #endif
@@ -611,14 +615,19 @@ EventListenerManager::DisableDevice(EventMessage aEventMessage)
 }
 
 void
-EventListenerManager::NotifyEventListenerRemoved(nsIAtom* aUserType)
+EventListenerManager::NotifyEventListenerRemoved(nsIAtom* aUserType,
+                                                 const nsAString& aTypeString)
 {
   // If the following code is changed, other callsites of EventListenerRemoved
   // and NotifyAboutMainThreadListenerChange should be changed too.
   mNoListenerForEvent = eVoidEvent;
   mNoListenerForEventAtom = nullptr;
-  if (mTarget && aUserType) {
-    mTarget->EventListenerRemoved(aUserType);
+  if (mTarget) {
+    if (aUserType) {
+      mTarget->EventListenerRemoved(aUserType);
+    } else if (!aTypeString.IsEmpty()) {
+      mTarget->EventListenerRemoved(aTypeString);
+    }
   }
   if (mIsMainThreadELM && mTarget) {
     EventListenerService::NotifyAboutMainThreadListenerChange(mTarget,
@@ -653,7 +662,7 @@ EventListenerManager::RemoveEventListenerInternal(
       if (listener->mListener == aListenerHolder &&
           listener->mFlags.EqualsForRemoval(aFlags)) {
         mListeners.RemoveElementAt(i);
-        NotifyEventListenerRemoved(aUserType);
+        NotifyEventListenerRemoved(aUserType, aTypeString);
         if (!aAllEvents && deviceType) {
           DisableDevice(aEventMessage);
         }
@@ -787,9 +796,14 @@ EventListenerManager::SetEventHandlerInternal(
     bool same = jsEventHandler->GetTypedEventHandler() == aTypedHandler;
     // Possibly the same listener, but update still the context and scope.
     jsEventHandler->SetHandler(aTypedHandler);
-    if (mTarget && !same && aName) {
-      mTarget->EventListenerRemoved(aName);
-      mTarget->EventListenerAdded(aName);
+    if (mTarget && !same) {
+      if (aName) {
+        mTarget->EventListenerRemoved(aName);
+        mTarget->EventListenerAdded(aName);
+      } else if (!aTypeString.IsEmpty()) {
+        mTarget->EventListenerRemoved(aTypeString);
+        mTarget->EventListenerAdded(aTypeString);
+      }
     }
     if (mIsMainThreadELM && mTarget) {
       EventListenerService::NotifyAboutMainThreadListenerChange(mTarget, aName);
@@ -911,7 +925,7 @@ EventListenerManager::RemoveEventHandler(nsIAtom* aName,
 
   if (listener) {
     mListeners.RemoveElementAt(uint32_t(listener - &mListeners.ElementAt(0)));
-    NotifyEventListenerRemoved(aName);
+    NotifyEventListenerRemoved(aName, aTypeString);
     if (IsDeviceType(eventMessage)) {
       DisableDevice(eventMessage);
     }
@@ -1275,10 +1289,10 @@ EventListenerManager::HandleEventInternal(nsPresContext* aPresContext,
               // do this extra work when we're not profiling.
               nsAutoString typeStr;
               (*aDOMEvent)->GetType(typeStr);
-              PROFILER_LABEL_PRINTF("EventListenerManager", "HandleEventInternal",
-                                    js::ProfileEntry::Category::EVENTS,
-                                    "%s",
-                                    NS_LossyConvertUTF16toASCII(typeStr).get());
+              NS_LossyConvertUTF16toASCII typeCStr(typeStr);
+              PROFILER_LABEL_DYNAMIC("EventListenerManager", "HandleEventInternal",
+                                     js::ProfileEntry::Category::EVENTS,
+                                     typeCStr.get());
               TimeStamp startTime = TimeStamp::Now();
 
               rv = HandleEventSubType(listener, *aDOMEvent, aCurrentTarget);
@@ -1342,7 +1356,8 @@ EventListenerManager::HandleEventInternal(nsPresContext* aPresContext,
     mListeners.RemoveElementsBy([](const Listener& aListener) {
       return aListener.mListenerType == Listener::eNoListener;
     });
-    NotifyEventListenerRemoved(aEvent->mSpecifiedEventType);
+    NotifyEventListenerRemoved(aEvent->mSpecifiedEventType,
+                               aEvent->mSpecifiedEventTypeString);
     if (IsDeviceType(aEvent->mMessage)) {
       // This is a device-type event, we need to check whether we can
       // disable device after removing the once listeners.
@@ -1569,6 +1584,8 @@ EventListenerManager::GetListenerInfo(nsCOMArray<nsIEventListenerInfo>* aList)
     nsAutoString eventType;
     if (listener.mAllEvents) {
       eventType.SetIsVoid(true);
+    } else if (listener.mListenerType == Listener::eNoListener) {
+      continue;
     } else {
       eventType.Assign(Substring(nsDependentAtomString(listener.mTypeAtom), 2));
     }
@@ -1769,9 +1786,8 @@ EventListenerManager::IsApzAwareListener(Listener* aListener)
 bool
 EventListenerManager::IsApzAwareEvent(nsIAtom* aEvent)
 {
-  if (aEvent == nsGkAtoms::onwheel ||
-      aEvent == nsGkAtoms::onDOMMouseScroll ||
-      aEvent == nsHtml5Atoms::onmousewheel ||
+  if (aEvent == nsGkAtoms::onwheel || aEvent == nsGkAtoms::onDOMMouseScroll ||
+      aEvent == nsGkAtoms::onmousewheel ||
       aEvent == nsGkAtoms::onMozMousePixelScroll) {
     return true;
   }

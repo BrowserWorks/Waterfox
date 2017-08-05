@@ -162,6 +162,10 @@ struct PersistentRootedMarker;
         set(p);                                                                                   \
         return *this;                                                                             \
     }                                                                                             \
+    Wrapper<T>& operator=(T&& p) {                                                                \
+        set(mozilla::Move(p));                                                                    \
+        return *this;                                                                             \
+    }                                                                                             \
     Wrapper<T>& operator=(const Wrapper<T>& other) {                                              \
         set(other.get());                                                                         \
         return *this;                                                                             \
@@ -568,6 +572,9 @@ class MOZ_STACK_CLASS MutableHandle : public js::MutableHandleBase<T, MutableHan
     void set(const T& v) {
         *ptr = v;
     }
+    void set(T&& v) {
+        *ptr = mozilla::Move(v);
+    }
 
     /*
      * This may be called only if the location of the T is guaranteed
@@ -727,7 +734,7 @@ class alignas(8) DispatchWrapper
 
     using TraceFn = void (*)(JSTracer*, T*, const char*);
     TraceFn tracer;
-    alignas(gc::CellSize) T storage;
+    alignas(gc::CellAlignBytes) T storage;
 
   public:
     template <typename U>
@@ -754,6 +761,24 @@ class alignas(8) DispatchWrapper
 } /* namespace js */
 
 namespace JS {
+
+namespace detail {
+
+/*
+ * For pointer types, the TraceKind for tracing is based on the list it is
+ * in (selected via MapTypeToRootKind), so no additional storage is
+ * required here. Non-pointer types, however, share the same list, so the
+ * function to call for tracing is stored adjacent to the struct. Since C++
+ * cannot templatize on storage class, this is implemented via the wrapper
+ * class DispatchWrapper.
+ */
+template <typename T>
+using MaybeWrapped = typename mozilla::Conditional<
+    MapTypeToRootKind<T>::kind == JS::RootKind::Traceable,
+    js::DispatchWrapper<T>,
+    T>::Type;
+
+} /* namespace detail */
 
 /**
  * Local variable of type T whose value is always rooted. This is typically
@@ -810,6 +835,9 @@ class MOZ_RAII Rooted : public js::RootedBase<T, Rooted<T>>
     void set(const T& value) {
         ptr = value;
     }
+    void set(T&& value) {
+        ptr = mozilla::Move(value);
+    }
 
     DECLARE_POINTER_CONSTREF_OPS(T);
     DECLARE_POINTER_ASSIGN_OPS(Rooted, T);
@@ -825,19 +853,7 @@ class MOZ_RAII Rooted : public js::RootedBase<T, Rooted<T>>
     Rooted<void*>** stack;
     Rooted<void*>* prev;
 
-    /*
-     * For pointer types, the TraceKind for tracing is based on the list it is
-     * in (selected via MapTypeToRootKind), so no additional storage is
-     * required here. Non-pointer types, however, share the same list, so the
-     * function to call for tracing is stored adjacent to the struct. Since C++
-     * cannot templatize on storage class, this is implemented via the wrapper
-     * class DispatchWrapper.
-     */
-    using MaybeWrapped = typename mozilla::Conditional<
-        MapTypeToRootKind<T>::kind == JS::RootKind::Traceable,
-        js::DispatchWrapper<T>,
-        T>::Type;
-    MaybeWrapped ptr;
+    detail::MaybeWrapped<T> ptr;
 
     Rooted(const Rooted&) = delete;
 } JS_HAZ_ROOTED;
@@ -1049,6 +1065,9 @@ MutableHandle<T>::MutableHandle(PersistentRooted<T>* root)
 JS_PUBLIC_API(void)
 AddPersistentRoot(RootingContext* cx, RootKind kind, PersistentRooted<void*>* root);
 
+JS_PUBLIC_API(void)
+AddPersistentRoot(JSRuntime* rt, RootKind kind, PersistentRooted<void*>* root);
+
 /**
  * A copyable, assignable global GC root type with arbitrary lifetime, an
  * infallible constructor, and automatic unrooting on destruction.
@@ -1098,6 +1117,12 @@ class PersistentRooted : public js::RootedBase<T, PersistentRooted<T>>,
         AddPersistentRoot(cx, kind, reinterpret_cast<JS::PersistentRooted<void*>*>(this));
     }
 
+    void registerWithRootLists(JSRuntime* rt) {
+        MOZ_ASSERT(!initialized());
+        JS::RootKind kind = JS::MapTypeToRootKind<T>::kind;
+        AddPersistentRoot(rt, kind, reinterpret_cast<JS::PersistentRooted<void*>*>(this));
+    }
+
   public:
     using ElementType = T;
 
@@ -1127,6 +1152,19 @@ class PersistentRooted : public js::RootedBase<T, PersistentRooted<T>>,
       : ptr(mozilla::Forward<U>(initial))
     {
         registerWithRootLists(RootingContext::get(cx));
+    }
+
+    explicit PersistentRooted(JSRuntime* rt)
+      : ptr(GCPolicy<T>::initial())
+    {
+        registerWithRootLists(rt);
+    }
+
+    template <typename U>
+    PersistentRooted(JSRuntime* rt, U&& initial)
+      : ptr(mozilla::Forward<U>(initial))
+    {
+        registerWithRootLists(rt);
     }
 
     PersistentRooted(const PersistentRooted& rhs)
@@ -1188,12 +1226,7 @@ class PersistentRooted : public js::RootedBase<T, PersistentRooted<T>>,
         ptr = mozilla::Forward<U>(value);
     }
 
-    // See the comment above Rooted::ptr.
-    using MaybeWrapped = typename mozilla::Conditional<
-        MapTypeToRootKind<T>::kind == JS::RootKind::Traceable,
-        js::DispatchWrapper<T>,
-        T>::Type;
-    MaybeWrapped ptr;
+    detail::MaybeWrapped<T> ptr;
 } JS_HAZ_ROOTED;
 
 class JS_PUBLIC_API(ObjectPtr)
@@ -1251,6 +1284,9 @@ class WrappedPtrOperations<UniquePtr<T, D>, Container>
 
   public:
     explicit operator bool() const { return !!uniquePtr(); }
+    T* get() const { return uniquePtr().get(); }
+    T* operator->() const { return get(); }
+    T& operator*() const { return *uniquePtr(); }
 };
 
 template <typename T, typename D, typename Container>
@@ -1261,6 +1297,7 @@ class MutableWrappedPtrOperations<UniquePtr<T, D>, Container>
 
   public:
     MOZ_MUST_USE typename UniquePtr<T, D>::Pointer release() { return uniquePtr().release(); }
+    void reset(T* ptr = T()) { uniquePtr().reset(ptr); }
 };
 
 namespace gc {

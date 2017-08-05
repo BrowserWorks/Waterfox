@@ -44,12 +44,6 @@ public:
   // as a result of a change to the :hover content state.
   uint32_t GetHoverGeneration() const { return mHoverGeneration; }
 
-  bool ObservingRefreshDriver() const { return mObservingRefreshDriver; }
-
-  void SetObservingRefreshDriver(bool aObserving) {
-      mObservingRefreshDriver = aObserving;
-  }
-
   void Disconnect() { mPresContext = nullptr; }
 
   static nsCString RestyleHintToString(nsRestyleHint aHint);
@@ -71,6 +65,11 @@ public:
   // WillDestroyFrameTree hasn't been called yet.
   void NotifyDestroyingFrame(nsIFrame* aFrame) {
     mOverflowChangedTracker.RemoveFrame(aFrame);
+    // If ProcessRestyledFrames is tracking frames which have been
+    // destroyed (to avoid re-visiting them), add this one to its set.
+    if (mDestroyedFrames) {
+      mDestroyedFrames->PutEntry(aFrame);
+    }
   }
 
   // Note: It's the caller's responsibility to make sure to wrap a
@@ -140,8 +139,6 @@ public:
     return mAnimationsWithDestroyedFrame;
   }
 
-  void PostRestyleEventForLazyConstruction() { PostRestyleEventInternal(true); }
-
   void ContentInserted(nsINode* aContainer, nsIContent* aChild);
   void ContentAppended(nsIContent* aContainer, nsIContent* aFirstNewContent);
 
@@ -174,8 +171,8 @@ public:
   inline void PostRebuildAllStyleDataEvent(nsChangeHint aExtraHint,
                                            nsRestyleHint aRestyleHint);
   inline void ProcessPendingRestyles();
-  inline nsresult ContentStateChanged(nsIContent* aContent,
-                                      EventStates aStateMask);
+  inline void ContentStateChanged(nsIContent* aContent,
+                                  EventStates aStateMask);
   inline void AttributeWillChange(dom::Element* aElement,
                                   int32_t aNameSpaceID,
                                   nsIAtom* aAttribute,
@@ -187,6 +184,27 @@ public:
                                int32_t aModType,
                                const nsAttrValue* aOldValue);
   inline nsresult ReparentStyleContext(nsIFrame* aFrame);
+
+  inline void UpdateOnlyAnimationStyles();
+
+  // Get a counter that increments on every style change, that we use to
+  // track whether off-main-thread animations are up-to-date.
+  uint64_t GetAnimationGeneration() const { return mAnimationGeneration; }
+
+  static uint64_t GetAnimationGenerationForFrame(nsIFrame* aFrame);
+
+  // Update the animation generation count to mark that animation state
+  // has changed.
+  //
+  // This is normally performed automatically by ProcessPendingRestyles
+  // but it is also called when we have out-of-band changes to animations
+  // such as changes made through the Web Animations API.
+  void IncrementAnimationGeneration();
+
+  static void AddLayerChangesForAnimation(nsIFrame* aFrame,
+                                          nsIContent* aContent,
+                                          nsStyleChangeList&
+                                            aChangeListToProcess);
 
 protected:
   RestyleManager(StyleBackendType aType, nsPresContext* aPresContext);
@@ -233,18 +251,22 @@ private:
   uint32_t mRestyleGeneration;
   uint32_t mHoverGeneration;
 
-  const StyleBackendType mType;
+  // Used to keep track of frames that have been destroyed during
+  // ProcessRestyledFrames, so we don't try to touch them again even if
+  // they're referenced again later in the changelist.
+  mozilla::UniquePtr<nsTHashtable<nsPtrHashKey<const nsIFrame>>> mDestroyedFrames;
 
-  // True if we're already waiting for a refresh notification.
-  bool mObservingRefreshDriver;
+  const StyleBackendType mType;
 
 protected:
   // True if we're in the middle of a nsRefreshDriver refresh
   bool mInStyleRefresh;
 
-  OverflowChangedTracker mOverflowChangedTracker;
+  // The total number of animation flushes by this frame constructor.
+  // Used to keep the layer and animation manager in sync.
+  uint64_t mAnimationGeneration;
 
-  void PostRestyleEventInternal(bool aForLazyConstruction);
+  OverflowChangedTracker mOverflowChangedTracker;
 
   /**
    * These are protected static methods that help with the change hint
@@ -254,7 +276,7 @@ protected:
   GetNearestAncestorFrame(nsIContent* aContent);
 
   static nsIFrame*
-  GetNextBlockInInlineSibling(FramePropertyTable* aPropTable, nsIFrame* aFrame);
+  GetNextBlockInInlineSibling(nsIFrame* aFrame);
 
   /**
    * Get the next continuation or similar ib-split sibling (assuming

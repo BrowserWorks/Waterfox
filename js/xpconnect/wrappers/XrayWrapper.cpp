@@ -201,9 +201,12 @@ XPCWrappedNativeXrayTraits::getWN(JSObject* wrapper)
 }
 
 const JSClass XPCWrappedNativeXrayTraits::HolderClass = {
-    "NativePropertyHolder", JSCLASS_HAS_RESERVED_SLOTS(2)
+    "NativePropertyHolder", JSCLASS_HAS_RESERVED_SLOTS(HOLDER_SHARED_SLOT_COUNT)
 };
 
+const JSClass XrayTraits::HolderClass = {
+    "XrayHolder", JSCLASS_HAS_RESERVED_SLOTS(HOLDER_SHARED_SLOT_COUNT)
+};
 
 const JSClass JSXrayTraits::HolderClass = {
     "JSXrayHolder", JSCLASS_HAS_RESERVED_SLOTS(SLOT_COUNT)
@@ -1112,7 +1115,7 @@ XrayTraits::expandoObjectMatchesConsumer(JSContext* cx,
 }
 
 bool
-XrayTraits::getExpandoObjectInternal(JSContext* cx, HandleObject target,
+XrayTraits::getExpandoObjectInternal(JSContext* cx, JSObject* expandoChain,
                                      nsIPrincipal* origin,
                                      JSObject* exclusiveGlobalArg,
                                      MutableHandleObject expandoObject)
@@ -1123,12 +1126,12 @@ XrayTraits::getExpandoObjectInternal(JSContext* cx, HandleObject target,
     // The expando object lives in the compartment of the target, so all our
     // work needs to happen there.
     RootedObject exclusiveGlobal(cx, exclusiveGlobalArg);
-    JSAutoCompartment ac(cx, target);
+    RootedObject head(cx, expandoChain);
+    JSAutoCompartment ac(cx, head);
     if (!JS_WrapObject(cx, &exclusiveGlobal))
         return false;
 
     // Iterate through the chain, looking for a same-origin object.
-    RootedObject head(cx, getExpandoChain(target));
     while (head) {
         if (expandoObjectMatchesConsumer(cx, head, origin, exclusiveGlobal)) {
             expandoObject.set(head);
@@ -1145,9 +1148,15 @@ bool
 XrayTraits::getExpandoObject(JSContext* cx, HandleObject target, HandleObject consumer,
                              MutableHandleObject expandoObject)
 {
+    // Return early if no expando object has ever been attached, which is
+    // usually the case.
+    JSObject* chain = getExpandoChain(target);
+    if (!chain)
+        return true;
+
     JSObject* consumerGlobal = js::GetGlobalForObjectCrossCompartment(consumer);
     bool isSandbox = !strcmp(js::GetObjectJSClass(consumerGlobal)->name, "Sandbox");
-    return getExpandoObjectInternal(cx, target, ObjectPrincipal(consumer),
+    return getExpandoObjectInternal(cx, chain, ObjectPrincipal(consumer),
                                     isSandbox ? consumerGlobal : nullptr,
                                     expandoObject);
 }
@@ -1163,11 +1172,14 @@ XrayTraits::attachExpandoObject(JSContext* cx, HandleObject target,
     // No duplicates allowed.
 #ifdef DEBUG
     {
-        RootedObject existingExpandoObject(cx);
-        if (getExpandoObjectInternal(cx, target, origin, exclusiveGlobal, &existingExpandoObject))
-            MOZ_ASSERT(!existingExpandoObject);
-        else
-            JS_ClearPendingException(cx);
+        JSObject* chain = getExpandoChain(target);
+        if (chain) {
+            RootedObject existingExpandoObject(cx);
+            if (getExpandoObjectInternal(cx, chain, origin, exclusiveGlobal, &existingExpandoObject))
+                MOZ_ASSERT(!existingExpandoObject);
+            else
+                JS_ClearPendingException(cx);
+        }
     }
 #endif
 
@@ -1315,14 +1327,14 @@ bool CloneExpandoChain(JSContext* cx, JSObject* dstArg, JSObject* srcArg)
 static JSObject*
 GetHolder(JSObject* obj)
 {
-    return &js::GetProxyExtra(obj, 0).toObject();
+    return &js::GetProxyReservedSlot(obj, 0).toObject();
 }
 
 JSObject*
 XrayTraits::getHolder(JSObject* wrapper)
 {
     MOZ_ASSERT(WrapperFactory::IsXrayWrapper(wrapper));
-    js::Value v = js::GetProxyExtra(wrapper, 0);
+    js::Value v = js::GetProxyReservedSlot(wrapper, 0);
     return v.isObject() ? &v.toObject() : nullptr;
 }
 
@@ -1334,7 +1346,7 @@ XrayTraits::ensureHolder(JSContext* cx, HandleObject wrapper)
         return holder;
     holder = createHolder(cx, wrapper); // virtual trap.
     if (holder)
-        js::SetProxyExtra(wrapper, 0, ObjectValue(*holder));
+        js::SetProxyReservedSlot(wrapper, 0, ObjectValue(*holder));
     return holder;
 }
 
@@ -1403,7 +1415,7 @@ XPCWrappedNativeXrayTraits::resolveNativeProperty(JSContext* cx, HandleObject wr
     }
 
     if (!(iface = ccx.GetInterface()) || !(member = ccx.GetMember())) {
-        if (id != nsXPConnect::GetContextInstance()->GetStringID(XPCJSContext::IDX_TO_STRING))
+        if (id != XPCJSRuntime::Get()->GetStringID(XPCJSContext::IDX_TO_STRING))
             return true;
 
         JSFunction* toString = JS_NewFunction(cx, XrayToString, 0, 0, "toString");
@@ -1854,7 +1866,7 @@ DOMXrayTraits::preserveWrapper(JSObject* target)
 JSObject*
 DOMXrayTraits::createHolder(JSContext* cx, JSObject* wrapper)
 {
-    return JS_NewObjectWithGivenProto(cx, nullptr, nullptr);
+    return JS_NewObjectWithGivenProto(cx, &HolderClass, nullptr);
 }
 
 const JSClass*
@@ -2407,16 +2419,35 @@ XrayWrapper<Base, Traits>::getPrototype(JSContext* cx, JS::HandleObject wrapper,
     // only if there's been a set. If there's not an expando, or the expando
     // slot is |undefined|, hand back the default proto, appropriately wrapped.
 
-    RootedValue v(cx);
     if (expando) {
-        JSAutoCompartment ac(cx, expando);
-        v = JS_GetReservedSlot(expando, JSSLOT_EXPANDO_PROTOTYPE);
+        RootedValue v(cx);
+        { // Scope for JSAutoCompartment
+            JSAutoCompartment ac(cx, expando);
+            v = JS_GetReservedSlot(expando, JSSLOT_EXPANDO_PROTOTYPE);
+        }
+        if (!v.isUndefined()) {
+            protop.set(v.toObjectOrNull());
+            return JS_WrapObject(cx, protop);
+        }
     }
-    if (v.isUndefined())
-        return getPrototypeHelper(cx, wrapper, target, protop);
 
-    protop.set(v.toObjectOrNull());
-    return JS_WrapObject(cx, protop);
+    // Check our holder, and cache there if we don't have it cached already.
+    RootedObject holder(cx, Traits::singleton.ensureHolder(cx, wrapper));
+    if (!holder)
+        return false;
+
+    Value cached = js::GetReservedSlot(holder,
+                                       Traits::HOLDER_SLOT_CACHED_PROTO);
+    if (cached.isUndefined()) {
+        if (!getPrototypeHelper(cx, wrapper, target, protop))
+            return false;
+
+        js::SetReservedSlot(holder, Traits::HOLDER_SLOT_CACHED_PROTO,
+                            ObjectOrNullValue(protop));
+    } else {
+        protop.set(cached.toObjectOrNull());
+    }
+    return true;
 }
 
 template <typename Base, typename Traits>

@@ -1,5 +1,4 @@
 load 105619-1.html
-load 147777-1.html
 load 187671-1.html
 load 192408-1.html
 load 285727-1.html
@@ -14,7 +13,7 @@ load 383979-1.xhtml
 load 383979-2.html
 load 386939-1.html
 load 391034-1.xhtml
-asserts-if(stylo,1) load 397022-1.html # bug 1324704
+load 397022-1.html
 load 399289-1.svg
 load 404470-1.html
 load 411603-1.html
@@ -23,23 +22,23 @@ load 413274-1.xhtml
 load 416461-1.xul
 load 418007-1.xhtml
 load 431705-1.xul
-load 432561-1.html # bug 1323705
+load 432561-1.html
 load 437170-1.html
 load 437532-1.html
-load 439184-1.html # bug 1323939
+load 439184-1.html
 load 444237-1.html
-load 444848-1.html 
+load 444848-1.html
 load 447776-1.html
 load 447783-1.html
 load 448161-1.html
 load 448161-2.html
 load 452150-1.xhtml
-load 456196.html # bug 132652
+load 456196.html
 load 460209-1.html
 load 460217-1.html
 load 460323-1.html
 load 466845-1.html
-load 469432-1.xhtml
+asserts-if(stylo,4) load 469432-1.xhtml # bug 1370830
 load 472195-1.html
 load 472237-1.html # will fail, test for leak (474704)
 HTTP(..) load 472237-1.html
@@ -73,18 +72,18 @@ load 601439-1.html
 load 605689-1.html
 load 611922-1.html
 load 621596-1.html
-skip-if(stylo) load 622314-1.xhtml # bug 1337695
+load 622314-1.xhtml
 load 637242.xhtml
 load 645142.html
-fails-if(stylo) == 645951-1.html 645951-1-ref.html
+fails-if(stylo) == 645951-1.html 645951-1-ref.html # bug 1367213
 load 652976-1.svg
 load 665209-1.html
 load 671799-1.html
 load 671799-2.html
-load 690990-1.html # bug 1323708
+load 690990-1.html
 load 696188-1.html
 load 696869-1.html
-asserts-if(stylo,2) load 700116.html # bug 1324635
+load 700116.html
 load 729126-1.html
 load 729126-2.html
 load 786108-1.html
@@ -102,7 +101,7 @@ load 861489-1.html
 load 862113.html
 load 867487.html
 load 873222.html
-asserts-if(stylo,1) load 880862.html # bug 1324701
+load 880862.html
 load 894245-1.html
 load 915440.html
 load 927734-1.html
@@ -115,7 +114,7 @@ load 992333-1.html
 skip-if(stylo) pref(dom.webcomponents.enabled,true) load 1017798-1.html # bug 1323689
 load 1028514-1.html
 load 1066089-1.html
-load 1074651-1.html # bug 1323652
+load 1074651-1.html
 load 1135534.html
 pref(dom.webcomponents.enabled,true) load 1089463-1.html
 pref(layout.css.expensive-style-struct-assertions.enabled,true) load 1136010-1.html
@@ -145,15 +144,15 @@ asserts-if(stylo,0-1) load 1264396-1.html # bug 1324677
 # layout.css.prefixes.webkit pref
 pref(layout.css.prefixes.webkit,false) load 1265611-1.html
 load border-image-visited-link.html
-load font-face-truncated-src.html 
+load font-face-truncated-src.html
 load large_border_image_width.html
 load long-url-list-stack-overflow.html
-pref(layout.css.background-clip-text.enabled,true) load 1264949.html
-pref(layout.css.background-clip-text.enabled,true) load 1270795.html
-pref(layout.css.background-clip-text.enabled,true) load 1275026.html
+load 1264949.html
+load 1270795.html
+load 1275026.html
 load 1278463-1.html
 pref(dom.animations-api.core.enabled,true) load 1277908-1.html # bug 1323652
-load 1277908-2.html # bug 1323652
+load 1277908-2.html
 load 1282076-1.html
 pref(dom.animations-api.core.enabled,true) load 1282076-2.html
 pref(dom.animations-api.core.enabled,true) load 1290994-1.html
@@ -170,4 +169,7 @@ load 1328535-1.html
 load 1331272.html
 HTTP load 1333001-1.html
 pref(dom.animations-api.core.enabled,true) load 1340344.html
+load 1342316-1.html
 load 1356601-1.html
+load content-only-on-link-before.html
+load content-only-on-visited-before.html

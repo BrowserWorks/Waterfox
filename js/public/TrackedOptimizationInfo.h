@@ -146,6 +146,7 @@ namespace JS {
     _(LoosyInt32BooleanCompare)                                         \
     _(CallsValueOf)                                                     \
     _(StrictCompare)                                                    \
+    _(InitHole)                                                         \
                                                                         \
     _(ICOptStub_GenericSuccess)                                         \
                                                                         \
@@ -196,7 +197,6 @@ namespace JS {
     _(CantInlineTooManyArgs)                                            \
     _(CantInlineNeedsArgsObj)                                           \
     _(CantInlineDebuggee)                                               \
-    _(CantInlineUnknownProps)                                           \
     _(CantInlineExceededDepth)                                          \
     _(CantInlineExceededTotalBytecodeLength)                            \
     _(CantInlineBigCaller)                                              \

@@ -21,10 +21,6 @@ SimpleTest.waitForExplicitFinish();
 const { Cc: Cc, Ci: Ci } = SpecialPowers;
 
 // Platform-independent directory names are #define'd in xpcom/io/nsDirectoryServiceDefs.h
-var defaultUploadDirectory = Cc["@mozilla.org/file/directory_service;1"]
-                            .getService(Ci.nsIDirectoryService)
-                            .QueryInterface(Ci.nsIProperties)
-                            .get("Desk", Ci.nsIFile);
 
 // When we want to test an upload directory other than the default, we need to
 // get a valid directory in a platform-independent way. Since NS_OS_DESKTOP_DIR
@@ -35,7 +31,6 @@ var customUploadDirectory = Cc["@mozilla.org/file/directory_service;1"]
                             .get("TmpD", Ci.nsIFile);
 
 // Useful for debugging
-//info("defaultUploadDirectory" + defaultUploadDirectory.path);
 //info("customUploadDirectory" + customUploadDirectory.path);
 
 var MockFilePicker = SpecialPowers.MockFilePicker;
@@ -47,15 +42,18 @@ f.focus();
 
 var testIndex = 0;
 var tests = [
-  ["", defaultUploadDirectory.path],
-  [customUploadDirectory.path, customUploadDirectory.path]
+  ["", null, "Desk"],
+  [customUploadDirectory.path, customUploadDirectory.path, ""]
 ]
 
 MockFilePicker.showCallback = function(filepicker) {
-  info(SpecialPowers.wrap(MockFilePicker).displayDirectory.path);
+  if (tests[testIndex][1] === null) {
+    is(SpecialPowers.wrap(MockFilePicker).displayDirectory, null, "DisplayDirectory is null");
+  } else {
+    is(SpecialPowers.wrap(MockFilePicker).displayDirectory.path, tests[testIndex][1], "DisplayDirectory matches the path");
+  }
 
-  is(SpecialPowers.wrap(MockFilePicker).displayDirectory.path,
-  tests[testIndex][1]);
+  is(SpecialPowers.wrap(MockFilePicker).displaySpecialDirectory, tests[testIndex][2], "DisplaySpecialDirectory matches the path");
 
   if (++testIndex == tests.length) {
     MockFilePicker.cleanup();

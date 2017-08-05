@@ -12,6 +12,7 @@ const ERRORS = new Set([
   "ElementNotInteractableError",
   "InsecureCertificateError",
   "InvalidArgumentError",
+  "InvalidCookieDomainError",
   "InvalidElementStateError",
   "InvalidSelectorError",
   "InvalidSessionIDError",
@@ -26,6 +27,7 @@ const ERRORS = new Set([
   "StaleElementReferenceError",
   "TimeoutError",
   "UnableToSetCookieError",
+  "UnexpectedAlertOpenError",
   "UnknownCommandError",
   "UnknownError",
   "UnsupportedOperationError",
@@ -94,15 +96,24 @@ error.isWebDriverError = function (obj) {
 };
 
 /**
- * Wraps any error as a WebDriverError.  If the given error is already in
- * the WebDriverError prototype chain, this function returns it
- * unmodified.
+ * Ensures error instance is a WebDriverError.
+ *
+ * If the given error is already in the WebDriverError prototype
+ * chain, |err| is returned unmodified.  If it is not, it is wrapped
+ * in UnknownError.
+ *
+ * @param {Error} err
+ *     Error to conditionally turn into a WebDriverError.
+ *
+ * @return {WebDriverError}
+ *     If |err| is a WebDriverError, it is returned unmodified.
+ *     Otherwise an UnknownError type is returned.
  */
 error.wrap = function (err) {
   if (error.isWebDriverError(err)) {
     return err;
   }
-  return new WebDriverError(err);
+  return new UnknownError(err);
 };
 
 /**
@@ -271,10 +282,23 @@ class ElementClickInterceptedError extends WebDriverError {
     if (obscuredEl && coords) {
       const doc = obscuredEl.ownerDocument;
       const overlayingEl = doc.elementFromPoint(coords.x, coords.y);
-      msg = error.pprint`Element ${obscuredEl} is not clickable ` +
-          `at point (${coords.x},${coords.y}) ` +
-          error.pprint`because another element ${overlayingEl} ` +
-          `obscures it`;
+
+      switch (obscuredEl.style.pointerEvents) {
+        case "none":
+          msg = error.pprint`Element ${obscuredEl} is not clickable ` +
+              `at point (${coords.x},${coords.y}) ` +
+              `because it does not have pointer events enabled, ` +
+              error.pprint`and element ${overlayingEl} ` +
+              `would receive the click instead`;
+          break;
+
+        default:
+          msg = error.pprint`Element ${obscuredEl} is not clickable ` +
+              `at point (${coords.x},${coords.y}) ` +
+              error.pprint`because another element ${overlayingEl} ` +
+              `obscures it`;
+          break;
+      }
     }
 
     super(msg);
@@ -300,6 +324,13 @@ class InvalidArgumentError extends WebDriverError {
   constructor (message) {
     super(message);
     this.status = "invalid argument";
+  }
+}
+
+class InvalidCookieDomainError extends WebDriverError {
+  constructor (message) {
+    super(message);
+    this.status = "invalid cookie domain";
   }
 }
 
@@ -450,6 +481,13 @@ class UnableToSetCookieError extends WebDriverError {
   }
 }
 
+class UnexpectedAlertOpenError extends WebDriverError {
+  constructor (message) {
+    super(message);
+    this.status = "unexpected alert open";
+  }
+}
+
 class UnknownCommandError extends WebDriverError {
   constructor (message) {
     super(message);
@@ -472,11 +510,12 @@ class UnsupportedOperationError extends WebDriverError {
 }
 
 const STATUSES = new Map([
+  ["element click intercepted", ElementClickInterceptedError],
   ["element not accessible", ElementNotAccessibleError],
   ["element not interactable", ElementNotInteractableError],
-  ["element click intercepted", ElementClickInterceptedError],
   ["insecure certificate", InsecureCertificateError],
   ["invalid argument", InvalidArgumentError],
+  ["invalid cookie domain", InvalidCookieDomainError],
   ["invalid element state", InvalidElementStateError],
   ["invalid selector", InvalidSelectorError],
   ["invalid session id", InvalidSessionIDError],
@@ -491,6 +530,7 @@ const STATUSES = new Map([
   ["stale element reference", StaleElementReferenceError],
   ["timeout", TimeoutError],
   ["unable to set cookie", UnableToSetCookieError],
+  ["unexpected alert open", UnexpectedAlertOpenError],
   ["unknown command", UnknownCommandError],
   ["unknown error", UnknownError],
   ["unsupported operation", UnsupportedOperationError],

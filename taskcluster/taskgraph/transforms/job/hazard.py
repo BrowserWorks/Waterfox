@@ -7,14 +7,15 @@ Support for running hazard jobs via dedicated scripts
 
 from __future__ import absolute_import, print_function, unicode_literals
 
-from voluptuous import Schema, Required, Optional, Any
+from taskgraph.util.schema import Schema
+from voluptuous import Required, Optional, Any
 
 from taskgraph.transforms.job import run_job_using
 from taskgraph.transforms.job.common import (
     docker_worker_add_workspace_cache,
     docker_worker_setup_secrets,
     docker_worker_add_public_artifacts,
-    docker_worker_support_vcs_checkout,
+    support_vcs_checkout,
 )
 
 haz_run_schema = Schema({
@@ -22,9 +23,6 @@ haz_run_schema = Schema({
 
     # The command to run within the task image (passed through to the worker)
     Required('command'): basestring,
-
-    # The tooltool manifest to use; default in the script is used if omitted
-    Optional('tooltool-manifest'): basestring,
 
     # The mozconfig to use; default in the script is used if omitted
     Optional('mozconfig'): basestring,
@@ -49,7 +47,7 @@ def docker_worker_hazard(config, job, taskdesc):
     docker_worker_add_public_artifacts(config, job, taskdesc)
     docker_worker_add_workspace_cache(config, job, taskdesc)
     docker_worker_setup_secrets(config, job, taskdesc)
-    docker_worker_support_vcs_checkout(config, job, taskdesc)
+    support_vcs_checkout(config, job, taskdesc)
 
     env = worker['env']
     env.update({
@@ -58,8 +56,6 @@ def docker_worker_hazard(config, job, taskdesc):
     })
 
     # script parameters
-    if run.get('tooltool-manifest'):
-        env['TOOLTOOL_MANIFEST'] = run['tooltool-manifest']
     if run.get('mozconfig'):
         env['MOZCONFIG'] = run['mozconfig']
 

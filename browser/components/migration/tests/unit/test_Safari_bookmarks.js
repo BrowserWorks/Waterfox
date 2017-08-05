@@ -1,6 +1,6 @@
 "use strict";
 
-add_task(function* () {
+add_task(async function() {
   registerFakePath("ULibDir", do_get_file("Library/"));
 
   let migrator = MigrationUtils.getMigrator("safari");
@@ -37,9 +37,9 @@ add_task(function* () {
     onItemVisited() {},
     onItemMoved() {},
   };
-  PlacesUtils.bookmarks.addObserver(bmObserver, false);
+  PlacesUtils.bookmarks.addObserver(bmObserver);
 
-  yield promiseMigration(migrator, MigrationUtils.resourceTypes.BOOKMARKS);
+  await promiseMigration(migrator, MigrationUtils.resourceTypes.BOOKMARKS);
   PlacesUtils.bookmarks.removeObserver(bmObserver);
 
   // Check the bookmarks have been imported to all the expected parents.

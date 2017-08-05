@@ -2,17 +2,12 @@
  * http://creativecommons.org/publicdomain/zero/1.0/
  */
 
-/* globals Services, XPCOMUtils, NewTabPrefsProvider, Preferences, aboutNewTabService, do_register_cleanup */
-
 "use strict";
 
 const {utils: Cu} = Components;
 Cu.import("resource://gre/modules/Services.jsm");
 Cu.import("resource://gre/modules/XPCOMUtils.jsm");
 Cu.import("resource://gre/modules/Preferences.jsm");
-
-XPCOMUtils.defineLazyModuleGetter(this, "NewTabPrefsProvider",
-                                  "resource:///modules/NewTabPrefsProvider.jsm");
 
 XPCOMUtils.defineLazyServiceGetter(this, "aboutNewTabService",
                                    "@mozilla.org/browser/aboutnewtab-service;1",
@@ -25,7 +20,6 @@ const DOWNLOADS_URL = "chrome://browser/content/downloads/contentAreaDownloadsVi
 function cleanup() {
   Services.prefs.setBoolPref("browser.newtabpage.activity-stream.enabled", false);
   aboutNewTabService.resetNewTabURL();
-  NewTabPrefsProvider.prefs.uninit();
 }
 
 do_register_cleanup(cleanup);
@@ -33,8 +27,7 @@ do_register_cleanup(cleanup);
 /**
  * Test the overriding of the default URL
  */
-add_task(function* test_override_activity_stream_disabled() {
-  NewTabPrefsProvider.prefs.init();
+add_task(async function test_override_activity_stream_disabled() {
   let notificationPromise;
   Services.prefs.setBoolPref("browser.newtabpage.activity-stream.enabled", false);
 
@@ -46,7 +39,7 @@ add_task(function* test_override_activity_stream_disabled() {
   let url = "http://example.com/";
   notificationPromise = nextChangeNotificationPromise(url);
   aboutNewTabService.newTabURL = url;
-  yield notificationPromise;
+  await notificationPromise;
   Assert.ok(aboutNewTabService.overridden, "Newtab URL should be overridden");
   Assert.ok(!aboutNewTabService.activityStreamEnabled, "Newtab activity stream should not be enabled");
   Assert.equal(aboutNewTabService.newTabURL, url, "Newtab URL should be the custom URL");
@@ -54,27 +47,26 @@ add_task(function* test_override_activity_stream_disabled() {
   // test reset with activity stream disabled
   notificationPromise = nextChangeNotificationPromise("about:newtab");
   aboutNewTabService.resetNewTabURL();
-  yield notificationPromise;
+  await notificationPromise;
   Assert.ok(!aboutNewTabService.overridden, "Newtab URL should not be overridden");
   Assert.equal(aboutNewTabService.newTabURL, "about:newtab", "Newtab URL should be the default");
 
   // test override to a chrome URL
   notificationPromise = nextChangeNotificationPromise(DOWNLOADS_URL);
   aboutNewTabService.newTabURL = DOWNLOADS_URL;
-  yield notificationPromise;
+  await notificationPromise;
   Assert.ok(aboutNewTabService.overridden, "Newtab URL should be overridden");
   Assert.equal(aboutNewTabService.newTabURL, DOWNLOADS_URL, "Newtab URL should be the custom URL");
 
   cleanup();
 });
 
-add_task(function* test_override_activity_stream_enabled() {
-  NewTabPrefsProvider.prefs.init();
+add_task(async function test_override_activity_stream_enabled() {
   let notificationPromise;
   // change newtab page to activity stream
   notificationPromise = nextChangeNotificationPromise("about:newtab");
   Services.prefs.setBoolPref("browser.newtabpage.activity-stream.enabled", true);
-  yield notificationPromise;
+  await notificationPromise;
   let activityStreamURL = aboutNewTabService.activityStreamURL;
   Assert.equal(aboutNewTabService.defaultURL, activityStreamURL, "Newtab URL should be the default activity stream URL");
   Assert.ok(!aboutNewTabService.overridden, "Newtab URL should not be overridden");
@@ -83,7 +75,7 @@ add_task(function* test_override_activity_stream_enabled() {
   // change to local newtab page while activity stream is enabled
   notificationPromise = nextChangeNotificationPromise(DEFAULT_CHROME_URL);
   aboutNewTabService.newTabURL = DEFAULT_CHROME_URL;
-  yield notificationPromise;
+  await notificationPromise;
   Assert.equal(aboutNewTabService.newTabURL, DEFAULT_CHROME_URL,
                "Newtab URL set to chrome url");
   Assert.equal(aboutNewTabService.defaultURL, DEFAULT_CHROME_URL,
@@ -97,7 +89,7 @@ add_task(function* test_override_activity_stream_enabled() {
 /**
  * Tests reponse to updates to prefs
  */
-add_task(function* test_updates() {
+add_task(async function test_updates() {
   /*
    * Simulates a "cold-boot" situation, with some pref already set before testing a series
    * of changes.
@@ -105,14 +97,13 @@ add_task(function* test_updates() {
   Preferences.set("browser.newtabpage.activity-stream.enabled", true);
   aboutNewTabService.resetNewTabURL(); // need to set manually because pref notifs are off
   let notificationPromise;
-  NewTabPrefsProvider.prefs.init();
 
   // test update fires on override and reset
   let testURL = "https://example.com/";
   notificationPromise = nextChangeNotificationPromise(
     testURL, "a notification occurs on override");
   aboutNewTabService.newTabURL = testURL;
-  yield notificationPromise;
+  await notificationPromise;
 
   // from overridden to default
   notificationPromise = nextChangeNotificationPromise(
@@ -120,13 +111,13 @@ add_task(function* test_updates() {
   aboutNewTabService.resetNewTabURL();
   Assert.ok(aboutNewTabService.activityStreamEnabled, "Activity Stream should be enabled");
   Assert.equal(aboutNewTabService.defaultURL, DEFAULT_HREF, "Default URL should be the activity stream page");
-  yield notificationPromise;
+  await notificationPromise;
 
   // reset twice, only one notification for default URL
   notificationPromise = nextChangeNotificationPromise(
     "about:newtab", "reset occurs");
   aboutNewTabService.resetNewTabURL();
-  yield notificationPromise;
+  await notificationPromise;
 
   cleanup();
 });
@@ -137,6 +128,6 @@ function nextChangeNotificationPromise(aNewURL, testMessage) {
       Services.obs.removeObserver(observer, aTopic);
       Assert.equal(aData, aNewURL, testMessage);
       resolve();
-    }, "newtab-url-changed", false);
+    }, "newtab-url-changed");
   });
 }

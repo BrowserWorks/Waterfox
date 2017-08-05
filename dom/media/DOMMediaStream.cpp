@@ -5,6 +5,7 @@
 
 #include "DOMMediaStream.h"
 #include "nsContentUtils.h"
+#include "nsRFPService.h"
 #include "nsServiceManagerUtils.h"
 #include "nsIScriptError.h"
 #include "nsIUUIDGenerator.h"
@@ -114,7 +115,7 @@ DOMMediaStream::TrackPort::BlockSourceTrackId(TrackID aTrackId, BlockingMode aBl
   if (mInputPort) {
     return mInputPort->BlockSourceTrackId(aTrackId, aBlockingMode);
   }
-  RefPtr<Pledge<bool>> rejected = new Pledge<bool>();
+  auto rejected = MakeRefPtr<Pledge<bool>>();
   rejected->Reject(NS_ERROR_FAILURE);
   return rejected.forget();
 }
@@ -553,8 +554,8 @@ DOMMediaStream::CurrentTime()
   if (!mPlaybackStream) {
     return 0.0;
   }
-  return mPlaybackStream->
-    StreamTimeToSeconds(mPlaybackStream->GetCurrentTime() - mLogicalStreamStartTime);
+  return nsRFPService::ReduceTimePrecisionAsSecs(mPlaybackStream->
+    StreamTimeToSeconds(mPlaybackStream->GetCurrentTime() - mLogicalStreamStartTime));
 }
 
 void

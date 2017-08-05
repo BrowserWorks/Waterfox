@@ -48,8 +48,11 @@ module.exports = createClass({
         getStr("layout.overlayGrid")
       ),
       dom.ul(
-        {},
+        {
+          id: "grid-list",
+        },
         grids.map(grid => GridItem({
+          key: grid.id,
           getSwatchColorPickerTooltip,
           grid,
           setSelectedNode,

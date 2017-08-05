@@ -42,13 +42,20 @@ const Ci = Components.interfaces;
 const Cu = Components.utils;
 
 Cu.import("resource://gre/modules/XPCOMUtils.jsm");
+Cu.import("resource://gre/modules/Services.jsm");
 
 XPCOMUtils.defineLazyModuleGetter(this, "PluralForm",
                                   "resource://gre/modules/PluralForm.jsm");
 
-this.__defineGetter__("gDecimalSymbol", function() {
+const MS_PER_DAY = 24 * 60 * 60 * 1000;
+
+Object.defineProperty(this, "gDecimalSymbol", {
+  configurable: true,
+  enumerable: true,
+  get() {
     delete this.gDecimalSymbol;
       return this.gDecimalSymbol = Number(5.4).toLocaleString().match(/\D/);
+  },
 });
 
 var localeNumberFormatCache = new Map();
@@ -92,11 +99,15 @@ var gStr = {
 };
 
 // This lazily initializes the string bundle upon first use.
-this.__defineGetter__("gBundle", function() {
-  delete this.gBundle;
-  return this.gBundle = Cc["@mozilla.org/intl/stringbundle;1"].
-                        getService(Ci.nsIStringBundleService).
-                        createBundle(kDownloadProperties);
+Object.defineProperty(this, "gBundle", {
+  configurable: true,
+  enumerable: true,
+  get() {
+    delete this.gBundle;
+    return this.gBundle = Cc["@mozilla.org/intl/stringbundle;1"].
+                          getService(Ci.nsIStringBundleService).
+                          createBundle(kDownloadProperties);
+  },
 });
 
 // Keep track of at most this many second/lastSec pairs so that multiple calls
@@ -342,55 +353,59 @@ this.DownloadUtils = {
       aNow = new Date();
     }
 
-    let dts = Cc["@mozilla.org/intl/scriptabledateformat;1"]
-              .getService(Ci.nsIScriptableDateFormat);
-
     // Figure out when today begins
     let today = new Date(aNow.getFullYear(), aNow.getMonth(), aNow.getDate());
 
-    // Get locale to use for date/time formatting
-    // TODO: Remove Intl fallback when no longer needed (bug 1344543).
-    const locale = typeof Intl === "undefined"
-                   ? undefined
-                   : Cc["@mozilla.org/chrome/chrome-registry;1"]
-                       .getService(Ci.nsIXULChromeRegistry)
-                       .getSelectedLocale("global", true);
-
-    // Figure out if the time is from today, yesterday, this week, etc.
     let dateTimeCompact;
-    if (aDate >= today) {
-      // After today started, show the time
-      dateTimeCompact = dts.FormatTime("",
-                                       dts.timeFormatNoSeconds,
-                                       aDate.getHours(),
-                                       aDate.getMinutes(),
-                                       0);
-    } else if (today - aDate < (24 * 60 * 60 * 1000)) {
-      // After yesterday started, show yesterday
-      dateTimeCompact = gBundle.GetStringFromName(gStr.yesterday);
-    } else if (today - aDate < (6 * 24 * 60 * 60 * 1000)) {
-      // After last week started, show day of week
-      dateTimeCompact = typeof Intl === "undefined"
-                        ? aDate.toLocaleFormat("%A")
-                        : aDate.toLocaleDateString(locale, { weekday: "long" });
-    } else {
-      // Show month/day
-      let month = typeof Intl === "undefined"
-                  ? aDate.toLocaleFormat("%B")
-                  : aDate.toLocaleDateString(locale, { month: "long" });
-      let date = aDate.getDate();
-      dateTimeCompact = gBundle.formatStringFromName(gStr.monthDate, [month, date], 2);
-    }
+    let dateTimeFull;
 
-    let dateTimeFull = dts.FormatDateTime("",
-                                          dts.dateFormatLong,
-                                          dts.timeFormatNoSeconds,
-                                          aDate.getFullYear(),
-                                          aDate.getMonth() + 1,
-                                          aDate.getDate(),
-                                          aDate.getHours(),
-                                          aDate.getMinutes(),
-                                          0);
+    // For Android, we have to keep the non Intl API version which uses
+    // deprecated toLocaleFormat until we get Intl API.
+    //
+    // For the rest of the platform, we'll use a combination of mozIntl,
+    // Intl API and localization.
+    if (typeof Intl === "undefined") {
+      // Figure out if the time is from today, yesterday, this week, etc.
+      if (aDate >= today) {
+        dateTimeCompact = aDate.toLocaleFormat("%X");
+      } else if (today - aDate < (MS_PER_DAY)) {
+        // After yesterday started, show yesterday
+        dateTimeCompact = gBundle.GetStringFromName(gStr.yesterday);
+      } else if (today - aDate < (6 * MS_PER_DAY)) {
+        // After last week started, show day of week
+        dateTimeCompact = aDate.toLocaleFormat("%A");
+      } else {
+        // Show month/day
+        let month = aDate.toLocaleFormat("%B");
+        let date = aDate.getDate();
+        dateTimeCompact = gBundle.formatStringFromName(gStr.monthDate, [month, date], 2);
+      }
+
+      dateTimeFull = aDate.toLocaleFormat("%x %X");
+    } else {
+      // Figure out if the time is from today, yesterday, this week, etc.
+      if (aDate >= today) {
+        let dts = Services.intl.createDateTimeFormat(undefined, {
+          timeStyle: "short"
+        });
+        dateTimeCompact = dts.format(aDate);
+      } else if (today - aDate < (MS_PER_DAY)) {
+        // After yesterday started, show yesterday
+        dateTimeCompact = gBundle.GetStringFromName(gStr.yesterday);
+      } else if (today - aDate < (6 * MS_PER_DAY)) {
+        // After last week started, show day of week
+        dateTimeCompact = aDate.toLocaleDateString(undefined, { weekday: "long" });
+      } else {
+        // Show month/day
+        let month = aDate.toLocaleDateString(undefined, { month: "long" });
+        let date = aDate.getDate();
+        dateTimeCompact = gBundle.formatStringFromName(gStr.monthDate, [month, date], 2);
+      }
+
+      const dtOptions = { dateStyle: "long", timeStyle: "short" };
+      dateTimeFull =
+        Services.intl.createDateTimeFormat(undefined, dtOptions).format(aDate);
+    }
 
     return [dateTimeCompact, dateTimeFull];
   },

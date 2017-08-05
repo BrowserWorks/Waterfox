@@ -460,7 +460,7 @@ public:
       return false;
     }
 
-    return NS_SUCCEEDED(NS_DispatchToCurrentThread(this));
+    return NS_SUCCEEDED(mWorkerPrivate->DispatchToMainThread(this));
   }
 
 private:
@@ -1582,8 +1582,6 @@ XMLHttpRequestWorker::Construct(const GlobalObject& aGlobal,
   WorkerPrivate* workerPrivate = GetWorkerPrivateFromContext(cx);
   MOZ_ASSERT(workerPrivate);
 
-  Telemetry::Accumulate(Telemetry::XHR_IN_WORKER, 1);
-
   RefPtr<XMLHttpRequestWorker> xhr = new XMLHttpRequestWorker(workerPrivate);
 
   if (workerPrivate->XHRParamsAllowed()) {
@@ -1830,15 +1828,17 @@ XMLHttpRequestWorker::SendInternal(SendRunnable* aRunnable,
 
   autoUnpin.Clear();
 
+  bool succeeded = autoSyncLoop->Run();
+  mStateData.mFlagSend = false;
+
   // Don't clobber an existing exception that we may have thrown on aRv
   // already... though can there really be one?  In any case, it seems to me
   // that this autoSyncLoop->Run() can never fail, since the StopSyncLoop call
   // for it will come from ProxyCompleteRunnable and that always passes true for
   // the second arg.
-  if (!autoSyncLoop->Run() && !aRv.Failed()) {
+  if (!succeeded && !aRv.Failed()) {
     aRv.Throw(NS_ERROR_FAILURE);
   }
-  mStateData.mFlagSend = false;
 }
 
 bool

@@ -7,9 +7,12 @@
 #define GFX_WEBRENDERDISPLAYITEMLAYER_H
 
 #include "Layers.h"
-#include "WebRenderLayerManager.h"
 #include "mozilla/layers/ImageClient.h"
 #include "mozilla/layers/PWebRenderBridgeChild.h"
+#include "mozilla/layers/WebRenderLayer.h"
+#include "mozilla/layers/WebRenderLayerManager.h"
+#include "mozilla/Maybe.h"
+#include "mozilla/webrender/WebRenderTypes.h"
 
 namespace mozilla {
 namespace layers {
@@ -19,31 +22,30 @@ class WebRenderDisplayItemLayer : public WebRenderLayer,
 public:
   explicit WebRenderDisplayItemLayer(WebRenderLayerManager* aLayerManager)
     : DisplayItemLayer(aLayerManager, static_cast<WebRenderLayer*>(this))
-    , mExternalImageId(0)
   {
     MOZ_COUNT_CTOR(WebRenderDisplayItemLayer);
   }
 
-  uint64_t SendImageContainer(ImageContainer* aContainer);
+  Maybe<wr::ImageKey> SendImageContainer(ImageContainer* aContainer,
+                                         nsTArray<layers::WebRenderParentCommand>& aParentCommands);
+  bool PushItemAsBlobImage(wr::DisplayListBuilder& aBuilder,
+                           const StackingContextHelper& aSc);
 
 protected:
-  virtual ~WebRenderDisplayItemLayer()
-  {
-    mCommands.Clear();
-    MOZ_COUNT_DTOR(WebRenderDisplayItemLayer);
-  }
+  virtual ~WebRenderDisplayItemLayer();
 
 public:
   Layer* GetLayer() override { return this; }
-  void RenderLayer() override;
+  void RenderLayer(wr::DisplayListBuilder& aBuilder,
+                   const StackingContextHelper& aHelper) override;
 
 private:
-  nsTArray<WebRenderCommand> mCommands;
+  wr::BuiltDisplayList mBuiltDisplayList;
   nsTArray<WebRenderParentCommand> mParentCommands;
   RefPtr<ImageClient> mImageClient;
   RefPtr<ImageContainer> mImageContainer;
-  uint64_t mExternalImageId;
-
+  wr::MaybeExternalImageId mExternalImageId;
+  Maybe<wr::ImageKey> mKey;
 };
 
 } // namespace layers

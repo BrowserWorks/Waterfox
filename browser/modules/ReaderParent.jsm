@@ -11,7 +11,6 @@ this.EXPORTED_SYMBOLS = [ "ReaderParent" ];
 
 Cu.import("resource://gre/modules/XPCOMUtils.jsm");
 Cu.import("resource://gre/modules/Services.jsm");
-Cu.import("resource://gre/modules/Task.jsm");
 
 XPCOMUtils.defineLazyModuleGetter(this, "PlacesUtils", "resource://gre/modules/PlacesUtils.jsm");
 XPCOMUtils.defineLazyModuleGetter(this, "ReaderMode", "resource://gre/modules/ReaderMode.jsm");
@@ -19,21 +18,7 @@ XPCOMUtils.defineLazyModuleGetter(this, "ReaderMode", "resource://gre/modules/Re
 const gStringBundle = Services.strings.createBundle("chrome://global/locale/aboutReader.properties");
 
 var ReaderParent = {
-  _readerModeInfoPanelOpen: false,
-
-  MESSAGES: [
-    "Reader:ArticleGet",
-    "Reader:FaviconRequest",
-    "Reader:UpdateReaderButton",
-  ],
-
-  init() {
-    let mm = Cc["@mozilla.org/globalmessagemanager;1"].getService(Ci.nsIMessageListenerManager);
-    for (let msg of this.MESSAGES) {
-      mm.addMessageListener(msg, this);
-    }
-  },
-
+  // Listeners are added in nsBrowserGlue.js
   receiveMessage(message) {
     switch (message.name) {
       case "Reader:ArticleGet":
@@ -107,16 +92,6 @@ var ReaderParent = {
       command.setAttribute("accesskey", gStringBundle.GetStringFromName("readerView.enter.accesskey"));
       key.setAttribute("disabled", !browser.isArticle);
     }
-
-    let currentUriHost = browser.currentURI && browser.currentURI.asciiHost;
-    if (browser.isArticle &&
-        !Services.prefs.getBoolPref("browser.reader.detectedFirstArticle") &&
-        currentUriHost && !currentUriHost.endsWith("mozilla.org")) {
-      Services.prefs.setBoolPref("browser.reader.detectedFirstArticle", true);
-      this._readerModeInfoPanelOpen = true;
-    } else if (this._readerModeInfoPanelOpen) {
-      this._readerModeInfoPanelOpen = false;
-    }
   },
 
   forceShowReaderIcon(browser) {
@@ -145,8 +120,8 @@ var ReaderParent = {
    * @return {Promise}
    * @resolves JS object representing the article, or null if no article is found.
    */
-  _getArticle: Task.async(function* (url, browser) {
-    return yield ReaderMode.downloadAndParseDocument(url).catch(e => {
+  async _getArticle(url, browser) {
+    return await ReaderMode.downloadAndParseDocument(url).catch(e => {
       if (e && e.newURL) {
         // Pass up the error so we can navigate the browser in question to the new URL:
         throw e;
@@ -154,5 +129,5 @@ var ReaderParent = {
       Cu.reportError("Error downloading and parsing document: " + e);
       return null;
     });
-  })
+  }
 };

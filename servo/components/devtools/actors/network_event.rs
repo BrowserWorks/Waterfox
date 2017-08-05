@@ -9,8 +9,6 @@
 use actor::{Actor, ActorMessageStatus, ActorRegistry};
 use devtools_traits::HttpRequest as DevtoolsHttpRequest;
 use devtools_traits::HttpResponse as DevtoolsHttpResponse;
-use encoding::all::UTF_8;
-use encoding::types::{DecoderTrap, Encoding};
 use hyper::header::{ContentType, Cookie};
 use hyper::header::Headers;
 use hyper::http::RawStatus;
@@ -361,11 +359,11 @@ impl NetworkEventActor {
     pub fn add_response(&mut self, response: DevtoolsHttpResponse) {
         self.response.headers = response.headers.clone();
         self.response.status = response.status.as_ref().map(|&(s, ref st)| {
-            let status_text = UTF_8.decode(st, DecoderTrap::Replace).unwrap();
+            let status_text = String::from_utf8_lossy(st).into_owned();
             RawStatus(s, Cow::from(status_text))
         });
         self.response.body = response.body.clone();
-     }
+    }
 
     pub fn event_actor(&self) -> EventActor {
         // TODO: Send the correct values for startedDateTime, isXHR, private
@@ -413,7 +411,7 @@ impl NetworkEventActor {
             transferredSize: 0,
             discardResponseBody: true,
         }
-     }
+    }
 
     pub fn response_cookies(&self) -> ResponseCookiesMsg {
         let mut cookies_size = 0;

@@ -157,11 +157,28 @@ ArraySetLength(JSContext* cx, Handle<ArrayObject*> obj, HandleId id,
  * Elements do not track property creation order, so enumerating the elements
  * of an object does not necessarily visit indexes in the order they were
  * created.
+ *
+ * Shifted elements
+ * ----------------
+ * It's pretty common to use an array as a queue, like this:
+ *
+ *    while (arr.length > 0)
+ *        foo(arr.shift());
+ *
+ * To ensure we don't get quadratic behavior on this, elements can be 'shifted'
+ * in memory. tryShiftDenseElements does this by incrementing elements_ to point
+ * to the next element and moving the ObjectElements header in memory (so it's
+ * stored where the shifted Value used to be).
+ *
+ * Shifted elements can be moved when we grow the array, when the array is
+ * frozen (for simplicity, shifted elements are not supported on objects that
+ * are frozen, have copy-on-write elements, or on arrays with non-writable
+ * length).
  */
 class ObjectElements
 {
   public:
-    enum Flags: uint32_t {
+    enum Flags: uint16_t {
         // Integers written to these elements must be converted to doubles.
         CONVERT_DOUBLE_ELEMENTS     = 0x1,
 
@@ -187,6 +204,15 @@ class ObjectElements
         FROZEN                      = 0x10,
     };
 
+    // The flags word stores both the flags and the number of shifted elements.
+    // Allow shifting 2047 elements before actually moving the elements.
+    static const size_t NumShiftedElementsBits = 11;
+    static const size_t MaxShiftedElements = (1 << NumShiftedElementsBits) - 1;
+    static const size_t NumShiftedElementsShift = 32 - NumShiftedElementsBits;
+    static const size_t FlagsMask = (1 << NumShiftedElementsShift) - 1;
+    static_assert(MaxShiftedElements == 2047,
+                  "MaxShiftedElements should match the comment");
+
   private:
     friend class ::JSObject;
     friend class ArrayObject;
@@ -199,7 +225,9 @@ class ObjectElements
     ArraySetLength(JSContext* cx, Handle<ArrayObject*> obj, HandleId id,
                    unsigned attrs, HandleValue value, ObjectOpResult& result);
 
-    /* See Flags enum above. */
+    // The NumShiftedElementsBits high bits of this are used to store the
+    // number of shifted elements, the other bits are available for the flags.
+    // See Flags enum above.
     uint32_t flags;
 
     /*
@@ -231,6 +259,9 @@ class ObjectElements
         return flags & NONWRITABLE_ARRAY_LENGTH;
     }
     void setNonwritableArrayLength() {
+        // See ArrayObject::setNonWritableLength.
+        MOZ_ASSERT(capacity == initializedLength);
+        MOZ_ASSERT(numShiftedElements() == 0);
         MOZ_ASSERT(!isCopyOnWrite());
         flags |= NONWRITABLE_ARRAY_LENGTH;
     }
@@ -240,6 +271,31 @@ class ObjectElements
     void clearCopyOnWrite() {
         MOZ_ASSERT(isCopyOnWrite());
         flags &= ~COPY_ON_WRITE;
+    }
+
+    void addShiftedElements(uint32_t count) {
+        MOZ_ASSERT(count < capacity);
+        MOZ_ASSERT(count < initializedLength);
+        MOZ_ASSERT(!(flags & (NONWRITABLE_ARRAY_LENGTH | FROZEN | COPY_ON_WRITE)));
+        uint32_t numShifted = numShiftedElements() + count;
+        MOZ_ASSERT(numShifted <= MaxShiftedElements);
+        flags = (numShifted << NumShiftedElementsShift) | (flags & FlagsMask);
+        capacity -= count;
+        initializedLength -= count;
+    }
+    void unshiftShiftedElements(uint32_t count) {
+        MOZ_ASSERT(count > 0);
+        MOZ_ASSERT(!(flags & (NONWRITABLE_ARRAY_LENGTH | FROZEN | COPY_ON_WRITE)));
+        uint32_t numShifted = numShiftedElements();
+        MOZ_ASSERT(count <= numShifted);
+        numShifted -= count;
+        flags = (numShifted << NumShiftedElementsShift) | (flags & FlagsMask);
+        capacity += count;
+        initializedLength += count;
+    }
+    void clearShiftedElements() {
+        flags &= FlagsMask;
+        MOZ_ASSERT(numShiftedElements() == 0);
     }
 
   public:
@@ -261,7 +317,7 @@ class ObjectElements
     const HeapSlot* elements() const {
         return reinterpret_cast<const HeapSlot*>(uintptr_t(this) + sizeof(ObjectElements));
     }
-    static ObjectElements * fromElements(HeapSlot* elems) {
+    static ObjectElements* fromElements(HeapSlot* elems) {
         return reinterpret_cast<ObjectElements*>(uintptr_t(elems) - sizeof(ObjectElements));
     }
 
@@ -299,16 +355,22 @@ class ObjectElements
         MOZ_ASSERT(!isCopyOnWrite());
         flags |= FROZEN;
     }
-    void markNotFrozen() {
-        MOZ_ASSERT(isFrozen());
-        MOZ_ASSERT(!isCopyOnWrite());
-        flags &= ~FROZEN;
-    }
 
     uint8_t elementAttributes() const {
         if (isFrozen())
             return JSPROP_ENUMERATE | JSPROP_PERMANENT | JSPROP_READONLY;
         return JSPROP_ENUMERATE;
+    }
+
+    uint32_t numShiftedElements() const {
+        uint32_t numShifted = flags >> NumShiftedElementsShift;
+        MOZ_ASSERT_IF(numShifted > 0,
+                      !(flags & (NONWRITABLE_ARRAY_LENGTH | FROZEN | COPY_ON_WRITE)));
+        return numShifted;
+    }
+
+    uint32_t numAllocatedElements() const {
+        return VALUES_PER_HEADER + capacity + numShiftedElements();
     }
 
     // This is enough slots to store an object of this class. See the static
@@ -449,7 +511,7 @@ class NativeObject : public ShapedObject
 
     // Update the last property, keeping the number of allocated slots in sync
     // with the object's new slot span.
-    bool setLastProperty(JSContext* cx, Shape* shape);
+    MOZ_ALWAYS_INLINE bool setLastProperty(JSContext* cx, Shape* shape);
 
     // As for setLastProperty(), but allows the number of fixed slots to
     // change. This can only be used when fixed slots are being erased from the
@@ -669,6 +731,13 @@ class NativeObject : public ShapedObject
      */
     static bool growSlotsDontReportOOM(JSContext* cx, NativeObject* obj, uint32_t newCount);
 
+    /*
+     * Like growSlotsDontReportOOM but for dense elements. This will return
+     * false if we failed to allocate a dense element for some reason (OOM, too
+     * many dense elements, non-writable array length, etc).
+     */
+    static bool addDenseElementDontReportOOM(JSContext* cx, NativeObject* obj);
+
     bool hasDynamicSlots() const { return !!slots_; }
 
     /* Compute dynamicSlotsCount() for this object. */
@@ -728,8 +797,6 @@ class NativeObject : public ShapedObject
     void freeSlot(JSContext* cx, uint32_t slot);
 
   private:
-    static Shape* getChildPropertyOnDictionary(JSContext* cx, HandleNativeObject obj,
-                                               HandleShape parent, MutableHandle<StackShape> child);
     static Shape* getChildProperty(JSContext* cx, HandleNativeObject obj,
                                    HandleShape parent, MutableHandle<StackShape> child);
 
@@ -871,10 +938,10 @@ class NativeObject : public ShapedObject
 
     // MAX_FIXED_SLOTS is the biggest number of fixed slots our GC
     // size classes will give an object.
-    static const uint32_t MAX_FIXED_SLOTS = 16;
+    static const uint32_t MAX_FIXED_SLOTS = shadow::Object::MAX_FIXED_SLOTS;
 
   protected:
-    inline bool updateSlotsForSpan(JSContext* cx, size_t oldSpan, size_t newSpan);
+    MOZ_ALWAYS_INLINE bool updateSlotsForSpan(JSContext* cx, size_t oldSpan, size_t newSpan);
 
   private:
     void prepareElementRangeForOverwrite(size_t start, size_t end) {
@@ -892,6 +959,8 @@ class NativeObject : public ShapedObject
         for (size_t i = start; i < end; i++)
             getSlotAddressUnchecked(i)->HeapSlot::~HeapSlot();
     }
+
+    inline void shiftDenseElementsUnchecked(uint32_t count);
 
   public:
     static bool rollbackProperties(JSContext* cx, HandleNativeObject obj,
@@ -980,8 +1049,24 @@ class NativeObject : public ShapedObject
                       "uint32_t (and sometimes int32_t ,too)");
     }
 
-    ObjectElements * getElementsHeader() const {
+    ObjectElements* getElementsHeader() const {
         return ObjectElements::fromElements(elements_);
+    }
+
+    // Returns a pointer to the first element, including shifted elements.
+    inline HeapSlot* unshiftedElements() const {
+        return elements_ - getElementsHeader()->numShiftedElements();
+    }
+
+    // Like getElementsHeader, but returns a pointer to the unshifted header.
+    // This is mainly useful for free()ing dynamic elements: the pointer
+    // returned here is the one we got from malloc.
+    void* getUnshiftedElementsHeader() const {
+        return ObjectElements::fromElements(unshiftedElements());
+    }
+
+    uint32_t unshiftedIndex(uint32_t index) const {
+        return index + getElementsHeader()->numShiftedElements();
     }
 
     /* Accessors for elements. */
@@ -992,6 +1077,19 @@ class NativeObject : public ShapedObject
             return growElements(cx, capacity);
         return true;
     }
+
+    // Try to shift |count| dense elements, see the "Shifted elements" comment.
+    inline bool tryShiftDenseElements(uint32_t count);
+
+    // Try to make space for |count| dense elements at the start of the array.
+    bool tryUnshiftDenseElements(uint32_t count);
+
+    // Move the elements header and all shifted elements to the start of the
+    // allocated elements space, so that numShiftedElements is 0 afterwards.
+    void moveShiftedElements();
+
+    // If this object has many shifted elements call moveShiftedElements.
+    void maybeMoveShiftedElements();
 
     static bool goodElementsAllocationAmount(JSContext* cx, uint32_t reqAllocated,
                                              uint32_t length, uint32_t* goodAmount);
@@ -1034,7 +1132,7 @@ class NativeObject : public ShapedObject
         MOZ_ASSERT(index < getDenseInitializedLength());
         MOZ_ASSERT(!denseElementsAreCopyOnWrite());
         checkStoredValue(val);
-        elements_[index].set(this, HeapSlot::Element, index, val);
+        elements_[index].set(this, HeapSlot::Element, unshiftedIndex(index), val);
     }
 
   public:
@@ -1056,7 +1154,7 @@ class NativeObject : public ShapedObject
         MOZ_ASSERT(!denseElementsAreCopyOnWrite());
         MOZ_ASSERT(!denseElementsAreFrozen());
         checkStoredValue(val);
-        elements_[index].init(this, HeapSlot::Element, index, val);
+        elements_[index].init(this, HeapSlot::Element, unshiftedIndex(index), val);
     }
 
     void setDenseElementMaybeConvertDouble(uint32_t index, const Value& val) {
@@ -1151,9 +1249,9 @@ class NativeObject : public ShapedObject
     bool canHaveNonEmptyElements();
 #endif
 
-    void setFixedElements() {
+    void setFixedElements(uint32_t numShifted = 0) {
         MOZ_ASSERT(canHaveNonEmptyElements());
-        elements_ = fixedElements();
+        elements_ = fixedElements() + numShifted;
     }
 
     inline bool hasDynamicElements() const {
@@ -1164,11 +1262,11 @@ class NativeObject : public ShapedObject
          * immediately afterwards. Such cases cannot occur for dense arrays
          * (which have at least two fixed slots) and can only result in a leak.
          */
-        return !hasEmptyElements() && elements_ != fixedElements();
+        return !hasEmptyElements() && !hasFixedElements();
     }
 
     inline bool hasFixedElements() const {
-        return elements_ == fixedElements();
+        return unshiftedElements() == fixedElements();
     }
 
     inline bool hasEmptyElements() const {
@@ -1220,6 +1318,8 @@ class NativeObject : public ShapedObject
     }
 
     void setPrivateGCThing(gc::Cell* cell) {
+        MOZ_ASSERT_IF(IsMarkedBlack(this),
+                      !JS::GCThingIsMarkedGray(JS::GCCellPtr(cell, cell->getTraceKind())));
         void** pprivate = &privateRef(numFixedSlots());
         privateWriteBarrierPre(pprivate);
         *pprivate = reinterpret_cast<void*>(cell);
@@ -1412,6 +1512,9 @@ MaybeNativeObject(JSObject* obj)
 
 // Defined in NativeObject-inl.h.
 bool IsPackedArray(JSObject* obj);
+
+extern void
+AddPropertyTypesAfterProtoChange(JSContext* cx, NativeObject* obj, ObjectGroup* oldGroup);
 
 } // namespace js
 

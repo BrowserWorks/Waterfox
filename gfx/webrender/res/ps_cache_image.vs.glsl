@@ -13,12 +13,13 @@ void main(void) {
                                  prim.local_clip_rect,
                                  prim.z,
                                  prim.layer,
-                                 prim.task);
+                                 prim.task,
+                                 prim.local_rect.p0);
 
-    RenderTaskData child_task = fetch_render_task(prim.user_data.x);
+    RenderTaskData child_task = fetch_render_task(prim.user_data1);
     vUv.z = child_task.data1.x;
 
-    vec2 texture_size = vec2(textureSize(sCache, 0));
+    vec2 texture_size = vec2(textureSize(sCacheRGBA8, 0));
     vec2 uv0 = child_task.data0.xy / texture_size;
     vec2 uv1 = (child_task.data0.xy + child_task.data0.zw) / texture_size;
 

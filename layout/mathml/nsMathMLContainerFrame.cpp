@@ -16,7 +16,6 @@
 #include "nsIDOMMutationEvent.h"
 #include "nsGkAtoms.h"
 #include "nsDisplayList.h"
-#include "nsIReflowCallback.h"
 #include "mozilla/Likely.h"
 #include "nsIScriptError.h"
 #include "nsContentUtils.h"
@@ -120,8 +119,7 @@ IsForeignChild(const nsIFrame* aFrame)
 {
   // This counts nsMathMLmathBlockFrame as a foreign child, because it
   // uses block reflow
-  return !(aFrame->IsFrameOfType(nsIFrame::eMathML)) ||
-    aFrame->GetType() == nsGkAtoms::blockFrame;
+  return !(aFrame->IsFrameOfType(nsIFrame::eMathML)) || aFrame->IsBlockFrame();
 }
 
 NS_DECLARE_FRAME_PROPERTY_DELETABLE(HTMLReflowOutputProperty,
@@ -134,7 +132,7 @@ nsMathMLContainerFrame::SaveReflowAndBoundingMetricsFor(nsIFrame*               
 {
   ReflowOutput* reflowOutput = new ReflowOutput(aReflowOutput);
   reflowOutput->mBoundingMetrics = aBoundingMetrics;
-  aFrame->Properties().Set(HTMLReflowOutputProperty(), reflowOutput);
+  aFrame->SetProperty(HTMLReflowOutputProperty(), reflowOutput);
 }
 
 // helper method to facilitate getting the reflow and bounding metrics
@@ -147,7 +145,7 @@ nsMathMLContainerFrame::GetReflowAndBoundingMetricsFor(nsIFrame*            aFra
   NS_PRECONDITION(aFrame, "null arg");
 
   ReflowOutput* reflowOutput =
-    aFrame->Properties().Get(HTMLReflowOutputProperty());
+    aFrame->GetProperty(HTMLReflowOutputProperty());
 
   // IMPORTANT: This function is only meant to be called in Place() methods
   // where it is assumed that SaveReflowAndBoundingMetricsFor has recorded the
@@ -175,9 +173,8 @@ void
 nsMathMLContainerFrame::ClearSavedChildMetrics()
 {
   nsIFrame* childFrame = mFrames.FirstChild();
-  FramePropertyTable* props = PresContext()->PropertyTable();
   while (childFrame) {
-    props->Delete(childFrame, HTMLReflowOutputProperty());
+    childFrame->DeleteProperty(HTMLReflowOutputProperty());
     childFrame = childFrame->GetNextSibling();
   }
 }
@@ -1317,38 +1314,6 @@ nsMathMLContainerFrame::PositionRowChildFrames(nscoord aOffsetX,
                       nullptr, dx, dy, 0);
     ++child;
   }
-}
-
-class ForceReflow : public nsIReflowCallback {
-public:
-  virtual bool ReflowFinished() override {
-    return true;
-  }
-  virtual void ReflowCallbackCanceled() override {}
-};
-
-// We only need one of these so we just make it a static global, no need
-// to dynamically allocate/destroy it.
-static ForceReflow gForceReflow;
-
-void
-nsMathMLContainerFrame::SetIncrementScriptLevel(int32_t aChildIndex, bool aIncrement)
-{
-  nsIFrame* child = PrincipalChildList().FrameAt(aChildIndex);
-  if (!child)
-    return;
-  nsIContent* content = child->GetContent();
-  if (!content->IsMathMLElement())
-    return;
-  nsMathMLElement* element = static_cast<nsMathMLElement*>(content);
-
-  if (element->GetIncrementScriptLevel() == aIncrement)
-    return;
-
-  // XXXroc this does a ContentStatesChanged, is it safe to call here? If
-  // not we should do it in a post-reflow callback.
-  element->SetIncrementScriptLevel(aIncrement, true);
-  PresContext()->PresShell()->PostReflowCallback(&gForceReflow);
 }
 
 // helpers to fix the inter-spacing when <math> is the only parent

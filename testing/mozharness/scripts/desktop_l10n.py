@@ -50,13 +50,6 @@ FAILURE = 1
 SUCCESS_STR = "Success"
 FAILURE_STR = "Failed"
 
-# when running get_output_form_command, pymake has some extra output
-# that needs to be filtered out
-PyMakeIgnoreList = [
-    re.compile(r'''.*make\.py(?:\[\d+\])?: Entering directory'''),
-    re.compile(r'''.*make\.py(?:\[\d+\])?: Leaving directory'''),
-]
-
 
 # mandatory configuration options, without them, this script will not work
 # it's a list of values that are already known before starting a build
@@ -510,33 +503,20 @@ class DesktopSingleLocale(LocalesMixin, ReleaseMixin, MockMixin, BuildbotMixin,
                 self.enUS_revision = match.groups()[1]
         return self.enUS_revision
 
-    def _query_make_variable(self, variable, make_args=None,
-                             exclude_lines=PyMakeIgnoreList):
+    def _query_make_variable(self, variable, make_args=None):
         """returns the value of make echo-variable-<variable>
            it accepts extra make arguements (make_args)
-           it also has an exclude_lines from the output filer
-           exclude_lines defaults to PyMakeIgnoreList because
-           on windows, pymake writes extra output lines that need
-           to be filtered out.
         """
         dirs = self.query_abs_dirs()
         make_args = make_args or []
-        exclude_lines = exclude_lines or []
         target = ["echo-variable-%s" % variable] + make_args
         cwd = dirs['abs_locales_dir']
         raw_output = self._get_output_from_make(target, cwd=cwd,
                                                 env=self.query_bootstrap_env())
-        # we want to log all the messages from make/pymake and
-        # exlcude some messages from the output ("Entering directory...")
+        # we want to log all the messages from make
         output = []
         for line in raw_output.split("\n"):
-            discard = False
-            for element in exclude_lines:
-                if element.match(line):
-                    discard = True
-                    continue
-            if not discard:
-                output.append(line.strip())
+            output.append(line.strip())
         output = " ".join(output).strip()
         self.info('echo-variable-%s: %s' % (variable, output))
         return output
@@ -718,7 +698,11 @@ class DesktopSingleLocale(LocalesMixin, ReleaseMixin, MockMixin, BuildbotMixin,
         return self._mach(target=target, env=env)
 
     def _get_mach_executable(self):
-        python = self.query_exe('python2.7')
+        python = sys.executable
+        # A mock environment is a special case, the system python isn't
+        # available there
+        if 'mock_target' in self.config:
+            python = 'python2.7'
         return [python, 'mach']
 
     def _get_make_executable(self):
@@ -818,7 +802,8 @@ class DesktopSingleLocale(LocalesMixin, ReleaseMixin, MockMixin, BuildbotMixin,
             matches = (glob.glob(os.path.join(upload_target, glob_name)) +
                        glob.glob(os.path.join(upload_target, 'update', glob_name)) +
                        glob.glob(os.path.join(upload_target, '*', 'xpi', glob_name)))
-            targets_exts = ["tar.bz2", "langpack.xpi", "complete.mar", "checksums"]
+            targets_exts = ["tar.bz2", "dmg", "langpack.xpi",
+                            "complete.mar", "checksums"]
             targets = ["target.%s" % ext for ext in targets_exts]
             for f in matches:
                 target_file = next(target_file for target_file in targets
@@ -1052,30 +1037,43 @@ class DesktopSingleLocale(LocalesMixin, ReleaseMixin, MockMixin, BuildbotMixin,
             return fn
 
     def _run_tooltool(self):
+        env = self.query_bootstrap_env()
         config = self.config
         dirs = self.query_abs_dirs()
-        if not config.get('tooltool_manifest_src'):
+        manifest_src = os.environ.get('TOOLTOOL_MANIFEST')
+        if not manifest_src:
+            manifest_src = config.get('tooltool_manifest_src')
+        if not manifest_src:
             return self.warning(ERROR_MSGS['tooltool_manifest_undetermined'])
-        fetch_script_path = os.path.join(dirs['abs_tools_dir'],
-                                         'scripts/tooltool/tooltool_wrapper.sh')
         tooltool_manifest_path = os.path.join(dirs['abs_mozilla_dir'],
-                                              config['tooltool_manifest_src'])
+                                              manifest_src)
+        python = sys.executable
+        # A mock environment is a special case, the system python isn't
+        # available there
+        if 'mock_target' in self.config:
+            python = 'python2.7'
+
         cmd = [
-            'sh',
-            fetch_script_path,
+            python, '-u',
+            os.path.join(dirs['abs_mozilla_dir'], 'mach'),
+            'artifact',
+            'toolchain',
+            '-v',
+            '--retry', '4',
+            '--tooltool-manifest',
             tooltool_manifest_path,
+            '--tooltool-url',
             config['tooltool_url'],
-            config['tooltool_bootstrap'],
         ]
-        cmd.extend(config['tooltool_script'])
         auth_file = self._get_tooltool_auth_file()
         if auth_file and os.path.exists(auth_file):
             cmd.extend(['--authentication-file', auth_file])
         cache = config['bootstrap_env'].get('TOOLTOOL_CACHE')
         if cache:
-            cmd.extend(['-c', cache])
+            cmd.extend(['--cache-dir', cache])
         self.info(str(cmd))
-        self.run_command(cmd, cwd=dirs['abs_mozilla_dir'], halt_on_failure=True)
+        self.run_command(cmd, cwd=dirs['abs_mozilla_dir'], halt_on_failure=True,
+                         env=env)
 
     def funsize_props(self):
         """Set buildbot properties required to trigger funsize tasks

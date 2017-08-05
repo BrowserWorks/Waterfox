@@ -1,8 +1,12 @@
 %filter substitution
 
 %define loweredShadow 0 1px rgba(255, 255, 255, .4)
+%ifdef MOZ_PHOTON_THEME
+%define focusRingShadow 0 0 0 1px -moz-mac-focusring inset, 0 0 0 1px -moz-mac-focusring
+%else
 %define focusRingShadow 0 0 1px -moz-mac-focusring inset, 0 0 4px 1px -moz-mac-focusring, 0 0 1.5px 1px -moz-mac-focusring
 %define yosemiteFocusRingShadow 0 0 0 0.5px -moz-mac-focusring inset, 0 0 0 2px -moz-mac-focusring
+%endif
 
 %define roundButtonBorder 1px solid rgba(0,0,0,.35)
 %define roundButtonColor black
@@ -15,7 +19,6 @@
 %define scopeBarSeparatorBorder 1px solid #888
 %define scopeBarTitleColor #6D6D6D
 
-%define toolbarbuttonCornerRadius 3px
 %define toolbarbuttonBackground linear-gradient(#FFF, #ADADAD) repeat-x
 %define toolbarbuttonPressedInnerShadow inset rgba(0, 0, 0, 0.3) 0 -6px 10px, inset #000 0 1px 3px, inset rgba(0, 0, 0, 0.2) 0 1px 3px
 %define toolbarbuttonInactiveBorderColor rgba(146, 146, 146, 0.84)

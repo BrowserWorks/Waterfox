@@ -14,7 +14,9 @@ use std::mem;
 use syntax::ast;
 
 /// Trace the layout of struct.
+#[derive(Debug)]
 pub struct StructLayoutTracker<'a, 'ctx: 'a> {
+    name: &'a str,
     ctx: &'a BindgenContext<'ctx>,
     comp: &'a CompInfo,
     latest_offset: usize,
@@ -36,15 +38,6 @@ pub fn align_to(size: usize, align: usize) -> usize {
     }
 
     size + align - rem
-}
-
-/// Returns the amount of bytes from a given amount of bytes, rounding up.
-pub fn bytes_from_bits(n: usize) -> usize {
-    if n % 8 == 0 {
-        return n / 8;
-    }
-
-    n / 8 + 1
 }
 
 /// Returns the lower power of two byte count that can hold at most n bits.
@@ -87,23 +80,10 @@ fn test_bytes_from_bits_pow2() {
     }
 }
 
-#[test]
-fn test_bytes_from_bits() {
-    assert_eq!(bytes_from_bits(0), 0);
-    for i in 1..9 {
-        assert_eq!(bytes_from_bits(i), 1);
-    }
-    for i in 9..17 {
-        assert_eq!(bytes_from_bits(i), 2);
-    }
-    for i in 17..25 {
-        assert_eq!(bytes_from_bits(i), 3);
-    }
-}
-
 impl<'a, 'ctx> StructLayoutTracker<'a, 'ctx> {
-    pub fn new(ctx: &'a BindgenContext<'ctx>, comp: &'a CompInfo) -> Self {
+    pub fn new(ctx: &'a BindgenContext<'ctx>, comp: &'a CompInfo, name: &'a str) -> Self {
         StructLayoutTracker {
+            name: name,
             ctx: ctx,
             comp: comp,
             latest_offset: 0,
@@ -115,6 +95,8 @@ impl<'a, 'ctx> StructLayoutTracker<'a, 'ctx> {
     }
 
     pub fn saw_vtable(&mut self) {
+        debug!("saw vtable for {}", self.name);
+
         let ptr_size = mem::size_of::<*mut ()>();
         self.latest_offset += ptr_size;
         self.latest_field_layout = Some(Layout::new(ptr_size, ptr_size));
@@ -122,6 +104,7 @@ impl<'a, 'ctx> StructLayoutTracker<'a, 'ctx> {
     }
 
     pub fn saw_base(&mut self, base_ty: &Type) {
+        debug!("saw base for {}", self.name);
         if let Some(layout) = base_ty.layout(self.ctx) {
             self.align_to_latest_field(layout);
 
@@ -131,7 +114,9 @@ impl<'a, 'ctx> StructLayoutTracker<'a, 'ctx> {
         }
     }
 
-    pub fn saw_bitfield_batch(&mut self, layout: Layout) {
+    pub fn saw_bitfield_unit(&mut self, layout: Layout) {
+        debug!("saw bitfield unit for {}: {:?}", self.name, layout);
+
         self.align_to_latest_field(layout);
 
         self.latest_offset += layout.size;
@@ -148,6 +133,7 @@ impl<'a, 'ctx> StructLayoutTracker<'a, 'ctx> {
     }
 
     pub fn saw_union(&mut self, layout: Layout) {
+        debug!("saw union for {}: {:?}", self.name, layout);
         self.align_to_latest_field(layout);
 
         self.latest_offset += self.padding_bytes(layout) + layout.size;
@@ -167,17 +153,20 @@ impl<'a, 'ctx> StructLayoutTracker<'a, 'ctx> {
             None => return None,
         };
 
-        if let TypeKind::Array(inner, len) = *field_ty.canonical_type(self.ctx).kind() {
+        if let TypeKind::Array(inner, len) =
+            *field_ty.canonical_type(self.ctx).kind() {
             // FIXME(emilio): As an _ultra_ hack, we correct the layout returned
             // by arrays of structs that have a bigger alignment than what we
             // can support.
             //
             // This means that the structs in the array are super-unsafe to
             // access, since they won't be properly aligned, but *shrug*.
-            if let Some(layout) = self.ctx.resolve_type(inner).layout(self.ctx) {
+            if let Some(layout) = self.ctx
+                .resolve_type(inner)
+                .layout(self.ctx) {
                 if layout.align > mem::size_of::<*mut ()>() {
-                    field_layout.size =
-                        align_to(layout.size, layout.align) * len;
+                    field_layout.size = align_to(layout.size, layout.align) *
+                                        len;
                     field_layout.align = mem::size_of::<*mut ()>();
                 }
             }
@@ -197,7 +186,8 @@ impl<'a, 'ctx> StructLayoutTracker<'a, 'ctx> {
             };
 
             // Otherwise the padding is useless.
-            let need_padding = padding_bytes >= field_layout.align;
+            let need_padding = padding_bytes >= field_layout.align ||
+                               field_layout.align > mem::size_of::<*mut ()>();
 
             self.latest_offset += padding_bytes;
 
@@ -206,14 +196,16 @@ impl<'a, 'ctx> StructLayoutTracker<'a, 'ctx> {
                    self.latest_offset);
 
             debug!("align field {} to {}/{} with {} padding bytes {:?}",
-                field_name,
-                self.latest_offset,
-                field_offset.unwrap_or(0) / 8,
-                padding_bytes,
-                field_layout);
+                   field_name,
+                   self.latest_offset,
+                   field_offset.unwrap_or(0) / 8,
+                   padding_bytes,
+                   field_layout);
 
             if need_padding && padding_bytes != 0 {
-                Some(Layout::new(padding_bytes, field_layout.align))
+                Some(Layout::new(padding_bytes,
+                                 cmp::min(field_layout.align,
+                                          mem::size_of::<*mut ()>())))
             } else {
                 None
             }
@@ -221,7 +213,8 @@ impl<'a, 'ctx> StructLayoutTracker<'a, 'ctx> {
 
         self.latest_offset += field_layout.size;
         self.latest_field_layout = Some(field_layout);
-        self.max_field_align = cmp::max(self.max_field_align, field_layout.align);
+        self.max_field_align = cmp::max(self.max_field_align,
+                                        field_layout.align);
         self.last_field_was_bitfield = false;
 
         debug!("Offset: {}: {} -> {}",
@@ -232,11 +225,14 @@ impl<'a, 'ctx> StructLayoutTracker<'a, 'ctx> {
         padding_layout.map(|layout| self.padding_field(layout))
     }
 
-    pub fn pad_struct(&mut self, name: &str, layout: Layout) -> Option<ast::StructField> {
+    pub fn pad_struct(&mut self, layout: Layout) -> Option<ast::StructField> {
+        debug!("pad_struct:\n\tself = {:#?}\n\tlayout = {:#?}", self, layout);
+
         if layout.size < self.latest_offset {
             error!("Calculated wrong layout for {}, too more {} bytes",
-                   name, self.latest_offset - layout.size);
-            return None
+                   self.name,
+                   self.latest_offset - layout.size);
+            return None;
         }
 
         let padding_bytes = layout.size - self.latest_offset;
@@ -248,19 +244,21 @@ impl<'a, 'ctx> StructLayoutTracker<'a, 'ctx> {
         // regardless, because bitfields don't respect alignment as strictly as
         // other fields.
         if padding_bytes > 0 &&
-            (padding_bytes >= layout.align ||
-             (self.last_field_was_bitfield &&
-                padding_bytes >= self.latest_field_layout.unwrap().align) ||
-             layout.align > mem::size_of::<*mut ()>()) {
+           (padding_bytes >= layout.align ||
+            (self.last_field_was_bitfield &&
+             padding_bytes >= self.latest_field_layout.unwrap().align) ||
+            layout.align > mem::size_of::<*mut ()>()) {
             let layout = if self.comp.packed() {
                 Layout::new(padding_bytes, 1)
             } else if self.last_field_was_bitfield ||
-                      layout.align > mem::size_of::<*mut ()>() {
+                                   layout.align > mem::size_of::<*mut ()>() {
                 // We've already given up on alignment here.
                 Layout::for_size(padding_bytes)
             } else {
                 Layout::new(padding_bytes, layout.align)
             };
+
+            debug!("pad bytes to struct {}, {:?}", self.name, layout);
 
             Some(self.padding_field(layout))
         } else {
@@ -314,12 +312,14 @@ impl<'a, 'ctx> StructLayoutTracker<'a, 'ctx> {
 
         // If it was, we may or may not need to align, depending on what the
         // current field alignment and the bitfield size and alignment are.
-        debug!("align_to_bitfield? {}: {:?} {:?}", self.last_field_was_bitfield,
-               layout, new_field_layout);
+        debug!("align_to_bitfield? {}: {:?} {:?}",
+               self.last_field_was_bitfield,
+               layout,
+               new_field_layout);
 
         if self.last_field_was_bitfield &&
-            new_field_layout.align <= layout.size % layout.align &&
-            new_field_layout.size <= layout.size % layout.align {
+           new_field_layout.align <= layout.size % layout.align &&
+           new_field_layout.size <= layout.size % layout.align {
             // The new field will be coalesced into some of the remaining bits.
             //
             // FIXME(emilio): I think this may not catch everything?

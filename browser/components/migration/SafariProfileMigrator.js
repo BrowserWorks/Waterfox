@@ -10,11 +10,10 @@ var Cu = Components.utils;
 
 Cu.import("resource://gre/modules/AppConstants.jsm");
 Cu.import("resource://gre/modules/FileUtils.jsm");
-Cu.import("resource://gre/modules/osfile.jsm"); /* globals OS */
+Cu.import("resource://gre/modules/osfile.jsm");
 Cu.import("resource://gre/modules/Services.jsm");
-Cu.import("resource://gre/modules/Task.jsm");
 Cu.import("resource://gre/modules/XPCOMUtils.jsm");
-Cu.import("resource:///modules/MigrationUtils.jsm"); /* globals MigratorPrototype */
+Cu.import("resource:///modules/MigrationUtils.jsm");
 
 XPCOMUtils.defineLazyModuleGetter(this, "Downloads",
                                   "resource://gre/modules/Downloads.jsm");
@@ -36,8 +35,8 @@ Bookmarks.prototype = {
   type: MigrationUtils.resourceTypes.BOOKMARKS,
 
   migrate: function B_migrate(aCallback) {
-    return Task.spawn(function* () {
-      let dict = yield new Promise(resolve =>
+    return (async () => {
+      let dict = await new Promise(resolve =>
         PropertyListUtils.read(this._file, resolve)
       );
       if (!dict)
@@ -48,8 +47,8 @@ Bookmarks.prototype = {
 
       let collection = dict.get("Title") == "com.apple.ReadingList" ?
         this.READING_LIST_COLLECTION : this.ROOT_COLLECTION;
-      yield this._migrateCollection(children, collection);
-    }.bind(this)).then(() => aCallback(true),
+      await this._migrateCollection(children, collection);
+    })().then(() => aCallback(true),
                         e => { Cu.reportError(e); aCallback(false) });
   },
 
@@ -67,7 +66,7 @@ Bookmarks.prototype = {
    * @param aCollection
    *        one of the values above.
    */
-  _migrateCollection: Task.async(function* (aEntries, aCollection) {
+  async _migrateCollection(aEntries, aCollection) {
     // A collection of bookmarks in Safari resembles places roots.  In the
     // property list files (Bookmarks.plist, ReadingList.plist) they are
     // stored as regular bookmarks folders, and thus can only be distinguished
@@ -81,11 +80,11 @@ Bookmarks.prototype = {
           let title = entry.get("Title");
           let children = entry.get("Children");
           if (title == "BookmarksBar")
-            yield this._migrateCollection(children, this.TOOLBAR_COLLECTION);
+            await this._migrateCollection(children, this.TOOLBAR_COLLECTION);
           else if (title == "BookmarksMenu")
-            yield this._migrateCollection(children, this.MENU_COLLECTION);
+            await this._migrateCollection(children, this.MENU_COLLECTION);
           else if (title == "com.apple.ReadingList")
-            yield this._migrateCollection(children, this.READING_LIST_COLLECTION);
+            await this._migrateCollection(children, this.READING_LIST_COLLECTION);
           else if (entry.get("ShouldOmitFromUI") !== true)
             entriesFiltered.push(entry);
         } else if (type == "WebBookmarkTypeLeaf") {
@@ -115,7 +114,7 @@ Bookmarks.prototype = {
         folderGuid = PlacesUtils.bookmarks.menuGuid;
         if (!MigrationUtils.isStartupMigration) {
           folderGuid =
-            yield MigrationUtils.createImportedBookmarksFolder("Safari", folderGuid);
+            await MigrationUtils.createImportedBookmarksFolder("Safari", folderGuid);
         }
         break;
       }
@@ -123,7 +122,7 @@ Bookmarks.prototype = {
         folderGuid = PlacesUtils.bookmarks.toolbarGuid;
         if (!MigrationUtils.isStartupMigration) {
           folderGuid =
-            yield MigrationUtils.createImportedBookmarksFolder("Safari", folderGuid);
+            await MigrationUtils.createImportedBookmarksFolder("Safari", folderGuid);
         }
         break;
       }
@@ -131,7 +130,7 @@ Bookmarks.prototype = {
         // Reading list items are imported as regular bookmarks.
         // They are imported under their own folder, created either under the
         // bookmarks menu (in the case of startup migration).
-        folderGuid = (yield MigrationUtils.insertBookmarkWrapper({
+        folderGuid = (await MigrationUtils.insertBookmarkWrapper({
           parentGuid: PlacesUtils.bookmarks.menuGuid,
           type: PlacesUtils.bookmarks.TYPE_FOLDER,
           title: MigrationUtils.getLocalizedString("importedSafariReadingList"),
@@ -144,8 +143,8 @@ Bookmarks.prototype = {
     if (folderGuid == -1)
       throw new Error("Invalid folder GUID");
 
-    yield this._migrateEntries(entriesFiltered, folderGuid);
-  }),
+    await this._migrateEntries(entriesFiltered, folderGuid);
+  },
 
   // migrate the given array of safari bookmarks to the given places
   // folder.
@@ -204,7 +203,7 @@ History.prototype = {
   },
 
   migrate: function H_migrate(aCallback) {
-    PropertyListUtils.read(this._file, function migrateHistory(aDict) {
+    PropertyListUtils.read(this._file, aDict => {
       try {
         if (!aDict)
           throw new Error("Could not read history property list");
@@ -247,7 +246,7 @@ History.prototype = {
         Cu.reportError(ex);
         aCallback(false);
       }
-    }.bind(this));
+    });
   }
 };
 
@@ -276,7 +275,7 @@ MainPreferencesPropertyList.prototype = {
     let alreadyReading = this._callbacks.length > 0;
     this._callbacks.push(aCallback);
     if (!alreadyReading) {
-      PropertyListUtils.read(this._file, function readPrefs(aDict) {
+      PropertyListUtils.read(this._file, aDict => {
         this._dict = aDict;
         for (let callback of this._callbacks) {
           try {
@@ -286,7 +285,7 @@ MainPreferencesPropertyList.prototype = {
           }
         }
         this._callbacks.splice(0);
-      }.bind(this));
+      });
     }
   },
 

@@ -46,7 +46,7 @@ public:
 
 class FTUserFontData {
 public:
-    NS_INLINE_DECL_REFCOUNTING(FTUserFontData)
+    NS_INLINE_DECL_THREADSAFE_REFCOUNTING(FTUserFontData)
 
     explicit FTUserFontData(FT_Face aFace, const uint8_t* aData)
         : mFace(aFace), mFontData(aData)
@@ -58,7 +58,7 @@ public:
 private:
     ~FTUserFontData()
     {
-        FT_Done_Face(mFace);
+        mozilla::gfx::Factory::ReleaseFTFace(mFace);
         if (mFontData) {
             NS_Free((void*)mFontData);
         }
@@ -66,23 +66,6 @@ private:
 
     FT_Face        mFace;
     const uint8_t *mFontData;
-};
-
-class FTUserFontDataRef {
-public:
-    explicit FTUserFontDataRef(FTUserFontData *aUserFontData)
-        : mUserFontData(aUserFontData)
-    {
-    }
-
-    static void Destroy(void* aData) {
-        FTUserFontDataRef* aUserFontDataRef =
-            static_cast<FTUserFontDataRef*>(aData);
-        delete aUserFontDataRef;
-    }
-
-private:
-    RefPtr<FTUserFontData> mUserFontData;
 };
 
 // The names for the font entry and font classes should really
@@ -168,6 +151,26 @@ protected:
 
     // data font
     const uint8_t* mFontData;
+
+    class UnscaledFontCache
+    {
+    public:
+        already_AddRefed<mozilla::gfx::UnscaledFontFontconfig>
+        Lookup(const char* aFile, uint32_t aIndex);
+
+        void Add(const RefPtr<mozilla::gfx::UnscaledFontFontconfig>& aUnscaledFont) {
+            mUnscaledFonts[kNumEntries-1] = aUnscaledFont;
+            MoveToFront(kNumEntries-1);
+        }
+
+    private:
+        void MoveToFront(size_t aIndex);
+
+        static const size_t kNumEntries = 3;
+        mozilla::WeakPtr<mozilla::gfx::UnscaledFont> mUnscaledFonts[kNumEntries];
+    };
+
+    UnscaledFontCache mUnscaledFontCache;
 };
 
 class gfxFontconfigFontFamily : public gfxFontFamily {
@@ -196,7 +199,7 @@ public:
                          bool& aNeedsSyntheticBold) override;
 
 protected:
-    virtual ~gfxFontconfigFontFamily() { }
+    virtual ~gfxFontconfigFontFamily();
 
     nsTArray<nsCountedRef<FcPattern> > mFontPatterns;
 
@@ -207,7 +210,8 @@ protected:
 
 class gfxFontconfigFont : public gfxFontconfigFontBase {
 public:
-    gfxFontconfigFont(cairo_scaled_font_t *aScaledFont,
+    gfxFontconfigFont(const RefPtr<mozilla::gfx::UnscaledFontFontconfig> &aUnscaledFont,
+                      cairo_scaled_font_t *aScaledFont,
                       FcPattern *aPattern,
                       gfxFloat aAdjustedSize,
                       gfxFontEntry *aFontEntry,
@@ -217,8 +221,6 @@ public:
 protected:
     virtual ~gfxFontconfigFont();
 };
-
-class nsILanguageAtomService;
 
 class gfxFcPlatformFontList : public gfxPlatformFontList {
 public:

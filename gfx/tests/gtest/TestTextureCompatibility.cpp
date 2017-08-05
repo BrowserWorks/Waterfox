@@ -7,7 +7,6 @@
 #include "gfxConfig.h"
 #include "gfxPlatform.h"
 #include "gtest/gtest.h"
-#include "gtest/MozGTestBench.h"
 #include "MockWidget.h"
 #include "mozilla/layers/BasicCompositor.h"
 #include "mozilla/layers/Compositor.h"
@@ -94,7 +93,7 @@ CheckCompatibilityWithBasicCompositor(LayersBackend aBackends,
     if (!aTextures[i]) {
       continue;
     }
-    aTextures[i]->SetCompositor(compositor);
+    aTextures[i]->SetTextureSourceProvider(compositor);
 
     // The lock function will fail if the texture is not compatible with
     // BasicCompositor.

@@ -74,7 +74,7 @@ class TlsAgent : public PollTarget {
   static const std::string kServerEcdhRsa;
   static const std::string kServerDsa;
 
-  TlsAgent(const std::string& name, Role role, Mode mode);
+  TlsAgent(const std::string& name, Role role, SSLProtocolVariant variant);
   virtual ~TlsAgent();
 
   void SetPeer(std::shared_ptr<TlsAgent>& peer) {
@@ -137,6 +137,7 @@ class TlsAgent : public PollTarget {
   void EnableFalseStart();
   void ExpectResumption();
   void ExpectShortHeaders();
+  void SkipVersionChecks();
   void SetSignatureSchemes(const SSLSignatureScheme* schemes, size_t count);
   void EnableAlpn(const uint8_t* val, size_t len);
   void CheckAlpn(SSLNextProtoState expected_state,
@@ -144,7 +145,6 @@ class TlsAgent : public PollTarget {
   void EnableSrtp();
   void CheckSrtp() const;
   void CheckErrorCode(int32_t expected) const;
-  void CheckAlerts() const;
   void WaitForErrorCode(int32_t expected, uint32_t delay) const;
   // Send data on the socket, encrypting it.
   void SendData(size_t bytes, size_t blocksize = 1024);
@@ -163,6 +163,7 @@ class TlsAgent : public PollTarget {
   void ConfigNamedGroups(const std::vector<SSLNamedGroup>& groups);
   void DisableECDHEServerKeyReuse();
   bool GetPeerChainLength(size_t* count);
+  void CheckCipherSuite(uint16_t cipher_suite);
 
   const std::string& name() const { return name_; }
 
@@ -245,41 +246,8 @@ class TlsAgent : public PollTarget {
     sni_callback_ = sni_callback;
   }
 
-  size_t alert_received_count() const { return alert_received_count_; }
-
-  void SetExpectedAlertReceivedCount(size_t count) {
-    expected_alert_received_count_ = count;
-  }
-
-  size_t expected_alert_received_count() const {
-    return expected_alert_received_count_;
-  }
-
-  bool GetLastAlertReceived(SSLAlert* alert) const {
-    if (!alert_received_count_) {
-      return false;
-    }
-    *alert = last_alert_received_;
-    return true;
-  }
-
-  size_t alert_sent_count() const { return alert_sent_count_; }
-
-  void SetExpectedAlertSentCount(size_t count) {
-    expected_alert_sent_count_ = count;
-  }
-
-  size_t expected_alert_sent_count() const {
-    return expected_alert_sent_count_;
-  }
-
-  bool GetLastAlertSent(SSLAlert* alert) const {
-    if (!alert_sent_count_) {
-      return false;
-    }
-    *alert = last_alert_sent_;
-    return true;
-  }
+  void ExpectReceiveAlert(uint8_t alert, uint8_t level = 0);
+  void ExpectSendAlert(uint8_t alert, uint8_t level = 0);
 
  private:
   const static char* states[];
@@ -362,28 +330,16 @@ class TlsAgent : public PollTarget {
     return SECSuccess;
   }
 
+  void CheckAlert(bool sent, const SSLAlert* alert);
+
   static void AlertReceivedCallback(const PRFileDesc* fd, void* arg,
                                     const SSLAlert* alert) {
-    TlsAgent* agent = reinterpret_cast<TlsAgent*>(arg);
-
-    std::cerr << agent->role_str()
-              << ": Alert received: level=" << static_cast<int>(alert->level)
-              << " desc=" << static_cast<int>(alert->description) << std::endl;
-
-    ++agent->alert_received_count_;
-    agent->last_alert_received_ = *alert;
+    reinterpret_cast<TlsAgent*>(arg)->CheckAlert(false, alert);
   }
 
   static void AlertSentCallback(const PRFileDesc* fd, void* arg,
                                 const SSLAlert* alert) {
-    TlsAgent* agent = reinterpret_cast<TlsAgent*>(arg);
-
-    std::cerr << agent->role_str()
-              << ": Alert sent: level=" << static_cast<int>(alert->level)
-              << " desc=" << static_cast<int>(alert->description) << std::endl;
-
-    ++agent->alert_sent_count_;
-    agent->last_alert_sent_ = *alert;
+    reinterpret_cast<TlsAgent*>(arg)->CheckAlert(true, alert);
   }
 
   static void HandshakeCallback(PRFileDesc* fd, void* arg) {
@@ -402,7 +358,7 @@ class TlsAgent : public PollTarget {
   void Connected();
 
   const std::string name_;
-  Mode mode_;
+  SSLProtocolVariant variant_;
   Role role_;
   uint16_t server_key_bits_;
   std::shared_ptr<DummyPrSocket> adapter_;
@@ -417,12 +373,10 @@ class TlsAgent : public PollTarget {
   bool can_falsestart_hook_called_;
   bool sni_hook_called_;
   bool auth_certificate_hook_called_;
-  size_t alert_received_count_;
-  size_t expected_alert_received_count_;
-  SSLAlert last_alert_received_;
-  size_t alert_sent_count_;
-  size_t expected_alert_sent_count_;
-  SSLAlert last_alert_sent_;
+  uint8_t expected_received_alert_;
+  uint8_t expected_received_alert_level_;
+  uint8_t expected_sent_alert_;
+  uint8_t expected_sent_alert_level_;
   bool handshake_callback_called_;
   SSLChannelInfo info_;
   SSLCipherSuiteInfo csinfo_;
@@ -435,6 +389,7 @@ class TlsAgent : public PollTarget {
   AuthCertificateCallbackFunction auth_certificate_callback_;
   SniCallbackFunction sni_callback_;
   bool expect_short_headers_;
+  bool skip_version_checks_;
 };
 
 inline std::ostream& operator<<(std::ostream& stream,
@@ -446,20 +401,23 @@ class TlsAgentTestBase : public ::testing::Test {
  public:
   static ::testing::internal::ParamGenerator<std::string> kTlsRolesAll;
 
-  TlsAgentTestBase(TlsAgent::Role role, Mode mode, uint16_t version = 0)
+  TlsAgentTestBase(TlsAgent::Role role, SSLProtocolVariant variant,
+                   uint16_t version = 0)
       : agent_(nullptr),
         role_(role),
-        mode_(mode),
+        variant_(variant),
         version_(version),
-        sink_adapter_(new DummyPrSocket("sink", mode)) {}
+        sink_adapter_(new DummyPrSocket("sink", variant)) {}
   virtual ~TlsAgentTestBase() {}
 
   void SetUp();
   void TearDown();
 
-  static void MakeRecord(Mode mode, uint8_t type, uint16_t version,
-                         const uint8_t* buf, size_t len, DataBuffer* out,
-                         uint64_t seq_num = 0);
+  void ExpectAlert(uint8_t alert);
+
+  static void MakeRecord(SSLProtocolVariant variant, uint8_t type,
+                         uint16_t version, const uint8_t* buf, size_t len,
+                         DataBuffer* out, uint64_t seq_num = 0);
   void MakeRecord(uint8_t type, uint16_t version, const uint8_t* buf,
                   size_t len, DataBuffer* out, uint64_t seq_num = 0) const;
   void MakeHandshakeMessage(uint8_t hs_type, const uint8_t* data, size_t hs_len,
@@ -474,10 +432,6 @@ class TlsAgentTestBase : public ::testing::Test {
     return str == "CLIENT" ? TlsAgent::CLIENT : TlsAgent::SERVER;
   }
 
-  static inline Mode ToMode(const std::string& str) {
-    return str == "TLS" ? STREAM : DGRAM;
-  }
-
   void Init(const std::string& server_name = TlsAgent::kServerRsa);
   void Reset(const std::string& server_name = TlsAgent::kServerRsa);
 
@@ -488,28 +442,28 @@ class TlsAgentTestBase : public ::testing::Test {
 
   std::unique_ptr<TlsAgent> agent_;
   TlsAgent::Role role_;
-  Mode mode_;
+  SSLProtocolVariant variant_;
   uint16_t version_;
   // This adapter is here just to accept packets from this agent.
   std::shared_ptr<DummyPrSocket> sink_adapter_;
 };
 
-class TlsAgentTest : public TlsAgentTestBase,
-                     public ::testing::WithParamInterface<
-                         std::tuple<std::string, std::string, uint16_t>> {
+class TlsAgentTest
+    : public TlsAgentTestBase,
+      public ::testing::WithParamInterface<
+          std::tuple<std::string, SSLProtocolVariant, uint16_t>> {
  public:
   TlsAgentTest()
       : TlsAgentTestBase(ToRole(std::get<0>(GetParam())),
-                         ToMode(std::get<1>(GetParam())),
-                         std::get<2>(GetParam())) {}
+                         std::get<1>(GetParam()), std::get<2>(GetParam())) {}
 };
 
-class TlsAgentTestClient
-    : public TlsAgentTestBase,
-      public ::testing::WithParamInterface<std::tuple<std::string, uint16_t>> {
+class TlsAgentTestClient : public TlsAgentTestBase,
+                           public ::testing::WithParamInterface<
+                               std::tuple<SSLProtocolVariant, uint16_t>> {
  public:
   TlsAgentTestClient()
-      : TlsAgentTestBase(TlsAgent::CLIENT, ToMode(std::get<0>(GetParam())),
+      : TlsAgentTestBase(TlsAgent::CLIENT, std::get<0>(GetParam()),
                          std::get<1>(GetParam())) {}
 };
 
@@ -517,18 +471,25 @@ class TlsAgentTestClient13 : public TlsAgentTestClient {};
 
 class TlsAgentStreamTestClient : public TlsAgentTestBase {
  public:
-  TlsAgentStreamTestClient() : TlsAgentTestBase(TlsAgent::CLIENT, STREAM) {}
+  TlsAgentStreamTestClient()
+      : TlsAgentTestBase(TlsAgent::CLIENT, ssl_variant_stream) {}
 };
 
 class TlsAgentStreamTestServer : public TlsAgentTestBase {
  public:
-  TlsAgentStreamTestServer() : TlsAgentTestBase(TlsAgent::SERVER, STREAM) {}
+  TlsAgentStreamTestServer()
+      : TlsAgentTestBase(TlsAgent::SERVER, ssl_variant_stream) {}
 };
 
 class TlsAgentDgramTestClient : public TlsAgentTestBase {
  public:
-  TlsAgentDgramTestClient() : TlsAgentTestBase(TlsAgent::CLIENT, DGRAM) {}
+  TlsAgentDgramTestClient()
+      : TlsAgentTestBase(TlsAgent::CLIENT, ssl_variant_datagram) {}
 };
+
+inline bool operator==(const SSLVersionRange& vr1, const SSLVersionRange& vr2) {
+  return vr1.min == vr2.min && vr1.max == vr2.max;
+}
 
 }  // namespace nss_test
 

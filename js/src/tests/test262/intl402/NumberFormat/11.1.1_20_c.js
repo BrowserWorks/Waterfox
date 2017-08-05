@@ -1,4 +1,3 @@
-// |reftest| skip-if(!this.hasOwnProperty('Intl')) -- needs Intl
 // Copyright 2011-2012 Norbert Lindenberg. All rights reserved.
 // Copyright 2012 Mozilla Corporation. All rights reserved.
 // This code is governed by the BSD license found in the LICENSE file.
@@ -184,14 +183,8 @@ Object.getOwnPropertyNames(currencyDigits).forEach(function (currency) {
     var format = Intl.NumberFormat([], {style: "currency", currency: currency});
     var min = format.resolvedOptions().minimumFractionDigits;
     var max = format.resolvedOptions().maximumFractionDigits;
-    if (min !== digits) {
-        $ERROR("Didn't get correct minimumFractionDigits for currency " +
-            currency + "; expected " + digits + ", got " + min + ".");
-    }
-    if (max !== digits) {
-        $ERROR("Didn't get correct maximumFractionDigits for currency " +
-            currency + "; expected " + digits + ", got " + max + ".");
-    }
+    assert.sameValue(min, digits, "Didn't get correct minimumFractionDigits for currency " + currency + ".");
+    assert.sameValue(max, digits, "Didn't get correct maximumFractionDigits for currency " + currency + ".");
 });
 
 reportCompare(0, 0);

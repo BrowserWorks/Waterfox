@@ -29,7 +29,7 @@ function fullZoomLocationChangeObserver(aSubject, aTopic) {
   }
   updateZoomUI(aSubject, false);
 }
-Services.obs.addObserver(fullZoomLocationChangeObserver, "browser-fullZoom:location-change", false);
+Services.obs.addObserver(fullZoomLocationChangeObserver, "browser-fullZoom:location-change");
 
 function onEndSwapDocShells(event) {
   updateZoomUI(event.originalTarget);
@@ -62,6 +62,7 @@ function updateZoomUI(aBrowser, aAnimate = false) {
     return;
   }
 
+  let appMenuZoomReset = win.document.getElementById("appMenu-zoomReset-button");
   let customizableZoomControls = win.document.getElementById("zoom-controls");
   let customizableZoomReset = win.document.getElementById("zoom-reset-button");
   let urlbarZoomButton = win.document.getElementById("urlbar-zoom-button");
@@ -74,7 +75,10 @@ function updateZoomUI(aBrowser, aAnimate = false) {
      (customizableZoomControls &&
       customizableZoomControls.getAttribute("cui-areatype") == "toolbar"));
 
-  let label = win.gNavigatorBundle.getFormattedString("urlbar-zoom-button.label", [zoomFactor]);
+  let label = win.gNavigatorBundle.getFormattedString("zoom-button.label", [zoomFactor]);
+  if (appMenuZoomReset) {
+    appMenuZoomReset.setAttribute("label", label);
+  }
   if (customizableZoomReset) {
     customizableZoomReset.setAttribute("label", label);
   }
@@ -98,8 +102,7 @@ let customizationListener = {
 };
 customizationListener.onWidgetAdded =
 customizationListener.onWidgetRemoved =
-customizationListener.onWidgetMoved =
-customizationListener.onWidgetInstanceRemoved = function(aWidgetId) {
+customizationListener.onWidgetMoved = function(aWidgetId) {
   if (aWidgetId == "zoom-controls") {
     for (let window of CustomizableUI.windows) {
       updateZoomUI(window.gBrowser.selectedBrowser);

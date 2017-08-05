@@ -3,6 +3,8 @@
  * http://creativecommons.org/publicdomain/zero/1.0/
  */
 
+/* import-globals-from helpers.js */
+
 var bufferCache = [];
 var utils = SpecialPowers.getDOMWindowUtils(window);
 
@@ -57,12 +59,12 @@ function compareBuffers(buffer1, buffer2)
 
 function getBlob(type, view)
 {
-  return new Blob([view], {type: type});
+  return new Blob([view], {type});
 }
 
 function getFile(name, type, view)
 {
-  return new File([view], name, {type: type});
+  return new File([view], name, {type});
 }
 
 function getRandomBlob(size)
@@ -220,10 +222,10 @@ function verifyWasmModule(module1, module2)
 
 function grabFileUsageAndContinueHandler(request)
 {
-  testGenerator.next(request.fileUsage);
+  testGenerator.next(request.result.fileUsage);
 }
 
-function getUsage(usageHandler)
+function getCurrentUsage(usageHandler)
 {
   let qms = SpecialPowers.Services.qms;
   let principal = SpecialPowers.wrap(document).nodePrincipal;

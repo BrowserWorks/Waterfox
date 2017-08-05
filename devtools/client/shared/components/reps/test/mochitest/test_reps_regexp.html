@@ -18,8 +18,11 @@ Test RegExp rep
 <script type="application/javascript">
 window.onload = Task.async(function* () {
   try {
-    const { REPS } = browserRequire("devtools/client/shared/components/reps/reps");
-    let { Rep, RegExp } = REPS;
+    const {
+      REPS,
+      getRep,
+    } = browserRequire("devtools/client/shared/components/reps/reps");
+    let { RegExp } = REPS;
 
     let gripStub = {
       "type": "object",
@@ -33,12 +36,23 @@ window.onload = Task.async(function* () {
     };
 
     // Test that correct rep is chosen
-    const renderedRep = shallowRenderComponent(Rep, { object: gripStub });
-    is(renderedRep.type, RegExp.rep, `Rep correctly selects ${RegExp.rep.displayName}`);
+    is(getRep(gripStub), RegExp.rep, "Rep correctly selects RegExp Rep");
 
     // Test rendering
     const renderedComponent = renderComponent(RegExp.rep, { object: gripStub });
     is(renderedComponent.textContent, "/ab+c/i", "RegExp rep has expected text content");
+
+    // Test rendering with objectLink
+    const objectLinkRenderedComponent = renderComponent(RegExp.rep, {
+      object: gripStub,
+      objectLink: (props, ...children) => React.DOM.span({},
+        "*", ...children, "*"),
+    });
+    is(
+      objectLinkRenderedComponent.textContent,
+      "*/ab+c/i*",
+      "RegExp rep has expected text content when an objectLink is passed as a prop"
+    );
   } catch(e) {
     ok(false, "Got an error: " + DevToolsUtils.safeErrorString(e));
   } finally {

@@ -1,6 +1,10 @@
 let { classes: Cc, interfaces: Ci } = Components;
 
 add_task(function* test() {
+  yield SpecialPowers.pushPrefEnv(
+    {set: [["browser.tabs.remote.separateFileUriProcess", true]]}
+  );
+
   let file = Cc["@mozilla.org/file/directory_service;1"]
                .getService(Ci.nsIDirectoryService)
                .QueryInterface(Ci.nsIProperties)
@@ -14,7 +18,7 @@ add_task(function* test() {
   let fileURL = fileHandler.getURLSpecFromFile(file);
 
   info("Opening url: " + fileURL);
-  let tab = gBrowser.addTab(fileURL);
+  let tab = BrowserTestUtils.addTab(gBrowser, fileURL);
 
   let browser = gBrowser.getBrowserForTab(tab);
   yield BrowserTestUtils.browserLoaded(browser);

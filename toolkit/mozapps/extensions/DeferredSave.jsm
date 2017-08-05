@@ -53,8 +53,8 @@ const NS_PREFBRANCH_PREFCHANGE_TOPIC_ID = "nsPref:changed";
 */
 var PrefObserver = {
  init() {
-   Services.prefs.addObserver(PREF_LOGGING_ENABLED, this, false);
-   Services.obs.addObserver(this, "xpcom-shutdown", false);
+   Services.prefs.addObserver(PREF_LOGGING_ENABLED, this);
+   Services.obs.addObserver(this, "xpcom-shutdown");
    this.observe(null, NS_PREFBRANCH_PREFCHANGE_TOPIC_ID, PREF_LOGGING_ENABLED);
  },
 
@@ -63,11 +63,7 @@ var PrefObserver = {
      Services.prefs.removeObserver(PREF_LOGGING_ENABLED, this);
      Services.obs.removeObserver(this, "xpcom-shutdown");
    } else if (aTopic == NS_PREFBRANCH_PREFCHANGE_TOPIC_ID) {
-     let debugLogEnabled = false;
-     try {
-       debugLogEnabled = Services.prefs.getBoolPref(PREF_LOGGING_ENABLED);
-     } catch (e) {
-     }
+     let debugLogEnabled = Services.prefs.getBoolPref(PREF_LOGGING_ENABLED, false);
      if (debugLogEnabled) {
        parentLogger.level = Log.Level.Debug;
      } else {

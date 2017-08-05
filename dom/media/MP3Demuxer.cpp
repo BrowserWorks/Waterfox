@@ -17,16 +17,11 @@
 #include "TimeUnits.h"
 #include "prenv.h"
 
-#ifdef PR_LOGGING
 extern mozilla::LazyLogModule gMediaDemuxerLog;
 #define MP3LOG(msg, ...) \
   MOZ_LOG(gMediaDemuxerLog, LogLevel::Debug, ("MP3Demuxer " msg, ##__VA_ARGS__))
 #define MP3LOGV(msg, ...) \
   MOZ_LOG(gMediaDemuxerLog, LogLevel::Verbose, ("MP3Demuxer " msg, ##__VA_ARGS__))
-#else
-#define MP3LOG(msg, ...)
-#define MP3LOGV(msg, ...)
-#endif
 
 using mozilla::media::TimeUnit;
 using mozilla::media::TimeInterval;
@@ -149,11 +144,11 @@ MP3TrackDemuxer::Init()
   mInfo->mChannels = mChannels;
   mInfo->mBitDepth = 16;
   mInfo->mMimeType = "audio/mpeg";
-  mInfo->mDuration = Duration().ToMicroseconds();
+  mInfo->mDuration = Duration();
 
   MP3LOG("Init mInfo={mRate=%d mChannels=%d mBitDepth=%d mDuration=%" PRId64 "}",
          mInfo->mRate, mInfo->mChannels, mInfo->mBitDepth,
-         mInfo->mDuration);
+         mInfo->mDuration.ToMicroseconds());
 
   return mSamplesPerSecond && mChannels;
 }
@@ -425,7 +420,9 @@ MP3TrackDemuxer::Duration(int64_t aNumFrames) const
 MediaByteRange
 MP3TrackDemuxer::FindFirstFrame()
 {
-  static const int MIN_SUCCESSIVE_FRAMES = 4;
+  // Get engough successive frames to avoid invalid frame from cut stream.
+  // However, some website use very short mp3 file so using the same value as Chrome.
+  static const int MIN_SUCCESSIVE_FRAMES = 3;
 
   MediaByteRange candidateFrame = FindNextFrame();
   int numSuccFrames = candidateFrame.Length() > 0;
@@ -609,13 +606,13 @@ MP3TrackDemuxer::GetNextFrame(const MediaByteRange& aRange)
 
   UpdateState(aRange);
 
-  frame->mTime = Duration(mFrameIndex - 1).ToMicroseconds();
-  frame->mDuration = Duration(1).ToMicroseconds();
+  frame->mTime = Duration(mFrameIndex - 1);
+  frame->mDuration = Duration(1);
   frame->mTimecode = frame->mTime;
   frame->mKeyframe = true;
 
-  MOZ_ASSERT(frame->mTime >= 0);
-  MOZ_ASSERT(frame->mDuration > 0);
+  MOZ_ASSERT(!frame->mTime.IsNegative());
+  MOZ_ASSERT(frame->mDuration.IsPositive());
 
   if (mNumParsedFrames == 1) {
     // First frame parsed, let's read VBR info if available.

@@ -11,23 +11,26 @@ void main(void) {
                                  prim.local_clip_rect,
                                  prim.z,
                                  prim.layer,
-                                 prim.task);
+                                 prim.task,
+                                 prim.local_rect.p0);
 
-    // Snap the start/end points to device pixel units.
-    // I'm not sure this is entirely correct, but the
-    // old render path does this, and it is needed to
-    // make the angle gradient ref tests pass. It might
-    // be better to fix this higher up in DL construction
-    // and not snap here?
-    vec2 start_point = floor(0.5 + gradient.start_end_point.xy * uDevicePixelRatio) / uDevicePixelRatio;
-    vec2 end_point = floor(0.5 + gradient.start_end_point.zw * uDevicePixelRatio) / uDevicePixelRatio;
+    vPos = vi.local_pos - prim.local_rect.p0;
 
+    vec2 start_point = gradient.start_end_point.xy;
+    vec2 end_point = gradient.start_end_point.zw;
     vec2 dir = end_point - start_point;
-    // Normalized offset of this vertex within the gradient, before clamp/repeat.
-    vOffset = dot(vi.local_pos - start_point, dir) / dot(dir, dir);
+
+    vStartPoint = start_point;
+    vScaledDir = dir / dot(dir, dir);
+
+    vTileSize = gradient.tile_size_repeat.xy;
+    vTileRepeat = gradient.tile_size_repeat.zw;
 
     // V coordinate of gradient row in lookup texture.
-    vGradientIndex = float(prim.sub_index) + 0.5;
+    vGradientIndex = float(prim.user_data0);
+
+    // The texture size of the lookup texture
+    vGradientTextureSize = vec2(textureSize(sGradients, 0));
 
     // Whether to repeat the gradient instead of clamping.
     vGradientRepeat = float(int(gradient.extend_mode.x) == EXTEND_MODE_REPEAT);

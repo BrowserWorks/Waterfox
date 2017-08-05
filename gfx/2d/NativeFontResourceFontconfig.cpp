@@ -6,6 +6,7 @@
 
 #include "NativeFontResourceFontconfig.h"
 #include "ScaledFontFontconfig.h"
+#include "UnscaledFontFreeType.h"
 #include "Logging.h"
 
 namespace mozilla {
@@ -20,13 +21,13 @@ NativeFontResourceFontconfig::NativeFontResourceFontconfig(UniquePtr<uint8_t[]>&
 NativeFontResourceFontconfig::~NativeFontResourceFontconfig()
 {
   if (mFace) {
-    FT_Done_Face(mFace);
+    Factory::ReleaseFTFace(mFace);
     mFace = nullptr;
   }
 }
 
 already_AddRefed<NativeFontResourceFontconfig>
-NativeFontResourceFontconfig::Create(uint8_t *aFontData, uint32_t aDataLength)
+NativeFontResourceFontconfig::Create(uint8_t *aFontData, uint32_t aDataLength, FT_Library aFTLibrary)
 {
   if (!aFontData || !aDataLength) {
     return nullptr;
@@ -34,12 +35,12 @@ NativeFontResourceFontconfig::Create(uint8_t *aFontData, uint32_t aDataLength)
   UniquePtr<uint8_t[]> fontData(new uint8_t[aDataLength]);
   memcpy(fontData.get(), aFontData, aDataLength);
 
-  FT_Face face;
-  if (FT_New_Memory_Face(Factory::GetFTLibrary(), fontData.get(), aDataLength, 0, &face) != FT_Err_Ok) {
+  FT_Face face = Factory::NewFTFaceFromData(aFTLibrary, fontData.get(), aDataLength, 0);
+  if (!face) {
     return nullptr;
   }
   if (FT_Select_Charmap(face, FT_ENCODING_UNICODE) != FT_Err_Ok) {
-    FT_Done_Face(face);
+    Factory::ReleaseFTFace(face);
     return nullptr;
   }
 
@@ -48,17 +49,12 @@ NativeFontResourceFontconfig::Create(uint8_t *aFontData, uint32_t aDataLength)
   return resource.forget();
 }
 
-already_AddRefed<ScaledFont>
-NativeFontResourceFontconfig::CreateScaledFont(uint32_t aIndex, Float aGlyphSize,
-                                               const uint8_t* aInstanceData, uint32_t aInstanceDataLength)
+already_AddRefed<UnscaledFont>
+NativeFontResourceFontconfig::CreateUnscaledFont(uint32_t aIndex,
+                                                 const uint8_t* aInstanceData, uint32_t aInstanceDataLength)
 {
-  if (aInstanceDataLength < sizeof(ScaledFontFontconfig::InstanceData)) {
-    gfxWarning() << "Fontconfig scaled font instance data is truncated.";
-    return nullptr;
-  }
-  return ScaledFontFontconfig::CreateFromInstanceData(
-           *reinterpret_cast<const ScaledFontFontconfig::InstanceData*>(aInstanceData),
-           mFace, nullptr, 0, aGlyphSize);
+  RefPtr<UnscaledFont> unscaledFont = new UnscaledFontFontconfig(mFace, this);
+  return unscaledFont.forget();
 }
 
 } // gfx

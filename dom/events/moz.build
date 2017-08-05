@@ -44,7 +44,6 @@ EXPORTS.mozilla.dom += [
     'CommandEvent.h',
     'CompositionEvent.h',
     'CustomEvent.h',
-    'DataContainerEvent.h',
     'DataTransfer.h',
     'DataTransferItem.h',
     'DataTransferItemList.h',
@@ -87,7 +86,6 @@ UNIFIED_SOURCES += [
     'CompositionEvent.cpp',
     'ContentEventHandler.cpp',
     'CustomEvent.cpp',
-    'DataContainerEvent.cpp',
     'DataTransfer.cpp',
     'DataTransferItem.cpp',
     'DataTransferItemList.cpp',
@@ -152,11 +150,6 @@ LOCAL_INCLUDES += [
     '/layout/xul',
     '/layout/xul/tree/',
 ]
-
-if CONFIG['MOZ_WIDGET_TOOLKIT'] == 'gonk':
-    LOCAL_INCLUDES += [
-        '/dom/wifi',
-    ]
 
 if CONFIG['GNU_CXX']:
     CXXFLAGS += ['-Wno-error=shadow']

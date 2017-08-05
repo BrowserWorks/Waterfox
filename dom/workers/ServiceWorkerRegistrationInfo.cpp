@@ -54,6 +54,7 @@ ServiceWorkerRegistrationInfo::Clear()
 
   if (mInstallingWorker) {
     mInstallingWorker->UpdateState(ServiceWorkerState::Redundant);
+    mInstallingWorker->UpdateRedundantTime();
     mInstallingWorker->WorkerPrivate()->NoteDeadServiceWorkerInfo();
     mInstallingWorker = nullptr;
     // FIXME(nsm): Abort any inflight requests from installing worker.
@@ -61,15 +62,19 @@ ServiceWorkerRegistrationInfo::Clear()
 
   if (mWaitingWorker) {
     mWaitingWorker->UpdateState(ServiceWorkerState::Redundant);
+    mWaitingWorker->UpdateRedundantTime();
     mWaitingWorker->WorkerPrivate()->NoteDeadServiceWorkerInfo();
     mWaitingWorker = nullptr;
   }
 
   if (mActiveWorker) {
     mActiveWorker->UpdateState(ServiceWorkerState::Redundant);
+    mActiveWorker->UpdateRedundantTime();
     mActiveWorker->WorkerPrivate()->NoteDeadServiceWorkerInfo();
     mActiveWorker = nullptr;
   }
+
+  NotifyChromeRegistrationListeners();
 }
 
 ServiceWorkerRegistrationInfo::ServiceWorkerRegistrationInfo(const nsACString& aScope,
@@ -77,7 +82,9 @@ ServiceWorkerRegistrationInfo::ServiceWorkerRegistrationInfo(const nsACString& a
                                                              nsLoadFlags aLoadFlags)
   : mControlledDocumentsCounter(0)
   , mUpdateState(NoUpdate)
-  , mLastUpdateCheckTime(0)
+  , mCreationTime(PR_Now())
+  , mCreationTimeStamp(TimeStamp::Now())
+  , mLastUpdateTime(0)
   , mLoadFlags(aLoadFlags)
   , mScope(aScope)
   , mPrincipal(aPrincipal)
@@ -117,6 +124,15 @@ ServiceWorkerRegistrationInfo::GetScriptSpec(nsAString& aScriptSpec)
   if (newest) {
     CopyUTF8toUTF16(newest->ScriptSpec(), aScriptSpec);
   }
+  return NS_OK;
+}
+
+NS_IMETHODIMP
+ServiceWorkerRegistrationInfo::GetLastUpdateTime(PRTime* _retval)
+{
+  AssertIsOnMainThread();
+  MOZ_ASSERT(_retval);
+  *_retval = mLastUpdateTime;
   return NS_OK;
 }
 
@@ -283,6 +299,9 @@ ServiceWorkerRegistrationInfo::FinishActivate(bool aSuccess)
 
   // Activation never fails, so aSuccess is ignored.
   mActiveWorker->UpdateState(ServiceWorkerState::Activated);
+  mActiveWorker->UpdateActivatedTime();
+  NotifyChromeRegistrationListeners();
+
   RefPtr<ServiceWorkerManager> swm = ServiceWorkerManager::GetInstance();
   if (!swm) {
     // browser shutdown started during async activation completion step
@@ -295,7 +314,11 @@ void
 ServiceWorkerRegistrationInfo::RefreshLastUpdateCheckTime()
 {
   AssertIsOnMainThread();
-  mLastUpdateCheckTime = PR_IntervalNow() / PR_MSEC_PER_SEC;
+
+  mLastUpdateTime =
+    mCreationTime + static_cast<PRTime>((TimeStamp::Now() -
+                                         mCreationTimeStamp).ToMicroseconds());
+  NotifyChromeRegistrationListeners();
 }
 
 bool
@@ -308,10 +331,15 @@ ServiceWorkerRegistrationInfo::IsLastUpdateCheckTimeOverOneDay() const
     return true;
   }
 
-  const uint64_t kSecondsPerDay = 86400;
-  const uint64_t now = PR_IntervalNow() / PR_MSEC_PER_SEC;
+  const int64_t kSecondsPerDay = 86400;
+  const int64_t now =
+    mCreationTime + static_cast<PRTime>((TimeStamp::Now() -
+                                         mCreationTimeStamp).ToMicroseconds());
 
-  if ((now - mLastUpdateCheckTime) > kSecondsPerDay) {
+  // now < mLastUpdateTime if the system time is reset between storing
+  // and loading mLastUpdateTime from ServiceWorkerRegistrar.
+  if (now < mLastUpdateTime ||
+      (now - mLastUpdateTime) / PR_MSEC_PER_SEC > kSecondsPerDay) {
     return true;
   }
   return false;
@@ -350,8 +378,6 @@ ServiceWorkerRegistrationInfo::UpdateRegistrationStateProperties(WhichServiceWor
          this,
          &ServiceWorkerRegistrationInfo::AsyncUpdateRegistrationStateProperties, aWorker, aTransition);
   MOZ_ALWAYS_SUCCEEDS(NS_DispatchToMainThread(runnable.forget()));
-
-  NotifyChromeRegistrationListeners();
 }
 
 void
@@ -439,6 +465,24 @@ ServiceWorkerRegistrationInfo::GetActive() const
   return mActiveWorker;
 }
 
+ServiceWorkerInfo*
+ServiceWorkerRegistrationInfo::GetByID(uint64_t aID) const
+{
+  if (mActiveWorker && mActiveWorker->ID() == aID) {
+    return mActiveWorker;
+  }
+  if (mWaitingWorker && mWaitingWorker->ID() == aID) {
+    return mWaitingWorker;
+  }
+  if (mInstallingWorker && mInstallingWorker->ID() == aID) {
+    return mInstallingWorker;
+  }
+  if (mEvaluatingWorker && mEvaluatingWorker->ID() == aID) {
+    return mEvaluatingWorker;
+  }
+  return nullptr;
+}
+
 void
 ServiceWorkerRegistrationInfo::SetEvaluating(ServiceWorkerInfo* aServiceWorker)
 {
@@ -462,6 +506,8 @@ ServiceWorkerRegistrationInfo::ClearEvaluating()
   }
 
   mEvaluatingWorker->UpdateState(ServiceWorkerState::Redundant);
+  // We don't update the redundant time for the sw here, since we've not expose
+  // evalutingWorker yet.
   mEvaluatingWorker = nullptr;
 }
 
@@ -477,7 +523,10 @@ ServiceWorkerRegistrationInfo::ClearInstalling()
   UpdateRegistrationStateProperties(WhichServiceWorker::INSTALLING_WORKER,
                                     Invalidate);
   mInstallingWorker->UpdateState(ServiceWorkerState::Redundant);
+  mInstallingWorker->UpdateRedundantTime();
   mInstallingWorker = nullptr;
+
+  NotifyChromeRegistrationListeners();
 }
 
 void
@@ -501,12 +550,15 @@ ServiceWorkerRegistrationInfo::TransitionInstallingToWaiting()
   if (mWaitingWorker) {
     MOZ_ASSERT(mInstallingWorker->CacheName() != mWaitingWorker->CacheName());
     mWaitingWorker->UpdateState(ServiceWorkerState::Redundant);
+    mWaitingWorker->UpdateRedundantTime();
   }
 
   mWaitingWorker = mInstallingWorker.forget();
   UpdateRegistrationStateProperties(WhichServiceWorker::INSTALLING_WORKER,
                                     TransitionToNextState);
   mWaitingWorker->UpdateState(ServiceWorkerState::Installed);
+  mWaitingWorker->UpdateInstalledTime();
+  NotifyChromeRegistrationListeners();
 
   RefPtr<ServiceWorkerManager> swm = ServiceWorkerManager::GetInstance();
   if (!swm) {
@@ -533,6 +585,7 @@ ServiceWorkerRegistrationInfo::SetActive(ServiceWorkerInfo* aServiceWorker)
   if (mActiveWorker) {
     MOZ_ASSERT(aServiceWorker->CacheName() != mActiveWorker->CacheName());
     mActiveWorker->UpdateState(ServiceWorkerState::Redundant);
+    mActiveWorker->UpdateRedundantTime();
   }
 
   // The active worker is being overriden due to initial load or
@@ -540,7 +593,10 @@ ServiceWorkerRegistrationInfo::SetActive(ServiceWorkerInfo* aServiceWorker)
   // Activated state.
   mActiveWorker = aServiceWorker;
   mActiveWorker->SetActivateStateUncheckedWithoutEvent(ServiceWorkerState::Activated);
+  // We don't need to update activated time when we load registration from
+  // registrar.
   UpdateRegistrationStateProperties(WhichServiceWorker::ACTIVE_WORKER, Invalidate);
+  NotifyChromeRegistrationListeners();
 }
 
 void
@@ -552,6 +608,7 @@ ServiceWorkerRegistrationInfo::TransitionWaitingToActive()
   if (mActiveWorker) {
     MOZ_ASSERT(mWaitingWorker->CacheName() != mActiveWorker->CacheName());
     mActiveWorker->UpdateState(ServiceWorkerState::Redundant);
+    mActiveWorker->UpdateRedundantTime();
   }
 
   // We are transitioning from waiting to active normally, so go to
@@ -560,6 +617,7 @@ ServiceWorkerRegistrationInfo::TransitionWaitingToActive()
   UpdateRegistrationStateProperties(WhichServiceWorker::WAITING_WORKER,
                                     TransitionToNextState);
   mActiveWorker->UpdateState(ServiceWorkerState::Activating);
+  NotifyChromeRegistrationListeners();
 }
 
 bool
@@ -578,6 +636,22 @@ void
 ServiceWorkerRegistrationInfo::SetLoadFlags(nsLoadFlags aLoadFlags)
 {
   mLoadFlags = aLoadFlags;
+}
+
+int64_t
+ServiceWorkerRegistrationInfo::GetLastUpdateTime() const
+{
+  return mLastUpdateTime;
+}
+
+void
+ServiceWorkerRegistrationInfo::SetLastUpdateTime(const int64_t aTime)
+{
+  if (aTime == 0) {
+    return;
+  }
+
+  mLastUpdateTime = aTime;
 }
 
 END_WORKERS_NAMESPACE

@@ -6,6 +6,7 @@
 
 EXPORTS += [
     'agnostic/AgnosticDecoderModule.h',
+    'agnostic/DummyMediaDataDecoder.h',
     'agnostic/OpusDecoder.h',
     'agnostic/TheoraDecoder.h',
     'agnostic/VorbisDecoder.h',
@@ -22,6 +23,8 @@ EXPORTS += [
 UNIFIED_SOURCES += [
     'agnostic/AgnosticDecoderModule.cpp',
     'agnostic/BlankDecoderModule.cpp',
+    'agnostic/DummyMediaDataDecoder.cpp',
+    'agnostic/NullDecoderModule.cpp',
     'agnostic/OpusDecoder.cpp',
     'agnostic/TheoraDecoder.cpp',
     'agnostic/VorbisDecoder.cpp',
@@ -57,6 +60,14 @@ if CONFIG['MOZ_FFMPEG']:
         'ffmpeg',
     ]
 
+if CONFIG['MOZ_AV1']:
+    EXPORTS += [
+        'agnostic/AOMDecoder.h',
+    ]
+    UNIFIED_SOURCES += [
+        'agnostic/AOMDecoder.cpp',
+    ]
+
 if CONFIG['MOZ_APPLEMEDIA']:
   EXPORTS += [
       'apple/AppleDecoderModule.h',
@@ -77,6 +88,7 @@ include('/ipc/chromium/chromium-config.mozbuild')
 if CONFIG['MOZ_WIDGET_TOOLKIT'] == 'android':
     EXPORTS += [
         'android/AndroidDecoderModule.h',
+        'android/JavaCallbacksSupport.h',
     ]
     UNIFIED_SOURCES += [
         'android/AndroidDecoderModule.cpp',

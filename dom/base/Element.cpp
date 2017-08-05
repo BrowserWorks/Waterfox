@@ -53,6 +53,8 @@
 #include "nsIScriptSecurityManager.h"
 #include "nsIDOMMutationEvent.h"
 #include "mozilla/dom/AnimatableBinding.h"
+#include "mozilla/dom/HTMLDivElement.h"
+#include "mozilla/dom/HTMLSpanElement.h"
 #include "mozilla/dom/KeyframeAnimationOptionsBinding.h"
 #include "mozilla/AnimationComparator.h"
 #include "mozilla/AsyncEventDispatcher.h"
@@ -150,8 +152,43 @@
 #include "nsDOMStringMap.h"
 #include "DOMIntersectionObserver.h"
 
+#include "nsISpeculativeConnect.h"
+
+#include "DOMMatrix.h"
+
 using namespace mozilla;
 using namespace mozilla::dom;
+
+//
+// Verify sizes of elements on 64-bit platforms. This should catch most memory
+// regressions, and is easy to verify locally since most developers are on
+// 64-bit machines. We use a template rather than a direct static assert so
+// that the error message actually displays the sizes.
+//
+
+// We need different numbers on certain build types to deal with the owning
+// thread pointer that comes with the non-threadsafe refcount on
+// FragmentOrElement.
+#ifdef MOZ_THREAD_SAFETY_OWNERSHIP_CHECKS_SUPPORTED
+#define EXTRA_DOM_ELEMENT_BYTES 8
+#else
+#define EXTRA_DOM_ELEMENT_BYTES 0
+#endif
+
+#define ASSERT_ELEMENT_SIZE(type, opt_size) \
+template<int a, int b> struct Check##type##Size \
+{ \
+  static_assert(sizeof(void*) != 8 || a == b, "DOM size changed"); \
+}; \
+Check##type##Size<sizeof(type), opt_size + EXTRA_DOM_ELEMENT_BYTES> g##type##CES;
+
+// Note that mozjemalloc uses a 16 byte quantum, so 128 is a bin/bucket size.
+ASSERT_ELEMENT_SIZE(Element, 120);
+ASSERT_ELEMENT_SIZE(HTMLDivElement, 128);
+ASSERT_ELEMENT_SIZE(HTMLSpanElement, 128);
+
+#undef ASSERT_ELEMENT_SIZE
+#undef EXTRA_DOM_ELEMENT_BYTES
 
 nsIAtom*
 nsIContent::DoGetID() const
@@ -224,7 +261,7 @@ void
 Element::UpdateState(bool aNotify)
 {
   EventStates oldState = mState;
-  mState = IntrinsicState() | (oldState & ESM_MANAGED_STATES);
+  mState = IntrinsicState() | (oldState & EXTERNALLY_MANAGED_STATES);
   if (aNotify) {
     EventStates changedStates = oldState ^ mState;
     if (!changedStates.IsEmpty()) {
@@ -306,9 +343,15 @@ void
 Element::Focus(mozilla::ErrorResult& aError)
 {
   nsCOMPtr<nsIDOMElement> domElement = do_QueryInterface(this);
-  nsIFocusManager* fm = nsFocusManager::GetFocusManager();
+  nsFocusManager* fm = nsFocusManager::GetFocusManager();
+  // Also other browsers seem to have the hack to not re-focus (and flush) when
+  // the element is already focused.
   if (fm && domElement) {
-    aError = fm->SetFocus(domElement, 0);
+    if (fm->CanSkipFocus(this)) {
+      fm->NeedsFlushBeforeEventHandling(this);
+    } else {
+      aError = fm->SetFocus(domElement, 0);
+    }
   }
 }
 
@@ -458,7 +501,7 @@ Element::GetBindingURL(nsIDocument *aDocument, css::URLValue **aResult)
 
   // Get the computed -moz-binding directly from the style context
   RefPtr<nsStyleContext> sc =
-    nsComputedDOMStyle::GetStyleContextForElementNoFlush(this, nullptr, shell);
+    nsComputedDOMStyle::GetStyleContextNoFlush(this, nullptr, shell);
   NS_ENSURE_TRUE(sc, false);
 
   NS_IF_ADDREF(*aResult = sc->StyleDisplay()->mBinding);
@@ -550,7 +593,7 @@ Element::WrapObject(JSContext *aCx, JS::Handle<JSObject*> aGivenProto)
 
     if (bindingURL) {
       nsCOMPtr<nsIURI> uri = bindingURL->GetURI();
-      nsCOMPtr<nsIPrincipal> principal = bindingURL->mOriginPrincipal.get();
+      nsCOMPtr<nsIPrincipal> principal = bindingURL->mExtraData->GetPrincipal();
 
       // We have a binding that must be installed.
       bool dummy;
@@ -622,7 +665,7 @@ Element::GetStyledFrame()
 }
 
 nsIScrollableFrame*
-Element::GetScrollFrame(nsIFrame **aStyledFrame, bool aFlushLayout)
+Element::GetScrollFrame(nsIFrame **aStyledFrame, FlushType aFlushType)
 {
   // it isn't clear what to return for SVG nodes, so just return nothing
   if (IsSVGElement()) {
@@ -632,9 +675,8 @@ Element::GetScrollFrame(nsIFrame **aStyledFrame, bool aFlushLayout)
     return nullptr;
   }
 
-  // Inline version of GetStyledFrame to use FlushType::None if needed.
-  nsIFrame* frame =
-    GetPrimaryFrame(aFlushLayout ? FlushType::Layout : FlushType::None);
+  // Inline version of GetStyledFrame to use the given FlushType.
+  nsIFrame* frame = GetPrimaryFrame(aFlushType);
   if (frame) {
     frame = nsLayoutUtils::GetStyleFrame(frame);
   }
@@ -642,29 +684,42 @@ Element::GetScrollFrame(nsIFrame **aStyledFrame, bool aFlushLayout)
   if (aStyledFrame) {
     *aStyledFrame = frame;
   }
-  if (!frame) {
-    return nullptr;
-  }
-
-  // menu frames implement GetScrollTargetFrame but we don't want
-  // to use it here.  Similar for comboboxes.
-  nsIAtom* type = frame->GetType();
-  if (type != nsGkAtoms::menuFrame && type != nsGkAtoms::comboboxControlFrame) {
-    nsIScrollableFrame *scrollFrame = frame->GetScrollTargetFrame();
-    if (scrollFrame)
-      return scrollFrame;
+  if (frame) {
+    // menu frames implement GetScrollTargetFrame but we don't want
+    // to use it here.  Similar for comboboxes.
+    LayoutFrameType type = frame->Type();
+    if (type != LayoutFrameType::Menu &&
+        type != LayoutFrameType::ComboboxControl) {
+      nsIScrollableFrame *scrollFrame = frame->GetScrollTargetFrame();
+      if (scrollFrame) {
+        MOZ_ASSERT(!OwnerDoc()->IsScrollingElement(this),
+                   "How can we have a scrollframe if we're the "
+                   "scrollingElement for our document?");
+        return scrollFrame;
+      }
+    }
   }
 
   nsIDocument* doc = OwnerDoc();
-  bool quirksMode = doc->GetCompatibilityMode() == eCompatibility_NavQuirks;
-  Element* elementWithRootScrollInfo =
-    quirksMode ? doc->GetBodyElement() : doc->GetRootElement();
-  if (this == elementWithRootScrollInfo) {
-    // In quirks mode, the scroll info for the body element should map to the
-    // root scrollable frame.
-    // In strict mode, the scroll info for the root element should map to the
-    // the root scrollable frame.
-    return frame->PresContext()->PresShell()->GetRootScrollFrameAsScrollable();
+  // Note: This IsScrollingElement() call can flush frames, if we're the body of
+  // a quirks mode document.
+  bool isScrollingElement = OwnerDoc()->IsScrollingElement(this);
+  // Now reget *aStyledFrame if the caller asked for it, because that frame
+  // flush can kill it.
+  if (aStyledFrame) {
+    nsIFrame* frame = GetPrimaryFrame(FlushType::None);
+    if (frame) {
+      *aStyledFrame = nsLayoutUtils::GetStyleFrame(frame);
+    } else {
+      *aStyledFrame = nullptr;
+    }
+  }
+
+  if (isScrollingElement) {
+    // Our scroll info should map to the root scrollable frame if there is one.
+    if (nsIPresShell* shell = doc->GetShell()) {
+      return shell->GetRootScrollFrameAsScrollable();
+    }
   }
 
   return nullptr;
@@ -814,7 +869,15 @@ Element::ScrollTop()
 void
 Element::SetScrollTop(int32_t aScrollTop)
 {
-  nsIScrollableFrame* sf = GetScrollFrame();
+  // When aScrollTop is 0, we don't need to flush layout to scroll to that
+  // point; we know 0 is always in range.  At least we think so...  But we do
+  // need to flush frames so we ensure we find the right scrollable frame if
+  // there is one.
+  //
+  // If aScrollTop is nonzero, we need to flush layout because we need to figure
+  // out what our real scrollTopMax is.
+  FlushType flushType = aScrollTop == 0 ? FlushType::Frames : FlushType::Layout;
+  nsIScrollableFrame* sf = GetScrollFrame(nullptr, flushType);
   if (sf) {
     nsIScrollableFrame::ScrollMode scrollMode = nsIScrollableFrame::INSTANT;
     if (sf->GetScrollbarStyles().mScrollBehavior == NS_STYLE_SCROLL_BEHAVIOR_SMOOTH) {
@@ -836,6 +899,9 @@ Element::ScrollLeft()
 void
 Element::SetScrollLeft(int32_t aScrollLeft)
 {
+  // We can't assume things here based on the value of aScrollLeft, because
+  // depending on our direction and layout 0 may or may not be in our scroll
+  // range.  So we need to flush layout no matter what.
   nsIScrollableFrame* sf = GetScrollFrame();
   if (sf) {
     nsIScrollableFrame::ScrollMode scrollMode = nsIScrollableFrame::INSTANT;
@@ -853,7 +919,7 @@ Element::SetScrollLeft(int32_t aScrollLeft)
 bool
 Element::ScrollByNoFlush(int32_t aDx, int32_t aDy)
 {
-  nsIScrollableFrame* sf = GetScrollFrame(nullptr, false);
+  nsIScrollableFrame* sf = GetScrollFrame(nullptr, FlushType::None);
   if (!sf) {
     return false;
   }
@@ -875,7 +941,7 @@ Element::ScrollByNoFlush(int32_t aDx, int32_t aDy)
 void
 Element::MozScrollSnap()
 {
-  nsIScrollableFrame* sf = GetScrollFrame(nullptr, false);
+  nsIScrollableFrame* sf = GetScrollFrame(nullptr, FlushType::None);
   if (sf) {
     sf->ScrollSnap();
   }
@@ -1226,7 +1292,7 @@ Element::SetAttribute(const nsAString& aName,
   nsAutoString nameToUse;
   const nsAttrName* name = InternalGetAttrNameFromQName(aName, &nameToUse);
   if (!name) {
-    nsCOMPtr<nsIAtom> nameAtom = NS_Atomize(nameToUse);
+    nsCOMPtr<nsIAtom> nameAtom = NS_AtomizeMainThread(nameToUse);
     if (!nameAtom) {
       aError.Throw(NS_ERROR_OUT_OF_MEMORY);
       return;
@@ -1308,7 +1374,7 @@ Element::GetAttributeNS(const nsAString& aNamespaceURI,
     return;
   }
 
-  nsCOMPtr<nsIAtom> name = NS_Atomize(aLocalName);
+  nsCOMPtr<nsIAtom> name = NS_AtomizeMainThread(aLocalName);
   bool hasAttr = GetAttr(nsid, name, aReturn);
   if (!hasAttr) {
     SetDOMStringToNull(aReturn);
@@ -1340,7 +1406,7 @@ Element::RemoveAttributeNS(const nsAString& aNamespaceURI,
                            const nsAString& aLocalName,
                            ErrorResult& aError)
 {
-  nsCOMPtr<nsIAtom> name = NS_Atomize(aLocalName);
+  nsCOMPtr<nsIAtom> name = NS_AtomizeMainThread(aLocalName);
   int32_t nsid =
     nsContentUtils::NameSpaceManager()->GetNameSpaceID(aNamespaceURI,
                                                        nsContentUtils::IsChromeDoc(OwnerDoc()));
@@ -1413,7 +1479,7 @@ Element::HasAttributeNS(const nsAString& aNamespaceURI,
     return false;
   }
 
-  nsCOMPtr<nsIAtom> name = NS_Atomize(aLocalName);
+  nsCOMPtr<nsIAtom> name = NS_AtomizeMainThread(aLocalName);
   return HasAttr(nsid, name);
 }
 
@@ -1673,18 +1739,7 @@ Element::BindToTree(nsIDocument* aDocument, nsIContent* aParent,
     // XXXbz if we already have a style attr parsed, this won't do
     // anything... need to fix that.
     // If MayHaveStyle() is true, we must be an nsStyledElement
-    static_cast<nsStyledElement*>(this)->ReparseStyleAttribute(false);
-  }
-
-  if (aDocument) {
-    // If we're in a document now, let our mapped attrs know what their new
-    // sheet is.  This is safe to run for non-mapped-attribute elements too;
-    // it'll just do a small bit of unnecessary work.  But most elements in
-    // practice are mapped-attribute elements.
-    nsHTMLStyleSheet* sheet = aDocument->GetAttributeStyleSheet();
-    if (sheet) {
-      mAttrsAndChildren.SetMappedAttrStyleSheet(sheet);
-    }
+    static_cast<nsStyledElement*>(this)->ReparseStyleAttribute(false, false);
   }
 
   // Call BindToTree on shadow root children.
@@ -1697,6 +1752,28 @@ Element::BindToTree(nsIDocument* aDocument, nsIContent* aParent,
                              shadowRoot->GetBindingParent(),
                              aCompileEventHandlers);
       NS_ENSURE_SUCCESS(rv, rv);
+    }
+  }
+
+  // Pseudo-elements implemented by JS must have the NODE_IS_NATIVE_ANONYMOUS
+  // flag set on them. For C++-created pseudo-elements, this is done in
+  // nsCSSFrameConstructor::GetAnonymousContent, but any JS that creates
+  // pseudo-elements would run after that. So we set that flag here,
+  // when the element implementing the pseudo is inserted into the document.
+  // We maintain the invariant that any NAC-implemented pseudo-element's
+  // anonymous ancestors are also flagged as NAC, which the style system relies on.
+  if (aDocument) {
+    CSSPseudoElementType pseudoType = GetPseudoElementType();
+    if (pseudoType != CSSPseudoElementType::NotPseudo &&
+        nsCSSPseudoElements::PseudoElementIsJSCreatedNAC(pseudoType)) {
+      SetFlags(NODE_IS_NATIVE_ANONYMOUS);
+      nsIContent* parent = aParent;
+      while (parent && !parent->IsRootOfNativeAnonymousSubtree()) {
+        MOZ_ASSERT(parent->IsInNativeAnonymousSubtree());
+        parent->SetFlags(NODE_IS_NATIVE_ANONYMOUS);
+        parent = parent->GetParent();
+      }
+      MOZ_ASSERT(parent);
     }
   }
 
@@ -1791,6 +1868,24 @@ Element::UnbindFromTree(bool aDeep, bool aNullParent)
     SetParentIsContent(false);
   }
 
+#ifdef DEBUG
+  // If we can get access to the PresContext, then we sanity-check that
+  // we're not leaving behind a pointer to ourselves as the PresContext's
+  // cached provider of the viewport's scrollbar styles.
+  if (document) {
+    nsIPresShell* presShell = document->GetShell();
+    if (presShell) {
+      nsPresContext* presContext = presShell->GetPresContext();
+      if (presContext) {
+        MOZ_ASSERT(this !=
+                   presContext->GetViewportScrollbarStylesOverrideNode(),
+                   "Leaving behind a raw pointer to this node (as having "
+                   "propagated scrollbar styles) - that's dangerous...");
+      }
+    }
+  }
+#endif
+
   // Ensure that CSS transitions don't continue on an element at a
   // different place in the tree (even if reinserted before next
   // animation refresh).
@@ -1813,9 +1908,7 @@ Element::UnbindFromTree(bool aDeep, bool aNullParent)
   if (IsStyledByServo()) {
     ClearServoData();
   } else {
-#ifdef MOZ_STYLO
     MOZ_ASSERT(!HasServoData());
-#endif
   }
 
   // Editable descendant count only counts descendants that
@@ -1943,12 +2036,7 @@ Element::SetSMILOverrideStyleDeclaration(DeclarationBlock* aDeclaration,
     if (doc) {
       nsCOMPtr<nsIPresShell> shell = doc->GetShell();
       if (shell) {
-        // Pass both eRestyle_StyleAttribute and
-        // eRestyle_StyleAttribute_Animations since we don't know if
-        // this style represents only the ticking of an existing
-        // animation or whether it's a new or changed animation.
-        shell->RestyleForAnimation(this, eRestyle_StyleAttribute |
-                                         eRestyle_StyleAttribute_Animations);
+        shell->RestyleForAnimation(this, eRestyle_StyleAttribute_Animations);
       }
     }
   }
@@ -2135,6 +2223,7 @@ Element::DispatchClickEvent(nsPresContext* aPresContext,
     pointerId = sourceMouseEvent->pointerId;
     inputSource = sourceMouseEvent->inputSource;
   } else if (aSourceEvent->mClass == eKeyboardEventClass) {
+    event.mFlags.mIsPositionless = true;
     inputSource = nsIDOMMouseEvent::MOZ_SOURCE_KEYBOARD;
   }
   event.pressure = pressure;
@@ -2241,13 +2330,15 @@ Element::MaybeCheckSameAttrVal(int32_t aNamespaceID,
                                bool aNotify,
                                nsAttrValue& aOldValue,
                                uint8_t* aModType,
-                               bool* aHasListeners)
+                               bool* aHasListeners,
+                               bool* aOldValueSet)
 {
   bool modification = false;
   *aHasListeners = aNotify &&
     nsContentUtils::HasMutationListeners(this,
                                          NS_EVENT_BITS_MUTATION_ATTRMODIFIED,
                                          this);
+  *aOldValueSet = false;
 
   // If we have no listeners and aNotify is false, we are almost certainly
   // coming from the content sink and will almost certainly have no previous
@@ -2272,6 +2363,7 @@ Element::MaybeCheckSameAttrVal(int32_t aNamespaceID,
         // We have to serialize the value anyway in order to create the
         // mutation event so there's no cost in doing it now.
         aOldValue.SetToSerialized(*info.mValue);
+        *aOldValueSet = true;
       }
       bool valueMatches = aValue.EqualsAsStrings(*info.mValue);
       if (valueMatches && aPrefix == info.mName->GetPrefix()) {
@@ -2291,10 +2383,12 @@ Element::OnlyNotifySameValueSet(int32_t aNamespaceID, nsIAtom* aName,
                                 nsIAtom* aPrefix,
                                 const nsAttrValueOrString& aValue,
                                 bool aNotify, nsAttrValue& aOldValue,
-                                uint8_t* aModType, bool* aHasListeners)
+                                uint8_t* aModType, bool* aHasListeners,
+                                bool* aOldValueSet)
 {
   if (!MaybeCheckSameAttrVal(aNamespaceID, aName, aPrefix, aValue, aNotify,
-                             aOldValue, aModType, aHasListeners)) {
+                             aOldValue, aModType, aHasListeners,
+                             aOldValueSet)) {
     return false;
   }
 
@@ -2320,17 +2414,27 @@ Element::SetAttr(int32_t aNamespaceID, nsIAtom* aName,
 
   uint8_t modType;
   bool hasListeners;
+  // We don't want to spend time preparsing class attributes if the value is not
+  // changing, so just init our nsAttrValueOrString with aValue for the
+  // OnlyNotifySameValueSet call.
   nsAttrValueOrString value(aValue);
   nsAttrValue oldValue;
+  bool oldValueSet;
 
   if (OnlyNotifySameValueSet(aNamespaceID, aName, aPrefix, value, aNotify,
-                             oldValue, &modType, &hasListeners)) {
-    return NS_OK;
+                             oldValue, &modType, &hasListeners, &oldValueSet)) {
+    return OnAttrSetButNotChanged(aNamespaceID, aName, value, aNotify);
   }
 
-  nsresult rv = BeforeSetAttr(aNamespaceID, aName, &value, aNotify);
-  NS_ENSURE_SUCCESS(rv, rv);
-  nsAttrValue* preparsedAttrValue = value.GetStoredAttrValue();
+  nsAttrValue attrValue;
+  nsAttrValue* preparsedAttrValue;
+  if (aNamespaceID == kNameSpaceID_None && aName == nsGkAtoms::_class) {
+    attrValue.ParseAtomArray(aValue);
+    value.ResetToAttrValue(attrValue);
+    preparsedAttrValue = &attrValue;
+  } else {
+    preparsedAttrValue = nullptr;
+  }
 
   if (aNotify) {
     nsNodeUtils::AttributeWillChange(this, aNamespaceID, aName, modType,
@@ -2339,21 +2443,23 @@ Element::SetAttr(int32_t aNamespaceID, nsIAtom* aName,
 
   // Hold a script blocker while calling ParseAttribute since that can call
   // out to id-observers
-  nsAutoScriptBlocker scriptBlocker;
+  nsIDocument* document = GetComposedDoc();
+  mozAutoDocUpdate updateBatch(document, UPDATE_CONTENT_MODEL, aNotify);
 
-  nsAttrValue attrValue;
-  if (preparsedAttrValue) {
-    attrValue.SwapValueWith(*preparsedAttrValue);
-  }
-  // Even the value was pre-parsed in BeforeSetAttr, we still need to call
-  // ParseAttribute because it can have side effects.
-  if (!ParseAttribute(aNamespaceID, aName, aValue, attrValue)) {
+  nsresult rv = BeforeSetAttr(aNamespaceID, aName, &value, aNotify);
+  NS_ENSURE_SUCCESS(rv, rv);
+
+  if (!preparsedAttrValue &&
+      !ParseAttribute(aNamespaceID, aName, aValue, attrValue)) {
     attrValue.SetTo(aValue);
   }
 
-  return SetAttrAndNotify(aNamespaceID, aName, aPrefix, oldValue,
+  PreIdMaybeChange(aNamespaceID, aName, &value);
+
+  return SetAttrAndNotify(aNamespaceID, aName, aPrefix,
+                          oldValueSet ? &oldValue : nullptr,
                           attrValue, modType, hasListeners, aNotify,
-                          kCallAfterSetAttr);
+                          kCallAfterSetAttr, document, updateBatch);
 }
 
 nsresult
@@ -2376,41 +2482,45 @@ Element::SetParsedAttr(int32_t aNamespaceID, nsIAtom* aName,
   bool hasListeners;
   nsAttrValueOrString value(aParsedValue);
   nsAttrValue oldValue;
+  bool oldValueSet;
 
   if (OnlyNotifySameValueSet(aNamespaceID, aName, aPrefix, value, aNotify,
-                             oldValue, &modType, &hasListeners)) {
-    return NS_OK;
+                             oldValue, &modType, &hasListeners, &oldValueSet)) {
+    return OnAttrSetButNotChanged(aNamespaceID, aName, value, aNotify);
   }
-
-  nsresult rv = BeforeSetAttr(aNamespaceID, aName, &value, aNotify);
-  NS_ENSURE_SUCCESS(rv, rv);
 
   if (aNotify) {
     nsNodeUtils::AttributeWillChange(this, aNamespaceID, aName, modType,
                                      &aParsedValue);
   }
 
-  return SetAttrAndNotify(aNamespaceID, aName, aPrefix, oldValue,
+  nsresult rv = BeforeSetAttr(aNamespaceID, aName, &value, aNotify);
+  NS_ENSURE_SUCCESS(rv, rv);
+
+  PreIdMaybeChange(aNamespaceID, aName, &value);
+
+  nsIDocument* document = GetComposedDoc();
+  mozAutoDocUpdate updateBatch(document, UPDATE_CONTENT_MODEL, aNotify);
+  return SetAttrAndNotify(aNamespaceID, aName, aPrefix,
+                          oldValueSet ? &oldValue : nullptr,
                           aParsedValue, modType, hasListeners, aNotify,
-                          kCallAfterSetAttr);
+                          kCallAfterSetAttr, document, updateBatch);
 }
 
 nsresult
 Element::SetAttrAndNotify(int32_t aNamespaceID,
                           nsIAtom* aName,
                           nsIAtom* aPrefix,
-                          const nsAttrValue& aOldValue,
+                          const nsAttrValue* aOldValue,
                           nsAttrValue& aParsedValue,
                           uint8_t aModType,
                           bool aFireMutation,
                           bool aNotify,
-                          bool aCallAfterSetAttr)
+                          bool aCallAfterSetAttr,
+                          nsIDocument* aComposedDocument,
+                          const mozAutoDocUpdate&)
 {
   nsresult rv;
-
-  nsIDocument* document = GetComposedDoc();
-  mozAutoDocUpdate updateBatch(document, UPDATE_CONTENT_MODEL, aNotify);
-
   nsMutationGuard::DidMutate();
 
   // Copy aParsedValue for later use since it will be lost when we call
@@ -2422,6 +2532,7 @@ Element::SetAttrAndNotify(int32_t aNamespaceID,
 
   bool hadValidDir = false;
   bool hadDirAuto = false;
+  bool oldValueSet;
 
   if (aNamespaceID == kNameSpaceID_None) {
     if (aName == nsGkAtoms::dir) {
@@ -2432,8 +2543,8 @@ Element::SetAttrAndNotify(int32_t aNamespaceID,
     // XXXbz Perhaps we should push up the attribute mapping function
     // stuff to Element?
     if (!IsAttributeMapped(aName) ||
-        !SetMappedAttribute(document, aName, aParsedValue, &rv)) {
-      rv = mAttrsAndChildren.SetAndSwapAttr(aName, aParsedValue);
+        !SetAndSwapMappedAttribute(aName, aParsedValue, &oldValueSet, &rv)) {
+      rv = mAttrsAndChildren.SetAndSwapAttr(aName, aParsedValue, &oldValueSet);
     }
   }
   else {
@@ -2442,27 +2553,44 @@ Element::SetAttrAndNotify(int32_t aNamespaceID,
                                                    aNamespaceID,
                                                    nsIDOMNode::ATTRIBUTE_NODE);
 
-    rv = mAttrsAndChildren.SetAndSwapAttr(ni, aParsedValue);
+    rv = mAttrsAndChildren.SetAndSwapAttr(ni, aParsedValue, &oldValueSet);
   }
-
-  // If the old value owns its own data, we know it is OK to keep using it.
-  const nsAttrValue* oldValue =
-      aParsedValue.StoresOwnData() ? &aParsedValue : &aOldValue;
-
   NS_ENSURE_SUCCESS(rv, rv);
 
-  if (document || HasFlag(NODE_FORCE_XBL_BINDINGS)) {
+  PostIdMaybeChange(aNamespaceID, aName, &valueForAfterSetAttr);
+
+  // If the old value owns its own data, we know it is OK to keep using it.
+  // oldValue will be null if there was no previously set value
+  const nsAttrValue* oldValue;
+  if (aParsedValue.StoresOwnData()) {
+    if (oldValueSet) {
+      oldValue = &aParsedValue;
+    } else {
+      oldValue = nullptr;
+    }
+  } else {
+    // No need to conditionally assign null here. If there was no previously
+    // set value for the attribute, aOldValue will already be null.
+    oldValue = aOldValue;
+  }
+
+  if (aComposedDocument || HasFlag(NODE_FORCE_XBL_BINDINGS)) {
     RefPtr<nsXBLBinding> binding = GetXBLBinding();
     if (binding) {
       binding->AttributeChanged(aName, aNamespaceID, false, aNotify);
     }
   }
 
-  UpdateState(aNotify);
-
   nsIDocument* ownerDoc = OwnerDoc();
   if (ownerDoc && GetCustomElementData()) {
-    nsCOMPtr<nsIAtom> oldValueAtom = oldValue->GetAsAtom();
+    nsCOMPtr<nsIAtom> oldValueAtom;
+    if (oldValue) {
+      oldValueAtom = oldValue->GetAsAtom();
+    } else {
+      // If there is no old value, get the value of the uninitialized attribute
+      // that was swapped with aParsedValue.
+      oldValueAtom = aParsedValue.GetAsAtom();
+    }
     nsCOMPtr<nsIAtom> newValueAtom = valueForAfterSetAttr.GetAsAtom();
     LifecycleCallbackArgs args = {
       nsDependentAtomString(aName),
@@ -2476,7 +2604,8 @@ Element::SetAttrAndNotify(int32_t aNamespaceID,
   }
 
   if (aCallAfterSetAttr) {
-    rv = AfterSetAttr(aNamespaceID, aName, &valueForAfterSetAttr, aNotify);
+    rv = AfterSetAttr(aNamespaceID, aName, &valueForAfterSetAttr, oldValue,
+                      aNotify);
     NS_ENSURE_SUCCESS(rv, rv);
 
     if (aNamespaceID == kNameSpaceID_None && aName == nsGkAtoms::dir) {
@@ -2485,12 +2614,14 @@ Element::SetAttrAndNotify(int32_t aNamespaceID,
     }
   }
 
+  UpdateState(aNotify);
+
   if (aNotify) {
     // Don't pass aOldValue to AttributeChanged since it may not be reliable.
     // Callers only compute aOldValue under certain conditions which may not
     // be triggered by all nsIMutationObservers.
     nsNodeUtils::AttributeChanged(this, aNamespaceID, aName, aModType,
-        oldValue == &aParsedValue ? &aParsedValue : nullptr);
+        aParsedValue.StoresOwnData() ? &aParsedValue : nullptr);
   }
 
   if (aFireMutation) {
@@ -2508,7 +2639,7 @@ Element::SetAttrAndNotify(int32_t aNamespaceID,
     if (!newValue.IsEmpty()) {
       mutation.mNewAttrValue = NS_Atomize(newValue);
     }
-    if (!oldValue->IsEmptyString()) {
+    if (oldValue && !oldValue->IsEmptyString()) {
       mutation.mPrevAttrValue = oldValue->GetAsAtom();
     }
     mutation.mAttrChange = aModType;
@@ -2520,25 +2651,6 @@ Element::SetAttrAndNotify(int32_t aNamespaceID,
   return NS_OK;
 }
 
-nsresult
-Element::BeforeSetAttr(int32_t aNamespaceID, nsIAtom* aName,
-                       nsAttrValueOrString* aValue, bool aNotify)
-{
-  if (aNamespaceID == kNameSpaceID_None) {
-    if (aName == nsGkAtoms::_class) {
-      // aValue->GetAttrValue will only be non-null here when this is called
-      // via Element::SetParsedAttr. This shouldn't happen for "class", but
-      // this will handle it.
-      if (aValue && !aValue->GetAttrValue()) {
-        nsAttrValue attr;
-        attr.ParseAtomArray(aValue->String());
-        aValue->TakeParsedValue(attr);
-      }
-    }
-  }
-  return NS_OK;
-}
-
 bool
 Element::ParseAttribute(int32_t aNamespaceID,
                         nsIAtom* aAttribute,
@@ -2546,22 +2658,16 @@ Element::ParseAttribute(int32_t aNamespaceID,
                         nsAttrValue& aResult)
 {
   if (aNamespaceID == kNameSpaceID_None) {
-    if (aAttribute == nsGkAtoms::_class) {
-      SetMayHaveClass();
-      // Result should have been preparsed above.
-      return true;
-    }
+    MOZ_ASSERT(aAttribute != nsGkAtoms::_class,
+               "The class attribute should be preparsed and therefore should "
+               "never be passed to Element::ParseAttribute");
     if (aAttribute == nsGkAtoms::id) {
       // Store id as an atom.  id="" means that the element has no id,
       // not that it has an emptystring as the id.
-      RemoveFromIdTable();
       if (aValue.IsEmpty()) {
-        ClearHasID();
         return false;
       }
       aResult.ParseAtom(aValue);
-      SetHasID();
-      AddToIdTable(aResult.GetAtomValue());
       return true;
     }
   }
@@ -2570,13 +2676,64 @@ Element::ParseAttribute(int32_t aNamespaceID,
 }
 
 bool
-Element::SetMappedAttribute(nsIDocument* aDocument,
-                            nsIAtom* aName,
-                            nsAttrValue& aValue,
-                            nsresult* aRetval)
+Element::SetAndSwapMappedAttribute(nsIAtom* aName,
+                                   nsAttrValue& aValue,
+                                   bool* aValueWasSet,
+                                   nsresult* aRetval)
 {
   *aRetval = NS_OK;
   return false;
+}
+
+nsresult
+Element::BeforeSetAttr(int32_t aNamespaceID, nsIAtom* aName,
+                       const nsAttrValueOrString* aValue, bool aNotify)
+{
+  if (aNamespaceID == kNameSpaceID_None) {
+    if (aName == nsGkAtoms::_class) {
+      if (aValue) {
+        // Note: This flag is asymmetrical. It is never unset and isn't exact.
+        // If it is ever made to be exact, we probably need to handle this
+        // similarly to how ids are handled in PreIdMaybeChange and
+        // PostIdMaybeChange.
+        SetMayHaveClass();
+      }
+    }
+  }
+
+  return NS_OK;
+}
+
+void
+Element::PreIdMaybeChange(int32_t aNamespaceID, nsIAtom* aName,
+                          const nsAttrValueOrString* aValue)
+{
+  if (aNamespaceID != kNameSpaceID_None || aName != nsGkAtoms::id) {
+    return;
+  }
+  RemoveFromIdTable();
+
+  return;
+}
+
+void
+Element::PostIdMaybeChange(int32_t aNamespaceID, nsIAtom* aName,
+                           const nsAttrValue* aValue)
+{
+  if (aNamespaceID != kNameSpaceID_None || aName != nsGkAtoms::id) {
+    return;
+  }
+
+  // id="" means that the element has no id, not that it has an empty
+  // string as the id.
+  if (aValue && !aValue->IsEmptyString()) {
+    SetHasID();
+    AddToIdTable(aValue->GetAtomValue());
+  } else {
+    ClearHasID();
+  }
+
+  return;
 }
 
 EventListenerManager*
@@ -2655,9 +2812,6 @@ Element::UnsetAttr(int32_t aNameSpaceID, nsIAtom* aName,
     return NS_OK;
   }
 
-  nsresult rv = BeforeSetAttr(aNameSpaceID, aName, nullptr, aNotify);
-  NS_ENSURE_SUCCESS(rv, rv);
-
   nsIDocument *document = GetComposedDoc();
   mozAutoDocUpdate updateBatch(document, UPDATE_CONTENT_MODEL, aNotify);
 
@@ -2667,10 +2821,15 @@ Element::UnsetAttr(int32_t aNameSpaceID, nsIAtom* aName,
                                      nullptr);
   }
 
+  nsresult rv = BeforeSetAttr(aNameSpaceID, aName, nullptr, aNotify);
+  NS_ENSURE_SUCCESS(rv, rv);
+
   bool hasMutationListeners = aNotify &&
     nsContentUtils::HasMutationListeners(this,
                                          NS_EVENT_BITS_MUTATION_ATTRMODIFIED,
                                          this);
+
+  PreIdMaybeChange(aNameSpaceID, aName, nullptr);
 
   // Grab the attr node if needed before we remove it from the attr map
   RefPtr<Attr> attrNode;
@@ -2690,12 +2849,6 @@ Element::UnsetAttr(int32_t aNameSpaceID, nsIAtom* aName,
   // react to unexpected attribute changes.
   nsMutationGuard::DidMutate();
 
-  if (aName == nsGkAtoms::id && aNameSpaceID == kNameSpaceID_None) {
-    // Have to do this before clearing flag. See RemoveFromIdTable
-    RemoveFromIdTable();
-    ClearHasID();
-  }
-
   bool hadValidDir = false;
   bool hadDirAuto = false;
 
@@ -2708,14 +2861,14 @@ Element::UnsetAttr(int32_t aNameSpaceID, nsIAtom* aName,
   rv = mAttrsAndChildren.RemoveAttrAt(index, oldValue);
   NS_ENSURE_SUCCESS(rv, rv);
 
+  PostIdMaybeChange(aNameSpaceID, aName, nullptr);
+
   if (document || HasFlag(NODE_FORCE_XBL_BINDINGS)) {
     RefPtr<nsXBLBinding> binding = GetXBLBinding();
     if (binding) {
       binding->AttributeChanged(aName, aNameSpaceID, true, aNotify);
     }
   }
-
-  UpdateState(aNotify);
 
   nsIDocument* ownerDoc = OwnerDoc();
   if (ownerDoc && GetCustomElementData()) {
@@ -2730,15 +2883,17 @@ Element::UnsetAttr(int32_t aNameSpaceID, nsIAtom* aName,
       ownerDoc, nsIDocument::eAttributeChanged, this, &args);
   }
 
+  rv = AfterSetAttr(aNameSpaceID, aName, nullptr, &oldValue, aNotify);
+  NS_ENSURE_SUCCESS(rv, rv);
+
+  UpdateState(aNotify);
+
   if (aNotify) {
     // We can always pass oldValue here since there is no new value which could
     // have corrupted it.
     nsNodeUtils::AttributeChanged(this, aNameSpaceID, aName,
                                   nsIDOMMutationEvent::REMOVAL, &oldValue);
   }
-
-  rv = AfterSetAttr(aNameSpaceID, aName, nullptr, aNotify);
-  NS_ENSURE_SUCCESS(rv, rv);
 
   if (aNameSpaceID == kNameSpaceID_None && aName == nsGkAtoms::dir) {
     OnSetDirAttr(this, nullptr, hadValidDir, hadDirAuto, aNotify);
@@ -3064,6 +3219,13 @@ Element::PostHandleEventForLinks(EventChainPostVisitor& aVisitor)
 
           EventStateManager::SetActiveManager(
             aVisitor.mPresContext->EventStateManager(), this);
+
+          // OK, we're pretty sure we're going to load, so warm up a speculative
+          // connection to be sure we have one ready when we open the channel.
+          nsCOMPtr<nsISpeculativeConnect> sc =
+            do_QueryInterface(nsContentUtils::GetIOService());
+          nsCOMPtr<nsIInterfaceRequestor> ir = do_QueryInterface(handler);
+          sc->SpeculativeConnect2(absURI, NodePrincipal(), ir);
         }
       }
     }
@@ -3151,6 +3313,7 @@ static nsIAtom** sPropertiesToTraverseAndUnlink[] =
   {
     &nsGkAtoms::sandbox,
     &nsGkAtoms::sizes,
+    &nsGkAtoms::dirAutoSetBy,
     nullptr
   };
 
@@ -3199,7 +3362,6 @@ Element::Closest(const nsAString& aSelector, ErrorResult& aResult)
     // is a pseudo-element-only selector that matches nothing.
     return nullptr;
   }
-  OwnerDoc()->FlushPendingLinkUpdates();
   TreeMatchContext matchingContext(false,
                                    nsRuleWalker::eRelevantLinkUnvisited,
                                    OwnerDoc(),
@@ -3227,7 +3389,6 @@ Element::Matches(const nsAString& aSelector, ErrorResult& aError)
     return false;
   }
 
-  OwnerDoc()->FlushPendingLinkUpdates();
   TreeMatchContext matchingContext(false,
                                    nsRuleWalker::eRelevantLinkUnvisited,
                                    OwnerDoc(),
@@ -3331,6 +3492,58 @@ Element::GetGridFragments(nsTArray<RefPtr<Grid>>& aResult)
     );
     frame = static_cast<nsGridContainerFrame*>(frame->GetNextInFlow());
   }
+}
+
+already_AddRefed<DOMMatrixReadOnly>
+Element::GetTransformToAncestor(Element& aAncestor)
+{
+  nsIFrame* primaryFrame = GetPrimaryFrame();
+  nsIFrame* ancestorFrame = aAncestor.GetPrimaryFrame();
+
+  Matrix4x4 transform;
+  if (primaryFrame) {
+    // If aAncestor is not actually an ancestor of this (including nullptr),
+    // then the call to GetTransformToAncestor will return the transform
+    // all the way up through the parent chain.
+    transform = nsLayoutUtils::GetTransformToAncestor(primaryFrame,
+      ancestorFrame, true);
+  }
+
+  DOMMatrixReadOnly* matrix = new DOMMatrix(this, transform);
+  RefPtr<DOMMatrixReadOnly> result(matrix);
+  return result.forget();
+}
+
+already_AddRefed<DOMMatrixReadOnly>
+Element::GetTransformToParent()
+{
+  nsIFrame* primaryFrame = GetPrimaryFrame();
+
+  Matrix4x4 transform;
+  if (primaryFrame) {
+    nsIFrame* parentFrame = primaryFrame->GetParent();
+    transform = nsLayoutUtils::GetTransformToAncestor(primaryFrame,
+      parentFrame, true);
+  }
+
+  DOMMatrixReadOnly* matrix = new DOMMatrix(this, transform);
+  RefPtr<DOMMatrixReadOnly> result(matrix);
+  return result.forget();
+}
+
+already_AddRefed<DOMMatrixReadOnly>
+Element::GetTransformToViewport()
+{
+  nsIFrame* primaryFrame = GetPrimaryFrame();
+  Matrix4x4 transform;
+  if (primaryFrame) {
+    transform = nsLayoutUtils::GetTransformToAncestor(primaryFrame,
+      nsLayoutUtils::GetDisplayRootFrame(primaryFrame), true);
+  }
+
+  DOMMatrixReadOnly* matrix = new DOMMatrix(this, transform);
+  RefPtr<DOMMatrixReadOnly> result(matrix);
+  return result.forget();
 }
 
 already_AddRefed<Animation>
@@ -3816,8 +4029,7 @@ Element::FontSizeInflation()
 net::ReferrerPolicy
 Element::GetReferrerPolicyAsEnum()
 {
-  if (Preferences::GetBool("network.http.enablePerElementReferrer", true) &&
-      IsHTMLElement()) {
+  if (IsHTMLElement()) {
     const nsAttrValue* referrerValue = GetParsedAttr(nsGkAtoms::referrerpolicy);
     if (referrerValue && referrerValue->Type() == nsAttrValue::eEnum) {
       return net::ReferrerPolicy(referrerValue->GetEnumValue());
@@ -3858,6 +4070,11 @@ Element::RegisteredIntersectionObservers()
   return &slots->mRegisteredIntersectionObservers;
 }
 
+enum nsPreviousIntersectionThreshold {
+  eUninitialized = -2,
+  eNonIntersecting = -1
+};
+
 void
 Element::RegisterIntersectionObserver(DOMIntersectionObserver* aObserver)
 {
@@ -3866,7 +4083,13 @@ Element::RegisterIntersectionObserver(DOMIntersectionObserver* aObserver)
   if (observers->Contains(aObserver)) {
     return;
   }
-  RegisteredIntersectionObservers()->Put(aObserver, -1);
+
+  // Value can be:
+  //   -2:   Makes sure next calculated threshold always differs, leading to a
+  //         notification task being scheduled.
+  //   -1:   Non-intersecting.
+  //   >= 0: Intersecting, valid index of aObserver->mThresholds.
+  RegisteredIntersectionObservers()->Put(aObserver, eUninitialized);
 }
 
 void
@@ -3900,4 +4123,12 @@ Element::ClearServoData() {
 #else
   MOZ_CRASH("Accessing servo node data in non-stylo build");
 #endif
+}
+
+void
+Element::SetCustomElementData(CustomElementData* aData)
+{
+  nsDOMSlots *slots = DOMSlots();
+  MOZ_ASSERT(!slots->mCustomElementData, "Custom element data may not be changed once set.");
+  slots->mCustomElementData = aData;
 }

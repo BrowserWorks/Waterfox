@@ -118,8 +118,8 @@ namespace CrashReporter {
   bool ShouldEnableSending();
 
   // Telemetry ping
-  bool SendCrashPing(StringTable& strings, std::string& pingUuid,
-                     const std::string& pingDir);
+  bool SendCrashPing(StringTable& strings, const std::string& hash,
+                     std::string& pingUuid, const std::string& pingDir);
 
   static const unsigned int kSaveCount = 10;
 }
@@ -152,7 +152,7 @@ bool UIEnsurePathExists(const std::string& path);
 bool UIFileExists(const std::string& path);
 bool UIMoveFile(const std::string& oldfile, const std::string& newfile);
 bool UIDeleteFile(const std::string& oldfile);
-std::ifstream* UIOpenRead(const std::string& filename);
+std::ifstream* UIOpenRead(const std::string& filename, bool binary = false);
 std::ofstream* UIOpenWrite(const std::string& filename,
                            bool append=false,
                            bool binary=false);

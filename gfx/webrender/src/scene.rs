@@ -5,10 +5,8 @@
 use fnv::FnvHasher;
 use std::collections::HashMap;
 use std::hash::BuildHasherDefault;
-use tiling::AuxiliaryListsMap;
-use webrender_traits::{AuxiliaryLists, BuiltDisplayList, PipelineId, Epoch, ColorF};
-use webrender_traits::{DisplayItem, DynamicProperties, LayerSize, LayoutTransform};
-use webrender_traits::{PropertyBinding, PropertyBindingId};
+use webrender_traits::{BuiltDisplayList, ColorF, DynamicProperties, Epoch, LayerSize, LayoutSize};
+use webrender_traits::{LayoutTransform, PipelineId, PropertyBinding, PropertyBindingId};
 
 /// Stores a map of the animated property bindings for the current display list. These
 /// can be used to animate the transform and/or opacity of a display list without
@@ -21,8 +19,8 @@ pub struct SceneProperties {
 impl SceneProperties {
     pub fn new() -> SceneProperties {
         SceneProperties {
-            transform_properties: HashMap::with_hasher(Default::default()),
-            float_properties: HashMap::with_hasher(Default::default()),
+            transform_properties: HashMap::default(),
+            float_properties: HashMap::default(),
         }
     }
 
@@ -41,7 +39,14 @@ impl SceneProperties {
     }
 
     /// Get the current value for a transform property.
-    pub fn resolve_layout_transform(&self, property: &PropertyBinding<LayoutTransform>) -> LayoutTransform {
+    pub fn resolve_layout_transform(&self,
+                                    property: Option<&PropertyBinding<LayoutTransform>>)
+                                    -> LayoutTransform {
+        let property = match property {
+            Some(property) => property,
+            None => return LayoutTransform::identity(),
+        };
+
         match *property {
             PropertyBinding::Value(matrix) => matrix,
             PropertyBinding::Binding(ref key) => {
@@ -79,6 +84,7 @@ pub struct ScenePipeline {
     pub pipeline_id: PipelineId,
     pub epoch: Epoch,
     pub viewport_size: LayerSize,
+    pub content_size: LayoutSize,
     pub background_color: Option<ColorF>,
 }
 
@@ -86,8 +92,7 @@ pub struct ScenePipeline {
 pub struct Scene {
     pub root_pipeline_id: Option<PipelineId>,
     pub pipeline_map: HashMap<PipelineId, ScenePipeline, BuildHasherDefault<FnvHasher>>,
-    pub pipeline_auxiliary_lists: AuxiliaryListsMap,
-    pub display_lists: HashMap<PipelineId, Vec<DisplayItem>, BuildHasherDefault<FnvHasher>>,
+    pub display_lists: HashMap<PipelineId, BuiltDisplayList, BuildHasherDefault<FnvHasher>>,
     pub properties: SceneProperties,
 }
 
@@ -95,9 +100,8 @@ impl Scene {
     pub fn new() -> Scene {
         Scene {
             root_pipeline_id: None,
-            pipeline_map: HashMap::with_hasher(Default::default()),
-            pipeline_auxiliary_lists: HashMap::with_hasher(Default::default()),
-            display_lists: HashMap::with_hasher(Default::default()),
+            pipeline_map: HashMap::default(),
+            display_lists: HashMap::default(),
             properties: SceneProperties::new(),
         }
     }
@@ -106,20 +110,20 @@ impl Scene {
         self.root_pipeline_id = Some(pipeline_id);
     }
 
-    pub fn set_root_display_list(&mut self,
-                                 pipeline_id: PipelineId,
-                                 epoch: Epoch,
-                                 built_display_list: BuiltDisplayList,
-                                 background_color: Option<ColorF>,
-                                 viewport_size: LayerSize,
-                                 auxiliary_lists: AuxiliaryLists) {
-        self.pipeline_auxiliary_lists.insert(pipeline_id, auxiliary_lists);
-        self.display_lists.insert(pipeline_id, built_display_list.all_display_items().to_vec());
+    pub fn set_display_list(&mut self,
+                            pipeline_id: PipelineId,
+                            epoch: Epoch,
+                            built_display_list: BuiltDisplayList,
+                            background_color: Option<ColorF>,
+                            viewport_size: LayerSize,
+                            content_size: LayoutSize) {
+        self.display_lists.insert(pipeline_id, built_display_list);
 
         let new_pipeline = ScenePipeline {
             pipeline_id: pipeline_id,
             epoch: epoch,
             viewport_size: viewport_size,
+            content_size: content_size,
             background_color: background_color,
         };
 

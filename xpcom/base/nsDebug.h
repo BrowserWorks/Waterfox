@@ -291,18 +291,16 @@ inline void MOZ_PretendNoReturn()
 #if defined(DEBUG) && !defined(XPCOM_GLUE_AVOID_NSPR)
 
 #define NS_ENSURE_SUCCESS_BODY(res, ret)                                  \
-    char *msg = mozilla::Smprintf("NS_ENSURE_SUCCESS(%s, %s) failed with "       \
+    mozilla::SmprintfPointer msg = mozilla::Smprintf("NS_ENSURE_SUCCESS(%s, %s) failed with " \
                            "result 0x%" PRIX32, #res, #ret,               \
                            static_cast<uint32_t>(__rv));                  \
-    NS_WARNING(msg);                                                      \
-    mozilla::SmprintfFree(msg);
+    NS_WARNING(msg.get());
 
 #define NS_ENSURE_SUCCESS_BODY_VOID(res)                                  \
-    char *msg = mozilla::Smprintf("NS_ENSURE_SUCCESS_VOID(%s) failed with "      \
+    mozilla::SmprintfPointer msg = mozilla::Smprintf("NS_ENSURE_SUCCESS_VOID(%s) failed with " \
                            "result 0x%" PRIX32, #res,                     \
                            static_cast<uint32_t>(__rv));                  \
-    NS_WARNING(msg);                                                      \
-    mozilla::SmprintfFree(msg);
+    NS_WARNING(msg.get());
 
 #else
 
@@ -363,15 +361,6 @@ inline void MOZ_PretendNoReturn()
   #define MOZ_THREAD_SAFETY_OWNERSHIP_CHECKS_SUPPORTED  1
 #endif
 
-#ifdef XPCOM_GLUE
-  #define NS_CheckThreadSafe(owningThread, msg)
-#else
-  #define NS_CheckThreadSafe(owningThread, msg)                 \
-    if (MOZ_UNLIKELY(owningThread != PR_GetCurrentThread())) {  \
-      MOZ_CRASH(msg);                                           \
-    }
-#endif
-
 #ifdef MOZILLA_INTERNAL_API
 void NS_ABORT_OOM(size_t aSize);
 #else
@@ -381,7 +370,6 @@ inline void NS_ABORT_OOM(size_t)
 }
 #endif
 
-typedef void (*StderrCallback)(const char* aFmt, va_list aArgs);
 /* When compiling the XPCOM Glue on Windows, we pretend that it's going to
  * be linked with a static CRT (-MT) even when it's not. This means that we
  * cannot link to data exports from the CRT, only function exports. So,
@@ -393,7 +381,6 @@ extern "C" {
 
 /**
  * printf_stderr(...) is much like fprintf(stderr, ...), except that:
- *  - it calls the callback set through set_stderr_callback
  *  - on Android and Firefox OS, *instead* of printing to stderr, it
  *    prints to logcat.  (Newlines in the string lead to multiple lines
  *    of logcat, but each function call implicitly completes a line even
@@ -406,7 +393,7 @@ void printf_stderr(const char* aFmt, ...) MOZ_FORMAT_PRINTF(1, 2);
 /**
  * Same as printf_stderr, but taking va_list instead of varargs
  */
-void vprintf_stderr(const char* aFmt, va_list aArgs);
+void vprintf_stderr(const char* aFmt, va_list aArgs) MOZ_FORMAT_PRINTF(1, 0);
 
 /**
  * fprintf_stderr is like fprintf, except that if its file argument
@@ -424,37 +411,6 @@ void vprintf_stderr(const char* aFmt, va_list aArgs);
  * (Producing multiple lines at once is fine.)
  */
 void fprintf_stderr(FILE* aFile, const char* aFmt, ...) MOZ_FORMAT_PRINTF(2, 3);
-
-// used by the profiler to log stderr in the profiler for more
-// advanced performance debugging and display/layers visualization.
-void set_stderr_callback(StderrCallback aCallback);
-
-#if defined(ANDROID) && !defined(RELEASE_OR_BETA)
-// Call this if you want a copy of stderr logging sent to a file. This is
-// useful to get around logcat overflow problems on android devices, which use
-// a circular logcat buffer and can intermittently drop messages if there's too
-// much spew.
-//
-// This is intended for local debugging only, DO NOT USE IN PRODUCTION CODE.
-// (This is ifndef RELEASE_OR_BETA to catch uses of it that accidentally get
-// checked in). Using this will also prevent the profiler from getting a copy of
-// the stderr messages which it uses for various visualization features.
-//
-// This function can be called from any thread, but if it is called multiple
-// times all invocations must be on the same thread. Invocations after the
-// first one are ignored, so you can safely put it inside a loop, for example.
-// Once this is called there is no way to turn it off; all stderr output from
-// that point forward will go to the file. Note that the output is subject to
-// buffering so make sure you have enough output to flush the messages you care
-// about before you terminate the process.
-//
-// The file passed in should be writable, so on Android devices a path like
-// "/data/local/tmp/blah" is a good one to use as it is world-writable and will
-// work even in B2G child processes which have reduced privileges. Note that the
-// actual file created will have the PID appended to the path you pass in, so
-// that on B2G the output from each process goes to a separate file.
-void copy_stderr_to_file(const char* aFile);
-#endif
 
 #ifdef __cplusplus
 }

@@ -25,17 +25,12 @@ public:
 
   NS_IMETHOD    GetEditor(nsIEditor **aEditor) = 0;
 
-  NS_IMETHOD    SetSelectionStart(int32_t aSelectionStart) = 0;
-  NS_IMETHOD    SetSelectionEnd(int32_t aSelectionEnd) = 0;
-  
-  NS_IMETHOD    SetSelectionRange(int32_t aSelectionStart,
-                                  int32_t aSelectionEnd,
+  NS_IMETHOD    SetSelectionRange(uint32_t aSelectionStart,
+                                  uint32_t aSelectionEnd,
                                   SelectionDirection aDirection = eNone) = 0;
 
   NS_IMETHOD    GetOwnedSelectionController(nsISelectionController** aSelCon) = 0;
   virtual nsFrameSelection* GetOwnedFrameSelection() = 0;
-
-  virtual nsresult GetPhonetic(nsAString& aPhonetic) = 0;
 
   /**
    * Ensure editor is initialized with the proper flags and the default value.

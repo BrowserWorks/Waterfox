@@ -1,6 +1,5 @@
 toolkit.jar:
 %  content global %content/global/ contentaccessible=yes
-%  content global-platform %content/global-platform/ platform
 *  content/global/license.html
    content/global/XPCNativeWrapper.js
    content/global/minimal-xul.css
@@ -33,6 +32,9 @@ toolkit.jar:
    content/global/aboutTelemetry.js
    content/global/aboutTelemetry.xhtml
    content/global/aboutTelemetry.css
+   content/global/aboutUrlClassifier.js
+   content/global/aboutUrlClassifier.xhtml
+   content/global/aboutUrlClassifier.css
    content/global/directionDetector.html
    content/global/plugins.html
    content/global/plugins.css

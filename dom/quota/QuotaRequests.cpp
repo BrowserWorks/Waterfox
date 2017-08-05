@@ -17,9 +17,6 @@ RequestBase::RequestBase()
   : mResultCode(NS_OK)
   , mHaveResultOrErrorCode(false)
 {
-#ifdef DEBUG
-  mOwningThread = PR_GetCurrentThread();
-#endif
   AssertIsOnOwningThread();
 }
 
@@ -28,9 +25,6 @@ RequestBase::RequestBase(nsIPrincipal* aPrincipal)
   , mResultCode(NS_OK)
   , mHaveResultOrErrorCode(false)
 {
-#ifdef DEBUG
-  mOwningThread = PR_GetCurrentThread();
-#endif
   AssertIsOnOwningThread();
 }
 
@@ -39,8 +33,7 @@ RequestBase::RequestBase(nsIPrincipal* aPrincipal)
 void
 RequestBase::AssertIsOnOwningThread() const
 {
-  MOZ_ASSERT(mOwningThread);
-  MOZ_ASSERT(PR_GetCurrentThread() == mOwningThread);
+  NS_ASSERT_OWNINGTHREAD(RequestBase);
 }
 
 #endif // DEBUG
@@ -91,13 +84,19 @@ RequestBase::GetResultCode(nsresult* aResultCode)
   return NS_OK;
 }
 
+UsageRequest::UsageRequest(nsIQuotaUsageCallback* aCallback)
+  : mCallback(aCallback)
+  , mBackgroundActor(nullptr)
+  , mCanceled(false)
+{
+  AssertIsOnOwningThread();
+  MOZ_ASSERT(aCallback);
+}
+
 UsageRequest::UsageRequest(nsIPrincipal* aPrincipal,
                            nsIQuotaUsageCallback* aCallback)
   : RequestBase(aPrincipal)
   , mCallback(aCallback)
-  , mUsage(0)
-  , mFileUsage(0)
-  , mLimit(0)
   , mBackgroundActor(nullptr)
   , mCanceled(false)
 {
@@ -126,14 +125,14 @@ UsageRequest::SetBackgroundActor(QuotaUsageRequestChild* aBackgroundActor)
 }
 
 void
-UsageRequest::SetResult(uint64_t aUsage, uint64_t aFileUsage, uint64_t aLimit)
+UsageRequest::SetResult(nsIVariant* aResult)
 {
   AssertIsOnOwningThread();
+  MOZ_ASSERT(aResult);
   MOZ_ASSERT(!mHaveResultOrErrorCode);
 
-  mUsage = aUsage;
-  mFileUsage = aFileUsage;
-  mLimit = aLimit;
+  mResult = aResult;
+
   mHaveResultOrErrorCode = true;
 
   FireCallback();
@@ -149,43 +148,16 @@ NS_IMPL_ADDREF_INHERITED(UsageRequest, RequestBase)
 NS_IMPL_RELEASE_INHERITED(UsageRequest, RequestBase)
 
 NS_IMETHODIMP
-UsageRequest::GetUsage(uint64_t* aUsage)
+UsageRequest::GetResult(nsIVariant** aResult)
 {
   AssertIsOnOwningThread();
+  MOZ_ASSERT(aResult);
 
   if (!mHaveResultOrErrorCode) {
     return NS_ERROR_FAILURE;
   }
 
-  *aUsage = mUsage;
-  return NS_OK;
-}
-
-NS_IMETHODIMP
-UsageRequest::GetFileUsage(uint64_t* aFileUsage)
-{
-  AssertIsOnOwningThread();
-  MOZ_ASSERT(aFileUsage);
-
-  if (!mHaveResultOrErrorCode) {
-    return NS_ERROR_FAILURE;
-  }
-
-  *aFileUsage = mFileUsage;
-  return NS_OK;
-}
-
-NS_IMETHODIMP
-UsageRequest::GetLimit(uint64_t* aLimit)
-{
-  AssertIsOnOwningThread();
-  MOZ_ASSERT(aLimit);
-
-  if (!mHaveResultOrErrorCode) {
-    return NS_ERROR_FAILURE;
-  }
-
-  *aLimit = mLimit;
+  NS_IF_ADDREF(*aResult = mResult);
   return NS_OK;
 }
 
@@ -248,6 +220,7 @@ Request::Request(nsIPrincipal* aPrincipal)
   : RequestBase(aPrincipal)
 {
   AssertIsOnOwningThread();
+  MOZ_ASSERT(aPrincipal);
 }
 
 Request::~Request()
@@ -256,17 +229,34 @@ Request::~Request()
 }
 
 void
-Request::SetResult()
+Request::SetResult(nsIVariant* aResult)
 {
   AssertIsOnOwningThread();
+  MOZ_ASSERT(aResult);
   MOZ_ASSERT(!mHaveResultOrErrorCode);
+
+  mResult = aResult;
 
   mHaveResultOrErrorCode = true;
 
   FireCallback();
 }
 
-NS_IMPL_CYCLE_COLLECTION_INHERITED(Request, RequestBase, mCallback)
+NS_IMETHODIMP
+Request::GetResult(nsIVariant** aResult)
+{
+  AssertIsOnOwningThread();
+  MOZ_ASSERT(aResult);
+
+  if (!mHaveResultOrErrorCode) {
+    return NS_ERROR_FAILURE;
+  }
+
+  NS_IF_ADDREF(*aResult = mResult);
+  return NS_OK;
+}
+
+NS_IMPL_CYCLE_COLLECTION_INHERITED(Request, RequestBase, mCallback, mResult)
 
 NS_INTERFACE_MAP_BEGIN_CYCLE_COLLECTION_INHERITED(Request)
   NS_INTERFACE_MAP_ENTRY(nsIQuotaRequest)

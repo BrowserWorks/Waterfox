@@ -10,14 +10,11 @@ this.EXPORTED_SYMBOLS = ["EngineSynchronizer"];
 
 var {utils: Cu} = Components;
 
+Cu.import("resource://gre/modules/XPCOMUtils.jsm");
 Cu.import("resource://gre/modules/Log.jsm");
 Cu.import("resource://services-sync/constants.js");
-Cu.import("resource://services-sync/engines.js");
-Cu.import("resource://services-sync/policies.js");
 Cu.import("resource://services-sync/util.js");
-Cu.import("resource://services-common/observers.js");
 Cu.import("resource://services-common/async.js");
-Cu.import("resource://gre/modules/Task.jsm");
 XPCOMUtils.defineLazyModuleGetter(this, "Doctor",
                                   "resource://services-sync/doctor.js");
 
@@ -184,7 +181,7 @@ EngineSynchronizer.prototype = {
       }
 
       // Upload meta/global if any engines changed anything.
-      let meta = this.service.recordManager.get(this.service.metaURL);
+      let meta = Async.promiseSpinningly(this.service.recordManager.get(this.service.metaURL));
       if (meta.isNew || meta.changed) {
         this._log.info("meta/global changed locally: reuploading.");
         try {
@@ -346,7 +343,7 @@ EngineSynchronizer.prototype = {
   },
 
   _updateEnabledEngines() {
-    let meta = this.service.recordManager.get(this.service.metaURL);
+    let meta = Async.promiseSpinningly(this.service.recordManager.get(this.service.metaURL));
     let numClients = this.service.scheduler.numClients;
     let engineManager = this.service.engineManager;
 

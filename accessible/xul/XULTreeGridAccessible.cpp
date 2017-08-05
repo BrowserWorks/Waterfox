@@ -325,7 +325,7 @@ XULTreeGridRowAccessible::ChildAtPoint(int32_t aX, int32_t aY,
   nsIFrame *rootFrame = presShell->GetRootFrame();
   NS_ENSURE_TRUE(rootFrame, nullptr);
 
-  nsIntRect rootRect = rootFrame->GetScreenRect();
+  CSSIntRect rootRect = rootFrame->GetScreenRect();
 
   int32_t clientX = presContext->DevPixelsToIntCSSPixels(aX) - rootRect.x;
   int32_t clientY = presContext->DevPixelsToIntCSSPixels(aY) - rootRect.y;
@@ -454,6 +454,18 @@ NS_IMPL_RELEASE_INHERITED(XULTreeGridCellAccessible, LeafAccessible)
 
 ////////////////////////////////////////////////////////////////////////////////
 // XULTreeGridCellAccessible: Accessible
+
+void
+XULTreeGridCellAccessible::Shutdown()
+{
+  mTree = nullptr;
+  mTreeView = nullptr;
+  mRow = -1;
+  mColumn = nullptr;
+  mParent = nullptr; // null-out to prevent base class's shutdown ops
+
+  LeafAccessible::Shutdown();
+}
 
 Accessible*
 XULTreeGridCellAccessible::FocusedChild()

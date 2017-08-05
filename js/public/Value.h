@@ -960,13 +960,17 @@ IsOptimizedPlaceholderMagicValue(const Value& v)
 static MOZ_ALWAYS_INLINE void
 ExposeValueToActiveJS(const Value& v)
 {
+#ifdef DEBUG
+    Value tmp = v;
+    MOZ_ASSERT(!js::gc::EdgeNeedsSweepUnbarrieredSlow(&tmp));
+#endif
     if (v.isGCThing())
         js::gc::ExposeGCThingToActiveJS(GCCellPtr(v));
 }
 
 /************************************************************************/
 
-static inline Value
+static inline MOZ_MAY_CALL_AFTER_MUST_RETURN Value
 NullValue()
 {
     Value v;

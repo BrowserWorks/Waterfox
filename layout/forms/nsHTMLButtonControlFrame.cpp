@@ -26,8 +26,9 @@ NS_NewHTMLButtonControlFrame(nsIPresShell* aPresShell, nsStyleContext* aContext)
 
 NS_IMPL_FRAMEARENA_HELPERS(nsHTMLButtonControlFrame)
 
-nsHTMLButtonControlFrame::nsHTMLButtonControlFrame(nsStyleContext* aContext)
-  : nsContainerFrame(aContext)
+nsHTMLButtonControlFrame::nsHTMLButtonControlFrame(nsStyleContext* aContext,
+                                                   nsIFrame::ClassID aID)
+  : nsContainerFrame(aContext, aID)
 {
 }
 
@@ -62,12 +63,6 @@ nsHTMLButtonControlFrame::AccessibleType()
   return a11y::eHTMLButtonType;
 }
 #endif
-
-nsIAtom*
-nsHTMLButtonControlFrame::GetType() const
-{
-  return nsGkAtoms::HTMLButtonControlFrame;
-}
 
 void 
 nsHTMLButtonControlFrame::SetFocus(bool aOn, bool aRepaint)
@@ -398,6 +393,19 @@ nsHTMLButtonControlFrame::SetAdditionalStyleContext(int32_t aIndex,
                                                     nsStyleContext* aStyleContext)
 {
   mRenderer.SetStyleContext(aIndex, aStyleContext);
+}
+
+void
+nsHTMLButtonControlFrame::DoUpdateStyleOfOwnedAnonBoxes(
+  ServoStyleSet& aStyleSet,
+  nsStyleChangeList& aChangeList,
+  nsChangeHint aHintForThisFrame)
+{
+  MOZ_ASSERT(mFrames.FirstChild(), "Must have our button-content anon box");
+  MOZ_ASSERT(!mFrames.FirstChild()->GetNextSibling(),
+             "Must only have our button-content anon box");
+  UpdateStyleOfChildAnonBox(mFrames.FirstChild(),
+                            aStyleSet, aChangeList, aHintForThisFrame);
 }
 
 #ifdef DEBUG

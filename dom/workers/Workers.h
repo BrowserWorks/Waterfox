@@ -290,7 +290,7 @@ struct WorkerLoadInfo
   nsresult
   SetPrincipalFromChannel(nsIChannel* aChannel);
 
-#if defined(DEBUG) || !defined(RELEASE_OR_BETA)
+#ifdef MOZ_DIAGNOSTIC_ASSERT_ENABLED
   bool
   FinalChannelPrincipalIsValid(nsIChannel* aChannel);
 
@@ -384,14 +384,6 @@ GetWorkerCrossThreadDispatcher(JSContext* aCx, const JS::Value& aWorker);
 // Random unique constant to facilitate JSPrincipal debugging
 const uint32_t kJSPrincipalsDebugToken = 0x7e2df9d2;
 
-namespace exceptions {
-
-// Implemented in Exceptions.cpp
-void
-ThrowDOMExceptionForNSResult(JSContext* aCx, nsresult aNSResult);
-
-} // namespace exceptions
-
 bool
 IsWorkerGlobal(JSObject* global);
 
@@ -400,14 +392,6 @@ IsDebuggerGlobal(JSObject* global);
 
 bool
 IsDebuggerSandbox(JSObject* object);
-
-// Throws the JSMSG_GETTER_ONLY exception.  This shouldn't be used going
-// forward -- getter-only properties should just use JS_PSG for the setter
-// (implying no setter at all), which will not throw when set in non-strict
-// code but will in strict code.  Old code should use this only for temporary
-// compatibility reasons.
-extern bool
-GetterOnlyJSNative(JSContext* aCx, unsigned aArgc, JS::Value* aVp);
 
 END_WORKERS_NAMESPACE
 

@@ -1,4 +1,3 @@
-// |reftest| skip-if(!this.hasOwnProperty('Intl')) -- needs Intl
 // Copyright 2012 Mozilla Corporation. All rights reserved.
 // This code is governed by the BSD license found in the LICENSE file.
 
@@ -32,18 +31,10 @@ var invalidLanguageTags = [
 
 testWithIntlConstructors(function (Constructor) {
     invalidLanguageTags.forEach(function (tag) {
-        var error;
-        try {
-            // this must throw an exception for an invalid language tag
+        // this must throw an exception for an invalid language tag
+        assert.throws(RangeError, function() {
             var obj = new Constructor([tag]);
-        } catch (e) {
-            error = e;
-        }
-        if (error === undefined) {
-            $ERROR("Invalid language tag " + tag + " was not rejected.");
-        } else if (error.name !== "RangeError") {
-            $ERROR("Invalid language tag " + tag + " was rejected with wrong error " + error.name + ".");
-        }
+        }, "Invalid language tag " + tag + " was not rejected.");
     });
     return true;
 });

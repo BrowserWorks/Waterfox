@@ -4,10 +4,8 @@
 # License, v. 2.0. If a copy of the MPL was not distributed with this
 # file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
-EXPORTS += [
-    'src/woff2_dec.h',
-    'src/woff2_out.h',
-]
+with Files('**'):
+    BUG_COMPONENT = ('Core', 'Graphics: Text')
 
 UNIFIED_SOURCES += [
     'src/table_tags.cc',
@@ -15,6 +13,10 @@ UNIFIED_SOURCES += [
     'src/woff2_common.cc',
     'src/woff2_dec.cc',
     'src/woff2_out.cc',
+]
+
+LOCAL_INCLUDES += [
+    '/modules/brotli/dec',
 ]
 
 # We allow warnings for third-party code that can be updated from upstream.

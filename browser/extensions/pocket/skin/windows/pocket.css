@@ -1,16 +1,14 @@
 @import url("chrome://pocket-shared/skin/pocket.css");
 
 #nav-bar #pocket-button > .toolbarbutton-icon {
-  padding: calc(var(--toolbarbutton-vertical-inner-padding)) 6px;
+%ifndef MOZ_PHOTON_THEME
+  padding: var(--toolbarbutton-inner-padding) 6px;
+%else
+  padding: calc(var(--toolbarbutton-inner-padding) - 1px);
+%endif
 }
 
 :-moz-any(#TabsToolbar, .widget-overflow-list) #pocket-button > .toolbarbutton-icon {
     max-width: 18px;
     padding: 0;
-}
-
-@media (-moz-windows-theme: luna-silver) and (max-resolution: 1dppx) {
-  #pocket-button {
-    list-style-image: url(Toolbar-lunaSilver.png);
-  }
 }

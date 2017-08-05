@@ -63,28 +63,30 @@
  * have higher priority, and more generically "www." prefixed hosts come before
  * unprefixed ones.
  * Given a host, examine associated pages and:
- *  - if all of the typed pages start with https://www. return https://www.
- *  - if all of the typed pages start with https:// return https://
+ *  - if at least half the typed pages start with https://www. return https://www.
+ *  - if at least half the typed pages start with https:// return https://
  *  - if all of the typed pages start with ftp: return ftp://
- *  - if all of the typed pages start with www. return www.
+ *     - This is because mostly people will want to visit the http version
+ *       of the site.
+ *  - if at least half the typed pages start with www. return www.
  *  - otherwise don't use any prefix
  */
 #define HOSTS_PREFIX_PRIORITY_FRAGMENT \
   "SELECT CASE " \
-    "WHEN 1 = ( " \
-      "SELECT min(substr(url,1,12) = 'https://www.') FROM moz_places h " \
+    "WHEN ( " \
+      "SELECT round(avg(substr(url,1,12) = 'https://www.')) FROM moz_places h " \
       "WHERE (" HOST_TO_REVHOST_PREDICATE ") AND +h.typed = 1 " \
     ") THEN 'https://www.' " \
-    "WHEN 1 = ( " \
-      "SELECT min(substr(url,1,8) = 'https://') FROM moz_places h " \
+    "WHEN ( " \
+      "SELECT round(avg(substr(url,1,8) = 'https://')) FROM moz_places h " \
       "WHERE (" HOST_TO_REVHOST_PREDICATE ") AND +h.typed = 1 " \
     ") THEN 'https://' " \
     "WHEN 1 = ( " \
       "SELECT min(substr(url,1,4) = 'ftp:') FROM moz_places h " \
       "WHERE (" HOST_TO_REVHOST_PREDICATE ") AND +h.typed = 1 " \
     ") THEN 'ftp://' " \
-    "WHEN 1 = ( " \
-      "SELECT min(substr(url,1,11) = 'http://www.') FROM moz_places h " \
+    "WHEN ( " \
+      "SELECT round(avg(substr(url,1,11) = 'http://www.')) FROM moz_places h " \
       "WHERE (" HOST_TO_REVHOST_PREDICATE ") AND +h.typed = 1 " \
     ") THEN 'www.' " \
   "END "
@@ -145,6 +147,11 @@
     "UPDATE moz_hosts " \
     "SET prefix = (" HOSTS_PREFIX_PRIORITY_FRAGMENT ") " \
     "WHERE host = OLD.host; " \
+    "DELETE FROM moz_icons " \
+    "WHERE fixed_icon_url_hash = hash(fixup_url(OLD.host || '/favicon.ico')) " \
+      "AND fixup_url(icon_url) = fixup_url(OLD.host || '/favicon.ico') "\
+      "AND NOT EXISTS (SELECT 1 FROM moz_hosts WHERE host = OLD.host " \
+                                                 "OR host = fixup_url(OLD.host));" \
   "END" \
 )
 
@@ -261,6 +268,14 @@
     "UPDATE moz_places " \
     "SET foreign_count = foreign_count - 1 " \
     "WHERE id = OLD.place_id; " \
+  "END" \
+)
+
+#define CREATE_ICONS_AFTERINSERT_TRIGGER NS_LITERAL_CSTRING( \
+  "CREATE TEMP TRIGGER moz_icons_afterinsert_v1_trigger " \
+  "AFTER INSERT ON moz_icons FOR EACH ROW " \
+  "BEGIN " \
+    "SELECT store_last_inserted_id('moz_icons', NEW.id); " \
   "END" \
 )
 

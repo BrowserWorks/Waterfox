@@ -13,7 +13,7 @@ const UPDATE_TIME_PREF = "browser.safebrowsing.provider.mozilla.nextupdatetime";
 var gBlocklistManager = {
   _type: "",
   _blockLists: [],
-  _brandShortName : null,
+  _brandShortName: null,
   _bundle: null,
   _tree: null,
 
@@ -81,7 +81,7 @@ var gBlocklistManager = {
 
     let blocklistsText = document.getElementById("blocklistsText");
     while (blocklistsText.hasChildNodes()) {
-      blocklistsText.removeChild(blocklistsText.firstChild);
+      blocklistsText.firstChild.remove();
     }
     blocklistsText.appendChild(document.createTextNode(params.introText));
 

@@ -7,6 +7,7 @@
 #include "FileSystemFileEntry.h"
 #include "CallbackRunnables.h"
 #include "mozilla/dom/File.h"
+#include "mozilla/dom/FileSystemUtils.h"
 #include "mozilla/dom/MultipartBlobImpl.h"
 #include "mozilla/dom/FileSystemFileEntryBinding.h"
 
@@ -18,10 +19,9 @@ namespace {
 class FileCallbackRunnable final : public Runnable
 {
 public:
-  FileCallbackRunnable(FileCallback* aCallback, ErrorCallback* aErrorCallback,
-                       File* aFile)
-    : mCallback(aCallback)
-    , mErrorCallback(aErrorCallback)
+  FileCallbackRunnable(FileCallback* aCallback, File* aFile)
+    : Runnable("FileCallbackRunnable")
+    , mCallback(aCallback)
     , mFile(aFile)
   {
     MOZ_ASSERT(aCallback);
@@ -33,29 +33,7 @@ public:
   {
     // Here we clone the File object.
 
-    nsAutoString name;
-    mFile->GetName(name);
-
-    nsAutoString type;
-    mFile->GetType(type);
-
-    nsTArray<RefPtr<BlobImpl>> blobImpls;
-    blobImpls.AppendElement(mFile->Impl());
-
-    ErrorResult rv;
-    RefPtr<BlobImpl> blobImpl =
-      MultipartBlobImpl::Create(Move(blobImpls), name, type, rv);
-    if (NS_WARN_IF(rv.Failed())) {
-      if (mErrorCallback) {
-        RefPtr<DOMException> exception =
-          DOMException::Create(rv.StealNSResult());
-        mErrorCallback->HandleEvent(*exception);
-      }
-
-      return NS_OK;
-    }
-
-    RefPtr<File> file = File::Create(mFile->GetParentObject(), blobImpl);
+    RefPtr<File> file = File::Create(mFile->GetParentObject(), mFile->Impl());
     MOZ_ASSERT(file);
 
     mCallback->HandleEvent(*file);
@@ -64,7 +42,6 @@ public:
 
 private:
   RefPtr<FileCallback> mCallback;
-  RefPtr<ErrorCallback> mErrorCallback;
   RefPtr<File> mFile;
 };
 
@@ -126,12 +103,9 @@ FileSystemFileEntry::GetFile(FileCallback& aSuccessCallback,
                              const Optional<OwningNonNull<ErrorCallback>>& aErrorCallback) const
 {
   RefPtr<FileCallbackRunnable> runnable =
-    new FileCallbackRunnable(&aSuccessCallback,
-                             aErrorCallback.WasPassed()
-                               ? &aErrorCallback.Value() : nullptr,
-                             mFile);
-  DebugOnly<nsresult> rv = NS_DispatchToMainThread(runnable);
-  NS_WARNING_ASSERTION(NS_SUCCEEDED(rv), "NS_DispatchToMainThread failed");
+    new FileCallbackRunnable(&aSuccessCallback, mFile);
+
+  FileSystemUtils::DispatchRunnable(GetParentObject(), runnable.forget());
 }
 
 } // dom namespace

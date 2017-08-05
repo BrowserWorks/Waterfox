@@ -4,37 +4,8 @@
  * Tests the FX_TAB_SWITCH_SPINNER_VISIBLE_MS and
  * FX_TAB_SWITCH_SPINNER_VISIBLE_LONG_MS telemetry probes
  */
-let gMinHangTime = 500; // ms
-let gMaxHangTime = 5 * 1000; // ms
-
-/**
- * Make a data URI for a generic webpage with a script that hangs for a given
- * amount of time.
- * @param  {?Number} aHangMs Number of milliseconds that the hang should last.
- *                   Defaults to 0.
- * @return {String}  The data URI generated.
- */
-function makeDataURI(aHangMs = 0) {
-  return `data:text/html,
-    <html>
-      <head>
-        <meta charset="utf-8"/>
-        <title>Tab Spinner Test</title>
-        <script>
-          function hang() {
-            let hangDuration = ${aHangMs};
-            if (hangDuration > 0) {
-              let startTime = window.performance.now();
-              while(window.performance.now() - startTime < hangDuration) {}
-            }
-          }
-        </script>
-      </head>
-      <body>
-        <h1 id='header'>Tab Spinner Test</h1>
-      </body>
-    </html>`;
-}
+const MIN_HANG_TIME = 500; // ms
+const MAX_HANG_TIME = 5 * 1000; // ms
 
 /**
  * Returns the sum of all values in an array.
@@ -48,44 +19,80 @@ function sum(aArray) {
 }
 
 /**
+ * Causes the content process for a remote <xul:browser> to run
+ * some busy JS for aMs milliseconds.
+ *
+ * @param {<xul:browser>} browser
+ *        The browser that's running in the content process that we're
+ *        going to hang.
+ * @param {int} aMs
+ *        The amount of time, in milliseconds, to hang the content process.
+ *
+ * @return {Promise}
+ *        Resolves once the hang is done.
+ */
+function hangContentProcess(browser, aMs) {
+  return ContentTask.spawn(browser, aMs, function*(ms) {
+    let then = Date.now();
+    while (Date.now() - then < ms) {
+      // Let's burn some CPU...
+    }
+  });
+}
+
+/**
  * A generator intended to be run as a Task. It tests one of the tab spinner
  * telemetry probes.
  * @param {String} aProbe The probe to test. Should be one of:
  *                  - FX_TAB_SWITCH_SPINNER_VISIBLE_MS
  *                  - FX_TAB_SWITCH_SPINNER_VISIBLE_LONG_MS
  */
-function* testProbe(aProbe) {
+async function testProbe(aProbe) {
   info(`Testing probe: ${aProbe}`);
   let histogram = Services.telemetry.getHistogramById(aProbe);
   let buckets = histogram.snapshot().ranges.filter(function(value) {
-    return (value > gMinHangTime && value < gMaxHangTime);
+    return (value > MIN_HANG_TIME && value < MAX_HANG_TIME);
   });
   let delayTime = buckets[0]; // Pick a bucket arbitrarily
 
   // The tab spinner does not show up instantly. We need to hang for a little
   // bit of extra time to account for the tab spinner delay.
   delayTime += gBrowser.selectedTab.linkedBrowser.getTabBrowser()._getSwitcher().TAB_SWITCH_TIMEOUT;
-  let dataURI1 = makeDataURI(delayTime);
-  let dataURI2 = makeDataURI();
 
-  let tab1 = yield BrowserTestUtils.openNewForegroundTab(gBrowser, dataURI1);
+  // In order for a spinner to be shown, the tab must have presented before.
+  let origTab = gBrowser.selectedTab;
+  let hangTab = await BrowserTestUtils.openNewForegroundTab(gBrowser);
+  let hangBrowser = hangTab.linkedBrowser;
+  ok(hangBrowser.isRemoteBrowser, "New tab should be remote.");
+  ok(hangBrowser.frameLoader.tabParent.hasPresented, "New tab has presented.");
+
+  // Now switch back to the original tab and set up our hang.
+  await BrowserTestUtils.switchTab(gBrowser, origTab);
+
+  let tabHangPromise = hangContentProcess(hangBrowser, delayTime);
   histogram.clear();
-  // Queue a hang in the content process when the
-  // event loop breathes next.
-  ContentTask.spawn(tab1.linkedBrowser, null, function*() {
-    content.wrappedJSObject.hang();
-  });
-  let tab2 = yield BrowserTestUtils.openNewForegroundTab(gBrowser, dataURI2);
+  let hangTabSwitch = BrowserTestUtils.switchTab(gBrowser, hangTab);
+  await tabHangPromise;
+  await hangTabSwitch;
+
+  // Now we should have a hang in our histogram.
   let snapshot = histogram.snapshot();
-  yield BrowserTestUtils.removeTab(tab2);
-  yield BrowserTestUtils.removeTab(tab1);
+  await BrowserTestUtils.removeTab(hangTab);
   ok(sum(snapshot.counts) > 0,
    `Spinner probe should now have a value in some bucket`);
 }
 
-add_task(function* setup() {
-  yield SpecialPowers.pushPrefEnv({
-    set: [["dom.ipc.processCount", 1]]
+add_task(async function setup() {
+  await SpecialPowers.pushPrefEnv({
+    set: [
+      ["dom.ipc.processCount", 1],
+      // We can interrupt JS to paint now, which is great for
+      // users, but bad for testing spinners. We temporarily
+      // disable that feature for this test so that we can
+      // easily get ourselves into a predictable tab spinner
+      // state.
+      ["browser.tabs.remote.force-paint", false],
+    ]
   });
 });
 

@@ -92,7 +92,8 @@ GetPlatformType()
 #elif defined(XP_WIN)
   return WINDOWS_PLATFORM;
 #else
-  return PLATFORM_TYPE_UNSPECIFIED;
+  // Default to Linux for other platforms (see bug 1362501).
+  return LINUX_PLATFORM;
 #endif
 }
 
@@ -459,24 +460,24 @@ nsUrlClassifierUtils::ParseFindFullHashResponseV4(const nsACString& aResponse,
       continue; // Ignore un-convertable threat type.
     }
     auto& hash = m.threat().hash();
-    auto cacheDuration = DurationToMs(m.cache_duration());
+    auto cacheDurationSec = m.cache_duration().seconds();
     aCallback->OnCompleteHashFound(nsCString(hash.c_str(), hash.length()),
-                                   tableNames, cacheDuration);
+                                   tableNames, cacheDurationSec);
 
     Telemetry::Accumulate(Telemetry::URLCLASSIFIER_POSITIVE_CACHE_DURATION,
-                          cacheDuration);
+                          cacheDurationSec * PR_MSEC_PER_SEC);
   }
 
   auto minWaitDuration = DurationToMs(r.minimum_wait_duration());
-  auto negCacheDuration = DurationToMs(r.negative_cache_duration());
+  auto negCacheDurationSec = r.negative_cache_duration().seconds();
 
-  aCallback->OnResponseParsed(minWaitDuration, negCacheDuration);
+  aCallback->OnResponseParsed(minWaitDuration, negCacheDurationSec);
 
   Telemetry::Accumulate(Telemetry::URLCLASSIFIER_COMPLETION_ERROR,
                         hasUnknownThreatType ? UNKNOWN_THREAT_TYPE : SUCCESS);
 
   Telemetry::Accumulate(Telemetry::URLCLASSIFIER_NEGATIVE_CACHE_DURATION,
-                        negCacheDuration);
+                        negCacheDurationSec * PR_MSEC_PER_SEC);
 
   return NS_OK;
 }

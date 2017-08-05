@@ -17,6 +17,7 @@
 #include "mozilla/plugins/PluginTypes.h"
 #include "mozilla/ipc/TaskFactory.h"
 #include "mozilla/TimeStamp.h"
+#include "mozilla/Unused.h"
 #include "npapi.h"
 #include "npfunctions.h"
 #include "nsDataHashtable.h"
@@ -24,14 +25,15 @@
 #include "nsIObserver.h"
 #ifdef XP_WIN
 #include "nsWindowsHelpers.h"
+#if defined(MOZ_SANDBOX)
 #include "sandboxPermissions.h"
+#endif
 #endif
 
 #ifdef MOZ_CRASHREPORTER
 #include "nsExceptionHandler.h"
 #endif
 
-class nsIProfileSaveEvent;
 class nsPluginTag;
 
 namespace mozilla {
@@ -125,12 +127,6 @@ public:
 
     virtual bool WaitForIPCConnection() { return true; }
 
-    nsCString GetHistogramKey() const {
-        return mPluginName + mPluginVersion;
-    }
-
-    void AccumulateModuleInitBlockedTime();
-
     virtual nsresult GetRunID(uint32_t* aRunID) override;
     virtual void SetHasLocalInstance() override {
         mHadLocalInstance = true;
@@ -199,6 +195,12 @@ protected:
       return IPC_FAIL_NO_REASON(this);
     }
 
+    virtual mozilla::ipc::IPCResult
+    AnswerSetCursorPos(const int &x, const int &y, bool* aResult) override
+    {
+      return IPC_FAIL_NO_REASON(this);
+    }
+
 protected:
     void SetChildTimeout(const int32_t aChildTimeout);
     static void TimeoutChanged(const char* aPref, void* aModule);
@@ -206,8 +208,6 @@ protected:
     virtual void UpdatePluginTimeout() {}
 
     virtual mozilla::ipc::IPCResult RecvNotifyContentModuleDestroyed() override { return IPC_OK(); }
-
-    virtual mozilla::ipc::IPCResult RecvProfile(const nsCString& aProfile) override { return IPC_OK(); }
 
     virtual mozilla::ipc::IPCResult AnswerGetKeyState(const int32_t& aVirtKey, int16_t* aRet) override;
 
@@ -336,8 +336,6 @@ protected:
     nsNPAPIPlugin* mPlugin;
     ipc::TaskFactory<PluginModuleParent> mTaskFactory;
     nsString mHangID;
-    RefPtr<nsIObserver> mProfilerObserver;
-    TimeDuration mTimeBlocked;
     nsCString mPluginName;
     nsCString mPluginVersion;
     int32_t mSandboxLevel;
@@ -501,16 +499,6 @@ class PluginModuleChromeParent
 
     void CachedSettingChanged();
 
-#ifdef  MOZ_GECKO_PROFILER
-    void GatherAsyncProfile();
-    void GatheredAsyncProfile(nsIProfileSaveEvent* aSaveEvent);
-    void StartProfiler(nsIProfilerStartParams* aParams);
-    void StopProfiler();
-#endif
-
-    virtual mozilla::ipc::IPCResult
-    RecvProfile(const nsCString& aProfile) override;
-
     virtual mozilla::ipc::IPCResult
     AnswerGetKeyState(const int32_t& aVirtKey, int16_t* aRet) override;
 
@@ -519,6 +507,10 @@ class PluginModuleChromeParent
     AnswerGetFileName(const GetFileNameFunc& aFunc,
                       const OpenFileNameIPC& aOfnIn,
                       OpenFileNameRetIPC* aOfnOut, bool* aResult) override;
+
+    // Proxy SetCursorPos on Windows.
+    virtual mozilla::ipc::IPCResult
+    AnswerSetCursorPos(const int &x, const int &y, bool* aResult) override;
 
 private:
     virtual void
@@ -563,11 +555,6 @@ private:
     void CleanupFromTimeout(const bool aByHangUI);
 
     virtual void UpdatePluginTimeout() override;
-
-#ifdef MOZ_GECKO_PROFILER
-    void InitPluginProfiling();
-    void ShutdownPluginProfiling();
-#endif
 
     void RegisterSettingsCallbacks();
     void UnregisterSettingsCallbacks();
@@ -667,10 +654,6 @@ private:
     // processes in existence!
     dom::ContentParent* mContentParent;
     nsCOMPtr<nsIObserver> mPluginOfflineObserver;
-#ifdef MOZ_GECKO_PROFILER
-    bool mIsProfilerActive;
-#endif
-    nsCString mProfile;
     bool mIsBlocklisted;
     static bool sInstantiated;
 #if defined(XP_WIN) && defined(MOZ_SANDBOX)

@@ -8,7 +8,8 @@
                     extra_prefixes="moz" spec="https://drafts.csswg.org/css-multicol/#propdef-columns">
     use properties::longhands::{column_count, column_width};
 
-    pub fn parse_value(context: &ParserContext, input: &mut Parser) -> Result<Longhands, ()> {
+    pub fn parse_value<'i, 't>(context: &ParserContext, input: &mut Parser<'i, 't>)
+                               -> Result<Longhands, ParseError<'i>> {
 
         let mut column_count = None;
         let mut column_width = None;
@@ -40,9 +41,9 @@
 
         let values = autos + column_count.iter().len() + column_width.iter().len();
         if values == 0 || values > 2 {
-            Err(())
+            Err(StyleParseError::UnspecifiedError.into())
         } else {
-            Ok(Longhands {
+            Ok(expanded! {
                 column_count: unwrap_or_initial!(column_count),
                 column_width: unwrap_or_initial!(column_width),
             })
@@ -65,7 +66,8 @@
     use properties::longhands::{column_rule_width, column_rule_style};
     use properties::longhands::column_rule_color;
 
-    pub fn parse_value(context: &ParserContext, input: &mut Parser) -> Result<Longhands, ()> {
+    pub fn parse_value<'i, 't>(context: &ParserContext, input: &mut Parser<'i, 't>)
+                               -> Result<Longhands, ParseError<'i>> {
         % for name in "width style color".split():
         let mut column_rule_${name} = None;
         % endfor
@@ -86,13 +88,13 @@
             break
         }
         if any {
-            Ok(Longhands {
+            Ok(expanded! {
                 column_rule_width: unwrap_or_initial!(column_rule_width),
                 column_rule_style: unwrap_or_initial!(column_rule_style),
                 column_rule_color: unwrap_or_initial!(column_rule_color),
             })
         } else {
-            Err(())
+            Err(StyleParseError::UnspecifiedError.into())
         }
     }
 

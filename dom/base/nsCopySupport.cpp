@@ -602,6 +602,13 @@ static nsresult AppendImagePromise(nsITransferable* aTransferable,
     return NS_OK;
   }
 
+  bool isMultipart;
+  rv = aImgRequest->GetMultipart(&isMultipart);
+  NS_ENSURE_SUCCESS(rv, rv);
+  if (isMultipart) {
+    return NS_OK;
+  }
+
   nsCOMPtr<nsINode> node = do_QueryInterface(aImageElement, &rv);
   NS_ENSURE_SUCCESS(rv, rv);
 
@@ -869,7 +876,7 @@ nsCopySupport::FireClipboardEvent(EventMessage aEventMessage,
     // check if we are looking at a password input
     nsCOMPtr<nsIFormControl> formControl = do_QueryInterface(srcNode);
     if (formControl) {
-      if (formControl->GetType() == NS_FORM_INPUT_PASSWORD) {
+      if (formControl->ControlType() == NS_FORM_INPUT_PASSWORD) {
         return false;
       }
     }

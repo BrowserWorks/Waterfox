@@ -133,7 +133,8 @@ js::StackUses(JSScript* script, jsbytecode* pc)
         return 2 + GET_ARGC(pc) + 1;
       default:
         /* stack: fun, this, [argc arguments] */
-        MOZ_ASSERT(op == JSOP_CALL || op == JSOP_EVAL || op == JSOP_CALLITER ||
+        MOZ_ASSERT(op == JSOP_CALL || op == JSOP_CALL_IGNORES_RV || op == JSOP_EVAL ||
+                   op == JSOP_CALLITER ||
                    op == JSOP_STRICTEVAL || op == JSOP_FUNCALL || op == JSOP_FUNAPPLY);
         return 2 + GET_ARGC(pc);
     }
@@ -728,6 +729,7 @@ BytecodeParser::simulateOp(JSOp op, uint32_t offset, OffsetAndDefIndex* offsetSt
       case JSOP_CHECKOBJCOERCIBLE:
       case JSOP_CHECKTHIS:
       case JSOP_CHECKTHISREINIT:
+      case JSOP_CHECKCLASSHERITAGE:
       case JSOP_DEBUGCHECKSELFHOSTED:
       case JSOP_INITGLEXICAL:
       case JSOP_INITLEXICAL:
@@ -1183,22 +1185,22 @@ ToDisassemblySource(JSContext* cx, HandleValue v, JSAutoByteString* bytes)
         char* nbytes = QuoteString(&sprinter, v.toString(), '"');
         if (!nbytes)
             return false;
-        nbytes = JS_sprintf_append(nullptr, "%s", nbytes);
-        if (!nbytes) {
+        UniqueChars copy = JS_smprintf("%s", nbytes);
+        if (!copy) {
             ReportOutOfMemory(cx);
             return false;
         }
-        bytes->initBytes(nbytes);
+        bytes->initBytes(Move(copy));
         return true;
     }
 
     if (JS::CurrentThreadIsHeapBusy() || !cx->isAllocAllowed()) {
-        char* source = JS_sprintf_append(nullptr, "<value>");
+        UniqueChars source = JS_smprintf("<value>");
         if (!source) {
             ReportOutOfMemory(cx);
             return false;
         }
-        bytes->initBytes(source);
+        bytes->initBytes(Move(source));
         return true;
     }
 
@@ -1227,7 +1229,7 @@ ToDisassemblySource(JSContext* cx, HandleValue v, JSAutoByteString* bytes)
 static bool
 ToDisassemblySource(JSContext* cx, HandleScope scope, JSAutoByteString* bytes)
 {
-    char* source = JS_sprintf_append(nullptr, "%s {", ScopeKindString(scope->kind()));
+    UniqueChars source = JS_smprintf("%s {", ScopeKindString(scope->kind()));
     if (!source) {
         ReportOutOfMemory(cx);
         return false;
@@ -1238,7 +1240,7 @@ ToDisassemblySource(JSContext* cx, HandleScope scope, JSAutoByteString* bytes)
         if (!AtomToPrintableString(cx, bi.name(), &nameBytes))
             return false;
 
-        source = JS_sprintf_append(source, "%s: ", nameBytes.ptr());
+        source = JS_sprintf_append(Move(source), "%s: ", nameBytes.ptr());
         if (!source) {
             ReportOutOfMemory(cx);
             return false;
@@ -1247,27 +1249,27 @@ ToDisassemblySource(JSContext* cx, HandleScope scope, JSAutoByteString* bytes)
         BindingLocation loc = bi.location();
         switch (loc.kind()) {
           case BindingLocation::Kind::Global:
-            source = JS_sprintf_append(source, "global");
+            source = JS_sprintf_append(Move(source), "global");
             break;
 
           case BindingLocation::Kind::Frame:
-            source = JS_sprintf_append(source, "frame slot %u", loc.slot());
+            source = JS_sprintf_append(Move(source), "frame slot %u", loc.slot());
             break;
 
           case BindingLocation::Kind::Environment:
-            source = JS_sprintf_append(source, "env slot %u", loc.slot());
+            source = JS_sprintf_append(Move(source), "env slot %u", loc.slot());
             break;
 
           case BindingLocation::Kind::Argument:
-            source = JS_sprintf_append(source, "arg slot %u", loc.slot());
+            source = JS_sprintf_append(Move(source), "arg slot %u", loc.slot());
             break;
 
           case BindingLocation::Kind::NamedLambdaCallee:
-            source = JS_sprintf_append(source, "named lambda callee");
+            source = JS_sprintf_append(Move(source), "named lambda callee");
             break;
 
           case BindingLocation::Kind::Import:
-            source = JS_sprintf_append(source, "import");
+            source = JS_sprintf_append(Move(source), "import");
             break;
         }
 
@@ -1277,7 +1279,7 @@ ToDisassemblySource(JSContext* cx, HandleScope scope, JSAutoByteString* bytes)
         }
 
         if (!bi.isLast()) {
-            source = JS_sprintf_append(source, ", ");
+            source = JS_sprintf_append(Move(source), ", ");
             if (!source) {
                 ReportOutOfMemory(cx);
                 return false;
@@ -1285,13 +1287,13 @@ ToDisassemblySource(JSContext* cx, HandleScope scope, JSAutoByteString* bytes)
         }
     }
 
-    source = JS_sprintf_append(source, "}");
+    source = JS_sprintf_append(Move(source), "}");
     if (!source) {
         ReportOutOfMemory(cx);
         return false;
     }
 
-    bytes->initBytes(source);
+    bytes->initBytes(Move(source));
     return true;
 }
 
@@ -1873,6 +1875,7 @@ ExpressionDecompiler::decompilePC(jsbytecode* pc, uint8_t defIndex)
       case JSOP_NEWTARGET:
         return write("new.target");
       case JSOP_CALL:
+      case JSOP_CALL_IGNORES_RV:
       case JSOP_CALLITER:
       case JSOP_FUNCALL:
       case JSOP_FUNAPPLY:
@@ -1883,9 +1886,32 @@ ExpressionDecompiler::decompilePC(jsbytecode* pc, uint8_t defIndex)
                write("(...)");
       case JSOP_NEWARRAY:
         return write("[]");
-      case JSOP_REGEXP:
-      case JSOP_OBJECT:
+      case JSOP_REGEXP: {
+        RootedObject obj(cx, script->getObject(GET_UINT32_INDEX(pc)));
+        JSString* str = obj->as<RegExpObject>().toString(cx);
+        if (!str)
+            return false;
+        return write(str);
+      }
       case JSOP_NEWARRAY_COPYONWRITE: {
+        RootedObject obj(cx, script->getObject(GET_UINT32_INDEX(pc)));
+        Handle<ArrayObject*> aobj = obj.as<ArrayObject>();
+        if (!write("["))
+            return false;
+        for (size_t i = 0; i < aobj->getDenseInitializedLength(); i++) {
+            if (i > 0 && !write(", "))
+                return false;
+
+            RootedValue v(cx, aobj->getDenseElement(i));
+            MOZ_RELEASE_ASSERT(v.isPrimitive() && !v.isMagic());
+
+            JSString* str = ValueToSource(cx, v);
+            if (!str || !write(str))
+                return false;
+        }
+        return write("]");
+      }
+      case JSOP_OBJECT: {
         JSObject* obj = script->getObject(GET_UINT32_INDEX(pc));
         RootedValue objv(cx, ObjectValue(*obj));
         JSString* str = ValueToSource(cx, objv);
@@ -1968,12 +1994,6 @@ ExpressionDecompiler::decompilePC(jsbytecode* pc, uint8_t defIndex)
           case JSOP_DERIVEDCONSTRUCTOR:
             return write("CONSTRUCTOR");
 
-          case JSOP_CLASSHERITAGE:
-            if (defIndex == 0)
-                return write("FUNCPROTO");
-            MOZ_ASSERT(defIndex == 1);
-            return write("OBJPROTO");
-
           case JSOP_DOUBLE:
             return sprinter.printf("%lf", script->getConst(GET_UINT32_INDEX(pc)).toDouble());
 
@@ -2025,7 +2045,11 @@ ExpressionDecompiler::decompilePC(jsbytecode* pc, uint8_t defIndex)
           case JSOP_LAMBDA:
           case JSOP_LAMBDA_ARROW:
           case JSOP_TOASYNC:
+          case JSOP_TOASYNCGEN:
             return write("FUN");
+
+          case JSOP_TOASYNCITER:
+            return write("ASYNCITER");
 
           case JSOP_MOREITER:
             // For stack dump, defIndex == 0 is not used.
@@ -2069,6 +2093,7 @@ ExpressionDecompiler::decompilePC(jsbytecode* pc, uint8_t defIndex)
           case JSOP_UNINITIALIZED:
             return write("UNINITIALIZED");
 
+          case JSOP_AWAIT:
           case JSOP_YIELD:
             // Printing "yield SOMETHING" is confusing since the operand doesn't
             // match to the syntax, since the stack operand for "yield 10" is
@@ -2394,7 +2419,7 @@ DecompileArgumentFromStack(JSContext* cx, int formalIndex, char** res)
 
     /* Don't handle getters, setters or calls from fun.call/fun.apply. */
     JSOp op = JSOp(*current);
-    if (op != JSOP_CALL && op != JSOP_NEW)
+    if (op != JSOP_CALL && op != JSOP_CALL_IGNORES_RV && op != JSOP_NEW)
         return true;
 
     if (static_cast<unsigned>(formalIndex) >= GET_ARGC(current))
@@ -2457,6 +2482,8 @@ js::CallResultEscapes(jsbytecode* pc)
 
     if (*pc == JSOP_CALL)
         pc += JSOP_CALL_LENGTH;
+    else if (*pc == JSOP_CALL_IGNORES_RV)
+        pc += JSOP_CALL_IGNORES_RV_LENGTH;
     else if (*pc == JSOP_SPREADCALL)
         pc += JSOP_SPREADCALL_LENGTH;
     else

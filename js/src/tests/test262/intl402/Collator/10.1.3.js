@@ -1,4 +1,3 @@
-// |reftest| skip-if(!this.hasOwnProperty('Intl')) -- needs Intl
 // Copyright 2012 Mozilla Corporation. All rights reserved.
 // This code is governed by the BSD license found in the LICENSE file.
 
@@ -13,12 +12,8 @@ author: Norbert Lindenberg
 var obj = new Intl.Collator();
 
 var actualPrototype = Object.getPrototypeOf(obj);
-if (actualPrototype !== Intl.Collator.prototype) {
-    $ERROR("Prototype of object constructed by Intl.Collator isn't Intl.Collator.prototype; got " + actualPrototype);
-}
+assert.sameValue(actualPrototype, Intl.Collator.prototype, "Prototype of object constructed by Intl.Collator isn't Intl.Collator.prototype.");
 
-if (!Object.isExtensible(obj)) {
-    $ERROR("Object constructed by Intl.Collator must be extensible.");
-}
+assert(Object.isExtensible(obj), "Object constructed by Intl.Collator must be extensible.");
 
 reportCompare(0, 0);

@@ -77,7 +77,10 @@ public:
   }
 
 protected:
-  explicit nsLeafFrame(nsStyleContext* aContext) : nsFrame(aContext) {}
+  nsLeafFrame(nsStyleContext* aContext, ClassID aID)
+    : nsFrame(aContext, aID)
+  {}
+
   virtual ~nsLeafFrame();
 
   /**

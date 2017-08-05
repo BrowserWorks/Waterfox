@@ -14,6 +14,7 @@
 #include "nsIScrollPositionListener.h"
 #include "nsDisplayList.h"
 #include "nsIAnonymousContentCreator.h"
+#include "gfxPrefs.h"
 
 class nsPresContext;
 class nsRenderingContext;
@@ -33,13 +34,13 @@ class nsCanvasFrame final : public nsContainerFrame,
 {
 public:
   explicit nsCanvasFrame(nsStyleContext* aContext)
-  : nsContainerFrame(aContext),
-    mDoPaintFocus(false),
-    mAddedScrollPositionListener(false) {}
+    : nsContainerFrame(aContext, kClassID)
+    , mDoPaintFocus(false)
+    , mAddedScrollPositionListener(false)
+  {}
 
-  NS_DECL_QUERYFRAME_TARGET(nsCanvasFrame)
   NS_DECL_QUERYFRAME
-  NS_DECL_FRAMEARENA_HELPERS
+  NS_DECL_FRAMEARENA_HELPERS(nsCanvasFrame)
 
 
   virtual void DestroyFrom(nsIFrame* aDestructRoot) override;
@@ -104,13 +105,6 @@ public:
   virtual void ScrollPositionWillChange(nscoord aX, nscoord aY) override;
   virtual void ScrollPositionDidChange(nscoord aX, nscoord aY) override {}
 
-  /**
-   * Get the "type" of the frame
-   *
-   * @see nsGkAtoms::canvasFrame
-   */
-  virtual nsIAtom* GetType() const override;
-
 #ifdef DEBUG_FRAME_DUMP
   virtual nsresult GetFrameName(nsAString& aResult) const override;
 #endif
@@ -161,19 +155,24 @@ public:
     // We need to override so we don't consider border-radius.
     aOutFrames->AppendElement(mFrame);
   }
+  virtual already_AddRefed<Layer> BuildLayer(nsDisplayListBuilder* aBuilder,
+                                             LayerManager* aManager,
+                                             const ContainerLayerParameters& aContainerParameters) override;
+  virtual void CreateWebRenderCommands(mozilla::wr::DisplayListBuilder& aBuilder,
+                                       const StackingContextHelper& aSc,
+                                       nsTArray<WebRenderParentCommand>& aParentCommands,
+                                       mozilla::layers::WebRenderDisplayItemLayer* aLayer) override;
 
   virtual LayerState GetLayerState(nsDisplayListBuilder* aBuilder,
                                    LayerManager* aManager,
                                    const ContainerLayerParameters& aParameters) override
   {
-    if (ForceActiveLayers()) {
+    if (ShouldUseAdvancedLayer(aManager, gfxPrefs::LayersAllowCanvasBackgroundColorLayers) ||
+        ForceActiveLayers()) {
       return mozilla::LAYER_ACTIVE;
     }
     return mozilla::LAYER_NONE;
   }
-  virtual already_AddRefed<Layer> BuildLayer(nsDisplayListBuilder* aBuilder,
-                                             LayerManager* aManager,
-                                             const ContainerLayerParameters& aContainerParameters) override;
   virtual void Paint(nsDisplayListBuilder* aBuilder,
                      nsRenderingContext* aCtx) override;
 
@@ -199,7 +198,7 @@ public:
 
   virtual void NotifyRenderingChanged() override
   {
-    mFrame->Properties().Delete(nsIFrame::CachedBackgroundImageDT());
+    mFrame->DeleteProperty(nsIFrame::CachedBackgroundImageDT());
   }
  
   // We still need to paint a background color as well as an image for this item, 

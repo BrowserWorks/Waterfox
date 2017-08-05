@@ -571,19 +571,16 @@ bool Buffer11::canDeallocateSystemMemory() const
             mSize <= mRenderer->getNativeCaps().maxUniformBlockSize);
 }
 
-void Buffer11::markBufferUsage(BufferUsage usage)
+gl::Error Buffer11::markBufferUsage(BufferUsage usage)
 {
     mIdleness[usage] = 0;
-}
 
-gl::Error Buffer11::garbageCollection(BufferUsage currentUsage)
-{
-    if (currentUsage != BUFFER_USAGE_SYSTEM_MEMORY && canDeallocateSystemMemory())
+    if (usage != BUFFER_USAGE_SYSTEM_MEMORY && canDeallocateSystemMemory())
     {
         ANGLE_TRY(checkForDeallocation(BUFFER_USAGE_SYSTEM_MEMORY));
     }
 
-    if (currentUsage != BUFFER_USAGE_STAGING)
+    if (usage != BUFFER_USAGE_STAGING)
     {
         ANGLE_TRY(checkForDeallocation(BUFFER_USAGE_STAGING));
     }
@@ -689,18 +686,14 @@ gl::ErrorOrResult<Buffer11::BufferStorage *> Buffer11::getBufferStorage(BufferUs
         newStorage = allocateStorage(usage);
     }
 
-    markBufferUsage(usage);
-
     // resize buffer
     if (newStorage->getSize() < mSize)
     {
         ANGLE_TRY(newStorage->resize(mSize, true));
     }
 
-    ASSERT(newStorage);
-
     ANGLE_TRY(updateBufferStorage(newStorage, 0, mSize));
-    ANGLE_TRY(garbageCollection(usage));
+    ANGLE_TRY(markBufferUsage(usage));
 
     return newStorage;
 }
@@ -744,8 +737,6 @@ gl::ErrorOrResult<Buffer11::BufferStorage *> Buffer11::getConstantBufferRangeSto
         newStorage           = cacheEntry->storage;
     }
 
-    markBufferUsage(BUFFER_USAGE_UNIFORM);
-
     if (newStorage->getSize() < static_cast<size_t>(size))
     {
         size_t maximumAllowedAdditionalSize = 2 * getSize();
@@ -780,7 +771,7 @@ gl::ErrorOrResult<Buffer11::BufferStorage *> Buffer11::getConstantBufferRangeSto
     }
 
     ANGLE_TRY(updateBufferStorage(newStorage, offset, size));
-    ANGLE_TRY(garbageCollection(BUFFER_USAGE_UNIFORM));
+    ANGLE_TRY(markBufferUsage(BUFFER_USAGE_UNIFORM));
     return newStorage;
 }
 
@@ -790,8 +781,6 @@ gl::Error Buffer11::updateBufferStorage(BufferStorage *storage,
 {
     BufferStorage *latestBuffer = nullptr;
     ANGLE_TRY_RESULT(getLatestBufferStorage(), latestBuffer);
-
-    ASSERT(storage);
 
     if (latestBuffer && latestBuffer->getDataRevision() > storage->getDataRevision())
     {

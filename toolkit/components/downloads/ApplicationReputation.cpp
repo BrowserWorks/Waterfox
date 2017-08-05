@@ -36,6 +36,7 @@
 #include "mozilla/SizePrintfMacros.h"
 #include "mozilla/Telemetry.h"
 #include "mozilla/TimeStamp.h"
+#include "mozilla/intl/LocaleService.h"
 
 #include "nsAutoPtr.h"
 #include "nsCOMPtr.h"
@@ -48,13 +49,13 @@
 #include "nsString.h"
 #include "nsTArray.h"
 #include "nsThreadUtils.h"
-#include "nsXPCOMStrings.h"
 
 #include "nsIContentPolicy.h"
 #include "nsILoadInfo.h"
 #include "nsContentUtils.h"
 #include "nsWeakReference.h"
 #include "nsCharSeparatedTokenizer.h"
+#include "nsIRedirectHistoryEntry.h"
 
 using namespace mozilla::downloads;
 using mozilla::ArrayLength;
@@ -63,6 +64,7 @@ using mozilla::OriginAttributes;
 using mozilla::Preferences;
 using mozilla::TimeStamp;
 using mozilla::Telemetry::Accumulate;
+using mozilla::intl::LocaleService;
 using safe_browsing::ClientDownloadRequest;
 using safe_browsing::ClientDownloadRequest_CertificateChain;
 using safe_browsing::ClientDownloadRequest_Resource;
@@ -74,7 +76,6 @@ using safe_browsing::ClientDownloadRequest_SignatureInfo;
 #define PREF_SB_DOWNLOADS_ENABLED "browser.safebrowsing.downloads.enabled"
 #define PREF_SB_DOWNLOADS_REMOTE_ENABLED "browser.safebrowsing.downloads.remote.enabled"
 #define PREF_SB_DOWNLOADS_REMOTE_TIMEOUT "browser.safebrowsing.downloads.remote.timeout_ms"
-#define PREF_GENERAL_LOCALE "general.useragent.locale"
 #define PREF_DOWNLOAD_BLOCK_TABLE "urlclassifier.downloadBlockTable"
 #define PREF_DOWNLOAD_ALLOW_TABLE "urlclassifier.downloadAllowTable"
 
@@ -158,8 +159,8 @@ LookupTablesInPrefs(const nsACString& tables, const char* aPref)
 
     // We are checking if the table found is V2 or V4 to record telemetry
     // Both V2 and V4 begin with "goog" but V4 ends with "-proto"
-    if (StringBeginsWith(prefToken, NS_LITERAL_CSTRING("goog"))) {
-      if (StringEndsWith(prefToken, NS_LITERAL_CSTRING("-proto"))) {
+    if (StringBeginsWith(table, NS_LITERAL_CSTRING("goog"))) {
+      if (StringEndsWith(table, NS_LITERAL_CSTRING("-proto"))) {
         telemetryInfo |= TelemetryMatchInfo::eV4Match;
       } else {
         telemetryInfo |= TelemetryMatchInfo::eV2Match;
@@ -1030,7 +1031,11 @@ PendingLookup::AddRedirects(nsIArray* aRedirects)
     rv = iter->GetNext(getter_AddRefs(supports));
     NS_ENSURE_SUCCESS(rv, rv);
 
-    nsCOMPtr<nsIPrincipal> principal = do_QueryInterface(supports, &rv);
+    nsCOMPtr<nsIRedirectHistoryEntry> redirectEntry = do_QueryInterface(supports, &rv);
+    NS_ENSURE_SUCCESS(rv, rv);
+
+    nsCOMPtr<nsIPrincipal> principal;
+    rv = redirectEntry->GetPrincipal(getter_AddRefs(principal));
     NS_ENSURE_SUCCESS(rv, rv);
 
     nsCOMPtr<nsIURI> uri;
@@ -1286,8 +1291,6 @@ PendingLookup::SendRemoteQueryInternal()
       return NS_ERROR_NOT_AVAILABLE;
     }
   }
-#ifdef XP_WIN
-  // The allowlist is only needed to do signature verification on Windows
   {
     nsAutoCString table;
     NS_ENSURE_SUCCESS(Preferences::GetCString(PREF_DOWNLOAD_ALLOW_TABLE,
@@ -1298,7 +1301,6 @@ PendingLookup::SendRemoteQueryInternal()
       return NS_ERROR_NOT_AVAILABLE;
     }
   }
-#endif
 
   LOG(("Sending remote query for application reputation [this = %p]",
        this));
@@ -1322,8 +1324,8 @@ PendingLookup::SendRemoteQueryInternal()
   mRequest.set_user_initiated(true);
 
   nsCString locale;
-  NS_ENSURE_SUCCESS(Preferences::GetCString(PREF_GENERAL_LOCALE, &locale),
-                    NS_ERROR_NOT_AVAILABLE);
+  rv = LocaleService::GetInstance()->GetAppLocaleAsLangTag(locale);
+  NS_ENSURE_SUCCESS(rv, rv);
   mRequest.set_locale(locale.get());
   nsCString sha256Hash;
   rv = mQuery->GetSha256Hash(sha256Hash);

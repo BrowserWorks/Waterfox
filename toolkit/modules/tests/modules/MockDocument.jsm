@@ -9,6 +9,9 @@ this.EXPORTED_SYMBOLS = ["MockDocument"]
 const {classes: Cc, interfaces: Ci, utils: Cu, results: Cr} = Components;
 
 Cu.importGlobalProperties(["URL"]);
+Cu.import("resource://gre/modules/XPCOMUtils.jsm");
+
+const { NetUtil } = Cu.import("resource://gre/modules/NetUtil.jsm", {});
 
 const MockDocument = {
   /**
@@ -20,8 +23,13 @@ const MockDocument = {
     parser.init();
     let parsedDoc = parser.parseFromString(aContent, aType);
 
+    // Assign onwerGlobal to documentElement as well for the form-less
+    // inputs treating it as rootElement.
+    this.mockOwnerGlobalProperty(parsedDoc.documentElement);
+
     for (let element of parsedDoc.forms) {
       this.mockOwnerDocumentProperty(element, parsedDoc, aDocumentURL);
+      this.mockOwnerGlobalProperty(element);
     }
     return parsedDoc;
   },
@@ -44,6 +52,29 @@ const MockDocument = {
     Object.defineProperty(aElement, "ownerDocument", {
       value: document,
     });
+  },
+
+  mockOwnerGlobalProperty(aElement) {
+    Object.defineProperty(aElement, "ownerGlobal", {
+      value: {
+        QueryInterface: XPCOMUtils.generateQI([Ci.nsIInterfaceRequestor]),
+        getInterface: () => ({
+          addManuallyManagedState() {},
+          removeManuallyManagedState() {},
+        }),
+      },
+      configurable: true,
+    });
+  },
+
+  createTestDocumentFromFile(aDocumentURL, aFile) {
+    let fileStream = Cc["@mozilla.org/network/file-input-stream;1"].
+                     createInstance(Ci.nsIFileInputStream);
+    fileStream.init(aFile, -1, -1, 0);
+
+    let data = NetUtil.readInputStreamToString(fileStream, fileStream.available());
+
+    return this.createTestDocument(aDocumentURL, data);
   },
 
 };

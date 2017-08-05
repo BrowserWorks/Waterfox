@@ -9,11 +9,12 @@ macosx64/debug:
         tier: 1
     worker-type: aws-provisioner-v1/gecko-{level}-b-macosx64
     worker:
-        implementation: docker-worker
         max-run-time: 36000
+        env:
+            TOOLTOOL_MANIFEST: "browser/config/tooltool-manifests/macosx64/cross-releng.manifest"
     run:
         using: mozharness
-        actions: [get-secrets build generate-build-stats update]
+        actions: [get-secrets build update]
         config:
             - builds/releng_base_mac_64_cross_builds.py
             - balrog/production.py
@@ -23,7 +24,7 @@ macosx64/debug:
         tooltool-downloads: internal
 
 macosx64/opt:
-    description: "MacOS X x64 Cross-compile"
+    description: "MacOS X x64"
     index:
         product: firefox
         job-name: macosx64-opt
@@ -31,69 +32,65 @@ macosx64/opt:
         platform: osx-10-7/opt
         symbol: tc(B)
         tier: 2
-    worker-type: aws-provisioner-v1/gecko-{level}-b-macosx64
-    worker:
-        implementation: docker-worker
-        max-run-time: 36000
+    worker-type: buildbot-bridge/buildbot-bridge
     run:
         using: mozharness
-        actions: [get-secrets build generate-build-stats update]
+        actions: [get-secrets build update]
         config:
-            - builds/releng_base_mac_64_cross_builds.py
+            - builds/releng_base_mac_64_builds.py
             - balrog/production.py
         script: "mozharness/scripts/fx_desktop_build.py"
         secrets: true
         tooltool-downloads: internal
 
-macosx64-qr/debug:
-    description: "MacOS X x64 QuantumRender"
+macosx64-devedition/opt:
+    description: "MacOS X Dev Edition x64"
     index:
-        product: firefox
-        job-name: macosx64-qr-debug
+        product: devedition
+        job-name: macosx64-devedition-opt
     treeherder:
-        platform: osx-10-7-qr/debug
+        platform: macosx64-devedition/opt
         symbol: tc(B)
-        tier: 2
-    worker-type: aws-provisioner-v1/gecko-{level}-b-macosx64
-    worker:
-        implementation: docker-worker
-        max-run-time: 36000
+        tier: 1
+    worker-type: buildbot-bridge/buildbot-bridge
     run:
         using: mozharness
-        actions: [get-secrets build generate-build-stats update]
+        actions: [get-secrets build update]
         config:
-            - builds/releng_base_mac_64_cross_builds.py
+            - builds/releng_base_mac_64_builds.py
             - balrog/production.py
         script: "mozharness/scripts/fx_desktop_build.py"
         secrets: true
-        custom-build-variant-cfg: cross-qr-debug
         tooltool-downloads: internal
-    run-on-projects: [ 'graphics' ]
+    run-on-projects: ['mozilla-beta',]
 
-macosx64-qr/opt:
-    description: "MacOS X x64 QuantumRender"
+macosx64-noopt/debug:
+    description: "MacOS X x64 No-optimize Debug"
     index:
         product: firefox
-        job-name: macosx64-qr-opt
+        job-name: macosx64-noopt-debug
     treeherder:
-        platform: osx-10-7-qr/opt
+        platform: osx-10-7-noopt/debug
         symbol: tc(B)
         tier: 2
     worker-type: aws-provisioner-v1/gecko-{level}-b-macosx64
     worker:
-        implementation: docker-worker
+        docker-image: {in-tree: desktop-build}
         max-run-time: 36000
+        env:
+            TOOLTOOL_MANIFEST: "browser/config/tooltool-manifests/macosx64/cross-releng.manifest"
     run:
         using: mozharness
-        actions: [get-secrets build generate-build-stats update]
+        actions: [get-secrets build update]
         config:
             - builds/releng_base_mac_64_cross_builds.py
             - balrog/production.py
         script: "mozharness/scripts/fx_desktop_build.py"
         secrets: true
-        custom-build-variant-cfg: cross-qr-opt
+        custom-build-variant-cfg: cross-noopt-debug
         tooltool-downloads: internal
-    run-on-projects: [ 'graphics' ]
+        keep-artifacts: false
+    run-on-projects: [ 'stylo', 'autoland', 'mozilla-inbound', 'mozilla-central', 'try' ]
 
 macosx64-add-on-devel/opt:
     description: "MacOS X x64 add-on-devel"
@@ -106,11 +103,12 @@ macosx64-add-on-devel/opt:
         tier: 2
     worker-type: aws-provisioner-v1/gecko-{level}-b-macosx64
     worker:
-        implementation: docker-worker
         max-run-time: 36000
+        env:
+            TOOLTOOL_MANIFEST: "browser/config/tooltool-manifests/macosx64/cross-releng.manifest"
     run:
        using: mozharness
-       actions: [get-secrets build generate-build-stats update]
+       actions: [get-secrets build update]
        config:
             - builds/releng_base_mac_64_cross_builds.py
             - balrog/production.py
@@ -119,3 +117,32 @@ macosx64-add-on-devel/opt:
        custom-build-variant-cfg: add-on-devel
        tooltool-downloads: internal
     run-on-projects: [ 'mozilla-beta', 'mozilla-release', 'mozilla-esr45' ]
+
+macosx64-nightly/opt:
+    description: "MacOS X x64 Cross-compile Nightly"
+    attributes:
+        nightly: true
+    index:
+        product: firefox
+        job-name: macosx64-opt
+        type: nightly
+    treeherder:
+        platform: osx-10-7/opt
+        symbol: tc(N)
+        tier: 2
+    worker-type: aws-provisioner-v1/gecko-{level}-b-macosx64
+    worker:
+        max-run-time: 36000
+        env:
+            TOOLTOOL_MANIFEST: "browser/config/tooltool-manifests/macosx64/cross-releng.manifest"
+    run:
+        using: mozharness
+        actions: [get-secrets build update]
+        config:
+            - builds/releng_base_mac_64_cross_builds.py
+            - disable_signing.py
+            - taskcluster_nightly.py
+        script: "mozharness/scripts/fx_desktop_build.py"
+        secrets: true
+        tooltool-downloads: internal
+    run-on-projects: []

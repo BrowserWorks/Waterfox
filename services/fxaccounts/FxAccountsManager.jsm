@@ -18,7 +18,6 @@ const { classes: Cc, interfaces: Ci, utils: Cu } = Components;
 Cu.import("resource://gre/modules/XPCOMUtils.jsm");
 Cu.import("resource://gre/modules/Services.jsm");
 Cu.import("resource://gre/modules/FxAccounts.jsm");
-Cu.import("resource://gre/modules/Promise.jsm");
 Cu.import("resource://gre/modules/FxAccountsCommon.js");
 
 XPCOMUtils.defineLazyServiceGetter(this, "permissionManager",
@@ -28,8 +27,8 @@ XPCOMUtils.defineLazyServiceGetter(this, "permissionManager",
 this.FxAccountsManager = {
 
   init() {
-    Services.obs.addObserver(this, ONLOGOUT_NOTIFICATION, false);
-    Services.obs.addObserver(this, ON_FXA_UPDATE_NOTIFICATION, false);
+    Services.obs.addObserver(this, ONLOGOUT_NOTIFICATION);
+    Services.obs.addObserver(this, ON_FXA_UPDATE_NOTIFICATION);
   },
 
   observe(aSubject, aTopic, aData) {
@@ -38,7 +37,7 @@ this.FxAccountsManager = {
 
     if (aData == ONVERIFIED_NOTIFICATION) {
       log.debug("FxAccountsManager: cache cleared, broadcasting: " + aData);
-      Services.obs.notifyObservers(null, aData, null);
+      Services.obs.notifyObservers(null, aData);
     }
   },
 
@@ -465,7 +464,7 @@ this.FxAccountsManager = {
     let client = this._getFxAccountsClient();
     return client.accountExists(aEmail).then(
       result => {
-        log.debug("Account " + result ? "" : "does not" + " exists");
+        log.debug("Account " + (result ? "" : "does not ") + "exists");
         let error = this._getError(result);
         if (error) {
           return this._error(error, result);
@@ -619,14 +618,7 @@ this.FxAccountsManager = {
   },
 
   getKeys() {
-    let syncEnabled = false;
-    try {
-      syncEnabled = Services.prefs.getBoolPref("services.sync.enabled");
-    } catch (e) {
-      dump("Sync is disabled, so you won't get the keys. " + e + "\n");
-    }
-
-    if (!syncEnabled) {
+    if (!Services.prefs.getBoolPref("services.sync.enabled", false)) {
       return Promise.reject(ERROR_SYNC_DISABLED);
     }
 

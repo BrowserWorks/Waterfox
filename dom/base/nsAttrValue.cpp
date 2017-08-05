@@ -750,7 +750,7 @@ nsAttrValue::GetAsAtom() const
 {
   switch (Type()) {
     case eString:
-      return NS_Atomize(GetStringValue());
+      return NS_AtomizeMainThread(GetStringValue());
 
     case eAtom:
       {
@@ -762,7 +762,7 @@ nsAttrValue::GetAsAtom() const
       {
         nsAutoString val;
         ToString(val);
-        return NS_Atomize(val);
+        return NS_AtomizeMainThread(val);
       }
   }
 }
@@ -1275,7 +1275,7 @@ nsAttrValue::ParseAtomArray(const nsAString& aValue)
     ++iter;
   } while (iter != end && !nsContentUtils::IsHTMLWhitespace(*iter));
 
-  nsCOMPtr<nsIAtom> classAtom = NS_Atomize(Substring(start, iter));
+  nsCOMPtr<nsIAtom> classAtom = NS_AtomizeMainThread(Substring(start, iter));
   if (!classAtom) {
     Reset();
     return;
@@ -1316,7 +1316,7 @@ nsAttrValue::ParseAtomArray(const nsAString& aValue)
       ++iter;
     } while (iter != end && !nsContentUtils::IsHTMLWhitespace(*iter));
 
-    classAtom = NS_Atomize(Substring(start, iter));
+    classAtom = NS_AtomizeMainThread(Substring(start, iter));
 
     if (!array->AppendElement(classAtom)) {
       Reset();
@@ -1534,6 +1534,40 @@ nsAttrValue::ParseIntWithFallback(const nsAString& aString, int32_t aDefault,
   SetIntValueAndType(val, eInteger, nonStrict ? &aString : nullptr);
 }
 
+void
+nsAttrValue::ParseClampedNonNegativeInt(const nsAString& aString,
+                                        int32_t aDefault, int32_t aMin,
+                                        int32_t aMax)
+{
+  ResetIfSet();
+
+  nsContentUtils::ParseHTMLIntegerResultFlags result;
+  int32_t val = nsContentUtils::ParseHTMLInteger(aString, &result);
+  bool nonStrict = (result & nsContentUtils::eParseHTMLInteger_IsPercent) ||
+                   (result & nsContentUtils::eParseHTMLInteger_NonStandard) ||
+                   (result & nsContentUtils::eParseHTMLInteger_DidNotConsumeAllInput);
+
+  if (result & nsContentUtils::eParseHTMLInteger_ErrorOverflow) {
+    if (result & nsContentUtils::eParseHTMLInteger_Negative) {
+      val = aDefault;
+    } else {
+      val = aMax;
+    }
+    nonStrict = true;
+  } else if ((result & nsContentUtils::eParseHTMLInteger_Error) || val < 0) {
+    val = aDefault;
+    nonStrict = true;
+  } else if (val < aMin) {
+    val = aMin;
+    nonStrict = true;
+  } else if (val > aMax) {
+    val = aMax;
+    nonStrict = true;
+  }
+
+  SetIntValueAndType(val, eInteger, nonStrict ? &aString : nullptr);
+}
+
 bool
 nsAttrValue::ParseNonNegativeIntValue(const nsAString& aString)
 {
@@ -1675,20 +1709,15 @@ nsAttrValue::LoadImage(nsIDocument* aDocument)
 {
   NS_ASSERTION(Type() == eURL, "wrong type");
 
-#ifdef DEBUG
-  {
-    nsString val;
-    ToString(val);
-    NS_ASSERTION(!val.IsEmpty(),
-                 "How did we end up with an empty string for eURL");
-  }
-#endif
-
   MiscContainer* cont = GetMiscContainer();
   mozilla::css::URLValue* url = cont->mValue.mURL;
+
+  NS_ASSERTION(!url->mString.IsEmpty(),
+               "How did we end up with an empty string for eURL");
+
   mozilla::css::ImageValue* image =
-    new css::ImageValue(url->GetURI(), url->mString, url->mBaseURI,
-                        url->mReferrer, url->mOriginPrincipal, aDocument);
+    new css::ImageValue(url->GetURI(), url->mString,
+                        do_AddRef(url->mExtraData), aDocument);
 
   NS_ADDREF(image);
   cont->mValue.mImage = image;
@@ -1702,7 +1731,7 @@ nsAttrValue::ParseStyleAttribute(const nsAString& aString,
 {
   nsIDocument* ownerDoc = aElement->OwnerDoc();
   nsHTMLCSSStyleSheet* sheet = ownerDoc->GetInlineStyleSheet();
-  nsCOMPtr<nsIURI> baseURI = aElement->GetBaseURI();
+  nsCOMPtr<nsIURI> baseURI = aElement->GetBaseURIForStyleAttr();
   nsIURI* docURI = ownerDoc->GetDocumentURI();
 
   NS_ASSERTION(aElement->NodePrincipal() == ownerDoc->NodePrincipal(),
@@ -1725,7 +1754,10 @@ nsAttrValue::ParseStyleAttribute(const nsAString& aString,
 
   RefPtr<DeclarationBlock> decl;
   if (ownerDoc->GetStyleBackendType() == StyleBackendType::Servo) {
-    decl = ServoDeclarationBlock::FromCssText(aString);
+    RefPtr<URLExtraData> data = new URLExtraData(baseURI, docURI,
+                                                 aElement->NodePrincipal());
+    decl = ServoDeclarationBlock::FromCssText(aString, data,
+                                              ownerDoc->GetCompatibilityMode());
   } else {
     css::Loader* cssLoader = ownerDoc->CSSLoader();
     nsCSSParser cssParser(cssLoader);
@@ -1765,7 +1797,7 @@ nsAttrValue::SetMiscAtomOrString(const nsAString* aValue)
                  "Empty string?");
     MiscContainer* cont = GetMiscContainer();
     if (len <= NS_ATTRVALUE_MAX_STRINGLENGTH_ATOM) {
-      nsCOMPtr<nsIAtom> atom = NS_Atomize(*aValue);
+      nsCOMPtr<nsIAtom> atom = NS_AtomizeMainThread(*aValue);
       if (atom) {
         cont->mStringBits =
           reinterpret_cast<uintptr_t>(atom.forget().take()) | eAtomBase;

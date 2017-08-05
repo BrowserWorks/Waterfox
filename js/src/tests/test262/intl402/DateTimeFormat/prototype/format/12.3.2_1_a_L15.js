@@ -1,4 +1,3 @@
-// |reftest| skip-if(!this.hasOwnProperty('Intl')) -- needs Intl
 // Copyright 2012 Mozilla Corporation. All rights reserved.
 // This code is governed by the license found in the LICENSE file.
 
@@ -13,6 +12,6 @@ author: Norbert Lindenberg
 includes: [testBuiltInObject.js]
 ---*/
 
-testBuiltInObject(new Intl.DateTimeFormat().format, true, false, [], 0);
+testBuiltInObject(new Intl.DateTimeFormat().format, true, false, [], 1);
 
 reportCompare(0, 0);

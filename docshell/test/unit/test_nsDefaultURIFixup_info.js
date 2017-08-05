@@ -182,12 +182,10 @@ var testcases = [ {
   }, {
     input: "[::1]:8000",
     fixedURI: "http://[::1]:8000/",
-    alternateURI: "http://[::1]:8000/",
     protocolChange: true,
   }, {
     input: "[::1]:8000/",
     fixedURI: "http://[::1]:8000/",
-    alternateURI: "http://[::1]:8000/",
     protocolChange: true,
   }, {
     input: "[[::1]]/",
@@ -200,11 +198,13 @@ var testcases = [ {
     protocolChange: true,
   }, {
     input: "[64:ff9b::8.8.8.8]",
-    fixedURI: "http://[64:ff9b::8.8.8.8]/",
+    fixedURI: "http://[64:ff9b::808:808]/",
+    alternateURI: "http://[64:ff9b::808:808]/",
     protocolChange: true
   }, {
     input: "[64:ff9b::8.8.8.8]/~moz",
-    fixedURI: "http://[64:ff9b::8.8.8.8]/~moz",
+    fixedURI: "http://[64:ff9b::808:808]/~moz",
+    alternateURI: "http://[64:ff9b::808:808]/~moz",
     protocolChange: true
   }, {
     input: "[::1][::1]",
@@ -213,7 +213,6 @@ var testcases = [ {
   }, {
     input: "[::1][100",
     fixedURI: null,
-    alternateURI: null,
     keywordLookup: true,
     protocolChange: true
   }, {
@@ -469,7 +468,22 @@ var testcases = [ {
     keywordLookup: true,
     protocolChange: true,
     affectedByDNSForSingleHosts: true,
-  }];
+  }, {
+    input: "localhost",
+    fixedURI: "http://localhost/",
+    keywordLookup: true,
+    protocolChange: true,
+    affectedByDNSForSingleHosts: true,
+  }, {
+    input: "localhost:8080",
+    fixedURI: "http://localhost:8080/",
+    protocolChange: true,
+  }, {
+    input: "plonk:8080",
+    fixedURI: "http://plonk:8080/",
+    protocolChange: true,
+  }
+];
 
 if (Services.appinfo.OS.toLowerCase().startsWith("win")) {
   testcases.push({

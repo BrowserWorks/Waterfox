@@ -454,6 +454,7 @@ MacroAssembler::subFromStackPtr(Imm32 imm32)
 void
 MacroAssembler::setupUnalignedABICall(Register scratch)
 {
+    MOZ_ASSERT(!IsCompilingWasm(), "wasm should only use aligned ABI calls");
     setupABICall();
     dynamicAlignment_ = true;
 
@@ -474,9 +475,8 @@ MacroAssembler::callWithABIPre(uint32_t* stackAdjust, bool callFromWasm)
         stackForCall += ComputeByteAlignment(stackForCall + sizeof(intptr_t),
                                              ABIStackAlignment);
     } else {
-        static_assert(sizeof(wasm::Frame) % ABIStackAlignment == 0,
-                      "wasm::Frame should be part of the stack alignment.");
-        stackForCall += ComputeByteAlignment(stackForCall + framePushed(),
+        uint32_t alignmentAtPrologue = callFromWasm ? sizeof(wasm::Frame) : 0;
+        stackForCall += ComputeByteAlignment(stackForCall + framePushed() + alignmentAtPrologue,
                                              ABIStackAlignment);
     }
 
@@ -498,7 +498,7 @@ MacroAssembler::callWithABIPre(uint32_t* stackAdjust, bool callFromWasm)
 }
 
 void
-MacroAssembler::callWithABIPost(uint32_t stackAdjust, MoveOp::Type result)
+MacroAssembler::callWithABIPost(uint32_t stackAdjust, MoveOp::Type result, bool cleanupArg)
 {
     freeStack(stackAdjust);
     if (dynamicAlignment_)

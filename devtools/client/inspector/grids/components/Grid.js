@@ -28,7 +28,10 @@ module.exports = createClass({
     onSetGridOverlayColor: PropTypes.func.isRequired,
     onShowBoxModelHighlighterForNode: PropTypes.func.isRequired,
     onShowGridAreaHighlight: PropTypes.func.isRequired,
+    onShowGridCellHighlight: PropTypes.func.isRequired,
+    onShowGridLineNamesHighlight: PropTypes.func.isRequired,
     onToggleGridHighlighter: PropTypes.func.isRequired,
+    onToggleShowGridAreas: PropTypes.func.isRequired,
     onToggleShowGridLineNumbers: PropTypes.func.isRequired,
     onToggleShowInfiniteLines: PropTypes.func.isRequired,
   },
@@ -45,10 +48,12 @@ module.exports = createClass({
       onHideBoxModelHighlighter,
       onSetGridOverlayColor,
       onShowBoxModelHighlighterForNode,
+      onShowGridAreaHighlight,
+      onShowGridCellHighlight,
+      onToggleShowGridAreas,
       onToggleGridHighlighter,
       onToggleShowGridLineNumbers,
       onToggleShowInfiniteLines,
-      onShowGridAreaHighlight,
     } = this.props;
 
     return grids.length ?
@@ -56,13 +61,6 @@ module.exports = createClass({
         {
           id: "layout-grid-container",
         },
-        showGridOutline ?
-          GridOutline({
-            grids,
-            onShowGridAreaHighlight,
-          })
-          :
-          null,
         dom.div(
           {
             className: "grid-content",
@@ -78,17 +76,26 @@ module.exports = createClass({
           }),
           GridDisplaySettings({
             highlighterSettings,
+            onToggleShowGridAreas,
             onToggleShowGridLineNumbers,
             onToggleShowInfiniteLines,
           })
-        )
+        ),
+        showGridOutline ?
+          GridOutline({
+            grids,
+            onShowGridAreaHighlight,
+            onShowGridCellHighlight,
+          })
+          :
+          null
       )
       :
       dom.div(
         {
           className: "layout-no-grids",
         },
-        getStr("layout.noGrids")
+        getStr("layout.noGridsOnThisPage")
       );
   },
 

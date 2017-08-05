@@ -10,7 +10,7 @@
 #include "gfxMatrix.h"
 #include "gfxRect.h"
 #include "nsFrame.h"
-#include "nsISVGChildFrame.h"
+#include "nsSVGDisplayableFrame.h"
 #include "nsLiteralString.h"
 #include "nsQueryFrame.h"
 #include "nsSVGUtils.h"
@@ -39,7 +39,7 @@ NS_NewSVGGeometryFrame(nsIPresShell* aPresShell, nsStyleContext* aContext);
 namespace mozilla {
 
 class SVGGeometryFrame : public nsFrame
-                       , public nsISVGChildFrame
+                       , public nsSVGDisplayableFrame
 {
   typedef mozilla::gfx::DrawTarget DrawTarget;
 
@@ -49,16 +49,19 @@ class SVGGeometryFrame : public nsFrame
   friend class ::nsDisplaySVGGeometry;
 
 protected:
-  explicit SVGGeometryFrame(nsStyleContext* aContext)
-    : nsFrame(aContext)
+  SVGGeometryFrame(nsStyleContext* aContext, nsIFrame::ClassID aID)
+    : nsFrame(aContext, aID)
   {
      AddStateBits(NS_FRAME_SVG_LAYOUT | NS_FRAME_MAY_BE_TRANSFORMED);
   }
 
+  explicit SVGGeometryFrame(nsStyleContext* aContext)
+    : SVGGeometryFrame(aContext, kClassID)
+  {}
+
 public:
-  NS_DECL_QUERYFRAME_TARGET(SVGGeometryFrame)
   NS_DECL_QUERYFRAME
-  NS_DECL_FRAMEARENA_HELPERS
+  NS_DECL_FRAMEARENA_HELPERS(SVGGeometryFrame)
 
   // nsIFrame interface:
   virtual void Init(nsIContent*       aContent,
@@ -75,13 +78,6 @@ public:
                                      int32_t         aModType) override;
 
   virtual void DidSetStyleContext(nsStyleContext* aOldStyleContext) override;
-
-  /**
-   * Get the "type" of the frame
-   *
-   * @see nsGkAtoms::svgGeometryFrame
-   */
-  virtual nsIAtom* GetType() const override;
 
   virtual bool IsSVGTransformed(Matrix *aOwnTransforms = nullptr,
                                 Matrix *aFromParentTransforms = nullptr) const override;
@@ -100,12 +96,12 @@ public:
   // SVGGeometryFrame methods
   gfxMatrix GetCanvasTM();
 protected:
-  // nsISVGChildFrame interface:
-  virtual DrawResult PaintSVG(gfxContext& aContext,
-                              const gfxMatrix& aTransform,
-                              const nsIntRect* aDirtyRect = nullptr) override;
+  // nsSVGDisplayableFrame interface:
+  virtual void PaintSVG(gfxContext& aContext,
+                        const gfxMatrix& aTransform,
+                        imgDrawingParams& aImgParams,
+                        const nsIntRect* aDirtyRect = nullptr) override;
   virtual nsIFrame* GetFrameForPoint(const gfxPoint& aPoint) override;
-  virtual nsRect GetCoveredRegion() override;
   virtual void ReflowSVG() override;
   virtual void NotifySVGChanged(uint32_t aFlags) override;
   virtual SVGBBox GetBBoxContribution(const Matrix &aToBBoxUserspace,
@@ -122,13 +118,14 @@ protected:
 private:
   enum { eRenderFill = 1, eRenderStroke = 2 };
   void Render(gfxContext* aContext, uint32_t aRenderComponents,
-              const gfxMatrix& aTransform);
+              const gfxMatrix& aTransform, imgDrawingParams& aImgParams);
 
   /**
    * @param aMatrix The transform that must be multiplied onto aContext to
    *   establish this frame's SVG user space.
    */
-  void PaintMarkers(gfxContext& aContext, const gfxMatrix& aMatrix);
+  void PaintMarkers(gfxContext& aContext, const gfxMatrix& aMatrix,
+                    imgDrawingParams& aImgParams);
 
   struct MarkerProperties {
     nsSVGMarkerProperty* mMarkerStart;

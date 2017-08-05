@@ -7,11 +7,13 @@
  * Bug 863102 - Automatically scroll down upon new network requests.
  */
 add_task(function* () {
-  requestLongerTimeout(2);
+  requestLongerTimeout(4);
 
-  let { monitor } = yield initNetMonitor(INFINITE_GET_URL);
-  let { document, gStore, windowRequire } = monitor.panelWin;
-  let Actions = windowRequire("devtools/client/netmonitor/actions/index");
+  let { monitor } = yield initNetMonitor(INFINITE_GET_URL, true);
+  let { document, windowRequire, store } = monitor.panelWin;
+  let Actions = windowRequire("devtools/client/netmonitor/src/actions/index");
+
+  store.dispatch(Actions.batchEnable(false));
 
   // Wait until the first request makes the empty notice disappear
   yield waitForRequestListToAppear();
@@ -47,7 +49,7 @@ add_task(function* () {
 
   // (4) Now select an item in the list and check that additional requests
   // do not change the scroll position.
-  gStore.dispatch(Actions.selectRequestByIndex(0));
+  store.dispatch(Actions.selectRequestByIndex(0));
   yield waitForNetworkEvents(monitor, 8);
   yield waitSomeTime();
   is(requestsContainer.scrollTop, 0, "Did not scroll.");

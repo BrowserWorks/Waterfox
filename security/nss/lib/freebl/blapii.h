@@ -9,6 +9,7 @@
 #define _BLAPII_H_
 
 #include "blapit.h"
+#include "mpi.h"
 
 /* max block size of supported block ciphers */
 #define MAX_BLOCK_SIZE 16
@@ -57,5 +58,13 @@ SEC_END_PROTOS
 #endif
 
 #undef HAVE_NO_SANITIZE_ATTR
+
+SECStatus RSA_Init();
+SECStatus generate_prime(mp_int *prime, int primeLen);
+
+/* Freebl state. */
+PRBool aesni_support();
+PRBool clmul_support();
+PRBool avx_support();
 
 #endif /* _BLAPII_H_ */

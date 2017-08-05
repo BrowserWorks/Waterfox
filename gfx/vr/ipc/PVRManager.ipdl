@@ -18,6 +18,7 @@ using struct mozilla::gfx::VRDisplayInfo from "gfxVR.h";
 using struct mozilla::gfx::VRSensorUpdate from "gfxVR.h";
 using struct mozilla::gfx::VRHMDSensorState from "gfxVR.h";
 using struct mozilla::gfx::VRControllerInfo from "gfxVR.h";
+using struct mozilla::gfx::VRSubmitFrameResultInfo from "gfxVR.h";
 using mozilla::layers::LayersBackend from "mozilla/layers/LayersTypes.h";
 using mozilla::layers::TextureFlags from "mozilla/layers/CompositorTypes.h";
 
@@ -39,34 +40,34 @@ parent:
   async PTexture(SurfaceDescriptor aSharedData, LayersBackend aBackend,
                  TextureFlags aTextureFlags, uint64_t aSerial);
 
-  async PVRLayer(uint32_t aDisplayID, float aLeftEyeX, float aLeftEyeY, float aLeftEyeWidth, float aLeftEyeHeight, float aRightEyeX, float aRightEyeY, float aRightEyeWidth, float aRightEyeHeight);
+  async PVRLayer(uint32_t aDisplayID, float aLeftEyeX, float aLeftEyeY,
+                 float aLeftEyeWidth, float aLeftEyeHeight, float aRightEyeX,
+                 float aRightEyeY, float aRightEyeWidth, float aRightEyeHeight,
+                 uint32_t aGroup);
 
   // (Re)Enumerate VR Displays.  An updated list of VR displays will be returned
   // asynchronously to children via UpdateDisplayInfo.
   async RefreshDisplays();
 
-  // GetDisplays synchronously returns the VR displays that have already been
-  // enumerated by RefreshDisplays() but does not enumerate new ones.
-  sync GetDisplays() returns(VRDisplayInfo[] aDisplayInfo);
-
   // Reset the sensor of the display identified by aDisplayID so that the current
   // sensor state is the "Zero" position.
   async ResetSensor(uint32_t aDisplayID);
 
-  sync GetSensorState(uint32_t aDisplayID) returns(VRHMDSensorState aState);
-  sync GetImmediateSensorState(uint32_t aDisplayID) returns(VRHMDSensorState aState);
-  sync SetHaveEventListener(bool aHaveEventListener);
+  async SetGroupMask(uint32_t aDisplayID, uint32_t aGroupMask);
+  async SetHaveEventListener(bool aHaveEventListener);
 
   async ControllerListenerAdded();
   async ControllerListenerRemoved();
-  // GetControllers synchronously returns the VR controllers that have already been
-  // enumerated by RefreshVRControllers() but does not enumerate new ones.
-  sync GetControllers() returns(VRControllerInfo[] aControllerInfo);
+  async VibrateHaptic(uint32_t aControllerIdx, uint32_t aHapticIndex,
+                      double aIntensity, double aDuration, uint32_t aPromiseID);
+  async StopVibrateHaptic(uint32_t aControllerIdx);
+
   async CreateVRTestSystem();
   async CreateVRServiceTestDisplay(nsCString aID, uint32_t aPromiseID);
   async CreateVRServiceTestController(nsCString aID, uint32_t aPromiseID);
   async SetDisplayInfoToMockDisplay(uint32_t aDeviceID, VRDisplayInfo aDisplayInfo);
   async SetSensorStateToMockDisplay(uint32_t aDeviceID, VRHMDSensorState aSensorState);
+
   async NewButtonEventToMockController(uint32_t aDeviceID, long aButton,
                                        bool aPressed);
   async NewAxisMoveEventToMockController(uint32_t aDeviceID, long aAxis,
@@ -83,9 +84,10 @@ child:
   // through DOM calls are always resolved.
   async UpdateDisplayInfo(VRDisplayInfo[] aDisplayUpdates);
 
-  async NotifyVSync();
-  async NotifyVRVSync(uint32_t aDisplayID);
+  async DispatchSubmitFrameResult(uint32_t aDisplayID, VRSubmitFrameResultInfo aResult);
   async GamepadUpdate(GamepadChangeEvent aGamepadEvent);
+  async ReplyGamepadVibrateHaptic(uint32_t aPromiseID);
+
   async ReplyCreateVRServiceTestDisplay(nsCString aID, uint32_t aPromiseID,
                                         uint32_t aDeviceID);
   async ReplyCreateVRServiceTestController(nsCString aID, uint32_t aPromiseID,

@@ -63,7 +63,7 @@ struct ImageBitmapCloneData final
 {
   RefPtr<gfx::DataSourceSurface> mSurface;
   gfx::IntRect mPictureRect;
-  bool mIsPremultipliedAlpha;
+  gfxAlphaType mAlphaType;
   bool mIsCroppingAreaOutSideOfSourceImage;
 };
 
@@ -152,7 +152,10 @@ public:
                        ImageBitmap* aImageBitmap);
 
   // Mozilla Extensions
-  static bool ExtensionsEnabled(JSContext* aCx, JSObject* aObj);
+  // aObj is an optional argument that isn't used by ExtensionsEnabled() and
+  // only exists because the bindings layer insists on passing it to us.  All
+  // other consumers of this function should only call it passing one argument.
+  static bool ExtensionsEnabled(JSContext* aCx, JSObject* aObj = nullptr);
 
   friend CreateImageBitmapFromBlob;
   friend CreateImageBitmapFromBlobTask;
@@ -197,7 +200,7 @@ protected:
    * CreateInternal(from ImageData) method.
    */
   ImageBitmap(nsIGlobalObject* aGlobal, layers::Image* aData,
-              bool aIsPremultipliedAlpha = true);
+              gfxAlphaType aAlphaType = gfxAlphaType::Premult);
 
   virtual ~ImageBitmap();
 
@@ -269,7 +272,7 @@ protected:
    */
   gfx::IntRect mPictureRect;
 
-  const bool mIsPremultipliedAlpha;
+  const gfxAlphaType mAlphaType;
 
   /*
    * Set mIsCroppingAreaOutSideOfSourceImage if image bitmap was cropped to the

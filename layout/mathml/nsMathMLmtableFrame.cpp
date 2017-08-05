@@ -167,9 +167,8 @@ FindCellProperty(const nsIFrame* aCellFrame,
   nsTArray<int8_t>* propertyData = nullptr;
 
   while (currentFrame) {
-    FrameProperties props = currentFrame->Properties();
-    propertyData = props.Get(aFrameProperty);
-    bool frameIsTable = (currentFrame->GetType() == nsGkAtoms::tableFrame);
+    propertyData = currentFrame->GetProperty(aFrameProperty);
+    bool frameIsTable = (currentFrame->IsTableFrame());
 
     if (propertyData || frameIsTable)
       currentFrame = nullptr; // A null frame pointer exits the loop
@@ -361,8 +360,7 @@ ParseFrameAttribute(nsIFrame* aFrame,
     if (valueList) {
       // The code reading the property assumes that this list is nonempty.
       NS_ASSERTION(valueList->Length() >= 1, "valueList should not be empty!");
-      FrameProperties props = aFrame->Properties();
-      props.Set(AttributeToProperty(aAttribute), valueList);
+      aFrame->SetProperty(AttributeToProperty(aAttribute), valueList);
     } else {
       ReportParseError(aFrame, aAttribute->GetUTF16String(), attrValue.get());
     }
@@ -585,12 +583,12 @@ MapAllAttributesIntoCSS(nsMathMLmtableFrame* aTableFrame)
 
   // mtable is simple and only has one (pseudo) row-group
   nsIFrame* rgFrame = aTableFrame->PrincipalChildList().FirstChild();
-  if (!rgFrame || rgFrame->GetType() != nsGkAtoms::tableRowGroupFrame)
+  if (!rgFrame || !rgFrame->IsTableRowGroupFrame())
     return;
 
   for (nsIFrame* rowFrame : rgFrame->PrincipalChildList()) {
     DEBUG_VERIFY_THAT_FRAME_IS(rowFrame, TableRow);
-    if (rowFrame->GetType() == nsGkAtoms::tableRowFrame) {
+    if (rowFrame->IsTableRowFrame()) {
       // Map row rowalign.
       ParseFrameAttribute(rowFrame, nsGkAtoms::rowalign_, false);
       // Map row columnalign.
@@ -598,7 +596,7 @@ MapAllAttributesIntoCSS(nsMathMLmtableFrame* aTableFrame)
 
       for (nsIFrame* cellFrame : rowFrame->PrincipalChildList()) {
         DEBUG_VERIFY_THAT_FRAME_IS(cellFrame, TableCell);
-        if (IS_TABLE_CELL(cellFrame->GetType())) {
+        if (IS_TABLE_CELL(cellFrame->Type())) {
           // Map cell rowalign.
           ParseFrameAttribute(cellFrame, nsGkAtoms::rowalign_, false);
           // Map row columnalign.
@@ -728,10 +726,10 @@ nsMathMLmtableWrapperFrame::AttributeChanged(int32_t  aNameSpaceID,
 
   // mtable is simple and only has one (pseudo) row-group inside our inner-table
   nsIFrame* tableFrame = mFrames.FirstChild();
-  NS_ASSERTION(tableFrame && tableFrame->GetType() == nsGkAtoms::tableFrame,
+  NS_ASSERTION(tableFrame && tableFrame->IsTableFrame(),
                "should always have an inner table frame");
   nsIFrame* rgFrame = tableFrame->PrincipalChildList().FirstChild();
-  if (!rgFrame || rgFrame->GetType() != nsGkAtoms::tableRowGroupFrame)
+  if (!rgFrame || !rgFrame->IsTableRowGroupFrame())
     return NS_OK;
 
   // align - just need to issue a dirty (resize) reflow command
@@ -769,8 +767,7 @@ nsMathMLmtableWrapperFrame::AttributeChanged(int32_t  aNameSpaceID,
              aAttribute == nsGkAtoms::columnalign_ ||
              aAttribute == nsGkAtoms::columnlines_) {
     // clear any cached property list for this table
-    presContext->PropertyTable()->
-      Delete(tableFrame, AttributeToProperty(aAttribute));
+    tableFrame->DeleteProperty(AttributeToProperty(aAttribute));
     // Reparse the new attribute on the table.
     ParseFrameAttribute(tableFrame, aAttribute, true);
   } else {
@@ -801,15 +798,15 @@ nsMathMLmtableWrapperFrame::GetRowFrameAt(int32_t aRowIndex)
   // if our inner table says that the index is valid, find the row now
   if (0 <= aRowIndex && aRowIndex <= rowCount) {
     nsIFrame* tableFrame = mFrames.FirstChild();
-    NS_ASSERTION(tableFrame && tableFrame->GetType() == nsGkAtoms::tableFrame,
+    NS_ASSERTION(tableFrame && tableFrame->IsTableFrame(),
                  "should always have an inner table frame");
     nsIFrame* rgFrame = tableFrame->PrincipalChildList().FirstChild();
-    if (!rgFrame || rgFrame->GetType() != nsGkAtoms::tableRowGroupFrame)
+    if (!rgFrame || !rgFrame->IsTableRowGroupFrame())
       return nullptr;
     for (nsIFrame* rowFrame : rgFrame->PrincipalChildList()) {
       if (aRowIndex == 0) {
         DEBUG_VERIFY_THAT_FRAME_IS(rowFrame, TableRow);
-        if (rowFrame->GetType() != nsGkAtoms::tableRowFrame)
+        if (!rowFrame->IsTableRowFrame())
           return nullptr;
 
         return rowFrame;
@@ -1121,7 +1118,7 @@ nsMathMLmtrFrame::AttributeChanged(int32_t  aNameSpaceID,
     return NS_OK;
   }
 
-  presContext->PropertyTable()->Delete(this, AttributeToProperty(aAttribute));
+  DeleteProperty(AttributeToProperty(aAttribute));
 
   bool allowMultiValues = (aAttribute == nsGkAtoms::columnalign_);
 
@@ -1220,8 +1217,7 @@ nsMathMLmtdFrame::AttributeChanged(int32_t  aNameSpaceID,
   if (aAttribute == nsGkAtoms::rowalign_ ||
       aAttribute == nsGkAtoms::columnalign_) {
 
-    nsPresContext* presContext = PresContext();
-    presContext->PropertyTable()->Delete(this, AttributeToProperty(aAttribute));
+    DeleteProperty(AttributeToProperty(aAttribute));
 
     // Reparse the attribute.
     ParseFrameAttribute(this, aAttribute, false);
@@ -1305,7 +1301,7 @@ NS_NewMathMLmtdInnerFrame(nsIPresShell* aPresShell, nsStyleContext* aContext)
 NS_IMPL_FRAMEARENA_HELPERS(nsMathMLmtdInnerFrame)
 
 nsMathMLmtdInnerFrame::nsMathMLmtdInnerFrame(nsStyleContext* aContext)
-  : nsBlockFrame(aContext)
+  : nsBlockFrame(aContext, kClassID)
 {
   // Make a copy of the parent nsStyleText for later modification.
   mUniqueStyleText = new (PresContext()) nsStyleText(*StyleText());

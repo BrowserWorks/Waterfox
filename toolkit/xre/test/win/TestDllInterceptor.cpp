@@ -236,6 +236,35 @@ bool TestNtQueryFullAttributesFile(void* aFunc)
   return patchedNtQueryFullAttributesFile(0, 0) != 0;
 }
 
+bool TestLdrUnloadDll(void* aFunc)
+{
+  typedef NTSTATUS (NTAPI *LdrUnloadDllType)(HMODULE);
+  auto patchedLdrUnloadDll = reinterpret_cast<LdrUnloadDllType>(aFunc);
+  return patchedLdrUnloadDll(0) != 0;
+}
+
+bool TestLdrResolveDelayLoadedAPI(void* aFunc)
+{
+  // These pointers are disguised as PVOID to avoid pulling in obscure headers
+  typedef PVOID (WINAPI *LdrResolveDelayLoadedAPIType)(PVOID, PVOID, PVOID,
+                                                       PVOID, PVOID, ULONG);
+  auto patchedLdrResolveDelayLoadedAPI =
+    reinterpret_cast<LdrResolveDelayLoadedAPIType>(aFunc);
+  // No idea how to call this API. Flags==99 is just an arbitrary number that
+  // doesn't crash when the other params are null.
+  return patchedLdrResolveDelayLoadedAPI(0, 0, 0, 0, 0, 99) == 0;
+}
+
+#ifdef _M_AMD64
+bool TestRtlInstallFunctionTableCallback(void* aFunc)
+{
+  auto patchedRtlInstallFunctionTableCallback =
+    reinterpret_cast<decltype(RtlInstallFunctionTableCallback)*>(aFunc);
+
+  return patchedRtlInstallFunctionTableCallback(0, 0, 0, 0, 0, 0) == FALSE;
+}
+#endif
+
 bool TestSetUnhandledExceptionFilter(void* aFunc)
 {
   auto patchedSetUnhandledExceptionFilter =
@@ -368,6 +397,34 @@ bool TestProcessCaretEvents(void* aFunc)
   return true;
 }
 
+bool TestSetCursorPos(void* aFunc)
+{
+  // SetCursorPos has some issues in automation -- see bug 1368033.
+  // For that reason, we don't check the return value -- we only
+  // check that the method runs without producing an exception.
+  auto patchedSetCursorPos =
+    reinterpret_cast<decltype(&SetCursorPos)>(aFunc);
+  patchedSetCursorPos(512, 512);
+  return true;
+}
+
+static DWORD sTlsIndex = 0;
+
+bool TestTlsAlloc(void* aFunc)
+{
+  auto patchedTlsAlloc =
+    reinterpret_cast<decltype(&TlsAlloc)>(aFunc);
+  sTlsIndex = patchedTlsAlloc();
+  return sTlsIndex != TLS_OUT_OF_INDEXES;
+}
+
+bool TestTlsFree(void* aFunc)
+{
+  auto patchedTlsFree =
+    reinterpret_cast<decltype(&TlsFree)>(aFunc);
+  return sTlsIndex != 0 && patchedTlsFree(sTlsIndex);
+}
+
 int main()
 {
   payload initial = { 0x12345678, 0xfc4e9d31, 0x87654321 };
@@ -463,10 +520,19 @@ int main()
       TestHook(TestGetOpenFileNameW, "comdlg32.dll", "GetOpenFileNameW") &&
 #ifdef _M_X64
       TestHook(TestGetKeyState, "user32.dll", "GetKeyState") &&    // see Bug 1316415
+      TestHook(TestLdrUnloadDll, "ntdll.dll", "LdrUnloadDll") &&
+      MaybeTestHook(IsWin8OrLater(), TestLdrResolveDelayLoadedAPI, "ntdll.dll", "LdrResolveDelayLoadedAPI") &&
+      MaybeTestHook(!IsWin8OrLater(), TestRtlInstallFunctionTableCallback, "kernel32.dll", "RtlInstallFunctionTableCallback") &&
 #endif
       MaybeTestHook(ShouldTestTipTsf(), TestProcessCaretEvents, "tiptsf.dll", "ProcessCaretEvents") &&
 #ifdef _M_IX86
       TestHook(TestSendMessageTimeoutW, "user32.dll", "SendMessageTimeoutW") &&
+#endif
+      TestHook(TestSetCursorPos, "user32.dll", "SetCursorPos") &&
+      TestHook(TestTlsAlloc, "kernel32.dll", "TlsAlloc") &&
+      TestHook(TestTlsFree, "kernel32.dll", "TlsFree") &&
+#ifdef _M_IX86
+      TestDetour("kernel32.dll", "BaseThreadInitThunk") &&
 #endif
       TestDetour("ntdll.dll", "LdrLoadDll")) {
     printf("TEST-PASS | WindowsDllInterceptor | all checks passed\n");

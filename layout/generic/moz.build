@@ -65,7 +65,7 @@ with Files('nsPluginFrame.*'):
     BUG_COMPONENT = ('Core', 'Plug-ins')
 
 with Files('nsVideoFrame.*'):
-    BUG_COMPONENT = ('Core', 'Video/Audio')
+    BUG_COMPONENT = ('Core', 'Audio/Video')
 
 with Files('*Selection*'):
     BUG_COMPONENT = ('Core', 'Selection')
@@ -101,6 +101,7 @@ EXPORTS += [
     'nsRubyTextFrame.h',
     'nsSplittableFrame.h',
     'nsSubDocumentFrame.h',
+    'nsTextFrameUtils.h',
     'nsTextRunTransformations.h',
     'RubyUtils.h',
     'ScrollbarActivity.h',
@@ -110,6 +111,8 @@ EXPORTS += [
 
 EXPORTS.mozilla += [
     'CSSAlignUtils.h',
+    'CSSOrderAwareFrameIterator.h',
+    'FrameTypeList.h',
     'ReflowInput.h',
     'ReflowOutput.h',
     'ViewportFrame.h',
@@ -129,6 +132,7 @@ UNIFIED_SOURCES += [
     'BlockReflowInput.cpp',
     'BRFrame.cpp',
     'CSSAlignUtils.cpp',
+    'CSSOrderAwareFrameIterator.cpp',
     'DetailsFrame.cpp',
     'FrameChildList.cpp',
     'MathMLTextRunFactory.cpp',
@@ -158,6 +162,7 @@ UNIFIED_SOURCES += [
     'nsIntervalSet.cpp',
     'nsLeafFrame.cpp',
     'nsLineBox.cpp',
+    'nsLineLayout.cpp',
     'nsPageContentFrame.cpp',
     'nsPageFrame.cpp',
     'nsPlaceholderFrame.cpp',
@@ -186,10 +191,8 @@ UNIFIED_SOURCES += [
     'ViewportFrame.cpp',
 ]
 
-# nsLineLayout.cpp needs to be built separately because it uses plarena.h.
 # nsPluginFrame.cpp needs to be built separately because of name clashes in the OS X headers.
 SOURCES += [
-    'nsLineLayout.cpp',
     'nsPluginFrame.cpp',
 ]
 

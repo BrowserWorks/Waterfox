@@ -3,6 +3,10 @@
 # License, v. 2.0. If a copy of the MPL was not distributed with this
 # file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
+# If you update this list, you may need to add a mapping within the following
+# file so that ESLint works correctly:
+# tools/lint/eslint/eslint-plugin-mozilla/lib/environments/browser-window.js
+
 <script type="application/javascript" src="chrome://global/content/printUtils.js"/>
 <script type="application/javascript" src="chrome://global/content/viewZoomOverlay.js"/>
 <script type="application/javascript" src="chrome://browser/content/places/browserPlacesViews.js"/>
@@ -26,7 +30,7 @@
 <script type="application/javascript" src="chrome://browser/content/browser-safebrowsing.js"/>
 <script type="application/javascript" src="chrome://browser/content/browser-sidebar.js"/>
 <script type="application/javascript" src="chrome://browser/content/browser-social.js"/>
-<script type="application/javascript" src="chrome://browser/content/browser-syncui.js"/>
+<script type="application/javascript" src="chrome://browser/content/browser-sync.js"/>
 <script type="application/javascript" src="chrome://browser/content/browser-tabsintitlebar.js"/>
 <script type="application/javascript" src="chrome://browser/content/browser-thumbnails.js"/>
 <script type="application/javascript" src="chrome://browser/content/browser-trackingprotection.js"/>
@@ -34,5 +38,3 @@
 #ifdef MOZ_DATA_REPORTING
 <script type="application/javascript" src="chrome://browser/content/browser-data-submission-info-bar.js"/>
 #endif
-
-<script type="application/javascript" src="chrome://browser/content/browser-fxaccounts.js"/>

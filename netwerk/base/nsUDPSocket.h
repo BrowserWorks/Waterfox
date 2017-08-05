@@ -12,11 +12,6 @@
 #include "nsAutoPtr.h"
 #include "nsCycleCollectionParticipant.h"
 
-#ifdef MOZ_WIDGET_GONK
-#include "nsINetworkInterface.h"
-#include "nsProxyRelease.h"
-#endif
-
 //-----------------------------------------------------------------------------
 
 namespace mozilla {
@@ -65,6 +60,7 @@ private:
   Mutex                                mLock;
   PRFileDesc                          *mFD;
   NetAddr                              mAddr;
+  OriginAttributes                     mOriginAttributes;
   nsCOMPtr<nsIUDPSocketListener>       mListener;
   nsCOMPtr<nsIEventTarget>             mListenerTarget;
   bool                                 mAttached;

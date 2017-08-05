@@ -13,7 +13,7 @@ import org.mozilla.gecko.background.fxa.FxAccountClientException.FxAccountClient
 import org.mozilla.gecko.background.fxa.FxAccountClientException.FxAccountClientRemoteException;
 import org.mozilla.gecko.fxa.FxAccountConstants;
 import org.mozilla.gecko.Locales;
-import org.mozilla.gecko.fxa.FxAccountDevice;
+import org.mozilla.gecko.fxa.devices.FxAccountDevice;
 import org.mozilla.gecko.sync.ExtendedJSONObject;
 import org.mozilla.gecko.sync.Utils;
 import org.mozilla.gecko.sync.crypto.HKDF;
@@ -813,6 +813,42 @@ public class FxAccountClient20 implements FxAccountClient {
       public void handleSuccess(int status, HttpResponse response, ExtendedJSONObject body) {
         try {
           delegate.handleSuccess(FxAccountDevice.fromJson(body));
+        } catch (Exception e) {
+          delegate.handleError(e);
+        }
+      }
+    };
+
+    post(resource, body);
+  }
+
+  @Override
+  public void destroyDevice(byte[] sessionToken, String deviceId, RequestDelegate<ExtendedJSONObject> delegate) {
+    final byte[] tokenId = new byte[32];
+    final byte[] reqHMACKey = new byte[32];
+    final byte[] requestKey = new byte[32];
+    try {
+      HKDF.deriveMany(sessionToken, new byte[0], FxAccountUtils.KW("sessionToken"), tokenId, reqHMACKey, requestKey);
+    } catch (Exception e) {
+      invokeHandleError(delegate, e);
+      return;
+    }
+
+    final BaseResource resource;
+    final ExtendedJSONObject body = new ExtendedJSONObject();
+    body.put("id", deviceId);
+    try {
+      resource = getBaseResource("account/device/destroy");
+    } catch (URISyntaxException | UnsupportedEncodingException e) {
+      invokeHandleError(delegate, e);
+      return;
+    }
+
+    resource.delegate = new ResourceDelegate<ExtendedJSONObject>(resource, delegate, ResponseType.JSON_OBJECT, tokenId, reqHMACKey) {
+      @Override
+      public void handleSuccess(int status, HttpResponse response, ExtendedJSONObject body) {
+        try {
+          delegate.handleSuccess(body);
         } catch (Exception e) {
           delegate.handleError(e);
         }

@@ -10,7 +10,7 @@
 #include "gfx2DGlue.h"
 #include "gfxContext.h"
 #include "nsIFrame.h"
-#include "nsISVGChildFrame.h"
+#include "nsSVGDisplayableFrame.h"
 #include "nsSVGContainerFrame.h"
 #include "nsSVGIntegrationUtils.h"
 #include "mozilla/dom/SVGSVGElement.h"
@@ -49,18 +49,13 @@ nsSVGInnerSVGFrame::Init(nsIContent*       aContent,
 }
 #endif /* DEBUG */
 
-nsIAtom *
-nsSVGInnerSVGFrame::GetType() const
-{
-  return nsGkAtoms::svgInnerSVGFrame;
-}
-
 //----------------------------------------------------------------------
-// nsISVGChildFrame methods
+// nsSVGDisplayableFrame methods
 
-DrawResult
+void
 nsSVGInnerSVGFrame::PaintSVG(gfxContext& aContext,
                              const gfxMatrix& aTransform,
+                             imgDrawingParams& aImgParams,
                              const nsIntRect *aDirtyRect)
 {
   NS_ASSERTION(!NS_SVGDisplayListPaintingEnabled() ||
@@ -76,7 +71,7 @@ nsSVGInnerSVGFrame::PaintSVG(gfxContext& aContext,
       GetAnimatedLengthValues(&x, &y, &width, &height, nullptr);
 
     if (width <= 0 || height <= 0) {
-      return DrawResult::SUCCESS;
+      return;
     }
 
     autoSR.SetContext(&aContext);
@@ -85,26 +80,8 @@ nsSVGInnerSVGFrame::PaintSVG(gfxContext& aContext,
     nsSVGUtils::SetClipRect(&aContext, aTransform, clipRect);
   }
 
-  return nsSVGDisplayContainerFrame::PaintSVG(aContext, aTransform, aDirtyRect);
-}
-
-nsRect
-nsSVGInnerSVGFrame::GetCoveredRegion()
-{
-  float x, y, w, h;
-  static_cast<SVGSVGElement*>(mContent)->
-    GetAnimatedLengthValues(&x, &y, &w, &h, nullptr);
-  if (w < 0.0f) w = 0.0f;
-  if (h < 0.0f) h = 0.0f;
-  // GetCanvasTM includes the x,y translation
-  nsRect bounds = nsSVGUtils::ToCanvasBounds(gfxRect(0.0, 0.0, w, h),
-                                             GetCanvasTM(),
-                                             PresContext());
-
-  if (!StyleDisplay()->IsScrollableOverflow()) {
-    bounds.UnionRect(bounds, nsSVGUtils::GetCoveredRegion(mFrames));
-  }
-  return bounds;
+  nsSVGDisplayContainerFrame::PaintSVG(aContext, aTransform, aImgParams,
+                                       aDirtyRect);
 }
 
 void
@@ -183,6 +160,45 @@ nsSVGInnerSVGFrame::NotifySVGChanged(uint32_t aFlags)
   }
 
   nsSVGDisplayContainerFrame::NotifySVGChanged(aFlags);
+}
+
+SVGBBox
+nsSVGInnerSVGFrame::GetBBoxContribution(const Matrix &aToBBoxUserspace,
+                                        uint32_t aFlags)
+{
+  // XXXjwatt It seems like authors would want the result to be clipped by the
+  // viewport we establish if IsScrollableOverflow() is true.  We should
+  // consider doing that.  See bug 1350755.
+
+  SVGBBox bbox;
+
+  if (aFlags & nsSVGUtils::eForGetClientRects) {
+    // XXXjwatt For consistency with the old code this code includes the
+    // viewport we establish in the result, but only includes the bounds of our
+    // descendants if they are not clipped to that viewport.  However, this is
+    // both inconsistent with Chrome and with the specs.  See bug 1350755.
+    // Ideally getClientRects/getBoundingClientRect should be consistent with
+    // getBBox.
+    float x, y, w, h;
+    static_cast<SVGSVGElement*>(mContent)->
+      GetAnimatedLengthValues(&x, &y, &w, &h, nullptr);
+    if (w < 0.0f) w = 0.0f;
+    if (h < 0.0f) h = 0.0f;
+    Rect viewport(x, y, w, h);
+    bbox = aToBBoxUserspace.TransformBounds(viewport);
+    if (StyleDisplay()->IsScrollableOverflow()) {
+      return bbox;
+    }
+    // Else we're not clipping to our viewport so we fall through and include
+    // the bounds of our children.
+  }
+
+  SVGBBox descendantsBbox =
+    nsSVGDisplayContainerFrame::GetBBoxContribution(aToBBoxUserspace, aFlags);
+
+  bbox.UnionEdges(descendantsBbox);
+
+  return bbox;
 }
 
 nsresult

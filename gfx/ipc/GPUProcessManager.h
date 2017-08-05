@@ -31,6 +31,7 @@ class CompositorUpdateObserver;
 class PCompositorBridgeChild;
 class PImageBridgeChild;
 class RemoteCompositorSession;
+class UiCompositorControllerChild;
 } // namespace layers
 namespace widget {
 class CompositorWidget;
@@ -66,6 +67,7 @@ class GPUProcessManager final : public GPUProcessHost::Listener
   typedef layers::PCompositorBridgeChild PCompositorBridgeChild;
   typedef layers::PImageBridgeChild PImageBridgeChild;
   typedef layers::RemoteCompositorSession RemoteCompositorSession;
+  typedef layers::UiCompositorControllerChild UiCompositorControllerChild;
 
 public:
   static void Initialize();
@@ -95,7 +97,8 @@ public:
     ipc::Endpoint<PCompositorBridgeChild>* aOutCompositor,
     ipc::Endpoint<PImageBridgeChild>* aOutImageBridge,
     ipc::Endpoint<PVRManagerChild>* aOutVRBridge,
-    ipc::Endpoint<dom::PVideoDecoderManagerChild>* aOutVideoManager);
+    ipc::Endpoint<dom::PVideoDecoderManagerChild>* aOutVideoManager,
+    nsTArray<uint32_t>* aNamespaces);
 
   // This returns a reference to the APZCTreeManager to which
   // pan/zoom-related events can be sent.
@@ -116,9 +119,23 @@ public:
   // Allocate an ID that can be used to refer to a layer tree and
   // associated resources that live only on the compositor thread.
   //
-  // Must run on the content main thread.
+  // Must run on the browser main thread.
   uint64_t AllocateLayerTreeId();
 
+  // Allocate an ID that can be used as Namespace and
+  // Must run on the browser main thread.
+  uint32_t AllocateNamespace();
+
+  // Allocate a layers ID and connect it to a compositor. If the compositor is null,
+  // the connect operation will not be performed, but an ID will still be allocated.
+  // This must be called from the browser main thread.
+  //
+  // Note that a layer tree id is always allocated, even if this returns false.
+  bool AllocateAndConnectLayerTreeId(
+    PCompositorBridgeChild* aCompositorBridge,
+    base::ProcessId aOtherPid,
+    uint64_t* aOutLayersId,
+    CompositorOptions* aOutCompositorOptions);
 
   void OnProcessLaunchComplete(GPUProcessHost* aHost) override;
   void OnProcessUnexpectedShutdown(GPUProcessHost* aHost) override;
@@ -155,14 +172,6 @@ public:
     return mNumProcessAttempts > 0;
   }
 
-  // Returns the next compositor reset sequence number, a monotonic counter
-  // for when the compositing device resets. Since content processes are
-  // notified of resets through each individual tab, this allows content to
-  // only re-acquire devices once for each reset.
-  uint64_t GetNextDeviceResetSequenceNumber() {
-    return ++mNextResetSequenceNo;
-  }
-
 private:
   // Called from our xpcom-shutdown observer.
   void OnXPCOMShutdown();
@@ -181,6 +190,8 @@ private:
   void RegisterSession(RemoteCompositorSession* aSession);
   void UnregisterSession(RemoteCompositorSession* aSession);
 
+  void RebuildRemoteSessions();
+
 private:
   GPUProcessManager();
 
@@ -198,7 +209,10 @@ private:
 
   void EnsureImageBridgeChild();
   void EnsureVRManager();
-  void EnsureUiCompositorController();
+
+#if defined(MOZ_WIDGET_ANDROID)
+  already_AddRefed<UiCompositorControllerChild> CreateUiCompositorController(nsBaseWidget* aWidget, const uint64_t aId);
+#endif // defined(MOZ_WIDGET_ANDROID)
 
   RefPtr<CompositorSession> CreateRemoteSession(
     nsBaseWidget* aWidget,
@@ -225,11 +239,14 @@ private:
   friend class Observer;
 
 private:
+  bool mDecodeVideoOnGpuProcess = true;
+
   RefPtr<Observer> mObserver;
   ipc::TaskFactory<GPUProcessManager> mTaskFactory;
   RefPtr<VsyncIOThreadHolder> mVsyncIOThread;
-  uint64_t mNextLayerTreeId;
-  uint64_t mNextResetSequenceNo;
+  uint32_t mNextNamespace;
+  uint32_t mIdNamespace;
+  uint32_t mResourceId;
   uint32_t mNumProcessAttempts;
 
   nsTArray<RefPtr<RemoteCompositorSession>> mRemoteSessions;

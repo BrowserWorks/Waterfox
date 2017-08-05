@@ -66,14 +66,10 @@ struct AstDecodeStackItem
 // We don't define a Value type because OpIter doesn't push void values, which
 // we actually need here because we're building an AST, so we maintain our own
 // stack.
-struct AstDecodePolicy : OpIterPolicy
+struct AstDecodePolicy
 {
-    // Enable validation because we can be called from wasmBinaryToText on bytes
-    // which are not necessarily valid, and we shouldn't run the decoder in
-    // non-validating mode on invalid code.
-    static const bool Validate = true;
-
-    static const bool Output = true;
+    typedef Nothing Value;
+    typedef Nothing ControlItem;
 };
 
 typedef OpIter<AstDecodePolicy> AstDecodeOpIter;
@@ -248,6 +244,18 @@ GenerateRef(AstDecodeContext& c, const AstName& prefix, uint32_t index, AstRef* 
 }
 
 static bool
+GenerateFuncRef(AstDecodeContext& c, uint32_t funcIndex, AstRef* ref)
+{
+    if (funcIndex < c.module().numFuncImports()) {
+        *ref = AstRef(c.module().funcImportNames()[funcIndex]);
+    } else {
+        if (!GenerateRef(c, AstName(u"func"), funcIndex, ref))
+            return false;
+    }
+    return true;
+}
+
+static bool
 AstDecodeCallArgs(AstDecodeContext& c, const SigWithId& sig, AstExprVector* funcArgs)
 {
     MOZ_ASSERT(!c.iter().currentBlockHasPolymorphicBase());
@@ -301,12 +309,8 @@ AstDecodeCall(AstDecodeContext& c)
         return true;
 
     AstRef funcRef;
-    if (funcIndex < c.module().numFuncImports()) {
-        funcRef = AstRef(c.module().funcImportNames()[funcIndex]);
-    } else {
-        if (!GenerateRef(c, AstName(u"func"), funcIndex, &funcRef))
-            return false;
-    }
+    if (!GenerateFuncRef(c, funcIndex, &funcRef))
+        return false;
 
     const SigWithId* sig = c.env().funcSigs[funcIndex];
 
@@ -1455,7 +1459,7 @@ AstDecodeFunctionBody(AstDecodeContext &c, uint32_t funcIndex, AstFunc** func)
     }
     c.exprs().shrinkTo(c.depths().popCopy());
 
-    if (!c.iter().readFunctionEnd())
+    if (!c.iter().readFunctionEnd(bodyEnd))
         return false;
 
     c.endFunction();
@@ -1716,7 +1720,7 @@ AstCreateStartFunc(AstDecodeContext &c)
         return true;
 
     AstRef funcRef;
-    if (!GenerateRef(c, AstName(u"func"), *c.env().startFuncIndex, &funcRef))
+    if (!GenerateFuncRef(c, *c.env().startFuncIndex, &funcRef))
         return false;
 
     c.module().setStartFunc(AstStartFunc(funcRef));

@@ -21,19 +21,13 @@
 #include "nsContentUtils.h"
 #include "nsDocShell.h"
 #include "nsGlobalWindow.h"
-#include "nsNullPrincipal.h"
+#include "NullPrincipal.h"
+#include "nsRedirectHistoryEntry.h"
 
 using namespace mozilla::dom;
 
 namespace mozilla {
 namespace net {
-
-static void
-InheritOriginAttributes(nsIPrincipal* aLoadingPrincipal,
-                        OriginAttributes& aAttrs)
-{
-  aAttrs.Inherit(aLoadingPrincipal->OriginAttributesRef());
-}
 
 LoadInfo::LoadInfo(nsIPrincipal* aLoadingPrincipal,
                    nsIPrincipal* aTriggeringPrincipal,
@@ -149,35 +143,35 @@ LoadInfo::LoadInfo(nsIPrincipal* aLoadingPrincipal,
     }
   }
 
-    // If CSP requires SRI (require-sri-for), then store that information
-    // in the loadInfo so we can enforce SRI before loading the subresource.
-    if (!mEnforceSRI) {
-      // do not look into the CSP if already true:
-      // a CSP saying that SRI isn't needed should not
-      // overrule GetVerifySignedContent
-      if (aLoadingPrincipal) {
-        nsCOMPtr<nsIContentSecurityPolicy> csp;
-        aLoadingPrincipal->GetCsp(getter_AddRefs(csp));
-        uint32_t externalType =
-          nsContentUtils::InternalContentPolicyTypeToExternal(aContentPolicyType);
-        // csp could be null if loading principal is system principal
-        if (csp) {
-          csp->RequireSRIForType(externalType, &mEnforceSRI);
-        }
-        // if CSP is delivered via a meta tag, it's speculatively available
-        // as 'preloadCSP'. If we are preloading a script or style, we have
-        // to apply that speculative 'preloadCSP' for such loads.
-        if (!mEnforceSRI && nsContentUtils::IsPreloadType(aContentPolicyType)) {
-          nsCOMPtr<nsIContentSecurityPolicy> preloadCSP;
-          aLoadingPrincipal->GetPreloadCsp(getter_AddRefs(preloadCSP));
-          if (preloadCSP) {
-            preloadCSP->RequireSRIForType(externalType, &mEnforceSRI);
-          }
+  // If CSP requires SRI (require-sri-for), then store that information
+  // in the loadInfo so we can enforce SRI before loading the subresource.
+  if (!mEnforceSRI) {
+    // do not look into the CSP if already true:
+    // a CSP saying that SRI isn't needed should not
+    // overrule GetVerifySignedContent
+    if (aLoadingPrincipal) {
+      nsCOMPtr<nsIContentSecurityPolicy> csp;
+      aLoadingPrincipal->GetCsp(getter_AddRefs(csp));
+      uint32_t externalType =
+        nsContentUtils::InternalContentPolicyTypeToExternal(aContentPolicyType);
+      // csp could be null if loading principal is system principal
+      if (csp) {
+        csp->RequireSRIForType(externalType, &mEnforceSRI);
+      }
+      // if CSP is delivered via a meta tag, it's speculatively available
+      // as 'preloadCSP'. If we are preloading a script or style, we have
+      // to apply that speculative 'preloadCSP' for such loads.
+      if (!mEnforceSRI && nsContentUtils::IsPreloadType(aContentPolicyType)) {
+        nsCOMPtr<nsIContentSecurityPolicy> preloadCSP;
+        aLoadingPrincipal->GetPreloadCsp(getter_AddRefs(preloadCSP));
+        if (preloadCSP) {
+          preloadCSP->RequireSRIForType(externalType, &mEnforceSRI);
         }
       }
     }
+  }
 
-  InheritOriginAttributes(mLoadingPrincipal, mOriginAttributes);
+  mOriginAttributes = mLoadingPrincipal->OriginAttributesRef();
 
   // We need to do this after inheriting the document's origin attributes
   // above, in case the loading principal ends up being the system principal.
@@ -261,15 +255,14 @@ LoadInfo::LoadInfo(nsPIDOMWindowOuter* aOuterWindow,
   // get the docshell from the outerwindow, and then get the originattributes
   nsCOMPtr<nsIDocShell> docShell = aOuterWindow->GetDocShell();
   MOZ_ASSERT(docShell);
-  const OriginAttributes attrs =
-    nsDocShell::Cast(docShell)->GetOriginAttributes();
+  mOriginAttributes = nsDocShell::Cast(docShell)->GetOriginAttributes();
 
+#ifdef DEBUG
   if (docShell->ItemType() == nsIDocShellTreeItem::typeChrome) {
-    MOZ_ASSERT(attrs.mPrivateBrowsingId == 0,
+    MOZ_ASSERT(mOriginAttributes.mPrivateBrowsingId == 0,
                "chrome docshell shouldn't have mPrivateBrowsingId set.");
   }
-
-  mOriginAttributes.Inherit(attrs);
+#endif
 }
 
 LoadInfo::LoadInfo(const LoadInfo& rhs)
@@ -323,8 +316,8 @@ LoadInfo::LoadInfo(nsIPrincipal* aLoadingPrincipal,
                    bool aInitialSecurityCheckDone,
                    bool aIsThirdPartyContext,
                    const OriginAttributes& aOriginAttributes,
-                   nsTArray<nsCOMPtr<nsIPrincipal>>& aRedirectChainIncludingInternalRedirects,
-                   nsTArray<nsCOMPtr<nsIPrincipal>>& aRedirectChain,
+                   RedirectHistoryArray& aRedirectChainIncludingInternalRedirects,
+                   RedirectHistoryArray& aRedirectChain,
                    const nsTArray<nsCString>& aCorsUnsafeHeaders,
                    bool aForcePreflight,
                    bool aIsPreflight,
@@ -473,11 +466,10 @@ LoadInfo::GetSandboxedLoadingPrincipal(nsIPrincipal** aPrincipal)
   if (!mSandboxedLoadingPrincipal) {
     if (mLoadingPrincipal) {
       mSandboxedLoadingPrincipal =
-        nsNullPrincipal::CreateWithInheritedAttributes(mLoadingPrincipal);
+        NullPrincipal::CreateWithInheritedAttributes(mLoadingPrincipal);
     } else {
       OriginAttributes attrs(mOriginAttributes);
-      attrs.StripAttributes(OriginAttributes::STRIP_ADDON_ID);
-      mSandboxedLoadingPrincipal = nsNullPrincipal::Create(attrs);
+      mSandboxedLoadingPrincipal = NullPrincipal::Create(attrs);
     }
   }
   MOZ_ASSERT(mSandboxedLoadingPrincipal);
@@ -725,9 +717,8 @@ LoadInfo::ResetPrincipalToInheritToNullPrincipal()
 {
   // take the originAttributes from the LoadInfo and create
   // a new NullPrincipal using those origin attributes.
-  OriginAttributes attrs;
-  attrs.Inherit(mOriginAttributes);
-  nsCOMPtr<nsIPrincipal> newNullPrincipal = nsNullPrincipal::Create(attrs);
+  nsCOMPtr<nsIPrincipal> newNullPrincipal =
+    NullPrincipal::Create(mOriginAttributes);
 
   mPrincipalToInherit = newNullPrincipal;
 
@@ -805,28 +796,54 @@ LoadInfo::GetInitialSecurityCheckDone(bool* aResult)
 }
 
 NS_IMETHODIMP
-LoadInfo::AppendRedirectedPrincipal(nsIPrincipal* aPrincipal, bool aIsInternalRedirect)
+LoadInfo::AppendRedirectHistoryEntry(nsIRedirectHistoryEntry* aEntry,
+                                     bool aIsInternalRedirect)
 {
-  NS_ENSURE_ARG(aPrincipal);
+  NS_ENSURE_ARG(aEntry);
   MOZ_ASSERT(NS_IsMainThread());
 
-  mRedirectChainIncludingInternalRedirects.AppendElement(aPrincipal);
+  mRedirectChainIncludingInternalRedirects.AppendElement(aEntry);
   if (!aIsInternalRedirect) {
-    mRedirectChain.AppendElement(aPrincipal);
+    mRedirectChain.AppendElement(aEntry);
   }
+  return NS_OK;
+}
+
+NS_IMETHODIMP
+LoadInfo::GetRedirects(JSContext* aCx, JS::MutableHandle<JS::Value> aRedirects,
+                       const RedirectHistoryArray& aArray)
+{
+  JS::Rooted<JSObject*> redirects(aCx, JS_NewArrayObject(aCx, aArray.Length()));
+  NS_ENSURE_TRUE(redirects, NS_ERROR_OUT_OF_MEMORY);
+
+  JS::Rooted<JSObject*> global(aCx, JS::CurrentGlobalOrNull(aCx));
+  NS_ENSURE_TRUE(global, NS_ERROR_UNEXPECTED);
+
+  nsCOMPtr<nsIXPConnect> xpc = mozilla::services::GetXPConnect();
+
+  for (size_t idx = 0; idx < aArray.Length(); idx++) {
+    JS::RootedObject jsobj(aCx);
+    nsresult rv = xpc->WrapNative(aCx, global, aArray[idx],
+                                  NS_GET_IID(nsIRedirectHistoryEntry),
+                                  jsobj.address());
+    NS_ENSURE_SUCCESS(rv, rv);
+    NS_ENSURE_STATE(jsobj);
+
+    bool rc = JS_DefineElement(aCx, redirects, idx, jsobj, JSPROP_ENUMERATE);
+    NS_ENSURE_TRUE(rc, NS_ERROR_UNEXPECTED);
+  }
+
+  aRedirects.setObject(*redirects);
   return NS_OK;
 }
 
 NS_IMETHODIMP
 LoadInfo::GetRedirectChainIncludingInternalRedirects(JSContext* aCx, JS::MutableHandle<JS::Value> aChain)
 {
-  if (!ToJSValue(aCx, mRedirectChainIncludingInternalRedirects, aChain)) {
-    return NS_ERROR_OUT_OF_MEMORY;
-  }
-  return NS_OK;
+  return GetRedirects(aCx, aChain, mRedirectChainIncludingInternalRedirects);
 }
 
-const nsTArray<nsCOMPtr<nsIPrincipal>>&
+const RedirectHistoryArray&
 LoadInfo::RedirectChainIncludingInternalRedirects()
 {
   return mRedirectChainIncludingInternalRedirects;
@@ -835,13 +852,10 @@ LoadInfo::RedirectChainIncludingInternalRedirects()
 NS_IMETHODIMP
 LoadInfo::GetRedirectChain(JSContext* aCx, JS::MutableHandle<JS::Value> aChain)
 {
-  if (!ToJSValue(aCx, mRedirectChain, aChain)) {
-    return NS_ERROR_OUT_OF_MEMORY;
-  }
-  return NS_OK;
+  return GetRedirects(aCx, aChain, mRedirectChain);
 }
 
-const nsTArray<nsCOMPtr<nsIPrincipal>>&
+const RedirectHistoryArray&
 LoadInfo::RedirectChain()
 {
   return mRedirectChain;
@@ -936,6 +950,13 @@ LoadInfo::MaybeIncreaseTainting(uint32_t aTainting)
     mTainting = tainting;
   }
   return NS_OK;
+}
+
+void
+LoadInfo::SynthesizeServiceWorkerTainting(LoadTainting aTainting)
+{
+  MOZ_DIAGNOSTIC_ASSERT(aTainting <= LoadTainting::Opaque);
+  mTainting = aTainting;
 }
 
 NS_IMETHODIMP

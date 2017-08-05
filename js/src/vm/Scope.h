@@ -397,7 +397,11 @@ class LexicalScope : public Scope
     static bool XDR(XDRState<mode>* xdr, ScopeKind kind, HandleScope enclosing,
                     MutableHandleScope scope);
 
-  protected:
+  private:
+    static LexicalScope* createWithData(JSContext* cx, ScopeKind kind,
+                                        MutableHandle<UniquePtr<Data>> data,
+                                        uint32_t firstFrameSlot, HandleScope enclosing);
+
     Data& data() {
         return *reinterpret_cast<Data*>(data_);
     }
@@ -521,8 +525,9 @@ class FunctionScope : public Scope
                     MutableHandleScope scope);
 
   private:
-    static UniquePtr<Data> copyData(JSContext* cx, Handle<Data*> data,
-                                    bool hasParameterExprs, MutableHandleShape envShape);
+    static FunctionScope* createWithData(JSContext* cx, MutableHandle<UniquePtr<Data>> data,
+                                         bool hasParameterExprs, bool needsEnvironment,
+                                         HandleFunction fun, HandleScope enclosing);
 
     Data& data() {
         return *reinterpret_cast<Data*>(data_);
@@ -618,8 +623,9 @@ class VarScope : public Scope
                     MutableHandleScope scope);
 
   private:
-    static UniquePtr<Data> copyData(JSContext* cx, Handle<Data*> data,
-                                    uint32_t firstFrameSlot, MutableHandleShape envShape);
+    static VarScope* createWithData(JSContext* cx, ScopeKind kind, MutableHandle<UniquePtr<Data>> data,
+                                    uint32_t firstFrameSlot, bool needsEnvironment,
+                                    HandleScope enclosing);
 
     Data& data() {
         return *reinterpret_cast<Data*>(data_);
@@ -714,7 +720,8 @@ class GlobalScope : public Scope
     static bool XDR(XDRState<mode>* xdr, ScopeKind kind, MutableHandleScope scope);
 
   private:
-    static UniquePtr<Data> copyData(JSContext* cx, Handle<Data*> data);
+    static GlobalScope* createWithData(JSContext* cx, ScopeKind kind,
+                                       MutableHandle<UniquePtr<Data>> data);
 
     Data& data() {
         return *reinterpret_cast<Data*>(data_);
@@ -814,8 +821,8 @@ class EvalScope : public Scope
                     MutableHandleScope scope);
 
   private:
-    static UniquePtr<Data> copyData(JSContext* cx, ScopeKind scopeKind,
-                                    Handle<Data*> data, MutableHandleShape envShape);
+    static EvalScope* createWithData(JSContext* cx, ScopeKind kind, MutableHandle<UniquePtr<Data>> data,
+                                     HandleScope enclosing);
 
     Data& data() {
         return *reinterpret_cast<Data*>(data_);
@@ -917,8 +924,8 @@ class ModuleScope : public Scope
                                Handle<ModuleObject*> module, HandleScope enclosing);
 
   private:
-    static UniquePtr<Data> copyData(JSContext* cx, Handle<Data*> data,
-                                    MutableHandleShape envShape);
+    static ModuleScope* createWithData(JSContext* cx, MutableHandle<UniquePtr<Data>> data,
+                                       Handle<ModuleObject*> module, HandleScope enclosing);
 
     Data& data() {
         return *reinterpret_cast<Data*>(data_);

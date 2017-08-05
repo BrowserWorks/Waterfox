@@ -240,10 +240,9 @@ var Scheduler = this.Scheduler = {
    * Prepare to kill the OS.File worker after a few seconds.
    */
   restartTimer: function(arg) {
-    let delay;
-    try {
-      delay = Services.prefs.getIntPref("osfile.reset_worker_delay");
-    } catch(e) {
+    let delay = Services.prefs.getIntPref("osfile.reset_worker_delay", 0);
+
+    if (!delay) {
       // Don't auto-shutdown if we don't have a delay preference set.
       return;
     }
@@ -280,13 +279,13 @@ var Scheduler = this.Scheduler = {
     let savedQueue = this.queue;
     this.queue = deferred.promise;
 
-    return this._killQueue = Task.spawn(function*() {
+    return this._killQueue = (async () => {
 
-      yield killQueue;
+      await killQueue;
       // From this point, and until the end of the Task, we are the
       // only call to `kill`, regardless of any `yield`.
 
-      yield savedQueue;
+      await savedQueue;
 
       try {
         // Enter critical section: no yield in this block
@@ -312,7 +311,7 @@ var Scheduler = this.Scheduler = {
         // Wait for result
         let resources;
         try {
-          resources = yield this._worker.post(...message);
+          resources = await this._worker.post(...message);
 
           Scheduler.latestReceived = [Date.now(), message];
         } catch (ex) {
@@ -360,7 +359,7 @@ var Scheduler = this.Scheduler = {
         deferred.resolve();
       }
 
-    }.bind(this));
+    })();
   },
 
   /**
@@ -405,7 +404,7 @@ var Scheduler = this.Scheduler = {
     }
 
     Scheduler.Debugging.messagesQueued++;
-    return this.push(Task.async(function*() {
+    return this.push(async () => {
       if (this.shutdown) {
 	LOG("OS.File is not available anymore. The following request has been rejected.",
 	  method, args);
@@ -426,7 +425,7 @@ var Scheduler = this.Scheduler = {
         try {
           Scheduler.Debugging.messagesSent++;
           Scheduler.Debugging.latestSent = Scheduler.Debugging.latestSent.slice(0, 2);
-          reply = yield this.worker.post(method, args, closure);
+          reply = await this.worker.post(method, args, closure);
           Scheduler.Debugging.latestReceived = [Date.now(), summarizeObject(reply)];
           return reply;
         } finally {
@@ -441,7 +440,7 @@ var Scheduler = this.Scheduler = {
         }
         Scheduler.restartTimer();
       }
-    }.bind(this)));
+    });
   },
 
   /**
@@ -477,14 +476,8 @@ const PREF_OSFILE_LOG_REDIRECT = "toolkit.osfile.log.redirect";
  *        An optional value that the DEBUG flag was set to previously.
  */
 function readDebugPref(prefName, oldPref = false) {
-  let pref = oldPref;
-  try {
-    pref = Services.prefs.getBoolPref(prefName);
-  } catch (x) {
-    // In case of an error when reading a pref keep it as is.
-  }
   // If neither pref nor oldPref were set, default it to false.
-  return pref;
+  return Services.prefs.getBoolPref(prefName, oldPref);
 };
 
 /**
@@ -498,13 +491,13 @@ Services.prefs.addObserver(PREF_OSFILE_LOG,
       // Don't start the worker just to set this preference.
       Scheduler.post("SET_DEBUG", [SharedAll.Config.DEBUG]);
     }
-  }, false);
+  });
 SharedAll.Config.DEBUG = readDebugPref(PREF_OSFILE_LOG, false);
 
 Services.prefs.addObserver(PREF_OSFILE_LOG_REDIRECT,
   function prefObserver(aSubject, aTopic, aData) {
     SharedAll.Config.TEST = readDebugPref(PREF_OSFILE_LOG_REDIRECT, OS.Shared.TEST);
-  }, false);
+  });
 SharedAll.Config.TEST = readDebugPref(PREF_OSFILE_LOG_REDIRECT, false);
 
 
@@ -517,7 +510,7 @@ const PREF_OSFILE_NATIVE = "toolkit.osfile.native";
 Services.prefs.addObserver(PREF_OSFILE_NATIVE,
   function prefObserver(aSubject, aTopic, aData) {
     nativeWheneverAvailable = readDebugPref(PREF_OSFILE_NATIVE, nativeWheneverAvailable);
-  }, false);
+  });
 
 
 // Update worker's DEBUG flag if it's true.
@@ -535,13 +528,13 @@ const PREF_OSFILE_TEST_SHUTDOWN_OBSERVER =
 
 AsyncShutdown.webWorkersShutdown.addBlocker(
   "OS.File: flush pending requests, warn about unclosed files, shut down service.",
-  Task.async(function*() {
+  async function() {
     // Give clients a last chance to enqueue requests.
-    yield Barriers.shutdown.wait({crashAfterMS: null});
+    await Barriers.shutdown.wait({crashAfterMS: null});
 
     // Wait until all requests are complete and kill the worker.
-    yield Scheduler.kill({reset: false, shutdown: true});
-  }),
+    await Scheduler.kill({reset: false, shutdown: true});
+  },
   () => {
     let details = Barriers.getDetails();
     details.clients = Barriers.shutdown.state;
@@ -558,12 +551,8 @@ Services.prefs.addObserver(PREF_OSFILE_TEST_SHUTDOWN_OBSERVER,
   function prefObserver() {
     // The temporary phase topic used to trigger the unclosed
     // phase warning.
-    let TOPIC = null;
-    try {
-      TOPIC = Services.prefs.getCharPref(
-        PREF_OSFILE_TEST_SHUTDOWN_OBSERVER);
-    } catch (x) {
-    }
+    let TOPIC = Services.prefs.getCharPref(PREF_OSFILE_TEST_SHUTDOWN_OBSERVER,
+                                           "");
     if (TOPIC) {
       // Generate a phase, add a blocker.
       // Note that this can work only if AsyncShutdown itself has been
@@ -574,7 +563,7 @@ Services.prefs.addObserver(PREF_OSFILE_TEST_SHUTDOWN_OBSERVER,
         () => Scheduler.kill({shutdown: false, reset: false})
       );
     }
-  }, false);
+  });
 
 /**
  * Representation of a file, with asynchronous methods.
@@ -1423,12 +1412,12 @@ DirectoryIterator.Entry.fromMsg = function fromMsg(value) {
 };
 
 File.resetWorker = function() {
-  return Task.spawn(function*() {
-    let resources = yield Scheduler.kill({shutdown: false, reset: true});
+  return (async function() {
+    let resources = await Scheduler.kill({shutdown: false, reset: true});
     if (resources && !resources.killed) {
         throw new Error("Could not reset worker, this would leak file descriptors: " + JSON.stringify(resources));
     }
-  });
+  })();
 };
 
 // Constants
@@ -1510,13 +1499,13 @@ function setupShutdown(phaseName) {
   // clients should register using AsyncShutdown.addBlocker.
   AsyncShutdown[phaseName].addBlocker(
     `OS.File: flush I/O queued before ${phaseName}`,
-    Task.async(function*() {
+    async function() {
       // Give clients a last chance to enqueue requests.
-      yield Barriers[phaseName].wait({crashAfterMS: null});
+      await Barriers[phaseName].wait({crashAfterMS: null});
 
       // Wait until all currently enqueued requests are completed.
-      yield Scheduler.queue;
-    }),
+      await Scheduler.queue;
+    },
     () => {
       let details = Barriers.getDetails();
       details.clients = Barriers[phaseName].state;

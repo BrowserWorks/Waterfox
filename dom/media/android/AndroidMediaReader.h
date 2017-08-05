@@ -35,7 +35,7 @@ class AndroidMediaReader : public MediaDecoderReader
   int64_t mAudioSeekTimeUs;
   RefPtr<VideoData> mLastVideoFrame;
   MozPromiseHolder<MediaDecoderReader::SeekPromise> mSeekPromise;
-  MozPromiseRequestHolder<MediaDecoderReader::MediaDataPromise> mSeekRequest;
+  MozPromiseRequestHolder<MediaDecoderReader::VideoDataPromise> mSeekRequest;
 public:
   AndroidMediaReader(AbstractMediaDecoder* aDecoder,
                      const MediaContainerType& aContainerType);
@@ -44,7 +44,8 @@ public:
                                                    TrackInfo::kVideoTrack)) override;
 
   bool DecodeAudioData() override;
-  bool DecodeVideoFrame(bool &aKeyframeSkip, int64_t aTimeThreshold) override;
+  bool DecodeVideoFrame(bool& aKeyframeSkip,
+                        const media::TimeUnit& aTimeThreshold) override;
 
   nsresult ReadMetadata(MediaInfo* aInfo, MetadataTags** aTags) override;
   RefPtr<SeekPromise> Seek(const SeekTarget& aTarget) override;

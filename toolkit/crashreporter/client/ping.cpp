@@ -122,6 +122,7 @@ CreateMetadataNode(StringTable& strings)
 {
   // The following list should be kept in sync with the one in CrashManager.jsm
   const char *entries[] = {
+    "AsyncShutdownTimeout",
     "AvailablePageFile",
     "AvailablePhysicalMemory",
     "AvailableVirtualMemory",
@@ -137,10 +138,11 @@ CreateMetadataNode(StringTable& strings)
     "ProductID",
     "ProductName",
     "ReleaseChannel",
+    "RemoteType",
     "SecondsSinceLastCrash",
+    "ShutdownProgress",
     "StartupCrash",
     "SystemMemoryUsePercentage",
-    "TelemetrySessionId",
     "TextureUsage",
     "TotalPageFile",
     "TotalPhysicalMemory",
@@ -163,15 +165,18 @@ CreateMetadataNode(StringTable& strings)
 
 // Create the payload node of the crash ping
 static Json::Value
-CreatePayloadNode(StringTable& strings, const string& aSessionId)
+CreatePayloadNode(StringTable& strings, const string& aHash,
+                  const string& aSessionId)
 {
   Json::Value payload;
 
   payload["sessionId"] = aSessionId;
   payload["version"] = 1;
   payload["crashDate"] = CurrentDate(kISO8601Date);
+  payload["crashTime"] = CurrentDate(kISO8601DateHours);
   payload["hasCrashEnvironment"] = true;
   payload["crashId"] = GetDumpLocalID();
+  payload["minidumpSha256Hash"] = aHash;
   payload["processType"] = "main"; // This is always a main crash
 
   // Parse the stack traces
@@ -217,7 +222,7 @@ CreateApplicationNode(const string& aVendor, const string& aName,
 
 // Create the root node of the crash ping
 static Json::Value
-CreateRootNode(StringTable& strings, const string& aUuid,
+CreateRootNode(StringTable& strings, const string& aUuid, const string& aHash,
                const string& aClientId, const string& aSessionId,
                const string& aName, const string& aVersion,
                const string& aChannel, const string& aBuildId)
@@ -250,7 +255,7 @@ CreateRootNode(StringTable& strings, const string& aUuid,
     root["environment"] = environment;
   }
 
-  root["payload"] = CreatePayloadNode(strings, aSessionId);
+  root["payload"] = CreatePayloadNode(strings, aHash, aSessionId);
   root["application"] = CreateApplicationNode(strings["Vendor"], aName,
                                               aVersion, aChannel, aBuildId,
                                               architecture, xpcomAbi);
@@ -304,7 +309,8 @@ WritePing(const string& aPath, const string& aPing)
 // Returns true if the ping was assembled and handed over to the pingsender
 // correctly, false otherwise and populates the aUUID field with the ping UUID.
 bool
-SendCrashPing(StringTable& strings, string& pingUuid, const string& pingDir)
+SendCrashPing(StringTable& strings, const string& aHash, string& pingUuid,
+              const string& pingDir)
 {
   string clientId    = strings[kTelemetryClientId];
   string serverUrl   = strings[kTelemetryUrl];
@@ -327,7 +333,7 @@ SendCrashPing(StringTable& strings, string& pingUuid, const string& pingDir)
     return false;
   }
 
-  Json::Value root = CreateRootNode(strings, uuid, clientId, sessionId,
+  Json::Value root = CreateRootNode(strings, uuid, aHash, clientId, sessionId,
                                     name, version, channel, buildId);
 
   // Write out the result to the pending pings directory

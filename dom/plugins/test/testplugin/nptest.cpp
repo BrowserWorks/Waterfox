@@ -133,6 +133,7 @@ static bool throwExceptionNextInvoke(NPObject* npobj, const NPVariant* args, uin
 static bool convertPointX(NPObject* npobj, const NPVariant* args, uint32_t argCount, NPVariant* result);
 static bool convertPointY(NPObject* npobj, const NPVariant* args, uint32_t argCount, NPVariant* result);
 static bool streamTest(NPObject* npobj, const NPVariant* args, uint32_t argCount, NPVariant* result);
+static bool postFileToURLTest(NPObject* npobj, const NPVariant* args, uint32_t argCount, NPVariant* result);
 static bool setPluginWantsAllStreams(NPObject* npobj, const NPVariant* args, uint32_t argCount, NPVariant* result);
 static bool crashPlugin(NPObject* npobj, const NPVariant* args, uint32_t argCount, NPVariant* result);
 static bool crashOnDestroy(NPObject* npobj, const NPVariant* args, uint32_t argCount, NPVariant* result);
@@ -140,7 +141,6 @@ static bool getObjectValue(NPObject* npobj, const NPVariant* args, uint32_t argC
 static bool getJavaCodebase(NPObject* npobj, const NPVariant* args, uint32_t argCount, NPVariant* result);
 static bool checkObjectValue(NPObject* npobj, const NPVariant* args, uint32_t argCount, NPVariant* result);
 static bool enableFPExceptions(NPObject* npobj, const NPVariant* args, uint32_t argCount, NPVariant* result);
-static bool getAuthInfo(NPObject* npobj, const NPVariant* args, uint32_t argCount, NPVariant* result);
 static bool asyncCallbackTest(NPObject* npobj, const NPVariant* args, uint32_t argCount, NPVariant* result);
 static bool checkGCRace(NPObject* npobj, const NPVariant* args, uint32_t argCount, NPVariant* result);
 static bool hangPlugin(NPObject* npobj, const NPVariant* args, uint32_t argCount, NPVariant* result);
@@ -207,6 +207,7 @@ static const NPUTF8* sPluginMethodIdentifierNames[] = {
   "convertPointX",
   "convertPointY",
   "streamTest",
+  "postFileToURLTest",
   "setPluginWantsAllStreams",
   "crash",
   "crashOnDestroy",
@@ -214,7 +215,6 @@ static const NPUTF8* sPluginMethodIdentifierNames[] = {
   "getJavaCodebase",
   "checkObjectValue",
   "enableFPExceptions",
-  "getAuthInfo",
   "asyncCallbackTest",
   "checkGCRace",
   "hang",
@@ -282,6 +282,7 @@ static const ScriptableFunction sPluginMethodFunctions[] = {
   convertPointX,
   convertPointY,
   streamTest,
+  postFileToURLTest,
   setPluginWantsAllStreams,
   crashPlugin,
   crashOnDestroy,
@@ -289,7 +290,6 @@ static const ScriptableFunction sPluginMethodFunctions[] = {
   getJavaCodebase,
   checkObjectValue,
   enableFPExceptions,
-  getAuthInfo,
   asyncCallbackTest,
   checkGCRace,
   hangPlugin,
@@ -527,7 +527,7 @@ static void sendBufferToFrame(NPP instance)
         if (!((ascii >= ',' && ascii <= ';') ||
               (ascii >= 'A' && ascii <= 'Z') ||
               (ascii >= 'a' && ascii <= 'z'))) {
-          char hex[8];
+          char hex[10];
           sprintf(hex, "%%%x", ascii);
           outbuf.replace(i, 1, hex);
           i += 2;
@@ -1982,20 +1982,6 @@ NPN_GetValueForURL(NPP instance, NPNURLVariable variable, const char *url, char 
   return sBrowserFuncs->getvalueforurl(instance, variable, url, value, len);
 }
 
-NPError
-NPN_GetAuthenticationInfo(NPP instance,
-                          const char *protocol,
-                          const char *host, int32_t port,
-                          const char *scheme,
-                          const char *realm,
-                          char **username, uint32_t *ulen,
-                          char **password,
-                          uint32_t *plen)
-{
-  return sBrowserFuncs->getauthenticationinfo(instance, protocol, host, port, scheme, realm,
-      username, ulen, password, plen);
-}
-
 void
 NPN_PluginThreadAsyncCall(NPP plugin, void (*func)(void*), void* userdata)
 {
@@ -2735,8 +2721,8 @@ convertPointY(NPObject* npobj, const NPVariant* args, uint32_t argCount, NPVaria
 static bool
 streamTest(NPObject* npobj, const NPVariant* args, uint32_t argCount, NPVariant* result)
 {
-  // .streamTest(url, doPost, doNull, writeCallback, notifyCallback, redirectCallback, allowRedirects)
-  if (7 != argCount)
+  // .streamTest(url, doPost, postData, writeCallback, notifyCallback, redirectCallback, allowRedirects, postFile = false)
+  if (!(7 <= argCount && argCount <= 8))
     return false;
 
   NPP npp = static_cast<TestNPObject*>(npobj)->npp;
@@ -2793,6 +2779,14 @@ streamTest(NPObject* npobj, const NPVariant* args, uint32_t argCount, NPVariant*
     return false;
   bool allowRedirects = NPVARIANT_TO_BOOLEAN(args[6]);
 
+  bool postFile = false;
+  if (argCount >= 8) {
+    if (!NPVARIANT_IS_BOOLEAN(args[7])) {
+      return false;
+    }
+    postFile = NPVARIANT_TO_BOOLEAN(args[7]);
+  }
+
   URLNotifyData* ndata = new URLNotifyData;
   ndata->cookie = "dynamic-cookie";
   ndata->writeCallback = writeCallback;
@@ -2811,7 +2805,7 @@ streamTest(NPObject* npobj, const NPVariant* args, uint32_t argCount, NPVariant*
   if (doPost) {
     err = NPN_PostURLNotify(npp, urlstr, nullptr,
                             postData.UTF8Length, postData.UTF8Characters,
-                            false, ndata);
+                            postFile, ndata);
   }
   else {
     err = NPN_GetURLNotify(npp, urlstr, nullptr, ndata);
@@ -2836,6 +2830,38 @@ streamTest(NPObject* npobj, const NPVariant* args, uint32_t argCount, NPVariant*
     BOOLEAN_TO_NPVARIANT(false, *result);
   }
 
+  return true;
+}
+
+static bool
+postFileToURLTest(NPObject* npobj, const NPVariant* args, uint32_t argCount, NPVariant* result)
+{
+  if (1 != argCount)
+    return false;
+
+  NPP npp = static_cast<TestNPObject*>(npobj)->npp;
+
+  string url;
+  {
+    if (!NPVARIANT_IS_STRING(args[0]))
+      return false;
+    NPString npurl = NPVARIANT_TO_STRING(args[0]);
+    // make a copy to ensure that the url string is null-terminated
+    url = string(npurl.UTF8Characters, npurl.UTF8Length);
+  }
+
+
+  NPError err;
+  {
+    string buf("/path/to/file");
+    err = NPN_PostURL(npp,
+                      url.c_str(),
+                      nullptr /* target */,
+                      buf.length(), buf.c_str(),
+                      true /* file */);
+  }
+
+  BOOLEAN_TO_NPVARIANT(NPERR_NO_ERROR == err, *result);
   return true;
 }
 
@@ -3010,58 +3036,6 @@ static bool enableFPExceptions(NPObject* npobj, const NPVariant* args, uint32_t 
 #else
   return false;
 #endif
-}
-
-static bool
-getAuthInfo(NPObject* npobj, const NPVariant* args, uint32_t argCount, NPVariant* result)
-{
-  if (argCount != 5)
-    return false;
-
-  NPP npp = static_cast<TestNPObject*>(npobj)->npp;
-
-  if (!NPVARIANT_IS_STRING(args[0]) || !NPVARIANT_IS_STRING(args[1]) ||
-      !NPVARIANT_IS_INT32(args[2]) || !NPVARIANT_IS_STRING(args[3]) ||
-      !NPVARIANT_IS_STRING(args[4]))
-    return false;
-
-  const NPString* protocol = &NPVARIANT_TO_STRING(args[0]);
-  const NPString* host = &NPVARIANT_TO_STRING(args[1]);
-  uint32_t port = NPVARIANT_TO_INT32(args[2]);
-  const NPString* scheme = &NPVARIANT_TO_STRING(args[3]);
-  const NPString* realm = &NPVARIANT_TO_STRING(args[4]);
-
-  char* username = nullptr;
-  char* password = nullptr;
-  uint32_t ulen = 0, plen = 0;
-
-  NPError err = NPN_GetAuthenticationInfo(npp,
-      protocol->UTF8Characters,
-      host->UTF8Characters,
-      port,
-      scheme->UTF8Characters,
-      realm->UTF8Characters,
-      &username,
-      &ulen,
-      &password,
-      &plen);
-
-  if (err != NPERR_NO_ERROR) {
-    return false;
-  }
-
-  char* outstring = (char*)NPN_MemAlloc(ulen + plen + 2);
-  memset(outstring, 0, ulen + plen + 2);
-  strncpy(outstring, username, ulen);
-  strcat(outstring, "|");
-  strncat(outstring, password, plen);
-
-  STRINGZ_TO_NPVARIANT(outstring, *result);
-
-  NPN_MemFree(username);
-  NPN_MemFree(password);
-
-  return true;
 }
 
 static void timerCallback(NPP npp, uint32_t timerID)

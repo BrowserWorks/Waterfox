@@ -127,7 +127,7 @@
           return;
 
         this.preferences.rootBranchInternal
-            .addObserver(this.name, this.preferences, false);
+            .addObserver(this.name, this.preferences);
         // In non-instant apply mode, we must try and use the last saved state
         // from any previous opens of a child dialog instead of the value from
         // preferences, to pick up any edits a user may have made.
@@ -181,7 +181,7 @@
               .removeObserver(this.name, this.preferences);
           this.setAttribute("name", val);
           this.preferences.rootBranchInternal
-              .addObserver(val, this.preferences, false);
+              .addObserver(val, this.preferences);
 
           return val;
         </setter>
@@ -337,13 +337,9 @@
                          .data;
             case "string":
             case "unichar":
-              return this._branch
-                         .getComplexValue(this.name, Components.interfaces.nsISupportsString)
-                         .data;
+              return this._branch.getStringPref(this.name);
             case "fontname":
-              var family = this._branch
-                               .getComplexValue(this.name, Components.interfaces.nsISupportsString)
-                               .data;
+              var family = this._branch.getStringPref(this.name);
               var fontEnumerator = Components.classes["@mozilla.org/gfx/fontenumerator;1"]
                                              .createInstance(Components.interfaces.nsIFontEnumerator);
               return fontEnumerator.getStandardFamilyName(family);
@@ -388,11 +384,7 @@
           case "string":
           case "unichar":
           case "fontname":
-            var iss = Components.classes["@mozilla.org/supports-string;1"]
-                                .createInstance(Components.interfaces.nsISupportsString);
-            iss.data = val;
-            this.preferences.rootBranch
-                .setComplexValue(this.name, Components.interfaces.nsISupportsString, iss);
+            this.preferences.rootBranch.setStringPref(this.name, val);
             break;
           case "file":
             var lf;
@@ -880,11 +872,8 @@
         <![CDATA[
           var psvc = Components.classes["@mozilla.org/preferences-service;1"]
                                .getService(Components.interfaces.nsIPrefBranch);
-          var animate = /Mac/.test(navigator.platform);
-          try {
-            animate = psvc.getBoolPref("browser.preferences.animateFadeIn");
-          } catch (e) { }
-          return animate;
+          return psvc.getBoolPref("browser.preferences.animateFadeIn",
+                                  /Mac/.test(navigator.platform));
         ]]>
         </getter>
       </property>

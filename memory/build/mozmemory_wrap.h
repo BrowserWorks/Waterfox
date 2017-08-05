@@ -36,8 +36,8 @@
  *   - jemalloc_stats
  *   - jemalloc_purge_freed_pages
  *   - jemalloc_free_dirty_pages
- *   (these functions are native to mozjemalloc, and have compatibility
- *   implementations for jemalloc3)
+ *   - jemalloc_thread_local_arena
+ *   (these functions are native to mozjemalloc)
  *
  * These functions are all exported as part of libmozglue (see
  * $(topsrcdir)/mozglue/build/Makefile.in), with a few implementation
@@ -87,21 +87,16 @@
  *   char* strdup_impl(const char *)
  * That implementation would call malloc by using "malloc_impl".
  *
- * While mozjemalloc uses these "_impl" suffixed helpers, jemalloc3, being
- * third-party code, doesn't, but instead has an elaborate way to mangle
- * individual functions. See under "Run jemalloc configure script" in
- * $(topsrcdir)/configure.in.
- *
  *
  * When building with replace-malloc support, the above still holds, but
  * the malloc implementation and jemalloc specific functions are the
  * replace-malloc functions from replace_malloc.c.
  *
- * The actual jemalloc/mozjemalloc implementation is prefixed with "je_".
+ * The actual mozjemalloc implementation is prefixed with "je_".
  *
  * Thus, when MOZ_REPLACE_MALLOC is defined, the "_impl" suffixed macros
- * expand to "je_" prefixed function when building mozjemalloc or
- * jemalloc3/mozjemalloc_compat, where MOZ_JEMALLOC_IMPL is defined.
+ * expand to "je_" prefixed function when building mozjemalloc, where
+ * MOZ_JEMALLOC_IMPL is defined.
  *
  * In other cases, the "_impl" suffixed macros follow the original scheme,
  * except on Windows and MacOSX, where they would expand to "je_" prefixed
@@ -125,52 +120,48 @@
 
 #include "mozilla/Types.h"
 
-#if !defined(MOZ_SYSTEM_JEMALLOC)
-#  ifdef MOZ_MEMORY_IMPL
-#    if defined(MOZ_JEMALLOC_IMPL) && defined(MOZ_REPLACE_MALLOC) && !defined(MOZ_REPLACE_JEMALLOC)
-#      define mozmem_malloc_impl(a)     je_ ## a
-#      define mozmem_jemalloc_impl(a)   je_ ## a
-#    else
-#      define MOZ_JEMALLOC_API MFBT_API
-#      ifdef MOZ_REPLACE_JEMALLOC
-#        define MOZ_MEMORY_API MFBT_API
-#        define mozmem_malloc_impl(a)     replace_ ## a
-#        define mozmem_jemalloc_impl(a)   replace_ ## a
-#      elif (defined(XP_WIN) || defined(XP_DARWIN))
-#        if defined(MOZ_REPLACE_MALLOC)
-#          define mozmem_malloc_impl(a)   a ## _impl
-#        else
-#          define mozmem_malloc_impl(a)   je_ ## a
-#        endif
-#      else
-#        define MOZ_MEMORY_API MFBT_API
-#        if defined(MOZ_WIDGET_ANDROID) || defined(MOZ_WIDGET_GONK)
-#          define MOZ_WRAP_NEW_DELETE
-#        endif
-#      endif
-#    endif
-#    ifdef XP_WIN
-#      define mozmem_dup_impl(a)      wrap_ ## a
-#    endif
-#  endif
-
-/* All other jemalloc3 functions are prefixed with "je_", except when
- * building against an unprefixed system jemalloc library */
-#  define je_(a) je_ ## a
-#else /* defined(MOZ_SYSTEM_JEMALLOC) */
-#  define je_(a) a
+#ifndef MOZ_EXTERN_C
+#ifdef __cplusplus
+#define MOZ_EXTERN_C extern "C"
+#else
+#define MOZ_EXTERN_C
+#endif
 #endif
 
-#if !defined(MOZ_MEMORY_IMPL) || defined(MOZ_SYSTEM_JEMALLOC)
-#  define MOZ_MEMORY_API MFBT_API
-#  define MOZ_JEMALLOC_API MFBT_API
+#ifdef MOZ_MEMORY_IMPL
+#  if defined(MOZ_JEMALLOC_IMPL) && defined(MOZ_REPLACE_MALLOC)
+#    define mozmem_malloc_impl(a)     je_ ## a
+#    define mozmem_jemalloc_impl(a)   je_ ## a
+#  else
+#    define MOZ_JEMALLOC_API MOZ_EXTERN_C MFBT_API
+#    if (defined(XP_WIN) || defined(XP_DARWIN))
+#      if defined(MOZ_REPLACE_MALLOC)
+#        define mozmem_malloc_impl(a)   a ## _impl
+#      else
+#        define mozmem_malloc_impl(a)   je_ ## a
+#      endif
+#    else
+#      define MOZ_MEMORY_API MOZ_EXTERN_C MFBT_API
+#      if defined(MOZ_WIDGET_ANDROID) || defined(MOZ_WIDGET_GONK)
+#        define MOZ_WRAP_NEW_DELETE
+#      endif
+#    endif
+#  endif
+#  ifdef XP_WIN
+#    define mozmem_dup_impl(a)      wrap_ ## a
+#  endif
+#endif
+
+#if !defined(MOZ_MEMORY_IMPL)
+#  define MOZ_MEMORY_API MOZ_EXTERN_C MFBT_API
+#  define MOZ_JEMALLOC_API MOZ_EXTERN_C MFBT_API
 #endif
 
 #ifndef MOZ_MEMORY_API
-#  define MOZ_MEMORY_API
+#  define MOZ_MEMORY_API MOZ_EXTERN_C
 #endif
 #ifndef MOZ_JEMALLOC_API
-#  define MOZ_JEMALLOC_API
+#  define MOZ_JEMALLOC_API MOZ_EXTERN_C
 #endif
 
 #ifndef mozmem_malloc_impl
@@ -215,5 +206,7 @@
 #define jemalloc_stats_impl              mozmem_jemalloc_impl(jemalloc_stats)
 #define jemalloc_purge_freed_pages_impl  mozmem_jemalloc_impl(jemalloc_purge_freed_pages)
 #define jemalloc_free_dirty_pages_impl   mozmem_jemalloc_impl(jemalloc_free_dirty_pages)
+#define jemalloc_thread_local_arena_impl \
+          mozmem_jemalloc_impl(jemalloc_thread_local_arena)
 
 #endif /* mozmemory_wrap_h */

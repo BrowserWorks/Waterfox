@@ -159,16 +159,16 @@ namespace mozilla {
 namespace mscom {
 
 /* static */ HRESULT
-MainThreadHandoff::Create(IHandlerPayload* aHandlerPayload,
+MainThreadHandoff::Create(IHandlerProvider* aHandlerProvider,
                           IInterceptorSink** aOutput)
 {
-  RefPtr<MainThreadHandoff> handoff(new MainThreadHandoff(aHandlerPayload));
+  RefPtr<MainThreadHandoff> handoff(new MainThreadHandoff(aHandlerProvider));
   return handoff->QueryInterface(IID_IInterceptorSink, (void**) aOutput);
 }
 
-MainThreadHandoff::MainThreadHandoff(IHandlerPayload* aHandlerPayload)
+MainThreadHandoff::MainThreadHandoff(IHandlerProvider* aHandlerProvider)
   : mRefCnt(0)
-  , mHandlerPayload(aHandlerPayload)
+  , mHandlerProvider(aHandlerProvider)
 {
 }
 
@@ -228,6 +228,37 @@ MainThreadHandoff::Release()
 }
 
 HRESULT
+MainThreadHandoff::FixIServiceProvider(ICallFrame* aFrame)
+{
+  MOZ_ASSERT(aFrame);
+
+  CALLFRAMEPARAMINFO iidOutParamInfo;
+  HRESULT hr = aFrame->GetParamInfo(1, &iidOutParamInfo);
+  if (FAILED(hr)) {
+    return hr;
+  }
+
+  VARIANT varIfaceOut;
+  hr = aFrame->GetParam(2, &varIfaceOut);
+  if (FAILED(hr)) {
+    return hr;
+  }
+
+  MOZ_ASSERT(varIfaceOut.vt == (VT_UNKNOWN | VT_BYREF));
+  if (varIfaceOut.vt != (VT_UNKNOWN | VT_BYREF)) {
+    return DISP_E_BADVARTYPE;
+  }
+
+  IID** iidOutParam = reinterpret_cast<IID**>(
+                        static_cast<BYTE*>(aFrame->GetStackLocation()) +
+                        iidOutParamInfo.stackOffset);
+
+  return OnWalkInterface(**iidOutParam,
+                         reinterpret_cast<void**>(varIfaceOut.ppunkVal), FALSE,
+                         TRUE);
+}
+
+HRESULT
 MainThreadHandoff::OnCall(ICallFrame* aFrame)
 {
   // (1) Get info about the method call
@@ -246,7 +277,7 @@ MainThreadHandoff::OnCall(ICallFrame* aFrame)
     return hr;
   }
 
-  InterceptorTargetPtr targetInterface;
+  InterceptorTargetPtr<IUnknown> targetInterface;
   hr = interceptor->GetTargetForIID(iid, targetInterface);
   if (FAILED(hr)) {
     return hr;
@@ -281,20 +312,31 @@ MainThreadHandoff::OnCall(ICallFrame* aFrame)
     return S_OK;
   }
 
-  // (5) Unfortunately ICallFrame::WalkFrame does not correctly handle array
-  // outparams. Instead, we find out whether anybody has called
-  // mscom::RegisterArrayData to supply array parameter information and use it
-  // if available. This is a terrible hack, but it works for the short term. In
-  // the longer term we want to be able to use COM proxy/stub metadata to
-  // resolve array information for us.
-  const ArrayData* arrayData = FindArrayData(iid, method);
-  if (arrayData) {
+  if (iid == IID_IServiceProvider) {
+    // The only possible method index for IID_IServiceProvider is for
+    // QueryService at index 3; its other methods are inherited from IUnknown
+    // and are not processed here.
+    MOZ_ASSERT(method == 3);
+    // (5) If our interface is IServiceProvider, we need to manually ensure
+    // that the correct IID is provided for the interface outparam in
+    // IServiceProvider::QueryService.
+    hr = FixIServiceProvider(aFrame);
+    if (FAILED(hr)) {
+      return hr;
+    }
+  } else if (const ArrayData* arrayData = FindArrayData(iid, method)) {
+    // (6) Unfortunately ICallFrame::WalkFrame does not correctly handle array
+    // outparams. Instead, we find out whether anybody has called
+    // mscom::RegisterArrayData to supply array parameter information and use it
+    // if available. This is a terrible hack, but it works for the short term. In
+    // the longer term we want to be able to use COM proxy/stub metadata to
+    // resolve array information for us.
     hr = FixArrayElements(aFrame, *arrayData);
     if (FAILED(hr)) {
       return hr;
     }
   } else {
-    // (6) Scan the outputs looking for any outparam interfaces that need wrapping.
+    // (7) Scan the outputs looking for any outparam interfaces that need wrapping.
     // NB: WalkFrame does not correctly handle array outparams. It processes the
     // first element of an array but not the remaining elements (if any).
     hr = aFrame->WalkFrame(CALLFRAME_WALK_OUT, this);
@@ -406,41 +448,40 @@ MainThreadHandoff::SetInterceptor(IWeakReference* aInterceptor)
 }
 
 HRESULT
-MainThreadHandoff::GetHandler(CLSID* aHandlerClsid)
+MainThreadHandoff::GetHandler(NotNull<CLSID*> aHandlerClsid)
 {
-  if (!mHandlerPayload) {
+  if (!mHandlerProvider) {
     return E_NOTIMPL;
   }
-  return mHandlerPayload->GetHandler(aHandlerClsid);
+
+  return mHandlerProvider->GetHandler(aHandlerClsid);
 }
 
 HRESULT
-MainThreadHandoff::GetHandlerPayloadSize(REFIID aIid, IUnknown* aTarget,
-                                         DWORD* aOutPayloadSize)
+MainThreadHandoff::GetHandlerPayloadSize(NotNull<DWORD*> aOutPayloadSize)
 {
-  if (!mHandlerPayload) {
+  if (!mHandlerProvider) {
     return E_NOTIMPL;
   }
-  return mHandlerPayload->GetHandlerPayloadSize(aIid, aTarget, aOutPayloadSize);
+  return mHandlerProvider->GetHandlerPayloadSize(aOutPayloadSize);
 }
 
 HRESULT
-MainThreadHandoff::WriteHandlerPayload(IStream* aStream, REFIID aIid,
-                                       IUnknown* aTarget)
+MainThreadHandoff::WriteHandlerPayload(NotNull<IStream*> aStream)
 {
-  if (!mHandlerPayload) {
+  if (!mHandlerProvider) {
     return E_NOTIMPL;
   }
-  return mHandlerPayload->WriteHandlerPayload(aStream, aIid, aTarget);
+  return mHandlerProvider->WriteHandlerPayload(aStream);
 }
 
 REFIID
 MainThreadHandoff::MarshalAs(REFIID aIid)
 {
-  if (!mHandlerPayload) {
+  if (!mHandlerProvider) {
     return aIid;
   }
-  return mHandlerPayload->MarshalAs(aIid);
+  return mHandlerProvider->MarshalAs(aIid);
 }
 
 HRESULT
@@ -482,27 +523,34 @@ MainThreadHandoff::OnWalkInterface(REFIID aIid, PVOID* aInterface,
   // as an interface that we are already managing. We can determine this by
   // querying (NOT casting!) both objects for IUnknown and then comparing the
   // resulting pointers.
-  InterceptorTargetPtr existingTarget;
+  InterceptorTargetPtr<IUnknown> existingTarget;
   hr = interceptor->GetTargetForIID(aIid, existingTarget);
   if (SUCCEEDED(hr)) {
-    bool areIUnknownsEqual = false;
+    // We'll start by checking the raw pointers. If they are equal, then the
+    // objects are equal. OTOH, if they differ, we must compare their
+    // IUnknown pointers to know for sure.
+    bool areTargetsEqual = existingTarget.get() == origInterface.get();
 
-    // This check must be done on the main thread
-    auto checkFn = [&existingTarget, &origInterface, &areIUnknownsEqual]() -> void {
-      RefPtr<IUnknown> unkExisting;
-      HRESULT hrExisting =
-        existingTarget->QueryInterface(IID_IUnknown,
-                                       (void**)getter_AddRefs(unkExisting));
-      RefPtr<IUnknown> unkNew;
-      HRESULT hrNew =
-        origInterface->QueryInterface(IID_IUnknown,
-                                      (void**)getter_AddRefs(unkNew));
-      areIUnknownsEqual = SUCCEEDED(hrExisting) && SUCCEEDED(hrNew) &&
+    if (!areTargetsEqual) {
+      // This check must be done on the main thread
+      auto checkFn = [&existingTarget, &origInterface, &areTargetsEqual]() -> void {
+        RefPtr<IUnknown> unkExisting;
+        HRESULT hrExisting =
+          existingTarget->QueryInterface(IID_IUnknown,
+                                         (void**)getter_AddRefs(unkExisting));
+        RefPtr<IUnknown> unkNew;
+        HRESULT hrNew =
+          origInterface->QueryInterface(IID_IUnknown,
+                                        (void**)getter_AddRefs(unkNew));
+        areTargetsEqual = SUCCEEDED(hrExisting) && SUCCEEDED(hrNew) &&
                           unkExisting == unkNew;
-    };
+      };
 
-    MainThreadInvoker invoker;
-    if (invoker.Invoke(NS_NewRunnableFunction(checkFn)) && areIUnknownsEqual) {
+      MainThreadInvoker invoker;
+      invoker.Invoke(NS_NewRunnableFunction(checkFn));
+    }
+
+    if (areTargetsEqual) {
       // The existing interface and the new interface both belong to the same
       // target object. Let's just use the existing one.
       void* intercepted = nullptr;
@@ -516,9 +564,11 @@ MainThreadHandoff::OnWalkInterface(REFIID aIid, PVOID* aInterface,
     }
   }
 
-  RefPtr<IHandlerPayload> payload;
-  if (mHandlerPayload) {
-    hr = mHandlerPayload->Clone(getter_AddRefs(payload));
+  RefPtr<IHandlerProvider> payload;
+  if (mHandlerProvider) {
+    hr = mHandlerProvider->NewInstance(aIid,
+                                       ToInterceptorTargetPtr(origInterface),
+                                       WrapNotNull((IHandlerProvider**)getter_AddRefs(payload)));
     MOZ_ASSERT(SUCCEEDED(hr));
     if (FAILED(hr)) {
       return hr;

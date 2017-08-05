@@ -10,6 +10,9 @@
 using namespace mozilla;
 using namespace mozilla::safebrowsing;
 
+#define GTEST_SAFEBROWSING_DIR NS_LITERAL_CSTRING("safebrowsing")
+#define GTEST_TABLE NS_LITERAL_CSTRING("gtest-malware-proto")
+
 template<typename Function>
 void RunTestInNewThread(Function&& aFunction) {
   nsCOMPtr<nsIRunnable> r = NS_NewRunnableFunction(mozilla::Forward<Function>(aFunction));
@@ -18,6 +21,50 @@ void RunTestInNewThread(Function&& aFunction) {
     NS_NewNamedThread("Testing Thread", getter_AddRefs(testingThread), r);
   ASSERT_EQ(rv, NS_OK);
   testingThread->Shutdown();
+}
+
+nsresult SyncApplyUpdates(Classifier* aClassifier,
+                          nsTArray<TableUpdate*>* aUpdates)
+{
+  // We need to spin a new thread specifically because the callback
+  // will be on the caller thread. If we call Classifier::AsyncApplyUpdates
+  // and wait on the same thread, this function will never return.
+
+  nsresult ret = NS_ERROR_FAILURE;
+  bool done = false;
+  auto onUpdateComplete = [&done, &ret](nsresult rv) {
+    // We are on the "ApplyUpdate" thread. Post an event to main thread
+    // so that we can avoid busy waiting on the main thread.
+    nsCOMPtr<nsIRunnable> r = NS_NewRunnableFunction([&done, &ret, rv] {
+      ret = rv;
+      done = true;
+    });
+    NS_DispatchToMainThread(r);
+  };
+
+  nsCOMPtr<nsIRunnable> r = NS_NewRunnableFunction([&]() {
+    nsresult rv = aClassifier->AsyncApplyUpdates(aUpdates, onUpdateComplete);
+    if (NS_FAILED(rv)) {
+      onUpdateComplete(rv);
+    }
+  });
+
+  nsCOMPtr<nsIThread> testingThread;
+  NS_NewNamedThread("ApplyUpdates", getter_AddRefs(testingThread));
+  if (!testingThread) {
+    return NS_ERROR_FAILURE;
+  }
+
+  testingThread->Dispatch(r, NS_DISPATCH_NORMAL);
+
+  // NS_NewCheckSummedOutputStream in HashStore::WriteFile
+  // will synchronously init NS_CRYPTO_HASH_CONTRACTID on
+  // the main thread. As a result we have to keep processing
+  // pending event until |done| becomes true. If there's no
+  // more pending event, what we only can do is wait.
+  MOZ_ALWAYS_TRUE(SpinEventLoopUntil([&]() { return done; }));
+
+  return ret;
 }
 
 already_AddRefed<nsIFile>
@@ -53,9 +100,7 @@ void ApplyUpdate(nsTArray<TableUpdate*>& updates)
       ASSERT_TRUE(NS_SUCCEEDED(rv));
   }
 
-  RunTestInNewThread([&] () -> void {
-    classifier->ApplyUpdates(&updates);
-  });
+  SyncApplyUpdates(classifier.get(), &updates);
 }
 
 void ApplyUpdate(TableUpdate* update)
@@ -88,7 +133,6 @@ PrefixArrayToAddPrefixArrayV2(const nsTArray<nsCString>& prefixArray,
     Prefix hash;
     static_assert(sizeof(hash.buf) == PREFIX_SIZE, "Prefix must be 4 bytes length");
     memcpy(hash.buf, prefixArray[i].BeginReading(), PREFIX_SIZE);
-    MOZ_ASSERT(prefixArray[i].Length() == PREFIX_SIZE);
 
     AddPrefix *add = out.AppendElement(fallible);
     if (!add) {
@@ -114,3 +158,43 @@ GeneratePrefix(const nsCString& aFragment, uint8_t aLength)
   return hash;
 }
 
+static nsresult
+BuildCache(LookupCacheV2* cache, const _PrefixArray& prefixArray)
+{
+  AddPrefixArray prefixes;
+  AddCompleteArray completions;
+  nsresult rv = PrefixArrayToAddPrefixArrayV2(prefixArray, prefixes);
+  if (NS_FAILED(rv)) {
+    return rv;
+  }
+
+  EntrySort(prefixes);
+  return cache->Build(prefixes, completions);
+}
+
+static nsresult
+BuildCache(LookupCacheV4* cache, const _PrefixArray& prefixArray)
+{
+  PrefixStringMap map;
+  PrefixArrayToPrefixStringMap(prefixArray, map);
+  return cache->Build(map);
+}
+
+template<typename T>
+UniquePtr<T>
+SetupLookupCache(const _PrefixArray& prefixArray)
+{
+  nsCOMPtr<nsIFile> file;
+  NS_GetSpecialDirectory(NS_APP_USER_PROFILE_50_DIR, getter_AddRefs(file));
+
+  file->AppendNative(GTEST_SAFEBROWSING_DIR);
+
+  UniquePtr<T> cache = MakeUnique<T>(GTEST_TABLE, EmptyCString(), file);
+  nsresult rv = cache->Init();
+  EXPECT_EQ(rv, NS_OK);
+
+  rv = BuildCache(cache.get(), prefixArray);
+  EXPECT_EQ(rv, NS_OK);
+
+  return Move(cache);
+}

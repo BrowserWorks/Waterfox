@@ -44,7 +44,7 @@ RestyleManager::ProcessPendingRestyles()
   MOZ_STYLO_FORWARD(ProcessPendingRestyles, ());
 }
 
-nsresult
+void
 RestyleManager::ContentStateChanged(nsIContent* aContent,
                                     EventStates aStateMask)
 {
@@ -77,6 +77,12 @@ nsresult
 RestyleManager::ReparentStyleContext(nsIFrame* aFrame)
 {
   MOZ_STYLO_FORWARD(ReparentStyleContext, (aFrame));
+}
+
+void
+RestyleManager::UpdateOnlyAnimationStyles()
+{
+  MOZ_STYLO_FORWARD(UpdateOnlyAnimationStyles, ());
 }
 
 } // namespace mozilla

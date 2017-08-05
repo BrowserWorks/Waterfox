@@ -88,6 +88,23 @@ template <typename T>
 class ZoneCellIter;
 
 } // namespace gc
+
+class MOZ_NON_TEMPORARY_CLASS ExternalStringCache
+{
+    static const size_t NumEntries = 4;
+    mozilla::Array<JSString*, NumEntries> entries_;
+
+    ExternalStringCache(const ExternalStringCache&) = delete;
+    void operator=(const ExternalStringCache&) = delete;
+
+  public:
+    ExternalStringCache() { purge(); }
+    void purge() { mozilla::PodArrayZero(entries_); }
+
+    MOZ_ALWAYS_INLINE JSString* lookup(const char16_t* chars, size_t len) const;
+    MOZ_ALWAYS_INLINE void put(JSString* s);
+};
+
 } // namespace js
 
 namespace JS {
@@ -161,7 +178,9 @@ struct Zone : public JS::shadow::Zone,
 
     void addSizeOfIncludingThis(mozilla::MallocSizeOf mallocSizeOf,
                                 size_t* typePool,
+                                size_t* jitZone,
                                 size_t* baselineStubsOptimized,
+                                size_t* cachedCFG,
                                 size_t* uniqueIdMap,
                                 size_t* shapeTables,
                                 size_t* atomsMarkBitmaps);
@@ -187,23 +206,17 @@ struct Zone : public JS::shadow::Zone,
 
     void scheduleGC() { MOZ_ASSERT(!CurrentThreadIsHeapBusy()); gcScheduled_ = true; }
     void unscheduleGC() { gcScheduled_ = false; }
-    bool isGCScheduled() { return gcScheduled_ && canCollect(); }
+    bool isGCScheduled() { return gcScheduled_; }
 
     void setPreservingCode(bool preserving) { gcPreserveCode_ = preserving; }
     bool isPreservingCode() const { return gcPreserveCode_; }
 
+    // Whether this zone can currently be collected. This doesn't take account
+    // of AutoKeepAtoms for the atoms zone.
     bool canCollect();
 
     void notifyObservingDebuggers();
 
-    enum GCState {
-        NoGC,
-        Mark,
-        MarkGray,
-        Sweep,
-        Finished,
-        Compact
-    };
     void setGCState(GCState state) {
         MOZ_ASSERT(CurrentThreadIsHeapBusy());
         MOZ_ASSERT_IF(state != NoGC, canCollect());
@@ -238,15 +251,6 @@ struct Zone : public JS::shadow::Zone,
             return needsIncrementalBarrier();
     }
 
-    GCState gcState() const { return gcState_; }
-    bool wasGCStarted() const { return gcState_ != NoGC; }
-    bool isGCMarkingBlack() { return gcState_ == Mark; }
-    bool isGCMarkingGray() { return gcState_ == MarkGray; }
-    bool isGCSweeping() { return gcState_ == Sweep; }
-    bool isGCFinished() { return gcState_ == Finished; }
-    bool isGCCompacting() { return gcState_ == Compact; }
-    bool isGCSweepingOrCompacting() { return gcState_ == Sweep || gcState_ == Compact; }
-
     // Get a number that is incremented whenever this zone is collected, and
     // possibly at other times too.
     uint64_t gcNumber();
@@ -257,9 +261,8 @@ struct Zone : public JS::shadow::Zone,
                runtimeFromActiveCooperatingThread()->hasZealMode(js::gc::ZealMode::VerifierPre);
     }
 
-    enum ShouldUpdateJit { DontUpdateJit, UpdateJit };
-    void setNeedsIncrementalBarrier(bool needs, ShouldUpdateJit updateJit);
-    const bool* addressOfNeedsIncrementalBarrier() const { return &needsIncrementalBarrier_; }
+    void setNeedsIncrementalBarrier(bool needs);
+    const uint32_t* addressOfNeedsIncrementalBarrier() const { return &needsIncrementalBarrier_; }
 
     js::jit::JitZone* getJitZone(JSContext* cx) { return jitZone_ ? jitZone_ : createJitZone(cx); }
     js::jit::JitZone* jitZone() { return jitZone_; }
@@ -270,20 +273,20 @@ struct Zone : public JS::shadow::Zone,
     void prepareForCompacting();
 
 #ifdef DEBUG
-    // For testing purposes, return the index of the zone group which this zone
+    // For testing purposes, return the index of the sweep group which this zone
     // was swept in in the last GC.
-    unsigned lastZoneGroupIndex() { return gcLastZoneGroupIndex; }
+    unsigned lastSweepGroupIndex() { return gcLastSweepGroupIndex; }
 #endif
-
-    using DebuggerVector = js::Vector<js::Debugger*, 0, js::SystemAllocPolicy>;
-
-  private:
-    js::ZoneGroupData<DebuggerVector*> debuggers;
 
     void sweepBreakpoints(js::FreeOp* fop);
     void sweepUniqueIds(js::FreeOp* fop);
     void sweepWeakMaps();
     void sweepCompartments(js::FreeOp* fop, bool keepAtleastOne, bool lastGC);
+
+    using DebuggerVector = js::Vector<js::Debugger*, 0, js::SystemAllocPolicy>;
+
+  private:
+    js::ZoneGroupData<DebuggerVector*> debuggers;
 
     js::jit::JitZone* createJitZone(JSContext* cx);
 
@@ -292,7 +295,7 @@ struct Zone : public JS::shadow::Zone,
     }
 
     // Side map for storing a unique ids for cells, independent of address.
-    js::ZoneGroupData<js::gc::UniqueIdMap> uniqueIds_;
+    js::ZoneGroupOrGCTaskData<js::gc::UniqueIdMap> uniqueIds_;
 
     js::gc::UniqueIdMap& uniqueIds() { return uniqueIds_.ref(); }
 
@@ -320,7 +323,7 @@ struct Zone : public JS::shadow::Zone,
 
   private:
     /* Live weakmaps in this zone. */
-    js::ZoneGroupData<mozilla::LinkedList<js::WeakMapBase>> gcWeakMapList_;
+    js::ZoneGroupOrGCTaskData<mozilla::LinkedList<js::WeakMapBase>> gcWeakMapList_;
   public:
     mozilla::LinkedList<js::WeakMapBase>& gcWeakMapList() { return gcWeakMapList_.ref(); }
 
@@ -335,7 +338,7 @@ struct Zone : public JS::shadow::Zone,
     // This zone's gray roots.
     typedef js::Vector<js::gc::Cell*, 0, js::SystemAllocPolicy> GrayRootVector;
   private:
-    js::ZoneGroupData<GrayRootVector> gcGrayRoots_;
+    js::ZoneGroupOrGCTaskData<GrayRootVector> gcGrayRoots_;
   public:
     GrayRootVector& gcGrayRoots() { return gcGrayRoots_.ref(); }
 
@@ -343,12 +346,12 @@ struct Zone : public JS::shadow::Zone,
     // preserved for re-scanning during sweeping.
     using WeakEdges = js::Vector<js::gc::TenuredCell**, 0, js::SystemAllocPolicy>;
   private:
-    js::ZoneGroupData<WeakEdges> gcWeakRefs_;
+    js::ZoneGroupOrGCTaskData<WeakEdges> gcWeakRefs_;
   public:
     WeakEdges& gcWeakRefs() { return gcWeakRefs_.ref(); }
 
   private:
-    // List of non-ephemeron weak containers to sweep during beginSweepingZoneGroup.
+    // List of non-ephemeron weak containers to sweep during beginSweepingSweepGroup.
     js::ZoneGroupData<mozilla::LinkedList<WeakCache<void*>>> weakCaches_;
   public:
     mozilla::LinkedList<WeakCache<void*>>& weakCaches() { return weakCaches_.ref(); }
@@ -361,26 +364,19 @@ struct Zone : public JS::shadow::Zone,
      * Mapping from not yet marked keys to a vector of all values that the key
      * maps to in any live weak map.
      */
-    js::ZoneGroupData<js::gc::WeakKeyTable> gcWeakKeys_;
+    js::ZoneGroupOrGCTaskData<js::gc::WeakKeyTable> gcWeakKeys_;
   public:
     js::gc::WeakKeyTable& gcWeakKeys() { return gcWeakKeys_.ref(); }
 
   private:
     // A set of edges from this zone to other zones.
     //
-    // This is used during GC while calculating zone groups to record edges that
-    // can't be determined by examining this zone by itself.
-    js::ZoneGroupData<ZoneSet> gcZoneGroupEdges_;
-
-    // Zones with dead proxies require an extra scan through the wrapper map,
-    // so track whether any dead proxies are known to exist.
-    js::ZoneGroupData<bool> hasDeadProxies_;
+    // This is used during GC while calculating sweep groups to record edges
+    // that can't be determined by examining this zone by itself.
+    js::ZoneGroupData<ZoneSet> gcSweepGroupEdges_;
 
   public:
-    ZoneSet& gcZoneGroupEdges() { return gcZoneGroupEdges_.ref(); }
-
-    bool hasDeadProxies() { return hasDeadProxies_; }
-    void setHasDeadProxies(bool b) { hasDeadProxies_ = b; }
+    ZoneSet& gcSweepGroupEdges() { return gcSweepGroupEdges_.ref(); }
 
     // Keep track of all TypeDescr and related objects in this compartment.
     // This is used by the GC to trace them all first when compacting, since the
@@ -410,7 +406,12 @@ struct Zone : public JS::shadow::Zone,
     bool addTypeDescrObject(JSContext* cx, HandleObject obj);
 
     bool triggerGCForTooMuchMalloc() {
-        return runtimeFromAnyThread()->gc.triggerZoneGC(this, JS::gcreason::TOO_MUCH_MALLOC);
+        JSRuntime* rt = runtimeFromAnyThread();
+
+        if (CurrentThreadCanAccessRuntime(rt))
+            return rt->gc.triggerZoneGC(this, JS::gcreason::TOO_MUCH_MALLOC);
+        else
+            return false;
     }
 
     void resetGCMallocBytes() { gcMallocCounter.reset(); }
@@ -434,8 +435,19 @@ struct Zone : public JS::shadow::Zone,
   private:
     // Bitmap of atoms marked by this zone.
     js::ZoneGroupOrGCTaskData<js::SparseBitmap> markedAtoms_;
+
+    // Set of atoms recently used by this Zone. Purged on GC.
+    js::ZoneGroupOrGCTaskData<js::AtomSet> atomCache_;
+
+    // Cache storing allocated external strings. Purged on GC.
+    js::ZoneGroupOrGCTaskData<js::ExternalStringCache> externalStringCache_;
+
   public:
     js::SparseBitmap& markedAtoms() { return markedAtoms_.ref(); }
+
+    js::AtomSet& atomCache() { return atomCache_.ref(); }
+
+    js::ExternalStringCache& externalStringCache() { return externalStringCache_.ref(); };
 
     // Track heap usage under this Zone.
     js::gc::HeapUsage usage;
@@ -485,7 +497,7 @@ struct Zone : public JS::shadow::Zone,
     }
 
 #ifdef DEBUG
-    js::ZoneGroupData<unsigned> gcLastZoneGroupIndex;
+    js::ZoneGroupData<unsigned> gcLastSweepGroupIndex;
 #endif
 
     static js::HashNumber UniqueIdToHash(uint64_t uid) {
@@ -591,10 +603,8 @@ struct Zone : public JS::shadow::Zone,
   private:
     js::ZoneGroupData<js::jit::JitZone*> jitZone_;
 
-    js::UnprotectedData<GCState> gcState_;
     js::ActiveThreadData<bool> gcScheduled_;
     js::ZoneGroupData<bool> gcPreserveCode_;
-    js::ZoneGroupData<bool> jitUsingBarriers_;
     js::ZoneGroupData<bool> keepShapeTables_;
 
     // Allow zones to be linked into a list

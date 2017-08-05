@@ -13,11 +13,11 @@ function test() {
   requestLongerTimeout(2);
 
   Services.prefs.setIntPref("browser.sessionstore.interval", 4000);
-  registerCleanupFunction(function () {
+  registerCleanupFunction(function() {
     Services.prefs.clearUserPref("browser.sessionstore.interval");
   });
 
-  let tab = gBrowser.addTab("about:blank");
+  let tab = BrowserTestUtils.addTab(gBrowser, "about:blank");
 
   let browser = tab.linkedBrowser;
 
@@ -26,8 +26,8 @@ function test() {
     let entry = sessionHistory.getEntryAtIndex(0, false);
     entry.QueryInterface(Ci.nsISHContainer);
 
-    whenChildCount(entry, 1, function () {
-      whenChildCount(entry, 2, function () {
+    whenChildCount(entry, 1, function() {
+      whenChildCount(entry, 2, function() {
         promiseBrowserLoaded(browser).then(() => {
           return TabStateFlusher.flush(browser);
         }).then(() => {

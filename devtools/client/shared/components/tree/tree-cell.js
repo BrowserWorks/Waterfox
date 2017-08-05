@@ -106,10 +106,12 @@ define(function (require, exports, module) {
           onBlur: this.updateInputEnabled,
           readOnly: true,
           value,
+          "aria-labelledby": id
         });
       } else {
         cellElement = span({
           onClick: (type !== "object") ? this.updateInputEnabled : null,
+          "aria-labelledby": id
         },
           renderValue(props)
         );
@@ -117,7 +119,10 @@ define(function (require, exports, module) {
 
       // Render me!
       return (
-        td({ className: classNames.join(" ") },
+        td({
+          className: classNames.join(" "),
+          role: "presentation"
+        },
           cellElement
         )
       );

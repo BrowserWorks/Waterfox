@@ -48,7 +48,9 @@ public:
   PTextureChild* CreateTexture(const SurfaceDescriptor& aSharedData,
                                LayersBackend aLayersBackend,
                                TextureFlags aFlags,
-                               uint64_t aSerial) override;
+                               uint64_t aSerial,
+                               wr::MaybeExternalImageId& aExternalImageId,
+                               nsIEventTarget* aTarget = nullptr) override;
 
   // ClientIPCAllocator
   base::ProcessId GetParentPid() const override { return OtherPid(); }

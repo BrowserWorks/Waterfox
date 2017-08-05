@@ -1,0 +1,56 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <title>Test for triggering Fullscreen by pointer events</title>
+  <script src="/tests/SimpleTest/SimpleTest.js"></script>
+  <script src="/tests/SimpleTest/EventUtils.js"></script>
+  <link rel="stylesheet" type="text/css" href="/tests/SimpleTest/test.css"/>
+</head>
+<body>
+<script>
+SimpleTest.waitForExplicitFinish();
+
+function startTest() {
+  let win = window.open("data:text/html,<body><div id='target' style='width: 50px; height: 50px; background: green'></div></body>", "_blank");
+  win.addEventListener("load", () => {
+    let target = win.document.getElementById("target");
+    target.addEventListener("pointerdown", () => {
+      target.requestFullscreen();
+      target.addEventListener("pointerdown", () => {
+        win.document.exitFullscreen();
+      }, {once: true});
+    }, {once: true});
+
+    win.document.addEventListener("fullscreenchange", () => {
+      if (win.document.fullscreenElement) {
+        ok(win.document.fullscreenElement, target, "fullscreenElement should be the div element");
+        // synthesize mouse events to generate pointer events and leave full screen.
+        synthesizeMouseAtCenter(target, { type: "mousedown" }, win);
+        synthesizeMouseAtCenter(target, { type: "mouseup" }, win);
+      } else {
+        win.close();
+        SimpleTest.finish();
+      }
+    });
+    // Make sure our window is focused before starting the test
+    SimpleTest.waitForFocus(() => {
+      // synthesize mouse events to generate pointer events and enter full screen.
+      synthesizeMouseAtCenter(target, { type: "mousedown" }, win);
+      synthesizeMouseAtCenter(target, { type: "mouseup" }, win);
+    }, win);
+  });
+}
+
+SimpleTest.waitForFocus(() => {
+  SpecialPowers.pushPrefEnv({
+    "set": [
+      ["full-screen-api.unprefix.enabled", true],
+      ["full-screen-api.allow-trusted-requests-only", false],
+      ["dom.w3c_pointer_events.enabled", true]
+    ]
+  }, startTest);
+});
+</script>
+</body>
+</html>

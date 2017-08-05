@@ -99,11 +99,14 @@ nsTextBoxFrame::AttributeChanged(int32_t         aNameSpaceID,
     return NS_OK;
 }
 
-nsTextBoxFrame::nsTextBoxFrame(nsStyleContext* aContext):
-  nsLeafBoxFrame(aContext), mAccessKeyInfo(nullptr), mCropType(CropRight),
-  mNeedsReflowCallback(false)
+nsTextBoxFrame::nsTextBoxFrame(nsStyleContext* aContext)
+  : nsLeafBoxFrame(aContext, kClassID)
+  , mAccessKeyInfo(nullptr)
+  , mCropType(CropRight)
+  , mAscent(0)
+  , mNeedsReflowCallback(false)
 {
-    MarkIntrinsicISizesDirty();
+  MarkIntrinsicISizesDirty();
 }
 
 nsTextBoxFrame::~nsTextBoxFrame()
@@ -277,7 +280,8 @@ nsTextBoxFrame::UpdateAttributes(nsIAtom*         aAttribute,
 
 }
 
-class nsDisplayXULTextBox : public nsDisplayItem {
+class nsDisplayXULTextBox final : public nsDisplayItem
+{
 public:
   nsDisplayXULTextBox(nsDisplayListBuilder* aBuilder,
                       nsTextBoxFrame* aFrame) :

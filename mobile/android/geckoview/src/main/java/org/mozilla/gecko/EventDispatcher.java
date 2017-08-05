@@ -1,3 +1,5 @@
+/* -*- Mode: Java; c-basic-offset: 4; tab-width: 4; indent-tabs-mode: nil; -*-
+ * vim: ts=4 sw=4 expandtab:
 /* This Source Code Form is subject to the terms of the Mozilla Public
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
@@ -32,9 +34,6 @@ import java.util.concurrent.CopyOnWriteArrayList;
 @RobocopTarget
 public final class EventDispatcher extends JNIObject {
     private static final String LOGTAG = "GeckoEventDispatcher";
-    /* package */ static final String GUID = "__guid__";
-    private static final String STATUS_ERROR = "error";
-    private static final String STATUS_SUCCESS = "success";
 
     private static final EventDispatcher INSTANCE = new EventDispatcher();
 
@@ -44,9 +43,9 @@ public final class EventDispatcher extends JNIObject {
      * empirically determine the initial capacity that avoids rehashing, we need to
      * determine the initial size, divide it by 75%, and round up to the next power-of-2.
      */
-    private static final int DEFAULT_GECKO_EVENTS_COUNT = 256; // Empirically measured
-    private static final int DEFAULT_UI_EVENTS_COUNT = 0; // Default for HashMap
-    private static final int DEFAULT_BACKGROUND_EVENTS_COUNT = 0; // Default for HashMap
+    private static final int DEFAULT_GECKO_EVENTS_COUNT = 64; // Empirically measured
+    private static final int DEFAULT_UI_EVENTS_COUNT = 128; // Empirically measured
+    private static final int DEFAULT_BACKGROUND_EVENTS_COUNT = 64; // Empirically measured
 
     // GeckoBundle-based events.
     private final Map<String, List<BundleEventListener>> mGeckoThreadListeners =
@@ -57,6 +56,7 @@ public final class EventDispatcher extends JNIObject {
         new HashMap<String, List<BundleEventListener>>(DEFAULT_BACKGROUND_EVENTS_COUNT);
 
     private boolean mAttachedToGecko;
+    private final NativeQueue mNativeQueue;
 
     @ReflectionTarget
     @WrapForJNI(calledFrom = "gecko")
@@ -65,6 +65,15 @@ public final class EventDispatcher extends JNIObject {
     }
 
     /* package */ EventDispatcher() {
+        mNativeQueue = GeckoThread.getNativeQueue();
+    }
+
+    /* package */ EventDispatcher(final NativeQueue queue) {
+        mNativeQueue = queue;
+    }
+
+    private boolean isReadyForDispatchingToGecko() {
+        return mNativeQueue.isReady();
     }
 
     @WrapForJNI(dispatchTo = "gecko") @Override // JNIObject
@@ -228,13 +237,16 @@ public final class EventDispatcher extends JNIObject {
     public void dispatch(final String type, final GeckoBundle message,
                          final EventCallback callback) {
         synchronized (this) {
-            if (mAttachedToGecko && hasGeckoListener(type)) {
+            if (isReadyForDispatchingToGecko() && mAttachedToGecko &&
+                hasGeckoListener(type)) {
                 dispatchToGecko(type, message, JavaCallbackDelegate.wrap(callback));
                 return;
             }
         }
 
-        dispatchToThreads(type, message, /* callback */ callback);
+        if (!dispatchToThreads(type, message, /* callback */ callback)) {
+            Log.w(LOGTAG, "No listener for " + type);
+        }
     }
 
     @WrapForJNI(calledFrom = "gecko")
@@ -277,15 +289,17 @@ public final class EventDispatcher extends JNIObject {
             return true;
         }
 
-        if (!GeckoThread.isRunning()) {
-            // Usually, we discard an event if there is no listeners for it by the time of
-            // the dispatch. However, if Gecko is not ready and there is no listener for
-            // this event that's possibly headed to Gecko, we make a special exception to
-            // queue this event until Gecko is ready. This way, Gecko can first register
-            // its listeners, and accept the event when it is ready.
-            GeckoThread.queueNativeCall(this, "dispatchToGecko",
-                                        String.class, type, GeckoBundle.class, message,
-                                        EventCallback.class, JavaCallbackDelegate.wrap(callback));
+        if (!isReadyForDispatchingToGecko()) {
+            // Usually, we discard an event if there is no listeners for it by
+            // the time of the dispatch. However, if Gecko(View) is not ready and
+            // there is no listener for this event that's possibly headed to
+            // Gecko, we make a special exception to queue this event until
+            // Gecko(View) is ready. This way, Gecko can first register its
+            // listeners, and accept the event when it is ready.
+            mNativeQueue.queueUntilReady(this, "dispatchToGecko",
+                String.class, type,
+                GeckoBundle.class, message,
+                EventCallback.class, JavaCallbackDelegate.wrap(callback));
             return true;
         }
 

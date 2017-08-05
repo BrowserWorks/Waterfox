@@ -65,7 +65,8 @@ public:
       mAddPrefixes.Length() == 0 &&
       mSubPrefixes.Length() == 0 &&
       mAddCompletes.Length() == 0 &&
-      mSubCompletes.Length() == 0;
+      mSubCompletes.Length() == 0 &&
+      mMissPrefixes.Length() == 0;
   }
 
   // Throughout, uint32_t aChunk refers only to the chunk number. Chunk data is
@@ -91,6 +92,7 @@ public:
   MOZ_MUST_USE nsresult NewSubComplete(uint32_t aAddChunk,
                                        const Completion& aCompletion,
                                        uint32_t aSubChunk);
+  MOZ_MUST_USE nsresult NewMissPrefix(const Prefix& aPrefix);
 
   ChunkSet& AddChunks() { return mAddChunks; }
   ChunkSet& SubChunks() { return mSubChunks; }
@@ -105,6 +107,9 @@ public:
   AddCompleteArray& AddCompletes() { return mAddCompletes; }
   SubCompleteArray& SubCompletes() { return mSubCompletes; }
 
+  // Entries that cannot be completed.
+  MissPrefixArray& MissPrefixes() { return mMissPrefixes; }
+
   // For downcasting.
   static const int TAG = 2;
 
@@ -117,8 +122,11 @@ private:
   ChunkSet mSubExpirations;
 
   // 4-byte sha256 prefixes.
-  AddPrefixArray mAddPrefixes;
-  SubPrefixArray mSubPrefixes;
+  AddPrefixArray  mAddPrefixes;
+  SubPrefixArray  mSubPrefixes;
+
+  // This is only used by gethash so don't add this to Header.
+  MissPrefixArray mMissPrefixes;
 
   // 32-byte hashes.
   AddCompleteArray mAddCompletes;
@@ -159,7 +167,9 @@ public:
 
   bool Empty() const override
   {
-    return mPrefixesMap.IsEmpty() && mRemovalIndiceArray.IsEmpty();
+    return mPrefixesMap.IsEmpty() &&
+           mRemovalIndiceArray.IsEmpty() &&
+           mFullHashResponseMap.IsEmpty();
   }
 
   bool IsFullUpdate() const { return mFullUpdate; }
@@ -167,6 +177,7 @@ public:
   RemovalIndiceArray& RemovalIndices() { return mRemovalIndiceArray; }
   const nsACString& ClientState() const { return mClientState; }
   const nsACString& Checksum() const { return mChecksum; }
+  const FullHashResponseMap& FullHashResponse() const { return mFullHashResponseMap; }
 
   // For downcasting.
   static const int TAG = 4;
@@ -176,6 +187,8 @@ public:
   void NewRemovalIndices(const uint32_t* aIndices, size_t aNumOfIndices);
   void SetNewClientState(const nsACString& aState) { mClientState = aState; }
   void NewChecksum(const std::string& aChecksum);
+  nsresult NewFullHashResponse(const Prefix& aPrefix,
+                               CachedFullHashResponse& aResponse);
 
 private:
   virtual int Tag() const override { return TAG; }
@@ -185,6 +198,9 @@ private:
   RemovalIndiceArray mRemovalIndiceArray;
   nsCString mClientState;
   nsCString mChecksum;
+
+  // This is used to store response from fullHashes.find.
+  FullHashResponseMap mFullHashResponseMap;
 };
 
 // There is one hash store per table.

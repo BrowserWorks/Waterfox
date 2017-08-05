@@ -6,7 +6,6 @@
 
 #include "prio.h"
 #include "PLDHashTable.h"
-#include "nsXPCOMStrings.h"
 #include "mozilla/IOInterposer.h"
 #include "mozilla/MemoryReporting.h"
 #include "mozilla/scache/StartupCache.h"
@@ -503,7 +502,7 @@ void
 StartupCache::ThreadedWrite(void *aClosure)
 {
   AutoProfilerRegister registerThread("StartupCache");
-  PR_SetCurrentThreadName("StartupCache");
+  NS_SetCurrentThreadName("StartupCache");
   mozilla::IOInterposer::RegisterCurrentThread();
   /*
    * It is safe to use the pointer passed in aClosure to reference the

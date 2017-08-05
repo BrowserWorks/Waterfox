@@ -9,7 +9,6 @@
 use app_units::Au;
 use block::{BlockFlow, ISizeAndMarginsComputer};
 use context::LayoutContext;
-use cssparser::{Color, RGBA};
 use display_list_builder::{BlockFlowDisplayListBuilding, BorderPaintingMode, DisplayListBuildState};
 use euclid::Point2D;
 use flow::{self, EarlyAbsolutePositionInfo, Flow, FlowClass, ImmutableFlowUtils, OpaqueFlow};
@@ -22,12 +21,11 @@ use serde::{Serialize, Serializer};
 use std::cmp::max;
 use std::fmt;
 use std::iter::{Enumerate, IntoIterator, Peekable};
-use std::sync::Arc;
 use style::computed_values::{border_collapse, border_spacing, border_top_style};
 use style::logical_geometry::{LogicalSize, PhysicalSide, WritingMode};
 use style::properties::ServoComputedValues;
 use style::servo::restyle_damage::{REFLOW, REFLOW_OUT_OF_FLOW};
-use style::values::computed::LengthOrPercentageOrAuto;
+use style::values::computed::{Color, LengthOrPercentageOrAuto};
 use table::{ColumnComputedInlineSize, ColumnIntrinsicInlineSize, InternalTable, VecExt};
 use table_cell::{CollapsedBordersForCell, TableCellFlow};
 
@@ -483,7 +481,7 @@ impl Flow for TableRowFlow {
         self.block_flow.collect_stacking_contexts(state);
     }
 
-    fn repair_style(&mut self, new_style: &Arc<ServoComputedValues>) {
+    fn repair_style(&mut self, new_style: &::StyleArc<ServoComputedValues>) {
         self.block_flow.repair_style(new_style)
     }
 
@@ -607,7 +605,7 @@ impl CollapsedBorder {
         CollapsedBorder {
             style: border_top_style::T::none,
             width: Au(0),
-            color: Color::RGBA(RGBA::transparent()),
+            color: Color::transparent(),
             provenance: CollapsedBorderProvenance::FromTable,
         }
     }

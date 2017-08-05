@@ -22,7 +22,7 @@
             <div class="container">
                 <h1 class="title">&aboutNetworking.warning;</h1>
                 <div class="toggle-container-with-text">
-                    <input id="warncheck" type="checkbox" checked="yes" />
+                    <input id="warncheck" type="checkbox" checked="yes" role="checkbox" />
                     <label for="warncheck">&aboutNetworking.showNextTime;</label>
                 </div>
                 <div>
@@ -50,6 +50,9 @@
             <div class="category" value="logging">
                 <span class="category-name">&aboutNetworking.logging;</span>
             </div>
+             <div class="category" value="rcwn">
+                <span class="category-name">&aboutNetworking.rcwn;</span>
+            </div>
         </div>
         <div class="main-content">
             <div class="header">
@@ -58,7 +61,7 @@
                 </div>
                 <div id="refreshDiv" class="toggle-container-with-text">
                     <button id="refreshButton">&aboutNetworking.refresh;</button>
-                    <input id="autorefcheck" type="checkbox" name="Autorefresh" />
+                    <input id="autorefcheck" type="checkbox" name="Autorefresh" role="checkbox" />
                     <label for="autorefcheck">&aboutNetworking.autoRefresh;</label>
                 </div>
             </div>
@@ -69,7 +72,7 @@
                       <tr>
                           <th>&aboutNetworking.hostname;</th>
                           <th>&aboutNetworking.port;</th>
-                          <th>&aboutNetworking.spdy;</th>
+                          <th>&aboutNetworking.http2;</th>
                           <th>&aboutNetworking.ssl;</th>
                           <th>&aboutNetworking.active;</th>
                           <th>&aboutNetworking.idle;</th>
@@ -136,6 +139,27 @@
                       </tr>
                   </thead>
                   <tbody id="dnslookuptool_content" />
+              </table>
+          </div>
+
+          <div id="rcwn" class="tab" hidden="true">
+              <table>
+                  <thead>
+                      <tr>
+                          <th>&aboutNetworking.rcwnStatus;</th>
+                          <th>&aboutNetworking.totalNetworkRequests;</th>
+                          <th>&aboutNetworking.rcwnCacheWonCount;</th>
+                          <th>&aboutNetworking.rcwnNetWonCount;</th>
+                      </tr>
+                  </thead>
+                  <tbody id="rcwn_content">
+                    <tr>
+                      <td id="rcwn_status"> </td>
+                      <td id="total_req_count"> </td>
+                      <td id="rcwn_cache_won_count"> </td>
+                      <td id="rcwn_cache_net_count"> </td>
+                    </tr>
+                  </tbody>
               </table>
           </div>
 

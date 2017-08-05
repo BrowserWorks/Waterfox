@@ -29,22 +29,33 @@ class SurfaceFactory;
 namespace gfx {
 
 class VRLayerChild : public PVRLayerChild {
-  NS_INLINE_DECL_REFCOUNTING(VRLayerChild)
+  NS_INLINE_DECL_THREADSAFE_REFCOUNTING(VRLayerChild)
 
 public:
-  VRLayerChild(uint32_t aVRDisplayID, VRManagerChild* aVRManagerChild);
+  static PVRLayerChild* CreateIPDLActor();
+  static bool DestroyIPDLActor(PVRLayerChild* actor);
+
   void Initialize(dom::HTMLCanvasElement* aCanvasElement);
   void SubmitFrame();
+  bool IsIPCOpen();
 
-protected:
+private:
+  VRLayerChild();
   virtual ~VRLayerChild();
   void ClearSurfaces();
-
-  uint32_t mVRDisplayID;
+  virtual void ActorDestroy(ActorDestroyReason aWhy) override;
 
   RefPtr<dom::HTMLCanvasElement> mCanvasElement;
   RefPtr<layers::SharedSurfaceTextureClient> mShSurfClient;
   RefPtr<layers::TextureClient> mFront;
+  bool mIPCOpen;
+
+  // AddIPDLReference and ReleaseIPDLReference are only to be called by CreateIPDLActor
+  // and DestroyIPDLActor, respectively. We intentionally make them private to prevent misuse.
+  // The purpose of these methods is to be aware of when the IPC system around this
+  // actor goes down: mIPCOpen is then set to false.
+  void AddIPDLReference();
+  void ReleaseIPDLReference();
 };
 
 } // namespace gfx

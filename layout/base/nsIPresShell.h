@@ -51,10 +51,6 @@
 #include "nsFrameState.h"
 #include "Units.h"
 
-#ifdef MOZ_B2G
-#include "nsIHardwareKeyHandler.h"
-#endif
-
 class nsDocShell;
 class nsIDocument;
 class nsIFrame;
@@ -247,29 +243,6 @@ public:
     RecordFree(aPtr);
     if (!mIsDestroying)
       mFrameArena.FreeByObjectID(aID, aPtr);
-  }
-
-  /**
-   * Other objects closely related to the frame tree that are allocated
-   * from a separate set of per-size free lists.  Note that different types
-   * of objects that has the same size are allocated from the same list.
-   * AllocateMisc does *not* clear the memory that it returns.
-   * AllocateMisc is infallible and will abort on out-of-memory.
-   *
-   * @deprecated use AllocateByObjectID/FreeByObjectID instead
-   */
-  void* AllocateMisc(size_t aSize)
-  {
-    void* result = mFrameArena.AllocateBySize(aSize);
-    RecordAlloc(result);
-    return result;
-  }
-
-  void FreeMisc(size_t aSize, void* aPtr)
-  {
-    RecordFree(aPtr);
-    if (!mIsDestroying)
-      mFrameArena.FreeBySize(aSize, aPtr);
   }
 
   template<typename T>
@@ -479,12 +452,6 @@ public:
   virtual nsCanvasFrame* GetCanvasFrame() const = 0;
 
   /**
-   * Gets the placeholder frame associated with the specified frame. This is
-   * a helper frame that forwards the request to the frame manager.
-   */
-  virtual nsIFrame* GetPlaceholderFrameFor(nsIFrame* aFrame) const = 0;
-
-  /**
    * Tell the pres shell that a frame needs to be marked dirty and needs
    * Reflow.  It's OK if this is an ancestor of the frame needing reflow as
    * long as the ancestor chain between them doesn't cross a reflow root.
@@ -552,11 +519,6 @@ public:
    * in the new frame tree.
    */
   virtual void CreateFramesFor(nsIContent* aContent) = 0;
-
-  /**
-   * Recreates the frames for a node
-   */
-  virtual nsresult RecreateFramesFor(nsIContent* aContent) = 0;
 
   void PostRecreateFramesFor(mozilla::dom::Element* aElement);
   void RestyleForAnimation(mozilla::dom::Element* aElement,
@@ -639,11 +601,21 @@ public:
            mInFlush;
   }
 
+  inline void EnsureStyleFlush();
   inline void SetNeedStyleFlush();
   inline void SetNeedLayoutFlush();
   inline void SetNeedThrottledAnimationFlush();
 
-  bool NeedStyleFlush() { return mNeedStyleFlush; }
+  bool ObservingStyleFlushes() const { return mObservingStyleFlushes; }
+  bool ObservingLayoutFlushes() const { return mObservingLayoutFlushes; }
+
+  void ObserveStyleFlushes()
+  {
+    if (!ObservingStyleFlushes())
+      DoObserveStyleFlushes();
+  }
+
+  bool NeedStyleFlush() const { return mNeedStyleFlush; }
 
   /**
    * Callbacks will be called even if reflow itself fails for
@@ -984,20 +956,6 @@ public:
   virtual void UnsuppressPainting() = 0;
 
   /**
-   * Called to disable nsITheme support in a specific presshell.
-   */
-  void DisableThemeSupport()
-  {
-    // Doesn't have to be dynamic.  Just set the bool.
-    mIsThemeSupportDisabled = true;
-  }
-
-  /**
-   * Indicates whether theme support is enabled.
-   */
-  bool IsThemeSupportEnabled() const { return !mIsThemeSupportDisabled; }
-
-  /**
    * Get the set of agent style sheets for this presentation
    */
   virtual nsresult GetAgentStyleSheets(
@@ -1022,7 +980,7 @@ public:
   /**
    * Reconstruct frames for all elements in the document
    */
-  virtual nsresult ReconstructFrames() = 0;
+  virtual void ReconstructFrames() = 0;
 
   /**
    * Notify that a content node's state has changed
@@ -1272,9 +1230,21 @@ public:
    * canvas frame (if the FORCE_DRAW flag is passed then this check is skipped).
    * aBackstopColor is composed behind the background color of the canvas, it is
    * transparent by default.
+   * We attempt to make the background color part of the scrolled canvas (to reduce
+   * transparent layers), and if async scrolling is enabled (and the background
+   * is opaque) then we add a second, unscrolled item to handle the checkerboarding
+   * case.
+   * ADD_FOR_SUBDOC shoud be specified when calling this for a subdocument, and
+   * LayoutUseContainersForRootFrame might cause the whole list to be scrolled. In
+   * that case the second unscrolled item will be elided.
+   * APPEND_UNSCROLLED_ONLY only attempts to add the unscrolled item, so that we
+   * can add it manually after LayoutUseContainersForRootFrame has built the
+   * scrolling ContainerLayer.
    */
   enum {
-    FORCE_DRAW = 0x01
+    FORCE_DRAW = 0x01,
+    ADD_FOR_SUBDOC = 0x02,
+    APPEND_UNSCROLLED_ONLY = 0x04,
   };
   virtual void AddCanvasBackgroundColorItem(nsDisplayListBuilder& aBuilder,
                                             nsDisplayList& aList,
@@ -1360,11 +1330,11 @@ public:
     }
   };
 
-  static void DispatchGotOrLostPointerCaptureEvent(bool aIsGotCapture,
-                                                   uint32_t aPointerId,
-                                                   uint16_t aPointerType,
-                                                   bool aIsPrimary,
-                                                   nsIContent* aCaptureTarget);
+  static void DispatchGotOrLostPointerCaptureEvent(
+                bool aIsGotCapture,
+                const mozilla::WidgetPointerEvent* aPointerEvent,
+                nsIContent* aCaptureTarget);
+
   static PointerCaptureInfo* GetPointerCaptureInfo(uint32_t aPointerId);
   static void SetPointerCapturingContent(uint32_t aPointerId,
                                          nsIContent* aContent);
@@ -1373,8 +1343,8 @@ public:
 
   // CheckPointerCaptureState checks cases, when got/lostpointercapture events
   // should be fired.
-  static void CheckPointerCaptureState(uint32_t aPointerId,
-                                       uint16_t aPointerType, bool aIsPrimary);
+  static void CheckPointerCaptureState(
+                const mozilla::WidgetPointerEvent* aPointerEvent);
 
   // GetPointerInfo returns true if pointer with aPointerId is situated in
   // device, false otherwise.
@@ -1599,11 +1569,12 @@ public:
                                       bool aFlushOnHoverChange) = 0;
 
   virtual void AddSizeOfIncludingThis(mozilla::MallocSizeOf aMallocSizeOf,
-                                      nsArenaMemoryStats *aArenaObjectsSize,
-                                      size_t *aPresShellSize,
-                                      size_t *aStyleSetsSize,
-                                      size_t *aTextRunsSize,
-                                      size_t *aPresContextSize) = 0;
+                                      nsArenaMemoryStats* aArenaObjectsSize,
+                                      size_t* aPresShellSize,
+                                      size_t* aStyleSetsSize,
+                                      size_t* aTextRunsSize,
+                                      size_t* aPresContextSize,
+                                      size_t* aFramePropertiesSize) = 0;
 
   /**
    * Methods that retrieve the cached font inflation preferences.
@@ -1701,12 +1672,26 @@ protected:
   bool RemoveRefreshObserverInternal(nsARefreshObserver* aObserver,
                                      mozilla::FlushType aFlushType);
 
+  void DoObserveStyleFlushes();
+  void DoObserveLayoutFlushes();
+
   /**
    * Do computations necessary to determine if font size inflation is enabled.
    * This value is cached after computation, as the computation is somewhat
    * expensive.
    */
   void RecomputeFontSizeInflationEnabled();
+
+  /**
+   * Does the actual work of figuring out the current state of font size inflation.
+   */
+  bool DetermineFontSizeInflationState();
+
+  /**
+   * Apply the system font scale from the corresponding pref to the PresContext,
+   * taking into account the current state of font size inflation.
+   */
+  void HandleSystemFontScale();
 
   void RecordAlloc(void* aPtr) {
 #ifdef DEBUG
@@ -1780,7 +1765,7 @@ public:
   }
 
   bool HasPendingReflow() const
-    { return mReflowScheduled || mReflowContinueTimer; }
+    { return mObservingLayoutFlushes || mReflowContinueTimer; }
 
   void SyncWindowProperties(nsView* aView);
 
@@ -1857,11 +1842,6 @@ protected:
   // changes in a way that prevents us from being able to (usefully)
   // re-use old pixels.
   RenderFlags               mRenderFlags;
-
-  // Indicates that the whole document must be restyled.  Changes to scoped
-  // style sheets are recorded in mChangedScopeStyleRoots rather than here
-  // in mStylesHaveChanged.
-  bool                      mStylesHaveChanged : 1;
   bool                      mDidInitialize : 1;
   bool                      mIsDestroying : 1;
   bool                      mIsReflowing : 1;
@@ -1869,17 +1849,10 @@ protected:
   // For all documents we initially lock down painting.
   bool                      mPaintingSuppressed : 1;
 
-  // Whether or not form controls should use nsITheme in this shell.
-  bool                      mIsThemeSupportDisabled : 1;
-
   bool                      mIsActive : 1;
   bool                      mFrozen : 1;
   bool                      mIsFirstPaint : 1;
   bool                      mObservesMutationsForPrint : 1;
-
-  // If true, we have a reflow scheduled. Guaranteed to be false if
-  // mReflowContinueTimer is non-null.
-  bool                      mReflowScheduled : 1;
 
   bool                      mSuppressInterruptibleReflows : 1;
   bool                      mScrollPositionClampingScrollPortSizeSet : 1;
@@ -1890,20 +1863,20 @@ protected:
   // True if a style flush might not be a no-op
   bool mNeedStyleFlush : 1;
 
+  // True if we're observing the refresh driver for style flushes.
+  bool mObservingStyleFlushes: 1;
+
+  // True if we're observing the refresh driver for layout flushes, that is, if
+  // we have a reflow scheduled.
+  //
+  // Guaranteed to be false if mReflowContinueTimer is non-null.
+  bool mObservingLayoutFlushes: 1;
+
   // True if there are throttled animations that would be processed when
   // performing a flush with mFlushAnimations == true.
   bool mNeedThrottledAnimationFlush : 1;
 
   uint32_t                  mPresShellId;
-
-  // List of subtrees rooted at style scope roots that need to be restyled.
-  // When a change to a scoped style sheet is made, we add the style scope
-  // root to this array rather than setting mStylesHaveChanged = true, since
-  // we know we don't need to restyle the whole document.  However, if in the
-  // same update block we have already had other changes that require
-  // the whole document to be restyled (i.e., mStylesHaveChanged is already
-  // true), then we don't bother adding the scope root here.
-  AutoTArray<RefPtr<mozilla::dom::Element>,1> mChangedScopeStyleRoots;
 
   static nsIContent*        gKeyDownTarget;
 
@@ -1915,10 +1888,11 @@ protected:
   bool mFontSizeInflationForceEnabled;
   bool mFontSizeInflationDisabledInMasterProcess;
   bool mFontSizeInflationEnabled;
-  bool mPaintingIsFrozen;
 
   // Dirty bit indicating that mFontSizeInflationEnabled needs to be recomputed.
   bool mFontSizeInflationEnabledIsDirty;
+
+  bool mPaintingIsFrozen;
 
   // If a document belongs to an invisible DocShell, this flag must be set
   // to true, so we can avoid any paint calls for widget related to this

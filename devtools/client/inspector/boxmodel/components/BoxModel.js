@@ -19,31 +19,52 @@ module.exports = createClass({
 
   propTypes: {
     boxModel: PropTypes.shape(Types.boxModel).isRequired,
+    setSelectedNode: PropTypes.func.isRequired,
     showBoxModelProperties: PropTypes.bool.isRequired,
     onHideBoxModelHighlighter: PropTypes.func.isRequired,
     onShowBoxModelEditor: PropTypes.func.isRequired,
     onShowBoxModelHighlighter: PropTypes.func.isRequired,
+    onShowBoxModelHighlighterForNode: PropTypes.func.isRequired,
     onToggleGeometryEditor: PropTypes.func.isRequired,
   },
 
   mixins: [ addons.PureRenderMixin ],
 
+  onKeyDown(event) {
+    let { target } = event;
+
+    if (target == this.boxModelContainer) {
+      this.boxModelMain.onKeyDown(event);
+    }
+  },
+
   render() {
     let {
       boxModel,
+      setSelectedNode,
       showBoxModelProperties,
       onHideBoxModelHighlighter,
       onShowBoxModelEditor,
       onShowBoxModelHighlighter,
+      onShowBoxModelHighlighterForNode,
       onToggleGeometryEditor,
     } = this.props;
 
     return dom.div(
       {
         className: "boxmodel-container",
+        tabIndex: 0,
+        ref: div => {
+          this.boxModelContainer = div;
+        },
+        onKeyDown: this.onKeyDown,
       },
       BoxModelMain({
         boxModel,
+        boxModelContainer: this.boxModelContainer,
+        ref: boxModelMain => {
+          this.boxModelMain = boxModelMain;
+        },
         onHideBoxModelHighlighter,
         onShowBoxModelEditor,
         onShowBoxModelHighlighter,
@@ -55,6 +76,9 @@ module.exports = createClass({
       showBoxModelProperties ?
         BoxModelProperties({
           boxModel,
+          setSelectedNode,
+          onHideBoxModelHighlighter,
+          onShowBoxModelHighlighterForNode,
         })
         :
         null

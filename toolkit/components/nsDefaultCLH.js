@@ -37,11 +37,11 @@ nsDefaultCLH.prototype = {
 
   /* nsISupports */
 
-  QueryInterface : XPCOMUtils.generateQI([nsICommandLineHandler]),
+  QueryInterface: XPCOMUtils.generateQI([nsICommandLineHandler]),
 
   /* nsICommandLineHandler */
 
-  handle : function clh_handle(cmdLine) {
+  handle: function clh_handle(cmdLine) {
     var printDir;
     while ((printDir = cmdLine.handleFlagWithParam("print-xpcom-dir", false))) {
       var out = "print-xpcom-dir(\"" + printDir + "\"): ";
@@ -101,10 +101,7 @@ nsDefaultCLH.prototype = {
     try {
       var chromeURI = prefs.getCharPref("toolkit.defaultChromeURI");
 
-      var flags = "chrome,dialog=no,all";
-      try {
-        flags = prefs.getCharPref("toolkit.defaultChromeFeatures");
-      } catch (e) { }
+      var flags = prefs.getCharPref("toolkit.defaultChromeFeatures", "chrome,dialog=no,all");
 
       var wwatch = Components.classes["@mozilla.org/embedcomp/window-watcher;1"]
                             .getService(nsIWindowWatcher);
@@ -113,7 +110,7 @@ nsDefaultCLH.prototype = {
     } catch (e) { }
   },
 
-  helpInfo : "",
+  helpInfo: "",
 };
 
 this.NSGetFactory = XPCOMUtils.generateNSGetFactory([nsDefaultCLH]);

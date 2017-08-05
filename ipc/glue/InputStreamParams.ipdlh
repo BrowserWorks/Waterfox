@@ -2,7 +2,6 @@
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
 
-include protocol PBlob;
 include ProtocolTypes;
 
 using struct mozilla::void_t
@@ -44,19 +43,6 @@ struct MultiplexInputStreamParams
   bool startedReadingCurrent;
 };
 
-struct RemoteInputStreamParams
-{
-  nsID id;
-};
-
-// XXX This may only be used for same-process inter-thread communication! The
-//     value should be reinterpret_cast'd to nsIInputStream. It carries a
-//     reference.
-struct SameProcessInputStreamParams
-{
-  intptr_t addRefedInputStream;
-};
-
 struct SlicedInputStreamParams
 {
   InputStreamParams stream;
@@ -64,6 +50,11 @@ struct SlicedInputStreamParams
   uint64_t length;
   uint64_t curPos;
   bool closed;
+};
+
+struct IPCBlobInputStreamParams
+{
+  nsID id;
 };
 
 union InputStreamParams
@@ -74,9 +65,8 @@ union InputStreamParams
   BufferedInputStreamParams;
   MIMEInputStreamParams;
   MultiplexInputStreamParams;
-  RemoteInputStreamParams;
-  SameProcessInputStreamParams;
   SlicedInputStreamParams;
+  IPCBlobInputStreamParams;
 };
 
 union OptionalInputStreamParams

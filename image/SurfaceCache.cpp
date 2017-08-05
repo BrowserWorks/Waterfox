@@ -505,7 +505,7 @@ public:
 
     // If the surface was not a placeholder, tell its image that we discarded it.
     if (!aSurface->IsPlaceholder()) {
-      static_cast<Image*>(imageKey)->OnSurfaceDiscarded();
+      static_cast<Image*>(imageKey)->OnSurfaceDiscarded(aSurface->GetSurfaceKey());
     }
 
     StopTracking(aSurface, aAutoLock);
@@ -706,7 +706,7 @@ public:
     }
 
     cache->SetLocked(false);
-    DoUnlockSurfaces(WrapNotNull(cache), aAutoLock);
+    DoUnlockSurfaces(WrapNotNull(cache), /* aStaticOnly = */ false, aAutoLock);
   }
 
   void UnlockEntries(const ImageKey aImageKey, const StaticMutexAutoLock& aAutoLock)
@@ -718,7 +718,8 @@ public:
 
     // (Note that we *don't* unlock the per-image cache here; that's the
     // difference between this and UnlockImage.)
-    DoUnlockSurfaces(WrapNotNull(cache), aAutoLock);
+    DoUnlockSurfaces(WrapNotNull(cache),
+      /* aStaticOnly = */ !gfxPrefs::ImageMemAnimatedDiscardable(), aAutoLock);
   }
 
   void RemoveImage(const ImageKey aImageKey, const StaticMutexAutoLock& aAutoLock)
@@ -866,13 +867,16 @@ private:
     }
   }
 
-  void DoUnlockSurfaces(NotNull<ImageSurfaceCache*> aCache,
+  void DoUnlockSurfaces(NotNull<ImageSurfaceCache*> aCache, bool aStaticOnly,
                         const StaticMutexAutoLock& aAutoLock)
   {
     // Unlock all the surfaces the per-image cache is holding.
     for (auto iter = aCache->ConstIter(); !iter.Done(); iter.Next()) {
       NotNull<CachedSurface*> surface = WrapNotNull(iter.UserData());
       if (surface->IsPlaceholder() || !surface->IsLocked()) {
+        continue;
+      }
+      if (aStaticOnly && surface->GetSurfaceKey().Playback() != PlaybackType::eStatic) {
         continue;
       }
       StopTracking(surface, aAutoLock);

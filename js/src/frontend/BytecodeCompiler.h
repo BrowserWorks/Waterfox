@@ -23,11 +23,10 @@ class LazyScript;
 class LifoAlloc;
 class ModuleObject;
 class ScriptSourceObject;
-struct SourceCompressionTask;
 
 namespace frontend {
 
-class TokenStream;
+class TokenStreamAnyChars;
 class FunctionBox;
 class ParseNode;
 
@@ -35,7 +34,6 @@ JSScript*
 CompileGlobalScript(JSContext* cx, LifoAlloc& alloc, ScopeKind scopeKind,
                     const ReadOnlyCompileOptions& options,
                     SourceBufferHolder& srcBuf,
-                    SourceCompressionTask* extraSct = nullptr,
                     ScriptSourceObject** sourceObjectOut = nullptr);
 
 JSScript*
@@ -43,7 +41,6 @@ CompileEvalScript(JSContext* cx, LifoAlloc& alloc,
                   HandleObject scopeChain, HandleScope enclosingScope,
                   const ReadOnlyCompileOptions& options,
                   SourceBufferHolder& srcBuf,
-                  SourceCompressionTask* extraSct = nullptr,
                   ScriptSourceObject** sourceObjectOut = nullptr);
 
 ModuleObject*
@@ -88,6 +85,12 @@ CompileStandaloneAsyncFunction(JSContext* cx, MutableHandleFunction fun,
                                const ReadOnlyCompileOptions& options,
                                JS::SourceBufferHolder& srcBuf,
                                const mozilla::Maybe<uint32_t>& parameterListEnd);
+
+MOZ_MUST_USE bool
+CompileStandaloneAsyncGenerator(JSContext* cx, MutableHandleFunction fun,
+                                const ReadOnlyCompileOptions& options,
+                                JS::SourceBufferHolder& srcBuf,
+                                const mozilla::Maybe<uint32_t>& parameterListEnd);
 
 MOZ_MUST_USE bool
 CompileAsyncFunctionBody(JSContext* cx, MutableHandleFunction fun,
@@ -140,13 +143,13 @@ class MOZ_STACK_CLASS AutoFrontendTraceLog
                          const char* filename, size_t line, size_t column);
 
     AutoFrontendTraceLog(JSContext* cx, const TraceLoggerTextId id,
-                         const TokenStream& tokenStream);
+                         const TokenStreamAnyChars& tokenStream);
 
     AutoFrontendTraceLog(JSContext* cx, const TraceLoggerTextId id,
-                         const TokenStream& tokenStream, FunctionBox* funbox);
+                         const TokenStreamAnyChars& tokenStream, FunctionBox* funbox);
 
     AutoFrontendTraceLog(JSContext* cx, const TraceLoggerTextId id,
-                         const TokenStream& tokenStream, ParseNode* pn);
+                         const TokenStreamAnyChars& tokenStream, ParseNode* pn);
 };
 
 } /* namespace frontend */

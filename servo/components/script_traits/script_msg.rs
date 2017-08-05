@@ -16,25 +16,27 @@ use canvas_traits::CanvasMsg;
 use devtools_traits::{ScriptToDevtoolsControlMsg, WorkerId};
 use euclid::point::Point2D;
 use euclid::size::{Size2D, TypedSize2D};
-use gfx_traits::ScrollRootId;
 use ipc_channel::ipc::IpcSender;
-use msg::constellation_msg::{FrameId, PipelineId, TraversalDirection};
+use msg::constellation_msg::{BrowsingContextId, TopLevelBrowsingContextId, FrameType, PipelineId, TraversalDirection};
 use msg::constellation_msg::{Key, KeyModifiers, KeyState};
 use net_traits::CoreResourceMsg;
+use net_traits::request::RequestInit;
 use net_traits::storage_thread::StorageType;
 use offscreen_gl_context::{GLContextAttributes, GLLimits};
+use servo_url::ImmutableOrigin;
 use servo_url::ServoUrl;
 use style_traits::CSSPixel;
 use style_traits::cursor::Cursor;
 use style_traits::viewport::ViewportConstraints;
+use webrender_traits::ClipId;
 
 /// Messages from the layout to the constellation.
 #[derive(Deserialize, Serialize)]
 pub enum LayoutMsg {
     /// Indicates whether this pipeline is currently running animations.
     ChangeRunningAnimationsState(PipelineId, AnimationState),
-    /// Inform the constellation of the size of the pipeline's viewport.
-    FrameSizes(Vec<(PipelineId, TypedSize2D<f32, CSSPixel>)>),
+    /// Inform the constellation of the size of the iframe's viewport.
+    IFrameSizes(Vec<(BrowsingContextId, TypedSize2D<f32, CSSPixel>)>),
     /// Requests that the constellation inform the compositor of the a cursor change.
     SetCursor(Cursor),
     /// Notifies the constellation that the viewport has been constrained in some manner
@@ -66,6 +68,9 @@ pub enum LogEntry {
 /// Messages from the script to the constellation.
 #[derive(Deserialize, Serialize)]
 pub enum ScriptMsg {
+    /// Requests are sent to constellation and fetches are checked manually
+    /// for cross-origin loads
+    InitiateNavigateRequest(RequestInit, PipelineId),
     /// Broadcast a storage event to every same-origin pipeline.
     /// The strings are key, old value and new value.
     BroadcastStorageEvent(PipelineId, StorageType, ServoUrl, Option<String>, Option<String>, Option<String>),
@@ -85,6 +90,10 @@ pub enum ScriptMsg {
     ForwardEvent(PipelineId, CompositorEvent),
     /// Requests that the constellation retrieve the current contents of the clipboard
     GetClipboardContents(IpcSender<String>),
+    /// Get the browsing context id for a given pipeline.
+    GetBrowsingContextId(PipelineId, IpcSender<Option<BrowsingContextId>>),
+    /// Get the parent info for a given pipeline.
+    GetParentInfo(PipelineId, IpcSender<Option<(PipelineId, FrameType)>>),
     /// <head> tag finished parsing
     HeadParsed,
     /// All pending loads are complete, and the `load` event for this pipeline
@@ -93,28 +102,29 @@ pub enum ScriptMsg {
     /// A new load has been requested, with an option to replace the current entry once loaded
     /// instead of adding a new entry.
     LoadUrl(PipelineId, LoadData, bool),
-    /// Dispatch a mozbrowser event to the parent of this pipeline.
-    /// The first PipelineId is for the parent, the second is for the originating pipeline.
-    MozBrowserEvent(PipelineId, PipelineId, MozBrowserEvent),
+    /// Post a message to the currently active window of a given browsing context.
+    PostMessage(BrowsingContextId, Option<ImmutableOrigin>, Vec<u8>),
+    /// Dispatch a mozbrowser event to the parent of a mozbrowser iframe.
+    MozBrowserEvent(PipelineId, TopLevelBrowsingContextId, MozBrowserEvent),
     /// HTMLIFrameElement Forward or Back traversal.
-    TraverseHistory(Option<PipelineId>, TraversalDirection),
+    TraverseHistory(TopLevelBrowsingContextId, TraversalDirection),
     /// Gets the length of the joint session history from the constellation.
-    JointSessionHistoryLength(PipelineId, IpcSender<u32>),
+    JointSessionHistoryLength(TopLevelBrowsingContextId, IpcSender<u32>),
     /// Favicon detected
     NewFavicon(ServoUrl),
     /// Status message to be displayed in the chrome, eg. a link URL on mouseover.
     NodeStatus(Option<String>),
     /// Notification that this iframe should be removed.
     /// Returns a list of pipelines which were closed.
-    RemoveIFrame(FrameId, IpcSender<Vec<PipelineId>>),
+    RemoveIFrame(BrowsingContextId, IpcSender<Vec<PipelineId>>),
     /// Change pipeline visibility
     SetVisible(PipelineId, bool),
     /// Notifies constellation that an iframe's visibility has been changed.
     VisibilityChangeComplete(PipelineId, bool),
     /// A load has been requested in an IFrame.
     ScriptLoadedURLInIFrame(IFrameLoadInfoWithData),
-    /// A load of `about:blank` has been completed in an IFrame.
-    ScriptLoadedAboutBlankInIFrame(IFrameLoadInfo, IpcSender<LayoutControlMsg>),
+    /// A load of the initial `about:blank` has been completed in an IFrame.
+    ScriptNewIFrame(IFrameLoadInfo, IpcSender<LayoutControlMsg>),
     /// Requests that the constellation set the contents of the clipboard
     SetClipboardContents(String),
     /// Mark a new document as active
@@ -126,7 +136,7 @@ pub enum ScriptMsg {
     /// Check if an alert dialog box should be presented
     Alert(PipelineId, String, IpcSender<bool>),
     /// Scroll a page in a window
-    ScrollFragmentPoint(PipelineId, ScrollRootId, Point2D<f32>, bool),
+    ScrollFragmentPoint(ClipId, Point2D<f32>, bool),
     /// Set title of current page
     /// https://html.spec.whatwg.org/multipage/#document.title
     SetTitle(PipelineId, Option<String>),
@@ -140,8 +150,8 @@ pub enum ScriptMsg {
     ResizeTo(Size2D<u32>),
     /// Script has handled a touch event, and either prevented or allowed default actions.
     TouchEventProcessed(EventResult),
-    /// A log entry, with the top-level frame id and thread name
-    LogEntry(Option<FrameId>, Option<String>, LogEntry),
+    /// A log entry, with the top-level browsing context id and thread name
+    LogEntry(Option<TopLevelBrowsingContextId>, Option<String>, LogEntry),
     /// Notifies the constellation that this pipeline has exited.
     PipelineExited(PipelineId),
     /// Send messages from postMessage calls from serviceworker

@@ -16,17 +16,14 @@
 bool
 nsIFrame::IsFlexItem() const
 {
-  return GetParent() &&
-    GetParent()->GetType() == nsGkAtoms::flexContainerFrame &&
-    !(GetStateBits() & NS_FRAME_OUT_OF_FLOW);
+  return GetParent() && GetParent()->IsFlexContainerFrame() &&
+         !(GetStateBits() & NS_FRAME_OUT_OF_FLOW);
 }
 
 bool
 nsIFrame::IsFlexOrGridContainer() const
 {
-  nsIAtom* t = GetType();
-  return t == nsGkAtoms::flexContainerFrame ||
-         t == nsGkAtoms::gridContainerFrame;
+  return IsFlexContainerFrame() || IsGridContainerFrame();
 }
 
 bool
@@ -69,9 +66,10 @@ nsIFrame::IsRelativelyPositioned() const
 }
 
 bool
-nsIFrame::IsAbsolutelyPositioned() const
+nsIFrame::IsAbsolutelyPositioned(const nsStyleDisplay* aStyleDisplay) const
 {
-  return StyleDisplay()->IsAbsolutelyPositioned(this);
+  const nsStyleDisplay* disp = StyleDisplayWithOptionalParam(aStyleDisplay);
+  return disp->IsAbsolutelyPositioned(this);
 }
 
 bool
@@ -165,7 +163,7 @@ nsIFrame::BaselineBOffset(mozilla::WritingMode aWM,
 void
 nsIFrame::PropagateRootElementWritingMode(mozilla::WritingMode aRootElemWM)
 {
-  MOZ_ASSERT(GetType() == nsGkAtoms::canvasFrame);
+  MOZ_ASSERT(IsCanvasFrame());
   for (auto f = this; f; f = f->GetParent()) {
     f->mWritingMode = aRootElemWM;
   }
@@ -175,8 +173,8 @@ nsContainerFrame*
 nsIFrame::GetInFlowParent()
 {
   if (GetStateBits() & NS_FRAME_OUT_OF_FLOW) {
-    nsFrameManager* fm = PresContext()->FrameManager();
-    return fm->GetPlaceholderFrameFor(FirstContinuation())->GetParent();
+    nsIFrame* ph = FirstContinuation()->GetProperty(nsIFrame::PlaceholderFrameProperty());
+    return ph->GetParent();
   }
 
   return GetParent();

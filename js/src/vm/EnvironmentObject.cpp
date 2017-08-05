@@ -14,7 +14,6 @@
 #include "jsiter.h"
 
 #include "builtin/ModuleObject.h"
-#include "frontend/ParseNode.h"
 #include "gc/Policy.h"
 #include "vm/ArgumentsObject.h"
 #include "vm/AsyncFunction.h"
@@ -2268,8 +2267,8 @@ DebugEnvironmentProxy::create(JSContext* cx, EnvironmentObject& env, HandleObjec
         return nullptr;
 
     DebugEnvironmentProxy* debugEnv = &obj->as<DebugEnvironmentProxy>();
-    debugEnv->setExtra(ENCLOSING_EXTRA, ObjectValue(*enclosing));
-    debugEnv->setExtra(SNAPSHOT_EXTRA, NullValue());
+    debugEnv->setReservedSlot(ENCLOSING_SLOT, ObjectValue(*enclosing));
+    debugEnv->setReservedSlot(SNAPSHOT_SLOT, NullValue());
 
     return debugEnv;
 }
@@ -2283,13 +2282,13 @@ DebugEnvironmentProxy::environment() const
 JSObject&
 DebugEnvironmentProxy::enclosingEnvironment() const
 {
-    return extra(ENCLOSING_EXTRA).toObject();
+    return reservedSlot(ENCLOSING_SLOT).toObject();
 }
 
 ArrayObject*
 DebugEnvironmentProxy::maybeSnapshot() const
 {
-    JSObject* obj = extra(SNAPSHOT_EXTRA).toObjectOrNull();
+    JSObject* obj = reservedSlot(SNAPSHOT_SLOT).toObjectOrNull();
     return obj ? &obj->as<ArrayObject>() : nullptr;
 }
 
@@ -2297,7 +2296,7 @@ void
 DebugEnvironmentProxy::initSnapshot(ArrayObject& o)
 {
     MOZ_ASSERT(maybeSnapshot() == nullptr);
-    setExtra(SNAPSHOT_EXTRA, ObjectValue(o));
+    setReservedSlot(SNAPSHOT_SLOT, ObjectValue(o));
 }
 
 bool
@@ -3094,23 +3093,6 @@ js::GetDebugEnvironmentForGlobalLexicalEnvironment(JSContext* cx)
 {
     EnvironmentIter ei(cx, &cx->global()->lexicalEnvironment(), &cx->global()->emptyGlobalScope());
     return GetDebugEnvironment(cx, ei);
-}
-
-// See declaration and documentation in jsfriendapi.h
-JS_FRIEND_API(JSObject*)
-js::GetNearestEnclosingWithEnvironmentObjectForFunction(JSFunction* fun)
-{
-    if (!fun->isInterpreted())
-        return &fun->global();
-
-    JSObject* env = fun->environment();
-    while (env && !env->is<WithEnvironmentObject>())
-        env = env->enclosingEnvironment();
-
-    if (!env)
-        return &fun->global();
-
-    return &env->as<WithEnvironmentObject>().object();
 }
 
 bool

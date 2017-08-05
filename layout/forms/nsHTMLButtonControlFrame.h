@@ -15,16 +15,19 @@ class nsRenderingContext;
 class nsPresContext;
 
 class nsHTMLButtonControlFrame : public nsContainerFrame,
-                                 public nsIFormControlFrame 
+                                 public nsIFormControlFrame
 {
 public:
-  explicit nsHTMLButtonControlFrame(nsStyleContext* aContext);
+  explicit nsHTMLButtonControlFrame(nsStyleContext* aContext)
+    : nsHTMLButtonControlFrame(aContext, kClassID)
+  {}
+
   ~nsHTMLButtonControlFrame();
 
   virtual void DestroyFrom(nsIFrame* aDestructRoot) override;
 
   NS_DECL_QUERYFRAME
-  NS_DECL_FRAMEARENA_HELPERS
+  NS_DECL_FRAMEARENA_HELPERS(nsHTMLButtonControlFrame)
 
   virtual void BuildDisplayList(nsDisplayListBuilder*   aBuilder,
                                 const nsRect&           aDirtyRect,
@@ -72,8 +75,6 @@ public:
   virtual mozilla::a11y::AccType AccessibleType() override;
 #endif
 
-  virtual nsIAtom* GetType() const override;
-  
 #ifdef DEBUG_FRAME_DUMP
   virtual nsresult GetFrameName(nsAString& aResult) const override {
     return MakeFrameName(NS_LITERAL_STRING("HTMLButtonControl"), aResult);
@@ -97,7 +98,15 @@ public:
       ~(nsIFrame::eReplaced | nsIFrame::eReplacedContainsBlock));
   }
 
+  /**
+   * Update the style of our ::-moz-button-content anonymous box.
+   */
+  void DoUpdateStyleOfOwnedAnonBoxes(mozilla::ServoStyleSet& aStyleSet,
+                                     nsStyleChangeList& aChangeList,
+                                     nsChangeHint aHintForThisFrame) override;
 protected:
+  nsHTMLButtonControlFrame(nsStyleContext* aContext, nsIFrame::ClassID aID);
+
   virtual bool IsInput() { return false; }
 
   // Indicates whether we should clip our children's painting to our

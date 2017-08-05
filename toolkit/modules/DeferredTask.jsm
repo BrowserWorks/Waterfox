@@ -272,9 +272,9 @@ this.DeferredTask.prototype = {
     this._armed = false;
     this._runningPromise = runningDeferred.promise;
 
-    runningDeferred.resolve(Task.spawn(function* () {
+    runningDeferred.resolve((async () => {
       // Execute the provided function asynchronously.
-      yield Task.spawn(this._taskFn).then(null, Cu.reportError);
+      await this._runTask();
 
       // Now that the task has finished, we check the state of the object to
       // determine if we should restart the task again.
@@ -286,13 +286,29 @@ this.DeferredTask.prototype = {
           // property should return false while the task is running, and should
           // remain false after the last execution terminates.
           this._armed = false;
-          yield Task.spawn(this._taskFn).then(null, Cu.reportError);
+          await this._runTask();
         }
       }
 
       // Indicate that the execution of the task has finished.  This happens
       // synchronously with the previous state changes in the function.
       this._runningPromise = null;
-    }.bind(this)).then(null, Cu.reportError));
+    })().then(null, Cu.reportError));
+  },
+
+  /**
+   * Executes the associated task and catches exceptions.
+   */
+  async _runTask() {
+    try {
+      let result = this._taskFn();
+      if (Object.prototype.toString.call(result) == "[object Generator]") {
+        await Task.spawn(result); // eslint-disable-line mozilla/no-task
+      } else {
+        await result;
+      }
+    } catch (ex) {
+      Cu.reportError(ex);
+    }
   },
 };

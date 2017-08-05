@@ -27,6 +27,9 @@ EXPORTS.mozilla.ipc += [
     'GeckoChildProcessHost.h',
     'InputStreamUtils.h',
     'IOThreadChild.h',
+    'IPCStreamAlloc.h',
+    'IPCStreamDestination.h',
+    'IPCStreamSource.h',
     'IPCStreamUtils.h',
     'MessageChannel.h',
     'MessageLink.h',
@@ -34,8 +37,6 @@ EXPORTS.mozilla.ipc += [
     'ProcessChild.h',
     'ProtocolUtils.h',
     'ScopedXREEmbed.h',
-    'SendStream.h',
-    'SendStreamAlloc.h',
     'SharedMemory.h',
     'SharedMemoryBasic.h',
     'Shmem.h',
@@ -143,6 +144,10 @@ UNIFIED_SOURCES += [
     'FileDescriptorUtils.cpp',
     'InputStreamUtils.cpp',
     'IPCMessageUtils.cpp',
+    'IPCStreamChild.cpp',
+    'IPCStreamDestination.cpp',
+    'IPCStreamParent.cpp',
+    'IPCStreamSource.cpp',
     'IPCStreamUtils.cpp',
     'MessageChannel.cpp',
     'MessageLink.cpp',
@@ -150,23 +155,29 @@ UNIFIED_SOURCES += [
     'ProcessChild.cpp',
     'ProtocolUtils.cpp',
     'ScopedXREEmbed.cpp',
-    'SendStreamChild.cpp',
-    'SendStreamParent.cpp',
     'SharedMemory.cpp',
     'Shmem.cpp',
     'StringUtil.cpp',
+    'URIUtils.cpp',
 ]
 
-# GeckoChildProcessHost.cpp cannot be built in unified mode because it uses plarena.h.
-# URIUtils.cpp cannot be built in unified mode because of name clashes on strdup.
 SOURCES += [
     'BackgroundChildImpl.cpp',
     'BackgroundParentImpl.cpp',
     'FileDescriptorSetChild.cpp',
     'FileDescriptorSetParent.cpp',
-    'GeckoChildProcessHost.cpp',
-    'URIUtils.cpp',
 ]
+
+if CONFIG['OS_ARCH'] == 'Darwin':
+    # GeckoChildProcessHost.cpp cannot be built unified due to OSX header
+    # clashes with TextRange.
+    SOURCES += [
+        'GeckoChildProcessHost.cpp',
+    ]
+else:
+    UNIFIED_SOURCES += [
+        'GeckoChildProcessHost.cpp',
+    ]
 
 if CONFIG['_MSC_VER']:
     # This is intended as a temporary hack to support building with VS2015.
@@ -189,9 +200,10 @@ IPDL_SOURCES = [
     'PBackground.ipdl',
     'PBackgroundSharedTypes.ipdlh',
     'PBackgroundTest.ipdl',
+    'PChildToParentStream.ipdl',
     'PFileDescriptorSet.ipdl',
+    'PParentToChildStream.ipdl',
     'ProtocolTypes.ipdlh',
-    'PSendStream.ipdl',
     'URIParams.ipdlh',
 ]
 

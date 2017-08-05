@@ -11,14 +11,12 @@ config = {
         'setup-mock',
         'build',
         'sendchange',
-        # 'generate-build-stats',
     ],
     "buildbot_json_path": "buildprops.json",
     'exes': {
         "buildbot": "/tools/buildbot/bin/buildbot",
     },
     'app_ini_path': '%(obj_dir)s/dist/bin/application.ini',
-    'enable_ccache': True,
     'vcs_share_base': '/builds/hg-shared',
     'objdir': MOZ_OBJDIR,
     'tooltool_script': ["/builds/tooltool.py"],
@@ -43,7 +41,6 @@ config = {
     'publish_nightly_en_US_routes': False,
     'env': {
         'MOZBUILD_STATE_PATH': os.path.join(os.getcwd(), '.mozbuild'),
-        'MOZ_AUTOMATION': '1',
         'DISPLAY': ':2',
         'HG_SHARE_BASE_DIR': '/builds/hg-shared',
         'MOZ_OBJDIR': MOZ_OBJDIR,

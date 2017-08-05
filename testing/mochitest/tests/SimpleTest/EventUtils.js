@@ -620,7 +620,7 @@ function sendWheelAndPaint(aTarget, aOffsetX, aOffsetY, aEvent, aCallback, aWind
         });
       }
 
-      SpecialPowers.Services.obs.addObserver(waitForPaints, "apz-repaints-flushed", false);
+      SpecialPowers.Services.obs.addObserver(waitForPaints, "apz-repaints-flushed");
       if (!utils.flushApzRepaints(aWindow)) {
         waitForPaints();
       }
@@ -768,10 +768,11 @@ function _computeKeyCodeFromChar(aChar)
  *             .keyCode value is initialized with this value.
  *
  * aWindow is optional, and defaults to the current window object.
+ * aCallback is optional, use the callback for receiving notifications of TIP.
  */
-function synthesizeKey(aKey, aEvent, aWindow = window)
+function synthesizeKey(aKey, aEvent, aWindow = window, aCallback)
 {
-  var TIP = _getTIP(aWindow);
+  var TIP = _getTIP(aWindow, aCallback);
   if (!TIP) {
     return;
   }
@@ -2131,7 +2132,7 @@ function synthesizeDrop(aSrcElement, aDestElement, aDragData, aDropEffect, aWind
     return synthesizeDropAfterDragOver(result, dataTransfer, aDestElement,
                                        aDestWindow, aDragEvent);
   } finally {
-    ds.endDragSession(true);
+    ds.endDragSession(true, _parseModifiers(aDragEvent));
   }
 }
 

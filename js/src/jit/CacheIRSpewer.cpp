@@ -4,7 +4,7 @@
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
 
-#ifdef JS_JITSPEW
+#ifdef JS_CACHEIR_SPEW
 
 #include "jit/CacheIRSpewer.h"
 
@@ -21,19 +21,16 @@
 #include <stdarg.h>
 
 #include "jsfun.h"
+#include "jsobj.h"
 #include "jsscript.h"
+
 #include "jscompartmentinlines.h"
+#include "jsobjinlines.h"
 
 using namespace js;
 using namespace js::jit;
 
-CacheIRSpewer cacheIRspewer;
-
-CacheIRSpewer&
-jit::GetCacheIRSpewerSingleton()
-{
-    return cacheIRspewer;
-}
+CacheIRSpewer CacheIRSpewer::cacheIRspewer;
 
 CacheIRSpewer::CacheIRSpewer()
   : outputLock(mutexid::CacheIRSpewer)
@@ -84,13 +81,14 @@ CacheIRSpewer::beginCache(LockGuard<Mutex>&, const IRGenerator& gen)
     JSONPrinter& j = json.ref();
 
     j.beginObject();
-    j.stringProperty("name", "%s", CacheKindNames[uint8_t(gen.cacheKind_)]);
-    j.stringProperty("file", "%s", gen.script_->filename());
+    j.property("name", CacheKindNames[uint8_t(gen.cacheKind_)]);
+    j.property("file", gen.script_->filename());
+    j.property("mode", int(gen.mode_));
     if (jsbytecode* pc = gen.pc_) {
         unsigned column;
-        j.integerProperty("line", PCToLineNumber(gen.script_, pc, &column));
-        j.integerProperty("column", column);
-        j.stringProperty("pc", "%p", pc);
+        j.property("line", PCToLineNumber(gen.script_, pc, &column));
+        j.property("column", column);
+        j.formatProperty("pc", "%p", pc);
     }
 }
 
@@ -125,7 +123,7 @@ QuoteString(GenericPrinter& out, JSLinearString* str)
 }
 
 void
-CacheIRSpewer::valueProperty(LockGuard<Mutex>&, const char* name, HandleValue v)
+CacheIRSpewer::valueProperty(LockGuard<Mutex>&, const char* name, const Value& v)
 {
     MOZ_ASSERT(enabled());
     JSONPrinter& j = json.ref();
@@ -135,12 +133,12 @@ CacheIRSpewer::valueProperty(LockGuard<Mutex>&, const char* name, HandleValue v)
     const char* type = InformalValueTypeName(v);
     if (v.isInt32())
         type = "int32";
-    j.stringProperty("type", "%s", type);
+    j.property("type", type);
 
     if (v.isInt32()) {
-        j.integerProperty("value", v.toInt32());
+        j.property("value", v.toInt32());
     } else if (v.isDouble()) {
-        j.doubleProperty("value", v.toDouble());
+        j.floatProperty("value", v.toDouble(), 3);
     } else if (v.isString() || v.isSymbol()) {
         JSString* str = v.isString() ? v.toString() : v.toSymbol()->description();
         if (str && str->isLinear()) {
@@ -148,6 +146,9 @@ CacheIRSpewer::valueProperty(LockGuard<Mutex>&, const char* name, HandleValue v)
             QuoteString(output, &str->asLinear());
             j.endStringProperty();
         }
+    } else if (v.isObject()) {
+        j.formatProperty("value", "%p (shape: %p)", &v.toObject(),
+                         v.toObject().maybeShape());
     }
 
     j.endObject();
@@ -157,7 +158,7 @@ void
 CacheIRSpewer::attached(LockGuard<Mutex>&, const char* name)
 {
     MOZ_ASSERT(enabled());
-    json.ref().stringProperty("attached", "%s", name);
+    json.ref().property("attached", name);
 }
 
 void
@@ -167,4 +168,4 @@ CacheIRSpewer::endCache(LockGuard<Mutex>&)
     json.ref().endObject();
 }
 
-#endif /* JS_JITSPEW */
+#endif /* JS_CACHEIR_SPEW */

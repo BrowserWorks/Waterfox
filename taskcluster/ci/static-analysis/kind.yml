@@ -2,7 +2,7 @@
 # License, v. 2.0. If a copy of the MPL was not distributed with this
 # file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
-implementation: taskgraph.task.transform:TransformTask
+loader: taskgraph.loader.transform:loader
 
 transforms:
    - taskgraph.transforms.build_attrs:transforms
@@ -26,12 +26,13 @@ jobs:
             platform: osx-10-7/debug
         worker-type: aws-provisioner-v1/gecko-{level}-b-macosx64
         worker:
-            implementation: docker-worker
             docker-image: {in-tree: desktop-build}
             max-run-time: 36000
+            env:
+                TOOLTOOL_MANIFEST: "browser/config/tooltool-manifests/macosx64/cross-releng.manifest"
         run:
             using: mozharness
-            actions: [build generate-build-stats update]
+            actions: [build update]
             config:
                 - builds/releng_base_mac_64_cross_builds.py
                 - balrog/production.py
@@ -49,12 +50,13 @@ jobs:
             platform: osx-10-7/opt
         worker-type: aws-provisioner-v1/gecko-{level}-b-macosx64
         worker:
-            implementation: docker-worker
             docker-image: {in-tree: desktop-build}
             max-run-time: 36000
+            env:
+                TOOLTOOL_MANIFEST: "browser/config/tooltool-manifests/macosx64/cross-releng.manifest"
         run:
             using: mozharness
-            actions: [build generate-build-stats update]
+            actions: [build update]
             config:
                 - builds/releng_base_mac_64_cross_builds.py
                 - balrog/production.py
@@ -72,12 +74,13 @@ jobs:
             platform: linux64/debug
         worker-type: aws-provisioner-v1/gecko-{level}-b-linux
         worker:
-            implementation: docker-worker
             docker-image: {in-tree: desktop-build}
             max-run-time: 36000
+            env:
+                TOOLTOOL_MANIFEST: "browser/config/tooltool-manifests/linux64/clang.manifest.centos6"
         run:
             using: mozharness
-            actions: [build generate-build-stats]
+            actions: [build]
             config:
                 - builds/releng_sub_linux_configs/64_stat_and_debug.py
                 - balrog/production.py
@@ -93,12 +96,13 @@ jobs:
             platform: linux64/opt
         worker-type: aws-provisioner-v1/gecko-{level}-b-linux
         worker:
-            implementation: docker-worker
             docker-image: {in-tree: desktop-build}
             max-run-time: 36000
+            env:
+                TOOLTOOL_MANIFEST: "browser/config/tooltool-manifests/linux64/clang.manifest.centos6"
         run:
             using: mozharness
-            actions: [build generate-build-stats]
+            actions: [build]
             config:
                 - builds/releng_sub_linux_configs/64_stat_and_opt.py
                 - balrog/production.py
@@ -117,8 +121,9 @@ jobs:
             tier: 1
         worker-type: aws-provisioner-v1/gecko-{level}-b-win2012
         worker:
-            implementation: generic-worker
             max-run-time: 7200
+            env:
+                TOOLTOOL_MANIFEST: "browser/config/tooltool-manifests/win32/clang.manifest"
         run:
             using: mozharness
             script: mozharness/scripts/fx_desktop_build.py
@@ -136,8 +141,9 @@ jobs:
             tier: 1
         worker-type: aws-provisioner-v1/gecko-{level}-b-win2012
         worker:
-            implementation: generic-worker
             max-run-time: 7200
+            env:
+                TOOLTOOL_MANIFEST: "browser/config/tooltool-manifests/win32/clang.manifest"
         run:
             using: mozharness
             script: mozharness/scripts/fx_desktop_build.py
@@ -155,8 +161,9 @@ jobs:
             tier: 1
         worker-type: aws-provisioner-v1/gecko-{level}-b-win2012
         worker:
-            implementation: generic-worker
             max-run-time: 7200
+            env:
+                TOOLTOOL_MANIFEST: "browser/config/tooltool-manifests/win64/clang.manifest"
         run:
             using: mozharness
             script: mozharness/scripts/fx_desktop_build.py
@@ -174,8 +181,9 @@ jobs:
             tier: 1
         worker-type: aws-provisioner-v1/gecko-{level}-b-win2012
         worker:
-            implementation: generic-worker
             max-run-time: 7200
+            env:
+                TOOLTOOL_MANIFEST: "browser/config/tooltool-manifests/win64/clang.manifest"
         run:
             using: mozharness
             script: mozharness/scripts/fx_desktop_build.py

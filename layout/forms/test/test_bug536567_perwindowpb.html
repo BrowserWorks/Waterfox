@@ -110,7 +110,7 @@ function runTest() {
     testIndex++;
     runTest();
   } else if (test == "clear history") {
-    Services.obs.notifyObservers(null, "browser:purge-session-history", "");
+    Services.obs.notifyObservers(null, "browser:purge-session-history");
     testIndex++;
     runTest();
   } else {
@@ -145,7 +145,7 @@ function whenDelayedStartupFinished(aWindow, aCallback) {
       Services.obs.removeObserver(observer, aTopic);
       setTimeout(aCallback, 0);
     }
-  }, "browser-delayed-startup-finished", false);
+  }, "browser-delayed-startup-finished");
 }
 
 function testOnWindow(aIsPrivate, aCallback) {
@@ -170,7 +170,10 @@ MockFilePicker.showCallback = function(filepicker) {
   var test = tests[testIndex];
   var returned = -1;
   for (var i = 0; i < dirs.length; i++) {
-    if (dirs[i].path == MockFilePicker.displayDirectory.path) {
+     var dir = MockFilePicker.displayDirectory
+                 ? MockFilePicker.displayDirectory
+                 : Services.dirsvc.get(MockFilePicker.displaySpecialDirectory, Ci.nsILocalFile);
+    if (dirs[i].path == dir.path) {
       returned = i;
       break;
     }

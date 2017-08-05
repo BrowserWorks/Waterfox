@@ -44,6 +44,10 @@ class MessageManagerReporter;
 
 namespace ipc {
 
+// Note: we round the time we spend to the nearest millisecond. So a min value
+// of 1 ms actually captures from 500us and above.
+static const uint32_t kMinTelemetrySyncMessageManagerLatencyMs = 1;
+
 enum MessageManagerFlags {
   MM_CHILD = 0,
   MM_CHROME = 1,
@@ -361,10 +365,9 @@ class nsMessageManagerScriptExecutor
 public:
   static void PurgeCache();
   static void Shutdown();
-  already_AddRefed<nsIXPConnectJSObjectHolder> GetGlobal()
+  JSObject* GetGlobal()
   {
-    nsCOMPtr<nsIXPConnectJSObjectHolder> ref = mGlobal;
-    return ref.forget();
+    return mGlobal;
   }
 
   void MarkScopesForCC();
@@ -383,7 +386,8 @@ protected:
                                     bool aRunInGlobalScope);
   bool InitChildGlobalInternal(nsISupports* aScope, const nsACString& aID);
   void Trace(const TraceCallbacks& aCallbacks, void* aClosure);
-  nsCOMPtr<nsIXPConnectJSObjectHolder> mGlobal;
+  void Unlink();
+  JS::TenuredHeap<JSObject*> mGlobal;
   nsCOMPtr<nsIPrincipal> mPrincipal;
   AutoTArray<JS::Heap<JSObject*>, 2> mAnonymousGlobalScopes;
 

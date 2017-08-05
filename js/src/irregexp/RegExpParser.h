@@ -31,6 +31,10 @@
 #ifndef V8_PARSER_H_
 #define V8_PARSER_H_
 
+#include "mozilla/Range.h"
+
+#include <stdarg.h>
+
 #include "irregexp/RegExpAST.h"
 
 namespace js {
@@ -49,6 +53,10 @@ ParsePattern(frontend::TokenStream& ts, LifoAlloc& alloc, JSAtom* str,
 bool
 ParsePatternSyntax(frontend::TokenStream& ts, LifoAlloc& alloc, JSAtom* str,
                    bool unicode);
+
+bool
+ParsePatternSyntax(frontend::TokenStream& ts, LifoAlloc& alloc,
+                   const mozilla::Range<const char16_t> chars, bool unicode);
 
 // A BufferedVector is an automatically growing list, just like (and backed
 // by) a Vector, that is optimized for the case of adding and removing
@@ -211,7 +219,13 @@ class RegExpParser
     bool ParseBackReferenceIndex(int* index_out);
 
     bool ParseClassAtom(char16_t* char_class, widechar *value);
+
+  private:
+    void SyntaxError(unsigned errorNumber, ...);
+
+  public:
     RegExpTree* ReportError(unsigned errorNumber, const char* param = nullptr);
+
     void Advance();
     void Advance(int dist) {
         next_pos_ += dist - 1;
@@ -291,6 +305,7 @@ class RegExpParser
     frontend::TokenStream& ts;
     LifoAlloc* alloc;
     RegExpCaptureVector* captures_;
+    const CharT* const start_;
     const CharT* next_pos_;
     const CharT* end_;
     widechar current_;

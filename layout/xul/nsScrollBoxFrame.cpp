@@ -14,10 +14,10 @@
 
 using namespace mozilla;
 
-class nsAutoRepeatBoxFrame : public nsButtonBoxFrame
+class nsAutoRepeatBoxFrame final : public nsButtonBoxFrame
 {
 public:
-  NS_DECL_FRAMEARENA_HELPERS
+  NS_DECL_FRAMEARENA_HELPERS(nsAutoRepeatBoxFrame)
 
   friend nsIFrame* NS_NewAutoRepeatBoxFrame(nsIPresShell* aPresShell,
                                             nsStyleContext* aContext);
@@ -42,14 +42,19 @@ public:
 
 protected:
   explicit nsAutoRepeatBoxFrame(nsStyleContext* aContext):
-    nsButtonBoxFrame(aContext) {}
+    nsButtonBoxFrame(aContext, kClassID) {}
   
   void StartRepeat() {
     if (IsActivatedOnHover()) {
       // No initial delay on hover.
-      nsRepeatService::GetInstance()->Start(Notify, this, 0);
+      nsRepeatService::GetInstance()->Start(Notify, this,
+                                            mContent->OwnerDoc(),
+                                            NS_LITERAL_CSTRING("DoMouseClick"),
+                                            0);
     } else {
-      nsRepeatService::GetInstance()->Start(Notify, this);
+      nsRepeatService::GetInstance()->Start(Notify, this,
+                                            mContent->OwnerDoc(),
+                                            NS_LITERAL_CSTRING("DoMouseClick"));
     }
   }
   void StopRepeat() {

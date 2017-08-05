@@ -8,6 +8,7 @@ with Files('**'):
     BUG_COMPONENT = ('Core', 'String')
 
 EXPORTS += [
+    'nsASCIIMask.h',
     'nsAString.h',
     'nsCharTraits.h',
     'nsDependentString.h',
@@ -31,7 +32,6 @@ EXPORTS += [
     'nsTSubstring.h',
     'nsTSubstringTuple.h',
     'nsUTF8Utils.h',
-    'nsXPCOMStrings.h',
     'nsXPIDLString.h',
     'string-template-def-char.h',
     'string-template-def-unichar.h',
@@ -39,6 +39,7 @@ EXPORTS += [
 ]
 
 UNIFIED_SOURCES += [
+    'nsASCIIMask.cpp',
     'nsDependentString.cpp',
     'nsDependentSubstring.cpp',
     'nsPromiseFlatString.cpp',

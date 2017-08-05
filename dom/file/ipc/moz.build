@@ -5,29 +5,41 @@
 # file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
 EXPORTS.mozilla.dom.ipc += [
-    'BlobChild.h',
-    'BlobParent.h',
-    'MemoryStreamChild.h',
-    'MemoryStreamParent.h',
-    'nsIRemoteBlob.h',
+    'IPCBlobInputStream.h',
+    'IPCBlobInputStreamChild.h',
+    'IPCBlobInputStreamParent.h',
+    'IPCBlobInputStreamStorage.h',
+    'PendingIPCBlobChild.h',
+    'PendingIPCBlobParent.h',
+]
+
+EXPORTS.mozilla.dom += [
+    'IPCBlobUtils.h',
 ]
 
 UNIFIED_SOURCES += [
-    'Blob.cpp',
-    'MemoryStreamParent.cpp',
+    'IPCBlobInputStream.cpp',
+    'IPCBlobInputStreamChild.cpp',
+    'IPCBlobInputStreamParent.cpp',
+    'IPCBlobInputStreamStorage.cpp',
+    'IPCBlobInputStreamThread.cpp',
+    'IPCBlobUtils.cpp',
+    'PendingIPCBlobChild.cpp',
+    'PendingIPCBlobParent.cpp',
 ]
 
 IPDL_SOURCES += [
     'BlobTypes.ipdlh',
-    'PBlob.ipdl',
-    'PBlobStream.ipdl',
-    'PMemoryStream.ipdl',
+    'IPCBlob.ipdlh',
+    'PIPCBlobInputStream.ipdl',
+    'PPendingIPCBlob.ipdl',
 ]
 
 LOCAL_INCLUDES += [
     '/dom/file',
     '/dom/ipc',
     '/dom/workers',
+    '/xpcom/build',
 ]
 
 include('/ipc/chromium/chromium-config.mozbuild')
@@ -38,3 +50,6 @@ CXXFLAGS += CONFIG['TK_CFLAGS']
 
 if CONFIG['GNU_CXX']:
     CXXFLAGS += ['-Wno-error=shadow']
+
+BROWSER_CHROME_MANIFESTS += ['tests/browser.ini']
+MOCHITEST_MANIFESTS += ['tests/mochitest.ini']

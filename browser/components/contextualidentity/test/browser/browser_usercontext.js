@@ -16,7 +16,7 @@ const BASE_URI = "http://mochi.test:8888/browser/browser/components/"
 // returns the newly opened tab
 function openTabInUserContext(uri, userContextId) {
   // open the tab in the correct userContextId
-  let tab = gBrowser.addTab(uri, {userContextId});
+  let tab = BrowserTestUtils.addTab(gBrowser, uri, {userContextId});
 
   // select tab and make sure its browser is focused
   gBrowser.selectedTab = tab;
@@ -25,15 +25,15 @@ function openTabInUserContext(uri, userContextId) {
   return tab;
 }
 
-add_task(function* setup() {
+add_task(async function setup() {
   // make sure userContext is enabled.
-  yield SpecialPowers.pushPrefEnv({"set": [
+  await SpecialPowers.pushPrefEnv({"set": [
     ["privacy.userContext.enabled", true],
     ["dom.ipc.processCount", 1]
   ]});
 });
 
-add_task(function* test() {
+add_task(async function test() {
   for (let userContextId of Object.keys(USER_CONTEXTS)) {
     // load the page in 3 different contexts and set a cookie
     // which should only be visible in that context
@@ -43,7 +43,7 @@ add_task(function* test() {
     let tab = openTabInUserContext(BASE_URI + "?" + cookie, userContextId);
 
     // wait for tab load
-    yield BrowserTestUtils.browserLoaded(gBrowser.getBrowserForTab(tab));
+    await BrowserTestUtils.browserLoaded(gBrowser.getBrowserForTab(tab));
 
     // remove the tab
     gBrowser.removeTab(tab);
@@ -54,7 +54,7 @@ add_task(function* test() {
     // cross-context properly. If we don't do that, we get an UNEXPECTED-PASS
     // for the localStorage case for the last tab we set.
     let tab = openTabInUserContext(BASE_URI + "?foo", 9999);
-    yield BrowserTestUtils.browserLoaded(gBrowser.getBrowserForTab(tab));
+    await BrowserTestUtils.browserLoaded(gBrowser.getBrowserForTab(tab));
     gBrowser.removeTab(tab);
   }
 
@@ -66,7 +66,7 @@ add_task(function* test() {
 
     // wait for load
     let browser = gBrowser.getBrowserForTab(tab);
-    yield BrowserTestUtils.browserLoaded(browser);
+    await BrowserTestUtils.browserLoaded(browser);
 
     // get the title
     let title = browser.contentDocument.title.trim().split("|");

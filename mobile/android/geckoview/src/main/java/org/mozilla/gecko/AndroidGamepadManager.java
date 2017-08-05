@@ -129,11 +129,11 @@ public class AndroidGamepadManager {
         }
     }
 
-    @WrapForJNI(calledFrom = "ui", dispatchTo = "gecko")
+    @WrapForJNI(calledFrom = "ui")
     private static native void onGamepadChange(int id, boolean added);
-    @WrapForJNI(calledFrom = "ui", dispatchTo = "gecko")
+    @WrapForJNI(calledFrom = "ui")
     private static native void onButtonChange(int id, int button, boolean pressed, float value);
-    @WrapForJNI(calledFrom = "ui", dispatchTo = "gecko")
+    @WrapForJNI(calledFrom = "ui")
     private static native void onAxisChange(int id, boolean[] valid, float[] values);
 
     private static boolean sStarted;
@@ -184,7 +184,7 @@ public class AndroidGamepadManager {
         }
     }
 
-    @WrapForJNI(calledFrom = "gecko")
+    @WrapForJNI
     private static void onGamepadAdded(final int device_id, final int service_id) {
         ThreadUtils.postToUiThread(new Runnable() {
             @Override
@@ -407,7 +407,10 @@ public class AndroidGamepadManager {
                 public void onInputDeviceChanged(int deviceId) {
                 }
             };
-            ((InputManager) GeckoAppShell.getContext().getSystemService(Context.INPUT_SERVICE)).registerInputDeviceListener(sListener, ThreadUtils.getUiHandler());
+            final InputManager im = (InputManager)
+                    GeckoAppShell.getApplicationContext()
+                                 .getSystemService(Context.INPUT_SERVICE);
+            im.registerInputDeviceListener(sListener, ThreadUtils.getUiHandler());
         }
     }
 
@@ -418,7 +421,10 @@ public class AndroidGamepadManager {
                 sPollTimer = null;
             }
         } else {
-            ((InputManager) GeckoAppShell.getContext().getSystemService(Context.INPUT_SERVICE)).unregisterInputDeviceListener(sListener);
+            final InputManager im = (InputManager)
+                    GeckoAppShell.getApplicationContext()
+                                 .getSystemService(Context.INPUT_SERVICE);
+            im.unregisterInputDeviceListener(sListener);
             sListener = null;
         }
     }

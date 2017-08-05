@@ -63,21 +63,23 @@ protected:
   virtual mozilla::ipc::IPCResult
   RecvFlushPendingFileDeletions() override;
 
-  virtual PBlobParent*
-  AllocPBlobParent(const BlobConstructorParams& aParams) override;
+  virtual PPendingIPCBlobParent*
+  AllocPPendingIPCBlobParent(const IPCBlob& aBlob) override;
 
   virtual bool
-  DeallocPBlobParent(PBlobParent* aActor) override;
+  DeallocPPendingIPCBlobParent(PPendingIPCBlobParent* aActor) override;
 
-  virtual PMemoryStreamParent*
-  AllocPMemoryStreamParent(const uint64_t& aSize) override;
-
-  virtual bool
-  DeallocPMemoryStreamParent(PMemoryStreamParent* aActor) override;
+  virtual PIPCBlobInputStreamParent*
+  AllocPIPCBlobInputStreamParent(const nsID& aID,
+                                 const uint64_t& aSize) override;
 
   virtual mozilla::ipc::IPCResult
-  RecvPBlobConstructor(PBlobParent* aActor,
-                       const BlobConstructorParams& params) override;
+  RecvPIPCBlobInputStreamConstructor(PIPCBlobInputStreamParent* aActor,
+                                     const nsID& aID,
+                                     const uint64_t& aSize) override;
+
+  virtual bool
+  DeallocPIPCBlobInputStreamParent(PIPCBlobInputStreamParent* aActor) override;
 
   virtual PFileDescriptorSetParent*
   AllocPFileDescriptorSetParent(const FileDescriptor& aFileDescriptor)
@@ -107,11 +109,17 @@ protected:
   virtual bool
   DeallocPBroadcastChannelParent(PBroadcastChannelParent* aActor) override;
 
-  virtual PSendStreamParent*
-  AllocPSendStreamParent() override;
+  virtual PChildToParentStreamParent*
+  AllocPChildToParentStreamParent() override;
 
   virtual bool
-  DeallocPSendStreamParent(PSendStreamParent* aActor) override;
+  DeallocPChildToParentStreamParent(PChildToParentStreamParent* aActor) override;
+
+  virtual PParentToChildStreamParent*
+  AllocPParentToChildStreamParent() override;
+
+  virtual bool
+  DeallocPParentToChildStreamParent(PParentToChildStreamParent* aActor) override;
 
   virtual PServiceWorkerManagerParent*
   AllocPServiceWorkerManagerParent() override;
@@ -212,6 +220,21 @@ protected:
 
   virtual bool
   DeallocPGamepadTestChannelParent(PGamepadTestChannelParent* aActor) override;
+
+  virtual PWebAuthnTransactionParent*
+  AllocPWebAuthnTransactionParent() override;
+
+  virtual bool
+  DeallocPWebAuthnTransactionParent(PWebAuthnTransactionParent* aActor) override;
+
+  virtual PHttpBackgroundChannelParent*
+  AllocPHttpBackgroundChannelParent(const uint64_t& aChannelId) override;
+
+  virtual mozilla::ipc::IPCResult
+  RecvPHttpBackgroundChannelConstructor(PHttpBackgroundChannelParent *aActor,
+                                        const uint64_t& aChannelId) override;
+  virtual bool
+  DeallocPHttpBackgroundChannelParent(PHttpBackgroundChannelParent *aActor) override;
 };
 
 } // namespace ipc

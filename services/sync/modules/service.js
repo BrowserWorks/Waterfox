@@ -18,13 +18,14 @@ const PBKDF2_KEY_BYTES = 16;
 const CRYPTO_COLLECTION = "crypto";
 const KEYS_WBO = "keys";
 
-Cu.import("resource://gre/modules/Preferences.jsm");
 Cu.import("resource://gre/modules/XPCOMUtils.jsm");
+Cu.import("resource://gre/modules/Services.jsm");
 Cu.import("resource://gre/modules/Log.jsm");
 Cu.import("resource://services-common/async.js");
 Cu.import("resource://services-sync/constants.js");
 Cu.import("resource://services-sync/engines.js");
 Cu.import("resource://services-sync/engines/clients.js");
+Cu.import("resource://services-sync/main.js");
 Cu.import("resource://services-sync/policies.js");
 Cu.import("resource://services-sync/record.js");
 Cu.import("resource://services-sync/resource.js");
@@ -153,7 +154,7 @@ Sync11Service.prototype = {
     let ok = false;
 
     try {
-      let iv = Svc.Crypto.generateRandomIV();
+      let iv = Weave.Crypto.generateRandomIV();
       if (iv.length == 24)
         ok = true;
 
@@ -207,7 +208,7 @@ Sync11Service.prototype = {
     // Fetch keys.
     let cryptoKeys = new CryptoWrapper(CRYPTO_COLLECTION, KEYS_WBO);
     try {
-      let cryptoResp = cryptoKeys.fetch(this.resource(this.cryptoKeysURL)).response;
+      let cryptoResp = Async.promiseSpinningly(cryptoKeys.fetch(this.resource(this.cryptoKeysURL))).response;
 
       // Save out the ciphertext for when we reupload. If there's a bug in
       // CollectionKeyManager, this will prevent us from uploading junk.
@@ -230,12 +231,13 @@ Sync11Service.prototype = {
       cryptoKeys.ciphertext = cipherText;
       cryptoKeys.cleartext  = null;
 
-      let uploadResp = cryptoKeys.upload(this.resource(this.cryptoKeysURL));
-      if (uploadResp.success)
+      let uploadResp = this._uploadCryptoKeys(cryptoKeys, cryptoResp.obj.modified);
+      if (uploadResp.success) {
         this._log.info("Successfully re-uploaded keys. Continuing sync.");
-      else
+      } else {
         this._log.warn("Got error response re-uploading keys. " +
                        "Continuing sync; let's try again later.");
+      }
 
       return false;            // Don't try again: same keys.
 
@@ -276,8 +278,6 @@ Sync11Service.prototype = {
    * Prepare to initialize the rest of Weave after waiting a little bit
    */
   onStartup: function onStartup() {
-    this._migratePrefs();
-
     this.status = Status;
     this.identity = Status._authManager;
     this.collectionKeys = new CollectionKeyManager();
@@ -309,7 +309,7 @@ Sync11Service.prototype = {
 
     Svc.Obs.add("weave:service:setup-complete", this);
     Svc.Obs.add("sync:collection_changed", this); // Pulled from FxAccountsCommon
-    Svc.Prefs.observe("engine.", this);
+    Services.prefs.addObserver(PREFS_BRANCH + "engine.", this);
 
     this.scheduler = new SyncScheduler(this);
 
@@ -327,7 +327,7 @@ Sync11Service.prototype = {
     // Send an event now that Weave service is ready.  We don't do this
     // synchronously so that observers can import this module before
     // registering an observer.
-    Utils.nextTick(function onNextTick() {
+    Utils.nextTick(() => {
       this.status.ready = true;
 
       // UI code uses the flag on the XPCOM service so it doesn't have
@@ -338,7 +338,7 @@ Sync11Service.prototype = {
       xps.ready = true;
 
       Svc.Obs.notify("weave:service:ready");
-    }.bind(this));
+    });
   },
 
   _checkSetup: function _checkSetup() {
@@ -346,39 +346,6 @@ Sync11Service.prototype = {
       return this.status.service = STATUS_DISABLED;
     }
     return this.status.checkSetup();
-  },
-
-  _migratePrefs: function _migratePrefs() {
-    // Migrate old debugLog prefs.
-    let logLevel = Svc.Prefs.get("log.appender.debugLog");
-    if (logLevel) {
-      Svc.Prefs.set("log.appender.file.level", logLevel);
-      Svc.Prefs.reset("log.appender.debugLog");
-    }
-    if (Svc.Prefs.get("log.appender.debugLog.enabled")) {
-      Svc.Prefs.set("log.appender.file.logOnSuccess", true);
-      Svc.Prefs.reset("log.appender.debugLog.enabled");
-    }
-
-    // Migrate old extensions.weave.* prefs if we haven't already tried.
-    if (Svc.Prefs.get("migrated", false))
-      return;
-
-    // Grab the list of old pref names
-    let oldPrefBranch = "extensions.weave.";
-    let oldPrefNames = Cc["@mozilla.org/preferences-service;1"].
-                       getService(Ci.nsIPrefService).
-                       getBranch(oldPrefBranch).
-                       getChildList("", {});
-
-    // Map each old pref to the current pref branch
-    let oldPref = new Preferences(oldPrefBranch);
-    for (let pref of oldPrefNames)
-      Svc.Prefs.set(pref, oldPref.get(pref));
-
-    // Remove all the old prefs and remember that we've migrated
-    oldPref.resetBranch("");
-    Svc.Prefs.set("migrated", true);
   },
 
   /**
@@ -438,7 +405,10 @@ Sync11Service.prototype = {
       // Ideally this observer should be in the SyncScheduler, but it would require
       // some work to know about the sync specific engines. We should move this there once it does.
       case "sync:collection_changed":
-        if (data.includes("clients")) {
+        // We check if we're running TPS here to avoid TPS failing because it
+        // couldn't get to get the sync lock, due to us currently syncing the
+        // clients engine.
+        if (data.includes("clients") && !Svc.Prefs.get("testing.tps", false)) {
           this.sync([]); // [] = clients collection only
         }
         break;
@@ -497,7 +467,7 @@ Sync11Service.prototype = {
     this._log.trace("In _fetchInfo: " + infoURL);
     let info;
     try {
-      info = this.resource(infoURL).get();
+      info = Async.promiseSpinningly(this.resource(infoURL).get());
     } catch (ex) {
       this.errorHandler.checkServerError(ex);
       throw ex;
@@ -550,7 +520,7 @@ Sync11Service.prototype = {
         if (infoCollections && (CRYPTO_COLLECTION in infoCollections)) {
           try {
             cryptoKeys = new CryptoWrapper(CRYPTO_COLLECTION, KEYS_WBO);
-            let cryptoResp = cryptoKeys.fetch(this.resource(this.cryptoKeysURL)).response;
+            let cryptoResp = Async.promiseSpinningly(cryptoKeys.fetch(this.resource(this.cryptoKeysURL))).response;
 
             if (cryptoResp.success) {
               this.handleFetchedKeys(syncKeyBundle, cryptoKeys);
@@ -645,7 +615,7 @@ Sync11Service.prototype = {
       }
 
       // Fetch collection info on every startup.
-      let test = this.resource(this.infoURL).get();
+      let test = Async.promiseSpinningly(this.resource(this.infoURL).get());
 
       switch (test.status) {
         case 200:
@@ -711,8 +681,7 @@ Sync11Service.prototype = {
     this._log.info("Encrypting new key bundle.");
     wbo.encrypt(this.identity.syncKeyBundle);
 
-    this._log.info("Uploading...");
-    let uploadRes = wbo.upload(this.resource(this.cryptoKeysURL));
+    let uploadRes = this._uploadCryptoKeys(wbo, 0);
     if (uploadRes.status != 200) {
       this._log.warn("Got status " + uploadRes.status + " uploading new keys. What to do? Throw!");
       this.errorHandler.checkServerError(uploadRes);
@@ -750,7 +719,7 @@ Sync11Service.prototype = {
 
     // Download and install them.
     let cryptoKeys = new CryptoWrapper(CRYPTO_COLLECTION, KEYS_WBO);
-    let cryptoResp = cryptoKeys.fetch(this.resource(this.cryptoKeysURL)).response;
+    let cryptoResp = Async.promiseSpinningly(cryptoKeys.fetch(this.resource(this.cryptoKeysURL))).response;
     if (cryptoResp.status != 200) {
       this._log.warn("Failed to download keys.");
       throw new Error("Symmetric key download failed.");
@@ -772,7 +741,11 @@ Sync11Service.prototype = {
       // Clear client-specific data from the server, including disabled engines.
       for (let engine of [this.clientsEngine].concat(this.engineManager.getAll())) {
         try {
-          engine.removeClientData();
+          // Note the additional Promise.resolve here is to handle the fact that
+          // some 3rd party engines probably don't return a promise. We can
+          // probably nuke this once webextensions become mandatory as then
+          // no 3rd party engines will be allowed to exist.
+          Async.promiseSpinningly(Promise.resolve().then(() => engine.removeClientData()));
         } catch (ex) {
           this._log.warn(`Deleting client data for ${engine.name} failed`, ex);
         }
@@ -813,7 +786,7 @@ Sync11Service.prototype = {
       this._clusterManager = this.identity.createClusterManager(this);
       Svc.Obs.notify("weave:service:start-over:finish");
     } catch (err) {
-      this._log.error("startOver failed to re-initialize the identity manager: " + err);
+      this._log.error("startOver failed to re-initialize the identity manager", err);
       // Still send the observer notification so the current state is
       // reflected in the UI.
       Svc.Obs.notify("weave:service:start-over:finish");
@@ -880,7 +853,7 @@ Sync11Service.prototype = {
     this._log.debug("Fetching server configuration", infoURL);
     let configResponse;
     try {
-      configResponse = this.resource(infoURL).get();
+      configResponse = Async.promiseSpinningly(this.resource(infoURL).get());
     } catch (ex) {
       // This is probably a network or similar error.
       this._log.warn("Failed to fetch info/configuration", ex);
@@ -910,7 +883,7 @@ Sync11Service.prototype = {
     }
 
     this._log.debug("Fetching global metadata record");
-    let meta = this.recordManager.get(this.metaURL);
+    let meta = Async.promiseSpinningly(this.recordManager.get(this.metaURL));
 
     // Checking modified time of the meta record.
     if (infoResponse &&
@@ -925,7 +898,7 @@ Sync11Service.prototype = {
       this.recordManager.del(this.metaURL);
 
       // ... fetch the current record from the server, and COPY THE FLAGS.
-      let newMeta = this.recordManager.get(this.metaURL);
+      let newMeta = Async.promiseSpinningly(this.recordManager.get(this.metaURL));
 
       // If we got a 401, we do not want to create a new meta/global - we
       // should be able to get the existing meta after we get a new node.
@@ -937,16 +910,9 @@ Sync11Service.prototype = {
 
       if (this.recordManager.response.status == 404) {
         this._log.debug("No meta/global record on the server. Creating one.");
-        newMeta = new WBORecord("meta", "global");
-        newMeta.payload.syncID = this.syncID;
-        newMeta.payload.storageVersion = STORAGE_VERSION;
-        newMeta.payload.declined = this.engineManager.getDeclined();
-
-        newMeta.isNew = true;
-
-        this.recordManager.set(this.metaURL, newMeta);
-        let uploadRes = newMeta.upload(this.resource(this.metaURL));
-        if (!uploadRes.success) {
+        try {
+          this._uploadNewMetaGlobal();
+        } catch (uploadRes) {
           this._log.warn("Unable to upload new meta/global. Failing remote setup.");
           this.errorHandler.checkServerError(uploadRes);
           return false;
@@ -1132,7 +1098,7 @@ Sync11Service.prototype = {
       // Now let's update our declined engines (but only if we have a metaURL;
       // if Sync failed due to no node we will not have one)
       if (this.metaURL) {
-        let meta = this.recordManager.get(this.metaURL);
+        let meta = Async.promiseSpinningly(this.recordManager.get(this.metaURL));
         if (!meta) {
           this._log.warn("No meta/global; can't update declined state.");
           return;
@@ -1151,21 +1117,50 @@ Sync11Service.prototype = {
   },
 
   /**
-   * Upload meta/global, throwing the response on failure.
+   * Upload a fresh meta/global record
+   * @throws the response object if the upload request was not a success
+   */
+  _uploadNewMetaGlobal() {
+    let meta = new WBORecord("meta", "global");
+    meta.payload.syncID = this.syncID;
+    meta.payload.storageVersion = STORAGE_VERSION;
+    meta.payload.declined = this.engineManager.getDeclined();
+    meta.modified = 0;
+    meta.isNew = true;
+
+    this.uploadMetaGlobal(meta);
+  },
+
+  /**
+   * Upload meta/global, throwing the response on failure
+   * @param {WBORecord} meta meta/global record
+   * @throws the response object if the request was not a success
    */
   uploadMetaGlobal(meta) {
-    this._log.debug("Uploading meta/global: " + JSON.stringify(meta));
-
-    // It would be good to set the X-If-Unmodified-Since header to `timestamp`
-    // for this PUT to ensure at least some level of transactionality.
-    // Unfortunately, the servers don't support it after a wipe right now
-    // (bug 693893), so we're going to defer this until bug 692700.
+    this._log.debug("Uploading meta/global", meta);
     let res = this.resource(this.metaURL);
-    let response = res.put(meta);
+    res.setHeader("X-If-Unmodified-Since", meta.modified);
+    let response = Async.promiseSpinningly(res.put(meta));
     if (!response.success) {
       throw response;
     }
+    // From https://docs.services.mozilla.com/storage/apis-1.5.html:
+    // "Successful responses will return the new last-modified time for the collection."
+    meta.modified = response.obj;
     this.recordManager.set(this.metaURL, meta);
+  },
+
+  /**
+   * Upload crypto/keys
+   * @param {WBORecord} cryptoKeys crypto/keys record
+   * @param {Number} lastModified known last modified timestamp (in decimal seconds),
+   *                 will be used to set the X-If-Unmodified-Since header
+   */
+  _uploadCryptoKeys(cryptoKeys, lastModified) {
+    this._log.debug(`Uploading crypto/keys (lastModified: ${lastModified})`);
+    let res = this.resource(this.cryptoKeysURL);
+    res.setHeader("X-If-Unmodified-Since", lastModified);
+    return Async.promiseSpinningly(res.put(cryptoKeys));
   },
 
   _freshStart: function _freshStart() {
@@ -1177,17 +1172,11 @@ Sync11Service.prototype = {
     this.wipeServer();
 
     // Upload a new meta/global record.
-    let meta = new WBORecord("meta", "global");
-    meta.payload.syncID = this.syncID;
-    meta.payload.storageVersion = STORAGE_VERSION;
-    meta.payload.declined = this.engineManager.getDeclined();
-    meta.isNew = true;
-
-    // uploadMetaGlobal throws on failure -- including race conditions.
+    // _uploadNewMetaGlobal throws on failure -- including race conditions.
     // If we got into a race condition, we'll abort the sync this way, too.
     // That's fine. We'll just wait till the next sync. The client that we're
     // racing is probably busy uploading stuff right now anyway.
-    this.uploadMetaGlobal(meta);
+    this._uploadNewMetaGlobal();
 
     // Wipe everything we know about except meta because we just uploaded it
     // TODO: there's a bug here. We should be calling resetClient, no?
@@ -1214,7 +1203,7 @@ Sync11Service.prototype = {
       let res = this.resource(this.storageURL.slice(0, -1));
       res.setHeader("X-Confirm-Delete", "1");
       try {
-        response = res.delete();
+        response = Async.promiseSpinningly(res.delete());
       } catch (ex) {
         this._log.debug("Failed to wipe server", ex);
         histogram.add(false);
@@ -1234,7 +1223,7 @@ Sync11Service.prototype = {
     for (let name of collections) {
       let url = this.storageURL + name;
       try {
-        response = this.resource(url).delete();
+        response = Async.promiseSpinningly(this.resource(url).delete());
       } catch (ex) {
         this._log.debug("Failed to wipe '" + name + "' collection", ex);
         histogram.add(false);

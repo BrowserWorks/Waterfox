@@ -1,8 +1,6 @@
-/* eslint-env mozilla/frame-script */
-
 function hideSelectPopup(selectPopup, mode = "enter", win = window) {
   let browser = win.gBrowser.selectedBrowser;
-  let selectClosedPromise = ContentTask.spawn(browser, null, function*() {
+  let selectClosedPromise = ContentTask.spawn(browser, null, async function() {
     Cu.import("resource://gre/modules/SelectContentHelper.jsm");
     return ContentTaskUtils.waitForCondition(() => !SelectContentHelper.open);
   });

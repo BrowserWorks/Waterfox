@@ -61,7 +61,7 @@ function frameScript() {
         }
       }
     }
-    Services.obs.addObserver(observer, "about:performance-update-complete", false);
+    Services.obs.addObserver(observer, "about:performance-update-complete");
     Services.obs.notifyObservers(null, "test-about:performance-test-driver", JSON.stringify(options));
   });
 
@@ -165,29 +165,25 @@ function frameScript() {
     let observer = function(subject, topic, mode) {
       Services.obs.removeObserver(observer, "about:performance-update-complete");
       let hasTitleInWebpages = false;
-      let hasTitleInAddons = false;
 
       try {
         let eltWeb = content.document.getElementById("webpages");
-        let eltAddons = content.document.getElementById("addons");
-        if (!eltWeb || !eltAddons) {
-          dump(`aboutperformance-test:hasItems: the page is not ready yet webpages:${eltWeb}, addons:${eltAddons}\n`);
+        if (!eltWeb) {
+          dump(`aboutperformance-test:hasItems: the page is not ready yet webpages:${eltWeb}\n`);
           return;
         }
 
-        let addonTitles = Array.from(eltAddons.querySelectorAll("span.title"), elt => elt.textContent);
         let webTitles = Array.from(eltWeb.querySelectorAll("span.title"), elt => elt.textContent);
 
-        hasTitleInAddons = addonTitles.includes(title);
         hasTitleInWebpages = webTitles.includes(title);
       } catch (ex) {
         Cu.reportError("Error in content: " + ex);
         Cu.reportError(ex.stack);
       } finally {
-        sendAsyncMessage("aboutperformance-test:hasItems", {hasTitleInAddons, hasTitleInWebpages, mode});
+        sendAsyncMessage("aboutperformance-test:hasItems", {hasTitleInWebpages, mode});
       }
     }
-    Services.obs.addObserver(observer, "about:performance-update-complete", false);
+    Services.obs.addObserver(observer, "about:performance-update-complete");
     Services.obs.notifyObservers(null, "test-about:performance-test-driver", JSON.stringify(options));
   });
 }
@@ -195,24 +191,24 @@ function frameScript() {
 var gTabAboutPerformance = null;
 var gTabContent = null;
 
-add_task(function* init() {
+add_task(async function init() {
   info("Setting up about:performance");
-  gTabAboutPerformance = gBrowser.selectedTab = gBrowser.addTab("about:performance");
-  yield ContentTask.spawn(gTabAboutPerformance.linkedBrowser, null, frameScript);
+  gTabAboutPerformance = gBrowser.selectedTab = BrowserTestUtils.addTab(gBrowser, "about:performance");
+  await ContentTask.spawn(gTabAboutPerformance.linkedBrowser, null, frameScript);
 
   info(`Setting up ${URL}`);
-  gTabContent = gBrowser.addTab(URL);
-  yield ContentTask.spawn(gTabContent.linkedBrowser, null, frameScript);
+  gTabContent = BrowserTestUtils.addTab(gBrowser, URL);
+  await ContentTask.spawn(gTabContent.linkedBrowser, null, frameScript);
 });
 
-var promiseExpectContent = Task.async(function*(options) {
+var promiseExpectContent = async function(options) {
   let title = "Testing about:performance " + Math.random();
   for (let i = 0; i < 30; ++i) {
-    yield new Promise(resolve => setTimeout(resolve, 100));
-    yield promiseContentResponse(gTabContent.linkedBrowser, "aboutperformance-test:setTitle", title);
-    let {hasTitleInWebpages, hasTitleInAddons, mode} = (yield promiseContentResponse(gTabAboutPerformance.linkedBrowser, "aboutperformance-test:hasItems", {title, options}));
+    await new Promise(resolve => setTimeout(resolve, 100));
+    await promiseContentResponse(gTabContent.linkedBrowser, "aboutperformance-test:setTitle", title);
+    let {hasTitleInWebpages, mode} = (await promiseContentResponse(gTabAboutPerformance.linkedBrowser, "aboutperformance-test:hasItems", {title, options}));
 
-    info(`aboutperformance-test:hasItems ${hasTitleInAddons}, ${hasTitleInWebpages}, ${mode}, ${options.displayRecent}`);
+    info(`aboutperformance-test:hasItems ${hasTitleInWebpages}, ${mode}, ${options.displayRecent}`);
     if (!hasTitleInWebpages) {
       info(`Title not found in webpages`);
       continue;
@@ -221,9 +217,8 @@ var promiseExpectContent = Task.async(function*(options) {
       info(`Wrong mode`);
       continue;
     }
-    Assert.ok(!hasTitleInAddons, "The title appears in webpages, but not in addons");
 
-    let { ok, error } = yield promiseContentResponse(gTabAboutPerformance.linkedBrowser, "aboutperformance-test:checkSanity", {options});
+    let { ok, error } = await promiseContentResponse(gTabAboutPerformance.linkedBrowser, "aboutperformance-test:checkSanity", {options});
     if (ok) {
       info("aboutperformance-test:checkSanity: success");
     }
@@ -233,19 +228,19 @@ var promiseExpectContent = Task.async(function*(options) {
     return true;
   }
   return false;
-});
+};
 
 // Test that we can find the title of a webpage in about:performance
-add_task(function* test_find_title() {
+add_task(async function test_find_title() {
     for (let displayRecent of [true, false]) {
       info(`Testing with autoRefresh, in ${displayRecent ? "recent" : "global"} mode`);
-      let found = yield promiseExpectContent({autoRefresh: 100, displayRecent});
+      let found = await promiseExpectContent({autoRefresh: 100, displayRecent});
       Assert.ok(found, `The page title appears when about:performance is set to auto-refresh`);
     }
 });
 
 // Test that we can close/reload tabs using the corresponding buttons
-add_task(function* test_close_tab() {
+add_task(async function test_close_tab() {
   let tabs = new Map();
   let closeObserver = function({type, originalTarget: tab}) {
     dump(`closeObserver: ${tab}, ${tab.constructor.name}, ${tab.tagName}, ${type}\n`);
@@ -267,17 +262,17 @@ add_task(function* test_close_tab() {
     for (let mode of ["close", "reload"]) {
       let URL = `about:about?display-recent=${displayRecent}&mode=${mode}&salt=${Math.random()}`;
       info(`Setting up ${URL}`);
-      let tab = gBrowser.addTab(URL);
-      yield ContentTask.spawn(tab.linkedBrowser, null, frameScript);
+      let tab = BrowserTestUtils.addTab(gBrowser, URL);
+      await ContentTask.spawn(tab.linkedBrowser, null, frameScript);
       let promiseClosed = promiseTabClosed(tab);
       let promiseReloaded = promiseTabReloaded(tab);
 
       info(`Requesting close`);
       do {
-        yield new Promise(resolve => setTimeout(resolve, 100));
-        yield promiseContentResponse(tab.linkedBrowser, "aboutperformance-test:setTitle", URL);
+        await new Promise(resolve => setTimeout(resolve, 100));
+        await promiseContentResponse(tab.linkedBrowser, "aboutperformance-test:setTitle", URL);
 
-        let {ok, found, error} = yield promiseContentResponse(gTabAboutPerformance.linkedBrowser, "aboutperformance-test:closeTab", {url: URL, autoRefresh: true, mode, displayRecent});
+        let {ok, found, error} = await promiseContentResponse(gTabAboutPerformance.linkedBrowser, "aboutperformance-test:closeTab", {url: URL, autoRefresh: true, mode, displayRecent});
         Assert.ok(ok, `Message aboutperformance-test:closeTab was handled correctly ${JSON.stringify(error)}`);
         info(`URL ${URL} ${found ? "found" : "hasn't been found yet"}`);
         if (found) {
@@ -287,24 +282,24 @@ add_task(function* test_close_tab() {
 
       if (mode == "close") {
         info(`Waiting for close`);
-        yield promiseClosed;
+        await promiseClosed;
       } else {
         info(`Waiting for reload`);
-        yield promiseReloaded;
-        yield BrowserTestUtils.removeTab(tab);
+        await promiseReloaded;
+        await BrowserTestUtils.removeTab(tab);
       }
     }
   }
 });
 
-add_task(function* cleanup() {
+add_task(async function cleanup() {
   // Cleanup
   info("Cleaning up");
-  yield promiseContentResponse(gTabAboutPerformance.linkedBrowser, "aboutperformance-test:done", null);
+  await promiseContentResponse(gTabAboutPerformance.linkedBrowser, "aboutperformance-test:done", null);
 
   info("Closing tabs");
   for (let tab of gBrowser.tabs) {
-    yield BrowserTestUtils.removeTab(tab);
+    await BrowserTestUtils.removeTab(tab);
   }
 
   info("Done");

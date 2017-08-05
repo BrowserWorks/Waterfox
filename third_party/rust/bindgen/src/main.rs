@@ -1,19 +1,25 @@
 extern crate bindgen;
+#[cfg(feature="logging")]
 extern crate env_logger;
 #[macro_use]
+#[cfg(feature="logging")]
 extern crate log;
 extern crate clang_sys;
 extern crate clap;
-extern crate rustc_serialize;
 
 use bindgen::clang_version;
 use std::env;
 use std::panic;
 
+#[macro_use]
+#[cfg(not(feature="logging"))]
+mod log_stubs;
+
 mod options;
 use options::builder_from_flags;
 
 pub fn main() {
+    #[cfg(feature="logging")]
     log::set_logger(|max_log_level| {
             use env_logger::Logger;
             let env_logger = Logger::new();
@@ -25,9 +31,12 @@ pub fn main() {
     let bind_args: Vec<_> = env::args().collect();
 
     let version = clang_version();
-    let expected_version = if cfg!(feature = "testing_only_llvm_stable") {
+    let expected_version = if cfg!(feature = "testing_only_libclang_4") {
+        (4, 0)
+    } else if cfg!(feature = "testing_only_libclang_3_8") {
         (3, 8)
     } else {
+        // Default to 3.9.
         (3, 9)
     };
 

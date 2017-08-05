@@ -17,8 +17,9 @@ const BROWSER_BASED_DIRS = [
   "resource://devtools/client/inspector/grids",
   "resource://devtools/client/inspector/layout",
   "resource://devtools/client/jsonview",
-  "resource://devtools/client/shared/vendor",
+  "resource://devtools/client/shared/source-map",
   "resource://devtools/client/shared/redux",
+  "resource://devtools/client/shared/vendor",
 ];
 
 const COMMON_LIBRARY_DIRS = [
@@ -36,7 +37,7 @@ const browserBasedDirsRegExp =
   /^resource\:\/\/devtools\/client\/\S*\/components\//;
 
 function clearCache() {
-  Services.obs.notifyObservers(null, "startupcache-invalidate", null);
+  Services.obs.notifyObservers(null, "startupcache-invalidate");
 }
 
 /*
@@ -110,6 +111,8 @@ function BrowserLoaderBuilder({ baseURI, window, useOnlyShared, commonLibRequire
     id: "browser-loader",
     sharedGlobal: true,
     sandboxPrototype: window,
+    sandboxName: "DevTools (UI loader)",
+    noSandboxAddonId: true,
     paths: Object.assign({}, dynamicPaths, loaderOptions.paths),
     invisibleToDebugger: loaderOptions.invisibleToDebugger,
     requireHook: (id, require) => {

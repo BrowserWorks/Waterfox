@@ -1,22 +1,10 @@
 "use strict";
 
-module.exports = { // eslint-disable-line no-undef
-  "extends": "../../.eslintrc.js",
-
-  "globals": {
-    "addMessageListener": false,
-    "Components": true,
-    "dump": true,
-    "removeMessageListener": false,
-    "sendAsyncMessage": false,
-    "TextDecoder": false,
-    "TextEncoder": false,
-  },
-
+module.exports = {
   "rules": {
     // Rules from the mozilla plugin
     "mozilla/balanced-listeners": "error",
-    "mozilla/no-aArgs": "warn",
+    "mozilla/no-aArgs": "error",
     "mozilla/no-cpows-in-tests": "error",
     "mozilla/var-only-at-top-level": "error",
 
@@ -35,9 +23,6 @@ module.exports = { // eslint-disable-line no-undef
       "requireReturnDescription": false,
     }],
 
-    // Braces only needed for multi-line arrow function blocks
-    // "arrow-body-style": ["error", "as-needed"],
-
     // Forbid spaces inside the square brackets of array literals.
     "array-bracket-spacing": ["error", "never"],
 
@@ -46,10 +31,6 @@ module.exports = { // eslint-disable-line no-undef
 
     // No space padding in parentheses
     "space-in-parens": ["error", "never"],
-
-    // Enforce one true brace style (opening brace on the same line) and avoid
-    // start and end braces on the same line.
-    "brace-style": ["error", "1tbs", {"allowSingleLine": true}],
 
     // Commas at the end of the line not the start
     "comma-style": "error",
@@ -63,27 +44,8 @@ module.exports = { // eslint-disable-line no-undef
     // Two space indent
     "indent": ["error", 2, {"SwitchCase": 1}],
 
-    // Space after colon not before in property declarations
-    "key-spacing": ["error", {"beforeColon": false, "afterColon": true, "mode": "minimum"}],
-
     // Always require parenthesis for new calls
     "new-parens": "error",
-
-    // Use [] instead of Array()
-    "no-array-constructor": "error",
-
-    // If an if block ends with a return no need for an else block
-    // "no-else-return": "error",
-
-    // Disallow empty statements. This will report an error for:
-    // try { something(); } catch (e) {}
-    // but will not report it for:
-    // try { something(); } catch (e) { /* Silencing the error because ...*/ }
-    // which is a valid use case.
-    "no-empty": "error",
-
-    // No spaces between function name and parentheses
-    "no-spaced-func": "warn",
 
     // No expressions where a statement is expected
     "no-unused-expressions": "error",
@@ -97,9 +59,6 @@ module.exports = { // eslint-disable-line no-undef
     // Always require semicolon at end of statement
     "semi": ["error", "always"],
 
-    // Require spaces around operators, except for a|"off".
-    "space-infix-ops": ["error", {"int32Hint": true}],
-
     // Disallow using variables outside the blocks they are defined (especially
     // since only let and const are used, see "no-var").
     "block-scoped-var": "error",
@@ -109,11 +68,7 @@ module.exports = { // eslint-disable-line no-undef
     "comma-dangle": ["error", "always-multiline"],
 
     // Warn about cyclomatic complexity in functions.
-    "complexity": "warn",
-
-    // Don't warn for inconsistent naming when capturing this (not so important
-    // with auto-binding fat arrow functions).
-    // "consistent-this": ["error", "self"],
+    "complexity": ["error", {"max": 20}],
 
     // Enforce dots on the next line with property name.
     "dot-location": ["error", "property"],
@@ -134,15 +89,6 @@ module.exports = { // eslint-disable-line no-undef
 
     // Disallow using the console API.
     "no-console": "error",
-
-    // Disallow control characters in regular expressions.
-    "no-control-regex": "error",
-
-    // Disallow use of eval(). We have other APIs to evaluate code in content.
-    "no-eval": "error",
-
-    // Disallow adding to native types
-    "no-extend-native": "error",
 
     // Disallow fallthrough of case statements, except if there is a comment.
     "no-fallthrough": "error",
@@ -182,14 +128,8 @@ module.exports = { // eslint-disable-line no-undef
     // Disallow Yoda conditions (where literal value comes first).
     "yoda": "error",
 
-    // disallow use of eval()-like methods
-    "no-implied-eval": "error",
-
     // Disallow function or variable declarations in nested blocks
     "no-inner-declarations": "error",
-
-    // Disallow labels that share a name with a variable
-    "no-label-var": "error",
 
     // Disallow creating new instances of String, Number, and Boolean
     "no-new-wrappers": "error",

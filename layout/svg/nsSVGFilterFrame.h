@@ -33,7 +33,7 @@ class nsSVGFilterFrame : public nsSVGContainerFrame
   NS_NewSVGFilterFrame(nsIPresShell* aPresShell, nsStyleContext* aContext);
 protected:
   explicit nsSVGFilterFrame(nsStyleContext* aContext)
-    : nsSVGContainerFrame(aContext)
+    : nsSVGContainerFrame(aContext, kClassID)
     , mLoopFlag(false)
     , mNoHRefURI(false)
   {
@@ -41,7 +41,7 @@ protected:
   }
 
 public:
-  NS_DECL_FRAMEARENA_HELPERS
+  NS_DECL_FRAMEARENA_HELPERS(nsSVGFilterFrame)
 
   // nsIFrame methods:
   virtual void BuildDisplayList(nsDisplayListBuilder*   aBuilder,
@@ -58,21 +58,12 @@ public:
                     nsIFrame*         aPrevInFlow) override;
 #endif
 
-  /**
-   * Get the "type" of the frame
-   *
-   * @see nsGkAtoms::svgFilterFrame
-   */
-  virtual nsIAtom* GetType() const override;
-
 private:
   // Parse our xlink:href and set up our nsSVGPaintingProperty if we
   // reference another filter and we don't have a property. Return
   // the referenced filter's frame if available, null otherwise.
-  class AutoFilterReferencer;
   friend class nsSVGFilterInstance;
   nsSVGFilterFrame* GetReferencedFilter();
-  nsSVGFilterFrame* GetReferencedFilterIfNotInUse();
 
   // Accessors to lookup filter attributes
   uint16_t GetEnumValue(uint32_t aIndex, nsIContent *aDefault);

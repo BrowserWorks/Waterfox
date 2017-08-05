@@ -13,8 +13,6 @@ XPCOMUtils.defineLazyModuleGetter(this, "PromiseUtils",
                                   "resource://gre/modules/PromiseUtils.jsm");
 XPCOMUtils.defineLazyModuleGetter(this, "OS",
                                   "resource://gre/modules/osfile.jsm");
-XPCOMUtils.defineLazyModuleGetter(this, "Task",
-                                  "resource://gre/modules/Task.jsm");
 
 this.EXPORTED_SYMBOLS = [
   "CrashSubmit"
@@ -59,8 +57,13 @@ function getL10nStrings() {
     path.append("Resources");
     path.append("crashreporter.ini");
     if (!path.exists()) {
-      // very bad, but I don't know how to recover
-      return null;
+      // This happens on Android where everything is in an APK.
+      // Android users can't see the contents of the submitted files
+      // anyway, so just hardcode some fallback strings.
+      return {
+        "crashid": "Crash ID: %s",
+        "reporturl": "You can view details of this crash at %s"
+      };
     }
   }
   let crstrings = parseINIStrings(path);
@@ -341,9 +344,10 @@ Submitter.prototype = {
     let id = this.id;
 
     if (this.recordSubmission) {
-      p = manager.ensureCrashIsPresent(id).then(() => {
-        return manager.addSubmissionAttempt(id, submissionID, new Date());
-      });
+      p = p.then(() => { return manager.ensureCrashIsPresent(id); })
+           .then(() => {
+             return manager.addSubmissionAttempt(id, submissionID, new Date());
+            });
     }
     p.then(() => { xhr.send(formData); });
     return true;
@@ -521,11 +525,11 @@ this.CrashSubmit = {
    * @return a Promise that is fulfilled with an array of string, each
    * being an ID as expected to be passed to submit() or ignore()
    */
-  pendingIDsAsync: Task.async(function* CrashSubmit_pendingIDsAsync(maxFileDate) {
+  pendingIDsAsync: async function CrashSubmit_pendingIDsAsync(maxFileDate) {
     let ids = [];
     let info = null;
     try {
-      info = yield OS.File.stat(getDir("pending").path)
+      info = await OS.File.stat(getDir("pending").path)
     } catch (ex) {
       /* pending dir doesn't exist, ignore */
       return ids;
@@ -534,7 +538,7 @@ this.CrashSubmit = {
     if (info.isDir) {
       let iterator = new OS.File.DirectoryIterator(getDir("pending").path);
       try {
-        yield iterator.forEach(
+        await iterator.forEach(
           function onEntry(file) {
             if (file.name.endsWith(".dmp")) {
               return OS.File.exists(file.path + ".ignore")
@@ -564,7 +568,7 @@ this.CrashSubmit = {
       }
     }
     return ids;
-  }),
+  },
 
   /**
    * Prune the saved dumps.

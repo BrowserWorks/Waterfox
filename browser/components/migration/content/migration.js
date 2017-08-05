@@ -24,11 +24,11 @@ var MigrationWizard = { /* exported MigrationWizard */
 
   init() {
     let os = Services.obs;
-    os.addObserver(this, "Migration:Started", false);
-    os.addObserver(this, "Migration:ItemBeforeMigrate", false);
-    os.addObserver(this, "Migration:ItemAfterMigrate", false);
-    os.addObserver(this, "Migration:ItemError", false);
-    os.addObserver(this, "Migration:Ended", false);
+    os.addObserver(this, "Migration:Started");
+    os.addObserver(this, "Migration:ItemBeforeMigrate");
+    os.addObserver(this, "Migration:ItemAfterMigrate");
+    os.addObserver(this, "Migration:ItemError");
+    os.addObserver(this, "Migration:Ended");
 
     this._wiz = document.documentElement;
 
@@ -185,7 +185,7 @@ var MigrationWizard = { /* exported MigrationWizard */
 
     var profiles = document.getElementById("profiles");
     while (profiles.hasChildNodes())
-      profiles.removeChild(profiles.firstChild);
+      profiles.firstChild.remove();
 
     // Note that this block is still reached even if the user chose 'From File'
     // and we canceled the dialog.  When that happens, _migrator will be null.
@@ -225,7 +225,7 @@ var MigrationWizard = { /* exported MigrationWizard */
   onImportItemsPageShow() {
     var dataSources = document.getElementById("dataSources");
     while (dataSources.hasChildNodes())
-      dataSources.removeChild(dataSources.firstChild);
+      dataSources.firstChild.remove();
 
     var items = this._migrator.getMigrateData(this._selectedProfile, this._autoMigrate);
     for (var i = 0; i < 16; ++i) {
@@ -367,7 +367,7 @@ var MigrationWizard = { /* exported MigrationWizard */
   _listItems(aID) {
     var items = document.getElementById(aID);
     while (items.hasChildNodes())
-      items.removeChild(items.firstChild);
+      items.firstChild.remove();
 
     var itemID;
     for (var i = 0; i < 16; ++i) {
@@ -426,12 +426,8 @@ var MigrationWizard = { /* exported MigrationWizard */
               if (this._newHomePage == "DEFAULT") {
                 prefBranch.clearUserPref("browser.startup.homepage");
               } else {
-                var str = Components.classes["@mozilla.org/supports-string;1"]
-                                  .createInstance(Components.interfaces.nsISupportsString);
-                str.data = this._newHomePage;
-                prefBranch.setComplexValue("browser.startup.homepage",
-                                           Components.interfaces.nsISupportsString,
-                                           str);
+                prefBranch.setStringPref("browser.startup.homepage",
+                                         this._newHomePage);
               }
 
               var dirSvc = Components.classes["@mozilla.org/file/directory_service;1"]

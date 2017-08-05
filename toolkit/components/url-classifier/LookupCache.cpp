@@ -6,11 +6,13 @@
 #include "LookupCache.h"
 #include "HashStore.h"
 #include "nsISeekableStream.h"
+#include "mozilla/ArrayUtils.h"
 #include "mozilla/Telemetry.h"
 #include "mozilla/Logging.h"
 #include "nsNetUtil.h"
 #include "prprf.h"
 #include "Classifier.h"
+#include "nsUrlClassifierInfo.h"
 
 // We act as the main entry point for all the real lookups,
 // so note that those are not done to the actual HashStore.
@@ -32,6 +34,8 @@
 // Name of the persistent PrefixSet storage
 #define PREFIXSET_SUFFIX  ".pset"
 
+#define V2_CACHE_DURATION_SEC (15 * 60)
+
 // MOZ_LOG=UrlClassifierDbService:5
 extern mozilla::LazyLogModule gUrlClassifierDbServiceLog;
 #define LOG(args) MOZ_LOG(gUrlClassifierDbServiceLog, mozilla::LogLevel::Debug, args)
@@ -40,7 +44,26 @@ extern mozilla::LazyLogModule gUrlClassifierDbServiceLog;
 namespace mozilla {
 namespace safebrowsing {
 
+const int CacheResultV2::VER = CacheResult::V2;
+const int CacheResultV4::VER = CacheResult::V4;
+
 const int LookupCacheV2::VER = 2;
+
+static
+void CStringToHexString(const nsACString& aIn, nsACString& aOut)
+{
+  static const char* const lut = "0123456789ABCDEF";
+
+  size_t len = aIn.Length();
+  MOZ_ASSERT(len <= COMPLETE_SIZE);
+
+  aOut.SetCapacity(2 * len);
+  for (size_t i = 0; i < aIn.Length(); ++i) {
+    const char c = static_cast<const char>(aIn[i]);
+    aOut.Append(lut[(c >> 4) & 0x0F]);
+    aOut.Append(lut[c & 15]);
+  }
+}
 
 LookupCache::LookupCache(const nsACString& aTableName,
                          const nsACString& aProvider,
@@ -94,54 +117,6 @@ LookupCache::UpdateRootDirHandle(nsIFile* aNewRootStoreDirectory)
 }
 
 nsresult
-LookupCache::Reset()
-{
-  LOG(("LookupCache resetting"));
-
-  nsCOMPtr<nsIFile> prefixsetFile;
-  nsresult rv = mStoreDirectory->Clone(getter_AddRefs(prefixsetFile));
-  NS_ENSURE_SUCCESS(rv, rv);
-
-  rv = prefixsetFile->AppendNative(mTableName + NS_LITERAL_CSTRING(PREFIXSET_SUFFIX));
-  NS_ENSURE_SUCCESS(rv, rv);
-
-  rv = prefixsetFile->Remove(false);
-  NS_ENSURE_SUCCESS(rv, rv);
-
-  ClearAll();
-
-  return NS_OK;
-}
-
-nsresult
-LookupCache::AddCompletionsToCache(AddCompleteArray& aAddCompletes)
-{
-  for (uint32_t i = 0; i < aAddCompletes.Length(); i++) {
-    if (mGetHashCache.BinaryIndexOf(aAddCompletes[i].CompleteHash()) == mGetHashCache.NoIndex) {
-      mGetHashCache.AppendElement(aAddCompletes[i].CompleteHash());
-    }
-  }
-  mGetHashCache.Sort();
-
-  return NS_OK;
-}
-
-#if defined(DEBUG)
-void
-LookupCache::DumpCache()
-{
-  if (!LOG_ENABLED())
-    return;
-
-  for (uint32_t i = 0; i < mGetHashCache.Length(); i++) {
-    nsAutoCString str;
-    mGetHashCache[i].ToHexString(str);
-    LOG(("Caches: %s", str.get()));
-  }
-}
-#endif
-
-nsresult
 LookupCache::WriteFile()
 {
   if (nsUrlClassifierDBService::ShutdownHasStarted()) {
@@ -161,6 +136,104 @@ LookupCache::WriteFile()
   return NS_OK;
 }
 
+nsresult
+LookupCache::CheckCache(const Completion& aCompletion,
+                        bool* aHas,
+                        bool* aConfirmed)
+{
+  // Shouldn't call this function if prefix is not in the database.
+  MOZ_ASSERT(*aHas);
+
+  *aConfirmed = false;
+
+  uint32_t prefix = aCompletion.ToUint32();
+
+  CachedFullHashResponse* fullHashResponse = mFullHashCache.Get(prefix);
+  if (!fullHashResponse) {
+    return NS_OK;
+  }
+
+  int64_t nowSec = PR_Now() / PR_USEC_PER_SEC;
+  int64_t expiryTimeSec;
+
+  FullHashExpiryCache& fullHashes = fullHashResponse->fullHashes;
+  nsDependentCSubstring completion(
+    reinterpret_cast<const char*>(aCompletion.buf), COMPLETE_SIZE);
+
+  // Check if we can find the fullhash in positive cache
+  if (fullHashes.Get(completion, &expiryTimeSec)) {
+    if (nowSec <= expiryTimeSec) {
+      // Url is NOT safe.
+      *aConfirmed = true;
+      LOG(("Found a valid fullhash in the positive cache"));
+    } else {
+      // Trigger a gethash request in this case(aConfirmed is false).
+      LOG(("Found an expired fullhash in the positive cache"));
+
+      // Remove fullhash entry from the cache when the negative cache
+      // is also expired because whether or not the fullhash is cached
+      // locally, we will need to consult the server next time we
+      // lookup this hash. We may as well remove it from our cache.
+      if (fullHashResponse->negativeCacheExpirySec < expiryTimeSec) {
+        fullHashes.Remove(completion);
+        if (fullHashes.Count() == 0 &&
+            fullHashResponse->negativeCacheExpirySec < nowSec) {
+          mFullHashCache.Remove(prefix);
+        }
+      }
+    }
+    return NS_OK;
+  }
+
+  // Check negative cache.
+  if (fullHashResponse->negativeCacheExpirySec >= nowSec) {
+    // Url is safe.
+    LOG(("Found a valid prefix in the negative cache"));
+    *aHas = false;
+  } else {
+    LOG(("Found an expired prefix in the negative cache"));
+    if (fullHashes.Count() == 0) {
+      mFullHashCache.Remove(prefix);
+    }
+  }
+
+  return NS_OK;
+}
+
+// This function remove cache entries whose negative cache time is expired.
+// It is possible that a cache entry whose positive cache time is not yet
+// expired but still being removed after calling this API. Right now we call
+// this on every update.
+void
+LookupCache::InvalidateExpiredCacheEntries()
+{
+  int64_t nowSec = PR_Now() / PR_USEC_PER_SEC;
+
+  for (auto iter = mFullHashCache.Iter(); !iter.Done(); iter.Next()) {
+    CachedFullHashResponse* response = iter.Data();
+    if (response->negativeCacheExpirySec < nowSec) {
+      iter.Remove();
+    }
+  }
+}
+
+void
+LookupCache::CopyFullHashCache(const LookupCache* aSource)
+{
+  if (!aSource) {
+    return;
+  }
+
+  CopyClassHashTable<FullHashResponseMap>(aSource->mFullHashCache,
+                                          mFullHashCache);
+}
+
+void
+LookupCache::ClearCache()
+{
+  mFullHashCache.Clear();
+}
+
 void
 LookupCache::ClearAll()
 {
@@ -170,9 +243,46 @@ LookupCache::ClearAll()
 }
 
 void
-LookupCache::ClearCache()
+LookupCache::GetCacheInfo(nsIUrlClassifierCacheInfo** aCache)
 {
-  mGetHashCache.Clear();
+  MOZ_ASSERT(aCache);
+
+  RefPtr<nsUrlClassifierCacheInfo> info = new nsUrlClassifierCacheInfo;
+  info->table = mTableName;
+
+  for (auto iter = mFullHashCache.ConstIter(); !iter.Done(); iter.Next()) {
+    RefPtr<nsUrlClassifierCacheEntry> entry = new nsUrlClassifierCacheEntry;
+
+    // Set prefix of the cache entry.
+    nsAutoCString prefix(reinterpret_cast<const char*>(&iter.Key()), PREFIX_SIZE);
+    CStringToHexString(prefix, entry->prefix);
+
+    // Set expiry of the cache entry.
+    CachedFullHashResponse* response = iter.Data();
+    entry->expirySec = response->negativeCacheExpirySec;
+
+    // Set positive cache.
+    FullHashExpiryCache& fullHashes = response->fullHashes;
+    for (auto iter2 = fullHashes.ConstIter(); !iter2.Done(); iter2.Next()) {
+      RefPtr<nsUrlClassifierPositiveCacheEntry> match =
+        new nsUrlClassifierPositiveCacheEntry;
+
+      // Set fullhash of positive cache entry.
+      CStringToHexString(iter2.Key(), match->fullhash);
+
+      // Set expiry of positive cache entry.
+      match->expirySec = iter2.Data();
+
+      entry->matches.AppendElement(
+        static_cast<nsIUrlClassifierPositiveCacheEntry*>(match));
+    }
+
+    info->entries.AppendElement(static_cast<nsIUrlClassifierCacheEntry*>(entry));
+  }
+
+  NS_ADDREF(*aCache = info);
+
+  return;
 }
 
 /* static */ bool
@@ -369,9 +479,6 @@ LookupCache::LoadPrefixSet()
     LOG(("stored PrefixSet exists, loading from disk"));
     rv = LoadFromFile(psFile);
     if (NS_FAILED(rv)) {
-      if (rv == NS_ERROR_FILE_CORRUPTED) {
-        Reset();
-      }
       return rv;
     }
     mPrimed = true;
@@ -388,6 +495,46 @@ LookupCache::LoadPrefixSet()
 
   return NS_OK;
 }
+
+#if defined(DEBUG)
+static
+nsCString GetFormattedTimeString(int64_t aCurTimeSec)
+{
+  PRExplodedTime pret;
+  PR_ExplodeTime(aCurTimeSec * PR_USEC_PER_SEC, PR_GMTParameters, &pret);
+
+  return nsPrintfCString(
+         "%04d-%02d-%02d %02d:%02d:%02d UTC",
+         pret.tm_year, pret.tm_month + 1, pret.tm_mday,
+         pret.tm_hour, pret.tm_min, pret.tm_sec);
+}
+
+void
+LookupCache::DumpCache()
+{
+  if (!LOG_ENABLED()) {
+    return;
+  }
+
+  for (auto iter = mFullHashCache.ConstIter(); !iter.Done(); iter.Next()) {
+    CachedFullHashResponse* response = iter.Data();
+
+    nsAutoCString prefix;
+    CStringToHexString(
+      nsCString(reinterpret_cast<const char*>(&iter.Key()), PREFIX_SIZE), prefix);
+    LOG(("Cache prefix(%s): %s, Expiry: %s", mTableName.get(), prefix.get(),
+          GetFormattedTimeString(response->negativeCacheExpirySec).get()));
+
+    FullHashExpiryCache& fullHashes = response->fullHashes;
+    for (auto iter2 = fullHashes.ConstIter(); !iter2.Done(); iter2.Next()) {
+      nsAutoCString fullhash;
+      CStringToHexString(iter2.Key(), fullhash);
+      LOG(("  - %s, Expiry: %s", fullhash.get(),
+            GetFormattedTimeString(iter2.Data()).get()));
+    }
+  }
+}
+#endif
 
 nsresult
 LookupCacheV2::Init()
@@ -421,10 +568,11 @@ LookupCacheV2::ClearAll()
 
 nsresult
 LookupCacheV2::Has(const Completion& aCompletion,
-                   bool* aHas, uint32_t* aMatchLength,
-                   bool* aFromCache)
+                   bool* aHas,
+                   uint32_t* aMatchLength,
+                   bool* aConfirmed)
 {
-  *aHas = *aFromCache = false;
+  *aHas = *aConfirmed = false;
   *aMatchLength = 0;
 
   uint32_t prefix = aCompletion.ToUint32();
@@ -433,41 +581,25 @@ LookupCacheV2::Has(const Completion& aCompletion,
   nsresult rv = mPrefixSet->Contains(prefix, &found);
   NS_ENSURE_SUCCESS(rv, rv);
 
-  LOG(("Probe in %s: %X, found %d", mTableName.get(), prefix, found));
-
   if (found) {
     *aHas = true;
     *aMatchLength = PREFIX_SIZE;
-  }
-
-  if ((mGetHashCache.BinaryIndexOf(aCompletion) != nsTArray<Completion>::NoIndex) ||
-      (mUpdateCompletions.BinaryIndexOf(aCompletion) != nsTArray<Completion>::NoIndex)) {
-    LOG(("Complete in %s", mTableName.get()));
-    *aFromCache = true;
+  } else if (mUpdateCompletions.BinaryIndexOf(aCompletion) !=
+             nsTArray<Completion>::NoIndex) {
+    // Completions is found in database, confirm the result
     *aHas = true;
     *aMatchLength = COMPLETE_SIZE;
+    *aConfirmed = true;
   }
 
-  return NS_OK;
-}
-
-void
-LookupCacheV2::IsHashEntryConfirmed(const Completion& aEntry,
-                                    const TableFreshnessMap& aTableFreshness,
-                                    uint32_t aFreshnessGuarantee,
-                                    bool* aConfirmed)
-{
-  int64_t age; // in seconds
-  bool found = aTableFreshness.Get(mTableName, &age);
-  if (!found) {
-    *aConfirmed = false;
-  } else {
-    int64_t now = (PR_Now() / PR_USEC_PER_SEC);
-    MOZ_ASSERT(age <= now);
-
-    // Considered completion as unsafe if its table is up-to-date.
-    *aConfirmed = (now - age) < aFreshnessGuarantee;
+  if (*aHas && !(*aConfirmed)) {
+    rv = CheckCache(aCompletion, aHas, aConfirmed);
   }
+
+  LOG(("Probe in %s: %X, has %d, confirmed %d",
+       mTableName.get(), prefix, *aHas, *aConfirmed));
+
+  return rv;
 }
 
 bool
@@ -512,6 +644,36 @@ LookupCacheV2::GetPrefixes(FallibleTArray<uint32_t>& aAddPrefixes)
     return NS_OK;
   }
   return mPrefixSet->GetPrefixesNative(aAddPrefixes);
+}
+
+void
+LookupCacheV2::AddGethashResultToCache(AddCompleteArray& aAddCompletes,
+                                       MissPrefixArray& aMissPrefixes,
+                                       int64_t aExpirySec)
+{
+  int64_t defaultExpirySec = PR_Now() / PR_USEC_PER_SEC + V2_CACHE_DURATION_SEC;
+  if (aExpirySec != 0) {
+    defaultExpirySec = aExpirySec;
+  }
+
+  for (const AddComplete& add : aAddCompletes) {
+    nsDependentCSubstring fullhash(
+      reinterpret_cast<const char*>(add.CompleteHash().buf), COMPLETE_SIZE);
+
+    CachedFullHashResponse* response =
+      mFullHashCache.LookupOrAdd(add.ToUint32());
+    response->negativeCacheExpirySec = defaultExpirySec;
+
+    FullHashExpiryCache& fullHashes = response->fullHashes;
+    fullHashes.Put(fullhash, defaultExpirySec);
+  }
+
+  for (const Prefix& prefix : aMissPrefixes) {
+    CachedFullHashResponse* response =
+      mFullHashCache.LookupOrAdd(prefix.ToUint32());
+
+    response->negativeCacheExpirySec = defaultExpirySec;
+  }
 }
 
 nsresult

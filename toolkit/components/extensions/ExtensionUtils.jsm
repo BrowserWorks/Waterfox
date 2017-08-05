@@ -11,33 +11,13 @@ const Cc = Components.classes;
 const Cu = Components.utils;
 const Cr = Components.results;
 
-const INTEGER = /^[1-9]\d*$/;
-
 Cu.import("resource://gre/modules/Services.jsm");
 Cu.import("resource://gre/modules/XPCOMUtils.jsm");
 
-XPCOMUtils.defineLazyModuleGetter(this, "AddonManager",
-                                  "resource://gre/modules/AddonManager.jsm");
-XPCOMUtils.defineLazyModuleGetter(this, "AppConstants",
-                                  "resource://gre/modules/AppConstants.jsm");
 XPCOMUtils.defineLazyModuleGetter(this, "ConsoleAPI",
                                   "resource://gre/modules/Console.jsm");
-XPCOMUtils.defineLazyModuleGetter(this, "LanguageDetector",
-                                  "resource:///modules/translation/LanguageDetector.jsm");
-XPCOMUtils.defineLazyModuleGetter(this, "Locale",
-                                  "resource://gre/modules/Locale.jsm");
 XPCOMUtils.defineLazyModuleGetter(this, "MessageChannel",
                                   "resource://gre/modules/MessageChannel.jsm");
-XPCOMUtils.defineLazyModuleGetter(this, "NetUtil",
-                                  "resource://gre/modules/NetUtil.jsm");
-XPCOMUtils.defineLazyModuleGetter(this, "Preferences",
-                                  "resource://gre/modules/Preferences.jsm");
-XPCOMUtils.defineLazyModuleGetter(this, "Schemas",
-                                  "resource://gre/modules/Schemas.jsm");
-
-XPCOMUtils.defineLazyServiceGetter(this, "styleSheetService",
-                                   "@mozilla.org/content/style-sheet-service;1",
-                                   "nsIStyleSheetService");
 
 function getConsole() {
   return new ConsoleAPI({
@@ -49,11 +29,12 @@ function getConsole() {
 XPCOMUtils.defineLazyGetter(this, "console", getConsole);
 
 let nextId = 0;
-const {uniqueProcessID} = Services.appinfo;
+XPCOMUtils.defineLazyGetter(this, "uniqueProcessID", () => Services.appinfo.uniqueProcessID);
 
 function getUniqueId() {
   return `${nextId++}-${uniqueProcessID}`;
 }
+
 
 /**
  * An Error subclass for which complete error messages are always passed
@@ -120,31 +101,10 @@ function runSafe(context, f, ...args) {
   return runSafeWithoutClone(f, ...args);
 }
 
-function getInnerWindowID(window) {
-  return window.QueryInterface(Ci.nsIInterfaceRequestor)
-    .getInterface(Ci.nsIDOMWindowUtils)
-    .currentInnerWindowID;
-}
-
 // Return true if the given value is an instance of the given
 // native type.
 function instanceOf(value, type) {
   return {}.toString.call(value) == `[object ${type}]`;
-}
-
-// Extend the object |obj| with the property descriptors of each object in
-// |args|.
-function extend(obj, ...args) {
-  for (let arg of args) {
-    let props = [...Object.getOwnPropertyNames(arg),
-                 ...Object.getOwnPropertySymbols(arg)];
-    for (let prop of props) {
-      let descriptor = Object.getOwnPropertyDescriptor(arg, prop);
-      Object.defineProperty(obj, prop, descriptor);
-    }
-  }
-
-  return obj;
 }
 
 /**
@@ -179,158 +139,23 @@ class DefaultMap extends Map {
   }
 }
 
-class SpreadArgs extends Array {
-  constructor(args) {
-    super();
-    this.push(...args);
-  }
+const _winUtils = new DefaultWeakMap(win => {
+  return win.QueryInterface(Ci.nsIInterfaceRequestor)
+            .getInterface(Ci.nsIDOMWindowUtils);
+});
+const getWinUtils = win => _winUtils.get(win);
+
+function getInnerWindowID(window) {
+  return getWinUtils(window).currentInnerWindowID;
 }
 
-// Manages icon details for toolbar buttons in the |pageAction| and
-// |browserAction| APIs.
-let IconDetails = {
-  // Normalizes the various acceptable input formats into an object
-  // with icon size as key and icon URL as value.
-  //
-  // If a context is specified (function is called from an extension):
-  // Throws an error if an invalid icon size was provided or the
-  // extension is not allowed to load the specified resources.
-  //
-  // If no context is specified, instead of throwing an error, this
-  // function simply logs a warning message.
-  normalize(details, extension, context = null) {
-    let result = {};
-
-    try {
-      if (details.imageData) {
-        let imageData = details.imageData;
-
-        if (typeof imageData == "string") {
-          imageData = {"19": imageData};
-        }
-
-        for (let size of Object.keys(imageData)) {
-          if (!INTEGER.test(size)) {
-            throw new ExtensionError(`Invalid icon size ${size}, must be an integer`);
-          }
-          result[size] = imageData[size];
-        }
-      }
-
-      if (details.path) {
-        let path = details.path;
-        if (typeof path != "object") {
-          path = {"19": path};
-        }
-
-        let baseURI = context ? context.uri : extension.baseURI;
-
-        for (let size of Object.keys(path)) {
-          if (!INTEGER.test(size)) {
-            throw new ExtensionError(`Invalid icon size ${size}, must be an integer`);
-          }
-
-          let url = baseURI.resolve(path[size]);
-
-          // The Chrome documentation specifies these parameters as
-          // relative paths. We currently accept absolute URLs as well,
-          // which means we need to check that the extension is allowed
-          // to load them. This will throw an error if it's not allowed.
-          try {
-            Services.scriptSecurityManager.checkLoadURIStrWithPrincipal(
-              extension.principal, url,
-              Services.scriptSecurityManager.DISALLOW_SCRIPT);
-          } catch (e) {
-            throw new ExtensionError(`Illegal URL ${url}`);
-          }
-
-          result[size] = url;
-        }
-      }
-    } catch (e) {
-      // Function is called from extension code, delegate error.
-      if (context) {
-        throw e;
-      }
-      // If there's no context, it's because we're handling this
-      // as a manifest directive. Log a warning rather than
-      // raising an error.
-      extension.manifestError(`Invalid icon data: ${e}`);
-    }
-
-    return result;
-  },
-
-  // Returns the appropriate icon URL for the given icons object and the
-  // screen resolution of the given window.
-  getPreferredIcon(icons, extension = null, size = 16) {
-    const DEFAULT = "chrome://browser/content/extension.svg";
-
-    let bestSize = null;
-    if (icons[size]) {
-      bestSize = size;
-    } else if (icons[2 * size]) {
-      bestSize = 2 * size;
-    } else {
-      let sizes = Object.keys(icons)
-                        .map(key => parseInt(key, 10))
-                        .sort((a, b) => a - b);
-
-      bestSize = sizes.find(candidate => candidate > size) || sizes.pop();
-    }
-
-    if (bestSize) {
-      return {size: bestSize, icon: icons[bestSize]};
-    }
-
-    return {size, icon: DEFAULT};
-  },
-
-  convertImageURLToDataURL(imageURL, contentWindow, browserWindow, size = 18) {
-    return new Promise((resolve, reject) => {
-      let image = new contentWindow.Image();
-      image.onload = function() {
-        let canvas = contentWindow.document.createElement("canvas");
-        let ctx = canvas.getContext("2d");
-        let dSize = size * browserWindow.devicePixelRatio;
-
-        // Scales the image while maintaing width to height ratio.
-        // If the width and height differ, the image is centered using the
-        // smaller of the two dimensions.
-        let dWidth, dHeight, dx, dy;
-        if (this.width > this.height) {
-          dWidth = dSize;
-          dHeight = image.height * (dSize / image.width);
-          dx = 0;
-          dy = (dSize - dHeight) / 2;
-        } else {
-          dWidth = image.width * (dSize / image.height);
-          dHeight = dSize;
-          dx = (dSize - dWidth) / 2;
-          dy = 0;
-        }
-
-        ctx.drawImage(this, 0, 0, this.width, this.height, dx, dy, dWidth, dHeight);
-        resolve(canvas.toDataURL("image/png"));
-      };
-      image.onerror = reject;
-      image.src = imageURL;
-    });
-  },
-
-  // These URLs should already be properly escaped, but make doubly sure CSS
-  // string escape characters are escaped here, since they could lead to a
-  // sandbox break.
-  escapeUrl(url) {
-    return url.replace(/[\\\s"]/g, encodeURIComponent);
-  },
-};
-
 const LISTENERS = Symbol("listeners");
+const ONCE_MAP = Symbol("onceMap");
 
 class EventEmitter {
   constructor() {
     this[LISTENERS] = new Map();
+    this[ONCE_MAP] = new WeakMap();
   }
 
   /**
@@ -366,11 +191,33 @@ class EventEmitter {
       let set = this[LISTENERS].get(event);
 
       set.delete(listener);
+      set.delete(this[ONCE_MAP].get(listener));
       if (!set.size) {
         this[LISTENERS].delete(event);
       }
     }
   }
+
+  /**
+   * Adds the given function as a listener for the given event once.
+   *
+   * @param {string} event
+   *       The name of the event to listen for.
+   * @param {function(string, ...any)} listener
+   *        The listener to call when events are emitted.
+   */
+  once(event, listener) {
+    let wrapper = (...args) => {
+      this.off(event, wrapper);
+      this[ONCE_MAP].delete(listener);
+
+      return listener(...args);
+    };
+    this[ONCE_MAP].set(listener, wrapper);
+
+    this.on(event, wrapper);
+  }
+
 
   /**
    * Triggers all listeners for the given event, and returns a promise
@@ -392,348 +239,6 @@ class EventEmitter {
     });
 
     return Promise.all(promises);
-  }
-}
-
-function LocaleData(data) {
-  this.defaultLocale = data.defaultLocale;
-  this.selectedLocale = data.selectedLocale;
-  this.locales = data.locales || new Map();
-  this.warnedMissingKeys = new Set();
-
-  // Map(locale-name -> Map(message-key -> localized-string))
-  //
-  // Contains a key for each loaded locale, each of which is a
-  // Map of message keys to their localized strings.
-  this.messages = data.messages || new Map();
-
-  if (data.builtinMessages) {
-    this.messages.set(this.BUILTIN, data.builtinMessages);
-  }
-}
-
-
-LocaleData.prototype = {
-  // Representation of the object to send to content processes. This
-  // should include anything the content process might need.
-  serialize() {
-    return {
-      defaultLocale: this.defaultLocale,
-      selectedLocale: this.selectedLocale,
-      messages: this.messages,
-      locales: this.locales,
-    };
-  },
-
-  BUILTIN: "@@BUILTIN_MESSAGES",
-
-  has(locale) {
-    return this.messages.has(locale);
-  },
-
-  // https://developer.chrome.com/extensions/i18n
-  localizeMessage(message, substitutions = [], options = {}) {
-    let defaultOptions = {
-      locale: this.selectedLocale,
-      defaultValue: "",
-      cloneScope: null,
-    };
-
-    options = Object.assign(defaultOptions, options);
-
-    let locales = new Set([this.BUILTIN, options.locale, this.defaultLocale]
-                          .filter(locale => this.messages.has(locale)));
-
-    // Message names are case-insensitive, so normalize them to lower-case.
-    message = message.toLowerCase();
-    for (let locale of locales) {
-      let messages = this.messages.get(locale);
-      if (messages.has(message)) {
-        let str = messages.get(message);
-
-        if (!Array.isArray(substitutions)) {
-          substitutions = [substitutions];
-        }
-
-        let replacer = (matched, index, dollarSigns) => {
-          if (index) {
-            // This is not quite Chrome-compatible. Chrome consumes any number
-            // of digits following the $, but only accepts 9 substitutions. We
-            // accept any number of substitutions.
-            index = parseInt(index, 10) - 1;
-            return index in substitutions ? substitutions[index] : "";
-          }
-          // For any series of contiguous `$`s, the first is dropped, and
-          // the rest remain in the output string.
-          return dollarSigns;
-        };
-        return str.replace(/\$(?:([1-9]\d*)|(\$+))/g, replacer);
-      }
-    }
-
-    // Check for certain pre-defined messages.
-    if (message == "@@ui_locale") {
-      return this.uiLocale;
-    } else if (message.startsWith("@@bidi_")) {
-      let registry = Cc["@mozilla.org/chrome/chrome-registry;1"].getService(Ci.nsIXULChromeRegistry);
-      let rtl = registry.isLocaleRTL("global");
-
-      if (message == "@@bidi_dir") {
-        return rtl ? "rtl" : "ltr";
-      } else if (message == "@@bidi_reversed_dir") {
-        return rtl ? "ltr" : "rtl";
-      } else if (message == "@@bidi_start_edge") {
-        return rtl ? "right" : "left";
-      } else if (message == "@@bidi_end_edge") {
-        return rtl ? "left" : "right";
-      }
-    }
-
-    if (!this.warnedMissingKeys.has(message)) {
-      let error = `Unknown localization message ${message}`;
-      if (options.cloneScope) {
-        error = new options.cloneScope.Error(error);
-      }
-      Cu.reportError(error);
-      this.warnedMissingKeys.add(message);
-    }
-    return options.defaultValue;
-  },
-
-  // Localize a string, replacing all |__MSG_(.*)__| tokens with the
-  // matching string from the current locale, as determined by
-  // |this.selectedLocale|.
-  //
-  // This may not be called before calling either |initLocale| or
-  // |initAllLocales|.
-  localize(str, locale = this.selectedLocale) {
-    if (!str) {
-      return str;
-    }
-
-    return str.replace(/__MSG_([A-Za-z0-9@_]+?)__/g, (matched, message) => {
-      return this.localizeMessage(message, [], {locale, defaultValue: matched});
-    });
-  },
-
-  // Validates the contents of a locale JSON file, normalizes the
-  // messages into a Map of message key -> localized string pairs.
-  addLocale(locale, messages, extension) {
-    let result = new Map();
-
-    // Chrome does not document the semantics of its localization
-    // system very well. It handles replacements by pre-processing
-    // messages, replacing |$[a-zA-Z0-9@_]+$| tokens with the value of their
-    // replacements. Later, it processes the resulting string for
-    // |$[0-9]| replacements.
-    //
-    // Again, it does not document this, but it accepts any number
-    // of sequential |$|s, and replaces them with that number minus
-    // 1. It also accepts |$| followed by any number of sequential
-    // digits, but refuses to process a localized string which
-    // provides more than 9 substitutions.
-    if (!instanceOf(messages, "Object")) {
-      extension.packagingError(`Invalid locale data for ${locale}`);
-      return result;
-    }
-
-    for (let key of Object.keys(messages)) {
-      let msg = messages[key];
-
-      if (!instanceOf(msg, "Object") || typeof(msg.message) != "string") {
-        extension.packagingError(`Invalid locale message data for ${locale}, message ${JSON.stringify(key)}`);
-        continue;
-      }
-
-      // Substitutions are case-insensitive, so normalize all of their names
-      // to lower-case.
-      let placeholders = new Map();
-      if (instanceOf(msg.placeholders, "Object")) {
-        for (let key of Object.keys(msg.placeholders)) {
-          placeholders.set(key.toLowerCase(), msg.placeholders[key]);
-        }
-      }
-
-      let replacer = (match, name) => {
-        let replacement = placeholders.get(name.toLowerCase());
-        if (instanceOf(replacement, "Object") && "content" in replacement) {
-          return replacement.content;
-        }
-        return "";
-      };
-
-      let value = msg.message.replace(/\$([A-Za-z0-9@_]+)\$/g, replacer);
-
-      // Message names are also case-insensitive, so normalize them to lower-case.
-      result.set(key.toLowerCase(), value);
-    }
-
-    this.messages.set(locale, result);
-    return result;
-  },
-
-  get acceptLanguages() {
-    let result = Preferences.get("intl.accept_languages", "", Ci.nsIPrefLocalizedString);
-    return result.split(/\s*,\s*/g);
-  },
-
-
-  get uiLocale() {
-    // Return the browser locale, but convert it to a Chrome-style
-    // locale code.
-    return Locale.getLocale().replace(/-/g, "_");
-  },
-};
-
-// This is a generic class for managing event listeners. Example usage:
-//
-// new SingletonEventManager(context, "api.subAPI", fire => {
-//   let listener = (...) => {
-//     // Fire any listeners registered with addListener.
-//     fire.async(arg1, arg2);
-//   };
-//   // Register the listener.
-//   SomehowRegisterListener(listener);
-//   return () => {
-//     // Return a way to unregister the listener.
-//     SomehowUnregisterListener(listener);
-//   };
-// }).api()
-//
-// The result is an object with addListener, removeListener, and
-// hasListener methods. |context| is an add-on scope (either an
-// ExtensionContext in the chrome process or ExtensionContext in a
-// content process). |name| is for debugging. |register| is a function
-// to register the listener. |register| should return an
-// unregister function that will unregister the listener.
-function SingletonEventManager(context, name, register) {
-  this.context = context;
-  this.name = name;
-  this.register = register;
-  this.unregister = new Map();
-}
-
-SingletonEventManager.prototype = {
-  addListener(callback, ...args) {
-    if (this.unregister.has(callback)) {
-      return;
-    }
-
-    let shouldFire = () => {
-      if (this.context.unloaded) {
-        dump(`${this.name} event fired after context unloaded.\n`);
-      } else if (!this.context.active) {
-        dump(`${this.name} event fired while context is inactive.\n`);
-      } else if (this.unregister.has(callback)) {
-        return true;
-      }
-      return false;
-    };
-
-    let fire = {
-      sync: (...args) => {
-        if (shouldFire()) {
-          return this.context.runSafe(callback, ...args);
-        }
-      },
-      async: (...args) => {
-        return Promise.resolve().then(() => {
-          if (shouldFire()) {
-            return this.context.runSafe(callback, ...args);
-          }
-        });
-      },
-      raw: (...args) => {
-        if (!shouldFire()) {
-          throw new Error("Called raw() on unloaded/inactive context");
-        }
-        return callback(...args);
-      },
-      asyncWithoutClone: (...args) => {
-        return Promise.resolve().then(() => {
-          if (shouldFire()) {
-            return this.context.runSafeWithoutClone(callback, ...args);
-          }
-        });
-      },
-    };
-
-
-    let unregister = this.register(fire, ...args);
-    this.unregister.set(callback, unregister);
-    this.context.callOnClose(this);
-  },
-
-  removeListener(callback) {
-    if (!this.unregister.has(callback)) {
-      return;
-    }
-
-    let unregister = this.unregister.get(callback);
-    this.unregister.delete(callback);
-    unregister();
-    if (this.unregister.size == 0) {
-      this.context.forgetOnClose(this);
-    }
-  },
-
-  hasListener(callback) {
-    return this.unregister.has(callback);
-  },
-
-  close() {
-    for (let unregister of this.unregister.values()) {
-      unregister();
-    }
-  },
-
-  api() {
-    return {
-      addListener: (...args) => this.addListener(...args),
-      removeListener: (...args) => this.removeListener(...args),
-      hasListener: (...args) => this.hasListener(...args),
-    };
-  },
-};
-
-// Simple API for event listeners where events never fire.
-function ignoreEvent(context, name) {
-  return {
-    addListener: function(callback) {
-      let id = context.extension.id;
-      let frame = Components.stack.caller;
-      let msg = `In add-on ${id}, attempting to use listener "${name}", which is unimplemented.`;
-      let scriptError = Cc["@mozilla.org/scripterror;1"]
-        .createInstance(Ci.nsIScriptError);
-      scriptError.init(msg, frame.filename, null, frame.lineNumber,
-                       frame.columnNumber, Ci.nsIScriptError.warningFlag,
-                       "content javascript");
-      let consoleService = Cc["@mozilla.org/consoleservice;1"]
-        .getService(Ci.nsIConsoleService);
-      consoleService.logMessage(scriptError);
-    },
-    removeListener: function(callback) {},
-    hasListener: function(callback) {},
-  };
-}
-
-// Copy an API object from |source| into the scope |dest|.
-function injectAPI(source, dest) {
-  for (let prop in source) {
-    // Skip names prefixed with '_'.
-    if (prop[0] == "_") {
-      continue;
-    }
-
-    let desc = Object.getOwnPropertyDescriptor(source, prop);
-    if (typeof(desc.value) == "function") {
-      Cu.exportFunction(desc.value, dest, {defineAs: prop});
-    } else if (typeof(desc.value) == "object") {
-      let obj = Cu.createObjectIn(dest, {defineAs: prop});
-      injectAPI(desc.value, obj);
-    } else {
-      Object.defineProperty(dest, prop, desc);
-    }
   }
 }
 
@@ -854,7 +359,7 @@ function promiseObserved(topic, test = () => true) {
         resolve({subject, data});
       }
     };
-    Services.obs.addObserver(observer, topic, false);
+    Services.obs.addObserver(observer, topic);
   });
 }
 
@@ -867,38 +372,6 @@ function getMessageManager(target) {
 
 function flushJarCache(jarPath) {
   Services.obs.notifyObservers(null, "flush-cache-entry", jarPath);
-}
-
-const PlatformInfo = Object.freeze({
-  os: (function() {
-    let os = AppConstants.platform;
-    if (os == "macosx") {
-      os = "mac";
-    }
-    return os;
-  })(),
-  arch: (function() {
-    let abi = Services.appinfo.XPCOMABI;
-    let [arch] = abi.split("-");
-    if (arch == "x86") {
-      arch = "x86-32";
-    } else if (arch == "x86_64") {
-      arch = "x86-64";
-    }
-    return arch;
-  })(),
-});
-
-function detectLanguage(text) {
-  return LanguageDetector.detectLanguage(text).then(result => ({
-    isReliable: result.confident,
-    languages: result.languages.map(lang => {
-      return {
-        language: lang.languageCode,
-        percentage: lang.percent,
-      };
-    }),
-  }));
 }
 
 /**
@@ -918,11 +391,6 @@ function normalizeTime(date) {
   return new Date((typeof date == "string" && /^\d+$/.test(date))
                         ? parseInt(date, 10) : date);
 }
-
-const stylesheetMap = new DefaultMap(url => {
-  let uri = NetUtil.newURI(url);
-  return styleSheetService.preloadSheet(uri, styleSheetService.AGENT_SHEET);
-});
 
 /**
  * Defines a lazy getter for the given property on the given object. The
@@ -963,26 +431,6 @@ function defineLazyGetter(object, prop, getter) {
       redefine(this, value);
     },
   });
-}
-
-function findPathInObject(obj, path, printErrors = true) {
-  let parent;
-  for (let elt of path.split(".")) {
-    if (!obj || !(elt in obj)) {
-      if (printErrors) {
-        Cu.reportError(`WebExtension API ${path} not found (it may be unimplemented by Firefox).`);
-      }
-      return null;
-    }
-
-    parent = obj;
-    obj = obj[elt];
-  }
-
-  if (typeof obj === "function") {
-    return obj.bind(parent);
-  }
-  return obj;
 }
 
 /**
@@ -1067,7 +515,7 @@ class MessageManagerProxy {
     if (this.messageManager) {
       return this.messageManager.sendAsyncMessage(...args);
     }
-    /* globals uneval */
+
     Cu.reportError(`Cannot send message: Other side disconnected: ${uneval(args)}`);
   }
 
@@ -1164,16 +612,13 @@ class MessageManagerProxy {
 
 this.ExtensionUtils = {
   defineLazyGetter,
-  detectLanguage,
-  extend,
-  findPathInObject,
   flushJarCache,
   getConsole,
   getInnerWindowID,
   getMessageManager,
   getUniqueId,
-  ignoreEvent,
-  injectAPI,
+  filterStack,
+  getWinUtils,
   instanceOf,
   normalizeTime,
   promiseDocumentLoaded,
@@ -1184,16 +629,10 @@ this.ExtensionUtils = {
   runSafeSync,
   runSafeSyncWithoutClone,
   runSafeWithoutClone,
-  stylesheetMap,
   DefaultMap,
   DefaultWeakMap,
   EventEmitter,
   ExtensionError,
-  IconDetails,
   LimitedSet,
-  LocaleData,
   MessageManagerProxy,
-  PlatformInfo,
-  SingletonEventManager,
-  SpreadArgs,
 };

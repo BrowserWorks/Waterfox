@@ -41,7 +41,8 @@ public:
                      EventChainPreVisitor& aVisitor) override;
   virtual nsresult PostHandleEvent(
                      EventChainPostVisitor& aVisitor) override;
-  virtual nsresult Clone(mozilla::dom::NodeInfo *aNodeInfo, nsINode **aResult) const override;
+  virtual nsresult Clone(mozilla::dom::NodeInfo *aNodeInfo, nsINode **aResult,
+                         bool aPreallocateChildren) const override;
 
   // nsIContent
   virtual nsresult BindToTree(nsIDocument *aDocument, nsIContent *aParent,
@@ -67,11 +68,20 @@ public:
   virtual nsresult UnsetAttr(int32_t aNameSpaceID, nsIAtom* aAttribute,
                              bool aNotify) override;
 
+  // Link
+  virtual bool ElementHasHref() const override;
+
   // WebIDL
   already_AddRefed<SVGAnimatedString> Href();
   already_AddRefed<SVGAnimatedString> Target();
   void GetDownload(nsAString & aDownload);
   void SetDownload(const nsAString & aDownload, ErrorResult& rv);
+
+  virtual void NodeInfoChanged(nsIDocument* aOldDoc) final override
+  {
+    ClearHasPendingLinkUpdate();
+    SVGAElementBase::NodeInfoChanged(aOldDoc);
+  }
 
 protected:
   virtual ~SVGAElement();

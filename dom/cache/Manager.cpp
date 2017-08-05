@@ -1423,11 +1423,10 @@ Manager::ShutdownAll()
 
   Factory::ShutdownAll();
 
-  while (!Factory::IsShutdownAllComplete()) {
-    if (!NS_ProcessNextEvent()) {
-      NS_WARNING("Something bad happened!");
-      break;
-    }
+  if (!mozilla::SpinEventLoopUntil([]() {
+        return Factory::IsShutdownAllComplete();
+      })) {
+    NS_WARNING("Something bad happened!");
   }
 }
 
@@ -1526,7 +1525,7 @@ Manager::ReleaseCacheId(CacheId aCacheId)
   NS_ASSERT_OWNINGTHREAD(Manager);
   for (uint32_t i = 0; i < mCacheIdRefs.Length(); ++i) {
     if (mCacheIdRefs[i].mCacheId == aCacheId) {
-#if defined(DEBUG) || !defined(RELEASE_OR_BETA)
+#ifdef MOZ_DIAGNOSTIC_ASSERT_ENABLED
       uint32_t oldRef = mCacheIdRefs[i].mCount;
 #endif
       mCacheIdRefs[i].mCount -= 1;
@@ -1577,7 +1576,7 @@ Manager::ReleaseBodyId(const nsID& aBodyId)
   NS_ASSERT_OWNINGTHREAD(Manager);
   for (uint32_t i = 0; i < mBodyIdRefs.Length(); ++i) {
     if (mBodyIdRefs[i].mBodyId == aBodyId) {
-#if defined(DEBUG) || !defined(RELEASE_OR_BETA)
+#ifdef MOZ_DIAGNOSTIC_ASSERT_ENABLED
       uint32_t oldRef = mBodyIdRefs[i].mCount;
 #endif
       mBodyIdRefs[i].mCount -= 1;

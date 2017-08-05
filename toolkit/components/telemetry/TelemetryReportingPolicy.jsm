@@ -146,6 +146,13 @@ this.TelemetryReportingPolicy = {
   },
 
   /**
+   * Check if this is the first time the browser ran.
+   */
+  isFirstRun() {
+    return TelemetryReportingPolicyImpl.isFirstRun();
+  },
+
+  /**
    * Test only method, restarts the policy.
    */
   reset() {
@@ -165,6 +172,13 @@ this.TelemetryReportingPolicy = {
   testInfobarShown() {
     return TelemetryReportingPolicyImpl._userNotified();
   },
+
+  /**
+   * Test only method, used to trigger an update of the "first run" state.
+   */
+  testUpdateFirstRun() {
+    return TelemetryReportingPolicyImpl.observe(null, "sessionstore-windows-restored", null);
+  },
 };
 
 var TelemetryReportingPolicyImpl = {
@@ -173,6 +187,9 @@ var TelemetryReportingPolicyImpl = {
   _notificationInProgress: false,
   // The timer used to show the datachoices notification at startup.
   _startupNotificationTimerId: null,
+  // Keep track of the first session state, as the related preference
+  // is flipped right after the browser starts.
+  _isFirstRun: true,
 
   get _log() {
     if (!this._logger) {
@@ -310,7 +327,7 @@ var TelemetryReportingPolicyImpl = {
     this._migratePreferences();
 
     // Add the event observers.
-    Services.obs.addObserver(this, "sessionstore-windows-restored", false);
+    Services.obs.addObserver(this, "sessionstore-windows-restored");
   },
 
   /**
@@ -352,6 +369,10 @@ var TelemetryReportingPolicyImpl = {
     return this.isUserNotifiedOfCurrentPolicy || bypassNotification;
   },
 
+  isFirstRun() {
+    return this._isFirstRun;
+  },
+
   /**
    * Migrate the data policy preferences, if needed.
    */
@@ -363,23 +384,33 @@ var TelemetryReportingPolicyImpl = {
   },
 
   /**
-   * Show the data choices infobar if the user wasn't already notified and data submission
-   * is enabled.
+   * Determine whether the user should be notified.
    */
-  _showInfobar() {
+  _shouldNotify() {
     if (!this.dataSubmissionEnabled) {
-      this._log.trace("_showInfobar - Data submission disabled by the policy.");
-      return;
+      this._log.trace("_shouldNotify - Data submission disabled by the policy.");
+      return false;
     }
 
     const bypassNotification = Preferences.get(PREF_BYPASS_NOTIFICATION, false);
     if (this.isUserNotifiedOfCurrentPolicy || bypassNotification) {
-      this._log.trace("_showInfobar - User already notified or bypassing the policy.");
-      return;
+      this._log.trace("_shouldNotify - User already notified or bypassing the policy.");
+      return false;
     }
 
     if (this._notificationInProgress) {
-      this._log.trace("_showInfobar - User not notified, notification already in progress.");
+      this._log.trace("_shouldNotify - User not notified, notification already in progress.");
+      return false;
+    }
+
+    return true;
+  },
+
+  /**
+   * Show the data choices infobar if needed.
+   */
+  _showInfobar() {
+    if (!this._shouldNotify()) {
       return;
     }
 
@@ -414,6 +445,10 @@ var TelemetryReportingPolicyImpl = {
    * Try to open the privacy policy in a background tab instead of showing the infobar.
    */
   _openFirstRunPage() {
+    if (!this._shouldNotify()) {
+      return false;
+    }
+
     let firstRunPolicyURL = Preferences.get(PREF_FIRST_RUN_URL, "");
     if (!firstRunPolicyURL) {
       return false;
@@ -461,8 +496,10 @@ var TelemetryReportingPolicyImpl = {
     win.addEventListener("unload", removeListeners);
     win.gBrowser.addTabsProgressListener(progressListener);
 
-    tab = win.gBrowser.loadOneTab(firstRunPolicyURL, { inBackground: true });
-
+    tab = win.gBrowser.loadOneTab(firstRunPolicyURL, {
+      inBackground: true,
+      triggeringPrincipal: Services.scriptSecurityManager.getSystemPrincipal(),
+    });
     return true;
   },
 
@@ -471,8 +508,8 @@ var TelemetryReportingPolicyImpl = {
       return;
     }
 
-    const isFirstRun = Preferences.get(PREF_FIRST_RUN, true);
-    if (isFirstRun) {
+    this._isFirstRun = Preferences.get(PREF_FIRST_RUN, true);
+    if (this._isFirstRun) {
       // We're performing the first run, flip firstRun preference for subsequent runs.
       Preferences.set(PREF_FIRST_RUN, false);
 
@@ -487,7 +524,7 @@ var TelemetryReportingPolicyImpl = {
 
     // Show the info bar.
     const delay =
-      isFirstRun ? NOTIFICATION_DELAY_FIRST_RUN_MSEC : NOTIFICATION_DELAY_NEXT_RUNS_MSEC;
+      this._isFirstRun ? NOTIFICATION_DELAY_FIRST_RUN_MSEC : NOTIFICATION_DELAY_NEXT_RUNS_MSEC;
 
     this._startupNotificationTimerId = Policy.setShowInfobarTimeout(
         // Calling |canUpload| eventually shows the infobar, if needed.

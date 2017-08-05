@@ -3,7 +3,6 @@
 
 // Tests the bookmark repair requestor and responder end-to-end (ie, without
 // many mocks)
-Cu.import("resource://gre/modules/PlacesUtils.jsm");
 Cu.import("resource://gre/modules/Log.jsm");
 Cu.import("resource://gre/modules/osfile.jsm");
 Cu.import("resource://services-sync/bookmark_repair.js");
@@ -74,7 +73,7 @@ async function promiseValidationDone(expected) {
   actual.sort((a, b) => String(a.name).localeCompare(b.name));
   expected.sort((a, b) => String(a.name).localeCompare(b.name));
   deepEqual(actual, expected);
-};
+}
 
 async function cleanup(server) {
   bookmarksEngine._store.wipe();
@@ -89,26 +88,7 @@ add_task(async function test_bookmark_repair_integration() {
 
   _("Ensure that a validation error triggers a repair request.");
 
-  let contents = {
-    meta: {
-      global: {
-        engines: {
-          clients: {
-            version: clientsEngine.version,
-            syncID: clientsEngine.syncID,
-          },
-          bookmarks: {
-            version: bookmarksEngine.version,
-            syncID: bookmarksEngine.syncID,
-          },
-        }
-      }
-    },
-    clients: {},
-    bookmarks: {},
-    crypto: {},
-  };
-  let server = serverForUsers({"foo": "password"}, contents);
+  let server = serverForFoo(bookmarksEngine);
   await SyncTestingInfrastructure(server);
 
   let user = server.user("foo");
@@ -166,8 +146,8 @@ add_task(async function test_bookmark_repair_integration() {
     // sync again - we should have a few problems...
     _("Sync again to trigger repair");
     validationPromise = promiseValidationDone([
-      {"name":"missingChildren","count":1},
-      {"name":"structuralDifferences","count":1},
+      {"name": "missingChildren", "count": 1},
+      {"name": "structuralDifferences", "count": 1},
     ]);
     Service.sync();
     await validationPromise;
@@ -318,6 +298,206 @@ add_task(async function test_bookmark_repair_integration() {
     await revalidationPromise;
     ok(!Services.prefs.prefHasUserValue("services.sync.repairs.bookmarks.state"),
       "Should clear repair pref after successfully completing repair");
+  } finally {
+    await cleanup(server);
+    clientsEngine = Service.clientsEngine = new ClientEngine(Service);
+  }
+});
+
+add_task(async function test_repair_client_missing() {
+  enableValidationPrefs();
+
+  _("Ensure that a record missing from the client only will get re-downloaded from the server");
+
+  let server = serverForFoo(bookmarksEngine);
+  await SyncTestingInfrastructure(server);
+
+  let remoteID = Utils.makeGUID();
+  try {
+
+    _("Syncing to initialize crypto etc.");
+    Service.sync();
+
+    _("Create remote client record");
+    server.insertWBO("foo", "clients", new ServerWBO(remoteID, encryptPayload({
+      id: remoteID,
+      name: "Remote client",
+      type: "desktop",
+      commands: [],
+      version: "54",
+      protocols: ["1.5"],
+    }), Date.now() / 1000));
+
+    let bookmarkInfo = await PlacesUtils.bookmarks.insert({
+      parentGuid: PlacesUtils.bookmarks.toolbarGuid,
+      url: "http://getfirefox.com/",
+      title: "Get Firefox!",
+    });
+
+    let validationPromise = promiseValidationDone([]);
+    _("Syncing.");
+    Service.sync();
+    // should have 2 clients
+    equal(clientsEngine.stats.numClients, 2)
+    await validationPromise;
+
+    // Delete the bookmark localy, but cheat by telling places that Sync did
+    // it, so Sync still thinks we have it.
+    await PlacesUtils.bookmarks.remove(bookmarkInfo.guid, {
+      source: PlacesUtils.bookmarks.SOURCE_SYNC,
+    });
+    // sanity check we aren't going to sync this removal.
+    do_check_empty(bookmarksEngine.pullNewChanges());
+    // sanity check that the bookmark is not there anymore
+    do_check_false(await PlacesUtils.bookmarks.fetch(bookmarkInfo.guid));
+
+    // sync again - we should have a few problems...
+    _("Syncing again.");
+    validationPromise = promiseValidationDone([
+      {"name": "clientMissing", "count": 1},
+      {"name": "structuralDifferences", "count": 1},
+    ]);
+    Service.sync();
+    await validationPromise;
+
+    // We shouldn't have started a repair with our second client.
+    equal(clientsEngine.getClientCommands(remoteID).length, 0);
+
+    // Trigger a sync (will request the missing item)
+    Service.sync();
+
+    // And we got our bookmark back
+    do_check_true(await PlacesUtils.bookmarks.fetch(bookmarkInfo.guid));
+  } finally {
+    await cleanup(server);
+  }
+});
+
+add_task(async function test_repair_server_missing() {
+  enableValidationPrefs();
+
+  _("Ensure that a record missing from the server only will get re-upload from the client");
+
+  let server = serverForFoo(bookmarksEngine);
+  await SyncTestingInfrastructure(server);
+
+  let user = server.user("foo");
+
+  let remoteID = Utils.makeGUID();
+  try {
+
+    _("Syncing to initialize crypto etc.");
+    Service.sync();
+
+    _("Create remote client record");
+    server.insertWBO("foo", "clients", new ServerWBO(remoteID, encryptPayload({
+      id: remoteID,
+      name: "Remote client",
+      type: "desktop",
+      commands: [],
+      version: "54",
+      protocols: ["1.5"],
+    }), Date.now() / 1000));
+
+    let bookmarkInfo = await PlacesUtils.bookmarks.insert({
+      parentGuid: PlacesUtils.bookmarks.toolbarGuid,
+      url: "http://getfirefox.com/",
+      title: "Get Firefox!",
+    });
+
+    let validationPromise = promiseValidationDone([]);
+    _("Syncing.");
+    Service.sync();
+    // should have 2 clients
+    equal(clientsEngine.stats.numClients, 2)
+    await validationPromise;
+
+    // Now we will reach into the server and hard-delete the bookmark
+    user.collection("bookmarks").wbo(bookmarkInfo.guid).delete();
+
+    // sync again - we should have a few problems...
+    _("Syncing again.");
+    validationPromise = promiseValidationDone([
+      {"name": "serverMissing", "count": 1},
+      {"name": "missingChildren", "count": 1},
+    ]);
+    Service.sync();
+    await validationPromise;
+
+    // We shouldn't have started a repair with our second client.
+    equal(clientsEngine.getClientCommands(remoteID).length, 0);
+
+    // Trigger a sync (will upload the missing item)
+    Service.sync();
+
+    // And the server got our bookmark back
+    do_check_true(user.collection("bookmarks").wbo(bookmarkInfo.guid));
+  } finally {
+    await cleanup(server);
+  }
+});
+
+add_task(async function test_repair_server_deleted() {
+  enableValidationPrefs();
+
+  _("Ensure that a record marked as deleted on the server but present on the client will get deleted on the client");
+
+  let server = serverForFoo(bookmarksEngine);
+  await SyncTestingInfrastructure(server);
+
+  let remoteID = Utils.makeGUID();
+  try {
+
+    _("Syncing to initialize crypto etc.");
+    Service.sync();
+
+    _("Create remote client record");
+    server.insertWBO("foo", "clients", new ServerWBO(remoteID, encryptPayload({
+      id: remoteID,
+      name: "Remote client",
+      type: "desktop",
+      commands: [],
+      version: "54",
+      protocols: ["1.5"],
+    }), Date.now() / 1000));
+
+    let bookmarkInfo = await PlacesUtils.bookmarks.insert({
+      parentGuid: PlacesUtils.bookmarks.toolbarGuid,
+      url: "http://getfirefox.com/",
+      title: "Get Firefox!",
+    });
+
+    let validationPromise = promiseValidationDone([]);
+    _("Syncing.");
+    Service.sync();
+    // should have 2 clients
+    equal(clientsEngine.stats.numClients, 2)
+    await validationPromise;
+
+    // Now we will reach into the server and create a tombstone for that bookmark
+    server.insertWBO("foo", "bookmarks", new ServerWBO(bookmarkInfo.guid, encryptPayload({
+      id: bookmarkInfo.guid,
+      deleted: true,
+    }), Date.now() / 1000));
+
+    // sync again - we should have a few problems...
+    _("Syncing again.");
+    validationPromise = promiseValidationDone([
+      {"name": "serverDeleted", "count": 1},
+      {"name": "deletedChildren", "count": 1},
+      {"name": "orphans", "count": 1}
+    ]);
+    Service.sync();
+    await validationPromise;
+
+    // We shouldn't have started a repair with our second client.
+    equal(clientsEngine.getClientCommands(remoteID).length, 0);
+
+    // Trigger a sync (will upload the missing item)
+    Service.sync();
+
+    // And the client deleted our bookmark
+    do_check_true(!(await PlacesUtils.bookmarks.fetch(bookmarkInfo.guid)));
   } finally {
     await cleanup(server);
   }

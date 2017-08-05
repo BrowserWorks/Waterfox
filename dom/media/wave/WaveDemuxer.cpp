@@ -33,7 +33,7 @@ bool
 WAVDemuxer::InitInternal()
 {
   if (!mTrackDemuxer) {
-    mTrackDemuxer = new WAVTrackDemuxer(mSource);
+    mTrackDemuxer = new WAVTrackDemuxer(mSource.GetResource());
   }
   return mTrackDemuxer->Init();
 }
@@ -77,7 +77,7 @@ WAVDemuxer::IsSeekable() const
 
 // WAVTrackDemuxer
 
-WAVTrackDemuxer::WAVTrackDemuxer(MediaResourceIndex aSource)
+WAVTrackDemuxer::WAVTrackDemuxer(MediaResource* aSource)
   : mSource(aSource)
   , mOffset(0)
   , mFirstChunkOffset(0)
@@ -161,9 +161,9 @@ WAVTrackDemuxer::Init()
   mInfo->mExtendedProfile = (mFmtParser.FmtChunk().WaveFormat() & 0xFF00) >> 8;
   mInfo->mMimeType = "audio/wave; codecs=";
   mInfo->mMimeType.AppendInt(mFmtParser.FmtChunk().WaveFormat());
-  mInfo->mDuration = Duration().ToMicroseconds();
+  mInfo->mDuration = Duration();
 
-  return !!(mInfo->mDuration);
+  return mInfo->mDuration.IsPositive();
 }
 
 bool
@@ -531,20 +531,20 @@ WAVTrackDemuxer::GetNextChunk(const MediaByteRange& aRange)
   ++mNumParsedChunks;
   ++mChunkIndex;
 
-  datachunk->mTime = Duration(mChunkIndex - 1).ToMicroseconds();
+  datachunk->mTime = Duration(mChunkIndex - 1);
 
   if (static_cast<uint32_t>(mChunkIndex) * DATA_CHUNK_SIZE < mDataLength) {
-    datachunk->mDuration = Duration(1).ToMicroseconds();
+    datachunk->mDuration = Duration(1);
   } else {
     uint32_t mBytesRemaining =
       mDataLength - mChunkIndex * DATA_CHUNK_SIZE;
-    datachunk->mDuration = DurationFromBytes(mBytesRemaining).ToMicroseconds();
+    datachunk->mDuration = DurationFromBytes(mBytesRemaining);
   }
   datachunk->mTimecode = datachunk->mTime;
   datachunk->mKeyframe = true;
 
-  MOZ_ASSERT(datachunk->mTime >= 0);
-  MOZ_ASSERT(datachunk->mDuration >= 0);
+  MOZ_ASSERT(!datachunk->mTime.IsNegative());
+  MOZ_ASSERT(!datachunk->mDuration.IsNegative());
 
   return datachunk.forget();
 }

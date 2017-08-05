@@ -1,4 +1,3 @@
-// |reftest| skip-if(!this.hasOwnProperty('Intl')) -- needs Intl
 // Copyright 2012 Mozilla Corporation. All rights reserved.
 // This code is governed by the BSD license found in the LICENSE file.
 
@@ -31,11 +30,7 @@ locales.forEach(function (locales) {
         numbers.forEach(function (number) {
             var referenceFormatted = formatObj.format(number);
             var formatted = formatFunc(number);
-            if (referenceFormatted !== formatted) {
-                $ERROR("format function produces different result than format method for locales " +
-                    locales + "; options: " + (options ? JSON.stringify(options) : options) +
-                    " : " + formatted + " vs. " + referenceFormatted + ".");
-            }
+            assert.sameValue(referenceFormatted, formatted, "format function produces different result than format method for locales " + locales + "; options: " + (options ? JSON.stringify(options) : options) + ".");
         });
     });
 });

@@ -83,7 +83,7 @@ public:
             r.front().value()->DebugDump(depth);
     }
 
-    void UpdateWeakPointersAfterGC(XPCJSContext* context);
+    void UpdateWeakPointersAfterGC();
 
     void ShutdownMarker();
 
@@ -146,6 +146,8 @@ public:
 #endif
         mTable.Remove(wrapper->GetIdentityObject());
     }
+
+    inline void Clear() { mTable.Clear(); }
 
     inline uint32_t Count() { return mTable.EntryCount(); }
 
@@ -365,6 +367,8 @@ public:
         NS_PRECONDITION(info,"bad param");
         mTable.Remove(info);
     }
+
+    inline void Clear() { mTable.Clear(); }
 
     inline uint32_t Count() { return mTable.EntryCount(); }
 

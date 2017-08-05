@@ -48,7 +48,7 @@ function observer(aSubject, aTopic, aData) {
 }
 
 kObservedTopics.forEach(topic => {
-  Services.obs.addObserver(observer, topic, false);
+  Services.obs.addObserver(observer, topic);
 });
 
 addMessageListener("Test:ExpectObserverCalled", ({data}) => {
@@ -117,7 +117,7 @@ addMessageListener("Test:WaitForObserverCall", ({data}) => {
       else
         --gObservedTopics[topic];
     }
-  }, topic, false);
+  }, topic);
 });
 
 addMessageListener("Test:WaitForMessage", () => {

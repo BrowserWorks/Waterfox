@@ -6,9 +6,9 @@ const PREF_RESTORE_ON_DEMAND = "browser.sessionstore.restore_on_demand";
 
 requestLongerTimeout(2);
 
-add_task(function* test() {
+add_task(async function test() {
   Services.prefs.setBoolPref(PREF_RESTORE_ON_DEMAND, false);
-  registerCleanupFunction(function () {
+  registerCleanupFunction(function() {
     Services.prefs.clearUserPref(PREF_RESTORE_ON_DEMAND);
   });
 
@@ -63,7 +63,7 @@ add_task(function* test() {
 
   let loadCount = 0;
   let promiseRestoringTabs = new Promise(resolve => {
-    gProgressListener.setCallback(function (aBrowser, aNeedRestore, aRestoring, aRestored) {
+    gProgressListener.setCallback(function(aBrowser, aNeedRestore, aRestoring, aRestored) {
       loadCount++;
 
       if (aBrowser.currentURI.spec == state1.windows[0].tabs[2].entries[0].url)
@@ -104,9 +104,9 @@ add_task(function* test() {
 
   let backupState = ss.getBrowserState();
   ss.setBrowserState(JSON.stringify(state1));
-  yield promiseRestoringTabs;
+  await promiseRestoringTabs;
 
   // Cleanup.
-  yield promiseAllButPrimaryWindowClosed();
-  yield promiseBrowserState(backupState);
+  await promiseAllButPrimaryWindowClosed();
+  await promiseBrowserState(backupState);
 });

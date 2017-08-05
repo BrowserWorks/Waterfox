@@ -17,7 +17,7 @@ var Services = require("Services");
 var { XPCOMUtils } = require("resource://gre/modules/XPCOMUtils.jsm");
 var promise = require("promise");
 var {
-  ActorPool, createExtraActors, appendExtraActors, GeneratedLocation
+  ActorPool, createExtraActors, appendExtraActors
 } = require("devtools/server/actors/common");
 var { DebuggerServer } = require("devtools/server/main");
 var DevToolsUtils = require("devtools/shared/DevToolsUtils");
@@ -336,7 +336,7 @@ TabActor.prototype = {
   get webextensionsContentScriptGlobals() {
     // Ignore xpcshell runtime which spawn TabActors without a window.
     if (this.window) {
-      return ExtensionContent.getContentScriptGlobalsForWindow(this.window);
+      return ExtensionContent.getContentScriptGlobals(this.window);
     }
 
     return [];
@@ -586,15 +586,21 @@ TabActor.prototype = {
   _watchDocshells() {
     // In child processes, we watch all docshells living in the process.
     if (this.listenForNewDocShells) {
-      Services.obs.addObserver(this, "webnavigation-create", false);
+      Services.obs.addObserver(this, "webnavigation-create");
     }
-    Services.obs.addObserver(this, "webnavigation-destroy", false);
+    Services.obs.addObserver(this, "webnavigation-destroy");
 
     // We watch for all child docshells under the current document,
     this._progressListener.watch(this.docShell);
 
     // And list all already existing ones.
     this._updateChildDocShells();
+  },
+
+  _unwatchDocShell(docShell) {
+    if (this._progressListener) {
+      this._progressListener.unwatch(docShell);
+    }
   },
 
   onSwitchToFrame(request) {
@@ -700,9 +706,43 @@ TabActor.prototype = {
   },
 
   _onDocShellDestroy(docShell) {
+    // Stop watching this docshell (the unwatch() method will check if we
+    // started watching it before).
+    this._unwatchDocShell(docShell);
+
     let webProgress = docShell.QueryInterface(Ci.nsIInterfaceRequestor)
                               .getInterface(Ci.nsIWebProgress);
     this._notifyDocShellDestroy(webProgress);
+
+    if (webProgress.DOMWindow == this._originalWindow) {
+      // If the original top level document we connected to is removed,
+      // we try to switch to any other top level document
+      let rootDocShells = this.docShells
+                              .filter(d => {
+                                return d != this.docShell &&
+                                       this._isRootDocShell(d);
+                              });
+      if (rootDocShells.length > 0) {
+        let newRoot = rootDocShells[0];
+        this._originalWindow = newRoot.DOMWindow;
+        this._changeTopLevelDocument(this._originalWindow);
+      } else {
+        // If for some reason (typically during Firefox shutdown), the original
+        // document is destroyed, and there is no other top level docshell,
+        // we detach the tab actor to unregister all listeners and prevent any
+        // exception
+        this.exit();
+      }
+      return;
+    }
+
+    // If the currently targeted context is destroyed,
+    // and we aren't on the top-level document,
+    // we have to switch to the top-level one.
+    if (webProgress.DOMWindow == this.window &&
+        this.window != this._originalWindow) {
+      this._changeTopLevelDocument(this._originalWindow);
+    }
   },
 
   _isRootDocShell(docShell) {
@@ -715,36 +755,34 @@ TabActor.prototype = {
     return !docShell.parent;
   },
 
+  _docShellToWindow(docShell) {
+    let webProgress = docShell.QueryInterface(Ci.nsIInterfaceRequestor)
+                              .getInterface(Ci.nsIWebProgress);
+    let window = webProgress.DOMWindow;
+    let id = window.QueryInterface(Ci.nsIInterfaceRequestor)
+                   .getInterface(Ci.nsIDOMWindowUtils)
+                   .outerWindowID;
+    let parentID = undefined;
+    // Ignore the parent of the original document on non-e10s firefox,
+    // as we get the xul window as parent and don't care about it.
+    if (window.parent && window != this._originalWindow) {
+      parentID = window.parent
+                       .QueryInterface(Ci.nsIInterfaceRequestor)
+                       .getInterface(Ci.nsIDOMWindowUtils)
+                       .outerWindowID;
+    }
+
+    return {
+      id,
+      parentID,
+      url: window.location.href,
+      title: window.document.title,
+    };
+  },
+
   // Convert docShell list to windows objects list being sent to the client
   _docShellsToWindows(docshells) {
-    return docshells.map(docShell => {
-      let webProgress = docShell.QueryInterface(Ci.nsIInterfaceRequestor)
-                                .getInterface(Ci.nsIWebProgress);
-      let window = webProgress.DOMWindow;
-      let id = window.QueryInterface(Ci.nsIInterfaceRequestor)
-                     .getInterface(Ci.nsIDOMWindowUtils)
-                     .outerWindowID;
-      let parentID = undefined;
-      // Ignore the parent of the original document on non-e10s firefox,
-      // as we get the xul window as parent and don't care about it.
-      if (window.parent && window != this._originalWindow) {
-        parentID = window.parent
-                         .QueryInterface(Ci.nsIInterfaceRequestor)
-                         .getInterface(Ci.nsIDOMWindowUtils)
-                         .outerWindowID;
-      }
-
-      // Collect the addonID from the document origin attributes.
-      let addonID = window.document.nodePrincipal.originAttributes.addonId;
-
-      return {
-        id,
-        parentID,
-        addonID,
-        url: window.location.href,
-        title: window.document.title,
-      };
-    });
+    return docshells.map(docShell => this._docShellToWindow(docShell));
   },
 
   _notifyDocShellsUpdate(docshells) {
@@ -780,41 +818,6 @@ TabActor.prototype = {
         destroy: true
       }]
     });
-
-    // Stop watching this docshell (the unwatch() method will check if we
-    // started watching it before).
-    webProgress.QueryInterface(Ci.nsIDocShell);
-    this._progressListener.unwatch(webProgress);
-
-    if (webProgress.DOMWindow == this._originalWindow) {
-      // If the original top level document we connected to is removed,
-      // we try to switch to any other top level document
-      let rootDocShells = this.docShells
-                              .filter(d => {
-                                return d != this.docShell &&
-                                       this._isRootDocShell(d);
-                              });
-      if (rootDocShells.length > 0) {
-        let newRoot = rootDocShells[0];
-        this._originalWindow = newRoot.DOMWindow;
-        this._changeTopLevelDocument(this._originalWindow);
-      } else {
-        // If for some reason (typically during Firefox shutdown), the original
-        // document is destroyed, and there is no other top level docshell,
-        // we detach the tab actor to unregister all listeners and prevent any
-        // exception
-        this.exit();
-      }
-      return;
-    }
-
-    // If the currently targeted context is destroyed,
-    // and we aren't on the top-level document,
-    // we have to switch to the top-level one.
-    if (webProgress.DOMWindow == this.window &&
-        this.window != this._originalWindow) {
-      this._changeTopLevelDocument(this._originalWindow);
-    }
   },
 
   _notifyDocShellDestroyAll() {
@@ -866,7 +869,7 @@ TabActor.prototype = {
     // Check for docShell availability, as it can be already gone
     // during Firefox shutdown.
     if (this.docShell) {
-      this._progressListener.unwatch(this.docShell);
+      this._unwatchDocShell(this.docShell);
       this._restoreDocumentSettings();
     }
     if (this._progressListener) {
@@ -957,7 +960,7 @@ TabActor.prototype = {
     let force = request && request.options && request.options.force;
     // Wait a tick so that the response packet can be dispatched before the
     // subsequent navigation event packet.
-    Services.tm.currentThread.dispatch(DevToolsUtils.makeInfallible(() => {
+    Services.tm.dispatchToMainThread(DevToolsUtils.makeInfallible(() => {
       // This won't work while the browser is shutting down and we don't really
       // care.
       if (Services.startup.shuttingDown) {
@@ -966,7 +969,7 @@ TabActor.prototype = {
       this.webNavigation.reload(force ?
         Ci.nsIWebNavigation.LOAD_FLAGS_BYPASS_CACHE :
         Ci.nsIWebNavigation.LOAD_FLAGS_NONE);
-    }, "TabActor.prototype.onReload's delayed body"), 0);
+    }, "TabActor.prototype.onReload's delayed body"));
     return {};
   },
 
@@ -976,9 +979,9 @@ TabActor.prototype = {
   onNavigateTo(request) {
     // Wait a tick so that the response packet can be dispatched before the
     // subsequent navigation event packet.
-    Services.tm.currentThread.dispatch(DevToolsUtils.makeInfallible(() => {
+    Services.tm.dispatchToMainThread(DevToolsUtils.makeInfallible(() => {
       this.window.location = request.url;
-    }, "TabActor.prototype.onNavigateTo's delayed body"), 0);
+    }, "TabActor.prototype.onNavigateTo's delayed body"));
     return {};
   },
 
@@ -1165,6 +1168,12 @@ TabActor.prototype = {
     this._setWindow(window);
 
     DevToolsUtils.executeSoon(() => {
+      // No need to do anything more if the actor is not attached anymore
+      // e.g. the client has been closed and the actors destroyed in the meantime.
+      if (!this.attached) {
+        return;
+      }
+
       // Then fake window-ready and navigate on the given document
       this._windowReady(window, true);
       DevToolsUtils.executeSoon(() => {
@@ -1402,51 +1411,6 @@ TabActor.prototype = {
       delete this._extraActors[name];
     }
   },
-
-  /**
-   * Takes a packet containing a url, line and column and returns
-   * the updated url, line and column based on the current source mapping
-   * (source mapped files, pretty prints).
-   *
-   * @param {String} request.url
-   * @param {Number} request.line
-   * @param {Number?} request.column
-   * @return {Promise<Object>}
-   */
-  onResolveLocation(request) {
-    let { url, line } = request;
-    let column = request.column || 0;
-    const scripts = this.threadActor.dbg.findScripts({ url });
-
-    if (!scripts[0] || !scripts[0].source) {
-      return promise.resolve({
-        from: this.actorID,
-        type: "resolveLocation",
-        error: "SOURCE_NOT_FOUND"
-      });
-    }
-    const source = scripts[0].source;
-    const generatedActor = this.sources.createNonSourceMappedActor(source);
-    let generatedLocation = new GeneratedLocation(
-      generatedActor, line, column);
-    return this.sources.getOriginalLocation(generatedLocation).then(loc => {
-      // If no map found, return this packet
-      if (loc.originalLine == null) {
-        return {
-          type: "resolveLocation",
-          error: "MAP_NOT_FOUND"
-        };
-      }
-
-      loc = loc.toJSON();
-      return {
-        from: this.actorID,
-        url: loc.source.url,
-        column: loc.column,
-        line: loc.line
-      };
-    });
-  },
 };
 
 /**
@@ -1462,7 +1426,6 @@ TabActor.prototype.requestTypes = {
   "switchToFrame": TabActor.prototype.onSwitchToFrame,
   "listFrames": TabActor.prototype.onListFrames,
   "listWorkers": TabActor.prototype.onListWorkers,
-  "resolveLocation": TabActor.prototype.onResolveLocation
 };
 
 exports.TabActor = TabActor;
@@ -1482,7 +1445,7 @@ function DebuggerProgressListener(tabActor) {
   this._onWindowHidden = this.onWindowHidden.bind(this);
 
   // Watch for windows destroyed (global observer that will need filtering)
-  Services.obs.addObserver(this, "inner-window-destroyed", false);
+  Services.obs.addObserver(this, "inner-window-destroyed");
 
   // XXX: for now we maintain the list of windows we know about in this instance
   // so that we can discriminate windows we care about when observing
@@ -1516,7 +1479,6 @@ DebuggerProgressListener.prototype = {
     let webProgress = docShell.QueryInterface(Ci.nsIInterfaceRequestor)
                               .getInterface(Ci.nsIWebProgress);
     webProgress.addProgressListener(this,
-                                    Ci.nsIWebProgress.NOTIFY_STATUS |
                                     Ci.nsIWebProgress.NOTIFY_STATE_WINDOW |
                                     Ci.nsIWebProgress.NOTIFY_STATE_DOCUMENT);
 

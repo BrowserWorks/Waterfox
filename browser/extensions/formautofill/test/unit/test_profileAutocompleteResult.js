@@ -4,11 +4,17 @@ Cu.import("resource://formautofill/ProfileAutoCompleteResult.jsm");
 
 let matchingProfiles = [{
   guid: "test-guid-1",
+  "given-name": "Timothy",
+  "family-name": "Berners-Lee",
+  name: "Timothy Berners-Lee",
   organization: "Sesame Street",
   "street-address": "123 Sesame Street.",
   tel: "1-345-345-3456.",
 }, {
   guid: "test-guid-2",
+  "given-name": "John",
+  "family-name": "Doe",
+  name: "John Doe",
   organization: "Mozilla",
   "street-address": "331 E. Evelyn Avenue",
   tel: "1-650-903-0800",
@@ -19,7 +25,7 @@ let matchingProfiles = [{
   tel: "1-000-000-0000",
 }];
 
-let allFieldNames = ["street-address", "organization", "tel"];
+let allFieldNames = ["given-name", "family-name", "street-address", "organization", "tel"];
 
 let testCases = [{
   description: "Focus on an `organization` field",
@@ -106,7 +112,7 @@ let testCases = [{
       comment: JSON.stringify(matchingProfiles[0]),
       label: JSON.stringify({
         primary: "123 Sesame Street.",
-        secondary: "Sesame Street",
+        secondary: "Timothy Berners-Lee",
       }),
       image: "",
     }, {
@@ -115,7 +121,7 @@ let testCases = [{
       comment: JSON.stringify(matchingProfiles[1]),
       label: JSON.stringify({
         primary: "331 E. Evelyn Avenue",
-        secondary: "Mozilla",
+        secondary: "John Doe",
       }),
       image: "",
     }, {

@@ -22,7 +22,7 @@ function run_test() {
 
 function checkValue(uri, id, attr, reference) {
   let value = XULStore.getValue(uri, id, attr);
-  do_check_true(value === reference);
+  do_check_eq(value, reference);
 }
 
 function checkValueExists(uri, id, attr, exists) {
@@ -59,45 +59,48 @@ function getAttributes(uri, id) {
 function checkArrays(a, b) {
   a.sort();
   b.sort();
-  do_check_true(a.toString() == b.toString());
+  do_check_eq(a.toString(), b.toString());
 }
 
 function checkOldStore() {
-  checkArrays(["addon-bar", "main-window", "sidebar-title"], getIDs(browserURI));
-  checkArrays(["collapsed"], getAttributes(browserURI, "addon-bar"));
-  checkArrays(["height", "screenX", "screenY", "sizemode", "width"],
+  checkArrays([], getIDs(browserURI));
+  checkArrays([], getAttributes(browserURI, "addon-bar"));
+  checkArrays([],
               getAttributes(browserURI, "main-window"));
-  checkArrays(["value"], getAttributes(browserURI, "sidebar-title"));
+  checkArrays([], getAttributes(browserURI, "sidebar-title"));
 
-  checkValue(browserURI, "addon-bar", "collapsed", "true");
-  checkValue(browserURI, "main-window", "width", "994");
-  checkValue(browserURI, "main-window", "height", "768");
-  checkValue(browserURI, "main-window", "screenX", "4");
-  checkValue(browserURI, "main-window", "screenY", "22");
-  checkValue(browserURI, "main-window", "sizemode", "normal");
+  checkValue(browserURI, "addon-bar", "collapsed", "");
+  checkValue(browserURI, "main-window", "width", "");
+  checkValue(browserURI, "main-window", "height", "");
+  checkValue(browserURI, "main-window", "screenX", "");
+  checkValue(browserURI, "main-window", "screenY", "");
+  checkValue(browserURI, "main-window", "sizemode", "");
   checkValue(browserURI, "sidebar-title", "value", "");
 
-  checkArrays(["lockCol", "prefCol"], getIDs(aboutURI));
-  checkArrays(["ordinal"], getAttributes(aboutURI, "lockCol"));
-  checkArrays(["ordinal", "sortDirection"], getAttributes(aboutURI, "prefCol"));
+  checkArrays([], getIDs(aboutURI));
+  checkArrays([], getAttributes(aboutURI, "lockCol"));
+  checkArrays([], getAttributes(aboutURI, "prefCol"));
 
-  checkValue(aboutURI, "prefCol", "ordinal", "1");
-  checkValue(aboutURI, "prefCol", "sortDirection", "ascending");
-  checkValue(aboutURI, "lockCol", "ordinal", "3");
+  checkValue(aboutURI, "prefCol", "ordinal", "");
+  checkValue(aboutURI, "prefCol", "sortDirection", "");
+  checkValue(aboutURI, "lockCol", "ordinal", "");
 }
 
-add_task(function* testImport() {
+add_task(async function testImport() {
   let src = "localstore.rdf";
   let dst = OS.Path.join(OS.Constants.Path.profileDir, src);
 
-  yield OS.File.copy(src, dst);
+  await OS.File.copy(src, dst);
 
-  // Importing relies on XULStore not yet being loaded before this point.
+  // Test to make sure that localstore.rdf isn't imported any more.
   XULStore = Cc["@mozilla.org/xul/xulstore;1"].getService(Ci.nsIXULStore);
   checkOldStore();
+
+  // Set a value that a future test depends on manually
+  XULStore.setValue(browserURI, "main-window", "width", "994");
 });
 
-add_task(function* testTruncation() {
+add_task(async function testTruncation() {
   let dos = Array(8192).join("~");
   // Long id names should trigger an exception
   Assert.throws(() => XULStore.setValue(browserURI, dos, "foo", "foo"), /NS_ERROR_ILLEGAL_VALUE/);
@@ -112,7 +115,7 @@ add_task(function* testTruncation() {
   XULStore.removeValue(browserURI, "dos", "dos")
 });
 
-add_task(function* testGetValue() {
+add_task(async function testGetValue() {
   // Get non-existing property
   checkValue(browserURI, "side-window", "height", "");
 
@@ -120,7 +123,7 @@ add_task(function* testGetValue() {
   checkValue(browserURI, "main-window", "width", "994");
 });
 
-add_task(function* testHasValue() {
+add_task(async function testHasValue() {
   // Check non-existing property
   checkValueExists(browserURI, "side-window", "height", false);
 
@@ -128,43 +131,43 @@ add_task(function* testHasValue() {
   checkValueExists(browserURI, "main-window", "width", true);
 });
 
-add_task(function* testSetValue() {
+add_task(async function testSetValue() {
   // Set new attribute
   checkValue(browserURI, "side-bar", "width", "");
   XULStore.setValue(browserURI, "side-bar", "width", "1000");
   checkValue(browserURI, "side-bar", "width", "1000");
-  checkArrays(["addon-bar", "main-window", "side-bar", "sidebar-title"], getIDs(browserURI));
+  checkArrays(["main-window", "side-bar"], getIDs(browserURI));
   checkArrays(["width"], getAttributes(browserURI, "side-bar"));
 
   // Modify existing property
   checkValue(browserURI, "side-bar", "width", "1000");
   XULStore.setValue(browserURI, "side-bar", "width", "1024");
   checkValue(browserURI, "side-bar", "width", "1024");
-  checkArrays(["addon-bar", "main-window", "side-bar", "sidebar-title"], getIDs(browserURI));
+  checkArrays(["main-window", "side-bar"], getIDs(browserURI));
   checkArrays(["width"], getAttributes(browserURI, "side-bar"));
 
   // Add another attribute
   checkValue(browserURI, "side-bar", "height", "");
   XULStore.setValue(browserURI, "side-bar", "height", "1000");
   checkValue(browserURI, "side-bar", "height", "1000");
-  checkArrays(["addon-bar", "main-window", "side-bar", "sidebar-title"], getIDs(browserURI));
+  checkArrays(["main-window", "side-bar"], getIDs(browserURI));
   checkArrays(["width", "height"], getAttributes(browserURI, "side-bar"));
 });
 
-add_task(function* testRemoveValue() {
+add_task(async function testRemoveValue() {
   // Remove first attribute
   checkValue(browserURI, "side-bar", "width", "1024");
   XULStore.removeValue(browserURI, "side-bar", "width");
   checkValue(browserURI, "side-bar", "width", "");
   checkValueExists(browserURI, "side-bar", "width", false);
-  checkArrays(["addon-bar", "main-window", "side-bar", "sidebar-title"], getIDs(browserURI));
+  checkArrays(["main-window", "side-bar"], getIDs(browserURI));
   checkArrays(["height"], getAttributes(browserURI, "side-bar"));
 
   // Remove second attribute
   checkValue(browserURI, "side-bar", "height", "1000");
   XULStore.removeValue(browserURI, "side-bar", "height");
   checkValue(browserURI, "side-bar", "height", "");
-  checkArrays(["addon-bar", "main-window", "sidebar-title"], getIDs(browserURI));
+  checkArrays(["main-window"], getIDs(browserURI));
 
   // Removing an attribute that doesn't exists shouldn't fail
   XULStore.removeValue(browserURI, "main-window", "bar");

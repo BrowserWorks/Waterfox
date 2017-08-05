@@ -57,18 +57,18 @@ class CodeGeneratorX86Shared : public CodeGeneratorShared
         Register temp_;
         FloatRegister input_;
         LInstruction* ins_;
-        wasm::TrapOffset trapOffset_;
+        wasm::BytecodeOffset bytecodeOffset_;
 
       public:
         OutOfLineSimdFloatToIntCheck(Register temp, FloatRegister input, LInstruction *ins,
-                                     wasm::TrapOffset trapOffset)
-          : temp_(temp), input_(input), ins_(ins), trapOffset_(trapOffset)
+                                     wasm::BytecodeOffset bytecodeOffset)
+          : temp_(temp), input_(input), ins_(ins), bytecodeOffset_(bytecodeOffset)
         {}
 
         Register temp() const { return temp_; }
         FloatRegister input() const { return input_; }
         LInstruction* ins() const { return ins_; }
-        wasm::TrapOffset trapOffset() const { return trapOffset_; }
+        wasm::BytecodeOffset bytecodeOffset() const { return bytecodeOffset_; }
 
         void accept(CodeGeneratorX86Shared* codegen) {
             codegen->visitOutOfLineSimdFloatToIntCheck(this);
@@ -236,6 +236,8 @@ class CodeGeneratorX86Shared : public CodeGeneratorShared
     virtual void visitCeilF(LCeilF* lir);
     virtual void visitRound(LRound* lir);
     virtual void visitRoundF(LRoundF* lir);
+    virtual void visitNearbyInt(LNearbyInt* lir);
+    virtual void visitNearbyIntF(LNearbyIntF* lir);
     virtual void visitGuardShape(LGuardShape* guard);
     virtual void visitGuardObjectGroup(LGuardObjectGroup* guard);
     virtual void visitGuardClass(LGuardClass* guard);

@@ -4,29 +4,28 @@
 
 [features/firefox@getpocket.com] chrome.jar:
 % content pocket %content/ contentaccessible=yes
-% skin pocket classic/1.0 %skin/linux/
+% skin pocket classic/1.0 %skin/linux/ os=LikeUnix
 % skin pocket classic/1.0 %skin/osx/ os=Darwin
 % skin pocket classic/1.0 %skin/windows/ os=WINNT
 % skin pocket-shared classic/1.0 %skin/shared/
   content/  (content/*)
-  skin/  (skin/*)
+  skin/shared (skin/shared/*)
+#ifdef XP_WIN
+  skin/windows/ (skin/windows/*.png)
+* skin/windows/pocket.css (skin/windows/pocket.css)
+#elifdef XP_MACOSX
+  skin/osx/ (skin/osx/*.png)
+* skin/osx/pocket.css (skin/osx/pocket.css)
+#else
+  skin/linux/ (skin/linux/*.png)
+* skin/linux/pocket.css (skin/linux/pocket.css)
+#endif
+
 # windows overrides
 % override chrome://pocket/skin/menuPanel.png             chrome://pocket/skin/menuPanel-aero.png            os=WINNT osversion=6
 % override chrome://pocket/skin/menuPanel.png             chrome://pocket/skin/menuPanel-aero.png            os=WINNT osversion=6.1
 % override chrome://pocket/skin/menuPanel@2x.png          chrome://pocket/skin/menuPanel-aero@2x.png         os=WINNT osversion=6
 % override chrome://pocket/skin/menuPanel@2x.png          chrome://pocket/skin/menuPanel-aero@2x.png         os=WINNT osversion=6.1
-% override chrome://pocket/skin/Toolbar@2x.png            chrome://pocket/skin/Toolbar-aero@2x.png           os=WINNT osversion=6
-% override chrome://pocket/skin/Toolbar@2x.png            chrome://pocket/skin/Toolbar-aero@2x.png           os=WINNT osversion=6.1
-% override chrome://pocket/skin/Toolbar@2x.png            chrome://pocket/skin/Toolbar-win8@2x.png           os=WINNT osversion=6.2
-% override chrome://pocket/skin/Toolbar@2x.png            chrome://pocket/skin/Toolbar-win8@2x.png           os=WINNT osversion=6.3
-% override chrome://pocket/skin/Toolbar.png               chrome://pocket/skin/Toolbar-XP.png                os=WINNT osversion<6
-% override chrome://pocket/skin/Toolbar.png               chrome://pocket/skin/Toolbar-aero.png              os=WINNT osversion=6
-% override chrome://pocket/skin/Toolbar.png               chrome://pocket/skin/Toolbar-aero.png              os=WINNT osversion=6.1
-% override chrome://pocket/skin/Toolbar.png               chrome://pocket/skin/Toolbar-win8.png              os=WINNT osversion=6.2
-% override chrome://pocket/skin/Toolbar.png               chrome://pocket/skin/Toolbar-win8.png              os=WINNT osversion=6.3
-# osx overrides
-% override chrome://pocket/skin/Toolbar.png               chrome://pocket/skin/Toolbar-yosemite.png          os=Darwin osversion>=10.10
-% override chrome://pocket/skin/Toolbar@2x.png            chrome://pocket/skin/Toolbar-yosemite@2x.png       os=Darwin osversion>=10.10
 % override chrome://pocket/skin/menuPanel.png             chrome://pocket/skin/menuPanel-yosemite.png        os=Darwin osversion>=10.10
 % override chrome://pocket/skin/menuPanel@2x.png          chrome://pocket/skin/menuPanel-yosemite@2x.png     os=Darwin osversion>=10.10
 

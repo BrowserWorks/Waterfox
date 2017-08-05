@@ -6,7 +6,7 @@
 
 <?xml-stylesheet href="chrome://global/skin/" type="text/css"?>
 <?xml-stylesheet href="chrome://browser/content/preferences/siteDataSettings.css" type="text/css"?>
-<?xml-stylesheet href="chrome://browser/skin/preferences/in-content/siteDataSettings.css" type="text/css"?>
+<?xml-stylesheet href="chrome://browser/skin/preferences/in-content-new/siteDataSettings.css" type="text/css"?>
 
 <!DOCTYPE dialog SYSTEM "chrome://browser/locale/preferences/siteDataSettings.dtd" >
 
@@ -37,7 +37,7 @@
 #endif
         >&removingDialog.title;</label>
         <separator class="thin"/>
-        <description id="removing-description">&removingDialog.description;</description>
+        <description id="removing-description">&removingSelected.description;</description>
       </vbox>
     </hbox>
 

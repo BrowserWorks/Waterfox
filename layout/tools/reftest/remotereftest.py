@@ -4,6 +4,7 @@
 
 from contextlib import closing
 import sys
+import logging
 import os
 import time
 import tempfile
@@ -235,12 +236,15 @@ class RemoteReftest(RefTest):
     def stopWebServer(self, options):
         self.server.stop()
 
-    def createReftestProfile(self, options, manifest):
+    def createReftestProfile(self, options, manifest, startAfter=None):
         profile = RefTest.createReftestProfile(self,
                                                options,
                                                manifest,
                                                server=options.remoteWebServer,
                                                port=options.httpPort)
+        if startAfter is not None:
+            print ("WARNING: Continuing after a crash is not supported for remote "
+                   "reftest yet.")
         profileDir = profile.profile
 
         prefs = {}
@@ -308,16 +312,16 @@ class RemoteReftest(RefTest):
                timeout=None, debuggerInfo=None,
                symbolsPath=None, options=None,
                valgrindPath=None, valgrindArgs=None, valgrindSuppFiles=None):
-        status = self.automation.runApp(None, env,
-                                        binary,
-                                        profile.profile,
-                                        cmdargs,
-                                        utilityPath=options.utilityPath,
-                                        xrePath=options.xrePath,
-                                        debuggerInfo=debuggerInfo,
-                                        symbolsPath=symbolsPath,
-                                        timeout=timeout)
-        return status
+        status, lastTestSeen = self.automation.runApp(None, env,
+                                                      binary,
+                                                      profile.profile,
+                                                      cmdargs,
+                                                      utilityPath=options.utilityPath,
+                                                      xrePath=options.xrePath,
+                                                      debuggerInfo=debuggerInfo,
+                                                      symbolsPath=symbolsPath,
+                                                      timeout=timeout)
+        return status, lastTestSeen
 
     def cleanup(self, profileDir):
         # Pull results back from device
@@ -340,26 +344,20 @@ class RemoteReftest(RefTest):
 
 
 def run_test_harness(parser, options):
-    if options.dm_trans == 'sut' and options.deviceIP is None:
-        print ("Error: If --dm_trans = sut, you must provide a device IP to "
-               "connect to via the --deviceIP option")
-        return 1
-
     dm_args = {
         'deviceRoot': options.remoteTestRoot,
         'host': options.deviceIP,
         'port': options.devicePort,
     }
 
-    dm_cls = mozdevice.DroidSUT
-    if options.dm_trans == 'adb':
-        dm_args['adbPath'] = options.adb_path
-        if not dm_args['host']:
-            dm_args['deviceSerial'] = options.deviceSerial
-        dm_cls = mozdevice.DroidADB
+    dm_args['adbPath'] = options.adb_path
+    if not dm_args['host']:
+        dm_args['deviceSerial'] = options.deviceSerial
+    if options.log_tbpl_level == 'debug' or options.log_mach_level == 'debug':
+        dm_args['logLevel'] = logging.DEBUG
 
     try:
-        dm = dm_cls(**dm_args)
+        dm = mozdevice.DroidADB(**dm_args)
     except mozdevice.DMError:
         traceback.print_exc()
         print ("Automation Error: exception while initializing devicemanager.  "

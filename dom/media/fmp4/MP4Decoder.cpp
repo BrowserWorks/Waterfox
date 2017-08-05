@@ -25,8 +25,8 @@
 
 namespace mozilla {
 
-MP4Decoder::MP4Decoder(MediaDecoderOwner* aOwner)
-  : MediaDecoder(aOwner)
+MP4Decoder::MP4Decoder(MediaDecoderInit& aInit)
+  : MediaDecoder(aInit)
 {
 }
 
@@ -181,7 +181,7 @@ MP4Decoder::IsAAC(const nsACString& aMimeType)
 bool
 MP4Decoder::IsEnabled()
 {
-  return Preferences::GetBool("media.mp4.enabled", true);
+  return MediaPrefs::MP4Enabled();
 }
 
 // sTestH264ExtraData represents the content of the avcC atom found in
@@ -220,8 +220,7 @@ CreateTestH264Decoder(layers::KnowsCompositor* aKnowsCompositor,
 {
   aConfig.mMimeType = "video/avc";
   aConfig.mId = 1;
-  aConfig.mDuration = 40000;
-  aConfig.mMediaTime = 0;
+  aConfig.mDuration = media::TimeUnit::FromMicroseconds(40000);
   aConfig.mImage = aConfig.mDisplay = nsIntSize(640, 360);
   aConfig.mExtraData = new MediaByteBuffer();
   aConfig.mExtraData->AppendElements(sTestH264ExtraData,
@@ -246,8 +245,9 @@ MP4Decoder::IsVideoAccelerated(layers::KnowsCompositor* aKnowsCompositor, nsIGlo
     return nullptr;
   }
 
-  RefPtr<TaskQueue> taskQueue =
-    new TaskQueue(GetMediaThreadPool(MediaThreadType::PLATFORM_DECODER));
+  RefPtr<TaskQueue> taskQueue = new TaskQueue(
+    GetMediaThreadPool(MediaThreadType::PLATFORM_DECODER),
+    "MP4Decoder::IsVideoAccelerated::taskQueue");
   VideoInfo config;
   RefPtr<MediaDataDecoder> decoder(CreateTestH264Decoder(aKnowsCompositor, config, taskQueue));
   if (!decoder) {

@@ -8,6 +8,7 @@
 
 #include "BlockReflowInput.h"
 
+#include <algorithm>
 #include "LayoutLogging.h"
 #include "nsBlockFrame.h"
 #include "nsLineLayout.h"
@@ -16,7 +17,7 @@
 #include "mozilla/AutoRestore.h"
 #include "mozilla/DebugOnly.h"
 #include "mozilla/Preferences.h"
-#include <algorithm>
+#include "TextOverflow.h"
 
 #ifdef DEBUG
 #include "nsBlockDebugFlags.h"
@@ -96,6 +97,7 @@ BlockReflowInput::BlockReflowInput(const ReflowInput& aReflowInput,
   if (aBlockNeedsFloatManager) {
     mFlags.mBlockNeedsFloatManager = true;
   }
+  mFlags.mCanHaveTextOverflow = css::TextOverflow::CanHaveTextOverflow(mBlock);
 
   MOZ_ASSERT(FloatManager(),
              "Float manager should be valid when creating BlockReflowInput!");
@@ -769,8 +771,7 @@ BlockReflowInput::FlowAndPlaceFloat(nsIFrame* aFloat)
   // an unconstrained inline-size, which can occur if the float had an
   // orthogonal writing mode and 'auto' block-size (in its mode).
   bool earlyFloatReflow =
-    aFloat->GetType() == nsGkAtoms::letterFrame ||
-    floatMarginISize == NS_UNCONSTRAINEDSIZE;
+    aFloat->IsLetterFrame() || floatMarginISize == NS_UNCONSTRAINEDSIZE;
   if (earlyFloatReflow) {
     mBlock->ReflowFloat(*this, adjustedAvailableSpace, aFloat, floatMargin,
                         floatOffsets, false, reflowStatus);
@@ -834,10 +835,10 @@ BlockReflowInput::FlowAndPlaceFloat(nsIFrame* aFloat)
         prevFrame = fc->mFloat;
         fc = fc->Next();
       }
-      
+
       if(prevFrame) {
         //get the frame type
-        if (nsGkAtoms::tableWrapperFrame == prevFrame->GetType()) {
+        if (prevFrame->IsTableWrapperFrame()) {
           //see if it has "align="
           // IE makes a difference between align and he float property
           nsIContent* content = prevFrame->GetContent();

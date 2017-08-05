@@ -6,6 +6,7 @@
   height: 100%;
   width: 100%;
   overflow: auto;
+  min-width: 200px;
 }
 
 /**
@@ -15,13 +16,15 @@
 .grid-container {
   display: flex;
   flex-direction: column;
-  flex: 1;
+  flex: 1 auto;
   align-items: center;
+  min-width: 140px;
 }
 
 .grid-container > span {
-  font-weight: bold;
-  margin-bottom: 3px;
+  font-weight: 600;
+  margin-bottom: 5px;
+  pointer-events: none;
 }
 
 .grid-container > ul {
@@ -31,7 +34,18 @@
 }
 
 .grid-container li {
+  display: flex;
+  align-items: center;
   padding: 4px 0;
+}
+
+.grid-container input {
+  margin: 0 5px;
+}
+
+.grid-container label {
+  display: flex;
+  align-items: center;
 }
 
 /**
@@ -50,29 +64,63 @@
 
 .grid-content {
   display: flex;
+  flex-wrap: wrap;
   flex: 1;
+  margin: 5px 0;
+}
+
+.grid-container:first-child {
+  margin-bottom: 10px;
 }
 
 /**
  * Grid Outline
  */
 
-#grid-outline {
-  margin: 5px auto;
+.grid-outline {
+  margin: 5px 0;
+}
+
+.grid-outline svg {
+  overflow: visible;
 }
 
 .grid-outline-border {
-  stroke-width: 0.75;
   fill: none;
+  stroke: currentColor;
+  stroke-width: 0.75;
+  vector-effect: non-scaling-stroke;
 }
 
 .grid-outline-cell {
   pointer-events: all;
+  stroke: currentColor;
   stroke-dasharray: 0.5, 2;
+  vector-effect: non-scaling-stroke;
 }
 
 .grid-outline-cell:hover {
   opacity: 0.45;
+  fill: currentColor;
+}
+
+.grid-outline-line {
+  opacity: 0;
+  stroke-width: 10;
+}
+
+.grid-outline-text {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--theme-graphs-full-red);
+}
+
+.grid-outline-text-icon {
+  background: url("chrome://devtools/skin/images/sad-face.svg");
+  margin-inline-end: 5px;
+  width: 16px;
+  height: 16px;
 }
 
 /**
@@ -89,15 +137,6 @@
  * Grid Item
  */
 
-.grid-item {
-  display: flex;
-  align-items: center;
-}
-
-.grid-item input {
-  margin: 0 5px;
-}
-
 .grid-color-swatch {
   width: 12px;
   height: 12px;
@@ -109,4 +148,12 @@
 
 .grid-color-value {
   display: none;
+}
+
+/**
+ * Settings Item
+ */
+
+.grid-settings-item label {
+  line-height: 16px;
 }

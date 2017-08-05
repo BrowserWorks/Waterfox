@@ -24,7 +24,7 @@ var CompactTheme = {
 
   init() {
     this.initialized = true;
-    Services.obs.addObserver(this, "lightweight-theme-styling-update", false);
+    Services.obs.addObserver(this, "lightweight-theme-styling-update");
 
     if (this.isThemeCurrentlyApplied) {
       this._toggleStyleSheet(true);
@@ -67,7 +67,7 @@ var CompactTheme = {
     // Don't touch things on the browser if gBrowserInit.onLoad hasn't
     // yet fired.
     if (this.initialized) {
-      gBrowser.tabContainer._positionPinnedTabs();
+      gBrowser.tabContainer.themeLayoutChanged();
     }
   },
 

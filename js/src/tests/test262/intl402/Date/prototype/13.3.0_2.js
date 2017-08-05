@@ -1,4 +1,3 @@
-// |reftest| skip-if(!this.hasOwnProperty('Intl')) -- needs Intl
 // Copyright 2012 Mozilla Corporation. All rights reserved.
 // This code is governed by the BSD license found in the LICENSE file.
 
@@ -21,10 +20,7 @@ Object.getOwnPropertyNames(functions).forEach(function (p) {
     var f = functions[p];
     invalidValues.forEach(function (value) {
         var result = f.call(new Date(value));
-        if (result !== "Invalid Date") {
-            $ERROR("Date.prototype." + p + " did not return \"Invalid Date\" for " +
-                value + " – got " + result + " instead.");
-        }
+        assert.sameValue(result, "Invalid Date", "Date.prototype." + p + " did not return \"Invalid Date\" for " + value);
     });
 });
 

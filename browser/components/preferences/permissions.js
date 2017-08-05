@@ -21,13 +21,13 @@ function Permission(principal, type, capability) {
 }
 
 var gPermissionManager = {
-  _type                 : "",
-  _permissions          : [],
-  _permissionsToAdd     : new Map(),
-  _permissionsToDelete  : new Map(),
-  _bundle               : null,
-  _tree                 : null,
-  _observerRemoved      : false,
+  _type: "",
+  _permissions: [],
+  _permissionsToAdd: new Map(),
+  _permissionsToDelete: new Map(),
+  _bundle: null,
+  _tree: null,
+  _observerRemoved: false,
 
   _view: {
     _rowCount: 0,
@@ -95,8 +95,9 @@ var gPermissionManager = {
       try {
         uri = Services.io.newURI(input_url);
         principal = Services.scriptSecurityManager.createCodebasePrincipal(uri, {});
-        // If we have ended up with an unknown scheme, the following will throw.
-        principal.origin;
+        if (principal.origin.startsWith("moz-nullprincipal:")) {
+          throw "Null principal";
+        }
       } catch (ex) {
         uri = Services.io.newURI("http://" + input_url);
         principal = Services.scriptSecurityManager.createCodebasePrincipal(uri, {});
@@ -218,7 +219,7 @@ var gPermissionManager = {
 
     var permissionsText = document.getElementById("permissionsText");
     while (permissionsText.hasChildNodes())
-      permissionsText.removeChild(permissionsText.firstChild);
+      permissionsText.firstChild.remove();
     permissionsText.appendChild(document.createTextNode(aParams.introText));
 
     document.title = aParams.windowTitle;
@@ -257,7 +258,7 @@ var gPermissionManager = {
     });
 
     Services.obs.notifyObservers(null, NOTIFICATION_FLUSH_PERMISSIONS, this._type);
-    Services.obs.addObserver(this, "perm-changed", false);
+    Services.obs.addObserver(this, "perm-changed");
 
     this._loadPermissions();
 

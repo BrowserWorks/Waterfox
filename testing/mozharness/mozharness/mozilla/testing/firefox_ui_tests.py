@@ -17,6 +17,10 @@ from mozharness.mozilla.testing.testbase import (
     TestingMixin,
     testing_config_options,
 )
+from mozharness.mozilla.testing.codecoverage import (
+    CodeCoverageMixin,
+    code_coverage_config_options
+)
 from mozharness.mozilla.vcstools import VCSToolsScript
 
 
@@ -27,6 +31,12 @@ firefox_ui_tests_config_options = [
         "dest": "allow_software_gl_layers",
         "default": False,
         "help": "Permits a software GL implementation (such as LLVMPipe) to use the GL compositor.",
+    }],
+    [["--enable-webrender"], {
+        "action": "store_true",
+        "dest": "enable_webrender",
+        "default": False,
+        "help": "Tries to enable the WebRender compositor.",
     }],
     [['--dry-run'], {
         'dest': 'dry_run',
@@ -48,7 +58,8 @@ firefox_ui_tests_config_options = [
         'dest': 'tag',
         'help': 'Subset of tests to run (local, remote).',
     }],
-] + copy.deepcopy(testing_config_options)
+] + copy.deepcopy(testing_config_options) \
+  + copy.deepcopy(code_coverage_config_options)
 
 # Command line arguments for update tests
 firefox_ui_update_harness_config_options = [
@@ -90,7 +101,7 @@ firefox_ui_update_config_options = firefox_ui_update_harness_config_options \
     + copy.deepcopy(firefox_ui_tests_config_options)
 
 
-class FirefoxUITests(TestingMixin, VCSToolsScript):
+class FirefoxUITests(TestingMixin, VCSToolsScript, CodeCoverageMixin):
 
     # Needs to be overwritten in sub classes
     cli_script = None
@@ -243,8 +254,15 @@ class FirefoxUITests(TestingMixin, VCSToolsScript):
             env.update({'MINIDUMP_STACKWALK': self.minidump_stackwalk_path})
         env['RUST_BACKTRACE'] = '1'
 
+        # If code coverage is enabled, set GCOV_PREFIX and JS_CODE_COVERAGE_OUTPUT_DIR env variables
+        if self.config.get('code_coverage'):
+            env['GCOV_PREFIX'] = self.gcov_dir
+            env['JS_CODE_COVERAGE_OUTPUT_DIR'] = self.jsvm_dir
+
         if self.config['allow_software_gl_layers']:
             env['MOZ_LAYERS_ALLOW_SOFTWARE_GL'] = '1'
+        if self.config['enable_webrender']:
+            env['MOZ_WEBRENDER'] = '1'
 
         return_code = self.run_command(cmd,
                                        cwd=dirs['abs_work_dir'],

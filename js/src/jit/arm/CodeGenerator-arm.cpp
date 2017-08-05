@@ -621,13 +621,17 @@ CodeGeneratorARM::visitSoftDivI(LSoftDivI* ins)
     Label done;
     divICommon(mir, lhs, rhs, output, ins->snapshot(), done);
 
-    masm.setupAlignedABICall();
-    masm.passABIArg(lhs);
-    masm.passABIArg(rhs);
-    if (gen->compilingWasm())
-        masm.callWithABI(wasm::SymbolicAddress::aeabi_idivmod);
-    else
+    if (gen->compilingWasm()) {
+        masm.setupWasmABICall();
+        masm.passABIArg(lhs);
+        masm.passABIArg(rhs);
+        masm.callWithABI(mir->bytecodeOffset(), wasm::SymbolicAddress::aeabi_idivmod);
+    } else {
+        masm.setupAlignedABICall();
+        masm.passABIArg(lhs);
+        masm.passABIArg(rhs);
         masm.callWithABI(JS_FUNC_TO_DATA_PTR(void*, __aeabi_idivmod));
+    }
 
     // idivmod returns the quotient in r0, and the remainder in r1.
     if (!mir->canTruncateRemainder()) {
@@ -777,9 +781,9 @@ CodeGeneratorARM::visitSoftModI(LSoftModI* ins)
     Label done;
 
     // Save the lhs in case we end up with a 0 that should be a -0.0 because lhs < 0.
-    MOZ_ASSERT(callTemp.code() > r3.code() && callTemp.code() < r12.code());
+    MOZ_ASSERT(callTemp != lhs);
+    MOZ_ASSERT(callTemp != rhs);
     masm.ma_mov(lhs, callTemp);
-
 
     // Prevent INT_MIN % -1;
     // The integer division will give INT_MIN, but we want -(double)INT_MIN.
@@ -806,13 +810,20 @@ CodeGeneratorARM::visitSoftModI(LSoftModI* ins)
 
     modICommon(mir, lhs, rhs, output, ins->snapshot(), done);
 
-    masm.setupAlignedABICall();
-    masm.passABIArg(lhs);
-    masm.passABIArg(rhs);
-    if (gen->compilingWasm())
-        masm.callWithABI(wasm::SymbolicAddress::aeabi_idivmod);
-    else
+    if (gen->compilingWasm()) {
+        masm.setupWasmABICall();
+        masm.passABIArg(lhs);
+        masm.passABIArg(rhs);
+        masm.callWithABI(mir->bytecodeOffset(), wasm::SymbolicAddress::aeabi_idivmod);
+    } else {
+        masm.setupAlignedABICall();
+        masm.passABIArg(lhs);
+        masm.passABIArg(rhs);
         masm.callWithABI(JS_FUNC_TO_DATA_PTR(void*, __aeabi_idivmod));
+    }
+
+    MOZ_ASSERT(r1 != output);
+    masm.move32(r1, output);
 
     // If X%Y == 0 and X < 0, then we *actually* wanted to return -0.0
     if (mir->canBeNegativeDividend()) {
@@ -821,12 +832,13 @@ CodeGeneratorARM::visitSoftModI(LSoftModI* ins)
         } else {
             MOZ_ASSERT(mir->fallible());
             // See if X < 0
-            masm.as_cmp(r1, Imm8(0));
+            masm.as_cmp(output, Imm8(0));
             masm.ma_b(&done, Assembler::NotEqual);
             masm.as_cmp(callTemp, Imm8(0));
             bailoutIf(Assembler::Signed, ins->snapshot());
         }
     }
+
     masm.bind(&done);
 }
 
@@ -2230,68 +2242,13 @@ CodeGeneratorARM::visitWasmReinterpret(LWasmReinterpret* lir)
 }
 
 void
-CodeGeneratorARM::emitWasmCall(LWasmCallBase* ins)
-{
-    MWasmCall* mir = ins->mir();
-
-    if (UseHardFpABI() || mir->callee().which() != wasm::CalleeDesc::Builtin) {
-        emitWasmCallBase(ins);
-        return;
-    }
-
-    // The soft ABI passes floating point arguments in GPRs. Since basically
-    // nothing is set up to handle this, the values are placed in the
-    // corresponding VFP registers, then transferred to GPRs immediately
-    // before the call. The mapping is sN <-> rN, where double registers
-    // can be treated as their two component single registers.
-
-    for (unsigned i = 0, e = ins->numOperands(); i < e; i++) {
-        LAllocation* a = ins->getOperand(i);
-        if (a->isFloatReg()) {
-            FloatRegister fr = ToFloatRegister(a);
-            if (fr.isDouble()) {
-                uint32_t srcId = fr.singleOverlay().id();
-                masm.ma_vxfer(fr, Register::FromCode(srcId), Register::FromCode(srcId + 1));
-            } else {
-                uint32_t srcId = fr.id();
-                masm.ma_vxfer(fr, Register::FromCode(srcId));
-            }
-        }
-    }
-
-    emitWasmCallBase(ins);
-
-    switch (mir->type()) {
-      case MIRType::Double:
-        masm.ma_vxfer(r0, r1, d0);
-        break;
-      case MIRType::Float32:
-        masm.as_vxfer(r0, InvalidReg, VFPRegister(d0).singleOverlay(), Assembler::CoreToFloat);
-        break;
-      default:
-        break;
-    }
-}
-
-void
-CodeGeneratorARM::visitWasmCall(LWasmCall* ins)
-{
-    emitWasmCall(ins);
-}
-
-void
-CodeGeneratorARM::visitWasmCallI64(LWasmCallI64* ins)
-{
-    emitWasmCall(ins);
-}
-
-void
 CodeGeneratorARM::visitAsmJSLoadHeap(LAsmJSLoadHeap* ins)
 {
     const MAsmJSLoadHeap* mir = ins->mir();
     MOZ_ASSERT(mir->offset() == 0);
 
     const LAllocation* ptr = ins->ptr();
+    const LAllocation* boundsCheckLimit = ins->boundsCheckLimit();
 
     bool isSigned;
     int size;
@@ -2325,7 +2282,6 @@ CodeGeneratorARM::visitAsmJSLoadHeap(LAsmJSLoadHeap* ins)
                                   ToRegister(ins->output()), scratch, Offset, Assembler::Always);
         }
     } else {
-        ScratchRegisterScope scratch(masm);
         Register ptrReg = ToRegister(ptr);
         if (isFloat) {
             FloatRegister output = ToFloatRegister(ins->output());
@@ -2334,8 +2290,8 @@ CodeGeneratorARM::visitAsmJSLoadHeap(LAsmJSLoadHeap* ins)
 
             Assembler::Condition cond = Assembler::Always;
             if (mir->needsBoundsCheck()) {
-                BufferOffset cmp = masm.as_cmp(ptrReg, Imm8(0));
-                masm.append(wasm::BoundsCheck(cmp.getOffset()));
+                Register boundsCheckLimitReg = ToRegister(boundsCheckLimit);
+                masm.as_cmp(ptrReg, O2Reg(boundsCheckLimitReg));
                 if (size == 32)
                     masm.ma_vimm_f32(GenericNaN(), output, Assembler::AboveOrEqual);
                 else
@@ -2343,19 +2299,20 @@ CodeGeneratorARM::visitAsmJSLoadHeap(LAsmJSLoadHeap* ins)
                 cond = Assembler::Below;
             }
 
+            ScratchRegisterScope scratch(masm);
             masm.ma_vldr(output, HeapReg, ptrReg, scratch, 0, cond);
         } else {
             Register output = ToRegister(ins->output());
 
             Assembler::Condition cond = Assembler::Always;
             if (mir->needsBoundsCheck()) {
-                uint32_t cmpOffset = masm.as_cmp(ptrReg, Imm8(0)).getOffset();
-                masm.append(wasm::BoundsCheck(cmpOffset));
-
+                Register boundsCheckLimitReg = ToRegister(boundsCheckLimit);
+                masm.as_cmp(ptrReg, O2Reg(boundsCheckLimitReg));
                 masm.ma_mov(Imm32(0), output, Assembler::AboveOrEqual);
                 cond = Assembler::Below;
             }
 
+            ScratchRegisterScope scratch(masm);
             masm.ma_dataTransferN(IsLoad, size, isSigned, HeapReg, ptrReg, output, scratch, Offset, cond);
         }
     }
@@ -2377,9 +2334,9 @@ CodeGeneratorARM::emitWasmLoad(T* lir)
     }
 
     if (resultType == MIRType::Int64)
-        masm.wasmLoadI64(mir->access(), ptr, ptr, ToOutRegister64(lir));
+        masm.wasmLoadI64(mir->access(), HeapReg, ptr, ptr, ToOutRegister64(lir));
     else
-        masm.wasmLoad(mir->access(), ptr, ptr, ToAnyRegister(lir->output()));
+        masm.wasmLoad(mir->access(), HeapReg, ptr, ptr, ToAnyRegister(lir->output()));
 }
 
 void
@@ -2405,15 +2362,16 @@ CodeGeneratorARM::emitWasmUnalignedLoad(T* lir)
     Register tmp1 = ToRegister(lir->getTemp(1));
 
     if (resultType == MIRType::Int64) {
-        masm.wasmUnalignedLoadI64(mir->access(), ptr, ptr, ToOutRegister64(lir), tmp1);
+        masm.wasmUnalignedLoadI64(mir->access(), HeapReg, ptr, ptr, ToOutRegister64(lir), tmp1);
     } else if (IsFloatingPointType(resultType)) {
         Register tmp2(ToRegister(lir->getTemp(2)));
         Register tmp3(Register::Invalid());
         if (mir->access().byteSize() == 8)
             tmp3 = ToRegister(lir->getTemp(3));
-        masm.wasmUnalignedLoadFP(mir->access(), ptr, ptr, ToFloatRegister(lir->output()), tmp1, tmp2, tmp3);
+        masm.wasmUnalignedLoadFP(mir->access(), HeapReg, ptr, ptr, ToFloatRegister(lir->output()),
+                                 tmp1, tmp2, tmp3);
     } else {
-        masm.wasmUnalignedLoad(mir->access(), ptr, ptr, ToRegister(lir->output()), tmp1);
+        masm.wasmUnalignedLoad(mir->access(), HeapReg, ptr, ptr, ToRegister(lir->output()), tmp1);
     }
 }
 
@@ -2460,9 +2418,10 @@ CodeGeneratorARM::emitWasmStore(T* lir)
 
     if (accessType == Scalar::Int64)
         masm.wasmStoreI64(mir->access(), ToRegister64(lir->getInt64Operand(lir->ValueIndex)),
-                          ptr, ptr);
+                          HeapReg, ptr, ptr);
     else
-        masm.wasmStore(mir->access(), ToAnyRegister(lir->getOperand(lir->ValueIndex)), ptr, ptr);
+        masm.wasmStore(mir->access(), ToAnyRegister(lir->getOperand(lir->ValueIndex)), HeapReg,
+                       ptr, ptr);
 }
 
 void
@@ -2489,12 +2448,12 @@ CodeGeneratorARM::emitWasmUnalignedStore(T* lir)
     if (accessType == Scalar::Int64) {
         masm.wasmUnalignedStoreI64(mir->access(),
                                    ToRegister64(lir->getInt64Operand(LWasmUnalignedStoreI64::ValueIndex)),
-                                   ptr, ptr, valOrTmp);
+                                   HeapReg, ptr, ptr, valOrTmp);
     } else if (accessType == Scalar::Float32 || accessType == Scalar::Float64) {
         FloatRegister value = ToFloatRegister(lir->getOperand(LWasmUnalignedStore::ValueIndex));
-        masm.wasmUnalignedStoreFP(mir->access(), value, ptr, ptr, valOrTmp);
+        masm.wasmUnalignedStoreFP(mir->access(), value, HeapReg, ptr, ptr, valOrTmp);
     } else {
-        masm.wasmUnalignedStore(mir->access(), valOrTmp, ptr, ptr);
+        masm.wasmUnalignedStore(mir->access(), valOrTmp, HeapReg, ptr, ptr);
     }
 }
 
@@ -2517,6 +2476,7 @@ CodeGeneratorARM::visitAsmJSStoreHeap(LAsmJSStoreHeap* ins)
     MOZ_ASSERT(mir->offset() == 0);
 
     const LAllocation* ptr = ins->ptr();
+    const LAllocation* boundsCheckLimit = ins->boundsCheckLimit();
 
     bool isSigned;
     int size;
@@ -2554,9 +2514,8 @@ CodeGeneratorARM::visitAsmJSStoreHeap(LAsmJSStoreHeap* ins)
 
         Assembler::Condition cond = Assembler::Always;
         if (mir->needsBoundsCheck()) {
-            BufferOffset cmp = masm.as_cmp(ptrReg, Imm8(0));
-            masm.append(wasm::BoundsCheck(cmp.getOffset()));
-
+            Register boundsCheckLimitReg = ToRegister(boundsCheckLimit);
+            masm.as_cmp(ptrReg, O2Reg(boundsCheckLimitReg));
             cond = Assembler::Below;
         }
 
@@ -2613,13 +2572,13 @@ CodeGeneratorARM::visitAsmJSCompareExchangeCallout(LAsmJSCompareExchangeCallout*
     masm.loadPtr(Address(tls, offsetof(wasm::TlsData, instance)), instance);
     masm.ma_mov(Imm32(mir->access().type()), viewType);
 
-    masm.setupAlignedABICall();
+    masm.setupWasmABICall();
     masm.passABIArg(instance);
     masm.passABIArg(viewType);
     masm.passABIArg(ptr);
     masm.passABIArg(oldval);
     masm.passABIArg(newval);
-    masm.callWithABI(wasm::SymbolicAddress::AtomicCmpXchg);
+    masm.callWithABI(mir->bytecodeOffset(), wasm::SymbolicAddress::AtomicCmpXchg);
 }
 
 void
@@ -2655,12 +2614,12 @@ CodeGeneratorARM::visitAsmJSAtomicExchangeCallout(LAsmJSAtomicExchangeCallout* i
     masm.loadPtr(Address(tls, offsetof(wasm::TlsData, instance)), instance);
     masm.ma_mov(Imm32(mir->access().type()), viewType);
 
-    masm.setupAlignedABICall();
+    masm.setupWasmABICall();
     masm.passABIArg(instance);
     masm.passABIArg(viewType);
     masm.passABIArg(ptr);
     masm.passABIArg(value);
-    masm.callWithABI(wasm::SymbolicAddress::AtomicXchg);
+    masm.callWithABI(mir->bytecodeOffset(), wasm::SymbolicAddress::AtomicXchg);
 }
 
 void
@@ -2727,27 +2686,28 @@ CodeGeneratorARM::visitAsmJSAtomicBinopCallout(LAsmJSAtomicBinopCallout* ins)
     masm.loadPtr(Address(tls, offsetof(wasm::TlsData, instance)), instance);
     masm.move32(Imm32(mir->access().type()), viewType);
 
-    masm.setupAlignedABICall();
+    masm.setupWasmABICall();
     masm.passABIArg(instance);
     masm.passABIArg(viewType);
     masm.passABIArg(ptr);
     masm.passABIArg(value);
 
+    wasm::BytecodeOffset bytecodeOffset = mir->bytecodeOffset();
     switch (mir->operation()) {
       case AtomicFetchAddOp:
-        masm.callWithABI(wasm::SymbolicAddress::AtomicFetchAdd);
+        masm.callWithABI(bytecodeOffset, wasm::SymbolicAddress::AtomicFetchAdd);
         break;
       case AtomicFetchSubOp:
-        masm.callWithABI(wasm::SymbolicAddress::AtomicFetchSub);
+        masm.callWithABI(bytecodeOffset, wasm::SymbolicAddress::AtomicFetchSub);
         break;
       case AtomicFetchAndOp:
-        masm.callWithABI(wasm::SymbolicAddress::AtomicFetchAnd);
+        masm.callWithABI(bytecodeOffset, wasm::SymbolicAddress::AtomicFetchAnd);
         break;
       case AtomicFetchOrOp:
-        masm.callWithABI(wasm::SymbolicAddress::AtomicFetchOr);
+        masm.callWithABI(bytecodeOffset, wasm::SymbolicAddress::AtomicFetchOr);
         break;
       case AtomicFetchXorOp:
-        masm.callWithABI(wasm::SymbolicAddress::AtomicFetchXor);
+        masm.callWithABI(bytecodeOffset, wasm::SymbolicAddress::AtomicFetchXor);
         break;
       default:
         MOZ_CRASH("Unknown op");
@@ -2870,9 +2830,7 @@ CodeGeneratorARM::visitSoftUDivOrMod(LSoftUDivOrMod* ins)
 
     MOZ_ASSERT(lhs == r0);
     MOZ_ASSERT(rhs == r1);
-    MOZ_ASSERT(ins->mirRaw()->isDiv() || ins->mirRaw()->isMod());
-    MOZ_ASSERT_IF(ins->mirRaw()->isDiv(), output == r0);
-    MOZ_ASSERT_IF(ins->mirRaw()->isMod(), output == r1);
+    MOZ_ASSERT(output == r0);
 
     Label done;
     MDiv* div = ins->mir()->isDiv() ? ins->mir()->toDiv() : nullptr;
@@ -2881,13 +2839,23 @@ CodeGeneratorARM::visitSoftUDivOrMod(LSoftUDivOrMod* ins)
     generateUDivModZeroCheck(rhs, output, &done, ins->snapshot(), div);
     generateUDivModZeroCheck(rhs, output, &done, ins->snapshot(), mod);
 
-    masm.setupAlignedABICall();
-    masm.passABIArg(lhs);
-    masm.passABIArg(rhs);
-    if (gen->compilingWasm())
-        masm.callWithABI(wasm::SymbolicAddress::aeabi_uidivmod);
-    else
+    if (gen->compilingWasm()) {
+        masm.setupWasmABICall();
+        masm.passABIArg(lhs);
+        masm.passABIArg(rhs);
+        wasm::BytecodeOffset bytecodeOffset = (div ? div->bytecodeOffset() : mod->bytecodeOffset());
+        masm.callWithABI(bytecodeOffset, wasm::SymbolicAddress::aeabi_uidivmod);
+    } else {
+        masm.setupAlignedABICall();
+        masm.passABIArg(lhs);
+        masm.passABIArg(rhs);
         masm.callWithABI(JS_FUNC_TO_DATA_PTR(void*, __aeabi_uidivmod));
+    }
+
+    if (mod) {
+        MOZ_ASSERT(output == r0, "output should not be r1 for mod");
+        masm.move32(r1, output);
+    }
 
     // uidivmod returns the quotient in r0, and the remainder in r1.
     if (div && !div->canTruncateRemainder()) {
@@ -2995,12 +2963,13 @@ CodeGeneratorARM::visitWasmTruncateToInt64(LWasmTruncateToInt64* lir)
 
     masm.Push(input);
 
-    masm.setupUnalignedABICall(output.high);
+    masm.setupWasmABICall();
     masm.passABIArg(inputDouble, MoveOp::DOUBLE);
+
     if (lir->mir()->isUnsigned())
-        masm.callWithABI(wasm::SymbolicAddress::TruncateDoubleToUint64);
+        masm.callWithABI(mir->bytecodeOffset(), wasm::SymbolicAddress::TruncateDoubleToUint64);
     else
-        masm.callWithABI(wasm::SymbolicAddress::TruncateDoubleToInt64);
+        masm.callWithABI(mir->bytecodeOffset(), wasm::SymbolicAddress::TruncateDoubleToInt64);
 
     masm.Pop(input);
 
@@ -3019,7 +2988,7 @@ CodeGeneratorARM::visitOutOfLineWasmTruncateCheck(OutOfLineWasmTruncateCheck* oo
 {
     masm.outOfLineWasmTruncateToIntCheck(ool->input(), ool->fromType(), ool->toType(),
                                          ool->isUnsigned(), ool->rejoin(),
-                                         ool->trapOffset());
+                                         ool->bytecodeOffset());
 }
 
 void
@@ -3030,13 +2999,7 @@ CodeGeneratorARM::visitInt64ToFloatingPointCall(LInt64ToFloatingPointCall* lir)
     MInt64ToFloatingPoint* mir = lir->mir();
     MIRType toType = mir->type();
 
-    // We are free to clobber all registers, since this is a call instruction.
-    AllocatableGeneralRegisterSet regs(GeneralRegisterSet::All());
-    regs.take(input.low);
-    regs.take(input.high);
-    Register temp = regs.takeAny();
-
-    masm.setupUnalignedABICall(temp);
+    masm.setupWasmABICall();
     masm.passABIArg(input.high);
     masm.passABIArg(input.low);
 
@@ -3047,7 +3010,8 @@ CodeGeneratorARM::visitInt64ToFloatingPointCall(LInt64ToFloatingPointCall* lir)
                                    : (isUnsigned ? wasm::SymbolicAddress::Uint64ToDouble
                                                  : wasm::SymbolicAddress::Int64ToDouble);
 
-    masm.callWithABI(callee, toType == MIRType::Float32 ? MoveOp::FLOAT32 : MoveOp::DOUBLE);
+    MoveOp::Type result = toType == MIRType::Float32 ? MoveOp::FLOAT32 : MoveOp::DOUBLE;
+    masm.callWithABI(mir->bytecodeOffset(), callee, result);
 
     DebugOnly<FloatRegister> output(ToFloatRegister(lir->output()));
     MOZ_ASSERT_IF(toType == MIRType::Double, output.value == ReturnDoubleReg);
@@ -3135,6 +3099,27 @@ CodeGeneratorARM::visitExtendInt32ToInt64(LExtendInt32ToInt64* lir)
         masm.ma_asr(Imm32(31), output.low, output.high);
 }
 
+static Register
+WasmGetTemporaryForDivOrMod(Register64 lhs, Register64 rhs)
+{
+    MOZ_ASSERT(IsCompilingWasm());
+
+    // All inputs are useAtStart for a call instruction. As a result we cannot
+    // ask the register allocator for a non-aliasing temp.
+    AllocatableGeneralRegisterSet regs(GeneralRegisterSet::All());
+    regs.take(lhs.low);
+    regs.take(lhs.high);
+
+    // The FramePointer shouldn't be clobbered for profiling.
+    regs.take(FramePointer);
+
+    if (lhs != rhs) {
+        regs.take(rhs.low);
+        regs.take(rhs.high);
+    }
+    return regs.takeAny();
+}
+
 void
 CodeGeneratorARM::visitDivOrModI64(LDivOrModI64* lir)
 {
@@ -3144,29 +3129,23 @@ CodeGeneratorARM::visitDivOrModI64(LDivOrModI64* lir)
 
     MOZ_ASSERT(output == ReturnReg64);
 
-    // All inputs are useAtStart for a call instruction. As a result we cannot
-    // ask for a non-aliasing temp. Using the following to get such a temp.
-    AllocatableGeneralRegisterSet regs(GeneralRegisterSet::All());
-    regs.take(lhs.low);
-    regs.take(lhs.high);
-    if (lhs != rhs) {
-        regs.take(rhs.low);
-        regs.take(rhs.high);
-    }
-    Register temp = regs.takeAny();
-
     Label done;
 
     // Handle divide by zero.
-    if (lir->canBeDivideByZero())
-        masm.branchTest64(Assembler::Zero, rhs, rhs, temp, trap(lir, wasm::Trap::IntegerDivideByZero));
+    if (lir->canBeDivideByZero()) {
+        Register temp = WasmGetTemporaryForDivOrMod(lhs, rhs);
+        masm.branchTest64(Assembler::Zero, rhs, rhs, temp,
+                          trap(lir, wasm::Trap::IntegerDivideByZero));
+    }
+
+    auto* mir = lir->mir();
 
     // Handle an integer overflow exception from INT64_MIN / -1.
     if (lir->canBeNegativeOverflow()) {
         Label notmin;
         masm.branch64(Assembler::NotEqual, lhs, Imm64(INT64_MIN), &notmin);
         masm.branch64(Assembler::NotEqual, rhs, Imm64(-1), &notmin);
-        if (lir->mir()->isMod())
+        if (mir->isMod())
             masm.xor64(output, output);
         else
             masm.jump(trap(lir, wasm::Trap::IntegerOverflow));
@@ -3174,17 +3153,16 @@ CodeGeneratorARM::visitDivOrModI64(LDivOrModI64* lir)
         masm.bind(&notmin);
     }
 
-    masm.setupUnalignedABICall(temp);
+    masm.setupWasmABICall();
     masm.passABIArg(lhs.high);
     masm.passABIArg(lhs.low);
     masm.passABIArg(rhs.high);
     masm.passABIArg(rhs.low);
 
-    MOZ_ASSERT(gen->compilingWasm());
-    if (lir->mir()->isMod())
-        masm.callWithABI(wasm::SymbolicAddress::ModI64);
+    if (mir->isMod())
+        masm.callWithABI(lir->bytecodeOffset(), wasm::SymbolicAddress::ModI64);
     else
-        masm.callWithABI(wasm::SymbolicAddress::DivI64);
+        masm.callWithABI(lir->bytecodeOffset(), wasm::SymbolicAddress::DivI64);
 
     MOZ_ASSERT(ReturnReg64 == output);
 
@@ -3199,32 +3177,25 @@ CodeGeneratorARM::visitUDivOrModI64(LUDivOrModI64* lir)
 
     MOZ_ASSERT(ToOutRegister64(lir) == ReturnReg64);
 
-    // All inputs are useAtStart for a call instruction. As a result we cannot
-    // ask for a non-aliasing temp. Using the following to get such a temp.
-    AllocatableGeneralRegisterSet regs(GeneralRegisterSet::All());
-    regs.take(lhs.low);
-    regs.take(lhs.high);
-    if (lhs != rhs) {
-        regs.take(rhs.low);
-        regs.take(rhs.high);
-    }
-    Register temp = regs.takeAny();
-
     // Prevent divide by zero.
-    if (lir->canBeDivideByZero())
-        masm.branchTest64(Assembler::Zero, rhs, rhs, temp, trap(lir, wasm::Trap::IntegerDivideByZero));
+    if (lir->canBeDivideByZero()) {
+        Register temp = WasmGetTemporaryForDivOrMod(lhs, rhs);
+        masm.branchTest64(Assembler::Zero, rhs, rhs, temp,
+                          trap(lir, wasm::Trap::IntegerDivideByZero));
+    }
 
-    masm.setupUnalignedABICall(temp);
+    masm.setupWasmABICall();
     masm.passABIArg(lhs.high);
     masm.passABIArg(lhs.low);
     masm.passABIArg(rhs.high);
     masm.passABIArg(rhs.low);
 
     MOZ_ASSERT(gen->compilingWasm());
-    if (lir->mir()->isMod())
-        masm.callWithABI(wasm::SymbolicAddress::UModI64);
+    MDefinition* mir = lir->mir();
+    if (mir->isMod())
+        masm.callWithABI(lir->bytecodeOffset(), wasm::SymbolicAddress::UModI64);
     else
-        masm.callWithABI(wasm::SymbolicAddress::UDivI64);
+        masm.callWithABI(lir->bytecodeOffset(), wasm::SymbolicAddress::UDivI64);
 }
 
 void

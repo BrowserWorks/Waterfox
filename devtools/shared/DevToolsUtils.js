@@ -46,9 +46,9 @@ exports.executeSoon = function (fn) {
     } else {
       executor = fn;
     }
-    Services.tm.mainThread.dispatch({
+    Services.tm.dispatchToMainThread({
       run: exports.makeInfallible(executor)
-    }, Ci.nsIThread.DISPATCH_NORMAL);
+    });
   }
 };
 
@@ -361,10 +361,6 @@ DevToolsUtils.defineLazyGetter(this, "NetUtil", () => {
 
 DevToolsUtils.defineLazyGetter(this, "OS", () => {
   return Cu.import("resource://gre/modules/osfile.jsm", {}).OS;
-});
-
-DevToolsUtils.defineLazyGetter(this, "TextDecoder", () => {
-  return Cu.import("resource://gre/modules/osfile.jsm", {}).TextDecoder;
 });
 
 DevToolsUtils.defineLazyGetter(this, "NetworkHelper", () => {

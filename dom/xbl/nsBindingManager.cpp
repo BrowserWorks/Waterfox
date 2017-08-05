@@ -255,11 +255,11 @@ nsBindingManager::GetAnonymousNodesFor(nsIContent* aContent)
 }
 
 nsresult
-nsBindingManager::ClearBinding(nsIContent* aContent)
+nsBindingManager::ClearBinding(Element* aElement)
 {
   // Hold a ref to the binding so it won't die when we remove it from our table
   RefPtr<nsXBLBinding> binding =
-    aContent ? aContent->GetXBLBinding() : nullptr;
+    aElement ? aElement->GetXBLBinding() : nullptr;
 
   if (!binding) {
     return NS_OK;
@@ -273,14 +273,14 @@ nsBindingManager::ClearBinding(nsIContent* aContent)
   // XXXbz should that be ownerdoc?  Wouldn't we need a ref to the
   // currentdoc too?  What's the one that should be passed to
   // ChangeDocument?
-  nsCOMPtr<nsIDocument> doc = aContent->OwnerDoc();
+  nsCOMPtr<nsIDocument> doc = aElement->OwnerDoc();
 
   // Finally remove the binding...
   // XXXbz this doesn't remove the implementation!  Should fix!  Until
   // then we need the explicit UnhookEventHandlers here.
   binding->UnhookEventHandlers();
   binding->ChangeDocument(doc, nullptr);
-  aContent->SetXBLBinding(nullptr, this);
+  aElement->SetXBLBinding(nullptr, this);
   binding->MarkForDeath();
 
   // ...and recreate its frames. We need to do this since the frames may have
@@ -290,7 +290,8 @@ nsBindingManager::ClearBinding(nsIContent* aContent)
   nsIPresShell *presShell = doc->GetShell();
   NS_ENSURE_TRUE(presShell, NS_ERROR_FAILURE);
 
-  return presShell->RecreateFramesFor(aContent);;
+  presShell->PostRecreateFramesFor(aElement);
+  return NS_OK;
 }
 
 nsresult
@@ -363,7 +364,7 @@ nsBindingManager::PostProcessAttachedQueueEvent()
 void
 nsBindingManager::PostPAQEventCallback(nsITimer* aTimer, void* aClosure)
 {
-  RefPtr<nsBindingManager> mgr = 
+  RefPtr<nsBindingManager> mgr =
     already_AddRefed<nsBindingManager>(static_cast<nsBindingManager*>(aClosure));
   mgr->PostProcessAttachedQueueEvent();
   NS_RELEASE(aTimer);
@@ -675,7 +676,6 @@ nsBindingManager::WalkRules(nsIStyleRuleProcessor::EnumFunc aFunc,
   do {
     nsXBLBinding *binding = content->GetXBLBinding();
     if (binding) {
-      aData->mTreeMatchContext.mScopedRoot = content;
       binding->WalkRules(aFunc, aData);
       // If we're not looking at our original content, allow the binding to cut
       // off style inheritance
@@ -697,9 +697,6 @@ nsBindingManager::WalkRules(nsIStyleRuleProcessor::EnumFunc aFunc,
   // If "content" is non-null that means we cut off inheritance at some point
   // in the loop.
   *aCutOffInheritance = (content != nullptr);
-
-  // Null out the scoped root that we set repeatedly
-  aData->mTreeMatchContext.mScopedRoot = nullptr;
 
   return NS_OK;
 }

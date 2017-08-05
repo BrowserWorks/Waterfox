@@ -42,6 +42,10 @@ EffectSet::Traverse(nsCycleCollectionTraversalCallback& aCallback)
 EffectSet::GetEffectSet(const dom::Element* aElement,
                         CSSPseudoElementType aPseudoType)
 {
+  if (!aElement->MayHaveAnimations()) {
+    return nullptr;
+  }
+
   nsIAtom* propName = GetEffectSetPropertyAtom(aPseudoType);
   return static_cast<EffectSet*>(aElement->GetProperty(propName));
 }
@@ -53,10 +57,6 @@ EffectSet::GetEffectSet(const nsIFrame* aFrame)
     EffectCompositor::GetAnimationElementAndPseudoForFrame(aFrame);
 
   if (!target) {
-    return nullptr;
-  }
-
-  if (!target->mElement->MayHaveAnimations()) {
     return nullptr;
   }
 
@@ -111,11 +111,8 @@ EffectSet::DestroyEffectSet(dom::Element* aElement,
 void
 EffectSet::UpdateAnimationGeneration(nsPresContext* aPresContext)
 {
-  MOZ_ASSERT(aPresContext->RestyleManager()->IsGecko(),
-             "stylo: Servo-backed style system should not be using "
-             "EffectSet");
   mAnimationGeneration =
-    aPresContext->RestyleManager()->AsGecko()->GetAnimationGeneration();
+    aPresContext->RestyleManager()->GetAnimationGeneration();
 }
 
 /* static */ nsIAtom**

@@ -9,16 +9,17 @@ var {classes: Cc, interfaces: Ci, utils: Cu} = Components;
 const TABS_TTL = 1814400;          // 21 days.
 const TAB_ENTRIES_LIMIT = 5;      // How many URLs to include in tab history.
 
-Cu.import("resource://gre/modules/Preferences.jsm");
 Cu.import("resource://gre/modules/XPCOMUtils.jsm");
+Cu.import("resource://gre/modules/Services.jsm");
 Cu.import("resource://services-sync/engines.js");
-Cu.import("resource://services-sync/engines/clients.js");
 Cu.import("resource://services-sync/record.js");
 Cu.import("resource://services-sync/util.js");
 Cu.import("resource://services-sync/constants.js");
 
 XPCOMUtils.defineLazyModuleGetter(this, "PrivateBrowsingUtils",
   "resource://gre/modules/PrivateBrowsingUtils.jsm");
+XPCOMUtils.defineLazyModuleGetter(this, "SessionStore",
+  "resource:///modules/sessionstore/SessionStore.jsm");
 
 this.TabSetRecord = function TabSetRecord(collection, id) {
   CryptoWrapper.call(this, collection, id);
@@ -75,9 +76,9 @@ TabEngine.prototype = {
     this.hasSyncedThisSession = false;
   },
 
-  removeClientData() {
+  async removeClientData() {
     let url = this.engineURL + "/" + this.service.clientsEngine.localID;
-    this.service.resource(url).delete();
+    await this.service.resource(url).delete();
   },
 
   /**
@@ -129,7 +130,7 @@ TabStore.prototype = {
   },
 
   getTabState(tab) {
-    return JSON.parse(Svc.Session.getTabState(tab));
+    return JSON.parse(SessionStore.getTabState(tab));
   },
 
   getAllTabs(filter) {
@@ -210,13 +211,11 @@ TabStore.prototype = {
     });
 
     // Figure out how many tabs we can pack into a payload.
-    // See bug 535326 comment 8 for an explanation of the estimation
-    // If the server configuration is absent, we use the old max payload size of 28K
-    let size = JSON.stringify(tabs).length;
+    // We use byteLength here because the data is not encrypted in ascii yet.
+    let size = new TextEncoder("utf-8").encode(JSON.stringify(tabs)).byteLength;
     let origLength = tabs.length;
-    const MAX_TAB_SIZE = (this.engine.service.serverConfiguration ?
-                          this.engine.service.serverConfiguration.max_record_payload_bytes :
-                          28672) / 4 * 3 - 1500;
+    // See bug 535326 comment 8 for an explanation of the estimation
+    const MAX_TAB_SIZE = this.engine.maxRecordPayloadBytes / 4 * 3 - 1500;
     if (size > MAX_TAB_SIZE) {
       // Estimate a little more than the direct fraction to maximize packing
       let cutoff = Math.ceil(tabs.length * MAX_TAB_SIZE / size);

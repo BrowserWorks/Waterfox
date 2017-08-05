@@ -51,13 +51,8 @@ xul|menulist:not([editable="true"]) > xul|*.menulist-dropmarker {
   margin-bottom: 6px;
 }
 
-xul|checkbox {
-  -moz-binding: url("chrome://global/content/bindings/checkbox.xml#checkbox");
-  -moz-box-align: center;
-}
-
 xul|*.checkbox-check {
-  background-image: none !important;
+  background-image: none;
 }
 
 xul|*.checkbox-check[checked] {
@@ -95,14 +90,9 @@ xul|*.numberbox-input-box {
   border-width: 0;
 }
 
-xul|*.text-link:-moz-focusring {
-  border: 1px dotted -moz-DialogText;
-}
-
 xul|menulist:-moz-focusring > xul|*.menulist-label-box,
 xul|radio[focused="true"] > xul|*.radio-label-box,
-html|input[type="checkbox"]:-moz-focusring + html|label:before,
-xul|checkbox:-moz-focusring > xul|*.checkbox-label-box {
+html|input[type="checkbox"]:-moz-focusring + html|label:before {
   outline: 1px dotted;
 }
 

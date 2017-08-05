@@ -37,7 +37,7 @@ function setTestPluginEnabledState(newEnabledState, plugin) {
   });
 }
 
-add_task(function* setup() {
+add_task(async function() {
   var tags = pluginHost.getPluginTags();
 
   // Find the test plugin
@@ -48,16 +48,13 @@ add_task(function* setup() {
   }
   if (!pluginTag) {
     ok(false, "Test Plug-in not available, can't run test");
-    finish();
+    return;
   }
   setTestPluginEnabledState(Ci.nsIPluginTag.STATE_ENABLED, pluginTag);
-});
-
-add_task(function* () {
-  yield BrowserTestUtils.openNewForegroundTab(gBrowser, testURL);
+  await BrowserTestUtils.openNewForegroundTab(gBrowser, testURL);
 
   // Set data for the plugin after the page load.
-  yield ContentTask.spawn(gBrowser.selectedBrowser, null, function*() {
+  await ContentTask.spawn(gBrowser.selectedBrowser, null, async function() {
     content.wrappedJSObject.testSteps();
   });
 
@@ -65,25 +62,23 @@ add_task(function* () {
     "Data stored for sites");
 
   // Clear data for "foo.com" and its subdomains.
-  yield ForgetAboutSite.removeDataFromDomain("foo.com");
+  await ForgetAboutSite.removeDataFromDomain("foo.com");
 
   ok(stored(["bar.com", "192.168.1.1", "localhost"]), "Data stored for sites");
   ok(!stored(["foo.com"]), "Data cleared for foo.com");
   ok(!stored(["bar.foo.com"]), "Data cleared for subdomains of foo.com");
 
     // Clear data for "bar.com" using a subdomain.
-  yield ForgetAboutSite.removeDataFromDomain("foo.bar.com");
+  await ForgetAboutSite.removeDataFromDomain("foo.bar.com");
   ok(!stored(["bar.com"]), "Data cleared for bar.com");
 
   // Clear data for "192.168.1.1".
-  yield ForgetAboutSite.removeDataFromDomain("192.168.1.1");
+  await ForgetAboutSite.removeDataFromDomain("192.168.1.1");
   ok(!stored(["192.168.1.1"]), "Data cleared for 192.168.1.1");
 
   // Clear data for "localhost".
-  yield ForgetAboutSite.removeDataFromDomain("localhost");
+  await ForgetAboutSite.removeDataFromDomain("localhost");
   ok(!stored(null), "All data cleared");
 
   gBrowser.removeCurrentTab();
 });
-
-

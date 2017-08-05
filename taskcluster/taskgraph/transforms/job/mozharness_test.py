@@ -2,26 +2,22 @@
 # License, v. 2.0. If a copy of the MPL was not distributed with this
 # file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
-from voluptuous import Schema, Required
+from __future__ import absolute_import, print_function, unicode_literals
+
+from voluptuous import Required
 from taskgraph.util.taskcluster import get_artifact_url
 from taskgraph.transforms.job import run_job_using
+from taskgraph.util.schema import Schema
 from taskgraph.transforms.tests import (
     test_description_schema,
     get_firefox_version,
     normpath
 )
 from taskgraph.transforms.job.common import (
-    docker_worker_support_vcs_checkout,
+    support_vcs_checkout,
 )
 import os
 import re
-
-ARTIFACTS = [
-    # (artifact name prefix, in-image path)
-    ("public/logs/", "build/upload/logs/"),
-    ("public/test", "artifacts/"),
-    ("public/test_info/", "build/blobber_upload_dir/"),
-]
 
 BUILDER_NAME_PREFIX = {
     'linux64-pgo': 'Ubuntu VM 12.04 x64',
@@ -31,7 +27,9 @@ BUILDER_NAME_PREFIX = {
     'linux64-ccov': 'Ubuntu Code Coverage VM 12.04 x64',
     'linux64-jsdcov': 'Ubuntu Code Coverage VM 12.04 x64',
     'linux64-stylo': 'Ubuntu VM 12.04 x64',
+    'linux64-devedition-nightly': 'Ubuntu VM 12.04 x64',
     'macosx64': 'Rev7 MacOSX Yosemite 10.10.5',
+    'macosx64-devedition': 'Rev7 MacOSX Yosemite 10.10.5 DevEdition',
     'android-4.3-arm7-api-15': 'Android 4.3 armv7 API 15+',
     'android-4.2-x86': 'Android 4.2 x86 Emulator',
     'android-4.3-arm7-api-15-gradle': 'Android 4.3 armv7 API 15+',
@@ -45,12 +43,34 @@ mozharness_test_run_schema = Schema({
 })
 
 
+def test_packages_url(taskdesc):
+    """Account for different platforms that name their test packages differently"""
+    build_platform = taskdesc['attributes']['build_platform']
+    build_type = taskdesc['attributes']['build_type']
+
+    if build_platform.startswith('macosx64') and build_type == 'opt':
+        target = 'firefox-{}.en-US.{}'.format(get_firefox_version(), 'mac')
+    else:
+        target = 'target'
+
+    return get_artifact_url(
+        '<build>', 'public/build/{}.test_packages.json'.format(target))
+
+
 @run_job_using('docker-engine', 'mozharness-test', schema=mozharness_test_run_schema)
 @run_job_using('docker-worker', 'mozharness-test', schema=mozharness_test_run_schema)
 def mozharness_test_on_docker(config, job, taskdesc):
     test = taskdesc['run']['test']
     mozharness = test['mozharness']
     worker = taskdesc['worker']
+
+    # apply some defaults
+    worker['docker-image'] = test['docker-image']
+    worker['allow-ptrace'] = True  # required for all tests, for crashreporter
+    worker['loopback-video'] = test['loopback-video']
+    worker['loopback-audio'] = test['loopback-audio']
+    worker['max-run-time'] = test['max-run-time']
+    worker['retry-exit-status'] = test['retry-exit-status']
 
     artifacts = [
         # (artifact name prefix, in-image path)
@@ -60,8 +80,6 @@ def mozharness_test_on_docker(config, job, taskdesc):
     ]
 
     installer_url = get_artifact_url('<build>', mozharness['build-artifact-name'])
-    test_packages_url = get_artifact_url('<build>',
-                                         'public/build/target.test_packages.json')
     mozharness_url = get_artifact_url('<build>',
                                       'public/build/mozharness.zip')
 
@@ -84,7 +102,12 @@ def mozharness_test_on_docker(config, job, taskdesc):
         'MOZILLA_BUILD_URL': {'task-reference': installer_url},
         'NEED_PULSEAUDIO': 'true',
         'NEED_WINDOW_MANAGER': 'true',
+        'ENABLE_E10S': str(bool(test.get('e10s'))).lower(),
+        'MOZ_AUTOMATION': '1',
     }
+
+    if mozharness.get('mochitest-flavor'):
+        env['MOCHITEST_FLAVOR'] = mozharness['mochitest-flavor']
 
     if mozharness['set-moz-node-path']:
         env['MOZ_NODE_PATH'] = '/usr/local/bin/node'
@@ -109,6 +132,9 @@ def mozharness_test_on_docker(config, job, taskdesc):
             'docker-worker:relengapi-proxy:tooltool.download.public',
         ])
 
+    if test['reboot']:
+        raise Exception('reboot: {} not supported on generic-worker'.format(test['reboot']))
+
     # assemble the command line
     command = [
         '/home/worker/bin/run-task',
@@ -118,7 +144,7 @@ def mozharness_test_on_docker(config, job, taskdesc):
 
     # Support vcs checkouts regardless of whether the task runs from
     # source or not in case it is needed on an interactive loaner.
-    docker_worker_support_vcs_checkout(config, test, taskdesc)
+    support_vcs_checkout(config, job, taskdesc)
 
     # If we have a source checkout, run mozharness from it instead of
     # downloading a zip file with the same content.
@@ -137,7 +163,7 @@ def mozharness_test_on_docker(config, job, taskdesc):
         command.append("--no-read-buildbot-config")
     command.extend([
         {"task-reference": "--installer-url=" + installer_url},
-        {"task-reference": "--test-packages-url=" + test_packages_url},
+        {"task-reference": "--test-packages-url=" + test_packages_url(taskdesc)},
     ])
     command.extend(mozharness.get('extra-options', []))
 
@@ -162,83 +188,96 @@ def mozharness_test_on_docker(config, job, taskdesc):
 
 
 @run_job_using('generic-worker', 'mozharness-test', schema=mozharness_test_run_schema)
-def mozharness_test_on_windows(config, job, taskdesc):
+def mozharness_test_on_generic_worker(config, job, taskdesc):
     test = taskdesc['run']['test']
     mozharness = test['mozharness']
     worker = taskdesc['worker']
 
+    is_macosx = worker['os'] == 'macosx'
+    is_windows = worker['os'] == 'windows'
+    assert is_macosx or is_windows
+
     artifacts = [
         {
-            'path': 'public\\logs\\localconfig.json',
-            'type': 'file'
-        },
-        {
-            'path': 'public\\logs\\log_critical.log',
-            'type': 'file'
-        },
-        {
-            'path': 'public\\logs\\log_error.log',
-            'type': 'file'
-        },
-        {
-            'path': 'public\\logs\\log_fatal.log',
-            'type': 'file'
-        },
-        {
-            'path': 'public\\logs\\log_info.log',
-            'type': 'file'
-        },
-        {
-            'path': 'public\\logs\\log_raw.log',
-            'type': 'file'
-        },
-        {
-            'path': 'public\\logs\\log_warning.log',
-            'type': 'file'
-        },
-        {
-            'path': 'public\\test_info',
+            'name': 'public/logs',
+            'path': 'logs',
             'type': 'directory'
-        }
+        },
     ]
 
-    build_platform = taskdesc['attributes']['build_platform']
+    # jittest doesn't have blob_upload_dir
+    if test['test-name'] != 'jittest':
+        artifacts.append({
+            'name': 'public/test_info',
+            'path': 'build/blobber_upload_dir',
+            'type': 'directory'
+        })
 
-    target = 'firefox-{}.en-US.{}'.format(get_firefox_version(), build_platform)
-
-    installer_url = get_artifact_url(
-        '<build>', 'public/build/{}.zip'.format(target))
-    test_packages_url = get_artifact_url(
-        '<build>', 'public/build/{}.test_packages.json'.format(target))
-    mozharness_url = get_artifact_url(
-        '<build>', 'public/build/mozharness.zip')
+    installer_url = get_artifact_url('<build>', mozharness['build-artifact-name'])
 
     taskdesc['scopes'].extend(
         ['generic-worker:os-group:{}'.format(group) for group in test['os-groups']])
 
     worker['os-groups'] = test['os-groups']
 
+    if test['reboot']:
+        raise Exception('reboot: {} not supported on generic-worker'.format(test['reboot']))
+
     worker['max-run-time'] = test['max-run-time']
     worker['artifacts'] = artifacts
 
-    # assemble the command line
-    mh_command = [
-        'c:\\mozilla-build\\python\\python.exe',
-        '-u',
-        'mozharness\\scripts\\' + normpath(mozharness['script'])
-    ]
+    env = worker.setdefault('env', {})
+    env['MOZ_AUTOMATION'] = '1'
+
+    # this list will get cleaned up / reduced / removed in bug 1354088
+    if is_macosx:
+        env.update({
+            'IDLEIZER_DISABLE_SHUTDOWN': 'true',
+            'LANG': 'en_US.UTF-8',
+            'LC_ALL': 'en_US.UTF-8',
+            'MOZ_HIDE_RESULTS_TABLE': '1',
+            'MOZ_NODE_PATH': '/usr/local/bin/node',
+            'MOZ_NO_REMOTE': '1',
+            'NO_EM_RESTART': '1',
+            'NO_FAIL_ON_TEST_ERRORS': '1',
+            'PATH': '/usr/local/bin:/usr/bin:/bin:/usr/sbin:/sbin',
+            'SHELL': '/bin/bash',
+            'XPCOM_DEBUG_BREAK': 'warn',
+            'XPC_FLAGS': '0x0',
+            'XPC_SERVICE_NAME': '0',
+        })
+
+    if is_macosx:
+        mh_command = [
+            'python2.7',
+            '-u',
+            'mozharness/scripts/' + mozharness['script']
+        ]
+    elif is_windows:
+        mh_command = [
+            'c:\\mozilla-build\\python\\python.exe',
+            '-u',
+            'mozharness\\scripts\\' + normpath(mozharness['script'])
+        ]
+
     for mh_config in mozharness['config']:
-        mh_command.extend(['--cfg', 'mozharness\\configs\\' + normpath(mh_config)])
+        cfg_path = 'mozharness/configs/' + mh_config
+        if is_windows:
+            cfg_path = normpath(cfg_path)
+        mh_command.extend(['--cfg', cfg_path])
     mh_command.extend(mozharness.get('extra-options', []))
     if mozharness.get('no-read-buildbot-config'):
         mh_command.append('--no-read-buildbot-config')
     mh_command.extend(['--installer-url', installer_url])
-    mh_command.extend(['--test-packages-url', test_packages_url])
+    mh_command.extend(['--test-packages-url', test_packages_url(taskdesc)])
     if mozharness.get('download-symbols'):
         if isinstance(mozharness['download-symbols'], basestring):
             mh_command.extend(['--download-symbols', mozharness['download-symbols']])
         else:
             mh_command.extend(['--download-symbols', 'true'])
+    if mozharness.get('include-blob-upload-branch'):
+        mh_command.append('--blob-upload-branch=' + config.params['project'])
+    mh_command.extend(mozharness.get('extra-options', []))
 
     # TODO: remove the need for run['chunked']
     if mozharness.get('chunked') or test['chunks'] > 1:
@@ -252,16 +291,28 @@ def mozharness_test_on_windows(config, job, taskdesc):
                 if isinstance(c, basestring) and c.startswith('--test-suite'):
                     mh_command[i] += suffix
 
-    # bug 1311966 - symlink to artifacts until generic worker supports virtual artifact paths
-    artifact_link_commands = ['mklink /d %cd%\\public\\test_info %cd%\\build\\blobber_upload_dir']
-    for link in [a['path'] for a in artifacts if a['path'].startswith('public\\logs\\')]:
-        artifact_link_commands.append('mklink %cd%\\{} %cd%\\{}'.format(link, link[7:]))
+    worker['mounts'] = [{
+        'directory': '.',
+        'content': {
+            'artifact': 'public/build/mozharness.zip',
+            'task-id': {
+                'task-reference': '<build>'
+            }
+        },
+        'format': 'zip'
+    }]
 
-    worker['command'] = artifact_link_commands + [
-        {'task-reference': 'c:\\mozilla-build\\wget\\wget.exe {}'.format(mozharness_url)},
-        'c:\\mozilla-build\\info-zip\\unzip.exe mozharness.zip',
-        {'task-reference': ' '.join(mh_command)}
-    ]
+    if is_windows:
+        worker['command'] = [
+            {'task-reference': ' '.join(mh_command)}
+        ]
+    else:  # is_macosx
+        mh_command_task_ref = []
+        for token in mh_command:
+            mh_command_task_ref.append({'task-reference': token})
+        worker['command'] = [
+            mh_command_task_ref
+        ]
 
 
 @run_job_using('native-engine', 'mozharness-test', schema=mozharness_test_run_schema)
@@ -269,10 +320,10 @@ def mozharness_test_on_native_engine(config, job, taskdesc):
     test = taskdesc['run']['test']
     mozharness = test['mozharness']
     worker = taskdesc['worker']
+    is_talos = test['suite'] == 'talos'
+    is_macosx = worker['os'] == 'macosx'
 
     installer_url = get_artifact_url('<build>', mozharness['build-artifact-name'])
-    test_packages_url = get_artifact_url('<build>',
-                                         'public/build/target.test_packages.json')
     mozharness_url = get_artifact_url('<build>',
                                       'public/build/mozharness.zip')
 
@@ -280,10 +331,17 @@ def mozharness_test_on_native_engine(config, job, taskdesc):
         'name': prefix.rstrip('/'),
         'path': path.rstrip('/'),
         'type': 'directory',
-    } for (prefix, path) in ARTIFACTS]
+    } for (prefix, path) in [
+        # (artifact name prefix, in-image path relative to homedir)
+        ("public/logs/", "workspace/build/upload/logs/"),
+        ("public/test", "artifacts/"),
+        ("public/test_info/", "workspace/build/blobber_upload_dir/"),
+    ]]
 
-    worker['reboot'] = test['reboot']
-    worker['env'] = {
+    if test['reboot']:
+        worker['reboot'] = test['reboot']
+
+    worker['env'] = env = {
         'GECKO_HEAD_REPOSITORY': config.params['head_repository'],
         'GECKO_HEAD_REV': config.params['head_rev'],
         'MOZHARNESS_CONFIG': ' '.join(mozharness['config']),
@@ -296,18 +354,23 @@ def mozharness_test_on_native_engine(config, job, taskdesc):
         "NO_FAIL_ON_TEST_ERRORS": '1',
         "MOZ_HIDE_RESULTS_TABLE": '1',
         "MOZ_NODE_PATH": "/usr/local/bin/node",
+        'MOZ_AUTOMATION': '1',
     }
+    # talos tests don't need Xvfb
+    if is_talos:
+        env['NEED_XVFB'] = 'false'
 
-    worker['context'] = '{}/raw-file/{}/taskcluster/scripts/tester/test-macosx.sh'.format(
-        config.params['head_repository'], config.params['head_rev']
+    script = 'test-macosx.sh' if is_macosx else 'test-linux.sh'
+    worker['context'] = '{}/raw-file/{}/taskcluster/scripts/tester/{}'.format(
+        config.params['head_repository'], config.params['head_rev'], script
     )
 
-    command = worker['command'] = ["./test-macosx.sh"]
+    command = worker['command'] = ["./{}".format(script)]
     if mozharness.get('no-read-buildbot-config'):
         command.append("--no-read-buildbot-config")
     command.extend([
         {"task-reference": "--installer-url=" + installer_url},
-        {"task-reference": "--test-packages-url=" + test_packages_url},
+        {"task-reference": "--test-packages-url=" + test_packages_url(taskdesc)},
     ])
     if mozharness.get('include-blob-upload-branch'):
         command.append('--blob-upload-branch=' + config.params['project'])
@@ -339,7 +402,7 @@ def mozharness_test_buildbot_bridge(config, job, taskdesc):
 
     branch = config.params['project']
     platform, build_type = test['build-platform'].split('/')
-    test_name = test.get('talos-try-name', test['test-name'])
+    test_name = test.get('try-name', test['test-name'])
     mozharness = test['mozharness']
 
     # mochitest e10s follows the pattern mochitest-e10s-<suffix>
@@ -351,13 +414,7 @@ def mozharness_test_buildbot_bridge(config, job, taskdesc):
         'mochitest-gpu',
         'mochitest-e10s',
     ]
-    test_name = test.get(
-                    'talos-try-name',
-                    test.get(
-                        'unittest-try-name',
-                        test['test-name']
-                    )
-                )
+    test_name = test.get('try-name', test['test-name'])
     if test['e10s'] and 'e10s' not in test_name:
         test_name += '-e10s'
 
@@ -384,19 +441,28 @@ def mozharness_test_buildbot_bridge(config, job, taskdesc):
     if test.get('suite', '') == 'talos':
         # on linux64-<variant>/<build>, we add the variant to the buildername
         m = re.match(r'\w+-([^/]+)/.*', test['test-platform'])
-        variant = ''
-        if m and m.group(1):
-            variant = m.group(1) + ' '
+        variant = m.group(1) if m and m.group(1) else ''
+
         # On beta and release, we run nightly builds on-push; the talos
         # builders need to run against non-nightly buildernames
-        if variant == 'nightly ':
+        if variant == 'nightly':
             variant = ''
-        buildername = '{} {} {}talos {}'.format(
-            BUILDER_NAME_PREFIX[platform],
-            branch,
-            variant,
-            test_name
+
+        # this variant name has branch after the variant type in BBB bug 1338871
+        if variant in ('stylo', 'stylo-sequential', 'devedition'):
+            name = '{prefix} {variant} {branch} talos {test_name}'
+        elif variant:
+            name = '{prefix} {branch} {variant} talos {test_name}'
+        else:
+            name = '{prefix} {branch} talos {test_name}'
+
+        buildername = name.format(
+            prefix=BUILDER_NAME_PREFIX[platform],
+            variant=variant,
+            branch=branch,
+            test_name=test_name
         )
+
         if buildername.startswith('Ubuntu'):
             buildername = buildername.replace('VM', 'HW')
     else:

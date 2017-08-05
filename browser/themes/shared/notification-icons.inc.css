@@ -4,18 +4,17 @@
  * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
 %endif
 
+.popup-notification-icon,
+.identity-popup-permission-icon {
+  -moz-context-properties: fill;
+  fill: GrayText;
+}
+
 #notification-popup-box {
   padding: 5px 0px;
   margin: -5px 0px;
   margin-inline-end: -5px;
   padding-inline-end: 5px;
-}
-
-.notification-anchor-icon,
-#blocked-permissions-container > .blocked-permission-icon {
-  width: 16px;
-  height: 16px;
-  margin-inline-start: 2px;
 }
 
 /* This class can be used alone or in combination with the class defining the
@@ -25,13 +24,20 @@
   list-style-image: url(chrome://browser/skin/notification-icons.svg#default-info);
 }
 
-.notification-anchor-icon:not(.plugin-blocked):-moz-lwtheme,
-#blocked-permissions-container > .blocked-permission-icon:-moz-lwtheme {
-  filter: url(chrome://global/skin/filters.svg#fill);
-  fill: currentColor;
+/* INDIVIDUAL NOTIFICATIONS */
+
+.focus-tab-by-prompt-icon {
+  list-style-image: url(chrome://browser/skin/notification-icons.svg#focus-tab-by-prompt);
 }
 
-/* INDIVIDUAL NOTIFICATIONS */
+.popup-notification-icon[popupid="persistent-storage"],
+.persistent-storage-icon {
+  list-style-image: url(chrome://browser/skin/notification-icons.svg#persistent-storage);
+}
+
+.persistent-storage-icon.blocked-permission-icon {
+  list-style-image: url(chrome://browser/skin/notification-icons.svg#persistent-storage-blocked);
+}
 
 .popup-notification-icon[popupid="web-notifications"],
 .desktop-notification-icon {
@@ -235,10 +241,43 @@ html|*#webRTC-previewVideo {
 
 .plugin-icon {
   list-style-image: url(chrome://browser/skin/notification-icons.svg#plugin);
+  transition: fill 1.5s;
 }
 
-.plugin-icon.plugin-blocked {
+#plugin-icon-badge {
+  list-style-image: url(chrome://browser/skin/notification-icons.svg#plugin-badge);
+  opacity: 0;
+  transition: opacity 1.5s;
+}
+
+#plugins-notification-icon[extraAttr="inactive"] > .plugin-icon {
+  fill: #bfbfbf;
+}
+
+#plugins-notification-icon[extraAttr="inactive"] > #plugin-icon-badge {
+  opacity: 1;
+}
+
+#plugins-notification-icon[extraAttr="inactive"] > #plugin-icon-badge[animate] {
+  animation: blink-badge 1000ms ease 0s 5 alternate both;
+}
+
+@keyframes blink-badge {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+.plugin-blocked > .plugin-icon {
   list-style-image: url(chrome://browser/skin/notification-icons.svg#plugin-blocked);
+  fill: #d92215 !important;
+}
+
+.plugin-blocked > #plugin-icon-badge {
+  visibility: collapse;
 }
 
 #notification-popup-box[hidden] {
@@ -306,3 +345,11 @@ html|*#webRTC-previewVideo {
   }
 }
 %endif
+
+/* UPDATE */
+.popup-notification-icon[popupid="update-available"],
+.popup-notification-icon[popupid="update-manual"],
+.popup-notification-icon[popupid="update-restart"] {
+  background: #74BF43 url(chrome://browser/skin/notification-icons.svg#update) no-repeat center;
+  border-radius: 50%;
+}

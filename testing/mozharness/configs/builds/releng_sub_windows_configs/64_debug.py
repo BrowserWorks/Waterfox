@@ -12,7 +12,6 @@ config = {
         'upload-files',
         'sendchange',
         'check-test',
-        'generate-build-stats',
         'update',  # decided by query_is_nightly()
     ],
     'stage_platform': 'win64-debug',
@@ -22,7 +21,6 @@ config = {
     'env': {
         'BINSCOPE': 'C:/Program Files (x86)/Microsoft/SDL BinScope/BinScope.exe',
         'HG_SHARE_BASE_DIR': 'C:/builds/hg-shared',
-        'MOZ_AUTOMATION': '1',
         'MOZ_CRASHREPORTER_NO_REPORT': '1',
         'MOZ_OBJDIR': 'obj-firefox',
         'PATH': 'C:/mozilla-build/nsis-3.01;C:/mozilla-build/python27;'

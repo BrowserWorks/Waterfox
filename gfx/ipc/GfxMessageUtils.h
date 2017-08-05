@@ -295,6 +295,14 @@ struct ParamTraits<mozilla::layers::DiagnosticTypes>
              mozilla::layers::DiagnosticTypes::ALL_BITS>
 {};
 
+template <>
+struct ParamTraits<mozilla::layers::ScrollDirection>
+  : public ContiguousEnumSerializer<
+            mozilla::layers::ScrollDirection,
+            mozilla::layers::ScrollDirection::NONE,
+            mozilla::layers::ScrollDirection::SENTINEL>
+{};
+
 /*
 template <>
 struct ParamTraits<mozilla::PixelFormat>
@@ -1279,14 +1287,6 @@ struct ParamTraits<mozilla::layers::EventRegionsOverride>
 {};
 
 template<>
-struct ParamTraits<mozilla::layers::AsyncDragMetrics::DragDirection>
-  : public ContiguousEnumSerializer<
-             mozilla::layers::AsyncDragMetrics::DragDirection,
-             mozilla::layers::AsyncDragMetrics::DragDirection::NONE,
-             mozilla::layers::AsyncDragMetrics::DragDirection::SENTINEL>
-{};
-
-template<>
 struct ParamTraits<mozilla::layers::AsyncDragMetrics>
 {
   typedef mozilla::layers::AsyncDragMetrics paramType;
@@ -1297,7 +1297,6 @@ struct ParamTraits<mozilla::layers::AsyncDragMetrics>
     WriteParam(aMsg, aParam.mPresShellId);
     WriteParam(aMsg, aParam.mDragStartSequenceNumber);
     WriteParam(aMsg, aParam.mScrollbarDragOffset);
-    WriteParam(aMsg, aParam.mScrollTrack);
     WriteParam(aMsg, aParam.mDirection);
   }
 
@@ -1307,7 +1306,6 @@ struct ParamTraits<mozilla::layers::AsyncDragMetrics>
             ReadParam(aMsg, aIter, &aResult->mPresShellId) &&
             ReadParam(aMsg, aIter, &aResult->mDragStartSequenceNumber) &&
             ReadParam(aMsg, aIter, &aResult->mScrollbarDragOffset) &&
-            ReadParam(aMsg, aIter, &aResult->mScrollTrack) &&
             ReadParam(aMsg, aIter, &aResult->mDirection));
   }
 };
@@ -1366,17 +1364,8 @@ struct ParamTraits<mozilla::layers::CompositorOptions>
 
 template <>
 struct ParamTraits<mozilla::layers::SimpleLayerAttributes>
-{
-  typedef mozilla::layers::SimpleLayerAttributes paramType;
-
-  static void Write(Message* aMsg, const paramType& aParam) {
-    aMsg->WriteBytes(&aParam, sizeof(aParam));
-  }
-
-  static bool Read(const Message* aMsg, PickleIterator* aIter, paramType* aResult) {
-    return aMsg->ReadBytesInto(aIter, aResult, sizeof(paramType));
-  }
-};
+  : public PlainOldDataSerializer<mozilla::layers::SimpleLayerAttributes>
+{ };
 
 } /* namespace IPC */
 

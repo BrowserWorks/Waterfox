@@ -12,7 +12,7 @@ var TabsInTitlebar = {
       return;
     }
     this._readPref();
-    Services.prefs.addObserver(this._prefName, this, false);
+    Services.prefs.addObserver(this._prefName, this);
 
     // We need to update the appearance of the titlebar when the menu changes
     // from the active to the inactive state. We can't, however, rely on
@@ -176,6 +176,16 @@ var TabsInTitlebar = {
 
       // Begin setting CSS properties which will cause a reflow
 
+      if (AppConstants.MOZ_PHOTON_THEME &&
+          AppConstants.isPlatformAndVersionAtLeast("win", "10.0")) {
+        if (!menuHeight) {
+          titlebarContentHeight = Math.max(titlebarContentHeight, fullTabsHeight);
+          $("titlebar-buttonbox").style.height = titlebarContentHeight + "px";
+        } else {
+          $("titlebar-buttonbox").style.removeProperty("height");
+        }
+      }
+
       // If the menubar is around (menuHeight is non-zero), try to adjust
       // its full height (i.e. including margins) to match the titlebar,
       // by changing the menubar's bottom padding
@@ -247,7 +257,8 @@ var TabsInTitlebar = {
       menubar.style.paddingBottom = "";
     }
 
-    ToolbarIconColor.inferFromText();
+    ToolbarIconColor.inferFromText("tabsintitlebar", TabsInTitlebar.enabled);
+
     if (CustomizationHandler.isCustomizing()) {
       gCustomizeMode.updateLWTStyling();
     }

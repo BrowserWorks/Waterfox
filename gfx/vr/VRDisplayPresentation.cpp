@@ -5,6 +5,7 @@
 
 #include "VRDisplayPresentation.h"
 
+#include "mozilla/dom/DocGroup.h"
 #include "mozilla/Unused.h"
 #include "VRDisplayClient.h"
 #include "VRLayerChild.h"
@@ -13,11 +14,19 @@ using namespace mozilla;
 using namespace mozilla::gfx;
 
 VRDisplayPresentation::VRDisplayPresentation(VRDisplayClient *aDisplayClient,
-                                             const nsTArray<mozilla::dom::VRLayer>& aLayers)
+                                             const nsTArray<mozilla::dom::VRLayer>& aLayers,
+                                             uint32_t aGroup)
   : mDisplayClient(aDisplayClient)
   , mDOMLayers(aLayers)
+  , mGroup(aGroup)
 {
   CreateLayers();
+}
+
+uint32_t
+VRDisplayPresentation::GetGroup() const
+{
+  return mGroup;
 }
 
 void
@@ -70,7 +79,17 @@ VRDisplayPresentation::CreateLayers()
       continue;
     }
 
-    RefPtr<VRLayerChild> vrLayer = static_cast<VRLayerChild*>(manager->CreateVRLayer(mDisplayClient->GetDisplayInfo().GetDisplayID(), leftBounds, rightBounds));
+    nsCOMPtr<nsIEventTarget> target;
+    nsIDocument* doc;
+    doc = canvasElement->OwnerDoc();
+    if (doc) {
+      target = doc->EventTargetFor(TaskCategory::Other);
+    }
+
+    RefPtr<VRLayerChild> vrLayer =
+      static_cast<VRLayerChild*>(manager->CreateVRLayer(mDisplayClient->GetDisplayInfo().GetDisplayID(),
+                                                        leftBounds, rightBounds, target,
+                                                        mGroup));
     if (!vrLayer) {
       NS_WARNING("CreateVRLayer returned null!");
       continue;
@@ -86,7 +105,9 @@ void
 VRDisplayPresentation::DestroyLayers()
 {
   for (VRLayerChild* layer : mLayers) {
-    Unused << layer->SendDestroy();
+    if (layer->IsIPCOpen()) {
+      Unused << layer->SendDestroy();
+    }
   }
   mLayers.Clear();
 }

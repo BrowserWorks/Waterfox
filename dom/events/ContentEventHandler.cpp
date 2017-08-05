@@ -776,13 +776,18 @@ ContentEventHandler::AppendFontRanges(FontRangeArray& aFontRanges,
   }
 
   int32_t baseOffset = aBaseOffset;
-  nsTextFrame* curr = do_QueryFrame(frame);
-  MOZ_ASSERT(curr, "Not a text frame");
+#ifdef DEBUG
+  {
+    nsTextFrame* text = do_QueryFrame(frame);
+    MOZ_ASSERT(text, "Not a text frame");
+  }
+#endif
+  auto* curr = static_cast<nsTextFrame*>(frame);
   while (curr) {
     int32_t frameXPStart = std::max(curr->GetContentOffset(), aXPStartOffset);
     int32_t frameXPEnd = std::min(curr->GetContentEnd(), aXPEndOffset);
     if (frameXPStart >= frameXPEnd) {
-      curr = static_cast<nsTextFrame*>(curr->GetNextContinuation());
+      curr = curr->GetNextContinuation();
       continue;
     }
 
@@ -791,11 +796,11 @@ ContentEventHandler::AppendFontRanges(FontRangeArray& aFontRanges,
 
     nsTextFrame* next = nullptr;
     if (frameXPEnd < aXPEndOffset) {
-      next = static_cast<nsTextFrame*>(curr->GetNextContinuation());
+      next = curr->GetNextContinuation();
       while (next && next->GetTextRun(nsTextFrame::eInflated) == textRun) {
         frameXPEnd = std::min(next->GetContentEnd(), aXPEndOffset);
         next = frameXPEnd < aXPEndOffset ?
-          static_cast<nsTextFrame*>(next->GetNextContinuation()) : nullptr;
+          next->GetNextContinuation() : nullptr;
       }
     }
 
@@ -951,7 +956,7 @@ ContentEventHandler::ExpandToClusterBoundary(nsIContent* aContent,
       *aXPOffset == static_cast<uint32_t>(endOffset)) {
     return NS_OK;
   }
-  if (frame->GetType() != nsGkAtoms::textFrame) {
+  if (!frame->IsTextFrame()) {
     return NS_ERROR_FAILURE;
   }
   nsTextFrame* textFrame = static_cast<nsTextFrame*>(frame);
@@ -980,11 +985,7 @@ ContentEventHandler::SetRangeFromFlatTextOffset(nsRange* aRange,
 
   // Special case like <br contenteditable>
   if (!mRootContent->HasChildren()) {
-    nsresult rv = aRange->SetStart(mRootContent, 0);
-    if (NS_WARN_IF(NS_FAILED(rv))) {
-      return rv;
-    }
-    rv = aRange->SetEnd(mRootContent, 0);
+    nsresult rv = aRange->CollapseTo(mRootContent, 0);
     if (NS_WARN_IF(NS_FAILED(rv))) {
       return rv;
     }
@@ -1612,7 +1613,7 @@ ContentEventHandler::GetLastFrameInRangeForTextRect(nsRange* aRange)
   // If the last frame is a text frame, we need to check if the range actually
   // includes at least one character in the range.  Therefore, if it's not a
   // text frame, we need to do nothing anymore.
-  if (lastFrame->GetType() != nsGkAtoms::textFrame) {
+  if (!lastFrame->IsTextFrame()) {
     return FrameAndNodeOffset(lastFrame, nodePosition.mOffset);
   }
 
@@ -1650,7 +1651,7 @@ ContentEventHandler::GetLineBreakerRectBefore(nsIFrame* aFrame)
   // If it's not a <br> frame, this method computes the line breaker's rect
   // outside the frame.  Therefore, we need to compute with parent frame's
   // font metrics in such case.
-  if (aFrame->GetType() != nsGkAtoms::brFrame && aFrame->GetParent()) {
+  if (!aFrame->IsBrFrame() && aFrame->GetParent()) {
     frameForFontMetrics = aFrame->GetParent();
   }
 
@@ -1695,7 +1696,7 @@ ContentEventHandler::GetLineBreakerRectBefore(nsIFrame* aFrame)
   //
   // However, this is a hack for unusual scenario.  This hack shouldn't be
   // used as far as possible.
-  if (aFrame->GetType() != nsGkAtoms::brFrame) {
+  if (!aFrame->IsBrFrame()) {
     if (kWritingMode.IsVertical()) {
       if (kWritingMode.IsLineInverted()) {
         // above of top-left corner of aFrame.
@@ -1868,7 +1869,7 @@ ContentEventHandler::OnQueryTextRectArray(WidgetQueryContentEvent* aEvent)
 
     // If the first frame is a text frame, the result should be computed with
     // the frame's API.
-    if (firstFrame->GetType() == nsGkAtoms::textFrame) {
+    if (firstFrame->IsTextFrame()) {
       rv = firstFrame->GetCharacterRectsInRange(firstFrame.mOffsetInNode,
                                                 kEndOffset - offset, charRects);
       if (NS_WARN_IF(NS_FAILED(rv)) || NS_WARN_IF(charRects.IsEmpty())) {
@@ -1934,8 +1935,7 @@ ContentEventHandler::OnQueryTextRectArray(WidgetQueryContentEvent* aEvent)
       // compute it with the cached last character's rect.  (However, don't
       // use this path if it's a <br> frame because trusting <br> frame's rect
       // is better than guessing the rect from the previous character.)
-      if (firstFrame->GetType() != nsGkAtoms::brFrame &&
-          aEvent->mInput.mOffset != offset) {
+      if (!firstFrame->IsBrFrame() && aEvent->mInput.mOffset != offset) {
         baseFrame = lastFrame;
         brRect = lastCharRect;
         if (!wasLineBreaker) {
@@ -1953,7 +1953,7 @@ ContentEventHandler::OnQueryTextRectArray(WidgetQueryContentEvent* aEvent)
       // If it's not a <br> frame and it's the first character rect at the
       // queried range, we need to the previous character of the start of
       // the queried range if there is a text node.
-      else if (firstFrame->GetType() != nsGkAtoms::brFrame && lastTextContent) {
+      else if (!firstFrame->IsBrFrame() && lastTextContent) {
         FrameRelativeRect brRectRelativeToLastTextFrame =
           GuessLineBreakerRectAfter(lastTextContent);
         if (NS_WARN_IF(!brRectRelativeToLastTextFrame.IsValid())) {
@@ -2159,7 +2159,7 @@ ContentEventHandler::OnQueryTextRect(WidgetQueryContentEvent* aEvent)
     }
 
     // Look for the last frame which should be included text rects.
-    ErrorResult erv;
+    IgnoredErrorResult erv;
     range->SelectNodeContents(*mRootContent, erv);
     if (NS_WARN_IF(erv.Failed())) {
       return NS_ERROR_UNEXPECTED;
@@ -2176,11 +2176,11 @@ ContentEventHandler::OnQueryTextRect(WidgetQueryContentEvent* aEvent)
       FrameRelativeRect relativeRect;
       // If there is a <br> frame at the end, it represents an empty line at
       // the end with moz-<br> or content <br> in a block level element.
-      if (lastFrame->GetType() == nsGkAtoms::brFrame) {
+      if (lastFrame->IsBrFrame()) {
         relativeRect = GetLineBreakerRectBefore(lastFrame);
       }
       // If there is a text frame at the end, use its information.
-      else if (lastFrame->GetType() == nsGkAtoms::textFrame) {
+      else if (lastFrame->IsTextFrame()) {
         relativeRect = GuessLineBreakerRectAfter(lastFrame->GetContent());
       }
       // If there is an empty frame which is neither a text frame nor a <br>
@@ -2229,7 +2229,7 @@ ContentEventHandler::OnQueryTextRect(WidgetQueryContentEvent* aEvent)
   // If the first frame is a text frame, the result should be computed with
   // the frame's rect but not including the rect before start point of the
   // queried range.
-  if (firstFrame->GetType() == nsGkAtoms::textFrame) {
+  if (firstFrame->IsTextFrame()) {
     rect.SetRect(nsPoint(0, 0), firstFrame->GetRect().Size());
     rv = ConvertToRootRelativeOffset(firstFrame, rect);
     if (NS_WARN_IF(NS_FAILED(rv))) {
@@ -2271,7 +2271,7 @@ ContentEventHandler::OnQueryTextRect(WidgetQueryContentEvent* aEvent)
   // Therefore, if the first frame isn't a <br> frame and there is a text
   // node before the first node in the queried range, we should compute the
   // first rect with the previous character's rect.
-  else if (firstFrame->GetType() != nsGkAtoms::brFrame && lastTextContent) {
+  else if (!firstFrame->IsBrFrame() && lastTextContent) {
     FrameRelativeRect brRectAfterLastChar =
       GuessLineBreakerRectAfter(lastTextContent);
     if (NS_WARN_IF(!brRectAfterLastChar.IsValid())) {
@@ -2337,8 +2337,7 @@ ContentEventHandler::OnQueryTextRect(WidgetQueryContentEvent* aEvent)
         // can return exactly correct rect only for <br> frame for now.  On the
         // other hand, GetLineBreakRectBefore() returns guessed caret rect for
         // the other frames.  We shouldn't include such odd rect to the result.
-        if (primaryFrame->GetType() == nsGkAtoms::textFrame ||
-            primaryFrame->GetType() == nsGkAtoms::brFrame) {
+        if (primaryFrame->IsTextFrame() || primaryFrame->IsBrFrame()) {
           frame = primaryFrame;
         }
       } while (!frame && !iter->IsDone());
@@ -2346,10 +2345,10 @@ ContentEventHandler::OnQueryTextRect(WidgetQueryContentEvent* aEvent)
         break;
       }
     }
-    if (frame->GetType() == nsGkAtoms::textFrame) {
+    if (frame->IsTextFrame()) {
       frameRect.SetRect(nsPoint(0, 0), frame->GetRect().Size());
     } else {
-      MOZ_ASSERT(frame->GetType() == nsGkAtoms::brFrame);
+      MOZ_ASSERT(frame->IsBrFrame());
       FrameRelativeRect relativeRect = GetLineBreakerRectBefore(frame);
       if (NS_WARN_IF(!relativeRect.IsValid())) {
         return NS_ERROR_FAILURE;
@@ -2381,7 +2380,7 @@ ContentEventHandler::OnQueryTextRect(WidgetQueryContentEvent* aEvent)
   }
 
   // Shrink the last frame for cutting off the text after the query range.
-  if (lastFrame->GetType() == nsGkAtoms::textFrame) {
+  if (lastFrame->IsTextFrame()) {
     lastFrame->GetPointFromOffset(lastFrame.mOffsetInNode, &ptOffset);
     if (lastFrame->GetWritingMode().IsVertical()) {
       frameRect.height -= lastFrame->GetRect().height - ptOffset.y;
@@ -2589,7 +2588,7 @@ ContentEventHandler::OnQueryCharacterAtPoint(WidgetQueryContentEvent* aEvent)
     return rv;
   }
 
-  if (targetFrame->GetType() != nsGkAtoms::textFrame) {
+  if (!targetFrame->IsTextFrame()) {
     // There is no character at the point but there is tentative caret point.
     aEvent->mSucceeded = true;
     return NS_OK;
@@ -2649,7 +2648,7 @@ ContentEventHandler::OnQueryDOMWidgetHittest(WidgetQueryContentEvent* aEvent)
 
   LayoutDeviceIntPoint eventLoc =
     aEvent->mRefPoint + aEvent->mWidget->WidgetToScreenOffset();
-  nsIntRect docFrameRect = docFrame->GetScreenRect(); // Returns CSS pixels
+  CSSIntRect docFrameRect = docFrame->GetScreenRect();
   CSSIntPoint eventLocCSS(
     mPresContext->DevPixelsToIntCSSPixels(eventLoc.x) - docFrameRect.x,
     mPresContext->DevPixelsToIntCSSPixels(eventLoc.y) - docFrameRect.y);
@@ -2880,8 +2879,7 @@ ContentEventHandler::AdjustCollapsedRangeMaybeIntoTextNode(nsRange* aRange)
     return NS_OK;
   }
 
-  nsresult rv = aRange->Set(childNode, offsetInChildNode,
-                            childNode, offsetInChildNode);
+  nsresult rv = aRange->CollapseTo(childNode, offsetInChildNode);
   if (NS_WARN_IF(NS_FAILED(rv))) {
     return rv;
   }

@@ -7,6 +7,7 @@
         <link rel="help" href="http://www.w3.org/TR/navigation-timing/#sec-navigation-timing-interface"/>
         <script src="/resources/testharness.js"></script>
         <script src="/resources/testharnessreport.js"></script>
+        <script src="/common/performance-timeline-utils.js"></script>
         <script src="resources/webperftestharness.js"></script>
         <script>
             setup({explicit_done: true});
@@ -102,7 +103,7 @@
         <iframe id="frameContext"
                 onload="/* Need to make sure we don't examine loadEventEnd
                            until after the load event has finished firing */
-                        setTimeout(onload_test, 0);"
+                        step_timeout(onload_test, 0);"
                 src="resources/blank_page_unload.html"
                 style="width: 250px; height: 250px;"></iframe>
     </body>

@@ -1,5 +1,5 @@
-/* eslint-env mozilla/frame-script */
-
+Cu.import("resource://gre/modules/Services.jsm");
+const SYSTEMPRINCIPAL = Services.scriptSecurityManager.getSystemPrincipal();
 const DUMMY1 = "http://example.com/browser/toolkit/modules/tests/browser/dummy_page.html";
 const DUMMY2 = "http://example.org/browser/toolkit/modules/tests/browser/dummy_page.html"
 
@@ -18,17 +18,17 @@ function makeURI(url) {
 }
 
 // Tests that loadURI accepts a referrer and it is included in the load.
-add_task(function* test_referrer() {
-  gBrowser.selectedTab = gBrowser.addTab();
+add_task(async function test_referrer() {
+  gBrowser.selectedTab = BrowserTestUtils.addTab(gBrowser);
   let browser = gBrowser.selectedBrowser;
 
   browser.webNavigation.loadURI(DUMMY1,
                                 Ci.nsIWebNavigation.LOAD_FLAGS_NONE,
-                                makeURI(DUMMY2),
-                                null, null);
-  yield waitForLoad(DUMMY1);
+                                makeURI(DUMMY2), null, null,
+                                SYSTEMPRINCIPAL);
+  await waitForLoad(DUMMY1);
 
-  yield ContentTask.spawn(browser, [ DUMMY1, DUMMY2 ], function([dummy1, dummy2]) {
+  await ContentTask.spawn(browser, [ DUMMY1, DUMMY2 ], function([dummy1, dummy2]) {
     is(content.location.href, dummy1, "Should have loaded the right URL");
     is(content.document.referrer, dummy2, "Should have the right referrer");
   });
@@ -37,7 +37,7 @@ add_task(function* test_referrer() {
 });
 
 // Tests that remote access to webnavigation.sessionHistory works.
-add_task(function* test_history() {
+add_task(async function test_history() {
   function checkHistoryIndex(browser, n) {
     return ContentTask.spawn(browser, n, function(n) {
       let history = docShell.QueryInterface(Ci.nsIInterfaceRequestor)
@@ -45,20 +45,22 @@ add_task(function* test_history() {
       is(history.index, n, "Should be at the right place in history");
     });
   }
-  gBrowser.selectedTab = gBrowser.addTab();
+  gBrowser.selectedTab = BrowserTestUtils.addTab(gBrowser);
   let browser = gBrowser.selectedBrowser;
 
   browser.webNavigation.loadURI(DUMMY1,
                                 Ci.nsIWebNavigation.LOAD_FLAGS_NONE,
-                                null, null, null);
-  yield waitForLoad(DUMMY1);
+                                null, null, null,
+                                SYSTEMPRINCIPAL);
+  await waitForLoad(DUMMY1);
 
   browser.webNavigation.loadURI(DUMMY2,
                                 Ci.nsIWebNavigation.LOAD_FLAGS_NONE,
-                                null, null, null);
-  yield waitForLoad(DUMMY2);
+                                null, null, null,
+                                SYSTEMPRINCIPAL);
+  await waitForLoad(DUMMY2);
 
-  yield ContentTask.spawn(browser, [DUMMY1, DUMMY2], function([dummy1, dummy2]) {
+  await ContentTask.spawn(browser, [DUMMY1, DUMMY2], function([dummy1, dummy2]) {
     let history = docShell.QueryInterface(Ci.nsIInterfaceRequestor)
                           .getInterface(Ci.nsISHistory);
     is(history.count, 2, "Should be two history items");
@@ -71,24 +73,24 @@ add_task(function* test_history() {
 
   let promise = waitForPageShow();
   browser.webNavigation.goBack();
-  yield promise;
-  yield checkHistoryIndex(browser, 0);
+  await promise;
+  await checkHistoryIndex(browser, 0);
 
   promise = waitForPageShow();
   browser.webNavigation.goForward();
-  yield promise;
-  yield checkHistoryIndex(browser, 1);
+  await promise;
+  await checkHistoryIndex(browser, 1);
 
   promise = waitForPageShow();
   browser.webNavigation.gotoIndex(0);
-  yield promise;
-  yield checkHistoryIndex(browser, 0);
+  await promise;
+  await checkHistoryIndex(browser, 0);
 
   gBrowser.removeCurrentTab();
 });
 
 // Tests that load flags are passed through to the content process.
-add_task(function* test_flags() {
+add_task(async function test_flags() {
   function checkHistory(browser, { count, index }) {
     return ContentTask.spawn(browser, [ DUMMY2, count, index ],
       function([ dummy2, count, index ]) {
@@ -101,41 +103,45 @@ add_task(function* test_flags() {
       });
   }
 
-  gBrowser.selectedTab = gBrowser.addTab();
+  gBrowser.selectedTab = BrowserTestUtils.addTab(gBrowser);
   let browser = gBrowser.selectedBrowser;
 
   browser.webNavigation.loadURI(DUMMY1,
                                 Ci.nsIWebNavigation.LOAD_FLAGS_NONE,
-                                null, null, null);
-  yield waitForLoad(DUMMY1);
+                                null, null, null,
+                                SYSTEMPRINCIPAL);
+  await waitForLoad(DUMMY1);
 
   browser.webNavigation.loadURI(DUMMY2,
                                 Ci.nsIWebNavigation.LOAD_FLAGS_REPLACE_HISTORY,
-                                null, null, null);
-  yield waitForLoad(DUMMY2);
-  yield checkHistory(browser, { count: 1, index: 0 });
+                                null, null, null,
+                                SYSTEMPRINCIPAL);
+  await waitForLoad(DUMMY2);
+  await checkHistory(browser, { count: 1, index: 0 });
 
   browser.webNavigation.loadURI(DUMMY1,
                                 Ci.nsIWebNavigation.LOAD_FLAGS_BYPASS_HISTORY,
-                                null, null, null);
-  yield waitForLoad(DUMMY1);
-  yield checkHistory(browser, { count: 1, index: 0 });
+                                null, null, null,
+                                SYSTEMPRINCIPAL);
+  await waitForLoad(DUMMY1);
+  await checkHistory(browser, { count: 1, index: 0 });
 
   gBrowser.removeCurrentTab();
 });
 
 // Tests that attempts to use unsupported arguments throw an exception.
-add_task(function* test_badarguments() {
+add_task(async function test_badarguments() {
   if (!gMultiProcessBrowser)
     return;
 
-  gBrowser.selectedTab = gBrowser.addTab();
+  gBrowser.selectedTab = BrowserTestUtils.addTab(gBrowser);
   let browser = gBrowser.selectedBrowser;
 
   try {
     browser.webNavigation.loadURI(DUMMY1,
                                   Ci.nsIWebNavigation.LOAD_FLAGS_NONE,
-                                  null, {}, null);
+                                  null, {}, null,
+                                  SYSTEMPRINCIPAL);
     ok(false, "Should have seen an exception from trying to pass some postdata");
   } catch (e) {
     ok(true, "Should have seen an exception from trying to pass some postdata");
@@ -144,7 +150,8 @@ add_task(function* test_badarguments() {
   try {
     browser.webNavigation.loadURI(DUMMY1,
                                   Ci.nsIWebNavigation.LOAD_FLAGS_NONE,
-                                  null, null, {});
+                                  null, null, {},
+                                  SYSTEMPRINCIPAL);
     ok(false, "Should have seen an exception from trying to pass some headers");
   } catch (e) {
     ok(true, "Should have seen an exception from trying to pass some headers");

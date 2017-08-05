@@ -61,13 +61,19 @@ public:
                               const nsAString& aKeySystem,
                               MediaKeySystemStatus aStatus);
 
-  static bool GetSupportedConfig(const nsAString& aKeySystem,
-                                 const Sequence<MediaKeySystemConfiguration>& aConfigs,
-                                 MediaKeySystemConfiguration& aOutConfig,
-                                 DecoderDoctorDiagnostics* aDiagnostics);
+  static bool GetSupportedConfig(
+    const nsAString& aKeySystem,
+    const Sequence<MediaKeySystemConfiguration>& aConfigs,
+    MediaKeySystemConfiguration& aOutConfig,
+    DecoderDoctorDiagnostics* aDiagnostics,
+    bool aIsPrivateBrowsing,
+    const std::function<void(const char*)>& aDeprecationLogFn);
 
   static bool KeySystemSupportsInitDataType(const nsAString& aKeySystem,
                                             const nsAString& aInitDataType);
+
+  static nsCString ToCString(
+    const Sequence<MediaKeySystemConfiguration>& aConfig);
 
 private:
   nsCOMPtr<nsPIDOMWindowInner> mParent;

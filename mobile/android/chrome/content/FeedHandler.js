@@ -57,9 +57,8 @@ var FeedHandler = {
     }
   },
 
-  observe: function fh_observe(aSubject, aTopic, aData) {
-    if (aTopic === "Feeds:Subscribe") {
-      let args = JSON.parse(aData);
+  onEvent: function fh_onEvent(event, args, callback) {
+    if (event === "Feeds:Subscribe") {
       let tab = BrowserApp.getTabForId(args.tabId);
       if (!tab)
         return;
@@ -77,13 +76,13 @@ var FeedHandler = {
           title: Strings.browser.GetStringFromName("feedHandler.chooseFeed")
         }).setSingleChoiceItems(feeds.map(function(feed) {
           return { label: feed.title || feed.href }
-        })).show((function(data) {
+        })).show(data => {
           feedIndex = data.button;
           if (feedIndex == -1)
             return;
 
           this.loadFeed(feeds[feedIndex], browser);
-        }).bind(this));
+        });
         return;
       }
 

@@ -7,13 +7,14 @@ Support for running toolchain-building jobs via dedicated scripts
 
 from __future__ import absolute_import, print_function, unicode_literals
 
-from voluptuous import Schema, Optional, Required, Any
+from taskgraph.util.schema import Schema
+from voluptuous import Optional, Required, Any
 
 from taskgraph.transforms.job import run_job_using
 from taskgraph.transforms.job.common import (
     docker_worker_add_tc_vcs_cache,
     docker_worker_add_gecko_vcs_env_vars,
-    docker_worker_support_vcs_checkout,
+    support_vcs_checkout,
 )
 from taskgraph.util.hash import hash_paths
 from taskgraph import GECKO
@@ -41,7 +42,7 @@ toolchain_run_schema = Schema({
 })
 
 
-def add_index_paths(config, run, taskdesc):
+def add_optimizations(config, run, taskdesc):
     files = list(run.get('resources', []))
     # This file
     files.append('taskcluster/taskgraph/transforms/job/toolchain.py')
@@ -54,13 +55,13 @@ def add_index_paths(config, run, taskdesc):
         'digest': hash_paths(GECKO, files),
     }
 
-    index_paths = taskdesc.setdefault('index-paths', [])
+    optimizations = taskdesc.setdefault('optimizations', [])
 
     # We'll try to find a cached version of the toolchain at levels above
     # and including the current level, starting at the highest level.
     for level in reversed(range(int(config.params['level']), 4)):
         subs['level'] = level
-        index_paths.append(TOOLCHAIN_INDEX.format(**subs))
+        optimizations.append(['index-search', TOOLCHAIN_INDEX.format(**subs)])
 
     # ... and cache at the lowest level.
     taskdesc.setdefault('routes', []).append(
@@ -70,6 +71,8 @@ def add_index_paths(config, run, taskdesc):
 @run_job_using("docker-worker", "toolchain-script", schema=toolchain_run_schema)
 def docker_worker_toolchain(config, job, taskdesc):
     run = job['run']
+    taskdesc['run-on-projects'] = ['autoland', 'mozilla-inbound',
+                                   'mozilla-central', 'try']
 
     worker = taskdesc['worker']
     worker['artifacts'] = []
@@ -83,13 +86,14 @@ def docker_worker_toolchain(config, job, taskdesc):
 
     docker_worker_add_tc_vcs_cache(config, job, taskdesc)
     docker_worker_add_gecko_vcs_env_vars(config, job, taskdesc)
-    docker_worker_support_vcs_checkout(config, job, taskdesc)
+    support_vcs_checkout(config, job, taskdesc)
 
     env = worker['env']
     env.update({
         'MOZ_BUILD_DATE': config.params['moz_build_date'],
         'MOZ_SCM_LEVEL': config.params['level'],
         'TOOLS_DISABLE': 'true',
+        'MOZ_AUTOMATION': '1',
     })
 
     # tooltool downloads.  By default we download using the API endpoint, but
@@ -115,6 +119,9 @@ def docker_worker_toolchain(config, job, taskdesc):
 
     worker['command'] = [
         '/home/worker/bin/run-task',
+        # Various caches/volumes are default owned by root:root.
+        '--chown-recursive', '/home/worker/workspace',
+        '--chown-recursive', '/home/worker/tooltool-cache',
         '--vcs-checkout=/home/worker/workspace/build/src',
         '--',
         'bash',
@@ -124,12 +131,14 @@ def docker_worker_toolchain(config, job, taskdesc):
             run['script'])
     ]
 
-    add_index_paths(config, run, taskdesc)
+    add_optimizations(config, run, taskdesc)
 
 
 @run_job_using("generic-worker", "toolchain-script", schema=toolchain_run_schema)
 def windows_toolchain(config, job, taskdesc):
     run = job['run']
+    taskdesc['run-on-projects'] = ['autoland', 'mozilla-inbound',
+                                   'mozilla-central', 'try']
 
     worker = taskdesc['worker']
 
@@ -144,7 +153,7 @@ def windows_toolchain(config, job, taskdesc):
     svn_cache = 'level-{}-toolchain-clang-cl-build-svn'.format(config.params['level'])
     worker['mounts'] = [{
         'cache-name': svn_cache,
-        'path': r'llvm-sources',
+        'directory': r'llvm-sources',
     }]
     taskdesc['scopes'].extend([
         'generic-worker:cache:' + svn_cache,
@@ -154,6 +163,7 @@ def windows_toolchain(config, job, taskdesc):
     env.update({
         'MOZ_BUILD_DATE': config.params['moz_build_date'],
         'MOZ_SCM_LEVEL': config.params['level'],
+        'MOZ_AUTOMATION': '1',
     })
 
     hg = r'c:\Program Files\Mercurial\hg.exe'
@@ -173,4 +183,4 @@ def windows_toolchain(config, job, taskdesc):
         r'{} -c ./build/src/taskcluster/scripts/misc/{}'.format(bash, run['script'])
     ]
 
-    add_index_paths(config, run, taskdesc)
+    add_optimizations(config, run, taskdesc)

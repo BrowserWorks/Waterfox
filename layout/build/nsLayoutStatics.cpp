@@ -32,7 +32,7 @@
 #include "nsImageFrame.h"
 #include "nsLayoutStylesheetCache.h"
 #include "mozilla/RuleProcessorCache.h"
-#include "nsPrincipal.h"
+#include "ContentPrincipal.h"
 #include "nsRange.h"
 #include "nsRegion.h"
 #include "nsRepeatService.h"
@@ -51,7 +51,6 @@
 #include "nsCSSRuleProcessor.h"
 #include "nsCORSListenerProxy.h"
 #include "nsHTMLDNSPrefetch.h"
-#include "nsHtml5Atoms.h"
 #include "nsHtml5Module.h"
 #include "nsHTMLTags.h"
 #include "nsIRDFContentSink.h"	// for RDF atom initialization
@@ -102,11 +101,6 @@
 #include "Latency.h"
 #include "WebAudioUtils.h"
 
-#ifdef MOZ_WIDGET_GONK
-#include "nsVolumeService.h"
-using namespace mozilla::system;
-#endif
-
 #include "nsError.h"
 
 #include "nsJSEnvironment.h"
@@ -132,6 +126,8 @@ using namespace mozilla::system;
 #include "mozilla/ServoBindings.h"
 #include "mozilla/StaticPresData.h"
 #include "mozilla/dom/WebIDLGlobalNameHash.h"
+#include "mozilla/dom/ipc/IPCBlobInputStreamStorage.h"
+#include "mozilla/dom/U2FTokenManager.h"
 
 using namespace mozilla;
 using namespace mozilla::net;
@@ -162,7 +158,6 @@ nsLayoutStatics::Initialize()
   nsCSSProps::AddRefTable();
   nsColorNames::AddRefTable();
   nsGkAtoms::AddRefAtoms();
-  nsHtml5Atoms::AddRefAtoms();
   nsTextServicesDocument::RegisterAtoms();
   nsHTMLTags::RegisterAtoms();
   nsRDFAtoms::RegisterAtoms();
@@ -270,7 +265,7 @@ nsLayoutStatics::Initialize()
   nsLayoutUtils::Initialize();
   nsIPresShell::InitializeStatics();
   TouchManager::InitializeStatics();
-  nsPrincipal::InitializeStatics();
+  ContentPrincipal::InitializeStatics();
 
   nsCORSListenerProxy::Startup();
 
@@ -312,7 +307,7 @@ nsLayoutStatics::Initialize()
   mozilla::dom::WebCryptoThreadPool::Initialize();
 
 #ifdef MOZ_STYLO
-  Servo_Initialize();
+  InitializeServo();
 #endif
 
 #ifndef MOZ_WIDGET_ANDROID
@@ -320,6 +315,10 @@ nsLayoutStatics::Initialize()
   MediaPrefs::GetSingleton();
 #endif
 
+  // This must be initialized on the main-thread.
+  mozilla::dom::IPCBlobInputStreamStorage::Initialize();
+
+  mozilla::dom::U2FTokenManager::Initialize();
   return NS_OK;
 }
 
@@ -330,7 +329,8 @@ nsLayoutStatics::Shutdown()
   // memory reporter manager.
 
 #ifdef MOZ_STYLO
-  Servo_Shutdown();
+  ShutdownServo();
+  URLExtraData::ReleaseDummy();
 #endif
 
   nsMessageManagerScriptExecutor::Shutdown();
@@ -400,10 +400,6 @@ nsLayoutStatics::Shutdown()
   CubebUtils::ShutdownLibrary();
   AsyncLatencyLogger::ShutdownLogger();
   WebAudioUtils::Shutdown();
-
-#ifdef MOZ_WIDGET_GONK
-  nsVolumeService::Shutdown();
-#endif
 
 #ifdef MOZ_WEBSPEECH
   nsSynthVoiceRegistry::Shutdown();

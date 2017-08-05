@@ -1,4 +1,3 @@
-// |reftest| skip-if(!this.hasOwnProperty('Intl')) -- needs Intl
 // Copyright 2012 Mozilla Corporation. All rights reserved.
 // This code is governed by the BSD license found in the LICENSE file.
 
@@ -32,21 +31,11 @@ Object.getOwnPropertyNames(functions).forEach(function (p) {
         } catch (e) {
             referenceError = e;
         }
-        if (referenceError === undefined) {
-            $ERROR("Internal error: Expected exception was not thrown by Intl.DateTimeFormat for locales " + locales + ".");
-        }
-        
-        try {
+        assert.notSameValue(referenceError, undefined, "Internal error: Expected exception was not thrown by Intl.DateTimeFormat for locales " + locales + ".");
+
+        assert.throws(referenceError.constructor, function() {
             var result = f.call(new Date(), locales);
-        } catch (e) {
-            error = e;
-        }
-        if (error === undefined) {
-            $ERROR("Date.prototype." + p + " didn't throw exception for locales " + locales + ".");
-        } else if (error.name !== referenceError.name) {
-            $ERROR("Date.prototype." + p + " threw exception " + error.name +
-                " for locales " + locales + "; expected " + referenceError.name + ".");
-        }
+        }, "Date.prototype." + p + " didn't throw exception for locales " + locales + ".");
     });
     
     options.forEach(function (options) {
@@ -56,23 +45,11 @@ Object.getOwnPropertyNames(functions).forEach(function (p) {
         } catch (e) {
             referenceError = e;
         }
-        if (referenceError === undefined) {
-            $ERROR("Internal error: Expected exception was not thrown by Intl.DateTimeFormat for options " +
-                JSON.stringify(options) + ".");
-        }
-        
-        try {
+        assert.notSameValue(referenceError, undefined, "Internal error: Expected exception was not thrown by Intl.DateTimeFormat for options " + JSON.stringify(options) + ".");
+
+        assert.throws(referenceError.constructor, function() {
             var result = f.call(new Date(), [], options);
-        } catch (e) {
-            error = e;
-        }
-        if (error === undefined) {
-            $ERROR("Date.prototype." + p + " didn't throw exception for options " +
-                JSON.stringify(options) + ".");
-        } else if (error.name !== referenceError.name) {
-            $ERROR("Date.prototype." + p + " threw exception " + error.name +
-                " for options " + JSON.stringify(options) + "; expected " + referenceError.name + ".");
-        }
+        }, "Date.prototype." + p + " didn't throw exception for options " + JSON.stringify(options) + ".");
     });
 });
 

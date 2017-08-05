@@ -12,6 +12,8 @@
 const { classes: Cc, interfaces: Ci, results: Cr, utils: Cu } = Components;
 
 Cu.import("resource://gre/modules/XPCOMUtils.jsm");
+Cu.import("resource://gre/modules/Services.jsm");
+Cu.import("resource://gre/modules/FileUtils.jsm");
 
 XPCOMUtils.defineLazyModuleGetter(this, "NetUtil",
                                           "resource://gre/modules/NetUtil.jsm");
@@ -20,6 +22,10 @@ XPCOMUtils.defineLazyModuleGetter(this, "PrivateBrowsingUtils",
 
 let mm = pluginElement.frameLoader.messageManager;
 let containerWindow = pluginElement.ownerGlobal;
+// We have to cache the print settings for printing PDF file here, since in
+// general we are not able to send XPCOM object across processes.
+let printSettings = {};
+
 // Prevent the drag event's default action on the element, to avoid dragging of
 // that element while the user selects text.
 pluginElement.addEventListener("dragstart",
@@ -36,6 +42,19 @@ if (isSynthetic) {
 
 function mapValue(v, instance) {
   return instance.rt.toPP_Var(v, instance);
+}
+
+function getFileName(url) {
+  let filename = "document.pdf";
+  let regex = /[^\/#\?]+\.pdf$/i;
+
+  let result = regex.exec(url.hash) ||
+               regex.exec(url.search) ||
+               regex.exec(url.pathname);
+  if (result) {
+    filename = result[0];
+  }
+  return filename;
 }
 
 dump("<>>>>>>>>>>>>>>>>>>>> AHA <<<<<<<<<<<<<<<<<<<<<>\n");
@@ -89,6 +108,11 @@ mm.addMessageListener("ppapi.js:frameLoaded", ({ target }) => {
     let fullscreen = (containerWindow.document.fullscreenElement == pluginElement);
     mm.sendAsyncMessage("ppapi.js:fullscreenchange", { fullscreen });
   });
+
+  containerWindow.addEventListener("hashchange", () => {
+    let url = containerWindow.location.href;
+    mm.sendAsyncMessage("ppapipdf.js:hashchange", { url });
+  })
 });
 
 mm.addMessageListener("ppapi.js:setFullscreen", ({ data }) => {
@@ -99,18 +123,108 @@ mm.addMessageListener("ppapi.js:setFullscreen", ({ data }) => {
   }
 });
 
-mm.addMessageListener("ppapipdf.js:save", () => {
-  let url = containerWindow.document.location;
-  let filename = "document.pdf";
-  let regex = /[^\/#\?]+\.pdf$/i;
+mm.addMessageListener("ppapipdf.js:setHash", ({ data }) => {
+  if (data) {
+    containerWindow.location.hash = data;
+  }
+});
 
-  let result = regex.exec(url.hash) ||
-               regex.exec(url.search) ||
-               regex.exec(url.pathname);
-  if (result) {
-    filename = result[0];
+mm.addMessageListener("ppapipdf.js:getPrintSettings", ({ data }) => {
+  // Set the title to pdf file name for the default print to file name.
+  let url = new containerWindow.URL(data.url);
+  containerWindow.document.title = getFileName(url);
+
+  let PSSVC = Cc["@mozilla.org/gfx/printsettings-service;1"].
+              getService(Ci.nsIPrintSettingsService);
+  printSettings = PSSVC.globalPrintSettings;
+  let webBrowserPrint =
+    containerWindow.QueryInterface(Ci.nsIInterfaceRequestor).
+    getInterface(Ci.nsIWebBrowserPrint);
+  let PPSVC = Cc["@mozilla.org/embedcomp/printingprompt-service;1"].
+              getService(Ci.nsIPrintingPromptService);
+  PPSVC.showPrintDialog(containerWindow, webBrowserPrint, printSettings);
+
+  // XPCOM object should not in general be sent across processes. So we have to
+  // copy out only the info PDFium needed and send it back to jsplugin process
+  // for getting PDF file.
+  let trimPrintSettings = {};
+  trimPrintSettings.marginTop = printSettings.marginTop;
+  trimPrintSettings.marginLeft = printSettings.marginLeft;
+  trimPrintSettings.marginBottom = printSettings.marginBottom;
+  trimPrintSettings.marginRight = printSettings.marginRight;
+  trimPrintSettings.unwriteableMarginLeft =
+    printSettings.unwriteableMarginLeft;
+  trimPrintSettings.unwriteableMarginTop =
+    printSettings.unwriteableMarginTop;
+  trimPrintSettings.unwriteableMarginRight =
+    printSettings.unwriteableMarginRight;
+  trimPrintSettings.unwriteableMarginBottom =
+    printSettings.unwriteableMarginBottom;
+  trimPrintSettings.paperWidth = printSettings.paperWidth;
+  trimPrintSettings.paperHeight = printSettings.paperHeight;
+  trimPrintSettings.paperSizeUnit = printSettings.paperSizeUnit;
+  trimPrintSettings.orientation = printSettings.orientation;
+  trimPrintSettings.shrinkToFit = printSettings.shrinkToFit;
+  trimPrintSettings.printInColor = printSettings.printInColor;
+  trimPrintSettings.printRange = printSettings.printRange;
+  trimPrintSettings.startPageRange = printSettings.startPageRange;
+  trimPrintSettings.endPageRange = printSettings.endPageRange;
+
+  mm.sendAsyncMessage("ppapipdf.js:printsettingschanged", {
+    trimPrintSettings });
+});
+
+mm.addMessageListener("ppapipdf.js:printPDF", ({ data }) => {
+  let file = new FileUtils.File(data.filePath);
+  if (!file.exists()) {
+    return;
   }
 
+  let webBrowserPrint =
+    containerWindow.QueryInterface(Ci.nsIInterfaceRequestor).
+    getInterface(Ci.nsIWebBrowserPrint);
+  if (!webBrowserPrint || !webBrowserPrint.printPDF) {
+    file.remove(false);
+    return;
+  }
+
+  webBrowserPrint.printPDF(file.path, printSettings)
+  .then(() => {
+    file.remove(false);
+  })
+  .catch(() => {
+    file.remove(false);
+  });
+});
+
+mm.addMessageListener("ppapipdf.js:openLink", ({data}) => {
+  const PDFIUM_WINDOW_OPEN_DISPOSITION = {
+    CURRENT_TAB: 1,
+    NEW_FOREGROUND_TAB: 3,
+    NEW_BACKGROUND_TAB: 4,
+    NEW_WINDOW: 6,
+  };
+  switch(data.disposition) {
+    case PDFIUM_WINDOW_OPEN_DISPOSITION.CURRENT_TAB:
+      containerWindow.location.href = data.url;
+      break;
+    // We don't support opening in background tab for now. Just open it in
+    // foreground tab.
+    case PDFIUM_WINDOW_OPEN_DISPOSITION.NEW_FOREGROUND_TAB:
+    case PDFIUM_WINDOW_OPEN_DISPOSITION.NEW_BACKGROUND_TAB:
+      containerWindow.open(data.url);
+      break;
+    case PDFIUM_WINDOW_OPEN_DISPOSITION.NEW_WINDOW:
+      containerWindow.open(data.url, "",
+        "noopener=1,menubar=1,toolbar=1," +
+        "location=1,personalbar=1,status=1,resizable");
+      break;
+  }
+});
+
+mm.addMessageListener("ppapipdf.js:save", ({ data }) => {
+  let url = new containerWindow.URL(data.url);
+  let filename = getFileName(url);
   let originalUri = NetUtil.newURI(url.href);
   let extHelperAppSvc =
         Cc["@mozilla.org/uriloader/external-helper-app-service;1"].
@@ -171,5 +285,36 @@ mm.addMessageListener("ppapipdf.js:save", () => {
     channel.asyncOpen2(listener);
   });
 });
+
+// This class is created to transfer global XUL commands event we needed.
+// The main reason we need to transfer it from sandbox side is that commands
+// triggered from menu bar targets only the outmost iframe (which is sandbox
+// itself) so we need to propagate it manually into the plugin's iframe.
+class CommandController {
+  constructor() {
+    this.SUPPORTED_COMMANDS = ['cmd_copy', 'cmd_selectAll'];
+    containerWindow.controllers.insertControllerAt(0, this);
+    containerWindow.addEventListener('unload', this.terminate.bind(this));
+  }
+
+  terminate() {
+    containerWindow.controllers.removeController(this);
+  }
+
+  supportsCommand(cmd) {
+    return this.SUPPORTED_COMMANDS.includes(cmd);
+  }
+
+  isCommandEnabled(cmd) {
+    return this.SUPPORTED_COMMANDS.includes(cmd);
+  }
+
+  doCommand(cmd) {
+    mm.sendAsyncMessage("ppapipdf.js:oncommand", {name: cmd});
+  }
+
+  onEvent(evt) {}
+};
+var commandController = new CommandController();
 
 mm.loadFrameScript("resource://ppapi.js/ppapi-instance.js", true);

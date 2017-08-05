@@ -5,11 +5,11 @@
 
 #include "mozilla/ArrayUtils.h"
 #include "mozilla/MemoryReporting.h"
+#include "mozilla/intl/OSPreferences.h"
 
 #include "gfxDWriteFontList.h"
 #include "gfxDWriteFonts.h"
 #include "nsUnicharUtils.h"
-#include "nsILocaleService.h"
 #include "nsServiceManagerUtils.h"
 #include "nsCharSeparatedTokenizer.h"
 #include "mozilla/Preferences.h"
@@ -27,6 +27,8 @@
 #include "harfbuzz/hb.h"
 
 using namespace mozilla;
+using namespace mozilla::gfx;
+using mozilla::intl::OSPreferences;
 
 #define LOG_FONTLIST(args) MOZ_LOG(gfxPlatform::GetLog(eGfxLog_fontlist), \
                                LogLevel::Debug, args)
@@ -183,6 +185,16 @@ gfxDWriteFontFamily::FindStyleVariations(FontInfoData *aFontInfoData)
         fullID.Append(' ');
         fullID.Append(faceName);
 
+        // Ignore italic style's "Meiryo" because "Meiryo (Bold) Italic" has
+        // non-italic style glyphs as Japanese characters.  However, using it
+        // causes serious problem if web pages wants some elements to be
+        // different style from others only with font-style.  For example,
+        // <em> and <i> should be rendered as italic in the default style.
+        if (fullID.EqualsLiteral("Meiryo Italic") ||
+            fullID.EqualsLiteral("Meiryo Bold Italic")) {
+            continue;
+        }
+
         gfxDWriteFontEntry *fe = new gfxDWriteFontEntry(fullID, font);
         fe->SetForceGDIClassic(mForceGDIClassic);
         AddFontEntry(fe);
@@ -272,19 +284,10 @@ gfxDWriteFontFamily::LocalizedName(nsAString &aLocalizedName)
 {
     aLocalizedName.AssignLiteral("Unknown Font");
     HRESULT hr;
-    nsresult rv;
-    nsCOMPtr<nsILocaleService> ls = do_GetService(NS_LOCALESERVICE_CONTRACTID,
-                                                  &rv);
-    nsCOMPtr<nsILocale> locale;
-    rv = ls->GetApplicationLocale(getter_AddRefs(locale));
-    nsString localeName;
-    if (NS_SUCCEEDED(rv)) {
-        rv = locale->GetCategory(NS_LITERAL_STRING(NSILOCALE_MESSAGE), 
-                                 localeName);
-    }
-    if (NS_FAILED(rv)) {
-        localeName.AssignLiteral("en-us");
-    }
+    nsAutoCString locale;
+    // We use system locale here because it's what user expects to see.
+    // See bug 1349454 for details.
+    OSPreferences::GetInstance()->GetSystemLocale(locale);
 
     RefPtr<IDWriteLocalizedStrings> names;
 
@@ -294,7 +297,7 @@ gfxDWriteFontFamily::LocalizedName(nsAString &aLocalizedName)
     }
     UINT32 idx = 0;
     BOOL exists;
-    hr = names->FindLocaleName(localeName.get(),
+    hr = names->FindLocaleName(NS_ConvertUTF8toUTF16(locale).get(),
                                &idx,
                                &exists);
     if (FAILED(hr)) {
@@ -577,7 +580,26 @@ gfxFont *
 gfxDWriteFontEntry::CreateFontInstance(const gfxFontStyle* aFontStyle,
                                        bool aNeedsBold)
 {
-    return new gfxDWriteFont(this, aFontStyle, aNeedsBold);
+    WeakPtr<UnscaledFont>& unscaledFontPtr =
+        aNeedsBold ? mUnscaledFontBold : mUnscaledFont;
+    RefPtr<UnscaledFontDWrite> unscaledFont =
+        static_cast<UnscaledFontDWrite*>(unscaledFontPtr.get());
+    if (!unscaledFont) {
+        DWRITE_FONT_SIMULATIONS sims = DWRITE_FONT_SIMULATIONS_NONE;
+        if (aNeedsBold) {
+            sims |= DWRITE_FONT_SIMULATIONS_BOLD;
+        }
+        RefPtr<IDWriteFontFace> fontFace;
+        nsresult rv = CreateFontFace(getter_AddRefs(fontFace), sims);
+        if (NS_FAILED(rv)) {
+            return nullptr;
+        }
+
+        unscaledFont = new UnscaledFontDWrite(fontFace, sims);
+        unscaledFontPtr = unscaledFont;
+    }
+
+    return new gfxDWriteFont(unscaledFont, this, aFontStyle, aNeedsBold);
 }
 
 nsresult
@@ -1383,23 +1405,11 @@ IFACEMETHODIMP DWriteFontFallbackRenderer::DrawGlyphRun(
 }
 
 gfxFontEntry*
-gfxDWriteFontList::GlobalFontFallback(const uint32_t aCh,
-                                      Script aRunScript,
-                                      const gfxFontStyle* aMatchStyle,
-                                      uint32_t& aCmapCount,
-                                      gfxFontFamily** aMatchedFamily)
+gfxDWriteFontList::PlatformGlobalFontFallback(const uint32_t aCh,
+                                              Script aRunScript,
+                                              const gfxFontStyle* aMatchStyle,
+                                              gfxFontFamily** aMatchedFamily)
 {
-    bool useCmaps = IsFontFamilyWhitelistActive() ||
-                    gfxPlatform::GetPlatform()->UseCmapsDuringSystemFallback();
-
-    if (useCmaps) {
-        return gfxPlatformFontList::GlobalFontFallback(aCh,
-                                                       aRunScript,
-                                                       aMatchStyle,
-                                                       aCmapCount,
-                                                       aMatchedFamily);
-    }
-
     HRESULT hr;
 
     RefPtr<IDWriteFactory> dwFactory =

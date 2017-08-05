@@ -3,19 +3,93 @@
  * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
 
 use app_units::Au;
-use std::mem;
-use std::slice;
-use {AuxiliaryLists, AuxiliaryListsDescriptor, BorderDisplayItem};
-use {BoxShadowClipMode, BoxShadowDisplayItem, BuiltDisplayList};
-use {BuiltDisplayListDescriptor, ClipRegion, ComplexClipRegion, ColorF};
-use {DisplayItem, ExtendMode, FilterOp, YuvColorSpace};
-use {FontKey, GlyphInstance, GradientDisplayItem, RadialGradientDisplayItem, GradientStop, IframeDisplayItem};
-use {ImageDisplayItem, ImageKey, ImageMask, ImageRendering, ItemRange, MixBlendMode, PipelineId};
-use {PushScrollLayerItem, PushStackingContextDisplayItem, RectangleDisplayItem, ScrollLayerId};
-use {ScrollPolicy, ServoScrollRootId, SpecificDisplayItem, StackingContext, TextDisplayItem};
-use {WebGLContextId, WebGLDisplayItem, YuvImageDisplayItem};
-use {LayoutTransform, LayoutPoint, LayoutRect, LayoutSize};
-use {BorderDetails, BorderWidths, GlyphOptions, PropertyBinding};
+use bincode;
+use serde::{Deserialize, Serialize, Serializer};
+use serde::ser::{SerializeSeq, SerializeMap};
+use time::precise_time_ns;
+use {BorderDetails, BorderDisplayItem, BorderWidths, BoxShadowClipMode, BoxShadowDisplayItem};
+use {ClipAndScrollInfo, ClipDisplayItem, ClipId, ClipRegion, ColorF, ComplexClipRegion};
+use {DisplayItem, ExtendMode, FilterOp, FontKey, GlyphInstance, GlyphOptions, Gradient};
+use {GradientDisplayItem, GradientStop, IframeDisplayItem, ImageDisplayItem, ImageKey, ImageMask};
+use {ImageRendering, LayoutPoint, LayoutRect, LayoutSize, LayoutTransform, MixBlendMode};
+use {PipelineId, PropertyBinding, PushStackingContextDisplayItem, RadialGradient};
+use {RadialGradientDisplayItem, RectangleDisplayItem, ScrollPolicy, SpecificDisplayItem};
+use {StackingContext, TextDisplayItem, TransformStyle, WebGLContextId, WebGLDisplayItem};
+use {YuvColorSpace, YuvData, YuvImageDisplayItem};
+use std::marker::PhantomData;
+
+#[repr(C)]
+#[derive(Clone, Copy, Debug, Deserialize, Eq, Hash, PartialEq, Serialize)]
+pub struct ItemRange<T> {
+    start: usize,
+    length: usize,
+    _boo: PhantomData<T>,
+}
+
+impl<T> Default for ItemRange<T> {
+    fn default() -> Self {
+        ItemRange { start: 0, length: 0, _boo: PhantomData }
+    }
+}
+
+impl<T> ItemRange<T> {
+    pub fn is_empty(&self) -> bool {
+        // Nothing more than space for a length (0).
+        self.length <= ::std::mem::size_of::<u64>()
+    }
+}
+
+/// A display list.
+#[derive(Clone, Default)]
+pub struct BuiltDisplayList {
+    /// Serde encoded bytes. Mostly DisplayItems, but some mixed in slices.
+    data: Vec<u8>,
+    descriptor: BuiltDisplayListDescriptor,
+}
+
+/// Describes the memory layout of a display list.
+///
+/// A display list consists of some number of display list items, followed by a number of display
+/// items.
+#[repr(C)]
+#[derive(Copy, Clone, Default, Deserialize, Serialize)]
+pub struct BuiltDisplayListDescriptor {
+    /// The size in bytes of the display list items in this display list.
+    display_list_items_size: usize,
+    /// The first IPC time stamp: before any work has been done
+    builder_start_time: u64,
+    /// The second IPC time stamp: after serialization
+    builder_finish_time: u64,
+}
+
+pub struct BuiltDisplayListIter<'a> {
+    list: &'a BuiltDisplayList,
+    data: &'a [u8],
+    cur_item: DisplayItem,
+    cur_stops: ItemRange<GradientStop>,
+    cur_glyphs: ItemRange<GlyphInstance>,
+    cur_filters: ItemRange<FilterOp>,
+    cur_clip: ClipRegion,
+    peeking: Peek,
+}
+
+pub struct DisplayItemRef<'a: 'b, 'b> {
+    iter: &'b BuiltDisplayListIter<'a>,
+}
+
+#[derive(PartialEq)]
+enum Peek {
+    StartPeeking,
+    IsPeeking,
+    NotPeeking,
+}
+
+#[derive(Clone)]
+pub struct AuxIter<'a, T> {
+    data: &'a [u8],
+    size: usize,
+    _boo: PhantomData<T>,
+}
 
 impl BuiltDisplayListDescriptor {
     pub fn size(&self) -> usize {
@@ -31,6 +105,10 @@ impl BuiltDisplayList {
         }
     }
 
+    pub fn into_data(self) -> (Vec<u8>, BuiltDisplayListDescriptor) {
+        (self.data, self.descriptor)
+    }
+
     pub fn data(&self) -> &[u8] {
         &self.data[..]
     }
@@ -39,121 +117,452 @@ impl BuiltDisplayList {
         &self.descriptor
     }
 
-    pub fn all_display_items<'a>(&'a self) -> &'a [DisplayItem] {
-        unsafe {
-            convert_blob_to_pod(&self.data[0..self.descriptor.display_list_items_size])
+    pub fn times(&self) -> (u64, u64) {
+      (self.descriptor.builder_start_time, self.descriptor.builder_finish_time)
+    }
+
+    pub fn iter(&self) -> BuiltDisplayListIter {
+        BuiltDisplayListIter::new(self)
+    }
+
+    pub fn get<T: Deserialize>(&self, range: ItemRange<T>) -> AuxIter<T> {
+        AuxIter::new(&self.data[range.start .. range.start + range.length])
+    }
+}
+
+impl<'a> BuiltDisplayListIter<'a> {
+    pub fn new(list: &'a BuiltDisplayList) -> Self {
+        BuiltDisplayListIter {
+            list: list,
+            data: &list.data,
+            // Dummy data, will be overwritten by `next`
+            cur_item: DisplayItem {
+                item: SpecificDisplayItem::PopStackingContext,
+                rect: LayoutRect::zero(),
+                clip_and_scroll: ClipAndScrollInfo::simple(ClipId::new(0, PipelineId(0, 0))),
+            },
+            cur_stops: ItemRange::default(),
+            cur_glyphs: ItemRange::default(),
+            cur_filters: ItemRange::default(),
+            cur_clip: ClipRegion::empty(),
+            peeking: Peek::NotPeeking,
         }
+    }
+
+    pub fn display_list(&self) -> &'a BuiltDisplayList {
+        self.list
+    }
+
+    pub fn next<'b>(&'b mut self) -> Option<DisplayItemRef<'a, 'b>> {
+        use SpecificDisplayItem::*;
+
+        match self.peeking {
+            Peek::IsPeeking => {
+                self.peeking = Peek::NotPeeking;
+                return Some(self.as_ref())
+            }
+            Peek::StartPeeking => {
+                self.peeking = Peek::IsPeeking;
+            }
+            Peek::NotPeeking => { /* do nothing */ }
+        }
+
+        // Don't let these bleed into another item
+        self.cur_stops = ItemRange::default();
+        self.cur_clip = ClipRegion::empty();
+
+        loop {
+            if self.data.len() == 0 {
+                return None
+            }
+
+            self.cur_item = bincode::deserialize_from(&mut self.data, bincode::Infinite)
+                                    .expect("MEH: malicious process?");
+
+            match self.cur_item.item {
+                SetClipRegion(clip) => {
+                    self.cur_clip = clip;
+                    let (clip_range, clip_count) = self.skip_slice::<ComplexClipRegion>();
+                    self.cur_clip.complex_clip_count = clip_count;
+                    self.cur_clip.complex_clips = clip_range;
+
+                    // This is a dummy item, skip over it
+                    continue;
+                }
+                SetGradientStops => {
+                    self.cur_stops = self.skip_slice::<GradientStop>().0;
+
+                    // This is a dummy item, skip over it
+                    continue;
+                }
+                Text(_) => {
+                    self.cur_glyphs = self.skip_slice::<GlyphInstance>().0;
+                }
+                PushStackingContext(_) => {
+                    self.cur_filters = self.skip_slice::<FilterOp>().0;
+                }
+                _ => { /* do nothing */ }
+            }
+
+            break;
+        }
+
+        Some(self.as_ref())
+    }
+
+    /// Returns the byte-range the slice occupied, and the number of elements
+    /// in the slice.
+    fn skip_slice<T: Deserialize>(&mut self) -> (ItemRange<T>, usize) {
+        let base = self.list.data.as_ptr() as usize;
+        let start = self.data.as_ptr() as usize;
+
+        // Read through the values (this is a bit of a hack to reuse logic)
+        let mut iter = AuxIter::<T>::new(self.data);
+        let count = iter.len();
+        for _ in &mut iter {}
+        let end = iter.data.as_ptr() as usize;
+
+        let range = ItemRange { start: start - base, length: end - start, _boo: PhantomData };
+
+        // Adjust data pointer to skip read values
+        self.data = &self.data[range.length..];
+        (range, count)
+    }
+
+    pub fn as_ref<'b>(&'b self) -> DisplayItemRef<'a, 'b> {
+        DisplayItemRef { iter: self }
+    }
+
+    pub fn starting_stacking_context(&mut self)
+        -> Option<(StackingContext, LayoutRect, ItemRange<FilterOp>)> {
+
+        self.next().and_then(|item| match *item.item() {
+            SpecificDisplayItem::PushStackingContext(ref specific_item) => {
+                Some((specific_item.stacking_context, item.rect(), item.filters()))
+            },
+            _ => None,
+        })
+    }
+
+    pub fn skip_current_stacking_context(&mut self) {
+        let mut depth = 0;
+        while let Some(item) = self.next() {
+            match *item.item() {
+                SpecificDisplayItem::PushStackingContext(..) => depth += 1,
+                SpecificDisplayItem::PopStackingContext if depth == 0 => return,
+                SpecificDisplayItem::PopStackingContext => depth -= 1,
+                _ => {}
+            }
+            debug_assert!(depth >= 0);
+        }
+    }
+
+    pub fn current_stacking_context_empty(&mut self) -> bool {
+        match self.peek() {
+            Some(item) => *item.item() == SpecificDisplayItem::PopStackingContext,
+            None => true,
+        }
+    }
+
+    pub fn peek<'b>(&'b mut self) -> Option<DisplayItemRef<'a, 'b>> {
+        if self.peeking == Peek::NotPeeking {
+            self.peeking = Peek::StartPeeking;
+            self.next()
+        } else {
+            Some(self.as_ref())
+        }
+    }
+}
+
+// Some of these might just become ItemRanges
+impl<'a, 'b> DisplayItemRef<'a, 'b> {
+    pub fn display_item(&self) -> &DisplayItem {
+        &self.iter.cur_item
+    }
+
+    pub fn rect(&self) -> LayoutRect {
+        self.iter.cur_item.rect
+    }
+
+    pub fn clip_and_scroll(&self) -> ClipAndScrollInfo {
+        self.iter.cur_item.clip_and_scroll
+    }
+
+    pub fn item(&self) -> &SpecificDisplayItem {
+        &self.iter.cur_item.item
+    }
+
+    pub fn clip_region(&self) -> &ClipRegion {
+        &self.iter.cur_clip
+    }
+
+    pub fn gradient_stops(&self) -> ItemRange<GradientStop> {
+        self.iter.cur_stops
+    }
+
+    pub fn glyphs(&self) -> ItemRange<GlyphInstance> {
+        self.iter.cur_glyphs
+    }
+
+    pub fn filters(&self) -> ItemRange<FilterOp> {
+        self.iter.cur_filters
+    }
+
+    pub fn display_list(&self) -> &BuiltDisplayList {
+        self.iter.display_list()
+    }
+
+    // Creates a new iterator where this element's iterator
+    // is, to hack around borrowck.
+    pub fn sub_iter(&self) -> BuiltDisplayListIter<'a> {
+        BuiltDisplayListIter {
+            list: self.iter.list,
+            data: self.iter.data,
+            // Dummy data, will be overwritten by `next`
+            cur_item: DisplayItem {
+                item: SpecificDisplayItem::PopStackingContext,
+                rect: LayoutRect::zero(),
+                clip_and_scroll: ClipAndScrollInfo::simple(ClipId::new(0, PipelineId(0, 0))),
+            },
+            cur_stops: ItemRange::default(),
+            cur_glyphs: ItemRange::default(),
+            cur_filters: ItemRange::default(),
+            cur_clip: ClipRegion::empty(),
+            peeking: Peek::NotPeeking,
+        }
+    }
+}
+
+impl<'a, T: Deserialize> AuxIter<'a, T> {
+    pub fn new(mut data: &'a [u8]) -> Self {
+
+        let size: usize = if data.len() == 0 {
+            0   // Accept empty ItemRanges pointing anywhere
+        } else {
+            bincode::deserialize_from(&mut data, bincode::Infinite)
+                                  .expect("MEH: malicious input?")
+        };
+
+        AuxIter {
+            data: data,
+            size: size,
+            _boo: PhantomData,
+        }
+    }
+}
+
+impl<'a, T: Deserialize> Iterator for AuxIter<'a, T> {
+    type Item = T;
+
+    fn next(&mut self) -> Option<T> {
+        if self.size == 0 {
+            None
+        } else {
+            self.size -= 1;
+            Some(bincode::deserialize_from(&mut self.data, bincode::Infinite)
+                         .expect("MEH: malicious input?"))
+        }
+    }
+
+    fn size_hint(&self) -> (usize, Option<usize>) {
+        (self.size, Some(self.size))
+    }
+}
+
+impl<'a, T: Deserialize> ::std::iter::ExactSizeIterator for AuxIter<'a, T> { }
+
+
+// This is purely for the JSON writer in wrench
+impl Serialize for BuiltDisplayList {
+    fn serialize<S: Serializer>(&self, serializer: S) -> Result<S::Ok, S::Error> {
+        let mut seq = serializer.serialize_seq(None)?;
+        let mut traversal = self.iter();
+        while let Some(item) = traversal.next() {
+            seq.serialize_element(&item)?
+        }
+        seq.end()
+    }
+}
+
+impl<'a, 'b> Serialize for DisplayItemRef<'a, 'b> {
+    fn serialize<S: Serializer>(&self, serializer: S) -> Result<S::Ok, S::Error> {
+        let mut map = serializer.serialize_map(None)?;
+
+        map.serialize_entry("item", self.display_item())?;
+
+        match *self.item() {
+            SpecificDisplayItem::Text(_) => {
+                map.serialize_entry("glyphs",
+                    &self.iter.list.get(self.glyphs()).collect::<Vec<_>>())?;
+            }
+            SpecificDisplayItem::PushStackingContext(_) => {
+                map.serialize_entry("filters",
+                    &self.iter.list.get(self.filters()).collect::<Vec<_>>())?;
+            }
+            _ => { }
+        }
+
+        let clip_region = self.clip_region();
+        let gradient_stops = self.gradient_stops();
+
+        map.serialize_entry("clip_region", &clip_region)?;
+        if !clip_region.complex_clips.is_empty() {
+            map.serialize_entry("complex_clips",
+                &self.iter.list.get(clip_region.complex_clips).collect::<Vec<_>>())?;
+        }
+
+        if !gradient_stops.is_empty() {
+            map.serialize_entry("gradient_stops",
+                &self.iter.list.get(gradient_stops).collect::<Vec<_>>())?;
+        }
+
+        map.end()
     }
 }
 
 #[derive(Clone)]
 pub struct DisplayListBuilder {
-    pub list: Vec<DisplayItem>,
-    auxiliary_lists_builder: AuxiliaryListsBuilder,
+    pub data: Vec<u8>,
     pub pipeline_id: PipelineId,
-    next_scroll_layer_id: usize,
+    clip_stack: Vec<ClipAndScrollInfo>,
+    next_clip_id: u64,
+    builder_start_time: u64,
+
+    /// The size of the content of this display list. This is used to allow scrolling
+    /// outside the bounds of the display list items themselves.
+    content_size: LayoutSize,
 }
 
 impl DisplayListBuilder {
-    pub fn new(pipeline_id: PipelineId) -> DisplayListBuilder {
+    pub fn new(pipeline_id: PipelineId, content_size: LayoutSize) -> DisplayListBuilder {
+        let start_time = precise_time_ns();
+
+        // We start at 1 here, because the root scroll id is always 0.
+        const FIRST_CLIP_ID : u64 = 1;
+
         DisplayListBuilder {
-            list: Vec::new(),
-            auxiliary_lists_builder: AuxiliaryListsBuilder::new(),
+            data: Vec::with_capacity(1024 * 1024),
             pipeline_id: pipeline_id,
-            next_scroll_layer_id: 0,
+            clip_stack: vec![ClipAndScrollInfo::simple(ClipId::root_scroll_node(pipeline_id))],
+            next_clip_id: FIRST_CLIP_ID,
+            builder_start_time: start_time,
+            content_size: content_size,
         }
     }
 
     pub fn print_display_list(&mut self) {
-        for item in &self.list {
-            println!("{:?}", item);
+        let mut temp = BuiltDisplayList::default();
+        ::std::mem::swap(&mut temp.data, &mut self.data);
+
+        {
+            let mut iter = BuiltDisplayListIter::new(&temp);
+            while let Some(item) = iter.next() {
+                println!("{:?}", item.display_item());
+            }
         }
+
+        self.data = temp.data;
+    }
+
+    fn push_item(&mut self, item: SpecificDisplayItem, rect: LayoutRect) {
+        bincode::serialize_into(&mut self.data, &DisplayItem {
+            item: item,
+            rect: rect,
+            clip_and_scroll: *self.clip_stack.last().unwrap(),
+        }, bincode::Infinite).unwrap();
+    }
+
+    fn push_new_empty_item(&mut self, item: SpecificDisplayItem) {
+        bincode::serialize_into(&mut self.data, &DisplayItem {
+            item: item,
+            rect: LayoutRect::zero(),
+            clip_and_scroll: *self.clip_stack.last().unwrap(),
+        }, bincode::Infinite).unwrap();
+    }
+
+    fn push_iter<I>(&mut self, iter: I)
+    where I: IntoIterator,
+          I::IntoIter: ExactSizeIterator,
+          I::Item: Serialize,
+    {
+        let iter = iter.into_iter();
+        let len = iter.len();
+        let mut count = 0;
+
+        bincode::serialize_into(&mut self.data, &len, bincode::Infinite).unwrap();
+        for elem in iter {
+            count += 1;
+            bincode::serialize_into(&mut self.data, &elem, bincode::Infinite).unwrap();
+        }
+
+        debug_assert_eq!(len, count);
+    }
+
+    fn push_range<T>(&mut self, range: ItemRange<T>, src: &BuiltDisplayList) {
+        self.data.extend_from_slice(&src.data[range.start..range.start+range.length]);
     }
 
     pub fn push_rect(&mut self,
                      rect: LayoutRect,
-                     clip: ClipRegion,
+                     _token: ClipRegionToken,
                      color: ColorF) {
-        let item = RectangleDisplayItem {
+        let item = SpecificDisplayItem::Rectangle(RectangleDisplayItem {
             color: color,
-        };
+        });
 
-        let display_item = DisplayItem {
-            item: SpecificDisplayItem::Rectangle(item),
-            rect: rect,
-            clip: clip,
-        };
-
-        self.list.push(display_item);
+        self.push_item(item, rect);
     }
 
     pub fn push_image(&mut self,
                       rect: LayoutRect,
-                      clip: ClipRegion,
+                      _token: ClipRegionToken,
                       stretch_size: LayoutSize,
                       tile_spacing: LayoutSize,
                       image_rendering: ImageRendering,
                       key: ImageKey) {
-        let item = ImageDisplayItem {
+        let item = SpecificDisplayItem::Image(ImageDisplayItem {
             image_key: key,
             stretch_size: stretch_size,
             tile_spacing: tile_spacing,
             image_rendering: image_rendering,
-        };
+        });
 
-        let display_item = DisplayItem {
-            item: SpecificDisplayItem::Image(item),
-            rect: rect,
-            clip: clip,
-        };
-
-        self.list.push(display_item);
+        self.push_item(item, rect);
     }
 
+    /// Push a yuv image. All planar data in yuv image should use the same buffer type.
     pub fn push_yuv_image(&mut self,
                           rect: LayoutRect,
-                          clip: ClipRegion,
-                          y_key: ImageKey,
-                          u_key: ImageKey,
-                          v_key: ImageKey,
-                          color_space: YuvColorSpace) {
-        self.list.push(DisplayItem {
-            item: SpecificDisplayItem::YuvImage(YuvImageDisplayItem {
-                y_image_key: y_key,
-                u_image_key: u_key,
-                v_image_key: v_key,
-                color_space: color_space,
-            }),
-            rect: rect,
-            clip: clip,
+                          _token: ClipRegionToken,
+                          yuv_data: YuvData,
+                          color_space: YuvColorSpace,
+                          image_rendering: ImageRendering) {
+        let item = SpecificDisplayItem::YuvImage(YuvImageDisplayItem {
+            yuv_data: yuv_data,
+            color_space: color_space,
+            image_rendering: image_rendering,
         });
+        self.push_item(item, rect);
     }
 
     pub fn push_webgl_canvas(&mut self,
                              rect: LayoutRect,
-                             clip: ClipRegion,
+                             _token: ClipRegionToken,
                              context_id: WebGLContextId) {
-        let item = WebGLDisplayItem {
+        let item = SpecificDisplayItem::WebGL(WebGLDisplayItem {
             context_id: context_id,
-        };
-
-        let display_item = DisplayItem {
-            item: SpecificDisplayItem::WebGL(item),
-            rect: rect,
-            clip: clip,
-        };
-
-        self.list.push(display_item);
+        });
+        self.push_item(item, rect);
     }
 
     pub fn push_text(&mut self,
                      rect: LayoutRect,
-                     clip: ClipRegion,
-                     glyphs: Vec<GlyphInstance>,
+                     _token: ClipRegionToken,
+                     glyphs: &[GlyphInstance],
                      font_key: FontKey,
                      color: ColorF,
                      size: Au,
-                     blur_radius: Au,
+                     blur_radius: f32,
                      glyph_options: Option<GlyphOptions>) {
         // Sanity check - anything with glyphs bigger than this
         // is probably going to consume too much memory to render
@@ -162,47 +571,207 @@ impl DisplayListBuilder {
         // font as a crash test - the rendering is also ignored
         // by the azure renderer.
         if size < Au::from_px(4096) {
-            let item = TextDisplayItem {
+            let item = SpecificDisplayItem::Text(TextDisplayItem {
                 color: color,
-                glyphs: self.auxiliary_lists_builder.add_glyph_instances(&glyphs),
                 font_key: font_key,
                 size: size,
                 blur_radius: blur_radius,
                 glyph_options: glyph_options,
-            };
+            });
 
-            let display_item = DisplayItem {
-                item: SpecificDisplayItem::Text(item),
-                rect: rect,
-                clip: clip,
-            };
+            self.push_item(item, rect);
+            self.push_iter(glyphs);
+        }
+    }
 
-            self.list.push(display_item);
+    // Gradients can be defined with stops outside the range of [0, 1]
+    // when this happens the gradient needs to be normalized by adjusting
+    // the gradient stops and gradient line into an equivalent gradient
+    // with stops in the range [0, 1]. this is done by moving the beginning
+    // of the gradient line to where stop[0] and the end of the gradient line
+    // to stop[n-1]. this function adjusts the stops in place, and returns
+    // the amount to adjust the gradient line start and stop
+    fn normalize_stops(stops: &mut Vec<GradientStop>,
+                       extend_mode: ExtendMode) -> (f32, f32) {
+        assert!(stops.len() >= 2);
+
+        let first = *stops.first().unwrap();
+        let last = *stops.last().unwrap();
+
+        assert!(first.offset <= last.offset);
+
+        let stops_origin = first.offset;
+        let stops_delta = last.offset - first.offset;
+
+        if stops_delta > 0.000001 {
+            for stop in stops {
+                stop.offset = (stop.offset - stops_origin) / stops_delta;
+            }
+
+            (first.offset, last.offset)
+        } else {
+            // We have a degenerate gradient and can't accurately transform the stops
+            // what happens here depends on the repeat behavior, but in any case
+            // we reconstruct the gradient stops to something simpler and equivalent
+            stops.clear();
+
+            match extend_mode {
+                ExtendMode::Clamp => {
+                    // This gradient is two colors split at the offset of the stops,
+                    // so create a gradient with two colors split at 0.5 and adjust
+                    // the gradient line so 0.5 is at the offset of the stops
+                    stops.push(GradientStop {
+                        color: first.color,
+                        offset: 0.0,
+                    });
+                    stops.push(GradientStop {
+                        color: first.color,
+                        offset: 0.5,
+                    });
+                    stops.push(GradientStop {
+                        color: last.color,
+                        offset: 0.5,
+                    });
+                    stops.push(GradientStop {
+                        color: last.color,
+                        offset: 1.0,
+                    });
+
+                    let offset = last.offset;
+
+                    (offset - 0.5, offset + 0.5)
+                }
+                ExtendMode::Repeat => {
+                    // A repeating gradient with stops that are all in the same
+                    // position should just display the last color. I believe the
+                    // spec says that it should be the average color of the gradient,
+                    // but this matches what Gecko and Blink does
+                    stops.push(GradientStop {
+                        color: last.color,
+                        offset: 0.0,
+                    });
+                    stops.push(GradientStop {
+                        color: last.color,
+                        offset: 1.0,
+                    });
+
+                    (0.0, 1.0)
+                }
+            }
+        }
+    }
+
+    // NOTE: gradients must be pushed in the order they're created
+    // because create_gradient stores the stops in anticipation
+    pub fn create_gradient(&mut self,
+                           start_point: LayoutPoint,
+                           end_point: LayoutPoint,
+                           mut stops: Vec<GradientStop>,
+                           extend_mode: ExtendMode) -> Gradient {
+        let (start_offset,
+             end_offset) = DisplayListBuilder::normalize_stops(&mut stops, extend_mode);
+
+        let start_to_end = end_point - start_point;
+
+        self.push_stops(&stops);
+
+        Gradient {
+            start_point: start_point + start_to_end * start_offset,
+            end_point: start_point + start_to_end * end_offset,
+            extend_mode: extend_mode,
+        }
+    }
+
+    // NOTE: gradients must be pushed in the order they're created
+    // because create_gradient stores the stops in anticipation
+    pub fn create_radial_gradient(&mut self,
+                                  center: LayoutPoint,
+                                  radius: LayoutSize,
+                                  mut stops: Vec<GradientStop>,
+                                  extend_mode: ExtendMode) -> RadialGradient {
+        if radius.width <= 0.0 || radius.height <= 0.0 {
+            // The shader cannot handle a non positive radius. So
+            // reuse the stops vector and construct an equivalent
+            // gradient.
+            let last_color = stops.last().unwrap().color;
+
+            let stops = [
+                GradientStop {
+                    offset: 0.0,
+                    color: last_color,
+                },
+                GradientStop {
+                    offset: 1.0,
+                    color: last_color,
+                },
+            ];
+
+            self.push_stops(&stops);
+
+            return RadialGradient {
+                start_center: center,
+                start_radius: 0.0,
+                end_center: center,
+                end_radius: 1.0,
+                ratio_xy: 1.0,
+                extend_mode: extend_mode,
+            };
+        }
+
+        let (start_offset,
+             end_offset) = DisplayListBuilder::normalize_stops(&mut stops, extend_mode);
+
+        self.push_stops(&stops);
+
+        RadialGradient {
+            start_center: center,
+            start_radius: radius.width * start_offset,
+            end_center: center,
+            end_radius: radius.width * end_offset,
+            ratio_xy: radius.width / radius.height,
+            extend_mode: extend_mode,
+        }
+    }
+
+    // NOTE: gradients must be pushed in the order they're created
+    // because create_gradient stores the stops in anticipation
+    pub fn create_complex_radial_gradient(&mut self,
+                                          start_center: LayoutPoint,
+                                          start_radius: f32,
+                                          end_center: LayoutPoint,
+                                          end_radius: f32,
+                                          ratio_xy: f32,
+                                          stops: Vec<GradientStop>,
+                                          extend_mode: ExtendMode) -> RadialGradient {
+
+        self.push_stops(&stops);
+
+        RadialGradient {
+            start_center: start_center,
+            start_radius: start_radius,
+            end_center: end_center,
+            end_radius: end_radius,
+            ratio_xy: ratio_xy,
+            extend_mode: extend_mode,
         }
     }
 
     pub fn push_border(&mut self,
                        rect: LayoutRect,
-                       clip: ClipRegion,
+                       _token: ClipRegionToken,
                        widths: BorderWidths,
                        details: BorderDetails) {
-        let item = BorderDisplayItem {
+        let item = SpecificDisplayItem::Border(BorderDisplayItem {
             details: details,
             widths: widths,
-        };
+        });
 
-        let display_item = DisplayItem {
-            item: SpecificDisplayItem::Border(item),
-            rect: rect,
-            clip: clip,
-        };
-
-        self.list.push(display_item);
+        self.push_item(item, rect);
     }
 
     pub fn push_box_shadow(&mut self,
                            rect: LayoutRect,
-                           clip: ClipRegion,
+                           _token: ClipRegionToken,
                            box_bounds: LayoutRect,
                            offset: LayoutPoint,
                            color: ColorF,
@@ -210,7 +779,7 @@ impl DisplayListBuilder {
                            spread_radius: f32,
                            border_radius: f32,
                            clip_mode: BoxShadowClipMode) {
-        let item = BoxShadowDisplayItem {
+        let item = SpecificDisplayItem::BoxShadow(BoxShadowDisplayItem {
             box_bounds: box_bounds,
             offset: offset,
             color: color,
@@ -218,338 +787,198 @@ impl DisplayListBuilder {
             spread_radius: spread_radius,
             border_radius: border_radius,
             clip_mode: clip_mode,
-        };
+        });
 
-        let display_item = DisplayItem {
-            item: SpecificDisplayItem::BoxShadow(item),
-            rect: rect,
-            clip: clip,
-        };
-
-        self.list.push(display_item);
+        self.push_item(item, rect);
     }
 
     pub fn push_gradient(&mut self,
                          rect: LayoutRect,
-                         clip: ClipRegion,
-                         start_point: LayoutPoint,
-                         end_point: LayoutPoint,
-                         stops: Vec<GradientStop>,
-                         extend_mode: ExtendMode) {
-        let item = GradientDisplayItem {
-            start_point: start_point,
-            end_point: end_point,
-            stops: self.auxiliary_lists_builder.add_gradient_stops(&stops),
-            extend_mode: extend_mode,
-        };
+                         _token: ClipRegionToken,
+                         gradient: Gradient,
+                         tile_size: LayoutSize,
+                         tile_spacing: LayoutSize) {
+        let item = SpecificDisplayItem::Gradient(GradientDisplayItem {
+            gradient: gradient,
+            tile_size: tile_size,
+            tile_spacing: tile_spacing,
+        });
 
-        let display_item = DisplayItem {
-            item: SpecificDisplayItem::Gradient(item),
-            rect: rect,
-            clip: clip,
-        };
-
-        self.list.push(display_item);
+        self.push_item(item, rect);
     }
 
     pub fn push_radial_gradient(&mut self,
                                 rect: LayoutRect,
-                                clip: ClipRegion,
-                                start_center: LayoutPoint,
-                                start_radius: f32,
-                                end_center: LayoutPoint,
-                                end_radius: f32,
-                                stops: Vec<GradientStop>,
-                                extend_mode: ExtendMode) {
-        let item = RadialGradientDisplayItem {
-            start_center: start_center,
-            start_radius: start_radius,
-            end_center: end_center,
-            end_radius: end_radius,
-            stops: self.auxiliary_lists_builder.add_gradient_stops(&stops),
-            extend_mode: extend_mode,
-        };
+                                _token: ClipRegionToken,
+                                gradient: RadialGradient,
+                                tile_size: LayoutSize,
+                                tile_spacing: LayoutSize) {
+        let item = SpecificDisplayItem::RadialGradient(RadialGradientDisplayItem {
+            gradient: gradient,
+            tile_size: tile_size,
+            tile_spacing: tile_spacing,
+        });
 
-        let display_item = DisplayItem {
-            item: SpecificDisplayItem::RadialGradient(item),
-            rect: rect,
-            clip: clip,
-        };
-
-        self.list.push(display_item);
+        self.push_item(item, rect);
     }
 
     pub fn push_stacking_context(&mut self,
                                  scroll_policy: ScrollPolicy,
                                  bounds: LayoutRect,
-                                 clip: ClipRegion,
-                                 z_index: i32,
-                                 transform: PropertyBinding<LayoutTransform>,
-                                 perspective: LayoutTransform,
+                                 transform: Option<PropertyBinding<LayoutTransform>>,
+                                 transform_style: TransformStyle,
+                                 perspective: Option<LayoutTransform>,
                                  mix_blend_mode: MixBlendMode,
                                  filters: Vec<FilterOp>) {
-        let stacking_context = StackingContext {
-            scroll_policy: scroll_policy,
-            bounds: bounds,
-            z_index: z_index,
-            transform: transform,
-            perspective: perspective,
-            mix_blend_mode: mix_blend_mode,
-            filters: self.auxiliary_lists_builder.add_filters(&filters),
-        };
+        let item = SpecificDisplayItem::PushStackingContext(PushStackingContextDisplayItem {
+            stacking_context: StackingContext {
+                scroll_policy: scroll_policy,
+                transform: transform,
+                transform_style: transform_style,
+                perspective: perspective,
+                mix_blend_mode: mix_blend_mode,
+            }
+        });
 
-        let item = DisplayItem {
-            item: SpecificDisplayItem::PushStackingContext(PushStackingContextDisplayItem {
-                stacking_context: stacking_context
-            }),
-            rect: LayoutRect::zero(),
-            clip: clip,
-        };
-        self.list.push(item);
+        self.push_item(item, bounds);
+        self.push_iter(&filters);
     }
 
     pub fn pop_stacking_context(&mut self) {
-        let item = DisplayItem {
-            item: SpecificDisplayItem::PopStackingContext,
-            rect: LayoutRect::zero(),
-            clip: ClipRegion::simple(&LayoutRect::zero()),
-        };
-        self.list.push(item);
+        self.push_new_empty_item(SpecificDisplayItem::PopStackingContext);
     }
 
-    pub fn push_scroll_layer(&mut self,
-                             clip: ClipRegion,
-                             content_size: LayoutSize,
-                             scroll_root_id: ServoScrollRootId) {
-        let scroll_layer_id = self.next_scroll_layer_id;
-        self.next_scroll_layer_id += 1;
-
-        let item = PushScrollLayerItem {
-            content_size: content_size,
-            id: ScrollLayerId::new(self.pipeline_id, scroll_layer_id, scroll_root_id),
-        };
-
-        let item = DisplayItem {
-            item: SpecificDisplayItem::PushScrollLayer(item),
-            rect: clip.main,
-            clip: clip,
-        };
-        self.list.push(item);
-    }
-
-    pub fn pop_scroll_layer(&mut self) {
-        let item = DisplayItem {
-            item: SpecificDisplayItem::PopScrollLayer,
-            rect: LayoutRect::zero(),
-            clip: ClipRegion::simple(&LayoutRect::zero()),
-        };
-        self.list.push(item);
-    }
-
-    pub fn push_iframe(&mut self, rect: LayoutRect, clip: ClipRegion, pipeline_id: PipelineId) {
-        let item = DisplayItem {
-            item: SpecificDisplayItem::Iframe(IframeDisplayItem { pipeline_id: pipeline_id }),
-            rect: rect,
-            clip: clip,
-        };
-        self.list.push(item);
-    }
-
-    pub fn new_clip_region(&mut self,
-                           rect: &LayoutRect,
-                           complex: Vec<ComplexClipRegion>,
-                           image_mask: Option<ImageMask>)
-                           -> ClipRegion {
-        ClipRegion::new(rect, complex, image_mask, &mut self.auxiliary_lists_builder)
-    }
-
-    pub fn finalize(self) -> (PipelineId, BuiltDisplayList, AuxiliaryLists) {
-        unsafe {
-            let blob = convert_pod_to_blob(&self.list).to_vec();
-            let display_list_items_size = blob.len();
-
-            (self.pipeline_id,
-             BuiltDisplayList {
-                 descriptor: BuiltDisplayListDescriptor {
-                     display_list_items_size: display_list_items_size,
-                 },
-                 data: blob,
-             },
-             self.auxiliary_lists_builder.finalize())
+    pub fn push_stops(&mut self, stops: &[GradientStop]) {
+        if stops.is_empty() {
+            return
         }
-    }
-}
-
-impl ItemRange {
-    pub fn new<T>(backing_list: &mut Vec<T>, items: &[T]) -> ItemRange where T: Copy + Clone {
-        let start = backing_list.len();
-        backing_list.extend_from_slice(items);
-        ItemRange {
-            start: start,
-            length: items.len(),
-        }
+        self.push_new_empty_item(SpecificDisplayItem::SetGradientStops);
+        self.push_iter(stops);
     }
 
-    pub fn empty() -> ItemRange {
-        ItemRange {
-            start: 0,
-            length: 0,
-        }
+    pub fn define_clip(&mut self,
+                       content_rect: LayoutRect,
+                       _token: ClipRegionToken,
+                       id: Option<ClipId>)
+                       -> ClipId {
+        let id = match id {
+            Some(id) => id,
+            None => {
+                self.next_clip_id += 1;
+                ClipId::Clip(self.next_clip_id - 1, self.pipeline_id)
+            }
+        };
+
+        let item = SpecificDisplayItem::Clip(ClipDisplayItem {
+            id: id,
+            parent_id: self.clip_stack.last().unwrap().scroll_node_id,
+        });
+
+        self.push_item(item, content_rect);
+        id
     }
 
-    pub fn get<'a, T>(&self, backing_list: &'a [T]) -> &'a [T] {
-        &backing_list[self.start..(self.start + self.length)]
+    pub fn push_clip_node(&mut self,
+                          content_rect: LayoutRect,
+                          token: ClipRegionToken,
+                          id: Option<ClipId>){
+        let id = self.define_clip(content_rect, token, id);
+        self.clip_stack.push(ClipAndScrollInfo::simple(id));
     }
 
-    pub fn get_mut<'a, T>(&self, backing_list: &'a mut [T]) -> &'a mut [T] {
-        &mut backing_list[self.start..(self.start + self.length)]
-    }
-}
-
-#[derive(Clone)]
-pub struct AuxiliaryListsBuilder {
-    gradient_stops: Vec<GradientStop>,
-    complex_clip_regions: Vec<ComplexClipRegion>,
-    filters: Vec<FilterOp>,
-    glyph_instances: Vec<GlyphInstance>,
-}
-
-impl AuxiliaryListsBuilder {
-    pub fn new() -> AuxiliaryListsBuilder {
-        AuxiliaryListsBuilder {
-            gradient_stops: Vec::new(),
-            complex_clip_regions: Vec::new(),
-            filters: Vec::new(),
-            glyph_instances: Vec::new(),
-        }
+    pub fn push_clip_id(&mut self, id: ClipId) {
+        self.clip_stack.push(ClipAndScrollInfo::simple(id));
     }
 
-    pub fn add_gradient_stops(&mut self, gradient_stops: &[GradientStop]) -> ItemRange {
-        ItemRange::new(&mut self.gradient_stops, gradient_stops)
+    pub fn push_clip_and_scroll_info(&mut self, info: ClipAndScrollInfo) {
+        self.clip_stack.push(info);
     }
 
-    pub fn gradient_stops(&self, gradient_stops_range: &ItemRange) -> &[GradientStop] {
-        gradient_stops_range.get(&self.gradient_stops[..])
+    pub fn pop_clip_id(&mut self) {
+        self.clip_stack.pop();
+        assert!(self.clip_stack.len() > 0);
     }
 
-    pub fn add_complex_clip_regions(&mut self, complex_clip_regions: &[ComplexClipRegion])
-                                    -> ItemRange {
-        ItemRange::new(&mut self.complex_clip_regions, complex_clip_regions)
+    pub fn pop_clip_node(&mut self) {
+        self.pop_clip_id();
     }
 
-    pub fn complex_clip_regions(&self, complex_clip_regions_range: &ItemRange)
-                                -> &[ComplexClipRegion] {
-        complex_clip_regions_range.get(&self.complex_clip_regions[..])
+    pub fn push_iframe(&mut self, rect: LayoutRect, _token: ClipRegionToken, pipeline_id: PipelineId) {
+        let item = SpecificDisplayItem::Iframe(IframeDisplayItem { pipeline_id: pipeline_id });
+        self.push_item(item, rect);
     }
 
-    pub fn add_filters(&mut self, filters: &[FilterOp]) -> ItemRange {
-        ItemRange::new(&mut self.filters, filters)
-    }
+    // Don't use this function. It will go away.
+    // We're using it as a hack in Gecko to retain parts sub-parts of display lists so that
+    // we can regenerate them without building Gecko display items.
+    pub fn push_built_display_list(&mut self, dl: BuiltDisplayList) {
+        // NOTE: Iframe and Clips aren't supported.
 
-    pub fn filters(&self, filters_range: &ItemRange) -> &[FilterOp] {
-        filters_range.get(&self.filters[..])
-    }
+        // FIXME: what `iter` here is doing an expensive deserialization
+        // because we need to update clip_and_scroll info! If we didn't need to
+        // update that, this function could just be memcopy!
 
-    pub fn add_glyph_instances(&mut self, glyph_instances: &[GlyphInstance]) -> ItemRange {
-        ItemRange::new(&mut self.glyph_instances, glyph_instances)
-    }
+        // This implementation is basically BuiltDisplayListIter::next in reverse.
 
-    pub fn glyph_instances(&self, glyph_instances_range: &ItemRange) -> &[GlyphInstance] {
-        glyph_instances_range.get(&self.glyph_instances[..])
-    }
+        let mut iter = dl.iter();
+        while let Some(item) = iter.next() {
+            // First handle explicit prefix dummy items
+            let clip_region = item.clip_region();
+            if *clip_region != ClipRegion::empty() {
+                self.push_new_empty_item(SpecificDisplayItem::SetClipRegion(*clip_region));
+                self.push_range(clip_region.complex_clips, &dl);
+            }
 
-    pub fn finalize(self) -> AuxiliaryLists {
-        unsafe {
-            let mut blob = convert_pod_to_blob(&self.gradient_stops).to_vec();
-            let gradient_stops_size = blob.len();
-            blob.extend_from_slice(convert_pod_to_blob(&self.complex_clip_regions));
-            let complex_clip_regions_size = blob.len() - gradient_stops_size;
-            blob.extend_from_slice(convert_pod_to_blob(&self.filters));
-            let filters_size = blob.len() - (complex_clip_regions_size + gradient_stops_size);
-            blob.extend_from_slice(convert_pod_to_blob(&self.glyph_instances));
-            let glyph_instances_size = blob.len() -
-                (complex_clip_regions_size + gradient_stops_size + filters_size);
+            let stops = item.gradient_stops();
+            if stops != ItemRange::default() {
+                self.push_new_empty_item(SpecificDisplayItem::SetGradientStops);
+                self.push_range(stops, &dl);
+            }
 
-            AuxiliaryLists {
-                data: blob,
-                descriptor: AuxiliaryListsDescriptor {
-                    gradient_stops_size: gradient_stops_size,
-                    complex_clip_regions_size: complex_clip_regions_size,
-                    filters_size: filters_size,
-                    glyph_instances_size: glyph_instances_size,
-                },
+            // Then reinsert the actual item, updating its clip_and_scroll
+            self.push_item(*item.item(), item.rect());
+
+            // Then handle implicit suffix items
+            match *item.item() {
+                SpecificDisplayItem::Text(_)                => self.push_range(item.glyphs(), &dl),
+                SpecificDisplayItem::PushStackingContext(_) => self.push_range(item.filters(), &dl),
+                _ => { /* do nothing */ }
             }
         }
     }
-}
 
-impl AuxiliaryListsDescriptor {
-    pub fn size(&self) -> usize {
-        self.gradient_stops_size + self.complex_clip_regions_size + self.filters_size +
-            self.glyph_instances_size
+    pub fn push_clip_region<I>(&mut self,
+                            rect: &LayoutRect,
+                            complex: I,
+                            image_mask: Option<ImageMask>)
+                            -> ClipRegionToken
+    where I: IntoIterator<Item = ComplexClipRegion>,
+          I::IntoIter: ExactSizeIterator,
+    {
+        self.push_new_empty_item(SpecificDisplayItem::SetClipRegion(
+            ClipRegion::new(rect, image_mask),
+        ));
+        self.push_iter(complex);
+
+        ClipRegionToken { _unforgeable: () }
+    }
+
+    pub fn finalize(self) -> (PipelineId, LayoutSize, BuiltDisplayList) {
+        let end_time = precise_time_ns();
+
+        (self.pipeline_id,
+         self.content_size,
+         BuiltDisplayList {
+            descriptor: BuiltDisplayListDescriptor {
+                display_list_items_size: self.data.len(),
+                builder_start_time: self.builder_start_time,
+                builder_finish_time: end_time,
+            },
+            data: self.data,
+         })
     }
 }
 
-impl AuxiliaryLists {
-    /// Creates a new `AuxiliaryLists` instance from a descriptor and data received over a channel.
-    pub fn from_data(data: Vec<u8>, descriptor: AuxiliaryListsDescriptor) -> AuxiliaryLists {
-        AuxiliaryLists {
-            data: data,
-            descriptor: descriptor,
-        }
-    }
-
-    pub fn data(&self) -> &[u8] {
-        &self.data[..]
-    }
-
-    pub fn descriptor(&self) -> &AuxiliaryListsDescriptor {
-        &self.descriptor
-    }
-
-    /// Returns the gradient stops described by `gradient_stops_range`.
-    pub fn gradient_stops(&self, gradient_stops_range: &ItemRange) -> &[GradientStop] {
-        unsafe {
-            let end = self.descriptor.gradient_stops_size;
-            gradient_stops_range.get(convert_blob_to_pod(&self.data[0..end]))
-        }
-    }
-
-    /// Returns the complex clipping regions described by `complex_clip_regions_range`.
-    pub fn complex_clip_regions(&self, complex_clip_regions_range: &ItemRange)
-                                -> &[ComplexClipRegion] {
-        let start = self.descriptor.gradient_stops_size;
-        let end = start + self.descriptor.complex_clip_regions_size;
-        unsafe {
-            complex_clip_regions_range.get(convert_blob_to_pod(&self.data[start..end]))
-        }
-    }
-
-    /// Returns the filters described by `filters_range`.
-    pub fn filters(&self, filters_range: &ItemRange) -> &[FilterOp] {
-        let start = self.descriptor.gradient_stops_size +
-            self.descriptor.complex_clip_regions_size;
-        let end = start + self.descriptor.filters_size;
-        unsafe {
-            filters_range.get(convert_blob_to_pod(&self.data[start..end]))
-        }
-    }
-
-    /// Returns the glyph instances described by `glyph_instances_range`.
-    pub fn glyph_instances(&self, glyph_instances_range: &ItemRange) -> &[GlyphInstance] {
-        let start = self.descriptor.gradient_stops_size +
-            self.descriptor.complex_clip_regions_size + self.descriptor.filters_size;
-        unsafe {
-            glyph_instances_range.get(convert_blob_to_pod(&self.data[start..]))
-        }
-    }
-}
-
-unsafe fn convert_pod_to_blob<T>(data: &[T]) -> &[u8] where T: Copy + 'static {
-    slice::from_raw_parts(data.as_ptr() as *const u8, data.len() * mem::size_of::<T>())
-}
-
-unsafe fn convert_blob_to_pod<T>(blob: &[u8]) -> &[T] where T: Copy + 'static {
-    slice::from_raw_parts(blob.as_ptr() as *const T, blob.len() / mem::size_of::<T>())
-}
-
+/// Verification that push_clip_region was called before
+/// pushing an item that requires it.
+pub struct ClipRegionToken { _unforgeable: () }

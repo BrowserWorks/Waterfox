@@ -30,21 +30,8 @@ testserver.registerDirectory("/addons/", do_get_file("addons"));
 
 createAppInfo("xpcshell@tests.mozilla.org", "XPCShell", "1", "42");
 
-const { Management } = Components.utils.import("resource://gre/modules/Extension.jsm", {});
-
-function promiseWebExtensionStartup() {
-  return new Promise(resolve => {
-    let listener = (event, extension) => {
-      Management.off("startup", listener);
-      resolve(extension);
-    };
-
-    Management.on("startup", listener);
-  });
-}
-
 // add-on registers upgrade listener, and ignores update.
-add_task(function* delay_updates_ignore() {
+add_task(async function delay_updates_ignore() {
   startupManager();
 
   let extension = ExtensionTestUtils.loadExtension({
@@ -74,9 +61,9 @@ add_task(function* delay_updates_ignore() {
     },
   }, IGNORE_ID);
 
-  yield Promise.all([extension.startup(), extension.awaitMessage("ready")]);
+  await Promise.all([extension.startup(), extension.awaitMessage("ready")]);
 
-  let addon = yield promiseAddonByID(IGNORE_ID);
+  let addon = await promiseAddonByID(IGNORE_ID);
   do_check_neq(addon, null);
   do_check_eq(addon.version, "1.0");
   do_check_eq(addon.name, "Generated extension");
@@ -85,15 +72,15 @@ add_task(function* delay_updates_ignore() {
   do_check_true(addon.isActive);
   do_check_eq(addon.type, "extension");
 
-  let update = yield promiseFindAddonUpdates(addon);
+  let update = await promiseFindAddonUpdates(addon);
   let install = update.updateAvailable;
 
-  yield promiseCompleteAllInstalls([install]);
+  await promiseCompleteAllInstalls([install]);
 
   do_check_eq(install.state, AddonManager.STATE_POSTPONED);
 
   // addon upgrade has been delayed
-  let addon_postponed = yield promiseAddonByID(IGNORE_ID);
+  let addon_postponed = await promiseAddonByID(IGNORE_ID);
   do_check_neq(addon_postponed, null);
   do_check_eq(addon_postponed.version, "1.0");
   do_check_eq(addon_postponed.name, "Generated extension");
@@ -102,14 +89,13 @@ add_task(function* delay_updates_ignore() {
   do_check_true(addon_postponed.isActive);
   do_check_eq(addon_postponed.type, "extension");
 
-  yield extension.awaitFinish("delay");
+  await extension.awaitFinish("delay");
 
   // restarting allows upgrade to proceed
-  yield extension.markUnloaded();
-  yield promiseRestartManager();
+  await promiseRestartManager();
 
-  let addon_upgraded = yield promiseAddonByID(IGNORE_ID);
-  yield promiseWebExtensionStartup();
+  let addon_upgraded = await promiseAddonByID(IGNORE_ID);
+  await extension.awaitStartup();
 
   do_check_neq(addon_upgraded, null);
   do_check_eq(addon_upgraded.version, "2.0");
@@ -119,12 +105,12 @@ add_task(function* delay_updates_ignore() {
   do_check_true(addon_upgraded.isActive);
   do_check_eq(addon_upgraded.type, "extension");
 
-  yield addon_upgraded.uninstall();
-  yield promiseShutdownManager();
+  await extension.unload();
+  await promiseShutdownManager();
 });
 
 // add-on registers upgrade listener, and allows update.
-add_task(function* delay_updates_complete() {
+add_task(async function delay_updates_complete() {
   startupManager();
 
   let extension = ExtensionTestUtils.loadExtension({
@@ -147,9 +133,9 @@ add_task(function* delay_updates_complete() {
     },
   }, COMPLETE_ID);
 
-  yield Promise.all([extension.startup(), extension.awaitMessage("ready")]);
+  await Promise.all([extension.startup(), extension.awaitMessage("ready")]);
 
-  let addon = yield promiseAddonByID(COMPLETE_ID);
+  let addon = await promiseAddonByID(COMPLETE_ID);
   do_check_neq(addon, null);
   do_check_eq(addon.version, "1.0");
   do_check_eq(addon.name, "Generated extension");
@@ -158,17 +144,17 @@ add_task(function* delay_updates_complete() {
   do_check_true(addon.isActive);
   do_check_eq(addon.type, "extension");
 
-  let update = yield promiseFindAddonUpdates(addon);
+  let update = await promiseFindAddonUpdates(addon);
   let install = update.updateAvailable;
 
   let promiseInstalled = promiseAddonEvent("onInstalled");
-  yield promiseCompleteAllInstalls([install]);
+  await promiseCompleteAllInstalls([install]);
 
-  yield extension.awaitFinish("reload");
+  await extension.awaitFinish("reload");
 
   // addon upgrade has been allowed
-  let [addon_allowed] = yield promiseInstalled;
-  yield promiseWebExtensionStartup();
+  let [addon_allowed] = await promiseInstalled;
+  await extension.awaitStartup();
 
   do_check_neq(addon_allowed, null);
   do_check_eq(addon_allowed.version, "2.0");
@@ -182,13 +168,12 @@ add_task(function* delay_updates_complete() {
     do_throw("Staging directory should not exist for formerly-postponed extension");
   }
 
-  yield extension.markUnloaded();
-  yield addon_allowed.uninstall();
-  yield promiseShutdownManager();
+  await extension.unload();
+  await promiseShutdownManager();
 });
 
 // add-on registers upgrade listener, initially defers update then allows upgrade
-add_task(function* delay_updates_defer() {
+add_task(async function delay_updates_defer() {
   startupManager();
 
   let extension = ExtensionTestUtils.loadExtension({
@@ -219,9 +204,9 @@ add_task(function* delay_updates_defer() {
     },
   }, DEFER_ID);
 
-  yield Promise.all([extension.startup(), extension.awaitMessage("ready")]);
+  await Promise.all([extension.startup(), extension.awaitMessage("ready")]);
 
-  let addon = yield promiseAddonByID(DEFER_ID);
+  let addon = await promiseAddonByID(DEFER_ID);
   do_check_neq(addon, null);
   do_check_eq(addon.version, "1.0");
   do_check_eq(addon.name, "Generated extension");
@@ -230,16 +215,16 @@ add_task(function* delay_updates_defer() {
   do_check_true(addon.isActive);
   do_check_eq(addon.type, "extension");
 
-  let update = yield promiseFindAddonUpdates(addon);
+  let update = await promiseFindAddonUpdates(addon);
   let install = update.updateAvailable;
 
   let promiseInstalled = promiseAddonEvent("onInstalled");
-  yield promiseCompleteAllInstalls([install]);
+  await promiseCompleteAllInstalls([install]);
 
   do_check_eq(install.state, AddonManager.STATE_POSTPONED);
 
   // upgrade is initially postponed
-  let addon_postponed = yield promiseAddonByID(DEFER_ID);
+  let addon_postponed = await promiseAddonByID(DEFER_ID);
   do_check_neq(addon_postponed, null);
   do_check_eq(addon_postponed.version, "1.0");
   do_check_eq(addon_postponed.name, "Generated extension");
@@ -249,13 +234,13 @@ add_task(function* delay_updates_defer() {
   do_check_eq(addon_postponed.type, "extension");
 
   // add-on will not allow upgrade until message is received
-  yield extension.awaitMessage("truly ready");
+  await extension.awaitMessage("truly ready");
   extension.sendMessage("allow");
-  yield extension.awaitFinish("allowed");
+  await extension.awaitFinish("allowed");
 
   // addon upgrade has been allowed
-  let [addon_allowed] = yield promiseInstalled;
-  yield promiseWebExtensionStartup();
+  let [addon_allowed] = await promiseInstalled;
+  await extension.awaitStartup();
 
   do_check_neq(addon_allowed, null);
   do_check_eq(addon_allowed.version, "2.0");
@@ -265,12 +250,11 @@ add_task(function* delay_updates_defer() {
   do_check_true(addon_allowed.isActive);
   do_check_eq(addon_allowed.type, "extension");
 
-  yield extension.markUnloaded();
-  yield promiseRestartManager();
+  await promiseRestartManager();
 
   // restart changes nothing
-  addon_allowed = yield promiseAddonByID(DEFER_ID);
-  yield promiseWebExtensionStartup();
+  addon_allowed = await promiseAddonByID(DEFER_ID);
+  await extension.awaitStartup();
 
   do_check_neq(addon_allowed, null);
   do_check_eq(addon_allowed.version, "2.0");
@@ -280,12 +264,12 @@ add_task(function* delay_updates_defer() {
   do_check_true(addon_allowed.isActive);
   do_check_eq(addon_allowed.type, "extension");
 
-  yield addon_allowed.uninstall();
-  yield promiseShutdownManager();
+  await extension.unload();
+  await promiseShutdownManager();
 });
 
 // browser.runtime.reload() without a pending upgrade should just reload.
-add_task(function* runtime_reload() {
+add_task(async function runtime_reload() {
   startupManager();
 
   let extension = ExtensionTestUtils.loadExtension({
@@ -311,9 +295,9 @@ add_task(function* runtime_reload() {
     },
   }, NOUPDATE_ID);
 
-  yield Promise.all([extension.startup(), extension.awaitMessage("ready")]);
+  await Promise.all([extension.startup(), extension.awaitMessage("ready")]);
 
-  let addon = yield promiseAddonByID(NOUPDATE_ID);
+  let addon = await promiseAddonByID(NOUPDATE_ID);
   do_check_neq(addon, null);
   do_check_eq(addon.version, "1.0");
   do_check_eq(addon.name, "Generated extension");
@@ -322,13 +306,13 @@ add_task(function* runtime_reload() {
   do_check_true(addon.isActive);
   do_check_eq(addon.type, "extension");
 
-  yield promiseFindAddonUpdates(addon);
+  await promiseFindAddonUpdates(addon);
 
   extension.sendMessage("reload");
   // Wait for extension to restart, to make sure reload works.
-  yield promiseWebExtensionStartup();
+  await extension.awaitStartup();
 
-  addon = yield promiseAddonByID(NOUPDATE_ID);
+  addon = await promiseAddonByID(NOUPDATE_ID);
   do_check_neq(addon, null);
   do_check_eq(addon.version, "1.0");
   do_check_eq(addon.name, "Generated extension");
@@ -337,7 +321,6 @@ add_task(function* runtime_reload() {
   do_check_true(addon.isActive);
   do_check_eq(addon.type, "extension");
 
-  yield extension.markUnloaded();
-  yield addon.uninstall();
-  yield promiseShutdownManager();
+  await extension.unload();
+  await promiseShutdownManager();
 });

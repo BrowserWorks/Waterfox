@@ -34,7 +34,7 @@ js::Allocate(JSContext* cx, AllocKind kind, size_t nDynamicSlots, InitialHeap he
 
     MOZ_ASSERT(thingSize == Arena::thingSize(kind));
     MOZ_ASSERT(thingSize >= sizeof(JSObject_Slots0));
-    static_assert(sizeof(JSObject_Slots0) >= CellSize,
+    static_assert(sizeof(JSObject_Slots0) >= MinCellSize,
                   "All allocations must be at least the allocator-imposed minimum size.");
 
     MOZ_ASSERT_IF(nDynamicSlots != 0, clasp->isNative() || clasp->isProxy());
@@ -131,7 +131,7 @@ T*
 js::Allocate(JSContext* cx)
 {
     static_assert(!mozilla::IsConvertible<T*, JSObject*>::value, "must not be JSObject derived");
-    static_assert(sizeof(T) >= CellSize,
+    static_assert(sizeof(T) >= MinCellSize,
                   "All allocations must be at least the allocator-imposed minimum size.");
 
     AllocKind kind = MapTypeToFinalizeKind<T>::kind;
@@ -188,7 +188,7 @@ bool
 GCRuntime::checkAllocatorState(JSContext* cx, AllocKind kind)
 {
     if (allowGC) {
-        if (!gcIfNeededPerAllocation(cx))
+        if (!gcIfNeededAtAllocation(cx))
             return false;
     }
 
@@ -223,7 +223,7 @@ GCRuntime::checkAllocatorState(JSContext* cx, AllocKind kind)
 }
 
 bool
-GCRuntime::gcIfNeededPerAllocation(JSContext* cx)
+GCRuntime::gcIfNeededAtAllocation(JSContext* cx)
 {
 #ifdef JS_GC_ZEAL
     if (needZealousGC())

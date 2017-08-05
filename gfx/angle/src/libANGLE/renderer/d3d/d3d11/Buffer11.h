@@ -106,8 +106,7 @@ class Buffer11 : public BufferD3D
         unsigned int lruCount;
     };
 
-    void markBufferUsage(BufferUsage usage);
-    gl::Error garbageCollection(BufferUsage currentUsage);
+    gl::Error markBufferUsage(BufferUsage usage);
     gl::ErrorOrResult<NativeStorage *> getStagingStorage();
     gl::ErrorOrResult<PackStorage *> getPackStorage();
     gl::ErrorOrResult<SystemMemoryStorage *> getSystemMemoryStorage();

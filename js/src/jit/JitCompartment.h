@@ -186,7 +186,7 @@ class JitRuntime
     MOZ_MUST_USE bool initialize(JSContext* cx, js::AutoLockForExclusiveAccess& lock);
 
     static void Trace(JSTracer* trc, js::AutoLockForExclusiveAccess& lock);
-    static void TraceJitcodeGlobalTable(JSTracer* trc);
+    static void TraceJitcodeGlobalTableForMinorGC(JSTracer* trc);
     static MOZ_MUST_USE bool MarkJitcodeGlobalTableIteratively(GCMarker* marker);
     static void SweepJitcodeGlobalTable(JSRuntime* rt);
 
@@ -393,6 +393,14 @@ struct CacheIRStubKey : public DefaultHasher<CacheIRStubKey> {
     }
 };
 
+template<typename Key>
+struct IcStubCodeMapGCPolicy
+{
+    static bool needsSweep(Key*, ReadBarrieredJitCode* value) {
+        return IsAboutToBeFinalized(value);
+    }
+};
+
 class JitZone
 {
     // Allocated space for optimized baseline stubs.
@@ -404,12 +412,47 @@ class JitZone
     using IonCacheIRStubInfoSet = HashSet<CacheIRStubKey, CacheIRStubKey, SystemAllocPolicy>;
     IonCacheIRStubInfoSet ionCacheIRStubInfoSet_;
 
+    // Map CacheIRStubKey to shared JitCode objects.
+    using BaselineCacheIRStubCodeMap = GCHashMap<CacheIRStubKey,
+                                                 ReadBarrieredJitCode,
+                                                 CacheIRStubKey,
+                                                 SystemAllocPolicy,
+                                                 IcStubCodeMapGCPolicy<CacheIRStubKey>>;
+    BaselineCacheIRStubCodeMap baselineCacheIRStubCodes_;
+
   public:
+    MOZ_MUST_USE bool init(JSContext* cx);
+    void sweep(FreeOp* fop);
+
+    void addSizeOfIncludingThis(mozilla::MallocSizeOf mallocSizeOf,
+                                size_t* jitZone,
+                                size_t* baselineStubsOptimized,
+                                size_t* cachedCFG) const;
+
     OptimizedICStubSpace* optimizedStubSpace() {
         return &optimizedStubSpace_;
     }
     CFGSpace* cfgSpace() {
         return &cfgSpace_;
+    }
+
+    JitCode* getBaselineCacheIRStubCode(const CacheIRStubKey::Lookup& key,
+                                        CacheIRStubInfo** stubInfo) {
+        auto p = baselineCacheIRStubCodes_.lookup(key);
+        if (p) {
+            *stubInfo = p->key().stubInfo.get();
+            return p->value();
+        }
+        *stubInfo = nullptr;
+        return nullptr;
+    }
+    MOZ_MUST_USE bool putBaselineCacheIRStubCode(const CacheIRStubKey::Lookup& lookup,
+                                                 CacheIRStubKey& key,
+                                                 JitCode* stubCode)
+    {
+        auto p = baselineCacheIRStubCodes_.lookupForAdd(lookup);
+        MOZ_ASSERT(!p);
+        return baselineCacheIRStubCodes_.add(p, Move(key), stubCode);
     }
 
     CacheIRStubInfo* getIonCacheIRStubInfo(const CacheIRStubKey::Lookup& key) {
@@ -432,16 +475,17 @@ class JitZone
     }
 };
 
+enum class BailoutReturnStub {
+    GetProp,
+    SetProp,
+    Call,
+    New,
+    Count
+};
+
 class JitCompartment
 {
     friend class JitActivation;
-
-    template<typename Key>
-    struct IcStubCodeMapGCPolicy {
-        static bool needsSweep(Key*, ReadBarrieredJitCode* value) {
-            return IsAboutToBeFinalized(value);
-        }
-    };
 
     // Map ICStub keys to ICStub shared code objects.
     using ICStubCodeMap = GCHashMap<uint32_t,
@@ -451,19 +495,19 @@ class JitCompartment
                                     IcStubCodeMapGCPolicy<uint32_t>>;
     ICStubCodeMap* stubCodes_;
 
-    // Map ICStub keys to ICStub shared code objects.
-    using CacheIRStubCodeMap = GCHashMap<CacheIRStubKey,
-                                         ReadBarrieredJitCode,
-                                         CacheIRStubKey,
-                                         RuntimeAllocPolicy,
-                                         IcStubCodeMapGCPolicy<CacheIRStubKey>>;
-    CacheIRStubCodeMap* cacheIRStubCodes_;
-
     // Keep track of offset into various baseline stubs' code at return
     // point from called script.
-    void* baselineCallReturnAddrs_[2];
-    void* baselineGetPropReturnAddr_;
-    void* baselineSetPropReturnAddr_;
+    struct BailoutReturnStubInfo
+    {
+        void* addr;
+        uint32_t key;
+
+        BailoutReturnStubInfo() : addr(nullptr), key(0) { }
+        BailoutReturnStubInfo(void* addr_, uint32_t key_) : addr(addr_), key(key_) { }
+    };
+    mozilla::EnumeratedArray<BailoutReturnStub,
+                             BailoutReturnStub::Count,
+                             BailoutReturnStubInfo> bailoutReturnStubInfo_;
 
     // Stubs to concatenate two strings inline, or perform RegExp calls inline.
     // These bake in zone and compartment specific pointers and can't be stored
@@ -509,7 +553,7 @@ class JitCompartment
     }
 
     JitCode* getStubCode(uint32_t key) {
-        ICStubCodeMap::AddPtr p = stubCodes_->lookupForAdd(key);
+        ICStubCodeMap::Ptr p = stubCodes_->lookup(key);
         if (p)
             return p->value();
         return nullptr;
@@ -522,50 +566,15 @@ class JitCompartment
         }
         return true;
     }
-    JitCode* getCacheIRStubCode(const CacheIRStubKey::Lookup& key, CacheIRStubInfo** stubInfo) {
-        CacheIRStubCodeMap::Ptr p = cacheIRStubCodes_->lookup(key);
-        if (p) {
-            *stubInfo = p->key().stubInfo.get();
-            return p->value();
-        }
-        *stubInfo = nullptr;
-        return nullptr;
+    void initBailoutReturnAddr(void* addr, uint32_t key, BailoutReturnStub kind) {
+        MOZ_ASSERT(bailoutReturnStubInfo_[kind].addr == nullptr);
+        bailoutReturnStubInfo_[kind] = BailoutReturnStubInfo { addr, key };
     }
-    MOZ_MUST_USE bool putCacheIRStubCode(const CacheIRStubKey::Lookup& lookup, CacheIRStubKey& key,
-                                         JitCode* stubCode)
-    {
-        CacheIRStubCodeMap::AddPtr p = cacheIRStubCodes_->lookupForAdd(lookup);
-        MOZ_ASSERT(!p);
-        return cacheIRStubCodes_->add(p, Move(key), stubCode);
-    }
-    void initBaselineCallReturnAddr(void* addr, bool constructing) {
-        MOZ_ASSERT(baselineCallReturnAddrs_[constructing] == nullptr);
-        baselineCallReturnAddrs_[constructing] = addr;
-    }
-    void* baselineCallReturnAddr(bool constructing) {
-        MOZ_ASSERT(baselineCallReturnAddrs_[constructing] != nullptr);
-        return baselineCallReturnAddrs_[constructing];
-    }
-    void initBaselineGetPropReturnAddr(void* addr) {
-        MOZ_ASSERT(baselineGetPropReturnAddr_ == nullptr);
-        baselineGetPropReturnAddr_ = addr;
-    }
-    void* baselineGetPropReturnAddr() {
-        MOZ_ASSERT(baselineGetPropReturnAddr_ != nullptr);
-        return baselineGetPropReturnAddr_;
-    }
-    void initBaselineSetPropReturnAddr(void* addr) {
-        MOZ_ASSERT(baselineSetPropReturnAddr_ == nullptr);
-        baselineSetPropReturnAddr_ = addr;
-    }
-    void* baselineSetPropReturnAddr() {
-        MOZ_ASSERT(baselineSetPropReturnAddr_ != nullptr);
-        return baselineSetPropReturnAddr_;
+    void* bailoutReturnAddr(BailoutReturnStub kind) {
+        MOZ_ASSERT(bailoutReturnStubInfo_[kind].addr);
+        return bailoutReturnStubInfo_[kind].addr;
     }
 
-    void toggleBarriers(bool enabled);
-
-  public:
     JitCompartment();
     ~JitCompartment();
 

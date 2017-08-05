@@ -155,10 +155,10 @@ var FullZoom = {
     let token = this._getBrowserToken(browser);
     this._cps2.getByDomainAndName(browser.currentURI.spec, this.name, ctxt, {
       handleResult() { hasPref = true; },
-      handleCompletion: function() {
+      handleCompletion: () => {
         if (!hasPref && token.isCurrent)
           this._applyPrefToZoom(undefined, browser);
-      }.bind(this)
+      }
     });
   },
 
@@ -224,14 +224,14 @@ var FullZoom = {
     let token = this._getBrowserToken(browser);
     this._cps2.getByDomainAndName(aURI.spec, this.name, ctxt, {
       handleResult(resultPref) { value = resultPref.value; },
-      handleCompletion: function() {
+      handleCompletion: () => {
         if (!token.isCurrent) {
           this._notifyOnLocationChange(browser);
           return;
         }
         this._applyPrefToZoom(value, browser,
                               this._notifyOnLocationChange.bind(this, browser));
-      }.bind(this)
+      }
     });
   },
 
@@ -287,7 +287,6 @@ var FullZoom = {
       if (token.isCurrent) {
         ZoomManager.setZoomForBrowser(browser, value === undefined ? 1 : value);
         this._ignorePendingZoomAccesses(browser);
-        Services.obs.notifyObservers(browser, "browser-fullZoom:zoomReset", "");
       }
     });
     this._removePref(browser);
@@ -355,7 +354,6 @@ var FullZoom = {
    * @param browser  The zoom of this browser will be saved.  Required.
    */
   _applyZoomToPref: function FullZoom__applyZoomToPref(browser) {
-    Services.obs.notifyObservers(browser, "browser-fullZoom:zoomChange", "");
     if (!this.siteSpecific ||
         gInPrintPreviewMode ||
         browser.isSyntheticDocument)
@@ -364,9 +362,9 @@ var FullZoom = {
     this._cps2.set(browser.currentURI.spec, this.name,
                    ZoomManager.getZoomForBrowser(browser),
                    this._loadContextFromBrowser(browser), {
-      handleCompletion: function() {
+      handleCompletion: () => {
         this._isNextContentPrefChangeInternal = true;
-      }.bind(this),
+      },
     });
   },
 
@@ -376,14 +374,13 @@ var FullZoom = {
    * @param browser  The zoom of this browser will be removed.  Required.
    */
   _removePref: function FullZoom__removePref(browser) {
-    Services.obs.notifyObservers(browser, "browser-fullZoom:zoomReset", "");
     if (browser.isSyntheticDocument)
       return;
     let ctxt = this._loadContextFromBrowser(browser);
     this._cps2.removeByDomainAndName(browser.currentURI.spec, this.name, ctxt, {
-      handleCompletion: function() {
+      handleCompletion: () => {
         this._isNextContentPrefChangeInternal = true;
-      }.bind(this),
+      },
     });
   },
 
@@ -514,13 +511,13 @@ var FullZoom = {
    */
   _notifyOnLocationChange: function FullZoom__notifyOnLocationChange(browser) {
     this._executeSoon(function() {
-      Services.obs.notifyObservers(browser, "browser-fullZoom:location-change", "");
+      Services.obs.notifyObservers(browser, "browser-fullZoom:location-change");
     });
   },
 
   _executeSoon: function FullZoom__executeSoon(callback) {
     if (!callback)
       return;
-    Services.tm.mainThread.dispatch(callback, Ci.nsIThread.DISPATCH_NORMAL);
+    Services.tm.dispatchToMainThread(callback);
   },
 };

@@ -19,6 +19,7 @@ EXPORTS.mozilla.dom.ipc += [
 ]
 
 EXPORTS.mozilla.dom += [
+    'CoalescedWheelData.h',
     'ContentBridgeChild.h',
     'ContentBridgeParent.h',
     'ContentChild.h',
@@ -49,6 +50,7 @@ EXPORTS.mozilla += [
 ]
 
 UNIFIED_SOURCES += [
+    'CoalescedWheelData.cpp',
     'ColorPickerParent.cpp',
     'ContentBridgeChild.cpp',
     'ContentBridgeParent.cpp',
@@ -56,7 +58,6 @@ UNIFIED_SOURCES += [
     'ContentPrefs.cpp',
     'ContentProcess.cpp',
     'ContentProcessManager.cpp',
-    'DatePickerParent.cpp',
     'FilePickerParent.cpp',
     'MemoryReportRequest.cpp',
     'nsIContentChild.cpp',
@@ -64,14 +65,12 @@ UNIFIED_SOURCES += [
     'PermissionMessageUtils.cpp',
     'PreallocatedProcessManager.cpp',
     'ProcessPriorityManager.cpp',
-    'ScreenManagerParent.cpp',
     'StructuredCloneData.cpp',
     'TabChild.cpp',
     'TabContext.cpp',
     'TabMessageUtils.cpp',
     'TabParent.cpp',
     'TelemetryScrollProbe.cpp',
-    'URLClassifierChild.cpp',
     'URLClassifierParent.cpp',
 ]
 
@@ -92,15 +91,14 @@ IPDL_SOURCES += [
     'PContentPermission.ipdlh',
     'PContentPermissionRequest.ipdl',
     'PCycleCollectWithLogs.ipdl',
-    'PDatePicker.ipdl',
     'PDocumentRenderer.ipdl',
     'PFilePicker.ipdl',
     'PPluginWidget.ipdl',
     'PProcessHangMonitor.ipdl',
-    'PScreenManager.ipdl',
     'PTabContext.ipdlh',
     'PURLClassifier.ipdl',
     'PURLClassifierInfo.ipdlh',
+    'PURLClassifierLocal.ipdl',
     'ServiceWorkerConfiguration.ipdlh',
 ]
 
@@ -159,7 +157,7 @@ if CONFIG['OS_ARCH'] != 'WINNT':
 
 DEFINES['BIN_SUFFIX'] = '"%s"' % CONFIG['BIN_SUFFIX']
 
-if CONFIG['MOZ_WIDGET_TOOLKIT'] in ('android', 'gtk2', 'gonk'):
+if CONFIG['MOZ_WIDGET_TOOLKIT'] in ('android', 'gtk2'):
     DEFINES['MOZ_ENABLE_FREETYPE'] = True
 
 if CONFIG['MOZ_TOOLKIT_SEARCH']:

@@ -83,10 +83,10 @@ void nsFramesetDrag::UnSet()
 /*******************************************************************************
  * nsHTMLFramesetBorderFrame
  ******************************************************************************/
-class nsHTMLFramesetBorderFrame : public nsLeafFrame
+class nsHTMLFramesetBorderFrame final : public nsLeafFrame
 {
 public:
-  NS_DECL_FRAMEARENA_HELPERS
+  NS_DECL_FRAMEARENA_HELPERS(nsHTMLFramesetBorderFrame)
 
 #ifdef DEBUG_FRAME_DUMP
   virtual nsresult GetFrameName(nsAString& aResult) const override;
@@ -134,12 +134,11 @@ protected:
 /*******************************************************************************
  * nsHTMLFramesetBlankFrame
  ******************************************************************************/
-class nsHTMLFramesetBlankFrame : public nsLeafFrame
+class nsHTMLFramesetBlankFrame final : public nsLeafFrame
 {
 public:
-  NS_DECL_QUERYFRAME_TARGET(nsHTMLFramesetBlankFrame)
   NS_DECL_QUERYFRAME
-  NS_DECL_FRAMEARENA_HELPERS
+  NS_DECL_FRAMEARENA_HELPERS(nsHTMLFramesetBlankFrame)
 
 #ifdef DEBUG_FRAME_DUMP
   virtual nsresult GetFrameName(nsAString& aResult) const override
@@ -158,7 +157,10 @@ public:
                           nsReflowStatus&          aStatus) override;
 
 protected:
-  explicit nsHTMLFramesetBlankFrame(nsStyleContext* aContext) : nsLeafFrame(aContext) {}
+  explicit nsHTMLFramesetBlankFrame(nsStyleContext* aContext)
+    : nsLeafFrame(aContext, kClassID)
+  {}
+
   virtual ~nsHTMLFramesetBlankFrame();
   virtual nscoord GetIntrinsicISize() override;
   virtual nscoord GetIntrinsicBSize() override;
@@ -174,7 +176,7 @@ bool    nsHTMLFramesetFrame::gDragInProgress = false;
 #define DEFAULT_BORDER_WIDTH_PX 6
 
 nsHTMLFramesetFrame::nsHTMLFramesetFrame(nsStyleContext* aContext)
-  : nsContainerFrame(aContext)
+  : nsContainerFrame(aContext, kClassID)
 {
   mNumRows             = 0;
   mNumCols             = 0;
@@ -335,7 +337,7 @@ nsHTMLFramesetFrame::Init(nsIContent*       aContent,
   for (int blankX = mChildCount; blankX < numCells; blankX++) {
     RefPtr<nsStyleContext> pseudoStyleContext;
     pseudoStyleContext = shell->StyleSet()->
-      ResolveAnonymousBoxStyle(nsCSSAnonBoxes::framesetBlank, mStyleContext);
+      ResolveNonInheritingAnonymousBoxStyle(nsCSSAnonBoxes::framesetBlank);
 
     // XXX the blank frame is using the content of its parent - at some point it
     // should just have null content, if we support that
@@ -911,8 +913,7 @@ nsHTMLFramesetFrame::Reflow(nsPresContext*           aPresContext,
 
         RefPtr<nsStyleContext> pseudoStyleContext;
         pseudoStyleContext = styleSet->
-          ResolveAnonymousBoxStyle(nsCSSAnonBoxes::horizontalFramesetBorder,
-                                   mStyleContext);
+          ResolveNonInheritingAnonymousBoxStyle(nsCSSAnonBoxes::horizontalFramesetBorder);
 
         borderFrame = new (shell) nsHTMLFramesetBorderFrame(pseudoStyleContext,
                                                             borderWidth,
@@ -941,8 +942,7 @@ nsHTMLFramesetFrame::Reflow(nsPresContext*           aPresContext,
 
             RefPtr<nsStyleContext> pseudoStyleContext;
             pseudoStyleContext = styleSet->
-              ResolveAnonymousBoxStyle(nsCSSAnonBoxes::verticalFramesetBorder,
-                                       mStyleContext);
+              ResolveNonInheritingAnonymousBoxStyle(nsCSSAnonBoxes::verticalFramesetBorder);
 
             borderFrame = new (shell) nsHTMLFramesetBorderFrame(pseudoStyleContext,
                                                                 borderWidth,
@@ -1093,12 +1093,6 @@ nsHTMLFramesetFrame::Reflow(nsPresContext*           aPresContext,
   NS_FRAME_SET_TRUNCATION(aStatus, aReflowInput, aDesiredSize);
 }
 
-nsIAtom*
-nsHTMLFramesetFrame::GetType() const
-{
-  return nsGkAtoms::frameSetFrame;
-}
-
 #ifdef DEBUG_FRAME_DUMP
 nsresult
 nsHTMLFramesetFrame::GetFrameName(nsAString& aResult) const
@@ -1106,13 +1100,6 @@ nsHTMLFramesetFrame::GetFrameName(nsAString& aResult) const
   return MakeFrameName(NS_LITERAL_STRING("Frameset"), aResult);
 }
 #endif
-
-bool
-nsHTMLFramesetFrame::IsLeaf() const
-{
-  // We handle constructing our kids manually
-  return true;
-}
 
 bool
 nsHTMLFramesetFrame::CanResize(bool aVertical,
@@ -1340,9 +1327,12 @@ NS_IMPL_FRAMEARENA_HELPERS(nsHTMLFramesetFrame)
  ******************************************************************************/
 nsHTMLFramesetBorderFrame::nsHTMLFramesetBorderFrame(nsStyleContext* aContext,
                                                      int32_t aWidth,
-                                                     bool    aVertical,
-                                                     bool    aVisibility)
-  : nsLeafFrame(aContext), mWidth(aWidth), mVertical(aVertical), mVisibility(aVisibility)
+                                                     bool aVertical,
+                                                     bool aVisibility)
+  : nsLeafFrame(aContext, kClassID)
+  , mWidth(aWidth)
+  , mVertical(aVertical)
+  , mVisibility(aVisibility)
 {
    mCanResize    = true;
    mColor        = NO_COLOR;

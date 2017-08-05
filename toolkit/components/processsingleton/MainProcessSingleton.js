@@ -21,7 +21,7 @@ MainProcessSingleton.prototype = {
   logConsoleMessage(message) {
     let logMsg = message.data;
     logMsg.wrappedJSObject = logMsg;
-    Services.obs.notifyObservers(logMsg, "console-api-log-event", null);
+    Services.obs.notifyObservers(logMsg, "console-api-log-event");
   },
 
   // Called when a webpage calls window.external.AddSearchProvider
@@ -67,7 +67,7 @@ MainProcessSingleton.prototype = {
   observe(subject, topic, data) {
     switch (topic) {
     case "app-startup": {
-      Services.obs.addObserver(this, "xpcom-shutdown", false);
+      Services.obs.addObserver(this, "xpcom-shutdown");
 
       // Load this script early so that console.* is initialized
       // before other frame scripts.
@@ -75,6 +75,7 @@ MainProcessSingleton.prototype = {
       Services.ppmm.loadProcessScript("chrome://global/content/process-content.js", true);
       Services.ppmm.addMessageListener("Console:Log", this.logConsoleMessage);
       Services.mm.addMessageListener("Search:AddEngine", this.addSearchEngine);
+      Services.ppmm.loadProcessScript("resource:///modules/ContentObservers.js", true);
       break;
     }
 

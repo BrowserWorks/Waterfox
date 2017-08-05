@@ -8,78 +8,154 @@
 #include <inttypes.h>
 #include "gfxPrefs.h"
 #include "LayersLogging.h"
+#include "mozilla/layers/ScrollingLayersHelper.h"
+#include "mozilla/layers/StackingContextHelper.h"
 #include "mozilla/layers/WebRenderBridgeChild.h"
 #include "mozilla/webrender/WebRenderTypes.h"
+#include "UnitTransforms.h"
 
 namespace mozilla {
 namespace layers {
 
 void
-WebRenderContainerLayer::RenderLayer()
+WebRenderContainerLayer::ClearAnimations()
 {
-  WrScrollFrameStackingContextGenerator scrollFrames(this);
 
+  if (!GetAnimations().IsEmpty()) {
+    mManager->AsWebRenderLayerManager()->
+      AddCompositorAnimationsIdForDiscard(GetCompositorAnimationsId());
+  }
+
+  Layer::ClearAnimations();
+}
+
+void
+WebRenderContainerLayer::UpdateTransformDataForAnimation()
+{
+  for (Animation& animation : mAnimations) {
+    if (animation.property() == eCSSProperty_transform) {
+      TransformData& transformData = animation.data().get_TransformData();
+      transformData.inheritedXScale() = GetInheritedXScale();
+      transformData.inheritedYScale() = GetInheritedYScale();
+      transformData.hasPerspectiveParent() =
+        GetParent() && GetParent()->GetTransformIsPerspective();
+    }
+  }
+}
+
+void
+WebRenderContainerLayer::RenderLayer(wr::DisplayListBuilder& aBuilder,
+                                     const StackingContextHelper& aSc)
+{
   nsTArray<LayerPolygon> children = SortChildrenBy3DZOrder(SortMode::WITHOUT_GEOMETRY);
+
   gfx::Matrix4x4 transform = GetTransform();
-  gfx::Rect relBounds = VisibleBoundsRelativeToParent();
-  if (!transform.IsIdentity()) {
-    // WR will only apply the 'translate' of the transform, so we need to do the scale/rotation manually.
-    gfx::Matrix4x4 boundTransform = transform;
-    boundTransform._41 = 0.0f;
-    boundTransform._42 = 0.0f;
-    boundTransform._43 = 0.0f;
-    relBounds.MoveTo(boundTransform.TransformPoint(relBounds.TopLeft()));
+  gfx::Matrix4x4* transformForSC = &transform;
+  float opacity = GetLocalOpacity();
+  float* opacityForSC = &opacity;
+  uint64_t animationsId = 0;
+
+  if (gfxPrefs::WebRenderOMTAEnabled() &&
+      !GetAnimations().IsEmpty()) {
+    MOZ_ASSERT(GetCompositorAnimationsId());
+
+    OptionalOpacity opacityForCompositor = void_t();
+    OptionalTransform transformForCompositor = void_t();
+
+    // Update opacity as nullptr in stacking context if there exists
+    // opacity animation, the opacity value will be resolved
+    // after animation sampling on the compositor
+    if (HasOpacityAnimation()) {
+      opacityForSC = nullptr;
+      // Pass default opacity to compositor in case gecko fails to
+      // get animated value after animation sampling.
+      opacityForCompositor = opacity;
+    }
+
+    // Update transfrom as nullptr in stacking context if there exists
+    // transform animation, the transform value will be resolved
+    // after animation sampling on the compositor
+    if (HasTransformAnimation()) {
+      transformForSC = nullptr;
+      // Pass default transform to compositor in case gecko fails to
+      // get animated value after animation sampling.
+      transformForCompositor = transform;
+      UpdateTransformDataForAnimation();
+    }
+
+    animationsId = GetCompositorAnimationsId();
+    OpAddCompositorAnimations
+      anim(CompositorAnimations(GetAnimations(), animationsId),
+           transformForCompositor, opacityForCompositor);
+    WrBridge()->AddWebRenderParentCommand(anim);
   }
 
-  gfx::Rect overflow(0, 0, relBounds.width, relBounds.height);
-  WrMixBlendMode mixBlendMode = wr::ToWrMixBlendMode(GetMixBlendMode());
-  Maybe<WrImageMask> mask = buildMaskLayer();
+  // If APZ is enabled and this layer is a scroll thumb, then it might need
+  // to move in the compositor to represent the async scroll position. So we
+  // ensure that there is an animations id set on it, we will use this to give
+  // WebRender updated transforms for composition.
+  if (WrManager()->AsyncPanZoomEnabled() &&
+      GetScrollThumbData().mDirection != ScrollDirection::NONE) {
+    // A scroll thumb better not have a transform animation already or we're
+    // going to end up clobbering it with APZ animating it too.
+    MOZ_ASSERT(transformForSC);
 
-  if (gfxPrefs::LayersDump()) {
-    printf_stderr("ContainerLayer %p using bounds=%s, overflow=%s, transform=%s, mix-blend-mode=%s\n",
-                  this->GetLayer(),
-                  Stringify(relBounds).c_str(),
-                  Stringify(overflow).c_str(),
-                  Stringify(transform).c_str(),
-                  Stringify(mixBlendMode).c_str());
+    EnsureAnimationsId();
+    animationsId = GetCompositorAnimationsId();
+    // We need to set the transform in the stacking context to null for it to
+    // pick up and install the animation id.
+    transformForSC = nullptr;
   }
 
-  WrBridge()->AddWebRenderCommand(
-    OpDPPushStackingContext(wr::ToWrRect(relBounds),
-                            wr::ToWrRect(overflow),
-                            mask,
-                            GetLocalOpacity(),
-                            GetLayer()->GetAnimations(),
-                            transform,
-                            mixBlendMode,
-                            FrameMetrics::NULL_SCROLL_ID));
+  if (transformForSC && transform.IsIdentity()) {
+    // If the transform is an identity transform, strip it out so that WR
+    // doesn't turn this stacking context into a reference frame, as it
+    // affects positioning. Bug 1345577 tracks a better fix.
+    transformForSC = nullptr;
+  }
+
+  nsTArray<WrFilterOp> filters;
+  for (const CSSFilter& filter : this->GetFilterChain()) {
+    filters.AppendElement(wr::ToWrFilterOp(filter));
+  }
+
+  ScrollingLayersHelper scroller(this, aBuilder, aSc);
+  StackingContextHelper sc(aSc, aBuilder, this, animationsId, opacityForSC, transformForSC, filters);
+
+  LayerRect rect = Bounds();
+  DumpLayerInfo("ContainerLayer", rect);
+
+  Maybe<WrImageMask> mask = BuildWrMaskLayer(&sc);
+  aBuilder.PushClip(sc.ToRelativeWrRect(rect), mask.ptrOr(nullptr));
+
   for (LayerPolygon& child : children) {
     if (child.layer->IsBackfaceHidden()) {
       continue;
     }
-    ToWebRenderLayer(child.layer)->RenderLayer();
+    ToWebRenderLayer(child.layer)->RenderLayer(aBuilder, sc);
   }
-  WrBridge()->AddWebRenderCommand(
-    OpDPPopStackingContext());
+  aBuilder.PopClip();
 }
 
 void
-WebRenderRefLayer::RenderLayer()
+WebRenderRefLayer::RenderLayer(wr::DisplayListBuilder& aBuilder,
+                               const StackingContextHelper& aSc)
 {
-  WrScrollFrameStackingContextGenerator scrollFrames(this);
+  ScrollingLayersHelper scroller(this, aBuilder, aSc);
 
-  gfx::Rect relBounds = TransformedVisibleBoundsRelativeToParent();
-  gfx::Matrix4x4 transform;// = GetTransform();
+  ParentLayerRect bounds = GetLocalTransformTyped().TransformBounds(Bounds());
+  // As with WebRenderTextLayer, because we don't push a stacking context for
+  // this layer, WR doesn't know about the transform on this layer. Therefore
+  // we need to apply that transform to the bounds before we pass it on to WR.
+  // The conversion from ParentLayerPixel to LayerPixel below is a result of
+  // changing the reference layer from "this layer" to the "the layer that
+  // created aSc".
+  LayerRect rect = ViewAs<LayerPixel>(bounds,
+      PixelCastJustification::MovingDownToChildren);
+  DumpLayerInfo("RefLayer", rect);
 
-  if (gfxPrefs::LayersDump()) {
-    printf_stderr("RefLayer %p (%" PRIu64 ") using bounds/overflow=%s, transform=%s\n",
-                  this->GetLayer(),
-                  mId,
-                  Stringify(relBounds).c_str(),
-                  Stringify(transform).c_str());
-  }
-
-  WrBridge()->AddWebRenderCommand(OpDPPushIframe(wr::ToWrRect(relBounds), wr::ToWrRect(relBounds), wr::AsPipelineId(mId)));
+  WrClipRegionToken clipRegion = aBuilder.PushClipRegion(aSc.ToRelativeWrRect(rect));
+  aBuilder.PushIFrame(aSc.ToRelativeWrRect(rect), clipRegion, wr::AsPipelineId(mId));
 }
 
 } // namespace layers

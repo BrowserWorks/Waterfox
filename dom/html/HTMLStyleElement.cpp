@@ -171,21 +171,23 @@ HTMLStyleElement::UnbindFromTree(bool aDeep, bool aNullParent)
 
 nsresult
 HTMLStyleElement::AfterSetAttr(int32_t aNameSpaceID, nsIAtom* aName,
-                               const nsAttrValue* aValue, bool aNotify)
+                               const nsAttrValue* aValue,
+                               const nsAttrValue* aOldValue, bool aNotify)
 {
   if (aNameSpaceID == kNameSpaceID_None) {
     if (aName == nsGkAtoms::title ||
         aName == nsGkAtoms::media ||
         aName == nsGkAtoms::type) {
       UpdateStyleSheetInternal(nullptr, nullptr, true);
-    } else if (aName == nsGkAtoms::scoped) {
+    } else if (aName == nsGkAtoms::scoped &&
+               OwnerDoc()->IsScopedStyleEnabled()) {
       bool isScoped = aValue;
       UpdateStyleSheetScopedness(isScoped);
     }
   }
 
   return nsGenericHTMLElement::AfterSetAttr(aNameSpaceID, aName, aValue,
-                                            aNotify);
+                                            aOldValue, aNotify);
 }
 
 NS_IMETHODIMP
@@ -241,7 +243,8 @@ HTMLStyleElement::GetStyleSheetInfo(nsAString& aTitle,
 
   GetAttr(kNameSpaceID_None, nsGkAtoms::type, aType);
 
-  *aIsScoped = HasAttr(kNameSpaceID_None, nsGkAtoms::scoped);
+  *aIsScoped = HasAttr(kNameSpaceID_None, nsGkAtoms::scoped) &&
+               OwnerDoc()->IsScopedStyleEnabled();
 
   nsAutoString mimeType;
   nsAutoString notUsed;

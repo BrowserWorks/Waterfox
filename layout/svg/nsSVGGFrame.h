@@ -15,25 +15,22 @@ class nsSVGGFrame : public nsSVGDisplayContainerFrame
 {
   friend nsIFrame*
   NS_NewSVGGFrame(nsIPresShell* aPresShell, nsStyleContext* aContext);
-protected:
   explicit nsSVGGFrame(nsStyleContext* aContext)
-    : nsSVGDisplayContainerFrame(aContext) {}
+    : nsSVGGFrame(aContext, kClassID) {}
+
+protected:
+  nsSVGGFrame(nsStyleContext* aContext, nsIFrame::ClassID aID)
+    : nsSVGDisplayContainerFrame(aContext, aID)
+  {}
 
 public:
-  NS_DECL_FRAMEARENA_HELPERS
+  NS_DECL_FRAMEARENA_HELPERS(nsSVGGFrame)
 
 #ifdef DEBUG
   virtual void Init(nsIContent*       aContent,
                     nsContainerFrame* aParent,
                     nsIFrame*         aPrevInFlow) override;
 #endif
-
-  /**
-   * Get the "type" of the frame
-   *
-   * @see nsGkAtoms::svgGFrame
-   */
-  virtual nsIAtom* GetType() const override;
 
 #ifdef DEBUG_FRAME_DUMP
   virtual nsresult GetFrameName(nsAString& aResult) const override
@@ -47,7 +44,7 @@ public:
                                     nsIAtom*        aAttribute,
                                     int32_t         aModType) override;
 
-  // nsISVGChildFrame interface:
+  // nsSVGDisplayableFrame interface:
   virtual void NotifySVGChanged(uint32_t aFlags) override;
 
   // nsSVGContainerFrame methods:

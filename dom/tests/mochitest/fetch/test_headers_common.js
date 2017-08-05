@@ -77,17 +77,44 @@ function TestCoreBehavior(headers, name) {
   headers.append(name, "bar");
 
   checkHas(headers, name, "Has the header");
-  var expected = (start ? start.concat(",bar") : "bar");
+  var expected = (start ? start.concat(", bar") : "bar");
   checkGet(headers, name, expected, "Retrieve all headers for name");
 
   headers.append(name, "baz");
   checkHas(headers, name, "Has the header");
-  expected = (start ? start.concat(",bar,baz") : "bar,baz");
+  expected = (start ? start.concat(", bar, baz") : "bar, baz");
   checkGet(headers, name, expected, "Retrieve all headers for name");
 
   headers.set(name, "snafu");
   checkHas(headers, name, "Has the header after set");
   checkGet(headers, name, "snafu", "Retrieve all headers after set");
+
+  const value_bam = "boom";
+  let testHTTPWhitespace = ["\t", "\n", "\r", " "];
+  while (testHTTPWhitespace.length != 0) {
+    headers.delete(name);
+
+    let char = testHTTPWhitespace.shift();
+    headers.set(name, char);
+    checkGet(headers, name, "",
+             "Header value " + char +
+             " should be normalized before checking and throwing");
+    headers.delete(name);
+
+    let valueFront = char + value_bam;
+    headers.set(name, valueFront);
+    checkGet(headers, name, value_bam,
+             "Header value " + valueFront +
+             " should be normalized before checking and throwing");
+
+    headers.delete(name);
+
+    let valueBack = value_bam + char;
+    headers.set(name, valueBack);
+    checkGet(headers, name, value_bam,
+             "Header value " + valueBack +
+             " should be normalized before checking and throwing");
+  }
 
   headers.delete(name.toUpperCase());
   checkNotHas(headers, name, "Does not have the header after delete");
@@ -101,11 +128,11 @@ function TestCoreBehavior(headers, name) {
   }, TypeError, "Append invalid header name should throw TypeError.");
 
   shouldThrow(function() {
-    headers.append(name, "bam\n");
+    headers.append(name, "ba\nm");
   }, TypeError, "Append invalid header value should throw TypeError.");
 
   shouldThrow(function() {
-    headers.append(name, "bam\n\r");
+    headers.append(name, "ba\rm");
   }, TypeError, "Append invalid header value should throw TypeError.");
 
   ok(!headers.guard, "guard should be undefined in content");
@@ -151,7 +178,7 @@ function TestFilledHeaders() {
     ["uts", "321"]
   ]);
   checkGet(filled, "zxy", "987", "Has first sequence filled key");
-  checkGet(filled, "xwv", "654,abc", "Has second sequence filled key");
+  checkGet(filled, "xwv", "654, abc", "Has second sequence filled key");
   checkGet(filled, "uts", "321", "Has third sequence filled key");
   TestCoreBehavior(filled, "xwv");
 

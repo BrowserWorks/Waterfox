@@ -44,6 +44,7 @@
 #include "builtin/MapObject.h"
 #include "js/Date.h"
 #include "js/GCHashTable.h"
+#include "vm/RegExpObject.h"
 #include "vm/SavedFrame.h"
 #include "vm/SharedArrayObject.h"
 #include "vm/TypedArrayObject.h"
@@ -1227,6 +1228,11 @@ JSStructuredCloneWriter::writeSharedArrayBuffer(HandleObject obj)
         return false;
     }
 
+    // We must not transfer buffer pointers cross-process.  The cloneDataPolicy
+    // should guard against this; check that it does.
+
+    MOZ_RELEASE_ASSERT(scope <= JS::StructuredCloneScope::SameProcessDifferentThread);
+
     Rooted<SharedArrayBufferObject*> sharedArrayBuffer(context(), &CheckedUnwrap(obj)->as<SharedArrayBufferObject>());
     SharedArrayRawBuffer* rawbuf = sharedArrayBuffer->rawBufferObject();
 
@@ -1436,13 +1442,15 @@ JSStructuredCloneWriter::traverseSavedFrame(HandleObject obj)
         return false;
 
     auto name = savedFrame->getFunctionDisplayName();
-    context()->markAtom(name);
+    if (name)
+        context()->markAtom(name);
     val = name ? StringValue(name) : NullValue();
     if (!startWrite(val))
         return false;
 
     auto cause = savedFrame->getAsyncCause();
-    context()->markAtom(cause);
+    if (cause)
+        context()->markAtom(cause);
     val = cause ? StringValue(cause) : NullValue();
     if (!startWrite(val))
         return false;
@@ -1481,7 +1489,7 @@ JSStructuredCloneWriter::startWrite(HandleValue v)
             return false;
 
         if (cls == ESClass::RegExp) {
-            RegExpGuard re(context());
+            RootedRegExpShared re(context());
             if (!RegExpToShared(context(), obj, &re))
                 return false;
             return out.writePair(SCTAG_REGEXP_OBJECT, re->getFlags()) &&
@@ -1961,6 +1969,11 @@ JSStructuredCloneReader::readSharedArrayBuffer(uint32_t nbytes, MutableHandleVal
         return false;
     }
 
+    // We must not transfer buffer pointers cross-process.  The cloneDataPolicy
+    // in the sender should guard against this; check that it does.
+
+    MOZ_RELEASE_ASSERT(storedScope <= JS::StructuredCloneScope::SameProcessDifferentThread);
+
     // The new object will have a new reference to the rawbuf.
 
     if (!rawbuf->addReference()) {
@@ -2113,8 +2126,8 @@ JSStructuredCloneReader::startRead(MutableHandleValue vp)
         if (!atom)
             return false;
 
-        RegExpObject* reobj = RegExpObject::create(context(), atom, flags, nullptr,
-                                                   context()->tempLifoAlloc());
+        RegExpObject* reobj = RegExpObject::create(context(), atom, flags, nullptr, nullptr,
+                                                   context()->tempLifoAlloc(), GenericObject);
         if (!reobj)
             return false;
         vp.setObject(*reobj);

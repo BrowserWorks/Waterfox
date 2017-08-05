@@ -8,13 +8,13 @@
 #include "TimerThread.h"
 
 #include "nsThreadUtils.h"
-#include "plarena.h"
 #include "pratom.h"
 
 #include "nsIObserverService.h"
 #include "nsIServiceManager.h"
 #include "mozilla/Services.h"
 #include "mozilla/ChaosMode.h"
+#include "mozilla/ArenaAllocator.h"
 #include "mozilla/ArrayUtils.h"
 #include "mozilla/BinarySearch.h"
 
@@ -34,7 +34,8 @@ TimerThread::TimerThread() :
   mShutdown(false),
   mWaiting(false),
   mNotified(false),
-  mSleeping(false)
+  mSleeping(false),
+  mAllowedEarlyFiringMicroseconds(0)
 {
 }
 
@@ -92,7 +93,7 @@ namespace {
 // thread.  Because TimerEventAllocator has its own lock, contention over that
 // lock is limited to the allocation and deallocation of nsTimerEvent objects.
 //
-// Because this allocator is layered over PLArenaPool, it never shrinks -- even
+// Because this is layered over ArenaAllocator, it never shrinks -- even
 // "freed" nsTimerEvents aren't truly freed, they're just put onto a free-list
 // for later recycling.  So the amount of memory consumed will always be equal
 // to the high-water mark consumption.  But nsTimerEvents are small and it's
@@ -107,21 +108,20 @@ private:
     FreeEntry* mNext;
   };
 
-  PLArenaPool mPool;
+  ArenaAllocator<4096> mPool;
   FreeEntry* mFirstFree;
   mozilla::Monitor mMonitor;
 
 public:
   TimerEventAllocator()
-    : mFirstFree(nullptr)
+    : mPool()
+    , mFirstFree(nullptr)
     , mMonitor("TimerEventAllocator")
   {
-    PL_InitArenaPool(&mPool, "TimerEventPool", 4096, /* align = */ 0);
   }
 
   ~TimerEventAllocator()
   {
-    PL_FinishArenaPool(&mPool);
   }
 
   void* Alloc(size_t aSize);
@@ -220,10 +220,7 @@ TimerEventAllocator::Alloc(size_t aSize)
     p = mFirstFree;
     mFirstFree = mFirstFree->mNext;
   } else {
-    PL_ARENA_ALLOCATE(p, &mPool, aSize);
-    if (!p) {
-      return nullptr;
-    }
+    p = mPool.Allocate(aSize, fallible);
   }
 
   return p;
@@ -332,7 +329,7 @@ TimerThread::Shutdown()
     return NS_ERROR_NOT_INITIALIZED;
   }
 
-  nsTArray<nsTimerImpl*> timers;
+  nsTArray<UniquePtr<Entry>> timers;
   {
     // lock scope
     MonitorAutoLock lock(mMonitor);
@@ -351,15 +348,15 @@ TimerThread::Shutdown()
     // might potentially call some code reentering the same lock
     // that leads to unexpected behavior or deadlock.
     // See bug 422472.
-    timers.AppendElements(mTimers);
-    mTimers.Clear();
+    mTimers.SwapElements(timers);
   }
 
   uint32_t timersCount = timers.Length();
   for (uint32_t i = 0; i < timersCount; i++) {
-    nsTimerImpl* timer = timers[i];
-    timer->Cancel();
-    ReleaseTimerInternal(timer);
+    RefPtr<nsTimerImpl> timer = timers[i]->Take();
+    if (timer) {
+      timer->Cancel();
+    }
   }
 
   mThread->Shutdown();    // wait for the thread to die
@@ -391,7 +388,7 @@ struct IntervalComparator
 NS_IMETHODIMP
 TimerThread::Run()
 {
-  PR_SetCurrentThreadName("Timer");
+  NS_SetCurrentThreadName("Timer");
 
   MonitorAutoLock lock(mMonitor);
 
@@ -411,7 +408,7 @@ TimerThread::Run()
 
   // Half of the amount of microseconds needed to get positive PRIntervalTime.
   // We use this to decide how to round our wait times later
-  int32_t halfMicrosecondsIntervalResolution = usIntervalResolution / 2;
+  mAllowedEarlyFiringMicroseconds = usIntervalResolution / 2;
   bool forceRunNextTimer = false;
 
   while (!mShutdown) {
@@ -430,12 +427,11 @@ TimerThread::Run()
     } else {
       waitFor = PR_INTERVAL_NO_TIMEOUT;
       TimeStamp now = TimeStamp::Now();
-      nsTimerImpl* timer = nullptr;
+
+      RemoveLeadingCanceledTimersInternal();
 
       if (!mTimers.IsEmpty()) {
-        timer = mTimers[0];
-
-        if (now >= timer->mTimeout || forceRunThisTimer) {
+        if (now >= mTimers[0]->Value()->mTimeout || forceRunThisTimer) {
     next:
           // NB: AddRef before the Release under RemoveTimerInternal to avoid
           // mRefCnt passing through zero, in case all other refs than the one
@@ -443,9 +439,8 @@ TimerThread::Run()
           // must be racing with us, blocked in gThread->RemoveTimer waiting
           // for TimerThread::mMonitor, under nsTimerImpl::Release.
 
-          RefPtr<nsTimerImpl> timerRef(timer);
-          RemoveTimerInternal(timer);
-          timer = nullptr;
+          RefPtr<nsTimerImpl> timerRef(mTimers[0]->Take());
+          RemoveFirstTimerInternal();
 
           MOZ_LOG(GetTimerLog(), LogLevel::Debug,
                  ("Timer thread woke up %fms from when it was supposed to\n",
@@ -487,16 +482,16 @@ TimerThread::Run()
         }
       }
 
-      if (!mTimers.IsEmpty()) {
-        timer = mTimers[0];
+      RemoveLeadingCanceledTimersInternal();
 
-        TimeStamp timeout = timer->mTimeout;
+      if (!mTimers.IsEmpty()) {
+        TimeStamp timeout = mTimers[0]->Value()->mTimeout;
 
         // Don't wait at all (even for PR_INTERVAL_NO_WAIT) if the next timer
         // is due now or overdue.
         //
         // Note that we can only sleep for integer values of a certain
-        // resolution. We use halfMicrosecondsIntervalResolution, calculated
+        // resolution. We use mAllowedEarlyFiringMicroseconds, calculated
         // before, to do the optimal rounding (i.e., of how to decide what
         // interval is so small we should not wait at all).
         double microseconds = (timeout - now).ToMilliseconds() * 1000;
@@ -513,7 +508,7 @@ TimerThread::Run()
           forceRunNextTimer = true;
         }
 
-        if (microseconds < halfMicrosecondsIntervalResolution) {
+        if (microseconds < mAllowedEarlyFiringMicroseconds) {
           forceRunNextTimer = false;
           goto next; // round down; execute event now
         }
@@ -561,13 +556,12 @@ TimerThread::AddTimer(nsTimerImpl* aTimer)
   }
 
   // Add the timer to our list.
-  int32_t i = AddTimerInternal(aTimer);
-  if (i < 0) {
+  if(!AddTimerInternal(aTimer)) {
     return NS_ERROR_OUT_OF_MEMORY;
   }
 
   // Awaken the timer thread.
-  if (mWaiting && i == 0) {
+  if (mWaiting && mTimers[0]->Value() == aTimer) {
     mNotified = true;
     mMonitor.Notify();
   }
@@ -596,25 +590,96 @@ TimerThread::RemoveTimer(nsTimerImpl* aTimer)
   return NS_OK;
 }
 
+TimeStamp
+TimerThread::FindNextFireTimeForCurrentThread(TimeStamp aDefault, uint32_t aSearchBound)
+{
+  MonitorAutoLock lock(mMonitor);
+  TimeStamp timeStamp = aDefault;
+  uint32_t index = 0;
+
+#ifdef DEBUG
+  TimeStamp firstTimeStamp;
+  Entry* initialFirstEntry = nullptr;
+  if (!mTimers.IsEmpty()) {
+    initialFirstEntry = mTimers[0].get();
+    firstTimeStamp = mTimers[0]->Timeout();
+  }
+#endif
+
+  auto end = mTimers.end();
+  while(end != mTimers.begin()) {
+    nsTimerImpl* timer = mTimers[0]->Value();
+    if (timer) {
+      if (timer->mTimeout > aDefault) {
+        timeStamp = aDefault;
+        break;
+      }
+
+      // Don't yield to timers created with the *_LOW_PRIORITY type.
+      if (!timer->IsLowPriority()) {
+        bool isOnCurrentThread = false;
+        nsresult rv = timer->mEventTarget->IsOnCurrentThread(&isOnCurrentThread);
+        if (NS_SUCCEEDED(rv) && isOnCurrentThread) {
+          timeStamp = timer->mTimeout;
+          break;
+        }
+      }
+
+      if (++index > aSearchBound) {
+        // Track the currently highest timeout so that we can bail out when we
+        // reach the bound or when we find a timer for the current thread.
+        // This won't give accurate information if we stop before finding
+        // any timer for the current thread, but at least won't report too
+        // long idle period.
+        timeStamp = timer->mTimeout;
+        break;
+      }
+    }
+
+    std::pop_heap(mTimers.begin(), end, Entry::UniquePtrLessThan);
+    --end;
+  }
+
+  while (end != mTimers.end()) {
+    ++end;
+    std::push_heap(mTimers.begin(), end, Entry::UniquePtrLessThan);
+  }
+
+#ifdef DEBUG
+  if (!mTimers.IsEmpty()) {
+    if (firstTimeStamp != mTimers[0]->Timeout()) {
+      TimeStamp now = TimeStamp::Now();
+      printf_stderr("firstTimeStamp %f, mTimers[0]->Timeout() %f, "
+                    "initialFirstTimer %p, current first %p\n",
+                    (firstTimeStamp - now).ToMilliseconds(),
+                    (mTimers[0]->Timeout() - now).ToMilliseconds(),
+                    initialFirstEntry, mTimers[0].get());
+    }
+  }
+  MOZ_ASSERT_IF(!mTimers.IsEmpty(), firstTimeStamp == mTimers[0]->Timeout());
+#endif
+
+  return timeStamp;
+}
+
 // This function must be called from within a lock
-int32_t
+bool
 TimerThread::AddTimerInternal(nsTimerImpl* aTimer)
 {
   mMonitor.AssertCurrentThreadOwns();
   if (mShutdown) {
-    return -1;
+    return false;
   }
 
   TimeStamp now = TimeStamp::Now();
 
-  TimerAdditionComparator c(now, aTimer);
-  nsTimerImpl** insertSlot = mTimers.InsertElementSorted(aTimer, c);
-
-  if (!insertSlot) {
-    return -1;
+  UniquePtr<Entry>* entry = mTimers.AppendElement(
+    MakeUnique<Entry>(now, aTimer->mTimeout, aTimer), mozilla::fallible);
+  if (!entry) {
+    return false;
   }
 
-  NS_ADDREF(aTimer);
+  std::push_heap(mTimers.begin(), mTimers.end(), Entry::UniquePtrLessThan);
 
 #ifdef MOZ_TASK_TRACER
   // Caller of AddTimer is the parent task of its timer event, so we store the
@@ -622,29 +687,55 @@ TimerThread::AddTimerInternal(nsTimerImpl* aTimer)
   aTimer->GetTLSTraceInfo();
 #endif
 
-  return insertSlot - mTimers.Elements();
+  return true;
 }
 
 bool
 TimerThread::RemoveTimerInternal(nsTimerImpl* aTimer)
 {
   mMonitor.AssertCurrentThreadOwns();
-  if (!mTimers.RemoveElement(aTimer)) {
+  if (!aTimer || !aTimer->mHolder) {
     return false;
   }
-
-  ReleaseTimerInternal(aTimer);
+  aTimer->mHolder->Forget(aTimer);
   return true;
 }
 
 void
-TimerThread::ReleaseTimerInternal(nsTimerImpl* aTimer)
+TimerThread::RemoveLeadingCanceledTimersInternal()
 {
-  if (!mShutdown) {
-    // copied to a local array before releasing in shutdown
-    mMonitor.AssertCurrentThreadOwns();
+  mMonitor.AssertCurrentThreadOwns();
+
+  // Move all canceled timers from the front of the list to
+  // the back of the list using std::pop_heap().  We do this
+  // without actually removing them from the list so we can
+  // modify the nsTArray in a single bulk operation.
+  auto sortedEnd = mTimers.end();
+  while (sortedEnd != mTimers.begin() && !mTimers[0]->Value()) {
+    std::pop_heap(mTimers.begin(), sortedEnd, Entry::UniquePtrLessThan);
+    --sortedEnd;
   }
-  NS_RELEASE(aTimer);
+
+  // If there were no canceled timers then we are done.
+  if (sortedEnd == mTimers.end()) {
+    return;
+  }
+
+  // Finally, remove the canceled timers from the back of the
+  // nsTArray.  Note, since std::pop_heap() uses iterators
+  // we must convert to nsTArray indices and number of
+  // elements here.
+  mTimers.RemoveElementsAt(sortedEnd - mTimers.begin(),
+                           mTimers.end() - sortedEnd);
+}
+
+void
+TimerThread::RemoveFirstTimerInternal()
+{
+  mMonitor.AssertCurrentThreadOwns();
+  MOZ_ASSERT(!mTimers.IsEmpty());
+  std::pop_heap(mTimers.begin(), mTimers.end(), Entry::UniquePtrLessThan);
+  mTimers.RemoveElementAt(mTimers.Length() - 1);
 }
 
 already_AddRefed<nsTimerImpl>
@@ -739,4 +830,10 @@ TimerThread::Observe(nsISupports* /* aSubject */, const char* aTopic,
   }
 
   return NS_OK;
+}
+
+uint32_t
+TimerThread::AllowedEarlyFiringMicroseconds() const
+{
+  return mAllowedEarlyFiringMicroseconds;
 }

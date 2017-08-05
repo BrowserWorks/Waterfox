@@ -16,7 +16,7 @@ XPCOMUtils.defineLazyModuleGetter(this, "RecentWindow",
                                   "resource:///modules/RecentWindow.jsm");
 XPCOMUtils.defineLazyModuleGetter(this, "CustomizableUI",
                                   "resource:///modules/CustomizableUI.jsm");
-XPCOMUtils.defineLazyModuleGetter(this, "AddonManager",
+XPCOMUtils.defineLazyModuleGetter(this, "AddonManagerPrivate",
                                   "resource://gre/modules/AddonManager.jsm");
 XPCOMUtils.defineLazyModuleGetter(this, "ReaderMode",
                                   "resource://gre/modules/ReaderMode.jsm");
@@ -128,40 +128,13 @@ function CreatePocketWidget(reason) {
       CustomizableUI.moveWidgetWithinArea("pocket-button", bmbtn + 1);
     }
   }
-
-  // Uninstall the Pocket social provider if it exists, but only if we haven't
-  // already uninstalled it in this manner.  That way the user can reinstall
-  // it if they prefer it without its being uninstalled every time they start
-  // the browser.
-  let SocialService;
-  try {
-    // For Firefox 51+
-    SocialService = Cu.import("resource:///modules/SocialService.jsm", {}).SocialService;
-  } catch (e) {
-    SocialService = Cu.import("resource://gre/modules/SocialService.jsm", {}).SocialService;
-  }
-
-  let origin = "https://getpocket.com";
-  SocialService.getProvider(origin, provider => {
-    if (provider) {
-      let pref = "social.backup.getpocket-com";
-      if (!Services.prefs.prefHasUserValue(pref)) {
-        let str = Cc["@mozilla.org/supports-string;1"].
-                  createInstance(Ci.nsISupportsString);
-        str.data = JSON.stringify(provider.manifest);
-        Services.prefs.setComplexValue(pref, Ci.nsISupportsString, str);
-        SocialService.uninstallProvider(origin, () => {});
-      }
-    }
-  });
-
 }
 
 // PocketContextMenu
 // When the context menu is opened check if we need to build and enable pocket UI.
 var PocketContextMenu = {
   init() {
-    Services.obs.addObserver(this, "on-build-contextmenu", false);
+    Services.obs.addObserver(this, "on-build-contextmenu");
   },
   shutdown() {
     Services.obs.removeObserver(this, "on-build-contextmenu");
@@ -480,21 +453,20 @@ function prefObserver(aSubject, aTopic, aData) {
 }
 
 function startup(data, reason) {
-  AddonManager.getAddonByID("isreaditlater@ideashower.com", addon => {
-    if (addon && addon.isActive)
-      return;
-    setDefaultPrefs();
-    // migrate enabled pref
-    if (Services.prefs.prefHasUserValue("browser.pocket.enabled")) {
-      Services.prefs.setBoolPref("extensions.pocket.enabled", Services.prefs.getBoolPref("browser.pocket.enabled"));
-      Services.prefs.clearUserPref("browser.pocket.enabled");
-    }
-    // watch pref change and enable/disable if necessary
-    Services.prefs.addObserver("extensions.pocket.enabled", prefObserver, false);
-    if (!Services.prefs.getBoolPref("extensions.pocket.enabled"))
-      return;
-    PocketOverlay.startup(reason);
-  });
+  if (AddonManagerPrivate.addonIsActive("isreaditlater@ideashower.com"))
+    return;
+
+  setDefaultPrefs();
+  // migrate enabled pref
+  if (Services.prefs.prefHasUserValue("browser.pocket.enabled")) {
+    Services.prefs.setBoolPref("extensions.pocket.enabled", Services.prefs.getBoolPref("browser.pocket.enabled"));
+    Services.prefs.clearUserPref("browser.pocket.enabled");
+  }
+  // watch pref change and enable/disable if necessary
+  Services.prefs.addObserver("extensions.pocket.enabled", prefObserver);
+  if (!Services.prefs.getBoolPref("extensions.pocket.enabled"))
+    return;
+  PocketOverlay.startup(reason);
 }
 
 function shutdown(data, reason) {

@@ -372,8 +372,10 @@ GeometryEditorHighlighter.prototype = extend(AutoRefreshHighlighter.prototype, {
 
     let { pageListenerTarget } = this.highlighterEnv;
 
-    DOM_EVENTS.forEach(type =>
-      pageListenerTarget.removeEventListener(type, this));
+    if (pageListenerTarget) {
+      DOM_EVENTS.forEach(type =>
+        pageListenerTarget.removeEventListener(type, this));
+    }
 
     AutoRefreshHighlighter.prototype.destroy.call(this);
 
@@ -389,11 +391,16 @@ GeometryEditorHighlighter.prototype = extend(AutoRefreshHighlighter.prototype, {
       return;
     }
 
-    const { type, pageX, pageY } = event;
+    const { target, type, pageX, pageY } = event;
 
     switch (type) {
       case "pagehide":
-        this.destroy();
+        // If a page hide event is triggered for current window's highlighter, hide the
+        // highlighter.
+        if (target.defaultView === this.win) {
+          this.destroy();
+        }
+
         break;
       case "mousedown":
         // The mousedown event is intended only for the handler
@@ -516,7 +523,7 @@ GeometryEditorHighlighter.prototype = extend(AutoRefreshHighlighter.prototype, {
     let node = this.currentNode;
     this.markup.scaleRootElement(node, this.ID_CLASS_PREFIX + "root");
 
-    setIgnoreLayoutChanges(false, node.ownerDocument.documentElement);
+    setIgnoreLayoutChanges(false, this.highlighterEnv.document.documentElement);
     return true;
   },
 
@@ -596,8 +603,7 @@ GeometryEditorHighlighter.prototype = extend(AutoRefreshHighlighter.prototype, {
 
     this.definedProperties.clear();
 
-    setIgnoreLayoutChanges(false,
-      this.currentNode.ownerDocument.documentElement);
+    setIgnoreLayoutChanges(false, this.highlighterEnv.document.documentElement);
   },
 
   hideArrows: function () {

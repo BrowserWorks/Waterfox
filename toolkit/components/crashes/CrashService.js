@@ -6,41 +6,100 @@
 
 const {classes: Cc, interfaces: Ci, utils: Cu} = Components;
 
+Cu.import("resource://gre/modules/AppConstants.jsm", this);
 Cu.import("resource://gre/modules/AsyncShutdown.jsm", this);
 Cu.import("resource://gre/modules/KeyValueParser.jsm");
 Cu.import("resource://gre/modules/osfile.jsm", this);
 Cu.import("resource://gre/modules/Promise.jsm", this);
 Cu.import("resource://gre/modules/Services.jsm", this);
-Cu.import("resource://gre/modules/Task.jsm", this);
 Cu.import("resource://gre/modules/XPCOMUtils.jsm", this);
 
 /**
- * Process the .extra file associated with the crash id and return the
- * annotations it contains in an object.
+ * Run the minidump analyzer tool to gather stack traces from the minidump. The
+ * stack traces will be stored in the .extra file under the StackTraces= entry.
  *
- * @param crashID {string} Crash ID. Likely a UUID.
+ * @param minidumpPath {string} The path to the minidump file
  *
- * @return {Promise} A promise that resolves to an object holding the crash
- *         annotations, this object may be empty if no annotations were found.
+ * @returns {Promise} A promise that gets resolved once minidump analysis has
+ *          finished.
  */
-function processExtraFile(id) {
-  let cr = Cc["@mozilla.org/toolkit/crash-reporter;1"]
-             .getService(Components.interfaces.nsICrashReporter);
-  let extraPath = OS.Path.join(cr.minidumpPath.path, id + ".extra");
+function runMinidumpAnalyzer(minidumpPath) {
+  return new Promise((resolve, reject) => {
+    const binSuffix = AppConstants.platform === "win" ? ".exe" : "";
+    const exeName = "minidump-analyzer" + binSuffix;
 
-  return Task.spawn(function* () {
-    try {
-      let decoder = new TextDecoder();
-      let extraFile = yield OS.File.read(extraPath);
-      let extraData = decoder.decode(extraFile);
+    let exe = Services.dirsvc.get("GreBinD", Ci.nsIFile);
 
-      return parseKeyValuePairs(extraData);
-    } catch (e) {
-      Cu.reportError(e);
+    if (AppConstants.platform === "macosx") {
+        exe.append("crashreporter.app");
+        exe.append("Contents");
+        exe.append("MacOS");
     }
 
-    return {};
+    exe.append(exeName);
+
+    let args = [ minidumpPath ];
+    let process = Cc["@mozilla.org/process/util;1"]
+                    .createInstance(Ci.nsIProcess);
+    process.init(exe);
+    process.startHidden = true;
+    process.runAsync(args, args.length, (subject, topic, data) => {
+      switch (topic) {
+        case "process-finished":
+          resolve();
+          break;
+        default:
+          reject(topic);
+          break;
+      }
+    });
   });
+}
+
+/**
+ * Computes the SHA256 hash of a minidump file
+ *
+ * @param minidumpPath {string} The path to the minidump file
+ *
+ * @returns {Promise} A promise that resolves to the hash value of the
+ *          minidump.
+ */
+function computeMinidumpHash(minidumpPath) {
+  return (async function() {
+    let minidumpData = await OS.File.read(minidumpPath);
+    let hasher = Cc["@mozilla.org/security/hash;1"]
+                   .createInstance(Ci.nsICryptoHash);
+    hasher.init(hasher.SHA256);
+    hasher.update(minidumpData, minidumpData.length);
+
+    let hashBin = hasher.finish(false);
+    let hash = "";
+
+    for (let i = 0; i < hashBin.length; i++) {
+      // Every character in the hash string contains a byte of the hash data
+      hash += ("0" + hashBin.charCodeAt(i).toString(16)).slice(-2);
+    }
+
+    return hash;
+  })();
+}
+
+/**
+ * Process the given .extra file and return the annotations it contains in an
+ * object.
+ *
+ * @param extraPath {string} The path to the .extra file
+ *
+ * @return {Promise} A promise that resolves to an object holding the crash
+ *         annotations.
+ */
+function processExtraFile(extraPath) {
+  return (async function() {
+    let decoder = new TextDecoder();
+    let extraData = await OS.File.read(extraPath);
+
+    return parseKeyValuePairs(decoder.decode(extraData));
+  })();
 }
 
 /**
@@ -89,13 +148,38 @@ CrashService.prototype = Object.freeze({
       throw new Error("Unrecognized CRASH_TYPE: " + crashType);
     }
 
+    let blocker = (async function() {
+      let metadata = {};
+      let hash = null;
+
+      try {
+        let cr = Cc["@mozilla.org/toolkit/crash-reporter;1"]
+                   .getService(Components.interfaces.nsICrashReporter);
+        let minidumpPath = cr.getMinidumpForID(id).path;
+        let extraPath = cr.getExtraFileForID(id).path;
+
+        await runMinidumpAnalyzer(minidumpPath);
+        metadata = await processExtraFile(extraPath);
+        hash = await computeMinidumpHash(minidumpPath);
+      } catch (e) {
+        Cu.reportError(e);
+      }
+
+      if (hash) {
+        metadata.MinidumpSha256Hash = hash;
+      }
+
+      await Services.crashmanager.addCrash(processType, crashType, id,
+                                           new Date(), metadata);
+    })();
+
     AsyncShutdown.profileBeforeChange.addBlocker(
-      "CrashService waiting for content crash ping to be sent",
-      processExtraFile(id).then(metadata => {
-        return Services.crashmanager.addCrash(processType, crashType, id,
-                                              new Date(), metadata)
-      })
+      "CrashService waiting for content crash ping to be sent", blocker
     );
+
+    blocker.then(AsyncShutdown.profileBeforeChange.removeBlocker(blocker));
+
+    return blocker;
   },
 
   observe(subject, topic, data) {

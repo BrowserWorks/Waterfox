@@ -11,9 +11,9 @@
 #include "mozilla/EventDispatcher.h"
 #include "mozilla/EventStateManager.h"
 #include "mozilla/EventStates.h"
-#include "mozilla/dom/AutocompleteErrorEvent.h"
 #include "mozilla/dom/nsCSPUtils.h"
 #include "mozilla/dom/nsCSPContext.h"
+#include "mozilla/dom/nsMixedContentBlocker.h"
 #include "mozilla/dom/HTMLFormControlsCollection.h"
 #include "mozilla/dom/HTMLFormElementBinding.h"
 #include "mozilla/Move.h"
@@ -31,7 +31,6 @@
 #include "nsAutoPtr.h"
 #include "nsTArray.h"
 #include "nsIMutableArray.h"
-#include "nsIFormAutofillContentService.h"
 #include "mozilla/BinarySearch.h"
 #include "nsQueryObject.h"
 
@@ -191,32 +190,37 @@ HTMLFormElement::GetElements(nsIDOMHTMLCollection** aElements)
 }
 
 nsresult
-HTMLFormElement::SetAttr(int32_t aNameSpaceID, nsIAtom* aName,
-                         nsIAtom* aPrefix, const nsAString& aValue,
-                         bool aNotify)
+HTMLFormElement::BeforeSetAttr(int32_t aNamespaceID, nsIAtom* aName,
+                               const nsAttrValueOrString* aValue, bool aNotify)
 {
-  if ((aName == nsGkAtoms::action || aName == nsGkAtoms::target) &&
-      aNameSpaceID == kNameSpaceID_None) {
-    if (mPendingSubmission) {
-      // aha, there is a pending submission that means we're in
-      // the script and we need to flush it. let's tell it
-      // that the event was ignored to force the flush.
-      // the second argument is not playing a role at all.
-      FlushPendingSubmission();
+  if (aNamespaceID == kNameSpaceID_None) {
+    if (aName == nsGkAtoms::action || aName == nsGkAtoms::target) {
+      // This check is mostly to preserve previous behavior.
+      if (aValue) {
+        if (mPendingSubmission) {
+          // aha, there is a pending submission that means we're in
+          // the script and we need to flush it. let's tell it
+          // that the event was ignored to force the flush.
+          // the second argument is not playing a role at all.
+          FlushPendingSubmission();
+        }
+        // Don't forget we've notified the password manager already if the
+        // page sets the action/target in the during submit. (bug 343182)
+        bool notifiedObservers = mNotifiedObservers;
+        ForgetCurrentSubmission();
+        mNotifiedObservers = notifiedObservers;
+      }
     }
-    // Don't forget we've notified the password manager already if the
-    // page sets the action/target in the during submit. (bug 343182)
-    bool notifiedObservers = mNotifiedObservers;
-    ForgetCurrentSubmission();
-    mNotifiedObservers = notifiedObservers;
   }
-  return nsGenericHTMLElement::SetAttr(aNameSpaceID, aName, aPrefix, aValue,
-                                       aNotify);
+
+  return nsGenericHTMLElement::BeforeSetAttr(aNamespaceID, aName, aValue,
+                                             aNotify);
 }
 
 nsresult
 HTMLFormElement::AfterSetAttr(int32_t aNameSpaceID, nsIAtom* aName,
-                              const nsAttrValue* aValue, bool aNotify)
+                              const nsAttrValue* aValue,
+                              const nsAttrValue* aOldValue, bool aNotify)
 {
   if (aName == nsGkAtoms::novalidate && aNameSpaceID == kNameSpaceID_None) {
     // Update all form elements states because they might be [no longer]
@@ -232,7 +236,8 @@ HTMLFormElement::AfterSetAttr(int32_t aNameSpaceID, nsIAtom* aName,
     }
   }
 
-  return nsGenericHTMLElement::AfterSetAttr(aNameSpaceID, aName, aValue, aNotify);
+  return nsGenericHTMLElement::AfterSetAttr(aNameSpaceID, aName, aValue,
+                                            aOldValue, aNotify);
 }
 
 NS_IMPL_STRING_ATTR(HTMLFormElement, AcceptCharset, acceptcharset)
@@ -283,31 +288,6 @@ HTMLFormElement::CheckValidity(bool* retVal)
 {
   *retVal = CheckValidity();
   return NS_OK;
-}
-
-void
-HTMLFormElement::RequestAutocomplete()
-{
-  bool dummy;
-  nsCOMPtr<nsIDOMWindow> window =
-    do_QueryInterface(OwnerDoc()->GetScriptHandlingObject(dummy));
-  nsCOMPtr<nsIFormAutofillContentService> formAutofillContentService =
-    do_GetService("@mozilla.org/formautofill/content-service;1");
-
-  if (!formAutofillContentService || !window) {
-    AutocompleteErrorEventInit init;
-    init.mBubbles = true;
-    init.mCancelable = false;
-    init.mReason = AutoCompleteErrorReason::Disabled;
-
-    RefPtr<AutocompleteErrorEvent> event =
-      AutocompleteErrorEvent::Constructor(this, NS_LITERAL_STRING("autocompleteerror"), init);
-
-    (new AsyncEventDispatcher(this, event))->PostDOMEvent();
-    return;
-  }
-
-  formAutofillContentService->RequestAutocomplete(this, window);
 }
 
 bool
@@ -386,7 +366,7 @@ CollectOrphans(nsINode* aRemovalRoot,
     if (node->HasFlag(MAYBE_ORPHAN_FORM_ELEMENT)) {
       node->UnsetFlags(MAYBE_ORPHAN_FORM_ELEMENT);
       if (!nsContentUtils::ContentIsDescendantOf(node, aRemovalRoot)) {
-        node->ClearForm(true);
+        node->ClearForm(true, false);
 
         // When a form control loses its form owner, its state can change.
         node->UpdateState(true);
@@ -907,6 +887,10 @@ HTMLFormElement::DoSecureToInsecureSubmitCheck(nsIURI* aActionURL,
     return NS_OK;
   }
 
+  if (nsMixedContentBlocker::IsPotentiallyTrustworthyLoopbackURL(aActionURL)) {
+    return NS_OK;
+  }
+
   nsCOMPtr<nsPIDOMWindowOuter> window = OwnerDoc()->GetWindow();
   if (!window) {
     return NS_ERROR_FAILURE;
@@ -1251,7 +1235,7 @@ HTMLFormElement::AddElement(nsGenericHTMLFormElement* aChild,
   AssertDocumentOrder(controlList, this);
 #endif
 
-  int32_t type = aChild->GetType();
+  int32_t type = aChild->ControlType();
 
   //
   // If it is a password control, and the password manager has not yet been
@@ -1352,7 +1336,7 @@ HTMLFormElement::RemoveElement(nsGenericHTMLFormElement* aChild,
   // Remove it from the radio group if it's a radio button
   //
   nsresult rv = NS_OK;
-  if (aChild->GetType() == NS_FORM_INPUT_RADIO) {
+  if (aChild->ControlType() == NS_FORM_INPUT_RADIO) {
     RefPtr<HTMLInputElement> radio =
       static_cast<HTMLInputElement*>(aChild);
     radio->WillRemoveFromRadioGroup();
@@ -1818,7 +1802,7 @@ HTMLFormElement::ImplicitSubmissionIsDisabled() const
   uint32_t length = mControls->mElements.Length();
   for (uint32_t i = 0; i < length && numDisablingControlsFound < 2; ++i) {
     if (mControls->mElements[i]->IsSingleLineTextControl(false) ||
-        mControls->mElements[i]->GetType() == NS_FORM_INPUT_NUMBER) {
+        mControls->mElements[i]->ControlType() == NS_FORM_INPUT_NUMBER) {
       numDisablingControlsFound++;
     }
   }
@@ -2024,7 +2008,7 @@ HTMLFormElement::SubmissionCanProceed(Element* aSubmitter)
     nsCOMPtr<nsIFormControl> fc = do_QueryInterface(aSubmitter);
     MOZ_ASSERT(fc);
 
-    uint32_t type = fc->GetType();
+    uint32_t type = fc->ControlType();
     MOZ_ASSERT(type == NS_FORM_INPUT_SUBMIT ||
                type == NS_FORM_INPUT_IMAGE ||
                type == NS_FORM_BUTTON_SUBMIT,
@@ -2225,7 +2209,7 @@ HTMLFormElement::GetNextRadioButton(const nsAString& aName,
       index = 0;
     }
     radio = HTMLInputElement::FromContentOrNull(radioGroup->Item(index));
-    isRadio = radio && radio->GetType() == NS_FORM_INPUT_RADIO;
+    isRadio = radio && radio->ControlType() == NS_FORM_INPUT_RADIO;
     if (!isRadio) {
       continue;
     }
@@ -2253,7 +2237,7 @@ HTMLFormElement::WalkRadioGroup(const nsAString& aName,
     uint32_t len = GetElementCount();
     for (uint32_t i = 0; i < len; i++) {
       control = GetElementAt(i);
-      if (control->GetType() == NS_FORM_INPUT_RADIO) {
+      if (control->ControlType() == NS_FORM_INPUT_RADIO) {
         nsCOMPtr<nsIContent> controlContent = do_QueryInterface(control);
         if (controlContent &&
             controlContent->AttrValueIs(kNameSpaceID_None, nsGkAtoms::name,
@@ -2275,7 +2259,7 @@ HTMLFormElement::WalkRadioGroup(const nsAString& aName,
   // If it's just a lone radio button, then select it.
   nsCOMPtr<nsIFormControl> formControl = do_QueryInterface(item);
   if (formControl) {
-    if (formControl->GetType() == NS_FORM_INPUT_RADIO) {
+    if (formControl->ControlType() == NS_FORM_INPUT_RADIO) {
       aVisitor->Visit(formControl);
     }
     return NS_OK;
@@ -2291,7 +2275,7 @@ HTMLFormElement::WalkRadioGroup(const nsAString& aName,
     nsCOMPtr<nsIDOMNode> node;
     nodeList->Item(i, getter_AddRefs(node));
     nsCOMPtr<nsIFormControl> formControl = do_QueryInterface(node);
-    if (formControl && formControl->GetType() == NS_FORM_INPUT_RADIO &&
+    if (formControl && formControl->ControlType() == NS_FORM_INPUT_RADIO &&
         !aVisitor->Visit(formControl)) {
       break;
     }

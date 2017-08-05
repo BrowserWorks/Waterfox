@@ -11,7 +11,6 @@
 #include "mozilla/dom/ScriptSettings.h"
 #include "mozilla/Preferences.h"
 #include "mozilla/Sprintf.h"
-#include "nsIDOMDataContainerEvent.h"
 #include "nsIDOMEvent.h"
 #include "nsIScriptSecurityManager.h"
 #include "nsIVariant.h"
@@ -641,6 +640,10 @@ IsCompressedTextureFormat(GLenum format)
     case LOCAL_GL_COMPRESSED_RGBA_S3TC_DXT1_EXT:
     case LOCAL_GL_COMPRESSED_RGBA_S3TC_DXT3_EXT:
     case LOCAL_GL_COMPRESSED_RGBA_S3TC_DXT5_EXT:
+    case LOCAL_GL_COMPRESSED_SRGB_S3TC_DXT1_EXT:
+    case LOCAL_GL_COMPRESSED_SRGB_ALPHA_S3TC_DXT1_EXT:
+    case LOCAL_GL_COMPRESSED_SRGB_ALPHA_S3TC_DXT3_EXT:
+    case LOCAL_GL_COMPRESSED_SRGB_ALPHA_S3TC_DXT5_EXT:
     case LOCAL_GL_ATC_RGB:
     case LOCAL_GL_ATC_RGBA_EXPLICIT_ALPHA:
     case LOCAL_GL_ATC_RGBA_INTERPOLATED_ALPHA:

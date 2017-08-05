@@ -15,16 +15,16 @@ namespace mozilla {
 enum class CSSPseudoElementType : uint8_t;
 } // namespace mozilla
 
-class nsProgressFrame : public nsContainerFrame,
-                        public nsIAnonymousContentCreator
+class nsProgressFrame final
+  : public nsContainerFrame
+  , public nsIAnonymousContentCreator
 {
   typedef mozilla::CSSPseudoElementType CSSPseudoElementType;
   typedef mozilla::dom::Element Element;
 
 public:
-  NS_DECL_QUERYFRAME_TARGET(nsProgressFrame)
   NS_DECL_QUERYFRAME
-  NS_DECL_FRAMEARENA_HELPERS
+  NS_DECL_FRAMEARENA_HELPERS(nsProgressFrame)
 
   explicit nsProgressFrame(nsStyleContext* aContext);
   virtual ~nsProgressFrame();
@@ -40,15 +40,11 @@ public:
                       const ReflowInput& aReflowInput,
                       nsReflowStatus&          aStatus) override;
 
-  virtual nsIAtom* GetType() const override;
-
 #ifdef DEBUG_FRAME_DUMP
   virtual nsresult GetFrameName(nsAString& aResult) const override {
     return MakeFrameName(NS_LITERAL_STRING("Progress"), aResult);
   }
 #endif
-
-  virtual bool IsLeaf() const override { return true; }
 
   // nsIAnonymousContentCreator
   virtual nsresult CreateAnonymousContent(nsTArray<ContentInfo>& aElements) override;

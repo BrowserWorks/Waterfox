@@ -25,6 +25,8 @@
 #include "nsCOMArray.h"
 #include "nsContentUtils.h"
 #include "mozilla/dom/nsMixedContentBlocker.h"
+#include "nsIContentSecurityPolicy.h"
+#include "mozilla/dom/TabGroup.h"
 
 using mozilla::LogLevel;
 
@@ -43,6 +45,8 @@ NS_NewContentPolicy(nsIContentPolicy **aResult)
 nsContentPolicy::nsContentPolicy()
     : mPolicies(NS_CONTENTPOLICY_CATEGORY)
     , mSimplePolicies(NS_SIMPLECONTENTPOLICY_CATEGORY)
+    , mMixedContentBlocker(do_GetService(NS_MIXEDCONTENTBLOCKER_CONTRACTID))
+    , mCSPService(do_GetService(CSPSERVICE_CONTRACTID))
 {
 }
 
@@ -116,25 +120,34 @@ nsContentPolicy::CheckPolicy(CPMethod          policyMethod,
     nsContentPolicyType externalType =
         nsContentUtils::InternalContentPolicyTypeToExternal(contentType);
 
-    nsCOMPtr<nsIContentPolicy> mixedContentBlocker =
-        do_GetService(NS_MIXEDCONTENTBLOCKER_CONTRACTID);
-
-    nsCOMPtr<nsIContentPolicy> cspService =
-      do_GetService(CSPSERVICE_CONTRACTID);
-
     /* 
      * Enumerate mPolicies and ask each of them, taking the logical AND of
      * their permissions.
      */
     nsresult rv;
-    nsCOMArray<nsIContentPolicy> entries;
-    mPolicies.GetEntries(entries);
+    const nsCOMArray<nsIContentPolicy>& entries = mPolicies.GetCachedEntries();
+
+    nsCOMPtr<nsPIDOMWindowOuter> window;
+    if (nsCOMPtr<nsINode> node = do_QueryInterface(requestingContext)) {
+        window = node->OwnerDoc()->GetWindow();
+    } else {
+        window = do_QueryInterface(requestingContext);
+    }
+
+    if (requestPrincipal) {
+        nsCOMPtr<nsIContentSecurityPolicy> csp;
+        requestPrincipal->GetCsp(getter_AddRefs(csp));
+        if (csp && window) {
+            csp->EnsureEventTarget(window->EventTargetFor(TaskCategory::Other));
+        }
+    }
+
     int32_t count = entries.Count();
     for (int32_t i = 0; i < count; i++) {
         /* check the appropriate policy */
         // Send internal content policy type to CSP and mixed content blocker
         nsContentPolicyType type = externalType;
-        if (mixedContentBlocker == entries[i] || cspService == entries[i]) {
+        if (mMixedContentBlocker == entries[i] || mCSPService == entries[i]) {
           type = contentType;
         }
         rv = (entries[i]->*policyMethod)(type, contentLocation,
@@ -150,12 +163,6 @@ nsContentPolicy::CheckPolicy(CPMethod          policyMethod,
 
     nsCOMPtr<nsIDOMElement> topFrameElement;
     bool isTopLevel = true;
-    nsCOMPtr<nsPIDOMWindowOuter> window;
-    if (nsCOMPtr<nsINode> node = do_QueryInterface(requestingContext)) {
-        window = node->OwnerDoc()->GetWindow();
-    } else {
-        window = do_QueryInterface(requestingContext);
-    }
 
     if (window) {
         nsCOMPtr<nsIDocShell> docShell = window->GetDocShell();
@@ -179,8 +186,8 @@ nsContentPolicy::CheckPolicy(CPMethod          policyMethod,
         }
     }
 
-    nsCOMArray<nsISimpleContentPolicy> simpleEntries;
-    mSimplePolicies.GetEntries(simpleEntries);
+    const nsCOMArray<nsISimpleContentPolicy>& simpleEntries =
+        mSimplePolicies.GetCachedEntries();
     count = simpleEntries.Count();
     for (int32_t i = 0; i < count; i++) {
         /* check the appropriate policy */

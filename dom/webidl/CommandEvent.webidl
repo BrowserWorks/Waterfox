@@ -4,11 +4,12 @@
  * You can obtain one at http://mozilla.org/MPL/2.0/.
  */
 
+[Func="IsChromeOrXBL"]
 interface CommandEvent : Event {
   readonly attribute DOMString? command;
 
   void initCommandEvent(DOMString type,
-                        boolean canBubble,
-                        boolean cancelable,
-                        DOMString? command);
+                        optional boolean canBubble = false,
+                        optional boolean cancelable = false,
+                        optional DOMString? command = null);
 };

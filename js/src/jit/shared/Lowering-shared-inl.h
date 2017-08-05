@@ -65,7 +65,8 @@ LIRGeneratorShared::define(details::LInstructionFixedDefsTempsHelper<1, X>* lir,
 }
 
 template <size_t X, size_t Y> void
-LIRGeneratorShared::defineFixed(LInstructionHelper<1, X, Y>* lir, MDefinition* mir, const LAllocation& output)
+LIRGeneratorShared::defineFixed(LInstructionHelper<1, X, Y>* lir, MDefinition* mir,
+                                const LAllocation& output)
 {
     LDefinition::Type type = LDefinition::TypeFrom(mir->type());
 
@@ -234,6 +235,7 @@ LIRGeneratorShared::defineReturn(LInstruction* lir, MDefinition* mir)
     lir->setMir(mir);
 
     MOZ_ASSERT(lir->isCall());
+    gen->setNeedsStaticStackAlignment();
 
     uint32_t vreg = getVirtualRegister();
 
@@ -484,6 +486,14 @@ LIRGeneratorShared::useRegisterOrConstantAtStart(MDefinition* mir)
     if (mir->isConstant())
         return LAllocation(mir->toConstant());
     return useRegisterAtStart(mir);
+}
+
+LAllocation
+LIRGeneratorShared::useRegisterOrZero(MDefinition* mir)
+{
+    if (mir->isConstant() && mir->toConstant()->isInt32(0))
+        return LAllocation();
+    return useRegister(mir);
 }
 
 LAllocation
@@ -807,6 +817,12 @@ LIRGeneratorShared::useInt64Fixed(MDefinition* mir, Register64 regs, bool useAtS
 #else
     return LInt64Allocation(LUse(regs.reg, vreg, useAtStart));
 #endif
+}
+
+LInt64Allocation
+LIRGeneratorShared::useInt64FixedAtStart(MDefinition* mir, Register64 regs)
+{
+    return useInt64Fixed(mir, regs, true);
 }
 
 LInt64Allocation

@@ -11,6 +11,7 @@ const { classes: Cc, interfaces: Ci, results: Cr, utils: Cu } = Components;
 Cu.import("resource://gre/modules/ctypes.jsm");
 Cu.import("resource://gre/modules/Services.jsm");
 Cu.import("resource://ppapi.js/opengles2-utils.jsm");
+Cu.importGlobalProperties(['URL']);
 
 const PP_OK = 0;
 const PP_OK_COMPLETIONPENDING = -1;
@@ -52,6 +53,12 @@ const PP_ERROR_ADDRESS_IN_USE = -108;
 const PP_ERROR_MESSAGE_TOO_BIG = -109;
 const PP_ERROR_NAME_NOT_RESOLVED = -110;
 
+// Point is defined as 1/72 of an inch (25.4mm)
+const POINT_PER_INCH = 72;
+const POINT_PER_MILLIMETER = POINT_PER_INCH / 25.4;
+
+const PRINT_FILE_NAME = "print.pdf";
+const PRINT_TEMP_KEY = "TmpD";
 
 const PP_Bool = {
   PP_FALSE: 0,
@@ -261,6 +268,26 @@ const PP_NetworkList_Type = {
   PP_NETWORKLIST_TYPE_CELLULAR: 3
 };
 
+const PP_PrintOrientation_Dev = {
+  PP_PRINTORIENTATION_NORMAL: 0,
+  PP_PRINTORIENTATION_ROTATED_90_CW: 1,
+  PP_PRINTORIENTATION_ROTATED_180: 2,
+  PP_PRINTORIENTATION_ROTATED_90_CCW: 3
+};
+
+const PP_PrintOutputFormat_Dev = {
+  PP_PRINTOUTPUTFORMAT_RASTER: 1 << 0,
+  PP_PRINTOUTPUTFORMAT_PDF: 1 << 1,
+  PP_PRINTOUTPUTFORMAT_POSTSCRIPT: 1 << 2,
+  PP_PRINTOUTPUTFORMAT_EMF: 1 << 3
+};
+
+const PP_PrintScalingOption_Dev = {
+  PP_PRINTSCALINGOPTION_NONE: 0,
+  PP_PRINTSCALINGOPTION_FIT_TO_PRINTABLE_AREA: 1,
+  PP_PRINTSCALINGOPTION_SOURCE_SIZE: 2
+};
+
 const PP_TextInput_Type_Dev = {
   PP_TEXTINPUT_TYPE_DEV_NONE: 0,
   PP_TEXTINPUT_TYPE_DEV_TEXT: 1,
@@ -329,6 +356,19 @@ const PR_TRUNCATE = 0x20;
 const PR_SYNC = 0x40;
 const PR_EXCL = 0x80;
 
+/* File mode bits */
+const PR_IRWXU = 0o700;  /* read, write, execute/search by owner */
+const PR_IRUSR = 0o400;  /* read permission, owner */
+const PR_IWUSR = 0o200;  /* write permission, owner */
+const PR_IXUSR = 0o100;  /* execute/search permission, owner */
+const PR_IRWXG = 0o070;  /* read, write, execute/search by group */
+const PR_IRGRP = 0o040;  /* read permission, group */
+const PR_IWGRP = 0o020;  /* write permission, group */
+const PR_IXGRP = 0o010;  /* execute/search permission, group */
+const PR_IRWXO = 0o007;  /* read, write, execute/search by others */
+const PR_IROTH = 0o004;  /* read permission, others */
+const PR_IWOTH = 0o002;  /* write permission, others */
+const PR_IXOTH = 0o001;  /* execute/search permission, others */
 
 class InterfaceMemberCall {
   constructor(interfaceName, memberName, args) {
@@ -894,6 +934,9 @@ class Graphics extends PP_Resource {
     super.destroy();
   }
   changeSize(width, height) {
+    let devicePixelRatio = this.instance.window.devicePixelRatio;
+    this.canvas.style.width = (width / devicePixelRatio) + "px";
+    this.canvas.style.height = (height / devicePixelRatio) + "px";
     this.canvas.width = width;
     this.canvas.height = height;
   }
@@ -1537,6 +1580,10 @@ class PPAPIInstance {
     this.cachedImageData = null;
     this.viewport = new PPAPIViewport(this);
     this.selectedText = "";
+    this.ppapiPrintSettings = {};
+    this.pageRangeInfo = {};
+
+    this.notifyHashChange(info.url);
 
     this.mm.addMessageListener("ppapi.js:fullscreenchange", (evt) => {
       this.viewport.notify({
@@ -1544,6 +1591,98 @@ class PPAPIInstance {
         fullscreen: evt.data.fullscreen
       });
     });
+
+    this.mm.addMessageListener("ppapipdf.js:hashchange", (evt) => {
+      this.notifyHashChange(evt.data.url);
+    });
+
+    this.mm.addMessageListener("ppapipdf.js:oncommand", (evt) => {
+      this.viewport.notify({
+        type: "command",
+        name: evt.data.name
+      });
+    });
+
+    this.mm.addMessageListener("ppapipdf.js:printsettingschanged", (evt) => {
+      // Convert trim print settings to ppapi print settings
+      let ps = evt.data.trimPrintSettings;
+      let point = (ps.paperSizeUnit == Ci.nsIPrintSettings.kPaperSizeInches)
+        ? POINT_PER_INCH : POINT_PER_MILLIMETER;
+      // Unit of margins are in inches but paper size could be inches or mm
+      this.ppapiPrintSettings.printable_area = {
+        point: {
+          x: ps.unwriteableMarginLeft * POINT_PER_INCH,
+          y: ps.unwriteableMarginTop * POINT_PER_INCH
+        },
+        size: {
+          width: ps.paperWidth * point - (ps.unwriteableMarginLeft +
+                 ps.unwriteableMarginRight) * POINT_PER_INCH,
+          height: ps.paperHeight * point - (ps.unwriteableMarginTop +
+                  ps.unwriteableMarginBottom) * POINT_PER_INCH
+        }
+      };
+      this.ppapiPrintSettings.content_area = {
+        point: {
+          x: ps.marginLeft * POINT_PER_INCH,
+          y: ps.marginTop * POINT_PER_INCH
+        },
+        size: {
+          width: ps.paperWidth * point - (ps.marginLeft +
+                 ps.marginRight) * POINT_PER_INCH,
+          height: ps.paperHeight * point - (ps.marginTop +
+                  ps.marginBottom) * POINT_PER_INCH
+        }
+      };
+      this.ppapiPrintSettings.paper_size = {
+        width: ps.paperWidth * point,
+        height: ps.paperHeight * point
+      };
+      // XXX The print dialog does not provide a way for user to set resolution
+      //     which causes us not able to access the resolution. So here we
+      //     workaround by setting resolution to a default value 0 and pass it
+      //     to PDFium for getting PDF file. It is fine to pass a unmeaningful
+      //     value of resolution when print as PDF.
+      this.ppapiPrintSettings.dpi = 0;
+      // XXX We only support kPortraitOrientation and kLandscapeOreintation,
+      //     otherwise we return directly.
+      switch (ps.orientation) {
+        case Ci.nsIPrintSettings.kPortraitOrientation:
+          this.ppapiPrintSettings.orientation =
+            PP_PrintOrientation_Dev.PP_PRINTORIENTATION_NORMAL;
+          break;
+        case Ci.nsIPrintSettings.kLandscapeOrientation:
+          this.ppapiPrintSettings.orientation =
+            PP_PrintOrientation_Dev.PP_PRINTORIENTATION_ROTATED_90_CW;
+          break;
+        default:
+          return;
+      }
+      this.ppapiPrintSettings.print_scaling_option = ps.shrinkToFit ?
+        PP_PrintScalingOption_Dev.PP_PRINTSCALINGOPTION_FIT_TO_PRINTABLE_AREA :
+        PP_PrintScalingOption_Dev.PP_PRINTSCALINGOPTION_NONE;
+      this.ppapiPrintSettings.grayscale = !ps.printInColor;
+      this.ppapiPrintSettings.format =
+        PP_PrintOutputFormat_Dev.PP_PRINTOUTPUTFORMAT_PDF;
+
+      // Store page range information
+      this.pageRangeInfo.printRange = ps.printRange;
+      this.pageRangeInfo.startPageRange = ps.startPageRange;
+      this.pageRangeInfo.endPageRange = ps.endPageRange;
+
+      let message = {type: 'print'};
+      this.viewportActionHandler(message);
+    });
+  }
+
+  notifyHashChange(url) {
+    let location = new URL(url);
+    if (location.hash) {
+      this.viewport.notify({
+        type: "hashChange",
+        // substring(1) for getting rid of the first '#' character
+        hash: location.hash.substring(1)
+      });
+    }
   }
 
   bindGraphics(graphicsDevice) {
@@ -1580,6 +1719,7 @@ class PPAPIInstance {
       let mouseEventInit = {
         altkey: event.altkey,
         button: event.button,
+        buttons: event.buttons,
         clientX: event.clientX - rect.left,
         clientY: event.clientY - rect.top,
         ctrlKey: event.ctrlKey,
@@ -1671,7 +1811,22 @@ class PPAPIInstance {
         this.mm.sendAsyncMessage("ppapi.js:setFullscreen", message.fullscreen);
         break;
       case 'save':
-        this.mm.sendAsyncMessage("ppapipdf.js:save");
+        this.mm.sendAsyncMessage("ppapipdf.js:save", {
+          url: this.info.url });
+        break;
+      case 'setHash':
+        this.mm.sendAsyncMessage("ppapipdf.js:setHash", message.hash);
+        break;
+      case 'startPrint':
+        // We need permission for showing print dialog to get print settings
+        this.mm.sendAsyncMessage("ppapipdf.js:getPrintSettings", {
+          url: this.info.url });
+        break;
+      case 'openLink':
+        this.mm.sendAsyncMessage("ppapipdf.js:openLink", {
+          url: message.url,
+          disposition: message.disposition
+        });
         break;
       case 'viewport':
       case 'rotateClockwise':
@@ -1680,6 +1835,7 @@ class PPAPIInstance {
       case 'getSelectedText':
       case 'getNamedDestination':
       case 'getPasswordComplete':
+      case 'print':
         let data = PP_Var.fromJSValue(new Dictionary(message), this);
         this.rt.call(new InterfaceMemberCall("PPP_Messaging;1.0", "HandleMessage",
           { instance: this, var: data }));
@@ -2978,25 +3134,37 @@ dump(`callFromJSON: < ${JSON.stringify(call)}\n`);
 
       if (event instanceof KeyboardInputEvent) {
         if (event.domEvent.location == event.domEvent.DOM_KEY_LOCATION_NUMPAD) {
-          modifiers &= PP_InputEvent_Modifier.PP_INPUTEVENT_MODIFIER_ISKEYPAD;
+          modifiers |= PP_InputEvent_Modifier.PP_INPUTEVENT_MODIFIER_ISKEYPAD;
         } else if (event.domEvent.location & event.domEvent.DOM_KEY_LOCATION_LEFT) {
-          modifiers &= PP_InputEvent_Modifier.PP_INPUTEVENT_MODIFIER_ISLEFT;
+          modifiers |= PP_InputEvent_Modifier.PP_INPUTEVENT_MODIFIER_ISLEFT;
         } else if (event.domEvent.location & event.domEvent.DOM_KEY_LOCATION_RIGHT) {
-          modifiers &= PP_InputEvent_Modifier.PP_INPUTEVENT_MODIFIER_ISRIGHT;
+          modifiers |= PP_InputEvent_Modifier.PP_INPUTEVENT_MODIFIER_ISRIGHT;
         }
 
         if (event.domEvent.repeat) {
-          modifiers &= PP_InputEvent_Modifier.PP_INPUTEVENT_MODIFIER_ISAUTOREPEAT;
+          modifiers |= PP_InputEvent_Modifier.PP_INPUTEVENT_MODIFIER_ISAUTOREPEAT;
         }
       } else if (event instanceof MouseInputEvent) {
-        if (event.domEvent.buttons && 0x01) {
-          modifiers &= PP_InputEvent_Modifier.PP_INPUTEVENT_MODIFIER_LEFTBUTTONDOWN;
+        if (event.domEvent.buttons & 0x01) {
+          modifiers |= PP_InputEvent_Modifier.PP_INPUTEVENT_MODIFIER_LEFTBUTTONDOWN;
         }
-        if (event.domEvent.buttons && 0x04) {
-          modifiers &= PP_InputEvent_Modifier.PP_INPUTEVENT_MODIFIER_MIDDLEBUTTONDOWN;
+        if (event.domEvent.buttons & 0x04) {
+          modifiers |= PP_InputEvent_Modifier.PP_INPUTEVENT_MODIFIER_MIDDLEBUTTONDOWN;
         }
-        if (event.domEvent.buttons && 0x02) {
-          modifiers &= PP_InputEvent_Modifier.PP_INPUTEVENT_MODIFIER_RIGHTBUTTONDOWN;
+        if (event.domEvent.buttons & 0x02) {
+          modifiers |= PP_InputEvent_Modifier.PP_INPUTEVENT_MODIFIER_RIGHTBUTTONDOWN;
+        }
+        if (event.domEvent.type == 'mouseup') {
+          // mouseup event indicates the key released only in domEvent.button
+          // rather than domEvent.buttons, but PDFium do use modifiers to
+          // determine which button is released. So we make it up here.
+          if (event.domEvent.button == 0) {
+            modifiers |= PP_InputEvent_Modifier.PP_INPUTEVENT_MODIFIER_LEFTBUTTONDOWN;
+          } else if (event.domEvent.button == 1) {
+            modifiers |= PP_InputEvent_Modifier.PP_INPUTEVENT_MODIFIER_MIDDLEBUTTONDOWN;
+          } else if (event.domEvent.button == 2) {
+            modifiers |= PP_InputEvent_Modifier.PP_INPUTEVENT_MODIFIER_RIGHTBUTTONDOWN;
+          }
         }
       }
 
@@ -3051,6 +3219,59 @@ dump(`callFromJSON: < ${JSON.stringify(call)}\n`);
       //return [new PP_Var(), { exception: PP_Var.fromJSValue(e) }];
     },
 
+    /**
+    * PP_Resource Create([in] PP_Instance instance,
+    *                    [in] PP_InputEvent_Type type,
+    *                    [in] PP_TimeTicks time_stamp,
+    *                    [in] uint32_t modifiers,
+    *                    [in] uint32_t key_code,
+    *                    [in] PP_Var character_text,
+    *                    [in] PP_Var code);
+    */
+    PPB_KeyboardInputEvent_Create: function(json) {
+      let instance = this.instances[json.instance];
+      let charCode = 0;
+      if (PP_VarType[json.character_text.type] ==
+          PP_VarType.PP_VARTYPE_STRING) {
+        charCode = String_PP_Var.getAsJSValue(json.character_text).charCodeAt(0);
+      }
+      let location = instance.window.KeyboardEvent.DOM_KEY_LOCATION_STANDARD;
+      if (PP_InputEvent_Modifier.PP_INPUTEVENT_MODIFIER_ISLEFT &
+          json.modifiers) {
+        location = instance.window.KeyboardEvent.DOM_KEY_LOCATION_LEFT;
+      } else if (PP_InputEvent_Modifier.PP_INPUTEVENT_MODIFIER_ISRIGHT &
+                 json.modifiers) {
+        location = instance.window.KeyboardEvent.DOM_KEY_LOCATION_RIGHT;
+      } else if(PP_InputEvent_Modifier.PP_INPUTEVENT_MODIFIER_ISKEYPAD &
+                json.modifiers) {
+        location = instance.window.KeyboardEvent.DOM_KEY_LOCATION_NUMPAD;
+      }
+
+      // FIXME I skipped to put |PP_Var code| into keyboardEventInit here
+      // because I neither find any useful |code| value passing into here
+      // nor have any PPB APIs which gets access to |code| now.
+      let keyboardEventInit = {
+        altKey: PP_InputEvent_Modifier.PP_INPUTEVENT_MODIFIER_ALTKEY &
+          json.modifiers,
+        charCode: charCode,
+        ctrlKey: PP_InputEvent_Modifier.PP_INPUTEVENT_MODIFIER_CONTROLKEY &
+          json.modifiers,
+        keyCode: json.key_code,
+        location: location,
+        metaKey: PP_InputEvent_Modifier.PP_INPUTEVENT_MODIFIER_METAKEY &
+          json.modifiers,
+        repeat: PP_InputEvent_Modifier.PP_INPUTEVENT_MODIFIER_ISAUTOREPEAT &
+          json.modifiers,
+        shiftKey: PP_InputEvent_Modifier.PP_INPUTEVENT_MODIFIER_SHIFTKEY &
+          json.modifiers,
+      };
+      let eventName = EventByTypes.get(PP_InputEvent_Type[json.type]);
+      let event = new instance.window.KeyboardEvent(eventName,
+                                                    keyboardEventInit);
+      let resource = new KeyboardInputEvent(instance, event);
+      resource.timeStamp = json.time_stamp;
+      return resource;
+    },
 
     /**
      * PP_Bool IsKeyboardInputEvent([in] PP_Resource resource);
@@ -3074,7 +3295,9 @@ dump(`callFromJSON: < ${JSON.stringify(call)}\n`);
     PPB_KeyboardInputEvent_GetCharacterText: function(json) {
       let event = PP_Resource.lookup(json.character_event);
       let charCode = event.domEvent.charCode;
-      if (charCode === 0) {
+      if (charCode === 0 ||
+          event.domEvent.getModifierState("Control") ||
+          event.domEvent.getModifierState("Meta")) {
         return new PP_Var();
       }
       return new String_PP_Var(String.fromCharCode(charCode));
@@ -4727,6 +4950,94 @@ dump(`callFromJSON: < ${JSON.stringify(call)}\n`);
     },
 
     /**
+     * void Print(
+     *   [in] PP_Instance instance);
+     */
+    PPB_PDF_Print: function(json) {
+      let instance = this.instances[json.instance];
+      let pageRangeInfo = instance.pageRangeInfo;
+
+      // Query supported formats
+      let supportedFormats = instance.rt.call(new InterfaceMemberCall(
+        "PPP_Printing(Dev);0.6", "QuerySupportedFormats", { instance }), true);
+      // XXX We only support PDF output format now.
+      if (!(PP_PrintOutputFormat_Dev.PP_PRINTOUTPUTFORMAT_PDF &
+          supportedFormats)) {
+        return;
+      }
+
+      // Begin of printing
+      let totalPageNumber = instance.rt.call(new InterfaceMemberCall(
+        "PPP_Printing(Dev);0.6", "Begin", { instance, print_settings:
+        instance.ppapiPrintSettings }), true);
+      if (totalPageNumber <= 0) {
+        return;
+      }
+
+      // Get PDF file
+      if (pageRangeInfo.printRange == Ci.nsIPrintSettings.kRangeAllPages) {
+        pageRangeInfo.startPageRange = 1;
+        pageRangeInfo.endPageRange = totalPageNumber;
+      } else {
+        if (pageRangeInfo.startPageRange < 1) {
+          pageRanges.startPageRange = 1;
+        }
+        if (pageRangeInfo.endPageRange > totalPageNumber) {
+          pageRangeInfo.endPageRange = totalPageNumber;
+        }
+        if (pageRangeInfo.startPageRange > pageRangeInfo.endPageRange) {
+          return;
+        }
+      }
+      // XXX We only support one page range now:
+      //     Gecko is using OS native print dialog now. And the print dialog
+      //     on Linux do support multiple page ranges. However, there is no
+      //     existing XPCOM interface for us to get the multiple page ranges
+      //     information. In addition, the print dialog on Mac and Windows only
+      //     support one page range.
+      //
+      //     The behavior of printing muliple page ranges on Linux now is we
+      //     will print out the pages from the minimum start page to the
+      //     maximum last page of the page ranges.
+      let pageRanges = [{ from: pageRangeInfo.startPageRange - 1,
+        to: pageRangeInfo.endPageRange - 1 }];
+      let pageRangeCount = pageRanges.length;
+      let bufferId = instance.rt.call(new InterfaceMemberCall(
+        "PPP_Printing(Dev);0.6", "PrintPages", {
+          instance, page_ranges: pageRanges, page_range_count: pageRangeCount
+        }), true);
+      if (!bufferId) {
+        return;
+      }
+      let buffer = PP_Resource.lookup(bufferId);
+
+      // Save PDF to file
+      let file = Services.dirsvc.get(PRINT_TEMP_KEY, Ci.nsIFile);
+      file.append(PRINT_FILE_NAME);
+      file.createUnique(Ci.nsIFile.NORMAL_FILE_TYPE, PR_IRUSR | PR_IWUSR);
+      let stream = Cc["@mozilla.org/network/file-output-stream;1"].
+                   createInstance(Ci.nsIFileOutputStream);
+      stream.init(file, PR_RDWR | PR_CREATE_FILE | PR_TRUNCATE,
+                  PR_IRUSR | PR_IWUSR, 0);
+      let binaryStream = Cc["@mozilla.org/binaryoutputstream;1"].
+                         createInstance(Ci.nsIBinaryOutputStream);
+      binaryStream.setOutputStream(stream);
+      let data = new Uint8ClampedArray(instance.rt.getCachedBuffer(buffer.mem));
+      binaryStream.writeByteArray(Array.from(data), buffer.size);
+
+      // End of printing
+      stream.flush();
+      stream.close();
+      buffer.unmap();
+      buffer.release();
+      instance.rt.call(new InterfaceMemberCall(
+        "PPP_Printing(Dev);0.6", "End", { instance }), true);
+      // We need permission for printing PDF file
+      instance.mm.sendAsyncMessage("ppapipdf.js:printPDF", {
+        filePath: file.path });
+    },
+
+    /**
      * void SearchString(
      *   [in] PP_Instance instance,
      *   [in] mem_t str,
@@ -5249,20 +5560,16 @@ dump(`callFromJSON: < ${JSON.stringify(call)}\n`);
      * float_t GetDeviceScale([in] PP_Resource resource);
      */
     PPB_View_GetDeviceScale: function(json) {
-      // FIXME Need to figure out how to get the ratio between device pixels
-      //       and DIPs.
       let view = PP_Resource.lookup(json.resource);
-      return 1; //view.instance.window.devicePixelRatio;
+      return view.instance.window.devicePixelRatio;
     },
 
     /**
      * float_t GetCSSScale([in] PP_Resource resource);
      */
     PPB_View_GetCSSScale: function(json) {
-      // FIXME Need to figure out how to get the ratio between CSS pixels
-      //       and DIPs.
       let view = PP_Resource.lookup(json.resource);
-      return view.instance.window.devicePixelRatio;
+      return 1;
     },
 
     /**

@@ -12,12 +12,12 @@ function test() {
   // Make sure the functionality added in bug 943339 doesn't affect the results
   gPrefService.setIntPref("browser.sessionstore.max_serialize_back", -1);
   gPrefService.setIntPref("browser.sessionstore.max_serialize_forward", -1);
-  registerCleanupFunction(function () {
+  registerCleanupFunction(function() {
     gPrefService.clearUserPref("browser.sessionstore.max_serialize_back");
     gPrefService.clearUserPref("browser.sessionstore.max_serialize_forward");
   });
 
-  let tab = gBrowser.addTab();
+  let tab = BrowserTestUtils.addTab(gBrowser);
   promiseBrowserLoaded(tab.linkedBrowser).then(() => {
     let tabState = { entries: [] };
     let max_entries = gPrefService.getIntPref("browser.sessionhistory.max_entries");

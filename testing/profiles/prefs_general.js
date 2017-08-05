@@ -1,5 +1,5 @@
 // Base preferences file used by most test harnesses
-
+/* globals user_pref */
 user_pref("browser.console.showInPanel", true);
 user_pref("browser.dom.window.dump.enabled", true);
 user_pref("browser.firstrun.show.localepicker", false);
@@ -13,6 +13,7 @@ user_pref("dom.experimental_forms", true); // on for testing
 user_pref("dom.forms.number", true); // on for testing
 user_pref("dom.forms.color", true); // on for testing
 user_pref("dom.forms.datetime", true); // on for testing
+user_pref("dom.forms.datetime.others", true); // on for testing
 user_pref("dom.max_script_run_time", 0); // no slow script dialogs
 user_pref("hangmonitor.timeout", 0); // no hang monitor
 user_pref("dom.max_chrome_script_run_time", 0);
@@ -47,6 +48,7 @@ user_pref("media.cache_size", 1000);
 user_pref("media.volume_scale", "0.01");
 user_pref("media.test.dumpDebugInfo", true);
 user_pref("media.dormant-on-pause-timeout-ms", 0); // Enter dormant immediately without waiting for timeout.
+user_pref("media.suspend-bkgnd-video.enabled", false);
 user_pref("security.warn_viewing_mixed", false);
 user_pref("app.update.enabled", false);
 user_pref("app.update.staging.enabled", false);
@@ -86,6 +88,7 @@ user_pref("extensions.installDistroAddons", false);
 // XPI extensions are required for test harnesses to load
 user_pref("extensions.defaultProviders.enabled", true);
 user_pref("xpinstall.signatures.required", false);
+user_pref("extensions.allow-non-mpc-extensions", true);
 
 user_pref("geo.wifi.uri", "http://%(server)s/tests/dom/tests/mochitest/geolocation/network_geolocation.sjs");
 user_pref("geo.wifi.timeToWaitBeforeSending", 2000);
@@ -195,9 +198,6 @@ user_pref("layout.spammy_warnings.enabled", false);
 user_pref("media.mediasource.mp4.enabled", true);
 user_pref("media.mediasource.webm.enabled", true);
 
-// Make sure the disk cache doesn't get auto disabled
-user_pref("network.http.bypass-cachelock-threshold", 200000);
-
 // Enable Gamepad
 user_pref("dom.gamepad.enabled", true);
 user_pref("dom.gamepad.non_standard_events.enabled", true);
@@ -237,35 +237,38 @@ user_pref("dom.presentation.testing.simulate-receiver", false);
 
 // Don't connect to Yahoo! for RSS feed tests.
 // en-US only uses .types.0.uri, but set all of them just to be sure.
-user_pref('browser.contentHandlers.types.0.uri', 'http://test1.example.org/rss?url=%%s')
-user_pref('browser.contentHandlers.types.1.uri', 'http://test1.example.org/rss?url=%%s')
-user_pref('browser.contentHandlers.types.2.uri', 'http://test1.example.org/rss?url=%%s')
-user_pref('browser.contentHandlers.types.3.uri', 'http://test1.example.org/rss?url=%%s')
-user_pref('browser.contentHandlers.types.4.uri', 'http://test1.example.org/rss?url=%%s')
-user_pref('browser.contentHandlers.types.5.uri', 'http://test1.example.org/rss?url=%%s')
+user_pref("browser.contentHandlers.types.0.uri", "http://test1.example.org/rss?url=%%s")
+user_pref("browser.contentHandlers.types.1.uri", "http://test1.example.org/rss?url=%%s")
+user_pref("browser.contentHandlers.types.2.uri", "http://test1.example.org/rss?url=%%s")
+user_pref("browser.contentHandlers.types.3.uri", "http://test1.example.org/rss?url=%%s")
+user_pref("browser.contentHandlers.types.4.uri", "http://test1.example.org/rss?url=%%s")
+user_pref("browser.contentHandlers.types.5.uri", "http://test1.example.org/rss?url=%%s")
 
 // We want to collect telemetry, but we don't want to send in the results.
-user_pref('toolkit.telemetry.server', 'https://%(server)s/telemetry-dummy/');
+user_pref("toolkit.telemetry.server", "https://%(server)s/telemetry-dummy/");
+// Don't new-profile' ping on new profiles during tests, otherwise the testing framework
+// might wait on the pingsender to finish and slow down tests.
+user_pref("toolkit.telemetry.newProfilePing.enabled", false);
 
 // A couple of preferences with default values to test that telemetry preference
 // watching is working.
-user_pref('toolkit.telemetry.test.pref1', true);
-user_pref('toolkit.telemetry.test.pref2', false);
+user_pref("toolkit.telemetry.test.pref1", true);
+user_pref("toolkit.telemetry.test.pref2", false);
 
 // We don't want to hit the real Firefox Accounts server for tests.  We don't
 // actually need a functioning FxA server, so just set it to something that
 // resolves and accepts requests, even if they all fail.
-user_pref('identity.fxaccounts.auth.uri', 'https://%(server)s/fxa-dummy/');
+user_pref("identity.fxaccounts.auth.uri", "https://%(server)s/fxa-dummy/");
 
 // Ditto for all the other Firefox accounts URIs used for about:accounts et al.:
 user_pref("identity.fxaccounts.remote.signup.uri", "https://%(server)s/fxa-signup");
 user_pref("identity.fxaccounts.remote.force_auth.uri", "https://%(server)s/fxa-force-auth");
 user_pref("identity.fxaccounts.remote.signin.uri", "https://%(server)s/fxa-signin");
 user_pref("identity.fxaccounts.settings.uri", "https://%(server)s/fxa-settings");
-user_pref('identity.fxaccounts.remote.webchannel.uri', 'https://%(server)s/');
+user_pref("identity.fxaccounts.remote.webchannel.uri", "https://%(server)s/");
 
 // We don't want browser tests to perform FxA device registration.
-user_pref('identity.fxaccounts.skipDeviceRegistration', true);
+user_pref("identity.fxaccounts.skipDeviceRegistration", true);
 
 // Increase the APZ content response timeout in tests to 1 minute.
 // This is to accommodate the fact that test environments tends to be slower
@@ -287,9 +290,8 @@ user_pref("browser.translation.engine", "bing");
 // Make sure we don't try to load snippets from the network.
 user_pref("browser.aboutHomeSnippets.updateUrl", "nonexistent://test");
 
-// Don't fetch or send directory tiles data from real servers
+// Don't fetch directory tiles data from real servers
 user_pref("browser.newtabpage.directory.source", 'data:application/json,{"testing":1}');
-user_pref("browser.newtabpage.directory.ping", "");
 
 // Tell the search service we are running in the US.  This also has the desired
 // side-effect of preventing our geoip lookup.
@@ -298,11 +300,15 @@ user_pref("browser.search.countryCode", "US");
 // This will prevent HTTP requests for region defaults.
 user_pref("browser.search.geoSpecificDefaults", false);
 
-// Make sure self support doesn't hit the network.
-user_pref("browser.selfsupport.url", "https://%(server)s/selfsupport-dummy/");
-user_pref("extensions.shield-recipe-client.api_url", "https://%(server)s/selfsupport-dummy/");
+// Make sure Shield doesn't hit the network.
+user_pref("extensions.shield-recipe-client.api_url", "");
 
 user_pref("media.eme.enabled", true);
+
+// Set the number of shmems the PChromiumCDM protocol pre-allocates to 0,
+// so that we test the case where we under-estimate how many shmems we need
+// to send decoded video frames from the CDM to Gecko.
+user_pref("media.eme.chromium-api.video-shmems", 0);
 
 user_pref("media.autoplay.enabled", true);
 
@@ -316,9 +322,6 @@ user_pref("dom.ipc.tabs.shutdownTimeoutSecs", 0);
 
 // Don't block add-ons for e10s
 user_pref("extensions.e10sBlocksEnabling", false);
-
-// Avoid performing Reader Mode intros during tests.
-user_pref("browser.reader.detectedFirstArticle", true);
 
 // Make tests run consistently on DevEdition (which has a lightweight theme
 // selected by default).
@@ -336,8 +339,6 @@ user_pref("browser.urlbar.suggest.searches", false);
 user_pref("browser.urlbar.userMadeSearchSuggestionsChoice", true);
 
 user_pref("browser.urlbar.usepreloadedtopurls.enabled", false);
-
-user_pref("dom.audiochannel.mutedByDefault", false);
 
 user_pref("webextensions.tests", true);
 user_pref("startup.homepage_welcome_url", "about:blank");
@@ -358,7 +359,7 @@ user_pref("media.openUnsupportedTypeWithExternalApp", false);
 user_pref("signon.rememberSignons", false);
 
 // Enable form autofill feature testing.
-user_pref("browser.formautofill.experimental", true);
+user_pref("extensions.formautofill.experimental", true);
 
 // Disable all recommended Marionette preferences for Gecko tests.
 // The prefs recommended by Marionette are typically geared towards

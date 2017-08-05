@@ -74,6 +74,11 @@
   padding: 0;
 }
 
+.devtools-toolbar-bottom {
+  border-top-width: 1px;
+  border-bottom: none;
+}
+
 .devtools-separator {
   margin: 0 2px;
   width: 2px;

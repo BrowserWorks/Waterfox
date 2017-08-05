@@ -12,6 +12,7 @@
 #include "mozilla/FloatingPoint.h"
 #include "mozilla/Maybe.h"
 #include "mozilla/dom/TimeRanges.h"
+#include "mozilla/TimeStamp.h"
 
 namespace mozilla {
 namespace media {
@@ -38,51 +39,6 @@ namespace media {
 // Number of nanoseconds per second. 1e9.
 static const int64_t NSECS_PER_S = 1000000000;
 
-struct Microseconds {
-  Microseconds()
-    : mValue(0)
-  {}
-
-  explicit Microseconds(int64_t aValue)
-    : mValue(aValue)
-  {}
-
-  double ToSeconds() {
-    return double(mValue) / USECS_PER_S;
-  }
-
-  static Microseconds FromSeconds(double aValue) {
-    MOZ_ASSERT(!IsNaN(aValue));
-
-    double val = aValue * USECS_PER_S;
-    if (val >= double(INT64_MAX)) {
-      return Microseconds(INT64_MAX);
-    } else if (val <= double(INT64_MIN)) {
-      return Microseconds(INT64_MIN);
-    } else {
-      return Microseconds(int64_t(val));
-    }
-  }
-
-  bool operator == (const Microseconds& aOther) const {
-    return mValue == aOther.mValue;
-  }
-  bool operator > (const Microseconds& aOther) const {
-    return mValue > aOther.mValue;
-  }
-  bool operator >= (const Microseconds& aOther) const {
-    return mValue >= aOther.mValue;
-  }
-  bool operator < (const Microseconds& aOther) const {
-    return mValue < aOther.mValue;
-  }
-  bool operator <= (const Microseconds& aOther) const {
-    return mValue <= aOther.mValue;
-  }
-
-  int64_t mValue;
-};
-
 // TimeUnit at present uses a CheckedInt64 as storage.
 // INT64_MAX has the special meaning of being +oo.
 class TimeUnit final {
@@ -105,20 +61,24 @@ public:
     }
   }
 
-  static TimeUnit FromMicroseconds(int64_t aValue) {
+  static constexpr TimeUnit FromMicroseconds(int64_t aValue) {
     return TimeUnit(aValue);
   }
 
-  static TimeUnit FromMicroseconds(Microseconds aValue) {
-    return TimeUnit(aValue.mValue);
-  }
-
-  static TimeUnit FromNanoseconds(int64_t aValue) {
+  static constexpr TimeUnit FromNanoseconds(int64_t aValue) {
     return TimeUnit(aValue / 1000);
   }
 
-  static TimeUnit FromInfinity() {
+  static constexpr TimeUnit FromInfinity() {
     return TimeUnit(INT64_MAX);
+  }
+
+  static TimeUnit FromTimeDuration(const TimeDuration& aDuration) {
+    return FromSeconds(aDuration.ToSeconds());
+  }
+
+  static constexpr TimeUnit Zero() {
+    return TimeUnit(0);
   }
 
   static TimeUnit Invalid() {
@@ -144,8 +104,20 @@ public:
     return double(mValue.value()) / USECS_PER_S;
   }
 
+  TimeDuration ToTimeDuration() const {
+    return TimeDuration::FromMicroseconds(mValue.value());
+  }
+
   bool IsInfinite() const {
     return mValue.value() == INT64_MAX;
+  }
+
+  bool IsPositive() const {
+    return mValue.value() > 0;
+  }
+
+  bool IsNegative() const {
+    return mValue.value() < 0;
   }
 
   bool operator == (const TimeUnit& aOther) const {
@@ -192,11 +164,15 @@ public:
     return *this;
   }
 
-  friend TimeUnit operator* (int aVal, const TimeUnit& aUnit) {
-    return TimeUnit(aUnit.mValue * aVal);
+  template <typename T>
+  TimeUnit operator*(T aVal) const {
+    // See bug 853398 for the reason to block double multiplier.
+    // If required, use MultDouble below and with caution.
+    static_assert(mozilla::IsIntegral<T>::value, "Must be an integral type");
+    return TimeUnit(mValue * aVal);
   }
-  friend TimeUnit operator* (const TimeUnit& aUnit, int aVal) {
-    return TimeUnit(aUnit.mValue * aVal);
+  TimeUnit MultDouble(double aVal) const {
+    return TimeUnit::FromSeconds(ToSeconds() * aVal);
   }
   friend TimeUnit operator/ (const TimeUnit& aUnit, int aVal) {
     return TimeUnit(aUnit.mValue / aVal);
@@ -207,25 +183,16 @@ public:
     return mValue.isValid();
   }
 
-  TimeUnit()
+  constexpr TimeUnit()
     : mValue(CheckedInt64(0))
   {}
-
-  explicit TimeUnit(const Microseconds& aMicroseconds)
-    : mValue(aMicroseconds.mValue)
-  {}
-  TimeUnit& operator = (const Microseconds& aMicroseconds)
-  {
-    mValue = aMicroseconds.mValue;
-    return *this;
-  }
 
   TimeUnit(const TimeUnit&) = default;
 
   TimeUnit& operator = (const TimeUnit&) = default;
 
 private:
-  explicit TimeUnit(CheckedInt64 aMicroseconds)
+  explicit constexpr TimeUnit(CheckedInt64 aMicroseconds)
     : mValue(aMicroseconds)
   {}
 

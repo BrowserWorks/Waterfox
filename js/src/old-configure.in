@@ -145,8 +145,7 @@ case "$target" in
         CFLAGS="$CFLAGS -TC -nologo"
         CXXFLAGS="$CXXFLAGS -TP -nologo"
         if test -z "$CLANG_CL"; then
-            CFLAGS="$CFLAGS -utf-8"
-            CXXFLAGS="$CXXFLAGS -utf-8"
+            CPPFLAGS="$CPPFLAGS -utf-8"
         fi
         # MSVC warning C4800 warns when a value is implicitly cast to bool,
         # because this also forces narrowing to a single byte, which can be a
@@ -408,9 +407,11 @@ AS='$(CC)'
 AS_DASH_C_FLAG='-c'
 DLL_PREFIX=lib
 LIB_PREFIX=lib
+RUST_LIB_PREFIX=lib
 DLL_SUFFIX=.so
 OBJ_SUFFIX=o
 LIB_SUFFIX=a
+RUST_LIB_SUFFIX=a
 IMPORT_LIB_SUFFIX=
 DIRENT_INO=d_ino
 MOZ_USER_DIR=".mozilla"
@@ -673,8 +674,10 @@ case "$target" in
         PKG_SKIP_STRIP=1
         OBJ_SUFFIX=obj
         LIB_SUFFIX=lib
+        RUST_LIB_SUFFIX=lib
         DLL_PREFIX=
         LIB_PREFIX=
+        RUST_LIB_PREFIX=
         IMPORT_LIB_SUFFIX=lib
         MKSHLIB='$(LINK) -NOLOGO -DLL -OUT:$@ -PDB:$(LINK_PDBFILE) $(DSO_LDOPTS)'
         MKCSHLIB='$(LINK) -NOLOGO -DLL -OUT:$@ -PDB:$(LINK_PDBFILE) $(DSO_LDOPTS)'
@@ -700,10 +703,6 @@ case "$target" in
           fi
           changequote([,])
         fi
-        dnl VS2013+ requires -FS when parallel building by make -jN.
-        dnl If nothing, compiler sometimes causes C1041 error.
-        CFLAGS="$CFLAGS -FS"
-        CXXFLAGS="$CXXFLAGS -FS"
         dnl VS2013+ supports -Gw for better linker optimizations.
         dnl http://blogs.msdn.com/b/vcblog/archive/2013/09/11/introducing-gw-compiler-switch.aspx
         dnl Disabled on ASan because it causes false-positive ODR violations.
@@ -811,6 +810,8 @@ case "$target" in
     fi
     AC_DEFINE(HAVE__MSIZE)
     AC_DEFINE(WIN32_LEAN_AND_MEAN)
+    dnl See http://support.microsoft.com/kb/143208 to use STL
+    AC_DEFINE(NOMINMAX)
     BIN_SUFFIX='.exe'
     MOZ_USER_DIR="Mozilla"
 
@@ -875,6 +876,10 @@ case "$target" in
     if test "$LIBRUNPATH"; then
 	DSO_LDOPTS="-R$LIBRUNPATH $DSO_LDOPTS"
     fi
+    ;;
+
+*-solaris*)
+    MOZ_FIX_LINK_PATHS=
     ;;
 
 esac
@@ -1535,9 +1540,6 @@ Android|WINNT|Darwin)
 esac
 
 if test "$MOZ_MEMORY"; then
-  if test "x$MOZ_DEBUG" = "x1"; then
-    AC_DEFINE(MOZ_MEMORY_DEBUG)
-  fi
   dnl The generic feature tests that determine how to compute ncpus are long and
   dnl complicated.  Therefore, simply define special cpp variables for the
   dnl platforms we have special knowledge of.
@@ -1735,7 +1737,9 @@ dnl ========================================================
 dnl = Enable using the clang plugin to build
 dnl ========================================================
 
+if test -n "$COMPILE_ENVIRONMENT"; then
 MOZ_CONFIG_CLANG_PLUGIN
+fi # COMPILE_ENVIRONMENT
 
 dnl ========================================================
 dnl = Enable static checking using sixgill
@@ -2097,10 +2101,12 @@ AC_SUBST(DSO_CFLAGS)
 AC_SUBST(DSO_PIC_CFLAGS)
 AC_SUBST(DSO_LDOPTS)
 AC_SUBST(LIB_PREFIX)
+AC_SUBST(RUST_LIB_PREFIX)
 AC_SUBST(DLL_PREFIX)
 AC_SUBST(DLL_SUFFIX)
 AC_DEFINE_UNQUOTED(MOZ_DLL_SUFFIX, "$DLL_SUFFIX")
 AC_SUBST(LIB_SUFFIX)
+AC_SUBST(RUST_LIB_SUFFIX)
 AC_SUBST(OBJ_SUFFIX)
 AC_SUBST(BIN_SUFFIX)
 AC_SUBST(IMPORT_LIB_SUFFIX)
@@ -2160,8 +2166,6 @@ fi
 AC_SUBST(JS_LIBRARY_NAME)
 AC_SUBST(JS_CONFIG_MOZ_JS_LIBS)
 AC_SUBST(JS_CONFIG_LIBS)
-
-MOZ_SUBCONFIGURE_JEMALLOC()
 
 # Avoid using obsolete NSPR features
 AC_DEFINE(NO_NSPR_10_SUPPORT)

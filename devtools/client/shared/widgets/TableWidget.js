@@ -8,6 +8,8 @@ loader.lazyRequireGetter(this, "setNamedTimeout",
   "devtools/client/shared/widgets/view-helpers", true);
 loader.lazyRequireGetter(this, "clearNamedTimeout",
   "devtools/client/shared/widgets/view-helpers", true);
+loader.lazyRequireGetter(this, "naturalSortCaseInsensitive",
+  "devtools/client/shared/natural-sort", true);
 const {KeyCodes} = require("devtools/client/shared/keycodes");
 
 const XUL_NS = "http://www.mozilla.org/keymaster/gatekeeper/there.is.only.xul";
@@ -123,6 +125,8 @@ function TableWidget(node, options = {}) {
 TableWidget.prototype = {
 
   items: null,
+  editBookmark: null,
+  scrollIntoViewOnUpdate: null,
 
   /**
    * Getter for the headers context menu popup id.
@@ -141,6 +145,17 @@ TableWidget.prototype = {
     for (let column of this.columns.values()) {
       column.selectRow(id[this.uniqueId] || id);
     }
+  },
+
+/**
+ * Is a row currently selected?
+ *
+ * @return {Boolean}
+ *         true or false.
+ */
+  get hasSelectedRow() {
+    return this.columns.get(this.uniqueId) &&
+           this.columns.get(this.uniqueId).selectedRow;
   },
 
   /**
@@ -170,7 +185,8 @@ TableWidget.prototype = {
    * Returns the index of the selected row disregarding hidden rows.
    */
   get visibleSelectedIndex() {
-    let cells = this.columns.get(this.uniqueId).visibleCellNodes;
+    let column = this.firstVisibleColumn;
+    let cells = column.visibleCellNodes;
 
     for (let i = 0; i < cells.length; i++) {
       if (cells[i].classList.contains("theme-selected")) {
@@ -179,6 +195,23 @@ TableWidget.prototype = {
     }
 
     return -1;
+  },
+
+  /**
+   * Returns the first visible column.
+   */
+  get firstVisibleColumn() {
+    for (let column of this.columns.values()) {
+      if (column._private) {
+        continue;
+      }
+
+      if (column.column.clientHeight > 0) {
+        return column;
+      }
+    }
+
+    return null;
   },
 
   /**
@@ -1159,7 +1192,9 @@ Column.prototype = {
   },
 
   /**
-   * Called when a row is updated.
+   * Called when a row is updated e.g. a cell is changed. This means that
+   * for a new row this method will be called once for each column. If a single
+   * cell is changed this method will be called just once.
    *
    * @param {string} event
    *        The event name of the event. i.e. EVENTS.ROW_UPDATED
@@ -1168,7 +1203,23 @@ Column.prototype = {
    */
   onRowUpdated: function (event, id) {
     this._updateItems();
+
     if (this.highlightUpdated && this.items[id] != null) {
+      if (this.table.scrollIntoViewOnUpdate) {
+        let cell = this.cells[this.items[id]];
+
+        // When a new row is created this method is called once for each column
+        // as each cell is updated. We can only scroll to cells if they are
+        // visible. We check for visibility and once we find the first visible
+        // cell in a row we scroll it into view and reset the
+        // scrollIntoViewOnUpdate flag.
+        if (cell.label.clientHeight > 0) {
+          cell.scrollIntoView();
+
+          this.table.scrollIntoViewOnUpdate = null;
+        }
+      }
+
       if (this.table.editBookmark) {
         // A rows position in the table can change as the result of an edit. In
         // order to ensure that the correct row is highlighted after an edit we
@@ -1180,6 +1231,7 @@ Column.prototype = {
 
       this.cells[this.items[id]].flash();
     }
+
     this.updateZebra();
   },
 
@@ -1262,11 +1314,11 @@ Column.prototype = {
       let index;
       if (this.sorted == 1) {
         index = this.cells.findIndex(element => {
-          return value < element.value;
+          return naturalSortCaseInsensitive(value, element.value) === -1;
         });
       } else {
         index = this.cells.findIndex(element => {
-          return value > element.value;
+          return naturalSortCaseInsensitive(value, element.value) === 1;
         });
       }
       index = index >= 0 ? index : this.cells.length;
@@ -1394,7 +1446,7 @@ Column.prototype = {
             a[this.id].textContent : a[this.id];
         let val2 = (b[this.id] instanceof Node) ?
             b[this.id].textContent : b[this.id];
-        return val1 > val2;
+        return naturalSortCaseInsensitive(val1, val2);
       });
     } else if (this.sorted > 1) {
       items.sort((a, b) => {
@@ -1402,7 +1454,7 @@ Column.prototype = {
             a[this.id].textContent : a[this.id];
         let val2 = (b[this.id] instanceof Node) ?
             b[this.id].textContent : b[this.id];
-        return val2 > val1;
+        return naturalSortCaseInsensitive(val2, val1);
       });
     }
 
@@ -1554,7 +1606,7 @@ Cell.prototype = {
       this.label.removeAttribute("value");
 
       while (this.label.firstChild) {
-        this.label.removeChild(this.label.firstChild);
+        this.label.firstChild.remove();
       }
 
       this.label.appendChild(value);
@@ -1592,6 +1644,10 @@ Cell.prototype = {
 
   focus: function () {
     this.label.focus();
+  },
+
+  scrollIntoView: function () {
+    this.label.scrollIntoView(false);
   },
 
   destroy: function () {

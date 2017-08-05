@@ -5,7 +5,7 @@
 # file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
 with Files('*'):
-    BUG_COMPONENT = ('Core', 'Video/Audio')
+    BUG_COMPONENT = ('Core', 'Audio/Video')
 
 include('sources.mozbuild')
 
@@ -104,6 +104,14 @@ if CONFIG['CLANG_CL'] or not CONFIG['_MSC_VER']:
                 SOURCES[f].flags += ['-mavx']
             if 'avx2.c' in f:
                 SOURCES[f].flags += ['-mavx2']
+
+if CONFIG['_MSC_VER'] and not CONFIG['CLANG_CL']:
+    for f in SOURCES:
+        if f.endswith('.c'):
+            if 'avx.c' in f:
+                SOURCES[f].flags += ['-arch:AVX']
+            if 'avx2.c' in f:
+                SOURCES[f].flags += ['-arch:AVX2']
 
 # Suppress warnings in third-party code.
 if CONFIG['GNU_CC'] or CONFIG['CLANG_CL']:

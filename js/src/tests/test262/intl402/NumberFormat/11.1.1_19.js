@@ -1,4 +1,3 @@
-// |reftest| skip-if(!this.hasOwnProperty('Intl')) -- needs Intl
 // Copyright 2012 Mozilla Corporation. All rights reserved.
 // This code is governed by the BSD license found in the LICENSE file.
 
@@ -12,25 +11,12 @@ author: Norbert Lindenberg
 
 var defaultLocale = new Intl.NumberFormat().resolvedOptions().locale;
 
-function expectError(f) {
-    var error;
-    try {
-        f();
-    } catch (e) {
-        error = e;
-    }
-    if (error === undefined) {
-        $ERROR("Invalid currency value " + value + " was not rejected.");
-    } else if (error.name !== "TypeError") {
-        $ERROR("Invalid currency value " + value + " was rejected with wrong error " + error.name + ".");
-    }
-}
-
-expectError(function () {
+assert.throws(TypeError, function () {
         return new Intl.NumberFormat([defaultLocale], {style: "currency"});
-});
-expectError(function () {
+}, "Throws TypeError when currency code is not specified.");
+
+assert.throws(TypeError, function () {
         return new Intl.NumberFormat([defaultLocale + "-u-cu-krw"], {style: "currency"});
-});
+}, "Throws TypeError when currency code is not specified; Currenty code from Unicode locale extension sequence is ignored.");
 
 reportCompare(0, 0);

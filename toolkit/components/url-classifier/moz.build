@@ -4,11 +4,15 @@
 # License, v. 2.0. If a copy of the MPL was not distributed with this
 # file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
+with Files('**'):
+    BUG_COMPONENT = ('Toolkit', 'Safe Browsing')
+
 TEST_DIRS += ['tests']
 
 XPIDL_SOURCES += [
     'nsIUrlClassifierDBService.idl',
     'nsIUrlClassifierHashCompleter.idl',
+    'nsIUrlClassifierInfo.idl',
     'nsIUrlClassifierPrefixSet.idl',
     'nsIUrlClassifierStreamUpdater.idl',
     'nsIUrlClassifierUtils.idl',
@@ -27,11 +31,13 @@ UNIFIED_SOURCES += [
     'LookupCacheV4.cpp',
     'nsCheckSummedOutputStream.cpp',
     'nsUrlClassifierDBService.cpp',
+    'nsUrlClassifierInfo.cpp',
     'nsUrlClassifierProxies.cpp',
     'nsUrlClassifierUtils.cpp',
     'protobuf/safebrowsing.pb.cc',
     'ProtocolParser.cpp',
     'RiceDeltaDecoder.cpp',
+    'SBTelemetryUtils.cpp',
 ]
 
 # define conflicting LOG() macros
@@ -67,6 +73,7 @@ EXPORTS += [
     'LookupCacheV4.h',
     'nsUrlClassifierPrefixSet.h',
     'protobuf/safebrowsing.pb.h',
+    'SBTelemetryUtils.h',
     'VariableLengthPrefixSet.h',
 ]
 
@@ -83,5 +90,7 @@ if CONFIG['GNU_CXX']:
 
 if CONFIG['NIGHTLY_BUILD'] or CONFIG['MOZ_DEBUG']:
     DEFINES['MOZ_SAFEBROWSING_DUMP_FAILED_UPDATES'] = True
+
+SPHINX_TREES['url-classifier'] = 'docs'
 
 include('/ipc/chromium/chromium-config.mozbuild')

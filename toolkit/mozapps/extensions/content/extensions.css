@@ -157,23 +157,27 @@ setting[type="menulist"] {
 .addon[active="true"] .disabled-postfix,
 .addon[pending="install"] .update-postfix,
 .addon[pending="install"] .disabled-postfix,
+.addon[legacy="false"] .legacy-warning,
 #detail-view:not([notification="warning"]) .warning,
 #detail-view:not([notification="error"]) .error,
 #detail-view:not([notification="info"]) .info,
 #detail-view:not([pending]) .pending,
 #detail-view:not([upgrade="true"]) .update-postfix,
 #detail-view[active="true"] .disabled-postfix,
+#detail-view[legacy="false"] .legacy-warning,
 #detail-view[loading] .detail-view-container,
 #detail-view:not([loading]) .alert-container,
 .detail-row:not([value]),
-#search-list[remote="false"] #search-allresults-link {
+#search-list[remote="false"] #search-allresults-link,
+#legacy-list .addon .disabled-postfix {
   display: none;
 }
 
 #addons-page:not([warning]) #list-view > .global-warning-container {
   display: none;
 }
-#addon-list .date-updated {
+#addon-list .date-updated,
+#legacy-list .date-updated {
   display: none;
 }
 
@@ -239,6 +243,10 @@ richlistitem:not([selected]) * {
 }
 
 #experiments-change-telemetry[disabled="true"] {
+  display: none;
+}
+
+.view-pane:not(#legacy-view) .addon-control.replacement {
   display: none;
 }
 

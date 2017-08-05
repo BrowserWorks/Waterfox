@@ -16,8 +16,8 @@
 
 class nsDisplayRangeFocusRing;
 
-class nsRangeFrame : public nsContainerFrame,
-                     public nsIAnonymousContentCreator
+class nsRangeFrame final : public nsContainerFrame,
+                           public nsIAnonymousContentCreator
 {
   friend nsIFrame*
   NS_NewRangeFrame(nsIPresShell* aPresShell, nsStyleContext* aContext);
@@ -31,9 +31,8 @@ class nsRangeFrame : public nsContainerFrame,
   typedef mozilla::dom::Element Element;
 
 public:
-  NS_DECL_QUERYFRAME_TARGET(nsRangeFrame)
   NS_DECL_QUERYFRAME
-  NS_DECL_FRAMEARENA_HELPERS
+  NS_DECL_FRAMEARENA_HELPERS(nsRangeFrame)
 
   // nsIFrame overrides
   virtual void Init(nsIContent*       aContent,
@@ -56,8 +55,6 @@ public:
     return MakeFrameName(NS_LITERAL_STRING("Range"), aResult);
   }
 #endif
-
-  virtual bool IsLeaf() const override { return true; }
 
 #ifdef ACCESSIBILITY
   virtual mozilla::a11y::AccType AccessibleType() override;
@@ -84,8 +81,6 @@ public:
 
   virtual nscoord GetMinISize(nsRenderingContext *aRenderingContext) override;
   virtual nscoord GetPrefISize(nsRenderingContext *aRenderingContext) override;
-
-  virtual nsIAtom* GetType() const override;
 
   virtual bool IsFrameOfType(uint32_t aFlags) const override
   {

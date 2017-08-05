@@ -37,6 +37,10 @@
 #include "mozilla/dom/VideoDecoderManagerParent.h"
 #include "MediaPrefs.h"
 
+#ifdef MOZ_CRASHREPORTER
+# include "nsExceptionHandler.h"
+#endif
+
 #if defined(MOZ_WIDGET_ANDROID)
 #include "mozilla/widget/AndroidUiThread.h"
 #include "mozilla/layers/UiCompositorControllerChild.h"
@@ -46,6 +50,13 @@ namespace mozilla {
 namespace gfx {
 
 using namespace mozilla::layers;
+
+enum class FallbackType : uint32_t
+{
+  NONE = 0,
+  DECODINGDISABLED,
+  DISABLED,
+};
 
 static StaticAutoPtr<GPUProcessManager> sSingleton;
 
@@ -70,8 +81,9 @@ GPUProcessManager::Shutdown()
 
 GPUProcessManager::GPUProcessManager()
  : mTaskFactory(this),
-   mNextLayerTreeId(0),
-   mNextResetSequenceNo(0),
+   mNextNamespace(0),
+   mIdNamespace(0),
+   mResourceId(0),
    mNumProcessAttempts(0),
    mDeviceResetCount(0),
    mProcess(nullptr),
@@ -79,6 +91,7 @@ GPUProcessManager::GPUProcessManager()
 {
   MOZ_COUNT_CTOR(GPUProcessManager);
 
+  mIdNamespace = AllocateNamespace();
   mObserver = new Observer(this);
   nsContentUtils::RegisterShutdownObserver(mObserver);
 
@@ -159,6 +172,9 @@ GPUProcessManager::DisableGPUProcess(const char* aMessage)
 
   gfxPlatform::NotifyGPUProcessDisabled();
 
+  Telemetry::Accumulate(Telemetry::GPU_PROCESS_CRASH_FALLBACKS,
+                        uint32_t(FallbackType::DISABLED));
+
   DestroyProcess();
   ShutdownVsyncIOThread();
 }
@@ -190,7 +206,7 @@ GPUProcessManager::EnsureImageBridgeChild()
   }
 
   if (!EnsureGPUReady()) {
-    ImageBridgeChild::InitSameProcess();
+    ImageBridgeChild::InitSameProcess(AllocateNamespace());
     return;
   }
 
@@ -207,7 +223,7 @@ GPUProcessManager::EnsureImageBridgeChild()
   }
 
   mGPUChild->SendInitImageBridge(Move(parentPipe));
-  ImageBridgeChild::InitWithGPUProcess(Move(childPipe));
+  ImageBridgeChild::InitWithGPUProcess(Move(childPipe), AllocateNamespace());
 }
 
 void
@@ -239,38 +255,33 @@ GPUProcessManager::EnsureVRManager()
 }
 
 #if defined(MOZ_WIDGET_ANDROID)
-void
-GPUProcessManager::EnsureUiCompositorController()
+already_AddRefed<UiCompositorControllerChild>
+GPUProcessManager::CreateUiCompositorController(nsBaseWidget* aWidget, const uint64_t aId)
 {
-  if (UiCompositorControllerChild::IsInitialized()) {
-    return;
-  }
-
-  RefPtr<nsThread> uiThread;
-
-  uiThread = GetAndroidUiThread();
-
-  MOZ_ASSERT(uiThread);
+  RefPtr<UiCompositorControllerChild> result;
 
   if (!EnsureGPUReady()) {
-    UiCompositorControllerChild::InitSameProcess(uiThread);
-    return;
-  }
+    result = UiCompositorControllerChild::CreateForSameProcess(aId);
+  } else {
+    ipc::Endpoint<PUiCompositorControllerParent> parentPipe;
+    ipc::Endpoint<PUiCompositorControllerChild> childPipe;
+    nsresult rv = PUiCompositorController::CreateEndpoints(
+      mGPUChild->OtherPid(),
+      base::GetCurrentProcId(),
+      &parentPipe,
+      &childPipe);
+    if (NS_FAILED(rv)) {
+      DisableGPUProcess("Failed to create PUiCompositorController endpoints");
+      return nullptr;
+    }
 
-  ipc::Endpoint<PUiCompositorControllerParent> parentPipe;
-  ipc::Endpoint<PUiCompositorControllerChild> childPipe;
-  nsresult rv = PUiCompositorController::CreateEndpoints(
-    mGPUChild->OtherPid(),
-    base::GetCurrentProcId(),
-    &parentPipe,
-    &childPipe);
-  if (NS_FAILED(rv)) {
-    DisableGPUProcess("Failed to create PUiCompositorController endpoints");
-    return;
+    mGPUChild->SendInitUiCompositorController(aId, Move(parentPipe));
+    result = UiCompositorControllerChild::CreateForGPUProcess(mProcessToken, Move(childPipe));
   }
-
-  mGPUChild->SendInitUiCompositorController(Move(parentPipe));
-  UiCompositorControllerChild::InitWithGPUProcess(uiThread, mProcessToken, Move(childPipe));
+  if (result) {
+    result->SetBaseWidget(aWidget);
+  }
+  return result.forget();
 }
 #endif // defined(MOZ_WIDGET_ANDROID)
 
@@ -302,11 +313,11 @@ GPUProcessManager::OnProcessLaunchComplete(GPUProcessHost* aHost)
   mVsyncBridge = VsyncBridgeChild::Create(mVsyncIOThread, mProcessToken, Move(vsyncChild));
   mGPUChild->SendInitVsyncBridge(Move(vsyncParent));
 
-  nsTArray<LayerTreeIdMapping> mappings;
-  LayerTreeOwnerTracker::Get()->Iterate([&](uint64_t aLayersId, base::ProcessId aProcessId) {
-    mappings.AppendElement(LayerTreeIdMapping(aLayersId, aProcessId));
-  });
-  mGPUChild->SendAddLayerTreeIdMapping(mappings);
+#ifdef MOZ_CRASHREPORTER
+  CrashReporter::AnnotateCrashReport(
+    NS_LITERAL_CSTRING("GPUProcessStatus"),
+    NS_LITERAL_CSTRING("Running"));
+#endif
 }
 
 static bool
@@ -354,12 +365,11 @@ GPUProcessManager::OnProcessDeviceReset(GPUProcessHost* aHost)
     HandleProcessLost();
     return;
   }
-  
-  uint64_t seqNo = GetNextDeviceResetSequenceNumber();
 
-  // We're good, do a reset like normal
-  for (auto& session : mRemoteSessions) {
-    session->NotifyDeviceReset(seqNo);
+  RebuildRemoteSessions();
+
+  for (const auto& listener : mListeners) {
+    listener->OnCompositorDeviceReset();
   }
 }
 
@@ -375,6 +385,14 @@ GPUProcessManager::OnProcessUnexpectedShutdown(GPUProcessHost* aHost)
     SprintfLiteral(disableMessage, "GPU process disabled after %d attempts",
                    mNumProcessAttempts);
     DisableGPUProcess(disableMessage);
+  } else if (mNumProcessAttempts > uint32_t(gfxPrefs::GPUProcessMaxRestartsWithDecoder()) &&
+             mDecodeVideoOnGpuProcess) {
+    mDecodeVideoOnGpuProcess = false;
+    Telemetry::Accumulate(Telemetry::GPU_PROCESS_CRASH_FALLBACKS,
+                                     uint32_t(FallbackType::DECODINGDISABLED));
+  } else {
+    Telemetry::Accumulate(Telemetry::GPU_PROCESS_CRASH_FALLBACKS,
+                                     uint32_t(FallbackType::NONE));
   }
 
   HandleProcessLost();
@@ -451,7 +469,19 @@ GPUProcessManager::HandleProcessLost()
   //      applied, and the window will not have a new compositor just yet.
   //      The next refresh tick and paint will ensure that one exists, again
   //      via nsIWidget::GetLayerManager.
+  RebuildRemoteSessions();
 
+  // Notify content. This will ensure that each content process re-establishes
+  // a connection to the compositor thread (whether it's in-process or in a
+  // newly launched GPU process).
+  for (const auto& listener : mListeners) {
+    listener->OnCompositorUnexpectedShutdown();
+  }
+}
+
+void
+GPUProcessManager::RebuildRemoteSessions()
+{
   // Build a list of sessions to notify, since notification might delete
   // entries from the list.
   nsTArray<RefPtr<RemoteCompositorSession>> sessions;
@@ -463,13 +493,6 @@ GPUProcessManager::HandleProcessLost()
   // that each widget destroys its layer manager and CompositorBridgeChild.
   for (const auto& session : sessions) {
     session->NotifySessionLost();
-  }
-
-  // Notify content. This will ensure that each content process re-establishes
-  // a connection to the compositor thread (whether it's in-process or in a
-  // newly launched GPU process).
-  for (const auto& listener : mListeners) {
-    listener->OnCompositorUnexpectedShutdown();
   }
 }
 
@@ -527,9 +550,12 @@ GPUProcessManager::DestroyProcess()
     mVsyncBridge->Close();
     mVsyncBridge = nullptr;
   }
-#if defined(MOZ_WIDGET_ANDROID)
-  UiCompositorControllerChild::Shutdown();
-#endif // defined(MOZ_WIDGET_ANDROID)
+
+#ifdef MOZ_CRASHREPORTER
+  CrashReporter::AnnotateCrashReport(
+    NS_LITERAL_CSTRING("GPUProcessStatus"),
+    NS_LITERAL_CSTRING("Destroyed"));
+#endif
 }
 
 RefPtr<CompositorSession>
@@ -544,12 +570,11 @@ GPUProcessManager::CreateTopLevelCompositor(nsBaseWidget* aWidget,
 
   EnsureImageBridgeChild();
   EnsureVRManager();
-#if defined(MOZ_WIDGET_ANDROID)
-  EnsureUiCompositorController();
-#endif // defined(MOZ_WIDGET_ANDROID)
+
+  RefPtr<CompositorSession> session;
 
   if (EnsureGPUReady()) {
-    RefPtr<CompositorSession> session = CreateRemoteSession(
+    session = CreateRemoteSession(
       aWidget,
       aLayerManager,
       layerTreeId,
@@ -557,22 +582,33 @@ GPUProcessManager::CreateTopLevelCompositor(nsBaseWidget* aWidget,
       aOptions,
       aUseExternalSurfaceSize,
       aSurfaceSize);
-    if (session) {
-      return session;
+    if (!session) {
+      // We couldn't create a remote compositor, so abort the process.
+      DisableGPUProcess("Failed to create remote compositor");
     }
-
-    // We couldn't create a remote compositor, so abort the process.
-    DisableGPUProcess("Failed to create remote compositor");
   }
 
-  return InProcessCompositorSession::Create(
-    aWidget,
-    aLayerManager,
-    layerTreeId,
-    aScale,
-    aOptions,
-    aUseExternalSurfaceSize,
-    aSurfaceSize);
+  if (!session) {
+    session = InProcessCompositorSession::Create(
+      aWidget,
+      aLayerManager,
+      layerTreeId,
+      aScale,
+      aOptions,
+      aUseExternalSurfaceSize,
+      aSurfaceSize,
+      AllocateNamespace());
+  }
+
+#if defined(MOZ_WIDGET_ANDROID)
+  if (session) {
+    // Nothing to do if controller gets a nullptr
+    RefPtr<UiCompositorControllerChild> controller = CreateUiCompositorController(aWidget, session->RootLayerTreeId());
+    session->SetUiCompositorControllerChild(controller);
+  }
+#endif // defined(MOZ_WIDGET_ANDROID)
+
+  return session;
 }
 
 RefPtr<CompositorSession>
@@ -601,7 +637,8 @@ GPUProcessManager::CreateRemoteSession(nsBaseWidget* aWidget,
   RefPtr<CompositorBridgeChild> child = CompositorBridgeChild::CreateRemote(
     mProcessToken,
     aLayerManager,
-    Move(childPipe));
+    Move(childPipe),
+    AllocateNamespace());
   if (!child) {
     gfxCriticalNote << "Failed to create CompositorBridgeChild";
     return nullptr;
@@ -659,7 +696,8 @@ GPUProcessManager::CreateContentBridges(base::ProcessId aOtherProcess,
                                         ipc::Endpoint<PCompositorBridgeChild>* aOutCompositor,
                                         ipc::Endpoint<PImageBridgeChild>* aOutImageBridge,
                                         ipc::Endpoint<PVRManagerChild>* aOutVRBridge,
-                                        ipc::Endpoint<dom::PVideoDecoderManagerChild>* aOutVideoManager)
+                                        ipc::Endpoint<dom::PVideoDecoderManagerChild>* aOutVideoManager,
+                                        nsTArray<uint32_t>* aNamespaces)
 {
   if (!CreateContentCompositorBridge(aOtherProcess, aOutCompositor) ||
       !CreateContentImageBridge(aOtherProcess, aOutImageBridge) ||
@@ -670,6 +708,9 @@ GPUProcessManager::CreateContentBridges(base::ProcessId aOtherProcess,
   // VideoDeocderManager is only supported in the GPU process, so we allow this to be
   // fallible.
   CreateContentVideoDecoderManager(aOtherProcess, aOutVideoManager);
+  // Allocates 2 namaspaces(for CompositorBridgeChild and ImageBridgeChild)
+  aNamespaces->AppendElement(AllocateNamespace());
+  aNamespaces->AppendElement(AllocateNamespace());
   return true;
 }
 
@@ -694,7 +735,7 @@ GPUProcessManager::CreateContentCompositorBridge(base::ProcessId aOtherProcess,
     return false;
   }
 
-  if (EnsureGPUReady()) {
+  if (mGPUChild) {
     mGPUChild->SendNewContentCompositorBridge(Move(parentPipe));
   } else {
     if (!CompositorBridgeParent::CreateForContent(Move(parentPipe))) {
@@ -771,7 +812,7 @@ GPUProcessManager::CreateContentVRManager(base::ProcessId aOtherProcess,
     return false;
   }
 
-  if (EnsureGPUReady()) {
+  if (mGPUChild) {
     mGPUChild->SendNewContentVRManager(Move(parentPipe));
   } else {
     if (!VRManagerParent::CreateForContent(Move(parentPipe))) {
@@ -787,7 +828,9 @@ void
 GPUProcessManager::CreateContentVideoDecoderManager(base::ProcessId aOtherProcess,
                                                     ipc::Endpoint<dom::PVideoDecoderManagerChild>* aOutEndpoint)
 {
-  if (!EnsureGPUReady() || !MediaPrefs::PDMUseGPUDecoder()) {
+  if (!EnsureGPUReady() ||
+      !MediaPrefs::PDMUseGPUDecoder() ||
+      !mDecodeVideoOnGpuProcess) {
     return;
   }
 
@@ -822,9 +865,7 @@ GPUProcessManager::MapLayerTreeId(uint64_t aLayersId, base::ProcessId aOwningId)
   LayerTreeOwnerTracker::Get()->Map(aLayersId, aOwningId);
 
   if (EnsureGPUReady()) {
-    AutoTArray<LayerTreeIdMapping, 1> mappings;
-    mappings.AppendElement(LayerTreeIdMapping(aLayersId, aOwningId));
-    mGPUChild->SendAddLayerTreeIdMapping(mappings);
+    mGPUChild->SendAddLayerTreeIdMapping(LayerTreeIdMapping(aLayersId, aOwningId));
   }
 }
 
@@ -849,8 +890,53 @@ GPUProcessManager::IsLayerTreeIdMapped(uint64_t aLayersId, base::ProcessId aRequ
 uint64_t
 GPUProcessManager::AllocateLayerTreeId()
 {
+  // Allocate tree id by using id namespace.
+  // By it, tree id does not conflict with external image id and
+  // async image pipeline id.
   MOZ_ASSERT(NS_IsMainThread());
-  return ++mNextLayerTreeId;
+  ++mResourceId;
+  if (mResourceId == UINT32_MAX) {
+    // Move to next id namespace.
+    mIdNamespace = AllocateNamespace();
+    mResourceId = 1;
+  }
+
+  uint64_t layerTreeId = mIdNamespace;
+  layerTreeId = (layerTreeId << 32) | mResourceId;
+  return layerTreeId;
+}
+
+uint32_t
+GPUProcessManager::AllocateNamespace()
+{
+  MOZ_ASSERT(NS_IsMainThread());
+  return ++mNextNamespace;
+}
+
+bool
+GPUProcessManager::AllocateAndConnectLayerTreeId(PCompositorBridgeChild* aCompositorBridge,
+                                                 base::ProcessId aOtherPid,
+                                                 uint64_t* aOutLayersId,
+                                                 CompositorOptions* aOutCompositorOptions)
+{
+  uint64_t layersId = AllocateLayerTreeId();
+  *aOutLayersId = layersId;
+
+  if (!mGPUChild || !aCompositorBridge) {
+    // If we're not remoting to another process, or there is no compositor,
+    // then we'll send at most one message. In this case we can just keep
+    // the old behavior of making sure the mapping occurs, and maybe sending
+    // a creation notification.
+    MapLayerTreeId(layersId, aOtherPid);
+    if (!aCompositorBridge) {
+      return false;
+    }
+    return aCompositorBridge->SendNotifyChildCreated(layersId, aOutCompositorOptions);
+  }
+
+  // Use the combined message path.
+  LayerTreeOwnerTracker::Get()->Map(layersId, aOtherPid);
+  return aCompositorBridge->SendMapAndNotifyChildCreated(layersId, aOtherPid, aOutCompositorOptions);
 }
 
 void

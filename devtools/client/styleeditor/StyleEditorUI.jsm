@@ -29,8 +29,6 @@ const {PluralForm} = require("devtools/shared/plural-form");
 const {PrefObserver} = require("devtools/client/shared/prefs");
 const csscoverage = require("devtools/shared/fronts/csscoverage");
 const {console} = require("resource://gre/modules/Console.jsm");
-const promise = require("promise");
-const defer = require("devtools/shared/defer");
 const {ResponsiveUIManager} =
   require("resource://devtools/client/responsivedesign/responsivedesign.jsm");
 const {KeyCodes} = require("devtools/client/shared/keycodes");
@@ -520,7 +518,7 @@ StyleEditorUI.prototype = {
       },
       disableAnimations: this._alwaysDisableAnimations,
       ordinal: ordinal,
-      onCreate: function (summary, details, data) {
+      onCreate: (summary, details, data) => {
         let createdEditor = data.editor;
         createdEditor.summary = summary;
         createdEditor.details = details;
@@ -595,9 +593,9 @@ StyleEditorUI.prototype = {
           this._selectEditor(createdEditor);
         }
         this.emit("editor-added", createdEditor);
-      }.bind(this),
+      },
 
-      onShow: function (summary, details, data) {
+      onShow: (summary, details, data) => {
         let showEditor = data.editor;
         this.selectedEditor = showEditor;
 
@@ -637,7 +635,7 @@ StyleEditorUI.prototype = {
             }
           }
         }.bind(this)).then(null, e => console.error(e));
-      }.bind(this)
+      }
     });
   },
 
@@ -662,7 +660,7 @@ StyleEditorUI.prototype = {
       }
     }
 
-    return promise.resolve();
+    return Promise.resolve();
   },
 
   /**
@@ -710,43 +708,41 @@ StyleEditorUI.prototype = {
       this._view.activeSummary = summary;
     });
 
-    return promise.all([editorPromise, summaryPromise]);
+    return Promise.all([editorPromise, summaryPromise]);
   },
 
   getEditorSummary: function (editor) {
-    if (editor.summary) {
-      return promise.resolve(editor.summary);
-    }
-
-    let deferred = defer();
     let self = this;
 
-    this.on("editor-added", function onAdd(e, selected) {
-      if (selected == editor) {
-        self.off("editor-added", onAdd);
-        deferred.resolve(editor.summary);
-      }
-    });
+    if (editor.summary) {
+      return Promise.resolve(editor.summary);
+    }
 
-    return deferred.promise;
+    return new Promise(resolve => {
+      this.on("editor-added", function onAdd(e, selected) {
+        if (selected == editor) {
+          self.off("editor-added", onAdd);
+          resolve(editor.summary);
+        }
+      });
+    });
   },
 
   getEditorDetails: function (editor) {
-    if (editor.details) {
-      return promise.resolve(editor.details);
-    }
-
-    let deferred = defer();
     let self = this;
 
-    this.on("editor-added", function onAdd(e, selected) {
-      if (selected == editor) {
-        self.off("editor-added", onAdd);
-        deferred.resolve(editor.details);
-      }
-    });
+    if (editor.details) {
+      return Promise.resolve(editor.details);
+    }
 
-    return deferred.promise;
+    return new Promise(resolve => {
+      this.on("editor-added", function onAdd(e, selected) {
+        if (selected == editor) {
+          self.off("editor-added", onAdd);
+          resolve(editor.details);
+        }
+      });
+    });
   },
 
   /**
@@ -865,7 +861,7 @@ StyleEditorUI.prototype = {
       let list = details.querySelector(".stylesheet-media-list");
 
       while (list.firstChild) {
-        list.removeChild(list.firstChild);
+        list.firstChild.remove();
       }
 
       let rules = editor.mediaRules;
@@ -899,19 +895,14 @@ StyleEditorUI.prototype = {
                              this._jumpToLocation.bind(this, location));
 
         let cond = this._panelDoc.createElement("div");
-        cond.textContent = rule.conditionText;
         cond.className = "media-rule-condition";
         if (!rule.matches) {
           cond.classList.add("media-condition-unmatched");
         }
         if (this._target.tab.tagName == "tab") {
-          const minMaxPattern = /(min\-|max\-)(width|height):\s\d+(px)/ig;
-          const replacement =
-                "<a href='#' class='media-responsive-mode-toggle'>$&</a>";
-
-          cond.innerHTML = cond.textContent.replace(minMaxPattern, replacement);
-          cond.addEventListener("click",
-                                this._onMediaConditionClick.bind(this));
+          this._setConditionContents(cond, rule.conditionText);
+        } else {
+          cond.textContent = rule.conditionText;
         }
         div.appendChild(cond);
 
@@ -932,16 +923,50 @@ StyleEditorUI.prototype = {
   },
 
   /**
-    * Called when a media condition is clicked
-    * If a responsive mode link is clicked, it will launch it.
-    *
-    * @param {object} e
-    *        Event object
-    */
-  _onMediaConditionClick: function (e) {
-    if (!e.target.matches(".media-responsive-mode-toggle")) {
-      return;
+   * Used to safely inject media query links
+   *
+   * @param {HTMLElement} element
+   *        The element corresponding to the media sidebar condition
+   * @param {String} rawText
+   *        The raw condition text to parse
+   */
+  _setConditionContents(element, rawText) {
+    const minMaxPattern = /(min\-|max\-)(width|height):\s\d+(px)/ig;
+
+    let match = minMaxPattern.exec(rawText);
+    let lastParsed = 0;
+    while (match && match.index != minMaxPattern.lastIndex) {
+      let matchEnd = match.index + match[0].length;
+      let node = this._panelDoc.createTextNode(
+        rawText.substring(lastParsed, match.index)
+      );
+      element.appendChild(node);
+
+      let link = this._panelDoc.createElement("a");
+      link.href = "#";
+      link.className = "media-responsive-mode-toggle";
+      link.textContent = rawText.substring(match.index, matchEnd);
+      link.addEventListener("click", this._onMediaConditionClick.bind(this));
+      element.appendChild(link);
+
+      match = minMaxPattern.exec(rawText);
+      lastParsed = matchEnd;
     }
+
+    let node = this._panelDoc.createTextNode(
+      rawText.substring(lastParsed, rawText.length)
+    );
+    element.appendChild(node);
+  },
+
+  /**
+   * Called when a media condition is clicked
+   * If a responsive mode link is clicked, it will launch it.
+   *
+   * @param {object} e
+   *        Event object
+   */
+  _onMediaConditionClick: function (e) {
     let conditionText = e.target.textContent;
     let isWidthCond = conditionText.toLowerCase().indexOf("width") > -1;
     let mediaVal = parseInt(/\d+/.exec(conditionText), 10);

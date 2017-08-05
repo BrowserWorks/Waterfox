@@ -1,8 +1,8 @@
 "use strict";
 
 module.exports = {
-  "extends": [
-    "../../../toolkit/.eslintrc.js"
+  "plugins": [
+    "spidermonkey-js"
   ],
 
   "rules": {

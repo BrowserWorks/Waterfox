@@ -162,7 +162,7 @@ function testStates(aAccOrElmOrID, aState, aExtraState, aAbsentState,
 }
 
 /**
- * Tests an acessible and its sub tree for the passed in state bits.
+ * Tests an accessible and its sub tree for the passed in state bits.
  * Used to make sure that states are propagated to descendants, for example the
  * STATE_UNAVAILABLE from a container to its children.
  *
@@ -204,7 +204,7 @@ function testStatesInSubtree(aAccOrElmOrID, aState, aExtraState, aAbsentState)
 function testIsDefunct(aAccessible, aTestName)
 {
   var id = prettyName(aAccessible) + (aTestName ? " [" + aTestName + "]" : "");
-  var [state, extraState] = getStates(aAccessible);
+  var [/*state*/, extraState] = getStates(aAccessible);
   isState(extraState & EXT_STATE_DEFUNCT, EXT_STATE_DEFUNCT, true,
           "no defuct state for " + id + "!");
 }

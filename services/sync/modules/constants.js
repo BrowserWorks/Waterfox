@@ -10,7 +10,7 @@ for (let [key, val] of Object.entries({
 WEAVE_VERSION:                         "@weave_version@",
 
 // Sync Server API version that the client supports.
-SYNC_API_VERSION:                      "1.1",
+SYNC_API_VERSION:                      "1.5",
 
 // Version of the data format this client supports. The data format describes
 // how records are packaged; this is separate from the Server API version and
@@ -56,27 +56,27 @@ MASTER_PASSWORD_LOCKED_RETRY_INTERVAL: 15 * 60 * 1000,   // 15 minutes
 // The default for how long we "block" sync from running when doing a migration.
 DEFAULT_BLOCK_PERIOD:                  2 * 24 * 60 * 60 * 1000, // 2 days
 
-// Separate from the ID fetch batch size to allow tuning for mobile.
-MOBILE_BATCH_SIZE:                     50,
-
 // 50 is hardcoded here because of URL length restrictions.
 // (GUIDs can be up to 64 chars long.)
 // Individual engines can set different values for their limit if their
 // identifiers are shorter.
 DEFAULT_GUID_FETCH_BATCH_SIZE:         50,
-DEFAULT_MOBILE_GUID_FETCH_BATCH_SIZE:  50,
 
 // Default batch size for applying incoming records.
 DEFAULT_STORE_BATCH_SIZE:              1,
-HISTORY_STORE_BATCH_SIZE:              50,      // same as MOBILE_BATCH_SIZE
-FORMS_STORE_BATCH_SIZE:                50,      // same as MOBILE_BATCH_SIZE
-PASSWORDS_STORE_BATCH_SIZE:            50,      // same as MOBILE_BATCH_SIZE
+HISTORY_STORE_BATCH_SIZE:              50,
+FORMS_STORE_BATCH_SIZE:                50,
+PASSWORDS_STORE_BATCH_SIZE:            50,
 ADDONS_STORE_BATCH_SIZE:               1000000, // process all addons at once
-APPS_STORE_BATCH_SIZE:                 50,      // same as MOBILE_BATCH_SIZE
+APPS_STORE_BATCH_SIZE:                 50,
 
 // Default batch size for download batching
 // (how many records are fetched at a time from the server when batching is used).
 DEFAULT_DOWNLOAD_BATCH_SIZE:           1000,
+
+
+// Default maximum size for a record payload
+DEFAULT_MAX_RECORD_PAYLOAD_BYTES:      262144,  // 256KB
 
 // score thresholds for early syncs
 SINGLE_USER_THRESHOLD:                 1000,

@@ -17,7 +17,7 @@ function testBug600545() {
   Services.prefs.setBoolPref("browser.sessionstore.resume_from_crash", false);
   Services.prefs.setIntPref("browser.sessionstore.interval", 2000);
 
-  registerCleanupFunction(function () {
+  registerCleanupFunction(function() {
     Services.prefs.clearUserPref("browser.sessionstore.resume_from_crash");
     Services.prefs.clearUserPref("browser.sessionstore.interval");
   });
@@ -31,7 +31,7 @@ function testBug600545() {
   let state = { windows: [
     {
       tabs: [
-        { entries: [{ url: "http://example.org#0", triggeringPrincipal_base64 }], pinned:true },
+        { entries: [{ url: "http://example.org#0", triggeringPrincipal_base64 }], pinned: true },
         { entries: [{ url: "http://example.com#1", triggeringPrincipal_base64 }] },
         { entries: [{ url: "http://example.com#2", triggeringPrincipal_base64 }] },
       ],
@@ -51,7 +51,7 @@ function testBug600545() {
   waitForBrowserState(state, function() {
     // Need to wait for SessionStore's saveState function to be called
     // so that non-pinned tabs will be stripped from non-active window
-    waitForSaveState(function () {
+    waitForSaveState(function() {
       let expectedNumberOfTabs = getStateTabCount(state);
       let retrievedState = JSON.parse(ss.getBrowserState());
       let actualNumberOfTabs = getStateTabCount(retrievedState);

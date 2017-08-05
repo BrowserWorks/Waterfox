@@ -91,6 +91,7 @@ static NS_DEFINE_CID(kAppShellCID, NS_APPSHELL_CID);
 #include "ANPBase.h"
 #include "AndroidBridge.h"
 #include "ClientLayerManager.h"
+#include "FennecJNIWrappers.h"
 #include "nsWindow.h"
 
 static nsPluginInstanceOwner* sFullScreenInstance = nullptr;
@@ -104,10 +105,6 @@ using namespace mozilla::dom;
 using namespace mozilla;
 using namespace mozilla::dom;
 using namespace mozilla::layers;
-
-static inline nsPoint AsNsPoint(const nsIntPoint &p) {
-  return nsPoint(p.x, p.y);
-}
 
 // special class for handeling DOM context menu events because for
 // some reason it starves other mouse events if implemented on the
@@ -134,7 +131,9 @@ class AsyncPaintWaitEvent : public Runnable
 {
 public:
   AsyncPaintWaitEvent(nsIContent* aContent, bool aFinished) :
-    mContent(aContent), mFinished(aFinished)
+    Runnable("AsyncPaintWaitEvent"),
+    mContent(aContent),
+    mFinished(aFinished)
   {
   }
 
@@ -167,22 +166,23 @@ nsPluginInstanceOwner::NotifyPaintWaiter(nsDisplayListBuilder* aBuilder)
 
 #if MOZ_WIDGET_ANDROID
 static void
-AttachToContainerAsSurfaceTexture(ImageContainer* container,
-                                  nsNPAPIPluginInstance* instance,
-                                  const LayoutDeviceRect& rect,
-                                  RefPtr<Image>* out_image)
+AttachToContainerAsSurface(ImageContainer* container,
+                           nsNPAPIPluginInstance* instance,
+                           const LayoutDeviceRect& rect,
+                           RefPtr<Image>* out_image)
 {
   MOZ_ASSERT(out_image);
   MOZ_ASSERT(!*out_image);
 
-  mozilla::gl::AndroidSurfaceTexture* surfTex = instance->AsSurfaceTexture();
-  if (!surfTex) {
+  java::GeckoSurface::LocalRef surface = instance->AsSurface();
+  if (!surface) {
     return;
   }
 
   RefPtr<Image> img = new SurfaceTextureImage(
-    surfTex,
+    surface->GetHandle(),
     gfx::IntSize::Truncate(rect.width, rect.height),
+    true, // continuously update without a transaction
     instance->OriginPos());
   *out_image = img;
 }
@@ -225,7 +225,7 @@ nsPluginInstanceOwner::GetImageContainer()
   if (r.width && r.height) {
     // Try to get it as an EGLImage first.
     RefPtr<Image> img;
-    AttachToContainerAsSurfaceTexture(container, mInstance, r, &img);
+    AttachToContainerAsSurface(container, mInstance, r, &img);
 
     if (img) {
       container->SetCurrentImageInTransaction(img);
@@ -1064,47 +1064,53 @@ NPBool nsPluginInstanceOwner::ConvertPointPuppet(PuppetWidget *widget,
   }
 
   nsPresContext* presContext = pluginFrame->PresContext();
-  double scaleFactor = double(nsPresContext::AppUnitsPerCSSPixel())/
-    presContext->DeviceContext()->AppUnitsPerDevPixelAtUnitFullZoom();
+  CSSToLayoutDeviceScale scaleFactor(
+    double(nsPresContext::AppUnitsPerCSSPixel()) /
+    presContext->DeviceContext()->AppUnitsPerDevPixelAtUnitFullZoom());
 
   PuppetWidget *puppetWidget = static_cast<PuppetWidget*>(widget);
   PuppetWidget *rootWidget = static_cast<PuppetWidget*>(widget->GetTopLevelWidget());
   if (!rootWidget) {
     return false;
   }
-  nsPoint chromeSize = AsNsPoint(rootWidget->GetChromeDimensions()) / scaleFactor;
+  CSSIntPoint chromeSize = CSSIntPoint::Truncate(
+    LayoutDeviceIntPoint::FromUnknownPoint(rootWidget->GetChromeDimensions()) /
+    scaleFactor);
   nsIntSize intScreenDims = rootWidget->GetScreenDimensions();
-  nsSize screenDims = nsSize(intScreenDims.width / scaleFactor,
-                             intScreenDims.height / scaleFactor);
+  CSSIntSize screenDims = CSSIntSize::Truncate(
+    LayoutDeviceIntSize::FromUnknownSize(intScreenDims) / scaleFactor);
   int32_t screenH = screenDims.height;
-  nsPoint windowPosition = AsNsPoint(rootWidget->GetWindowPosition()) / scaleFactor;
+  CSSIntPoint windowPosition = CSSIntPoint::Truncate(
+    LayoutDeviceIntPoint::FromUnknownPoint(rootWidget->GetWindowPosition()) /
+    scaleFactor);
 
   // Window size is tab size + chrome size.
   LayoutDeviceIntRect tabContentBounds = puppetWidget->GetBounds();
-  tabContentBounds.ScaleInverseRoundOut(scaleFactor);
+  tabContentBounds.ScaleInverseRoundOut(scaleFactor.scale);
   int32_t windowH = tabContentBounds.height + int(chromeSize.y);
 
-  nsPoint pluginPosition = AsNsPoint(pluginFrame->GetScreenRect().TopLeft());
+  CSSIntPoint pluginPosition = pluginFrame->GetScreenRect().TopLeft();
 
   // Convert (sourceX, sourceY) to 'real' (not PuppetWidget) screen space.
   // In OSX, the Y-axis increases upward, which is the reverse of ours.
   // We want OSX coordinates for window and screen so those equations are swapped.
-  nsPoint sourcePoint(sourceX, sourceY);
-  nsPoint screenPoint;
+  CSSIntPoint sourcePoint = CSSIntPoint::Truncate(sourceX, sourceY);
+  CSSIntPoint screenPoint;
   switch (sourceSpace) {
     case NPCoordinateSpacePlugin:
       screenPoint = sourcePoint + pluginPosition +
-        pluginFrame->GetContentRectRelativeToSelf().TopLeft() / nsPresContext::AppUnitsPerCSSPixel();
+        CSSIntPoint::Truncate(CSSPoint::FromAppUnits(
+          pluginFrame->GetContentRectRelativeToSelf().TopLeft()));
       break;
     case NPCoordinateSpaceWindow:
-      screenPoint = nsPoint(sourcePoint.x, windowH-sourcePoint.y) +
+      screenPoint = CSSIntPoint(sourcePoint.x, windowH-sourcePoint.y) +
         windowPosition;
       break;
     case NPCoordinateSpaceFlippedWindow:
       screenPoint = sourcePoint + windowPosition;
       break;
     case NPCoordinateSpaceScreen:
-      screenPoint = nsPoint(sourcePoint.x, screenH-sourcePoint.y);
+      screenPoint = CSSIntPoint(sourcePoint.x, screenH-sourcePoint.y);
       break;
     case NPCoordinateSpaceFlippedScreen:
       screenPoint = sourcePoint;
@@ -1114,11 +1120,12 @@ NPBool nsPluginInstanceOwner::ConvertPointPuppet(PuppetWidget *widget,
   }
 
   // Convert from screen to dest space.
-  nsPoint destPoint;
+  CSSIntPoint destPoint;
   switch (destSpace) {
     case NPCoordinateSpacePlugin:
       destPoint = screenPoint - pluginPosition -
-        pluginFrame->GetContentRectRelativeToSelf().TopLeft() / nsPresContext::AppUnitsPerCSSPixel();
+        CSSIntPoint::Truncate(CSSPoint::FromAppUnits(
+          pluginFrame->GetContentRectRelativeToSelf().TopLeft()));
       break;
     case NPCoordinateSpaceWindow:
       destPoint = screenPoint - windowPosition;
@@ -1128,7 +1135,7 @@ NPBool nsPluginInstanceOwner::ConvertPointPuppet(PuppetWidget *widget,
       destPoint = screenPoint - windowPosition;
       break;
     case NPCoordinateSpaceScreen:
-      destPoint = nsPoint(screenPoint.x, screenH-screenPoint.y);
+      destPoint = CSSIntPoint(screenPoint.x, screenH-screenPoint.y);
       break;
     case NPCoordinateSpaceFlippedScreen:
       destPoint = screenPoint;
@@ -1172,12 +1179,7 @@ NPBool nsPluginInstanceOwner::ConvertPointNoPuppet(nsIWidget *widget,
   double scaleFactor = double(nsPresContext::AppUnitsPerCSSPixel())/
     presContext->DeviceContext()->AppUnitsPerDevPixelAtUnitFullZoom();
 
-  nsCOMPtr<nsIScreenManager> screenMgr = do_GetService("@mozilla.org/gfx/screenmanager;1");
-  if (!screenMgr) {
-    return false;
-  }
-  nsCOMPtr<nsIScreen> screen;
-  screenMgr->ScreenForNativeWidget(widget->GetNativeData(NS_NATIVE_WINDOW), getter_AddRefs(screen));
+  nsCOMPtr<nsIScreen> screen = widget->GetWidgetScreen();
   if (!screen) {
     return false;
   }
@@ -1192,7 +1194,7 @@ NPBool nsPluginInstanceOwner::ConvertPointNoPuppet(nsIWidget *widget,
   int32_t windowY = windowScreenBounds.y;
   int32_t windowHeight = windowScreenBounds.height;
 
-  nsIntRect pluginScreenRect = pluginFrame->GetScreenRect();
+  CSSIntRect pluginScreenRect = pluginFrame->GetScreenRect();
 
   double screenXGecko, screenYGecko;
   switch (sourceSpace) {
@@ -1546,8 +1548,8 @@ bool nsPluginInstanceOwner::AddPluginView(const LayoutDeviceRect& aRect /* = Lay
     mJavaView = (void*)jni::GetGeckoThreadEnv()->NewGlobalRef((jobject)mJavaView);
   }
 
-  if (mFullScreen) {
-    java::GeckoAppShell::AddFullScreenPluginView(jni::Object::Ref::From(jobject(mJavaView)));
+  if (mFullScreen && jni::IsFennec()) {
+    java::GeckoApp::AddPluginView(jni::Object::Ref::From(jobject(mJavaView)));
     sFullScreenInstance = this;
   }
 
@@ -1559,8 +1561,8 @@ void nsPluginInstanceOwner::RemovePluginView()
   if (!mInstance || !mJavaView)
     return;
 
-  if (mFullScreen) {
-    java::GeckoAppShell::RemoveFullScreenPluginView(jni::Object::Ref::From(jobject(mJavaView)));
+  if (mFullScreen && jni::IsFennec()) {
+    java::GeckoApp::RemovePluginView(jni::Object::Ref::From(jobject(mJavaView)));
   }
   jni::GetGeckoThreadEnv()->DeleteGlobalRef((jobject)mJavaView);
   mJavaView = nullptr;
@@ -1585,8 +1587,9 @@ nsPluginInstanceOwner::GetImageContainerForVideo(nsNPAPIPluginInstance::VideoInf
 
   if (aVideoInfo->mDimensions.width && aVideoInfo->mDimensions.height) {
     RefPtr<Image> img = new SurfaceTextureImage(
-      aVideoInfo->mSurfaceTexture,
+      aVideoInfo->mSurface->GetHandle(),
       gfx::IntSize::Truncate(aVideoInfo->mDimensions.width, aVideoInfo->mDimensions.height),
+      true, /* continuous */
       gl::OriginPos::BottomLeft);
     container->SetCurrentImageInTransaction(img);
   }

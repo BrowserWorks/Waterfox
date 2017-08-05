@@ -86,7 +86,7 @@ DoOCSPRequest(const UniquePLArenaPool& arena, const char* url,
   if (!arena.get() || !url || !encodedRequest || !encodedRequest->data) {
     return Result::FATAL_ERROR_INVALID_ARGS;
   }
-  uint32_t urlLen = PL_strlen(url);
+  uint32_t urlLen = strlen(url);
   if (urlLen > static_cast<uint32_t>(std::numeric_limits<int32_t>::max())) {
     return Result::FATAL_ERROR_INVALID_ARGS;
   }
@@ -141,7 +141,7 @@ DoOCSPRequest(const UniquePLArenaPool& arena, const char* url,
   }
   nsAutoCString
     hostname(url + authorityPos + hostnamePos,
-             static_cast<nsACString_internal::size_type>(hostnameLen));
+             static_cast<nsACString::size_type>(hostnameLen));
 
   nsNSSHttpServerSession* serverSessionPtr = nullptr;
   Result rv = nsNSSHttpInterface::createSessionFcn(
@@ -196,7 +196,7 @@ DoOCSPRequest(const UniquePLArenaPool& arena, const char* url,
   const char* httpResponseData;
   uint32_t httpResponseDataLen = 0; // 0 means any response size is acceptable
   rv = nsNSSHttpInterface::trySendAndReceiveFcn(requestSession.get(), nullptr,
-                                                &httpResponseCode, nullptr,
+                                                &httpResponseCode,
                                                 nullptr, &httpResponseData,
                                                 &httpResponseDataLen);
   if (rv != Success) {

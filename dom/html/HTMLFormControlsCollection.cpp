@@ -29,7 +29,7 @@ HTMLFormControlsCollection::ShouldBeInElements(nsIFormControl* aFormControl)
   // <input type=image> elements to the list of form controls in a
   // form.
 
-  switch (aFormControl->GetType()) {
+  switch (aFormControl->ControlType()) {
   case NS_FORM_BUTTON_BUTTON :
   case NS_FORM_BUTTON_RESET :
   case NS_FORM_BUTTON_SUBMIT :
@@ -100,12 +100,12 @@ HTMLFormControlsCollection::Clear()
 {
   // Null out childrens' pointer to me.  No refcounting here
   for (int32_t i = mElements.Length() - 1; i >= 0; i--) {
-    mElements[i]->ClearForm(false);
+    mElements[i]->ClearForm(false, false);
   }
   mElements.Clear();
 
   for (int32_t i = mNotInElements.Length() - 1; i >= 0; i--) {
-    mNotInElements[i]->ClearForm(false);
+    mNotInElements[i]->ClearForm(false, false);
   }
   mNotInElements.Clear();
 

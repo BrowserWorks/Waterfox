@@ -39,6 +39,8 @@ ViewportFrame::Init(nsIContent*       aContent,
                     nsIFrame*         aPrevInFlow)
 {
   nsContainerFrame::Init(aContent, aParent, aPrevInFlow);
+  // No need to call CreateView() here - the frame ctor will call SetView()
+  // with the ViewManager's root view, so we'll assign it in SetViewInternal().
 
   nsIFrame* parent = nsLayoutUtils::GetCrossDocParentFrame(this);
   if (parent) {
@@ -159,7 +161,7 @@ ViewportFrame::BuildDisplayListForTopLayer(nsDisplayListBuilder* aBuilder,
       }
       if (nsIFrame* backdropPh =
           frame->GetChildList(kBackdropList).FirstChild()) {
-        MOZ_ASSERT(backdropPh->GetType() == nsGkAtoms::placeholderFrame);
+        MOZ_ASSERT(backdropPh->IsPlaceholderFrame());
         nsIFrame* backdropFrame =
           static_cast<nsPlaceholderFrame*>(backdropPh)->GetOutOfFlowFrame();
         MOZ_ASSERT(backdropFrame);
@@ -411,12 +413,6 @@ ViewportFrame::ComputeCustomOverflow(nsOverflowAreas& aOverflowAreas)
   }
 
   return nsContainerFrame::ComputeCustomOverflow(aOverflowAreas);
-}
-
-nsIAtom*
-ViewportFrame::GetType() const
-{
-  return nsGkAtoms::viewportFrame;
 }
 
 #ifdef DEBUG_FRAME_DUMP

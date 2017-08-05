@@ -11,6 +11,7 @@
 #include "mozilla/dom/cache/Cache.h"
 #include "mozilla/dom/Promise.h"
 #include "mozilla/dom/PromiseWorkerProxy.h"
+#include "mozilla/dom/ScriptLoader.h"
 #include "mozilla/ipc/BackgroundUtils.h"
 #include "mozilla/ipc/PBackgroundSharedTypes.h"
 #include "nsICacheInfoChannel.h"
@@ -23,7 +24,6 @@
 #include "nsIScriptSecurityManager.h"
 #include "nsContentUtils.h"
 #include "nsNetUtil.h"
-#include "nsScriptLoader.h"
 #include "ServiceWorkerManager.h"
 #include "Workers.h"
 #include "nsStringStream.h"
@@ -396,15 +396,13 @@ public:
         return;
       }
 
-      Cache* cache = nullptr;
+      RefPtr<Cache> cache;
       nsresult rv = UNWRAP_OBJECT(Cache, obj, cache);
       if (NS_WARN_IF(NS_FAILED(rv))) {
         Fail(rv);
         return;
       }
 
-      // Just to be safe.
-      RefPtr<Cache> kungfuDeathGrip = cache;
       WriteToCache(cache);
       return;
     }
@@ -671,11 +669,13 @@ CompareNetwork::Initialize(nsIPrincipal* aPrincipal, const nsAString& aURL, nsIL
   nsCOMPtr<nsIHttpChannel> httpChannel = do_QueryInterface(mChannel);
   if (httpChannel) {
     // Spec says no redirects allowed for SW scripts.
-    httpChannel->SetRedirectionLimit(0);
+    rv = httpChannel->SetRedirectionLimit(0);
+    MOZ_ASSERT(NS_SUCCEEDED(rv));
 
-    httpChannel->SetRequestHeader(NS_LITERAL_CSTRING("Service-Worker"),
-                                  NS_LITERAL_CSTRING("script"),
-                                  /* merge */ false);
+    rv = httpChannel->SetRequestHeader(NS_LITERAL_CSTRING("Service-Worker"),
+                                       NS_LITERAL_CSTRING("script"),
+                                       /* merge */ false);
+    MOZ_ASSERT(NS_SUCCEEDED(rv));
   }
 
   nsCOMPtr<nsIStreamLoader> loader;
@@ -765,7 +765,7 @@ CompareNetwork::OnStreamComplete(nsIStreamLoader* aLoader, nsISupports* aContext
     // Get the stringified numeric status code, not statusText which could be
     // something misleading like OK for a 404.
     uint32_t status = 0;
-    httpChannel->GetResponseStatus(&status); // don't care if this fails, use 0.
+    Unused << httpChannel->GetResponseStatus(&status); // don't care if this fails, use 0.
     nsAutoString statusAsText;
     statusAsText.AppendInt(status);
 
@@ -826,9 +826,9 @@ CompareNetwork::OnStreamComplete(nsIStreamLoader* aLoader, nsISupports* aContext
   char16_t* buffer = nullptr;
   size_t len = 0;
 
-  rv = nsScriptLoader::ConvertToUTF16(httpChannel, aString, aLen,
-                                      NS_LITERAL_STRING("UTF-8"), nullptr,
-                                      buffer, len);
+  rv = ScriptLoader::ConvertToUTF16(httpChannel, aString, aLen,
+                                    NS_LITERAL_STRING("UTF-8"), nullptr,
+                                    buffer, len);
   if (NS_WARN_IF(NS_FAILED(rv))) {
     mManager->NetworkFinished(rv);
     return rv;
@@ -880,9 +880,9 @@ CompareCache::OnStreamComplete(nsIStreamLoader* aLoader, nsISupports* aContext,
   char16_t* buffer = nullptr;
   size_t len = 0;
 
-  nsresult rv = nsScriptLoader::ConvertToUTF16(nullptr, aString, aLen,
-                                               NS_LITERAL_STRING("UTF-8"),
-                                               nullptr, buffer, len);
+  nsresult rv = ScriptLoader::ConvertToUTF16(nullptr, aString, aLen,
+                                             NS_LITERAL_STRING("UTF-8"),
+                                             nullptr, buffer, len);
   if (NS_WARN_IF(NS_FAILED(rv))) {
     mManager->CacheFinished(rv, false);
     return rv;
@@ -917,13 +917,9 @@ CompareCache::ManageCacheResult(JSContext* aCx, JS::Handle<JS::Value> aValue)
   }
 
   JS::Rooted<JSObject*> obj(aCx, &aValue.toObject());
-  if (NS_WARN_IF(!obj)) {
-    mManager->CacheFinished(NS_ERROR_FAILURE, false);
-    return;
-  }
 
   Cache* cache = nullptr;
-  nsresult rv = UNWRAP_OBJECT(Cache, obj, cache);
+  nsresult rv = UNWRAP_OBJECT(Cache, &obj, cache);
   if (NS_WARN_IF(NS_FAILED(rv))) {
     mManager->CacheFinished(rv, false);
     return;
@@ -957,13 +953,9 @@ CompareCache::ManageValueResult(JSContext* aCx, JS::Handle<JS::Value> aValue)
   MOZ_ASSERT(aValue.isObject());
 
   JS::Rooted<JSObject*> obj(aCx, &aValue.toObject());
-  if (NS_WARN_IF(!obj)) {
-    mManager->CacheFinished(NS_ERROR_FAILURE, false);
-    return;
-  }
 
   Response* response = nullptr;
-  nsresult rv = UNWRAP_OBJECT(Response, obj, response);
+  nsresult rv = UNWRAP_OBJECT(Response, &obj, response);
   if (NS_WARN_IF(NS_FAILED(rv))) {
     mManager->CacheFinished(rv, false);
     return;

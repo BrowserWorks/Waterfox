@@ -22,6 +22,16 @@
   margin: 2px 6px !important; /* !important for overriding toolbarbutton.css */
 }
 
+/* START photon adjustments */
+
+photonpanelmultiview .subviewbutton > .toolbarbutton-text,
+photonpanelmultiview .subviewbutton:-moz-any([image],[targetURI],.cui-withicon, .bookmark-item) > .toolbarbutton-text,
+photonpanelmultiview .panel-banner-item > .toolbarbutton-multiline-text {
+  margin: 0 !important;  /* !important for overriding the rules above. */
+}
+
+/* END photon adjustments */
+
 .restoreallitem > .toolbarbutton-icon {
   display: none;
 }
@@ -82,6 +92,10 @@ toolbarpaletteitem[place="palette"] > .toolbarbutton-1 > .toolbarbutton-menubutt
 .PanelUI-remotetabs-notabsforclient-label {
   margin-left: 19px;
   font-size: 13px;
+}
+
+#PanelUI-remotetabs[mainview] .PanelUI-remotetabs-notabsforclient-label {
+  margin-left: 23px;
 }
 
 #PanelUI-remotetabs-tabslist {

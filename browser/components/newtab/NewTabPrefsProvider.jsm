@@ -1,6 +1,3 @@
-/* global Services, Preferences, EventEmitter, XPCOMUtils */
-/* exported NewTabPrefsProvider */
-
 "use strict";
 
 this.EXPORTED_SYMBOLS = ["NewTabPrefsProvider"];
@@ -11,7 +8,7 @@ Cu.import("resource://gre/modules/Preferences.jsm");
 Cu.import("resource://gre/modules/XPCOMUtils.jsm");
 
 XPCOMUtils.defineLazyGetter(this, "EventEmitter", function() {
-  const {EventEmitter} = Cu.import("resource://devtools/shared/event-emitter.js", {});
+  const {EventEmitter} = Cu.import("resource://gre/modules/EventEmitter.jsm", {});
   return EventEmitter;
 });
 
@@ -88,7 +85,7 @@ PrefsProvider.prototype = {
 
   init() {
     for (let pref of gPrefsMap.keys()) {
-      Services.prefs.addObserver(pref, this, false);
+      Services.prefs.addObserver(pref, this);
     }
   },
 

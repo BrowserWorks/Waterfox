@@ -32,12 +32,15 @@ registerCleanupFunction(() => {
   Services.prefs.clearUserPref("devtools.debugger.log");
 });
 
-// WebAnimations API is not enabled by default in all release channels yet, see
-// Bug 1264101.
-function enableWebAnimationsAPI() {
+// Some animation features are not enabled by default in release/beta channels
+// yet including:
+// * parts of the Web Animations API (Bug 1264101), and
+// * the frames() timing function (Bug 1379582).
+function enableAnimationFeatures() {
   return new Promise(resolve => {
     SpecialPowers.pushPrefEnv({"set": [
-      ["dom.animations-api.core.enabled", true]
+      ["dom.animations-api.core.enabled", true],
+      ["layout.css.frames-timing.enabled", true],
     ]}, resolve);
   });
 }
@@ -49,7 +52,7 @@ function enableWebAnimationsAPI() {
  */
 var _addTab = addTab;
 addTab = function (url) {
-  return enableWebAnimationsAPI().then(() => _addTab(url)).then(tab => {
+  return enableAnimationFeatures().then(() => _addTab(url)).then(tab => {
     let browser = tab.linkedBrowser;
     info("Loading the helper frame script " + FRAME_SCRIPT_URL);
     browser.messageManager.loadFrameScript(FRAME_SCRIPT_URL, false);
@@ -93,6 +96,9 @@ var selectNodeAndWaitForAnimations = Task.async(
     // be properly displayed (wait for all target DOM nodes to be previewed).
     let {AnimationsPanel} = inspector.sidebar.getWindowForTab(TAB_NAME);
     yield waitForAllAnimationTargets(AnimationsPanel);
+
+    // Wait for animation timeline rendering.
+    yield waitForAnimationTimelineRendering(AnimationsPanel);
   }
 );
 
@@ -158,6 +164,8 @@ var openAnimationInspector = Task.async(function* () {
   // nodes to be lazily displayed). This is safe to do even if there are no
   // animations displayed.
   yield waitForAllAnimationTargets(AnimationsPanel);
+  // Also, wait for timeline redering.
+  yield waitForAnimationTimelineRendering(AnimationsPanel);
 
   return {
     toolbox: toolbox,
@@ -291,12 +299,14 @@ function* assertScrubberMoving(panel, isMoving) {
  */
 function* clickTimelinePlayPauseButton(panel) {
   let onUiUpdated = panel.once(panel.UI_UPDATED_EVENT);
+  const onAnimationTimelineRendered = waitForAnimationTimelineRendering(panel);
 
   let btn = panel.playTimelineButtonEl;
   let win = btn.ownerDocument.defaultView;
   EventUtils.sendMouseEvent({type: "click"}, btn, win);
 
   yield onUiUpdated;
+  yield onAnimationTimelineRendered;
   yield waitForAllAnimationTargets(panel);
 }
 
@@ -307,12 +317,14 @@ function* clickTimelinePlayPauseButton(panel) {
  */
 function* clickTimelineRewindButton(panel) {
   let onUiUpdated = panel.once(panel.UI_UPDATED_EVENT);
+  const onAnimationTimelineRendered = waitForAnimationTimelineRendering(panel);
 
   let btn = panel.rewindTimelineButtonEl;
   let win = btn.ownerDocument.defaultView;
   EventUtils.sendMouseEvent({type: "click"}, btn, win);
 
   yield onUiUpdated;
+  yield onAnimationTimelineRendered;
   yield waitForAllAnimationTargets(panel);
 }
 
@@ -324,6 +336,7 @@ function* clickTimelineRewindButton(panel) {
  */
 function* changeTimelinePlaybackRate(panel, rate) {
   let onUiUpdated = panel.once(panel.UI_UPDATED_EVENT);
+  const onAnimationTimelineRendered = waitForAnimationTimelineRendering(panel);
 
   let select = panel.rateSelectorEl.firstChild;
   let win = select.ownerDocument.defaultView;
@@ -342,12 +355,56 @@ function* changeTimelinePlaybackRate(panel, rate) {
   EventUtils.synthesizeMouseAtCenter(option, {type: "mouseup"}, win);
 
   yield onUiUpdated;
+  yield onAnimationTimelineRendered;
   yield waitForAllAnimationTargets(panel);
 
   // Simulate a mousemove outside of the rate selector area to avoid subsequent
   // tests from failing because of unwanted mouseover events.
   EventUtils.synthesizeMouseAtCenter(
     win.document.querySelector("#timeline-toolbar"), {type: "mousemove"}, win);
+}
+
+/**
+ * Wait for animation selecting.
+ * @param {AnimationsPanel} panel
+ */
+function* waitForAnimationSelecting(panel) {
+  yield panel.animationsTimelineComponent.once("animation-selected");
+}
+
+/**
+ * Wait for rendering animation timeline.
+ * @param {AnimationsPanel} panel
+ */
+function* waitForAnimationTimelineRendering(panel) {
+  const ready =
+    panel.animationsTimelineComponent.animations.length === 0
+    ? Promise.resolve()
+    : panel.animationsTimelineComponent.once("animation-timeline-rendering-completed");
+  yield ready;
+}
+
+/**
+   + * Click the timeline header to update the animation current time.
+   + * @param {AnimationsPanel} panel
+   + * @param {Number} x position rate on timeline header.
+   + *                 This method calculates
+   + *                 `position * offsetWidth + offsetLeft of timeline header`
+   + *                 as the clientX of MouseEvent.
+   + *                 This parameter should be from 0.0 to 1.0.
+   + */
+function* clickOnTimelineHeader(panel, position) {
+  const timeline = panel.animationsTimelineComponent;
+  const onTimelineDataChanged = timeline.once("timeline-data-changed");
+
+  const header = timeline.timeHeaderEl;
+  const clientX = header.offsetLeft + header.offsetWidth * position;
+  EventUtils.sendMouseEvent({ type: "mousedown", clientX: clientX },
+                            header, header.ownerDocument.defaultView);
+  info(`Click at (${ clientX }, 0) on timeline header`);
+  EventUtils.sendMouseEvent({ type: "mouseup", clientX: clientX }, header,
+                            header.ownerDocument.defaultView);
+  return yield onTimelineDataChanged;
 }
 
 /**
@@ -369,43 +426,35 @@ function disableHighlighter(toolbox) {
  * Click on an animation in the timeline to select/unselect it.
  * @param {AnimationsPanel} panel The panel instance.
  * @param {Number} index The index of the animation to click on.
- * @param {Boolean} shouldClose Set to true if clicking should close the
- * animation.
+ * @param {Boolean} shouldAlreadySelected Set to true
+ *                  if the clicked animation is already selected.
  * @return {Promise} resolves to the animation whose state has changed.
  */
-function* clickOnAnimation(panel, index, shouldClose) {
+function* clickOnAnimation(panel, index, shouldAlreadySelected) {
   let timeline = panel.animationsTimelineComponent;
 
   // Expect a selection event.
-  let onSelectionChanged = timeline.once(shouldClose
-                                         ? "animation-unselected"
+  let onSelectionChanged = timeline.once(shouldAlreadySelected
+                                         ? "animation-already-selected"
                                          : "animation-selected");
-
-  // If we're opening the animation, also wait for the keyframes-retrieved
-  // event.
-  let onReady = shouldClose
-                ? Promise.resolve()
-                : timeline.details[index].once("keyframes-retrieved");
 
   info("Click on animation " + index + " in the timeline");
   let timeBlock = timeline.rootWrapperEl.querySelectorAll(".time-block")[index];
   EventUtils.sendMouseEvent({type: "click"}, timeBlock,
                             timeBlock.ownerDocument.defaultView);
 
-  yield onReady;
   return yield onSelectionChanged;
 }
 
 /**
  * Get an instance of the Keyframes component from the timeline.
  * @param {AnimationsPanel} panel The panel instance.
- * @param {Number} animationIndex The index of the animation in the timeline.
  * @param {String} propertyName The name of the animated property.
  * @return {Keyframes} The Keyframes component instance.
  */
-function getKeyframeComponent(panel, animationIndex, propertyName) {
+function getKeyframeComponent(panel, propertyName) {
   let timeline = panel.animationsTimelineComponent;
-  let detailsComponent = timeline.details[animationIndex];
+  let detailsComponent = timeline.details;
   return detailsComponent.keyframeComponents
                          .find(c => c.propertyName === propertyName);
 }
@@ -413,14 +462,134 @@ function getKeyframeComponent(panel, animationIndex, propertyName) {
 /**
  * Get a keyframe element from the timeline.
  * @param {AnimationsPanel} panel The panel instance.
- * @param {Number} animationIndex The index of the animation in the timeline.
  * @param {String} propertyName The name of the animated property.
  * @param {Index} keyframeIndex The index of the keyframe.
  * @return {DOMNode} The keyframe element.
  */
-function getKeyframeEl(panel, animationIndex, propertyName, keyframeIndex) {
-  let keyframeComponent = getKeyframeComponent(panel, animationIndex,
-                                               propertyName);
+function getKeyframeEl(panel, propertyName, keyframeIndex) {
+  let keyframeComponent = getKeyframeComponent(panel, propertyName);
   return keyframeComponent.keyframesEl
                           .querySelectorAll(".frame")[keyframeIndex];
+}
+
+/**
+ * Set style to test document.
+ * @param {Animation} animation - animation object.
+ * @param {AnimationsPanel} panel - The panel instance.
+ * @param {String} name - property name.
+ * @param {String} value - property value.
+ * @param {String} selector - selector for test document.
+ */
+function* setStyle(animation, panel, name, value, selector) {
+  info("Change the animation style via the content DOM. Setting " +
+       name + " to " + value + " of " + selector);
+
+  const onAnimationChanged = animation ? once(animation, "changed") : Promise.resolve();
+  yield executeInContent("devtools:test:setStyle", {
+    selector: selector,
+    propertyName: name,
+    propertyValue: value
+  });
+  yield onAnimationChanged;
+
+  // Also wait for the target node previews to be loaded if the panel got
+  // refreshed as a result of this animation mutation.
+  yield waitForAllAnimationTargets(panel);
+  // And wait for animation timeline rendering.
+  yield waitForAnimationTimelineRendering(panel);
+}
+
+/**
+ * Graph shapes of summary and detail are constructed by <path> element.
+ * This function checks the vertex of path segments.
+ * Also, if needed, checks the color for <stop> element.
+ * @param pathEl - <path> element.
+ * @param duration - float as duration which pathEl represetns.
+ * @param hasClosePath - set true if the path shoud be closing.
+ * @param expectedValues - JSON object format. We can test the vertex and color.
+ *                         e.g.
+ *                         [
+ *                           // Test the vertex (x=0, y=0) should be passing through.
+ *                           { x: 0, y: 0 },
+ *                           { x: 0, y: 1 },
+ *                           // If we have to test the color as well,
+ *                           // we can write as following.
+ *                           { x: 500, y: 1, color: "rgb(0, 0, 255)" },
+ *                           { x: 1000, y: 1 }
+ *                         ]
+ */
+function assertPathSegments(pathEl, duration, hasClosePath, expectedValues) {
+  const pathSegList = pathEl.pathSegList;
+  ok(pathSegList, "The tested element should have pathSegList");
+
+  expectedValues.forEach(expectedValue => {
+    ok(isPassingThrough(pathSegList, expectedValue.x, expectedValue.y),
+       `The path segment of x ${ expectedValue.x }, y ${ expectedValue.y } `
+       + `should be passing through`);
+
+    if (expectedValue.color) {
+      assertColor(pathEl.closest("svg"), expectedValue.x / duration, expectedValue.color);
+    }
+  });
+
+  if (hasClosePath) {
+    const closePathSeg = pathSegList.getItem(pathSegList.numberOfItems - 1);
+    is(closePathSeg.pathSegType, closePathSeg.PATHSEG_CLOSEPATH,
+       "The last segment should be close path");
+  }
+}
+
+/**
+ * Check the color for <stop> element.
+ * @param svgEl - <svg> element which has <stop> element.
+ * @param offset - float which represents the "offset" attribute of <stop>.
+ * @param expectedColor - e.g. rgb(0, 0, 255)
+ */
+function assertColor(svgEl, offset, expectedColor) {
+  const stopEl = findStopElement(svgEl, offset);
+  ok(stopEl, `stop element at offset ${ offset } should exist`);
+  is(stopEl.getAttribute("stop-color"), expectedColor,
+     `stop-color of stop element at offset ${ offset } should be ${ expectedColor }`);
+}
+
+/**
+ * Check whether the given vertex is passing throug on the path.
+ * @param pathSegList - pathSegList of <path> element.
+ * @param x - float x of vertex.
+ * @param y - float y of vertex.
+ * @return true: passing through, false: no on the path.
+ */
+function isPassingThrough(pathSegList, x, y) {
+  let previousPathSeg = pathSegList.getItem(0);
+  for (let i = 0; i < pathSegList.numberOfItems; i++) {
+    const pathSeg = pathSegList.getItem(i);
+    if (pathSeg.x === undefined) {
+      continue;
+    }
+    const currentX = parseFloat(pathSeg.x.toFixed(3));
+    const currentY = parseFloat(pathSeg.y.toFixed(6));
+    if (currentX === x && currentY === y) {
+      return true;
+    }
+    const previousX = parseFloat(previousPathSeg.x.toFixed(3));
+    const previousY = parseFloat(previousPathSeg.y.toFixed(6));
+    if (previousX <= x && x <= currentX &&
+        Math.min(previousY, currentY) <= y && y <= Math.max(previousY, currentY)) {
+      return true;
+    }
+    previousPathSeg = pathSeg;
+  }
+  return false;
+}
+
+/**
+ * Find <stop> element which has given offset from given <svg> element.
+ * @param svgEl - <svg> element which has <stop> element.
+ * @param offset - float which represents the "offset" attribute of <stop>.
+ * @return <stop> element.
+ */
+function findStopElement(svgEl, offset) {
+  return [...svgEl.querySelectorAll("stop")].find(stopEl => {
+    return stopEl.getAttribute("offset") == offset;
+  });
 }

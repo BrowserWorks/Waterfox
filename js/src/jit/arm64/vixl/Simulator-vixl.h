@@ -697,7 +697,7 @@ class Redirection;
 
 class Simulator : public DecoderVisitor {
  public:
-  explicit Simulator(Decoder* decoder, FILE* stream = stdout);
+  explicit Simulator(JSContext* cx, Decoder* decoder, FILE* stream = stdout);
   ~Simulator();
 
   // Moz changes.
@@ -738,7 +738,8 @@ class Simulator : public DecoderVisitor {
     pc_modified_ = true;
   }
 
-  void set_resume_pc(void* new_resume_pc);
+  void trigger_wasm_interrupt();
+  void handle_wasm_interrupt();
 
   void increment_pc() {
     if (!pc_modified_) {
@@ -2509,6 +2510,8 @@ class Simulator : public DecoderVisitor {
 
   // Processor state ---------------------------------------
 
+  JSContext* const cx_;
+
   // Simulated monitors for exclusive access instructions.
   SimExclusiveLocalMonitor local_monitor_;
   SimExclusiveGlobalMonitor global_monitor_;
@@ -2570,7 +2573,7 @@ class Simulator : public DecoderVisitor {
   // automatically incremented.
   bool pc_modified_;
   const Instruction* pc_;
-  const Instruction* resume_pc_;
+  bool wasm_interrupt_;
 
   static const char* xreg_names[];
   static const char* wreg_names[];

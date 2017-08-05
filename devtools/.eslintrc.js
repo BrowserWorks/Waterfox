@@ -28,6 +28,8 @@ module.exports = {
     "setInterval": true,
     "setTimeout": true,
     "uneval": true,
+    "TextDecoder": true,
+    "TextEncoder": true,
     "URL": true,
     "WebSocket": true,
     "XMLHttpRequest": true
@@ -233,8 +235,10 @@ module.exports = {
     "no-fallthrough": "error",
     // Allow the use of leading or trailing decimal points in numeric literals.
     "no-floating-decimal": "off",
-    // Disallow comments inline after code.
-    "no-inline-comments": "error",
+    // disallow use of eval()-like methods
+    "no-implied-eval": "error",
+    // Allow comments inline after code.
+    "no-inline-comments": "off",
     // Disallow if as the only statement in an else block.
     "no-lonely-if": "error",
     // Allow mixing regular variable and require declarations (not a node env).
@@ -417,6 +421,10 @@ module.exports = {
     // And these are the rules that haven't been discussed so far, and that are
     // disabled for now until we introduce them, one at a time.
 
+    // enforce consistent spacing before and after the arrow in arrow functions
+    "arrow-spacing": "off",
+    // enforce consistent spacing inside computed property brackets
+    "computed-property-spacing": "off",
     // Require for-in loops to have an if statement.
     "guard-for-in": "off",
     // allow/disallow an empty newline after var statement
@@ -427,8 +435,6 @@ module.exports = {
     "no-eq-null": "off",
     // disallow overwriting functions written as function declarations
     "no-func-assign": "off",
-    // disallow use of eval()-like methods
-    "no-implied-eval": "off",
     // disallow function or variable declarations in nested blocks
     "no-inner-declarations": "off",
     // disallow invalid regular expression strings in the RegExp constructor
@@ -466,6 +472,8 @@ module.exports = {
     "no-undef-init": "off",
     // disallow usage of expressions in statement position
     "no-unused-expressions": "off",
+    // disallow unnecessary concatenation of literals or template literals
+    "no-useless-concat": "off",
     // disallow use of void operator
     "no-void": "off",
     // disallow wrapping of non-IIFE statements in parens

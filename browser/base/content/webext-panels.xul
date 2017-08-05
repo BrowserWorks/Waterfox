@@ -6,6 +6,7 @@
 # file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
 <?xml-stylesheet href="chrome://browser/skin/" type="text/css"?>
+<?xml-stylesheet href="chrome://browser/content/usercontext/usercontext.css" type="text/css"?>
 <?xul-overlay href="chrome://global/content/editMenuOverlay.xul"?>
 <?xul-overlay href="chrome://browser/content/places/placesOverlay.xul"?>
 
@@ -24,7 +25,7 @@
   <script type="application/javascript" src="chrome://browser/content/browser.js"/>
   <script type="application/javascript" src="chrome://browser/content/browser-places.js"/>
   <script type="application/javascript" src="chrome://browser/content/browser-social.js"/>
-  <script type="application/javascript" src="chrome://browser/content/browser-fxaccounts.js"/>
+  <script type="application/javascript" src="chrome://browser/content/browser-sync.js"/>
   <script type="application/javascript" src="chrome://browser/content/nsContextMenu.js"/>
   <script type="application/javascript" src="chrome://browser/content/webext-panels.js"/>
 
@@ -49,6 +50,14 @@
 
   <popupset id="mainPopupSet">
     <tooltip id="aHTMLTooltip" page="true"/>
+
+    <panel type="autocomplete-richlistbox"
+           id="PopupAutoComplete"
+           noautofocus="true"
+           hidden="true"
+           overflowpadding="4"
+           norolluponanchor="true" />
+
     <menupopup id="contentAreaContextMenu" pagemenu="start"
                onpopupshowing="if (event.target != this)
                                  return true;

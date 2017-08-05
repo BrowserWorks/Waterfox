@@ -77,16 +77,16 @@ module.exports = createClass({
             type: "checkbox",
             checked: !debugDisabled,
             onChange: this.onEnableAddonDebuggingChange,
+            role: "checkbox",
           }),
           dom.label({
             className: "addons-debugging-label",
             htmlFor: "enable-addon-debugging",
             title: Strings.GetStringFromName("addonDebugging.tooltip")
           }, Strings.GetStringFromName("addonDebugging.label")),
-          "(",
           dom.a({ href: MORE_INFO_URL, target: "_blank" },
-            Strings.GetStringFromName("moreInfo")),
-          ")"
+            Strings.GetStringFromName("addonDebugging.learnMore")
+          ),
         ),
         dom.button({
           id: "load-addon-from-file",

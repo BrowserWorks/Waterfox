@@ -18,7 +18,6 @@ import java.util.Locale;
 import android.content.SharedPreferences;
 
 import org.mozilla.gecko.EventDispatcher;
-import org.mozilla.gecko.GeckoAppShell;
 import org.mozilla.gecko.GeckoSharedPrefs;
 import org.mozilla.gecko.PrefsHelper;
 import org.mozilla.gecko.R;
@@ -443,7 +442,7 @@ public class BrowserSearch extends HomeFragment
             // Position for Top Sites grid items, but will always be -1 since this is only for BrowserSearch result
             final int position = -1;
 
-            new RemoveItemByUrlTask(context, info.url, info.itemType, position).execute();
+            new RemoveItemTask(getActivity(), info, position).execute();
             return true;
         }
 
@@ -497,7 +496,9 @@ public class BrowserSearch extends HomeFragment
         }
 
         // Prefetch auto-completed domain since it's a likely target
-        GeckoAppShell.notifyObservers("Session:Prefetch", "http://" + autocompletion);
+        final GeckoBundle data = new GeckoBundle(1);
+        data.putString("url", "http://" + autocompletion);
+        EventDispatcher.getInstance().dispatch("Session:Prefetch", data);
 
         mAutocompleteHandler.onAutocomplete(autocompletion);
         mAutocompleteHandler = null;
@@ -597,7 +598,9 @@ public class BrowserSearch extends HomeFragment
 
             if (searchCount == 0) {
                 // Prefetch the first item in the list since it's weighted the highest
-                GeckoAppShell.notifyObservers("Session:Prefetch", url);
+                final GeckoBundle data = new GeckoBundle(1);
+                data.putString("url", url);
+                EventDispatcher.getInstance().dispatch("Session:Prefetch", data);
             }
 
             // Does the completion match against the whole URL? This will match

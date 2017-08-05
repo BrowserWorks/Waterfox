@@ -69,7 +69,7 @@ function getHelpManData(commandData, context) {
       }
       else {
         // We need defaultText to work the text version of defaultValue
-        input = l10n.lookupFormat('helpManOptional');
+        input = l10n.lookup('helpManOptional');
         /*
         var val = param.type.stringify(param.defaultValue);
         input = Promise.resolve(val).then(function(defaultValue) {
@@ -78,9 +78,9 @@ function getHelpManData(commandData, context) {
         */
       }
 
-      return Promise.resolve(input).then(function(defaultDescr) {
+      return Promise.resolve(input).then(defaultDescr => {
         return '(' + (param.type.name || param.type) + ', ' + defaultDescr + ')';
-      }.bind(this));
+      });
     },
     getSynopsis: function(param) {
       var name = param.name + (param.short ? '|-' + param.short : '');

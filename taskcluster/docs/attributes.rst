@@ -100,6 +100,12 @@ talos_try_name
 
 This is the name used to refer to a talos job via try syntax.
 
+job_try_name
+============
+
+This is the name used to refer to a "job" via try syntax (``-j``).  Note that for
+some kinds, ``-j`` also matches against ``build_platform``.
+
 test_chunk
 ==========
 
@@ -149,3 +155,7 @@ locale
 For jobs that operate on only one locale, we set the attribute ``locale`` to the
 specific locale involved. Currently this is only in l10n versions of the
 ``beetmover`` and ``balrog`` kinds.
+
+signed
+======
+Signals that the output of this task contains signed artifacts.

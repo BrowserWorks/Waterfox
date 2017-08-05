@@ -102,13 +102,6 @@ this.AppConstants = Object.freeze({
   false,
 #endif
 
-  MOZ_SERVICES_CLOUDSYNC:
-#ifdef MOZ_SERVICES_CLOUDSYNC
-  true,
-#else
-  false,
-#endif
-
   MOZ_UPDATER:
 #ifdef MOZ_UPDATER
   true,
@@ -253,8 +246,22 @@ this.AppConstants = Object.freeze({
   false,
 #endif
 
+  MOZ_ADDON_SIGNING:
+#ifdef MOZ_ADDON_SIGNING
+  true,
+#else
+  false,
+#endif
+
   MOZ_REQUIRE_SIGNING:
 #ifdef MOZ_REQUIRE_SIGNING
+  true,
+#else
+  false,
+#endif
+
+  MOZ_ALLOW_LEGACY_EXTENSIONS:
+#ifdef MOZ_ALLOW_LEGACY_EXTENSIONS
   true,
 #else
   false,
@@ -347,4 +354,19 @@ this.AppConstants = Object.freeze({
 #else
     false,
 #endif
+
+  MOZ_PHOTON_ANIMATIONS:
+#ifdef MOZ_PHOTON_ANIMATIONS
+    true,
+#else
+    false,
+#endif
+
+  MOZ_PHOTON_THEME:
+#ifdef MOZ_PHOTON_THEME
+    true,
+#else
+    false,
+#endif
+
 });

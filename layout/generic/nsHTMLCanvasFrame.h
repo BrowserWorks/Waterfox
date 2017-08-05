@@ -25,20 +25,20 @@ class nsAString;
 
 nsIFrame* NS_NewHTMLCanvasFrame (nsIPresShell* aPresShell, nsStyleContext* aContext);
 
-class nsHTMLCanvasFrame : public nsContainerFrame
+class nsHTMLCanvasFrame final : public nsContainerFrame
 {
 public:
   typedef mozilla::layers::Layer Layer;
   typedef mozilla::layers::LayerManager LayerManager;
   typedef mozilla::ContainerLayerParameters ContainerLayerParameters;
 
-  NS_DECL_QUERYFRAME_TARGET(nsHTMLCanvasFrame)
   NS_DECL_QUERYFRAME
-  NS_DECL_FRAMEARENA_HELPERS
+  NS_DECL_FRAMEARENA_HELPERS(nsHTMLCanvasFrame)
 
   explicit nsHTMLCanvasFrame(nsStyleContext* aContext)
-  : nsContainerFrame(aContext)
-    , mBorderPadding(GetWritingMode()) {}
+    : nsContainerFrame(aContext, kClassID)
+    , mBorderPadding(GetWritingMode())
+  {}
 
   virtual void Init(nsIContent*       aContent,
                     nsContainerFrame* aParent,
@@ -82,8 +82,6 @@ public:
   virtual mozilla::a11y::AccType AccessibleType() override;
 #endif
 
-  virtual nsIAtom* GetType() const override;
-
   virtual bool IsFrameOfType(uint32_t aFlags) const override
   {
     return nsSplittableFrame::IsFrameOfType(aFlags &
@@ -99,6 +97,12 @@ public:
     return PrincipalChildList().FirstChild()->GetContentInsertionFrame();
   }
 
+  /**
+   * Update the style of our ::-moz-html-canvas-content anonymous box.
+   */
+  void DoUpdateStyleOfOwnedAnonBoxes(mozilla::ServoStyleSet& aStyleSet,
+                                     nsStyleChangeList& aChangeList,
+                                     nsChangeHint aHintForThisFrame) override;
 protected:
   virtual ~nsHTMLCanvasFrame();
 

@@ -6,7 +6,7 @@ var expectedNotification;
 var expectedData;
 
 var TestObserver = {
-  QueryInterface : XPCOMUtils.generateQI([Ci.nsIObserver, Ci.nsISupportsWeakReference]),
+  QueryInterface: XPCOMUtils.generateQI([Ci.nsIObserver, Ci.nsISupportsWeakReference]),
 
   observe(subject, topic, data) {
     do_check_eq(topic, "passwordmgr-storage-changed");
@@ -62,7 +62,7 @@ var testuser1 = new LoginInfo("http://testhost1", "", null,
 var testuser2 = new LoginInfo("http://testhost2", "", null,
     "dummydude2", "itsasecret2", "put_user2_here", "put_pw2_here");
 
-Services.obs.addObserver(TestObserver, "passwordmgr-storage-changed", false);
+Services.obs.addObserver(TestObserver, "passwordmgr-storage-changed");
 
 
 /* ========== 1 ========== */

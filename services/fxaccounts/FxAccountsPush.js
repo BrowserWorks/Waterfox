@@ -10,7 +10,6 @@ Cu.import("resource://gre/modules/XPCOMUtils.jsm");
 Cu.import("resource://gre/modules/Services.jsm");
 Cu.import("resource://services-sync/util.js");
 Cu.import("resource://gre/modules/FxAccountsCommon.js");
-Cu.import("resource://gre/modules/Task.jsm");
 
 /**
  * FxAccountsPushService manages Push notifications for Firefox Accounts in the browser
@@ -79,9 +78,9 @@ FxAccountsPushService.prototype = {
     }
 
     // listen to new push messages, push changes and logout events
-    Services.obs.addObserver(this, this.pushService.pushTopic, false);
-    Services.obs.addObserver(this, this.pushService.subscriptionChangeTopic, false);
-    Services.obs.addObserver(this, ONLOGOUT_NOTIFICATION, false);
+    Services.obs.addObserver(this, this.pushService.pushTopic);
+    Services.obs.addObserver(this, this.pushService.subscriptionChangeTopic);
+    Services.obs.addObserver(this, ONLOGOUT_NOTIFICATION);
 
     this.log.debug("FxAccountsPush initialized");
     return true;
@@ -171,9 +170,17 @@ FxAccountsPushService.prototype = {
       case ON_DEVICE_DISCONNECTED_NOTIFICATION:
         this.fxAccounts.handleDeviceDisconnection(payload.data.id);
         return;
+      case ON_PROFILE_UPDATED_NOTIFICATION:
+        // We already have a "profile updated" notification sent via WebChannel,
+        // let's just re-use that.
+        Services.obs.notifyObservers(null, ON_PROFILE_CHANGE_NOTIFICATION);
+        return;
       case ON_PASSWORD_CHANGED_NOTIFICATION:
       case ON_PASSWORD_RESET_NOTIFICATION:
         this._onPasswordChanged();
+        return;
+      case ON_ACCOUNT_DESTROYED_NOTIFICATION:
+        this.fxAccounts.handleAccountDestroyed(payload.data.uid);
         return;
       case ON_COLLECTION_CHANGED_NOTIFICATION:
         Services.obs.notifyObservers(null, ON_COLLECTION_CHANGED_NOTIFICATION, payload.data.collections);
@@ -189,12 +196,12 @@ FxAccountsPushService.prototype = {
    * @returns {Promise}
    * @private
    */
-  _onPasswordChanged: Task.async(function* () {
-    if (!(yield this.fxAccounts.sessionStatus())) {
-      yield this.fxAccounts.resetCredentials();
-      Services.obs.notifyObservers(null, ON_ACCOUNT_STATE_CHANGE_NOTIFICATION, null);
+  async _onPasswordChanged() {
+    if (!(await this.fxAccounts.sessionStatus())) {
+      await this.fxAccounts.resetCredentials();
+      Services.obs.notifyObservers(null, ON_ACCOUNT_STATE_CHANGE_NOTIFICATION);
     }
-  }),
+  },
   /**
    * Fired when the Push server drops a subscription, or the subscription identifier changes.
    *

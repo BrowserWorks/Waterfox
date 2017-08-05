@@ -7,16 +7,6 @@
 
 /* arena allocation for the frame tree and closely-related objects */
 
-// Even on 32-bit systems, we allocate objects from the frame arena
-// that require 8-byte alignment.  The cast to uintptr_t is needed
-// because plarena isn't as careful about mask construction as it
-// ought to be.
-#define ALIGN_SHIFT 3
-#define PL_ARENA_CONST_ALIGN_MASK ((uintptr_t(1) << ALIGN_SHIFT) - 1)
-#include "plarena.h"
-// plarena.h needs to be included first to make it use the above
-// PL_ARENA_CONST_ALIGN_MASK in this file.
-
 #include "nsPresArena.h"
 
 #include "mozilla/Poison.h"
@@ -24,17 +14,15 @@
 #include "nsArenaMemoryStats.h"
 #include "nsPrintfCString.h"
 #include "nsStyleContext.h"
+#include "FrameLayerBuilder.h"
+#include "mozilla/ArrayUtils.h"
 
 #include <inttypes.h>
 
 using namespace mozilla;
 
-// Size to use for PLArena block allocations.
-static const size_t ARENA_PAGE_SIZE = 8192;
-
 nsPresArena::nsPresArena()
 {
-  PL_INIT_ARENA_POOL(&mPool, "PresArena", ARENA_PAGE_SIZE);
 }
 
 nsPresArena::~nsPresArena()
@@ -42,8 +30,7 @@ nsPresArena::~nsPresArena()
   ClearArenaRefPtrs();
 
 #if defined(MOZ_HAVE_MEM_CHECKS)
-  for (auto iter = mFreeLists.Iter(); !iter.Done(); iter.Next()) {
-    FreeList* entry = iter.Get();
+  for (FreeList* entry = mFreeLists; entry != ArrayEnd(mFreeLists); ++entry) {
     nsTArray<void*>::index_type len;
     while ((len = entry->mEntries.Length())) {
       void* result = entry->mEntries.ElementAt(len - 1);
@@ -52,8 +39,6 @@ nsPresArena::~nsPresArena()
     }
   }
 #endif
-
-  PL_FinishArenaPool(&mPool);
 }
 
 /* inline */ void
@@ -112,13 +97,12 @@ void*
 nsPresArena::Allocate(uint32_t aCode, size_t aSize)
 {
   MOZ_ASSERT(aSize > 0, "PresArena cannot allocate zero bytes");
+  MOZ_ASSERT(aCode < ArrayLength(mFreeLists));
 
   // We only hand out aligned sizes
-  aSize = PL_ARENA_ALIGN(&mPool, aSize);
+  aSize = mPool.AlignedSize(aSize);
 
-  // If there is no free-list entry for this type already, we have
-  // to create one now, to record its size.
-  FreeList* list = mFreeLists.PutEntry(aCode);
+  FreeList* list = &mFreeLists[aCode];
 
   nsTArray<void*>::index_type len = list->mEntries.Length();
   if (list->mEntrySize == 0) {
@@ -162,20 +146,17 @@ nsPresArena::Allocate(uint32_t aCode, size_t aSize)
 
   // Allocate a new chunk from the arena
   list->mEntriesEverAllocated++;
-  PL_ARENA_ALLOCATE(result, &mPool, aSize);
-  if (!result) {
-    NS_ABORT_OOM(aSize);
-  }
-  return result;
+  return mPool.Allocate(aSize);
 }
 
 void
 nsPresArena::Free(uint32_t aCode, void* aPtr)
 {
+  MOZ_ASSERT(aCode < ArrayLength(mFreeLists));
+
   // Try to recycle this entry.
-  FreeList* list = mFreeLists.GetEntry(aCode);
-  MOZ_ASSERT(list, "no free list for pres arena object");
-  MOZ_ASSERT(list->mEntrySize > 0, "PresArena cannot free zero bytes");
+  FreeList* list = &mFreeLists[aCode];
+  MOZ_ASSERT(list->mEntrySize > 0, "object of this type was never allocated");
 
   mozWritePoison(aPtr, list->mEntrySize);
 
@@ -198,12 +179,11 @@ nsPresArena::AddSizeOfExcludingThis(mozilla::MallocSizeOf aMallocSizeOf,
   // slop in the arena itself as well as the size of objects that
   // we've not measured explicitly.
 
-  size_t mallocSize = PL_SizeOfArenaPoolExcludingPool(&mPool, aMallocSizeOf);
-  mallocSize += mFreeLists.SizeOfExcludingThis(aMallocSizeOf);
+  size_t mallocSize = mPool.SizeOfExcludingThis(aMallocSizeOf);
 
   size_t totalSizeInFreeLists = 0;
-  for (auto iter = mFreeLists.Iter(); !iter.Done(); iter.Next()) {
-    FreeList* entry = iter.Get();
+  for (FreeList* entry = mFreeLists; entry != ArrayEnd(mFreeLists); ++entry) {
+    mallocSize += entry->SizeOfExcludingThis(aMallocSizeOf);
 
     // Note that we're not measuring the size of the entries on the free
     // list here.  The free list knows how many objects we've allocated
@@ -213,13 +193,15 @@ nsPresArena::AddSizeOfExcludingThis(mozilla::MallocSizeOf aMallocSizeOf,
     size_t totalSize = entry->mEntrySize * entry->mEntriesEverAllocated;
     size_t* p;
 
-    switch (NS_PTR_TO_INT32(entry->mKey)) {
-#define FRAME_ID(classname)                               \
+    switch (entry - mFreeLists) {
+#define FRAME_ID(classname, ...)                          \
       case nsQueryFrame::classname##_id:                  \
         p = &aArenaStats->FRAME_ID_STAT_FIELD(classname); \
         break;
+#define ABSTRACT_FRAME_ID(...)
 #include "nsFrameIdList.h"
 #undef FRAME_ID
+#undef ABSTRACT_FRAME_ID
       case eArenaObjectID_nsLineBox:
         p = &aArenaStats->mLineBoxes;
         break;

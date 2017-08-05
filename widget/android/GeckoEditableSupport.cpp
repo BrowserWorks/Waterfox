@@ -8,6 +8,7 @@
 
 #include "AndroidRect.h"
 #include "KeyEvent.h"
+#include "PuppetWidget.h"
 #include "android_npapi.h"
 #include "nsIContent.h"
 #include "nsISelection.h"
@@ -358,11 +359,9 @@ ConvertRectArrayToJavaRectFArray(const nsTArray<LayoutDeviceIntRect>& aRects,
     for (size_t i = 0; i < length; i++) {
         LayoutDeviceIntRect tmp = aRects[i] + aOffset;
 
-        sdk::RectF::LocalRef rect(rects.Env());
-        sdk::RectF::New(tmp.x / aScale.scale, tmp.y / aScale.scale,
-                        (tmp.x + tmp.width) / aScale.scale,
-                        (tmp.y + tmp.height) / aScale.scale,
-                        &rect);
+        auto rect = sdk::RectF::New(tmp.x / aScale.scale, tmp.y / aScale.scale,
+                                    (tmp.x + tmp.width) / aScale.scale,
+                                    (tmp.y + tmp.height) / aScale.scale);
         rects->SetElement(i, rect);
     }
     return rects;
@@ -391,7 +390,7 @@ GeckoEditableSupport::RemoveComposition(RemoveCompositionFlag aFlag)
 
     nsEventStatus status = nsEventStatus_eIgnore;
 
-    NS_ENSURE_SUCCESS_VOID(mDispatcher->BeginNativeInputTransaction());
+    NS_ENSURE_SUCCESS_VOID(BeginInputTransaction(mDispatcher));
     mDispatcher->CommitComposition(
             status, aFlag == CANCEL_IME_COMPOSITION ? &EmptyString() : nullptr);
 }
@@ -442,7 +441,7 @@ GeckoEditableSupport::OnKeyEvent(int32_t aAction, int32_t aKeyCode,
         mIMEKeyEvents.AppendElement(UniquePtr<WidgetEvent>(event.Duplicate()));
     } else {
         RemoveComposition();
-        NS_ENSURE_SUCCESS_VOID(dispatcher->BeginNativeInputTransaction());
+        NS_ENSURE_SUCCESS_VOID(BeginInputTransaction(dispatcher));
         dispatcher->DispatchKeyboardEvent(msg, event, status);
         if (widget->Destroyed() || status == nsEventStatus_eConsumeNoDefault) {
             // Skip default processing.
@@ -463,6 +462,10 @@ GeckoEditableSupport::OnKeyEvent(int32_t aAction, int32_t aKeyCode,
     if (aIsSynthesizedImeKey) {
         mIMEKeyEvents.AppendElement(
                 UniquePtr<WidgetEvent>(pressEvent.Duplicate()));
+    } else if (nsIWidget::UsePuppetWidgets()) {
+        // Don't use native key bindings.
+        pressEvent.PreventNativeKeyBindings();
+        dispatcher->MaybeDispatchKeypressEvents(pressEvent, status);
     } else {
         dispatcher->MaybeDispatchKeypressEvents(pressEvent, status);
     }
@@ -482,7 +485,7 @@ GeckoEditableSupport::SendIMEDummyKeyEvent(nsIWidget* aWidget, EventMessage msg)
     WidgetKeyboardEvent event(true, msg, aWidget);
     event.mTime = PR_Now() / 1000;
     MOZ_ASSERT(event.mKeyCode == 0);
-    NS_ENSURE_SUCCESS_VOID(mDispatcher->BeginNativeInputTransaction());
+    NS_ENSURE_SUCCESS_VOID(BeginInputTransaction(mDispatcher));
     mDispatcher->DispatchKeyboardEvent(msg, event, status);
 }
 
@@ -661,7 +664,11 @@ GeckoEditableSupport::FlushIMEChanges(FlushChangesFlag aFlags)
             FlushIMEText(FLUSH_FLAG_RECOVER);
         } else {
             // Give up because we've already tried.
+#ifdef RELEASE_OR_BETA
+            env->ExceptionClear();
+#else
             MOZ_CATCH_JNI_EXCEPTION(env);
+#endif
         }
         return true;
     };
@@ -757,7 +764,7 @@ GeckoEditableSupport::OnImeReplaceText(int32_t aStart, int32_t aEnd,
     */
     nsCOMPtr<nsIWidget> widget = GetWidget();
     NS_ENSURE_TRUE_VOID(mDispatcher && widget);
-    NS_ENSURE_SUCCESS_VOID(mDispatcher->BeginNativeInputTransaction());
+    NS_ENSURE_SUCCESS_VOID(BeginInputTransaction(mDispatcher));
 
     RefPtr<TextComposition> composition(GetComposition());
     MOZ_ASSERT(!composition || !composition->IsEditorHandlingEvent());
@@ -792,11 +799,15 @@ GeckoEditableSupport::OnImeReplaceText(int32_t aStart, int32_t aEnd,
                 // widget for duplicated events is initially nullptr.
                 event->mWidget = widget;
 
-                if (event->mMessage == eKeyPress) {
-                    mDispatcher->MaybeDispatchKeypressEvents(*event, status);
-                } else {
+                if (event->mMessage != eKeyPress) {
                     mDispatcher->DispatchKeyboardEvent(
                             event->mMessage, *event, status);
+                } else if (nsIWidget::UsePuppetWidgets()) {
+                    // Don't use native key bindings.
+                    event->PreventNativeKeyBindings();
+                    mDispatcher->MaybeDispatchKeypressEvents(*event, status);
+                } else {
+                    mDispatcher->MaybeDispatchKeypressEvents(*event, status);
                 }
                 if (!mDispatcher || widget->Destroyed()) {
                     break;
@@ -967,7 +978,7 @@ GeckoEditableSupport::OnImeUpdateComposition(int32_t aStart, int32_t aEnd,
             text, event.mData.Length(), event.mRanges->Length());
 #endif // DEBUG_ANDROID_IME
 
-    if (NS_WARN_IF(NS_FAILED(mDispatcher->BeginNativeInputTransaction()))) {
+    if (NS_WARN_IF(NS_FAILED(BeginInputTransaction(mDispatcher)))) {
         mIMERanges->Clear();
         return;
     }
@@ -1042,6 +1053,21 @@ GeckoEditableSupport::NotifyIME(TextEventDispatcher* aTextEventDispatcher,
                     return;
                 }
 
+                mEditable->NotifyIME(
+                        GeckoEditableListener::NOTIFY_IME_OF_TOKEN);
+
+                if (mIsRemote) {
+                    if (!mEditableAttached) {
+                        // Re-attach on focus; see OnRemovedFrom().
+                        AttachNative(mEditable, this);
+                        mEditableAttached = true;
+                    }
+                    // Because GeckoEditableSupport in content process doesn't
+                    // manage the active input context, we need to retrieve the
+                    // input context from the widget, for use by
+                    // OnImeReplaceText.
+                    mInputContext = widget->GetInputContext();
+                }
                 mDispatcher = dispatcher;
                 mIMEKeyEvents.Clear();
                 FlushIMEText();
@@ -1061,7 +1087,7 @@ GeckoEditableSupport::NotifyIME(TextEventDispatcher* aTextEventDispatcher,
 
             if (!mIMEMaskEventsCount) {
                 mEditable->NotifyIME(GeckoEditableListener::NOTIFY_IME_OF_BLUR);
-                mDispatcher = nullptr;
+                OnRemovedFrom(mDispatcher);
             }
 
             // Mask events because we lost focus. Unmask on the next focus.
@@ -1109,6 +1135,12 @@ GeckoEditableSupport::NotifyIME(TextEventDispatcher* aTextEventDispatcher,
 void
 GeckoEditableSupport::OnRemovedFrom(TextEventDispatcher* aTextEventDispatcher)
 {
+    mDispatcher = nullptr;
+
+    if (mIsRemote) {
+        // When we're remote, detach every time.
+        OnDetach();
+    }
 }
 
 void
@@ -1119,14 +1151,14 @@ GeckoEditableSupport::WillDispatchKeyboardEvent(
 {
 }
 
-nsIMEUpdatePreference
-GeckoEditableSupport::GetIMEUpdatePreference()
+NS_IMETHODIMP_(IMENotificationRequests)
+GeckoEditableSupport::GetIMENotificationRequests()
 {
     // While a plugin has focus, Listener doesn't need any notifications.
     if (GetInputContext().mIMEState.mEnabled == IMEState::PLUGIN) {
-      return nsIMEUpdatePreference();
+      return IMENotificationRequests();
     }
-    return nsIMEUpdatePreference(nsIMEUpdatePreference::NOTIFY_TEXT_CHANGE);
+    return IMENotificationRequests(IMENotificationRequests::NOTIFY_TEXT_CHANGE);
 }
 
 void

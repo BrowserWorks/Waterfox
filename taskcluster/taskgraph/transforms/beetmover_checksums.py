@@ -8,11 +8,11 @@ Transform the checksums signing task into an actual task description.
 from __future__ import absolute_import, print_function, unicode_literals
 
 from taskgraph.transforms.base import TransformSequence
-from taskgraph.util.schema import validate_schema
+from taskgraph.util.schema import validate_schema, Schema
 from taskgraph.util.scriptworker import (get_beetmover_bucket_scope,
                                          get_beetmover_action_scope)
 from taskgraph.transforms.task import task_description_schema
-from voluptuous import Schema, Any, Required, Optional
+from voluptuous import Any, Required, Optional
 
 # Voluptuous uses marker objects as dictionary *keys*, but they are not
 # comparable, so we cast all of the keys back to regular strings
@@ -65,6 +65,7 @@ def make_beetmover_checksums_description(config, jobs):
 
         attributes = {
             'nightly': dep_job.attributes.get('nightly', False),
+            'signed': dep_job.attributes.get('signed', False),
             'build_platform': dep_job.attributes.get('build_platform'),
             'build_type': dep_job.attributes.get('build_type'),
         }
@@ -91,6 +92,10 @@ def make_beetmover_checksums_description(config, jobs):
 
 
 def generate_upstream_artifacts(refs, platform, locale=None):
+    # Until bug 1331141 is fixed, if you are adding any new artifacts here that
+    # need to be transfered to S3, please be aware you also need to follow-up
+    # with a beetmover patch in https://github.com/mozilla-releng/beetmoverscript/.
+    # See example in bug 1348286
     common_paths = [
         "public/target.checksums",
         "public/target.checksums.asc",

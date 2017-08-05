@@ -15,7 +15,6 @@ const { classes: Cc, interfaces: Ci, utils: Cu, results: Cr } = Components;
 
 Cu.import("resource://gre/modules/Promise.jsm");
 Cu.import("resource://gre/modules/Services.jsm");
-Cu.import("resource://gre/modules/Task.jsm");
 Cu.import("resource://gre/modules/XPCOMUtils.jsm");
 
 Cu.import("resource://testing-common/TestUtils.jsm");
@@ -36,9 +35,9 @@ this.LoginTestUtils = {
    * Forces the storage module to save all data, and the Login Manager service
    * to replace the storage module with a newly initialized instance.
    */
-  * reloadData() {
-    Services.obs.notifyObservers(null, "passwordmgr-storage-replace", null);
-    yield TestUtils.topicObserved("passwordmgr-storage-replace-complete");
+  async reloadData() {
+    Services.obs.notifyObservers(null, "passwordmgr-storage-replace");
+    await TestUtils.topicObserved("passwordmgr-storage-replace-complete");
   },
 
   /**

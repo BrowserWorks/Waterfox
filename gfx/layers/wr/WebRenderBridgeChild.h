@@ -16,11 +16,38 @@ namespace widget {
 class CompositorWidget;
 }
 
+namespace wr {
+class DisplayListBuilder;
+}
+
 namespace layers {
 
 class CompositableClient;
 class CompositorBridgeChild;
+class StackingContextHelper;
 class TextureForwarder;
+
+class UnscaledFontHashKey : public PLDHashEntryHdr
+{
+public:
+  typedef gfx::UnscaledFont* KeyType;
+  typedef const gfx::UnscaledFont* KeyTypePointer;
+
+  explicit UnscaledFontHashKey(KeyTypePointer aKey) : mKey(const_cast<KeyType>(aKey)) {}
+
+  KeyType GetKey() const { return mKey; }
+  bool KeyEquals(KeyTypePointer aKey) const { return aKey == mKey; }
+
+  static KeyTypePointer KeyToPointer(KeyType aKey) { return aKey; }
+  static PLDHashNumber HashKey(KeyTypePointer aKey)
+  {
+    return NS_PTR_TO_UINT32(aKey) >> 2;
+  }
+  enum { ALLOW_MEMMOVE = true };
+
+private:
+  WeakPtr<gfx::UnscaledFont> mKey;
+};
 
 class WebRenderBridgeChild final : public PWebRenderBridgeChild
                                  , public CompositableForwarder
@@ -30,23 +57,28 @@ class WebRenderBridgeChild final : public PWebRenderBridgeChild
 public:
   explicit WebRenderBridgeChild(const wr::PipelineId& aPipelineId);
 
-  void AddWebRenderCommand(const WebRenderCommand& aCmd);
-  void AddWebRenderCommands(const nsTArray<WebRenderCommand>& aCommands);
   void AddWebRenderParentCommand(const WebRenderParentCommand& aCmd);
   void AddWebRenderParentCommands(const nsTArray<WebRenderParentCommand>& aCommands);
 
   bool DPBegin(const  gfx::IntSize& aSize);
-  void DPEnd(const gfx::IntSize& aSize, bool aIsSync, uint64_t aTransactionId);
+  void DPEnd(wr::DisplayListBuilder &aBuilder, const gfx::IntSize& aSize,
+             bool aIsSync, uint64_t aTransactionId,
+             const WebRenderScrollData& aScrollData);
 
   CompositorBridgeChild* GetCompositorBridgeChild();
+
+  wr::PipelineId GetPipeline() { return mPipelineId; }
 
   // KnowsCompositor
   TextureForwarder* GetTextureForwarder() override;
   LayersIPCActor* GetLayersIPCActor() override;
 
-  uint64_t AllocExternalImageId(const CompositableHandle& aHandle);
-  uint64_t AllocExternalImageIdForCompositable(CompositableClient* aCompositable);
-  void DeallocExternalImageId(uint64_t aImageId);
+  void AddPipelineIdForAsyncCompositable(const wr::PipelineId& aPipelineId,
+                                         const CompositableHandle& aHandlee);
+  void RemovePipelineIdForAsyncCompositable(const wr::PipelineId& aPipelineId);
+
+  wr::ExternalImageId AllocExternalImageIdForCompositable(CompositableClient* aCompositable);
+  void DeallocExternalImageId(wr::ExternalImageId& aImageId);
 
   /**
    * Clean this up, finishing with SendShutDown() which will cause __delete__
@@ -63,15 +95,21 @@ public:
     mIdNamespace = aIdNamespace;
   }
 
+  void PushGlyphs(wr::DisplayListBuilder& aBuilder, const nsTArray<GlyphArray>& aGlyphs,
+                  gfx::ScaledFont* aFont, const StackingContextHelper& aSc,
+                  const LayerRect& aBounds, const LayerRect& aClip);
+
+  wr::FontKey GetFontKeyForScaledFont(gfx::ScaledFont* aScaledFont);
+
+  void RemoveExpiredFontKeys();
+  void ClearReadLocks();
+
 private:
   friend class CompositorBridgeChild;
 
   ~WebRenderBridgeChild() {}
 
-  uint64_t GetNextExternalImageId();
-
-  wr::BuiltDisplayList ProcessWebrenderCommands(const gfx::IntSize &aSize,
-                                                InfallibleTArray<WebRenderCommand>& aCommands);
+  wr::ExternalImageId GetNextExternalImageId();
 
   // CompositableForwarder
   void Connect(CompositableClient* aCompositable,
@@ -110,7 +148,6 @@ private:
 
   bool AddOpDestroy(const OpDestroy& aOp);
 
-  nsTArray<WebRenderCommand> mCommands;
   nsTArray<WebRenderParentCommand> mParentCommands;
   nsTArray<OpDestroy> mDestroyedActors;
   nsDataHashtable<nsUint64HashKey, CompositableClient*> mCompositables;
@@ -123,6 +160,9 @@ private:
 
   bool mIPCOpen;
   bool mDestroyed;
+
+  uint32_t mFontKeysDeleted;
+  nsDataHashtable<UnscaledFontHashKey, wr::FontKey> mFontKeys;
 };
 
 } // namespace layers

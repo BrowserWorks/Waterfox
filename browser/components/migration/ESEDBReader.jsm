@@ -231,7 +231,7 @@ function unloadLibraries() {
 }
 
 function loadLibraries() {
-  Services.obs.addObserver(unloadLibraries, "xpcom-shutdown", false);
+  Services.obs.addObserver(unloadLibraries, "xpcom-shutdown");
   gLibs.ese = ctypes.open("esent.dll");
   gLibs.kernel = ctypes.open("kernel32.dll");
   KERNEL.FileTimeToSystemTime = gLibs.kernel.declare("FileTimeToSystemTime",
@@ -435,7 +435,7 @@ ESEDB.prototype = {
         // Deal with null values:
         buffer = null;
       } else {
-        Cu.reportError("Unexpected JET error: " + err + ";" + " retrieving value for column " + column.name);
+        Cu.reportError("Unexpected JET error: " + err + "; retrieving value for column " + column.name);
         throw new Error(convertESEError(err));
       }
     }

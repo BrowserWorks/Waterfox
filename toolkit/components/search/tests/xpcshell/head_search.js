@@ -8,7 +8,6 @@ Cu.import("resource://gre/modules/osfile.jsm");
 Cu.import("resource://gre/modules/NetUtil.jsm");
 Cu.import("resource://gre/modules/Promise.jsm");
 Cu.import("resource://gre/modules/Services.jsm");
-Cu.import("resource://gre/modules/Task.jsm");
 Cu.import("resource://gre/modules/XPCOMUtils.jsm");
 Cu.import("resource://testing-common/AppInfo.jsm");
 Cu.import("resource://testing-common/httpd.js");
@@ -170,11 +169,11 @@ function removeMetadata() {
 }
 
 function promiseCacheData() {
-  return new Promise(resolve => Task.spawn(function* () {
+  return new Promise(resolve => (async function() {
     let path = OS.Path.join(OS.Constants.Path.profileDir, CACHE_FILENAME);
-    let bytes = yield OS.File.read(path, {compression: "lz4"});
+    let bytes = await OS.File.read(path, {compression: "lz4"});
     resolve(JSON.parse(new TextDecoder().decode(bytes)));
-  }));
+  })());
 }
 
 function promiseSaveCacheData(data) {
@@ -184,39 +183,39 @@ function promiseSaveCacheData(data) {
 }
 
 function promiseEngineMetadata() {
-  return new Promise(resolve => Task.spawn(function* () {
-    let cache = yield promiseCacheData();
+  return new Promise(resolve => (async function() {
+    let cache = await promiseCacheData();
     let data = {};
     for (let engine of cache.engines) {
       data[engine._shortName] = engine._metaData;
     }
     resolve(data);
-  }));
+  })());
 }
 
 function promiseGlobalMetadata() {
-  return new Promise(resolve => Task.spawn(function* () {
-    let cache = yield promiseCacheData();
+  return new Promise(resolve => (async function() {
+    let cache = await promiseCacheData();
     resolve(cache.metaData);
-  }));
+  })());
 }
 
 function promiseSaveGlobalMetadata(globalData) {
-  return new Promise(resolve => Task.spawn(function* () {
-    let data = yield promiseCacheData();
+  return new Promise(resolve => (async function() {
+    let data = await promiseCacheData();
     data.metaData = globalData;
-    yield promiseSaveCacheData(data);
+    await promiseSaveCacheData(data);
     resolve();
-  }));
+  })());
 }
 
-var forceExpiration = Task.async(function* () {
-  let metadata = yield promiseGlobalMetadata();
+var forceExpiration = async function() {
+  let metadata = await promiseGlobalMetadata();
 
   // Make the current geodefaults expire 1s ago.
   metadata.searchDefaultExpir = Date.now() - 1000;
-  yield promiseSaveGlobalMetadata(metadata);
-});
+  await promiseSaveGlobalMetadata(metadata);
+};
 
 /**
  * Clean the profile of any cache file left from a previous run.
@@ -348,7 +347,11 @@ function useHttpServer() {
   httpServer.start(-1);
   httpServer.registerDirectory("/", do_get_cwd());
   gDataUrl = "http://localhost:" + httpServer.identity.primaryPort + "/data/";
-  do_register_cleanup(() => httpServer.stop(() => {}));
+  do_register_cleanup(async function cleanup_httpServer() {
+    await new Promise(resolve => {
+      httpServer.stop(resolve);
+    });
+  });
   return httpServer;
 }
 
@@ -366,7 +369,7 @@ function useHttpServer() {
  *                   except for the engine name.  Alternative to xmlFileName.
  *        }
  */
-var addTestEngines = Task.async(function* (aItems) {
+var addTestEngines = async function(aItems) {
   if (!gDataUrl) {
     do_throw("useHttpServer must be called before addTestEngines.");
   }
@@ -375,7 +378,7 @@ var addTestEngines = Task.async(function* (aItems) {
 
   for (let item of aItems) {
     do_print("Adding engine: " + item.name);
-    yield new Promise((resolve, reject) => {
+    await new Promise((resolve, reject) => {
       Services.obs.addObserver(function obs(subject, topic, data) {
         try {
           let engine = subject.QueryInterface(Ci.nsISearchEngine);
@@ -390,7 +393,7 @@ var addTestEngines = Task.async(function* (aItems) {
         } catch (ex) {
           reject(ex);
         }
-      }, "browser-search-engine-modified", false);
+      }, "browser-search-engine-modified");
 
       if (item.xmlFileName) {
         Services.search.addEngine(gDataUrl + item.xmlFileName,
@@ -402,7 +405,7 @@ var addTestEngines = Task.async(function* (aItems) {
   }
 
   return engines;
-});
+};
 
 /**
  * Installs a test engine into the test profile.
@@ -488,7 +491,7 @@ function waitForSearchNotification(aExpectedData) {
 
       Services.obs.removeObserver(observer, SEARCH_SERVICE_TOPIC);
       resolve(aSubject);
-    }, SEARCH_SERVICE_TOPIC, false);
+    }, SEARCH_SERVICE_TOPIC);
   });
 }
 

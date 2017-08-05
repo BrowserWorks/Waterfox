@@ -10,6 +10,7 @@
 #include "mozilla/ArrayUtils.h"
 #include "mozilla/Attributes.h"
 #include "mozilla/HashFunctions.h"
+#include "mozilla/ServoStyleSet.h"
 #include "mozilla/UniquePtrExtensions.h"
 
 #include "nsXULAppAPI.h"
@@ -51,6 +52,7 @@
 #include "nsRefPtrHashtable.h"
 #include "nsIMemoryReporter.h"
 #include "nsThreadUtils.h"
+#include "GeckoProfiler.h"
 
 #ifdef DEBUG
 #define ENSURE_MAIN_PROCESS(message, pref) do {                                \
@@ -352,7 +354,7 @@ PreferenceServiceReporter::CollectReports(
   for (auto iter = rootBranch->mObservers.Iter(); !iter.Done(); iter.Next()) {
     nsAutoPtr<PrefCallback>& callback = iter.Data();
     nsPrefBranch* prefBranch = callback->GetPrefBranch();
-    const char* pref = prefBranch->getPrefName(callback->GetDomain().get());
+    const auto& pref = prefBranch->getPrefName(callback->GetDomain().get());
 
     if (callback->IsWeak()) {
       nsCOMPtr<nsIObserver> callbackRef = do_QueryReferent(callback->mWeakRef);
@@ -365,7 +367,7 @@ PreferenceServiceReporter::CollectReports(
       numStrong++;
     }
 
-    nsDependentCString prefString(pref);
+    nsDependentCString prefString(pref.get());
     uint32_t oldCount = 0;
     prefCounter.Get(prefString, &oldCount);
     uint32_t currentCount = oldCount + 1;
@@ -478,10 +480,11 @@ bool
 Preferences::InitStaticMembers()
 {
 #ifndef MOZ_B2G
-  MOZ_ASSERT(NS_IsMainThread());
+  MOZ_ASSERT(NS_IsMainThread() || mozilla::ServoStyleSet::IsInServoTraversal());
 #endif
 
   if (!sShutdown && !sPreferences) {
+    MOZ_ASSERT(NS_IsMainThread());
     nsCOMPtr<nsIPrefService> prefService =
       do_GetService(NS_PREFSERVICE_CONTRACTID);
   }
@@ -803,6 +806,12 @@ Preferences::SetInitPhase(pref_initPhase phase)
 {
   pref_SetInitPhase(phase);
 }
+
+pref_initPhase
+Preferences::InitPhase()
+{
+  return pref_GetInitPhase();
+}
 #endif
 
 NS_IMETHODIMP
@@ -962,6 +971,11 @@ Preferences::ReadAndOwnUserPrefFile(nsIFile *aFile)
 nsresult
 Preferences::SavePrefFileInternal(nsIFile *aFile)
 {
+  // We allow different behavior here when aFile argument is not null,
+  // but it happens to be the same as the current file.  It is not
+  // clear that we should, but it does give us a "force" save on the
+  // unmodified pref file (see the original bug 160377 when we added this.)
+
   if (nullptr == aFile) {
     // the mDirty flag tells us if we should write to mCurrentFile
     // we only check this flag when the caller wants to write to the default
@@ -971,9 +985,14 @@ Preferences::SavePrefFileInternal(nsIFile *aFile)
 
     // It's possible that we never got a prefs file.
     nsresult rv = NS_OK;
-    if (mCurrentFile)
+    if (mCurrentFile) {
       rv = WritePrefFile(mCurrentFile);
+    }
 
+    // If we succeeded writing to mCurrentFile, reset the dirty flag
+    if (NS_SUCCEEDED(rv)) {
+      mDirty = false;
+    }
     return rv;
   } else {
     return WritePrefFile(aFile);
@@ -990,6 +1009,9 @@ Preferences::WritePrefFile(nsIFile* aFile)
 
   if (!gHashTable)
     return NS_ERROR_NOT_INITIALIZED;
+
+  PROFILER_LABEL("Preferences", "WritePrefFile",
+                 js::ProfileEntry::Category::OTHER);
 
   // execute a "safe" save by saving through a tempfile
   rv = NS_NewSafeLocalFileOutputStream(getter_AddRefs(outStreamSink),
@@ -1033,8 +1055,6 @@ Preferences::WritePrefFile(nsIFile* aFile)
       return rv;
     }
   }
-
-  mDirty = false;
   return NS_OK;
 }
 
@@ -1711,6 +1731,34 @@ Preferences::RemoveObservers(nsIObserver* aObserver,
   return NS_OK;
 }
 
+static void NotifyObserver(const char* aPref, void* aClosure)
+{
+  nsCOMPtr<nsIObserver> observer = static_cast<nsIObserver*>(aClosure);
+  observer->Observe(nullptr, NS_PREFBRANCH_PREFCHANGE_TOPIC_ID,
+                    NS_ConvertASCIItoUTF16(aPref).get());
+}
+
+static void RegisterPriorityCallback(PrefChangedFunc aCallback,
+                                     const char* aPref,
+                                     void* aClosure)
+{
+  MOZ_ASSERT(Preferences::IsServiceAvailable());
+
+  ValueObserverHashKey hashKey(aPref, aCallback, Preferences::ExactMatch);
+  RefPtr<ValueObserver> observer;
+  gObserverTable->Get(&hashKey, getter_AddRefs(observer));
+  if (observer) {
+    observer->AppendClosure(aClosure);
+    return;
+  }
+
+  observer = new ValueObserver(aPref, aCallback, Preferences::ExactMatch);
+  observer->AppendClosure(aClosure);
+  PREF_RegisterPriorityCallback(aPref, NotifyObserver,
+                                static_cast<nsIObserver*>(observer));
+  gObserverTable->Put(observer, observer);
+}
+
 // static
 nsresult
 Preferences::RegisterCallback(PrefChangedFunc aCallback,
@@ -1778,6 +1826,10 @@ Preferences::UnregisterCallback(PrefChangedFunc aCallback,
   return NS_OK;
 }
 
+// We insert cache observers using RegisterPriorityCallback to ensure they
+// are called prior to ordinary pref observers.  Doing this ensures that
+// ordinary observers will never get stale values from cache variables.
+
 static void BoolVarChanged(const char* aPref, void* aClosure)
 {
   CacheData* cache = static_cast<CacheData*>(aClosure);
@@ -1801,7 +1853,8 @@ Preferences::AddBoolVarCache(bool* aCache,
   data->cacheLocation = aCache;
   data->defaultValueBool = aDefault;
   gCacheData->AppendElement(data);
-  return RegisterCallback(BoolVarChanged, aPref, data, ExactMatch);
+  RegisterPriorityCallback(BoolVarChanged, aPref, data);
+  return NS_OK;
 }
 
 static void IntVarChanged(const char* aPref, void* aClosure)
@@ -1827,7 +1880,8 @@ Preferences::AddIntVarCache(int32_t* aCache,
   data->cacheLocation = aCache;
   data->defaultValueInt = aDefault;
   gCacheData->AppendElement(data);
-  return RegisterCallback(IntVarChanged, aPref, data, ExactMatch);
+  RegisterPriorityCallback(IntVarChanged, aPref, data);
+  return NS_OK;
 }
 
 static void UintVarChanged(const char* aPref, void* aClosure)
@@ -1853,7 +1907,8 @@ Preferences::AddUintVarCache(uint32_t* aCache,
   data->cacheLocation = aCache;
   data->defaultValueUint = aDefault;
   gCacheData->AppendElement(data);
-  return RegisterCallback(UintVarChanged, aPref, data, ExactMatch);
+  RegisterPriorityCallback(UintVarChanged, aPref, data);
+  return NS_OK;
 }
 
 template <MemoryOrdering Order>
@@ -1881,7 +1936,8 @@ Preferences::AddAtomicUintVarCache(Atomic<uint32_t, Order>* aCache,
   data->cacheLocation = aCache;
   data->defaultValueUint = aDefault;
   gCacheData->AppendElement(data);
-  return RegisterCallback(AtomicUintVarChanged<Order>, aPref, data, ExactMatch);
+  RegisterPriorityCallback(AtomicUintVarChanged<Order>, aPref, data);
+  return NS_OK;
 }
 
 // Since the definition of this template function is not in a header file,
@@ -1914,7 +1970,8 @@ Preferences::AddFloatVarCache(float* aCache,
   data->cacheLocation = aCache;
   data->defaultValueFloat = aDefault;
   gCacheData->AppendElement(data);
-  return RegisterCallback(FloatVarChanged, aPref, data, ExactMatch);
+  RegisterPriorityCallback(FloatVarChanged, aPref, data);
+  return NS_OK;
 }
 
 // static

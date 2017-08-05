@@ -5,36 +5,36 @@ const TEST_PAGE = "/browser/browser/base/content/test/general/dummy_page.html";
 var gTestTab, gBgTab, gTestZoom;
 
 function testBackgroundLoad() {
-  Task.spawn(function* () {
+  (async function() {
     is(ZoomManager.zoom, gTestZoom, "opening a background tab should not change foreground zoom");
 
-    yield FullZoomHelper.removeTabAndWaitForLocationChange(gBgTab);
+    await FullZoomHelper.removeTabAndWaitForLocationChange(gBgTab);
 
-    yield FullZoom.reset();
-    yield FullZoomHelper.removeTabAndWaitForLocationChange(gTestTab);
+    await FullZoom.reset();
+    await FullZoomHelper.removeTabAndWaitForLocationChange(gTestTab);
     finish();
-  });
+  })();
 }
 
 function testInitialZoom() {
-  Task.spawn(function* () {
+  (async function() {
     is(ZoomManager.zoom, 1, "initial zoom level should be 1");
     FullZoom.enlarge();
 
     gTestZoom = ZoomManager.zoom;
     isnot(gTestZoom, 1, "zoom level should have changed");
 
-    gBgTab = gBrowser.addTab();
-    yield FullZoomHelper.load(gBgTab, "http://mochi.test:8888" + TEST_PAGE);
-  }).then(testBackgroundLoad, FullZoomHelper.failAndContinue(finish));
+    gBgTab = BrowserTestUtils.addTab(gBrowser);
+    await FullZoomHelper.load(gBgTab, "http://mochi.test:8888" + TEST_PAGE);
+  })().then(testBackgroundLoad, FullZoomHelper.failAndContinue(finish));
 }
 
 function test() {
   waitForExplicitFinish();
 
-  Task.spawn(function* () {
-    gTestTab = gBrowser.addTab();
-    yield FullZoomHelper.selectTabAndWaitForLocationChange(gTestTab);
-    yield FullZoomHelper.load(gTestTab, "http://example.org" + TEST_PAGE);
-  }).then(testInitialZoom, FullZoomHelper.failAndContinue(finish));
+  (async function() {
+    gTestTab = BrowserTestUtils.addTab(gBrowser);
+    await FullZoomHelper.selectTabAndWaitForLocationChange(gTestTab);
+    await FullZoomHelper.load(gTestTab, "http://example.org" + TEST_PAGE);
+  })().then(testInitialZoom, FullZoomHelper.failAndContinue(finish));
 }

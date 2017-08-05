@@ -8,5 +8,4 @@ flat varying vec4 vUvBorder;
 
 #ifdef WR_FEATURE_TRANSFORM
 varying vec3 vLocalPos;
-flat varying vec4 vLocalRect;
 #endif

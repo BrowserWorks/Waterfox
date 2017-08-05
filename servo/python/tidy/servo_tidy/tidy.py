@@ -58,6 +58,7 @@ FILE_PATTERNS_TO_IGNORE = ["*.#*", "*.pyc", "fake-ld.sh"]
 SPEC_BASE_PATH = "components/script/dom/"
 
 WEBIDL_STANDARDS = [
+    "//www.khronos.org/registry/webgl/extensions",
     "//www.khronos.org/registry/webgl/specs",
     "//developer.mozilla.org/en-US/docs/Web/API",
     "//dev.w3.org/2006/webapi",
@@ -67,6 +68,7 @@ WEBIDL_STANDARDS = [
     "//dom.spec.whatwg.org",
     "//domparsing.spec.whatwg.org",
     "//drafts.csswg.org",
+    "//drafts.css-houdini.org",
     "//drafts.fxtf.org",
     "//encoding.spec.whatwg.org",
     "//fetch.spec.whatwg.org",
@@ -111,11 +113,11 @@ def progress_wrapper(iterator):
 
 
 class FileList(object):
-    def __init__(self, directory, only_changed_files=False, exclude_dirs=[], progress=True, stylo=False):
+    def __init__(self, directory, only_changed_files=False, exclude_dirs=[], progress=True):
         self.directory = directory
         self.excluded = exclude_dirs
         iterator = self._filter_excluded() if exclude_dirs else self._default_walk()
-        if only_changed_files and not stylo:
+        if only_changed_files:
             try:
                 # Fall back if git doesn't work
                 newiter = self._git_changed_files()
@@ -168,10 +170,9 @@ def filter_file(file_name):
     return True
 
 
-def filter_files(start_dir, only_changed_files, progress, stylo):
+def filter_files(start_dir, only_changed_files, progress):
     file_iter = FileList(start_dir, only_changed_files=only_changed_files,
-                         exclude_dirs=config["ignore"]["directories"], progress=progress,
-                         stylo=stylo)
+                         exclude_dirs=config["ignore"]["directories"], progress=progress)
     for file_name in file_iter:
         base_name = os.path.basename(file_name)
         if not any(fnmatch.fnmatch(base_name, pattern) for pattern in FILE_PATTERNS_TO_CHECK):
@@ -447,10 +448,13 @@ def check_rust(file_name, lines):
 
     prev_use = None
     prev_open_brace = False
+    multi_line_string = False
     current_indent = 0
     prev_crate = {}
     prev_mod = {}
     prev_feature_name = ""
+    indent = 0
+    prev_indent = 0
 
     decl_message = "{} is not in alphabetical order"
     decl_expected = "\n\t\033[93mexpected: {}\033[0m"
@@ -459,6 +463,18 @@ def check_rust(file_name, lines):
     for idx, original_line in enumerate(lines):
         # simplify the analysis
         line = original_line.strip()
+        prev_indent = indent
+        indent = len(original_line) - len(line)
+
+        # Hack for components/selectors/build.rs
+        if multi_line_string:
+            if line.startswith('"#'):
+                multi_line_string = False
+            else:
+                continue
+        if line.endswith('r#"'):
+            multi_line_string = True
+
         is_attribute = re.search(r"#\[.*\]", line)
         is_comment = re.search(r"^//|^/\*|^\*", line)
 
@@ -565,6 +581,8 @@ def check_rust(file_name, lines):
             # This particular pattern is not reentrant-safe in script_thread.rs
             (r"match self.documents.borrow", "use a separate variable for the match expression",
              lambda match, line: file_name.endswith('script_thread.rs')),
+            # -> () is unnecessary
+            (r"-> \(\)", "encountered function signature with -> ()", no_filter),
         ]
 
         for pattern, message, filter_func in regex_rules:
@@ -576,11 +594,17 @@ def check_rust(file_name, lines):
             yield (idx + 1, "found an empty line following a {")
         prev_open_brace = line.endswith("{")
 
+        # ensure a line starting with { or } has a number of leading spaces that is a multiple of 4
+        if line.startswith(("{", "}")):
+            match = re.match(r"(?: {4})* {1,3}([{}])", original_line)
+            if match:
+                if indent != prev_indent - 4:
+                    yield (idx + 1, "space before {} is not a multiple of 4".format(match.group(1)))
+
         # check alphabetical order of extern crates
         if line.startswith("extern crate "):
             # strip "extern crate " from the begin and ";" from the end
             crate_name = line[13:-1]
-            indent = len(original_line) - len(line)
             if indent not in prev_crate:
                 prev_crate[indent] = ""
             if prev_crate[indent] > crate_name:
@@ -615,7 +639,6 @@ def check_rust(file_name, lines):
         # into a single import block
         if line.startswith("use "):
             import_block = True
-            indent = len(original_line) - len(line)
             if not line.endswith(";") and '{' in line:
                 yield (idx + 1, "use statement spans multiple lines")
             if '{ ' in line:
@@ -644,7 +667,6 @@ def check_rust(file_name, lines):
 
         # modules must be in the same line and alphabetically sorted
         if line.startswith("mod ") or line.startswith("pub mod "):
-            indent = len(original_line) - len(line)
             # strip /(pub )?mod/ from the left and ";" from the right
             mod = line[4:-1] if line.startswith("mod ") else line[8:-1]
 
@@ -806,8 +828,8 @@ def check_spec(file_name, lines):
     # Pattern representing a line with comment containing a spec link
     link_patt = re.compile("^\s*///? https://.+$")
 
-    # Pattern representing a line with comment
-    comment_patt = re.compile("^\s*///?.+$")
+    # Pattern representing a line with comment or attribute
+    comment_patt = re.compile("^\s*(///?.+|#\[.+\])$")
 
     brace_count = 0
     in_impl = False
@@ -829,12 +851,11 @@ def check_spec(file_name, lines):
                         # No more comments exist above, yield warning
                         yield (idx + 1, "method declared in webidl is missing a comment with a specification link")
                         break
-            if '{' in line and in_impl:
-                brace_count += 1
-            if '}' in line and in_impl:
-                if brace_count == 1:
+            if in_impl:
+                brace_count += line.count('{')
+                brace_count -= line.count('}')
+                if brace_count < 1:
                     break
-                brace_count -= 1
 
 
 def check_config_file(config_file, print_text=True):
@@ -1016,20 +1037,22 @@ class LintRunner(object):
         dir_name, filename = os.path.split(self.path)
         sys.path.append(dir_name)
         module = imp.load_source(filename[:-3], self.path)
-        if hasattr(module, 'Lint'):
-            if issubclass(module.Lint, LintRunner):
-                lint = module.Lint(self.path, self.only_changed_files,
-                                   self.exclude_dirs, self.progress, stylo=self.stylo)
-                for error in lint.run():
-                    if not hasattr(error, '__iter__'):
-                        yield (self.path, 1, "errors should be a tuple of (path, line, reason)")
-                        return
-                    yield error
-            else:
-                yield (self.path, 1, "class 'Lint' should inherit from 'LintRunner'")
-        else:
-            yield (self.path, 1, "script should contain a class named 'Lint'")
         sys.path.remove(dir_name)
+        if not hasattr(module, 'Lint'):
+            yield (self.path, 1, "script should contain a class named 'Lint'")
+            return
+
+        if not issubclass(module.Lint, LintRunner):
+            yield (self.path, 1, "class 'Lint' should inherit from 'LintRunner'")
+            return
+
+        lint = module.Lint(self.path, self.only_changed_files,
+                           self.exclude_dirs, self.progress, stylo=self.stylo)
+        for error in lint.run():
+            if type(error) is not tuple or (type(error) is tuple and len(error) != 3):
+                yield (self.path, 1, "errors should be a tuple of (path, line, reason)")
+                return
+            yield error
 
     def get_files(self, path, **kwargs):
         args = ['only_changed_files', 'exclude_dirs', 'progress']
@@ -1048,28 +1071,13 @@ def run_lint_scripts(only_changed_files=False, progress=True, stylo=False):
             yield error
 
 
-def check_commits(path='.'):
-    """Gets all commits since the last merge."""
-    args = ['git', 'log', '-n1', '--merges', '--format=%H']
-    last_merge = subprocess.check_output(args, cwd=path).strip()
-    args = ['git', 'log', '{}..HEAD'.format(last_merge), '--format=%s']
-    commits = subprocess.check_output(args, cwd=path).lower().splitlines()
-
-    for commit in commits:
-        # .split() to only match entire words
-        if 'wip' in commit.split():
-            yield ('.', 0, 'no commits should contain WIP')
-
-    raise StopIteration
-
-
 def scan(only_changed_files=False, progress=True, stylo=False):
     # check config file for errors
     config_errors = check_config_file(CONFIG_FILE_PATH)
     # check directories contain expected files
     directory_errors = check_directory_files(config['check_ext'])
     # standard checks
-    files_to_check = filter_files('.', only_changed_files, progress, stylo)
+    files_to_check = filter_files('.', only_changed_files and not stylo, progress)
     checking_functions = (check_flake8, check_lock, check_webidl_spec, check_json, check_yaml)
     line_checking_functions = (check_license, check_by_line, check_toml, check_shell,
                                check_rust, check_spec, check_modeline)
@@ -1078,11 +1086,9 @@ def scan(only_changed_files=False, progress=True, stylo=False):
     dep_license_errors = check_dep_license_errors(get_dep_toml_files(only_changed_files), progress)
     # other lint checks
     lint_errors = run_lint_scripts(only_changed_files, progress, stylo=stylo)
-    # check commits for WIP
-    commit_errors = [] if stylo else check_commits()
     # chain all the iterators
     errors = itertools.chain(config_errors, directory_errors, lint_errors,
-                             file_errors, dep_license_errors, commit_errors)
+                             file_errors, dep_license_errors)
 
     error = None
     for error in errors:

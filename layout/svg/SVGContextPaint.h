@@ -10,12 +10,14 @@
 #include "gfxMatrix.h"
 #include "gfxPattern.h"
 #include "gfxTypes.h"
+#include "gfxUtils.h"
 #include "mozilla/AlreadyAddRefed.h"
 #include "mozilla/Assertions.h"
 #include "mozilla/gfx/2D.h"
 #include "nsColor.h"
 #include "nsStyleStruct.h"
 #include "nsTArray.h"
+#include "DrawResult.h"
 
 class gfxContext;
 class nsIDocument;
@@ -48,31 +50,42 @@ class SVGContextPaint : public RefCounted<SVGContextPaint>
 {
 protected:
   typedef mozilla::gfx::DrawTarget DrawTarget;
+  typedef mozilla::image::imgDrawingParams imgDrawingParams;
 
-  SVGContextPaint() {}
+  SVGContextPaint()
+    : mDashOffset(0.0f)
+    , mStrokeWidth(0.0f)
+  {}
 
 public:
+
   MOZ_DECLARE_REFCOUNTED_TYPENAME(SVGContextPaint)
 
   virtual ~SVGContextPaint() {}
 
-  virtual already_AddRefed<gfxPattern> GetFillPattern(const DrawTarget* aDrawTarget,
-                                                      float aOpacity,
-                                                      const gfxMatrix& aCTM) = 0;
-  virtual already_AddRefed<gfxPattern> GetStrokePattern(const DrawTarget* aDrawTarget,
-                                                        float aOpacity,
-                                                        const gfxMatrix& aCTM) = 0;
+  virtual already_AddRefed<gfxPattern>
+  GetFillPattern(const DrawTarget* aDrawTarget,
+                 float aOpacity,
+                 const gfxMatrix& aCTM,
+                 imgDrawingParams& aImgParams) = 0;
+  virtual already_AddRefed<gfxPattern>
+  GetStrokePattern(const DrawTarget* aDrawTarget,
+                   float aOpacity,
+                   const gfxMatrix& aCTM,
+                   imgDrawingParams& aImgParams) = 0;
   virtual float GetFillOpacity() const = 0;
   virtual float GetStrokeOpacity() const = 0;
 
-  already_AddRefed<gfxPattern> GetFillPattern(const DrawTarget* aDrawTarget,
-                                              const gfxMatrix& aCTM) {
-    return GetFillPattern(aDrawTarget, GetFillOpacity(), aCTM);
+  already_AddRefed<gfxPattern>
+  GetFillPattern(const DrawTarget* aDrawTarget, const gfxMatrix& aCTM,
+                 imgDrawingParams& aImgParams) {
+    return GetFillPattern(aDrawTarget, GetFillOpacity(), aCTM, aImgParams);
   }
 
-  already_AddRefed<gfxPattern> GetStrokePattern(const DrawTarget* aDrawTarget,
-                                                const gfxMatrix& aCTM) {
-    return GetStrokePattern(aDrawTarget, GetStrokeOpacity(), aCTM);
+  already_AddRefed<gfxPattern>
+  GetStrokePattern(const DrawTarget* aDrawTarget, const gfxMatrix& aCTM,
+                   imgDrawingParams& aImgParams) {
+    return GetStrokePattern(aDrawTarget, GetStrokeOpacity(), aCTM, aImgParams);
   }
 
   static SVGContextPaint* GetContextPaint(nsIContent* aContent);
@@ -82,15 +95,15 @@ public:
   void InitStrokeGeometry(gfxContext *aContext,
                           float devUnitsPerSVGUnit);
 
-  FallibleTArray<gfxFloat>& GetStrokeDashArray() {
+  const FallibleTArray<gfxFloat>& GetStrokeDashArray() const {
     return mDashes;
   }
 
-  gfxFloat GetStrokeDashOffset() {
+  gfxFloat GetStrokeDashOffset() const {
     return mDashOffset;
   }
 
-  gfxFloat GetStrokeWidth() {
+  gfxFloat GetStrokeWidth() const {
     return mStrokeWidth;
   }
 
@@ -100,6 +113,12 @@ public:
                            "subclass");
     return 0;
   }
+
+  /**
+   * Returns true if image context paint is allowed to be used in an image that
+   * has the given URI, else returns false.
+   */
+  static bool IsAllowedForImageFromURI(nsIURI* aURI);
 
 private:
   // Member-vars are initialized in InitStrokeGeometry.
@@ -137,18 +156,26 @@ struct SVGContextPaintImpl : public SVGContextPaint
 {
 protected:
   typedef mozilla::gfx::DrawTarget DrawTarget;
-public:
-  DrawMode Init(const DrawTarget* aDrawTarget,
-                const gfxMatrix& aContextMatrix,
-                nsIFrame* aFrame,
-                SVGContextPaint* aOuterContextPaint);
 
-  already_AddRefed<gfxPattern> GetFillPattern(const DrawTarget* aDrawTarget,
-                                              float aOpacity,
-                                              const gfxMatrix& aCTM) override;
-  already_AddRefed<gfxPattern> GetStrokePattern(const DrawTarget* aDrawTarget,
-                                                float aOpacity,
-                                                const gfxMatrix& aCTM) override;
+public:
+
+  DrawMode
+  Init(const DrawTarget* aDrawTarget,
+       const gfxMatrix& aContextMatrix,
+       nsIFrame* aFrame,
+       SVGContextPaint* aOuterContextPaint,
+       imgDrawingParams& aImgParams);
+
+  already_AddRefed<gfxPattern>
+  GetFillPattern(const DrawTarget* aDrawTarget,
+                 float aOpacity,
+                 const gfxMatrix& aCTM,
+                 imgDrawingParams& aImgParams) override;
+  already_AddRefed<gfxPattern>
+  GetStrokePattern(const DrawTarget* aDrawTarget,
+                   float aOpacity,
+                   const gfxMatrix& aCTM,
+                   imgDrawingParams& aImgParams) override;
 
   void SetFillOpacity(float aOpacity) { mFillOpacity = aOpacity; }
   float GetFillOpacity() const override { return mFillOpacity; }
@@ -198,10 +225,12 @@ public:
     gfxMatrix mPatternMatrix;
     nsRefPtrHashtable<nsFloatHashKey, gfxPattern> mPatternCache;
 
-    already_AddRefed<gfxPattern> GetPattern(const DrawTarget* aDrawTarget,
-                                            float aOpacity,
-                                            nsStyleSVGPaint nsStyleSVG::*aFillOrStroke,
-                                            const gfxMatrix& aCTM);
+    already_AddRefed<gfxPattern>
+    GetPattern(const DrawTarget* aDrawTarget,
+               float aOpacity,
+               nsStyleSVGPaint nsStyleSVG::*aFillOrStroke,
+               const gfxMatrix& aCTM,
+               imgDrawingParams& aImgParams);
   };
 
   Paint mFillPaint;
@@ -219,40 +248,68 @@ public:
  */
 class SVGEmbeddingContextPaint : public SVGContextPaint
 {
+  typedef gfx::Color Color;
+
 public:
-  SVGEmbeddingContextPaint() {}
+  SVGEmbeddingContextPaint()
+    : mFillOpacity(1.0f)
+    , mStrokeOpacity(1.0f)
+  {}
 
-  void SetFill(nscolor aFill);
-  void SetStroke(nscolor aStroke);
-
-  already_AddRefed<gfxPattern> GetFillPattern(const DrawTarget* aDrawTarget,
-                                              float aOpacity,
-                                              const gfxMatrix& aCTM) override {
-    return do_AddRef(mFill);
+  bool operator==(const SVGEmbeddingContextPaint& aOther) const {
+    MOZ_ASSERT(GetStrokeWidth() == aOther.GetStrokeWidth() &&
+               GetStrokeDashOffset() == aOther.GetStrokeDashOffset() &&
+               GetStrokeDashArray() == aOther.GetStrokeDashArray(),
+               "We don't currently include these in the context information "
+               "from an embedding element");
+    return mFill == aOther.mFill &&
+           mStroke == aOther.mStroke &&
+           mFillOpacity == aOther.mFillOpacity &&
+           mStrokeOpacity == aOther.mStrokeOpacity;
   }
 
-  already_AddRefed<gfxPattern> GetStrokePattern(const DrawTarget* aDrawTarget,
-                                                float aOpacity,
-                                                const gfxMatrix& aCTM) override {
-    return do_AddRef(mStroke);
+  void SetFill(nscolor aFill) {
+    mFill.emplace(gfx::ToDeviceColor(aFill));
+  }
+  void SetStroke(nscolor aStroke) {
+    mStroke.emplace(gfx::ToDeviceColor(aStroke));
   }
 
+  /**
+   * Returns a pattern of type PatternType::COLOR, or else nullptr.
+   */
+  already_AddRefed<gfxPattern>
+  GetFillPattern(const DrawTarget* aDrawTarget, float aFillOpacity,
+                 const gfxMatrix& aCTM, imgDrawingParams& aImgParams) override;
+
+  /**
+   * Returns a pattern of type PatternType::COLOR, or else nullptr.
+   */
+  already_AddRefed<gfxPattern>
+  GetStrokePattern(const DrawTarget* aDrawTarget, float aStrokeOpacity,
+                   const gfxMatrix& aCTM, imgDrawingParams& aImgParams) override;
+
+  void SetFillOpacity(float aOpacity) {
+    mFillOpacity = aOpacity;
+  }
   float GetFillOpacity() const override {
-    // Always 1.0f since we don't currently allow 'context-fill-opacity'
-    return 1.0f;
+    return mFillOpacity;
   };
 
+  void SetStrokeOpacity(float aOpacity) {
+    mStrokeOpacity = aOpacity;
+  }
   float GetStrokeOpacity() const override {
-    // Always 1.0f since we don't currently allow 'context-stroke-opacity'
-    return 1.0f;
+    return mStrokeOpacity;
   };
 
   uint32_t Hash() const override;
 
 private:
-  // Note: if these are set at all, they'll have type PatternType::COLOR.
-  RefPtr<gfxPattern> mFill;
-  RefPtr<gfxPattern> mStroke;
+  Maybe<Color> mFill;
+  Maybe<Color> mStroke;
+  float mFillOpacity;
+  float mStrokeOpacity;
 };
 
 } // namespace mozilla

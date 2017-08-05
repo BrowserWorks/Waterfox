@@ -41,6 +41,7 @@
 #include "nsThreadUtils.h"
 #include "nsAutoPtr.h"
 #include "nsIMutableArray.h"
+#include "nsIRedirectHistoryEntry.h"
 
 // used to access our datastore of user-configured helper applications
 #include "nsIHandlerService.h"
@@ -273,7 +274,7 @@ static bool GetFilenameAndExtensionFromChannel(nsIChannel* aChannel,
  * Obtains the directory to use.  This tends to vary per platform, and
  * needs to be consistent throughout our codepaths. For platforms where
  * helper apps use the downloads directory, this should be kept in
- * sync with nsDownloadManager.cpp
+ * sync with DownloadIntegration.jsm.
  *
  * Optionally skip availability of the directory and storage.
  */
@@ -468,6 +469,9 @@ static const nsDefaultMimeTypeEntry defaultMimeEntries[] =
   { "application/xhtml+xml", "xhtml" },
   { "application/xhtml+xml", "xht" },
   { TEXT_PLAIN, "txt" },
+  { APPLICATION_JSON, "json" },
+  { APPLICATION_XJAVASCRIPT, "js" },
+  { APPLICATION_XJAVASCRIPT, "jsm" },
   { VIDEO_OGG, "ogv" },
   { VIDEO_OGG, "ogg" },
   { APPLICATION_OGG, "ogg" },
@@ -476,6 +480,9 @@ static const nsDefaultMimeTypeEntry defaultMimeEntries[] =
   { APPLICATION_PDF, "pdf" },
   { VIDEO_WEBM, "webm" },
   { AUDIO_WEBM, "webm" },
+  { IMAGE_ICO, "ico" },
+  { TEXT_PLAIN, "properties" },
+  { TEXT_PLAIN, "locale" },
 #if defined(MOZ_WMF)
   { VIDEO_MP4, "mp4" },
   { AUDIO_MP4, "m4a" },
@@ -740,7 +747,7 @@ NS_IMETHODIMP nsExternalHelperAppService::DoContent(const nsACString& aMimeConte
     nsCOMPtr<nsIHttpChannel> httpChan = do_QueryInterface(channel);
     if (httpChan) {
       nsAutoCString requestMethod;
-      httpChan->GetRequestMethod(requestMethod);
+      Unused << httpChan->GetRequestMethod(requestMethod);
       allowURLExt = !requestMethod.EqualsLiteral("POST");
     }
 
@@ -1623,8 +1630,8 @@ NS_IMETHODIMP nsExternalAppHandler::OnStartRequest(nsIRequest *request, nsISuppo
     nsCOMPtr<nsIHttpChannel> httpChannel(do_QueryInterface(mOriginalChannel));
     if (httpChannel) {
       nsAutoCString refreshHeader;
-      httpChannel->GetResponseHeader(NS_LITERAL_CSTRING("refresh"),
-                                     refreshHeader);
+      Unused << httpChannel->GetResponseHeader(NS_LITERAL_CSTRING("refresh"),
+                                               refreshHeader);
       if (!refreshHeader.IsEmpty()) {
         mShouldCloseWindow = false;
       }
@@ -1671,10 +1678,12 @@ NS_IMETHODIMP nsExternalAppHandler::OnStartRequest(nsIRequest *request, nsISuppo
     return NS_OK;
   }
 
-  // Inform channel it is open on behalf of a download to prevent caching.
+  // Inform channel it is open on behalf of a download to throttle it during
+  // page loads and prevent its caching.
   nsCOMPtr<nsIHttpChannelInternal> httpInternal = do_QueryInterface(aChannel);
   if (httpInternal) {
-    httpInternal->SetChannelIsForDownload(true);
+    rv = httpInternal->SetChannelIsForDownload(true);
+    MOZ_ASSERT(NS_SUCCEEDED(rv));
   }
 
   // now that the temp file is set up, find out if we need to invoke a dialog
@@ -2045,8 +2054,8 @@ nsExternalAppHandler::OnSaveComplete(nsIBackgroundFileSaver *aSaver,
         NS_ENSURE_SUCCESS(rv, rv);
         LOG(("nsExternalAppHandler: Got %" PRIuSIZE " redirects\n",
              loadInfo->RedirectChain().Length()));
-        for (nsIPrincipal* principal : loadInfo->RedirectChain()) {
-          redirectChain->AppendElement(principal, false);
+        for (nsIRedirectHistoryEntry* entry : loadInfo->RedirectChain()) {
+          redirectChain->AppendElement(entry, false);
         }
         mRedirects = redirectChain;
       }
@@ -2419,7 +2428,7 @@ NS_IMETHODIMP nsExternalAppHandler::LaunchWithApplication(nsIFile * aApplication
   // was specified in mSuggestedFileName after the download is done prior to
   // launching the helper app.  So that any existing file of that name won't be
   // overwritten we call CreateUnique().  Also note that we use the same
-  // directory as originally downloaded so nsDownload can rename in place
+  // directory as originally downloaded so the download can be renamed in place
   // later.
   nsCOMPtr<nsIFile> fileToUse;
   (void) GetDownloadDirectory(getter_AddRefs(fileToUse));

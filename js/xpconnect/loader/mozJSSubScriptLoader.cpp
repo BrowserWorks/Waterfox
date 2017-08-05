@@ -15,7 +15,6 @@
 #include "nsNetCID.h"
 #include "nsNetUtil.h"
 #include "nsIFileURL.h"
-#include "nsScriptLoader.h"
 #include "nsIScriptSecurityManager.h"
 #include "nsThreadUtils.h"
 
@@ -27,7 +26,9 @@
 
 #include "mozilla/dom/Promise.h"
 #include "mozilla/dom/ToJSValue.h"
+#include "mozilla/dom/ScriptLoader.h"
 #include "mozilla/HoldDropJSObjects.h"
+#include "mozilla/ScriptPreloader.h"
 #include "mozilla/scache/StartupCache.h"
 #include "mozilla/scache/StartupCacheUtils.h"
 #include "mozilla/Unused.h"
@@ -50,19 +51,22 @@ public:
         , charset(NullString())
         , ignoreCache(false)
         , async(false)
+        , wantReturnValue(false)
     { }
 
     virtual bool Parse() {
       return ParseObject("target", &target) &&
              ParseString("charset", charset) &&
              ParseBoolean("ignoreCache", &ignoreCache) &&
-             ParseBoolean("async", &async);
+             ParseBoolean("async", &async) &&
+             ParseBoolean("wantReturnValue", &wantReturnValue);
     }
 
     RootedObject target;
     nsString charset;
     bool ignoreCache;
     bool async;
+    bool wantReturnValue;
 };
 
 
@@ -80,29 +84,32 @@ public:
 #define LOAD_ERROR_NOSPEC "Failed to get URI spec.  This is bad."
 #define LOAD_ERROR_CONTENTTOOBIG "ContentLength is too large"
 
-mozJSSubScriptLoader::mozJSSubScriptLoader() : mSystemPrincipal(nullptr)
+mozJSSubScriptLoader::mozJSSubScriptLoader()
 {
 }
 
 mozJSSubScriptLoader::~mozJSSubScriptLoader()
 {
-    /* empty */
 }
 
 NS_IMPL_ISUPPORTS(mozJSSubScriptLoader, mozIJSSubScriptLoader)
 
 static void
-ReportError(JSContext* cx, const char* msg)
+ReportError(JSContext* cx, const nsACString& msg)
 {
-    RootedValue exn(cx, JS::StringValue(JS_NewStringCopyZ(cx, msg)));
-    JS_SetPendingException(cx, exn);
+    NS_ConvertUTF8toUTF16 ucMsg(msg);
+
+    RootedValue exn(cx);
+    if (xpc::NonVoidStringToJsval(cx, ucMsg, &exn)) {
+        JS_SetPendingException(cx, exn);
+    }
 }
 
 static void
 ReportError(JSContext* cx, const char* origMsg, nsIURI* uri)
 {
     if (!uri) {
-        ReportError(cx, origMsg);
+        ReportError(cx, nsDependentCString(origMsg));
         return;
     }
 
@@ -114,33 +121,31 @@ ReportError(JSContext* cx, const char* origMsg, nsIURI* uri)
     nsAutoCString msg(origMsg);
     msg.Append(": ");
     msg.Append(spec);
-    ReportError(cx, msg.get());
+    ReportError(cx, msg);
 }
 
-bool
+static bool
 PrepareScript(nsIURI* uri,
               JSContext* cx,
-              RootedObject& targetObj,
+              HandleObject targetObj,
               const char* uriStr,
               const nsAString& charset,
               const char* buf,
               int64_t len,
-              bool reuseGlobal,
-              MutableHandleScript script,
-              MutableHandleFunction function)
+              bool wantReturnValue,
+              MutableHandleScript script)
 {
     JS::CompileOptions options(cx);
-    // Use line 0 to make the function body starts from line 1 when
-    // |reuseGlobal == true|.
-    options.setFileAndLine(uriStr, reuseGlobal ? 0 : 1)
-           .setVersion(JSVERSION_LATEST);
+    options.setFileAndLine(uriStr, 1)
+           .setVersion(JSVERSION_LATEST)
+           .setNoScriptRval(!wantReturnValue);
     if (!charset.IsVoid()) {
         char16_t* scriptBuf = nullptr;
         size_t scriptLength = 0;
 
         nsresult rv =
-            nsScriptLoader::ConvertToUTF16(nullptr, reinterpret_cast<const uint8_t*>(buf), len,
-                                           charset, nullptr, scriptBuf, scriptLength);
+            ScriptLoader::ConvertToUTF16(nullptr, reinterpret_cast<const uint8_t*>(buf), len,
+                                         charset, nullptr, scriptBuf, scriptLength);
 
         JS::SourceBufferHolder srcBuf(scriptBuf, scriptLength,
                                       JS::SourceBufferHolder::GiveOwnership);
@@ -150,75 +155,49 @@ PrepareScript(nsIURI* uri,
             return false;
         }
 
-        if (!reuseGlobal) {
-            if (JS_IsGlobalObject(targetObj)) {
-                return JS::Compile(cx, options, srcBuf, script);
-            }
-            return JS::CompileForNonSyntacticScope(cx, options, srcBuf, script);
+        if (JS_IsGlobalObject(targetObj)) {
+            return JS::Compile(cx, options, srcBuf, script);
         }
-        AutoObjectVector envChain(cx);
-        if (!JS_IsGlobalObject(targetObj) && !envChain.append(targetObj)) {
-            return false;
-        }
-        return JS::CompileFunction(cx, envChain, options, nullptr, 0, nullptr,
-                                   srcBuf, function);
+        return JS::CompileForNonSyntacticScope(cx, options, srcBuf, script);
     }
     // We only use lazy source when no special encoding is specified because
     // the lazy source loader doesn't know the encoding.
-    if (!reuseGlobal) {
-        options.setSourceIsLazy(true);
-        if (JS_IsGlobalObject(targetObj)) {
-            return JS::Compile(cx, options, buf, len, script);
-        }
-        return JS::CompileForNonSyntacticScope(cx, options, buf, len, script);
+    options.setSourceIsLazy(true);
+    if (JS_IsGlobalObject(targetObj)) {
+        return JS::Compile(cx, options, buf, len, script);
     }
-    AutoObjectVector envChain(cx);
-    if (!JS_IsGlobalObject(targetObj) && !envChain.append(targetObj)) {
-        return false;
-    }
-    return JS::CompileFunction(cx, envChain, options, nullptr, 0, nullptr,
-                               buf, len, function);
+    return JS::CompileForNonSyntacticScope(cx, options, buf, len, script);
 }
 
-bool
+static bool
 EvalScript(JSContext* cx,
-           RootedObject& target_obj,
+           HandleObject targetObj,
            MutableHandleValue retval,
            nsIURI* uri,
-           bool cache,
-           RootedScript& script,
-           RootedFunction& function)
+           bool startupCache,
+           bool preloadCache,
+           MutableHandleScript script)
 {
-    if (function) {
-        script = JS_GetFunctionScript(cx, function);
-    }
-
-    if (function) {
-        if (!JS_CallFunction(cx, target_obj, function, JS::HandleValueArray::empty(), retval)) {
+    if (JS_IsGlobalObject(targetObj)) {
+        if (!JS::CloneAndExecuteScript(cx, script, retval)) {
             return false;
         }
     } else {
-        if (JS_IsGlobalObject(target_obj)) {
-            if (!JS_ExecuteScript(cx, script, retval)) {
-                return false;
-            }
-        } else {
-            JS::AutoObjectVector envChain(cx);
-            if (!envChain.append(target_obj)) {
-                return false;
-            }
-            if (!JS_ExecuteScript(cx, envChain, script, retval)) {
-                return false;
-            }
+        JS::AutoObjectVector envChain(cx);
+        if (!envChain.append(targetObj)) {
+            return false;
+        }
+        if (!JS::CloneAndExecuteScript(cx, envChain, script, retval)) {
+            return false;
         }
     }
 
-    JSAutoCompartment rac(cx, target_obj);
+    JSAutoCompartment rac(cx, targetObj);
     if (!JS_WrapValue(cx, retval)) {
         return false;
     }
 
-    if (cache && !!script) {
+    if (script && (startupCache || preloadCache)) {
         nsAutoCString cachePath;
         JSVersion version = JS_GetVersion(cx);
         cachePath.AppendPrintf("jssubloader/%d", version);
@@ -237,8 +216,36 @@ EvalScript(JSContext* cx,
             return false;
         }
 
-        WriteCachedScript(StartupCache::GetSingleton(),
-                          cachePath, cx, principal, script);
+        nsCString uriStr;
+        if (preloadCache && NS_SUCCEEDED(uri->GetSpec(uriStr))) {
+            // Note that, when called during startup, this will keep the
+            // original JSScript object alive for an indefinite amount of time.
+            // This has the side-effect of keeping the global that the script
+            // was compiled for alive, too.
+            //
+            // For most startups, the global in question will be the
+            // CompilationScope, since we pre-compile any scripts that were
+            // needed during the last startup in that scope. But for startups
+            // when a non-cached script is used (e.g., after add-on
+            // installation), this may be a Sandbox global, which may be
+            // nuked but held alive by the JSScript.
+            //
+            // In general, this isn't a problem, since add-on Sandboxes which
+            // use the script preloader are not destroyed until add-on shutdown,
+            // and when add-ons are uninstalled or upgraded, the preloader cache
+            // is immediately flushed after shutdown. But it's possible to
+            // disable and reenable an add-on without uninstalling it, leading
+            // to cached scripts being held alive, and tied to nuked Sandbox
+            // globals. Given the unusual circumstances required to trigger
+            // this, it's not a major concern. But it should be kept in mind.
+            ScriptPreloader::GetSingleton().NoteScript(uriStr, cachePath, script);
+        }
+
+        if (startupCache) {
+            JSAutoCompartment ac(cx, script);
+            WriteCachedScript(StartupCache::GetSingleton(),
+                              cachePath, cx, principal, script);
+        }
     }
 
     return true;
@@ -252,14 +259,14 @@ public:
 
     NS_DECL_CYCLE_COLLECTION_SCRIPT_HOLDER_CLASS(AsyncScriptLoader)
 
-    AsyncScriptLoader(nsIChannel* aChannel, bool aReuseGlobal,
+    AsyncScriptLoader(nsIChannel* aChannel, bool aWantReturnValue,
                       JSObject* aTargetObj, const nsAString& aCharset,
                       bool aCache, Promise* aPromise)
         : mChannel(aChannel)
         , mTargetObj(aTargetObj)
         , mPromise(aPromise)
         , mCharset(aCharset)
-        , mReuseGlobal(aReuseGlobal)
+        , mWantReturnValue(aWantReturnValue)
         , mCache(aCache)
     {
         // Needed for the cycle collector to manage mTargetObj.
@@ -271,12 +278,12 @@ private:
         mozilla::DropJSObjects(this);
     }
 
-    RefPtr<nsIChannel>      mChannel;
-    Heap<JSObject*>           mTargetObj;
-    RefPtr<Promise>         mPromise;
-    nsString                  mCharset;
-    bool                      mReuseGlobal;
-    bool                      mCache;
+    RefPtr<nsIChannel> mChannel;
+    Heap<JSObject*> mTargetObj;
+    RefPtr<Promise> mPromise;
+    nsString mCharset;
+    bool mWantReturnValue;
+    bool mCache;
 };
 
 NS_IMPL_CYCLE_COLLECTION_CLASS(AsyncScriptLoader)
@@ -328,8 +335,8 @@ public:
     }
 
 private:
-    AutoEntryScript&          mAutoEntryScript;
-    RefPtr<Promise>           mPromise;
+    AutoEntryScript& mAutoEntryScript;
+    RefPtr<Promise> mPromise;
     nsCOMPtr<nsIGlobalObject> mGlobalObject;
 };
 
@@ -374,23 +381,24 @@ AsyncScriptLoader::OnStreamComplete(nsIIncrementalStreamLoader* aLoader,
         return NS_OK;
     }
 
-    RootedFunction function(cx);
     RootedScript script(cx);
     nsAutoCString spec;
     nsresult rv = uri->GetSpec(spec);
     NS_ENSURE_SUCCESS(rv, rv);
 
-    RootedObject target_obj(cx, mTargetObj);
+    RootedObject targetObj(cx, mTargetObj);
 
-    if (!PrepareScript(uri, cx, target_obj, spec.get(), mCharset,
+    if (!PrepareScript(uri, cx, targetObj, spec.get(), mCharset,
                        reinterpret_cast<const char*>(aBuf), aLength,
-                       mReuseGlobal, &script, &function))
+                       mWantReturnValue, &script))
     {
         return NS_OK;
     }
 
     JS::Rooted<JS::Value> retval(cx);
-    if (EvalScript(cx, target_obj, &retval, uri, mCache, script, function)) {
+    if (EvalScript(cx, targetObj, &retval, uri, mCache,
+                   mCache && !mWantReturnValue,
+                   &script)) {
         autoPromise.ResolvePromise(retval);
     }
 
@@ -398,14 +406,15 @@ AsyncScriptLoader::OnStreamComplete(nsIIncrementalStreamLoader* aLoader,
 }
 
 nsresult
-mozJSSubScriptLoader::ReadScriptAsync(nsIURI* uri, JSObject* targetObjArg,
+mozJSSubScriptLoader::ReadScriptAsync(nsIURI* uri,
+                                      HandleObject targetObj,
                                       const nsAString& charset,
-                                      nsIIOService* serv, bool reuseGlobal,
-                                      bool cache, MutableHandleValue retval)
+                                      nsIIOService* serv,
+                                      bool wantReturnValue,
+                                      bool cache,
+                                      MutableHandleValue retval)
 {
-    RootedObject target_obj(RootingCx(), targetObjArg);
-
-    nsCOMPtr<nsIGlobalObject> globalObject = xpc::NativeGlobal(target_obj);
+    nsCOMPtr<nsIGlobalObject> globalObject = xpc::NativeGlobal(targetObj);
     ErrorResult result;
 
     AutoJSAPI jsapi;
@@ -443,8 +452,8 @@ mozJSSubScriptLoader::ReadScriptAsync(nsIURI* uri, JSObject* targetObjArg,
 
     RefPtr<AsyncScriptLoader> loadObserver =
         new AsyncScriptLoader(channel,
-                              reuseGlobal,
-                              target_obj,
+                              wantReturnValue,
+                              targetObj,
                               charset,
                               cache,
                               promise);
@@ -458,16 +467,16 @@ mozJSSubScriptLoader::ReadScriptAsync(nsIURI* uri, JSObject* targetObjArg,
 }
 
 bool
-mozJSSubScriptLoader::ReadScript(nsIURI* uri, JSContext* cx, JSObject* targetObjArg,
-                                 const nsAString& charset, const char* uriStr,
-                                 nsIIOService* serv, nsIPrincipal* principal,
-                                 bool reuseGlobal, JS::MutableHandleScript script,
-                                 JS::MutableHandleFunction function)
+mozJSSubScriptLoader::ReadScript(nsIURI* uri,
+                                 JSContext* cx,
+                                 HandleObject targetObj,
+                                 const nsAString& charset,
+                                 const char* uriStr,
+                                 nsIIOService* serv,
+                                 bool wantReturnValue,
+                                 MutableHandleScript script)
 {
     script.set(nullptr);
-    function.set(nullptr);
-
-    RootedObject target_obj(cx, targetObjArg);
 
     // We create a channel and call SetContentType, to avoid expensive MIME type
     // lookups (bug 632490).
@@ -511,10 +520,9 @@ mozJSSubScriptLoader::ReadScript(nsIURI* uri, JSContext* cx, JSObject* targetObj
     rv = NS_ReadInputStreamToString(instream, buf, len);
     NS_ENSURE_SUCCESS(rv, false);
 
-    return PrepareScript(uri, cx, target_obj, uriStr, charset,
-                         buf.get(), len,
-                         reuseGlobal,
-                         script, function);
+    return PrepareScript(uri, cx, targetObj, uriStr, charset,
+                         buf.get(), len, wantReturnValue,
+                         script);
 }
 
 NS_IMETHODIMP
@@ -529,8 +537,8 @@ mozJSSubScriptLoader::LoadSubScript(const nsAString& url,
      * Synchronous (an async version would be cool too.)
      *   url: The url to load.  Must be local so that it can be loaded
      *        synchronously.
-     *   target_obj: Optional object to eval the script onto (defaults to context
-     *               global)
+     *   targetObj: Optional object to eval the script onto (defaults to context
+     *              global)
      *   charset: Optional character set to use for reading
      *   returns: Whatever jsval the script pointed to by the url returns.
      * Should ONLY (O N L Y !) be called from JavaScript code.
@@ -577,16 +585,13 @@ mozJSSubScriptLoader::DoLoadSubScriptWithOptions(const nsAString& url,
     }
 
     RootedObject targetObj(cx);
-    mozJSComponentLoader* loader = mozJSComponentLoader::Get();
-    rv = loader->FindTargetObject(cx, &targetObj);
-    NS_ENSURE_SUCCESS(rv, rv);
-
-    // We base reusingGlobal off of what the loader told us, but we may not
-    // actually be using that object.
-    bool reusingGlobal = !JS_IsGlobalObject(targetObj);
-
-    if (options.target)
+    if (options.target) {
         targetObj = options.target;
+    } else {
+        mozJSComponentLoader* loader = mozJSComponentLoader::Get();
+        loader->FindTargetObject(cx, &targetObj);
+        MOZ_ASSERT(JS_IsGlobalObject(targetObj));
+    }
 
     // Remember an object out of the calling compartment so that we
     // can properly wrap the result later.
@@ -615,12 +620,12 @@ mozJSSubScriptLoader::DoLoadSubScriptWithOptions(const nsAString& url,
     JSAutoCompartment ac(cx, targetObj);
 
     // Suppress caching if we're compiling as content.
-    StartupCache* cache = (principal == mSystemPrincipal)
-                          ? StartupCache::GetSingleton()
-                          : nullptr;
+    bool ignoreCache = options.ignoreCache || principal != mSystemPrincipal;
+    StartupCache* cache = ignoreCache ? nullptr : StartupCache::GetSingleton();
+
     nsCOMPtr<nsIIOService> serv = do_GetService(NS_IOSERVICE_CONTRACTID);
     if (!serv) {
-        ReportError(cx, LOAD_ERROR_NOSERVICE);
+        ReportError(cx, NS_LITERAL_CSTRING(LOAD_ERROR_NOSERVICE));
         return NS_OK;
     }
 
@@ -628,13 +633,13 @@ mozJSSubScriptLoader::DoLoadSubScriptWithOptions(const nsAString& url,
     // canonicalized spec.
     rv = NS_NewURI(getter_AddRefs(uri), NS_LossyConvertUTF16toASCII(url).get(), nullptr, serv);
     if (NS_FAILED(rv)) {
-        ReportError(cx, LOAD_ERROR_NOURI);
+        ReportError(cx, NS_LITERAL_CSTRING(LOAD_ERROR_NOURI));
         return NS_OK;
     }
 
     rv = uri->GetSpec(uriStr);
     if (NS_FAILED(rv)) {
-        ReportError(cx, LOAD_ERROR_NOSPEC);
+        ReportError(cx, NS_LITERAL_CSTRING(LOAD_ERROR_NOSPEC));
         return NS_OK;
     }
 
@@ -667,11 +672,13 @@ mozJSSubScriptLoader::DoLoadSubScriptWithOptions(const nsAString& url,
     cachePath.AppendPrintf("jssubloader/%d", version);
     PathifyURI(uri, cachePath);
 
-    RootedFunction function(cx);
     RootedScript script(cx);
-    if (cache && !options.ignoreCache) {
-        rv = ReadCachedScript(cache, cachePath, cx, mSystemPrincipal, &script);
-        if (NS_FAILED(rv)) {
+    if (!options.ignoreCache) {
+        if (!options.wantReturnValue)
+            script = ScriptPreloader::GetSingleton().GetCachedScript(cx, cachePath);
+        if (!script && cache)
+            rv = ReadCachedScript(cache, cachePath, cx, mSystemPrincipal, &script);
+        if (NS_FAILED(rv) || !script) {
             // ReadCachedScript may have set a pending exception.
             JS_ClearPendingException(cx);
         }
@@ -680,21 +687,22 @@ mozJSSubScriptLoader::DoLoadSubScriptWithOptions(const nsAString& url,
     // If we are doing an async load, trigger it and bail out.
     if (!script && options.async) {
         return ReadScriptAsync(uri, targetObj, options.charset, serv,
-                               reusingGlobal, !!cache, retval);
+                               options.wantReturnValue, !!cache, retval);
     }
 
-    if (!script) {
-        if (!ReadScript(uri, cx, targetObj, options.charset,
-                        static_cast<const char*>(uriStr.get()), serv,
-                        principal, reusingGlobal, &script, &function))
-        {
-            return NS_OK;
-        }
-    } else {
+    if (script) {
+        // |script| came from the cache, so don't bother writing it
+        // |back there.
         cache = nullptr;
+    } else if (!ReadScript(uri, cx, targetObj, options.charset,
+                        static_cast<const char*>(uriStr.get()), serv,
+                        options.wantReturnValue, &script)) {
+        return NS_OK;
     }
 
-    Unused << EvalScript(cx, targetObj, retval, uri, !!cache, script, function);
+    Unused << EvalScript(cx, targetObj, retval, uri, !!cache,
+                         !ignoreCache && !options.wantReturnValue,
+                         &script);
     return NS_OK;
 }
 
@@ -823,9 +831,9 @@ ScriptPrecompiler::OnStreamComplete(nsIIncrementalStreamLoader* aLoader,
     // Convert data to char16_t* and prepare to call CompileOffThread.
     nsAutoString hintCharset;
     nsresult rv =
-        nsScriptLoader::ConvertToUTF16(mChannel, aString, aLength,
-                                       hintCharset, nullptr,
-                                       mScriptBuf, mScriptLength);
+        ScriptLoader::ConvertToUTF16(mChannel, aString, aLength,
+                                     hintCharset, nullptr,
+                                     mScriptBuf, mScriptLength);
 
     NS_ENSURE_SUCCESS(rv, NS_OK);
 
@@ -846,7 +854,6 @@ ScriptPrecompiler::OnStreamComplete(nsIIncrementalStreamLoader* aLoader,
 
     JS::CompileOptions options(cx, JSVERSION_DEFAULT);
     options.forceAsync = true;
-    options.installedFile = true;
 
     nsCOMPtr<nsIURI> uri;
     mChannel->GetURI(getter_AddRefs(uri));

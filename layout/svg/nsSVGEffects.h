@@ -7,7 +7,7 @@
 #define NSSVGEFFECTS_H_
 
 #include "mozilla/Attributes.h"
-#include "FramePropertyTable.h"
+#include "FrameProperties.h"
 #include "mozilla/dom/Element.h"
 #include "nsHashKeys.h"
 #include "nsID.h"
@@ -76,7 +76,7 @@ public:
    * @param aOK this is only for the convenience of callers. We set *aOK to false
    * if the frame is the wrong type
    */
-  nsIFrame* GetReferencedFrame(nsIAtom* aFrameType, bool* aOK);
+  nsIFrame* GetReferencedFrame(mozilla::LayoutFrameType aFrameType, bool* aOK);
 
   Element* GetReferencedElement();
 
@@ -483,8 +483,6 @@ public:
      */
     nsTArray<nsSVGMaskFrame*> GetMaskFrames();
 
-    bool MightHaveNoneSVGMask() const;
-
     /*
      * @return true if all effects we have are valid or we have no effect
      * at all.
@@ -668,11 +666,23 @@ public:
   static already_AddRefed<nsIURI>
   GetPaintURI(nsIFrame* aFrame, nsStyleSVGPaint nsStyleSVG::* aPaint);
 
-    /**
+  /**
    * A helper function to resolve SVG mask URL.
    */
   static already_AddRefed<nsIURI>
   GetMaskURI(nsIFrame* aFrame, uint32_t aIndex);
+
+  /**
+   * Return a baseURL for resolving a local-ref URL.
+   *
+   * @param aContent an element which uses a local-ref property. Here are some
+   *                 examples:
+   *                   <rect fill=url(#foo)>
+   *                   <circle clip-path=url(#foo)>
+   *                   <use xlink:href="#foo">
+   */
+  static already_AddRefed<nsIURI>
+  GetBaseURLForLocalRef(nsIContent* aContent, nsIURI* aDocURI);
 };
 
 #endif /*NSSVGEFFECTS_H_*/

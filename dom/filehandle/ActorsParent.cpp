@@ -9,12 +9,12 @@
 #include "mozilla/Attributes.h"
 #include "mozilla/Unused.h"
 #include "mozilla/dom/File.h"
-#include "mozilla/dom/FileHandleCommon.h"
 #include "mozilla/dom/PBackgroundFileHandleParent.h"
 #include "mozilla/dom/PBackgroundFileRequestParent.h"
 #include "mozilla/dom/indexedDB/ActorsParent.h"
 #include "mozilla/dom/indexedDB/PBackgroundIDBDatabaseParent.h"
-#include "mozilla/dom/ipc/BlobParent.h"
+#include "mozilla/dom/IPCBlobUtils.h"
+#include "mozilla/dom/ipc/PendingIPCBlobParent.h"
 #include "nsAutoPtr.h"
 #include "nsComponentManagerUtils.h"
 #include "nsDebug.h"
@@ -200,7 +200,9 @@ class FileHandle
   bool mFinishedOrAborted;
   bool mForceAborted;
 
-  DEBUGONLY(nsCOMPtr<nsIEventTarget> mThreadPoolEventTarget;)
+#ifdef DEBUG
+  nsCOMPtr<nsIEventTarget> mThreadPoolEventTarget;
+#endif
 
 public:
   void
@@ -456,7 +458,9 @@ class NormalFileHandleOp
   bool mActorDestroyed;
   const bool mFileHandleIsAborted;
 
-  DEBUGONLY(bool mResponseSent;)
+#ifdef DEBUG
+  bool mResponseSent;
+#endif
 
 protected:
   nsCOMPtr<nsISupports> mFileStream;
@@ -506,7 +510,9 @@ protected:
     , mOperationMayProceed(true)
     , mActorDestroyed(false)
     , mFileHandleIsAborted(aFileHandle->IsAborted())
-    DEBUGONLY(, mResponseSent(false))
+#ifdef DEBUG
+    , mResponseSent(false)
+#endif
   {
     MOZ_ASSERT(aFileHandle);
   }
@@ -946,12 +952,7 @@ FileHandleThreadPool::Shutdown()
     return;
   }
 
-  nsIThread* currentThread = NS_GetCurrentThread();
-  MOZ_ASSERT(currentThread);
-
-  while (!mShutdownComplete) {
-    MOZ_ALWAYS_TRUE(NS_ProcessNextEvent(currentThread));
-  }
+  MOZ_ALWAYS_TRUE(SpinEventLoopUntil([&]() { return mShutdownComplete; }));
 }
 
 nsresult
@@ -1777,19 +1778,6 @@ FileHandle::VerifyRequestData(const FileRequestData& aData) const
     }
 
     case FileRequestData::TFileRequestBlobData: {
-      const FileRequestBlobData& data =
-        aData.get_FileRequestBlobData();
-
-      if (NS_WARN_IF(data.blobChild())) {
-        ASSERT_UNLESS_FUZZING();
-        return false;
-      }
-
-      if (NS_WARN_IF(!data.blobParent())) {
-        ASSERT_UNLESS_FUZZING();
-        return false;
-      }
-
       break;
     }
 
@@ -2086,7 +2074,9 @@ NormalFileHandleOp::SendSuccessResult()
     }
   }
 
-  DEBUGONLY(mResponseSent = true;)
+#ifdef DEBUG
+  mResponseSent = true;
+#endif
 
   return NS_OK;
 }
@@ -2104,7 +2094,9 @@ NormalFileHandleOp::SendFailureResult(nsresult aResultCode)
       PBackgroundFileRequestParent::Send__delete__(this, aResultCode);
   }
 
-  DEBUGONLY(mResponseSent = true;)
+#ifdef DEBUG
+  mResponseSent = true;
+#endif
 
   return result;
 }
@@ -2538,14 +2530,14 @@ WriteOp::Init(FileHandle* aFileHandle)
       const FileRequestBlobData& blobData =
         data.get_FileRequestBlobData();
 
-      auto blobActor = static_cast<BlobParent*>(blobData.blobParent());
+      RefPtr<BlobImpl> blobImpl = IPCBlobUtils::Deserialize(blobData.blob());
+      if (NS_WARN_IF(!blobImpl)) {
+        return false;
+      }
 
-      RefPtr<BlobImpl> blobImpl = blobActor->GetBlobImpl();
-
-      ErrorResult rv;
+      IgnoredErrorResult rv;
       blobImpl->GetInternalStream(getter_AddRefs(inputStream), rv);
       if (NS_WARN_IF(rv.Failed())) {
-        rv.SuppressException();
         return false;
       }
 
@@ -2656,8 +2648,8 @@ GetFileOp::GetResponse(FileRequestResponse& aResponse)
   RefPtr<BlobImpl> blobImpl = mFileHandle->GetMutableFile()->CreateBlobImpl();
   MOZ_ASSERT(blobImpl);
 
-  PBlobParent* actor =
-    BackgroundParent::GetOrCreateActorForBlobImpl(mBackgroundParent, blobImpl);
+  PendingIPCBlobParent* actor =
+    PendingIPCBlobParent::Create(mBackgroundParent, blobImpl);
   if (NS_WARN_IF(!actor)) {
     // This can only fail if the child has crashed.
     aResponse = NS_ERROR_DOM_FILEHANDLE_UNKNOWN_ERR;

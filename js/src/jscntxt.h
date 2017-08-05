@@ -17,6 +17,7 @@
 #include "js/Utility.h"
 #include "js/Vector.h"
 #include "threading/ProtectedData.h"
+#include "vm/ErrorReporting.h"
 #include "vm/Runtime.h"
 
 #ifdef _MSC_VER
@@ -65,9 +66,26 @@ class MOZ_RAII AutoCycleDetector
 
 struct AutoResolving;
 
-namespace frontend { class CompileError; }
-
 struct HelperThread;
+
+using JobQueue = GCVector<JSObject*, 0, SystemAllocPolicy>;
+
+class AutoLockForExclusiveAccess;
+
+/*
+ * Used for engine-internal handling of async tasks, as currently
+ * enabled in the js shell and jsapi tests.
+ */
+struct InternalAsyncTasks
+{
+    explicit InternalAsyncTasks()
+      : outstanding(0),
+        finished()
+    {}
+
+    size_t outstanding;
+    Vector<JS::AsyncTask*, 0, SystemAllocPolicy> finished;
+};
 
 void ReportOverRecursed(JSContext* cx, unsigned errorNumber);
 
@@ -202,10 +220,14 @@ struct JSContext : public JS::RootingContext,
 #endif
 
   private:
-    // If |c| or |oldCompartment| is the atoms compartment, the
-    // |exclusiveAccessLock| must be held.
-    inline void enterCompartment(JSCompartment* c,
-                                 const js::AutoLockForExclusiveAccess* maybeLock = nullptr);
+    // We distinguish between entering the atoms compartment and all other
+    // compartments. Entering the atoms compartment requires a lock. Also, we
+    // don't call enterZoneGroup when entering the atoms compartment since that
+    // can induce GC hazards.
+    inline void enterNonAtomsCompartment(JSCompartment* c);
+    inline void enterAtomsCompartment(JSCompartment* c,
+                                      const js::AutoLockForExclusiveAccess& lock);
+
     friend class js::AutoCompartment;
 
   public:
@@ -267,8 +289,11 @@ struct JSContext : public JS::RootingContext,
     js::gc::AtomMarkingRuntime& atomMarking() {
         return runtime_->gc.atomMarking;
     }
-    void markAtom(js::gc::TenuredCell* atom) {
+    void markAtom(JSAtom* atom) {
         atomMarking().markAtom(this, atom);
+    }
+    void markAtom(JS::Symbol* symbol) {
+        atomMarking().markAtom(this, symbol);
     }
     void markId(jsid id) {
         atomMarking().markId(this, id);
@@ -278,21 +303,13 @@ struct JSContext : public JS::RootingContext,
     }
 
     // Methods specific to any HelperThread for the context.
-    bool addPendingCompileError(js::frontend::CompileError** err);
+    bool addPendingCompileError(js::CompileError** err);
     void addPendingOverRecursed();
     void addPendingOutOfMemory();
 
     JSRuntime* runtime() { return runtime_; }
+    const JSRuntime* runtime() const { return runtime_; }
 
-    static size_t offsetOfActivation() {
-        return offsetof(JSContext, activation_);
-    }
-    static size_t offsetOfWasmActivation() {
-        return offsetof(JSContext, wasmActivationStack_);
-    }
-    static size_t offsetOfProfilingActivation() {
-        return offsetof(JSContext, profilingActivation_);
-     }
     static size_t offsetOfCompartment() {
         return offsetof(JSContext, compartment_);
     }
@@ -301,9 +318,25 @@ struct JSContext : public JS::RootingContext,
     friend class js::jit::DebugModeOSRVolatileJitFrameIterator;
     friend void js::ReportOverRecursed(JSContext*, unsigned errorNumber);
 
+    // Returns to the embedding to allow other cooperative threads to run. We
+    // may do this if we need access to a ZoneGroup that is in use by another
+    // thread.
+    void yieldToEmbedding() {
+        (*yieldCallback_)(this);
+    }
+
+    void setYieldCallback(js::YieldCallback callback) {
+        yieldCallback_ = callback;
+    }
+
   private:
     static JS::Error reportedError;
     static JS::OOM reportedOOM;
+
+    // This callback is used to ask the embedding to allow other cooperative
+    // threads to run. We may do this if we need access to a ZoneGroup that is
+    // in use by another thread.
+    js::ThreadLocalData<js::YieldCallback> yieldCallback_;
 
   public:
     inline JS::Result<> boolToResult(bool ok);
@@ -347,25 +380,22 @@ struct JSContext : public JS::RootingContext,
     js::Activation* volatile profilingActivation_;
 
   public:
-    /* See WasmActivation comment. */
-    js::WasmActivation* volatile wasmActivationStack_;
-
-    js::WasmActivation* wasmActivationStack() const {
-        return wasmActivationStack_;
-    }
-    static js::WasmActivation* innermostWasmActivation() {
-        return js::TlsContext.get()->wasmActivationStack_;
-    }
-
     js::Activation* activation() const {
         return activation_;
     }
+    static size_t offsetOfActivation() {
+        return offsetof(JSContext, activation_);
+    }
+
     js::Activation* profilingActivation() const {
         return profilingActivation_;
     }
     void* addressOfProfilingActivation() {
         return (void*) &profilingActivation_;
     }
+    static size_t offsetOfProfilingActivation() {
+        return offsetof(JSContext, profilingActivation_);
+     }
 
   private:
     /* Space for interpreter frames. */
@@ -541,6 +571,10 @@ struct JSContext : public JS::RootingContext,
     // compartment. Therefore, we avoid collecting the atoms compartment when
     // exclusive threads are running.
     js::ThreadLocalData<unsigned> keepAtoms;
+
+    bool canCollectAtoms() const {
+        return !keepAtoms && !runtime()->hasHelperThreadZones();
+    }
 
   private:
     // Pools used for recycling name maps and vectors when parsing and
@@ -882,16 +916,32 @@ struct JSContext : public JS::RootingContext,
         ionReturnOverride_ = v;
     }
 
-    /*
-     * If Baseline or Ion code is on the stack, and has called into C++, this
-     * will be aligned to an exit frame.
-     */
-    js::ThreadLocalData<uint8_t*> jitTop;
-
     mozilla::Atomic<uintptr_t, mozilla::Relaxed> jitStackLimit;
 
     // Like jitStackLimit, but not reset to trigger interrupts.
     js::ThreadLocalData<uintptr_t> jitStackLimitNoInterrupt;
+
+    // Promise callbacks.
+    js::ThreadLocalData<JSGetIncumbentGlobalCallback> getIncumbentGlobalCallback;
+    js::ThreadLocalData<JSEnqueuePromiseJobCallback> enqueuePromiseJobCallback;
+    js::ThreadLocalData<void*> enqueuePromiseJobCallbackData;
+
+    // Queue of pending jobs as described in ES2016 section 8.4.
+    // Only used if internal job queue handling was activated using
+    // `js::UseInternalJobQueues`.
+    js::ThreadLocalData<JS::PersistentRooted<js::JobQueue>*> jobQueue;
+    js::ThreadLocalData<bool> drainingJobQueue;
+    js::ThreadLocalData<bool> stopDrainingJobQueue;
+    js::ExclusiveData<js::InternalAsyncTasks> asyncTasks;
+
+    js::ThreadLocalData<JSPromiseRejectionTrackerCallback> promiseRejectionTrackerCallback;
+    js::ThreadLocalData<void*> promiseRejectionTrackerCallbackData;
+
+    JSObject* getIncumbentGlobal(JSContext* cx);
+    bool enqueuePromiseJob(JSContext* cx, js::HandleFunction job, js::HandleObject promise,
+                           js::HandleObject incumbentGlobal);
+    void addUnhandledRejectedPromise(JSContext* cx, js::HandleObject promise);
+    void removeUnhandledRejectedPromise(JSContext* cx, js::HandleObject promise);
 }; /* struct JSContext */
 
 inline JS::Result<>
@@ -988,7 +1038,7 @@ SelfHostedFunction(JSContext* cx, HandlePropertyName propName);
 #ifdef va_start
 extern bool
 ReportErrorVA(JSContext* cx, unsigned flags, const char* format,
-              ErrorArgumentsType argumentsType, va_list ap);
+              ErrorArgumentsType argumentsType, va_list ap) MOZ_FORMAT_PRINTF(3, 0);
 
 extern bool
 ReportErrorNumberVA(JSContext* cx, unsigned flags, JSErrorCallback callback,
@@ -1028,12 +1078,6 @@ ReportUsageErrorASCII(JSContext* cx, HandleObject callee, const char* msg);
 extern bool
 PrintError(JSContext* cx, FILE* file, JS::ConstUTF8CharsZ toStringResult,
            JSErrorReport* report, bool reportWarnings);
-
-/*
- * Send a JSErrorReport to the warningReporter callback.
- */
-void
-CallWarningReporter(JSContext* cx, JSErrorReport* report);
 
 extern bool
 ReportIsNotDefined(JSContext* cx, HandlePropertyName name);
@@ -1221,8 +1265,8 @@ class MOZ_RAII AutoKeepAtoms
 
         JSRuntime* rt = cx->runtime();
         if (!cx->helperThread()) {
-            if (rt->gc.fullGCForAtomsRequested() && !cx->keepAtoms)
-                rt->gc.triggerFullGCForAtoms();
+            if (rt->gc.fullGCForAtomsRequested() && cx->canCollectAtoms())
+                rt->gc.triggerFullGCForAtoms(cx);
         }
     }
 };

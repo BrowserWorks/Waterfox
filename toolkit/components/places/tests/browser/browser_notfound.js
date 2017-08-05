@@ -2,7 +2,7 @@
  * License, v. 2.0. If a copy of the MPL was not distributed with this file,
  * You can obtain one at http://mozilla.org/MPL/2.0/. */
 
-add_task(function* () {
+add_task(async function() {
   const TEST_URL = "http://mochi.test:8888/notFoundPage.html";
 
   // Used to verify errors are not marked as typed.
@@ -35,12 +35,12 @@ add_task(function* () {
       onDeleteVisits() {},
       QueryInterface: XPCOMUtils.generateQI([Ci.nsINavHistoryObserver])
     };
-    PlacesUtils.history.addObserver(historyObserver, false);
+    PlacesUtils.history.addObserver(historyObserver);
   });
 
   let newTabPromise = BrowserTestUtils.openNewForegroundTab(gBrowser, TEST_URL);
-  yield Promise.all([visitedPromise, newTabPromise]);
+  await Promise.all([visitedPromise, newTabPromise]);
 
-  yield PlacesTestUtils.clearHistory();
+  await PlacesTestUtils.clearHistory();
   gBrowser.removeCurrentTab();
 });

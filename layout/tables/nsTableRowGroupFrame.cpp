@@ -53,8 +53,8 @@ struct TableRowGroupReflowInput {
 
 } // namespace mozilla
 
-nsTableRowGroupFrame::nsTableRowGroupFrame(nsStyleContext* aContext):
-  nsContainerFrame(aContext)
+nsTableRowGroupFrame::nsTableRowGroupFrame(nsStyleContext* aContext)
+  : nsContainerFrame(aContext, kClassID)
 {
   SetRepeatable(false);
 }
@@ -85,8 +85,7 @@ nsTableRowGroupFrame::GetRowCount()
     NS_ASSERTION(e.get()->StyleDisplay()->mDisplay ==
                  mozilla::StyleDisplay::TableRow,
                  "Unexpected display");
-    NS_ASSERTION(e.get()->GetType() == nsGkAtoms::tableRowFrame,
-                 "Unexpected frame type");
+    NS_ASSERTION(e.get()->IsTableRowFrame(), "Unexpected frame type");
   }
 #endif
 
@@ -97,7 +96,7 @@ int32_t nsTableRowGroupFrame::GetStartRowIndex()
 {
   int32_t result = -1;
   if (mFrames.NotEmpty()) {
-    NS_ASSERTION(mFrames.FirstChild()->GetType() == nsGkAtoms::tableRowFrame,
+    NS_ASSERTION(mFrames.FirstChild()->IsTableRowFrame(),
                  "Unexpected frame type");
     result = static_cast<nsTableRowFrame*>(mFrames.FirstChild())->GetRowIndex();
   }
@@ -199,46 +198,6 @@ nsTableRowGroupFrame::InitRepeatedFrame(nsTableRowGroupFrame* aHeaderFooterFrame
   return NS_OK;
 }
 
-/**
- * We need a custom display item for table row backgrounds. This is only used
- * when the table row is the root of a stacking context (e.g., has 'opacity').
- * Table row backgrounds can extend beyond the row frame bounds, when
- * the row contains row-spanning cells.
- */
-class nsDisplayTableRowGroupBackground : public nsDisplayTableItem {
-public:
-  nsDisplayTableRowGroupBackground(nsDisplayListBuilder* aBuilder,
-                                   nsTableRowGroupFrame* aFrame) :
-    nsDisplayTableItem(aBuilder, aFrame) {
-    MOZ_COUNT_CTOR(nsDisplayTableRowGroupBackground);
-  }
-#ifdef NS_BUILD_REFCNT_LOGGING
-  virtual ~nsDisplayTableRowGroupBackground() {
-    MOZ_COUNT_DTOR(nsDisplayTableRowGroupBackground);
-  }
-#endif
-
-  virtual void Paint(nsDisplayListBuilder* aBuilder,
-                     nsRenderingContext* aCtx) override;
-
-  NS_DISPLAY_DECL_NAME("TableRowGroupBackground", TYPE_TABLE_ROW_GROUP_BACKGROUND)
-};
-
-void
-nsDisplayTableRowGroupBackground::Paint(nsDisplayListBuilder* aBuilder,
-                                        nsRenderingContext* aCtx)
-{
-  auto rgFrame = static_cast<nsTableRowGroupFrame*>(mFrame);
-  TableBackgroundPainter painter(rgFrame->GetTableFrame(),
-                                 TableBackgroundPainter::eOrigin_TableRowGroup,
-                                 mFrame->PresContext(), *aCtx,
-                                 mVisibleRect, ToReferenceFrame(),
-                                 aBuilder->GetBackgroundPaintFlags());
-
-  DrawResult result = painter.PaintRowGroup(rgFrame);
-  nsDisplayTableItemGeometry::UpdateDrawResult(this, result);
-}
-
 // Handle the child-traversal part of DisplayGenericTablePart
 static void
 DisplayRows(nsDisplayListBuilder* aBuilder, nsFrame* aFrame,
@@ -294,19 +253,8 @@ nsTableRowGroupFrame::BuildDisplayList(nsDisplayListBuilder*   aBuilder,
                                        const nsRect&           aDirtyRect,
                                        const nsDisplayListSet& aLists)
 {
-  nsDisplayTableItem* item = nullptr;
-  if (IsVisibleInSelection(aBuilder)) {
-    bool isRoot = aBuilder->IsAtRootOfPseudoStackingContext();
-    if (isRoot) {
-      // This background is created regardless of whether this frame is
-      // visible or not. Visibility decisions are delegated to the
-      // table background painter.
-      item = new (aBuilder) nsDisplayTableRowGroupBackground(aBuilder, this);
-      aLists.BorderBackground()->AppendNewToTop(item);
-    }
-  }
   nsTableFrame::DisplayGenericTablePart(aBuilder, this, aDirtyRect,
-                                        aLists, item, DisplayRows);
+                                        aLists, DisplayRows);
 }
 
 nsIFrame::LogicalSides
@@ -647,7 +595,7 @@ nsTableRowGroupFrame::CalculateRowBSizes(nsPresContext*           aPresContext,
   if (numRows <= 0)
     return;
 
-  nsTArray<RowInfo> rowInfo;
+  AutoTArray<RowInfo, 32> rowInfo;
   if (!rowInfo.AppendElements(numRows)) {
     return;
   }
@@ -1589,7 +1537,7 @@ nsTableRowGroupFrame::InsertFrames(ChildListID     aListID,
 
   int32_t numRows = rows.Length();
   if (numRows > 0) {
-    nsTableRowFrame* prevRow = (nsTableRowFrame *)nsTableFrame::GetFrameAtOrBefore(this, aPrevFrame, nsGkAtoms::tableRowFrame);
+    nsTableRowFrame* prevRow = (nsTableRowFrame *)nsTableFrame::GetFrameAtOrBefore(this, aPrevFrame, LayoutFrameType::TableRow);
     int32_t rowIndex = (prevRow) ? prevRow->GetRowIndex() + 1 : startRowIndex;
     tableFrame->InsertRows(this, rows, rowIndex, true);
 
@@ -1683,12 +1631,6 @@ nsTableRowGroupFrame::IsSimpleRowFrame(nsTableFrame* aTableFrame,
   }
 
   return false;
-}
-
-nsIAtom*
-nsTableRowGroupFrame::GetType() const
-{
-  return nsGkAtoms::tableRowGroupFrame;
 }
 
 /** find page break before the first row **/
@@ -1960,7 +1902,7 @@ nsTableRowGroupFrame::ClearRowCursor()
   }
 
   RemoveStateBits(NS_ROWGROUP_HAS_ROW_CURSOR);
-  Properties().Delete(RowCursorProperty());
+  DeleteProperty(RowCursorProperty());
 }
 
 nsTableRowGroupFrame::FrameCursorData*
@@ -1984,7 +1926,7 @@ nsTableRowGroupFrame::SetupRowCursor()
   FrameCursorData* data = new FrameCursorData();
   if (!data)
     return nullptr;
-  Properties().Set(RowCursorProperty(), data);
+  SetProperty(RowCursorProperty(), data);
   AddStateBits(NS_ROWGROUP_HAS_ROW_CURSOR);
   return data;
 }
@@ -1996,7 +1938,7 @@ nsTableRowGroupFrame::GetFirstRowContaining(nscoord aY, nscoord* aOverflowAbove)
     return nullptr;
   }
 
-  FrameCursorData* property = Properties().Get(RowCursorProperty());
+  FrameCursorData* property = GetProperty(RowCursorProperty());
   uint32_t cursorIndex = property->mCursorIndex;
   uint32_t frameCount = property->mFrames.Length();
   if (cursorIndex >= frameCount)

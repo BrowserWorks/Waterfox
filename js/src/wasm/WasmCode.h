@@ -20,36 +20,65 @@
 #define wasm_code_h
 
 #include "js/HashTable.h"
+#include "threading/ExclusiveData.h"
 #include "wasm/WasmTypes.h"
 
 namespace js {
 
 struct AsmJSMetadata;
-class Debugger;
-class WasmActivation;
-class WasmBreakpoint;
-class WasmBreakpointSite;
 class WasmInstanceObject;
 
 namespace wasm {
 
 struct LinkData;
+struct LinkDataTier;
 struct Metadata;
+struct MetadataTier;
 class FrameIterator;
+
+// ShareableBytes is a reference-counted Vector of bytes.
+
+struct ShareableBytes : ShareableBase<ShareableBytes>
+{
+    // Vector is 'final', so instead make Vector a member and add boilerplate.
+    Bytes bytes;
+    size_t sizeOfExcludingThis(MallocSizeOf m) const { return bytes.sizeOfExcludingThis(m); }
+    const uint8_t* begin() const { return bytes.begin(); }
+    const uint8_t* end() const { return bytes.end(); }
+    size_t length() const { return bytes.length(); }
+    bool append(const uint8_t *p, uint32_t ct) { return bytes.append(p, ct); }
+};
+
+typedef RefPtr<ShareableBytes> MutableBytes;
+typedef RefPtr<const ShareableBytes> SharedBytes;
 
 // A wasm CodeSegment owns the allocated executable code for a wasm module.
 
 class CodeSegment;
 typedef UniquePtr<CodeSegment> UniqueCodeSegment;
+typedef UniquePtr<const CodeSegment> UniqueConstCodeSegment;
 
 class CodeSegment
 {
+    // Executable code must be deallocated specially.
+    struct FreeCode {
+        uint32_t codeLength;
+        FreeCode() : codeLength(0) {}
+        explicit FreeCode(uint32_t codeLength) : codeLength(codeLength) {}
+        void operator()(uint8_t* codeBytes);
+    };
+    typedef UniquePtr<uint8_t, FreeCode> UniqueCodeBytes;
+    static UniqueCodeBytes AllocateCodeBytes(uint32_t codeLength);
+
+    // How this code was compiled.
+    Tier tier_;
+
     // bytes_ points to a single allocation of executable machine code in
     // the range [0, length_).  The range [0, functionLength_) is
     // the subrange of [0, length_) which contains function code.
-    uint8_t* bytes_;
-    uint32_t functionLength_;
-    uint32_t length_;
+    UniqueCodeBytes bytes_;
+    uint32_t        functionLength_;
+    uint32_t        length_;
 
     // These are pointers into code for stubs used for asynchronous
     // signal-handler control-flow transfer.
@@ -57,32 +86,47 @@ class CodeSegment
     uint8_t* outOfBoundsCode_;
     uint8_t* unalignedAccessCode_;
 
-    // The profiling mode may be changed dynamically.
-    bool profilingEnabled_;
+    bool initialize(Tier tier,
+                    UniqueCodeBytes bytes,
+                    uint32_t codeLength,
+                    const ShareableBytes& bytecode,
+                    const LinkDataTier& linkData,
+                    const Metadata& metadata);
 
+    static UniqueConstCodeSegment create(Tier tier,
+                                         UniqueCodeBytes bytes,
+                                         uint32_t codeLength,
+                                         const ShareableBytes& bytecode,
+                                         const LinkDataTier& linkData,
+                                         const Metadata& metadata);
   public:
-#ifdef MOZ_VTUNE
-    unsigned vtune_method_id_; // Zero if unset.
-#endif
-
-  protected:
-    CodeSegment() { PodZero(this); }
-    template <class> friend struct js::MallocProvider;
-
     CodeSegment(const CodeSegment&) = delete;
-    CodeSegment(CodeSegment&&) = delete;
     void operator=(const CodeSegment&) = delete;
-    void operator=(CodeSegment&&) = delete;
 
-  public:
-    static UniqueCodeSegment create(JSContext* cx,
-                                    const Bytes& code,
-                                    const LinkData& linkData,
-                                    const Metadata& metadata,
-                                    HandleWasmMemoryObject memory);
-    ~CodeSegment();
+    CodeSegment()
+      : tier_(Tier(-1)),
+        functionLength_(0),
+        length_(0),
+        interruptCode_(nullptr),
+        outOfBoundsCode_(nullptr),
+        unalignedAccessCode_(nullptr)
+    {}
 
-    uint8_t* base() const { return bytes_; }
+    static UniqueConstCodeSegment create(Tier tier,
+                                         jit::MacroAssembler& masm,
+                                         const ShareableBytes& bytecode,
+                                         const LinkDataTier& linkData,
+                                         const Metadata& metadata);
+
+    static UniqueConstCodeSegment create(Tier tier,
+                                         const Bytes& unlinkedBytes,
+                                         const ShareableBytes& bytecode,
+                                         const LinkDataTier& linkData,
+                                         const Metadata& metadata);
+
+    Tier tier() const { return tier_; }
+
+    uint8_t* base() const { return bytes_.get(); }
     uint32_t length() const { return length_; }
 
     uint8_t* interruptCode() const { return interruptCode_; }
@@ -102,28 +146,15 @@ class CodeSegment
         return pc >= base() && pc < (base() + length_);
     }
 
-    // onMovingGrow must be called if the memory passed to 'create' performs a
-    // moving grow operation.
+    // Structured clone support:
 
-    void onMovingGrow(uint8_t* prevMemoryBase, const Metadata& metadata, ArrayBufferObject& buffer);
+    size_t serializedSize() const;
+    uint8_t* serialize(uint8_t* cursor, const LinkDataTier& linkData) const;
+    const uint8_t* deserialize(const uint8_t* cursor, const ShareableBytes& bytecode,
+                               const LinkDataTier& linkData, const Metadata& metadata);
+
+    void addSizeOfMisc(mozilla::MallocSizeOf mallocSizeOf, size_t* code, size_t* data) const;
 };
-
-// ShareableBytes is a ref-counted vector of bytes which are incrementally built
-// during compilation and then immutably shared.
-
-struct ShareableBytes : ShareableBase<ShareableBytes>
-{
-    // Vector is 'final', so instead make Vector a member and add boilerplate.
-    Bytes bytes;
-    size_t sizeOfExcludingThis(MallocSizeOf m) const { return bytes.sizeOfExcludingThis(m); }
-    const uint8_t* begin() const { return bytes.begin(); }
-    const uint8_t* end() const { return bytes.end(); }
-    size_t length() const { return bytes.length(); }
-    bool append(const uint8_t *p, uint32_t ct) { return bytes.append(p, ct); }
-};
-
-typedef RefPtr<ShareableBytes> MutableBytes;
-typedef RefPtr<const ShareableBytes> SharedBytes;
 
 // A FuncExport represents a single function definition inside a wasm Module
 // that has been exported one or more times. A FuncExport represents an
@@ -138,7 +169,7 @@ class FuncExport
     MOZ_INIT_OUTSIDE_CTOR struct CacheablePod {
         uint32_t funcIndex_;
         uint32_t codeRangeIndex_;
-        uint32_t entryOffset_;
+        uint32_t entryOffset_;      // Machine code offset
     } pod;
 
   public:
@@ -187,8 +218,8 @@ class FuncImport
     Sig sig_;
     struct CacheablePod {
         uint32_t tlsDataOffset_;
-        uint32_t interpExitCodeOffset_;
-        uint32_t jitExitCodeOffset_;
+        uint32_t interpExitCodeOffset_; // Machine code offset
+        uint32_t jitExitCodeOffset_;    // Machine code offset
     } pod;
 
   public:
@@ -231,153 +262,6 @@ class FuncImport
 
 typedef Vector<FuncImport, 0, SystemAllocPolicy> FuncImportVector;
 
-// A CodeRange describes a single contiguous range of code within a wasm
-// module's code segment. A CodeRange describes what the code does and, for
-// function bodies, the name and source coordinates of the function.
-
-class CodeRange
-{
-  public:
-    enum Kind {
-        Function,          // function definition
-        Entry,             // calls into wasm from C++
-        ImportJitExit,     // fast-path calling from wasm into JIT code
-        ImportInterpExit,  // slow-path calling from wasm into C++ interp
-        TrapExit,          // calls C++ to report and jumps to throw stub
-        DebugTrap,         // calls C++ to handle debug event such as
-                           // enter/leave frame or breakpoint
-        FarJumpIsland,     // inserted to connect otherwise out-of-range insns
-        Inline             // stub that is jumped-to, not called, and thus
-                           // replaces/loses preceding innermost frame
-    };
-
-  private:
-    // All fields are treated as cacheable POD:
-    uint32_t begin_;
-    uint32_t profilingReturn_;
-    uint32_t end_;
-    uint32_t funcIndex_;
-    uint32_t funcLineOrBytecode_;
-    uint8_t funcBeginToTableEntry_;
-    uint8_t funcBeginToTableProfilingJump_;
-    uint8_t funcBeginToNonProfilingEntry_;
-    uint8_t funcProfilingJumpToProfilingReturn_;
-    uint8_t funcProfilingEpilogueToProfilingReturn_;
-    Kind kind_ : 8;
-
-  public:
-    CodeRange() = default;
-    CodeRange(Kind kind, Offsets offsets);
-    CodeRange(Kind kind, ProfilingOffsets offsets);
-    CodeRange(uint32_t funcIndex, uint32_t lineOrBytecode, FuncOffsets offsets);
-
-    // All CodeRanges have a begin and end.
-
-    uint32_t begin() const {
-        return begin_;
-    }
-    uint32_t end() const {
-        return end_;
-    }
-
-    // Other fields are only available for certain CodeRange::Kinds.
-
-    Kind kind() const {
-        return kind_;
-    }
-
-    bool isFunction() const {
-        return kind() == Function;
-    }
-    bool isImportExit() const {
-        return kind() == ImportJitExit || kind() == ImportInterpExit;
-    }
-    bool isTrapExit() const {
-        return kind() == TrapExit;
-    }
-    bool isInline() const {
-        return kind() == Inline;
-    }
-
-    // Every CodeRange except entry and inline stubs has a profiling return
-    // which is used for asynchronous profiling to determine the frame pointer.
-
-    uint32_t profilingReturn() const {
-        MOZ_ASSERT(isFunction() || isImportExit() || isTrapExit());
-        return profilingReturn_;
-    }
-
-    // Functions have offsets which allow patching to selectively execute
-    // profiling prologues/epilogues.
-
-    uint32_t funcProfilingEntry() const {
-        MOZ_ASSERT(isFunction());
-        return begin();
-    }
-    uint32_t funcTableEntry() const {
-        MOZ_ASSERT(isFunction());
-        return begin_ + funcBeginToTableEntry_;
-    }
-    uint32_t funcTableProfilingJump() const {
-        MOZ_ASSERT(isFunction());
-        return begin_ + funcBeginToTableProfilingJump_;
-    }
-    uint32_t funcNonProfilingEntry() const {
-        MOZ_ASSERT(isFunction());
-        return begin_ + funcBeginToNonProfilingEntry_;
-    }
-    uint32_t funcProfilingJump() const {
-        MOZ_ASSERT(isFunction());
-        return profilingReturn_ - funcProfilingJumpToProfilingReturn_;
-    }
-    uint32_t funcProfilingEpilogue() const {
-        MOZ_ASSERT(isFunction());
-        return profilingReturn_ - funcProfilingEpilogueToProfilingReturn_;
-    }
-    uint32_t funcIndex() const {
-        MOZ_ASSERT(isFunction());
-        return funcIndex_;
-    }
-    uint32_t funcLineOrBytecode() const {
-        MOZ_ASSERT(isFunction());
-        return funcLineOrBytecode_;
-    }
-
-    // A sorted array of CodeRanges can be looked up via BinarySearch and PC.
-
-    struct PC {
-        size_t offset;
-        explicit PC(size_t offset) : offset(offset) {}
-        bool operator==(const CodeRange& rhs) const {
-            return offset >= rhs.begin() && offset < rhs.end();
-        }
-        bool operator<(const CodeRange& rhs) const {
-            return offset < rhs.begin();
-        }
-    };
-};
-
-WASM_DECLARE_POD_VECTOR(CodeRange, CodeRangeVector)
-
-// A CallThunk describes the offset and target of thunks so that they may be
-// patched at runtime when profiling is toggled. Thunks are emitted to connect
-// callsites that are too far away from callees to fit in a single call
-// instruction's relative offset.
-
-struct CallThunk
-{
-    uint32_t offset;
-    union {
-        uint32_t funcIndex;
-        uint32_t codeRangeIndex;
-    } u;
-
-    CallThunk(uint32_t offset, uint32_t funcIndex) : offset(offset) { u.funcIndex = funcIndex; }
-    CallThunk() = default;
-};
-
-WASM_DECLARE_POD_VECTOR(CallThunk, CallThunkVector)
-
 // A wasm module can either use no memory, a unshared memory (ArrayBuffer) or
 // shared memory (SharedArrayBuffer).
 
@@ -402,7 +286,9 @@ struct NameInBytecode
     uint32_t offset;
     uint32_t length;
 
-    NameInBytecode() = default;
+    NameInBytecode()
+      : offset(UINT32_MAX), length(0)
+    {}
     NameInBytecode(uint32_t offset, uint32_t length)
       : offset(offset), length(length)
     {}
@@ -436,56 +322,91 @@ typedef Vector<ExprType, 0, SystemAllocPolicy> FuncReturnTypesVector;
 //
 // Metadata is built incrementally by ModuleGenerator and then shared immutably
 // between modules.
+//
+// The Metadata structure is split into tier-invariant and tier-variant parts;
+// the former points to instances of the latter.  Additionally, the asm.js
+// subsystem subclasses the Metadata, adding more tier-invariant data, some of
+// which is serialized.  See AsmJS.cpp.
 
 struct MetadataCacheablePod
 {
     ModuleKind            kind;
     MemoryUsage           memoryUsage;
     uint32_t              minMemoryLength;
+    uint32_t              globalDataLength;
     Maybe<uint32_t>       maxMemoryLength;
     Maybe<uint32_t>       startFuncIndex;
 
     explicit MetadataCacheablePod(ModuleKind kind)
       : kind(kind),
         memoryUsage(MemoryUsage::None),
-        minMemoryLength(0)
+        minMemoryLength(0),
+        globalDataLength(0)
     {}
 };
 
+typedef uint8_t ModuleHash[8];
+
+struct MetadataTier
+{
+    explicit MetadataTier(Tier tier)
+      : tier(tier)
+    {
+        MOZ_ASSERT(tier == Tier::Baseline || tier == Tier::Ion);
+    }
+
+    const Tier            tier;
+
+    MemoryAccessVector    memoryAccesses;
+    CodeRangeVector       codeRanges;
+    CallSiteVector        callSites;
+    FuncImportVector      funcImports;
+    FuncExportVector      funcExports;
+
+    // Debug information, not serialized.
+    Uint32Vector          debugTrapFarJumpOffsets;
+    Uint32Vector          debugFuncToCodeRange;
+
+    const FuncExport& lookupFuncExport(uint32_t funcIndex) const;
+
+    WASM_DECLARE_SERIALIZABLE(MetadataTier);
+};
+
+typedef UniquePtr<MetadataTier> UniqueMetadataTier;
+
 struct Metadata : ShareableBase<Metadata>, MetadataCacheablePod
 {
-    explicit Metadata(ModuleKind kind = ModuleKind::Wasm) : MetadataCacheablePod(kind) {}
+    // `tier_` will become more complicated when tiering is implemented.
+    UniqueMetadataTier tier_;
+
+    Tiers tiers() const;
+    const MetadataTier& metadata(Tier t) const;
+    MetadataTier& metadata(Tier t);
+
+    explicit Metadata(UniqueMetadataTier tier, ModuleKind kind = ModuleKind::Wasm)
+      : MetadataCacheablePod(kind),
+        tier_(Move(tier))
+    {}
     virtual ~Metadata() {}
 
     MetadataCacheablePod& pod() { return *this; }
     const MetadataCacheablePod& pod() const { return *this; }
 
-    FuncImportVector      funcImports;
-    FuncExportVector      funcExports;
     SigWithIdVector       sigIds;
     GlobalDescVector      globals;
     TableDescVector       tables;
-    MemoryAccessVector    memoryAccesses;
-    MemoryPatchVector     memoryPatches;
-    BoundsCheckVector     boundsChecks;
-    CodeRangeVector       codeRanges;
-    CallSiteVector        callSites;
-    CallThunkVector       callThunks;
     NameInBytecodeVector  funcNames;
     CustomSectionVector   customSections;
     CacheableChars        filename;
+    ModuleHash            hash;
 
     // Debug-enabled code is not serialized.
     bool                  debugEnabled;
-    Uint32Vector          debugTrapFarJumpOffsets;
-    Uint32Vector          debugFuncToCodeRange;
     FuncArgTypesVector    debugFuncArgTypes;
     FuncReturnTypesVector debugFuncReturnTypes;
 
     bool usesMemory() const { return UsesMemory(memoryUsage); }
     bool hasSharedMemory() const { return memoryUsage == MemoryUsage::Shared; }
-
-    const FuncExport& lookupFuncExport(uint32_t funcIndex) const;
 
     // AsmJSMetadata derives Metadata iff isAsmJS(). Mostly this distinction is
     // encapsulated within AsmJS.cpp, but the additional virtual functions allow
@@ -516,150 +437,67 @@ struct Metadata : ShareableBase<Metadata>, MetadataCacheablePod
 typedef RefPtr<Metadata> MutableMetadata;
 typedef RefPtr<const Metadata> SharedMetadata;
 
-// The generated source location for the AST node/expression. The offset field refers
-// an offset in an binary format file.
+// Code objects own executable code and the metadata that describe it. A single
+// Code object is normally shared between a module and all its instances.
+//
+// profilingLabels_ is lazily initialized, but behind a lock.
 
-struct ExprLoc
+class Code : public ShareableBase<Code>
 {
-    uint32_t lineno;
-    uint32_t column;
-    uint32_t offset;
-    ExprLoc() : lineno(0), column(0), offset(0) {}
-    ExprLoc(uint32_t lineno_, uint32_t column_, uint32_t offset_)
-      : lineno(lineno_), column(column_), offset(offset_)
-    {}
-};
-
-typedef Vector<ExprLoc, 0, SystemAllocPolicy> ExprLocVector;
-typedef Vector<uint32_t, 0, SystemAllocPolicy> ExprLocIndexVector;
-
-// The generated source map for WebAssembly binary file. This map is generated during
-// building the text buffer (see BinaryToExperimentalText).
-
-class GeneratedSourceMap
-{
-    ExprLocVector exprlocs_;
-    UniquePtr<ExprLocIndexVector> sortedByOffsetExprLocIndices_;
-    uint32_t totalLines_;
+    // `tier_` will become more complicated when tiering is implemented.
+    UniqueConstCodeSegment              tier_;
+    SharedMetadata                      metadata_;
+    ExclusiveData<CacheableCharsVector> profilingLabels_;
 
   public:
-    explicit GeneratedSourceMap() : totalLines_(0) {}
-    ExprLocVector& exprlocs() { return exprlocs_; }
+    Code();
 
-    uint32_t totalLines() { return totalLines_; }
-    void setTotalLines(uint32_t val) { totalLines_ = val; }
+    Code(UniqueConstCodeSegment tier, const Metadata& metadata);
 
-    bool searchLineByOffset(JSContext* cx, uint32_t offset, size_t* exprlocIndex);
-};
+    Tier anyTier() const;
+    Tiers tiers() const;
 
-typedef UniquePtr<GeneratedSourceMap> UniqueGeneratedSourceMap;
-typedef HashMap<uint32_t, uint32_t, DefaultHasher<uint32_t>, SystemAllocPolicy> StepModeCounters;
-typedef HashMap<uint32_t, WasmBreakpointSite*, DefaultHasher<uint32_t>, SystemAllocPolicy> WasmBreakpointSiteMap;
-
-// Code objects own executable code and the metadata that describes it. At the
-// moment, Code objects are owned uniquely by instances since CodeSegments are
-// not shareable. However, once this restriction is removed, a single Code
-// object will be shared between a module and all its instances.
-
-class Code
-{
-    const UniqueCodeSegment  segment_;
-    const SharedMetadata     metadata_;
-    const SharedBytes        maybeBytecode_;
-    UniqueGeneratedSourceMap maybeSourceMap_;
-    CacheableCharsVector     funcLabels_;
-    bool                     profilingEnabled_;
-
-    // State maintained when debugging is enabled:
-
-    uint32_t                 enterAndLeaveFrameTrapsCounter_;
-    WasmBreakpointSiteMap    breakpointSites_;
-    StepModeCounters         stepModeCounters_;
-
-    void toggleDebugTrap(uint32_t offset, bool enabled);
-    bool ensureSourceMap(JSContext* cx);
-
-  public:
-    Code(UniqueCodeSegment segment,
-         const Metadata& metadata,
-         const ShareableBytes* maybeBytecode);
-
-    CodeSegment& segment() { return *segment_; }
-    const CodeSegment& segment() const { return *segment_; }
+    const CodeSegment& segment(Tier tier) const;
+    const MetadataTier& metadata(Tier tier) const { return metadata_->metadata(tier); }
     const Metadata& metadata() const { return *metadata_; }
 
     // Frame iterator support:
 
-    const CallSite* lookupCallSite(void* returnAddress) const;
-    const CodeRange* lookupRange(void* pc) const;
-    const MemoryAccess* lookupMemoryAccess(void* pc) const;
+    const CallSite* lookupCallSite(void* returnAddress, const CodeSegment** segment = nullptr) const;
+    const CodeRange* lookupRange(void* pc, const CodeSegment** segment = nullptr) const;
+    const MemoryAccess* lookupMemoryAccess(void* pc, const CodeSegment** segment = nullptr) const;
 
-    // Return the name associated with a given function index, or generate one
-    // if none was given by the module.
+    // Signal handling support:
 
-    bool getFuncName(uint32_t funcIndex, UTF8Bytes* name) const;
-    JSAtom* getFuncAtom(JSContext* cx, uint32_t funcIndex) const;
+    bool containsFunctionPC(const void* pc, const CodeSegment** segmentp = nullptr) const;
+    bool containsCodePC(const void* pc, const CodeSegment** segmentp = nullptr) const;
 
-    // If the source bytecode was saved when this Code was constructed, this
-    // method will render the binary as text. Otherwise, a diagnostic string
-    // will be returned.
+    // To save memory, profilingLabels_ are generated lazily when profiling mode
+    // is enabled.
 
-    JSString* createText(JSContext* cx);
-    bool getLineOffsets(JSContext* cx, size_t lineno, Vector<uint32_t>* offsets);
-    bool getOffsetLocation(JSContext* cx, uint32_t offset, bool* found, size_t* lineno, size_t* column);
-    bool totalSourceLines(JSContext* cx, uint32_t* count);
-
-    // Each Code has a profiling mode that is updated to match the runtime's
-    // profiling mode when there are no other activations of the code live on
-    // the stack. Once in profiling mode, ProfilingFrameIterator can be used to
-    // asynchronously walk the stack. Otherwise, the ProfilingFrameIterator will
-    // skip any activations of this code.
-
-    MOZ_MUST_USE bool ensureProfilingState(JSRuntime* rt, bool enabled);
-    bool profilingEnabled() const { return profilingEnabled_; }
-    const char* profilingLabel(uint32_t funcIndex) const { return funcLabels_[funcIndex].get(); }
-
-    // The Code can track enter/leave frame events. Any such event triggers
-    // debug trap. The enter/leave frame events enabled or disabled across
-    // all functions.
-
-    void adjustEnterAndLeaveFrameTrapsState(JSContext* cx, bool enabled);
-
-    // When the Code is debugEnabled, individual breakpoints can be enabled or
-    // disabled at instruction offsets.
-
-    bool hasBreakpointTrapAtOffset(uint32_t offset);
-    void toggleBreakpointTrap(JSRuntime* rt, uint32_t offset, bool enabled);
-    WasmBreakpointSite* getOrCreateBreakpointSite(JSContext* cx, uint32_t offset);
-    bool hasBreakpointSite(uint32_t offset);
-    void destroyBreakpointSite(FreeOp* fop, uint32_t offset);
-    bool clearBreakpointsIn(JSContext* cx, WasmInstanceObject* instance,
-                            js::Debugger* dbg, JSObject* handler);
-
-    // When the Code is debug-enabled, single-stepping mode can be toggled on
-    // the granularity of individual functions.
-
-    bool stepModeEnabled(uint32_t funcIndex) const;
-    bool incrementStepModeCount(JSContext* cx, uint32_t funcIndex);
-    bool decrementStepModeCount(JSContext* cx, uint32_t funcIndex);
-
-    // Stack inspection helpers.
-
-    bool debugGetLocalTypes(uint32_t funcIndex, ValTypeVector* locals, size_t* argsLength);
-    ExprType debugGetResultType(uint32_t funcIndex);
+    void ensureProfilingLabels(const Bytes* maybeBytecode, bool profilingEnabled) const;
+    const char* profilingLabel(uint32_t funcIndex) const;
 
     // about:memory reporting:
 
-    void addSizeOfMisc(MallocSizeOf mallocSizeOf,
-                       Metadata::SeenSet* seenMetadata,
-                       ShareableBytes::SeenSet* seenBytes,
-                       size_t* code,
-                       size_t* data) const;
+    void addSizeOfMiscIfNotSeen(MallocSizeOf mallocSizeOf,
+                                Metadata::SeenSet* seenMetadata,
+                                Code::SeenSet* seenCode,
+                                size_t* code,
+                                size_t* data) const;
 
-    WASM_DECLARE_SERIALIZABLE(Code);
+    // A Code object is serialized as the length and bytes of the machine code
+    // after statically unlinking it; the Code is then later recreated from the
+    // machine code and other parts.
+
+    size_t serializedSize() const;
+    uint8_t* serialize(uint8_t* cursor, const LinkData& linkData) const;
+    const uint8_t* deserialize(const uint8_t* cursor, const SharedBytes& bytecode,
+                               const LinkData& linkData, Metadata* maybeMetadata);
 };
 
-typedef UniquePtr<Code> UniqueCode;
+typedef RefPtr<const Code> SharedCode;
+typedef RefPtr<Code> MutableCode;
 
 } // namespace wasm
 } // namespace js

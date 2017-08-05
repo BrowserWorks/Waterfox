@@ -62,19 +62,28 @@ const char XPC_XPCONNECT_CONTRACTID[]     = "@mozilla.org/js/xpc/XPConnect;1";
 
 /***************************************************************************/
 
+// This global should be used very sparingly: only to create and destroy
+// nsXPConnect and when creating a new cooperative (non-primary) XPCJSContext.
+static XPCJSContext* gPrimaryContext;
+
 nsXPConnect::nsXPConnect()
-    :   mContext(nullptr),
-        mShuttingDown(false)
+    : mShuttingDown(false)
 {
-    mContext = XPCJSContext::newXPCJSContext();
-    if (!mContext) {
+    XPCJSContext::InitTLS();
+
+    XPCJSContext* xpccx = XPCJSContext::NewXPCJSContext(nullptr);
+    if (!xpccx) {
         NS_RUNTIMEABORT("Couldn't create XPCJSContext.");
     }
+    gPrimaryContext = xpccx;
+    mRuntime = xpccx->Runtime();
 }
 
 nsXPConnect::~nsXPConnect()
 {
-    mContext->DeleteSingletonScopes();
+    MOZ_ASSERT(XPCJSContext::Get() == gPrimaryContext);
+
+    mRuntime->DeleteSingletonScopes();
 
     // In order to clean up everything properly, we need to GC twice: once now,
     // to clean anything that can go away on its own (like the Junk Scope, which
@@ -82,7 +91,7 @@ nsXPConnect::~nsXPConnect()
     // XPConnect, to clean the stuff we forcibly disconnected. The forced
     // shutdown code defaults to leaking in a number of situations, so we can't
     // get by with only the second GC. :-(
-    mContext->GarbageCollect(JS::gcreason::XPCONNECT_SHUTDOWN);
+    mRuntime->GarbageCollect(JS::gcreason::XPCONNECT_SHUTDOWN);
 
     mShuttingDown = true;
     XPCWrappedNativeScope::SystemIsBeingShutDown();
@@ -91,7 +100,7 @@ nsXPConnect::~nsXPConnect()
     // after which point we need to GC to clean everything up. We need to do
     // this before deleting the XPCJSContext, because doing so destroys the
     // maps that our finalize callback depends on.
-    mContext->GarbageCollect(JS::gcreason::XPCONNECT_SHUTDOWN);
+    mRuntime->GarbageCollect(JS::gcreason::XPCONNECT_SHUTDOWN);
 
     NS_RELEASE(gSystemPrincipal);
     gScriptSecurityManager = nullptr;
@@ -99,7 +108,7 @@ nsXPConnect::~nsXPConnect()
     // shutdown the logging system
     XPC_LOG_FINISH();
 
-    delete mContext;
+    delete gPrimaryContext;
 
     gSelf = nullptr;
     gOnceAliveNowDead = true;
@@ -111,9 +120,6 @@ nsXPConnect::InitStatics()
 {
     gSelf = new nsXPConnect();
     gOnceAliveNowDead = false;
-    if (!gSelf->mContext) {
-        NS_RUNTIMEABORT("Couldn't create XPCJSContext.");
-    }
 
     // Initial extra ref to keep the singleton alive
     // balanced by explicit call to ReleaseXPConnectSingleton()
@@ -125,13 +131,14 @@ nsXPConnect::InitStatics()
     gScriptSecurityManager->GetSystemPrincipal(&gSystemPrincipal);
     MOZ_RELEASE_ASSERT(gSystemPrincipal);
 
-    if (!JS::InitSelfHostedCode(gSelf->mContext->Context()))
+    JSContext* cx = XPCJSContext::Get()->Context();
+    if (!JS::InitSelfHostedCode(cx))
         MOZ_CRASH("InitSelfHostedCode failed");
-    if (!gSelf->mContext->JSContextInitialized(gSelf->mContext->Context()))
-        MOZ_CRASH("JSContextInitialized failed");
+    if (!gSelf->mRuntime->InitializeStrings(cx))
+        MOZ_CRASH("InitializeStrings failed");
 
     // Initialize our singleton scopes.
-    gSelf->mContext->InitSingletonScopes();
+    gSelf->mRuntime->InitSingletonScopes();
 }
 
 nsXPConnect*
@@ -154,11 +161,11 @@ nsXPConnect::ReleaseXPConnectSingleton()
 }
 
 // static
-XPCJSContext*
-nsXPConnect::GetContextInstance()
+XPCJSRuntime*
+nsXPConnect::GetRuntimeInstance()
 {
-    nsXPConnect* xpc = XPConnect();
-    return xpc->GetContext();
+    MOZ_RELEASE_ASSERT(NS_IsMainThread());
+    return gSelf->mRuntime;
 }
 
 // static
@@ -397,7 +404,7 @@ nsXPConnect::GetInfoForName(const char * name, nsIInterfaceInfo** info)
 NS_IMETHODIMP
 nsXPConnect::GarbageCollect(uint32_t reason)
 {
-    GetContext()->GarbageCollect(reason);
+    mRuntime->GarbageCollect(reason);
     return NS_OK;
 }
 
@@ -759,7 +766,7 @@ nsXPConnect::GetWrappedNativeOfJSObject(JSContext * aJSContext,
     return NS_OK;
 }
 
-nsISupports*
+already_AddRefed<nsISupports>
 xpc::UnwrapReflectorToISupports(JSObject* reflector)
 {
     // Unwrap security wrappers, if allowed.
@@ -772,20 +779,16 @@ xpc::UnwrapReflectorToISupports(JSObject* reflector)
         XPCWrappedNative* wn = XPCWrappedNative::Get(reflector);
         if (!wn)
             return nullptr;
-        return wn->Native();
+        nsCOMPtr<nsISupports> native = wn->Native();
+        return native.forget();
     }
 
-    // Try DOM objects.
+    // Try DOM objects.  This QI without taking a ref first is safe, because
+    // this if non-null our thing will definitely be a DOM object, and we know
+    // their QI to nsISupports doesn't do anything weird.
     nsCOMPtr<nsISupports> canonical =
         do_QueryInterface(mozilla::dom::UnwrapDOMObjectToISupports(reflector));
-    return canonical;
-}
-
-NS_IMETHODIMP_(nsISupports*)
-nsXPConnect::GetNativeOfWrapper(JSContext* aJSContext,
-                                JSObject* aJSObj)
-{
-    return UnwrapReflectorToISupports(aJSObj);
+    return canonical.forget();
 }
 
 NS_IMETHODIMP
@@ -846,8 +849,8 @@ NS_IMETHODIMP
 nsXPConnect::SetFunctionThisTranslator(const nsIID & aIID,
                                        nsIXPCFunctionThisTranslator* aTranslator)
 {
-    XPCJSContext* cx = GetContext();
-    IID2ThisTranslatorMap* map = cx->GetThisTranslatorMap();
+    XPCJSRuntime* rt = GetRuntimeInstance();
+    IID2ThisTranslatorMap* map = rt->GetThisTranslatorMap();
     map->Add(aIID, aTranslator);
     return NS_OK;
 }
@@ -929,13 +932,6 @@ nsXPConnect::DebugDump(int16_t depth)
     XPC_LOG_INDENT();
         XPC_LOG_ALWAYS(("gSelf @ %p", gSelf));
         XPC_LOG_ALWAYS(("gOnceAliveNowDead is %d", (int)gOnceAliveNowDead));
-        if (mContext) {
-            if (depth)
-                mContext->DebugDump(depth);
-            else
-                XPC_LOG_ALWAYS(("XPCJSContext @ %p", mContext));
-        } else
-            XPC_LOG_ALWAYS(("mContext is null"));
         XPCWrappedNativeScope::DebugDumpAllScopes(depth);
     XPC_LOG_OUTDENT();
 #endif
@@ -1000,7 +996,7 @@ nsXPConnect::DebugPrintJSStack(bool showArgs,
     if (!cx)
         printf("there is no JSContext on the nsIThreadJSContextStack!\n");
     else
-        return xpc_PrintJSStack(cx, showArgs, showLocals, showThisProps);
+        return xpc_PrintJSStack(cx, showArgs, showLocals, showThisProps).release();
 
     return nullptr;
 }
@@ -1137,7 +1133,7 @@ SetLocationForGlobal(JSObject* global, nsIURI* locationURI)
 NS_IMETHODIMP
 nsXPConnect::NotifyDidPaint()
 {
-    JS::NotifyDidPaint(GetContext()->Context());
+    JS::NotifyDidPaint(XPCJSContext::Get()->Context());
     return NS_OK;
 }
 
@@ -1408,3 +1404,29 @@ ThreadSafeIsChromeOrXBL(JSContext* cx, JSObject* obj)
 
 } // namespace dom
 } // namespace mozilla
+
+void
+xpc::CreateCooperativeContext()
+{
+    MOZ_ASSERT(gPrimaryContext);
+    XPCJSContext::NewXPCJSContext(gPrimaryContext);
+}
+
+void
+xpc::DestroyCooperativeContext()
+{
+    MOZ_ASSERT(XPCJSContext::Get() != gPrimaryContext);
+    delete XPCJSContext::Get();
+}
+
+void
+xpc::YieldCooperativeContext()
+{
+    JS_YieldCooperativeContext(XPCJSContext::Get()->Context());
+}
+
+void
+xpc::ResumeCooperativeContext()
+{
+    JS_ResumeCooperativeContext(XPCJSContext::Get()->Context());
+}

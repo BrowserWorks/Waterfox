@@ -71,14 +71,14 @@ class AsyncCompositionManager final
 public:
   NS_INLINE_DECL_REFCOUNTING(AsyncCompositionManager)
 
-  explicit AsyncCompositionManager(HostLayerManager* aManager);
+  explicit AsyncCompositionManager(CompositorBridgeParent* aParent, HostLayerManager* aManager);
 
   /**
    * This forces the is-first-paint flag to true. This is intended to
    * be called by the widget code when it loses its viewport information
    * (or for whatever reason wants to refresh the viewport information).
    * The information refresh happens because the compositor will call
-   * SetFirstPaintViewport on the next frame of composition.
+   * AndroidDynamicToolbarAnimator::FirstPaint() on the next frame of composition.
    */
   void ForceIsFirstPaint() { mIsFirstPaint = true; }
 
@@ -94,15 +94,11 @@ public:
   void ComputeRotation();
 
   // Call after updating our layer tree.
-  void Updated(bool isFirstPaint, const TargetConfig& aTargetConfig,
-               int32_t aPaintSyncId)
+  void Updated(bool isFirstPaint, const TargetConfig& aTargetConfig)
   {
     mIsFirstPaint |= isFirstPaint;
     mLayersUpdated = true;
     mTargetConfig = aTargetConfig;
-    if (aPaintSyncId) {
-      mPaintSyncId = aPaintSyncId;
-    }
   }
 
   bool RequiresReorientation(mozilla::dom::ScreenOrientationInternal aOrientation) const
@@ -135,6 +131,38 @@ public:
   };
 
   typedef std::map<Layer*, ClipParts> ClipPartsCache;
+
+  /**
+   * Compute the updated shadow transform for a scroll thumb layer that
+   * reflects async scrolling of the associated scroll frame.
+   *
+   * @param aCurrentTransform The current shadow transform on the scroll thumb
+   *    layer, as returned by Layer::GetLocalTransform() or similar.
+   * @param aScrollableContentTransform The current content transform on the
+   *    scrollable content, as returned by Layer::GetTransform().
+   * @param aApzc The APZC that scrolls the scroll frame.
+   * @param aMetrics The metrics associated with the scroll frame, reflecting
+   *    the last paint of the associated content. Note: this metrics should
+   *    NOT reflect async scrolling, i.e. they should be the layer tree's
+   *    copy of the metrics, or APZC's last-content-paint metrics.
+   * @param aThumbData The scroll thumb data for the the scroll thumb layer.
+   * @param aScrollbarIsDescendant True iff. the scroll thumb layer is a
+   *    descendant of the layer bearing the scroll frame's metrics.
+   * @param aOutClipTransform If not null, and |aScrollbarIsDescendant| is true,
+   *    this will be populated with a transform that should be applied to the
+   *    clip rects of all layers between the scroll thumb layer and the ancestor
+   *    layer for the scrollable content.
+   * @return The new shadow transform for the scroll thumb layer, including
+   *    any pre- or post-scales.
+   */
+  static LayerToParentLayerMatrix4x4 ComputeTransformForScrollThumb(
+      const LayerToParentLayerMatrix4x4& aCurrentTransform,
+      const gfx::Matrix4x4& aScrollableContentTransform,
+      AsyncPanZoomController* aApzc,
+      const FrameMetrics& aMetrics,
+      const ScrollThumbData& aThumbData,
+      bool aScrollbarIsDescendant,
+      AsyncTransformComponentMatrix* aOutClipTransform);
 private:
   // Return true if an AsyncPanZoomController content transform was
   // applied for |aLayer|. |*aOutFoundRoot| is set to true on Android only, if
@@ -148,18 +176,6 @@ private:
    * so that it stays in sync with the content that is being scrolled by APZ.
    */
   void ApplyAsyncTransformToScrollbar(Layer* aLayer);
-
-  void SetFirstPaintViewport(const LayerIntPoint& aOffset,
-                             const CSSToLayerScale& aZoom,
-                             const CSSRect& aCssPageRect);
-  void SyncFrameMetrics(const ParentLayerPoint& aScrollOffset,
-                        const CSSToParentLayerScale& aZoom,
-                        const CSSRect& aCssPageRect,
-                        const CSSRect& aDisplayPort,
-                        const CSSToLayerScale& aPaintedResolution,
-                        bool aLayersUpdated,
-                        int32_t aPaintSyncId,
-                        ScreenMargin& aFixedLayerMargins);
 
   /**
    * Adds a translation to the transform of any fixed position (whose parent
@@ -231,8 +247,6 @@ private:
   // after a layers update has it set. It is cleared after that first composition.
   bool mLayersUpdated;
 
-  int32_t mPaintSyncId;
-
   bool mReadyForCompose;
 
   gfx::Matrix mWorldTransform;
@@ -241,7 +255,12 @@ private:
   TimeStamp mPreviousFrameTimeStamp;
   AnimationMetricsTracker mAnimationMetricsTracker;
 
+  CompositorBridgeParent* mCompositorBridge;
+
 #ifdef MOZ_WIDGET_ANDROID
+public:
+  void SetFixedLayerMargins(ScreenIntCoord aTop, ScreenIntCoord aBottom);
+private:
   // The following two fields are only needed on Fennec with C++ APZ, because
   // then we need to reposition the gecko scrollbar to deal with the
   // dynamic toolbar shifting content around.

@@ -138,6 +138,12 @@ const SNAPSHOT_SCHEMA = {
         numRemoteWindows: {
           type: "number",
         },
+        currentContentProcesses: {
+          type: "number",
+        },
+        maxContentProcesses: {
+          type: "number",
+        },
         keyGoogleFound: {
           type: "boolean",
         },
@@ -201,6 +207,27 @@ const SNAPSHOT_SCHEMA = {
           isActive: {
             required: true,
             type: "boolean",
+          },
+        },
+      },
+    },
+    features: {
+      required: true,
+      type: "array",
+      items: {
+        type: "object",
+        properties: {
+          name: {
+            required: true,
+            type: "string",
+          },
+          version: {
+            required: true,
+            type: "string",
+          },
+          id: {
+            required: true,
+            type: "string",
           },
         },
       },
@@ -496,6 +523,10 @@ const SNAPSHOT_SCHEMA = {
           type: "boolean"
         },
         contentSandboxLevel: {
+          required: AppConstants.MOZ_CONTENT_SANDBOX,
+          type: "number"
+        },
+        effectiveContentSandboxLevel: {
           required: AppConstants.MOZ_CONTENT_SANDBOX,
           type: "number"
         },

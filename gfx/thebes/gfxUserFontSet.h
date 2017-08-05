@@ -17,6 +17,9 @@
 #include "mozilla/net/ReferrerPolicy.h"
 #include "gfxFontConstants.h"
 
+namespace mozilla {
+class PostTraversalTask;
+} // namespace mozilla
 class nsFontFaceLoader;
 
 //#define DEBUG_USERFONT_CACHE
@@ -134,7 +137,7 @@ public:
     explicit gfxUserFontFamily(const nsAString& aName)
         : gfxFontFamily(aName) { }
 
-    virtual ~gfxUserFontFamily() { }
+    virtual ~gfxUserFontFamily();
 
     // add the given font entry to the end of the family's list
     void AddFontEntry(gfxFontEntry* aFontEntry) {
@@ -175,7 +178,7 @@ class gfxUserFontSet {
 
 public:
 
-    NS_INLINE_DECL_REFCOUNTING(gfxUserFontSet)
+    NS_INLINE_DECL_THREADSAFE_REFCOUNTING(gfxUserFontSet)
 
     gfxUserFontSet();
 
@@ -206,7 +209,7 @@ public:
     // weight - [100, 900] (multiples of 100)
     // stretch = [NS_FONT_STRETCH_ULTRA_CONDENSED, NS_FONT_STRETCH_ULTRA_EXPANDED]
     // italic style = constants in gfxFontConstants.h, e.g. NS_FONT_STYLE_NORMAL
-    // language override = result of calling gfxFontStyle::ParseFontLanguageOverride
+    // language override = result of calling nsRuleNode::ParseFontLanguageOverride
     // TODO: support for unicode ranges not yet implemented
     virtual already_AddRefed<gfxUserFontEntry> CreateUserFontEntry(
                               const nsTArray<gfxFontFaceSrc>& aFontFaceSrcList,
@@ -215,7 +218,7 @@ public:
                               uint8_t aStyle,
                               const nsTArray<gfxFontFeature>& aFeatureSettings,
                               uint32_t aLanguageOverride,
-                              gfxSparseBitSet* aUnicodeRanges,
+                              gfxCharacterMap* aUnicodeRanges,
                               uint8_t aFontDisplay) = 0;
 
     // creates a font face for the specified family, or returns an existing
@@ -228,7 +231,7 @@ public:
                                uint8_t aStyle,
                                const nsTArray<gfxFontFeature>& aFeatureSettings,
                                uint32_t aLanguageOverride,
-                               gfxSparseBitSet* aUnicodeRanges,
+                               gfxCharacterMap* aUnicodeRanges,
                                uint8_t aFontDisplay);
 
     // add in a font face for which we have the gfxUserFontEntry already
@@ -247,14 +250,6 @@ public:
 
     // Look up names in a fontlist and return true if any are in the set
     bool ContainsUserFontSetFonts(const mozilla::FontFamilyList& aFontList) const;
-
-    // Lookup a font entry for a given style, returns null if not loaded.
-    // aFamily must be a family returned by our LookupFamily method.
-    // (only used by gfxPangoFontGroup for now)
-    gfxUserFontEntry* FindUserFontEntryAndLoad(gfxFontFamily* aFamily,
-                                               const gfxFontStyle& aFontStyle,
-                                               bool& aNeedsBold,
-                                               bool& aWaitForUserFont);
 
     // check whether the given source is allowed to be loaded;
     // returns the Principal (for use in the key when caching the loaded font),
@@ -529,7 +524,7 @@ protected:
                                    uint8_t aStyle,
                                    const nsTArray<gfxFontFeature>& aFeatureSettings,
                                    uint32_t aLanguageOverride,
-                                   gfxSparseBitSet* aUnicodeRanges,
+                                   gfxCharacterMap* aUnicodeRanges,
                                    uint8_t aFontDisplay);
 
     // creates a new gfxUserFontFamily in mFontFamilies, or returns an existing
@@ -556,6 +551,7 @@ protected:
 // acts a placeholder until the real font is downloaded
 
 class gfxUserFontEntry : public gfxFontEntry {
+    friend class mozilla::PostTraversalTask;
     friend class gfxUserFontSet;
     friend class nsUserFontSet;
     friend class nsFontFaceLoader;
@@ -564,6 +560,7 @@ class gfxUserFontEntry : public gfxFontEntry {
 public:
     enum UserFontLoadState {
         STATUS_NOT_LOADED = 0,
+        STATUS_LOAD_PENDING,
         STATUS_LOADING,
         STATUS_LOADED,
         STATUS_FAILED
@@ -576,7 +573,7 @@ public:
                      uint8_t aStyle,
                      const nsTArray<gfxFontFeature>& aFeatureSettings,
                      uint32_t aLanguageOverride,
-                     gfxSparseBitSet* aUnicodeRanges,
+                     gfxCharacterMap* aUnicodeRanges,
                      uint8_t aFontDisplay);
 
     virtual ~gfxUserFontEntry();
@@ -588,7 +585,7 @@ public:
                  uint8_t aStyle,
                  const nsTArray<gfxFontFeature>& aFeatureSettings,
                  uint32_t aLanguageOverride,
-                 gfxSparseBitSet* aUnicodeRanges,
+                 gfxCharacterMap* aUnicodeRanges,
                  uint8_t aFontDisplay);
 
     virtual gfxFont* CreateFontInstance(const gfxFontStyle* aFontStyle,
@@ -601,7 +598,8 @@ public:
 
     // whether to wait before using fallback font or not
     bool WaitForUserFont() const {
-        return mUserFontLoadState == STATUS_LOADING &&
+        return (mUserFontLoadState == STATUS_LOAD_PENDING ||
+                mUserFontLoadState == STATUS_LOADING) &&
                mFontDataLoadingState < LOADING_SLOWLY;
     }
 
@@ -641,6 +639,8 @@ protected:
 
     // attempt to load the next resource in the src list.
     void LoadNextSrc();
+    void ContinueLoad();
+    void DoLoadNextSrc(bool aForceAsync);
 
     // change the load state
     virtual void SetLoadState(UserFontLoadState aLoadState);

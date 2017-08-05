@@ -9,144 +9,59 @@ include LayersSurfaces;
 include LayersMessages;
 include protocol PTexture;
 
-using WrBorderRadius from "mozilla/webrender/webrender_ffi.h";
-using WrBorderSide from "mozilla/webrender/webrender_ffi.h";
-using WrColor from "mozilla/webrender/webrender_ffi.h";
-using WrLayoutSize from "mozilla/webrender/webrender_ffi.h";
-using WrRect from "mozilla/webrender/webrender_ffi.h";
-using WrPoint from "mozilla/webrender/webrender_ffi.h";
-using WrGradientStop from "mozilla/webrender/webrender_ffi.h";
-using WrGradientExtendMode from "mozilla/webrender/webrender_ffi.h";
-using WrGlyphArray from "mozilla/webrender/webrender_ffi.h";
+using WrSize from "mozilla/webrender/webrender_ffi.h";
+using WrImageRendering from "mozilla/webrender/webrender_ffi.h";
 using WrMixBlendMode from "mozilla/webrender/webrender_ffi.h";
-using WrBoxShadowClipMode from "mozilla/webrender/webrender_ffi.h";
 using MaybeImageMask from "mozilla/webrender/WebRenderTypes.h";
-using mozilla::gfx::Matrix4x4 from "mozilla/gfx/Matrix.h";
-using mozilla::wr::ByteBuffer from "mozilla/webrender/WebRenderTypes.h";
-using mozilla::wr::PipelineId from "mozilla/webrender/WebRenderTypes.h";
-using mozilla::wr::ImageRendering from "mozilla/webrender/WebRenderTypes.h";
+using mozilla::wr::ExternalImageId from "mozilla/webrender/WebRenderTypes.h";
 using mozilla::wr::ImageKey from "mozilla/webrender/WebRenderTypes.h";
-using mozilla::wr::FontKey from "mozilla/webrender/WebRenderTypes.h";
-using mozilla::LayerIntRegion from "Units.h";
+using mozilla::wr::PipelineId from "mozilla/webrender/WebRenderTypes.h";
+using mozilla::gfx::MaybeIntSize from "mozilla/gfx/Point.h";
+using mozilla::LayerPoint from "Units.h";
+using mozilla::layers::MaybeLayerRect from "mozilla/layers/LayersTypes.h";
+using class mozilla::gfx::Matrix4x4 from "mozilla/gfx/Matrix.h";
+using struct mozilla::void_t from "ipc/IPCMessageUtils.h";
 
 namespace mozilla {
 namespace layers {
 
-struct OpDPPushStackingContext {
-  WrRect bounds;
-  WrRect overflow;
-  MaybeImageMask mask;
-  float opacity;
-  Animation[] animations;
-  Matrix4x4 matrix;
-  WrMixBlendMode mixBlendMode;
-  uint64_t scrollid;
+union OptionalTransform {
+  Matrix4x4;
+  void_t;
 };
 
-struct OpDPPopStackingContext { };
-
-struct OpDPPushScrollLayer {
-  WrRect bounds;
-  WrRect overflow;
-  MaybeImageMask mask;
-  uint64_t scrollid;
-};
-
-struct OpDPPopScrollLayer { };
-
-struct OpDPPushRect {
-  WrRect bounds;
-  WrRect clip;
-  WrColor color;
-};
-
-struct OpDPPushBorder {
-  WrRect bounds;
-  WrRect clip;
-  WrBorderSide top;
-  WrBorderSide right;
-  WrBorderSide bottom;
-  WrBorderSide left;
-  WrBorderRadius radius;
-};
-
-struct OpDPPushLinearGradient {
-  WrRect bounds;
-  WrRect clip;
-  WrPoint startPoint;
-  WrPoint endPoint;
-  WrGradientExtendMode extendMode;
-  WrGradientStop[] stops;
-};
-
-struct OpDPPushRadialGradient {
-  WrRect bounds;
-  WrRect clip;
-  WrPoint startCenter;
-  WrPoint endCenter;
-  float startRadius;
-  float endRadius;
-  WrGradientExtendMode extendMode;
-  WrGradientStop[] stops;
-};
-
-struct OpDPPushImage {
-  WrRect bounds;
-  WrRect clip;
-  MaybeImageMask mask;
-  ImageRendering filter;
-  ImageKey key;
+union OptionalOpacity {
+  float;
+  void_t;
 };
 
 struct OpAddExternalImage {
-  uint64_t externalImageId;
+  ExternalImageId externalImageId;
   ImageKey key;
 };
 
-struct OpDPPushIframe {
-  WrRect bounds;
-  WrRect clip;
+struct OpAddCompositorAnimations {
+  CompositorAnimations data;
+  OptionalTransform transform;
+  OptionalOpacity opacity;
+};
+
+struct OpUpdateAsyncImagePipeline {
   PipelineId pipelineId;
-};
-
-struct OpDPPushText {
-  WrRect bounds;
-  WrRect clip;
-  WrGlyphArray[] glyph_array;
-  float glyph_size;
-  FontKey key;
-};
-
-struct OpDPPushBoxShadow {
-  WrRect rect;
-  WrRect clip;
-  WrRect box_bounds;
-  WrPoint offset;
-  WrColor color;
-  float blur_radius;
-  float spread_radius;
-  float border_radius;
-  WrBoxShadowClipMode clip_mode;
-};
-
-union WebRenderCommand {
-  OpDPPushStackingContext;
-  OpDPPopStackingContext;
-  OpDPPushScrollLayer;
-  OpDPPopScrollLayer;
-  OpDPPushRect;
-  OpDPPushBorder;
-  OpDPPushLinearGradient;
-  OpDPPushRadialGradient;
-  OpDPPushImage;
-  OpDPPushIframe;
-  OpDPPushText;
-  OpDPPushBoxShadow;
+  LayerRect scBounds;
+  Matrix4x4 scTransform;
+  MaybeIntSize scaleToSize;
+  MaybeLayerRect clipRect;
+  MaybeImageMask mask;
+  WrImageRendering filter;
+  WrMixBlendMode mixBlendMode;
 };
 
 union WebRenderParentCommand {
   OpAddExternalImage;
+  OpUpdateAsyncImagePipeline;
   CompositableOperation;
+  OpAddCompositorAnimations;
 };
 
 } // namespace

@@ -8,6 +8,7 @@
 #define nsFocusManager_h___
 
 #include "nsCycleCollectionParticipant.h"
+#include "nsIContent.h"
 #include "nsIDocument.h"
 #include "nsIFocusManager.h"
 #include "nsIObserver.h"
@@ -91,6 +92,26 @@ public:
     nsCOMPtr<nsIDocument> handlingDocument = mMouseButtonEventHandlingDocument;
     mMouseButtonEventHandlingDocument = aDocument;
     return handlingDocument.forget();
+  }
+
+  void NeedsFlushBeforeEventHandling(nsIContent* aContent)
+  {
+    if (mFocusedContent == aContent) {
+      mEventHandlingNeedsFlush = true;
+    }
+  }
+
+  bool CanSkipFocus(nsIContent* aContent);
+
+  void FlushBeforeEventHandlingIfNeeded(nsIContent* aContent)
+  {
+    if (mEventHandlingNeedsFlush) {
+      nsCOMPtr<nsIDocument> doc = aContent->GetComposedDoc();
+      if (doc) {
+        mEventHandlingNeedsFlush = false;
+        doc->FlushPendingNotifications(mozilla::FlushType::Layout);
+      }
+    }
   }
 
   /**
@@ -515,10 +536,15 @@ private:
   // focus rings: in the losing focus case that information could be
   // wrong..
   static void NotifyFocusStateChange(nsIContent* aContent,
+                                     nsIContent* aContentToFocus,
                                      bool aWindowShouldShowFocusRing,
                                      bool aGettingFocus);
 
   void SetFocusedWindowInternal(nsPIDOMWindowOuter* aWindow);
+
+  // Notify the change of content window ID
+  // belonging to the top level outer window.
+  void NotifyCurrentTopLevelContentWindowChange(nsPIDOMWindowOuter* aWindow);
 
   // the currently active and front-most top-most window
   nsCOMPtr<nsPIDOMWindowOuter> mActiveWindow;
@@ -555,6 +581,10 @@ private:
   // and the caller can access the document node, the caller should succeed in
   // moving focus.
   nsCOMPtr<nsIDocument> mMouseButtonEventHandlingDocument;
+
+  // If set to true, layout of the document of the event target should be
+  // flushed before handling focus depending events.
+  bool mEventHandlingNeedsFlush;
 
   static bool sTestMode;
 

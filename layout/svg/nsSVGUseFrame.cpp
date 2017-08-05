@@ -12,21 +12,22 @@
 
 using namespace mozilla::dom;
 
-class nsSVGUseFrame : public nsSVGGFrame
-                    , public nsIAnonymousContentCreator
+class nsSVGUseFrame final
+  : public nsSVGGFrame
+  , public nsIAnonymousContentCreator
 {
   friend nsIFrame*
   NS_NewSVGUseFrame(nsIPresShell* aPresShell, nsStyleContext* aContext);
 
 protected:
   explicit nsSVGUseFrame(nsStyleContext* aContext)
-    : nsSVGGFrame(aContext)
+    : nsSVGGFrame(aContext, kClassID)
     , mHasValidDimensions(true)
   {}
 
 public:
   NS_DECL_QUERYFRAME
-  NS_DECL_FRAMEARENA_HELPERS
+  NS_DECL_FRAMEARENA_HELPERS(nsSVGUseFrame)
 
   // nsIFrame interface:
   virtual void Init(nsIContent*       aContent,
@@ -39,15 +40,6 @@ public:
 
   virtual void DestroyFrom(nsIFrame* aDestructRoot) override;
 
-  /**
-   * Get the "type" of the frame
-   *
-   * @see nsGkAtoms::svgUseFrame
-   */
-  virtual nsIAtom* GetType() const override;
-
-  virtual bool IsLeaf() const override;
-
 #ifdef DEBUG_FRAME_DUMP
   virtual nsresult GetFrameName(nsAString& aResult) const override
   {
@@ -55,7 +47,7 @@ public:
   }
 #endif
 
-  // nsISVGChildFrame interface:
+  // nsSVGDisplayableFrame interface:
   virtual void ReflowSVG() override;
   virtual void NotifySVGChanged(uint32_t aFlags) override;
 
@@ -78,12 +70,6 @@ NS_NewSVGUseFrame(nsIPresShell* aPresShell, nsStyleContext* aContext)
 }
 
 NS_IMPL_FRAMEARENA_HELPERS(nsSVGUseFrame)
-
-nsIAtom *
-nsSVGUseFrame::GetType() const
-{
-  return nsGkAtoms::svgUseFrame;
-}
 
 //----------------------------------------------------------------------
 // nsQueryFrame methods
@@ -169,15 +155,9 @@ nsSVGUseFrame::DestroyFrom(nsIFrame* aDestructRoot)
   use->DestroyAnonymousContent();
 }
 
-bool
-nsSVGUseFrame::IsLeaf() const
-{
-  return true;
-}
-
 
 //----------------------------------------------------------------------
-// nsISVGChildFrame methods
+// nsSVGDisplayableFrame methods
 
 void
 nsSVGUseFrame::ReflowSVG()

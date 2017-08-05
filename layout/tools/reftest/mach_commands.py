@@ -134,7 +134,6 @@ class ReftestRunner(MozbuildObject):
             args.app = self.substs["ANDROID_PACKAGE_NAME"]
         if not args.utilityPath:
             args.utilityPath = args.xrePath
-        args.dm_trans = "adb"
         args.ignoreWindowSize = True
         args.printDeviceInfo = False
 
@@ -223,6 +222,7 @@ class MachCommands(MachCommandBase):
         return self._run_reftest(**kwargs)
 
     def _run_reftest(self, **kwargs):
+        kwargs["topsrcdir"] = self.topsrcdir
         process_test_objects(kwargs)
         reftest = self._spawn(ReftestRunner)
         if conditions.is_android(self):

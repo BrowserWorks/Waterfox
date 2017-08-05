@@ -20,7 +20,7 @@ var gUpdateHistory = {
     var uc = um.updateCount;
     if (uc) {
       while (this._view.hasChildNodes())
-        this._view.removeChild(this._view.firstChild);
+        this._view.firstChild.remove();
 
       var bundle = document.getElementById("updateBundle");
 
@@ -59,12 +59,9 @@ var gUpdateHistory = {
    */
   _formatDate(seconds) {
     var date = new Date(seconds);
-    const locale = Components.classes["@mozilla.org/chrome/chrome-registry;1"]
-                   .getService(Components.interfaces.nsIXULChromeRegistry)
-                   .getSelectedLocale("global", true);
     const dtOptions = { year: "numeric", month: "long", day: "numeric",
                         hour: "numeric", minute: "numeric", second: "numeric" };
-    return date.toLocaleString(locale, dtOptions);
+    return date.toLocaleString(undefined, dtOptions);
   }
 };
 

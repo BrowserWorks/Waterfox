@@ -10,7 +10,7 @@
 #include "js/Class.h"
 
 #include "nsJSPrincipals.h"
-#include "nsNullPrincipal.h"
+#include "NullPrincipal.h"
 #include "nsThreadUtils.h"
 #include "nsContentUtils.h"
 
@@ -46,6 +46,7 @@ SimpleGlobal_finalize(js::FreeOp *fop, JSObject *obj)
 {
   SimpleGlobalObject* globalObject =
     static_cast<SimpleGlobalObject*>(JS_GetPrivate(obj));
+  globalObject->ClearWrapper(obj);
   NS_RELEASE(globalObject);
 }
 
@@ -113,7 +114,7 @@ SimpleGlobalObject::Create(GlobalType globalType, JS::Handle<JS::Value> proto)
            .setSystemZone();
 
     if (NS_IsMainThread()) {
-      nsCOMPtr<nsIPrincipal> principal = nsNullPrincipal::Create();
+      nsCOMPtr<nsIPrincipal> principal = NullPrincipal::Create();
       options.creationOptions().setTrace(xpc::TraceXPCGlobal);
       global = xpc::CreateGlobalObject(cx, js::Jsvalify(&SimpleGlobalClass),
                                        nsJSPrincipals::get(principal),

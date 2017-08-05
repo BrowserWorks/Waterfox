@@ -8,7 +8,8 @@
    waitForServiceWorkerRegistered, unregisterServiceWorker,
    waitForDelayedStartupFinished, setupTestAboutDebuggingWebExtension,
    waitForServiceWorkerActivation, enableServiceWorkerDebugging,
-   getServiceWorkerContainer */
+   getServiceWorkerContainer, promiseAddonEvent, installAddonWithManager, getAddonByID,
+   tearDownAddon */
 /* import-globals-from ../../framework/test/shared-head.js */
 
 "use strict";
@@ -193,7 +194,7 @@ function* installAddon({document, path, name, isWebExtension}) {
         Services.obs.removeObserver(listener, "test-devtools");
 
         done();
-      }, "test-devtools", false);
+      }, "test-devtools");
     });
   }
   // Trigger the file picker by clicking on the button
@@ -212,7 +213,8 @@ function* installAddon({document, path, name, isWebExtension}) {
 
 function* uninstallAddon({document, id, name}) {
   let addonList = getAddonListWithAddon(document, id);
-  let addonListMutation = waitForMutation(addonList, { childList: true });
+  let addonListMutation = waitForMutation(addonList.parentNode,
+                                          { childList: true, subtree: true });
 
   // Now uninstall this addon
   yield new Promise(done => {
@@ -232,13 +234,18 @@ function* uninstallAddon({document, id, name}) {
     });
   });
 
-  // Ensure that the UI removes the addon from the list
   yield addonListMutation;
-  let names = [...addonList.querySelectorAll(".target-name")];
-  names = names.map(element => element.textContent);
-  ok(!names.includes(name),
-    "After uninstall, the addon name disappears from the list of addons: "
-    + names);
+
+  // If parentNode is none, that means the entire addonList was removed from the
+  // document. This happens when the addon we are removing is the last one.
+  if (addonList.parentNode !== null) {
+    // Ensure that the UI removes the addon from the list
+    let names = [...addonList.querySelectorAll(".target-name")];
+    names = names.map(element => element.textContent);
+    ok(!names.includes(name),
+      "After uninstall, the addon name disappears from the list of addons: "
+      + names);
+  }
 }
 
 /**
@@ -360,7 +367,7 @@ function waitForDelayedStartupFinished(win) {
         Services.obs.removeObserver(observer, topic);
         resolve();
       }
-    }, "browser-delayed-startup-finished", false);
+    }, "browser-delayed-startup-finished");
   });
 }
 
@@ -435,4 +442,59 @@ function enableServiceWorkerDebugging() {
     SpecialPowers.pushPrefEnv(options, done);
     Services.ppmm.releaseCachedProcesses();
   });
+}
+
+/**
+ * Returns a promise that resolves when the given add-on event is fired. The
+ * resolved value is an array of arguments passed for the event.
+ */
+function promiseAddonEvent(event) {
+  return new Promise(resolve => {
+    let listener = {
+      [event]: function (...args) {
+        AddonManager.removeAddonListener(listener);
+        resolve(args);
+      }
+    };
+
+    AddonManager.addAddonListener(listener);
+  });
+}
+
+/**
+ * Install an add-on using the AddonManager so it does not show up as temporary.
+ */
+function installAddonWithManager(filePath) {
+  return new Promise((resolve, reject) => {
+    AddonManager.getInstallForFile(filePath, install => {
+      if (!install) {
+        throw new Error(`An install was not created for ${filePath}`);
+      }
+      install.addListener({
+        onDownloadFailed: reject,
+        onDownloadCancelled: reject,
+        onInstallFailed: reject,
+        onInstallCancelled: reject,
+        onInstallEnded: resolve
+      });
+      install.install();
+    });
+  });
+}
+
+function getAddonByID(addonId) {
+  return new Promise(resolve => {
+    AddonManager.getAddonByID(addonId, addon => resolve(addon));
+  });
+}
+
+/**
+ * Uninstall an add-on.
+ */
+function* tearDownAddon(addon) {
+  const onUninstalled = promiseAddonEvent("onUninstalled");
+  addon.uninstall();
+  const [uninstalledAddon] = yield onUninstalled;
+  is(uninstalledAddon.id, addon.id,
+     `Add-on was uninstalled: ${uninstalledAddon.id}`);
 }

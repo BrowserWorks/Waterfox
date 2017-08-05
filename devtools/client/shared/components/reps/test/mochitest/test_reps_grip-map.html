@@ -22,9 +22,10 @@ window.onload = Task.async(function* () {
   const {
     REPS,
     MODE,
+    getRep,
     getSelectableInInspectorGrips,
   } = browserRequire("devtools/client/shared/components/reps/reps");
-  let { Rep, GripMap } = REPS;
+  let { GripMap } = REPS;
 
   const componentUnderTest = GripMap;
 
@@ -41,6 +42,8 @@ window.onload = Task.async(function* () {
     yield testOnDomNodeMouseOver();
     yield testOnDomNodeMouseOut();
     yield testOnDomNodeInspectIconClick();
+
+    yield testObjectLink();
   } catch (e) {
     ok(false, "Got an error: " + DevToolsUtils.safeErrorString(e));
   } finally {
@@ -53,8 +56,7 @@ window.onload = Task.async(function* () {
 
     // Test that correct rep is chosen
     const gripStub = getGripStub("testEmptyMap");
-    const renderedRep = shallowRenderComponent(Rep, { object: gripStub });
-    is(renderedRep.type, GripMap.rep, `Rep correctly selects ${GripMap.rep.displayName}`);
+    is(getRep(gripStub), GripMap.rep, "Rep correctly selects GripMap Rep");
 
     // Test rendering
     const defaultOutput = `Map {  }`;
@@ -116,8 +118,7 @@ window.onload = Task.async(function* () {
 
     // Test that correct rep is chosen
     const gripStub = getGripStub("testWeakMap");
-    const renderedRep = shallowRenderComponent(Rep, { object: gripStub });
-    is(renderedRep.type, GripMap.rep, `Rep correctly selects ${GripMap.rep.displayName}`);
+    is(getRep(gripStub), GripMap.rep, "Rep correctly selects GripMap Rep");
 
     // Test rendering
     const defaultOutput = `WeakMap { Object: "value-a" }`;
@@ -156,7 +157,7 @@ window.onload = Task.async(function* () {
     // `new Map([["key-a","value-a"], ["key-b","value-b"], ["key-c","value-c"]])`
     const testName = "testMaxEntries";
 
-    const defaultOutput = `Map { key-a: "value-a", key-b: "value-b", key-c: "value-c" }`;
+    const defaultOutput = `Map { "key-a": "value-a", "key-b": "value-b", "key-c": "value-c" }`;
 
     const modeTests = [
       {
@@ -186,10 +187,10 @@ window.onload = Task.async(function* () {
     const testName = "testMoreThanMaxEntries";
 
     const defaultOutput =
-      `Map { key-0: "value-0", key-1: "value-1", key-2: "value-2", 98 more… }`;
+      `Map { "key-0": "value-0", "key-1": "value-1", "key-2": "value-2", 98 more… }`;
 
     // Generate string with 101 entries, which is the max limit for 'long' mode.
-    let longString = Array.from({length: 10}).map((_, i) => `key-${i}: "value-${i}"`);
+    let longString = Array.from({length: 10}).map((_, i) => `"key-${i}": "value-${i}"`);
     const longOutput = `Map { ${longString.join(", ")}, 91 more… }`;
 
     const modeTests = [
@@ -220,9 +221,9 @@ window.onload = Task.async(function* () {
     const testName = "testUninterestingEntries";
 
     const defaultOutput =
-      `Map { key-a: null, key-c: "value-c", key-d: 4, 1 more… }`;
+      `Map { "key-a": null, "key-c": "value-c", "key-d": 4, 1 more… }`;
     const longOutput =
-      `Map { key-a: null, key-b: undefined, key-c: "value-c", key-d: 4 }`;
+      `Map { "key-a": null, "key-b": undefined, "key-c": "value-c", "key-d": 4 }`;
 
     const modeTests = [
       {
@@ -252,11 +253,9 @@ window.onload = Task.async(function* () {
 
     const valuesGrips = getSelectableInInspectorGrips(nodeValuedStub);
     is(valuesGrips.length, 3, "the stub has three node grips");
-    const valuesattachedActorIds = getStubAttachedActorIds(valuesGrips);
 
     const keysGrips = getSelectableInInspectorGrips(nodeKeyedStub);
     is(keysGrips.length, 3, "the stub has three node grips");
-    const keysAttachedActorIds = getStubAttachedActorIds(keysGrips);
 
     let mouseOverValue;
     let onDOMNodeMouseOver = (object) => {
@@ -267,7 +266,6 @@ window.onload = Task.async(function* () {
     const nodeValuedRenderedComponent = renderComponent(GripMap.rep, {
       object: nodeValuedStub,
       onDOMNodeMouseOver,
-      attachedActorIds: valuesattachedActorIds,
     });
 
     let nodes = nodeValuedRenderedComponent.querySelectorAll(".objectBox-node");
@@ -282,7 +280,6 @@ window.onload = Task.async(function* () {
     const nodeKeyedRenderedComponent = renderComponent(GripMap.rep, {
       object: nodeKeyedStub,
       onDOMNodeMouseOver,
-      attachedActorIds: keysAttachedActorIds,
     });
 
     nodes = nodeKeyedRenderedComponent.querySelectorAll(".objectBox-node");
@@ -300,11 +297,9 @@ window.onload = Task.async(function* () {
 
     const valuesGrips = getSelectableInInspectorGrips(nodeValuedStub);
     is(valuesGrips.length, 3, "the stub has three node grips");
-    const valuesattachedActorIds = getStubAttachedActorIds(valuesGrips);
 
     const keysGrips = getSelectableInInspectorGrips(nodeKeyedStub);
     is(keysGrips.length, 3, "the stub has three node grips");
-    const keysAttachedActorIds = getStubAttachedActorIds(keysGrips);
 
     let called = 0;
     let onDOMNodeMouseOut = (object) => {
@@ -315,7 +310,6 @@ window.onload = Task.async(function* () {
     const nodeValuedRenderedComponent = renderComponent(GripMap.rep, {
       object: nodeValuedStub,
       onDOMNodeMouseOut,
-      attachedActorIds: valuesattachedActorIds,
     });
 
     let nodes = nodeValuedRenderedComponent.querySelectorAll(".objectBox-node");
@@ -328,7 +322,6 @@ window.onload = Task.async(function* () {
     const nodeKeyedRenderedComponent = renderComponent(GripMap.rep, {
       object: nodeKeyedStub,
       onDOMNodeMouseOut,
-      attachedActorIds: keysAttachedActorIds,
     });
 
     nodes = nodeKeyedRenderedComponent.querySelectorAll(".objectBox-node");
@@ -346,11 +339,9 @@ window.onload = Task.async(function* () {
 
     const valuesGrips = getSelectableInInspectorGrips(nodeValuedStub);
     is(valuesGrips.length, 3, "the stub has three node grips");
-    const valuesattachedActorIds = getStubAttachedActorIds(valuesGrips);
 
     const keysGrips = getSelectableInInspectorGrips(nodeKeyedStub);
     is(keysGrips.length, 3, "the stub has three node grips");
-    const keysAttachedActorIds = getStubAttachedActorIds(keysGrips);
 
     let inspectIconClickedValue = null;
     let onInspectIconClick = (object) => {
@@ -358,23 +349,21 @@ window.onload = Task.async(function* () {
     };
 
     const renderedComponentWithoutInspectIcon = renderComponent(GripMap.rep, {
-      object: nodeValuedStub,
+      object: getGripStub("testDisconnectedNodeValuedMap"),
       onInspectIconClick,
-      attachedActorIds: [],
     });
     is(renderedComponentWithoutInspectIcon.querySelector(".open-inspector"), null,
-      "There isn't an inspect icon when the actor is not in attachedActorIds");
+      "There isn't an inspect icon when nodes are not connected to the DOM tree");
 
     info("Testing onInspectIconClick on node valued Map");
     const nodeValuedRenderedComponent = renderComponent(GripMap.rep, {
       object: nodeValuedStub,
       onInspectIconClick,
-      attachedActorIds: valuesattachedActorIds,
     });
 
     let icons = nodeValuedRenderedComponent.querySelectorAll(".open-inspector");
     is(icons.length, valuesGrips.length,
-      "There is an icon for each map value with a matching attachedNodeFront");
+      "There is an icon for each node connected to the DOM tree");
 
     icons.forEach((icon, index) => {
       TestUtils.Simulate.click(icon);
@@ -386,18 +375,56 @@ window.onload = Task.async(function* () {
     const nodeKeyedRenderedComponent = renderComponent(GripMap.rep, {
       object: nodeKeyedStub,
       onInspectIconClick,
-      attachedActorIds: keysAttachedActorIds,
     });
 
     icons = nodeKeyedRenderedComponent.querySelectorAll(".open-inspector");
     is(icons.length, keysGrips.length,
-      "There is an icon for each map key with a matching attachedNodeFront");
+      "There is an icon for each node connected to the DOM tree");
 
     icons.forEach((icon, index) => {
       TestUtils.Simulate.click(icon);
       is(inspectIconClickedValue, keysGrips[index], "onInspectIconClick is called " +
         "with the expected argument when the inspect icon is clicked");
     });
+  }
+
+  function testObjectLink() {
+    // Test object:
+    // `new Map([["key-a",null], ["key-b",undefined], ["key-c","value-c"], ["key-d",4]])`
+    const defaultOutput =
+      `*Map** { *"key-a": null, "key-c": "value-c", "key-d": 4, *1 more…** }*`;
+    const longOutput =
+      `*Map** { *"key-a": null, "key-b": undefined, "key-c": "value-c", "key-d": 4* }*`;
+
+    const modeTests = [
+      {
+        mode: undefined,
+        expectedOutput: defaultOutput,
+      },
+      {
+        mode: MODE.TINY,
+        expectedOutput: `*Map*`,
+      },
+      {
+        mode: MODE.SHORT,
+        expectedOutput: defaultOutput,
+      },
+      {
+        mode: MODE.LONG,
+        expectedOutput: longOutput,
+      }
+    ];
+
+    testRepRenderModes(
+      modeTests,
+      "testObjectLink",
+      componentUnderTest,
+      getGripStub("testUninterestingEntries"),
+      {
+        objectLink: (props, ...children) => React.DOM.span({},
+          "*", ...children, "*"),
+      }
+    );
   }
 
   function getGripStub(functionName) {
@@ -566,6 +593,92 @@ window.onload = Task.async(function* () {
           }
         };
 
+      case "testDisconnectedNodeValuedMap":
+        return {
+          "type": "object",
+          "actor": "server1.conn1.child1/obj213",
+          "class": "Map",
+          "ownPropertyLength": 0,
+          "preview": {
+            "kind": "MapLike",
+            "size": 3,
+            "entries": [
+              [
+                "item-0",
+                {
+                  "type": "object",
+                  "actor": "server1.conn1.child1/obj214",
+                  "class": "HTMLButtonElement",
+                  "extensible": true,
+                  "frozen": false,
+                  "sealed": false,
+                  "ownPropertyLength": 0,
+                  "preview": {
+                    "kind": "DOMNode",
+                    "nodeType": 1,
+                    "nodeName": "button",
+                    "isConnected": false,
+                    "attributes": {
+                      "id": "btn-1",
+                      "class": "btn btn-log",
+                      "type": "button"
+                    },
+                    "attributesLength": 3
+                  }
+                }
+              ],
+              [
+                "item-1",
+                {
+                  "type": "object",
+                  "actor": "server1.conn1.child1/obj215",
+                  "class": "HTMLButtonElement",
+                  "extensible": true,
+                  "frozen": false,
+                  "sealed": false,
+                  "ownPropertyLength": 0,
+                  "preview": {
+                    "kind": "DOMNode",
+                    "nodeType": 1,
+                    "nodeName": "button",
+                    "isConnected": false,
+                    "attributes": {
+                      "id": "btn-2",
+                      "class": "btn btn-err",
+                      "type": "button"
+                    },
+                    "attributesLength": 3
+                  }
+                }
+              ],
+              [
+                "item-2",
+                {
+                  "type": "object",
+                  "actor": "server1.conn1.child1/obj216",
+                  "class": "HTMLButtonElement",
+                  "extensible": true,
+                  "frozen": false,
+                  "sealed": false,
+                  "ownPropertyLength": 0,
+                  "preview": {
+                    "kind": "DOMNode",
+                    "nodeType": 1,
+                    "nodeName": "button",
+                    "isConnected": false,
+                    "attributes": {
+                      "id": "btn-3",
+                      "class": "btn btn-count",
+                      "type": "button"
+                    },
+                    "attributesLength": 3
+                  }
+                }
+              ]
+            ]
+          }
+        };
+
       case "testNodeValuedMap":
         return {
           "type": "object",
@@ -590,6 +703,7 @@ window.onload = Task.async(function* () {
                     "kind": "DOMNode",
                     "nodeType": 1,
                     "nodeName": "button",
+                    "isConnected": true,
                     "attributes": {
                       "id": "btn-1",
                       "class": "btn btn-log",
@@ -613,6 +727,7 @@ window.onload = Task.async(function* () {
                     "kind": "DOMNode",
                     "nodeType": 1,
                     "nodeName": "button",
+                    "isConnected": true,
                     "attributes": {
                       "id": "btn-2",
                       "class": "btn btn-err",
@@ -636,6 +751,7 @@ window.onload = Task.async(function* () {
                     "kind": "DOMNode",
                     "nodeType": 1,
                     "nodeName": "button",
+                    "isConnected": true,
                     "attributes": {
                       "id": "btn-3",
                       "class": "btn btn-count",
@@ -672,6 +788,7 @@ window.onload = Task.async(function* () {
                     "kind": "DOMNode",
                     "nodeType": 1,
                     "nodeName": "button",
+                    "isConnected": true,
                     "attributes": {
                       "id": "btn-1",
                       "class": "btn btn-log",
@@ -695,6 +812,7 @@ window.onload = Task.async(function* () {
                     "kind": "DOMNode",
                     "nodeType": 1,
                     "nodeName": "button",
+                    "isConnected": true,
                     "attributes": {
                       "id": "btn-3",
                       "class": "btn btn-count",
@@ -718,6 +836,7 @@ window.onload = Task.async(function* () {
                     "kind": "DOMNode",
                     "nodeType": 1,
                     "nodeName": "button",
+                    "isConnected": true,
                     "attributes": {
                       "id": "btn-2",
                       "class": "btn btn-err",

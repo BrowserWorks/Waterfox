@@ -11,10 +11,9 @@ import java.net.URLConnection;
 import java.net.URLDecoder;
 import java.util.List;
 
-import org.json.JSONException;
-import org.json.JSONObject;
 import org.mozilla.gecko.AppConstants;
 import org.mozilla.gecko.EventDispatcher;
+import org.mozilla.gecko.GeckoActivityMonitor;
 import org.mozilla.gecko.GeckoAppShell;
 import org.mozilla.gecko.R;
 import org.mozilla.gecko.gfx.BitmapUtils;
@@ -24,6 +23,7 @@ import org.mozilla.gecko.util.EventCallback;
 import org.mozilla.gecko.util.GeckoBundle;
 import org.mozilla.gecko.util.ThreadUtils;
 
+import android.app.Activity;
 import android.app.PendingIntent;
 import android.content.ComponentName;
 import android.content.Context;
@@ -127,27 +127,22 @@ public final class NotificationHelper implements BundleEventListener {
     }
 
     public static void getArgsAndSendNotificationIntent(SafeIntent intent) {
-        final JSONObject args = new JSONObject();
+        final GeckoBundle args = new GeckoBundle(5);
         final Uri data = intent.getData();
 
         final String notificationType = data.getQueryParameter(EVENT_TYPE_ATTR);
 
-        try {
-            args.put(ID_ATTR, data.getQueryParameter(ID_ATTR));
-            args.put(EVENT_TYPE_ATTR, notificationType);
-            args.put(HANDLER_ATTR, data.getQueryParameter(HANDLER_ATTR));
-            args.put(COOKIE_ATTR, intent.getStringExtra(COOKIE_ATTR));
+        args.putString(ID_ATTR, data.getQueryParameter(ID_ATTR));
+        args.putString(EVENT_TYPE_ATTR, notificationType);
+        args.putString(HANDLER_ATTR, data.getQueryParameter(HANDLER_ATTR));
+        args.putString(COOKIE_ATTR, intent.getStringExtra(COOKIE_ATTR));
 
-            if (BUTTON_EVENT.equals(notificationType)) {
-                final String actionName = data.getQueryParameter(ACTION_ID_ATTR);
-                args.put(ACTION_ID_ATTR, actionName);
-            }
-
-            Log.i(LOGTAG, "Send " + args.toString());
-            GeckoAppShell.notifyObservers("Notification:Event", args.toString());
-        } catch (JSONException e) {
-            Log.e(LOGTAG, "Error building JSON notification arguments.", e);
+        if (BUTTON_EVENT.equals(notificationType)) {
+            final String actionName = data.getQueryParameter(ACTION_ID_ATTR);
+            args.putString(ACTION_ID_ATTR, actionName);
         }
+
+        EventDispatcher.getInstance().dispatch("Notification:Event", args);
     }
 
     public void handleNotificationIntent(SafeIntent i) {
@@ -196,8 +191,14 @@ public final class NotificationHelper implements BundleEventListener {
         notificationIntent.putExtra(COOKIE_ATTR, message.getString(COOKIE_ATTR, ""));
 
         // All intents get routed through the notificationReceiver. That lets us bail if we don't want to start Gecko
-        final ComponentName name = new ComponentName(
-                mContext, GeckoAppShell.getGeckoInterface().getActivity().getClass());
+        final Activity currentActivity =
+                GeckoActivityMonitor.getInstance().getCurrentActivity();
+        final ComponentName name;
+        if (currentActivity != null) {
+            name = new ComponentName(mContext, currentActivity.getClass());
+        } else {
+            name = new ComponentName(mContext, AppConstants.MOZ_ANDROID_BROWSER_INTENT_CLASS);
+        }
         notificationIntent.putExtra(ORIGINAL_EXTRA_COMPONENT, name);
 
         return notificationIntent;

@@ -18,7 +18,7 @@ namespace mozilla {
 namespace dom {
 
 HTMLFieldSetElement::HTMLFieldSetElement(already_AddRefed<mozilla::dom::NodeInfo>& aNodeInfo)
-  : nsGenericHTMLFormElement(aNodeInfo)
+  : nsGenericHTMLFormElement(aNodeInfo, NS_FORM_FIELDSET)
   , mElements(nullptr)
   , mFirstLegend(nullptr)
   , mInvalidElementsCount(0)
@@ -83,7 +83,8 @@ HTMLFieldSetElement::GetEventTargetParent(EventChainPreVisitor& aVisitor)
 
 nsresult
 HTMLFieldSetElement::AfterSetAttr(int32_t aNameSpaceID, nsIAtom* aName,
-                                  const nsAttrValue* aValue, bool aNotify)
+                                  const nsAttrValue* aValue,
+                                  const nsAttrValue* aOldValue, bool aNotify)
 {
   if (aNameSpaceID == kNameSpaceID_None && aName == nsGkAtoms::disabled &&
       nsINode::GetFirstChild()) {
@@ -100,7 +101,7 @@ HTMLFieldSetElement::AfterSetAttr(int32_t aNameSpaceID, nsIAtom* aName,
   }
 
   return nsGenericHTMLFormElement::AfterSetAttr(aNameSpaceID, aName,
-                                                aValue, aNotify);
+                                                aValue, aOldValue, aNotify);
 }
 
 // nsIDOMHTMLFieldSetElement

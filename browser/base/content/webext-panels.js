@@ -3,8 +3,13 @@
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
 
+// Via webext-panels.xul
+/* import-globals-from browser.js */
+/* import-globals-from nsContextMenu.js */
+
 XPCOMUtils.defineLazyModuleGetter(this, "ExtensionParent",
                                   "resource://gre/modules/ExtensionParent.jsm");
+
 Cu.import("resource://gre/modules/ExtensionUtils.jsm");
 
 var {
@@ -27,6 +32,7 @@ function getBrowser(sidebar) {
   browser.setAttribute("webextension-view-type", "sidebar");
   browser.setAttribute("context", "contentAreaContextMenu");
   browser.setAttribute("tooltip", "aHTMLTooltip");
+  browser.setAttribute("autocompletepopup", "PopupAutoComplete");
   browser.setAttribute("onclick", "window.parent.contentAreaClick(event, true);");
 
   let readyPromise;
@@ -36,6 +42,11 @@ function getBrowser(sidebar) {
                          E10SUtils.getRemoteTypeForURI(sidebar.uri, true,
                                                        E10SUtils.EXTENSION_REMOTE_TYPE));
     readyPromise = promiseEvent(browser, "XULFrameLoaderCreated");
+
+    window.messageManager.addMessageListener("contextmenu", openContextMenu);
+    window.addEventListener("unload", () => {
+      window.messageManager.removeMessageListener("contextmenu", openContextMenu);
+    }, {once: true});
   } else {
     readyPromise = Promise.resolve();
   }
@@ -44,6 +55,15 @@ function getBrowser(sidebar) {
   return readyPromise.then(() => {
     browser.messageManager.loadFrameScript("chrome://browser/content/content.js", false);
     ExtensionParent.apiManager.emit("extension-browser-inserted", browser);
+
+    if (sidebar.browserStyle) {
+      browser.messageManager.loadFrameScript(
+        "chrome://extensions/content/ext-browser-content.js", false);
+
+      browser.messageManager.sendAsyncMessage("Extension:InitBrowser", {
+        stylesheets: ExtensionParent.extensionStylesheets,
+      });
+    }
     return browser;
   });
 }
@@ -53,6 +73,7 @@ function loadWebPanel() {
   let sidebar = {
     uri: sidebarURI.searchParams.get("panel"),
     remote: sidebarURI.searchParams.get("remote"),
+    browserStyle: sidebarURI.searchParams.get("browser-style"),
   };
   getBrowser(sidebar).then(browser => {
     browser.loadURI(sidebar.uri);

@@ -1,4 +1,3 @@
-// |reftest| skip-if(!this.hasOwnProperty('Intl')) -- needs Intl
 // Copyright 2012 Mozilla Corporation. All rights reserved.
 // This code is governed by the BSD license found in the LICENSE file.
 
@@ -14,8 +13,6 @@ includes: [testIntl.js]
 taintProperties(["localeMatcher", "kn", "kf"]);
 
 var locale = new Intl.Collator(undefined, {localeMatcher: "lookup"}).resolvedOptions().locale;
-if (!isCanonicalizedStructurallyValidLanguageTag(locale)) {
-    $ERROR("Collator returns invalid locale " + locale + ".");
-}
+assert(isCanonicalizedStructurallyValidLanguageTag(locale), "Collator returns invalid locale " + locale + ".");
 
 reportCompare(0, 0);

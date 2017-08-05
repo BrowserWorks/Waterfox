@@ -7,14 +7,14 @@
 #ifndef jit_CacheIRSpewer_h
 #define jit_CacheIRSpewer_h
 
-#ifdef JS_JITSPEW
+#ifdef JS_CACHEIR_SPEW
 
 #include "mozilla/Maybe.h"
 
 #include "jit/CacheIR.h"
-#include "jit/JSONPrinter.h"
 #include "js/TypeDecls.h"
 #include "threading/LockGuard.h"
+#include "vm/JSONPrinter.h"
 #include "vm/MutexIDs.h"
 
 namespace js {
@@ -25,10 +25,14 @@ class CacheIRSpewer
     Mutex outputLock;
     Fprinter output;
     mozilla::Maybe<JSONPrinter> json;
+    static CacheIRSpewer cacheIRspewer;
 
   public:
+
     CacheIRSpewer();
     ~CacheIRSpewer();
+
+    static CacheIRSpewer& singleton() { return cacheIRspewer; }
 
     bool init();
     bool enabled() { return json.isSome(); }
@@ -37,17 +41,14 @@ class CacheIRSpewer
     Mutex& lock() { MOZ_ASSERT(enabled()); return outputLock; }
 
     void beginCache(LockGuard<Mutex>&, const IRGenerator& generator);
-    void valueProperty(LockGuard<Mutex>&, const char* name, HandleValue v);
+    void valueProperty(LockGuard<Mutex>&, const char* name, const Value& v);
     void attached(LockGuard<Mutex>&, const char* name);
     void endCache(LockGuard<Mutex>&);
 };
 
-CacheIRSpewer&
-GetCacheIRSpewerSingleton();
-
 } // namespace jit
 } // namespace js
 
-#endif /* JS_JITSPEW */
+#endif /* JS_CACHEIR_SPEW */
 
 #endif /* jit_CacheIRSpewer_h */

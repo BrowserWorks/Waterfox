@@ -36,7 +36,7 @@ function frameScript()
     addEventListener("unload", eventHandler, true);
     addEventListener("pagehide", eventHandler, false);
     addEventListener("pagehide", eventHandler, true);
-    Services.obs.addObserver(onOuterWindowDestroyed, "outer-window-destroyed", false);
+    Services.obs.addObserver(onOuterWindowDestroyed, "outer-window-destroyed");
 
     sendAsyncMessage("Test:Ready");
   }, true);
@@ -66,7 +66,7 @@ const EXPECTED = [
 function test() {
   waitForExplicitFinish();
 
-  var newTab = gBrowser.addTab("about:blank");
+  var newTab = BrowserTestUtils.addTab(gBrowser, "about:blank");
   gBrowser.selectedTab = newTab;
 
   let browser = newTab.linkedBrowser;

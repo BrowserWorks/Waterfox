@@ -9,7 +9,6 @@ config = {
         'checkout-sources',
         # 'setup-mock', windows do not use mock
         'build',
-        # 'generate-build-stats',
         'update',  # decided by query_is_nightly()
     ],
     'stage_platform': 'win32-st-an-debug',
@@ -27,7 +26,6 @@ clang.manifest",
         'BINSCOPE': 'C:/Program Files (x86)/Microsoft/SDL BinScope/BinScope.exe',
         'HG_SHARE_BASE_DIR': 'C:/builds/hg-shared',
         'MOZBUILD_STATE_PATH': os.path.join(os.getcwd(), '.mozbuild'),
-        'MOZ_AUTOMATION': '1',
         'MOZ_CRASHREPORTER_NO_REPORT': '1',
         'MOZ_OBJDIR': 'obj-firefox',
         'PATH': 'C:/mozilla-build/nsis-3.01;C:/mozilla-build/python27;'
@@ -41,5 +39,6 @@ clang.manifest",
     },
     'src_mozconfig': 'browser/config/mozconfigs/win32/debug-static-analysis',
     'purge_minsize': 9,
+    'artifact_flag_build_variant_in_try': None,
     #######################
 }

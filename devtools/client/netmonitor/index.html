@@ -1,0 +1,91 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+<!DOCTYPE html>
+<html dir="">
+  <head>
+    <link rel="stylesheet" href="chrome://devtools/content/shared/widgets/widgets.css"/>
+    <link rel="stylesheet" href="chrome://devtools/skin/widgets.css"/>
+    <link rel="stylesheet" href="chrome://devtools/content/netmonitor/src/assets/styles/netmonitor.css"/>
+    <script src="chrome://devtools/content/shared/theme-switching.js"></script>
+  </head>
+  <body class="theme-sidebar" role="application">
+    <div id="mount"></div>
+    <script>
+      "use strict";
+
+      const { BrowserLoader } = Components.utils.import("resource://devtools/client/shared/browser-loader.js", {});
+      const require = window.windowRequire = BrowserLoader({
+        baseURI: "resource://devtools/client/netmonitor/",
+        window,
+      }).require;
+
+      const EventEmitter = require("devtools/shared/event-emitter");
+      const { createFactory } = require("devtools/client/shared/vendor/react");
+      const { render, unmountComponentAtNode } = require("devtools/client/shared/vendor/react-dom");
+      const Provider = createFactory(require("devtools/client/shared/vendor/react-redux").Provider);
+      const { bindActionCreators } = require("devtools/client/shared/vendor/redux");
+      const { configureStore } = require("./src/utils/create-store");
+      const store = configureStore();
+      const actions = bindActionCreators(require("./src/actions/index"), store.dispatch);
+      const { onFirefoxConnect, onDisconnect } = require("./src/connector/index");
+
+      // Inject EventEmitter into global window.
+      EventEmitter.decorate(window);
+      // Inject to global window for testing
+      window.store = store;
+
+      window.Netmonitor = {
+        bootstrap({ toolbox }) {
+          this.mount = document.querySelector("#mount");
+          const connection = {
+            tabConnection: {
+              tabTarget: toolbox.target,
+            },
+            toolbox,
+          };
+          const App = createFactory(require("./src/components/app"));
+          const sourceMapService = toolbox.sourceMapURLService;
+          render(Provider({ store }, App({ sourceMapService })), this.mount);
+          return onFirefoxConnect(connection, actions, store.getState);
+        },
+
+        destroy() {
+          unmountComponentAtNode(this.mount);
+          return onDisconnect();
+        }
+      };
+
+      // Implement support for chrome://devtools/content/netmonitor/index.html?type=tab&id=1234 URLs
+      // where 1234 is the tab id, you can retrieve from about:debugging#tabs links.
+      // Simply copy the id from about:devtools-toolbox?type=tab&id=1234 URLs.
+
+      // URL constructor doesn't support chrome: scheme
+      let href = window.location.href.replace(/chrome:/, "http://");
+      let url = new window.URL(href);
+
+      // If query parameters are given in a chrome tab, the inspector is running in standalone.
+      if (window.location.protocol === "chrome:" && url.search.length > 1) {
+        const { targetFromURL } = require("devtools/client/framework/target-from-url");
+
+        (async function () {
+          let target = await targetFromURL(url);
+          // Start the network event listening as it is done in the toolbox code
+          await target.activeConsole.startListeners([
+            "NetworkActivity",
+          ]);
+          // Create a fake toolbox object
+          let toolbox = {
+            target,
+            viewSourceInDebugger() {
+              throw new Error("toolbox.viewSourceInDebugger is not implement from a tab");
+            }
+          };
+          window.Netmonitor.bootstrap({ toolbox });
+        })().catch(e => {
+          window.alert("Unable to start the network monitor:" + e.message + "\n" + e.stack);
+        });
+      }
+    </script>
+  </body>
+</html>

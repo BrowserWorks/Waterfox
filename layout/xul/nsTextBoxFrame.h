@@ -12,12 +12,11 @@ class nsAccessKeyInfo;
 class nsAsyncAccesskeyUpdate;
 class nsFontMetrics;
 
-class nsTextBoxFrame : public nsLeafBoxFrame
+class nsTextBoxFrame final : public nsLeafBoxFrame
 {
 public:
-  NS_DECL_QUERYFRAME_TARGET(nsTextBoxFrame)
   NS_DECL_QUERYFRAME
-  NS_DECL_FRAMEARENA_HELPERS
+  NS_DECL_FRAMEARENA_HELPERS(nsTextBoxFrame)
 
   virtual nsSize GetXULPrefSize(nsBoxLayoutState& aBoxLayoutState) override;
   virtual nsSize GetXULMinSize(nsBoxLayoutState& aBoxLayoutState) override;

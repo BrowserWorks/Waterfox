@@ -107,7 +107,8 @@ nsXULWindow::nsXULWindow(uint32_t aChromeFlags)
     mRegistered(false),
     mPersistentAttributesDirty(0),
     mPersistentAttributesMask(0),
-    mChromeFlags(aChromeFlags)
+    mChromeFlags(aChromeFlags),
+    mNextTabParentId(0)
 {
 }
 
@@ -239,7 +240,8 @@ NS_IMETHODIMP nsXULWindow::SetZLevel(uint32_t aLevel)
     if (doc) {
       ErrorResult rv;
       RefPtr<dom::Event> event =
-        doc->CreateEvent(NS_LITERAL_STRING("Events"),rv);
+        doc->CreateEvent(NS_LITERAL_STRING("Events"), dom::CallerType::System,
+                         rv);
       if (event) {
         event->InitEvent(NS_LITERAL_STRING("windowZLevel"), true, false);
 
@@ -381,11 +383,7 @@ NS_IMETHODIMP nsXULWindow::ShowModal()
 
   {
     AutoNoJSAPI nojsapi;
-    nsIThread *thread = NS_GetCurrentThread();
-    while (mContinueModalLoop) {
-      if (!NS_ProcessNextEvent(thread))
-        break;
-    }
+    SpinEventLoopUntil([&]() { return !mContinueModalLoop; });
   }
 
   mContinueModalLoop = false;
@@ -913,7 +911,7 @@ NS_IMETHODIMP nsXULWindow::SetTitle(const char16_t* aTitle)
 {
   NS_ENSURE_STATE(mWindow);
   mTitle.Assign(aTitle);
-  mTitle.StripChars("\n\r");
+  mTitle.StripCRLF();
   NS_ENSURE_SUCCESS(mWindow->SetTitle(mTitle), NS_ERROR_FAILURE);
 
   // Tell the window mediator that a title has changed
@@ -997,6 +995,94 @@ NS_IMETHODIMP nsXULWindow::EnsureAuthPrompter()
   }
   return mAuthPrompter ? NS_OK : NS_ERROR_FAILURE;
 }
+
+NS_IMETHODIMP nsXULWindow::GetAvailScreenSize(int32_t* aAvailWidth, int32_t* aAvailHeight)
+{
+  nsresult rv;
+
+  nsCOMPtr<mozIDOMWindowProxy> domWindow;
+  GetWindowDOMWindow(getter_AddRefs(domWindow));
+  NS_ENSURE_STATE(domWindow);
+
+  auto* window = nsPIDOMWindowOuter::From(domWindow);
+  NS_ENSURE_STATE(window);
+
+  nsCOMPtr<nsIDOMScreen> screen = window->GetScreen();
+  NS_ENSURE_STATE(screen);
+
+  rv = screen->GetAvailWidth(aAvailWidth);
+  NS_ENSURE_SUCCESS(rv, rv);
+
+  rv = screen->GetAvailHeight(aAvailHeight);
+  NS_ENSURE_SUCCESS(rv, rv);
+
+  return NS_OK;
+}
+
+// Rounds window size to 1000x1000, or, if there isn't enough available
+// screen space, to a multiple of 200x100.
+NS_IMETHODIMP nsXULWindow::ForceRoundedDimensions()
+{
+  if (mIsHiddenWindow) {
+    return NS_OK;
+  }
+
+  int32_t availWidthCSS    = 0;
+  int32_t availHeightCSS   = 0;
+  int32_t contentWidthCSS  = 0;
+  int32_t contentHeightCSS = 0;
+  int32_t windowWidthCSS   = 0;
+  int32_t windowHeightCSS  = 0;
+  double devicePerCSSPixels = 1.0;
+
+  GetUnscaledDevicePixelsPerCSSPixel(&devicePerCSSPixels);
+
+  GetAvailScreenSize(&availWidthCSS, &availHeightCSS);
+
+  // To get correct chrome size, we have to resize the window to a proper
+  // size first. So, here, we size it to its available size.
+  SetSpecifiedSize(availWidthCSS, availHeightCSS);
+
+  // Get the current window size for calculating chrome UI size.
+  GetSize(&windowWidthCSS, &windowHeightCSS); // device pixels
+  windowWidthCSS = NSToIntRound(windowWidthCSS / devicePerCSSPixels);
+  windowHeightCSS = NSToIntRound(windowHeightCSS / devicePerCSSPixels);
+
+  // Get the content size for calculating chrome UI size.
+  GetPrimaryContentSize(&contentWidthCSS, &contentHeightCSS);
+
+  // Calculate the chrome UI size.
+  int32_t chromeWidth = 0, chromeHeight = 0;
+  chromeWidth = windowWidthCSS - contentWidthCSS;
+  chromeHeight = windowHeightCSS - contentHeightCSS;
+
+  int32_t targetContentWidth = 0, targetContentHeight = 0;
+
+  // Here, we use the available screen dimensions as the input dimensions to
+  // force the window to be rounded as the maximum available content size.
+  nsContentUtils::CalcRoundedWindowSizeForResistingFingerprinting(
+    chromeWidth,
+    chromeHeight,
+    availWidthCSS,
+    availHeightCSS,
+    availWidthCSS,
+    availHeightCSS,
+    false, // aSetOuterWidth
+    false, // aSetOuterHeight
+    &targetContentWidth,
+    &targetContentHeight
+  );
+
+  targetContentWidth = NSToIntRound(targetContentWidth * devicePerCSSPixels);
+  targetContentHeight = NSToIntRound(targetContentHeight * devicePerCSSPixels);
+
+  SetPrimaryContentSize(targetContentWidth, targetContentHeight);
+
+  mIgnoreXULSize = true;
+  mIgnoreXULSizeMode = true;
+
+  return NS_OK;
+}
  
 void nsXULWindow::OnChromeLoaded()
 {
@@ -1009,8 +1095,15 @@ void nsXULWindow::OnChromeLoaded()
 
     int32_t specWidth = -1, specHeight = -1;
     bool gotSize = false;
+    bool isContent = false;
 
-    if (!mIgnoreXULSize) {
+    GetHasPrimaryContent(&isContent);
+
+    // If this window has a primary content and fingerprinting resistance is
+    // enabled, we enforce this window to rounded dimensions.
+    if (isContent && nsContentUtils::ShouldResistFingerprinting()) {
+      ForceRoundedDimensions();
+    } else if (!mIgnoreXULSize) {
       gotSize = LoadSizeFromXUL(specWidth, specHeight);
     }
 
@@ -1202,22 +1295,15 @@ void
 nsXULWindow::SetSpecifiedSize(int32_t aSpecWidth, int32_t aSpecHeight)
 {
   // constrain to screen size
-  nsCOMPtr<mozIDOMWindowProxy> domWindow;
-  GetWindowDOMWindow(getter_AddRefs(domWindow));
-  if (domWindow) {
-    auto* window = nsPIDOMWindowOuter::From(domWindow);
-    nsCOMPtr<nsIDOMScreen> screen = window->GetScreen();
-    if (screen) {
-      int32_t screenWidth;
-      int32_t screenHeight;
-      screen->GetAvailWidth(&screenWidth); // CSS pixels
-      screen->GetAvailHeight(&screenHeight);
-      if (aSpecWidth > screenWidth) {
-        aSpecWidth = screenWidth;
-      }
-      if (aSpecHeight > screenHeight) {
-        aSpecHeight = screenHeight;
-      }
+  int32_t screenWidth;
+  int32_t screenHeight;
+
+  if (NS_SUCCEEDED(GetAvailScreenSize(&screenWidth, &screenHeight))) {
+    if (aSpecWidth > screenWidth) {
+      aSpecWidth = screenWidth;
+    }
+    if (aSpecHeight > screenHeight) {
+      aSpecHeight = screenHeight;
     }
   }
 
@@ -1711,7 +1797,8 @@ nsXULWindow::GetPrimaryTabParentSize(int32_t* aWidth,
                                      int32_t* aHeight)
 {
   TabParent* tabParent = TabParent::GetFrom(mPrimaryTabParent);
-  Element* element = tabParent->GetOwnerElement();
+  // Need strong ref, since Client* can run script.
+  nsCOMPtr<Element> element = tabParent->GetOwnerElement();
   NS_ENSURE_STATE(element);
 
   *aWidth = element->ClientWidth();
@@ -1818,13 +1905,17 @@ NS_IMETHODIMP nsXULWindow::ExitModalLoop(nsresult aStatus)
 NS_IMETHODIMP nsXULWindow::CreateNewWindow(int32_t aChromeFlags,
                                            nsITabParent *aOpeningTab,
                                            mozIDOMWindowProxy *aOpener,
+                                           uint64_t aNextTabParentId,
                                            nsIXULWindow **_retval)
 {
   NS_ENSURE_ARG_POINTER(_retval);
 
-  if (aChromeFlags & nsIWebBrowserChrome::CHROME_OPENAS_CHROME)
+  if (aChromeFlags & nsIWebBrowserChrome::CHROME_OPENAS_CHROME) {
+    MOZ_RELEASE_ASSERT(aNextTabParentId == 0,
+                       "Unexpected next tab parent ID, should never have a non-zero nextTabParentId when creating a new chrome window");
     return CreateNewChromeWindow(aChromeFlags, aOpeningTab, aOpener, _retval);
-  return CreateNewContentWindow(aChromeFlags, aOpeningTab, aOpener, _retval);
+  }
+  return CreateNewContentWindow(aChromeFlags, aOpeningTab, aOpener, aNextTabParentId, _retval);
 }
 
 NS_IMETHODIMP nsXULWindow::CreateNewChromeWindow(int32_t aChromeFlags,
@@ -1854,6 +1945,7 @@ NS_IMETHODIMP nsXULWindow::CreateNewChromeWindow(int32_t aChromeFlags,
 NS_IMETHODIMP nsXULWindow::CreateNewContentWindow(int32_t aChromeFlags,
                                                   nsITabParent *aOpeningTab,
                                                   mozIDOMWindowProxy *aOpener,
+                                                  uint64_t aNextTabParentId,
                                                   nsIXULWindow **_retval)
 {
   nsCOMPtr<nsIAppShellService> appShell(do_GetService(NS_APPSHELLSERVICE_CONTRACTID));
@@ -1899,6 +1991,10 @@ NS_IMETHODIMP nsXULWindow::CreateNewContentWindow(int32_t aChromeFlags,
                                    (static_cast<nsIXULWindow*>
                                                (newWindow));
 
+  if (aNextTabParentId) {
+    xulWin->mNextTabParentId = aNextTabParentId;
+  }
+
   if (aOpener) {
     nsCOMPtr<nsIDocShell> docShell;
     xulWin->GetDocShell(getter_AddRefs(docShell));
@@ -1914,14 +2010,11 @@ NS_IMETHODIMP nsXULWindow::CreateNewContentWindow(int32_t aChromeFlags,
 
   {
     AutoNoJSAPI nojsapi;
-    nsIThread *thread = NS_GetCurrentThread();
-    while (xulWin->IsLocked()) {
-      if (!NS_ProcessNextEvent(thread))
-        break;
-    }
+    SpinEventLoopUntil([&]() { return !xulWin->IsLocked(); });
   }
 
   NS_ENSURE_STATE(xulWin->mPrimaryContentShell || xulWin->mPrimaryTabParent);
+  MOZ_ASSERT_IF(xulWin->mPrimaryContentShell, aNextTabParentId == 0);
 
   *_retval = newWindow;
   NS_ADDREF(*_retval);
@@ -2068,7 +2161,7 @@ void nsXULWindow::PlaceWindowLayersBehind(uint32_t aLowLevel,
 
   // get next lower window
   bool more;
-  while (windowEnumerator->HasMoreElements(&more), more) {
+  while (NS_SUCCEEDED(windowEnumerator->HasMoreElements(&more)) && more) {
     uint32_t nextZ; // z-level of nextWindow
     nsCOMPtr<nsISupports> nextWindow;
     windowEnumerator->GetNext(getter_AddRefs(nextWindow));
@@ -2222,3 +2315,10 @@ nsXULWindow::GetTabCount(uint32_t* aResult)
   return NS_OK;
 }
 
+nsresult
+nsXULWindow::GetNextTabParentId(uint64_t* aNextTabParentId)
+{
+  NS_ENSURE_ARG_POINTER(aNextTabParentId);
+  *aNextTabParentId = mNextTabParentId;
+  return NS_OK;
+}

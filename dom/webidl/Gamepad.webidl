@@ -11,6 +11,7 @@
 [Pref="dom.gamepad.enabled"]
 interface GamepadButton {
   readonly    attribute boolean pressed;
+  readonly    attribute boolean touched;
   readonly    attribute double  value;
 };
 
@@ -80,4 +81,11 @@ interface Gamepad {
    */
   [Pref="dom.gamepad.extensions.enabled"]
   readonly attribute GamepadPose? pose;
+
+  /**
+   * The current haptic actuator of the device, an array of
+   * GamepadHapticActuator.
+   */
+  [Constant, Cached, Frozen, Pref="dom.gamepad.extensions.enabled"]
+  readonly attribute sequence<GamepadHapticActuator> hapticActuators;
 };

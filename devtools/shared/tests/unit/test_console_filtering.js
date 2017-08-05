@@ -16,8 +16,7 @@ var callback = {
       do_check_eq(message.level, "warn");
       do_check_eq(message.arguments[0], "Warning from foo");
       seenTypes |= 1;
-    } else if (message.originAttributes &&
-              message.originAttributes.addonId == "bar") {
+    } else if (message.addonId == "bar") {
       do_check_eq(message.level, "error");
       do_check_eq(message.arguments[0], "Error from bar");
       seenTypes |= 2;
@@ -30,11 +29,31 @@ var callback = {
   }
 };
 
+let policy;
+do_register_cleanup(() => {
+  policy.active = false;
+});
+
 function createFakeAddonWindow({addonId} = {}) {
-  let baseURI = Services.io.newURI("about:blank");
-  let originAttributes = {addonId};
+  const uuidGen = Cc["@mozilla.org/uuid-generator;1"].getService(Ci.nsIUUIDGenerator);
+  const uuid = uuidGen.generateUUID().number.slice(1, -1);
+
+  if (policy) {
+    policy.active = false;
+  }
+  /* globals MatchPatternSet, WebExtensionPolicy */
+  policy = new WebExtensionPolicy({
+    id: addonId,
+    mozExtensionHostname: uuid,
+    baseURL: "file:///",
+    allowedOrigins: new MatchPatternSet([]),
+    localizeCallback() {},
+  });
+  policy.active = true;
+
+  let baseURI = Services.io.newURI(`moz-extension://${uuid}/`);
   let principal = Services.scriptSecurityManager
-        .createCodebasePrincipal(baseURI, originAttributes);
+        .createCodebasePrincipal(baseURI, {});
   let chromeWebNav = Services.appShell.createWindowlessBrowser(true);
   let docShell = chromeWebNav.QueryInterface(Ci.nsIInterfaceRequestor)
                              .getInterface(Ci.nsIDocShell);

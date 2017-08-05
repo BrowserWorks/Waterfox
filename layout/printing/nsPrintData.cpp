@@ -24,17 +24,25 @@ static mozilla::LazyLogModule gPrintingLog("printing");
 //---------------------------------------------------
 //-- nsPrintData Class Impl
 //---------------------------------------------------
-nsPrintData::nsPrintData(ePrintDataType aType) :
-  mType(aType), mDebugFilePtr(nullptr), mPrintObject(nullptr), mSelectedPO(nullptr),
-  mPrintDocList(0), mIsIFrameSelected(false),
-  mIsParentAFrameSet(false), mOnStartSent(false),
-  mIsAborted(false), mPreparingForPrint(false), mDocWasToBeDestroyed(false),
-  mShrinkToFit(false), mPrintFrameType(nsIPrintSettings::kFramesAsIs), 
-  mNumPrintablePages(0), mNumPagesPrinted(0),
-  mShrinkRatio(1.0), mOrigDCScale(1.0), mPPEventListeners(nullptr), 
-  mBrandName(nullptr)
+nsPrintData::nsPrintData(ePrintDataType aType)
+  : mType(aType)
+  , mDebugFilePtr(nullptr)
+  , mPrintDocList(0)
+  , mIsIFrameSelected(false)
+  , mIsParentAFrameSet(false)
+  , mOnStartSent(false)
+  , mIsAborted(false)
+  , mPreparingForPrint(false)
+  , mDocWasToBeDestroyed(false)
+  , mShrinkToFit(false)
+  , mPrintFrameType(nsIPrintSettings::kFramesAsIs)
+  , mNumPrintablePages(0)
+  , mNumPagesPrinted(0)
+  , mShrinkRatio(1.0)
+  , mOrigDCScale(1.0)
+  , mPPEventListeners(nullptr)
+  , mBrandName(nullptr)
 {
-  MOZ_COUNT_CTOR(nsPrintData);
   nsCOMPtr<nsIStringBundle> brandBundle;
   nsCOMPtr<nsIStringBundleService> svc =
     mozilla::services::GetStringBundleService();
@@ -53,7 +61,6 @@ nsPrintData::nsPrintData(ePrintDataType aType) :
 
 nsPrintData::~nsPrintData()
 {
-  MOZ_COUNT_DTOR(nsPrintData);
   // remove the event listeners
   if (mPPEventListeners) {
     mPPEventListeners->RemoveListeners();
@@ -77,15 +84,13 @@ nsPrintData::~nsPrintData()
       if (!isCancelled && !mIsAborted) {
         rv = mPrintDC->EndDocument();
       } else {
-        rv = mPrintDC->AbortDocument();  
+        rv = mPrintDC->AbortDocument();
       }
       if (NS_FAILED(rv)) {
         // XXX nsPrintData::ShowPrintErrorDialog(rv);
       }
     }
   }
-
-  delete mPrintObject;
 
   if (mBrandName) {
     free(mBrandName);
@@ -112,11 +117,17 @@ nsPrintData::DoOnProgressChange(int32_t      aProgress,
                                 bool         aDoStartStop,
                                 int32_t      aFlag)
 {
-  for (int32_t i=0;i<mPrintProgressListeners.Count();i++) {
-    nsIWebProgressListener* wpl = mPrintProgressListeners.ObjectAt(i);
-    wpl->OnProgressChange(nullptr, nullptr, aProgress, aMaxProgress, aProgress, aMaxProgress);
+  size_t numberOfListeners = mPrintProgressListeners.Length();
+  for (size_t i = 0; i < numberOfListeners; ++i) {
+    nsCOMPtr<nsIWebProgressListener> listener =
+      mPrintProgressListeners.SafeElementAt(i);
+    if (NS_WARN_IF(!listener)) {
+      continue;
+    }
+    listener->OnProgressChange(nullptr, nullptr, aProgress, aMaxProgress,
+                               aProgress, aMaxProgress);
     if (aDoStartStop) {
-      wpl->OnStateChange(nullptr, nullptr, aFlag, NS_OK);
+      listener->OnStateChange(nullptr, nullptr, aFlag, NS_OK);
     }
   }
 }
@@ -124,12 +135,14 @@ nsPrintData::DoOnProgressChange(int32_t      aProgress,
 void
 nsPrintData::DoOnStatusChange(nsresult aStatus)
 {
-  uint32_t numberOfListeners = mPrintProgressListeners.Length();
-  for (uint32_t i = 0; i < numberOfListeners; ++i) {
-    nsIWebProgressListener* listener = mPrintProgressListeners.SafeElementAt(i);
-    if (listener) {
-      listener->OnStatusChange(nullptr, nullptr, aStatus, nullptr);
+  size_t numberOfListeners = mPrintProgressListeners.Length();
+  for (size_t i = 0; i < numberOfListeners; ++i) {
+    nsCOMPtr<nsIWebProgressListener> listener =
+      mPrintProgressListeners.SafeElementAt(i);
+    if (NS_WARN_IF(!listener)) {
+      continue;
     }
+    listener->OnStatusChange(nullptr, nullptr, aStatus, nullptr);
   }
 }
 

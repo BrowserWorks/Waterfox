@@ -50,6 +50,28 @@ InitIntlClass(JSContext* cx, HandleObject obj);
  */
 class SharedIntlData
 {
+    struct LinearStringLookup
+    {
+        union {
+            const JS::Latin1Char* latin1Chars;
+            const char16_t* twoByteChars;
+        };
+        bool isLatin1;
+        size_t length;
+        JS::AutoCheckCannotGC nogc;
+        HashNumber hash = 0;
+
+        explicit LinearStringLookup(JSLinearString* string)
+          : isLatin1(string->hasLatin1Chars()), length(string->length())
+        {
+            if (isLatin1)
+                latin1Chars = string->latin1Chars(nogc);
+            else
+                twoByteChars = string->twoByteChars(nogc);
+        }
+    };
+
+  private:
     /**
      * Information tracking the set of the supported time zone names, derived
      * from the IANA time zone database <https://www.iana.org/time-zones>.
@@ -79,17 +101,8 @@ class SharedIntlData
 
     struct TimeZoneHasher
     {
-        struct Lookup
+        struct Lookup : LinearStringLookup
         {
-            union {
-                const JS::Latin1Char* latin1Chars;
-                const char16_t* twoByteChars;
-            };
-            bool isLatin1;
-            size_t length;
-            JS::AutoCheckCannotGC nogc;
-            HashNumber hash;
-
             explicit Lookup(JSLinearString* timeZone);
         };
 
@@ -157,7 +170,7 @@ class SharedIntlData
      * isn't a valid IANA time zone name, |result| remains unchanged.
      */
     bool validateTimeZoneName(JSContext* cx, JS::HandleString timeZone,
-                              JS::MutableHandleString result);
+                              MutableHandleAtom result);
 
     /**
      * Returns the canonical time zone name in |result|. If no canonical name
@@ -169,6 +182,57 @@ class SharedIntlData
     bool tryCanonicalizeTimeZoneConsistentWithIANA(JSContext* cx, JS::HandleString timeZone,
                                                    MutableHandleAtom result);
 
+  private:
+    /**
+     * The case first parameter (BCP47 key "kf") allows to switch the order of
+     * upper- and lower-case characters. ICU doesn't directly provide an API
+     * to query the default case first value of a given locale, but instead
+     * requires to instantiate a collator object and then query the case first
+     * attribute (UCOL_CASE_FIRST).
+     * To avoid instantiating an additional collator object whenever we need
+     * to retrieve the default case first value of a specific locale, we
+     * compute the default case first value for every supported locale only
+     * once and then keep a list of all locales which don't use the default
+     * case first setting.
+     * There is almost no difference between lower-case first and when case
+     * first is disabled (UCOL_LOWER_FIRST resp. UCOL_OFF), so we only need to
+     * track locales which use upper-case first as their default setting.
+     */
+
+    using Locale = JSAtom*;
+
+    struct LocaleHasher
+    {
+        struct Lookup : LinearStringLookup
+        {
+            explicit Lookup(JSLinearString* locale);
+        };
+
+        static js::HashNumber hash(const Lookup& lookup) { return lookup.hash; }
+        static bool match(Locale key, const Lookup& lookup);
+    };
+
+    using LocaleSet = js::GCHashSet<Locale,
+                                    LocaleHasher,
+                                    js::SystemAllocPolicy>;
+
+    LocaleSet upperCaseFirstLocales;
+
+    bool upperCaseFirstInitialized = false;
+
+    /**
+     * Precomputes the available locales which use upper-case first sorting.
+     */
+    bool ensureUpperCaseFirstLocales(JSContext* cx);
+
+  public:
+    /**
+     * Sets |isUpperFirst| to true if |locale| sorts upper-case characters
+     * before lower-case characters.
+     */
+    bool isUpperCaseFirst(JSContext* cx, JS::HandleString locale, bool* isUpperFirst);
+
+  public:
     void destroyInstance();
 
     void trace(JSTracer* trc);
@@ -245,6 +309,15 @@ intl_availableCollations(JSContext* cx, unsigned argc, Value* vp);
  */
 extern MOZ_MUST_USE bool
 intl_CompareStrings(JSContext* cx, unsigned argc, Value* vp);
+
+/**
+ * Returns true if the given locale sorts upper-case before lower-case
+ * characters.
+ *
+ * Usage: result = intl_isUpperCaseFirst(locale)
+ */
+extern MOZ_MUST_USE bool
+intl_isUpperCaseFirst(JSContext* cx, unsigned argc, Value* vp);
 
 
 /******************** NumberFormat ********************/
@@ -361,6 +434,16 @@ intl_DateTimeFormat_availableLocales(JSContext* cx, unsigned argc, Value* vp);
  */
 extern MOZ_MUST_USE bool
 intl_availableCalendars(JSContext* cx, unsigned argc, Value* vp);
+
+/**
+ * Returns the calendar type identifier per Unicode Technical Standard 35,
+ * Unicode Locale Data Markup Language, for the default calendar for the given
+ * locale.
+ *
+ * Usage: calendar = intl_defaultCalendar(locale)
+ */
+extern MOZ_MUST_USE bool
+intl_defaultCalendar(JSContext* cx, unsigned argc, Value* vp);
 
 /**
  * 6.4.1 IsValidTimeZoneName ( timeZone )
@@ -593,6 +676,27 @@ intl_GetLocaleInfo(JSContext* cx, unsigned argc, Value* vp);
  */
 extern MOZ_MUST_USE bool
 intl_ComputeDisplayNames(JSContext* cx, unsigned argc, Value* vp);
+
+
+/******************** String ********************/
+
+/**
+ * Returns the input string converted to lower case based on the language
+ * specific case mappings for the input locale.
+ *
+ * Usage: lowerCase = intl_toLocaleLowerCase(string, locale)
+ */
+extern MOZ_MUST_USE bool
+intl_toLocaleLowerCase(JSContext* cx, unsigned argc, Value* vp);
+
+/**
+ * Returns the input string converted to upper case based on the language
+ * specific case mappings for the input locale.
+ *
+ * Usage: upperCase = intl_toLocaleUpperCase(string, locale)
+ */
+extern MOZ_MUST_USE bool
+intl_toLocaleUpperCase(JSContext* cx, unsigned argc, Value* vp);
 
 #if ENABLE_INTL_API
 /**

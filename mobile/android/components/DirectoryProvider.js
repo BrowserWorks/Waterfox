@@ -113,13 +113,9 @@ DirectoryProvider.prototype = {
       return;
 
     let curLocale = "";
-    try {
-      curLocale = Services.prefs.getComplexValue("general.useragent.locale", Ci.nsIPrefLocalizedString).data;
-    } catch (e) {
-      try {
-        curLocale = Services.prefs.getCharPref("general.useragent.locale");
-      } catch (ee) {
-      }
+    let reqLocales = Services.locales.getRequestedLocales();
+    if (reqLocales.length > 0) {
+      curLocale = reqLocales[0];
     }
 
     if (curLocale) {

@@ -83,7 +83,8 @@ protected:
 
 public:
 
-  virtual nsresult Clone(mozilla::dom::NodeInfo *aNodeInfo, nsINode **aResult) const MOZ_MUST_OVERRIDE override;
+  virtual nsresult Clone(mozilla::dom::NodeInfo *aNodeInfo, nsINode **aResult,
+                         bool aPreallocateChildren) const MOZ_MUST_OVERRIDE override;
 
   typedef mozilla::SVGNumberList SVGNumberList;
   typedef mozilla::SVGAnimatedNumberList SVGAnimatedNumberList;
@@ -114,6 +115,12 @@ public:
 
   virtual bool IsNodeOfType(uint32_t aFlags) const override;
 
+  /**
+   * We override the default to unschedule computation of Servo declaration blocks
+   * when adopted across documents.
+   */
+  virtual void NodeInfoChanged(nsIDocument* aOldDoc) override;
+
   NS_IMETHOD WalkContentStyleRules(nsRuleWalker* aRuleWalker) override;
   void WalkAnimatedContentStyleRules(nsRuleWalker* aRuleWalker);
 
@@ -135,6 +142,8 @@ public:
   NS_FORWARD_NSIDOMNODE_TO_NSINODE
   NS_FORWARD_NSIDOMELEMENT_TO_GENERIC
   NS_DECL_NSIDOMSVGELEMENT
+
+  NS_IMPL_FROMCONTENT(nsSVGElement, kNameSpaceID_SVG)
 
   // Gets the element that establishes the rectangular viewport against which
   // we should resolve percentage lengths (our "coordinate context"). Returns
@@ -284,7 +293,8 @@ public:
     return nullptr;
   }
 
-  virtual nsISMILAttr* GetAnimatedAttr(int32_t aNamespaceID, nsIAtom* aName) override;
+  mozilla::UniquePtr<nsISMILAttr> GetAnimatedAttr(int32_t aNamespaceID,
+                                                  nsIAtom* aName) override;
   void AnimationNeedsResample();
   void FlushAnimations();
 
@@ -322,6 +332,9 @@ public:
   virtual bool IsSVGFocusable(bool* aIsFocusable, int32_t* aTabIndex);
   virtual bool IsFocusableInternal(int32_t* aTabIndex, bool aWithMouse) override;
 
+  void UpdateContentDeclarationBlock(mozilla::StyleBackendType aBackend);
+  const mozilla::DeclarationBlock* GetContentDeclarationBlock() const;
+
 protected:
   virtual JSObject* WrapNode(JSContext *cx, JS::Handle<JSObject*> aGivenProto) override;
 
@@ -332,23 +345,21 @@ protected:
   // BeforeSetAttr since it would involve allocating extra SVG value types.
   // See the comment in nsSVGElement::WillChangeValue.
   virtual nsresult BeforeSetAttr(int32_t aNamespaceID, nsIAtom* aName,
-                                 nsAttrValueOrString* aValue,
+                                 const nsAttrValueOrString* aValue,
                                  bool aNotify) override final
   {
     return nsSVGElementBase::BeforeSetAttr(aNamespaceID, aName, aValue, aNotify);
   }
 #endif // DEBUG
   virtual nsresult AfterSetAttr(int32_t aNamespaceID, nsIAtom* aName,
-                                const nsAttrValue* aValue, bool aNotify) override;
+                                const nsAttrValue* aValue,
+                                const nsAttrValue* aOldValue,
+                                bool aNotify) override;
   virtual bool ParseAttribute(int32_t aNamespaceID, nsIAtom* aAttribute,
                                 const nsAString& aValue, nsAttrValue& aResult) override;
   static nsresult ReportAttributeParseFailure(nsIDocument* aDocument,
                                               nsIAtom* aAttribute,
                                               const nsAString& aValue);
-
-  void UpdateContentDeclarationBlock();
-  void UpdateAnimatedContentDeclarationBlock();
-  mozilla::DeclarationBlock* GetAnimatedContentDeclarationBlock();
 
   nsAttrValue WillChangeValue(nsIAtom* aName);
   // aNewValue is set to the old value. This value may be invalid if

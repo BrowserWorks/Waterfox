@@ -33,6 +33,7 @@ function unsetE10sPrefs() {
 }
 
 // Load the shared-head file first.
+/* import-globals-from shared-head.js */
 Services.scriptloader.loadSubScript(
   'chrome://mochitests/content/browser/accessible/tests/browser/shared-head.js',
   this);
@@ -47,7 +48,7 @@ function a11yInitOrShutdownPromise() {
       Services.obs.removeObserver(observe, 'a11y-init-or-shutdown');
       resolve(data);
     };
-    Services.obs.addObserver(observe, 'a11y-init-or-shutdown', false);
+    Services.obs.addObserver(observe, 'a11y-init-or-shutdown');
   });
 }
 
@@ -109,7 +110,7 @@ function shutdownPromise(contentBrowser) {
 
 /**
  * Simpler verions of waitForEvent defined in
- * accessible/tests/browser/e10s/events.js
+ * accessible/tests/browser/events.js
  */
 function waitForEvent(eventType, expectedId) {
   return new Promise(resolve => {
@@ -123,7 +124,7 @@ function waitForEvent(eventType, expectedId) {
         }
       }
     };
-    Services.obs.addObserver(eventObserver, 'accessible-event', false);
+    Services.obs.addObserver(eventObserver, 'accessible-event');
   });
 }
 
@@ -132,9 +133,9 @@ function waitForEvent(eventType, expectedId) {
  */
 function forceGC() {
   SpecialPowers.gc();
-  SpecialPowers.forceGC();
+  SpecialPowers.forceShrinkingGC();
   SpecialPowers.forceCC();
   SpecialPowers.gc();
-  SpecialPowers.forceGC();
+  SpecialPowers.forceShrinkingGC();
   SpecialPowers.forceCC();
 }

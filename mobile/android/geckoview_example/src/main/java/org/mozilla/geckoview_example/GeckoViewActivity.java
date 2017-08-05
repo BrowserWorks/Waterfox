@@ -6,94 +6,95 @@
 package org.mozilla.geckoview_example;
 
 import android.app.Activity;
-import android.app.AlertDialog;
-import android.content.DialogInterface;
+import android.content.Intent;
+import android.net.Uri;
 import android.os.Bundle;
+import android.os.SystemClock;
 import android.util.Log;
-import android.widget.Toast;
+import android.view.WindowManager;
 
-import org.mozilla.gecko.BaseGeckoInterface;
-import org.mozilla.gecko.GeckoProfile;
-import org.mozilla.gecko.GeckoThread;
 import org.mozilla.gecko.GeckoView;
-
-import static org.mozilla.gecko.GeckoView.setGeckoInterface;
+import org.mozilla.gecko.GeckoViewSettings;
 
 public class GeckoViewActivity extends Activity {
     private static final String LOGTAG = "GeckoViewActivity";
+    private static final String DEFAULT_URL = "https://mozilla.org";
+    private static final String USE_MULTIPROCESS_EXTRA = "use_multiprocess";
 
-    GeckoView mGeckoView;
+    /* package */ static final int REQUEST_FILE_PICKER = 1;
+
+    private GeckoView mGeckoView;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
+        Log.i(LOGTAG, "zerdatime " + SystemClock.elapsedRealtime() +
+              " - application start");
 
-        setGeckoInterface(new BaseGeckoInterface(this));
+        if (BuildConfig.DEBUG) {
+            // In debug builds, we want to load JavaScript resources fresh with each build.
+            GeckoView.preload(this, "-purgecaches");
+        }
 
         setContentView(R.layout.geckoview_activity);
 
         mGeckoView = (GeckoView) findViewById(R.id.gecko_view);
-        mGeckoView.setChromeDelegate(new MyGeckoViewChrome());
         mGeckoView.setContentListener(new MyGeckoViewContent());
         mGeckoView.setProgressListener(new MyGeckoViewProgress());
+
+        final BasicGeckoViewPrompt prompt = new BasicGeckoViewPrompt();
+        prompt.filePickerRequestCode = REQUEST_FILE_PICKER;
+        mGeckoView.setPromptDelegate(prompt);
+
+        loadFromIntent(getIntent());
     }
 
     @Override
-    protected void onStart() {
-        super.onStart();
+    protected void onNewIntent(final Intent intent) {
+        super.onNewIntent(intent);
+        setIntent(intent);
 
-        final GeckoProfile profile = GeckoProfile.get(getApplicationContext());
-
-        GeckoThread.initMainProcess(profile, /* args */ null, /* debugging */ false);
-        GeckoThread.launch();
+        if (intent.getData() != null) {
+            loadFromIntent(intent);
+        }
     }
 
-    private class MyGeckoViewChrome implements GeckoView.ChromeDelegate {
-        @Override
-        public void onAlert(GeckoView view, String message, GeckoView.PromptResult result) {
-            Log.i(LOGTAG, "Alert!");
-            result.confirm();
-            Toast.makeText(getApplicationContext(), message, Toast.LENGTH_LONG).show();
-        }
+    private void loadFromIntent(final Intent intent) {
+        mGeckoView.getSettings().setBoolean(
+            GeckoViewSettings.USE_MULTIPROCESS,
+            intent.getBooleanExtra(USE_MULTIPROCESS_EXTRA, true));
 
-        @Override
-        public void onConfirm(GeckoView view, String message, final GeckoView.PromptResult result) {
-            Log.i(LOGTAG, "Confirm!");
-            new AlertDialog.Builder(GeckoViewActivity.this)
-                .setTitle("javaScript dialog")
-                .setMessage(message)
-                .setPositiveButton(android.R.string.ok,
-                                   new DialogInterface.OnClickListener() {
-                                       public void onClick(DialogInterface dialog, int which) {
-                                           result.confirm();
-                                       }
-                                   })
-                .setNegativeButton(android.R.string.cancel,
-                                   new DialogInterface.OnClickListener() {
-                                       public void onClick(DialogInterface dialog, int which) {
-                                           result.cancel();
-                                       }
-                                   })
-                .create()
-                .show();
-        }
+        final Uri uri = intent.getData();
+        mGeckoView.loadUri(uri != null ? uri.toString() : DEFAULT_URL);
+    }
 
-        @Override
-        public void onPrompt(GeckoView view, String message, String defaultValue, GeckoView.PromptResult result) {
-            result.cancel();
-        }
-
-        @Override
-        public void onDebugRequest(GeckoView view, GeckoView.PromptResult result) {
-            Log.i(LOGTAG, "Remote Debug!");
-            result.confirm();
+    @Override
+    protected void onActivityResult(final int requestCode, final int resultCode,
+                                    final Intent data) {
+        if (requestCode == REQUEST_FILE_PICKER) {
+            final BasicGeckoViewPrompt prompt = (BasicGeckoViewPrompt)
+                    mGeckoView.getPromptDelegate();
+            prompt.onFileCallbackResult(resultCode, data);
+        } else {
+            super.onActivityResult(requestCode, resultCode, data);
         }
     }
 
     private class MyGeckoViewContent implements GeckoView.ContentListener {
         @Override
-        public void onTitleChanged(GeckoView view, String title) {
+        public void onTitleChange(GeckoView view, String title) {
             Log.i(LOGTAG, "Content title changed to " + title);
+        }
+
+        @Override
+        public void onFullScreen(final GeckoView view, final boolean fullScreen) {
+            getWindow().setFlags(fullScreen ? WindowManager.LayoutParams.FLAG_FULLSCREEN : 0,
+                                 WindowManager.LayoutParams.FLAG_FULLSCREEN);
+            if (fullScreen) {
+                getActionBar().hide();
+            } else {
+                getActionBar().show();
+            }
         }
     }
 
@@ -101,15 +102,19 @@ public class GeckoViewActivity extends Activity {
         @Override
         public void onPageStart(GeckoView view, String url) {
             Log.i(LOGTAG, "Starting to load page at " + url);
+            Log.i(LOGTAG, "zerdatime " + SystemClock.elapsedRealtime() +
+                  " - page load start");
         }
 
         @Override
         public void onPageStop(GeckoView view, boolean success) {
             Log.i(LOGTAG, "Stopping page load " + (success ? "successfully" : "unsuccessfully"));
+            Log.i(LOGTAG, "zerdatime " + SystemClock.elapsedRealtime() +
+                  " - page load stop");
         }
 
         @Override
-        public void onSecurityChanged(GeckoView view, int status) {
+        public void onSecurityChange(GeckoView view, int status) {
             String statusString;
             if ((status & STATE_IS_BROKEN) != 0) {
                 statusString = "broken";

@@ -71,10 +71,7 @@
 
 #define NS_APP_LOCALSTORE_50_FILE               "LclSt"
 #define NS_APP_USER_PANELS_50_FILE              "UPnls"
-#define NS_APP_USER_MIMETYPES_50_FILE           "UMimTyp"
 #define NS_APP_CACHE_PARENT_DIR                 "cachePDir"
-
-#define NS_APP_DOWNLOADS_50_FILE                "DLoads"
 
 #define NS_APP_SEARCH_50_FILE                   "SrchF"
 

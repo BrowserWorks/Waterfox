@@ -65,6 +65,8 @@ tasks:
         - "index.gecko.v2.{{project}}.latest.firefox.decision"
         - "tc-treeherder.v2.{{project}}.{{revision}}.{{pushlog_id}}"
         - "tc-treeherder-stage.v2.{{project}}.{{revision}}.{{pushlog_id}}"
+        - "notify.email.{{owner}}.on-failed"
+        - "notify.email.{{owner}}.on-exception"
 
       payload:
         env:
@@ -85,7 +87,9 @@ tasks:
 
         # Note: This task is built server side without the context or tooling that
         # exist in tree so we must hard code the hash
-        image: 'taskcluster/decision@sha256:0f59f922d86c471e208b7ea08ab077fc68c3920ed5e6895d69a23e8f3457dc24'
+        # XXX Changing this will break Chain of Trust without an associated puppet and
+        # scriptworker patch!
+        image: 'taskcluster/decision:0.1.8@sha256:195d8439c8e90d59311d877bd2a8964849b2e43bfc6c234092618518d8b2891b'
 
         maxRunTime: 1800
 

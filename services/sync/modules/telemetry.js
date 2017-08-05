@@ -8,23 +8,26 @@ const {classes: Cc, interfaces: Ci, utils: Cu, results: Cr} = Components;
 
 this.EXPORTED_SYMBOLS = ["SyncTelemetry"];
 
+Cu.import("resource://gre/modules/XPCOMUtils.jsm");
+Cu.import("resource://gre/modules/Services.jsm");
+Cu.import("resource://gre/modules/Log.jsm");
 Cu.import("resource://services-sync/browserid_identity.js");
 Cu.import("resource://services-sync/main.js");
 Cu.import("resource://services-sync/status.js");
 Cu.import("resource://services-sync/util.js");
+Cu.import("resource://services-sync/resource.js");
 Cu.import("resource://services-common/observers.js");
 Cu.import("resource://services-common/async.js");
-Cu.import("resource://gre/modules/Log.jsm");
-Cu.import("resource://gre/modules/TelemetryController.jsm");
-Cu.import("resource://gre/modules/FxAccounts.jsm");
-Cu.import("resource://gre/modules/XPCOMUtils.jsm");
-Cu.import("resource://gre/modules/osfile.jsm", this);
 
 let constants = {};
 Cu.import("resource://services-sync/constants.js", constants);
 
-var fxAccountsCommon = {};
-Cu.import("resource://gre/modules/FxAccountsCommon.js", fxAccountsCommon);
+XPCOMUtils.defineLazyModuleGetter(this, "TelemetryController",
+                              "resource://gre/modules/TelemetryController.jsm");
+XPCOMUtils.defineLazyModuleGetter(this, "TelemetryUtils",
+                                  "resource://gre/modules/TelemetryUtils.jsm");
+XPCOMUtils.defineLazyModuleGetter(this, "OS",
+                                  "resource://gre/modules/osfile.jsm");
 
 XPCOMUtils.defineLazyServiceGetter(this, "Telemetry",
                                    "@mozilla.org/base/telemetry;1",
@@ -416,6 +419,9 @@ class SyncTelemetryImpl {
     this.lastSubmissionTime = Telemetry.msSinceProcessStart();
     this.lastUID = EMPTY_UID;
     this.lastDeviceID = undefined;
+    let sessionStartDate = Services.startup.getStartupInfo().main;
+    this.sessionStartDate = TelemetryUtils.toLocalTimeISOString(
+      TelemetryUtils.truncateToHours(sessionStartDate));
   }
 
   getPingJSON(reason) {
@@ -426,6 +432,7 @@ class SyncTelemetryImpl {
       syncs: this.payloads.slice(),
       uid: this.lastUID,
       deviceID: this.lastDeviceID,
+      sessionStartDate: this.sessionStartDate,
       events: this.events.length == 0 ? undefined : this.events,
     };
   }
@@ -546,6 +553,9 @@ class SyncTelemetryImpl {
     log.debug("recording event", eventDetails);
 
     let { object, method, value, extra } = eventDetails;
+    if (extra && AsyncResource.serverTime && !extra.serverTime) {
+      extra.serverTime = String(AsyncResource.serverTime);
+    }
     let category = "sync";
     let ts = Math.floor(tryGetMonotonicTimestamp());
 
@@ -695,4 +705,5 @@ class SyncTelemetryImpl {
 
 }
 
+/* global SyncTelemetry */
 this.SyncTelemetry = new SyncTelemetryImpl(ENGINES);

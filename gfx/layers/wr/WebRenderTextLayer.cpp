@@ -8,6 +8,7 @@
 #include "gfxPrefs.h"
 #include "LayersLogging.h"
 #include "mozilla/webrender/WebRenderTypes.h"
+#include "mozilla/layers/ScrollingLayersHelper.h"
 #include "mozilla/layers/WebRenderBridgeChild.h"
 
 #include "mozilla/gfx/2D.h"
@@ -18,31 +19,30 @@ namespace layers {
 using namespace mozilla::gfx;
 
 void
-WebRenderTextLayer::RenderLayer()
+WebRenderTextLayer::RenderLayer(wr::DisplayListBuilder& aBuilder,
+                                const StackingContextHelper& aSc)
 {
     if (mBounds.IsEmpty()) {
         return;
     }
 
-    gfx::Rect rect = RelativeToParent(GetTransform().TransformBounds(IntRectToRect(mBounds)));
-    gfx::Rect clip;
-    if (GetClipRect().isSome()) {
-      clip = RelativeToParent(IntRectToRect(GetClipRect().ref().ToUnknownRect()));
-    } else {
-      clip = rect;
-    }
+    ScrollingLayersHelper scroller(this, aBuilder, aSc);
 
-    if (gfxPrefs::LayersDump()) {
-        printf_stderr("TextLayer %p using rect=%s, clip=%s\n",
-                      this->GetLayer(),
-                      Stringify(rect).c_str(),
-                      Stringify(clip).c_str());
-    }
+    LayerRect rect = LayerRect::FromUnknownRect(
+        // I am not 100% sure this is correct, but it probably is. Because:
+        // the bounds are in layer space, and when gecko composites layers it
+        // applies the transform to the layer before compositing. However with
+        // WebRender compositing, we don't pass the transform on this layer to
+        // WR, so WR has no way of knowing about the transformed bounds unless
+        // we apply it here. The glyphs that we push to WR should already be
+        // taking the transform into account.
+        GetTransform().TransformBounds(IntRectToRect(mBounds))
+    );
+    DumpLayerInfo("TextLayer", rect);
 
-    nsTArray<WebRenderCommand> commands;
-    mGlyphHelper.BuildWebRenderCommands(WrBridge(), commands, mGlyphs, mFont,
-                                        GetOffsetToParent(), rect, clip);
-    WrBridge()->AddWebRenderCommands(commands);
+    LayerRect clipRect = ClipRect().valueOr(rect);
+
+    WrBridge()->PushGlyphs(aBuilder, mGlyphs, mFont, aSc, rect, clipRect);
 }
 
 } // namespace layers

@@ -55,7 +55,7 @@ public:
                                                   nsStyleContext* aContext);
 
   NS_DECL_QUERYFRAME
-  NS_DECL_FRAMEARENA_HELPERS
+  NS_DECL_FRAMEARENA_HELPERS(nsListControlFrame)
 
     // nsIFrame
   virtual nsresult HandleEvent(nsPresContext* aPresContext,
@@ -87,13 +87,6 @@ public:
                                 const nsDisplayListSet& aLists) override;
 
   virtual nsContainerFrame* GetContentInsertionFrame() override;
-
-  /**
-   * Get the "type" of the frame
-   *
-   * @see nsGkAtoms::scrollFrame
-   */
-  virtual nsIAtom* GetType() const override;
 
   virtual bool IsFrameOfType(uint32_t aFlags) const override
   {
@@ -238,11 +231,6 @@ public:
    * (always false if not in drop-down mode)
    */
   bool GetDropdownCanGrow() const { return mDropdownCanGrow; }
-
-  /**
-   * Dropdowns need views
-   */
-  virtual bool NeedsView() override { return IsInDropDownMode(); }
 
   /**
    * Frees statics owned by this class.
@@ -398,16 +386,23 @@ protected:
    */
   uint32_t GetNumberOfRows();
 
+  nsView* GetViewInternal() const override { return mView; }
+  void SetViewInternal(nsView* aView) override { mView = aView; }
+
   // Data Members
   int32_t      mStartSelectionIndex;
   int32_t      mEndSelectionIndex;
 
-  nsIComboboxControlFrame *mComboboxFrame;
-  uint32_t     mNumDisplayRows;
+  nsIComboboxControlFrame* mComboboxFrame;
+
+  // The view is only created (& non-null) if IsInDropDownMode() is true.
+  nsView* mView;
+
+  uint32_t mNumDisplayRows;
   bool mChangesSinceDragStart:1;
   bool mButtonDown:1;
-  // Has the user selected a visible item since we showed the
-  // dropdown?
+
+  // Has the user selected a visible item since we showed the dropdown?
   bool mItemSelectionStarted:1;
 
   bool mIsAllContentHere:1;

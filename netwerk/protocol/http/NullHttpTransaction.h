@@ -38,7 +38,8 @@ public:
                       nsIInterfaceRequestor *callbacks,
                       uint32_t caps);
 
-  bool Claim();
+  MOZ_MUST_USE bool Claim();
+  void Unclaim();
 
   // Overload of nsAHttpTransaction methods
   bool IsNullTransaction() override final { return true; }
@@ -48,6 +49,12 @@ public:
   {
     return PR_SecondsToInterval(15);
   }
+
+  // We have to override this function because |mTransaction| in nsHalfOpenSocket
+  // could be either nsHttpTransaction or NullHttpTransaction.
+  // NullHttpTransaction will be activated on the connection immediately after
+  // creation and be never put in a pending queue, so it's OK to just return 0.
+  uint64_t TopLevelOuterContentWindowId() override { return 0; }
 
 protected:
   virtual ~NullHttpTransaction();

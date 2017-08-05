@@ -35,10 +35,12 @@ public interface GlobalSessionCallback {
   void informMigrated(GlobalSession session);
 
   void handleAborted(GlobalSession globalSession, String reason);
+  void handleError(GlobalSession globalSession, Exception ex, String reason);
   void handleError(GlobalSession globalSession, Exception ex);
   void handleSuccess(GlobalSession globalSession);
   void handleStageCompleted(Stage currentState, GlobalSession globalSession);
   void handleIncompleteStage(Stage currentState, GlobalSession globalSession);
+  void handleFullSyncNecessary();
 
   /**
    * Called when a {@link GlobalSession} wants to know if it should continue

@@ -1,37 +1,17 @@
 /* Any copyright is dedicated to the Public Domain.
    http://creativecommons.org/publicdomain/zero/1.0/ */
 
-const { addObserver, removeObserver } = Cc["@mozilla.org/observer-service;1"].
-                                          getService(Ci.nsIObserverService);
+add_task(async function() {
+  await BrowserTestUtils.openNewForegroundTab(gBrowser, "http://example.com");
 
-function receive(topic) {
-  return new Promise((resolve, reject) => {
-    let timeout = setTimeout(() => {
-      reject(new Error("Timeout"));
-    }, 90000);
-
-    const observer = {
-      observe: subject => {
-        removeObserver(observer, topic);
-        clearTimeout(timeout);
-        resolve(subject);
-      }
-    };
-    addObserver(observer, topic, false);
-  });
-}
-
-add_task(function* () {
-  yield BrowserTestUtils.openNewForegroundTab(gBrowser, "http://example.com");
-
-  yield ContentTask.spawn(gBrowser.selectedBrowser, {}, function* () {
+  await ContentTask.spawn(gBrowser.selectedBrowser, {}, async function() {
     content.history.pushState({}, "2", "2.html");
   });
 
-  yield receive("sessionstore-state-write-complete");
+  await TestUtils.topicObserved("sessionstore-state-write-complete");
 
   // Wait for the session data to be flushed before continuing the test
-  yield new Promise(resolve => SessionStore.getSessionHistory(gBrowser.selectedTab, resolve));
+  await new Promise(resolve => SessionStore.getSessionHistory(gBrowser.selectedTab, resolve));
 
   let backButton = document.getElementById("back-button");
   let contextMenu = document.getElementById("backForwardMenu");
@@ -40,12 +20,12 @@ add_task(function* () {
 
   let popupShownPromise = BrowserTestUtils.waitForEvent(contextMenu, "popupshown");
   EventUtils.synthesizeMouseAtCenter(backButton, {type: "contextmenu", button: 2});
-  let event = yield popupShownPromise;
+  let event = await popupShownPromise;
 
   ok(true, "history menu opened");
 
   // Wait for the session data to be flushed before continuing the test
-  yield new Promise(resolve => SessionStore.getSessionHistory(gBrowser.selectedTab, resolve));
+  await new Promise(resolve => SessionStore.getSessionHistory(gBrowser.selectedTab, resolve));
 
   is(event.target.children.length, 2, "Two history items");
 
@@ -61,11 +41,11 @@ add_task(function* () {
 
   let popupHiddenPromise = BrowserTestUtils.waitForEvent(contextMenu, "popuphidden");
   event.target.hidePopup();
-  yield popupHiddenPromise;
+  await popupHiddenPromise;
   info("Hidden popup");
 
   let onClose = BrowserTestUtils.waitForEvent(gBrowser.tabContainer, "TabClose");
-  yield BrowserTestUtils.removeTab(gBrowser.selectedTab);
-  yield onClose;
+  await BrowserTestUtils.removeTab(gBrowser.selectedTab);
+  await onClose;
   info("Tab closed");
 });

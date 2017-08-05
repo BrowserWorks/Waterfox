@@ -14,6 +14,7 @@
 #include "nsIStreamBufferAccess.h"
 #include "nsCOMPtr.h"
 #include "nsIIPCSerializableInputStream.h"
+#include "nsIAsyncInputStream.h"
 
 ////////////////////////////////////////////////////////////////////////////////
 
@@ -31,6 +32,7 @@ protected:
     virtual ~nsBufferedStream();
 
     nsresult Init(nsISupports* stream, uint32_t bufferSize);
+    nsresult GetData(nsISupports **aResult);
     NS_IMETHOD Fill() = 0;
     NS_IMETHOD Flush() = 0;
 
@@ -61,7 +63,9 @@ protected:
 class nsBufferedInputStream : public nsBufferedStream,
                               public nsIBufferedInputStream,
                               public nsIStreamBufferAccess,
-                              public nsIIPCSerializableInputStream
+                              public nsIIPCSerializableInputStream,
+                              public nsIAsyncInputStream,
+                              public nsIInputStreamCallback
 {
 public:
     NS_DECL_ISUPPORTS_INHERITED
@@ -69,6 +73,8 @@ public:
     NS_DECL_NSIBUFFEREDINPUTSTREAM
     NS_DECL_NSISTREAMBUFFERACCESS
     NS_DECL_NSIIPCSERIALIZABLEINPUTSTREAM
+    NS_DECL_NSIASYNCINPUTSTREAM
+    NS_DECL_NSIINPUTSTREAMCALLBACK
 
     nsBufferedInputStream() : nsBufferedStream() {}
 
@@ -82,16 +88,21 @@ public:
 protected:
     virtual ~nsBufferedInputStream() {}
 
+    bool IsIPCSerializable() const;
+    bool IsAsyncInputStream() const;
+
     NS_IMETHOD Fill() override;
     NS_IMETHOD Flush() override { return NS_OK; } // no-op for input streams
+
+    nsCOMPtr<nsIInputStreamCallback> mAsyncWaitCallback;
 };
 
 ////////////////////////////////////////////////////////////////////////////////
 
-class nsBufferedOutputStream final : public nsBufferedStream,
-                                     public nsISafeOutputStream,
-                                     public nsIBufferedOutputStream,
-                                     public nsIStreamBufferAccess
+class nsBufferedOutputStream  : public nsBufferedStream,
+                                public nsISafeOutputStream,
+                                public nsIBufferedOutputStream,
+                                public nsIStreamBufferAccess
 {
 public:
     NS_DECL_ISUPPORTS_INHERITED

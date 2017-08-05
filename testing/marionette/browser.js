@@ -67,7 +67,7 @@ browser.getTabBrowser = function (win) {
  * Creates a browsing context wrapper.
  *
  * Browsing contexts handle interactions with the browser, according to
- * the current environment (desktop, B2G, Fennec, &c).
+ * the current environment (Firefox, Fennec).
  *
  * @param {nsIDOMWindow} win
  *     The window whose browser needs to be accessed.
@@ -91,9 +91,6 @@ browser.Context = class {
     this.tabBrowser = browser.getTabBrowser(win);
 
     this.knownFrames = [];
-
-    // Used in B2G to identify the homescreen content page
-    this.mainContentId = null;
 
     // Used to set curFrameId upon new session
     this.newSession = true;
@@ -119,7 +116,6 @@ browser.Context = class {
     this.frameManager.addMessageManagerListeners(driver.mm);
     this.getIdForBrowser = driver.getIdForBrowser.bind(driver);
     this.updateIdForBrowser = driver.updateIdForBrowser.bind(driver);
-    this._curFrameId = null;
     this._browserWasRemote = null;
     this._hasRemotenessChange = false;
   }
@@ -143,17 +139,24 @@ browser.Context = class {
    */
   get curFrameId() {
     let rv = null;
-    if (this.driver.appName == "B2G") {
-      rv = this._curFrameId;
-    } else if (this.tab) {
+    if (this.tab) {
       rv = this.getIdForBrowser(this.contentBrowser);
     }
     return rv;
   }
 
-  set curFrameId(id) {
-    if (this.driver.appName != "Firefox") {
-      this._curFrameId = id;
+  /**
+   * Returns the current URL of the content browser.
+   * If no browser is available, null will be returned.
+   */
+  get currentURL() {
+    // Bug 1363368 - contentBrowser could be null until we wait for its
+    // initialization been finished
+    if (this.contentBrowser) {
+      return this.contentBrowser.currentURI.spec;
+
+    } else {
+      throw new NoSuchWindowError("Current window does not have a content browser");
     }
   }
 
@@ -314,11 +317,7 @@ browser.Context = class {
 
         if (target === this.contentBrowser) {
           this.updateIdForBrowser(this.contentBrowser, uid);
-          this.mainContentId = uid;
         }
-      } else {
-        this._curFrameId = uid;
-        this.mainContentId = uid;
       }
     }
 
@@ -333,7 +332,7 @@ browser.Context = class {
    * script. This function does the necessary bookkeeping.
    */
   hasRemotenessChange() {
-    // None of these checks are relevant on b2g or if we don't have a tab yet,
+    // None of these checks are relevant if we don't have a tab yet,
     // and may not apply on Fennec.
     if (this.driver.appName != "Firefox" ||
         this.tab === null ||

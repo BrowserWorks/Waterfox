@@ -133,24 +133,14 @@ if CONFIG['MOZ_PREF_EXTENSIONS']:
 
 DIRS += [
     '/devtools',
+    '/toolkit/library',
+    '/toolkit/library/gtest/rust',
+    '/toolkit/library/rust',
+    '/toolkit/library/StaticXULComponentsEnd',
     '/services',
     '/startupcache',
     '/js/ductwork/debugger',
     '/other-licenses/snappy',
-]
-
-if CONFIG['MOZ_GIO_COMPONENT']:
-    DIRS += ['/extensions/gio']
-
-if CONFIG['MOZ_RUST']:
-    DIRS += [
-        '/toolkit/library/gtest/rust',
-        '/toolkit/library/rust',
-    ]
-
-DIRS += [
-    '/toolkit/library/StaticXULComponentsEnd',
-    '/toolkit/library',
 ]
 
 if 'gtk' in CONFIG['MOZ_WIDGET_TOOLKIT']:
@@ -163,6 +153,9 @@ if CONFIG['ENABLE_MARIONETTE']:
         '/testing/firefox-ui',
         '/testing/marionette',
     ]
+
+if CONFIG['ENABLE_GECKODRIVER']:
+    DIRS += ['/testing/geckodriver']
 
 DIRS += [
     '/tools/quitter',
@@ -190,7 +183,6 @@ if CONFIG['ENABLE_TESTS']:
 
     if CONFIG['MOZ_WEBRTC'] and not CONFIG['MOZ_TASK_TRACER']:
         DIRS += [
-            '/media/webrtc/signaling/test',
             '/media/mtransport/test',
         ]
 

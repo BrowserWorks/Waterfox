@@ -7,7 +7,7 @@
 #ifndef mozilla_EffectSet_h
 #define mozilla_EffectSet_h
 
-#include "mozilla/AnimationRule.h" // For AnimationRule
+#include "mozilla/AnimValuesStyleRule.h"
 #include "mozilla/DebugOnly.h"
 #include "mozilla/EffectCompositor.h"
 #include "mozilla/EnumeratedArray.h"
@@ -38,6 +38,8 @@ public:
     , mActiveIterators(0)
     , mCalledPropertyDtor(false)
 #endif
+    , mMayHaveOpacityAnim(false)
+    , mMayHaveTransformAnim(false)
   {
     MOZ_COUNT_CTOR(EffectSet);
   }
@@ -67,6 +69,11 @@ public:
 
   void AddEffect(dom::KeyframeEffectReadOnly& aEffect);
   void RemoveEffect(dom::KeyframeEffectReadOnly& aEffect);
+
+  void SetMayHaveOpacityAnimation() { mMayHaveOpacityAnim = true; }
+  bool MayHaveOpacityAnimation() const { return mMayHaveOpacityAnim; }
+  void SetMayHaveTransformAnimation() { mMayHaveTransformAnim = true; }
+  bool MayHaveTransformAnimation() const { return mMayHaveTransformAnim; }
 
 private:
   typedef nsTHashtable<nsRefPtrHashKey<dom::KeyframeEffectReadOnly>>
@@ -163,7 +170,7 @@ public:
 
   size_t Count() const { return mEffects.Count(); }
 
-  struct AnimationRule&
+  RefPtr<AnimValuesStyleRule>&
   AnimationRule(EffectCompositor::CascadeLevel aCascadeLevel)
   {
     return mAnimationRule[aCascadeLevel];
@@ -195,6 +202,10 @@ public:
   {
     return mPropertiesForAnimationsLevel;
   }
+  nsCSSPropertyIDSet PropertiesForAnimationsLevel() const
+  {
+    return mPropertiesForAnimationsLevel;
+  }
 
 private:
   static nsIAtom* GetEffectSetPropertyAtom(CSSPseudoElementType aPseudoType);
@@ -209,7 +220,7 @@ private:
   EnumeratedArray<EffectCompositor::CascadeLevel,
                   EffectCompositor::CascadeLevel(
                     EffectCompositor::kCascadeLevelCount),
-                  mozilla::AnimationRule> mAnimationRule;
+                  RefPtr<AnimValuesStyleRule>> mAnimationRule;
 
   // Refresh driver timestamp from the moment when transform animations in this
   // effect set were last updated and sent to the compositor. This is used for
@@ -248,6 +259,9 @@ private:
 
   bool mCalledPropertyDtor;
 #endif
+
+  bool mMayHaveOpacityAnim;
+  bool mMayHaveTransformAnim;
 };
 
 } // namespace mozilla

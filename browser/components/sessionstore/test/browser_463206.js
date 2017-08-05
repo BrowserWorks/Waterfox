@@ -7,13 +7,13 @@
 const TEST_URL = "http://mochi.test:8888/browser/" +
                  "browser/components/sessionstore/test/browser_463206_sample.html";
 
-add_task(function* () {
+add_task(async function() {
   // Add a new tab.
-  let tab = gBrowser.addTab(TEST_URL);
-  yield BrowserTestUtils.browserLoaded(tab.linkedBrowser);
+  let tab = BrowserTestUtils.addTab(gBrowser, TEST_URL);
+  await BrowserTestUtils.browserLoaded(tab.linkedBrowser);
 
   // "Type in" some random values.
-  yield ContentTask.spawn(tab.linkedBrowser, null, function* () {
+  await ContentTask.spawn(tab.linkedBrowser, null, async function() {
     function typeText(aTextField, aValue) {
       aTextField.value = aValue;
 
@@ -29,10 +29,10 @@ add_task(function* () {
 
   // Duplicate the tab.
   let tab2 = gBrowser.duplicateTab(tab);
-  yield promiseTabRestored(tab2);
+  await promiseTabRestored(tab2);
 
   // Query a few values from the top and its child frames.
-  yield ContentTask.spawn(tab2.linkedBrowser, null, function* () {
+  await ContentTask.spawn(tab2.linkedBrowser, null, async function() {
     Assert.notEqual(content.document.getElementById("out1").value,
       content.frames[1].document.getElementById("out1").value,
       "text isn't reused for frames");
@@ -41,7 +41,7 @@ add_task(function* () {
     Assert.equal(content.frames[1].document.getElementById("out2").value,
       "", "id prefixes can't be faked");
     // Disabled for now, Bug 588077
-    //Assert.equal(content.frames[0].frames[1].document.getElementById("in1").value,
+    // Assert.equal(content.frames[0].frames[1].document.getElementById("in1").value,
     //  "", "id prefixes aren't mixed up");
     Assert.equal(content.frames[1].frames[0].document.getElementById("in1").value,
       "", "id prefixes aren't mixed up");

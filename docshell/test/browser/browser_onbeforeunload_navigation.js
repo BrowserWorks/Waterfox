@@ -105,7 +105,7 @@ function onTabModalDialogLoaded(node) {
 }
 
 // Listen for the dialog being created
-Services.obs.addObserver(onTabModalDialogLoaded, "tabmodal-dialog-loaded", false);
+Services.obs.addObserver(onTabModalDialogLoaded, "tabmodal-dialog-loaded");
 
 function runNextTest() {
   currentTest++;
@@ -155,7 +155,7 @@ function test() {
   waitForExplicitFinish();
   gBrowser.addProgressListener(tabStateListener);
 
-  testTab = gBrowser.selectedTab = gBrowser.addTab();
+  testTab = gBrowser.selectedTab = BrowserTestUtils.addTab(gBrowser);
   testTab.linkedBrowser.addEventListener("load", onTabLoaded, true);
   testTab.linkedBrowser.loadURI(TEST_PAGE);
 }

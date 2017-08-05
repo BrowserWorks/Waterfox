@@ -34,6 +34,7 @@
 #include "AudioSegment.h"
 #include "MediaSegment.h"
 #include "MediaPipelineFilter.h"
+#include "RtpLogger.h"
 #include "databuffer.h"
 #include "transportflow.h"
 #include "transportlayer.h"
@@ -41,6 +42,7 @@
 #include "transportlayerice.h"
 #include "runnable_utils.h"
 #include "libyuv/convert.h"
+#include "mozilla/dom/RTCStatsReportBinding.h"
 #include "mozilla/SharedThreadPool.h"
 #include "mozilla/PeerIdentity.h"
 #include "mozilla/Preferences.h"
@@ -50,18 +52,21 @@
 #include "mozilla/UniquePtr.h"
 #include "mozilla/UniquePtrExtensions.h"
 #include "mozilla/Sprintf.h"
+#include "mozilla/SizePrintfMacros.h"
 
 #include "webrtc/common_types.h"
 #include "webrtc/common_video/libyuv/include/webrtc_libyuv.h"
+
+#include "nsThreadUtils.h"
 
 #include "logging.h"
 
 // Max size given stereo is 480*2*2 = 1920 (10ms of 16-bits stereo audio at
 // 48KHz)
-#define AUDIO_SAMPLE_BUFFER_MAX 480*2*2
+#define AUDIO_SAMPLE_BUFFER_MAX_BYTES 480*2*2
 static_assert((WEBRTC_DEFAULT_SAMPLE_RATE/100)*sizeof(uint16_t) * 2
-               <= AUDIO_SAMPLE_BUFFER_MAX,
-               "AUDIO_SAMPLE_BUFFER_MAX is not large enough");
+               <= AUDIO_SAMPLE_BUFFER_MAX_BYTES,
+               "AUDIO_SAMPLE_BUFFER_MAX_BYTES is not large enough");
 
 using namespace mozilla;
 using namespace mozilla::dom;
@@ -72,6 +77,7 @@ using namespace mozilla::layers;
 MOZ_MTLOG_MODULE("mediapipeline")
 
 namespace mozilla {
+extern mozilla::LogModule* AudioLogModule();
 
 class VideoConverterListener
 {
@@ -542,12 +548,8 @@ public:
     while (packetizer_->PacketsAvailable()) {
       uint32_t samplesPerPacket = packetizer_->PacketSize() *
                                   packetizer_->Channels();
-      // We know that webrtc.org's code going to copy the samples down the line,
-      // so we can just use a stack buffer here instead of malloc-ing.
-      int16_t packet[AUDIO_SAMPLE_BUFFER_MAX];
-
-      packetizer_->Output(packet);
-      mConduit->SendAudioFrame(packet, samplesPerPacket, rate, 0);
+      packetizer_->Output(packet_);
+      mConduit->SendAudioFrame(packet_, samplesPerPacket, rate, 0);
     }
   }
 
@@ -574,6 +576,8 @@ protected:
   nsCOMPtr<nsIEventTarget> mThread;
   // Only accessed on mThread
   nsAutoPtr<AudioPacketizer<int16_t, int16_t>> packetizer_;
+  // A buffer to hold a single packet of audio.
+  int16_t packet_[AUDIO_SAMPLE_BUFFER_MAX_BYTES / sizeof(int16_t)];
 };
 
 static char kDTLSExporterLabel[] = "EXTRACTOR-dtls_srtp";
@@ -606,7 +610,7 @@ MediaPipeline::MediaPipeline(const std::string& pc,
     pc_(pc),
     description_(),
     filter_(filter),
-    rtp_parser_(webrtc::RtpHeaderParser::Create()) {
+    rtp_parser_(webrtc::RtpHeaderParser::Create()){
   // To indicate rtcp-mux rtcp_transport should be nullptr.
   // Therefore it's an error to send in the same flow for
   // both rtp and rtcp.
@@ -733,26 +737,53 @@ MediaPipeline::UpdateTransport_s(int level,
 }
 
 void
-MediaPipeline::SelectSsrc_m(size_t ssrc_index)
+MediaPipeline::AddRIDExtension_m(size_t extension_id)
 {
-  if (ssrc_index < ssrcs_received_.size()) {
-    uint32_t ssrc = ssrcs_received_[ssrc_index];
-    RUN_ON_THREAD(sts_thread_,
-                  WrapRunnable(
-                               this,
-                               &MediaPipeline::SelectSsrc_s,
-                               ssrc),
-                  NS_DISPATCH_NORMAL);
-
-    conduit_->SetRemoteSSRC(ssrc);
-  }
+  RUN_ON_THREAD(sts_thread_,
+                WrapRunnable(RefPtr<MediaPipeline>(this),
+                             &MediaPipeline::AddRIDExtension_s,
+                             extension_id),
+                NS_DISPATCH_NORMAL);
 }
 
 void
-MediaPipeline::SelectSsrc_s(uint32_t ssrc)
+MediaPipeline::AddRIDExtension_s(size_t extension_id)
+{
+  rtp_parser_->RegisterRtpHeaderExtension(webrtc::kRtpExtensionRtpStreamId,
+                                          extension_id);
+}
+
+void
+MediaPipeline::AddRIDFilter_m(const std::string& rid)
+{
+  RUN_ON_THREAD(sts_thread_,
+                WrapRunnable(RefPtr<MediaPipeline>(this),
+                             &MediaPipeline::AddRIDFilter_s,
+                             rid),
+                NS_DISPATCH_NORMAL);
+}
+
+void
+MediaPipeline::AddRIDFilter_s(const std::string& rid)
 {
   filter_ = new MediaPipelineFilter;
-  filter_->AddRemoteSSRC(ssrc);
+  filter_->AddRemoteRtpStreamId(rid);
+}
+
+void
+MediaPipeline::GetContributingSourceStats(
+    const nsString& aInboundRtpStreamId,
+    FallibleTArray<dom::RTCRTPContributingSourceStats>& aArr) const
+{
+  // Get the expiry from now
+  DOMHighResTimeStamp expiry = RtpCSRCStats::GetExpiryFromTime(GetNow());
+  for (auto info : csrc_stats_) {
+    if (!info.second.Expired(expiry)) {
+      RTCRTPContributingSourceStats stats;
+      info.second.GetWebidlInstance(stats, aInboundRtpStreamId);
+      aArr.AppendElement(stats, fallible);
+    }
+  }
 }
 
 void MediaPipeline::StateChange(TransportFlow *flow, TransportLayer::State state) {
@@ -1045,13 +1076,46 @@ void MediaPipeline::RtpPacketReceived(TransportLayer *layer,
     return;
   }
 
-  if (std::find(ssrcs_received_.begin(), ssrcs_received_.end(), header.ssrc) ==
-      ssrcs_received_.end()) {
-    ssrcs_received_.push_back(header.ssrc);
-  }
-
   if (filter_ && !filter_->Filter(header)) {
     return;
+  }
+
+  // Make sure to only get the time once, and only if we need it by
+  // using getTimestamp() for access
+  DOMHighResTimeStamp now = 0.0;
+  bool hasTime = false;
+
+  // Remove expired RtpCSRCStats
+  if (!csrc_stats_.empty()) {
+    if (!hasTime) {
+      now = GetNow();
+      hasTime = true;
+    }
+    auto expiry = RtpCSRCStats::GetExpiryFromTime(now);
+    for (auto p = csrc_stats_.begin(); p != csrc_stats_.end();) {
+      if (p->second.Expired(expiry)) {
+        p = csrc_stats_.erase(p);
+        continue;
+      }
+      p++;
+    }
+  }
+
+  // Add new RtpCSRCStats
+  if (header.numCSRCs) {
+    for (auto i = 0; i < header.numCSRCs; i++) {
+      if (!hasTime) {
+        now = GetNow();
+        hasTime = true;
+      }
+      auto csrcInfo = csrc_stats_.find(header.arrOfCSRCs[i]);
+      if (csrcInfo == csrc_stats_.end()) {
+        csrc_stats_.insert(std::make_pair(header.arrOfCSRCs[i],
+            RtpCSRCStats(header.arrOfCSRCs[i],now)));
+      } else {
+        csrcInfo->second.SetTimestamp(now);
+      }
+    }
   }
 
   // Make a copy rather than cast away constness
@@ -1075,6 +1139,9 @@ void MediaPipeline::RtpPacketReceived(TransportLayer *layer,
   }
   MOZ_MTLOG(ML_DEBUG, description_ << " received RTP packet.");
   increment_rtp_packets_received(out_len);
+
+  RtpLogger::LogPacket(inner_data.get(), out_len, true, true, header.headerLength,
+                       description_);
 
   (void)conduit_->ReceivedRTPPacket(inner_data.get(), out_len, header.ssrc);  // Ignore error codes
 }
@@ -1136,6 +1203,8 @@ void MediaPipeline::RtcpPacketReceived(TransportLayer *layer,
 
   MOZ_MTLOG(ML_DEBUG, description_ << " received RTCP packet.");
   increment_rtcp_packets_received();
+
+  RtpLogger::LogPacket(inner_data.get(), out_len, true, false, 0, description_);
 
   MOZ_ASSERT(rtcp_.recv_srtp_);  // This should never happen
 
@@ -1627,6 +1696,17 @@ nsresult MediaPipeline::PipelineTransport::SendRtpRtcpPacket_s(
   // libsrtp enciphers in place, so we need a big enough buffer.
   MOZ_ASSERT(data->capacity() >= data->len() + SRTP_MAX_EXPANSION);
 
+  if (RtpLogger::IsPacketLoggingOn()) {
+    int header_len = 12;
+    webrtc::RTPHeader header;
+    if (pipeline_->rtp_parser_ &&
+        pipeline_->rtp_parser_->Parse(data->data(), data->len(), &header)) {
+        header_len = header.headerLength;
+    }
+    RtpLogger::LogPacket(data->data(), data->len(), false, is_rtp, header_len,
+                         pipeline_->description_);
+  }
+
   int out_len;
   nsresult res;
   if (is_rtp) {
@@ -1839,6 +1919,7 @@ class GenericReceiveListener : public MediaStreamListener
     : source_(source),
       track_id_(track_id),
       played_ticks_(0),
+      last_log_(0),
       principal_handle_(PRINCIPAL_HANDLE_NONE) {}
 
   virtual ~GenericReceiveListener() {}
@@ -1888,6 +1969,7 @@ class GenericReceiveListener : public MediaStreamListener
   SourceMediaStream *source_;
   const TrackID track_id_;
   TrackTicks played_ticks_;
+  TrackTicks last_log_; // played_ticks_ when we last logged
   PrincipalHandle principal_handle_;
 };
 
@@ -1954,7 +2036,7 @@ public:
     // This comparison is done in total time to avoid accumulated roundoff errors.
     while (source_->TicksToTimeRoundDown(WEBRTC_DEFAULT_SAMPLE_RATE,
                                          played_ticks_) < desired_time) {
-      int16_t scratch_buffer[AUDIO_SAMPLE_BUFFER_MAX];
+      int16_t scratch_buffer[AUDIO_SAMPLE_BUFFER_MAX_BYTES / sizeof(int16_t)];
 
       int samples_length;
 
@@ -1977,7 +2059,7 @@ public:
         PodArrayZero(scratch_buffer);
       }
 
-      MOZ_ASSERT(samples_length * sizeof(uint16_t) < AUDIO_SAMPLE_BUFFER_MAX);
+      MOZ_ASSERT(samples_length * sizeof(uint16_t) < AUDIO_SAMPLE_BUFFER_MAX_BYTES);
 
       MOZ_MTLOG(ML_DEBUG, "Audio conduit returned buffer of length "
                 << samples_length);
@@ -2014,6 +2096,14 @@ public:
       // Handle track not actually added yet or removed/finished
       if (source_->AppendToTrack(track_id_, &segment)) {
         played_ticks_ += frames;
+        if (MOZ_LOG_TEST(AudioLogModule(), LogLevel::Debug)) {
+          if (played_ticks_ > last_log_ + WEBRTC_DEFAULT_SAMPLE_RATE) { // ~ 1 second
+            MOZ_LOG(AudioLogModule(), LogLevel::Debug,
+                    ("%p: Inserting %" PRIuSIZE " samples into track %d, total = %" PRIu64,
+                     (void*) this, frames, track_id_, played_ticks_));
+            last_log_ = played_ticks_;
+          }
+        }
       } else {
         MOZ_MTLOG(ML_ERROR, "AppendToTrack failed");
         // we can't un-read the data, but that's ok since we don't want to
@@ -2285,6 +2375,37 @@ nsresult MediaPipelineReceiveVideo::Init() {
 void MediaPipelineReceiveVideo::SetPrincipalHandle_m(const PrincipalHandle& principal_handle)
 {
   listener_->SetPrincipalHandle_m(principal_handle);
+}
+
+DOMHighResTimeStamp MediaPipeline::GetNow() {
+  return webrtc::Clock::GetRealTimeClock()->TimeInMilliseconds();
+}
+
+DOMHighResTimeStamp
+MediaPipeline::RtpCSRCStats::GetExpiryFromTime(
+    const DOMHighResTimeStamp aTime) {
+  // DOMHighResTimeStamp is a unit measured in ms
+  return aTime - EXPIRY_TIME_MILLISECONDS;
+}
+
+MediaPipeline::RtpCSRCStats::RtpCSRCStats(const uint32_t aCsrc,
+                                          const DOMHighResTimeStamp aTime)
+  : mCsrc(aCsrc)
+  , mTimestamp(aTime) {}
+
+void
+MediaPipeline::RtpCSRCStats::GetWebidlInstance(
+    dom::RTCRTPContributingSourceStats& aWebidlObj,
+    const nsString &aInboundRtpStreamId) const
+{
+  nsString statId = NS_LITERAL_STRING("csrc_") + aInboundRtpStreamId;
+  statId.AppendLiteral("_");
+  statId.AppendInt(mCsrc);
+  aWebidlObj.mId.Construct(statId);
+  aWebidlObj.mType.Construct(RTCStatsType::Csrc);
+  aWebidlObj.mTimestamp.Construct(mTimestamp);
+  aWebidlObj.mContributorSsrc.Construct(mCsrc);
+  aWebidlObj.mInboundRtpStreamId.Construct(aInboundRtpStreamId);
 }
 
 }  // end namespace

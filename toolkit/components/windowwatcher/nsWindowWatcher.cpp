@@ -63,6 +63,7 @@
 #include "nsIPrefService.h"
 #include "nsSandboxFlags.h"
 #include "mozilla/Preferences.h"
+#include "mozilla/dom/Element.h"
 #include "mozilla/dom/Storage.h"
 #include "mozilla/dom/ScriptSettings.h"
 #include "mozilla/dom/TabParent.h"
@@ -481,6 +482,7 @@ nsWindowWatcher::CreateChromeWindow(const nsACString& aFeatures,
                                     uint32_t aChromeFlags,
                                     nsITabParent* aOpeningTabParent,
                                     mozIDOMWindowProxy* aOpener,
+                                    uint64_t aNextTabParentId,
                                     nsIWebBrowserChrome** aResult)
 {
   nsCOMPtr<nsIWindowCreator2> windowCreator2(do_QueryInterface(mWindowCreator));
@@ -499,7 +501,8 @@ nsWindowWatcher::CreateChromeWindow(const nsACString& aFeatures,
   nsCOMPtr<nsIWebBrowserChrome> newWindowChrome;
   nsresult rv =
     windowCreator2->CreateChromeWindow2(aParentChrome, aChromeFlags,
-                                        aOpeningTabParent, aOpener, &cancel,
+                                        aOpeningTabParent, aOpener,
+                                        aNextTabParentId, &cancel,
                                         getter_AddRefs(newWindowChrome));
 
   if (NS_SUCCEEDED(rv) && cancel) {
@@ -546,6 +549,8 @@ nsWindowWatcher::OpenWindowWithTabParent(nsITabParent* aOpeningTabParent,
                                          const nsACString& aFeatures,
                                          bool aCalledFromJS,
                                          float aOpenerFullZoom,
+                                         uint64_t aNextTabParentId,
+                                         bool aForceNoOpener,
                                          nsITabParent** aResult)
 {
   MOZ_ASSERT(XRE_IsParentProcess());
@@ -613,7 +618,8 @@ nsWindowWatcher::OpenWindowWithTabParent(nsITabParent* aOpeningTabParent,
   nsCOMPtr<nsIWebBrowserChrome> newWindowChrome;
 
   CreateChromeWindow(aFeatures, parentChrome, chromeFlags,
-                     aOpeningTabParent, nullptr,
+                     aForceNoOpener ? nullptr : aOpeningTabParent, nullptr,
+                     aNextTabParentId,
                      getter_AddRefs(newWindowChrome));
 
   if (NS_WARN_IF(!newWindowChrome)) {
@@ -984,7 +990,8 @@ nsWindowWatcher::OpenWindowInternal(mozIDOMWindowProxy* aParent,
       if (windowCreator2) {
         mozIDOMWindowProxy* openerWindow = aForceNoOpener ? nullptr : aParent;
         rv = CreateChromeWindow(features, parentChrome, chromeFlags,
-                                nullptr, openerWindow, getter_AddRefs(newChrome));
+                                nullptr, openerWindow, 0,
+                                getter_AddRefs(newChrome));
 
       } else {
         rv = mWindowCreator->CreateChromeWindow(parentChrome, chromeFlags,
@@ -1098,10 +1105,9 @@ nsWindowWatcher::OpenWindowInternal(mozIDOMWindowProxy* aParent,
     if (subjectPrincipal &&
         !nsContentUtils::IsSystemOrExpandedPrincipal(subjectPrincipal) &&
         docShell->ItemType() != nsIDocShellTreeItem::typeChrome) {
-      OriginAttributes attrs;
-      attrs.Inherit(subjectPrincipal->OriginAttributesRef());
-      isPrivateBrowsingWindow = !!attrs.mPrivateBrowsingId;
-      docShell->SetOriginAttributes(attrs);
+      isPrivateBrowsingWindow =
+        !!subjectPrincipal->OriginAttributesRef().mPrivateBrowsingId;
+      docShell->SetOriginAttributes(subjectPrincipal->OriginAttributesRef());
     } else {
       nsCOMPtr<nsIDocShellTreeItem> parentItem;
       GetWindowTreeItem(aParent, getter_AddRefs(parentItem));
@@ -2406,22 +2412,52 @@ nsWindowWatcher::SizeOpenedWindow(nsIDocShellTreeOwner* aTreeOwner,
       screenHeight = NSToIntRound(screenHeight / scale);
 
       if (aSizeSpec.SizeSpecified()) {
-        /* Unlike position, force size out-of-bounds check only if
-           size actually was specified. Otherwise, intrinsically sized
-           windows are broken. */
-        if (height < 100) {
-          height = 100;
-          winHeight = height + (sizeChromeHeight ? 0 : chromeHeight);
-        }
-        if (winHeight > screenHeight) {
-          height = screenHeight - (sizeChromeHeight ? 0 : chromeHeight);
-        }
-        if (width < 100) {
-          width = 100;
-          winWidth = width + (sizeChromeWidth ? 0 : chromeWidth);
-        }
-        if (winWidth > screenWidth) {
-          width = screenWidth - (sizeChromeWidth ? 0 : chromeWidth);
+        if (!nsContentUtils::ShouldResistFingerprinting()) {
+          /* Unlike position, force size out-of-bounds check only if
+             size actually was specified. Otherwise, intrinsically sized
+             windows are broken. */
+          if (height < 100) {
+            height = 100;
+            winHeight = height + (sizeChromeHeight ? 0 : chromeHeight);
+          }
+          if (winHeight > screenHeight) {
+            height = screenHeight - (sizeChromeHeight ? 0 : chromeHeight);
+          }
+          if (width < 100) {
+            width = 100;
+            winWidth = width + (sizeChromeWidth ? 0 : chromeWidth);
+          }
+          if (winWidth > screenWidth) {
+            width = screenWidth - (sizeChromeWidth ? 0 : chromeWidth);
+          }
+        } else {
+          int32_t targetContentWidth  = 0;
+          int32_t targetContentHeight = 0;
+
+          nsContentUtils::CalcRoundedWindowSizeForResistingFingerprinting(
+            chromeWidth,
+            chromeHeight,
+            screenWidth,
+            screenHeight,
+            width,
+            height,
+            sizeChromeWidth,
+            sizeChromeHeight,
+            &targetContentWidth,
+            &targetContentHeight
+          );
+
+          if (aSizeSpec.mInnerWidthSpecified ||
+              aSizeSpec.mOuterWidthSpecified) {
+            width = targetContentWidth;
+            winWidth = width + (sizeChromeWidth ? 0 : chromeWidth);
+          }
+
+          if (aSizeSpec.mInnerHeightSpecified ||
+              aSizeSpec.mOuterHeightSpecified) {
+            height = targetContentHeight;
+            winHeight = height + (sizeChromeHeight ? 0 : chromeHeight);
+          }
         }
       }
 

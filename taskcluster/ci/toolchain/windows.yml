@@ -2,7 +2,7 @@
 # License, v. 2.0. If a copy of the MPL was not distributed with this
 # file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
-win32-clang-cl/opt:
+win32-clang-cl:
     description: "Clang-cl toolchain build"
     treeherder:
         kind: build
@@ -11,15 +11,17 @@ win32-clang-cl/opt:
         tier: 2
     worker-type: aws-provisioner-v1/gecko-{level}-b-win2012
     worker:
-        implementation: generic-worker
         max-run-time: 36000
+        env:
+            TOOLTOOL_MANIFEST: "browser/config/tooltool-manifests/win32/build-clang-cl.manifest"
     run:
         using: toolchain-script
         script: build-clang32-windows.sh
         resources:
             - 'build/build-clang/**'
+            - 'taskcluster/scripts/misc/build-clang-windows-helper32.sh'
 
-win64-clang-cl/opt:
+win64-clang-cl:
     description: "Clang-cl toolchain build"
     treeherder:
         kind: build
@@ -28,15 +30,17 @@ win64-clang-cl/opt:
         tier: 2
     worker-type: aws-provisioner-v1/gecko-{level}-b-win2012
     worker:
-        implementation: generic-worker
         max-run-time: 36000
+        env:
+            TOOLTOOL_MANIFEST: "browser/config/tooltool-manifests/win32/build-clang-cl.manifest"
     run:
         using: toolchain-script
         script: build-clang64-windows.sh
         resources:
             - 'build/build-clang/**'
+            - 'taskcluster/scripts/misc/build-clang-windows-helper64.sh'
 
-win32-clang-tidy/opt:
+win32-clang-tidy:
     description: "Clang-tidy toolchain build"
     index:
         product: static-analysis
@@ -48,15 +52,17 @@ win32-clang-tidy/opt:
         tier: 2
     worker-type: aws-provisioner-v1/gecko-{level}-b-win2012
     worker:
-        implementation: generic-worker
         max-run-time: 36000
+        env:
+            TOOLTOOL_MANIFEST: "browser/config/tooltool-manifests/win32/build-clang-cl.manifest"
     run:
         using: toolchain-script
         script: build-clang-tidy32-windows.sh
         resources:
             - 'build/build-clang/**'
+            - 'taskcluster/scripts/misc/build-clang-windows-helper32.sh'
 
-win64-clang-tidy/opt:
+win64-clang-tidy:
     description: "Clang-tidy toolchain build"
     index:
         product: static-analysis
@@ -68,10 +74,12 @@ win64-clang-tidy/opt:
         tier: 2
     worker-type: aws-provisioner-v1/gecko-{level}-b-win2012
     worker:
-        implementation: generic-worker
         max-run-time: 36000
+        env:
+            TOOLTOOL_MANIFEST: "browser/config/tooltool-manifests/win32/build-clang-cl.manifest"
     run:
         using: toolchain-script
         script: build-clang-tidy64-windows.sh
         resources:
             - 'build/build-clang/**'
+            - 'taskcluster/scripts/misc/build-clang-windows-helper64.sh'

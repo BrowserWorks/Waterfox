@@ -1,3 +1,4 @@
+
 /* -*- Mode: C++; tab-width: 2; indent-tabs-mode: nil; c-basic-offset: 2 -*- */
 /* This Source Code Form is subject to the terms of the Mozilla Public
  * License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -10,18 +11,16 @@
 
 // Make sure we can initialize our thread profile
 TEST(ThreadProfile, Initialization) {
-  PseudoStack* stack = new PseudoStack();
   Thread::tid_t tid = 1000;
-  ThreadInfo info("testThread", tid, true, stack, nullptr);
-  info.SetHasProfile();
+  ThreadInfo info("testThread", tid, true, nullptr);
+  info.StartProfiling();
 }
 
 // Make sure we can record one tag and read it
 TEST(ThreadProfile, InsertOneTag) {
-  PseudoStack* stack = new PseudoStack();
   Thread::tid_t tid = 1000;
-  ThreadInfo info("testThread", tid, true, stack, nullptr);
-  ProfileBuffer* pb = new ProfileBuffer(10);
+  ThreadInfo info("testThread", tid, true, nullptr);
+  UniquePtr<ProfileBuffer> pb(new ProfileBuffer(10));
   pb->addTag(ProfileBufferEntry::Time(123.1));
   ASSERT_TRUE(pb->mEntries != nullptr);
   ASSERT_TRUE(pb->mEntries[pb->mReadPos].kind() ==
@@ -31,10 +30,9 @@ TEST(ThreadProfile, InsertOneTag) {
 
 // See if we can insert some tags
 TEST(ThreadProfile, InsertTagsNoWrap) {
-  PseudoStack* stack = new PseudoStack();
   Thread::tid_t tid = 1000;
-  ThreadInfo info("testThread", tid, true, stack, nullptr);
-  ProfileBuffer* pb = new ProfileBuffer(100);
+  ThreadInfo info("testThread", tid, true, nullptr);
+  UniquePtr<ProfileBuffer> pb(new ProfileBuffer(100));
   int test_size = 50;
   for (int i = 0; i < test_size; i++) {
     pb->addTag(ProfileBufferEntry::Time(i));
@@ -51,13 +49,12 @@ TEST(ThreadProfile, InsertTagsNoWrap) {
 
 // See if wrapping works as it should in the basic case
 TEST(ThreadProfile, InsertTagsWrap) {
-  PseudoStack* stack = new PseudoStack();
   Thread::tid_t tid = 1000;
   // we can fit only 24 tags in this buffer because of the empty slot
   int tags = 24;
   int buffer_size = tags + 1;
-  ThreadInfo info("testThread", tid, true, stack, nullptr);
-  ProfileBuffer* pb = new ProfileBuffer(buffer_size);
+  ThreadInfo info("testThread", tid, true, nullptr);
+  UniquePtr<ProfileBuffer> pb(new ProfileBuffer(buffer_size));
   int test_size = 43;
   for (int i = 0; i < test_size; i++) {
     pb->addTag(ProfileBufferEntry::Time(i));

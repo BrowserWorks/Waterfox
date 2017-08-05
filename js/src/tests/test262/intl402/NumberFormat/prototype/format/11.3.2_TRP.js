@@ -1,4 +1,3 @@
-// |reftest| skip-if(!this.hasOwnProperty('Intl')) -- needs Intl
 // Copyright 2011-2012 Norbert Lindenberg. All rights reserved.
 // Copyright 2012 Mozilla Corporation. All rights reserved.
 // This code is governed by the BSD license found in the LICENSE file.
@@ -33,8 +32,9 @@ var testData = {
     "-123.45": "-123.45",
     "123.44499": "123.44",
     "-123.44499": "-123.44",
-    "123.44500": "123.45",
-    "-123.44500": "-123.45",
+    // Ref tc39/ecma402#128
+    "123.44500": "123.44",
+    "-123.44500": "-123.44",
     "123.44501": "123.45",
     "-123.44501": "-123.45",
     "0.001234": "0.001234",

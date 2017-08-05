@@ -29,7 +29,7 @@
 
 using mozilla::LogLevel;
 
-PRLogModuleInfo* gWin32SoundLog = nullptr;
+static mozilla::LazyLogModule gWin32SoundLog("nsSound");
 
 class nsSoundPlayer: public mozilla::Runnable {
 public:
@@ -76,7 +76,7 @@ protected:
 NS_IMETHODIMP
 nsSoundPlayer::Run()
 {
-  PR_SetCurrentThreadName("Play Sound");
+  NS_SetCurrentThreadName("Play Sound");
 
   NS_PRECONDITION(!mSoundName.IsEmpty(), "Sound name should not be empty");
   ::PlaySoundW(mSoundName.get(), nullptr,
@@ -108,10 +108,6 @@ NS_IMPL_ISUPPORTS(nsSound, nsISound, nsIStreamLoaderObserver)
 
 nsSound::nsSound()
 {
-    if (!gWin32SoundLog) {
-      gWin32SoundLog = PR_NewLogModule("nsSound");
-    }
-
     mLastSound = nullptr;
 }
 

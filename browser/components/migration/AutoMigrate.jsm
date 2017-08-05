@@ -11,6 +11,8 @@ const { classes: Cc, interfaces: Ci, results: Cr, utils: Cu } = Components;
 const kAutoMigrateEnabledPref = "browser.migrate.automigrate.enabled";
 const kUndoUIEnabledPref = "browser.migrate.automigrate.ui.enabled";
 
+const kInPageUIEnabledPref = "browser.migrate.automigrate.inpage.ui.enabled";
+
 const kAutoMigrateBrowserPref = "browser.migrate.automigrate.browser";
 const kAutoMigrateImportedItemIds = "browser.migrate.automigrate.imported-items";
 
@@ -25,8 +27,8 @@ const kNotificationId = "automigration-undo";
 Cu.import("resource:///modules/MigrationUtils.jsm");
 Cu.import("resource://gre/modules/Preferences.jsm");
 Cu.import("resource://gre/modules/Services.jsm");
-Cu.import("resource://gre/modules/Task.jsm");
 Cu.import("resource://gre/modules/XPCOMUtils.jsm");
+
 XPCOMUtils.defineLazyModuleGetter(this, "AsyncShutdown",
                                   "resource://gre/modules/AsyncShutdown.jsm");
 XPCOMUtils.defineLazyModuleGetter(this, "LoginHelper",
@@ -47,7 +49,6 @@ XPCOMUtils.defineLazyGetter(this, "gBrandBundle", function() {
 
 Cu.importGlobalProperties(["URL"]);
 
-/* globals kUndoStateFullPath */
 XPCOMUtils.defineLazyGetter(this, "kUndoStateFullPath", function() {
   return OS.Path.join(OS.Constants.Path.profileDir, "initialMigrationMetadata.jsonlz4");
 });
@@ -126,8 +127,8 @@ const AutoMigrate = {
     };
 
     MigrationUtils.initializeUndoData();
-    Services.obs.addObserver(migrationObserver, "Migration:Ended", false);
-    Services.obs.addObserver(migrationObserver, "Migration:ItemError", false);
+    Services.obs.addObserver(migrationObserver, "Migration:Ended");
+    Services.obs.addObserver(migrationObserver, "Migration:ItemError");
     migrator.migrate(this.resourceTypesToUse, profileStartup, profileToMigrate);
     histogram.add(20);
   },
@@ -188,28 +189,28 @@ const AutoMigrate = {
   },
 
   _pendingUndoTasks: false,
-  canUndo: Task.async(function* () {
+  async canUndo() {
     if (this._savingPromise) {
-      yield this._savingPromise;
+      await this._savingPromise;
     }
     if (this._pendingUndoTasks) {
       return false;
     }
     let fileExists = false;
     try {
-      fileExists = yield OS.File.exists(kUndoStateFullPath);
+      fileExists = await OS.File.exists(kUndoStateFullPath);
     } catch (ex) {
       Cu.reportError(ex);
     }
     return fileExists;
-  }),
+  },
 
-  undo: Task.async(function* () {
+  async undo() {
     let browserId = Preferences.get(kAutoMigrateBrowserPref, "unknown");
     TelemetryStopwatch.startKeyed("FX_STARTUP_MIGRATION_UNDO_TOTAL_MS", browserId);
     let histogram = Services.telemetry.getHistogramById("FX_STARTUP_MIGRATION_AUTOMATED_IMPORT_UNDO");
     histogram.add(0);
-    if (!(yield this.canUndo())) {
+    if (!(await this.canUndo())) {
       histogram.add(5);
       throw new Error("Can't undo!");
     }
@@ -222,7 +223,7 @@ const AutoMigrate = {
       encoding: "utf-8",
       compression: "lz4",
     });
-    let stateData = this._dejsonifyUndoState(yield readPromise);
+    let stateData = this._dejsonifyUndoState(await readPromise);
     histogram.add(12);
 
     this._errorMap = {bookmarks: 0, visits: 0, logins: 0};
@@ -240,7 +241,7 @@ const AutoMigrate = {
       TelemetryStopwatch.finishKeyed(histogramId, browserId);
     };
     startTelemetryStopwatch("bookmarks");
-    yield this._removeUnchangedBookmarks(stateData.get("bookmarks")).catch(ex => {
+    await this._removeUnchangedBookmarks(stateData.get("bookmarks")).catch(ex => {
       Cu.reportError("Uncaught exception when removing unchanged bookmarks!");
       Cu.reportError(ex);
     });
@@ -249,7 +250,7 @@ const AutoMigrate = {
     histogram.add(15);
 
     startTelemetryStopwatch("visits");
-    yield this._removeSomeVisits(stateData.get("visits")).catch(ex => {
+    await this._removeSomeVisits(stateData.get("visits")).catch(ex => {
       Cu.reportError("Uncaught exception when removing history visits!");
       Cu.reportError(ex);
     });
@@ -258,7 +259,7 @@ const AutoMigrate = {
     histogram.add(20);
 
     startTelemetryStopwatch("logins");
-    yield this._removeUnchangedLogins(stateData.get("logins")).catch(ex => {
+    await this._removeUnchangedLogins(stateData.get("logins")).catch(ex => {
       Cu.reportError("Uncaught exception when removing unchanged logins!");
       Cu.reportError(ex);
     });
@@ -274,7 +275,7 @@ const AutoMigrate = {
     this._purgeUndoState(this.UNDO_REMOVED_REASON_UNDO_USED);
     histogram.add(30);
     TelemetryStopwatch.finishKeyed("FX_STARTUP_MIGRATION_UNDO_TOTAL_MS", browserId);
-  }),
+  },
 
   _removeNotificationBars() {
     let browserWindows = Services.wm.getEnumerator("navigator:browser");
@@ -316,54 +317,75 @@ const AutoMigrate = {
   },
 
   /**
-   * Show the user a notification bar indicating we automatically imported
-   * their data and offering them the possibility of removing it.
+   * Decide if we need to show [the user] a prompt indicating we automatically
+   * imported their data.
    * @param target (xul:browser)
    *        The browser in which we should show the notification.
+   * @returns {Boolean} return true when need to show the prompt.
    */
-  maybeShowUndoNotification: Task.async(function* (target) {
-    if (!(yield this.canUndo())) {
-      return;
+  async shouldShowMigratePrompt(target) {
+    if (!(await this.canUndo())) {
+      return false;
     }
 
     // The tab might have navigated since we requested the undo state:
     let canUndoFromThisPage = ["about:home", "about:newtab"].includes(target.currentURI.spec);
     if (!canUndoFromThisPage ||
         !Preferences.get(kUndoUIEnabledPref, false)) {
-      return;
-    }
-
-    let win = target.ownerGlobal;
-    let notificationBox = win.gBrowser.getNotificationBox(target);
-    if (!notificationBox || notificationBox.getNotificationWithValue(kNotificationId)) {
-      return;
+      return false;
     }
 
     // At this stage we're committed to show the prompt - unless we shouldn't,
     // in which case we remove the undo prefs (which will cause canUndo() to
     // return false from now on.):
-    if (!this.shouldStillShowUndoPrompt()) {
+    if (this.isMigratePromptExpired()) {
       this._purgeUndoState(this.UNDO_REMOVED_REASON_OFFER_EXPIRED);
       this._removeNotificationBars();
-      return;
+      return false;
     }
 
+    let remainingDays = Preferences.get(kAutoMigrateDaysToOfferUndoPref, 0);
+    Services.telemetry.getHistogramById("FX_STARTUP_MIGRATION_UNDO_OFFERED").add(4 - remainingDays);
+
+    return true;
+  },
+
+  /**
+   * Return the message that denotes the user data is migrated from the other browser.
+   * @returns {String} imported message with the brand and the browser name
+   */
+  getUndoMigrationMessage() {
     let browserName = this.getBrowserUsedForMigration();
     if (!browserName) {
       browserName = MigrationUtils.getLocalizedString("automigration.undo.unknownbrowser");
     }
-    const kMessageId = "automigration.undo.message." +
+    const kMessageId = "automigration.undo.message2." +
                       Preferences.get(kAutoMigrateImportedItemIds, "all");
     const kBrandShortName = gBrandBundle.GetStringFromName("brandShortName");
-    let message = MigrationUtils.getLocalizedString(kMessageId,
-                                                    [browserName, kBrandShortName]);
+    return MigrationUtils.getLocalizedString(kMessageId,
+                                             [kBrandShortName, browserName]);
+  },
 
+  /**
+   * Show the user a notification bar indicating we automatically imported
+   * their data and offering them the possibility of removing it.
+   * @param target (xul:browser)
+   *        The browser in which we should show the notification.
+   */
+  showUndoNotificationBar(target) {
+    let isInPage = Preferences.get(kInPageUIEnabledPref, false);
+    let win = target.ownerGlobal;
+    let notificationBox = win.gBrowser.getNotificationBox(target);
+    if (isInPage || !notificationBox || notificationBox.getNotificationWithValue(kNotificationId)) {
+      return;
+    }
+    let message = this.getUndoMigrationMessage();
     let buttons = [
       {
         label: MigrationUtils.getLocalizedString("automigration.undo.keep2.label"),
         accessKey: MigrationUtils.getLocalizedString("automigration.undo.keep2.accesskey"),
         callback: () => {
-          this._purgeUndoState(this.UNDO_REMOVED_REASON_OFFER_REJECTED);
+          this.keepAutoMigration();
           this._removeNotificationBars();
         },
       },
@@ -371,19 +393,21 @@ const AutoMigrate = {
         label: MigrationUtils.getLocalizedString("automigration.undo.dontkeep2.label"),
         accessKey: MigrationUtils.getLocalizedString("automigration.undo.dontkeep2.accesskey"),
         callback: () => {
-          this._maybeOpenUndoSurveyTab(win);
-          this.undo();
+          this.undoAutoMigration(win);
         },
       },
     ];
     notificationBox.appendNotification(
       message, kNotificationId, null, notificationBox.PRIORITY_INFO_HIGH, buttons
     );
-    let remainingDays = Preferences.get(kAutoMigrateDaysToOfferUndoPref, 0);
-    Services.telemetry.getHistogramById("FX_STARTUP_MIGRATION_UNDO_OFFERED").add(4 - remainingDays);
-  }),
+  },
 
-  shouldStillShowUndoPrompt() {
+
+  /**
+   * Return true if we have shown the prompt to user several days.
+   * (defined in kAutoMigrateDaysToOfferUndoPref)
+   */
+  isMigratePromptExpired() {
     let today = new Date();
     // Round down to midnight:
     today = new Date(today.getFullYear(), today.getMonth(), today.getDate());
@@ -398,10 +422,10 @@ const AutoMigrate = {
       Preferences.set(kAutoMigrateDaysToOfferUndoPref, remainingDays);
       Preferences.set(kAutoMigrateLastUndoPromptDateMsPref, today.valueOf().toString());
       if (remainingDays <= 0) {
-        return false;
+        return true;
       }
     }
-    return true;
+    return false;
   },
 
   UNDO_REMOVED_REASON_UNDO_USED: 0,
@@ -477,11 +501,11 @@ const AutoMigrate = {
    * Store the information required for using 'undo' of the automatic
    * migration in the user's profile.
    */
-  saveUndoState: Task.async(function* () {
+  async saveUndoState() {
     let resolveSavingPromise;
     this._saveUndoStateTrackerForShutdown = "processing undo history";
     this._savingPromise = new Promise(resolve => { resolveSavingPromise = resolve });
-    let state = yield MigrationUtils.stopAndRetrieveUndoData();
+    let state = await MigrationUtils.stopAndRetrieveUndoData();
 
     if (!state || ![...state.values()].some(ary => ary.length > 0)) {
       // If we didn't import anything, abort now.
@@ -509,9 +533,9 @@ const AutoMigrate = {
         throw e;
       });
     return this._undoSavePromise;
-  }),
+  },
 
-  _removeUnchangedBookmarks: Task.async(function* (bookmarks) {
+  async _removeUnchangedBookmarks(bookmarks) {
     if (!bookmarks.length) {
       return;
     }
@@ -530,7 +554,7 @@ const AutoMigrate = {
     });
     // We can't use the result of Promise.all because that would include nulls
     // for bookmarks that no longer exist (which we're catching above).
-    yield Promise.all(bmPromises);
+    await Promise.all(bmPromises);
     let unchangedBookmarks = bookmarksFromDB.filter(bm => {
       return bm.lastModified.getTime() == guidToLMMap.get(bm.guid).getTime();
     });
@@ -558,7 +582,7 @@ const AutoMigrate = {
       // Can't just use a .catch() because Bookmarks.remove() can throw (rather
       // than returning rejected promises).
       try {
-        yield PlacesUtils.bookmarks.remove(guid, {preventRemovalOfNonEmptyFolders: true});
+        await PlacesUtils.bookmarks.remove(guid, {preventRemovalOfNonEmptyFolders: true});
       } catch (err) {
         if (err && err.message != "Cannot remove a non-empty folder.") {
           this._errorMap.bookmarks++;
@@ -566,9 +590,9 @@ const AutoMigrate = {
         }
       }
     }
-  }),
+  },
 
-  _removeUnchangedLogins: Task.async(function* (logins) {
+  async _removeUnchangedLogins(logins) {
     for (let login of logins) {
       let foundLogins = LoginHelper.searchLoginsWithObject({guid: login.guid});
       if (foundLogins.length) {
@@ -585,9 +609,9 @@ const AutoMigrate = {
         }
       }
     }
-  }),
+  },
 
-  _removeSomeVisits: Task.async(function* (visits) {
+  async _removeSomeVisits(visits) {
     for (let urlVisits of visits) {
       let urlObj;
       try {
@@ -602,7 +626,7 @@ const AutoMigrate = {
         limit: urlVisits.visitCount,
       };
       try {
-        yield PlacesUtils.history.removeVisitsByFilter(visitData);
+        await PlacesUtils.history.removeVisitsByFilter(visitData);
       } catch (ex) {
         this._errorMap.visits++;
         try {
@@ -612,7 +636,7 @@ const AutoMigrate = {
         Cu.reportError(ex);
       }
     }
-  }),
+  },
 
   /**
    * Maybe open a new tab with a survey. The tab will only be opened if all of
@@ -638,10 +662,8 @@ const AutoMigrate = {
       // Strip out any empty elements, so an empty pref doesn't
       // lead to a an array with 1 empty string in it.
       surveyLocales = new Set(surveyLocales.filter(str => !!str));
-      let chromeRegistry = Cc["@mozilla.org/chrome/chrome-registry;1"]
-                             .getService(Ci.nsIXULChromeRegistry);
       canDoSurveyInLocale =
-        surveyLocales.has(chromeRegistry.getSelectedLocale("global"));
+        surveyLocales.has(Services.locale.getAppLocaleAsLangTag());
     } catch (ex) {
       /* ignore exceptions and just don't do the survey. */
     }
@@ -660,6 +682,22 @@ const AutoMigrate = {
   QueryInterface: XPCOMUtils.generateQI(
     [Ci.nsIObserver, Ci.nsINavBookmarkObserver, Ci.nsISupportsWeakReference]
   ),
+
+  /**
+   * Undo action called by the UndoNotification or by the newtab
+   * @param chromeWindow A reference to the window in which to open a link.
+   */
+  undoAutoMigration(chromeWindow) {
+    this._maybeOpenUndoSurveyTab(chromeWindow);
+    this.undo();
+  },
+
+  /**
+   * Keep the automigration result and not prompt anymore
+   */
+  keepAutoMigration() {
+    this._purgeUndoState(this.UNDO_REMOVED_REASON_OFFER_REJECTED);
+  },
 };
 
 AutoMigrate.init();

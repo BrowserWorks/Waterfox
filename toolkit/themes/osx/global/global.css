@@ -21,7 +21,16 @@ menulist > menupopup {
   --arrowpanel-color: hsl(0,0%,10%);
   --arrowpanel-border-color: hsla(210,4%,10%,.05);
   --arrowpanel-border-radius: 3.5px;
+  --focus-ring-box-shadow: @focusRingShadow@;
 }
+
+%ifndef MOZ_PHOTON_THEME
+@media (-moz-mac-yosemite-theme) {
+  :root {
+    --focus-ring-box-shadow: @yosemiteFocusRingShadow@;
+  }
+}
+%endif
 
 /* ::::: root elements ::::: */
 
@@ -29,7 +38,7 @@ window,
 page,
 dialog,
 wizard,
-prefwindow { 
+prefwindow {
   -moz-appearance: dialog;
   background-color: #FFFFFF;
   color: -moz-DialogText;
@@ -64,7 +73,7 @@ window.dialog {
 }
 
 .message-icon {
-  list-style-image: url("chrome://global/skin/icons/information-64.png");
+  list-style-image: url("chrome://global/skin/icons/info.svg");
 }
 
 .alert-dialog #info\.icon,
@@ -111,7 +120,7 @@ statusbarpanel {
 
 .statusbarpanel-iconic {
   padding: 0px;
-}    
+}
 
 /* ::::: miscellaneous formatting ::::: */
 
@@ -140,7 +149,7 @@ statusbar:-moz-lwtheme {
   border-bottom-color: ThreeDHighlight;
   margin: 0 5px 5px;
 }
-  
+
 .outset {
   border: 1px solid ThreeDShadow;
   border-left-color: ThreeDHighlight;
@@ -156,7 +165,7 @@ separator[orient="vertical"] {
 
 separator.thin:not([orient="vertical"]) {
   height: 0.5em;
-}  
+}
 separator.thin[orient="vertical"] {
   width: 0.5em;
 }
@@ -173,7 +182,7 @@ separator.groove[orient="vertical"] {
   margin-left: 0.4em;
   margin-right: 0.4em;
 }
-    
+
 .plain {
   -moz-appearance: none;
   margin: 0 !important;
@@ -234,9 +243,9 @@ label[disabled="true"] {
 .text-link:hover {
   text-decoration: underline;
 }
-  
+
 .text-link:-moz-focusring {
-  box-shadow: @focusRingShadow@;
+  box-shadow: var(--focus-ring-box-shadow);
 }
 
 .toolbar-focustarget {
@@ -264,11 +273,11 @@ notification > button:active:hover {
 }
 
 notification > button:-moz-focusring {
-  box-shadow: @focusRingShadow@, @roundButtonShadow@;
+  box-shadow: var(--focus-ring-box-shadow), @roundButtonShadow@;
 }
 
 notification > button:active:hover:-moz-focusring {
-  box-shadow: @focusRingShadow@, @roundButtonPressedShadow@;
+  box-shadow: var(--focus-ring-box-shadow), @roundButtonPressedShadow@;
 }
 
 notification > button > .button-box > .button-text {

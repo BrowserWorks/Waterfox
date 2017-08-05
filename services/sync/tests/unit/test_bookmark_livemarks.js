@@ -7,7 +7,6 @@ Cu.import("resource://services-sync/engines.js");
 Cu.import("resource://services-sync/engines/bookmarks.js");
 Cu.import("resource://services-sync/util.js");
 Cu.import("resource://services-sync/service.js");
-Cu.import("resource://gre/modules/PlacesUtils.jsm");
 Cu.import("resource://testing-common/services/common/utils.js");
 
 const DESCRIPTION_ANNO = "bookmarkProperties/description";
@@ -21,14 +20,14 @@ var record631361 = {
   index: 150,
   modified: 1296768176.49,
   payload:
-  {"id":"M5bwUKK8hPyF",
-   "type":"livemark",
-   "siteUri":"http://www.bbc.co.uk/go/rss/int/news/-/news/",
-   "feedUri":"http://fxfeeds.mozilla.com/en-US/firefox/headlines.xml",
-   "parentName":"Bookmarks Toolbar",
-   "parentid":"toolbar",
-   "title":"Latest Headlines",
-   "description":"",
+  {"id": "M5bwUKK8hPyF",
+   "type": "livemark",
+   "siteUri": "http://www.bbc.co.uk/go/rss/int/news/-/news/",
+   "feedUri": "http://fxfeeds.mozilla.com/en-US/firefox/headlines.xml",
+   "parentName": "Bookmarks Toolbar",
+   "parentid": "toolbar",
+   "title": "Latest Headlines",
+   "description": "",
    "children":
      ["7oBdEZB-8BMO", "SUd1wktMNCTB", "eZe4QWzo1BcY", "YNBhGwhVnQsN",
       "92Aw2SMEkFg0", "uw0uKqrVFwd-", "x7mx2P3--8FJ", "d-jVF8UuC9Ye",

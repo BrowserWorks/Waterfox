@@ -1,4 +1,3 @@
-// |reftest| skip-if(!this.hasOwnProperty('Intl')) -- needs Intl
 // Copyright 2012 Google Inc.  All rights reserved.
 // This code is governed by the BSD license found in the LICENSE file.
 
@@ -10,9 +9,6 @@ description: >
 author: Roozbeh Pournader
 ---*/
 
-if (Intl.DateTimeFormat.prototype.constructor !== Intl.DateTimeFormat) {
-    $ERROR("Intl.DateTimeFormat.prototype.constructor is not the same as " +
-          "Intl.DateTimeFormat");
-}
+assert.sameValue(Intl.DateTimeFormat.prototype.constructor, Intl.DateTimeFormat, "Intl.DateTimeFormat.prototype.constructor is not the same as Intl.DateTimeFormat");
 
 reportCompare(0, 0);

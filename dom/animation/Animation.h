@@ -312,13 +312,22 @@ public:
    * running on the compositor).
    */
   bool CanThrottle() const;
+
   /**
-   * Updates |aStyleRule| with the animation values of this animation's effect,
-   * if any.
-   * Any properties contained in |aPropertiesToSkip| will not be added or
-   * updated in |aStyleRule|.
+   * Updates various bits of state that we need to update as the result of
+   * running ComposeStyle().
+   * See the comment of KeyframeEffectReadOnly::WillComposeStyle for more detail.
    */
-  void ComposeStyle(AnimationRule& aStyleRule,
+  void WillComposeStyle();
+
+  /**
+   * Updates |aComposeResult| with the animation values of this animation's
+   * effect, if any.
+   * Any properties contained in |aPropertiesToSkip| will not be added or
+   * updated in |aComposeResult|.
+   */
+  template<typename ComposeAnimationResult>
+  void ComposeStyle(ComposeAnimationResult&& aComposeResult,
                     const nsCSSPropertyIDSet& aPropertiesToSkip);
 
   void NotifyEffectTimingUpdated();

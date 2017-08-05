@@ -2,6 +2,7 @@
 
 module.exports = {
   "extends": [
-    "../../../../testing/mochitest/chrome.eslintrc.js"
+    "plugin:mozilla/chrome-test",
+    "plugin:mozilla/browser-test"
   ],
 };

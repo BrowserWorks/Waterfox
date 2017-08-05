@@ -6,9 +6,7 @@
 
 "use strict";
 
-const WebConsoleUtils = require("devtools/client/webconsole/utils").Utils;
-const STRINGS_URI = "devtools/client/locales/webconsole.properties";
-const l10n = new WebConsoleUtils.L10n(STRINGS_URI);
+const l10n = require("devtools/client/webconsole/webconsole-l10n");
 
 const {
   MESSAGE_SOURCE,
@@ -65,13 +63,21 @@ function transformPacket(packet) {
           parameters = null;
           break;
         case "time":
-          // We don't show anything for console.time calls to match Chrome's behaviour.
           parameters = null;
-          type = MESSAGE_TYPE.NULL_MESSAGE;
+          if (timer && timer.error) {
+            messageText = l10n.getFormatStr(timer.error, [timer.name]);
+            level = MESSAGE_LEVEL.WARN;
+          } else {
+            // We don't show anything for console.time calls to match Chrome's behaviour.
+            type = MESSAGE_TYPE.NULL_MESSAGE;
+          }
           break;
         case "timeEnd":
           parameters = null;
-          if (timer) {
+          if (timer && timer.error) {
+            messageText = l10n.getFormatStr(timer.error, [timer.name]);
+            level = MESSAGE_LEVEL.WARN;
+          } else if (timer) {
             // We show the duration to users when calls console.timeEnd() is called,
             // if corresponding console.time() was called before.
             let duration = Math.round(timer.duration * 100) / 100;
@@ -96,13 +102,15 @@ function transformPacket(packet) {
           break;
         case "group":
           type = MESSAGE_TYPE.START_GROUP;
-          parameters = null;
-          messageText = message.groupName || l10n.getStr("noGroupLabel");
+          if (parameters.length === 0) {
+            parameters = [l10n.getStr("noGroupLabel")];
+          }
           break;
         case "groupCollapsed":
           type = MESSAGE_TYPE.START_GROUP_COLLAPSED;
-          parameters = null;
-          messageText = message.groupName || l10n.getStr("noGroupLabel");
+          if (parameters.length === 0) {
+            parameters = [l10n.getStr("noGroupLabel")];
+          }
           break;
         case "groupEnd":
           type = MESSAGE_TYPE.END_GROUP;
@@ -140,6 +148,17 @@ function transformPacket(packet) {
         type: MESSAGE_TYPE.LOG,
         level: MESSAGE_LEVEL.LOG,
         messageText: "Navigated to " + message.url,
+        timeStamp: message.timeStamp
+      });
+    }
+
+    case "logMessage": {
+      let { message } = packet;
+      return new ConsoleMessage({
+        source: MESSAGE_SOURCE.CONSOLE_API,
+        type: MESSAGE_TYPE.LOG,
+        level: MESSAGE_LEVEL.LOG,
+        messageText: message.message,
         timeStamp: message.timeStamp
       });
     }
@@ -218,7 +237,7 @@ function transformPacket(packet) {
 // Helpers
 function getRepeatId(message) {
   message = message.toJS();
-  delete message.repeat;
+  message.timeStamp = null;
   return JSON.stringify(message);
 }
 
@@ -238,8 +257,11 @@ function convertCachedPacket(packet) {
   } else if (packet._type === "NetworkEvent") {
     convertPacket.networkEvent = packet;
     convertPacket.type = "networkEvent";
+  } else if (packet._type === "LogMessage") {
+    convertPacket.message = packet;
+    convertPacket.type = "logMessage";
   } else {
-    throw new Error("Unexpected packet type");
+    throw new Error("Unexpected packet type: " + packet._type);
   }
   return convertPacket;
 }

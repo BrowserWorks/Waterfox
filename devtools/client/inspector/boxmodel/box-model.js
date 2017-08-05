@@ -6,13 +6,13 @@
 
 const { Task } = require("devtools/shared/task");
 const { getCssProperties } = require("devtools/shared/fronts/css-properties");
-const { ReflowFront } = require("devtools/shared/fronts/reflow");
 
 const { InplaceEditor } = require("devtools/client/shared/inplace-editor");
 
 const {
   updateGeometryEditorEnabled,
   updateLayout,
+  updateOffsetParent,
 } = require("./actions/box-model");
 
 const EditingSession = require("./utils/editing-session");
@@ -59,11 +59,7 @@ BoxModel.prototype = {
     this.inspector.selection.off("new-node-front", this.onNewSelection);
     this.inspector.sidebar.off("select", this.onSidebarSelect);
 
-    if (this.reflowFront) {
-      this.untrackReflows();
-      this.reflowFront.destroy();
-      this.reflowFront = null;
-    }
+    this.untrackReflows();
 
     this.document = null;
     this.highlighters = null;
@@ -88,8 +84,8 @@ BoxModel.prototype = {
    * Returns true if the computed or layout panel is visible, and false otherwise.
    */
   isPanelVisible() {
-    return this.inspector.toolbox.currentToolId === "inspector" &&
-           this.inspector.sidebar &&
+    return this.inspector.toolbox && this.inspector.sidebar &&
+           this.inspector.toolbox.currentToolId === "inspector" &&
            (this.inspector.sidebar.getCurrentTabID() === "layoutview" ||
             this.inspector.sidebar.getCurrentTabID() === "computedview");
   },
@@ -108,30 +104,14 @@ BoxModel.prototype = {
    * Starts listening to reflows in the current tab.
    */
   trackReflows() {
-    if (!this.reflowFront) {
-      let { target } = this.inspector;
-      if (target.form.reflowActor) {
-        this.reflowFront = ReflowFront(target.client,
-                                       target.form);
-      } else {
-        return;
-      }
-    }
-
-    this.reflowFront.on("reflows", this.updateBoxModel);
-    this.reflowFront.start();
+    this.inspector.reflowTracker.trackReflows(this, this.updateBoxModel);
   },
 
   /**
    * Stops listening to reflows in the current tab.
    */
   untrackReflows() {
-    if (!this.reflowFront) {
-      return;
-    }
-
-    this.reflowFront.off("reflows", this.updateBoxModel);
-    this.reflowFront.stop();
+    this.inspector.reflowTracker.untrackReflows(this, this.updateBoxModel);
   },
 
   /**
@@ -147,25 +127,41 @@ BoxModel.prototype = {
     }
 
     let lastRequest = Task.spawn((function* () {
-      if (!(this.isPanelVisible() &&
-          this.inspector.selection.isConnected() &&
-          this.inspector.selection.isElementNode())) {
+      if (!this.inspector ||
+          !this.isPanelVisible() ||
+          !this.inspector.selection.isConnected() ||
+          !this.inspector.selection.isElementNode()) {
         return null;
       }
 
       let node = this.inspector.selection.nodeFront;
+
       let layout = yield this.inspector.pageStyle.getLayout(node, {
         autoMargins: true,
       });
-      let styleEntries = yield this.inspector.pageStyle.getApplied(node, {});
+
+      let styleEntries = yield this.inspector.pageStyle.getApplied(node, {
+        // We don't need styles applied to pseudo elements of the current node.
+        skipPseudo: true
+      });
       this.elementRules = styleEntries.map(e => e.rule);
 
       // Update the layout properties with whether or not the element's position is
       // editable with the geometry editor.
       let isPositionEditable = yield this.inspector.pageStyle.isPositionEditable(node);
+
       layout = Object.assign({}, layout, {
         isPositionEditable,
       });
+
+      const actorCanGetOffSetParent =
+        yield this.inspector.target.actorHasMethod("domwalker", "getOffsetParent");
+
+      if (actorCanGetOffSetParent) {
+        // Update the redux store with the latest offset parent DOM node
+        let offsetParent = yield this.inspector.walker.getOffsetParent(node);
+        this.store.dispatch(updateOffsetParent(offsetParent));
+      }
 
       // Update the redux store with the latest layout properties and update the box
       // model view.
@@ -191,6 +187,10 @@ BoxModel.prototype = {
    * Hides the box-model highlighter on the currently selected element.
    */
   onHideBoxModelHighlighter() {
+    if (!this.inspector) {
+      return;
+    }
+
     let toolbox = this.inspector.toolbox;
     toolbox.highlighterUtils.unhighlight();
   },
@@ -298,6 +298,10 @@ BoxModel.prototype = {
           }
         }
 
+        if (property.substring(0, 9) == "position-") {
+          properties[0].name = property.substring(9);
+        }
+
         session.setProperties(properties).catch(e => console.error(e));
       },
       done: (value, commit) => {
@@ -306,6 +310,10 @@ BoxModel.prototype = {
           session.revert().then(() => {
             session.destroy();
           }, e => console.error(e));
+          return;
+        }
+
+        if (!this.inspector) {
           return;
         }
 
@@ -328,6 +336,10 @@ BoxModel.prototype = {
    *         Options passed to the highlighter actor.
    */
   onShowBoxModelHighlighter(options = {}) {
+    if (!this.inspector) {
+      return;
+    }
+
     let toolbox = this.inspector.toolbox;
     let nodeFront = this.inspector.selection.nodeFront;
 

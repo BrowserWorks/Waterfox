@@ -4,10 +4,26 @@
 # License, v. 2.0. If a copy of the MPL was not distributed with this
 # file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
+# Default extra components to build config
+with Files('**'):
+    BUG_COMPONENT = ('Core', 'Build Config')
+
+with Files('devtools/**'):
+    BUG_COMPONENT = ('Firefox', 'Developer Tools')
+
 with Files('mach/**'):
     BUG_COMPONENT = ('Core', 'mach')
 
+with Files('mozboot/**'):
+    BUG_COMPONENT = ('Core', 'Build Config')
+
 with Files('mozbuild/**'):
+    BUG_COMPONENT = ('Core', 'Build Config')
+
+with Files('mozlint/**'):
+    BUG_COMPONENT = ('Testing', 'Lint')
+
+with Files('mozversioncontrol/**'):
     BUG_COMPONENT = ('Core', 'Build Config')
 
 SPHINX_PYTHON_PACKAGE_DIRS += [

@@ -12,6 +12,7 @@
 #include "nsWrapperCache.h"
 
 #include "mozilla/dom/Fetch.h"
+#include "mozilla/dom/FetchSignal.h"
 #include "mozilla/dom/InternalRequest.h"
 // Required here due to certain WebIDL enums/classes being declared in both
 // files.
@@ -155,7 +156,6 @@ public:
 private:
   ~Request();
 
-  nsCOMPtr<nsIGlobalObject> mOwner;
   RefPtr<InternalRequest> mRequest;
   // Lazily created.
   RefPtr<Headers> mHeaders;

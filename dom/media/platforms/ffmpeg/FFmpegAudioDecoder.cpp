@@ -137,7 +137,7 @@ FFmpegAudioDecoder<LIBAV_VER>::ProcessDecode(MediaRawData* aSample)
   }
 
   int64_t samplePosition = aSample->mOffset;
-  media::TimeUnit pts = media::TimeUnit::FromMicroseconds(aSample->mTime);
+  media::TimeUnit pts = aSample->mTime;
 
   DecodedData results;
   while (packet.size > 0) {
@@ -204,7 +204,7 @@ FFmpegAudioDecoder<LIBAV_VER>::ProcessDecode(MediaRawData* aSample)
       }
 
       results.AppendElement(new AudioData(
-        samplePosition, pts.ToMicroseconds(), duration.ToMicroseconds(),
+        samplePosition, pts, duration,
         mFrame->nb_samples, Move(audio), numChannels, samplingRate));
 
       pts = newpts;

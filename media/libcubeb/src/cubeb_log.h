@@ -8,6 +8,8 @@
 #ifndef CUBEB_LOG
 #define CUBEB_LOG
 
+#include "cubeb/cubeb.h"
+
 #ifdef __cplusplus
 extern "C" {
 #endif
@@ -18,8 +20,9 @@ extern "C" {
 #define PRINTF_FORMAT(fmt, args)
 #endif
 
-extern cubeb_log_level g_log_level;
-extern cubeb_log_callback g_log_callback PRINTF_FORMAT(1, 2);
+extern cubeb_log_level g_cubeb_log_level;
+extern cubeb_log_callback g_cubeb_log_callback PRINTF_FORMAT(1, 2);
+void cubeb_async_log(const char * fmt, ...);
 
 #ifdef __cplusplus
 }
@@ -29,9 +32,15 @@ extern cubeb_log_callback g_log_callback PRINTF_FORMAT(1, 2);
 #define LOG(msg, ...) LOG_INTERNAL(CUBEB_LOG_NORMAL, msg, ##__VA_ARGS__)
 
 #define LOG_INTERNAL(level, fmt, ...) do {                                   \
-    if (g_log_callback && level <= g_log_level) {                            \
-      g_log_callback("%s:%d: " fmt "\n", __FILE__, __LINE__, ##__VA_ARGS__); \
+    if (g_cubeb_log_callback && level <= g_cubeb_log_level) {                            \
+      g_cubeb_log_callback("%s:%d: " fmt "\n", __FILE__, __LINE__, ##__VA_ARGS__); \
     }                                                                        \
   } while(0)
+
+/* Asynchronous verbose logging, to log in real-time callbacks. */
+#define ALOGV(fmt, ...)                   \
+do {                                      \
+  cubeb_async_log(fmt, ##__VA_ARGS__);    \
+} while(0)
 
 #endif // CUBEB_LOG

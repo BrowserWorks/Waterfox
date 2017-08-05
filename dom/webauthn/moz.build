@@ -7,23 +7,38 @@
 with Files("**"):
     BUG_COMPONENT = ("Core", "DOM: Device Interfaces")
 
+IPDL_SOURCES += [
+    'PWebAuthnTransaction.ipdl'
+]
+
 EXPORTS.mozilla.dom += [
+    'AuthenticatorAssertionResponse.h',
+    'AuthenticatorAttestationResponse.h',
+    'AuthenticatorResponse.h',
     'NSSU2FTokenRemote.h',
-    'ScopedCredential.h',
-    'ScopedCredentialInfo.h',
-    'WebAuthentication.h',
-    'WebAuthnAssertion.h',
-    'WebAuthnAttestation.h',
+    'PublicKeyCredential.h',
+    'U2FSoftTokenManager.h',
+    'U2FTokenManager.h',
+    'U2FTokenTransport.h',
+    'WebAuthnManager.h',
     'WebAuthnRequest.h',
+    'WebAuthnTransactionChild.h',
+    'WebAuthnTransactionParent.h',
+    'WebAuthnUtil.h'
 ]
 
 UNIFIED_SOURCES += [
+    'AuthenticatorAssertionResponse.cpp',
+    'AuthenticatorAttestationResponse.cpp',
+    'AuthenticatorResponse.cpp',
     'NSSU2FTokenRemote.cpp',
-    'ScopedCredential.cpp',
-    'ScopedCredentialInfo.cpp',
-    'WebAuthentication.cpp',
-    'WebAuthnAssertion.cpp',
-    'WebAuthnAttestation.cpp',
+    'PublicKeyCredential.cpp',
+    'U2FSoftTokenManager.cpp',
+    'U2FTokenManager.cpp',
+    'WebAuthnManager.cpp',
+    'WebAuthnTransactionChild.cpp',
+    'WebAuthnTransactionParent.cpp',
+    'WebAuthnUtil.cpp'
 ]
 
 include('/ipc/chromium/chromium-config.mozbuild')

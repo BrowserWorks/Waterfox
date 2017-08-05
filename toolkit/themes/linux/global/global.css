@@ -13,10 +13,6 @@
 
 /* ::::: XBL bindings ::::: */
 
-checkbox {
-  -moz-binding: url("chrome://global/content/bindings/checkbox.xml#checkbox-with-spacing");
-}
-
 radio {
   -moz-binding: url("chrome://global/skin/globalBindings.xml#radio-with-spacing");
 }
@@ -99,22 +95,17 @@ iframe {
 
 statusbar {
   -moz-appearance: statusbar;
-  border-top: 1px solid ThreeDLightShadow;
-  border-left: 1px solid ThreeDShadow;
-  border-right: 1px solid ThreeDHighlight;
-  border-bottom: 1px solid ThreeDHighlight;
-  background-color: -moz-Dialog;
   min-height: 22px;
+}
+
+statusbar:-moz-lwtheme {
+  -moz-appearance: none;
 }
 
 statusbarpanel {
   -moz-appearance: statusbarpanel;
   -moz-box-align: center;
   -moz-box-pack: center;
-  border-left: 1px solid ThreeDHighlight;
-  border-top: 1px solid ThreeDHighlight;
-  border-right: 1px solid ThreeDShadow;
-  border-bottom: 1px solid ThreeDShadow;
   padding: 0 4px;
 }
 
@@ -123,7 +114,6 @@ statusbarpanel {
   -moz-box-pack: end;
   -moz-appearance: resizerpanel;
   padding: 0;
-  border: none;
 }
 
 .statusbarpanel-iconic,
@@ -135,7 +125,7 @@ statusbarpanel {
 /* XXXBlake yeah, shoot me -- these don't belong here.  I'll move them later. */
 
 sidebarheader {
-  height: 25px;
+  min-height: 25px;
   background-color: -moz-Dialog;
 }
 

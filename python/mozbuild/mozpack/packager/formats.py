@@ -6,11 +6,14 @@ from __future__ import absolute_import
 
 from mozpack.chrome.manifest import (
     Manifest,
+    ManifestEntryWithRelPath,
     ManifestInterfaces,
     ManifestChrome,
     ManifestBinaryComponent,
     ManifestResource,
+    ManifestMultiContent,
 )
+from mozpack.errors import errors
 from urlparse import urlparse
 import mozpack.path as mozpath
 from mozpack.files import (
@@ -22,11 +25,6 @@ from mozpack.copier import (
     FileRegistrySubtree,
     Jarrer,
 )
-
-STARTUP_CACHE_PATHS = [
-    'jsloader',
-    'jssubloader',
-]
 
 '''
 Formatters are classes receiving packaging instructions and creating the
@@ -133,6 +131,7 @@ class FlatSubFormatter(object):
     def __init__(self, copier):
         assert isinstance(copier, (FileRegistry, FileRegistrySubtree))
         self.copier = copier
+        self._chrome_db = {}
 
     def add(self, path, content):
         self.copier.add(path, content)
@@ -156,6 +155,25 @@ class FlatSubFormatter(object):
                                             mozpath.basename(path))
                 self.add_manifest(Manifest(parent, relpath))
             self.copier.add(path, ManifestFile(entry.base))
+
+        if isinstance(entry, ManifestChrome):
+            data = self._chrome_db.setdefault(entry.name, {})
+            if isinstance(entry, ManifestMultiContent):
+                entries = data.setdefault(entry.type, {}) \
+                              .setdefault(entry.id, [])
+            else:
+                entries = data.setdefault(entry.type, [])
+            for e in entries:
+                # Ideally, we'd actually check whether entry.flags are more
+                # specific than e.flags, but in practice the following test
+                # is enough for now.
+                if entry == e:
+                    errors.warn('"%s" is duplicated. Skipping.' % entry)
+                    return
+                if not entry.flags or e.flags and entry.flags == e.flags:
+                    errors.fatal('"%s" overrides "%s"' % (entry, e))
+            entries.append(entry)
+
         self.copier[path].add(entry)
 
     def add_interfaces(self, path, content):
@@ -321,4 +339,4 @@ class OmniJarSubFormatter(PiecemealFormatter):
             'greprefs.js',
             'hyphenation',
             'update.locale',
-        ] or path[0] in STARTUP_CACHE_PATHS
+        ]

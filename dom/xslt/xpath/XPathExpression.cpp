@@ -75,7 +75,7 @@ XPathExpression::EvaluateWithContext(JSContext* aCx,
                                      JS::Handle<JSObject*> aInResult,
                                      ErrorResult& aRv)
 {
-    XPathResult* inResult = nullptr;
+    RefPtr<XPathResult> inResult;
     if (aInResult) {
         nsresult rv = UNWRAP_OBJECT(XPathResult, aInResult, inResult);
         if (NS_FAILED(rv) && rv != NS_ERROR_XPC_BAD_CONVERT_JS) {
@@ -206,10 +206,12 @@ EvalContextImpl::getVariable(int32_t aNamespace,
     return NS_ERROR_INVALID_ARG;
 }
 
-bool
-EvalContextImpl::isStripSpaceAllowed(const txXPathNode& aNode)
+nsresult
+EvalContextImpl::isStripSpaceAllowed(const txXPathNode& aNode, bool& aAllowed)
 {
-    return false;
+    aAllowed = false;
+
+    return NS_OK;
 }
 
 void*

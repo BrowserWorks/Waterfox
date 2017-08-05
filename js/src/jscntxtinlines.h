@@ -14,9 +14,9 @@
 
 #include "builtin/Object.h"
 #include "jit/JitFrames.h"
+#include "proxy/Proxy.h"
 #include "vm/HelperThreads.h"
 #include "vm/Interpreter.h"
-#include "vm/ProxyObject.h"
 #include "vm/Symbol.h"
 
 namespace js {
@@ -68,9 +68,11 @@ class CompartmentChecker
     }
 
     void check(JSObject* obj) {
-        MOZ_ASSERT(JS::ObjectIsNotGray(obj));
-        if (obj)
+        if (obj) {
+            MOZ_ASSERT(JS::ObjectIsNotGray(obj));
+            MOZ_ASSERT(!js::gc::IsAboutToBeFinalizedUnbarriered(&obj));
             check(obj->compartment());
+        }
     }
 
     template<typename T>
@@ -88,13 +90,18 @@ class CompartmentChecker
         check(handle.get());
     }
 
-    void checkAtom(gc::Cell* cell) {
+    template <typename T>
+    void checkAtom(T* thing) {
+        static_assert(mozilla::IsSame<T, JSAtom>::value ||
+                      mozilla::IsSame<T, JS::Symbol>::value,
+                      "Should only be called with JSAtom* or JS::Symbol* argument");
+
 #ifdef DEBUG
         // Atoms which move across zone boundaries need to be marked in the new
         // zone, see JS_MarkCrossZoneId.
         if (compartment) {
             JSRuntime* rt = compartment->runtimeFromAnyThread();
-            MOZ_ASSERT(rt->gc.atomMarking.atomIsMarked(compartment->zone(), cell));
+            MOZ_ASSERT(rt->gc.atomMarking.atomIsMarked(compartment->zone(), thing));
         }
 #endif
     }
@@ -102,7 +109,7 @@ class CompartmentChecker
     void check(JSString* str) {
         MOZ_ASSERT(JS::CellIsNotGray(str));
         if (str->isAtom()) {
-            checkAtom(str);
+            checkAtom(&str->asAtom());
         } else {
             checkZone(str->zone());
         }
@@ -156,8 +163,12 @@ class CompartmentChecker
     }
 
     void check(jsid id) {
-        if (JSID_IS_GCTHING(id))
-            checkAtom(JSID_TO_GCTHING(id).asCell());
+        if (JSID_IS_ATOM(id))
+            checkAtom(JSID_TO_ATOM(id));
+        else if (JSID_IS_SYMBOL(id))
+            checkAtom(JSID_TO_SYMBOL(id));
+        else
+            MOZ_ASSERT(!JSID_IS_GCTHING(id));
     }
 
     void check(JSScript* script) {
@@ -442,17 +453,27 @@ JSContext::runningWithTrustedPrincipals()
 }
 
 inline void
-JSContext::enterCompartment(
-    JSCompartment* c,
-    const js::AutoLockForExclusiveAccess* maybeLock /* = nullptr */)
+JSContext::enterNonAtomsCompartment(JSCompartment* c)
 {
     enterCompartmentDepth_++;
 
-    if (!c->zone()->isAtomsZone())
-        enterZoneGroup(c->zone()->group());
+    MOZ_ASSERT(!c->zone()->isAtomsZone());
+    enterZoneGroup(c->zone()->group());
 
     c->enter();
-    setCompartment(c, maybeLock);
+    setCompartment(c, nullptr);
+}
+
+inline void
+JSContext::enterAtomsCompartment(JSCompartment* c,
+                                 const js::AutoLockForExclusiveAccess& lock)
+{
+    enterCompartmentDepth_++;
+
+    MOZ_ASSERT(c->zone()->isAtomsZone());
+
+    c->enter();
+    setCompartment(c, &lock);
 }
 
 template <typename T>
@@ -460,7 +481,7 @@ inline void
 JSContext::enterCompartmentOf(const T& target)
 {
     MOZ_ASSERT(JS::CellIsNotGray(target));
-    enterCompartment(target->compartment(), nullptr);
+    enterNonAtomsCompartment(target->compartment());
 }
 
 inline void
@@ -520,7 +541,7 @@ inline void
 JSContext::enterZoneGroup(js::ZoneGroup* group)
 {
     MOZ_ASSERT(this == js::TlsContext.get());
-    group->enter();
+    group->enter(this);
 }
 
 inline void

@@ -11,18 +11,18 @@ module.metadata = {
 };
 
 const { Cu } = require('chrome');
-const { on, off, emit } = require('../../event/core');
+lazyRequire(this, '../../event/core', "on", "off", "emit");
 
-const { data } = require('sdk/self');
+lazyRequire(this, 'sdk/self', "data");
 
-const { isObject, isNil } = require('../../lang/type');
+lazyRequire(this, '../../lang/type', "isObject", "isNil");
 
-const { getMostRecentBrowserWindow } = require('../../window/utils');
-const { ignoreWindow } = require('../../private-browsing/utils');
+lazyRequire(this, '../../window/utils', "getMostRecentBrowserWindow");
+lazyRequire(this, '../../private-browsing/utils', "ignoreWindow");
 const { CustomizableUI } = Cu.import('resource:///modules/CustomizableUI.jsm', {});
 const { AREA_PANEL, AREA_NAVBAR } = CustomizableUI;
 
-const { events: viewEvents } = require('./view/events');
+lazyRequire(this, './view/events', { "events": "viewEvents" });
 
 const XUL_NS = 'http://www.mozilla.org/keymaster/gatekeeper/there.is.only.xul';
 
@@ -66,9 +66,8 @@ require('../../system/unload').when( _ =>
 );
 
 function getNode(id, window) {
-  return !views.has(id) || ignoreWindow(window)
-    ? null
-    : CustomizableUI.getWidget(id).forWindow(window).node
+  let view = views.get(id);
+  return view && view.nodes.get(window);
 };
 
 function isInToolbar(id) {
@@ -133,9 +132,6 @@ function create(options) {
 
       let image = getImage(icon, true, window.devicePixelRatio);
 
-      if (ignoreWindow(window))
-        node.style.display = 'none';
-
       node.setAttribute('id', this.id);
       node.setAttribute('class', 'toolbarbutton-1 chromeclass-toolbar-additional badged-button');
       node.setAttribute('type', type);
@@ -144,11 +140,23 @@ function create(options) {
       node.setAttribute('image', image);
       node.setAttribute('constrain-size', 'true');
 
-      views.set(id, {
+      if (!views.get(id)) {
+        views.set(id, {
+          nodes: new WeakMap(),
+        });
+      }
+
+      let view = views.get(id);
+      Object.assign(view, {
         area: this.currentArea,
         icon: icon,
         label: label
       });
+
+      if (ignoreWindow(window))
+        node.style.display = 'none';
+      else
+        view.nodes.set(window, node);
 
       node.addEventListener('command', function(event) {
         if (views.has(id)) {
@@ -219,7 +227,7 @@ function setBadge(id, window, badge, color) {
   if (node) {
     // `Array.from` is needed to handle unicode symbol properly:
     // '𝐀𝐁'.length is 4 where Array.from('𝐀𝐁').length is 2
-    let text = isNil(badge)
+    let text = badge == null
                   ? ''
                   : Array.from(String(badge)).slice(0, 4).join('');
 
@@ -229,7 +237,7 @@ function setBadge(id, window, badge, color) {
                                         'class', 'toolbarbutton-badge');
 
     if (badgeNode)
-      badgeNode.style.backgroundColor = isNil(color) ? '' : color;
+      badgeNode.style.backgroundColor = color == null ? '' : color;
   }
 }
 exports.setBadge = setBadge;

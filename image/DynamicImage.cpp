@@ -7,6 +7,7 @@
 #include "gfxPlatform.h"
 #include "gfxUtils.h"
 #include "mozilla/gfx/2D.h"
+#include "mozilla/gfx/Logging.h"
 #include "mozilla/RefPtr.h"
 #include "ImageRegion.h"
 #include "Orientation.h"
@@ -80,7 +81,7 @@ DynamicImage::OnImageDataComplete(nsIRequest* aRequest,
 }
 
 void
-DynamicImage::OnSurfaceDiscarded()
+DynamicImage::OnSurfaceDiscarded(const SurfaceKey& aSurfaceKey)
 { }
 
 void
@@ -125,6 +126,12 @@ DynamicImage::GetHeight(int32_t* aHeight)
 {
   *aHeight = mDrawable->Size().height;
   return NS_OK;
+}
+
+nsresult
+DynamicImage::GetNativeSizes(nsTArray<IntSize>& aNativeSizes) const
+{
+  return NS_ERROR_NOT_IMPLEMENTED;
 }
 
 NS_IMETHODIMP

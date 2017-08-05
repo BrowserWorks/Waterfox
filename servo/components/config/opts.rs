@@ -25,18 +25,12 @@ use url::{self, Url};
 
 
 /// Global flags for Servo, currently set on the command line.
-#[derive(Clone)]
-#[cfg_attr(feature = "servo", derive(Deserialize, Serialize))]
+#[derive(Clone, Deserialize, Serialize)]
 pub struct Opts {
     pub is_running_problem_test: bool,
 
     /// The initial URL to load.
     pub url: Option<ServoUrl>,
-
-    /// How many threads to use for CPU painting (`-t`).
-    ///
-    /// Note that painting is sequentialized when using GPU painting.
-    pub paint_threads: usize,
 
     /// The maximum size of each tile in pixels (`-s`).
     pub tile_size: usize,
@@ -87,30 +81,19 @@ pub struct Opts {
     /// browser engines.
     pub bubble_inline_sizes_separately: bool,
 
-    /// True if we should show borders on all layers and tiles for
-    /// debugging purposes (`--show-debug-borders`).
-    pub show_debug_borders: bool,
-
     /// True if we should show borders on all fragments for debugging purposes
     /// (`--show-debug-fragment-borders`).
     pub show_debug_fragment_borders: bool,
 
-    /// True if we should paint tiles with overlays based on which thread painted them.
-    pub show_debug_parallel_paint: bool,
-
     /// True if we should paint borders around flows based on which thread painted them.
     pub show_debug_parallel_layout: bool,
-
-    /// True if we should paint tiles a random color whenever they're repainted. Useful for
-    /// debugging invalidation.
-    pub paint_flashing: bool,
 
     /// If set with --disable-text-aa, disable antialiasing on fonts. This is primarily useful for reftests
     /// where pixel perfect results are required when using fonts such as the Ahem
     /// font for layout tests.
     pub enable_text_antialiasing: bool,
 
-    /// If set with --enable-subpixel, use subpixel antialiasing for glyphs. In the future
+    /// If set with --disable-subpixel, use subpixel antialiasing for glyphs. In the future
     /// this will likely become the default, but for now it's opt-in while we work
     /// out any bugs and improve the implementation.
     pub enable_subpixel_text_antialiasing: bool,
@@ -177,9 +160,6 @@ pub struct Opts {
     /// Dumps the display list in JSON form after a layout.
     pub dump_display_list_json: bool,
 
-    /// Dumps the layer tree when it changes.
-    pub dump_layer_tree: bool,
-
     /// Emits notifications when there is a relayout.
     pub relayout_event: bool,
 
@@ -210,6 +190,9 @@ pub struct Opts {
     /// True if webrender recording should be enabled.
     pub webrender_record: bool,
 
+    /// True if webrender is allowed to batch draw calls as instances.
+    pub webrender_batch: bool,
+
     /// True to compile all webrender shaders at init time. This is mostly
     /// useful when modifying the shaders, to ensure they all compile
     /// after each change is made.
@@ -230,6 +213,12 @@ pub struct Opts {
 
     /// Print the version and exit.
     pub is_printing_version: bool,
+
+    /// Path to SSL certificates.
+    pub certificate_path: Option<String>,
+
+    /// Unminify Javascript.
+    pub unminify_js: bool,
 }
 
 fn print_usage(app: &str, opts: &Options) {
@@ -250,8 +239,8 @@ pub struct DebugOptions {
     /// Disable antialiasing of rendered text.
     pub disable_text_aa: bool,
 
-    /// Enable subpixel antialiasing of rendered text.
-    pub enable_subpixel_aa: bool,
+    /// Disable subpixel antialiasing of rendered text.
+    pub disable_subpixel_aa: bool,
 
     /// Disable antialiasing of rendered text on the HTML canvas element.
     pub disable_canvas_aa: bool,
@@ -271,9 +260,6 @@ pub struct DebugOptions {
     /// Print the display list in JSON form.
     pub dump_display_list_json: bool,
 
-    /// Print the layer tree whenever it changes.
-    pub dump_layer_tree: bool,
-
     /// Print notifications when there is a relayout.
     pub relayout_event: bool,
 
@@ -283,20 +269,11 @@ pub struct DebugOptions {
     /// Enable all heartbeats for profiling.
     pub profile_heartbeats: bool,
 
-    /// Paint borders along layer and tile boundaries.
-    pub show_compositor_borders: bool,
-
     /// Paint borders along fragment boundaries.
     pub show_fragment_borders: bool,
 
-    /// Overlay tiles with colors showing which thread painted them.
-    pub show_parallel_paint: bool,
-
     /// Mark which thread laid each flow out with colors.
     pub show_parallel_layout: bool,
-
-    /// Overlay repainted areas with a random color.
-    pub paint_flashing: bool,
 
     /// Write layout trace to an external file for debugging.
     pub trace_layout: bool,
@@ -332,6 +309,9 @@ pub struct DebugOptions {
     /// Enable webrender recording.
     pub webrender_record: bool,
 
+    /// Enable webrender instanced draw call batching.
+    pub webrender_disable_batch: bool,
+
     /// Use multisample antialiasing in WebRender.
     pub use_msaa: bool,
 
@@ -356,22 +336,18 @@ impl DebugOptions {
                 "help" => self.help = true,
                 "bubble-widths" => self.bubble_widths = true,
                 "disable-text-aa" => self.disable_text_aa = true,
-                "enable-subpixel-aa" => self.enable_subpixel_aa = true,
+                "disable-subpixel-aa" => self.disable_subpixel_aa = true,
                 "disable-canvas-aa" => self.disable_text_aa = true,
                 "dump-style-tree" => self.dump_style_tree = true,
                 "dump-rule-tree" => self.dump_rule_tree = true,
                 "dump-flow-tree" => self.dump_flow_tree = true,
                 "dump-display-list" => self.dump_display_list = true,
                 "dump-display-list-json" => self.dump_display_list_json = true,
-                "dump-layer-tree" => self.dump_layer_tree = true,
                 "relayout-event" => self.relayout_event = true,
                 "profile-script-events" => self.profile_script_events = true,
                 "profile-heartbeats" => self.profile_heartbeats = true,
-                "show-compositor-borders" => self.show_compositor_borders = true,
                 "show-fragment-borders" => self.show_fragment_borders = true,
-                "show-parallel-paint" => self.show_parallel_paint = true,
                 "show-parallel-layout" => self.show_parallel_layout = true,
-                "paint-flashing" => self.paint_flashing = true,
                 "trace-layout" => self.trace_layout = true,
                 "disable-share-style-cache" => self.disable_share_style_cache = true,
                 "style-sharing-stats" => self.style_sharing_stats = true,
@@ -383,6 +359,7 @@ impl DebugOptions {
                 "wr-stats" => self.webrender_stats = true,
                 "wr-debug" => self.webrender_debug = true,
                 "wr-record" => self.webrender_record = true,
+                "wr-no-batch" => self.webrender_disable_batch = true,
                 "msaa" => self.use_msaa = true,
                 "full-backtraces" => self.full_backtraces = true,
                 "precache-shaders" => self.precache_shaders = true,
@@ -410,15 +387,11 @@ fn print_debug_usage(app: &str) -> ! {
     print_option("dump-flow-tree", "Print the flow tree after each layout.");
     print_option("dump-display-list", "Print the display list after each layout.");
     print_option("dump-display-list-json", "Print the display list in JSON form.");
-    print_option("dump-layer-tree", "Print the layer tree whenever it changes.");
     print_option("relayout-event", "Print notifications when there is a relayout.");
     print_option("profile-script-events", "Enable profiling of script-related events.");
     print_option("profile-heartbeats", "Enable heartbeats for all thread categories.");
-    print_option("show-compositor-borders", "Paint borders along layer and tile boundaries.");
     print_option("show-fragment-borders", "Paint borders along fragment boundaries.");
-    print_option("show-parallel-paint", "Overlay tiles with colors showing which thread painted them.");
     print_option("show-parallel-layout", "Mark which thread laid each flow out with colors.");
-    print_option("paint-flashing", "Overlay repainted areas with a random color.");
     print_option("trace-layout", "Write layout trace to an external file for debugging.");
     print_option("disable-share-style-cache",
                  "Disable the style sharing cache.");
@@ -434,8 +407,9 @@ fn print_debug_usage(app: &str) -> ! {
     print_option("wr-stats", "Show WebRender profiler on screen.");
     print_option("msaa", "Use multisample antialiasing in WebRender.");
     print_option("full-backtraces", "Print full backtraces for all errors");
-    print_option("wr-debug", "Display webrender tile borders. Must be used with -w option.");
-    print_option("precache-shaders", "Compile all shaders during init. Must be used with -w option.");
+    print_option("wr-debug", "Display webrender tile borders.");
+    print_option("wr-no-batch", "Disable webrender instanced batching.");
+    print_option("precache-shaders", "Compile all shaders during init.");
     print_option("signpost", "Emit native OS signposts for profile events (currently macOS only)");
 
     println!("");
@@ -443,8 +417,7 @@ fn print_debug_usage(app: &str) -> ! {
     process::exit(0)
 }
 
-#[derive(Clone)]
-#[cfg_attr(feature = "servo", derive(Deserialize, Serialize))]
+#[derive(Clone, Deserialize, Serialize)]
 pub enum OutputOptions {
     FileName(String),
     Stdout(f64)
@@ -507,8 +480,7 @@ const DEFAULT_USER_AGENT: UserAgent = UserAgent::Desktop;
 pub fn default_opts() -> Opts {
     Opts {
         is_running_problem_test: false,
-        url: Some(ServoUrl::parse("about:blank").unwrap()),
-        paint_threads: 1,
+        url: None,
         tile_size: 512,
         device_pixels_per_px: None,
         time_profiling: None,
@@ -521,14 +493,11 @@ pub fn default_opts() -> Opts {
         replace_surrogates: false,
         gc_profile: false,
         load_webfonts_synchronously: false,
-        headless: true,
+        headless: false,
         hard_fail: true,
         bubble_inline_sizes_separately: false,
-        show_debug_borders: false,
         show_debug_fragment_borders: false,
-        show_debug_parallel_paint: false,
         show_debug_parallel_layout: false,
-        paint_flashing: false,
         enable_text_antialiasing: false,
         enable_subpixel_text_antialiasing: false,
         enable_canvas_antialiasing: false,
@@ -547,7 +516,6 @@ pub fn default_opts() -> Opts {
         dump_flow_tree: false,
         dump_display_list: false,
         dump_display_list_json: false,
-        dump_layer_tree: false,
         relayout_event: false,
         profile_script_events: false,
         profile_heartbeats: false,
@@ -564,8 +532,11 @@ pub fn default_opts() -> Opts {
         is_printing_version: false,
         webrender_debug: false,
         webrender_record: false,
+        webrender_batch: true,
         precache_shaders: false,
         signpost: false,
+        certificate_path: None,
+        unminify_js: false,
     }
 }
 
@@ -615,6 +586,7 @@ pub fn from_cmdline_args(args: &[String]) -> ArgumentParsingResult {
                   "A comma-separated string of debug options. Pass help to show available options.", "");
     opts.optflag("h", "help", "Print this message");
     opts.optopt("", "resources-path", "Path to find static resources", "/home/servo/resources");
+    opts.optopt("", "certificate-path", "Path to find SSL certificates", "/home/servo/resources/certs");
     opts.optopt("", "content-process" , "Run as a content process and connect to the given pipe",
                 "servo-ipc-channel.abcdefg");
     opts.optmulti("", "pref",
@@ -625,6 +597,7 @@ pub fn from_cmdline_args(args: &[String]) -> ArgumentParsingResult {
     opts.optopt("", "config-dir",
                     "config directory following xdg spec on linux platform", "");
     opts.optflag("v", "version", "Display servo version information");
+    opts.optflag("", "unminify-js", "Unminify Javascript");
 
     let opt_match = match opts.parse(args) {
         Ok(m) => m,
@@ -658,11 +631,10 @@ pub fn from_cmdline_args(args: &[String]) -> ArgumentParsingResult {
     }
 
     let cwd = env::current_dir().unwrap();
-    let homepage_pref = PREFS.get("shell.homepage");
     let url_opt = if !opt_match.free.is_empty() {
         Some(&opt_match.free[0][..])
     } else {
-        homepage_pref.as_string()
+        None
     };
     let is_running_problem_test =
         url_opt
@@ -672,16 +644,11 @@ pub fn from_cmdline_args(args: &[String]) -> ArgumentParsingResult {
              url.starts_with("http://web-platform.test:8000/_mozilla/mozilla/canvas/") ||
              url.starts_with("http://web-platform.test:8000/_mozilla/css/canvas_over_area.html"));
 
-    let url = match url_opt {
-        Some(url_string) => {
-            parse_url_or_filename(&cwd, url_string)
-                .unwrap_or_else(|()| args_fail("URL parsing failed"))
-        },
-        None => {
-            print_usage(app_name, &opts);
-            args_fail("servo asks that you provide a URL")
-        }
-    };
+    let url_opt = url_opt.and_then(|url_string| parse_url_or_filename(&cwd, url_string)
+                                   .or_else(|error| {
+                                       warn!("URL parsing failed ({:?}).", error);
+                                       Err(error)
+                                   }).ok());
 
     let tile_size: usize = match opt_match.opt_str("s") {
         Some(tile_size_str) => tile_size_str.parse()
@@ -693,12 +660,6 @@ pub fn from_cmdline_args(args: &[String]) -> ArgumentParsingResult {
         dppx_str.parse()
             .unwrap_or_else(|err| args_fail(&format!("Error parsing option: --device-pixel-ratio ({})", err)))
     );
-
-    let mut paint_threads: usize = match opt_match.opt_str("t") {
-        Some(paint_threads_str) => paint_threads_str.parse()
-            .unwrap_or_else(|err| args_fail(&format!("Error parsing option: -t ({})", err))),
-        None => cmp::max(num_cpus::get() * 3 / 4, 1),
-    };
 
     // If only the flag is present, default to a 5 second period for both profilers
     let time_profiling = if opt_match.opt_present("p") {
@@ -749,7 +710,6 @@ pub fn from_cmdline_args(args: &[String]) -> ArgumentParsingResult {
 
     let mut bubble_inline_sizes_separately = debug_options.bubble_widths;
     if debug_options.trace_layout {
-        paint_threads = 1;
         layout_threads = Some(1);
         bubble_inline_sizes_separately = true;
     }
@@ -809,8 +769,7 @@ pub fn from_cmdline_args(args: &[String]) -> ArgumentParsingResult {
 
     let opts = Opts {
         is_running_problem_test: is_running_problem_test,
-        url: Some(url),
-        paint_threads: paint_threads,
+        url: url_opt,
         tile_size: tile_size,
         device_pixels_per_px: device_pixels_per_px,
         time_profiling: time_profiling,
@@ -838,20 +797,16 @@ pub fn from_cmdline_args(args: &[String]) -> ArgumentParsingResult {
         sandbox: opt_match.opt_present("S"),
         random_pipeline_closure_probability: random_pipeline_closure_probability,
         random_pipeline_closure_seed: random_pipeline_closure_seed,
-        show_debug_borders: debug_options.show_compositor_borders,
         show_debug_fragment_borders: debug_options.show_fragment_borders,
-        show_debug_parallel_paint: debug_options.show_parallel_paint,
         show_debug_parallel_layout: debug_options.show_parallel_layout,
-        paint_flashing: debug_options.paint_flashing,
         enable_text_antialiasing: !debug_options.disable_text_aa,
-        enable_subpixel_text_antialiasing: debug_options.enable_subpixel_aa,
+        enable_subpixel_text_antialiasing: !debug_options.disable_subpixel_aa,
         enable_canvas_antialiasing: !debug_options.disable_canvas_aa,
         dump_style_tree: debug_options.dump_style_tree,
         dump_rule_tree: debug_options.dump_rule_tree,
         dump_flow_tree: debug_options.dump_flow_tree,
         dump_display_list: debug_options.dump_display_list,
         dump_display_list_json: debug_options.dump_display_list_json,
-        dump_layer_tree: debug_options.dump_layer_tree,
         relayout_event: debug_options.relayout_event,
         disable_share_style_cache: debug_options.disable_share_style_cache,
         style_sharing_stats: debug_options.style_sharing_stats,
@@ -866,8 +821,11 @@ pub fn from_cmdline_args(args: &[String]) -> ArgumentParsingResult {
         is_printing_version: is_printing_version,
         webrender_debug: debug_options.webrender_debug,
         webrender_record: debug_options.webrender_record,
+        webrender_batch: !debug_options.webrender_disable_batch,
         precache_shaders: debug_options.precache_shaders,
         signpost: debug_options.signpost,
+        certificate_path: opt_match.opt_str("certificate-path"),
+        unminify_js: opt_match.opt_present("unminify-js"),
     };
 
     set_defaults(opts);

@@ -255,6 +255,12 @@ EdgeInclusiveIntersection(const nsRect& aRect, const nsRect& aOtherRect)
   return Some(nsRect(left, top, right - left, bottom - top));
 }
 
+enum class BrowsingContextInfo {
+  SimilarOriginBrowsingContext,
+  DifferentOriginBrowsingContext,
+  UnknownBrowsingContext
+};
+
 void
 DOMIntersectionObserver::Update(nsIDocument* aDocument, DOMHighResTimeStamp time)
 {
@@ -266,17 +272,21 @@ DOMIntersectionObserver::Update(nsIDocument* aDocument, DOMHighResTimeStamp time
     root = mRoot;
     rootFrame = root->GetPrimaryFrame();
     if (rootFrame) {
-      if (rootFrame->GetType() == nsGkAtoms::scrollFrame) {
+      nsRect rootRectRelativeToRootFrame;
+      if (rootFrame->IsScrollFrame()) {
+        // rootRectRelativeToRootFrame should be the content rect of rootFrame, not including the scrollbars.
         nsIScrollableFrame* scrollFrame = do_QueryFrame(rootFrame);
-        rootRect = nsLayoutUtils::TransformFrameRectToAncestor(
-          rootFrame,
-          rootFrame->GetContentRectRelativeToSelf(),
-          scrollFrame->GetScrolledFrame());
+        rootRectRelativeToRootFrame = scrollFrame->GetScrollPortRect();
       } else {
-        rootRect = nsLayoutUtils::GetAllInFlowRectsUnion(rootFrame,
-          nsLayoutUtils::GetContainingBlockForClientRect(rootFrame),
-          nsLayoutUtils::RECTS_ACCOUNT_FOR_TRANSFORMS);
+        // rootRectRelativeToRootFrame should be the border rect of rootFrame.
+        rootRectRelativeToRootFrame = rootFrame->GetRectRelativeToSelf();
       }
+      nsIFrame* containingBlock =
+        nsLayoutUtils::GetContainingBlockForClientRect(rootFrame);
+      rootRect =
+        nsLayoutUtils::TransformFrameRectToAncestor(rootFrame,
+                                                    rootRectRelativeToRootFrame,
+                                                    containingBlock);
     }
   } else {
     nsCOMPtr<nsIPresShell> presShell = aDocument->GetShell();
@@ -324,6 +334,7 @@ DOMIntersectionObserver::Update(nsIDocument* aDocument, DOMHighResTimeStamp time
     nsIFrame* targetFrame = target->GetPrimaryFrame();
     nsRect targetRect;
     Maybe<nsRect> intersectionRect;
+    bool isSameDoc = root && root->GetComposedDoc() == target->GetComposedDoc();
 
     if (rootFrame && targetFrame) {
       // If mRoot is set we are testing intersection with a container element
@@ -332,7 +343,7 @@ DOMIntersectionObserver::Update(nsIDocument* aDocument, DOMHighResTimeStamp time
         // Skip further processing of this target if it is not in the same
         // Document as the intersection root, e.g. if root is an element of
         // the main document and target an element from an embedded iframe.
-        if (target->GetComposedDoc() != root->GetComposedDoc()) {
+        if (!isSameDoc) {
           continue;
         }
         // Skip further processing of this target if is not a descendant of the
@@ -349,11 +360,11 @@ DOMIntersectionObserver::Update(nsIDocument* aDocument, DOMHighResTimeStamp time
         nsLayoutUtils::GetContainingBlockForClientRect(targetFrame),
         nsLayoutUtils::RECTS_ACCOUNT_FOR_TRANSFORMS
       );
-      intersectionRect = Some(targetFrame->GetVisualOverflowRect());
+      intersectionRect = Some(targetFrame->GetRectRelativeToSelf());
 
       nsIFrame* containerFrame = nsLayoutUtils::GetCrossDocParentFrame(targetFrame);
       while (containerFrame && containerFrame != rootFrame) {
-        if (containerFrame->GetType() == nsGkAtoms::scrollFrame) {
+        if (containerFrame->IsScrollFrame()) {
           nsIScrollableFrame* scrollFrame = do_QueryFrame(containerFrame);
           nsRect subFrameRect = scrollFrame->GetScrollPortRect();
           nsRect intersectionRectRelativeToContainer =
@@ -374,11 +385,22 @@ DOMIntersectionObserver::Update(nsIDocument* aDocument, DOMHighResTimeStamp time
       }
     }
 
-    nsRect rootIntersectionRect = rootRect;
-    bool isInSimilarOriginBrowsingContext = rootFrame && targetFrame &&
-                                            CheckSimilarOrigin(root, target);
+    nsRect rootIntersectionRect;
+    BrowsingContextInfo isInSimilarOriginBrowsingContext =
+      BrowsingContextInfo::UnknownBrowsingContext;
 
-    if (isInSimilarOriginBrowsingContext) {
+    if (rootFrame && targetFrame) {
+      rootIntersectionRect = rootRect;
+    }
+
+    if (root && target) {
+      isInSimilarOriginBrowsingContext = CheckSimilarOrigin(root, target) ?
+        BrowsingContextInfo::SimilarOriginBrowsingContext :
+        BrowsingContextInfo::DifferentOriginBrowsingContext;
+    }
+
+    if (isInSimilarOriginBrowsingContext ==
+        BrowsingContextInfo::SimilarOriginBrowsingContext) {
       rootIntersectionRect.Inflate(rootMargin);
     }
 
@@ -393,19 +415,27 @@ DOMIntersectionObserver::Update(nsIDocument* aDocument, DOMHighResTimeStamp time
         intersectionRectRelativeToRoot,
         rootIntersectionRect
       );
-      if (intersectionRect.isSome()) {
-        intersectionRect = Some(nsLayoutUtils::TransformFrameRectToAncestor(
-          nsLayoutUtils::GetContainingBlockForClientRect(rootFrame),
-          intersectionRect.value(),
-          targetFrame->PresContext()->PresShell()->GetRootScrollFrame()
-        ));
+      if (intersectionRect.isSome() && !isSameDoc) {
+        nsRect rect = intersectionRect.value();
+        nsPresContext* presContext = targetFrame->PresContext();
+        nsIFrame* rootScrollFrame = presContext->PresShell()->GetRootScrollFrame();
+        if (rootScrollFrame) {
+          nsLayoutUtils::TransformRect(rootFrame, rootScrollFrame, rect);
+        }
+        intersectionRect = Some(rect);
       }
     }
 
     double targetArea = targetRect.width * targetRect.height;
     double intersectionArea = !intersectionRect ?
       0 : intersectionRect->width * intersectionRect->height;
-    double intersectionRatio = targetArea > 0.0 ? intersectionArea / targetArea : 0.0;
+    
+    double intersectionRatio;
+    if (targetArea > 0.0) {
+      intersectionRatio = intersectionArea / targetArea;
+    } else {
+      intersectionRatio = intersectionRect.isSome() ? 1.0 : 0.0;
+    }
 
     size_t threshold = -1;
     if (intersectionRatio > 0.0) {
@@ -428,7 +458,9 @@ DOMIntersectionObserver::Update(nsIDocument* aDocument, DOMHighResTimeStamp time
     if (target->UpdateIntersectionObservation(this, threshold)) {
       QueueIntersectionObserverEntry(
         target, time,
-        isInSimilarOriginBrowsingContext ? Some(rootIntersectionRect) : Nothing(),
+        isInSimilarOriginBrowsingContext ==
+          BrowsingContextInfo::DifferentOriginBrowsingContext ?
+          Nothing() : Some(rootIntersectionRect),
         targetRect, intersectionRect, intersectionRatio
       );
     }
@@ -460,6 +492,7 @@ DOMIntersectionObserver::QueueIntersectionObserverEntry(Element* aTarget,
     rootBounds.forget(),
     boundingClientRect.forget(),
     intersectionRect.forget(),
+    aIntersectionRect.isSome(),
     aTarget, aIntersectionRatio);
   mQueuedEntries.AppendElement(entry.forget());
 }

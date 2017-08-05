@@ -17,7 +17,7 @@
 #include "nsRegionFwd.h"
 #include "mozilla/gfx/Rect.h"
 #include "mozilla/CheckedInt.h"
-#include "mozilla/webrender/webrender_ffi.h"
+#include "mozilla/webrender/WebRenderTypes.h"
 
 class gfxASurface;
 class gfxDrawable;
@@ -35,6 +35,9 @@ class WebRenderCommand;
 namespace image {
 class ImageRegion;
 } // namespace image
+namespace wr {
+class DisplayListBuilder;
+} // namespace wr
 } // namespace mozilla
 
 class gfxUtils {
@@ -309,38 +312,6 @@ SafeBytesForBitmap(uint32_t aWidth, uint32_t aHeight, unsigned aBytesPerPixel)
   CheckedInt<uint32_t> height = uint32_t(aHeight);
   return width * height * aBytesPerPixel;
 }
-
-class WebRenderGlyphHelper final {
-public:
-  WebRenderGlyphHelper()
-    : mFontData(nullptr)
-    , mFontDataLength(0)
-    , mIndex(0)
-    , mGlyphSize(0.0)
-  {
-  }
-
-  ~WebRenderGlyphHelper()
-  {
-    if (mFontData) {
-      free(mFontData);
-    }
-  }
-
-  void BuildWebRenderCommands(layers::WebRenderBridgeChild* aChild,
-                              nsTArray<layers::WebRenderCommand>& aCommands,
-                              const nsTArray<layers::GlyphArray>& aGlyphs,
-                              ScaledFont* aFont,
-                              const Point& aOffset,
-                              const Rect& aBounds,
-                              const Rect& aClip);
-
-public:
-  uint8_t* mFontData;
-  uint32_t mFontDataLength;
-  uint32_t mIndex;
-  float mGlyphSize;
-};
 
 } // namespace gfx
 } // namespace mozilla

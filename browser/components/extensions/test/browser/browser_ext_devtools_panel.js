@@ -6,15 +6,96 @@ XPCOMUtils.defineLazyModuleGetter(this, "devtools",
                                   "resource://devtools/shared/Loader.jsm");
 XPCOMUtils.defineLazyModuleGetter(this, "gDevTools",
                                   "resource://devtools/client/framework/gDevTools.jsm");
+XPCOMUtils.defineLazyModuleGetter(this, "Preferences",
+                                  "resource://gre/modules/Preferences.jsm");
+
+const DEVTOOLS_THEME_PREF = "devtools.theme";
 
 /**
  * This test file ensures that:
  *
- * - ensures that devtools.panel.create is able to create a devtools panel
+ * - devtools.panels.themeName returns the correct value,
+ *   both from a page and a panel.
+ * - devtools.panels.onThemeChanged fires for theme changes,
+ *   both from a page and a panel.
+ * - devtools.panels.create is able to create a devtools panel.
  */
 
-add_task(function* test_devtools_page_panels_create() {
-  let tab = yield BrowserTestUtils.openNewForegroundTab(gBrowser, "http://mochi.test:8888/");
+async function switchTheme(theme) {
+  const waitforThemeChanged = new Promise(resolve => gDevTools.once("theme-changed", resolve));
+  Preferences.set(DEVTOOLS_THEME_PREF, theme);
+  await waitforThemeChanged;
+}
+
+async function testThemeSwitching(extension, locations = ["page"]) {
+  for (let newTheme of ["dark", "light"]) {
+    await switchTheme(newTheme);
+    for (let location of locations) {
+      is(await extension.awaitMessage(`devtools_theme_changed_${location}`),
+        newTheme,
+        `The onThemeChanged event listener fired for the ${location}.`);
+      is(await extension.awaitMessage(`current_theme_${location}`),
+        newTheme,
+        `The current theme is reported as expected for the ${location}.`);
+    }
+  }
+}
+
+add_task(async function test_theme_name_no_panel() {
+  let tab = await BrowserTestUtils.openNewForegroundTab(gBrowser, "http://mochi.test:8888/");
+
+  async function devtools_page() {
+    browser.devtools.panels.onThemeChanged.addListener(themeName => {
+      browser.test.sendMessage("devtools_theme_changed_page", themeName);
+      browser.test.sendMessage("current_theme_page", browser.devtools.panels.themeName);
+    });
+
+    browser.test.sendMessage("initial_theme", browser.devtools.panels.themeName);
+  }
+
+  let extension = ExtensionTestUtils.loadExtension({
+    manifest: {
+      devtools_page: "devtools_page.html",
+    },
+    files: {
+      "devtools_page.html": `<!DOCTYPE html>
+      <html>
+       <head>
+         <meta charset="utf-8">
+       </head>
+       <body>
+         <script src="devtools_page.js"></script>
+       </body>
+      </html>`,
+      "devtools_page.js": devtools_page,
+    },
+  });
+
+  // Ensure that the initial value of the devtools theme is "light".
+  await SpecialPowers.pushPrefEnv({set: [[DEVTOOLS_THEME_PREF, "light"]]});
+
+  await extension.startup();
+
+  let target = devtools.TargetFactory.forTab(tab);
+  await gDevTools.showToolbox(target, "webconsole");
+  info("developer toolbox opened");
+
+  is(await extension.awaitMessage("initial_theme"),
+    "light",
+    "The initial theme is reported as expected.");
+
+  await testThemeSwitching(extension);
+
+  await gDevTools.closeToolbox(target);
+  await target.destroy();
+
+  await extension.unload();
+
+  await BrowserTestUtils.removeTab(tab);
+});
+
+add_task(async function test_devtools_page_panels_create() {
+  let tab = await BrowserTestUtils.openNewForegroundTab(gBrowser, "http://mochi.test:8888/");
 
   async function devtools_page() {
     const result = {
@@ -46,7 +127,13 @@ add_task(function* test_devtools_page_panels_create() {
         browser.test.sendMessage("devtools_panel_hidden", result);
       });
 
+      browser.devtools.panels.onThemeChanged.addListener(themeName => {
+        browser.test.sendMessage("devtools_theme_changed_page", themeName);
+        browser.test.sendMessage("current_theme_page", browser.devtools.panels.themeName);
+      });
+
       browser.test.sendMessage("devtools_panel_created");
+      browser.test.sendMessage("initial_theme_page", browser.devtools.panels.themeName);
     } catch (err) {
       // Make the test able to fail fast when it is going to be a failure.
       browser.test.sendMessage("devtools_panel_created");
@@ -59,8 +146,15 @@ add_task(function* test_devtools_page_panels_create() {
     // and accessible from the devtools_page when the panel.onShown
     // event has been received.
     window.TEST_PANEL_GLOBAL = "test_panel_global";
+
+    browser.devtools.panels.onThemeChanged.addListener(themeName => {
+      browser.test.sendMessage("devtools_theme_changed_panel", themeName);
+      browser.test.sendMessage("current_theme_panel", browser.devtools.panels.themeName);
+    });
+
     browser.test.sendMessage("devtools_panel_inspectedWindow_tabId",
                              browser.devtools.inspectedWindow.tabId);
+    browser.test.sendMessage("initial_theme_panel", browser.devtools.panels.themeName);
   }
 
   let extension = ExtensionTestUtils.loadExtension({
@@ -92,43 +186,64 @@ add_task(function* test_devtools_page_panels_create() {
     },
   });
 
-  yield extension.startup();
+  registerCleanupFunction(function() {
+    Preferences.reset(DEVTOOLS_THEME_PREF);
+  });
+
+  // Ensure that the initial value of the devtools theme is "light".
+  Preferences.set(DEVTOOLS_THEME_PREF, "light");
+
+  await extension.startup();
 
   let target = devtools.TargetFactory.forTab(tab);
 
-  const toolbox = yield gDevTools.showToolbox(target, "webconsole");
+  const toolbox = await gDevTools.showToolbox(target, "webconsole");
   info("developer toolbox opened");
 
-  yield extension.awaitMessage("devtools_panel_created");
+  await extension.awaitMessage("devtools_panel_created");
+  is(await extension.awaitMessage("initial_theme_page"),
+    "light",
+    "The initial theme is reported as expected from a devtools page.");
 
   const toolboxAdditionalTools = toolbox.getAdditionalTools();
 
   is(toolboxAdditionalTools.length, 1,
      "Got the expected number of toolbox specific panel registered.");
 
-  const panelId = toolboxAdditionalTools[0].id;
+  await testThemeSwitching(extension);
 
-  yield gDevTools.showToolbox(target, panelId);
-  const {devtoolsPageTabId} = yield extension.awaitMessage("devtools_panel_shown");
-  const devtoolsPanelTabId = yield extension.awaitMessage("devtools_panel_inspectedWindow_tabId");
+  const panelDef = toolboxAdditionalTools[0];
+  const panelId = panelDef.id;
+
+  is(panelDef.invertIconForLightTheme, false,
+     "devtools.panel.create set invertIconForLightTheme to false by default");
+
+  await gDevTools.showToolbox(target, panelId);
+  const {devtoolsPageTabId} = await extension.awaitMessage("devtools_panel_shown");
+  const devtoolsPanelTabId = await extension.awaitMessage("devtools_panel_inspectedWindow_tabId");
   is(devtoolsPanelTabId, devtoolsPageTabId,
      "Got the same devtools.inspectedWindow.tabId from devtools page and panel");
+  is(await extension.awaitMessage("initial_theme_panel"),
+    "light",
+    "The initial theme is reported as expected from a devtools panel.");
   info("Addon Devtools Panel shown");
 
-  yield gDevTools.showToolbox(target, "webconsole");
-  const results = yield extension.awaitMessage("devtools_panel_hidden");
+  await testThemeSwitching(extension, ["page", "panel"]);
+
+  await gDevTools.showToolbox(target, "webconsole");
+  const results = await extension.awaitMessage("devtools_panel_hidden");
   info("Addon Devtools Panel hidden");
 
   is(results.panelCreated, 1, "devtools.panel.create callback has been called once");
   is(results.panelShown, 1, "panel.onShown listener has been called once");
   is(results.panelHidden, 1, "panel.onHidden listener has been called once");
 
-  yield gDevTools.showToolbox(target, panelId);
-  yield extension.awaitMessage("devtools_panel_shown");
+  await gDevTools.showToolbox(target, panelId);
+  await extension.awaitMessage("devtools_panel_shown");
   info("Addon Devtools Panel shown - second cycle");
 
-  yield gDevTools.showToolbox(target, "webconsole");
-  const secondCycleResults = yield extension.awaitMessage("devtools_panel_hidden");
+  await gDevTools.showToolbox(target, "webconsole");
+  const secondCycleResults = await extension.awaitMessage("devtools_panel_hidden");
   info("Addon Devtools Panel hidden - second cycle");
 
   is(secondCycleResults.panelCreated, 1, "devtools.panel.create callback has been called once");
@@ -143,7 +258,7 @@ add_task(function* test_devtools_page_panels_create() {
   Services.prefs.setBoolPref(`devtools.webext-${panelId}.enabled`, false);
   gDevTools.emit("tool-unregistered", panelId);
 
-  yield waitToolVisibilityOff;
+  await waitToolVisibilityOff;
 
   ok(toolbox.hasAdditionalTool(panelId),
      "The tool has not been removed on visibilityswitch set to false");
@@ -159,7 +274,7 @@ add_task(function* test_devtools_page_panels_create() {
   Services.prefs.setBoolPref(`devtools.webext-${panelId}.enabled`, true);
   gDevTools.emit("tool-registered", panelId);
 
-  yield waitToolVisibilityOn;
+  await waitToolVisibilityOn;
 
   ok(toolbox.hasAdditionalTool(panelId),
      "The tool has been added on visibilityswitch set to true");
@@ -168,28 +283,30 @@ add_task(function* test_devtools_page_panels_create() {
 
   // Test devtools panel is loaded correctly after being toggled and
   // devtools panel events has been fired as expected.
-  yield gDevTools.showToolbox(target, panelId);
-  yield extension.awaitMessage("devtools_panel_shown");
+  await gDevTools.showToolbox(target, panelId);
+  await extension.awaitMessage("devtools_panel_shown");
+  is(await extension.awaitMessage("initial_theme_panel"),
+    "light",
+    "The initial theme is reported as expected from a devtools panel.");
   info("Addon Devtools Panel shown - after visibilityswitch toggled");
 
   info("Wait until the Addon Devtools Panel has been loaded - after visibilityswitch toggled");
-  const panelTabIdAfterToggle = yield extension.awaitMessage("devtools_panel_inspectedWindow_tabId");
+  const panelTabIdAfterToggle = await extension.awaitMessage("devtools_panel_inspectedWindow_tabId");
   is(panelTabIdAfterToggle, devtoolsPageTabId,
      "Got the same devtools.inspectedWindow.tabId from devtools panel after visibility toggled");
 
-  yield gDevTools.showToolbox(target, "webconsole");
-  const toolToggledResults = yield extension.awaitMessage("devtools_panel_hidden");
+  await gDevTools.showToolbox(target, "webconsole");
+  const toolToggledResults = await extension.awaitMessage("devtools_panel_hidden");
   info("Addon Devtools Panel hidden - after visibilityswitch toggled");
 
   is(toolToggledResults.panelCreated, 1, "devtools.panel.create callback has been called once");
   is(toolToggledResults.panelShown, 3, "panel.onShown listener has been called three times");
   is(toolToggledResults.panelHidden, 3, "panel.onHidden listener has been called three times");
 
-  yield gDevTools.closeToolbox(target);
+  await gDevTools.closeToolbox(target);
+  await target.destroy();
 
-  yield target.destroy();
+  await extension.unload();
 
-  yield extension.unload();
-
-  yield BrowserTestUtils.removeTab(tab);
+  await BrowserTestUtils.removeTab(tab);
 });

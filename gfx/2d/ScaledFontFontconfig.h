@@ -14,12 +14,14 @@ namespace mozilla {
 namespace gfx {
 
 class NativeFontResourceFontconfig;
+class UnscaledFontFontconfig;
 
 class ScaledFontFontconfig : public ScaledFontBase
 {
 public:
   MOZ_DECLARE_REFCOUNTED_VIRTUAL_TYPENAME(ScaledFontFontconfig, override)
-  ScaledFontFontconfig(cairo_scaled_font_t* aScaledFont, FcPattern* aPattern, Float aSize);
+  ScaledFontFontconfig(cairo_scaled_font_t* aScaledFont, FcPattern* aPattern,
+                       const RefPtr<UnscaledFont>& aUnscaledFont, Float aSize);
   ~ScaledFontFontconfig();
 
   FontType GetType() const override { return FontType::FONTCONFIG; }
@@ -28,17 +30,13 @@ public:
   SkTypeface* GetSkTypeface() override;
 #endif
 
-  bool GetFontFileData(FontFileDataOutput aDataCallback, void* aBaton) override;
+  bool CanSerialize() override { return true; }
 
   bool GetFontInstanceData(FontInstanceDataOutput aCb, void* aBaton) override;
 
-  bool GetFontDescriptor(FontDescriptorOutput aCb, void* aBaton) override;
-
-  static already_AddRefed<ScaledFont>
-    CreateFromFontDescriptor(const uint8_t* aData, uint32_t aDataLength, Float aSize);
-
 private:
   friend class NativeFontResourceFontconfig;
+  friend class UnscaledFontFontconfig;
 
   struct InstanceData
   {
@@ -65,17 +63,11 @@ private:
     Float mSkew;
   };
 
-  struct FontDescriptor
-  {
-    uint32_t mPathLength;
-    uint32_t mIndex;
-    InstanceData mInstanceData;
-  };
-
   static already_AddRefed<ScaledFont>
     CreateFromInstanceData(const InstanceData& aInstanceData,
-                           FT_Face aFace, const char* aPathname, uint32_t aIndex,
-                           Float aSize);
+                           UnscaledFontFontconfig* aUnscaledFont,
+                           Float aSize,
+                           NativeFontResource* aNativeFontResource = nullptr);
 
   FcPattern* mPattern;
 };

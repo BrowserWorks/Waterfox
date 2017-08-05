@@ -84,6 +84,7 @@ var gPlayedTests = [
   { name:"seek-short.webm", type:"video/webm", duration:0.23 },
   { name:"gizmo-short.mp4", type:"video/mp4", duration:0.27 },
   { name:"owl-short.mp3", type:"audio/mpeg", duration:0.52 },
+  { name:"very-short.mp3", type:"audio/mpeg", duration:0.07 },
   // Disable vbr.mp3 to see if it reduces the error of AUDCLNT_E_CPUUSAGE_EXCEEDED.
   // See bug 1110922 comment 26.
   //{ name:"vbr.mp3", type:"audio/mpeg", duration:10.0 },
@@ -93,12 +94,11 @@ var gPlayedTests = [
 // Used by test_mozLoadFrom.  Need one test file per decoder backend, plus
 // anything for testing clone-specific bugs.
 var cloneKey = Math.floor(Math.random()*100000000);
-var gCloneTests = gSmallTests.concat([
-  { name:"bug520908.ogv", type:"video/ogg", duration:0.2 },
+var gCloneTests = [
   // short-video is more like 1s, so if you load this twice you'll get an unexpected duration
   { name:"dynamic_resource.sjs?key=" + cloneKey + "&res1=320x240.ogv&res2=short-video.ogv",
     type:"video/ogg", duration:0.266 },
-]);
+];
 
 // Used by test_play_twice.  Need one test file per decoder backend, plus
 // anything for testing bugs that occur when replying a played file.
@@ -263,10 +263,10 @@ var gPlayTests = [
   { name:"small-shot.mp3", type:"audio/mpeg", duration:0.27 },
   { name:"owl.mp3", type:"audio/mpeg", duration:3.343 },
   // owl.mp3 as above, but with something funny going on in the ID3v2 tag
-  // that causes DirectShow to fail.
+  // that caused DirectShow to fail.
   { name:"owl-funny-id3.mp3", type:"audio/mpeg", duration:3.343 },
   // owl.mp3 as above, but with something even funnier going on in the ID3v2 tag
-  // that causes DirectShow to fail.
+  // that caused DirectShow to fail.
   { name:"owl-funnier-id3.mp3", type:"audio/mpeg", duration:3.343 },
   // One second of silence with ~140KB of ID3 tags. Usually when the first MP3
   // frame is at such a high offset into the file, MP3FrameParser will give up
@@ -546,6 +546,13 @@ if (manifestNavigator().userAgent.includes("Windows") &&
                                    {name: "red-48x46.mp4", type:"video/mp4"});
 }
 
+// These files would get error after receiving "loadedmetadata", we would like
+// to check duration in "onerror" and make sure the duration is still available.
+var gDurationTests = [
+  { name:"bug603918.webm", duration:6.076 },
+  { name:"bug604067.webm", duration:6.076 }
+]
+
 // These are files that have nontrivial duration and are useful for seeking within.
 var gSeekTests = [
   { name:"r11025_s16_c1.wav", type:"audio/x-wav", duration:1.0 },
@@ -602,14 +609,6 @@ if (manifestNavigator().userAgent.indexOf("Mobile") != -1 ||
 
 function getAndroidVersion() {
   return androidVersion;
-}
-
-//Android supports fragmented MP4 playback from 4.3.
-//Fragmented MP4.
-if (getAndroidVersion() >= 18) {
-  gUnseekableTests = gUnseekableTests.concat([
-    { name:"street.mp4", type:"video/mp4" }
-  ]);
 }
 
 // These are files suitable for using with a "new Audio" constructor.
@@ -776,16 +775,21 @@ var gMetadataTests = [
   },
   { name:"wavedata_u8.wav", tags: { }
   },
-  { name:"flac-s24.flac", tags: {
-      ALBUM:"Seascapes",
-      TITLE:"(La Mer) - II. Jeux de vagues. Allegro",
-      COMPOSER:"Debussy, Claude",
-      TRACKNUMBER:"2/9",
-      DISCNUMBER:"1/1",
-      encoder:"Lavf57.41.100",
-    }
-  },
 ];
+
+// Now Fennec doesn't support flac, so only test it on non-android platforms.
+if (getAndroidVersion() < 0) {
+  gMetadataTests = gMetadataTests.concat([
+    { name:"flac-s24.flac", tags: {
+        ALBUM:"Seascapes",
+        TITLE:"(La Mer) - II. Jeux de vagues. Allegro",
+        COMPOSER:"Debussy, Claude",
+        TRACKNUMBER:"2/9",
+        DISCNUMBER:"1/1",
+        encoder:"Lavf57.41.100",
+      }
+    }]);
+}
 
 // Test files for Encrypted Media Extensions
 var gEMETests = [
@@ -1546,7 +1550,7 @@ function removeNodeAndSource(n) {
   n.srcObject = null;
   n.src = "";
   while (n.firstChild) {
-    n.removeChild(n.firstChild);
+    n.firstChild.remove();
   }
 }
 
@@ -1589,6 +1593,8 @@ var PARALLEL_TESTS = 2;
 // conditions that might not otherwise be encountered on the test data.
 var gTestPrefs = [
   ['media.recorder.max_memory', 1024],
+  ['media.audio-max-decode-error', 0],
+  ['media.video-max-decode-error', 0],
 ];
 
 // When true, we'll loop forever on whatever test we run. Use this to debug
@@ -1615,6 +1621,8 @@ function MediaTestManager() {
   // Set a very large timeout to prevent Mochitest timeout.
   // Instead MediaTestManager will manage timeout of each test.
   SimpleTest.requestLongerTimeout(1000);
+
+  this.hasTimeout = false;
 
   // Return how many seconds elapsed since |begin|.
   function elapsedTime(begin) {
@@ -1643,11 +1651,11 @@ function MediaTestManager() {
 
     // Always wait for explicit finish.
     SimpleTest.waitForExplicitFinish();
-    SpecialPowers.pushPrefEnv({'set': gTestPrefs}, (function() {
+    SpecialPowers.pushPrefEnv({'set': gTestPrefs}, () => {
       this.nextTest();
-    }).bind(this));
+    });
 
-    SimpleTest.registerCleanupFunction(function() {
+    SimpleTest.registerCleanupFunction(() => {
       if (this.tokens.length > 0) {
         info("Test timed out. Remaining tests=" + this.tokens);
       }
@@ -1657,7 +1665,7 @@ function MediaTestManager() {
           handler.ontimeout();
         }
       }
-    }.bind(this));
+    });
   }
 
   // Registers that the test corresponding to 'token' has been started.
@@ -1667,10 +1675,11 @@ function MediaTestManager() {
     this.numTestsRunning++;
     this.handlers[token] = handler;
 
-    var onTimeout = function() {
+    var onTimeout = () => {
+      this.hasTimeout = true;
       ok(false, `${token} timed out!`);
       this.finished(token);
-    }.bind(this);
+    };
     // Default timeout to 180s for each test.
     this.timers[token] = setTimeout(onTimeout, 180000);
 
@@ -1733,12 +1742,15 @@ function MediaTestManager() {
       if (this.onFinished) {
         this.onFinished();
       }
-      var onCleanup = function() {
+      if (this.hasTimeout) {
+        dumpDebugInfo();
+      }
+      var onCleanup = () => {
         var end = new Date();
         SimpleTest.info("Finished at " + end + " (" + (end.getTime() / 1000) + "s)");
         SimpleTest.info("Running time: " + elapsedTime(this.startTime) + "s");
         SimpleTest.finish();
-      }.bind(this);
+      };
       mediaTestCleanup(onCleanup);
       return;
     }
@@ -1767,18 +1779,20 @@ function isSlowPlatform() {
   return SpecialPowers.Services.appinfo.name == "B2G" || getAndroidVersion() == 10;
 }
 
+function dumpDebugInfo() {
+  for (var v of document.getElementsByTagName("video")) {
+    v.mozDumpDebugInfo();
+  }
+  for (var a of document.getElementsByTagName("audio")) {
+    a.mozDumpDebugInfo();
+  }
+}
+
 // Could be undefined in a page opened by the parent test page
 // like file_access_controls.html.
 if ("SimpleTest" in window) {
   SimpleTest.requestFlakyTimeout("untriaged");
 
   // Register timeout function to dump debugging logs.
-  SimpleTest.registerTimeoutFunction(function() {
-    for (var v of document.getElementsByTagName("video")) {
-      v.mozDumpDebugInfo();
-    }
-    for (var a of document.getElementsByTagName("audio")) {
-      a.mozDumpDebugInfo();
-    }
-  });
+  SimpleTest.registerTimeoutFunction(dumpDebugInfo);
 }

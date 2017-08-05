@@ -2,7 +2,7 @@
 
 do_get_profile();
 
-add_task(function* test_contextualIdentities_without_permissions() {
+add_task(async function test_contextualIdentities_without_permissions() {
   function backgroundScript() {
     browser.test.assertTrue(!browser.contextualIdentities,
                             "contextualIdentities API is not available when the contextualIdentities permission is not required");
@@ -16,17 +16,33 @@ add_task(function* test_contextualIdentities_without_permissions() {
     },
   });
 
-  yield extension.startup();
-  yield extension.awaitFinish("contextualIdentities_permission");
-  yield extension.unload();
+  await extension.startup();
+  await extension.awaitFinish("contextualIdentities_permission");
+  await extension.unload();
 });
 
 
-add_task(function* test_contextualIdentity_no_containers() {
-  function backgroundScript() {
-    browser.test.assertTrue(!browser.contextualIdentities,
-                            "contextualIdentities API is not available when the containers are disabled");
-    browser.test.notifyPass("contextualIdentities_pref");
+add_task(async function test_contextualIdentity_no_containers() {
+  async function backgroundScript() {
+    let ci = await browser.contextualIdentities.get("foobar");
+    browser.test.assertEq(false, ci, "No identity should be returned here");
+
+    ci = await browser.contextualIdentities.get("firefox-container-1");
+    browser.test.assertEq(false, ci, "We don't have any identity");
+
+    let cis = await browser.contextualIdentities.query({});
+    browser.test.assertEq(false, cis, "no containers, 0 containers");
+
+    ci = await browser.contextualIdentities.create({name: "foobar", color: "red", icon: "icon"});
+    browser.test.assertEq(false, ci, "We don't have any identity");
+
+    ci = await browser.contextualIdentities.update("firefox-container-1", {name: "barfoo", color: "blue", icon: "icon icon"});
+    browser.test.assertEq(false, ci, "We don't have any identity");
+
+    ci = await browser.contextualIdentities.remove("firefox-container-1");
+    browser.test.assertEq(false, ci, "We have an identity");
+
+    browser.test.notifyPass("contextualIdentities");
   }
 
   let extension = ExtensionTestUtils.loadExtension({
@@ -38,14 +54,14 @@ add_task(function* test_contextualIdentity_no_containers() {
 
   Services.prefs.setBoolPref("privacy.userContext.enabled", false);
 
-  yield extension.startup();
-  yield extension.awaitFinish("contextualIdentities_pref");
-  yield extension.unload();
+  await extension.startup();
+  await extension.awaitFinish("contextualIdentities");
+  await extension.unload();
 
   Services.prefs.clearUserPref("privacy.userContext.enabled");
 });
 
-add_task(function* test_contextualIdentity_with_permissions() {
+add_task(async function test_contextualIdentity_with_permissions() {
   async function backgroundScript() {
     let ci = await browser.contextualIdentities.get("foobar");
     browser.test.assertEq(null, ci, "No identity should be returned here");
@@ -116,9 +132,9 @@ add_task(function* test_contextualIdentity_with_permissions() {
 
   Services.prefs.setBoolPref("privacy.userContext.enabled", true);
 
-  yield extension.startup();
-  yield extension.awaitFinish("contextualIdentities");
-  yield extension.unload();
+  await extension.startup();
+  await extension.awaitFinish("contextualIdentities");
+  await extension.unload();
 
   Services.prefs.clearUserPref("privacy.userContext.enabled");
 });

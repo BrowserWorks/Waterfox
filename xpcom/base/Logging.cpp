@@ -44,18 +44,6 @@ namespace mozilla {
 
 namespace detail {
 
-void log_print(const PRLogModuleInfo* aModule,
-               LogLevel aLevel,
-               const char* aFmt, ...)
-{
-  va_list ap;
-  va_start(ap, aFmt);
-  char* buff = mozilla::Vsmprintf(aFmt, ap);
-  PR_LogPrint("%s", buff);
-  mozilla::SmprintfFree(buff);
-  va_end(ap);
-}
-
 void log_print(const LogModule* aModule,
                LogLevel aLevel,
                const char* aFmt, ...)
@@ -358,11 +346,13 @@ public:
   }
 
   void Print(const char* aName, LogLevel aLevel, const char* aFmt, va_list aArgs)
+    MOZ_FORMAT_PRINTF(4, 0)
   {
     const size_t kBuffSize = 1024;
     char buff[kBuffSize];
 
     char* buffToWrite = buff;
+    SmprintfPointer allocatedBuff;
 
     va_list argsCopy;
     va_copy(argsCopy, aArgs);
@@ -379,7 +369,8 @@ public:
       charsWritten = strlen(buff);
     } else if (static_cast<size_t>(charsWritten) >= kBuffSize - 1) {
       // We may have maxed out, allocate a buffer instead.
-      buffToWrite = mozilla::Vsmprintf(aFmt, aArgs);
+      allocatedBuff = mozilla::Vsmprintf(aFmt, aArgs);
+      buffToWrite = allocatedBuff.get();
       charsWritten = strlen(buffToWrite);
     }
 
@@ -437,10 +428,6 @@ public:
 
     if (mIsSync) {
       fflush(out);
-    }
-
-    if (buffToWrite != buff) {
-      mozilla::SmprintfFree(buffToWrite);
     }
 
     if (mRotate > 0 && outFile) {

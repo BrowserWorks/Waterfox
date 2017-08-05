@@ -12,7 +12,7 @@
 
 button {
   -moz-appearance: button;
-  margin: 1px 5px 2px 5px;
+  margin: 1px 5px 2px;
   min-width: 6.3em;
   color: ButtonText;
   text-shadow: none;
@@ -20,10 +20,6 @@ button {
 
 .button-box {
   -moz-appearance: button-focus;
-  padding-top: 1px;
-  padding-bottom: 2px;
-  padding-inline-start: 3px;
-  padding-inline-end: 4px;
 }
 
 .button-icon {
@@ -37,39 +33,14 @@ button {
 
 /* .......... hover state .......... */
 
-button:hover {
+button:hover:not(:-moz-any(:active,[disabled="true"],[open="true"],[checked="true"])) {
   color: -moz-buttonhovertext;
-}
-
-/* .......... active/open/checked state .......... */
-
-button:hover:active,
-button[open="true"],
-button[checked="true"] {
-  color: ButtonText;
-}
-
-button:hover:active > .button-box,
-button[open="true"] > .button-box,
-button[checked="true"] > .button-box {
-  padding-top: 2px;
-  padding-bottom: 1px;
-  padding-inline-start: 4px;
-  padding-inline-end: 3px;
 }
 
 /* .......... disabled state .......... */
 
-button[disabled="true"],
-button[disabled="true"]:hover:active {
+button[disabled="true"] {
   color: GrayText;
-}
-
-button[disabled="true"] > .button-box {
-  padding-top: 1px !important;
-  padding-bottom: 2px !important;
-  padding-inline-start: 3px !important;
-  padding-inline-end: 4px !important;
 }
 
 /* ::::: menu/menu-button buttons ::::: */

@@ -23,7 +23,6 @@
 
 #include "mozilla/IntegerPrintfMacros.h"
 #include "mozilla/Preferences.h"
-#include "mozilla/Telemetry.h"
 #include "nsITabChild.h"
 #include "private/pprio.h"
 #include "nsInputStreamPump.h"
@@ -487,6 +486,12 @@ nsJARChannel::SetLoadFlags(nsLoadFlags aLoadFlags)
 }
 
 NS_IMETHODIMP
+nsJARChannel::GetIsDocument(bool *aIsDocument)
+{
+    return NS_GetIsDocumentChannel(this, aIsDocument);
+}
+
+NS_IMETHODIMP
 nsJARChannel::GetLoadGroup(nsILoadGroup **aLoadGroup)
 {
     NS_IF_ADDREF(*aLoadGroup = mLoadGroup);
@@ -799,12 +804,6 @@ nsJARChannel::AsyncOpen(nsIStreamListener *listener, nsISupports *ctx)
             return NS_ERROR_UNSAFE_CONTENT_TYPE;
         }
 
-        static bool reportedRemoteJAR = false;
-        if (!reportedRemoteJAR) {
-            reportedRemoteJAR = true;
-            Telemetry::Accumulate(Telemetry::REMOTE_JAR_PROTOCOL_USED, 1);
-        }
-
         // kick off an async download of the base URI...
         nsCOMPtr<nsIStreamListener> downloader = new MemoryDownloader(this);
         uint32_t loadFlags =
@@ -953,8 +952,8 @@ nsJARChannel::OnDownloadComplete(MemoryDownloader* aDownloader,
             // send us a JAR file.  Check the server-supplied content type for
             // a JAR type.
             nsAutoCString header;
-            httpChannel->GetResponseHeader(NS_LITERAL_CSTRING("Content-Type"),
-                                           header);
+            Unused << httpChannel->GetResponseHeader(
+              NS_LITERAL_CSTRING("Content-Type"), header);
             nsAutoCString contentType;
             nsAutoCString charset;
             NS_ParseResponseContentType(header, contentType, charset);

@@ -8,7 +8,7 @@ import org.mozilla.gecko.background.fxa.FxAccountClient20.AccountStatusResponse;
 import org.mozilla.gecko.background.fxa.FxAccountClient20.RecoveryEmailStatusResponse;
 import org.mozilla.gecko.background.fxa.FxAccountClient20.RequestDelegate;
 import org.mozilla.gecko.background.fxa.FxAccountClient20.TwoKeys;
-import org.mozilla.gecko.fxa.FxAccountDevice;
+import org.mozilla.gecko.fxa.devices.FxAccountDevice;
 import org.mozilla.gecko.sync.ExtendedJSONObject;
 
 import java.util.List;
@@ -19,6 +19,7 @@ public interface FxAccountClient {
   public void keys(byte[] keyFetchToken, RequestDelegate<TwoKeys> requestDelegate);
   public void sign(byte[] sessionToken, ExtendedJSONObject publicKey, long certificateDurationInMilliseconds, RequestDelegate<String> requestDelegate);
   public void registerOrUpdateDevice(byte[] sessionToken, FxAccountDevice device, RequestDelegate<FxAccountDevice> requestDelegate);
+  public void destroyDevice(byte[] sessionToken, String deviceId, RequestDelegate<ExtendedJSONObject> requestDelegate);
   public void deviceList(byte[] sessionToken, RequestDelegate<FxAccountDevice[]> requestDelegate);
   public void notifyDevices(byte[] sessionToken, List<String> deviceIds, ExtendedJSONObject payload, Long TTL, RequestDelegate<ExtendedJSONObject> requestDelegate);
 }

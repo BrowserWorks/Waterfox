@@ -106,6 +106,11 @@ class MachCommands(MachCommandBase):
     def taskgraph_optimized(self, **options):
         return self.show_taskgraph('optimized_task_graph', options)
 
+    @ShowTaskGraphSubCommand('taskgraph', 'morphed',
+                             description="Show the morphed taskgraph")
+    def taskgraph_morphed(self, **options):
+        return self.show_taskgraph('morphed_task_graph', options)
+
     @SubCommand('taskgraph', 'decision',
                 description="Run the decision task")
     @CommandArgument('--root', '-r',
@@ -144,10 +149,6 @@ class MachCommands(MachCommandBase):
     @CommandArgument('--level',
                      required=True,
                      help='SCM level of this repository')
-    @CommandArgument('--triggered-by',
-                     choices=['nightly', 'push'],
-                     default='push',
-                     help='Source of execution of the decision graph')
     @CommandArgument('--target-tasks-method',
                      help='method for selecting the target tasks to generate')
     def taskgraph_decision(self, **options):

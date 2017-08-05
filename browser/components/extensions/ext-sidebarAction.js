@@ -2,7 +2,8 @@
 /* vim: set sts=2 sw=2 et tw=80: */
 "use strict";
 
-Cu.import("resource://gre/modules/ExtensionUtils.jsm");
+// The ext-* files are imported into the same scopes.
+/* import-globals-from ext-utils.js */
 
 XPCOMUtils.defineLazyModuleGetter(this, "AppConstants",
                                   "resource://gre/modules/AppConstants.jsm");
@@ -10,15 +11,18 @@ XPCOMUtils.defineLazyModuleGetter(this, "CustomizableUI",
                                   "resource:///modules/CustomizableUI.jsm");
 XPCOMUtils.defineLazyModuleGetter(this, "Services",
                                   "resource://gre/modules/Services.jsm");
-XPCOMUtils.defineLazyModuleGetter(this, "Task",
-                                  "resource://gre/modules/Task.jsm");
 
-let {
+Cu.import("resource://gre/modules/ExtensionParent.jsm");
+
+var {
   ExtensionError,
-  IconDetails,
 } = ExtensionUtils;
 
-const XUL_NS = "http://www.mozilla.org/keymaster/gatekeeper/there.is.only.xul";
+var {
+  IconDetails,
+} = ExtensionParent;
+
+var XUL_NS = "http://www.mozilla.org/keymaster/gatekeeper/there.is.only.xul";
 
 // WeakMap[Extension -> SidebarAction]
 let sidebarActionMap = new WeakMap();
@@ -29,15 +33,28 @@ const sidebarURL = "chrome://browser/content/webext-panels.xul";
  * Responsible for the sidebar_action section of the manifest as well
  * as the associated sidebar browser.
  */
-class SidebarAction {
-  constructor(options, extension) {
-    this.extension = extension;
+this.sidebarAction = class extends ExtensionAPI {
+  static for(extension) {
+    return sidebarActionMap.get(extension);
+  }
+
+  onManifestEntry(entryName) {
+    let {extension} = this;
+
+    extension.once("ready", this.onReady.bind(this));
+
+    let options = extension.manifest.sidebar_action;
 
     // Add the extension to the sidebar menu.  The sidebar widget will copy
     // from that when it is viewed, so we shouldn't need to update that.
     let widgetId = makeWidgetId(extension.id);
     this.id = `${widgetId}-sidebar-action`;
     this.menuId = `menu_${this.id}`;
+    this.buttonId = `button_${this.id}`;
+
+    // We default browser_style to true because this is a new API and
+    // we therefore don't need to worry about breaking existing add-ons.
+    this.browserStyle = options.browser_style || options.browser_style === null;
 
     this.defaults = {
       enabled: true,
@@ -54,6 +71,44 @@ class SidebarAction {
       this.createMenuItem(window, this.defaults);
     };
     windowTracker.addOpenListener(this.windowOpenListener);
+
+    sidebarActionMap.set(extension, this);
+  }
+
+  onReady() {
+    this.build();
+  }
+
+  onShutdown(reason) {
+    sidebarActionMap.delete(this.this);
+
+    this.tabContext.shutdown();
+
+    // Don't remove everything on app shutdown so session restore can handle
+    // restoring open sidebars.
+    if (reason === "APP_SHUTDOWN") {
+      return;
+    }
+
+    for (let window of windowTracker.browserWindows()) {
+      let {document, SidebarUI} = window;
+      if (SidebarUI.currentID === this.id) {
+        SidebarUI.hide();
+      }
+      let menu = document.getElementById(this.menuId);
+      if (menu) {
+        menu.remove();
+      }
+      let button = document.getElementById(this.buttonId);
+      if (button) {
+        button.remove();
+      }
+      let broadcaster = document.getElementById(this.id);
+      if (broadcaster) {
+        broadcaster.remove();
+      }
+    }
+    windowTracker.removeOpenListener(this.windowOpenListener);
   }
 
   build() {
@@ -61,10 +116,11 @@ class SidebarAction {
                        (evt, tab) => { this.updateWindow(tab.ownerGlobal); });
 
     let install = this.extension.startupReason === "ADDON_INSTALL";
+    let upgrade = ["ADDON_UPGRADE", "ADDON_DOWNGRADE"].includes(this.extension.startupReason);
     for (let window of windowTracker.browserWindows()) {
       this.updateWindow(window);
-      if (install) {
-        let {SidebarUI} = window;
+      let {SidebarUI} = window;
+      if (install || (upgrade && SidebarUI.lastOpenedId == this.id)) {
         SidebarUI.show(this.id);
       }
     }
@@ -81,10 +137,17 @@ class SidebarAction {
   }
 
   sidebarUrl(panel) {
+    let url = `${sidebarURL}?panel=${encodeURIComponent(panel)}`;
+
     if (this.extension.remote) {
-      return `${sidebarURL}?remote=1&panel=${encodeURIComponent(panel)}`;
+      url += "&remote=1";
     }
-    return `${sidebarURL}?&panel=${encodeURIComponent(panel)}`;
+
+    if (this.browserStyle) {
+      url += "&browser-style=1";
+    }
+
+    return url;
   }
 
   createMenuItem(window, details) {
@@ -99,19 +162,28 @@ class SidebarAction {
     broadcaster.setAttribute("group", "sidebar");
     broadcaster.setAttribute("label", details.title);
     broadcaster.setAttribute("sidebarurl", this.sidebarUrl(details.panel));
+
     // oncommand gets attached to menuitem, so we use the observes attribute to
     // get the command id we pass to SidebarUI.
-    broadcaster.setAttribute("oncommand", "SidebarUI.toggle(this.getAttribute('observes'))");
+    broadcaster.setAttribute("oncommand", "SidebarUI.show(this.getAttribute('observes'))");
 
+    // Insert a menuitem for View->Show Sidebars.
     let menuitem = document.createElementNS(XUL_NS, "menuitem");
     menuitem.setAttribute("id", this.menuId);
     menuitem.setAttribute("observes", this.id);
     menuitem.setAttribute("class", "menuitem-iconic webextension-menuitem");
-
     this.setMenuIcon(menuitem, details);
+
+    // Insert a toolbarbutton for the sidebar dropdown selector.
+    let toolbarbutton = document.createElementNS(XUL_NS, "toolbarbutton");
+    toolbarbutton.setAttribute("id", this.buttonId);
+    toolbarbutton.setAttribute("observes", this.id);
+    toolbarbutton.setAttribute("class", "subviewbutton subviewbutton-iconic webextension-menuitem");
+    this.setMenuIcon(toolbarbutton, details);
 
     document.getElementById("mainBroadcasterSet").appendChild(broadcaster);
     document.getElementById("viewSidebarMenu").appendChild(menuitem);
+    document.getElementById("sidebar-extensions").appendChild(toolbarbutton);
 
     return menuitem;
   }
@@ -155,6 +227,9 @@ class SidebarAction {
     }
 
     this.setMenuIcon(menu, tabData);
+
+    let button = document.getElementById(this.buttonId);
+    this.setMenuIcon(button, tabData);
 
     // Update the sidebar if this extension is the current sidebar.
     if (SidebarUI.currentID === this.id) {
@@ -235,25 +310,6 @@ class SidebarAction {
     return this.tabContext.get(nativeTab)[prop];
   }
 
-  shutdown() {
-    this.tabContext.shutdown();
-    for (let window of windowTracker.browserWindows()) {
-      let {document, SidebarUI} = window;
-      if (SidebarUI.currentID === this.id) {
-        SidebarUI.hide();
-      }
-      let menu = document.getElementById(this.menuId);
-      if (menu) {
-        menu.remove();
-      }
-      let broadcaster = document.getElementById(this.id);
-      if (broadcaster) {
-        broadcaster.remove();
-      }
-    }
-    windowTracker.removeOpenListener(this.windowOpenListener);
-  }
-
   /**
    * Triggers this sidebar action for the given window, with the same effects as
    * if it were toggled via menu or toolbarbutton by a user.
@@ -266,98 +322,70 @@ class SidebarAction {
       SidebarUI.toggle(this.id);
     }
   }
-}
 
-SidebarAction.for = (extension) => {
-  return sidebarActionMap.get(extension);
+  getAPI(context) {
+    let {extension} = context;
+    const sidebarAction = this;
+
+    function getTab(tabId) {
+      if (tabId !== null) {
+        return tabTracker.getTab(tabId);
+      }
+      return null;
+    }
+
+    return {
+      sidebarAction: {
+        async setTitle(details) {
+          let nativeTab = getTab(details.tabId);
+
+          let title = details.title;
+          // Clear the tab-specific title when given a null string.
+          if (nativeTab && title === "") {
+            title = null;
+          }
+          sidebarAction.setProperty(nativeTab, "title", title);
+        },
+
+        getTitle(details) {
+          let nativeTab = getTab(details.tabId);
+
+          let title = sidebarAction.getProperty(nativeTab, "title");
+          return Promise.resolve(title);
+        },
+
+        async setIcon(details) {
+          let nativeTab = getTab(details.tabId);
+
+          let icon = IconDetails.normalize(details, extension, context);
+          sidebarAction.setProperty(nativeTab, "icon", icon);
+        },
+
+        async setPanel(details) {
+          let nativeTab = getTab(details.tabId);
+
+          let url;
+          // Clear the tab-specific url when given a null string.
+          if (nativeTab && details.panel === "") {
+            url = null;
+          } else if (details.panel !== "") {
+            url = context.uri.resolve(details.panel);
+          } else {
+            throw new ExtensionError("Invalid url for sidebar panel.");
+          }
+
+          sidebarAction.setProperty(nativeTab, "panel", url);
+        },
+
+        getPanel(details) {
+          let nativeTab = getTab(details.tabId);
+
+          let panel = sidebarAction.getProperty(nativeTab, "panel");
+          return Promise.resolve(panel);
+        },
+      },
+    };
+  }
 };
 
-global.sidebarActionFor = SidebarAction.for;
-
-/* eslint-disable mozilla/balanced-listeners */
-extensions.on("manifest_sidebar_action", (type, directive, extension, manifest) => {
-  let sidebarAction = new SidebarAction(manifest.sidebar_action, extension);
-  sidebarActionMap.set(extension, sidebarAction);
-});
-
-extensions.on("ready", (type, extension) => {
-  // We build sidebars during ready to ensure the background scripts are ready.
-  if (sidebarActionMap.has(extension)) {
-    sidebarActionMap.get(extension).build();
-  }
-});
-
-extensions.on("shutdown", (type, extension) => {
-  if (sidebarActionMap.has(extension)) {
-    // Don't remove everything on app shutdown so session restore can handle
-    // restoring open sidebars.
-    if (extension.shutdownReason !== "APP_SHUTDOWN") {
-      sidebarActionMap.get(extension).shutdown();
-    }
-    sidebarActionMap.delete(extension);
-  }
-});
-/* eslint-enable mozilla/balanced-listeners */
-
-extensions.registerSchemaAPI("sidebarAction", "addon_parent", context => {
-  let {extension} = context;
-
-  function getTab(tabId) {
-    if (tabId !== null) {
-      return tabTracker.getTab(tabId);
-    }
-    return null;
-  }
-
-  return {
-    sidebarAction: {
-      async setTitle(details) {
-        let nativeTab = getTab(details.tabId);
-
-        let title = details.title;
-        // Clear the tab-specific title when given a null string.
-        if (nativeTab && title === "") {
-          title = null;
-        }
-        SidebarAction.for(extension).setProperty(nativeTab, "title", title);
-      },
-
-      getTitle(details) {
-        let nativeTab = getTab(details.tabId);
-
-        let title = SidebarAction.for(extension).getProperty(nativeTab, "title");
-        return Promise.resolve(title);
-      },
-
-      async setIcon(details) {
-        let nativeTab = getTab(details.tabId);
-
-        let icon = IconDetails.normalize(details, extension, context);
-        SidebarAction.for(extension).setProperty(nativeTab, "icon", icon);
-      },
-
-      async setPanel(details) {
-        let nativeTab = getTab(details.tabId);
-
-        let url;
-        // Clear the tab-specific url when given a null string.
-        if (nativeTab && details.panel === "") {
-          url = null;
-        } else if (details.panel !== "") {
-          url = context.uri.resolve(details.panel);
-        } else {
-          throw new ExtensionError("Invalid url for sidebar panel.");
-        }
-
-        SidebarAction.for(extension).setProperty(nativeTab, "panel", url);
-      },
-
-      getPanel(details) {
-        let nativeTab = getTab(details.tabId);
-
-        let panel = SidebarAction.for(extension).getProperty(nativeTab, "panel");
-        return Promise.resolve(panel);
-      },
-    },
-  };
-});
+global.sidebarActionFor = this.sidebarAction.for;

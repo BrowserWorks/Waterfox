@@ -15,9 +15,8 @@
 #ifdef XP_WIN
 # include <windows.h>
 # undef assert
-# undef min
-# undef max
 # undef GetProp
+# undef MemoryBarrier
 # undef SetProp
 # undef CONST
 # undef STRICT

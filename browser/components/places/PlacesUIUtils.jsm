@@ -21,8 +21,6 @@ XPCOMUtils.defineLazyModuleGetter(this, "PrivateBrowsingUtils",
                                   "resource://gre/modules/PrivateBrowsingUtils.jsm");
 XPCOMUtils.defineLazyModuleGetter(this, "NetUtil",
                                   "resource://gre/modules/NetUtil.jsm");
-XPCOMUtils.defineLazyModuleGetter(this, "Task",
-                                  "resource://gre/modules/Task.jsm");
 XPCOMUtils.defineLazyModuleGetter(this, "RecentWindow",
                                   "resource:///modules/RecentWindow.jsm");
 
@@ -31,9 +29,6 @@ Cu.import("resource://gre/modules/PlacesUtils.jsm");
 
 XPCOMUtils.defineLazyModuleGetter(this, "PlacesTransactions",
                                   "resource://gre/modules/PlacesTransactions.jsm");
-
-XPCOMUtils.defineLazyModuleGetter(this, "CloudSync",
-                                  "resource://gre/modules/CloudSync.jsm");
 
 XPCOMUtils.defineLazyModuleGetter(this, "Weave",
                                   "resource://services-sync/main.js");
@@ -201,7 +196,7 @@ let InternalFaviconLoader = {
     }
     this._initialized = true;
 
-    Services.obs.addObserver(this, "inner-window-destroyed", false);
+    Services.obs.addObserver(this, "inner-window-destroyed");
     Services.ppmm.addMessageListener("Toolkit:inner-window-destroyed", msg => {
       this.removeRequestsForInner(msg.data);
     });
@@ -947,7 +942,7 @@ this.PlacesUIUtils = {
       var uriList = PlacesUtils.toISupportsString(urls.join("|"));
       var args = Cc["@mozilla.org/array;1"].
                   createInstance(Ci.nsIMutableArray);
-      args.appendElement(uriList, /* weak =*/ false);
+      args.appendElement(uriList);
       browserWindow = Services.ww.openWindow(aWindow,
                                              "chrome://browser/content/browser.xul",
                                              null, "chrome,dialog=no,all", args);
@@ -958,7 +953,11 @@ this.PlacesUIUtils = {
     // For consistency, we want all the bookmarks to open in new tabs, instead
     // of having one of them replace the currently focused tab.  Hence we call
     // loadTabs with aReplace set to false.
-    browserWindow.gBrowser.loadTabs(urls, loadInBackground, false);
+    browserWindow.gBrowser.loadTabs(urls, {
+      inBackground: loadInBackground,
+      replace: false,
+      triggeringPrincipal: Services.scriptSecurityManager.getSystemPrincipal(),
+    });
   },
 
   openLiveMarkNodesInTabs:
@@ -1110,8 +1109,13 @@ this.PlacesUIUtils = {
     return this.leftPaneQueries;
   },
 
-  // Get the folder id for the organizer left-pane folder.
   get leftPaneFolderId() {
+    delete this.leftPaneFolderId;
+    return this.leftPaneFolderId = this.maybeRebuildLeftPane();
+  },
+
+  // Get the folder id for the organizer left-pane folder.
+  maybeRebuildLeftPane() {
     let leftPaneRoot = -1;
     let allBookmarksId;
 
@@ -1163,8 +1167,8 @@ this.PlacesUIUtils = {
     // Returns true if item really exists, false otherwise.
     function itemExists(aItemId) {
       try {
-        bs.getItemIndex(aItemId);
-        return true;
+        let index = bs.getItemIndex(aItemId);
+        return index > -1;
       } catch (e) {
         return false;
       }
@@ -1251,8 +1255,7 @@ this.PlacesUIUtils = {
         safeRemoveItem(leftPaneRoot);
       } else {
         // Everything is fine, return the current left pane folder.
-        delete this.leftPaneFolderId;
-        return this.leftPaneFolderId = leftPaneRoot;
+        return leftPaneRoot;
       }
     }
 
@@ -1345,8 +1348,7 @@ this.PlacesUIUtils = {
     };
     bs.runInBatchMode(callback, null);
 
-    delete this.leftPaneFolderId;
-    return this.leftPaneFolderId = leftPaneRoot;
+    return leftPaneRoot;
   },
 
   /**
@@ -1501,12 +1503,12 @@ this.PlacesUIUtils = {
    * @return a node-like object suitable for initialising editBookmarkOverlay.
    * @throws if aFetchInfo is representing a separator.
    */
-  promiseNodeLikeFromFetchInfo: Task.async(function* (aFetchInfo) {
+  async promiseNodeLikeFromFetchInfo(aFetchInfo) {
     if (aFetchInfo.itemType == PlacesUtils.bookmarks.TYPE_SEPARATOR)
       throw new Error("promiseNodeLike doesn't support separators");
 
     return Object.freeze({
-      itemId: yield PlacesUtils.promiseItemId(aFetchInfo.guid),
+      itemId: await PlacesUtils.promiseItemId(aFetchInfo.guid),
       bookmarkGuid: aFetchInfo.guid,
       title: aFetchInfo.title,
       uri: aFetchInfo.url !== undefined ? aFetchInfo.url.href : "",
@@ -1528,7 +1530,7 @@ this.PlacesUIUtils = {
         return Ci.nsINavHistoryResultNode.RESULT_TYPE_URI;
       }
     });
-  }),
+  },
 
   /**
    * Shortcut for calling promiseNodeLikeFromFetchInfo on the result of
@@ -1536,12 +1538,12 @@ this.PlacesUIUtils = {
    *
    * @see promiseNodeLikeFromFetchInfo above and Bookmarks.fetch in Bookmarks.jsm.
    */
-  fetchNodeLike: Task.async(function* (aGuidOrInfo) {
-    let info = yield PlacesUtils.bookmarks.fetch(aGuidOrInfo);
+  async fetchNodeLike(aGuidOrInfo) {
+    let info = await PlacesUtils.bookmarks.fetch(aGuidOrInfo);
     if (!info)
       return null;
-    return (yield this.promiseNodeLikeFromFetchInfo(info));
-  })
+    return (await this.promiseNodeLikeFromFetchInfo(info));
+  }
 };
 
 

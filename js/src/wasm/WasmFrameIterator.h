@@ -34,12 +34,12 @@ class CallSite;
 class Code;
 class CodeRange;
 class DebugFrame;
+class DebugState;
 class Instance;
 class SigIdDesc;
-struct CallThunk;
+struct Frame;
 struct FuncOffsets;
-struct ProfilingOffsets;
-struct TrapOffset;
+struct CallableOffsets;
 
 // Iterates over the frames of a single WasmActivation, called synchronously
 // from C++ in the thread of the asm.js.
@@ -59,11 +59,11 @@ class FrameIterator
     const Code* code_;
     const CallSite* callsite_;
     const CodeRange* codeRange_;
-    uint8_t* fp_;
+    Frame* fp_;
     Unwind unwind_;
-    bool missingFrameMessage_;
+    void** unwoundAddressOfReturnAddress_;
 
-    void settle();
+    void popFrame();
 
   public:
     explicit FrameIterator();
@@ -77,37 +77,86 @@ class FrameIterator
     unsigned lineOrBytecode() const;
     const CodeRange* codeRange() const { return codeRange_; }
     Instance* instance() const;
+    void** unwoundAddressOfReturnAddress() const;
     bool debugEnabled() const;
     DebugFrame* debugFrame() const;
     const CallSite* debugTrapCallsite() const;
 };
 
-// An ExitReason describes the possible reasons for leaving compiled wasm code
-// or the state of not having left compiled wasm code (ExitReason::None).
-enum class ExitReason : uint32_t
+enum class SymbolicAddress;
+
+// An ExitReason describes the possible reasons for leaving compiled wasm
+// code or the state of not having left compiled wasm code
+// (ExitReason::None). It is either a known reason, or a enumeration to a native
+// function that is used for better display in the profiler.
+class ExitReason
 {
-    None,          // default state, the pc is in wasm code
-    ImportJit,     // fast-path call directly into JIT code
-    ImportInterp,  // slow-path call into C++ Invoke()
-    Native,        // call to native C++ code (e.g., Math.sin, ToInt32(), interrupt)
-    Trap,          // call to trap handler for the trap in WasmActivation::trap
-    DebugTrap      // call to debug trap handler
+    uint32_t payload_;
+
+    ExitReason() {}
+
+  public:
+    enum class Fixed : uint32_t
+    {
+        None,          // default state, the pc is in wasm code
+        ImportJit,     // fast-path call directly into JIT code
+        ImportInterp,  // slow-path call into C++ Invoke()
+        BuiltinNative, // fast-path call directly into native C++ code
+        Trap,          // call to trap handler for the trap in WasmActivation::trap
+        DebugTrap      // call to debug trap handler
+    };
+
+    MOZ_IMPLICIT ExitReason(Fixed exitReason)
+      : payload_(0x0 | (uint32_t(exitReason) << 1))
+    {
+        MOZ_ASSERT(isFixed());
+    }
+
+    explicit ExitReason(SymbolicAddress sym)
+      : payload_(0x1 | (uint32_t(sym) << 1))
+    {
+        MOZ_ASSERT(uint32_t(sym) <= (UINT32_MAX << 1), "packing constraints");
+        MOZ_ASSERT(!isFixed());
+    }
+
+    static ExitReason Decode(uint32_t payload) {
+        ExitReason reason;
+        reason.payload_ = payload;
+        return reason;
+    }
+
+    static ExitReason None() { return ExitReason(ExitReason::Fixed::None); }
+
+    bool isFixed() const { return (payload_ & 0x1) == 0; }
+    bool isNone() const { return isFixed() && fixed() == Fixed::None; }
+    bool isNative() const { return !isFixed() || fixed() == Fixed::BuiltinNative; }
+
+    uint32_t encode() const {
+        return payload_;
+    }
+    Fixed fixed() const {
+        MOZ_ASSERT(isFixed());
+        return Fixed(payload_ >> 1);
+    }
+    SymbolicAddress symbolic() const {
+        MOZ_ASSERT(!isFixed());
+        return SymbolicAddress(payload_ >> 1);
+    }
 };
 
 // Iterates over the frames of a single WasmActivation, given an
-// asynchrously-interrupted thread's state. If the activation's
-// module is not in profiling mode, the activation is skipped.
+// asynchronously-interrupted thread's state.
 class ProfilingFrameIterator
 {
     const WasmActivation* activation_;
     const Code* code_;
     const CodeRange* codeRange_;
-    uint8_t* callerFP_;
+    Frame* callerFP_;
     void* callerPC_;
     void* stackAddress_;
     ExitReason exitReason_;
 
-    void initFromFP();
+    void initFromExitFP();
 
   public:
     ProfilingFrameIterator();
@@ -125,26 +174,64 @@ class ProfilingFrameIterator
 
 void
 GenerateExitPrologue(jit::MacroAssembler& masm, unsigned framePushed, ExitReason reason,
-                     ProfilingOffsets* offsets);
+                     CallableOffsets* offsets);
 void
 GenerateExitEpilogue(jit::MacroAssembler& masm, unsigned framePushed, ExitReason reason,
-                     ProfilingOffsets* offsets);
+                     CallableOffsets* offsets);
 void
 GenerateFunctionPrologue(jit::MacroAssembler& masm, unsigned framePushed, const SigIdDesc& sigId,
                          FuncOffsets* offsets);
 void
 GenerateFunctionEpilogue(jit::MacroAssembler& masm, unsigned framePushed, FuncOffsets* offsets);
 
-// Runtime patching to enable/disable profiling
+// Mark all instance objects live on the stack.
 
 void
-ToggleProfiling(const Code& code, const CallSite& callSite, bool enabled);
+TraceActivations(JSContext* cx, const CooperatingContext& target, JSTracer* trc);
 
-void
-ToggleProfiling(const Code& code, const CallThunk& callThunk, bool enabled);
+// Given a fault at pc with register fp, return the faulting instance if there
+// is such a plausible instance, and otherwise null.
 
-void
-ToggleProfiling(const Code& code, const CodeRange& codeRange, bool enabled);
+Instance*
+LookupFaultingInstance(WasmActivation* activation, void* pc, void* fp);
+
+// If the innermost (active) Activation is a WasmActivation, return it.
+
+WasmActivation*
+ActivationIfInnermost(JSContext* cx);
+
+// Return whether the given PC is in wasm code.
+
+bool
+InCompiledCode(void* pc);
+
+// Describes register state and associated code at a given call frame.
+
+struct UnwindState
+{
+    Frame* fp;
+    void* pc;
+    const Code* code;
+    const CodeRange* codeRange;
+    UnwindState() : fp(nullptr), pc(nullptr), code(nullptr), codeRange(nullptr) {}
+};
+
+typedef JS::ProfilingFrameIterator::RegisterState RegisterState;
+
+// Ensures the register state at a call site is consistent: pc must be in the
+// code range of the code described by fp. This prevents issues when using
+// the values of pc/fp, especially at call sites boundaries, where the state
+// hasn't fully transitioned from the caller's to the callee's.
+//
+// unwoundCaller is set to true if we were in a transitional state and had to
+// rewind to the caller's frame instead of the current frame.
+//
+// Returns true if it was possible to get to a clear state, or false if the
+// frame should be ignored.
+
+bool
+StartUnwinding(const WasmActivation& activation, const RegisterState& registers,
+               UnwindState* unwindState, bool* unwoundCaller);
 
 } // namespace wasm
 } // namespace js

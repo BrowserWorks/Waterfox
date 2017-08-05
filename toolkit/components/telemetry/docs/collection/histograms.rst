@@ -2,7 +2,7 @@
 Histograms
 ==========
 
-If a user has opted into submitting performance data to Mozilla, the Telemetry system will collect various measures of Firefox performance, hardware, usage and customizations and submit it to Mozilla. The Telemetry data collected by a single client can be examined from the integrated ``about:telemetry`` browser page, while the aggregated reports across entire user populations are publicly available at `https://telemetry.mozilla.org <https://telemetry.mozilla.org>`_.
+If a user has opted into submitting performance data to Mozilla, the Telemetry system will collect various measures of Firefox performance, hardware, usage and customizations and submit it to Mozilla. The Telemetry data collected by a single client can be examined from the integrated ``about:telemetry`` browser page, while the aggregated reports across entire user populations are publicly available at `telemetry.mozilla.org <https://telemetry.mozilla.org>`_.
 
 .. important::
 
@@ -63,13 +63,13 @@ Categorical histograms are similar to enumerated histograms. However, instead of
 
 ``enumerated``
 --------------
-This histogram type is intended for storing "enum" values, when you can't specify labels and thus cannot use ``categorical`` histograms. An enumerated histogram consists of a fixed number of *buckets*, each of which is associated with a consecutive integer value (the bucket's *label*). Each bucket corresponds to an enum value and counts the number of times its particular enum value was recorded.
+This histogram type is intended for storing "enum" values, when you can't specify labels and thus cannot use ``categorical`` histograms. An enumerated histogram consists of a fixed number of *buckets* (specified by ``n_values``), each of which is associated with a consecutive integer value (the bucket's *label*), `0` to `n_values`. Each bucket corresponds to an enum value and counts the number of times its particular enum value was recorded; except for the `n_values` bucket, which counts all values greater than or equal to n_values.
 
 You might use this type of histogram if, for example, you wanted to track the relative popularity of SSL handshake types. Whenever the browser started an SSL handshake, it would record one of a limited number of enum values which uniquely identifies the handshake type.
 
 .. note::
 
-    Set ``n_buckets`` to a slightly larger value than needed to allow for new enum values in the future. See `Changing a histogram`_ if you need to add more enums later.
+    Set ``n_values`` to a slightly larger value than needed to allow for new enum values in the future. See `Changing a histogram`_ if you need to add more enums later.
 
 ``flag``
 --------
@@ -84,6 +84,8 @@ Flag histograms will ignore any changes after the flag is set, so once the flag 
 *Deprecated* (please use uint :doc:`scalars`).
 
 This histogram type is used when you want to record a count of something. It only stores a single value and defaults to `0`.
+
+.. _histogram-type-keyed:
 
 Keyed Histograms
 ----------------
@@ -106,6 +108,7 @@ The following is a sample histogram declaration from ``Histograms.json`` for a h
 .. code-block:: json
 
     "MEMORY_RESIDENT": {
+      "record_in_processes": ["main", "content"],
       "alert_emails": ["team@mozilla.xyz"],
       "expires_in_version": "never",
       "kind": "exponential",
@@ -119,6 +122,16 @@ The following is a sample histogram declaration from ``Histograms.json`` for a h
 Histograms which track timings in milliseconds or microseconds should suffix their names with ``"_MS"`` and ``"_US"`` respectively. Flag-type histograms should have the suffix ``"_FLAG"`` in their name.
 
 The possible fields in a histogram declaration are listed below.
+
+``record_in_processes``
+-----------------------
+Required. This field is a list of processes this histogram can be recorded in. Currently-supported values are:
+
+- ``main``
+- ``content``
+- ``gpu``
+- ``all_child`` (record in all child processes)
+- ``all`` (record in all processes)
 
 ``alert_emails``
 ----------------
@@ -193,7 +206,7 @@ Changing histogram declarations after the histogram has been released is tricky.
 Adding a JavaScript Probe
 =========================
 
-A Telemetry probe is the code that measures and stores values in a histogram. Probes in privileged JavaScript code can make use of the `nsITelemetry <https://mxr.mozilla.org/mozilla-central/source/toolkit/components/telemetry/nsITelemetry.idl>`_ interface to get references to histogram objects. A new value is recorded in the histogram by calling ``add`` on the histogram object:
+A Telemetry probe is the code that measures and stores values in a histogram. Probes in privileged JavaScript code can make use of the `nsITelemetry <https://dxr.mozilla.org/mozilla-central/source/toolkit/components/telemetry/nsITelemetry.idl>`_ interface to get references to histogram objects. A new value is recorded in the histogram by calling ``add`` on the histogram object:
 
 .. code-block:: js
 
@@ -205,7 +218,11 @@ A Telemetry probe is the code that measures and stores values in a histogram. Pr
 
 Note that ``nsITelemetry.getHistogramById()`` will throw an ``NS_ERROR_ILLEGAL_VALUE`` JavaScript exception if it is called with an invalid histogram ID. The ``add()`` function will not throw if it fails, instead it prints an error in the browser console.
 
-For histograms measuring time, `TelemetryStopwatch <https://mxr.mozilla.org/mozilla-central/source/toolkit/components/telemetry/TelemetryStopwatch.jsm>`_ can be used to avoid working with Dates manually:
+.. warning::
+
+  Adding a new Telemetry probe is not possible with Artifact builds. A full build is needed.
+
+For histograms measuring time, `TelemetryStopwatch <https://dxr.mozilla.org/mozilla-central/source/toolkit/components/telemetry/TelemetryStopwatch.jsm>`_ can be used to avoid working with Dates manually:
 
 .. code-block:: js
 
@@ -218,7 +235,7 @@ For histograms measuring time, `TelemetryStopwatch <https://mxr.mozilla.org/mozi
 Adding a C++ Probe
 ==================
 
-Probes in native code can also use the `nsITelemetry <https://mxr.mozilla.org/mozilla-central/source/toolkit/components/telemetry/nsITelemetry.idl>`_ interface, but the helper functions declared in `Telemetry.h <https://mxr.mozilla.org/mozilla-central/source/toolkit/components/telemetry/Telemetry.h>`_ are more convenient:
+Probes in native code can also use the `nsITelemetry <https://dxr.mozilla.org/mozilla-central/source/toolkit/components/telemetry/nsITelemetry.idl>`_ interface, but the helper functions declared in `Telemetry.h <https://dxr.mozilla.org/mozilla-central/source/toolkit/components/telemetry/Telemetry.h>`_ are more convenient:
 
 .. code-block:: cpp
 
@@ -255,6 +272,10 @@ The histogram names declared in ``Histograms.json`` are translated into constant
 .. code-block:: cpp
 
   mozilla::Telemetry::Accumulate(mozilla::Telemetry::STARTUP_CRASH_DETECTED, true);
+
+.. warning::
+
+  Telemetry accumulations are designed to be cheap, not free. If you wish to accumulate values in a performance-sensitive piece of code, store the accumualtions locally and accumulate after the performance-sensitive piece ("hot path") has completed.
 
 The ``Telemetry.h`` header also declares the helper classes ``AutoTimer`` and ``AutoCounter``. Objects of these types automatically record a histogram value when they go out of scope:
 

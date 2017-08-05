@@ -29,25 +29,25 @@
 
 #include "nsIAtom.h"
 #include "nsHtml5AtomTable.h"
-#include "nsString.h"
+#include "nsHtml5String.h"
 #include "nsNameSpaceManager.h"
 #include "nsIContent.h"
 #include "nsTraceRefcnt.h"
 #include "jArray.h"
 #include "nsHtml5ArrayCopy.h"
 #include "nsAHtml5TreeBuilderState.h"
-#include "nsHtml5Atoms.h"
+#include "nsGkAtoms.h"
 #include "nsHtml5ByteReadable.h"
 #include "nsIUnicodeDecoder.h"
 #include "nsHtml5Macros.h"
 #include "nsIContentHandle.h"
+#include "nsHtml5Portability.h"
 
+#include "nsHtml5AttributeName.h"
+#include "nsHtml5ElementName.h"
 #include "nsHtml5Tokenizer.h"
 #include "nsHtml5TreeBuilder.h"
 #include "nsHtml5MetaScanner.h"
-#include "nsHtml5AttributeName.h"
-#include "nsHtml5ElementName.h"
-#include "nsHtml5HtmlAttributes.h"
 #include "nsHtml5StackNode.h"
 #include "nsHtml5UTF16Buffer.h"
 #include "nsHtml5Portability.h"
@@ -160,11 +160,11 @@ nsHtml5StateSnapshot::~nsHtml5StateSnapshot()
 {
   MOZ_COUNT_DTOR(nsHtml5StateSnapshot);
   for (int32_t i = 0; i < stack.length; i++) {
-    stack[i]->release();
+    stack[i]->release(nullptr);
   }
   for (int32_t i = 0; i < listOfActiveFormattingElements.length; i++) {
     if (listOfActiveFormattingElements[i]) {
-      listOfActiveFormattingElements[i]->release();
+      listOfActiveFormattingElements[i]->release(nullptr);
     }
   }
 }

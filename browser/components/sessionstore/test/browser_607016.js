@@ -2,13 +2,15 @@
 
 var stateBackup = ss.getBrowserState();
 
-add_task(function* () {
+add_task(async function() {
   /** Bug 607016 - If a tab is never restored, attributes (eg. hidden) aren't updated correctly **/
   ignoreAllUncaughtExceptions();
 
   // Set the pref to true so we know exactly how many tabs should be restoring at
   // any given time. This guarantees that a finishing load won't start another.
   Services.prefs.setBoolPref("browser.sessionstore.restore_on_demand", true);
+  // Don't restore tabs lazily.
+  Services.prefs.setBoolPref("browser.sessionstore.restore_tabs_lazily", false);
 
   let state = { windows: [{ tabs: [
     { entries: [{ url: "http://example.org#1", triggeringPrincipal_base64 }], extData: { "uniq": r() } },
@@ -19,7 +21,7 @@ add_task(function* () {
     { entries: [{ url: "http://example.org#6", triggeringPrincipal_base64 }] } // creating
   ], selected: 1 }] };
 
-  function* progressCallback() {
+  async function progressCallback() {
     let curState = JSON.parse(ss.getBrowserState());
     for (let i = 0; i < curState.windows[0].tabs.length; i++) {
       let tabState = state.windows[0].tabs[i];
@@ -27,8 +29,7 @@ add_task(function* () {
       if (tabState.extData) {
         is(tabCurState.extData["uniq"], tabState.extData["uniq"],
            "sanity check that tab has correct extData");
-      }
-      else {
+      } else {
         // We aren't expecting there to be any data on extData, but panorama
         // may be setting something, so we need to make sure that if we do have
         // data, we just don't have anything for "uniq".
@@ -64,8 +65,7 @@ add_task(function* () {
     if ("extData" in tabState) {
       ok(!("uniq" in tabState.extData),
          "(deleting) uniq not in existing extData");
-    }
-    else {
+    } else {
       ok(true, "(deleting) no data is stored in extData");
     }
 
@@ -77,7 +77,7 @@ add_task(function* () {
        "(creating) new data is stored in extData where there was none");
 
     while (gBrowser.tabs.length > 1) {
-      yield promiseRemoveTab(gBrowser.tabs[1]);
+      await promiseRemoveTab(gBrowser.tabs[1]);
     }
   }
 
@@ -85,14 +85,16 @@ add_task(function* () {
   ss.setBrowserState(JSON.stringify(state));
 
   // Wait until the selected tab is restored and all others are pending.
-  yield Promise.all(Array.map(gBrowser.tabs, tab => {
+  await Promise.all(Array.map(gBrowser.tabs, tab => {
     return (tab == gBrowser.selectedTab) ?
       promiseTabRestored(tab) : promiseTabRestoring(tab)
   }));
 
   // Kick off the actual tests.
-  yield progressCallback();
+  await progressCallback();
 
   // Cleanup.
-  yield promiseBrowserState(stateBackup);
+  Services.prefs.clearUserPref("browser.sessionstore.restore_on_demand");
+  Services.prefs.clearUserPref("browser.sessionstore.restore_tabs_lazily");
+  await promiseBrowserState(stateBackup);
 });

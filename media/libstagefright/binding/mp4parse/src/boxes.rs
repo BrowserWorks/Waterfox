@@ -49,7 +49,7 @@ impl From<u32> for FourCC {
     fn from(number: u32) -> FourCC {
         let mut box_chars = Vec::new();
         for x in 0..4 {
-            let c = (number >> x * 8 & 0x000000FF) as u8;
+            let c = (number >> (x * 8) & 0x000000FF) as u8;
             box_chars.push(c);
         }
         box_chars.reverse();
@@ -116,6 +116,7 @@ box_database!(
     AVC3SampleEntry                   0x61766333, // "avc3" - Need to check official name in spec.
     AVCConfigurationBox               0x61766343, // "avcC"
     MP4AudioSampleEntry               0x6d703461, // "mp4a"
+    MP4VideoSampleEntry               0x6d703476, // "mp4v"
     ESDBox                            0x65736473, // "esds"
     VP8SampleEntry                    0x76703038, // "vp08"
     VP9SampleEntry                    0x76703039, // "vp09"

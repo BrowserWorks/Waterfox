@@ -11,8 +11,11 @@
 #include "base/basictypes.h"
 #include "base/message_loop.h"
 
+#include "nsIMemoryReporter.h"
+#include "mozilla/Atomics.h"
 #include "mozilla/DebugOnly.h"
 #include "mozilla/Monitor.h"
+#include "mozilla/MozPromise.h"
 #include "mozilla/Vector.h"
 #if defined(OS_WIN)
 #include "mozilla/ipc/Neutering.h"
@@ -26,8 +29,9 @@
 
 #include <deque>
 #include <functional>
-#include <stack>
+#include <map>
 #include <math.h>
+#include <stack>
 
 namespace mozilla {
 namespace ipc {
@@ -61,6 +65,14 @@ enum class SyncSendError {
     ReplyError,
 };
 
+enum class PromiseRejectReason {
+    SendError,
+    ChannelClosed,
+    HandlerRejected,
+    ActorDestroyed,
+    EndGuard_,
+};
+
 enum ChannelState {
     ChannelClosed,
     ChannelOpening,
@@ -72,7 +84,7 @@ enum ChannelState {
 
 class AutoEnterTransaction;
 
-class MessageChannel : HasResultCodes
+class MessageChannel : HasResultCodes, MessageLoop::DestructionObserver
 {
     friend class ProcessLink;
     friend class ThreadLink;
@@ -82,6 +94,26 @@ class MessageChannel : HasResultCodes
 
     typedef mozilla::Monitor Monitor;
 
+    // We could templatize the actor type but it would unnecessarily
+    // expand the code size. Using the actor address as the
+    // identifier is already good enough.
+    typedef void* ActorIdType;
+
+    struct PromiseHolder
+    {
+        RefPtr<MozPromiseRefcountable> mPromise;
+
+        // For rejecting and removing the pending promises when a
+        // subprotocol is destoryed.
+        ActorIdType mActorId;
+
+        std::function<void(MozPromiseRefcountable*,
+                           PromiseRejectReason,
+                           const char*)> mRejectFunction;
+    };
+    static Atomic<size_t> gUnresolvedPromises;
+    friend class PromiseReporter;
+
   public:
     static const int32_t kNoTimeout;
 
@@ -89,7 +121,8 @@ class MessageChannel : HasResultCodes
     typedef IPC::MessageInfo MessageInfo;
     typedef mozilla::ipc::Transport Transport;
 
-    explicit MessageChannel(IToplevelProtocol *aListener);
+    explicit MessageChannel(const char *aName,
+                            IToplevelProtocol *aListener);
     ~MessageChannel();
 
     IToplevelProtocol *Listener() const {
@@ -130,7 +163,7 @@ class MessageChannel : HasResultCodes
     // Call aInvoke for each pending message until it returns false.
     // XXX: You must get permission from an IPC peer to use this function
     //      since it requires custom deserialization and re-orders events.
-    void PeekMessages(std::function<bool(const Message& aMsg)> aInvoke);
+    void PeekMessages(const std::function<bool(const Message& aMsg)>& aInvoke);
 
     // Misc. behavioral traits consumers can request for this channel
     enum ChannelFlags {
@@ -153,6 +186,30 @@ class MessageChannel : HasResultCodes
     // Asynchronously send a message to the other side of the channel
     bool Send(Message* aMsg);
 
+    // Asynchronously send a message to the other side of the channel
+    // and wait for asynchronous reply
+    template<typename Promise>
+    bool Send(Message* aMsg, Promise* aPromise, ActorIdType aActorId) {
+        int32_t seqno = NextSeqno();
+        aMsg->set_seqno(seqno);
+        if (!Send(aMsg)) {
+            return false;
+        }
+        PromiseHolder holder;
+        holder.mPromise = aPromise;
+        holder.mActorId = aActorId;
+        holder.mRejectFunction = [](MozPromiseRefcountable* aRejectPromise,
+                                    PromiseRejectReason aReason,
+                                    const char* aRejectSite) {
+            static_cast<Promise*>(aRejectPromise)->Reject(aReason, aRejectSite);
+        };
+        mPendingPromises.insert(std::make_pair(seqno, Move(holder)));
+        gUnresolvedPromises++;
+        return true;
+    }
+
+    void SendBuildID();
+
     // Asynchronously deliver a message back to this side of the
     // channel
     bool Echo(Message* aMsg);
@@ -167,6 +224,13 @@ class MessageChannel : HasResultCodes
     bool WaitForIncomingMessage();
 
     bool CanSend() const;
+
+    // Remove and return a promise that needs reply
+    already_AddRefed<MozPromiseRefcountable> PopPromise(const Message& aMsg);
+
+    // Used to reject and remove pending promises owned by the given
+    // actor when it's about to be destroyed.
+    void RejectPendingPromisesForActor(ActorIdType aActorId);
 
     // If sending a sync message returns an error, this function gives a more
     // descriptive error message.
@@ -421,6 +485,11 @@ class MessageChannel : HasResultCodes
     // Tell the IO thread to close the channel and wait for it to ACK.
     void SynchronouslyClose();
 
+    // Returns true if ShouldDeferMessage(aMsg) is guaranteed to return true.
+    // Otherwise, the result of ShouldDeferMessage(aMsg) may be true or false,
+    // depending on context.
+    static bool IsAlwaysDeferred(const Message& aMsg);
+
     bool WasTransactionCanceled(int transaction);
     bool ShouldDeferMessage(const Message& aMsg);
     bool ShouldDeferInterruptMessage(const Message& aMsg, size_t aStackDepth);
@@ -488,9 +557,15 @@ class MessageChannel : HasResultCodes
 
     typedef LinkedList<RefPtr<MessageTask>> MessageQueue;
     typedef std::map<size_t, Message> MessageMap;
+    typedef std::map<size_t, PromiseHolder> PromiseMap;
     typedef IPC::Message::msgid_t msgid_t;
 
+    void WillDestroyCurrentMessageLoop() override;
+
   private:
+    // This will be a string literal, so lifetime is not an issue.
+    const char* mName;
+
     // Based on presumption the listener owns and overlives the channel,
     // this is never nullified.
     IToplevelProtocol* mListener;
@@ -513,7 +588,7 @@ class MessageChannel : HasResultCodes
     bool mInTimeoutSecondHalf;
 
     // Worker-thread only; sequence numbers for messages that require
-    // synchronous replies.
+    // replies.
     int32_t mNextSeqno;
 
     static bool sIsPumpingMessages;
@@ -575,6 +650,12 @@ class MessageChannel : HasResultCodes
     bool DispatchingSyncMessage() const;
     int DispatchingSyncMessageNestedLevel() const;
 
+#ifdef DEBUG
+    void AssertMaybeDeferredCountCorrect();
+#else
+    void AssertMaybeDeferredCountCorrect() {}
+#endif
+
     // If a sync message times out, we store its sequence number here. Any
     // future sync messages will fail immediately. Once the reply for original
     // sync message is received, we allow sync messages again.
@@ -626,6 +707,11 @@ class MessageChannel : HasResultCodes
     // another blocking message, because it's blocked on a reply from us.
     //
     MessageQueue mPending;
+
+    // The number of messages in mPending for which IsAlwaysDeferred is false
+    // (i.e., the number of messages that might not be deferred, depending on
+    // context).
+    size_t mMaybeDeferredPendingCount;
 
     // Stack of all the out-calls on which this channel is awaiting responses.
     // Each stack refers to a different protocol and the stacks are mutually
@@ -682,6 +768,9 @@ class MessageChannel : HasResultCodes
     // https://bugzilla.mozilla.org/show_bug.cgi?id=521929.
     MessageMap mOutOfTurnReplies;
 
+    // Map of async Promises that are still waiting replies.
+    PromiseMap mPendingPromises;
+
     // Stack of Interrupt in-calls that were deferred because of race
     // conditions.
     std::stack<Message> mDeferred;
@@ -714,5 +803,14 @@ CancelCPOWs();
 
 } // namespace ipc
 } // namespace mozilla
+
+namespace IPC {
+template <>
+struct ParamTraits<mozilla::ipc::PromiseRejectReason>
+    : public ContiguousEnumSerializer<mozilla::ipc::PromiseRejectReason,
+                                      mozilla::ipc::PromiseRejectReason::SendError,
+                                      mozilla::ipc::PromiseRejectReason::EndGuard_>
+{ };
+} // namespace IPC
 
 #endif  // ifndef ipc_glue_MessageChannel_h

@@ -142,6 +142,27 @@ protected:
 
   virtual bool IncludeInContext(nsINode *aNode);
 
+  void Clear();
+
+  class MOZ_STACK_CLASS AutoReleaseDocumentIfNeeded final
+  {
+  public:
+    explicit AutoReleaseDocumentIfNeeded(nsDocumentEncoder* aEncoder)
+      : mEncoder(aEncoder)
+    {
+    }
+
+    ~AutoReleaseDocumentIfNeeded()
+    {
+      if (mEncoder->mFlags & RequiresReinitAfterOutput) {
+        mEncoder->Clear();
+      }
+    }
+
+  private:
+    nsDocumentEncoder* mEncoder;
+  };
+
   nsCOMPtr<nsIDocument>          mDocument;
   nsCOMPtr<nsISelection>         mSelection;
   RefPtr<nsRange>              mRange;
@@ -183,7 +204,8 @@ NS_INTERFACE_MAP_BEGIN_CYCLE_COLLECTION(nsDocumentEncoder)
 NS_INTERFACE_MAP_END
 
 NS_IMPL_CYCLE_COLLECTION(nsDocumentEncoder,
-                         mDocument, mSelection, mRange, mNode, mCommonParent)
+                         mDocument, mSelection, mRange, mNode, mSerializer,
+                         mCommonParent)
 
 nsDocumentEncoder::nsDocumentEncoder() : mCachedBuffer(nullptr)
 {
@@ -996,6 +1018,19 @@ nsDocumentEncoder::SerializeRangeToString(nsRange *aRange,
   return rv;
 }
 
+void
+nsDocumentEncoder::Clear()
+{
+  mDocument = nullptr;
+  mSelection = nullptr;
+  mRange = nullptr;
+  mNode = nullptr;
+  mCommonParent = nullptr;
+  mNodeFixup = nullptr;
+
+  Initialize(false);
+}
+
 NS_IMETHODIMP
 nsDocumentEncoder::EncodeToString(nsAString& aOutputString)
 {
@@ -1008,6 +1043,8 @@ nsDocumentEncoder::EncodeToStringWithMaxLength(uint32_t aMaxLength,
 {
   if (!mDocument)
     return NS_ERROR_NOT_INITIALIZED;
+
+  AutoReleaseDocumentIfNeeded autoReleaseDocument(this);
 
   aOutputString.Truncate();
 

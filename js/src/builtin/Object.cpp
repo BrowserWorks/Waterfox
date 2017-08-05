@@ -507,8 +507,7 @@ js::obj_toString(JSContext* cx, unsigned argc, Value* vp)
 
     // Step 15.
     RootedValue tag(cx);
-    RootedId toStringTagId(cx, SYMBOL_TO_JSID(cx->wellKnownSymbols().toStringTag));
-    if (!GetProperty(cx, obj, obj, toStringTagId, &tag))
+    if (!GetInterestingSymbolProperty(cx, obj, cx->wellKnownSymbols().toStringTag, &tag))
         return false;
 
     // Step 16.
@@ -516,17 +515,22 @@ js::obj_toString(JSContext* cx, unsigned argc, Value* vp)
         // Non-standard (bug 1277801): Use ClassName as a fallback in the interim
         if (!builtinTag) {
             const char* className = GetObjectClassName(cx, obj);
+            // "[object Object]" is by far the most common case at this point,
+            // so we optimize it here.
+            if (strcmp(className, "Object") == 0) {
+                builtinTag = cx->names().objectObject;
+            } else {
+                StringBuffer sb(cx);
+                if (!sb.append("[object ") || !sb.append(className, strlen(className)) ||
+                    !sb.append("]"))
+                {
+                    return false;
+                }
 
-            StringBuffer sb(cx);
-            if (!sb.append("[object ") || !sb.append(className, strlen(className)) ||
-                !sb.append("]"))
-            {
-                return false;
+                builtinTag = sb.finishAtom();
+                if (!builtinTag)
+                    return false;
             }
-
-            builtinTag = sb.finishString();
-            if (!builtinTag)
-                return false;
         }
 
         args.rval().setString(builtinTag);
@@ -538,7 +542,7 @@ js::obj_toString(JSContext* cx, unsigned argc, Value* vp)
     if (!sb.append("[object ") || !sb.append(tag.toString()) || !sb.append("]"))
         return false;
 
-    RootedString str(cx, sb.finishString());
+    JSString* str = sb.finishAtom();
     if (!str)
         return false;
 
@@ -679,50 +683,6 @@ obj_unwatch(JSContext* cx, unsigned argc, Value* vp)
 }
 
 #endif /* JS_HAS_OBJ_WATCHPOINT */
-
-/* ECMA 15.2.4.5. */
-bool
-js::obj_hasOwnProperty(JSContext* cx, unsigned argc, Value* vp)
-{
-    CallArgs args = CallArgsFromVp(argc, vp);
-
-    HandleValue idValue = args.get(0);
-
-    // As an optimization, provide a fast path when rooting is not necessary and
-    // we can safely retrieve the object's shape.
-
-    /* Step 1, 2. */
-    jsid id;
-    if (args.thisv().isObject() && ValueToId<NoGC>(cx, idValue, &id)) {
-        JSObject* obj = &args.thisv().toObject();
-        PropertyResult prop;
-        if (obj->isNative() &&
-            NativeLookupOwnProperty<NoGC>(cx, &obj->as<NativeObject>(), id, &prop))
-        {
-            args.rval().setBoolean(prop.isFound());
-            return true;
-        }
-    }
-
-    /* Step 1. */
-    RootedId idRoot(cx);
-    if (!ToPropertyKey(cx, idValue, &idRoot))
-        return false;
-
-    /* Step 2. */
-    RootedObject obj(cx, ToObject(cx, args.thisv()));
-    if (!obj)
-        return false;
-
-    /* Step 3. */
-    bool found;
-    if (!HasOwnProperty(cx, obj, idRoot, &found))
-        return false;
-
-    /* Step 4,5. */
-    args.rval().setBoolean(found);
-    return true;
-}
 
 /* ES5 15.2.4.6. */
 static bool
@@ -1315,7 +1275,7 @@ static const JSFunctionSpec object_methods[] = {
     JS_FN(js_watch_str,                obj_watch,                   2,0),
     JS_FN(js_unwatch_str,              obj_unwatch,                 1,0),
 #endif
-    JS_FN(js_hasOwnProperty_str,       obj_hasOwnProperty,          1,0),
+    JS_SELF_HOSTED_FN(js_hasOwnProperty_str, "Object_hasOwnProperty", 1,0),
     JS_FN(js_isPrototypeOf_str,        obj_isPrototypeOf,           1,0),
     JS_FN(js_propertyIsEnumerable_str, obj_propertyIsEnumerable,    1,0),
 #if JS_OLD_GETTER_SETTER_METHODS

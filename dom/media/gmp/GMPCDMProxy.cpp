@@ -28,11 +28,13 @@ GMPCDMProxy::GMPCDMProxy(dom::MediaKeys* aKeys,
                          const nsAString& aKeySystem,
                          GMPCrashHelper* aCrashHelper,
                          bool aDistinctiveIdentifierRequired,
-                         bool aPersistentStateRequired)
+                         bool aPersistentStateRequired,
+                         nsIEventTarget* aMainThread)
   : CDMProxy(aKeys,
              aKeySystem,
              aDistinctiveIdentifierRequired,
-             aPersistentStateRequired)
+             aPersistentStateRequired,
+             aMainThread)
   , mCrashHelper(aCrashHelper)
   , mCDM(nullptr)
   , mShutdownCalled(false)
@@ -124,7 +126,7 @@ GMPCDMProxy::gmp_InitDone(GMPDecryptorProxy* aCDM, UniquePtr<InitData>&& aData)
   }
 
   mCDM = aCDM;
-  mCallback.reset(new GMPCDMCallbackProxy(this));
+  mCallback.reset(new GMPCDMCallbackProxy(this, mMainThread));
   mCDM->Init(mCallback.get(),
              mDistinctiveIdentifierRequired,
              mPersistentStateRequired);
@@ -141,7 +143,7 @@ void GMPCDMProxy::OnSetDecryptorId(uint32_t aId)
     NewRunnableMethod<uint32_t>(this,
                                 &GMPCDMProxy::OnCDMCreated,
                                 mCreatePromiseId));
-  NS_DispatchToMainThread(task);
+  mMainThread->Dispatch(task.forget(), NS_DISPATCH_NORMAL);
 }
 
 class gmp_InitDoneCallback : public GetGMPDecryptorCallback
@@ -326,6 +328,7 @@ GMPCDMProxy::gmp_CreateSession(UniquePtr<CreateSessionData>&& aData)
 
 void
 GMPCDMProxy::LoadSession(PromiseId aPromiseId,
+                         dom::MediaKeySessionType aSessionType,
                          const nsAString& aSessionId)
 {
   MOZ_ASSERT(NS_IsMainThread());
@@ -497,7 +500,7 @@ GMPCDMProxy::gmp_Shutdown()
   // Abort any pending decrypt jobs, to awaken any clients waiting on a job.
   for (size_t i = 0; i < mDecryptionJobs.Length(); i++) {
     DecryptJob* job = mDecryptionJobs[i];
-    job->PostResult(AbortedErr);
+    job->PostResult(eme::AbortedErr);
   }
   mDecryptionJobs.Clear();
 
@@ -518,7 +521,7 @@ GMPCDMProxy::RejectPromise(PromiseId aId, nsresult aCode,
   } else {
     nsCOMPtr<nsIRunnable> task(new RejectPromiseTask(this, aId, aCode,
                                                      aReason));
-    NS_DispatchToMainThread(task);
+    mMainThread->Dispatch(task.forget(), NS_DISPATCH_NORMAL);
   }
 }
 
@@ -536,7 +539,7 @@ GMPCDMProxy::ResolvePromise(PromiseId aId)
     task = NewRunnableMethod<PromiseId>(this,
                                         &GMPCDMProxy::ResolvePromise,
                                         aId);
-    NS_DispatchToMainThread(task);
+    mMainThread->Dispatch(task.forget(), NS_DISPATCH_NORMAL);
   }
 }
 
@@ -609,7 +612,10 @@ GMPCDMProxy::OnExpirationChange(const nsAString& aSessionId,
   }
   RefPtr<dom::MediaKeySession> session(mKeys->GetSession(aSessionId));
   if (session) {
-    session->SetExpiration(static_cast<double>(aExpiryTime));
+    // Expiry of 0 is interpreted as "never expire". See bug 1345341.
+    double t = (aExpiryTime == 0) ? std::numeric_limits<double>::quiet_NaN()
+                                  : static_cast<double>(aExpiryTime);
+    session->SetExpiration(t);
   }
 }
 
@@ -690,7 +696,7 @@ GMPCDMProxy::gmp_Decrypt(RefPtr<DecryptJob> aJob)
   MOZ_ASSERT(IsOnOwnerThread());
 
   if (!mCDM) {
-    aJob->PostResult(AbortedErr);
+    aJob->PostResult(eme::AbortedErr);
     return;
   }
 

@@ -28,6 +28,11 @@
     <command id="Browser:SendLink"
              oncommand="MailIntegration.sendLinkForBrowser(gBrowser.selectedBrowser);"/>
 
+    <command id="PageAction:copyURL"
+             oncommand="gPageActionButton.copyURL();"/>
+    <command id="PageAction:emailLink"
+             oncommand="gPageActionButton.emailLink();"/>
+
     <command id="cmd_pageSetup" oncommand="PrintUtils.showPageSetup();"/>
     <command id="cmd_print" oncommand="PrintUtils.printWindow(window.gBrowser.selectedBrowser.outerWindowID, window.gBrowser.selectedBrowser);"/>
     <command id="cmd_printPreview" oncommand="PrintUtils.printPreview(PrintPreviewListener);"/>
@@ -93,7 +98,7 @@
     <command id="Browser:OpenLocation" oncommand="openLocation();"/>
     <command id="Browser:RestoreLastSession" oncommand="restoreLastSession();" disabled="true"/>
     <command id="Browser:NewUserContextTab" oncommand="openNewUserContextTab(event.sourceEvent);"/>
-    <command id="Browser:OpenAboutContainers" oncommand="openPreferences('paneContainers');"/>
+    <command id="Browser:OpenAboutContainers" oncommand="openPreferences('paneContainers', {origin: 'ContainersCommand'});"/>
 
     <command id="Tools:Search" oncommand="BrowserSearch.webSearch();"/>
     <command id="Tools:Downloads" oncommand="BrowserDownloadsUI();"/>
@@ -338,7 +343,7 @@
     <key id="key_fullZoomReset"   key="&fullZoomResetCmd.commandkey;"    command="cmd_fullZoomReset"   modifiers="accel"/>
     <key                          key="&fullZoomResetCmd.commandkey2;"   command="cmd_fullZoomReset"   modifiers="accel"/>
 
-    <key id="key_showAllTabs" command="Browser:ShowAllTabs" keycode="VK_TAB" modifiers="control,shift"/>
+    <key id="key_showAllTabs" command="Browser:ShowAllTabs" keycode="VK_TAB" modifiers="control,shift" disabled="true"/>
 
     <key id="key_switchTextDirection" key="&bidiSwitchTextDirectionItem.commandkey;" command="cmd_switchTextDirection" modifiers="accel,shift" />
 
@@ -347,10 +352,20 @@
     <key id="key_sanitize" command="Tools:Sanitize" keycode="VK_DELETE" modifiers="accel,shift"/>
 #ifdef XP_MACOSX
     <key id="key_sanitize_mac" command="Tools:Sanitize" keycode="VK_BACK" modifiers="accel,shift"/>
-    <key id="key_quitApplication" key="&quitApplicationCmdUnix.key;" modifiers="accel" reserved="true"/>
-#elifdef XP_UNIX
-    <key id="key_quitApplication" key="&quitApplicationCmdUnix.key;" command="cmd_quitApplication" modifiers="accel" reserved="true"/>
 #endif
+    <key id="key_quitApplication" key="&quitApplicationCmd.key;"
+#ifdef XP_WIN
+         modifiers="accel,shift"
+#else
+         modifiers="accel"
+#endif
+# On OS X, dark voodoo magic invokes the quit code for this key.
+# So we're not adding the attribute on OSX because of backwards/add-on compat.
+# See bug 1369909 for background on this.
+#ifndef XP_MACOSX
+         command="cmd_quitApplication"
+#endif
+         reserved="true"/>
 
 #ifdef FULL_BROWSER_WINDOW
     <key id="key_undoCloseTab" command="History:UndoCloseTab" key="&tabCmd.commandkey;" modifiers="accel,shift"/>

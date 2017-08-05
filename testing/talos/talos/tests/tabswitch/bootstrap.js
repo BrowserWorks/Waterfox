@@ -84,7 +84,10 @@ function waitForDelayedStartup(win) {
  */
 function loadTabs(gBrowser, urls) {
   return new Promise((resolve) => {
-    gBrowser.loadTabs(urls, true);
+    gBrowser.loadTabs(urls, {
+      inBackground: true,
+      triggeringPrincipal: Services.scriptSecurityManager.getSystemPrincipal(),
+    });
 
     let waitingToLoad = new Set(urls);
 
@@ -161,9 +164,8 @@ function loadTPSContentScript(browser) {
         Services.profiler.AddMarker("Content saw transaction id: " + event.transactionId);
         if (event.transactionId > lastTransactionId) {
           Services.profiler.AddMarker("Content saw correct MozAfterPaint");
-          sendAsyncMessage("TPS:ContentSawPaint", {
-            time: Date.now().valueOf(),
-          });
+          let time = Math.floor(content.performance.timing.navigationStart + content.performance.now());
+          sendAsyncMessage("TPS:ContentSawPaint", { time });
           removeEventListener("MozAfterPaint", onPaint);
         }
       });
@@ -188,6 +190,7 @@ function loadTPSContentScript(browser) {
 function switchToTab(tab) {
   let browser = tab.linkedBrowser;
   let gBrowser = tab.ownerGlobal.gBrowser;
+  let window = tab.ownerGlobal;
 
   // Single-process tab switching works quite differently from
   // multi-process tab switching. In the single-process case, tab
@@ -201,7 +204,7 @@ function switchToTab(tab) {
       // inside the content, since it's the content that will hear a MozAfterPaint
       // once the content is presented to the user.
       yield loadTPSContentScript(browser);
-      let start = Date.now().valueOf();
+      let start = Math.floor(window.performance.timing.navigationStart + window.performance.now());
       TalosParentProfiler.resume("start (" + start + "): " + browser.currentURI.spec);
 
       // We need to wait for the TabSwitchDone event to make sure
@@ -225,7 +228,7 @@ function switchToTab(tab) {
     let winUtils = win.QueryInterface(Ci.nsIInterfaceRequestor)
                       .getInterface(Ci.nsIDOMWindowUtils);
 
-    let start = Date.now().valueOf();
+    let start = Math.floor(window.performance.timing.navigationStart + window.performance.now());
     TalosParentProfiler.resume("start (" + start + "): " + browser.currentURI.spec);
 
     // There is no async tab switcher for the single-process case,
@@ -315,7 +318,8 @@ function waitForContentPresented(browser, lastTransactionId) {
         if (event.transactionId > lastTransactionId) {
           win.removeEventListener("MozAfterPaint", onPaint);
           TalosParentProfiler.mark("Content saw MozAfterPaint");
-          resolve(Date.now().valueOf());
+          let time = Math.floor(win.performance.timing.navigationStart + win.performance.now());
+          resolve(time);
         }
       }
     });
@@ -414,6 +418,7 @@ function test(window) {
     }
 
     for (let tab of tabs) {
+      gBrowser.moveTabTo(tab, 1);
       yield forceGC(win, tab.linkedBrowser);
       let time = yield switchToTab(tab);
       dump(`${tab.linkedBrowser.currentURI.spec}: ${time}ms\n`);
@@ -434,8 +439,10 @@ function test(window) {
     output += '</table></body></html>';
     dump("total tab switch time:" + time + "\n");
 
-    let resultsTab = win.gBrowser.loadOneTab('data:text/html;charset=utf-8,' +
-                                             encodeURIComponent(output));
+    let resultsTab = win.gBrowser.loadOneTab(
+      'data:text/html;charset=utf-8,' + encodeURIComponent(output), {
+      triggeringPrincipal: Services.scriptSecurityManager.getSystemPrincipal(),
+    });
     let pref = Services.prefs.getBoolPref("browser.tabs.warnOnCloseOtherTabs");
     if (pref)
       Services.prefs.setBoolPref("browser.tabs.warnOnCloseOtherTabs", false);

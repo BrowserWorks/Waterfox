@@ -32,6 +32,9 @@ GetGCObjectKind(const Class* clasp)
 {
     if (clasp == FunctionClassPtr)
         return AllocKind::FUNCTION;
+
+    MOZ_ASSERT(!clasp->isProxy(), "Proxies should use GetProxyGCObjectKind");
+
     uint32_t nslots = JSCLASS_RESERVED_SLOTS(clasp);
     if (clasp->flags & JSCLASS_HAS_PRIVATE)
         nslots++;
@@ -445,15 +448,15 @@ class GCZonesIter
 
 typedef CompartmentsIterT<GCZonesIter> GCCompartmentsIter;
 
-/* Iterates over all zones in the current zone group. */
-class GCZoneGroupIter {
+/* Iterates over all zones in the current sweep group. */
+class GCSweepGroupIter {
   private:
     JS::Zone* current;
 
   public:
-    explicit GCZoneGroupIter(JSRuntime* rt) {
+    explicit GCSweepGroupIter(JSRuntime* rt) {
         MOZ_ASSERT(CurrentThreadIsPerformingGC());
-        current = rt->gc.getCurrentZoneGroup();
+        current = rt->gc.getCurrentSweepGroup();
     }
 
     bool done() const { return !current; }
@@ -472,7 +475,7 @@ class GCZoneGroupIter {
     JS::Zone* operator->() const { return get(); }
 };
 
-typedef CompartmentsIterT<GCZoneGroupIter> GCCompartmentGroupIter;
+typedef CompartmentsIterT<GCSweepGroupIter> GCCompartmentGroupIter;
 
 inline void
 RelocationOverlay::forwardTo(Cell* cell)
@@ -487,6 +490,114 @@ RelocationOverlay::forwardTo(Cell* cell)
     magic_ = Relocated;
     newLocation_ = cell;
 }
+
+template <typename T>
+struct MightBeForwarded
+{
+    static_assert(mozilla::IsBaseOf<Cell, T>::value,
+                  "T must derive from Cell");
+    static_assert(!mozilla::IsSame<Cell, T>::value && !mozilla::IsSame<TenuredCell, T>::value,
+                  "T must not be Cell or TenuredCell");
+
+    static const bool value = mozilla::IsBaseOf<JSObject, T>::value ||
+                              mozilla::IsBaseOf<Shape, T>::value ||
+                              mozilla::IsBaseOf<BaseShape, T>::value ||
+                              mozilla::IsBaseOf<JSString, T>::value ||
+                              mozilla::IsBaseOf<JSScript, T>::value ||
+                              mozilla::IsBaseOf<js::LazyScript, T>::value ||
+                              mozilla::IsBaseOf<js::Scope, T>::value ||
+                              mozilla::IsBaseOf<js::RegExpShared, T>::value;
+};
+
+template <typename T>
+inline bool
+IsForwarded(T* t)
+{
+    RelocationOverlay* overlay = RelocationOverlay::fromCell(t);
+    if (!MightBeForwarded<T>::value) {
+        MOZ_ASSERT(!overlay->isForwarded());
+        return false;
+    }
+
+    return overlay->isForwarded();
+}
+
+struct IsForwardedFunctor : public BoolDefaultAdaptor<Value, false> {
+    template <typename T> bool operator()(T* t) { return IsForwarded(t); }
+};
+
+inline bool
+IsForwarded(const JS::Value& value)
+{
+    return DispatchTyped(IsForwardedFunctor(), value);
+}
+
+template <typename T>
+inline T*
+Forwarded(T* t)
+{
+    RelocationOverlay* overlay = RelocationOverlay::fromCell(t);
+    MOZ_ASSERT(overlay->isForwarded());
+    return reinterpret_cast<T*>(overlay->forwardingAddress());
+}
+
+struct ForwardedFunctor : public IdentityDefaultAdaptor<Value> {
+    template <typename T> inline Value operator()(T* t) {
+        return js::gc::RewrapTaggedPointer<Value, T>::wrap(Forwarded(t));
+    }
+};
+
+inline Value
+Forwarded(const JS::Value& value)
+{
+    return DispatchTyped(ForwardedFunctor(), value);
+}
+
+template <typename T>
+inline T
+MaybeForwarded(T t)
+{
+    if (IsForwarded(t))
+        t = Forwarded(t);
+    MakeAccessibleAfterMovingGC(t);
+    return t;
+}
+
+#ifdef JSGC_HASH_TABLE_CHECKS
+
+template <typename T>
+inline bool
+IsGCThingValidAfterMovingGC(T* t)
+{
+    return !IsInsideNursery(t) && !RelocationOverlay::isCellForwarded(t);
+}
+
+template <typename T>
+inline void
+CheckGCThingAfterMovingGC(T* t)
+{
+    if (t)
+        MOZ_RELEASE_ASSERT(IsGCThingValidAfterMovingGC(t));
+}
+
+template <typename T>
+inline void
+CheckGCThingAfterMovingGC(const ReadBarriered<T*>& t)
+{
+    CheckGCThingAfterMovingGC(t.unbarrieredGet());
+}
+
+struct CheckValueAfterMovingGCFunctor : public VoidDefaultAdaptor<Value> {
+    template <typename T> void operator()(T* t) { CheckGCThingAfterMovingGC(t); }
+};
+
+inline void
+CheckValueAfterMovingGC(const JS::Value& value)
+{
+    DispatchTyped(CheckValueAfterMovingGCFunctor(), value);
+}
+
+#endif // JSGC_HASH_TABLE_CHECKS
 
 } /* namespace gc */
 } /* namespace js */

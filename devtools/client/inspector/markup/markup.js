@@ -13,7 +13,6 @@ const nodeFilterConstants = require("devtools/shared/dom-node-filter-constants")
 const EventEmitter = require("devtools/shared/event-emitter");
 const {LocalizationHelper} = require("devtools/shared/l10n");
 const {PluralForm} = require("devtools/shared/plural-form");
-const {template} = require("devtools/shared/gcli/templater");
 const AutocompletePopup = require("devtools/client/shared/autocomplete-popup");
 const KeyShortcuts = require("devtools/client/shared/key-shortcuts");
 const {scrollIntoViewIfNeeded} = require("devtools/client/shared/scroll");
@@ -71,11 +70,8 @@ function MarkupView(inspector, frame, controllerWindow) {
   this.doc = this._frame.contentDocument;
   this._elt = this.doc.querySelector("#root");
 
-  try {
-    this.maxChildren = Services.prefs.getIntPref("devtools.markup.pagesize");
-  } catch (ex) {
-    this.maxChildren = DEFAULT_MAX_CHILDREN;
-  }
+  this.maxChildren = Services.prefs.getIntPref("devtools.markup.pagesize",
+                                               DEFAULT_MAX_CHILDREN);
 
   this.collapseAttributes =
     Services.prefs.getBoolPref(ATTR_COLLAPSE_ENABLED_PREF);
@@ -166,10 +162,14 @@ MarkupView.prototype = {
 
   _initTooltips: function () {
     // The tooltips will be attached to the toolbox document.
-    this.eventDetailsTooltip = new HTMLTooltip(this.toolbox.doc,
-      {type: "arrow"});
-    this.imagePreviewTooltip = new HTMLTooltip(this.toolbox.doc,
-      {type: "arrow", useXulWrapper: "true"});
+    this.eventDetailsTooltip = new HTMLTooltip(this.toolbox.doc, {
+      type: "arrow",
+      consumeOutsideClicks: false,
+    });
+    this.imagePreviewTooltip = new HTMLTooltip(this.toolbox.doc, {
+      type: "arrow",
+      useXulWrapper: true,
+    });
     this._enableImagePreviewTooltip();
   },
 
@@ -421,7 +421,8 @@ MarkupView.prototype = {
    *         requests queued up
    */
   _showBoxModel: function (nodeFront) {
-    return this.toolbox.highlighterUtils.highlightNodeFront(nodeFront);
+    return this.toolbox.highlighterUtils.highlightNodeFront(nodeFront)
+      .catch(this._handleRejectionIfNotDestroyed);
   },
 
   /**
@@ -434,7 +435,8 @@ MarkupView.prototype = {
    *         requests queued up
    */
   _hideBoxModel: function (forceHide) {
-    return this.toolbox.highlighterUtils.unhighlight(forceHide);
+    return this.toolbox.highlighterUtils.unhighlight(forceHide)
+      .catch(this._handleRejectionIfNotDestroyed);
   },
 
   _briefBoxModelTimer: null,
@@ -460,13 +462,6 @@ MarkupView.prototype = {
     }, NEW_SELECTION_HIGHLIGHTER_TIMER);
 
     return promise.all([onShown, this._briefBoxModelPromise.promise]);
-  },
-
-  template: function (name, dest, options = {stack: "markup.xhtml"}) {
-    let node = this.doc.getElementById("template-" + name).cloneNode(true);
-    node.removeAttribute("id");
-    template(node, dest, options);
-    return node;
   },
 
   /**
@@ -1607,7 +1602,7 @@ MarkupView.prototype = {
       // this container will do double duty as the container for the single
       // text child.
       while (container.children.firstChild) {
-        container.children.removeChild(container.children.firstChild);
+        container.children.firstChild.remove();
       }
 
       container.setInlineTextChild(container.node.inlineTextChild);
@@ -1619,7 +1614,7 @@ MarkupView.prototype = {
 
     if (!container.hasChildren) {
       while (container.children.firstChild) {
-        container.children.removeChild(container.children.firstChild);
+        container.children.firstChild.remove();
       }
       container.childrenDirty = false;
       container.setExpanded(false);
@@ -1662,31 +1657,16 @@ MarkupView.prototype = {
         }
 
         while (container.children.firstChild) {
-          container.children.removeChild(container.children.firstChild);
+          container.children.firstChild.remove();
         }
 
-        if (!(children.hasFirst && children.hasLast)) {
-          let nodesCount = container.node.numChildren;
-          let showAllString = PluralForm.get(nodesCount,
-            INSPECTOR_L10N.getStr("markupView.more.showAll2"));
-          let data = {
-            showing: INSPECTOR_L10N.getStr("markupView.more.showing"),
-            showAll: showAllString.replace("#1", nodesCount),
-            allButtonClick: () => {
-              container.maxChildren = -1;
-              container.childrenDirty = true;
-              this._updateChildren(container);
-            }
-          };
-
-          if (!children.hasFirst) {
-            let span = this.template("more-nodes", data);
-            fragment.insertBefore(span, fragment.firstChild);
-          }
-          if (!children.hasLast) {
-            let span = this.template("more-nodes", data);
-            fragment.appendChild(span);
-          }
+        if (!children.hasFirst) {
+          let topItem = this.buildMoreNodesButtonMarkup(container);
+          fragment.insertBefore(topItem, fragment.firstChild);
+        }
+        if (!children.hasLast) {
+          let bottomItem = this.buildMoreNodesButtonMarkup(container);
+          fragment.appendChild(bottomItem);
         }
 
         container.children.appendChild(fragment);
@@ -1694,6 +1674,30 @@ MarkupView.prototype = {
       }).catch(this._handleRejectionIfNotDestroyed);
     this._queuedChildUpdates.set(container, updatePromise);
     return updatePromise;
+  },
+
+  buildMoreNodesButtonMarkup: function (container) {
+    let elt = this.doc.createElement("li");
+    elt.classList.add("more-nodes", "devtools-class-comment");
+
+    let label = this.doc.createElement("span");
+    label.textContent = INSPECTOR_L10N.getStr("markupView.more.showing");
+    elt.appendChild(label);
+
+    let button = this.doc.createElement("button");
+    button.setAttribute("href", "#");
+    let showAllString = PluralForm.get(container.node.numChildren,
+      INSPECTOR_L10N.getStr("markupView.more.showAll2"));
+    button.textContent = showAllString.replace("#1", container.node.numChildren);
+    elt.appendChild(button);
+
+    button.addEventListener("click", () => {
+      container.maxChildren = -1;
+      container.childrenDirty = true;
+      this._updateChildren(container);
+    });
+
+    return elt;
   },
 
   _waitForChildren: function () {

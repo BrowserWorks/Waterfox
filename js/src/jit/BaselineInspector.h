@@ -105,7 +105,6 @@ class BaselineInspector
     MIRType expectedBinaryArithSpecialization(jsbytecode* pc);
     MIRType expectedPropertyAccessInputType(jsbytecode* pc);
 
-    bool hasSeenNonNativeGetElement(jsbytecode* pc);
     bool hasSeenNegativeIndexGetElement(jsbytecode* pc);
     bool hasSeenAccessedGetter(jsbytecode* pc);
     bool hasSeenDoubleResult(jsbytecode* pc);
@@ -136,6 +135,9 @@ class BaselineInspector
                                             JSFunction** commonGetter, Shape** globalShape,
                                             bool* isOwnProperty, ReceiverVector& receivers,
                                             ObjectGroupVector& convertUnboxedGroups);
+
+    MOZ_MUST_USE bool megamorphicGetterSetterFunction(jsbytecode* pc, bool isGetter,
+                                                      JSFunction** getterOrSetter);
 
     MOZ_MUST_USE bool commonSetPropFunction(jsbytecode* pc, JSObject** holder, Shape** holderShape,
                                             JSFunction** commonSetter, bool* isOwnProperty,

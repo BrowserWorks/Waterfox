@@ -17,13 +17,16 @@
 #include "nsDataHashtable.h"
 #include "nsHashKeys.h"
 
+#include "mozilla/gfx/UnscaledFontDWrite.h"
+
 /**
  * \brief Class representing a font face for a font entry.
  */
 class gfxDWriteFont : public gfxFont 
 {
 public:
-    gfxDWriteFont(gfxFontEntry *aFontEntry,
+    gfxDWriteFont(const RefPtr<mozilla::gfx::UnscaledFontDWrite>& aUnscaledFont,
+                  gfxFontEntry *aFontEntry,
                   const gfxFontStyle *aFontStyle,
                   bool aNeedsBold = false,
                   AntialiasOption = kAntialiasDefault);
@@ -51,7 +54,7 @@ public:
                                BoundingBoxType aBoundingBoxType,
                                DrawTarget *aDrawTargetForTightBoundingBox,
                                Spacing *aSpacing,
-                               uint16_t aOrientation) override;
+                               mozilla::gfx::ShapedTextFlags aOrientation) override;
 
     virtual bool ProvidesGlyphWidths() const override;
 

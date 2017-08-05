@@ -19,6 +19,7 @@ struct GamepadAdded {
   GamepadServiceType service_type;
   uint32_t num_buttons;
   uint32_t num_axes;
+  uint32_t num_haptics;
 };
 
 struct GamepadRemoved {
@@ -37,8 +38,9 @@ struct GamepadButtonInformation {
   uint32_t index;
   GamepadServiceType service_type;
   uint32_t button;
-  bool pressed;
   double value;
+  bool pressed;
+  bool touched;
 };
 
 struct GamepadPoseInformation {
@@ -47,12 +49,19 @@ struct GamepadPoseInformation {
   GamepadPoseState pose_state;
 };
 
+struct GamepadHandInformation {
+  uint32_t index;
+  GamepadServiceType service_type;
+  GamepadHand hand;
+};
+
 union GamepadChangeEvent {
   GamepadAdded;
   GamepadRemoved;
   GamepadAxisInformation;
   GamepadButtonInformation;
   GamepadPoseInformation;
+  GamepadHandInformation;
 };
 
 } // namespace dom

@@ -15,12 +15,12 @@
 /******************************************************************************
  * nsSubDocumentFrame
  *****************************************************************************/
-class nsSubDocumentFrame : public nsAtomicContainerFrame,
-                           public nsIReflowCallback
+class nsSubDocumentFrame final
+  : public nsAtomicContainerFrame
+  , public nsIReflowCallback
 {
 public:
-  NS_DECL_QUERYFRAME_TARGET(nsSubDocumentFrame)
-  NS_DECL_FRAMEARENA_HELPERS
+  NS_DECL_FRAMEARENA_HELPERS(nsSubDocumentFrame)
 
   explicit nsSubDocumentFrame(nsStyleContext* aContext);
 
@@ -30,8 +30,6 @@ public:
 #endif
 
   NS_DECL_QUERYFRAME
-
-  nsIAtom* GetType() const override;
 
   bool IsFrameOfType(uint32_t aFlags) const override
   {
@@ -129,6 +127,13 @@ public:
    */
   bool PassPointerEventsToChildren();
 
+  void MaybeShowViewer()
+  {
+    if (!mDidCreateDoc && !mCallingShow) {
+      ShowViewer();
+    }
+  }
+
 protected:
   friend class AsyncFrameInit;
 
@@ -157,7 +162,11 @@ protected:
    */
   nsIFrame* ObtainIntrinsicSizeFrame();
 
+  nsView* GetViewInternal() const override { return mOuterView; }
+  void SetViewInternal(nsView* aView) override { mOuterView = aView; }
+
   RefPtr<nsFrameLoader> mFrameLoader;
+  nsView* mOuterView;
   nsView* mInnerView;
   bool mIsInline;
   bool mPostedReflowCallback;

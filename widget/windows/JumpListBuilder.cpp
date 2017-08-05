@@ -20,6 +20,7 @@
 #include "nsThreadUtils.h"
 #include "mozilla/LazyIdleThread.h"
 #include "nsIObserverService.h"
+#include "mozilla/Unused.h"
 
 #include "WinUtils.h"
 
@@ -36,16 +37,75 @@ static NS_DEFINE_CID(kJumpListShortcutCID, NS_WIN_JUMPLISTSHORTCUT_CID);
 // defined in WinTaskbar.cpp
 extern const wchar_t *gMozillaJumpListIDGeneric;
 
-bool JumpListBuilder::sBuildingList = false;
+Atomic<bool> JumpListBuilder::sBuildingList(false);
 const char kPrefTaskbarEnabled[] = "browser.taskbar.lists.enabled";
 
 NS_IMPL_ISUPPORTS(JumpListBuilder, nsIJumpListBuilder, nsIObserver)
 #define TOPIC_PROFILE_BEFORE_CHANGE "profile-before-change"
 #define TOPIC_CLEAR_PRIVATE_DATA "clear-private-data"
 
+
+namespace detail {
+
+class DoneCommitListBuildCallback : public nsIRunnable
+{
+  NS_DECL_THREADSAFE_ISUPPORTS
+
+public:
+  DoneCommitListBuildCallback(nsIJumpListCommittedCallback* aCallback,
+                              JumpListBuilder* aBuilder)
+    : mCallback(aCallback)
+    , mBuilder(aBuilder)
+    , mResult(false)
+  {
+  }
+
+  NS_IMETHOD Run() override
+  {
+    MOZ_ASSERT(NS_IsMainThread());
+    if (mCallback) {
+      Unused << mCallback->Done(mResult);
+    }
+    // Ensure we are releasing on the main thread.
+    Destroy();
+    return NS_OK;
+  }
+
+  void SetResult(bool aResult)
+  {
+    mResult = aResult;
+  }
+
+private:
+  ~DoneCommitListBuildCallback()
+  {
+    // Destructor does not always call on the main thread.
+    MOZ_ASSERT(!mCallback);
+    MOZ_ASSERT(!mBuilder);
+  }
+
+  void Destroy()
+  {
+    MOZ_ASSERT(NS_IsMainThread());
+    mCallback = nullptr;
+    mBuilder = nullptr;
+  }
+
+  // These two references MUST be released on the main thread.
+  RefPtr<nsIJumpListCommittedCallback> mCallback;
+  RefPtr<JumpListBuilder> mBuilder;
+  bool mResult;
+};
+
+NS_IMPL_ISUPPORTS(DoneCommitListBuildCallback, nsIRunnable);
+
+} // namespace detail
+
+
 JumpListBuilder::JumpListBuilder() :
   mMaxItems(0),
-  mHasCommit(false)
+  mHasCommit(false),
+  mMonitor("JumpListBuilderMonitor")
 {
   ::CoInitialize(nullptr);
 
@@ -77,6 +137,7 @@ NS_IMETHODIMP JumpListBuilder::GetAvailable(int16_t *aAvailable)
 {
   *aAvailable = false;
 
+  ReentrantMonitorAutoEnter lock(mMonitor);
   if (mJumpListMgr)
     *aAvailable = true;
 
@@ -92,6 +153,7 @@ NS_IMETHODIMP JumpListBuilder::GetIsListCommitted(bool *aCommit)
 
 NS_IMETHODIMP JumpListBuilder::GetMaxListItems(int16_t *aMaxItems)
 {
+  ReentrantMonitorAutoEnter lock(mMonitor);
   if (!mJumpListMgr)
     return NS_ERROR_NOT_AVAILABLE;
 
@@ -121,6 +183,7 @@ NS_IMETHODIMP JumpListBuilder::InitListBuild(nsIMutableArray *removedItems, bool
 
   *_retval = false;
 
+  ReentrantMonitorAutoEnter lock(mMonitor);
   if (!mJumpListMgr)
     return NS_ERROR_NOT_AVAILABLE;
 
@@ -251,6 +314,7 @@ NS_IMETHODIMP JumpListBuilder::AddListToBuild(int16_t aCatType, nsIArray *items,
 
   *_retval = false;
 
+  ReentrantMonitorAutoEnter lock(mMonitor);
   if (!mJumpListMgr)
     return NS_ERROR_NOT_AVAILABLE;
 
@@ -398,6 +462,7 @@ NS_IMETHODIMP JumpListBuilder::AddListToBuild(int16_t aCatType, nsIArray *items,
 
 NS_IMETHODIMP JumpListBuilder::AbortListBuild()
 {
+  ReentrantMonitorAutoEnter lock(mMonitor);
   if (!mJumpListMgr)
     return NS_ERROR_NOT_AVAILABLE;
 
@@ -407,29 +472,50 @@ NS_IMETHODIMP JumpListBuilder::AbortListBuild()
   return NS_OK;
 }
 
-NS_IMETHODIMP JumpListBuilder::CommitListBuild(bool *_retval)
+NS_IMETHODIMP JumpListBuilder::CommitListBuild(nsIJumpListCommittedCallback* aCallback)
 {
-  *_retval = false;
-
+  ReentrantMonitorAutoEnter lock(mMonitor);
   if (!mJumpListMgr)
     return NS_ERROR_NOT_AVAILABLE;
+
+  // Also holds a strong reference to this to prevent use-after-free.
+  RefPtr<detail::DoneCommitListBuildCallback> callback =
+    new detail::DoneCommitListBuildCallback(aCallback, this);
+
+  // The builder has a strong reference in the callback already, so we do not
+  // need to do it for this runnable again.
+  RefPtr<nsIRunnable> event =
+    NewNonOwningRunnableMethod<RefPtr<detail::DoneCommitListBuildCallback>>
+      ("JumpListBuilder::DoCommitListBuild", this,
+       &JumpListBuilder::DoCommitListBuild, Move(callback));
+  Unused << mIOThread->Dispatch(event, NS_DISPATCH_NORMAL);
+
+  return NS_OK;
+}
+
+void JumpListBuilder::DoCommitListBuild(RefPtr<detail::DoneCommitListBuildCallback> aCallback)
+{
+  ReentrantMonitorAutoEnter lock(mMonitor);
+  MOZ_ASSERT(mJumpListMgr);
+  MOZ_ASSERT(aCallback);
 
   HRESULT hr = mJumpListMgr->CommitList();
   sBuildingList = false;
 
-  // XXX We might want some specific error data here.
   if (SUCCEEDED(hr)) {
-    *_retval = true;
     mHasCommit = true;
   }
 
-  return NS_OK;
+  // XXX We might want some specific error data here.
+  aCallback->SetResult(SUCCEEDED(hr));
+  Unused << NS_DispatchToMainThread(aCallback);
 }
 
 NS_IMETHODIMP JumpListBuilder::DeleteActiveList(bool *_retval)
 {
   *_retval = false;
 
+  ReentrantMonitorAutoEnter lock(mMonitor);
   if (!mJumpListMgr)
     return NS_ERROR_NOT_AVAILABLE;
 

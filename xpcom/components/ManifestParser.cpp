@@ -56,7 +56,7 @@ struct ManifestDirective
 
   bool allowbootstrap;
 
-  // The platform/contentaccessible flags only apply to content directives.
+  // The contentaccessible flags only apply to content directives.
   bool contentflags;
 
   // Function to handle this directive. This isn't a union because C++ still
@@ -135,18 +135,6 @@ IsNewline(char aChar)
 {
   return aChar == '\n' || aChar == '\r';
 }
-
-namespace {
-struct SmprintfFreePolicy
-{
-  void operator()(char* ptr) {
-    mozilla::SmprintfFree(ptr);
-  }
-};
-
-typedef mozilla::UniquePtr<char, SmprintfFreePolicy> SmprintfPointer;
-
-} // namespace
 
 /**
  * If we are pre-loading XPTs, this method may do nothing because the
@@ -331,6 +319,19 @@ CheckStringFlag(const nsSubstring& aFlag, const nsSubstring& aData,
   return true;
 }
 
+static bool
+CheckOsFlag(const nsSubstring& aFlag, const nsSubstring& aData,
+            const nsSubstring& aValue, TriState& aResult)
+{
+  bool result = CheckStringFlag(aFlag, aData, aValue, aResult);
+#if defined(XP_UNIX) && !defined(XP_DARWIN) && !defined(ANDROID)
+  if (result && aResult == eBad) {
+    result = CheckStringFlag(aFlag, aData, NS_LITERAL_STRING("likeunix"), aResult);
+  }
+#endif
+  return result;
+}
+
 /**
  * Check for a modifier flag of the following form:
  *   "flag=version"
@@ -461,7 +462,6 @@ ParseManifest(NSLocationType aType, FileLocation& aFile, char* aBuf,
   nsChromeRegistry::ManifestProcessingContext chromecx(aType, aFile);
   nsresult rv;
 
-  NS_NAMED_LITERAL_STRING(kPlatform, "platform");
   NS_NAMED_LITERAL_STRING(kContentAccessible, "contentaccessible");
   NS_NAMED_LITERAL_STRING(kRemoteEnabled, "remoteenabled");
   NS_NAMED_LITERAL_STRING(kRemoteRequired, "remoterequired");
@@ -678,7 +678,7 @@ ParseManifest(NSLocationType aType, FileLocation& aFile, char* aBuf,
       NS_ConvertASCIItoUTF16 wtoken(token);
 
       if (CheckStringFlag(kApplication, wtoken, appID, stApp) ||
-          CheckStringFlag(kOs, wtoken, osTarget, stOs) ||
+          CheckOsFlag(kOs, wtoken, osTarget, stOs) ||
           CheckStringFlag(kABI, wtoken, abi, stABI) ||
           CheckStringFlag(kProcess, wtoken, process, stProcess) ||
           CheckVersionFlag(kOsVersion, wtoken, osVersion, stOsVersion) ||
@@ -697,11 +697,6 @@ ParseManifest(NSLocationType aType, FileLocation& aFile, char* aBuf,
 
       if (directive->contentflags) {
         bool flag;
-        if (CheckFlag(kPlatform, wtoken, flag)) {
-          if (flag)
-            flags |= nsChromeRegistry::PLATFORM_PACKAGE;
-          continue;
-        }
         if (CheckFlag(kContentAccessible, wtoken, flag)) {
           if (flag)
             flags |= nsChromeRegistry::CONTENT_ACCESSIBLE;

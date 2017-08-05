@@ -7,6 +7,7 @@ const { Kinto } = Cu.import("resource://services-common/kinto-offline-client.js"
 const { FirefoxAdapter } = Cu.import("resource://services-common/kinto-storage-adapter.js", {});
 const { NetUtil } = Cu.import("resource://gre/modules/NetUtil.jsm", {});
 const { OneCRLBlocklistClient } = Cu.import("resource://services-common/blocklist-clients.js", {});
+const { UptakeTelemetry } = Cu.import("resource://services-common/uptake-telemetry.js", {});
 
 let server;
 
@@ -15,6 +16,9 @@ const PREF_BLOCKLIST_ENFORCE_SIGNING   = "services.blocklist.signing.enforced";
 const PREF_BLOCKLIST_ONECRL_COLLECTION = "services.blocklist.onecrl.collection";
 const PREF_SETTINGS_SERVER             = "services.settings.server";
 const PREF_SIGNATURE_ROOT              = "security.content.signature.root_hash";
+
+// Telemetry reports.
+const TELEMETRY_HISTOGRAM_KEY = OneCRLBlocklistClient.identifier;
 
 const kintoFilename = "kinto.sqlite";
 
@@ -255,7 +259,16 @@ add_task(function* test_check_signatures() {
       "Server: waitress"
     ],
     status: {status: 200, statusText: "OK"},
-    responseBody: JSON.stringify({"settings":{"batch_max_requests":25}, "url":`http://localhost:${port}/v1/`, "documentation":"https://kinto.readthedocs.org/", "version":"1.5.1", "commit":"cbc6f58", "hello":"kinto"})
+    responseBody: JSON.stringify({
+      "settings": {
+        "batch_max_requests": 25
+      },
+      "url": `http://localhost:${port}/v1/`,
+      "documentation": "https://kinto.readthedocs.org/",
+      "version": "1.5.1",
+      "commit": "cbc6f58",
+      "hello": "kinto"
+    })
   };
 
   // This is the initial, empty state of the collection. This is only used
@@ -281,7 +294,7 @@ add_task(function* test_check_signatures() {
 
   // Here, we map request method and path to the available responses
   const emptyCollectionResponses = {
-    "GET:/test_blocklist_signatures/test_cert_chain.pem?":[RESPONSE_CERT_CHAIN],
+    "GET:/test_blocklist_signatures/test_cert_chain.pem?": [RESPONSE_CERT_CHAIN],
     "GET:/v1/?": [RESPONSE_SERVER_SETTINGS],
     "GET:/v1/buckets/blocklists/collections/certificates/records?_sort=-last_modified":
       [RESPONSE_EMPTY_INITIAL],
@@ -292,10 +305,18 @@ add_task(function* test_check_signatures() {
   // .. and use this map to register handlers for each path
   registerHandlers(emptyCollectionResponses);
 
+  let startHistogram = getUptakeTelemetrySnapshot(TELEMETRY_HISTOGRAM_KEY);
+
   // With all of this set up, we attempt a sync. This will resolve if all is
   // well and throw if something goes wrong.
   // We don't want to load initial json dumps in this test suite.
   yield OneCRLBlocklistClient.maybeSync(1000, startTime, {loadDump: false});
+
+  let endHistogram = getUptakeTelemetrySnapshot(TELEMETRY_HISTOGRAM_KEY);
+
+  // ensure that a success histogram is tracked when a succesful sync occurs.
+  let expectedIncrements = {[UptakeTelemetry.STATUS.SUCCESS]: 1};
+  checkUptakeTelemetry(startHistogram, endHistogram, expectedIncrements);
 
   // Check that some additions (2 records) to the collection have a valid
   // signature.
@@ -433,7 +454,18 @@ add_task(function* test_check_signatures() {
   };
 
   registerHandlers(badSigGoodSigResponses);
+
+  startHistogram = getUptakeTelemetrySnapshot(TELEMETRY_HISTOGRAM_KEY);
+
   yield OneCRLBlocklistClient.maybeSync(5000, startTime);
+
+  endHistogram = getUptakeTelemetrySnapshot(TELEMETRY_HISTOGRAM_KEY);
+
+  // ensure that the failure count is incremented for a succesful sync with an
+  // (initial) bad signature - only SERVICES_SETTINGS_SYNC_SIG_FAIL should
+  // increment.
+  expectedIncrements = {[UptakeTelemetry.STATUS.SIGNATURE_ERROR]: 1};
+  checkUptakeTelemetry(startHistogram, endHistogram, expectedIncrements);
 
   const badSigGoodOldResponses = {
     // In this test, we deliberately serve a bad signature initially. The
@@ -474,6 +506,7 @@ add_task(function* test_check_signatures() {
       [RESPONSE_COMPLETE_INITIAL_SORTED_BY_ID]
   };
 
+  startHistogram = getUptakeTelemetrySnapshot(TELEMETRY_HISTOGRAM_KEY);
   registerHandlers(allBadSigResponses);
   try {
     yield OneCRLBlocklistClient.maybeSync(6000, startTime);
@@ -481,6 +514,11 @@ add_task(function* test_check_signatures() {
   } catch (e) {
     yield checkRecordCount(2);
   }
+
+  // Ensure that the failure is reflected in the accumulated telemetry:
+  endHistogram = getUptakeTelemetrySnapshot(TELEMETRY_HISTOGRAM_KEY);
+  expectedIncrements = {[UptakeTelemetry.STATUS.SIGNATURE_RETRY_ERROR]: 1};
+  checkUptakeTelemetry(startHistogram, endHistogram, expectedIncrements);
 });
 
 function run_test() {

@@ -4,6 +4,8 @@
 const ConsoleAPIStorage = Cc["@mozilla.org/consoleAPI-storage;1"]
       .getService(Ci.nsIConsoleAPIStorage);
 
+const {WebExtensionPolicy} = Cu.import("resource://gre/modules/Services.jsm", {});
+
 const FAKE_ADDON_ID = "test-webext-addon@mozilla.org";
 const EXPECTED_CONSOLE_ID = `addon/${FAKE_ADDON_ID}`;
 const EXPECTED_CONSOLE_MESSAGE_CONTENT = "fake-webext-addon-test-log-message";
@@ -11,7 +13,7 @@ const ConsoleObserver = {
   QueryInterface: XPCOMUtils.generateQI([Ci.nsIObserver]),
 
   init() {
-    Services.obs.addObserver(this, "console-api-log-event", false);
+    Services.obs.addObserver(this, "console-api-log-event");
   },
 
   uninit() {
@@ -25,17 +27,16 @@ const ConsoleObserver = {
       is(consoleAPIMessage.arguments[0], EXPECTED_CONSOLE_MESSAGE_CONTENT,
          "the consoleAPIMessage contains the expected message");
 
-      ok(consoleAPIMessage.originAttributes, "the consoleAPImessage contains originattributes");
-      is(consoleAPIMessage.originAttributes.addonId, FAKE_ADDON_ID,
-         "the consoleAPImessage's originAttributes contains the expected addonId");
+      is(consoleAPIMessage.addonId, FAKE_ADDON_ID,
+         "the consoleAPImessage originAttributes contains the expected addonId");
 
       let cachedMessages = ConsoleAPIStorage.getEvents().filter((msg) => {
-        return msg.originAttributes && msg.originAttributes.addonId == FAKE_ADDON_ID;
+        return msg.addonId == FAKE_ADDON_ID;
       });
 
       is(cachedMessages.length, 1, "found the expected cached console messages from the addon");
-      is(cachedMessages[0] && cachedMessages[0].originAttributes.addonId, FAKE_ADDON_ID,
-         "the cached message's originAttributes contains the expected addonId");
+      is(cachedMessages[0] && cachedMessages[0].addonId, FAKE_ADDON_ID,
+         "the cached message originAttributes contains the expected addonId");
 
       finish();
     }
@@ -51,10 +52,21 @@ function test()
   let uuidGenerator = Cc["@mozilla.org/uuid-generator;1"].getService(Ci.nsIUUIDGenerator);
   let uuid = uuidGenerator.generateUUID().number;
   uuid = uuid.slice(1, -1); // Strip { and } off the UUID.
-  let baseURI = Services.io.newURI("about:blank");
-  let originAttributes = {addonId: FAKE_ADDON_ID};
+
+  const url = `moz-extension://${uuid}/`;
+  /* globals MatchPatternSet, WebExtensionPolicy */
+  let policy = new WebExtensionPolicy({
+    id: FAKE_ADDON_ID,
+    mozExtensionHostname: uuid,
+    baseURL: "file:///",
+    allowedOrigins: new MatchPatternSet([]),
+    localizeCallback() {},
+  });
+  policy.active = true;
+
+  let baseURI = Services.io.newURI(url);
   let principal = Services.scriptSecurityManager
-        .createCodebasePrincipal(baseURI, originAttributes);
+        .createCodebasePrincipal(baseURI, {});
 
   let chromeWebNav = Services.appShell.createWindowlessBrowser(true);
   let interfaceRequestor = chromeWebNav.QueryInterface(Ci.nsIInterfaceRequestor);
@@ -64,6 +76,7 @@ function test()
   info("fake webextension docShell created");
 
   registerCleanupFunction(function() {
+    policy.active = false;
     if (chromeWebNav) {
       chromeWebNav.close();
       chromeWebNav = null;

@@ -13,7 +13,6 @@
 #include "nsCSSPseudoElements.h"
 #include "nsGenericHTMLElement.h"
 #include "nsIEditor.h"
-#include "nsIPhonetic.h"
 #include "nsTextFragment.h"
 #include "nsIDOMHTMLTextAreaElement.h"
 #include "nsNameSpaceManager.h"
@@ -104,11 +103,12 @@ private:
 #endif
 
 nsTextControlFrame::nsTextControlFrame(nsStyleContext* aContext)
-  : nsContainerFrame(aContext)
+  : nsContainerFrame(aContext, kClassID)
   , mFirstBaseline(NS_INTRINSIC_WIDTH_UNKNOWN)
   , mEditorHasBeenInitialized(false)
   , mIsProcessing(false)
   , mUsePlaceholder(false)
+  , mUsePreview(false)
 #ifdef DEBUG
   , mInEditorInitialization(false)
 #endif
@@ -124,11 +124,7 @@ nsTextControlFrame::DestroyFrom(nsIFrame* aDestructRoot)
 {
   mScrollEvent.Revoke();
 
-  EditorInitializer* initializer = Properties().Get(TextControlInitializer());
-  if (initializer) {
-    initializer->Revoke();
-    Properties().Delete(TextControlInitializer());
-  }
+  DeleteProperty(TextControlInitializer());
 
   // Unbind the text editor state object from the frame.  The editor will live
   // on, but things like controllers will be released.
@@ -139,12 +135,6 @@ nsTextControlFrame::DestroyFrom(nsIFrame* aDestructRoot)
   nsFormControlFrame::RegUnRegAccessKey(static_cast<nsIFrame*>(this), false);
 
   nsContainerFrame::DestroyFrom(aDestructRoot);
-}
-
-nsIAtom*
-nsTextControlFrame::GetType() const 
-{ 
-  return nsGkAtoms::textInputFrame;
 }
 
 LogicalSize
@@ -306,7 +296,7 @@ nsTextControlFrame::EnsureEditorInitialized()
     mEditorHasBeenInitialized = true;
 
     if (weakFrame.IsAlive()) {
-      int32_t position = 0;
+      uint32_t position = 0;
 
       // Set the selection to the end of the text field (bug 1287655),
       // but only if the contents has changed (bug 1337392).
@@ -363,8 +353,18 @@ nsTextControlFrame::CreateAnonymousContent(nsTArray<ContentInfo>& aElements)
       // For textareas, UpdateValueDisplay doesn't initialize the visibility
       // status of the placeholder because it returns early, so we have to
       // do that manually here.
-      txtCtrl->UpdatePlaceholderVisibility(true);
+      txtCtrl->UpdateOverlayTextVisibility(true);
     }
+  }
+
+  mUsePreview = txtCtrl->IsPreviewEnabled();
+
+  if (mUsePreview) {
+    // Create the preview anonymous content if needed.
+    Element* previewNode = txtCtrl->CreatePreviewNode();
+    NS_ENSURE_TRUE(previewNode, NS_ERROR_OUT_OF_MEMORY);
+
+    aElements.AppendElement(previewNode);
   }
 
   rv = UpdateValueDisplay(false);
@@ -390,12 +390,8 @@ nsTextControlFrame::CreateAnonymousContent(nsTArray<ContentInfo>& aElements)
   if (initEagerly) {
     NS_ASSERTION(!nsContentUtils::IsSafeToRunScript(),
                  "Someone forgot a script blocker?");
-    EditorInitializer* initializer = Properties().Get(TextControlInitializer());
-    if (initializer) {
-      initializer->Revoke();
-    }
-    initializer = new EditorInitializer(this);
-    Properties().Set(TextControlInitializer(),initializer);
+    EditorInitializer* initializer = new EditorInitializer(this);
+    SetProperty(TextControlInitializer(), initializer);
     nsContentUtils::AddScriptRunner(initializer);
   }
 
@@ -424,9 +420,14 @@ nsTextControlFrame::AppendAnonymousContentTo(nsTArray<nsIContent*>& aElements,
   }
 
   nsIContent* placeholder = txtCtrl->GetPlaceholderNode();
-  if (placeholder && !(aFilter & nsIContent::eSkipPlaceholderContent))
+  if (placeholder && !(aFilter & nsIContent::eSkipPlaceholderContent)) {
     aElements.AppendElement(placeholder);
+  }
 
+  nsIContent* preview = txtCtrl->GetPreviewNode();
+  if (preview) {
+    aElements.AppendElement(preview);
+  }
 }
 
 nscoord
@@ -605,12 +606,6 @@ nsTextControlFrame::IsXULCollapsed()
   return false;
 }
 
-bool
-nsTextControlFrame::IsLeaf() const
-{
-  return true;
-}
-
 NS_IMETHODIMP
 nsTextControlFrame::ScrollOnFocusEvent::Run()
 {
@@ -640,7 +635,7 @@ void nsTextControlFrame::SetFocus(bool aOn, bool aRepaint)
   // If 'dom.placeholeder.show_on_focus' preference is 'false', focusing or
   // blurring the frame can have an impact on the placeholder visibility.
   if (mUsePlaceholder) {
-    txtCtrl->UpdatePlaceholderVisibility(true);
+    txtCtrl->UpdateOverlayTextVisibility(true);
   }
 
   if (!aOn) {
@@ -675,7 +670,9 @@ void nsTextControlFrame::SetFocus(bool aOn, bool aRepaint)
     }
     if (!(lastFocusMethod & nsIFocusManager::FLAG_BYMOUSE)) {
       RefPtr<ScrollOnFocusEvent> event = new ScrollOnFocusEvent(this);
-      nsresult rv = NS_DispatchToCurrentThread(event);
+      nsresult rv = mContent->OwnerDoc()->Dispatch("ScrollOnFocusEvent",
+                                                   TaskCategory::Other,
+                                                   do_AddRef(event));
       if (NS_SUCCEEDED(rv)) {
         mScrollEvent = event;
       }
@@ -744,9 +741,9 @@ nsTextControlFrame::GetEditor(nsIEditor **aEditor)
 
 nsresult
 nsTextControlFrame::SetSelectionInternal(nsIDOMNode *aStartNode,
-                                         int32_t aStartOffset,
+                                         uint32_t aStartOffset,
                                          nsIDOMNode *aEndNode,
-                                         int32_t aEndOffset,
+                                         uint32_t aEndOffset,
                                          nsITextControlFrame::SelectionDirection aDirection)
 {
   // Create a new range to represent the new selection.
@@ -758,7 +755,12 @@ nsTextControlFrame::SetSelectionInternal(nsIDOMNode *aStartNode,
   // we have access to the node.
   nsCOMPtr<nsINode> start = do_QueryInterface(aStartNode);
   nsCOMPtr<nsINode> end = do_QueryInterface(aEndNode);
-  nsresult rv = range->Set(start, aStartOffset, end, aEndOffset);
+  // XXXbz nsRange::SetStartAndEnd takes int32_t (and ranges generally work on
+  // int32_t), but we're passing uint32_t.  The good news is that at this point
+  // our endpoints should really be within our length, so not really that big.
+  // And if they _are_ that big, SetStartAndEnd() will simply error out, which
+  // is not too bad for a case we don't expect to happen.
+  nsresult rv = range->SetStartAndEnd(start, aStartOffset, end, aEndOffset);
   NS_ENSURE_SUCCESS(rv, rv);
 
   // Get the selection, clear it and add the new range to it!
@@ -861,7 +863,7 @@ nsTextControlFrame::SelectAllOrCollapseToEndOfText(bool aSelect)
 }
 
 nsresult
-nsTextControlFrame::SetSelectionEndPoints(int32_t aSelStart, int32_t aSelEnd,
+nsTextControlFrame::SetSelectionEndPoints(uint32_t aSelStart, uint32_t aSelEnd,
                                           nsITextControlFrame::SelectionDirection aDirection)
 {
   NS_ASSERTION(aSelStart <= aSelEnd, "Invalid selection offsets!");
@@ -870,7 +872,7 @@ nsTextControlFrame::SetSelectionEndPoints(int32_t aSelStart, int32_t aSelEnd,
     return NS_ERROR_FAILURE;
 
   nsCOMPtr<nsIDOMNode> startNode, endNode;
-  int32_t startOffset, endOffset;
+  uint32_t startOffset, endOffset;
 
   // Calculate the selection start point.
 
@@ -896,7 +898,7 @@ nsTextControlFrame::SetSelectionEndPoints(int32_t aSelStart, int32_t aSelEnd,
 }
 
 NS_IMETHODIMP
-nsTextControlFrame::SetSelectionRange(int32_t aSelStart, int32_t aSelEnd,
+nsTextControlFrame::SetSelectionRange(uint32_t aSelStart, uint32_t aSelEnd,
                                       nsITextControlFrame::SelectionDirection aDirection)
 {
   nsresult rv = EnsureEditorInitialized();
@@ -913,56 +915,10 @@ nsTextControlFrame::SetSelectionRange(int32_t aSelStart, int32_t aSelEnd,
 }
 
 
-NS_IMETHODIMP
-nsTextControlFrame::SetSelectionStart(int32_t aSelectionStart)
-{
-  nsresult rv = EnsureEditorInitialized();
-  NS_ENSURE_SUCCESS(rv, rv);
-
-  int32_t selStart = 0, selEnd = 0;
-
-  nsCOMPtr<nsITextControlElement> txtCtrl = do_QueryInterface(GetContent());
-  MOZ_ASSERT(txtCtrl, "Content not a text control element");
-  rv = txtCtrl->GetSelectionRange(&selStart, &selEnd);
-  NS_ENSURE_SUCCESS(rv, rv);
-
-  if (aSelectionStart > selEnd) {
-    // Collapse to the new start point.
-    selEnd = aSelectionStart;
-  }
-
-  selStart = aSelectionStart;
-
-  return SetSelectionEndPoints(selStart, selEnd);
-}
-
-NS_IMETHODIMP
-nsTextControlFrame::SetSelectionEnd(int32_t aSelectionEnd)
-{
-  nsresult rv = EnsureEditorInitialized();
-  NS_ENSURE_SUCCESS(rv, rv);
-
-  int32_t selStart = 0, selEnd = 0;
-
-  nsCOMPtr<nsITextControlElement> txtCtrl = do_QueryInterface(GetContent());
-  MOZ_ASSERT(txtCtrl, "Content not a text control element");
-  rv = txtCtrl->GetSelectionRange(&selStart, &selEnd);
-  NS_ENSURE_SUCCESS(rv, rv);
-
-  if (aSelectionEnd < selStart) {
-    // Collapse to the new end point.
-    selStart = aSelectionEnd;
-  }
-
-  selEnd = aSelectionEnd;
-
-  return SetSelectionEndPoints(selStart, selEnd);
-}
-
 nsresult
-nsTextControlFrame::OffsetToDOMPoint(int32_t aOffset,
+nsTextControlFrame::OffsetToDOMPoint(uint32_t aOffset,
                                      nsIDOMNode** aResult,
-                                     int32_t* aPosition)
+                                     uint32_t* aPosition)
 {
   NS_ENSURE_ARG_POINTER(aResult && aPosition);
 
@@ -994,13 +950,13 @@ nsTextControlFrame::OffsetToDOMPoint(int32_t aOffset,
   NS_ENSURE_SUCCESS(rv, rv);
   nsCOMPtr<nsIDOMText> textNode = do_QueryInterface(firstNode);
 
-  if (length == 0 || aOffset < 0) {
+  if (length == 0) {
     NS_IF_ADDREF(*aResult = rootNode);
     *aPosition = 0;
   } else if (textNode) {
     uint32_t textLength = 0;
     textNode->GetLength(&textLength);
-    if (length == 2 && uint32_t(aOffset) == textLength) {
+    if (length == 2 && aOffset == textLength) {
       // If we're at the end of the text node and we have a trailing BR node,
       // set the selection on the BR node.
       NS_IF_ADDREF(*aResult = rootNode);
@@ -1008,7 +964,7 @@ nsTextControlFrame::OffsetToDOMPoint(int32_t aOffset,
     } else {
       // Otherwise, set the selection on the textnode itself.
       NS_IF_ADDREF(*aResult = firstNode);
-      *aPosition = std::min(aOffset, int32_t(textLength));
+      *aPosition = std::min(aOffset, textLength);
     }
   } else {
     NS_IF_ADDREF(*aResult = rootNode);
@@ -1126,22 +1082,6 @@ nsTextControlFrame::GetText(nsString& aText)
 }
 
 
-nsresult
-nsTextControlFrame::GetPhonetic(nsAString& aPhonetic)
-{
-  aPhonetic.Truncate(0);
-
-  nsCOMPtr<nsIEditor> editor;
-  nsresult rv = GetEditor(getter_AddRefs(editor));
-  NS_ENSURE_SUCCESS(rv, rv);
-
-  nsCOMPtr<nsIPhonetic> phonetic = do_QueryInterface(editor);
-  if (phonetic) {
-    phonetic->GetPhonetic(aPhonetic);
-  }
-  return NS_OK;
-}
-
 ///END NSIFRAME OVERLOADS
 /////BEGIN PROTECTED METHODS
 
@@ -1183,7 +1123,7 @@ nsTextControlFrame::SetInitialChildList(ChildListID     aListID,
     NS_ASSERTION(txtCtrl, "Content not a text control element");
     txtCtrl->InitializeKeyboardEventListeners();
 
-    nsPoint* contentScrollPos = Properties().Get(ContentScrollPos());
+    nsPoint* contentScrollPos = GetProperty(ContentScrollPos());
     if (contentScrollPos) {
       // If we have a scroll pos stored to be passed to our anonymous
       // div, do it here!
@@ -1192,7 +1132,7 @@ nsTextControlFrame::SetInitialChildList(ChildListID     aListID,
       nsPresState fakePresState;
       fakePresState.SetScrollState(*contentScrollPos);
       statefulFrame->RestoreState(&fakePresState);
-      Properties().Remove(ContentScrollPos());
+      RemoveProperty(ContentScrollPos());
       delete contentScrollPos;
     }
   }
@@ -1206,7 +1146,7 @@ nsTextControlFrame::SetValueChanged(bool aValueChanged)
 
   if (mUsePlaceholder) {
     AutoWeakFrame weakFrame(this);
-    txtCtrl->UpdatePlaceholderVisibility(true);
+    txtCtrl->UpdateOverlayTextVisibility(true);
     if (!weakFrame.IsAlive()) {
       return;
     }
@@ -1256,13 +1196,13 @@ nsTextControlFrame::UpdateValueDisplay(bool aNotify,
     txtCtrl->GetTextEditorValue(value, true);
   }
 
-  // Update the display of the placeholder value if needed.
-  // We don't need to do this if we're about to initialize the
-  // editor, since EnsureEditorInitialized takes care of this.
-  if (mUsePlaceholder && !aBeforeEditorInit)
+  // Update the display of the placeholder value and preview text if needed.
+  // We don't need to do this if we're about to initialize the editor, since
+  // EnsureEditorInitialized takes care of this.
+  if ((mUsePlaceholder || mUsePreview) && !aBeforeEditorInit)
   {
     AutoWeakFrame weakFrame(this);
-    txtCtrl->UpdatePlaceholderVisibility(aNotify);
+    txtCtrl->UpdateOverlayTextVisibility(aNotify);
     NS_ENSURE_STATE(weakFrame.IsAlive());
   }
 
@@ -1342,7 +1282,7 @@ nsTextControlFrame::RestoreState(nsPresState* aState)
   // Most likely, we don't have our anonymous content constructed yet, which
   // would cause us to end up here.  In this case, we'll just store the scroll
   // pos ourselves, and forward it to the scroll frame later when it's created.
-  Properties().Set(ContentScrollPos(), new nsPoint(aState->GetScrollPosition()));
+  SetProperty(ContentScrollPos(), new nsPoint(aState->GetScrollPosition()));
   return NS_OK;
 }
 
@@ -1378,10 +1318,12 @@ nsTextControlFrame::BuildDisplayList(nsDisplayListBuilder*   aBuilder,
   nsDisplayListSet set(content, content, content, content, content, content);
 
   while (kid) {
-    // If the frame is the placeholder frame, we should only show it if the
-    // placeholder has to be visible.
-    if (kid->GetContent() != txtCtrl->GetPlaceholderNode() ||
-        txtCtrl->GetPlaceholderVisibility()) {
+    // If the frame is the placeholder or preview frame, we should only show
+    // it if it has to be visible.
+    if (!((kid->GetContent() == txtCtrl->GetPlaceholderNode() &&
+           !txtCtrl->GetPlaceholderVisibility()) ||
+          (kid->GetContent() == txtCtrl->GetPreviewNode() &&
+           !txtCtrl->GetPreviewVisibility()))) {
       BuildDisplayListForChild(aBuilder, kid, aDirtyRect, set, 0);
     }
     kid = kid->GetNextSibling();

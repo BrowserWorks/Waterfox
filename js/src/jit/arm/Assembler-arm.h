@@ -73,7 +73,7 @@ static constexpr Register IntArgReg0 = r0;
 static constexpr Register IntArgReg1 = r1;
 static constexpr Register IntArgReg2 = r2;
 static constexpr Register IntArgReg3 = r3;
-static constexpr Register HeapReg = r11;
+static constexpr Register HeapReg = r10;
 static constexpr Register CallTempNonArgRegs[] = { r5, r6, r7, r8 };
 static const uint32_t NumCallTempNonArgRegs =
     mozilla::ArrayLength(CallTempNonArgRegs);
@@ -134,7 +134,7 @@ static constexpr FloatRegister InvalidFloatReg;
 static constexpr Register JSReturnReg_Type = r3;
 static constexpr Register JSReturnReg_Data = r2;
 static constexpr Register StackPointer = sp;
-static constexpr Register FramePointer = InvalidReg;
+static constexpr Register FramePointer = r11;
 static constexpr Register ReturnReg = r0;
 static constexpr Register64 ReturnReg64(r1, r0);
 static constexpr FloatRegister ReturnFloat32Reg = { FloatRegisters::d0, VFPRegister::Single };
@@ -168,6 +168,7 @@ static constexpr Register WasmIonExitRegE1 = r1;
 // None of these may be the second scratch register (lr).
 static constexpr Register WasmIonExitRegReturnData = r2;
 static constexpr Register WasmIonExitRegReturnType = r3;
+static constexpr Register WasmIonExitTlsReg = r9;
 static constexpr Register WasmIonExitRegD0 = r0;
 static constexpr Register WasmIonExitRegD1 = r1;
 static constexpr Register WasmIonExitRegD2 = r4;
@@ -1284,7 +1285,6 @@ class Assembler : public AssemblerShared
 
     CompactBufferWriter jumpRelocations_;
     CompactBufferWriter dataRelocations_;
-    CompactBufferWriter preBarriers_;
 
     ARMBuffer m_buffer;
 
@@ -1317,7 +1317,7 @@ class Assembler : public AssemblerShared
     uint32_t spewProbe(Label* l);
     uint32_t spewDefine(Label* l);
     void spew(const char* fmt, ...) MOZ_FORMAT_PRINTF(2, 3);
-    void spew(const char* fmt, va_list args);
+    void spew(const char* fmt, va_list args) MOZ_FORMAT_PRINTF(2, 0);
 #endif
 
   public:
@@ -1361,9 +1361,6 @@ class Assembler : public AssemblerShared
             if (ptr.value)
                 dataRelocations_.writeUnsigned(nextOffset().getOffset());
         }
-    }
-    void writePrebarrierOffset(CodeOffset label) {
-        preBarriers_.writeUnsigned(label.offset());
     }
 
     enum RelocBranchStyle {
@@ -1414,14 +1411,12 @@ class Assembler : public AssemblerShared
     bool asmMergeWith(Assembler& other);
     void copyJumpRelocationTable(uint8_t* dest);
     void copyDataRelocationTable(uint8_t* dest);
-    void copyPreBarrierTable(uint8_t* dest);
 
     // Size of the instruction stream, in bytes, after pools are flushed.
     size_t size() const;
     // Size of the jump relocation table, in bytes.
     size_t jumpRelocationTableBytes() const;
     size_t dataRelocationTableBytes() const;
-    size_t preBarrierTableBytes() const;
 
     // Size of the data table, in bytes.
     size_t bytesNeeded() const;
@@ -1745,6 +1740,8 @@ class Assembler : public AssemblerShared
     static bool SupportsSimd() {
         return js::jit::SupportsSimd;
     }
+
+    static bool HasRoundInstruction(RoundingMode mode) { return false; }
 
   protected:
     void addPendingJump(BufferOffset src, ImmPtr target, Relocation::Kind kind) {

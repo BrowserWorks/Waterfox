@@ -4,8 +4,7 @@
 
 'use strict';
 
-/* global EVENT_DESCRIPTION_CHANGE, EVENT_NAME_CHANGE, EVENT_REORDER */
-
+/* import-globals-from ../../mochitest/name.js */
 loadScripts({ name: 'name.js', dir: MOCHITESTS_DIR });
 
 /**
@@ -138,7 +137,7 @@ addAccessibleTask(`
   <p id="description">aria description</p>
   <p id="description2">another description</p>
   <img id="image" />`,
-  function*(browser, accDoc) {
+  async function(browser, accDoc) {
     let imgAcc = findAccessibleChildByID(accDoc, 'image');
 
     for (let { desc, waitFor, attrs, expected } of tests) {
@@ -149,10 +148,10 @@ addAccessibleTask(`
       }
       if (attrs) {
         for (let { attr, value } of attrs) {
-          yield invokeSetAttribute(browser, 'image', attr, value);
+          await invokeSetAttribute(browser, 'image', attr, value);
         }
       }
-      yield onUpdate;
+      await onUpdate;
       // When attribute change (alt) triggers reorder event, accessible will
       // become defunct.
       if (isDefunct(imgAcc)) {

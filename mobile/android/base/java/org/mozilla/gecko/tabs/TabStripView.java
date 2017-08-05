@@ -21,6 +21,8 @@ import android.graphics.Paint;
 import android.graphics.Shader;
 import android.support.v7.widget.LinearLayoutManager;
 import android.support.v7.widget.RecyclerView;
+import android.support.v7.widget.ViewUtils;
+import android.support.v7.widget.helper.ItemTouchHelper;
 import android.util.AttributeSet;
 import android.view.View;
 import android.view.ViewTreeObserver;
@@ -29,11 +31,15 @@ import android.view.animation.DecelerateInterpolator;
 import java.util.ArrayList;
 import java.util.List;
 
-public class TabStripView extends RecyclerView {
+import static org.mozilla.gecko.Tab.TabType;
+
+public class TabStripView extends RecyclerView
+                          implements TabsTouchHelperCallback.DragListener {
     private static final int ANIM_TIME_MS = 200;
     private static final DecelerateInterpolator ANIM_INTERPOLATOR = new DecelerateInterpolator();
 
     private final TabStripAdapter adapter;
+    private final TabType type;
     private boolean isPrivate;
 
     private final TabAnimatorListener animatorListener;
@@ -43,6 +49,8 @@ public class TabStripView extends RecyclerView {
 
     public TabStripView(Context context, AttributeSet attrs) {
         super(context, attrs);
+
+        type = TabType.BROWSING;
 
         fadingEdgePaint = new Paint();
         final Resources resources = getResources();
@@ -63,6 +71,12 @@ public class TabStripView extends RecyclerView {
         setItemAnimator(new TabStripItemAnimator(ANIM_TIME_MS));
 
         addItemDecoration(new TabStripDividerItem(context));
+
+        final int dragDirections = ItemTouchHelper.START | ItemTouchHelper.END;
+        // A TouchHelper handler for drag and drop.
+        final TabsTouchHelperCallback callback = new TabsTouchHelperCallback(this, dragDirections);
+        final ItemTouchHelper touchHelper = new ItemTouchHelper(callback);
+        touchHelper.attachToRecyclerView(this);
     }
 
     /* package */ void refreshTabs() {
@@ -71,7 +85,7 @@ public class TabStripView extends RecyclerView {
         final List<Tab> tabs = new ArrayList<>();
 
         for (final Tab tab : Tabs.getInstance().getTabsInOrder()) {
-            if (tab.isPrivate() == isPrivate) {
+            if (tab.isPrivate() == isPrivate && tab.getType() == type) {
                 tabs.add(tab);
             }
         }
@@ -90,7 +104,7 @@ public class TabStripView extends RecyclerView {
     }
 
     /* package */ void addTab(Tab tab, int position) {
-        if (tab.isPrivate() != isPrivate) {
+        if (tab.isPrivate() != isPrivate || tab.getType() != type) {
             return;
         }
 
@@ -125,6 +139,15 @@ public class TabStripView extends RecyclerView {
 
     /* package */ void updateTab(Tab tab) {
         adapter.notifyTabChanged(tab);
+    }
+
+    /* package */ boolean isPrivate() {
+        return isPrivate;
+    }
+
+    @Override
+    public boolean onItemMove(int fromPosition, int toPosition) {
+        return adapter.moveTab(fromPosition, toPosition);
     }
 
     public int getPositionForSelectedTab() {
@@ -204,12 +227,22 @@ public class TabStripView extends RecyclerView {
             return;
         }
 
-        fadingEdgePaint.setShader(new LinearGradient(w - fadingEdgeSize, 0, w, 0,
-                new int[] { 0x0, 0x11292C29, 0xDD292C29 },
-                new float[] { 0, 0.4f, 1.0f }, Shader.TileMode.CLAMP));
+        // Gradient argb color stops.
+        final int transparent = 0x0;
+        final int inBetween = 0x11292C29;
+        final int darkest = 0xDD292C29;
+        if (ViewUtils.isLayoutRtl(this)) {
+            fadingEdgePaint.setShader(new LinearGradient(0, 0, fadingEdgeSize, 0,
+                    new int[] { darkest, inBetween, transparent },
+                    new float[] { 0, 0.6f, 1.0f }, Shader.TileMode.CLAMP));
+        } else {
+            fadingEdgePaint.setShader(new LinearGradient(w - fadingEdgeSize, 0, w, 0,
+                    new int[] { transparent, inBetween, darkest },
+                    new float[] { 0, 0.4f, 1.0f }, Shader.TileMode.CLAMP));
+        }
     }
 
-    private float getFadingEdgeStrength() {
+    private float getFadingEdgeStrength(boolean layoutIsLTR) {
         final int childCount = getChildCount();
         if (childCount == 0) {
             return 0.0f;
@@ -219,12 +252,20 @@ public class TabStripView extends RecyclerView {
                 return 1.0f;
             }
 
-            final int right = getChildAt(getChildCount() - 1).getRight();
-            final int paddingRight = getPaddingRight();
-            final int width = getWidth();
+            final float strength;
+            if (layoutIsLTR) {
+                final int right = getChildAt(getChildCount() - 1).getRight();
+                final int paddingRight = getPaddingRight();
+                final int width = getWidth();
 
-            final float strength = (right > width - paddingRight ?
-                    (float) (right - width + paddingRight) / fadingEdgeSize : 0.0f);
+                strength = (right > width - paddingRight ?
+                        (float) (right - width + paddingRight) / fadingEdgeSize : 0.0f);
+            } else {
+                final int left = getChildAt(getChildCount() - 1).getLeft();
+                final int paddingLeft = getPaddingLeft();
+
+                strength = left < paddingLeft ? (float) (paddingLeft - left) / fadingEdgeSize : 0.0f;
+            }
 
             return Math.max(0.0f, Math.min(strength, 1.0f));
         }
@@ -233,10 +274,15 @@ public class TabStripView extends RecyclerView {
     @Override
     public void draw(Canvas canvas) {
         super.draw(canvas);
-        final float strength = getFadingEdgeStrength();
+        final boolean isLTR = !ViewUtils.isLayoutRtl(this);
+        final float strength = getFadingEdgeStrength(isLTR);
         if (strength > 0.0f) {
-            final int r = getRight();
-            canvas.drawRect(r - fadingEdgeSize, getTop(), r, getBottom(), fadingEdgePaint);
+            if (isLTR) {
+                final int r = getRight();
+                canvas.drawRect(r - fadingEdgeSize, getTop(), r, getBottom(), fadingEdgePaint);
+            } else {
+                canvas.drawRect(0, getTop(), fadingEdgeSize, getBottom(), fadingEdgePaint);
+            }
             fadingEdgePaint.setAlpha((int) (strength * 255));
         }
     }

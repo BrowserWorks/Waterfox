@@ -476,9 +476,10 @@
           if (aEvent.target.localName != "textbox")
             return true; // Let child buttons of autocomplete take input
 
-          // XXXpch this is so bogus...
-          if (aEvent.defaultPrevented)
+          // Re: urlbarDeferred, see the comment in urlbarBindings.xml.
+          if (aEvent.defaultPrevented && !aEvent.urlbarDeferred) {
             return false;
+          }
 
           var cancel = false;
 
@@ -1041,13 +1042,14 @@ extends="chrome://global/content/bindings/popup.xml#popup">
           this.mIsPopupHidingTick = false;
         }, 0);
 
-        // Reset the maxRows property to the cached "normal" value, and reset
-        // _normalMaxRows so that we can detect whether it was set by the input
-        // when the popupshowing handler runs.
+        // Reset the maxRows property to the cached "normal" value (if there's
+        // any), and reset normalMaxRows so that we can detect whether it was set
+        // by the input when the popupshowing handler runs.
 
         // Null-check this.mInput; see bug 1017914
-        if (this.mInput)
+        if (this.mInput && this._normalMaxRows > 0) {
           this.mInput.maxRows = this._normalMaxRows;
+        }
         this._normalMaxRows = -1;
         // If the list was being navigated and then closed, make sure
         // we fire accessible focus event back to textbox
@@ -1086,12 +1088,17 @@ extends="chrome://global/content/bindings/popup.xml#popup">
         <setter>
           <![CDATA[
           this.richlistbox.selectedIndex = val;
-
-          // when clearing the selection (val == -1, so selectedItem will be
-          // null), we want to scroll back to the top.  see bug #406194
-          this.richlistbox.ensureElementIsVisible(
-            this.richlistbox.selectedItem || this.richlistbox.firstChild);
-
+          // Since ensureElementIsVisible may cause an expensive Layout flush,
+          // invoke it only if there may be a scrollbar, so if we could fetch
+          // more results than we can show at once.
+          // maxResults is the maximum number of fetched results, maxRows is the
+          // maximum number of rows we show at once, without a scrollbar.
+          if (this.mPopupOpen && this.maxResults > this.maxRows) {
+            // when clearing the selection (val == -1, so selectedItem will be
+            // null), we want to scroll back to the top.  see bug #406194
+            this.richlistbox.ensureElementIsVisible(
+              this.richlistbox.selectedItem || this.richlistbox.firstChild);
+          }
           return val;
         ]]>
         </setter>
@@ -1099,7 +1106,7 @@ extends="chrome://global/content/bindings/popup.xml#popup">
 
       <method name="onSearchBegin">
         <body><![CDATA[
-          this.richlistbox.mouseSelectedIndex = -1;
+          this.richlistbox.mousedOverIndex = -1;
 
           if (typeof this._onSearchBegin == "function") {
             this._onSearchBegin();
@@ -1317,7 +1324,7 @@ extends="chrome://global/content/bindings/popup.xml#popup">
             let reusable = false;
             let itemExists = this._currentIndex < existingItemsCount;
 
-            let originalValue, originalText;
+            let originalValue, originalText, originalType;
             let value = controller.getValueAt(this._currentIndex);
             let label = controller.getLabelAt(this._currentIndex);
             let comment = controller.getCommentAt(this._currentIndex);
@@ -1331,8 +1338,13 @@ extends="chrome://global/content/bindings/popup.xml#popup">
 
               originalValue = item.getAttribute("ac-value");
               originalText = item.getAttribute("ac-text");
+              originalType = item.getAttribute("originaltype");
 
-              reusable = item.getAttribute("originaltype") === style;
+              // All of types are reusable except for autofill-profile,
+              // which has different structure of <content> and overrides
+              // _adjustAcItem().
+              reusable = originalType === style ||
+                         (style !== "autofill-profile" && originalType !== "autofill-profile");
             } else {
               // need to create a new item
               item = document.createElementNS("http://www.mozilla.org/keymaster/gatekeeper/there.is.only.xul", "richlistitem");
@@ -1347,14 +1359,14 @@ extends="chrome://global/content/bindings/popup.xml#popup">
 
             // Completely reuse the existing richlistitem for invalidation
             // due to new results, but only when: the item is the same, *OR*
-            // we are about to replace the currently mouse-selected item, to
+            // we are about to replace the currently moused-over item, to
             // avoid surprising the user.
             let iface = Components.interfaces.nsIAutoCompletePopup;
             if (reusable &&
                 originalText == trimmedSearchString &&
                 invalidateReason == iface.INVALIDATE_REASON_NEW_RESULT &&
                 (originalValue == value ||
-                 this.richlistbox.mouseSelectedIndex === this._currentIndex)) {
+                 this.richlistbox.mousedOverIndex === this._currentIndex)) {
 
               // try to re-use the existing item
               let reused = item._reuseAcItem();
@@ -1371,7 +1383,14 @@ extends="chrome://global/content/bindings/popup.xml#popup">
             }
 
             if (itemExists) {
-              item._adjustAcItem();
+              // Adjust only when the result's type is reusable for existing
+              // item's. Otherwise, we might insensibly call old _adjustAcItem()
+              // as new binding has not been attached yet.
+              // We don't need to worry about switching to new binding, since
+              // _adjustAcItem() will fired by its own constructor accordingly.
+              if (reusable) {
+                item._adjustAcItem();
+              }
               item.collapsed = false;
             } else {
               // set the class at the end so we can use the attributes
@@ -1818,7 +1837,7 @@ extends="chrome://global/content/bindings/popup.xml#popup">
             return;
           }
           while (aDescriptionElement.hasChildNodes())
-            aDescriptionElement.removeChild(aDescriptionElement.firstChild);
+            aDescriptionElement.firstChild.remove();
 
           // If aNoEmphasis is specified, don't add any emphasis
           if (aNoEmphasis) {
@@ -2353,7 +2372,10 @@ extends="chrome://global/content/bindings/popup.xml#popup">
             this._typeIcon.style.removeProperty("margin-inline-start");
             return true;
           }
-          let rect = this._siteIcon.getBoundingClientRect();
+          let utils = window.QueryInterface(Ci.nsIInterfaceRequestor)
+                            .getInterface(Ci.nsIDOMWindowUtils);
+          let rect = utils.getBoundsWithoutFlushing(this._siteIcon);
+
           let dir = this.getAttribute("dir");
           let delta = dir == "rtl" ? rect.right - newStart
                                    : newStart - rect.left;
@@ -2482,6 +2504,45 @@ extends="chrome://global/content/bindings/popup.xml#popup">
         ]]></body>
       </method>
     </implementation>
+
+    <handlers>
+      <!--
+        This overrides listitem's mousedown handler because we want to set the
+        selected item even when the shift or accel keys are pressed.
+      -->
+      <handler event="mousedown"><![CDATA[
+        // Call this.control only once since it's not a simple getter.
+        let control = this.control;
+        if (!control || control.disabled) {
+          return;
+        }
+        if (!this.selected) {
+          control.selectItem(this);
+        }
+        control.currentItem = this;
+      ]]></handler>
+
+      <handler event="mouseover"><![CDATA[
+        // The point of implementing this handler is to allow drags to change
+        // the selected item.  If the user mouses down on an item, it becomes
+        // selected.  If they then drag the mouse to another item, select it.
+        // Handle all three primary mouse buttons: right, left, and wheel, since
+        // all three change the selection on mousedown.
+        let mouseDown = event.buttons & 0b111;
+        if (!mouseDown) {
+          return;
+        }
+        // Call this.control only once since it's not a simple getter.
+        let control = this.control;
+        if (!control || control.disabled) {
+          return;
+        }
+        if (!this.selected) {
+          control.selectItem(this);
+        }
+        control.currentItem = this;
+      ]]></handler>
+    </handlers>
   </binding>
 
   <binding id="autocomplete-tree" extends="chrome://global/content/bindings/tree.xml#tree">
@@ -2496,7 +2557,7 @@ extends="chrome://global/content/bindings/popup.xml#popup">
   <binding id="autocomplete-richlistbox" extends="chrome://global/content/bindings/richlistbox.xml#richlistbox">
     <implementation>
       <field name="mLastMoveTime">Date.now()</field>
-      <field name="mouseSelectedIndex">-1</field>
+      <field name="mousedOverIndex">-1</field>
     </implementation>
     <handlers>
       <handler event="mouseup">
@@ -2516,22 +2577,28 @@ extends="chrome://global/content/bindings/popup.xml#popup">
 
       <handler event="mousemove">
         <![CDATA[
-        if (Date.now() - this.mLastMoveTime > 30) {
-         let item = event.target;
-         while (item && item.localName != "richlistitem") {
-           item = item.parentNode;
-         }
-
-         if (!item)
-           return;
-
-         let index = this.getIndexOfItem(item);
-         if (index != this.selectedIndex) {
-            this.mouseSelectedIndex = this.selectedIndex = index;
-         }
-
-         this.mLastMoveTime = Date.now();
+        if (Date.now() - this.mLastMoveTime <= 30) {
+          return;
         }
+
+        let item = event.target;
+        while (item && item.localName != "richlistitem") {
+          item = item.parentNode;
+        }
+
+        if (!item) {
+          return;
+        }
+
+        let index = this.getIndexOfItem(item);
+
+        this.mousedOverIndex = index;
+
+        if (item.selectedByMouseOver) {
+          this.selectedIndex = index;
+        }
+
+        this.mLastMoveTime = Date.now();
       ]]>
       </handler>
     </handlers>
@@ -2552,6 +2619,11 @@ extends="chrome://global/content/bindings/popup.xml#popup">
       ]]></handler>
 
       <handler event="mousemove"><![CDATA[
+        if (event.defaultPrevented) {
+          // Allow bindings that extend this one to cancel the event so that
+          // nothing is selected.
+          return;
+        }
         if (Date.now() - this.mLastMoveTime > 30) {
          var rc = this.parentNode.treeBoxObject.getRowAt(event.clientX, event.clientY);
          if (rc != this.parentNode.currentIndex)

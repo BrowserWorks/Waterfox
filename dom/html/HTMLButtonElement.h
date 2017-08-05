@@ -47,7 +47,6 @@ public:
   NS_DECL_NSIDOMHTMLBUTTONELEMENT
 
   // overriden nsIFormControl methods
-  NS_IMETHOD_(uint32_t) GetType() const override { return mType; }
   NS_IMETHOD Reset() override;
   NS_IMETHOD SubmitNamesValues(HTMLFormSubmission* aFormSubmission) override;
   NS_IMETHOD SaveState() override;
@@ -63,7 +62,8 @@ public:
                      EventChainPostVisitor& aVisitor) override;
 
   // nsINode
-  virtual nsresult Clone(mozilla::dom::NodeInfo* aNodeInfo, nsINode** aResult) const override;
+  virtual nsresult Clone(mozilla::dom::NodeInfo* aNodeInfo, nsINode** aResult,
+                         bool aPreallocateChildren) const override;
   virtual JSObject* WrapNode(JSContext* aCx, JS::Handle<JSObject*> aGivenProto) override;
 
   // nsIContent
@@ -81,13 +81,15 @@ public:
    * Called when an attribute is about to be changed
    */
   virtual nsresult BeforeSetAttr(int32_t aNameSpaceID, nsIAtom* aName,
-                                 nsAttrValueOrString* aValue,
+                                 const nsAttrValueOrString* aValue,
                                  bool aNotify) override;
   /**
    * Called when an attribute has just been changed
    */
-  nsresult AfterSetAttr(int32_t aNamespaceID, nsIAtom* aName,
-                        const nsAttrValue* aValue, bool aNotify) override;
+  virtual nsresult AfterSetAttr(int32_t aNamespaceID, nsIAtom* aName,
+                                const nsAttrValue* aValue,
+                                const nsAttrValue* aOldValue,
+                                bool aNotify) override;
   virtual bool ParseAttribute(int32_t aNamespaceID,
                               nsIAtom* aAttribute,
                               const nsAString& aValue,
@@ -172,7 +174,6 @@ public:
 protected:
   virtual ~HTMLButtonElement();
 
-  uint8_t mType;
   bool mDisabledChanged;
   bool mInInternalActivate;
   bool mInhibitStateRestoration;

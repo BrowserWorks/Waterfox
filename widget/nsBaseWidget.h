@@ -279,14 +279,8 @@ public:
                             const mozilla::WidgetPluginEvent& aEvent) override
                           { }
   virtual MOZ_MUST_USE nsresult AttachNativeKeyEvent(mozilla::WidgetKeyboardEvent& aEvent) override { return NS_ERROR_NOT_IMPLEMENTED; }
-  virtual bool            ExecuteNativeKeyBinding(
-                            NativeKeyBindingsType aType,
-                            const mozilla::WidgetKeyboardEvent& aEvent,
-                            DoCommandCallback aCallback,
-                            void* aCallbackData) override { return false; }
   bool                    ComputeShouldAccelerate();
   virtual bool            WidgetTypeSupportsAcceleration() { return true; }
-  virtual nsIMEUpdatePreference GetIMEUpdatePreference() override { return nsIMEUpdatePreference(); }
   virtual MOZ_MUST_USE nsresult OnDefaultButtonLoaded(const LayoutDeviceIntRect& aButtonRect) override { return NS_ERROR_NOT_IMPLEMENTED; }
   virtual already_AddRefed<nsIWidget>
   CreateChild(const LayoutDeviceIntRect& aRect,
@@ -404,6 +398,12 @@ public:
   // displayport during the live resize to avoid unneccessary overpainting.
   void NotifyLiveResizeStarted();
   void NotifyLiveResizeStopped();
+
+#if defined(MOZ_WIDGET_ANDROID)
+  void RecvToolbarAnimatorMessageFromCompositor(int32_t) override {};
+  void UpdateRootFrameMetrics(const ScreenPoint& aScrollOffset, const CSSToScreenScale& aZoom, const CSSRect& aPage) override {};
+  void RecvScreenPixels(mozilla::ipc::Shmem&& aMem, const ScreenIntSize& aSize) override {};
+#endif
 
 protected:
   // These are methods for CompositorWidgetWrapper, and should only be
@@ -544,6 +544,8 @@ protected:
 
   nsPopupType PopupType() const { return mPopupType; }
 
+  bool HasRemoteContent() const { return mHasRemoteContent; }
+
   void NotifyRollupGeometryChange()
   {
     // XULPopupManager isn't interested in this notification, so only
@@ -581,7 +583,7 @@ protected:
   void EnsureTextEventDispatcher();
 
   // Notify the compositor that a device reset has occurred.
-  void OnRenderingDeviceReset(uint64_t aSeqNo);
+  void OnRenderingDeviceReset();
 
   bool UseAPZ();
 
@@ -678,6 +680,7 @@ protected:
   nsPopupLevel      mPopupLevel;
   nsPopupType       mPopupType;
   SizeConstraints   mSizeConstraints;
+  bool              mHasRemoteContent;
 
   CompositorWidgetDelegate* mCompositorWidgetDelegate;
 

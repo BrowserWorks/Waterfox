@@ -301,6 +301,28 @@ CrossOriginXrayWrapper::delete_(JSContext* cx, JS::Handle<JSObject*> wrapper,
     return false;
 }
 
+bool
+CrossOriginXrayWrapper::setPrototype(JSContext* cx, JS::HandleObject wrapper,
+                                     JS::HandleObject proto,
+                                     JS::ObjectOpResult& result) const
+{
+    // https://html.spec.whatwg.org/multipage/browsers.html#windowproxy-setprototypeof
+    // and
+    // https://html.spec.whatwg.org/multipage/browsers.html#location-setprototypeof
+    // both say to call SetImmutablePrototype, which does nothing and just
+    // returns whether the passed-in value equals the current prototype.  Our
+    // current prototype is always null, so this just comes down to returning
+    // whether null was passed in.
+    //
+    // In terms of ObjectOpResult that means calling one of the fail*() things
+    // on it if non-null was passed, and it's got one that does just what we
+    // want.
+    if (!proto) {
+        return result.succeed();
+    }
+    return result.failCantSetProto();
+}
+
 #define XOW FilteringWrapper<CrossOriginXrayWrapper, CrossOriginAccessiblePropertiesOnly>
 #define NNXOW FilteringWrapper<CrossCompartmentSecurityWrapper, Opaque>
 #define NNXOWC FilteringWrapper<CrossCompartmentSecurityWrapper, OpaqueWithCall>

@@ -210,7 +210,6 @@ public:
   virtual nsTransparencyMode GetTransparencyMode() override;
   virtual void            UpdateOpaqueRegion(const LayoutDeviceIntRegion& aOpaqueRegion) override;
 #endif // MOZ_XUL
-  virtual nsIMEUpdatePreference GetIMEUpdatePreference() override;
   virtual nsresult        SetNonClientMargins(LayoutDeviceIntMargin& aMargins) override;
   void                    SetDrawsInTitlebar(bool aState) override;
   virtual void            UpdateWindowDraggingRegion(const LayoutDeviceIntRegion& aRegion) override;
@@ -317,6 +316,7 @@ public:
 
   void GetCompositorWidgetInitData(mozilla::widget::CompositorWidgetInitData* aInitData) override;
   bool IsTouchWindow() const { return mTouchWindow; }
+  bool SynchronouslyRepaintOnResize() override;
 
 protected:
   virtual ~nsWindow();

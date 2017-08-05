@@ -169,7 +169,7 @@ TabListView.prototype = {
   _clearChilden(node) {
     let parent = node || this.container;
     while (parent.firstChild) {
-      parent.removeChild(parent.firstChild);
+      parent.firstChild.remove();
     }
   },
 
@@ -213,7 +213,7 @@ TabListView.prototype = {
   _updateClient(item, itemNode) {
     itemNode.setAttribute("id", "item-" + item.id);
     let lastSync = new Date(item.lastModified);
-    let lastSyncTitle = getChromeWindow(this._window).gSyncUI.formatLastSyncDate(lastSync);
+    let lastSyncTitle = getChromeWindow(this._window).gSync.formatLastSyncDate(lastSync);
     itemNode.setAttribute("title", lastSyncTitle);
     if (item.closed) {
       itemNode.classList.add("closed");
@@ -524,13 +524,16 @@ TabListView.prototype = {
     while (el) {
       let show = false;
       if (showTabOptions) {
-        if (el.getAttribute("id") != "syncedTabsOpenAllInTabs") {
+        if (el.getAttribute("id") != "syncedTabsOpenAllInTabs" &&
+            el.getAttribute("id") != "syncedTabsManageDevices") {
           show = true;
         }
       } else if (el.getAttribute("id") == "syncedTabsOpenAllInTabs") {
         const tabs = item.querySelectorAll(".item-tabs-list > .item.tab");
         show = tabs.length > 0;
       } else if (el.getAttribute("id") == "syncedTabsRefresh") {
+        show = true;
+      } else if (el.getAttribute("id") == "syncedTabsManageDevices") {
         show = true;
       }
       el.hidden = !show;

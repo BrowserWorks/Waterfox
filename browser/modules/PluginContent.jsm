@@ -59,7 +59,7 @@ PluginContent.prototype = {
     global.addMessageListener("BrowserPlugins:CrashReportSubmitted", this);
     global.addMessageListener("BrowserPlugins:Test:ClearCrashData", this);
 
-    Services.obs.addObserver(this, "decoder-doctor-notification", false);
+    Services.obs.addObserver(this, "decoder-doctor-notification");
   },
 
   uninit() {
@@ -163,7 +163,6 @@ PluginContent.prototype = {
       return;
     }
 
-    this._finishRecordingFlashPluginTelemetry();
     this.clearPluginCaches();
     this.haveShownNotification = false;
   },
@@ -538,18 +537,8 @@ PluginContent.prototype = {
         break;
 
       case "PluginInstantiated":
-        let key = this._getPluginInfo(plugin).pluginTag.niceName;
-        Services.telemetry.getKeyedHistogramById("PLUGIN_ACTIVATION_COUNT").add(key);
         shouldShowNotification = true;
-        let pluginRect = plugin.getBoundingClientRect();
-        if (pluginRect.width <= 5 && pluginRect.height <= 5) {
-          Services.telemetry.getHistogramById("PLUGIN_TINY_CONTENT").add(1);
-        }
         break;
-    }
-
-    if (this._getPluginInfo(plugin).mimetype === FLASH_MIME_TYPE) {
-      this._recordFlashPluginTelemetry(eventType, plugin);
     }
 
     // Show the in-content UI if it's not too big. The crashed plugin handler already did this.
@@ -580,49 +569,6 @@ PluginContent.prototype = {
 
     if (shouldShowNotification) {
       this._showClickToPlayNotification(plugin, false);
-    }
-  },
-
-  _recordFlashPluginTelemetry(eventType, plugin) {
-    if (!Services.telemetry.canRecordExtended) {
-      return;
-    }
-
-    if (!this.flashPluginStats) {
-      this.flashPluginStats = {
-        instancesCount: 0,
-        plugins: new WeakSet()
-      };
-    }
-
-    if (!this.flashPluginStats.plugins.has(plugin)) {
-      // Reporting plugin instance and its dimensions only once.
-      this.flashPluginStats.plugins.add(plugin);
-
-      this.flashPluginStats.instancesCount++;
-
-      let pluginRect = plugin.getBoundingClientRect();
-      Services.telemetry.getHistogramById("FLASH_PLUGIN_WIDTH")
-                       .add(pluginRect.width);
-      Services.telemetry.getHistogramById("FLASH_PLUGIN_HEIGHT")
-                       .add(pluginRect.height);
-      Services.telemetry.getHistogramById("FLASH_PLUGIN_AREA")
-                       .add(pluginRect.width * pluginRect.height);
-
-      let state = this._getPluginInfo(plugin).fallbackType;
-      if (state === null) {
-        state = Ci.nsIObjectLoadingContent.PLUGIN_UNSUPPORTED;
-      }
-      Services.telemetry.getHistogramById("FLASH_PLUGIN_STATES")
-                       .add(state);
-    }
-  },
-
-  _finishRecordingFlashPluginTelemetry() {
-    if (this.flashPluginStats) {
-      Services.telemetry.getHistogramById("FLASH_PLUGIN_INSTANCES_ON_PAGE")
-                        .add(this.flashPluginStats.instancesCount);
-    delete this.flashPluginStats;
     }
   },
 

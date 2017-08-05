@@ -22,6 +22,7 @@ public:
   NS_DECL_IMGICONTAINER
 
   // Inherited methods from Image.
+  nsresult GetNativeSizes(nsTArray<gfx::IntSize>& aNativeSizes) const override;
   virtual already_AddRefed<ProgressTracker> GetProgressTracker() override;
 
   virtual size_t
@@ -45,7 +46,7 @@ public:
                                        nsresult aStatus,
                                        bool aLastPart) override;
 
-  virtual void OnSurfaceDiscarded() override;
+  virtual void OnSurfaceDiscarded(const SurfaceKey& aSurfaceKey) override;
 
   virtual void SetInnerWindowID(uint64_t aInnerWindowId) override;
   virtual uint64_t InnerWindowID() const override;

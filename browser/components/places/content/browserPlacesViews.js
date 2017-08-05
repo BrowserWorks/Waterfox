@@ -60,7 +60,7 @@ PlacesViewBase.prototype = {
 
     let result = history.executeQueries(queries.value, queries.value.length,
                                         options.value);
-    result.addObserver(this, false);
+    result.addObserver(this);
     return val;
   },
 
@@ -496,7 +496,7 @@ PlacesViewBase.prototype = {
     if (elt.localName == "menupopup")
       elt = elt.parentNode;
 
-    elt.setAttribute("scheme", PlacesUIUtils.guessUrlSchemeForUI(aURIString));
+    elt.setAttribute("scheme", PlacesUIUtils.guessUrlSchemeForUI(aPlacesNode.uri));
   },
 
   nodeIconChanged: function PVB_nodeIconChanged(aPlacesNode) {
@@ -508,14 +508,12 @@ PlacesViewBase.prototype = {
       return;
 
     // Here we need the <menu>.
-    if (elt.localName == "menupopup")
+    if (elt.localName == "menupopup") {
       elt = elt.parentNode;
-
-    let icon = aPlacesNode.icon;
-    if (!icon)
-      elt.removeAttribute("image");
-    else if (icon != elt.getAttribute("image"))
-      elt.setAttribute("image", icon);
+    }
+    // We must remove and reset the attribute to force an update.
+    elt.removeAttribute("image");
+    elt.setAttribute("image", aPlacesNode.icon);
   },
 
   nodeAnnotationChanged:
@@ -598,7 +596,7 @@ PlacesViewBase.prototype = {
            child != popup._endMarker;
            child = child.nextSibling) {
         if (child._placesNode && child._placesNode.uri == aPlacesNode.uri) {
-          if (aCount)
+          if (aPlacesNode.accessCount)
             child.setAttribute("visited", "true");
           else
             child.removeAttribute("visited");
@@ -1011,7 +1009,7 @@ PlacesToolbar.prototype = {
 
     this._openedMenuButton = null;
     while (this._rootElt.hasChildNodes()) {
-      this._rootElt.removeChild(this._rootElt.firstChild);
+      this._rootElt.firstChild.remove();
     }
 
     let cc = this._resultNode.childCount;
@@ -1952,7 +1950,7 @@ PlacesPanelMenuView.prototype = {
 
     // Container is the toolbar itself.
     while (this._rootElt.hasChildNodes()) {
-      this._rootElt.removeChild(this._rootElt.firstChild);
+      this._rootElt.firstChild.remove();
     }
 
     for (let i = 0; i < this._resultNode.childCount; ++i) {

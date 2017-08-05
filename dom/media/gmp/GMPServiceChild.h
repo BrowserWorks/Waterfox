@@ -42,17 +42,25 @@ public:
 
   static void UpdateGMPCapabilities(nsTArray<mozilla::dom::GMPCapabilityData>&& aCapabilities);
 
+  void BeginShutdown();
+
 protected:
   void InitializePlugins(AbstractThread*) override
   {
     // Nothing to do here.
   }
 
-  virtual RefPtr<GetGMPContentParentPromise>
-  GetContentParent(GMPCrashHelper* aHelper,
-                   const nsACString& aNodeId,
-                   const nsCString& aAPI,
-                   const nsTArray<nsCString>& aTags) override;
+  virtual RefPtr<GetGMPContentParentPromise> GetContentParent(
+    GMPCrashHelper* aHelper,
+    const nsACString& aNodeIdString,
+    const nsCString& aAPI,
+    const nsTArray<nsCString>& aTags) override;
+
+  RefPtr<GetGMPContentParentPromise> GetContentParent(
+    GMPCrashHelper* aHelper,
+    const NodeId& aNodeId,
+    const nsCString& aAPI,
+    const nsTArray<nsCString>& aTags) override;
 
 private:
   friend class OpenPGMPServiceChild;
@@ -78,6 +86,10 @@ public:
   void GetAlreadyBridgedTo(nsTArray<ProcessId>& aAlreadyBridgedTo);
 
   static bool Create(Endpoint<PGMPServiceChild>&& aGMPService);
+
+  ipc::IPCResult RecvBeginShutdown() override;
+
+  bool HaveContentParents() const;
 
 private:
   nsRefPtrHashtable<nsUint64HashKey, GMPContentParent> mContentParents;

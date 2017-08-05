@@ -56,6 +56,12 @@ WinTextEventDispatcherListener::NotifyIME(
   return IMEHandler::NotifyIME(window, aNotification);
 }
 
+NS_IMETHODIMP_(IMENotificationRequests)
+WinTextEventDispatcherListener::GetIMENotificationRequests()
+{
+  return IMEHandler::GetIMENotificationRequests();
+}
+
 NS_IMETHODIMP_(void)
 WinTextEventDispatcherListener::OnRemovedFrom(
                                   TextEventDispatcher* aTextEventDispatcher)

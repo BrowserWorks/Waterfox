@@ -19,8 +19,8 @@
 #include "nsIURI.h"
 #include "nsJSUtils.h"
 #include "nsNetUtil.h"
-#include "nsNullPrincipal.h"
-#include "nsExpandedPrincipal.h"
+#include "NullPrincipal.h"
+#include "ExpandedPrincipal.h"
 #include "WrapperFactory.h"
 #include "xpcprivate.h"
 #include "xpc_make_class.h"
@@ -35,6 +35,8 @@
 #include "mozilla/dom/IndexedDatabaseManager.h"
 #include "mozilla/dom/Fetch.h"
 #include "mozilla/dom/FileBinding.h"
+#include "mozilla/dom/MessageChannelBinding.h"
+#include "mozilla/dom/MessagePortBinding.h"
 #include "mozilla/dom/PromiseBinding.h"
 #include "mozilla/dom/RequestBinding.h"
 #include "mozilla/dom/ResponseBinding.h"
@@ -415,7 +417,7 @@ sandbox_finalize(js::FreeOp* fop, JSObject* obj)
         return;
     }
 
-    static_cast<SandboxPrivate*>(sop)->ForgetGlobalObject();
+    static_cast<SandboxPrivate*>(sop)->ForgetGlobalObject(obj);
     DestroyProtoAndIfaceCache(obj);
     DeferredFinalize(sop);
 }
@@ -487,7 +489,7 @@ sandbox_addProperty(JSContext* cx, HandleObject obj, HandleId id, HandleValue v)
     // Whenever JS_EnumerateStandardClasses is called, it defines the
     // "undefined" property, even if it's already defined. We don't want to do
     // anything in that case.
-    if (id == XPCJSContext::Get()->GetStringID(XPCJSContext::IDX_UNDEFINED))
+    if (id == XPCJSRuntime::Get()->GetStringID(XPCJSContext::IDX_UNDEFINED))
         return true;
 
     // Avoid recursively triggering sandbox_addProperty in the
@@ -716,8 +718,8 @@ WrapCallable(JSContext* cx, HandleObject callable, HandleObject sandboxProtoProx
     JSObject* obj = js::NewProxyObject(cx, &xpc::sandboxCallableProxyHandler,
                                        priv, nullptr, options);
     if (obj) {
-        js::SetProxyExtra(obj, SandboxCallableProxyHandler::SandboxProxySlot,
-                          ObjectValue(*sandboxProtoProxy));
+        js::SetProxyReservedSlot(obj, SandboxCallableProxyHandler::SandboxProxySlot,
+                                 ObjectValue(*sandboxProtoProxy));
     }
 
     return obj;
@@ -934,6 +936,8 @@ xpc::GlobalProperties::Parse(JSContext* cx, JS::HandleObject obj)
             caches = true;
         } else if (!strcmp(name.ptr(), "FileReader")) {
             fileReader = true;
+        } else if (!strcmp(name.ptr(), "MessageChannel")) {
+            messageChannel = true;
         } else {
             JS_ReportErrorUTF8(cx, "Unknown property name: %s", name.ptr());
             return false;
@@ -1011,6 +1015,11 @@ xpc::GlobalProperties::Define(JSContext* cx, JS::HandleObject obj)
     if (fileReader && !dom::FileReaderBinding::GetConstructorObject(cx))
         return false;
 
+    if (messageChannel &&
+        (!dom::MessageChannelBinding::GetConstructorObject(cx) ||
+         !dom::MessagePortBinding::GetConstructorObject(cx)))
+        return false;
+
     return true;
 }
 
@@ -1049,7 +1058,7 @@ xpc::CreateSandboxObject(JSContext* cx, MutableHandleValue vp, nsISupports* prin
         if (sop) {
             principal = sop->GetPrincipal();
         } else {
-            RefPtr<nsNullPrincipal> nullPrin = nsNullPrincipal::Create();
+            RefPtr<NullPrincipal> nullPrin = NullPrincipal::Create();
             principal = nullPrin;
         }
     }
@@ -1288,8 +1297,7 @@ GetPrincipalOrSOP(JSContext* cx, HandleObject from, nsISupports** out)
     MOZ_ASSERT(out);
     *out = nullptr;
 
-    nsXPConnect* xpc = nsXPConnect::XPConnect();
-    nsISupports* native = xpc->GetNativeOfWrapper(cx, from);
+    nsCOMPtr<nsISupports> native = xpc::UnwrapReflectorToISupports(from);
 
     if (nsCOMPtr<nsIScriptObjectPrincipal> sop = do_QueryInterface(native)) {
         sop.forget(out);
@@ -1439,8 +1447,8 @@ GetExpandedPrincipal(JSContext* cx, HandleObject arrayObj,
         }
     }
 
-    nsCOMPtr<nsIExpandedPrincipal> result =
-        new nsExpandedPrincipal(allowedDomains, attrs.ref());
+    RefPtr<ExpandedPrincipal> result =
+        ExpandedPrincipal::Create(allowedDomains, attrs.ref());
     result.forget(out);
     return true;
 }
@@ -1784,7 +1792,7 @@ nsXPCComponents_utils_Sandbox::CallOrConstruct(nsIXPConnectWrappedNative* wrappe
         }
     } else if (args[0].isNull()) {
         // Null means that we just pass prinOrSop = nullptr, and get an
-        // nsNullPrincipal.
+        // NullPrincipal.
         ok = true;
     }
 

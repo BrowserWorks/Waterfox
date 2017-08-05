@@ -319,11 +319,10 @@ nsHtml5TreeOperation::AddAttributes(nsIContent* aNode,
     if (!node->HasAttr(nsuri, localName)) {
       // prefix doesn't need regetting. it is always null or a static atom
       // local name is never null
-      node->SetAttr(nsuri,
-                    localName,
-                    aAttributes->getPrefixNoBoundsCheck(i),
-                    *(aAttributes->getValueNoBoundsCheck(i)),
-                    true);
+      nsString value; // Not Auto, because using it to hold nsStringBuffer*
+      aAttributes->getValueNoBoundsCheck(i).ToString(value);
+      node->SetAttr(
+        nsuri, localName, aAttributes->getPrefixNoBoundsCheck(i), value, true);
       // XXX what to do with nsresult?
     }
   }
@@ -339,9 +338,9 @@ nsHtml5TreeOperation::CreateElement(int32_t aNs,
                                     nsNodeInfoManager* aNodeInfoManager,
                                     nsHtml5DocumentBuilder* aBuilder)
 {
-  bool isKeygen = (aName == nsHtml5Atoms::keygen && aNs == kNameSpaceID_XHTML);
+  bool isKeygen = (aName == nsGkAtoms::keygen && aNs == kNameSpaceID_XHTML);
   if (MOZ_UNLIKELY(isKeygen)) {
-    aName = nsHtml5Atoms::select;
+    aName = nsGkAtoms::select;
   }
 
   nsCOMPtr<dom::Element> newElement;
@@ -356,7 +355,7 @@ nsHtml5TreeOperation::CreateElement(int32_t aNs,
   dom::Element* newContent = newElement;
   aBuilder->HoldElement(newElement.forget());
 
-  if (MOZ_UNLIKELY(aName == nsHtml5Atoms::style || aName == nsHtml5Atoms::link)) {
+  if (MOZ_UNLIKELY(aName == nsGkAtoms::style || aName == nsGkAtoms::link)) {
     nsCOMPtr<nsIStyleSheetLinkingElement> ssle(do_QueryInterface(newContent));
     if (ssle) {
       ssle->InitStyleLinkElement(false);
@@ -384,11 +383,8 @@ nsHtml5TreeOperation::CreateElement(int32_t aNs,
                         theAttribute,
                         false);
 
-    RefPtr<dom::NodeInfo> optionNodeInfo =
-      aNodeInfoManager->GetNodeInfo(nsHtml5Atoms::option,
-                                    nullptr,
-                                    kNameSpaceID_XHTML,
-                                    nsIDOMNode::ELEMENT_NODE);
+    RefPtr<dom::NodeInfo> optionNodeInfo = aNodeInfoManager->GetNodeInfo(
+      nsGkAtoms::option, nullptr, kNameSpaceID_XHTML, nsIDOMNode::ELEMENT_NODE);
 
     for (uint32_t i = 0; i < theContent.Length(); ++i) {
       nsCOMPtr<dom::Element> optionElt;
@@ -418,12 +414,13 @@ nsHtml5TreeOperation::CreateElement(int32_t aNs,
     nsCOMPtr<nsIAtom> prefix = aAttributes->getPrefixNoBoundsCheck(i);
     int32_t nsuri = aAttributes->getURINoBoundsCheck(i);
 
-    if (aNs == kNameSpaceID_XHTML &&
-        nsHtml5Atoms::a == aName &&
-        nsHtml5Atoms::name == localName) {
+    nsString value; // Not Auto, because using it to hold nsStringBuffer*
+    aAttributes->getValueNoBoundsCheck(i).ToString(value);
+    if (aNs == kNameSpaceID_XHTML && nsGkAtoms::a == aName &&
+        nsGkAtoms::name == localName) {
       // This is an HTML5-incompliant Geckoism.
       // Remove when fixing bug 582361
-      NS_ConvertUTF16toUTF8 cname(*(aAttributes->getValueNoBoundsCheck(i)));
+      NS_ConvertUTF16toUTF8 cname(value);
       NS_ConvertUTF8toUTF16 uv(nsUnescape(cname.BeginWriting()));
       newContent->SetAttr(nsuri,
                           localName,
@@ -431,7 +428,6 @@ nsHtml5TreeOperation::CreateElement(int32_t aNs,
                           uv,
                           false);
     } else {
-      nsString& value = *(aAttributes->getValueNoBoundsCheck(i));
       newContent->SetAttr(nsuri,
                           localName,
                           prefix,
@@ -638,7 +634,8 @@ nsHtml5TreeOperation::MarkMalformedIfScript(nsIContent* aNode)
 
 nsresult
 nsHtml5TreeOperation::Perform(nsHtml5TreeOpExecutor* aBuilder,
-                              nsIContent** aScriptElement)
+                              nsIContent** aScriptElement,
+                              bool* aInterrupted)
 {
   switch(mOpCode) {
     case eTreeOpUninitialized: {
@@ -667,7 +664,10 @@ nsHtml5TreeOperation::Perform(nsHtml5TreeOpExecutor* aBuilder,
     }
     case eTreeOpAppendToDocument: {
       nsIContent* node = *(mOne.node);
-      return AppendToDocument(node, aBuilder);
+      nsresult rv = AppendToDocument(node, aBuilder);
+
+      aBuilder->PauseDocUpdate(aInterrupted);
+      return rv;
     }
     case eTreeOpAddAttributes: {
       nsIContent* node = *(mOne.node);
@@ -995,7 +995,7 @@ nsHtml5TreeOperation::Perform(nsHtml5TreeOpExecutor* aBuilder,
       return NS_OK;
     }
     case eTreeOpStartLayout: {
-      aBuilder->StartLayout(); // this causes a notification flush anyway
+      aBuilder->StartLayout(aInterrupted); // this causes a notification flush anyway
       return NS_OK;
     }
     default: {

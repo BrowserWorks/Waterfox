@@ -4,7 +4,6 @@ set -x -e -v
 
 # This script is for building clang-cl on Windows.
 
-chmod +x build/src/taskcluster/docker/recipes/tooltool.py
 : TOOLTOOL_CACHE                ${TOOLTOOL_CACHE:=/home/worker/tooltool-cache}
 export TOOLTOOL_CACHE
 
@@ -14,8 +13,7 @@ if [ ! -e ${TOOLTOOL_AUTH_FILE} ]; then
     exit 1
 fi
 
-TOOLTOOL_MANIFEST=build/src/browser/config/tooltool-manifests/win32/build-clang-cl.manifest
-./build/src/taskcluster/docker/recipes/tooltool.py --authentication-file="${TOOLTOOL_AUTH_FILE}" -m "${TOOLTOOL_MANIFEST}" fetch
+./build/src/mach artifact toolchain -v --authentication-file="${TOOLTOOL_AUTH_FILE}" --tooltool-manifest "build/src/${TOOLTOOL_MANIFEST}"${TOOLTOOL_CACHE:+ --cache-dir ${TOOLTOOL_CACHE}}
 
 # Set up all the Visual Studio paths.
 MSVC_DIR=vs2015u3

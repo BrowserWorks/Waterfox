@@ -49,6 +49,7 @@ CreateElementTransaction::~CreateElementTransaction()
 
 NS_IMPL_CYCLE_COLLECTION_INHERITED(CreateElementTransaction,
                                    EditTransactionBase,
+                                   mEditorBase,
                                    mParent,
                                    mNewNode,
                                    mRefNode)
@@ -62,7 +63,9 @@ NS_INTERFACE_MAP_END_INHERITING(EditTransactionBase)
 NS_IMETHODIMP
 CreateElementTransaction::DoTransaction()
 {
-  MOZ_ASSERT(mEditorBase && mTag && mParent);
+  if (NS_WARN_IF(!mEditorBase) || NS_WARN_IF(!mTag) || NS_WARN_IF(!mParent)) {
+    return NS_ERROR_NOT_INITIALIZED;
+  }
 
   mNewNode = mEditorBase->CreateHTMLContent(mTag);
   NS_ENSURE_STATE(mNewNode);
@@ -96,7 +99,7 @@ CreateElementTransaction::DoTransaction()
   RefPtr<Selection> selection = mEditorBase->GetSelection();
   NS_ENSURE_TRUE(selection, NS_ERROR_NULL_POINTER);
 
-  rv = selection->CollapseNative(mParent, mParent->IndexOf(mNewNode) + 1);
+  rv = selection->Collapse(mParent, mParent->IndexOf(mNewNode) + 1);
   NS_ASSERTION(!rv.Failed(),
                "selection could not be collapsed after insert");
   return NS_OK;
@@ -105,7 +108,9 @@ CreateElementTransaction::DoTransaction()
 NS_IMETHODIMP
 CreateElementTransaction::UndoTransaction()
 {
-  MOZ_ASSERT(mEditorBase && mParent);
+  if (NS_WARN_IF(!mEditorBase) || NS_WARN_IF(!mParent)) {
+    return NS_ERROR_NOT_INITIALIZED;
+  }
 
   ErrorResult rv;
   mParent->RemoveChild(*mNewNode, rv);
@@ -116,7 +121,9 @@ CreateElementTransaction::UndoTransaction()
 NS_IMETHODIMP
 CreateElementTransaction::RedoTransaction()
 {
-  MOZ_ASSERT(mEditorBase && mParent);
+  if (NS_WARN_IF(!mEditorBase) || NS_WARN_IF(!mParent)) {
+    return NS_ERROR_NOT_INITIALIZED;
+  }
 
   // First, reset mNewNode so it has no attributes or content
   // XXX We never actually did this, we only cleared mNewNode's contents if it

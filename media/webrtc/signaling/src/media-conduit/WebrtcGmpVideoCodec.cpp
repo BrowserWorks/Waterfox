@@ -309,6 +309,7 @@ WebrtcGmpVideoEncoder::Encode(const webrtc::VideoFrame& aInputImage,
   MOZ_ASSERT(aInputImage.width() >= 0 && aInputImage.height() >= 0);
   // Would be really nice to avoid this sync dispatch, but it would require a
   // copy of the frame, since it doesn't appear to actually have a refcount.
+  // Passing 'this' is safe since this is synchronous.
   mGMPThread->Dispatch(
       WrapRunnable(this,
                    &WebrtcGmpVideoEncoder::Encode_g,
@@ -591,11 +592,12 @@ WebrtcGmpVideoEncoder::Encoded(GMPVideoEncodedFrame* aEncodedFrame,
         default:
           MOZ_CRASH("GMP_BufferType already handled in switch above");
       }
-      if (buffer+size > end) {
+      MOZ_ASSERT(size != 0 &&
+                 buffer+size <= end); // in non-debug code, don't crash in this case
+      if (size == 0 || buffer+size > end) {
         // XXX see above - should we kill the plugin for returning extra bytes?  Probably
         LOG(LogLevel::Error,
-            ("GMP plugin returned badly formatted encoded data: end is %td bytes past buffer end",
-             buffer+size - end));
+            ("GMP plugin returned badly formatted encoded data: buffer=%p, size=%d, end=%p", buffer, size, end));
         return;
       }
       // XXX optimize by making buffer an offset
@@ -775,6 +777,7 @@ WebrtcGmpVideoDecoder::Decode(const webrtc::EncodedImage& aInputImage,
   MOZ_ASSERT(!NS_IsMainThread());
   // Would be really nice to avoid this sync dispatch, but it would require a
   // copy of the frame, since it doesn't appear to actually have a refcount.
+  // Passing 'this' is safe since this is synchronous.
   mozilla::SyncRunnable::DispatchToThread(mGMPThread,
                 WrapRunnableRet(&ret, this,
                                 &WebrtcGmpVideoDecoder::Decode_g,

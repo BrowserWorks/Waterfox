@@ -14,6 +14,9 @@ XPCOMUtils.defineLazyServiceGetter(this, "cpmm",
                                    "@mozilla.org/childprocessmessagemanager;1",
                                    "nsIMessageSender");
 
+XPCOMUtils.defineLazyModuleGetter(this, "TelemetryController",
+                                  "resource://gre/modules/TelemetryController.jsm");
+
 /*
  * The message manager has an upper limit on message sizes that it can
  * reliably forward to the parent so we limit the size of console log event
@@ -44,9 +47,9 @@ ContentProcessSingleton.prototype = {
   observe(subject, topic, data) {
     switch (topic) {
     case "app-startup": {
-      Services.obs.addObserver(this, "console-api-log-event", false);
-      Services.obs.addObserver(this, "xpcom-shutdown", false);
-      cpmm.addMessageListener("DevTools:InitDebuggerServer", this);
+      Services.obs.addObserver(this, "console-api-log-event");
+      Services.obs.addObserver(this, "xpcom-shutdown");
+      TelemetryController.observe(null, topic, null);
       break;
     }
     case "console-api-log-event": {
@@ -99,17 +102,7 @@ ContentProcessSingleton.prototype = {
     case "xpcom-shutdown":
       Services.obs.removeObserver(this, "console-api-log-event");
       Services.obs.removeObserver(this, "xpcom-shutdown");
-      cpmm.removeMessageListener("DevTools:InitDebuggerServer", this);
       break;
-    }
-  },
-
-  receiveMessage(message) {
-    // load devtools component on-demand
-    // Only reply if we are in a real content process
-    if (Services.appinfo.processType == Services.appinfo.PROCESS_TYPE_CONTENT) {
-      let {init} = Cu.import("resource://devtools/server/content-server.jsm", {});
-      init(message);
     }
   },
 };

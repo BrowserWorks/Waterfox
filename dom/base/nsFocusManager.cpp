@@ -11,6 +11,7 @@
 #include "AccessibleCaretEventHub.h"
 #include "nsIInterfaceRequestorUtils.h"
 #include "nsGkAtoms.h"
+#include "nsGlobalWindow.h"
 #include "nsContentUtils.h"
 #include "nsIDocument.h"
 #include "nsIEditor.h"
@@ -44,6 +45,7 @@
 #include "TabChild.h"
 #include "nsFrameLoader.h"
 #include "nsNumberControlFrame.h"
+#include "nsNetUtil.h"
 
 #include "mozilla/ContentEvents.h"
 #include "mozilla/dom/Element.h"
@@ -179,6 +181,7 @@ static const char* kObservedPrefs[] = {
 };
 
 nsFocusManager::nsFocusManager()
+  : mEventHandlingNeedsFlush(false)
 { }
 
 nsFocusManager::~nsFocusManager()
@@ -316,7 +319,7 @@ nsFocusManager::GetRedirectedFocus(nsIContent* aContent)
   // For input number, redirect focus to our anonymous text control.
   if (aContent->IsHTMLElement(nsGkAtoms::input)) {
     bool typeIsNumber =
-      static_cast<dom::HTMLInputElement*>(aContent)->GetType() ==
+      static_cast<dom::HTMLInputElement*>(aContent)->ControlType() ==
         NS_FORM_INPUT_NUMBER;
 
     if (typeIsNumber) {
@@ -535,10 +538,8 @@ nsFocusManager::MoveFocus(mozIDOMWindowProxy* aWindow, nsIDOMElement* aStartElem
     NS_ENSURE_TRUE(startContent, NS_ERROR_INVALID_ARG);
 
     window = GetCurrentWindow(startContent);
-  }
-  else {
+  } else {
     window = aWindow ? nsPIDOMWindowOuter::From(aWindow) : mFocusedWindow.get();
-    NS_ENSURE_TRUE(window, NS_ERROR_FAILURE);
   }
 
   NS_ENSURE_TRUE(window, NS_ERROR_FAILURE);
@@ -863,7 +864,7 @@ nsFocusManager::ContentRemoved(nsIDocument* aDocument, nsIContent* aContent)
       }
     }
 
-    NotifyFocusStateChange(content, shouldShowFocusRing, false);
+    NotifyFocusStateChange(content, nullptr, shouldShowFocusRing, false);
   }
 
   return NS_OK;
@@ -969,6 +970,7 @@ nsFocusManager::WindowHidden(mozIDOMWindowProxy* aWindow)
 
   if (oldFocusedContent && oldFocusedContent->IsInComposedDoc()) {
     NotifyFocusStateChange(oldFocusedContent,
+                           nullptr,
                            mFocusedWindow->ShouldShowFocusRing(),
                            false);
     window->UpdateCommands(NS_LITERAL_STRING("focus"), nullptr, 0);
@@ -1088,12 +1090,21 @@ nsFocusManager::ParentActivated(mozIDOMWindowProxy* aWindow, bool aActive)
 /* static */
 void
 nsFocusManager::NotifyFocusStateChange(nsIContent* aContent,
+                                       nsIContent* aContentToFocus,
                                        bool aWindowShouldShowFocusRing,
                                        bool aGettingFocus)
 {
+  MOZ_ASSERT_IF(aContentToFocus, !aGettingFocus);
   if (!aContent->IsElement()) {
     return;
   }
+
+  nsIContent* commonAncestor = nullptr;
+  if (aContentToFocus && aContentToFocus->IsElement()) {
+    commonAncestor =
+      nsContentUtils::GetCommonFlattenedTreeAncestor(aContent, aContentToFocus);
+  }
+
   EventStates eventState = NS_EVENT_STATE_FOCUS;
   if (aWindowShouldShowFocusRing) {
     eventState |= NS_EVENT_STATE_FOCUSRING;
@@ -1105,9 +1116,18 @@ nsFocusManager::NotifyFocusStateChange(nsIContent* aContent,
     aContent->AsElement()->RemoveStates(eventState);
   }
 
-  for (Element* element = aContent->AsElement(); element;
-       element = element->GetParentElementCrossingShadowRoot()) {
+  for (nsIContent* content = aContent;
+       content && content != commonAncestor;
+       content = content->GetFlattenedTreeParent()) {
+    if (!content->IsElement()) {
+      continue;
+    }
+
+    Element* element = content->AsElement();
     if (aGettingFocus) {
+      if (element->State().HasState(NS_EVENT_STATE_FOCUS_WITHIN)) {
+        break;
+      }
       element->AddStates(NS_EVENT_STATE_FOCUS_WITHIN);
     } else {
       element->RemoveStates(NS_EVENT_STATE_FOCUS_WITHIN);
@@ -1143,7 +1163,7 @@ bool
 ActivateOrDeactivateChild(TabParent* aParent, void* aArg)
 {
   bool active = static_cast<bool>(aArg);
-  Unused << aParent->Manager()->AsContentParent()->SendParentActivated(aParent, active);
+  Unused << aParent->Manager()->SendParentActivated(aParent, active);
   return false;
 }
 
@@ -1547,8 +1567,10 @@ nsFocusManager::CheckIfFocusable(nsIContent* aContent, uint32_t aFlags)
     return nullptr;
   }
 
-  // Make sure that our frames are up to date
-  doc->FlushPendingNotifications(FlushType::Layout);
+  // Make sure that our frames are up to date while ensuring the presshell is
+  // also initialized in case we come from an autofocus event.
+  mEventHandlingNeedsFlush = false;
+  doc->FlushPendingNotifications(FlushType::EnsurePresShellInitAndFrames);
 
   nsIPresShell *shell = doc->GetShell();
   if (!shell)
@@ -1661,7 +1683,10 @@ nsFocusManager::Blur(nsPIDOMWindowOuter* aWindowToClear,
     content && content->IsInComposedDoc() && !IsNonFocusableRoot(content);
   if (content) {
     if (sendBlurEvent) {
-      NotifyFocusStateChange(content, shouldShowFocusRing, false);
+      NotifyFocusStateChange(content,
+                             aContentToFocus,
+                             shouldShowFocusRing,
+                             false);
     }
 
     // if an object/plug-in/remote browser is being blurred, move the system focus
@@ -1850,6 +1875,8 @@ nsFocusManager::Focus(nsPIDOMWindowOuter* aWindow,
 
   SetFocusedWindowInternal(aWindow);
 
+  NotifyCurrentTopLevelContentWindowChange(aWindow);
+
   // Update the system focus by focusing the root widget.  But avoid this
   // if 1) aAdjustWidgets is false or 2) aContent is a plugin that has its
   // own widget and is either already focused or is about to be focused.
@@ -1910,7 +1937,10 @@ nsFocusManager::Focus(nsPIDOMWindowOuter* aWindow,
       aContent && aContent->IsInComposedDoc() && !IsNonFocusableRoot(aContent);
     nsPresContext* presContext = presShell->GetPresContext();
     if (sendFocusEvent) {
-      NotifyFocusStateChange(aContent, aWindow->ShouldShowFocusRing(), true);
+      NotifyFocusStateChange(aContent,
+                             nullptr,
+                             aWindow->ShouldShowFocusRing(),
+                             true);
 
       // if this is an object/plug-in/remote browser, focus its widget.  Note that we might
       // no longer be in the same document, due to the events we fired above when
@@ -2712,8 +2742,8 @@ nsFocusManager::DetermineElementToMoveFocus(nsPIDOMWindowOuter* aWindow,
     // autocomplete widget use the noautofocus attribute to allow the focus to
     // remain outside the popup when it is opened.
     if (frame) {
-      popupFrame = nsLayoutUtils::GetClosestFrameOfType(frame,
-                                                        nsGkAtoms::menuPopupFrame);
+      popupFrame =
+        nsLayoutUtils::GetClosestFrameOfType(frame, LayoutFrameType::MenuPopup);
     }
 
     if (popupFrame && !forDocumentNavigation) {
@@ -2939,8 +2969,8 @@ nsFocusManager::DetermineElementToMoveFocus(nsPIDOMWindowOuter* aWindow,
       // navigation would move outside the popup when tabbing outside the
       // iframe.
       if (!forDocumentNavigation) {
-        popupFrame = nsLayoutUtils::GetClosestFrameOfType(frame,
-                                                          nsGkAtoms::menuPopupFrame);
+        popupFrame = nsLayoutUtils::GetClosestFrameOfType(
+          frame, LayoutFrameType::MenuPopup);
         if (popupFrame) {
           rootContent = popupFrame->GetContent();
           NS_ASSERTION(rootContent, "Popup frame doesn't have a content node");
@@ -3653,6 +3683,20 @@ nsFocusManager::SetFocusedWindowInternal(nsPIDOMWindowOuter* aWindow)
 }
 
 void
+nsFocusManager::NotifyCurrentTopLevelContentWindowChange(
+                                                   nsPIDOMWindowOuter* aWindow)
+{
+  MOZ_ASSERT(aWindow);
+
+  nsCOMPtr<nsPIDOMWindowOuter> topWindow = aWindow->GetTop();
+  if (nsGlobalWindow::Cast(topWindow)->IsChromeWindow()) {
+    return;
+  }
+
+  NS_NotifyCurrentTopLevelOuterContentWindowId(topWindow->WindowID());
+}
+
+void
 nsFocusManager::MarkUncollectableForCCGeneration(uint32_t aGeneration)
 {
   if (!sInstance) {
@@ -3687,6 +3731,37 @@ nsFocusManager::MarkUncollectableForCCGeneration(uint32_t aGeneration)
     sInstance->mMouseButtonEventHandlingDocument->
       MarkUncollectableForCCGeneration(aGeneration);
   }
+}
+
+bool
+nsFocusManager::CanSkipFocus(nsIContent* aContent)
+{
+  if (!aContent ||
+      nsContentUtils::IsChromeDoc(aContent->OwnerDoc())) {
+    return false;
+  }
+
+  if (mFocusedContent == aContent) {
+    return true;
+  }
+
+  nsIDocShell* ds = aContent->OwnerDoc()->GetDocShell();
+  if (!ds) {
+    return true;
+  }
+
+  nsCOMPtr<nsIDocShellTreeItem> root;
+  ds->GetRootTreeItem(getter_AddRefs(root));
+  nsCOMPtr<nsPIDOMWindowOuter> newRootWindow =
+    root ? root->GetWindow() : nullptr;
+  if (mActiveWindow != newRootWindow) {
+    nsPIDOMWindowOuter* outerWindow = aContent->OwnerDoc()->GetWindow();
+    if (outerWindow && outerWindow->GetFocusedNode() == aContent) {
+      return true;
+    }
+  }
+
+  return false;
 }
 
 nsresult

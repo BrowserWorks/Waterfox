@@ -20,6 +20,7 @@
 #include "mozilla/layers/D3D11ShareHandleImage.h"
 #include "mozilla/layers/ImageBridgeChild.h"
 #include "mozilla/layers/TextureForwarder.h"
+#include "mozilla/layers/TextureD3D11.h"
 #include "nsPrintfCString.h"
 #include "nsThreadUtils.h"
 #include "VideoUtils.h"
@@ -85,6 +86,8 @@ using layers::D3D9SurfaceImage;
 using layers::D3D9RecycleAllocator;
 using layers::D3D11ShareHandleImage;
 using layers::D3D11RecycleAllocator;
+using namespace layers;
+using namespace gfx;
 
 class D3D9DXVA2Manager : public DXVA2Manager
 {
@@ -515,7 +518,7 @@ D3D9DXVA2Manager::CreateDXVA2Decoder(const VideoInfo& aVideoInfo,
   desc.Format = (D3DFORMAT)MAKEFOURCC('N','V','1','2');
 
   // Assume the current duration is representative for the entire video.
-  float framerate = 1000000.0 / aVideoInfo.mDuration;
+  float framerate = 1000000.0 / aVideoInfo.mDuration.ToMicroseconds();
   if (IsUnsupportedResolution(desc.SampleWidth, desc.SampleHeight, framerate)) {
     return false;
   }
@@ -596,7 +599,11 @@ public:
   virtual ~D3D11DXVA2Manager();
 
   HRESULT Init(layers::KnowsCompositor* aKnowsCompositor,
-               nsACString& aFailureReason);
+               nsACString& aFailureReason,
+               ID3D11Device* aDevice);
+  HRESULT InitInternal(layers::KnowsCompositor* aKnowsCompositor,
+                       nsACString& aFailureReason,
+                       ID3D11Device* aDevice);
 
   IUnknown* GetDXVADeviceManager() override;
 
@@ -605,6 +612,9 @@ public:
   HRESULT CopyToImage(IMFSample* aVideoSample,
                       const nsIntRect& aRegion,
                       Image** aOutImage) override;
+
+  virtual HRESULT CopyToBGRATexture(ID3D11Texture2D *aInTexture,
+                                    ID3D11Texture2D** aOutTexture);
 
   HRESULT ConfigureForSize(uint32_t aWidth, uint32_t aHeight) override;
 
@@ -628,10 +638,12 @@ private:
   CreateDecoder(const D3D11_VIDEO_DECODER_DESC& aDesc) const;
 
   RefPtr<ID3D11Device> mDevice;
+  RefPtr<ID3D11DeviceContext> mContext;
   RefPtr<IMFDXGIDeviceManager> mDXGIDeviceManager;
   RefPtr<MFTDecoder> mTransform;
   RefPtr<D3D11RecycleAllocator> mTextureClientAllocator;
   RefPtr<ID3D11VideoDecoder> mDecoder;
+  RefPtr<layers::SyncObject> mSyncObject;
   GUID mDecoderGUID;
   uint32_t mWidth = 0;
   uint32_t mHeight = 0;
@@ -661,13 +673,20 @@ D3D11DXVA2Manager::GetDXVADeviceManager()
   MutexAutoLock lock(mLock);
   return mDXGIDeviceManager;
 }
-
 HRESULT
 D3D11DXVA2Manager::Init(layers::KnowsCompositor* aKnowsCompositor,
-                        nsACString& aFailureReason)
+                        nsACString& aFailureReason,
+                        ID3D11Device* aDevice)
 {
-  HRESULT hr;
+  if (!NS_IsMainThread()) {
+    // DXVA Managers used for full video have to be initialized on the main
+    // thread. Managers initialized off the main thread have to pass a device
+    // and can only be used for color conversion.
+    MOZ_ASSERT(aDevice);
+    return InitInternal(aKnowsCompositor, aFailureReason, aDevice);
+  }
 
+  HRESULT hr;
   ScopedGfxFeatureReporter reporter("DXVA2D3D11");
 
   gfx::D3D11VideoCrashGuard crashGuard;
@@ -677,11 +696,65 @@ D3D11DXVA2Manager::Init(layers::KnowsCompositor* aKnowsCompositor,
     return E_FAIL;
   }
 
-  mDevice = gfx::DeviceManagerDx::Get()->CreateDecoderDevice();
-  if (!mDevice) {
-    aFailureReason.AssignLiteral("Failed to create D3D11 device for decoder");
-    return E_FAIL;
+  hr = InitInternal(aKnowsCompositor, aFailureReason, aDevice);
+  NS_ENSURE_TRUE(SUCCEEDED(hr), hr);
+
+  if (layers::ImageBridgeChild::GetSingleton() || !aKnowsCompositor) {
+    // There's no proper KnowsCompositor for ImageBridge currently (and it
+    // implements the interface), so just use that if it's available.
+    mTextureClientAllocator = new D3D11RecycleAllocator(
+      layers::ImageBridgeChild::GetSingleton().get(), mDevice);
+
+    if (ImageBridgeChild::GetSingleton() && gfxPrefs::PDMWMFUseSyncTexture() &&
+        mDevice != DeviceManagerDx::Get()->GetCompositorDevice()) {
+      // We use a syncobject to avoid the cost of the mutex lock when compositing,
+      // and because it allows color conversion ocurring directly from this texture
+      // DXVA does not seem to accept IDXGIKeyedMutex textures as input.
+      mSyncObject =
+        layers::SyncObject::CreateSyncObject(layers::ImageBridgeChild::GetSingleton()->
+                                               GetTextureFactoryIdentifier().mSyncHandle,
+                                             mDevice);
+    }
+  } else {
+    mTextureClientAllocator =
+      new D3D11RecycleAllocator(aKnowsCompositor, mDevice);
+    if (gfxPrefs::PDMWMFUseSyncTexture()) {
+      // We use a syncobject to avoid the cost of the mutex lock when compositing,
+      // and because it allows color conversion ocurring directly from this texture
+      // DXVA does not seem to accept IDXGIKeyedMutex textures as input.
+      mSyncObject =
+        layers::SyncObject::CreateSyncObject(aKnowsCompositor->GetTextureFactoryIdentifier().mSyncHandle,
+                                             mDevice);
+    }
   }
+  mTextureClientAllocator->SetMaxPoolSize(5);
+
+  Telemetry::Accumulate(Telemetry::MEDIA_DECODER_BACKEND_USED,
+                        uint32_t(media::MediaDecoderBackend::WMFDXVA2D3D11));
+
+  reporter.SetSuccessful();
+
+  return S_OK;
+}
+
+HRESULT
+D3D11DXVA2Manager::InitInternal(layers::KnowsCompositor* aKnowsCompositor,
+                                nsACString& aFailureReason,
+                                ID3D11Device* aDevice)
+{
+  HRESULT hr;
+
+  mDevice = aDevice;
+
+  if (!mDevice) {
+    mDevice = gfx::DeviceManagerDx::Get()->CreateDecoderDevice();
+    if (!mDevice) {
+      aFailureReason.AssignLiteral("Failed to create D3D11 device for decoder");
+      return E_FAIL;
+    }
+  }
+
+  mDevice->GetImmediateContext(getter_AddRefs(mContext));
 
   hr = wmf::MFCreateDXGIDeviceManager(&mDeviceManagerToken,
                                       getter_AddRefs(mDXGIDeviceManager));
@@ -788,22 +861,6 @@ D3D11DXVA2Manager::Init(layers::KnowsCompositor* aKnowsCompositor,
     }
   }
 
-  if (layers::ImageBridgeChild::GetSingleton()) {
-    // There's no proper KnowsCompositor for ImageBridge currently (and it
-    // implements the interface), so just use that if it's available.
-    mTextureClientAllocator = new D3D11RecycleAllocator(
-      layers::ImageBridgeChild::GetSingleton().get(), mDevice);
-  } else {
-    mTextureClientAllocator =
-      new D3D11RecycleAllocator(aKnowsCompositor, mDevice);
-  }
-  mTextureClientAllocator->SetMaxPoolSize(5);
-
-  Telemetry::Accumulate(Telemetry::MEDIA_DECODER_BACKEND_USED,
-                        uint32_t(media::MediaDecoderBackend::WMFDXVA2D3D11));
-
-  reporter.SetSuccessful();
-
   return S_OK;
 }
 
@@ -833,38 +890,143 @@ D3D11DXVA2Manager::CopyToImage(IMFSample* aVideoSample,
 {
   NS_ENSURE_TRUE(aVideoSample, E_POINTER);
   NS_ENSURE_TRUE(aOutImage, E_POINTER);
-
-  // Our video frame is stored in a non-sharable ID3D11Texture2D. We need
-  // to create a copy of that frame as a sharable resource, save its share
-  // handle, and put that handle into the rendering pipeline.
+  MOZ_ASSERT(mTextureClientAllocator);
 
   RefPtr<D3D11ShareHandleImage> image =
     new D3D11ShareHandleImage(gfx::IntSize(mWidth, mHeight), aRegion);
   bool ok = image->AllocateTexture(mTextureClientAllocator, mDevice);
   NS_ENSURE_TRUE(ok, E_FAIL);
 
-  HRESULT hr = mTransform->Input(aVideoSample);
-  NS_ENSURE_TRUE(SUCCEEDED(hr), hr);
+  RefPtr<TextureClient> client = image->GetTextureClient(ImageBridgeChild::GetSingleton().get());
+  NS_ENSURE_TRUE(client, E_FAIL);
 
   RefPtr<IDXGIKeyedMutex> mutex;
-  RefPtr<IMFSample> sample;
+  HRESULT hr;
   RefPtr<ID3D11Texture2D> texture = image->GetTexture();
 
   texture->QueryInterface((IDXGIKeyedMutex**)getter_AddRefs(mutex));
 
-  hr = mutex->AcquireSync(0, 2000);
+  {
+    AutoTextureLock(mutex, hr, 2000);
+    if (mutex && (FAILED(hr) || hr == WAIT_TIMEOUT || hr == WAIT_ABANDONED)) {
+      return hr;
+    }
 
-  if (hr != S_OK) {
-    NS_WARNING("Acquire sync didn't manage to return within 2 seconds.");
+    if (!mutex && mDevice != DeviceManagerDx::Get()->GetCompositorDevice()) {
+      NS_ENSURE_TRUE(mSyncObject, E_FAIL);
+    }
+
+    if (client && client->GetFormat() == SurfaceFormat::NV12) {
+      // Our video frame is stored in a non-sharable ID3D11Texture2D. We need
+      // to create a copy of that frame as a sharable resource, save its share
+      // handle, and put that handle into the rendering pipeline.
+
+      RefPtr<IMFMediaBuffer> buffer;
+      hr = aVideoSample->GetBufferByIndex(0, getter_AddRefs(buffer));
+      NS_ENSURE_TRUE(SUCCEEDED(hr), hr);
+
+      RefPtr<IMFDXGIBuffer> dxgiBuf;
+      hr = buffer->QueryInterface((IMFDXGIBuffer**)getter_AddRefs(dxgiBuf));
+      NS_ENSURE_TRUE(SUCCEEDED(hr), hr);
+
+      RefPtr<ID3D11Texture2D> tex;
+      hr = dxgiBuf->GetResource(__uuidof(ID3D11Texture2D), getter_AddRefs(tex));
+      NS_ENSURE_TRUE(SUCCEEDED(hr), hr);
+
+      UINT index;
+      dxgiBuf->GetSubresourceIndex(&index);
+      mContext->CopySubresourceRegion(texture, 0, 0, 0, 0, tex, index, nullptr);
+    } else {
+      // Our video sample is in NV12 format but our output texture is in BGRA.
+      // Use MFT to do color conversion.
+      hr = mTransform->Input(aVideoSample);
+      NS_ENSURE_TRUE(SUCCEEDED(hr), hr);
+
+      RefPtr<IMFSample> sample;
+      hr = CreateOutputSample(sample, texture);
+      NS_ENSURE_TRUE(SUCCEEDED(hr), hr);
+
+      hr = mTransform->Output(&sample);
+    }
+  }
+  if (!mutex && mDevice != DeviceManagerDx::Get()->GetCompositorDevice()) {
+    client->SyncWithObject(mSyncObject);
+    mSyncObject->FinalizeFrame();
   }
 
-  hr = CreateOutputSample(sample, texture);
+  image.forget(aOutImage);
+
+  return S_OK;
+}
+
+HRESULT
+D3D11DXVA2Manager::CopyToBGRATexture(ID3D11Texture2D *aInTexture,
+                                     ID3D11Texture2D** aOutTexture)
+{
+  NS_ENSURE_TRUE(aInTexture, E_POINTER);
+  NS_ENSURE_TRUE(aOutTexture, E_POINTER);
+
+  HRESULT hr;
+  RefPtr<ID3D11Texture2D> texture, inTexture;
+
+  inTexture = aInTexture;
+
+  CD3D11_TEXTURE2D_DESC desc;
+  aInTexture->GetDesc(&desc);
+  hr = ConfigureForSize(desc.Width, desc.Height);
   NS_ENSURE_TRUE(SUCCEEDED(hr), hr);
 
-  hr = mTransform->Output(&sample);
-  mutex->ReleaseSync(0);
+  RefPtr<IDXGIKeyedMutex> mutex;
+  inTexture->QueryInterface((IDXGIKeyedMutex**)getter_AddRefs(mutex));
+  // The rest of this function will not work if inTexture implements
+  // IDXGIKeyedMutex! In that case case we would have to copy to a
+  // non-mutex using texture.
 
-  image.forget(aOutImage);
+  if (mutex) {
+    RefPtr<ID3D11Texture2D> newTexture;
+
+    desc.MiscFlags = 0;
+    hr = mDevice->CreateTexture2D(&desc, nullptr, getter_AddRefs(newTexture));
+    NS_ENSURE_TRUE(SUCCEEDED(hr) && newTexture, E_FAIL);
+
+    hr = mutex->AcquireSync(0, 2000);
+    NS_ENSURE_TRUE(SUCCEEDED(hr), hr);
+
+    mContext->CopyResource(newTexture, inTexture);
+
+    mutex->ReleaseSync(0);
+    inTexture = newTexture;
+  }
+
+  desc.Format = DXGI_FORMAT_B8G8R8A8_UNORM;
+
+  hr = mDevice->CreateTexture2D(&desc, nullptr, getter_AddRefs(texture));
+  NS_ENSURE_TRUE(SUCCEEDED(hr) && texture, E_FAIL);
+
+  RefPtr<IMFSample> inputSample;
+  wmf::MFCreateSample(getter_AddRefs(inputSample));
+
+  // If these aren't set the decoder fails.
+  inputSample->SetSampleTime(10);
+  inputSample->SetSampleDuration(10000);
+
+  RefPtr<IMFMediaBuffer> inputBuffer;
+  hr = wmf::MFCreateDXGISurfaceBuffer(
+    __uuidof(ID3D11Texture2D), inTexture, 0, FALSE, getter_AddRefs(inputBuffer));
+  NS_ENSURE_TRUE(SUCCEEDED(hr), hr);
+
+  inputSample->AddBuffer(inputBuffer);
+
+  hr = mTransform->Input(inputSample);
+  NS_ENSURE_TRUE(SUCCEEDED(hr), hr);
+
+  RefPtr<IMFSample> outputSample;
+  hr = CreateOutputSample(outputSample, texture);
+  NS_ENSURE_TRUE(SUCCEEDED(hr), hr);
+
+  hr = mTransform->Output(&outputSample);
+
+  texture.forget(aOutTexture);
 
   return S_OK;
 }
@@ -947,7 +1109,7 @@ D3D11DXVA2Manager::CreateDXVA2Decoder(const VideoInfo& aVideoInfo,
   desc.SampleHeight = aVideoInfo.mImage.height;
 
   // Assume the current duration is representative for the entire video.
-  float framerate = 1000000.0 / aVideoInfo.mDuration;
+  float framerate = 1000000.0 / aVideoInfo.mDuration.ToMicroseconds();
   if (IsUnsupportedResolution(desc.SampleWidth, desc.SampleHeight, framerate)) {
     return false;
   }
@@ -1009,7 +1171,8 @@ D3D11DXVA2Manager::CreateDecoder(const D3D11_VIDEO_DECODER_DESC& aDesc) const
 /* static */
 DXVA2Manager*
 DXVA2Manager::CreateD3D11DXVA(layers::KnowsCompositor* aKnowsCompositor,
-                              nsACString& aFailureReason)
+                              nsACString& aFailureReason,
+                              ID3D11Device* aDevice)
 {
   // DXVA processing takes up a lot of GPU resources, so limit the number of
   // videos we use DXVA with at any one time.
@@ -1021,7 +1184,7 @@ DXVA2Manager::CreateD3D11DXVA(layers::KnowsCompositor* aKnowsCompositor,
   }
 
   nsAutoPtr<D3D11DXVA2Manager> manager(new D3D11DXVA2Manager());
-  HRESULT hr = manager->Init(aKnowsCompositor, aFailureReason);
+  HRESULT hr = manager->Init(aKnowsCompositor, aFailureReason, aDevice);
   NS_ENSURE_TRUE(SUCCEEDED(hr), nullptr);
 
   return manager.forget();
@@ -1030,14 +1193,16 @@ DXVA2Manager::CreateD3D11DXVA(layers::KnowsCompositor* aKnowsCompositor,
 DXVA2Manager::DXVA2Manager()
   : mLock("DXVA2Manager")
 {
-  MOZ_ASSERT(NS_IsMainThread());
-  ++sDXVAVideosCount;
+  if (NS_IsMainThread()) {
+    ++sDXVAVideosCount;
+  }
 }
 
 DXVA2Manager::~DXVA2Manager()
 {
-  MOZ_ASSERT(NS_IsMainThread());
-  --sDXVAVideosCount;
+  if (NS_IsMainThread()) {
+    --sDXVAVideosCount;
+  }
 }
 
 bool

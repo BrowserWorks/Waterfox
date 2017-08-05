@@ -37,7 +37,11 @@ pref("services.sync.log.appender.console", "Fatal");
 pref("services.sync.log.appender.dump", "Error");
 pref("services.sync.log.appender.file.level", "Trace");
 pref("services.sync.log.appender.file.logOnError", true);
+#if defined(NIGHTLY_BUILD)
+pref("services.sync.log.appender.file.logOnSuccess", true);
+#else
 pref("services.sync.log.appender.file.logOnSuccess", false);
+#endif
 pref("services.sync.log.appender.file.maxErrorAge", 864000); // 10 days
 pref("services.sync.log.rootLogger", "Debug");
 pref("services.sync.log.logger.addonutils", "Debug");
@@ -83,3 +87,7 @@ pref("services.sync.engine.bookmarks.validation.percentageChance", 10);
 
 // We won't validate an engine if it has more than this many records on the server.
 pref("services.sync.engine.bookmarks.validation.maxRecords", 1000);
+
+// The maximum number of immediate resyncs to trigger for changes made during
+// a sync.
+pref("services.sync.maxResyncs", 5);

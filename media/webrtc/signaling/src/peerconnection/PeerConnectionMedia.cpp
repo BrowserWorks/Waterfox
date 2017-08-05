@@ -259,6 +259,21 @@ PeerConnectionMedia::ProtocolProxyQueryHandler::SetProxyOnPcm(
 
 NS_IMPL_ISUPPORTS(PeerConnectionMedia::ProtocolProxyQueryHandler, nsIProtocolProxyCallback)
 
+void
+PeerConnectionMedia::StunAddrsHandler::OnStunAddrsAvailable(
+    const mozilla::net::NrIceStunAddrArray& addrs)
+{
+  CSFLogInfo(logTag, "%s: receiving (%d) stun addrs", __FUNCTION__,
+                                                      (int)addrs.Length());
+  if (pcm_) {
+    pcm_->mStunAddrs = addrs;
+    pcm_->mLocalAddrsCompleted = true;
+    pcm_->mStunAddrsRequest = nullptr;
+    pcm_->FlushIceCtxOperationQueueIfReady();
+    pcm_ = nullptr;
+  }
+}
+
 PeerConnectionMedia::PeerConnectionMedia(PeerConnectionImpl *parent)
     : mParent(parent),
       mParentHandle(parent->GetHandle()),
@@ -269,7 +284,27 @@ PeerConnectionMedia::PeerConnectionMedia(PeerConnectionImpl *parent)
       mMainThread(mParent->GetMainThread()),
       mSTSThread(mParent->GetSTSThread()),
       mProxyResolveCompleted(false),
-      mIceRestartState(ICE_RESTART_NONE) {
+      mIceRestartState(ICE_RESTART_NONE),
+      mLocalAddrsCompleted(false) {
+}
+
+void
+PeerConnectionMedia::InitLocalAddrs()
+{
+  if (XRE_IsContentProcess()) {
+    CSFLogDebug(logTag, "%s: Get stun addresses via IPC",
+                mParentHandle.c_str());
+    // We're in the content process, so send a request over IPC for the
+    // stun address discovery.
+    mStunAddrsRequest =
+        new StunAddrsRequestChild(new StunAddrsHandler(this));
+    mStunAddrsRequest->SendGetStunAddrs();
+  } else {
+    // No content process, so don't need to hold up the ice event queue
+    // until completion of stun address discovery. We can let the
+    // discovery of stun addresses happen in the same process.
+    mLocalAddrsCompleted = true;
+  }
 }
 
 nsresult
@@ -353,10 +388,12 @@ nsresult PeerConnectionMedia::Init(const std::vector<NrIceStunServer>& stun_serv
 
   bool ice_tcp = Preferences::GetBool("media.peerconnection.ice.tcp", false);
 
+  // setup the stun local addresses IPC async call
+  InitLocalAddrs();
+
   // TODO(ekr@rtfm.com): need some way to set not offerer later
   // Looks like a bug in the NrIceCtx API.
   mIceCtxHdlr = NrIceCtxHandler::Create("PC:" + mParentName,
-                                        true, // Offerer
                                         mParent->GetAllowIceLoopback(),
                                         ice_tcp,
                                         mParent->GetAllowIceLinkLocal(),
@@ -428,7 +465,7 @@ PeerConnectionMedia::EnsureTransport_s(size_t aLevel, size_t aComponentCount)
     std::ostringstream os;
     os << mParentName << " aLevel=" << aLevel;
     RefPtr<NrIceMediaStream> stream =
-      mIceCtxHdlr->CreateStream(os.str().c_str(),
+      mIceCtxHdlr->CreateStream(os.str(),
                                 aComponentCount);
 
     if (!stream) {
@@ -593,6 +630,7 @@ PeerConnectionMedia::StartIceChecks(const JsepSession& aSession)
         RefPtr<PeerConnectionMedia>(this),
         &PeerConnectionMedia::StartIceChecks_s,
         aSession.IsIceControlling(),
+        aSession.IsOfferer(),
         aSession.RemoteIsIceLite(),
         // Copy, just in case API changes to return a ref
         std::vector<std::string>(aSession.GetIceOptions())));
@@ -603,6 +641,7 @@ PeerConnectionMedia::StartIceChecks(const JsepSession& aSession)
 void
 PeerConnectionMedia::StartIceChecks_s(
     bool aIsControlling,
+    bool aIsOfferer,
     bool aIsIceLite,
     const std::vector<std::string>& aIceOptionsList) {
 
@@ -629,7 +668,7 @@ PeerConnectionMedia::StartIceChecks_s(
                                      NrIceCtx::ICE_CONTROLLING :
                                      NrIceCtx::ICE_CONTROLLED);
 
-  mIceCtxHdlr->ctx()->StartChecks();
+  mIceCtxHdlr->ctx()->StartChecks(aIsOfferer);
 }
 
 bool
@@ -920,6 +959,10 @@ PeerConnectionMedia::EnsureIceGathering_s(bool aDefaultRouteOnly,
     return;
   }
 
+  if (mStunAddrs.Length()) {
+    mIceCtxHdlr->ctx()->SetStunAddrs(mStunAddrs);
+  }
+
   // Start gathering, but only if there are streams
   for (size_t i = 0; i < mIceCtxHdlr->ctx()->GetStreamCount(); ++i) {
     if (mIceCtxHdlr->ctx()->GetStream(i)) {
@@ -1017,6 +1060,11 @@ PeerConnectionMedia::SelfDestruct()
     mRemoteSourceStreams[i]->DetachMedia_m();
   }
 
+  if (mStunAddrsRequest) {
+    mStunAddrsRequest->Cancel();
+    mStunAddrsRequest = nullptr;
+  }
+
   if (mProxyRequest) {
     mProxyRequest->Cancel(NS_ERROR_ABORT);
     mProxyRequest = nullptr;
@@ -1089,6 +1137,7 @@ PeerConnectionMedia::ShutdownMediaTransport_s()
 
   mIceCtxHdlr = nullptr;
 
+  // we're holding a ref to 'this' that's released by SelfDestruct_m
   mMainThread->Dispatch(WrapRunnable(this, &PeerConnectionMedia::SelfDestruct_m),
                         NS_DISPATCH_NORMAL);
 }

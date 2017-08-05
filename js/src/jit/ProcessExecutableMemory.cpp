@@ -160,13 +160,8 @@ RegisterExecutableMemory(void* p, size_t bytes, size_t pageSize)
     // XXX NB: The profiler believes this function is only called from the main
     // thread. If that ever becomes untrue, the profiler must be updated
     // immediately.
-    AcquireStackWalkWorkaroundLock();
-
-    bool success = RtlAddFunctionTable(&r->runtimeFunction, 1, reinterpret_cast<DWORD64>(p));
-
-    ReleaseStackWalkWorkaroundLock();
-
-    return success;
+    AutoSuppressStackWalking suppress;
+    return RtlAddFunctionTable(&r->runtimeFunction, 1, reinterpret_cast<DWORD64>(p));
 }
 
 static void
@@ -177,11 +172,8 @@ UnregisterExecutableMemory(void* p, size_t bytes, size_t pageSize)
     // XXX NB: The profiler believes this function is only called from the main
     // thread. If that ever becomes untrue, the profiler must be updated
     // immediately.
-    AcquireStackWalkWorkaroundLock();
-
+    AutoSuppressStackWalking suppress;
     RtlDeleteFunctionTable(&r->runtimeFunction);
-
-    ReleaseStackWalkWorkaroundLock();
 }
 # endif
 
@@ -217,7 +209,10 @@ ReserveProcessExecutableMemory(size_t bytes)
         }
 
         p = (uint8_t*)p + pageSize;
+        bytes -= pageSize;
     }
+
+    RegisterJitCodeRegion((uint8_t*)p, bytes);
 # endif
 
     return p;
@@ -227,6 +222,8 @@ static void
 DeallocateProcessExecutableMemory(void* addr, size_t bytes)
 {
 # ifdef HAVE_64BIT_BUILD
+    UnregisterJitCodeRegion((uint8_t*)addr, bytes);
+
     if (sJitExceptionHandler) {
         size_t pageSize = gc::SystemPageSize();
         addr = (uint8_t*)addr - pageSize;

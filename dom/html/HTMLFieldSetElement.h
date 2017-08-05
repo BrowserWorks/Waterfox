@@ -43,18 +43,20 @@ public:
   virtual nsresult GetEventTargetParent(
                      EventChainPreVisitor& aVisitor) override;
   virtual nsresult AfterSetAttr(int32_t aNameSpaceID, nsIAtom* aName,
-                                const nsAttrValue* aValue, bool aNotify) override;
+                                const nsAttrValue* aValue,
+                                const nsAttrValue* aOldValue,
+                                bool aNotify) override;
 
   virtual nsresult InsertChildAt(nsIContent* aChild, uint32_t aIndex,
                                      bool aNotify) override;
   virtual void RemoveChildAt(uint32_t aIndex, bool aNotify) override;
 
   // nsIFormControl
-  NS_IMETHOD_(uint32_t) GetType() const override { return NS_FORM_FIELDSET; }
   NS_IMETHOD Reset() override;
   NS_IMETHOD SubmitNamesValues(HTMLFormSubmission* aFormSubmission) override;
   virtual bool IsDisabledForEvents(EventMessage aMessage) override;
-  virtual nsresult Clone(mozilla::dom::NodeInfo *aNodeInfo, nsINode **aResult) const override;
+  virtual nsresult Clone(mozilla::dom::NodeInfo *aNodeInfo, nsINode **aResult,
+                         bool aPreallocateChildren) const override;
 
   const nsIContent* GetFirstLegend() const { return mFirstLegend; }
 

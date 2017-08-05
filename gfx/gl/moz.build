@@ -24,6 +24,7 @@ if CONFIG['MOZ_GL_PROVIDER']:
     gl_provider = CONFIG['MOZ_GL_PROVIDER']
 
 EXPORTS += [
+    'AndroidNativeWindow.h',
     'AndroidSurfaceTexture.h',
     'DecomposeIntoNoRepeatTriangles.h',
     'EGLUtils.h',
@@ -51,7 +52,6 @@ EXPORTS += [
     'SharedSurfaceEGL.h',
     'SharedSurfaceGL.h',
     'SurfaceTypes.h',
-    'TextureGarbageBin.h',
 ]
 
 if CONFIG['MOZ_X11']:
@@ -140,7 +140,6 @@ UNIFIED_SOURCES += [
     'SharedSurfaceEGL.cpp',
     'SharedSurfaceGL.cpp',
     'SurfaceTypes.cpp',
-    'TextureGarbageBin.cpp',
     'TextureImageEGL.cpp',
 ]
 

@@ -15,6 +15,8 @@
 #include "mozilla/dom/Element.h"
 #include "nsContentUtils.h"
 #include "nsIURI.h"
+#include "mozilla/URLExtraData.h"
+#include "nsSVGEffects.h"
 
 NS_IMPL_NS_NEW_NAMESPACED_SVG_ELEMENT(Use)
 
@@ -87,7 +89,8 @@ SVGUseElement::~SVGUseElement()
 // nsIDOMNode methods
 
 nsresult
-SVGUseElement::Clone(mozilla::dom::NodeInfo *aNodeInfo, nsINode **aResult) const
+SVGUseElement::Clone(mozilla::dom::NodeInfo *aNodeInfo, nsINode **aResult,
+                     bool aPreallocateChildren) const
 {
   *aResult = nullptr;
   already_AddRefed<mozilla::dom::NodeInfo> ni = RefPtr<mozilla::dom::NodeInfo>(aNodeInfo).forget();
@@ -95,7 +98,7 @@ SVGUseElement::Clone(mozilla::dom::NodeInfo *aNodeInfo, nsINode **aResult) const
 
   nsCOMPtr<nsINode> kungFuDeathGrip(it);
   nsresult rv1 = it->Init();
-  nsresult rv2 = const_cast<SVGUseElement*>(this)->CopyInnerTo(it);
+  nsresult rv2 = const_cast<SVGUseElement*>(this)->CopyInnerTo(it, aPreallocateChildren);
 
   // SVGUseElement specific portion - record who we cloned from
   it->mOriginal = const_cast<SVGUseElement*>(this);
@@ -327,10 +330,13 @@ SVGUseElement::CreateAnonymousContent()
   }
 
   // Store the base URI
-  mContentBaseURI = targetContent->GetBaseURI();
-  if (!mContentBaseURI) {
+  nsCOMPtr<nsIURI> baseURI = targetContent->GetBaseURI();
+  if (!baseURI) {
     return nullptr;
   }
+  mContentURLData = new URLExtraData(baseURI.forget(),
+                                     do_AddRef(OwnerDoc()->GetDocumentURI()),
+                                     do_AddRef(NodePrincipal()));
 
   targetContent->AddMutationObserver(this);
   mClone = newcontent;
@@ -418,11 +424,15 @@ SVGUseElement::LookupHref()
     return;
   }
 
+  nsCOMPtr<nsIURI> originURI =
+    mOriginal ? mOriginal->GetBaseURI() : GetBaseURI();
+  nsCOMPtr<nsIURI> baseURI = nsContentUtils::IsLocalRefURL(href)
+    ? nsSVGEffects::GetBaseURLForLocalRef(this, originURI)
+    : originURI;
+
   nsCOMPtr<nsIURI> targetURI;
-  nsCOMPtr<nsIURI> baseURI = mOriginal ? mOriginal->GetBaseURI() : GetBaseURI();
   nsContentUtils::NewURIWithDocumentCharset(getter_AddRefs(targetURI), href,
                                             GetComposedDoc(), baseURI);
-
   mSource.Reset(this, targetURI);
 }
 
@@ -455,20 +465,36 @@ SVGUseElement::PrependLocalTransformsTo(
   const gfxMatrix &aMatrix, SVGTransformTypes aWhich) const
 {
   // 'transform' attribute:
-  gfxMatrix fromUserSpace =
-    SVGUseElementBase::PrependLocalTransformsTo(aMatrix, aWhich);
-  if (aWhich == eUserSpaceToParent) {
-    return fromUserSpace;
+  gfxMatrix userToParent;
+
+  if (aWhich == eUserSpaceToParent || aWhich == eAllTransforms) {
+    userToParent = GetUserToParentTransform(mAnimateMotionTransform,
+                                            mTransforms);
+    if (aWhich == eUserSpaceToParent) {
+      return userToParent * aMatrix;
+    }
   }
+
   // our 'x' and 'y' attributes:
   float x, y;
   const_cast<SVGUseElement*>(this)->GetAnimatedLengthValues(&x, &y, nullptr);
-  gfxMatrix toUserSpace = gfxMatrix::Translation(x, y);
-  if (aWhich == eChildToUserSpace) {
-    return toUserSpace * aMatrix;
+
+  gfxMatrix childToUser = gfxMatrix::Translation(x, y);
+
+  if (aWhich == eAllTransforms) {
+    return childToUser * userToParent * aMatrix;
   }
-  MOZ_ASSERT(aWhich == eAllTransforms, "Unknown TransformTypes");
-  return toUserSpace * fromUserSpace;
+
+  MOZ_ASSERT(aWhich == eChildToUserSpace, "Unknown TransformTypes");
+
+  // The following may look broken because pre-multiplying our eChildToUserSpace
+  // transform with another matrix without including our eUserSpaceToParent
+  // transform between the two wouldn't make sense.  We don't expect that to
+  // ever happen though.  We get here either when the identity matrix has been
+  // passed because our caller just wants our eChildToUserSpace transform, or
+  // when our eUserSpaceToParent transform has already been multiplied into the
+  // matrix that our caller passes (such as when we're called from PaintSVG).
+  return childToUser * aMatrix;
 }
 
 /* virtual */ bool

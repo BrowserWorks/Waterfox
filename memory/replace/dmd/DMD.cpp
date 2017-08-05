@@ -20,6 +20,8 @@
 #include <windows.h>
 #include <process.h>
 #else
+#include <pthread.h>
+#include <sys/types.h>
 #include <unistd.h>
 #endif
 
@@ -47,33 +49,7 @@
 
 // replace_malloc.h needs to be included before replace_malloc_bridge.h,
 // which DMD.h includes, so DMD.h needs to be included after replace_malloc.h.
-// MOZ_REPLACE_ONLY_MEMALIGN saves us from having to define
-// replace_{posix_memalign,aligned_alloc,valloc}.  It requires defining
-// PAGE_SIZE.  Nb: sysconf() is expensive, but it's only used for (the obsolete
-// and rarely used) valloc.
-#define MOZ_REPLACE_ONLY_MEMALIGN 1
-
-#ifndef PAGE_SIZE
-#define DMD_DEFINED_PAGE_SIZE
-#ifdef XP_WIN
-#define PAGE_SIZE GetPageSize()
-static long GetPageSize()
-{
-  SYSTEM_INFO si;
-  GetSystemInfo(&si);
-  return si.dwPageSize;
-}
-#else // XP_WIN
-#define PAGE_SIZE sysconf(_SC_PAGESIZE)
-#endif // XP_WIN
-#endif // PAGE_SIZE
 #include "replace_malloc.h"
-#undef MOZ_REPLACE_ONLY_MEMALIGN
-#ifdef DMD_DEFINED_PAGE_SIZE
-#undef DMD_DEFINED_PAGE_SIZE
-#undef PAGE_SIZE
-#endif // DMD_DEFINED_PAGE_SIZE
-
 #include "DMD.h"
 
 namespace mozilla {
@@ -93,6 +69,7 @@ DMDBridge::GetDMDFuncs()
   return &gDMDFuncs;
 }
 
+MOZ_FORMAT_PRINTF(1, 2)
 inline void
 StatusMsg(const char* aFmt, ...)
 {
@@ -440,9 +417,6 @@ public:
 
 #else
 
-#include <pthread.h>
-#include <sys/types.h>
-
 class MutexBase
 {
   pthread_mutex_t mMutex;
@@ -526,8 +500,6 @@ public:
 #define DMD_SET_TLS_DATA(i_, v_)        TlsSetValue((i_), (v_))
 
 #else
-
-#include <pthread.h>
 
 #define DMD_TLS_INDEX_TYPE               pthread_key_t
 #define DMD_CREATE_TLS_INDEX(i_)         pthread_key_create(&(i_), nullptr)
@@ -1588,7 +1560,7 @@ Init(const malloc_table_t* aMallocTable)
   if (e) {
     StatusMsg("$DMD = '%s'\n", e);
   } else {
-    StatusMsg("$DMD is undefined\n", e);
+    StatusMsg("$DMD is undefined\n");
   }
 
   // Parse $DMD env var.

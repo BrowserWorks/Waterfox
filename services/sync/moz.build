@@ -5,7 +5,7 @@
 # file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
 with Files('**'):
-    BUG_COMPONENT = ('Mozilla Services', 'Firefox Sync: Backend')
+    BUG_COMPONENT = ('Firefox', 'Sync')
 
 DIRS += ['locales']
 
@@ -36,6 +36,7 @@ EXTRA_JS_MODULES['services-sync'] += [
     'modules/status.js',
     'modules/SyncedTabs.jsm',
     'modules/telemetry.js',
+    'modules/UIState.jsm',
     'modules/util.js',
 ]
 
@@ -44,7 +45,7 @@ EXTRA_PP_JS_MODULES['services-sync'] += [
 ]
 
 # Definitions used by constants.js
-DEFINES['weave_version'] = '1.56.0'
+DEFINES['weave_version'] = '1.57.0'
 DEFINES['weave_id'] = '{340c2bbc-ce74-4362-90b5-7c26312808ef}'
 
 EXTRA_JS_MODULES['services-sync'].engines += [

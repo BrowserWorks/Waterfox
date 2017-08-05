@@ -27,6 +27,8 @@
 # error "Unknown architecture!"
 #endif
 
+#include "wasm/WasmBuiltins.h"
+
 namespace js {
 namespace jit {
 
@@ -84,21 +86,29 @@ void
 MacroAssembler::call(const wasm::CallSiteDesc& desc, const Register reg)
 {
     CodeOffset l = call(reg);
-    append(desc, l, framePushed());
+    append(desc, l);
 }
 
 void
 MacroAssembler::call(const wasm::CallSiteDesc& desc, uint32_t funcDefIndex)
 {
     CodeOffset l = callWithPatch();
-    append(desc, l, framePushed(), funcDefIndex);
+    append(desc, l, funcDefIndex);
 }
 
 void
 MacroAssembler::call(const wasm::CallSiteDesc& desc, wasm::Trap trap)
 {
     CodeOffset l = callWithPatch();
-    append(desc, l, framePushed(), trap);
+    append(desc, l, trap);
+}
+
+void
+MacroAssembler::call(const wasm::CallSiteDesc& desc, wasm::SymbolicAddress imm)
+{
+    MOZ_ASSERT(wasm::NeedsBuiltinThunk(imm), "only for functions which may appear in profiler");
+    call(imm);
+    append(desc, CodeOffset(currentOffset()));
 }
 
 // ===============================================================
@@ -281,9 +291,9 @@ MacroAssembler::PushStubCode()
 }
 
 void
-MacroAssembler::enterExitFrame(Register temp, const VMFunction* f)
+MacroAssembler::enterExitFrame(Register cxreg, Register scratch, const VMFunction* f)
 {
-    linkExitFrame(temp);
+    linkExitFrame(cxreg, scratch);
     // Push the JitCode pointer. (Keep the code alive, when on the stack)
     PushStubCode();
     // Push VMFunction pointer, to mark arguments.
@@ -291,18 +301,18 @@ MacroAssembler::enterExitFrame(Register temp, const VMFunction* f)
 }
 
 void
-MacroAssembler::enterFakeExitFrame(Register temp, enum ExitFrameTokenValues token)
+MacroAssembler::enterFakeExitFrame(Register cxreg, Register scratch, enum ExitFrameTokenValues token)
 {
-    linkExitFrame(temp);
+    linkExitFrame(cxreg, scratch);
     Push(Imm32(token));
     Push(ImmPtr(nullptr));
 }
 
 void
-MacroAssembler::enterFakeExitFrameForNative(Register temp, bool isConstructing)
+MacroAssembler::enterFakeExitFrameForNative(Register cxreg, Register scratch, bool isConstructing)
 {
-    enterFakeExitFrame(temp, isConstructing ? ConstructNativeExitFrameLayoutToken
-                                            : CallNativeExitFrameLayoutToken);
+    enterFakeExitFrame(cxreg, scratch, isConstructing ? ConstructNativeExitFrameLayoutToken
+                                                      : CallNativeExitFrameLayoutToken);
 }
 
 void
@@ -409,6 +419,14 @@ MacroAssembler::branchIfRopeOrExternal(Register str, Register temp, Label* label
 }
 
 void
+MacroAssembler::branchIfNotRope(Register str, Label* label)
+{
+    Address flags(str, JSString::offsetOfFlags());
+    static_assert(JSString::ROPE_FLAGS == 0, "Rope type flags must be 0");
+    branchTest32(Assembler::NonZero, flags, Imm32(JSString::TYPE_FLAGS_MASK), label);
+}
+
+void
 MacroAssembler::branchLatin1String(Register string, Label* label)
 {
     branchTest32(Assembler::NonZero, Address(string, JSString::offsetOfFlags()),
@@ -444,6 +462,20 @@ MacroAssembler::branchIfInterpreted(Register fun, Label* label)
     Address address(fun, JSFunction::offsetOfNargs());
     int32_t bit = IMM32_16ADJ(JSFunction::INTERPRETED);
     branchTest32(Assembler::NonZero, address, Imm32(bit), label);
+}
+
+void
+MacroAssembler::branchIfObjectEmulatesUndefined(Register objReg, Register scratch,
+                                                Label* slowCheck, Label* label)
+{
+    // The branches to out-of-line code here implement a conservative version
+    // of the JSObject::isWrapper test performed in EmulatesUndefined.
+    loadObjClass(objReg, scratch);
+
+    branchTestClassIsProxy(true, scratch, slowCheck);
+
+    Address flags(scratch, Class::offsetOfFlags());
+    branchTest32(Assembler::NonZero, flags, Imm32(JSCLASS_EMULATES_UNDEFINED), label);
 }
 
 void
@@ -492,22 +524,6 @@ void
 MacroAssembler::branchTestObjGroup(Condition cond, Register obj, Register group, Label* label)
 {
     branchPtr(cond, Address(obj, JSObject::offsetOfGroup()), group, label);
-}
-
-void
-MacroAssembler::branchTestObjectTruthy(bool truthy, Register objReg, Register scratch,
-                                       Label* slowCheck, Label* checked)
-{
-    // The branches to out-of-line code here implement a conservative version
-    // of the JSObject::isWrapper test performed in EmulatesUndefined.  If none
-    // of the branches are taken, we can check class flags directly.
-    loadObjClass(objReg, scratch);
-    Address flags(scratch, Class::offsetOfFlags());
-
-    branchTestClassIsProxy(true, scratch, slowCheck);
-
-    Condition cond = truthy ? Assembler::Zero : Assembler::NonZero;
-    branchTest32(cond, flags, Imm32(JSCLASS_EMULATES_UNDEFINED), checked);
 }
 
 void

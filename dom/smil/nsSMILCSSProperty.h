@@ -10,10 +10,13 @@
 #define NS_SMILCSSPROPERTY_H_
 
 #include "mozilla/Attributes.h"
+#include "mozilla/StyleBackendType.h"
 #include "nsISMILAttr.h"
 #include "nsIAtom.h"
 #include "nsCSSPropertyID.h"
 #include "nsCSSValue.h"
+
+class nsStyleContext;
 
 namespace mozilla {
 namespace dom {
@@ -33,8 +36,14 @@ public:
    * Constructs a new nsSMILCSSProperty.
    * @param  aPropID   The CSS property we're interested in animating.
    * @param  aElement  The element whose CSS property is being animated.
+   * @param  aBaseStyleContext  The style context to use when getting the base
+   *                            value. If this is nullptr and GetBaseValue is
+   *                            called, an empty nsSMILValue initialized with
+   *                            the nsSMILCSSValueType will be returned.
    */
-  nsSMILCSSProperty(nsCSSPropertyID aPropID, mozilla::dom::Element* aElement);
+  nsSMILCSSProperty(nsCSSPropertyID aPropID,
+                    mozilla::dom::Element* aElement,
+                    nsStyleContext* aBaseStyleContext);
 
   // nsISMILAttr methods
   virtual nsresult ValueFromString(const nsAString& aStr,
@@ -50,10 +59,14 @@ public:
    * SMIL animation.
    *
    * @param   aProperty  The property to check for animation support.
+   * @param   aBackend   The style backend to check for animation support.
+   *                     This is a temporary measure until the Servo backend
+   *                     supports all animatable properties (bug 1353918).
    * @return  true if the given property is supported for SMIL animation, or
    *          false otherwise
    */
-  static bool IsPropertyAnimatable(nsCSSPropertyID aPropID);
+  static bool IsPropertyAnimatable(nsCSSPropertyID aPropID,
+                                   mozilla::StyleBackendType aBackend);
 
 protected:
   nsCSSPropertyID mPropID;
@@ -62,6 +75,12 @@ protected:
   // as the Compositing step, and DOM elements don't get a chance to die during
   // that time.
   mozilla::dom::Element*   mElement;
+
+  // The style context to use when fetching base styles.
+  // As with mElement, since an nsISMILAttr only lives as long as the
+  // compositing step and since ComposeAttribute holds an owning reference to
+  // the base style context, we can use a non-owning reference here.
+  nsStyleContext* mBaseStyleContext;
 };
 
 #endif // NS_SMILCSSPROPERTY_H_

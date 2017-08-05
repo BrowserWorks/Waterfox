@@ -15,6 +15,11 @@ const {isWindowIncluded} = require("devtools/shared/layout/utils");
 const specs = require("devtools/shared/specs/storage");
 const { Task } = require("devtools/shared/task");
 
+const DEFAULT_VALUE = "value";
+
+loader.lazyRequireGetter(this, "naturalSortCaseInsensitive",
+  "devtools/client/shared/natural-sort", true);
+
 // GUID to be used as a separator in compound keys. This must match the same
 // constant in devtools/client/storage/ui.js,
 // devtools/client/storage/test/head.js and
@@ -181,7 +186,7 @@ StorageActors.defaults = function (typeName, observationTopics) {
       this.populateStoresForHosts();
       if (observationTopics) {
         observationTopics.forEach((observationTopic) => {
-          Services.obs.addObserver(this, observationTopic, false);
+          Services.obs.addObserver(this, observationTopic);
         });
       }
       this.onWindowReady = this.onWindowReady.bind(this);
@@ -357,15 +362,20 @@ StorageActors.defaults = function (typeName, observationTopics) {
             toReturn.data.push(...values);
           }
         }
+
         toReturn.total = this.getObjectsSize(host, names, options);
+
         if (offset > toReturn.total) {
           // In this case, toReturn.data is an empty array.
           toReturn.offset = toReturn.total;
           toReturn.data = [];
         } else {
-          toReturn.data = toReturn.data.sort((a, b) => {
-            return a[sortOn] - b[sortOn];
-          }).slice(offset, offset + size).map(a => this.toStoreObject(a));
+          // We need to use natural sort before slicing.
+          let sorted = toReturn.data.sort((a, b) => {
+            return naturalSortCaseInsensitive(a[sortOn], b[sortOn]);
+          });
+          let sliced = sorted.slice(offset, offset + size);
+          toReturn.data = sliced.map(a => this.toStoreObject(a));
         }
       } else {
         let obj = yield this.getValuesForHost(host, undefined, undefined,
@@ -375,15 +385,18 @@ StorageActors.defaults = function (typeName, observationTopics) {
         }
 
         toReturn.total = obj.length;
+
         if (offset > toReturn.total) {
           // In this case, toReturn.data is an empty array.
           toReturn.offset = offset = toReturn.total;
           toReturn.data = [];
         } else {
-          toReturn.data = obj.sort((a, b) => {
-            return a[sortOn] - b[sortOn];
-          }).slice(offset, offset + size)
-            .map(object => this.toStoreObject(object));
+          // We need to use natural sort before slicing.
+          let sorted = obj.sort((a, b) => {
+            return naturalSortCaseInsensitive(a[sortOn], b[sortOn]);
+          });
+          let sliced = sorted.slice(offset, offset + size);
+          toReturn.data = sliced.map(object => this.toStoreObject(object));
         }
       }
 
@@ -657,6 +670,14 @@ StorageActors.createActor({
     this.editCookie(data);
   }),
 
+  addItem: Task.async(function* (guid) {
+    let doc = this.storageActor.document;
+    let time = new Date().getTime();
+    let expiry = new Date(time + 3600 * 24 * 1000).toGMTString();
+
+    doc.cookie = `${guid}=${DEFAULT_VALUE};expires=${expiry}`;
+  }),
+
   removeItem: Task.async(function* (host, name) {
     let doc = this.storageActor.document;
     this.removeCookie(host, name, doc.nodePrincipal
@@ -921,7 +942,7 @@ var cookieHelpers = {
   },
 
   addCookieObservers() {
-    Services.obs.addObserver(cookieHelpers, "cookie-changed", false);
+    Services.obs.addObserver(cookieHelpers, "cookie-changed");
     return null;
   },
 
@@ -983,6 +1004,12 @@ var cookieHelpers = {
       case "editCookie": {
         let rowdata = msg.data.args[0];
         return cookieHelpers.editCookie(rowdata);
+      }
+      case "createNewCookie": {
+        let host = msg.data.args[0];
+        let guid = msg.data.args[1];
+        let originAttributes = msg.data.args[2];
+        return cookieHelpers.createNewCookie(host, guid, originAttributes);
       }
       case "removeCookie": {
         let host = msg.data.args[0];
@@ -1109,6 +1136,14 @@ function getObjectForLocalOrSessionStorage(type) {
         { name: "name", editable: true },
         { name: "value", editable: true }
       ];
+    }),
+
+    addItem: Task.async(function* (guid, host) {
+      let storage = this.hostVsStores.get(host);
+      if (!storage) {
+        return;
+      }
+      storage.setItem(guid, DEFAULT_VALUE);
     }),
 
     /**
@@ -2469,8 +2504,8 @@ let StorageActor = protocol.ActorClassWithSpec(specs.storageSpec, {
 
     // Notifications that help us keep track of newly added windows and windows
     // that got removed
-    Services.obs.addObserver(this, "content-document-global-created", false);
-    Services.obs.addObserver(this, "inner-window-destroyed", false);
+    Services.obs.addObserver(this, "content-document-global-created");
+    Services.obs.addObserver(this, "inner-window-destroyed");
     this.onPageChange = this.onPageChange.bind(this);
 
     let handler = tabActor.chromeEventHandler;

@@ -314,9 +314,12 @@ MOZ_CrashPrintf(const char* aFilename, int aLine, const char* aFormat, ...);
  */
 #define MOZ_CRASH_UNSAFE_PRINTF(format, ...) \
    do { \
-     MOZ_STATIC_ASSERT_VALID_ARG_COUNT(__VA_ARGS__); \
      static_assert( \
-       MOZ_PASTE_PREFIX_AND_ARG_COUNT(, __VA_ARGS__) <= sPrintfMaxArgs, \
+       MOZ_ARG_COUNT(__VA_ARGS__) > 0, \
+       "Did you forget arguments to MOZ_CRASH_UNSAFE_PRINTF? " \
+       "Or maybe you want MOZ_CRASH instead?"); \
+     static_assert( \
+       MOZ_ARG_COUNT(__VA_ARGS__) <= sPrintfMaxArgs, \
        "Only up to 4 additional arguments are allowed!"); \
      static_assert(sizeof(format) <= sPrintfCrashReasonSize, \
        "The supplied format string is too long!"); \
@@ -364,6 +367,9 @@ MOZ_END_EXTERN_C
  * This can cause user pain, so use it sparingly. If a MOZ_DIAGNOSTIC_ASSERT
  * is firing, it should promptly be converted to a MOZ_ASSERT while the failure
  * is being investigated, rather than letting users suffer.
+ *
+ * MOZ_DIAGNOSTIC_ASSERT_ENABLED is defined when MOZ_DIAGNOSTIC_ASSERT is like
+ * MOZ_RELEASE_ASSERT rather than MOZ_ASSERT.
  */
 
 /*
@@ -444,10 +450,14 @@ struct AssertionConditionType
 #  define MOZ_ASSERT(...) do { } while (0)
 #endif /* DEBUG */
 
-#ifdef RELEASE_OR_BETA
-#  define MOZ_DIAGNOSTIC_ASSERT MOZ_ASSERT
-#else
+#if defined(NIGHTLY_BUILD) || defined(MOZ_DEV_EDITION)
 #  define MOZ_DIAGNOSTIC_ASSERT MOZ_RELEASE_ASSERT
+#  define MOZ_DIAGNOSTIC_ASSERT_ENABLED 1
+#else
+#  define MOZ_DIAGNOSTIC_ASSERT MOZ_ASSERT
+#  ifdef DEBUG
+#    define MOZ_DIAGNOSTIC_ASSERT_ENABLED 1
+#  endif
 #endif
 
 /*

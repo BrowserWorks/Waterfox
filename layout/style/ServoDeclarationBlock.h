@@ -25,10 +25,11 @@ public:
     : DeclarationBlock(aCopy)
     , mRaw(Servo_DeclarationBlock_Clone(aCopy.mRaw).Consume()) {}
 
-  NS_INLINE_DECL_REFCOUNTING(ServoDeclarationBlock)
+  NS_INLINE_DECL_THREADSAFE_REFCOUNTING(ServoDeclarationBlock)
 
   static already_AddRefed<ServoDeclarationBlock>
-  FromCssText(const nsAString& aCssText);
+  FromCssText(const nsAString& aCssText, URLExtraData* aExtraData,
+              nsCompatibility aMode);
 
   RawServoDeclarationBlock* Raw() const { return mRaw; }
   RawServoDeclarationBlock* const* RefRaw() const {
@@ -36,6 +37,17 @@ public:
                   sizeof(RawServoDeclarationBlock*),
                   "RefPtr should just be a pointer");
     return reinterpret_cast<RawServoDeclarationBlock* const*>(&mRaw);
+  }
+
+  const RawServoDeclarationBlockStrong* RefRawStrong() const
+  {
+    static_assert(sizeof(RefPtr<RawServoDeclarationBlock>) ==
+                  sizeof(RawServoDeclarationBlock*),
+                  "RefPtr should just be a pointer");
+    static_assert(sizeof(RefPtr<RawServoDeclarationBlock>) ==
+                  sizeof(RawServoDeclarationBlockStrong),
+                  "RawServoDeclarationBlockStrong should be the same as RefPtr");
+    return reinterpret_cast<const RawServoDeclarationBlockStrong*>(&mRaw);
   }
 
   void ToString(nsAString& aResult) const {

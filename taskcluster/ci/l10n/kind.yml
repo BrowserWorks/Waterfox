@@ -2,7 +2,7 @@
 # License, v. 2.0. If a copy of the MPL was not distributed with this
 # file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
-implementation: taskgraph.task.repacks:RepackTask
+loader: taskgraph.loader.single_dep:loader
 
 
 transforms:
@@ -28,6 +28,11 @@ job-template:
       by-build-platform:
          default: browser/locales/all-locales
          android-api-15-l10n: mobile/locales/l10n-changesets.json
+   ignore-locales:
+      by-build-platform:
+         # OSX has a special locale for japanese
+         macosx64.*: [ja]
+         default: [ja-JP-mac]
    run-time:
       by-build-platform:
          default: 36000
@@ -36,18 +41,7 @@ job-template:
       by-build-platform:
          default: public
          android-api-15-l10n: internal
-   index:
-      type: l10n
-      product:
-         by-build-platform:
-            default: firefox
-            android-api-15-l10n: mobile
-      job-name:
-         by-build-platform:
-            linux-l10n: linux-opt
-            linux64-l10n: linux64-opt
-            macosx64: macosx64-opt
-            android-api-15-l10n: android-api-15-opt
+         macosx64-nightly: internal
    worker-type:
       by-build-platform:
          default: aws-provisioner-v1/gecko-{level}-b-linux
@@ -61,7 +55,7 @@ job-template:
          by-build-platform:
             linux64-l10n: linux64/opt
             linux-l10n: linux32/opt
-            macosx64: macosx64/opt
+            macosx64: osx-10-7/opt
             android-api-15-l10n: android-4-0-armv7-api15/opt
    mozharness:
       config:
@@ -111,9 +105,9 @@ job-template:
    when:
       files-changed:
          - browser/locales/all-locales
-         - python/compare-locales/**
          - testing/mozharness/configs/single_locale/**
          - testing/mozharness/mozharness/mozilla/l10n/locales.py
          - testing/mozharness/scripts/desktop_l10n.py
+         - third_party/python/compare-locales/**
          - toolkit/locales/**
          - toolkit/mozapps/installer/**

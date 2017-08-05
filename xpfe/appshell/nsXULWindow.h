@@ -90,6 +90,8 @@ protected:
    NS_IMETHOD EnsurePrimaryContentTreeOwner();
    NS_IMETHOD EnsurePrompter();
    NS_IMETHOD EnsureAuthPrompter();
+   NS_IMETHOD ForceRoundedDimensions();
+   NS_IMETHOD GetAvailScreenSize(int32_t* aAvailWidth, int32_t* aAvailHeight);
 
    void OnChromeLoaded();
    void StaggerPosition(int32_t &aRequestedX, int32_t &aRequestedY,
@@ -121,7 +123,11 @@ protected:
       int32_t aCY);
    NS_IMETHOD ExitModalLoop(nsresult aStatus);
    NS_IMETHOD CreateNewChromeWindow(int32_t aChromeFlags, nsITabParent* aOpeningTab, mozIDOMWindowProxy* aOpenerWindow, nsIXULWindow **_retval);
-   NS_IMETHOD CreateNewContentWindow(int32_t aChromeFlags, nsITabParent* aOpeningTab, mozIDOMWindowProxy* aOpenerWindow, nsIXULWindow **_retval);
+   NS_IMETHOD CreateNewContentWindow(int32_t aChromeFlags,
+                                     nsITabParent* aOpeningTab,
+                                     mozIDOMWindowProxy* aOpenerWindow,
+                                     uint64_t aNextTabParentId,
+                                     nsIXULWindow **_retval);
    NS_IMETHOD GetHasPrimaryContent(bool* aResult);
 
    void       EnableParent(bool aEnable);
@@ -165,6 +171,7 @@ protected:
    uint32_t                mPersistentAttributesDirty; // persistentAttributes
    uint32_t                mPersistentAttributesMask;
    uint32_t                mChromeFlags;
+   uint64_t                mNextTabParentId;
    nsString                mTitle;
    nsIntRect               mOpenerScreenRect; // the screen rect of the opener
 

@@ -684,30 +684,8 @@ GLBlitHelper::BindAndUploadEGLImage(EGLImage image, GLuint target)
 bool
 GLBlitHelper::BlitSurfaceTextureImage(layers::SurfaceTextureImage* stImage)
 {
-    AndroidSurfaceTexture* surfaceTexture = stImage->GetSurfaceTexture();
-
-    ScopedBindTextureUnit boundTU(mGL, LOCAL_GL_TEXTURE0);
-
-    if (NS_FAILED(surfaceTexture->Attach(mGL, PR_MillisecondsToInterval(ATTACH_WAIT_MS))))
-        return false;
-
-    // UpdateTexImage() changes the EXTERNAL binding, so save it here
-    // so we can restore it after.
-    int oldBinding = 0;
-    mGL->fGetIntegerv(LOCAL_GL_TEXTURE_BINDING_EXTERNAL, &oldBinding);
-
-    surfaceTexture->UpdateTexImage();
-
-    gfx::Matrix4x4 transform;
-    surfaceTexture->GetTransformMatrix(transform);
-
-    mGL->fUniformMatrix4fv(mTextureTransformLoc, 1, false, &transform._11);
-    mGL->fDrawArrays(LOCAL_GL_TRIANGLE_STRIP, 0, 4);
-
-    surfaceTexture->Detach();
-
-    mGL->fBindTexture(LOCAL_GL_TEXTURE_EXTERNAL, oldBinding);
-    return true;
+    // FIXME
+    return false;
 }
 
 bool
@@ -756,9 +734,13 @@ GLBlitHelper::BlitPlanarYCbCrImage(layers::PlanarYCbCrImage* yuvImage)
         mGL->fActiveTexture(LOCAL_GL_TEXTURE0 + i);
         mGL->fGetIntegerv(LOCAL_GL_TEXTURE_BINDING_2D, &oldTex[i]);
     }
-    BindAndUploadYUVTexture(Channel_Y, yuvData->mYStride, yuvData->mYSize.height, yuvData->mYChannel, needsAllocation);
-    BindAndUploadYUVTexture(Channel_Cb, yuvData->mCbCrStride, yuvData->mCbCrSize.height, yuvData->mCbChannel, needsAllocation);
-    BindAndUploadYUVTexture(Channel_Cr, yuvData->mCbCrStride, yuvData->mCbCrSize.height, yuvData->mCrChannel, needsAllocation);
+
+    {
+        const ResetUnpackState reset(mGL);
+        BindAndUploadYUVTexture(Channel_Y, yuvData->mYStride, yuvData->mYSize.height, yuvData->mYChannel, needsAllocation);
+        BindAndUploadYUVTexture(Channel_Cb, yuvData->mCbCrStride, yuvData->mCbCrSize.height, yuvData->mCbChannel, needsAllocation);
+        BindAndUploadYUVTexture(Channel_Cr, yuvData->mCbCrStride, yuvData->mCbCrSize.height, yuvData->mCrChannel, needsAllocation);
+    }
 
     if (needsAllocation) {
         mGL->fUniform2f(mYTexScaleLoc, (float)yuvData->mYSize.width/yuvData->mYStride, 1.0f);
@@ -796,14 +778,18 @@ GLBlitHelper::BlitMacIOSurfaceImage(layers::MacIOSurfaceImage* ioImage)
     mGL->fBindTexture(LOCAL_GL_TEXTURE_RECTANGLE_ARB, textures[0]);
     mGL->fTexParameteri(LOCAL_GL_TEXTURE_RECTANGLE_ARB, LOCAL_GL_TEXTURE_WRAP_T, LOCAL_GL_CLAMP_TO_EDGE);
     mGL->fTexParameteri(LOCAL_GL_TEXTURE_RECTANGLE_ARB, LOCAL_GL_TEXTURE_WRAP_S, LOCAL_GL_CLAMP_TO_EDGE);
-    surf->CGLTexImageIOSurface2D(gl::GLContextCGL::Cast(mGL)->GetCGLContext(), 0);
+    surf->CGLTexImageIOSurface2D(mGL,
+                                 gl::GLContextCGL::Cast(mGL)->GetCGLContext(),
+                                 0);
     mGL->fUniform2f(mYTexScaleLoc, surf->GetWidth(0), surf->GetHeight(0));
 
     mGL->fActiveTexture(LOCAL_GL_TEXTURE1);
     mGL->fBindTexture(LOCAL_GL_TEXTURE_RECTANGLE_ARB, textures[1]);
     mGL->fTexParameteri(LOCAL_GL_TEXTURE_RECTANGLE_ARB, LOCAL_GL_TEXTURE_WRAP_T, LOCAL_GL_CLAMP_TO_EDGE);
     mGL->fTexParameteri(LOCAL_GL_TEXTURE_RECTANGLE_ARB, LOCAL_GL_TEXTURE_WRAP_S, LOCAL_GL_CLAMP_TO_EDGE);
-    surf->CGLTexImageIOSurface2D(gl::GLContextCGL::Cast(mGL)->GetCGLContext(), 1);
+    surf->CGLTexImageIOSurface2D(mGL,
+                                 gl::GLContextCGL::Cast(mGL)->GetCGLContext(),
+                                 1);
     mGL->fUniform2f(mCbCrTexScaleLoc, surf->GetWidth(1), surf->GetHeight(1));
 
     mGL->fDrawArrays(LOCAL_GL_TRIANGLE_STRIP, 0, 4);
@@ -868,13 +854,8 @@ GLBlitHelper::BlitImageToFramebuffer(layers::Image* srcImage,
     mGL->fViewport(0, 0, destSize.width, destSize.height);
 
     switch (type) {
-    case ConvertPlanarYCbCr: {
-            const auto saved = mGL->GetIntAs<GLint>(LOCAL_GL_UNPACK_ALIGNMENT);
-            mGL->fPixelStorei(LOCAL_GL_UNPACK_ALIGNMENT, 1);
-            const auto ret = BlitPlanarYCbCrImage(static_cast<PlanarYCbCrImage*>(srcImage));
-            mGL->fPixelStorei(LOCAL_GL_UNPACK_ALIGNMENT, saved);
-            return ret;
-        }
+    case ConvertPlanarYCbCr:
+        return BlitPlanarYCbCrImage(static_cast<PlanarYCbCrImage*>(srcImage));
 
 #ifdef MOZ_WIDGET_ANDROID
     case ConvertSurfaceTexture:

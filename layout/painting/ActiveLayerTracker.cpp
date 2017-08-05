@@ -119,9 +119,10 @@ class LayerActivityTracker final : public nsExpirationTracker<LayerActivity,4> {
 public:
   // 75-100ms is a good timeout period. We use 4 generations of 25ms each.
   enum { GENERATION_MS = 100 };
-  LayerActivityTracker()
+  explicit LayerActivityTracker(nsIEventTarget* aEventTarget)
     : nsExpirationTracker<LayerActivity,4>(GENERATION_MS,
-                                           "LayerActivityTracker")
+                                           "LayerActivityTracker",
+                                           aEventTarget)
     , mDestroying(false)
   {}
   ~LayerActivityTracker() {
@@ -178,7 +179,7 @@ LayerActivityTracker::NotifyExpired(LayerActivity* aObject)
       f->SchedulePaint();
     }
     f->RemoveStateBits(NS_FRAME_HAS_LAYER_ACTIVITY_PROPERTY);
-    f->Properties().Delete(LayerActivityProperty());
+    f->DeleteProperty(LayerActivityProperty());
   } else {
     c->DeleteProperty(nsGkAtoms::LayerActivity);
   }
@@ -190,25 +191,24 @@ GetLayerActivity(nsIFrame* aFrame)
   if (!aFrame->HasAnyStateBits(NS_FRAME_HAS_LAYER_ACTIVITY_PROPERTY)) {
     return nullptr;
   }
-  FrameProperties properties = aFrame->Properties();
-  return properties.Get(LayerActivityProperty());
+  return aFrame->GetProperty(LayerActivityProperty());
 }
 
 static LayerActivity*
 GetLayerActivityForUpdate(nsIFrame* aFrame)
 {
-  FrameProperties properties = aFrame->Properties();
-  LayerActivity* layerActivity = properties.Get(LayerActivityProperty());
+  LayerActivity* layerActivity = GetLayerActivity(aFrame);
   if (layerActivity) {
     gLayerActivityTracker->MarkUsed(layerActivity);
   } else {
     if (!gLayerActivityTracker) {
-      gLayerActivityTracker = new LayerActivityTracker();
+      gLayerActivityTracker = new LayerActivityTracker(
+        SystemGroup::EventTargetFor(TaskCategory::Other));
     }
     layerActivity = new LayerActivity(aFrame);
     gLayerActivityTracker->AddObject(layerActivity);
     aFrame->AddStateBits(NS_FRAME_HAS_LAYER_ACTIVITY_PROPERTY);
-    properties.Set(LayerActivityProperty(), layerActivity);
+    aFrame->SetProperty(LayerActivityProperty(), layerActivity);
   }
   return layerActivity;
 }
@@ -225,8 +225,7 @@ ActiveLayerTracker::TransferActivityToContent(nsIFrame* aFrame, nsIContent* aCon
   if (!aFrame->HasAnyStateBits(NS_FRAME_HAS_LAYER_ACTIVITY_PROPERTY)) {
     return;
   }
-  FrameProperties properties = aFrame->Properties();
-  LayerActivity* layerActivity = properties.Remove(LayerActivityProperty());
+  LayerActivity* layerActivity = aFrame->RemoveProperty(LayerActivityProperty());
   aFrame->RemoveStateBits(NS_FRAME_HAS_LAYER_ACTIVITY_PROPERTY);
   if (!layerActivity) {
     return;
@@ -248,7 +247,7 @@ ActiveLayerTracker::TransferActivityToFrame(nsIContent* aContent, nsIFrame* aFra
   layerActivity->mContent = nullptr;
   layerActivity->mFrame = aFrame;
   aFrame->AddStateBits(NS_FRAME_HAS_LAYER_ACTIVITY_PROPERTY);
-  aFrame->Properties().Set(LayerActivityProperty(), layerActivity);
+  aFrame->SetProperty(LayerActivityProperty(), layerActivity);
 }
 
 static void
@@ -511,7 +510,8 @@ ActiveLayerTracker::IsContentActive(nsIFrame* aFrame)
 ActiveLayerTracker::SetCurrentScrollHandlerFrame(nsIFrame* aFrame)
 {
   if (!gLayerActivityTracker) {
-    gLayerActivityTracker = new LayerActivityTracker();
+    gLayerActivityTracker = new LayerActivityTracker(
+      SystemGroup::EventTargetFor(TaskCategory::Other));
   }
   gLayerActivityTracker->mCurrentScrollHandlerFrame = aFrame;
 }

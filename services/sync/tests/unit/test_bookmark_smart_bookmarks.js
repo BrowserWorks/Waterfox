@@ -1,7 +1,6 @@
 /* Any copyright is dedicated to the Public Domain.
    http://creativecommons.org/publicdomain/zero/1.0/ */
 
-Cu.import("resource://gre/modules/PlacesUtils.jsm");
 Cu.import("resource://gre/modules/Log.jsm");
 Cu.import("resource://services-sync/engines.js");
 Cu.import("resource://services-sync/engines/bookmarks.js");
@@ -44,14 +43,6 @@ function clearBookmarks() {
   PlacesUtils.bookmarks.removeFolderChildren(PlacesUtils.bookmarks.tagsFolder);
   PlacesUtils.bookmarks.removeFolderChildren(PlacesUtils.bookmarks.toolbarFolder);
   PlacesUtils.bookmarks.removeFolderChildren(PlacesUtils.bookmarks.unfiledBookmarksFolder);
-}
-
-function serverForFoo(engineData) {
-  return serverForUsers({"foo": "password"}, {
-    meta: {global: {engines: {bookmarks: {version: engineData.version,
-                                          syncID: engineData.syncID}}}},
-    bookmarks: {}
-  });
 }
 
 // Verify that Places smart bookmarks have their annotation uploaded and

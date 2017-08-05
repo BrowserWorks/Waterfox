@@ -67,10 +67,10 @@ VRSystemManager::AddGamepad(const VRControllerInfo& controllerInfo)
                       controllerInfo.GetHand(),
                       dom::GamepadServiceType::VR,
                       controllerInfo.GetNumButtons(),
-                      controllerInfo.GetNumAxes());
+                      controllerInfo.GetNumAxes(),
+                      controllerInfo.GetNumHaptics());
 
   VRManager* vm = VRManager::Get();
-  MOZ_ASSERT(vm);
   vm->NotifyGamepadChange<dom::GamepadAdded>(a);
 }
 
@@ -80,19 +80,17 @@ VRSystemManager::RemoveGamepad(uint32_t aIndex)
   dom::GamepadRemoved a(aIndex, dom::GamepadServiceType::VR);
 
   VRManager* vm = VRManager::Get();
-  MOZ_ASSERT(vm);
   vm->NotifyGamepadChange<dom::GamepadRemoved>(a);
 }
 
 void
 VRSystemManager::NewButtonEvent(uint32_t aIndex, uint32_t aButton,
-                                bool aPressed)
+                                bool aPressed, bool aTouched, double aValue)
 {
   dom::GamepadButtonInformation a(aIndex, dom::GamepadServiceType::VR,
-                                  aButton, aPressed, aPressed ? 1.0L : 0.0L);
+                                  aButton, aValue, aPressed, aTouched);
 
   VRManager* vm = VRManager::Get();
-  MOZ_ASSERT(vm);
   vm->NotifyGamepadChange<dom::GamepadButtonInformation>(a);
 }
 
@@ -104,7 +102,6 @@ VRSystemManager::NewAxisMove(uint32_t aIndex, uint32_t aAxis,
                                 aAxis, aValue);
 
   VRManager* vm = VRManager::Get();
-  MOZ_ASSERT(vm);
   vm->NotifyGamepadChange<dom::GamepadAxisInformation>(a);
 }
 
@@ -116,6 +113,17 @@ VRSystemManager::NewPoseState(uint32_t aIndex,
                                 aPose);
 
   VRManager* vm = VRManager::Get();
-  MOZ_ASSERT(vm);
   vm->NotifyGamepadChange<dom::GamepadPoseInformation>(a);
 }
+
+void
+VRSystemManager::NewHandChangeEvent(uint32_t aIndex,
+                                    const dom::GamepadHand aHand)
+{
+  dom::GamepadHandInformation a(aIndex, dom::GamepadServiceType::VR,
+                                aHand);
+
+  VRManager* vm = VRManager::Get();
+  vm->NotifyGamepadChange<dom::GamepadHandInformation>(a);
+}
+

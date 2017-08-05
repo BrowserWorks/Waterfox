@@ -88,7 +88,7 @@ RunOnTaskQueue(TaskQueue* aQueue, FunctionType aFun)
 }
 
 // std::function can't come soon enough. :-(
-#define DO_FAIL []()->void { EXPECT_TRUE(false); }
+#define DO_FAIL []() { EXPECT_TRUE(false); return TestPromise::CreateAndReject(0, __func__); }
 
 TEST(MozPromise, BasicResolve)
 {
@@ -185,7 +185,11 @@ TEST(MozPromise, CompletionPromises)
     ->Then(queue, __func__,
       [] (int aVal) -> RefPtr<TestPromise> { return TestPromise::CreateAndResolve(aVal + 10, __func__); },
       DO_FAIL)
-    ->Then(queue, __func__, [&invokedPass] () -> void { invokedPass = true; }, DO_FAIL)
+    ->Then(queue, __func__,
+           [&invokedPass] (int aVal) {
+             invokedPass = true;
+             return TestPromise::CreateAndResolve(aVal, __func__);
+           }, DO_FAIL)
     ->Then(queue, __func__,
       [queue] (int aVal) -> RefPtr<TestPromise> {
         RefPtr<TestPromise::Private> p = new TestPromise::Private(__func__);
@@ -222,7 +226,7 @@ TEST(MozPromise, PromiseAllResolve)
         EXPECT_EQ(aResolveValues[2], 42);
         queue->BeginShutdown();
       },
-      DO_FAIL
+      []() { EXPECT_TRUE(false); }
     );
   });
 }
@@ -241,7 +245,7 @@ TEST(MozPromise, PromiseAllReject)
     promises.AppendElement(TestPromise::CreateAndReject(52.0, __func__));
 
     TestPromise::All(queue, promises)->Then(queue, __func__,
-      DO_FAIL,
+      []() { EXPECT_TRUE(false); },
       [queue] (float aRejectValue) -> void {
         EXPECT_EQ(aRejectValue, 32.0);
         queue->BeginShutdown();
@@ -268,8 +272,11 @@ TEST(MozPromise, Chaining)
       p = p->Then(queue, __func__,
         [] (int aVal) {
           EXPECT_EQ(aVal, 42);
+          return TestPromise::CreateAndResolve(aVal, __func__);
         },
-        [] () {}
+        [] (double aVal) {
+          return TestPromise::CreateAndReject(aVal, __func__);
+        }
       );
 
       if (i == kIterations / 2) {
@@ -285,6 +292,119 @@ TEST(MozPromise, Chaining)
     // in the promise chain.
     p->Then(queue, __func__, [] () {}, [] () {})->Track(holder);
   });
+}
+
+TEST(MozPromise, ResolveOrRejectValue)
+{
+  using MyPromise = MozPromise<UniquePtr<int>, bool, false>;
+  using RRValue = MyPromise::ResolveOrRejectValue;
+
+  RRValue val;
+  EXPECT_TRUE(val.IsNothing());
+  EXPECT_FALSE(val.IsResolve());
+  EXPECT_FALSE(val.IsReject());
+
+  val.SetResolve(MakeUnique<int>(87));
+  EXPECT_FALSE(val.IsNothing());
+  EXPECT_TRUE(val.IsResolve());
+  EXPECT_FALSE(val.IsReject());
+  EXPECT_EQ(87, *val.ResolveValue());
+
+  // IsResolve() should remain true after Move().
+  UniquePtr<int> i = Move(val.ResolveValue());
+  EXPECT_EQ(87, *i);
+  EXPECT_TRUE(val.IsResolve());
+  EXPECT_EQ(val.ResolveValue().get(), nullptr);
+}
+
+TEST(MozPromise, MoveOnlyType)
+{
+  using MyPromise = MozPromise<UniquePtr<int>, bool, true>;
+  using RRValue = MyPromise::ResolveOrRejectValue;
+
+  AutoTaskQueue atq;
+  RefPtr<TaskQueue> queue = atq.Queue();
+
+  MyPromise::CreateAndResolve(MakeUnique<int>(87), __func__)
+  ->Then(queue, __func__,
+    [](UniquePtr<int> aVal) {
+      EXPECT_EQ(87, *aVal);
+    },
+    []() { EXPECT_TRUE(false); });
+
+  MyPromise::CreateAndResolve(MakeUnique<int>(87), __func__)
+  ->Then(queue, __func__,
+    [queue](RRValue&& aVal) {
+      EXPECT_FALSE(aVal.IsNothing());
+      EXPECT_TRUE(aVal.IsResolve());
+      EXPECT_FALSE(aVal.IsReject());
+      EXPECT_EQ(87, *aVal.ResolveValue());
+
+      // Move() shouldn't change the resolve/reject state of aVal.
+      RRValue val = Move(aVal);
+      EXPECT_TRUE(aVal.IsResolve());
+      EXPECT_EQ(nullptr, aVal.ResolveValue().get());
+      EXPECT_EQ(87, *val.ResolveValue());
+
+      queue->BeginShutdown();
+    });
+}
+
+TEST(MozPromise, HeterogeneousChaining)
+{
+  using Promise1 = MozPromise<UniquePtr<char>, bool, true>;
+  using Promise2 = MozPromise<UniquePtr<int>, bool, true>;
+  using RRValue1 = Promise1::ResolveOrRejectValue;
+  using RRValue2 = Promise2::ResolveOrRejectValue;
+
+  MozPromiseRequestHolder<Promise2> holder;
+
+  AutoTaskQueue atq;
+  RefPtr<TaskQueue> queue = atq.Queue();
+
+  RunOnTaskQueue(queue, [queue, &holder]() {
+    Promise1::CreateAndResolve(MakeUnique<char>(0), __func__)
+      ->Then(queue,
+             __func__,
+             [&holder]() {
+               holder.Disconnect();
+               return Promise2::CreateAndResolve(MakeUnique<int>(0), __func__);
+             })
+      ->Then(queue,
+             __func__,
+             []() {
+               // Shouldn't be called for we've disconnected the request.
+               EXPECT_FALSE(true);
+             })
+      ->Track(holder);
+  });
+
+  Promise1::CreateAndResolve(MakeUnique<char>(87), __func__)
+    ->Then(queue,
+           __func__,
+           [](UniquePtr<char> aVal) {
+             EXPECT_EQ(87, *aVal);
+             return Promise2::CreateAndResolve(MakeUnique<int>(94), __func__);
+           },
+           []() {
+             return Promise2::CreateAndResolve(MakeUnique<int>(95), __func__);
+           })
+    ->Then(queue,
+           __func__,
+           [](UniquePtr<int> aVal) { EXPECT_EQ(94, *aVal); },
+           []() { EXPECT_FALSE(true); });
+
+  Promise1::CreateAndResolve(MakeUnique<char>(87), __func__)
+    ->Then(queue,
+           __func__,
+           [](RRValue1&& aVal) {
+             EXPECT_EQ(87, *aVal.ResolveValue());
+             return Promise2::CreateAndResolve(MakeUnique<int>(94), __func__);
+           })
+    ->Then(queue, __func__, [queue](RRValue2&& aVal) {
+      EXPECT_EQ(94, *aVal.ResolveValue());
+      queue->BeginShutdown();
+    });
 }
 
 #undef DO_FAIL

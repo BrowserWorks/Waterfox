@@ -16,6 +16,7 @@
 #identity-popup[connection=secure] [when-connection~=secure],
 #identity-popup[connection=chrome] [when-connection~=chrome],
 #identity-popup[connection=file] [when-connection~=file],
+#identity-popup[connection=extension] [when-connection~=extension],
 /* Show insecure login forms messages when needed. */
 #identity-popup[loginforms=insecure] [when-loginforms=insecure],
 /* Show weak cipher messages when needed. */
@@ -141,14 +142,10 @@
 
 .identity-popup-expander > .button-box {
   padding: 0;
-  -moz-appearance: none;
-  border-style: none;
-  border-left: 1px solid var(--panel-separator-color);
 }
 
-.identity-popup-expander:-moz-focusring > .button-box,
-.identity-popup-expander[panel-multiview-anchor] > .button-box {
-  border-style: none;
+.identity-popup-expander:not([panel-multiview-anchor]) > .button-box {
+  border-left: 1px solid var(--panel-separator-color);
 }
 
 .identity-popup-expander:hover {
@@ -171,10 +168,14 @@
 #identity-popup-securityView-header > description,
 #identity-popup-securityView-body > description,
 #identity-popup-permissions-content > description,
-#tracking-protection-content > label {
-  white-space: pre-wrap;
+#tracking-protection-content > description {
   font-size: 110%;
   margin: 0;
+}
+
+/* This element needs the pre-wrap because we add newlines to it in the code. */
+#identity-popup-content-supplemental {
+  white-space: pre-wrap;
 }
 
 .identity-popup-headline {
@@ -243,7 +244,9 @@
 
 #identity-popup[connection=secure-cert-user-overridden] #identity-popup-securityView,
 #identity-popup[connection=secure-cert-user-overridden] #identity-popup-security-content {
-  background-image: url(chrome://browser/skin/connection-mixed-passive-loaded.svg#icon);
+  background-image: url(chrome://browser/skin/connection-mixed-passive-loaded.svg);
+  -moz-context-properties: fill;
+  fill: GrayText;
 }
 
 #identity-popup[loginforms=insecure] #identity-popup-securityView,
@@ -251,6 +254,13 @@
 #identity-popup[mixedcontent~=active-loaded][isbroken] #identity-popup-securityView,
 #identity-popup[mixedcontent~=active-loaded][isbroken] #identity-popup-security-content {
   background-image: url(chrome://browser/skin/controlcenter/mcb-disabled.svg);
+}
+
+#identity-popup[connection=extension] #identity-popup-securityView,
+#identity-popup[connection=extension] #identity-popup-security-content {
+  background-image: url(chrome://browser/skin/controlcenter/extension.svg);
+  -moz-context-properties: fill;
+  fill: #60bf4c;
 }
 
 #identity-popup-security-descriptions > description {
@@ -347,6 +357,7 @@ description#identity-popup-content-verifier,
 
 #identity-popup-permissions-content {
   background-image: url(chrome://browser/skin/controlcenter/permissions.svg);
+  padding-bottom: 1.5em;
 }
 
 #identity-popup-permissions-headline {
@@ -376,6 +387,8 @@ description#identity-popup-content-verifier,
 }
 
 .identity-popup-permission-icon.in-use {
+  -moz-context-properties: fill;
+  fill: rgb(224, 41, 29);
   animation: 1.5s ease in-use-blink infinite;
 }
 
@@ -415,15 +428,14 @@ description#identity-popup-content-verifier,
 
 .identity-popup-permission-remove-button > .button-box {
   padding: 0;
-  -moz-appearance: none;
 }
 
 .identity-popup-permission-remove-button > .button-box > .button-icon {
   margin: 0;
   width: 16px;
   height: 16px;
-  list-style-image: url(chrome://browser/skin/panel-icons.svg#cancel);
-  filter: url(chrome://global/skin/filters.svg#fill);
+  list-style-image: url(chrome://browser/skin/panel-icon-cancel.svg);
+  -moz-context-properties: fill;
   fill: graytext;
 }
 

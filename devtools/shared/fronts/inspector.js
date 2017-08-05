@@ -432,7 +432,7 @@ const NodeFront = FrontClassWithSpec(nodeSpec, {
       return null;
     }
     const { DebuggerServer } = require("devtools/server/main");
-    let actor = DebuggerServer._searchAllConnectionsForActor(this.actorID);
+    let actor = DebuggerServer.searchAllConnectionsForActor(this.actorID);
     if (!actor) {
       // Can happen if we try to get the raw node for an already-expired
       // actor.
@@ -767,8 +767,9 @@ const WalkerFront = FrontClassWithSpec(walkerSpec, {
         }
 
         if (!targetFront) {
-          console.trace("Got a mutation for an unexpected actor: " + targetID +
+          console.warn("Got a mutation for an unexpected actor: " + targetID +
             ", please file a bug on bugzilla.mozilla.org!");
+          console.trace();
           continue;
         }
 
@@ -826,8 +827,9 @@ const WalkerFront = FrontClassWithSpec(walkerSpec, {
           // first.
           for (let child of targetFront.treeChildren()) {
             if (child.nodeType === nodeConstants.DOCUMENT_NODE) {
-              console.trace("Got an unexpected frameLoad in the inspector, " +
+              console.warn("Got an unexpected frameLoad in the inspector, " +
                 "please file a bug on bugzilla.mozilla.org!");
+              console.trace();
             }
           }
         } else if (change.type === "documentUnload") {
@@ -905,7 +907,7 @@ const WalkerFront = FrontClassWithSpec(walkerSpec, {
       return null;
     }
     const { DebuggerServer } = require("devtools/server/main");
-    let walkerActor = DebuggerServer._searchAllConnectionsForActor(this.actorID);
+    let walkerActor = DebuggerServer.searchAllConnectionsForActor(this.actorID);
     if (!walkerActor) {
       throw Error("Could not find client side for actor " + this.actorID);
     }
@@ -925,7 +927,7 @@ const WalkerFront = FrontClassWithSpec(walkerSpec, {
       // Imported an already-orphaned node.
       this._orphaned.add(top);
       walkerActor._orphaned
-        .add(DebuggerServer._searchAllConnectionsForActor(top.actorID));
+        .add(DebuggerServer.searchAllConnectionsForActor(top.actorID));
     }
     return returnNode;
   },

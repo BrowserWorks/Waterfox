@@ -675,7 +675,7 @@ struct TransportSecurityPreload {
 
 /* Sort hostnames for binary search. */
 static const TransportSecurityPreload kPublicKeyPinningPreloadList[] = {
-  { "0.me.uk", true, true, false, -1, &kPinset_ncsccs },
+  { "0.me.uk", true, false, false, -1, &kPinset_ncsccs },
   { "2mdn.net", true, false, false, -1, &kPinset_google_root_pems },
   { "accounts.firefox.com", true, false, true, 4, &kPinset_mozilla_services },
   { "accounts.google.com", true, false, false, -1, &kPinset_google_root_pems },
@@ -1041,6 +1041,7 @@ static const TransportSecurityPreload kPublicKeyPinningPreloadList[] = {
   { "market.android.com", true, false, false, -1, &kPinset_google_root_pems },
   { "mbasic.facebook.com", true, false, false, -1, &kPinset_facebook },
   { "meet.google.com", true, false, false, -1, &kPinset_google_root_pems },
+  { "messenger.com", false, false, false, -1, &kPinset_facebook },
   { "mobile.twitter.com", true, false, false, -1, &kPinset_twitterCom },
   { "mt.search.yahoo.com", false, true, false, -1, &kPinset_yahoo },
   { "mtouch.facebook.com", true, false, false, -1, &kPinset_facebook },
@@ -1049,7 +1050,7 @@ static const TransportSecurityPreload kPublicKeyPinningPreloadList[] = {
   { "mx.search.yahoo.com", false, true, false, -1, &kPinset_yahoo },
   { "myaccount.google.com", true, false, false, -1, &kPinset_google_root_pems },
   { "myactivity.google.com", true, false, false, -1, &kPinset_google_root_pems },
-  { "ncsccs.com", true, true, false, -1, &kPinset_ncsccs },
+  { "ncsccs.com", true, false, false, -1, &kPinset_ncsccs },
   { "ni.search.yahoo.com", false, true, false, -1, &kPinset_yahoo },
   { "nl.search.yahoo.com", false, true, false, -1, &kPinset_yahoo },
   { "no.search.yahoo.com", false, true, false, -1, &kPinset_yahoo },
@@ -1082,6 +1083,7 @@ static const TransportSecurityPreload kPublicKeyPinningPreloadList[] = {
   { "script.google.com", true, false, false, -1, &kPinset_google_root_pems },
   { "se.search.yahoo.com", false, true, false, -1, &kPinset_yahoo },
   { "search.yahoo.com", false, true, false, -1, &kPinset_yahoo },
+  { "secretintelligence.0.me.uk", true, false, false, -1, &kPinset_ncsccs },
   { "secure.facebook.com", true, false, false, -1, &kPinset_facebook },
   { "security.google.com", true, false, false, -1, &kPinset_google_root_pems },
   { "services.mozilla.com", true, false, true, 6, &kPinset_mozilla_services },
@@ -1102,7 +1104,7 @@ static const TransportSecurityPreload kPublicKeyPinningPreloadList[] = {
   { "test-mode.pinning.example.com", true, true, false, -1, &kPinset_mozilla_test },
   { "testpilot.firefox.com", false, false, true, 9, &kPinset_mozilla_services },
   { "th.search.yahoo.com", false, true, false, -1, &kPinset_yahoo },
-  { "themathematician.uk", true, true, false, -1, &kPinset_ncsccs },
+  { "themathematician.uk", true, false, false, -1, &kPinset_ncsccs },
   { "torproject.org", false, false, false, -1, &kPinset_tor },
   { "touch.facebook.com", true, false, false, -1, &kPinset_facebook },
   { "tr.search.yahoo.com", false, true, false, -1, &kPinset_yahoo },
@@ -1141,6 +1143,7 @@ static const TransportSecurityPreload kPublicKeyPinningPreloadList[] = {
   { "www.gmail.com", false, false, false, -1, &kPinset_google_root_pems },
   { "www.googlegroups.com", true, false, false, -1, &kPinset_google_root_pems },
   { "www.googlemail.com", false, false, false, -1, &kPinset_google_root_pems },
+  { "www.messenger.com", true, false, false, -1, &kPinset_facebook },
   { "www.torproject.org", true, false, false, -1, &kPinset_tor },
   { "www.twitter.com", true, false, false, -1, &kPinset_twitterCom },
   { "xa.search.yahoo.com", false, true, false, -1, &kPinset_yahoo },
@@ -1154,8 +1157,8 @@ static const TransportSecurityPreload kPublicKeyPinningPreloadList[] = {
   { "zh.search.yahoo.com", false, true, false, -1, &kPinset_yahoo },
 };
 
-// Pinning Preload List Length = 477;
+// Pinning Preload List Length = 480;
 
 static const int32_t kUnknownId = -1;
 
-static const PRTime kPreloadPKPinsExpirationTime = INT64_C(1506384000000000);
+static const PRTime kPreloadPKPinsExpirationTime = INT64_C(1510617600000000);

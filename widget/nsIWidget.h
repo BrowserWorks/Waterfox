@@ -18,6 +18,7 @@
 #include "nsITheme.h"
 #include "nsITimer.h"
 #include "nsRegionFwd.h"
+#include "nsStyleConsts.h"
 #include "nsXULAppAPI.h"
 #include "mozilla/Maybe.h"
 #include "mozilla/EventForwards.h"
@@ -42,6 +43,11 @@ class   nsIRunnable;
 class   nsIKeyEventInPluginCallback;
 
 namespace mozilla {
+#if defined(MOZ_WIDGET_ANDROID)
+namespace ipc {
+class Shmem;
+}
+#endif // defined(MOZ_WIDGET_ANDROID)
 namespace dom {
 class TabChild;
 } // namespace dom
@@ -143,16 +149,6 @@ typedef void* nsNativeWidget;
 { 0x06396bf6, 0x2dd8, 0x45e5, \
   { 0xac, 0x45, 0x75, 0x26, 0x53, 0xb1, 0xc9, 0x80 } }
 
-/*
- * Window shadow styles
- * Also used for the -moz-window-shadow CSS property
- */
-
-#define NS_STYLE_WINDOW_SHADOW_NONE             0
-#define NS_STYLE_WINDOW_SHADOW_DEFAULT          1
-#define NS_STYLE_WINDOW_SHADOW_MENU             2
-#define NS_STYLE_WINDOW_SHADOW_TOOLTIP          3
-#define NS_STYLE_WINDOW_SHADOW_SHEET            4
 
 /**
  * Transparency modes
@@ -343,6 +339,7 @@ class nsIWidget : public nsISupports
     typedef mozilla::layers::ZoomConstraints ZoomConstraints;
     typedef mozilla::widget::IMEMessage IMEMessage;
     typedef mozilla::widget::IMENotification IMENotification;
+    typedef mozilla::widget::IMENotificationRequests IMENotificationRequests;
     typedef mozilla::widget::IMEState IMEState;
     typedef mozilla::widget::InputContext InputContext;
     typedef mozilla::widget::InputContextAction InputContextAction;
@@ -357,6 +354,9 @@ class nsIWidget : public nsISupports
     typedef mozilla::LayoutDeviceIntRegion LayoutDeviceIntRegion;
     typedef mozilla::LayoutDeviceIntSize LayoutDeviceIntSize;
     typedef mozilla::ScreenIntPoint ScreenIntPoint;
+    typedef mozilla::ScreenIntSize ScreenIntSize;
+    typedef mozilla::ScreenPoint ScreenPoint;
+    typedef mozilla::CSSToScreenScale CSSToScreenScale;
     typedef mozilla::DesktopIntRect DesktopIntRect;
     typedef mozilla::CSSRect CSSRect;
 
@@ -1679,6 +1679,14 @@ private:
 
 public:
     /**
+     * If key events have not been handled by content or XBL handlers, they can
+     * be offered to the system (for custom application shortcuts set in system
+     * preferences, for example).
+     */
+    virtual void
+    PostHandleKeyEvent(mozilla::WidgetKeyboardEvent* aEvent);
+
+    /**
      * Activates a native menu item at the position specified by the index
      * string. The index string is a string of positive integers separated
      * by the "|" (pipe) character. The last integer in the string represents
@@ -1800,26 +1808,27 @@ public:
     virtual MOZ_MUST_USE nsresult
     AttachNativeKeyEvent(mozilla::WidgetKeyboardEvent& aEvent) = 0;
 
-    /*
-     * Execute native key bindings for aType.
+    /**
+     * Retrieve edit commands when the key combination of aEvent is used
+     * in platform native applications.
      */
-    typedef void (*DoCommandCallback)(mozilla::Command, void*);
-    enum NativeKeyBindingsType
+    enum NativeKeyBindingsType : uint8_t
     {
       NativeKeyBindingsForSingleLineEditor,
       NativeKeyBindingsForMultiLineEditor,
       NativeKeyBindingsForRichTextEditor
     };
-    virtual bool ExecuteNativeKeyBinding(
-                        NativeKeyBindingsType aType,
-                        const mozilla::WidgetKeyboardEvent& aEvent,
-                        DoCommandCallback aCallback,
-                        void* aCallbackData) = 0;
+    virtual void GetEditCommands(NativeKeyBindingsType aType,
+                                 const mozilla::WidgetKeyboardEvent& aEvent,
+                                 nsTArray<mozilla::CommandInt>& aCommands);
 
     /*
-     * Retrieves preference for IME updates
+     * Retrieves a reference to notification requests of IME.  Note that the
+     * reference is valid while the nsIWidget instance is alive.  So, if you
+     * need to store the reference for a long time, you need to grab the widget
+     * instance too.
      */
-    virtual nsIMEUpdatePreference GetIMEUpdatePreference() = 0;
+    const IMENotificationRequests& IMENotificationRequestsRef();
 
     /*
      * Call this method when a dialog is opened which has a default button.
@@ -1852,6 +1861,9 @@ public:
      */
     static already_AddRefed<nsIWidget>
     CreatePuppetWidget(TabChild* aTabChild);
+
+    static already_AddRefed<nsIWidget>
+    CreateHeadlessWidget();
 
     /**
      * Allocate and return a "plugin proxy widget", a subclass of PuppetWidget
@@ -1936,6 +1948,13 @@ public:
     { return nullptr; }
 
     /**
+     * Returns true if the widget requires synchronous repaints on resize,
+     * false otherwise.
+     */
+    virtual bool SynchronouslyRepaintOnResize()
+    { return true; }
+
+    /**
      * Some platforms (only cocoa right now) round widget coordinates to the
      * nearest even pixels (see bug 892994), this function allows us to
      * determine how widget coordinates will be rounded.
@@ -2002,6 +2021,32 @@ public:
                    const bool aIsVertical,
                    const LayoutDeviceIntPoint& aPoint)
     { }
+
+#if defined(MOZ_WIDGET_ANDROID)
+    /**
+     * RecvToolbarAnimatorMessageFromCompositor receive message from compositor thread.
+     *
+     * @param aMessage message being sent to Android UI thread.
+     */
+    virtual void RecvToolbarAnimatorMessageFromCompositor(int32_t aMessage) = 0;
+
+    /**
+     * UpdateRootFrameMetrics steady state frame metrics send from compositor thread
+     *
+     * @param aScrollOffset  page scroll offset value in screen pixels.
+     * @param aZoom          current page zoom.
+     * @param aPage          bounds of the page in CSS coordinates.
+     */
+    virtual void UpdateRootFrameMetrics(const ScreenPoint& aScrollOffset, const CSSToScreenScale& aZoom, const CSSRect& aPage) = 0;
+
+    /**
+     * RecvScreenPixels Buffer containing the pixel from the frame buffer. Used for android robocop tests.
+     *
+     * @param aMem  shared memory containing the frame buffer pixels.
+     * @param aSize size of the buffer in screen pixels.
+     */
+    virtual void RecvScreenPixels(mozilla::ipc::Shmem&& aMem, const ScreenIntSize& aSize) = 0;
+#endif
 
 protected:
     /**

@@ -20,14 +20,14 @@ window.onload = Task.async(function* () {
   const {
     REPS,
     MODE,
+    getRep,
     getSelectableInInspectorGrips,
   } = browserRequire("devtools/client/shared/components/reps/reps");
-  let { Rep, Event } = REPS;
+  let { Event } = REPS;
 
   try {
     // Test that correct rep is chosen
-    const renderedRep = shallowRenderComponent(Rep, { object: getGripStub("testEvent") });
-    is(renderedRep.type, Event.rep, `Rep correctly selects ${Event.rep.displayName}`);
+    is(getRep(getGripStub("testEvent")), Event.rep, "Rep correctly selects Event Rep");
 
     yield testEvent();
     yield testMouseEvent();
@@ -38,6 +38,8 @@ window.onload = Task.async(function* () {
     yield testOnDomNodeMouseOver();
     yield testOnDomNodeMouseOut();
     yield testOnDomNodeInspectIconClick();
+
+    yield testObjectLink();
   } catch (e) {
     ok(false, "Got an error: " + DevToolsUtils.safeErrorString(e));
   } finally {
@@ -127,8 +129,6 @@ window.onload = Task.async(function* () {
 
     is(grips.length, 1, "the stub has one node grip");
 
-    const attachedActorIds = getStubAttachedActorIds(grips);
-
     let mouseOverValue;
     let onDOMNodeMouseOver = (object) => {
       mouseOverValue = object;
@@ -136,7 +136,6 @@ window.onload = Task.async(function* () {
     const renderedComponent = renderComponent(Event.rep, {
       object: stub,
       onDOMNodeMouseOver,
-      attachedActorIds,
     });
 
     const node = renderedComponent.querySelector(".objectBox-node");
@@ -151,8 +150,6 @@ window.onload = Task.async(function* () {
     const grips = getSelectableInInspectorGrips(stub);
     is(grips.length, 1, "the stub has one node grip");
 
-    const attachedActorIds = getStubAttachedActorIds(grips);
-
     let called = false;
     let onDOMNodeMouseOut = (object) => {
       called = true;
@@ -160,7 +157,6 @@ window.onload = Task.async(function* () {
     const renderedComponent = renderComponent(Event.rep, {
       object: stub,
       onDOMNodeMouseOut,
-      attachedActorIds
     });
 
     const node = renderedComponent.querySelector(".objectBox-node");
@@ -174,40 +170,48 @@ window.onload = Task.async(function* () {
     const grips = getSelectableInInspectorGrips(stub);
     is(grips.length, 1, "the stub has one node grip");
 
-    const attachedActorIds = getStubAttachedActorIds(grips);
-
     let inspectIconClickedValue = null;
     let onInspectIconClick = (object) => {
       inspectIconClickedValue = object;
     };
 
-    let renderedComponentWithoutInspectIcon = renderComponent(Event.rep, {
-      object: stub,
-      onInspectIconClick,
-      attachedActorIds: ["someOtherId"]
-    });
-    is(renderedComponentWithoutInspectIcon.querySelector(".open-inspector"), null,
-      "There isn't an inspect icon when the actor is not in attachedActorIds");
-
-    is(renderedComponentWithoutInspectIcon.querySelector(".open-inspector"), null,
-      "There isn't an inspect icon when attachedActorIds does not have keys " +
-      "matching grip event's target item");
-
     const renderedComponent = renderComponent(Event.rep, {
       object: stub,
       onInspectIconClick,
-      attachedActorIds
     });
 
     const icon = renderedComponent.querySelector(".open-inspector");
-    ok(icon !== null, "There is an icon as expected when passing a matching " +
-      "attachedActorIds item");
+    ok(icon !== null,
+      "There is an inspect icon when the node is connected to the DOM tree");
 
     TestUtils.Simulate.click(icon);
 
     is(inspectIconClickedValue, grips[0],
       "onInspectIconClick is called with the expected argument " +
       "when the inspect icon is clicked");
+  }
+
+  function testObjectLink() {
+    const renderedComponent = renderComponent(Event.rep, {
+      object: getGripStub("testMouseEvent"),
+      objectLink: (props, ...children) => React.DOM.span({},
+        "*", ...children, "*"),
+    });
+    is(renderedComponent.textContent,
+      "*click** { *target: div#test, clientX: 62, clientY: 18, *3 more…** }*",
+      "Event rep has expected text content when an objectLink is passed as a prop");
+
+    const longRenderedComponent = renderComponent(Event.rep, {
+      object: getGripStub("testMouseEvent"),
+      mode: MODE.LONG,
+      objectLink: (props, ...children) => React.DOM.span({},
+        "*", ...children, "*"),
+    });
+    is(longRenderedComponent.textContent,
+      "*click** { *target: div#test, buttons: 0, clientX: 62, clientY: 18, layerX: 0, " +
+      "layerY: 0* }*",
+      "Event rep has expected text content in long mode when an objectLink is passed " +
+      "as a prop");
   }
 
   function getGripStub(name) {
@@ -319,6 +323,7 @@ window.onload = Task.async(function* () {
                 "kind": "DOMNode",
                 "nodeType": 1,
                 "nodeName": "div",
+                "isConnected": true,
                 "attributes": {
                   "id": "test"
                 },

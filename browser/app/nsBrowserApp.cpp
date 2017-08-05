@@ -104,7 +104,7 @@ using namespace mozilla;
 #endif
 #define kDesktopFolder "browser"
 
-static void Output(const char *fmt, ... )
+static MOZ_FORMAT_PRINTF(1, 2) void Output(const char *fmt, ... )
 {
   va_list ap;
   va_start(ap, fmt);
@@ -261,14 +261,13 @@ int main(int argc, char* argv[], char* envp[])
 {
   mozilla::TimeStamp start = mozilla::TimeStamp::Now();
 
-#ifdef HAS_DLL_BLOCKLIST
-  DllBlocklist_Initialize();
-#endif
-
 #ifdef MOZ_BROWSER_CAN_BE_CONTENTPROC
   // We are launching as a content process, delegate to the appropriate
   // main
   if (argc > 1 && IsArg(argv[1], "contentproc")) {
+#ifdef HAS_DLL_BLOCKLIST
+    DllBlocklist_Initialize(eDllBlocklistInitFlagIsChildProcess);
+#endif
 #if defined(XP_WIN) && defined(MOZ_SANDBOX)
     // We need to initialize the sandbox TargetServices before InitXPCOMGlue
     // because we might need the sandbox broker to give access to some files.
@@ -292,6 +291,9 @@ int main(int argc, char* argv[], char* envp[])
   }
 #endif
 
+#ifdef HAS_DLL_BLOCKLIST
+  DllBlocklist_Initialize();
+#endif
 
   nsresult rv = InitXPCOMGlue(argv[0]);
   if (NS_FAILED(rv)) {

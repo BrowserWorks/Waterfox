@@ -12,7 +12,6 @@ this.EXPORTED_SYMBOLS = [ "ContentLinkHandler" ];
 
 Cu.import("resource://gre/modules/XPCOMUtils.jsm");
 Cu.import("resource://gre/modules/Services.jsm");
-Cu.import("resource://gre/modules/NetUtil.jsm");
 
 XPCOMUtils.defineLazyModuleGetter(this, "Feeds",
   "resource:///modules/Feeds.jsm");
@@ -135,7 +134,7 @@ this.ContentLinkHandler = {
 
   getLinkIconURI(aLink) {
     let targetDoc = aLink.ownerDocument;
-    var uri = BrowserUtils.makeURI(aLink.href, targetDoc.characterSet);
+    var uri = Services.io.newURI(aLink.href, targetDoc.characterSet);
     try {
       uri.userPass = "";
     } catch (e) {

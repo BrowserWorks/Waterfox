@@ -22,6 +22,7 @@
 #include "mozilla/DeadlockDetector.h"
 #include "mozilla/ReentrantMonitor.h"
 #include "mozilla/Mutex.h"
+#include "mozilla/RWLock.h"
 
 #if defined(MOZILLA_INTERNAL_API)
 #include "GeckoProfiler.h"
@@ -300,11 +301,12 @@ BlockingResourceBase::CheckAcquire()
     out.AppendLiteral("\nDeadlock may happen for some other execution\n\n");
   }
 
-  // XXX can customize behavior on whether we /think/ deadlock is
-  // XXX about to happen.  for example:
-  // XXX   if (maybeImminent)
-  //           NS_RUNTIMEABORT(out.get());
-  NS_ERROR(out.get());
+  // Only error out if we think a deadlock is imminent.
+  if (maybeImminent) {
+    NS_ERROR(out.get());
+  } else {
+    NS_WARNING(out.get());
+  }
 }
 
 
@@ -379,18 +381,62 @@ void
 OffTheBooksMutex::Lock()
 {
   CheckAcquire();
-  PR_Lock(mLock);
-  Acquire();       // protected by mLock
+  this->lock();
+  mOwningThread = PR_GetCurrentThread();
+  Acquire();
 }
 
 void
 OffTheBooksMutex::Unlock()
 {
-  Release();                  // protected by mLock
-  PRStatus status = PR_Unlock(mLock);
-  NS_ASSERTION(PR_SUCCESS == status, "bad Mutex::Unlock()");
+  Release();
+  mOwningThread = nullptr;
+  this->unlock();
 }
 
+void
+OffTheBooksMutex::AssertCurrentThreadOwns() const
+{
+  MOZ_ASSERT(IsAcquired() && mOwningThread == PR_GetCurrentThread());
+}
+
+//
+// Debug implementation of RWLock
+//
+
+void
+RWLock::ReadLock()
+{
+  // All we want to ensure here is that we're not attempting to acquire the
+  // read lock while this thread is holding the write lock.
+  CheckAcquire();
+  this->ReadLockInternal();
+  MOZ_ASSERT(mOwningThread == nullptr);
+}
+
+void
+RWLock::ReadUnlock()
+{
+  MOZ_ASSERT(mOwningThread == nullptr);
+  this->ReadUnlockInternal();
+}
+
+void
+RWLock::WriteLock()
+{
+  CheckAcquire();
+  this->WriteLockInternal();
+  mOwningThread = PR_GetCurrentThread();
+  Acquire();
+}
+
+void
+RWLock::WriteUnlock()
+{
+  Release();
+  mOwningThread = nullptr;
+  this->WriteUnlockInternal();
+}
 
 //
 // Debug implementation of ReentrantMonitor
@@ -491,18 +537,24 @@ CondVar::Wait(PRIntervalTime aInterval)
   // save mutex state and reset to empty
   AcquisitionState savedAcquisitionState = mLock->GetAcquisitionState();
   BlockingResourceBase* savedChainPrev = mLock->mChainPrev;
+  PRThread* savedOwningThread = mLock->mOwningThread;
   mLock->ClearAcquisitionState();
   mLock->mChainPrev = 0;
+  mLock->mOwningThread = nullptr;
 
   // give up mutex until we're back from Wait()
-  nsresult rv =
-    PR_WaitCondVar(mCvar, aInterval) == PR_SUCCESS ? NS_OK : NS_ERROR_FAILURE;
+  if (aInterval == PR_INTERVAL_NO_TIMEOUT) {
+    mImpl.wait(*mLock);
+  } else {
+    mImpl.wait_for(*mLock, TimeDuration::FromMilliseconds(double(aInterval)));
+  }
 
   // restore saved state
   mLock->SetAcquisitionState(savedAcquisitionState);
   mLock->mChainPrev = savedChainPrev;
+  mLock->mOwningThread = savedOwningThread;
 
-  return rv;
+  return NS_OK;
 }
 
 #endif // ifdef DEBUG

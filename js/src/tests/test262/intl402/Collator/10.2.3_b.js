@@ -1,4 +1,3 @@
-// |reftest| skip-if(!this.hasOwnProperty('Intl')) -- needs Intl
 // Copyright 2012 Mozilla Corporation. All rights reserved.
 // This code is governed by the license found in the LICENSE file.
 
@@ -40,14 +39,8 @@ Object.getOwnPropertyNames(keyValues).forEach(function (key) {
     keyValues[key].forEach(function (value) {
         var collator = new Intl.Collator([defaultLocale + "-u-" + key + "-" + value]);
         var options = collator.resolvedOptions();
-        if (options.locale !== defaultLocale) {
-            $ERROR("Locale " + options.locale + " is affected by key " +
-                key + "; value " + value + ".");
-        }
-        if (JSON.stringify(options) !== defaultOptionsJSON) {
-            $ERROR("Resolved options " + JSON.stringify(options) + " are affected by key " +
-                key + "; value " + value + ".");
-        }
+        assert.sameValue(options.locale, defaultLocale, "Locale " + options.locale + " is affected by key " + key + "; value " + value + ".");
+        assert.sameValue(JSON.stringify(options), defaultOptionsJSON, "Resolved options " + JSON.stringify(options) + " are affected by key " + key + "; value " + value + ".");
         testArraysAreSame(defaultSortedArray, testArray.sort(collator.compare));
     });
 });

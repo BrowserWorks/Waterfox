@@ -2,19 +2,17 @@
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
 
-/* globals registerCleanupFunction, add_task, is, isnot */
-
 "use strict";
 
 registerCleanupFunction(teardown);
 
-add_task(function* testVoiceselectDropdownAutoclose() {
+add_task(async function testVoiceselectDropdownAutoclose() {
   setup();
 
-  yield spawnInNewReaderTab(TEST_ARTICLE, function* () {
+  await spawnInNewReaderTab(TEST_ARTICLE, async function() {
     let $ = content.document.querySelector.bind(content.document);
 
-    yield NarrateTestUtils.waitForNarrateToggle(content);
+    await NarrateTestUtils.waitForNarrateToggle(content);
 
     $(NarrateTestUtils.TOGGLE).click();
     ok(NarrateTestUtils.isVisible($(NarrateTestUtils.POPUP)),
@@ -43,13 +41,13 @@ add_task(function* testVoiceselectDropdownAutoclose() {
   });
 });
 
-add_task(function* testVoiceselectLabelChange() {
+add_task(async function testVoiceselectLabelChange() {
   setup();
 
-  yield spawnInNewReaderTab(TEST_ARTICLE, function* () {
+  await spawnInNewReaderTab(TEST_ARTICLE, async function() {
     let $ = content.document.querySelector.bind(content.document);
 
-    yield NarrateTestUtils.waitForNarrateToggle(content);
+    await NarrateTestUtils.waitForNarrateToggle(content);
 
     $(NarrateTestUtils.TOGGLE).click();
     ok(NarrateTestUtils.isVisible($(NarrateTestUtils.POPUP)),
@@ -66,13 +64,13 @@ add_task(function* testVoiceselectLabelChange() {
   });
 });
 
-add_task(function* testVoiceselectKeyboard() {
+add_task(async function testVoiceselectKeyboard() {
   setup();
 
-  yield spawnInNewReaderTab(TEST_ARTICLE, function* () {
+  await spawnInNewReaderTab(TEST_ARTICLE, async function() {
     let $ = content.document.querySelector.bind(content.document);
 
-    yield NarrateTestUtils.waitForNarrateToggle(content);
+    await NarrateTestUtils.waitForNarrateToggle(content);
 
     $(NarrateTestUtils.TOGGLE).click();
     ok(NarrateTestUtils.isVisible($(NarrateTestUtils.POPUP)),
@@ -89,7 +87,7 @@ add_task(function* testVoiceselectKeyboard() {
 
     eventUtils.sendKey("DOWN", content);
 
-    yield ContentTaskUtils.waitForCondition(
+    await ContentTaskUtils.waitForCondition(
       () => $(NarrateTestUtils.VOICE_SELECTED).dataset.value != firstValue,
       "value changed after pressing DOWN key");
 
@@ -105,7 +103,7 @@ add_task(function* testVoiceselectKeyboard() {
     ok(!NarrateTestUtils.isVisible($(NarrateTestUtils.VOICE_OPTIONS)),
       "voice options hidden after pressing RETURN");
 
-    yield ContentTaskUtils.waitForCondition(
+    await ContentTaskUtils.waitForCondition(
       () => $(NarrateTestUtils.VOICE_SELECTED).dataset.value == firstValue,
       "value changed back to original after pressing RETURN");
   });

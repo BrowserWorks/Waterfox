@@ -43,19 +43,13 @@ NS_QUERYFRAME_HEAD(nsDeckFrame)
   NS_QUERYFRAME_ENTRY(nsDeckFrame)
 NS_QUERYFRAME_TAIL_INHERITING(nsBoxFrame)
 
-
 nsDeckFrame::nsDeckFrame(nsStyleContext* aContext)
-  : nsBoxFrame(aContext), mIndex(0)
+  : nsBoxFrame(aContext, kClassID)
+  , mIndex(0)
 {
   nsCOMPtr<nsBoxLayout> layout;
   NS_NewStackLayout(layout);
   SetXULLayoutManager(layout);
-}
-
-nsIAtom*
-nsDeckFrame::GetType() const
-{
-  return nsGkAtoms::deckFrame;
 }
 
 nsresult

@@ -12,6 +12,9 @@
 #ifdef MOZ_THREADSTACKHELPER_NATIVE
 #include "shared-libraries.h"
 #endif
+#ifdef MOZ_THREADSTACKHELPER_PSEUDO
+#include "js/ProfilingStack.h"
+#endif
 
 #include "mozilla/Assertions.h"
 #include "mozilla/Attributes.h"
@@ -64,8 +67,7 @@
 
 #ifdef MOZ_THREADSTACKHELPER_NATIVE
 #if defined(MOZ_THREADSTACKHELPER_X86) || \
-    defined(MOZ_THREADSTACKHELPER_X64) || \
-    defined(MOZ_THREADSTACKHELPER_ARM)
+    defined(MOZ_THREADSTACKHELPER_X64)
 // On these architectures, the stack grows downwards (toward lower addresses).
 #define MOZ_THREADSTACKHELPER_STACK_GROWS_DOWN
 #else
@@ -116,9 +118,6 @@ ThreadStackHelper::ThreadStackHelper()
   : mStackToFill(nullptr)
 #ifdef MOZ_THREADSTACKHELPER_PSEUDO
   , mPseudoStack(profiler_get_pseudo_stack())
-#ifdef MOZ_THREADSTACKHELPER_NATIVE
-  , mContextToFill(nullptr)
-#endif
   , mMaxStackSize(Stack::sMaxInlineStorage)
   , mMaxBufferSize(512)
 #endif
@@ -135,13 +134,10 @@ ThreadStackHelper::ThreadStackHelper()
     | THREAD_GET_CONTEXT | THREAD_QUERY_INFORMATION
 #endif
     , FALSE, 0);
+  mStackTop = profiler_get_stack_top();
   MOZ_ASSERT(mInitialized);
 #elif defined(XP_MACOSX)
   mThreadID = mach_thread_self();
-#endif
-
-#ifdef MOZ_THREADSTACKHELPER_NATIVE
-  GetThreadStackBase();
 #endif
 }
 
@@ -156,45 +152,6 @@ ThreadStackHelper::~ThreadStackHelper()
 #endif
 }
 
-#ifdef MOZ_THREADSTACKHELPER_NATIVE
-void ThreadStackHelper::GetThreadStackBase()
-{
-  mThreadStackBase = 0;
-
-#if defined(XP_LINUX)
-  void* stackAddr;
-  size_t stackSize;
-  ::pthread_t pthr = ::pthread_self();
-  ::pthread_attr_t pthr_attr;
-  NS_ENSURE_TRUE_VOID(!::pthread_getattr_np(pthr, &pthr_attr));
-  if (!::pthread_attr_getstack(&pthr_attr, &stackAddr, &stackSize)) {
-#ifdef MOZ_THREADSTACKHELPER_STACK_GROWS_DOWN
-    mThreadStackBase = intptr_t(stackAddr) + stackSize;
-#else
-    mThreadStackBase = intptr_t(stackAddr);
-#endif
-  }
-  MOZ_ALWAYS_TRUE(!::pthread_attr_destroy(&pthr_attr));
-
-#elif defined(XP_WIN)
-  ::MEMORY_BASIC_INFORMATION meminfo = {};
-  NS_ENSURE_TRUE_VOID(::VirtualQuery(&meminfo, &meminfo, sizeof(meminfo)));
-#ifdef MOZ_THREADSTACKHELPER_STACK_GROWS_DOWN
-  mThreadStackBase = intptr_t(meminfo.BaseAddress) + meminfo.RegionSize;
-#else
-  mThreadStackBase = intptr_t(meminfo.AllocationBase);
-#endif
-
-#elif defined(XP_MACOSX)
-  ::pthread_t pthr = ::pthread_self();
-  mThreadStackBase = intptr_t(::pthread_get_stackaddr_np(pthr));
-
-#else
-  #error "Unsupported platform"
-#endif // platform
-}
-#endif // MOZ_THREADSTACKHELPER_NATIVE
-
 namespace {
 template<typename T>
 class ScopedSetPtr
@@ -208,40 +165,58 @@ public:
 } // namespace
 
 void
-ThreadStackHelper::GetStack(Stack& aStack)
+ThreadStackHelper::GetPseudoStack(Stack& aStack)
+{
+  GetStacksInternal(&aStack, nullptr);
+}
+
+void
+ThreadStackHelper::GetStacksInternal(Stack* aStack, NativeStack* aNativeStack)
 {
   // Always run PrepareStackBuffer first to clear aStack
-  if (!PrepareStackBuffer(aStack)) {
+  if (aStack && !PrepareStackBuffer(*aStack)) {
     // Skip and return empty aStack
     return;
   }
 
-  ScopedSetPtr<Stack> stackPtr(mStackToFill, &aStack);
+  ScopedSetPtr<Stack> stackPtr(mStackToFill, aStack);
 
 #if defined(XP_LINUX)
   if (!sInitialized) {
     MOZ_ASSERT(false);
     return;
   }
-  siginfo_t uinfo = {};
-  uinfo.si_signo = sFillStackSignum;
-  uinfo.si_code = SI_QUEUE;
-  uinfo.si_pid = getpid();
-  uinfo.si_uid = getuid();
-  uinfo.si_value.sival_ptr = this;
-  if (::syscall(SYS_rt_tgsigqueueinfo, uinfo.si_pid,
-                mThreadID, sFillStackSignum, &uinfo)) {
-    // rt_tgsigqueueinfo was added in Linux 2.6.31.
-    // Could have failed because the syscall did not exist.
-    return;
+  if (aStack) {
+    siginfo_t uinfo = {};
+    uinfo.si_signo = sFillStackSignum;
+    uinfo.si_code = SI_QUEUE;
+    uinfo.si_pid = getpid();
+    uinfo.si_uid = getuid();
+    uinfo.si_value.sival_ptr = this;
+    if (::syscall(SYS_rt_tgsigqueueinfo, uinfo.si_pid,
+                  mThreadID, sFillStackSignum, &uinfo)) {
+      // rt_tgsigqueueinfo was added in Linux 2.6.31.
+      // Could have failed because the syscall did not exist.
+      return;
+    }
+    MOZ_ALWAYS_TRUE(!::sem_wait(&mSem));
   }
-  MOZ_ALWAYS_TRUE(!::sem_wait(&mSem));
 
 #elif defined(XP_WIN)
   if (!mInitialized) {
     MOZ_ASSERT(false);
     return;
   }
+
+  // NOTE: We can only perform frame pointer stack walking on non win64
+  // platforms, because Win64 always omits frame pointers. We don't want to use
+  // MozStackWalk here, so we just skip collecting stacks entirely.
+#ifndef MOZ_THREADSTACKHELPER_X64
+  if (aNativeStack) {
+    aNativeStack->reserve(Telemetry::HangStack::sMaxNativeFrames);
+  }
+#endif
+
   if (::SuspendThread(mThreadID) == DWORD(-1)) {
     MOZ_ASSERT(false);
     return;
@@ -251,10 +226,49 @@ ThreadStackHelper::GetStack(Stack& aStack)
   // GetThreadContext to ensure it's really suspended.
   // See https://blogs.msdn.microsoft.com/oldnewthing/20150205-00/?p=44743.
   CONTEXT context;
+  memset(&context, 0, sizeof(context));
   context.ContextFlags = CONTEXT_CONTROL;
   if (::GetThreadContext(mThreadID, &context)) {
-    FillStackBuffer();
-    FillThreadContext();
+    if (aStack) {
+      FillStackBuffer();
+    }
+
+#ifndef MOZ_THREADSTACKHELPER_X64
+    if (aNativeStack) {
+      auto callback = [](uint32_t, void* aPC, void*, void* aClosure) {
+        NativeStack* stack = static_cast<NativeStack*>(aClosure);
+        stack->push_back(reinterpret_cast<uintptr_t>(aPC));
+      };
+
+      // Now we need to get our frame pointer, our stack pointer, and our stack
+      // top. Rather than registering and storing the stack tops ourselves, we use
+      // the gecko profiler to look it up.
+      void** framePointer = reinterpret_cast<void**>(context.Ebp);
+      void** stackPointer = reinterpret_cast<void**>(context.Esp);
+
+      MOZ_ASSERT(mStackTop, "The thread should be registered by the profiler");
+
+      // Double check that the values we pulled for the thread make sense before
+      // walking the stack.
+      if (mStackTop && framePointer >= stackPointer && framePointer < mStackTop) {
+        // NOTE: In bug 1346415 this was changed to use FramePointerStackWalk.
+        // This was done because lowering the background hang timer threshold
+        // would cause it to fire on infra early during the boot process, causing
+        // a deadlock in MozStackWalk when the target thread was holding the
+        // windows-internal lock on the function table, as it would be suspended
+        // before we tried to grab the lock to walk its stack.
+        //
+        // FramePointerStackWalk is implemented entirely in userspace and thus
+        // doesn't have the same issues with deadlocking. Unfortunately as 64-bit
+        // windows is not guaranteed to have frame pointers, the stack walking
+        // code is only enabled on 32-bit windows builds (bug 1357829).
+        FramePointerStackWalk(callback, /* skipFrames */ 0,
+                              /* maxFrames */ Telemetry::HangStack::sMaxNativeFrames,
+                              reinterpret_cast<void*>(aNativeStack), framePointer,
+                              mStackTop);
+      }
+    }
+#endif
   }
 
   MOZ_ALWAYS_TRUE(::ResumeThread(mThreadID) != DWORD(-1));
@@ -268,66 +282,32 @@ ThreadStackHelper::GetStack(Stack& aStack)
   }
 # endif
 
-  if (::thread_suspend(mThreadID) != KERN_SUCCESS) {
-    MOZ_ASSERT(false);
-    return;
+  if (aStack) {
+    if (::thread_suspend(mThreadID) != KERN_SUCCESS) {
+      MOZ_ASSERT(false);
+      return;
+    }
+
+    FillStackBuffer();
+
+    MOZ_ALWAYS_TRUE(::thread_resume(mThreadID) == KERN_SUCCESS);
   }
-
-  FillStackBuffer();
-  FillThreadContext();
-
-  MOZ_ALWAYS_TRUE(::thread_resume(mThreadID) == KERN_SUCCESS);
 
 #endif
 }
 
-#ifdef MOZ_THREADSTACKHELPER_NATIVE
-class ThreadStackHelper::ThreadContext final
+void
+ThreadStackHelper::GetNativeStack(NativeStack& aNativeStack)
 {
-public:
-  // TODO: provide per-platform definition of Context.
-  typedef struct {} Context;
-
-  // Limit copied stack to 4kB
-  static const size_t kMaxStackSize = 0x1000;
-  // Limit unwound stack to 32 frames
-  static const unsigned int kMaxStackFrames = 32;
-  // Whether this structure contains valid data
-  bool mValid;
-  // Processor context
-  Context mContext;
-  // Stack area
-  UniquePtr<uint8_t[]> mStack;
-  // Start of stack area
-  uintptr_t mStackBase;
-  // Size of stack area
-  size_t mStackSize;
-  // End of stack area
-  const void* mStackEnd;
-
-  ThreadContext()
-    : mValid(false)
-    , mStackBase(0)
-    , mStackSize(0)
-    , mStackEnd(nullptr) {}
-};
+#ifdef MOZ_THREADSTACKHELPER_NATIVE
+  GetStacksInternal(nullptr, &aNativeStack);
 #endif // MOZ_THREADSTACKHELPER_NATIVE
+}
 
 void
-ThreadStackHelper::GetNativeStack(Stack& aStack)
+ThreadStackHelper::GetPseudoAndNativeStack(Stack& aStack, NativeStack& aNativeStack)
 {
-#ifdef MOZ_THREADSTACKHELPER_NATIVE
-  ThreadContext context;
-  context.mStack = MakeUnique<uint8_t[]>(ThreadContext::kMaxStackSize);
-
-  ScopedSetPtr<ThreadContext> contextPtr(mContextToFill, &context);
-
-  // Get pseudostack first and fill the thread context.
-  GetStack(aStack);
-  NS_ENSURE_TRUE_VOID(context.mValid);
-
-  // TODO: walk the saved stack frames.
-#endif // MOZ_THREADSTACKHELPER_NATIVE
+  GetStacksInternal(&aStack, &aNativeStack);
 }
 
 #ifdef XP_LINUX
@@ -342,7 +322,6 @@ ThreadStackHelper::FillStackHandler(int aSignal, siginfo_t* aInfo,
   ThreadStackHelper* const helper =
     reinterpret_cast<ThreadStackHelper*>(aInfo->si_value.sival_ptr);
   helper->FillStackBuffer();
-  helper->FillThreadContext(aContext);
   ::sem_post(&helper->mSem);
 }
 
@@ -426,7 +405,7 @@ GetPathAfterComponent(const char* filename, const char (&component)[LEN]) {
 } // namespace
 
 const char*
-ThreadStackHelper::AppendJSEntry(const volatile js::ProfileEntry* aEntry,
+ThreadStackHelper::AppendJSEntry(const js::ProfileEntry* aEntry,
                                  intptr_t& aAvailableBufferSize,
                                  const char* aPrevLabel)
 {
@@ -513,25 +492,15 @@ ThreadStackHelper::FillStackBuffer()
   intptr_t availableBufferSize = intptr_t(reservedBufferSize);
 
   // Go from front to back
-  const volatile js::ProfileEntry* entry = mPseudoStack->mStack;
-  const volatile js::ProfileEntry* end = entry + mPseudoStack->stackSize();
+  const js::ProfileEntry* entry = mPseudoStack->entries;
+  const js::ProfileEntry* end = entry + mPseudoStack->stackSize();
   // Deduplicate identical, consecutive frames
   const char* prevLabel = nullptr;
   for (; reservedSize-- && entry != end; entry++) {
-    /* We only accept non-copy labels, including js::RunScript,
-       because we only want static labels in the hang stack. */
-    if (entry->isCopyLabel()) {
-      continue;
-    }
     if (entry->isJs()) {
       prevLabel = AppendJSEntry(entry, availableBufferSize, prevLabel);
       continue;
     }
-#ifdef MOZ_THREADSTACKHELPER_NATIVE
-    if (mContextToFill) {
-      mContextToFill->mStackEnd = entry->stackAddress();
-    }
-#endif
     const char* const label = entry->label();
     if (mStackToFill->IsSameAsEntry(prevLabel, label)) {
       // Avoid duplicate labels to save space in the stack.
@@ -551,176 +520,6 @@ ThreadStackHelper::FillStackBuffer()
     mMaxBufferSize = reservedBufferSize - availableBufferSize;
   }
 #endif
-}
-
-MOZ_ASAN_BLACKLIST void
-ThreadStackHelper::FillThreadContext(void* aContext)
-{
-#ifdef MOZ_THREADSTACKHELPER_NATIVE
-  if (!mContextToFill) {
-    return;
-  }
-
-#if 0 // TODO: remove dependency on Breakpad structs.
-#if defined(XP_LINUX)
-  const ucontext_t& context = *reinterpret_cast<ucontext_t*>(aContext);
-#if defined(MOZ_THREADSTACKHELPER_X86)
-  mContextToFill->mContext.context_flags = MD_CONTEXT_X86_FULL;
-  mContextToFill->mContext.edi = context.uc_mcontext.gregs[REG_EDI];
-  mContextToFill->mContext.esi = context.uc_mcontext.gregs[REG_ESI];
-  mContextToFill->mContext.ebx = context.uc_mcontext.gregs[REG_EBX];
-  mContextToFill->mContext.edx = context.uc_mcontext.gregs[REG_EDX];
-  mContextToFill->mContext.ecx = context.uc_mcontext.gregs[REG_ECX];
-  mContextToFill->mContext.eax = context.uc_mcontext.gregs[REG_EAX];
-  mContextToFill->mContext.ebp = context.uc_mcontext.gregs[REG_EBP];
-  mContextToFill->mContext.eip = context.uc_mcontext.gregs[REG_EIP];
-  mContextToFill->mContext.eflags = context.uc_mcontext.gregs[REG_EFL];
-  mContextToFill->mContext.esp = context.uc_mcontext.gregs[REG_ESP];
-#elif defined(MOZ_THREADSTACKHELPER_X64)
-  mContextToFill->mContext.context_flags = MD_CONTEXT_AMD64_FULL;
-  mContextToFill->mContext.eflags = uint32_t(context.uc_mcontext.gregs[REG_EFL]);
-  mContextToFill->mContext.rax = context.uc_mcontext.gregs[REG_RAX];
-  mContextToFill->mContext.rcx = context.uc_mcontext.gregs[REG_RCX];
-  mContextToFill->mContext.rdx = context.uc_mcontext.gregs[REG_RDX];
-  mContextToFill->mContext.rbx = context.uc_mcontext.gregs[REG_RBX];
-  mContextToFill->mContext.rsp = context.uc_mcontext.gregs[REG_RSP];
-  mContextToFill->mContext.rbp = context.uc_mcontext.gregs[REG_RBP];
-  mContextToFill->mContext.rsi = context.uc_mcontext.gregs[REG_RSI];
-  mContextToFill->mContext.rdi = context.uc_mcontext.gregs[REG_RDI];
-  memcpy(&mContextToFill->mContext.r8,
-         &context.uc_mcontext.gregs[REG_R8], 8 * sizeof(int64_t));
-  mContextToFill->mContext.rip = context.uc_mcontext.gregs[REG_RIP];
-#elif defined(MOZ_THREADSTACKHELPER_ARM)
-  mContextToFill->mContext.context_flags = MD_CONTEXT_ARM_FULL;
-  memcpy(&mContextToFill->mContext.iregs[0],
-         &context.uc_mcontext.arm_r0, 17 * sizeof(int32_t));
-#else
-  #error "Unsupported architecture"
-#endif // architecture
-
-#elif defined(XP_WIN)
-  // Breakpad context struct is based off of the Windows CONTEXT struct,
-  // so we assume they are the same; do some sanity checks to make sure.
-  static_assert(sizeof(ThreadContext::Context) == sizeof(::CONTEXT),
-                "Context struct mismatch");
-  static_assert(offsetof(ThreadContext::Context, context_flags) ==
-                offsetof(::CONTEXT, ContextFlags),
-                "Context struct mismatch");
-  mContextToFill->mContext.context_flags = CONTEXT_FULL;
-  NS_ENSURE_TRUE_VOID(::GetThreadContext(mThreadID,
-      reinterpret_cast<::CONTEXT*>(&mContextToFill->mContext)));
-
-#elif defined(XP_MACOSX)
-#if defined(MOZ_THREADSTACKHELPER_X86)
-  const thread_state_flavor_t flavor = x86_THREAD_STATE32;
-  x86_thread_state32_t state = {};
-  mach_msg_type_number_t count = x86_THREAD_STATE32_COUNT;
-#elif defined(MOZ_THREADSTACKHELPER_X64)
-  const thread_state_flavor_t flavor = x86_THREAD_STATE64;
-  x86_thread_state64_t state = {};
-  mach_msg_type_number_t count = x86_THREAD_STATE64_COUNT;
-#elif defined(MOZ_THREADSTACKHELPER_ARM)
-  const thread_state_flavor_t flavor = ARM_THREAD_STATE;
-  arm_thread_state_t state = {};
-  mach_msg_type_number_t count = ARM_THREAD_STATE_COUNT;
-#endif
-  NS_ENSURE_TRUE_VOID(KERN_SUCCESS == ::thread_get_state(
-    mThreadID, flavor, reinterpret_cast<thread_state_t>(&state), &count));
-#if __DARWIN_UNIX03
-#define GET_REGISTER(s, r) ((s).__##r)
-#else
-#define GET_REGISTER(s, r) ((s).r)
-#endif
-#if defined(MOZ_THREADSTACKHELPER_X86)
-  mContextToFill->mContext.context_flags = MD_CONTEXT_X86_FULL;
-  mContextToFill->mContext.edi = GET_REGISTER(state, edi);
-  mContextToFill->mContext.esi = GET_REGISTER(state, esi);
-  mContextToFill->mContext.ebx = GET_REGISTER(state, ebx);
-  mContextToFill->mContext.edx = GET_REGISTER(state, edx);
-  mContextToFill->mContext.ecx = GET_REGISTER(state, ecx);
-  mContextToFill->mContext.eax = GET_REGISTER(state, eax);
-  mContextToFill->mContext.ebp = GET_REGISTER(state, ebp);
-  mContextToFill->mContext.eip = GET_REGISTER(state, eip);
-  mContextToFill->mContext.eflags = GET_REGISTER(state, eflags);
-  mContextToFill->mContext.esp = GET_REGISTER(state, esp);
-#elif defined(MOZ_THREADSTACKHELPER_X64)
-  mContextToFill->mContext.context_flags = MD_CONTEXT_AMD64_FULL;
-  mContextToFill->mContext.eflags = uint32_t(GET_REGISTER(state, rflags));
-  mContextToFill->mContext.rax = GET_REGISTER(state, rax);
-  mContextToFill->mContext.rcx = GET_REGISTER(state, rcx);
-  mContextToFill->mContext.rdx = GET_REGISTER(state, rdx);
-  mContextToFill->mContext.rbx = GET_REGISTER(state, rbx);
-  mContextToFill->mContext.rsp = GET_REGISTER(state, rsp);
-  mContextToFill->mContext.rbp = GET_REGISTER(state, rbp);
-  mContextToFill->mContext.rsi = GET_REGISTER(state, rsi);
-  mContextToFill->mContext.rdi = GET_REGISTER(state, rdi);
-  memcpy(&mContextToFill->mContext.r8,
-         &GET_REGISTER(state, r8), 8 * sizeof(int64_t));
-  mContextToFill->mContext.rip = GET_REGISTER(state, rip);
-#elif defined(MOZ_THREADSTACKHELPER_ARM)
-  mContextToFill->mContext.context_flags = MD_CONTEXT_ARM_FULL;
-  memcpy(mContextToFill->mContext.iregs,
-         GET_REGISTER(state, r), 17 * sizeof(int32_t));
-#else
-  #error "Unsupported architecture"
-#endif // architecture
-#undef GET_REGISTER
-
-#else
-  #error "Unsupported platform"
-#endif // platform
-
-  intptr_t sp = 0;
-#if defined(MOZ_THREADSTACKHELPER_X86)
-  sp = mContextToFill->mContext.esp;
-#elif defined(MOZ_THREADSTACKHELPER_X64)
-  sp = mContextToFill->mContext.rsp;
-#elif defined(MOZ_THREADSTACKHELPER_ARM)
-  sp = mContextToFill->mContext.iregs[13];
-#else
-  #error "Unsupported architecture"
-#endif // architecture
-  NS_ENSURE_TRUE_VOID(sp);
-  NS_ENSURE_TRUE_VOID(mThreadStackBase);
-
-  size_t stackSize = std::min(intptr_t(ThreadContext::kMaxStackSize),
-                              std::abs(sp - mThreadStackBase));
-
-  if (mContextToFill->mStackEnd) {
-    // Limit the start of stack to a certain location if specified.
-    stackSize = std::min(intptr_t(stackSize),
-      std::abs(sp - intptr_t(mContextToFill->mStackEnd)));
-  }
-
-#ifndef MOZ_THREADSTACKHELPER_STACK_GROWS_DOWN
-  // If if the stack grows upwards, and we need to recalculate our
-  // stack copy's base address. Subtract sizeof(void*) so that the
-  // location pointed to by sp is included.
-  sp -= stackSize - sizeof(void*);
-#endif
-
-#ifndef MOZ_ASAN
-  memcpy(mContextToFill->mStack.get(), reinterpret_cast<void*>(sp), stackSize);
-  // Valgrind doesn't care about the access outside the stack frame, but
-  // the presence of uninitialised values on the stack does cause it to
-  // later report a lot of false errors when Breakpad comes to unwind it.
-  // So mark the extracted data as defined.
-  MOZ_MAKE_MEM_DEFINED(mContextToFill->mStack.get(), stackSize);
-#else
-  // ASan will flag memcpy for access outside of stack frames,
-  // so roll our own memcpy here.
-  intptr_t* dst = reinterpret_cast<intptr_t*>(&mContextToFill->mStack[0]);
-  const intptr_t* src = reinterpret_cast<intptr_t*>(sp);
-  for (intptr_t len = stackSize; len > 0; len -= sizeof(*src)) {
-    *(dst++) = *(src++);
-  }
-#endif
-
-  mContextToFill->mStackBase = uintptr_t(sp);
-  mContextToFill->mStackSize = stackSize;
-  mContextToFill->mValid = true;
-#endif
-#endif // MOZ_THREADSTACKHELPER_NATIVE
 }
 
 } // namespace mozilla

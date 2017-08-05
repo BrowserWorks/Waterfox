@@ -98,7 +98,7 @@ RestyleTracker::ProcessOneRestyle(Element* aElement,
              (primaryFrame ||
               (aChangeHint & nsChangeHint_ReconstructFrame))) {
     // Don't need to recompute style; just apply the hint
-    nsStyleChangeList changeList;
+    nsStyleChangeList changeList(StyleBackendType::Gecko);
     changeList.AppendChange(primaryFrame, aElement, aChangeHint);
     mRestyleManager->ProcessRestyledFrames(changeList);
   }
@@ -114,8 +114,8 @@ RestyleTracker::DoProcessRestyles()
       docURL = uri->GetSpecOrDefault();
     }
   }
-  PROFILER_LABEL_PRINTF("RestyleTracker", "ProcessRestyles",
-                        js::ProfileEntry::Category::CSS, "(%s)", docURL.get());
+  PROFILER_LABEL_DYNAMIC("RestyleTracker", "ProcessRestyles",
+                         js::ProfileEntry::Category::CSS, docURL.get());
 
   nsDocShell* docShell = static_cast<nsDocShell*>(mRestyleManager->PresContext()->GetDocShell());
   RefPtr<TimelineConsumers> timelines = TimelineConsumers::Get();
@@ -256,7 +256,7 @@ RestyleTracker::DoProcessRestyles()
         }
 
         Maybe<GeckoProfilerTracingRAII> profilerRAII;
-        if (profiler_feature_active("restyle")) {
+        if (profiler_feature_active(ProfilerFeature::Restyle)) {
           profilerRAII.emplace("Paint", "Styles", Move(data->mBacktrace));
         }
         ProcessOneRestyle(element, data->mRestyleHint, data->mChangeHint,
@@ -360,7 +360,7 @@ RestyleTracker::DoProcessRestyles()
           LOG_RESTYLE_INDENT();
 
           Maybe<GeckoProfilerTracingRAII> profilerRAII;
-          if (profiler_feature_active("restyle")) {
+          if (profiler_feature_active(ProfilerFeature::Restyle)) {
             profilerRAII.emplace("Paint", "Styles", Move(currentRestyle->mBacktrace));
           }
           if (isTimelineRecording) {

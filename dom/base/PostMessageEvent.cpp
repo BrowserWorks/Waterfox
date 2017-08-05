@@ -105,18 +105,17 @@ PostMessageEvent::Run()
     //       don't do that in other places it seems better to hold the line for
     //       now.  Long-term, we want HTML5 to address this so that we can
     //       be compliant while being safer.
-    if (!BasePrincipal::Cast(targetPrin)->EqualsIgnoringAddonId(mProvidedPrincipal)) {
+    if (!targetPrin->Equals(mProvidedPrincipal)) {
+      MOZ_DIAGNOSTIC_ASSERT(ChromeUtils::IsOriginAttributesEqualIgnoringFPD(mProvidedPrincipal->OriginAttributesRef(),
+                                                                            targetPrin->OriginAttributesRef()),
+                            "Unexpected postMessage call to a window with mismatched "
+                            "origin attributes");
+
       nsAutoString providedOrigin, targetOrigin;
       nsresult rv = nsContentUtils::GetUTFOrigin(targetPrin, targetOrigin);
       NS_ENSURE_SUCCESS(rv, rv);
       rv = nsContentUtils::GetUTFOrigin(mProvidedPrincipal, providedOrigin);
       NS_ENSURE_SUCCESS(rv, rv);
-
-      MOZ_DIAGNOSTIC_ASSERT(providedOrigin != targetOrigin ||
-                            (mProvidedPrincipal->OriginAttributesRef() ==
-                              targetPrin->OriginAttributesRef()),
-                            "Unexpected postMessage call to a window with mismatched "
-                            "origin attributes");
 
       const char16_t* params[] = { providedOrigin.get(), targetOrigin.get() };
 
@@ -145,7 +144,7 @@ PostMessageEvent::Run()
     new MessageEvent(eventTarget, nullptr, nullptr);
 
 
-  Nullable<WindowProxyOrMessagePort> source;
+  Nullable<WindowProxyOrMessagePortOrServiceWorker> source;
   source.SetValue().SetAsWindowProxy() = mSource ? mSource->AsOuter() : nullptr;
 
   Sequence<OwningNonNull<MessagePort>> ports;

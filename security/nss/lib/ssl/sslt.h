@@ -304,6 +304,15 @@ typedef struct SSLPreliminaryChannelInfoStr {
      */
     PRBool canSendEarlyData;
 
+    /* The following fields were added in NSS 3.31. */
+    /* The number of early data octets that a client is permitted to send on
+     * this connection.  The value will be zero if the connection was not
+     * resumed or early data is not permitted.  For a client, this value only
+     * has meaning if |canSendEarlyData| is true.  For a server, this indicates
+     * the value that was advertised in the session ticket that was used to
+     * resume this session. */
+    PRUint32 maxEarlyDataSize;
+
     /* When adding new fields to this structure, please document the
      * NSS version in which they were added. */
 } SSLPreliminaryChannelInfo;
@@ -401,11 +410,10 @@ typedef enum {
 /* This is the old name for the supported_groups extensions. */
 #define ssl_elliptic_curves_xtn ssl_supported_groups_xtn
 
-/* SSL_MAX_EXTENSIONS doesn't include ssl_padding_xtn.  It includes the maximum
- * number of extensions that are supported for any single message type.  That
- * is, a ClientHello; ServerHello and TLS 1.3 NewSessionTicket and
- * HelloRetryRequest extensions are smaller. */
-#define SSL_MAX_EXTENSIONS 19
+/* SSL_MAX_EXTENSIONS includes the maximum number of extensions that are
+ * supported for any single message type.  That is, a ClientHello; ServerHello
+ * and TLS 1.3 NewSessionTicket and HelloRetryRequest extensions have fewer. */
+#define SSL_MAX_EXTENSIONS 20
 
 /* Deprecated */
 typedef enum {

@@ -40,9 +40,8 @@ protected:
   typedef mozilla::gfx::DrawTarget DrawTarget;
 
 public:
-  NS_DECL_FRAMEARENA_HELPERS
+  NS_DECL_FRAMEARENA_HELPERS(nsBoxFrame)
 #ifdef DEBUG
-  NS_DECL_QUERYFRAME_TARGET(nsBoxFrame)
   NS_DECL_QUERYFRAME
 #endif
 
@@ -112,8 +111,6 @@ public:
 
   virtual void DidSetStyleContext(nsStyleContext* aOldStyleContext) override;
 
-  virtual nsIAtom* GetType() const override;
-
   virtual bool IsFrameOfType(uint32_t aFlags) const override
   {
     // record that children that are ignorable whitespace should be excluded 
@@ -140,10 +137,6 @@ public:
                          nsDidReflowStatus        aStatus) override;
 
   virtual bool HonorPrintBackgroundSettings() override;
-
-  virtual ~nsBoxFrame();
-  
-  explicit nsBoxFrame(nsStyleContext* aContext, bool aIsRoot = false, nsBoxLayout* aLayoutManager = nullptr);
 
   // virtual so nsStackFrame, nsButtonBoxFrame, nsSliderFrame and nsMenuFrame
   // can override it
@@ -178,7 +171,14 @@ public:
    */
   virtual bool SupportsOrdinalsInChildren();
 
+private:
+  explicit nsBoxFrame(nsStyleContext* aContext)
+    : nsBoxFrame(aContext, kClassID, false, nullptr) {}
 protected:
+  nsBoxFrame(nsStyleContext* aContext, ClassID aID, bool aIsRoot = false,
+             nsBoxLayout* aLayoutManager = nullptr);
+  virtual ~nsBoxFrame();
+
 #ifdef DEBUG_LAYOUT
     virtual void GetBoxName(nsAutoString& aName) override;
     void PaintXULDebugBackground(nsRenderingContext& aRenderingContext,

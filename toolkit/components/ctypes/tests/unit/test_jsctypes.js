@@ -949,6 +949,7 @@ function run_float_tests(library, t, name, size) {
   // Check that values roundtrip through toSource() correctly.
   function test_roundtrip(tFn, val) {
     let f1 = tFn(val);
+    // eslint-disable-next-line no-eval
     var f2 = eval(f1.toSource());
     do_check_eq(f1.value, f2.value);
   }
@@ -1341,7 +1342,7 @@ function run_StructType_tests() {
 
   // Check that malformed descriptors are an error.
   do_check_throws(function() {
-    ctypes.StructType("a", [{"x":ctypes.int32_t}, {"x":ctypes.int8_t}]);
+    ctypes.StructType("a", [{"x": ctypes.int32_t}, {"x": ctypes.int8_t}]);
   }, TypeError);
   do_check_throws(function() {
     ctypes.StructType("a", [5]);
@@ -1350,16 +1351,16 @@ function run_StructType_tests() {
     ctypes.StructType("a", [{}]);
   }, TypeError);
   do_check_throws(function() {
-    ctypes.StructType("a", [{5:ctypes.int32_t}]);
+    ctypes.StructType("a", [{5: ctypes.int32_t}]);
   }, TypeError);
   do_check_throws(function() {
-    ctypes.StructType("a", [{"5":ctypes.int32_t}]);
+    ctypes.StructType("a", [{"5": ctypes.int32_t}]);
   }, TypeError);
   do_check_throws(function() {
-    ctypes.StructType("a", [{"x":5}]);
+    ctypes.StructType("a", [{"x": 5}]);
   }, TypeError);
   do_check_throws(function() {
-    ctypes.StructType("a", [{"x":ctypes.int32_t()}]);
+    ctypes.StructType("a", [{"x": ctypes.int32_t()}]);
   }, TypeError);
 
   // Check that opaque structs work.
@@ -1543,6 +1544,7 @@ function run_StructType_tests() {
 
   do_check_eq(s.toSource(), "s_t(4, {\"a\": 7, \"b\": 2}, 10)");
   do_check_eq(s.toSource(), s.toString());
+  // eslint-disable-next-line no-eval
   var s2 = eval(s.toSource());
   do_check_true(s2.constructor === s_t);
   do_check_eq(s.b.b, s2.b.b);
@@ -2041,6 +2043,7 @@ function run_ArrayType_tests() {
   c.value = [1, 2, 3, 4, 5, 6];
   do_check_eq(c.toSource(), "ctypes.int32_t.array(6)([1, 2, 3, 4, 5, 6])");
   do_check_eq(c.toSource(), c.toString());
+  // eslint-disable-next-line no-eval
   var c2 = eval(c.toSource());
   do_check_eq(c2.constructor.name, "int32_t[6]");
   do_check_eq(c2.length, 6);
@@ -2106,7 +2109,7 @@ function run_type_toString_tests() {
   do_check_eq(c.voidptr_t.toString(), "type void*");
   do_check_eq(c.char16_t.toString(), "type char16_t");
 
-  var simplestruct = c.StructType("simplestruct", [{"smitty":c.voidptr_t}]);
+  var simplestruct = c.StructType("simplestruct", [{"smitty": c.voidptr_t}]);
   do_check_eq(simplestruct.toString(), "type simplestruct");
 
   // One type modifier, int base type.
@@ -2401,10 +2404,10 @@ function run_struct_tests(library) {
                        [{ x: ctypes.int32_t },
                         { y: ctypes.int32_t }]);
   const rect_t = new ctypes.StructType("myRECT",
-                       [{ top   : ctypes.int32_t },
-                        { left  : ctypes.int32_t },
+                       [{ top: ctypes.int32_t },
+                        { left: ctypes.int32_t },
                         { bottom: ctypes.int32_t },
-                        { right : ctypes.int32_t }]);
+                        { right: ctypes.int32_t }]);
 
   let test_pt_in_rect = library.declare("test_pt_in_rect", ctypes.default_abi, ctypes.int32_t, rect_t, point_t);
   let rect = new rect_t(10, 5, 5, 10);
@@ -2418,11 +2421,11 @@ function run_struct_tests(library) {
                         { i2: ctypes.int64_t },
                         { i3: ctypes.uint8_t }]);
   const nested_t = new ctypes.StructType("NESTED",
-                       [{ n1   : ctypes.int32_t },
-                        { n2   : ctypes.int16_t },
+                       [{ n1: ctypes.int32_t },
+                        { n2: ctypes.int16_t },
                         { inner: inner_t },
-                        { n3   : ctypes.int64_t },
-                        { n4   : ctypes.int32_t }]);
+                        { n3: ctypes.int64_t },
+                        { n4: ctypes.int32_t }]);
 
   let test_nested_struct = library.declare("test_nested_struct", ctypes.default_abi, ctypes.int32_t, nested_t);
   let inner = new inner_t(161, 523412, 43);
@@ -2703,10 +2706,10 @@ function run_variadic_tests(library) {
 
 function run_static_data_tests(library) {
   const rect_t = new ctypes.StructType("myRECT",
-                       [{ top   : ctypes.int32_t },
-                        { left  : ctypes.int32_t },
+                       [{ top: ctypes.int32_t },
+                        { left: ctypes.int32_t },
                         { bottom: ctypes.int32_t },
-                        { right : ctypes.int32_t }]);
+                        { right: ctypes.int32_t }]);
 
   let data_rect = library.declare("data_rect", rect_t);
 

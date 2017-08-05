@@ -21,13 +21,13 @@
 #include "nsCOMArray.h"
 #include "nsIURI.h"
 #include "nsIXULDocument.h"
-#include "nsScriptLoader.h"
 #include "nsIStreamListener.h"
 #include "nsIStreamLoader.h"
 #include "nsICSSLoaderObserver.h"
 #include "nsIXULStore.h"
 
 #include "mozilla/Attributes.h"
+#include "mozilla/dom/ScriptLoader.h"
 
 #include "js/TracingAPI.h"
 #include "js/TypeDecls.h"
@@ -138,7 +138,8 @@ public:
     bool OnDocumentParserError() override;
 
     // nsINode interface overrides
-    virtual nsresult Clone(mozilla::dom::NodeInfo *aNodeInfo, nsINode **aResult) const override;
+    virtual nsresult Clone(mozilla::dom::NodeInfo *aNodeInfo, nsINode **aResult,
+                           bool aPreallocateChildren) const override;
 
     // nsIDOMNode interface
     NS_FORWARD_NSIDOMNODE_TO_NSINODE

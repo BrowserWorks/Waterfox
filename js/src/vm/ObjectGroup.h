@@ -139,6 +139,7 @@ class ObjectGroup : public gc::TenuredCell
     /* Flags for this group. */
     ObjectGroupFlags flags_;
 
+  public:
     // Kinds of addendums which can be attached to ObjectGroups.
     enum AddendumKind {
         Addendum_None,
@@ -168,6 +169,7 @@ class ObjectGroup : public gc::TenuredCell
         Addendum_TypeDescr
     };
 
+  private:
     // If non-null, holds additional information about this object, whose
     // format is indicated by the object's addendum kind.
     void* addendum_;
@@ -200,7 +202,11 @@ class ObjectGroup : public gc::TenuredCell
     inline TypeNewScript* newScript();
 
     void setNewScript(TypeNewScript* newScript) {
+        MOZ_ASSERT(newScript);
         setAddendum(Addendum_NewScript, newScript);
+    }
+    void detachNewScript() {
+        setAddendum(Addendum_None, nullptr);
     }
 
     inline PreliminaryObjectArrayWithTemplate* maybePreliminaryObjects();
@@ -560,6 +566,28 @@ class ObjectGroupCompartment
     NewTable* defaultNewTable;
     NewTable* lazyTable;
 
+    // Cache for defaultNewGroup. Purged on GC.
+    class DefaultNewGroupCache
+    {
+        ObjectGroup* group_;
+        JSObject* associated_;
+
+      public:
+        DefaultNewGroupCache() { purge(); }
+
+        void purge() {
+            group_ = nullptr;
+        }
+        void put(ObjectGroup* group, JSObject* associated) {
+            group_ = group;
+            associated_ = associated;
+        }
+
+        MOZ_ALWAYS_INLINE ObjectGroup* lookup(const Class* clasp, TaggedProto proto,
+                                              JSObject* associated);
+    };
+    DefaultNewGroupCache defaultNewGroupCache;
+
     struct ArrayObjectKey;
     using ArrayObjectTable = js::GCRekeyableHashMap<ArrayObjectKey,
                                                     ReadBarrieredObjectGroup,
@@ -621,6 +649,10 @@ class ObjectGroupCompartment
     void clearTables();
 
     void sweep(FreeOp* fop);
+
+    void purge() {
+        defaultNewGroupCache.purge();
+    }
 
 #ifdef JSGC_HASH_TABLE_CHECKS
     void checkTablesAfterMovingGC() {

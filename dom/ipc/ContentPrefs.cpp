@@ -6,9 +6,17 @@
 
 #include "ContentPrefs.h"
 
-/************************************************************
- *    DO NOT ADD PREFS TO THIS LIST WITHOUT DOM PEER REVIEW *
- ************************************************************/
+/******************************************************************************
+ *
+ *           DO NOT ADD PREFS TO THIS LIST WITHOUT DOM PEER REVIEW
+ *
+ * This is the list of preferences that are sent to the content process on
+ * startup. Only prefs that are required immediately upon startup should be
+ * listed here. The first IPC message received in the content process will
+ * contain all the other prefs. Prefs should only be listed here if they must be
+ * read before the first IPC message is received.
+ *
+ ******************************************************************************/
 
 const char* mozilla::dom::ContentPrefs::gInitPrefs[] = {
   "accessibility.monoaudio.enable",
@@ -56,6 +64,7 @@ const char* mozilla::dom::ContentPrefs::gInitPrefs[] = {
   "dom.vibrator.enabled",
   "dom.vibrator.max_vibrate_list_len",
   "dom.vibrator.max_vibrate_ms",
+  "dom.webcomponents.customelements.enabled",
   "dom.webcomponents.enabled",
   "focusmanager.testmode",
   "font.size.inflation.disabledInMasterProcess",
@@ -104,55 +113,13 @@ const char* mozilla::dom::ContentPrefs::gInitPrefs[] = {
   "javascript.options.wasm_baselinejit",
   "javascript.options.werror",
   "javascript.use_us_english_locale",
-  "jsloader.reuseGlobal",
-  "layout.css.all-shorthand.enabled",
-  "layout.css.background-blend-mode.enabled",
-  "layout.css.background-clip-text.enabled",
-  "layout.css.box-decoration-break.enabled",
-  "layout.css.color-adjust.enabled",
-  "layout.css.contain.enabled",
-  "layout.css.control-characters.visible",
-  "layout.css.display-flow-root.enabled",
-  "layout.css.expensive-style-struct-assertions.enabled",
-  "layout.css.float-logical-values.enabled",
-  "layout.css.font-variations.enabled",
-  "layout.css.grid.enabled",
-  "layout.css.image-orientation.enabled",
-  "layout.css.initial-letter.enabled",
-  "layout.css.isolation.enabled",
-  "layout.css.mix-blend-mode.enabled",
-  "layout.css.osx-font-smoothing.enabled",
-  "layout.css.overflow-clip-box.enabled",
-  "layout.css.prefixes.animations",
-  "layout.css.prefixes.border-image",
-  "layout.css.prefixes.box-sizing",
-  "layout.css.prefixes.device-pixel-ratio-webkit",
-  "layout.css.prefixes.font-features",
-  "layout.css.prefixes.gradients",
-  "layout.css.prefixes.transforms",
-  "layout.css.prefixes.transitions",
-  "layout.css.prefixes.webkit",
-  "layout.css.scope-pseudo.enabled",
-  "layout.css.scroll-behavior.property-enabled",
-  "layout.css.scroll-snap.enabled",
-  "layout.css.servo.enabled",
-  "layout.css.shape-outside.enabled",
-  "layout.css.text-align-unsafe-value.enabled",
-  "layout.css.text-combine-upright-digits.enabled",
-  "layout.css.text-combine-upright.enabled",
-  "layout.css.text-justify.enabled",
-  "layout.css.touch_action.enabled",
-  "layout.css.unprefixing-service.enabled",
-  "layout.css.unprefixing-service.globally-whitelisted",
-  "layout.css.unprefixing-service.include-test-domains",
-  "layout.css.variables.enabled",
-  "layout.css.visited_links_enabled",
   "layout.idle_period.required_quiescent_frames",
   "layout.idle_period.time_limit",
   "layout.interruptible-reflow.enabled",
   "mathml.disabled",
   "media.apple.forcevda",
   "media.clearkey.persistent-license.enabled",
+  "media.cubeb.backend",
   "media.cubeb_latency_msg_frames",
   "media.cubeb_latency_playback_ms",
   "media.decoder-doctor.wmf-disabled-is-failure",
@@ -163,6 +130,7 @@ const char* mozilla::dom::ContentPrefs::gInitPrefs[] = {
   "media.decoder.recycle.enabled",
   "media.dormant-on-pause-timeout-ms",
   "media.eme.audio.blank",
+  "media.eme.chromium-api.enabled",
   "media.eme.enabled",
   "media.eme.video.blank",
   "media.ffmpeg.enabled",
@@ -238,13 +206,12 @@ const char* mozilla::dom::ContentPrefs::gInitPrefs[] = {
   "privacy.firstparty.isolate",
   "privacy.firstparty.isolate.restrict_opener_access",
   "privacy.resistFingerprinting",
-  "security.data_uri.inherit_security_context",
+  "security.data_uri.unique_opaque_origin",
   "security.fileuri.strict_origin_policy",
   "security.sandbox.content.level",
   "security.sandbox.content.tempDirSuffix",
   "security.sandbox.logging.enabled",
   "security.sandbox.mac.track.violations",
-  "security.sandbox.windows.log",
   "security.sandbox.windows.log.stackTraceDepth",
   "shutdown.watchdog.timeoutSecs",
   "signed.applets.codebase_principal_support",
@@ -284,4 +251,3 @@ const char*  mozilla::dom::ContentPrefs::GetContentPref(size_t aIndex)
   MOZ_ASSERT(aIndex < ArrayLength(ContentPrefs::gInitPrefs));
   return gInitPrefs[aIndex];
 }
-

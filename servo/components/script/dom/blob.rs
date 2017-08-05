@@ -12,8 +12,6 @@ use dom::bindings::reflector::{DomObject, Reflector, reflect_dom_object};
 use dom::bindings::str::DOMString;
 use dom::globalscope::GlobalScope;
 use dom_struct::dom_struct;
-use encoding::all::UTF_8;
-use encoding::types::{EncoderTrap, Encoding};
 use ipc_channel::ipc;
 use net_traits::{CoreResourceMsg, IpcSend};
 use net_traits::blob_url_store::{BlobBuf, get_blob_origin};
@@ -161,6 +159,11 @@ impl Blob {
                 })
             }
         }
+    }
+
+    /// Get a copy of the type_string
+    pub fn type_string(&self) -> String {
+        self.type_string.clone()
     }
 
     /// Get a FileID representing the Blob content,
@@ -332,12 +335,11 @@ pub fn blob_parts_to_bytes(blobparts: Vec<BlobOrString>) -> Result<Vec<u8>, ()> 
     for blobpart in &blobparts {
         match blobpart {
             &BlobOrString::String(ref s) => {
-                let mut bytes = UTF_8.encode(s, EncoderTrap::Replace).map_err(|_|())?;
-                ret.append(&mut bytes);
+                ret.extend(s.as_bytes());
             },
             &BlobOrString::Blob(ref b) => {
-                let mut bytes = b.get_bytes().unwrap_or(vec![]);
-                ret.append(&mut bytes);
+                let bytes = b.get_bytes().unwrap_or(vec![]);
+                ret.extend(bytes);
             },
         }
     }
@@ -348,12 +350,12 @@ pub fn blob_parts_to_bytes(blobparts: Vec<BlobOrString>) -> Result<Vec<u8>, ()> 
 impl BlobMethods for Blob {
     // https://w3c.github.io/FileAPI/#dfn-size
     fn Size(&self) -> u64 {
-         match *self.blob_impl.borrow() {
-            BlobImpl::File(ref f) => f.size,
-            BlobImpl::Memory(ref v) => v.len() as u64,
-            BlobImpl::Sliced(ref parent, ref rel_pos) =>
-                rel_pos.to_abs_range(parent.Size() as usize).len() as u64,
-         }
+        match *self.blob_impl.borrow() {
+           BlobImpl::File(ref f) => f.size,
+           BlobImpl::Memory(ref v) => v.len() as u64,
+           BlobImpl::Sliced(ref parent, ref rel_pos) =>
+               rel_pos.to_abs_range(parent.Size() as usize).len() as u64,
+        }
     }
 
     // https://w3c.github.io/FileAPI/#dfn-type

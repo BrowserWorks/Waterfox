@@ -8,18 +8,21 @@
 #include <string>
 #include <vector>
 #include "argparse.h"
+#include "tool.h"
 
-class DBTool {
+class DBTool : public Tool {
  public:
-  bool Run(const std::vector<std::string>& arguments);
-
-  void Usage();
+  bool Run(const std::vector<std::string>& arguments) override;
 
  private:
+  void Usage() override;
   bool PathHasDBFiles(std::string path);
   void ListCertificates();
   bool ImportCertificate(const ArgParser& parser);
   bool ListKeys();
+  bool ImportKey(const ArgParser& parser);
+  bool DeleteCert(const ArgParser& parser);
+  bool DeleteKey(const ArgParser& parser);
 };
 
 #endif  // dbtool_h__

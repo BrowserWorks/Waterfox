@@ -7,22 +7,26 @@ use euclid::size::TypedSize2D;
 use servo_url::ServoUrl;
 use std::borrow::ToOwned;
 use style::Atom;
-use style::error_reporting::ParseErrorReporter;
+use style::context::QuirksMode;
+use style::error_reporting::{ParseErrorReporter, ContextualParseError};
 use style::media_queries::*;
-use style::parser::ParserContextExtraData;
 use style::servo::media_queries::*;
-use style::stylesheets::{Stylesheet, Origin, CssRule};
+use style::shared_lock::SharedRwLock;
+use style::stylearc::Arc;
+use style::stylesheets::{AllRules, Stylesheet, Origin, CssRule};
 use style::values::specified;
 use style_traits::ToCss;
 
 pub struct CSSErrorReporterTest;
 
 impl ParseErrorReporter for CSSErrorReporterTest {
-     fn report_error(&self, _input: &mut Parser, _position: SourcePosition, _message: &str) {
-     }
-     fn clone(&self) -> Box<ParseErrorReporter + Send + Sync> {
-        Box::new(CSSErrorReporterTest)
-     }
+    fn report_error<'a>(&self,
+                        _input: &mut Parser,
+                        _position: SourcePosition,
+                        _error: ContextualParseError<'a>,
+                        _url: &ServoUrl,
+                        _line_number_offset: u64) {
+    }
 }
 
 fn test_media_rule<F>(css: &str, callback: F)
@@ -30,39 +34,32 @@ fn test_media_rule<F>(css: &str, callback: F)
 {
     let url = ServoUrl::parse("http://localhost").unwrap();
     let css_str = css.to_owned();
+    let lock = SharedRwLock::new();
+    let media_list = Arc::new(lock.wrap(MediaList::empty()));
     let stylesheet = Stylesheet::from_str(
-        css, url, Origin::Author, Default::default(),
-        None, Box::new(CSSErrorReporterTest),
-        ParserContextExtraData::default());
+        css, url, Origin::Author, media_list, lock,
+        None, &CSSErrorReporterTest, QuirksMode::NoQuirks, 0u64);
+    let dummy = Device::new(MediaType::Screen, TypedSize2D::new(200.0, 100.0));
     let mut rule_count = 0;
-    media_queries(&stylesheet.rules.read().0, &mut |mq| {
-        rule_count += 1;
-        callback(mq, css);
-    });
-    assert!(rule_count > 0, css_str);
-}
-
-fn media_queries<F>(rules: &[CssRule], f: &mut F)
-    where F: FnMut(&MediaList),
-{
-    for rule in rules {
-        rule.with_nested_rules_and_mq(|rules, mq| {
-            if let Some(mq) = mq {
-                f(mq)
-            }
-            media_queries(rules, f)
-        })
+    let guard = stylesheet.shared_lock.read();
+    for rule in stylesheet.iter_rules::<AllRules>(&dummy, &guard) {
+        if let CssRule::Media(ref lock) = *rule {
+            rule_count += 1;
+            callback(&lock.read_with(&guard).media_queries.read_with(&guard), css);
+        }
     }
+    assert!(rule_count > 0, css_str);
 }
 
 fn media_query_test(device: &Device, css: &str, expected_rule_count: usize) {
     let url = ServoUrl::parse("http://localhost").unwrap();
+    let lock = SharedRwLock::new();
+    let media_list = Arc::new(lock.wrap(MediaList::empty()));
     let ss = Stylesheet::from_str(
-        css, url, Origin::Author, Default::default(),
-        None, Box::new(CSSErrorReporterTest),
-        ParserContextExtraData::default());
+        css, url, Origin::Author, media_list, lock,
+        None, &CSSErrorReporterTest, QuirksMode::NoQuirks, 0u64);
     let mut rule_count = 0;
-    ss.effective_style_rules(device, |_| rule_count += 1);
+    ss.effective_style_rules(device, &ss.shared_lock.read(), |_| rule_count += 1);
     assert!(rule_count == expected_rule_count, css.to_owned());
 }
 
@@ -277,12 +274,12 @@ fn test_mq_expressions() {
 
 #[test]
 fn test_to_css() {
-  test_media_rule("@media print and (width: 43px) { }", |list, _| {
-      let q = &list.media_queries[0];
-      let mut dest = String::new();
-      assert_eq!(Ok(()), q.to_css(&mut dest));
-      assert_eq!(dest, "print and (width: 43px)");
-  });
+    test_media_rule("@media print and (width: 43px) { }", |list, _| {
+        let q = &list.media_queries[0];
+        let mut dest = String::new();
+        assert_eq!(Ok(()), q.to_css(&mut dest));
+        assert_eq!(dest, "print and (width: 43px)");
+    });
 }
 
 #[test]
@@ -323,11 +320,12 @@ fn test_mq_multiple_expressions() {
 #[test]
 fn test_mq_malformed_expressions() {
     fn check_malformed_expr(list: &MediaList, css: &str) {
-        assert!(list.media_queries.len() == 1, css.to_owned());
-        let q = &list.media_queries[0];
-        assert!(q.qualifier == Some(Qualifier::Not), css.to_owned());
-        assert!(q.media_type == MediaQueryType::All, css.to_owned());
-        assert!(q.expressions.len() == 0, css.to_owned());
+        assert!(!list.media_queries.is_empty(), css.to_owned());
+        for mq in &list.media_queries {
+            assert!(mq.qualifier == Some(Qualifier::Not), css.to_owned());
+            assert!(mq.media_type == MediaQueryType::All, css.to_owned());
+            assert!(mq.expressions.is_empty(), css.to_owned());
+        }
     }
 
     for rule in &[
@@ -337,8 +335,6 @@ fn test_mq_malformed_expressions() {
         "@media not {}",
         "@media not (min-width: 300px) {}",
         "@media , {}",
-        "@media screen 4px, print {}",
-        "@media screen, {}",
     ] {
         test_media_rule(rule, check_malformed_expr);
     }

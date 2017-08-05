@@ -11,6 +11,7 @@
 #include "mozilla/gfx/GPUProcessManager.h"
 #include "mozilla/StaticMutex.h"
 #include "mozilla/StaticPtr.h"
+#include "mozilla/SystemGroup.h"
 #include "mozilla/Unused.h"
 #include "nsComponentManagerUtils.h"
 #include "nsITimer.h"
@@ -21,12 +22,15 @@
 using mozilla::StaticMutex;
 using mozilla::StaticMutexAutoLock;
 using mozilla::StaticAutoPtr;
+using mozilla::SystemGroup;
+using mozilla::TaskCategory;
 using mozilla::Telemetry::Accumulation;
 using mozilla::Telemetry::KeyedAccumulation;
 using mozilla::Telemetry::ScalarActionType;
 using mozilla::Telemetry::ScalarAction;
 using mozilla::Telemetry::KeyedScalarAction;
 using mozilla::Telemetry::ScalarVariant;
+using mozilla::Telemetry::ChildEventData;
 
 namespace TelemetryIPCAccumulator = mozilla::TelemetryIPCAccumulator;
 
@@ -37,20 +41,25 @@ namespace TelemetryIPCAccumulator = mozilla::TelemetryIPCAccumulator;
 const uint32_t kBatchTimeoutMs = 2000;
 
 // To stop growing unbounded in memory while waiting for kBatchTimeoutMs to
-// drain the g*Accumulations arrays, request an immediate flush if the arrays
-// manage to reach this high water mark of elements.
+// drain the probe accumulation arrays, we request an immediate flush if the
+// arrays manage to reach certain high water mark of elements.
 const size_t kHistogramAccumulationsArrayHighWaterMark = 5 * 1024;
+const size_t kScalarActionsArrayHighWaterMark = 10000;
+// With the current limits, events cost us about 1100 bytes each.
+// This limits memory use to about 10MB.
+const size_t kEventsArrayHighWaterMark = 10000;
 
-// For batching and sending child process accumulations to the parent
+// This timer is used for batching and sending child process accumulations to the parent.
 nsITimer* gIPCTimer = nullptr;
 mozilla::Atomic<bool, mozilla::Relaxed> gIPCTimerArmed(false);
 mozilla::Atomic<bool, mozilla::Relaxed> gIPCTimerArming(false);
 
-// For batching and sending child process accumulations to the parent
+// This batches child process accumulations that should be sent to the parent.
 StaticAutoPtr<nsTArray<Accumulation>> gHistogramAccumulations;
 StaticAutoPtr<nsTArray<KeyedAccumulation>> gKeyedHistogramAccumulations;
 StaticAutoPtr<nsTArray<ScalarAction>> gChildScalarsActions;
 StaticAutoPtr<nsTArray<KeyedScalarAction>> gChildKeyedScalarsActions;
+StaticAutoPtr<nsTArray<ChildEventData>> gChildEvents;
 
 // This is a StaticMutex rather than a plain Mutex so that (1)
 // it gets initialised in a thread-safe manner the first time
@@ -62,7 +71,8 @@ static StaticMutex gTelemetryIPCAccumulatorMutex;
 
 namespace {
 
-void DoArmIPCTimerMainThread(const StaticMutexAutoLock& lock)
+void
+DoArmIPCTimerMainThread(const StaticMutexAutoLock& lock)
 {
   MOZ_ASSERT(NS_IsMainThread());
   gIPCTimerArming = false;
@@ -71,17 +81,21 @@ void DoArmIPCTimerMainThread(const StaticMutexAutoLock& lock)
   }
   if (!gIPCTimer) {
     CallCreateInstance(NS_TIMER_CONTRACTID, &gIPCTimer);
+    if (gIPCTimer) {
+      gIPCTimer->SetTarget(SystemGroup::EventTargetFor(TaskCategory::Other));
+    }
   }
   if (gIPCTimer) {
     gIPCTimer->InitWithNamedFuncCallback(TelemetryIPCAccumulator::IPCTimerFired,
                                          nullptr, kBatchTimeoutMs,
-                                         nsITimer::TYPE_ONE_SHOT,
+                                         nsITimer::TYPE_ONE_SHOT_LOW_PRIORITY,
                                          "TelemetryIPCAccumulator::IPCTimerFired");
     gIPCTimerArmed = true;
   }
 }
 
-void ArmIPCTimer(const StaticMutexAutoLock& lock)
+void
+ArmIPCTimer(const StaticMutexAutoLock& lock)
 {
   if (gIPCTimerArmed || gIPCTimerArming) {
     return;
@@ -97,6 +111,16 @@ void ArmIPCTimer(const StaticMutexAutoLock& lock)
       DoArmIPCTimerMainThread(locker);
     }));
   }
+}
+
+void
+DispatchIPCTimerFired()
+{
+  TelemetryIPCAccumulator::DispatchToMainThread(
+    NS_NewRunnableFunction("TelemetryIPCAccumulator::IPCTimerFired",
+                           []() -> void {
+      TelemetryIPCAccumulator::IPCTimerFired(nullptr, nullptr);
+    }));
 }
 
 } // anonymous namespace
@@ -115,9 +139,7 @@ TelemetryIPCAccumulator::AccumulateChildHistogram(mozilla::Telemetry::HistogramI
     gHistogramAccumulations = new nsTArray<Accumulation>();
   }
   if (gHistogramAccumulations->Length() == kHistogramAccumulationsArrayHighWaterMark) {
-    TelemetryIPCAccumulator::DispatchToMainThread(NS_NewRunnableFunction([]() -> void {
-      TelemetryIPCAccumulator::IPCTimerFired(nullptr, nullptr);
-    }));
+    DispatchIPCTimerFired();
   }
   gHistogramAccumulations->AppendElement(Accumulation{aId, aSample});
   ArmIPCTimer(locker);
@@ -132,9 +154,7 @@ TelemetryIPCAccumulator::AccumulateChildKeyedHistogram(mozilla::Telemetry::Histo
     gKeyedHistogramAccumulations = new nsTArray<KeyedAccumulation>();
   }
   if (gKeyedHistogramAccumulations->Length() == kHistogramAccumulationsArrayHighWaterMark) {
-    TelemetryIPCAccumulator::DispatchToMainThread(NS_NewRunnableFunction([]() -> void {
-      TelemetryIPCAccumulator::IPCTimerFired(nullptr, nullptr);
-    }));
+    DispatchIPCTimerFired();
   }
   gKeyedHistogramAccumulations->AppendElement(KeyedAccumulation{aId, aSample, aKey});
   ArmIPCTimer(locker);
@@ -148,6 +168,9 @@ TelemetryIPCAccumulator::RecordChildScalarAction(mozilla::Telemetry::ScalarID aI
   // Make sure to have the storage.
   if (!gChildScalarsActions) {
     gChildScalarsActions = new nsTArray<ScalarAction>();
+  }
+  if (gChildScalarsActions->Length() == kScalarActionsArrayHighWaterMark) {
+    DispatchIPCTimerFired();
   }
   // Store the action.
   gChildScalarsActions->AppendElement(ScalarAction{aId, aAction, Some(aValue)});
@@ -165,9 +188,38 @@ TelemetryIPCAccumulator::RecordChildKeyedScalarAction(mozilla::Telemetry::Scalar
   if (!gChildKeyedScalarsActions) {
     gChildKeyedScalarsActions = new nsTArray<KeyedScalarAction>();
   }
+  if (gChildKeyedScalarsActions->Length() == kScalarActionsArrayHighWaterMark) {
+    DispatchIPCTimerFired();
+  }
   // Store the action.
   gChildKeyedScalarsActions->AppendElement(
     KeyedScalarAction{aId, aAction, NS_ConvertUTF16toUTF8(aKey), Some(aValue)});
+  ArmIPCTimer(locker);
+}
+
+void
+TelemetryIPCAccumulator::RecordChildEvent(const mozilla::TimeStamp& timestamp,
+                                          const nsACString& category,
+                                          const nsACString& method,
+                                          const nsACString& object,
+                                          const mozilla::Maybe<nsCString>& value,
+                                          const nsTArray<mozilla::Telemetry::EventExtraEntry>& extra)
+{
+  StaticMutexAutoLock locker(gTelemetryIPCAccumulatorMutex);
+
+  if (!gChildEvents) {
+    gChildEvents = new nsTArray<ChildEventData>();
+  }
+
+  if (gChildEvents->Length() == kEventsArrayHighWaterMark) {
+    DispatchIPCTimerFired();
+  }
+
+  // Store the event.
+  gChildEvents->AppendElement(ChildEventData{timestamp, nsCString(category),
+                                             nsCString(method), nsCString(object),
+                                             value,
+                                             nsTArray<mozilla::Telemetry::EventExtraEntry>(extra)});
   ArmIPCTimer(locker);
 }
 
@@ -183,6 +235,8 @@ SendAccumulatedData(TActor* ipcActor)
   nsTArray<KeyedAccumulation> keyedAccumulationsToSend;
   nsTArray<ScalarAction> scalarsToSend;
   nsTArray<KeyedScalarAction> keyedScalarsToSend;
+  nsTArray<ChildEventData> eventsToSend;
+
   {
     StaticMutexAutoLock locker(gTelemetryIPCAccumulatorMutex);
     if (gHistogramAccumulations) {
@@ -197,6 +251,9 @@ SendAccumulatedData(TActor* ipcActor)
     }
     if (gChildKeyedScalarsActions) {
       keyedScalarsToSend.SwapElements(*gChildKeyedScalarsActions);
+    }
+    if (gChildEvents) {
+      eventsToSend.SwapElements(*gChildEvents);
     }
   }
 
@@ -217,6 +274,10 @@ SendAccumulatedData(TActor* ipcActor)
   if (keyedScalarsToSend.Length()) {
     mozilla::Unused <<
       NS_WARN_IF(!ipcActor->SendUpdateChildKeyedScalars(keyedScalarsToSend));
+  }
+  if (eventsToSend.Length()) {
+    mozilla::Unused <<
+      NS_WARN_IF(!ipcActor->SendRecordChildEvents(eventsToSend));
   }
 }
 
@@ -260,17 +321,12 @@ TelemetryIPCAccumulator::DeInitializeGlobalState()
   gKeyedHistogramAccumulations = nullptr;
   gChildScalarsActions = nullptr;
   gChildKeyedScalarsActions = nullptr;
+  gChildEvents = nullptr;
 }
 
 void
 TelemetryIPCAccumulator::DispatchToMainThread(already_AddRefed<nsIRunnable>&& aEvent)
 {
-  nsCOMPtr<nsIRunnable> event(aEvent);
-  nsCOMPtr<nsIThread> thread;
-  nsresult rv = NS_GetMainThread(getter_AddRefs(thread));
-  if (NS_FAILED(rv)) {
-    NS_WARNING("NS_FAILED DispatchToMainThread. Maybe we're shutting down?");
-    return;
-  }
-  thread->Dispatch(event, 0);
+  SystemGroup::EventTargetFor(TaskCategory::Other)->Dispatch(Move(aEvent),
+                                                             nsIEventTarget::DISPATCH_NORMAL);
 }

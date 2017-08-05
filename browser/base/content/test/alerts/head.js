@@ -1,22 +1,3 @@
-function promiseAlertWindow() {
-  return new Promise(function(resolve) {
-    let listener = {
-      onOpenWindow(window) {
-        let alertWindow = window.QueryInterface(Ci.nsIInterfaceRequestor).getInterface(Ci.nsIDOMWindow);
-        alertWindow.addEventListener("load", function() {
-          let windowType = alertWindow.document.documentElement.getAttribute("windowtype");
-          if (windowType != "alert:alert") {
-            return;
-          }
-          Services.wm.removeListener(listener);
-          resolve(alertWindow);
-        }, {once: true});
-      },
-    };
-    Services.wm.addListener(listener);
-  });
-}
-
 /**
  * Similar to `BrowserTestUtils.closeWindow`, but
  * doesn't call `window.close()`.
@@ -41,11 +22,11 @@ function promiseWindowClosed(window) {
  * rejected after the requested number of miliseconds.
  */
 function openNotification(aBrowser, fn, timeout) {
-  return ContentTask.spawn(aBrowser, [fn, timeout], function* ([contentFn, contentTimeout]) {
+  return ContentTask.spawn(aBrowser, [fn, timeout], async function([contentFn, contentTimeout]) {
     let win = content.wrappedJSObject;
     let notification = win[contentFn]();
     win._notification = notification;
-    yield new Promise((resolve, reject) => {
+    await new Promise((resolve, reject) => {
       function listener() {
         notification.removeEventListener("show", listener);
         resolve();

@@ -38,7 +38,7 @@ add_task(function* () {
   EventUtils.sendKey("escape", inspector.panelWin);
 
   info("Testing the rule-view selector");
-  let ruleView = inspector.ruleview.view;
+  let ruleView = inspector.getPanel("ruleview").view;
   let cssRuleEditor = getRuleViewRuleEditor(ruleView, 1);
   EventUtils.synthesizeMouse(cssRuleEditor.selectorText, 0, 0, {}, inspector.panelWin);
   yield checkTextBox(inspector.panelDoc.activeElement, toolbox);
@@ -69,6 +69,10 @@ add_task(function* () {
     ".boxmodel-margin.boxmodel-top > span");
   EventUtils.synthesizeMouseAtCenter(margin, {}, inspector.panelWin);
   yield checkTextBox(inspector.panelDoc.activeElement, toolbox);
+
+  // Move the mouse out of the box-model region to avoid triggering the box model
+  // highlighter.
+  EventUtils.synthesizeMouseAtCenter(tag, {}, inspector.panelWin);
 });
 
 function* checkTextBox(textBox, {textBoxContextMenuPopup}) {

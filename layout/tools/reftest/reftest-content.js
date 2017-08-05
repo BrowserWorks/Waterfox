@@ -21,9 +21,10 @@ const NS_GFXINFO_CONTRACTID = "@mozilla.org/gfx/info;1";
 const BLANK_URL_FOR_CLEARING = "data:text/html;charset=UTF-8,%3C%21%2D%2DCLEAR%2D%2D%3E";
 
 CU.import("resource://gre/modules/Timer.jsm");
-CU.import("resource://gre/modules/AsyncSpellCheckTestHelper.jsm");
+CU.import("chrome://reftest/content/AsyncSpellCheckTestHelper.jsm");
 
 var gBrowserIsRemote;
+var gIsWebRenderEnabled;
 var gHaveCanvasSnapshot = false;
 // Plugin layers can be updated asynchronously, so to make sure that all
 // layer surfaces have the right content, we need to listen for explicit
@@ -40,7 +41,6 @@ var gTimeoutHook = null;
 var gFailureTimeout = null;
 var gFailureReason;
 var gAssertionCount = 0;
-var gTestCount = 0;
 
 var gDebug;
 var gVerbose = false;
@@ -142,11 +142,7 @@ function StartTestURI(type, uri, timeout)
     // The GC is only able to clean up compartments after the CC runs. Since
     // the JS ref tests disable the normal browser chrome and do not otherwise
     // create substatial DOM garbage, the CC tends not to run enough normally.
-    ++gTestCount;
-    if (gTestCount % 1000 == 0) {
-        CU.forceGC();
-        CU.forceCC();
-    }
+    windowUtils().runNextCollectorTimer();
 
     // Reset gExplicitPendingPaintCount in case there was a timeout or
     // the count is out of sync for some other reason
@@ -585,7 +581,7 @@ function WaitForTestEnd(contentRootElement, inPrintMode, spellCheckedElements) {
                 state = STATE_WAITING_TO_FINISH;
                 MakeProgress();
             };
-            os.addObserver(flushWaiter, "apz-repaints-flushed", false);
+            os.addObserver(flushWaiter, "apz-repaints-flushed");
 
             var willSnapshot = (gCurrentTestType != TYPE_SCRIPT) &&
                                (gCurrentTestType != TYPE_LOAD);
@@ -1024,6 +1020,15 @@ function SendContentReady()
 {
     let gfxInfo = (NS_GFXINFO_CONTRACTID in CC) && CC[NS_GFXINFO_CONTRACTID].getService(CI.nsIGfxInfo);
     let info = gfxInfo.getInfo();
+
+    // The webrender check has to be separate from the d2d checks
+    // since the d2d checks will throw an exception on non-windows platforms.
+    try {
+        gIsWebRenderEnabled = gfxInfo.WebRenderEnabled;
+    } catch (e) {
+        gIsWebRenderEnabled = false;
+    }
+
     try {
         info.D2DEnabled = gfxInfo.D2DEnabled;
         info.DWriteEnabled = gfxInfo.DWriteEnabled;
@@ -1131,28 +1136,40 @@ function SendUpdateCanvasForEvent(event, contentRootElement)
       }
       return;
     }
-    
-    var rectList = event.clientRects;
-    LogInfo("SendUpdateCanvasForEvent with " + rectList.length + " rects");
-    for (var i = 0; i < rectList.length; ++i) {
-        var r = rectList[i];
-        // Set left/top/right/bottom to "device pixel" boundaries
-        var left = Math.floor(roundTo(r.left*scale, 0.001));
-        var top = Math.floor(roundTo(r.top*scale, 0.001));
-        var right = Math.ceil(roundTo(r.right*scale, 0.001));
-        var bottom = Math.ceil(roundTo(r.bottom*scale, 0.001));
-        LogInfo("Rect: " + left + " " + top + " " + right + " " + bottom);
 
-        rects.push({ left: left, top: top, right: right, bottom: bottom });
+    var message;
+    if (gIsWebRenderEnabled && !windowUtils().isMozAfterPaintPending) {
+        // Webrender doesn't have invalidation, so we just invalidate the whole
+        // screen once we don't have anymore paints pending. This will force
+        // the snapshot.
+
+        LogInfo("Webrender enabled, sending update whole canvas for invalidation");
+        message = "reftest:UpdateWholeCanvasForInvalidation";
+    } else {
+        var rectList = event.clientRects;
+        LogInfo("SendUpdateCanvasForEvent with " + rectList.length + " rects");
+        for (var i = 0; i < rectList.length; ++i) {
+            var r = rectList[i];
+            // Set left/top/right/bottom to "device pixel" boundaries
+            var left = Math.floor(roundTo(r.left * scale, 0.001));
+            var top = Math.floor(roundTo(r.top * scale, 0.001));
+            var right = Math.ceil(roundTo(r.right * scale, 0.001));
+            var bottom = Math.ceil(roundTo(r.bottom * scale, 0.001));
+            LogInfo("Rect: " + left + " " + top + " " + right + " " + bottom);
+
+            rects.push({ left: left, top: top, right: right, bottom: bottom });
+        }
+
+        message = "reftest:UpdateCanvasForInvalidation";
     }
 
     // See comments in SendInitCanvasWithSnapshot() re: the split
     // logic here.
     if (!gBrowserIsRemote) {
-        sendSyncMessage("reftest:UpdateCanvasForInvalidation", { rects: rects });
+        sendSyncMessage(message, { rects: rects });
     } else {
         SynchronizeForSnapshot(SYNC_ALLOW_DISABLE);
-        sendAsyncMessage("reftest:UpdateCanvasForInvalidation", { rects: rects });
+        sendAsyncMessage(message, { rects: rects });
     }
 }
 if (content.document.readyState == "complete") {

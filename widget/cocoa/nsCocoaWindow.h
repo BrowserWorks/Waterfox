@@ -346,11 +346,10 @@ public:
     {
       return mInputContext;
     }
-    virtual bool ExecuteNativeKeyBinding(
-                        NativeKeyBindingsType aType,
-                        const mozilla::WidgetKeyboardEvent& aEvent,
-                        DoCommandCallback aCallback,
-                        void* aCallbackData) override;
+    virtual void GetEditCommands(
+                   NativeKeyBindingsType aType,
+                   const mozilla::WidgetKeyboardEvent& aEvent,
+                   nsTArray<mozilla::CommandInt>& aCommands) override;
 
     void SetPopupWindowLevel();
 
@@ -360,7 +359,8 @@ protected:
   nsresult             CreateNativeWindow(const NSRect &aRect,
                                           nsBorderStyle aBorderStyle,
                                           bool aRectIsFrameRect);
-  nsresult             CreatePopupContentView(const LayoutDeviceIntRect &aRect);
+  nsresult             CreatePopupContentView(const LayoutDeviceIntRect &aRect,
+                                              nsWidgetInitData* aInitData);
   void                 DestroyNativeWindow();
   void                 AdjustWindowShadow();
   void                 SetWindowBackgroundBlur();

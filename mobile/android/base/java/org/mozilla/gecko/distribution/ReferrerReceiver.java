@@ -8,10 +8,8 @@ package org.mozilla.gecko.distribution;
 import org.mozilla.gecko.AdjustConstants;
 import org.mozilla.gecko.annotation.RobocopTarget;
 import org.mozilla.gecko.AppConstants;
-import org.mozilla.gecko.GeckoAppShell;
-
-import org.json.JSONException;
-import org.json.JSONObject;
+import org.mozilla.gecko.EventDispatcher;
+import org.mozilla.gecko.util.GeckoBundle;
 
 import android.content.BroadcastReceiver;
 import android.content.Context;
@@ -41,6 +39,13 @@ public class ReferrerReceiver extends BroadcastReceiver {
     private static final String MOZILLA_UTM_SOURCE = "mozilla";
 
     /**
+     * If the install intent has this source, it is a referrer intent using our
+     * Adjust ID. It's treated as OTA and tracked using Adjust and
+     * Mozilla's metrics systems.
+     */
+    private static final String MOZILLA_ADJUST_SOURCE = "adjust_store";
+
+    /**
      * If the install intent has this campaign, we'll load the specified distribution.
      */
     private static final String DISTRIBUTION_UTM_CAMPAIGN = "distribution";
@@ -56,7 +61,8 @@ public class ReferrerReceiver extends BroadcastReceiver {
         // Track the referrer object for distribution handling.
         ReferrerDescriptor referrer = new ReferrerDescriptor(intent.getStringExtra("referrer"));
 
-        if (!TextUtils.equals(referrer.source, MOZILLA_UTM_SOURCE)) {
+        if (!TextUtils.equals(referrer.source, MOZILLA_UTM_SOURCE) &&
+            !TextUtils.equals(referrer.source, MOZILLA_ADJUST_SOURCE)) {
             // Allow the Adjust handler to process the intent.
             try {
                 AdjustConstants.getAdjustHelper().onReceive(context, intent);
@@ -92,16 +98,10 @@ public class ReferrerReceiver extends BroadcastReceiver {
             return;
         }
 
-        try {
-            final JSONObject data = new JSONObject();
-            data.put("id", "playstore");
-            data.put("version", referrer.campaign);
-            String payload = data.toString();
-
-            // Try to make sure the prefs are written as a group.
-            GeckoAppShell.notifyObservers("Campaign:Set", payload);
-        } catch (JSONException e) {
-            Log.e(LOGTAG, "Error propagating campaign identifier.", e);
-        }
+        final GeckoBundle data = new GeckoBundle(2);
+        data.putString("id", "playstore");
+        data.putString("version", referrer.campaign);
+        // Try to make sure the prefs are written as a group.
+        EventDispatcher.getInstance().dispatch("Campaign:Set", data);
     }
 }

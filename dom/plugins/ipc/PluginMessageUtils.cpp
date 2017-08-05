@@ -23,7 +23,8 @@ class DeferNPObjectReleaseRunnable : public mozilla::Runnable
 {
 public:
   DeferNPObjectReleaseRunnable(const NPNetscapeFuncs* f, NPObject* o)
-    : mFuncs(f)
+    : Runnable("DeferNPObjectReleaseRunnable")
+    , mFuncs(f)
     , mObject(o)
   {
     NS_ASSERTION(o, "no release null objects");
@@ -82,7 +83,7 @@ MediateRace(const MessageChannel::MessageInfo& parent,
   }
 }
 
-#if defined(OS_LINUX)
+#if defined(OS_LINUX) || defined(OS_SOLARIS)
 static string
 ReplaceAll(const string& haystack, const string& needle, const string& with)
 {
@@ -101,7 +102,7 @@ ReplaceAll(const string& haystack, const string& needle, const string& with)
 string
 MungePluginDsoPath(const string& path)
 {
-#if defined(OS_LINUX)
+#if defined(OS_LINUX) || defined(OS_SOLARIS)
   // https://bugzilla.mozilla.org/show_bug.cgi?id=519601
   return ReplaceAll(path, "netscape", "netsc@pe");
 #else
@@ -112,7 +113,7 @@ MungePluginDsoPath(const string& path)
 string
 UnmungePluginDsoPath(const string& munged)
 {
-#if defined(OS_LINUX)
+#if defined(OS_LINUX) || defined(OS_SOLARIS)
   return ReplaceAll(munged, "netsc@pe", "netscape");
 #else
   return munged;

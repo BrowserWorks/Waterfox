@@ -7,6 +7,8 @@
 <script type="application/javascript"
         src="chrome://browser/content/preferences/in-content/main.js"/>
 
+<stringbundle id="bundlePreferences" src="chrome://browser/locale/preferences.properties"/>
+
 <preferences id="mainPreferences" hidden="true" data-category="paneGeneral">
 
 #ifdef E10S_TESTING_ONLY
@@ -108,6 +110,23 @@
     <preference id="browser.ctrlTab.previews"
                 name="browser.ctrlTab.previews"
                 type="bool"/>
+
+  <preference id="browser.preferences.defaultPerformanceSettings.enabled"
+              name="browser.preferences.defaultPerformanceSettings.enabled"
+              type="bool"/>
+
+  <preference id="dom.ipc.processCount"
+              name="dom.ipc.processCount"
+              type="int"/>
+
+  <preference id="dom.ipc.processCount.web"
+              name="dom.ipc.processCount.web"
+              type="int"/>
+
+  <preference id="layers.acceleration.disabled"
+              name="layers.acceleration.disabled"
+              type="bool"
+              inverted="true"/>
 </preferences>
 
 <hbox id="header-general"
@@ -130,7 +149,10 @@
               label="&separateProfileMode.label;"/>
     <hbox align="center" class="indent">
       <label id="useFirefoxSync">&useFirefoxSync.label;</label>
-      <label id="getStarted" class="text-link">&getStarted.label;</label>
+      <deck id="getStarted">
+        <label class="text-link">&getStarted.notloggedin.label;</label>
+        <label class="text-link">&getStarted.configured.label;</label>
+      </deck>
     </hbox>
   </vbox>
 #endif
@@ -401,4 +423,41 @@
               accesskey="&showTabsInTaskbar.accesskey;"
               preference="browser.taskbar.previews.enable"/>
 #endif
+</groupbox>
+
+<!-- Performance -->
+<groupbox id="performanceGroup" data-category="paneGeneral" hidden="true">
+  <caption><label>&performance.label;</label></caption>
+
+  <hbox align="center">
+    <checkbox id="useRecommendedPerformanceSettings"
+              label="&useRecommendedPerformanceSettings.label;"
+              accesskey="&useRecommendedPerformanceSettings.accesskey;"
+              preference="browser.preferences.defaultPerformanceSettings.enabled"/>
+    <label id="performanceSettingsLearnMore" class="learnMore text-link">&performanceSettingsLearnMore.label;</label>
+  </hbox>
+  <description class="indent">&useRecommendedPerformanceSettings.description;</description>
+
+  <vbox id="performanceSettings" class="indent" hidden="true">
+    <checkbox id="allowHWAccel"
+              label="&allowHWAccel.label;"
+              accesskey="&allowHWAccel.accesskey;"
+              preference="layers.acceleration.disabled"/>
+    <hbox align="center">
+      <label id="limitContentProcess" accesskey="&limitContentProcessOption.accesskey;" control="contentProcessCount">&limitContentProcessOption.label;</label>
+      <menulist id="contentProcessCount" preference="dom.ipc.processCount">
+        <menupopup>
+          <menuitem label="1" value="1"/>
+          <menuitem label="2" value="2"/>
+          <menuitem label="3" value="3"/>
+          <menuitem label="4" value="4"/>
+          <menuitem label="5" value="5"/>
+          <menuitem label="6" value="6"/>
+          <menuitem label="7" value="7"/>
+        </menupopup>
+      </menulist>
+    </hbox>
+    <description id="contentProcessCountEnabledDescription">&limitContentProcessOption.description;</description>
+    <description id="contentProcessCountDisabledDescription">&limitContentProcessOption.disabledDescription;<label class="text-link" href="https://wiki.mozilla.org/Electrolysis">&limitContentProcessOption.disabledDescriptionLink;</label></description>
+  </vbox>
 </groupbox>

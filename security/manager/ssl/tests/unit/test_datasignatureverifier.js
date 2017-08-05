@@ -120,55 +120,64 @@ const signatures = [
 "bQp9Z2/M",
 
 // Invalid signature data ("foobar" base 64 encoded)
-"Zm9vYmFy"
+"Zm9vYmFy",
+
+// Key 1, Data 1, SHA512 hash algorithm, with embedded whitespace.
+`MIGTMA0GCSqGSIb3DQEBDQUAA4GBAF0+XYD/r0Annz1GJ24GTkAlWY/OixCSV6Ix
+   OMM7P2d/jgOP+ICKIpxqaSE0CbkLiegUiidIOWvFqDxQJWlAAukDUWISGFfJMFxX
+ 3jzJ0bBfeNY/1Qo8jMQopcNco/NlNgoSKAUOBtk31aFgNoVC3kWUk6pO97KEiJ+e
+   bQp9Z2/M`,
 ];
 
 const tests = [
 // Data   Signature  Key   Expected   Throws
 // Pass cases
-  [0,     0,         0,    true,      false], //0
-  [0,     1,         0,    true,      false], //1
-  [0,     2,         0,    true,      false], //2
-  [0,     3,         0,    true,      false], //3
-  [0,     4,         0,    true,      false], //4
-  [0,     5,         0,    true,      false], //5
-  [1,     6,         0,    true,      false], //6
-  [1,     7,         0,    true,      false], //7
-  [1,     8,         0,    true,      false], //8
-  [1,     9,         0,    true,      false], //9
-  [1,     10,        0,    true,      false], //10
-  [1,     11,        0,    true,      false], //11
-  [0,     12,        1,    true,      false], //12
-  [0,     13,        1,    true,      false], //13
-  [1,     14,        1,    true,      false], //14
-  [1,     15,        1,    true,      false], //15
+  [0,     0,         0,    true,      false], // 0
+  [0,     1,         0,    true,      false], // 1
+  [0,     2,         0,    true,      false], // 2
+  [0,     3,         0,    true,      false], // 3
+  [0,     4,         0,    true,      false], // 4
+  [0,     5,         0,    true,      false], // 5
+  [1,     6,         0,    true,      false], // 6
+  [1,     7,         0,    true,      false], // 7
+  [1,     8,         0,    true,      false], // 8
+  [1,     9,         0,    true,      false], // 9
+  [1,     10,        0,    true,      false], // 10
+  [1,     11,        0,    true,      false], // 11
+  [0,     12,        1,    true,      false], // 12
+  [0,     13,        1,    true,      false], // 13
+  [1,     14,        1,    true,      false], // 14
+  [1,     15,        1,    true,      false], // 15
 // Incorrect data cases
-  [1,     0,         0,    false,     false], //16
-  [1,     1,         0,    false,     false], //17
-  [1,     2,         0,    false,     false], //18
-  [1,     3,         0,    false,     false], //19
-  [1,     4,         0,    false,     false], //20
-  [1,     5,         0,    false,     false], //21
-  [0,     6,         0,    false,     false], //22
-  [0,     7,         0,    false,     false], //23
-  [0,     8,         0,    false,     false], //24
-  [0,     9,         0,    false,     false], //25
-  [0,     10,        0,    false,     false], //26
-  [0,     11,        0,    false,     false], //27
+  [1,     0,         0,    false,     false], // 16
+  [1,     1,         0,    false,     false], // 17
+  [1,     2,         0,    false,     false], // 18
+  [1,     3,         0,    false,     false], // 19
+  [1,     4,         0,    false,     false], // 20
+  [1,     5,         0,    false,     false], // 21
+  [0,     6,         0,    false,     false], // 22
+  [0,     7,         0,    false,     false], // 23
+  [0,     8,         0,    false,     false], // 24
+  [0,     9,         0,    false,     false], // 25
+  [0,     10,        0,    false,     false], // 26
+  [0,     11,        0,    false,     false], // 27
 // Incorrect key cases
-  [0,     1,         1,    false,     false], //28
-  [0,     5,         1,    false,     false], //29
-  [1,     7,         1,    false,     false], //30
-  [1,     11,        1,    false,     false], //31
-  [0,     12,        0,    false,     false], //32
-  [0,     13,        0,    false,     false], //33
-  [1,     14,        0,    false,     false], //34
-  [1,     15,        0,    false,     false], //35
+  [0,     1,         1,    false,     false], // 28
+  [0,     5,         1,    false,     false], // 29
+  [1,     7,         1,    false,     false], // 30
+  [1,     11,        1,    false,     false], // 31
+  [0,     12,        0,    false,     false], // 32
+  [0,     13,        0,    false,     false], // 33
+  [1,     14,        0,    false,     false], // 34
+  [1,     15,        0,    false,     false], // 35
 // Invalid data cases
-  [0,     0,         2,    false,     true],  //36
-  [0,     1,         2,    false,     true],  //37
-  [0,     16,        0,    false,     true],  //38
-  [1,     16,        0,    false,     true],  //39
+  [0,     0,         2,    false,     true],  // 36
+  [0,     1,         2,    false,     true],  // 37
+  [0,     16,        0,    false,     true],  // 38
+  [1,     16,        0,    false,     true],  // 39
+  // Test embedded whitespace (e.g. signature read directly from file) is
+  // ignored for backwards compatibility purposes.
+  [1,     17,        1,    true,      false],
 ];
 
 function run_test() {

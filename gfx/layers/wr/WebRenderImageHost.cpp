@@ -9,6 +9,8 @@
 #include "mozilla/layers/Compositor.h"  // for Compositor
 #include "mozilla/layers/Effects.h"     // for TexturedEffect, Effect, etc
 #include "mozilla/layers/LayerManagerComposite.h"     // for TexturedEffect, Effect, etc
+#include "mozilla/layers/WebRenderBridgeParent.h"
+#include "mozilla/layers/WebRenderCompositableHolder.h"
 #include "nsAString.h"
 #include "nsDebug.h"                    // for NS_WARNING, NS_ASSERTION
 #include "nsPrintfCString.h"            // for nsPrintfCString
@@ -25,10 +27,13 @@ class ISurfaceAllocator;
 WebRenderImageHost::WebRenderImageHost(const TextureInfo& aTextureInfo)
   : CompositableHost(aTextureInfo)
   , ImageComposite()
+  , mWrBridge(nullptr)
+  , mWrBridgeBindings(0)
 {}
 
 WebRenderImageHost::~WebRenderImageHost()
 {
+  MOZ_ASSERT(!mWrBridge);
 }
 
 void
@@ -62,6 +67,27 @@ WebRenderImageHost::UseTextureHost(const nsTArray<TimedTexture>& aTextures)
 
   mImages.SwapElements(newImages);
   newImages.Clear();
+
+  if (mWrBridge && GetAsyncRef()) {
+    mWrBridge->ScheduleComposition();
+  }
+
+  // Video producers generally send replacement images with the same frameID but
+  // slightly different timestamps in order to sync with the audio clock. This
+  // means that any CompositeUntil() call we made in Composite() may no longer
+  // guarantee that we'll composite until the next frame is ready. Fix that here.
+  if (mWrBridge && mLastFrameID >= 0) {
+    MOZ_ASSERT(mWrBridge->CompositableHolder());
+    for (size_t i = 0; i < mImages.Length(); ++i) {
+      bool frameComesAfter = mImages[i].mFrameID > mLastFrameID ||
+                             mImages[i].mProducerID != mLastProducerID;
+      if (frameComesAfter && !mImages[i].mTimeStamp.IsNull()) {
+        mWrBridge->CompositableHolder()->CompositeUntil(mImages[i].mTimeStamp +
+                           TimeDuration::FromMilliseconds(BIAS_TIME_MS));
+        break;
+      }
+    }
+  }
 }
 
 void
@@ -77,6 +103,7 @@ WebRenderImageHost::CleanupResources()
   nsTArray<TimedImage> newImages;
   mImages.SwapElements(newImages);
   newImages.Clear();
+  SetCurrentTextureHost(nullptr);
 }
 
 void
@@ -95,26 +122,81 @@ WebRenderImageHost::RemoveTextureHost(TextureHost* aTexture)
 TimeStamp
 WebRenderImageHost::GetCompositionTime() const
 {
-  // XXX temporary workaround
-  return TimeStamp::Now();
+  TimeStamp time;
+  if (mWrBridge) {
+    MOZ_ASSERT(mWrBridge->CompositableHolder());
+    time = mWrBridge->CompositableHolder()->GetCompositionTime();
+  }
+  return time;
 }
 
 TextureHost*
 WebRenderImageHost::GetAsTextureHost(IntRect* aPictureRect)
 {
-  MOZ_ASSERT_UNREACHABLE("unexpected to be called");
+  TimedImage* img = ChooseImage();
+  if (img) {
+    return img->mTextureHost;
+  }
   return nullptr;
 }
 
+TextureHost*
+WebRenderImageHost::GetAsTextureHostForComposite()
+{
+  int imageIndex = ChooseImageIndex();
+  if (imageIndex < 0) {
+    SetCurrentTextureHost(nullptr);
+    return nullptr;
+  }
+
+  if (mWrBridge && uint32_t(imageIndex) + 1 < mImages.Length()) {
+    MOZ_ASSERT(mWrBridge->CompositableHolder());
+    mWrBridge->CompositableHolder()->CompositeUntil(mImages[imageIndex + 1].mTimeStamp + TimeDuration::FromMilliseconds(BIAS_TIME_MS));
+  }
+
+  TimedImage* img = &mImages[imageIndex];
+
+  if (mLastFrameID != img->mFrameID || mLastProducerID != img->mProducerID) {
+    mLastFrameID = img->mFrameID;
+    mLastProducerID = img->mProducerID;
+  }
+  SetCurrentTextureHost(img->mTextureHost);
+  return mCurrentTextureHost;
+}
+
+void
+WebRenderImageHost::SetCurrentTextureHost(TextureHost* aTexture)
+{
+  if (aTexture == mCurrentTextureHost.get()) {
+    return;
+  }
+
+  if (mWrBridge &&
+      !!mCurrentTextureHost &&
+      mCurrentTextureHost != aTexture &&
+      mCurrentTextureHost->AsWebRenderTextureHost()) {
+    MOZ_ASSERT(mWrBridge->CompositableHolder());
+    wr::PipelineId piplineId = mWrBridge->PipelineId();
+    wr::Epoch epoch = mWrBridge->WrEpoch();
+    mWrBridge->CompositableHolder()->HoldExternalImage(
+      piplineId,
+      epoch,
+      mCurrentTextureHost->AsWebRenderTextureHost());
+  }
+
+  mCurrentTextureHost = aTexture;
+}
+
 void WebRenderImageHost::Attach(Layer* aLayer,
-                       Compositor* aCompositor,
+                       TextureSourceProvider* aProvider,
                        AttachFlags aFlags)
 {
   MOZ_ASSERT_UNREACHABLE("unexpected to be called");
 }
 
 void
-WebRenderImageHost::Composite(LayerComposite* aLayer,
+WebRenderImageHost::Composite(Compositor* aCompositor,
+                     LayerComposite* aLayer,
                      EffectChain& aEffectChain,
                      float aOpacity,
                      const gfx::Matrix4x4& aTransform,
@@ -127,14 +209,14 @@ WebRenderImageHost::Composite(LayerComposite* aLayer,
 }
 
 void
-WebRenderImageHost::SetCompositor(Compositor* aCompositor)
+WebRenderImageHost::SetTextureSourceProvider(TextureSourceProvider* aProvider)
 {
-  if (mCompositor != aCompositor) {
+  if (mTextureSourceProvider != aProvider) {
     for (auto& img : mImages) {
-      img.mTextureHost->SetCompositor(aCompositor);
+      img.mTextureHost->SetTextureSourceProvider(aProvider);
     }
   }
-  CompositableHost::SetCompositor(aCompositor);
+  CompositableHost::SetTextureSourceProvider(aProvider);
 }
 
 void
@@ -197,6 +279,30 @@ WebRenderImageHost::GetImageSize() const
     return IntSize(img->mPictureRect.width, img->mPictureRect.height);
   }
   return IntSize();
+}
+
+void
+WebRenderImageHost::SetWrBridge(WebRenderBridgeParent* aWrBridge)
+{
+  // For image hosts created through ImageBridgeParent, there may be multiple
+  // references to it due to the order of creation and freeing of layers by
+  // the layer tree. However this should be limited to things such as video
+  // which will not be reused across different WebRenderBridgeParent objects.
+  MOZ_ASSERT(aWrBridge);
+  MOZ_ASSERT(!mWrBridge || mWrBridge == aWrBridge);
+  mWrBridge = aWrBridge;
+  ++mWrBridgeBindings;
+}
+
+void
+WebRenderImageHost::ClearWrBridge()
+{
+  MOZ_ASSERT(mWrBridgeBindings > 0);
+  --mWrBridgeBindings;
+  if (mWrBridgeBindings == 0) {
+    SetCurrentTextureHost(nullptr);
+    mWrBridge = nullptr;
+  }
 }
 
 } // namespace layers

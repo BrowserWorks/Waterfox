@@ -60,8 +60,7 @@ VP9Benchmark::IsVP9DecodeFast()
                         Preferences::GetUint("media.benchmark.timeout", 1000))
                     });
     estimiser->Run()->Then(
-      // Non-DocGroup version of AbstractThread::MainThread for utility function.
-      AbstractThread::MainThread(), __func__,
+      SystemGroup::AbstractMainThreadFor(TaskCategory::Other), __func__,
       [](uint32_t aDecodeFps) {
         if (XRE_IsContentProcess()) {
           dom::ContentChild* contentChild = dom::ContentChild::GetSingleton();
@@ -91,7 +90,7 @@ VP9Benchmark::IsVP9DecodeFast()
 }
 
 Benchmark::Benchmark(MediaDataDemuxer* aDemuxer, const Parameters& aParameters)
-  : QueueObject(AbstractThread::GetCurrent())
+  : QueueObject(AbstractThread::MainThread())
   , mParameters(aParameters)
   , mKeepAliveUntilComplete(this)
   , mPlaybackState(this, aDemuxer)
@@ -145,10 +144,13 @@ Benchmark::Init()
 
 BenchmarkPlayback::BenchmarkPlayback(Benchmark* aMainThreadState,
                                      MediaDataDemuxer* aDemuxer)
-  : QueueObject(new TaskQueue(GetMediaThreadPool(MediaThreadType::PLAYBACK)))
+  : QueueObject(new TaskQueue(
+      GetMediaThreadPool(MediaThreadType::PLAYBACK),
+      "BenchmarkPlayback::QueueObject"))
   , mMainThreadState(aMainThreadState)
-  , mDecoderTaskQueue(new TaskQueue(GetMediaThreadPool(
-                        MediaThreadType::PLATFORM_DECODER)))
+  , mDecoderTaskQueue(new TaskQueue(
+      GetMediaThreadPool(MediaThreadType::PLATFORM_DECODER),
+      "BenchmarkPlayback::mDecoderTaskQueue"))
   , mDemuxer(aDemuxer)
   , mSampleIndex(0)
   , mFrameCount(0)

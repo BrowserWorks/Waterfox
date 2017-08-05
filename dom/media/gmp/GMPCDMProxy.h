@@ -26,7 +26,8 @@ public:
               const nsAString& aKeySystem,
               GMPCrashHelper* aCrashHelper,
               bool aDistinctiveIdentifierRequired,
-              bool aPersistentStateRequired);
+              bool aPersistentStateRequired,
+              nsIEventTarget* aMainThread);
 
   void Init(PromiseId aPromiseId,
             const nsAString& aOrigin,
@@ -42,6 +43,7 @@ public:
                      nsTArray<uint8_t>& aInitData) override;
 
   void LoadSession(PromiseId aPromiseId,
+                   dom::MediaKeySessionType aSessionType,
                    const nsAString& aSessionId) override;
 
   void SetServerCertificate(PromiseId aPromiseId,

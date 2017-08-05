@@ -41,7 +41,7 @@ ifdef MOZ_PKG_SPECIAL
 MOZ_PKG_PLATFORM := $(MOZ_PKG_PLATFORM)-$(MOZ_PKG_SPECIAL)
 endif
 
-MOZ_PKG_DIR = $(MOZ_APP_NAME)
+MOZ_PKG_DIR ?= $(MOZ_APP_NAME)
 
 ifndef MOZ_PKG_APPNAME
 MOZ_PKG_APPNAME = $(MOZ_APP_NAME)
@@ -92,7 +92,7 @@ CPP_TEST_PACKAGE = $(PKG_BASENAME).cppunittest.tests.zip
 XPC_TEST_PACKAGE = $(PKG_BASENAME).xpcshell.tests.zip
 MOCHITEST_PACKAGE = $(PKG_BASENAME).mochitest.tests.zip
 REFTEST_PACKAGE = $(PKG_BASENAME).reftest.tests.zip
-WP_TEST_PACKAGE = $(PKG_BASENAME).web-platform.tests.zip
+WP_TEST_PACKAGE = $(PKG_BASENAME).web-platform.tests.tar.gz
 TALOS_PACKAGE = $(PKG_BASENAME).talos.tests.zip
 AWSY_PACKAGE = $(PKG_BASENAME).awsy.tests.zip
 GTEST_PACKAGE = $(PKG_BASENAME).gtest.tests.zip
@@ -116,5 +116,8 @@ else
 JSSHELL_NAME = jsshell-$(MOZ_PKG_PLATFORM).zip
 endif
 PKG_JSSHELL = $(DIST)/$(JSSHELL_NAME)
+
+# Stylo binding files
+STYLO_BINDINGS_PACKAGE = $(PKG_BASENAME).stylo-bindings.zip
 
 endif # PACKAGE_NAME_MK_INCLUDED

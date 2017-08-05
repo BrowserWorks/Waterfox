@@ -98,16 +98,34 @@ public:
    * provided by the tracker are defined in terms of this period. If the
    * period is zero, then we don't use a timer and rely on someone calling
    * AgeOneGenerationLocked explicitly.
+   * @param aName the name of the subclass for telemetry.
+   * @param aEventTarget the optional event target on main thread to label the
+   * runnable of the asynchronous invocation to NotifyExpired().
+
    */
-  ExpirationTrackerImpl(uint32_t aTimerPeriod, const char* aName)
+  ExpirationTrackerImpl(uint32_t aTimerPeriod,
+                        const char* aName,
+                        nsIEventTarget* aEventTarget = nullptr)
     : mTimerPeriod(aTimerPeriod)
     , mNewestGeneration(0)
     , mInAgeOneGeneration(false)
     , mName(aName)
+    , mEventTarget(aEventTarget)
   {
     static_assert(K >= 2 && K <= nsExpirationState::NOT_TRACKED,
                   "Unsupported number of generations (must be 2 <= K <= 15)");
     MOZ_ASSERT(NS_IsMainThread());
+    if (mEventTarget) {
+      bool current = false;
+      // NOTE: The following check+crash could be condensed into a
+      // MOZ_RELEASE_ASSERT, but that triggers a segfault during compilation in
+      // clang 3.8. Once we don't have to care about clang 3.8 anymore, though,
+      // we can convert to MOZ_RELEASE_ASSERT here.
+      if (MOZ_UNLIKELY(NS_FAILED(mEventTarget->IsOnCurrentThread(&current)) ||
+                       !current)) {
+        MOZ_CRASH("Provided event target must be on the main thread");
+      }
+    }
     mObserver = new ExpirationTrackerObserver();
     mObserver->Init(this);
   }
@@ -129,8 +147,8 @@ public:
   nsresult AddObjectLocked(T* aObj, const AutoLock& aAutoLock)
   {
     nsExpirationState* state = aObj->GetExpirationState();
-    NS_ASSERTION(!state->IsTracked(),
-                 "Tried to add an object that's already tracked");
+    MOZ_ASSERT(!state->IsTracked(),
+               "Tried to add an object that's already tracked");
     nsTArray<T*>& generation = mGenerations[mNewestGeneration];
     uint32_t index = generation.Length();
     if (index > nsExpirationState::MAX_INDEX_IN_GENERATION) {
@@ -158,17 +176,18 @@ public:
   void RemoveObjectLocked(T* aObj, const AutoLock& aAutoLock)
   {
     nsExpirationState* state = aObj->GetExpirationState();
-    NS_ASSERTION(state->IsTracked(), "Tried to remove an object that's not tracked");
+    MOZ_ASSERT(state->IsTracked(), "Tried to remove an object that's not tracked");
     nsTArray<T*>& generation = mGenerations[state->mGeneration];
     uint32_t index = state->mIndexInGeneration;
-    NS_ASSERTION(generation.Length() > index &&
-                 generation[index] == aObj, "Object is lying about its index");
+    MOZ_ASSERT(generation.Length() > index &&
+               generation[index] == aObj, "Object is lying about its index");
     // Move the last object to fill the hole created by removing aObj
     uint32_t last = generation.Length() - 1;
     T* lastObj = generation[last];
     generation[index] = lastObj;
     lastObj->GetExpirationState()->mIndexInGeneration = index;
     generation.RemoveElementAt(last);
+    MOZ_ASSERT(generation.Length() == last);
     state->mGeneration = nsExpirationState::NOT_TRACKED;
     // We do not check whether we need to stop the timer here. The timer
     // will check that itself next time it fires. Checking here would not
@@ -334,6 +353,7 @@ private:
   uint32_t           mNewestGeneration;
   bool               mInAgeOneGeneration;
   const char* const  mName;   // Used for timer firing profiling.
+  const nsCOMPtr<nsIEventTarget> mEventTarget;
 
   /**
    * Whenever "memory-pressure" is observed, it calls AgeAllGenerationsLocked()
@@ -394,15 +414,21 @@ private:
     if (!mTimer) {
       return NS_ERROR_OUT_OF_MEMORY;
     }
-    if (!NS_IsMainThread()) {
+    if (mEventTarget) {
+      mTimer->SetTarget(mEventTarget);
+    } else if (!NS_IsMainThread()) {
       // TimerCallback should always be run on the main thread to prevent races
       // to the destruction of the tracker.
       nsCOMPtr<nsIEventTarget> target = do_GetMainThread();
       NS_ENSURE_STATE(target);
       mTimer->SetTarget(target);
     }
-    mTimer->InitWithNamedFuncCallback(TimerCallback, this, mTimerPeriod,
-                                      nsITimer::TYPE_REPEATING_SLACK, mName);
+    mTimer->InitWithNamedFuncCallback(
+      TimerCallback,
+      this,
+      mTimerPeriod,
+      nsITimer::TYPE_REPEATING_SLACK_LOW_PRIORITY,
+      mName);
     return NS_OK;
   }
 };
@@ -454,8 +480,12 @@ protected:
   virtual void NotifyExpired(T* aObj) = 0;
 
 public:
-  nsExpirationTracker(uint32_t aTimerPeriod, const char* aName)
-    : ::detail::SingleThreadedExpirationTracker<T, K>(aTimerPeriod, aName)
+  nsExpirationTracker(uint32_t aTimerPeriod,
+                      const char* aName,
+                      nsIEventTarget* aEventTarget = nullptr)
+    : ::detail::SingleThreadedExpirationTracker<T, K>(aTimerPeriod,
+                                                      aName,
+                                                      aEventTarget)
   { }
 
   virtual ~nsExpirationTracker()

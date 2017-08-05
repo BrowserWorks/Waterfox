@@ -206,8 +206,8 @@ static void SetBoolKey(const wchar_t* key, const wchar_t* value, bool enabled)
 static bool GetStringValue(HKEY hRegKey, LPCTSTR valueName, wstring& value)
 {
   DWORD type, dataSize;
-  wchar_t buf[2048];
-  dataSize = sizeof(buf);
+  wchar_t buf[2048] = {};
+  dataSize = sizeof(buf) - 1;
   if (RegQueryValueEx(hRegKey, valueName, nullptr,
                      &type, (LPBYTE)buf, &dataSize) == ERROR_SUCCESS &&
       type == REG_SZ) {
@@ -1391,7 +1391,7 @@ bool UIGetSettingsPath(const string& vendor,
                        const string& product,
                        string& settings_path)
 {
-  wchar_t path[MAX_PATH];
+  wchar_t path[MAX_PATH] = {};
   HRESULT hRes = SHGetFolderPath(nullptr,
                                  CSIDL_APPDATA,
                                  nullptr,
@@ -1402,7 +1402,8 @@ bool UIGetSettingsPath(const string& vendor,
     // registry when the call to SHGetFolderPath is unable to provide this path
     // (Bug 513958).
     HKEY key;
-    DWORD type, size, dwRes;
+    DWORD type, dwRes;
+    DWORD size = sizeof(path) - 1;
     dwRes = ::RegOpenKeyExW(HKEY_CURRENT_USER,
                             L"Software\\Microsoft\\Windows\\CurrentVersion\\Explorer\\Shell Folders",
                             0,
@@ -1463,16 +1464,21 @@ bool UIDeleteFile(const string& oldfile)
   return DeleteFile(UTF8ToWide(oldfile).c_str()) == TRUE;
 }
 
-ifstream* UIOpenRead(const string& filename)
+ifstream* UIOpenRead(const string& filename, bool binary)
 {
   // adapted from breakpad's src/common/windows/http_upload.cc
+  std::ios_base::openmode mode = ios::in;
+
+  if (binary) {
+    mode = mode | ios::binary;
+  }
 
 #if defined(_MSC_VER)
   ifstream* file = new ifstream();
-  file->open(UTF8ToWide(filename).c_str(), ios::in);
+  file->open(UTF8ToWide(filename).c_str(), mode);
 #else   // GCC
   ifstream* file = new ifstream(WideToMBCP(UTF8ToWide(filename), CP_ACP).c_str(),
-                                ios::in);
+                                mode);
 #endif  // _MSC_VER
 
   return file;

@@ -46,6 +46,22 @@ OrientedImage::GetHeight(int32_t* aHeight)
   }
 }
 
+nsresult
+OrientedImage::GetNativeSizes(nsTArray<IntSize>& aNativeSizes) const
+{
+  nsresult rv = InnerImage()->GetNativeSizes(aNativeSizes);
+
+  if (mOrientation.SwapsWidthAndHeight()) {
+    auto i = aNativeSizes.Length();
+    while (i > 0) {
+      --i;
+      swap(aNativeSizes[i].width, aNativeSizes[i].height);
+    }
+  }
+
+  return rv;
+}
+
 NS_IMETHODIMP
 OrientedImage::GetIntrinsicSize(nsSize* aSize)
 {
@@ -293,12 +309,13 @@ OrientedImage::Draw(gfxContext* aContext,
   region.TransformBoundsBy(inverseMatrix);
 
   auto orientViewport = [&](const SVGImageContext& aOldContext) {
-    CSSIntSize viewportSize(aOldContext.GetViewportSize());
-    if (mOrientation.SwapsWidthAndHeight()) {
-      swap(viewportSize.width, viewportSize.height);
-    }
     SVGImageContext context(aOldContext);
-    context.SetViewportSize(viewportSize);
+    auto oldViewport = aOldContext.GetViewportSize();
+    if (oldViewport && mOrientation.SwapsWidthAndHeight()) {
+      // Swap width and height:
+      CSSIntSize newViewport(oldViewport->height, oldViewport->width);
+      context.SetViewportSize(Some(newViewport));
+    }
     return context;
   };
 

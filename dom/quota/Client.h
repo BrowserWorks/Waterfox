@@ -13,6 +13,7 @@
 
 #include "PersistenceType.h"
 
+class nsIFile;
 class nsIRunnable;
 
 #define IDB_DIRECTORY_NAME "idb"
@@ -30,6 +31,8 @@ class UsageInfo;
 class Client
 {
 public:
+  typedef mozilla::Atomic<bool> AtomicBool;
+
   NS_INLINE_DECL_PURE_VIRTUAL_REFCOUNTING
 
   enum Type {
@@ -90,15 +93,23 @@ public:
 
   // Methods which are called on the IO thred.
   virtual nsresult
+  UpgradeStorageFrom1_0To2_0(nsIFile* aDirectory)
+  {
+    return NS_OK;
+  }
+
+  virtual nsresult
   InitOrigin(PersistenceType aPersistenceType,
              const nsACString& aGroup,
              const nsACString& aOrigin,
+             const AtomicBool& aCanceled,
              UsageInfo* aUsageInfo) = 0;
 
   virtual nsresult
   GetUsageForOrigin(PersistenceType aPersistenceType,
                     const nsACString& aGroup,
                     const nsACString& aOrigin,
+                    const AtomicBool& aCanceled,
                     UsageInfo* aUsageInfo) = 0;
 
   virtual void

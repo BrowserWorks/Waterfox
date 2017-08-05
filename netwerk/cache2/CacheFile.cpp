@@ -885,9 +885,11 @@ CacheFile::OpenOutputStream(CacheOutputCloseListener *aCloseListener, nsIOutputS
     // Remove alt-data
     rv = Truncate(mAltDataOffset);
     if (NS_FAILED(rv)) {
+      LOG(("CacheFile::OpenOutputStream() - Truncating alt-data failed "
+           "[rv=0x%08" PRIx32 "]", static_cast<uint32_t>(rv)));
       return rv;
     }
-    mMetadata->SetElement(CacheFileUtils::kAltDataKey, nullptr);
+    SetAltMetadata(nullptr);
     mAltDataOffset = -1;
   }
 
@@ -916,8 +918,6 @@ CacheFile::OpenAlternativeOutputStream(CacheOutputCloseListener *aCloseListener,
 
   MOZ_ASSERT(mHandle || mMemoryOnly || mOpeningFile);
 
-  nsresult rv;
-
   if (!mReady) {
     LOG(("CacheFile::OpenAlternativeOutputStream() - CacheFile is not ready "
          "[this=%p]", this));
@@ -939,10 +939,14 @@ CacheFile::OpenAlternativeOutputStream(CacheOutputCloseListener *aCloseListener,
     }
   }
 
+  nsresult rv;
+
   if (mAltDataOffset != -1) {
     // Truncate old alt-data
     rv = Truncate(mAltDataOffset);
     if (NS_FAILED(rv)) {
+      LOG(("CacheFile::OpenAlternativeOutputStream() - Truncating old alt-data "
+           "failed [rv=0x%08" PRIx32 "]", static_cast<uint32_t>(rv)));
       return rv;
     }
   } else {
@@ -952,12 +956,10 @@ CacheFile::OpenAlternativeOutputStream(CacheOutputCloseListener *aCloseListener,
   nsAutoCString altMetadata;
   CacheFileUtils::BuildAlternativeDataInfo(aAltDataType, mAltDataOffset,
                                            altMetadata);
-  rv = mMetadata->SetElement(CacheFileUtils::kAltDataKey, altMetadata.get());
+  rv = SetAltMetadata(altMetadata.get());
   if (NS_FAILED(rv)) {
-    // Removing element shouldn't fail because it doesn't allocate memory.
-    mMetadata->SetElement(CacheFileUtils::kAltDataKey, nullptr);
-
-    mAltDataOffset = -1;
+    LOG(("CacheFile::OpenAlternativeOutputStream() - Set Metadata for alt-data"
+         "failed [rv=0x%08" PRIx32 "]", static_cast<uint32_t>(rv)));
     return rv;
   }
 
@@ -1152,7 +1154,7 @@ CacheFile::SetExpirationTime(uint32_t aExpirationTime)
   PostWriteTimer();
 
   if (mHandle && !mHandle->IsDoomed())
-    CacheFileIOManager::UpdateIndexEntry(mHandle, nullptr, &aExpirationTime);
+    CacheFileIOManager::UpdateIndexEntry(mHandle, nullptr, &aExpirationTime, nullptr, nullptr, nullptr);
 
   return mMetadata->SetExpirationTime(aExpirationTime);
 }
@@ -1181,7 +1183,7 @@ CacheFile::SetFrecency(uint32_t aFrecency)
   PostWriteTimer();
 
   if (mHandle && !mHandle->IsDoomed())
-    CacheFileIOManager::UpdateIndexEntry(mHandle, &aFrecency, nullptr);
+    CacheFileIOManager::UpdateIndexEntry(mHandle, &aFrecency, nullptr, nullptr, nullptr, nullptr);
 
   return mMetadata->SetFrecency(aFrecency);
 }
@@ -1194,6 +1196,103 @@ CacheFile::GetFrecency(uint32_t *_retval)
   NS_ENSURE_TRUE(mMetadata, NS_ERROR_UNEXPECTED);
 
   return mMetadata->GetFrecency(_retval);
+}
+
+nsresult CacheFile::SetNetworkTimes(uint64_t aOnStartTime, uint64_t aOnStopTime)
+{
+  CacheFileAutoLock lock(this);
+
+  LOG(("CacheFile::SetNetworkTimes() this=%p, aOnStartTime=%" PRIu64
+       ", aOnStopTime=%" PRIu64 "", this, aOnStartTime, aOnStopTime));
+
+  MOZ_ASSERT(mMetadata);
+  NS_ENSURE_TRUE(mMetadata, NS_ERROR_UNEXPECTED);
+  MOZ_ASSERT(aOnStartTime != kIndexTimeNotAvailable);
+  MOZ_ASSERT(aOnStopTime != kIndexTimeNotAvailable);
+
+  PostWriteTimer();
+
+  nsAutoCString onStartTime;
+  onStartTime.AppendInt(aOnStartTime);
+  nsresult rv = mMetadata->SetElement("net-response-time-onstart", onStartTime.get());
+  if (NS_WARN_IF(NS_FAILED(rv))) {
+    return rv;
+  }
+
+  nsAutoCString onStopTime;
+  onStopTime.AppendInt(aOnStopTime);
+  rv = mMetadata->SetElement("net-response-time-onstop", onStopTime.get());
+  if (NS_WARN_IF(NS_FAILED(rv))) {
+    return rv;
+  }
+
+  uint16_t onStartTime16 = aOnStartTime <= kIndexTimeOutOfBound ? aOnStartTime : kIndexTimeOutOfBound;
+  uint16_t onStopTime16 = aOnStopTime <= kIndexTimeOutOfBound ? aOnStopTime : kIndexTimeOutOfBound;
+
+  if (mHandle && !mHandle->IsDoomed()) {
+    CacheFileIOManager::UpdateIndexEntry(mHandle, nullptr, nullptr, nullptr,
+                                         &onStartTime16, &onStopTime16);
+  }
+  return NS_OK;
+}
+
+nsresult CacheFile::GetOnStartTime(uint64_t *_retval)
+{
+  CacheFileAutoLock lock(this);
+
+  MOZ_ASSERT(mMetadata);
+  const char *onStartTimeStr = mMetadata->GetElement("net-response-time-onstart");
+  if (!onStartTimeStr) {
+    return NS_ERROR_NOT_AVAILABLE;
+  }
+  nsresult rv;
+  *_retval = nsCString(onStartTimeStr).ToInteger64(&rv);
+  MOZ_ASSERT(NS_SUCCEEDED(rv));
+  return NS_OK;
+}
+
+nsresult CacheFile::GetOnStopTime(uint64_t *_retval)
+{
+  CacheFileAutoLock lock(this);
+
+  MOZ_ASSERT(mMetadata);
+  const char *onStopTimeStr = mMetadata->GetElement("net-response-time-onstop");
+  if (!onStopTimeStr) {
+    return NS_ERROR_NOT_AVAILABLE;
+  }
+  nsresult rv;
+  *_retval = nsCString(onStopTimeStr).ToInteger64(&rv);
+  MOZ_ASSERT(NS_SUCCEEDED(rv));
+  return NS_OK;
+}
+
+nsresult
+CacheFile::SetAltMetadata(const char* aAltMetadata)
+{
+  AssertOwnsLock();
+  LOG(("CacheFile::SetAltMetadata() this=%p, aAltMetadata=%s",
+       this, aAltMetadata ? aAltMetadata : ""));
+
+  MOZ_ASSERT(mMetadata);
+  NS_ENSURE_TRUE(mMetadata, NS_ERROR_UNEXPECTED);
+
+  PostWriteTimer();
+
+  nsresult rv = mMetadata->SetElement(CacheFileUtils::kAltDataKey, aAltMetadata);
+  bool hasAltData = aAltMetadata ? true : false;
+
+  if (NS_FAILED(rv)) {
+    // Removing element shouldn't fail because it doesn't allocate memory.
+    mMetadata->SetElement(CacheFileUtils::kAltDataKey, nullptr);
+
+    mAltDataOffset = -1;
+    hasAltData = false;
+  }
+
+  if (mHandle && !mHandle->IsDoomed()) {
+    CacheFileIOManager::UpdateIndexEntry(mHandle, nullptr, nullptr, &hasAltData, nullptr, nullptr);
+  }
+  return rv;
 }
 
 nsresult
@@ -1798,56 +1897,98 @@ CacheFile::Truncate(int64_t aOffset)
 {
   AssertOwnsLock();
 
+  LOG(("CacheFile::Truncate() [this=%p, offset=%" PRId64 "]", this, aOffset));
+
   nsresult rv;
 
   MOZ_ASSERT(aOffset <= mDataSize);
   MOZ_ASSERT(mReady);
 
   uint32_t lastChunk = 0;
-
-  if (aOffset > 0) {
+  if (mDataSize > 0) {
     lastChunk = (mDataSize - 1) / kChunkSize;
   }
 
-  uint32_t bytesInLastChunk = aOffset - lastChunk * kChunkSize;
+  uint32_t newLastChunk = 0;
+  if (aOffset > 0) {
+    newLastChunk = (aOffset - 1) / kChunkSize;
+  }
 
+  uint32_t bytesInNewLastChunk = aOffset - newLastChunk * kChunkSize;
+
+  // Remove all truncated chunks from mCachedChunks
   for (auto iter = mCachedChunks.Iter(); !iter.Done(); iter.Next()) {
     uint32_t idx = iter.Key();
 
-    if (idx > lastChunk) {
+    if (idx > newLastChunk) {
       // This is unused chunk, simply remove it.
+      LOG(("CacheFile::Truncate() - removing cached chunk [idx=%u]", idx));
       iter.Remove();
-      continue;
-    }
-
-    if (idx == lastChunk) {
-      RefPtr<CacheFileChunk>& chunk = iter.Data();
-
-      rv = chunk->Truncate(bytesInLastChunk);
-      if (NS_FAILED(rv)) {
-        return rv;
-      }
     }
   }
 
+  // Discard all truncated chunks in mChunks
   for (auto iter = mChunks.Iter(); !iter.Done(); iter.Next()) {
     uint32_t idx = iter.Key();
-    RefPtr<CacheFileChunk>& chunk = iter.Data();
 
-    if (idx > lastChunk) {
+    if (idx > newLastChunk) {
+      RefPtr<CacheFileChunk>& chunk = iter.Data();
+      LOG(("CacheFile::Truncate() - discarding chunk [idx=%u, chunk=%p]",
+           idx, chunk.get()));
       chunk->mDiscardedChunk = true;
       mDiscardedChunks.AppendElement(chunk);
       iter.Remove();
-      continue;
     }
+  }
 
-    if (idx == lastChunk) {
-      RefPtr<CacheFileChunk>& chunk = iter.Data();
+  // Remove hashes of all removed chunks from the metadata
+  for (uint32_t i = lastChunk; i > newLastChunk; --i) {
+    mMetadata->RemoveHash(i);
+  }
 
-      rv = chunk->Truncate(bytesInLastChunk);
+  // Truncate new last chunk
+  if (bytesInNewLastChunk == kChunkSize) {
+    LOG(("CacheFile::Truncate() - not truncating last chunk."));
+  } else {
+    RefPtr<CacheFileChunk> chunk;
+    if (mChunks.Get(newLastChunk, getter_AddRefs(chunk))) {
+      LOG(("CacheFile::Truncate() - New last chunk %p got from mChunks.",
+           chunk.get()));
+    } else if (mCachedChunks.Get(newLastChunk, getter_AddRefs(chunk))) {
+      LOG(("CacheFile::Truncate() - New last chunk %p got from mCachedChunks.",
+           chunk.get()));
+    } else {
+      // New last chunk isn't loaded but we need to update the hash.
+      MOZ_ASSERT(!mMemoryOnly);
+      MOZ_ASSERT(mHandle);
+
+      rv = GetChunkLocked(newLastChunk, PRELOADER, nullptr,
+                          getter_AddRefs(chunk));
       if (NS_FAILED(rv)) {
         return rv;
       }
+      // We've checked that we don't have this chunk, so no chunk must be
+      // returned.
+      MOZ_ASSERT(!chunk);
+
+      if (!mChunks.Get(newLastChunk, getter_AddRefs(chunk))) {
+        return NS_ERROR_UNEXPECTED;
+      }
+
+      LOG(("CacheFile::Truncate() - New last chunk %p got from preloader.",
+           chunk.get()));
+    }
+
+    rv = chunk->Truncate(bytesInNewLastChunk);
+    if (NS_FAILED(rv)) {
+      return rv;
+    }
+
+    // If the chunk is ready set the new hash now. If it's still being loaded
+    // CacheChunk::Truncate() made the chunk dirty and the hash will be updated
+    // in OnChunkWritten().
+    if (chunk->IsReady()) {
+      mMetadata->SetHash(newLastChunk, chunk->Hash());
     }
   }
 
@@ -2319,7 +2460,25 @@ CacheFile::InitIndexEntry()
   uint32_t frecency;
   mMetadata->GetFrecency(&frecency);
 
-  rv = CacheFileIOManager::UpdateIndexEntry(mHandle, &frecency, &expTime);
+  bool hasAltData = mMetadata->GetElement(CacheFileUtils::kAltDataKey) ? true : false;
+
+  static auto toUint16 = [](const char* s) -> uint16_t {
+    if (s) {
+      nsresult rv;
+      uint64_t n64 = nsCString(s).ToInteger64(&rv);
+      MOZ_ASSERT(NS_SUCCEEDED(rv));
+      return n64 <= kIndexTimeOutOfBound ? n64 : kIndexTimeOutOfBound ;
+    }
+    return kIndexTimeNotAvailable;
+  };
+
+  const char *onStartTimeStr = mMetadata->GetElement("net-response-time-onstart");
+  uint16_t onStartTime = toUint16(onStartTimeStr);
+
+  const char *onStopTimeStr = mMetadata->GetElement("net-response-time-onstop");
+  uint16_t onStopTime = toUint16(onStopTimeStr);
+
+  rv = CacheFileIOManager::UpdateIndexEntry(mHandle, &frecency, &expTime, &hasAltData, &onStartTime, &onStopTime);
   NS_ENSURE_SUCCESS(rv, rv);
 
   return NS_OK;

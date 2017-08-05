@@ -74,12 +74,28 @@ private:
   bool mDownloadError;
   bool mBeganStream;
 
+  nsCString mDownloadErrorStatusStr;
+
   // Note that mStreamTable is only used by v2, it is empty for v4 update.
   nsCString mStreamTable;
 
   nsCOMPtr<nsIChannel> mChannel;
   nsCOMPtr<nsIUrlClassifierDBService> mDBService;
-  nsCOMPtr<nsITimer> mTimer;
+
+  // In v2, a update response might contain redirection and this
+  // timer is for fetching the redirected update.
+  nsCOMPtr<nsITimer> mFetchIndirectUpdatesTimer;
+
+  // When we DownloadUpdate(), the DBService might be busy on processing
+  // request issused outside of StreamUpdater. We have to fire a timer to
+  // retry on our own.
+  nsCOMPtr<nsITimer> mFetchNextRequestTimer;
+
+  // Timer to abort the download if the server takes too long to respond.
+  nsCOMPtr<nsITimer> mResponseTimeoutTimer;
+
+  // Timer to abort the download if it takes too long.
+  nsCOMPtr<nsITimer> mTimeoutTimer;
 
   struct PendingRequest {
     nsCString mTables;
@@ -105,6 +121,7 @@ private:
   // The provider for current update request and should be only used by telemetry
   // since it would show up as "other" for any other providers.
   nsCString mTelemetryProvider;
+  PRIntervalTime mTelemetryClockStart;
 };
 
 #endif // nsUrlClassifierStreamUpdater_h_

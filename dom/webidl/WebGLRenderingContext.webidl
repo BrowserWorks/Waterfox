@@ -820,6 +820,15 @@ interface WEBGL_compressed_texture_s3tc
 };
 
 [NoInterfaceObject]
+interface WEBGL_compressed_texture_s3tc_srgb {
+    /* Compressed Texture Formats */
+    const GLenum COMPRESSED_SRGB_S3TC_DXT1_EXT        = 0x8C4C;
+    const GLenum COMPRESSED_SRGB_ALPHA_S3TC_DXT1_EXT  = 0x8C4D;
+    const GLenum COMPRESSED_SRGB_ALPHA_S3TC_DXT3_EXT  = 0x8C4E;
+    const GLenum COMPRESSED_SRGB_ALPHA_S3TC_DXT5_EXT  = 0x8C4F;
+};
+
+[NoInterfaceObject]
 interface WEBGL_compressed_texture_astc {
     /* Compressed Texture Format */
     const GLenum COMPRESSED_RGBA_ASTC_4x4_KHR = 0x93B0;
@@ -1085,9 +1094,10 @@ interface EXT_disjoint_timer_query {
 };
 
 [NoInterfaceObject]
-interface MOZ_debug_get {
+interface MOZ_debug {
     const GLenum EXTENSIONS = 0x1F03;
     const GLenum WSI_INFO   = 0x10000;
+    const GLenum UNPACK_REQUIRE_FASTPATH = 0x10001;
 
     [Throws]
     any getParameter(GLenum pname);

@@ -27,14 +27,12 @@ XPIDL_SOURCES += [
     'nsIObjectLoadingContent.idl',
     'nsIRemoteWindowContext.idl',
     'nsIScriptChannel.idl',
-    'nsIScriptLoaderObserver.idl',
     'nsISelection.idl',
     'nsISelectionController.idl',
     'nsISelectionDisplay.idl',
     'nsISelectionListener.idl',
     'nsISelectionPrivate.idl',
     'nsISimpleContentPolicy.idl',
-    'nsISiteSpecificUserAgent.idl',
     'nsISlowScriptDebug.idl',
 ]
 
@@ -93,7 +91,6 @@ EXPORTS += [
     'nsINode.h',
     'nsINodeList.h',
     'nsIScriptContext.h',
-    'nsIScriptElement.h',
     'nsIScriptGlobalObject.h',
     'nsIScriptNameSpaceManager.h',
     'nsIScriptObjectPrincipal.h',
@@ -114,7 +111,6 @@ EXPORTS += [
     'nsRange.h',
     'nsReferencedElement.h',
     'nsSandboxFlags.h',
-    'nsScriptLoader.h',
     'nsStructuredCloneContainer.h',
     'nsStubAnimationObserver.h',
     'nsStubDocumentObserver.h',
@@ -199,8 +195,8 @@ EXPORTS.mozilla.dom += [
     'ResponsiveImageSelector.h',
     'SameProcessMessageQueue.h',
     'ScreenOrientation.h',
-    'ScriptSettings.h',
     'ShadowRoot.h',
+    'StructuredCloneBlob.h',
     'StructuredCloneHolder.h',
     'StructuredCloneTags.h',
     'StyleSheetList.h',
@@ -316,8 +312,6 @@ UNIFIED_SOURCES += [
     'nsRange.cpp',
     'nsReferencedElement.cpp',
     'nsScreen.cpp',
-    'nsScriptElement.cpp',
-    'nsScriptLoader.cpp',
     'nsScriptNameSpaceManager.cpp',
     'nsStructuredCloneContainer.cpp',
     'nsStubAnimationObserver.cpp',
@@ -344,8 +338,8 @@ UNIFIED_SOURCES += [
     'ResponsiveImageSelector.cpp',
     'SameProcessMessageQueue.cpp',
     'ScreenOrientation.cpp',
-    'ScriptSettings.cpp',
     'ShadowRoot.cpp',
+    'StructuredCloneBlob.cpp',
     'StructuredCloneHolder.cpp',
     'StyleSheetList.cpp',
     'SubtleCrypto.cpp',
@@ -354,6 +348,7 @@ UNIFIED_SOURCES += [
     'TextInputProcessor.cpp',
     'ThirdPartyUtil.cpp',
     'Timeout.cpp',
+    'TimeoutExecutor.cpp',
     'TimeoutHandler.cpp',
     'TimeoutManager.cpp',
     'TreeWalker.cpp',
@@ -410,20 +405,11 @@ if CONFIG['INTEL_ARCHITECTURE']:
 EXTRA_COMPONENTS += [
     'contentAreaDropListener.js',
     'contentAreaDropListener.manifest',
-    'messageWakeupService.js',
-    'messageWakeupService.manifest',
     'ProcessSelector.js',
     'ProcessSelector.manifest',
     'SlowScriptDebug.js',
     'SlowScriptDebug.manifest',
 ]
-
-# Firefox for Android provides an alternate version of this component
-if CONFIG['MOZ_BUILD_APP'] != 'mobile/android':
-    EXTRA_COMPONENTS += [
-        'SiteSpecificUserAgent.js',
-        'SiteSpecificUserAgent.manifest',
-    ]
 
 EXTRA_JS_MODULES += [
     'DOMRequestHelper.jsm',
@@ -466,11 +452,6 @@ LOCAL_INCLUDES += [
     '/widget',
     '/xpcom/ds',
 ]
-
-if CONFIG['MOZ_WIDGET_TOOLKIT'] == 'gonk':
-    LOCAL_INCLUDES += [
-        '../system/gonk',
-    ]
 
 if CONFIG['MOZ_WEBRTC']:
     LOCAL_INCLUDES += [

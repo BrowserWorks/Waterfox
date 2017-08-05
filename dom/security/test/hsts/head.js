@@ -263,9 +263,9 @@ var Observer = {
     throw "Can't handle topic "+topic;
   },
   add_observers: function (services, include_on_modify = false) {
-    services.obs.addObserver(Observer, "console-api-log-event", false);
-    services.obs.addObserver(Observer, "http-on-examine-response", false);
-    services.obs.addObserver(Observer, "http-on-modify-request", false);
+    services.obs.addObserver(Observer, "console-api-log-event");
+    services.obs.addObserver(Observer, "http-on-examine-response");
+    services.obs.addObserver(Observer, "http-on-modify-request");
   },
   cleanup: function () {
     this.listeners = {};
@@ -362,7 +362,7 @@ var Observer = {
 // opens `uri' in a new tab and focuses it.
 // returns the newly opened tab
 function openTab(uri) {
-  let tab = gBrowser.addTab(uri);
+  let tab = BrowserTestUtils.addTab(gBrowser, uri);
 
   // select tab and make sure its browser is focused
   gBrowser.selectedTab = tab;
@@ -431,11 +431,5 @@ async function execute_test(test, mimetype) {
       test, test_settings[which_test].type,
       test_settings[which_test].timeout);
 
-  let tab = openTab(src);
-  test_servers[test]['tab'] = tab;
-
-  let browser = gBrowser.getBrowserForTab(tab);
-  await BrowserTestUtils.browserLoaded(browser);
-
-  await BrowserTestUtils.removeTab(tab);
+  await BrowserTestUtils.withNewTab(src, () => {});
 }

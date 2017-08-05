@@ -19,7 +19,9 @@
 #include "nsRect.h"
 #include "nspr.h"
 #include "png.h"
+
 #include "RasterImage.h"
+#include "SurfaceCache.h"
 #include "SurfacePipeFactory.h"
 #include "mozilla/DebugOnly.h"
 #include "mozilla/Telemetry.h"
@@ -569,6 +571,13 @@ nsPNGDecoder::info_callback(png_structp png_ptr, png_infop info_ptr)
 
   // Post our size to the superclass
   decoder->PostSize(frameRect.width, frameRect.height);
+
+  if (width >
+    SurfaceCache::MaximumCapacity()/(bit_depth > 8 ? 16:8)) {
+    // libpng needs space to allocate two row buffers
+    png_error(decoder->mPNG, "Image is too wide");
+  }
+
   if (decoder->HasError()) {
     // Setting the size led to an error.
     png_error(decoder->mPNG, "Sizing error");
@@ -735,6 +744,11 @@ nsPNGDecoder::info_callback(png_structp png_ptr, png_infop info_ptr)
   if (interlace_type == PNG_INTERLACE_ADAM7) {
     if (frameRect.height < INT32_MAX / (frameRect.width * int32_t(channels))) {
       const size_t bufferSize = channels * frameRect.width * frameRect.height;
+
+      if (bufferSize > SurfaceCache::MaximumCapacity()) {
+        png_error(decoder->mPNG, "Insufficient memory to deinterlace image");
+      }
+
       decoder->interlacebuf = static_cast<uint8_t*>(malloc(bufferSize));
     }
     if (!decoder->interlacebuf) {
@@ -943,6 +957,33 @@ nsPNGDecoder::DoYield(png_structp aPNGStruct)
     Transition::ContinueUnbufferedAfterYield(State::PNG_DATA, consumedBytes);
 }
 
+nsresult
+nsPNGDecoder::FinishInternal()
+{
+  // We shouldn't be called in error cases.
+  MOZ_ASSERT(!HasError(), "Can't call FinishInternal on error!");
+
+  if (IsMetadataDecode()) {
+    return NS_OK;
+  }
+
+  int32_t loop_count = 0;
+#ifdef PNG_APNG_SUPPORTED
+  if (png_get_valid(mPNG, mInfo, PNG_INFO_acTL)) {
+    int32_t num_plays = png_get_num_plays(mPNG, mInfo);
+    loop_count = num_plays - 1;
+  }
+#endif
+
+  if (InFrame()) {
+    EndImageFrame();
+  }
+  PostDecodeDone(loop_count);
+
+  return NS_OK;
+}
+
+
 #ifdef PNG_APNG_SUPPORTED
 // got the header of a new frame that's coming
 void
@@ -959,7 +1000,6 @@ nsPNGDecoder::frame_info_callback(png_structp png_ptr, png_uint_32 frame_num)
   if (!previousFrameWasHidden && decoder->IsFirstFrameDecode()) {
     // We're about to get a second non-hidden frame, but we only want the first.
     // Stop decoding now. (And avoid allocating the unnecessary buffers below.)
-    decoder->PostDecodeDone();
     return decoder->DoTerminate(png_ptr, TerminalState::SUCCESS);
   }
 
@@ -1025,17 +1065,6 @@ nsPNGDecoder::end_callback(png_structp png_ptr, png_infop info_ptr)
   // We shouldn't get here if we've hit an error
   MOZ_ASSERT(!decoder->HasError(), "Finishing up PNG but hit error!");
 
-  int32_t loop_count = 0;
-#ifdef PNG_APNG_SUPPORTED
-  if (png_get_valid(png_ptr, info_ptr, PNG_INFO_acTL)) {
-    int32_t num_plays = png_get_num_plays(png_ptr, info_ptr);
-    loop_count = num_plays - 1;
-  }
-#endif
-
-  // Send final notifications.
-  decoder->EndImageFrame();
-  decoder->PostDecodeDone(loop_count);
   return decoder->DoTerminate(png_ptr, TerminalState::SUCCESS);
 }
 

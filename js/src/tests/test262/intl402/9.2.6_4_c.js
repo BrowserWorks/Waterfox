@@ -1,4 +1,3 @@
-// |reftest| skip-if(!this.hasOwnProperty('Intl')) -- needs Intl
 // Copyright 2012 Mozilla Corporation. All rights reserved.
 // This code is governed by the BSD license found in the LICENSE file.
 
@@ -18,15 +17,9 @@ testWithIntlConstructors(function (Constructor) {
         var noLinguisticContent = "zxx";
         var supported = Constructor.supportedLocalesOf([defaultLocale, noLinguisticContent],
             {localeMatcher: matcher});
-        if (supported.indexOf(defaultLocale) === -1) {
-            $ERROR("SupportedLocales didn't return default locale with matcher " + matcher + ".");
-        }
-        if (supported.indexOf(noLinguisticContent) !== -1) {
-            $ERROR("SupportedLocales returned the \"no linguistic content\" locale with matcher " + matcher + ".");
-        }
-        if (supported.length > 1) {
-            $ERROR("SupportedLocales returned stray locales: " + supported.join(", ") + " with matcher " + matcher + ".");
-        }
+        assert.notSameValue(supported.indexOf(defaultLocale), -1, "SupportedLocales didn't return default locale with matcher " + matcher + ".");
+        assert.sameValue(supported.indexOf(noLinguisticContent), -1, "SupportedLocales returned the \"no linguistic content\" locale with matcher " + matcher + ".");
+        assert.sameValue(supported.length > 1, false, "SupportedLocales returned stray locales: " + supported.join(", ") + " with matcher " + matcher + ".");
     });
 
     return true;

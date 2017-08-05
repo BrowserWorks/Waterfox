@@ -2,7 +2,7 @@
 # License, v. 2.0. If a copy of the MPL was not distributed with this
 # file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
-linux64-clang/opt:
+linux64-clang:
     description: "Clang toolchain build"
     treeherder:
         kind: build
@@ -11,17 +11,19 @@ linux64-clang/opt:
         tier: 1
     worker-type: aws-provisioner-v1/gecko-{level}-b-linux
     worker:
-        implementation: docker-worker
         docker-image: {in-tree: desktop-build}
         max-run-time: 36000
+        env:
+            TOOLTOOL_MANIFEST: "browser/config/tooltool-manifests/linux64/releng.manifest"
     run:
         using: toolchain-script
         script: build-clang-linux.sh
         tooltool-downloads: public
         resources:
             - 'build/build-clang/**'
+            - 'taskcluster/scripts/misc/tooltool-download.sh'
 
-linux64-clang-tidy/opt:
+linux64-clang-tidy:
     description: "Clang-tidy build"
     index:
         product: static-analysis
@@ -33,9 +35,10 @@ linux64-clang-tidy/opt:
         tier: 1
     worker-type: aws-provisioner-v1/gecko-{level}-b-linux
     worker:
-        implementation: docker-worker
         docker-image: {in-tree: desktop-build}
         max-run-time: 36000
+        env:
+            TOOLTOOL_MANIFEST: "browser/config/tooltool-manifests/linux64/releng.manifest"
     run:
         using: toolchain-script
         script: build-clang-tidy-linux.sh
@@ -43,8 +46,9 @@ linux64-clang-tidy/opt:
         resources:
             - 'build/clang-plugin/**'
             - 'build/build-clang/**'
+            - 'taskcluster/scripts/misc/tooltool-download.sh'
 
-linux64-gcc/opt:
+linux64-gcc:
     description: "GCC toolchain build"
     treeherder:
         kind: build
@@ -53,7 +57,6 @@ linux64-gcc/opt:
         tier: 1
     worker-type: aws-provisioner-v1/gecko-{level}-b-linux
     worker:
-        implementation: docker-worker
         docker-image: {in-tree: desktop-build}
         max-run-time: 36000
     run:
@@ -62,7 +65,7 @@ linux64-gcc/opt:
         resources:
             - 'build/unix/build-gcc/**'
 
-linux64-binutils/opt:
+linux64-binutils:
     description: "Binutils toolchain build"
     treeherder:
         kind: build
@@ -71,7 +74,6 @@ linux64-binutils/opt:
         tier: 1
     worker-type: aws-provisioner-v1/gecko-{level}-b-linux
     worker:
-        implementation: docker-worker
         docker-image: {in-tree: desktop-build}
         max-run-time: 36000
     run:
@@ -80,7 +82,7 @@ linux64-binutils/opt:
         resources:
             - 'build/unix/build-binutils/**'
 
-linux64-cctools-port/opt:
+linux64-cctools-port:
     description: "cctools-port toolchain build"
     treeherder:
         kind: build
@@ -89,14 +91,18 @@ linux64-cctools-port/opt:
         tier: 1
     worker-type: aws-provisioner-v1/gecko-{level}-b-linux
     worker:
-        implementation: docker-worker
         docker-image: {in-tree: desktop-build}
         max-run-time: 36000
+        env:
+            TOOLTOOL_MANIFEST: "browser/config/tooltool-manifests/linux64/clang.manifest"
     run:
         using: toolchain-script
         script: build-cctools-port.sh
+        tooltool-downloads: public
+        resources:
+            - 'taskcluster/scripts/misc/tooltool-download.sh'
 
-linux64-hfsplus/opt:
+linux64-hfsplus:
     description: "hfsplus toolchain build"
     treeherder:
         kind: build
@@ -105,17 +111,19 @@ linux64-hfsplus/opt:
         tier: 1
     worker-type: aws-provisioner-v1/gecko-{level}-b-linux
     worker:
-        implementation: docker-worker
         docker-image: {in-tree: desktop-build}
         max-run-time: 36000
+        env:
+            TOOLTOOL_MANIFEST: "browser/config/tooltool-manifests/linux64/clang.manifest"
     run:
         using: toolchain-script
         script: build-hfsplus-linux.sh
         tooltool-downloads: public
         resources:
             - 'build/unix/build-hfsplus/**'
+            - 'taskcluster/scripts/misc/tooltool-download.sh'
 
-linux64-libdmg/opt:
+linux64-libdmg:
     description: "libdmg-hfsplus toolchain build"
     treeherder:
         kind: build
@@ -124,7 +132,6 @@ linux64-libdmg/opt:
         tier: 1
     worker-type: aws-provisioner-v1/gecko-{level}-b-linux
     worker:
-        implementation: docker-worker
         docker-image: {in-tree: desktop-build}
         max-run-time: 36000
     run:

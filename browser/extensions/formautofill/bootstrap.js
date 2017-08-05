@@ -30,44 +30,36 @@ function insertStyleSheet(domWindow, url) {
   }
 }
 
-let windowListener = {
-  onOpenWindow(aWindow) {
-    let domWindow = aWindow.QueryInterface(Ci.nsIInterfaceRequestor).getInterface(Ci.nsIDOMWindow);
-
-    domWindow.addEventListener("load", function onWindowLoaded() {
-      insertStyleSheet(domWindow, STYLESHEET_URI);
-    }, {once: true});
-  },
-};
-
-function startup() {
-  // Besides this pref, we'll need dom.forms.autocomplete.experimental enabled
-  // as well to make sure form autocomplete works correctly.
-  if (!Services.prefs.getBoolPref("browser.formautofill.experimental")) {
+function onMaybeOpenPopup(evt) {
+  let domWindow = evt.target.ownerGlobal;
+  if (CACHED_STYLESHEETS.has(domWindow)) {
+    // This window already has autofill stylesheets.
     return;
   }
 
-  let parent = new FormAutofillParent();
-  let enumerator = Services.wm.getEnumerator("navigator:browser");
-  // Load stylesheet to already opened windows
-  while (enumerator.hasMoreElements()) {
-    let win = enumerator.getNext();
-    let domWindow = win.QueryInterface(Ci.nsIInterfaceRequestor).getInterface(Ci.nsIDOMWindow);
+  insertStyleSheet(domWindow, STYLESHEET_URI);
+}
 
-    insertStyleSheet(domWindow, STYLESHEET_URI);
+function startup() {
+  if (!Services.prefs.getBoolPref("extensions.formautofill.experimental")) {
+    return;
   }
 
-  Services.wm.addListener(windowListener);
+  // Listen for the autocomplete popup message to lazily append our stylesheet related to the popup.
+  Services.mm.addMessageListener("FormAutoComplete:MaybeOpenPopup", onMaybeOpenPopup);
 
-  parent.init();
+  let parent = new FormAutofillParent();
+  parent.init().catch(Cu.reportError);
+  Services.ppmm.loadProcessScript("data:,new " + function() {
+    Components.utils.import("resource://formautofill/FormAutofillContent.jsm");
+  }, true);
   Services.mm.loadFrameScript("chrome://formautofill/content/FormAutofillFrameScript.js", true);
 }
 
 function shutdown() {
-  Services.wm.removeListener(windowListener);
+  Services.mm.removeMessageListener("FormAutoComplete:MaybeOpenPopup", onMaybeOpenPopup);
 
   let enumerator = Services.wm.getEnumerator("navigator:browser");
-
   while (enumerator.hasMoreElements()) {
     let win = enumerator.getNext();
     let domWindow = win.QueryInterface(Ci.nsIInterfaceRequestor).getInterface(Ci.nsIDOMWindow);

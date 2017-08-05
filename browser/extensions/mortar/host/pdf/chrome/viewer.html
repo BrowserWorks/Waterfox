@@ -19,6 +19,7 @@
     <script src="js/toolbar.js"></script>
     <script src="js/viewport.js"></script>
     <script src="js/password-prompt.js"></script>
+    <script src="js/presentation-controller.js"></script>
     <script src="js/viewer.js"></script>
   </head>
 
@@ -27,11 +28,7 @@
 
       <div id="sidebarContainer">
         <div id="toolbarSidebar">
-          <div class="splitToolbarButton toggled">
-            <button id="viewOutline" class="toolbarButton group" title="Show Document Outline" tabindex="3" data-l10n-id="outline">
-               <span data-l10n-id="outline_label">Document Outline</span>
-            </button>
-          </div>
+          <div id="outlineLabel" class="toolbarLabel" data-l10n-id="outline_label">Document Outline</div>
         </div>
         <div id="sidebarContent">
           <div id="outlineView">
@@ -74,9 +71,9 @@
               <span data-l10n-id="download_label">Download</span>
             </button>
 
-            <a href="#" id="secondaryViewBookmark" class="secondaryToolbarButton bookmark visibleSmallView" title="Current view (copy or open in new window)" tabindex="55" data-l10n-id="bookmark">
+            <button href="#" id="secondaryViewBookmark" class="secondaryToolbarButton bookmark visibleSmallView" title="Current view (copy or open in new window)" tabindex="55" data-l10n-id="bookmark">
               <span data-l10n-id="bookmark_label">Current View</span>
-            </a>
+            </button>
 
             <div class="horizontalToolbarSeparator visibleLargeView"></div>
 
@@ -103,7 +100,7 @@
           <div id="toolbarContainer">
             <div id="toolbarViewer">
               <div id="toolbarViewerLeft">
-                <button id="sidebarToggle" class="toolbarButton" title="Toggle Sidebar" tabindex="11" data-l10n-id="toggle_sidebar">
+                <button id="viewOutline" class="toolbarButton" title="Show Document Outline" tabindex="11" data-l10n-id="outline">
                   <span data-l10n-id="toggle_sidebar_label">Toggle Sidebar</span>
                 </button>
                 <div class="toolbarButtonSpacer"></div>
@@ -135,9 +132,9 @@
                 <button id="download" class="toolbarButton download hiddenMediumView" title="Download" tabindex="34" data-l10n-id="download">
                   <span data-l10n-id="download_label">Download</span>
                 </button>
-                <a href="#" id="viewBookmark" class="toolbarButton bookmark hiddenSmallView" title="Current view (copy or open in new window)" tabindex="35" data-l10n-id="bookmark">
+                <button target="_blank" id="viewBookmark" class="toolbarButton bookmark hiddenMediumView" title="Current view (copy or open in new window)" tabindex="35" data-l10n-id="bookmark">
                   <span data-l10n-id="bookmark_label">Current View</span>
-                </a>
+                </button>
 
                 <div class="verticalToolbarSeparator hiddenSmallView"></div>
 

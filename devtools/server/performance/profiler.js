@@ -248,13 +248,13 @@ const ProfilerManager = (function () {
     },
 
     /**
-     * Returns a stringified JSON object that describes the shared libraries
+     * Returns an array of objects that describes the shared libraries
      * which are currently loaded into our process. Can be called while the
      * profiler is stopped.
      */
-    getSharedLibraryInformation: function () {
+    get sharedLibraries() {
       return {
-        sharedLibraryInformation: nsIProfilerModule.getSharedLibraryInformation()
+        sharedLibraries: nsIProfilerModule.sharedLibraries
       };
     },
 
@@ -324,7 +324,7 @@ const ProfilerManager = (function () {
     registerEventListeners: function () {
       if (!this._eventsRegistered) {
         PROFILER_SYSTEM_EVENTS.forEach(eventName =>
-          Services.obs.addObserver(this, eventName, false));
+          Services.obs.addObserver(this, eventName));
         this._eventsRegistered = true;
       }
     },
@@ -471,10 +471,10 @@ var Profiler = exports.Profiler = Class({
   },
 
   /**
-   * @see ProfilerManager.isActive
+   * @see ProfilerManager.sharedLibraries
    */
-  getSharedLibraryInformation: function () {
-    return ProfilerManager.getSharedLibraryInformation();
+  sharedLibraries: function () {
+    return ProfilerManager.sharedLibraries;
   },
 
   /**

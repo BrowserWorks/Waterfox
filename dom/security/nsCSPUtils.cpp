@@ -267,20 +267,21 @@ CSP_ContentTypeToDirective(nsContentPolicyType aType)
 }
 
 nsCSPHostSrc*
-CSP_CreateHostSrcFromURI(nsIURI* aURI)
+CSP_CreateHostSrcFromSelfURI(nsIURI* aSelfURI)
 {
   // Create the host first
   nsCString host;
-  aURI->GetHost(host);
+  aSelfURI->GetAsciiHost(host);
   nsCSPHostSrc *hostsrc = new nsCSPHostSrc(NS_ConvertUTF8toUTF16(host));
+  hostsrc->setGeneratedFromSelfKeyword();
 
   // Add the scheme.
   nsCString scheme;
-  aURI->GetScheme(scheme);
+  aSelfURI->GetScheme(scheme);
   hostsrc->setScheme(NS_ConvertUTF8toUTF16(scheme));
 
   int32_t port;
-  aURI->GetPort(&port);
+  aSelfURI->GetPort(&port);
   // Only add port if it's not default port.
   if (port > 0) {
     nsAutoString portStr;
@@ -349,13 +350,17 @@ CSP_IsQuotelessKeyword(const nsAString& aKey)
  * @param aUpgradeInsecure
  *        Whether the policy makes use of the directive
  *        'upgrade-insecure-requests'.
+ * @param aFromSelfURI
+ *        Whether a scheme was generated from the keyword 'self'
+ *        which then allows schemeless sources to match ws and wss.
  */
 
 bool
 permitsScheme(const nsAString& aEnforcementScheme,
               nsIURI* aUri,
               bool aReportOnly,
-              bool aUpgradeInsecure)
+              bool aUpgradeInsecure,
+              bool aFromSelfURI)
 {
   nsAutoCString scheme;
   nsresult rv = aUri->GetScheme(scheme);
@@ -374,8 +379,20 @@ permitsScheme(const nsAString& aEnforcementScheme,
   // allow scheme-less sources where the protected resource is http
   // and the load is https, see:
   // http://www.w3.org/TR/CSP2/#match-source-expression
-  if (aEnforcementScheme.EqualsASCII("http") &&
-      scheme.EqualsASCII("https")) {
+  if (aEnforcementScheme.EqualsASCII("http")) {
+    if (scheme.EqualsASCII("https")) {
+      return true;
+    }
+    if ((scheme.EqualsASCII("ws") || scheme.EqualsASCII("wss")) && aFromSelfURI) {
+      return true;
+    }
+  }
+  if (aEnforcementScheme.EqualsASCII("https")) {
+    if (scheme.EqualsLiteral("wss") && aFromSelfURI) {
+      return true;
+    }
+  }
+  if (aEnforcementScheme.EqualsASCII("ws") && scheme.EqualsASCII("wss")) {
     return true;
   }
 
@@ -484,7 +501,7 @@ nsCSPSchemeSrc::permits(nsIURI* aUri, const nsAString& aNonce, bool aWasRedirect
   if (mInvalidated) {
     return false;
   }
-  return permitsScheme(mScheme, aUri, aReportOnly, aUpgradeInsecure);
+  return permitsScheme(mScheme, aUri, aReportOnly, aUpgradeInsecure, false);
 }
 
 bool
@@ -504,6 +521,8 @@ nsCSPSchemeSrc::toString(nsAString& outStr) const
 
 nsCSPHostSrc::nsCSPHostSrc(const nsAString& aHost)
   : mHost(aHost)
+  , mGeneratedFromSelfKeyword(false)
+  , mWithinFrameAncstorsDir(false)
 {
   ToLowerCase(mHost);
 }
@@ -612,7 +631,7 @@ nsCSPHostSrc::permits(nsIURI* aUri, const nsAString& aNonce, bool aWasRedirected
   // http://www.w3.org/TR/CSP11/#match-source-expression
 
   // 4.3) scheme matching: Check if the scheme matches.
-  if (!permitsScheme(mScheme, aUri, aReportOnly, aUpgradeInsecure)) {
+  if (!permitsScheme(mScheme, aUri, aReportOnly, aUpgradeInsecure, mGeneratedFromSelfKeyword)) {
     return false;
   }
 
@@ -643,7 +662,7 @@ nsCSPHostSrc::permits(nsIURI* aUri, const nsAString& aNonce, bool aWasRedirected
   // Before we can check if the host matches, we have to
   // extract the host part from aUri.
   nsAutoCString uriHost;
-  nsresult rv = aUri->GetHost(uriHost);
+  nsresult rv = aUri->GetAsciiHost(uriHost);
   NS_ENSURE_SUCCESS(rv, false);
 
   nsString decodedUriHost;
@@ -686,6 +705,11 @@ nsCSPHostSrc::permits(nsIURI* aUri, const nsAString& aNonce, bool aWasRedirected
     nsAutoCString uriPath;
     rv = url->GetFilePath(uriPath);
     NS_ENSURE_SUCCESS(rv, false);
+
+    if (mWithinFrameAncstorsDir) {
+      // no path matching for frame-ancestors to not leak any path information.
+      return true;
+    }
 
     nsString decodedUriPath;
     CSP_PercentDecodeStr(NS_ConvertUTF8toUTF16(uriPath), decodedUriPath);
@@ -919,10 +943,6 @@ nsCSPHashSrc::allows(enum CSPKeyword aKeyword, const nsAString& aHashOrNonce,
   rv = hasher->Finish(true, hash);
   NS_ENSURE_SUCCESS(rv, false);
 
-  // The NSS Base64 encoder automatically adds linebreaks "\r\n" every 64
-  // characters. We need to remove these so we can properly validate longer
-  // (SHA-512) base64-encoded hashes
-  hash.StripChars("\r\n");
   return NS_ConvertUTF16toUTF8(mHash).Equals(hash);
 }
 

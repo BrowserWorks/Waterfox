@@ -24,6 +24,10 @@ pub struct FontContext {
     gdi_gamma_lut: GammaLut,
 }
 
+// DirectWrite is safe to use on multiple threads and non-shareable resources are
+// all hidden inside their font context.
+unsafe impl Send for FontContext {}
+
 pub struct RasterizedGlyph {
     pub width: u32,
     pub height: u32,
@@ -117,13 +121,17 @@ impl FontContext {
         }
     }
 
-    pub fn add_raw_font(&mut self, font_key: &FontKey, data: &[u8]) {
+    pub fn has_font(&self, font_key: &FontKey) -> bool {
+        self.fonts.contains_key(font_key)
+    }
+
+    pub fn add_raw_font(&mut self, font_key: &FontKey, data: &[u8], index: u32) {
         if self.fonts.contains_key(font_key) {
             return
         }
 
         if let Some(font_file) = dwrote::FontFile::new_from_data(data) {
-            let face = font_file.create_face(0, dwrote::DWRITE_FONT_SIMULATIONS_NONE);
+            let face = font_file.create_face(index, dwrote::DWRITE_FONT_SIMULATIONS_NONE);
             self.fonts.insert((*font_key).clone(), face);
         } else {
             // XXX add_raw_font needs to have a way to return an error
@@ -143,10 +151,14 @@ impl FontContext {
         self.fonts.insert((*font_key).clone(), face);
     }
 
+    pub fn delete_font(&mut self, font_key: &FontKey) {
+        self.fonts.remove(font_key);
+    }
+
     // Assumes RGB format from dwrite, which is 3 bytes per pixel as dwrite
     // doesn't output an alpha value via GlyphRunAnalysis::CreateAlphaTexture
     #[allow(dead_code)]
-    fn print_glyph_data(&self, data: &Vec<u8>, width: usize, height: usize) {
+    fn print_glyph_data(&self, data: &[u8], width: usize, height: usize) {
         // Rust doesn't have step_by support on stable :(
         for i in 0..height {
             let current_height = i * width * 3;
@@ -214,7 +226,7 @@ impl FontContext {
 
     // DWRITE gives us values in RGB. WR doesn't really touch it after. Note, CG returns in BGR
     // TODO: Decide whether all fonts should return RGB or BGR
-    fn convert_to_rgba(&self, pixels: &Vec<u8>, render_mode: FontRenderMode) -> Vec<u8> {
+    fn convert_to_rgba(&self, pixels: &[u8], render_mode: FontRenderMode) -> Vec<u8> {
         match render_mode {
             FontRenderMode::Mono => {
                 let mut rgba_pixels: Vec<u8> = vec![0; pixels.len() * 4];
@@ -230,13 +242,8 @@ impl FontContext {
                 let length = pixels.len() / 3;
                 let mut rgba_pixels: Vec<u8> = vec![0; length * 4];
                 for i in 0..length {
-                    // TODO(vlad): we likely need to do something smarter
-                    // This is what skia does
-                    let alpha = ((pixels[i*3+0] as u32 +
-                                pixels[i*3+1] as u32 +
-                                pixels[i*3+2] as u32)
-                                / 3) as u8;
-
+                    // Only take the G channel, as its closest to D2D
+                    let alpha = pixels[i*3 + 1] as u8;
                     rgba_pixels[i*4+0] = alpha;
                     rgba_pixels[i*4+1] = alpha;
                     rgba_pixels[i*4+2] = alpha;
@@ -272,28 +279,32 @@ impl FontContext {
         let width = (bounds.right - bounds.left) as usize;
         let height = (bounds.bottom - bounds.top) as usize;
 
-        // We should not get here since glyph_dimensions would return
-        // None for empty glyphs.
-        assert!(width > 0 && height > 0);
+        // Alpha texture bounds can sometimes return an empty rect
+        // Such as for spaces
+        if width == 0 || height == 0 {
+            return None;
+        }
 
         let mut pixels = analysis.create_alpha_texture(texture_type, bounds);
 
-        let lut_correction = match glyph_options {
-            Some(option) => {
-                if option.force_gdi_rendering {
-                    &self.gdi_gamma_lut
-                } else {
-                    &self.gamma_lut
-                }
-            },
-            None => &self.gamma_lut
-        };
+        if render_mode != FontRenderMode::Mono {
+            let lut_correction = match glyph_options {
+                Some(option) => {
+                    if option.force_gdi_rendering {
+                        &self.gdi_gamma_lut
+                    } else {
+                        &self.gamma_lut
+                    }
+                },
+                None => &self.gamma_lut
+            };
 
-        lut_correction.preblend_rgb(&mut pixels, width, height,
-                                    ColorLut::new(key.color.r,
-                                                  key.color.g,
-                                                  key.color.b,
-                                                  key.color.a));
+            lut_correction.preblend_rgb(&mut pixels, width, height,
+                                        ColorLut::new(key.color.r,
+                                                      key.color.g,
+                                                      key.color.b,
+                                                      key.color.a));
+        }
 
         let rgba_pixels = self.convert_to_rgba(&mut pixels, render_mode);
 

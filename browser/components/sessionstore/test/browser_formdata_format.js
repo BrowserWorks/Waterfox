@@ -10,28 +10,28 @@ function test() {
   let formData = [
     { },
     // old format
-    { "#input1" : "value0" },
-    { "#input1" : "value1", "/xhtml:html/xhtml:body/xhtml:input[@name='input2']" : "value2" },
-    { "/xhtml:html/xhtml:body/xhtml:input[@name='input2']" : "value3" },
+    { "#input1": "value0" },
+    { "#input1": "value1", "/xhtml:html/xhtml:body/xhtml:input[@name='input2']": "value2" },
+    { "/xhtml:html/xhtml:body/xhtml:input[@name='input2']": "value3" },
     // new format
-    { id: { "input1" : "value4" } },
-    { id: { "input1" : "value5" }, xpath: {} },
-    { id: { "input1" : "value6" }, xpath: { "/xhtml:html/xhtml:body/xhtml:input[@name='input2']" : "value7" } },
-    { id: {}, xpath: { "/xhtml:html/xhtml:body/xhtml:input[@name='input2']" : "value8" } },
-    { xpath: { "/xhtml:html/xhtml:body/xhtml:input[@name='input2']" : "value9" } },
+    { id: { "input1": "value4" } },
+    { id: { "input1": "value5" }, xpath: {} },
+    { id: { "input1": "value6" }, xpath: { "/xhtml:html/xhtml:body/xhtml:input[@name='input2']": "value7" } },
+    { id: {}, xpath: { "/xhtml:html/xhtml:body/xhtml:input[@name='input2']": "value8" } },
+    { xpath: { "/xhtml:html/xhtml:body/xhtml:input[@name='input2']": "value9" } },
     // combinations
-    { "#input1" : "value10", id: { "input1" : "value11" } },
-    { "#input1" : "value12", id: { "input1" : "value13" }, xpath: { "/xhtml:html/xhtml:body/xhtml:input[@name='input2']" : "value14" } },
-    { "#input1" : "value15", xpath: { "/xhtml:html/xhtml:body/xhtml:input[@name='input2']" : "value16" } },
-    { "/xhtml:html/xhtml:body/xhtml:input[@name='input2']" : "value17", id: { "input1" : "value18" } },
-    { "/xhtml:html/xhtml:body/xhtml:input[@name='input2']" : "value19", id: { "input1" : "value20" }, xpath: { "/xhtml:html/xhtml:body/xhtml:input[@name='input2']" : "value21" } },
-    { "/xhtml:html/xhtml:body/xhtml:input[@name='input2']" : "value22", xpath: { "/xhtml:html/xhtml:body/xhtml:input[@name='input2']" : "value23" } },
-    { "#input1" : "value24", "/xhtml:html/xhtml:body/xhtml:input[@name='input2']" : "value25", id: { "input1" : "value26" } },
-    { "#input1" : "value27", "/xhtml:html/xhtml:body/xhtml:input[@name='input2']" : "value28", id: { "input1" : "value29" }, xpath: { "/xhtml:html/xhtml:body/xhtml:input[@name='input2']" : "value30" } },
-    { "#input1" : "value31", "/xhtml:html/xhtml:body/xhtml:input[@name='input2']" : "value32", xpath: { "/xhtml:html/xhtml:body/xhtml:input[@name='input2']" : "value33" } }
+    { "#input1": "value10", id: { "input1": "value11" } },
+    { "#input1": "value12", id: { "input1": "value13" }, xpath: { "/xhtml:html/xhtml:body/xhtml:input[@name='input2']": "value14" } },
+    { "#input1": "value15", xpath: { "/xhtml:html/xhtml:body/xhtml:input[@name='input2']": "value16" } },
+    { "/xhtml:html/xhtml:body/xhtml:input[@name='input2']": "value17", id: { "input1": "value18" } },
+    { "/xhtml:html/xhtml:body/xhtml:input[@name='input2']": "value19", id: { "input1": "value20" }, xpath: { "/xhtml:html/xhtml:body/xhtml:input[@name='input2']": "value21" } },
+    { "/xhtml:html/xhtml:body/xhtml:input[@name='input2']": "value22", xpath: { "/xhtml:html/xhtml:body/xhtml:input[@name='input2']": "value23" } },
+    { "#input1": "value24", "/xhtml:html/xhtml:body/xhtml:input[@name='input2']": "value25", id: { "input1": "value26" } },
+    { "#input1": "value27", "/xhtml:html/xhtml:body/xhtml:input[@name='input2']": "value28", id: { "input1": "value29" }, xpath: { "/xhtml:html/xhtml:body/xhtml:input[@name='input2']": "value30" } },
+    { "#input1": "value31", "/xhtml:html/xhtml:body/xhtml:input[@name='input2']": "value32", xpath: { "/xhtml:html/xhtml:body/xhtml:input[@name='input2']": "value33" } }
   ]
   let expectedValues = [
-    [ "" , "" ],
+    [ "", "" ],
     // old format
     [ "value0", "" ],
     [ "value1", "value2" ],
@@ -64,8 +64,7 @@ function test() {
 
 async function testTabRestoreData(aFormData, aExpectedValue) {
   let URL = ROOT + "browser_formdata_format_sample.html";
-  let tab = gBrowser.addTab("about:blank");
-  let browser = tab.linkedBrowser;
+  let tab = BrowserTestUtils.addTab(gBrowser, "about:blank");
 
   aFormData.url = URL;
   let tabState = { entries: [{ url: URL, triggeringPrincipal_base64 }], formdata: aFormData };

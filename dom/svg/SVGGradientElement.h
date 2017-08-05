@@ -48,7 +48,8 @@ protected:
   virtual JSObject* WrapNode(JSContext* aCx, JS::Handle<JSObject*> aGivenProto) override = 0;
 
 public:
-  virtual nsresult Clone(mozilla::dom::NodeInfo *aNodeInfo, nsINode **aResult) const override = 0;
+  virtual nsresult Clone(mozilla::dom::NodeInfo *aNodeInfo, nsINode **aResult,
+                         bool aPreallocateChildren) const override = 0;
 
   // nsIContent
   NS_IMETHOD_(bool) IsAttributeMapped(const nsIAtom* aAttribute) const override;
@@ -98,7 +99,8 @@ protected:
   virtual JSObject* WrapNode(JSContext* aCx, JS::Handle<JSObject*> aGivenProto) override;
 
 public:
-  virtual nsresult Clone(mozilla::dom::NodeInfo *aNodeInfo, nsINode **aResult) const override;
+  virtual nsresult Clone(mozilla::dom::NodeInfo *aNodeInfo, nsINode **aResult,
+                         bool aPreallocateChildren) const override;
 
   // WebIDL
   already_AddRefed<SVGAnimatedLength> X1();
@@ -131,7 +133,8 @@ protected:
   virtual JSObject* WrapNode(JSContext* aCx, JS::Handle<JSObject*> aGivenProto) override;
 
 public:
-  virtual nsresult Clone(mozilla::dom::NodeInfo *aNodeInfo, nsINode **aResult) const override;
+  virtual nsresult Clone(mozilla::dom::NodeInfo *aNodeInfo, nsINode **aResult,
+                         bool aPreallocateChildren) const override;
 
   // WebIDL
   already_AddRefed<SVGAnimatedLength> Cx();
@@ -139,13 +142,14 @@ public:
   already_AddRefed<SVGAnimatedLength> R();
   already_AddRefed<SVGAnimatedLength> Fx();
   already_AddRefed<SVGAnimatedLength> Fy();
+  already_AddRefed<SVGAnimatedLength> Fr();
 protected:
 
   virtual LengthAttributesInfo GetLengthInfo() override;
 
-  enum { ATTR_CX, ATTR_CY, ATTR_R, ATTR_FX, ATTR_FY };
-  nsSVGLength2 mLengthAttributes[5];
-  static LengthInfo sLengthInfo[5];
+  enum { ATTR_CX, ATTR_CY, ATTR_R, ATTR_FX, ATTR_FY, ATTR_FR };
+  nsSVGLength2 mLengthAttributes[6];
+  static LengthInfo sLengthInfo[6];
 };
 
 } // namespace dom

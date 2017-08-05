@@ -28,10 +28,8 @@
 #include "nsIDOMEventTarget.h"
 #include "nsIDOMMouseEvent.h"
 #include "nsIDOMNode.h"
-#include "nsIDOMText.h"
 #include "nsIDocument.h"
 #include "nsIEditor.h"
-#include "nsIHTMLObjectResizeListener.h"
 #include "nsIHTMLObjectResizer.h"
 #include "nsIPresShell.h"
 #include "nsISupportsUtils.h"
@@ -491,11 +489,6 @@ HTMLEditor::HideShadowAndInfo()
 nsresult
 HTMLEditor::StartResizing(nsIDOMElement* aHandle)
 {
-  // First notify the listeners if any
-  for (auto& listener : mObjectResizeEventListeners) {
-    listener->OnStartResizing(static_cast<nsIDOMElement*>(GetAsDOMNode(mResizedObject)));
-  }
-
   mIsResizing = true;
   mActivatedHandle = do_QueryInterface(aHandle);
   NS_ENSURE_STATE(mActivatedHandle || !aHandle);
@@ -632,8 +625,6 @@ HTMLEditor::SetResizingInfoPosition(int32_t aX,
                                     int32_t aW,
                                     int32_t aH)
 {
-  nsCOMPtr<nsIDOMDocument> domdoc = GetDOMDocument();
-
   // Determine the position of the resizing info box based upon the new
   // position and size of the element (aX, aY, aW, aH), and which
   // resizer is the "activated handle".  For example, place the resizing
@@ -702,12 +693,15 @@ HTMLEditor::SetResizingInfoPosition(int32_t aX,
                     NS_LITERAL_STRING(", ") + diffHeightStr +
                     NS_LITERAL_STRING(")"));
 
-  nsCOMPtr<nsIDOMText> nodeAsText;
-  nsresult rv = domdoc->CreateTextNode(info, getter_AddRefs(nodeAsText));
-  NS_ENSURE_SUCCESS(rv, rv);
-  textInfo = do_QueryInterface(nodeAsText);
+  nsCOMPtr<nsIDocument> doc = GetDocument();
+  textInfo = doc->CreateTextNode(info);
+  if (NS_WARN_IF(!textInfo)) {
+    return NS_ERROR_FAILURE;
+  }
   mResizingInfo->AppendChild(*textInfo, erv);
-  NS_ENSURE_TRUE(!erv.Failed(), erv.StealNSResult());
+  if (NS_WARN_IF(erv.Failed())) {
+    return erv.StealNSResult();
+  }
 
   return mResizingInfo->UnsetAttr(kNameSpaceID_None, nsGkAtoms::_class, true);
 }
@@ -970,12 +964,6 @@ HTMLEditor::SetFinalSize(int32_t aX,
                                        EmptyString());
     }
   }
-  // finally notify the listeners if any
-  for (auto& listener : mObjectResizeEventListeners) {
-    listener->OnEndResizing(static_cast<nsIDOMElement*>(GetAsDOMNode(mResizedObject)),
-                            mResizedObjectWidth, mResizedObjectHeight, width,
-                            height);
-  }
 
   // keep track of that size
   mResizedObjectWidth  = width;
@@ -1003,35 +991,6 @@ NS_IMETHODIMP
 HTMLEditor::SetObjectResizingEnabled(bool aObjectResizingEnabled)
 {
   mIsObjectResizingEnabled = aObjectResizingEnabled;
-  return NS_OK;
-}
-
-NS_IMETHODIMP
-HTMLEditor::AddObjectResizeEventListener(nsIHTMLObjectResizeListener* aListener)
-{
-  NS_ENSURE_ARG_POINTER(aListener);
-  if (mObjectResizeEventListeners.Contains(aListener)) {
-    /* listener already registered */
-    NS_ASSERTION(false,
-                 "trying to register an already registered object resize event listener");
-    return NS_OK;
-  }
-  mObjectResizeEventListeners.AppendElement(*aListener);
-  return NS_OK;
-}
-
-NS_IMETHODIMP
-HTMLEditor::RemoveObjectResizeEventListener(
-              nsIHTMLObjectResizeListener* aListener)
-{
-  NS_ENSURE_ARG_POINTER(aListener);
-  if (!mObjectResizeEventListeners.Contains(aListener)) {
-    /* listener was not registered */
-    NS_ASSERTION(false,
-                 "trying to remove an object resize event listener that was not already registered");
-    return NS_OK;
-  }
-  mObjectResizeEventListeners.RemoveElement(aListener);
   return NS_OK;
 }
 

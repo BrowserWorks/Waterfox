@@ -79,15 +79,11 @@ const DELAY_WARNING_MS = 10 * 1000;
 // Crash the process if shutdown is really too long
 // (allowing for sleep).
 const PREF_DELAY_CRASH_MS = "toolkit.asyncshutdown.crash_timeout";
-var DELAY_CRASH_MS = 60 * 1000; // One minute
-try {
-  DELAY_CRASH_MS = Services.prefs.getIntPref(PREF_DELAY_CRASH_MS);
-} catch (ex) {
-  // Ignore errors
-}
+var DELAY_CRASH_MS = Services.prefs.getIntPref(PREF_DELAY_CRASH_MS,
+                                               60 * 1000); // One minute
 Services.prefs.addObserver(PREF_DELAY_CRASH_MS, function() {
   DELAY_CRASH_MS = Services.prefs.getIntPref(PREF_DELAY_CRASH_MS);
-}, false);
+});
 
 /**
  * A set of Promise that supports waiting.
@@ -207,15 +203,10 @@ function log(msg, prefix = "", error = null) {
   }
 }
 const PREF_DEBUG_LOG = "toolkit.asyncshutdown.log";
-var DEBUG_LOG = false;
-try {
-  DEBUG_LOG = Services.prefs.getBoolPref(PREF_DEBUG_LOG);
-} catch (ex) {
-  // Ignore errors
-}
+var DEBUG_LOG = Services.prefs.getBoolPref(PREF_DEBUG_LOG, false);
 Services.prefs.addObserver(PREF_DEBUG_LOG, function() {
   DEBUG_LOG = Services.prefs.getBoolPref(PREF_DEBUG_LOG);
-}, false);
+});
 
 function debug(msg, error = null) {
   if (DEBUG_LOG) {
@@ -360,12 +351,7 @@ this.AsyncShutdown = {
    * Access function getPhase. For testing purposes only.
    */
   get _getPhase() {
-    let accepted = false;
-    try {
-      accepted = Services.prefs.getBoolPref("toolkit.asyncshutdown.testing");
-    } catch (ex) {
-      // Ignore errors
-    }
+    let accepted = Services.prefs.getBoolPref("toolkit.asyncshutdown.testing", false);
     if (accepted) {
       return getPhase;
     }
@@ -464,12 +450,7 @@ function getPhase(topic) {
      * notification. For testing purposes only.
      */
     get _trigger() {
-      let accepted = false;
-      try {
-        accepted = Services.prefs.getBoolPref("toolkit.asyncshutdown.testing");
-      } catch (ex) {
-        // Ignore errors
-      }
+      let accepted = Services.prefs.getBoolPref("toolkit.asyncshutdown.testing", false);
       if (accepted) {
         return () => spinner.observe();
       }
@@ -489,7 +470,7 @@ function getPhase(topic) {
 function Spinner(topic) {
   this._barrier = new Barrier(topic);
   this._topic = topic;
-  Services.obs.addObserver(this, topic, false);
+  Services.obs.addObserver(this, topic);
 }
 
 Spinner.prototype = {
@@ -938,7 +919,7 @@ Barrier.prototype = Object.freeze({
       // battery-sucking) situation is report the issue and crash.
       timeToCrash = looseTimer(crashAfterMS);
       timeToCrash.promise.then(
-        function onTimeout() {
+        () => {
           // Report the problem as best as we can, then crash.
           let state = this.state;
 
@@ -976,7 +957,7 @@ Barrier.prototype = Object.freeze({
             break;
           }
           gDebug.abort(filename, lineNumber);
-        }.bind(this),
+        },
         function onSatisfied() {
           // The promise has been rejected, which means that we have satisfied
           // all completion conditions.

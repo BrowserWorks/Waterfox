@@ -32,7 +32,7 @@ RUN_REFTEST = rm -f ./$@.log && $(PYTHON) _tests/reftest/runreftest.py \
   $(SYMBOLS_PATH) $(EXTRA_TEST_ARGS) $(1) | tee ./$@.log
 
 REMOTE_REFTEST = rm -f ./$@.log && $(PYTHON) _tests/reftest/remotereftest.py \
-  --dm_trans=$(DM_TRANS) --ignore-window-size \
+  --ignore-window-size \
   --app=$(TEST_PACKAGE_NAME) --deviceIP=${TEST_DEVICE} --xre-path=${MOZ_HOST_BIN} \
   --httpd-path=_tests/modules --suite reftest \
   --extra-profile-file=$(topsrcdir)/mobile/android/fonts \
@@ -53,7 +53,6 @@ reftest:
 	$(CHECK_TEST_ERROR)
 
 reftest-remote: TEST_PATH?=layout/reftests/reftest.list
-reftest-remote: DM_TRANS?=adb
 reftest-remote:
 	@if [ '${MOZ_HOST_BIN}' = '' ]; then \
         echo 'environment variable MOZ_HOST_BIN must be set to a directory containing host xpcshell'; \
@@ -61,8 +60,6 @@ reftest-remote:
         echo 'MOZ_HOST_BIN does not specify a directory'; \
     elif [ ! -f ${MOZ_HOST_BIN}/xpcshell ]; then \
         echo 'xpcshell not found in MOZ_HOST_BIN'; \
-    elif [ '${TEST_DEVICE}' = '' -a '$(DM_TRANS)' != 'adb' ]; then \
-        echo 'please prepare your host with the environment variable TEST_DEVICE'; \
     else \
         ln -s $(abspath $(topsrcdir)) _tests/reftest/tests; \
         $(call REMOTE_REFTEST,'tests/$(TEST_PATH)'); \
@@ -87,18 +84,12 @@ REMOTE_CPPUNITTESTS = \
 	$(PYTHON) -u $(topsrcdir)/testing/remotecppunittests.py \
 	  --xre-path=$(DEPTH)/dist/bin \
 	  --localLib=$(DEPTH)/dist/fennec \
-	  --dm_trans=$(DM_TRANS) \
 	  --deviceIP=${TEST_DEVICE} \
 	  $(TEST_PATH) $(EXTRA_TEST_ARGS)
 
 # Usage: |make [TEST_PATH=...] [EXTRA_TEST_ARGS=...] cppunittests-remote|.
-cppunittests-remote: DM_TRANS?=adb
 cppunittests-remote:
-	@if [ '${TEST_DEVICE}' != '' -o '$(DM_TRANS)' = 'adb' ]; \
-          then $(call REMOTE_CPPUNITTESTS); \
-        else \
-          echo 'please prepare your host with environment variables for TEST_DEVICE'; \
-        fi
+	$(call REMOTE_CPPUNITTESTS);
 
 jetpack-tests:
 	cd $(topsrcdir)/addon-sdk/source && $(PYTHON) bin/cfx -b $(abspath $(browser_path)) --parseable testpkgs
@@ -128,23 +119,26 @@ ifdef COMPILE_ENVIRONMENT
 stage-all: stage-cppunittests
 endif
 
-TEST_PKGS := \
+TEST_PKGS_ZIP := \
   common \
   cppunittest \
   mochitest \
   reftest \
   talos \
   awsy \
-  web-platform \
   xpcshell \
+  $(NULL)
+
+TEST_PKGS_TARGZ := \
+  web-platform \
   $(NULL)
 
 ifdef LINK_GTEST_DURING_COMPILE
 stage-all: stage-gtest
-TEST_PKGS += gtest
+TEST_PKGS_ZIP += gtest
 endif
 
-PKG_ARG = --$(1) '$(PKG_BASENAME).$(1).tests.zip'
+PKG_ARG = --$(1) '$(PKG_BASENAME).$(1).tests.$(2)'
 
 test-packages-manifest:
 	@rm -f $(MOZ_TEST_PACKAGES_FILE)
@@ -152,8 +146,9 @@ test-packages-manifest:
 	$(PYTHON) $(topsrcdir)/build/gen_test_packages_manifest.py \
       --jsshell $(JSSHELL_NAME) \
       --dest-file '$(MOZ_TEST_PACKAGES_FILE)' \
-      $(call PKG_ARG,common) \
-      $(foreach pkg,$(TEST_PKGS),$(call PKG_ARG,$(pkg)))
+      $(call PKG_ARG,common,zip) \
+      $(foreach pkg,$(TEST_PKGS_ZIP),$(call PKG_ARG,$(pkg),zip)) \
+      $(foreach pkg,$(TEST_PKGS_TARGZ),$(call PKG_ARG,$(pkg),tar.gz))
 
 package-tests-prepare-dest:
 	@rm -f '$(DIST)/$(PKG_PATH)$(TEST_PACKAGE)'
@@ -163,11 +158,12 @@ define package_archive
 package-tests-$(1): stage-all package-tests-prepare-dest
 	$$(call py_action,test_archive, \
 		$(1) \
-		'$$(abspath $$(DIST))/$$(PKG_PATH)/$$(PKG_BASENAME).$(1).tests.zip')
+		'$$(abspath $$(DIST))/$$(PKG_PATH)/$$(PKG_BASENAME).$(1).tests.$(2)')
 package-tests: package-tests-$(1)
 endef
 
-$(foreach name,$(TEST_PKGS),$(eval $(call package_archive,$(name))))
+$(foreach name,$(TEST_PKGS_ZIP),$(eval $(call package_archive,$(name),zip)))
+$(foreach name,$(TEST_PKGS_TARGZ),$(eval $(call package_archive,$(name),tar.gz)))
 
 ifeq ($(MOZ_BUILD_APP),mobile/android)
 stage-all: stage-android

@@ -9,13 +9,6 @@
  * matching and cascading
  */
 
-#define PL_ARENA_CONST_ALIGN_MASK 7
-// We want page-sized arenas so there's no fragmentation involved.
-// Including plarena.h must come first to avoid it being included by some
-// header file thereby making PL_ARENA_CONST_ALIGN_MASK ineffective.
-#define NS_CASCADEENUMDATA_ARENA_BLOCK_SIZE (4096)
-#include "plarena.h"
-
 #include "nsCSSRuleProcessor.h"
 
 #include "nsAutoPtr.h"
@@ -47,12 +40,15 @@
 #include "nsContentUtils.h"
 #include "nsMediaList.h"
 #include "nsCSSRules.h"
+#include "nsCSSCounterStyleRule.h"
+#include "nsCSSFontFaceRule.h"
 #include "nsStyleSet.h"
 #include "mozilla/dom/Element.h"
 #include "nsNthIndexCache.h"
 #include "mozilla/ArrayUtils.h"
 #include "mozilla/EventStates.h"
 #include "mozilla/Preferences.h"
+#include "mozilla/ServoStyleSet.h"
 #include "mozilla/LookAndFeel.h"
 #include "mozilla/Likely.h"
 #include "mozilla/OperatorNewExtensions.h"
@@ -62,6 +58,8 @@
 
 using namespace mozilla;
 using namespace mozilla::dom;
+
+typedef ArenaAllocator<4096, 8> CascadeAllocator;
 
 #define VISITED_PSEUDO_PREF "layout.css.visited_links_enabled"
 
@@ -896,7 +894,11 @@ struct RuleCascadeData {
   nsTArray<nsCSSCounterStyleRule*> mCounterStyleRules;
 
   nsDataHashtable<nsStringHashKey, nsCSSKeyframesRule*> mKeyframesRuleTable;
-  nsDataHashtable<nsStringHashKey, nsCSSCounterStyleRule*> mCounterStyleRuleTable;
+  // The hashtable doesn't need to hold a strong reference to the name
+  // atom, because nsCSSCounterStyleRule always does. If the name changes
+  // we need to discard this table and rebuild it anyway.
+  nsDataHashtable<nsPtrHashKey<nsIAtom>,
+                  nsCSSCounterStyleRule*> mCounterStyleRuleTable;
 
   // Looks up or creates the appropriate list in |mAttributeSelectors|.
   // Returns null only on allocation failure.
@@ -1065,13 +1067,15 @@ nsCSSRuleProcessor::Startup()
                                true);
 }
 
-static bool
-InitSystemMetrics()
+/* static */ void
+nsCSSRuleProcessor::InitSystemMetrics()
 {
-  NS_ASSERTION(!sSystemMetrics, "already initialized");
+  if (sSystemMetrics)
+    return;
+
+  MOZ_ASSERT(NS_IsMainThread());
 
   sSystemMetrics = new nsTArray< nsCOMPtr<nsIAtom> >;
-  NS_ENSURE_TRUE(sSystemMetrics, false);
 
   /***************************************************************************
    * ANY METRICS ADDED HERE SHOULD ALSO BE ADDED AS MEDIA QUERIES IN         *
@@ -1197,8 +1201,6 @@ InitSystemMetrics()
     }
   }
 #endif
-
-  return true;
 }
 
 /* static */ void
@@ -1217,9 +1219,7 @@ nsCSSRuleProcessor::Shutdown()
 /* static */ bool
 nsCSSRuleProcessor::HasSystemMetric(nsIAtom* aMetric)
 {
-  if (!sSystemMetrics && !InitSystemMetrics()) {
-    return false;
-  }
+  nsCSSRuleProcessor::InitSystemMetrics();
   return sSystemMetrics->IndexOf(aMetric) != sSystemMetrics->NoIndex;
 }
 
@@ -1227,15 +1227,14 @@ nsCSSRuleProcessor::HasSystemMetric(nsIAtom* aMetric)
 /* static */ uint8_t
 nsCSSRuleProcessor::GetWindowsThemeIdentifier()
 {
-  if (!sSystemMetrics)
-    InitSystemMetrics();
+  nsCSSRuleProcessor::InitSystemMetrics();
   return sWinThemeId;
 }
 #endif
 
 /* static */
 EventStates
-nsCSSRuleProcessor::GetContentState(Element* aElement, const TreeMatchContext& aTreeMatchContext)
+nsCSSRuleProcessor::GetContentState(Element* aElement, bool aUsingPrivateBrowsing)
 {
   EventStates state = aElement->StyleState();
 
@@ -1246,11 +1245,30 @@ nsCSSRuleProcessor::GetContentState(Element* aElement, const TreeMatchContext& a
   if (state.HasState(NS_EVENT_STATE_VISITED) &&
       (!gSupportVisitedPseudo ||
        aElement->OwnerDoc()->IsBeingUsedAsImage() ||
-       aTreeMatchContext.mUsingPrivateBrowsing)) {
+       aUsingPrivateBrowsing)) {
     state &= ~NS_EVENT_STATE_VISITED;
     state |= NS_EVENT_STATE_UNVISITED;
   }
   return state;
+}
+
+/* static */
+EventStates
+nsCSSRuleProcessor::GetContentState(Element* aElement, const TreeMatchContext& aTreeMatchContext)
+{
+  return nsCSSRuleProcessor::GetContentState(
+    aElement,
+    aTreeMatchContext.mUsingPrivateBrowsing
+  );
+}
+
+/* static */
+EventStates
+nsCSSRuleProcessor::GetContentState(Element* aElement)
+{
+  nsILoadContext* loadContext = aElement->OwnerDoc()->GetLoadContext();
+  bool usingPrivateBrowsing = loadContext && loadContext->UsePrivateBrowsing();
+  return nsCSSRuleProcessor::GetContentState(aElement, usingPrivateBrowsing);
 }
 
 /* static */
@@ -1265,31 +1283,33 @@ nsCSSRuleProcessor::IsLink(const Element* aElement)
 EventStates
 nsCSSRuleProcessor::GetContentStateForVisitedHandling(
                      Element* aElement,
-                     const TreeMatchContext& aTreeMatchContext,
                      nsRuleWalker::VisitedHandlingType aVisitedHandling,
                      bool aIsRelevantLink)
 {
-  EventStates contentState = GetContentState(aElement, aTreeMatchContext);
-  if (contentState.HasAtLeastOneOfStates(NS_EVENT_STATE_VISITED | NS_EVENT_STATE_UNVISITED)) {
+  // It's unnecessary to call GetContentState() here (which may flip visited to
+  // unvisited) since this function will remove both unvisited and visited if
+  // either is set and produce a new value.
+  EventStates state = aElement->StyleState();
+  if (state.HasAtLeastOneOfStates(NS_EVENT_STATE_VISITED | NS_EVENT_STATE_UNVISITED)) {
     MOZ_ASSERT(IsLink(aElement), "IsLink() should match state");
-    contentState &= ~(NS_EVENT_STATE_VISITED | NS_EVENT_STATE_UNVISITED);
+    state &= ~(NS_EVENT_STATE_VISITED | NS_EVENT_STATE_UNVISITED);
     if (aIsRelevantLink) {
       switch (aVisitedHandling) {
         case nsRuleWalker::eRelevantLinkUnvisited:
-          contentState |= NS_EVENT_STATE_UNVISITED;
+          state |= NS_EVENT_STATE_UNVISITED;
           break;
         case nsRuleWalker::eRelevantLinkVisited:
-          contentState |= NS_EVENT_STATE_VISITED;
+          state |= NS_EVENT_STATE_VISITED;
           break;
         case nsRuleWalker::eLinksVisitedOrUnvisited:
-          contentState |= NS_EVENT_STATE_UNVISITED | NS_EVENT_STATE_VISITED;
+          state |= NS_EVENT_STATE_UNVISITED | NS_EVENT_STATE_VISITED;
           break;
       }
     } else {
-      contentState |= NS_EVENT_STATE_UNVISITED;
+      state |= NS_EVENT_STATE_UNVISITED;
     }
   }
-  return contentState;
+  return state;
 }
 
 /**
@@ -1605,7 +1625,6 @@ StateSelectorMatches(Element* aElement,
     EventStates contentState =
       nsCSSRuleProcessor::GetContentStateForVisitedHandling(
                                    aElement,
-                                   aTreeMatchContext,
                                    aTreeMatchContext.VisitedHandling(),
                                    aNodeMatchContext.mIsRelevantLink);
     if (!contentState.HasAtLeastOneOfStates(aStatesToCheck)) {
@@ -1633,6 +1652,213 @@ StateSelectorMatches(Element* aElement,
                               statesToCheck)) {
       return false;
     }
+  }
+  return true;
+}
+
+// Chooses the thread safe version in Servo mode, and
+// the non-thread safe one in Gecko mode. The non thread safe one does
+// some extra caching, and is preferred when possible.
+static inline bool
+IsSignificantChildMaybeThreadSafe(const nsIContent* aContent,
+                                  bool aTextIsSignificant,
+                                  bool aWhitespaceIsSignificant)
+{
+  if (ServoStyleSet::IsInServoTraversal()) {
+    // See bug 1349100 for optimizing this
+    return nsStyleUtil::ThreadSafeIsSignificantChild(aContent,
+                                                     aTextIsSignificant,
+                                                     aWhitespaceIsSignificant);
+  } else {
+    auto content = const_cast<nsIContent*>(aContent);
+    return IsSignificantChild(content, aTextIsSignificant, aWhitespaceIsSignificant);
+  }
+}
+
+/* static */ bool
+nsCSSRuleProcessor::LangPseudoMatches(const mozilla::dom::Element* aElement,
+                                      const nsAString* aOverrideLang,
+                                      bool aHasOverrideLang,
+                                      const char16_t* aString,
+                                      const nsIDocument* aDocument)
+{
+  NS_ASSERTION(aString, "null lang parameter");
+  if (!aString || !*aString) {
+    return false;
+  }
+
+  // We have to determine the language of the current element.  Since
+  // this is currently no property and since the language is inherited
+  // from the parent we have to be prepared to look at all parent
+  // nodes.  The language itself is encoded in the LANG attribute.
+  bool haveLanguage = false;
+  nsAutoString language;
+  if (aHasOverrideLang) {
+    if (aOverrideLang) {
+      language = *aOverrideLang;
+      haveLanguage = true;
+    }
+  } else {
+    haveLanguage = aElement->GetLang(language);
+  }
+
+  if (haveLanguage) {
+    return nsStyleUtil::DashMatchCompare(language,
+                                         nsDependentString(aString),
+                                         nsASCIICaseInsensitiveStringComparator());
+  }
+
+  if (aDocument) {
+    // Try to get the language from the HTTP header or if this
+    // is missing as well from the preferences.
+    // The content language can be a comma-separated list of
+    // language codes.
+    aDocument->GetContentLanguage(language);
+
+    nsDependentString langString(aString);
+    language.StripWhitespace();
+    int32_t begin = 0;
+    int32_t len = language.Length();
+    while (begin < len) {
+      int32_t end = language.FindChar(char16_t(','), begin);
+      if (end == kNotFound) {
+        end = len;
+      }
+      if (nsStyleUtil::DashMatchCompare(Substring(language, begin,
+                                                  end-begin),
+                                        langString,
+                                        nsASCIICaseInsensitiveStringComparator())) {
+        return true;
+      }
+      begin = end + 1;
+    }
+    if (begin < len) {
+      return true;
+    }
+  }
+
+  return false;
+}
+
+/* static */ bool
+nsCSSRuleProcessor::StringPseudoMatches(const mozilla::dom::Element* aElement,
+                                        CSSPseudoClassType aPseudo,
+                                        const char16_t* aString,
+                                        const nsIDocument* aDocument,
+                                        bool aForStyling,
+                                        EventStates aStateMask,
+                                        bool* aSetSlowSelectorFlag,
+                                        bool* const aDependence)
+{
+  MOZ_ASSERT(aSetSlowSelectorFlag);
+
+  switch (aPseudo) {
+    case CSSPseudoClassType::mozLocaleDir:
+      {
+        bool docIsRTL;
+        if (ServoStyleSet::IsInServoTraversal()) {
+          docIsRTL = aDocument->ThreadSafeGetDocumentState()
+                              .HasState(NS_DOCUMENT_STATE_RTL_LOCALE);
+        } else {
+          auto doc = const_cast<nsIDocument*>(aDocument);
+          docIsRTL = doc->GetDocumentState()
+                        .HasState(NS_DOCUMENT_STATE_RTL_LOCALE);
+        }
+
+        nsDependentString dirString(aString);
+
+        if (dirString.EqualsLiteral("rtl")) {
+          if (!docIsRTL) {
+            return false;
+          }
+        } else if (dirString.EqualsLiteral("ltr")) {
+          if (docIsRTL) {
+            return false;
+          }
+        } else {
+          // Selectors specifying other directions never match.
+          return false;
+        }
+      }
+      break;
+
+    case CSSPseudoClassType::mozSystemMetric:
+      {
+        nsCOMPtr<nsIAtom> metric = NS_Atomize(aString);
+        if (!nsCSSRuleProcessor::HasSystemMetric(metric)) {
+          return false;
+        }
+      }
+      break;
+
+    case CSSPseudoClassType::mozEmptyExceptChildrenWithLocalname:
+      {
+        NS_ASSERTION(aString, "Must have string!");
+        const nsIContent *child = nullptr;
+        int32_t index = -1;
+
+        if (aForStyling) {
+          // FIXME:  This isn't sufficient to handle:
+          //   :-moz-empty-except-children-with-localname() + E
+          //   :-moz-empty-except-children-with-localname() ~ E
+          // because we don't know to restyle the grandparent of the
+          // inserted/removed element (as in bug 534804 for :empty).
+          *aSetSlowSelectorFlag = true;
+        }
+        do {
+          child = aElement->GetChildAt(++index);
+        } while (child &&
+                  (!IsSignificantChildMaybeThreadSafe(child, true, false) ||
+                  (child->GetNameSpaceID() == aElement->GetNameSpaceID() &&
+                    child->NodeInfo()->NameAtom()->Equals(nsDependentString(aString)))));
+        if (child) {
+          return false;
+        }
+      }
+      break;
+
+    case CSSPseudoClassType::dir:
+      {
+        if (aDependence) {
+          EventStates states = sPseudoClassStateDependences[
+            static_cast<CSSPseudoClassTypeBase>(aPseudo)];
+          if (aStateMask.HasAtLeastOneOfStates(states)) {
+            *aDependence = true;
+            return false;
+          }
+        }
+
+        // If we only had to consider HTML, directionality would be
+        // exclusively LTR or RTL.
+        //
+        // However, in markup languages where there is no direction attribute
+        // we have to consider the possibility that neither dir(rtl) nor
+        // dir(ltr) matches.
+        EventStates state = aElement->StyleState();
+        nsDependentString dirString(aString);
+
+        if (dirString.EqualsLiteral("rtl")) {
+          if (!state.HasState(NS_EVENT_STATE_RTL)) {
+            return false;
+          }
+        } else if (dirString.EqualsLiteral("ltr")) {
+          if (!state.HasState(NS_EVENT_STATE_LTR)) {
+            return false;
+          }
+        } else {
+          // Selectors specifying other directions never match.
+          return false;
+        }
+      }
+      break;
+
+    case CSSPseudoClassType::lang:
+      if (LangPseudoMatches(aElement, nullptr, false, aString, aDocument)) {
+        break;
+      }
+      return false;
+
+    default: MOZ_ASSERT_UNREACHABLE("Called StringPseudoMatches() with unknown string-like pseudo");
   }
   return true;
 }
@@ -1776,92 +2002,6 @@ static bool SelectorMatches(Element* aElement,
       }
       break;
 
-    case CSSPseudoClassType::mozEmptyExceptChildrenWithLocalname:
-      {
-        NS_ASSERTION(pseudoClass->u.mString, "Must have string!");
-        nsIContent *child = nullptr;
-        int32_t index = -1;
-
-        if (aTreeMatchContext.mForStyling)
-          // FIXME:  This isn't sufficient to handle:
-          //   :-moz-empty-except-children-with-localname() + E
-          //   :-moz-empty-except-children-with-localname() ~ E
-          // because we don't know to restyle the grandparent of the
-          // inserted/removed element (as in bug 534804 for :empty).
-          aElement->SetFlags(NODE_HAS_SLOW_SELECTOR);
-        do {
-          child = aElement->GetChildAt(++index);
-        } while (child &&
-                  (!IsSignificantChild(child, true, false) ||
-                  (child->GetNameSpaceID() == aElement->GetNameSpaceID() &&
-                    child->NodeInfo()->NameAtom()->Equals(nsDependentString(pseudoClass->u.mString)))));
-        if (child != nullptr) {
-          return false;
-        }
-      }
-      break;
-
-    case CSSPseudoClassType::lang:
-      {
-        NS_ASSERTION(nullptr != pseudoClass->u.mString, "null lang parameter");
-        if (!pseudoClass->u.mString || !*pseudoClass->u.mString) {
-          return false;
-        }
-
-        // We have to determine the language of the current element.  Since
-        // this is currently no property and since the language is inherited
-        // from the parent we have to be prepared to look at all parent
-        // nodes.  The language itself is encoded in the LANG attribute.
-        nsAutoString language;
-        if (aElement->GetLang(language)) {
-          if (!nsStyleUtil::DashMatchCompare(language,
-                                              nsDependentString(pseudoClass->u.mString),
-                                              nsASCIICaseInsensitiveStringComparator())) {
-            return false;
-          }
-          // This pseudo-class matched; move on to the next thing
-          break;
-        }
-
-        nsIDocument* doc = aTreeMatchContext.mDocument;
-        if (doc) {
-          // Try to get the language from the HTTP header or if this
-          // is missing as well from the preferences.
-          // The content language can be a comma-separated list of
-          // language codes.
-          doc->GetContentLanguage(language);
-
-          nsDependentString langString(pseudoClass->u.mString);
-          language.StripWhitespace();
-          int32_t begin = 0;
-          int32_t len = language.Length();
-          while (begin < len) {
-            int32_t end = language.FindChar(char16_t(','), begin);
-            if (end == kNotFound) {
-              end = len;
-            }
-            if (nsStyleUtil::DashMatchCompare(Substring(language, begin,
-                                                        end-begin),
-                                              langString,
-                                              nsASCIICaseInsensitiveStringComparator())) {
-              break;
-            }
-            begin = end + 1;
-          }
-          if (begin < len) {
-            // This pseudo-class matched
-            break;
-          }
-        }
-      }
-      return false;
-
-    case CSSPseudoClassType::mozBoundElement:
-      if (aTreeMatchContext.mScopedRoot != aElement) {
-        return false;
-      }
-      break;
-
     case CSSPseudoClassType::root:
       if (aElement != aElement->OwnerDoc()->GetRootElement()) {
         return false;
@@ -1999,38 +2139,6 @@ static bool SelectorMatches(Element* aElement,
       }
       break;
 
-    case CSSPseudoClassType::mozSystemMetric:
-      {
-        nsCOMPtr<nsIAtom> metric = NS_Atomize(pseudoClass->u.mString);
-        if (!nsCSSRuleProcessor::HasSystemMetric(metric)) {
-          return false;
-        }
-      }
-      break;
-
-    case CSSPseudoClassType::mozLocaleDir:
-      {
-        bool docIsRTL =
-          aTreeMatchContext.mDocument->GetDocumentState().
-            HasState(NS_DOCUMENT_STATE_RTL_LOCALE);
-
-        nsDependentString dirString(pseudoClass->u.mString);
-
-        if (dirString.EqualsLiteral("rtl")) {
-          if (!docIsRTL) {
-            return false;
-          }
-        } else if (dirString.EqualsLiteral("ltr")) {
-          if (docIsRTL) {
-            return false;
-          }
-        } else {
-          // Selectors specifying other directions never match.
-          return false;
-        }
-      }
-      break;
-
     case CSSPseudoClassType::mozLWTheme:
       {
         if (aTreeMatchContext.mDocument->GetDocumentLWTheme() <=
@@ -2065,41 +2173,6 @@ static bool SelectorMatches(Element* aElement,
       }
       break;
 
-    case CSSPseudoClassType::dir:
-      {
-        if (aDependence) {
-          EventStates states = sPseudoClassStateDependences[
-            static_cast<CSSPseudoClassTypeBase>(pseudoClass->mType)];
-          if (aNodeMatchContext.mStateMask.HasAtLeastOneOfStates(states)) {
-            *aDependence = true;
-            return false;
-          }
-        }
-
-        // If we only had to consider HTML, directionality would be
-        // exclusively LTR or RTL.
-        //
-        // However, in markup languages where there is no direction attribute
-        // we have to consider the possibility that neither dir(rtl) nor
-        // dir(ltr) matches.
-        EventStates state = aElement->StyleState();
-        nsDependentString dirString(pseudoClass->u.mString);
-
-        if (dirString.EqualsLiteral("rtl")) {
-          if (!state.HasState(NS_EVENT_STATE_RTL)) {
-            return false;
-          }
-        } else if (dirString.EqualsLiteral("ltr")) {
-          if (!state.HasState(NS_EVENT_STATE_LTR)) {
-            return false;
-          }
-        } else {
-          // Selectors specifying other directions never match.
-          return false;
-        }
-      }
-      break;
-
     case CSSPseudoClassType::scope:
       if (aTreeMatchContext.mForScopedStyle) {
         if (aTreeMatchContext.mCurrentStyleScope) {
@@ -2124,7 +2197,25 @@ static bool SelectorMatches(Element* aElement,
       break;
 
     default:
-      MOZ_ASSERT(false, "How did that happen?");
+      {
+        MOZ_ASSERT(nsCSSPseudoClasses::HasStringArg(pseudoClass->mType));
+        bool setSlowSelectorFlag = false;
+        bool matched = nsCSSRuleProcessor::StringPseudoMatches(aElement,
+                                                               pseudoClass->mType,
+                                                               pseudoClass->u.mString,
+                                                               aTreeMatchContext.mDocument,
+                                                               aTreeMatchContext.mForStyling,
+                                                               aNodeMatchContext.mStateMask,
+                                                               &setSlowSelectorFlag,
+                                                               aDependence);
+        if (setSlowSelectorFlag) {
+          aElement->SetFlags(NODE_HAS_SLOW_SELECTOR);
+        }
+
+        if (!matched) {
+          return false;
+        }
+      }
     }
   }
 
@@ -3069,7 +3160,7 @@ nsCSSRuleProcessor::KeyframesRuleForName(nsPresContext* aPresContext,
 
 nsCSSCounterStyleRule*
 nsCSSRuleProcessor::CounterStyleRuleForName(nsPresContext* aPresContext,
-                                            const nsAString& aName)
+                                            nsIAtom* aName)
 {
   RuleCascadeData* cascade = GetRuleCascade(aPresContext);
 
@@ -3320,7 +3411,8 @@ AddRule(RuleSelectorPair* aRuleInfo, RuleCascadeData* aCascade)
     NS_ASSERTION(aRuleInfo->mSelector->mNext->mOperator == ':',
                  "Unexpected mNext combinator");
     ruleHash->AppendRule(*aRuleInfo);
-  } else if (pseudoType == CSSPseudoElementType::AnonBox) {
+  } else if (pseudoType == CSSPseudoElementType::InheritingAnonBox ||
+             pseudoType == CSSPseudoElementType::NonInheritingAnonBox) {
     NS_ASSERTION(!aRuleInfo->mSelector->mCasedTag &&
                  !aRuleInfo->mSelector->mIDList &&
                  !aRuleInfo->mSelector->mClassList &&
@@ -3384,10 +3476,8 @@ struct PerWeightDataListItem : public RuleSelectorPair {
 
 
   // Placement new to arena allocate the PerWeightDataListItem
-  void *operator new(size_t aSize, PLArenaPool &aArena) CPP_THROW_NEW {
-    void *mem;
-    PL_ARENA_ALLOCATE(mem, &aArena, aSize);
-    return mem;
+  void *operator new(size_t aSize, CascadeAllocator &aArena) CPP_THROW_NEW {
+    return aArena.Allocate(aSize, fallible);
   }
 
   PerWeightDataListItem *mNext;
@@ -3461,14 +3551,10 @@ struct CascadeEnumData {
       mSheetType(aSheetType),
       mMustGatherDocumentRules(aMustGatherDocumentRules)
   {
-    // Initialize our arena
-    PL_INIT_ARENA_POOL(&mArena, "CascadeEnumDataArena",
-                       NS_CASCADEENUMDATA_ARENA_BLOCK_SIZE);
   }
 
   ~CascadeEnumData()
   {
-    PL_FinishArenaPool(&mArena);
   }
 
   nsPresContext* mPresContext;
@@ -3480,7 +3566,8 @@ struct CascadeEnumData {
   nsTArray<css::DocumentRule*>& mDocumentRules;
   nsMediaQueryResultCacheKey& mCacheKey;
   nsDocumentRuleResultCacheKey& mDocumentCacheKey;
-  PLArenaPool mArena;
+  // We want page-sized arenas so there's no fragmentation involved.
+  CascadeAllocator  mArena;
   // Hooray, a manual PLDHashTable since nsClassHashtable doesn't
   // provide a getter that gives me a *reference* to the value.
   PLDHashTable mRulesByWeight; // of PerWeightDataListItem linked lists
@@ -3565,6 +3652,8 @@ CascadeRuleEnumFunc(css::Rule* aRule, void* aData)
 {
   CascadeEnumData* data = (CascadeEnumData*)aData;
   int32_t type = aRule->GetType();
+  MOZ_ASSERT(type != css::Rule::IMPORT_RULE,
+             "@import rule must not be handled here");
 
   if (css::Rule::STYLE_RULE == type) {
     css::StyleRule* styleRule = static_cast<css::StyleRule*>(aRule);
@@ -3665,16 +3754,40 @@ nsCSSRuleProcessor::CascadeSheet(CSSStyleSheet* aSheet, CascadeEnumData* aData)
   if (aSheet->IsApplicable() &&
       aSheet->UseForPresentation(aData->mPresContext, aData->mCacheKey) &&
       aSheet->mInner) {
-
-    StyleSheet* child = aSheet->GetFirstChild();
-    while (child) {
-      CascadeSheet(child->AsGecko(), aData);
-
-      child = child->mNext;
+    auto& rules = aSheet->Inner()->mOrderedRules;
+    uint32_t i = 0, len = rules.Length();
+    for (; i < len; i++) {
+      if (rules[i]->GetType() != css::Rule::IMPORT_RULE) {
+        break;
+      }
     }
 
-    for (css::Rule* rule : aSheet->Inner()->mOrderedRules) {
-      if (!CascadeRuleEnumFunc(rule, aData)) {
+    if (i > 0) {
+      // Collect stylesheets from @import rules. It is done in reverse
+      // order so that we can avoid cascading duplicate sheets.
+      nsTArray<StyleSheet*> childSheets(i);
+      nsTHashtable<nsPtrHashKey<StyleSheet>> childSheetSet(i);
+      for (uint32_t j = i; j > 0; j--) {
+        auto importRule = static_cast<css::ImportRule*>(rules[j - 1]);
+        StyleSheet* sheet = importRule->GetStyleSheet();
+        // There are two cases we want to ignore an import rule:
+        // 1. the import rule does not have stylesheet connected because
+        //    it fails in security check or there is a loop involved.
+        // 2. the sheet has been referenced by another import rule at a
+        //    later position.
+        if (sheet && !childSheetSet.Contains(sheet)) {
+          childSheets.AppendElement(sheet);
+          childSheetSet.PutEntry(sheet);
+        }
+      }
+      // Now cascade all sheets listed.
+      for (StyleSheet* child : Reversed(childSheets)) {
+        CascadeSheet(child->AsGecko(), aData);
+      }
+    }
+
+    for (; i < len; i++) {
+      if (!CascadeRuleEnumFunc(rules[i], aData)) {
         return false;
       }
     }
@@ -3792,7 +3905,7 @@ nsCSSRuleProcessor::RefreshRuleCascade(nsPresContext* aPresContext)
       for (nsTArray<nsCSSCounterStyleRule*>::size_type i = 0,
            iEnd = newCascade->mCounterStyleRules.Length(); i < iEnd; ++i) {
         nsCSSCounterStyleRule* rule = newCascade->mCounterStyleRules[i];
-        newCascade->mCounterStyleRuleTable.Put(rule->GetName(), rule);
+        newCascade->mCounterStyleRuleTable.Put(rule->Name(), rule);
       }
 
       // mMustGatherDocumentRules controls whether we build mDocumentRules

@@ -203,19 +203,8 @@ enum {
 
   NODE_IS_ROOT_OF_CHROME_ONLY_ACCESS =    NODE_FLAG_BIT(20),
 
-  // These two bits are shared by Gecko's and Servo's restyle systems for
-  // different purposes. They should not be accessed directly, and access to
-  // them should be properly guarded by asserts.
-  //
-  // FIXME(bholley): These should move to Element, and we only need one now.
-  NODE_SHARED_RESTYLE_BIT_1 =             NODE_FLAG_BIT(21),
-  NODE_SHARED_RESTYLE_BIT_2 =             NODE_FLAG_BIT(22),
-
-  // Whether this node has dirty descendants for Servo's style system.
-  NODE_HAS_DIRTY_DESCENDANTS_FOR_SERVO =  NODE_SHARED_RESTYLE_BIT_1,
-
   // Remaining bits are node type specific.
-  NODE_TYPE_SPECIFIC_BITS_OFFSET =        23
+  NODE_TYPE_SPECIFIC_BITS_OFFSET =        21
 };
 
 // Make sure we have space for our bits
@@ -282,7 +271,6 @@ private:
 // Categories of node properties
 // 0 is global.
 #define DOM_USER_DATA         1
-#define SMIL_MAPPED_ATTR_ANIMVAL 2
 
 // IID for the nsINode interface
 #define NS_INODE_IID \
@@ -356,7 +344,9 @@ public:
   explicit nsINode(already_AddRefed<mozilla::dom::NodeInfo>& aNodeInfo)
   : mNodeInfo(aNodeInfo)
   , mParent(nullptr)
+#ifndef BOOL_FLAGS_ON_WRAPPER_CACHE
   , mBoolFlags(0)
+#endif
   , mNextSibling(nullptr)
   , mPreviousSibling(nullptr)
   , mFirstChild(nullptr)
@@ -1080,8 +1070,11 @@ public:
    *
    * @param aNodeInfo the nodeinfo to use for the clone
    * @param aResult the clone
+   * @param aPreallocateChildren If true, the array of children will be
+   *                             preallocated in preparation for a deep copy.
    */
-  virtual nsresult Clone(mozilla::dom::NodeInfo *aNodeInfo, nsINode **aResult) const = 0;
+  virtual nsresult Clone(mozilla::dom::NodeInfo *aNodeInfo, nsINode **aResult,
+                         bool aPreallocateChildren) const = 0;
 
   // This class can be extended by subclasses that wish to store more
   // information in the slots.
@@ -1639,7 +1632,7 @@ public:
   bool HasPointerLock() const { return GetBoolFlag(ElementHasPointerLock); }
   void SetPointerLock() { SetBoolFlag(ElementHasPointerLock); }
   void ClearPointerLock() { ClearBoolFlag(ElementHasPointerLock); }
-  bool MayHaveAnimations() { return GetBoolFlag(ElementHasAnimations); }
+  bool MayHaveAnimations() const { return GetBoolFlag(ElementHasAnimations); }
   void SetMayHaveAnimations() { SetBoolFlag(ElementHasAnimations); }
   void SetHasValidDir() { SetBoolFlag(NodeHasValidDirAttribute); }
   void ClearHasValidDir() { ClearBoolFlag(NodeHasValidDirAttribute); }
@@ -2058,8 +2051,11 @@ protected:
   nsINode* MOZ_OWNING_REF mParent;
 
 private:
+#ifndef BOOL_FLAGS_ON_WRAPPER_CACHE
   // Boolean flags.
   uint32_t mBoolFlags;
+#endif
+
 
 protected:
   // These references are non-owning and safe, as they are managed by

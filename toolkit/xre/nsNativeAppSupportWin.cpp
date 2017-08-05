@@ -35,11 +35,11 @@
 #include "nsIFile.h"
 #include "nsIObserver.h"
 #include "nsIObserverService.h"
-#include "nsIDOMLocation.h"
 #include "nsIWebNavigation.h"
 #include "nsIWindowMediator.h"
 #include "nsNativeCharsetUtils.h"
 #include "nsIAppStartup.h"
+#include "mozilla/dom/Location.h"
 
 #include <windows.h>
 #include <shellapi.h>
@@ -953,7 +953,7 @@ nsNativeAppSupportWin::HandleDDENotification( UINT uType,       // transaction t
                     do {
                         // Get most recently used Nav window.
                         nsCOMPtr<mozIDOMWindowProxy> navWin;
-                        GetMostRecentWindow( NS_LITERAL_STRING( "navigator:browser" ).get(),
+                        GetMostRecentWindow( u"navigator:browser",
                                              getter_AddRefs( navWin ) );
                         nsCOMPtr<nsPIDOMWindowOuter> piNavWin = do_QueryInterface(navWin);
                         if ( !piNavWin ) {
@@ -967,7 +967,7 @@ nsNativeAppSupportWin::HandleDDENotification( UINT uType,       // transaction t
                             break;
                         }
                         // Get location.
-                        nsCOMPtr<nsIDOMLocation> location = internalContent->GetLocation();
+                        RefPtr<dom::Location> location = internalContent->GetLocation();
                         if ( !location ) {
                             break;
                         }
@@ -1430,7 +1430,7 @@ nsNativeAppSupportWin::OpenBrowserWindow()
     // browser window.
 
     nsCOMPtr<mozIDOMWindowProxy> navWin;
-    GetMostRecentWindow( NS_LITERAL_STRING( "navigator:browser" ).get(), getter_AddRefs( navWin ) );
+    GetMostRecentWindow( u"navigator:browser", getter_AddRefs( navWin ) );
 
     // This isn't really a loop.  We just use "break" statements to fall
     // out to the OpenWindow call when things go awry.

@@ -8,7 +8,6 @@
 #include "mozilla/Attributes.h"
 #include "nscore.h"
 #include "nsContainerFrame.h"
-#include "nsTablePainter.h"
 #include "nsTableRowGroupFrame.h"
 #include "mozilla/WritingModes.h"
 
@@ -32,9 +31,8 @@ class nsTableRowFrame : public nsContainerFrame
   using TableCellReflowInput = mozilla::TableCellReflowInput;
 
 public:
-  NS_DECL_QUERYFRAME_TARGET(nsTableRowFrame)
   NS_DECL_QUERYFRAME
-  NS_DECL_FRAMEARENA_HELPERS
+  NS_DECL_FRAMEARENA_HELPERS(nsTableRowFrame)
 
   virtual ~nsTableRowFrame();
 
@@ -66,7 +64,7 @@ public:
   nsTableRowGroupFrame* GetTableRowGroupFrame() const
   {
     nsIFrame* parent = GetParent();
-    MOZ_ASSERT(parent && parent->GetType() == nsGkAtoms::tableRowGroupFrame);
+    MOZ_ASSERT(parent && parent->IsTableRowGroupFrame());
     return static_cast<nsTableRowGroupFrame*>(parent);
   }
 
@@ -104,13 +102,6 @@ public:
                       nsReflowStatus&          aStatus) override;
 
   void DidResize();
-
-  /**
-   * Get the "type" of the frame
-   *
-   * @see nsGkAtoms::tableRowFrame
-   */
-  virtual nsIAtom* GetType() const override;
 
 #ifdef DEBUG_FRAME_DUMP
   virtual nsresult GetFrameName(nsAString& aResult) const override;
@@ -263,7 +254,7 @@ protected:
   /** protected constructor.
     * @see NewFrame
     */
-  explicit nsTableRowFrame(nsStyleContext *aContext);
+  explicit nsTableRowFrame(nsStyleContext* aContext, ClassID aID = kClassID);
 
   void InitChildReflowInput(nsPresContext&              aPresContext,
                             const mozilla::LogicalSize& aAvailSize,

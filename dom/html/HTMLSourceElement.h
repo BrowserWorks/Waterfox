@@ -12,11 +12,12 @@
 #include "nsGenericHTMLElement.h"
 #include "mozilla/dom/HTMLMediaElement.h"
 
-class nsMediaList;
 class nsAttrValue;
 
 namespace mozilla {
 namespace dom {
+
+class MediaList;
 
 class HTMLSourceElement final : public nsGenericHTMLElement,
                                 public nsIDOMHTMLSourceElement
@@ -34,7 +35,8 @@ public:
   // nsIDOMHTMLSourceElement
   NS_DECL_NSIDOMHTMLSOURCEELEMENT
 
-  virtual nsresult Clone(mozilla::dom::NodeInfo* aNodeInfo, nsINode** aResult) const override;
+  virtual nsresult Clone(mozilla::dom::NodeInfo* aNodeInfo, nsINode** aResult,
+                         bool aPreallocateChildren) const override;
 
   // Override BindToTree() so that we can trigger a load when we add a
   // child source element.
@@ -110,13 +112,14 @@ protected:
 protected:
   virtual nsresult AfterSetAttr(int32_t aNameSpaceID, nsIAtom* aName,
                                 const nsAttrValue* aValue,
+                                const nsAttrValue* aOldValue,
                                 bool aNotify) override;
 
 private:
-  RefPtr<nsMediaList> mMediaList;
+  RefPtr<MediaList> mMediaList;
   RefPtr<MediaSource> mSrcMediaSource;
 
-  // Generates a new nsMediaList using the given input
+  // Generates a new MediaList using the given input
   void UpdateMediaList(const nsAttrValue* aValue);
 };
 

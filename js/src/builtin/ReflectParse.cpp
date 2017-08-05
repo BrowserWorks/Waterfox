@@ -243,7 +243,7 @@ class NodeBuilder
     typedef AutoValueArray<AST_LIMIT> CallbackArray;
 
     JSContext*  cx;
-    TokenStream* tokenStream;
+    TokenStreamAnyChars* tokenStream;
     bool        saveLoc;               /* save source location information?     */
     char const* src;                  /* source filename or null               */
     RootedValue srcval;                /* source filename JS value or null      */
@@ -302,7 +302,7 @@ class NodeBuilder
         return true;
     }
 
-    void setTokenStream(TokenStream* ts) {
+    void setTokenStream(TokenStreamAnyChars* ts) {
         tokenStream = ts;
     }
 
@@ -1726,7 +1726,7 @@ namespace {
 class ASTSerializer
 {
     JSContext*          cx;
-    Parser<FullParseHandler>* parser;
+    Parser<FullParseHandler, char16_t>* parser;
     NodeBuilder         builder;
     DebugOnly<uint32_t> lineno;
 
@@ -1832,7 +1832,7 @@ class ASTSerializer
         return builder.init(userobj);
     }
 
-    void setParser(Parser<FullParseHandler>* p) {
+    void setParser(Parser<FullParseHandler, char16_t>* p) {
         parser = p;
         builder.setTokenStream(&p->tokenStream);
     }
@@ -3226,6 +3226,8 @@ ASTSerializer::property(ParseNode* pn, MutableHandleValue dst)
         return expression(pn->pn_kid, &val) &&
                builder.prototypeMutation(val, &pn->pn_pos, dst);
     }
+    if (pn->isKind(PNK_SPREAD))
+        return expression(pn, dst);
 
     PropKind kind;
     switch (pn->getOp()) {
@@ -3346,6 +3348,16 @@ ASTSerializer::objectPattern(ParseNode* pn, MutableHandleValue dst)
         return false;
 
     for (ParseNode* propdef = pn->pn_head; propdef; propdef = propdef->pn_next) {
+        if (propdef->isKind(PNK_SPREAD)) {
+            RootedValue target(cx);
+            RootedValue spread(cx);
+            if (!pattern(propdef->pn_kid, &target))
+                return false;
+            if(!builder.spreadExpression(target, &propdef->pn_pos, &spread))
+                return false;
+            elts.infallibleAppend(spread);
+            continue;
+        }
         LOCAL_ASSERT(propdef->isKind(PNK_MUTATEPROTO) != propdef->isOp(JSOP_INITPROP));
 
         RootedValue key(cx);
@@ -3707,9 +3719,10 @@ reflect_parse(JSContext* cx, uint32_t argc, Value* vp)
     UsedNameTracker usedNames(cx);
     if (!usedNames.init())
         return false;
-    Parser<FullParseHandler> parser(cx, cx->tempLifoAlloc(), options, chars.begin().get(),
-                                    chars.length(), /* foldConstants = */ false, usedNames,
-                                    nullptr, nullptr);
+    Parser<FullParseHandler, char16_t> parser(cx, cx->tempLifoAlloc(), options,
+                                              chars.begin().get(), chars.length(),
+                                              /* foldConstants = */ false, usedNames, nullptr,
+                                              nullptr);
     if (!parser.checkOptions())
         return false;
 

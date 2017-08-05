@@ -4,6 +4,7 @@
 
 "use strict";
 
+const Services = require("Services");
 const { addons, createClass, createFactory, PropTypes } =
   require("devtools/client/shared/vendor/react");
 const { connect } = require("devtools/client/shared/vendor/react-redux");
@@ -19,16 +20,20 @@ const Types = require("../types");
 const BOXMODEL_STRINGS_URI = "devtools/client/locales/boxmodel.properties";
 const BOXMODEL_L10N = new LocalizationHelper(BOXMODEL_STRINGS_URI);
 
+const BOXMODEL_OPENED_PREF = "devtools.computed.boxmodel.opened";
+
 const BoxModelApp = createClass({
 
   displayName: "BoxModelApp",
 
   propTypes: {
     boxModel: PropTypes.shape(Types.boxModel).isRequired,
+    setSelectedNode: PropTypes.func.isRequired,
     showBoxModelProperties: PropTypes.bool.isRequired,
     onHideBoxModelHighlighter: PropTypes.func.isRequired,
     onShowBoxModelEditor: PropTypes.func.isRequired,
     onShowBoxModelHighlighter: PropTypes.func.isRequired,
+    onShowBoxModelHighlighterForNode: PropTypes.func.isRequired,
     onToggleGeometryEditor: PropTypes.func.isRequired,
   },
 
@@ -41,7 +46,11 @@ const BoxModelApp = createClass({
           header: BOXMODEL_L10N.getStr("boxmodel.title"),
           component: BoxModel,
           componentProps: this.props,
-          opened: true,
+          opened: Services.prefs.getBoolPref(BOXMODEL_OPENED_PREF),
+          onToggled: () => {
+            let opened = Services.prefs.getBoolPref(BOXMODEL_OPENED_PREF);
+            Services.prefs.setBoolPref(BOXMODEL_OPENED_PREF, !opened);
+          }
         }
       ]
     });

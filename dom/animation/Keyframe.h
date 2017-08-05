@@ -31,10 +31,14 @@ struct PropertyValuePair
   // (string).
   nsCSSValue mValue;
 
-  // The specified value when using the Servo backend. However, even when
-  // using the Servo backend, we still fill in |mValue| in the case where we
-  // fail to parse the value since we use it to store the original string.
+  // The specified value when using the Servo backend.
   RefPtr<RawServoDeclarationBlock> mServoDeclarationBlock;
+
+#ifdef DEBUG
+  // Flag to indicate that when we call StyleAnimationValue::ComputeValues on
+  // this value we should behave as if that function had failed.
+  bool mSimulateComputeValuesFailure;
+#endif
 
   bool operator==(const PropertyValuePair&) const;
 };

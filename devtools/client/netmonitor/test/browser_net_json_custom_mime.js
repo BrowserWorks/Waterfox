@@ -8,19 +8,18 @@
  */
 
 add_task(function* () {
-  let { L10N } = require("devtools/client/netmonitor/utils/l10n");
-
   let { tab, monitor } = yield initNetMonitor(JSON_CUSTOM_MIME_URL);
   info("Starting test... ");
 
-  let { document, gStore, windowRequire } = monitor.panelWin;
-  let Actions = windowRequire("devtools/client/netmonitor/actions/index");
+  let { document, store, windowRequire } = monitor.panelWin;
+  let Actions = windowRequire("devtools/client/netmonitor/src/actions/index");
+  let { L10N } = windowRequire("devtools/client/netmonitor/src/utils/l10n");
   let {
     getDisplayedRequests,
     getSortedRequests,
-  } = windowRequire("devtools/client/netmonitor/selectors/index");
+  } = windowRequire("devtools/client/netmonitor/src/selectors/index");
 
-  gStore.dispatch(Actions.batchEnable(false));
+  store.dispatch(Actions.batchEnable(false));
 
   let wait = waitForNetworkEvents(monitor, 1);
   yield ContentTask.spawn(tab.linkedBrowser, {}, function* () {
@@ -30,8 +29,8 @@ add_task(function* () {
 
   verifyRequestItemTarget(
     document,
-    getDisplayedRequests(gStore.getState()),
-    getSortedRequests(gStore.getState()).get(0),
+    getDisplayedRequests(store.getState()),
+    getSortedRequests(store.getState()).get(0),
     "GET",
     CONTENT_TYPE_SJS + "?fmt=json-custom-mime",
     {
@@ -62,7 +61,7 @@ add_task(function* () {
     let jsonView = tabpanel.querySelector(".tree-section .treeLabel") || {};
     is(jsonView.textContent === L10N.getStr("jsonScopeName"), true,
       "The response json view has the intended visibility.");
-    is(tabpanel.querySelector(".editor-mount iframe") === null, true,
+    is(tabpanel.querySelector(".CodeMirror-code") === null, true,
       "The response editor doesn't have the intended visibility.");
     is(tabpanel.querySelector(".response-image-box") === null, true,
       "The response image box doesn't have the intended visibility.");
@@ -81,7 +80,7 @@ add_task(function* () {
 
     is(labels[0].textContent, "greeting",
       "The first json property name was incorrect.");
-    is(values[0].textContent, "\"Hello oddly-named JSON!\"",
+    is(values[0].textContent, "Hello oddly-named JSON!",
       "The first json property value was incorrect.");
   }
 });

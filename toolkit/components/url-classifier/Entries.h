@@ -262,6 +262,7 @@ typedef FallibleTArray<AddPrefix>   AddPrefixArray;
 typedef FallibleTArray<AddComplete> AddCompleteArray;
 typedef FallibleTArray<SubPrefix>   SubPrefixArray;
 typedef FallibleTArray<SubComplete> SubCompleteArray;
+typedef FallibleTArray<Prefix>      MissPrefixArray;
 
 /**
  * Compares chunks by their add chunk, then their prefix.
@@ -317,6 +318,53 @@ WriteTArray(nsIOutputStream* aStream, nsTArray_Impl<T, Alloc>& aArray)
 typedef nsClassHashtable<nsUint32HashKey, nsCString> PrefixStringMap;
 
 typedef nsDataHashtable<nsCStringHashKey, int64_t> TableFreshnessMap;
+
+typedef nsCStringHashKey FullHashString;
+
+typedef nsDataHashtable<FullHashString, int64_t> FullHashExpiryCache;
+
+struct CachedFullHashResponse {
+  int64_t negativeCacheExpirySec;
+
+  // Map contains all matches found in Fullhash response, this field might be empty.
+  FullHashExpiryCache fullHashes;
+
+  CachedFullHashResponse& operator=(const CachedFullHashResponse& aOther) {
+    negativeCacheExpirySec = aOther.negativeCacheExpirySec;
+
+    fullHashes.Clear();
+    for (auto iter = aOther.fullHashes.ConstIter(); !iter.Done(); iter.Next()) {
+      fullHashes.Put(iter.Key(), iter.Data());
+    }
+
+    return *this;
+  }
+
+  bool operator==(const CachedFullHashResponse& aOther) const {
+    if (negativeCacheExpirySec != aOther.negativeCacheExpirySec ||
+        fullHashes.Count() != aOther.fullHashes.Count()) {
+      return false;
+    }
+    for (auto iter = fullHashes.ConstIter(); !iter.Done(); iter.Next()) {
+      if (iter.Data() != aOther.fullHashes.Get(iter.Key())) {
+        return false;
+      }
+    }
+    return true;
+  }
+};
+
+typedef nsClassHashtable<nsUint32HashKey, CachedFullHashResponse> FullHashResponseMap;
+
+template<class T>
+void
+CopyClassHashTable(const T& aSource, T& aDestination)
+{
+  for (auto iter = aSource.ConstIter(); !iter.Done(); iter.Next()) {
+    auto value = aDestination.LookupOrAdd(iter.Key());
+    *value = *(iter.Data());
+  }
+}
 
 } // namespace safebrowsing
 } // namespace mozilla

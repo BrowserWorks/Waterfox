@@ -15,6 +15,9 @@
 [Global=(Worker,DedicatedWorker),
  Exposed=DedicatedWorker]
 interface DedicatedWorkerGlobalScope : WorkerGlobalScope {
+  [Replaceable]
+  readonly attribute DOMString name;
+
   [Throws]
   void postMessage(any message, optional sequence<object> transfer = []);
 

@@ -2,14 +2,15 @@
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
 
+use gpu_store::GpuStoreAddress;
 use internal_types::{HardwareCompositeOp, LowLevelFilterOp};
-use mask_cache::MaskCacheInfo;
+use mask_cache::{MaskBounds, MaskCacheInfo};
 use prim_store::{PrimitiveCacheKey, PrimitiveIndex};
 use std::{cmp, f32, i32, mem, usize};
 use tiling::{ClipScrollGroupIndex, PackedLayerIndex, RenderPass, RenderTargetIndex};
-use tiling::{ScrollLayerIndex, StackingContextIndex};
-use webrender_traits::{DeviceIntLength, DeviceIntPoint, DeviceIntRect, DeviceIntSize};
-use webrender_traits::MixBlendMode;
+use tiling::{RenderTargetKind, StackingContextIndex};
+use webrender_traits::{ClipId, DeviceIntLength, DeviceIntPoint, DeviceIntRect, DeviceIntSize};
+use webrender_traits::{MixBlendMode};
 
 const FLOATS_PER_RENDER_TASK_INFO: usize = 12;
 
@@ -33,10 +34,10 @@ pub enum RenderTaskKey {
 #[derive(Debug, Copy, Clone, Eq, PartialEq, Hash)]
 pub enum MaskCacheKey {
     Primitive(PrimitiveIndex),
-    ScrollLayer(ScrollLayerIndex),
+    ClipNode(ClipId),
 }
 
-#[derive(Debug, Copy, Clone)]
+#[derive(Debug, Copy, Clone, PartialEq)]
 pub enum RenderTaskId {
     Static(RenderTaskIndex),
     Dynamic(RenderTaskKey),
@@ -51,17 +52,17 @@ pub enum RenderTaskLocation {
 
 #[derive(Debug, Clone)]
 pub enum AlphaRenderItem {
-    Primitive(ClipScrollGroupIndex, PrimitiveIndex, i32),
+    Primitive(Option<ClipScrollGroupIndex>, PrimitiveIndex, i32),
     Blend(StackingContextIndex, RenderTaskId, LowLevelFilterOp, i32),
     Composite(StackingContextIndex, RenderTaskId, RenderTaskId, MixBlendMode, i32),
+    SplitComposite(StackingContextIndex, RenderTaskId, GpuStoreAddress, i32),
     HardwareComposite(StackingContextIndex, RenderTaskId, HardwareCompositeOp, i32),
 }
 
 #[derive(Debug, Clone)]
 pub struct AlphaRenderTask {
     screen_origin: DeviceIntPoint,
-    pub opaque_items: Vec<AlphaRenderItem>,
-    pub alpha_items: Vec<AlphaRenderItem>,
+    pub items: Vec<AlphaRenderItem>,
 }
 
 #[derive(Debug, Copy, Clone)]
@@ -151,10 +152,15 @@ impl RenderTask {
             location: location,
             kind: RenderTaskKind::Alpha(AlphaRenderTask {
                 screen_origin: screen_origin,
-                alpha_items: Vec::new(),
-                opaque_items: Vec::new(),
+                items: Vec::new(),
             }),
         }
+    }
+
+    pub fn new_dynamic_alpha_batch(task_index: RenderTaskIndex,
+                                   rect: &DeviceIntRect) -> RenderTask {
+        let location = RenderTaskLocation::Dynamic(None, rect.size);
+        Self::new_alpha_batch(task_index, rect.origin, location)
     }
 
     pub fn new_prim_cache(key: PrimitiveCacheKey,
@@ -189,19 +195,44 @@ impl RenderTask {
         // We scan through the clip stack and detect if our actual rectangle
         // is in the intersection of all of all the outer bounds,
         // and if it's completely inside the intersection of all of the inner bounds.
-        let result = clips.iter()
-                          .fold(Some(actual_rect), |current, clip| {
-            current.and_then(|rect| rect.intersection(&clip.1.outer_rect))
-        });
+
+        // TODO(gw): If we encounter a clip with unknown bounds, we'll just use
+        // the original rect. This is overly conservative, but can
+        // be optimized later.
+        let mut result = Some(actual_rect);
+        for &(_, ref clip) in clips {
+            match *clip.bounds.as_ref().unwrap() {
+                MaskBounds::OuterInner(ref outer, _) |
+                MaskBounds::Outer(ref outer) => {
+                    result = result.and_then(|rect| {
+                        rect.intersection(&outer.bounding_rect)
+                    });
+                }
+                MaskBounds::None => {
+                    result = Some(actual_rect);
+                    break;
+                }
+            }
+        }
 
         let task_rect = match result {
             None => return MaskResult::Outside,
             Some(rect) => rect,
         };
 
+        // Accumulate inner rects. As soon as we encounter
+        // a clip mask where we don't have or don't know
+        // the inner rect, this will become None.
         let inner_rect = clips.iter()
                               .fold(Some(task_rect), |current, clip| {
-            current.and_then(|rect| rect.intersection(&clip.1.inner_rect))
+            current.and_then(|rect| {
+                let inner_rect = match *clip.1.bounds.as_ref().unwrap() {
+                    MaskBounds::Outer(..) |
+                    MaskBounds::None => DeviceIntRect::zero(),
+                    MaskBounds::OuterInner(_, ref inner) => inner.bounding_rect
+                };
+                rect.intersection(&inner_rect)
+            })
         });
 
         // TODO(gw): This optimization is very conservative for now.
@@ -213,7 +244,7 @@ impl RenderTask {
         if inner_rect.is_some() && clips.len() == 1 {
             let (_, ref clip_info) = clips[0];
             if clip_info.image.is_none() &&
-               clip_info.effective_clip_count == 1 &&
+               clip_info.effective_complex_clip_count == 1 &&
                clip_info.is_aligned {
                 geometry_kind = MaskGeometryKind::CornersOnly;
             }
@@ -434,6 +465,17 @@ impl RenderTask {
         *max_depth = cmp::max(*max_depth, depth);
         for child in &self.children {
             child.max_depth(depth, max_depth);
+        }
+    }
+
+    pub fn target_kind(&self) -> RenderTargetKind {
+        match self.kind {
+            RenderTaskKind::Alpha(..) |
+            RenderTaskKind::CachePrimitive(..) |
+            RenderTaskKind::VerticalBlur(..) |
+            RenderTaskKind::Readback(..) |
+            RenderTaskKind::HorizontalBlur(..) => RenderTargetKind::Color,
+            RenderTaskKind::CacheMask(..) => RenderTargetKind::Alpha,
         }
     }
 }

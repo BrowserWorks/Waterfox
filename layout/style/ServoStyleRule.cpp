@@ -73,9 +73,11 @@ ServoStyleRuleDeclaration::SetCSSDeclaration(DeclarationBlock* aDecl)
     nsCOMPtr<nsIDocument> doc = sheet->GetAssociatedDocument();
     mozAutoDocUpdate updateBatch(doc, UPDATE_STYLE, true);
     if (aDecl != mDecls) {
+      mDecls->SetOwningRule(nullptr);
       RefPtr<ServoDeclarationBlock> decls = aDecl->AsServo();
       Servo_StyleRule_SetStyle(rule->Raw(), decls->Raw());
       mDecls = decls.forget();
+      mDecls->SetOwningRule(rule);
     }
     if (doc) {
       doc->StyleRuleChanged(sheet, rule);
@@ -94,13 +96,22 @@ void
 ServoStyleRuleDeclaration::GetCSSParsingEnvironment(
   CSSParsingEnvironment& aCSSParseEnv)
 {
+  MOZ_ASSERT_UNREACHABLE("GetCSSParsingEnvironment "
+                         "shouldn't be calling for a Servo rule");
   GetCSSParsingEnvironmentForRule(Rule(), aCSSParseEnv);
+}
+
+nsDOMCSSDeclaration::ServoCSSParsingEnvironment
+ServoStyleRuleDeclaration::GetServoCSSParsingEnvironment() const
+{
+  return GetServoCSSParsingEnvironmentForRule(Rule());
 }
 
 // -- ServoStyleRule --------------------------------------------------
 
-ServoStyleRule::ServoStyleRule(already_AddRefed<RawServoStyleRule> aRawRule)
-  : BindingStyleRule(0, 0)
+ServoStyleRule::ServoStyleRule(already_AddRefed<RawServoStyleRule> aRawRule,
+                               uint32_t aLine, uint32_t aColumn)
+  : BindingStyleRule(aLine, aColumn)
   , mRawRule(aRawRule)
   , mDecls(Servo_StyleRule_GetStyle(mRawRule).Consume())
 {
@@ -108,6 +119,7 @@ ServoStyleRule::ServoStyleRule(already_AddRefed<RawServoStyleRule> aRawRule)
 
 // QueryInterface implementation for ServoStyleRule
 NS_INTERFACE_MAP_BEGIN_CYCLE_COLLECTION_INHERITED(ServoStyleRule)
+  NS_INTERFACE_MAP_ENTRY(nsICSSStyleRuleDOMWrapper)
   NS_INTERFACE_MAP_ENTRY(nsIDOMCSSStyleRule)
 NS_INTERFACE_MAP_END_INHERITING(css::Rule)
 
@@ -161,8 +173,14 @@ ServoStyleRule::Clone() const
 size_t
 ServoStyleRule::SizeOfIncludingThis(MallocSizeOf aMallocSizeOf) const
 {
-  // TODO Implement this!
-  return aMallocSizeOf(this);
+  size_t n = aMallocSizeOf(this);
+
+  // Measurement of the following members may be added later if DMD finds it is
+  // worthwhile:
+  // - mRawRule
+  // - mDecls
+
+  return n;
 }
 
 #ifdef DEBUG
@@ -177,6 +195,15 @@ ServoStyleRule::List(FILE* out, int32_t aIndent) const
   fprintf_stderr(out, "%s\n", str.get());
 }
 #endif
+
+/* nsICSSStyleRuleDOMWrapper implementation */
+
+NS_IMETHODIMP
+ServoStyleRule::GetCSSStyleRule(BindingStyleRule **aResult)
+{
+  NS_ADDREF(*aResult = this);
+  return NS_OK;
+}
 
 /* CSSRule implementation */
 
@@ -220,6 +247,39 @@ NS_IMETHODIMP
 ServoStyleRule::GetStyle(nsIDOMCSSStyleDeclaration** aStyle)
 {
   *aStyle = do_AddRef(&mDecls).take();
+  return NS_OK;
+}
+
+uint32_t
+ServoStyleRule::GetSelectorCount()
+{
+  uint32_t aCount;
+  Servo_StyleRule_GetSelectorCount(mRawRule, &aCount);
+
+  return aCount;
+}
+
+nsresult
+ServoStyleRule::GetSelectorText(uint32_t aSelectorIndex, nsAString& aText)
+{
+  Servo_StyleRule_GetSelectorTextFromIndex(mRawRule, aSelectorIndex, &aText);
+  return NS_OK;
+}
+
+nsresult
+ServoStyleRule::GetSpecificity(uint32_t aSelectorIndex, uint64_t* aSpecificity)
+{
+  // TODO Bug 1370501
+  return NS_OK;
+}
+
+nsresult
+ServoStyleRule::SelectorMatchesElement(Element* aElement,
+                                       uint32_t aSelectorIndex,
+                                       const nsAString& aPseudo,
+                                       bool* aMatches)
+{
+  // TODO Bug 1370502
   return NS_OK;
 }
 

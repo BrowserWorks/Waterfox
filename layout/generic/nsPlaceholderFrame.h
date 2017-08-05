@@ -54,9 +54,8 @@ nsIFrame* NS_NewPlaceholderFrame(nsIPresShell* aPresShell,
  */
 class nsPlaceholderFrame final : public nsFrame {
 public:
-  NS_DECL_FRAMEARENA_HELPERS
+  NS_DECL_FRAMEARENA_HELPERS(nsPlaceholderFrame)
 #ifdef DEBUG
-  NS_DECL_QUERYFRAME_TARGET(nsPlaceholderFrame)
   NS_DECL_QUERYFRAME
 #endif
 
@@ -68,7 +67,8 @@ public:
                                           nsStyleContext* aContext,
                                           nsFrameState aTypeBit);
   nsPlaceholderFrame(nsStyleContext* aContext, nsFrameState aTypeBit)
-    : nsFrame(aContext)
+    : nsFrame(aContext, kClassID)
+    , mOutOfFlowFrame(nullptr)
   {
     NS_PRECONDITION(aTypeBit == PLACEHOLDER_FOR_FLOAT ||
                     aTypeBit == PLACEHOLDER_FOR_ABSPOS ||
@@ -116,17 +116,25 @@ public:
   virtual nsresult GetFrameName(nsAString& aResult) const override;
 #endif // DEBUG
 
-  /**
-   * Get the "type" of the frame
-   *
-   * @see nsGkAtoms::placeholderFrame
-   */
-  virtual nsIAtom* GetType() const override;
-
   virtual bool IsEmpty() override { return true; }
   virtual bool IsSelfEmpty() override { return true; }
 
   virtual bool CanContinueTextRun() const override;
+
+  void SetLineIsEmptySoFar(bool aValue) {
+    AddOrRemoveStateBits(PLACEHOLDER_LINE_IS_EMPTY_SO_FAR, aValue);
+    AddStateBits(PLACEHOLDER_HAVE_LINE_IS_EMPTY_SO_FAR);
+  }
+  bool GetLineIsEmptySoFar(bool* aResult) const {
+    bool haveValue = HasAnyStateBits(PLACEHOLDER_HAVE_LINE_IS_EMPTY_SO_FAR);
+    if (haveValue) {
+      *aResult = HasAnyStateBits(PLACEHOLDER_LINE_IS_EMPTY_SO_FAR);
+    }
+    return haveValue;
+  }
+  void ForgetLineIsEmptySoFar() {
+    RemoveStateBits(PLACEHOLDER_HAVE_LINE_IS_EMPTY_SO_FAR);
+  }
 
 #ifdef ACCESSIBILITY
   virtual mozilla::a11y::AccType AccessibleType() override
@@ -137,7 +145,7 @@ public:
   }
 #endif
 
-  virtual nsStyleContext* GetParentStyleContext(nsIFrame** aProviderFrame) const override;
+  nsStyleContext* GetParentStyleContextForOutOfFlow(nsIFrame** aProviderFrame) const;
 
   bool RenumberFrameAndDescendants(int32_t* aOrdinal,
                                    int32_t aDepth,
@@ -154,7 +162,7 @@ public:
    */
   static nsIFrame* GetRealFrameFor(nsIFrame* aFrame) {
     NS_PRECONDITION(aFrame, "Must have a frame to work with");
-    if (aFrame->GetType() == nsGkAtoms::placeholderFrame) {
+    if (aFrame->IsPlaceholderFrame()) {
       return GetRealFrameForPlaceholder(aFrame);
     }
     return aFrame;
@@ -164,7 +172,7 @@ public:
    * @return the out-of-flow for aFrame, which is known to be a placeholder
    */
   static nsIFrame* GetRealFrameForPlaceholder(nsIFrame* aFrame) {
-    NS_PRECONDITION(aFrame->GetType() == nsGkAtoms::placeholderFrame,
+    NS_PRECONDITION(aFrame->IsPlaceholderFrame(),
                     "Must have placeholder frame as input");
     nsIFrame* outOfFlow =
       static_cast<nsPlaceholderFrame*>(aFrame)->GetOutOfFlowFrame();

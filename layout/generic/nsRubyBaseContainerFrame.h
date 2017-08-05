@@ -22,12 +22,10 @@ nsContainerFrame* NS_NewRubyBaseContainerFrame(nsIPresShell* aPresShell,
 class nsRubyBaseContainerFrame final : public nsContainerFrame
 {
 public:
-  NS_DECL_FRAMEARENA_HELPERS
-  NS_DECL_QUERYFRAME_TARGET(nsRubyBaseContainerFrame)
+  NS_DECL_FRAMEARENA_HELPERS(nsRubyBaseContainerFrame)
   NS_DECL_QUERYFRAME
 
   // nsIFrame overrides
-  virtual nsIAtom* GetType() const override;
   virtual bool IsFrameOfType(uint32_t aFlags) const override;
   virtual bool CanContinueTextRun() const override;
   virtual void AddInlineMinISize(nsRenderingContext *aRenderingContext,
@@ -66,7 +64,10 @@ protected:
   friend nsContainerFrame*
     NS_NewRubyBaseContainerFrame(nsIPresShell* aPresShell,
                                  nsStyleContext* aContext);
-  explicit nsRubyBaseContainerFrame(nsStyleContext* aContext) : nsContainerFrame(aContext) {}
+
+  explicit nsRubyBaseContainerFrame(nsStyleContext* aContext)
+    : nsContainerFrame(aContext, kClassID)
+  {}
 
   struct RubyReflowInput;
   nscoord ReflowColumns(const RubyReflowInput& aReflowInput,

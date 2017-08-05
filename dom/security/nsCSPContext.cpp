@@ -44,6 +44,9 @@
 #include "nsINetworkInterceptController.h"
 #include "nsSandboxFlags.h"
 #include "nsIScriptElement.h"
+#include "nsIEventTarget.h"
+#include "mozilla/dom/DocGroup.h"
+#include "nsXULAppAPI.h"
 
 using namespace mozilla;
 
@@ -156,10 +159,13 @@ nsCSPContext::ShouldLoad(nsContentPolicyType aContentType,
   nsAutoString nonce;
   bool parserCreated = false;
   if (!isPreload) {
-    nsCOMPtr<nsIDOMHTMLElement> htmlElement = do_QueryInterface(aRequestContext);
-    if (htmlElement) {
-      rv = htmlElement->GetAttribute(NS_LITERAL_STRING("nonce"), nonce);
-      NS_ENSURE_SUCCESS(rv, rv);
+    if (aContentType == nsIContentPolicy::TYPE_SCRIPT ||
+        aContentType == nsIContentPolicy::TYPE_STYLESHEET) {
+      nsCOMPtr<nsIDOMHTMLElement> htmlElement = do_QueryInterface(aRequestContext);
+      if (htmlElement) {
+        rv = htmlElement->GetAttribute(NS_LITERAL_STRING("nonce"), nonce);
+        NS_ENSURE_SUCCESS(rv, rv);
+      }
     }
 
     nsCOMPtr<nsIScriptElement> script = do_QueryInterface(aRequestContext);
@@ -337,6 +343,20 @@ nsCSPContext::GetBlockAllMixedContent(bool *outBlockAllMixedContent)
      if (!mPolicies[i]->getReportOnlyFlag() &&
         mPolicies[i]->hasDirective(nsIContentSecurityPolicy::BLOCK_ALL_MIXED_CONTENT)) {
       *outBlockAllMixedContent = true;
+      return NS_OK;
+    }
+  }
+  return NS_OK;
+}
+
+NS_IMETHODIMP
+nsCSPContext::GetEnforcesFrameAncestors(bool *outEnforcesFrameAncestors)
+{
+  *outEnforcesFrameAncestors = false;
+  for (uint32_t i = 0; i < mPolicies.Length(); i++) {
+    if (!mPolicies[i]->getReportOnlyFlag() &&
+        mPolicies[i]->hasDirective(nsIContentSecurityPolicy::FRAME_ANCESTORS_DIRECTIVE)) {
+      *outEnforcesFrameAncestors = true;
       return NS_OK;
     }
   }
@@ -665,6 +685,7 @@ nsCSPContext::SetRequestContext(nsIDOMDocument* aDOMDocument,
 
     // set the flag on the document for CSP telemetry
     doc->SetHasCSP(true);
+    mEventTarget = doc->EventTargetFor(TaskCategory::Other);
   }
   else {
     CSPCONTEXTLOG(("No Document in SetRequestContext; can not query loadgroup; sending reports may fail."));
@@ -676,6 +697,20 @@ nsCSPContext::SetRequestContext(nsIDOMDocument* aDOMDocument,
   }
 
   NS_ASSERTION(mSelfURI, "mSelfURI not available, can not translate 'self' into actual URI");
+  return NS_OK;
+}
+
+NS_IMETHODIMP
+nsCSPContext::EnsureEventTarget(nsIEventTarget* aEventTarget)
+{
+  NS_ENSURE_ARG(aEventTarget);
+  // Don't bother if we did have a valid event target (if the csp object is
+  // tied to a document in SetRequestContext)
+  if (mEventTarget) {
+    return NS_OK;
+  }
+
+  mEventTarget = aEventTarget;
   return NS_OK;
 }
 
@@ -1000,7 +1035,8 @@ nsCSPContext::SendReports(nsISupports* aBlockedContentSource,
     // if this is an HTTP channel, set the request method to post
     nsCOMPtr<nsIHttpChannel> httpChannel(do_QueryInterface(reportChannel));
     if (httpChannel) {
-      httpChannel->SetRequestMethod(NS_LITERAL_CSTRING("POST"));
+      rv = httpChannel->SetRequestMethod(NS_LITERAL_CSTRING("POST"));
+      MOZ_ASSERT(NS_SUCCEEDED(rv));
     }
 
     RefPtr<CSPViolationReportListener> listener = new CSPViolationReportListener();
@@ -1163,17 +1199,30 @@ nsCSPContext::AsyncReportViolation(nsISupports* aBlockedContentSource,
 {
   NS_ENSURE_ARG_MAX(aViolatedPolicyIndex, mPolicies.Length() - 1);
 
-  NS_DispatchToMainThread(new CSPReportSenderRunnable(aBlockedContentSource,
-                                                      aOriginalURI,
-                                                      aViolatedPolicyIndex,
-                                                      mPolicies[aViolatedPolicyIndex]->getReportOnlyFlag(),
-                                                      aViolatedDirective,
-                                                      aObserverSubject,
-                                                      aSourceFile,
-                                                      aScriptSample,
-                                                      aLineNum,
-                                                      this));
-   return NS_OK;
+  nsCOMPtr<nsIRunnable> task =
+    new CSPReportSenderRunnable(aBlockedContentSource,
+                                aOriginalURI,
+                                aViolatedPolicyIndex,
+                                mPolicies[aViolatedPolicyIndex]->getReportOnlyFlag(),
+                                aViolatedDirective,
+                                aObserverSubject,
+                                aSourceFile,
+                                aScriptSample,
+                                aLineNum,
+                                this);
+
+  if (XRE_IsContentProcess()) {
+    if (mEventTarget) {
+      if (nsCOMPtr<nsINamed> named = do_QueryInterface(task)) {
+        named->SetName("CSPReportSenderRunnable");
+      }
+      mEventTarget->Dispatch(task.forget(), NS_DISPATCH_NORMAL);
+      return NS_OK;
+    }
+  }
+
+  NS_DispatchToMainThread(task.forget());
+  return NS_OK;
 }
 
 NS_IMETHODIMP

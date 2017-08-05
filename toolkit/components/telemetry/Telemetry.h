@@ -38,6 +38,7 @@ struct Accumulation;
 struct KeyedAccumulation;
 struct ScalarAction;
 struct KeyedScalarAction;
+struct ChildEventData;
 
 enum TimerResolution {
   Millisecond,
@@ -190,6 +191,7 @@ public:
     : start(aStart)
     , key(aKey)
   {
+    MOZ_ASSERT(!aKey.IsEmpty(), "The key must not be empty.");
     MOZ_GUARD_OBJECT_NOTIFIER_INIT;
   }
 

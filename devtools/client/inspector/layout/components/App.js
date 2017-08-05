@@ -4,6 +4,7 @@
 
 "use strict";
 
+const Services = require("Services");
 const { addons, createClass, createFactory, DOM: dom, PropTypes } =
   require("devtools/client/shared/vendor/react");
 const { connect } = require("devtools/client/shared/vendor/react-redux");
@@ -24,6 +25,9 @@ const BOXMODEL_L10N = new LocalizationHelper(BOXMODEL_STRINGS_URI);
 const LAYOUT_STRINGS_URI = "devtools/client/locales/layout.properties";
 const LAYOUT_L10N = new LocalizationHelper(LAYOUT_STRINGS_URI);
 
+const BOXMODEL_OPENED_PREF = "devtools.layout.boxmodel.opened";
+const GRID_OPENED_PREF = "devtools.layout.grid.opened";
+
 const App = createClass({
 
   displayName: "App",
@@ -40,6 +44,7 @@ const App = createClass({
     onSetGridOverlayColor: PropTypes.func.isRequired,
     onShowBoxModelEditor: PropTypes.func.isRequired,
     onShowBoxModelHighlighter: PropTypes.func.isRequired,
+    onShowBoxModelHighlighterForNode: PropTypes.func.isRequired,
     onToggleGridHighlighter: PropTypes.func.isRequired,
     onToggleShowGridLineNumbers: PropTypes.func.isRequired,
     onToggleShowInfiniteLines: PropTypes.func.isRequired,
@@ -51,20 +56,29 @@ const App = createClass({
     return dom.div(
       {
         id: "layout-container",
+        className: "devtools-monospace",
       },
       Accordion({
         items: [
           {
-            header: BOXMODEL_L10N.getStr("boxmodel.title"),
-            component: BoxModel,
-            componentProps: this.props,
-            opened: true,
-          },
-          {
             header: LAYOUT_L10N.getStr("layout.header"),
             component: Grid,
             componentProps: this.props,
-            opened: true,
+            opened: Services.prefs.getBoolPref(GRID_OPENED_PREF),
+            onToggled: () => {
+              let opened = Services.prefs.getBoolPref(GRID_OPENED_PREF);
+              Services.prefs.setBoolPref(GRID_OPENED_PREF, !opened);
+            }
+          },
+          {
+            header: BOXMODEL_L10N.getStr("boxmodel.title"),
+            component: BoxModel,
+            componentProps: this.props,
+            opened: Services.prefs.getBoolPref(BOXMODEL_OPENED_PREF),
+            onToggled: () => {
+              let opened = Services.prefs.getBoolPref(BOXMODEL_OPENED_PREF);
+              Services.prefs.setBoolPref(BOXMODEL_OPENED_PREF, !opened);
+            }
           },
         ]
       })

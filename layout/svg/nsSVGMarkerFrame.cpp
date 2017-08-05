@@ -15,6 +15,7 @@
 
 using namespace mozilla::dom;
 using namespace mozilla::gfx;
+using namespace mozilla::image;
 
 nsContainerFrame*
 NS_NewSVGMarkerFrame(nsIPresShell* aPresShell, nsStyleContext* aContext)
@@ -60,12 +61,6 @@ nsSVGMarkerFrame::Init(nsIContent*       aContent,
 }
 #endif /* DEBUG */
 
-nsIAtom *
-nsSVGMarkerFrame::GetType() const
-{
-  return nsGkAtoms::svgMarkerFrame;
-}
-
 //----------------------------------------------------------------------
 // nsSVGContainerFrame methods:
 
@@ -85,60 +80,53 @@ nsSVGMarkerFrame::GetCanvasTM()
   gfxMatrix markedTM = mMarkedFrame->GetCanvasTM();
   mInUse2 = false;
 
-  Matrix markerTM = content->GetMarkerTransform(mStrokeWidth, mX, mY,
-                                                mAutoAngle, mIsStart);
   Matrix viewBoxTM = content->GetViewBoxTransform();
 
-  return ThebesMatrix(viewBoxTM * markerTM) * markedTM;
+  return ThebesMatrix(viewBoxTM * mMarkerTM) * markedTM;
 }
 
 static nsIFrame*
 GetAnonymousChildFrame(nsIFrame* aFrame)
 {
   nsIFrame* kid = aFrame->PrincipalChildList().FirstChild();
-  MOZ_ASSERT(kid && kid->GetType() == nsGkAtoms::svgMarkerAnonChildFrame,
+  MOZ_ASSERT(kid && kid->IsSVGMarkerAnonChildFrame(),
              "expected to find anonymous child of marker frame");
   return kid;
 }
 
-nsresult
+void
 nsSVGMarkerFrame::PaintMark(gfxContext& aContext,
                             const gfxMatrix& aToMarkedFrameUserSpace,
-                            SVGGeometryFrame *aMarkedFrame,
-                            nsSVGMark *aMark, float aStrokeWidth)
+                            SVGGeometryFrame* aMarkedFrame,
+                            const nsSVGMark& aMark, float aStrokeWidth,
+                            imgDrawingParams& aImgParams)
 {
   // If the flag is set when we get here, it means this marker frame
   // has already been used painting the current mark, and the document
   // has a marker reference loop.
-  if (mInUse)
-    return NS_OK;
+  if (mInUse) {
+    return;
+  }
 
   AutoMarkerReferencer markerRef(this, aMarkedFrame);
 
   SVGMarkerElement *marker = static_cast<SVGMarkerElement*>(mContent);
   if (!marker->HasValidDimensions()) {
-    return NS_OK;
+    return;
   }
 
   const nsSVGViewBoxRect viewBox = marker->GetViewBoxRect();
 
   if (viewBox.width <= 0.0f || viewBox.height <= 0.0f) {
     // We must disable rendering if the viewBox width or height are zero.
-    return NS_OK;
+    return;
   }
-
-  mStrokeWidth = aStrokeWidth;
-  mX = aMark->x;
-  mY = aMark->y;
-  mAutoAngle = aMark->angle;
-  mIsStart = aMark->type == nsSVGMark::eStart;
 
   Matrix viewBoxTM = marker->GetViewBoxTransform();
 
-  Matrix markerTM = marker->GetMarkerTransform(mStrokeWidth, mX, mY,
-                                               mAutoAngle, mIsStart);
+  mMarkerTM = marker->GetMarkerTransform(aStrokeWidth, aMark);
 
-  gfxMatrix markTM = ThebesMatrix(viewBoxTM) * ThebesMatrix(markerTM) *
+  gfxMatrix markTM = ThebesMatrix(viewBoxTM) * ThebesMatrix(mMarkerTM) *
                      aToMarkedFrameUserSpace;
 
   if (StyleDisplay()->IsScrollableOverflow()) {
@@ -151,22 +139,20 @@ nsSVGMarkerFrame::PaintMark(gfxContext& aContext,
 
 
   nsIFrame* kid = GetAnonymousChildFrame(this);
-  nsISVGChildFrame* SVGFrame = do_QueryFrame(kid);
+  nsSVGDisplayableFrame* SVGFrame = do_QueryFrame(kid);
   // The CTM of each frame referencing us may be different.
-  SVGFrame->NotifySVGChanged(nsISVGChildFrame::TRANSFORM_CHANGED);
-  DrawResult result = nsSVGUtils::PaintFrameWithEffects(kid, aContext, markTM);
+  SVGFrame->NotifySVGChanged(nsSVGDisplayableFrame::TRANSFORM_CHANGED);
+  nsSVGUtils::PaintFrameWithEffects(kid, aContext, markTM, aImgParams);
 
   if (StyleDisplay()->IsScrollableOverflow())
     aContext.Restore();
-
-  return (result == DrawResult::SUCCESS) ? NS_OK : NS_ERROR_FAILURE;
 }
 
 SVGBBox
-nsSVGMarkerFrame::GetMarkBBoxContribution(const Matrix &aToBBoxUserspace,
+nsSVGMarkerFrame::GetMarkBBoxContribution(const Matrix& aToBBoxUserspace,
                                           uint32_t aFlags,
-                                          SVGGeometryFrame *aMarkedFrame,
-                                          const nsSVGMark *aMark,
+                                          SVGGeometryFrame* aMarkedFrame,
+                                          const nsSVGMark& aMark,
                                           float aStrokeWidth)
 {
   SVGBBox bbox;
@@ -190,19 +176,12 @@ nsSVGMarkerFrame::GetMarkBBoxContribution(const Matrix &aToBBoxUserspace,
     return bbox;
   }
 
-  mStrokeWidth = aStrokeWidth;
-  mX = aMark->x;
-  mY = aMark->y;
-  mAutoAngle = aMark->angle;
-  mIsStart = aMark->type == nsSVGMark::eStart;
-
-  Matrix markerTM =
-    content->GetMarkerTransform(mStrokeWidth, mX, mY, mAutoAngle, mIsStart);
+  mMarkerTM = content->GetMarkerTransform(aStrokeWidth, aMark);
   Matrix viewBoxTM = content->GetViewBoxTransform();
 
-  Matrix tm = viewBoxTM * markerTM * aToBBoxUserspace;
+  Matrix tm = viewBoxTM * mMarkerTM * aToBBoxUserspace;
 
-  nsISVGChildFrame* child = do_QueryFrame(GetAnonymousChildFrame(this));
+  nsSVGDisplayableFrame* child = do_QueryFrame(GetAnonymousChildFrame(this));
   // When we're being called to obtain the invalidation area, we need to
   // pass down all the flags so that stroke is included. However, once DOM
   // getBBox() accepts flags, maybe we should strip some of those here?
@@ -219,6 +198,16 @@ nsSVGMarkerFrame::SetParentCoordCtxProvider(SVGSVGElement *aContext)
 {
   SVGMarkerElement *marker = static_cast<SVGMarkerElement*>(mContent);
   marker->SetParentCoordCtxProvider(aContext);
+}
+
+void
+nsSVGMarkerFrame::DoUpdateStyleOfOwnedAnonBoxes(
+  mozilla::ServoStyleSet& aStyleSet,
+  nsStyleChangeList& aChangeList,
+  nsChangeHint aHintForThisFrame)
+{
+  UpdateStyleOfChildAnonBox(GetAnonymousChildFrame(this), aStyleSet,
+                            aChangeList, aHintForThisFrame);
 }
 
 //----------------------------------------------------------------------
@@ -265,14 +254,7 @@ nsSVGMarkerAnonChildFrame::Init(nsIContent*       aContent,
                                 nsContainerFrame* aParent,
                                 nsIFrame*         aPrevInFlow)
 {
-  MOZ_ASSERT(aParent->GetType() == nsGkAtoms::svgMarkerFrame,
-             "Unexpected parent");
+  MOZ_ASSERT(aParent->IsSVGMarkerFrame(), "Unexpected parent");
   nsSVGDisplayContainerFrame::Init(aContent, aParent, aPrevInFlow);
 }
 #endif
-
-nsIAtom *
-nsSVGMarkerAnonChildFrame::GetType() const
-{
-  return nsGkAtoms::svgMarkerAnonChildFrame;
-}

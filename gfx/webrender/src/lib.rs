@@ -2,18 +2,16 @@
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
 
-//#![feature(mpsc_select)]
-
-//! A GPU based Webrender.
+//! A GPU based renderer for the web.
 //!
 //! It serves as an experimental render backend for [Servo](https://servo.org/),
 //! but it can also be used as such in a standalone application.
 //!
 //! # External dependencies
-//! Webrender currently depends on [FreeType](https://www.freetype.org/)
+//! WebRender currently depends on [FreeType](https://www.freetype.org/)
 //!
 //! # Api Structure
-//! The main entry point to webrender is the `webrender::renderer::Renderer`.
+//! The main entry point to WebRender is the `webrender::renderer::Renderer`.
 //!
 //! By calling `Renderer::new(...)` you get a `Renderer`, as well as a `RenderApiSender`.
 //! Your `Renderer` is responsible to render the previously processed frames onto the screen.
@@ -24,23 +22,19 @@
 //! to make better use of multicore systems.
 //!
 //! What is referred to as a `frame`, is the current geometry on the screen.
-//! A new Frame is created by calling [set_root_stacking_context()][newframe] on the `RenderApi`.
+//! A new Frame is created by calling [`set_display_list()`][newframe] on the `RenderApi`.
 //! When the geometry is processed, the application will be informed via a `RenderNotifier`,
 //! a callback which you employ with [set_render_notifier][notifier] on the `Renderer`
 //! More information about [stacking contexts][stacking_contexts].
 //!
-//! `set_root_stacking_context()` also needs to be supplied with `BuiltDisplayList`s.
+//! `set_display_list()` also needs to be supplied with `BuiltDisplayList`s.
 //! These are obtained by finalizing a `DisplayListBuilder`. These are used to draw your geometry.
 //! But it doesn't only contain trivial geometry, it can also store another StackingContext, as
 //! they're nestable.
 //!
-//! Remember to insert the DisplayListId into the StackingContext as well, as they'll be referenced
-//! from there. An Id for your DisplayList can be obtained by calling
-//! `yourRenderApiInstance.next_display_list_id();`
-//!
 //! [stacking_contexts]: https://developer.mozilla.org/en-US/docs/Web/CSS/CSS_Positioning/Understanding_z_index/The_stacking_context
-//! [newframe]: ../webrender_traits/struct.RenderApi.html#method.set_root_stacking_context
-//! [notifier]: struct.Renderer.html#method.set_render_notifier
+//! [newframe]: ../webrender_traits/struct.RenderApi.html#method.set_display_list
+//! [notifier]: renderer/struct.Renderer.html#method.set_render_notifier
 
 #[macro_use]
 extern crate lazy_static;
@@ -51,21 +45,25 @@ extern crate bitflags;
 #[macro_use]
 extern crate thread_profiler;
 
-mod batch_builder;
+mod border;
 mod clip_scroll_node;
 mod clip_scroll_tree;
 mod debug_colors;
 mod debug_font_data;
 mod debug_render;
 mod device;
+mod ellipse;
 mod frame;
 mod frame_builder;
 mod freelist;
 mod geometry;
+mod glyph_rasterizer;
+mod gpu_cache;
 mod gpu_store;
 mod internal_types;
 mod mask_cache;
 mod prim_store;
+mod print_tree;
 mod profiler;
 mod record;
 mod render_backend;
@@ -76,6 +74,16 @@ mod spring;
 mod texture_cache;
 mod tiling;
 mod util;
+
+#[doc(hidden)] // for benchmarks
+pub use texture_cache::TexturePage;
+
+#[cfg(feature = "webgl")]
+mod webgl_types;
+
+#[cfg(not(feature = "webgl"))]
+#[path = "webgl_stubs.rs"]
+mod webgl_types;
 
 mod shader_source {
     include!(concat!(env!("OUT_DIR"), "/shaders.rs"));
@@ -127,12 +135,14 @@ extern crate num_traits;
 //extern crate notify;
 extern crate time;
 extern crate webrender_traits;
+#[cfg(feature = "webgl")]
 extern crate offscreen_gl_context;
 extern crate byteorder;
-extern crate threadpool;
+extern crate rayon;
+extern crate plane_split;
 
 #[cfg(any(target_os="macos", target_os="windows"))]
 extern crate gamma_lut;
 
 pub use renderer::{ExternalImage, ExternalImageSource, ExternalImageHandler};
-pub use renderer::{Renderer, RendererOptions};
+pub use renderer::{GraphicsApi, GraphicsApiInfo, ReadPixelsFormat, Renderer, RendererOptions};

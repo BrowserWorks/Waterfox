@@ -119,7 +119,7 @@ CodeGeneratorX86::visitBoxFloatingPoint(LBoxFloatingPoint* box)
         masm.convertFloat32ToDouble(reg, ScratchFloat32Reg);
         reg = ScratchFloat32Reg;
     }
-    masm.boxDouble(reg, out);
+    masm.boxDouble(reg, out, reg);
 }
 
 void
@@ -305,43 +305,6 @@ CodeGeneratorX86::visitLoadTypedArrayElementStatic(LLoadTypedArrayElementStatic*
         masm.bind(ool->rejoin());
 }
 
-void
-CodeGeneratorX86::emitWasmCall(LWasmCallBase* ins)
-{
-    MWasmCall* mir = ins->mir();
-
-    emitWasmCallBase(ins);
-
-    if (IsFloatingPointType(mir->type()) && mir->callee().which() == wasm::CalleeDesc::Builtin) {
-        if (mir->type() == MIRType::Float32) {
-            masm.reserveStack(sizeof(float));
-            Operand op(esp, 0);
-            masm.fstp32(op);
-            masm.loadFloat32(op, ReturnFloat32Reg);
-            masm.freeStack(sizeof(float));
-        } else {
-            MOZ_ASSERT(mir->type() == MIRType::Double);
-            masm.reserveStack(sizeof(double));
-            Operand op(esp, 0);
-            masm.fstp(op);
-            masm.loadDouble(op, ReturnDoubleReg);
-            masm.freeStack(sizeof(double));
-        }
-    }
-}
-
-void
-CodeGeneratorX86::visitWasmCall(LWasmCall* ins)
-{
-    emitWasmCall(ins);
-}
-
-void
-CodeGeneratorX86::visitWasmCallI64(LWasmCallI64* ins)
-{
-    emitWasmCall(ins);
-}
-
 template <typename T>
 void
 CodeGeneratorX86::emitWasmLoad(T* ins)
@@ -352,10 +315,14 @@ CodeGeneratorX86::emitWasmLoad(T* ins)
     MOZ_ASSERT(offset < wasm::OffsetGuardLimit);
 
     const LAllocation* ptr = ins->ptr();
+    const LAllocation* memoryBase = ins->memoryBase();
+
+    // Lowering has set things up so that we can use a BaseIndex form if the
+    // pointer is constant and the offset is zero, or if the pointer is zero.
 
     Operand srcAddr = ptr->isBogus()
-                      ? Operand(PatchedAbsoluteAddress(offset))
-                      : Operand(ToRegister(ptr), offset);
+                      ? Operand(ToRegister(memoryBase), offset ? offset : mir->base()->toConstant()->toInt32())
+                      : Operand(ToRegister(memoryBase), ToRegister(ptr), TimesOne, offset);
 
     if (mir->type() == MIRType::Int64)
         masm.wasmLoadI64(mir->access(), srcAddr, ToOutRegister64(ins));
@@ -385,9 +352,14 @@ CodeGeneratorX86::emitWasmStore(T* ins)
     MOZ_ASSERT(offset < wasm::OffsetGuardLimit);
 
     const LAllocation* ptr = ins->ptr();
+    const LAllocation* memoryBase = ins->memoryBase();
+
+    // Lowering has set things up so that we can use a BaseIndex form if the
+    // pointer is constant and the offset is zero, or if the pointer is zero.
+
     Operand dstAddr = ptr->isBogus()
-                      ? Operand(PatchedAbsoluteAddress(offset))
-                      : Operand(ToRegister(ptr), offset);
+                      ? Operand(ToRegister(memoryBase), offset ? offset : mir->base()->toConstant()->toInt32())
+                      : Operand(ToRegister(memoryBase), ToRegister(ptr), TimesOne, offset);
 
     if (mir->access().type() == Scalar::Int64) {
         Register64 value = ToRegister64(ins->getInt64Operand(LWasmStoreI64::ValueIndex));
@@ -417,6 +389,8 @@ CodeGeneratorX86::visitAsmJSLoadHeap(LAsmJSLoadHeap* ins)
     MOZ_ASSERT(mir->access().offset() == 0);
 
     const LAllocation* ptr = ins->ptr();
+    const LAllocation* boundsCheckLimit = ins->boundsCheckLimit();
+    const LAllocation* memoryBase = ins->memoryBase();
     AnyRegister out = ToAnyRegister(ins->output());
 
     Scalar::Type accessType = mir->accessType();
@@ -427,12 +401,13 @@ CodeGeneratorX86::visitAsmJSLoadHeap(LAsmJSLoadHeap* ins)
         ool = new(alloc()) OutOfLineLoadTypedArrayOutOfBounds(out, accessType);
         addOutOfLineCode(ool, mir);
 
-        masm.wasmBoundsCheck(Assembler::AboveOrEqual, ToRegister(ptr), ool->entry());
+        masm.wasmBoundsCheck(Assembler::AboveOrEqual, ToRegister(ptr), ToRegister(boundsCheckLimit),
+                             ool->entry());
     }
 
     Operand srcAddr = ptr->isBogus()
-                      ? Operand(PatchedAbsoluteAddress())
-                      : Operand(ToRegister(ptr), 0);
+                      ? Operand(ToRegister(memoryBase), 0)
+                      : Operand(ToRegister(memoryBase), ToRegister(ptr), TimesOne);
 
     masm.wasmLoad(mir->access(), srcAddr, out);
 
@@ -497,18 +472,22 @@ CodeGeneratorX86::visitAsmJSStoreHeap(LAsmJSStoreHeap* ins)
 
     const LAllocation* ptr = ins->ptr();
     const LAllocation* value = ins->value();
+    const LAllocation* boundsCheckLimit = ins->boundsCheckLimit();
+    const LAllocation* memoryBase = ins->memoryBase();
 
     Scalar::Type accessType = mir->accessType();
     MOZ_ASSERT(!Scalar::isSimdType(accessType));
     canonicalizeIfDeterministic(accessType, value);
 
     Operand dstAddr = ptr->isBogus()
-                      ? Operand(PatchedAbsoluteAddress())
-                      : Operand(ToRegister(ptr), 0);
+                      ? Operand(ToRegister(memoryBase), 0)
+                      : Operand(ToRegister(memoryBase), ToRegister(ptr), TimesOne);
 
     Label rejoin;
-    if (mir->needsBoundsCheck())
-        masm.wasmBoundsCheck(Assembler::AboveOrEqual, ToRegister(ptr), &rejoin);
+    if (mir->needsBoundsCheck()) {
+        masm.wasmBoundsCheck(Assembler::AboveOrEqual, ToRegister(ptr), ToRegister(boundsCheckLimit),
+                             &rejoin);
+    }
 
     masm.wasmStore(mir->access(), ToAnyRegister(value), dstAddr);
 
@@ -521,13 +500,12 @@ CodeGeneratorX86::visitAsmJSStoreHeap(LAsmJSStoreHeap* ins)
 // set up the heap address in addrTemp.
 
 void
-CodeGeneratorX86::asmJSAtomicComputeAddress(Register addrTemp, Register ptrReg)
+CodeGeneratorX86::asmJSAtomicComputeAddress(Register addrTemp, Register ptrReg, Register memoryBase)
 {
     // Add in the actual heap pointer explicitly, to avoid opening up
     // the abstraction that is atomicBinopToTypedIntArray at this time.
     masm.movl(ptrReg, addrTemp);
-    masm.addlWithPatch(Imm32(0), addrTemp);
-    masm.append(wasm::MemoryPatch(masm.size()));
+    masm.addl(memoryBase, addrTemp);
 }
 
 void
@@ -541,8 +519,9 @@ CodeGeneratorX86::visitAsmJSCompareExchangeHeap(LAsmJSCompareExchangeHeap* ins)
     Register oldval = ToRegister(ins->oldValue());
     Register newval = ToRegister(ins->newValue());
     Register addrTemp = ToRegister(ins->addrTemp());
+    Register memoryBase = ToRegister(ins->memoryBase());
 
-    asmJSAtomicComputeAddress(addrTemp, ptrReg);
+    asmJSAtomicComputeAddress(addrTemp, ptrReg, memoryBase);
 
     Address memAddr(addrTemp, 0);
     masm.compareExchangeToTypedIntArray(accessType == Scalar::Uint32 ? Scalar::Int32 : accessType,
@@ -563,8 +542,9 @@ CodeGeneratorX86::visitAsmJSAtomicExchangeHeap(LAsmJSAtomicExchangeHeap* ins)
     Register ptrReg = ToRegister(ins->ptr());
     Register value = ToRegister(ins->value());
     Register addrTemp = ToRegister(ins->addrTemp());
+    Register memoryBase = ToRegister(ins->memoryBase());
 
-    asmJSAtomicComputeAddress(addrTemp, ptrReg);
+    asmJSAtomicComputeAddress(addrTemp, ptrReg, memoryBase);
 
     Address memAddr(addrTemp, 0);
     masm.atomicExchangeToTypedIntArray(accessType == Scalar::Uint32 ? Scalar::Int32 : accessType,
@@ -586,8 +566,9 @@ CodeGeneratorX86::visitAsmJSAtomicBinopHeap(LAsmJSAtomicBinopHeap* ins)
     Register addrTemp = ToRegister(ins->addrTemp());
     const LAllocation* value = ins->value();
     AtomicOp op = mir->operation();
+    Register memoryBase = ToRegister(ins->memoryBase());
 
-    asmJSAtomicComputeAddress(addrTemp, ptrReg);
+    asmJSAtomicComputeAddress(addrTemp, ptrReg, memoryBase);
 
     Address memAddr(addrTemp, 0);
     if (value->isConstant()) {
@@ -619,8 +600,9 @@ CodeGeneratorX86::visitAsmJSAtomicBinopHeapForEffect(LAsmJSAtomicBinopHeapForEff
     Register addrTemp = ToRegister(ins->addrTemp());
     const LAllocation* value = ins->value();
     AtomicOp op = mir->operation();
+    Register memoryBase = ToRegister(ins->memoryBase());
 
-    asmJSAtomicComputeAddress(addrTemp, ptrReg);
+    asmJSAtomicComputeAddress(addrTemp, ptrReg, memoryBase);
 
     Address memAddr(addrTemp, 0);
     if (value->isConstant())
@@ -761,12 +743,15 @@ CodeGeneratorX86::visitOutOfLineTruncate(OutOfLineTruncate* ool)
     {
         saveVolatile(output);
 
-        masm.setupUnalignedABICall(output);
-        masm.passABIArg(input, MoveOp::DOUBLE);
-        if (gen->compilingWasm())
-            masm.callWithABI(wasm::SymbolicAddress::ToInt32);
-        else
+        if (gen->compilingWasm()) {
+            masm.setupWasmABICall();
+            masm.passABIArg(input, MoveOp::DOUBLE);
+            masm.callWithABI(ins->mir()->bytecodeOffset(), wasm::SymbolicAddress::ToInt32);
+        } else {
+            masm.setupUnalignedABICall(output);
+            masm.passABIArg(input, MoveOp::DOUBLE);
             masm.callWithABI(BitwiseCast<void*, int32_t(*)(double)>(JS::ToInt32));
+        }
         masm.storeCallWordResult(output);
 
         restoreVolatile(output);
@@ -842,18 +827,23 @@ CodeGeneratorX86::visitOutOfLineTruncateFloat32(OutOfLineTruncateFloat32* ool)
     {
         saveVolatile(output);
 
-        masm.push(input);
-        masm.setupUnalignedABICall(output);
+        masm.Push(input);
+
+        if (gen->compilingWasm())
+            masm.setupWasmABICall();
+        else
+            masm.setupUnalignedABICall(output);
+
         masm.vcvtss2sd(input, input, input);
         masm.passABIArg(input.asDouble(), MoveOp::DOUBLE);
 
         if (gen->compilingWasm())
-            masm.callWithABI(wasm::SymbolicAddress::ToInt32);
+            masm.callWithABI(ins->mir()->bytecodeOffset(), wasm::SymbolicAddress::ToInt32);
         else
             masm.callWithABI(BitwiseCast<void*, int32_t(*)(double)>(JS::ToInt32));
 
         masm.storeCallWordResult(output);
-        masm.pop(input);
+        masm.Pop(input);
 
         restoreVolatile(output);
     }
@@ -930,19 +920,10 @@ CodeGeneratorX86::visitDivOrModI64(LDivOrModI64* lir)
 {
     Register64 lhs = ToRegister64(lir->getInt64Operand(LDivOrModI64::Lhs));
     Register64 rhs = ToRegister64(lir->getInt64Operand(LDivOrModI64::Rhs));
+    Register temp = ToRegister(lir->temp());
     Register64 output = ToOutRegister64(lir);
 
     MOZ_ASSERT(output == ReturnReg64);
-
-    // We are free to clobber all registers, since this is a call instruction.
-    AllocatableGeneralRegisterSet regs(GeneralRegisterSet::All());
-    regs.take(lhs.low);
-    regs.take(lhs.high);
-    if (lhs != rhs) {
-        regs.take(rhs.low);
-        regs.take(rhs.high);
-    }
-    Register temp = regs.takeAny();
 
     Label done;
 
@@ -950,12 +931,14 @@ CodeGeneratorX86::visitDivOrModI64(LDivOrModI64* lir)
     if (lir->canBeDivideByZero())
         masm.branchTest64(Assembler::Zero, rhs, rhs, temp, trap(lir, wasm::Trap::IntegerDivideByZero));
 
+    MDefinition* mir = lir->mir();
+
     // Handle an integer overflow exception from INT64_MIN / -1.
     if (lir->canBeNegativeOverflow()) {
         Label notmin;
         masm.branch64(Assembler::NotEqual, lhs, Imm64(INT64_MIN), &notmin);
         masm.branch64(Assembler::NotEqual, rhs, Imm64(-1), &notmin);
-        if (lir->mir()->isMod())
+        if (mir->isMod())
             masm.xor64(output, output);
         else
             masm.jump(trap(lir, wasm::Trap::IntegerOverflow));
@@ -963,17 +946,17 @@ CodeGeneratorX86::visitDivOrModI64(LDivOrModI64* lir)
         masm.bind(&notmin);
     }
 
-    masm.setupUnalignedABICall(temp);
+    masm.setupWasmABICall();
     masm.passABIArg(lhs.high);
     masm.passABIArg(lhs.low);
     masm.passABIArg(rhs.high);
     masm.passABIArg(rhs.low);
 
     MOZ_ASSERT(gen->compilingWasm());
-    if (lir->mir()->isMod())
-        masm.callWithABI(wasm::SymbolicAddress::ModI64);
+    if (mir->isMod())
+        masm.callWithABI(lir->bytecodeOffset(), wasm::SymbolicAddress::ModI64);
     else
-        masm.callWithABI(wasm::SymbolicAddress::DivI64);
+        masm.callWithABI(lir->bytecodeOffset(), wasm::SymbolicAddress::DivI64);
 
     // output in edx:eax, move to output register.
     masm.movl(edx, output.high);
@@ -987,35 +970,27 @@ CodeGeneratorX86::visitUDivOrModI64(LUDivOrModI64* lir)
 {
     Register64 lhs = ToRegister64(lir->getInt64Operand(LDivOrModI64::Lhs));
     Register64 rhs = ToRegister64(lir->getInt64Operand(LDivOrModI64::Rhs));
+    Register temp = ToRegister(lir->temp());
     Register64 output = ToOutRegister64(lir);
 
     MOZ_ASSERT(output == ReturnReg64);
-
-    // We are free to clobber all registers, since this is a call instruction.
-    AllocatableGeneralRegisterSet regs(GeneralRegisterSet::All());
-    regs.take(lhs.low);
-    regs.take(lhs.high);
-    if (lhs != rhs) {
-        regs.take(rhs.low);
-        regs.take(rhs.high);
-    }
-    Register temp = regs.takeAny();
 
     // Prevent divide by zero.
     if (lir->canBeDivideByZero())
         masm.branchTest64(Assembler::Zero, rhs, rhs, temp, trap(lir, wasm::Trap::IntegerDivideByZero));
 
-    masm.setupUnalignedABICall(temp);
+    masm.setupWasmABICall();
     masm.passABIArg(lhs.high);
     masm.passABIArg(lhs.low);
     masm.passABIArg(rhs.high);
     masm.passABIArg(rhs.low);
 
     MOZ_ASSERT(gen->compilingWasm());
-    if (lir->mir()->isMod())
-        masm.callWithABI(wasm::SymbolicAddress::UModI64);
+    MDefinition* mir = lir->mir();
+    if (mir->isMod())
+        masm.callWithABI(lir->bytecodeOffset(), wasm::SymbolicAddress::UModI64);
     else
-        masm.callWithABI(wasm::SymbolicAddress::UDivI64);
+        masm.callWithABI(lir->bytecodeOffset(), wasm::SymbolicAddress::UDivI64);
 
     // output in edx:eax, move to output register.
     masm.movl(edx, output.high);

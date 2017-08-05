@@ -29,11 +29,16 @@ namespace mozilla {
         class CompositorBridgeChild;
         class LayerManager;
         class APZCTreeManager;
+        class UiCompositorControllerChild;
     }
 
     namespace widget {
         class GeckoEditableSupport;
     } // namespace widget
+
+    namespace ipc {
+        class Shmem;
+    } // namespace ipc
 }
 
 class nsWindow : public nsBaseWidget
@@ -50,6 +55,7 @@ public:
 
     static void InitNatives();
     void SetScreenId(uint32_t aScreenId) { mScreenId = aScreenId; }
+    void EnableEventDispatcher();
 
 private:
     uint32_t mScreenId;
@@ -130,7 +136,9 @@ public:
             , mWindowLock(NativePtr<Impl>::sName)
         {
             MOZ_ASSERT(NS_IsMainThread());
-            mPtr->mPtr = this;
+            if (mPtr) {
+                mPtr->mPtr = this;
+            }
         }
 
         ~WindowPtr()
@@ -211,7 +219,6 @@ public:
 
     void UpdateOverscrollVelocity(const float aX, const float aY);
     void UpdateOverscrollOffset(const float aX, const float aY);
-    void SetScrollingRootContent(const bool isRootContent);
 
     //
     // nsIWidget
@@ -272,7 +279,6 @@ public:
     virtual void SetInputContext(const InputContext& aContext,
                                  const InputContextAction& aAction) override;
     virtual InputContext GetInputContext() override;
-    virtual nsIMEUpdatePreference GetIMEUpdatePreference() override;
 
     void SetSelectionDragState(bool aState);
     LayerManager* GetLayerManager(PLayerTransactionChild* aShadowManager = nullptr,
@@ -280,11 +286,6 @@ public:
                                   LayerManagerPersistence aPersistence = LAYER_MANAGER_CURRENT) override;
 
     virtual bool NeedsPaint() override;
-    virtual bool PreRender(mozilla::widget::WidgetRenderingContext* aContext) override;
-    virtual void DrawWindowUnderlay(mozilla::widget::WidgetRenderingContext* aContext,
-                                    LayoutDeviceIntRect aRect) override;
-    virtual void DrawWindowOverlay(mozilla::widget::WidgetRenderingContext* aContext,
-                                   LayoutDeviceIntRect aRect) override;
 
     virtual bool WidgetPaintsBackground() override;
 
@@ -307,7 +308,7 @@ public:
     nsresult SynthesizeNativeMouseMove(LayoutDeviceIntPoint aPoint,
                                        nsIObserver* aObserver) override;
 
-    CompositorBridgeChild* GetCompositorBridgeChild() const;
+    mozilla::layers::CompositorBridgeChild* GetCompositorBridgeChild() const;
 
     mozilla::jni::DependentRef<mozilla::java::GeckoLayerClient> GetLayerClient();
 
@@ -315,6 +316,11 @@ public:
     // event (like a keypress or mouse click).
     void UserActivity();
 
+    mozilla::java::GeckoEditable::Ref& GetEditableParent() { return mEditable; }
+
+    void RecvToolbarAnimatorMessageFromCompositor(int32_t aMessage) override;
+    void UpdateRootFrameMetrics(const ScreenPoint& aScrollOffset, const CSSToScreenScale& aZoom, const CSSRect& aPage) override;
+    void RecvScreenPixels(mozilla::ipc::Shmem&& aMem, const ScreenIntSize& aSize) override;
 protected:
     void BringToFront();
     nsWindow *FindTopLevel();
@@ -349,9 +355,8 @@ private:
     void CreateLayerManager(int aCompositorWidth, int aCompositorHeight);
     void RedrawAll();
 
-    mozilla::java::LayerRenderer::Frame::GlobalRef mLayerRendererFrame;
-
     int64_t GetRootLayerId() const;
+    RefPtr<mozilla::layers::UiCompositorControllerChild> GetUiCompositorControllerChild();
 };
 
 #endif /* NSWINDOW_H_ */

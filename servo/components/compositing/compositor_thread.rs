@@ -8,13 +8,12 @@ use SendableFrameTree;
 use compositor::CompositingReason;
 use euclid::point::Point2D;
 use euclid::size::Size2D;
-use gfx_traits::ScrollRootId;
 use ipc_channel::ipc::IpcSender;
 use msg::constellation_msg::{Key, KeyModifiers, KeyState, PipelineId};
 use net_traits::image::base::Image;
 use profile_traits::mem;
 use profile_traits::time;
-use script_traits::{AnimationState, ConstellationMsg, EventResult};
+use script_traits::{AnimationState, ConstellationMsg, EventResult, LoadData};
 use servo_url::ServoUrl;
 use std::fmt::{Debug, Error, Formatter};
 use std::sync::mpsc::{Receiver, Sender};
@@ -23,32 +22,46 @@ use style_traits::viewport::ViewportConstraints;
 use webrender;
 use webrender_traits;
 
-/// Sends messages to the compositor. This is a trait supplied by the port because the method used
-/// to communicate with the compositor may have to kick OS event loops awake, communicate cross-
-/// process, and so forth.
-pub trait CompositorProxy : 'static + Send {
-    /// Sends a message to the compositor.
-    fn send(&self, msg: Msg);
-    /// Clones the compositor proxy.
-    fn clone_compositor_proxy(&self) -> Box<CompositorProxy + 'static + Send>;
+
+/// Used to wake up the event loop, provided by the servo port/embedder.
+pub trait EventLoopWaker : 'static + Send {
+    fn clone(&self) -> Box<EventLoopWaker + Send>;
+    fn wake(&self);
 }
 
-/// The port that the compositor receives messages on. As above, this is a trait supplied by the
-/// Servo port.
-pub trait CompositorReceiver : 'static {
-    /// Receives the next message inbound for the compositor. This must not block.
-    fn try_recv_compositor_msg(&mut self) -> Option<Msg>;
-    /// Synchronously waits for, and returns, the next message inbound for the compositor.
-    fn recv_compositor_msg(&mut self) -> Msg;
+/// Sends messages to the compositor.
+pub struct CompositorProxy {
+    pub sender: Sender<Msg>,
+    pub event_loop_waker: Box<EventLoopWaker>,
 }
 
-/// A convenience implementation of `CompositorReceiver` for a plain old Rust `Receiver`.
-impl CompositorReceiver for Receiver<Msg> {
-    fn try_recv_compositor_msg(&mut self) -> Option<Msg> {
-        self.try_recv().ok()
+impl CompositorProxy {
+    pub fn send(&self, msg: Msg) {
+        // Send a message and kick the OS event loop awake.
+        if let Err(err) = self.sender.send(msg) {
+            warn!("Failed to send response ({}).", err);
+        }
+        self.event_loop_waker.wake();
     }
-    fn recv_compositor_msg(&mut self) -> Msg {
-        self.recv().unwrap()
+    pub fn clone_compositor_proxy(&self) -> CompositorProxy {
+        CompositorProxy {
+            sender: self.sender.clone(),
+            event_loop_waker: self.event_loop_waker.clone(),
+        }
+    }
+}
+
+/// The port that the compositor receives messages on.
+pub struct CompositorReceiver {
+    pub receiver: Receiver<Msg>
+}
+
+impl CompositorReceiver {
+    pub fn try_recv_compositor_msg(&mut self) -> Option<Msg> {
+        self.receiver.try_recv().ok()
+    }
+    pub fn recv_compositor_msg(&mut self) -> Msg {
+        self.receiver.recv().unwrap()
     }
 }
 
@@ -56,7 +69,7 @@ pub trait RenderListener {
     fn recomposite(&mut self, reason: CompositingReason);
 }
 
-impl RenderListener for Box<CompositorProxy + 'static> {
+impl RenderListener for CompositorProxy {
     fn recomposite(&mut self, reason: CompositingReason) {
         self.send(Msg::Recomposite(reason));
     }
@@ -73,19 +86,21 @@ pub enum Msg {
     ShutdownComplete,
 
     /// Scroll a page in a window
-    ScrollFragmentPoint(PipelineId, ScrollRootId, Point2D<f32>, bool),
+    ScrollFragmentPoint(webrender_traits::ClipId, Point2D<f32>, bool),
     /// Alerts the compositor that the current page has changed its title.
     ChangePageTitle(PipelineId, Option<String>),
-    /// Alerts the compositor that the current page has changed its URL.
-    ChangePageUrl(PipelineId, ServoUrl),
     /// Alerts the compositor that the given pipeline has changed whether it is running animations.
     ChangeRunningAnimationsState(PipelineId, AnimationState),
     /// Replaces the current frame tree, typically called during main frame navigation.
     SetFrameTree(SendableFrameTree, IpcSender<()>),
-    /// The load of a page has begun: (can go back, can go forward).
-    LoadStart(bool, bool),
-    /// The load of a page has completed: (can go back, can go forward, is root frame).
-    LoadComplete(bool, bool, bool),
+    /// The load of a page has begun
+    LoadStart,
+    /// The load of a page has completed
+    LoadComplete,
+    /// The history state has changed.
+    HistoryChanged(Vec<LoadData>, usize),
+    /// Wether or not to follow a link
+    AllowNavigation(ServoUrl, IpcSender<bool>),
     /// We hit the delayed composition timeout. (See `delayed_composition.rs`.)
     DelayedCompositionTimeout(u64),
     /// Composite.
@@ -141,10 +156,11 @@ impl Debug for Msg {
             Msg::ScrollFragmentPoint(..) => write!(f, "ScrollFragmentPoint"),
             Msg::ChangeRunningAnimationsState(..) => write!(f, "ChangeRunningAnimationsState"),
             Msg::ChangePageTitle(..) => write!(f, "ChangePageTitle"),
-            Msg::ChangePageUrl(..) => write!(f, "ChangePageUrl"),
             Msg::SetFrameTree(..) => write!(f, "SetFrameTree"),
-            Msg::LoadComplete(..) => write!(f, "LoadComplete"),
-            Msg::LoadStart(..) => write!(f, "LoadStart"),
+            Msg::LoadComplete => write!(f, "LoadComplete"),
+            Msg::AllowNavigation(..) => write!(f, "AllowNavigation"),
+            Msg::LoadStart => write!(f, "LoadStart"),
+            Msg::HistoryChanged(..) => write!(f, "HistoryChanged"),
             Msg::DelayedCompositionTimeout(..) => write!(f, "DelayedCompositionTimeout"),
             Msg::Recomposite(..) => write!(f, "Recomposite"),
             Msg::KeyEvent(..) => write!(f, "KeyEvent"),
@@ -171,9 +187,9 @@ impl Debug for Msg {
 /// Data used to construct a compositor.
 pub struct InitialCompositorState {
     /// A channel to the compositor.
-    pub sender: Box<CompositorProxy + Send>,
+    pub sender: CompositorProxy,
     /// A port on which messages inbound to the compositor can be received.
-    pub receiver: Box<CompositorReceiver>,
+    pub receiver: CompositorReceiver,
     /// A channel to the constellation.
     pub constellation_chan: Sender<ConstellationMsg>,
     /// A channel to the time profiler thread.

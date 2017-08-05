@@ -41,23 +41,23 @@ public:
     //
     // @return failure code to close the transaction.
     //
-    virtual nsresult OnHeadersAvailable(nsAHttpTransaction *,
-                                        nsHttpRequestHead *,
-                                        nsHttpResponseHead *,
-                                        bool *reset) = 0;
+    virtual MOZ_MUST_USE nsresult OnHeadersAvailable(nsAHttpTransaction *,
+                                                     nsHttpRequestHead *,
+                                                     nsHttpResponseHead *,
+                                                     bool *reset) = 0;
 
     //
     // called by a transaction to resume either sending or receiving data
     // after a transaction returned NS_BASE_STREAM_WOULD_BLOCK from its
     // ReadSegments/WriteSegments methods.
     //
-    virtual nsresult ResumeSend() = 0;
-    virtual nsresult ResumeRecv() = 0;
+    virtual MOZ_MUST_USE nsresult ResumeSend() = 0;
+    virtual MOZ_MUST_USE nsresult ResumeRecv() = 0;
 
     // called by a transaction to force a "send/recv from network" iteration
     // even if not scheduled by socket associated with connection
-    virtual nsresult ForceSend() = 0;
-    virtual nsresult ForceRecv() = 0;
+    virtual MOZ_MUST_USE nsresult ForceSend() = 0;
+    virtual MOZ_MUST_USE nsresult ForceRecv() = 0;
 
     // After a connection has had ResumeSend() called by a transaction,
     // and it is ready to write to the network it may need to know the
@@ -96,9 +96,9 @@ public:
 
     // get the transport level information for this connection. This may fail
     // if it is in use.
-    virtual nsresult TakeTransport(nsISocketTransport **,
-                                   nsIAsyncInputStream **,
-                                   nsIAsyncOutputStream **) = 0;
+    virtual MOZ_MUST_USE nsresult TakeTransport(nsISocketTransport **,
+                                                nsIAsyncInputStream **,
+                                                nsIAsyncOutputStream **) = 0;
 
     // called by a transaction to get the security info from the socket.
     virtual void GetSecurityInfo(nsISupports **) = 0;
@@ -113,7 +113,7 @@ public:
 
     // called by a transaction when the transaction reads more from the socket
     // than it should have (eg. containing part of the next response).
-    virtual nsresult PushBack(const char *data, uint32_t length) = 0;
+    virtual MOZ_MUST_USE nsresult PushBack(const char *data, uint32_t length) = 0;
 
     // Used to determine if the connection wants read events even though
     // it has not written out a transaction. Used when a connection has issued
@@ -128,6 +128,9 @@ public:
     // Transfer the base http connection object along with a
     // reference to it to the caller.
     virtual already_AddRefed<nsHttpConnection> TakeHttpConnection() = 0;
+
+    // Like TakeHttpConnection() but do not drop our own ref
+    virtual already_AddRefed<nsHttpConnection> HttpConnection() = 0;
 
     // Get the nsISocketTransport used by the connection without changing
     //  references or ownership.
@@ -148,17 +151,21 @@ public:
 NS_DEFINE_STATIC_IID_ACCESSOR(nsAHttpConnection, NS_AHTTPCONNECTION_IID)
 
 #define NS_DECL_NSAHTTPCONNECTION(fwdObject)                    \
-    nsresult OnHeadersAvailable(nsAHttpTransaction *, nsHttpRequestHead *, nsHttpResponseHead *, bool *reset) override; \
+    MOZ_MUST_USE nsresult OnHeadersAvailable(nsAHttpTransaction *,  \
+                                             nsHttpRequestHead *,   \
+                                             nsHttpResponseHead *,  \
+                                             bool *reset) override; \
     void CloseTransaction(nsAHttpTransaction *, nsresult) override; \
-    nsresult TakeTransport(nsISocketTransport **,    \
-                           nsIAsyncInputStream **,   \
-                           nsIAsyncOutputStream **) override; \
+    MOZ_MUST_USE nsresult TakeTransport(nsISocketTransport **,    \
+                                        nsIAsyncInputStream **,   \
+                                        nsIAsyncOutputStream **) override; \
     bool IsPersistent() override;                         \
     bool IsReused() override;                             \
     void DontReuse() override;                            \
-    nsresult PushBack(const char *, uint32_t) override;   \
+    MOZ_MUST_USE nsresult PushBack(const char *, uint32_t) override; \
     already_AddRefed<nsHttpConnection> TakeHttpConnection() override; \
-    /*                                                    \
+    already_AddRefed<nsHttpConnection> HttpConnection() override; \
+    /*                                                                  \
        Thes methods below have automatic definitions that just forward the \
        function to a lower level connection object        \
     */                                                    \
@@ -179,25 +186,25 @@ NS_DEFINE_STATIC_IID_ACCESSOR(nsAHttpConnection, NS_AHTTPCONNECTION_IID)
       }                                                   \
       return (fwdObject)->GetSecurityInfo(result);        \
     }                                                     \
-    nsresult ResumeSend() override     \
+    MOZ_MUST_USE nsresult ResumeSend() override \
     {                                      \
         if (!(fwdObject))                  \
             return NS_ERROR_FAILURE;       \
         return (fwdObject)->ResumeSend();  \
     }                                      \
-    nsresult ResumeRecv() override     \
+    MOZ_MUST_USE nsresult ResumeRecv() override \
     {                                      \
         if (!(fwdObject))                  \
             return NS_ERROR_FAILURE;       \
         return (fwdObject)->ResumeRecv();  \
     }                                      \
-    nsresult ForceSend() override      \
+    MOZ_MUST_USE nsresult ForceSend() override \
     {                                      \
         if (!(fwdObject))                  \
             return NS_ERROR_FAILURE;       \
         return (fwdObject)->ForceSend();   \
     }                                      \
-    nsresult ForceRecv() override      \
+    MOZ_MUST_USE nsresult ForceRecv() override \
     {                                      \
         if (!(fwdObject))                  \
             return NS_ERROR_FAILURE;       \
@@ -240,6 +247,9 @@ NS_DEFINE_STATIC_IID_ACCESSOR(nsAHttpConnection, NS_AHTTPCONNECTION_IID)
         if (fwdObject)                                      \
             (fwdObject)->SetSecurityCallbacks(aCallbacks);  \
     }
+
+    // ThrottleResponse deliberately ommited since we want different implementation
+    // for h1 and h2 connections.
 
 } // namespace net
 } // namespace mozilla

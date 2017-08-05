@@ -33,6 +33,30 @@ Cc["@mozilla.org/globalmessagemanager;1"]
 XPCOMUtils.defineLazyModuleGetter(this, "E10SUtils",
   "resource:///modules/E10SUtils.jsm");
 
+const PROCESSSELECTOR_CONTRACTID = "@mozilla.org/ipc/processselector;1";
+const OUR_PROCESSSELECTOR_CID =
+  Components.ID("{f9746211-3d53-4465-9aeb-ca0d96de0253}");
+const EXISTING_JSID = Cc[PROCESSSELECTOR_CONTRACTID];
+const DEFAULT_PROCESSSELECTOR_CID = EXISTING_JSID ?
+  Components.ID(EXISTING_JSID.number) : null;
+
+// A process selector that always asks for a new process.
+function NewProcessSelector() {
+}
+
+NewProcessSelector.prototype = {
+  classID: OUR_PROCESSSELECTOR_CID,
+  QueryInterface: XPCOMUtils.generateQI([Ci.nsIContentProcessProvider]),
+
+  provideProcess() {
+    return Ci.nsIContentProcessProvider.NEW_PROCESS;
+  }
+};
+
+let registrar = Components.manager.QueryInterface(Ci.nsIComponentRegistrar);
+let selectorFactory = XPCOMUtils._getFactory(NewProcessSelector);
+registrar.registerFactory(OUR_PROCESSSELECTOR_CID, "", null, selectorFactory);
+
 // For now, we'll allow tests to use CPOWs in this module for
 // some cases.
 Cu.permitCPOWsInScope(this);
@@ -77,7 +101,7 @@ this.BrowserTestUtils = {
         url: options
       }
     }
-    let tab = yield BrowserTestUtils.openNewForegroundTab(options.gBrowser, options.url);
+    let tab = yield BrowserTestUtils.openNewForegroundTab(options);
     let originalWindow = tab.ownerGlobal;
     let result = yield taskFn(tab.linkedBrowser);
     let finalWindow = tab.ownerGlobal;
@@ -94,9 +118,13 @@ this.BrowserTestUtils = {
   /**
    * Opens a new tab in the foreground.
    *
-   * @param {tabbrowser} tabbrowser
+   * This function takes an options object (which is preferred) or actual
+   * parameters. The names of the options must correspond to the names below.
+   * gBrowser is required and all other options are optional.
+   *
+   * @param {tabbrowser} gBrowser
    *        The tabbrowser to open the tab new in.
-   * @param {string} opening
+   * @param {string} opening (or url)
    *        May be either a string URL to load in the tab, or a function that
    *        will be called to open a foreground tab. Defaults to "about:blank".
    * @param {boolean} waitForLoad
@@ -104,32 +132,83 @@ this.BrowserTestUtils = {
    * @param {boolean} waitForStateStop
    *        True to wait for the web progress listener to send STATE_STOP for the
    *        document in the tab. Defaults to false.
+   * @param {boolean} forceNewProcess
+   *        True to force the new tab to load in a new process. Defaults to
+   *        false.
    *
    * @return {Promise}
    *         Resolves when the tab is ready and loaded as necessary.
    * @resolves The new tab.
    */
-  openNewForegroundTab(tabbrowser, opening = "about:blank", aWaitForLoad = true, aWaitForStateStop = false) {
-    let tab;
-    let promises = [
-      BrowserTestUtils.switchTab(tabbrowser, function () {
-        if (typeof opening == "function") {
-          opening();
-          tab = tabbrowser.selectedTab;
-        }
-        else {
-          tabbrowser.selectedTab = tab = tabbrowser.addTab(opening);
-        }
-      })
-    ];
+  openNewForegroundTab(tabbrowser, ...args) {
+    let options;
+    if (tabbrowser instanceof Ci.nsIDOMXULElement) {
+      // tabbrowser is a tabbrowser, read the rest of the arguments from args.
+      let [
+        opening = "about:blank",
+        waitForLoad = true,
+        waitForStateStop = false,
+        forceNewProcess = false,
+      ] = args;
 
-    if (aWaitForLoad) {
-      promises.push(BrowserTestUtils.browserLoaded(tab.linkedBrowser));
-    }
-    if (aWaitForStateStop) {
-      promises.push(BrowserTestUtils.browserStopped(tab.linkedBrowser));
+      options = { opening, waitForLoad, waitForStateStop, forceNewProcess };
+    } else {
+      if ("url" in tabbrowser && !("opening" in tabbrowser)) {
+        tabbrowser.opening = tabbrowser.url;
+      }
+
+      let {
+        opening = "about:blank",
+        waitForLoad = true,
+        waitForStateStop = false,
+        forceNewProcess = false,
+      } = tabbrowser;
+
+      tabbrowser = tabbrowser.gBrowser;
+      options = { opening, waitForLoad, waitForStateStop, forceNewProcess };
     }
 
+    let { opening: opening,
+          waitForLoad: aWaitForLoad,
+          waitForStateStop: aWaitForStateStop
+    } = options;
+
+    let promises, tab;
+    try {
+      // If we're asked to force a new process, replace the normal process
+      // selector with one that always asks for a new process.
+      // If DEFAULT_PROCESSSELECTOR_CID is null, we're in non-e10s mode and we
+      // should skip this.
+      if (options.forceNewProcess && DEFAULT_PROCESSSELECTOR_CID) {
+        registrar.registerFactory(OUR_PROCESSSELECTOR_CID, "",
+                                  PROCESSSELECTOR_CONTRACTID, null);
+      }
+
+      promises = [
+        BrowserTestUtils.switchTab(tabbrowser, function () {
+          if (typeof opening == "function") {
+            opening();
+            tab = tabbrowser.selectedTab;
+          }
+          else {
+            tabbrowser.selectedTab = tab = tabbrowser.addTab(opening);
+          }
+        })
+      ];
+
+      if (aWaitForLoad) {
+        promises.push(BrowserTestUtils.browserLoaded(tab.linkedBrowser));
+      }
+      if (aWaitForStateStop) {
+        promises.push(BrowserTestUtils.browserStopped(tab.linkedBrowser));
+      }
+    } finally {
+      // Restore the original process selector, if needed.
+      if (options.forceNewProcess && DEFAULT_PROCESSSELECTOR_CID) {
+        registrar.registerFactory(DEFAULT_PROCESSSELECTOR_CID, "",
+                                  PROCESSSELECTOR_CONTRACTID, null);
+      }
+    }
     return Promise.all(promises).then(() => tab);
   },
 
@@ -183,6 +262,11 @@ this.BrowserTestUtils = {
    * @resolves When a load event is triggered for the browser.
    */
   browserLoaded(browser, includeSubFrames=false, wantLoad=null) {
+    // Passing a url as second argument is a common mistake we should prevent.
+    if (includeSubFrames && typeof includeSubFrames != "boolean") {
+      throw("The second argument to browserLoaded should be a boolean.");
+    }
+
     // If browser belongs to tabbrowser-tab, ensure it has been
     // inserted into the document.
     let tabbrowser = browser.ownerGlobal.gBrowser;
@@ -280,26 +364,48 @@ this.BrowserTestUtils = {
    *        The tabbrowser to look for the next new tab in.
    * @param {string} url
    *        A string URL to look for in the new tab. If null, allows any non-blank URL.
+   * @param {boolean} waitForLoad
+   *        True to wait for the page in the new tab to load. Defaults to false.
    *
    * @return {Promise}
-   * @resolves With the {xul:tab} when a tab is opened and its location changes to the given URL.
+   * @resolves With the {xul:tab} when a tab is opened and its location changes
+   *           to the given URL and optionally that browser has loaded.
    *
    * NB: this method will not work if you open a new tab with e.g. BrowserOpenTab
    * and the tab does not load a URL, because no onLocationChange will fire.
    */
-  waitForNewTab(tabbrowser, url) {
+  waitForNewTab(tabbrowser, url, waitForLoad = false) {
+    let urlMatches = url ? (urlToMatch) => urlToMatch == url
+                         : (urlToMatch) => urlToMatch != "about:blank";
     return new Promise((resolve, reject) => {
       tabbrowser.tabContainer.addEventListener("TabOpen", function(openEvent) {
+        let newTab = openEvent.target;
+        let newBrowser = newTab.linkedBrowser;
+        let result;
+        if (waitForLoad) {
+          // If waiting for load, resolve with promise for that, which when load
+          // completes resolves to the new tab.
+          result = BrowserTestUtils.browserLoaded(newBrowser, false, urlMatches)
+                                   .then(() => newTab);
+        } else {
+          // If not waiting for load, just resolve with the new tab.
+          result = newTab;
+        }
+
         let progressListener = {
           onLocationChange(aBrowser) {
-            if (aBrowser != openEvent.target.linkedBrowser ||
-                (url && aBrowser.currentURI.spec != url) ||
-                (!url && aBrowser.currentURI.spec == "about:blank")) {
+            // Only interested in location changes on our browser.
+            if (aBrowser != newBrowser) {
+              return;
+            }
+
+            // Check that new location is the URL we want.
+            if (!urlMatches(aBrowser.currentURI.spec)) {
               return;
             }
 
             tabbrowser.removeTabsProgressListener(progressListener);
-            resolve(openEvent.target);
+            resolve(result);
           },
         };
         tabbrowser.addTabsProgressListener(progressListener);
@@ -564,6 +670,11 @@ this.BrowserTestUtils = {
     if (winType == "navigator:browser") {
       let finalMsgsPromise = new Promise((resolve) => {
         let browserSet = new Set(win.gBrowser.browsers);
+        // Ensure all browsers have been inserted or we won't get
+        // messages back from them.
+        browserSet.forEach((browser) => {
+          win.gBrowser._insertBrowser(win.gBrowser.getTabForBrowser(browser));
+        })
         let mm = win.getGroupMessageManager("browsers");
 
         mm.addMessageListener("SessionStore:update", function onMessage(msg) {
@@ -989,7 +1100,7 @@ this.BrowserTestUtils = {
         });
       };
 
-      Services.obs.addObserver(observer, 'ipc:content-shutdown', false);
+      Services.obs.addObserver(observer, 'ipc:content-shutdown');
     });
 
     expectedPromises.push(crashCleanupPromise);
@@ -1359,4 +1470,16 @@ this.BrowserTestUtils = {
     }
     Services.ppmm.removeDelayedProcessScript(kAboutPageRegistrationContentScript);
   },
+
+  /**
+   * Opens a tab with a given uri and params object. If the params object is not set
+   * or the params parameter does not include a triggeringPricnipal then this function
+   * provides a params object using the systemPrincipal as the default triggeringPrincipal.
+   */
+  addTab(browser, uri, params = {}) {
+    if (!params.triggeringPrincipal) {
+      params.triggeringPrincipal = Services.scriptSecurityManager.getSystemPrincipal();
+    }
+    return browser.addTab(uri, params);
+  }
 };

@@ -11,12 +11,12 @@
 #define ZIP_TABSIZE   256
 #define ZIP_BUFLEN    (4*1024)      /* Used as output buffer when deflating items to a file */
 
-#include "plarena.h"
 #include "zlib.h"
 #include "zipstruct.h"
 #include "nsAutoPtr.h"
 #include "nsIFile.h"
 #include "nsISupportsImpl.h" // For mozilla::ThreadSafeAutoRefCnt
+#include "mozilla/ArenaAllocator.h"
 #include "mozilla/FileUtils.h"
 #include "mozilla/FileLocation.h"
 #include "mozilla/UniquePtr.h"
@@ -37,6 +37,9 @@
 
 class nsZipFind;
 struct PRFileDesc;
+#ifdef MOZ_JAR_BROTLI
+struct BrotliStateStruct;
+#endif
 
 /**
  * This file defines some of the basic structures used by libjar to
@@ -217,7 +220,7 @@ private:
   NS_DECL_OWNINGTHREAD
 
   nsZipItem*    mFiles[ZIP_TABSIZE];
-  PLArenaPool   mArena;
+  mozilla::ArenaAllocator<1024, sizeof(void*)> mArena;
 
   const char*   mCommentPtr;
   uint16_t      mCommentLen;
@@ -314,6 +317,9 @@ private:
   uint8_t  *mBuf; 
   uint32_t  mBufSize; 
   z_stream  mZs;
+#ifdef MOZ_JAR_BROTLI
+  BrotliStateStruct* mBrotliState;
+#endif
   uint32_t mCRC;
   bool mDoCRC;
 };

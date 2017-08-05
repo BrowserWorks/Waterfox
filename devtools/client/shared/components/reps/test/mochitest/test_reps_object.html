@@ -17,8 +17,12 @@ Test Obj rep
 <script src="head.js" type="application/javascript"></script>
 <script type="application/javascript">
 window.onload = Task.async(function* () {
-  const { REPS, MODE } = browserRequire("devtools/client/shared/components/reps/reps");
-  let { Rep, Obj } = REPS;
+  const {
+    REPS,
+    MODE,
+    getRep,
+  } = browserRequire("devtools/client/shared/components/reps/reps");
+  let { Obj } = REPS;
 
   const componentUnderTest = Obj;
 
@@ -30,6 +34,9 @@ window.onload = Task.async(function* () {
     yield testMoreThanMaxProps();
     yield testUninterestingProps();
 
+    // Test that unusual property names are escaped.
+    yield testEscapedPropertyNames();
+
     // Test that properties are rendered as expected by PropRep
     yield testNested();
 
@@ -37,6 +44,9 @@ window.onload = Task.async(function* () {
     yield testMoreProp();
 
     // Test that you can pass a custom title to the Rep
+    yield testCustomTitle();
+
+    // Test that you can pass an objectLink to the Rep
     yield testCustomTitle();
   } catch(e) {
     ok(false, "Got an error: " + DevToolsUtils.safeErrorString(e));
@@ -48,8 +58,7 @@ window.onload = Task.async(function* () {
     const stub = {};
 
     // Test that correct rep is chosen
-    const renderedRep = shallowRenderComponent(Rep, { object: stub });
-    is(renderedRep.type, Obj.rep, `Rep correctly selects ${Obj.rep.displayName}`);
+    is(getRep(stub), Obj.rep, "Rep correctly selects Obj Rep");
 
     // Test rendering
     const defaultOutput = `Object`;
@@ -159,6 +168,32 @@ window.onload = Task.async(function* () {
     testRepRenderModes(modeTests, "testUninterestingProps", componentUnderTest, stub);
   }
 
+  function testEscapedPropertyNames() {
+    const stub = {"":1, "quote-this":2, noquotes:3};
+    const defaultOutput = `Object { "": 1, "quote-this": 2, noquotes: 3 }`;
+
+    const modeTests = [
+      {
+        mode: undefined,
+        expectedOutput: defaultOutput,
+      },
+      {
+        mode: MODE.TINY,
+        expectedOutput: `Object`,
+      },
+      {
+        mode: MODE.SHORT,
+        expectedOutput: defaultOutput,
+      },
+      {
+        mode: MODE.LONG,
+        expectedOutput: defaultOutput,
+      }
+    ];
+
+    testRepRenderModes(modeTests, "testEscapedPropertyNames", componentUnderTest, stub);
+  }
+
   function testNested() {
     const stub = {
       objProp: {
@@ -253,6 +288,46 @@ window.onload = Task.async(function* () {
       componentUnderTest,
       stub, {
         title: customTitle
+      }
+    );
+  }
+
+  function testObjectLink() {
+    const stub = {
+      a: undefined,
+      b: 1,
+      "more": 2,
+      d: 3
+    };
+    const defaultOutput = `*Object **{ *b: 1, more: 2, d: 3, *1 more…** }*`;
+
+    const modeTests = [
+      {
+        mode: undefined,
+        expectedOutput: defaultOutput,
+      },
+      {
+        mode: MODE.TINY,
+        expectedOutput: `*Object*`,
+      },
+      {
+        mode: MODE.SHORT,
+        expectedOutput: defaultOutput,
+      },
+      {
+        mode: MODE.LONG,
+        expectedOutput: defaultOutput,
+      }
+    ];
+
+    testRepRenderModes(
+      modeTests,
+      "testObjectLink",
+      componentUnderTest,
+      stub,
+      {
+        objectLink: (props, ...children) => React.DOM.span({},
+          "*", ...children, "*"),
       }
     );
   }

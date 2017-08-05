@@ -206,8 +206,7 @@ ShadowRoot::GetElementsByTagNameNS(const nsAString& aNamespaceURI,
 void
 ShadowRoot::AddToIdTable(Element* aElement, nsIAtom* aId)
 {
-  nsIdentifierMapEntry *entry =
-    mIdentifierMap.PutEntry(nsDependentAtomString(aId));
+  nsIdentifierMapEntry* entry = mIdentifierMap.PutEntry(aId);
   if (entry) {
     entry->AddIdElement(aElement);
   }
@@ -216,8 +215,7 @@ ShadowRoot::AddToIdTable(Element* aElement, nsIAtom* aId)
 void
 ShadowRoot::RemoveFromIdTable(Element* aElement, nsIAtom* aId)
 {
-  nsIdentifierMapEntry *entry =
-    mIdentifierMap.GetEntry(nsDependentAtomString(aId));
+  nsIdentifierMapEntry* entry = mIdentifierMap.GetEntry(aId);
   if (entry) {
     entry->RemoveIdElement(aElement);
     if (entry->IsEmpty()) {
@@ -712,7 +710,8 @@ ShadowRoot::ContentRemoved(nsIDocument* aDocument,
 }
 
 nsresult
-ShadowRoot::Clone(mozilla::dom::NodeInfo *aNodeInfo, nsINode **aResult) const
+ShadowRoot::Clone(mozilla::dom::NodeInfo *aNodeInfo, nsINode **aResult,
+                  bool aPreallocateChildren) const
 {
   *aResult = nullptr;
   return NS_ERROR_DOM_DATA_CLONE_ERR;

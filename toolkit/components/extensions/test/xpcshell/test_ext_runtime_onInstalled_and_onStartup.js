@@ -8,6 +8,7 @@ XPCOMUtils.defineLazyGetter(this, "Management", () => {
 });
 
 Cu.import("resource://gre/modules/AddonManager.jsm");
+Cu.import("resource://gre/modules/Preferences.jsm");
 
 const {
   createAppInfo,
@@ -26,19 +27,6 @@ AddonTestUtils.init(this);
 AddonTestUtils.overrideCertDB();
 
 createAppInfo("xpcshell@tests.mozilla.org", "XPCShell", "1", "42");
-
-function awaitEvent(eventName) {
-  return new Promise(resolve => {
-    let listener = (_eventName, ...args) => {
-      if (_eventName === eventName) {
-        Management.off(eventName, listener);
-        resolve(...args);
-      }
-    };
-
-    Management.on(eventName, listener);
-  });
-}
 
 function background() {
   let onInstalledDetails = null;
@@ -69,21 +57,29 @@ function background() {
   });
 }
 
-function* expectEvents(extension, {onStartupFired, onInstalledFired, onInstalledReason}) {
+async function expectEvents(extension, {onStartupFired, onInstalledFired, onInstalledReason, onInstalledTemporary, onInstalledPrevious}) {
   extension.sendMessage("get-on-installed-details");
-  let details = yield extension.awaitMessage("on-installed-details");
+  let details = await extension.awaitMessage("on-installed-details");
   if (onInstalledFired) {
     equal(details.reason, onInstalledReason, "runtime.onInstalled fired with the correct reason");
+    equal(details.temporary, onInstalledTemporary, "runtime.onInstalled fired with the correct temporary flag");
+    if (onInstalledPrevious) {
+      equal(details.previousVersion, onInstalledPrevious, "runtime.onInstalled after update with correct previousVersion");
+    }
   } else {
     equal(details.fired, onInstalledFired, "runtime.onInstalled should not have fired");
   }
 
   extension.sendMessage("did-on-startup-fire");
-  let fired = yield extension.awaitMessage("on-startup-fired");
+  let fired = await extension.awaitMessage("on-startup-fired");
   equal(fired, onStartupFired, `Expected runtime.onStartup to ${onStartupFired ? "" : "not "} fire`);
 }
 
-add_task(function* test_should_fire_on_addon_update() {
+add_task(async function test_should_fire_on_addon_update() {
+  Preferences.set("extensions.logging.enabled", false);
+
+  await promiseStartupManager();
+
   const EXTENSION_ID = "test_runtime_on_installed_addon_update@tests.mozilla.org";
 
   const PREF_EM_CHECK_UPDATE_SECURITY = "extensions.checkUpdateSecurity";
@@ -137,51 +133,48 @@ add_task(function* test_should_fire_on_addon_update() {
 
   testServer.registerFile("/addons/test_runtime_on_installed-2.0.xpi", webExtensionFile);
 
-  yield promiseStartupManager();
+  await extension.startup();
 
-  yield extension.startup();
-
-  yield expectEvents(extension, {
+  await expectEvents(extension, {
     onStartupFired: false,
     onInstalledFired: true,
+    onInstalledTemporary: false,
     onInstalledReason: "install",
   });
 
-  let addon = yield AddonManager.getAddonByID(EXTENSION_ID);
+  let addon = await AddonManager.getAddonByID(EXTENSION_ID);
   equal(addon.version, "1.0", "The installed addon has the correct version");
 
-  let update = yield promiseFindAddonUpdates(addon);
+  let update = await promiseFindAddonUpdates(addon);
   let install = update.updateAvailable;
 
   let promiseInstalled = promiseAddonEvent("onInstalled");
-  yield promiseCompleteAllInstalls([install]);
+  await promiseCompleteAllInstalls([install]);
 
-  yield extension.awaitMessage("reloading");
+  await extension.awaitMessage("reloading");
 
-  let startupPromise = awaitEvent("ready");
-
-  let [updated_addon] = yield promiseInstalled;
+  let [updated_addon] = await promiseInstalled;
   equal(updated_addon.version, "2.0", "The updated addon has the correct version");
 
-  extension.extension = yield startupPromise;
-  extension.attachListeners();
+  await extension.awaitStartup();
 
-  yield expectEvents(extension, {
+  await expectEvents(extension, {
     onStartupFired: false,
     onInstalledFired: true,
+    onInstalledTemporary: false,
     onInstalledReason: "update",
+    onInstalledPrevious: "1.0",
   });
 
-  yield extension.unload();
+  await extension.unload();
 
-  yield updated_addon.uninstall();
-  yield promiseShutdownManager();
+  await promiseShutdownManager();
 });
 
-add_task(function* test_should_fire_on_browser_update() {
+add_task(async function test_should_fire_on_browser_update() {
   const EXTENSION_ID = "test_runtime_on_installed_browser_update@tests.mozilla.org";
 
-  yield promiseStartupManager();
+  await promiseStartupManager();
 
   let extension = ExtensionTestUtils.loadExtension({
     useAddonManager: "permanent",
@@ -196,68 +189,64 @@ add_task(function* test_should_fire_on_browser_update() {
     background,
   });
 
-  yield extension.startup();
+  await extension.startup();
 
-  yield expectEvents(extension, {
+  await expectEvents(extension, {
     onStartupFired: false,
     onInstalledFired: true,
+    onInstalledTemporary: false,
     onInstalledReason: "install",
   });
 
-  let startupPromise = awaitEvent("ready");
-  yield promiseRestartManager("1");
-  extension.extension = yield startupPromise;
-  extension.attachListeners();
+  await promiseRestartManager("1");
 
-  yield expectEvents(extension, {
+  await extension.awaitStartup();
+
+  await expectEvents(extension, {
     onStartupFired: true,
     onInstalledFired: false,
   });
 
   // Update the browser.
-  startupPromise = awaitEvent("ready");
-  yield promiseRestartManager("2");
-  extension.extension = yield startupPromise;
-  extension.attachListeners();
+  await promiseRestartManager("2");
+  await extension.awaitStartup();
 
-  yield expectEvents(extension, {
+  await expectEvents(extension, {
     onStartupFired: true,
     onInstalledFired: true,
+    onInstalledTemporary: false,
     onInstalledReason: "browser_update",
   });
 
   // Restart the browser.
-  startupPromise = awaitEvent("ready");
-  yield promiseRestartManager("2");
-  extension.extension = yield startupPromise;
-  extension.attachListeners();
+  await promiseRestartManager("2");
+  await extension.awaitStartup();
 
-  yield expectEvents(extension, {
+  await expectEvents(extension, {
     onStartupFired: true,
     onInstalledFired: false,
   });
 
   // Update the browser again.
-  startupPromise = awaitEvent("ready");
-  yield promiseRestartManager("3");
-  extension.extension = yield startupPromise;
-  extension.attachListeners();
+  await promiseRestartManager("3");
+  await extension.awaitStartup();
 
-  yield expectEvents(extension, {
+  await expectEvents(extension, {
     onStartupFired: true,
     onInstalledFired: true,
+    onInstalledTemporary: false,
     onInstalledReason: "browser_update",
   });
 
-  yield extension.unload();
+  await extension.unload();
 
-  yield promiseShutdownManager();
+  await promiseShutdownManager();
 });
 
-add_task(function* test_should_not_fire_on_reload() {
+add_task(async function test_should_not_fire_on_reload() {
   const EXTENSION_ID = "test_runtime_on_installed_reload@tests.mozilla.org";
 
-  yield promiseStartupManager();
+  await promiseStartupManager();
 
   let extension = ExtensionTestUtils.loadExtension({
     useAddonManager: "permanent",
@@ -272,32 +261,32 @@ add_task(function* test_should_not_fire_on_reload() {
     background,
   });
 
-  yield extension.startup();
+  await extension.startup();
 
-  yield expectEvents(extension, {
+  await expectEvents(extension, {
     onStartupFired: false,
     onInstalledFired: true,
+    onInstalledTemporary: false,
     onInstalledReason: "install",
   });
 
-  let startupPromise = awaitEvent("ready");
   extension.sendMessage("reload-extension");
-  extension.extension = yield startupPromise;
-  extension.attachListeners();
+  extension.setRestarting();
+  await extension.awaitStartup();
 
-  yield expectEvents(extension, {
+  await expectEvents(extension, {
     onStartupFired: false,
     onInstalledFired: false,
   });
 
-  yield extension.unload();
-  yield promiseShutdownManager();
+  await extension.unload();
+  await promiseShutdownManager();
 });
 
-add_task(function* test_should_not_fire_on_restart() {
+add_task(async function test_should_not_fire_on_restart() {
   const EXTENSION_ID = "test_runtime_on_installed_restart@tests.mozilla.org";
 
-  yield promiseStartupManager();
+  await promiseStartupManager();
 
   let extension = ExtensionTestUtils.loadExtension({
     useAddonManager: "permanent",
@@ -312,27 +301,57 @@ add_task(function* test_should_not_fire_on_restart() {
     background,
   });
 
-  yield extension.startup();
+  await extension.startup();
 
-  yield expectEvents(extension, {
+  await expectEvents(extension, {
     onStartupFired: false,
     onInstalledFired: true,
+    onInstalledTemporary: false,
     onInstalledReason: "install",
   });
 
-  let addon = yield AddonManager.getAddonByID(EXTENSION_ID);
+  let addon = await AddonManager.getAddonByID(EXTENSION_ID);
   addon.userDisabled = true;
 
-  let startupPromise = awaitEvent("ready");
   addon.userDisabled = false;
-  extension.extension = yield startupPromise;
-  extension.attachListeners();
+  await extension.awaitStartup();
 
-  yield expectEvents(extension, {
+  await expectEvents(extension, {
     onStartupFired: false,
     onInstalledFired: false,
   });
 
-  yield extension.markUnloaded();
-  yield promiseShutdownManager();
+  await extension.markUnloaded();
+  await promiseShutdownManager();
+});
+
+add_task(async function test_temporary_installation() {
+  const EXTENSION_ID = "test_runtime_on_installed_addon_temporary@tests.mozilla.org";
+
+  await promiseStartupManager();
+
+  let extension = ExtensionTestUtils.loadExtension({
+    useAddonManager: "temporary",
+    manifest: {
+      "version": "1.0",
+      "applications": {
+        "gecko": {
+          "id": EXTENSION_ID,
+        },
+      },
+    },
+    background,
+  });
+
+  await extension.startup();
+
+  await expectEvents(extension, {
+    onStartupFired: false,
+    onInstalledFired: true,
+    onInstalledReason: "install",
+    onInstalledTemporary: true,
+  });
+
+  await extension.unload();
+  await promiseShutdownManager();
 });

@@ -14,16 +14,15 @@ if (typeof define === "undefined") {
 
 // React
 const {
-  createFactory,
   PropTypes
 } = require("devtools/client/shared/vendor/react");
 
-const VariablesViewLink = createFactory(require("devtools/client/webconsole/new-console-output/components/variables-view-link"));
+const VariablesViewLink = require("devtools/client/webconsole/new-console-output/components/variables-view-link");
 
-const { REPS, MODE, createFactories } = require("devtools/client/shared/components/reps/reps");
-const Rep = createFactory(REPS.Rep);
+const { REPS, MODE } = require("devtools/client/shared/components/reps/reps");
+const Rep = REPS.Rep;
 const Grip = REPS.Grip;
-const StringRep = createFactories(REPS.StringRep).rep;
+const StringRep = REPS.StringRep.rep;
 
 GripMessageBody.displayName = "GripMessageBody";
 
@@ -37,6 +36,8 @@ GripMessageBody.propTypes = {
     createElement: PropTypes.func.isRequired,
   }),
   userProvidedStyle: PropTypes.string,
+  useQuotes: PropTypes.bool,
+  escapeWhitespace: PropTypes.bool,
 };
 
 GripMessageBody.defaultProps = {
@@ -44,7 +45,13 @@ GripMessageBody.defaultProps = {
 };
 
 function GripMessageBody(props) {
-  const { grip, userProvidedStyle, serviceContainer } = props;
+  const {
+    grip,
+    userProvidedStyle,
+    serviceContainer,
+    useQuotes,
+    escapeWhitespace
+  } = props;
 
   let styleObject;
   if (userProvidedStyle && userProvidedStyle !== "") {
@@ -53,9 +60,15 @@ function GripMessageBody(props) {
 
   let onDOMNodeMouseOver;
   let onDOMNodeMouseOut;
+  let onInspectIconClick;
   if (serviceContainer) {
-    onDOMNodeMouseOver = (object) => serviceContainer.highlightDomElement(object);
+    onDOMNodeMouseOver = serviceContainer.highlightDomElement
+      ? (object) => serviceContainer.highlightDomElement(object)
+      : null;
     onDOMNodeMouseOut = serviceContainer.unHighlightDomElement;
+    onInspectIconClick = serviceContainer.openNodeInInspector
+      ? (object) => serviceContainer.openNodeInInspector(object)
+      : null;
   }
 
   return (
@@ -63,7 +76,8 @@ function GripMessageBody(props) {
     typeof grip === "string"
       ? StringRep({
         object: grip,
-        useQuotes: false,
+        useQuotes: useQuotes,
+        escapeWhitespace: escapeWhitespace,
         mode: props.mode,
         style: styleObject
       })
@@ -72,29 +86,30 @@ function GripMessageBody(props) {
         objectLink: VariablesViewLink,
         onDOMNodeMouseOver,
         onDOMNodeMouseOut,
+        onInspectIconClick,
         defaultRep: Grip,
         mode: props.mode,
       })
   );
 }
 
+// Regular expression that matches the allowed CSS property names.
+const allowedStylesRegex = new RegExp(
+  "^(?:-moz-)?(?:background|border|box|clear|color|cursor|display|float|font|line|" +
+  "margin|padding|text|transition|outline|white-space|word|writing|" +
+  "(?:min-|max-)?width|(?:min-|max-)?height)"
+);
+
+// Regular expression that matches the forbidden CSS property values.
+const forbiddenValuesRegexs = [
+  // url(), -moz-element()
+  /\b(?:url|(?:-moz-)?element)[\s('"]+/gi,
+
+  // various URL protocols
+  /['"(]*(?:chrome|resource|about|app|data|https?|ftp|file):+\/*/gi,
+];
+
 function cleanupStyle(userProvidedStyle, createElement) {
-  // Regular expression that matches the allowed CSS property names.
-  const allowedStylesRegex = new RegExp(
-    "^(?:-moz-)?(?:background|border|box|clear|color|cursor|display|float|font|line|" +
-    "margin|padding|text|transition|outline|white-space|word|writing|" +
-    "(?:min-|max-)?width|(?:min-|max-)?height)"
-  );
-
-  // Regular expression that matches the forbidden CSS property values.
-  const forbiddenValuesRegexs = [
-    // url(), -moz-element()
-    /\b(?:url|(?:-moz-)?element)[\s('"]+/gi,
-
-    // various URL protocols
-    /['"(]*(?:chrome|resource|about|app|data|https?|ftp|file):+\/*/gi,
-  ];
-
   // Use a dummy element to parse the style string.
   let dummy = createElement("div");
   dummy.style = userProvidedStyle;

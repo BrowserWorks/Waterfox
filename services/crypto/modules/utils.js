@@ -182,7 +182,7 @@ this.CryptoUtils = {
    * The output is an octet string of length dkLen, which you
    * can encode as you wish.
    */
-  pbkdf2Generate : function pbkdf2Generate(P, S, c, dkLen,
+  pbkdf2Generate: function pbkdf2Generate(P, S, c, dkLen,
                        hmacAlg = Ci.nsICryptoHMAC.SHA1, hmacLen = 20) {
 
     // We don't have a default in the algo itself, as NSS does.
@@ -251,19 +251,6 @@ this.CryptoUtils = {
     ret += T[l - 1].substr(0, r);
 
     return ret;
-  },
-
-  deriveKeyFromPassphrase: function deriveKeyFromPassphrase(passphrase,
-                                                            salt,
-                                                            keyLength,
-                                                            forceJS) {
-    if (Svc.Crypto.deriveKeyFromPassphrase && !forceJS) {
-      return Svc.Crypto.deriveKeyFromPassphrase(passphrase, salt, keyLength);
-    }
-    // Fall back to JS implementation.
-    // 4096 is hardcoded in WeaveCrypto, so do so here.
-    return CryptoUtils.pbkdf2Generate(passphrase, atob(salt), 4096,
-                                      keyLength);
   },
 
   /**
@@ -511,7 +498,7 @@ this.CryptoUtils = {
       artifacts.hash = hash_b64;
     }
 
-    let requestString = ("hawk.1.header" + "\n" +
+    let requestString = ("hawk.1.header\n" +
                          artifacts.ts.toString(10) + "\n" +
                          artifacts.nonce + "\n" +
                          artifacts.method + "\n" +
@@ -561,15 +548,6 @@ XPCOMUtils.defineLazyServiceGetter(Svc,
                                    "KeyFactory",
                                    "@mozilla.org/security/keyobjectfactory;1",
                                    "nsIKeyObjectFactory");
-
-Svc.__defineGetter__("Crypto", function() {
-  let ns = {};
-  Cu.import("resource://services-crypto/WeaveCrypto.js", ns);
-
-  let wc = new ns.WeaveCrypto();
-  delete Svc.Crypto;
-  return Svc.Crypto = wc;
-});
 
 Observers.add("xpcom-shutdown", function unloadServices() {
   Observers.remove("xpcom-shutdown", unloadServices);

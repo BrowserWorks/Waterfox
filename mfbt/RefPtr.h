@@ -251,6 +251,7 @@ public:
   }
 
   already_AddRefed<T>
+  MOZ_MAY_CALL_AFTER_MUST_RETURN
   forget()
   // return the value of mRawPtr and null out mRawPtr. Useful for
   // already_AddRefed return values.
@@ -644,6 +645,20 @@ MakeAndAddRef(Args&&... aArgs)
 {
   RefPtr<T> p(new T(Forward<Args>(aArgs)...));
   return p.forget();
+}
+
+/**
+ * Helper function to be able to conveniently write things like:
+ *
+ *   auto runnable = MakeRefPtr<ErrorCallbackRunnable<nsIDOMGetUserMediaSuccessCallback>>(
+ *       mOnSuccess, mOnFailure, *error, mWindowID);
+ */
+template<typename T, typename... Args>
+RefPtr<T>
+MakeRefPtr(Args&&... aArgs)
+{
+  RefPtr<T> p(new T(Forward<Args>(aArgs)...));
+  return p;
 }
 
 } // namespace mozilla

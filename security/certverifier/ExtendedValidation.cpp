@@ -6,33 +6,35 @@
 
 #include "ExtendedValidation.h"
 
-#include "base64.h"
 #include "cert.h"
-#include "certdb.h"
 #include "hasht.h"
 #include "mozilla/ArrayUtils.h"
 #include "mozilla/Assertions.h"
+#include "mozilla/Base64.h"
 #include "mozilla/Casting.h"
 #include "mozilla/PodOperations.h"
+#include "nsDependentString.h"
+#include "nsString.h"
 #include "pk11pub.h"
 #include "pkix/pkixtypes.h"
-#include "prerror.h"
 
-struct nsMyTrustedEVInfo
+namespace mozilla { namespace psm {
+
+struct EVInfo
 {
   // See bug 1338873 about making these fields const.
-  const char* dotted_oid;
-  const char* oid_name; // Set this to null to signal an invalid structure,
+  const char* dottedOid;
+  const char* oidName; // Set this to null to signal an invalid structure,
                   // (We can't have an empty list, so we'll use a dummy entry)
-  unsigned char ev_root_sha256_fingerprint[SHA256_LENGTH];
-  const char* issuer_base64;
-  const char* serial_base64;
+  unsigned char sha256Fingerprint[SHA256_LENGTH];
+  const char* issuerBase64;
+  const char* serialBase64;
 };
 
 // HOWTO enable additional CA root certificates for EV:
 //
 // For each combination of "root certificate" and "policy OID",
-// one entry must be added to the array named myTrustedEVInfos.
+// one entry must be added to the array named kEVInfos.
 //
 // We use the combination of "issuer name" and "serial number" to
 // uniquely identify the certificate. In order to avoid problems
@@ -84,9 +86,9 @@ struct nsMyTrustedEVInfo
 static const size_t NUM_TEST_EV_ROOTS = 2;
 #endif
 
-static const struct nsMyTrustedEVInfo myTrustedEVInfos[] = {
+static const struct EVInfo kEVInfos[] = {
   // IMPORTANT! When extending this list, if you add another entry that uses
-  // the same dotted_oid as an existing entry, use the same oid_name.
+  // the same dottedOid as an existing entry, use the same oidName.
 #ifdef DEBUG
   // Debug EV certificates should all use the following OID:
   // 1.3.6.1.4.1.13769.666.666.666.1.500.9.1.
@@ -646,18 +648,6 @@ static const struct nsMyTrustedEVInfo myTrustedEVInfos[] = {
     "CYP0",
   },
   {
-    // CN=Swisscom Root EV CA 2,OU=Digital Certificate Services,O=Swisscom,C=ch
-    "2.16.756.1.83.21.0",
-    "Swisscom  EV OID",
-    { 0xD9, 0x5F, 0xEA, 0x3C, 0xA4, 0xEE, 0xDC, 0xE7, 0x4C, 0xD7, 0x6E,
-      0x75, 0xFC, 0x6D, 0x1F, 0xF6, 0x2C, 0x44, 0x1F, 0x0F, 0xA8, 0xBC,
-      0x77, 0xF0, 0x34, 0xB1, 0x9E, 0x5D, 0xB2, 0x58, 0x01, 0x5D },
-    "MGcxCzAJBgNVBAYTAmNoMREwDwYDVQQKEwhTd2lzc2NvbTElMCMGA1UECxMcRGln"
-    "aXRhbCBDZXJ0aWZpY2F0ZSBTZXJ2aWNlczEeMBwGA1UEAxMVU3dpc3Njb20gUm9v"
-    "dCBFViBDQSAy",
-    "APL6ZOJ0Y9ON/RAdBB92ylg=",
-  },
-  {
     // CN=VeriSign Universal Root Certification Authority,OU="(c) 2008 VeriSign, Inc. - For authorized use only",OU=VeriSign Trust Network,O="VeriSign, Inc.",C=US
     "2.16.840.1.113733.1.7.23.6",
     "VeriSign EV OID",
@@ -871,17 +861,6 @@ static const struct nsMyTrustedEVInfo myTrustedEVInfos[] = {
     "SmVyc2V5IENpdHkxHjAcBgNVBAoTFVRoZSBVU0VSVFJVU1QgTmV0d29yazEuMCwG"
     "A1UEAxMlVVNFUlRydXN0IEVDQyBDZXJ0aWZpY2F0aW9uIEF1dGhvcml0eQ==",
     "XIuZxVqUxdJxVt7NiYDMJg==",
-  },
-  {
-    // CN=GlobalSign,O=GlobalSign,OU=GlobalSign ECC Root CA - R4
-    "1.3.6.1.4.1.4146.1.1",
-    "GlobalSign EV OID",
-    { 0xBE, 0xC9, 0x49, 0x11, 0xC2, 0x95, 0x56, 0x76, 0xDB, 0x6C, 0x0A,
-      0x55, 0x09, 0x86, 0xD7, 0x6E, 0x3B, 0xA0, 0x05, 0x66, 0x7C, 0x44,
-      0x2C, 0x97, 0x62, 0xB4, 0xFB, 0xB7, 0x73, 0xDE, 0x22, 0x8C },
-    "MFAxJDAiBgNVBAsTG0dsb2JhbFNpZ24gRUNDIFJvb3QgQ0EgLSBSNDETMBEGA1UE"
-    "ChMKR2xvYmFsU2lnbjETMBEGA1UEAxMKR2xvYmFsU2lnbg==",
-    "KjikHJYKBN5CsiilC+g0mAI=",
   },
   {
     // CN=GlobalSign,O=GlobalSign,OU=GlobalSign ECC Root CA - R5
@@ -1141,11 +1120,11 @@ static const struct nsMyTrustedEVInfo myTrustedEVInfos[] = {
   },
 };
 
-static SECOidTag sEVInfoOIDTags[mozilla::ArrayLength(myTrustedEVInfos)];
+static SECOidTag sEVInfoOIDTags[ArrayLength(kEVInfos)];
 
 static_assert(SEC_OID_UNKNOWN == 0,
   "We depend on zero-initialized globals being interpreted as SEC_OID_UNKNOWN.");
-static_assert(mozilla::ArrayLength(sEVInfoOIDTags) == mozilla::ArrayLength(myTrustedEVInfos),
+static_assert(ArrayLength(sEVInfoOIDTags) == ArrayLength(kEVInfos),
   "These arrays are used in parallel and must have the same length.");
 
 static SECOidTag
@@ -1179,8 +1158,6 @@ isEVPolicy(SECOidTag policyOIDTag)
   return false;
 }
 
-namespace mozilla { namespace psm {
-
 bool
 CertIsAuthoritativeForEVPolicy(const UniqueCERTCertificate& cert,
                                const mozilla::pkix::CertPolicyId& policy)
@@ -1199,13 +1176,13 @@ CertIsAuthoritativeForEVPolicy(const UniqueCERTCertificate& cert,
   }
 
   const SECOidData* cabforumOIDData = SECOID_FindOIDByTag(sCABForumEVOIDTag);
-  for (size_t iEV = 0; iEV < mozilla::ArrayLength(myTrustedEVInfos); ++iEV) {
-    const nsMyTrustedEVInfo& entry = myTrustedEVInfos[iEV];
+  for (size_t i = 0; i < ArrayLength(kEVInfos); ++i) {
+    const EVInfo& entry = kEVInfos[i];
 
     // This check ensures that only the specific roots we approve for EV get
     // that status, and not certs (roots or otherwise) that happen to have an
     // OID that's already been approved for EV.
-    if (!PodEqual(fingerprint, entry.ev_root_sha256_fingerprint)) {
+    if (!PodEqual(fingerprint, entry.sha256Fingerprint)) {
       continue;
     }
 
@@ -1213,7 +1190,7 @@ CertIsAuthoritativeForEVPolicy(const UniqueCERTCertificate& cert,
         PodEqual(cabforumOIDData->oid.data, policy.bytes, policy.numBytes)) {
       return true;
     }
-    const SECOidData* oidData = SECOID_FindOIDByTag(sEVInfoOIDTags[iEV]);
+    const SECOidData* oidData = SECOID_FindOIDByTag(sEVInfoOIDTags[i]);
     if (oidData && oidData->oid.len == policy.numBytes &&
         PodEqual(oidData->oid.data, policy.bytes, policy.numBytes)) {
       return true;
@@ -1229,7 +1206,7 @@ LoadExtendedValidationInfo()
   static const char* sCABForumOIDString = "2.23.140.1.1";
   static const char* sCABForumOIDDescription = "CA/Browser Forum EV OID";
 
-  mozilla::ScopedAutoSECItem cabforumOIDItem;
+  ScopedAutoSECItem cabforumOIDItem;
   if (SEC_StringToOID(nullptr, &cabforumOIDItem, sCABForumOIDString, 0)
         != SECSuccess) {
     return NS_ERROR_FAILURE;
@@ -1239,8 +1216,8 @@ LoadExtendedValidationInfo()
     return NS_ERROR_FAILURE;
   }
 
-  for (size_t iEV = 0; iEV < mozilla::ArrayLength(myTrustedEVInfos); ++iEV) {
-    const nsMyTrustedEVInfo& entry = myTrustedEVInfos[iEV];
+  for (size_t i = 0; i < ArrayLength(kEVInfos); ++i) {
+    const EVInfo& entry = kEVInfos[i];
 
     SECStatus srv;
 #ifdef DEBUG
@@ -1249,25 +1226,28 @@ LoadExtendedValidationInfo()
     // actually present in our loaded root certificates module. It is
     // unnecessary to check this in non-debug builds since we will safely fall
     // back to DV if the EV information is incorrect.
-    mozilla::ScopedAutoSECItem derIssuer;
-    srv = ATOB_ConvertAsciiToItem(&derIssuer, entry.issuer_base64);
-    MOZ_ASSERT(srv == SECSuccess, "Could not base64-decode built-in EV issuer");
-    if (srv != SECSuccess) {
-      return NS_ERROR_FAILURE;
+    nsAutoCString derIssuer;
+    nsresult rv = Base64Decode(nsDependentCString(entry.issuerBase64),
+                               derIssuer);
+    MOZ_ASSERT(NS_SUCCEEDED(rv), "Could not base64-decode built-in EV issuer");
+    if (NS_FAILED(rv)) {
+      return rv;
     }
 
-    mozilla::ScopedAutoSECItem serialNumber;
-    srv = ATOB_ConvertAsciiToItem(&serialNumber, entry.serial_base64);
-    MOZ_ASSERT(srv == SECSuccess, "Could not base64-decode built-in EV serial");
-    if (srv != SECSuccess) {
-      return NS_ERROR_FAILURE;
+    nsAutoCString serialNumber;
+    rv = Base64Decode(nsDependentCString(entry.serialBase64), serialNumber);
+    MOZ_ASSERT(NS_SUCCEEDED(rv), "Could not base64-decode built-in EV serial");
+    if (NS_FAILED(rv)) {
+      return rv;
     }
 
     CERTIssuerAndSN ias;
-    ias.derIssuer.data = derIssuer.data;
-    ias.derIssuer.len = derIssuer.len;
-    ias.serialNumber.data = serialNumber.data;
-    ias.serialNumber.len = serialNumber.len;
+    ias.derIssuer.data =
+      BitwiseCast<unsigned char*, const char*>(derIssuer.get());
+    ias.derIssuer.len = derIssuer.Length();
+    ias.serialNumber.data =
+      BitwiseCast<unsigned char*, const char*>(serialNumber.get());
+    ias.serialNumber.len = serialNumber.Length();
     ias.serialNumber.type = siUnsignedInteger;
 
     UniqueCERTCertificate cert(CERT_FindCertByIssuerAndSN(nullptr, &ias));
@@ -1279,7 +1259,7 @@ LoadExtendedValidationInfo()
       // The entries for the debug EV roots are at indices 0 through
       // NUM_TEST_EV_ROOTS - 1. Since they're not built-in, they probably
       // haven't been loaded yet.
-      MOZ_ASSERT(iEV < NUM_TEST_EV_ROOTS, "Could not find built-in EV root");
+      MOZ_ASSERT(i < NUM_TEST_EV_ROOTS, "Could not find built-in EV root");
     } else {
       unsigned char certFingerprint[SHA256_LENGTH];
       srv = PK11_HashBuf(SEC_OID_SHA256, certFingerprint, cert->derCert.data,
@@ -1288,7 +1268,7 @@ LoadExtendedValidationInfo()
       if (srv != SECSuccess) {
         return NS_ERROR_FAILURE;
       }
-      bool same = PodEqual(certFingerprint, entry.ev_root_sha256_fingerprint);
+      bool same = PodEqual(certFingerprint, entry.sha256Fingerprint);
       MOZ_ASSERT(same, "EV root fingerprint mismatch");
       if (!same) {
         return NS_ERROR_FAILURE;
@@ -1296,14 +1276,14 @@ LoadExtendedValidationInfo()
     }
 #endif
     // This is the code that actually enables these roots for EV.
-    mozilla::ScopedAutoSECItem evOIDItem;
-    srv = SEC_StringToOID(nullptr, &evOIDItem, entry.dotted_oid, 0);
+    ScopedAutoSECItem evOIDItem;
+    srv = SEC_StringToOID(nullptr, &evOIDItem, entry.dottedOid, 0);
     MOZ_ASSERT(srv == SECSuccess, "SEC_StringToOID failed");
     if (srv != SECSuccess) {
       return NS_ERROR_FAILURE;
     }
-    sEVInfoOIDTags[iEV] = RegisterOID(evOIDItem, entry.oid_name);
-    if (sEVInfoOIDTags[iEV] == SEC_OID_UNKNOWN) {
+    sEVInfoOIDTags[i] = RegisterOID(evOIDItem, entry.oidName);
+    if (sEVInfoOIDTags[i] == SEC_OID_UNKNOWN) {
       return NS_ERROR_FAILURE;
     }
   }

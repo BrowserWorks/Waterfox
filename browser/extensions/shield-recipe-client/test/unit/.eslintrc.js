@@ -1,8 +1,11 @@
 "use strict";
 
 module.exports = {
-  globals: {
-    do_get_file: false,
-    equal: false,
-  },
+  extends: [
+    "plugin:mozilla/xpcshell-test"
+  ],
+
+  plugins: [
+    "mozilla"
+  ],
 };

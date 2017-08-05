@@ -317,7 +317,8 @@ class imgRequestMainThreadCancel : public Runnable
 {
 public:
   imgRequestMainThreadCancel(imgRequest* aImgRequest, nsresult aStatus)
-    : mImgRequest(aImgRequest)
+    : Runnable("imgRequestMainThreadCancel")
+    , mImgRequest(aImgRequest)
     , mStatus(aStatus)
   {
     MOZ_ASSERT(!NS_IsMainThread(), "Create me off main thread only!");
@@ -367,7 +368,8 @@ class imgRequestMainThreadEvict : public Runnable
 {
 public:
   explicit imgRequestMainThreadEvict(imgRequest* aImgRequest)
-    : mImgRequest(aImgRequest)
+    : Runnable("imgRequestMainThreadEvict")
+    , mImgRequest(aImgRequest)
   {
     MOZ_ASSERT(!NS_IsMainThread(), "Create me off main thread only!");
     MOZ_ASSERT(aImgRequest);
@@ -509,11 +511,11 @@ imgRequest::HasConsumers() const
   return progressTracker && progressTracker->ObserverCount() > 0;
 }
 
-already_AddRefed<Image>
+already_AddRefed<image::Image>
 imgRequest::GetImage() const
 {
   MutexAutoLock lock(mMutex);
-  RefPtr<Image> image = mImage;
+  RefPtr<image::Image> image = mImage;
   return image.forget();
 }
 
@@ -541,10 +543,48 @@ imgRequest::AdjustPriority(imgRequestProxy* proxy, int32_t delta)
     return;
   }
 
+  AdjustPriorityInternal(delta);
+}
+
+void
+imgRequest::AdjustPriorityInternal(int32_t aDelta)
+{
   nsCOMPtr<nsISupportsPriority> p = do_QueryInterface(mChannel);
   if (p) {
-    p->AdjustPriority(delta);
+    p->AdjustPriority(aDelta);
   }
+}
+
+void
+imgRequest::BoostPriority(uint32_t aCategory)
+{
+  uint32_t newRequestedCategory =
+    (mBoostCategoriesRequested & aCategory) ^ aCategory;
+  if (!newRequestedCategory) {
+    // priority boost for each category can only apply once.
+    return;
+  }
+
+  MOZ_LOG(gImgLog, LogLevel::Debug,
+         ("[this=%p] imgRequest::BoostPriority for category %x",
+          this, newRequestedCategory));
+
+  int32_t delta = 0;
+
+  if (newRequestedCategory & imgIRequest::CATEGORY_FRAME_INIT) {
+    --delta;
+  }
+
+  if (newRequestedCategory & imgIRequest::CATEGORY_SIZE_QUERY) {
+    --delta;
+  }
+
+  if (newRequestedCategory & imgIRequest::CATEGORY_DISPLAY) {
+    delta += nsISupportsPriority::PRIORITY_HIGH;
+  }
+
+  AdjustPriorityInternal(delta);
+  mBoostCategoriesRequested |= newRequestedCategory;
 }
 
 bool
@@ -599,17 +639,17 @@ imgRequest::SetCacheValidation(imgCacheEntry* aCacheEntry, nsIRequest* aRequest)
     if (httpChannel) {
       bool bMustRevalidate = false;
 
-      httpChannel->IsNoStoreResponse(&bMustRevalidate);
+      Unused << httpChannel->IsNoStoreResponse(&bMustRevalidate);
 
       if (!bMustRevalidate) {
-        httpChannel->IsNoCacheResponse(&bMustRevalidate);
+        Unused << httpChannel->IsNoCacheResponse(&bMustRevalidate);
       }
 
       if (!bMustRevalidate) {
         nsAutoCString cacheHeader;
 
-        httpChannel->GetResponseHeader(NS_LITERAL_CSTRING("Cache-Control"),
-                                            cacheHeader);
+        Unused << httpChannel->GetResponseHeader(NS_LITERAL_CSTRING("Cache-Control"),
+                                                 cacheHeader);
         if (PL_strcasestr(cacheHeader.get(), "must-revalidate")) {
           bMustRevalidate = true;
         }
@@ -905,7 +945,7 @@ imgRequest::CheckListenerChain()
 
 struct NewPartResult final
 {
-  explicit NewPartResult(Image* aExistingImage)
+  explicit NewPartResult(image::Image* aExistingImage)
     : mImage(aExistingImage)
     , mIsFirstPart(!aExistingImage)
     , mSucceeded(false)
@@ -914,7 +954,7 @@ struct NewPartResult final
 
   nsAutoCString mContentType;
   nsAutoCString mContentDisposition;
-  RefPtr<Image> mImage;
+  RefPtr<image::Image> mImage;
   const bool mIsFirstPart;
   bool mSucceeded;
   bool mShouldResetCacheEntry;
@@ -922,7 +962,7 @@ struct NewPartResult final
 
 static NewPartResult
 PrepareForNewPart(nsIRequest* aRequest, nsIInputStream* aInStr, uint32_t aCount,
-                  ImageURL* aURI, bool aIsMultipart, Image* aExistingImage,
+                  ImageURL* aURI, bool aIsMultipart, image::Image* aExistingImage,
                   ProgressTracker* aProgressTracker, uint32_t aInnerWindowId)
 {
   NewPartResult result(aExistingImage);
@@ -967,17 +1007,18 @@ PrepareForNewPart(nsIRequest* aRequest, nsIInputStream* aInStr, uint32_t aCount,
   if (aIsMultipart) {
     // Create the ProgressTracker and image for this part.
     RefPtr<ProgressTracker> progressTracker = new ProgressTracker();
-    RefPtr<Image> partImage =
-      ImageFactory::CreateImage(aRequest, progressTracker, result.mContentType,
-                                aURI, /* aIsMultipart = */ true,
-                                aInnerWindowId);
+    RefPtr<image::Image> partImage =
+      image::ImageFactory::CreateImage(aRequest, progressTracker,
+                                       result.mContentType,
+                                       aURI, /* aIsMultipart = */ true,
+                                       aInnerWindowId);
 
     if (result.mIsFirstPart) {
       // First part for a multipart channel. Create the MultipartImage wrapper.
       MOZ_ASSERT(aProgressTracker, "Shouldn't have given away tracker yet");
       aProgressTracker->SetIsMultipart();
       result.mImage =
-        ImageFactory::CreateMultipartImage(partImage, aProgressTracker);
+        image::ImageFactory::CreateMultipartImage(partImage, aProgressTracker);
     } else {
       // Transition to the new part.
       auto multipartImage = static_cast<MultipartImage*>(aExistingImage);
@@ -992,9 +1033,10 @@ PrepareForNewPart(nsIRequest* aRequest, nsIInputStream* aInStr, uint32_t aCount,
 
     // Create an image using our progress tracker.
     result.mImage =
-      ImageFactory::CreateImage(aRequest, aProgressTracker, result.mContentType,
-                                aURI, /* aIsMultipart = */ false,
-                                aInnerWindowId);
+      image::ImageFactory::CreateImage(aRequest, aProgressTracker,
+                                       result.mContentType,
+                                       aURI, /* aIsMultipart = */ false,
+                                       aInnerWindowId);
   }
 
   MOZ_ASSERT(result.mImage);
@@ -1013,7 +1055,8 @@ class FinishPreparingForNewPartRunnable final : public Runnable
 public:
   FinishPreparingForNewPartRunnable(imgRequest* aImgRequest,
                                     NewPartResult&& aResult)
-    : mImgRequest(aImgRequest)
+    : Runnable("FinishPreparingForNewPartRunnable")
+    , mImgRequest(aImgRequest)
     , mResult(aResult)
   {
     MOZ_ASSERT(aImgRequest);

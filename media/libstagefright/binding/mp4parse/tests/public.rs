@@ -45,7 +45,7 @@ fn public_api() {
                 // track.data part
                 assert_eq!(match v.codec_specific {
                     mp4::VideoCodecSpecific::AVCConfig(v) => {
-                        assert!(v.len() > 0);
+                        assert!(!v.is_empty());
                         "AVC"
                     }
                     mp4::VideoCodecSpecific::VPxConfig(vpx) => {
@@ -53,8 +53,12 @@ fn public_api() {
                         assert!(vpx.bit_depth > 0);
                         assert!(vpx.color_space > 0);
                         assert!(vpx.chroma_subsampling > 0);
-                        assert!(vpx.codec_init.len() > 0);
+                        assert!(!vpx.codec_init.is_empty());
                         "VPx"
+                    }
+                    mp4::VideoCodecSpecific::ESDSConfig(mp4v) => {
+                        assert!(!mp4v.is_empty());
+                        "MP4V"
                     }
                 }, "AVC");
             }
@@ -82,7 +86,7 @@ fn public_api() {
                     }
                     mp4::AudioCodecSpecific::FLACSpecificBox(flac) => {
                         // STREAMINFO block must be present and first.
-                        assert!(flac.blocks.len() > 0);
+                        assert!(!flac.blocks.is_empty());
                         assert_eq!(flac.blocks[0].block_type, 0);
                         assert_eq!(flac.blocks[0].data.len(), 34);
                         "FLAC"
@@ -122,12 +126,12 @@ fn public_audio_tenc() {
         match track.data {
             Some(mp4::SampleEntry::Audio(a)) => {
                 match a.protection_info.iter().find(|sinf| sinf.tenc.is_some()) {
-                    Some(ref p) => {
+                    Some(p) => {
                         assert_eq!(p.code_name, "mp4a");
                         if let Some(ref tenc) = p.tenc {
                             assert!(tenc.is_encrypted > 0);
-                            assert!(tenc.iv_size ==  16);
-                            assert!(tenc.kid == kid);
+                            assert_eq!(tenc.iv_size, 16);
+                            assert_eq!(tenc.kid, kid);
                         } else {
                             assert!(false, "Invalid test condition");
                         }
@@ -175,12 +179,12 @@ fn public_video_cenc() {
         match track.data {
             Some(mp4::SampleEntry::Video(v)) => {
                 match v.protection_info.iter().find(|sinf| sinf.tenc.is_some()) {
-                    Some(ref p) => {
+                    Some(p) => {
                         assert_eq!(p.code_name, "avc1");
                         if let Some(ref tenc) = p.tenc {
                             assert!(tenc.is_encrypted > 0);
-                            assert!(tenc.iv_size ==  16);
-                            assert!(tenc.kid == kid);
+                            assert_eq!(tenc.iv_size, 16);
+                            assert_eq!(tenc.kid, kid);
                         } else {
                             assert!(false, "Invalid test condition");
                         }
@@ -201,7 +205,7 @@ fn public_video_cenc() {
         for kid_id in pssh.kid {
             assert_eq!(kid_id, kid);
         }
-        assert_eq!(pssh.data.len(), 0);
+        assert!(pssh.data.is_empty());
         assert_eq!(pssh.box_content, pssh_box);
     }
 }

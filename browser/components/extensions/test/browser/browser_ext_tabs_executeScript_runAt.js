@@ -14,8 +14,8 @@
  * fail to load as early as expected, but don't load at any illegal time.
  */
 
-add_task(function* testExecuteScript() {
-  let tab = yield BrowserTestUtils.openNewForegroundTab(gBrowser, "about:blank", true);
+add_task(async function testExecuteScript() {
+  let tab = await BrowserTestUtils.openNewForegroundTab(gBrowser, "about:blank", true);
 
   async function background() {
     let tab;
@@ -52,6 +52,10 @@ add_task(function* testExecuteScript() {
           // races.
           browser.tabs.executeScript({
             code: "document.readyState",
+            // Testing default `runAt`.
+          }),
+          browser.tabs.executeScript({
+            code: "document.readyState",
             runAt: "document_idle",
           }),
           browser.tabs.executeScript({
@@ -77,7 +81,8 @@ add_task(function* testExecuteScript() {
         // Otherwise, try again.
         success = (states[0] == "loading" &&
                    states[1] == "interactive" &&
-                   states[2] == "complete");
+                   states[2] == "complete" &&
+                   states[3] == "complete");
       }
 
       browser.test.assertTrue(success, "Got the earliest expected states at least once");
@@ -97,11 +102,11 @@ add_task(function* testExecuteScript() {
     background,
   });
 
-  yield extension.startup();
+  await extension.startup();
 
-  yield extension.awaitFinish("executeScript-runAt");
+  await extension.awaitFinish("executeScript-runAt");
 
-  yield extension.unload();
+  await extension.unload();
 
-  yield BrowserTestUtils.removeTab(tab);
+  await BrowserTestUtils.removeTab(tab);
 });

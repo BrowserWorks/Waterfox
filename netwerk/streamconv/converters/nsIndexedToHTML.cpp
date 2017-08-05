@@ -6,6 +6,7 @@
 #include "DateTimeFormat.h"
 #include "nsIndexedToHTML.h"
 #include "mozilla/dom/EncodingUtils.h"
+#include "mozilla/intl/LocaleService.h"
 #include "nsNetUtil.h"
 #include "netCore.h"
 #include "nsStringStream.h"
@@ -18,12 +19,13 @@
 #include "nsIPrefService.h"
 #include "nsIPrefBranch.h"
 #include "nsIPrefLocalizedString.h"
-#include "nsIChromeRegistry.h"
 #include "nsIStringBundle.h"
 #include "nsITextToSubURI.h"
 #include "nsXPIDLString.h"
 #include <algorithm>
 #include "nsIChannel.h"
+
+using mozilla::intl::LocaleService;
 
 NS_IMPL_ISUPPORTS(nsIndexedToHTML,
                   nsIDirIndexListener,
@@ -125,8 +127,19 @@ nsIndexedToHTML::DoOnStartRequest(nsIRequest* request, nsISupports *aContext,
 
     nsCOMPtr<nsIChannel> channel = do_QueryInterface(request);
     nsCOMPtr<nsIURI> uri;
-    rv = channel->GetURI(getter_AddRefs(uri));
+    rv = channel->GetOriginalURI(getter_AddRefs(uri));
     if (NS_FAILED(rv)) return rv;
+
+    bool isResource = false;
+    rv = uri->SchemeIs("resource", &isResource);
+    if (NS_FAILED(rv)) return rv;
+
+    // We use the original URI for the title and parent link when it's a
+    // resource:// url, instead of the jar:file:// url it resolves to.
+    if (!isResource) {
+        rv = channel->GetURI(getter_AddRefs(uri));
+        if (NS_FAILED(rv)) return rv;
+    }
 
     channel->SetContentType(NS_LITERAL_CSTRING("text/html"));
 
@@ -430,7 +443,6 @@ nsIndexedToHTML::DoOnStartRequest(nsIRequest* request, nsISupports *aContext,
     nsCOMPtr<nsIFileURL> fileURL(do_QueryInterface(innerUri));
     //XXX bug 388553: can't use skinnable icons here due to security restrictions
     if (fileURL) {
-        //buffer.AppendLiteral("chrome://global/skin/dirListing/local.png");
         buffer.AppendLiteral("data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAB"
                              "AAAAAQCAYAAAAf8%2F9hAAAAGXRFWHRTb2Z0d2FyZQBBZG9i"
                              "ZSBJbWFnZVJlYWR5ccllPAAAAjFJREFUeNqsU8uOElEQPffR"
@@ -452,7 +464,6 @@ nsIndexedToHTML::DoOnStartRequest(nsIRequest* request, nsISupports *aContext,
                              "4pQ1%2FlPF0RGM9Ns91Wmptk0GfB4EJkt77vXYj%2F8m%2B8"
                              "y%2FkrwABHbz2H9V68DQAAAABJRU5ErkJggg%3D%3D");
     } else {
-        //buffer.AppendLiteral("chrome://global/skin/dirListing/remote.png");
         buffer.AppendLiteral("data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAB"
                              "AAAAAQCAYAAAAf8%2F9hAAAAGXRFWHRTb2Z0d2FyZQBBZG9i"
                              "ZSBJbWFnZVJlYWR5ccllPAAAAeBJREFUeNqcU81O20AQ%2Ft"
@@ -544,12 +555,7 @@ nsIndexedToHTML::DoOnStartRequest(nsIRequest* request, nsISupports *aContext,
         // will prematurely close the string.  Go ahead an
         // add a base href, but only do so if we're not
         // dealing with a resource URI.
-        nsCOMPtr<nsIURI> originalUri;
-        rv = channel->GetOriginalURI(getter_AddRefs(originalUri));
-        bool wasResource = false;
-        if (NS_FAILED(rv) ||
-            NS_FAILED(originalUri->SchemeIs("resource", &wasResource)) ||
-            !wasResource) {
+        if (!isResource) {
             buffer.AppendLiteral("<base href=\"");
             nsAdoptingCString htmlEscapedUri(nsEscapeHTML(baseUri.get()));
             buffer.Append(htmlEscapedUri);
@@ -562,14 +568,8 @@ nsIndexedToHTML::DoOnStartRequest(nsIRequest* request, nsISupports *aContext,
     }
 
     nsCString direction(NS_LITERAL_CSTRING("ltr"));
-    nsCOMPtr<nsIXULChromeRegistry> reg =
-      mozilla::services::GetXULChromeRegistryService();
-    if (reg) {
-      bool isRTL = false;
-      reg->IsLocaleRTL(NS_LITERAL_CSTRING("global"), &isRTL);
-      if (isRTL) {
-        direction.AssignLiteral("rtl");
-      }
+    if (LocaleService::GetInstance()->IsAppLocaleRTL()) {
+      direction.AssignLiteral("rtl");
     }
 
     buffer.AppendLiteral("</head>\n<body dir=\"");

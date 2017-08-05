@@ -7,6 +7,7 @@ const FIXTURE = [
   {
     "id": "2xU5h-4bkWqA",
     "type": "client",
+    "lastModified": 1492201200,
     "name": "laptop",
     "isMobile": false,
     "tabs": [
@@ -31,13 +32,14 @@ const FIXTURE = [
   {
     "id": "OL3EJCsdb2JD",
     "type": "client",
+    "lastModified": 1492201200,
     "name": "desktop",
     "isMobile": false,
     "tabs": []
   }
 ];
 
-add_task(function* testGetDataEmpty() {
+add_task(async function testGetDataEmpty() {
   let store = new SyncedTabsListStore(SyncedTabs);
   let spy = sinon.spy();
 
@@ -46,7 +48,7 @@ add_task(function* testGetDataEmpty() {
   });
   store.on("change", spy);
 
-  yield store.getData();
+  await store.getData();
 
   Assert.ok(SyncedTabs.getTabClients.calledWith(""));
   Assert.ok(spy.calledWith({
@@ -57,7 +59,7 @@ add_task(function* testGetDataEmpty() {
     inputFocused: false
   }));
 
-  yield store.getData("filter");
+  await store.getData("filter");
 
   Assert.ok(SyncedTabs.getTabClients.calledWith("filter"));
   Assert.ok(spy.calledWith({
@@ -71,7 +73,7 @@ add_task(function* testGetDataEmpty() {
   SyncedTabs.getTabClients.restore();
 });
 
-add_task(function* testRowSelectionWithoutFilter() {
+add_task(async function testRowSelectionWithoutFilter() {
   let store = new SyncedTabsListStore(SyncedTabs);
   let spy = sinon.spy();
 
@@ -79,7 +81,7 @@ add_task(function* testRowSelectionWithoutFilter() {
     return Promise.resolve(FIXTURE);
   });
 
-  yield store.getData();
+  await store.getData();
   SyncedTabs.getTabClients.restore();
 
   store.on("change", spy);
@@ -122,7 +124,7 @@ add_task(function* testRowSelectionWithoutFilter() {
 });
 
 
-add_task(function* testToggleBranches() {
+add_task(async function testToggleBranches() {
   let store = new SyncedTabsListStore(SyncedTabs);
   let spy = sinon.spy();
 
@@ -130,7 +132,7 @@ add_task(function* testToggleBranches() {
     return Promise.resolve(FIXTURE);
   });
 
-  yield store.getData();
+  await store.getData();
   SyncedTabs.getTabClients.restore();
 
   store.selectRow(0);
@@ -156,7 +158,7 @@ add_task(function* testToggleBranches() {
 });
 
 
-add_task(function* testRowSelectionWithFilter() {
+add_task(async function testRowSelectionWithFilter() {
   let store = new SyncedTabsListStore(SyncedTabs);
   let spy = sinon.spy();
 
@@ -164,7 +166,7 @@ add_task(function* testRowSelectionWithFilter() {
     return Promise.resolve(FIXTURE);
   });
 
-  yield store.getData("filter");
+  await store.getData("filter");
   SyncedTabs.getTabClients.restore();
 
   store.on("change", spy);
@@ -191,7 +193,7 @@ add_task(function* testRowSelectionWithFilter() {
 });
 
 
-add_task(function* testFilterAndClearFilter() {
+add_task(async function testFilterAndClearFilter() {
   let store = new SyncedTabsListStore(SyncedTabs);
   let spy = sinon.spy();
 
@@ -200,7 +202,7 @@ add_task(function* testFilterAndClearFilter() {
   });
   store.on("change", spy);
 
-  yield store.getData("filter");
+  await store.getData("filter");
 
   Assert.ok(SyncedTabs.getTabClients.calledWith("filter"));
   Assert.ok(!spy.args[0][0].canUpdateAll, "can't update all");
@@ -212,7 +214,7 @@ add_task(function* testFilterAndClearFilter() {
   Assert.ok(spy.args[1][0].clients[0].tabs[0].selected,
     "tab is selected");
 
-  yield store.clearFilter();
+  await store.clearFilter();
 
   Assert.ok(SyncedTabs.getTabClients.calledWith(""));
   Assert.ok(!spy.args[2][0].canUpdateAll, "can't update all");
@@ -225,7 +227,7 @@ add_task(function* testFilterAndClearFilter() {
   SyncedTabs.getTabClients.restore();
 });
 
-add_task(function* testFocusBlurInput() {
+add_task(async function testFocusBlurInput() {
   let store = new SyncedTabsListStore(SyncedTabs);
   let spy = sinon.spy();
 
@@ -234,7 +236,7 @@ add_task(function* testFocusBlurInput() {
   });
   store.on("change", spy);
 
-  yield store.getData();
+  await store.getData();
   SyncedTabs.getTabClients.restore();
 
   Assert.ok(!spy.args[0][0].canUpdateAll, "must rerender all");

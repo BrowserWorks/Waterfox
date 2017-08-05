@@ -59,7 +59,7 @@ function registerTableUpdate(aTable, aFilename) {
   });
 }
 
-add_task(function* test_setup() {
+add_task(async function test_setup() {
   // Set up a local HTTP server to return bad verdicts.
   Services.prefs.setCharPref(appRepURLPref,
                              "http://localhost:4444/download");
@@ -91,11 +91,11 @@ add_task(function* test_setup() {
   gHttpServ.start(4444);
 
   do_register_cleanup(function() {
-    return Task.spawn(function* () {
-      yield new Promise(resolve => {
+    return (async function() {
+      await new Promise(resolve => {
         gHttpServ.stop(resolve);
       });
-    });
+    })();
   });
 });
 
@@ -330,12 +330,25 @@ add_test(function test_redirect_on_blocklist() {
   let secman = Services.scriptSecurityManager;
   let badRedirects = Cc["@mozilla.org/array;1"]
                        .createInstance(Ci.nsIMutableArray);
-  badRedirects.appendElement(secman.createCodebasePrincipal(exampleURI, {}),
-                             false);
-  badRedirects.appendElement(secman.createCodebasePrincipal(blocklistedURI, {}),
-                             false);
-  badRedirects.appendElement(secman.createCodebasePrincipal(whitelistedURI, {}),
-                             false);
+
+  let redirect1 = {
+    QueryInterface: XPCOMUtils.generateQI([Ci.nsIRedirectHistoryEntry]),
+    principal: secman.createCodebasePrincipal(exampleURI, {}),
+  };
+  badRedirects.appendElement(redirect1);
+
+  let redirect2 = {
+    QueryInterface: XPCOMUtils.generateQI([Ci.nsIRedirectHistoryEntry]),
+    principal: secman.createCodebasePrincipal(blocklistedURI, {}),
+  };
+  badRedirects.appendElement(redirect2);
+
+  let redirect3 = {
+    QueryInterface: XPCOMUtils.generateQI([Ci.nsIRedirectHistoryEntry]),
+    principal: secman.createCodebasePrincipal(whitelistedURI, {}),
+  };
+  badRedirects.appendElement(redirect3);
+
   gAppRep.queryReputation({
     sourceURI: whitelistedURI,
     referrerURI: exampleURI,

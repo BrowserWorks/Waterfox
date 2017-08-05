@@ -5,8 +5,6 @@
 
 // Tests for the FxA push service.
 
-Cu.import("resource://gre/modules/Task.jsm");
-Cu.import("resource://gre/modules/Promise.jsm");
 Cu.import("resource://gre/modules/FxAccountsCommon.js");
 Cu.import("resource://gre/modules/Log.jsm");
 
@@ -163,7 +161,7 @@ add_test(function observePushTopicDeviceConnected() {
     Services.obs.removeObserver(obs, topic);
     run_next_test();
   };
-  Services.obs.addObserver(obs, ON_DEVICE_CONNECTED_NOTIFICATION, false);
+  Services.obs.addObserver(obs, ON_DEVICE_CONNECTED_NOTIFICATION);
 
   let pushService = new FxAccountsPushService({
     pushService: mockPushService,
@@ -198,6 +196,61 @@ add_test(function observePushTopicDeviceDisconnected() {
   let pushService = new FxAccountsPushService({
     pushService: mockPushService,
     fxAccounts: customAccounts,
+  });
+
+  pushService.observe(msg, mockPushService.pushTopic, FXA_PUSH_SCOPE_ACCOUNT_UPDATE);
+});
+
+add_test(function observePushTopicAccountDestroyed() {
+  const uid = "bogusuid";
+  let msg = {
+    data: {
+      json: () => ({
+        command: ON_ACCOUNT_DESTROYED_NOTIFICATION,
+        data: {
+          uid
+        }
+      })
+    },
+    QueryInterface() {
+      return this;
+    }
+  };
+  let customAccounts = Object.assign(mockFxAccounts, {
+    handleAccountDestroyed() {
+      // checking verification status on push messages without data
+      run_next_test();
+    }
+  });
+
+  let pushService = new FxAccountsPushService({
+    pushService: mockPushService,
+    fxAccounts: customAccounts,
+  });
+
+  pushService.observe(msg, mockPushService.pushTopic, FXA_PUSH_SCOPE_ACCOUNT_UPDATE);
+});
+
+add_test(function observePushTopicProfileUpdated() {
+  let msg = {
+    data: {
+      json: () => ({
+        command: ON_PROFILE_UPDATED_NOTIFICATION
+      })
+    },
+    QueryInterface() {
+      return this;
+    }
+  };
+  let obs = (subject, topic, data) => {
+    Services.obs.removeObserver(obs, topic);
+    run_next_test();
+  };
+  Services.obs.addObserver(obs, ON_PROFILE_CHANGE_NOTIFICATION);
+
+  let pushService = new FxAccountsPushService({
+    pushService: mockPushService,
+    fxAccounts: mockFxAccounts,
   });
 
   pushService.observe(msg, mockPushService.pushTopic, FXA_PUSH_SCOPE_ACCOUNT_UPDATE);

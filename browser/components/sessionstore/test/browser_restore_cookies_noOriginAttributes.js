@@ -24,7 +24,7 @@ const SESSION_DATA = JSON.stringify(
     }, {
       entries: [{
         url: "http://www.example.com/browser/browser/components/sessionstore/test/browser_1267910_page.html",
-        triggeringPrincipal_base64: triggeringPrincipal_base64,
+        triggeringPrincipal_base64,
         charset: "UTF-8",
         ID: 0,
         docshellID: 2,
@@ -77,7 +77,7 @@ const SESSION_DATA_OA = JSON.stringify(
     }, {
       entries: [{
         url: "http://www.example.com/browser/browser/components/sessionstore/test/browser_1267910_page.html",
-        triggeringPrincipal_base64: triggeringPrincipal_base64,
+        triggeringPrincipal_base64,
         charset: "UTF-8",
         ID: 0,
         docshellID: 2,
@@ -123,15 +123,15 @@ const SESSION_DATA_OA = JSON.stringify(
   global: {}
 });
 
-add_task(function* run_test() {
+add_task(async function run_test() {
   // Wait until initialization is complete.
-  yield SessionStore.promiseInitialized;
+  await SessionStore.promiseInitialized;
 
   // Clear cookies.
   Services.cookies.removeAll();
 
   // Open a new window.
-  let win = yield promiseNewWindowLoaded();
+  let win = await promiseNewWindowLoaded();
 
   // Restore window with session cookies that have no originAttributes.
   ss.setWindowState(win, SESSION_DATA, true);
@@ -170,5 +170,5 @@ add_task(function* run_test() {
   is(cookie.path, COOKIE.path, "cookie path successfully restored");
 
   // Close our window.
-  yield BrowserTestUtils.closeWindow(win);
+  await BrowserTestUtils.closeWindow(win);
 });

@@ -112,21 +112,6 @@ SVGAnimationElement::GetTargetAttributeName(int32_t *aNamespaceID,
                         aNamespaceID, aLocalName));
 }
 
-nsSMILTargetAttrType
-SVGAnimationElement::GetTargetAttributeType() const
-{
-  nsIContent::AttrValuesArray typeValues[] = { &nsGkAtoms::css,
-                                               &nsGkAtoms::XML,
-                                               nullptr};
-  nsSMILTargetAttrType smilTypes[] = { eSMILTargetAttrType_CSS,
-                                       eSMILTargetAttrType_XML };
-  int32_t index = FindAttrValueIn(kNameSpaceID_None,
-                                  nsGkAtoms::attributeType,
-                                  typeValues,
-                                  eCaseMatters);
-  return (index >= 0) ? smilTypes[index] : eSMILTargetAttrType_auto;
-}
-
 nsSMILTimedElement&
 SVGAnimationElement::TimedElement()
 {
@@ -263,8 +248,7 @@ SVGAnimationElement::ParseAttribute(int32_t aNamespaceID,
 {
   if (aNamespaceID == kNameSpaceID_None) {
     // Deal with target-related attributes here
-    if (aAttribute == nsGkAtoms::attributeName ||
-        aAttribute == nsGkAtoms::attributeType) {
+    if (aAttribute == nsGkAtoms::attributeName) {
       aResult.ParseAtom(aValue);
       AnimationNeedsResample();
       return true;
@@ -299,11 +283,12 @@ SVGAnimationElement::ParseAttribute(int32_t aNamespaceID,
 
 nsresult
 SVGAnimationElement::AfterSetAttr(int32_t aNamespaceID, nsIAtom* aName,
-                                  const nsAttrValue* aValue, bool aNotify)
+                                  const nsAttrValue* aValue,
+                                  const nsAttrValue* aOldValue, bool aNotify)
 {
   nsresult rv =
     SVGAnimationElementBase::AfterSetAttr(aNamespaceID, aName, aValue,
-                                          aNotify);
+                                          aOldValue, aNotify);
 
   if (SVGTests::IsConditionalProcessingAttribute(aName)) {
     bool isDisabled = !SVGTests::PassesConditionalProcessingTests();

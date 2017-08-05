@@ -4,6 +4,13 @@
  * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
 
 #include "nsPrefetchService.h"
+
+#include "mozilla/AsyncEventDispatcher.h"
+#include "mozilla/Attributes.h"
+#include "mozilla/CORSMode.h"
+#include "mozilla/dom/HTMLLinkElement.h"
+#include "mozilla/Preferences.h"
+
 #include "nsICacheEntry.h"
 #include "nsIServiceManager.h"
 #include "nsICategoryManager.h"
@@ -25,10 +32,6 @@
 #include "mozilla/Logging.h"
 #include "plstr.h"
 #include "nsIAsyncVerifyRedirectCallback.h"
-#include "mozilla/Preferences.h"
-#include "mozilla/Attributes.h"
-#include "mozilla/CORSMode.h"
-#include "mozilla/dom/HTMLLinkElement.h"
 #include "nsIDOMNode.h"
 #include "nsINode.h"
 #include "nsIDocument.h"
@@ -150,11 +153,12 @@ nsPrefetchNode::OpenChannel()
     nsCOMPtr<nsIHttpChannel> httpChannel =
         do_QueryInterface(mChannel);
     if (httpChannel) {
-        httpChannel->SetReferrerWithPolicy(mReferrerURI, referrerPolicy);
-        httpChannel->SetRequestHeader(
-            NS_LITERAL_CSTRING("X-Moz"),
-            NS_LITERAL_CSTRING("prefetch"),
-            false);
+        rv = httpChannel->SetReferrerWithPolicy(mReferrerURI, referrerPolicy);
+        MOZ_ASSERT(NS_SUCCEEDED(rv));
+        rv = httpChannel->SetRequestHeader(NS_LITERAL_CSTRING("X-Moz"),
+                                           NS_LITERAL_CSTRING("prefetch"),
+                                           false);
+        MOZ_ASSERT(NS_SUCCEEDED(rv));
     }
 
     // Reduce the priority of prefetch network requests.
@@ -339,9 +343,10 @@ nsPrefetchNode::AsyncOnChannelRedirect(nsIChannel *aOldChannel,
     nsCOMPtr<nsIHttpChannel> httpChannel = do_QueryInterface(aNewChannel);
     NS_ENSURE_STATE(httpChannel);
 
-    httpChannel->SetRequestHeader(NS_LITERAL_CSTRING("X-Moz"),
-                                  NS_LITERAL_CSTRING("prefetch"),
-                                  false);
+    rv = httpChannel->SetRequestHeader(NS_LITERAL_CSTRING("X-Moz"),
+                                       NS_LITERAL_CSTRING("prefetch"),
+                                       false);
+    MOZ_ASSERT(NS_SUCCEEDED(rv));
 
     // Assign to mChannel after we get notification about success of the
     // redirect in OnRedirectResult.
@@ -492,13 +497,17 @@ nsPrefetchService::DispatchEvent(nsPrefetchNode *node, bool aSuccess)
     for (uint32_t i = 0; i < node->mSources.Length(); i++) {
       nsCOMPtr<nsINode> domNode = do_QueryReferent(node->mSources.ElementAt(i));
       if (domNode && domNode->IsInComposedDoc()) {
-        nsContentUtils::DispatchTrustedEvent(domNode->OwnerDoc(),
-                                             domNode,
-                                             aSuccess ?
-                                              NS_LITERAL_STRING("load") :
-                                              NS_LITERAL_STRING("error"),
-                                             /* aCanBubble = */ false,
-                                             /* aCancelable = */ false);
+        // We don't dispatch synchronously since |node| might be in a DocGroup
+        // that we're not allowed to touch. (Our network request happens in the
+        // DocGroup of one of the mSources nodes--not necessarily this one).
+        RefPtr<AsyncEventDispatcher> dispatcher =
+          new AsyncEventDispatcher(domNode,
+                                   aSuccess ?
+                                    NS_LITERAL_STRING("load") :
+                                    NS_LITERAL_STRING("error"),
+                                   /* aCanBubble = */ false);
+        dispatcher->RequireNodeInDocument();
+        dispatcher->PostDOMEvent();
       }
     }
 }

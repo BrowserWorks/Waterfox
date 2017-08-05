@@ -75,7 +75,7 @@ var PointerlockFsWarning = {
     if (aOrigin) {
       this._origin = aOrigin;
     }
-    let uri = BrowserUtils.makeURI(this._origin);
+    let uri = Services.io.newURI(this._origin);
     let host = null;
     try {
       host = uri.host;
@@ -393,7 +393,7 @@ var FullScreen = {
         break;
       }
       case "DOMFullscreen:Painted": {
-        Services.obs.notifyObservers(window, "fullscreen-painted", "");
+        Services.obs.notifyObservers(window, "fullscreen-painted");
         TelemetryStopwatch.finish("FULLSCREEN_CHANGE_MS");
         break;
       }
@@ -537,7 +537,8 @@ var FullScreen = {
     // e.g. we wouldn't want the autoscroll icon firing this event, so when the user
     // toggles chrome when moving mouse to the top, it doesn't go away again.
     if (aEvent.type == "popupshown" && !FullScreen._isChromeCollapsed &&
-        aEvent.target.localName != "tooltip" && aEvent.target.localName != "window")
+        aEvent.target.localName != "tooltip" && aEvent.target.localName != "window" &&
+        aEvent.target.getAttribute("nopreventnavboxhide") != "true")
       FullScreen._isPopupOpen = true;
     else if (aEvent.type == "popuphidden" && aEvent.target.localName != "tooltip" &&
              aEvent.target.localName != "window") {
@@ -545,6 +546,10 @@ var FullScreen = {
       // Try again to hide toolbar when we close the popup.
       FullScreen.hideNavToolbox(true);
     }
+  },
+
+  get navToolboxHidden() {
+    return this._isChromeCollapsed;
   },
 
   // Autohide helpers for the context menu item
@@ -579,6 +584,7 @@ var FullScreen = {
     }
 
     this._isChromeCollapsed = false;
+    Services.obs.notifyObservers(null, "fullscreen-nav-toolbox", "shown");
   },
 
   hideNavToolbox(aAnimate = false) {
@@ -587,7 +593,7 @@ var FullScreen = {
 
     this._fullScrToggler.hidden = false;
 
-    if (aAnimate && gPrefService.getBoolPref("browser.fullscreen.animate")) {
+    if (aAnimate && gPrefService.getBoolPref("toolkit.cosmeticAnimations.enabled")) {
       gNavToolbox.setAttribute("fullscreenShouldAnimate", true);
       // Hide the fullscreen toggler until the transition ends.
       let listener = () => {
@@ -602,6 +608,8 @@ var FullScreen = {
     gNavToolbox.style.marginTop =
       -gNavToolbox.getBoundingClientRect().height + "px";
     this._isChromeCollapsed = true;
+    Services.obs.notifyObservers(null, "fullscreen-nav-toolbox", "hidden");
+
     MousePosTracker.removeListener(this);
   },
 
@@ -628,7 +636,8 @@ var FullScreen = {
       }
     }
 
-    ToolbarIconColor.inferFromText();
+    ToolbarIconColor.inferFromText("fullscreen", aEnterFS);
+
 
     // For Lion fullscreen, all fullscreen controls are hidden, don't
     // bother to touch them. If we don't stop here, the following code

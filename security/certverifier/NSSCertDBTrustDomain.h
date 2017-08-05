@@ -10,6 +10,7 @@
 #include "CertVerifier.h"
 #include "ScopedNSSTypes.h"
 #include "mozilla/BasePrincipal.h"
+#include "mozilla/TimeStamp.h"
 #include "nsICertBlocklist.h"
 #include "nsString.h"
 #include "pkix/pkixtypes.h"
@@ -77,6 +78,8 @@ public:
   NSSCertDBTrustDomain(SECTrustType certDBTrustType, OCSPFetching ocspFetching,
                        OCSPCache& ocspCache, void* pinArg,
                        CertVerifier::OcspGetConfig ocspGETConfig,
+                       mozilla::TimeDuration ocspTimeoutSoft,
+                       mozilla::TimeDuration ocspTimeoutHard,
                        uint32_t certShortLifetimeInDays,
                        CertVerifier::PinningMode pinningMode,
                        unsigned int minRSABits,
@@ -85,6 +88,7 @@ public:
                        NetscapeStepUpPolicy netscapeStepUpPolicy,
                        const OriginAttributes& originAttributes,
                        UniqueCERTCertList& builtChain,
+          /*optional*/ UniqueCERTCertList* peerCertChain = nullptr,
           /*optional*/ PinningTelemetryInfo* pinningTelemetryInfo = nullptr,
           /*optional*/ const char* hostname = nullptr);
 
@@ -143,7 +147,9 @@ public:
                    override;
 
   virtual Result IsChainValid(const mozilla::pkix::DERArray& certChain,
-                              mozilla::pkix::Time time) override;
+                              mozilla::pkix::Time time,
+                              const mozilla::pkix::CertPolicyId& requiredPolicy)
+                              override;
 
   virtual void NoteAuxiliaryExtension(
                    mozilla::pkix::AuxiliaryExtension extension,
@@ -175,12 +181,15 @@ private:
     const mozilla::pkix::CertID& certID, mozilla::pkix::Time time,
     uint16_t maxLifetimeInDays, mozilla::pkix::Input encodedResponse,
     EncodedResponseSource responseSource, /*out*/ bool& expired);
+  TimeDuration GetOCSPTimeout() const;
 
   const SECTrustType mCertDBTrustType;
   const OCSPFetching mOCSPFetching;
   OCSPCache& mOCSPCache; // non-owning!
   void* mPinArg; // non-owning!
   const CertVerifier::OcspGetConfig mOCSPGetConfig;
+  const mozilla::TimeDuration mOCSPTimeoutSoft;
+  const mozilla::TimeDuration mOCSPTimeoutHard;
   const uint32_t mCertShortLifetimeInDays;
   CertVerifier::PinningMode mPinningMode;
   const unsigned int mMinRSABits;
@@ -189,6 +198,7 @@ private:
   NetscapeStepUpPolicy mNetscapeStepUpPolicy;
   const OriginAttributes& mOriginAttributes;
   UniqueCERTCertList& mBuiltChain; // non-owning
+  UniqueCERTCertList* mPeerCertChain; // non-owning
   PinningTelemetryInfo* mPinningTelemetryInfo;
   const char* mHostname; // non-owning - only used for pinning checks
   nsCOMPtr<nsICertBlocklist> mCertBlocklist;

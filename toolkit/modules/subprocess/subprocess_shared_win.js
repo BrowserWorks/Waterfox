@@ -7,6 +7,9 @@
 
 /* exported LIBC, Win, createPipe, libc */
 
+// This file is loaded into the same scope as subprocess_win.jsm
+/* import-globals-from subprocess_win.jsm */
+
 const LIBC = OS.Constants.libc;
 
 const Win = OS.Constants.Win;
@@ -66,6 +69,9 @@ Object.assign(win32, {
 });
 
 Object.assign(win32, {
+  INVALID_HANDLE_VALUE: ctypes.cast(ctypes.int64_t(-1), win32.HANDLE),
+  NULL_HANDLE_VALUE: ctypes.cast(ctypes.uintptr_t(0), win32.HANDLE),
+
   CREATE_SUSPENDED: 0x00000004,
   CREATE_NEW_CONSOLE: 0x00000010,
   CREATE_UNICODE_ENVIRONMENT: 0x00000400,

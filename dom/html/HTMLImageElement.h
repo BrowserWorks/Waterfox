@@ -75,30 +75,20 @@ public:
 
   bool IsHTMLFocusable(bool aWithMouse, bool *aIsFocusable, int32_t *aTabIndex) override;
 
-  // SetAttr override.  C++ is stupid, so have to override both
-  // overloaded methods.
-  nsresult SetAttr(int32_t aNameSpaceID, nsIAtom* aName,
-                   const nsAString& aValue, bool aNotify)
-  {
-    return SetAttr(aNameSpaceID, aName, nullptr, aValue, aNotify);
-  }
-  virtual nsresult SetAttr(int32_t aNameSpaceID, nsIAtom* aName,
-                           nsIAtom* aPrefix, const nsAString& aValue,
-                           bool aNotify) override;
-
   virtual nsresult BindToTree(nsIDocument* aDocument, nsIContent* aParent,
                               nsIContent* aBindingParent,
                               bool aCompileEventHandlers) override;
   virtual void UnbindFromTree(bool aDeep, bool aNullParent) override;
 
   virtual EventStates IntrinsicState() const override;
-  virtual nsresult Clone(mozilla::dom::NodeInfo *aNodeInfo, nsINode **aResult) const override;
+  virtual nsresult Clone(mozilla::dom::NodeInfo *aNodeInfo, nsINode **aResult,
+                         bool aPreallocateChildren) const override;
 
-  virtual void NodeInfoChanged() override;
+  virtual void NodeInfoChanged(nsIDocument* aOldDoc) override;
 
-  nsresult CopyInnerTo(Element* aDest);
+  nsresult CopyInnerTo(Element* aDest, bool aPreallocateChildren);
 
-  void MaybeLoadImage();
+  void MaybeLoadImage(bool aAlwaysForceLoad);
 
   bool IsMap()
   {
@@ -344,11 +334,19 @@ protected:
   void UpdateFormOwner();
 
   virtual nsresult BeforeSetAttr(int32_t aNameSpaceID, nsIAtom* aName,
-                                 nsAttrValueOrString* aValue,
+                                 const nsAttrValueOrString* aValue,
                                  bool aNotify) override;
 
   virtual nsresult AfterSetAttr(int32_t aNameSpaceID, nsIAtom* aName,
-                                const nsAttrValue* aValue, bool aNotify) override;
+                                const nsAttrValue* aValue,
+                                const nsAttrValue* aOldValue,
+                                bool aNotify) override;
+  virtual nsresult OnAttrSetButNotChanged(int32_t aNamespaceID, nsIAtom* aName,
+                                          const nsAttrValueOrString& aValue,
+                                          bool aNotify) override;
+
+  // Override for nsImageLoadingContent.
+  nsIContent* AsContent() override { return this; }
 
   // This is a weak reference that this element and the HTMLFormElement
   // cooperate in maintaining.
@@ -362,6 +360,35 @@ private:
 
   static void MapAttributesIntoRule(const nsMappedAttributes* aAttributes,
                                     GenericSpecifiedValues* aGenericData);
+  /**
+   * This function is called by BeforeSetAttr and OnAttrSetButNotChanged.
+   * It will not be called if the value is being unset.
+   *
+   * @param aNamespaceID the namespace of the attr being set
+   * @param aName the localname of the attribute being set
+   * @param aValue the value it's being set to represented as either a string or
+   *        a parsed nsAttrValue.
+   * @param aNotify Whether we plan to notify document observers.
+   */
+  void BeforeMaybeChangeAttr(int32_t aNamespaceID, nsIAtom* aName,
+                             const nsAttrValueOrString& aValue,
+                             bool aNotify);
+  /**
+   * This function is called by AfterSetAttr and OnAttrSetButNotChanged.
+   * It will not be called if the value is being unset.
+   *
+   * @param aNamespaceID the namespace of the attr being set
+   * @param aName the localname of the attribute being set
+   * @param aNotify Whether we plan to notify document observers.
+   */
+  void AfterMaybeChangeAttr(int32_t aNamespaceID, nsIAtom* aName,
+                            bool aNotify);
+  /**
+   * Used by BeforeMaybeChangeAttr and AfterMaybeChangeAttr to keep track of
+   * whether a reload needs to be forced after an attribute change that is
+   * currently in progress.
+   */
+  bool mForceReload;
 
   bool mInDocResponsiveContent;
   RefPtr<ImageLoadTask> mPendingImageLoadTask;

@@ -16,6 +16,7 @@ include protocol PLayerTransaction;
 include protocol PTexture;
 include protocol PWebRenderBridge;
 include "mozilla/GfxMessageUtils.h";
+include "mozilla/layers/WebRenderMessageUtils.h";
 
 using struct mozilla::null_t from "ipc/IPCMessageUtils.h";
 using struct mozilla::layers::TextureFactoryIdentifier from "mozilla/layers/CompositorTypes.h";
@@ -30,11 +31,14 @@ using mozilla::ipc::SharedMemoryBasic::Handle from "mozilla/ipc/SharedMemoryBasi
 using mozilla::CSSIntRegion from "Units.h";
 using mozilla::LayoutDeviceIntPoint from "Units.h";
 using mozilla::LayoutDeviceIntRegion from "Units.h";
+using mozilla::LayoutDeviceIntSize from "Units.h";
 using class mozilla::TimeStamp from "mozilla/TimeStamp.h";
 using class mozilla::layers::FrameUniformityData from "mozilla/layers/FrameUniformityData.h";
 using mozilla::layers::TextureFlags from "mozilla/layers/CompositorTypes.h";
 using mozilla::layers::CompositorOptions from "mozilla/layers/CompositorOptions.h";
 using mozilla::wr::PipelineId from "mozilla/webrender/WebRenderTypes.h";
+using base::ProcessId from "base/process.h";
+using mozilla::wr::MaybeExternalImageId from "mozilla/webrender/WebRenderTypes.h";
 
 namespace mozilla {
 namespace layers {
@@ -80,15 +84,6 @@ child:
   // compositor device resets, such as in CompositorD3D9, and ensures that
   // TextureSources are recreated.
   async InvalidateLayers(uint64_t layersId);
-
-  // The compositor type or device has changed, and a new texture factory
-  // identifier is available. Layers must be invalidated and the new identifier
-  // must be propagated. The sequence number is a generation count for the
-  // compositor.
-  async CompositorUpdated(
-    uint64_t layersId,
-    TextureFactoryIdentifier newIdentifier,
-    uint64_t seqNo);
 
   // The compositor completed a layers transaction. id is the layers id
   // of the child layer tree that was composited (or 0 when notifying
@@ -139,11 +134,6 @@ parent:
 
   // When out-of-process, this must be called to finish initialization.
   sync Initialize(uint64_t rootLayerTreeId);
-  sync Reset(LayersBackend[] aBackendHints, uint64_t aSeqNo)
-    returns (bool aResult, TextureFactoryIdentifier aOutIdentifier);
-
-  // Returns the CompositorOptions for this compositor.
-  sync GetCompositorOptions(uint64_t layersId) returns (CompositorOptions aOptions);
 
   // Must be called after Initialize(), and only succeeds if AsyncPanZoomEnabled() is true.
   async PAPZ(uint64_t layersId);
@@ -153,10 +143,6 @@ parent:
    * Confirmation callback for UpdatePluginConfigurations and HideAllPlugins.
    */
   async RemotePluginsReady();
-
-  // Confirmation that the child has invalidated all its layers, and will not
-  // request layers against an old compositor.
-  async AcknowledgeCompositorUpdate(uint64_t aLayersId, uint64_t aSeqNo);
 
   // Child requests frame uniformity measurements
   sync GetFrameUniformity() returns (FrameUniformityData data);
@@ -172,7 +158,15 @@ parent:
 
   // See bug 1316632 comment #33 for why this has to be sync. Otherwise,
   // there are ordering issues with SendPLayerTransactionConstructor.
-  sync NotifyChildCreated(uint64_t id);
+  sync NotifyChildCreated(uint64_t id)
+    returns (CompositorOptions compositorOptions);
+
+  // This version of NotifyChildCreated also performs a layer tree mapping.
+  //
+  // See bug 1316632 comment #33 for why this has to be sync. Otherwise,
+  // there are ordering issues with SendPLayerTransactionConstructor.
+  sync MapAndNotifyChildCreated(uint64_t id, ProcessId owner)
+    returns (CompositorOptions compositorOptions);
 
   async AdoptChild(uint64_t id);
 
@@ -180,7 +174,8 @@ parent:
   // reassociate layers. This must be synchronous to ensure that the
   // association happens before PLayerTransactions are sent over the
   // cross-process bridge.
-  sync NotifyChildRecreated(uint64_t id);
+  sync NotifyChildRecreated(uint64_t id)
+    returns (CompositorOptions compositorOptions);
 
   // Make a snapshot of the content that would have been drawn to our
   // render target at the time this message is received.  If the size
@@ -195,6 +190,13 @@ parent:
   // block until they are completed.
   sync FlushRendering();
 
+  // Same as FlushRendering, but asynchronous, since not all platforms require
+  // synchronous repaints on resize.
+  async FlushRenderingAsync();
+
+  // Make sure any pending composites have been received.
+  sync WaitOnTransactionProcessed();
+
   // Force an additional frame presentation to be executed. This is used to
   // work around a windows presentation bug (See Bug 1232042)
   async ForcePresent();
@@ -208,8 +210,7 @@ parent:
   // layersBackendHints is an ordered list of preffered backends where
   // layersBackendHints[0] is the best backend. If any hints are LayersBackend::LAYERS_NONE
   // that hint is ignored.
-  sync PLayerTransaction(LayersBackend[] layersBackendHints, uint64_t id)
-    returns (TextureFactoryIdentifier textureFactoryIdentifier, bool success);
+  async PLayerTransaction(LayersBackend[] layersBackendHints, uint64_t id);
 
   // Notify the compositor that a region of the screen has been invalidated.
   async NotifyRegionInvalidated(nsIntRegion region);
@@ -237,12 +238,12 @@ parent:
    */
   async AllPluginsCaptured();
 
-  async PTexture(SurfaceDescriptor aSharedData, LayersBackend aBackend, TextureFlags aTextureFlags, uint64_t id, uint64_t aSerial);
+  async PTexture(SurfaceDescriptor aSharedData, LayersBackend aBackend, TextureFlags aTextureFlags, uint64_t id, uint64_t aSerial, MaybeExternalImageId aExternalImageId);
 
   sync SyncWithCompositor();
 
   // The pipelineId is the same as the layersId
-  sync PWebRenderBridge(PipelineId pipelineId)
+  sync PWebRenderBridge(PipelineId pipelineId, LayoutDeviceIntSize aSize)
     returns (TextureFactoryIdentifier textureFactoryIdentifier, uint32_t idNamespace); //XXX: use the WrIdNamespace type
 
 child:

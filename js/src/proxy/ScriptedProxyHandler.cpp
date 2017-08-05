@@ -130,7 +130,7 @@ IsCompatiblePropertyDescriptor(JSContext* cx, bool extensible, Handle<PropertyDe
 ScriptedProxyHandler::handlerObject(const JSObject* proxy)
 {
     MOZ_ASSERT(proxy->as<ProxyObject>().handler() == &ScriptedProxyHandler::singleton);
-    return proxy->as<ProxyObject>().extra(ScriptedProxyHandler::HANDLER_EXTRA).toObjectOrNull();
+    return proxy->as<ProxyObject>().reservedSlot(ScriptedProxyHandler::HANDLER_EXTRA).toObjectOrNull();
 }
 
 // ES8 rev 0c1bd3004329336774cbc90de727cd0cf5f11e93 7.3.9 GetMethod,
@@ -657,7 +657,7 @@ static bool
 CreateFilteredListFromArrayLike(JSContext* cx, HandleValue v, AutoIdVector& props)
 {
     // Step 2.
-    RootedObject obj(cx, NonNullObject(cx, v));
+    RootedObject obj(cx, NonNullObjectWithName(cx, "return value of the ownKeys trap", v));
     if (!obj)
         return false;
 
@@ -1268,7 +1268,8 @@ ScriptedProxyHandler::fun_toString(JSContext* cx, HandleObject proxy, unsigned i
 }
 
 bool
-ScriptedProxyHandler::regexp_toShared(JSContext* cx, HandleObject proxy, RegExpGuard* g) const
+ScriptedProxyHandler::regexp_toShared(JSContext* cx, HandleObject proxy,
+                                      MutableHandleRegExpShared shared) const
 {
     MOZ_CRASH("Should not end up in ScriptedProxyHandler::regexp_toShared");
     return false;
@@ -1286,7 +1287,7 @@ bool
 ScriptedProxyHandler::isCallable(JSObject* obj) const
 {
     MOZ_ASSERT(obj->as<ProxyObject>().handler() == &ScriptedProxyHandler::singleton);
-    uint32_t callConstruct = obj->as<ProxyObject>().extra(IS_CALLCONSTRUCT_EXTRA).toPrivateUint32();
+    uint32_t callConstruct = obj->as<ProxyObject>().reservedSlot(IS_CALLCONSTRUCT_EXTRA).toPrivateUint32();
     return !!(callConstruct & IS_CALLABLE);
 }
 
@@ -1294,7 +1295,7 @@ bool
 ScriptedProxyHandler::isConstructor(JSObject* obj) const
 {
     MOZ_ASSERT(obj->as<ProxyObject>().handler() == &ScriptedProxyHandler::singleton);
-    uint32_t callConstruct = obj->as<ProxyObject>().extra(IS_CALLCONSTRUCT_EXTRA).toPrivateUint32();
+    uint32_t callConstruct = obj->as<ProxyObject>().reservedSlot(IS_CALLCONSTRUCT_EXTRA).toPrivateUint32();
     return !!(callConstruct & IS_CONSTRUCTOR);
 }
 
@@ -1319,7 +1320,7 @@ ProxyCreate(JSContext* cx, CallArgs& args, const char* callerName)
     }
 
     // Step 1.
-    RootedObject target(cx, NonNullObject(cx, args[0]));
+    RootedObject target(cx, NonNullObjectArg(cx, "`target`", callerName, args[0]));
     if (!target)
         return false;
 
@@ -1330,7 +1331,7 @@ ProxyCreate(JSContext* cx, CallArgs& args, const char* callerName)
     }
 
     // Step 3.
-    RootedObject handler(cx, NonNullObject(cx, args[1]));
+    RootedObject handler(cx, NonNullObjectArg(cx, "`handler`", callerName, args[1]));
     if (!handler)
         return false;
 
@@ -1349,13 +1350,13 @@ ProxyCreate(JSContext* cx, CallArgs& args, const char* callerName)
 
     // Step 9 (reordered).
     Rooted<ProxyObject*> proxy(cx, &proxy_->as<ProxyObject>());
-    proxy->setExtra(ScriptedProxyHandler::HANDLER_EXTRA, ObjectValue(*handler));
+    proxy->setReservedSlot(ScriptedProxyHandler::HANDLER_EXTRA, ObjectValue(*handler));
 
     // Step 7.
     uint32_t callable = target->isCallable() ? ScriptedProxyHandler::IS_CALLABLE : 0;
     uint32_t constructor = target->isConstructor() ? ScriptedProxyHandler::IS_CONSTRUCTOR : 0;
-    proxy->setExtra(ScriptedProxyHandler::IS_CALLCONSTRUCT_EXTRA,
-                    PrivateUint32Value(callable | constructor));
+    proxy->setReservedSlot(ScriptedProxyHandler::IS_CALLCONSTRUCT_EXTRA,
+                           PrivateUint32Value(callable | constructor));
 
     // Step 10.
     args.rval().setObject(*proxy);
@@ -1387,7 +1388,7 @@ RevokeProxy(JSContext* cx, unsigned argc, Value* vp)
         MOZ_ASSERT(p->is<ProxyObject>());
 
         p->as<ProxyObject>().setSameCompartmentPrivate(NullValue());
-        p->as<ProxyObject>().setExtra(ScriptedProxyHandler::HANDLER_EXTRA, NullValue());
+        p->as<ProxyObject>().setReservedSlot(ScriptedProxyHandler::HANDLER_EXTRA, NullValue());
     }
 
     args.rval().setUndefined();

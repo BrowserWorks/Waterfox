@@ -4,17 +4,20 @@
 
 //! Abstract windowing methods. The concrete implementations of these can be found in `platform/`.
 
-use compositor_thread::{CompositorProxy, CompositorReceiver};
+use compositor_thread::EventLoopWaker;
 use euclid::{Point2D, Size2D};
 use euclid::point::TypedPoint2D;
+use euclid::rect::TypedRect;
 use euclid::scale_factor::ScaleFactor;
 use euclid::size::TypedSize2D;
+use gleam::gl;
 use msg::constellation_msg::{Key, KeyModifiers, KeyState};
 use net_traits::net_error_list::NetError;
-use script_traits::{DevicePixel, MouseButton, TouchEventType, TouchId, TouchpadPressurePhase};
+use script_traits::{DevicePixel, LoadData, MouseButton, TouchEventType, TouchId, TouchpadPressurePhase};
 use servo_geometry::DeviceIndependentPixel;
 use servo_url::ServoUrl;
 use std::fmt::{Debug, Error, Formatter};
+use std::rc::Rc;
 use style_traits::cursor::Cursor;
 use webrender_traits::ScrollLocation;
 
@@ -51,8 +54,6 @@ pub enum WindowEvent {
     Resize(TypedSize2D<u32, DevicePixel>),
     /// Touchpad Pressure
     TouchpadPressure(TypedPoint2D<f32, DevicePixel>, f32, TouchpadPressurePhase),
-    /// Sent when you want to override the viewport.
-    Viewport(TypedPoint2D<u32, DevicePixel>, TypedSize2D<u32, DevicePixel>),
     /// Sent when a new URL is to be loaded.
     LoadUrl(String),
     /// Sent when a mouse hit test is to be performed.
@@ -88,7 +89,6 @@ impl Debug for WindowEvent {
             WindowEvent::InitializeCompositing => write!(f, "InitializeCompositing"),
             WindowEvent::Resize(..) => write!(f, "Resize"),
             WindowEvent::TouchpadPressure(..) => write!(f, "TouchpadPressure"),
-            WindowEvent::Viewport(..) => write!(f, "Viewport"),
             WindowEvent::KeyEvent(..) => write!(f, "Key"),
             WindowEvent::LoadUrl(..) => write!(f, "LoadUrl"),
             WindowEvent::MouseWindowEventClass(..) => write!(f, "Mouse"),
@@ -106,8 +106,10 @@ impl Debug for WindowEvent {
 }
 
 pub trait WindowMethods {
-    /// Returns the size of the window in hardware pixels.
+    /// Returns the rendering area size in hardware pixels.
     fn framebuffer_size(&self) -> TypedSize2D<u32, DevicePixel>;
+    /// Returns the position and size of the window within the rendering area.
+    fn window_rect(&self) -> TypedRect<u32, DevicePixel>;
     /// Returns the size of the window in density-independent "px" units.
     fn size(&self) -> TypedSize2D<f32, DeviceIndependentPixel>;
     /// Presents the window to the screen (perhaps by page flipping).
@@ -124,28 +126,26 @@ pub trait WindowMethods {
 
     /// Sets the page title for the current page.
     fn set_page_title(&self, title: Option<String>);
-    /// Sets the load data for the current page.
-    fn set_page_url(&self, url: ServoUrl);
     /// Called when the browser chrome should display a status message.
     fn status(&self, Option<String>);
     /// Called when the browser has started loading a frame.
-    fn load_start(&self, back: bool, forward: bool);
+    fn load_start(&self);
     /// Called when the browser is done loading a frame.
-    fn load_end(&self, back: bool, forward: bool, root: bool);
+    fn load_end(&self);
     /// Called when the browser encounters an error while loading a URL
     fn load_error(&self, code: NetError, url: String);
+    /// Wether or not to follow a link
+    fn allow_navigation(&self, url: ServoUrl) -> bool;
     /// Called when the <head> tag has finished parsing
     fn head_parsed(&self);
+    /// Called when the history state has changed.
+    fn history_changed(&self, Vec<LoadData>, usize);
 
     /// Returns the scale factor of the system (device pixels / device independent pixels).
     fn hidpi_factor(&self) -> ScaleFactor<f32, DeviceIndependentPixel, DevicePixel>;
 
-    /// Creates a channel to the compositor. The dummy parameter is needed because we don't have
-    /// UFCS in Rust yet.
-    ///
-    /// This is part of the windowing system because its implementation often involves OS-specific
-    /// magic to wake the up window's event loop.
-    fn create_compositor_channel(&self) -> (Box<CompositorProxy + Send>, Box<CompositorReceiver>);
+    /// Returns a thread-safe object to wake up the window's event loop.
+    fn create_event_loop_waker(&self) -> Box<EventLoopWaker>;
 
     /// Requests that the window system prepare a composite. Typically this will involve making
     /// some type of platform-specific graphics context current. Returns true if the composite may
@@ -163,4 +163,7 @@ pub trait WindowMethods {
 
     /// Add a favicon
     fn set_favicon(&self, url: ServoUrl);
+
+    /// Return the GL function pointer trait.
+    fn gl(&self) -> Rc<gl::Gl>;
 }

@@ -20,9 +20,10 @@ window.onload = Task.async(function* () {
   const {
     REPS,
     MODE,
+    getRep,
     getSelectableInInspectorGrips,
   } = browserRequire("devtools/client/shared/components/reps/reps");
-  let { Rep, GripArray } = REPS;
+  let { GripArray } = REPS;
 
   let componentUnderTest = GripArray;
   const maxLength = {
@@ -39,6 +40,7 @@ window.onload = Task.async(function* () {
     yield testMoreThanLongMaxProps();
     yield testRecursiveArray();
     yield testPreviewLimit();
+    yield testEmptySlots();
     yield testNamedNodeMap();
     yield testNodeList();
     yield testDocumentFragment();
@@ -46,6 +48,8 @@ window.onload = Task.async(function* () {
     yield testOnDomNodeMouseOver();
     yield testOnDomNodeMouseOut();
     yield testOnDomNodeInspectIconClick();
+
+    yield testObjectLink();
   } catch (e) {
     ok(false, "Got an error: " + DevToolsUtils.safeErrorString(e));
   } finally {
@@ -58,8 +62,7 @@ window.onload = Task.async(function* () {
 
     // Test that correct rep is chosen
     const gripStub = getGripStub("testBasic");
-    const renderedRep = shallowRenderComponent(Rep, { object: gripStub });
-    is(renderedRep.type, GripArray.rep, `Rep correctly selects ${GripArray.rep.displayName}`);
+    is(getRep(gripStub), GripArray.rep, "Rep correctly selects GripArray Rep");
 
     // Test rendering
     const defaultOutput = `Array []`;
@@ -234,6 +237,206 @@ window.onload = Task.async(function* () {
     testRepRenderModes(modeTests, testName, componentUnderTest, getGripStub(testName));
   }
 
+  function testEmptySlots() {
+    testRepRenderModes(
+      [{
+        mode: undefined,
+        expectedOutput: "Array [ <5 empty slots> ]",
+      },
+      {
+        mode: MODE.TINY,
+        expectedOutput: `[5]`,
+      },
+      {
+        mode: MODE.SHORT,
+        expectedOutput: "Array [ <5 empty slots> ]",
+      },
+      {
+        mode: MODE.LONG,
+        expectedOutput: "Array [ <5 empty slots> ]",
+      }],
+      "Array with empty slots only",
+      componentUnderTest,
+      getGripStub("Array(5)")
+    );
+
+    testRepRenderModes(
+      [{
+        mode: undefined,
+        expectedOutput: "Array [ <1 empty slot>, 1, 2, 1 more… ]",
+      },
+      {
+        mode: MODE.TINY,
+        expectedOutput: `[4]`,
+      },
+      {
+        mode: MODE.SHORT,
+        expectedOutput: "Array [ <1 empty slot>, 1, 2, 1 more… ]",
+      },
+      {
+        mode: MODE.LONG,
+        expectedOutput: "Array [ <1 empty slot>, 1, 2, 3 ]",
+      }],
+      "Array with one empty slot at the beginning",
+      componentUnderTest,
+      getGripStub("[,1,2,3]")
+    );
+
+    testRepRenderModes(
+      [{
+        mode: undefined,
+        expectedOutput: "Array [ <3 empty slots>, 3, 4, 1 more… ]",
+      },
+      {
+        mode: MODE.TINY,
+        expectedOutput: `[6]`,
+      },
+      {
+        mode: MODE.SHORT,
+        expectedOutput: "Array [ <3 empty slots>, 3, 4, 1 more… ]",
+      },
+      {
+        mode: MODE.LONG,
+        expectedOutput: "Array [ <3 empty slots>, 3, 4, 5 ]",
+      }],
+      "Array with multiple consecutive empty slots at the beginning",
+      componentUnderTest,
+      getGripStub("[,,,3,4,5]")
+    );
+
+    testRepRenderModes(
+      [{
+        mode: undefined,
+        expectedOutput: "Array [ 0, 1, <1 empty slot>, 3 more… ]",
+      },
+      {
+        mode: MODE.TINY,
+        expectedOutput: `[6]`,
+      },
+      {
+        mode: MODE.SHORT,
+        expectedOutput: "Array [ 0, 1, <1 empty slot>, 3 more… ]",
+      },
+      {
+        mode: MODE.LONG,
+        expectedOutput: "Array [ 0, 1, <1 empty slot>, 3, 4, 5 ]",
+      }],
+      "Array with one empty slot in the middle",
+      componentUnderTest,
+      getGripStub("[0,1,,3,4,5]")
+    );
+
+    testRepRenderModes(
+      [{
+        mode: undefined,
+        expectedOutput: "Array [ 0, 1, <3 empty slots>, 1 more… ]",
+      },
+      {
+        mode: MODE.TINY,
+        expectedOutput: `[6]`,
+      },
+      {
+        mode: MODE.SHORT,
+        expectedOutput: "Array [ 0, 1, <3 empty slots>, 1 more… ]",
+      },
+      {
+        mode: MODE.LONG,
+        expectedOutput: "Array [ 0, 1, <3 empty slots>, 5 ]",
+      }],
+      "Array with multiple successive empty slots in the middle",
+      componentUnderTest,
+      getGripStub("[0,1,,,,5]")
+    );
+
+    testRepRenderModes(
+      [{
+        mode: undefined,
+        expectedOutput: "Array [ 0, <1 empty slot>, 2, 3 more… ]",
+      },
+      {
+        mode: MODE.TINY,
+        expectedOutput: `[6]`,
+      },
+      {
+        mode: MODE.SHORT,
+        expectedOutput: "Array [ 0, <1 empty slot>, 2, 3 more… ]",
+      },
+      {
+        mode: MODE.LONG,
+        expectedOutput: "Array [ 0, <1 empty slot>, 2, <1 empty slot>, 4, 5 ]",
+      }],
+      "Array with multiple non successive single empty slots",
+      componentUnderTest,
+      getGripStub("[0,,2,,4,5]")
+    );
+
+    testRepRenderModes(
+      [{
+        mode: undefined,
+        expectedOutput: "Array [ 0, <2 empty slots>, 3, 5 more… ]",
+      },
+      {
+        mode: MODE.TINY,
+        expectedOutput: `[9]`,
+      },
+      {
+        mode: MODE.SHORT,
+        expectedOutput: "Array [ 0, <2 empty slots>, 3, 5 more… ]",
+      },
+      {
+        mode: MODE.LONG,
+        expectedOutput: "Array [ 0, <2 empty slots>, 3, <3 empty slots>, 7, 8 ]",
+      }],
+      "Array with multiple multi-slot holes",
+      componentUnderTest,
+      getGripStub("[0,,,3,,,,7,8]")
+    );
+
+    testRepRenderModes(
+      [{
+        mode: undefined,
+        expectedOutput: "Array [ 0, 1, 2, 3 more… ]",
+      },
+      {
+        mode: MODE.TINY,
+        expectedOutput: `[6]`,
+      },
+      {
+        mode: MODE.SHORT,
+        expectedOutput: "Array [ 0, 1, 2, 3 more… ]",
+      },
+      {
+        mode: MODE.LONG,
+        expectedOutput: "Array [ 0, 1, 2, 3, 4, <1 empty slot> ]",
+      }],
+      "Array with a single slot hole at the end",
+      componentUnderTest,
+      getGripStub("[0,1,2,3,4,,]")
+    );
+
+    testRepRenderModes(
+      [{
+        mode: undefined,
+        expectedOutput: "Array [ 0, 1, 2, 3 more… ]",
+      },
+      {
+        mode: MODE.TINY,
+        expectedOutput: `[6]`,
+      },
+      {
+        mode: MODE.SHORT,
+        expectedOutput: "Array [ 0, 1, 2, 3 more… ]",
+      },
+      {
+        mode: MODE.LONG,
+        expectedOutput: "Array [ 0, 1, 2, <3 empty slots> ]",
+      }],
+      "Array with multiple consecutive empty slots at the end",
+      componentUnderTest,
+      getGripStub("[0,1,2,,,,]")
+    );
+  }
+
   function testNamedNodeMap() {
     const testName = "testNamedNodeMap";
 
@@ -326,8 +529,6 @@ window.onload = Task.async(function* () {
 
     is(grips.length, 3, "the stub has three node grips");
 
-    const attachedActorIds = getStubAttachedActorIds(grips);
-
     let mouseOverValue;
     let onDOMNodeMouseOver = (object) => {
       mouseOverValue = object;
@@ -335,7 +536,6 @@ window.onload = Task.async(function* () {
     const renderedComponent = renderComponent(GripArray.rep, {
       object: stub,
       onDOMNodeMouseOver,
-      attachedActorIds,
     });
 
     const nodes = renderedComponent.querySelectorAll(".objectBox-node");
@@ -355,8 +555,6 @@ window.onload = Task.async(function* () {
 
     is(grips.length, 3, "the stub has three node grips");
 
-    const attachedActorIds = getStubAttachedActorIds(grips);
-
     let called = 0;
     let onDOMNodeMouseOut = (object) => {
       called++;
@@ -364,7 +562,6 @@ window.onload = Task.async(function* () {
     const renderedComponent = renderComponent(GripArray.rep, {
       object: stub,
       onDOMNodeMouseOut,
-      attachedActorIds,
     });
 
     const nodes = renderedComponent.querySelectorAll(".objectBox-node");
@@ -375,35 +572,30 @@ window.onload = Task.async(function* () {
   }
 
   function testOnDomNodeInspectIconClick() {
-    const stub = getGripStub("testNodeList");
-    const grips = getSelectableInInspectorGrips(stub);
-
-    is(grips.length, 3, "the stub has three node grips");
-
-    const attachedActorIds = getStubAttachedActorIds(grips);
-
     let inspectIconClickedValue = null;
     let onInspectIconClick = (object) => {
       inspectIconClickedValue = object;
     };
 
     let renderedComponentWithoutInspectIcon = renderComponent(GripArray.rep, {
-      object: stub,
+      object: getGripStub("testDisconnectedNodeList"),
       onInspectIconClick,
-      attachedActorIds: ["someOtherId"],
     });
     is(renderedComponentWithoutInspectIcon.querySelector(".open-inspector"), null,
-      "There isn't an inspect icon when the actor is not in attachedActorIds");
+      "There isn't an inspect icon when the nodes are not connected to the DOM tree");
 
+    const stub = getGripStub("testNodeList");
+    const grips = getSelectableInInspectorGrips(stub);
+
+    is(grips.length, 3, "the stub has three node grips");
     const renderedComponent = renderComponent(GripArray.rep, {
       object: stub,
       onInspectIconClick,
-      attachedActorIds,
     });
 
     const icons = renderedComponent.querySelectorAll(".open-inspector");
     is(icons.length, grips.length,
-      "There is an icon for each grip array item with a matching attachedNodeFront");
+      "There is an icon for each node connected to the DOM tree");
 
     icons.forEach((icon, index) => {
       TestUtils.Simulate.click(icon);
@@ -412,6 +604,41 @@ window.onload = Task.async(function* () {
         "onInspectIconClick is called with the expected argument " +
         "when the inspect icon is clicked");
     });
+  }
+
+  function testObjectLink() {
+    // Test array = `["test string"…] //4 items`
+    const defaultOutput = `*Array **[ *${Array(maxLength.short).fill("\"test string\"").join(", ")}, *1 more…** ]*`;
+
+    const modeTests = [
+      {
+        mode: undefined,
+        expectedOutput: defaultOutput,
+      },
+      {
+        mode: MODE.TINY,
+        expectedOutput: `*[*${maxLength.short + 1}*]*`,
+      },
+      {
+        mode: MODE.SHORT,
+        expectedOutput: defaultOutput,
+      },
+      {
+        mode: MODE.LONG,
+        expectedOutput: `*Array **[ *${Array(maxLength.short + 1).fill("\"test string\"").join(", ")}* ]*`,
+      }
+    ];
+
+    testRepRenderModes(
+      modeTests,
+      "testObjectLink",
+      componentUnderTest,
+      getGripStub("testMoreThanShortMaxProps"),
+      {
+        objectLink: (props, ...children) => React.DOM.span({},
+          "*", ...children, "*"),
+      }
+    );
   }
 
   function getGripStub(functionName) {
@@ -641,6 +868,7 @@ window.onload = Task.async(function* () {
                   "kind": "DOMNode",
                   "nodeType": 1,
                   "nodeName": "button",
+                  "isConnected": true,
                   "attributes": {
                     "id": "btn-1",
                     "class": "btn btn-log",
@@ -661,6 +889,7 @@ window.onload = Task.async(function* () {
                   "kind": "DOMNode",
                   "nodeType": 1,
                   "nodeName": "button",
+                  "isConnected": true,
                   "attributes": {
                     "id": "btn-2",
                     "class": "btn btn-err",
@@ -681,6 +910,87 @@ window.onload = Task.async(function* () {
                   "kind": "DOMNode",
                   "nodeType": 1,
                   "nodeName": "button",
+                  "isConnected": true,
+                  "attributes": {
+                    "id": "btn-3",
+                    "class": "btn btn-count",
+                    "type": "button"
+                  },
+                  "attributesLength": 3
+                }
+              }
+            ]
+          }
+        };
+
+      case "testDisconnectedNodeList":
+        return {
+          "type": "object",
+          "actor": "server1.conn1.child1/obj51",
+          "class": "NodeList",
+          "extensible": true,
+          "frozen": false,
+          "sealed": false,
+          "ownPropertyLength": 3,
+          "preview": {
+            "kind": "ArrayLike",
+            "length": 3,
+            "items": [
+              {
+                "type": "object",
+                "actor": "server1.conn1.child1/obj52",
+                "class": "HTMLButtonElement",
+                "extensible": true,
+                "frozen": false,
+                "sealed": false,
+                "ownPropertyLength": 0,
+                "preview": {
+                  "kind": "DOMNode",
+                  "nodeType": 1,
+                  "nodeName": "button",
+                  "isConnected": false,
+                  "attributes": {
+                    "id": "btn-1",
+                    "class": "btn btn-log",
+                    "type": "button"
+                  },
+                  "attributesLength": 3
+                }
+              },
+              {
+                "type": "object",
+                "actor": "server1.conn1.child1/obj53",
+                "class": "HTMLButtonElement",
+                "extensible": true,
+                "frozen": false,
+                "sealed": false,
+                "ownPropertyLength": 0,
+                "preview": {
+                  "kind": "DOMNode",
+                  "nodeType": 1,
+                  "nodeName": "button",
+                  "isConnected": false,
+                  "attributes": {
+                    "id": "btn-2",
+                    "class": "btn btn-err",
+                    "type": "button"
+                  },
+                  "attributesLength": 3
+                }
+              },
+              {
+                "type": "object",
+                "actor": "server1.conn1.child1/obj54",
+                "class": "HTMLButtonElement",
+                "extensible": true,
+                "frozen": false,
+                "sealed": false,
+                "ownPropertyLength": 0,
+                "preview": {
+                  "kind": "DOMNode",
+                  "nodeType": 1,
+                  "nodeName": "button",
+                  "isConnected": false,
                   "attributes": {
                     "id": "btn-3",
                     "class": "btn btn-count",
@@ -803,6 +1113,204 @@ window.onload = Task.async(function* () {
                   "attributesLength": 2
                 }
               }
+            ]
+          }
+        };
+      case "Array(5)" :
+        return {
+          "type": "object",
+          "actor": "server1.conn4.child1/obj33",
+          "class": "Array",
+          "extensible": true,
+          "frozen": false,
+          "sealed": false,
+          "ownPropertyLength": 1,
+          "preview": {
+            "kind": "ArrayLike",
+            "length": 5,
+            "items": [
+              null,
+              null,
+              null,
+              null,
+              null
+            ]
+          }
+        };
+      case "[,1,2,3]" :
+        return {
+          "type": "object",
+          "actor": "server1.conn4.child1/obj35",
+          "class": "Array",
+          "extensible": true,
+          "frozen": false,
+          "sealed": false,
+          "ownPropertyLength": 4,
+          "preview": {
+            "kind": "ArrayLike",
+            "length": 4,
+            "items": [
+              null,
+              1,
+              2,
+              3
+            ]
+          }
+        };
+      case "[,,,3,4,5]" :
+        return {
+          "type": "object",
+          "actor": "server1.conn4.child1/obj37",
+          "class": "Array",
+          "extensible": true,
+          "frozen": false,
+          "sealed": false,
+          "ownPropertyLength": 4,
+          "preview": {
+            "kind": "ArrayLike",
+            "length": 6,
+            "items": [
+              null,
+              null,
+              null,
+              3,
+              4,
+              5
+            ]
+          }
+        };
+      case "[0,1,,3,4,5]" :
+        return {
+          "type": "object",
+          "actor": "server1.conn4.child1/obj65",
+          "class": "Array",
+          "extensible": true,
+          "frozen": false,
+          "sealed": false,
+          "ownPropertyLength": 6,
+          "preview": {
+            "kind": "ArrayLike",
+            "length": 6,
+            "items": [
+              0,
+              1,
+              null,
+              3,
+              4,
+              5
+            ]
+          }
+        };
+      case "[0,1,,,,5]" :
+        return {
+          "type": "object",
+          "actor": "server1.conn4.child1/obj83",
+          "class": "Array",
+          "extensible": true,
+          "frozen": false,
+          "sealed": false,
+          "ownPropertyLength": 4,
+          "preview": {
+            "kind": "ArrayLike",
+            "length": 6,
+            "items": [
+              0,
+              1,
+              null,
+              null,
+              null,
+              5
+            ]
+          }
+        };
+      case "[0,,2,,4,5]" :
+        return {
+          "type": "object",
+          "actor": "server1.conn4.child1/obj85",
+          "class": "Array",
+          "extensible": true,
+          "frozen": false,
+          "sealed": false,
+          "ownPropertyLength": 5,
+          "preview": {
+            "kind": "ArrayLike",
+            "length": 6,
+            "items": [
+              0,
+              null,
+              2,
+              null,
+              4,
+              5
+            ]
+          }
+        };
+      case "[0,,,3,,,,7,8]" :
+        return {
+          "type": "object",
+          "actor": "server1.conn4.child1/obj87",
+          "class": "Array",
+          "extensible": true,
+          "frozen": false,
+          "sealed": false,
+          "ownPropertyLength": 5,
+          "preview": {
+            "kind": "ArrayLike",
+            "length": 9,
+            "items": [
+              0,
+              null,
+              null,
+              3,
+              null,
+              null,
+              null,
+              7,
+              8
+            ]
+          }
+        };
+      case "[0,1,2,3,4,,]" :
+        return {
+          "type": "object",
+          "actor": "server1.conn4.child1/obj89",
+          "class": "Array",
+          "extensible": true,
+          "frozen": false,
+          "sealed": false,
+          "ownPropertyLength": 6,
+          "preview": {
+            "kind": "ArrayLike",
+            "length": 6,
+            "items": [
+              0,
+              1,
+              2,
+              3,
+              4,
+              null
+            ]
+          }
+        };
+      case "[0,1,2,,,,]" :
+        return {
+          "type": "object",
+          "actor": "server1.conn13.child1/obj88",
+          "class": "Array",
+          "extensible": true,
+          "frozen": false,
+          "sealed": false,
+          "ownPropertyLength": 4,
+          "preview": {
+            "kind": "ArrayLike",
+            "length": 6,
+            "items": [
+              0,
+              1,
+              2,
+              null,
+              null,
+              null
             ]
           }
         };

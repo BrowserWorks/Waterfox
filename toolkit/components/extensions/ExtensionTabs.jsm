@@ -25,6 +25,8 @@ const {
   DefaultWeakMap,
   EventEmitter,
   ExtensionError,
+  defineLazyGetter,
+  getWinUtils,
 } = ExtensionUtils;
 
 /**
@@ -179,7 +181,7 @@ class TabBase {
    *        Returns true if this is a private browsing tab, false otherwise.
    *        @readonly
    */
-  get incognito() {
+  get _incognito() {
     return PrivateBrowsingUtils.isBrowserPrivate(this.browser);
   }
 
@@ -472,7 +474,6 @@ class TabBase {
       id: this.id,
       index: this.index,
       windowId: this.windowId,
-      selected: this.selected,
       highlighted: this.selected,
       active: this.selected,
       pinned: this.pinned,
@@ -547,9 +548,9 @@ class TabBase {
     if (this.hasActiveTabPermission) {
       // If we have the "activeTab" permission for this tab, ignore
       // the host whitelist.
-      options.matchesHost = ["<all_urls>"];
+      options.matches = ["<all_urls>"];
     } else {
-      options.matchesHost = this.extension.whiteListedHosts.serialize();
+      options.matches = this.extension.whiteListedHosts.patterns.map(host => host.pattern);
     }
 
     if (details.code !== null) {
@@ -581,6 +582,8 @@ class TabBase {
     } else {
       options.css_origin = "author";
     }
+
+    options.wantReturnValue = true;
 
     return this.sendMessage(context, "Extension:Execute", {options});
   }
@@ -639,6 +642,8 @@ class TabBase {
     return this._execute(context, details, "css", "removeCSS").then(() => {});
   }
 }
+
+defineLazyGetter(TabBase.prototype, "incognito", function() { return this._incognito; });
 
 // Note: These must match the values in windows.json.
 const WINDOW_ID_NONE = -1;
@@ -914,7 +919,7 @@ class WindowBase {
    *
    * @returns {Iterator<TabBase>}
    */
-  * getTabs() {
+  getTabs() {
     throw new Error("Not implemented");
   }
   /* eslint-enable valid-jsdoc */
@@ -1164,7 +1169,7 @@ class WindowTrackerBase extends EventEmitter {
     this._windowIds = new DefaultWeakMap(window => {
       window.QueryInterface(Ci.nsIInterfaceRequestor);
 
-      return window.getInterface(Ci.nsIDOMWindowUtils).outerWindowID;
+      return getWinUtils(window).outerWindowID;
     });
   }
 
@@ -1810,7 +1815,7 @@ class WindowManagerBase {
    * @returns {Iterator<WindowBase>}
    * @abstract
    */
-  * getAll() {
+  getAll() {
     throw new Error("Not implemented");
   }
 

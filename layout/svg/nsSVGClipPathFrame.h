@@ -6,34 +6,33 @@
 #ifndef __NS_SVGCLIPPATHFRAME_H__
 #define __NS_SVGCLIPPATHFRAME_H__
 
-#include "AutoReferenceLimiter.h"
 #include "gfxMatrix.h"
 #include "mozilla/Attributes.h"
 #include "nsSVGContainerFrame.h"
 #include "nsSVGUtils.h"
 
 class gfxContext;
-class nsISVGChildFrame;
+class nsSVGDisplayableFrame;
 
-class nsSVGClipPathFrame : public nsSVGContainerFrame
+class nsSVGClipPathFrame final : public nsSVGContainerFrame
 {
   friend nsIFrame*
   NS_NewSVGClipPathFrame(nsIPresShell* aPresShell, nsStyleContext* aContext);
 
   typedef mozilla::gfx::Matrix Matrix;
   typedef mozilla::gfx::SourceSurface SourceSurface;
-  typedef mozilla::image::DrawResult DrawResult;
+  typedef mozilla::image::imgDrawingParams imgDrawingParams;
 
 protected:
   explicit nsSVGClipPathFrame(nsStyleContext* aContext)
-    : nsSVGContainerFrame(aContext)
-    , mReferencing(mozilla::AutoReferenceLimiter::notReferencing)
+    : nsSVGContainerFrame(aContext, kClassID)
+    , mIsBeingProcessed(false)
   {
     AddStateBits(NS_FRAME_IS_NONDISPLAY);
   }
 
 public:
-  NS_DECL_FRAMEARENA_HELPERS
+  NS_DECL_FRAMEARENA_HELPERS(nsSVGClipPathFrame)
 
   // nsIFrame methods:
   virtual void BuildDisplayList(nsDisplayListBuilder*   aBuilder,
@@ -78,7 +77,7 @@ public:
    * @param [in, optional] aExtraMasksTransform The transform to use with
    *   aExtraMask. Should be passed when aExtraMask is passed.
    */
-  mozilla::Pair<DrawResult, RefPtr<SourceSurface>>
+  already_AddRefed<SourceSurface>
   GetClipMask(gfxContext& aReferenceContext, nsIFrame* aClippedFrame,
               const gfxMatrix& aMatrix, Matrix* aMaskTransform,
               SourceSurface* aExtraMask = nullptr,
@@ -99,7 +98,7 @@ public:
    * @param [in, optional] aExtraMasksTransform The transform to use with
    *   aExtraMask. Should be passed when aExtraMask is passed.
    */
-  DrawResult
+  void
   PaintClipMask(gfxContext& aMaskContext, nsIFrame* aClippedFrame,
                 const gfxMatrix& aMatrix, Matrix* aMaskTransform,
                 SourceSurface* aExtraMask, const Matrix& aExtraMasksTransform);
@@ -112,7 +111,7 @@ public:
   // Check if this clipPath is made up of more than one geometry object.
   // If so, the clipping API in cairo isn't enough and we need to use
   // mask based clipping.
-  bool IsTrivial(nsISVGChildFrame **aSingleChild = nullptr);
+  bool IsTrivial(nsSVGDisplayableFrame **aSingleChild = nullptr);
 
   bool IsValid();
 
@@ -125,13 +124,6 @@ public:
                     nsContainerFrame* aParent,
                     nsIFrame*         aPrevInFlow) override;
 
-  /**
-   * Get the "type" of the frame
-   *
-   * @see nsGkAtoms::svgClipPathFrame
-   */
-  virtual nsIAtom* GetType() const override;
-
 #ifdef DEBUG_FRAME_DUMP
   virtual nsresult GetFrameName(nsAString& aResult) const override
   {
@@ -139,8 +131,8 @@ public:
   }
 #endif
 
-  SVGBBox 
-  GetBBoxForClipPathFrame(const SVGBBox &aBBox, const gfxMatrix &aMatrix);
+  SVGBBox GetBBoxForClipPathFrame(const SVGBBox& aBBox,
+                                  const gfxMatrix& aMatrix);
 
   /**
    * If the clipPath element transforms its children due to
@@ -158,8 +150,8 @@ private:
   already_AddRefed<DrawTarget> CreateClipMask(gfxContext& aReferenceContext,
                                               mozilla::gfx::IntPoint& aOffset);
 
-  DrawResult PaintFrameIntoMask(nsIFrame *aFrame, nsIFrame* aClippedFrame,
-                                gfxContext& aTarget, const gfxMatrix& aMatrix);
+  void PaintFrameIntoMask(nsIFrame *aFrame, nsIFrame* aClippedFrame,
+                          gfxContext& aTarget, const gfxMatrix& aMatrix);
 
   // Set, during a GetClipMask() call, to the transform that still needs to be
   // concatenated to the transform of the DrawTarget that was passed to
@@ -176,9 +168,9 @@ private:
   // may not even be called soon/any more.
   gfxMatrix mMatrixForChildren;
 
-  // Flag used by AutoReferenceLimiter while we're processing an instance of
-  // this class to protect against (break) reference loops.
-  int16_t mReferencing;
+  // Flag used to indicate whether a methods that may reenter due to
+  // following a reference to another instance is currently executing.
+  bool mIsBeingProcessed;
 };
 
 #endif

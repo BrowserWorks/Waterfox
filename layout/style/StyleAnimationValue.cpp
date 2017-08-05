@@ -11,6 +11,7 @@
 #include "mozilla/ArrayUtils.h"
 #include "mozilla/MathAlgorithms.h"
 #include "mozilla/RuleNodeCacheConditions.h"
+#include "mozilla/ServoBindings.h"
 #include "mozilla/StyleSetHandle.h"
 #include "mozilla/StyleSetHandleInlines.h"
 #include "mozilla/Tuple.h"
@@ -23,11 +24,13 @@
 #include "nsStyleContext.h"
 #include "nsStyleSet.h"
 #include "nsComputedDOMStyle.h"
+#include "nsContentUtils.h"
 #include "nsCSSParser.h"
 #include "nsCSSPseudoElements.h"
 #include "mozilla/css/Declaration.h"
 #include "mozilla/dom/Element.h"
 #include "mozilla/FloatingPoint.h"
+#include "mozilla/KeyframeUtils.h" // KeyframeUtils::ParseProperty
 #include "mozilla/Likely.h"
 #include "mozilla/ServoBindings.h" // RawServoDeclarationBlock
 #include "gfxMatrix.h"
@@ -2882,9 +2885,10 @@ StyleAnimationValue::AddWeighted(nsCSSPropertyID aProperty,
     case eUnit_Enumerated:
       switch (aProperty) {
         case eCSSProperty_font_stretch: {
-          // Animate just like eUnit_Integer.
-          int32_t result = floor(aCoeff1 * double(aValue1.GetIntValue()) +
-                                 aCoeff2 * double(aValue2.GetIntValue()));
+          // https://drafts.csswg.org/css-fonts-3/#font-stretch-animation
+          double interpolatedValue = aCoeff1 * double(aValue1.GetIntValue()) +
+                                     aCoeff2 * double(aValue2.GetIntValue());
+          int32_t result = floor(interpolatedValue + 0.5);
           if (result < NS_STYLE_FONT_STRETCH_ULTRA_CONDENSED) {
             result = NS_STYLE_FONT_STRETCH_ULTRA_CONDENSED;
           } else if (result > NS_STYLE_FONT_STRETCH_ULTRA_EXPANDED) {
@@ -2916,17 +2920,15 @@ StyleAnimationValue::AddWeighted(nsCSSPropertyID aProperty,
       return true;
     }
     case eUnit_Integer: {
-      // http://dev.w3.org/csswg/css3-transitions/#animation-of-property-types-
-      // says we should use floor
-      int32_t result = floor(aCoeff1 * double(aValue1.GetIntValue()) +
-                             aCoeff2 * double(aValue2.GetIntValue()));
+      // https://drafts.csswg.org/css-transitions/#animtype-integer
+      double interpolatedValue = aCoeff1 * double(aValue1.GetIntValue()) +
+                                 aCoeff2 * double(aValue2.GetIntValue());
+      int32_t result = floor(interpolatedValue + 0.5);
       if (aProperty == eCSSProperty_font_weight) {
-        if (result < 100) {
-          result = 100;
-        } else if (result > 900) {
-          result = 900;
-        }
+        // https://drafts.csswg.org/css-transitions/#animtype-font-weight
+        result += 50;
         result -= result % 100;
+        result = Clamp(result, 100, 900);
       } else {
         result = RestrictValue(aProperty, result);
       }
@@ -3352,9 +3354,19 @@ StyleAnimationValue::Accumulate(nsCSSPropertyID aProperty,
       MOZ_ASSERT(listB);
 
       nsAutoPtr<nsCSSValueList> resultList;
-      if (listA->mValue.GetUnit() == eCSSUnit_None ||
-          listB->mValue.GetUnit() == eCSSUnit_None) {
+      if (listA->mValue.GetUnit() == eCSSUnit_None) {
+        // If |aA| is 'none' then we are calculating:
+        //
+        //    none * |aCount| + |aB|
+        //    = none + |aB|
+        //    = |aB|
+        //
+        // Hence the result should just be |aB|, even if |aB| is also 'none'.
+        // Since |result| is already initialized to |aB|, we just return that.
         break;
+      } else if (listB->mValue.GetUnit() == eCSSUnit_None) {
+        resultList = AddTransformLists(0.0, listA, aCount, listA,
+                                       eCSSKeyword_accumulatematrix);
       } else if (TransformFunctionListsMatch(listA, listB)) {
         resultList = AddTransformLists(1.0, listB, aCount, listA,
                                        eCSSKeyword_accumulatematrix);
@@ -4190,6 +4202,16 @@ StyleClipBasicShapeToCSSArray(const StyleShapeSource& aClipPath,
   return true;
 }
 
+static void
+SetFallbackValue(nsCSSValuePair* aPair, const nsStyleSVGPaint& aPaint)
+{
+  if (aPaint.GetFallbackType() == eStyleSVGFallbackType_Color) {
+    aPair->mYValue.SetColorValue(aPaint.GetFallbackColor());
+  } else {
+    aPair->mYValue.SetNoneValue();
+  }
+}
+
 bool
 StyleAnimationValue::ExtractComputedValue(nsCSSPropertyID aProperty,
                                           nsStyleContext* aStyleContext,
@@ -4707,22 +4729,33 @@ StyleAnimationValue::ExtractComputedValue(nsCSSPropertyID aProperty,
             NS_WARNING("Null paint server");
             return false;
           }
-          nsAutoPtr<nsCSSValuePair> pair(new nsCSSValuePair);
-          pair->mXValue.SetURLValue(url);
-          pair->mYValue.SetColorValue(paint.GetFallbackColor());
-          aComputedValue.SetAndAdoptCSSValuePairValue(pair.forget(),
-                                                      eUnit_CSSValuePair);
+          if (paint.GetFallbackType() != eStyleSVGFallbackType_NotSet) {
+            nsAutoPtr<nsCSSValuePair> pair(new nsCSSValuePair);
+            pair->mXValue.SetURLValue(url);
+            SetFallbackValue(pair, paint);
+            aComputedValue.SetAndAdoptCSSValuePairValue(pair.forget(),
+                                                        eUnit_CSSValuePair);
+          } else {
+            auto result = MakeUnique<nsCSSValue>();
+            result->SetURLValue(url);
+            aComputedValue.SetAndAdoptCSSValueValue(
+              result.release(), eUnit_URL);
+          }
           return true;
         }
         case eStyleSVGPaintType_ContextFill:
         case eStyleSVGPaintType_ContextStroke: {
-          nsAutoPtr<nsCSSValuePair> pair(new nsCSSValuePair);
-          pair->mXValue.SetIntValue(paint.Type() == eStyleSVGPaintType_ContextFill ?
-                                    NS_COLOR_CONTEXT_FILL : NS_COLOR_CONTEXT_STROKE,
-                                    eCSSUnit_Enumerated);
-          pair->mYValue.SetColorValue(paint.GetFallbackColor());
-          aComputedValue.SetAndAdoptCSSValuePairValue(pair.forget(),
-                                                      eUnit_CSSValuePair);
+          int32_t value = paint.Type() == eStyleSVGPaintType_ContextFill ?
+                            NS_COLOR_CONTEXT_FILL : NS_COLOR_CONTEXT_STROKE;
+          if (paint.GetFallbackType() != eStyleSVGFallbackType_NotSet) {
+            nsAutoPtr<nsCSSValuePair> pair(new nsCSSValuePair);
+            pair->mXValue.SetIntValue(value, eCSSUnit_Enumerated);
+            SetFallbackValue(pair, paint);
+            aComputedValue.SetAndAdoptCSSValuePairValue(pair.forget(),
+                                                        eUnit_CSSValuePair);
+          } else {
+            aComputedValue.SetIntValue(value, eUnit_Enumerated);
+          }
           return true;
         }
         default:
@@ -5191,4 +5224,168 @@ StyleAnimationValue::operator==(const StyleAnimationValue& aOther) const
 
   NS_NOTREACHED("incomplete case");
   return false;
+}
+
+
+// AnimationValue Implementation
+
+bool
+AnimationValue::operator==(const AnimationValue& aOther) const
+{
+  // It is possible to compare an empty AnimationValue with others, so both
+  // mServo and mGecko could be null while comparing.
+  MOZ_ASSERT(!mServo || mGecko.IsNull());
+  if (mServo && aOther.mServo) {
+    return Servo_AnimationValue_DeepEqual(mServo, aOther.mServo);
+  }
+  return !mServo && !aOther.mServo &&
+         mGecko == aOther.mGecko;
+}
+
+bool
+AnimationValue::operator!=(const AnimationValue& aOther) const
+{
+  return !operator==(aOther);
+}
+
+float
+AnimationValue::GetOpacity() const
+{
+  MOZ_ASSERT(!mServo != mGecko.IsNull());
+  return mServo ? Servo_AnimationValue_GetOpacity(mServo)
+                : mGecko.GetFloatValue();
+}
+
+gfxSize
+AnimationValue::GetScaleValue(const nsIFrame* aFrame) const
+{
+  MOZ_ASSERT(!mServo != mGecko.IsNull());
+  if (mServo) {
+    RefPtr<nsCSSValueSharedList> list;
+    Servo_AnimationValue_GetTransform(mServo, &list);
+    return nsStyleTransformMatrix::GetScaleValue(list, aFrame);
+  }
+  return mGecko.GetScaleValue(aFrame);
+}
+
+void
+AnimationValue::SerializeSpecifiedValue(nsCSSPropertyID aProperty,
+                                        nsAString& aString) const
+{
+  MOZ_ASSERT(!mServo != mGecko.IsNull());
+  if (mServo) {
+    Servo_AnimationValue_Serialize(mServo, aProperty, &aString);
+    return;
+  }
+
+  DebugOnly<bool> uncomputeResult =
+    StyleAnimationValue::UncomputeValue(aProperty, mGecko, aString);
+  MOZ_ASSERT(uncomputeResult, "failed to uncompute StyleAnimationValue");
+}
+
+bool
+AnimationValue::IsInterpolableWith(nsCSSPropertyID aProperty,
+                                   const AnimationValue& aToValue) const
+{
+  if (IsNull() || aToValue.IsNull()) {
+    return false;
+  }
+
+  MOZ_ASSERT(!mServo != mGecko.IsNull());
+  MOZ_ASSERT(mGecko.IsNull() == aToValue.mGecko.IsNull() &&
+             !mServo == !aToValue.mServo,
+             "Animation values should have the same style engine");
+
+  if (mServo) {
+    return Servo_AnimationValues_IsInterpolable(mServo, aToValue.mServo);
+  }
+
+  // If this is ever a performance problem, we could add a
+  // StyleAnimationValue::IsInterpolatable method, but it seems fine for now.
+  StyleAnimationValue dummy;
+  return StyleAnimationValue::Interpolate(
+           aProperty, mGecko, aToValue.mGecko, 0.5, dummy);
+}
+
+double
+AnimationValue::ComputeDistance(nsCSSPropertyID aProperty,
+                                const AnimationValue& aOther,
+                                nsStyleContext* aStyleContext) const
+{
+  if (IsNull() || aOther.IsNull()) {
+    return 0.0;
+  }
+
+  MOZ_ASSERT(!mServo != mGecko.IsNull());
+  MOZ_ASSERT(mGecko.IsNull() == aOther.mGecko.IsNull() &&
+             !mServo == !aOther.mServo,
+             "Animation values should have the same style engine");
+
+  if (mServo) {
+    return Servo_AnimationValues_ComputeDistance(mServo, aOther.mServo);
+  }
+
+  double distance = 0.0;
+  return StyleAnimationValue::ComputeDistance(aProperty,
+                                              mGecko,
+                                              aOther.mGecko,
+                                              aStyleContext,
+                                              distance)
+         ? distance
+         : 0.0;
+}
+
+/* static */ AnimationValue
+AnimationValue::FromString(nsCSSPropertyID aProperty,
+                           const nsAString& aValue,
+                           Element* aElement)
+{
+  MOZ_ASSERT(aElement);
+
+  AnimationValue result;
+
+  nsCOMPtr<nsIDocument> doc = aElement->GetComposedDoc();
+  if (!doc) {
+    return result;
+  }
+
+  nsCOMPtr<nsIPresShell> shell = doc->GetShell();
+  if (!shell) {
+    return result;
+  }
+
+  // GetStyleContext() flushes style, so we shouldn't assume that any
+  // non-owning references we have are still valid.
+  RefPtr<nsStyleContext> styleContext =
+    nsComputedDOMStyle::GetStyleContext(aElement, nullptr, shell);
+
+  if (styleContext->StyleSource().IsServoComputedValues()) {
+    nsPresContext* presContext = shell->GetPresContext();
+    if (!presContext) {
+      return result;
+    }
+
+    RefPtr<RawServoDeclarationBlock> declarations =
+      KeyframeUtils::ParseProperty(aProperty, aValue, doc);
+
+    if (!declarations) {
+      return result;
+    }
+
+    const ServoComputedValues* computedValues =
+      styleContext->StyleSource().AsServoComputedValues();
+    result.mServo = presContext->StyleSet()
+                               ->AsServo()
+                               ->ComputeAnimationValue(aElement,
+                                                       declarations,
+                                                       computedValues);
+    return result;
+  }
+
+  if (!StyleAnimationValue::ComputeValue(aProperty, aElement, styleContext,
+                                         aValue, false /* |aUseSVGMode| */,
+                                         result.mGecko)) {
+    MOZ_ASSERT(result.IsNull());
+  }
+  return result;
 }

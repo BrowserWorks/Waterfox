@@ -42,6 +42,8 @@ StreamBlobImpl::StreamBlobImpl(nsIInputStream* aInputStream,
                                uint64_t aLength)
   : BaseBlobImpl(aContentType, aLength)
   , mInputStream(aInputStream)
+  , mIsDirectory(false)
+  , mFileId(-1)
 {
   mImmutable = true;
 }
@@ -51,6 +53,8 @@ StreamBlobImpl::StreamBlobImpl(StreamBlobImpl* aOther,
                                uint64_t aStart, uint64_t aLength)
   : BaseBlobImpl(aContentType, aOther->mStart + aStart, aLength)
   , mInputStream(new SlicedInputStream(aOther->mInputStream, aStart, aLength))
+  , mIsDirectory(false)
+  , mFileId(-1)
 {
   mImmutable = true;
 }
@@ -62,6 +66,8 @@ StreamBlobImpl::StreamBlobImpl(nsIInputStream* aInputStream,
                                uint64_t aLength)
   : BaseBlobImpl(aName, aContentType, aLength, aLastModifiedDate)
   , mInputStream(aInputStream)
+  , mIsDirectory(false)
+  , mFileId(-1)
 {
   mImmutable = true;
 }

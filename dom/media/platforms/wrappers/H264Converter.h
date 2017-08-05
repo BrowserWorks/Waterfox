@@ -12,6 +12,8 @@
 
 namespace mozilla {
 
+class DecoderDoctorDiagnostics;
+
 // H264Converter is a MediaDataDecoder wrapper used to ensure that
 // only AVCC or AnnexB is fed to the underlying MediaDataDecoder.
 // The H264Converter allows playback of content where the SPS NAL may not be
@@ -69,32 +71,31 @@ private:
   nsresult CheckForSPSChange(MediaRawData* aSample);
   void UpdateConfigFromExtraData(MediaByteBuffer* aExtraData);
 
-  void OnDecoderInitDone(const TrackType aTrackType);
-  void OnDecoderInitFailed(const MediaResult& aError);
-
-  bool CanRecycleDecoder() const
-  {
-    MOZ_ASSERT(mDecoder);
-    return MediaPrefs::MediaDecoderCheckRecycling()
-           && mDecoder->SupportDecoderRecycling();
-  }
+  bool CanRecycleDecoder() const;
 
   void DecodeFirstSample(MediaRawData* aSample);
+  void DrainThenFlushDecoder(MediaRawData* aPendingSample);
+  void FlushThenShutdownDecoder(MediaRawData* aPendingSample);
+  RefPtr<ShutdownPromise> ShutdownDecoder();
 
   RefPtr<PlatformDecoderModule> mPDM;
   const VideoInfo mOriginalConfig;
   VideoInfo mCurrentConfig;
+  // Current out of band extra data (as found in metadata's VideoInfo).
+  RefPtr<MediaByteBuffer> mOriginalExtraData;
   RefPtr<layers::KnowsCompositor> mKnowsCompositor;
   RefPtr<layers::ImageContainer> mImageContainer;
   const RefPtr<TaskQueue> mTaskQueue;
-  RefPtr<MediaRawData> mPendingSample;
   RefPtr<MediaDataDecoder> mDecoder;
   MozPromiseRequestHolder<InitPromise> mInitPromiseRequest;
   MozPromiseRequestHolder<DecodePromise> mDecodePromiseRequest;
   MozPromiseHolder<DecodePromise> mDecodePromise;
   MozPromiseRequestHolder<FlushPromise> mFlushRequest;
+  MediaDataDecoder::DecodedData mPendingFrames;
+  MozPromiseRequestHolder<DecodePromise> mDrainRequest;
   MozPromiseRequestHolder<ShutdownPromise> mShutdownRequest;
   RefPtr<ShutdownPromise> mShutdownPromise;
+  MozPromiseHolder<FlushPromise> mFlushPromise;
 
   RefPtr<GMPCrashHelper> mGMPCrashHelper;
   Maybe<bool> mNeedAVCC;
@@ -103,6 +104,7 @@ private:
   const TrackInfo::TrackType mType;
   MediaEventProducer<TrackInfo::TrackType>* const mOnWaitingForKeyEvent;
   const CreateDecoderParams::OptionSet mDecoderOptions;
+  Maybe<bool> mCanRecycleDecoder;
 };
 
 } // namespace mozilla

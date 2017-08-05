@@ -3,15 +3,10 @@
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
 
-Components.utils.import("resource://gre/modules/XPCOMUtils.jsm");
-Components.utils.import("resource://gre/modules/Services.jsm");
+ const { classes: Cc, interfaces: Ci, results: Cr, utils: Cu } = Components;
 
-/**
- * Constants
- */
-
-const Cc = Components.classes;
-const Ci = Components.interfaces;
+Cu.import("resource://gre/modules/XPCOMUtils.jsm");
+Cu.import("resource://gre/modules/Services.jsm");
 
 // Stop updating jumplists after some idle time.
 const IDLE_TIMEOUT_SECONDS = 5 * 60;
@@ -52,28 +47,18 @@ XPCOMUtils.defineLazyGetter(this, "_stringBundle", function() {
                  .createBundle("chrome://browser/locale/taskbar.properties");
 });
 
-XPCOMUtils.defineLazyGetter(this, "PlacesUtils", function() {
-  Components.utils.import("resource://gre/modules/PlacesUtils.jsm");
-  return PlacesUtils;
-});
-
-XPCOMUtils.defineLazyGetter(this, "NetUtil", function() {
-  Components.utils.import("resource://gre/modules/NetUtil.jsm");
-  return NetUtil;
-});
-
 XPCOMUtils.defineLazyServiceGetter(this, "_idle",
                                    "@mozilla.org/widget/idleservice;1",
                                    "nsIIdleService");
-
 XPCOMUtils.defineLazyServiceGetter(this, "_taskbarService",
                                    "@mozilla.org/windows-taskbar;1",
                                    "nsIWinTaskbar");
-
 XPCOMUtils.defineLazyServiceGetter(this, "_winShellService",
                                    "@mozilla.org/browser/shell-service;1",
                                    "nsIWindowsShellService");
 
+XPCOMUtils.defineLazyModuleGetter(this, "PlacesUtils",
+  "resource://gre/modules/PlacesUtils.jsm");
 XPCOMUtils.defineLazyModuleGetter(this, "PrivateBrowsingUtils",
   "resource://gre/modules/PrivateBrowsingUtils.jsm");
 
@@ -266,9 +251,15 @@ this.WinTaskbarJumpList =
   },
 
   _commitBuild: function WTBJL__commitBuild() {
-    if (!this._hasPendingStatements() && !this._builder.commitListBuild()) {
-      this._builder.abortListBuild();
+    if (this._hasPendingStatements()) {
+      return;
     }
+
+    this._builder.commitListBuild(succeed => {
+      if (!succeed) {
+        this._builder.abortListBuild();
+      }
+    });
   },
 
   _buildTasks: function WTBJL__buildTasks() {
@@ -279,7 +270,7 @@ this.WinTaskbarJumpList =
         return;
       var item = this._getHandlerAppItem(task.title, task.description,
                                          task.args, task.iconIndex, null);
-      items.appendElement(item, false);
+      items.appendElement(item);
     }, this);
 
     if (items.length > 0)
@@ -324,7 +315,7 @@ this.WinTaskbarJumpList =
         let faviconPageUri = Services.io.newURI(aResult.uri);
         let shortcut = this._getHandlerAppItem(title, title, aResult.uri, 1,
                                                faviconPageUri);
-        items.appendElement(shortcut, false);
+        items.appendElement(shortcut);
         this._frequentHashList.push(aResult.uri);
       },
       this
@@ -369,7 +360,7 @@ this.WinTaskbarJumpList =
         let faviconPageUri = Services.io.newURI(aResult.uri);
         let shortcut = this._getHandlerAppItem(title, title, aResult.uri, 1,
                                                faviconPageUri);
-        items.appendElement(shortcut, false);
+        items.appendElement(shortcut);
         count++;
       },
       this
@@ -437,7 +428,7 @@ this.WinTaskbarJumpList =
         }
       },
       handleError(aError) {
-        Components.utils.reportError(
+        Cu.reportError(
           "Async execution error (" + aError.result + "): " + aError.message);
       },
       handleCompletion(aReason) {
@@ -456,12 +447,12 @@ this.WinTaskbarJumpList =
       if (oldItem) {
         try { // in case we get a bad uri
           let uriSpec = oldItem.app.getParameter(0);
-          URIsToRemove.push(NetUtil.newURI(uriSpec));
+          URIsToRemove.push(Services.io.newURI(uriSpec));
         } catch (err) { }
       }
     }
     if (URIsToRemove.length > 0) {
-      PlacesUtils.bhistory.removePages(URIsToRemove, URIsToRemove.length, true);
+      PlacesUtils.history.remove(URIsToRemove).catch(Cu.reportError);
     }
   },
 
@@ -493,9 +484,9 @@ this.WinTaskbarJumpList =
     // If the browser is closed while in private browsing mode, the "exit"
     // notification is fired on quit-application-granted.
     // History cleanup can happen at profile-change-teardown.
-    Services.obs.addObserver(this, "profile-before-change", false);
-    Services.obs.addObserver(this, "browser:purge-session-history", false);
-    _prefs.addObserver("", this, false);
+    Services.obs.addObserver(this, "profile-before-change");
+    Services.obs.addObserver(this, "browser:purge-session-history");
+    _prefs.addObserver("", this);
   },
 
   _freeObs: function WTBJL__freeObs() {

@@ -1,4 +1,3 @@
-// |reftest| skip-if(!this.hasOwnProperty('Intl')) -- needs Intl
 // Copyright 2012 Mozilla Corporation. All rights reserved.
 // This code is governed by the BSD license found in the LICENSE file.
 
@@ -29,12 +28,9 @@ Object.getOwnPropertyNames(additionalTimeZoneNames).forEach(function (name) {
     if (error === undefined) {
         var actual = format.resolvedOptions().timeZone;
         var expected = additionalTimeZoneNames[name];
-        if (actual !== expected) {
-            $ERROR("Time zone name " + name + " was accepted, but incorrectly canonicalized to " +
-                actual + "; expected " + expected + ".");
-        }
-    } else if (error.name !== "RangeError") {
-        $ERROR("Time zone name " + name + " was rejected with wrong error " + error.name + ".");
+        assert.sameValue(actual, expected, "Time zone name " + name + " was accepted, but incorrectly canonicalized.");
+    } else {
+        assert(error instanceof RangeError, "Time zone name " + name + " was rejected with wrong error " + error.name + ".");
     }
 });
 

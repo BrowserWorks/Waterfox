@@ -1,4 +1,3 @@
-// |reftest| skip-if(!this.hasOwnProperty('Intl')) -- needs Intl
 // Copyright 2013 Mozilla Corporation. All rights reserved.
 // This code is governed by the license found in the LICENSE file.
 
@@ -15,12 +14,8 @@ var thisValues = ["a", "t", "u", "undefined", "UNDEFINED", "nicht definiert", "x
 var i;
 for (i = 0; i < thisValues.length; i++) {
     var thisValue = thisValues[i];
-    if (thisValue.localeCompare() !== thisValue.localeCompare(undefined)) {
-        $ERROR("String.prototype.localeCompare does not treat missing 'that' argument as undefined.");
-    }
-    if (thisValue.localeCompare(undefined) !== thisValue.localeCompare("undefined")) {
-        $ERROR("String.prototype.localeCompare does not treat undefined 'that' argument as \"undefined\".");
-    }
+    assert.sameValue(thisValue.localeCompare(), thisValue.localeCompare(undefined), "String.prototype.localeCompare does not treat missing 'that' argument as undefined.");
+    assert.sameValue(thisValue.localeCompare(undefined), thisValue.localeCompare("undefined"), "String.prototype.localeCompare does not treat undefined 'that' argument as \"undefined\".");
 }
 
 reportCompare(0, 0);

@@ -3,28 +3,27 @@
 
 "use strict";
 
-add_task(function* () {
+add_task(async function() {
   // Test that changing the URL in a pinned tab works correctly
 
   let TEST_LINK_INITIAL = "about:";
   let TEST_LINK_CHANGED = "about:support";
 
-  let appTab = gBrowser.addTab(TEST_LINK_INITIAL);
+  let appTab = BrowserTestUtils.addTab(gBrowser, TEST_LINK_INITIAL);
   let browser = appTab.linkedBrowser;
-  yield BrowserTestUtils.browserLoaded(browser);
+  await BrowserTestUtils.browserLoaded(browser);
 
   gBrowser.pinTab(appTab);
   is(appTab.pinned, true, "Tab was successfully pinned");
 
   let initialTabsNo = gBrowser.tabs.length;
 
-  let goButton = document.getElementById("urlbar-go-button");
   gBrowser.selectedTab = appTab;
   gURLBar.focus();
   gURLBar.value = TEST_LINK_CHANGED;
 
-  goButton.click();
-  yield BrowserTestUtils.browserLoaded(browser);
+  gURLBar.goButton.click();
+  await BrowserTestUtils.browserLoaded(browser);
 
   is(appTab.linkedBrowser.currentURI.spec, TEST_LINK_CHANGED,
      "New page loaded in the app tab");
@@ -32,25 +31,25 @@ add_task(function* () {
 
   // Now check that opening a link that does create a new tab works,
   // and also that it nulls out the opener.
-  let pageLoadPromise = BrowserTestUtils.browserLoaded(appTab.linkedBrowser, "http://example.com/");
-  yield BrowserTestUtils.loadURI(appTab.linkedBrowser, "http://example.com/");
+  let pageLoadPromise = BrowserTestUtils.browserLoaded(appTab.linkedBrowser, false, "http://example.com/");
+  await BrowserTestUtils.loadURI(appTab.linkedBrowser, "http://example.com/");
   info("Started loading example.com");
-  yield pageLoadPromise;
+  await pageLoadPromise;
   info("Loaded example.com");
   let newTabPromise = BrowserTestUtils.waitForNewTab(gBrowser, "http://example.org/");
-  yield ContentTask.spawn(browser, null, function* () {
+  await ContentTask.spawn(browser, null, async function() {
     let link = content.document.createElement("a");
     link.href = "http://example.org/";
     content.document.body.appendChild(link);
     link.click();
   });
   info("Created & clicked link");
-  let extraTab = yield newTabPromise;
+  let extraTab = await newTabPromise;
   info("Got a new tab");
-  yield ContentTask.spawn(extraTab.linkedBrowser, null, function* () {
+  await ContentTask.spawn(extraTab.linkedBrowser, null, async function() {
     is(content.opener, null, "No opener should be available");
   });
-  yield BrowserTestUtils.removeTab(extraTab);
+  await BrowserTestUtils.removeTab(extraTab);
 });
 
 

@@ -1,4 +1,3 @@
-// |reftest| skip-if(!this.hasOwnProperty('Intl')) -- needs Intl
 // Copyright 2012 Google Inc.  All rights reserved.
 // This code is governed by the BSD license found in the LICENSE file.
 
@@ -31,33 +30,16 @@ var formattedNaN = formatter.format(NaN);
 var formattedInfinity = formatter.format(Infinity);
 var formattedNegativeInfinity = formatter.format(-Infinity);
 
-if (formattedNaN === formattedInfinity) {
-    $ERROR('Intl.NumberFormat formats NaN and Infinity the ' +
-        'same way.');
-}
+assert.notSameValue(formattedNaN, formattedInfinity, 'Intl.NumberFormat formats NaN and Infinity the same way.');
 
-if (formattedNaN === formattedNegativeInfinity) {
-    $ERROR('Intl.NumberFormat formats NaN and negative ' +
-        'Infinity the same way.');
-}
+assert.notSameValue(formattedNaN, formattedNegativeInfinity, 'Intl.NumberFormat formats NaN and negative Infinity the same way.');
 
-if (formattedInfinity === formattedNegativeInfinity) {
-    $ERROR('Intl.NumberFormat formats Infinity and ' +
-        'negative Infinity the same way.');
-}
+assert.notSameValue(formattedInfinity, formattedNegativeInfinity, 'Intl.NumberFormat formats Infinity and negative Infinity the same way.');
 
-if (hasUnicodeDigits.test(formattedNaN)) {
-    $ERROR('Intl.NumberFormat formats NaN using a digit.');
-}
+assert.sameValue(hasUnicodeDigits.test(formattedNaN), false, 'Intl.NumberFormat formats NaN using a digit.');
 
-if (hasUnicodeDigits.test(formattedInfinity)) {
-    $ERROR('Intl.NumberFormat formats Infinity using a ' +
-        'digit.');
-}
+assert.sameValue(hasUnicodeDigits.test(formattedInfinity), false, 'Intl.NumberFormat formats Infinity using a digit.');
 
-if (hasUnicodeDigits.test(formattedNegativeInfinity)) {
-    $ERROR('Intl.NumberFormat formats negative Infinity ' + 
-        'using a digit.');
-}
+assert.sameValue(hasUnicodeDigits.test(formattedNegativeInfinity), false, 'Intl.NumberFormat formats negative Infinity using a digit.');
 
 reportCompare(0, 0);

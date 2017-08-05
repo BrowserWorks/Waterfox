@@ -6,7 +6,12 @@ import urllib
 
 from marionette_driver import By, errors
 
-from marionette_harness import MarionetteTestCase, run_if_e10s, skip_if_mobile
+from marionette_harness import (
+    MarionetteTestCase,
+    run_if_e10s,
+    skip_if_e10s,
+    skip_if_mobile,
+)
 
 
 def inline(doc):
@@ -78,6 +83,7 @@ class TestLegacyClick(MarionetteTestCase):
         self.marionette.delete_session()
         self.marionette.start_session()
 
+    @skip_if_e10s("bug 1360446")
     def test_click(self):
         self.marionette.navigate(inline("""
             <button>click me</button>
@@ -250,6 +256,41 @@ class TestClick(TestLegacyClick):
         with self.assertRaises(errors.ElementClickInterceptedException):
             obscured.click()
         self.assertFalse(self.marionette.execute_script("return window.clicked", sandbox=None))
+
+    def test_pointer_events_none(self):
+        self.marionette.navigate(inline("""
+            <button style="pointer-events: none">click me</button>
+            <script>
+              window.clicked = false;
+              let button = document.querySelector("button");
+              button.addEventListener("click", () => window.clicked = true);
+            </script>
+        """))
+        button = self.marionette.find_element(By.TAG_NAME, "button")
+        self.assertEqual("none", button.value_of_css_property("pointer-events"))
+
+        with self.assertRaisesRegexp(errors.ElementClickInterceptedException,
+                                     "does not have pointer events enabled"):
+            button.click()
+        self.assertFalse(self.marionette.execute_script("return window.clicked", sandbox=None))
+
+    def test_inclusive_descendant(self):
+        self.marionette.navigate(inline("""
+            <select multiple>
+              <option>first
+              <option>second
+              <option>third
+             </select>"""))
+        select = self.marionette.find_element(By.TAG_NAME, "select")
+
+        # This tests that the pointer-interactability test does not
+        # cause an ElementClickInterceptedException.
+        #
+        # At a <select multiple>'s in-view centre point, you might
+        # find a fully rendered <option>.  Marionette should test that
+        # the paint tree at this point _contains_ <option>, not that the
+        # first element of the paint tree is _equal_ to <select>.
+        select.click()
 
 
 class TestClickNavigation(MarionetteTestCase):

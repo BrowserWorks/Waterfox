@@ -3,6 +3,21 @@
 
 skip script ecma_6/String/normalize-generateddata-input.js # input data for other test
 
+# Skip intl402 tests when Intl isn't available.
+skip-if(!this.hasOwnProperty('Intl')) include test262/intl402/jstests.list
+
+# Skip Intl.PluralRules tests when the addIntlExtras helper isn't available.
+skip-if(!this.hasOwnProperty('addIntlExtras')) include test262/intl402/PluralRules/jstests.list
+
+# Skip built-ins/Simd tests when SIMD isn't available.
+skip-if(!this.hasOwnProperty('SIMD')) include test262/built-ins/Simd/jstests.list
+
+# Skip built-in/Atomics when Atomics isn't available
+skip-if(!this.hasOwnProperty('Atomics')) include test262/built-ins/Atomics/jstests.list
+
+# Skip built-in/SharedArrayBuffer
+skip-if(!this.hasOwnProperty('SharedArrayBuffer')) include test262/built-ins/SharedArrayBuffer/jstests.list
+
 # Times out on arm and cgc builds.
 slow script test262/built-ins/decodeURI/S15.1.3.1_A2.5_T1.js
 slow script test262/built-ins/decodeURIComponent/S15.1.3.2_A2.5_T1.js
@@ -26,28 +41,38 @@ skip-if(!Array.prototype.values) script test262/built-ins/Array/prototype/Symbol
 skip-if(!Array.prototype.values) include test262/built-ins/Array/prototype/values/jstests.list
 skip-if(!String.prototype.normalize) include test262/built-ins/String/prototype/normalize/jstests.list
 
+# Async generator is non-release-or-beta only.
+skip-if(release_or_beta) include test262/language/expressions/async-generators/jstests.list
+skip-if(release_or_beta) include test262/language/statements/async-generator/jstests.list
+
+# Requires ICU to detect Final_Sigma case mapping context
+skip-if(!this.hasOwnProperty("Intl")) script test262/built-ins/String/prototype/toLowerCase/Final_Sigma_U180E.js
+skip-if(!this.hasOwnProperty("Intl")) script test262/built-ins/String/prototype/toLowerCase/special_casing_conditional.js
+skip-if(!this.hasOwnProperty("Intl")) script test262/built-ins/String/prototype/toLocaleLowerCase/Final_Sigma_U180E.js
+skip-if(!this.hasOwnProperty("Intl")) script test262/built-ins/String/prototype/toLocaleLowerCase/special_casing_conditional.js
+
 
 #####################################
 # Test262 tests disabled on browser #
 #####################################
 
 # Defines a non-configurable property on the WindowProxy object.
-skip-if(!xulRuntime.shell) script test262/annexB/language/eval-code/direct/global-block-decl-eval-global-exsting-global-update.js
-skip-if(!xulRuntime.shell) script test262/annexB/language/eval-code/direct/global-if-decl-else-decl-a-eval-global-exsting-global-update.js
-skip-if(!xulRuntime.shell) script test262/annexB/language/eval-code/direct/global-if-decl-else-decl-b-eval-global-exsting-global-update.js
-skip-if(!xulRuntime.shell) script test262/annexB/language/eval-code/direct/global-if-decl-else-stmt-eval-global-exsting-global-update.js
-skip-if(!xulRuntime.shell) script test262/annexB/language/eval-code/direct/global-if-decl-no-else-eval-global-exsting-global-update.js
-skip-if(!xulRuntime.shell) script test262/annexB/language/eval-code/direct/global-if-stmt-else-decl-eval-global-exsting-global-update.js
-skip-if(!xulRuntime.shell) script test262/annexB/language/eval-code/direct/global-switch-case-eval-global-exsting-global-update.js
-skip-if(!xulRuntime.shell) script test262/annexB/language/eval-code/direct/global-switch-dflt-eval-global-exsting-global-update.js
-skip-if(!xulRuntime.shell) script test262/annexB/language/eval-code/indirect/global-block-decl-eval-global-exsting-global-update.js
-skip-if(!xulRuntime.shell) script test262/annexB/language/eval-code/indirect/global-if-decl-else-decl-a-eval-global-exsting-global-update.js
-skip-if(!xulRuntime.shell) script test262/annexB/language/eval-code/indirect/global-if-decl-else-decl-b-eval-global-exsting-global-update.js
-skip-if(!xulRuntime.shell) script test262/annexB/language/eval-code/indirect/global-if-decl-else-stmt-eval-global-exsting-global-update.js
-skip-if(!xulRuntime.shell) script test262/annexB/language/eval-code/indirect/global-if-decl-no-else-eval-global-exsting-global-update.js
-skip-if(!xulRuntime.shell) script test262/annexB/language/eval-code/indirect/global-if-stmt-else-decl-eval-global-exsting-global-update.js
-skip-if(!xulRuntime.shell) script test262/annexB/language/eval-code/indirect/global-switch-case-eval-global-exsting-global-update.js
-skip-if(!xulRuntime.shell) script test262/annexB/language/eval-code/indirect/global-switch-dflt-eval-global-exsting-global-update.js
+skip-if(!xulRuntime.shell) script test262/annexB/language/eval-code/direct/global-block-decl-eval-global-existing-global-update.js
+skip-if(!xulRuntime.shell) script test262/annexB/language/eval-code/direct/global-if-decl-else-decl-a-eval-global-existing-global-update.js
+skip-if(!xulRuntime.shell) script test262/annexB/language/eval-code/direct/global-if-decl-else-decl-b-eval-global-existing-global-update.js
+skip-if(!xulRuntime.shell) script test262/annexB/language/eval-code/direct/global-if-decl-else-stmt-eval-global-existing-global-update.js
+skip-if(!xulRuntime.shell) script test262/annexB/language/eval-code/direct/global-if-decl-no-else-eval-global-existing-global-update.js
+skip-if(!xulRuntime.shell) script test262/annexB/language/eval-code/direct/global-if-stmt-else-decl-eval-global-existing-global-update.js
+skip-if(!xulRuntime.shell) script test262/annexB/language/eval-code/direct/global-switch-case-eval-global-existing-global-update.js
+skip-if(!xulRuntime.shell) script test262/annexB/language/eval-code/direct/global-switch-dflt-eval-global-existing-global-update.js
+skip-if(!xulRuntime.shell) script test262/annexB/language/eval-code/indirect/global-block-decl-eval-global-existing-global-update.js
+skip-if(!xulRuntime.shell) script test262/annexB/language/eval-code/indirect/global-if-decl-else-decl-a-eval-global-existing-global-update.js
+skip-if(!xulRuntime.shell) script test262/annexB/language/eval-code/indirect/global-if-decl-else-decl-b-eval-global-existing-global-update.js
+skip-if(!xulRuntime.shell) script test262/annexB/language/eval-code/indirect/global-if-decl-else-stmt-eval-global-existing-global-update.js
+skip-if(!xulRuntime.shell) script test262/annexB/language/eval-code/indirect/global-if-decl-no-else-eval-global-existing-global-update.js
+skip-if(!xulRuntime.shell) script test262/annexB/language/eval-code/indirect/global-if-stmt-else-decl-eval-global-existing-global-update.js
+skip-if(!xulRuntime.shell) script test262/annexB/language/eval-code/indirect/global-switch-case-eval-global-existing-global-update.js
+skip-if(!xulRuntime.shell) script test262/annexB/language/eval-code/indirect/global-switch-dflt-eval-global-existing-global-update.js
 skip-if(!xulRuntime.shell) script test262/language/eval-code/direct/var-env-func-init-global-update-non-configurable.js
 skip-if(!xulRuntime.shell) script test262/language/eval-code/indirect/var-env-func-init-global-update-non-configurable.js
 skip-if(!xulRuntime.shell) script test262/language/global-code/script-decl-lex-restricted-global.js
@@ -60,68 +85,7 @@ skip-if(!xulRuntime.shell) script test262/language/global-code/script-decl-func-
 skip-if(!xulRuntime.shell) script test262/language/global-code/script-decl-lex.js
 skip-if(!xulRuntime.shell) script test262/language/global-code/script-decl-var-err.js
 
-# Fails because window has a "length" property resp. the indexed property access on WindowProxy.
-skip-if(!xulRuntime.shell) script test262/language/expressions/arrow-function/dstr-ary-ptrn-rest-obj-prop-id.js
-skip-if(!xulRuntime.shell) script test262/language/expressions/arrow-function/dstr-dflt-ary-ptrn-rest-obj-prop-id.js
-skip-if(!xulRuntime.shell) script test262/language/expressions/class/dstr-gen-meth-ary-ptrn-rest-obj-prop-id.js
-skip-if(!xulRuntime.shell) script test262/language/expressions/class/dstr-gen-meth-dflt-ary-ptrn-rest-obj-prop-id.js
-skip-if(!xulRuntime.shell) script test262/language/expressions/class/dstr-gen-meth-static-ary-ptrn-rest-obj-prop-id.js
-skip-if(!xulRuntime.shell) script test262/language/expressions/class/dstr-gen-meth-static-dflt-ary-ptrn-rest-obj-prop-id.js
-skip-if(!xulRuntime.shell) script test262/language/expressions/class/dstr-meth-ary-ptrn-rest-obj-prop-id.js
-skip-if(!xulRuntime.shell) script test262/language/expressions/class/dstr-meth-dflt-ary-ptrn-rest-obj-prop-id.js
-skip-if(!xulRuntime.shell) script test262/language/expressions/class/dstr-meth-static-ary-ptrn-rest-obj-prop-id.js
-skip-if(!xulRuntime.shell) script test262/language/expressions/class/dstr-meth-static-dflt-ary-ptrn-rest-obj-prop-id.js
-skip-if(!xulRuntime.shell) script test262/language/expressions/function/dstr-ary-ptrn-rest-obj-prop-id.js
-skip-if(!xulRuntime.shell) script test262/language/expressions/function/dstr-dflt-ary-ptrn-rest-obj-prop-id.js
-skip-if(!xulRuntime.shell) script test262/language/expressions/generators/dstr-ary-ptrn-rest-obj-prop-id.js
-skip-if(!xulRuntime.shell) script test262/language/expressions/generators/dstr-dflt-ary-ptrn-rest-obj-prop-id.js
-skip-if(!xulRuntime.shell) script test262/language/expressions/object/dstr-gen-meth-ary-ptrn-rest-obj-prop-id.js
-skip-if(!xulRuntime.shell) script test262/language/expressions/object/dstr-gen-meth-dflt-ary-ptrn-rest-obj-prop-id.js
-skip-if(!xulRuntime.shell) script test262/language/expressions/object/dstr-meth-ary-ptrn-rest-obj-prop-id.js
-skip-if(!xulRuntime.shell) script test262/language/expressions/object/dstr-meth-dflt-ary-ptrn-rest-obj-prop-id.js
-skip-if(!xulRuntime.shell) script test262/language/statements/class/dstr-gen-meth-ary-ptrn-rest-obj-prop-id.js
-skip-if(!xulRuntime.shell) script test262/language/statements/class/dstr-gen-meth-dflt-ary-ptrn-rest-obj-prop-id.js
-skip-if(!xulRuntime.shell) script test262/language/statements/class/dstr-gen-meth-static-ary-ptrn-rest-obj-prop-id.js
-skip-if(!xulRuntime.shell) script test262/language/statements/class/dstr-gen-meth-static-dflt-ary-ptrn-rest-obj-prop-id.js
-skip-if(!xulRuntime.shell) script test262/language/statements/class/dstr-meth-ary-ptrn-rest-obj-prop-id.js
-skip-if(!xulRuntime.shell) script test262/language/statements/class/dstr-meth-dflt-ary-ptrn-rest-obj-prop-id.js
-skip-if(!xulRuntime.shell) script test262/language/statements/class/dstr-meth-static-ary-ptrn-rest-obj-prop-id.js
-skip-if(!xulRuntime.shell) script test262/language/statements/class/dstr-meth-static-dflt-ary-ptrn-rest-obj-prop-id.js
-skip-if(!xulRuntime.shell) script test262/language/statements/const/dstr-ary-ptrn-rest-obj-prop-id.js
-skip-if(!xulRuntime.shell) script test262/language/statements/for-of/dstr-const-ary-ptrn-rest-obj-prop-id.js
-skip-if(!xulRuntime.shell) script test262/language/statements/for-of/dstr-let-ary-ptrn-rest-obj-prop-id.js
-skip-if(!xulRuntime.shell) script test262/language/statements/for-of/dstr-var-ary-ptrn-rest-obj-prop-id.js
-skip-if(!xulRuntime.shell) script test262/language/statements/for/dstr-const-ary-ptrn-rest-obj-prop-id.js
-skip-if(!xulRuntime.shell) script test262/language/statements/for/dstr-let-ary-ptrn-rest-obj-prop-id.js
-skip-if(!xulRuntime.shell) script test262/language/statements/for/dstr-var-ary-ptrn-rest-obj-prop-id.js
-skip-if(!xulRuntime.shell) script test262/language/statements/function/dstr-ary-ptrn-rest-obj-prop-id.js
-skip-if(!xulRuntime.shell) script test262/language/statements/function/dstr-dflt-ary-ptrn-rest-obj-prop-id.js
-skip-if(!xulRuntime.shell) script test262/language/statements/generators/dstr-ary-ptrn-rest-obj-prop-id.js
-skip-if(!xulRuntime.shell) script test262/language/statements/generators/dstr-dflt-ary-ptrn-rest-obj-prop-id.js
-skip-if(!xulRuntime.shell) script test262/language/statements/let/dstr-ary-ptrn-rest-obj-prop-id.js
-skip-if(!xulRuntime.shell) script test262/language/statements/try/dstr-ary-ptrn-rest-obj-prop-id.js
-skip-if(!xulRuntime.shell) script test262/language/statements/variable/dstr-ary-ptrn-rest-obj-prop-id.js
-skip-if(!xulRuntime.shell) script test262/built-ins/Array/prototype/every/15.4.4.16-2-15.js
-skip-if(!xulRuntime.shell) script test262/built-ins/Array/prototype/every/15.4.4.16-7-c-i-23.js
-skip-if(!xulRuntime.shell) script test262/built-ins/Array/prototype/filter/15.4.4.20-2-15.js
-skip-if(!xulRuntime.shell) script test262/built-ins/Array/prototype/filter/15.4.4.20-9-c-i-23.js
-skip-if(!xulRuntime.shell) script test262/built-ins/Array/prototype/forEach/15.4.4.18-2-15.js
-skip-if(!xulRuntime.shell) script test262/built-ins/Array/prototype/forEach/15.4.4.18-7-c-i-23.js
-skip-if(!xulRuntime.shell) script test262/built-ins/Array/prototype/indexOf/15.4.4.14-1-17.js
-skip-if(!xulRuntime.shell) script test262/built-ins/Array/prototype/indexOf/15.4.4.14-2-15.js
-skip-if(!xulRuntime.shell) script test262/built-ins/Array/prototype/indexOf/15.4.4.14-9-b-i-23.js
-skip-if(!xulRuntime.shell) script test262/built-ins/Array/prototype/lastIndexOf/15.4.4.15-1-17.js
-skip-if(!xulRuntime.shell) script test262/built-ins/Array/prototype/lastIndexOf/15.4.4.15-2-15.js
-skip-if(!xulRuntime.shell) script test262/built-ins/Array/prototype/lastIndexOf/15.4.4.15-8-b-i-23.js
-skip-if(!xulRuntime.shell) script test262/built-ins/Array/prototype/map/15.4.4.19-8-c-i-23.js
-skip-if(!xulRuntime.shell) script test262/built-ins/Array/prototype/reduce/15.4.4.21-2-15.js
-skip-if(!xulRuntime.shell) script test262/built-ins/Array/prototype/reduce/15.4.4.21-8-b-iii-1-23.js
-skip-if(!xulRuntime.shell) script test262/built-ins/Array/prototype/reduce/15.4.4.21-9-c-i-23.js
-skip-if(!xulRuntime.shell) script test262/built-ins/Array/prototype/reduceRight/15.4.4.22-2-15.js
-skip-if(!xulRuntime.shell) script test262/built-ins/Array/prototype/reduceRight/15.4.4.22-8-b-iii-1-23.js
-skip-if(!xulRuntime.shell) script test262/built-ins/Array/prototype/reduceRight/15.4.4.22-9-c-i-23.js
-skip-if(!xulRuntime.shell) script test262/built-ins/Array/prototype/some/15.4.4.17-2-15.js
-skip-if(!xulRuntime.shell) script test262/built-ins/Array/prototype/some/15.4.4.17-7-c-i-23.js
+# Defines a restricted property on the WindowProxy object.
 skip-if(!xulRuntime.shell) script test262/built-ins/Object/defineProperty/15.2.3.6-4-354-13.js
 skip-if(!xulRuntime.shell) script test262/built-ins/Object/defineProperty/15.2.3.6-4-360-7.js
 skip-if(!xulRuntime.shell) script test262/built-ins/Object/defineProperty/15.2.3.6-4-531-13.js
@@ -190,28 +154,6 @@ skip script test262/built-ins/TypedArrays/internals/Set/tonumber-value-throws.js
 
 # https://bugzilla.mozilla.org/show_bug.cgi?id=1140152
 skip script test262/built-ins/TypedArray/prototype/slice/bit-precision.js
-
-# https://bugzilla.mozilla.org/show_bug.cgi?id=1317383
-skip script test262/built-ins/TypedArrays/buffer-arg-byteoffset-is-negative-throws.js
-skip script test262/built-ins/TypedArrays/buffer-arg-defined-negative-length.js
-skip script test262/built-ins/TypedArrays/length-arg-is-infinity-throws-rangeerror.js
-skip script test262/built-ins/TypedArrays/length-arg-is-negative-integer-throws-rangeerror.js
-skip script test262/built-ins/TypedArrays/length-arg-toindex-length.js
-skip script test262/built-ins/TypedArrays/object-arg-length-excessive-throws.js
-
-# https://bugzilla.mozilla.org/show_bug.cgi?id=924058
-skip script test262/built-ins/Array/prototype/pop/S15.4.4.6_A2_T2.js
-skip script test262/built-ins/Array/prototype/pop/S15.4.4.6_A3_T1.js
-skip script test262/built-ins/Array/prototype/pop/S15.4.4.6_A3_T2.js
-skip script test262/built-ins/Array/prototype/push/S15.4.4.7_A2_T2.js
-skip script test262/built-ins/Array/prototype/push/S15.4.4.7_A4_T1.js
-skip script test262/built-ins/Array/prototype/slice/create-species-undef-invalid-len.js
-skip script test262/built-ins/Array/prototype/slice/create-non-array-invalid-len.js
-skip script test262/built-ins/Array/prototype/slice/S15.4.4.10_A3_T1.js
-skip script test262/built-ins/Array/prototype/slice/S15.4.4.10_A3_T2.js
-skip script test262/built-ins/Array/prototype/splice/S15.4.4.12_A3_T1.js
-skip script test262/built-ins/Array/prototype/splice/create-non-array-invalid-len.js
-skip script test262/built-ins/Array/prototype/splice/create-species-undef-invalid-len.js
 
 # https://bugzilla.mozilla.org/show_bug.cgi?id=1317405
 skip script test262/language/computed-property-names/class/static/method-number.js
@@ -320,7 +262,7 @@ skip script test262/built-ins/Proxy/setPrototypeOf/trap-is-not-callable-realm.js
 
 # Erros thrown from wrong realm, similar to 1225839, 1288457, and 1297179.
 skip script test262/language/expressions/new/non-ctor-err-realm.js
-skip script test262/built-ins/Array/define-own-prop-length-overflow-realm.js
+skip script test262/built-ins/Array/length/define-own-prop-length-overflow-realm.js
 skip script test262/built-ins/Function/internals/Construct/derived-return-val-realm.js
 skip script test262/built-ins/Function/internals/Construct/derived-this-uninitialized-realm.js
 
@@ -354,36 +296,12 @@ skip script test262/built-ins/TypedArrays/typedarray-arg-same-ctor-buffer-ctor-s
 skip script test262/built-ins/WeakMap/proto-from-ctor-realm.js
 skip script test262/built-ins/WeakSet/proto-from-ctor-realm.js
 
-# https://bugzilla.mozilla.org/show_bug.cgi?id=1216630
-skip script test262/built-ins/Function/prototype/toString/class-declaration-complex-heritage.js
-skip script test262/built-ins/Function/prototype/toString/class-declaration-explicit-ctor.js
-skip script test262/built-ins/Function/prototype/toString/class-declaration-implicit-ctor.js
-skip script test262/built-ins/Function/prototype/toString/class-expression-explicit-ctor.js
-skip script test262/built-ins/Function/prototype/toString/class-expression-implicit-ctor.js
-
-# https://bugzilla.mozilla.org/show_bug.cgi?id=1317397
-skip script test262/built-ins/RegExp/prototype/Symbol.search/lastindex-no-restore.js
-skip script test262/built-ins/RegExp/prototype/exec/failure-lastindex-no-access.js
-skip script test262/built-ins/RegExp/prototype/exec/success-lastindex-no-access.js
-
 # https://bugzilla.mozilla.org/show_bug.cgi?id=1317395
 skip script test262/built-ins/ArrayBuffer/prototype/byteLength/detached-buffer.js
 
 # https://bugzilla.mozilla.org/show_bug.cgi?id=1317394
 skip script test262/built-ins/DataView/prototype/byteOffset/detached-buffer.js
 skip script test262/built-ins/DataView/prototype/byteLength/detached-buffer.js
-
-# https://bugzilla.mozilla.org/show_bug.cgi?id=1317391
-skip script test262/language/statements/class/subclass/class-definition-null-proto-missing-return-override.js
-skip script test262/language/statements/class/subclass/class-definition-null-proto-this.js
-
-# https://bugzilla.mozilla.org/show_bug.cgi?id=1108941
-skip script test262/language/expressions/tagged-template/cache-differing-expressions.js
-skip script test262/language/expressions/tagged-template/cache-differing-expressions-eval.js
-skip script test262/language/expressions/tagged-template/cache-differing-expressions-new-function.js
-skip script test262/language/expressions/tagged-template/cache-identical-source.js
-skip script test262/language/expressions/tagged-template/cache-identical-source-new-function.js
-skip script test262/language/expressions/tagged-template/cache-identical-source-eval.js
 
 # We're still waiting for a final decision on https://github.com/tc39/ecma402/pull/84.
 skip script test262/intl402/Collator/10.1.1_1.js
@@ -420,6 +338,7 @@ skip script test262/language/statements/for-of/cptn-expr-abrupt-empty.js
 skip script test262/language/statements/for-of/cptn-expr-itr.js
 skip script test262/language/statements/for-of/cptn-expr-no-itr.js
 skip script test262/language/statements/if/cptn-else-false-nrml.js
+skip script test262/language/statements/if/cptn-else-false-abrupt-empty.js
 skip script test262/language/statements/if/cptn-else-true-abrupt-empty.js
 skip script test262/language/statements/if/cptn-else-true-nrml.js
 skip script test262/language/statements/if/cptn-no-else-false.js
@@ -453,55 +372,27 @@ skip script test262/intl402/NumberFormat/prototype/formatToParts/name.js
 skip script test262/intl402/NumberFormat/prototype/formatToParts/return-abrupt-tonumber.js
 
 # https://bugzilla.mozilla.org/show_bug.cgi?id=1296234
-skip script test262/intl402/Collator/prototype/compare/name.js
 skip script test262/intl402/Collator/prototype/compare/compare-function-name.js
-skip script test262/intl402/DateTimeFormat/prototype/format/name.js
 skip script test262/intl402/DateTimeFormat/prototype/format/format-function-name.js
-skip script test262/intl402/NumberFormat/prototype/format/name.js
 skip script test262/intl402/NumberFormat/prototype/format/format-function-name.js
 
-# https://bugzilla.mozilla.org/show_bug.cgi?id=394604
-skip script test262/intl402/String/prototype/toLocaleLowerCase/capital_I_with_dot.js
-skip script test262/intl402/String/prototype/toLocaleLowerCase/special_casing_Azeri.js
-skip script test262/intl402/String/prototype/toLocaleLowerCase/special_casing_Lithuanian.js
-skip script test262/intl402/String/prototype/toLocaleLowerCase/special_casing_Turkish.js
-skip script test262/intl402/String/prototype/toLocaleUpperCase/special_casing_Azeri.js
-skip script test262/intl402/String/prototype/toLocaleUpperCase/special_casing_Lithuanian.js
-skip script test262/intl402/String/prototype/toLocaleUpperCase/special_casing_Turkish.js
-skip script test262/built-ins/String/prototype/toLocaleLowerCase/Final_Sigma_U180E.js
-skip script test262/built-ins/String/prototype/toLocaleLowerCase/special_casing_conditional.js
-skip script test262/built-ins/String/prototype/toLocaleUpperCase/special_casing.js
-skip script test262/built-ins/String/prototype/toLowerCase/Final_Sigma_U180E.js
-skip script test262/built-ins/String/prototype/toLowerCase/special_casing.js
-skip script test262/built-ins/String/prototype/toLowerCase/special_casing_conditional.js
-skip script test262/built-ins/String/prototype/toUpperCase/special_casing.js
-
 # https://bugzilla.mozilla.org/show_bug.cgi?id=1317373
-skip script test262/annexB/language/eval-code/direct/global-if-stmt-else-decl-eval-global-exsting-global-init.js
-skip script test262/annexB/language/eval-code/direct/global-switch-dflt-eval-global-exsting-global-init.js
-skip script test262/annexB/language/eval-code/direct/global-if-decl-no-else-eval-global-exsting-global-init.js
-skip script test262/annexB/language/eval-code/direct/global-if-decl-else-stmt-eval-global-exsting-global-init.js
-skip script test262/annexB/language/eval-code/direct/global-if-decl-else-decl-b-eval-global-exsting-global-init.js
-skip script test262/annexB/language/eval-code/direct/global-if-decl-else-decl-a-eval-global-exsting-global-init.js
-skip script test262/annexB/language/eval-code/direct/global-block-decl-eval-global-exsting-global-init.js
-skip script test262/annexB/language/eval-code/direct/global-switch-case-eval-global-exsting-global-init.js
-skip script test262/annexB/language/eval-code/indirect/global-if-stmt-else-decl-eval-global-exsting-global-init.js
-skip script test262/annexB/language/eval-code/indirect/global-switch-dflt-eval-global-exsting-global-init.js
-skip script test262/annexB/language/eval-code/indirect/global-if-decl-no-else-eval-global-exsting-global-init.js
-skip script test262/annexB/language/eval-code/indirect/global-if-decl-else-stmt-eval-global-exsting-global-init.js
-skip script test262/annexB/language/eval-code/indirect/global-if-decl-else-decl-b-eval-global-exsting-global-init.js
-skip script test262/annexB/language/eval-code/indirect/global-if-decl-else-decl-a-eval-global-exsting-global-init.js
-skip script test262/annexB/language/eval-code/indirect/global-block-decl-eval-global-exsting-global-init.js
-skip script test262/annexB/language/eval-code/indirect/global-switch-case-eval-global-exsting-global-init.js
-
-# https://bugzilla.mozilla.org/show_bug.cgi?id=1331092
-skip script test262/language/expressions/async-generators/expression-yield-as-statement.js
-skip script test262/language/expressions/async-generators/expression-await-thenable-as-yield-operand.js
-skip script test262/language/expressions/async-generators/expression-yield-as-operand.js
-skip script test262/language/expressions/async-generators/expression-await-as-yield-operand.js
-skip script test262/language/expressions/async-generators/expression-yield-newline.js
-skip script test262/language/expressions/async-generators/expression-await-promise-as-yield-operand.js
-skip script test262/language/expressions/async-generators/expression-yield-star-before-newline.js
+skip script test262/annexB/language/eval-code/direct/global-if-stmt-else-decl-eval-global-existing-global-init.js
+skip script test262/annexB/language/eval-code/direct/global-switch-dflt-eval-global-existing-global-init.js
+skip script test262/annexB/language/eval-code/direct/global-if-decl-no-else-eval-global-existing-global-init.js
+skip script test262/annexB/language/eval-code/direct/global-if-decl-else-stmt-eval-global-existing-global-init.js
+skip script test262/annexB/language/eval-code/direct/global-if-decl-else-decl-b-eval-global-existing-global-init.js
+skip script test262/annexB/language/eval-code/direct/global-if-decl-else-decl-a-eval-global-existing-global-init.js
+skip script test262/annexB/language/eval-code/direct/global-block-decl-eval-global-existing-global-init.js
+skip script test262/annexB/language/eval-code/direct/global-switch-case-eval-global-existing-global-init.js
+skip script test262/annexB/language/eval-code/indirect/global-if-stmt-else-decl-eval-global-existing-global-init.js
+skip script test262/annexB/language/eval-code/indirect/global-switch-dflt-eval-global-existing-global-init.js
+skip script test262/annexB/language/eval-code/indirect/global-if-decl-no-else-eval-global-existing-global-init.js
+skip script test262/annexB/language/eval-code/indirect/global-if-decl-else-stmt-eval-global-existing-global-init.js
+skip script test262/annexB/language/eval-code/indirect/global-if-decl-else-decl-b-eval-global-existing-global-init.js
+skip script test262/annexB/language/eval-code/indirect/global-if-decl-else-decl-a-eval-global-existing-global-init.js
+skip script test262/annexB/language/eval-code/indirect/global-block-decl-eval-global-existing-global-init.js
+skip script test262/annexB/language/eval-code/indirect/global-switch-case-eval-global-existing-global-init.js
 
 # SIMD.
 skip script test262/built-ins/Simd/check.js
@@ -511,29 +402,133 @@ skip script test262/built-ins/Simd/replace_lane.js
 skip script test262/built-ins/Simd/shuffle.js
 skip script test262/built-ins/Simd/swizzle.js
 
-# SIMD. Fails with --ion-eager --no-threads
+# https://bugzilla.mozilla.org/show_bug.cgi?id=1336991
 skip script test262/built-ins/Simd/float_operators.js
 skip script test262/built-ins/Simd/all_true.js
 skip script test262/built-ins/Simd/any_true.js
 
+# https://bugzilla.mozilla.org/show_bug.cgi?id=1340147
+skip script test262/language/module-code/eval-export-dflt-cls-anon.js
+skip script test262/language/module-code/eval-export-dflt-expr-cls-anon.js
+skip script test262/language/module-code/eval-export-dflt-expr-fn-anon.js
+skip script test262/language/module-code/eval-export-dflt-expr-gen-anon.js
+skip script test262/language/module-code/instn-named-bndng-dflt-fun-anon.js
+skip script test262/language/module-code/instn-named-bndng-dflt-gen-anon.js
+
+# https://bugzilla.mozilla.org/show_bug.cgi?id=1340307
+skip script test262/language/module-code/instn-resolve-empty-export.js
+skip script test262/language/module-code/instn-resolve-empty-import.js
+skip script test262/language/module-code/instn-resolve-err-reference.js
+skip script test262/language/module-code/instn-resolve-order-depth.js
+skip script test262/language/module-code/instn-resolve-order-src.js
+skip script test262/language/module-code/parse-err-reference.js
+skip script test262/language/expressions/postfix-increment/target-cover-yieldexpr.js
+skip script test262/language/expressions/postfix-increment/target-newtarget.js
+skip script test262/language/expressions/postfix-increment/target-cover-newtarget.js
+skip script test262/language/expressions/postfix-increment/non-simple.js
+skip script test262/language/expressions/postfix-decrement/target-cover-yieldexpr.js
+skip script test262/language/expressions/postfix-decrement/target-newtarget.js
+skip script test262/language/expressions/postfix-decrement/target-cover-newtarget.js
+skip script test262/language/expressions/postfix-decrement/non-simple.js
+skip script test262/language/expressions/prefix-increment/target-cover-yieldexpr.js
+skip script test262/language/expressions/prefix-increment/target-newtarget.js
+skip script test262/language/expressions/prefix-increment/target-cover-newtarget.js
+skip script test262/language/expressions/prefix-increment/non-simple.js
+skip script test262/language/expressions/prefix-decrement/target-cover-yieldexpr.js
+skip script test262/language/expressions/prefix-decrement/target-newtarget.js
+skip script test262/language/expressions/prefix-decrement/target-cover-newtarget.js
+skip script test262/language/expressions/prefix-decrement/non-simple.js
+skip script test262/language/asi/S7.9_A5.7_T1.js
+
+# Dependent on evalInWorker, setSharedArrayBuffer, and
+# getSharedArrayBuffer, plus the test cases can't actually run in the
+# browser even if that were fixed, https://bugzil.la/1349863
+skip-if(!xulRuntime.shell) script test262/built-ins/Atomics/wait/negative-timeout.js
+skip-if(!xulRuntime.shell) script test262/built-ins/Atomics/wait/was-woken.js
+skip-if(!xulRuntime.shell) script test262/built-ins/Atomics/wait/did-timeout.js
+skip-if(!xulRuntime.shell) script test262/built-ins/Atomics/wait/good-views.js
+skip-if(!xulRuntime.shell) script test262/built-ins/Atomics/wait/no-spurious-wakeup.js
+skip-if(!xulRuntime.shell) script test262/built-ins/Atomics/wait/nan-timeout.js
+skip-if(!xulRuntime.shell) script test262/built-ins/Atomics/wake/wake-all.js
+skip-if(!xulRuntime.shell) script test262/built-ins/Atomics/wake/wake-zero.js
+skip-if(!xulRuntime.shell) script test262/built-ins/Atomics/wake/wake-negative.js
+skip-if(!xulRuntime.shell) script test262/built-ins/Atomics/wake/wake-nan.js
+skip-if(!xulRuntime.shell) script test262/built-ins/Atomics/wake/wake-two.js
+skip-if(!xulRuntime.shell) script test262/built-ins/Atomics/wake/wake-in-order.js
+skip-if(!xulRuntime.shell) script test262/built-ins/Atomics/wake/wake-one.js
+skip-if(!xulRuntime.shell) script test262/built-ins/Atomics/wake/wake-all-on-loc.js
+
+# SharedArrayBuffer API pedantry
+# https://bugzilla.mozilla.org/show_bug.cgi?id=1346071
+skip script test262/built-ins/TypedArrays/buffer-arg-proto-from-ctor-realm-sab.js
+skip script test262/built-ins/SharedArrayBuffer/proto-from-ctor-realm.js
+skip script test262/built-ins/DataView/proto-from-ctor-realm-sab.js
+
+# https://bugzilla.mozilla.org/show_bug.cgi?id=1346081
+skip script test262/intl402/NumberFormat/prototype/format/11.3.2_TRP.js
+skip script test262/intl402/NumberFormat/prototype/format/11.3.2_TRF.js
+
+# https://bugzilla.mozilla.org/show_bug.cgi?id=1346080
+skip script test262/intl402/PluralRules/prototype/select/tainting.js
+
+# https://bugzilla.mozilla.org/show_bug.cgi?id=1340304
+skip-if(!xulRuntime.shell) script test262/language/module-code/instn-iee-err-circular.js
+skip-if(!xulRuntime.shell) script test262/language/module-code/instn-iee-err-circular-as.js
+
+# RegExp s (dotAll) flag
+# https://bugzilla.mozilla.org/show_bug.cgi?id=1361856
+skip script test262/annexB/built-ins/RegExp/prototype/flags/order-after-compile.js
+skip include test262/built-ins/RegExp/dotall/jstests.list
+skip include test262/built-ins/RegExp/prototype/dotAll/jstests.list
+skip script test262/built-ins/RegExp/prototype/flags/order.js
+skip script test262/built-ins/RegExp/prototype/flags/s.js
+
+# Hoisted block-level function named "arguments" not initialized with undefined per B.3.3.1
+# https://bugzilla.mozilla.org/show_bug.cgi?id=1339123
+skip script test262/annexB/language/function-code/block-decl-func-skip-arguments.js
+
+# RegExp Unicode Property Escapes
+# https://bugzilla.mozilla.org/show_bug.cgi?id=1361876
+skip include test262/built-ins/RegExp/property-escapes/jstests.list
+
+# RegExp lookBehind
+# https://bugzilla.mozilla.org/show_bug.cgi?id=1225665
+skip include test262/built-ins/RegExp/lookBehind/jstests.list
+
+# RegExp named groups
+# https://bugzilla.mozilla.org/show_bug.cgi?id=1362154
+skip include test262/built-ins/RegExp/named-groups/jstests.list
+
+# Stash rval in AsyncIteratorClose
+# https://bugzilla.mozilla.org/show_bug.cgi?id=1364608
+skip script test262/language/statements/for-await-of/async-func-dstr-const-ary-ptrn-elision-step-err.js
+skip script test262/language/statements/for-await-of/async-func-dstr-const-ary-ptrn-rest-id-iter-step-err.js
+skip script test262/language/statements/for-await-of/async-func-dstr-let-ary-ptrn-elision-step-err.js
+skip script test262/language/statements/for-await-of/async-func-dstr-let-ary-ptrn-rest-id-iter-step-err.js
+skip script test262/language/statements/for-await-of/async-func-dstr-var-ary-ptrn-elision-step-err.js
+skip script test262/language/statements/for-await-of/async-func-dstr-var-ary-ptrn-rest-id-iter-step-err.js
+skip script test262/language/statements/for-await-of/async-gen-dstr-const-ary-ptrn-elision-step-err.js
+skip script test262/language/statements/for-await-of/async-gen-dstr-const-ary-ptrn-rest-id-iter-step-err.js
+skip script test262/language/statements/for-await-of/async-gen-dstr-let-ary-ptrn-elision-step-err.js
+skip script test262/language/statements/for-await-of/async-gen-dstr-let-ary-ptrn-rest-id-iter-step-err.js
+skip script test262/language/statements/for-await-of/async-gen-dstr-var-ary-ptrn-elision-step-err.js
+skip script test262/language/statements/for-await-of/async-gen-dstr-var-ary-ptrn-rest-id-iter-step-err.js
+
+# Missing expression statement restriction for "async function"
+# https://bugzilla.mozilla.org/show_bug.cgi?id=1361143
+skip script test262/language/statements/for/decl-async-fun.js
+skip script test262/language/statements/for/decl-async-gen.js
+skip script test262/language/statements/for-in/decl-async-fun.js
+skip script test262/language/statements/for-in/decl-async-gen.js
+skip script test262/language/statements/for-of/decl-async-fun.js
+skip script test262/language/statements/for-of/decl-async-gen.js
+skip script test262/language/statements/labeled/decl-async-function.js
+skip script test262/language/statements/labeled/decl-async-generator.js
+skip script test262/language/statements/while/decl-async-fun.js
+skip script test262/language/statements/while/decl-async-gen.js
+skip script test262/language/statements/with/decl-async-fun.js
+skip script test262/language/statements/with/decl-async-gen.js
 
 ####################################################
 # Tests disabled due to invalid test expectations  #
 ####################################################
-
-# Only works in the Bocoup time zone.
-skip script test262/annexB/built-ins/Date/prototype/setYear/time-clip.js
-
-# Only works for time zones west of Greenwich.
-skip script test262/built-ins/Date/prototype/setFullYear/new-value-time-clip.js
-skip script test262/built-ins/Date/prototype/setMonth/new-value-time-clip.js
-
-# ES2017: https://github.com/tc39/ecma262/pull/453
-skip script test262/language/block-scope/syntax/redeclaration-in-block/attempt-to-redeclare-function-declaration-with-function-declaration-n.js
-
-# Expects TypeError, but RangeError thrown.
-skip script test262/built-ins/DataView/prototype/setFloat64/detached-buffer-after-toindex-byteoffset.js
-skip script test262/built-ins/DataView/prototype/setInt16/detached-buffer-after-toindex-byteoffset.js
-
-# https://github.com/tc39/Function-prototype-toString-revision/issues/20
-skip script test262/built-ins/Function/prototype/toString/AsyncFunction.js

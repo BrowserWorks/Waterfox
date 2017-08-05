@@ -7,6 +7,7 @@
 #include "mozilla/Assertions.h"
 
 #include "GeneratedJNIWrappers.h"
+#include "AndroidBuild.h"
 #include "nsAppShell.h"
 
 #ifdef MOZ_CRASHREPORTER
@@ -123,6 +124,12 @@ void SetGeckoThreadEnv(JNIEnv* aEnv)
             Class::LocalRef::Adopt(aEnv->GetObjectClass(sClassLoader)).Get(),
             "loadClass", "(Ljava/lang/String;)Ljava/lang/Class;");
     MOZ_ASSERT(sClassLoader && sClassLoaderLoadClass);
+
+    if (java::GeckoThread::IsChildProcess()) {
+        // Disallow Fennec-only classes from being used in child processes.
+        sIsFennec = false;
+        return;
+    }
 
     auto geckoAppClass = Class::LocalRef::Adopt(
             aEnv->FindClass("org/mozilla/gecko/GeckoApp"));
@@ -281,7 +288,7 @@ jclass GetClassRef(JNIEnv* aEnv, const char* aClassName)
     return nullptr;
 }
 
-void DispatchToGeckoThread(UniquePtr<AbstractCall>&& aCall)
+void DispatchToGeckoPriorityQueue(UniquePtr<AbstractCall>&& aCall)
 {
     class AbstractCallEvent : public nsAppShell::Event
     {
@@ -304,6 +311,14 @@ void DispatchToGeckoThread(UniquePtr<AbstractCall>&& aCall)
 bool IsFennec()
 {
     return sIsFennec;
+}
+
+int GetAPIVersion() {
+    static int32_t apiVersion = 0;
+    if (!apiVersion && IsAvailable()) {
+        apiVersion = java::sdk::VERSION::SDK_INT();
+    }
+    return apiVersion;
 }
 
 } // jni

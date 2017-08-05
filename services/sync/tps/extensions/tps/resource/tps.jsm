@@ -20,6 +20,7 @@ Cu.import("resource://gre/modules/Services.jsm");
 Cu.import("resource://gre/modules/AppConstants.jsm");
 Cu.import("resource://gre/modules/PlacesUtils.jsm");
 Cu.import("resource://gre/modules/FileUtils.jsm");
+Cu.import("resource://gre/modules/Timer.jsm");
 Cu.import("resource://services-common/async.js");
 Cu.import("resource://services-sync/constants.js");
 Cu.import("resource://services-sync/main.js");
@@ -99,7 +100,8 @@ const OBSERVER_TOPICS = ["fxaccounts:onlogin",
                          "weave:service:sync:finish",
                          "weave:service:sync:delayed",
                          "weave:service:sync:error",
-                         "weave:service:sync:start"
+                         "weave:service:sync:start",
+                         "weave:service:resyncs-finished",
                         ];
 
 var TPS = {
@@ -174,7 +176,14 @@ var TPS = {
           break;
 
         case "sessionstore-windows-restored":
-          Utils.nextTick(this.RunNextTestAction, this);
+          // This is a terrible hack, but fixes cases where tps (usually cleanup)
+          // fails because of sessionstore restoring windows before tps is able
+          // to initialize. This used to take only 1 tick, but at some point
+          // session store started restoring windows sooner, or tps started
+          // initializing later.
+          setTimeout(() => {
+            this.RunNextTestAction();
+          }, 1000);
           break;
 
         case "weave:service:setup-complete":
@@ -205,7 +214,7 @@ var TPS = {
 
           break;
 
-        case "weave:service:sync:finish":
+        case "weave:service:resyncs-finished":
           this._syncActive = false;
           this._syncErrors = 0;
           this._triggeredSync = false;
@@ -261,7 +270,15 @@ var TPS = {
   },
 
   FinishAsyncOperation: function TPS__FinishAsyncOperation() {
-    this._operations_pending--;
+    // We fire a FinishAsyncOperation at the end of a sync finish (somewhat
+    // dubious, but we're consistent about it), but a sync may or may not be
+    // triggered during login, and it's hard for us to know (without e.g.
+    // auth/fxaccounts.jsm calling back into this module). So we just assume
+    // the FinishAsyncOperation without a StartAsyncOperation is fine, and works
+    // as if a StartAsyncOperation had been called.
+    if (this._operations_pending) {
+      this._operations_pending--;
+    }
     if (!this.operations_pending) {
       this._currentAction++;
       Utils.nextTick(function() {
@@ -280,10 +297,10 @@ var TPS = {
                    " on window " + JSON.stringify(aWindow));
     switch (action) {
       case ACTION_ADD:
-        BrowserWindows.Add(aWindow.private, function(win) {
+        BrowserWindows.Add(aWindow.private, win => {
           Logger.logInfo("window finished loading");
           this.FinishAsyncOperation();
-        }.bind(this));
+        });
         break;
     }
     Logger.logPass("executing action " + action.toUpperCase() + " on windows");
@@ -587,6 +604,7 @@ var TPS = {
         waiter();
         Logger.logInfo("signout complete");
       }
+      Authentication.deleteEmail(this.config.fx_account.username);
     } catch (e) {
       Logger.logError("Failed to sign out: " + Log.exceptionStr(e));
     }
@@ -607,7 +625,7 @@ var TPS = {
         item.decrypt(collectionKey);
         items.push(item.cleartext);
       };
-      collection.get();
+      Async.promiseSpinningly(collection.get());
       return items;
     };
     let serverRecordDumpStr;
@@ -655,7 +673,7 @@ var TPS = {
       Logger.logInfo(`About to perform validation for "${engineName}"`);
       let engine = Weave.Service.engineManager.get(engineName);
       let validator = new ValidatorType(engine);
-      let serverRecords = validator.getServerItems(engine);
+      let serverRecords = Async.promiseSpinningly(validator.getServerItems(engine));
       let clientRecords = Async.promiseSpinningly(validator.getClientItems());
       try {
         // This substantially improves the logs for addons while not making a
@@ -883,10 +901,9 @@ var TPS = {
       // parse the test file
       Services.scriptloader.loadSubScript(file, this);
       this._currentPhase = phase;
+      // cleanup phases are in the format `cleanup-${profileName}`.
       if (this._currentPhase.startsWith("cleanup-")) {
-        let profileToClean = Cc["@mozilla.org/toolkit/profile-service;1"]
-                             .getService(Ci.nsIToolkitProfileService)
-                             .selectedProfile.name;
+        let profileToClean = this._currentPhase.slice("cleanup-".length);
         this.phases[this._currentPhase] = profileToClean;
         this.Phase(this._currentPhase, [[this.Cleanup]]);
       } else {
@@ -1101,7 +1118,7 @@ var TPS = {
    */
   waitForSyncFinished: function TPS__waitForSyncFinished() {
     if (this._syncActive) {
-      this.waitForEvent("weave:service:sync:finished");
+      this.waitForEvent("weave:service:resyncs-finished");
     }
   },
 
@@ -1122,13 +1139,14 @@ var TPS = {
       return;
     }
 
+    // This might come during Authentication.signIn
+    this._triggeredSync = true;
     Logger.logInfo("Setting client credentials and login.");
     Authentication.signIn(this.config.fx_account);
     this.waitForSetupComplete();
     Logger.AssertEqual(Weave.Status.service, Weave.STATUS_OK, "Weave status OK");
     this.waitForTracking();
-    // We get an initial sync at login time - let that complete.
-    this._triggeredSync = true;
+    // We might get an initial sync at login time - let that complete.
     this.waitForSyncFinished();
   },
 
@@ -1140,6 +1158,10 @@ var TPS = {
    *
    */
   Sync: function TPS__Sync(wipeAction) {
+    if (this._syncActive) {
+      Logger.logInfo("WARNING: Sync currently active! Waiting, before triggering another");
+      this.waitForSyncFinished();
+    }
     Logger.logInfo("Executing Sync" + (wipeAction ? ": " + wipeAction : ""));
 
     // Force a wipe action if requested. In case of an initial sync the pref

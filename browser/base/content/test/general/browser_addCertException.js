@@ -9,14 +9,14 @@
 // using the button contained therein to load the certificate exception
 // dialog, using that to add an exception, and finally successfully visiting
 // the site, including showing the right identity box and control center icons.
-add_task(function* () {
-  yield BrowserTestUtils.openNewForegroundTab(gBrowser);
-  yield loadBadCertPage("https://expired.example.com");
+add_task(async function() {
+  await BrowserTestUtils.openNewForegroundTab(gBrowser);
+  await loadBadCertPage("https://expired.example.com");
   checkControlPanelIcons();
   let certOverrideService = Cc["@mozilla.org/security/certoverride;1"]
                               .getService(Ci.nsICertOverrideService);
   certOverrideService.clearValidityOverride("expired.example.com", -1);
-  yield BrowserTestUtils.removeTab(gBrowser.selectedTab);
+  await BrowserTestUtils.removeTab(gBrowser.selectedTab);
 });
 
 // Check for the correct icons in the identity box and control center.
@@ -36,13 +36,13 @@ function checkControlPanelIcons() {
         .getComputedStyle(document.getElementById("identity-popup-security-content"))
         .getPropertyValue("background-image");
   is(connectionIconImage,
-     "url(\"chrome://browser/skin/connection-mixed-passive-loaded.svg#icon\")",
+     "url(\"chrome://browser/skin/connection-mixed-passive-loaded.svg\")",
      "Using expected icon image in the identity block");
   is(securityViewBG,
-     "url(\"chrome://browser/skin/connection-mixed-passive-loaded.svg#icon\")",
+     "url(\"chrome://browser/skin/connection-mixed-passive-loaded.svg\")",
      "Using expected icon image in the Control Center main view");
   is(securityContentBG,
-     "url(\"chrome://browser/skin/connection-mixed-passive-loaded.svg#icon\")",
+     "url(\"chrome://browser/skin/connection-mixed-passive-loaded.svg\")",
      "Using expected icon image in the Control Center subview");
 
   gIdentityHandler._identityPopup.hidden = true;

@@ -13,7 +13,7 @@ function test()
   // Observer must be attached *before* Scratchpad is opened.
   CloseObserver.init();
 
-  gBrowser.selectedTab = gBrowser.addTab();
+  gBrowser.selectedTab = BrowserTestUtils.addTab(gBrowser);
   gBrowser.selectedBrowser.addEventListener("load", function () {
     openScratchpad(runTests);
   }, {capture: true, once: true});
@@ -60,7 +60,7 @@ var CloseObserver = {
   expectedValue: null,
   init: function ()
   {
-    Services.obs.addObserver(this, "browser-lastwindow-close-requested", false);
+    Services.obs.addObserver(this, "browser-lastwindow-close-requested");
   },
 
   observe: function (aSubject)

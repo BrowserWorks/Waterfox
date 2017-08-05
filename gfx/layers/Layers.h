@@ -9,7 +9,7 @@
 #include <map>
 #include <stdint.h>                     // for uint32_t, uint64_t, uint8_t
 #include <stdio.h>                      // for FILE
-#include <sys/types.h>                  // for int32_t, int64_t
+#include <sys/types.h>                  // for int32_t
 #include "FrameMetrics.h"               // for FrameMetrics
 #include "Units.h"                      // for LayerMargin, LayerPoint, ParentLayerIntRect
 #include "gfxContext.h"
@@ -88,6 +88,7 @@ class ContainerLayer;
 class ImageLayer;
 class DisplayItemLayer;
 class ColorLayer;
+class CompositorAnimations;
 class CompositorBridgeChild;
 class TextLayer;
 class CanvasLayer;
@@ -115,7 +116,8 @@ class LayersPacket;
 
 #define MOZ_LAYER_DECL_NAME(n, e)                              \
   virtual const char* Name() const override { return n; }  \
-  virtual LayerType GetType() const override { return e; }
+  virtual LayerType GetType() const override { return e; } \
+  static LayerType Type() { return e; }
 
 // Defined in LayerUserData.h; please include that file instead.
 class LayerUserData;
@@ -327,6 +329,9 @@ public:
    */
   virtual void Composite() {}
 
+  virtual void SetNeedsComposite(bool aNeedsComposite) {}
+  virtual bool NeedsComposite() const { return false; }
+
   virtual bool HasShadowManagerInternal() const { return false; }
   bool HasShadowManager() const { return HasShadowManagerInternal(); }
   virtual void StorePluginWidgetConfigurations(const nsTArray<nsIWidget::Configuration>& aConfigurations) {}
@@ -462,6 +467,15 @@ public:
                                                                 = ImageContainer::SYNCHRONOUS);
 
   /**
+   * Since the lifetimes of display items and display item layers are different,
+   * calling this tells the layer manager that the display item layer is valid for
+   * only one transaction. Users should call ClearDisplayItemLayers() to remove
+   * references to the dead display item at the end of a transaction.
+   */
+  virtual void TrackDisplayItemLayer(RefPtr<DisplayItemLayer> aLayer);
+  virtual void ClearDisplayItemLayers();
+
+  /**
    * Type of layer manager his is. This is to be used sparsely in order to
    * avoid a lot of Layers backend specific code. It should be used only when
    * Layers backend specific functionality is necessary.
@@ -583,6 +597,13 @@ public:
   virtual void FlushRendering() { }
 
   /**
+   * Make sure that the previous transaction has been
+   * received. This will synchronsly wait on a remote compositor. */
+  virtual void WaitOnTransactionProcessed() { }
+
+  virtual void SendInvalidRegion(const nsIntRegion& aRegion) {}
+
+  /**
    * Checks if we need to invalidate the OS widget to trigger
    * painting when updating this layer manager.
    */
@@ -645,9 +666,6 @@ public:
                                       nsTArray<float>& aFrameIntervals);
 
   void RecordFrame();
-  void PostPresent();
-
-  void BeginTabSwitch();
 
   static bool IsLogEnabled();
   static mozilla::LogModule* GetLog();
@@ -760,8 +778,6 @@ private:
   };
   FramesTimingRecording mRecording;
 
-  TimeStamp mTabSwitchStart;
-
 public:
   /*
    * Methods to store/get/clear a "pending scroll info update" object on a
@@ -774,6 +790,14 @@ public:
   void ClearPendingScrollInfoUpdate();
 private:
   std::map<FrameMetrics::ViewID,ScrollUpdateInfo> mPendingScrollUpdates;
+
+  // Display items are only valid during this transaction.
+  // At the end of the transaction, we have to go and clear out
+  // DisplayItemLayer's and null their display item. See comment
+  // above DisplayItemLayer declaration.
+  // Since layers are ref counted, we also have to stop holding
+  // a reference to the display item layer as well.
+  nsTArray<RefPtr<DisplayItemLayer>> mDisplayItemLayers;
 };
 
 /**
@@ -875,22 +899,6 @@ public:
                  "Can't be opaque and require component alpha");
     if (mSimpleAttrs.SetContentFlags(aFlags)) {
       MOZ_LAYERS_LOG_IF_SHADOWABLE(this, ("Layer::Mutated(%p) ContentFlags", this));
-      MutatedSimple();
-    }
-  }
-
-  /**
-   * CONSTRUCTION PHASE ONLY
-   * The union of the bounds of all the display item that got flattened
-   * into this layer. This is intended to be an approximation to the
-   * size of the layer if the nearest scrollable ancestor had an infinitely
-   * large displayport. Computing this more exactly is too expensive,
-   * but this approximation is sufficient for what we need to use it for.
-   */
-  virtual void SetLayerBounds(const gfx::IntRect& aLayerBounds)
-  {
-    if (mSimpleAttrs.SetLayerBounds(aLayerBounds)) {
-      MOZ_LAYERS_LOG_IF_SHADOWABLE(this, ("Layer::Mutated(%p) LayerBounds", this));
       MutatedSimple();
     }
   }
@@ -1215,15 +1223,18 @@ public:
     }
   }
 
+  // Ensure that this layer has a valid (non-zero) animations id. This value is
+  // unique across layers.
+  void EnsureAnimationsId();
   // Call AddAnimation to add a new animation to this layer from layout code.
   // Caller must fill in all the properties of the returned animation.
   // A later animation overrides an earlier one.
   Animation* AddAnimation();
   // ClearAnimations clears animations on this layer.
-  void ClearAnimations();
+  virtual void ClearAnimations();
   // This is only called when the layer tree is updated. Do not call this from
   // layout code.  To add an animation to this layer, use AddAnimation.
-  void SetAnimations(const AnimationArray& aAnimations);
+  void SetCompositorAnimations(const CompositorAnimations& aCompositorAnimations);
   // Go through all animations in this layer and its children and, for
   // any animations with a null start time, update their start time such
   // that at |aReadyTime| the animation's current time corresponds to its
@@ -1285,12 +1296,13 @@ public:
 
   /**
    * CONSTRUCTION PHASE ONLY
-   * If a layer is a scrollbar layer, |aScrollId| holds the scroll identifier
-   * of the scrollable content that the scrollbar is for.
+   * If a layer is a scroll thumb container layer, set the scroll identifier
+   * of the scroll frame scrolled by the thumb, and other data related to the
+   * thumb.
    */
-  void SetScrollbarData(FrameMetrics::ViewID aScrollId, ScrollDirection aDir, float aThumbRatio)
+  void SetScrollThumbData(FrameMetrics::ViewID aScrollId, const ScrollThumbData& aThumbData)
   {
-    if (mSimpleAttrs.SetScrollbarData(aScrollId, aDir, aThumbRatio)) {
+    if (mSimpleAttrs.SetScrollThumbData(aScrollId, aThumbData)) {
       MOZ_LAYERS_LOG_IF_SHADOWABLE(this, ("Layer::Mutated(%p) ScrollbarData", this));
       MutatedSimple();
     }
@@ -1321,7 +1333,6 @@ public:
   const Maybe<LayerClip>& GetScrolledClip() const { return mSimpleAttrs.ScrolledClip(); }
   Maybe<ParentLayerIntRect> GetScrolledClipRect() const;
   uint32_t GetContentFlags() { return mSimpleAttrs.ContentFlags(); }
-  const gfx::IntRect& GetLayerBounds() const { return mSimpleAttrs.LayerBounds(); }
   const LayerIntRegion& GetVisibleRegion() const { return mVisibleRegion; }
   const ScrollMetadata& GetScrollMetadata(uint32_t aIndex) const;
   const FrameMetrics& GetFrameMetrics(uint32_t aIndex) const;
@@ -1365,8 +1376,7 @@ public:
   const LayerRect& GetStickyScrollRangeOuter() { return mSimpleAttrs.StickyScrollRangeOuter(); }
   const LayerRect& GetStickyScrollRangeInner() { return mSimpleAttrs.StickyScrollRangeInner(); }
   FrameMetrics::ViewID GetScrollbarTargetContainerId() { return mSimpleAttrs.ScrollbarTargetContainerId(); }
-  ScrollDirection GetScrollbarDirection() { return mSimpleAttrs.ScrollbarDirection(); }
-  float GetScrollbarThumbRatio() { return mSimpleAttrs.ScrollbarThumbRatio(); }
+  const ScrollThumbData& GetScrollThumbData() const { return mSimpleAttrs.ThumbData(); }
   bool IsScrollbarContainer() { return mSimpleAttrs.IsScrollbarContainer(); }
   Layer* GetMaskLayer() const { return mMaskLayer; }
   void CheckCanary() const { mCanary.Check(); }
@@ -1415,12 +1425,14 @@ public:
   // Note that all lengths in animation data are either in CSS pixels or app
   // units and must be converted to device pixels by the compositor.
   AnimationArray& GetAnimations() { return mAnimations; }
+  uint64_t GetCompositorAnimationsId() { return mCompositorAnimationsId; }
   InfallibleTArray<AnimData>& GetAnimationData() { return mAnimationData; }
 
   uint64_t GetAnimationGeneration() { return mAnimationGeneration; }
   void SetAnimationGeneration(uint64_t aCount) { mAnimationGeneration = aCount; }
 
   bool HasTransformAnimation() const;
+  bool HasOpacityAnimation() const;
 
   StyleAnimationValue GetBaseAnimationStyle() const
   {
@@ -1801,6 +1813,8 @@ public:
   // matches the frame metrics array length.
 
   virtual void ClearCachedResources() {}
+
+  virtual bool SupportsAsyncUpdate() { return false; }
 private:
   void ScrollMetadataChanged();
 public:
@@ -1921,6 +1935,7 @@ protected:
   nsAutoPtr<gfx::Matrix4x4> mPendingTransform;
   gfx::Matrix4x4 mEffectiveTransform;
   AnimationArray mAnimations;
+  uint64_t mCompositorAnimationsId;
   // See mPendingTransform above.
   nsAutoPtr<AnimationArray> mPendingAnimations;
   InfallibleTArray<AnimData> mAnimationData;
@@ -2235,6 +2250,12 @@ public:
     return mEventRegionsOverride;
   }
 
+  void SetFilterChain(nsTArray<CSSFilter>&& aFilterChain) {
+    mFilterChain = aFilterChain;
+  }
+
+  nsTArray<CSSFilter>& GetFilterChain() { return mFilterChain; }
+
 protected:
   friend class ReadbackProcessor;
 
@@ -2321,6 +2342,7 @@ protected:
   // the intermediate surface.
   bool mChildrenChanged;
   EventRegionsOverride mEventRegionsOverride;
+  nsTArray<CSSFilter> mFilterChain;
 };
 
 /**
@@ -2845,7 +2867,7 @@ public:
   // These getters can be used anytime.
   virtual RefLayer* AsRefLayer() override { return this; }
 
-  virtual int64_t GetReferentId() { return mId; }
+  virtual uint64_t GetReferentId() { return mId; }
 
   /**
    * DRAWING PHASE ONLY

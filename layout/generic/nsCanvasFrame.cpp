@@ -15,6 +15,7 @@
 #include "nsStyleContext.h"
 #include "nsRenderingContext.h"
 #include "nsGkAtoms.h"
+#include "nsIFrameInlines.h"
 #include "nsIPresShell.h"
 #include "nsDisplayList.h"
 #include "nsCSSFrameConstructor.h"
@@ -22,6 +23,7 @@
 #include "gfxPlatform.h"
 #include "nsPrintfCString.h"
 #include "mozilla/dom/AnonymousContent.h"
+#include "mozilla/layers/StackingContextHelper.h"
 #include "mozilla/PresShell.h"
 // for focus
 #include "nsIScrollableFrame.h"
@@ -274,6 +276,10 @@ nsDisplayCanvasBackgroundColor::BuildLayer(nsDisplayListBuilder* aBuilder,
     return nullptr;
   }
 
+  if (aManager->GetBackendType() == layers::LayersBackend::LAYERS_WR) {
+    return BuildDisplayItemLayer(aBuilder, aManager, aContainerParameters);
+  }
+
   RefPtr<ColorLayer> layer = static_cast<ColorLayer*>
     (aManager->GetLayerBuilder()->GetLeafLayerFor(aBuilder, this));
   if (!layer) {
@@ -295,6 +301,26 @@ nsDisplayCanvasBackgroundColor::BuildLayer(nsDisplayListBuilder* aBuilder,
                                                       aContainerParameters.mOffset.y, 0));
 
   return layer.forget();
+}
+
+void
+nsDisplayCanvasBackgroundColor::CreateWebRenderCommands(mozilla::wr::DisplayListBuilder& aBuilder,
+                                                        const StackingContextHelper& aSc,
+                                                        nsTArray<WebRenderParentCommand>& aParentCommands,
+                                                        WebRenderDisplayItemLayer* aLayer)
+{
+  nsCanvasFrame* frame = static_cast<nsCanvasFrame*>(mFrame);
+  nsPoint offset = ToReferenceFrame();
+  nsRect bgClipRect = frame->CanvasArea() + offset;
+  int32_t appUnitsPerDevPixel = mFrame->PresContext()->AppUnitsPerDevPixel();
+
+  LayoutDeviceRect rect = LayoutDeviceRect::FromAppUnits(
+          bgClipRect, appUnitsPerDevPixel);
+
+  WrRect transformedRect = aSc.ToRelativeWrRect(rect);
+  aBuilder.PushRect(transformedRect,
+                    aBuilder.PushClipRegion(transformedRect),
+                    wr::ToWrColor(ToDeviceColor(mColor)));
 }
 
 #ifdef MOZ_DUMP_PAINTING
@@ -338,7 +364,7 @@ nsDisplayCanvasBackgroundImage::Paint(nsDisplayListBuilder* aBuilder,
     // above.
     destRect.Round();
     RefPtr<DrawTarget> dt = 
-      Frame()->Properties().Get(nsIFrame::CachedBackgroundImageDT());
+      Frame()->GetProperty(nsIFrame::CachedBackgroundImageDT());
     DrawTarget* destDT = dest->GetDrawTarget();
     if (dt) {
       BlitSurface(destDT, destRect, dt);
@@ -355,7 +381,7 @@ nsDisplayCanvasBackgroundImage::Paint(nsDisplayListBuilder* aBuilder,
       nsRenderingContext context(ctx);
       PaintInternal(aBuilder, &context, bgClipRect, &bgClipRect);
       BlitSurface(dest->GetDrawTarget(), destRect, dt);
-      frame->Properties().Set(nsIFrame::CachedBackgroundImageDT(),
+      frame->SetProperty(nsIFrame::CachedBackgroundImageDT(),
                               dt.forget().take());
       return;
     }
@@ -783,15 +809,8 @@ nsCanvasFrame::Reflow(nsPresContext*           aPresContext,
   NS_FRAME_SET_TRUNCATION(aStatus, aReflowInput, aDesiredSize);
 }
 
-nsIAtom*
-nsCanvasFrame::GetType() const
-{
-  return nsGkAtoms::canvasFrame;
-}
-
-nsresult 
-nsCanvasFrame::GetContentForEvent(WidgetEvent* aEvent,
-                                  nsIContent** aContent)
+nsresult
+nsCanvasFrame::GetContentForEvent(WidgetEvent* aEvent, nsIContent** aContent)
 {
   NS_ENSURE_ARG_POINTER(aContent);
   nsresult rv = nsFrame::GetContentForEvent(aEvent,

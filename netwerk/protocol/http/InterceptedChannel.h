@@ -43,8 +43,25 @@ protected:
 
   void EnsureSynthesizedResponse();
   void DoNotifyController();
-  nsresult DoSynthesizeStatus(uint16_t aStatus, const nsACString& aReason);
-  nsresult DoSynthesizeHeader(const nsACString& aName, const nsACString& aValue);
+  MOZ_MUST_USE nsresult DoSynthesizeStatus(uint16_t aStatus,
+                                           const nsACString& aReason);
+  MOZ_MUST_USE nsresult DoSynthesizeHeader(const nsACString& aName,
+                                           const nsACString& aValue);
+
+  TimeStamp mLaunchServiceWorkerStart;
+  TimeStamp mLaunchServiceWorkerEnd;
+  TimeStamp mDispatchFetchEventStart;
+  TimeStamp mDispatchFetchEventEnd;
+  TimeStamp mHandleFetchEventStart;
+  TimeStamp mHandleFetchEventEnd;
+
+  TimeStamp mFinishResponseStart;
+  TimeStamp mFinishResponseEnd;
+  enum {
+    Invalid = 0,
+    Synthesized,
+    Reset
+  } mSynthesizedOrReset;
 
   virtual ~InterceptedChannelBase();
 public:
@@ -59,6 +76,75 @@ public:
   NS_IMETHOD GetResponseBody(nsIOutputStream** aOutput) override;
   NS_IMETHOD GetConsoleReportCollector(nsIConsoleReportCollector** aCollectorOut) override;
   NS_IMETHOD SetReleaseHandle(nsISupports* aHandle) override;
+
+  NS_IMETHODIMP
+  SetLaunchServiceWorkerStart(TimeStamp aTimeStamp) override
+  {
+    mLaunchServiceWorkerStart = aTimeStamp;
+    return NS_OK;
+  }
+
+  NS_IMETHODIMP
+  SetLaunchServiceWorkerEnd(TimeStamp aTimeStamp) override
+  {
+    mLaunchServiceWorkerEnd = aTimeStamp;
+    return NS_OK;
+  }
+
+  NS_IMETHODIMP
+  SetDispatchFetchEventStart(TimeStamp aTimeStamp) override
+  {
+    mDispatchFetchEventStart = aTimeStamp;
+    return NS_OK;
+  }
+
+  NS_IMETHODIMP
+  SetDispatchFetchEventEnd(TimeStamp aTimeStamp) override
+  {
+    mDispatchFetchEventEnd = aTimeStamp;
+    return NS_OK;
+  }
+
+  NS_IMETHODIMP
+  SetHandleFetchEventStart(TimeStamp aTimeStamp) override
+  {
+    mHandleFetchEventStart = aTimeStamp;
+    return NS_OK;
+  }
+
+  NS_IMETHODIMP
+  SetHandleFetchEventEnd(TimeStamp aTimeStamp) override
+  {
+    mHandleFetchEventEnd = aTimeStamp;
+    return NS_OK;
+  }
+
+  NS_IMETHODIMP
+  SetFinishResponseStart(TimeStamp aTimeStamp) override
+  {
+    mFinishResponseStart = aTimeStamp;
+    return NS_OK;
+  }
+
+  NS_IMETHODIMP
+  SetFinishSynthesizedResponseEnd(TimeStamp aTimeStamp) override
+  {
+    MOZ_ASSERT(mSynthesizedOrReset == Invalid);
+    mSynthesizedOrReset = Synthesized;
+    mFinishResponseEnd = aTimeStamp;
+    return NS_OK;
+  }
+
+  NS_IMETHODIMP
+  SetChannelResetEnd(TimeStamp aTimeStamp) override
+  {
+    MOZ_ASSERT(mSynthesizedOrReset == Invalid);
+    mSynthesizedOrReset = Reset;
+    mFinishResponseEnd = aTimeStamp;
+    return NS_OK;
+  }
+
+  NS_IMETHODIMP SaveTimeStamps() override;
 
   static already_AddRefed<nsIURI>
   SecureUpgradeChannelURI(nsIChannel* aChannel);

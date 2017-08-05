@@ -1,6 +1,10 @@
-// Single-step profiling currently only works in the ARM simulator
-if (!getBuildConfiguration()["arm-simulator"])
+try {
+    enableSingleStepProfiling();
+    disableSingleStepProfiling();
+} catch(e) {
+    // Single step profiling not supported here.
     quit();
+}
 
 const Module = WebAssembly.Module;
 const Instance = WebAssembly.Instance;
@@ -9,10 +13,11 @@ const Table = WebAssembly.Table;
 function normalize(stack)
 {
     var wasmFrameTypes = [
-        {re:/^entry trampoline \(in asm.js\)$/,             sub:">"},
-        {re:/^wasm-function\[(\d+)\] \(.*\)$/,              sub:"$1"},
-        {re:/^(fast|slow) FFI trampoline \(in asm.js\)$/,   sub:"<"},
-        {re:/ \(in asm.js\)$/,                              sub:""}
+        {re:/^entry trampoline \(in wasm\)$/,                        sub:">"},
+        {re:/^wasm-function\[(\d+)\] \(.*\)$/,                       sub:"$1"},
+        {re:/^(fast|slow) FFI trampoline (to native )?\(in wasm\)$/, sub:"<"},
+        {re:/^call to[ asm.js]? native (.*) \(in wasm\)$/,           sub:"$1"},
+        {re:/ \(in wasm\)$/,                                         sub:""}
     ];
 
     var framesIn = stack.split(',');
@@ -109,6 +114,68 @@ test(
 {"":{foo:()=>{}}},
 ["", ">", "1,>", "0,1,>", "<,0,1,>", "0,1,>", "1,>", ">", ""]);
 
+test(`(module
+    (import $f32 "Math" "sin" (param f32) (result f32))
+    (func (export "") (param f32) (result f32)
+        get_local 0
+        call $f32
+    )
+)`,
+this,
+["", ">", "1,>", "<,1,>", "1,>", ">", ""]);
+
+if (getBuildConfiguration()["arm-simulator"]) {
+    // On ARM, some int64 operations are calls to C++.
+    for (let op of ['div_s', 'rem_s', 'div_u', 'rem_u']) {
+        test(`(module
+            (func (export "") (param i32) (result i32)
+                get_local 0
+                i64.extend_s/i32
+                i64.const 0x1a2b3c4d5e6f
+                i64.${op}
+                i32.wrap/i64
+            )
+        )`,
+        this,
+        ["", ">", "0,>", "<,0,>", `i64.${op},0,>`, "<,0,>", "0,>", ">", ""]);
+    }
+}
+
+// current_memory is a callout.
+test(`(module
+    (memory 1)
+    (func (export "") (result i32)
+         current_memory
+    )
+)`,
+this,
+["", ">", "0,>", "<,0,>", "current_memory,0,>", "<,0,>", "0,>", ">", ""]);
+
+// grow_memory is a callout.
+test(`(module
+    (memory 1)
+    (func (export "") (result i32)
+         i32.const 1
+         grow_memory
+    )
+)`,
+this,
+["", ">", "0,>", "<,0,>", "grow_memory,0,>", "<,0,>", "0,>", ">", ""]);
+
+// A few math builtins.
+for (let type of ['f32', 'f64']) {
+    for (let func of ['ceil', 'floor', 'nearest', 'trunc']) {
+        test(`(module
+            (func (export "") (param ${type}) (result ${type})
+                get_local 0
+                ${type}.${func}
+            )
+        )`,
+        this,
+        ["", ">", "0,>", "<,0,>", `${type}.${func},0,>`, "<,0,>", "0,>", ">", ""]);
+    }
+}
+
 function testError(code, error, expect)
 {
     enableGeckoProfiling();
@@ -125,7 +192,7 @@ testError(
     (func (export "") (call $foo))
 )`,
 WebAssembly.RuntimeError,
-["", ">", "1,>", "0,1,>", "trap handling,0,1,>", "inline stub,0,1,>", "trap handling,0,1,>", ""]);
+["", ">", "1,>", "0,1,>", "interstitial,0,1,>", "trap handling,0,1,>", "", ">", ""]);
 
 testError(
 `(module
@@ -140,7 +207,7 @@ WebAssembly.RuntimeError,
 // Technically we have this one *one-instruction* interval where
 // the caller is lost (the stack with "1,>"). It's annoying to fix and shouldn't
 // mess up profiles in practice so we ignore it.
-["", ">", "0,>", "1,0,>", "1,>", "trap handling,0,>", "inline stub,0,>", "trap handling,0,>", ""]);
+["", ">", "0,>", "1,0,>", "1,>", "trap handling,0,>", "", ">", ""]);
 
 (function() {
     var e = wasmEvalText(`

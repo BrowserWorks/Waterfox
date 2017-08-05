@@ -17,6 +17,7 @@
 #include "jslibmath.h"
 #include "jsstr.h"
 
+#include "builtin/RegExp.h"
 #include "jit/AtomicOperations.h"
 #include "jit/BaselineInspector.h"
 #include "jit/IonBuilder.h"
@@ -1375,12 +1376,12 @@ MSimdGeneralShuffle::foldsTo(TempAllocator& alloc)
 
 MInstruction*
 MSimdConvert::AddLegalized(TempAllocator& alloc, MBasicBlock* addTo, MDefinition* obj,
-                           MIRType toType, SimdSign sign, wasm::TrapOffset trapOffset)
+                           MIRType toType, SimdSign sign, wasm::BytecodeOffset bytecodeOffset)
 {
     MIRType fromType = obj->type();
 
     if (SupportsUint32x4FloatConversions || sign != SimdSign::Unsigned) {
-        MInstruction* ins = New(alloc, obj, toType, sign, trapOffset);
+        MInstruction* ins = New(alloc, obj, toType, sign, bytecodeOffset);
         addTo->add(ins);
         return ins;
     }
@@ -1456,7 +1457,7 @@ MSimdConvert::AddLegalized(TempAllocator& alloc, MBasicBlock* addTo, MDefinition
     if (fromType == MIRType::Float32x4 && toType == MIRType::Int32x4) {
         // The Float32x4 -> Uint32x4 conversion can throw if the input is out of
         // range. This is handled by the LFloat32x4ToUint32x4 expansion.
-        MInstruction* ins = New(alloc, obj, toType, sign, trapOffset);
+        MInstruction* ins = New(alloc, obj, toType, sign, bytecodeOffset);
         addTo->add(ins);
         return ins;
     }
@@ -1778,6 +1779,19 @@ MAssertRange::printOpcode(GenericPrinter& out) const
     assertedRange()->dump(out);
 }
 
+void MNearbyInt::printOpcode(GenericPrinter& out) const
+{
+    MDefinition::printOpcode(out);
+    const char* roundingModeStr = nullptr;
+    switch (roundingMode_) {
+      case RoundingMode::Up:                roundingModeStr = "(up)"; break;
+      case RoundingMode::Down:              roundingModeStr = "(down)"; break;
+      case RoundingMode::NearestTiesToEven: roundingModeStr = "(nearest ties even)"; break;
+      case RoundingMode::TowardsZero:       roundingModeStr = "(towards zero)"; break;
+    }
+    out.printf(" %s", roundingModeStr);
+}
+
 const char*
 MMathFunction::FunctionName(Function function)
 {
@@ -1963,7 +1977,7 @@ WrappedFunction::WrappedFunction(JSFunction* fun)
 
 MCall*
 MCall::New(TempAllocator& alloc, JSFunction* target, size_t maxArgc, size_t numActualArgs,
-           bool construct, bool isDOMCall)
+           bool construct, bool ignoresReturnValue, bool isDOMCall)
 {
     WrappedFunction* wrappedTarget = target ? new(alloc) WrappedFunction(target) : nullptr;
     MOZ_ASSERT(maxArgc >= numActualArgs);
@@ -1972,7 +1986,7 @@ MCall::New(TempAllocator& alloc, JSFunction* target, size_t maxArgc, size_t numA
         MOZ_ASSERT(!construct);
         ins = new(alloc) MCallDOMNative(wrappedTarget, numActualArgs);
     } else {
-        ins = new(alloc) MCall(wrappedTarget, numActualArgs, construct);
+        ins = new(alloc) MCall(wrappedTarget, numActualArgs, construct, ignoresReturnValue);
     }
     if (!ins->init(alloc, maxArgc + NumNonArgumentOperands))
         return nullptr;
@@ -2153,6 +2167,15 @@ MRound::trySpecializeFloat32(TempAllocator& alloc)
         specialization_ = MIRType::Float32;
 }
 
+void
+MNearbyInt::trySpecializeFloat32(TempAllocator& alloc)
+{
+    if (EnsureFloatInputOrConvert(this, alloc)) {
+        specialization_ = MIRType::Float32;
+        setResultType(MIRType::Float32);
+    }
+}
+
 MTableSwitch*
 MTableSwitch::New(TempAllocator& alloc, MDefinition* ins, int32_t low, int32_t high)
 {
@@ -2248,6 +2271,22 @@ MTypeBarrier::congruentTo(const MDefinition* def) const
     if (!resultTypeSet()->equals(other->resultTypeSet()))
         return false;
     return congruentIfOperandsEqual(other);
+}
+
+MDefinition*
+MTypeBarrier::foldsTo(TempAllocator& alloc)
+{
+    MIRType type = resultTypeSet()->getKnownMIRType();
+    if (type == MIRType::Value || type == MIRType::Object)
+        return this;
+
+    if (!input()->isConstant())
+        return this;
+
+    if (input()->type() != type)
+        return this;
+
+    return input();
 }
 
 #ifdef DEBUG
@@ -3149,7 +3188,8 @@ MBinaryArithInstruction::foldsTo(TempAllocator& alloc)
         if (isTruncated()) {
             if (!folded->block())
                 block()->insertBefore(this, folded);
-            return MTruncateToInt32::New(alloc, folded);
+            if (folded->type() != MIRType::Int32)
+                return MTruncateToInt32::New(alloc, folded);
         }
         return folded;
     }
@@ -3327,6 +3367,16 @@ MMinMax::foldsTo(TempAllocator& alloc)
             return toDouble;
         }
     }
+
+    if (operand->isArrayLength() && constant->type() == MIRType::Int32) {
+        MOZ_ASSERT(operand->type() == MIRType::Int32);
+
+        // max(array.length, 0) = array.length
+        // ArrayLength is always >= 0, so just return it.
+        if (isMax() && constant->toInt32() <= 0)
+            return operand;
+    }
+
     return this;
 }
 
@@ -4909,10 +4959,12 @@ MObjectState::templateObjectOf(MDefinition* obj)
         return obj->toNewObject()->templateObject();
     else if (obj->isCreateThisWithTemplate())
         return obj->toCreateThisWithTemplate()->templateObject();
-    else
+    else if (obj->isNewCallObject())
         return obj->toNewCallObject()->templateObject();
+    else if (obj->isNewIterator())
+        return obj->toNewIterator()->templateObject();
 
-    return nullptr;
+    MOZ_CRASH("unreachable");
 }
 
 bool
@@ -5392,14 +5444,19 @@ MGuardReceiverPolymorphic::congruentTo(const MDefinition* ins) const
 }
 
 void
-InlinePropertyTable::trimTo(const ObjectVector& targets, const BoolVector& choiceSet)
+InlinePropertyTable::trimTo(const InliningTargets& targets, const BoolVector& choiceSet)
 {
     for (size_t i = 0; i < targets.length(); i++) {
         // If the target was inlined, don't erase the entry.
         if (choiceSet[i])
             continue;
 
-        JSFunction* target = &targets[i]->as<JSFunction>();
+        // If the target wasn't a function we would have veto'ed it
+        // and it will not be in the entries list.
+        if (!targets[i].target->is<JSFunction>())
+            continue;
+
+        JSFunction* target = &targets[i].target->as<JSFunction>();
 
         // Eliminate all entries containing the vetoed function from the map.
         size_t j = 0;
@@ -5413,7 +5470,7 @@ InlinePropertyTable::trimTo(const ObjectVector& targets, const BoolVector& choic
 }
 
 void
-InlinePropertyTable::trimToTargets(const ObjectVector& targets)
+InlinePropertyTable::trimToTargets(const InliningTargets& targets)
 {
     JitSpew(JitSpew_Inlining, "Got inlineable property cache with %d cases",
             (int)numEntries());
@@ -5422,7 +5479,7 @@ InlinePropertyTable::trimToTargets(const ObjectVector& targets)
     while (i < numEntries()) {
         bool foundFunc = false;
         for (size_t j = 0; j < targets.length(); j++) {
-            if (entries_[i]->func == targets[j]) {
+            if (entries_[i]->func == targets[j].target) {
                 foundFunc = true;
                 break;
             }
@@ -5678,10 +5735,9 @@ MWasmUnsignedToFloat32::foldsTo(TempAllocator& alloc)
 
 MWasmCall*
 MWasmCall::New(TempAllocator& alloc, const wasm::CallSiteDesc& desc, const wasm::CalleeDesc& callee,
-               const Args& args, MIRType resultType, uint32_t spIncrement, uint32_t tlsStackOffset,
-               MDefinition* tableIndex)
+               const Args& args, MIRType resultType, uint32_t spIncrement, MDefinition* tableIndex)
 {
-    MWasmCall* call = new(alloc) MWasmCall(desc, callee, spIncrement, tlsStackOffset);
+    MWasmCall* call = new(alloc) MWasmCall(desc, callee, spIncrement);
     call->setResultType(resultType);
 
     if (!call->argRegs_.init(alloc, args.length()))
@@ -5707,12 +5763,10 @@ MWasmCall::NewBuiltinInstanceMethodCall(TempAllocator& alloc,
                                         const ABIArg& instanceArg,
                                         const Args& args,
                                         MIRType resultType,
-                                        uint32_t spIncrement,
-                                        uint32_t tlsStackOffset)
+                                        uint32_t spIncrement)
 {
     auto callee = wasm::CalleeDesc::builtinInstanceMethod(builtin);
-    MWasmCall* call = MWasmCall::New(alloc, desc, callee, args, resultType, spIncrement,
-                                     tlsStackOffset, nullptr);
+    MWasmCall* call = MWasmCall::New(alloc, desc, callee, args, resultType, spIncrement, nullptr);
     if (!call)
         return nullptr;
 
@@ -5999,7 +6053,7 @@ bool
 jit::ElementAccessMightBeFrozen(CompilerConstraintList* constraints, MDefinition* obj)
 {
     TemporaryTypeSet* types = obj->resultTypeSet();
-    return !types || types->hasObjectFlags(constraints, OBJECT_FLAG_FROZEN);
+    return !types || types->hasObjectFlags(constraints, OBJECT_FLAG_FROZEN_ELEMENTS);
 }
 
 AbortReasonOr<bool>

@@ -44,7 +44,7 @@ gfxGDIFont::gfxGDIFont(GDIFontEntry *aFontEntry,
                        const gfxFontStyle *aFontStyle,
                        bool aNeedsBold,
                        AntialiasOption anAAOption)
-    : gfxFont(aFontEntry, aFontStyle, anAAOption),
+    : gfxFont(nullptr, aFontEntry, aFontStyle, anAAOption),
       mFont(nullptr),
       mFontFace(nullptr),
       mMetrics(nullptr),
@@ -53,6 +53,10 @@ gfxGDIFont::gfxGDIFont(GDIFontEntry *aFontEntry,
       mScriptCache(nullptr)
 {
     Initialize();
+
+    if (mFont) {
+        mUnscaledFont = aFontEntry->LookupUnscaledFont(mFont);
+    }
 }
 
 gfxGDIFont::~gfxGDIFont()
@@ -86,6 +90,7 @@ gfxGDIFont::ShapeText(DrawTarget     *aDrawTarget,
                       uint32_t        aLength,
                       Script          aScript,
                       bool            aVertical,
+                      RoundingFlags   aRounding,
                       gfxShapedText  *aShapedText)
 {
     if (!mIsValid) {
@@ -102,7 +107,7 @@ gfxGDIFont::ShapeText(DrawTarget     *aDrawTarget,
     }
 
     return gfxFont::ShapeText(aDrawTarget, aText, aOffset, aLength, aScript,
-                              aVertical, aShapedText);
+                              aVertical, aRounding, aShapedText);
 }
 
 const gfxFont::Metrics&
@@ -136,7 +141,7 @@ gfxGDIFont::Measure(const gfxTextRun *aTextRun,
                     BoundingBoxType aBoundingBoxType,
                     DrawTarget *aRefDrawTarget,
                     Spacing *aSpacing,
-                    uint16_t aOrientation)
+                    gfx::ShapedTextFlags aOrientation)
 {
     gfxFont::RunMetrics metrics =
         gfxFont::Measure(aTextRun, aStart, aEnd, aBoundingBoxType,
@@ -223,6 +228,12 @@ gfxGDIFont::Initialize()
 
     mMetrics = new gfxFont::Metrics;
     ::memset(mMetrics, 0, sizeof(*mMetrics));
+
+    if (!mFont) {
+        NS_WARNING("Failed creating GDI font");
+        mIsValid = false;
+        return;
+    }
 
     AutoDC dc;
     SetGraphicsMode(dc.GetDC(), GM_ADVANCED);

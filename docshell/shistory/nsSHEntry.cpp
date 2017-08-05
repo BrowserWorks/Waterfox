@@ -5,17 +5,21 @@
  * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
 
 #include "nsSHEntry.h"
+
+#include <algorithm>
+
+#include "nsDocShellEditorData.h"
+#include "nsIContentViewer.h"
 #include "nsIDocShellLoadInfo.h"
 #include "nsIDocShellTreeItem.h"
-#include "nsDocShellEditorData.h"
-#include "nsSHEntryShared.h"
-#include "nsILayoutHistoryState.h"
-#include "nsIContentViewer.h"
-#include "nsIStructuredCloneContainer.h"
 #include "nsIInputStream.h"
+#include "nsILayoutHistoryState.h"
+#include "nsIStructuredCloneContainer.h"
 #include "nsIURI.h"
+#include "nsSHEntryShared.h"
+#include "nsSHistory.h"
+
 #include "mozilla/net/ReferrerPolicy.h"
-#include <algorithm>
 
 namespace dom = mozilla::dom;
 
@@ -23,16 +27,17 @@ static uint32_t gEntryID = 0;
 
 nsSHEntry::nsSHEntry()
   : mShared(new nsSHEntryShared())
-  , mLoadReplace(false)
   , mReferrerPolicy(mozilla::net::RP_Unset)
   , mLoadType(0)
   , mID(gEntryID++)
   , mScrollPositionX(0)
   , mScrollPositionY(0)
   , mParent(nullptr)
+  , mLoadReplace(false)
   , mURIWasModified(false)
   , mIsSrcdocEntry(false)
   , mScrollRestorationIsManual(false)
+  , mLoadedInThisProcess(false)
 {
 }
 
@@ -40,7 +45,6 @@ nsSHEntry::nsSHEntry(const nsSHEntry& aOther)
   : mShared(aOther.mShared)
   , mURI(aOther.mURI)
   , mOriginalURI(aOther.mOriginalURI)
-  , mLoadReplace(aOther.mLoadReplace)
   , mReferrerURI(aOther.mReferrerURI)
   , mReferrerPolicy(aOther.mReferrerPolicy)
   , mTitle(aOther.mTitle)
@@ -50,12 +54,14 @@ nsSHEntry::nsSHEntry(const nsSHEntry& aOther)
   , mScrollPositionX(0)  // XXX why not copy?
   , mScrollPositionY(0)  // XXX why not copy?
   , mParent(aOther.mParent)
-  , mURIWasModified(aOther.mURIWasModified)
   , mStateData(aOther.mStateData)
-  , mIsSrcdocEntry(aOther.mIsSrcdocEntry)
-  , mScrollRestorationIsManual(false)
   , mSrcdocData(aOther.mSrcdocData)
   , mBaseURI(aOther.mBaseURI)
+  , mLoadReplace(aOther.mLoadReplace)
+  , mURIWasModified(aOther.mURIWasModified)
+  , mIsSrcdocEntry(aOther.mIsSrcdocEntry)
+  , mScrollRestorationIsManual(false)
+  , mLoadedInThisProcess(aOther.mLoadedInThisProcess)
 {
 }
 
@@ -293,6 +299,19 @@ nsSHEntry::SetLayoutHistoryState(nsILayoutHistoryState* aState)
 }
 
 NS_IMETHODIMP
+nsSHEntry::InitLayoutHistoryState(nsILayoutHistoryState** aState)
+{
+  if (!mShared->mLayoutHistoryState) {
+    nsCOMPtr<nsILayoutHistoryState> historyState;
+    historyState = NS_NewLayoutHistoryState();
+    nsresult rv = SetLayoutHistoryState(historyState);
+    NS_ENSURE_SUCCESS(rv, rv);
+  }
+
+  return GetLayoutHistoryState(aState);
+}
+
+NS_IMETHODIMP
 nsSHEntry::GetLoadType(uint32_t* aResult)
 {
   *aResult = mLoadType;
@@ -442,6 +461,8 @@ nsSHEntry::Create(nsIURI* aURI, const nsAString& aTitle,
 
   mIsSrcdocEntry = false;
   mSrcdocData = NullString();
+
+  mLoadedInThisProcess = true;
 
   return NS_OK;
 }
@@ -625,6 +646,13 @@ NS_IMETHODIMP
 nsSHEntry::SetScrollRestorationIsManual(bool aIsManual)
 {
   mScrollRestorationIsManual = aIsManual;
+  return NS_OK;
+}
+
+NS_IMETHODIMP
+nsSHEntry::GetLoadedInThisProcess(bool* aLoadedInThisProcess)
+{
+  *aLoadedInThisProcess = mLoadedInThisProcess;
   return NS_OK;
 }
 
@@ -943,5 +971,23 @@ NS_IMETHODIMP
 nsSHEntry::SetLastTouched(uint32_t aLastTouched)
 {
   mShared->mLastTouched = aLastTouched;
+  return NS_OK;
+}
+
+NS_IMETHODIMP
+nsSHEntry::GetSHistory(nsISHistory** aSHistory)
+{
+  nsCOMPtr<nsISHistory> shistory(do_QueryReferent(mShared->mSHistory));
+  shistory.forget(aSHistory);
+  return NS_OK;
+}
+
+NS_IMETHODIMP
+nsSHEntry::SetSHistory(nsISHistory* aSHistory)
+{
+  nsWeakPtr shistory = do_GetWeakReference(aSHistory);
+  // mSHistory can not be changed once it's set
+  MOZ_ASSERT(!mShared->mSHistory || (mShared->mSHistory == shistory));
+  mShared->mSHistory = shistory;
   return NS_OK;
 }

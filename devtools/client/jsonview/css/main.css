@@ -3,7 +3,10 @@
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
 
-@import "resource://devtools/client/shared/components/reps/reps.css";
+@import "resource://devtools/client/themes/variables.css";
+@import "resource://devtools/client/themes/common.css";
+@import "resource://devtools/client/themes/toolbars.css";
+
 @import "resource://devtools/client/shared/components/tree/tree-view.css";
 @import "resource://devtools/client/shared/components/tabs/tabs.css";
 
@@ -17,10 +20,17 @@
 /******************************************************************************/
 /* Panel Content */
 
+.tab-panel-inner {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+}
+
 .panelContent {
   direction: ltr;
   overflow-y: auto;
   width: 100%;
+  flex: 1;
 }
 
 /* The tree takes the entire horizontal space within the panel content. */
@@ -41,20 +51,8 @@
 /******************************************************************************/
 /* Theme Firebug */
 
-.theme-firebug .panelContent {
-  height: calc(100% - 30px);
-}
-
 /* JSON View is using bigger font-size for the main tabs so,
   let's overwrite the default value. */
 .theme-firebug .tabs .tabs-navigation {
   font-size: 14px;
-}
-
-/******************************************************************************/
-/* Theme Light & Theme Dark*/
-
-.theme-dark .panelContent,
-.theme-light .panelContent {
-  height: calc(100% - 27px);
 }

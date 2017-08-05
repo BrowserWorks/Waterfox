@@ -60,6 +60,10 @@ enum StructuredCloneTags {
   // This tag is used by both main thread and workers.
   SCTAG_DOM_URLSEARCHPARAMS,
 
+  SCTAG_DOM_INPUTSTREAM,
+
+  SCTAG_DOM_STRUCTURED_CLONE_HOLDER,
+
   // When adding a new tag for IDB, please don't add it to the end of the list!
   // Tags that are supported by IDB must not ever change. See the static assert
   // in IDBObjectStore.cpp, method CommonStructuredCloneReadCallback.

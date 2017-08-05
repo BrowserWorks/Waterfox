@@ -133,7 +133,8 @@ TheoraDecoder::ProcessDecode(MediaRawData* aSample)
 
   bool bos = mPacketCount == 0;
   ogg_packet pkt = InitTheoraPacket(
-    aData, aLength, bos, false, aSample->mTimecode, mPacketCount++);
+    aData, aLength, bos, false,
+    aSample->mTimecode.ToMicroseconds(), mPacketCount++);
 
   int ret = th_decode_packetin(mTheoraDecoderContext, &pkt, nullptr);
   if (ret == 0 || ret == TH_DUPFRAME) {

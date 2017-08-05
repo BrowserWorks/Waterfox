@@ -46,6 +46,37 @@ public:
     return true;
   }
 
+  int64_t GetFileId() override
+  {
+    return mFileId;
+  }
+
+  void SetFileId(int64_t aFileId)
+  {
+    mFileId = aFileId;
+  }
+
+  void SetFullPath(const nsAString& aFullPath)
+  {
+    mFullPath = aFullPath;
+  }
+
+  void GetMozFullPathInternal(nsAString& aFullPath,
+                              ErrorResult& aRv) const override
+  {
+    aFullPath = mFullPath;
+  }
+
+  void SetIsDirectory(bool aIsDirectory)
+  {
+    mIsDirectory = aIsDirectory;
+  }
+
+  bool IsDirectory() const override
+  {
+    return mIsDirectory;
+  }
+
 private:
   StreamBlobImpl(nsIInputStream* aInputStream,
                  const nsAString& aContentType,
@@ -67,6 +98,10 @@ private:
   void MaybeRegisterMemoryReporter();
 
   nsCOMPtr<nsIInputStream> mInputStream;
+
+  nsString mFullPath;
+  bool mIsDirectory;
+  int64_t mFileId;
 };
 
 } // namespace dom

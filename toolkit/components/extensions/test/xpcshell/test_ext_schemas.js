@@ -462,9 +462,9 @@ let wrapper = {
   },
 };
 
-add_task(function* () {
+add_task(async function() {
   let url = "data:," + JSON.stringify(json);
-  yield Schemas.load(url);
+  await Schemas.load(url);
 
   let root = {};
   tallied = null;
@@ -927,9 +927,9 @@ let deprecatedJson = [
   },
 ];
 
-add_task(function* testDeprecation() {
+add_task(async function testDeprecation() {
   let url = "data:," + JSON.stringify(deprecatedJson);
-  yield Schemas.load(url);
+  await Schemas.load(url);
 
   let root = {};
   Schemas.inject(root, wrapper);
@@ -1081,9 +1081,9 @@ let choicesJson = [
    ]},
 ];
 
-add_task(function* testChoices() {
+add_task(async function testChoices() {
   let url = "data:," + JSON.stringify(choicesJson);
-  yield Schemas.load(url);
+  await Schemas.load(url);
 
   let root = {};
   Schemas.inject(root, wrapper);
@@ -1091,7 +1091,7 @@ add_task(function* testChoices() {
   talliedErrors.length = 0;
 
   Assert.throws(() => root.choices.meh("frog"),
-                /Value must either: be one of \["foo", "bar", "baz"\], match the pattern \/florg\.\*meh\/, or be an integer value/);
+                /Value "frog" must either: be one of \["foo", "bar", "baz"\], match the pattern \/florg\.\*meh\/, or be an integer value/);
 
   Assert.throws(() => root.choices.meh(4),
                 /be a string value, or be at least 12/);
@@ -1166,9 +1166,9 @@ let permissionsJson = [
    ]},
 ];
 
-add_task(function* testPermissions() {
+add_task(async function testPermissions() {
   let url = "data:," + JSON.stringify(permissionsJson);
-  yield Schemas.load(url);
+  await Schemas.load(url);
 
   let root = {};
   Schemas.inject(root, wrapper);
@@ -1263,10 +1263,10 @@ let nestedNamespaceJson = [
   },
 ];
 
-add_task(function* testNestedNamespace() {
+add_task(async function testNestedNamespace() {
   let url = "data:," + JSON.stringify(nestedNamespaceJson);
 
-  yield Schemas.load(url);
+  await Schemas.load(url);
 
   let root = {};
   Schemas.inject(root, wrapper);
@@ -1299,7 +1299,85 @@ add_task(function* testNestedNamespace() {
   //    "Got the expected event defined in the CustomType instance");
 });
 
-add_task(function* testLocalAPIImplementation() {
+let $importJson = [
+  {
+    namespace: "from_the",
+    $import: "future",
+  },
+  {
+    namespace: "future",
+    properties: {
+      PROP1: {value: "original value"},
+      PROP2: {value: "second original"},
+    },
+    types: [
+      {
+        id: "Colour",
+        type: "string",
+        enum: ["red", "white", "blue"],
+      },
+    ],
+    functions: [
+      {
+        name: "dye",
+        type: "function",
+        parameters: [
+          {name: "arg", $ref: "Colour"},
+        ],
+      },
+    ],
+  },
+  {
+    namespace: "embrace",
+    $import: "future",
+    properties: {
+      PROP2: {value: "overridden value"},
+    },
+    types: [
+      {
+        id: "Colour",
+        type: "string",
+        enum: ["blue", "orange"],
+      },
+    ],
+  },
+];
+
+add_task(async function test_$import() {
+  let url = "data:," + JSON.stringify($importJson);
+  await Schemas.load(url);
+
+  let root = {};
+  tallied = null;
+  Schemas.inject(root, wrapper);
+  equal(tallied, null);
+
+  equal(root.from_the.PROP1, "original value", "imported property");
+  equal(root.from_the.PROP2, "second original", "second imported property");
+  equal(root.from_the.Colour.RED, "red", "imported enum type");
+  equal(typeof root.from_the.dye, "function", "imported function");
+
+  root.from_the.dye("white");
+  verify("call", "from_the", "dye", ["white"]);
+
+  Assert.throws(() => root.from_the.dye("orange"),
+                /Invalid enumeration value/,
+                "original imported argument type Colour doesn't include 'orange'");
+
+  equal(root.embrace.PROP1, "original value", "imported property");
+  equal(root.embrace.PROP2, "overridden value", "overridden property");
+  equal(root.embrace.Colour.ORANGE, "orange", "overridden enum type");
+  equal(typeof root.embrace.dye, "function", "imported function");
+
+  root.embrace.dye("orange");
+  verify("call", "embrace", "dye", ["orange"]);
+
+  Assert.throws(() => root.embrace.dye("white"),
+                /Invalid enumeration value/,
+                "overridden argument type Colour doesn't include 'white'");
+});
+
+add_task(async function testLocalAPIImplementation() {
   let countGet2 = 0;
   let countProp3 = 0;
   let countProp3SubFoo = 0;
@@ -1400,9 +1478,9 @@ let defaultsJson = [
    ]},
 ];
 
-add_task(function* testDefaults() {
+add_task(async function testDefaults() {
   let url = "data:," + JSON.stringify(defaultsJson);
-  yield Schemas.load(url);
+  await Schemas.load(url);
 
   let testingApiObj = {
     defaultFoo: function(arg) {

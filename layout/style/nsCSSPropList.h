@@ -1553,6 +1553,16 @@ CSS_PROP_COLUMN(
     CSS_PROP_NO_OFFSET,
     eStyleAnimType_Custom)
 CSS_PROP_COLUMN(
+    column-span,
+    column_span,
+    ColumnSpan,
+    CSS_PROPERTY_PARSE_VALUE,
+    "layout.css.column-span.enabled",
+    VARIANT_HK,
+    kColumnSpanKTable,
+    CSS_PROP_NO_OFFSET,
+    eStyleAnimType_Discrete)
+CSS_PROP_COLUMN(
     column-width,
     column_width,
     ColumnWidth,
@@ -1594,6 +1604,19 @@ CSS_PROP_CONTENT(
     CSS_PROP_NO_OFFSET,
     eStyleAnimType_Discrete)
 #ifndef CSS_PROP_LIST_EXCLUDE_INTERNAL
+CSS_PROP_SVG(
+    // Only intended to be used internally by Mozilla, so prefixed.
+    -moz-context-properties,
+    _moz_context_properties,
+    CSS_PROP_DOMPROP_PREFIXED(ContextProperties),
+    CSS_PROPERTY_PARSE_FUNCTION |
+        CSS_PROPERTY_VALUE_LIST_USES_COMMAS |
+        CSS_PROPERTY_INTERNAL,
+    "",
+    0,
+    nullptr,
+    CSS_PROP_NO_OFFSET,
+    eStyleAnimType_None)
 CSS_PROP_TEXT(
     -moz-control-character-visibility,
     _moz_control_character_visibility,
@@ -1701,7 +1724,7 @@ CSS_PROP_SVG(
     FillOpacity,
     CSS_PROPERTY_PARSE_VALUE,
     "",
-    VARIANT_HN | VARIANT_OPENTYPE_SVG_KEYWORD,
+    VARIANT_HN | VARIANT_KEYWORD,
     kContextOpacityKTable,
     offsetof(nsStyleSVG, mFillOpacity),
     eStyleAnimType_float)
@@ -3846,7 +3869,7 @@ CSS_PROP_SVG(
     StrokeOpacity,
     CSS_PROPERTY_PARSE_VALUE,
     "",
-    VARIANT_HN | VARIANT_OPENTYPE_SVG_KEYWORD,
+    VARIANT_HN | VARIANT_KEYWORD,
     kContextOpacityKTable,
     offsetof(nsStyleSVG, mStrokeOpacity),
     eStyleAnimType_float)

@@ -8,10 +8,14 @@ const {classes: Cc, interfaces: Ci, results: Cr, utils: Cu} = Components;
 this.EXPORTED_SYMBOLS = ["ExtensionsUI"];
 
 Cu.import("resource://gre/modules/XPCOMUtils.jsm");
-Cu.import("resource://devtools/shared/event-emitter.js");
+Cu.import("resource://gre/modules/EventEmitter.jsm");
 
 XPCOMUtils.defineLazyModuleGetter(this, "AddonManager",
                                   "resource://gre/modules/AddonManager.jsm");
+XPCOMUtils.defineLazyModuleGetter(this, "AddonManagerPrivate",
+                                  "resource://gre/modules/AddonManager.jsm");
+XPCOMUtils.defineLazyModuleGetter(this, "AppMenuNotifications",
+                                  "resource://gre/modules/AppMenuNotifications.jsm");
 XPCOMUtils.defineLazyModuleGetter(this, "PluralForm",
                                   "resource://gre/modules/PluralForm.jsm");
 XPCOMUtils.defineLazyModuleGetter(this, "RecentWindow",
@@ -33,88 +37,104 @@ this.ExtensionsUI = {
   sideloaded: new Set(),
   updates: new Set(),
   sideloadListener: null,
+  histogram: null,
 
-  init() {
-    Services.obs.addObserver(this, "webextension-permission-prompt", false);
-    Services.obs.addObserver(this, "webextension-update-permissions", false);
-    Services.obs.addObserver(this, "webextension-install-notify", false);
+  async init() {
+    this.histogram = Services.telemetry.getHistogramById("EXTENSION_INSTALL_PROMPT_RESULT");
+
+    Services.obs.addObserver(this, "webextension-permission-prompt");
+    Services.obs.addObserver(this, "webextension-update-permissions");
+    Services.obs.addObserver(this, "webextension-install-notify");
+    Services.obs.addObserver(this, "webextension-optional-permission-prompt");
+
+    await RecentWindow.getMostRecentBrowserWindow().delayedStartupPromise;
 
     this._checkForSideloaded();
   },
 
-  _checkForSideloaded() {
-    AddonManager.getAllAddons(addons => {
-      // Check for any side-loaded addons that the user is allowed
-      // to enable.
-      let sideloaded = addons.filter(
-        addon => addon.seen === false && (addon.permissions & AddonManager.PERM_CAN_ENABLE));
+  async _checkForSideloaded() {
+    let sideloaded = await AddonManagerPrivate.getNewSideloads();
 
-      if (!sideloaded.length) {
-        return;
+    if (!sideloaded.length) {
+      // No new side-loads. We're done.
+      return;
+    }
+
+    // The ordering shouldn't matter, but tests depend on notifications
+    // happening in a specific order.
+    sideloaded.sort((a, b) => a.id.localeCompare(b.id));
+
+    if (WEBEXT_PERMISSION_PROMPTS) {
+      if (!this.sideloadListener) {
+        this.sideloadListener = {
+          onEnabled: addon => {
+            if (!this.sideloaded.has(addon)) {
+              return;
+            }
+
+            this.sideloaded.delete(addon);
+              this._updateNotifications();
+
+            if (this.sideloaded.size == 0) {
+              AddonManager.removeAddonListener(this.sideloadListener);
+              this.sideloadListener = null;
+            }
+          },
+        };
+        AddonManager.addAddonListener(this.sideloadListener);
       }
 
-      if (WEBEXT_PERMISSION_PROMPTS) {
-        if (!this.sideloadListener) {
-          this.sideloadListener = {
-            onEnabled: addon => {
-              if (!this.sideloaded.has(addon)) {
-                return;
-              }
-
-              this.sideloaded.delete(addon);
-              this.emit("change");
-
-              if (this.sideloaded.size == 0) {
-                AddonManager.removeAddonListener(this.sideloadListener);
-                this.sideloadListener = null;
-              }
-            },
-          };
-          AddonManager.addAddonListener(this.sideloadListener);
-        }
-
-        for (let addon of sideloaded) {
-          this.sideloaded.add(addon);
-        }
-        this.emit("change");
-      } else {
-        // This and all the accompanying about:newaddon code can eventually
-        // be removed.  See bug 1331521.
-        let win = RecentWindow.getMostRecentBrowserWindow();
-        for (let addon of sideloaded) {
-          win.openUILinkIn(`about:newaddon?id=${addon.id}`, "tab");
-        }
+      for (let addon of sideloaded) {
+        this.sideloaded.add(addon);
       }
-    });
+        this._updateNotifications();
+    } else {
+      // This and all the accompanying about:newaddon code can eventually
+      // be removed.  See bug 1331521.
+      let win = RecentWindow.getMostRecentBrowserWindow();
+      for (let addon of sideloaded) {
+        win.openUILinkIn(`about:newaddon?id=${addon.id}`, "tab");
+      }
+    }
   },
 
-  showAddonsManager(browser, strings, icon) {
+  _updateNotifications() {
+    if (this.sideloaded.size + this.updates.size == 0) {
+      AppMenuNotifications.removeNotification("addon-alert");
+    } else {
+      AppMenuNotifications.showBadgeOnlyNotification("addon-alert");
+    }
+    this.emit("change");
+  },
+
+  showAddonsManager(browser, strings, icon, histkey) {
     let global = browser.selectedBrowser.ownerGlobal;
     return global.BrowserOpenAddonsMgr("addons://list/extension").then(aomWin => {
       let aomBrowser = aomWin.QueryInterface(Ci.nsIInterfaceRequestor)
                              .getInterface(Ci.nsIDocShell)
                              .chromeEventHandler;
-      return this.showPermissionsPrompt(aomBrowser, strings, icon);
+      return this.showPermissionsPrompt(aomBrowser, strings, icon, histkey);
     });
   },
 
   showSideloaded(browser, addon) {
     addon.markAsSeen();
     this.sideloaded.delete(addon);
-    this.emit("change");
+    this._updateNotifications();
 
     let strings = this._buildStrings({
       addon,
       permissions: addon.userPermissions,
       type: "sideload",
     });
-    this.showAddonsManager(browser, strings, addon.iconURL).then(answer => {
-      addon.userDisabled = !answer;
-    });
+    this.showAddonsManager(browser, strings, addon.iconURL, "sideload")
+        .then(answer => {
+          addon.userDisabled = !answer;
+        });
   },
 
   showUpdate(browser, info) {
-    this.showAddonsManager(browser, info.strings, info.addon.iconURL)
+    this.showAddonsManager(browser, info.strings, info.addon.iconURL, "update")
         .then(answer => {
           if (answer) {
             info.resolve();
@@ -124,7 +144,7 @@ this.ExtensionsUI = {
           // At the moment, this prompt will re-appear next time we do an update
           // check.  See bug 1332360 for proposal to avoid this.
           this.updates.delete(info);
-          this.emit("change");
+          this._updateNotifications();
         });
   },
 
@@ -140,20 +160,43 @@ this.ExtensionsUI = {
         progressNotification.remove();
       }
 
+      info.unsigned = info.addon.signedState <= AddonManager.SIGNEDSTATE_MISSING;
+      if (info.unsigned && Cu.isInAutomation &&
+          Services.prefs.getBoolPref("extensions.ui.ignoreUnsigned", false)) {
+        info.unsigned = false;
+      }
+
       let strings = this._buildStrings(info);
+
       // If this is an update with no promptable permissions, just apply it
       if (info.type == "update" && strings.msgs.length == 0) {
         info.resolve();
         return;
       }
 
-      this.showPermissionsPrompt(target, strings, info.icon).then(answer => {
-        if (answer) {
-          info.resolve();
-        } else {
-          info.reject();
-        }
-      });
+      let icon = info.unsigned ? "chrome://browser/skin/warning.svg" : info.icon;
+
+      let histkey;
+      if (info.type == "sideload") {
+        histkey = "sideload";
+      } else if (info.type == "update") {
+        histkey = "update";
+      } else if (info.source == "AMO") {
+        histkey = "installAmo";
+      } else if (info.source == "local") {
+        histkey = "installLocal";
+      } else {
+        histkey = "installWeb";
+      }
+
+      this.showPermissionsPrompt(target, strings, icon, histkey)
+          .then(answer => {
+            if (answer) {
+              info.resolve();
+            } else {
+              info.reject();
+            }
+          });
     } else if (topic == "webextension-update-permissions") {
       let info = subject.wrappedJSObject;
       info.type = "update";
@@ -173,7 +216,7 @@ this.ExtensionsUI = {
       };
 
       this.updates.add(update);
-      this.emit("change");
+      this._updateNotifications();
     } else if (topic == "webextension-install-notify") {
       let {target, addon, callback} = subject.wrappedJSObject;
       this.showInstallNotification(target, addon).then(() => {
@@ -181,6 +224,21 @@ this.ExtensionsUI = {
           callback();
         }
       });
+    } else if (topic == "webextension-optional-permission-prompt") {
+      let {browser, name, icon, permissions, resolve} = subject.wrappedJSObject;
+      let strings = this._buildStrings({
+        type: "optional",
+        addon: {name},
+        permissions,
+      });
+
+      // If we don't have any promptable permissions, just proceed
+      if (strings.msgs.length == 0) {
+        resolve();
+        return;
+      }
+
+      resolve(this.showPermissionsPrompt(browser, strings, icon));
     }
   },
 
@@ -198,18 +256,19 @@ this.ExtensionsUI = {
 
     let bundle = Services.strings.createBundle(BROWSER_PROPERTIES);
 
-    let perms = info.permissions || {hosts: [], permissions: []};
+    let perms = info.permissions || {origins: [], permissions: []};
 
     // First classify our host permissions
     let allUrls = false, wildcards = [], sites = [];
-    for (let permission of perms.hosts) {
+    for (let permission of perms.origins) {
       if (permission == "<all_urls>") {
         allUrls = true;
         break;
       }
       let match = /^[htps*]+:\/\/([^/]+)\//.exec(permission);
       if (!match) {
-        throw new Error("Unparseable host permission");
+        Cu.reportError(`Unparseable host permission ${permission}`);
+        continue;
       }
       if (match[1] == "*") {
         allUrls = true;
@@ -280,7 +339,8 @@ this.ExtensionsUI = {
     let addonName = `<span class="addon-webext-name">${name}</span>`;
 
     result.header = bundle.formatStringFromName("webextPerms.header", [addonName], 1);
-    result.text = "";
+    result.text = info.unsigned ?
+                  bundle.GetStringFromName("webextPerms.unsignedWarning") : "";
     result.listIntro = bundle.GetStringFromName("webextPerms.listIntro");
 
     result.acceptText = bundle.GetStringFromName("webextPerms.add.label");
@@ -302,17 +362,23 @@ this.ExtensionsUI = {
       result.text = bundle.formatStringFromName("webextPerms.updateText", [addonName], 1);
       result.acceptText = bundle.GetStringFromName("webextPerms.updateAccept.label");
       result.acceptKey = bundle.GetStringFromName("webextPerms.updateAccept.accessKey");
+    } else if (info.type == "optional") {
+      result.header = bundle.formatStringFromName("webextPerms.optionalPermsHeader", [addonName], 1);
+      result.text = "";
+      result.listIntro = bundle.GetStringFromName("webextPerms.optionalPermsListIntro");
+      result.acceptText = bundle.GetStringFromName("webextPerms.optionalPermsAllow.label");
+      result.acceptKey = bundle.GetStringFromName("webextPerms.optionalPermsAllow.accessKey");
+      result.cancelText = bundle.GetStringFromName("webextPerms.optionalPermsDeny.label");
     }
 
     return result;
   },
 
-  showPermissionsPrompt(browser, strings, icon) {
+  showPermissionsPrompt(browser, strings, icon, histkey) {
     function eventCallback(topic) {
+      let doc = this.browser.ownerDocument;
       if (topic == "showing") {
-        let doc = this.browser.ownerDocument;
         doc.getElementById("addon-webext-perm-header").innerHTML = strings.header;
-
         let textEl = doc.getElementById("addon-webext-perm-text");
         textEl.innerHTML = strings.text;
         textEl.hidden = !strings.text;
@@ -349,13 +415,23 @@ this.ExtensionsUI = {
       let action = {
         label: strings.acceptText,
         accessKey: strings.acceptKey,
-        callback: () => resolve(true),
+        callback: () => {
+          if (histkey) {
+            this.histogram.add(histkey + "Accepted");
+          }
+          resolve(true);
+        },
       };
       let secondaryActions = [
         {
           label: strings.cancelText,
           accessKey: strings.cancelKey,
-          callback: () => resolve(false),
+          callback: () => {
+            if (histkey) {
+              this.histogram.add(histkey + "Rejected");
+            }
+            resolve(false);
+          },
         },
       ];
 

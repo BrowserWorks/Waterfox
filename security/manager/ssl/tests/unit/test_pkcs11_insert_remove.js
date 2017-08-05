@@ -22,7 +22,7 @@ function SmartcardObserver(type) {
 }
 
 SmartcardObserver.prototype = {
-  observe: function(subject, topic, data) {
+  observe(subject, topic, data) {
     equal(topic, this.type, "Observed and expected types should match");
     equal(gExpectedTokenLabel, data,
           "Expected and observed token labels should match");
@@ -33,9 +33,9 @@ SmartcardObserver.prototype = {
 
 function run_test() {
   Services.obs.addObserver(new SmartcardObserver("smartcard-insert"),
-                           "smartcard-insert", false);
+                           "smartcard-insert");
   Services.obs.addObserver(new SmartcardObserver("smartcard-remove"),
-                           "smartcard-remove", false);
+                           "smartcard-remove");
 
   loadPKCS11TestModule(false);
 }

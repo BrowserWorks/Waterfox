@@ -10,6 +10,8 @@
 #include "mozilla/Attributes.h"
 #include "mozilla/dom/ipc/IdType.h"
 #include "mozilla/ipc/ProtocolUtils.h"
+#include "mozilla/ipc/PChildToParentStreamParent.h"
+#include "mozilla/ipc/PParentToChildStreamParent.h"
 
 #include "nsFrameMessageManager.h"
 #include "nsISupports.h"
@@ -32,8 +34,9 @@ class CpowEntry;
 
 namespace ipc {
 class PFileDescriptorSetParent;
-class PMemoryStreamParent;
-class PSendStreamParent;
+class PChildToParentStreamParent;
+class PParentToChildStreamParent;
+class PIPCBlobInputStreamParent;
 }
 
 namespace dom {
@@ -41,11 +44,9 @@ namespace dom {
 class Blob;
 class BlobConstructorParams;
 class BlobImpl;
-class BlobParent;
 class ContentParent;
 class ContentBridgeParent;
 class IPCTabContext;
-class PBlobParent;
 class PBrowserParent;
 
 class nsIContentParent : public nsISupports
@@ -58,23 +59,26 @@ public:
 
   nsIContentParent();
 
-  BlobParent* GetOrCreateActorForBlob(Blob* aBlob);
-  BlobParent* GetOrCreateActorForBlobImpl(BlobImpl* aImpl);
-
   virtual ContentParentId ChildID() const = 0;
   virtual bool IsForBrowser() const = 0;
+  virtual bool IsForJSPlugin() const = 0;
 
-  MOZ_MUST_USE virtual PBlobParent*
-  SendPBlobConstructor(PBlobParent* aActor,
-                       const BlobConstructorParams& aParams) = 0;
+  virtual mozilla::ipc::PIPCBlobInputStreamParent*
+  SendPIPCBlobInputStreamConstructor(mozilla::ipc::PIPCBlobInputStreamParent* aActor,
+                                     const nsID& aID,
+                                     const uint64_t& aSize) = 0;
 
   MOZ_MUST_USE virtual PBrowserParent*
   SendPBrowserConstructor(PBrowserParent* actor,
                           const TabId& aTabId,
+                          const TabId& aSameTabGroupAs,
                           const IPCTabContext& context,
                           const uint32_t& chromeFlags,
                           const ContentParentId& aCpId,
                           const bool& aIsForBrowser) = 0;
+
+  virtual mozilla::ipc::PFileDescriptorSetParent*
+  SendPFileDescriptorSetConstructor(const mozilla::ipc::FileDescriptor&) = 0;
 
   virtual bool IsContentParent() const { return false; }
 
@@ -86,7 +90,17 @@ public:
 
   nsFrameMessageManager* GetMessageManager() const { return mMessageManager; }
 
+  virtual bool SendActivate(PBrowserParent* aTab) = 0;
+
+  virtual bool SendDeactivate(PBrowserParent* aTab) = 0;
+
+  virtual bool SendParentActivated(PBrowserParent* aTab,
+                                   const bool& aActivated) = 0;
+
   virtual int32_t Pid() const = 0;
+
+  virtual mozilla::ipc::PParentToChildStreamParent*
+  SendPParentToChildStreamConstructor(mozilla::ipc::PParentToChildStreamParent*) = 0;
 
 protected: // methods
   bool CanOpenBrowser(const IPCTabContext& aContext);
@@ -96,20 +110,18 @@ protected: // IPDL methods
   virtual bool DeallocPJavaScriptParent(mozilla::jsipc::PJavaScriptParent*);
 
   virtual PBrowserParent* AllocPBrowserParent(const TabId& aTabId,
+                                              const TabId& aSameTabGroupsAs,
                                               const IPCTabContext& aContext,
                                               const uint32_t& aChromeFlags,
                                               const ContentParentId& aCpId,
                                               const bool& aIsForBrowser);
   virtual bool DeallocPBrowserParent(PBrowserParent* frame);
 
-  virtual PBlobParent* AllocPBlobParent(const BlobConstructorParams& aParams);
+  virtual mozilla::ipc::PIPCBlobInputStreamParent*
+  AllocPIPCBlobInputStreamParent(const nsID& aID, const uint64_t& aSize);
 
-  virtual bool DeallocPBlobParent(PBlobParent* aActor);
-
-  virtual mozilla::ipc::PMemoryStreamParent*
-  AllocPMemoryStreamParent(const uint64_t& aSize);
-
-  virtual bool DeallocPMemoryStreamParent(mozilla::ipc::PMemoryStreamParent* aActor);
+  virtual bool
+  DeallocPIPCBlobInputStreamParent(mozilla::ipc::PIPCBlobInputStreamParent* aActor);
 
   virtual mozilla::ipc::PFileDescriptorSetParent*
   AllocPFileDescriptorSetParent(const mozilla::ipc::FileDescriptor& aFD);
@@ -117,9 +129,15 @@ protected: // IPDL methods
   virtual bool
   DeallocPFileDescriptorSetParent(mozilla::ipc::PFileDescriptorSetParent* aActor);
 
-  virtual mozilla::ipc::PSendStreamParent* AllocPSendStreamParent();
+  virtual mozilla::ipc::PChildToParentStreamParent* AllocPChildToParentStreamParent();
 
-  virtual bool DeallocPSendStreamParent(mozilla::ipc::PSendStreamParent* aActor);
+  virtual bool
+  DeallocPChildToParentStreamParent(mozilla::ipc::PChildToParentStreamParent* aActor);
+
+  virtual mozilla::ipc::PParentToChildStreamParent* AllocPParentToChildStreamParent();
+
+  virtual bool
+  DeallocPParentToChildStreamParent(mozilla::ipc::PParentToChildStreamParent* aActor);
 
   virtual mozilla::ipc::IPCResult RecvSyncMessage(const nsString& aMsg,
                                                   const ClonedMessageData& aData,

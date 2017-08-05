@@ -2,34 +2,31 @@
 /* vim: set sts=2 sw=2 et tw=80: */
 "use strict";
 
-const {classes: Cc, interfaces: Ci, utils: Cu, results: Cr} = Components;
+// The ext-* files are imported into the same scopes.
+/* import-globals-from ext-devtools.js */
 
-Cu.import("resource://gre/modules/ExtensionUtils.jsm");
+this.devtools_network = class extends ExtensionAPI {
+  getAPI(context) {
+    return {
+      devtools: {
+        network: {
+          onNavigated: new SingletonEventManager(context, "devtools.onNavigated", fire => {
+            let listener = (event, data) => {
+              fire.async(data.url);
+            };
 
-const {
-  SingletonEventManager,
-} = ExtensionUtils;
-
-extensions.registerSchemaAPI("devtools.network", "devtools_parent", (context) => {
-  return {
-    devtools: {
-      network: {
-        onNavigated: new SingletonEventManager(context, "devtools.onNavigated", fire => {
-          let listener = (event, data) => {
-            fire.async(data.url);
-          };
-
-          let targetPromise = getDevToolsTargetForContext(context);
-          targetPromise.then(target => {
-            target.on("navigate", listener);
-          });
-          return () => {
+            let targetPromise = getDevToolsTargetForContext(context);
             targetPromise.then(target => {
-              target.off("navigate", listener);
+              target.on("navigate", listener);
             });
-          };
-        }).api(),
+            return () => {
+              targetPromise.then(target => {
+                target.off("navigate", listener);
+              });
+            };
+          }).api(),
+        },
       },
-    },
-  };
-});
+    };
+  }
+};

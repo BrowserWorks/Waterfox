@@ -314,6 +314,20 @@ MediaEngineRemoteVideoSource::SetLastCapability(
   mLastCapability = mCapability;
 
   webrtc::CaptureCapability cap = aCapability;
+  switch (mMediaSource) {
+    case dom::MediaSourceEnum::Screen:
+    case dom::MediaSourceEnum::Window:
+    case dom::MediaSourceEnum::Application:
+      // Undo the hack where ideal and max constraints are crammed together
+      // in mCapability for consumption by low-level code. We don't actually
+      // know the real resolution yet, so report min(ideal, max) for now.
+      cap.width = std::min(cap.width >> 16, cap.width & 0xffff);
+      cap.height = std::min(cap.height >> 16, cap.height & 0xffff);
+      break;
+
+    default:
+      break;
+  }
   RefPtr<MediaEngineRemoteVideoSource> that = this;
 
   NS_DispatchToMainThread(media::NewRunnableFrom([that, cap]() mutable {
@@ -356,6 +370,13 @@ MediaEngineRemoteVideoSource::FrameSizeChange(unsigned int w, unsigned int h)
     LOG(("MediaEngineRemoteVideoSource Video FrameSizeChange: %ux%u was %ux%u", w, h, mWidth, mHeight));
     mWidth = w;
     mHeight = h;
+
+    RefPtr<MediaEngineRemoteVideoSource> that = this;
+    NS_DispatchToMainThread(media::NewRunnableFrom([that, w, h]() mutable {
+      that->mSettings.mWidth.Value() = w;
+      that->mSettings.mHeight.Value() = h;
+      return NS_OK;
+    }));
   }
 }
 

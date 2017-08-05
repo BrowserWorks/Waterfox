@@ -822,10 +822,11 @@ TEST_F(pkixocsp_VerifyEncodedResponse_DelegatedResponder,
 {
   static const char* subCAName = "good_indirect_subca_1_first sub-CA";
   static const char* signerName = "good_indirect_subca_1_first OCSP signer";
+  static const long zero = 0;
 
   // sub-CA of root (root is the direct issuer of endEntity)
   const ByteString subCAExtensions[] = {
-    CreateEncodedBasicConstraints(true, 0, Critical::No),
+    CreateEncodedBasicConstraints(true, &zero, Critical::No),
     ByteString()
   };
   ScopedTestKeyPair subCAKeyPair(GenerateKeyPair());
@@ -875,10 +876,11 @@ TEST_F(pkixocsp_VerifyEncodedResponse_DelegatedResponder,
 {
   static const char* subCAName = "good_indirect_subca_1_second sub-CA";
   static const char* signerName = "good_indirect_subca_1_second OCSP signer";
+  static const long zero = 0;
 
   // sub-CA of root (root is the direct issuer of endEntity)
   const ByteString subCAExtensions[] = {
-    CreateEncodedBasicConstraints(true, 0, Critical::No),
+    CreateEncodedBasicConstraints(true, &zero, Critical::No),
     ByteString()
   };
   ScopedTestKeyPair subCAKeyPair(GenerateKeyPair());
@@ -999,7 +1001,23 @@ public:
     TrustLevel certTrustLevel;
   };
 
+// trustDomain deliberately shadows the inherited field so that it isn't used
+// by accident. See bug 1339921.
+// Unfortunately GCC can't parse __has_warning("-Wshadow-field") even if it's
+// the latter part of a conjunction that would evaluate to false, so we have to
+// wrap it in a separate preprocessor conditional rather than using &&.
+#if defined(__clang__)
+  #if __has_warning("-Wshadow-field")
+    #pragma clang diagnostic push
+    #pragma clang diagnostic ignored "-Wshadow-field"
+  #endif
+#endif
   TrustDomain trustDomain;
+#if defined(__clang__)
+  #if __has_warning("-Wshadow-field")
+    #pragma clang diagnostic pop
+  #endif
+#endif
   ByteString signerCertDER;
   ByteString responseString;
   Input response; // references data in responseString

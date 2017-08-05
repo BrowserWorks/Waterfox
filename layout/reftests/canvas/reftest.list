@@ -1,5 +1,5 @@
 == default-size.html default-size-ref.html
-fuzzy-if(Android,8,1000) skip-if(webrender) == size-1.html size-1-ref.html # see bug 1322816 for webrender
+fuzzy-if(Android,8,1000) == size-1.html size-1-ref.html
 
 == empty-transaction-1.html empty-transaction-1-ref.html
 
@@ -63,10 +63,10 @@ random != text-emoji.html text-emoji-notref.html
 # azure quartz uses CGDrawLinearGradient instead of DrawShading
 # so we have less control over degenerate behaviour as tested by this
 # test
-fails-if((azureSkia&&!azureSkiaGL)||(azureSkiaGL&&Android)) == linear-gradient-1a.html linear-gradient-1-ref.html
+fails-if((azureSkia&&!azureSkiaGL&&!styloVsGecko)||(azureSkiaGL&&Android)) == linear-gradient-1a.html linear-gradient-1-ref.html
 
 # this passes with cairo on 10.7 and 10.8 but not with azure for reasons unknown
-fails-if((azureSkia&&!azureSkiaGL)||(azureSkiaGL&&Android)) == linear-gradient-1b.html linear-gradient-1-ref.html
+fails-if((azureSkia&&!azureSkiaGL&&!styloVsGecko)||(azureSkiaGL&&Android)) == linear-gradient-1b.html linear-gradient-1-ref.html
 
 == zero-dimensions.html zero-dimensions-ref.html
 
@@ -94,13 +94,13 @@ fuzzy-if(azureSkia,1,15) fuzzy-if(skiaContent,1,20) == transformed-gradient.html
 == 749467-1.html 749467-1-ref.html
 
 # You get a little bit of rounding fuzz on OSX from transforming the paths between user space and device space
-fuzzy-if(d2d,12,21) fuzzy-if(skiaContent,12,7) fuzzy-if(d2d&&/^Windows\x20NT\x2010\.0/.test(http.oscpu),2,141) == 784573-1.html 784573-1-ref.html
+fuzzy-if(d2d,12,21) fuzzy-if(skiaContent,16,84) fuzzy-if(d2d&&/^Windows\x20NT\x2010\.0/.test(http.oscpu),2,141) == 784573-1.html 784573-1-ref.html
 
 == 802658-1.html 802658-1-ref.html
 == 1074733-1.html 1074733-1-ref.html
 == 1107096-invisibles.html 1107096-invisibles-ref.html
 == 1151821-1.html 1151821-1-ref.html
-== 1201272-1.html 1201272-1-ref.html
+fuzzy-if(skiaContent,1,43) == 1201272-1.html 1201272-1-ref.html
 == 1224976-1.html 1224976-1-ref.html
 == 1238795-1.html 1238795-1-ref.html
 == 1303534-1.html 1303534-1-ref.html
@@ -109,4 +109,8 @@ fuzzy-if(d2d,12,21) fuzzy-if(skiaContent,12,7) fuzzy-if(d2d&&/^Windows\x20NT\x20
 fuzzy-if(winWidget,1,14) == 1304353-text-global-alpha-2.html 1304353-text-global-alpha-2-ref.html
 fuzzy-if(winWidget,94,1575) fuzzy-if(cocoaWidget,1,24) == 1304353-text-global-composite-op-1.html 1304353-text-global-composite-op-1-ref.html
 
+== text-indent-1a.html text-indent-1-ref.html
+== text-indent-1b.html text-indent-1-ref.html
+
 == 1347147-1.html 1347147-1-ref.html
+== 1353000-1.html 1353000-1-ref.html

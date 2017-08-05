@@ -1,4 +1,3 @@
-// |reftest| skip-if(!this.hasOwnProperty('Intl')) -- needs Intl
 // Copyright 2012 Mozilla Corporation. All rights reserved.
 // This code is governed by the BSD license found in the LICENSE file.
 
@@ -13,8 +12,6 @@ author: Norbert Lindenberg
 var obj = new Intl.DateTimeFormat();
 
 var toStringValue = Object.prototype.toString.call(obj);
-if (toStringValue !== "[object Object]") {
-    $ERROR("Intl.DateTimeFormat instance produces wrong [[Class]] - toString returns " + toStringValue + ".");
-}
+assert.sameValue(toStringValue, "[object Object]", "Intl.DateTimeFormat instance produces wrong [[Class]] - toString returns " + toStringValue + ".");
 
 reportCompare(0, 0);

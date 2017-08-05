@@ -39,6 +39,10 @@
 // download history
 #include "nsDownloadHistory.h"
 
+
+// LoadContexts (used for testing)
+#include "LoadContext.h"
+
 using mozilla::dom::ContentHandlerService;
 
 static bool gInitialized = false;
@@ -124,6 +128,8 @@ NS_DEFINE_NAMED_CID(NS_SHISTORY_CID);
 NS_DEFINE_NAMED_CID(NS_SHISTORY_INTERNAL_CID);
 NS_DEFINE_NAMED_CID(NS_DOWNLOADHISTORY_CID);
 NS_DEFINE_NAMED_CID(NS_CONTENTHANDLERSERVICE_CID);
+NS_DEFINE_NAMED_CID(NS_LOADCONTEXT_CID);
+NS_DEFINE_NAMED_CID(NS_PRIVATELOADCONTEXT_CID);
 
 const mozilla::Module::CIDEntry kDocShellCIDs[] = {
   { &kNS_DOCSHELL_CID, false, nullptr, nsDocShellConstructor },
@@ -152,6 +158,8 @@ const mozilla::Module::CIDEntry kDocShellCIDs[] = {
   { &kNS_SHISTORY_CID, false, nullptr, nsSHistoryConstructor },
   { &kNS_SHISTORY_INTERNAL_CID, false, nullptr, nsSHistoryConstructor },
   { &kNS_DOWNLOADHISTORY_CID, false, nullptr, nsDownloadHistoryConstructor },
+  { &kNS_LOADCONTEXT_CID, false, nullptr, mozilla::CreateTestLoadContext },
+  { &kNS_PRIVATELOADCONTEXT_CID, false, nullptr, mozilla::CreatePrivateTestLoadContext },
   { nullptr }
 };
 
@@ -169,9 +177,6 @@ const mozilla::Module::ContractIDEntry kDocShellContracts[] = {
   { NS_ABOUT_MODULE_CONTRACTID_PREFIX "crashes", &kNS_ABOUT_REDIRECTOR_MODULE_CID },
 #endif
   { NS_ABOUT_MODULE_CONTRACTID_PREFIX "credits", &kNS_ABOUT_REDIRECTOR_MODULE_CID },
-#ifdef MOZ_DEVTOOLS_ALL
-  { NS_ABOUT_MODULE_CONTRACTID_PREFIX "debugging", &kNS_ABOUT_REDIRECTOR_MODULE_CID },
-#endif
   { NS_ABOUT_MODULE_CONTRACTID_PREFIX "license", &kNS_ABOUT_REDIRECTOR_MODULE_CID },
   { NS_ABOUT_MODULE_CONTRACTID_PREFIX "logo", &kNS_ABOUT_REDIRECTOR_MODULE_CID },
   { NS_ABOUT_MODULE_CONTRACTID_PREFIX "memory", &kNS_ABOUT_REDIRECTOR_MODULE_CID },
@@ -192,6 +197,7 @@ const mozilla::Module::ContractIDEntry kDocShellContracts[] = {
 #endif
   { NS_ABOUT_MODULE_CONTRACTID_PREFIX "webrtc", &kNS_ABOUT_REDIRECTOR_MODULE_CID },
   { NS_ABOUT_MODULE_CONTRACTID_PREFIX "printpreview", &kNS_ABOUT_REDIRECTOR_MODULE_CID },
+  { NS_ABOUT_MODULE_CONTRACTID_PREFIX "url-classifier", &kNS_ABOUT_REDIRECTOR_MODULE_CID },
   { NS_URI_LOADER_CONTRACTID, &kNS_URI_LOADER_CID },
   { NS_DOCUMENTLOADER_SERVICE_CONTRACTID, &kNS_DOCUMENTLOADER_SERVICE_CID },
   { NS_HANDLERSERVICE_CONTRACTID, &kNS_CONTENTHANDLERSERVICE_CID, mozilla::Module::CONTENT_PROCESS_ONLY },
@@ -215,6 +221,8 @@ const mozilla::Module::ContractIDEntry kDocShellContracts[] = {
   { NS_SHISTORY_CONTRACTID, &kNS_SHISTORY_CID },
   { NS_SHISTORY_INTERNAL_CONTRACTID, &kNS_SHISTORY_INTERNAL_CID },
   { NS_DOWNLOADHISTORY_CONTRACTID, &kNS_DOWNLOADHISTORY_CID },
+  { NS_LOADCONTEXT_CONTRACTID, &kNS_LOADCONTEXT_CID },
+  { NS_PRIVATELOADCONTEXT_CONTRACTID, &kNS_PRIVATELOADCONTEXT_CID },
   { nullptr }
 };
 

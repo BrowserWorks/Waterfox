@@ -13,6 +13,7 @@
 #include "mozilla/ipc/ProtocolUtils.h"
 #include "mozilla/layers/PCompositorBridgeChild.h"
 #include "mozilla/layers/TextureForwarder.h" // for TextureForwarder
+#include "mozilla/webrender/WebRenderTypes.h"
 #include "nsClassHashtable.h"           // for nsClassHashtable
 #include "nsCOMPtr.h"                   // for nsCOMPtr
 #include "nsHashKeys.h"                 // for nsUint64HashKey
@@ -51,7 +52,7 @@ class CompositorBridgeChild final : public PCompositorBridgeChild,
 public:
   NS_INLINE_DECL_THREADSAFE_REFCOUNTING(CompositorBridgeChild, override);
 
-  explicit CompositorBridgeChild(LayerManager *aLayerManager);
+  explicit CompositorBridgeChild(LayerManager *aLayerManager, uint32_t aNamespace);
 
   void Destroy();
 
@@ -65,13 +66,14 @@ public:
   /**
    * Initialize the singleton compositor bridge for a content process.
    */
-  static bool InitForContent(Endpoint<PCompositorBridgeChild>&& aEndpoint);
-  static bool ReinitForContent(Endpoint<PCompositorBridgeChild>&& aEndpoint);
+  static bool InitForContent(Endpoint<PCompositorBridgeChild>&& aEndpoint, uint32_t aNamespace);
+  static bool ReinitForContent(Endpoint<PCompositorBridgeChild>&& aEndpoint, uint32_t aNamespace);
 
   static RefPtr<CompositorBridgeChild> CreateRemote(
     const uint64_t& aProcessToken,
     LayerManager* aLayerManager,
-    Endpoint<PCompositorBridgeChild>&& aEndpoint);
+    Endpoint<PCompositorBridgeChild>&& aEndpoint,
+    uint32_t aNamespace);
 
   /**
    * Initialize the CompositorBridgeChild, create CompositorBridgeParent, and
@@ -102,11 +104,6 @@ public:
   RecvInvalidateLayers(const uint64_t& aLayersId) override;
 
   virtual mozilla::ipc::IPCResult
-  RecvCompositorUpdated(const uint64_t& aLayersId,
-                        const TextureFactoryIdentifier& aNewIdentifier,
-                        const uint64_t& aSeqNo) override;
-
-  virtual mozilla::ipc::IPCResult
   RecvUpdatePluginConfigurations(const LayoutDeviceIntPoint& aContentOffset,
                                  const LayoutDeviceIntRegion& aVisibleRegion,
                                  nsTArray<PluginWindowData>&& aPlugins) override;
@@ -121,7 +118,8 @@ public:
                                             const LayersBackend& aLayersBackend,
                                             const TextureFlags& aFlags,
                                             const uint64_t& aId,
-                                            const uint64_t& aSerial) override;
+                                            const uint64_t& aSerial,
+                                            const wr::MaybeExternalImageId& aExternalImageId) override;
 
   virtual bool DeallocPTextureChild(PTextureChild* actor) override;
 
@@ -130,7 +128,9 @@ public:
   virtual PTextureChild* CreateTexture(const SurfaceDescriptor& aSharedData,
                                        LayersBackend aLayersBackend,
                                        TextureFlags aFlags,
-                                       uint64_t aSerial) override;
+                                       uint64_t aSerial,
+                                       wr::MaybeExternalImageId& aExternalImageId,
+                                       nsIEventTarget* aTarget) override;
 
   virtual void HandleFatalError(const char* aName, const char* aMsg) const override;
 
@@ -153,7 +153,7 @@ public:
   bool SendWillClose();
   bool SendPause();
   bool SendResume();
-  bool SendNotifyChildCreated(const uint64_t& id);
+  bool SendNotifyChildCreated(const uint64_t& id, CompositorOptions* aOptions);
   bool SendAdoptChild(const uint64_t& id);
   bool SendMakeSnapshot(const SurfaceDescriptor& inSnapshot, const gfx::IntRect& dirtyRect);
   bool SendFlushRendering();
@@ -223,13 +223,19 @@ public:
 
   void WillEndTransaction();
 
-  PWebRenderBridgeChild* AllocPWebRenderBridgeChild(const wr::PipelineId& aPipelineId, TextureFactoryIdentifier*,
+  PWebRenderBridgeChild* AllocPWebRenderBridgeChild(const wr::PipelineId& aPipelineId,
+                                                    const LayoutDeviceIntSize&,
+                                                    TextureFactoryIdentifier*,
                                                     uint32_t*) override;
   bool DeallocPWebRenderBridgeChild(PWebRenderBridgeChild* aActor) override;
 
   uint64_t DeviceResetSequenceNumber() const {
     return mDeviceResetSequenceNumber;
   }
+
+  wr::MaybeExternalImageId GetNextExternalImageId() override;
+
+  wr::PipelineId GetNextPipelineId();
 
 private:
   // Private destructor, to discourage deletion outside of Release():
@@ -240,9 +246,7 @@ private:
 
   virtual PLayerTransactionChild*
     AllocPLayerTransactionChild(const nsTArray<LayersBackend>& aBackendHints,
-                                const uint64_t& aId,
-                                TextureFactoryIdentifier* aTextureFactoryIdentifier,
-                                bool* aSuccess) override;
+                                const uint64_t& aId) override;
 
   virtual bool DeallocPLayerTransactionChild(PLayerTransactionChild *aChild) override;
 
@@ -262,6 +266,11 @@ private:
   mozilla::ipc::IPCResult RecvObserveLayerUpdate(const uint64_t& aLayersId,
                                                  const uint64_t& aEpoch,
                                                  const bool& aActive) override;
+
+  already_AddRefed<nsIEventTarget>
+  GetSpecificMessageEventTarget(const Message& aMsg) override;
+
+  uint64_t GetNextResourceId();
 
   // Class used to store the shared FrameMetrics, mutex, and APZCId  in a hash table
   class SharedFrameMetricsData {
@@ -290,6 +299,10 @@ private:
   };
 
   RefPtr<LayerManager> mLayerManager;
+
+  uint32_t mIdNamespace;
+  uint32_t mResourceId;
+
   // When not multi-process, hold a reference to the CompositorBridgeParent to keep it
   // alive. This reference should be null in multi-process.
   RefPtr<CompositorBridgeParent> mCompositorBridgeParent;

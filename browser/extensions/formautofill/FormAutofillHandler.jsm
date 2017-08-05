@@ -29,6 +29,8 @@ FormAutofillUtils.defineLazyLogGetter(this, this.EXPORTED_SYMBOLS[0]);
 function FormAutofillHandler(form) {
   this.form = form;
   this.fieldDetails = [];
+  this.winUtils = this.form.rootElement.ownerGlobal.QueryInterface(Ci.nsIInterfaceRequestor)
+    .getInterface(Ci.nsIDOMWindowUtils);
 }
 
 FormAutofillHandler.prototype = {
@@ -53,52 +55,34 @@ FormAutofillHandler.prototype = {
   fieldDetails: null,
 
   /**
-   * Returns information from the form about fields that can be autofilled, and
-   * populates the fieldDetails array on this object accordingly.
-   *
-   * @returns {Array<Object>} Serializable data structure that can be sent to the user
-   *          interface, or null if the operation failed because the constraints
-   *          on the allowed fields were not honored.
+   * String of the filled profile's guid.
+   */
+  filledProfileGUID: null,
+
+  /**
+   * A WindowUtils reference of which Window the form belongs
+   */
+  winUtils: null,
+
+  /**
+   * Enum for form autofill MANUALLY_MANAGED_STATES values
+   */
+  fieldStateEnum: {
+    // not themed
+    NORMAL: null,
+    // highlighted
+    AUTO_FILLED: "-moz-autofill",
+    // highlighted && grey color text
+    PREVIEW: "-moz-autofill-preview",
+  },
+
+  /**
+   * Set fieldDetails from the form about fields that can be autofilled.
    */
   collectFormFields() {
-    let autofillData = [];
-
-    for (let element of this.form.elements) {
-      // Exclude elements to which no autocomplete field has been assigned.
-      let info = FormAutofillHeuristics.getInfo(element);
-      if (!info) {
-        continue;
-      }
-
-      // Store the association between the field metadata and the element.
-      if (this.fieldDetails.some(f => f.section == info.section &&
-                                      f.addressType == info.addressType &&
-                                      f.contactType == info.contactType &&
-                                      f.fieldName == info.fieldName)) {
-        // A field with the same identifier already exists.
-        log.debug("Not collecting a field matching another with the same info:", info);
-        return null;
-      }
-
-      let inputFormat = {
-        section: info.section,
-        addressType: info.addressType,
-        contactType: info.contactType,
-        fieldName: info.fieldName,
-      };
-      // Clone the inputFormat for caching the fields and elements together
-      let formatWithElement = Object.assign({}, inputFormat);
-
-      inputFormat.index = autofillData.length;
-      autofillData.push(inputFormat);
-
-      formatWithElement.element = element;
-      this.fieldDetails.push(formatWithElement);
-    }
-
-    log.debug("Collected details on", autofillData.length, "fields");
-
-    return autofillData;
+    let fieldDetails = FormAutofillHeuristics.getFormInfo(this.form);
+    this.fieldDetails = fieldDetails ? fieldDetails : [];
+    log.debug("Collected details on", this.fieldDetails.length, "fields");
   },
 
   /**
@@ -112,21 +96,202 @@ FormAutofillHandler.prototype = {
    */
   autofillFormFields(profile, focusedInput) {
     log.debug("profile in autofillFormFields:", profile);
+
+    this.filledProfileGUID = profile.guid;
     for (let fieldDetail of this.fieldDetails) {
       // Avoid filling field value in the following cases:
       // 1. the focused input which is filled in FormFillController.
       // 2. a non-empty input field
       // 3. the invalid value set
+      // 4. value already chosen in select element
 
-      if (fieldDetail.element === focusedInput ||
-          fieldDetail.element.value) {
+      let element = fieldDetail.elementWeakRef.get();
+      if (!element) {
         continue;
       }
 
       let value = profile[fieldDetail.fieldName];
-      if (value) {
-        fieldDetail.element.setUserInput(value);
+      if (element instanceof Ci.nsIDOMHTMLInputElement && !element.value && value) {
+        if (element !== focusedInput) {
+          element.setUserInput(value);
+        }
+        this.changeFieldState(fieldDetail, "AUTO_FILLED");
+      } else if (element instanceof Ci.nsIDOMHTMLSelectElement) {
+        for (let option of element.options) {
+          if (value === option.textContent || value === option.value) {
+            // Do not change value if the option is already selected.
+            // Use case for multiple select is not considered here.
+            if (option.selected) {
+              break;
+            }
+            // TODO: Using dispatchEvent does not 100% simulate select change.
+            //       Should investigate further in Bug 1365895.
+            option.selected = true;
+            element.dispatchEvent(new Event("input", {"bubbles": true}));
+            element.dispatchEvent(new Event("change", {"bubbles": true}));
+            this.changeFieldState(fieldDetail, "AUTO_FILLED");
+            break;
+          }
+        }
+      }
+
+      // Unlike using setUserInput directly, FormFillController dispatches an
+      // asynchronous "DOMAutoComplete" event with an "input" event follows right
+      // after. So, we need to suppress the first "input" event fired off from
+      // focused input to make sure the latter change handler won't be affected
+      // by auto filling.
+      if (element === focusedInput) {
+        const suppressFirstInputHandler = e => {
+          if (e.isTrusted) {
+            e.stopPropagation();
+            element.removeEventListener("input", suppressFirstInputHandler);
+          }
+        };
+
+        element.addEventListener("input", suppressFirstInputHandler);
+      }
+      element.previewValue = "";
+    }
+
+    // Handle the highlight style resetting caused by user's correction afterward.
+    log.debug("register change handler for filled form:", this.form);
+    const onChangeHandler = e => {
+      let hasFilledFields;
+
+      if (!e.isTrusted) {
+        return;
+      }
+
+      for (let fieldDetail of this.fieldDetails) {
+        let element = fieldDetail.elementWeakRef.get();
+
+        if (!element) {
+          return;
+        }
+
+        if (e.target == element || (e.target == element.form && e.type == "reset")) {
+          this.changeFieldState(fieldDetail, "NORMAL");
+        }
+
+        hasFilledFields |= (fieldDetail.state == "AUTO_FILLED");
+      }
+
+      // Unregister listeners once no field is in AUTO_FILLED state.
+      if (!hasFilledFields) {
+        this.form.rootElement.removeEventListener("input", onChangeHandler);
+        this.form.rootElement.removeEventListener("reset", onChangeHandler);
+      }
+    };
+
+    this.form.rootElement.addEventListener("input", onChangeHandler);
+    this.form.rootElement.addEventListener("reset", onChangeHandler);
+  },
+
+  /**
+   * Populates result to the preview layers with given profile.
+   *
+   * @param {Object} profile
+   *        A profile to be previewed with
+   */
+  previewFormFields(profile) {
+    log.debug("preview profile in autofillFormFields:", profile);
+
+    for (let fieldDetail of this.fieldDetails) {
+      let element = fieldDetail.elementWeakRef.get();
+      let value = profile[fieldDetail.fieldName] || "";
+
+      // Skip the field that is null or already has text entered
+      if (!element || element.value) {
+        continue;
+      }
+
+      element.previewValue = value;
+      this.changeFieldState(fieldDetail, value ? "PREVIEW" : "NORMAL");
+    }
+  },
+
+  /**
+   * Clear preview text and background highlight of all fields.
+   */
+  clearPreviewedFormFields() {
+    log.debug("clear previewed fields in:", this.form);
+
+    for (let fieldDetail of this.fieldDetails) {
+      let element = fieldDetail.elementWeakRef.get();
+      if (!element) {
+        log.warn(fieldDetail.fieldName, "is unreachable");
+        continue;
+      }
+
+      element.previewValue = "";
+
+      // We keep the state if this field has
+      // already been auto-filled.
+      if (fieldDetail.state === "AUTO_FILLED") {
+        continue;
+      }
+
+      this.changeFieldState(fieldDetail, "NORMAL");
+    }
+  },
+
+  /**
+   * Change the state of a field to correspond with different presentations.
+   *
+   * @param {Object} fieldDetail
+   *        A fieldDetail of which its element is about to update the state.
+   * @param {string} nextState
+   *        Used to determine the next state
+   */
+  changeFieldState(fieldDetail, nextState) {
+    let element = fieldDetail.elementWeakRef.get();
+
+    if (!element) {
+      log.warn(fieldDetail.fieldName, "is unreachable while changing state");
+      return;
+    }
+    if (!(nextState in this.fieldStateEnum)) {
+      log.warn(fieldDetail.fieldName, "is trying to change to an invalid state");
+      return;
+    }
+
+    for (let [state, mmStateValue] of Object.entries(this.fieldStateEnum)) {
+      // The NORMAL state is simply the absence of other manually
+      // managed states so we never need to add or remove it.
+      if (!mmStateValue) {
+        continue;
+      }
+
+      if (state == nextState) {
+        this.winUtils.addManuallyManagedState(element, mmStateValue);
+      } else {
+        this.winUtils.removeManuallyManagedState(element, mmStateValue);
       }
     }
+
+    fieldDetail.state = nextState;
+  },
+
+  /**
+   * Return the profile that is converted from fieldDetails and only non-empty fields
+   * are included.
+   *
+   * @returns {Object} The new profile that convert from details with trimmed result.
+   */
+  createProfile() {
+    let profile = {};
+
+    this.fieldDetails.forEach(detail => {
+      let element = detail.elementWeakRef.get();
+      // Remove the unnecessary spaces
+      let value = element && element.value.trim();
+      if (!value) {
+        return;
+      }
+
+      profile[detail.fieldName] = value;
+    });
+
+    return profile;
   },
 };

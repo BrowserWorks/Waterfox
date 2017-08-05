@@ -34,6 +34,8 @@
 const { classes: Cc, interfaces: Ci, manager: Cm, results: Cr,
         utils: Cu } = Components;
 
+const URL_HTTP_UPDATE_SJS = "http://test_details/";
+
 /* global INSTALL_LOCALE, MOZ_APP_NAME, BIN_SUFFIX, MOZ_APP_VENDOR */
 /* global MOZ_APP_BASENAME, APP_BIN_SUFFIX, APP_INFO_NAME, APP_INFO_VENDOR */
 /* global IS_WIN, IS_MACOSX, IS_UNIX, MOZ_VERIFY_MAR_SIGNATURE */
@@ -163,7 +165,6 @@ var gCallbackBinFile = "callback_app" + BIN_SUFFIX;
 var gCallbackArgs = ["./", "callback.log", "Test Arg 2", "Test Arg 3"];
 var gPostUpdateBinFile = "postup_app" + BIN_SUFFIX;
 var gSvcOriginalLogContents;
-var gUseTestAppDir = true;
 // Some update staging failures can remove the update. This allows tests to
 // specify that the status file and the active update should not be checked
 // after an update is staged.
@@ -768,6 +769,8 @@ function setupTestCommon() {
   let caller = Components.stack.caller;
   gTestID = caller.filename.toString().split("/").pop().split(".")[0];
 
+  createAppInfo("xpcshell@tests.mozilla.org", APP_INFO_NAME, "1.0", "2.0");
+
   // Tests that don't work with XULRunner.
   const XUL_RUNNER_INCOMPATIBLE = ["marAppApplyUpdateAppBinInUseStageSuccess_win",
                                    "marAppApplyUpdateStageSuccess",
@@ -1101,7 +1104,6 @@ function checkPostUpdateRunningFile(aShouldExist) {
  * update service stub.
  */
 function standardInit() {
-  createAppInfo("xpcshell@tests.mozilla.org", APP_INFO_NAME, "1.0", "2.0");
   // Initialize the update service stub component
   initUpdateServiceStub();
 }
@@ -1901,14 +1903,19 @@ function stageUpdate(aCheckSvcLog) {
     gSvcOriginalLogContents = readServiceLogFile();
   }
 
-  Services.obs.addObserver(gUpdateStagedObserver, "update-staged", false);
+  Services.obs.addObserver(gUpdateStagedObserver, "update-staged");
 
   setAppBundleModTime();
   setEnvironment();
-  // Stage the update.
-  Cc["@mozilla.org/updates/update-processor;1"].
-    createInstance(Ci.nsIUpdateProcessor).
-    processUpdate(gUpdateManager.activeUpdate);
+  try {
+    // Stage the update.
+    Cc["@mozilla.org/updates/update-processor;1"].
+      createInstance(Ci.nsIUpdateProcessor).
+      processUpdate(gUpdateManager.activeUpdate);
+  } catch (e) {
+    Assert.ok(false,
+              "error thrown while calling processUpdate, exception: " + e);
+  }
 
   // The environment is not reset here because processUpdate in
   // nsIUpdateProcessor uses a new thread and clearing the environment
@@ -3699,20 +3706,11 @@ function adjustGeneralPaths() {
       aPersistent.value = true;
       switch (aProp) {
         case NS_GRE_DIR:
-          if (gUseTestAppDir) {
-            return getApplyDirFile(DIR_RESOURCES, true);
-          }
-          break;
+          return getApplyDirFile(DIR_RESOURCES, true);
         case NS_GRE_BIN_DIR:
-          if (gUseTestAppDir) {
-            return getApplyDirFile(DIR_MACOS, true);
-          }
-          break;
+          return getApplyDirFile(DIR_MACOS, true);
         case XRE_EXECUTABLE_FILE:
-          if (gUseTestAppDir) {
-            return getApplyDirFile(DIR_MACOS + FILE_APP_BIN, true);
-          }
-          break;
+          return getApplyDirFile(DIR_MACOS + FILE_APP_BIN, true);
         case XRE_UPDATE_ROOT_DIR:
           return getMockUpdRootD();
       }
@@ -3898,6 +3896,14 @@ function runUpdateUsingApp(aExpectedStatus) {
  * launched.
  */
 function setEnvironment() {
+  if (IS_WIN) {
+    // The tests use nsIProcess to launch the updater and it is simpler to just
+    // set an environment variable and have the test updater set the current
+    // working directory than it is to set the current working directory in the
+    // test itself.
+    gEnv.set("CURWORKDIRPATH", getApplyDirFile().path);
+  }
+
   // Prevent setting the environment more than once.
   if (gShouldResetEnv !== undefined) {
     return;

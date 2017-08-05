@@ -42,12 +42,6 @@ nsFirstLetterFrame::GetFrameName(nsAString& aResult) const
 }
 #endif
 
-nsIAtom*
-nsFirstLetterFrame::GetType() const
-{
-  return nsGkAtoms::letterFrame;
-}
-
 void
 nsFirstLetterFrame::BuildDisplayList(nsDisplayListBuilder*   aBuilder,
                                      const nsRect&           aDirtyRect,
@@ -66,10 +60,10 @@ nsFirstLetterFrame::Init(nsIContent*       aContent,
     // Get proper style context for ourselves.  We're creating the frame
     // that represents everything *except* the first letter, so just create
     // a style context like we would for a text node.
-    nsStyleContext* parentStyleContext = mStyleContext->GetParent();
+    nsStyleContext* parentStyleContext = mStyleContext->GetParentAllowServo();
     if (parentStyleContext) {
       newSC = PresContext()->StyleSet()->
-        ResolveStyleForOtherNonElement(parentStyleContext);
+        ResolveStyleForFirstLetterContinuation(parentStyleContext);
       SetStyleContextWithoutNotification(newSC);
     }
   }
@@ -222,7 +216,7 @@ nsFirstLetterFrame::Reflow(nsPresContext*          aPresContext,
     LogicalSize convertedSize = kidMetrics.Size(lineWM).ConvertTo(wm, lineWM);
     kid->SetRect(nsRect(bp.IStart(wm), bp.BStart(wm),
                         convertedSize.ISize(wm), convertedSize.BSize(wm)));
-    kid->FinishAndStoreOverflow(&kidMetrics);
+    kid->FinishAndStoreOverflow(&kidMetrics, rs.mStyleDisplay);
     kid->DidReflow(aPresContext, nullptr, nsDidReflowStatus::FINISHED);
 
     convertedSize.ISize(wm) += bp.IStartEnd(wm);
@@ -238,7 +232,7 @@ nsFirstLetterFrame::Reflow(nsPresContext*          aPresContext,
     aMetrics.UnionOverflowAreasWithDesiredBounds();
     ConsiderChildOverflow(aMetrics.mOverflowAreas, kid);
 
-    FinishAndStoreOverflow(&aMetrics);
+    FinishAndStoreOverflow(&aMetrics, aReflowInput.mStyleDisplay);
   } else {
     // Pretend we are a span and reflow the child frame
     nsLineLayout* ll = aReflowInput.mLineLayout;
@@ -321,8 +315,7 @@ nsFirstLetterFrame::CreateContinuationForFloatingParent(nsPresContext* aPresCont
   *aContinuation = nullptr;
 
   nsIPresShell* presShell = aPresContext->PresShell();
-  nsPlaceholderFrame* placeholderFrame =
-    presShell->FrameManager()->GetPlaceholderFrameFor(this);
+  nsPlaceholderFrame* placeholderFrame = GetPlaceholderFrame();
   nsContainerFrame* parent = placeholderFrame->GetParent();
 
   nsIFrame* continuation = presShell->FrameConstructor()->
@@ -331,10 +324,14 @@ nsFirstLetterFrame::CreateContinuationForFloatingParent(nsPresContext* aPresCont
   // The continuation will have gotten the first letter style from its
   // prev continuation, so we need to repair the style context so it
   // doesn't have the first letter styling.
-  nsStyleContext* parentSC = this->StyleContext()->GetParent();
+  //
+  // Note that getting parent frame's style context is different from getting
+  // this frame's style context's parent in the presence of ::first-line,
+  // which we do want the continuation to inherit from.
+  nsStyleContext* parentSC = parent->StyleContext();
   if (parentSC) {
     RefPtr<nsStyleContext> newSC;
-    newSC = presShell->StyleSet()->ResolveStyleForOtherNonElement(parentSC);
+    newSC = presShell->StyleSet()->ResolveStyleForFirstLetterContinuation(parentSC);
     continuation->SetStyleContext(newSC);
     nsLayoutUtils::MarkDescendantsDirty(continuation);
   }
@@ -386,7 +383,7 @@ nsFirstLetterFrame::DrainOverflowFrames(nsPresContext* aPresContext)
     if (kidContent) {
       NS_ASSERTION(kidContent->IsNodeOfType(nsINode::eTEXT),
                    "should contain only text nodes");
-      nsStyleContext* parentSC = prevInFlow ? mStyleContext->GetParent() :
+      nsStyleContext* parentSC = prevInFlow ? mStyleContext->GetParentAllowServo() :
                                               mStyleContext;
       sc = aPresContext->StyleSet()->ResolveStyleForText(kidContent, parentSC);
       kid->SetStyleContext(sc);

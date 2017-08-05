@@ -1,4 +1,3 @@
-// |reftest| skip-if(!this.hasOwnProperty('Intl')) -- needs Intl
 // Copyright 2012 Google Inc.  All rights reserved.
 // This code is governed by the BSD license found in the LICENSE file.
 
@@ -15,17 +14,11 @@ var requestedLocales = [defaultLocale, notSupported];
 
 var supportedLocales;
 
-if (!Intl.Collator.hasOwnProperty('supportedLocalesOf')) {
-    $ERROR("Intl.Collator doesn't have a supportedLocalesOf property.");
-}
+assert(Intl.Collator.hasOwnProperty('supportedLocalesOf'), "Intl.Collator doesn't have a supportedLocalesOf property.");
 
 supportedLocales = Intl.Collator.supportedLocalesOf(requestedLocales);
-if (supportedLocales.length !== 1) {
-    $ERROR('The length of supported locales list is not 1.');
-}
+assert.sameValue(supportedLocales.length, 1, 'The length of supported locales list is not 1.');
 
-if (supportedLocales[0] !== defaultLocale) {
-    $ERROR('The default locale is not returned in the supported list.');
-}
+assert.sameValue(supportedLocales[0], defaultLocale, 'The default locale is not returned in the supported list.');
 
 reportCompare(0, 0);

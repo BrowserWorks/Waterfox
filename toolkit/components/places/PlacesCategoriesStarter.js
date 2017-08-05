@@ -29,8 +29,8 @@ XPCOMUtils.defineLazyModuleGetter(this, "PlacesDBUtils",
  * certain categories are invoked.
  */
 function PlacesCategoriesStarter() {
-  Services.obs.addObserver(this, TOPIC_GATHER_TELEMETRY, false);
-  Services.obs.addObserver(this, PlacesUtils.TOPIC_SHUTDOWN, false);
+  Services.obs.addObserver(this, TOPIC_GATHER_TELEMETRY);
+  Services.obs.addObserver(this, PlacesUtils.TOPIC_SHUTDOWN);
 
   // nsINavBookmarkObserver implementation.
   let notify = () => {
@@ -62,11 +62,7 @@ PlacesCategoriesStarter.prototype = {
       case PlacesUtils.TOPIC_SHUTDOWN:
         Services.obs.removeObserver(this, PlacesUtils.TOPIC_SHUTDOWN);
         Services.obs.removeObserver(this, TOPIC_GATHER_TELEMETRY);
-        let globalObj =
-          Cu.getGlobalForObject(PlacesCategoriesStarter.prototype);
-        let descriptor =
-          Object.getOwnPropertyDescriptor(globalObj, "PlacesDBUtils");
-        if (descriptor.value !== undefined) {
+        if (Cu.isModuleLoaded("resource://gre/modules/PlacesDBUtils.jsm")) {
           PlacesDBUtils.shutdown();
         }
         break;
@@ -75,11 +71,8 @@ PlacesCategoriesStarter.prototype = {
         break;
       case "idle-daily":
         // Once a week run places.sqlite maintenance tasks.
-        let lastMaintenance = 0;
-        try {
-          lastMaintenance =
-            Services.prefs.getIntPref("places.database.lastMaintenance");
-        } catch (ex) {}
+        let lastMaintenance =
+          Services.prefs.getIntPref("places.database.lastMaintenance", 0);
         let nowSeconds = parseInt(Date.now() / 1000);
         if (lastMaintenance < nowSeconds - MAINTENANCE_INTERVAL_SECONDS) {
           PlacesDBUtils.maintenanceOnIdle();

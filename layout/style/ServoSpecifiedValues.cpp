@@ -48,6 +48,11 @@ ServoSpecifiedValues::SetIdentStringValue(nsCSSPropertyID aId,
 {
   nsCOMPtr<nsIAtom> atom = NS_Atomize(aValue);
   Servo_DeclarationBlock_SetIdentStringValue(mDecl, aId, atom);
+  if (aId == eCSSProperty__x_lang) {
+    // This forces the lang prefs result to be cached
+    // so that we can access them off main thread during traversal
+    mPresContext->ForceCacheLang(atom);
+  }
 }
 
 void
@@ -66,6 +71,19 @@ void
 ServoSpecifiedValues::SetPixelValue(nsCSSPropertyID aId, float aValue)
 {
   Servo_DeclarationBlock_SetPixelValue(mDecl, aId, aValue);
+}
+
+void
+ServoSpecifiedValues::SetLengthValue(nsCSSPropertyID aId, nsCSSValue aValue)
+{
+  MOZ_ASSERT(aValue.IsLengthUnit());
+  Servo_DeclarationBlock_SetLengthValue(mDecl, aId, aValue.GetFloatValue(), aValue.GetUnit());
+}
+
+void
+ServoSpecifiedValues::SetNumberValue(nsCSSPropertyID aId, float aValue)
+{
+  Servo_DeclarationBlock_SetNumberValue(mDecl, aId, aValue);
 }
 
 void
@@ -102,4 +120,13 @@ void
 ServoSpecifiedValues::SetTextDecorationColorOverride()
 {
   Servo_DeclarationBlock_SetTextDecorationColorOverride(mDecl);
+}
+
+void
+ServoSpecifiedValues::SetBackgroundImage(nsAttrValue& aValue)
+{
+  nsAutoString str;
+  aValue.ToString(str);
+  Servo_DeclarationBlock_SetBackgroundImage(mDecl, str,
+        mPresContext->Document()->DefaultStyleAttrURLData());
 }

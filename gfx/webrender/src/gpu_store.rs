@@ -5,10 +5,29 @@
 use device::TextureFilter;
 use std::marker::PhantomData;
 use std::mem;
+use std::ops::Add;
+use util::recycle_vec;
 use webrender_traits::ImageFormat;
 
 #[derive(Debug, Copy, Clone, Eq, Hash, PartialEq)]
 pub struct GpuStoreAddress(pub i32);
+
+
+impl Add<i32> for GpuStoreAddress {
+    type Output = GpuStoreAddress;
+
+    fn add(self, other: i32) -> GpuStoreAddress {
+        GpuStoreAddress(self.0 + other)
+    }
+}
+
+impl Add<usize> for GpuStoreAddress {
+    type Output = GpuStoreAddress;
+
+    fn add(self, other: usize) -> GpuStoreAddress {
+        GpuStoreAddress(self.0 + other as i32)
+    }
+}
 
 pub trait GpuStoreLayout {
     fn image_format() -> ImageFormat;
@@ -35,6 +54,10 @@ pub trait GpuStoreLayout {
     fn items_per_row<T>() -> usize {
         Self::texture_width::<T>() / Self::texels_per_item::<T>()
     }
+
+    fn rows_per_item<T>() -> usize {
+        Self::texels_per_item::<T>() / Self::texture_width::<T>()
+    }
 }
 
 /// A CPU-side buffer storing content to be uploaded to the GPU.
@@ -55,6 +78,13 @@ impl<T: Clone + Default, L: GpuStoreLayout> GpuStore<T, L> {
         }
     }
 
+    pub fn recycle(self) -> Self {
+        GpuStore {
+            data: recycle_vec(self.data),
+            layout: PhantomData,
+        }
+    }
+
     pub fn push<E>(&mut self, data: E) -> GpuStoreAddress where T: From<E> {
         let address = GpuStoreAddress(self.data.len() as i32);
         self.data.push(T::from(data));
@@ -71,8 +101,10 @@ impl<T: Clone + Default, L: GpuStoreLayout> GpuStore<T, L> {
         // Extend the data array to be a multiple of the row size.
         // This ensures memory safety when the array is passed to
         // OpenGL to upload to the GPU.
-        while items.len() % items_per_row != 0 {
-            items.push(T::default());
+        if items_per_row != 0 {
+            while items_per_row != 0 && items.len() % items_per_row != 0 {
+                items.push(T::default());
+            }
         }
 
         items
@@ -105,6 +137,10 @@ impl<T: Clone + Default, L: GpuStoreLayout> GpuStore<T, L> {
                          count: usize) -> &mut [T] {
         let offset = address.0 as usize;
         &mut self.data[offset..offset + count]
+    }
+
+    pub fn clear(&mut self) {
+        self.data.clear()
     }
 
     // TODO(gw): Implement incremental updates of

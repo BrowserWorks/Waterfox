@@ -33,21 +33,28 @@ namespace wasm {
 // LinkData is built incrementing by ModuleGenerator and then stored immutably
 // in Module.
 
-struct LinkDataCacheablePod
+struct LinkDataTierCacheablePod
 {
     uint32_t functionCodeLength;
-    uint32_t globalDataLength;
     uint32_t interruptOffset;
     uint32_t outOfBoundsOffset;
     uint32_t unalignedAccessOffset;
 
-    LinkDataCacheablePod() { mozilla::PodZero(this); }
+    LinkDataTierCacheablePod() { mozilla::PodZero(this); }
 };
 
-struct LinkData : LinkDataCacheablePod
+struct LinkDataTier : LinkDataTierCacheablePod
 {
-    LinkDataCacheablePod& pod() { return *this; }
-    const LinkDataCacheablePod& pod() const { return *this; }
+    const Tier tier;
+
+    explicit LinkDataTier(Tier tier)
+      : tier(tier)
+    {
+        MOZ_ASSERT(tier == Tier::Baseline || tier == Tier::Ion);
+    }
+
+    LinkDataTierCacheablePod& pod() { return *this; }
+    const LinkDataTierCacheablePod& pod() const { return *this; }
 
     struct InternalLink {
         enum Kind {
@@ -74,8 +81,24 @@ struct LinkData : LinkDataCacheablePod
     WASM_DECLARE_SERIALIZABLE(LinkData)
 };
 
-typedef UniquePtr<LinkData> UniqueLinkData;
-typedef UniquePtr<const LinkData> UniqueConstLinkData;
+typedef UniquePtr<LinkDataTier> UniqueLinkDataTier;
+
+struct LinkData
+{
+    // `tier_` will become more complicated once tiering is implemented.
+    UniqueLinkDataTier tier_;
+
+    LinkData() : tier_(nullptr) {}
+
+    // Construct the tier_ object.
+    bool initTier(Tier tier);
+
+    Tiers tiers() const;
+    const LinkDataTier& linkData(Tier tier) const;
+    LinkDataTier& linkData(Tier tier);
+
+    WASM_DECLARE_SERIALIZABLE(LinkData)
+};
 
 // Module represents a compiled wasm module and primarily provides two
 // operations: instantiation and serialization. A Module can be instantiated any
@@ -83,23 +106,31 @@ typedef UniquePtr<const LinkData> UniqueConstLinkData;
 // any number of times such that the serialized bytes can be deserialized later
 // to produce a new, equivalent Module.
 //
-// Since fully linked-and-instantiated code (represented by CodeSegment) cannot
-// be shared between instances, Module stores an unlinked, uninstantiated copy
-// of the code (represented by the Bytes) and creates a new CodeSegment each
-// time it is instantiated. In the future, Module will store a shareable,
-// immutable CodeSegment that can be shared by all its instances.
+// Fully linked-and-instantiated code (represented by Code and its owned
+// CodeSegment) can be shared between instances, provided none of those
+// instances are being debugged. If patchable code is needed then each instance
+// must have its own Code. Module eagerly creates a new Code and gives it to the
+// first instance; it then instantiates new Code objects from a copy of the
+// unlinked code that it keeps around for that purpose.
 
 class Module : public JS::WasmModule
 {
     const Assumptions       assumptions_;
-    const Bytes             code_;
+    const SharedCode        code_;
+    const UniqueConstBytes  unlinkedCodeForDebugging_;
     const LinkData          linkData_;
     const ImportVector      imports_;
     const ExportVector      exports_;
     const DataSegmentVector dataSegments_;
     const ElemSegmentVector elemSegments_;
-    const SharedMetadata    metadata_;
     const SharedBytes       bytecode_;
+
+    // `codeIsBusy_` is set to false initially and then to true when `code_` is
+    // already being used for an instance and can't be shared because it may be
+    // patched by the debugger. Subsequent instances must then create copies
+    // by linking the `unlinkedCodeForDebugging_`.
+
+    mutable mozilla::Atomic<bool> codeIsBusy_;
 
     bool instantiateFunctions(JSContext* cx, Handle<FunctionVector> funcImports) const;
     bool instantiateMemory(JSContext* cx, MutableHandleWasmMemoryObject memory) const;
@@ -114,30 +145,36 @@ class Module : public JS::WasmModule
 
   public:
     Module(Assumptions&& assumptions,
-           Bytes&& code,
+           const Code& code,
+           UniqueConstBytes unlinkedCodeForDebugging,
            LinkData&& linkData,
            ImportVector&& imports,
            ExportVector&& exports,
            DataSegmentVector&& dataSegments,
            ElemSegmentVector&& elemSegments,
-           const Metadata& metadata,
            const ShareableBytes& bytecode)
       : assumptions_(Move(assumptions)),
-        code_(Move(code)),
+        code_(&code),
+        unlinkedCodeForDebugging_(Move(unlinkedCodeForDebugging)),
         linkData_(Move(linkData)),
         imports_(Move(imports)),
         exports_(Move(exports)),
         dataSegments_(Move(dataSegments)),
         elemSegments_(Move(elemSegments)),
-        metadata_(&metadata),
-        bytecode_(&bytecode)
-    {}
+        bytecode_(&bytecode),
+        codeIsBusy_(false)
+    {
+        MOZ_ASSERT_IF(metadata().debugEnabled, unlinkedCodeForDebugging_);
+    }
     ~Module() override { /* Note: can be called on any thread */ }
 
-    const Metadata& metadata() const { return *metadata_; }
+    const Code& code() const { return *code_; }
+    const Metadata& metadata() const { return code_->metadata(); }
+    const MetadataTier& metadata(Tier t) const { return code_->metadata(t); }
     const ImportVector& imports() const { return imports_; }
     const ExportVector& exports() const { return exports_; }
     const Bytes& bytecode() const { return bytecode_->bytes; }
+    uint32_t codeLength(Tier t) const { return code_->segment(t).length(); }
 
     // Instantiate this module with the given imports:
 
@@ -166,11 +203,12 @@ class Module : public JS::WasmModule
     void addSizeOfMisc(MallocSizeOf mallocSizeOf,
                        Metadata::SeenSet* seenMetadata,
                        ShareableBytes::SeenSet* seenBytes,
+                       Code::SeenSet* seenCode,
                        size_t* code, size_t* data) const;
 
     // Generated code analysis support:
 
-    bool extractCode(JSContext* cx, MutableHandleValue vp);
+    bool extractCode(JSContext* cx, MutableHandleValue vp) const;
 };
 
 typedef RefPtr<Module> SharedModule;

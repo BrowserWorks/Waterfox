@@ -404,9 +404,9 @@ Declaration::GetImageLayerValue(
 
     StyleGeometryBox originDefaultValue =
       (aTable == nsStyleImageLayers::kBackgroundLayerTable)
-      ? StyleGeometryBox::Padding : StyleGeometryBox::Border;
+      ? StyleGeometryBox::PaddingBox : StyleGeometryBox::BorderBox;
     if (static_cast<StyleGeometryBox>(clip->mValue.GetIntValue()) !=
-        StyleGeometryBox::Border ||
+        StyleGeometryBox::BorderBox ||
         static_cast<StyleGeometryBox>(origin->mValue.GetIntValue()) !=
         originDefaultValue) {
 #ifdef DEBUG
@@ -800,17 +800,26 @@ Declaration::GetPropertyValueInternal(
       MOZ_ASSERT(StringEndsWith(nsCSSProps::GetStringValue(subprops[2]),
                                 NS_LITERAL_CSTRING("-color")),
                  "third subprop must be the color property");
-      const nsCSSValue *colorValue = data->ValueFor(subprops[2]);
-      bool isCurrentColor =
-        colorValue->GetUnit() == eCSSUnit_EnumColor &&
-        colorValue->GetIntValue() == NS_COLOR_CURRENTCOLOR;
-      if (!AppendValueToString(subprops[0], aValue, aSerialization) ||
-          !(aValue.Append(char16_t(' ')),
-            AppendValueToString(subprops[1], aValue, aSerialization)) ||
+
+      bool ok = AppendValueToString(subprops[0], aValue, aSerialization);
+      if (ok) {
+        aValue.Append(u' ');
+        ok = AppendValueToString(subprops[1], aValue, aSerialization);
+        if (ok) {
+          const nsCSSValue *colorValue = data->ValueFor(subprops[2]);
+          bool isCurrentColor =
+            colorValue->GetUnit() == eCSSUnit_EnumColor &&
+            colorValue->GetIntValue() == NS_COLOR_CURRENTCOLOR;
+
           // Don't output a third value when it's currentcolor.
-          !(isCurrentColor ||
-            (aValue.Append(char16_t(' ')),
-             AppendValueToString(subprops[2], aValue, aSerialization)))) {
+          if (!isCurrentColor) {
+            aValue.Append(u' ');
+            ok = AppendValueToString(subprops[2], aValue, aSerialization);
+          }
+        }
+      }
+
+      if (!ok) {
         aValue.Truncate();
       }
       break;
@@ -863,8 +872,6 @@ Declaration::GetPropertyValueInternal(
         data->ValueFor(eCSSProperty_font_language_override);
       const nsCSSValue *fontKerning =
         data->ValueFor(eCSSProperty_font_kerning);
-      const nsCSSValue *fontSynthesis =
-        data->ValueFor(eCSSProperty_font_synthesis);
       const nsCSSValue *fontVariantAlternates =
         data->ValueFor(eCSSProperty_font_variant_alternates);
       const nsCSSValue *fontVariantCaps =
@@ -891,7 +898,6 @@ Declaration::GetPropertyValueInternal(
             featureSettings->GetUnit() != eCSSUnit_System_Font ||
             languageOverride->GetUnit() != eCSSUnit_System_Font ||
             fontKerning->GetUnit() != eCSSUnit_System_Font ||
-            fontSynthesis->GetUnit() != eCSSUnit_System_Font ||
             fontVariantAlternates->GetUnit() != eCSSUnit_System_Font ||
             fontVariantCaps->GetUnit() != eCSSUnit_System_Font ||
             fontVariantEastAsian->GetUnit() != eCSSUnit_System_Font ||
@@ -910,9 +916,6 @@ Declaration::GetPropertyValueInternal(
             featureSettings->GetUnit() != eCSSUnit_Normal ||
             languageOverride->GetUnit() != eCSSUnit_Normal ||
             fontKerning->GetIntValue() != NS_FONT_KERNING_AUTO ||
-            fontSynthesis->GetUnit() != eCSSUnit_Enumerated ||
-            fontSynthesis->GetIntValue() !=
-              (NS_FONT_SYNTHESIS_WEIGHT | NS_FONT_SYNTHESIS_STYLE) ||
             fontVariantAlternates->GetUnit() != eCSSUnit_Normal ||
             fontVariantEastAsian->GetUnit() != eCSSUnit_Normal ||
             fontVariantLigatures->GetUnit() != eCSSUnit_Normal ||

@@ -7,11 +7,11 @@
 # buckets specified by each histogram.
 
 import sys
-import re
 import histogram_tools
 import json
 
 from collections import OrderedDict
+
 
 def main(argv):
     filenames = argv
@@ -28,7 +28,7 @@ def main(argv):
             'linear': '1',
             'exponential': '0',
             'count': '4',
-            }
+        }
         # Use __setitem__ because Python lambdas are so limited.
         histogram_tools.table_dispatch(histogram.kind(), table,
                                        lambda k: parameters.__setitem__('kind', k))
@@ -45,8 +45,8 @@ def main(argv):
         except histogram_tools.DefinitionException:
             continue
 
-        all_histograms.update({ name: parameters });
+        all_histograms.update({name: parameters})
 
-    print json.dumps({ 'histograms': all_histograms})
+    print json.dumps({'histograms': all_histograms})
 
 main(sys.argv[1:])

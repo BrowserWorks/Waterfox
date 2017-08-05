@@ -5,7 +5,7 @@
 "use strict";
 
 const { Cc, Ci, Cu } = require("chrome");
-const { OS, TextDecoder } = Cu.import("resource://gre/modules/osfile.jsm", {});
+const { OS } = Cu.import("resource://gre/modules/osfile.jsm", {});
 const { Task } = require("devtools/shared/task");
 
 const gcli = require("gcli/index");
@@ -15,10 +15,6 @@ loader.lazyGetter(this, "prefBranch", function () {
   let prefService = Cc["@mozilla.org/preferences-service;1"]
                       .getService(Ci.nsIPrefService);
   return prefService.getBranch(null).QueryInterface(Ci.nsIPrefBranch2);
-});
-
-loader.lazyGetter(this, "supportsString", function () {
-  return Cc["@mozilla.org/supports-string;1"].createInstance(Ci.nsISupportsString);
 });
 
 loader.lazyImporter(this, "NetUtil", "resource://gre/modules/NetUtil.jsm");
@@ -31,8 +27,7 @@ const PREF_DIR = "devtools.commands.dir";
  * using in gcli.addItemsByModule
  */
 function loadItemsFromMozDir() {
-  let dirName = prefBranch.getComplexValue(PREF_DIR,
-                                           Ci.nsISupportsString).data.trim();
+  let dirName = prefBranch.getStringPref(PREF_DIR).trim();
   if (dirName == "") {
     return Promise.resolve([]);
   }
@@ -143,8 +138,7 @@ exports.items = [
     exec: function (args, context) {
       gcli.load();
 
-      let dirName = prefBranch.getComplexValue(PREF_DIR,
-                                              Ci.nsISupportsString).data.trim();
+      let dirName = prefBranch.getStringPref(PREF_DIR).trim();
       return l10n.lookupFormat("cmdStatus3", [ dirName ]);
     }
   },
@@ -172,8 +166,7 @@ exports.items = [
       return true;
     },
     exec: function (args, context) {
-      supportsString.data = args.directory;
-      prefBranch.setComplexValue(PREF_DIR, Ci.nsISupportsString, supportsString);
+      prefBranch.setStringPref(PREF_DIR, args.directory);
 
       gcli.load();
 

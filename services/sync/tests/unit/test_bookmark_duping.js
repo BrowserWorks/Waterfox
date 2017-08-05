@@ -1,7 +1,6 @@
 /* Any copyright is dedicated to the Public Domain.
    http://creativecommons.org/publicdomain/zero/1.0/ */
 
-Cu.import("resource://gre/modules/PlacesUtils.jsm");
 Cu.import("resource://gre/modules/PlacesSyncUtils.jsm");
 Cu.import("resource://services-common/async.js");
 Cu.import("resource://gre/modules/Log.jsm");
@@ -25,23 +24,10 @@ store._log.level = Log.Level.Trace;
 engine._log.level = Log.Level.Trace;
 
 async function setup() {
- let server = serverForUsers({"foo": "password"}, {
-    meta: {global: {engines: {bookmarks: {version: engine.version,
-                                          syncID: engine.syncID}}}},
-    bookmarks: {},
-  });
-
-  generateNewKeys(Service.collectionKeys);
-
+ let server = serverForFoo(engine);
   await SyncTestingInfrastructure(server);
 
   let collection = server.user("foo").collection("bookmarks");
-
-  // The bookmarks engine *always* tracks changes, meaning we might try
-  // and sync due to the bookmarks we ourselves create! Worse, because we
-  // do an engine sync only, there's no locking - so we end up with multiple
-  // syncs running. Neuter that by making the threshold very large.
-  Service.scheduler.syncThreshold = 10000000;
 
   Svc.Obs.notify("weave:engine:start-tracking");   // We skip usual startup...
 
@@ -123,6 +109,7 @@ async function validate(collection, expectedFailures = []) {
     do_print(JSON.stringify(summary));
     // print the entire validator output as it has IDs etc.
     do_print(JSON.stringify(problems, undefined, 2));
+    do_print("Expected: " + JSON.stringify(expectedFailures, undefined, 2));
     // All server records and the entire bookmark tree.
     do_print("Server records:\n" + JSON.stringify(collection.payloads(), undefined, 2));
     let tree = await PlacesUtils.promiseBookmarksTree("", { includeItemIds: true });
@@ -139,7 +126,7 @@ add_task(async function test_dupe_bookmark() {
   try {
     // The parent folder and one bookmark in it.
     let {id: folder1_id, guid: folder1_guid } = await createFolder(bms.toolbarFolder, "Folder 1");
-    let {guid: bmk1_guid} = await createBookmark(folder1_id, "http://getfirefox.com/", "Get Firefox!");
+    let {id: localId, guid: bmk1_guid} = await createBookmark(folder1_id, "http://getfirefox.com/", "Get Firefox!");
 
     engine.sync();
 
@@ -157,10 +144,27 @@ add_task(async function test_dupe_bookmark() {
       parentName: "Folder 1",
       parentid: folder1_guid,
     };
-
     collection.insert(newGUID, encryptPayload(to_apply), Date.now() / 1000 + 500);
+
+    let onItemChangedObserved = false;
+    const obs = {
+      onItemChanged(id, prop, isAnno, newVal, lastMod, itemType, parentId, guid, parentGuid, oldVal, source) {
+        equal(id, localId);
+        equal(prop, "guid");
+        equal(newVal, newGUID);
+        equal(itemType, bms.TYPE_BOOKMARK);
+        equal(parentId, folder1_id);
+        equal(guid, newGUID);
+        equal(parentGuid, folder1_guid);
+        equal(oldVal, bmk1_guid);
+        equal(source, PlacesUtils.bookmarks.SOURCE_SYNC);
+        onItemChangedObserved = true;
+      }
+    };
+    PlacesUtils.bookmarks.addObserver(obs, false);
+
     _("Syncing so new dupe record is processed");
-    engine.lastSync = engine.lastSync - 0.01;
+    engine.lastSync = engine.lastSync - 5;
     engine.sync();
 
     // We should have logically deleted the dupe record.
@@ -175,8 +179,11 @@ add_task(async function test_dupe_bookmark() {
     ok(!serverRecord.children.includes(bmk1_guid));
     ok(serverRecord.children.includes(newGUID));
 
+    ok(onItemChangedObserved);
+
     // and a final sanity check - use the validator
     await validate(collection);
+    PlacesUtils.bookmarks.removeObserver(obs);
   } finally {
     await cleanup(server);
   }
@@ -218,7 +225,7 @@ add_task(async function test_dupe_reparented_bookmark() {
     collection.insert(newGUID, encryptPayload(to_apply), Date.now() / 1000 + 500);
 
     _("Syncing so new dupe record is processed");
-    engine.lastSync = engine.lastSync - 0.01;
+    engine.lastSync = engine.lastSync - 5;
     engine.sync();
 
     // We should have logically deleted the dupe record.
@@ -295,7 +302,7 @@ add_task(async function test_dupe_reparented_locally_changed_bookmark() {
     });
 
     _("Syncing so new dupe record is processed");
-    engine.lastSync = engine.lastSync - 0.01;
+    engine.lastSync = engine.lastSync - 5;
     engine.sync();
 
     // We should have logically deleted the dupe record.
@@ -386,7 +393,7 @@ add_task(async function test_dupe_reparented_to_earlier_appearing_parent_bookmar
 
 
     _("Syncing so new records are processed.");
-    engine.lastSync = engine.lastSync - 0.01;
+    engine.lastSync = engine.lastSync - 5;
     engine.sync();
 
     // Everything should be parented correctly.
@@ -462,7 +469,7 @@ add_task(async function test_dupe_reparented_to_later_appearing_parent_bookmark(
     }), Date.now() / 1000 + 500);
 
     _("Syncing so out-of-order records are processed.");
-    engine.lastSync = engine.lastSync - 0.01;
+    engine.lastSync = engine.lastSync - 5;
     engine.sync();
 
     // The intended parent did end up existing, so it should be parented
@@ -514,10 +521,11 @@ add_task(async function test_dupe_reparented_to_future_arriving_parent_bookmark(
       parentName: "Folder 1",
       parentid: newParentGUID,
       tags: [],
+      dateAdded: Date.now() - 10000
     }), Date.now() / 1000 + 500);
 
     _("Syncing so new dupe record is processed");
-    engine.lastSync = engine.lastSync - 0.01;
+    engine.lastSync = engine.lastSync - 5;
     engine.sync();
 
     // We should have logically deleted the dupe record.
@@ -557,6 +565,7 @@ add_task(async function test_dupe_reparented_to_future_arriving_parent_bookmark(
       parentid: folder2_guid,
       children: [newGUID],
       tags: [],
+      dateAdded: Date.now() - 10000,
     }), Date.now() / 1000 + 500);
     // We also queue an update to "folder 2" that references the new parent.
     collection.insert(folder2_guid, encryptPayload({
@@ -567,10 +576,12 @@ add_task(async function test_dupe_reparented_to_future_arriving_parent_bookmark(
       parentid: "toolbar",
       children: [newParentGUID],
       tags: [],
+      dateAdded: Date.now() - 11000,
     }), Date.now() / 1000 + 500);
 
+
     _("Syncing so missing parent appears");
-    engine.lastSync = engine.lastSync - 0.01;
+    engine.lastSync = engine.lastSync - 5;
     engine.sync();
 
     // The intended parent now does exist, so it should have been reparented.
@@ -626,7 +637,7 @@ add_task(async function test_dupe_empty_folder() {
     }), Date.now() / 1000 + 500);
 
     _("Syncing so new dupe records are processed");
-    engine.lastSync = engine.lastSync - 0.01;
+    engine.lastSync = engine.lastSync - 5;
     engine.sync();
 
     await validate(collection);

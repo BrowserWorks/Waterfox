@@ -20,7 +20,7 @@
 #include "nsDefaultURIFixup.h"
 #include "mozilla/Preferences.h"
 #include "mozilla/dom/ContentChild.h"
-#include "mozilla/ipc/InputStreamUtils.h"
+#include "mozilla/ipc/IPCStreamUtils.h"
 #include "mozilla/ipc/URIUtils.h"
 #include "mozilla/Tokenizer.h"
 #include "nsIObserverService.h"
@@ -167,7 +167,7 @@ nsDefaultURIFixup::GetFixupURIInfo(const nsACString& aStringURI,
   nsAutoCString uriString(aStringURI);
 
   // Eliminate embedded newlines, which single-line text fields now allow:
-  uriString.StripChars("\r\n");
+  uriString.StripCRLF();
   // Cleanup the empty spaces that might be on each end:
   uriString.Trim(" ");
 
@@ -432,7 +432,7 @@ nsDefaultURIFixup::KeywordToURI(const nsACString& aKeyword,
       return NS_ERROR_NOT_AVAILABLE;
     }
 
-    ipc::OptionalInputStreamParams postData;
+    ipc::OptionalIPCStream postData;
     ipc::OptionalURIParams uri;
     nsAutoString providerName;
     if (!contentChild->SendKeywordToURI(keyword, &providerName, &postData,
@@ -444,11 +444,8 @@ nsDefaultURIFixup::KeywordToURI(const nsACString& aKeyword,
     info->mKeywordProviderName = providerName;
 
     if (aPostData) {
-      nsTArray<ipc::FileDescriptor> fds;
-      nsCOMPtr<nsIInputStream> temp = DeserializeInputStream(postData, fds);
+      nsCOMPtr<nsIInputStream> temp = ipc::DeserializeIPCStream(postData);
       temp.forget(aPostData);
-
-      MOZ_ASSERT(fds.IsEmpty());
     }
 
     nsCOMPtr<nsIURI> temp = DeserializeURI(uri);
@@ -548,11 +545,22 @@ nsDefaultURIFixup::MakeAlternateURI(nsIURI* aURI)
   if (!userpass.IsEmpty()) {
     return false;
   }
+  // Don't fix up hosts with ports
+  int32_t port;
+  aURI->GetPort(&port);
+  if (port != -1) {
+    return false;
+  }
 
   nsAutoCString oldHost;
-  nsAutoCString newHost;
   aURI->GetHost(oldHost);
 
+  // Don't fix up 'localhost' because that's confusing:
+  if (oldHost.EqualsLiteral("localhost")) {
+    return false;
+  }
+
+  nsAutoCString newHost;
   // Count the dots
   int32_t numDots = 0;
   nsReadingIterator<char> iter;

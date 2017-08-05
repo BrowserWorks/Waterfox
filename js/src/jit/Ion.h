@@ -8,7 +8,6 @@
 #define jit_Ion_h
 
 #include "mozilla/MemoryReporting.h"
-#include "mozilla/Move.h"
 #include "mozilla/Result.h"
 
 #include "jscntxt.h"
@@ -41,18 +40,8 @@ enum class AbortReason : uint8_t {
 
 template <typename V>
 using AbortReasonOr = mozilla::Result<V, AbortReason>;
+using mozilla::Err;
 using mozilla::Ok;
-
-// This is the equivalent of the following, except that these are functions and
-// not types, which makes this syntax invalid:
-//     using Err = mozilla::MakeGenericErrorResult;
-template <typename E>
-inline mozilla::GenericErrorResult<E>
-Err(E&& aErrorValue)
-{
-    return mozilla::MakeGenericErrorResult(mozilla::Forward<E>(aErrorValue));
-}
-
 
 static_assert(sizeof(AbortReasonOr<Ok>) <= sizeof(uintptr_t),
     "Unexpected size of AbortReasonOr<Ok>");
@@ -158,8 +147,6 @@ void Invalidate(JSContext* cx, const RecompileInfoVector& invalid, bool resetUse
 void Invalidate(JSContext* cx, JSScript* script, bool resetUses = true,
                 bool cancelOffThread = true);
 
-void ToggleBarriers(JS::Zone* zone, bool needs);
-
 class IonBuilder;
 class MIRGenerator;
 class LIRGraph;
@@ -170,7 +157,7 @@ LIRGraph* GenerateLIR(MIRGenerator* mir);
 CodeGenerator* GenerateCode(MIRGenerator* mir, LIRGraph* lir);
 CodeGenerator* CompileBackEnd(MIRGenerator* mir);
 
-void AttachFinishedCompilations(JSContext* cx);
+void AttachFinishedCompilations(ZoneGroup* group, JSContext* maybecx);
 void FinishOffThreadBuilder(JSRuntime* runtime, IonBuilder* builder,
                             const AutoLockHelperThreadState& lock);
 
@@ -195,7 +182,9 @@ IsIonInlinablePC(jsbytecode* pc) {
     // CALL, FUNCALL, FUNAPPLY, EVAL, NEW (Normal Callsites)
     // GETPROP, CALLPROP, and LENGTH. (Inlined Getters)
     // SETPROP, SETNAME, SETGNAME (Inlined Setters)
-    return IsCallPC(pc) || IsGetPropPC(pc) || IsSetPropPC(pc);
+    return (IsCallPC(pc) && !IsSpreadCallPC(pc)) ||
+           IsGetPropPC(pc) ||
+           IsSetPropPC(pc);
 }
 
 inline bool
@@ -223,7 +212,6 @@ bool OffThreadCompilationAvailable(JSContext* cx);
 
 void ForbidCompilation(JSContext* cx, JSScript* script);
 
-void PurgeCaches(JSScript* script);
 size_t SizeOfIonData(JSScript* script, mozilla::MallocSizeOf mallocSizeOf);
 void DestroyJitScripts(FreeOp* fop, JSScript* script);
 void TraceJitScripts(JSTracer* trc, JSScript* script);

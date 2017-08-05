@@ -601,12 +601,48 @@ RuleRewriter.prototype = {
    *                  to be "lexically safe".
    */
   sanitizePropertyValue: function (text) {
+    // Start by stripping any trailing ";".  This is done here to
+    // avoid the case where the user types "url(" (which is turned
+    // into "url(;" by the rule view before coming here), being turned
+    // into "url(;)" by this code -- due to the way "url(...)" is
+    // parsed as a single token.
+    text = text.replace(/;$/, "");
     let lexer = getCSSLexer(text);
 
     let result = "";
     let previousOffset = 0;
-    let braceDepth = 0;
+    let parenStack = [];
     let anySanitized = false;
+
+    // Push a closing paren on the stack.
+    let pushParen = (token, closer) => {
+      result = result + text.substring(previousOffset, token.startOffset) +
+        text.substring(token.startOffset, token.endOffset);
+      // We set the location of the paren in a funny way, to handle
+      // the case where we've seen a function token, where the paren
+      // appears at the end.
+      parenStack.push({closer, offset: result.length - 1});
+      previousOffset = token.endOffset;
+    };
+
+    // Pop a closing paren from the stack.
+    let popSomeParens = (closer) => {
+      while (parenStack.length > 0) {
+        let paren = parenStack.pop();
+
+        if (paren.closer === closer) {
+          return true;
+        }
+
+        // Found a non-matching closing paren, so quote it.  Note that
+        // these are processed in reverse order.
+        result = result.substring(0, paren.offset) + "\\" +
+          result.substring(paren.offset);
+        anySanitized = true;
+      }
+      return false;
+    };
+
     while (true) {
       let token = lexer.nextToken();
       if (!token) {
@@ -624,14 +660,22 @@ RuleRewriter.prototype = {
             break;
 
           case "{":
-            ++braceDepth;
+            pushParen(token, "}");
+            break;
+
+          case "(":
+            pushParen(token, ")");
+            break;
+
+          case "[":
+            pushParen(token, "]");
             break;
 
           case "}":
-            --braceDepth;
-            if (braceDepth < 0) {
-              // Found an unmatched close bracket.
-              braceDepth = 0;
+          case ")":
+          case "]":
+            // Did we find an unmatched close bracket?
+            if (!popSomeParens(token.text)) {
               // Copy out text from |previousOffset|.
               result += text.substring(previousOffset, token.startOffset);
               // Quote the offending symbol.
@@ -641,8 +685,13 @@ RuleRewriter.prototype = {
             }
             break;
         }
+      } else if (token.tokenType === "function") {
+        pushParen(token, ")");
       }
     }
+
+    // Fix up any unmatched parens.
+    popSomeParens(null);
 
     // Copy out any remaining text, then any needed terminators.
     result += text.substring(previousOffset, text.length);

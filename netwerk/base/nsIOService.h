@@ -95,7 +95,16 @@ public:
 
     bool IsLinkUp();
 
-    static bool IsInheritSecurityContextForDataURIEnabled();
+    static bool IsDataURIUniqueOpaqueOrigin();
+
+    // Used to count the total number of HTTP requests made
+    void IncrementRequestNumber() { mTotalRequests++; }
+    uint32_t GetTotalRequestNumber() { return mTotalRequests; }
+    // Used to keep "race cache with network" stats
+    void IncrementCacheWonRequestNumber() { mCacheWon++; }
+    uint32_t GetCacheWonRequestNumber() { return mCacheWon; }
+    void IncrementNetWonRequestNumber() { mNetWon++; }
+    uint32_t GetNetWonRequestNumber() { return mNetWon; }
 
     // Used to trigger a recheck of the captive portal status
     nsresult RecheckCaptivePortal();
@@ -176,7 +185,11 @@ private:
 
     bool                                 mNetworkNotifyChanged;
 
-    static bool                          sDataURIInheritSecurityContext;
+    static bool                          sIsDataURIUniqueOpaqueOrigin;
+
+    uint32_t mTotalRequests;
+    uint32_t mCacheWon;
+    uint32_t mNetWon;
 
     // These timestamps are needed for collecting telemetry on PR_Connect,
     // PR_ConnectContinue and PR_Close blocking time.  If we spend very long

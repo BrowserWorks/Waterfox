@@ -18,7 +18,6 @@ config = {
         'upload-files',
         'sendchange',
         'check-test',
-        'generate-build-stats',
         'update',  # decided by query_is_nightly()
     ],
     "buildbot_json_path": "buildprops.json",
@@ -47,7 +46,7 @@ config = {
     'secret_files': [
         {'filename': '/builds/gapi.data',
          'secret_name': 'project/releng/gecko/build/level-%(scm-level)s/gapi.data',
-         'min_scm_level': 2, 'default': 'try-build-has-no-secrets'},
+         'min_scm_level': 1},
         {'filename': '/builds/mozilla-desktop-geoloc-api.key',
          'secret_name': 'project/releng/gecko/build/level-%(scm-level)s/mozilla-desktop-geoloc-api.key',
          'min_scm_level': 2, 'default': 'try-build-has-no-secrets'},
@@ -58,7 +57,6 @@ config = {
          'secret_name': 'project/releng/gecko/build/level-%(scm-level)s/adjust-sdk-beta.token',
          'min_scm_level': 2, 'default': 'try-build-has-no-secrets'},
     ],
-    'enable_ccache': True,
     'vcs_share_base': '/builds/hg-shared',
     'objdir': 'obj-firefox',
     'tooltool_script': ["/builds/tooltool.py"],
@@ -77,12 +75,11 @@ config = {
     'publish_nightly_en_US_routes': True,
     'env': {
         'MOZBUILD_STATE_PATH': os.path.join(os.getcwd(), '.mozbuild'),
-        'MOZ_AUTOMATION': '1',
         'DISPLAY': ':2',
         'HG_SHARE_BASE_DIR': '/builds/hg-shared',
         'MOZ_OBJDIR': 'obj-firefox',
         'TINDERBOX_OUTPUT': '1',
-        'TOOLTOOL_CACHE': '/builds/tooltool_cache',
+        'TOOLTOOL_CACHE': '/home/worker/tooltool-cache',
         'TOOLTOOL_HOME': '/builds',
         'MOZ_CRASHREPORTER_NO_REPORT': '1',
         'CCACHE_DIR': '/builds/ccache',
@@ -154,7 +151,5 @@ config = {
         ######## 32 bit specific ###########
     ],
     'src_mozconfig': 'browser/config/mozconfigs/linux32/nightly',
-    'tooltool_manifest_src': "browser/config/tooltool-manifests/linux32/\
-releng.manifest",
     #########################################################################
 }

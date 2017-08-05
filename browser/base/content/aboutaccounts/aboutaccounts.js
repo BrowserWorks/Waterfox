@@ -6,6 +6,7 @@
 
 var {classes: Cc, interfaces: Ci, utils: Cu} = Components;
 
+Cu.import("resource://gre/modules/XPCOMUtils.jsm");
 Cu.import("resource://gre/modules/Services.jsm");
 Cu.import("resource://gre/modules/FxAccounts.jsm");
 
@@ -30,17 +31,14 @@ function log(msg) {
 
 function getPreviousAccountNameHash() {
   try {
-    return Services.prefs.getComplexValue(PREF_LAST_FXA_USER, Ci.nsISupportsString).data;
+    return Services.prefs.getStringPref(PREF_LAST_FXA_USER);
   } catch (_) {
     return "";
   }
 }
 
 function setPreviousAccountNameHash(acctName) {
-  let string = Cc["@mozilla.org/supports-string;1"]
-               .createInstance(Ci.nsISupportsString);
-  string.data = sha256(acctName);
-  Services.prefs.setComplexValue(PREF_LAST_FXA_USER, Ci.nsISupportsString, string);
+  Services.prefs.setStringPref(PREF_LAST_FXA_USER, sha256(acctName));
 }
 
 function needRelinkWarning(acctName) {
@@ -112,7 +110,9 @@ var wrapper = {
     this.iframe.QueryInterface(Ci.nsIFrameLoaderOwner);
     let docShell = this.iframe.frameLoader.docShell;
     docShell.QueryInterface(Ci.nsIWebProgress);
-    docShell.addProgressListener(this.iframeListener, Ci.nsIWebProgress.NOTIFY_STATE_DOCUMENT);
+    docShell.addProgressListener(this.iframeListener,
+                                 Ci.nsIWebProgress.NOTIFY_STATE_DOCUMENT |
+                                 Ci.nsIWebProgress.NOTIFY_LOCATION);
     iframe.addEventListener("load", this);
 
     // Ideally we'd just merge urlParams with new URL(url).searchParams, but our
@@ -169,10 +169,6 @@ var wrapper = {
         setErrorPage("networkError");
       }
     },
-
-    onProgressChange() {},
-    onStatusChange() {},
-    onSecurityChange() {},
   },
 
   handleEvent(evt) {
@@ -432,14 +428,9 @@ function migrateToDevEdition(urlParams) {
   try {
     defaultProfilePath = window.getDefaultProfilePath();
   } catch (e) {} // no default profile.
-  let migrateSyncCreds = false;
-  if (defaultProfilePath) {
-    try {
-      migrateSyncCreds = Services.prefs.getBoolPref("identity.fxaccounts.migrateToDevEdition");
-    } catch (e) {}
-  }
 
-  if (!migrateSyncCreds) {
+  if (!defaultProfilePath ||
+      !Services.prefs.getBoolPref("identity.fxaccounts.migrateToDevEdition", false)) {
     return Promise.resolve(false);
   }
 
@@ -509,7 +500,7 @@ function initObservers() {
   }
 
   for (let topic of OBSERVER_TOPICS) {
-    Services.obs.addObserver(observe, topic, false);
+    Services.obs.addObserver(observe, topic);
   }
   window.addEventListener("unload", function(event) {
     log("about:accounts unloading")

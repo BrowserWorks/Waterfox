@@ -27,17 +27,9 @@ BUILD_KINDS = set([
     'artifact-build',
     'hazard',
     'l10n',
-    'upload-symbols',
     'valgrind',
     'static-analysis',
     'spidermonkey',
-])
-
-# anything in this list is governed by -j
-JOB_KINDS = set([
-    'source-test',
-    'toolchain',
-    'android-stuff',
 ])
 
 
@@ -123,13 +115,14 @@ UNITTEST_ALIASES = {
 # [test_platforms]} translations, This includes only the most commonly-used
 # substrings.  This is intended only for backward-compatibility.  New test
 # platforms should have their `test_platform` spelled out fully in try syntax.
+# Note that the test platforms here are only the prefix up to the `/`.
 UNITTEST_PLATFORM_PRETTY_NAMES = {
     'Ubuntu': ['linux32', 'linux64', 'linux64-asan'],
     'x64': ['linux64', 'linux64-asan'],
     'Android 4.3': ['android-4.3-arm7-api-15'],
+    '10.10': ['macosx64'],
     # other commonly-used substrings for platforms not yet supported with
     # in-tree taskgraphs:
-    # '10.10': [..TODO..],
     # '10.10.5': [..TODO..],
     # '10.6': [..TODO..],
     # '10.8': [..TODO..],
@@ -166,6 +159,7 @@ RIDEALONG_BUILDS = {
         'sm-asan',
         'sm-mozjs-sys',
         'sm-msan',
+        'sm-fuzzing',
     ],
 }
 
@@ -200,20 +194,18 @@ def escape_whitespace_in_brackets(input_str):
     return result
 
 
-def find_try_idx(message):
+def split_try_msg(message):
+    try:
+        try_idx = message.index('try:')
+    except ValueError:
+        return []
+    message = message[try_idx:].split('\n')[0]
     # shlex used to ensure we split correctly when giving values to argparse.
-    parts = shlex.split(escape_whitespace_in_brackets(message))
-    try_idx = None
-    for idx, part in enumerate(parts):
-        if part == TRY_DELIMITER:
-            try_idx = idx
-            break
-
-    return try_idx, parts
+    return shlex.split(escape_whitespace_in_brackets(message))
 
 
 def parse_message(message):
-    try_idx, parts = find_try_idx(message)
+    parts = split_try_msg(message)
 
     # Argument parser based on try flag flags
     parser = argparse.ArgumentParser()
@@ -233,7 +225,7 @@ def parse_message(message):
     parser.add_argument('--rebuild-talos', dest='talos_trigger_tests', action='store',
                         type=int, default=1)
     parser.add_argument('--setenv', dest='env', action='append')
-    parser.add_argument('--spsProfile', dest='profile', action='store_true')
+    parser.add_argument('--geckoProfile', dest='profile', action='store_true')
     parser.add_argument('--tag', dest='tag', action='store', default=None)
     parser.add_argument('--no-retry', dest='no_retry', action='store_true')
     parser.add_argument('--include-nightly', dest='include_nightly', action='store_true')
@@ -246,8 +238,7 @@ def parse_message(message):
 
     # In order to run test jobs multiple times
     parser.add_argument('--rebuild', dest='trigger_tests', type=int, default=1)
-    parts = parts[try_idx:] if try_idx is not None else []
-    args, _ = parser.parse_known_args(parts[try_idx:])
+    args, _ = parser.parse_known_args(parts)
     return args
 
 
@@ -296,16 +287,16 @@ class TryOptionSyntax(object):
         self.tag = None
         self.no_retry = False
 
-        try_idx, _ = find_try_idx(message)
-        if try_idx is None:
+        parts = split_try_msg(message)
+        if not parts:
             return None
 
         args = parse_message(message)
         assert args is not None
 
         self.jobs = self.parse_jobs(args.jobs)
-        self.build_types = self.parse_build_types(args.build_types)
-        self.platforms = self.parse_platforms(args.platforms)
+        self.build_types = self.parse_build_types(args.build_types, full_task_graph)
+        self.platforms = self.parse_platforms(args.platforms, full_task_graph)
         self.unittests = self.parse_test_option(
             "unittest_try_name", args.unittests, full_task_graph)
         self.talos = self.parse_test_option("talos_try_name", args.talos, full_task_graph)
@@ -327,14 +318,23 @@ class TryOptionSyntax(object):
             expanded.extend(j.strip() for j in job.split(','))
         return expanded
 
-    def parse_build_types(self, build_types_arg):
+    def parse_build_types(self, build_types_arg, full_task_graph):
         if build_types_arg is None:
             build_types_arg = []
+
         build_types = filter(None, [BUILD_TYPE_ALIASES.get(build_type) for
                              build_type in build_types_arg])
+
+        all_types = set(t.attributes['build_type']
+                        for t in full_task_graph.tasks.itervalues()
+                        if 'build_type' in t.attributes)
+        bad_types = set(build_types) - all_types
+        if bad_types:
+            raise Exception("Unknown build type(s) [%s] specified for try" % ','.join(bad_types))
+
         return build_types
 
-    def parse_platforms(self, platform_arg):
+    def parse_platforms(self, platform_arg, full_task_graph):
         if platform_arg == 'all':
             return None
 
@@ -345,6 +345,17 @@ class TryOptionSyntax(object):
                 results.extend(RIDEALONG_BUILDS[build])
                 logger.info("platform %s triggers ridealong builds %s" %
                             (build, ', '.join(RIDEALONG_BUILDS[build])))
+
+        test_platforms = set(t.attributes['test_platform']
+                             for t in full_task_graph.tasks.itervalues()
+                             if 'test_platform' in t.attributes)
+        build_platforms = set(t.attributes['build_platform']
+                              for t in full_task_graph.tasks.itervalues()
+                              if 'build_platform' in t.attributes)
+        all_platforms = test_platforms | build_platforms
+        bad_platforms = set(results) - all_platforms
+        if bad_platforms:
+            raise Exception("Unknown platform(s) [%s] specified for try" % ','.join(bad_platforms))
 
         return results
 
@@ -364,7 +375,7 @@ class TryOptionSyntax(object):
         if test_arg is None or test_arg == 'none':
             return []
 
-        all_platforms = set(t.attributes['test_platform']
+        all_platforms = set(t.attributes['test_platform'].split('/')[0]
                             for t in full_task_graph.tasks.itervalues()
                             if 'test_platform' in t.attributes)
 
@@ -562,21 +573,29 @@ class TryOptionSyntax(object):
                     break
             else:
                 return False
-            if 'platforms' in test and attr('test_platform') not in test['platforms']:
-                return False
+            if 'platforms' in test:
+                platform = attributes.get('test_platform', '').split('/')[0]
+                if platform not in test['platforms']:
+                    return False
             if 'only_chunks' in test and attr('test_chunk') not in test['only_chunks']:
                 return False
             return True
 
-        if attr('kind') == 'test':
+        job_try_name = attr('job_try_name')
+        if job_try_name:
+            # Beware the subtle distinction between [] and None for self.jobs and self.platforms.
+            # They will be [] if there was no try syntax, and None if try syntax was detected but
+            # they remained unspecified.
+            if self.jobs and job_try_name not in self.jobs:
+                return False
+            elif not self.jobs and attr('build_platform'):
+                if self.platforms is None or attr('build_platform') in self.platforms:
+                    return True
+                return False
+            return True
+        elif attr('kind') == 'test':
             return match_test(self.unittests, 'unittest_try_name') \
                  or match_test(self.talos, 'talos_try_name')
-        elif attr('kind') in JOB_KINDS:
-            # This will add 'job' tasks to the target set even if no try syntax was specified.
-            if not self.jobs:
-                return True
-            if attr('build_platform') in self.jobs:
-                return True
         elif attr('kind') in BUILD_KINDS:
             if attr('build_type') not in self.build_types:
                 return False

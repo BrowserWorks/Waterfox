@@ -59,6 +59,7 @@ public:
   typedef nsBaseHashtableET<KeyClass, DataType> EntryType;
 
   using nsTHashtable<EntryType>::Contains;
+  using nsTHashtable<EntryType>::GetGeneration;
 
   nsBaseHashtable() {}
   explicit nsBaseHashtable(uint32_t aInitLength)
@@ -122,12 +123,7 @@ public:
    */
   DataType& GetOrInsert(const KeyType& aKey)
   {
-    EntryType* ent = this->GetEntry(aKey);
-    if (ent) {
-      return ent->mData;
-    }
-
-    ent = this->PutEntry(aKey);
+    EntryType* ent = this->PutEntry(aKey);
     return ent->mData;
   }
 
@@ -162,6 +158,41 @@ public:
    * @param aKey the key to remove from the hashtable
    */
   void Remove(KeyType aKey) { this->RemoveEntry(aKey); }
+
+  /**
+   * Looks up aKey in the hashtable and if found calls the given callback
+   * aFunction with the value.  If the callback returns true then the entry
+   * is removed.  If aKey doesn't exist nothing happens.
+   * The hashtable must not be modified in the callback function.
+   *
+   * A typical usage of this API looks like this:
+   *
+   *   table.LookupRemoveIf(key, [](T* aValue) {
+   *     // ... do stuff using aValue ...
+   *     return aValue->IsEmpty(); // or some other condition to remove it
+   *   });
+   *
+   * This is useful for cases where you want to lookup and possibly modify
+   * the value and then maybe remove the entry but would like to avoid two
+   * hashtable lookups.
+   */
+  template<class F>
+  void LookupRemoveIf(KeyType aKey, F aFunction)
+  {
+#ifdef DEBUG
+    auto tableGeneration = GetGeneration();
+#endif
+    EntryType* ent = this->GetEntry(aKey);
+    if (!ent) {
+      return;
+    }
+    bool shouldRemove = aFunction(ent->mData);
+    MOZ_ASSERT(tableGeneration == GetGeneration(),
+               "hashtable was modified by the LookupRemoveIf callback!");
+    if (shouldRemove) {
+      this->RemoveEntry(ent);
+    }
+  }
 
   // This is an iterator that also allows entry removal. Example usage:
   //

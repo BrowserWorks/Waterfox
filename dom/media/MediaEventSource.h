@@ -13,7 +13,6 @@
 #include "mozilla/Mutex.h"
 #include "mozilla/Tuple.h"
 #include "mozilla/TypeTraits.h"
-#include "mozilla/UniquePtr.h"
 
 #include "nsISupportsImpl.h"
 #include "nsTArray.h"
@@ -44,8 +43,12 @@ public:
     return mRevoked;
   }
 
+protected:
+  // Virtual destructor is required since we might delete a Listener object
+  // through its base type pointer.
+  virtual ~RevocableToken() { }
+
 private:
-  ~RevocableToken() {}
   Atomic<bool> mRevoked;
 };
 
@@ -56,11 +59,6 @@ enum class ListenerPolicy : int8_t {
   // Allow multiple listeners. Event data will always be copied when passed
   // to the listeners.
   NonExclusive
-};
-
-enum class DispatchPolicy : int8_t {
-  Sync, // Events are passed synchronously to the listeners.
-  Async // Events are passed asynchronously to the listeners.
 };
 
 namespace detail {
@@ -97,10 +95,10 @@ public:
 template <typename T>
 struct TakeArgs : public TakeArgsHelper<T>::Type {};
 
-template <DispatchPolicy Dp, typename T> struct EventTarget;
+template <typename T> struct EventTarget;
 
 template <>
-struct EventTarget<DispatchPolicy::Async, nsIEventTarget> {
+struct EventTarget<nsIEventTarget> {
   static void
   Dispatch(nsIEventTarget* aTarget, already_AddRefed<nsIRunnable> aTask) {
     aTarget->Dispatch(Move(aTask), NS_DISPATCH_NORMAL);
@@ -108,35 +106,10 @@ struct EventTarget<DispatchPolicy::Async, nsIEventTarget> {
 };
 
 template <>
-struct EventTarget<DispatchPolicy::Async, AbstractThread> {
+struct EventTarget<AbstractThread> {
   static void
   Dispatch(AbstractThread* aTarget, already_AddRefed<nsIRunnable> aTask) {
     aTarget->Dispatch(Move(aTask), AbstractThread::DontAssertDispatchSuccess);
-  }
-};
-
-template <>
-struct EventTarget<DispatchPolicy::Sync, nsIEventTarget> {
-  static bool IsOnCurrentThread(nsIEventTarget* aTarget) {
-    bool current = false;
-    auto rv = aTarget->IsOnCurrentThread(&current);
-    return NS_SUCCEEDED(rv) && current;
-  }
-  static void
-  Dispatch(nsIEventTarget* aTarget, already_AddRefed<nsIRunnable> aTask) {
-    MOZ_ASSERT(IsOnCurrentThread(aTarget));
-    nsCOMPtr<nsIRunnable> r = aTask;
-    r->Run();
-  }
-};
-
-template <>
-struct EventTarget<DispatchPolicy::Sync, AbstractThread> {
-  static void
-  Dispatch(AbstractThread* aTarget, already_AddRefed<nsIRunnable> aTask) {
-    MOZ_ASSERT(aTarget->IsCurrentThreadIn());
-    nsCOMPtr<nsIRunnable> r = aTask;
-    r->Run();
   }
 };
 
@@ -153,172 +126,121 @@ private:
   T* const mPtr;
 };
 
-/**
- * A helper class to pass event data to the listeners. Optimized to save
- * copy when Move is possible or |Function| takes no arguments.
- */
-template<DispatchPolicy Dp, typename Target, typename Function>
-class ListenerHelper {
-  // Define our custom runnable to minimize copy of the event data.
-  // NS_NewRunnableFunction will result in 2 copies of the event data.
-  // One is captured by the lambda and the other is the copy of the lambda.
-  template <typename... Ts>
-  class R : public Runnable {
-  public:
-    template <typename... Us>
-    R(RevocableToken* aToken, const Function& aFunction, Us&&... aEvents)
-      : mToken(aToken)
-      , mFunction(aFunction)
-      , mEvents(Forward<Us>(aEvents)...) {}
-
-    template <typename... Vs, size_t... Is>
-    void Invoke(Tuple<Vs...>& aEvents, IndexSequence<Is...>) {
-      // Enable move whenever possible since mEvent won't be used anymore.
-      mFunction(Move(Get<Is>(aEvents))...);
-    }
-
-    NS_IMETHOD Run() override {
-      // Don't call the listener if it is disconnected.
-      if (!mToken->IsRevoked()) {
-        Invoke(mEvents, typename IndexSequenceFor<Ts...>::Type());
-      }
-      return NS_OK;
-    }
-
-  private:
-    RefPtr<RevocableToken> mToken;
-    Function mFunction;
-
-    template <typename T>
-    using ArgType = typename RemoveCV<typename RemoveReference<T>::Type>::Type;
-    Tuple<ArgType<Ts>...> mEvents;
-  };
-
-public:
-  ListenerHelper(RevocableToken* aToken, Target* aTarget, const Function& aFunc)
-    : mToken(aToken), mTarget(aTarget), mFunction(aFunc) {}
-
-  // |F| takes one or more arguments.
-  template <typename F, typename... Ts>
-  typename EnableIf<TakeArgs<F>::value, void>::Type
-  DispatchHelper(const F& aFunc, Ts&&... aEvents) {
-    nsCOMPtr<nsIRunnable> r =
-      new R<Ts...>(mToken, aFunc, Forward<Ts>(aEvents)...);
-    EventTarget<Dp, Target>::Dispatch(mTarget.get(), r.forget());
-  }
-
-  // |F| takes no arguments. Don't bother passing aEvent.
-  template <typename F, typename... Ts>
-  typename EnableIf<!TakeArgs<F>::value, void>::Type
-  DispatchHelper(const F& aFunc, Ts&&...) {
-    const RefPtr<RevocableToken>& token = mToken;
-    nsCOMPtr<nsIRunnable> r = NS_NewRunnableFunction([=] () {
-      // Don't call the listener if it is disconnected.
-      if (!token->IsRevoked()) {
-        aFunc();
-      }
-    });
-    EventTarget<Dp, Target>::Dispatch(mTarget.get(), r.forget());
-  }
-
-  template <typename... Ts>
-  void Dispatch(Ts&&... aEvents) {
-    DispatchHelper(mFunction, Forward<Ts>(aEvents)...);
-  }
-
-private:
-  RefPtr<RevocableToken> mToken;
-  const RefPtr<Target> mTarget;
-  Function mFunction;
-};
-
-/**
- * Define whether an event data should be copied or moved to the listeners.
- *
- * @Copy Data will always be copied. Each listener gets a copy.
- * @Move Data will always be moved.
- */
-enum class EventPassMode : int8_t {
-  Copy,
-  Move
-};
-
-class ListenerBase {
-public:
-  ListenerBase() : mToken(new RevocableToken()) {}
-  ~ListenerBase() {
-    MOZ_ASSERT(Token()->IsRevoked(), "Must disconnect the listener.");
-  }
-  RevocableToken* Token() const {
-    return mToken;
-  }
-private:
-  const RefPtr<RevocableToken> mToken;
-};
-
-/**
- * Stored by MediaEventSource to send notifications to the listener.
- * Since virtual methods can not be templated, this class is specialized
- * to provide different Dispatch() overloads depending on EventPassMode.
- */
-template <EventPassMode Mode, typename... As>
-class Listener : public ListenerBase {
-public:
-  virtual ~Listener() {}
-  virtual void Dispatch(const As&... aEvents) = 0;
-};
-
 template <typename... As>
-class Listener<EventPassMode::Move, As...> : public ListenerBase {
+class Listener : public RevocableToken
+{
 public:
-  virtual ~Listener() {}
-  virtual void Dispatch(As... aEvents) = 0;
+  template <typename... Ts>
+  void Dispatch(Ts&&... aEvents)
+  {
+    if (CanTakeArgs()) {
+      DispatchTask(NewRunnableMethod<typename Decay<Ts>::Type&&...>(
+        this, &Listener::ApplyWithArgs, Forward<Ts>(aEvents)...));
+    } else {
+      DispatchTask(NewRunnableMethod(this, &Listener::ApplyWithNoArgs));
+    }
+  }
+
+protected:
+  virtual ~Listener()
+  {
+    MOZ_ASSERT(IsRevoked(), "Must disconnect the listener.");
+  }
+
+private:
+  virtual void DispatchTask(already_AddRefed<nsIRunnable> aTask) = 0;
+
+  // True if the underlying listener function takes non-zero arguments.
+  virtual bool CanTakeArgs() const = 0;
+  // Pass the event data to the underlying listener function. Should be called
+  // only when CanTakeArgs() returns true.
+  virtual void ApplyWithArgs(As&&... aEvents) = 0;
+  // Invoke the underlying listener function. Should be called only when
+  // CanTakeArgs() returns false.
+  virtual void ApplyWithNoArgs() = 0;
 };
 
 /**
  * Store the registered target thread and function so it knows where and to
  * whom to send the event data.
  */
-template <DispatchPolicy Dp, typename Target,
-          typename Function, EventPassMode, typename... As>
-class ListenerImpl : public Listener<EventPassMode::Copy, As...> {
-public:
-  ListenerImpl(Target* aTarget, const Function& aFunction)
-    : mHelper(ListenerBase::Token(), aTarget, aFunction) {}
-  void Dispatch(const As&... aEvents) override {
-    mHelper.Dispatch(aEvents...);
-  }
-private:
-  ListenerHelper<Dp, Target, Function> mHelper;
-};
+template <typename Target, typename Function, typename... As>
+class ListenerImpl : public Listener<As...>
+{
+  // Strip CV and reference from Function.
+  using FunctionStorage = typename Decay<Function>::Type;
 
-template <DispatchPolicy Dp, typename Target, typename Function, typename... As>
-class ListenerImpl<Dp, Target, Function, EventPassMode::Move, As...>
-  : public Listener<EventPassMode::Move, As...> {
 public:
-  ListenerImpl(Target* aTarget, const Function& aFunction)
-    : mHelper(ListenerBase::Token(), aTarget, aFunction) {}
-  void Dispatch(As... aEvents) override {
-    mHelper.Dispatch(Move(aEvents)...);
+  template <typename F>
+  ListenerImpl(Target* aTarget, F&& aFunction)
+    : mTarget(aTarget)
+    , mFunction(Forward<F>(aFunction))
+  {
   }
-private:
-  ListenerHelper<Dp, Target, Function> mHelper;
-};
 
-/**
- * Select EventPassMode based on ListenerPolicy.
- *
- * @Copy Selected when ListenerPolicy is NonExclusive because each listener
- * must get a copy.
- *
- * @Move Selected when ListenerPolicy is Exclusive. All types passed to
- * MediaEventProducer::Notify() must be movable.
- */
-template <ListenerPolicy Lp>
-struct PassModePicker {
-  static const EventPassMode Value =
-    Lp == ListenerPolicy::NonExclusive ?
-    EventPassMode::Copy : EventPassMode::Move;
+private:
+  void DispatchTask(already_AddRefed<nsIRunnable> aTask) override
+  {
+    EventTarget<Target>::Dispatch(mTarget.get(), Move(aTask));
+  }
+
+  bool CanTakeArgs() const override
+  {
+    return TakeArgs<FunctionStorage>::value;
+  }
+
+  // |F| takes one or more arguments.
+  template <typename F>
+  typename EnableIf<TakeArgs<F>::value, void>::Type
+  ApplyWithArgsImpl(const F& aFunc, As&&... aEvents)
+  {
+    aFunc(Move(aEvents)...);
+  }
+
+  // |F| takes no arguments.
+  template <typename F>
+  typename EnableIf<!TakeArgs<F>::value, void>::Type
+  ApplyWithArgsImpl(const F& aFunc, As&&... aEvents)
+  {
+    MOZ_CRASH("Call ApplyWithNoArgs instead.");
+  }
+
+  void ApplyWithArgs(As&&... aEvents) override
+  {
+    MOZ_RELEASE_ASSERT(TakeArgs<Function>::value);
+    // Don't call the listener if it is disconnected.
+    if (!RevocableToken::IsRevoked()) {
+      ApplyWithArgsImpl(mFunction, Move(aEvents)...);
+    }
+  }
+
+  // |F| takes one or more arguments.
+  template <typename F>
+  typename EnableIf<TakeArgs<F>::value, void>::Type
+  ApplyWithNoArgsImpl(const F& aFunc)
+  {
+    MOZ_CRASH("Call ApplyWithArgs instead.");
+  }
+
+  // |F| takes no arguments.
+  template <typename F>
+  typename EnableIf<!TakeArgs<F>::value, void>::Type
+  ApplyWithNoArgsImpl(const F& aFunc)
+  {
+    aFunc();
+  }
+
+  virtual void ApplyWithNoArgs() override
+  {
+    MOZ_RELEASE_ASSERT(!TakeArgs<Function>::value);
+    // Don't call the listener if it is disconnected.
+    if (!RevocableToken::IsRevoked()) {
+      ApplyWithNoArgsImpl(mFunction);
+    }
+  }
+
+  const RefPtr<Target> mTarget;
+  FunctionStorage mFunction;
 };
 
 /**
@@ -337,8 +259,7 @@ struct IsAnyReference<T> {
 
 } // namespace detail
 
-template <DispatchPolicy, ListenerPolicy, typename... Ts>
-class MediaEventSourceImpl;
+template <ListenerPolicy, typename... Ts> class MediaEventSourceImpl;
 
 /**
  * Not thread-safe since this is not meant to be shared and therefore only
@@ -347,7 +268,7 @@ class MediaEventSourceImpl;
  * listener from an event source.
  */
 class MediaEventListener {
-  template <DispatchPolicy, ListenerPolicy, typename... Ts>
+  template <ListenerPolicy, typename... Ts>
   friend class MediaEventSourceImpl;
 
 public:
@@ -387,7 +308,7 @@ private:
 /**
  * A generic and thread-safe class to implement the observer pattern.
  */
-template <DispatchPolicy Dp, ListenerPolicy Lp, typename... Es>
+template <ListenerPolicy Lp, typename... Es>
 class MediaEventSourceImpl {
   static_assert(!detail::IsAnyReference<Es...>::value,
                 "Ref-type not supported!");
@@ -395,14 +316,10 @@ class MediaEventSourceImpl {
   template <typename T>
   using ArgType = typename detail::EventTypeTraits<T>::ArgType;
 
-  static const detail::EventPassMode PassMode =
-    detail::PassModePicker<Lp>::Value;
-
-  typedef detail::Listener<PassMode, ArgType<Es>...> Listener;
+  typedef detail::Listener<ArgType<Es>...> Listener;
 
   template<typename Target, typename Func>
-  using ListenerImpl =
-    detail::ListenerImpl<Dp, Target, Func, PassMode, ArgType<Es>...>;
+  using ListenerImpl = detail::ListenerImpl<Target, Func, ArgType<Es>...>;
 
   template <typename Method>
   using TakeArgs = detail::TakeArgs<Method>;
@@ -410,7 +327,7 @@ class MediaEventSourceImpl {
   void PruneListeners() {
     int32_t last = static_cast<int32_t>(mListeners.Length()) - 1;
     for (int32_t i = last; i >= 0; --i) {
-      if (mListeners[i]->Token()->IsRevoked()) {
+      if (mListeners[i]->IsRevoked()) {
         mListeners.RemoveElementAt(i);
       }
     }
@@ -418,13 +335,14 @@ class MediaEventSourceImpl {
 
   template<typename Target, typename Function>
   MediaEventListener
-  ConnectInternal(Target* aTarget, const Function& aFunction) {
+  ConnectInternal(Target* aTarget, Function&& aFunction) {
     MutexAutoLock lock(mMutex);
     PruneListeners();
     MOZ_ASSERT(Lp == ListenerPolicy::NonExclusive || mListeners.IsEmpty());
     auto l = mListeners.AppendElement();
-    l->reset(new ListenerImpl<Target, Function>(aTarget, aFunction));
-    return MediaEventListener((*l)->Token());
+    *l = new ListenerImpl<Target, Function>(
+      aTarget, Forward<Function>(aFunction));
+    return MediaEventListener(*l);
   }
 
   // |Method| takes one or more arguments.
@@ -432,10 +350,10 @@ class MediaEventSourceImpl {
   typename EnableIf<TakeArgs<Method>::value, MediaEventListener>::Type
   ConnectInternal(Target* aTarget, This* aThis, Method aMethod) {
     detail::RawPtr<This> thiz(aThis);
-    auto f = [=] (ArgType<Es>&&... aEvents) {
-      (thiz.get()->*aMethod)(Move(aEvents)...);
-    };
-    return ConnectInternal(aTarget, f);
+    return ConnectInternal(aTarget,
+      [=](ArgType<Es>&&... aEvents) {
+        (thiz.get()->*aMethod)(Move(aEvents)...);
+      });
   }
 
   // |Method| takes no arguments. Don't bother passing the event data.
@@ -443,10 +361,10 @@ class MediaEventSourceImpl {
   typename EnableIf<!TakeArgs<Method>::value, MediaEventListener>::Type
   ConnectInternal(Target* aTarget, This* aThis, Method aMethod) {
     detail::RawPtr<This> thiz(aThis);
-    auto f = [=] () {
-      (thiz.get()->*aMethod)();
-    };
-    return ConnectInternal(aTarget, f);
+    return ConnectInternal(aTarget,
+      [=]() {
+        (thiz.get()->*aMethod)();
+      });
   }
 
 public:
@@ -460,14 +378,14 @@ public:
    */
   template<typename Function>
   MediaEventListener
-  Connect(AbstractThread* aTarget, const Function& aFunction) {
-    return ConnectInternal(aTarget, aFunction);
+  Connect(AbstractThread* aTarget, Function&& aFunction) {
+    return ConnectInternal(aTarget, Forward<Function>(aFunction));
   }
 
   template<typename Function>
   MediaEventListener
-  Connect(nsIEventTarget* aTarget, const Function& aFunction) {
-    return ConnectInternal(aTarget, aFunction);
+  Connect(nsIEventTarget* aTarget, Function&& aFunction) {
+    return ConnectInternal(aTarget, Forward<Function>(aFunction));
   }
 
   /**
@@ -496,16 +414,15 @@ public:
 protected:
   MediaEventSourceImpl() : mMutex("MediaEventSourceImpl::mMutex") {}
 
-  template <DispatchPolicy P, typename... Ts>
-  typename EnableIf<P == DispatchPolicy::Async, void>::Type
-  NotifyInternal(IntegralConstant<DispatchPolicy, P>, Ts&&... aEvents) {
+  template <typename... Ts>
+  void NotifyInternal(Ts&&... aEvents) {
     MutexAutoLock lock(mMutex);
     int32_t last = static_cast<int32_t>(mListeners.Length()) - 1;
     for (int32_t i = last; i >= 0; --i) {
       auto&& l = mListeners[i];
       // Remove disconnected listeners.
       // It is not optimal but is simple and works well.
-      if (l->Token()->IsRevoked()) {
+      if (l->IsRevoked()) {
         mListeners.RemoveElementAt(i);
         continue;
       }
@@ -513,47 +430,18 @@ protected:
     }
   }
 
-  template <DispatchPolicy P, typename... Ts>
-  typename EnableIf<P == DispatchPolicy::Sync, void>::Type
-  NotifyInternal(IntegralConstant<DispatchPolicy, P>, Ts&&... aEvents) {
-    // Move |mListeners| to a new container before iteration to prevent
-    // |mListeners| from being disrupted if the listener calls Connect() to
-    // modify |mListeners| in the callback function.
-    nsTArray<UniquePtr<Listener>> listeners;
-    listeners.SwapElements(mListeners);
-    for (auto&& l : listeners) {
-      l->Dispatch(Forward<Ts>(aEvents)...);
-    }
-    PruneListeners();
-    // Move remaining listeners back to |mListeners|.
-    for (auto&& l : listeners) {
-      if (!l->Token()->IsRevoked()) {
-        mListeners.AppendElement(Move(l));
-      }
-    }
-    // Perform sanity checks.
-    MOZ_ASSERT(Lp == ListenerPolicy::NonExclusive || mListeners.Length() <= 1);
-  }
-
-  template <typename... Ts>
-  void Notify(Ts&&... aEvents) {
-    NotifyInternal(IntegralConstant<DispatchPolicy, Dp>(),
-                   Forward<Ts>(aEvents)...);
-  }
-
 private:
   Mutex mMutex;
-  nsTArray<UniquePtr<Listener>> mListeners;
+  nsTArray<RefPtr<Listener>> mListeners;
 };
 
 template <typename... Es>
 using MediaEventSource =
-  MediaEventSourceImpl<DispatchPolicy::Async,
-                       ListenerPolicy::NonExclusive, Es...>;
+  MediaEventSourceImpl<ListenerPolicy::NonExclusive, Es...>;
 
 template <typename... Es>
 using MediaEventSourceExc =
-  MediaEventSourceImpl<DispatchPolicy::Async, ListenerPolicy::Exclusive, Es...>;
+  MediaEventSourceImpl<ListenerPolicy::Exclusive, Es...>;
 
 /**
  * A class to separate the interface of event subject (MediaEventSource)
@@ -563,7 +451,11 @@ using MediaEventSourceExc =
 template <typename... Es>
 class MediaEventProducer : public MediaEventSource<Es...> {
 public:
-  using MediaEventSource<Es...>::Notify;
+  template <typename... Ts>
+  void Notify(Ts&&... aEvents) {
+    // Pass lvalues to prevent move in NonExclusive mode.
+    this->NotifyInternal(aEvents...);
+  }
 };
 
 /**
@@ -574,7 +466,7 @@ template <>
 class MediaEventProducer<void> : public MediaEventSource<void> {
 public:
   void Notify() {
-    MediaEventSource<void>::Notify(false /* dummy */);
+    this->NotifyInternal(true /* dummy */);
   }
 };
 
@@ -584,33 +476,10 @@ public:
 template <typename... Es>
 class MediaEventProducerExc : public MediaEventSourceExc<Es...> {
 public:
-  using MediaEventSourceExc<Es...>::Notify;
-};
-
-/**
- * Events are passed directly to the callback function of the listeners without
- * dispatching. Note this class is not thread-safe. Both Connect() and Notify()
- * must be called on the same thread.
- */
-template <typename... Es>
-class MediaCallback
-  : public MediaEventSourceImpl<DispatchPolicy::Sync,
-                                ListenerPolicy::NonExclusive, Es...> {
-public:
-  using MediaEventSourceImpl<DispatchPolicy::Sync,
-                             ListenerPolicy::NonExclusive, Es...>::Notify;
-};
-
-/**
- * A special version of MediaCallback which allows at most one listener.
- */
-template <typename... Es>
-class MediaCallbackExc
-  : public MediaEventSourceImpl<DispatchPolicy::Sync,
-                                ListenerPolicy::Exclusive, Es...> {
-public:
-  using MediaEventSourceImpl<DispatchPolicy::Sync,
-                             ListenerPolicy::Exclusive, Es...>::Notify;
+  template <typename... Ts>
+  void Notify(Ts&&... aEvents) {
+    this->NotifyInternal(Forward<Ts>(aEvents)...);
+  }
 };
 
 } // namespace mozilla

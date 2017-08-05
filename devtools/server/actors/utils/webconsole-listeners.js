@@ -233,7 +233,7 @@ ConsoleAPIListener.prototype =
   init: function () {
     // Note that the observer is process-wide. We will filter the messages as
     // needed, see CAL_observe().
-    Services.obs.addObserver(this, "console-api-log-event", false);
+    Services.obs.addObserver(this, "console-api-log-event");
   },
 
   /**
@@ -301,8 +301,7 @@ ConsoleAPIListener.prototype =
 
       // Filtering based on the originAttributes used by
       // the Console API object.
-      if (message.originAttributes &&
-          message.originAttributes.addonId == this.addonId) {
+      if (message.addonId == this.addonId) {
         return true;
       }
 

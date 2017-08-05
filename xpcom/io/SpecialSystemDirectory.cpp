@@ -27,6 +27,9 @@
 #include <stdlib.h>
 #include <sys/param.h>
 #include "prenv.h"
+#if defined(MOZ_WIDGET_COCOA)
+#include "CocoaFileUtils.h"
+#endif
 
 #endif
 
@@ -151,9 +154,9 @@ static nsresult
 GetRegWindowsAppDataFolder(bool aLocal, nsIFile** aFile)
 {
   HKEY key;
-  NS_NAMED_LITERAL_STRING(keyName,
-    "Software\\Microsoft\\Windows\\CurrentVersion\\Explorer\\Shell Folders");
-  DWORD res = ::RegOpenKeyExW(HKEY_CURRENT_USER, keyName.get(), 0, KEY_READ,
+  LPCWSTR keyName =
+    L"Software\\Microsoft\\Windows\\CurrentVersion\\Explorer\\Shell Folders";
+  DWORD res = ::RegOpenKeyExW(HKEY_CURRENT_USER, keyName, 0, KEY_READ,
                               &key);
   if (res != ERROR_SUCCESS) {
     return NS_ERROR_FAILURE;
@@ -766,10 +769,20 @@ GetSpecialSystemDirectory(SystemDirectories aSystemSystemDirectory,
 nsresult
 GetOSXFolderType(short aDomain, OSType aFolderType, nsIFile** aLocalFile)
 {
-  OSErr err;
-  FSRef fsRef;
   nsresult rv = NS_ERROR_FAILURE;
 
+  if (aFolderType == kTemporaryFolderType) {
+    NS_NewLocalFile(EmptyString(), true, aLocalFile);
+    nsCOMPtr<nsILocalFileMac> localMacFile(do_QueryInterface(*aLocalFile));
+    if (localMacFile) {
+      rv = localMacFile->InitWithCFURL(
+             CocoaFileUtils::GetTemporaryFolderCFURLRef());
+    }
+    return rv;
+  }
+
+  OSErr err;
+  FSRef fsRef;
   err = ::FSFindFolder(aDomain, aFolderType, kCreateFolder, &fsRef);
   if (err == noErr) {
     NS_NewLocalFile(EmptyString(), true, aLocalFile);

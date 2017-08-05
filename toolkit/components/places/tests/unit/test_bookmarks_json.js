@@ -17,22 +17,22 @@ var test_bookmarks = {
     { guid: "OCyeUO5uu9FF",
       title: "Mozilla Firefox",
       children: [
-        { guid:"OCyeUO5uu9FG",
+        { guid: "OCyeUO5uu9FG",
           title: "Help and Tutorials",
           url: "http://en-us.www.mozilla.com/en-US/firefox/help/",
           icon: "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABAAAAAQCAYAAAAf8/9hAAAABGdBTUEAAK/INwWK6QAAABl0RVh0U29mdHdhcmUAQWRvYmUgSW1hZ2VSZWFkeXHJZTwAAAHWSURBVHjaYvz//z8DJQAggJiQOe/fv2fv7Oz8rays/N+VkfG/iYnJfyD/1+rVq7ffu3dPFpsBAAHEAHIBCJ85c8bN2Nj4vwsDw/8zQLwKiO8CcRoQu0DxqlWrdsHUwzBAAIGJmTNnPgYa9j8UqhFElwPxf2MIDeIrKSn9FwSJoRkAEEAM0DD4DzMAyPi/G+QKY4hh5WAXGf8PDQ0FGwJ22d27CjADAAIIrLmjo+MXA9R2kAHvGBA2wwx6B8W7od6CeQcggKCmCEL8bgwxYCbUIGTDVkHDBia+CuotgACCueD3TDQN75D4xmAvCoK9ARMHBzAw0AECiBHkAlC0Mdy7x9ABNA3obAZXIAa6iKEcGlMVQHwWyjYuL2d4v2cPg8vZswx7gHyAAAK7AOif7SAbOqCmn4Ha3AHFsIDtgPq/vLz8P4MSkJ2W9h8ggBjevXvHDo4FQUQg/kdypqCg4H8lUIACnQ/SOBMYI8bAsAJFPcj1AAEEjwVQqLpAbXmH5BJjqI0gi9DTAAgDBBCcAVLkgmQ7yKCZxpCQxqUZhAECCJ4XgMl493ug21ZD+aDAXH0WLM4A9MZPXJkJIIAwTAR5pQMalaCABQUULttBGCCAGCnNzgABBgAMJ5THwGvJLAAAAABJRU5ErkJggg=="
         },
-        { guid:"OCyeUO5uu9FH",
+        { guid: "OCyeUO5uu9FH",
           title: "Customize Firefox",
           url: "http://en-us.www.mozilla.com/en-US/firefox/customize/",
           icon: "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABAAAAAQCAYAAAAf8/9hAAAABGdBTUEAAK/INwWK6QAAABl0RVh0U29mdHdhcmUAQWRvYmUgSW1hZ2VSZWFkeXHJZTwAAAHWSURBVHjaYvz//z8DJQAggJiQOe/fv2fv7Oz8rays/N+VkfG/iYnJfyD/1+rVq7ffu3dPFpsBAAHEAHIBCJ85c8bN2Nj4vwsDw/8zQLwKiO8CcRoQu0DxqlWrdsHUwzBAAIGJmTNnPgYa9j8UqhFElwPxf2MIDeIrKSn9FwSJoRkAEEAM0DD4DzMAyPi/G+QKY4hh5WAXGf8PDQ0FGwJ22d27CjADAAIIrLmjo+MXA9R2kAHvGBA2wwx6B8W7od6CeQcggKCmCEL8bgwxYCbUIGTDVkHDBia+CuotgACCueD3TDQN75D4xmAvCoK9ARMHBzAw0AECiBHkAlC0Mdy7x9ABNA3obAZXIAa6iKEcGlMVQHwWyjYuL2d4v2cPg8vZswx7gHyAAAK7AOif7SAbOqCmn4Ha3AHFsIDtgPq/vLz8P4MSkJ2W9h8ggBjevXvHDo4FQUQg/kdypqCg4H8lUIACnQ/SOBMYI8bAsAJFPcj1AAEEjwVQqLpAbXmH5BJjqI0gi9DTAAgDBBCcAVLkgmQ7yKCZxpCQxqUZhAECCJ4XgMl493ug21ZD+aDAXH0WLM4A9MZPXJkJIIAwTAR5pQMalaCABQUULttBGCCAGCnNzgABBgAMJ5THwGvJLAAAAABJRU5ErkJggg=="
         },
-        { guid:"OCyeUO5uu9FI",
+        { guid: "OCyeUO5uu9FI",
           title: "Get Involved",
           url: "http://en-us.www.mozilla.com/en-US/firefox/community/",
           icon: "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABAAAAAQCAYAAAAf8/9hAAAABGdBTUEAAK/INwWK6QAAABl0RVh0U29mdHdhcmUAQWRvYmUgSW1hZ2VSZWFkeXHJZTwAAAHWSURBVHjaYvz//z8DJQAggJiQOe/fv2fv7Oz8rays/N+VkfG/iYnJfyD/1+rVq7ffu3dPFpsBAAHEAHIBCJ85c8bN2Nj4vwsDw/8zQLwKiO8CcRoQu0DxqlWrdsHUwzBAAIGJmTNnPgYa9j8UqhFElwPxf2MIDeIrKSn9FwSJoRkAEEAM0DD4DzMAyPi/G+QKY4hh5WAXGf8PDQ0FGwJ22d27CjADAAIIrLmjo+MXA9R2kAHvGBA2wwx6B8W7od6CeQcggKCmCEL8bgwxYCbUIGTDVkHDBia+CuotgACCueD3TDQN75D4xmAvCoK9ARMHBzAw0AECiBHkAlC0Mdy7x9ABNA3obAZXIAa6iKEcGlMVQHwWyjYuL2d4v2cPg8vZswx7gHyAAAK7AOif7SAbOqCmn4Ha3AHFsIDtgPq/vLz8P4MSkJ2W9h8ggBjevXvHDo4FQUQg/kdypqCg4H8lUIACnQ/SOBMYI8bAsAJFPcj1AAEEjwVQqLpAbXmH5BJjqI0gi9DTAAgDBBCcAVLkgmQ7yKCZxpCQxqUZhAECCJ4XgMl493ug21ZD+aDAXH0WLM4A9MZPXJkJIIAwTAR5pQMalaCABQUULttBGCCAGCnNzgABBgAMJ5THwGvJLAAAAABJRU5ErkJggg=="
         },
-        { guid:"OCyeUO5uu9FJ",
+        { guid: "OCyeUO5uu9FJ",
           title: "About Us",
           url: "http://en-us.www.mozilla.com/en-US/about/",
           icon: "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABAAAAAQCAYAAAAf8/9hAAAABGdBTUEAAK/INwWK6QAAABl0RVh0U29mdHdhcmUAQWRvYmUgSW1hZ2VSZWFkeXHJZTwAAAHWSURBVHjaYvz//z8DJQAggJiQOe/fv2fv7Oz8rays/N+VkfG/iYnJfyD/1+rVq7ffu3dPFpsBAAHEAHIBCJ85c8bN2Nj4vwsDw/8zQLwKiO8CcRoQu0DxqlWrdsHUwzBAAIGJmTNnPgYa9j8UqhFElwPxf2MIDeIrKSn9FwSJoRkAEEAM0DD4DzMAyPi/G+QKY4hh5WAXGf8PDQ0FGwJ22d27CjADAAIIrLmjo+MXA9R2kAHvGBA2wwx6B8W7od6CeQcggKCmCEL8bgwxYCbUIGTDVkHDBia+CuotgACCueD3TDQN75D4xmAvCoK9ARMHBzAw0AECiBHkAlC0Mdy7x9ABNA3obAZXIAa6iKEcGlMVQHwWyjYuL2d4v2cPg8vZswx7gHyAAAK7AOif7SAbOqCmn4Ha3AHFsIDtgPq/vLz8P4MSkJ2W9h8ggBjevXvHDo4FQUQg/kdypqCg4H8lUIACnQ/SOBMYI8bAsAJFPcj1AAEEjwVQqLpAbXmH5BJjqI0gi9DTAAgDBBCcAVLkgmQ7yKCZxpCQxqUZhAECCJ4XgMl493ug21ZD+aDAXH0WLM4A9MZPXJkJIIAwTAR5pQMalaCABQUULttBGCCAGCnNzgABBgAMJ5THwGvJLAAAAABJRU5ErkJggg=="
@@ -44,13 +44,13 @@ var test_bookmarks = {
       type: Ci.nsINavHistoryResultNode.RESULT_TYPE_SEPARATOR
     },
     {
-      guid:"OCyeUO5uu9FL",
+      guid: "OCyeUO5uu9FL",
       title: "test",
       description: "folder test comment",
       dateAdded: 1177541020000000,
       // lastModified: 1177541050000000,
       children: [
-        { guid:"OCyeUO5uu9GX",
+        { guid: "OCyeUO5uu9GX",
           title: "test post keyword",
           description: "item description",
           dateAdded: 1177375336000000,
@@ -69,7 +69,7 @@ var test_bookmarks = {
       url: "http://en-us.www.mozilla.com/en-US/firefox/central/",
       icon: "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABAAAAAQCAYAAAAf8/9hAAAABGdBTUEAAK/INwWK6QAAABl0RVh0U29mdHdhcmUAQWRvYmUgSW1hZ2VSZWFkeXHJZTwAAAHWSURBVHjaYvz//z8DJQAggJiQOe/fv2fv7Oz8rays/N+VkfG/iYnJfyD/1+rVq7ffu3dPFpsBAAHEAHIBCJ85c8bN2Nj4vwsDw/8zQLwKiO8CcRoQu0DxqlWrdsHUwzBAAIGJmTNnPgYa9j8UqhFElwPxf2MIDeIrKSn9FwSJoRkAEEAM0DD4DzMAyPi/G+QKY4hh5WAXGf8PDQ0FGwJ22d27CjADAAIIrLmjo+MXA9R2kAHvGBA2wwx6B8W7od6CeQcggKCmCEL8bgwxYCbUIGTDVkHDBia+CuotgACCueD3TDQN75D4xmAvCoK9ARMHBzAw0AECiBHkAlC0Mdy7x9ABNA3obAZXIAa6iKEcGlMVQHwWyjYuL2d4v2cPg8vZswx7gHyAAAK7AOif7SAbOqCmn4Ha3AHFsIDtgPq/vLz8P4MSkJ2W9h8ggBjevXvHDo4FQUQg/kdypqCg4H8lUIACnQ/SOBMYI8bAsAJFPcj1AAEEjwVQqLpAbXmH5BJjqI0gi9DTAAgDBBCcAVLkgmQ7yKCZxpCQxqUZhAECCJ4XgMl493ug21ZD+aDAXH0WLM4A9MZPXJkJIIAwTAR5pQMalaCABQUULttBGCCAGCnNzgABBgAMJ5THwGvJLAAAAABJRU5ErkJggg=="
     },
-    { guid:"OCyeUO5uu9FR",
+    { guid: "OCyeUO5uu9FR",
       title: "Latest Headlines",
       url: "http://en-us.fxfeeds.mozilla.com/en-US/firefox/livebookmarks/",
       feedUrl: "http://en-us.fxfeeds.mozilla.com/en-US/firefox/headlines.xml"
@@ -86,44 +86,44 @@ var test_bookmarks = {
 // Exported bookmarks file pointer.
 var bookmarksExportedFile;
 
-add_task(function* test_import_bookmarks() {
+add_task(async function test_import_bookmarks() {
   let bookmarksFile = OS.Path.join(do_get_cwd().path, "bookmarks.json");
 
-  yield BookmarkJSONUtils.importFromFile(bookmarksFile, true);
-  yield PlacesTestUtils.promiseAsyncUpdates();
-  yield testImportedBookmarks();
+  await BookmarkJSONUtils.importFromFile(bookmarksFile, true);
+  await PlacesTestUtils.promiseAsyncUpdates();
+  await testImportedBookmarks();
 });
 
-add_task(function* test_export_bookmarks() {
+add_task(async function test_export_bookmarks() {
   bookmarksExportedFile = OS.Path.join(OS.Constants.Path.profileDir,
                                        "bookmarks.exported.json");
-  yield BookmarkJSONUtils.exportToFile(bookmarksExportedFile);
-  yield PlacesTestUtils.promiseAsyncUpdates();
+  await BookmarkJSONUtils.exportToFile(bookmarksExportedFile);
+  await PlacesTestUtils.promiseAsyncUpdates();
 });
 
-add_task(function* test_import_exported_bookmarks() {
-  yield PlacesUtils.bookmarks.eraseEverything();
-  yield BookmarkJSONUtils.importFromFile(bookmarksExportedFile, true);
-  yield PlacesTestUtils.promiseAsyncUpdates();
-  yield testImportedBookmarks();
+add_task(async function test_import_exported_bookmarks() {
+  await PlacesUtils.bookmarks.eraseEverything();
+  await BookmarkJSONUtils.importFromFile(bookmarksExportedFile, true);
+  await PlacesTestUtils.promiseAsyncUpdates();
+  await testImportedBookmarks();
 });
 
-add_task(function* test_import_ontop() {
-  yield PlacesUtils.bookmarks.eraseEverything();
-  yield BookmarkJSONUtils.importFromFile(bookmarksExportedFile, true);
-  yield PlacesTestUtils.promiseAsyncUpdates();
-  yield BookmarkJSONUtils.exportToFile(bookmarksExportedFile);
-  yield PlacesTestUtils.promiseAsyncUpdates();
-  yield BookmarkJSONUtils.importFromFile(bookmarksExportedFile, true);
-  yield PlacesTestUtils.promiseAsyncUpdates();
-  yield testImportedBookmarks();
+add_task(async function test_import_ontop() {
+  await PlacesUtils.bookmarks.eraseEverything();
+  await BookmarkJSONUtils.importFromFile(bookmarksExportedFile, true);
+  await PlacesTestUtils.promiseAsyncUpdates();
+  await BookmarkJSONUtils.exportToFile(bookmarksExportedFile);
+  await PlacesTestUtils.promiseAsyncUpdates();
+  await BookmarkJSONUtils.importFromFile(bookmarksExportedFile, true);
+  await PlacesTestUtils.promiseAsyncUpdates();
+  await testImportedBookmarks();
 });
 
-add_task(function* test_clean() {
-  yield PlacesUtils.bookmarks.eraseEverything();
+add_task(async function test_clean() {
+  await PlacesUtils.bookmarks.eraseEverything();
 });
 
-function* testImportedBookmarks() {
+async function testImportedBookmarks() {
   for (let group in test_bookmarks) {
     do_print("[testImportedBookmarks()] Checking group '" + group + "'");
 
@@ -147,17 +147,17 @@ function* testImportedBookmarks() {
     do_check_eq(root.childCount, items.length);
 
     for (let key in items) {
-      yield checkItem(items[key], root.getChild(key));
+      await checkItem(items[key], root.getChild(key));
     }
 
     root.containerOpen = false;
   }
 }
 
-function* checkItem(aExpected, aNode) {
+function checkItem(aExpected, aNode) {
   let id = aNode.itemId;
 
-  return Task.spawn(function* () {
+  return (async function() {
     for (let prop in aExpected) {
       switch (prop) {
         case "type":
@@ -189,18 +189,18 @@ function* checkItem(aExpected, aNode) {
             function(aURI, aDataLen, aData, aMimeType) {
               deferred.resolve(aData);
             });
-          let data = yield deferred.promise;
+          let data = await deferred.promise;
           let base64Icon = "data:image/png;base64," +
                            base64EncodeString(String.fromCharCode.apply(String, data));
           do_check_true(base64Icon == aExpected.icon);
           break;
         case "keyword": {
-          let entry = yield PlacesUtils.keywords.fetch({ url: aNode.uri });
+          let entry = await PlacesUtils.keywords.fetch({ url: aNode.uri });
           Assert.equal(entry.keyword, aExpected.keyword);
           break;
         }
         case "guid":
-          let guid = yield PlacesUtils.promiseItemGuid(id);
+          let guid = await PlacesUtils.promiseItemGuid(id);
           do_check_eq(guid, aExpected.guid);
           break;
         case "sidebar":
@@ -208,16 +208,16 @@ function* checkItem(aExpected, aNode) {
                       id, LOAD_IN_SIDEBAR_ANNO), aExpected.sidebar);
           break;
         case "postData": {
-          let entry = yield PlacesUtils.keywords.fetch({ url: aNode.uri });
+          let entry = await PlacesUtils.keywords.fetch({ url: aNode.uri });
           Assert.equal(entry.postData, aExpected.postData);
           break;
         }
         case "charset":
           let testURI = NetUtil.newURI(aNode.uri);
-          do_check_eq((yield PlacesUtils.getCharsetForURI(testURI)), aExpected.charset);
+          do_check_eq((await PlacesUtils.getCharsetForURI(testURI)), aExpected.charset);
           break;
         case "feedUrl":
-          let livemark = yield PlacesUtils.livemarks.getLivemark({ id });
+          let livemark = await PlacesUtils.livemarks.getLivemark({ id });
           do_check_eq(livemark.siteURI.spec, aExpected.url);
           do_check_eq(livemark.feedURI.spec, aExpected.feedUrl);
           break;
@@ -228,7 +228,7 @@ function* checkItem(aExpected, aNode) {
           do_check_eq(folder.childCount, aExpected.children.length);
 
           for (let index = 0; index < aExpected.children.length; index++) {
-            yield checkItem(aExpected.children[index], folder.getChild(index));
+            await checkItem(aExpected.children[index], folder.getChild(index));
           }
 
           folder.containerOpen = false;
@@ -237,5 +237,5 @@ function* checkItem(aExpected, aNode) {
           throw new Error("Unknown property");
       }
     }
-  });
+  })();
 }

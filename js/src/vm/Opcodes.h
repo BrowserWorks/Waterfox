@@ -431,7 +431,7 @@
      * Push a well-known symbol onto the operand stack.
      *   Category: Literals
      *   Type: Constants
-     *   Operands: uint8_t n, the JS::SymbolCode of the symbol to use
+     *   Operands: uint8_t symbol (the JS::SymbolCode of the symbol to use)
      *   Stack: => symbol
      */ \
     macro(JSOP_SYMBOL,    45, "symbol",     NULL,         2,  0,  1,  JOF_UINT8) \
@@ -491,14 +491,13 @@
      */ \
     macro(JSOP_STRICTSPREADEVAL,      50, "strict-spreadeval", NULL,         1,  3,  1, JOF_BYTE|JOF_INVOKE|JOF_TYPESET|JOF_CHECKSTRICT) \
     /*
-     * Writes the [[Prototype]] objects for both a class and its .prototype to
-     * the stack, given the result of a heritage expression.
+     * Ensures the result of a class's heritage expression is either null or a constructor.
      *   Category: Literals
      *   Type: Object
      *   Operands:
-     *   Stack: heritage => funcProto, objProto
+     *   Stack: heritage => heritage
      */ \
-    macro(JSOP_CLASSHERITAGE,  51, "classheritage",   NULL,         1,  1,  2,  JOF_BYTE) \
+    macro(JSOP_CHECKCLASSHERITAGE,  51, "checkclassheritage",   NULL, 1,  1,  1,  JOF_BYTE) \
     /*
      * Pushes a clone of a function with a given [[Prototype]] onto the stack.
      *   Category: Statements
@@ -586,7 +585,7 @@
      *   Category: Literals
      *   Type: Constants
      *   Operands: uint32_t atomIndex
-     *   Stack: => string
+     *   Stack: => atom
      */ \
     macro(JSOP_STRING,    61, "string",     NULL,         5,  0,  1, JOF_ATOM) \
     /*
@@ -813,7 +812,7 @@
      * Pushes the value of local variable onto the stack.
      *   Category: Variables and Scopes
      *   Type: Local Variables
-     *   Operands: uint32_t localno
+     *   Operands: uint24_t localno
      *   Stack: => val
      */ \
     macro(JSOP_GETLOCAL,  86,"getlocal",    NULL,         4,  0,  1,  JOF_LOCAL|JOF_NAME) \
@@ -821,7 +820,7 @@
      * Stores the top stack value to the given local.
      *   Category: Variables and Scopes
      *   Type: Local Variables
-     *   Operands: uint32_t localno
+     *   Operands: uint24_t localno
      *   Stack: v => v
      */ \
     macro(JSOP_SETLOCAL,  87,"setlocal",    NULL,         4,  1,  1,  JOF_LOCAL|JOF_NAME|JOF_DETECTING) \
@@ -1429,7 +1428,7 @@
      * JS_UNINITIALIZED_LEXICAL magic, throwing an error if so.
      *   Category: Variables and Scopes
      *   Type: Local Variables
-     *   Operands: uint32_t localno
+     *   Operands: uint24_t localno
      *   Stack: =>
      */ \
     macro(JSOP_CHECKLEXICAL,  138, "checklexical", NULL,     4,  0,  0, JOF_LOCAL|JOF_NAME) \
@@ -1438,7 +1437,7 @@
      * value.
      *   Category: Variables and Scopes
      *   Type: Local Variables
-     *   Operands: uint32_t localno
+     *   Operands: uint24_t localno
      *   Stack: v => v
      */ \
     macro(JSOP_INITLEXICAL,   139, "initlexical",  NULL,      4,  1,  1, JOF_LOCAL|JOF_NAME|JOF_DETECTING) \
@@ -1748,7 +1747,7 @@
      *
      *   Category: Variables and Scopes
      *   Type: Local Variables
-     *   Operands: uint32_t localno
+     *   Operands: uint24_t localno
      *   Stack: v => v
      */ \
     macro(JSOP_THROWSETCONST,        169, "throwsetconst",        NULL, 4,  1,  1, JOF_LOCAL|JOF_NAME|JOF_DETECTING) \
@@ -1967,7 +1966,15 @@
      *   Stack: this => this
      */ \
     macro(JSOP_CHECKTHISREINIT,191,"checkthisreinit",NULL,1,  1,  1,  JOF_BYTE) \
-    macro(JSOP_UNUSED192,     192,"unused192",   NULL,    1,  0,  0,  JOF_BYTE) \
+    /*
+     * Pops the top of stack value as 'unwrapped', converts it to async
+     * generator 'wrapped', and pushes 'wrapped' back on the stack.
+     *   Category: Statements
+     *   Type: Generator
+     *   Operands:
+     *   Stack: unwrapped => wrapped
+     */ \
+    macro(JSOP_TOASYNCGEN,    192, "toasyncgen", NULL,    1,  1,  1, JOF_BYTE) \
     \
     /*
      * Pops the top two values on the stack as 'propval' and 'obj', pushes
@@ -2144,8 +2151,26 @@
      *   Stack: promise, gen => resolved
      */ \
     macro(JSOP_AWAIT,         209, "await",        NULL,  4,  2,  1,  JOF_UINT24) \
-    macro(JSOP_UNUSED210,     210, "unused210",    NULL,  1,  0,  0,  JOF_BYTE) \
-    macro(JSOP_UNUSED211,     211, "unused211",    NULL,  1,  0,  0,  JOF_BYTE) \
+    /*
+     * Pops the iterator from the top of the stack, and create async iterator
+     * from it and push the async iterator back onto the stack.
+     *   Category: Statements
+     *   Type: Generator
+     *   Operands:
+     *   Stack: iter => asynciter
+     */ \
+    macro(JSOP_TOASYNCITER,   210, "toasynciter",  NULL,  1,  1,  1,  JOF_BYTE) \
+    /*
+     * Pops the top two values 'id' and 'obj' from the stack, then pushes
+     * obj.hasOwnProperty(id)
+     *
+     * Note that 'obj' is the top value.
+     *   Category: Other
+     *   Type:
+     *   Operands:
+     *   Stack: id, obj => (obj.hasOwnProperty(id))
+     */ \
+    macro(JSOP_HASOWN,        211, "hasown",     NULL,    1,  2,  1, JOF_BYTE) \
     /*
      * Initializes generator frame, creates a generator and pushes it on the
      * stack.
@@ -2235,7 +2260,15 @@
      *   Stack: =>
      */ \
     macro(JSOP_TRY_DESTRUCTURING_ITERCLOSE, 220, "try-destructuring-iterclose", NULL, 1, 0, 0, JOF_BYTE) \
-    macro(JSOP_UNUSED221,     221,"unused221",     NULL,  1,  0,  0,  JOF_BYTE) \
+    \
+    /*
+     * Pushes the current global's builtin prototype for a given proto key
+     *   Category: Literals
+     *   Type: Constants
+     *   Operands: uint8_t kind
+     *   Stack: => %BuiltinPrototype%
+     */ \
+    macro(JSOP_BUILTINPROTO, 221, "builtinproto", NULL, 2,  0,  1,  JOF_UINT8) \
     macro(JSOP_UNUSED222,     222,"unused222",     NULL,  1,  0,  0,  JOF_BYTE) \
     macro(JSOP_UNUSED223,     223,"unused223",     NULL,  1,  0,  0,  JOF_BYTE) \
     \
@@ -2306,14 +2339,23 @@
      *   Operands:
      *   Stack: =>
      */ \
-    macro(JSOP_JUMPTARGET,  230, "jumptarget",     NULL,  1,  0,  0,  JOF_BYTE)
+    macro(JSOP_JUMPTARGET,  230, "jumptarget",     NULL,  1,  0,  0,  JOF_BYTE)\
+    /*
+     * Like JSOP_CALL, but tells the function that the return value is ignored.
+     * stack.
+     *   Category: Statements
+     *   Type: Function
+     *   Operands: uint16_t argc
+     *   Stack: callee, this, args[0], ..., args[argc-1] => rval
+     *   nuses: (argc+2)
+     */ \
+    macro(JSOP_CALL_IGNORES_RV, 231, "call-ignores-rv", NULL, 3, -1, 1, JOF_UINT16|JOF_INVOKE|JOF_TYPESET)
 
 /*
  * In certain circumstances it may be useful to "pad out" the opcode space to
  * a power of two.  Use this macro to do so.
  */
 #define FOR_EACH_TRAILING_UNUSED_OPCODE(macro) \
-    macro(231) \
     macro(232) \
     macro(233) \
     macro(234) \

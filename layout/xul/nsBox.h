@@ -50,7 +50,7 @@ public:
   void PropagateDebug(nsBoxLayoutState& aState);
 #endif
 
-  nsBox();
+  nsBox(ClassID aID);
   virtual ~nsBox();
 
   /**

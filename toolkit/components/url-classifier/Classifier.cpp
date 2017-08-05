@@ -22,7 +22,7 @@
 #include "mozilla/Base64.h"
 #include "mozilla/Unused.h"
 #include "mozilla/SizePrintfMacros.h"
-#include "mozilla/TypedEnumBits.h"
+#include "mozilla/UniquePtr.h"
 #include "nsIUrlClassifierUtils.h"
 #include "nsUrlClassifierDBService.h"
 
@@ -63,7 +63,7 @@ public:
 
 private:
   nsTArray<TableUpdate*>* mUpdatesArrayRef;
-  nsTArray<nsAutoPtr<TableUpdate>> mUpdatesPointerHolder;
+  nsTArray<UniquePtr<TableUpdate>> mUpdatesPointerHolder;
 };
 
 } // End of unnamed namespace.
@@ -149,7 +149,10 @@ Classifier::GetPrivateStoreDirectory(nsIFile* aRootStoreDirectory,
 
 Classifier::Classifier()
   : mIsTableRequestResultOutdated(true)
+  , mUpdateInterrupted(true)
 {
+  NS_NewNamedThread(NS_LITERAL_CSTRING("Classifier Update"),
+                    getter_AddRefs(mUpdateThread));
 }
 
 Classifier::~Classifier()
@@ -274,17 +277,33 @@ Classifier::Close()
 void
 Classifier::Reset()
 {
-  DropStores();
+  MOZ_ASSERT(NS_GetCurrentThread() != mUpdateThread,
+             "Reset() MUST NOT be called on update thread");
 
-  mRootStoreDirectory->Remove(true);
-  mBackupDirectory->Remove(true);
-  mUpdatingDirectory->Remove(true);
-  mToDeleteDirectory->Remove(true);
+  LOG(("Reset() is called so we interrupt the update."));
+  mUpdateInterrupted = true;
 
-  CreateStoreDirectory();
+  auto resetFunc = [=] {
+    DropStores();
 
-  mTableFreshness.Clear();
-  RegenActiveTables();
+    mRootStoreDirectory->Remove(true);
+    mBackupDirectory->Remove(true);
+    mUpdatingDirectory->Remove(true);
+    mToDeleteDirectory->Remove(true);
+
+    CreateStoreDirectory();
+
+    RegenActiveTables();
+  };
+
+  if (!mUpdateThread) {
+    LOG(("Async update has been disabled. Just Reset() on worker thread."));
+    resetFunc();
+    return;
+  }
+
+  nsCOMPtr<nsIRunnable> r = NS_NewRunnableFunction(resetFunc);
+  SyncRunnable::DispatchToThread(mUpdateThread, r);
 }
 
 void
@@ -292,8 +311,6 @@ Classifier::ResetTables(ClearType aType, const nsTArray<nsCString>& aTables)
 {
   for (uint32_t i = 0; i < aTables.Length(); i++) {
     LOG(("Resetting table: %s", aTables[i].get()));
-    // Spoil this table by marking it as no known freshness
-    mTableFreshness.Remove(aTables[i]);
     LookupCache *cache = GetLookupCache(aTables[i]);
     if (cache) {
       // Remove any cached Completes for this table if clear type is Clear_Cache
@@ -355,20 +372,6 @@ Classifier::DeleteTables(nsIFile* aDirectory, const nsTArray<nsCString>& aTables
 }
 
 void
-Classifier::AbortUpdateAndReset(const nsCString& aTable)
-{
-  // We don't need to reset while shutting down. It will only slow us down.
-  if (nsUrlClassifierDBService::ShutdownHasStarted()) {
-    return;
-  }
-
-  LOG(("Abort updating table %s.", aTable.get()));
-
-  // ResetTables will clear both in-memory & on-disk data.
-  ResetTables(Clear_All, nsTArray<nsCString> { aTable });
-}
-
-void
 Classifier::TableRequest(nsACString& aResult)
 {
   MOZ_ASSERT(!NS_IsMainThread(),
@@ -388,14 +391,21 @@ Classifier::TableRequest(nsACString& aResult)
     HashStore store(tables[i], GetProvider(tables[i]), mRootStoreDirectory);
 
     nsresult rv = store.Open();
-    if (NS_FAILED(rv))
+    if (NS_FAILED(rv)) {
       continue;
-
-    aResult.Append(store.TableName());
-    aResult.Append(';');
+    }
 
     ChunkSet &adds = store.AddChunks();
     ChunkSet &subs = store.SubChunks();
+
+    // Open HashStore will always succeed even that is not a v2 table.
+    // So skip tables without add and sub chunks.
+    if (adds.Length() == 0 && subs.Length() == 0) {
+      continue;
+    }
+
+    aResult.Append(store.TableName());
+    aResult.Append(';');
 
     if (adds.Length() > 0) {
       aResult.AppendLiteral("a:");
@@ -429,20 +439,9 @@ Classifier::TableRequest(nsACString& aResult)
   mIsTableRequestResultOutdated = false;
 }
 
-// This is used to record the matching statistics for v2 and v4.
-enum class PrefixMatch : uint8_t {
-  eNoMatch = 0x00,
-  eMatchV2Prefix = 0x01,
-  eMatchV4Prefix = 0x02,
-  eMatchBoth = eMatchV2Prefix | eMatchV4Prefix
-};
-
-MOZ_MAKE_ENUM_CLASS_BITWISE_OPERATORS(PrefixMatch)
-
 nsresult
 Classifier::Check(const nsACString& aSpec,
                   const nsACString& aTables,
-                  uint32_t aFreshnessGuarantee,
                   LookupResultArray& aResults)
 {
   Telemetry::AutoTimer<Telemetry::URLCLASSIFIER_CL_CHECK_TIME> timer;
@@ -480,8 +479,6 @@ Classifier::Check(const nsACString& aSpec,
     }
   }
 
-  PrefixMatch matchingStatistics = PrefixMatch::eNoMatch;
-
   // Now check each lookup fragment against the entries in the DB.
   for (uint32_t i = 0; i < fragments.Length(); i++) {
     Completion lookupHash;
@@ -496,24 +493,16 @@ Classifier::Check(const nsACString& aSpec,
 
     for (uint32_t i = 0; i < cacheArray.Length(); i++) {
       LookupCache *cache = cacheArray[i];
-      bool has, fromCache;
+      bool has, confirmed;
       uint32_t matchLength;
 
-      rv = cache->Has(lookupHash, &has, &matchLength, &fromCache);
+      rv = cache->Has(lookupHash, &has, &matchLength, &confirmed);
       NS_ENSURE_SUCCESS(rv, rv);
+
       if (has) {
         LookupResult *result = aResults.AppendElement();
         if (!result)
           return NS_ERROR_OUT_OF_MEMORY;
-
-        // For V2, there is no TTL for caching, so we use table freshness to
-        // decide if matching a completion should trigger a gethash request or not.
-        // For V4, this is done by Positive Caching & Negative Caching mechanism.
-        bool confirmed = false;
-        if (fromCache) {
-          cache->IsHashEntryConfirmed(lookupHash, mTableFreshness,
-                                      aFreshnessGuarantee, &confirmed);
-        }
 
         LOG(("Found a result in %s: %s",
              cache->TableName().get(),
@@ -533,20 +522,9 @@ Classifier::Check(const nsACString& aSpec,
           continue;
         }
 
-        if (result->mProtocolV2) {
-          matchingStatistics |= PrefixMatch::eMatchV2Prefix;
-          result->mMatchResult = MatchResult::eV2Prefix;
-        } else {
-          matchingStatistics |= PrefixMatch::eMatchV2Prefix;
-          result->mMatchResult = MatchResult::eV4Prefix;
-        }
+        result->mMatchResult = result->mProtocolV2 ?
+                               MatchResult::eV2Prefix : MatchResult::eV4Prefix;
       }
-    }
-
-    // TODO : This will be removed in Bug 1338033.
-    if (shouldDoTelemetry) {
-      Telemetry::Accumulate(Telemetry::URLCLASSIFIER_PREFIX_MATCH,
-                            static_cast<uint8_t>(matchingStatistics));
     }
   }
 
@@ -649,6 +627,64 @@ Classifier::RemoveUpdateIntermediaries()
   }
 }
 
+void
+Classifier::CopyAndInvalidateFullHashCache()
+{
+  MOZ_ASSERT(NS_GetCurrentThread() != mUpdateThread,
+             "CopyAndInvalidateFullHashCache cannot be called on update thread "
+             "since it mutates mLookupCaches which is only safe on "
+             "worker thread.");
+
+  // New lookup caches are built from disk, data likes cache which is
+  // generated online won't exist. We have to manually copy cache from
+  // old LookupCache to new LookupCache.
+  for (auto& newCache: mNewLookupCaches) {
+    for (auto& oldCache: mLookupCaches) {
+      if (oldCache->TableName() == newCache->TableName()) {
+        newCache->CopyFullHashCache(oldCache);
+        break;
+      }
+    }
+  }
+
+  // Clear cache when update.
+  // Invalidate cache entries in CopyAndInvalidateFullHashCache because only
+  // at this point we will have cache data in LookupCache.
+  for (auto& newCache: mNewLookupCaches) {
+    newCache->InvalidateExpiredCacheEntries();
+  }
+}
+
+void
+Classifier::MergeNewLookupCaches()
+{
+  MOZ_ASSERT(NS_GetCurrentThread() != mUpdateThread,
+             "MergeNewLookupCaches cannot be called on update thread "
+             "since it mutates mLookupCaches which is only safe on "
+             "worker thread.");
+
+  for (auto& newCache: mNewLookupCaches) {
+    // For each element in mNewLookCaches, it will be swapped with
+    //   - An old cache in mLookupCache with the same table name or
+    //   - nullptr (mLookupCache will be expaned) otherwise.
+    size_t swapIndex = 0;
+    for (; swapIndex < mLookupCaches.Length(); swapIndex++) {
+      if (mLookupCaches[swapIndex]->TableName() == newCache->TableName()) {
+        break;
+      }
+    }
+    if (swapIndex == mLookupCaches.Length()) {
+      mLookupCaches.AppendElement(nullptr);
+    }
+
+    Swap(mLookupCaches[swapIndex], newCache);
+    mLookupCaches[swapIndex]->UpdateRootDirHandle(mRootStoreDirectory);
+  }
+
+  // At this point, mNewLookupCaches's length remains the same but
+  // will contain either old cache (override) or nullptr (append).
+}
+
 nsresult
 Classifier::SwapInNewTablesAndCleanup()
 {
@@ -668,11 +704,10 @@ Classifier::SwapInNewTablesAndCleanup()
     return rv;
   }
 
-  // Step 2. Swap in in-memory tables and update root directroy handles.
-  mLookupCaches.SwapElements(mNewLookupCaches);
-  for (auto c: mLookupCaches) {
-    c->UpdateRootDirHandle(mRootStoreDirectory);
-  }
+  // Step 2. Merge mNewLookupCaches into mLookupCaches. The outdated
+  // LookupCaches will be stored in mNewLookupCaches and be cleaned
+  // up later.
+  MergeNewLookupCaches();
 
   // Step 3. Re-generate active tables based on on-disk tables.
   rv = RegenActiveTables();
@@ -691,12 +726,79 @@ Classifier::SwapInNewTablesAndCleanup()
   return rv;
 }
 
-nsresult
-Classifier::ApplyUpdates(nsTArray<TableUpdate*>* aUpdates)
+void Classifier::FlushAndDisableAsyncUpdate()
 {
-  // Will run on the update thread after Bug 1339760.
-  // No lock is required except for CopyInUseDirForUpdate() since
-  // the table lookup may lead to database removal.
+  LOG(("Classifier::FlushAndDisableAsyncUpdate [%p, %p]", this, mUpdateThread.get()));
+
+  if (!mUpdateThread) {
+    LOG(("Async update has been disabled."));
+    return;
+  }
+
+  mUpdateThread->Shutdown();
+  mUpdateThread = nullptr;
+}
+
+nsresult
+Classifier::AsyncApplyUpdates(nsTArray<TableUpdate*>* aUpdates,
+                              const AsyncUpdateCallback& aCallback)
+{
+  LOG(("Classifier::AsyncApplyUpdates"));
+
+  if (!mUpdateThread) {
+    LOG(("Async update has already been disabled."));
+    return NS_ERROR_FAILURE;
+  }
+
+  //         Caller thread      |       Update thread
+  // --------------------------------------------------------
+  //                            |    ApplyUpdatesBackground
+  //    (processing other task) |    (bg-update done. ping back to caller thread)
+  //    (processing other task) |    idle...
+  //    ApplyUpdatesForeground  |
+  //          callback          |
+
+  mUpdateInterrupted = false;
+  nsresult rv = mRootStoreDirectory->Clone(getter_AddRefs(mRootStoreDirectoryForUpdate));
+  if (NS_FAILED(rv)) {
+    LOG(("Failed to clone mRootStoreDirectory for update."));
+    return rv;
+  }
+
+  nsCOMPtr<nsIThread> callerThread = NS_GetCurrentThread();
+  MOZ_ASSERT(callerThread != mUpdateThread);
+
+  nsCOMPtr<nsIRunnable> bgRunnable = NS_NewRunnableFunction([=] {
+    MOZ_ASSERT(NS_GetCurrentThread() == mUpdateThread, "MUST be on update thread");
+
+    LOG(("Step 1. ApplyUpdatesBackground on update thread."));
+    nsCString failedTableName;
+    nsresult bgRv = ApplyUpdatesBackground(aUpdates, failedTableName);
+
+    nsCOMPtr<nsIRunnable> fgRunnable = NS_NewRunnableFunction([=] {
+      MOZ_ASSERT(NS_GetCurrentThread() == callerThread, "MUST be on caller thread");
+
+      LOG(("Step 2. ApplyUpdatesForeground on caller thread"));
+      nsresult rv = ApplyUpdatesForeground(bgRv, failedTableName);;
+
+      LOG(("Step 3. Updates applied! Fire callback."));
+
+      aCallback(rv);
+    });
+    callerThread->Dispatch(fgRunnable, NS_DISPATCH_NORMAL);
+  });
+
+  return mUpdateThread->Dispatch(bgRunnable, NS_DISPATCH_NORMAL);
+}
+
+nsresult
+Classifier::ApplyUpdatesBackground(nsTArray<TableUpdate*>* aUpdates,
+                                   nsACString& aFailedTableName)
+{
+  // |mUpdateInterrupted| is guaranteed to have been unset.
+  // If |mUpdateInterrupted| is set at any point, Reset() must have
+  // been called then we need to interrupt the update process.
+  // We only add checkpoints for non-trivial tasks.
 
   if (!aUpdates || aUpdates->Length() == 0) {
     return NS_OK;
@@ -723,18 +825,15 @@ Classifier::ApplyUpdates(nsTArray<TableUpdate*>* aUpdates)
     ScopedUpdatesClearer scopedUpdatesClearer(aUpdates);
 
     {
-      // TODO: Bug 1339050. This section should be mutual exclusive to
-      // LookupCache::Open() and HashStore::Open() since those operations
-      // might fail and cause the database to be removed. It'll be fine
-      // until we move "apply update" code off the worker thread.
+      // Check point 1: Copying file takes time so we check here.
+      if (mUpdateInterrupted) {
+        LOG(("Update is interrupted. Don't copy files."));
+        return NS_OK;
+      }
+
       rv = CopyInUseDirForUpdate(); // i.e. mUpdatingDirectory will be setup.
       if (NS_FAILED(rv)) {
         LOG(("Failed to copy in-use directory for update."));
-        return rv;
-      }
-      rv = CopyInUseLookupCacheForUpdate(); // i.e. mNewLookupCaches will be setup.
-      if (NS_FAILED(rv)) {
-        LOG(("Failed to create lookup caches from copied files."));
         return rv;
       }
     }
@@ -747,6 +846,12 @@ Classifier::ApplyUpdates(nsTArray<TableUpdate*>* aUpdates)
         // Run all updates for one table
         nsCString updateTable(aUpdates->ElementAt(i)->TableName());
 
+        // Check point 2: Processing downloaded data takes time.
+        if (mUpdateInterrupted) {
+          LOG(("Update is interrupted. Stop building new tables."));
+          return NS_OK;
+        }
+
         // Will update the mirrored in-memory and on-disk databases.
         if (TableUpdate::Cast<TableUpdateV2>((*aUpdates)[i])) {
           rv = UpdateHashStore(aUpdates, updateTable);
@@ -755,13 +860,7 @@ Classifier::ApplyUpdates(nsTArray<TableUpdate*>* aUpdates)
         }
 
         if (NS_FAILED(rv)) {
-          if (rv != NS_ERROR_OUT_OF_MEMORY) {
-#ifdef MOZ_SAFEBROWSING_DUMP_FAILED_UPDATES
-            DumpFailedUpdate();
-#endif
-            // TODO: Bug 1339050 - Should be run on worker thread.
-            AbortUpdateAndReset(updateTable);
-          }
+          aFailedTableName = updateTable;
           RemoveUpdateIntermediaries();
           return rv;
         }
@@ -770,11 +869,6 @@ Classifier::ApplyUpdates(nsTArray<TableUpdate*>* aUpdates)
 
   } // End of scopedUpdatesClearer scope.
 
-  rv = SwapInNewTablesAndCleanup();
-  if (NS_FAILED(rv)) {
-    LOG(("Failed to swap in new tables."));
-  }
-
   if (LOG_ENABLED()) {
     PRIntervalTime clockEnd = PR_IntervalNow();
     LOG(("update took %dms\n",
@@ -782,6 +876,28 @@ Classifier::ApplyUpdates(nsTArray<TableUpdate*>* aUpdates)
   }
 
   return rv;
+}
+
+nsresult
+Classifier::ApplyUpdatesForeground(nsresult aBackgroundRv,
+                                   const nsACString& aFailedTableName)
+{
+  if (mUpdateInterrupted) {
+    LOG(("Update is interrupted! Just remove update intermediaries."));
+    RemoveUpdateIntermediaries();
+    return NS_OK;
+  }
+  if (NS_SUCCEEDED(aBackgroundRv)) {
+    // Copy and Invalidate fullhash cache here because this call requires
+    // mLookupCaches which is only available on work-thread
+    CopyAndInvalidateFullHashCache();
+
+    return SwapInNewTablesAndCleanup();
+  }
+  if (NS_ERROR_OUT_OF_MEMORY != aBackgroundRv) {
+    ResetTables(Clear_All, nsTArray<nsCString> { nsCString(aFailedTableName) });
+  }
+  return aBackgroundRv;
 }
 
 nsresult
@@ -802,21 +918,16 @@ Classifier::ApplyFullHashes(nsTArray<TableUpdate*>* aUpdates)
   return NS_OK;
 }
 
-int64_t
-Classifier::GetLastUpdateTime(const nsACString& aTableName)
-{
-  int64_t age;
-  bool found = mTableFreshness.Get(aTableName, &age);
-  return found ? (age * PR_MSEC_PER_SEC) : 0;
-}
-
 void
-Classifier::SetLastUpdateTime(const nsACString &aTable,
-                              uint64_t updateTime)
+Classifier::GetCacheInfo(const nsACString& aTable,
+                         nsIUrlClassifierCacheInfo** aCache)
 {
-  LOG(("Marking table %s as last updated on %" PRIu64,
-       PromiseFlatCString(aTable).get(), updateTime));
-  mTableFreshness.Put(aTable, updateTime / PR_MSEC_PER_SEC);
+  LookupCache* lookupCache = GetLookupCache(aTable);
+  if (!lookupCache) {
+    return;
+  }
+
+  lookupCache->GetCacheInfo(aCache);
 }
 
 void
@@ -834,42 +945,51 @@ Classifier::RegenActiveTables()
   mActiveTablesCache.Clear();
 
   nsTArray<nsCString> foundTables;
-  ScanStoreDir(foundTables);
+  ScanStoreDir(mRootStoreDirectory, foundTables);
 
   for (uint32_t i = 0; i < foundTables.Length(); i++) {
     nsCString table(foundTables[i]);
-    HashStore store(table, GetProvider(table), mRootStoreDirectory);
 
-    nsresult rv = store.Open();
-    if (NS_FAILED(rv))
-      continue;
-
-    LookupCache *lookupCache = GetLookupCache(store.TableName());
+    LookupCache *lookupCache = GetLookupCache(table);
     if (!lookupCache) {
       continue;
     }
 
-    if (!lookupCache->IsPrimed())
+    if (!lookupCache->IsPrimed()) {
       continue;
+    }
 
-    const ChunkSet &adds = store.AddChunks();
-    const ChunkSet &subs = store.SubChunks();
+    if (LookupCache::Cast<LookupCacheV4>(lookupCache)) {
+      LOG(("Active v4 table: %s", table.get()));
+    } else {
+      HashStore store(table, GetProvider(table), mRootStoreDirectory);
 
-    if (adds.Length() == 0 && subs.Length() == 0)
-      continue;
+      nsresult rv = store.Open();
+      if (NS_FAILED(rv)) {
+        continue;
+      }
 
-    LOG(("Active table: %s", store.TableName().get()));
-    mActiveTablesCache.AppendElement(store.TableName());
+      const ChunkSet &adds = store.AddChunks();
+      const ChunkSet &subs = store.SubChunks();
+
+      if (adds.Length() == 0 && subs.Length() == 0) {
+        continue;
+      }
+
+      LOG(("Active v2 table: %s", store.TableName().get()));
+    }
+
+    mActiveTablesCache.AppendElement(table);
   }
 
   return NS_OK;
 }
 
 nsresult
-Classifier::ScanStoreDir(nsTArray<nsCString>& aTables)
+Classifier::ScanStoreDir(nsIFile* aDirectory, nsTArray<nsCString>& aTables)
 {
   nsCOMPtr<nsISimpleEnumerator> entries;
-  nsresult rv = mRootStoreDirectory->GetDirectoryEntries(getter_AddRefs(entries));
+  nsresult rv = aDirectory->GetDirectoryEntries(getter_AddRefs(entries));
   NS_ENSURE_SUCCESS(rv, rv);
 
   bool hasMore;
@@ -880,11 +1000,22 @@ Classifier::ScanStoreDir(nsTArray<nsCString>& aTables)
 
     nsCOMPtr<nsIFile> file = do_QueryInterface(supports);
 
+    // If |file| is a directory, recurse to find its entries as well.
+    bool isDirectory;
+    if (NS_FAILED(file->IsDirectory(&isDirectory))) {
+      continue;
+    }
+    if (isDirectory) {
+      ScanStoreDir(file, aTables);
+      continue;
+    }
+
     nsCString leafName;
     rv = file->GetNativeLeafName(leafName);
     NS_ENSURE_SUCCESS(rv, rv);
 
-    nsCString suffix(NS_LITERAL_CSTRING(".sbstore"));
+    // Both v2 and v4 contain .pset file
+    nsCString suffix(NS_LITERAL_CSTRING(".pset"));
 
     int32_t dot = leafName.RFind(suffix, 0);
     if (dot != -1) {
@@ -939,10 +1070,9 @@ Classifier::GetFailedUpdateDirectroy()
 nsresult
 Classifier::DumpRawTableUpdates(const nsACString& aRawUpdates)
 {
-  // DumpFailedUpdate() MUST be called first to create the
-  // "failed update" directory
-
   LOG(("Dumping raw table updates..."));
+
+  DumpFailedUpdate();
 
   nsCOMPtr<nsIFile> failedUpdatekDirectory = GetFailedUpdateDirectroy();
 
@@ -1011,31 +1141,12 @@ Classifier::CopyInUseDirForUpdate()
 
   // Remove the destination directory first (just in case) the do the copy.
   mUpdatingDirectory->Remove(true);
-  rv = mRootStoreDirectory->CopyToNative(nullptr, updatingDirName);
-  NS_ENSURE_SUCCESS(rv, rv);
-
-  // We moved some things to new places, so move the handles around, too.
-  rv = SetupPathNames();
-  NS_ENSURE_SUCCESS(rv, rv);
-
-  return NS_OK;
-}
-
-nsresult
-Classifier::CopyInUseLookupCacheForUpdate()
-{
-  MOZ_ASSERT(mNewLookupCaches.IsEmpty(), "Update intermediaries is forgotten to "
-                                         "be removed in the previous update.");
-
-  // TODO: Bug 1341183 - Implement deep copy function or copy ctor.
-  // For now we just re-open every table we have opened.
-  // Another option is to NOT pre-open these LookupCaches and
-  // do a "merge" instead of "swap" after update.
-  for (auto c: mLookupCaches) {
-    if (!GetLookupCacheForUpdate(c->TableName())) {
-      return NS_ERROR_FAILURE;
-    }
+  if (!mRootStoreDirectoryForUpdate) {
+    LOG(("mRootStoreDirectoryForUpdate is null."));
+    return NS_ERROR_NULL_POINTER;
   }
+  rv = mRootStoreDirectoryForUpdate->CopyToNative(nullptr, updatingDirName);
+  NS_ENSURE_SUCCESS(rv, rv);
 
   return NS_OK;
 }
@@ -1144,9 +1255,6 @@ Classifier::UpdateHashStore(nsTArray<TableUpdate*>* aUpdates,
     return NS_ERROR_UC_UPDATE_TABLE_NOT_FOUND;
   }
 
-  // Clear cache when update
-  lookupCache->ClearCache();
-
   FallibleTArray<uint32_t> AddPrefixHashes;
   rv = lookupCache->GetPrefixes(AddPrefixHashes);
   NS_ENSURE_SUCCESS(rv, rv);
@@ -1209,9 +1317,7 @@ Classifier::UpdateHashStore(nsTArray<TableUpdate*>* aUpdates,
   rv = lookupCache->WriteFile();
   NS_ENSURE_SUCCESS(rv, NS_ERROR_UC_UPDATE_FAIL_TO_WRITE_DISK);
 
-  int64_t now = (PR_Now() / PR_USEC_PER_SEC);
   LOG(("Successfully updated %s", store.TableName().get()));
-  mTableFreshness.Put(store.TableName(), now);
 
   return NS_OK;
 }
@@ -1305,10 +1411,7 @@ Classifier::UpdateTableV4(nsTArray<TableUpdate*>* aUpdates,
     NS_ENSURE_SUCCESS(rv, NS_ERROR_UC_UPDATE_FAIL_TO_WRITE_DISK);
   }
 
-
-  int64_t now = (PR_Now() / PR_USEC_PER_SEC);
   LOG(("Successfully updated %s\n", PromiseFlatCString(aTable).get()));
-  mTableFreshness.Put(aTable, now);
 
   return NS_OK;
 }
@@ -1328,8 +1431,20 @@ Classifier::UpdateCache(TableUpdate* aUpdate)
     return NS_ERROR_FAILURE;
   }
 
-  auto updateV2 = TableUpdate::Cast<TableUpdateV2>(aUpdate);
-  lookupCache->AddCompletionsToCache(updateV2->AddCompletes());
+  auto lookupV2 = LookupCache::Cast<LookupCacheV2>(lookupCache);
+  if (lookupV2) {
+    auto updateV2 = TableUpdate::Cast<TableUpdateV2>(aUpdate);
+    lookupV2->AddGethashResultToCache(updateV2->AddCompletes(),
+                                      updateV2->MissPrefixes());
+  } else {
+    auto lookupV4 = LookupCache::Cast<LookupCacheV4>(lookupCache);
+    if (!lookupV4) {
+      return NS_ERROR_FAILURE;
+    }
+
+    auto updateV4 = TableUpdate::Cast<TableUpdateV4>(aUpdate);
+    lookupV4->AddFullHashResponseToCache(updateV4->FullHashResponse());
+  }
 
 #if defined(DEBUG)
   lookupCache->DumpCache();
@@ -1341,6 +1456,11 @@ Classifier::UpdateCache(TableUpdate* aUpdate)
 LookupCache *
 Classifier::GetLookupCache(const nsACString& aTable, bool aForUpdate)
 {
+  if (aForUpdate) {
+    MOZ_ASSERT(NS_GetCurrentThread() == mUpdateThread,
+               "GetLookupCache(aForUpdate==true) can only be called on update thread.");
+  }
+
   nsTArray<LookupCache*>& lookupCaches = aForUpdate ? mNewLookupCaches
                                                     : mLookupCaches;
   auto& rootStoreDirectory = aForUpdate ? mUpdatingDirectory
@@ -1420,10 +1540,23 @@ Classifier::ReadNoiseEntries(const Prefix& aPrefix,
     return NS_ERROR_FAILURE;
   }
 
+  // We do not want to simply pick random prefixes, because this would allow
+  // averaging out the noise by analysing the traffic from Firefox users.
+  // Instead, we ensure the 'noise' is the same for the same prefix by seeding
+  // the random number generator with the prefix. We prefer not to use rand()
+  // which isn't thread safe, and the reseeding of which could trip up other
+  // parts othe code that expect actual random numbers.
+  // Here we use a simple LCG (Linear Congruential Generator) to generate
+  // random numbers. We seed the LCG with the prefix we are generating noise
+  // for.
+  // http://en.wikipedia.org/wiki/Linear_congruential_generator
+
+  uint32_t m = prefixes.Length();
+  uint32_t a = aCount % m;
+  uint32_t idx = aPrefix.ToUint32() % m;
+
   for (size_t i = 0; i < aCount; i++) {
-    // Pick some prefixes from cache as noise
-    // We pick a random prefix index from 0 to prefixes.Length() - 1;
-    uint32_t idx = rand() % prefixes.Length();
+    idx = (a * idx + a) % m;
 
     Prefix newPrefix;
     uint32_t hash = prefixes[idx];

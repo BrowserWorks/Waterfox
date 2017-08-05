@@ -6,6 +6,7 @@
 
 #include "mozilla/dom/MediaKeySystemAccess.h"
 #include "mozilla/dom/MediaKeySystemAccessBinding.h"
+#include "mozilla/dom/MediaKeySession.h"
 #include "mozilla/Preferences.h"
 #include "MediaContainerType.h"
 #include "MediaPrefs.h"
@@ -36,6 +37,7 @@
 #ifdef MOZ_WIDGET_ANDROID
 #include "FennecJNIWrappers.h"
 #endif
+#include <functional>
 
 namespace mozilla {
 namespace dom {
@@ -49,6 +51,9 @@ NS_INTERFACE_MAP_BEGIN_CYCLE_COLLECTION(MediaKeySystemAccess)
   NS_INTERFACE_MAP_ENTRY(nsISupports)
 NS_INTERFACE_MAP_END
 
+static nsCString
+ToCString(const MediaKeySystemConfiguration& aConfig);
+
 MediaKeySystemAccess::MediaKeySystemAccess(nsPIDOMWindowInner* aParent,
                                            const nsAString& aKeySystem,
                                            const MediaKeySystemConfiguration& aConfig)
@@ -56,6 +61,8 @@ MediaKeySystemAccess::MediaKeySystemAccess(nsPIDOMWindowInner* aParent,
   , mKeySystem(aKeySystem)
   , mConfig(aConfig)
 {
+  EME_LOG("Created MediaKeySystemAccess for keysystem=%s config=%s",
+          NS_ConvertUTF16toUTF8(mKeySystem).get(), mozilla::dom::ToCString(mConfig).get());
 }
 
 MediaKeySystemAccess::~MediaKeySystemAccess()
@@ -98,8 +105,11 @@ MediaKeySystemAccess::CreateMediaKeys(ErrorResult& aRv)
 static bool
 HavePluginForKeySystem(const nsCString& aKeySystem)
 {
-  bool havePlugin = HaveGMPFor(NS_LITERAL_CSTRING(GMP_API_DECRYPTOR),
-                               { aKeySystem });
+  nsCString api = MediaPrefs::EMEChromiumAPIEnabled()
+                    ? NS_LITERAL_CSTRING(CHROMIUM_CDM_API)
+                    : NS_LITERAL_CSTRING(GMP_API_DECRYPTOR);
+
+  bool havePlugin = HaveGMPFor(api, { aKeySystem });
 #ifdef MOZ_WIDGET_ANDROID
   // Check if we can use MediaDrm for this keysystem.
   if (!havePlugin) {
@@ -306,6 +316,7 @@ GetSupportedKeySystems()
       widevine.mSessionTypes.AppendElement(MediaKeySessionType::Persistent_license);
 #endif
       widevine.mAudioRobustness.AppendElement(NS_LITERAL_STRING("SW_SECURE_CRYPTO"));
+      widevine.mVideoRobustness.AppendElement(NS_LITERAL_STRING("SW_SECURE_CRYPTO"));
       widevine.mVideoRobustness.AppendElement(NS_LITERAL_STRING("SW_SECURE_DECODE"));
 #if defined(XP_WIN)
       // Widevine CDM doesn't include an AAC decoder. So if WMF can't
@@ -448,16 +459,11 @@ CanDecryptAndDecode(const nsString& aKeySystem,
 static bool
 ToSessionType(const nsAString& aSessionType, MediaKeySessionType& aOutType)
 {
-  using MediaKeySessionTypeValues::strings;
-  const char* temporary =
-    strings[static_cast<uint32_t>(MediaKeySessionType::Temporary)].value;
-  if (aSessionType.EqualsASCII(temporary)) {
+  if (aSessionType.Equals(ToString(MediaKeySessionType::Temporary))) {
     aOutType = MediaKeySessionType::Temporary;
     return true;
   }
-  const char* persistentLicense =
-    strings[static_cast<uint32_t>(MediaKeySessionType::Persistent_license)].value;
-  if (aSessionType.EqualsASCII(persistentLicense)) {
+  if (aSessionType.Equals(ToString(MediaKeySessionType::Persistent_license))) {
     aOutType = MediaKeySessionType::Persistent_license;
     return true;
   }
@@ -543,11 +549,13 @@ IsParameterUnrecognized(const nsAString& aContentType)
 
 // 3.1.2.3 Get Supported Capabilities for Audio/Video Type
 static Sequence<MediaKeySystemMediaCapability>
-GetSupportedCapabilities(const CodecType aCodecType,
-                         const nsTArray<MediaKeySystemMediaCapability>& aRequestedCapabilities,
-                         const MediaKeySystemConfiguration& aPartialConfig,
-                         const KeySystemConfig& aKeySystem,
-                         DecoderDoctorDiagnostics* aDiagnostics)
+GetSupportedCapabilities(
+  const CodecType aCodecType,
+  const nsTArray<MediaKeySystemMediaCapability>& aRequestedCapabilities,
+  const MediaKeySystemConfiguration& aPartialConfig,
+  const KeySystemConfig& aKeySystem,
+  DecoderDoctorDiagnostics* aDiagnostics,
+  const std::function<void(const char*)>& aDeprecationLogFn)
 {
   // Let local accumulated configuration be a local copy of partial configuration.
   // (Note: It's not necessary for us to maintain a local copy, as we don't need
@@ -660,6 +668,9 @@ GetSupportedCapabilities(const CodecType aCodecType,
 
     // If media types is empty:
     if (codecs.IsEmpty()) {
+      // Log deprecation warning to encourage authors to not do this!
+      aDeprecationLogFn("MediaEMENoCodecsDeprecatedWarning");
+      // TODO: Remove this once we're sure it doesn't break the web.
       // If container normatively implies a specific set of codecs and codec constraints:
       // Let parameters be that set.
       if (isMP4) {
@@ -822,10 +833,9 @@ UnboxSessionTypes(const Optional<Sequence<nsString>>& aSessionTypes)
   if (aSessionTypes.WasPassed()) {
     sessionTypes = aSessionTypes.Value();
   } else {
-    using MediaKeySessionTypeValues::strings;
-    const char* temporary = strings[static_cast<uint32_t>(MediaKeySessionType::Temporary)].value;
     // Note: fallible. Results in an empty array.
-    sessionTypes.AppendElement(NS_ConvertUTF8toUTF16(nsDependentCString(temporary)), mozilla::fallible);
+    sessionTypes.AppendElement(ToString(MediaKeySessionType::Temporary),
+                               mozilla::fallible);
   }
   return sessionTypes;
 }
@@ -835,7 +845,9 @@ static bool
 GetSupportedConfig(const KeySystemConfig& aKeySystem,
                    const MediaKeySystemConfiguration& aCandidate,
                    MediaKeySystemConfiguration& aOutConfig,
-                   DecoderDoctorDiagnostics* aDiagnostics)
+                   DecoderDoctorDiagnostics* aDiagnostics,
+                   bool aInPrivateBrowsing,
+                   const std::function<void(const char*)>& aDeprecationLogFn)
 {
   // Let accumulated configuration be a new MediaKeySystemConfiguration dictionary.
   MediaKeySystemConfiguration config;
@@ -884,6 +896,14 @@ GetSupportedConfig(const KeySystemConfig& aKeySystem,
                         config.mPersistentState)) {
     EME_LOG("MediaKeySystemConfiguration (label='%s') rejected; "
             "persistentState requirement not satisfied.",
+            NS_ConvertUTF16toUTF8(aCandidate.mLabel).get());
+    return false;
+  }
+
+  if (config.mPersistentState == MediaKeysRequirement::Required &&
+      aInPrivateBrowsing) {
+    EME_LOG("MediaKeySystemConfiguration (label='%s') rejected; "
+            "persistentState requested in Private Browsing window.",
             NS_ConvertUTF16toUTF8(aCandidate.mLabel).get());
     return false;
   }
@@ -940,8 +960,13 @@ GetSupportedConfig(const KeySystemConfig& aKeySystem,
 
   // If the videoCapabilities and audioCapabilities members in candidate
   // configuration are both empty, return NotSupported.
-  // TODO: Most sites using EME still don't pass capabilities, so we
-  // can't reject on it yet without breaking them. So add this later.
+  if (aCandidate.mAudioCapabilities.IsEmpty() &&
+      aCandidate.mVideoCapabilities.IsEmpty()) {
+    // TODO: Most sites using EME still don't pass capabilities, so we
+    // can't reject on it yet without breaking them. So add this later.
+    // Log deprecation warning to encourage authors to not do this!
+    aDeprecationLogFn("MediaEMENoCapabilitiesDeprecatedWarning");
+  }
 
   // If the videoCapabilities member in candidate configuration is non-empty:
   if (!aCandidate.mVideoCapabilities.IsEmpty()) {
@@ -954,7 +979,8 @@ GetSupportedConfig(const KeySystemConfig& aKeySystem,
                                aCandidate.mVideoCapabilities,
                                config,
                                aKeySystem,
-                               aDiagnostics);
+                               aDiagnostics,
+                               aDeprecationLogFn);
     // If video capabilities is null, return NotSupported.
     if (caps.IsEmpty()) {
       EME_LOG("MediaKeySystemConfiguration (label='%s') rejected; "
@@ -979,7 +1005,8 @@ GetSupportedConfig(const KeySystemConfig& aKeySystem,
                                aCandidate.mAudioCapabilities,
                                config,
                                aKeySystem,
-                               aDiagnostics);
+                               aDiagnostics,
+                               aDeprecationLogFn);
     // If audio capabilities is null, return NotSupported.
     if (caps.IsEmpty()) {
       EME_LOG("MediaKeySystemConfiguration (label='%s') rejected; "
@@ -1053,10 +1080,13 @@ GetSupportedConfig(const KeySystemConfig& aKeySystem,
 
 /* static */
 bool
-MediaKeySystemAccess::GetSupportedConfig(const nsAString& aKeySystem,
-                                         const Sequence<MediaKeySystemConfiguration>& aConfigs,
-                                         MediaKeySystemConfiguration& aOutConfig,
-                                         DecoderDoctorDiagnostics* aDiagnostics)
+MediaKeySystemAccess::GetSupportedConfig(
+  const nsAString& aKeySystem,
+  const Sequence<MediaKeySystemConfiguration>& aConfigs,
+  MediaKeySystemConfiguration& aOutConfig,
+  DecoderDoctorDiagnostics* aDiagnostics,
+  bool aIsPrivateBrowsing,
+  const std::function<void(const char*)>& aDeprecationLogFn)
 {
   KeySystemConfig implementation;
   if (!GetKeySystemConfig(aKeySystem, implementation)) {
@@ -1066,7 +1096,9 @@ MediaKeySystemAccess::GetSupportedConfig(const nsAString& aKeySystem,
     if (mozilla::dom::GetSupportedConfig(implementation,
                                          candidate,
                                          aOutConfig,
-                                         aDiagnostics)) {
+                                         aDiagnostics,
+                                         aIsPrivateBrowsing,
+                                         aDeprecationLogFn)) {
       return true;
     }
   }
@@ -1091,6 +1123,104 @@ MediaKeySystemAccess::NotifyObservers(nsPIDOMWindowInner* aWindow,
   if (obs) {
     obs->NotifyObservers(aWindow, "mediakeys-request", json.get());
   }
+}
+
+static nsCString
+ToCString(const nsString& aString)
+{
+  nsCString str("'");
+  str.Append(NS_ConvertUTF16toUTF8(aString));
+  str.AppendLiteral("'");
+  return str;
+}
+
+static nsCString
+ToCString(const MediaKeysRequirement aValue)
+{
+  nsCString str("'");
+  str.Append(nsDependentCString(
+    MediaKeysRequirementValues::strings[static_cast<uint32_t>(aValue)].value));
+  str.AppendLiteral("'");
+  return str;
+}
+
+static nsCString
+ToCString(const MediaKeySystemMediaCapability& aValue)
+{
+  nsCString str;
+  str.AppendLiteral("{contentType=");
+  str.Append(ToCString(aValue.mContentType));
+  str.AppendLiteral(", robustness=");
+  str.Append(ToCString(aValue.mRobustness));
+  str.AppendLiteral("}");
+  return str;
+}
+
+template<class Type>
+static nsCString
+ToCString(const Sequence<Type>& aSequence)
+{
+  nsCString str;
+  str.AppendLiteral("[");
+  for (size_t i = 0; i < aSequence.Length(); i++) {
+    if (i != 0) {
+      str.AppendLiteral(",");
+    }
+    str.Append(ToCString(aSequence[i]));
+  }
+  str.AppendLiteral("]");
+  return str;
+}
+
+template<class Type>
+static nsCString
+ToCString(const Optional<Sequence<Type>>& aOptional)
+{
+  nsCString str;
+  if (aOptional.WasPassed()) {
+    str.Append(ToCString(aOptional.Value()));
+  } else {
+    str.AppendLiteral("[]");
+  }
+  return str;
+}
+
+static nsCString
+ToCString(const MediaKeySystemConfiguration& aConfig)
+{
+  nsCString str;
+  str.AppendLiteral("{label=");
+  str.Append(ToCString(aConfig.mLabel));
+
+  str.AppendLiteral(", initDataTypes=");
+  str.Append(ToCString(aConfig.mInitDataTypes));
+
+  str.AppendLiteral(", audioCapabilities=");
+  str.Append(ToCString(aConfig.mAudioCapabilities));
+
+  str.AppendLiteral(", videoCapabilities=");
+  str.Append(ToCString(aConfig.mVideoCapabilities));
+
+  str.AppendLiteral(", distinctiveIdentifier=");
+  str.Append(ToCString(aConfig.mDistinctiveIdentifier));
+
+  str.AppendLiteral(", persistentState=");
+  str.Append(ToCString(aConfig.mPersistentState));
+
+  str.AppendLiteral(", sessionTypes=");
+  str.Append(ToCString(aConfig.mSessionTypes));
+
+  str.AppendLiteral("}");
+
+  return str;
+}
+
+/* static */
+nsCString
+MediaKeySystemAccess::ToCString(
+  const Sequence<MediaKeySystemConfiguration>& aConfig)
+{
+  return mozilla::dom::ToCString(aConfig);
 }
 
 } // namespace dom

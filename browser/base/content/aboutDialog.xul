@@ -1,4 +1,4 @@
-<?xml version="1.0"?> <!-- -*- Mode: HTML -*- --> 
+<?xml version="1.0"?> <!-- -*- Mode: HTML -*- -->
 
 # This Source Code Form is subject to the terms of the Mozilla Public
 # License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -45,10 +45,8 @@
       <vbox id="leftBox" flex="1"/>
       <vbox id="rightBox" flex="1">
         <hbox align="baseline">
-#expand <label id="version">__MOZ_APP_VERSION_DISPLAY__</label>
-#ifndef NIGHTLY_BUILD
-#expand <label id="releasenotes" class="text-link" href="https://www.waterfoxproject.org/blog/waterfox-__MOZ_APP_VERSION__-release-download">&releaseNotes.link;</label>
-#endif
+#expand   <label id="version">__MOZ_APP_VERSION_DISPLAY__</label>
+          <label id="releasenotes" class="text-link" hidden="true" href="https://www.waterfoxproject.org/blog/waterfox-__MOZ_APP_VERSION__-release-download">&releaseNotes.link;</label>
         </hbox>
 
         <label id="distribution" class="text-blurb"/>
@@ -73,7 +71,7 @@
               </hbox>
               <hbox id="apply" align="center">
                 <button id="updateButton" align="start"
-                        label="&update.updateButton.label2;"
+                        label="&update.updateButton.label3;"
                         accesskey="&update.updateButton.accesskey;"
                         oncommand="gAppUpdater.buttonRestartAfterDownload();"/>
                 <spacer flex="1"/>
@@ -106,7 +104,7 @@
                 <label>&update.unsupported.start;</label><label id="unsupportedLink" class="text-link">&update.unsupported.linkText;</label><label>&update.unsupported.end;</label>
               </hbox>
               <hbox id="restarting" align="center">
-                <label>&update.restarting;</label>
+                <image class="update-throbber"/><label>&update.restarting;</label>
               </hbox>
             </deck>
 #endif
@@ -145,7 +143,7 @@
       <description id="trademark">&trademarkInfo.part1;</description>
     </vbox>
   </vbox>
-  
+
   <keyset>
     <key keycode="VK_ESCAPE" oncommand="window.close();"/>
   </keyset>

@@ -3105,7 +3105,7 @@ MacroAssemblerARMCompat::unboxPrivate(const ValueOperand& src, Register dest)
 }
 
 void
-MacroAssemblerARMCompat::boxDouble(FloatRegister src, const ValueOperand& dest)
+MacroAssemblerARMCompat::boxDouble(FloatRegister src, const ValueOperand& dest, FloatRegister)
 {
     as_vxfer(dest.payloadReg(), dest.typeReg(), VFPRegister(src), FloatToCore);
 }
@@ -4980,6 +4980,13 @@ MacroAssembler::Pop(const ValueOperand& val)
     adjustFrame(-sizeof(Value));
 }
 
+void
+MacroAssembler::PopStackPtr()
+{
+    as_dtr(IsLoad, 32, Offset, sp, DTRAddr(sp, DtrOffImm(0)));
+    adjustFrame(-sizeof(intptr_t));
+}
+
 // ===============================================================
 // Simple call functions.
 
@@ -5138,7 +5145,7 @@ MacroAssembler::nopPatchableToCall(const wasm::CallSiteDesc& desc)
 {
     CodeOffset offset(currentOffset());
     ma_nop();
-    append(desc, CodeOffset(currentOffset()), framePushed());
+    append(desc, CodeOffset(currentOffset()));
     return offset;
 }
 
@@ -5179,6 +5186,7 @@ MacroAssembler::popReturnAddress()
 void
 MacroAssembler::setupUnalignedABICall(Register scratch)
 {
+    MOZ_ASSERT(!IsCompilingWasm(), "wasm should only use aligned ABI calls");
     setupABICall();
     dynamicAlignment_ = true;
 
@@ -5227,29 +5235,28 @@ MacroAssembler::callWithABIPre(uint32_t* stackAdjust, bool callFromWasm)
 }
 
 void
-MacroAssembler::callWithABIPost(uint32_t stackAdjust, MoveOp::Type result)
+MacroAssembler::callWithABIPost(uint32_t stackAdjust, MoveOp::Type result, bool callFromWasm)
 {
     if (secondScratchReg_ != lr)
         ma_mov(secondScratchReg_, lr);
 
-    switch (result) {
-      case MoveOp::DOUBLE:
-        if (!UseHardFpABI()) {
+    // Calls to native functions in wasm pass through a thunk which already
+    // fixes up the return value for us.
+    if (!callFromWasm && !UseHardFpABI()) {
+        switch (result) {
+          case MoveOp::DOUBLE:
             // Move double from r0/r1 to ReturnFloatReg.
             ma_vxfer(r0, r1, ReturnDoubleReg);
-        }
-        break;
-      case MoveOp::FLOAT32:
-        if (!UseHardFpABI()) {
+            break;
+          case MoveOp::FLOAT32:
             // Move float32 from r0 to ReturnFloatReg.
-            ma_vxfer(r0, ReturnFloat32Reg.singleOverlay());
+            ma_vxfer(r0, ReturnFloat32Reg);
+            break;
+          case MoveOp::GENERAL:
+            break;
+          default:
+            MOZ_CRASH("unexpected callWithABI result");
         }
-        break;
-      case MoveOp::GENERAL:
-        break;
-
-      default:
-        MOZ_CRASH("unexpected callWithABI result");
     }
 
     freeStack(stackAdjust);
@@ -5442,77 +5449,81 @@ MacroAssembler::wasmTruncateFloat32ToInt32(FloatRegister input, Register output,
 }
 
 void
-MacroAssembler::wasmLoad(const wasm::MemoryAccessDesc& access, Register ptr, Register ptrScratch,
-                         AnyRegister output)
+MacroAssembler::wasmLoad(const wasm::MemoryAccessDesc& access, Register memoryBase, Register ptr,
+                         Register ptrScratch, AnyRegister output)
 {
-    wasmLoadImpl(access, ptr, ptrScratch, output, Register64::Invalid());
+    wasmLoadImpl(access, memoryBase, ptr, ptrScratch, output, Register64::Invalid());
 }
 
 void
-MacroAssembler::wasmLoadI64(const wasm::MemoryAccessDesc& access, Register ptr, Register ptrScratch,
-                            Register64 output)
+MacroAssembler::wasmLoadI64(const wasm::MemoryAccessDesc& access, Register memoryBase, Register ptr,
+                            Register ptrScratch, Register64 output)
 {
-    wasmLoadImpl(access, ptr, ptrScratch, AnyRegister(), output);
+    wasmLoadImpl(access, memoryBase, ptr, ptrScratch, AnyRegister(), output);
 }
 
 void
-MacroAssembler::wasmStore(const wasm::MemoryAccessDesc& access, AnyRegister value, Register ptr,
-                          Register ptrScratch)
+MacroAssembler::wasmStore(const wasm::MemoryAccessDesc& access, AnyRegister value,
+                          Register memoryBase, Register ptr, Register ptrScratch)
 {
-    wasmStoreImpl(access, value, Register64::Invalid(), ptr, ptrScratch);
+    wasmStoreImpl(access, value, Register64::Invalid(), memoryBase, ptr, ptrScratch);
 }
 
 void
-MacroAssembler::wasmStoreI64(const wasm::MemoryAccessDesc& access, Register64 value, Register ptr,
-                             Register ptrScratch)
+MacroAssembler::wasmStoreI64(const wasm::MemoryAccessDesc& access, Register64 value,
+                             Register memoryBase, Register ptr, Register ptrScratch)
 {
-    wasmStoreImpl(access, AnyRegister(), value, ptr, ptrScratch);
+    wasmStoreImpl(access, AnyRegister(), value, memoryBase, ptr, ptrScratch);
 }
 
 void
-MacroAssembler::wasmUnalignedLoad(const wasm::MemoryAccessDesc& access, Register ptr,
-                                  Register ptrScratch, Register output, Register tmp)
+MacroAssembler::wasmUnalignedLoad(const wasm::MemoryAccessDesc& access, Register memoryBase,
+                                  Register ptr, Register ptrScratch, Register output, Register tmp)
 {
-    wasmUnalignedLoadImpl(access, ptr, ptrScratch, AnyRegister(output), Register64::Invalid(), tmp,
+    wasmUnalignedLoadImpl(access, memoryBase, ptr, ptrScratch, AnyRegister(output),
+                          Register64::Invalid(), tmp, Register::Invalid(), Register::Invalid());
+}
+
+void
+MacroAssembler::wasmUnalignedLoadFP(const wasm::MemoryAccessDesc& access, Register memoryBase,
+                                    Register ptr, Register ptrScratch, FloatRegister outFP,
+                                    Register tmp1, Register tmp2, Register tmp3)
+{
+    wasmUnalignedLoadImpl(access, memoryBase, ptr, ptrScratch, AnyRegister(outFP),
+                          Register64::Invalid(), tmp1, tmp2, tmp3);
+}
+
+void
+MacroAssembler::wasmUnalignedLoadI64(const wasm::MemoryAccessDesc& access, Register memoryBase,
+                                     Register ptr, Register ptrScratch, Register64 out64,
+                                     Register tmp)
+{
+    wasmUnalignedLoadImpl(access, memoryBase, ptr, ptrScratch, AnyRegister(), out64, tmp,
                           Register::Invalid(), Register::Invalid());
 }
 
 void
-MacroAssembler::wasmUnalignedLoadFP(const wasm::MemoryAccessDesc& access, Register ptr,
-                                    Register ptrScratch, FloatRegister outFP, Register tmp1,
-                                    Register tmp2, Register tmp3)
-{
-    wasmUnalignedLoadImpl(access, ptr, ptrScratch, AnyRegister(outFP), Register64::Invalid(),
-                          tmp1, tmp2, tmp3);
-}
-
-void
-MacroAssembler::wasmUnalignedLoadI64(const wasm::MemoryAccessDesc& access, Register ptr,
-                                     Register ptrScratch, Register64 out64, Register tmp)
-{
-    wasmUnalignedLoadImpl(access, ptr, ptrScratch, AnyRegister(), out64, tmp, Register::Invalid(),
-                          Register::Invalid());
-}
-
-void
 MacroAssembler::wasmUnalignedStore(const wasm::MemoryAccessDesc& access, Register value,
-                                   Register ptr, Register ptrScratch)
+                                   Register memoryBase, Register ptr, Register ptrScratch)
 {
-    wasmUnalignedStoreImpl(access, FloatRegister(), Register64::Invalid(), ptr, ptrScratch, value);
+    wasmUnalignedStoreImpl(access, FloatRegister(), Register64::Invalid(), memoryBase, ptr,
+                           ptrScratch, value);
 }
 
 void
 MacroAssembler::wasmUnalignedStoreFP(const wasm::MemoryAccessDesc& access, FloatRegister floatVal,
-                                     Register ptr, Register ptrScratch, Register tmp)
+                                     Register memoryBase, Register ptr, Register ptrScratch,
+                                     Register tmp)
 {
-    wasmUnalignedStoreImpl(access, floatVal, Register64::Invalid(), ptr, ptrScratch, tmp);
+    wasmUnalignedStoreImpl(access, floatVal, Register64::Invalid(), memoryBase, ptr, ptrScratch, tmp);
 }
 
 void
 MacroAssembler::wasmUnalignedStoreI64(const wasm::MemoryAccessDesc& access, Register64 val64,
-                                      Register ptr, Register ptrScratch, Register tmp)
+                                      Register memoryBase, Register ptr, Register ptrScratch,
+                                      Register tmp)
 {
-    wasmUnalignedStoreImpl(access, FloatRegister(), val64, ptr, ptrScratch, tmp);
+    wasmUnalignedStoreImpl(access, FloatRegister(), val64, memoryBase, ptr, ptrScratch, tmp);
 }
 
 //}}} check_macroassembler_style
@@ -5576,7 +5587,7 @@ MacroAssemblerARM::wasmTruncateToInt32(FloatRegister input, Register output, MIR
 void
 MacroAssemblerARM::outOfLineWasmTruncateToIntCheck(FloatRegister input, MIRType fromType,
                                                    MIRType toType, bool isUnsigned, Label* rejoin,
-                                                   wasm::TrapOffset trapOffset)
+                                                   wasm::BytecodeOffset trapOffset)
 {
     ScratchDoubleScope scratchScope(asMasm());
     FloatRegister scratch;
@@ -5660,8 +5671,9 @@ MacroAssemblerARM::outOfLineWasmTruncateToIntCheck(FloatRegister input, MIRType 
 }
 
 void
-MacroAssemblerARM::wasmLoadImpl(const wasm::MemoryAccessDesc& access, Register ptr,
-                                Register ptrScratch, AnyRegister output, Register64 out64)
+MacroAssemblerARM::wasmLoadImpl(const wasm::MemoryAccessDesc& access, Register memoryBase,
+                                Register ptr, Register ptrScratch, AnyRegister output,
+                                Register64 out64)
 {
     MOZ_ASSERT(ptr == ptrScratch);
 
@@ -5689,15 +5701,15 @@ MacroAssemblerARM::wasmLoadImpl(const wasm::MemoryAccessDesc& access, Register p
         if (type == Scalar::Int64) {
             MOZ_ASSERT(INT64LOW_OFFSET == 0);
 
-            load = ma_dataTransferN(IsLoad, 32, /* signed = */ false, HeapReg, ptr, out64.low);
+            load = ma_dataTransferN(IsLoad, 32, /* signed = */ false, memoryBase, ptr, out64.low);
             append(access, load.getOffset(), framePushed);
 
             as_add(ptr, ptr, Imm8(INT64HIGH_OFFSET));
 
-            load = ma_dataTransferN(IsLoad, 32, isSigned, HeapReg, ptr, out64.high);
+            load = ma_dataTransferN(IsLoad, 32, isSigned, memoryBase, ptr, out64.high);
             append(access, load.getOffset(), framePushed);
         } else {
-            load = ma_dataTransferN(IsLoad, byteSize * 8, isSigned, HeapReg, ptr, out64.low);
+            load = ma_dataTransferN(IsLoad, byteSize * 8, isSigned, memoryBase, ptr, out64.low);
             append(access, load.getOffset(), framePushed);
 
             if (isSigned)
@@ -5710,12 +5722,12 @@ MacroAssemblerARM::wasmLoadImpl(const wasm::MemoryAccessDesc& access, Register p
         if (isFloat) {
             MOZ_ASSERT((byteSize == 4) == output.fpu().isSingle());
             ScratchRegisterScope scratch(asMasm());
-            ma_add(HeapReg, ptr, scratch);
+            ma_add(memoryBase, ptr, scratch);
 
             load = ma_vldr(Operand(Address(scratch, 0)).toVFPAddr(), output.fpu());
             append(access, load.getOffset(), framePushed);
         } else {
-            load = ma_dataTransferN(IsLoad, byteSize * 8, isSigned, HeapReg, ptr, output.gpr());
+            load = ma_dataTransferN(IsLoad, byteSize * 8, isSigned, memoryBase, ptr, output.gpr());
             append(access, load.getOffset(), framePushed);
         }
     }
@@ -5725,7 +5737,8 @@ MacroAssemblerARM::wasmLoadImpl(const wasm::MemoryAccessDesc& access, Register p
 
 void
 MacroAssemblerARM::wasmStoreImpl(const wasm::MemoryAccessDesc& access, AnyRegister value,
-                                 Register64 val64, Register ptr, Register ptrScratch)
+                                 Register64 val64, Register memoryBase, Register ptr,
+                                 Register ptrScratch)
 {
     MOZ_ASSERT(ptr == ptrScratch);
 
@@ -5750,19 +5763,21 @@ MacroAssemblerARM::wasmStoreImpl(const wasm::MemoryAccessDesc& access, AnyRegist
     if (type == Scalar::Int64) {
         MOZ_ASSERT(INT64LOW_OFFSET == 0);
 
-        store = ma_dataTransferN(IsStore, 32 /* bits */, /* signed */ false, HeapReg, ptr, val64.low);
+        store = ma_dataTransferN(IsStore, 32 /* bits */, /* signed */ false, memoryBase, ptr,
+                                 val64.low);
         append(access, store.getOffset(), framePushed);
 
         as_add(ptr, ptr, Imm8(INT64HIGH_OFFSET));
 
-        store = ma_dataTransferN(IsStore, 32 /* bits */, /* signed */ true, HeapReg, ptr, val64.high);
+        store = ma_dataTransferN(IsStore, 32 /* bits */, /* signed */ true, memoryBase, ptr,
+                                 val64.high);
         append(access, store.getOffset(), framePushed);
     } else {
         if (value.isFloat()) {
             ScratchRegisterScope scratch(asMasm());
             FloatRegister val = value.fpu();
             MOZ_ASSERT((byteSize == 4) == val.isSingle());
-            ma_add(HeapReg, ptr, scratch);
+            ma_add(memoryBase, ptr, scratch);
 
             store = ma_vstr(val, Operand(Address(scratch, 0)).toVFPAddr());
             append(access, store.getOffset(), framePushed);
@@ -5770,7 +5785,8 @@ MacroAssemblerARM::wasmStoreImpl(const wasm::MemoryAccessDesc& access, AnyRegist
             bool isSigned = type == Scalar::Uint32 || type == Scalar::Int32; // see AsmJSStoreHeap;
             Register val = value.gpr();
 
-            store = ma_dataTransferN(IsStore, 8 * byteSize /* bits */, isSigned, HeapReg, ptr, val);
+            store = ma_dataTransferN(IsStore, 8 * byteSize /* bits */, isSigned, memoryBase, ptr,
+                                     val);
             append(access, store.getOffset(), framePushed);
         }
     }
@@ -5779,9 +5795,10 @@ MacroAssemblerARM::wasmStoreImpl(const wasm::MemoryAccessDesc& access, AnyRegist
 }
 
 void
-MacroAssemblerARM::wasmUnalignedLoadImpl(const wasm::MemoryAccessDesc& access, Register ptr,
-                                         Register ptrScratch, AnyRegister outAny, Register64 out64,
-                                         Register tmp, Register tmp2, Register tmp3)
+MacroAssemblerARM::wasmUnalignedLoadImpl(const wasm::MemoryAccessDesc& access, Register memoryBase,
+                                         Register ptr, Register ptrScratch, AnyRegister outAny,
+                                         Register64 out64, Register tmp, Register tmp2,
+                                         Register tmp3)
 {
     MOZ_ASSERT(ptr == ptrScratch);
     MOZ_ASSERT_IF(access.type() != Scalar::Float32 && access.type() != Scalar::Float64,
@@ -5799,8 +5816,8 @@ MacroAssemblerARM::wasmUnalignedLoadImpl(const wasm::MemoryAccessDesc& access, R
         ma_add(Imm32(offset), ptr, scratch);
     }
 
-    // Add HeapReg to ptr, so we can use base+index addressing in the byte loads.
-    ma_add(HeapReg, ptr);
+    // Add memoryBase to ptr, so we can use base+index addressing in the byte loads.
+    ma_add(memoryBase, ptr);
 
     unsigned byteSize = access.byteSize();
     Scalar::Type type = access.type();
@@ -5853,7 +5870,8 @@ MacroAssemblerARM::wasmUnalignedLoadImpl(const wasm::MemoryAccessDesc& access, R
 
 void
 MacroAssemblerARM::wasmUnalignedStoreImpl(const wasm::MemoryAccessDesc& access, FloatRegister floatValue,
-                                          Register64 val64, Register ptr, Register ptrScratch, Register tmp)
+                                          Register64 val64, Register memoryBase, Register ptr,
+                                          Register ptrScratch, Register tmp)
 {
     MOZ_ASSERT(ptr == ptrScratch);
     // They can't both be valid, but they can both be invalid.
@@ -5870,8 +5888,8 @@ MacroAssemblerARM::wasmUnalignedStoreImpl(const wasm::MemoryAccessDesc& access, 
         ma_add(Imm32(offset), ptr, scratch);
     }
 
-    // Add HeapReg to ptr, so we can use base+index addressing in the byte loads.
-    ma_add(HeapReg, ptr);
+    // Add memoryBase to ptr, so we can use base+index addressing in the byte loads.
+    ma_add(memoryBase, ptr);
 
     asMasm().memoryBarrier(access.barrierBefore());
 
@@ -5902,8 +5920,8 @@ MacroAssemblerARM::wasmUnalignedStoreImpl(const wasm::MemoryAccessDesc& access, 
 }
 
 void
-MacroAssemblerARM::emitUnalignedLoad(bool isSigned, unsigned byteSize, Register ptr, Register tmp,
-                                     Register dest, unsigned offset)
+MacroAssemblerARM::emitUnalignedLoad(bool isSigned, unsigned byteSize, Register ptr,
+                                     Register tmp, Register dest, unsigned offset)
 {
     // Preconditions.
     MOZ_ASSERT(ptr != tmp);

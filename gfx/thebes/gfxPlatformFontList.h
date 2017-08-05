@@ -21,7 +21,7 @@
 #include "mozilla/Attributes.h"
 #include "mozilla/MemoryReporting.h"
 #include "mozilla/RangedArray.h"
-#include "nsILanguageAtomService.h"
+#include "nsLanguageAtomService.h"
 
 class CharMapHashKey : public PLDHashEntryHdr
 {
@@ -176,6 +176,12 @@ public:
     // (platforms may override, eg Mac)
     virtual bool GetStandardFamilyName(const nsAString& aFontName, nsAString& aFamilyName);
 
+    // get the default font name which is available on the system from
+    // font.name-list.*.  if there are no available fonts in the pref,
+    // returns nullptr.
+    gfxFontFamily* GetDefaultFontFamily(const nsACString& aLangGroup,
+                                        const nsACString& aGenericFamily);
+
     virtual void AddSizeOfExcludingThis(mozilla::MallocSizeOf aMallocSizeOf,
                                         FontListSizes* aSizes) const;
     virtual void AddSizeOfIncludingThis(mozilla::MallocSizeOf aMallocSizeOf,
@@ -264,6 +270,47 @@ protected:
         NS_DECL_NSIMEMORYREPORTER
     };
 
+    template<bool ForNameList>
+    class PrefNameMaker final : public nsAutoCString
+    {
+        void Init(const nsACString& aGeneric, const nsACString& aLangGroup)
+        {
+            Assign(ForNameList ? NS_LITERAL_CSTRING("font.name-list.")
+                               : NS_LITERAL_CSTRING("font.name."));
+            Append(aGeneric);
+            if (!aLangGroup.IsEmpty()) {
+                Append('.');
+                Append(aLangGroup);
+            }
+        }
+
+    public:
+        PrefNameMaker(const nsACString& aGeneric,
+                      const nsACString& aLangGroup)
+        {
+            Init(aGeneric, aLangGroup);
+        }
+
+        PrefNameMaker(const char* aGeneric,
+                      const char* aLangGroup)
+        {
+            Init(nsDependentCString(aGeneric), nsDependentCString(aLangGroup));
+        }
+
+        PrefNameMaker(const char* aGeneric,
+                      nsIAtom* aLangGroup)
+        {
+            if (aLangGroup) {
+                Init(nsDependentCString(aGeneric), nsAtomCString(aLangGroup));
+            } else {
+                Init(nsDependentCString(aGeneric), nsAutoCString());
+            }
+        }
+    };
+
+    typedef PrefNameMaker<false> NamePref;
+    typedef PrefNameMaker<true>  NameListPref;
+
     explicit gfxPlatformFontList(bool aNeedFullnamePostscriptNames = true);
 
     static gfxPlatformFontList *sPlatformFontList;
@@ -297,12 +344,24 @@ protected:
                                      const gfxFontStyle* aMatchStyle,
                                      gfxFontFamily** aMatchedFamily);
 
-    // search fonts system-wide for a given character, null otherwise
-    virtual gfxFontEntry* GlobalFontFallback(const uint32_t aCh,
-                                             Script aRunScript,
-                                             const gfxFontStyle* aMatchStyle,
-                                             uint32_t& aCmapCount,
-                                             gfxFontFamily** aMatchedFamily);
+    // Search fonts system-wide for a given character, null if not found.
+    gfxFontEntry* GlobalFontFallback(const uint32_t aCh,
+                                     Script aRunScript,
+                                     const gfxFontStyle* aMatchStyle,
+                                     uint32_t& aCmapCount,
+                                     gfxFontFamily** aMatchedFamily);
+
+    // Platform-specific implementation of global font fallback, if any;
+    // this may return nullptr in which case the default cmap-based fallback
+    // will be performed.
+    virtual gfxFontEntry*
+    PlatformGlobalFontFallback(const uint32_t aCh,
+                               Script aRunScript,
+                               const gfxFontStyle* aMatchStyle,
+                               gfxFontFamily** aMatchedFamily)
+    {
+        return nullptr;
+    }
 
     // whether system-based font fallback is used or not
     // if system fallback is used, no need to load all cmaps
@@ -338,8 +397,6 @@ protected:
     void GenerateFontListKey(const nsAString& aKeyName, nsAString& aResult);
 
     virtual void GetFontFamilyNames(nsTArray<nsString>& aFontFamilyNames);
-
-    nsILanguageAtomService* GetLangService();
 
     // helper function to map lang to lang group
     nsIAtom* GetLangGroup(nsIAtom* aLanguage);
@@ -449,7 +506,8 @@ protected:
 
     nsTHashtable<nsPtrHashKey<gfxUserFontSet> > mUserFontSetList;
 
-    nsCOMPtr<nsILanguageAtomService> mLangService;
+    nsLanguageAtomService* mLangService;
+
     nsTArray<uint32_t> mCJKPrefLangs;
     nsTArray<mozilla::FontFamilyType> mDefaultGenericsLangGroup;
 

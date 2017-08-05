@@ -15,49 +15,6 @@ namespace mozilla {
 namespace layers {
 
 /**
- * A texture source meant for use with MacIOSurfaceTextureHostOGL.
- *
- * It does not own any GL texture, and attaches its shared handle to one of
- * the compositor's temporary textures when binding.
- */
-class MacIOSurfaceTextureSourceOGL : public TextureSource
-                                   , public TextureSourceOGL
-{
-public:
-  MacIOSurfaceTextureSourceOGL(CompositorOGL* aCompositor,
-                               MacIOSurface* aSurface);
-  virtual ~MacIOSurfaceTextureSourceOGL();
-
-  virtual const char* Name() const override { return "MacIOSurfaceTextureSourceOGL"; }
-
-  virtual TextureSourceOGL* AsSourceOGL() override { return this; }
-
-  virtual void BindTexture(GLenum activetex,
-                           gfx::SamplingFilter aSamplingFilter) override;
-
-  virtual bool IsValid() const override { return !!gl(); }
-
-  virtual gfx::IntSize GetSize() const override;
-
-  virtual gfx::SurfaceFormat GetFormat() const override;
-
-  virtual GLenum GetTextureTarget() const override { return LOCAL_GL_TEXTURE_RECTANGLE_ARB; }
-
-  virtual GLenum GetWrapMode() const override { return LOCAL_GL_CLAMP_TO_EDGE; }
-
-  // MacIOSurfaceTextureSourceOGL doesn't own any gl texture
-  virtual void DeallocateDeviceData() override {}
-
-  virtual void SetCompositor(Compositor* aCompositor) override;
-
-  gl::GLContext* gl() const;
-
-protected:
-  RefPtr<CompositorOGL> mCompositor;
-  RefPtr<MacIOSurface> mSurface;
-};
-
-/**
  * A TextureHost for shared MacIOSurface
  *
  * Most of the logic actually happens in MacIOSurfaceTextureSourceOGL.
@@ -72,9 +29,7 @@ public:
   // MacIOSurfaceTextureSourceOGL doesn't own any GL texture
   virtual void DeallocateDeviceData() override {}
 
-  virtual void SetCompositor(Compositor* aCompositor) override;
-
-  virtual Compositor* GetCompositor() override { return mCompositor; }
+  virtual void SetTextureSourceProvider(TextureSourceProvider* aProvider) override;
 
   virtual bool Lock() override;
 
@@ -100,10 +55,29 @@ public:
   virtual const char* Name() override { return "MacIOSurfaceTextureHostOGL"; }
 #endif
 
+  virtual MacIOSurfaceTextureHostOGL* AsMacIOSurfaceTextureHost() override { return this; }
+
+  MacIOSurface* GetMacIOSurface()
+  {
+    return mSurface;
+  }
+
+  virtual void GetWRImageKeys(nsTArray<wr::ImageKey>& aImageKeys,
+                              const std::function<wr::ImageKey()>& aImageKeyAllocator) override;
+
+  virtual void AddWRImage(wr::WebRenderAPI* aAPI,
+                          Range<const wr::ImageKey>& aImageKeys,
+                          const wr::ExternalImageId& aExtID) override;
+
+  virtual void PushExternalImage(wr::DisplayListBuilder& aBuilder,
+                                 const WrRect& aBounds,
+                                 const WrClipRegionToken aClip,
+                                 wr::ImageRendering aFilter,
+                                 Range<const wr::ImageKey>& aImageKeys) override;
+
 protected:
   GLTextureSource* CreateTextureSourceForPlane(size_t aPlane);
 
-  RefPtr<CompositorOGL> mCompositor;
   RefPtr<GLTextureSource> mTextureSource;
   RefPtr<MacIOSurface> mSurface;
 };

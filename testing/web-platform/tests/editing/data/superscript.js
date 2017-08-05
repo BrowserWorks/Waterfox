@@ -1,3 +1,4 @@
+// For documentation of the format, see README in this directory.
 var browserTests = [
 ["foo[]bar",
     [["superscript",""]],
@@ -184,16 +185,6 @@ var browserTests = [
     "foo<sub>b</sub><sup>[a]</sup><sub>r</sub>baz",
     [true,true],
     {"stylewithcss":[false,true,"",false,false,""],"superscript":[false,false,"",false,true,""]}],
-["foo<sup>[bar]</sup>baz",
-    [["stylewithcss","true"],["superscript",""]],
-    "foo[bar]baz",
-    [true,true],
-    {"stylewithcss":[false,false,"",false,true,""],"superscript":[false,true,"",false,false,""]}],
-["foo<sup>[bar]</sup>baz",
-    [["stylewithcss","false"],["superscript",""]],
-    "foo[bar]baz",
-    [true,true],
-    {"stylewithcss":[false,true,"",false,false,""],"superscript":[false,true,"",false,false,""]}],
 ["foo<sup>b[a]r</sup>baz",
     [["stylewithcss","true"],["superscript",""]],
     "foo<sup>b</sup>[a]<sup>r</sup>baz",

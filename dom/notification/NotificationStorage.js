@@ -44,7 +44,7 @@ function NotificationStorage() {
   this._requests = {};
   this._requestCount = 0;
 
-  Services.obs.addObserver(this, "xpcom-shutdown", false);
+  Services.obs.addObserver(this, "xpcom-shutdown");
 
   // Register for message listeners.
   this.registerListeners();
@@ -224,7 +224,7 @@ NotificationStorage.prototype = {
     // fetching from the database.
     notifications.forEach(function(notification) {
       try {
-        Services.tm.currentThread.dispatch(
+        Services.tm.dispatchToMainThread(
           callback.handle.bind(callback,
                                notification.id,
                                notification.title,
@@ -235,22 +235,20 @@ NotificationStorage.prototype = {
                                notification.icon,
                                notification.data,
                                notification.mozbehavior,
-                               notification.serviceWorkerRegistrationScope),
-          Ci.nsIThread.DISPATCH_NORMAL);
+                               notification.serviceWorkerRegistrationScope));
       } catch (e) {
         if (DEBUG) { debug("Error calling callback handle: " + e); }
       }
     });
     try {
-      Services.tm.currentThread.dispatch(callback.done,
-                                         Ci.nsIThread.DISPATCH_NORMAL);
+      Services.tm.dispatchToMainThread(callback.done);
     } catch (e) {
       if (DEBUG) { debug("Error calling callback done: " + e); }
     }
   },
 
   _populateCache: function(notifications) {
-    notifications.forEach(function(notification) {
+    notifications.forEach(notification => {
       this._notifications[notification.id] = notification;
       if (notification.tag && notification.origin) {
         let tag = notification.tag;
@@ -260,7 +258,7 @@ NotificationStorage.prototype = {
         }
         this._byTag[origin][tag] = notification;
       }
-    }.bind(this));
+    });
     this._cached = true;
   },
 

@@ -10,6 +10,8 @@
 #include "mozilla/DOMEventTargetHelper.h"
 #include "mozilla/dom/VRServiceTestBinding.h"
 
+#include "gfxVR.h"
+
 namespace mozilla {
 namespace dom {
 
@@ -27,6 +29,7 @@ public:
   void SetPose(const Nullable<Float32Array>& aPosition, const Nullable<Float32Array>& aLinearVelocity,
                const Nullable<Float32Array>& aLinearAcceleration, const Nullable<Float32Array>& aOrientation,
                const Nullable<Float32Array>& aAngularVelocity, const Nullable<Float32Array>& aAngularAcceleration);
+  void SetMountState(bool aIsMounted) { mDisplayInfo.mIsMounted = aIsMounted; }
   void Update();
   virtual JSObject* WrapObject(JSContext* aCx, JS::Handle<JSObject*> aGivenProto) override;
 
@@ -36,6 +39,7 @@ private:
   uint32_t mDeviceID;
   gfx::VRDisplayInfo mDisplayInfo;
   gfx::VRHMDSensorState mSensorState;
+  TimeStamp mTimestamp;
 };
 
 class VRMockController : public DOMEventTargetHelper

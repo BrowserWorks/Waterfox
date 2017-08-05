@@ -16,7 +16,6 @@ const TRANSLATION_PREF_DETECT_LANG = "browser.translation.detectLanguage";
 
 Cu.import("resource://gre/modules/Services.jsm");
 Cu.import("resource://gre/modules/Promise.jsm");
-Cu.import("resource://gre/modules/Task.jsm", this);
 
 this.Translation = {
   STATE_OFFER: 0,
@@ -33,9 +32,7 @@ this.Translation = {
   _defaultTargetLanguage: "",
   get defaultTargetLanguage() {
     if (!this._defaultTargetLanguage) {
-      this._defaultTargetLanguage = Cc["@mozilla.org/chrome/chrome-registry;1"]
-                                      .getService(Ci.nsIXULChromeRegistry)
-                                      .getSelectedLocale("global")
+      this._defaultTargetLanguage = Services.locale.getAppLocaleAsLangTag()
                                       .split("-")[0];
     }
     return this._defaultTargetLanguage;
@@ -88,8 +85,8 @@ this.Translation = {
    * The list of translation engines and their attributions.
    */
   supportedEngines: {
-    "bing"    : "http://aka.ms/MicrosoftTranslatorAttribution",
-    "yandex"  : "http://translate.yandex.com/"
+    "bing": "http://aka.ms/MicrosoftTranslatorAttribution",
+    "yandex": "http://translate.yandex.com/"
   },
 
   /**
@@ -303,18 +300,18 @@ this.TranslationTelemetry = {
     const plain = (id) => Services.telemetry.getHistogramById(id);
     const keyed = (id) => Services.telemetry.getKeyedHistogramById(id);
     this.HISTOGRAMS = {
-      OPPORTUNITIES         : () => plain("TRANSLATION_OPPORTUNITIES"),
-      OPPORTUNITIES_BY_LANG : () => keyed("TRANSLATION_OPPORTUNITIES_BY_LANGUAGE"),
-      PAGES                 : () => plain("TRANSLATED_PAGES"),
-      PAGES_BY_LANG         : () => keyed("TRANSLATED_PAGES_BY_LANGUAGE"),
-      CHARACTERS            : () => plain("TRANSLATED_CHARACTERS"),
-      DENIED                : () => plain("DENIED_TRANSLATION_OFFERS"),
-      AUTO_REJECTED         : () => plain("AUTO_REJECTED_TRANSLATION_OFFERS"),
-      SHOW_ORIGINAL         : () => plain("REQUESTS_OF_ORIGINAL_CONTENT"),
-      TARGET_CHANGES        : () => plain("CHANGES_OF_TARGET_LANGUAGE"),
-      DETECTION_CHANGES     : () => plain("CHANGES_OF_DETECTED_LANGUAGE"),
-      SHOW_UI               : () => plain("SHOULD_TRANSLATION_UI_APPEAR"),
-      DETECT_LANG           : () => plain("SHOULD_AUTO_DETECT_LANGUAGE"),
+      OPPORTUNITIES: () => plain("TRANSLATION_OPPORTUNITIES"),
+      OPPORTUNITIES_BY_LANG: () => keyed("TRANSLATION_OPPORTUNITIES_BY_LANGUAGE"),
+      PAGES: () => plain("TRANSLATED_PAGES"),
+      PAGES_BY_LANG: () => keyed("TRANSLATED_PAGES_BY_LANGUAGE"),
+      CHARACTERS: () => plain("TRANSLATED_CHARACTERS"),
+      DENIED: () => plain("DENIED_TRANSLATION_OFFERS"),
+      AUTO_REJECTED: () => plain("AUTO_REJECTED_TRANSLATION_OFFERS"),
+      SHOW_ORIGINAL: () => plain("REQUESTS_OF_ORIGINAL_CONTENT"),
+      TARGET_CHANGES: () => plain("CHANGES_OF_TARGET_LANGUAGE"),
+      DETECTION_CHANGES: () => plain("CHANGES_OF_DETECTED_LANGUAGE"),
+      SHOW_UI: () => plain("SHOULD_TRANSLATION_UI_APPEAR"),
+      DETECT_LANG: () => plain("SHOULD_AUTO_DETECT_LANGUAGE"),
     };
 
     // Capturing the values of flags at the startup.

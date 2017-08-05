@@ -25,6 +25,7 @@
 #include "mozilla/layers/LayersSurfaces.h"  // for SurfaceDescriptor
 #include "mozilla/mozalloc.h"           // for operator delete
 #include "mozilla/gfx/CriticalSection.h"
+#include "mozilla/webrender/WebRenderTypes.h"
 #include "nsCOMPtr.h"                   // for already_AddRefed
 #include "nsISupportsImpl.h"            // for TextureImage::AddRef, etc
 #include "GfxTexturesReporter.h"
@@ -32,6 +33,7 @@
 #include "nsThreadUtils.h"
 
 class gfxImageSurface;
+struct ID3D11Device;
 
 namespace mozilla {
 
@@ -103,7 +105,11 @@ public:
   MOZ_DECLARE_REFCOUNTED_VIRTUAL_TYPENAME(SyncObject)
   virtual ~SyncObject() { }
 
-  static already_AddRefed<SyncObject> CreateSyncObject(SyncHandle aHandle);
+  static already_AddRefed<SyncObject> CreateSyncObject(SyncHandle aHandle
+#ifdef XP_WIN
+                                                       , ID3D11Device* aDevice = nullptr
+#endif
+                                                       );
 
   enum class SyncType {
     D3D11,
@@ -741,6 +747,13 @@ protected:
 
   // Serial id of TextureClient. It is unique in current process.
   const uint64_t mSerial;
+
+  // External image id. It is unique if it is allocated.
+  // The id is allocated in TextureClient::InitIPDLActor().
+  // Its allocation is supported by
+  // CompositorBridgeChild and ImageBridgeChild for now.
+  wr::MaybeExternalImageId mExternalImageId;
+
   // Used to assign serial ids of TextureClient.
   static mozilla::Atomic<uint64_t> sSerialCounter;
 

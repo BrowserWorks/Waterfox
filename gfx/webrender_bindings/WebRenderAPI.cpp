@@ -4,14 +4,21 @@
  * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
 
 #include "WebRenderAPI.h"
+#include "LayersLogging.h"
 #include "mozilla/webrender/RendererOGL.h"
+#include "mozilla/gfx/gfxVars.h"
 #include "mozilla/layers/CompositorThread.h"
 #include "mozilla/widget/CompositorWidget.h"
 #include "mozilla/widget/CompositorWidget.h"
 #include "mozilla/layers/SynchronousTask.h"
 
+#define WRDL_LOG(...)
+//#define WRDL_LOG(...) printf_stderr("WRDL: " __VA_ARGS__)
+
 namespace mozilla {
 namespace wr {
+
+using layers::Stringify;
 
 class NewRenderer : public RendererEvent
 {
@@ -21,7 +28,8 @@ public:
               bool* aUseANGLE,
               RefPtr<widget::CompositorWidget>&& aWidget,
               layers::SynchronousTask* aTask,
-              bool aEnableProfiler)
+              bool aEnableProfiler,
+              LayoutDeviceIntSize aSize)
     : mWrApi(aApi)
     , mMaxTextureSize(aMaxTextureSize)
     , mUseANGLE(aUseANGLE)
@@ -29,6 +37,7 @@ public:
     , mCompositorWidget(Move(aWidget))
     , mTask(aTask)
     , mEnableProfiler(aEnableProfiler)
+    , mSize(aSize)
   {
     MOZ_COUNT_CTOR(NewRenderer);
   }
@@ -42,8 +51,19 @@ public:
   {
     layers::AutoCompleteTask complete(mTask);
 
-    RefPtr<gl::GLContext> gl = gl::GLContextProvider::CreateForCompositorWidget(mCompositorWidget, true);
+    RefPtr<gl::GLContext> gl;
+    if (gfx::gfxVars::UseWebRenderANGLE()) {
+      gl = gl::GLContextProviderEGL::CreateForCompositorWidget(mCompositorWidget, true);
+      if (!gl || !gl->IsANGLE()) {
+        gfxCriticalNote << "Failed ANGLE GL context creation for WebRender: " << gfx::hexa(gl.get());
+        return;
+      }
+    }
+    if (!gl) {
+      gl = gl::GLContextProvider::CreateForCompositorWidget(mCompositorWidget, true);
+    }
     if (!gl || !gl->MakeCurrent()) {
+      gfxCriticalNote << "Failed GL context creation for WebRender: " << gfx::hexa(gl.get());
       return;
     }
 
@@ -51,7 +71,9 @@ public:
     *mUseANGLE = gl->IsANGLE();
 
     WrRenderer* wrRenderer = nullptr;
-    if (!wr_window_new(aWindowId, gl.get(), this->mEnableProfiler, mWrApi, &wrRenderer)) {
+    if (!wr_window_new(aWindowId, mSize.width, mSize.height, gl.get(),
+                       this->mEnableProfiler, mWrApi, &wrRenderer)) {
+      // wr_window_new puts a message into gfxCriticalNote if it returns false
       return;
     }
     MOZ_ASSERT(wrRenderer);
@@ -79,6 +101,7 @@ private:
   RefPtr<widget::CompositorWidget> mCompositorWidget;
   layers::SynchronousTask* mTask;
   bool mEnableProfiler;
+  LayoutDeviceIntSize mSize;
 };
 
 class RemoveRenderer : public RendererEvent
@@ -110,7 +133,8 @@ private:
 already_AddRefed<WebRenderAPI>
 WebRenderAPI::Create(bool aEnableProfiler,
                      layers::CompositorBridgeParentBase* aBridge,
-                     RefPtr<widget::CompositorWidget>&& aWidget)
+                     RefPtr<widget::CompositorWidget>&& aWidget,
+                     LayoutDeviceIntSize aSize)
 {
   MOZ_ASSERT(aBridge);
   MOZ_ASSERT(aWidget);
@@ -127,7 +151,7 @@ WebRenderAPI::Create(bool aEnableProfiler,
   // the next time we need to access the WrApi object.
   layers::SynchronousTask task("Create Renderer");
   auto event = MakeUnique<NewRenderer>(&wrApi, aBridge, &maxTextureSize, &useANGLE,
-                                       Move(aWidget), &task, aEnableProfiler);
+                                       Move(aWidget), &task, aEnableProfiler, aSize);
   RenderThread::Get()->RunEvent(id, Move(event));
 
   task.Wait();
@@ -155,33 +179,64 @@ WebRenderAPI::~WebRenderAPI()
 }
 
 void
+WebRenderAPI::UpdateScrollPosition(const WrPipelineId& aPipelineId,
+                                   const layers::FrameMetrics::ViewID& aScrollId,
+                                   const WrPoint& aScrollPosition)
+{
+  wr_scroll_layer_with_id(mWrApi, aPipelineId, aScrollId, aScrollPosition);
+}
+
+void
 WebRenderAPI::GenerateFrame()
 {
   wr_api_generate_frame(mWrApi);
 }
 
 void
+WebRenderAPI::GenerateFrame(const nsTArray<WrOpacityProperty>& aOpacityArray,
+                            const nsTArray<WrTransformProperty>& aTransformArray)
+{
+  wr_api_generate_frame_with_properties(mWrApi,
+                                        aOpacityArray.IsEmpty() ?
+                                          nullptr : aOpacityArray.Elements(),
+                                        aOpacityArray.Length(),
+                                        aTransformArray.IsEmpty() ?
+                                          nullptr : aTransformArray.Elements(),
+                                        aTransformArray.Length());
+}
+
+void
 WebRenderAPI::SetRootDisplayList(gfx::Color aBgColor,
                                  Epoch aEpoch,
                                  LayerSize aViewportSize,
-				 WrPipelineId pipeline_id,
-				 WrBuiltDisplayListDescriptor dl_descriptor,
-				 uint8_t *dl_data,
-				 size_t dl_size,
-				 WrAuxiliaryListsDescriptor aux_descriptor,
-				 uint8_t *aux_data,
-				 size_t aux_size)
+                                 WrPipelineId pipeline_id,
+                                 const WrSize& content_size,
+                                 WrBuiltDisplayListDescriptor dl_descriptor,
+                                 uint8_t *dl_data,
+                                 size_t dl_size)
 {
     wr_api_set_root_display_list(mWrApi,
-				 aEpoch,
-				 aViewportSize.width, aViewportSize.height,
+                                 ToWrColor(aBgColor),
+                                 aEpoch,
+                                 aViewportSize.width, aViewportSize.height,
                                  pipeline_id,
+                                 content_size,
                                  dl_descriptor,
                                  dl_data,
-                                 dl_size,
-                                 aux_descriptor,
-                                 aux_data,
-                                 aux_size);
+                                 dl_size);
+}
+
+void
+WebRenderAPI::ClearRootDisplayList(Epoch aEpoch,
+                                   WrPipelineId pipeline_id)
+{
+  wr_api_clear_root_display_list(mWrApi, aEpoch, pipeline_id);
+}
+
+void
+WebRenderAPI::SetWindowParameters(LayoutDeviceIntSize size)
+{
+  wr_api_set_window_parameters(mWrApi, size.width, size.height);
 }
 
 void
@@ -210,7 +265,8 @@ WebRenderAPI::Readback(gfx::IntSize size,
             virtual void Run(RenderThread& aRenderThread, WindowId aWindowId) override
             {
                 aRenderThread.UpdateAndRender(aWindowId);
-                wr_renderer_readback(mSize.width, mSize.height, mBuffer, mBufferSize);
+                wr_renderer_readback(aRenderThread.GetRenderer(aWindowId)->GetWrRenderer(),
+                                     mSize.width, mSize.height, mBuffer, mBufferSize);
                 layers::AutoCompleteTask complete(mTask);
             }
 
@@ -232,56 +288,174 @@ WebRenderAPI::Readback(gfx::IntSize size,
 }
 
 void
+WebRenderAPI::Pause()
+{
+    class PauseEvent : public RendererEvent
+    {
+        public:
+            explicit PauseEvent(layers::SynchronousTask* aTask)
+                : mTask(aTask)
+            {
+                MOZ_COUNT_CTOR(PauseEvent);
+            }
+
+            ~PauseEvent()
+            {
+                MOZ_COUNT_DTOR(PauseEvent);
+            }
+
+            virtual void Run(RenderThread& aRenderThread, WindowId aWindowId) override
+            {
+                aRenderThread.Pause(aWindowId);
+                layers::AutoCompleteTask complete(mTask);
+            }
+
+            layers::SynchronousTask* mTask;
+    };
+
+    layers::SynchronousTask task("Pause");
+    auto event = MakeUnique<PauseEvent>(&task);
+    // This event will be passed from wr_backend thread to renderer thread. That
+    // implies that all frame data have been processed when the renderer runs this event.
+    RunOnRenderThread(Move(event));
+
+    task.Wait();
+}
+
+bool
+WebRenderAPI::Resume()
+{
+    class ResumeEvent : public RendererEvent
+    {
+        public:
+            explicit ResumeEvent(layers::SynchronousTask* aTask, bool* aResult)
+                : mTask(aTask)
+                , mResult(aResult)
+            {
+                MOZ_COUNT_CTOR(ResumeEvent);
+            }
+
+            ~ResumeEvent()
+            {
+                MOZ_COUNT_DTOR(ResumeEvent);
+            }
+
+            virtual void Run(RenderThread& aRenderThread, WindowId aWindowId) override
+            {
+                *mResult = aRenderThread.Resume(aWindowId);
+                layers::AutoCompleteTask complete(mTask);
+            }
+
+            layers::SynchronousTask* mTask;
+            bool* mResult;
+    };
+
+    bool result = false;
+    layers::SynchronousTask task("Resume");
+    auto event = MakeUnique<ResumeEvent>(&task, &result);
+    // This event will be passed from wr_backend thread to renderer thread. That
+    // implies that all frame data have been processed when the renderer runs this event.
+    RunOnRenderThread(Move(event));
+
+    task.Wait();
+    return result;
+}
+
+void
+WebRenderAPI::WaitFlushed()
+{
+    class WaitFlushedEvent : public RendererEvent
+    {
+        public:
+            explicit WaitFlushedEvent(layers::SynchronousTask* aTask)
+                : mTask(aTask)
+            {
+                MOZ_COUNT_CTOR(WaitFlushedEvent);
+            }
+
+            ~WaitFlushedEvent()
+            {
+                MOZ_COUNT_DTOR(WaitFlushedEvent);
+            }
+
+            virtual void Run(RenderThread& aRenderThread, WindowId aWindowId) override
+            {
+                layers::AutoCompleteTask complete(mTask);
+            }
+
+            layers::SynchronousTask* mTask;
+    };
+
+    layers::SynchronousTask task("WaitFlushed");
+    auto event = MakeUnique<WaitFlushedEvent>(&task);
+    // This event will be passed from wr_backend thread to renderer thread. That
+    // implies that all frame data have been processed when the renderer runs this event.
+    RunOnRenderThread(Move(event));
+
+    task.Wait();
+}
+
+void
 WebRenderAPI::SetRootPipeline(PipelineId aPipeline)
 {
   wr_api_set_root_pipeline(mWrApi, aPipeline);
 }
 
 void
-WebRenderAPI::AddImage(ImageKey key, const ImageDescriptor& aDescritptor,
+WebRenderAPI::AddImage(ImageKey key, const ImageDescriptor& aDescriptor,
                        Range<uint8_t> aBytes)
 {
   wr_api_add_image(mWrApi,
                    key,
-                   &aDescritptor,
-                   &aBytes[0], aBytes.length());
+                   &aDescriptor,
+                   RangeToByteSlice(aBytes));
 }
 
 void
-WebRenderAPI::AddExternalImageHandle(ImageKey key,
-                                     gfx::IntSize aSize,
-                                     gfx::SurfaceFormat aFormat,
-                                     uint64_t aHandle)
+WebRenderAPI::AddBlobImage(ImageKey key, const ImageDescriptor& aDescriptor,
+                           Range<uint8_t> aBytes)
 {
-  auto format = SurfaceFormatToWrImageFormat(aFormat).value();
-  wr_api_add_external_image_handle(mWrApi,
-                                   key,
-                                   aSize.width, aSize.height, format,
-                                   aHandle);
+  wr_api_add_blob_image(mWrApi,
+                        key,
+                        &aDescriptor,
+                        RangeToByteSlice(aBytes));
+}
+
+void
+WebRenderAPI::AddExternalImage(ImageKey key,
+                               const ImageDescriptor& aDescriptor,
+                               ExternalImageId aExtID,
+                               WrExternalImageBufferType aBufferType,
+                               uint8_t aChannelIndex)
+{
+  wr_api_add_external_image(mWrApi,
+                            key,
+                            &aDescriptor,
+                            aExtID,
+                            aBufferType,
+                            aChannelIndex);
 }
 
 void
 WebRenderAPI::AddExternalImageBuffer(ImageKey key,
-                                     gfx::IntSize aSize,
-                                     gfx::SurfaceFormat aFormat,
-                                     uint64_t aHandle)
+                                     const ImageDescriptor& aDescriptor,
+                                     ExternalImageId aHandle)
 {
-  auto format = SurfaceFormatToWrImageFormat(aFormat).value();
   wr_api_add_external_image_buffer(mWrApi,
                                    key,
-                                   aSize.width, aSize.height, format,
+                                   &aDescriptor,
                                    aHandle);
 }
 
 void
 WebRenderAPI::UpdateImageBuffer(ImageKey aKey,
-                                const ImageDescriptor& aDescritptor,
+                                const ImageDescriptor& aDescriptor,
                                 Range<uint8_t> aBytes)
 {
   wr_api_update_image(mWrApi,
                       aKey,
-                      &aDescritptor,
-                      &aBytes[0], aBytes.length());
+                      &aDescriptor,
+                      RangeToByteSlice(aBytes));
 }
 
 void
@@ -291,15 +465,15 @@ WebRenderAPI::DeleteImage(ImageKey aKey)
 }
 
 void
-WebRenderAPI::AddRawFont(wr::FontKey key, Range<uint8_t> aBytes)
+WebRenderAPI::AddRawFont(wr::FontKey aKey, Range<uint8_t> aBytes, uint32_t aIndex)
 {
-  wr_api_add_raw_font(mWrApi, key, &aBytes[0], aBytes.length());
+  wr_api_add_raw_font(mWrApi, aKey, &aBytes[0], aBytes.length(), aIndex);
 }
 
 void
 WebRenderAPI::DeleteFont(wr::FontKey aKey)
 {
-  printf("XXX - WebRender does not seem to implement deleting a font! Leaking it...\n");
+  wr_api_delete_font(mWrApi, aKey);
 }
 
 class EnableProfiler : public RendererEvent
@@ -342,10 +516,11 @@ WebRenderAPI::RunOnRenderThread(UniquePtr<RendererEvent> aEvent)
   wr_api_send_external_event(mWrApi, event);
 }
 
-DisplayListBuilder::DisplayListBuilder(PipelineId aId)
+DisplayListBuilder::DisplayListBuilder(PipelineId aId,
+                                       const WrSize& aContentSize)
 {
   MOZ_COUNT_CTOR(DisplayListBuilder);
-  mWrState = wr_state_new(aId);
+  mWrState = wr_state_new(aId, aContentSize);
 }
 
 DisplayListBuilder::~DisplayListBuilder()
@@ -367,104 +542,229 @@ DisplayListBuilder::End()
 }
 
 void
-DisplayListBuilder::Finalize(WrBuiltDisplayListDescriptor& dl_descriptor,
-                             wr::VecU8& dl_data,
-                             WrAuxiliaryListsDescriptor& aux_descriptor,
-                             wr::VecU8& aux_data)
+DisplayListBuilder::Finalize(WrSize& aOutContentSize,
+                             BuiltDisplayList& aOutDisplayList)
 {
-    wr_api_finalize_builder(mWrState,
-                            dl_descriptor,
-                            dl_data.inner,
-                            aux_descriptor,
-                            aux_data.inner);
+  wr_api_finalize_builder(mWrState,
+                          &aOutContentSize,
+                          &aOutDisplayList.dl_desc,
+                          &aOutDisplayList.dl.inner);
 }
 
 void
 DisplayListBuilder::PushStackingContext(const WrRect& aBounds,
-                                        const WrRect& aOverflow,
-                                        const WrImageMask* aMask,
-                                        const float aOpacity,
-                                        const gfx::Matrix4x4& aTransform,
-                                        const WrMixBlendMode& aMixBlendMode)
+                                        const uint64_t& aAnimationId,
+                                        const float* aOpacity,
+                                        const gfx::Matrix4x4* aTransform,
+                                        const WrMixBlendMode& aMixBlendMode,
+                                        const nsTArray<WrFilterOp>& aFilters)
 {
-  wr_dp_push_stacking_context(mWrState, aBounds, aOverflow, aMask, aOpacity,
-                              &aTransform.components[0], aMixBlendMode);
+  WrMatrix matrix;
+  if (aTransform) {
+    matrix = ToWrMatrix(*aTransform);
+  }
+  const WrMatrix* maybeTransform = aTransform ? &matrix : nullptr;
+  WRDL_LOG("PushStackingContext b=%s t=%s\n", Stringify(aBounds).c_str(),
+      aTransform ? Stringify(*aTransform).c_str() : "none");
+  wr_dp_push_stacking_context(mWrState, aBounds, aAnimationId, aOpacity,
+                              maybeTransform, aMixBlendMode,
+                              aFilters.Elements(), aFilters.Length());
 }
 
 void
 DisplayListBuilder::PopStackingContext()
 {
+  WRDL_LOG("PopStackingContext\n");
   wr_dp_pop_stacking_context(mWrState);
 }
 
 void
-DisplayListBuilder::PushScrollLayer(const WrRect& aBounds,
-                                    const WrRect& aOverflow,
-                                    const WrImageMask* aMask)
+DisplayListBuilder::PushClip(const WrRect& aClipRect,
+                             const WrImageMask* aMask)
 {
-  wr_dp_push_scroll_layer(mWrState, aBounds, aOverflow, aMask);
+  uint64_t clip_id = wr_dp_push_clip(mWrState, aClipRect, aMask);
+  WRDL_LOG("PushClip id=%" PRIu64 " r=%s m=%p\n", clip_id,
+      Stringify(aClipRect).c_str(), aMask);
+  mClipIdStack.push_back(clip_id);
+}
+
+void
+DisplayListBuilder::PopClip()
+{
+  WRDL_LOG("PopClip id=%" PRIu64 "\n", mClipIdStack.back());
+  mClipIdStack.pop_back();
+  wr_dp_pop_clip(mWrState);
+}
+
+void
+DisplayListBuilder::PushBuiltDisplayList(BuiltDisplayList dl)
+{
+  wr_dp_push_built_display_list(mWrState,
+                                dl.dl_desc,
+                                dl.dl.Extract());
+}
+
+void
+DisplayListBuilder::PushScrollLayer(const layers::FrameMetrics::ViewID& aScrollId,
+                                    const WrRect& aContentRect,
+                                    const WrRect& aClipRect)
+{
+  WRDL_LOG("PushScrollLayer id=%" PRIu64 " co=%s cl=%s\n",
+      aScrollId, Stringify(aContentRect).c_str(), Stringify(aClipRect).c_str());
+  wr_dp_push_scroll_layer(mWrState, aScrollId, aContentRect, aClipRect);
+  mScrollIdStack.push_back(aScrollId);
 }
 
 void
 DisplayListBuilder::PopScrollLayer()
 {
+  WRDL_LOG("PopScrollLayer id=%" PRIu64 "\n", mScrollIdStack.back());
+  mScrollIdStack.pop_back();
   wr_dp_pop_scroll_layer(mWrState);
 }
 
 void
+DisplayListBuilder::PushClipAndScrollInfo(const layers::FrameMetrics::ViewID& aScrollId,
+                                          const uint64_t* aClipId)
+{
+  WRDL_LOG("PushClipAndScroll s=%" PRIu64 " c=%s\n", aScrollId,
+      aClipId ? Stringify(*aClipId).c_str() : "none");
+  wr_dp_push_clip_and_scroll_info(mWrState, aScrollId, aClipId);
+}
+
+void
+DisplayListBuilder::PopClipAndScrollInfo()
+{
+  WRDL_LOG("PopClipAndScroll\n");
+  wr_dp_pop_clip_and_scroll_info(mWrState);
+}
+
+void
 DisplayListBuilder::PushRect(const WrRect& aBounds,
-                             const WrRect& aClip,
+                             const WrClipRegionToken aClip,
                              const WrColor& aColor)
 {
+  WRDL_LOG("PushRect b=%s c=%s\n",
+      Stringify(aBounds).c_str(),
+      Stringify(aColor).c_str());
   wr_dp_push_rect(mWrState, aBounds, aClip, aColor);
 }
 
 void
 DisplayListBuilder::PushLinearGradient(const WrRect& aBounds,
-                                       const WrRect& aClip,
+                                       const WrClipRegionToken aClip,
                                        const WrPoint& aStartPoint,
                                        const WrPoint& aEndPoint,
                                        const nsTArray<WrGradientStop>& aStops,
-                                       wr::GradientExtendMode aExtendMode)
+                                       wr::GradientExtendMode aExtendMode,
+                                       const WrSize aTileSize,
+                                       const WrSize aTileSpacing)
 {
   wr_dp_push_linear_gradient(mWrState,
                              aBounds, aClip,
                              aStartPoint, aEndPoint,
                              aStops.Elements(), aStops.Length(),
-                             aExtendMode);
+                             aExtendMode,
+                             aTileSize, aTileSpacing);
 }
 
 void
 DisplayListBuilder::PushRadialGradient(const WrRect& aBounds,
-                                       const WrRect& aClip,
-                                       const WrPoint& aStartCenter,
-                                       const WrPoint& aEndCenter,
-                                       float aStartRadius,
-                                       float aEndRadius,
+                                       const WrClipRegionToken aClip,
+                                       const WrPoint& aCenter,
+                                       const WrSize& aRadius,
                                        const nsTArray<WrGradientStop>& aStops,
-                                       wr::GradientExtendMode aExtendMode)
+                                       wr::GradientExtendMode aExtendMode,
+                                       const WrSize aTileSize,
+                                       const WrSize aTileSpacing)
 {
   wr_dp_push_radial_gradient(mWrState,
                              aBounds, aClip,
-                             aStartCenter, aEndCenter,
-                             aStartRadius, aEndRadius,
+                             aCenter, aRadius,
                              aStops.Elements(), aStops.Length(),
-                             aExtendMode);
+                             aExtendMode,
+                             aTileSize, aTileSpacing);
 }
 
 void
 DisplayListBuilder::PushImage(const WrRect& aBounds,
-                              const WrRect& aClip,
-                              const WrImageMask* aMask,
+                              const WrClipRegionToken aClip,
                               wr::ImageRendering aFilter,
                               wr::ImageKey aImage)
 {
-  wr_dp_push_image(mWrState, aBounds, aClip, aMask, aFilter, aImage);
+  WrSize size;
+  size.width = aBounds.width;
+  size.height = aBounds.height;
+  PushImage(aBounds, aClip, size, size, aFilter, aImage);
+}
+
+void
+DisplayListBuilder::PushImage(const WrRect& aBounds,
+                              const WrClipRegionToken aClip,
+                              const WrSize& aStretchSize,
+                              const WrSize& aTileSpacing,
+                              wr::ImageRendering aFilter,
+                              wr::ImageKey aImage)
+{
+  WRDL_LOG("PushImage b=%s s=%s t=%s\n", Stringify(aBounds).c_str(),
+      Stringify(aStretchSize).c_str(), Stringify(aTileSpacing).c_str());
+  wr_dp_push_image(mWrState, aBounds, aClip, aStretchSize, aTileSpacing, aFilter, aImage);
+}
+
+void
+DisplayListBuilder::PushYCbCrPlanarImage(const WrRect& aBounds,
+                                         const WrClipRegionToken aClip,
+                                         wr::ImageKey aImageChannel0,
+                                         wr::ImageKey aImageChannel1,
+                                         wr::ImageKey aImageChannel2,
+                                         WrYuvColorSpace aColorSpace,
+                                         wr::ImageRendering aRendering)
+{
+  wr_dp_push_yuv_planar_image(mWrState,
+                              aBounds,
+                              aClip,
+                              aImageChannel0,
+                              aImageChannel1,
+                              aImageChannel2,
+                              aColorSpace,
+                              aRendering);
+}
+
+void
+DisplayListBuilder::PushNV12Image(const WrRect& aBounds,
+                                  const WrClipRegionToken aClip,
+                                  wr::ImageKey aImageChannel0,
+                                  wr::ImageKey aImageChannel1,
+                                  WrYuvColorSpace aColorSpace,
+                                  wr::ImageRendering aRendering)
+{
+  wr_dp_push_yuv_NV12_image(mWrState,
+                            aBounds,
+                            aClip,
+                            aImageChannel0,
+                            aImageChannel1,
+                            aColorSpace,
+                            aRendering);
+}
+
+void
+DisplayListBuilder::PushYCbCrInterleavedImage(const WrRect& aBounds,
+                                              const WrClipRegionToken aClip,
+                                              wr::ImageKey aImageChannel0,
+                                              WrYuvColorSpace aColorSpace,
+                                              wr::ImageRendering aRendering)
+{
+  wr_dp_push_yuv_interleaved_image(mWrState,
+                                   aBounds,
+                                   aClip,
+                                   aImageChannel0,
+                                   aColorSpace,
+                                   aRendering);
 }
 
 void
 DisplayListBuilder::PushIFrame(const WrRect& aBounds,
-                               const WrRect& aClip,
+                               const WrClipRegionToken aClip,
                                PipelineId aPipeline)
 {
   wr_dp_push_iframe(mWrState, aBounds, aClip, aPipeline);
@@ -472,7 +772,8 @@ DisplayListBuilder::PushIFrame(const WrRect& aBounds,
 
 void
 DisplayListBuilder::PushBorder(const WrRect& aBounds,
-                               const WrRect& aClip,
+                               const WrClipRegionToken aClip,
+                               const WrBorderWidths& aWidths,
                                const WrBorderSide& aTop,
                                const WrBorderSide& aRight,
                                const WrBorderSide& aBottom,
@@ -480,13 +781,59 @@ DisplayListBuilder::PushBorder(const WrRect& aBounds,
                                const WrBorderRadius& aRadius)
 {
   wr_dp_push_border(mWrState, aBounds, aClip,
-                    aTop, aRight, aBottom, aLeft,
-                    aRadius);
+                    aWidths, aTop, aRight, aBottom, aLeft, aRadius);
+}
+
+void
+DisplayListBuilder::PushBorderImage(const WrRect& aBounds,
+                                    const WrClipRegionToken aClip,
+                                    const WrBorderWidths& aWidths,
+                                    wr::ImageKey aImage,
+                                    const WrNinePatchDescriptor& aPatch,
+                                    const WrSideOffsets2Df32& aOutset,
+                                    const WrRepeatMode& aRepeatHorizontal,
+                                    const WrRepeatMode& aRepeatVertical)
+{
+  wr_dp_push_border_image(mWrState, aBounds, aClip,
+                          aWidths, aImage, aPatch, aOutset,
+                          aRepeatHorizontal, aRepeatVertical);
+}
+
+void
+DisplayListBuilder::PushBorderGradient(const WrRect& aBounds,
+                                       const WrClipRegionToken aClip,
+                                       const WrBorderWidths& aWidths,
+                                       const WrPoint& aStartPoint,
+                                       const WrPoint& aEndPoint,
+                                       const nsTArray<WrGradientStop>& aStops,
+                                       wr::GradientExtendMode aExtendMode,
+                                       const WrSideOffsets2Df32& aOutset)
+{
+  wr_dp_push_border_gradient(mWrState, aBounds, aClip,
+                             aWidths, aStartPoint, aEndPoint,
+                             aStops.Elements(), aStops.Length(),
+                             aExtendMode, aOutset);
+}
+
+void
+DisplayListBuilder::PushBorderRadialGradient(const WrRect& aBounds,
+                                             const WrClipRegionToken aClip,
+                                             const WrBorderWidths& aWidths,
+                                             const WrPoint& aCenter,
+                                             const WrSize& aRadius,
+                                             const nsTArray<WrGradientStop>& aStops,
+                                             wr::GradientExtendMode aExtendMode,
+                                             const WrSideOffsets2Df32& aOutset)
+{
+  wr_dp_push_border_radial_gradient(
+    mWrState, aBounds, aClip, aWidths, aCenter,
+    aRadius, aStops.Elements(), aStops.Length(),
+    aExtendMode, aOutset);
 }
 
 void
 DisplayListBuilder::PushText(const WrRect& aBounds,
-                             const WrRect& aClip,
+                             const WrClipRegionToken aClip,
                              const gfx::Color& aColor,
                              wr::FontKey aFontKey,
                              Range<const WrGlyphInstance> aGlyphBuffer,
@@ -501,7 +848,7 @@ DisplayListBuilder::PushText(const WrRect& aBounds,
 
 void
 DisplayListBuilder::PushBoxShadow(const WrRect& aRect,
-                                  const WrRect& aClip,
+                                  const WrClipRegionToken aClip,
                                   const WrRect& aBoxBounds,
                                   const WrPoint& aOffset,
                                   const WrColor& aColor,
@@ -514,6 +861,53 @@ DisplayListBuilder::PushBoxShadow(const WrRect& aRect,
                         aBoxBounds, aOffset, aColor,
                         aBlurRadius, aSpreadRadius, aBorderRadius,
                         aClipMode);
+}
+
+WrClipRegionToken
+DisplayListBuilder::PushClipRegion(const WrRect& aMain,
+                                   const WrImageMask* aMask)
+{
+  WRDL_LOG("PushClipRegion r=%s m=%p\n", Stringify(aMain).c_str(), aMask);
+  return wr_dp_push_clip_region(mWrState,
+                                aMain,
+                                nullptr, 0,
+                                aMask);
+}
+
+WrClipRegionToken
+DisplayListBuilder::PushClipRegion(const WrRect& aMain,
+                                   const nsTArray<WrComplexClipRegion>& aComplex,
+                                   const WrImageMask* aMask)
+{
+  WRDL_LOG("PushClipRegion r=%s cl=%d m=%p\n", Stringify(aMain).c_str(),
+      (int)aComplex.Length(), aMask);
+  return wr_dp_push_clip_region(mWrState,
+                                aMain,
+                                aComplex.Elements(), aComplex.Length(),
+                                aMask);
+}
+
+Maybe<uint64_t>
+DisplayListBuilder::TopmostClipId()
+{
+  if (mClipIdStack.empty()) {
+    return Nothing();
+  }
+  return Some(mClipIdStack.back());
+}
+
+Maybe<layers::FrameMetrics::ViewID>
+DisplayListBuilder::ParentScrollIdFor(layers::FrameMetrics::ViewID aScrollId)
+{
+  // Finds the scrollId in mScrollIdStack immediately before aScrollId, or
+  // returns Nothing() if it can't find one
+  for (auto it = mScrollIdStack.rbegin(); it != mScrollIdStack.rend(); it++) {
+    if (*it == aScrollId) {
+      it++;
+      return (it == mScrollIdStack.rend() ? Nothing() : Some(*it));
+    }
+  }
+  return Nothing();
 }
 
 } // namespace wr

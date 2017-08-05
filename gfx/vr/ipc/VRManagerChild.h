@@ -17,10 +17,12 @@
 
 namespace mozilla {
 namespace dom {
+class Promise;
 class GamepadManager;
 class Navigator;
 class VRDisplay;
 class VREventObserver;
+class VRMockDisplay;
 } // namespace dom
 namespace layers {
 class TextureClient;
@@ -46,9 +48,10 @@ public:
   // Indicate that an observer should no longer receive VR events.
   void RemoveListener(dom::VREventObserver* aObserver);
 
-  int GetInputFrameID();
   bool GetVRDisplays(nsTArray<RefPtr<VRDisplayClient> >& aDisplays);
   bool RefreshVRDisplaysWithCallback(uint64_t aWindowId);
+  void AddPromise(const uint32_t& aID, dom::Promise* aPromise);
+
   void CreateVRServiceTestDisplay(const nsCString& aID, dom::Promise* aPromise);
   void CreateVRServiceTestController(const nsCString& aID, dom::Promise* aPromise);
 
@@ -60,13 +63,20 @@ public:
 
   static bool IsCreated();
 
-  virtual PTextureChild* CreateTexture(const SurfaceDescriptor& aSharedData,
-                                       layers::LayersBackend aLayersBackend,
-                                       TextureFlags aFlags,
-                                       uint64_t aSerial) override;
+  virtual PTextureChild* CreateTexture(
+    const SurfaceDescriptor& aSharedData,
+    layers::LayersBackend aLayersBackend,
+    TextureFlags aFlags,
+    uint64_t aSerial,
+    wr::MaybeExternalImageId& aExternalImageId,
+    nsIEventTarget* aTarget = nullptr) override;
   virtual void CancelWaitForRecycle(uint64_t aTextureId) override;
 
-  PVRLayerChild* CreateVRLayer(uint32_t aDisplayID, const Rect& aLeftEyeRect, const Rect& aRightEyeRect);
+  PVRLayerChild* CreateVRLayer(uint32_t aDisplayID,
+                               const Rect& aLeftEyeRect,
+                               const Rect& aRightEyeRect,
+                               nsIEventTarget* aTarget,
+                               uint32_t aGroup);
 
   static void IdentifyTextureHost(const layers::TextureFactoryIdentifier& aIdentifier);
   layers::LayersBackend GetBackendType() const;
@@ -109,16 +119,18 @@ protected:
                                             const float& aRightEyeX,
                                             const float& aRightEyeY,
                                             const float& aRightEyeWidth,
-                                            const float& aRightEyeHeight) override;
+                                            const float& aRightEyeHeight,
+                                            const uint32_t& aGroup) override;
   virtual bool DeallocPVRLayerChild(PVRLayerChild* actor) override;
 
   virtual mozilla::ipc::IPCResult RecvUpdateDisplayInfo(nsTArray<VRDisplayInfo>&& aDisplayUpdates) override;
 
   virtual mozilla::ipc::IPCResult RecvParentAsyncMessages(InfallibleTArray<AsyncParentMessageData>&& aMessages) override;
 
-  virtual mozilla::ipc::IPCResult RecvNotifyVSync() override;
-  virtual mozilla::ipc::IPCResult RecvNotifyVRVSync(const uint32_t& aDisplayID) override;
+  virtual mozilla::ipc::IPCResult RecvDispatchSubmitFrameResult(const uint32_t& aDisplayID, const VRSubmitFrameResultInfo& aResult) override;
   virtual mozilla::ipc::IPCResult RecvGamepadUpdate(const GamepadChangeEvent& aGamepadEvent) override;
+  virtual mozilla::ipc::IPCResult RecvReplyGamepadVibrateHaptic(const uint32_t& aPromiseID) override;
+
   virtual mozilla::ipc::IPCResult RecvReplyCreateVRServiceTestDisplay(const nsCString& aID,
                                                                       const uint32_t& aPromiseID,
                                                                       const uint32_t& aDeviceID) override;
@@ -162,8 +174,6 @@ private:
   bool mDisplaysInitialized;
   nsTArray<uint64_t> mNavigatorCallbacks;
 
-  int32_t mInputFrameID;
-
   MessageLoop* mMessageLoop;
 
   struct FrameRequest;
@@ -185,8 +195,10 @@ private:
 
   layers::LayersBackend mBackend;
   RefPtr<layers::SyncObject> mSyncObject;
+  nsRefPtrHashtable<nsUint32HashKey, dom::Promise> mGamepadPromiseList; // TODO: check if it can merge into one list?
   uint32_t mPromiseID;
   nsRefPtrHashtable<nsUint32HashKey, dom::Promise> mPromiseList;
+  RefPtr<dom::VRMockDisplay> mVRMockDisplay;
 
   DISALLOW_COPY_AND_ASSIGN(VRManagerChild);
 };

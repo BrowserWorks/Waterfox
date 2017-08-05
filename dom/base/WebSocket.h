@@ -12,6 +12,7 @@
 #include "mozilla/dom/WebSocketBinding.h" // for BinaryType
 #include "mozilla/DOMEventTargetHelper.h"
 #include "mozilla/ErrorResult.h"
+#include "mozilla/Mutex.h"
 #include "nsCOMPtr.h"
 #include "nsCycleCollectionParticipant.h"
 #include "nsISupports.h"
@@ -50,7 +51,10 @@ public:
   virtual bool IsCertainlyAliveForCC() const override;
 
   // EventTarget
+  using EventTarget::EventListenerAdded;
   virtual void EventListenerAdded(nsIAtom* aType) override;
+
+  using EventTarget::EventListenerRemoved;
   virtual void EventListenerRemoved(nsIAtom* aType) override;
 
   virtual void DisconnectFromOwner() override;

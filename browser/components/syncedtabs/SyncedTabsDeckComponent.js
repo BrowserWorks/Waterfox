@@ -70,9 +70,9 @@ SyncedTabsDeckComponent.prototype = {
   },
 
   init() {
-    Services.obs.addObserver(this, this._SyncedTabs.TOPIC_TABS_CHANGED, false);
-    Services.obs.addObserver(this, FxAccountsCommon.ONLOGIN_NOTIFICATION, false);
-    Services.obs.addObserver(this, "weave:service:login:change", false);
+    Services.obs.addObserver(this, this._SyncedTabs.TOPIC_TABS_CHANGED);
+    Services.obs.addObserver(this, FxAccountsCommon.ONLOGIN_NOTIFICATION);
+    Services.obs.addObserver(this, "weave:service:login:change");
 
     // Go ahead and trigger sync
     this._SyncedTabs.syncTabs()
@@ -122,7 +122,7 @@ SyncedTabsDeckComponent.prototype = {
 
   getPanelStatus() {
     return this._accountStatus().then(exists => {
-      if (!exists || this._getChromeWindow(this._window).gSyncUI.loginFailed()) {
+      if (!exists || this._SyncedTabs.loginFailed) {
         return this.PANELS.NOT_AUTHED_INFO;
       }
       if (!this._SyncedTabs.isConfiguredToSyncTabs) {
@@ -166,7 +166,7 @@ SyncedTabsDeckComponent.prototype = {
   },
 
   openSyncPrefs() {
-    this._getChromeWindow(this._window).gSyncUI.openPrefs("tabs-sidebar");
+    this._getChromeWindow(this._window).gSync.openPrefs("tabs-sidebar");
   }
 };
 

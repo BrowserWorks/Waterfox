@@ -18,8 +18,6 @@ XPCOMUtils.defineLazyModuleGetter(this, "AsyncShutdown",
   "resource://gre/modules/AsyncShutdown.jsm");
 XPCOMUtils.defineLazyModuleGetter(this, "Promise",
   "resource://gre/modules/Promise.jsm");
-XPCOMUtils.defineLazyModuleGetter(this, "Task",
-  "resource://gre/modules/Task.jsm");
 
 
 /**
@@ -186,8 +184,8 @@ nsAsyncShutdownClient.prototype = {
   },
 
   /* ........ QueryInterface .............. */
-  QueryInterface :  XPCOMUtils.generateQI([Ci.nsIAsyncShutdownBarrier]),
-  classID:          Components.ID("{314e9e96-cc37-4d5c-843b-54709ce11426}"),
+  QueryInterface: XPCOMUtils.generateQI([Ci.nsIAsyncShutdownBarrier]),
+  classID: Components.ID("{314e9e96-cc37-4d5c-843b-54709ce11426}"),
 };
 
 /**
@@ -218,8 +216,8 @@ nsAsyncShutdownBarrier.prototype = {
   },
 
   /* ........ QueryInterface .............. */
-  QueryInterface :  XPCOMUtils.generateQI([Ci.nsIAsyncShutdownBarrier]),
-  classID:          Components.ID("{29a0e8b5-9111-4c09-a0eb-76cd02bf20fa}"),
+  QueryInterface: XPCOMUtils.generateQI([Ci.nsIAsyncShutdownBarrier]),
+  classID: Components.ID("{29a0e8b5-9111-4c09-a0eb-76cd02bf20fa}"),
 };
 
 function nsAsyncShutdownService() {
@@ -265,8 +263,8 @@ nsAsyncShutdownService.prototype = {
   },
 
   /* ........ QueryInterface .............. */
-  QueryInterface :  XPCOMUtils.generateQI([Ci.nsIAsyncShutdownService]),
-  classID:          Components.ID("{35c496de-a115-475d-93b5-ffa3f3ae6fe3}"),
+  QueryInterface: XPCOMUtils.generateQI([Ci.nsIAsyncShutdownService]),
+  classID: Components.ID("{35c496de-a115-475d-93b5-ffa3f3ae6fe3}"),
 };
 
 

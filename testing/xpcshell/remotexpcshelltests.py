@@ -4,6 +4,7 @@
 # License, v. 2.0. If a copy of the MPL was not distributed with this
 # file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
+import logging
 import posixpath
 import sys, os
 import subprocess
@@ -144,9 +145,9 @@ class RemoteXPCShellTestThread(xpcshell.XPCShellTestThread):
                 self.shellReturnCode = self.device.shell(cmd, f, timeout=timeout+10)
             except mozdevice.DMError as e:
                 if self.timedout:
-                    # If the test timed out, there is a good chance the SUTagent also
-                    # timed out and failed to return a return code, generating a
-                    # DMError. Ignore the DMError to simplify the error report.
+                    # If the test timed out, there is a good chance the device
+                    # manager also timed out and raised DMError.
+                    # Ignore the DMError to simplify the error report.
                     self.shellReturnCode = None
                     pass
                 else:
@@ -578,16 +579,13 @@ def main():
                                     options,
                                     {"tbpl": sys.stdout})
 
-    if options.dm_trans == "adb":
-        if options.deviceIP:
-            dm = mozdevice.DroidADB(options.deviceIP, options.devicePort, packageName=None, deviceRoot=options.remoteTestRoot)
-        else:
-            dm = mozdevice.DroidADB(packageName=None, deviceRoot=options.remoteTestRoot)
-    else:
-        if not options.deviceIP:
-            print "Error: you must provide a device IP to connect to via the --device option"
-            sys.exit(1)
-        dm = mozdevice.DroidSUT(options.deviceIP, options.devicePort, deviceRoot=options.remoteTestRoot)
+    dm_args = {'deviceRoot': options.remoteTestRoot}
+    if options.deviceIP:
+        dm_args['host'] = options.deviceIP
+        dm_args['port'] = options.devicePort
+    if options.log_tbpl_level == 'debug' or options.log_mach_level == 'debug':
+        dm_args['logLevel'] = logging.DEBUG
+    dm = mozdevice.DroidADB(**dm_args)
 
     if options.interactive and not options.testPath:
         print >>sys.stderr, "Error: You must specify a test filename in interactive mode!"

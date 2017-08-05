@@ -37,25 +37,26 @@ class nsTableCellFrame : public nsContainerFrame,
   typedef mozilla::gfx::DrawTarget DrawTarget;
   typedef mozilla::image::DrawResult DrawResult;
 
+  friend nsTableCellFrame* NS_NewTableCellFrame(nsIPresShell*   aPresShell,
+                                                nsStyleContext* aContext,
+                                                nsTableFrame* aTableFrame);
+
+  nsTableCellFrame(nsStyleContext* aContext, nsTableFrame* aTableFrame)
+    : nsTableCellFrame(aContext, aTableFrame, kClassID) {}
+
 protected:
   typedef mozilla::WritingMode WritingMode;
   typedef mozilla::LogicalSide LogicalSide;
   typedef mozilla::LogicalMargin LogicalMargin;
 
 public:
-  NS_DECL_QUERYFRAME_TARGET(nsTableCellFrame)
   NS_DECL_QUERYFRAME
-  NS_DECL_FRAMEARENA_HELPERS
-
-  // default constructor supplied by the compiler
-
-  nsTableCellFrame(nsStyleContext* aContext, nsTableFrame* aTableFrame);
-  ~nsTableCellFrame();
+  NS_DECL_FRAMEARENA_HELPERS(nsTableCellFrame)
 
   nsTableRowFrame* GetTableRowFrame() const
   {
     nsIFrame* parent = GetParent();
-    MOZ_ASSERT(parent && parent->GetType() == nsGkAtoms::tableRowFrame);
+    MOZ_ASSERT(parent && parent->IsTableRowFrame());
     return static_cast<nsTableRowFrame*>(parent);
   }
 
@@ -107,11 +108,6 @@ public:
                                 const nsRect&           aDirtyRect,
                                 const nsDisplayListSet& aLists) override;
 
-  DrawResult PaintCellBackground(nsRenderingContext& aRenderingContext,
-                                 const nsRect& aDirtyRect, nsPoint aPt,
-                                 uint32_t aFlags);
-
- 
   virtual nsresult ProcessBorders(nsTableFrame* aFrame,
                                   nsDisplayListBuilder* aBuilder,
                                   const nsDisplayListSet& aLists);
@@ -124,13 +120,6 @@ public:
                       ReflowOutput& aDesiredSize,
                       const ReflowInput& aReflowInput,
                       nsReflowStatus&      aStatus) override;
-
-  /**
-   * Get the "type" of the frame
-   *
-   * @see nsLayoutAtoms::tableCellFrame
-   */
-  virtual nsIAtom* GetType() const override;
 
 #ifdef DEBUG_FRAME_DUMP
   virtual nsresult GetFrameName(nsAString& aResult) const override;
@@ -240,6 +229,10 @@ public:
   virtual void InvalidateFrameForRemoval() override { InvalidateFrameSubtree(); }
 
 protected:
+  nsTableCellFrame(nsStyleContext* aContext, nsTableFrame* aTableFrame,
+                   ClassID aID);
+  ~nsTableCellFrame();
+
   virtual LogicalSides
   GetLogicalSkipSides(const ReflowInput* aReflowInput = nullptr) const override;
 
@@ -308,19 +301,13 @@ class nsBCTableCellFrame final : public nsTableCellFrame
 {
   typedef mozilla::image::DrawResult DrawResult;
 public:
-  NS_DECL_FRAMEARENA_HELPERS
+  NS_DECL_FRAMEARENA_HELPERS(nsBCTableCellFrame)
 
   nsBCTableCellFrame(nsStyleContext* aContext, nsTableFrame* aTableFrame);
 
   ~nsBCTableCellFrame();
 
-  virtual nsIAtom* GetType() const override;
-
   virtual nsMargin GetUsedBorder() const override;
-  virtual bool GetBorderRadii(const nsSize& aFrameSize,
-                              const nsSize& aBorderArea,
-                              Sides aSkipSides,
-                              nscoord aRadii[8]) const override;
 
   // Get the *inner half of the border only*, in twips.
   virtual LogicalMargin GetBorderWidth(WritingMode aWM) const override;

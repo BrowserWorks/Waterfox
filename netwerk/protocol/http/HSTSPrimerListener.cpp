@@ -3,6 +3,7 @@
 /* This Source Code Form is subject to the terms of the Mozilla Public
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
+#include "HttpLog.h"
 
 #include "nsHttp.h"
 
@@ -305,6 +306,13 @@ HSTSPrimingListener::StartHSTSPriming(nsIChannel* aRequestChannel,
   }
   nsCOMPtr<nsIHttpChannelInternal> internal = do_QueryInterface(primingChannel);
   NS_ENSURE_STATE(internal);
+
+  // Since this is a perfomrance critical request (blocks the page load) we
+  // want to get the response ASAP.
+  nsCOMPtr<nsIClassOfService> classOfService(do_QueryInterface(primingChannel));
+  if (classOfService) {
+    classOfService->AddClassFlags(nsIClassOfService::UrgentStart);
+  }
 
   // Currently using HEAD per the draft, but under discussion to change to GET
   // with credentials so if the upgrade is approved the result is already cached.

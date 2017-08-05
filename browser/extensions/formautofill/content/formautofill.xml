@@ -27,6 +27,12 @@
     </xbl:content>
 
     <implementation implements="nsIDOMXULSelectControlItemElement">
+      <!-- For form autofill, we want to unify the selection no matter by
+      keyboard navigation or mouseover in order not to confuse user which
+      profile preview is being shown. This field is set to true to indicate
+      that selectedIndex of popup should be changed while mouseover item -->
+      <field name="selectedByMouseOver">true</field>
+
       <constructor>
         <![CDATA[
           this._itemBox = document.getAnonymousElementByAttribute(
@@ -43,12 +49,33 @@
         ]]>
       </constructor>
 
+      <property name="selected" onget="return this.getAttribute('selected') == 'true';">
+        <setter><![CDATA[
+          /* global Cu */
+          if (val) {
+            this.setAttribute("selected", "true");
+          } else {
+            this.removeAttribute("selected");
+          }
+
+          let {AutoCompletePopup} = Cu.import("resource://gre/modules/AutoCompletePopup.jsm", {});
+
+          AutoCompletePopup.sendMessageToBrowser("FormAutofill:PreviewProfile");
+
+          return val;
+        ]]></setter>
+      </property>
+
       <method name="_cleanup">
         <body>
         <![CDATA[
             this._itemBox.removeAttribute("size");
         ]]>
         </body>
+      </method>
+
+      <method name="_onChanged">
+        <body></body>
       </method>
 
       <method name="_onOverflow">
@@ -63,11 +90,10 @@
         <body>
         <![CDATA[
           let outerBoxRect = this.parentNode.getBoundingClientRect();
-          let value = this.getAttribute("ac-value");
-          let comment = this.getAttribute("ac-comment");
+          let {primary, secondary} = JSON.parse(this.getAttribute("ac-value"));
 
-          this._comment.textContent = comment;
-          this._label.textContent = value;
+          this._label.textContent = primary;
+          this._comment.textContent = secondary;
 
           // Make item fit in popup as XUL box could not constrain
           // item's width

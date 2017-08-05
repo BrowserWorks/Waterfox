@@ -40,7 +40,7 @@ class nsSVGIntegrationUtils final
 {
   typedef mozilla::gfx::DrawTarget DrawTarget;
   typedef mozilla::gfx::IntRect IntRect;
-  typedef mozilla::image::DrawResult DrawResult;
+  typedef mozilla::image::imgDrawingParams imgDrawingParams;
 
 public:
   /**
@@ -132,7 +132,7 @@ public:
   static bool
   HitTestFrameForEffects(nsIFrame* aFrame, const nsPoint& aPt);
 
-  struct PaintFramesParams {
+  struct MOZ_STACK_CLASS PaintFramesParams {
     gfxContext& ctx;
     nsIFrame* frame;
     const nsRect& dirtyRect;
@@ -142,30 +142,33 @@ public:
     bool handleOpacity; // If true, PaintMaskAndClipPath/ PaintFilter should
                         // apply css opacity.
     IntRect maskRect;
+    imgDrawingParams& imgParams;
 
     explicit PaintFramesParams(gfxContext& aCtx, nsIFrame* aFrame,
                                const nsRect& aDirtyRect,
                                const nsRect& aBorderArea,
                                nsDisplayListBuilder* aBuilder,
                                mozilla::layers::LayerManager* aLayerManager,
-                               bool aHandleOpacity)
+                               bool aHandleOpacity,
+                               imgDrawingParams& aImgParams)
       : ctx(aCtx), frame(aFrame), dirtyRect(aDirtyRect),
         borderArea(aBorderArea), builder(aBuilder),
-        layerManager(aLayerManager), handleOpacity(aHandleOpacity)
+        layerManager(aLayerManager), handleOpacity(aHandleOpacity),
+        imgParams(aImgParams)
     { }
   };
 
   /**
    * Paint non-SVG frame with mask, clipPath and opacity effect.
    */
-  static DrawResult
+  static void
   PaintMaskAndClipPath(const PaintFramesParams& aParams);
 
   /**
    * Paint mask of non-SVG frame onto a given context, aParams.ctx.
    * aParams.ctx must contain an A8 surface.
    */
-  static DrawResult
+  static void
   PaintMask(const PaintFramesParams& aParams);
 
   /**
@@ -177,7 +180,7 @@ public:
   /**
    * Paint non-SVG frame with filter and opacity effect.
    */
-  static DrawResult
+  static void
   PaintFilter(const PaintFramesParams& aParams);
 
   /**

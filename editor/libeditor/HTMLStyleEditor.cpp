@@ -536,9 +536,11 @@ HTMLEditor::SplitStyleAboveRange(nsRange* inRange,
   NS_ENSURE_SUCCESS(rv, rv);
 
   // reset the range
-  rv = inRange->SetStart(startNode, startOffset);
-  NS_ENSURE_SUCCESS(rv, rv);
-  return inRange->SetEnd(endNode, endOffset);
+  rv = inRange->SetStartAndEnd(startNode, startOffset, endNode, endOffset);
+  if (NS_WARN_IF(NS_FAILED(rv))) {
+    return rv;
+  }
+  return NS_OK;
 }
 
 nsresult
@@ -637,6 +639,21 @@ HTMLEditor::ClearStyle(nsCOMPtr<nsINode>* aNode,
                               getter_AddRefs(leftNode),
                               getter_AddRefs(rightNode));
     NS_ENSURE_SUCCESS(rv, rv);
+
+    if (rightNode) {
+      bool bIsEmptyNode;
+      IsEmptyNode(rightNode, &bIsEmptyNode, false, true);
+      if (bIsEmptyNode) {
+        // delete rightNode if it became empty
+        rv = DeleteNode(rightNode);
+        NS_ENSURE_SUCCESS(rv, rv);
+      }
+    }
+
+    if (!leftNode) {
+      return NS_OK;
+    }
+
     // should be impossible to not get a new leftnode here
     nsCOMPtr<nsINode> newSelParent = GetLeftmostChild(leftNode);
     if (!newSelParent) {
@@ -647,13 +664,6 @@ HTMLEditor::ClearStyle(nsCOMPtr<nsINode>* aNode,
     // if you happen to click at the end of a line.
     if (savedBR) {
       rv = MoveNode(savedBR, newSelParent, 0);
-      NS_ENSURE_SUCCESS(rv, rv);
-    }
-    bool bIsEmptyNode;
-    IsEmptyNode(rightNode, &bIsEmptyNode, false, true);
-    if (bIsEmptyNode) {
-      // delete rightNode if it became empty
-      rv = DeleteNode(rightNode);
       NS_ENSURE_SUCCESS(rv, rv);
     }
     // remove the style on this new hierarchy
@@ -875,10 +885,11 @@ HTMLEditor::PromoteRangeIfStartsOrEndsInNamedAnchor(nsRange& aRange)
     endOffset = endNode ? endNode->IndexOf(parent) + 1 : 0;
   }
 
-  nsresult rv = aRange.SetStart(startNode, startOffset);
-  NS_ENSURE_SUCCESS(rv, rv);
-  rv = aRange.SetEnd(endNode, endOffset);
-  NS_ENSURE_SUCCESS(rv, rv);
+  nsresult rv = aRange.SetStartAndEnd(startNode, startOffset,
+                                      endNode, endOffset);
+  if (NS_WARN_IF(NS_FAILED(rv))) {
+    return rv;
+  }
 
   return NS_OK;
 }
@@ -908,10 +919,11 @@ HTMLEditor::PromoteInlineRange(nsRange& aRange)
     endNode = parent;
   }
 
-  nsresult rv = aRange.SetStart(startNode, startOffset);
-  NS_ENSURE_SUCCESS(rv, rv);
-  rv = aRange.SetEnd(endNode, endOffset);
-  NS_ENSURE_SUCCESS(rv, rv);
+  nsresult rv = aRange.SetStartAndEnd(startNode, startOffset,
+                                      endNode, endOffset);
+  if (NS_WARN_IF(NS_FAILED(rv))) {
+    return rv;
+  }
 
   return NS_OK;
 }
@@ -1633,8 +1645,8 @@ HTMLEditor::GetFontFaceState(bool* aMixed,
 
   NS_NAMED_LITERAL_STRING(attr, "face");
   nsresult rv =
-    GetInlinePropertyBase(*nsGkAtoms::font, &attr, nullptr, &first, &any,
-                          &all, &outFace);
+    GetInlinePropertyBase(*nsGkAtoms::font, &attr.AsString(), nullptr, &first,
+                          &any, &all, &outFace);
   NS_ENSURE_SUCCESS(rv, rv);
   if (any && !all) {
     return NS_OK; // mixed
@@ -1676,8 +1688,8 @@ HTMLEditor::GetFontColorState(bool* aMixed,
   bool first, any, all;
 
   nsresult rv =
-    GetInlinePropertyBase(*nsGkAtoms::font, &colorStr, nullptr, &first,
-                          &any, &all, &aOutColor);
+    GetInlinePropertyBase(*nsGkAtoms::font, &colorStr.AsString(), nullptr,
+                          &first, &any, &all, &aOutColor);
   NS_ENSURE_SUCCESS(rv, rv);
   if (any && !all) {
     return NS_OK; // mixed

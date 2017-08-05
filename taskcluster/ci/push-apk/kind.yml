@@ -2,7 +2,7 @@
 # License, v. 2.0. If a copy of the MPL was not distributed with this
 # file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
-implementation: taskgraph.task.push_apk:PushApkTask
+loader: taskgraph.loader.push_apk:loader
 
 transforms:
    - taskgraph.transforms.push_apk:transforms
@@ -31,7 +31,7 @@ jobs:
             tier: 2
             kind: other
         run-on-projects:
-            - mozilla-aurora
+            - mozilla-central
             - mozilla-beta
             - mozilla-release
         deadline-after: 5 days

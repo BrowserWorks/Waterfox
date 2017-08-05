@@ -85,17 +85,8 @@ enum RDFContentSinkParseMode {
     eRDFContentSinkParseMode_Date
 };
 
-typedef
-NS_STDCALL_FUNCPROTO(nsresult,
-                     nsContainerTestFn,
-                     nsIRDFContainerUtils, IsAlt,
-                     (nsIRDFDataSource*, nsIRDFResource*, bool*));
-
-typedef
-NS_STDCALL_FUNCPROTO(nsresult,
-                     nsMakeContainerFn,
-                     nsIRDFContainerUtils, MakeAlt,
-                     (nsIRDFDataSource*, nsIRDFResource*, nsIRDFContainer**));
+typedef decltype(&nsIRDFContainerUtils::IsAlt) nsContainerTestFn;
+typedef decltype(&nsIRDFContainerUtils::MakeAlt) nsMakeContainerFn;
 
 class RDFContentSinkImpl : public nsIRDFContentSink,
                            public nsIExpatSink
@@ -441,9 +432,9 @@ RDFContentSinkImpl::HandleEndElement(const char16_t *aName)
           nsAutoString tagStr(aName);
           char* tagCStr = ToNewCString(tagStr);
 
-          PR_LogPrint
+          MOZ_LOG(gLog, LogLevel::Warning,
                  ("rdfxml: extra close tag '%s' at line %d",
-                  tagCStr, 0/*XXX fix me */);
+                  tagCStr, 0/*XXX fix me */));
 
           free(tagCStr);
       }

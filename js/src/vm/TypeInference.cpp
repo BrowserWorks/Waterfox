@@ -811,22 +811,6 @@ TypeSet::IsTypeMarked(JSRuntime* rt, TypeSet::Type* v)
     return rv;
 }
 
-/* static */ bool
-TypeSet::IsTypeAllocatedDuringIncremental(TypeSet::Type v)
-{
-    bool rv;
-    if (v.isSingletonUnchecked()) {
-        JSObject* obj = v.singletonNoBarrier();
-        rv = obj->isTenured() && obj->asTenured().arena()->allocatedDuringIncremental;
-    } else if (v.isGroupUnchecked()) {
-        ObjectGroup* group = v.groupNoBarrier();
-        rv = group->arena()->allocatedDuringIncremental;
-    } else {
-        rv = false;
-    }
-    return rv;
-}
-
 static inline bool
 IsObjectKeyAboutToBeFinalized(TypeSet::ObjectKey** keyp)
 {
@@ -1343,7 +1327,7 @@ js::EnsureTrackPropertyTypes(JSContext* cx, JSObject* obj, jsid id)
         }
     }
 
-    MOZ_ASSERT(obj->group()->unknownProperties() || TrackPropertyTypes(cx, obj, id));
+    MOZ_ASSERT(obj->group()->unknownProperties() || TrackPropertyTypes(obj, id));
 }
 
 bool
@@ -1494,11 +1478,17 @@ js::FinishCompilation(JSContext* cx, HandleScript script, CompilerConstraintList
                 succeeded = false;
         }
 
+        // Add this compilation to the inlinedCompilations list of each inlined
+        // script, so we can invalidate it on changes to stack type sets.
+        if (entry.script != script) {
+            if (!entry.script->types()->addInlinedCompilation(*precompileInfo))
+                succeeded = false;
+        }
+
         // If necessary, add constraints to trigger invalidation on the script
         // after any future changes to the stack type sets.
         if (entry.script->hasFreezeConstraints())
             continue;
-        entry.script->setHasFreezeConstraints();
 
         size_t count = TypeScript::NumTypeSets(entry.script);
 
@@ -1507,6 +1497,9 @@ js::FinishCompilation(JSContext* cx, HandleScript script, CompilerConstraintList
             if (!array[i].addConstraint(cx, cx->typeLifoAlloc().new_<TypeConstraintFreezeStack>(entry.script), false))
                 succeeded = false;
         }
+
+        if (succeeded)
+            entry.script->setHasFreezeConstraints();
     }
 
     if (!succeeded || types.compilerOutputs->back().pendingInvalidation()) {
@@ -1754,6 +1747,15 @@ TemporaryTypeSet::maybeSingleton()
     return getSingleton(0);
 }
 
+TemporaryTypeSet::ObjectKey*
+TemporaryTypeSet::maybeSingleObject()
+{
+    if (baseFlags() != 0 || baseObjectCount() != 1)
+        return nullptr;
+
+    return getObject(0);
+}
+
 JSObject*
 HeapTypeSetKey::singleton(CompilerConstraintList* constraints)
 {
@@ -1891,37 +1893,6 @@ ObjectGroup::initialHeap(CompilerConstraintList* constraints)
 
 namespace {
 
-// Constraint which triggers recompilation on any type change in an inlined
-// script. The freeze constraints added to stack type sets will only directly
-// invalidate the script containing those stack type sets. To invalidate code
-// for scripts into which the base script was inlined, ObjectStateChange is used.
-class ConstraintDataFreezeObjectForInlinedCall
-{
-  public:
-    ConstraintDataFreezeObjectForInlinedCall()
-    {}
-
-    const char* kind() { return "freezeObjectForInlinedCall"; }
-
-    bool invalidateOnNewType(TypeSet::Type type) { return false; }
-    bool invalidateOnNewPropertyState(TypeSet* property) { return false; }
-    bool invalidateOnNewObjectState(ObjectGroup* group) {
-        // We don't keep track of the exact dependencies the caller has on its
-        // inlined scripts' type sets, so always invalidate the caller.
-        return true;
-    }
-
-    bool constraintHolds(JSContext* cx,
-                         const HeapTypeSetKey& property, TemporaryTypeSet* expected)
-    {
-        return true;
-    }
-
-    bool shouldSweep() { return false; }
-
-    JSCompartment* maybeCompartment() { return nullptr; }
-};
-
 // Constraint which triggers recompilation when a typed array's data becomes
 // invalid.
 class ConstraintDataFreezeObjectForTypedArrayData
@@ -1994,16 +1965,6 @@ class ConstraintDataFreezeObjectForUnboxedConvertedToNative
 };
 
 } /* anonymous namespace */
-
-void
-TypeSet::ObjectKey::watchStateChangeForInlinedCall(CompilerConstraintList* constraints)
-{
-    HeapTypeSetKey objectProperty = property(JSID_EMPTY);
-    LifoAlloc* alloc = constraints->alloc();
-
-    typedef CompilerConstraintInstance<ConstraintDataFreezeObjectForInlinedCall> T;
-    constraints->add(alloc->new_<T>(alloc, objectProperty, ConstraintDataFreezeObjectForInlinedCall()));
-}
 
 void
 TypeSet::ObjectKey::watchStateChangeForTypedArrayData(CompilerConstraintList* constraints)
@@ -2449,6 +2410,27 @@ TemporaryTypeSet::maybeCallable(CompilerConstraintList* constraints)
 }
 
 bool
+TemporaryTypeSet::maybeProxy(CompilerConstraintList* constraints)
+{
+    if (!maybeObject())
+        return false;
+
+    if (unknownObject())
+        return true;
+
+    unsigned count = getObjectCount();
+    for (unsigned i = 0; i < count; i++) {
+        const Class* clasp = getObjectClass(i);
+        if (!clasp)
+            continue;
+        if (clasp->isProxy() || !getObject(i)->hasStableClassAndProto(constraints))
+            return true;
+    }
+
+    return false;
+}
+
+bool
 TemporaryTypeSet::maybeEmulatesUndefined(CompilerConstraintList* constraints)
 {
     if (!maybeObject())
@@ -2600,11 +2582,12 @@ TypeZone::addPendingRecompile(JSContext* cx, JSScript* script)
     if (script->hasIonScript())
         addPendingRecompile(cx, script->ionScript()->recompileInfo());
 
-    // When one script is inlined into another the caller listens to state
-    // changes on the callee's script, so trigger these to force recompilation
-    // of any such callers.
-    if (script->functionNonDelazifying() && !script->functionNonDelazifying()->hasLazyGroup())
-        ObjectStateChange(cx, script->functionNonDelazifying()->group(), false);
+    // Trigger recompilation of any callers inlining this script.
+    if (TypeScript* types = script->types()) {
+        for (RecompileInfo info : types->inlinedCompilations())
+            addPendingRecompile(cx, info);
+        types->inlinedCompilations().clearAndFree();
+    }
 }
 
 #ifdef JS_CRASH_DIAGNOSTICS
@@ -2613,6 +2596,14 @@ js::ReportMagicWordFailure(uintptr_t actual, uintptr_t expected)
 {
     MOZ_CRASH_UNSAFE_PRINTF("Got 0x%" PRIxPTR " expected magic word 0x%" PRIxPTR,
                             actual, expected);
+}
+
+void
+js::ReportMagicWordFailure(uintptr_t actual, uintptr_t expected, uintptr_t flags, uintptr_t objectSet)
+{
+    MOZ_CRASH_UNSAFE_PRINTF("Got 0x%" PRIxPTR " expected magic word 0x%" PRIxPTR
+                            " flags 0x%" PRIxPTR " objectSet 0x%" PRIxPTR,
+                            actual, expected, flags, objectSet);
 }
 #endif
 
@@ -3351,6 +3342,22 @@ js::TypeMonitorResult(JSContext* cx, JSScript* script, jsbytecode* pc, TypeSet::
 }
 
 void
+js::TypeMonitorResult(JSContext* cx, JSScript* script, jsbytecode* pc, StackTypeSet* types,
+                      TypeSet::Type type)
+{
+    assertSameCompartment(cx, script, type);
+
+    AutoEnterAnalysis enter(cx);
+
+    MOZ_ASSERT(types == TypeScript::BytecodeTypes(script, pc));
+    MOZ_ASSERT(!types->hasType(type));
+
+    InferSpew(ISpewOps, "bytecodeType: %p %05" PRIuSIZE ": %s",
+              script, script->pcToOffset(pc), TypeSet::TypeString(type));
+    types->addType(cx, type);
+}
+
+void
 js::TypeMonitorResult(JSContext* cx, JSScript* script, jsbytecode* pc, const js::Value& rval)
 {
     /* Allow the non-TYPESET scenario to simplify stubs used in compound opcodes. */
@@ -3961,7 +3968,7 @@ TypeNewScript::maybeAnalyze(JSContext* cx, ObjectGroup* group, bool* regenerate,
 
     // Transfer this TypeNewScript from the fully initialized group to the
     // partially initialized group.
-    group->setNewScript(nullptr);
+    group->detachNewScript();
     initialGroup->setNewScript(this);
 
     initializedShape_ = prefixShape;
@@ -4428,6 +4435,19 @@ JSScript::maybeSweepTypes(AutoClearTypeInferenceStateOnOOM* oom)
 
     TypeZone& types = zone()->types;
 
+    // Sweep the inlinedCompilations Vector.
+    {
+        RecompileInfoVector& inlinedCompilations = types_->inlinedCompilations();
+        size_t dest = 0;
+        for (size_t i = 0; i < inlinedCompilations.length(); i++) {
+            if (inlinedCompilations[i].shouldSweep(types))
+                continue;
+            inlinedCompilations[dest] = inlinedCompilations[i];
+            dest++;
+        }
+        inlinedCompilations.shrinkTo(dest);
+    }
+
     // Destroy all type information attached to the script if desired. We can
     // only do this if nothing has been compiled for the script, which will be
     // the case unless the script has been compiled since we started sweeping.
@@ -4466,22 +4486,22 @@ JSScript::maybeSweepTypes(AutoClearTypeInferenceStateOnOOM* oom)
 void
 TypeScript::destroy()
 {
-    js_free(this);
+    js_delete(this);
 }
 
 void
 Zone::addSizeOfIncludingThis(mozilla::MallocSizeOf mallocSizeOf,
                              size_t* typePool,
+                             size_t* jitZone,
                              size_t* baselineStubsOptimized,
+                             size_t* cachedCFG,
                              size_t* uniqueIdMap,
                              size_t* shapeTables,
                              size_t* atomsMarkBitmaps)
 {
     *typePool += types.typeLifoAlloc().sizeOfExcludingThis(mallocSizeOf);
-    if (jitZone()) {
-        *baselineStubsOptimized +=
-            jitZone()->optimizedStubSpace()->sizeOfExcludingThis(mallocSizeOf);
-    }
+    if (jitZone_)
+        jitZone_->addSizeOfIncludingThis(mallocSizeOf, jitZone, baselineStubsOptimized, cachedCFG);
     *uniqueIdMap += uniqueIds().sizeOfExcludingThis(mallocSizeOf);
     *shapeTables += baseShapes().sizeOfExcludingThis(mallocSizeOf)
                   + initialShapes().sizeOfExcludingThis(mallocSizeOf);

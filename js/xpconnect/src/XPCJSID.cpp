@@ -495,7 +495,7 @@ xpc::HasInstance(JSContext* cx, HandleObject objArg, const nsID* iid, bool* bp)
     if (mozilla::jsipc::IsCPOW(obj))
         return mozilla::jsipc::InstanceOf(obj, iid, bp);
 
-    nsISupports* identity = UnwrapReflectorToISupports(obj);
+    nsCOMPtr<nsISupports> identity = UnwrapReflectorToISupports(obj);
     if (!identity)
         return NS_OK;
 
@@ -657,8 +657,10 @@ nsJSCID::CreateInstance(HandleValue iidval, JSContext* cx,
     rv = compMgr->CreateInstance(mDetails->ID(), nullptr, *iid, getter_AddRefs(inst));
     MOZ_ASSERT(NS_FAILED(rv) || inst, "component manager returned success, but instance is null!");
 
-    if (NS_FAILED(rv) || !inst)
-        return NS_ERROR_XPC_CI_RETURNED_FAILURE;
+    NS_ENSURE_SUCCESS(rv, NS_ERROR_XPC_CI_RETURNED_FAILURE);
+    if (!inst) {
+      return NS_ERROR_XPC_CI_RETURNED_FAILURE;
+    }
 
     rv = nsContentUtils::WrapNative(cx, inst, iid, retval);
     if (NS_FAILED(rv) || retval.isPrimitive())
@@ -692,8 +694,11 @@ nsJSCID::GetService(HandleValue iidval, JSContext* cx, uint8_t optionalArgc,
     nsCOMPtr<nsISupports> srvc;
     rv = svcMgr->GetService(mDetails->ID(), *iid, getter_AddRefs(srvc));
     MOZ_ASSERT(NS_FAILED(rv) || srvc, "service manager returned success, but service is null!");
-    if (NS_FAILED(rv) || !srvc)
+
+    NS_ENSURE_SUCCESS(rv, NS_ERROR_XPC_GS_RETURNED_FAILURE);
+    if (!srvc) {
         return NS_ERROR_XPC_GS_RETURNED_FAILURE;
+    }
 
     RootedValue v(cx);
     rv = nsContentUtils::WrapNative(cx, srvc, iid, &v);
@@ -710,12 +715,12 @@ nsJSCID::Construct(nsIXPConnectWrappedNative* wrapper,
                    const CallArgs& args, bool* _retval)
 {
     RootedObject obj(cx, objArg);
-    XPCJSContext* xpccx = nsXPConnect::GetContextInstance();
-    if (!xpccx)
+    XPCJSRuntime* xpcrt = nsXPConnect::GetRuntimeInstance();
+    if (!xpcrt)
         return NS_ERROR_FAILURE;
 
     // 'push' a call context and call on it
-    RootedId name(cx, xpccx->GetStringID(XPCJSContext::IDX_CREATE_INSTANCE));
+    RootedId name(cx, xpcrt->GetStringID(XPCJSContext::IDX_CREATE_INSTANCE));
     XPCCallContext ccx(cx, obj, nullptr, name, args.length(), args.array(),
                        args.rval().address());
 

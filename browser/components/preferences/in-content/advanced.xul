@@ -34,16 +34,6 @@
   <preference id="general.smoothScroll"
               name="general.smoothScroll"
               type="bool"/>
-  <preference id="layers.acceleration.disabled"
-              name="layers.acceleration.disabled"
-              type="bool"
-              inverted="true"/>
-#ifdef XP_WIN
-  <preference id="gfx.direct2d.disabled"
-              name="gfx.direct2d.disabled"
-              type="bool"
-              inverted="true"/>
-#endif
   <preference id="layout.spellcheckDefault"
               name="layout.spellcheckDefault"
               type="int"/>
@@ -120,7 +110,7 @@
   <stringbundle id="bundleShell" src="chrome://browser/locale/shellservice.properties"/>
   <stringbundle id="bundleBrand" src="chrome://branding/locale/brand.properties"/>
 #endif
-  <stringbundle id="bundlePreferences" src="chrome://browser/locale/preferences/preferences.properties"/>
+  <stringbundle id="bundlePreferences" src="chrome://browser/locale/preferences-old/preferences.properties"/>
 
 <hbox id="header-advanced"
       class="header"
@@ -187,10 +177,6 @@
                   label="&useSmoothScrolling.label;"
                   accesskey="&useSmoothScrolling.accesskey;"
                   preference="general.smoothScroll"/>
-        <checkbox id="allowHWAccel"
-                  label="&allowHWAccel.label;"
-                  accesskey="&allowHWAccel.accesskey;"
-                  preference="layers.acceleration.disabled"/>
         <checkbox id="checkSpelling"
                   label="&checkUserSpelling.label;"
                   accesskey="&checkUserSpelling.accesskey;"
@@ -291,7 +277,7 @@
       </groupbox>
 
       <!-- Offline apps -->
-      <groupbox id="offlineGroup">
+      <groupbox id="offlineGroup" hidden="true">
         <caption><label>&offlineStorage2.label;</label></caption>
 
         <hbox align="center">

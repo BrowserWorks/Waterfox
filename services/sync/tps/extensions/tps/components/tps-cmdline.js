@@ -20,28 +20,29 @@ const nsISupportsString              = Components.interfaces.nsISupportsString;
 const nsIWindowWatcher               = Components.interfaces.nsIWindowWatcher;
 
 Components.utils.import("resource://gre/modules/XPCOMUtils.jsm");
+Components.utils.import("resource://gre/modules/Services.jsm");
 
 function TPSCmdLineHandler() {}
 
 TPSCmdLineHandler.prototype = {
   classDescription: "TPSCmdLineHandler",
-  classID         : TPS_CMDLINE_CLSID,
-  contractID      : TPS_CMDLINE_CONTRACTID,
+  classID: TPS_CMDLINE_CLSID,
+  contractID: TPS_CMDLINE_CONTRACTID,
 
   QueryInterface: XPCOMUtils.generateQI([nsISupports,
                                          nsICommandLineHandler,
                                          nsICmdLineHandler]),   /* nsISupports */
 
   /* nsICmdLineHandler */
-  commandLineArgument : "-tps",
-  prefNameForStartup : "general.startup.tps",
-  helpText : "Run TPS tests with the given test file.",
-  handlesArgs : true,
-  defaultArgs : "",
-  openWindowWithArgs : true,
+  commandLineArgument: "-tps",
+  prefNameForStartup: "general.startup.tps",
+  helpText: "Run TPS tests with the given test file.",
+  handlesArgs: true,
+  defaultArgs: "",
+  openWindowWithArgs: true,
 
   /* nsICommandLineHandler */
-  handle : function handler_handle(cmdLine) {
+  handle: function handler_handle(cmdLine) {
     let options = {};
 
     let uristr = cmdLine.handleFlagWithParam("tps", false);
@@ -56,26 +57,26 @@ TPSCmdLineHandler.prototype = {
 
     options.ignoreUnusedEngines = cmdLine.handleFlag("ignore-unused-engines",
                                                      false);
-
-
-    /* Ignore the platform's online/offline status while running tests. */
-    var ios = Components.classes["@mozilla.org/network/io-service;1"]
-              .getService(Components.interfaces.nsIIOService2);
-    ios.manageOfflineStatus = false;
-    ios.offline = false;
-
-    Components.utils.import("resource://tps/tps.jsm");
-    Components.utils.import("resource://tps/quit.js", TPS);
     let uri = cmdLine.resolveURI(uristr).spec;
-    TPS.RunTestPhase(uri, phase, logfile, options);
 
-    // cmdLine.preventDefault = true;
+    const onStartupFinished = () => {
+      Services.obs.removeObserver(onStartupFinished, "browser-delayed-startup-finished");
+      /* Ignore the platform's online/offline status while running tests. */
+      var ios = Components.classes["@mozilla.org/network/io-service;1"]
+                .getService(Components.interfaces.nsIIOService2);
+      ios.manageOfflineStatus = false;
+      ios.offline = false;
+      Components.utils.import("resource://tps/tps.jsm");
+      Components.utils.import("resource://tps/quit.js", TPS);
+      TPS.RunTestPhase(uri, phase, logfile, options);
+    };
+    Services.obs.addObserver(onStartupFinished, "browser-delayed-startup-finished");
   },
 
-  helpInfo : "  --tps <file>              Run TPS tests with the given test file.\n" +
-             "  --tpsphase <phase>        Run the specified phase in the TPS test.\n" +
-             "  --tpslogfile <file>       Logfile for TPS output.\n" +
-             "  --ignore-unused-engines   Don't load engines not used in tests.\n",
+  helpInfo: "  --tps <file>              Run TPS tests with the given test file.\n" +
+            "  --tpsphase <phase>        Run the specified phase in the TPS test.\n" +
+            "  --tpslogfile <file>       Logfile for TPS output.\n" +
+            "  --ignore-unused-engines   Don't load engines not used in tests.\n",
 };
 
 

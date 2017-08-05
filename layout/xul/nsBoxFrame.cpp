@@ -98,7 +98,8 @@ nsIFrame* nsBoxFrame::mDebugChild = nullptr;
 nsIFrame*
 NS_NewBoxFrame(nsIPresShell* aPresShell, nsStyleContext* aContext, bool aIsRoot, nsBoxLayout* aLayoutManager)
 {
-  return new (aPresShell) nsBoxFrame(aContext, aIsRoot, aLayoutManager);
+  return new (aPresShell) nsBoxFrame(aContext, nsBoxFrame::kClassID,
+                                     aIsRoot, aLayoutManager);
 }
 
 nsIFrame*
@@ -116,19 +117,22 @@ NS_QUERYFRAME_TAIL_INHERITING(nsContainerFrame)
 #endif
 
 nsBoxFrame::nsBoxFrame(nsStyleContext* aContext,
+                       ClassID aID,
                        bool aIsRoot,
-                       nsBoxLayout* aLayoutManager) :
-  nsContainerFrame(aContext)
+                       nsBoxLayout* aLayoutManager)
+  : nsContainerFrame(aContext, aID)
+  , mFlex(0)
+  , mAscent(0)
 {
   mState |= NS_STATE_IS_HORIZONTAL;
   mState |= NS_STATE_AUTO_STRETCH;
 
-  if (aIsRoot) 
+  if (aIsRoot)
      mState |= NS_STATE_IS_ROOT;
 
   mValign = vAlign_Top;
   mHalign = hAlign_Left;
-  
+
   // if no layout manager specified us the static sprocket layout
   nsCOMPtr<nsBoxLayout> layout = aLayoutManager;
 
@@ -1543,12 +1547,6 @@ nsBoxFrame::GetFrameName(nsAString& aResult) const
 }
 #endif
 
-nsIAtom*
-nsBoxFrame::GetType() const
-{
-  return nsGkAtoms::boxFrame;
-}
-
 #ifdef DEBUG_LAYOUT
 nsresult
 nsBoxFrame::GetXULDebug(bool& aDebug)
@@ -2006,7 +2004,8 @@ nsBoxFrame::XULRelayoutChildAtOrdinal(nsIFrame* aChild)
 // REVIEW: This is roughly of what nsMenuFrame::GetFrameForPoint used to do.
 // I've made 'allowevents' affect child elements because that seems the only
 // reasonable thing to do.
-class nsDisplayXULEventRedirector : public nsDisplayWrapList {
+class nsDisplayXULEventRedirector final : public nsDisplayWrapList
+{
 public:
   nsDisplayXULEventRedirector(nsDisplayListBuilder* aBuilder,
                               nsIFrame* aFrame, nsDisplayItem* aItem,
@@ -2058,7 +2057,7 @@ void nsDisplayXULEventRedirector::HitTest(nsDisplayListBuilder* aBuilder,
   }
 }
 
-class nsXULEventRedirectorWrapper : public nsDisplayWrapper
+class nsXULEventRedirectorWrapper final : public nsDisplayWrapper
 {
 public:
   explicit nsXULEventRedirectorWrapper(nsIFrame* aTargetFrame)

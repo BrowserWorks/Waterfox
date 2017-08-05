@@ -10,6 +10,7 @@
 
 #include "mozilla/ClearOnShutdown.h"
 #include "mozilla/Preferences.h"
+#include "mozilla/SandboxSettings.h"
 #include "nsPrintfCString.h"
 #include "nsString.h"
 #include "nsThreadUtils.h"
@@ -18,6 +19,10 @@
 
 #ifdef ANDROID
 #include "cutils/properties.h"
+#endif
+
+#ifdef MOZ_WIDGET_GTK
+#include <glib.h>
 #endif
 
 namespace mozilla {
@@ -149,6 +154,15 @@ SandboxBrokerPolicyFactory::SandboxBrokerPolicyFactory()
   policy->AddDir(rdwr, "/dev/snd");
 #endif
 
+#ifdef MOZ_WIDGET_GTK
+  // Bug 1321134: DConf's single bit of shared memory
+  if (const auto userDir = g_get_user_runtime_dir()) {
+    // The leaf filename is "user" by default, but is configurable.
+    nsPrintfCString shmPath("%s/dconf/", userDir);
+    policy->AddPrefix(rdwrcr, shmPath.get());
+  }
+#endif
+
   mCommonContentPolicy.reset(policy);
 #endif
 }
@@ -162,7 +176,7 @@ SandboxBrokerPolicyFactory::GetContentPolicy(int aPid)
 
   MOZ_ASSERT(NS_IsMainThread());
   // File broker usage is controlled through a pref.
-  if (Preferences::GetInt("security.sandbox.content.level") <= 1) {
+  if (GetEffectiveContentSandboxLevel() <= 1) {
     return nullptr;
   }
 

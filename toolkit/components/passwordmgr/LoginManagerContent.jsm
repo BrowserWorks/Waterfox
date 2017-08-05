@@ -10,12 +10,11 @@ this.EXPORTED_SYMBOLS = [ "LoginManagerContent",
 
 const { classes: Cc, interfaces: Ci, results: Cr, utils: Cu } = Components;
 const PASSWORD_INPUT_ADDED_COALESCING_THRESHOLD_MS = 1;
-const AUTOCOMPLETE_AFTER_CONTEXTMENU_THRESHOLD_MS = 400;
+const AUTOCOMPLETE_AFTER_RIGHT_CLICK_THRESHOLD_MS = 400;
 
 Cu.import("resource://gre/modules/XPCOMUtils.jsm");
 Cu.import("resource://gre/modules/Services.jsm");
 Cu.import("resource://gre/modules/PrivateBrowsingUtils.jsm");
-Cu.import("resource://gre/modules/InsecurePasswordUtils.jsm");
 Cu.import("resource://gre/modules/Promise.jsm");
 Cu.import("resource://gre/modules/Preferences.jsm");
 Cu.import("resource://gre/modules/Timer.jsm");
@@ -41,10 +40,10 @@ XPCOMUtils.defineLazyGetter(this, "log", () => {
 
 // These mirror signon.* prefs.
 var gEnabled, gAutofillForms, gStoreWhenAutocompleteOff;
-var gLastContextMenuEventTimeStamp = Number.NEGATIVE_INFINITY;
+var gLastRightClickTimeStamp = Number.NEGATIVE_INFINITY;
 
 var observer = {
-  QueryInterface : XPCOMUtils.generateQI([Ci.nsIObserver,
+  QueryInterface: XPCOMUtils.generateQI([Ci.nsIObserver,
                                           Ci.nsIFormSubmitObserver,
                                           Ci.nsIWebProgressListener,
                                           Ci.nsIDOMEventListener,
@@ -129,10 +128,13 @@ var observer = {
         break;
       }
 
-      case "contextmenu": {
-        // Date.now() is used instead of event.timeStamp since
-        // dom.event.highrestimestamp.enabled isn't true on all channels yet.
-        gLastContextMenuEventTimeStamp = Date.now();
+      case "mousedown": {
+        if (aEvent.button == 2) {
+          // Date.now() is used instead of event.timeStamp since
+          // dom.event.highrestimestamp.enabled isn't true on all channels yet.
+          gLastRightClickTimeStamp = Date.now();
+        }
+
         break;
       }
 
@@ -143,9 +145,9 @@ var observer = {
   },
 };
 
-Services.obs.addObserver(observer, "earlyformsubmit", false);
+Services.obs.addObserver(observer, "earlyformsubmit");
 var prefBranch = Services.prefs.getBranch("signon.");
-prefBranch.addObserver("", observer.onPrefChange, false);
+prefBranch.addObserver("", observer.onPrefChange);
 
 observer.onPrefChange(); // read initial values
 
@@ -161,7 +163,7 @@ function messageManagerFromWindow(win) {
 // This object maps to the "child" process (even in the single-process case).
 var LoginManagerContent = {
 
-  __formFillService : null, // FormFillController, for username autocompleting
+  __formFillService: null, // FormFillController, for username autocompleting
   get _formFillService() {
     if (!this.__formFillService)
       this.__formFillService =
@@ -398,14 +400,14 @@ var LoginManagerContent = {
       log("Creating a DeferredTask to call _fetchLoginsFromParentAndFillForm soon");
       this._formLikeByRootElement.set(formLike.rootElement, formLike);
 
-      deferredTask = new DeferredTask(function* deferredInputProcessing() {
+      deferredTask = new DeferredTask(() => {
         // Get the updated formLike instead of the one at the time of creating the DeferredTask via
         // a closure since it could be stale since FormLike.elements isn't live.
         let formLike2 = this._formLikeByRootElement.get(formLike.rootElement);
         log("Running deferred processing of onDOMInputPasswordAdded", formLike2);
         this._deferredPasswordAddedTasksByRootElement.delete(formLike2.rootElement);
         this._fetchLoginsFromParentAndFillForm(formLike2, window);
-      }.bind(this), PASSWORD_INPUT_ADDED_COALESCING_THRESHOLD_MS);
+      }, PASSWORD_INPUT_ADDED_COALESCING_THRESHOLD_MS);
 
       this._deferredPasswordAddedTasksByRootElement.set(formLike.rootElement, deferredTask);
     }
@@ -541,22 +543,25 @@ var LoginManagerContent = {
     }
 
     let clobberUsername = true;
-    let options = {
-      inputElement,
-    };
-
     let form = LoginFormFactory.createFromField(inputElement);
     if (inputElement.type == "password") {
       clobberUsername = false;
     }
-    this._fillForm(form, true, clobberUsername, true, true, loginsFound, recipes, options);
+
+    this._fillForm(form, loginsFound, recipes, {
+      inputElement,
+      autofillForm: true,
+      clobberUsername,
+      clobberPassword: true,
+      userTriggered: true,
+    });
   },
 
   loginsFound({ form, loginsFound, recipes }) {
     let doc = form.ownerDocument;
     let autofillForm = gAutofillForms && !PrivateBrowsingUtils.isContentWindowPrivate(doc.defaultView);
 
-    this._fillForm(form, autofillForm, false, false, false, loginsFound, recipes);
+    this._fillForm(form, loginsFound, recipes, {autofillForm});
   },
 
   /**
@@ -575,33 +580,24 @@ var LoginManagerContent = {
     }
 
     /*
-     * A `focus` event is fired before a `contextmenu` event if a user right-clicks into an
+     * A `mousedown` event is fired before the `focus` event if the user right clicks into an
      * unfocused field. In that case we don't want to show both autocomplete and a context menu
-     * overlapping so we spin the event loop to see if a `contextmenu` event is coming next. If no
-     * `contextmenu` event was seen and the focused field is still focused by the form fill
-     * controller then show the autocomplete popup.
+     * overlapping so we check against the timestamp that was set by the `mousedown` event if the
+     * button code indicated a right click.
+     * We use a timestamp instead of a bool to avoid complexity when dealing with multiple input
+     * forms and the fact that a mousedown into an already focused field does not trigger another focus.
      * Date.now() is used instead of event.timeStamp since dom.event.highrestimestamp.enabled isn't
      * true on all channels yet.
      */
-    let timestamp = Date.now();
-    setTimeout(function maybeOpenAutocompleteAfterFocus() {
-      // Even though the `focus` event happens first in testing, I don't want to
-      // rely on that since it was supposedly in the opposite order before. Use
-      // the absolute value to handle both orders.
-      let timeDiff = Math.abs(gLastContextMenuEventTimeStamp - timestamp);
-      if (timeDiff < AUTOCOMPLETE_AFTER_CONTEXTMENU_THRESHOLD_MS) {
-        log("Not opening autocomplete after focus since a context menu was opened within",
-            timeDiff, "ms");
-        return;
-      }
+    let timeDiff = Date.now() - gLastRightClickTimeStamp;
+    if (timeDiff < AUTOCOMPLETE_AFTER_RIGHT_CLICK_THRESHOLD_MS) {
+      log("Not opening autocomplete after focus since a context menu was opened within",
+          timeDiff, "ms");
+      return;
+    }
 
-      if (this._formFillService.focusedInput == focusedField) {
-        log("maybeOpenAutocompleteAfterFocus: Opening the autocomplete popup");
-        this._formFillService.showPopup();
-      } else {
-        log("maybeOpenAutocompleteAfterFocus: FormFillController has a different focused input");
-      }
-    }.bind(this), 0);
+    log("maybeOpenAutocompleteAfterFocus: Opening the autocomplete popup");
+    this._formFillService.showPopup();
   },
 
   /**
@@ -648,7 +644,11 @@ var LoginManagerContent = {
     if (usernameField == acInputField && passwordField) {
       this._getLoginDataFromParent(acForm, { showMasterPassword: false })
           .then(({ form, loginsFound, recipes }) => {
-            this._fillForm(form, true, false, true, true, loginsFound, recipes);
+            this._fillForm(form, loginsFound, recipes, {
+              autofillForm: true,
+              clobberPassword: true,
+              userTriggered: true,
+            });
           })
           .then(null, Cu.reportError);
     } else {
@@ -693,7 +693,7 @@ var LoginManagerContent = {
       }
 
       pwFields[pwFields.length] = {
-                                    index   : i,
+                                    index: i,
                                     element
                                   };
     }
@@ -744,8 +744,8 @@ var LoginManagerContent = {
         // The field from the password override may be in a different FormLike.
         let formLike = LoginFormFactory.createFromField(pwOverrideField);
         pwFields = [{
-          index   : [...formLike.elements].indexOf(pwOverrideField),
-          element : pwOverrideField,
+          index: [...formLike.elements].indexOf(pwOverrideField),
+          element: pwOverrideField,
         }];
       }
 
@@ -983,23 +983,33 @@ var LoginManagerContent = {
    * in using the provided logins and recipes.
    *
    * @param {LoginForm} form
-   * @param {bool} autofillForm denotes if we should fill the form in automatically
-   * @param {bool} clobberUsername controls if an existing username can be overwritten.
-   *                               If this is false and an inputElement of type password
-   *                               is also passed, the username field will be ignored.
-   *                               If this is false and no inputElement is passed, if the username
-   *                               field value is not found in foundLogins, it will not fill the password.
-   * @param {bool} clobberPassword controls if an existing password value can be
-   *                               overwritten
-   * @param {bool} userTriggered is an indication of whether this filling was triggered by
-   *                             the user
-   * @param {nsILoginInfo[]} foundLogins is an array of nsILoginInfo that could be used for the form
-   * @param {Set} recipes that could be used to affect how the form is filled
-   * @param {Object} [options = {}] is a list of options for this method.
-            - [inputElement] is an optional target input element we want to fill
+   * @param {nsILoginInfo[]} foundLogins an array of nsILoginInfo that could be
+            used for the form
+   * @param {Set} recipes a set of recipes that could be used to affect how the
+            form is filled
+   * @param {Object} [options = {}] a list of options for this method
+   * @param {HTMLInputElement} [options.inputElement = null] an optional target
+   *        input element we want to fill
+   * @param {bool} [options.autofillForm = false] denotes if we should fill the
+   *        form in automatically
+   * @param {bool} [options.clobberUsername = false] controls if an existing
+   *        username can be overwritten. If this is false and an inputElement
+   *        of type password is also passed, the username field will be ignored.
+   *        If this is false and no inputElement is passed, if the username
+   *        field value is not found in foundLogins, it will not fill the
+   *        password.
+   * @param {bool} [options.clobberPassword = false] controls if an existing
+   *        password value can be overwritten
+   * @param {bool} [options.userTriggered = false] an indication of whether
+   *        this filling was triggered by the user
    */
-  _fillForm(form, autofillForm, clobberUsername, clobberPassword,
-            userTriggered, foundLogins, recipes, {inputElement} = {}) {
+  _fillForm(form, foundLogins, recipes, {
+    inputElement = null,
+    autofillForm = false,
+    clobberUsername = false,
+    clobberPassword = false,
+    userTriggered = false,
+  } = {}) {
     if (form instanceof Ci.nsIDOMHTMLFormElement) {
       throw new Error("_fillForm should only be called with FormLike objects");
     }
@@ -1262,10 +1272,10 @@ var LoginManagerContent = {
       if (usernameField) {
         log("_fillForm: Attaching event listeners to usernameField");
         usernameField.addEventListener("focus", observer);
-        usernameField.addEventListener("contextmenu", observer);
+        usernameField.addEventListener("mousedown", observer);
       }
 
-      Services.obs.notifyObservers(form.rootElement, "passwordmgr-processed-form", null);
+      Services.obs.notifyObservers(form.rootElement, "passwordmgr-processed-form");
     }
   },
 
@@ -1432,8 +1442,7 @@ function UserAutoCompleteResult(aSearchString, matchingLogins, {isSecure, messag
   this.matchCount = matchingLogins.length + this._showInsecureFieldWarning;
   this._messageManager = messageManager;
   this._stringBundle = Services.strings.createBundle("chrome://passwordmgr/locale/passwordmgr.properties");
-  this._dateAndTimeFormatter = new Intl.DateTimeFormat(undefined,
-                              { day: "numeric", month: "short", year: "numeric" });
+  this._dateAndTimeFormatter = Services.intl.createDateTimeFormat(undefined, { dateStyle: "medium" });
 
   this._isPasswordField = isPasswordField;
 
@@ -1446,11 +1455,11 @@ function UserAutoCompleteResult(aSearchString, matchingLogins, {isSecure, messag
 }
 
 UserAutoCompleteResult.prototype = {
-  QueryInterface : XPCOMUtils.generateQI([Ci.nsIAutoCompleteResult,
+  QueryInterface: XPCOMUtils.generateQI([Ci.nsIAutoCompleteResult,
                                           Ci.nsISupportsWeakReference]),
 
   // private
-  logins : null,
+  logins: null,
 
   // Allow autoCompleteSearch to get at the JS object so it can
   // modify some readonly properties for internal use.
@@ -1459,11 +1468,11 @@ UserAutoCompleteResult.prototype = {
   },
 
   // Interfaces from idl...
-  searchString : null,
-  searchResult : Ci.nsIAutoCompleteResult.RESULT_NOMATCH,
-  defaultIndex : -1,
-  errorDescription : "",
-  matchCount : 0,
+  searchString: null,
+  searchResult: Ci.nsIAutoCompleteResult.RESULT_NOMATCH,
+  defaultIndex: -1,
+  errorDescription: "",
+  matchCount: 0,
 
   getValueAt(index) {
     if (index < 0 || index >= this.matchCount) {

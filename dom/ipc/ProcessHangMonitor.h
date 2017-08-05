@@ -7,16 +7,14 @@
 #ifndef mozilla_ProcessHangMonitor_h
 #define mozilla_ProcessHangMonitor_h
 
+#include "mozilla/AlreadyAddRefed.h"
 #include "mozilla/Atomics.h"
+#include "nsCOMPtr.h"
 #include "nsIObserver.h"
 
+class nsIRunnable;
 class nsITabChild;
-
-class MessageLoop;
-
-namespace base {
-class Thread;
-} // namespace base
+class nsIThread;
 
 namespace mozilla {
 
@@ -57,8 +55,7 @@ class ProcessHangMonitor final
     StartDebugger
   };
   SlowScriptAction NotifySlowScript(nsITabChild* aTabChild,
-                                    const char* aFileName,
-                                    unsigned aLineNo);
+                                    const char* aFileName);
 
   void NotifyPluginHang(uint32_t aPluginId);
 
@@ -67,14 +64,15 @@ class ProcessHangMonitor final
   void InitiateCPOWTimeout();
   bool ShouldTimeOutCPOWs();
 
-  MessageLoop* MonitorLoop();
+  void Dispatch(already_AddRefed<nsIRunnable> aRunnable);
+  bool IsOnThread();
 
  private:
   static ProcessHangMonitor* sInstance;
 
   Atomic<bool> mCPOWTimeout;
 
-  base::Thread* mThread;
+  nsCOMPtr<nsIThread> mThread;
 };
 
 } // namespace mozilla

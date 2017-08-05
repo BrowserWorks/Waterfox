@@ -76,6 +76,30 @@ const SELECTED_PROPERTY_SUPPORTED_XUL = new Set([
   "TAB",
 ]);
 
+/**
+ * Common form controls that user can change the value property interactively.
+ */
+const COMMON_FORM_CONTROLS = new Set([
+  "input",
+  "textarea",
+  "select",
+]);
+
+/**
+ * Input elements that do not fire "input" and "change" events when value
+ * property changes.
+ */
+const INPUT_TYPES_NO_EVENT = new Set([
+  "checkbox",
+  "radio",
+  "file",
+  "hidden",
+  "image",
+  "reset",
+  "button",
+  "submit",
+]);
+
 this.interaction = {};
 
 /**
@@ -116,7 +140,9 @@ this.interaction = {};
  */
 interaction.clickElement = function* (el, strict = false, specCompat = false) {
   const a11y = accessibility.get(strict);
-  if (specCompat) {
+  if (element.isXULElement(el)) {
+    yield chromeClick(el, a11y);
+  } else if (specCompat) {
     yield webdriverClickElement(el, a11y);
   } else {
     yield seleniumClickElement(el, a11y);
@@ -155,7 +181,7 @@ function* webdriverClickElement (el, a11y) {
   let rects = containerEl.getClientRects();
   let clickPoint = element.getInViewCentrePoint(rects[0], win);
 
-  if (!element.isPointerInteractable(containerEl)) {
+  if (element.isObscured(containerEl)) {
     throw new ElementClickInterceptedError(containerEl, clickPoint);
   }
 
@@ -166,22 +192,10 @@ function* webdriverClickElement (el, a11y) {
   });
 
   // step 8
-
-  // chrome elements
-  if (element.isXULElement(el)) {
-    if (el.localName == "option") {
-      interaction.selectOption(el);
-    } else {
-      el.click();
-    }
-
-  // content elements
+  if (el.localName == "option") {
+    interaction.selectOption(el);
   } else {
-    if (el.localName == "option") {
-      interaction.selectOption(el);
-    } else {
-      event.synthesizeMouseAtPoint(clickPoint.x, clickPoint.y, {}, win);
-    }
+    event.synthesizeMouseAtPoint(clickPoint.x, clickPoint.y, {}, win);
   }
 
   // step 9
@@ -190,6 +204,24 @@ function* webdriverClickElement (el, a11y) {
   // step 10
   // if the click causes navigation, the post-navigation checks are
   // handled by the load listener in listener.js
+}
+
+function* chromeClick (el, a11y) {
+  if (!atom.isElementEnabled(el)) {
+    throw new InvalidElementStateError("Element is not enabled");
+  }
+
+  yield a11y.getAccessible(el, true).then(acc => {
+    a11y.assertVisible(acc, el, true);
+    a11y.assertEnabled(acc, el, true);
+    a11y.assertActionable(acc, el);
+  });
+
+  if (el.localName == "option") {
+    interaction.selectOption(el);
+  } else {
+    el.click();
+  }
 }
 
 function* seleniumClickElement (el, a11y) {
@@ -214,24 +246,13 @@ function* seleniumClickElement (el, a11y) {
     a11y.assertActionable(acc, el);
   });
 
-  // chrome elements
-  if (element.isXULElement(el)) {
-    if (el.localName == "option") {
-      interaction.selectOption(el);
-    } else {
-      el.click();
-    }
-
-  // content elements
+  if (el.localName == "option") {
+    interaction.selectOption(el);
   } else {
-    if (el.localName == "option") {
-      interaction.selectOption(el);
-    } else {
-      let rects = el.getClientRects();
-      let centre = element.getInViewCentrePoint(rects[0], win);
-      let opts = {};
-      event.synthesizeMouseAtPoint(centre.x, centre.y, opts, win);
-    }
+    let rects = el.getClientRects();
+    let centre = element.getInViewCentrePoint(rects[0], win);
+    let opts = {};
+    event.synthesizeMouseAtPoint(centre.x, centre.y, opts, win);
   }
 };
 
@@ -344,6 +365,32 @@ interaction.uploadFile = function* (el, path) {
 
   el.mozSetFileArray(fs);
 
+  event.change(el);
+};
+
+/**
+ * Sets a form element's value.
+ *
+ * @param {DOMElement} el
+ *     An form element, e.g. input, textarea, etc.
+ * @param {string} value
+ *     The value to be set.
+ *
+ * @throws TypeError
+ *     If |el| is not an supported form element.
+ */
+interaction.setFormControlValue = function* (el, value) {
+  if (!COMMON_FORM_CONTROLS.has(el.localName)) {
+    throw new TypeError("This function is for form elements only");
+  }
+
+  el.value = value;
+
+  if (INPUT_TYPES_NO_EVENT.has(el.type)) {
+    return;
+  }
+
+  event.input(el);
   event.change(el);
 };
 

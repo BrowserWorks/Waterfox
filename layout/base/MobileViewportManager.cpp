@@ -88,10 +88,16 @@ void
 MobileViewportManager::SetRestoreResolution(float aResolution,
                                             LayoutDeviceIntSize aDisplaySize)
 {
-  mRestoreResolution = Some(aResolution);
+  SetRestoreResolution(aResolution);
   ScreenIntSize restoreDisplaySize = ViewAs<ScreenPixel>(aDisplaySize,
     PixelCastJustification::LayoutDeviceIsScreenForBounds);
   mRestoreDisplaySize = Some(restoreDisplaySize);
+}
+
+void
+MobileViewportManager::SetRestoreResolution(float aResolution)
+{
+  mRestoreResolution = Some(aResolution);
 }
 
 void
@@ -105,6 +111,11 @@ void
 MobileViewportManager::ResolutionUpdated()
 {
   MVM_LOG("%p: resolution updated\n", this);
+  if (!mPainted) {
+    // Save the value, so our default zoom calculation
+    // can take it into account later on.
+    SetRestoreResolution(mPresShell->GetResolution());
+  }
   RefreshSPCSPS();
 }
 
@@ -305,6 +316,13 @@ MobileViewportManager::UpdateDisplayPortMargins()
       // comment 1).
       return;
     }
+    nsRect displayportBase =
+      nsRect(nsPoint(0, 0), nsLayoutUtils::CalculateCompositionSizeForFrame(root));
+    // We only create MobileViewportManager for root content documents. If that ever changes
+    // we'd need to limit the size of this displayport base rect because non-toplevel documents
+    // have no limit on their size.
+    MOZ_ASSERT(mPresShell->GetPresContext()->IsRootContentDocument());
+    nsLayoutUtils::SetDisplayPortBaseIfNotSet(root->GetContent(), displayportBase);
     nsIScrollableFrame* scrollable = do_QueryFrame(root);
     nsLayoutUtils::CalculateAndSetDisplayPortMargins(scrollable,
       nsLayoutUtils::RepaintMode::DoNotRepaint);

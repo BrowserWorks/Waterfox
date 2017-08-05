@@ -19,6 +19,7 @@ namespace mp4_demuxer
 {
 
 class Index;
+class IndiceWrapper;
 
 typedef int64_t Microseconds;
 
@@ -26,10 +27,10 @@ class SampleIterator
 {
 public:
   explicit SampleIterator(Index* aIndex);
+  ~SampleIterator();
   already_AddRefed<mozilla::MediaRawData> GetNext();
   void Seek(Microseconds aTime);
   Microseconds GetNextKeyframeTime();
-
 private:
   Sample* Get();
 
@@ -37,6 +38,7 @@ private:
 
   void Next();
   RefPtr<Index> mIndex;
+  friend class Index;
   size_t mCurrentMoof;
   size_t mCurrentSample;
 };
@@ -92,11 +94,13 @@ public:
     Interval<Microseconds> mTime;
   };
 
-  Index(const nsTArray<Indice>& aIndex,
+  Index(const IndiceWrapper& aIndices,
         Stream* aSource,
         uint32_t aTrackId,
         bool aIsAudio);
 
+  void UpdateMoofIndex(const mozilla::MediaByteRangeSet& aByteRanges,
+                       bool aCanEvict);
   void UpdateMoofIndex(const mozilla::MediaByteRangeSet& aByteRanges);
   Microseconds GetEndCompositionIfBuffered(
     const mozilla::MediaByteRangeSet& aByteRanges);
@@ -109,11 +113,14 @@ public:
 
 private:
   ~Index();
+  void RegisterIterator(SampleIterator* aIterator);
+  void UnregisterIterator(SampleIterator* aIterator);
 
   Stream* mSource;
   FallibleTArray<Sample> mIndex;
   FallibleTArray<MP4DataOffset> mDataOffset;
   nsAutoPtr<MoofParser> mMoofParser;
+  nsTArray<SampleIterator*> mIterators;
 
   // ConvertByteRangesToTimeRanges cache
   mozilla::MediaByteRangeSet mLastCachedRanges;

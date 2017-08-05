@@ -3,7 +3,7 @@
     "message": "ဝဘ်ထံမှ ဓါတ်ပုံများနှင့် မျက်နှာပြင်ပုံဖမ်းချက်များကို ရိုက်ယူပြီး ယာယီ သို့မဟုတ် အမြဲတမ်းသိုလှောင်ရာတွင် သိမ်းဆည်းပါ။"
   },
   "addonAuthorsList": {
-    "message": "Mozilla <screenshots-feedback@mozilla.org>"
+    "message": "Mozilla <screenshots-feedback@mozilla.com>"
   },
   "contextMenuLabel": {
     "message": "မျက်နှာပြင်ပုံရိပ် ဖမ်းယူပါ"
@@ -48,10 +48,10 @@
     "message": "ကိုယ်နှစ်သက်ရာ စာမျက်နှာများကို ဖမ်းယူပါ"
   },
   "tourHeaderThree": {
-    "message": "နှစ်သက်သလို"
+    "message": "ဝင်ဒိုးများ သို့မဟုတ် စာမျက်နှာတစ်ခုလုံးကို ဖမ်းယူပါ"
   },
   "tourHeaderFour": {
-    "message": "ဝင်ဒိုးများ သို့မဟုတ် စာမျက်နှာတစ်ခုလုံးကို ဖမ်းယူပါ"
+    "message": "နှစ်သက်သလို"
   },
   "tourSkip": {
     "message": "SKIP"

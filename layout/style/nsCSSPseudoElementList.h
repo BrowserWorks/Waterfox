@@ -25,10 +25,15 @@
 // OUTPUT_CLASS=nsCSSPseudoElements
 // MACRO_NAME=CSS_PSEUDO_ELEMENT
 
-CSS_PSEUDO_ELEMENT(after, ":after", CSS_PSEUDO_ELEMENT_IS_CSS2)
-CSS_PSEUDO_ELEMENT(before, ":before", CSS_PSEUDO_ELEMENT_IS_CSS2)
+CSS_PSEUDO_ELEMENT(after, ":after", CSS_PSEUDO_ELEMENT_IS_CSS2 |
+                                    CSS_PSEUDO_ELEMENT_IS_FLEX_OR_GRID_ITEM)
+CSS_PSEUDO_ELEMENT(before, ":before", CSS_PSEUDO_ELEMENT_IS_CSS2 |
+                                      CSS_PSEUDO_ELEMENT_IS_FLEX_OR_GRID_ITEM)
 
 CSS_PSEUDO_ELEMENT(backdrop, ":backdrop", 0)
+
+CSS_PSEUDO_ELEMENT(cue, ":cue", CSS_PSEUDO_ELEMENT_IS_JS_CREATED_NAC |
+                                CSS_PSEUDO_ELEMENT_SUPPORTS_STYLE_ATTRIBUTE)
 
 CSS_PSEUDO_ELEMENT(firstLetter, ":first-letter",
                    CSS_PSEUDO_ELEMENT_IS_CSS2 |

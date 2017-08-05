@@ -8,7 +8,7 @@ function test()
 {
   waitForExplicitFinish();
 
-  gBrowser.selectedTab = gBrowser.addTab();
+  gBrowser.selectedTab = BrowserTestUtils.addTab(gBrowser);
   gBrowser.selectedBrowser.addEventListener("load", function () {
     openScratchpad(runTests);
   }, {capture: true, once: true});
@@ -28,7 +28,7 @@ function runTests()
     is(aSubject.data, hud.hudId, "notification hudId is correct");
 
     HUDService.toggleBrowserConsole().then(finish);
-  }, "web-console-created", false);
+  }, "web-console-created");
 
   let hud = HUDService.getBrowserConsole();
   ok(!hud, "browser console is not open");

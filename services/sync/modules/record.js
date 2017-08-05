@@ -21,6 +21,7 @@ const KEYS_WBO = "keys";
 Cu.import("resource://gre/modules/Log.jsm");
 Cu.import("resource://services-sync/constants.js");
 Cu.import("resource://services-sync/keys.js");
+Cu.import("resource://services-sync/main.js");
 Cu.import("resource://services-sync/resource.js");
 Cu.import("resource://services-sync/util.js");
 Cu.import("resource://services-common/async.js");
@@ -42,12 +43,12 @@ WBORecord.prototype = {
 
   // Get thyself from your URI, then deserialize.
   // Set thine 'response' field.
-  fetch: function fetch(resource) {
+  async fetch(resource) {
     if (!(resource instanceof Resource)) {
       throw new Error("First argument must be a Resource instance.");
     }
 
-    let r = resource.get();
+    let r = await resource.get();
     if (r.success) {
       this.deserialize(r);   // Warning! Muffles exceptions!
     }
@@ -55,7 +56,7 @@ WBORecord.prototype = {
     return this;
   },
 
-  upload: function upload(resource) {
+  upload(resource) {
     if (!(resource instanceof Resource)) {
       throw new Error("First argument must be a Resource instance.");
     }
@@ -139,9 +140,9 @@ CryptoWrapper.prototype = {
       throw new Error("A key bundle must be supplied to encrypt.");
     }
 
-    this.IV = Svc.Crypto.generateRandomIV();
-    this.ciphertext = Svc.Crypto.encrypt(JSON.stringify(this.cleartext),
-                                         keyBundle.encryptionKeyB64, this.IV);
+    this.IV = Weave.Crypto.generateRandomIV();
+    this.ciphertext = Weave.Crypto.encrypt(JSON.stringify(this.cleartext),
+                                           keyBundle.encryptionKeyB64, this.IV);
     this.hmac = this.ciphertextHMAC(keyBundle);
     this.cleartext = null;
   },
@@ -164,8 +165,8 @@ CryptoWrapper.prototype = {
     }
 
     // Handle invalid data here. Elsewhere we assume that cleartext is an object.
-    let cleartext = Svc.Crypto.decrypt(this.ciphertext,
-                                       keyBundle.encryptionKeyB64, this.IV);
+    let cleartext = Weave.Crypto.decrypt(this.ciphertext,
+                                         keyBundle.encryptionKeyB64, this.IV);
     let json_result = JSON.parse(cleartext);
 
     if (json_result && (json_result instanceof Object)) {
@@ -223,12 +224,12 @@ RecordManager.prototype = {
   _recordType: CryptoWrapper,
   _logName: "Sync.RecordManager",
 
-  import: function RecordMgr_import(url) {
+  async import(url) {
     this._log.trace("Importing record: " + (url.spec ? url.spec : url));
     try {
       // Clear out the last response with empty object if GET fails
       this.response = {};
-      this.response = this.service.resource(url).get();
+      this.response = await this.service.resource(url).get();
 
       // Don't parse and save the record on failure
       if (!this.response.success)
@@ -247,11 +248,11 @@ RecordManager.prototype = {
     }
   },
 
-  get: function RecordMgr_get(url) {
+  get(url) {
     // Use a url string as the key to the hash
     let spec = url.spec ? url.spec : url;
     if (spec in this._records)
-      return this._records[spec];
+      return Promise.resolve(this._records[spec]);
     return this.import(url);
   },
 
@@ -703,7 +704,7 @@ Collection.prototype = {
   // Returns the last response processed, and doesn't run the record handler
   // on any items if a non-success status is received while downloading the
   // records (or if a network error occurs).
-  getBatched(batchSize = DEFAULT_DOWNLOAD_BATCH_SIZE) {
+  async getBatched(batchSize = DEFAULT_DOWNLOAD_BATCH_SIZE) {
     let totalLimit = Number(this.limit) || Infinity;
     if (batchSize <= 0 || batchSize >= totalLimit) {
       // Invalid batch sizes should arguably be an error, but they're easy to handle
@@ -733,7 +734,7 @@ Collection.prototype = {
         }
         this._log.trace("Performing batched GET", { limit: this.limit, offset: this.offset });
         // Actually perform the request
-        resp = this.get();
+        resp = await this.get();
         if (!resp.success) {
           break;
         }
@@ -996,7 +997,8 @@ PostQueue.prototype = {
     }
     this.queued = "";
     this.numQueued = 0;
-    let response = this.poster(queued, headers, batch, !!(finalBatchPost && this.batchID !== null));
+    let response = Async.promiseSpinningly(
+                    this.poster(queued, headers, batch, !!(finalBatchPost && this.batchID !== null)));
 
     if (!response.success) {
       this.log.trace("Server error response during a batch", response);

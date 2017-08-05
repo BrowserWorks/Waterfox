@@ -129,6 +129,57 @@ function getProcArchitecture() {
   }
 }
 
+// Gets the supported CPU instruction set.
+function getInstructionSet() {
+  if (AppConstants.platform == "win") {
+    const PF_MMX_INSTRUCTIONS_AVAILABLE = 3; // MMX
+    const PF_XMMI_INSTRUCTIONS_AVAILABLE = 6; // SSE
+    const PF_XMMI64_INSTRUCTIONS_AVAILABLE = 10; // SSE2
+    const PF_SSE3_INSTRUCTIONS_AVAILABLE = 13; // SSE3
+
+    let lib = ctypes.open("kernel32.dll");
+    let IsProcessorFeaturePresent = lib.declare("IsProcessorFeaturePresent",
+                                                ctypes.winapi_abi,
+                                                ctypes.int32_t, /* success */
+                                                ctypes.uint32_t); /* DWORD */
+    let instructionSet = "unknown";
+    try {
+      if (IsProcessorFeaturePresent(PF_SSE3_INSTRUCTIONS_AVAILABLE)) {
+        instructionSet = "SSE3";
+      } else if (IsProcessorFeaturePresent(PF_XMMI64_INSTRUCTIONS_AVAILABLE)) {
+        instructionSet = "SSE2";
+      } else if (IsProcessorFeaturePresent(PF_XMMI_INSTRUCTIONS_AVAILABLE)) {
+        instructionSet = "SSE";
+      } else if (IsProcessorFeaturePresent(PF_MMX_INSTRUCTIONS_AVAILABLE)) {
+        instructionSet = "MMX";
+      }
+    } catch (e) {
+      Cu.reportError("Error getting processor instruction set. " +
+                     "Exception: " + e);
+    }
+
+    lib.close();
+    return instructionSet;
+  }
+
+  return "NA";
+}
+
+// Gets the RAM size in megabytes. This will round the value because sysinfo
+// doesn't always provide RAM in multiples of 1024.
+function getMemoryMB() {
+  let memoryMB = "unknown";
+  try {
+    memoryMB = Services.sysinfo.getProperty("memsize");
+    if (memoryMB) {
+      memoryMB = Math.round(memoryMB / 1024 / 1024);
+    }
+  } catch (e) {
+    do_throw("Error getting system info memsize property. Exception: " + e);
+  }
+  return memoryMB;
+}
+
 // Helper function for formatting a url and getting the result we're
 // interested in
 function getResult(url) {
@@ -289,4 +340,12 @@ add_task(function* test_custom() {
   let url = URL_PREFIX + "%CUSTOM%/";
   Assert.equal(getResult(url), "custom",
                "the url query string for %CUSTOM%" + MSG_SHOULD_EQUAL);
+});
+
+// url constructed with %SYSTEM_CAPABILITIES%
+add_task(function* test_systemCapabilities() {
+  let url = URL_PREFIX + "%SYSTEM_CAPABILITIES%/";
+  let systemCapabilities = getInstructionSet() + "," + getMemoryMB();
+  Assert.equal(getResult(url), systemCapabilities,
+               "the url param for %SYSTEM_CAPABILITIES%" + MSG_SHOULD_EQUAL);
 });

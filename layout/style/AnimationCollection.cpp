@@ -40,7 +40,7 @@ AnimationCollection<AnimationType>::PropertyDtor(void* aObject,
 template <class AnimationType>
 /* static */ AnimationCollection<AnimationType>*
 AnimationCollection<AnimationType>::GetAnimationCollection(
-  dom::Element *aElement,
+  const dom::Element *aElement,
   CSSPseudoElementType aPseudoType)
 {
   if (!aElement->MayHaveAnimations()) {
@@ -56,6 +56,25 @@ AnimationCollection<AnimationType>::GetAnimationCollection(
   return
     static_cast<AnimationCollection<AnimationType>*>(aElement->
                                                      GetProperty(propName));
+}
+
+template <class AnimationType>
+/* static */ AnimationCollection<AnimationType>*
+AnimationCollection<AnimationType>::GetAnimationCollection(
+  const dom::Element *aElement,
+  nsIAtom* aPseudoTagOrNull)
+{
+  MOZ_ASSERT(!aPseudoTagOrNull ||
+             aPseudoTagOrNull == nsCSSPseudoElements::before ||
+             aPseudoTagOrNull == nsCSSPseudoElements::after);
+
+  CSSPseudoElementType pseudoType = CSSPseudoElementType::NotPseudo;
+  if (aPseudoTagOrNull) {
+    pseudoType = aPseudoTagOrNull == nsCSSPseudoElements::before
+                 ? CSSPseudoElementType::before
+                 : CSSPseudoElementType::after;
+  }
+  return GetAnimationCollection(aElement, pseudoType);
 }
 
 template <class AnimationType>
@@ -138,12 +157,7 @@ void
 AnimationCollection<AnimationType>::UpdateCheckGeneration(
   nsPresContext* aPresContext)
 {
-  if (aPresContext->RestyleManager()->IsServo()) {
-    // stylo: ServoRestyleManager does not support animations yet.
-    return;
-  }
-  mCheckGeneration =
-    aPresContext->RestyleManager()->AsGecko()->GetAnimationGeneration();
+  mCheckGeneration = aPresContext->RestyleManager()->GetAnimationGeneration();
 }
 
 template<class AnimationType>

@@ -27,10 +27,9 @@ XPCOMUtils.defineLazyModuleGetter(this, "Task",
  * posted on the event loop of the main thread is processed.
  */
 function promiseResolvedLater(aValue) {
-  let deferred = Promise.defer();
-  Services.tm.mainThread.dispatch(() => deferred.resolve(aValue),
-                                  Ci.nsIThread.DISPATCH_NORMAL);
-  return deferred.promise;
+  return new Promise(resolve => {
+    Services.tm.dispatchToMainThread(() => resolve(aValue));
+  });
 }
 
 ////////////////////////////////////////////////////////////////////////////////

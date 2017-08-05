@@ -18,10 +18,10 @@ add_task(function*()
 
   // Open a keepalive tab in the background to make sure we don't accidentally
   // kill the content process
-  var keepaliveTab = gBrowser.addTab("about:blank");
+  var keepaliveTab = BrowserTestUtils.addTab(gBrowser, "about:blank");
 
   // Open the main tab to run the test in
-  var tab = gBrowser.addTab("about:blank");
+  var tab = BrowserTestUtils.addTab(gBrowser, "about:blank");
   gBrowser.selectedTab = tab;
   var browser = gBrowser.selectedBrowser;
 
@@ -53,7 +53,7 @@ add_task(function*()
         }
       };
 
-      Services.obs.addObserver(ConsoleObserver, "console-storage-cache-event", false);
+      Services.obs.addObserver(ConsoleObserver, "console-storage-cache-event");
 
       // Redirect the browser to the test URI
       content.window.location = TEST_URI;

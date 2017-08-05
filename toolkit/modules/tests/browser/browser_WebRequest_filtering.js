@@ -59,16 +59,16 @@ function compareLists(list1, list2, kind) {
   is(String(list1), String(list2), `${kind} URLs correct`);
 }
 
-add_task(function* filter_urls() {
+add_task(async function filter_urls() {
   let filter = {urls: new MatchPattern("*://*/*_style_*")};
 
   WebRequest.onBeforeRequest.addListener(onBeforeRequest, filter, ["blocking"]);
   WebRequest.onBeforeSendHeaders.addListener(onBeforeSendHeaders, filter, ["blocking"]);
   WebRequest.onResponseStarted.addListener(onResponseStarted, filter);
 
-  gBrowser.selectedTab = gBrowser.addTab(URL);
+  gBrowser.selectedTab = BrowserTestUtils.addTab(gBrowser, URL);
 
-  yield waitForLoad();
+  await waitForLoad();
 
   gBrowser.removeCurrentTab();
 
@@ -81,16 +81,16 @@ add_task(function* filter_urls() {
   WebRequest.onResponseStarted.removeListener(onResponseStarted);
 });
 
-add_task(function* filter_types() {
+add_task(async function filter_types() {
   let filter = {types: ["stylesheet"]};
 
   WebRequest.onBeforeRequest.addListener(onBeforeRequest, filter, ["blocking"]);
   WebRequest.onBeforeSendHeaders.addListener(onBeforeSendHeaders, filter, ["blocking"]);
   WebRequest.onResponseStarted.addListener(onResponseStarted, filter);
 
-  gBrowser.selectedTab = gBrowser.addTab(URL);
+  gBrowser.selectedTab = BrowserTestUtils.addTab(gBrowser, URL);
 
-  yield waitForLoad();
+  await waitForLoad();
 
   gBrowser.removeCurrentTab();
 

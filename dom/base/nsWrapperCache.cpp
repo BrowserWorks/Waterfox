@@ -8,8 +8,7 @@
 
 #include "js/Class.h"
 #include "js/Proxy.h"
-#include "mozilla/dom/DOMJSProxyHandler.h"
-#include "mozilla/CycleCollectedJSContext.h"
+#include "mozilla/CycleCollectedJSRuntime.h"
 #include "mozilla/HoldDropJSObjects.h"
 #include "nsCycleCollectionTraversalCallback.h"
 #include "nsCycleCollector.h"
@@ -31,7 +30,7 @@ nsWrapperCache::HoldJSObjects(void* aScriptObjectHolder,
 {
   cyclecollector::HoldJSObjectsImpl(aScriptObjectHolder, aTracer);
   if (mWrapper && !JS::ObjectIsTenured(mWrapper)) {
-    CycleCollectedJSContext::Get()->NurseryWrapperPreserved(mWrapper);
+    CycleCollectedJSRuntime::Get()->NurseryWrapperPreserved(mWrapper);
   }
 }
 
@@ -42,7 +41,7 @@ nsWrapperCache::SetWrapperJSObject(JSObject* aWrapper)
   UnsetWrapperFlags(kWrapperFlagsMask & ~WRAPPER_IS_NOT_DOM_BINDING);
 
   if (aWrapper && !JS::ObjectIsTenured(aWrapper)) {
-    CycleCollectedJSContext::Get()->NurseryWrapperAdded(this);
+    CycleCollectedJSRuntime::Get()->NurseryWrapperAdded(this);
   }
 }
 
@@ -50,13 +49,6 @@ void
 nsWrapperCache::ReleaseWrapper(void* aScriptObjectHolder)
 {
   if (PreservingWrapper()) {
-    // PreserveWrapper puts new DOM bindings in the JS holders hash, but they
-    // can also be in the DOM expando hash, so we need to try to remove them
-    // from both here.
-    JSObject* obj = GetWrapperPreserveColor();
-    if (IsDOMBinding() && obj && js::IsProxy(obj)) {
-      DOMProxyHandler::ClearExternalRefsForWrapperRelease(obj);
-    }
     SetPreservingWrapper(false);
     cyclecollector::DropJSObjectsImpl(aScriptObjectHolder);
   }

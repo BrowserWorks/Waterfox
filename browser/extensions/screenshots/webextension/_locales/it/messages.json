@@ -3,7 +3,7 @@
     "message": "Crea screenshot di contenuti sul Web e salvali, solo per un periodo di tempo o in modo permanente."
   },
   "addonAuthorsList": {
-    "message": "Mozilla <screenshots-feedback@mozilla.org>"
+    "message": "Mozilla <screenshots-feedback@mozilla.com>"
   },
   "contextMenuLabel": {
     "message": "Cattura screenshot"
@@ -64,6 +64,9 @@
   "selfScreenshotErrorTitle": {
     "message": "Non è possibile salvare uno screenshot di una pagina di Firefox Screenshots"
   },
+  "emptySelectionErrorTitle": {
+    "message": "L’area selezionata è troppo piccola"
+  },
   "genericErrorTitle": {
     "message": "Wow! Firefox Screenshots è andato in tilt"
   },
@@ -80,16 +83,16 @@
     "message": "Fai clic e trascina per catturare solo una parte della pagina. Posiziona il mouse sopra all’area selezionata per evidenziarla."
   },
   "tourHeaderThree": {
-    "message": "Come piace a te"
-  },
-  "tourBodyThree": {
-    "message": "Cattura lo screenshot di una pagina web, ritaglialo e salvalo online per condividerlo in modo più veloce, oppure scaricalo sul tuo computer. Puoi anche utilizzare il pulsante “I miei screenshot” per ritrovare tutte le immagini che hai salvato."
-  },
-  "tourHeaderFour": {
     "message": "Cattura una finestra o una pagina intera"
   },
-  "tourBodyFour": {
+  "tourBodyThree": {
     "message": "Utilizza i pulsanti in alto a destra per catturare una parte della finestra o l’intera pagina."
+  },
+  "tourHeaderFour": {
+    "message": "Come piace a te"
+  },
+  "tourBodyFour": {
+    "message": "Cattura lo screenshot di una pagina web, ritaglialo e salvalo online per condividerlo in modo più veloce, oppure scaricalo sul tuo computer. Puoi anche utilizzare il pulsante “I miei screenshot” per ritrovare tutte le immagini che hai salvato."
   },
   "tourSkip": {
     "message": "Ignora"

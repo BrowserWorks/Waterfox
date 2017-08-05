@@ -26,13 +26,65 @@ final class GeckoEditableChild extends JNIObject implements IGeckoEditableChild 
     private static final boolean DEBUG = false;
     private static final String LOGTAG = "GeckoEditableChild";
 
+    private final class RemoteChild extends IGeckoEditableChild.Stub {
+        @Override // IGeckoEditableChild
+        public void onKeyEvent(int action, int keyCode, int scanCode, int metaState,
+                               int keyPressMetaState, long time, int domPrintableKeyValue,
+                               int repeatCount, int flags, boolean isSynthesizedImeKey,
+                               KeyEvent event) {
+            GeckoEditableChild.this.onKeyEvent(
+                    action, keyCode, scanCode, metaState, keyPressMetaState, time,
+                    domPrintableKeyValue, repeatCount, flags, isSynthesizedImeKey, event);
+        }
+
+        @Override // IGeckoEditableChild
+        public void onImeSynchronize() {
+            GeckoEditableChild.this.onImeSynchronize();
+        }
+
+        @Override // IGeckoEditableChild
+        public void onImeReplaceText(int start, int end, String text) {
+            GeckoEditableChild.this.onImeReplaceText(start, end, text);
+        }
+
+        @Override // IGeckoEditableChild
+        public void onImeAddCompositionRange(int start, int end, int rangeType,
+                                             int rangeStyles, int rangeLineStyle,
+                                             boolean rangeBoldLine, int rangeForeColor,
+                                             int rangeBackColor, int rangeLineColor) {
+            GeckoEditableChild.this.onImeAddCompositionRange(
+                    start, end, rangeType, rangeStyles, rangeLineStyle, rangeBoldLine,
+                    rangeForeColor, rangeBackColor, rangeLineColor);
+        }
+
+        @Override // IGeckoEditableChild
+        public void onImeUpdateComposition(int start, int end, int flags) {
+            GeckoEditableChild.this.onImeUpdateComposition(start, end, flags);
+        }
+
+        @Override // IGeckoEditableChild
+        public void onImeRequestCursorUpdates(int requestMode) {
+            GeckoEditableChild.this.onImeRequestCursorUpdates(requestMode);
+        }
+    }
+
     private final IGeckoEditableParent mEditableParent;
+    private final IGeckoEditableChild mEditableChild;
 
     private int mCurrentTextLength; // Used by Gecko thread
 
     @WrapForJNI(calledFrom = "gecko")
     /* package */ GeckoEditableChild(final IGeckoEditableParent editableParent) {
         mEditableParent = editableParent;
+
+        final IBinder binder = editableParent.asBinder();
+        if (binder.queryLocalInterface(IGeckoEditableParent.class.getName()) != null) {
+            // IGeckoEditableParent is local; i.e. we're in the main process.
+            mEditableChild = this;
+        } else {
+            // IGeckoEditableParent is remote; i.e. we're in a content process.
+            mEditableChild = new RemoteChild();
+        }
     }
 
     @WrapForJNI(dispatchTo = "proxy") @Override // IGeckoEditableChild
@@ -71,7 +123,8 @@ final class GeckoEditableChild extends JNIObject implements IGeckoEditableChild 
 
     @Override // IInterface
     public IBinder asBinder() {
-        return null;
+        // Return the GeckoEditableParent's binder as our binder for comparison purposes.
+        return mEditableParent.asBinder();
     }
 
     @WrapForJNI(calledFrom = "gecko")
@@ -96,7 +149,7 @@ final class GeckoEditableChild extends JNIObject implements IGeckoEditableChild 
         }
 
         try {
-            mEditableParent.notifyIME(type);
+            mEditableParent.notifyIME(mEditableChild, type);
         } catch (final RemoteException e) {
             Log.e(LOGTAG, "Remote call failed", e);
             return;
@@ -134,7 +187,7 @@ final class GeckoEditableChild extends JNIObject implements IGeckoEditableChild 
             throw new IllegalArgumentException("invalid selection notification range");
         }
 
-        mEditableParent.onSelectionChange(start, end);
+        mEditableParent.onSelectionChange(mEditableChild.asBinder(), start, end);
     }
 
     @WrapForJNI(calledFrom = "gecko", exceptionMode = "ignore")
@@ -170,7 +223,7 @@ final class GeckoEditableChild extends JNIObject implements IGeckoEditableChild 
 
         mCurrentTextLength += start + text.length() - oldEnd;
         // Need unboundedOldEnd so GeckoEditable can distinguish changed text vs cleared text.
-        mEditableParent.onTextChange(text, start, unboundedOldEnd);
+        mEditableParent.onTextChange(mEditableChild.asBinder(), text, start, unboundedOldEnd);
     }
 
     @WrapForJNI(calledFrom = "gecko")
@@ -188,7 +241,7 @@ final class GeckoEditableChild extends JNIObject implements IGeckoEditableChild 
         }
 
         try {
-            mEditableParent.onDefaultKeyEvent(event);
+            mEditableParent.onDefaultKeyEvent(mEditableChild.asBinder(), event);
         } catch (final RemoteException e) {
             Log.e(LOGTAG, "Remote call failed", e);
         }
@@ -203,7 +256,7 @@ final class GeckoEditableChild extends JNIObject implements IGeckoEditableChild 
         }
 
         try {
-            mEditableParent.updateCompositionRects(rects);
+            mEditableParent.updateCompositionRects(mEditableChild.asBinder(), rects);
         } catch (final RemoteException e) {
             Log.e(LOGTAG, "Remote call failed", e);
         }

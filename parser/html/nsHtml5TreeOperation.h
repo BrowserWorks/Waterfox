@@ -7,7 +7,6 @@
 
 #include "nsHtml5DocumentMode.h"
 #include "nsHtml5HtmlAttributes.h"
-#include "nsXPCOMStrings.h"
 #include "mozilla/dom/FromParser.h"
 
 class nsIContent;
@@ -108,7 +107,7 @@ class nsHtml5TreeOperation {
       }
       nsAutoString str;
       aAtom->ToString(str);
-      return NS_Atomize(str);
+      return NS_AtomizeMainThread(str);
     }
 
     static nsresult AppendTextToTextNode(const char16_t* aBuffer,
@@ -418,7 +417,7 @@ class nsHtml5TreeOperation {
       NS_PRECONDITION(mOpCode == eTreeOpUninitialized,
         "Op code must be uninitialized when initializing.");
 
-      char16_t* str = NS_StringCloneData(aString);
+      char16_t* str = ToNewUnicode(aString);
       mOpCode = aOpCode;
       mOne.unicharPtr = str;
     }
@@ -489,7 +488,8 @@ class nsHtml5TreeOperation {
     }
 
     nsresult Perform(nsHtml5TreeOpExecutor* aBuilder,
-                     nsIContent** aScriptElement);
+                     nsIContent** aScriptElement,
+                     bool* aInterrupted);
 
   private:
     // possible optimization:

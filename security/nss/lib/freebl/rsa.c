@@ -190,12 +190,12 @@ cleanup:
     }
     return rv;
 }
-static SECStatus
+
+SECStatus
 generate_prime(mp_int *prime, int primeLen)
 {
     mp_err err = MP_OKAY;
     SECStatus rv = SECSuccess;
-    unsigned long counter = 0;
     int piter;
     unsigned char *pb = NULL;
     pb = PORT_Alloc(primeLen);
@@ -208,7 +208,7 @@ generate_prime(mp_int *prime, int primeLen)
         pb[0] |= 0xC0;            /* set two high-order bits */
         pb[primeLen - 1] |= 0x01; /* set low-order bit       */
         CHECK_MPI_OK(mp_read_unsigned_octets(prime, pb, primeLen));
-        err = mpp_make_prime(prime, primeLen * 8, PR_FALSE, &counter);
+        err = mpp_make_prime(prime, primeLen * 8, PR_FALSE);
         if (err != MP_NO)
             goto cleanup;
         /* keep going while err == MP_NO */
@@ -1551,7 +1551,7 @@ cleanup:
     return rv;
 }
 
-static SECStatus
+SECStatus
 RSA_Init(void)
 {
     if (PR_CallOnce(&coBPInit, init_blinding_params_list) != PR_SUCCESS) {
@@ -1559,12 +1559,6 @@ RSA_Init(void)
         return SECFailure;
     }
     return SECSuccess;
-}
-
-SECStatus
-BL_Init(void)
-{
-    return RSA_Init();
 }
 
 /* cleanup at shutdown */

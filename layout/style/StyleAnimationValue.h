@@ -257,9 +257,6 @@ public:
    * @param aComputedValue The computed value to be converted.
    * @param [out] aSpecifiedValue The resulting specified value.
    * @return true on success, false on failure.
-   *
-   * These functions are not MOZ_MUST_USE because failing to check the return
-   * value is common and reasonable.
    */
   static MOZ_MUST_USE bool
   UncomputeValue(nsCSSPropertyID aProperty,
@@ -573,22 +570,75 @@ private:
 
 struct AnimationValue
 {
-  StyleAnimationValue mGecko;
-  RefPtr<RawServoAnimationValue> mServo;
+  explicit AnimationValue(const StyleAnimationValue& aValue)
+    : mGecko(aValue) { }
+  explicit AnimationValue(const RefPtr<RawServoAnimationValue>& aValue)
+    : mServo(aValue) { }
+  AnimationValue() = default;
 
-  inline bool operator==(const AnimationValue& aOther) const;
+  AnimationValue(const AnimationValue& aOther)
+    : mGecko(aOther.mGecko), mServo(aOther.mServo) { }
+  AnimationValue(AnimationValue&& aOther)
+    : mGecko(Move(aOther.mGecko)), mServo(Move(aOther.mServo)) { }
+
+  AnimationValue& operator=(const AnimationValue& aOther)
+  {
+    if (this != &aOther) {
+      mGecko = aOther.mGecko;
+      mServo = aOther.mServo;
+    }
+    return *this;
+  }
+  AnimationValue& operator=(AnimationValue&& aOther)
+  {
+    MOZ_ASSERT(this != &aOther, "Do not move itself");
+    if (this != &aOther) {
+      mGecko = Move(aOther.mGecko);
+      mServo = Move(aOther.mServo);
+    }
+    return *this;
+  }
+
+  bool operator==(const AnimationValue& aOther) const;
+  bool operator!=(const AnimationValue& aOther) const;
 
   bool IsNull() const { return mGecko.IsNull() && !mServo; }
 
-  inline float GetOpacity() const;
+  float GetOpacity() const;
 
   // Returns the scale for mGecko or mServo, which are calculated with
   // reference to aFrame.
-  inline gfxSize GetScaleValue(const nsIFrame* aFrame) const;
+  gfxSize GetScaleValue(const nsIFrame* aFrame) const;
 
   // Uncompute this AnimationValue and then serialize it.
-  inline void SerializeSpecifiedValue(nsCSSPropertyID aProperty,
-                                      nsAString& aString) const;
+  void SerializeSpecifiedValue(nsCSSPropertyID aProperty,
+                               nsAString& aString) const;
+
+  // Check if |*this| and |aToValue| can be interpolated.
+  bool IsInterpolableWith(nsCSSPropertyID aProperty,
+                          const AnimationValue& aToValue) const;
+
+  // Compute the distance between *this and aOther.
+  // If |aStyleContext| is nullptr, we will return 0.0 if we have mismatched
+  // transform lists.
+  double ComputeDistance(nsCSSPropertyID aProperty,
+                         const AnimationValue& aOther,
+                         nsStyleContext* aStyleContext) const;
+
+  // Create an AnimaitonValue from a string. This method flushes style, so we
+  // should use this carefully. Now, it is only used by
+  // nsDOMWindowUtils::ComputeAnimationDistance.
+  static AnimationValue FromString(nsCSSPropertyID aProperty,
+                                   const nsAString& aValue,
+                                   dom::Element* aElement);
+
+  // mGecko and mServo are mutually exclusive: only one or the other should
+  // ever be set.
+  // FIXME: After obsoleting StyleAnimationValue, we should remove mGecko, and
+  // make AnimationValue a wrapper of RawServoAnimationValue to hide these
+  // FFIs.
+  StyleAnimationValue mGecko;
+  RefPtr<RawServoAnimationValue> mServo;
 };
 
 struct PropertyStyleAnimationValuePair

@@ -18,7 +18,6 @@ namespace dom {
 
 class BlobImpl;
 class ContentParent;
-class PBlobParent;
 
 } // namespace dom
 
@@ -58,16 +57,15 @@ public:
   static already_AddRefed<ContentParent>
   GetContentParent(PBackgroundParent* aBackgroundActor);
 
-  static mozilla::dom::PBlobParent*
-  GetOrCreateActorForBlobImpl(PBackgroundParent* aBackgroundActor,
-                              BlobImpl* aBlobImpl);
-
   // Get a value that represents the ContentParent associated with the parent
   // actor for comparison. The value is not guaranteed to uniquely identify the
   // ContentParent after the ContentParent has died. This function may only be
   // called on the background thread.
   static intptr_t
   GetRawContentParentForComparison(PBackgroundParent* aBackgroundActor);
+
+  static uint64_t
+  GetChildID(PBackgroundParent* aBackgroundActor);
 
 private:
   // Only called by ContentParent for cross-process actors.
