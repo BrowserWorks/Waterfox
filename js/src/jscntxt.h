@@ -816,6 +816,7 @@ struct JSContext : public JS::RootingContext,
     js::ThreadLocalData<bool> interruptCallbackDisabled;
 
     mozilla::Atomic<uint32_t, mozilla::Relaxed> interrupt_;
+    mozilla::Atomic<uint32_t, mozilla::Relaxed> interruptRegExpJit_;
 
     enum InterruptMode {
         RequestInterruptUrgent,
@@ -870,6 +871,9 @@ struct JSContext : public JS::RootingContext,
 
     void* addressOfInterrupt() {
         return &interrupt_;
+    }
+    void* addressOfInterruptRegExpJit() {
+        return &interruptRegExpJit_;
     }
     void* addressOfJitStackLimit() {
         return &jitStackLimit;

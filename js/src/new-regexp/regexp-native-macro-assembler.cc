@@ -88,9 +88,19 @@ void SMRegExpMacroAssembler::AdvanceRegister(int reg, int by) {
 }
 
 void SMRegExpMacroAssembler::Backtrack() {
-    // Pop code location from backtrack stack and jump to location.
-    Pop(temp0_);
-    masm_.jump(temp0_);
+  // Check for an interrupt. We have to restart from the beginning if we
+  // are interrupted, so we only check for urgent interrupts.
+  js::jit::Label noInterrupt;
+  masm_.branch32(
+      Assembler::Equal, AbsoluteAddress(cx_->addressOfInterruptRegExpJit()),
+      Imm32(0), &noInterrupt);
+  masm_.movePtr(ImmWord(js::RegExpRunStatus_Error), temp0_);
+  masm_.jump(&exit_label_);
+  masm_.bind(&noInterrupt);
+
+  // Pop code location from backtrack stack and jump to location.
+  Pop(temp0_);
+  masm_.jump(temp0_);
 }
 
 void SMRegExpMacroAssembler::Bind(Label* label) {
