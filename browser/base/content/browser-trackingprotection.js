@@ -224,5 +224,14 @@ var TrackingProtection = {
         style: "primary",
       },
     ];
-  }),
+
+    let panelTarget = await UITour.getTarget(window, "trackingProtection");
+    UITour.initForBrowser(gBrowser.selectedBrowser, window);
+    UITour.showInfo(window, panelTarget,
+                    gNavigatorBundle.getString("trackingProtection.intro.title"),
+                    gNavigatorBundle.getFormattedString("trackingProtection.intro.description2",
+                                                        [brandShortName]),
+                    undefined, buttons,
+                    { closeButtonCallback: () => this.dontShowIntroPanelAgain() });
+  },
 };

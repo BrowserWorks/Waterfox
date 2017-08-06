@@ -1333,7 +1333,6 @@ sticky_pref("geo.provider.ms-windows-location", true);
 sticky_pref("geo.provider.use_gpsd", true);
 #endif
 #endif
-#endif
 
 // We keep allowing non-HTTPS geo requests on all the release
 // channels, for now.
