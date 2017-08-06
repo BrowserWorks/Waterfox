@@ -1996,6 +1996,22 @@ nsPluginHost::AddPluginTag(nsPluginTag* aPluginTag)
   }
 }
 
+static bool
+PluginInfoIsFlash(const nsPluginInfo& info)
+{
+  if (!info.fName || strcmp(info.fName, "Shockwave Flash") != 0) {
+    return false;
+  }
+  for (uint32_t i = 0; i < info.fVariantCount; ++i) {
+    if (info.fMimeTypeArray[i] &&
+        (!strcmp(info.fMimeTypeArray[i], "application/x-shockwave-flash") ||
+         !strcmp(info.fMimeTypeArray[i], "application/x-shockwave-flash-test"))) {
+      return true;
+    }
+  }
+  return false;
+}
+
 typedef NS_NPAPIPLUGIN_CALLBACK(char *, NP_GETMIMEDESCRIPTION)(void);
 
 nsresult nsPluginHost::ScanPluginsDirectory(nsIFile *pluginsDir,
@@ -2121,7 +2137,7 @@ nsresult nsPluginHost::ScanPluginsDirectory(nsIFile *pluginsDir,
       }
       // if we don't have mime type don't proceed, this is not a plugin
       if (NS_FAILED(res) || !info.fMimeTypeArray ||
-          (!ShouldAddPlugin(info, flashOnly))) {
+          (flashOnly && !PluginInfoIsFlash(info))) {
         RefPtr<nsInvalidPluginTag> invalidTag = new nsInvalidPluginTag(filePath.get(),
                                                                          fileModTime);
         pluginFile.FreePluginInfo(info);
@@ -3113,6 +3129,10 @@ nsPluginHost::ReadPluginInfo()
     MOZ_LOG(nsPluginLogging::gPluginLog, PLUGIN_LOG_BASIC,
       ("LoadCachedPluginsInfo : Loading Cached plugininfo for %s\n", tag->FileName().get()));
 
+    if (!ShouldAddPlugin(tag)) {
+      continue;
+    }
+
     tag->mNext = mCachedPlugins;
     mCachedPlugins = tag;
   }
@@ -3900,26 +3920,6 @@ nsPluginHost::DestroyRunningInstances(nsPluginTag* aPluginTag)
       }
     }
   }
-}
-
-/* static */
-bool
-nsPluginHost::CanUsePluginForMIMEType(const nsACString& aMIMEType)
-{
-  // We only support flash as a plugin, so if the mime types don't match for
-  // those, exit before we start loading plugins.
-  //
-  // XXX: Remove test/java cases when bug 1351885 lands.
-  if (nsPluginHost::GetSpecialType(aMIMEType) == nsPluginHost::eSpecialType_Flash ||
-      MimeTypeIsAllowedForFakePlugin(NS_ConvertUTF8toUTF16(aMIMEType)) ||
-      aMIMEType.LowerCaseEqualsLiteral("application/x-test") ||
-      aMIMEType.LowerCaseEqualsLiteral("application/x-second-test") ||
-      aMIMEType.LowerCaseEqualsLiteral("application/x-third-test") ||
-      aMIMEType.LowerCaseEqualsLiteral("application/x-java-test")) {
-    return true;
-  }
-
-  return true;
 }
 
 // Runnable that does an async destroy of a plugin.
