@@ -8,15 +8,15 @@
 
 # BrandFullNameInternal is used for some registry and file system values
 # instead of BrandFullName and typically should not be modified.
-!define BrandFullNameInternal "Mozilla Developer Preview"
-!define CompanyName           "mozilla.org"
-!define URLInfoAbout          "https://www.mozilla.org"
-!define HelpLink              "https://support.mozilla.org"
+!define BrandFullNameInternal "Waterfox"
+!define CompanyName           "waterfoxproject.org"
+!define URLInfoAbout          "https://www.waterfoxproject.org"
+!define HelpLink              "https://www.reddit.com/r/waterfox"
 
-!define URLStubDownload32 "http://download.mozilla.org/?os=win&lang=${AB_CD}&product=firefox-latest"
-!define URLStubDownload64 "http://download.mozilla.org/?os=win64&lang=${AB_CD}&product=firefox-latest"
-!define URLManualDownload "https://www.mozilla.org/${AB_CD}/firefox/installer-help/?channel=release&installer_lang=${AB_CD}"
-!define URLSystemRequirements "https://www.mozilla.org/firefox/system-requirements/"
+!define URLStubDownload32 ""
+!define URLStubDownload64 ""
+!define URLManualDownload "https://www.waterfoxproject.org/downloads"
+!define URLSystemRequirements "https://www.waterfoxproject.org/downloads"
 !define Channel "unofficial"
 
 # The installer's certificate name and issuer expected by the stub installer
