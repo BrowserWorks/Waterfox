@@ -14,6 +14,8 @@ ID
 *.rej
 *.orig
 *.log
+*.so
+*.o
 
 # Vim swap files.
 .*.sw[a-z]
