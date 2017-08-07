@@ -460,6 +460,8 @@ public:
 
   virtual bool Synchronize() override;
 
+  IDXGIKeyedMutex* GetKeyedMutex() { return mKeyedMutex.get(); };
+
 private:
   virtual ~SyncObjectD3D11Host() { }
 
