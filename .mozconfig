@@ -30,7 +30,6 @@ mk_add_options MOZ_MAKE_FLAGS=-j6
 mk_add_options MOZ_OBJDIR=objdir
 
 ac_add_options --disable-crashreporter
-ac_add_options --disable-eme
 ac_add_options --disable-js-shell
 ac_add_options --disable-maintenance-service
 ac_add_options --disable-profiling
@@ -44,5 +43,5 @@ ac_add_options --enable-updater
 
 ac_add_options --with-app-name=waterfox
 ac_add_options --with-app-basename=Waterfox
-ac_add_options --with-branding=browser/branding/official
+ac_add_options --with-branding=browser/branding/unofficial
 ac_add_options --with-distribution-id=org.Waterfoxproject
