@@ -59,7 +59,7 @@ static const void *hb_graphite2_get_table (const void *data, unsigned int tag, s
   hb_graphite2_shaper_face_data_t *face_data = (hb_graphite2_shaper_face_data_t *) data;
   hb_graphite2_tablelist_t *tlist = face_data->tlist;
 
-  hb_blob_t *blob = NULL;
+  hb_blob_t *blob = nullptr;
 
   for (hb_graphite2_tablelist_t *p = tlist; p; p = p->next)
     if (p->tag == tag) {
@@ -74,13 +74,13 @@ static const void *hb_graphite2_get_table (const void *data, unsigned int tag, s
     hb_graphite2_tablelist_t *p = (hb_graphite2_tablelist_t *) calloc (1, sizeof (hb_graphite2_tablelist_t));
     if (unlikely (!p)) {
       hb_blob_destroy (blob);
-      return NULL;
+      return nullptr;
     }
     p->blob = blob;
     p->tag = tag;
 
     /* TODO Not thread-safe, but fairly harmless.
-     * We can do the double-chcked pointer cmpexch thing here. */
+     * We can do the double-checked pointer cmpexch thing here. */
     p->next = face_data->tlist;
     face_data->tlist = p;
   }
@@ -100,20 +100,20 @@ _hb_graphite2_shaper_face_data_create (hb_face_t *face)
   if (!hb_blob_get_length (silf_blob))
   {
     hb_blob_destroy (silf_blob);
-    return NULL;
+    return nullptr;
   }
   hb_blob_destroy (silf_blob);
 
   hb_graphite2_shaper_face_data_t *data = (hb_graphite2_shaper_face_data_t *) calloc (1, sizeof (hb_graphite2_shaper_face_data_t));
   if (unlikely (!data))
-    return NULL;
+    return nullptr;
 
   data->face = face;
   data->grface = gr_make_face (data, &hb_graphite2_get_table, gr_face_preloadAll);
 
   if (unlikely (!data->grface)) {
     free (data);
-    return NULL;
+    return nullptr;
   }
 
   return data;
@@ -143,7 +143,7 @@ _hb_graphite2_shaper_face_data_destroy (hb_graphite2_shaper_face_data_t *data)
 gr_face *
 hb_graphite2_face_get_gr_face (hb_face_t *face)
 {
-  if (unlikely (!hb_graphite2_shaper_face_data_ensure (face))) return NULL;
+  if (unlikely (!hb_graphite2_shaper_face_data_ensure (face))) return nullptr;
   return HB_SHAPER_DATA_GET (face)->grface;
 }
 
@@ -171,7 +171,7 @@ _hb_graphite2_shaper_font_data_destroy (hb_graphite2_shaper_font_data_t *data HB
 gr_font *
 hb_graphite2_font_get_gr_font (hb_font_t *font)
 {
-  return NULL;
+  return nullptr;
 }
 
 
@@ -221,7 +221,7 @@ _hb_graphite2_shape (hb_shape_plan_t    *shape_plan,
   gr_face *grface = HB_SHAPER_DATA_GET (face)->grface;
 
   const char *lang = hb_language_to_string (hb_buffer_get_language (buffer));
-  const char *lang_end = lang ? strchr (lang, '-') : NULL;
+  const char *lang_end = lang ? strchr (lang, '-') : nullptr;
   int lang_len = lang_end ? lang_end - lang : -1;
   gr_feature_val *feats = gr_face_featureval_for_lang (grface, lang ? hb_tag_from_string (lang, lang_len) : 0);
 
@@ -232,7 +232,7 @@ _hb_graphite2_shape (hb_shape_plan_t    *shape_plan,
       gr_fref_set_feature_value (fref, features[i].value, feats);
   }
 
-  gr_segment *seg = NULL;
+  gr_segment *seg = nullptr;
   const gr_slot *is;
   unsigned int ci = 0, ic = 0;
   float curradvx = 0., curradvy = 0.;
@@ -250,7 +250,7 @@ _hb_graphite2_shape (hb_shape_plan_t    *shape_plan,
   hb_tag_t script_tag[2];
   hb_ot_tags_from_script (hb_buffer_get_script (buffer), &script_tag[0], &script_tag[1]);
 
-  seg = gr_make_seg (NULL, grface,
+  seg = gr_make_seg (nullptr, grface,
 		     script_tag[1] == HB_TAG_NONE ? script_tag[0] : script_tag[1],
 		     feats,
 		     gr_utf32, chars, buffer->len,
@@ -307,6 +307,8 @@ _hb_graphite2_shape (hb_shape_plan_t    *shape_plan,
     curradv = gr_slot_origin_X(gr_seg_first_slot(seg));
     clusters[0].advance = gr_seg_advance_X(seg) - curradv;
   }
+  else
+    clusters[0].advance = 0;
   for (is = gr_seg_first_slot (seg), ic = 0; is; is = gr_slot_next_in_segment (is), ic++)
   {
     unsigned int before = gr_slot_before (is);
@@ -332,7 +334,10 @@ _hb_graphite2_shape (hb_shape_plan_t    *shape_plan,
       if (HB_DIRECTION_IS_BACKWARD(buffer->props.direction))
         c->advance = curradv - gr_slot_origin_X(is);
       else
-        clusters[ci].advance = gr_slot_origin_X(is) - curradv;
+      {
+        c->advance = 0;
+        clusters[ci].advance += gr_slot_origin_X(is) - curradv;
+      }
       ci++;
       curradv = gr_slot_origin_X(is);
     }
@@ -345,7 +350,7 @@ _hb_graphite2_shape (hb_shape_plan_t    *shape_plan,
   if (HB_DIRECTION_IS_BACKWARD(buffer->props.direction))
     clusters[ci].advance += curradv;
   else
-    clusters[ci].advance = gr_seg_advance_X(seg) - curradv;
+    clusters[ci].advance += gr_seg_advance_X(seg) - curradv;
   ci++;
 
   for (unsigned int i = 0; i < ci; ++i)
@@ -365,9 +370,9 @@ _hb_graphite2_shape (hb_shape_plan_t    *shape_plan,
   float yscale = (float) font->y_scale / upem;
   yscale *= yscale / xscale;
   /* Positioning. */
-  int currclus = -1;
+  unsigned int currclus = (unsigned int) -1;
   const hb_glyph_info_t *info = buffer->info;
-  hb_glyph_position_t *pPos = hb_buffer_get_glyph_positions (buffer, NULL);
+  hb_glyph_position_t *pPos = hb_buffer_get_glyph_positions (buffer, nullptr);
   if (!HB_DIRECTION_IS_BACKWARD(buffer->props.direction))
   {
     curradvx = 0;
@@ -382,13 +387,13 @@ _hb_graphite2_shape (hb_shape_plan_t    *shape_plan,
       } else
         pPos->x_advance = 0.;
 
-      pPos->y_advance = gr_slot_advance_Y (is, grface, NULL) * yscale;
+      pPos->y_advance = gr_slot_advance_Y (is, grface, nullptr) * yscale;
       curradvy += pPos->y_advance;
     }
   }
   else
   {
-    curradvx = gr_seg_advance_X(seg);
+    curradvx = gr_seg_advance_X(seg) * xscale;
     for (is = gr_seg_first_slot (seg); is; pPos++, info++, is = gr_slot_next_in_segment (is))
     {
       if (info->cluster != currclus)
@@ -399,7 +404,7 @@ _hb_graphite2_shape (hb_shape_plan_t    *shape_plan,
       } else
         pPos->x_advance = 0.;
 
-      pPos->y_advance = gr_slot_advance_Y (is, grface, NULL) * yscale;
+      pPos->y_advance = gr_slot_advance_Y (is, grface, nullptr) * yscale;
       curradvy -= pPos->y_advance;
       pPos->x_offset = (gr_slot_origin_X (is) - info->var1.i32) * xscale - curradvx + pPos->x_advance;
       pPos->y_offset = gr_slot_origin_Y (is) * yscale - curradvy;
@@ -409,6 +414,8 @@ _hb_graphite2_shape (hb_shape_plan_t    *shape_plan,
 
   if (feats) gr_featureval_destroy (feats);
   gr_seg_destroy (seg);
+
+  buffer->unsafe_to_break_all ();
 
   return true;
 }

@@ -22,6 +22,8 @@
  * PROVIDE MAINTENANCE, SUPPORT, UPDATES, ENHANCEMENTS, OR MODIFICATIONS.
  */
 
+#include "hb-private.hh"
+#include "hb-debug.hh"
 #define HB_SHAPER directwrite
 #include "hb-shaper-impl-private.hh"
 
@@ -29,10 +31,6 @@
 
 #include "hb-directwrite.h"
 
-
-#ifndef HB_DEBUG_DIRECTWRITE
-#define HB_DEBUG_DIRECTWRITE (HB_DEBUG+0)
-#endif
 
 HB_SHAPER_DATA_ENSURE_DEFINE(directwrite, face)
 HB_SHAPER_DATA_ENSURE_DEFINE(directwrite, font)
@@ -140,7 +138,7 @@ _hb_directwrite_shaper_face_data_create(hb_face_t *face)
   hb_directwrite_shaper_face_data_t *data =
     (hb_directwrite_shaper_face_data_t *) malloc (sizeof (hb_directwrite_shaper_face_data_t));
   if (unlikely (!data))
-    return NULL;
+    return nullptr;
 
   // TODO: factory and fontFileLoader should be cached separately
   IDWriteFactory* dwriteFactory;
@@ -153,7 +151,7 @@ _hb_directwrite_shaper_face_data_create(hb_face_t *face)
   HRESULT hr;
   hb_blob_t *blob = hb_face_reference_blob (face);
   IDWriteFontFileStream *fontFileStream = new DWriteFontFileStream (
-    (uint8_t*) hb_blob_get_data (blob, NULL), hb_blob_get_length (blob));
+    (uint8_t*) hb_blob_get_data (blob, nullptr), hb_blob_get_length (blob));
 
   IDWriteFontFileLoader *fontFileLoader = new DWriteFontFileLoader (fontFileStream);
   dwriteFactory->RegisterFontFileLoader (fontFileLoader);
@@ -165,7 +163,7 @@ _hb_directwrite_shaper_face_data_create(hb_face_t *face)
 
 #define FAIL(...) \
   HB_STMT_START { \
-    DEBUG_MSG (DIRECTWRITE, NULL, __VA_ARGS__); \
+    DEBUG_MSG (DIRECTWRITE, nullptr, __VA_ARGS__); \
     return false; \
   } HB_STMT_END;
 
@@ -233,12 +231,12 @@ struct hb_directwrite_shaper_font_data_t {
 hb_directwrite_shaper_font_data_t *
 _hb_directwrite_shaper_font_data_create (hb_font_t *font)
 {
-  if (unlikely (!hb_directwrite_shaper_face_data_ensure (font->face))) return NULL;
+  if (unlikely (!hb_directwrite_shaper_face_data_ensure (font->face))) return nullptr;
 
   hb_directwrite_shaper_font_data_t *data =
     (hb_directwrite_shaper_font_data_t *) malloc (sizeof (hb_directwrite_shaper_font_data_t));
   if (unlikely (!data))
-    return NULL;
+    return nullptr;
 
   return data;
 }
@@ -313,7 +311,7 @@ public:
     , mTextLength(textLength)
     , mLocaleName(localeName)
     , mReadingDirection(readingDirection)
-    , mCurrentRun(NULL) { };
+    , mCurrentRun(nullptr) { };
 
   ~TextAnalysis() {
     // delete runs, except mRunHead which is part of the TextAnalysis object
@@ -337,7 +335,7 @@ public:
     mRunHead.mTextLength = mTextLength;
     mRunHead.mBidiLevel =
       (mReadingDirection == DWRITE_READING_DIRECTION_RIGHT_TO_LEFT);
-    mRunHead.nextRun = NULL;
+    mRunHead.nextRun = nullptr;
     mCurrentRun = &mRunHead;
 
     // Call each of the analyzers in sequence, recording their results.
@@ -356,7 +354,7 @@ public:
   {
     if (textPosition >= mTextLength) {
       // No text at this position, valid query though.
-      *textString = NULL;
+      *textString = nullptr;
       *textLength = 0;
     }
     else {
@@ -372,8 +370,8 @@ public:
   {
     if (textPosition == 0 || textPosition > mTextLength) {
       // Either there is no text before here (== 0), or this
-      // is an invalid position. The query is considered valid thouh.
-      *textString = NULL;
+      // is an invalid position. The query is considered valid though.
+      *textString = nullptr;
       *textLength = 0;
     }
     else {
@@ -399,7 +397,7 @@ public:
     OUT IDWriteNumberSubstitution** numberSubstitution)
   {
     // We do not support number substitution.
-    *numberSubstitution = NULL;
+    *numberSubstitution = nullptr;
     *textLength = mTextLength - textPosition;
 
     return S_OK;
@@ -617,14 +615,14 @@ _hb_directwrite_shape_full(hb_shape_plan_t    *shape_plan,
   */
   uint32_t textLength = buffer->len;
 
-  TextAnalysis analysis(textString, textLength, NULL, readingDirection);
+  TextAnalysis analysis(textString, textLength, nullptr, readingDirection);
   TextAnalysis::Run *runHead;
   HRESULT hr;
   hr = analysis.GenerateResults(analyzer, &runHead);
 
 #define FAIL(...) \
   HB_STMT_START { \
-    DEBUG_MSG (DIRECTWRITE, NULL, __VA_ARGS__); \
+    DEBUG_MSG (DIRECTWRITE, nullptr, __VA_ARGS__); \
     return false; \
   } HB_STMT_END;
 
@@ -639,7 +637,7 @@ _hb_directwrite_shape_full(hb_shape_plan_t    *shape_plan,
   bool isRightToLeft = HB_DIRECTION_IS_BACKWARD (buffer->props.direction);
 
   const wchar_t localeName[20] = {0};
-  if (buffer->props.language != NULL)
+  if (buffer->props.language != nullptr)
   {
     mbstowcs ((wchar_t*) localeName,
       hb_language_to_string (buffer->props.language), 20);
@@ -672,7 +670,7 @@ retry_getglyphs:
     malloc (maxGlyphCount * sizeof (DWRITE_SHAPING_GLYPH_PROPERTIES));
 
   hr = analyzer->GetGlyphs (textString, textLength, fontFace, false,
-    isRightToLeft, &runHead->mScript, localeName, NULL, &dwFeatures,
+    isRightToLeft, &runHead->mScript, localeName, nullptr, &dwFeatures,
     featureRangeLengths, 1, maxGlyphCount, clusterMap, textProperties, glyphIndices,
     glyphProperties, &glyphCount);
 
@@ -927,8 +925,7 @@ hb_directwrite_shape_experimental_width(hb_font_t          *font,
   hb_bool_t res = _hb_directwrite_shape_full (shape_plan, font, buffer,
     features, num_features, width);
 
-  if (res)
-    buffer->content_type = HB_BUFFER_CONTENT_TYPE_GLYPHS;
+  buffer->unsafe_to_break_all ();
 
   return res;
 }

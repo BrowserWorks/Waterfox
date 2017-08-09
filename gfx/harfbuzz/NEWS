@@ -1,3 +1,207 @@
+Overview of changes leading to 1.7.6
+Wednesday, March 7, 2018
+====================================
+
+- Fix to hb_set_t binary operations. Ouch.
+- New experimental harfbuzz-subset library. All of hb-subset.h
+  is experimental right now and API WILL change.
+
+- New API:
+hb_blob_copy_writable_or_fail()
+HB_OT_TAG_BASE
+hb_set_previous()
+hb_set_previous_range()
+
+
+Overview of changes leading to 1.7.5
+Tuesday, January 30, 2018
+====================================
+
+- Separate Khmer shaper from Indic.
+- First stab at AAT morx. Not hooked up.
+- Misc bug fixes.
+
+
+Overview of changes leading to 1.7.4
+Wednesday, December 20, 2017
+====================================
+
+- Fix collect_glyphs() regression caused by hb_set_t changes.
+
+
+Overview of changes leading to 1.7.3
+Monday, December 18, 2017
+====================================
+
+- hb_set_t performance tuning and optimizations.
+- Speed up collect_glyphs() and reject garbage data.
+- In hb_coretext_font_create() set font point-size (ptem).
+- Misc fixes.
+
+
+Overview of changes leading to 1.7.2
+Monday, December 4, 2017
+====================================
+
+- Optimize hb_set_add_range().
+- Misc fixes.
+- New API:
+hb_coretext_font_create()
+
+
+Overview of changes leading to 1.7.1
+Tuesday, November 14, 2017
+====================================
+
+- Fix atexit object destruction regression.
+- Fix minor integer-overflow.
+
+
+Overview of changes leading to 1.7.0
+Monday, November 13, 2017
+====================================
+
+- Minor Indic fixes.
+- Implement kerning and glyph names in hb-ot-font.
+- Various DSO optimization re .data and .bss sizes.
+- Make C++11 optional; build fixes.
+- Mark all other backends "unsafe-to-break".
+- Graphite fix.
+
+
+Overview of changes leading to 1.6.3
+Thursday, October 26th, 2017
+====================================
+
+- Fix hb_set_t some more.  Should be solid now.
+- Implement get_glyph_name() for hb-ot-font.
+- Misc fixes.
+
+
+Overview of changes leading to 1.6.2
+Monday, October 23nd, 2017
+====================================
+
+- Yesterday's release had a bad crasher; don't use it.  That's what
+  happens when one works on Sunday...
+  https://github.com/harfbuzz/harfbuzz/issues/578
+- Build fixes for FreeBSD and Chrome Android.
+
+
+Overview of changes leading to 1.6.1
+Sunday, October 22nd, 2017
+====================================
+
+- Don't skip over COMBINING GRAPHEME JOINER when ligating, etc.
+  To be refined: https://github.com/harfbuzz/harfbuzz/issues/554
+- Faster hb_set_t implementation.
+- Don't use deprecated ICU API.
+- Fix undefined-behavior in Myanmar shaper, introduced in 1.6.0
+- Deprecated API:
+  hb_set_invert()
+
+
+Overview of changes leading to 1.6.0
+Friday, October the 13th, 2017
+====================================
+
+- Update to Unicode 10.
+
+- Various Indic and Universal Shaping Engine fixes as a result of
+  HarfBuzz Hackfest with Jonathan Kew at Web Engines Hackfest at
+  the Igalia offices in A Coruña, Spain.  Thanks Igalia for having
+  us!
+
+- Implement Unicode Arabic Mark Ordering Algorithm UTR#53.
+
+- Implement optical sizing / tracking in CoreText backend, using
+  new API hb_font_set_ptem().
+
+- Allow notifying hb_font_t that underlying FT_Face changed sizing,
+  using new API hb_ft_font_changed().
+
+- More Graphite backend RTL fixes.
+
+- Fix caching of variable font shaping plans.
+
+- hb-view / hb-shape now accept following new arguments:
+
+  o --unicodes: takes a list of hex numbers that represent Unicode
+    codepoints.
+
+New API:
++hb_face_get_table_tags()
++hb_font_set_ptem()
++hb_font_get_ptem()
++hb_ft_font_changed()
+
+
+Overview of changes leading to 1.5.1
+Tuesday, September 5, 2017
+====================================
+
+- Fix "unsafe-to-break" in fallback shaping and other corner cases.
+  All our tests pass with --verify now, meaning unsafe-to-break API
+  works as expected.
+- Add --unicodes to hb-view / hb-shape.
+- [indic] Treat Consonant_With_Stacker as consonant.  This will need
+  further tweaking.
+- hb_buffer_diff() tweaks.
+
+
+Overview of changes leading to 1.5.0
+Wednesday, August 23, 2017
+====================================
+
+- Misc new API, for appending a buffer to another, and for comparing
+  contents of two buffers for types of differences.
+
+- New "unsafe-to-break" API.  Can be used to speed up reshaping
+  in line-breaking situations.  Essentially, after shaping, it returns
+  positions in the input string (some of the cluster boundaries) that
+  are "safe to break" in that if the text is segmented at that position
+  and two sides reshaped and concatenated, the shaping result is
+  exactly the same as shaping the text in one piece.
+
+  hb-view and hb-shape and hb-shape now take --verify, which verifies
+  the above property.
+
+  Some corner cases of the implementation are still not quite working.
+  Those will be fixed in subsequent releases.
+
+- New API:
+
+hb_buffer_append()
+
+hb_glyph_flags_t
+HB_GLYPH_FLAG_UNSAFE_TO_BREAK
+HB_GLYPH_FLAG_DEFINED
+hb_glyph_info_get_glyph_flags()
+
+HB_BUFFER_SERIALIZE_FLAG_GLYPH_FLAGS
+
+hb_buffer_diff_flags_t
+HB_BUFFER_DIFF_FLAG_EQUAL
+HB_BUFFER_DIFF_FLAG_CONTENT_TYPE_MISMATCH
+HB_BUFFER_DIFF_FLAG_LENGTH_MISMATCH
+HB_BUFFER_DIFF_FLAG_NOTDEF_PRESENT
+HB_BUFFER_DIFF_FLAG_DOTTED_CIRCLE_PRESENT
+HB_BUFFER_DIFF_FLAG_CODEPOINT_MISMATCH
+HB_BUFFER_DIFF_FLAG_CLUSTER_MISMATCH
+HB_BUFFER_DIFF_FLAG_GLYPH_FLAGS_MISMATCH
+HB_BUFFER_DIFF_FLAG_POSITION_MISMATCH
+hb_buffer_diff
+
+
+Overview of changes leading to 1.4.8
+Tuesday, August 8, 2017
+====================================
+
+- Major fix to avar table handling.
+- Rename hb-shape --show-message to --trace.
+- Build fixes.
+
+
 Overview of changes leading to 1.4.7
 Tuesday, July 18, 2017
 ====================================
@@ -290,7 +494,7 @@ Tuesday, February 23, 2016
 - CoreText: Drastically speed up font initialization.
 - CoreText: Fix tiny leak.
 - Group ZWJ/ZWNJ with previous syllable under cluster-level=0.
-  https://github.com/behdad/harfbuzz/issues/217
+  https://github.com/harfbuzz/harfbuzz/issues/217
 - Add test/shaping/README.md about how to add tests to the suite.
 
 
@@ -306,8 +510,8 @@ Friday, February 19, 2016
 - Allow GPOS cursive connection on marks, and fix the interaction with
   mark attachment.  This work resulted in some changes to how mark
   attachments work.  See:
-  https://github.com/behdad/harfbuzz/issues/211
-  https://github.com/behdad/harfbuzz/commit/86c68c7a2c971efe8e35b1f1bd99401dc8b688d2
+  https://github.com/harfbuzz/harfbuzz/issues/211
+  https://github.com/harfbuzz/harfbuzz/commit/86c68c7a2c971efe8e35b1f1bd99401dc8b688d2
 - Graphite2 shaper: improved negative advance handling (eg. Nastaliq).
 - Add nmake-based build system for Windows.
 - Minor speedup.
@@ -348,7 +552,7 @@ Wednesday, November 26, 2015
 ====================================
 
 - Fix badly-broken fallback shaper that affected terminology.
-  https://github.com/behdad/harfbuzz/issues/187
+  https://github.com/harfbuzz/harfbuzz/issues/187
 - Fix y_scaling in Graphite shaper.
 - API changes:
   * An unset glyph_h_origin() function in font-funcs now (sensibly)
@@ -370,11 +574,11 @@ Wednesday, November 18, 2015
 ====================================
 
 - Implement 'stch' stretch feature for Syriac Abbreviation Mark.
-  https://github.com/behdad/harfbuzz/issues/141
+  https://github.com/harfbuzz/harfbuzz/issues/141
 - Disable use of decompose_compatibility() callback.
 - Implement "shaping" of various Unicode space characters, even
   if the font does not support them.
-  https://github.com/behdad/harfbuzz/issues/153
+  https://github.com/harfbuzz/harfbuzz/issues/153
 - If font does not support U+2011 NO-BREAK HYPHEN, fallback to
   U+2010 HYPHEN.
 - Changes resulting from libFuzzer continuous fuzzing:
@@ -397,7 +601,7 @@ Thursday, October 15, 2015
 - Revert default load-flags of fonts created using hb_ft_font_create()
   back to FT_LOAD_DEFAULT|FT_LOAD_NO_HINTING.  This was changed in
   last release (1.0.5), but caused major issues, so revert.
-  https://github.com/behdad/harfbuzz/issues/143
+  https://github.com/harfbuzz/harfbuzz/issues/143
 
 
 Overview of changes leading to 1.0.5
@@ -405,7 +609,7 @@ Tuesday, October 13, 2015
 ====================================
 
 - Fix multiple memory access bugs discovered using libFuzzer.
-  https://github.com/behdad/harfbuzz/issues/139
+  https://github.com/harfbuzz/harfbuzz/issues/139
   Everyone should upgrade to this version as soon as possible.
   We now have continuous fuzzing set up, to avoid issues like
   these creeping in again.
@@ -676,7 +880,7 @@ Wednesday, July 16, 2014
   U+FFFD REPLACEMENT CHARACTER now.
 - With all changes in this release, the buffer will contain fully
   valid Unicode after hb_buffer_add_utf8/16/32 no matter how
-  broken the input is.  This can be overriden though.  See below.
+  broken the input is.  This can be overridden though.  See below.
 - Fix Mongolian Variation Selectors for fonts without GDEF.
 - Fix minor invalid buffer access.
 - Accept zh-Hant and zh-Hans language tags.  hb_ot_tag_to_language()

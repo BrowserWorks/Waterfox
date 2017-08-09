@@ -44,6 +44,7 @@ defaults = ('Other', 'Not_Applicable', 'Cn', 'No_Block')
 # TODO Characters that are not in Unicode Indic files, but used in USE
 data[0][0x034F] = defaults[0]
 data[0][0x2060] = defaults[0]
+data[0][0x20F0] = defaults[0]
 for u in range (0xFE00, 0xFE0F + 1):
 	data[0][u] = defaults[0]
 
@@ -117,6 +118,7 @@ property_names = [
 	'Top_And_Right',
 	'Top_And_Left',
 	'Top_And_Left_And_Right',
+	'Bottom_And_Left',
 	'Bottom_And_Right',
 	'Top_And_Bottom_And_Right',
 	'Overstruck',
@@ -153,7 +155,7 @@ def is_BASE(U, UISC, UGC):
 def is_BASE_IND(U, UISC, UGC):
 	#SPEC-DRAFT return (UISC in [Consonant_Dead, Modifying_Letter] or UGC == Po)
 	return (UISC in [Consonant_Dead, Modifying_Letter] or
-		(UGC == Po and not U in [0x104E, 0x2022]) or
+		(UGC == Po and not U in [0x104E, 0x2022, 0x11A3F, 0x11A45]) or
 		False # SPEC-DRAFT-OUTDATED! U == 0x002D
 		)
 def is_BASE_NUM(U, UISC, UGC):
@@ -177,6 +179,8 @@ def is_CONS_MOD(U, UISC, UGC):
 def is_CONS_SUB(U, UISC, UGC):
 	#SPEC-DRAFT return UISC == Consonant_Subjoined
 	return UISC == Consonant_Subjoined and UGC != Lo
+def is_CONS_WITH_STACKER(U, UISC, UGC):
+	return UISC == Consonant_With_Stacker
 def is_HALANT(U, UISC, UGC):
 	return UISC in [Virama, Invisible_Stacker]
 def is_HALANT_NUM(U, UISC, UGC):
@@ -198,9 +202,7 @@ def is_OTHER(U, UISC, UGC):
 def is_Reserved(U, UISC, UGC):
 	return UGC == 'Cn'
 def is_REPHA(U, UISC, UGC):
-	#return UISC == Consonant_Preceding_Repha
-	#SPEC-OUTDATED hack to categorize Consonant_With_Stacker and Consonant_Prefixed
-	return UISC in [Consonant_Preceding_Repha, Consonant_With_Stacker, Consonant_Prefixed]
+	return UISC in [Consonant_Preceding_Repha, Consonant_Prefixed]
 def is_SYM(U, UISC, UGC):
 	if U == 0x25CC: return False #SPEC-DRAFT
 	#SPEC-DRAFT return UGC in [So, Sc] or UISC == Symbol_Letter
@@ -229,6 +231,7 @@ use_mapping = {
 	'M':	is_CONS_MED,
 	'CM':	is_CONS_MOD,
 	'SUB':	is_CONS_SUB,
+	'CS':	is_CONS_WITH_STACKER,
 	'H':	is_HALANT,
 	'HN':	is_HALANT_NUM,
 	'ZWNJ':	is_ZWNJ,
@@ -252,7 +255,7 @@ use_positions = {
 	},
 	'M': {
 		'Abv': [Top],
-		'Blw': [Bottom],
+		'Blw': [Bottom, Bottom_And_Left],
 		'Pst': [Right],
 		'Pre': [Left],
 	},
@@ -294,12 +297,23 @@ def map_to_use(data):
 		if U == 0x17DD: UISC = Vowel_Dependent
 		if 0x1CE2 <= U <= 0x1CE8: UISC = Cantillation_Mark
 
+		# TODO: https://github.com/harfbuzz/harfbuzz/pull/627
+		if 0x1BF2 <= U <= 0x1BF3: UISC = Nukta; UIPC = Bottom
+
 		# TODO: U+1CED should only be allowed after some of
 		# the nasalization marks, maybe only for U+1CE9..U+1CF1.
 		if U == 0x1CED: UISC = Tone_Mark
 
-		evals = [(k, v(U,UISC,UGC)) for k,v in items]
-		values = [k for k,v in evals if v]
+		# TODO: https://github.com/harfbuzz/harfbuzz/issues/525
+		if U == 0x1A7F: UISC = Consonant_Final; UIPC = Bottom
+
+		# TODO: https://github.com/harfbuzz/harfbuzz/pull/609
+		if U == 0x20F0: UISC = Cantillation_Mark; UIPC = Top
+
+		# TODO: https://github.com/harfbuzz/harfbuzz/pull/626
+		if U == 0xA8B4: UISC = Consonant_Medial
+
+		values = [k for k,v in items if v(U,UISC,UGC)]
 		assert len(values) == 1, "%s %s %s %s" % (hex(U), UISC, UGC, values)
 		USE = values[0]
 
@@ -337,12 +351,6 @@ def map_to_use(data):
 
 defaults = ('O', 'No_Block')
 data = map_to_use(data)
-
-# Remove the outliers
-singles = {}
-for u in [0x034F, 0x25CC, 0x1107F]:
-	singles[u] = data[u]
-	del data[u]
 
 print "/* == Start of generated table == */"
 print "/*"
@@ -441,20 +449,17 @@ page_bits = 12
 print "}; /* Table items: %d; occupancy: %d%% */" % (offset, occupancy)
 print
 print "USE_TABLE_ELEMENT_TYPE"
-print "hb_use_get_categories (hb_codepoint_t u)"
+print "hb_use_get_category (hb_codepoint_t u)"
 print "{"
 print "  switch (u >> %d)" % page_bits
 print "  {"
-pages = set([u>>page_bits for u in starts+ends+singles.keys()])
+pages = set([u>>page_bits for u in starts+ends])
 for p in sorted(pages):
 	print "    case 0x%0Xu:" % p
 	for (start,end) in zip (starts, ends):
 		if p not in [start>>page_bits, end>>page_bits]: continue
 		offset = "use_offset_0x%04xu" % start
 		print "      if (hb_in_range<hb_codepoint_t> (u, 0x%04Xu, 0x%04Xu)) return use_table[u - 0x%04Xu + %s];" % (start, end-1, start, offset)
-	for u,d in singles.items ():
-		if p != u>>page_bits: continue
-		print "      if (unlikely (u == 0x%04Xu)) return %s;" % (u, d[0])
 	print "      break;"
 	print ""
 print "    default:"
