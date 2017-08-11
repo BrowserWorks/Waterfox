@@ -112,9 +112,6 @@
 
 #define NS_HTTP_PROTOCOL_FLAGS (URI_STD | ALLOWS_PROXY | ALLOWS_PROXY_HTTP | URI_LOADABLE_BY_ANYONE)
 
-// Firefox compatibility version we claim in our UA by default
-#define MOZILLA_COMPATVERSION "52.9"
-
 //-----------------------------------------------------------------------------
 
 namespace mozilla {
@@ -211,6 +208,7 @@ nsHttpHandler::nsHttpHandler()
     , mLegacyAppVersion("5.0")
     , mProduct("Gecko")
     , mCompatFirefoxEnabled(false)
+    , mCompatFirefoxVersion("52.9")
     , mUserAgentIsDirty(true)
     , mAcceptLanguagesIsDirty(true)
     , mPromptTempRedirect(true)
@@ -440,10 +438,12 @@ nsHttpHandler::Init()
     nsHttpChannelAuthProvider::InitializePrefs();
 
     // rv: should have the Firefox/Gecko compatversion for web compatibility
-    mMisc.AssignLiteral("rv:" MOZILLA_COMPATVERSION);
+    mMisc.AssignLiteral("rv:");
+    mMisc += mCompatFirefoxVersion;
 
     mCompatGecko.AssignLiteral("Gecko/20100101");
-    mCompatFirefox.AssignLiteral("Firefox/" MOZILLA_COMPATVERSION);
+    mCompatFirefox.AssignLiteral("Firefox/");
+    mCompatFirefox += mCompatFirefoxVersion;
 
     nsCOMPtr<nsIXULAppInfo> appInfo =
         do_GetService("@mozilla.org/xre/app-info;1");
@@ -472,7 +472,7 @@ nsHttpHandler::Init()
       appInfo->GetVersion(mAppVersion);
     } else {
       // Fall back to platform if appInfo is unavailable
-      mAppVersion.Assign(MOZILLA_UAVERSION);
+      mAppVersion.AssignLiteral(MOZILLA_UAVERSION);
     }
 
     // If there's no override set, set it to the dynamic BuildID
@@ -1184,10 +1184,26 @@ nsHttpHandler::PrefsChanged(nsIPrefBranch *prefs, const char *pref)
         mUserAgentIsDirty = true;
     }
 
+    // general.useragent.compatMode.version
+    // This is the version number used in rv: for Gecko compatibility
+    // and in the Firefox/nn.nn slice when compatMode.firefox is enabled.
+    if (PREF_CHANGED(UA_PREF("compatMode.version"))) {
+        prefs->GetCharPref(UA_PREF("compatMode.version"),
+                           getter_Copies(mCompatFirefoxVersion));
+        
+        // rebuild mMisc and compatMode slice
+        mMisc.AssignLiteral("rv:");
+        mMisc += mCompatFirefoxVersion;
+        mCompatFirefox.AssignLiteral("Firefox/");
+        mCompatFirefox += mCompatFirefoxVersion;
+        
+        mUserAgentIsDirty = true;
+    }
+
     // general.useragent.override
     if (PREF_CHANGED(UA_PREF("override"))) {
         prefs->GetCharPref(UA_PREF("override"),
-                            getter_Copies(mUserAgentOverride));
+                           getter_Copies(mUserAgentOverride));
         mUserAgentIsDirty = true;
     }
 
