@@ -2638,6 +2638,18 @@ gfxFont::GetShapedWord(DrawTarget *aDrawTarget,
     return sw;
 }
 
+template gfxShapedWord*
+gfxFont::GetShapedWord(DrawTarget *aDrawTarget,
+                       const uint8_t *aText,
+                       uint32_t    aLength,
+                       uint32_t    aHash,
+                       Script      aRunScript,
+                       bool        aVertical,
+                       int32_t     aAppUnitsPerDevUnit,
+                       gfx::ShapedTextFlags aFlags,
+                       RoundingFlags aRounding,
+                       gfxTextPerfMetrics *aTextPerf);
+
 bool
 gfxFont::CacheHashEntry::KeyEquals(const KeyTypePointer aKey) const
 {
