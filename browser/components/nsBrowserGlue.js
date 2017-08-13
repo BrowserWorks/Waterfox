@@ -55,6 +55,7 @@ let initializedModules = {};
   ["AppMenuNotifications", "resource://gre/modules/AppMenuNotifications.jsm"],
   ["AsyncShutdown", "resource://gre/modules/AsyncShutdown.jsm"],
   ["AutoCompletePopup", "resource://gre/modules/AutoCompletePopup.jsm"],
+  ["BrowserUtils", "resource://gre/modules/BrowserUtils.jsm"],
   ["BookmarkHTMLUtils", "resource://gre/modules/BookmarkHTMLUtils.jsm"],
   ["BookmarkJSONUtils", "resource://gre/modules/BookmarkJSONUtils.jsm"],
   ["ContentClick", "resource:///modules/ContentClick.jsm"],
@@ -495,6 +496,10 @@ BrowserGlue.prototype = {
         break;
       case "sync-ui-state:update":
         this._updateFxaBadges();
+        break;
+      case "browser.application.restart":
+        this._initPlaces(true);
+        BrowserUtils.restartApplication();       
         break;
     }
   },

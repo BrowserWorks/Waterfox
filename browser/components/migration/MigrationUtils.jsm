@@ -14,6 +14,7 @@ const TOPIC_PLACES_DEFAULTS_FINISHED = "places-browser-init-complete";
 Cu.import("resource://gre/modules/AppConstants.jsm");
 Cu.import("resource://gre/modules/Services.jsm");
 Cu.import("resource://gre/modules/XPCOMUtils.jsm");
+Cu.import("resource://gre/modules/Console.jsm");
 
 Cu.importGlobalProperties(["URL"]);
 
@@ -48,14 +49,14 @@ XPCOMUtils.defineLazyGetter(this, "gAvailableMigratorKeys", function() {
   if (AppConstants.platform == "win") {
     return [
       "firefox", "edge", "ie", "chrome", "chromium", "360se",
-      "canary"
+      "canary", "waterfox"
     ];
   }
   if (AppConstants.platform == "macosx") {
-    return ["firefox", "safari", "chrome", "chromium", "canary"];
+    return ["firefox", "safari", "chrome", "chromium", "canary", "waterfox"];
   }
   if (AppConstants.XP_UNIX) {
-    return ["firefox", "chrome", "chromium"];
+    return ["firefox", "chrome", "chromium", "waterfox"];
   }
   return [];
 });
@@ -562,6 +563,8 @@ this.MigrationUtils = Object.freeze({
         return "sourceNameChromium";
       case "firefox":
         return "sourceNameFirefox";
+      case "waterfox":
+        return "sourceNameWaterfox";
       case "360se":
         return "sourceName360se";
     }
@@ -697,6 +700,7 @@ this.MigrationUtils = Object.freeze({
       try {
         migrator = Cc["@mozilla.org/profile/migrator;1?app=browser&type=" +
                       aKey].createInstance(Ci.nsIBrowserProfileMigrator);
+        console.log(aKey);
       } catch (ex) { Cu.reportError(ex) }
       this._migrators.set(aKey, migrator);
     }
@@ -721,6 +725,7 @@ this.MigrationUtils = Object.freeze({
       "Safari":                            "safari",
       "Firefox":                           "firefox",
       "Nightly":                           "firefox",
+      "Waterfox":                          "waterfox",
       "Google Chrome":                     "chrome",  // Windows, Linux
       "Chrome":                            "chrome",  // OS X
       "Chromium":                          "chromium", // Windows, OS X
@@ -1122,6 +1127,7 @@ this.MigrationUtils = Object.freeze({
     "canary":     7,
     "safari":     8,
     "360se":      9,
+    "waterfox":   10,
   },
   getSourceIdForTelemetry(sourceName) {
     return this._sourceNameToIdMapping[sourceName] || 0;

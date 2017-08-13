@@ -2,7 +2,7 @@
 
 # macOS Specific Options
 if test `uname -s` = Darwin; then
-ac_add_options --enable-optimize="-O3 -march=core2 -w"
+ac_add_options --enable-optimize="-O2 -w"
 ac_add_options --with-macos-sdk=/Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX10.11.sdk
 mk_add_options AUTOCONF=/usr/local/Cellar/autoconf213/2.13/bin/autoconf213
 # Windows 10 Specific Options
@@ -44,4 +44,4 @@ ac_add_options --enable-updater
 ac_add_options --with-app-name=waterfox
 ac_add_options --with-app-basename=Waterfox
 ac_add_options --with-branding=browser/branding/unofficial
-ac_add_options --with-distribution-id=org.Waterfoxproject
+ac_add_options --with-distribution-id=org.waterfoxproject

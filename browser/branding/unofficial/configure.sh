@@ -10,7 +10,7 @@ if test "$OS_ARCH" = "WINNT"; then
 elif test "$OS_ARCH" = "Linux"; then
   MOZ_APP_PROFILE=mozilla/Firefox
 elif test "$OS_ARCH" = "Darwin"; then
-  MOZ_APP_PROFILE=Firefox
+  MOZ_APP_PROFILE=Waterfox
 fi
 
 MOZ_TELEMETRY_REPORTING=0

@@ -483,6 +483,7 @@
 @RESPATH@/browser/components/ProfileMigrator.js
 @RESPATH@/browser/components/ChromeProfileMigrator.js
 @RESPATH@/browser/components/FirefoxProfileMigrator.js
+@RESPATH@/browser/components/WaterfoxProfileMigrator.js
 #ifdef XP_WIN
 @RESPATH@/browser/components/360seProfileMigrator.js
 @RESPATH@/browser/components/EdgeProfileMigrator.js
