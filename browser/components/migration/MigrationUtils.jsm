@@ -537,7 +537,9 @@ this.MigrationUtils = Object.freeze({
 
     const OVERRIDES = {
       "4_firefox": "4_firefox_history_and_bookmarks",
-      "64_firefox": "64_firefox_other"
+      "64_firefox": "64_firefox_other",
+      "4_waterfox": "4_waterfox_history_and_bookmarks",
+      "64_waterfox": "64_waterfox_other"
     };
     aKey = OVERRIDES[aKey] || aKey;
 

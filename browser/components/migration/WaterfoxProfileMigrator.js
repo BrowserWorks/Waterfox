@@ -184,8 +184,12 @@
   let formData = getFileResource(types.FORMDATA, ["formhistory.sqlite"]);
   let bookmarksBackups = getFileResource(types.OTHERDATA, [PlacesBackups.profileRelativeFolderPath]);
   let dictionary = getFileResource(types.OTHERDATA, ["persdict.dat"]);
+  let extensionFiles = getFileResource(types.OTHERDATA, ["addons.json", "extension-settings.json", "extensions.ini", "extensions.json"]);
+  let extensionDirectories = getFileResource(types.OTHERDATA, ["browser-extension-data", "extension-data", "extensions"]);
  
-  // All extensions sit in the extensions subdirectory within the profile directory
+  // Turns out the below code isn't necessary as directories can be copied as above. 
+  // Oh the wasted hours...
+/*   // All extensions sit in the extensions subdirectory within the profile directory
   let extensionsDir = this._getFileObject(sourceProfileDir, "extensions");
   // Since we don't have any extensions installed by the user on on first run,
   // create a folder called extensions in the current profile
@@ -209,7 +213,7 @@
      file.copyTo(dest, "");
     }
    }
-  }
+  } */
  
   let sessionCheckpoints = this._getFileObject(sourceProfileDir, "sessionCheckpoints.json");
   let sessionFile = this._getFileObject(sourceProfileDir, "sessionstore.js");
@@ -263,7 +267,7 @@
   };
  
   return [places, cookies, passwords, formData, dictionary, bookmarksBackups,
-   session, times, favicons
+   session, times, favicons, extensionFiles, extensionDirectories
   ].filter(r => r);
  };
  
