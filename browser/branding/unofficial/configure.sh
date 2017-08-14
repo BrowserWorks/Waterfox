@@ -6,9 +6,9 @@ MOZ_APP_DISPLAYNAME=Waterfox
 
 # Hard code profile locations due to rebranding changing the default location
 if test "$OS_ARCH" = "WINNT"; then
-  MOZ_APP_PROFILE=Mozilla/Firefox
+  MOZ_APP_PROFILE=Waterfox
 elif test "$OS_ARCH" = "Linux"; then
-  MOZ_APP_PROFILE=mozilla/Firefox
+  MOZ_APP_PROFILE=Waterfox
 elif test "$OS_ARCH" = "Darwin"; then
   MOZ_APP_PROFILE=Waterfox
 fi

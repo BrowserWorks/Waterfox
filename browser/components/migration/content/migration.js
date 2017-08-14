@@ -444,7 +444,7 @@ var MigrationWizard = { /* exported MigrationWizard */
           this._wiz.canAdvance = true;
           this._wiz.advance();
 
-          setTimeout(close, 5000);
+          // setTimeout(close, 5000);
         } else {
           this._wiz.canAdvance = true;
           var nextButton = this._wiz.getButton("next");
