@@ -186,6 +186,7 @@
   let dictionary = getFileResource(types.OTHERDATA, ["persdict.dat"]);
   let extensionFiles = getFileResource(types.OTHERDATA, ["addons.json", "extension-settings.json", "extensions.ini", "extensions.json"]);
   let extensionDirectories = getFileResource(types.OTHERDATA, ["browser-extension-data", "extension-data", "extensions"]);
+  let miscData = getFileResource(types.OTHERDATA, ["permissions.sqlite", "search.json.mozlz4", "mimeTypes.rdf"]);
  
   // Turns out the below code isn't necessary as directories can be copied as above. 
   // Oh the wasted hours...
@@ -267,7 +268,7 @@
   };
  
   return [places, cookies, passwords, formData, dictionary, bookmarksBackups,
-   session, times, favicons, extensionFiles, extensionDirectories
+   session, times, favicons, extensionFiles, extensionDirectories, miscData
   ].filter(r => r);
  };
  
