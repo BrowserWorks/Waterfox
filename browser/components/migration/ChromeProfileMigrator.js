@@ -193,7 +193,7 @@ Object.defineProperty(ChromeProfileMigrator.prototype, "sourceProfiles", {
         });
       }
     } catch (e) {
-      Cu.reportError("Error detecting Chrome profiles: " + e);
+      // Cu.reportError("Error detecting Chrome profiles: " + e);
       // If we weren't able to detect any profiles above, fallback to the Default profile.
       let defaultProfileFolder = this._chromeUserDataFolder.clone();
       defaultProfileFolder.append("Default");
