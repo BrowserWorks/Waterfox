@@ -2,7 +2,7 @@
 
 # macOS Specific Options
 if test `uname -s` = Darwin; then
-ac_add_options --enable-optimize="-O2 -w"
+ac_add_options --enable-optimize="-O2 -march=core2 -mtune=generic -w"
 ac_add_options --with-macos-sdk=/Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX10.11.sdk
 mk_add_options AUTOCONF=/usr/local/Cellar/autoconf213/2.13/bin/autoconf213
 # Windows 10 Specific Options
@@ -18,7 +18,7 @@ export WIN_UCRT_REDIST_DIR="/c/Program Files (x86)/Windows Kits/10/Redist/ucrt/D
 elif test `uname -s` = Linux; then
 export CC=clang
 export CXX=clang++
-ac_add_options --enable-optimize="-O3 -fcolor-diagnostics -w"
+ac_add_options --enable-optimize="-O3 -mtune=generic -fcolor-diagnostics -w"
 ac_add_options --target=x86_64-pc-linux-gnu
 ac_add_options --with-ccache=ccache
 ac_add_options --disable-pulseaudio
