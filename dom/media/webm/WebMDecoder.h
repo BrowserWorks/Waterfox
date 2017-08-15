@@ -31,8 +31,6 @@ public:
   // with an enabled platform decoder backend.
   // If provided, codecs are checked for support.
   static bool IsSupportedType(const MediaContainerType& aContainerType);
-
-  void GetMozDebugReaderData(nsACString& aString) override;
 };
 
 } // namespace mozilla
