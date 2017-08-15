@@ -1625,7 +1625,7 @@ BrowserGlue.prototype = {
 
   // eslint-disable-next-line complexity
   _migrateUI: function BG__migrateUI() {
-    const UI_VERSION = 47;
+    const UI_VERSION = 55;
     const BROWSER_DOCURL = "chrome://browser/content/browser.xul";
 
     let currentUIVersion;
@@ -1953,6 +1953,11 @@ BrowserGlue.prototype = {
       } catch (ex) {
         // A missing pref is not a fatal error.
       }
+    }
+
+    if (currentUIVersion < 55) {
+      // Make sure users can run "Full add-ons"
+      Services.prefs.setBoolPref("extensions.legacy.enabled", true);
     }
 
     // Update the migration version.
