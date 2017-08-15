@@ -3,6 +3,7 @@
 # macOS Specific Options
 if test `uname -s` = Darwin; then
 ac_add_options --enable-optimize="-O2 -march=core2 -mtune=generic -w"
+ac_add_options --with-ccache=ccache
 ac_add_options --with-macos-sdk=/Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX10.11.sdk
 mk_add_options AUTOCONF=/usr/local/Cellar/autoconf213/2.13/bin/autoconf213
 # Windows 10 Specific Options
@@ -33,6 +34,7 @@ ac_add_options --disable-crashreporter
 ac_add_options --disable-js-shell
 ac_add_options --disable-maintenance-service
 ac_add_options --disable-profiling
+ac_add_options --disable-signmar
 ac_add_options --disable-tests
 ac_add_options --disable-verify-mar
 
