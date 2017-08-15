@@ -191,7 +191,7 @@
   let enumerator = sourceProfileDir.directoryEntries;
   while (enumerator.hasMoreElements()) {
     let file = enumerator.getNext().QueryInterface(Ci.nsIFile);
-    if (file.isFile() || file.isDirectory()) {
+    if ((file.isFile() || file.isDirectory()) && (file.leafName !== "parent.lock")) {
       file.copyTo(currentProfileDir, "");
     }
   }
