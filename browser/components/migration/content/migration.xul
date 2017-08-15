@@ -14,7 +14,7 @@
         title="&migrationWizard.title;"
         onload="MigrationWizard.init()"
         onunload="MigrationWizard.uninit()"
-        style="width: 50em; height: 46em;"
+        style="width: 50em; height: 39em;"
         buttons="accept,cancel"
         branded="true">
 
@@ -26,7 +26,6 @@
               label="&importSource.title;"
               onpageadvanced="return MigrationWizard.onImportSourcePageAdvanced();">
     <description id="welcomeText" >&migrationWizard.text1;</description>
-    <description id="welcomeText" >&migrationWizard.text2;</description>
 #ifdef XP_WIN
     <description id="importAll" control="importSourceGroup">&importFrom.label;</description>
 #else
