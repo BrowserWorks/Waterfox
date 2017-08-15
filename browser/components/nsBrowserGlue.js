@@ -1956,8 +1956,20 @@ BrowserGlue.prototype = {
     }
 
     if (currentUIVersion < 55) {
-      // Make sure users can run "Full add-ons"
+      // Set any disabled Waterfox features to false if upgrading from lower version
+      // where these may have been enabled.
+      Services.prefs.setBoolPref("browser.send_pings", false);
+      Services.prefs.setBoolPref("experiments.enabled", false);
+      Services.prefs.setBoolPref("experiments.manifest.uri", "");
+      Services.prefs.setBoolPref("experiments.supported", false);
       Services.prefs.setBoolPref("extensions.legacy.enabled", true);
+      Services.prefs.setBoolPref("toolkit.telemetry.archive.enabled", false);
+      Services.prefs.setBoolPref("toolkit.telemetry.newProfilePing.enabled", false);
+      Services.prefs.setBoolPref("toolkit.telemetry.shutdownPingSender.enabled", false);
+      Services.prefs.setBoolPref("xpinstall.signatures.required", false);
+      Services.prefs.setStringPref("browser.aboutHomeSnippets.updateUrl", "");
+      Services.prefs.setStringPref("browser.newtabpage.directory.source", "");
+      Services.prefs.setStringPref("extensions.hotfix.id", "");
     }
 
     // Update the migration version.
