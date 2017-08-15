@@ -184,9 +184,9 @@
   let formData = getFileResource(types.FORMDATA, ["formhistory.sqlite"]);
   let bookmarksBackups = getFileResource(types.OTHERDATA, [PlacesBackups.profileRelativeFolderPath]);
   let dictionary = getFileResource(types.OTHERDATA, ["persdict.dat"]);
-  let extensionFiles = getFileResource(types.OTHERDATA, ["addons.json", "extension-settings.json", "extensions.ini", "extensions.json"]);
+  // let extensionFiles = getFileResource(types.OTHERDATA, ["addons.json", "extension-settings.json", "extensions.ini", "extensions.json"]);
   let extensionDirectories = getFileResource(types.OTHERDATA, ["browser-extension-data", "extension-data", "extensions"]);
-  let miscData = getFileResource(types.OTHERDATA, ["permissions.sqlite", "search.json.mozlz4", "mimeTypes.rdf"]);
+  let miscData = getFileResource(types.OTHERDATA, ["permissions.sqlite", "search.json.mozlz4", "mimeTypes.rdf", "prefs.js"]);
  
   // Turns out the below code isn't necessary as directories can be copied as above. 
   // Oh the wasted hours...
@@ -218,7 +218,7 @@
  
   let sessionCheckpoints = this._getFileObject(sourceProfileDir, "sessionCheckpoints.json");
   let sessionFile = this._getFileObject(sourceProfileDir, "sessionstore.js");
-  let session;
+  /* let session;
   if (sessionFile) {
    session = {
     type: types.SESSION,
@@ -247,7 +247,7 @@
      });
     }
    };
-  }
+  } */
  
   // Telemetry related migrations.
   let times = {
@@ -268,7 +268,7 @@
   };
  
   return [places, cookies, passwords, formData, dictionary, bookmarksBackups,
-   session, times, favicons, extensionFiles, extensionDirectories, miscData
+   session, times, favicons, extensionDirectories, miscData
   ].filter(r => r);
  };
  

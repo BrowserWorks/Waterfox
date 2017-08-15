@@ -5,7 +5,7 @@
 
 <!ENTITY migrationWizard.title          "Waterfox Wizard">
 <!ENTITY migrationWizard.text1          "Waterfox now uses its own profile location to store your personal data. If you are coming from an older version of Waterfox, you will need to import your existing Waterfox data as previously this data was shared with your Firefox profile.">
-<!ENTITY migrationWizard.text2          "If you are moving from a previous Waterfox version, unfortunately not all of your previous about:config and add-on preferences may transfer.">
+<!ENTITY migrationWizard.text2          "If you are moving from a previous Waterfox version, your add-on data may not transfer.">
 
 <!ENTITY importFrom.label               "Import from:">
 <!ENTITY importFromUnix.label           "Import from:">
