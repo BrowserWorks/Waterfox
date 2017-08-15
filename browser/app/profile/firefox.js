@@ -1587,7 +1587,8 @@ pref("dom.ipc.processPrelaunch.enabled", false);
 #ifdef EARLY_BETA_OR_EARLIER
 pref("browser.migrate.automigrate.enabled", true);
 #else
-pref("browser.migrate.automigrate.enabled", false);
+pref("browser.migrate.automigrate.enabled", true);
+pref("browser.migrate.automigrate.browser", "waterfox");
 #endif
 // 4 here means the suggestion notification will be automatically
 // hidden the 4th day, so it will actually be shown on 3 different days.

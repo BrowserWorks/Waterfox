@@ -175,100 +175,28 @@
   };
  
   let types = MigrationUtils.resourceTypes;
-  let places = getFileResource(types.HISTORY, ["places.sqlite"]);
-  let favicons = getFileResource(types.HISTORY, ["favicons.sqlite"]);
-  let cookies = getFileResource(types.COOKIES, ["cookies.sqlite"]);
-  let passwords = getFileResource(types.PASSWORDS, ["signons.sqlite", "logins.json", "key3.db",
-   "signedInUser.json"
-  ]);
-  let formData = getFileResource(types.FORMDATA, ["formhistory.sqlite"]);
-  let bookmarksBackups = getFileResource(types.OTHERDATA, [PlacesBackups.profileRelativeFolderPath]);
-  let dictionary = getFileResource(types.OTHERDATA, ["persdict.dat"]);
-  // let extensionFiles = getFileResource(types.OTHERDATA, ["addons.json", "extension-settings.json", "extensions.ini", "extensions.json"]);
-  let extensionDirectories = getFileResource(types.OTHERDATA, ["browser-extension-data", "extension-data", "extensions"]);
-  let miscData = getFileResource(types.OTHERDATA, ["permissions.sqlite", "search.json.mozlz4", "mimeTypes.rdf", "prefs.js"]);
+  let places = getFileResource(types.HISTORY, [""]);
+  let favicons = getFileResource(types.HISTORY, [""]);
+  let cookies = getFileResource(types.COOKIES, [""]);
+  let passwords = getFileResource(types.PASSWORDS, [""]);
+  let formData = getFileResource(types.FORMDATA, [""]);
+  let bookmarksBackups = getFileResource(types.OTHERDATA, [""]);
+  let dictionary = getFileResource(types.OTHERDATA, [""]);
  
-  // Turns out the below code isn't necessary as directories can be copied as above. 
-  // Oh the wasted hours...
-/*   // All extensions sit in the extensions subdirectory within the profile directory
-  let extensionsDir = this._getFileObject(sourceProfileDir, "extensions");
-  // Since we don't have any extensions installed by the user on on first run,
-  // create a folder called extensions in the current profile
-  let createSubDir = (name) => {
-   let dir = currentProfileDir.clone();
-   dir.append(name);
-   dir.create(Ci.nsIFile.DIRECTORY_TYPE, FileUtils.PERMS_DIRECTORY);
-   return dir;
-  };
   // Here, we enumarate the extensions directory and loop through each
   // file. Copy each extension within that directory every loop.
   // More info:
   // https://developer.mozilla.org/en-US/docs/FileGuide/Directories#Iterating_over_the_Files_in_a_Directory
   // https://developer.mozilla.org/en-US/docs/FileGuide/MoveCopyDelete#Copying_a_File
-  if (extensionsDir && extensionsDir.isDirectory()) {
-   let dest = createSubDir("extensions");
-   let enumerator = extensionsDir.directoryEntries;
-   while (enumerator.hasMoreElements()) {
+  let enumerator = sourceProfileDir.directoryEntries;
+  while (enumerator.hasMoreElements()) {
     let file = enumerator.getNext().QueryInterface(Ci.nsIFile);
-    if (file.isFile()) {
-     file.copyTo(dest, "");
+    if (file.isFile() || file.isDirectory()) {
+      file.copyTo(currentProfileDir, "");
     }
-   }
-  } */
+  }
  
-  let sessionCheckpoints = this._getFileObject(sourceProfileDir, "sessionCheckpoints.json");
-  let sessionFile = this._getFileObject(sourceProfileDir, "sessionstore.js");
-  /* let session;
-  if (sessionFile) {
-   session = {
-    type: types.SESSION,
-    migrate(aCallback) {
-     sessionCheckpoints.copyTo(currentProfileDir, "sessionCheckpoints.json");
-     let newSessionFile = currentProfileDir.clone();
-     newSessionFile.append("sessionstore.js");
-     let migrationPromise = SessionMigration.migrate(sessionFile.path, newSessionFile.path);
-     migrationPromise.then(function() {
-      let buildID = Services.appinfo.platformBuildID;
-      let mstone = Services.appinfo.platformVersion;
-      // Force the browser to one-off resume the session that we give it:
-      Services.prefs.setBoolPref("browser.sessionstore.resume_session_once", true);
-      // Reset the homepage_override prefs so that the browser doesn't override our
-      // session with the "what's new" page:
-      Services.prefs.setCharPref("browser.startup.homepage_override.mstone", mstone);
-      Services.prefs.setCharPref("browser.startup.homepage_override.buildID", buildID);
-      // It's too early in startup for the pref service to have a profile directory,
-      // so we have to manually tell it where to save the prefs file.
-      let newPrefsFile = currentProfileDir.clone();
-      newPrefsFile.append("prefs.js");
-      Services.prefs.savePrefFile(newPrefsFile);
-      aCallback(true);
-     }, function() {
-      aCallback(false);
-     });
-    }
-   };
-  } */
- 
-  // Telemetry related migrations.
-  let times = {
-   name: "times", // name is used only by tests.
-   type: types.OTHERDATA,
-   migrate: aCallback => {
-    let file = this._getFileObject(sourceProfileDir, "times.json");
-    if (file) {
-     file.copyTo(currentProfileDir, "");
-    }
-    // And record the fact a migration (ie, a reset) happened.
-    let timesAccessor = new ProfileAge(currentProfileDir.path);
-    timesAccessor.recordProfileReset().then(
-     () => aCallback(true),
-     () => aCallback(false)
-    );
-   }
-  };
- 
-  return [places, cookies, passwords, formData, dictionary, bookmarksBackups,
-   session, times, favicons, extensionDirectories, miscData
+  return [places, cookies, passwords, formData, dictionary, bookmarksBackups, favicons
   ].filter(r => r);
  };
  
