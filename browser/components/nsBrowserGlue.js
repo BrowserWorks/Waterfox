@@ -1960,7 +1960,6 @@ BrowserGlue.prototype = {
       // where these may have been enabled.
       Services.prefs.setBoolPref("browser.send_pings", false);
       Services.prefs.setBoolPref("experiments.enabled", false);
-      Services.prefs.setBoolPref("experiments.manifest.uri", "");
       Services.prefs.setBoolPref("experiments.supported", false);
       Services.prefs.setBoolPref("extensions.legacy.enabled", true);
       Services.prefs.setBoolPref("toolkit.telemetry.archive.enabled", false);
@@ -1969,6 +1968,7 @@ BrowserGlue.prototype = {
       Services.prefs.setBoolPref("xpinstall.signatures.required", false);
       Services.prefs.setStringPref("browser.aboutHomeSnippets.updateUrl", "");
       Services.prefs.setStringPref("browser.newtabpage.directory.source", "");
+      Services.prefs.setStringPref("experiments.manifest.uri", "");      
       Services.prefs.setStringPref("extensions.hotfix.id", "");
     }
 
