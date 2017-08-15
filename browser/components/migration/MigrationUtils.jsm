@@ -14,7 +14,6 @@ const TOPIC_PLACES_DEFAULTS_FINISHED = "places-browser-init-complete";
 Cu.import("resource://gre/modules/AppConstants.jsm");
 Cu.import("resource://gre/modules/Services.jsm");
 Cu.import("resource://gre/modules/XPCOMUtils.jsm");
-Cu.import("resource://gre/modules/Console.jsm");
 
 Cu.importGlobalProperties(["URL"]);
 
@@ -702,7 +701,6 @@ this.MigrationUtils = Object.freeze({
       try {
         migrator = Cc["@mozilla.org/profile/migrator;1?app=browser&type=" +
                       aKey].createInstance(Ci.nsIBrowserProfileMigrator);
-        console.log(aKey);
       } catch (ex) { Cu.reportError(ex) }
       this._migrators.set(aKey, migrator);
     }
