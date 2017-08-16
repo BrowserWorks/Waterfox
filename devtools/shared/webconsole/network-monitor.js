@@ -189,7 +189,7 @@ function StackTraceCollector(filters) {
 
 StackTraceCollector.prototype = {
   init() {
-    Services.obs.addObserver(this, "http-on-opening-request", false);
+    Services.obs.addObserver(this, "http-on-opening-request");
     ChannelEventSinkFactory.getService().registerCollector(this);
   },
 
@@ -537,22 +537,14 @@ NetworkResponseListener.prototype = {
       return;
     }
 
-    let openResponse = null;
-
-    for (let id in this.owner.openResponses) {
-      let item = this.owner.openResponses[id];
-      if (item.channel === this.httpActivity.channel) {
-        openResponse = item;
-        break;
-      }
-    }
-
+    let channel = this.httpActivity.channel;
+    let openResponse = this.owner.openResponses.get(channel);
     if (!openResponse) {
       return;
     }
     this._foundOpenResponse = true;
 
-    delete this.owner.openResponses[openResponse.id];
+    this.owner.openResponses.delete(channel);
 
     this.httpActivity.owner.addResponseHeaders(openResponse.headers);
     this.httpActivity.owner.addResponseCookies(openResponse.cookies);
@@ -709,8 +701,8 @@ NetworkResponseListener.prototype = {
 function NetworkMonitor(filters, owner) {
   this.filters = filters;
   this.owner = owner;
-  this.openRequests = {};
-  this.openResponses = {};
+  this.openRequests = new Map();
+  this.openResponses = new Map();
   this._httpResponseExaminer =
     DevToolsUtils.makeInfallible(this._httpResponseExaminer).bind(this);
   this._httpModifyExaminer =
@@ -782,16 +774,16 @@ NetworkMonitor.prototype = {
     if (Services.appinfo.processType != Ci.nsIXULRuntime.PROCESS_TYPE_CONTENT) {
       gActivityDistributor.addObserver(this);
       Services.obs.addObserver(this._httpResponseExaminer,
-                               "http-on-examine-response", false);
+                               "http-on-examine-response");
       Services.obs.addObserver(this._httpResponseExaminer,
-                               "http-on-examine-cached-response", false);
+                               "http-on-examine-cached-response");
       Services.obs.addObserver(this._httpModifyExaminer,
-                               "http-on-modify-request", false);
+                               "http-on-modify-request");
     }
     // In child processes, only watch for service worker requests
     // everything else only happens in the parent process
     Services.obs.addObserver(this._serviceWorkerRequest,
-                             "service-worker-synthesized-response", false);
+                             "service-worker-synthesized-response");
   },
 
   get throttleData() {
@@ -894,7 +886,7 @@ NetworkMonitor.prototype = {
     response.httpVersion = "HTTP/" + httpVersionMaj.value + "." +
                                      httpVersionMin.value;
 
-    this.openResponses[response.id] = response;
+    this.openResponses.set(channel, response);
 
     if (topic === "http-on-examine-cached-response") {
       // Service worker requests emits cached-reponse notification on non-e10s,
@@ -1178,13 +1170,7 @@ NetworkMonitor.prototype = {
    *        The HTTP activity object, or null if it is not found.
    */
   _findActivityObject: function (channel) {
-    for (let id in this.openRequests) {
-      let item = this.openRequests[id];
-      if (item.channel === channel) {
-        return item;
-      }
-    }
-    return null;
+    return this.openRequests.get(channel) || null;
   },
 
   /**
@@ -1226,7 +1212,7 @@ NetworkMonitor.prototype = {
         owner: null,
       };
 
-      this.openRequests[httpActivity.id] = httpActivity;
+      this.openRequests.set(channel, httpActivity);
     }
 
     return httpActivity;
@@ -1377,7 +1363,7 @@ NetworkMonitor.prototype = {
   _onTransactionClose: function (httpActivity) {
     let result = this._setupHarTimings(httpActivity);
     httpActivity.owner.addEventTimings(result.total, result.timings);
-    delete this.openRequests[httpActivity.id];
+    this.openRequests.delete(httpActivity.channel);
   },
 
   /**
@@ -1496,8 +1482,8 @@ NetworkMonitor.prototype = {
                                 "service-worker-synthesized-response");
 
     this.interceptedChannels.clear();
-    this.openRequests = {};
-    this.openResponses = {};
+    this.openRequests.clear();
+    this.openResponses.clear();
     this.owner = null;
     this.filters = null;
     this._throttler = null;
@@ -2018,11 +2004,6 @@ ConsoleProgressListener.prototype = {
                                   this.window.document.title);
     }
   },
-
-  onLocationChange: function () {},
-  onStatusChange: function () {},
-  onProgressChange: function () {},
-  onSecurityChange: function () {},
 
   /**
    * Destroy the ConsoleProgressListener.

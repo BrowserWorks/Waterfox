@@ -35,6 +35,9 @@ struct IDirectDraw7;
 
 namespace mozilla {
 class ScopedGfxFeatureReporter;
+namespace layers {
+class DeviceAttachmentsD3D11;
+} // namespace layers
 
 namespace gfx {
 class FeatureState;
@@ -67,8 +70,15 @@ public:
   // need to avoid it.
   bool CanInitializeKeyedMutexTextures();
 
+  // Intel devices on older windows versions seem to occasionally have
+  // stability issues when supplying InitData to CreateTexture2D.
+  bool HasCrashyInitData();
+
   bool CreateCompositorDevices();
   void CreateContentDevices();
+
+  void GetCompositorDevices(RefPtr<ID3D11Device>* aOutDevice,
+                            RefPtr<layers::DeviceAttachmentsD3D11>* aOutAttachments);
 
   void ImportDeviceInfo(const D3D11DeviceStatus& aDeviceStatus);
   void ExportDeviceInfo(D3D11DeviceStatus* aOut);
@@ -94,6 +104,10 @@ public:
   void NotifyD3D9DeviceReset();
 
 private:
+  // Pre-load any compositor resources that are expensive, and are needed when we
+  // attempt to create a compositor.
+  static void PreloadAttachmentsOnCompositorThread();
+
   IDXGIAdapter1 *GetDXGIAdapter();
 
   void DisableD3D11AfterCrash();
@@ -138,6 +152,7 @@ private:
   RefPtr<ID3D11Device> mCompositorDevice;
   RefPtr<ID3D11Device> mContentDevice;
   RefPtr<ID3D11Device> mDecoderDevice;
+  RefPtr<layers::DeviceAttachmentsD3D11> mCompositorAttachments;
   bool mCompositorDeviceSupportsVideo;
 
   Maybe<D3D11DeviceStatus> mDeviceStatus;

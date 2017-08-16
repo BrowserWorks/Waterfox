@@ -378,6 +378,9 @@ DeveloperToolbar.prototype.show = function (focus) {
     // to do any real work.
     yield this._hidePromise;
 
+    // Append the browser-level stylesheet to the browser document.
+    yield gDevToolsBrowser.loadBrowserStyleSheet(this._chromeWindow);
+
     this.createToolbar();
 
     Services.prefs.setBoolPref("devtools.toolbar.visible", true);
@@ -625,7 +628,7 @@ DeveloperToolbar.prototype.destroy = function () {
 DeveloperToolbar.prototype._notify = function (topic) {
   let data = { toolbar: this };
   data.wrappedJSObject = data;
-  Services.obs.notifyObservers(data, topic, null);
+  Services.obs.notifyObservers(data, topic);
 };
 
 /**
@@ -1019,7 +1022,7 @@ OutputPanel.prototype._update = function () {
 
   // Empty this._div
   while (this._div.hasChildNodes()) {
-    this._div.removeChild(this._div.firstChild);
+    this._div.firstChild.remove();
   }
 
   if (this.displayedOutput.data != null) {
@@ -1030,7 +1033,7 @@ OutputPanel.prototype._update = function () {
       }
 
       while (this._div.hasChildNodes()) {
-        this._div.removeChild(this._div.firstChild);
+        this._div.firstChild.remove();
       }
 
       let links = node.querySelectorAll("*[href]");

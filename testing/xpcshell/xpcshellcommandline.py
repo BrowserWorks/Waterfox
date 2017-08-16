@@ -112,6 +112,11 @@ def add_common_arguments(parser):
                         action="store",
                         help="Path to a manifest file from which to rerun failures "
                         "(with --rerun-failure) or in which to record failed tests")
+    parser.add_argument("--threads",
+                        type=int, dest="threadCount", default=0,
+                        help="override the number of jobs (threads) when running tests in parallel, "
+                             "the default is CPU x 1.5 when running via mach and CPU x 4 when running "
+                             "in automation")
     parser.add_argument("testPaths", nargs="*", default=None,
                         help="Paths of tests to run.")
 
@@ -121,10 +126,6 @@ def add_remote_arguments(parser):
 
     parser.add_argument("--devicePort", action="store", type=str, dest="devicePort",
                         default=20701, help="port of remote device to test")
-
-    parser.add_argument("--dm_trans", action="store", type=str, dest="dm_trans",
-                        choices=["adb", "sut"], default="adb",
-                        help="the transport to use to communicate with device: [adb|sut]; default=adb")
 
     parser.add_argument("--objdir", action="store", type=str, dest="objdir",
                         help="local objdir, containing xpcshell binaries")

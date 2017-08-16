@@ -559,6 +559,10 @@ NewPropertyIteratorObject(JSContext* cx, unsigned flags)
 
         PropertyIteratorObject* res = &obj->as<PropertyIteratorObject>();
 
+        // CodeGenerator::visitIteratorStartO assumes the iterator object is not
+        // inside the nursery when deciding whether a barrier is necessary.
+        MOZ_ASSERT(!js::gc::IsInsideNursery(res));
+
         MOZ_ASSERT(res->numFixedSlots() == JSObject::ITER_CLASS_NFIXED_SLOTS);
         return res;
     }
@@ -938,28 +942,30 @@ js::GetIteratorObject(JSContext* cx, HandleObject obj, uint32_t flags)
     return iterator;
 }
 
+// ES 2017 draft 7.4.7.
 JSObject*
-js::CreateItrResultObject(JSContext* cx, HandleValue value, bool done)
+js::CreateIterResultObject(JSContext* cx, HandleValue value, bool done)
 {
-    // FIXME: We can cache the iterator result object shape somewhere.
-    AssertHeapIsIdle();
+    // Step 1 (implicit).
 
-    RootedObject proto(cx, GlobalObject::getOrCreateObjectPrototype(cx, cx->global()));
-    if (!proto)
+    // Step 2.
+    RootedObject resultObj(cx, NewBuiltinClassInstance<PlainObject>(cx));
+    if (!resultObj)
         return nullptr;
 
-    RootedPlainObject obj(cx, NewObjectWithGivenProto<PlainObject>(cx, proto));
-    if (!obj)
+    // Step 3.
+    if (!DefineProperty(cx, resultObj, cx->names().value, value))
         return nullptr;
 
-    if (!DefineProperty(cx, obj, cx->names().value, value))
+    // Step 4.
+    if (!DefineProperty(cx, resultObj, cx->names().done,
+                        done ? TrueHandleValue : FalseHandleValue))
+    {
         return nullptr;
+    }
 
-    RootedValue doneBool(cx, BooleanValue(done));
-    if (!DefineProperty(cx, obj, cx->names().done, doneBool))
-        return nullptr;
-
-    return obj;
+    // Step 5.
+    return resultObj;
 }
 
 bool
@@ -1132,6 +1138,17 @@ const Class ArrayIteratorObject::class_ = {
     JSCLASS_HAS_RESERVED_SLOTS(ArrayIteratorSlotCount)
 };
 
+
+ArrayIteratorObject*
+js::NewArrayIteratorObject(JSContext* cx, NewObjectKind newKind)
+{
+    RootedObject proto(cx, GlobalObject::getOrCreateArrayIteratorPrototype(cx, cx->global()));
+    if (!proto)
+        return nullptr;
+
+    return NewObjectWithGivenProto<ArrayIteratorObject>(cx, proto, newKind);
+}
+
 static const JSFunctionSpec array_iterator_methods[] = {
     JS_SELF_HOSTED_FN("next", "ArrayIteratorNext", 0, 0),
     JS_FS_END
@@ -1157,6 +1174,16 @@ static const JSFunctionSpec string_iterator_methods[] = {
     JS_SELF_HOSTED_FN("next", "StringIteratorNext", 0, 0),
     JS_FS_END
 };
+
+StringIteratorObject*
+js::NewStringIteratorObject(JSContext* cx, NewObjectKind newKind)
+{
+    RootedObject proto(cx, GlobalObject::getOrCreateStringIteratorPrototype(cx, cx->global()));
+    if (!proto)
+        return nullptr;
+
+    return NewObjectWithGivenProto<StringIteratorObject>(cx, proto, newKind);
+}
 
 JSObject*
 js::ValueToIterator(JSContext* cx, unsigned flags, HandleValue vp)

@@ -89,12 +89,6 @@ class FuncBytes
 typedef UniquePtr<FuncBytes> UniqueFuncBytes;
 typedef Vector<UniqueFuncBytes, 8, SystemAllocPolicy> UniqueFuncBytesVector;
 
-enum class CompileMode
-{
-    Baseline,
-    Ion
-};
-
 // FuncCompileUnit contains all the data necessary to produce and store the
 // results of a single function's compilation.
 
@@ -137,7 +131,7 @@ typedef Vector<FuncCompileUnit, 8, SystemAllocPolicy> FuncCompileUnitVector;
 class CompileTask
 {
     const ModuleEnvironment&   env_;
-    CompileMode                mode_;
+    Tier                       tier_;
     LifoAlloc                  lifo_;
     Maybe<jit::TempAllocator>  alloc_;
     Maybe<jit::MacroAssembler> masm_;
@@ -154,11 +148,12 @@ class CompileTask
     }
 
   public:
-    CompileTask(const ModuleEnvironment& env, CompileMode mode, size_t defaultChunkSize)
+    CompileTask(const ModuleEnvironment& env, Tier tier, size_t defaultChunkSize)
       : env_(env),
-        mode_(mode),
+        tier_(tier),
         lifo_(defaultChunkSize)
     {
+        MOZ_ASSERT(tier == Tier::Baseline || tier == Tier::Ion);
         init();
     }
     LifoAlloc& lifo() {
@@ -176,8 +171,8 @@ class CompileTask
     FuncCompileUnitVector& units() {
         return units_;
     }
-    CompileMode mode() const {
-        return mode_;
+    Tier tier() const {
+        return tier_;
     }
     bool debugEnabled() const {
         return debugEnabled_;
@@ -212,15 +207,17 @@ class MOZ_STACK_CLASS ModuleGenerator
     typedef HashSet<uint32_t, DefaultHasher<uint32_t>, SystemAllocPolicy> Uint32Set;
     typedef Vector<CompileTask, 0, SystemAllocPolicy> CompileTaskVector;
     typedef Vector<CompileTask*, 0, SystemAllocPolicy> CompileTaskPtrVector;
-    typedef EnumeratedArray<Trap, Trap::Limit, ProfilingOffsets> TrapExitOffsetArray;
+    typedef EnumeratedArray<Trap, Trap::Limit, CallableOffsets> TrapExitOffsetArray;
 
     // Constant parameters
-    CompileMode                     compileMode_;
+    Tier                            tier_;
     UniqueChars*                    error_;
 
     // Data that is moved into the result of finish()
     Assumptions                     assumptions_;
+    LinkDataTier*                   linkDataTier_; // Owned by linkData_
     LinkData                        linkData_;
+    MetadataTier*                   metadataTier_; // Owned by metadata_
     MutableMetadata                 metadata_;
 
     // Data scoped to the ModuleGenerator's lifetime
@@ -257,13 +254,14 @@ class MOZ_STACK_CLASS ModuleGenerator
     bool funcIsCompiled(uint32_t funcIndex) const;
     const CodeRange& funcCodeRange(uint32_t funcIndex) const;
     uint32_t numFuncImports() const;
-    MOZ_MUST_USE bool patchCallSites(TrapExitOffsetArray* maybeTrapExits = nullptr);
+    MOZ_MUST_USE bool patchCallSites();
     MOZ_MUST_USE bool patchFarJumps(const TrapExitOffsetArray& trapExits, const Offsets& debugTrapStub);
     MOZ_MUST_USE bool finishTask(CompileTask* task);
     MOZ_MUST_USE bool finishOutstandingTask();
     MOZ_MUST_USE bool finishFuncExports();
     MOZ_MUST_USE bool finishCodegen();
-    MOZ_MUST_USE bool finishLinkData(Bytes& code);
+    MOZ_MUST_USE bool finishLinkData();
+    void generateBytecodeHash(const ShareableBytes& bytecode);
     MOZ_MUST_USE bool addFuncImport(const Sig& sig, uint32_t globalDataOffset);
     MOZ_MUST_USE bool allocateGlobalBytes(uint32_t bytes, uint32_t align, uint32_t* globalDataOff);
     MOZ_MUST_USE bool allocateGlobal(GlobalDesc* global);

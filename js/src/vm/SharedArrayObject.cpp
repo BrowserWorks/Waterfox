@@ -98,10 +98,24 @@ SharedArrayMappedSize(uint32_t allocSize)
 static mozilla::Atomic<uint32_t, mozilla::ReleaseAcquire> numLive;
 static const uint32_t maxLive = 1000;
 
+#ifdef DEBUG
+static mozilla::Atomic<int32_t> liveBuffers_;
+#endif
+
 static uint32_t
 SharedArrayAllocSize(uint32_t length)
 {
     return AlignBytes(length + gc::SystemPageSize(), gc::SystemPageSize());
+}
+
+int32_t
+SharedArrayRawBuffer::liveBuffers()
+{
+#ifdef DEBUG
+    return liveBuffers_;
+#else
+    return 0;
+#endif
 }
 
 SharedArrayRawBuffer*
@@ -123,9 +137,8 @@ SharedArrayRawBuffer::New(JSContext* cx, uint32_t length)
         // Test >= to guard against the case where multiple extant runtimes
         // race to allocate.
         if (++numLive >= maxLive) {
-            JSRuntime* rt = cx->runtime();
-            if (rt->largeAllocationFailureCallback)
-                rt->largeAllocationFailureCallback(rt->largeAllocationFailureCallbackData);
+            if (OnLargeAllocationFailure)
+                OnLargeAllocationFailure();
             if (numLive >= maxLive) {
                 numLive--;
                 return nullptr;
@@ -162,6 +175,9 @@ SharedArrayRawBuffer::New(JSContext* cx, uint32_t length)
     uint8_t* base = buffer - sizeof(SharedArrayRawBuffer);
     SharedArrayRawBuffer* rawbuf = new (base) SharedArrayRawBuffer(buffer, length, preparedForAsmJS);
     MOZ_ASSERT(rawbuf->length == length); // Deallocation needs this
+#ifdef DEBUG
+    liveBuffers_++;
+#endif
     return rawbuf;
 }
 
@@ -195,6 +211,10 @@ SharedArrayRawBuffer::dropReference()
         return;
 
     // If this was the final reference, release the buffer.
+
+#ifdef DEBUG
+    liveBuffers_--;
+#endif
 
     SharedMem<uint8_t*> p = this->dataPointerShared() - gc::SystemPageSize();
     MOZ_ASSERT(p.asValue() % gc::SystemPageSize() == 0);
@@ -234,28 +254,38 @@ SharedArrayBufferObject::byteLengthGetter(JSContext* cx, unsigned argc, Value* v
     return CallNonGenericMethod<IsSharedArrayBuffer, byteLengthGetterImpl>(cx, args);
 }
 
+// ES2017 draft rev 6390c2f1b34b309895d31d8c0512eac8660a0210
+// 24.2.2.1 SharedArrayBuffer( length )
 bool
 SharedArrayBufferObject::class_constructor(JSContext* cx, unsigned argc, Value* vp)
 {
     CallArgs args = CallArgsFromVp(argc, vp);
 
+    // Step 1.
     if (!ThrowIfNotConstructing(cx, args, "SharedArrayBuffer"))
         return false;
 
-    // Bugs 1068458, 1161298: Limit length to 2^31-1.
-    uint32_t length;
-    bool overflow_unused;
-    if (!ToLengthClamped(cx, args.get(0), &length, &overflow_unused) || length > INT32_MAX) {
-        JS_ReportErrorNumberASCII(cx, GetErrorMessage, nullptr, JSMSG_SHARED_ARRAY_BAD_LENGTH);
+    // Step 2.
+    uint64_t byteLength;
+    if (!ToIndex(cx, args.get(0), &byteLength))
         return false;
-    }
 
+    // Step 3 (Inlined 24.2.1.1 AllocateSharedArrayBuffer).
+    // 24.2.1.1, step 1 (Inlined 9.1.14 OrdinaryCreateFromConstructor).
     RootedObject proto(cx);
     RootedObject newTarget(cx, &args.newTarget().toObject());
     if (!GetPrototypeFromConstructor(cx, newTarget, &proto))
         return false;
 
-    JSObject* bufobj = New(cx, length, proto);
+    // 24.2.1.1, step 3 (Inlined 6.2.7.2 CreateSharedByteDataBlock, step 2).
+    // Refuse to allocate too large buffers, currently limited to ~2 GiB.
+    if (byteLength > INT32_MAX) {
+        JS_ReportErrorNumberASCII(cx, GetErrorMessage, nullptr, JSMSG_SHARED_ARRAY_BAD_LENGTH);
+        return false;
+    }
+
+    // 24.2.1.1, steps 1 and 4-6.
+    JSObject* bufobj = New(cx, uint32_t(byteLength), proto);
     if (!bufobj)
         return false;
     args.rval().setObject(*bufobj);

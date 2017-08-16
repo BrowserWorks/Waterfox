@@ -16,6 +16,7 @@
 class nsAString;
 
 namespace mozilla {
+struct AnimationValue;
 namespace dom {
 class Element;
 } // namespace dom
@@ -28,6 +29,7 @@ class nsSMILCSSValueType : public nsISMILType
 {
 public:
   typedef mozilla::dom::Element Element;
+  typedef mozilla::AnimationValue AnimationValue;
 
   // Singleton for nsSMILValue objects to hold onto.
   static nsSMILCSSValueType sSingleton;
@@ -35,22 +37,24 @@ public:
 protected:
   // nsISMILType Methods
   // -------------------
-  virtual void     Init(nsSMILValue& aValue) const override;
-  virtual void     Destroy(nsSMILValue&) const override;
-  virtual nsresult Assign(nsSMILValue& aDest,
-                          const nsSMILValue& aSrc) const override;
-  virtual bool     IsEqual(const nsSMILValue& aLeft,
-                           const nsSMILValue& aRight) const override;
-  virtual nsresult Add(nsSMILValue& aDest,
-                       const nsSMILValue& aValueToAdd,
-                       uint32_t aCount) const override;
-  virtual nsresult ComputeDistance(const nsSMILValue& aFrom,
-                                   const nsSMILValue& aTo,
-                                   double& aDistance) const override;
-  virtual nsresult Interpolate(const nsSMILValue& aStartVal,
-                               const nsSMILValue& aEndVal,
-                               double aUnitDistance,
-                               nsSMILValue& aResult) const override;
+  void     Init(nsSMILValue& aValue) const override;
+  void     Destroy(nsSMILValue&) const override;
+  nsresult Assign(nsSMILValue& aDest,
+                  const nsSMILValue& aSrc) const override;
+  bool     IsEqual(const nsSMILValue& aLeft,
+                   const nsSMILValue& aRight) const override;
+  nsresult Add(nsSMILValue& aDest,
+               const nsSMILValue& aValueToAdd,
+               uint32_t aCount) const override;
+  nsresult SandwichAdd(nsSMILValue& aDest,
+                       const nsSMILValue& aValueToAdd) const override;
+  nsresult ComputeDistance(const nsSMILValue& aFrom,
+                           const nsSMILValue& aTo,
+                           double& aDistance) const override;
+  nsresult Interpolate(const nsSMILValue& aStartVal,
+                       const nsSMILValue& aEndVal,
+                       double aUnitDistance,
+                       nsSMILValue& aResult) const override;
 
 public:
   // Helper Methods
@@ -85,18 +89,31 @@ public:
                               bool* aIsContextSensitive);
 
   /**
+   * Creates an nsSMILValue to wrap the given animation value.
+   *
+   * @param aPropID         The property that |aValue| corresponds to.
+   * @param aTargetElement  The target element to which the animation value
+   *                        applies.
+   * @param aValue          The animation value to use.
+   * @return                A new nsSMILValue. On failure, returns an
+   *                        nsSMILValue with the null type (i.e. rv.IsNull()
+   *                        returns true).
+   */
+  static nsSMILValue ValueFromAnimationValue(nsCSSPropertyID aPropID,
+                                             Element* aTargetElement,
+                                             const AnimationValue& aValue);
+
+  /**
    * Creates a string representation of the given nsSMILValue.
    *
    * Note: aValue is expected to be of this type (that is, it's expected to
    * have been initialized by nsSMILCSSValueType::sSingleton).  If aValue is a
-   * freshly-initialized value, this method will succeed, though the resulting
-   * string will be empty.
+   * freshly-initialized value the resulting string will be empty.
    *
    * @param       aValue   The nsSMILValue to be converted into a string.
    * @param [out] aString  The string to be populated with the given value.
-   * @return               true on success, false on failure.
    */
-  static bool ValueToString(const nsSMILValue& aValue, nsAString& aString);
+  static void ValueToString(const nsSMILValue& aValue, nsAString& aString);
 
   /**
    * Return the CSS property animated by the specified value.

@@ -601,6 +601,13 @@ MacroAssembler::Push(FloatRegister t)
 }
 
 void
+MacroAssembler::PushFlags()
+{
+    pushFlags();
+    adjustFrame(sizeof(intptr_t));
+}
+
+void
 MacroAssembler::Pop(const Operand op)
 {
     pop(op);
@@ -626,6 +633,19 @@ MacroAssembler::Pop(const ValueOperand& val)
 {
     popValue(val);
     implicitPop(sizeof(Value));
+}
+
+void
+MacroAssembler::PopFlags()
+{
+    popFlags();
+    implicitPop(sizeof(intptr_t));
+}
+
+void
+MacroAssembler::PopStackPtr()
+{
+    Pop(StackPointer);
 }
 
 // ===============================================================
@@ -741,7 +761,7 @@ MacroAssembler::nopPatchableToCall(const wasm::CallSiteDesc& desc)
 {
     CodeOffset offset(currentOffset());
     masm.nop_five();
-    append(desc, CodeOffset(currentOffset()), framePushed());
+    append(desc, CodeOffset(currentOffset()));
     MOZ_ASSERT_IF(!oom(), size() - offset.offset() == ToggledCallSize(nullptr));
     return offset;
 }
@@ -784,9 +804,9 @@ struct MOZ_RAII AutoHandleWasmTruncateToIntErrors
     MacroAssembler& masm;
     Label inputIsNaN;
     Label fail;
-    wasm::TrapOffset off;
+    wasm::BytecodeOffset off;
 
-    explicit AutoHandleWasmTruncateToIntErrors(MacroAssembler& masm, wasm::TrapOffset off)
+    explicit AutoHandleWasmTruncateToIntErrors(MacroAssembler& masm, wasm::BytecodeOffset off)
       : masm(masm), off(off)
     { }
 
@@ -818,7 +838,7 @@ MacroAssembler::wasmTruncateFloat32ToInt32(FloatRegister input, Register output,
 
 void
 MacroAssembler::outOfLineWasmTruncateDoubleToInt32(FloatRegister input, bool isUnsigned,
-                                                   wasm::TrapOffset off, Label* rejoin)
+                                                   wasm::BytecodeOffset off, Label* rejoin)
 {
     AutoHandleWasmTruncateToIntErrors traps(*this, off);
 
@@ -841,7 +861,7 @@ MacroAssembler::outOfLineWasmTruncateDoubleToInt32(FloatRegister input, bool isU
 
 void
 MacroAssembler::outOfLineWasmTruncateFloat32ToInt32(FloatRegister input, bool isUnsigned,
-                                                    wasm::TrapOffset off, Label* rejoin)
+                                                    wasm::BytecodeOffset off, Label* rejoin)
 {
     AutoHandleWasmTruncateToIntErrors traps(*this, off);
 
@@ -862,7 +882,7 @@ MacroAssembler::outOfLineWasmTruncateFloat32ToInt32(FloatRegister input, bool is
 
 void
 MacroAssembler::outOfLineWasmTruncateDoubleToInt64(FloatRegister input, bool isUnsigned,
-                                                   wasm::TrapOffset off, Label* rejoin)
+                                                   wasm::BytecodeOffset off, Label* rejoin)
 {
     AutoHandleWasmTruncateToIntErrors traps(*this, off);
 
@@ -889,7 +909,7 @@ MacroAssembler::outOfLineWasmTruncateDoubleToInt64(FloatRegister input, bool isU
 
 void
 MacroAssembler::outOfLineWasmTruncateFloat32ToInt64(FloatRegister input, bool isUnsigned,
-                                                    wasm::TrapOffset off, Label* rejoin)
+                                                    wasm::BytecodeOffset off, Label* rejoin)
 {
     AutoHandleWasmTruncateToIntErrors traps(*this, off);
 

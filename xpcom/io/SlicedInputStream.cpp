@@ -15,13 +15,16 @@ NS_IMPL_RELEASE(SlicedInputStream);
 
 NS_INTERFACE_MAP_BEGIN(SlicedInputStream)
   NS_INTERFACE_MAP_ENTRY(nsIInputStream)
-  NS_INTERFACE_MAP_ENTRY(nsIAsyncInputStream)
   NS_INTERFACE_MAP_ENTRY_CONDITIONAL(nsICloneableInputStream,
                                      mWeakCloneableInputStream || !mInputStream)
   NS_INTERFACE_MAP_ENTRY_CONDITIONAL(nsIIPCSerializableInputStream,
                                      mWeakIPCSerializableInputStream || !mInputStream)
   NS_INTERFACE_MAP_ENTRY_CONDITIONAL(nsISeekableStream,
                                      mWeakSeekableInputStream || !mInputStream)
+  NS_INTERFACE_MAP_ENTRY_CONDITIONAL(nsIAsyncInputStream,
+                                     mWeakAsyncInputStream || !mInputStream)
+  NS_INTERFACE_MAP_ENTRY_CONDITIONAL(nsIInputStreamCallback,
+                                     mWeakAsyncInputStream || !mInputStream)
   NS_INTERFACE_MAP_ENTRY_AMBIGUOUS(nsISupports, nsIInputStream)
 NS_INTERFACE_MAP_END
 
@@ -30,10 +33,13 @@ SlicedInputStream::SlicedInputStream(nsIInputStream* aInputStream,
   : mWeakCloneableInputStream(nullptr)
   , mWeakIPCSerializableInputStream(nullptr)
   , mWeakSeekableInputStream(nullptr)
+  , mWeakAsyncInputStream(nullptr)
   , mStart(aStart)
   , mLength(aLength)
   , mCurPos(0)
   , mClosed(false)
+  , mAsyncWaitFlags(0)
+  , mAsyncWaitRequestedCount(0)
 {
   MOZ_ASSERT(aInputStream);
   SetSourceStream(aInputStream);
@@ -43,10 +49,13 @@ SlicedInputStream::SlicedInputStream()
   : mWeakCloneableInputStream(nullptr)
   , mWeakIPCSerializableInputStream(nullptr)
   , mWeakSeekableInputStream(nullptr)
+  , mWeakAsyncInputStream(nullptr)
   , mStart(0)
   , mLength(0)
   , mCurPos(0)
   , mClosed(false)
+  , mAsyncWaitFlags(0)
+  , mAsyncWaitRequestedCount(0)
 {}
 
 SlicedInputStream::~SlicedInputStream()
@@ -77,6 +86,12 @@ SlicedInputStream::SetSourceStream(nsIInputStream* aInputStream)
     do_QueryInterface(aInputStream);
   if (seekableStream && SameCOMIdentity(aInputStream, seekableStream)) {
     mWeakSeekableInputStream = seekableStream;
+  }
+
+  nsCOMPtr<nsIAsyncInputStream> asyncInputStream =
+    do_QueryInterface(aInputStream);
+  if (asyncInputStream && SameCOMIdentity(aInputStream, asyncInputStream)) {
+    mWeakAsyncInputStream = asyncInputStream;
   }
 }
 
@@ -141,12 +156,12 @@ SlicedInputStream::Read(char* aBuffer, uint32_t aCount, uint32_t* aReadCount)
     } else {
       char buf[4096];
       while (mCurPos < mStart) {
-	uint32_t bytesRead;
-	uint64_t bufCount = XPCOM_MIN(mStart - mCurPos, (uint64_t)sizeof(buf));
-	nsresult rv = mInputStream->Read(buf, bufCount, &bytesRead);
-	if (NS_WARN_IF(NS_FAILED(rv)) || bytesRead == 0) {
-	  return rv;
-	}
+        uint32_t bytesRead;
+        uint64_t bufCount = XPCOM_MIN(mStart - mCurPos, (uint64_t)sizeof(buf));
+        nsresult rv = mInputStream->Read(buf, bufCount, &bytesRead);
+        if (NS_WARN_IF(NS_FAILED(rv)) || bytesRead == 0) {
+          return rv;
+        }
 
          mCurPos += bytesRead;
       }
@@ -218,14 +233,9 @@ NS_IMETHODIMP
 SlicedInputStream::CloseWithStatus(nsresult aStatus)
 {
   NS_ENSURE_STATE(mInputStream);
+  NS_ENSURE_STATE(mWeakAsyncInputStream);
 
-  nsCOMPtr<nsIAsyncInputStream> asyncStream =
-    do_QueryInterface(mInputStream);
-  if (!asyncStream) {
-    return NS_ERROR_FAILURE;
-  }
-
-  return asyncStream->CloseWithStatus(aStatus);
+  return mWeakAsyncInputStream->CloseWithStatus(aStatus);
 }
 
 NS_IMETHODIMP
@@ -235,15 +245,94 @@ SlicedInputStream::AsyncWait(nsIInputStreamCallback* aCallback,
                              nsIEventTarget* aEventTarget)
 {
   NS_ENSURE_STATE(mInputStream);
+  NS_ENSURE_STATE(mWeakAsyncInputStream);
 
-  nsCOMPtr<nsIAsyncInputStream> asyncStream =
-    do_QueryInterface(mInputStream);
-  if (!asyncStream) {
+  if (mAsyncWaitCallback && aCallback) {
     return NS_ERROR_FAILURE;
   }
 
-  return asyncStream->AsyncWait(aCallback, aFlags, aRequestedCount,
-                                aEventTarget);
+  mAsyncWaitCallback = aCallback;
+
+  if (!mAsyncWaitCallback) {
+    return NS_OK;
+  }
+
+  // If we haven't started retrieving data, let's see if we can seek.
+  // If we cannot seek, we will do consecutive reads.
+  if (mCurPos < mStart && mWeakSeekableInputStream) {
+    nsresult rv =
+      mWeakSeekableInputStream->Seek(nsISeekableStream::NS_SEEK_SET, mStart);
+    if (NS_WARN_IF(NS_FAILED(rv))) {
+      return rv;
+    }
+
+    mCurPos = mStart;
+  }
+
+  mAsyncWaitFlags = aFlags;
+  mAsyncWaitRequestedCount = aRequestedCount;
+  mAsyncWaitEventTarget = aEventTarget;
+
+  // If we are not at the right position, let's do an asyncWait just internal.
+  if (mCurPos < mStart) {
+    return mWeakAsyncInputStream->AsyncWait(this, 0, mStart - mCurPos,
+                                            aEventTarget);
+  }
+
+  return mWeakAsyncInputStream->AsyncWait(this, aFlags, aRequestedCount,
+                                          aEventTarget);
+}
+
+// nsIInputStreamCallback
+
+NS_IMETHODIMP
+SlicedInputStream::OnInputStreamReady(nsIAsyncInputStream* aStream)
+{
+  MOZ_ASSERT(mInputStream);
+  MOZ_ASSERT(mWeakAsyncInputStream);
+  MOZ_ASSERT(mWeakAsyncInputStream == aStream);
+
+  // We have been canceled in the meanwhile.
+  if (!mAsyncWaitCallback) {
+    return NS_OK;
+  }
+
+  if (mCurPos < mStart) {
+    char buf[4096];
+    while (mCurPos < mStart) {
+      uint32_t bytesRead;
+      uint64_t bufCount = XPCOM_MIN(mStart - mCurPos, (uint64_t)sizeof(buf));
+      nsresult rv = mInputStream->Read(buf, bufCount, &bytesRead);
+      if (rv == NS_BASE_STREAM_WOULD_BLOCK) {
+        return mWeakAsyncInputStream->AsyncWait(this, 0, mStart - mCurPos,
+                                                mAsyncWaitEventTarget);
+      }
+
+      if (NS_WARN_IF(NS_FAILED(rv)) || bytesRead == 0) {
+        return RunAsyncWaitCallback();
+      }
+
+      mCurPos += bytesRead;
+    }
+
+    // Now we are ready to do the 'real' asyncWait.
+    return mWeakAsyncInputStream->AsyncWait(this, mAsyncWaitFlags,
+                                            mAsyncWaitRequestedCount,
+                                            mAsyncWaitEventTarget);
+  }
+
+  return RunAsyncWaitCallback();
+}
+
+nsresult
+SlicedInputStream::RunAsyncWaitCallback()
+{
+  nsCOMPtr<nsIInputStreamCallback> callback = mAsyncWaitCallback;
+
+  mAsyncWaitCallback = nullptr;
+  mAsyncWaitEventTarget = nullptr;
+
+  return callback->OnInputStreamReady(this);
 }
 
 // nsIIPCSerializableInputStream
@@ -256,7 +345,8 @@ SlicedInputStream::Serialize(mozilla::ipc::InputStreamParams& aParams,
   MOZ_ASSERT(mWeakIPCSerializableInputStream);
 
   SlicedInputStreamParams params;
-  SerializeInputStream(mInputStream, params.stream(), aFileDescriptors);
+  InputStreamHelper::SerializeInputStream(mInputStream, params.stream(),
+                                          aFileDescriptors);
   params.start() = mStart;
   params.length() = mLength;
   params.curPos() = mCurPos;
@@ -282,7 +372,8 @@ SlicedInputStream::Deserialize(const mozilla::ipc::InputStreamParams& aParams,
     aParams.get_SlicedInputStreamParams();
 
   nsCOMPtr<nsIInputStream> stream =
-    DeserializeInputStream(params.stream(), aFileDescriptors);
+    InputStreamHelper::DeserializeInputStream(params.stream(),
+                                              aFileDescriptors);
   if (!stream) {
     NS_WARNING("Deserialize failed!");
     return false;
@@ -317,30 +408,40 @@ SlicedInputStream::Seek(int32_t aWhence, int64_t aOffset)
   NS_ENSURE_STATE(mWeakSeekableInputStream);
 
   int64_t offset;
+  nsresult rv;
+
   switch (aWhence) {
     case NS_SEEK_SET:
       offset = mStart + aOffset;
       break;
     case NS_SEEK_CUR:
-      offset = mStart + mCurPos + aOffset;
+      // mCurPos could be lower than mStart if the reading has not started yet.
+      offset = XPCOM_MAX(mStart, mCurPos) + aOffset;
       break;
-    case NS_SEEK_END:
-      offset = mStart + mLength + aOffset;
+    case NS_SEEK_END: {
+      uint64_t available;
+      rv = mInputStream->Available(&available);
+      if (NS_WARN_IF(NS_FAILED(rv))) {
+        return rv;
+      }
+
+      offset = XPCOM_MIN(mStart + mLength, available) + aOffset;
       break;
-   default:
-     return NS_ERROR_ILLEGAL_VALUE;
+    }
+    default:
+      return NS_ERROR_ILLEGAL_VALUE;
   }
 
   if (offset < (int64_t)mStart || offset > (int64_t)(mStart + mLength)) {
     return NS_ERROR_INVALID_ARG;
   }
 
-  nsresult rv = mWeakSeekableInputStream->Seek(NS_SEEK_SET, offset);
+  rv = mWeakSeekableInputStream->Seek(NS_SEEK_SET, offset);
   if (NS_WARN_IF(NS_FAILED(rv))) {
     return rv;
   }
 
-  mCurPos = offset - mStart;
+  mCurPos = offset;
   return NS_OK;
 }
 

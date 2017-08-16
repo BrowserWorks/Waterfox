@@ -1,6 +1,4 @@
-/* globals AddonManager, Components, LegacyExtensionsUtils, Services,
-   XPCOMUtils */
-
+/* globals ADDON_DISABLE */
 const OLD_ADDON_PREF_NAME = "extensions.jid1-NeEaf3sAHdKHPA@jetpack.deviceIdInfo";
 const OLD_ADDON_ID = "jid1-NeEaf3sAHdKHPA@jetpack";
 const ADDON_ID = "screenshots@mozilla.org";
@@ -22,7 +20,7 @@ XPCOMUtils.defineLazyModuleGetter(this, "LegacyExtensionsUtils",
 
 let addonResourceURI;
 let appStartupDone;
-const appStartupPromise = new Promise((resolve, reject) => {
+let appStartupPromise = new Promise((resolve, reject) => {
   appStartupDone = resolve;
 });
 
@@ -41,7 +39,7 @@ const prefObserver = {
     // aData is the name of the pref that's been changed (relative to aSubject)
     if (aData == USER_DISABLE_PREF || aData == SYSTEM_DISABLE_PREF) {
       // eslint-disable-next-line promise/catch-or-return
-      appStartupPromise.then(handleStartup);
+      appStartupPromise = appStartupPromise.then(handleStartup);
     }
   }
 };
@@ -62,7 +60,10 @@ const appStartupObserver = {
 }
 
 const APP_STARTUP = 1;
+let startupReason;
+
 function startup(data, reason) { // eslint-disable-line no-unused-vars
+  startupReason = reason;
   if (reason === APP_STARTUP) {
     appStartupObserver.register();
   } else {
@@ -71,7 +72,7 @@ function startup(data, reason) { // eslint-disable-line no-unused-vars
   prefObserver.register();
   addonResourceURI = data.resourceURI;
   // eslint-disable-next-line promise/catch-or-return
-  appStartupPromise.then(handleStartup);
+  appStartupPromise = appStartupPromise.then(handleStartup);
 }
 
 function shutdown(data, reason) { // eslint-disable-line no-unused-vars
@@ -80,9 +81,8 @@ function shutdown(data, reason) { // eslint-disable-line no-unused-vars
     id: ADDON_ID,
     resourceURI: addonResourceURI
   });
-  if (webExtension.started) {
-    stop(webExtension);
-  }
+  // Because the prefObserver is unregistered above, this _should_ terminate the promise chain.
+  appStartupPromise = appStartupPromise.then(() => { stop(webExtension, reason); });
 }
 
 function install(data, reason) {} // eslint-disable-line no-unused-vars
@@ -104,15 +104,16 @@ function handleStartup() {
   });
 
   if (!shouldDisable() && !webExtension.started) {
-    start(webExtension);
+    return start(webExtension);
   } else if (shouldDisable()) {
-    stop(webExtension);
+    return stop(webExtension, ADDON_DISABLE);
   }
 }
 
 function start(webExtension) {
-  webExtension.startup().then((api) => {
+  return webExtension.startup(startupReason).then((api) => {
     api.browser.runtime.onMessage.addListener(handleMessage);
+    return Promise.resolve(null);
   }).catch((err) => {
     // The startup() promise will be rejected if the webExtension was
     // already started (a harmless error), or if initializing the
@@ -124,8 +125,8 @@ function start(webExtension) {
   });
 }
 
-function stop(webExtension) {
-  webExtension.shutdown();
+function stop(webExtension, reason) {
+  return Promise.resolve(webExtension.shutdown(reason));
 }
 
 function handleMessage(msg, sender, sendReply) {

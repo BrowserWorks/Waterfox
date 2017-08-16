@@ -2,14 +2,12 @@
 set -x -e -v
 
 # This script is for building clang for Mac OS X on Linux.
-
 WORKSPACE=$HOME/workspace
 HOME_DIR=$WORKSPACE/build
 UPLOAD_DIR=$WORKSPACE/artifacts
 
 cd $HOME_DIR/src
 
-TOOLTOOL_MANIFEST=browser/config/tooltool-manifests/macosx64/cross-clang.manifest
 . taskcluster/scripts/misc/tooltool-download.sh
 
 # ld needs libLTO.so from llvm

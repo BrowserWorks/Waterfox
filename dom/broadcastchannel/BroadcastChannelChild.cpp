@@ -7,7 +7,6 @@
 #include "BroadcastChannelChild.h"
 #include "BroadcastChannel.h"
 #include "jsapi.h"
-#include "mozilla/dom/ipc/BlobChild.h"
 #include "mozilla/dom/File.h"
 #include "mozilla/dom/MessageEvent.h"
 #include "mozilla/dom/MessageEventBinding.h"
@@ -95,13 +94,8 @@ BroadcastChannelChild::RecvNotify(const ClonedMessageData& aData)
   init.mOrigin = mOrigin;
   init.mData = value;
 
-  ErrorResult rv;
   RefPtr<MessageEvent> event =
-    MessageEvent::Constructor(mBC, NS_LITERAL_STRING("message"), init, rv);
-  if (NS_WARN_IF(rv.Failed())) {
-    rv.SuppressException();
-    return IPC_OK();
-  }
+    MessageEvent::Constructor(mBC, NS_LITERAL_STRING("message"), init);
 
   event->SetTrusted(true);
 

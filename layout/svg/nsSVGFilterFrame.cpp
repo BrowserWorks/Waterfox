@@ -7,6 +7,7 @@
 #include "nsSVGFilterFrame.h"
 
 // Keep others in (case-insensitive) order:
+#include "AutoReferenceChainGuard.h"
 #include "gfxUtils.h"
 #include "nsGkAtoms.h"
 #include "nsSVGEffects.h"
@@ -17,6 +18,7 @@
 #include "nsSVGUtils.h"
 #include "nsContentUtils.h"
 
+using namespace mozilla;
 using namespace mozilla::dom;
 
 nsIFrame*
@@ -27,26 +29,6 @@ NS_NewSVGFilterFrame(nsIPresShell* aPresShell, nsStyleContext* aContext)
 
 NS_IMPL_FRAMEARENA_HELPERS(nsSVGFilterFrame)
 
-class MOZ_RAII nsSVGFilterFrame::AutoFilterReferencer
-{
-public:
-  explicit AutoFilterReferencer(nsSVGFilterFrame *aFrame MOZ_GUARD_OBJECT_NOTIFIER_PARAM)
-    : mFrame(aFrame)
-  {
-    MOZ_GUARD_OBJECT_NOTIFIER_INIT;
-    // Reference loops should normally be detected in advance and handled, so
-    // we're not expecting to encounter them here
-    MOZ_ASSERT(!mFrame->mLoopFlag, "Undetected reference loop!");
-    mFrame->mLoopFlag = true;
-  }
-  ~AutoFilterReferencer() {
-    mFrame->mLoopFlag = false;
-  }
-private:
-  nsSVGFilterFrame *mFrame;
-  MOZ_DECL_USE_GUARD_OBJECT_NOTIFIER
-};
-
 uint16_t
 nsSVGFilterFrame::GetEnumValue(uint32_t aIndex, nsIContent *aDefault)
 {
@@ -56,12 +38,22 @@ nsSVGFilterFrame::GetEnumValue(uint32_t aIndex, nsIContent *aDefault)
   if (thisEnum.IsExplicitlySet())
     return thisEnum.GetAnimValue();
 
-  AutoFilterReferencer filterRef(this);
+  // Before we recurse, make sure we'll break reference loops and over long
+  // reference chains:
+  static int16_t sRefChainLengthCounter = AutoReferenceChainGuard::noChain;
+  AutoReferenceChainGuard refChainGuard(this, &mLoopFlag,
+                                        &sRefChainLengthCounter);
+  if (MOZ_UNLIKELY(!refChainGuard.Reference())) {
+    // Break reference chain
+    return static_cast<SVGFilterElement *>(aDefault)->
+    mEnumAttributes[aIndex].GetAnimValue();
+  }
 
-  nsSVGFilterFrame *next = GetReferencedFilterIfNotInUse();
-  return next ? next->GetEnumValue(aIndex, aDefault) :
-    static_cast<SVGFilterElement *>(aDefault)->
-      mEnumAttributes[aIndex].GetAnimValue();
+  nsSVGFilterFrame *next = GetReferencedFilter();
+
+  return next ? next->GetEnumValue(aIndex, aDefault)
+              : static_cast<SVGFilterElement *>(aDefault)->
+                  mEnumAttributes[aIndex].GetAnimValue();
 }
 
 const nsSVGLength2 *
@@ -73,11 +65,20 @@ nsSVGFilterFrame::GetLengthValue(uint32_t aIndex, nsIContent *aDefault)
   if (thisLength->IsExplicitlySet())
     return thisLength;
 
-  AutoFilterReferencer filterRef(this);
+  // Before we recurse, make sure we'll break reference loops and over long
+  // reference chains:
+  static int16_t sRefChainLengthCounter = AutoReferenceChainGuard::noChain;
+  AutoReferenceChainGuard refChainGuard(this, &mLoopFlag,
+                                        &sRefChainLengthCounter);
+  if (MOZ_UNLIKELY(!refChainGuard.Reference())) {
+    // Break reference chain
+    return &static_cast<SVGFilterElement*>(aDefault)->mLengthAttributes[aIndex];
+  }
 
-  nsSVGFilterFrame *next = GetReferencedFilterIfNotInUse();
-  return next ? next->GetLengthValue(aIndex, aDefault) :
-    &static_cast<SVGFilterElement *>(aDefault)->mLengthAttributes[aIndex];
+  nsSVGFilterFrame *next = GetReferencedFilter();
+
+  return next ? next->GetLengthValue(aIndex, aDefault)
+              : &static_cast<SVGFilterElement *>(aDefault)->mLengthAttributes[aIndex];
 }
 
 const SVGFilterElement *
@@ -93,11 +94,20 @@ nsSVGFilterFrame::GetFilterContent(nsIContent *aDefault)
     }
   }
 
-  AutoFilterReferencer filterRef(this);
+  // Before we recurse, make sure we'll break reference loops and over long
+  // reference chains:
+  static int16_t sRefChainLengthCounter = AutoReferenceChainGuard::noChain;
+  AutoReferenceChainGuard refChainGuard(this, &mLoopFlag,
+                                        &sRefChainLengthCounter);
+  if (MOZ_UNLIKELY(!refChainGuard.Reference())) {
+    // Break reference chain
+    return static_cast<SVGFilterElement*>(aDefault);
+  }
 
-  nsSVGFilterFrame *next = GetReferencedFilterIfNotInUse();
-  return next ? next->GetFilterContent(aDefault) :
-    static_cast<SVGFilterElement *>(aDefault);
+  nsSVGFilterFrame *next = GetReferencedFilter();
+
+  return next ? next->GetFilterContent(aDefault)
+              : static_cast<SVGFilterElement*>(aDefault);
 }
 
 nsSVGFilterFrame *
@@ -107,7 +117,7 @@ nsSVGFilterFrame::GetReferencedFilter()
     return nullptr;
 
   nsSVGPaintingProperty *property =
-    Properties().Get(nsSVGEffects::HrefAsPaintingProperty());
+    GetProperty(nsSVGEffects::HrefAsPaintingProperty());
 
   if (!property) {
     // Fetch our Filter element's href or xlink:href attribute
@@ -143,27 +153,11 @@ nsSVGFilterFrame::GetReferencedFilter()
   if (!result)
     return nullptr;
 
-  nsIAtom* frameType = result->GetType();
-  if (frameType != nsGkAtoms::svgFilterFrame)
+  LayoutFrameType frameType = result->Type();
+  if (frameType != LayoutFrameType::SVGFilter)
     return nullptr;
 
   return static_cast<nsSVGFilterFrame*>(result);
-}
-
-nsSVGFilterFrame *
-nsSVGFilterFrame::GetReferencedFilterIfNotInUse()
-{
-  nsSVGFilterFrame *referenced = GetReferencedFilter();
-  if (!referenced)
-    return nullptr;
-
-  if (referenced->mLoopFlag) {
-    // XXXjwatt: we should really send an error to the JavaScript Console here:
-    NS_WARNING("Filter reference loop detected while inheriting attribute!");
-    return nullptr;
-  }
-
-  return referenced;
 }
 
 nsresult
@@ -183,7 +177,7 @@ nsSVGFilterFrame::AttributeChanged(int32_t  aNameSpaceID,
               aNameSpaceID == kNameSpaceID_None) &&
              aAttribute == nsGkAtoms::href) {
     // Blow away our reference, if any
-    Properties().Delete(nsSVGEffects::HrefAsPaintingProperty());
+    DeleteProperty(nsSVGEffects::HrefAsPaintingProperty());
     mNoHRefURI = false;
     // And update whoever references us
     nsSVGEffects::InvalidateDirectRenderingObservers(this);
@@ -204,9 +198,3 @@ nsSVGFilterFrame::Init(nsIContent*       aContent,
   nsSVGContainerFrame::Init(aContent, aParent, aPrevInFlow);
 }
 #endif /* DEBUG */
-
-nsIAtom *
-nsSVGFilterFrame::GetType() const
-{
-  return nsGkAtoms::svgFilterFrame;
-}

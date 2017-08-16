@@ -21,6 +21,7 @@ interface nsIDocShellTreeItem;
 interface nsIStructuredCloneContainer;
 interface nsIBFCacheEntry;
 interface nsIPrincipal;
+interface nsISHistory;
 
 %{C++
 #include "nsRect.h"
@@ -138,6 +139,12 @@ interface nsISHEntry : nsISupports
 
     /** LayoutHistoryState for scroll position and form values */
     attribute nsILayoutHistoryState layoutHistoryState;
+
+    /**
+     * Initialises the LayoutHistoryState if it doesn't already exist
+     * and returns a reference to it.
+     */
+    nsILayoutHistoryState initLayoutHistoryState();
 
     /** parent of this entry */
     attribute nsISHEntry parent;
@@ -320,6 +327,19 @@ interface nsISHEntry : nsISupports
      * if true == "manual", false == "auto".
      */
     attribute boolean scrollRestorationIsManual;
+
+    /**
+     * Flag to indicate that the history entry was originally loaded in the
+     * current process. This flag does not survive a browser process switch.
+     */
+    readonly attribute boolean loadedInThisProcess;
+
+    /**
+     * The session history it belongs to. It's usually only set on root entries.
+     * SHEntry is strictly bound to the SHistory it belongs to; it should not be
+     * changed once set to a non-null value.
+     */
+    [noscript] attribute nsISHistory SHistory;
 };
 
 [scriptable, uuid(bb66ac35-253b-471f-a317-3ece940f04c5)]

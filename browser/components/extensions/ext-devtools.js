@@ -2,7 +2,11 @@
 /* vim: set sts=2 sw=2 et tw=80: */
 "use strict";
 
-/* global getTargetTabIdForToolbox */
+/* exported getDevToolsTargetForContext */
+/* global getTargetTabIdForToolbox, getDevToolsTargetForContext */
+
+// The ext-* files are imported into the same scopes.
+/* import-globals-from ext-utils.js */
 
 /**
  * This module provides helpers used by the other specialized `ext-devtools-*.js` modules
@@ -11,12 +15,10 @@
 
 XPCOMUtils.defineLazyModuleGetter(this, "gDevTools",
                                   "resource://devtools/client/framework/gDevTools.jsm");
-XPCOMUtils.defineLazyModuleGetter(this, "Task",
-                                  "resource://gre/modules/Task.jsm");
 
 Cu.import("resource://gre/modules/ExtensionParent.jsm");
 
-const {
+var {
   HiddenExtensionPage,
   watchExtensionProxyContextLoad,
 } = ExtensionParent;
@@ -37,28 +39,26 @@ let initDevTools;
  * @returns {Promise<TabTarget>}
  *   The cloned devtools target associated to the context.
  */
-global.getDevToolsTargetForContext = (context) => {
-  return Task.spawn(function* asyncGetTabTarget() {
-    if (context.devToolsTarget) {
-      yield context.devToolsTarget.makeRemote();
-      return context.devToolsTarget;
-    }
-
-    if (!context.devToolsToolbox || !context.devToolsToolbox.target) {
-      throw new Error("Unable to get a TabTarget for a context not associated to any toolbox");
-    }
-
-    if (!context.devToolsToolbox.target.isLocalTab) {
-      throw new Error("Unexpected target type: only local tabs are currently supported.");
-    }
-
-    const {TabTarget} = require("devtools/client/framework/target");
-
-    context.devToolsTarget = new TabTarget(context.devToolsToolbox.target.tab);
-    yield context.devToolsTarget.makeRemote();
-
+global.getDevToolsTargetForContext = async (context) => {
+  if (context.devToolsTarget) {
+    await context.devToolsTarget.makeRemote();
     return context.devToolsTarget;
-  });
+  }
+
+  if (!context.devToolsToolbox || !context.devToolsToolbox.target) {
+    throw new Error("Unable to get a TabTarget for a context not associated to any toolbox");
+  }
+
+  if (!context.devToolsToolbox.target.isLocalTab) {
+    throw new Error("Unexpected target type: only local tabs are currently supported.");
+  }
+
+  const {TabTarget} = require("devtools/client/framework/target");
+
+  context.devToolsTarget = new TabTarget(context.devToolsToolbox.target.tab);
+  await context.devToolsTarget.makeRemote();
+
+  return context.devToolsTarget;
 };
 
 /**
@@ -119,37 +119,36 @@ class DevToolsPage extends HiddenExtensionPage {
     });
   }
 
-  build() {
-    return Task.spawn(function* () {
-      yield this.createBrowserElement();
+  async build() {
+    await this.createBrowserElement();
 
-      // Listening to new proxy contexts.
-      this.unwatchExtensionProxyContextLoad = watchExtensionProxyContextLoad(this, context => {
-        // Keep track of the toolbox and target associated to the context, which is
-        // needed by the API methods implementation.
-        context.devToolsToolbox = this.toolbox;
+    // Listening to new proxy contexts.
+    this.unwatchExtensionProxyContextLoad = watchExtensionProxyContextLoad(this, context => {
+      // Keep track of the toolbox and target associated to the context, which is
+      // needed by the API methods implementation.
+      context.devToolsToolbox = this.toolbox;
 
-        if (!this.topLevelContext) {
-          this.topLevelContext = context;
+      if (!this.topLevelContext) {
+        this.topLevelContext = context;
 
-          // Ensure this devtools page is destroyed, when the top level context proxy is
-          // closed.
-          this.topLevelContext.callOnClose(this);
+        // Ensure this devtools page is destroyed, when the top level context proxy is
+        // closed.
+        this.topLevelContext.callOnClose(this);
 
-          this.resolveTopLevelContext(context);
-        }
-      });
+        this.resolveTopLevelContext(context);
+      }
+    });
 
-      extensions.emit("extension-browser-inserted", this.browser, {
-        devtoolsToolboxInfo: {
-          inspectedWindowTabId: getTargetTabIdForToolbox(this.toolbox),
-        },
-      });
+    extensions.emit("extension-browser-inserted", this.browser, {
+      devtoolsToolboxInfo: {
+        inspectedWindowTabId: getTargetTabIdForToolbox(this.toolbox),
+        themeName: gDevTools.getTheme(),
+      },
+    });
 
-      this.browser.loadURI(this.url);
+    this.browser.loadURI(this.url);
 
-      yield this.waitForTopLevelContext;
-    }.bind(this));
+    await this.waitForTopLevelContext;
   }
 
   close() {
@@ -206,6 +205,10 @@ class DevToolsPageDefinition {
     this.devtoolsPageForTarget = new Map();
   }
 
+  onThemeChanged(evt, themeName) {
+    Services.ppmm.broadcastAsyncMessage("Extension:DevToolsThemeChanged", {themeName});
+  }
+
   buildForToolbox(toolbox) {
     if (this.devtoolsPageForTarget.has(toolbox.target)) {
       return Promise.reject(new Error("DevtoolsPage has been already created for this toolbox"));
@@ -214,6 +217,11 @@ class DevToolsPageDefinition {
     const devtoolsPage = new DevToolsPage(this.extension, {
       toolbox, url: this.url, devToolsPageDefinition: this,
     });
+
+    // If this is the first DevToolsPage, subscribe to the theme-changed event
+    if (this.devtoolsPageForTarget.size === 0) {
+      gDevTools.on("theme-changed", this.onThemeChanged);
+    }
     this.devtoolsPageForTarget.set(toolbox.target, devtoolsPage);
 
     return devtoolsPage.build();
@@ -228,6 +236,11 @@ class DevToolsPageDefinition {
       // raise an exception if it is still there.
       if (this.devtoolsPageForTarget.has(target)) {
         throw new Error(`Leaked DevToolsPage instance for target "${target.toString()}"`);
+      }
+
+      // If this was the last DevToolsPage, unsubscribe from the theme-changed event
+      if (this.devtoolsPageForTarget.size === 0) {
+        gDevTools.off("theme-changed", this.onThemeChanged);
       }
     }
   }
@@ -249,7 +262,6 @@ class DevToolsPageDefinition {
   }
 }
 
-/* eslint-disable mozilla/balanced-listeners */
 
 let devToolsInitialized = false;
 initDevTools = function() {
@@ -257,6 +269,7 @@ initDevTools = function() {
     return;
   }
 
+  /* eslint-disable mozilla/balanced-listeners */
   // Create a devtools page context for a new opened toolbox,
   // based on the registered devtools_page definitions.
   gDevTools.on("toolbox-created", (evt, toolbox) => {
@@ -292,22 +305,35 @@ initDevTools = function() {
       devtoolsPageDefinition.shutdownForTarget(target);
     }
   });
+  /* eslint-enable mozilla/balanced-listeners */
 
   devToolsInitialized = true;
 };
 
-// Create and register a new devtools_page definition as specified in the
-// "devtools_page" property in the extension manifest.
-extensions.on("manifest_devtools_page", (type, directive, extension, manifest) => {
-  let devtoolsPageDefinition = new DevToolsPageDefinition(extension, manifest[directive]);
-  devtoolsPageDefinitionMap.set(extension, devtoolsPageDefinition);
-});
+this.devtools = class extends ExtensionAPI {
+  onManifestEntry(entryName) {
+    let {extension} = this;
+    let {manifest} = extension;
 
-// Destroy the registered devtools_page definition on extension shutdown.
-extensions.on("shutdown", (type, extension) => {
-  if (devtoolsPageDefinitionMap.has(extension)) {
-    devtoolsPageDefinitionMap.get(extension).shutdown();
-    devtoolsPageDefinitionMap.delete(extension);
+    // Create and register a new devtools_page definition as specified in the
+    // "devtools_page" property in the extension manifest.
+    let devtoolsPageDefinition = new DevToolsPageDefinition(extension, manifest.devtools_page);
+    devtoolsPageDefinitionMap.set(extension, devtoolsPageDefinition);
   }
-});
-/* eslint-enable mozilla/balanced-listeners */
+
+  onShutdown(reason) {
+    let {extension} = this;
+
+    // Destroy the registered devtools_page definition on extension shutdown.
+    if (devtoolsPageDefinitionMap.has(extension)) {
+      devtoolsPageDefinitionMap.get(extension).shutdown();
+      devtoolsPageDefinitionMap.delete(extension);
+    }
+  }
+
+  getAPI(context) {
+    return {
+      devtools: {},
+    };
+  }
+};

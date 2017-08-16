@@ -37,24 +37,6 @@
         ]]></getter>
       </property>
 
-      <!-- increases or decreases the browser's network priority -->
-      <method name="adjustPriority">
-        <parameter name="adjustment"/>
-        <body><![CDATA[
-          this.messageManager.sendAsyncMessage("NetworkPrioritizer:AdjustPriority",
-                                               {adjustment});
-        ]]></body>
-      </method>
-
-      <!-- sets the browser's network priority to a discrete value -->
-      <method name="setPriority">
-        <parameter name="priority"/>
-        <body><![CDATA[
-          this.messageManager.sendAsyncMessage("NetworkPrioritizer:SetPriority",
-                                               {priority});
-        ]]></body>
-      </method>
-
       <field name="_controller">null</field>
 
       <field name="_selectParentHelper">null</field>
@@ -302,7 +284,14 @@
       <method name="permitUnload">
         <body>
         <![CDATA[
-          const kTimeout = 5000;
+          let { frameLoader } = this.QueryInterface(Components.interfaces.nsIFrameLoaderOwner);
+          let tabParent = frameLoader.tabParent;
+
+          if (!tabParent.hasBeforeUnload) {
+            return { permitUnload: true, timedOut: false };
+          }
+
+          const kTimeout = 1000;
 
           let finished = false;
           let responded = false;
@@ -337,7 +326,7 @@
 
           mm.sendAsyncMessage("PermitUnload", {id});
           mm.addMessageListener("PermitUnload", msgListener);
-          Services.obs.addObserver(observer, "message-manager-close", false);
+          Services.obs.addObserver(observer, "message-manager-close");
 
           let timedOut = false;
           function timeout() {
@@ -346,7 +335,7 @@
             }
 
             // Dispatch something to ensure that the main thread wakes up.
-            Services.tm.mainThread.dispatch(function() {}, Components.interfaces.nsIThread.DISPATCH_NORMAL);
+            Services.tm.dispatchToMainThread(function() {});
           }
 
           let timer = Components.classes["@mozilla.org/timer;1"].createInstance(Components.interfaces.nsITimer);
@@ -568,6 +557,14 @@
         <parameter name="aPrincipal"/>
         <body>
           <![CDATA[
+            // Ensure that the content process has the permissions which are
+            // needed to create a document with the given principal.
+            let permissionPrincipal =
+              BrowserUtils.principalWithMatchingOA(aPrincipal, this.contentPrincipal);
+            let {frameLoader} = this.QueryInterface(Components.interfaces.nsIFrameLoaderOwner);
+            frameLoader.tabParent.transmitPermissionsForPrincipal(permissionPrincipal);
+
+            // Create the about blank content viewer in the content process
             this.messageManager.sendAsyncMessage("Browser:CreateAboutBlank", aPrincipal);
           ]]>
         </body>

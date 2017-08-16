@@ -12,7 +12,6 @@
 #include "nsIDOMRange.h"
 #include "nsIEditor.h"
 #include "nsIDOMNode.h"
-#include "nsUnicharUtilCIID.h"
 #include "nsUnicodeProperties.h"
 #include "nsServiceManagerUtils.h"
 #include "nsIContent.h"
@@ -336,9 +335,11 @@ mozInlineSpellWordUtil::MakeRange(NodeOffset aBegin, NodeOffset aEnd,
     return NS_ERROR_NOT_INITIALIZED;
 
   RefPtr<nsRange> range = new nsRange(aBegin.mNode);
-  nsresult rv = range->Set(aBegin.mNode, aBegin.mOffset,
-                           aEnd.mNode, aEnd.mOffset);
-  NS_ENSURE_SUCCESS(rv, rv);
+  nsresult rv = range->SetStartAndEnd(aBegin.mNode, aBegin.mOffset,
+                                      aEnd.mNode, aEnd.mOffset);
+  if (NS_WARN_IF(NS_FAILED(rv))) {
+    return rv;
+  }
   range.forget(aRange);
 
   return NS_OK;
@@ -851,9 +852,9 @@ WordSplitState::ClassifyCharacter(int32_t aIndex, bool aRecurse) const
 
   // this will classify the character, we want to treat "ignorable" characters
   // such as soft hyphens, and also ZWJ and ZWNJ as word characters.
-  nsIUGenCategory::nsUGenCategory
-    charCategory = mozilla::unicode::GetGenCategory(mDOMWordText[aIndex]);
-  if (charCategory == nsIUGenCategory::kLetter ||
+  nsUGenCategory charCategory =
+    mozilla::unicode::GetGenCategory(mDOMWordText[aIndex]);
+  if (charCategory == nsUGenCategory::kLetter ||
       IsIgnorableCharacter(mDOMWordText[aIndex]) ||
       mDOMWordText[aIndex] == 0x200C /* ZWNJ */ ||
       mDOMWordText[aIndex] == 0x200D /* ZWJ */)
@@ -902,10 +903,10 @@ WordSplitState::ClassifyCharacter(int32_t aIndex, bool aRecurse) const
   }
 
   // all other punctuation
-  if (charCategory == nsIUGenCategory::kSeparator ||
-      charCategory == nsIUGenCategory::kOther ||
-      charCategory == nsIUGenCategory::kPunctuation ||
-      charCategory == nsIUGenCategory::kSymbol) {
+  if (charCategory == nsUGenCategory::kSeparator ||
+      charCategory == nsUGenCategory::kOther ||
+      charCategory == nsUGenCategory::kPunctuation ||
+      charCategory == nsUGenCategory::kSymbol) {
     // Don't break on hyphens, as hunspell handles them on its own.
     if (aIndex > 0 &&
         mDOMWordText[aIndex] == '-' &&
@@ -1033,7 +1034,7 @@ WordSplitState::ShouldSkipWord(int32_t aStart, int32_t aLength)
 
   // check to see if the word contains a digit
   for (int32_t i = aStart; i < last; i ++) {
-    if (unicode::GetGenCategory(mDOMWordText[i]) == nsIUGenCategory::kNumber) {
+    if (unicode::GetGenCategory(mDOMWordText[i]) == nsUGenCategory::kNumber) {
       return true;
     }
   }

@@ -9,22 +9,47 @@
 #include "mozilla/gfx/Logging.h"
 #include "mozilla/layers/CompositorBridgeParent.h"
 #include "mozilla/layers/CompositorThread.h"
+#include "mozilla/webrender/RenderBufferTextureHost.h"
+#include "mozilla/webrender/RenderTextureHostOGL.h"
 #include "mozilla/widget/CompositorWidget.h"
 
 namespace mozilla {
 namespace wr {
 
-WrExternalImage LockExternalImage(void* aObj, WrExternalImageId aId)
+WrExternalImage LockExternalImage(void* aObj, WrExternalImageId aId, uint8_t aChannelIndex)
 {
-  return WrExternalImage { /*WrExternalImageIdType::TextureHandle, */0.0f, 0.0f, 0.0f, 0.0f, 0 };
+  RendererOGL* renderer = reinterpret_cast<RendererOGL*>(aObj);
+  RenderTextureHost* texture = renderer->GetRenderTexture(aId);
+
+  if (texture->AsBufferTextureHost()) {
+    RenderBufferTextureHost* bufferTexture = texture->AsBufferTextureHost();
+    MOZ_ASSERT(bufferTexture);
+    bufferTexture->Lock();
+    RenderBufferTextureHost::RenderBufferData data =
+        bufferTexture->GetBufferDataForRender(aChannelIndex);
+
+    return RawDataToWrExternalImage(data.mData, data.mBufferSize);
+  } else {
+    // texture handle case
+    RenderTextureHostOGL* textureOGL = texture->AsTextureHostOGL();
+    MOZ_ASSERT(textureOGL);
+
+    textureOGL->SetGLContext(renderer->mGL);
+    textureOGL->Lock();
+    gfx::IntSize size = textureOGL->GetSize(aChannelIndex);
+
+    return NativeTextureToWrExternalImage(textureOGL->GetGLHandle(aChannelIndex),
+                                          0, 0,
+                                          size.width, size.height);
+  }
 }
 
-void UnlockExternalImage(void* aObj, WrExternalImageId aId)
+void UnlockExternalImage(void* aObj, WrExternalImageId aId, uint8_t aChannelIndex)
 {
-}
-
-void ReleaseExternalImage(void* aObj, WrExternalImageId aId)
-{
+  RendererOGL* renderer = reinterpret_cast<RendererOGL*>(aObj);
+  RenderTextureHost* texture = renderer->GetRenderTexture(aId);
+  MOZ_ASSERT(texture);
+  texture->Unlock();
 }
 
 RendererOGL::RendererOGL(RefPtr<RenderThread>&& aThread,
@@ -51,6 +76,11 @@ RendererOGL::RendererOGL(RefPtr<RenderThread>&& aThread,
 RendererOGL::~RendererOGL()
 {
   MOZ_COUNT_DTOR(RendererOGL);
+  if (!mGL->MakeCurrent()) {
+    gfxCriticalNote << "Failed to make render context current during destroying.";
+    // Leak resources!
+    return;
+  }
   wr_renderer_delete(mWrRenderer);
 }
 
@@ -61,7 +91,6 @@ RendererOGL::GetExternalImageHandler()
     this,
     LockExternalImage,
     UnlockExternalImage,
-    ReleaseExternalImage,
   };
 }
 
@@ -109,6 +138,32 @@ RendererOGL::Render()
 }
 
 void
+RendererOGL::Pause()
+{
+#ifdef MOZ_WIDGET_ANDROID
+  if (!mGL || mGL->IsDestroyed()) {
+    return;
+  }
+  // ReleaseSurface internally calls MakeCurrent.
+  mGL->ReleaseSurface();
+#endif
+}
+
+bool
+RendererOGL::Resume()
+{
+#ifdef MOZ_WIDGET_ANDROID
+  if (!mGL || mGL->IsDestroyed()) {
+    return false;
+  }
+  // RenewSurface internally calls MakeCurrent.
+  return mGL->RenewSurface(mWidget);
+#else
+  return true;
+#endif
+}
+
+void
 RendererOGL::SetProfilerEnabled(bool aEnabled)
 {
   wr_renderer_set_profiler_enabled(mWrRenderer, aEnabled);
@@ -118,6 +173,12 @@ WrRenderedEpochs*
 RendererOGL::FlushRenderedEpochs()
 {
   return wr_renderer_flush_rendered_epochs(mWrRenderer);
+}
+
+RenderTextureHost*
+RendererOGL::GetRenderTexture(WrExternalImageId aExternalImageId)
+{
+  return mThread->GetRenderTexture(aExternalImageId);
 }
 
 } // namespace wr

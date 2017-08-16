@@ -14,9 +14,11 @@ out to us in a GitHub issue, or stop by
 - [Testing](#testing)
   - [Overview](#overview)
   - [Running All Tests](#running-all-tests)
+  - [Running a Single Test](#running-a-single-test)
   - [Authoring New Tests](#authoring-new-tests)
-- [Generating Graphviz Dot File](#generating-graphviz-dot-file)
+  - [Test Expectations and `libclang` Versions](#test-expectations-and-libclang-versions)
 - [Automatic code formatting](#automatic-code-formatting)
+- [Generating Graphviz Dot Files](#generating-graphviz-dot-files)
 - [Debug Logging](#debug-logging)
 - [Using `creduce` to Minimize Test Cases](#using-creduce-to-minimize-test-cases)
   - [Isolating Your Test Case](#isolating-your-test-case)
@@ -65,12 +67,12 @@ $ export LD_LIBRARY_PATH=path/to/clang-3.9/lib # for Linux
 $ export DYLD_LIBRARY_PATH=path/to/clang-3.9/lib # for macOS
 ```
 
-Additionally, you may want to build and test with the `docs_` feature to ensure
-that you aren't forgetting to document types and functions. CI will catch it if
-you forget, but the turn around will be a lot slower ;)
+Additionally, you may want to build and test with the `testing_only_docs`
+feature to ensure that you aren't forgetting to document types and functions. CI
+will catch it if you forget, but the turn around will be a lot slower ;)
 
 ```
-$ cargo build --features docs_
+$ cargo build --features testing_only_docs
 ```
 
 ## Testing
@@ -91,7 +93,26 @@ Run `cargo test` to compare generated Rust bindings to the expectations.
 ### Running All Tests
 
 ```
-$ cargo test [--all-features]
+$ cargo test --features testing_only_libclang_$VERSION
+```
+
+Where `$VERSION` is one of:
+
+* `4`
+* `3_9`
+* `3_8`
+
+depending on which version of `libclang` you have installed.
+
+### Running a Single Test
+
+To generate bindings for a single test header, compile the bindings, and run the
+layout assertion tests for those bindings, use the `tests/test-one.sh`
+script. It supports fuzzy searching for test headers. For example, to test
+`tests/headers/what_is_going_on.hpp`, execute this command:
+
+```
+$ ./tests/test-one.sh going
 ```
 
 ### Authoring New Tests
@@ -113,26 +134,24 @@ Then verify the new Rust bindings compile and pass some basic tests:
 $ cargo test -p tests_expectations
 ```
 
-## Generating Graphviz Dot Files
+### Test Expectations and `libclang` Versions
 
-We have a special thing which will help you debug your codegen context if something
-will go wrong. It will generate a [`graphviz`](http://graphviz.org/pdf/dotguide.pdf)
-dot file and then you can create a PNG from it with `graphviz` tool in your OS.
+If a test generates different bindings across different `libclang` versions (for
+example, because we take advantage of better/newer APIs when possible), then you
+can add multiple test expectations, one for each supported `libclang`
+version. Instead of having a single `tests/expectations/tests/my_test.rs` file,
+add each of:
 
-Here is an example how it could be done:
+* `tests/expectations/tests/libclang-4/my_test.rs`
+* `tests/expectations/tests/libclang-3.9/my_test.rs`
+* `tests/expectations/tests/libclang-3.8/my_test.rs`
 
-```
-$ cargo run -- example.hpp --emit-ir-graphviz output.dot
-```
-
-It will generate your graphviz dot file and then you will need tog
-create a PNG from it with `graphviz`.
-
-Something like this:
-
-```
-$ dot -Tpng output.dot -o output.png
-```
+If you need to update the test expectations for a test file that generates
+different bindings for different `libclang` versions, you *don't* need to have
+many version of `libclang` installed locally. Just make a work-in-progress pull
+request, and then when Travis CI fails, it will log a diff of the
+expectations. Use the diff to patch the appropriate expectation file locally and
+then update your pull request.
 
 ## Automatic code formatting
 
@@ -156,6 +175,37 @@ $ cargo fmt
 ```
 
 The code style is described in the `rustfmt.toml` file in top level of the repo.
+
+## Generating Graphviz Dot Files
+
+We can generate [Graphviz](http://graphviz.org/pdf/dotguide.pdf) dot files from
+our internal representation of a C/C++ input header, and then you can create a
+PNG or PDF from it with Graphviz's `dot` program. This is very useful when
+debugging bindgen!
+
+First, make sure you have Graphviz and `dot` installed:
+
+```
+$ brew install graphviz         # OS X
+$ sudo dnf install graphviz     # Fedora
+$ # Etc...
+```
+
+Then, use the `--emit-ir-graphviz` flag to generate a `dot` file from our IR:
+
+```
+$ cargo run -- example.hpp --emit-ir-graphviz output.dot
+```
+
+Finally, convert the `dot` file to an image:
+
+```
+$ dot -Tpng output.dot -o output.png
+```
+
+The final result will look something like this:
+
+[![An example graphviz rendering of our IR](./example-graphviz-ir.png)](./example-graphviz-ir.png)
 
 ## Debug Logging
 

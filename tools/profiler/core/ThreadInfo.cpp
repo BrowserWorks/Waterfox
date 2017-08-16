@@ -12,21 +12,27 @@
 #include <pthread.h>
 #endif
 
-ThreadInfo::ThreadInfo(const char* aName, int aThreadId,
-                       bool aIsMainThread, PseudoStack* aPseudoStack,
+#ifdef XP_WIN
+#include <process.h>
+#define getpid _getpid
+#else
+#include <unistd.h> // for getpid()
+#endif
+
+ThreadInfo::ThreadInfo(const char* aName, int aThreadId, bool aIsMainThread,
                        void* aStackTop)
   : mName(strdup(aName))
   , mThreadId(aThreadId)
   , mIsMainThread(aIsMainThread)
-  , mPseudoStack(aPseudoStack)
+  , mRacyInfo(mozilla::WrapNotNull(new RacyThreadInfo()))
   , mPlatformData(AllocPlatformData(aThreadId))
   , mStackTop(aStackTop)
-  , mPendingDelete(false)
-  , mHasProfile(false)
-  , mMutex(MakeUnique<mozilla::Mutex>("ThreadInfo::mMutex"))
+  , mIsBeingProfiled(false)
+  , mContext(nullptr)
+  , mJSSampling(INACTIVE)
+  , mLastSample()
 {
   MOZ_COUNT_CTOR(ThreadInfo);
-  mThread = NS_GetCurrentThread();
 
   // We don't have to guess on mac
 #if defined(GP_OS_darwin)
@@ -39,44 +45,47 @@ ThreadInfo::ThreadInfo(const char* aName, int aThreadId,
   MOZ_ASSERT(aThreadId <= INT32_MAX, "native thread ID is > INT32_MAX");
 }
 
-ThreadInfo::~ThreadInfo() {
+ThreadInfo::~ThreadInfo()
+{
   MOZ_COUNT_DTOR(ThreadInfo);
+
+  delete mRacyInfo;
 }
 
 void
-ThreadInfo::SetPendingDelete()
+ThreadInfo::StartProfiling()
 {
-  mPendingDelete = true;
-  // We don't own the pseudostack so disconnect it.
-  mPseudoStack = nullptr;
+  mIsBeingProfiled = true;
+  mRacyInfo->ReinitializeOnResume();
+  if (mIsMainThread) {
+    mResponsiveness.emplace();
+  }
 }
 
-bool
-ThreadInfo::CanInvokeJS() const
+void
+ThreadInfo::StopProfiling()
 {
-  if (!mThread) {
-    MOZ_ASSERT(IsMainThread());
-    return true;
-  }
-  bool result;
-  mozilla::DebugOnly<nsresult> rv = mThread->GetCanInvokeJS(&result);
-  MOZ_ASSERT(NS_SUCCEEDED(rv));
-  return result;
+  mResponsiveness.reset();
+  mIsBeingProfiled = false;
 }
 
 void
 ThreadInfo::StreamJSON(ProfileBuffer* aBuffer, SpliceableJSONWriter& aWriter,
-                       const TimeStamp& aStartTime, double aSinceTime)
+                       const TimeStamp& aProcessStartTime, double aSinceTime)
 {
   // mUniqueStacks may already be emplaced from FlushSamplesAndMarkers.
   if (!mUniqueStacks.isSome()) {
-    mUniqueStacks.emplace(mPseudoStack->mContext);
+    mUniqueStacks.emplace(mContext);
   }
 
   aWriter.Start(SpliceableJSONWriter::SingleLineStyle);
   {
-    StreamSamplesAndMarkers(aBuffer, aWriter, aStartTime, aSinceTime,
-                            *mUniqueStacks);
+    StreamSamplesAndMarkers(Name(), ThreadId(), aBuffer, aWriter,
+                            aProcessStartTime, aSinceTime, mContext,
+                            mSavedStreamedSamples.get(),
+                            mSavedStreamedMarkers.get(), *mUniqueStacks);
+    mSavedStreamedSamples.reset();
+    mSavedStreamedMarkers.reset();
 
     aWriter.StartObjectProperty("stackTable");
     {
@@ -125,17 +134,23 @@ ThreadInfo::StreamJSON(ProfileBuffer* aBuffer, SpliceableJSONWriter& aWriter,
 }
 
 void
-ThreadInfo::StreamSamplesAndMarkers(ProfileBuffer* aBuffer,
-                                    SpliceableJSONWriter& aWriter,
-                                    const TimeStamp& aStartTime,
-                                    double aSinceTime,
-                                    UniqueStacks& aUniqueStacks)
+StreamSamplesAndMarkers(const char* aName,
+                        int aThreadId,
+                        ProfileBuffer* aBuffer,
+                        SpliceableJSONWriter& aWriter,
+                        const TimeStamp& aProcessStartTime,
+                        double aSinceTime,
+                        JSContext* aContext,
+                        char* aSavedStreamedSamples,
+                        char* aSavedStreamedMarkers,
+                        UniqueStacks& aUniqueStacks)
 {
   aWriter.StringProperty("processType",
                          XRE_ChildProcessTypeToString(XRE_GetProcessType()));
 
-  aWriter.StringProperty("name", Name());
-  aWriter.IntProperty("tid", static_cast<int>(mThreadId));
+  aWriter.StringProperty("name", aName);
+  aWriter.IntProperty("tid", static_cast<int64_t>(aThreadId));
+  aWriter.IntProperty("pid", static_cast<int64_t>(getpid()));
 
   aWriter.StartObjectProperty("samples");
   {
@@ -146,21 +161,19 @@ ThreadInfo::StreamSamplesAndMarkers(ProfileBuffer* aBuffer,
       schema.WriteField("responsiveness");
       schema.WriteField("rss");
       schema.WriteField("uss");
-      schema.WriteField("frameNumber");
     }
 
     aWriter.StartArrayProperty("data");
     {
-      if (mSavedStreamedSamples) {
+      if (aSavedStreamedSamples) {
         // We would only have saved streamed samples during shutdown
         // streaming, which cares about dumping the entire buffer, and thus
         // should have passed in 0 for aSinceTime.
         MOZ_ASSERT(aSinceTime == 0);
-        aWriter.Splice(mSavedStreamedSamples.get());
-        mSavedStreamedSamples.reset();
+        aWriter.Splice(aSavedStreamedSamples);
       }
-      aBuffer->StreamSamplesToJSON(aWriter, mThreadId, aSinceTime,
-                                   mPseudoStack->mContext, aUniqueStacks);
+      aBuffer->StreamSamplesToJSON(aWriter, aThreadId, aSinceTime, aContext,
+                                   aUniqueStacks);
     }
     aWriter.EndArray();
   }
@@ -177,13 +190,12 @@ ThreadInfo::StreamSamplesAndMarkers(ProfileBuffer* aBuffer,
 
     aWriter.StartArrayProperty("data");
     {
-      if (mSavedStreamedMarkers) {
+      if (aSavedStreamedMarkers) {
         MOZ_ASSERT(aSinceTime == 0);
-        aWriter.Splice(mSavedStreamedMarkers.get());
-        mSavedStreamedMarkers.reset();
+        aWriter.Splice(aSavedStreamedMarkers);
       }
-      aBuffer->StreamMarkersToJSON(aWriter, mThreadId, aStartTime, aSinceTime,
-                                   aUniqueStacks);
+      aBuffer->StreamMarkersToJSON(aWriter, aThreadId, aProcessStartTime,
+                                   aSinceTime, aUniqueStacks);
     }
     aWriter.EndArray();
   }
@@ -192,12 +204,11 @@ ThreadInfo::StreamSamplesAndMarkers(ProfileBuffer* aBuffer,
 
 void
 ThreadInfo::FlushSamplesAndMarkers(ProfileBuffer* aBuffer,
-                                   const TimeStamp& aStartTime)
-
+                                   const TimeStamp& aProcessStartTime)
 {
   // This function is used to serialize the current buffer just before
   // JSContext destruction.
-  MOZ_ASSERT(mPseudoStack->mContext);
+  MOZ_ASSERT(mContext);
 
   // Unlike StreamJSObject, do not surround the samples in brackets by calling
   // aWriter.{Start,End}BareList. The result string will be a comma-separated
@@ -206,14 +217,14 @@ ThreadInfo::FlushSamplesAndMarkers(ProfileBuffer* aBuffer,
   //
   // Note that the UniqueStacks instance is persisted so that the frame-index
   // mapping is stable across JS shutdown.
-  mUniqueStacks.emplace(mPseudoStack->mContext);
+  mUniqueStacks.emplace(mContext);
 
   {
     SpliceableChunkedJSONWriter b;
     b.StartBareList();
     {
       aBuffer->StreamSamplesToJSON(b, mThreadId, /* aSinceTime = */ 0,
-                                   mPseudoStack->mContext, *mUniqueStacks);
+                                   mContext, *mUniqueStacks);
     }
     b.EndBareList();
     mSavedStreamedSamples = b.WriteFunc()->CopyData();
@@ -223,7 +234,7 @@ ThreadInfo::FlushSamplesAndMarkers(ProfileBuffer* aBuffer,
     SpliceableChunkedJSONWriter b;
     b.StartBareList();
     {
-      aBuffer->StreamMarkersToJSON(b, mThreadId, aStartTime,
+      aBuffer->StreamMarkersToJSON(b, mThreadId, aProcessStartTime,
                                    /* aSinceTime = */ 0, *mUniqueStacks);
     }
     b.EndBareList();
@@ -235,19 +246,12 @@ ThreadInfo::FlushSamplesAndMarkers(ProfileBuffer* aBuffer,
   aBuffer->reset();
 }
 
-mozilla::Mutex&
-ThreadInfo::GetMutex()
-{
-  return *mMutex.get();
-}
-
 size_t
 ThreadInfo::SizeOfIncludingThis(mozilla::MallocSizeOf aMallocSizeOf) const
 {
   size_t n = aMallocSizeOf(this);
-
   n += aMallocSizeOf(mName.get());
-  n += mPseudoStack->SizeOfIncludingThis(aMallocSizeOf);
+  n += mRacyInfo->SizeOfIncludingThis(aMallocSizeOf);
 
   // Measurement of the following members may be added later if DMD finds it
   // is worthwhile:
@@ -255,11 +259,9 @@ ThreadInfo::SizeOfIncludingThis(mozilla::MallocSizeOf aMallocSizeOf) const
   // - mSavedStreamedSamples
   // - mSavedStreamedMarkers
   // - mUniqueStacks
-  // - mMutex
   //
   // The following members are not measured:
   // - mThread: because it is non-owning
 
   return n;
 }
-

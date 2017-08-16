@@ -1,7 +1,7 @@
 /* -*- indent-tabs-mode: nil; js-indent-level: 2 -*- */
 /* vim: set ft=javascript ts=2 et sw=2 tw=80: */
 
-const addonInstallId = "addon-install-confirmation";
+const ADDON_INSTALL_ID = "addon-install-confirmation";
 
 let fileurl1 = get_addon_file_url("browser_dragdrop1.xpi");
 let fileurl2 = get_addon_file_url("browser_dragdrop2.xpi");
@@ -9,18 +9,18 @@ let fileurl2 = get_addon_file_url("browser_dragdrop2.xpi");
 function promiseInstallNotification(aBrowser) {
   return new Promise(resolve => {
     function popupshown(event) {
-      if (event.target.getAttribute("popupid") != addonInstallId) {
+      if (event.target.getAttribute("popupid") != ADDON_INSTALL_ID) {
         return;
       }
 
       let notification =
-        PopupNotifications.getNotification(addonInstallId, aBrowser);
+        PopupNotifications.getNotification(ADDON_INSTALL_ID, aBrowser);
       if (!notification) {
         return;
       }
 
       PopupNotifications.panel.removeEventListener("popupshown", popupshown);
-      ok(true, `Got ${addonInstallId} popup for browser`);
+      ok(true, `Got ${ADDON_INSTALL_ID} popup for browser`);
       notification.remove();
       resolve();
     }
@@ -44,9 +44,9 @@ function CheckBrowserInPid(browser, expectedPid, message) {
   });
 }
 
-function* testOpenedAndDraggedXPI(aBrowser) {
+async function testOpenedAndDraggedXPI(aBrowser) {
   // Get the current pid for browser for comparison later.
-  let browserPid = yield ContentTask.spawn(aBrowser, null, () => {
+  let browserPid = await ContentTask.spawn(aBrowser, null, () => {
     return Services.appinfo.processID;
   });
 
@@ -56,8 +56,8 @@ function* testOpenedAndDraggedXPI(aBrowser) {
   urlbar.value = fileurl1.spec;
   urlbar.focus();
   EventUtils.synthesizeKey("KEY_Enter", { code: "Enter" });
-  yield promiseNotification;
-  yield CheckBrowserInPid(aBrowser, browserPid,
+  await promiseNotification;
+  await CheckBrowserInPid(aBrowser, browserPid,
                           "Check that browser has not switched process.");
 
   // No process switch for XPI file:// URI dragged to tab.
@@ -67,8 +67,8 @@ function* testOpenedAndDraggedXPI(aBrowser) {
                [[{type: "text/uri-list", data: fileurl1.spec}]],
                "move");
   is(effect, "move", "Drag should be accepted");
-  yield promiseNotification;
-  yield CheckBrowserInPid(aBrowser, browserPid,
+  await promiseNotification;
+  await CheckBrowserInPid(aBrowser, browserPid,
                           "Check that browser has not switched process.");
 
   // No process switch for two XPI file:// URIs dragged to tab.
@@ -79,23 +79,23 @@ function* testOpenedAndDraggedXPI(aBrowser) {
             [{type: "text/uri-list", data: fileurl2.spec}]],
            "move");
   is(effect, "move", "Drag should be accepted");
-  let [newTab, newTabInstallNotification] = yield promiseTabAndNotification;
-  yield promiseNotification;
+  let [newTab, newTabInstallNotification] = await promiseTabAndNotification;
+  await promiseNotification;
   if (gBrowser.selectedTab != newTab) {
-    yield BrowserTestUtils.switchTab(gBrowser, newTab);
+    await BrowserTestUtils.switchTab(gBrowser, newTab);
   }
-  yield newTabInstallNotification;
-  yield BrowserTestUtils.removeTab(newTab);
-  yield CheckBrowserInPid(aBrowser, browserPid,
+  await newTabInstallNotification;
+  await BrowserTestUtils.removeTab(newTab);
+  await CheckBrowserInPid(aBrowser, browserPid,
                           "Check that browser has not switched process.");
 }
 
 // Test for bug 1175267.
-add_task(function* () {
-  yield SpecialPowers.pushPrefEnv({
+add_task(async function() {
+  await SpecialPowers.pushPrefEnv({
     set: [["xpinstall.customConfirmationUI", true]]
   });
 
-  yield BrowserTestUtils.withNewTab("http://example.com", testOpenedAndDraggedXPI);
-  yield BrowserTestUtils.withNewTab("about:robots", testOpenedAndDraggedXPI);
+  await BrowserTestUtils.withNewTab("http://example.com", testOpenedAndDraggedXPI);
+  await BrowserTestUtils.withNewTab("about:robots", testOpenedAndDraggedXPI);
 });

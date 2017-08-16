@@ -11,7 +11,6 @@
 #include "nsIServiceManager.h"
 #include "nsIURI.h"
 
-#include "nsIChromeRegistry.h"
 #include "nsIFile.h"
 #include "nsIObjectInputStream.h"
 #include "nsIObjectOutputStream.h"
@@ -28,9 +27,11 @@
 #include "mozilla/scache/StartupCache.h"
 #include "mozilla/scache/StartupCacheUtils.h"
 #include "mozilla/Telemetry.h"
+#include "mozilla/intl/LocaleService.h"
 
 using namespace mozilla;
 using namespace mozilla::scache;
+using mozilla::intl::LocaleService;
 
 static bool gDisableXULCache = false; // enabled by default
 static const char kDisableXULCachePref[] = "nglayout.debug.disable_xul_cache";
@@ -189,16 +190,25 @@ nsXULPrototypeCache::PutPrototype(nsXULPrototypeDocument* aDocument)
     return NS_OK;
 }
 
+mozilla::StyleSheet*
+nsXULPrototypeCache::GetStyleSheet(nsIURI* aURI,
+                                   StyleBackendType aType)
+{
+    StyleSheetTable& table = StyleSheetTableFor(aType);
+    return table.GetWeak(aURI);
+}
+
 nsresult
-nsXULPrototypeCache::PutStyleSheet(StyleSheet* aStyleSheet)
+nsXULPrototypeCache::PutStyleSheet(StyleSheet* aStyleSheet,
+                                   StyleBackendType aType)
 {
     nsIURI* uri = aStyleSheet->GetSheetURI();
 
-    mStyleSheetTable.Put(uri, aStyleSheet);
+    StyleSheetTable& table = StyleSheetTableFor(aType);
+    table.Put(uri, aStyleSheet);
 
     return NS_OK;
 }
-
 
 JSScript*
 nsXULPrototypeCache::GetScript(nsIURI* aURI)
@@ -228,45 +238,62 @@ nsXULPrototypeCache::PutScript(nsIURI* aURI,
     return NS_OK;
 }
 
+nsXBLDocumentInfo*
+nsXULPrototypeCache::GetXBLDocumentInfo(nsIURI* aURL,
+                                        StyleBackendType aType)
+{
+  MOZ_ASSERT(aType != StyleBackendType::None,
+             "Please use either gecko or servo when looking up for the cache!");
+  return XBLDocTableFor(aType).GetWeak(aURL);
+}
+
 nsresult
 nsXULPrototypeCache::PutXBLDocumentInfo(nsXBLDocumentInfo* aDocumentInfo)
 {
-    nsIURI* uri = aDocumentInfo->DocumentURI();
+  nsIURI* uri = aDocumentInfo->DocumentURI();
+  XBLDocTable& table =
+    XBLDocTableFor(aDocumentInfo->GetDocument()->GetStyleBackendType());
 
-    RefPtr<nsXBLDocumentInfo> info;
-    mXBLDocTable.Get(uri, getter_AddRefs(info));
-    if (!info) {
-        mXBLDocTable.Put(uri, aDocumentInfo);
-    }
-    return NS_OK;
+  nsXBLDocumentInfo* info = table.GetWeak(uri);
+  if (!info) {
+    table.Put(uri, aDocumentInfo);
+  }
+  return NS_OK;
 }
 
 void
 nsXULPrototypeCache::FlushSkinFiles()
 {
-  // Flush out skin XBL files from the cache.
-  for (auto iter = mXBLDocTable.Iter(); !iter.Done(); iter.Next()) {
-    nsAutoCString str;
-    iter.Key()->GetPath(str);
-    if (strncmp(str.get(), "/skin", 5) == 0) {
-      iter.Remove();
-    }
-  }
+  StyleBackendType tableTypes[] = { StyleBackendType::Gecko,
+                                    StyleBackendType::Servo };
 
-  // Now flush out our skin stylesheets from the cache.
-  for (auto iter = mStyleSheetTable.Iter(); !iter.Done(); iter.Next()) {
-    nsAutoCString str;
-    iter.Data()->GetSheetURI()->GetPath(str);
-    if (strncmp(str.get(), "/skin", 5) == 0) {
-      iter.Remove();
+  for (auto tableType : tableTypes) {
+    // Flush out skin XBL files from the cache.
+    XBLDocTable& xblDocTable = XBLDocTableFor(tableType);
+    for (auto iter = xblDocTable.Iter(); !iter.Done(); iter.Next()) {
+      nsAutoCString str;
+      iter.Key()->GetPath(str);
+      if (strncmp(str.get(), "/skin", 5) == 0) {
+        iter.Remove();
+      }
     }
-  }
 
-  // Iterate over all the remaining XBL and make sure cached
-  // scoped skin stylesheets are flushed and refetched by the
-  // prototype bindings.
-  for (auto iter = mXBLDocTable.Iter(); !iter.Done(); iter.Next()) {
-    iter.Data()->FlushSkinStylesheets();
+    // Now flush out our skin stylesheets from the cache.
+    StyleSheetTable& table = StyleSheetTableFor(tableType);
+    for (auto iter = table.Iter(); !iter.Done(); iter.Next()) {
+      nsAutoCString str;
+      iter.Data()->GetSheetURI()->GetPath(str);
+      if (strncmp(str.get(), "/skin", 5) == 0) {
+        iter.Remove();
+      }
+    }
+
+    // Iterate over all the remaining XBL and make sure cached
+    // scoped skin stylesheets are flushed and refetched by the
+    // prototype bindings.
+    for (auto iter = xblDocTable.Iter(); !iter.Done(); iter.Next()) {
+      iter.Data()->FlushSkinStylesheets();
+    }
   }
 }
 
@@ -281,8 +308,10 @@ nsXULPrototypeCache::Flush()
 {
     mPrototypeTable.Clear();
     mScriptTable.Clear();
-    mStyleSheetTable.Clear();
-    mXBLDocTable.Clear();
+    mGeckoStyleSheetTable.Clear();
+    mServoStyleSheetTable.Clear();
+    mGeckoXBLDocTable.Clear();
+    mServoXBLDocTable.Clear();
 }
 
 
@@ -484,12 +513,8 @@ nsXULPrototypeCache::BeginCaching(nsIURI* aURI)
     rv = aURI->GetHost(package);
     if (NS_FAILED(rv))
         return rv;
-    nsCOMPtr<nsIXULChromeRegistry> chromeReg
-        = do_GetService(NS_CHROMEREGISTRY_CONTRACTID, &rv);
     nsAutoCString locale;
-    rv = chromeReg->GetSelectedLocale(package, false, locale);
-    if (NS_FAILED(rv))
-        return rv;
+    LocaleService::GetInstance()->GetAppLocaleAsLangTag(locale);
 
     nsAutoCString fileChromePath, fileLocale;
 
@@ -581,8 +606,14 @@ nsXULPrototypeCache::BeginCaching(nsIURI* aURI)
 void
 nsXULPrototypeCache::MarkInCCGeneration(uint32_t aGeneration)
 {
-    for (auto iter = mXBLDocTable.Iter(); !iter.Done(); iter.Next()) {
-        iter.Data()->MarkInCCGeneration(aGeneration);
+    StyleBackendType tableTypes[] = { StyleBackendType::Gecko,
+                                      StyleBackendType::Servo };
+
+    for (auto tableType : tableTypes) {
+        XBLDocTable& xblDocTable = XBLDocTableFor(tableType);
+        for (auto iter = xblDocTable.Iter(); !iter.Done(); iter.Next()) {
+            iter.Data()->MarkInCCGeneration(aGeneration);
+        }
     }
     for (auto iter = mPrototypeTable.Iter(); !iter.Done(); iter.Next()) {
         iter.Data()->MarkInCCGeneration(aGeneration);

@@ -429,7 +429,8 @@ NS_IMETHODIMP nsContentTreeOwner::ReloadInFreshProcess(nsIDocShell* aDocShell,
 }
 
 NS_IMETHODIMP nsContentTreeOwner::StartPrerenderingDocument(nsIURI* aHref,
-                                                            nsIURI* aReferrer)
+                                                            nsIURI* aReferrer,
+                                                            nsIPrincipal* aTriggeringPrincipal)
 {
   NS_WARNING("Cannot prerender a document in the parent process");
   return NS_ERROR_FAILURE;
@@ -763,7 +764,7 @@ NS_IMETHODIMP nsContentTreeOwner::SetTitle(const char16_t* aTitle)
       //
       // location bar is turned off, find the browser location
       //
-      // use the document's nsPrincipal to find the true owner
+      // use the document's ContentPrincipal to find the true owner
       // in case of javascript: or data: documents
       //
       nsCOMPtr<nsIDocShellTreeItem> dsitem;

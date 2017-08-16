@@ -102,10 +102,15 @@ struct StepFunction {
   int type;
 };
 
+struct FramesFunction {
+  int frames;
+};
+
 union TimingFunction {
   null_t;
   CubicBezierFunction;
   StepFunction;
+  FramesFunction;
 };
 
 // Send the angle with units rather than sending all angles in radians
@@ -187,6 +192,11 @@ struct TransformData {
   Point3D transformOrigin;
   nsRect bounds;
   int32_t appUnitsPerDevPixel;
+  // The resolution scale inherited from the parent
+  float inheritedXScale;
+  float inheritedYScale;
+  // True if the parent has perspective transform
+  bool hasPerspectiveParent;
 };
 
 union AnimationData {
@@ -243,6 +253,13 @@ struct Animation {
   Animatable baseStyle;
 };
 
+struct CompositorAnimations {
+  Animation[] animations;
+  // This id is used to map the layer animations between content
+  // and compositor side
+  uint64_t id;
+};
+
 // Change a layer's attributes
 struct CommonLayerAttributes {
   LayerIntRegion visibleRegion;
@@ -252,7 +269,7 @@ struct CommonLayerAttributes {
   LayerHandle maskLayer;
   LayerHandle[] ancestorMaskLayers;
   // Animated colors will only honored for ColorLayers.
-  Animation[] animations;
+  CompositorAnimations compositorAnimations;
   nsIntRegion invalidRegion;
   ScrollMetadata[] scrollMetadata;
   nsCString displayListLog;
@@ -283,7 +300,7 @@ struct TextLayerAttributes      { IntRect bounds; GlyphArray[] glyphs; uintptr_t
 struct ColorLayerAttributes     { LayerColor color; IntRect bounds; };
 struct CanvasLayerAttributes    { SamplingFilter samplingFilter; IntRect bounds; };
 struct RefLayerAttributes {
-  int64_t id;
+  uint64_t id;
   // TODO: Once bug 1132895 is fixed we shouldn't need to propagate the override
   // explicitly here.
   EventRegionsOverride eventRegionsOverride;
@@ -532,6 +549,14 @@ union AsyncParentMessageData {
   OpNotifyNotUsed;
 };
 
+struct PaintTiming {
+  float serializeMs;
+  float sendMs;
+  float dlMs;
+  float flbMs;
+  float rasterMs;
+};
+
 struct TransactionInfo
 {
   Edit[] cset;
@@ -548,7 +573,6 @@ struct TransactionInfo
   uint32_t paintSequenceNumber;
   bool isRepeatTransaction;
   TimeStamp transactionStart;
-  int32_t paintSyncId;
 };
 
 } // namespace

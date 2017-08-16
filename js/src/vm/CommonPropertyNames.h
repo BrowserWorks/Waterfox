@@ -30,7 +30,10 @@
     macro(ArrayValuesAt, ArrayValuesAt, "ArrayValuesAt") \
     macro(as, as, "as") \
     macro(Async, Async, "Async") \
+    macro(AsyncFromSyncIterator, AsyncFromSyncIterator, "Async-from-Sync Iterator") \
     macro(AsyncFunction, AsyncFunction, "AsyncFunction") \
+    macro(AsyncGenerator, AsyncGenerator, "AsyncGenerator") \
+    macro(AsyncGeneratorFunction, AsyncGeneratorFunction, "AsyncGeneratorFunction") \
     macro(AsyncWrapped, AsyncWrapped, "AsyncWrapped") \
     macro(async, async, "async") \
     macro(await, await, "await") \
@@ -71,6 +74,8 @@
     macro(constructor, constructor, "constructor") \
     macro(continue, continue_, "continue") \
     macro(ConvertAndCopyTo, ConvertAndCopyTo, "ConvertAndCopyTo") \
+    macro(CopyDataProperties, CopyDataProperties, "CopyDataProperties") \
+    macro(CopyDataPropertiesUnfiltered, CopyDataPropertiesUnfiltered, "CopyDataPropertiesUnfiltered") \
     macro(copyWithin, copyWithin, "copyWithin") \
     macro(count, count, "count") \
     macro(CreateResolvingFunctions, CreateResolvingFunctions, "CreateResolvingFunctions") \
@@ -255,6 +260,7 @@
     macro(objectFunction, objectFunction, "[object Function]") \
     macro(objectNull, objectNull, "[object Null]") \
     macro(objectNumber, objectNumber, "[object Number]") \
+    macro(objectObject, objectObject, "[object Object]") \
     macro(objectRegExp, objectRegExp, "[object RegExp]") \
     macro(objects, objects, "objects") \
     macro(objectString, objectString, "[object String]") \
@@ -319,6 +325,7 @@
     macro(star, star, "*") \
     macro(starDefaultStar, starDefaultStar, "*default*") \
     macro(StarGeneratorNext, StarGeneratorNext, "StarGeneratorNext") \
+    macro(StarGeneratorReturn, StarGeneratorReturn, "StarGeneratorReturn") \
     macro(StarGeneratorThrow, StarGeneratorThrow, "StarGeneratorThrow") \
     macro(startTimestamp, startTimestamp, "startTimestamp") \
     macro(state, state, "state") \

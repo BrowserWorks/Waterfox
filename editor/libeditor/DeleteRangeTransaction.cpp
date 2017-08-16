@@ -24,50 +24,42 @@ namespace mozilla {
 using namespace dom;
 
 // note that aEditorBase is not refcounted
-DeleteRangeTransaction::DeleteRangeTransaction()
-  : mEditorBase(nullptr)
-  , mRangeUpdater(nullptr)
+DeleteRangeTransaction::DeleteRangeTransaction(EditorBase& aEditorBase,
+                                               nsRange& aRangeToDelete,
+                                               RangeUpdater* aRangeUpdater)
+  : mEditorBase(&aEditorBase)
+  , mRangeToDelete(aRangeToDelete.CloneRange())
+  , mRangeUpdater(aRangeUpdater)
 {
 }
 
 NS_IMPL_CYCLE_COLLECTION_INHERITED(DeleteRangeTransaction,
                                    EditAggregateTransaction,
-                                   mRange)
+                                   mEditorBase,
+                                   mRangeToDelete)
 
 NS_INTERFACE_MAP_BEGIN_CYCLE_COLLECTION(DeleteRangeTransaction)
 NS_INTERFACE_MAP_END_INHERITING(EditAggregateTransaction)
 
-nsresult
-DeleteRangeTransaction::Init(EditorBase* aEditorBase,
-                             nsRange* aRange,
-                             RangeUpdater* aRangeUpdater)
-{
-  MOZ_ASSERT(aEditorBase && aRange);
-
-  mEditorBase = aEditorBase;
-  mRange = aRange->CloneRange();
-  mRangeUpdater = aRangeUpdater;
-
-  NS_ENSURE_TRUE(mEditorBase->IsModifiableNode(mRange->GetStartParent()),
-                 NS_ERROR_FAILURE);
-  NS_ENSURE_TRUE(mEditorBase->IsModifiableNode(mRange->GetEndParent()),
-                 NS_ERROR_FAILURE);
-  NS_ENSURE_TRUE(mEditorBase->IsModifiableNode(mRange->GetCommonAncestor()),
-                 NS_ERROR_FAILURE);
-
-  return NS_OK;
-}
-
 NS_IMETHODIMP
 DeleteRangeTransaction::DoTransaction()
 {
-  MOZ_ASSERT(mRange && mEditorBase);
+  if (NS_WARN_IF(!mEditorBase) || NS_WARN_IF(!mRangeToDelete)) {
+    return NS_ERROR_NOT_AVAILABLE;
+  }
+
+  // Swap mRangeToDelete out into a stack variable, so we make sure to null it
+  // out on return from this function.  Once this function returns, we no longer
+  // need mRangeToDelete, and keeping it alive in the long term slows down all
+  // DOM mutations because it's observing them.
+  RefPtr<nsRange> rangeToDelete;
+  rangeToDelete.swap(mRangeToDelete);
 
   // build the child transactions
-  nsCOMPtr<nsINode> startParent = mRange->GetStartParent();
-  int32_t startOffset = mRange->StartOffset();
-  nsCOMPtr<nsINode> endParent = mRange->GetEndParent();
-  int32_t endOffset = mRange->EndOffset();
+  nsCOMPtr<nsINode> startParent = rangeToDelete->GetStartParent();
+  int32_t startOffset = rangeToDelete->StartOffset();
+  nsCOMPtr<nsINode> endParent = rangeToDelete->GetEndParent();
+  int32_t endOffset = rangeToDelete->EndOffset();
   MOZ_ASSERT(startParent && endParent);
 
   if (startParent == endParent) {
@@ -82,7 +74,7 @@ DeleteRangeTransaction::DoTransaction()
       CreateTxnsToDeleteContent(startParent, startOffset, nsIEditor::eNext);
     NS_ENSURE_SUCCESS(rv, rv);
     // delete the intervening nodes
-    rv = CreateTxnsToDeleteNodesBetween();
+    rv = CreateTxnsToDeleteNodesBetween(rangeToDelete);
     NS_ENSURE_SUCCESS(rv, rv);
     // delete the relevant content in the end node
     rv = CreateTxnsToDeleteContent(endParent, endOffset, nsIEditor::ePrevious);
@@ -110,16 +102,12 @@ DeleteRangeTransaction::DoTransaction()
 NS_IMETHODIMP
 DeleteRangeTransaction::UndoTransaction()
 {
-  MOZ_ASSERT(mRange && mEditorBase);
-
   return EditAggregateTransaction::UndoTransaction();
 }
 
 NS_IMETHODIMP
 DeleteRangeTransaction::RedoTransaction()
 {
-  MOZ_ASSERT(mRange && mEditorBase);
-
   return EditAggregateTransaction::RedoTransaction();
 }
 
@@ -135,6 +123,10 @@ DeleteRangeTransaction::CreateTxnsToDeleteBetween(nsINode* aNode,
                                                   int32_t aStartOffset,
                                                   int32_t aEndOffset)
 {
+  if (NS_WARN_IF(!mEditorBase)) {
+    return NS_ERROR_NOT_AVAILABLE;
+  }
+
   // see what kind of node we have
   if (aNode->IsNodeOfType(nsINode::eDATA_NODE)) {
     // if the node is a chardata node, then delete chardata content
@@ -148,34 +140,37 @@ DeleteRangeTransaction::CreateTxnsToDeleteBetween(nsINode* aNode,
     RefPtr<nsGenericDOMDataNode> charDataNode =
       static_cast<nsGenericDOMDataNode*>(aNode);
 
-    RefPtr<DeleteTextTransaction> transaction =
+    RefPtr<DeleteTextTransaction> deleteTextTransaction =
       new DeleteTextTransaction(*mEditorBase, *charDataNode, aStartOffset,
                                 numToDel, mRangeUpdater);
-
-    nsresult rv = transaction->Init();
-    NS_ENSURE_SUCCESS(rv, rv);
-
-    AppendChild(transaction);
+    // If the text node isn't editable, it should be never undone/redone.
+    // So, the transaction shouldn't be recorded.
+    if (NS_WARN_IF(!deleteTextTransaction->CanDoIt())) {
+      return NS_ERROR_FAILURE;
+    }
+    AppendChild(deleteTextTransaction);
     return NS_OK;
   }
 
   nsCOMPtr<nsIContent> child = aNode->GetChildAt(aStartOffset);
-  NS_ENSURE_STATE(child);
-
-  // XXX This looks odd.  Only when the last transaction causes error at
-  //     calling Init(), the result becomes error.  Otherwise, always NS_OK.
-  nsresult rv = NS_OK;
   for (int32_t i = aStartOffset; i < aEndOffset; ++i) {
-    RefPtr<DeleteNodeTransaction> transaction = new DeleteNodeTransaction();
-    rv = transaction->Init(mEditorBase, child, mRangeUpdater);
-    if (NS_SUCCEEDED(rv)) {
-      AppendChild(transaction);
+    // Even if we detect invalid range, we should ignore it for removing
+    // specified range's nodes as far as possible.
+    if (NS_WARN_IF(!child)) {
+      break;
     }
-
+    RefPtr<DeleteNodeTransaction> deleteNodeTransaction =
+      new DeleteNodeTransaction(*mEditorBase, *child, mRangeUpdater);
+    // XXX This is odd handling.  Even if some children are not editable,
+    //     editor should append transactions because they could be editable
+    //     at undoing/redoing.  Additionally, if the transaction needs to
+    //     delete/restore all nodes, it should at undoing/redoing.
+    if (deleteNodeTransaction->CanDoIt()) {
+      AppendChild(deleteNodeTransaction);
+    }
     child = child->GetNextSibling();
   }
 
-  NS_ENSURE_SUCCESS(rv, rv);
   return NS_OK;
 }
 
@@ -184,6 +179,10 @@ DeleteRangeTransaction::CreateTxnsToDeleteContent(nsINode* aNode,
                                                   int32_t aOffset,
                                                   nsIEditor::EDirection aAction)
 {
+  if (NS_WARN_IF(!mEditorBase)) {
+    return NS_ERROR_NOT_AVAILABLE;
+  }
+
   // see what kind of node we have
   if (aNode->IsNodeOfType(nsINode::eDATA_NODE)) {
     // if the node is a chardata node, then delete chardata content
@@ -199,14 +198,15 @@ DeleteRangeTransaction::CreateTxnsToDeleteContent(nsINode* aNode,
     if (numToDelete) {
       RefPtr<nsGenericDOMDataNode> dataNode =
         static_cast<nsGenericDOMDataNode*>(aNode);
-      RefPtr<DeleteTextTransaction> transaction =
+      RefPtr<DeleteTextTransaction> deleteTextTransaction =
         new DeleteTextTransaction(*mEditorBase, *dataNode, start, numToDelete,
                                   mRangeUpdater);
-
-      nsresult rv = transaction->Init();
-      NS_ENSURE_SUCCESS(rv, rv);
-
-      AppendChild(transaction);
+      // If the text node isn't editable, it should be never undone/redone.
+      // So, the transaction shouldn't be recorded.
+      if (NS_WARN_IF(!deleteTextTransaction->CanDoIt())) {
+        return NS_ERROR_FAILURE;
+      }
+      AppendChild(deleteTextTransaction);
     }
   }
 
@@ -214,21 +214,33 @@ DeleteRangeTransaction::CreateTxnsToDeleteContent(nsINode* aNode,
 }
 
 nsresult
-DeleteRangeTransaction::CreateTxnsToDeleteNodesBetween()
+DeleteRangeTransaction::CreateTxnsToDeleteNodesBetween(nsRange* aRangeToDelete)
 {
+  if (NS_WARN_IF(!mEditorBase)) {
+    return NS_ERROR_NOT_AVAILABLE;
+  }
+
   nsCOMPtr<nsIContentIterator> iter = NS_NewContentSubtreeIterator();
 
-  nsresult rv = iter->Init(mRange);
+  nsresult rv = iter->Init(aRangeToDelete);
   NS_ENSURE_SUCCESS(rv, rv);
 
   while (!iter->IsDone()) {
     nsCOMPtr<nsINode> node = iter->GetCurrentNode();
-    NS_ENSURE_TRUE(node, NS_ERROR_NULL_POINTER);
+    if (NS_WARN_IF(!node)) {
+      return NS_ERROR_NULL_POINTER;
+    }
 
-    RefPtr<DeleteNodeTransaction> transaction = new DeleteNodeTransaction();
-    rv = transaction->Init(mEditorBase, node, mRangeUpdater);
-    NS_ENSURE_SUCCESS(rv, rv);
-    AppendChild(transaction);
+    RefPtr<DeleteNodeTransaction> deleteNodeTransaction =
+      new DeleteNodeTransaction(*mEditorBase, *node, mRangeUpdater);
+    // XXX This is odd handling.  Even if some nodes in the range are not
+    //     editable, editor should append transactions because they could
+    //     at undoing/redoing.  Additionally, if the transaction needs to
+    //     delete/restore all nodes, it should at undoing/redoing.
+    if (NS_WARN_IF(!deleteNodeTransaction->CanDoIt())) {
+      return NS_ERROR_FAILURE;
+    }
+    AppendChild(deleteNodeTransaction);
 
     iter->Next();
   }

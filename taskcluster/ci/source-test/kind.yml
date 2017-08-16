@@ -2,10 +2,10 @@
 # License, v. 2.0. If a copy of the MPL was not distributed with this
 # file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
-implementation: taskgraph.task.transform:TransformTask
+loader: taskgraph.loader.transform:loader
 
 transforms:
-   - taskgraph.transforms.build_attrs:transforms
+   - taskgraph.transforms.source_test:transforms
    - taskgraph.transforms.job:transforms
    - taskgraph.transforms.task:transforms
 
@@ -18,4 +18,6 @@ jobs-from:
 # This is used by run-task based tasks to lookup which build task it
 # should depend on based on its own platform.
 dependent-build-platforms:
-    linux64.*: build-linux64/opt
+    linux64.*:
+        label: build-linux64/opt
+        target-name: target.tar.bz2

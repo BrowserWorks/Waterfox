@@ -10,8 +10,6 @@ Cu.importGlobalProperties(["URL"]);
 
 Cu.import("resource://gre/modules/XPCOMUtils.jsm");
 Cu.import("resource://gre/modules/Services.jsm");
-XPCOMUtils.defineLazyModuleGetter(this, "Task",
-                                  "resource://gre/modules/Task.jsm");
 XPCOMUtils.defineLazyModuleGetter(this, "PlacesUtils",
                                   "resource://gre/modules/PlacesUtils.jsm");
 XPCOMUtils.defineLazyModuleGetter(this, "NetUtil",
@@ -36,7 +34,7 @@ this.PlacesTestUtils = Object.freeze({
    * @resolves When all visits have been added successfully.
    * @rejects JavaScript exception.
    */
-  addVisits: Task.async(function* (placeInfo) {
+  async addVisits(placeInfo) {
     let places = [];
     let infos = [];
 
@@ -63,7 +61,15 @@ this.PlacesTestUtils = Object.freeze({
       }
       let visitDate = place.visitDate;
       if (visitDate) {
-        if (!(visitDate instanceof Date)) {
+        if (visitDate.constructor.name != "Date") {
+          // visitDate should be in microseconds. It's easy to do the wrong thing
+          // and pass milliseconds to updatePlaces, so we lazily check for that.
+          // While it's not easily distinguishable, since both are integers, we
+          // can check if the value is very far in the past, and assume it's
+          // probably a mistake.
+          if (visitDate <= Date.now()) {
+            throw new Error("AddVisits expects a Date object or _micro_seconds!");
+          }
           visitDate = PlacesUtils.toDate(visitDate);
         }
       } else {
@@ -77,7 +83,44 @@ this.PlacesTestUtils = Object.freeze({
       infos.push(info);
     }
     return PlacesUtils.history.insertMany(infos);
-  }),
+  },
+
+   /*
+    * Add Favicons
+    *
+    * @param {Map} faviconURLs  keys are page URLs, values are their
+    *                           associated favicon URLs.
+    */
+
+  async addFavicons(faviconURLs) {
+    let faviconPromises = [];
+
+    // If no favicons were provided, we do not want to continue on
+    if (!faviconURLs) {
+      throw new Error("No favicon URLs were provided");
+    }
+    for (let [key, val] of faviconURLs) {
+      if (!val) {
+        throw new Error("URL does not exist");
+      }
+      faviconPromises.push(new Promise((resolve, reject) => {
+        let uri = NetUtil.newURI(key);
+        let faviconURI = NetUtil.newURI(val);
+        try {
+          PlacesUtils.favicons.setAndFetchFaviconForPage(
+            uri,
+            faviconURI,
+            false,
+            PlacesUtils.favicons.FAVICON_LOAD_NON_PRIVATE,
+            resolve,
+            Services.scriptSecurityManager.getSystemPrincipal());
+        } catch (ex) {
+          reject(ex);
+        }
+      }));
+    }
+    await Promise.all(faviconPromises);
+  },
 
   /**
    * Clear all history.
@@ -91,7 +134,7 @@ this.PlacesTestUtils = Object.freeze({
       Services.obs.addObserver(function observe(subj, topic, data) {
         Services.obs.removeObserver(observe, topic);
         resolve();
-      }, PlacesUtils.TOPIC_EXPIRATION_FINISHED, false);
+      }, PlacesUtils.TOPIC_EXPIRATION_FINISHED);
     });
 
     return Promise.all([expirationFinished, PlacesUtils.history.clear()]);
@@ -111,15 +154,15 @@ this.PlacesTestUtils = Object.freeze({
    *       this is a problem only across different connections.
    */
   promiseAsyncUpdates() {
-    return PlacesUtils.withConnectionWrapper("promiseAsyncUpdates", Task.async(function* (db) {
+    return PlacesUtils.withConnectionWrapper("promiseAsyncUpdates", async function(db) {
       try {
-        yield db.executeCached("BEGIN EXCLUSIVE");
-        yield db.executeCached("COMMIT");
+        await db.executeCached("BEGIN EXCLUSIVE");
+        await db.executeCached("COMMIT");
       } catch (ex) {
         // If we fail to start a transaction, it's because there is already one.
         // In such a case we should not try to commit the existing transaction.
       }
-    }));
+    });
   },
 
   /**
@@ -131,14 +174,14 @@ this.PlacesTestUtils = Object.freeze({
    * @resolves Returns true if the page is found.
    * @rejects JavaScript exception.
    */
-  isPageInDB: Task.async(function* (aURI) {
+  async isPageInDB(aURI) {
     let url = aURI instanceof Ci.nsIURI ? aURI.spec : aURI;
-    let db = yield PlacesUtils.promiseDBConnection();
-    let rows = yield db.executeCached(
+    let db = await PlacesUtils.promiseDBConnection();
+    let rows = await db.executeCached(
       "SELECT id FROM moz_places WHERE url_hash = hash(:url) AND url = :url",
       { url });
     return rows.length > 0;
-  }),
+  },
 
   /**
    * Asynchronously checks how many visits exist for a specified page.
@@ -149,16 +192,16 @@ this.PlacesTestUtils = Object.freeze({
    * @resolves Returns the number of visits found.
    * @rejects JavaScript exception.
    */
-  visitsInDB: Task.async(function* (aURI) {
+  async visitsInDB(aURI) {
     let url = aURI instanceof Ci.nsIURI ? aURI.spec : aURI;
-    let db = yield PlacesUtils.promiseDBConnection();
-    let rows = yield db.executeCached(
+    let db = await PlacesUtils.promiseDBConnection();
+    let rows = await db.executeCached(
       `SELECT count(*) FROM moz_historyvisits v
        JOIN moz_places h ON h.id = v.place_id
        WHERE url_hash = hash(:url) AND url = :url`,
       { url });
     return rows[0].getResultByIndex(0);
-  }),
+  },
 
   /**
    * Asynchronously returns the required DB field for a specified page.
@@ -169,15 +212,15 @@ this.PlacesTestUtils = Object.freeze({
    * @resolves Returns the field value.
    * @rejects JavaScript exception.
    */
-  fieldInDB: Task.async(function* (aURI, field) {
+  async fieldInDB(aURI, field) {
     let url = aURI instanceof Ci.nsIURI ? new URL(aURI.spec) : new URL(aURI);
-    let db = yield PlacesUtils.promiseDBConnection();
-    let rows = yield db.executeCached(
+    let db = await PlacesUtils.promiseDBConnection();
+    let rows = await db.executeCached(
       `SELECT ${field} FROM moz_places
        WHERE url_hash = hash(:url) AND url = :url`,
       { url: url.href });
     return rows[0].getResultByIndex(0);
-  }),
+  },
 
   /**
    * Marks all syncable bookmarks as synced by setting their sync statuses to
@@ -190,8 +233,8 @@ this.PlacesTestUtils = Object.freeze({
    */
   markBookmarksAsSynced() {
     return PlacesUtils.withConnectionWrapper("PlacesTestUtils: markBookmarksAsSynced", function(db) {
-      return db.executeTransaction(function* () {
-        yield db.executeCached(
+      return db.executeTransaction(async function() {
+        await db.executeCached(
           `WITH RECURSIVE
            syncedItems(id) AS (
              SELECT b.id FROM moz_bookmarks b
@@ -206,7 +249,7 @@ this.PlacesTestUtils = Object.freeze({
                syncStatus = :syncStatus
            WHERE id IN syncedItems`,
           { syncStatus: PlacesUtils.bookmarks.SYNC_STATUS.NORMAL });
-        yield db.executeCached("DELETE FROM moz_bookmarks_deleted");
+        await db.executeCached("DELETE FROM moz_bookmarks_deleted");
       });
     });
   },
@@ -227,12 +270,12 @@ this.PlacesTestUtils = Object.freeze({
    */
   setBookmarkSyncFields(...aFieldInfos) {
     return PlacesUtils.withConnectionWrapper("PlacesTestUtils: setBookmarkSyncFields", function(db) {
-      return db.executeTransaction(function* () {
+      return db.executeTransaction(async function() {
         for (let info of aFieldInfos) {
           if (!PlacesUtils.isValidGuid(info.guid)) {
             throw new Error(`Invalid GUID: ${info.guid}`);
           }
-          yield db.executeCached(
+          await db.executeCached(
             `UPDATE moz_bookmarks
              SET syncStatus = IFNULL(:syncStatus, syncStatus),
                  syncChangeCounter = IFNULL(:syncChangeCounter, syncChangeCounter),
@@ -248,11 +291,11 @@ this.PlacesTestUtils = Object.freeze({
     });
   },
 
-  fetchBookmarkSyncFields: Task.async(function* (...aGuids) {
-    let db = yield PlacesUtils.promiseDBConnection();
+  async fetchBookmarkSyncFields(...aGuids) {
+    let db = await PlacesUtils.promiseDBConnection();
     let results = [];
     for (let guid of aGuids) {
-      let rows = yield db.executeCached(`
+      let rows = await db.executeCached(`
         SELECT syncStatus, syncChangeCounter, lastModified, dateAdded
         FROM moz_bookmarks
         WHERE guid = :guid`,
@@ -269,11 +312,11 @@ this.PlacesTestUtils = Object.freeze({
       });
     }
     return results;
-  }),
+  },
 
-  fetchSyncTombstones: Task.async(function* () {
-    let db = yield PlacesUtils.promiseDBConnection();
-    let rows = yield db.executeCached(`
+  async fetchSyncTombstones() {
+    let db = await PlacesUtils.promiseDBConnection();
+    let rows = await db.executeCached(`
       SELECT guid, dateRemoved
       FROM moz_bookmarks_deleted
       ORDER BY guid`);
@@ -281,5 +324,5 @@ this.PlacesTestUtils = Object.freeze({
       guid: row.getResultByName("guid"),
       dateRemoved: PlacesUtils.toDate(row.getResultByName("dateRemoved")),
     }));
-  }),
+  },
 });

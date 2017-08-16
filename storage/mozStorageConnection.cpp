@@ -1006,24 +1006,22 @@ Connection::internalClose(sqlite3 *aNativeConnection)
               stmt));
 
 #ifdef DEBUG
-      char *msg = ::mozilla::Smprintf("SQL statement '%s' (%p) should have been finalized before closing the connection",
-                               ::sqlite3_sql(stmt),
-                               stmt);
-      NS_WARNING(msg);
-      ::mozilla::SmprintfFree(msg);
-      msg = nullptr;
+      {
+        SmprintfPointer msg = ::mozilla::Smprintf("SQL statement '%s' (%p) should have been finalized before closing the connection",
+                                           ::sqlite3_sql(stmt),
+                                           stmt);
+        NS_WARNING(msg.get());
+      }
 #endif // DEBUG
 
       srv = ::sqlite3_finalize(stmt);
 
 #ifdef DEBUG
       if (srv != SQLITE_OK) {
-        msg = ::mozilla::Smprintf("Could not finalize SQL statement '%s' (%p)",
-                           ::sqlite3_sql(stmt),
-                           stmt);
-        NS_WARNING(msg);
-        ::mozilla::SmprintfFree(msg);
-        msg = nullptr;
+        SmprintfPointer msg = ::mozilla::Smprintf("Could not finalize SQL statement '%s' (%p)",
+                                           ::sqlite3_sql(stmt),
+                                           stmt);
+        NS_WARNING(msg.get());
       }
 #endif // DEBUG
 
@@ -1401,8 +1399,15 @@ Connection::initializeClone(Connection* aClone, bool aReadOnly)
         nsCString path;
         rv = stmt->GetUTF8String(2, path);
         if (NS_SUCCEEDED(rv) && !path.IsEmpty()) {
-          rv = aClone->ExecuteSimpleSQL(NS_LITERAL_CSTRING("ATTACH DATABASE '") +
-            path + NS_LITERAL_CSTRING("' AS ") + name);
+          nsCOMPtr<mozIStorageStatement> attachStmt;
+          rv = aClone->CreateStatement(
+            NS_LITERAL_CSTRING("ATTACH DATABASE :path AS ") + name,
+            getter_AddRefs(attachStmt));
+          MOZ_ASSERT(NS_SUCCEEDED(rv));
+          rv = attachStmt->BindUTF8StringByName(NS_LITERAL_CSTRING("path"),
+                                                path);
+          MOZ_ASSERT(NS_SUCCEEDED(rv));
+          rv = attachStmt->Execute();
           MOZ_ASSERT(NS_SUCCEEDED(rv), "couldn't re-attach database to cloned connection");
         }
       }
@@ -1410,6 +1415,9 @@ Connection::initializeClone(Connection* aClone, bool aReadOnly)
   }
 
   // Copy over pragmas from the original connection.
+  // LIMITATION WARNING!  Many of these pragmas are actually scoped to the
+  // schema ("main" and any other attached databases), and this implmentation
+  // fails to propagate them.  This is being addressed on trunk.
   static const char * pragmas[] = {
     "cache_size",
     "temp_store",
@@ -1816,12 +1824,11 @@ Connection::CreateTable(const char *aTableName,
 {
   if (!mDBConn) return NS_ERROR_NOT_INITIALIZED;
 
-  char *buf = ::mozilla::Smprintf("CREATE TABLE %s (%s)", aTableName, aTableSchema);
+  SmprintfPointer buf = ::mozilla::Smprintf("CREATE TABLE %s (%s)", aTableName, aTableSchema);
   if (!buf)
     return NS_ERROR_OUT_OF_MEMORY;
 
-  int srv = executeSql(mDBConn, buf);
-  ::mozilla::SmprintfFree(buf);
+  int srv = executeSql(mDBConn, buf.get());
 
   return convertResultCode(srv);
 }

@@ -78,7 +78,8 @@ function createStyle(test, rules, doc) {
 // Create a pseudo element
 function createPseudo(test, type) {
   createStyle(test, { '@keyframes anim': '',
-                      ['.pseudo::' + type]: 'animation: anim 10s;' });
+                      ['.pseudo::' + type]: 'animation: anim 10s; ' +
+                                            'content: \'\';'  });
   var div = createDiv(test);
   div.classList.add('pseudo');
   var anims = document.getAnimations();
@@ -88,11 +89,6 @@ function createPseudo(test, type) {
   assert_equals(anim.effect.target.type, '::' + type);
   anim.cancel();
   return anim.effect.target;
-}
-
-// Convert px unit value to a Number
-function pxToNum(str) {
-  return Number(String(str).match(/^(-?[\d.]+)px$/)[1]);
 }
 
 // Cubic bezier with control points (0, 0), (x1, y1), (x2, y2), and (1, 1).
@@ -143,6 +139,13 @@ function stepStart(nsteps) {
   return function stepStartClosure(x) {
     var result = Math.floor(x * nsteps + 1.0) / nsteps;
     return (result > 1.0) ? 1.0 : result;
+  }
+}
+
+function framesTiming(nframes) {
+  return function framesClosure(x) {
+    var result = Math.floor(x * nframes) / (nframes - 1);
+    return (result > 1.0 && x <= 1.0) ? 1.0 : result;
   }
 }
 
@@ -236,6 +239,6 @@ function assert_matrix_equals(actual, expected, description) {
     'dimension of the matrix: ' + description);
   for (var i = 0; i < actualMatrixArray.length; i++) {
     assert_approx_equals(actualMatrixArray[i], expectedMatrixArray[i], 0.0001,
-      'expecetd ' + expected + ' but got ' + actual + ": " + description);
+      'expected ' + expected + ' but got ' + actual + ": " + description);
   }
 }

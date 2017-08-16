@@ -9,8 +9,6 @@ XPIDL_SOURCES += [
     'nsIArrayExtensions.idl',
     'nsIAtom.idl',
     'nsIAtomService.idl',
-    'nsICollection.idl',
-    'nsIEnumerator.idl',
     'nsIHashable.idl',
     'nsIINIParser.idl',
     'nsIMutableArray.idl',
@@ -24,7 +22,6 @@ XPIDL_SOURCES += [
     'nsISerializable.idl',
     'nsISimpleEnumerator.idl',
     'nsIStringEnumerator.idl',
-    'nsISupportsArray.idl',
     'nsISupportsIterators.idl',
     'nsISupportsPrimitives.idl',
     'nsIVariant.idl',
@@ -69,7 +66,6 @@ EXPORTS += [
     'nsStaticAtom.h',
     'nsStaticNameTable.h',
     'nsStringEnumerator.h',
-    'nsSupportsArray.h',
     'nsSupportsPrimitives.h',
     'nsTArray-inl.h',
     'nsTArray.h',
@@ -83,6 +79,8 @@ EXPORTS += [
 ]
 
 EXPORTS.mozilla += [
+    'ArenaAllocator.h',
+    'ArenaAllocatorExtensions.h',
     'ArrayIterator.h',
     'IncrementalTokenizer.h',
     'Observer.h',
@@ -105,24 +103,17 @@ UNIFIED_SOURCES += [
     'nsINIParserImpl.cpp',
     'nsObserverList.cpp',
     'nsObserverService.cpp',
+    'nsPersistentProperties.cpp',
     'nsProperties.cpp',
     'nsQuickSort.cpp',
+    'nsStaticNameTable.cpp',
     'nsStringEnumerator.cpp',
-    'nsSupportsArray.cpp',
-    'nsSupportsArrayEnumerator.cpp',
     'nsSupportsPrimitives.cpp',
     'nsTArray.cpp',
     'nsTObserverArray.cpp',
     'nsVariant.cpp',
     'PLDHashTable.cpp',
     'Tokenizer.cpp',
-]
-
-# These two files cannot be built in unified mode because they use the
-# PL_ARENA_CONST_ALIGN_MASK macro with plarena.h.
-SOURCES += [
-    'nsPersistentProperties.cpp',
-    'nsStaticNameTable.cpp',
 ]
 
 EXTRA_COMPONENTS += [

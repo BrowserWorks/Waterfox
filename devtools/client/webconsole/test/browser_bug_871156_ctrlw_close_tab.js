@@ -13,9 +13,9 @@ add_task(function* () {
                    "<p>hello world";
   let firstTab = gBrowser.selectedTab;
 
-  Services.prefs.setBoolPref("browser.tabs.animate", false);
+  Services.prefs.setBoolPref("toolkit.cosmeticAnimations.enabled", false);
   registerCleanupFunction(() => {
-    Services.prefs.clearUserPref("browser.tabs.animate");
+    Services.prefs.clearUserPref("toolkit.cosmeticAnimations.enabled");
   });
 
   yield loadTab(TEST_URI);
@@ -66,7 +66,7 @@ add_task(function* () {
     ok(true, "the Browser Console closed");
 
     deferred.resolve(null);
-  }, "web-console-destroyed", false);
+  }, "web-console-destroyed");
 
   waitForFocus(() => {
     EventUtils.synthesizeKey("w", { accelKey: true }, hud.iframeWindow);

@@ -45,6 +45,9 @@ BEGIN_TEST(testGCGrayMarking)
 {
     AutoNoAnalysisForTest disableAnalysis;
     AutoDisableCompactingGC disableCompactingGC(cx);
+#ifdef JS_GC_ZEAL
+    AutoLeaveZeal nozeal(cx);
+#endif /* JS_GC_ZEAL */
 
     CHECK(InitGlobals());
     JSAutoCompartment ac(cx, global1);
@@ -157,11 +160,19 @@ TestWeakMaps()
     JSObject* weakMap = JS::NewWeakMapObject(cx);
     CHECK(weakMap);
 
-    JSObject* key = AllocWeakmapKeyObject();
-    CHECK(key);
+    JSObject* key;
+    JSObject* value;
+    {
+        JS::RootedObject rootedMap(cx, weakMap);
 
-    JSObject* value = AllocPlainObject();
-    CHECK(value);
+        key = AllocWeakmapKeyObject();
+        CHECK(key);
+
+        value = AllocPlainObject();
+        CHECK(value);
+
+        weakMap = rootedMap;
+    }
 
     {
         JS::RootedObject rootedMap(cx, weakMap);

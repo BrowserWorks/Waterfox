@@ -10,6 +10,7 @@
 #include "nsIClassInfoImpl.h"
 #include "nsTArray.h"
 #include "nsAutoPtr.h"
+#include "mozilla/AbstractThread.h"
 #include "mozilla/ThreadLocal.h"
 #ifdef MOZ_CANARY
 #include <fcntl.h>
@@ -109,6 +110,10 @@ nsThreadManager::Init()
   // We need to keep a pointer to the current thread, so we can satisfy
   // GetIsMainThread calls that occur post-Shutdown.
   mMainThread->GetPRThread(&mMainPRThread);
+
+  // Init AbstractThread.
+  AbstractThread::InitTLS();
+  AbstractThread::InitMainThread();
 
   mInitialized = true;
   return NS_OK;
@@ -347,4 +352,18 @@ nsThreadManager::GetHighestNumberOfThreads()
 {
   OffTheBooksMutexAutoLock lock(mLock);
   return mHighestNumberOfThreads;
+}
+
+NS_IMETHODIMP
+nsThreadManager::DispatchToMainThread(nsIRunnable *aEvent)
+{
+  // Note: C++ callers should instead use NS_DispatchToMainThread.
+  MOZ_ASSERT(NS_IsMainThread());
+
+  // Keep this functioning during Shutdown
+  if (NS_WARN_IF(!mMainThread)) {
+    return NS_ERROR_NOT_INITIALIZED;
+  }
+
+  return mMainThread->DispatchFromScript(aEvent, 0);
 }

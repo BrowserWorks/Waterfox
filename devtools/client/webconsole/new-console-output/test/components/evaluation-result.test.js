@@ -40,6 +40,15 @@ describe("EvaluationResult component:", () => {
     expect(wrapper.find(".message.error").length).toBe(1);
   });
 
+  it("renders an error with a longString exception message", () => {
+    const message = stubPreparedMessages.get("longString message Error");
+    const wrapper = render(EvaluationResult({ message }));
+
+    const text = wrapper.find(".message-body").text();
+    expect(text.startsWith("Error: Long error Long error")).toBe(true);
+    expect(wrapper.find(".message.error").length).toBe(1);
+  });
+
   it("displays a [Learn more] link", () => {
     const store = setupStore([]);
 
@@ -82,12 +91,24 @@ describe("EvaluationResult component:", () => {
     expect(locationLink.text()).toBe("debugger eval code:1:4");
   });
 
-  it("has a timestamp", () => {
+  it("has a timestamp when passed a truthy timestampsVisible prop", () => {
     const message = stubPreparedMessages.get("new Date(0)");
-    const wrapper = render(EvaluationResult({ message }));
-    const L10n = require("devtools/client/webconsole/new-console-output/test/fixtures/L10n");
-    const { timestampString } = new L10n();
+    const wrapper = render(EvaluationResult({
+      message,
+      timestampsVisible: true,
+    }));
+    const { timestampString } = require("devtools/client/webconsole/webconsole-l10n");
 
     expect(wrapper.find(".timestamp").text()).toBe(timestampString(message.timeStamp));
+  });
+
+  it("does not have a timestamp when timestampsVisible prop is falsy", () => {
+    const message = stubPreparedMessages.get("new Date(0)");
+    const wrapper = render(EvaluationResult({
+      message,
+      timestampsVisible: false,
+    }));
+
+    expect(wrapper.find(".timestamp").length).toBe(0);
   });
 });

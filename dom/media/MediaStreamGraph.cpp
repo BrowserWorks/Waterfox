@@ -1555,7 +1555,8 @@ namespace {
 class MediaStreamGraphShutDownRunnable : public Runnable {
 public:
   explicit MediaStreamGraphShutDownRunnable(MediaStreamGraphImpl* aGraph)
-    : mGraph(aGraph)
+    : Runnable("MediaStreamGraphShutDownRunnable")
+    , mGraph(aGraph)
   {}
   NS_IMETHOD Run()
   {
@@ -2676,7 +2677,8 @@ MediaStream::AddMainThreadListener(MainThreadMediaStreamListener* aListener)
   {
   public:
     explicit NotifyRunnable(MediaStream* aStream)
-      : mStream(aStream)
+      : Runnable("MediaStream::NotifyRunnable")
+      , mStream(aStream)
     {}
 
     NS_IMETHOD Run() override
@@ -3023,7 +3025,7 @@ SourceMediaStream::AddDirectTrackListenerImpl(already_AddRefed<DirectMediaStream
       LogLevel::Warning,
       ("Source track for direct track listener %p is unknown", listener.get()));
     // It is not a video or audio track.
-    MOZ_ASSERT(true);
+    MOZ_ASSERT(false);
     return;
   }
   LOG(
@@ -3320,7 +3322,7 @@ MediaInputPort::BlockSourceTrackId(TrackID aTrackId, BlockingMode aBlockingMode)
   MOZ_ASSERT(IsTrackIDExplicit(aTrackId),
              "Only explicit TrackID is allowed");
 
-  RefPtr<Pledge<bool>> pledge = new Pledge<bool>();
+  auto pledge = MakeRefPtr<Pledge<bool>>();
   nsCOMPtr<nsIRunnable> runnable = NewRunnableFrom([pledge]() {
     MOZ_ASSERT(NS_IsMainThread());
     pledge->Resolve(true);
@@ -3759,8 +3761,9 @@ class GraphStartedRunnable final : public Runnable
 {
 public:
   GraphStartedRunnable(AudioNodeStream* aStream, MediaStreamGraph* aGraph)
-  : mStream(aStream)
-  , mGraph(aGraph)
+    : Runnable("GraphStartedRunnable")
+    , mStream(aStream)
+    , mGraph(aGraph)
   { }
 
   NS_IMETHOD Run() override {
@@ -4009,7 +4012,8 @@ MediaStreamGraph::ApplyAudioContextOperation(MediaStream* aDestinationStream,
     }
     void RunDuringShutdown() override
     {
-      MOZ_ASSERT(false, "We should be reviving the graph?");
+      MOZ_ASSERT(mAudioContextOperation == AudioContextOperation::Close,
+                 "We should be reviving the graph?");
     }
 
   private:
@@ -4029,10 +4033,7 @@ MediaStreamGraph::ApplyAudioContextOperation(MediaStream* aDestinationStream,
 bool
 MediaStreamGraph::IsNonRealtime() const
 {
-  const MediaStreamGraphImpl* impl = static_cast<const MediaStreamGraphImpl*>(this);
-  MediaStreamGraphImpl* graph;
-
-  return !gGraphs.Get(uint32_t(impl->AudioChannel()), &graph) || graph != impl;
+  return !static_cast<const MediaStreamGraphImpl*>(this)->mRealtime;
 }
 
 void

@@ -3,8 +3,17 @@
 
 const PREF_NEWTAB_ENABLED = "browser.newtabpage.enabled";
 const PREF_NEWTAB_DIRECTORYSOURCE = "browser.newtabpage.directory.source";
+const PREF_NEWTAB_ACTIVITY_STREAM = "browser.newtabpage.activity-stream.enabled";
 
 Services.prefs.setBoolPref(PREF_NEWTAB_ENABLED, true);
+Services.prefs.setBoolPref(PREF_NEWTAB_ACTIVITY_STREAM, false);
+
+// Opens and closes a new tab to clear any existing preloaded ones. This is
+// necessary to prevent any left-over activity-stream preloaded new tabs from
+// affecting these tests.
+BrowserOpenTab();
+const initialTab = gBrowser.selectedTab;
+gBrowser.removeTab(initialTab);
 
 var tmp = {};
 Cu.import("resource://gre/modules/NewTabUtils.jsm", tmp);
@@ -77,14 +86,8 @@ registerCleanupFunction(function() {
     }
   });
 
-  // Stop any update timers to prevent unexpected updates in later tests
-  let timer = NewTabUtils.allPages._scheduleUpdateTimeout;
-  if (timer) {
-    clearTimeout(timer);
-    delete NewTabUtils.allPages._scheduleUpdateTimeout;
-  }
-
   Services.prefs.clearUserPref(PREF_NEWTAB_ENABLED);
+  Services.prefs.clearUserPref(PREF_NEWTAB_ACTIVITY_STREAM);
   Services.prefs.setCharPref(PREF_NEWTAB_DIRECTORYSOURCE, gOrigDirectorySource);
 
   return watchLinksChangeOnce();
@@ -110,7 +113,7 @@ function watchLinksChangeOnce() {
   });
 }
 
-add_task(function* setup() {
+add_task(async function setup() {
   registerCleanupFunction(function() {
     return new Promise(resolve => {
       function cleanupAndFinish() {
@@ -130,15 +133,15 @@ add_task(function* setup() {
     });
   });
 
-  let promiseReady = Task.spawn(function*() {
-    yield watchLinksChangeOnce();
-    yield whenPagesUpdated();
-  });
+  let promiseReady = (async function() {
+    await watchLinksChangeOnce();
+    await whenPagesUpdated();
+  })();
 
   // Save the original directory source (which is set globally for tests)
   gOrigDirectorySource = Services.prefs.getCharPref(PREF_NEWTAB_DIRECTORYSOURCE);
   Services.prefs.setCharPref(PREF_NEWTAB_DIRECTORYSOURCE, gDirectorySource);
-  yield promiseReady;
+  await promiseReady;
 });
 
 /** Perform an action on a cell within the newtab page.
@@ -148,8 +151,9 @@ add_task(function* setup() {
   */
 function performOnCell(aIndex, aFn) {
   return ContentTask.spawn(gWindow.gBrowser.selectedBrowser,
-                           { index: aIndex, fn: aFn.toString() }, function* (args) {
+                           { index: aIndex, fn: aFn.toString() }, async function(args) {
     let cell = content.gGrid.cells[args.index];
+    // eslint-disable-next-line no-eval
     return eval(args.fn)(cell);
   });
 }
@@ -253,11 +257,7 @@ function setPinnedLinks(aLinks) {
     });
   }
 
-  let string = Cc["@mozilla.org/supports-string;1"]
-                 .createInstance(Ci.nsISupportsString);
-  string.data = JSON.stringify(links);
-  Services.prefs.setComplexValue("browser.newtabpage.pinned",
-                                 Ci.nsISupportsString, string);
+  Services.prefs.setStringPref("browser.newtabpage.pinned", JSON.stringify(links));
 
   NewTabUtils.pinnedLinks.resetCache();
   NewTabUtils.allPages.update();
@@ -303,14 +303,14 @@ function waitForCondition(aConditionFn, aMaxTries = 50, aCheckInterval = 100) {
 /**
  * Creates a new tab containing 'about:newtab'.
  */
-function* addNewTabPageTab() {
-  let tab = yield BrowserTestUtils.openNewForegroundTab(gWindow.gBrowser, "about:newtab", false);
+async function addNewTabPageTab() {
+  let tab = await BrowserTestUtils.openNewForegroundTab(gWindow.gBrowser, "about:newtab", false);
   let browser = tab.linkedBrowser;
 
   // Wait for the document to become visible in case it was preloaded.
-  yield waitForCondition(() => !browser.contentDocument.hidden)
+  await waitForCondition(() => !browser.contentDocument.hidden)
 
-  yield new Promise(resolve => {
+  await new Promise(resolve => {
     if (NewTabUtils.allPages.enabled) {
       // Continue when the link cache has been populated.
       NewTabUtils.links.populateCache(function() {
@@ -333,11 +333,11 @@ function* addNewTabPageTab() {
  *         The second cell contains 'http://example2.com/'. The third cell is empty.
  *         The fourth cell contains the pinned site 'http://example4.com/'.
  */
-function* checkGrid(pattern) {
+async function checkGrid(pattern) {
   let length = pattern.split(",").length;
 
-  yield ContentTask.spawn(gWindow.gBrowser.selectedBrowser,
-                          { length, pattern }, function* (args) {
+  await ContentTask.spawn(gWindow.gBrowser.selectedBrowser,
+                          { length, pattern }, async function(args) {
     let grid = content.wrappedJSObject.gGrid;
 
     let sites = grid.sites.slice(0, args.length);
@@ -401,10 +401,10 @@ function unpinCell(aIndex) {
  * an external link onto the grid e.g. the text from the URL bar.
  * @param aDestIndex The cell index of the drop target.
  */
-function* simulateExternalDrop(aDestIndex) {
+async function simulateExternalDrop(aDestIndex) {
   let pagesUpdatedPromise = whenPagesUpdated();
 
-  yield ContentTask.spawn(gWindow.gBrowser.selectedBrowser, aDestIndex, function*(dropIndex) {
+  await ContentTask.spawn(gWindow.gBrowser.selectedBrowser, aDestIndex, async function(dropIndex) {
     return new Promise(resolve => {
       const url = "data:text/html;charset=utf-8," +
                   "<a id='link' href='http://example99.com/'>link</a>";
@@ -444,7 +444,7 @@ function* simulateExternalDrop(aDestIndex) {
     });
   });
 
-  yield pagesUpdatedPromise;
+  await pagesUpdatedPromise;
 }
 
 /**
@@ -472,7 +472,7 @@ function whenPagesUpdated() {
  * Waits for the response to the page's initial search state request.
  */
 function whenSearchInitDone() {
-  return ContentTask.spawn(gWindow.gBrowser.selectedBrowser, {}, function*() {
+  return ContentTask.spawn(gWindow.gBrowser.selectedBrowser, {}, async function() {
     return new Promise(resolve => {
       if (content.gSearch) {
         let searchController = content.gSearch._contentSearchController;
@@ -506,7 +506,7 @@ function whenSearchInitDone() {
  *        Can be any of("blank"|"classic"|"enhanced")
  */
 function customizeNewTabPage(aTheme) {
-  return ContentTask.spawn(gWindow.gBrowser.selectedBrowser, aTheme, function*(contentTheme) {
+  return ContentTask.spawn(gWindow.gBrowser.selectedBrowser, aTheme, async function(contentTheme) {
 
     let document = content.document;
     let panel = document.getElementById("newtab-customize-panel");
@@ -530,11 +530,11 @@ function customizeNewTabPage(aTheme) {
 
     let opened = panelOpened(true);
     customizeButton.click();
-    yield opened;
+    await opened;
 
     let closed = panelOpened(false);
     customizeButton.click();
-    yield closed;
+    await closed;
   });
 }
 
@@ -542,7 +542,7 @@ function customizeNewTabPage(aTheme) {
  * Reports presence of a scrollbar
  */
 function hasScrollbar() {
-  return ContentTask.spawn(gWindow.gBrowser.selectedBrowser, {}, function* () {
+  return ContentTask.spawn(gWindow.gBrowser.selectedBrowser, {}, async function() {
     let docElement = content.document.documentElement;
     return docElement.scrollHeight > docElement.clientHeight;
   });

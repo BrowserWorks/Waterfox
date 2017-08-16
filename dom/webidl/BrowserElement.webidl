@@ -31,26 +31,6 @@ interface BrowserElementCommon {
   [Throws,
    Pref="dom.mozBrowserFramesEnabled",
    ChromeOnly]
-  void setVisible(boolean visible);
-
-  [Throws,
-   Pref="dom.mozBrowserFramesEnabled",
-   ChromeOnly]
-  DOMRequest getVisible();
-
-  [Throws,
-   Pref="dom.mozBrowserFramesEnabled",
-   ChromeOnly]
-  void setActive(boolean active);
-
-  [Throws,
-   Pref="dom.mozBrowserFramesEnabled",
-   ChromeOnly]
-  boolean getActive();
-
-  [Throws,
-   Pref="dom.mozBrowserFramesEnabled",
-   ChromeOnly]
   void addNextPaintListener(BrowserElementNextPaintEventCallback listener);
 
   [Throws,
@@ -170,52 +150,4 @@ interface BrowserElementPrivileged {
    ChromeOnly]
   DOMRequest getWebManifest();
 
-};
-
-// Bits needed for BrowserElementAudioChannel.
-partial interface BrowserElementPrivileged {
-  [Pure, Cached, Throws,
-   Pref="dom.mozBrowserFramesEnabled",
-   ChromeOnly]
-  readonly attribute sequence<BrowserElementAudioChannel> allowedAudioChannels;
-
-  /**
-   * Mutes all audio in this browser.
-   */
-  [Throws,
-   Pref="dom.mozBrowserFramesEnabled",
-   ChromeOnly]
-  void mute();
-
-  /**
-   * Unmutes all audio in this browser.
-   */
-  [Throws,
-   Pref="dom.mozBrowserFramesEnabled",
-   ChromeOnly]
-  void unmute();
-
-  /**
-   * Obtains whether or not the browser is muted.
-   */
-  [Throws,
-   Pref="dom.mozBrowserFramesEnabled",
-   ChromeOnly]
-  DOMRequest getMuted();
-
-  /**
-   * Sets the volume for the browser.
-   */
-  [Throws,
-   Pref="dom.mozBrowserFramesEnabled",
-   ChromeOnly]
-  void setVolume(float volume);
-
-  /**
-   * Gets the volume for the browser.
-   */
-  [Throws,
-   Pref="dom.mozBrowserFramesEnabled",
-   ChromeOnly]
-  DOMRequest getVolume();
 };

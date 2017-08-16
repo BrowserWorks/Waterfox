@@ -9,6 +9,7 @@
 #include "gfxPrefs.h"
 #include "mozilla/gfx/Logging.h"
 #include "nsITimer.h"
+#include "mozilla/Preferences.h"
 
 namespace mozilla {
 namespace gfx {
@@ -37,6 +38,10 @@ GPUProcessHost::Launch()
 {
   MOZ_ASSERT(mLaunchPhase == LaunchPhase::Unlaunched);
   MOZ_ASSERT(!mGPUChild);
+
+#if defined(XP_WIN) && defined(MOZ_SANDBOX)
+  mSandboxLevel = Preferences::GetInt("security.sandbox.gpu.level");
+#endif
 
   mLaunchPhase = LaunchPhase::Waiting;
   mLaunchTime = TimeStamp::Now();
@@ -152,12 +157,12 @@ GPUProcessHost::Shutdown()
     // unexpected.
     mShutdownRequested = true;
 
-#ifdef NS_FREE_PERMANENT_DATA
     // The channel might already be closed if we got here unexpectedly.
     if (!mChannelClosed) {
       mGPUChild->Close();
     }
-#else
+
+#ifndef NS_FREE_PERMANENT_DATA
     // No need to communicate shutdown, the GPU process doesn't need to
     // communicate anything back.
     KillHard("NormalShutdown");

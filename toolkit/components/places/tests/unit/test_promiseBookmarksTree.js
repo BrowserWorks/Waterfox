@@ -2,66 +2,53 @@
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
 
-function* check_has_child(aParentGuid, aChildGuid) {
-  let parentTree = yield PlacesUtils.promiseBookmarksTree(aParentGuid);
-  do_check_true("children" in parentTree);
-  do_check_true(parentTree.children.find( e => e.guid == aChildGuid ) != null);
+async function check_has_child(aParentGuid, aChildGuid) {
+  let parentTree = await PlacesUtils.promiseBookmarksTree(aParentGuid);
+  Assert.ok("children" in parentTree);
+  Assert.notEqual(parentTree.children.find( e => e.guid == aChildGuid ), null);
 }
 
-function* compareToNode(aItem, aNode, aIsRootItem, aExcludedGuids = []) {
+async function compareToNode(aItem, aNode, aIsRootItem, aExcludedGuids = []) {
   // itemId==-1 indicates a non-bookmark node, which is unexpected.
-  do_check_neq(aNode.itemId, -1);
+  Assert.notEqual(aNode.itemId, -1);
 
   function check_unset(...aProps) {
-    aProps.forEach( p => { do_check_false(p in aItem); } );
+    for (let p of aProps) {
+      if (p in aItem) {
+        Assert.ok(false, `Unexpected property ${p} with value ${aItem[p]}`);
+      }
+    }
   }
-  function strict_eq_check(v1, v2) {
-    dump("v1: " + v1 + " v2: " + v2 + "\n");
-    do_check_eq(typeof v1, typeof v2);
-    do_check_eq(v1, v2);
-  }
+
   function compare_prop(aItemProp, aNodeProp = aItemProp, aOptional = false) {
     if (aOptional && aNode[aNodeProp] === null)
       check_unset(aItemProp);
     else
-      strict_eq_check(aItem[aItemProp], aNode[aNodeProp]);
-  }
-  function compare_prop_to_value(aItemProp, aValue, aOptional = true) {
-    if (aOptional && aValue === null)
-      check_unset(aItemProp);
-    else
-      strict_eq_check(aItem[aItemProp], aValue);
+      Assert.strictEqual(aItem[aItemProp], aNode[aNodeProp]);
   }
 
   // Bug 1013053 - bookmarkIndex is unavailable for the query's root
-  if (aNode.bookmarkIndex == -1) {
-    compare_prop_to_value("index",
-                          PlacesUtils.bookmarks.getItemIndex(aNode.itemId),
-                          false);
-  } else {
+  if (aNode.bookmarkIndex == -1)
+    Assert.strictEqual(aItem.index, PlacesUtils.bookmarks.getItemIndex(aNode.itemId));
+  else
     compare_prop("index", "bookmarkIndex");
-  }
 
   compare_prop("dateAdded");
   compare_prop("lastModified");
 
   if (aIsRootItem && aNode.itemId != PlacesUtils.placesRootId) {
-    do_check_true("parentGuid" in aItem);
-    yield check_has_child(aItem.parentGuid, aItem.guid)
+    Assert.ok("parentGuid" in aItem);
+    await check_has_child(aItem.parentGuid, aItem.guid)
   } else {
     check_unset("parentGuid");
   }
 
   let expectedAnnos = PlacesUtils.getAnnotationsForItem(aItem.id);
-  if (expectedAnnos.length > 0) {
-    let annosToString = annos => {
-      return annos.map(a => a.name + ":" + a.value).sort().join(",");
-    };
-    do_check_true(Array.isArray(aItem.annos))
-    do_check_eq(annosToString(aItem.annos), annosToString(expectedAnnos));
-  } else {
+  if (expectedAnnos.length > 0)
+    Assert.deepEqual(aItem.annos, expectedAnnos);
+  else
     check_unset("annos");
-  }
+
   const BOOKMARK_ONLY_PROPS = ["uri", "iconuri", "tags", "charset", "keyword"];
   const FOLDER_ONLY_PROPS = ["children", "root"];
 
@@ -69,7 +56,7 @@ function* compareToNode(aItem, aNode, aIsRootItem, aExcludedGuids = []) {
 
   switch (aNode.type) {
     case Ci.nsINavHistoryResultNode.RESULT_TYPE_FOLDER:
-      do_check_eq(aItem.type, PlacesUtils.TYPE_X_MOZ_PLACE_CONTAINER);
+      Assert.equal(aItem.type, PlacesUtils.TYPE_X_MOZ_PLACE_CONTAINER);
       compare_prop("title", "title", true);
       check_unset(...BOOKMARK_ONLY_PROPS);
 
@@ -89,53 +76,43 @@ function* compareToNode(aItem, aNode, aIsRootItem, aExcludedGuids = []) {
       }
 
       if (expectedChildrenNodes.length > 0) {
-        do_check_true(Array.isArray(aItem.children));
-        do_check_eq(aItem.children.length, expectedChildrenNodes.length);
+        Assert.ok(Array.isArray(aItem.children));
+        Assert.equal(aItem.children.length, expectedChildrenNodes.length);
         for (let i = 0; i < aItem.children.length; i++) {
           nodesCount +=
-            yield compareToNode(aItem.children[i], expectedChildrenNodes[i],
+            await compareToNode(aItem.children[i], expectedChildrenNodes[i],
                                 false, aExcludedGuids);
         }
       } else {
         check_unset("children");
       }
 
-      switch (aItem.id) {
-      case PlacesUtils.placesRootId:
-        compare_prop_to_value("root", "placesRoot");
-        break;
-      case PlacesUtils.bookmarksMenuFolderId:
-        compare_prop_to_value("root", "bookmarksMenuFolder");
-        break;
-      case PlacesUtils.toolbarFolderId:
-        compare_prop_to_value("root", "toolbarFolder");
-        break;
-      case PlacesUtils.unfiledBookmarksFolderId:
-        compare_prop_to_value("root", "unfiledBookmarksFolder");
-        break;
-      case PlacesUtils.mobileFolderId:
-        compare_prop_to_value("root", "mobileFolder");
-        break;
-      default:
+      let rootName = mapItemIdToInternalRootName(aItem.id);
+      if (rootName)
+        Assert.equal(aItem.root, rootName);
+      else
         check_unset("root");
-      }
       break;
     case Ci.nsINavHistoryResultNode.RESULT_TYPE_SEPARATOR:
-      do_check_eq(aItem.type, PlacesUtils.TYPE_X_MOZ_PLACE_SEPARATOR);
+      Assert.equal(aItem.type, PlacesUtils.TYPE_X_MOZ_PLACE_SEPARATOR);
       check_unset(...BOOKMARK_ONLY_PROPS, ...FOLDER_ONLY_PROPS);
       break;
     default:
-      do_check_eq(aItem.type, PlacesUtils.TYPE_X_MOZ_PLACE);
+      Assert.equal(aItem.type, PlacesUtils.TYPE_X_MOZ_PLACE);
       compare_prop("uri");
       // node.tags's format is "a, b" whilst promiseBoookmarksTree is "a,b"
       if (aNode.tags === null)
         check_unset("tags");
       else
-        compare_prop_to_value("tags", aNode.tags.replace(/, /g, ","), false);
+        Assert.equal(aItem.tags, aNode.tags.replace(/, /g, ","));
 
       if (aNode.icon) {
-        let nodeIconData = aNode.icon.replace("moz-anno:favicon:", "");
-        compare_prop_to_value("iconuri", nodeIconData);
+        try {
+          await compareFavicons(aNode.icon, aItem.iconuri);
+        } catch (ex) {
+          do_print(ex);
+          todo_check_true(false);
+        }
       } else {
         check_unset(aItem.iconuri);
       }
@@ -143,11 +120,17 @@ function* compareToNode(aItem, aNode, aIsRootItem, aExcludedGuids = []) {
       check_unset(...FOLDER_ONLY_PROPS);
 
       let itemURI = uri(aNode.uri);
-      compare_prop_to_value("charset",
-                            yield PlacesUtils.getCharsetForURI(itemURI));
+      let expectedCharset = await PlacesUtils.getCharsetForURI(itemURI);
+      if (expectedCharset)
+        Assert.equal(aItem.charset, expectedCharset);
+      else
+        check_unset("charset");
 
-      let entry = yield PlacesUtils.keywords.fetch({ url: aNode.uri });
-      compare_prop_to_value("keyword", entry ? entry.keyword : null);
+      let entry = await PlacesUtils.keywords.fetch({ url: aNode.uri });
+      if (entry)
+        Assert.equal(aItem.keyword, entry.keyword);
+      else
+        check_unset("keyword");
 
       if ("title" in aItem)
         compare_prop("title");
@@ -156,13 +139,13 @@ function* compareToNode(aItem, aNode, aIsRootItem, aExcludedGuids = []) {
   }
 
   if (aIsRootItem)
-    do_check_eq(aItem.itemsCount, nodesCount);
+    Assert.strictEqual(aItem.itemsCount, nodesCount);
 
   return nodesCount;
 }
 
 var itemsCount = 0;
-function* new_bookmark(aInfo) {
+async function new_bookmark(aInfo) {
   ++itemsCount;
   if (!("url" in aInfo))
     aInfo.url = uri("http://test.item." + itemsCount);
@@ -170,65 +153,69 @@ function* new_bookmark(aInfo) {
   if (!("title" in aInfo))
     aInfo.title = "Test Item (bookmark) " + itemsCount;
 
-  yield PlacesTransactions.NewBookmark(aInfo).transact();
+  await PlacesTransactions.NewBookmark(aInfo).transact();
 }
 
-function* new_folder(aInfo) {
+async function new_folder(aInfo) {
   if (!("title" in aInfo))
     aInfo.title = "Test Item (folder) " + itemsCount;
-  return yield PlacesTransactions.NewFolder(aInfo).transact();
+  return await PlacesTransactions.NewFolder(aInfo).transact();
 }
 
 // Walks a result nodes tree and test promiseBookmarksTree for each node.
 // DO NOT COPY THIS LOGIC:  It is done here to accomplish a more comprehensive
 // test of the API (the entire hierarchy data is available in the very test).
-function* test_promiseBookmarksTreeForEachNode(aNode, aOptions, aExcludedGuids) {
-  do_check_true(aNode.bookmarkGuid && aNode.bookmarkGuid.length > 0);
-  let item = yield PlacesUtils.promiseBookmarksTree(aNode.bookmarkGuid, aOptions);
-  yield* compareToNode(item, aNode, true, aExcludedGuids);
+async function test_promiseBookmarksTreeForEachNode(aNode, aOptions, aExcludedGuids) {
+  Assert.ok(aNode.bookmarkGuid && aNode.bookmarkGuid.length > 0);
+  let item = await PlacesUtils.promiseBookmarksTree(aNode.bookmarkGuid, aOptions);
+  await compareToNode(item, aNode, true, aExcludedGuids);
+
+  if (!PlacesUtils.nodeIsContainer(aNode)) {
+    return item;
+  }
 
   for (let i = 0; i < aNode.childCount; i++) {
     let child = aNode.getChild(i);
     if (child.itemId != PlacesUtils.tagsFolderId)
-      yield test_promiseBookmarksTreeForEachNode(child,
+      await test_promiseBookmarksTreeForEachNode(child,
                                                  { includeItemIds: true },
                                                  aExcludedGuids);
   }
   return item;
 }
 
-function* test_promiseBookmarksTreeAgainstResult(aItemGuid = "",
+async function test_promiseBookmarksTreeAgainstResult(aItemGuid = "",
                                                  aOptions = { includeItemIds: true },
                                                  aExcludedGuids) {
   let itemId = aItemGuid ?
-    yield PlacesUtils.promiseItemId(aItemGuid) : PlacesUtils.placesRootId;
+    await PlacesUtils.promiseItemId(aItemGuid) : PlacesUtils.placesRootId;
   let node = PlacesUtils.getFolderContents(itemId).root;
-  return yield test_promiseBookmarksTreeForEachNode(node, aOptions, aExcludedGuids);
+  return await test_promiseBookmarksTreeForEachNode(node, aOptions, aExcludedGuids);
 }
 
-add_task(function* () {
+add_task(async function() {
   // Add some bookmarks to cover various use cases.
-  yield new_bookmark({ parentGuid: PlacesUtils.bookmarks.toolbarGuid });
-  yield new_folder({ parentGuid: PlacesUtils.bookmarks.menuGuid,
+  await new_bookmark({ parentGuid: PlacesUtils.bookmarks.toolbarGuid });
+  await new_folder({ parentGuid: PlacesUtils.bookmarks.menuGuid,
                      annotations: [{ name: "TestAnnoA", value: "TestVal" },
                                    { name: "TestAnnoB", value: 0 }]});
   let sepInfo = { parentGuid: PlacesUtils.bookmarks.menuGuid };
-  yield PlacesTransactions.NewSeparator(sepInfo).transact();
-  let folderGuid = yield new_folder({ parentGuid: PlacesUtils.bookmarks.menuGuid });
-  yield new_bookmark({ title: null,
+  await PlacesTransactions.NewSeparator(sepInfo).transact();
+  let folderGuid = await new_folder({ parentGuid: PlacesUtils.bookmarks.menuGuid });
+  await new_bookmark({ title: null,
                        parentGuid: folderGuid,
                        keyword: "test_keyword",
                        tags: ["TestTagA", "TestTagB"],
                        annotations: [{ name: "TestAnnoA", value: "TestVal2"}]});
   let urlWithCharsetAndFavicon = uri("http://charset.and.favicon");
-  yield new_bookmark({ parentGuid: folderGuid, url: urlWithCharsetAndFavicon });
-  yield PlacesUtils.setCharsetForURI(urlWithCharsetAndFavicon, "UTF-8");
-  yield promiseSetIconForPage(urlWithCharsetAndFavicon, SMALLPNG_DATA_URI);
+  await new_bookmark({ parentGuid: folderGuid, url: urlWithCharsetAndFavicon });
+  await PlacesUtils.setCharsetForURI(urlWithCharsetAndFavicon, "UTF-8");
+  await setFaviconForPage(urlWithCharsetAndFavicon, SMALLPNG_DATA_URI);
   // Test the default places root without specifying it.
-  yield test_promiseBookmarksTreeAgainstResult();
+  await test_promiseBookmarksTreeAgainstResult();
 
   // Do specify it
-  yield test_promiseBookmarksTreeAgainstResult(PlacesUtils.bookmarks.rootGuid);
+  await test_promiseBookmarksTreeAgainstResult(PlacesUtils.bookmarks.rootGuid);
 
   // Exclude the bookmarks menu.
   // The calllback should be four times - once for the toolbar, once for
@@ -239,13 +226,13 @@ add_task(function* () {
   // passed in.
   let guidsPassedToExcludeCallback = new Set();
   let placesRootWithoutTheMenu =
-  yield test_promiseBookmarksTreeAgainstResult(PlacesUtils.bookmarks.rootGuid, {
+  await test_promiseBookmarksTreeAgainstResult(PlacesUtils.bookmarks.rootGuid, {
     excludeItemsCallback: aItem => {
       guidsPassedToExcludeCallback.add(aItem.guid);
       return aItem.root == "bookmarksMenuFolder";
     },
     includeItemIds: true
   }, [PlacesUtils.bookmarks.menuGuid]);
-  do_check_eq(guidsPassedToExcludeCallback.size, 5);
-  do_check_eq(placesRootWithoutTheMenu.children.length, 3);
+  Assert.equal(guidsPassedToExcludeCallback.size, 5);
+  Assert.equal(placesRootWithoutTheMenu.children.length, 3);
 });

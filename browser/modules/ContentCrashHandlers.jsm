@@ -24,8 +24,6 @@ XPCOMUtils.defineLazyModuleGetter(this, "RemotePages",
   "resource://gre/modules/RemotePageManager.jsm");
 XPCOMUtils.defineLazyModuleGetter(this, "SessionStore",
   "resource:///modules/sessionstore/SessionStore.jsm");
-XPCOMUtils.defineLazyModuleGetter(this, "Task",
-  "resource://gre/modules/Task.jsm");
 XPCOMUtils.defineLazyModuleGetter(this, "RecentWindow",
   "resource:///modules/RecentWindow.jsm");
 XPCOMUtils.defineLazyModuleGetter(this, "PluralForm",
@@ -60,8 +58,8 @@ this.TabCrashHandler = {
       return;
     this.initialized = true;
 
-    Services.obs.addObserver(this, "ipc:content-shutdown", false);
-    Services.obs.addObserver(this, "oop-frameloader-crashed", false);
+    Services.obs.addObserver(this, "ipc:content-shutdown");
+    Services.obs.addObserver(this, "oop-frameloader-crashed");
 
     this.pageListener = new RemotePages("about:tabcrashed");
     // LOAD_BACKGROUND pages don't fire load events, so the about:tabcrashed
@@ -385,7 +383,7 @@ this.TabCrashHandler = {
     CrashSubmit.submit(dumpID, {
       recordSubmission: true,
       extraExtraKeyVals,
-    }).then(null, Cu.reportError);
+    }).catch(Cu.reportError);
 
     this.prefs.setBoolPref("sendReport", true);
     this.prefs.setBoolPref("includeURL", includeURL);
@@ -579,10 +577,8 @@ this.UnsubmittedCrashHandler = {
         this.prefs.clearUserPref("suppressUntilDate");
       }
 
-      Services.obs.addObserver(this, "browser-delayed-startup-finished",
-                               false);
-      Services.obs.addObserver(this, "profile-before-change",
-                               false);
+      Services.obs.addObserver(this, "browser-delayed-startup-finished");
+      Services.obs.addObserver(this, "profile-before-change");
     }
   },
 
@@ -646,13 +642,13 @@ this.UnsubmittedCrashHandler = {
    *          show a notification on the most recent browser window.
    *          If a notification cannot be shown, will resolve with null.
    */
-  checkForUnsubmittedCrashReports: Task.async(function*() {
+  async checkForUnsubmittedCrashReports() {
     let dateLimit = new Date();
     dateLimit.setDate(dateLimit.getDate() - PENDING_CRASH_REPORT_DAYS);
 
     let reportIDs = [];
     try {
-      reportIDs = yield CrashSubmit.pendingIDsAsync(dateLimit);
+      reportIDs = await CrashSubmit.pendingIDsAsync(dateLimit);
     } catch (e) {
       Cu.reportError(e);
       return null;
@@ -666,7 +662,7 @@ this.UnsubmittedCrashHandler = {
       }
     }
     return null;
-  }),
+  },
 
   /**
    * Returns true if the notification should be shown.
@@ -885,7 +881,7 @@ this.UnsubmittedCrashHandler = {
         extraExtraKeyVals: {
           "SubmittedFromInfobar": true,
         },
-      });
+      }).catch(Cu.reportError);
     }
   },
 };
@@ -903,9 +899,9 @@ this.PluginCrashReporter = {
     this.initialized = true;
     this.crashReports = new Map();
 
-    Services.obs.addObserver(this, "plugin-crashed", false);
-    Services.obs.addObserver(this, "gmp-plugin-crash", false);
-    Services.obs.addObserver(this, "profile-after-change", false);
+    Services.obs.addObserver(this, "plugin-crashed");
+    Services.obs.addObserver(this, "gmp-plugin-crash");
+    Services.obs.addObserver(this, "profile-after-change");
   },
 
   uninit() {
@@ -999,7 +995,7 @@ this.PluginCrashReporter = {
     });
 
     if (browserDumpID)
-      CrashSubmit.submit(browserDumpID);
+      CrashSubmit.submit(browserDumpID).catch(Cu.reportError);
 
     this.broadcastState(runID, "submitting");
 

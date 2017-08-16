@@ -504,6 +504,9 @@ struct ssl3CipherSpecStr {
     SECItem msItem;
     DTLSEpoch epoch;
     DTLSRecvdRecords recvdRecords;
+    /* The number of 0-RTT bytes that can be sent or received in TLS 1.3. This
+     * will be zero for everything but 0-RTT. */
+    PRUint32 earlyDataRemaining;
 
     PRUint8 refCt;
     const char *phase;
@@ -989,7 +992,7 @@ typedef struct SSLWrappedSymWrappingKeyStr {
 } SSLWrappedSymWrappingKey;
 
 typedef struct SessionTicketStr {
-    PRUint16 ticket_version;
+    PRBool valid;
     SSL3ProtocolVersion ssl_version;
     ssl3CipherSuite cipher_suite;
     SSLCompressionMethod compression_method;
@@ -1007,12 +1010,13 @@ typedef struct SessionTicketStr {
     PRUint16 ms_length;
     SSL3Opaque master_secret[48];
     PRBool extendedMasterSecretUsed;
-    ClientIdentity client_identity;
+    ClientAuthenticationType client_auth_type;
     SECItem peer_cert;
     PRUint32 timestamp;
     PRUint32 flags;
     SECItem srvName; /* negotiated server name */
     SECItem alpnSelection;
+    PRUint32 maxEarlyData;
 } SessionTicket;
 
 /*
@@ -1231,6 +1235,7 @@ extern FILE *ssl_trace_iob;
 extern FILE *ssl_keylog_iob;
 extern PRUint32 ssl3_sid_timeout;
 extern PRUint32 ssl_ticket_lifetime;
+extern PRUint32 ssl_max_early_data_size;
 
 extern const char *const ssl3_cipherName[];
 
@@ -1350,8 +1355,8 @@ extern SECStatus ssl_CipherPrefSetDefault(PRInt32 which, PRBool enabled);
 
 extern SECStatus ssl3_ConstrainRangeByPolicy(void);
 
-extern SECStatus ssl3_InitState(sslSocket *ss);
-extern SECStatus ssl3_RestartHandshakeHashes(sslSocket *ss);
+extern void ssl3_InitState(sslSocket *ss);
+extern void ssl3_RestartHandshakeHashes(sslSocket *ss);
 extern SECStatus ssl3_UpdateHandshakeHashes(sslSocket *ss,
                                             const unsigned char *b,
                                             unsigned int l);
@@ -1490,6 +1495,14 @@ extern PRInt32 ssl3_SendRecord(sslSocket *ss, ssl3CipherSpec *cwSpec,
  * versions of TLS are disabled.
  */
 #define SSL_LIBRARY_VERSION_NONE 0
+
+/* SSL_LIBRARY_VERSION_MIN_SUPPORTED is the minimum version that this version
+ * of libssl supports. Applications should use SSL_VersionRangeGetSupported at
+ * runtime to determine which versions are supported by the version of libssl
+ * in use.
+ */
+#define SSL_LIBRARY_VERSION_MIN_SUPPORTED_DATAGRAM SSL_LIBRARY_VERSION_TLS_1_1
+#define SSL_LIBRARY_VERSION_MIN_SUPPORTED_STREAM SSL_LIBRARY_VERSION_3_0
 
 /* SSL_LIBRARY_VERSION_MAX_SUPPORTED is the maximum version that this version
  * of libssl supports. Applications should use SSL_VersionRangeGetSupported at
@@ -1639,7 +1652,6 @@ extern SECStatus ssl3_SendECDHServerKeyExchange(sslSocket *ss);
 extern SECStatus ssl_ImportECDHKeyShare(
     sslSocket *ss, SECKEYPublicKey *peerKey,
     SSL3Opaque *b, PRUint32 length, const sslNamedGroupDef *curve);
-unsigned int tls13_SizeOfECDHEKeyShareKEX(const SECKEYPublicKey *pubKey);
 SECStatus tls13_EncodeECDHEKeyShareKEX(const sslSocket *ss,
                                        const SECKEYPublicKey *pubKey);
 
@@ -1855,6 +1867,8 @@ ssl3_TLSPRFWithMasterSecret(sslSocket *ss, ssl3CipherSpec *spec,
                             const char *label, unsigned int labelLen,
                             const unsigned char *val, unsigned int valLen,
                             unsigned char *out, unsigned int outLen);
+
+PRBool ssl_AlpnTagAllowed(const sslSocket *ss, const SECItem *tag);
 
 #ifdef TRACE
 #define SSL_TRACE(msg) ssl_Trace msg

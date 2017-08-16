@@ -8,7 +8,7 @@
 #include "mozilla/Assertions.h"         // for MOZ_ASSERT, etc.
 #include "mozilla/EditorUtils.h"        // for EditorUtils
 #include "mozilla/dom/Selection.h"      // for Selection
-#include "nsAString.h"                  // for nsAString_internal::Length
+#include "nsAString.h"                  // for nsAString::Length
 #include "nsCycleCollectionParticipant.h"
 #include "nsDebug.h"                    // for NS_ENSURE_TRUE, etc.
 #include "nsError.h"                    // for NS_OK, etc.
@@ -686,7 +686,8 @@ already_AddRefed<nsRange>
 RangeItem::GetRange()
 {
   RefPtr<nsRange> range = new nsRange(startNode);
-  if (NS_FAILED(range->Set(startNode, startOffset, endNode, endOffset))) {
+  if (NS_FAILED(range->SetStartAndEnd(startNode, startOffset,
+                                      endNode, endOffset))) {
     return nullptr;
   }
   return range.forget();

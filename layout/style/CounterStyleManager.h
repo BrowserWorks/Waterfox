@@ -6,8 +6,9 @@
 #ifndef mozilla_CounterStyleManager_h_
 #define mozilla_CounterStyleManager_h_
 
+#include "nsIAtom.h"
 #include "nsStringFwd.h"
-#include "nsRefPtrHashtable.h"
+#include "nsDataHashtable.h"
 #include "nsHashKeys.h"
 
 #include "nsStyleConsts.h"
@@ -96,8 +97,6 @@ public:
 
   virtual AnonymousCounterStyle* AsAnonymous() { return nullptr; }
 
-  NS_INLINE_DECL_PURE_VIRTUAL_REFCOUNTING
-
 protected:
   int32_t mStyle;
 };
@@ -106,6 +105,7 @@ class AnonymousCounterStyle final : public CounterStyle
 {
 public:
   explicit AnonymousCounterStyle(const nsSubstring& aContent);
+  AnonymousCounterStyle(uint8_t aSystem, nsTArray<nsString> aSymbols);
   explicit AnonymousCounterStyle(const nsCSSValue::Array* aValue);
 
   virtual void GetStyleName(nsAString& aResult) override;
@@ -132,7 +132,7 @@ public:
   uint8_t GetSystem() const { return mSystem; }
   const nsTArray<nsString>& GetSymbols() const { return mSymbols; }
 
-  NS_INLINE_DECL_REFCOUNTING(AnonymousCounterStyle, override)
+  NS_INLINE_DECL_THREADSAFE_REFCOUNTING(AnonymousCounterStyle)
 
 private:
   ~AnonymousCounterStyle() {}
@@ -140,6 +140,171 @@ private:
   bool mSingleString;
   uint8_t mSystem;
   nsTArray<nsString> mSymbols;
+};
+
+// A smart pointer to CounterStyle. It either owns a reference to an
+// anonymous counter style, or weakly refers to a named counter style
+// managed by counter style manager.
+class CounterStylePtr
+{
+public:
+  CounterStylePtr() : mRaw(0) {}
+  CounterStylePtr(const CounterStylePtr& aOther)
+    : mRaw(aOther.mRaw)
+  {
+    switch (GetType()) {
+      case eCounterStyle:
+        break;
+      case eAnonymousCounterStyle:
+        AsAnonymous()->AddRef();
+        break;
+      case eUnresolvedAtom:
+        AsAtom()->AddRef();
+        break;
+      case eMask:
+        MOZ_ASSERT_UNREACHABLE("Unknown type");
+        break;
+    }
+  }
+  CounterStylePtr(CounterStylePtr&& aOther)
+    : mRaw(aOther.mRaw)
+  {
+    aOther.mRaw = 0;
+  }
+  ~CounterStylePtr() { Reset(); }
+
+  CounterStylePtr& operator=(const CounterStylePtr& aOther)
+  {
+    if (this != &aOther) {
+      Reset();
+      new (this) CounterStylePtr(aOther);
+    }
+    return *this;
+  }
+  CounterStylePtr& operator=(CounterStylePtr&& aOther)
+  {
+    if (this != &aOther) {
+      Reset();
+      mRaw = aOther.mRaw;
+      aOther.mRaw = 0;
+    }
+    return *this;
+  }
+  CounterStylePtr& operator=(decltype(nullptr))
+  {
+    Reset();
+    return *this;
+  }
+  CounterStylePtr& operator=(already_AddRefed<nsIAtom> aAtom)
+  {
+    Reset();
+    if (nsIAtom* raw = aAtom.take()) {
+      AssertPointerAligned(raw);
+      mRaw = reinterpret_cast<uintptr_t>(raw) | eUnresolvedAtom;
+    }
+    return *this;
+  }
+  CounterStylePtr& operator=(AnonymousCounterStyle* aCounterStyle)
+  {
+    Reset();
+    if (aCounterStyle) {
+      CounterStyle* raw = do_AddRef(aCounterStyle).take();
+      AssertPointerAligned(raw);
+      mRaw = reinterpret_cast<uintptr_t>(raw) | eAnonymousCounterStyle;
+    }
+    return *this;
+  }
+  CounterStylePtr& operator=(CounterStyle* aCounterStyle)
+  {
+    Reset();
+    if (aCounterStyle) {
+      MOZ_ASSERT(!aCounterStyle->AsAnonymous());
+      AssertPointerAligned(aCounterStyle);
+      mRaw = reinterpret_cast<uintptr_t>(aCounterStyle) | eCounterStyle;
+    }
+    return *this;
+  }
+
+  operator CounterStyle*() const & { return Get(); }
+  operator CounterStyle*() const && = delete;
+  CounterStyle* operator->() const { return Get(); }
+  explicit operator bool() const { return !!mRaw; }
+  bool operator!() const { return !mRaw; }
+  bool operator==(const CounterStylePtr& aOther) const
+    { return mRaw == aOther.mRaw; }
+  bool operator!=(const CounterStylePtr& aOther) const
+    { return mRaw != aOther.mRaw; }
+
+  bool IsResolved() const { return !IsUnresolved(); }
+  inline void Resolve(CounterStyleManager* aManager);
+
+private:
+  CounterStyle* Get() const
+  {
+    MOZ_ASSERT(IsResolved());
+    return reinterpret_cast<CounterStyle*>(mRaw & ~eMask);
+  }
+  template<typename T>
+  void AssertPointerAligned(T* aPointer)
+  {
+    // This can be checked at compile time via
+    // > static_assert(alignof(CounterStyle) >= 4);
+    // > static_assert(alignof(nsIAtom) >= 4);
+    // but MSVC2015 doesn't support using alignof on an abstract class.
+    // Once we move to MSVC2017, we can replace this runtime check with
+    // the compile time check above.
+    MOZ_ASSERT(!(reinterpret_cast<uintptr_t>(aPointer) & eMask));
+  }
+
+  enum Type : uintptr_t {
+    eCounterStyle = 0,
+    eAnonymousCounterStyle = 1,
+    eUnresolvedAtom = 2,
+    eMask = 3,
+  };
+
+  Type GetType() const { return static_cast<Type>(mRaw & eMask); }
+  bool IsUnresolved() const { return GetType() == eUnresolvedAtom; }
+  bool IsAnonymous() const { return GetType() == eAnonymousCounterStyle; }
+  nsIAtom* AsAtom()
+  {
+    MOZ_ASSERT(IsUnresolved());
+    return reinterpret_cast<nsIAtom*>(mRaw & ~eMask);
+  }
+  AnonymousCounterStyle* AsAnonymous()
+  {
+    MOZ_ASSERT(IsAnonymous());
+    return static_cast<AnonymousCounterStyle*>(
+      reinterpret_cast<CounterStyle*>(mRaw & ~eMask));
+  }
+
+  void Reset()
+  {
+    switch (GetType()) {
+      case eCounterStyle:
+        break;
+      case eAnonymousCounterStyle:
+        AsAnonymous()->Release();
+        break;
+      case eUnresolvedAtom:
+        AsAtom()->Release();
+        break;
+      case eMask:
+        MOZ_ASSERT_UNREACHABLE("Unknown type");
+        break;
+    }
+    mRaw = 0;
+  }
+
+  // mRaw contains the pointer, and its last two bits are used for type
+  // of the pointer.
+  // If the type is eUnresolvedAtom, the pointer owns a reference to an
+  // nsIAtom, and it needs to be resolved to a counter style before use.
+  // If the type is eAnonymousCounterStyle, it owns a reference to an
+  // anonymous counter style.
+  // Otherwise it is a weak pointer referring a named counter style
+  // managed by CounterStyleManager.
+  uintptr_t mRaw;
 };
 
 class CounterStyleManager final
@@ -156,10 +321,10 @@ public:
   bool IsInitial() const
   {
     // only 'none' and 'decimal'
-    return mCacheTable.Count() == 2;
+    return mStyles.Count() == 2;
   }
 
-  CounterStyle* BuildCounterStyle(const nsSubstring& aName);
+  CounterStyle* BuildCounterStyle(nsIAtom* aName);
 
   static CounterStyle* GetBuiltinStyle(int32_t aStyle);
   static CounterStyle* GetNoneStyle()
@@ -176,15 +341,30 @@ public:
   // if any counter style is changed, false elsewise. This method should
   // be called when any counter style may be affected.
   bool NotifyRuleChanged();
+  // NotifyRuleChanged will evict no longer needed counter styles into
+  // mRetiredStyles, and this function destroys all objects listed there.
+  // It should be called only after no one may ever use those objects.
+  void CleanRetiredStyles();
 
   nsPresContext* PresContext() const { return mPresContext; }
 
   NS_INLINE_DECL_REFCOUNTING(CounterStyleManager)
 
 private:
+  void DestroyCounterStyle(CounterStyle* aCounterStyle);
+
   nsPresContext* mPresContext;
-  nsRefPtrHashtable<nsStringHashKey, CounterStyle> mCacheTable;
+  nsDataHashtable<nsRefPtrHashKey<nsIAtom>, CounterStyle*> mStyles;
+  nsTArray<CounterStyle*> mRetiredStyles;
 };
+
+void
+CounterStylePtr::Resolve(CounterStyleManager* aManager)
+{
+  if (IsUnresolved()) {
+    *this = aManager->BuildCounterStyle(AsAtom());
+  }
+}
 
 } // namespace mozilla
 

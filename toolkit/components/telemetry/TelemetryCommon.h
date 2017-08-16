@@ -9,10 +9,22 @@
 #include "nsTHashtable.h"
 #include "jsapi.h"
 #include "nsIScriptError.h"
+#include "nsXULAppAPI.h"
+#include "mozilla/TypedEnumBits.h"
+#include "mozilla/TelemetryProcessEnums.h"
 
 namespace mozilla {
 namespace Telemetry {
 namespace Common {
+
+enum class RecordedProcessType : uint32_t {
+  Main       = (1 << GeckoProcessType_Default),  // Also known as "parent process"
+  Content    = (1 << GeckoProcessType_Content),
+  Gpu        = (1 << GeckoProcessType_GPU),
+  AllChilds  = 0xFFFFFFFF - 1,  // All the children processes (i.e. content, gpu, ...)
+  All        = 0xFFFFFFFF       // All the processes
+};
+MOZ_MAKE_ENUM_CLASS_BITWISE_OPERATORS(RecordedProcessType);
 
 template<class EntryType>
 class AutoHashtable : public nsTHashtable<EntryType>
@@ -50,6 +62,8 @@ AutoHashtable<EntryType>::ReflectIntoJS(ReflectEntryFunc entryFunc,
 bool IsExpiredVersion(const char* aExpiration);
 bool IsInDataset(uint32_t aDataset, uint32_t aContainingDataset);
 bool CanRecordDataset(uint32_t aDataset, bool aCanRecordBase, bool aCanRecordExtended);
+bool CanRecordInProcess(RecordedProcessType aProcesses, GeckoProcessType aProcess);
+bool CanRecordInProcess(RecordedProcessType aProcesses, ProcessID aProcess);
 
 /**
  * Return the number of milliseconds since process start using monotonic
@@ -67,6 +81,19 @@ nsresult MsSinceProcessStart(double* aResult);
  * @param aMsg The text message to print to the console.
  */
 void LogToBrowserConsole(uint32_t aLogLevel, const nsAString& aMsg);
+
+/**
+ * Get the name string for a ProcessID.
+ * This is the name we use for the Telemetry payloads.
+ */
+const char* GetNameForProcessID(ProcessID process);
+
+/**
+ * Get the GeckoProcessType for a ProcessID.
+ * Telemetry distinguishes between more process types than the GeckoProcessType,
+ * so the mapping is not direct.
+ */
+GeckoProcessType GetGeckoProcessType(ProcessID process);
 
 } // namespace Common
 } // namespace Telemetry

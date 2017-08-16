@@ -24,14 +24,14 @@ fuzzy-if(azureSkia,255,2700) == 1090168-3.html 1090168-3-ref.html # bug 1230357 
 == 1094914-1b.html 1094914-1-ref.html
 == 1096224-1a.html 1096224-1-ref.html
 == 1096224-1b.html 1096224-1-ref.html
-fails == 1102175-1a.html 1102175-1-ref.html
+fails-if(!styloVsGecko) == 1102175-1a.html 1102175-1-ref.html
 == 1102175-1b.html 1102175-1-ref.html
 == 1103613-1.html 1103613-1-ref.html
 == 1105268-1-min-max-dimensions.html 1105268-1-min-max-dimensions-ref.html
 == 1105268-2-min-max-dimensions.html 1105268-2-min-max-dimensions-ref.html
 == 1106669-1-intrinsic-for-container.html 1106669-1-intrinsic-for-container-ref.html
 == 1108923-1-percentage-margins.html 1108923-1-percentage-margins-ref.html
-== 1111944-1-list-marker.html 1111944-1-list-marker-ref.html
+fails-if(webrender) == 1111944-1-list-marker.html 1111944-1-list-marker-ref.html
 fuzzy(116,94) fuzzy-if(winWidget,135,124) HTTP(..) == 1115916-1-vertical-metrics.html 1115916-1-vertical-metrics-ref.html
 == 1117210-1-vertical-baseline-snap.html 1117210-1-vertical-baseline-snap-ref.html
 == 1117227-1-text-overflow.html 1117227-1-text-overflow-ref.html
@@ -107,7 +107,7 @@ HTTP(..) == 1127488-align-right-vertical-lr-ltr.html 1127488-align-bottom-left-r
 == 1133945-1-vertical-align.html 1133945-1-vertical-align-ref.html
 skip-if(Android) == 1134744-radio-checkbox-baseline-1.html 1134744-radio-checkbox-baseline-1-ref.html # Disabled on Android until bug 1352238 is fixed.
 == 1134849-orthogonal-inline.html 1134849-orthogonal-inline-ref.html
-== 1135361-ruby-justify-1.html 1135361-ruby-justify-1-ref.html # bug 1136067
+fails-if(styloVsGecko||stylo) == 1135361-ruby-justify-1.html 1135361-ruby-justify-1-ref.html # bug 1136067
 fuzzy-if(winWidget,255,163) fuzzy-if(skiaContent,159,111) == 1136557-1-nested-spans.html 1136557-1-nested-spans-ref.html
 fuzzy-if(winWidget,255,221) fuzzy-if(skiaContent,159,111) == 1136557-2-nested-spans.html 1136557-2-nested-spans-ref.html
 fuzzy-if(winWidget,255,236) == 1136557-3-nested-spans.html 1136557-3-nested-spans-ref.html
@@ -147,7 +147,7 @@ test-pref(dom.meta-viewport.enabled,true) test-pref(font.size.inflation.emPerLin
 == 1193519-sideways-lr-1.html 1193519-sideways-lr-1-ref.html
 == 1193519-sideways-lr-2.html 1193519-sideways-lr-2-ref.html
 fuzzy-if(winWidget,3,84) == 1193519-sideways-lr-3.html 1193519-sideways-lr-3-ref.html
-fuzzy-if(winWidget,3,112) == 1193519-sideways-lr-4.html 1193519-sideways-lr-4-ref.html
+fuzzy-if(winWidget,3,112) fails-if(webrender) == 1193519-sideways-lr-4.html 1193519-sideways-lr-4-ref.html # see bug 1366692. Rounding error with WR enabled.
 fuzzy-if(gtkWidget,255,6) fuzzy-if(cocoaWidget,65,69) == 1193519-sideways-lr-decoration-1.html 1193519-sideways-lr-decoration-1-ref.html
 
 == 1196887-1-computed-display-inline-block.html 1196887-1-computed-display-inline-block-ref.html
@@ -169,10 +169,10 @@ skip-if(Android) HTTP(..) == 1248248-1-orientation-break-glyphrun.html 1248248-1
 
 == 1302389-scrolled-rect-1a.html 1302389-scrolled-rect-1-ref.html
 fuzzy-if(Android,54,852) == 1302389-scrolled-rect-1b.html 1302389-scrolled-rect-1-ref.html
-fuzzy-if(Android,54,852) fuzzy-if(gtkWidget,1,25) fuzzy-if(cocoaWidget,1,2) fails-if(webrender) == 1302389-scrolled-rect-1c.html 1302389-scrolled-rect-1-ref.html
-fuzzy-if(gtkWidget,1,25) fuzzy-if(cocoaWidget,1,2) fails-if(webrender) == 1302389-scrolled-rect-1d.html 1302389-scrolled-rect-1-ref.html
-fuzzy-if(Android,54,852) fuzzy-if(gtkWidget,1,25) fuzzy-if(cocoaWidget,1,2) fails-if(webrender) == 1302389-scrolled-rect-2a.html 1302389-scrolled-rect-2-ref.html
-fuzzy-if(gtkWidget,1,25) fuzzy-if(cocoaWidget,1,2) fails-if(webrender) == 1302389-scrolled-rect-2b.html 1302389-scrolled-rect-2-ref.html
+fuzzy-if(Android,54,852) fuzzy-if(gtkWidget,1,25) fuzzy-if(cocoaWidget,1,2) == 1302389-scrolled-rect-1c.html 1302389-scrolled-rect-1-ref.html
+fuzzy-if(gtkWidget,1,25) fuzzy-if(cocoaWidget,1,2) == 1302389-scrolled-rect-1d.html 1302389-scrolled-rect-1-ref.html
+fuzzy-if(Android,54,852) fuzzy-if(gtkWidget,1,25) fuzzy-if(cocoaWidget,1,2) == 1302389-scrolled-rect-2a.html 1302389-scrolled-rect-2-ref.html
+fuzzy-if(gtkWidget,1,25) fuzzy-if(cocoaWidget,1,2) == 1302389-scrolled-rect-2b.html 1302389-scrolled-rect-2-ref.html
 == 1302389-scrolled-rect-2c.html 1302389-scrolled-rect-2-ref.html
 fuzzy-if(Android,54,852) == 1302389-scrolled-rect-2d.html 1302389-scrolled-rect-2-ref.html
 

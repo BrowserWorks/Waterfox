@@ -43,7 +43,7 @@ void nsTableColGroupFrame::ResetColIndices(nsIFrame*       aFirstColGroup,
   nsTableColGroupFrame* colGroupFrame = (nsTableColGroupFrame*)aFirstColGroup;
   int32_t colIndex = aFirstColIndex;
   while (colGroupFrame) {
-    if (nsGkAtoms::tableColGroupFrame == colGroupFrame->GetType()) {
+    if (colGroupFrame->IsTableColGroupFrame()) {
       // reset the starting col index for the first cg only if we should reset
       // the whole colgroup (aStartColFrame defaults to nullptr) or if
       // aFirstColIndex is smaller than the existing starting col index
@@ -57,7 +57,7 @@ void nsTableColGroupFrame::ResetColIndices(nsIFrame*       aFirstColGroup,
         colFrame = colGroupFrame->PrincipalChildList().FirstChild();
       }
       while (colFrame) {
-        if (nsGkAtoms::tableColFrame == colFrame->GetType()) {
+        if (colFrame->IsTableColFrame()) {
           ((nsTableColFrame*)colFrame)->SetColIndex(colIndex);
           colIndex++;
         }
@@ -228,8 +228,8 @@ nsTableColGroupFrame::InsertFrames(ChildListID     aListID,
 
   const nsFrameList::Slice& newFrames =
     mFrames.InsertFrames(this, aPrevFrame, aFrameList);
-  nsIFrame* prevFrame = nsTableFrame::GetFrameAtOrBefore(this, aPrevFrame,
-                                                         nsGkAtoms::tableColFrame);
+  nsIFrame* prevFrame = nsTableFrame::GetFrameAtOrBefore(
+    this, aPrevFrame, LayoutFrameType::TableCol);
 
   int32_t colIndex = (prevFrame) ? ((nsTableColFrame*)prevFrame)->GetColIndex() + 1 : GetStartColumnIndex();
   InsertColsReflow(colIndex, newFrames);
@@ -284,8 +284,8 @@ nsTableColGroupFrame::RemoveFrame(ChildListID     aListID,
     return;
   }
   bool contentRemoval = false;
-  
-  if (nsGkAtoms::tableColFrame == aOldFrame->GetType()) {
+
+  if (aOldFrame->IsTableColFrame()) {
     nsTableColFrame* colFrame = (nsTableColFrame*)aOldFrame;
     if (colFrame->GetColType() == eColContent) {
       contentRemoval = true;
@@ -296,15 +296,18 @@ nsTableColGroupFrame::RemoveFrame(ChildListID     aListID,
 #ifdef DEBUG
         nsIFrame* providerFrame;
         nsStyleContext* psc = colFrame->GetParentStyleContext(&providerFrame);
-        if (colFrame->StyleContext()->GetParent() == psc) {
-          NS_ASSERTION(col->StyleContext() == colFrame->StyleContext() &&
-                       col->GetContent() == colFrame->GetContent(),
-                       "How did that happen??");
+        if (psc->StyleSource().IsGeckoRuleNodeOrNull()) {
+          // This check code is useful only in Gecko-backed style system.
+          if (colFrame->StyleContext()->GetParent() == psc) {
+            NS_ASSERTION(col->StyleContext() == colFrame->StyleContext() &&
+                         col->GetContent() == colFrame->GetContent(),
+                         "How did that happen??");
+          }
+          // else colFrame is being removed because of a frame
+          // reconstruct on it, and its style context is still the old
+          // one, so we can't assert anything about how it compares to
+          // col's style context.
         }
-        // else colFrame is being removed because of a frame
-        // reconstruct on it, and its style context is still the old
-        // one, so we can't assert anything about how it compares to
-        // col's style context.
 #endif
         nextCol = col->GetNextCol();
         RemoveFrame(kPrincipalList, col);
@@ -383,6 +386,14 @@ nsTableColGroupFrame::Reflow(nsPresContext*          aPresContext,
   NS_FRAME_SET_TRUNCATION(aStatus, aReflowInput, aDesiredSize);
 }
 
+void
+nsTableColGroupFrame::BuildDisplayList(nsDisplayListBuilder*   aBuilder,
+                                       const nsRect&           aDirtyRect,
+                                       const nsDisplayListSet& aLists)
+{
+  nsTableFrame::DisplayGenericTablePart(aBuilder, this, aDirtyRect, aLists);
+}
+
 nsTableColFrame * nsTableColGroupFrame::GetFirstColumn()
 {
   return GetNextColumn(nullptr);
@@ -454,21 +465,16 @@ NS_NewTableColGroupFrame(nsIPresShell* aPresShell, nsStyleContext* aContext)
 
 NS_IMPL_FRAMEARENA_HELPERS(nsTableColGroupFrame)
 
-nsIAtom*
-nsTableColGroupFrame::GetType() const
-{
-  return nsGkAtoms::tableColGroupFrame;
-}
-  
-void 
+void
 nsTableColGroupFrame::InvalidateFrame(uint32_t aDisplayItemKey)
 {
   nsIFrame::InvalidateFrame(aDisplayItemKey);
   GetParent()->InvalidateFrameWithRect(GetVisualOverflowRect() + GetPosition(), aDisplayItemKey);
 }
 
-void 
-nsTableColGroupFrame::InvalidateFrameWithRect(const nsRect& aRect, uint32_t aDisplayItemKey)
+void
+nsTableColGroupFrame::InvalidateFrameWithRect(const nsRect& aRect,
+                                              uint32_t aDisplayItemKey)
 {
   nsIFrame::InvalidateFrameWithRect(aRect, aDisplayItemKey);
   // If we have filters applied that would affects our bounds, then

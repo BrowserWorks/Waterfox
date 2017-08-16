@@ -627,7 +627,8 @@ class Marionette(object):
                 # do no further server-side cleanup in this case.
                 pass
         if self.instance:
-            self.instance.close()
+            # stop application and, if applicable, stop emulator
+            self.instance.close(clean=True)
 
     def __del__(self):
         self.cleanup()
@@ -840,134 +841,6 @@ class Marionette(object):
                 for i in range(len(val)):
                     typing.append(val[i])
         return "".join(typing)
-
-    def get_permission(self, perm):
-        script = """
-        let value = {
-          'url': document.nodePrincipal.URI.spec,
-          'appId': document.nodePrincipal.appId,
-          'isInIsolatedMozBrowserElement': document.nodePrincipal.isInIsolatedMozBrowserElement,
-          'type': arguments[0]
-        };
-        return value;"""
-        with self.using_context("content"):
-            value = self.execute_script(script, script_args=(perm,), sandbox="system")
-
-        with self.using_context("chrome"):
-            permission = self.execute_script("""
-                Components.utils.import("resource://gre/modules/Services.jsm");
-                let perm = arguments[0];
-                let secMan = Services.scriptSecurityManager;
-                let attrs = {appId: perm.appId,
-                            inIsolatedMozBrowser: perm.isInIsolatedMozBrowserElement};
-                let principal = secMan.createCodebasePrincipal(
-                                Services.io.newURI(perm.url, null, null),
-                                attrs);
-                let testPerm = Services.perms.testPermissionFromPrincipal(
-                               principal, perm.type);
-                return testPerm;
-                """, script_args=(value,))
-        return permission
-
-    def push_permission(self, perm, allow):
-        script = """
-        let allow = arguments[0];
-        if (typeof(allow) == "boolean") {
-            if (allow) {
-              allow = Components.interfaces.nsIPermissionManager.ALLOW_ACTION;
-            }
-            else {
-              allow = Components.interfaces.nsIPermissionManager.DENY_ACTION;
-            }
-        }
-        let perm_type = arguments[1];
-
-        Components.utils.import("resource://gre/modules/Services.jsm");
-        window.wrappedJSObject.permChanged = false;
-        window.wrappedJSObject.permObserver = function(subject, topic, data) {
-          if (topic == "perm-changed") {
-            let permission = subject.QueryInterface(Components.interfaces.nsIPermission);
-            if (perm_type == permission.type) {
-              Services.obs.removeObserver(window.wrappedJSObject.permObserver,
-                                          "perm-changed");
-              window.wrappedJSObject.permChanged = true;
-            }
-          }
-        };
-        Services.obs.addObserver(window.wrappedJSObject.permObserver,
-                                 "perm-changed", false);
-
-        let value = {
-          'url': document.nodePrincipal.URI.spec,
-          'appId': document.nodePrincipal.appId,
-          'isInIsolatedMozBrowserElement': document.nodePrincipal.isInIsolatedMozBrowserElement,
-          'type': perm_type,
-          'action': allow
-        };
-        return value;
-        """
-        with self.using_context("content"):
-            perm = self.execute_script(script, script_args=(allow, perm,), sandbox="system")
-
-        current_perm = self.get_permission(perm["type"])
-        if current_perm == perm["action"]:
-            with self.using_context("content"):
-                self.execute_script("""
-                    Components.utils.import("resource://gre/modules/Services.jsm");
-                    Services.obs.removeObserver(window.wrappedJSObject.permObserver,
-                                                "perm-changed");
-                    """, sandbox="system")
-            return
-
-        with self.using_context("chrome"):
-            self.execute_script("""
-                Components.utils.import("resource://gre/modules/Services.jsm");
-                let perm = arguments[0];
-                let secMan = Services.scriptSecurityManager;
-                let attrs = {appId: perm.appId,
-                             inIsolatedMozBrowser: perm.isInIsolatedMozBrowserElement};
-                let principal = secMan.createCodebasePrincipal(Services.io.newURI(perm.url,
-                                                                                  null, null),
-                                                                                  attrs);
-                Services.perms.addFromPrincipal(principal, perm.type, perm.action);
-                return true;
-                """, script_args=(perm,))
-
-        with self.using_context("content"):
-            self.execute_async_script("""
-                let wait = function() {
-                  if (window.wrappedJSObject.permChanged) {
-                    marionetteScriptFinished();
-                  } else {
-                    window.setTimeout(wait, 100);
-                  }
-                }();
-                """, sandbox="system")
-
-    @contextmanager
-    def using_permissions(self, perms):
-        '''
-        Sets permissions for code being executed in a `with` block,
-        and restores them on exit.
-
-        :param perms: A dict containing one or more perms and their
-        values to be set.
-
-        Usage example::
-
-          with marionette.using_permissions({'systemXHR': True}):
-              ... do stuff ...
-        '''
-        original_perms = {}
-        for perm in perms:
-            original_perms[perm] = self.get_permission(perm)
-            self.push_permission(perm, perms[perm])
-
-        try:
-            yield
-        finally:
-            for perm in original_perms:
-                self.push_permission(perm, original_perms[perm])
 
     def clear_pref(self, pref):
         """Clear the user-defined value from the specified preference.
@@ -1185,13 +1058,16 @@ class Marionette(object):
         self._send_message("quitApplication", body)
 
     @do_process_check
-    def quit(self, in_app=False, callback=None):
+    def quit(self, clean=False, in_app=False, callback=None):
         """Terminate the currently running instance.
 
         This command will delete the active marionette session. It also allows
         manipulation of eg. the profile data while the application is not running.
         To start the application again, start_session() has to be called.
 
+        :param clean: If False the same profile will be used after the next start of
+                      the application. Note that the in app initiated restart always
+                      maintains the same profile.
         :param in_app: If True, marionette will cause a quit from within the
                        browser. Otherwise the browser will be quit immediately
                        by killing the process.
@@ -1213,10 +1089,18 @@ class Marionette(object):
             self.delete_session(send_request=False, reset_session_id=True)
 
             # Give the application some time to shutdown
-            self.instance.runner.wait(timeout=self.DEFAULT_SHUTDOWN_TIMEOUT)
+            returncode = self.instance.runner.wait(timeout=self.DEFAULT_SHUTDOWN_TIMEOUT)
+            if returncode is None:
+                # This will force-close the application without sending any other message.
+                self.cleanup()
+
+                message = ("Process killed because a requested application quit did not happen "
+                           "within {}s. Check gecko.log for errors.")
+                raise IOError(message.format(self.DEFAULT_SHUTDOWN_TIMEOUT))
+
         else:
             self.delete_session(reset_session_id=True)
-            self.instance.close()
+            self.instance.close(clean=clean)
 
     @do_process_check
     def restart(self, clean=False, in_app=False, callback=None):
@@ -1254,7 +1138,8 @@ class Marionette(object):
             self.delete_session(send_request=False, reset_session_id=True)
 
             try:
-                self.raise_for_port()
+                timeout = self.DEFAULT_SHUTDOWN_TIMEOUT + self.DEFAULT_STARTUP_TIMEOUT
+                self.raise_for_port(timeout=timeout)
             except socket.timeout:
                 if self.instance.runner.returncode is not None:
                     exc, val, tb = sys.exc_info()
@@ -1264,7 +1149,7 @@ class Marionette(object):
         else:
             self.delete_session()
             self.instance.restart(clean=clean)
-            self.raise_for_port()
+            self.raise_for_port(timeout=self.DEFAULT_STARTUP_TIMEOUT)
 
         self.start_session(session_id=session_id)
 
@@ -1304,8 +1189,8 @@ class Marionette(object):
         if self.instance:
             returncode = self.instance.runner.returncode
             if returncode is not None:
-                # We're managing a binary which has terminated, so restart it.
-                self.instance.restart()
+                # We're managing a binary which has terminated, so start it again.
+                self.instance.start()
 
         self.client = transport.TcpTransport(
             self.host,
@@ -1335,7 +1220,6 @@ class Marionette(object):
 
     @test_name.setter
     def test_name(self, test_name):
-        self._send_message("setTestName", {"value": test_name})
         self._test_name = test_name
 
     def delete_session(self, send_request=True, reset_session_id=False):
@@ -1997,44 +1881,6 @@ class Marionette(object):
         return self._send_message("getLogs",
                                   key="value" if self.protocol == 1 else None)
 
-    def import_script(self, js_file):
-        """Imports a script into the scope of the execute_script and
-        execute_async_script calls.
-
-        This is particularly useful if you wish to import your own
-        libraries.
-
-        :param js_file: Filename of JavaScript file to import.
-
-        For example, Say you have a script, importfunc.js, that contains:
-
-        ::
-
-            let testFunc = function() { return "i'm a test function!";};
-
-        Assuming this file is in the same directory as the test, you
-        could do something like:
-
-        ::
-
-            js = os.path.abspath(os.path.join(__file__, os.path.pardir, "importfunc.js"))
-            marionette.import_script(js)
-            assert "i'm a test function!" == self.marionette.execute_script("return testFunc();")
-        """
-        js = ""
-        with open(js_file, "r") as f:
-            js = f.read()
-        body = {"script": js}
-        self._send_message("importScript", body)
-
-    def clear_imported_scripts(self):
-        """Clears all imported scripts in this context, ie: calling
-        clear_imported_scripts in chrome context will clear only scripts
-        you imported in chrome, and will leave the scripts you imported
-        in content context.
-        """
-        self._send_message("clearImportedScripts")
-
     def add_cookie(self, cookie):
         """Adds a cookie to your current session.
 
@@ -2218,3 +2064,12 @@ class Marionette(object):
         should be equivalent to the user pressing the the maximize button
         """
         return self._send_message("maximizeWindow")
+
+    def fullscreen(self):
+        """ Synchronously sets the user agent window to full screen as if the user
+        had done "View > Enter Full Screen",  or restores it if it is already
+        in full screen.
+
+        :returns: dictionary representation of current window width and height
+        """
+        return self._send_message("fullscreen")

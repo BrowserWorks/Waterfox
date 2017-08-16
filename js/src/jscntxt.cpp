@@ -25,7 +25,6 @@
 #endif // ANDROID
 #ifdef XP_WIN
 #include <processthreadsapi.h>
-#include <windows.h>
 #endif // XP_WIN
 
 #include "jsatom.h"
@@ -44,11 +43,13 @@
 #include "jsstr.h"
 #include "jstypes.h"
 #include "jswatchpoint.h"
+#include "jswin.h"
 
 #include "gc/Marking.h"
 #include "jit/Ion.h"
 #include "jit/PcScriptCache.h"
 #include "js/CharacterEncoding.h"
+#include "vm/ErrorReporting.h"
 #include "vm/HelperThreads.h"
 #include "vm/Shape.h"
 #include "wasm/WasmSignalHandlers.h"
@@ -158,12 +159,14 @@ js::NewContext(uint32_t maxBytes, uint32_t maxNurseryBytes, JSRuntime* parentRun
     }
 
     if (!runtime->init(cx, maxBytes, maxNurseryBytes)) {
+        runtime->destroyRuntime();
         js_delete(cx);
         js_delete(runtime);
         return nullptr;
     }
 
     if (!cx->init(ContextKind::Cooperative)) {
+        runtime->destroyRuntime();
         js_delete(cx);
         js_delete(runtime);
         return nullptr;
@@ -205,6 +208,20 @@ js::ResumeCooperativeContext(JSContext* cx)
     cx->runtime()->setActiveContext(cx);
 }
 
+static void
+FreeJobQueueHandling(JSContext* cx)
+{
+    if (!cx->jobQueue)
+        return;
+
+    cx->jobQueue->reset();
+    FreeOp* fop = cx->defaultFreeOp();
+    fop->delete_(cx->jobQueue.ref());
+    cx->getIncumbentGlobalCallback = nullptr;
+    cx->enqueuePromiseJobCallback = nullptr;
+    cx->enqueuePromiseJobCallbackData = nullptr;
+}
+
 void
 js::DestroyContext(JSContext* cx)
 {
@@ -220,6 +237,8 @@ js::DestroyContext(JSContext* cx)
     // cooperative contexts which they have read off the owner context of a
     // zone group. See HelperThread::handleIonWorkload.
     CancelOffThreadIonCompile(cx->runtime());
+
+    FreeJobQueueHandling(cx);
 
     if (cx->runtime()->cooperatingContexts().length() == 1) {
         // Destroy the runtime along with its last context.
@@ -538,21 +557,20 @@ static bool
 PrintSingleError(JSContext* cx, FILE* file, JS::ConstUTF8CharsZ toStringResult,
                  T* report, PrintErrorKind kind)
 {
-    UniquePtr<char> prefix;
+    UniqueChars prefix;
     if (report->filename)
-        prefix.reset(JS_smprintf("%s:", report->filename));
+        prefix = JS_smprintf("%s:", report->filename);
 
     if (report->lineno) {
-        UniquePtr<char> tmp(JS_smprintf("%s%u:%u ", prefix ? prefix.get() : "", report->lineno,
-                                        report->column));
-        prefix = Move(tmp);
+        prefix = JS_smprintf("%s%u:%u ", prefix ? prefix.get() : "", report->lineno,
+                                        report->column);
     }
 
     if (kind != PrintErrorKind::Error) {
         const char* kindPrefix = nullptr;
         switch (kind) {
           case PrintErrorKind::Error:
-            break;
+            MOZ_CRASH("unreachable");
           case PrintErrorKind::Warning:
             kindPrefix = "warning";
             break;
@@ -564,8 +582,7 @@ PrintSingleError(JSContext* cx, FILE* file, JS::ConstUTF8CharsZ toStringResult,
             break;
         }
 
-        UniquePtr<char> tmp(JS_smprintf("%s%s: ", prefix ? prefix.get() : "", kindPrefix));
-        prefix = Move(tmp);
+        prefix = JS_smprintf("%s%s: ", prefix ? prefix.get() : "", kindPrefix);
     }
 
     const char* message = toStringResult ? toStringResult.c_str() : report->message().c_str();
@@ -930,16 +947,6 @@ js::ReportErrorNumberUCArray(JSContext* cx, unsigned flags, JSErrorCallback call
     return warning;
 }
 
-void
-js::CallWarningReporter(JSContext* cx, JSErrorReport* reportp)
-{
-    MOZ_ASSERT(reportp);
-    MOZ_ASSERT(JSREPORT_IS_WARNING(reportp->flags));
-
-    if (JS::WarningReporter warningReporter = cx->runtime()->warningReporter)
-        warningReporter(cx, reportp);
-}
-
 bool
 js::ReportIsNotDefined(JSContext* cx, HandleId id)
 {
@@ -1103,6 +1110,184 @@ JSContext::recoverFromOutOfMemory()
     }
 }
 
+static bool
+InternalEnqueuePromiseJobCallback(JSContext* cx, JS::HandleObject job,
+                                  JS::HandleObject allocationSite,
+                                  JS::HandleObject incumbentGlobal, void* data)
+{
+    MOZ_ASSERT(job);
+    return cx->jobQueue->append(job);
+}
+
+static bool
+InternalStartAsyncTaskCallback(JSContext* cx, JS::AsyncTask* task)
+{
+    task->user = cx;
+
+    ExclusiveData<InternalAsyncTasks>::Guard asyncTasks = cx->asyncTasks.lock();
+    asyncTasks->outstanding++;
+    return true;
+}
+
+static bool
+InternalFinishAsyncTaskCallback(JS::AsyncTask* task)
+{
+    JSContext* cx = (JSContext*)task->user;
+
+    ExclusiveData<InternalAsyncTasks>::Guard asyncTasks = cx->asyncTasks.lock();
+    MOZ_ASSERT(asyncTasks->outstanding > 0);
+    asyncTasks->outstanding--;
+    return asyncTasks->finished.append(task);
+}
+
+namespace {
+class MOZ_STACK_CLASS ReportExceptionClosure : public ScriptEnvironmentPreparer::Closure
+{
+  public:
+    explicit ReportExceptionClosure(HandleValue exn)
+        : exn_(exn)
+    {
+    }
+
+    bool operator()(JSContext* cx) override
+    {
+        cx->setPendingException(exn_);
+        return false;
+    }
+
+  private:
+    HandleValue exn_;
+};
+} // anonymous namespace
+
+JS_FRIEND_API(bool)
+js::UseInternalJobQueues(JSContext* cx)
+{
+    // Internal job queue handling must be set up very early. Self-hosting
+    // initialization is as good a marker for that as any.
+    MOZ_RELEASE_ASSERT(!cx->runtime()->hasInitializedSelfHosting(),
+                       "js::UseInternalJobQueues must be called early during runtime startup.");
+    MOZ_ASSERT(!cx->jobQueue);
+    auto* queue = cx->new_<PersistentRooted<JobQueue>>(cx, JobQueue(SystemAllocPolicy()));
+    if (!queue)
+        return false;
+
+    cx->jobQueue = queue;
+
+    JS::SetEnqueuePromiseJobCallback(cx, InternalEnqueuePromiseJobCallback);
+    JS::SetAsyncTaskCallbacks(cx, InternalStartAsyncTaskCallback, InternalFinishAsyncTaskCallback);
+
+    return true;
+}
+
+JS_FRIEND_API(void)
+js::StopDrainingJobQueue(JSContext* cx)
+{
+    MOZ_ASSERT(cx->jobQueue);
+    cx->stopDrainingJobQueue = true;
+}
+
+JS_FRIEND_API(void)
+js::RunJobs(JSContext* cx)
+{
+    MOZ_ASSERT(cx->jobQueue);
+
+    if (cx->drainingJobQueue || cx->stopDrainingJobQueue)
+        return;
+
+    while (true) {
+        // Wait for any outstanding async tasks to finish so that the
+        // finishedAsyncTasks list is fixed.
+        while (true) {
+            AutoLockHelperThreadState lock;
+            if (!cx->asyncTasks.lock()->outstanding)
+                break;
+            HelperThreadState().wait(lock, GlobalHelperThreadState::CONSUMER);
+        }
+
+        // Lock the whole time while copying back the asyncTasks finished queue
+        // so that any new tasks created during finish() cannot racily join the
+        // job queue.  Call finish() only thereafter, to avoid a circular mutex
+        // dependency (see also bug 1297901).
+        Vector<JS::AsyncTask*, 0, SystemAllocPolicy> finished;
+        {
+            ExclusiveData<InternalAsyncTasks>::Guard asyncTasks = cx->asyncTasks.lock();
+            finished = Move(asyncTasks->finished);
+            asyncTasks->finished.clear();
+        }
+
+        for (JS::AsyncTask* task : finished)
+            task->finish(cx);
+
+        // It doesn't make sense for job queue draining to be reentrant. At the
+        // same time we don't want to assert against it, because that'd make
+        // drainJobQueue unsafe for fuzzers. We do want fuzzers to test this,
+        // so we simply ignore nested calls of drainJobQueue.
+        cx->drainingJobQueue = true;
+
+        RootedObject job(cx);
+        JS::HandleValueArray args(JS::HandleValueArray::empty());
+        RootedValue rval(cx);
+
+        // Execute jobs in a loop until we've reached the end of the queue.
+        // Since executing a job can trigger enqueuing of additional jobs,
+        // it's crucial to re-check the queue length during each iteration.
+        for (size_t i = 0; i < cx->jobQueue->length(); i++) {
+            // A previous job might have set this flag. E.g., the js shell
+            // sets it if the `quit` builtin function is called.
+            if (cx->stopDrainingJobQueue)
+                break;
+
+            job = cx->jobQueue->get()[i];
+
+            // It's possible that queue draining was interrupted prematurely,
+            // leaving the queue partly processed. In that case, slots for
+            // already-executed entries will contain nullptrs, which we should
+            // just skip.
+            if (!job)
+                continue;
+
+            cx->jobQueue->get()[i] = nullptr;
+            AutoCompartment ac(cx, job);
+            {
+                if (!JS::Call(cx, UndefinedHandleValue, job, args, &rval)) {
+                    // Nothing we can do about uncatchable exceptions.
+                    if (!cx->isExceptionPending())
+                        continue;
+                    RootedValue exn(cx);
+                    if (cx->getPendingException(&exn)) {
+                        /*
+                         * Clear the exception, because
+                         * PrepareScriptEnvironmentAndInvoke will assert that we don't
+                         * have one.
+                         */
+                        cx->clearPendingException();
+                        ReportExceptionClosure reportExn(exn);
+                        PrepareScriptEnvironmentAndInvoke(cx, cx->global(), reportExn);
+                    }
+                }
+            }
+        }
+
+        cx->drainingJobQueue = false;
+
+        if (cx->stopDrainingJobQueue) {
+            cx->stopDrainingJobQueue = false;
+            break;
+        }
+
+        cx->jobQueue->clear();
+
+        // It's possible a job added an async task, and it's also possible
+        // that task has already finished.
+        {
+            ExclusiveData<InternalAsyncTasks>::Guard asyncTasks = cx->asyncTasks.lock();
+            if (asyncTasks->outstanding == 0 && asyncTasks->finished.length() == 0)
+                break;
+        }
+    }
+}
+
 JS::Error JSContext::reportedError;
 JS::OOM JSContext::reportedOOM;
 
@@ -1118,7 +1303,7 @@ JSContext::alreadyReportedOOM()
         MOZ_ASSERT(isThrowingOutOfMemory());
     }
 #endif
-    return mozilla::MakeGenericErrorResult(reportedOOM);
+    return mozilla::Err(reportedOOM);
 }
 
 mozilla::GenericErrorResult<JS::Error&>
@@ -1128,7 +1313,7 @@ JSContext::alreadyReportedError()
     if (!helperThread())
         MOZ_ASSERT(isExceptionPending());
 #endif
-    return mozilla::MakeGenericErrorResult(reportedError);
+    return mozilla::Err(reportedError);
 }
 
 JSContext::JSContext(JSRuntime* runtime, const JS::ContextOptions& options)
@@ -1142,7 +1327,6 @@ JSContext::JSContext(JSRuntime* runtime, const JS::ContextOptions& options)
     jitActivation(nullptr),
     activation_(nullptr),
     profilingActivation_(nullptr),
-    wasmActivationStack_(nullptr),
     nativeStackBase(GetNativeStackBase()),
     entryMonitor(nullptr),
     noExecuteDebuggerTop(nullptr),
@@ -1208,9 +1392,17 @@ JSContext::JSContext(JSRuntime* runtime, const JS::ContextOptions& options)
     handlingJitInterrupt_(false),
     osrTempData_(nullptr),
     ionReturnOverride_(MagicValue(JS_ARG_POISON)),
-    jitTop(nullptr),
     jitStackLimit(UINTPTR_MAX),
-    jitStackLimitNoInterrupt(UINTPTR_MAX)
+    jitStackLimitNoInterrupt(UINTPTR_MAX),
+    getIncumbentGlobalCallback(nullptr),
+    enqueuePromiseJobCallback(nullptr),
+    enqueuePromiseJobCallbackData(nullptr),
+    jobQueue(nullptr),
+    drainingJobQueue(false),
+    stopDrainingJobQueue(false),
+    asyncTasks(mutexid::InternalAsyncTasks),
+    promiseRejectionTrackerCallback(nullptr),
+    promiseRejectionTrackerCallbackData(nullptr)
 {
     MOZ_ASSERT(static_cast<JS::RootingContext*>(this) ==
                JS::RootingContext::get(this));
@@ -1452,6 +1644,9 @@ JSContext::findVersion()
 
     if (compartment() && compartment()->behaviors().version() != JSVERSION_UNKNOWN)
         return compartment()->behaviors().version();
+
+    if (!CurrentThreadCanAccessRuntime(runtime()))
+        return JSVERSION_DEFAULT;
 
     return runtime()->defaultVersion();
 }

@@ -56,7 +56,7 @@ static nsIFrame*
 CheckForTrailingTextFrameRecursive(nsIFrame* aFrame, nsIFrame* aStopAtFrame)
 {
   if (aFrame == aStopAtFrame ||
-      ((aFrame->GetType() == nsGkAtoms::textFrame &&
+      ((aFrame->IsTextFrame() &&
        (static_cast<nsTextFrame*>(aFrame))->IsAtEndOfLine())))
     return aFrame;
   if (!aFrame->IsFrameOfType(nsIFrame::eLineParticipant))
@@ -104,7 +104,7 @@ AdjustCaretFrameForLineEnd(nsIFrame** aFrame, int32_t* aOffset)
     if (r)
     {
       *aFrame = r;
-      NS_ASSERTION(r->GetType() == nsGkAtoms::textFrame, "Expected text frame");
+      NS_ASSERTION(r->IsTextFrame(), "Expected text frame");
       *aOffset = (static_cast<nsTextFrame*>(r))->GetContentEnd();
       return;
     }
@@ -341,13 +341,41 @@ nsCaret::GetGeometryForFrame(nsIFrame* aFrame,
     framePos.y = baseline - ascent;
   }
   Metrics caretMetrics = ComputeMetrics(aFrame, aFrameOffset, height);
+
+  nsTextFrame* textFrame = do_QueryFrame(aFrame);
+  if (textFrame) {
+    gfxTextRun* textRun =
+      textFrame->GetTextRun(nsTextFrame::TextRunType::eInflated);
+    if (textRun) {
+      // For "upstream" text where the textrun direction is reversed from the
+      // frame's inline-dir we want the caret to be painted before rather than
+      // after its nominal inline position, so we offset by its width.
+      bool textRunDirIsReverseOfFrame =
+        wm.IsInlineReversed() != textRun->IsInlineReversed();
+      // However, in sideways-lr mode we invert this behavior because this is
+      // the one writing mode where bidi-LTR corresponds to inline-reversed
+      // already, which reverses the desired caret placement behavior.
+      // Note that the following condition is equivalent to:
+      //   if ( (!textRun->IsSidewaysLeft() && textRunDirIsReverseOfFrame) ||
+      //        (textRun->IsSidewaysLeft()  && !textRunDirIsReverseOfFrame) )
+      if (textRunDirIsReverseOfFrame != textRun->IsSidewaysLeft()) {
+        int dir = wm.IsBidiLTR() ? -1 : 1;
+        if (vertical) {
+          framePos.y += dir * caretMetrics.mCaretWidth;
+        } else {
+          framePos.x += dir * caretMetrics.mCaretWidth;
+        }
+      }
+    }
+  }
+
   rect = nsRect(framePos, vertical ? nsSize(height, caretMetrics.mCaretWidth) :
                                      nsSize(caretMetrics.mCaretWidth, height));
 
   // Clamp the inline-position to be within our scroll frame. If we don't, then
   // it clips us, and we don't appear at all. See bug 335560.
-  nsIFrame *scrollFrame =
-    nsLayoutUtils::GetClosestFrameOfType(aFrame, nsGkAtoms::scrollFrame);
+  nsIFrame* scrollFrame =
+    nsLayoutUtils::GetClosestFrameOfType(aFrame, LayoutFrameType::Scroll);
   if (scrollFrame) {
     // First, use the scrollFrame to get at the scrollable view that we're in.
     nsIScrollableFrame *sf = do_QueryFrame(scrollFrame);
@@ -522,10 +550,9 @@ nsCaret::GetPaintGeometry(nsRect* aRect)
 
   // If the offset falls outside of the frame, then don't paint the caret.
   int32_t startOffset, endOffset;
-  if (frame->GetType() == nsGkAtoms::textFrame &&
+  if (frame->IsTextFrame() &&
       (NS_FAILED(frame->GetOffsets(startOffset, endOffset)) ||
-      startOffset > frameOffset ||
-      endOffset < frameOffset)) {
+       startOffset > frameOffset || endOffset < frameOffset)) {
     return nullptr;
   }
 

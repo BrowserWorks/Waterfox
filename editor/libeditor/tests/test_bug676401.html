@@ -5,7 +5,6 @@ https://bugzilla.mozilla.org/show_bug.cgi?id=676401
 -->
 <head>
   <title>Test for Bug 676401</title>
-  <script type="application/javascript" src="/MochiKit/packed.js"></script>
   <script type="application/javascript" src="/tests/SimpleTest/SimpleTest.js"></script>
   <script type="text/javascript" src="/tests/SimpleTest/EventUtils.js"></script>
   <link rel="stylesheet" type="text/css" href="/tests/SimpleTest/test.css"/>
@@ -43,8 +42,15 @@ var alwaysEnabledCommands = [
   "styleWithCSS",
 ];
 
+function ensureNobodyHasFocus()
+{
+  document.activeElement.blur();
+}
+
 function IsCommandEnabled(command) {
   var enabled;
+
+  ensureNobodyHasFocus();
 
   // non-editable div: should return false unless alwaysEnabled
   window.getSelection().selectAllChildren(gBlock1);
@@ -65,7 +71,7 @@ function runTests() {
 
   // common commands: test with and without "styleWithCSS"
   commands = [
-    "bold", "italic", "underline", "strikeThrough", 
+    "bold", "italic", "underline", "strikeThrough",
     "subscript", "superscript", "foreColor", "backColor", "hiliteColor",
     "fontName", "fontSize",
     "justifyLeft", "justifyCenter", "justifyRight", "justifyFull",
@@ -90,6 +96,8 @@ function runTests() {
     IsCommandEnabled(commands[i]);
 
   // These are privileged, and available only to chrome.
+  ensureNobodyHasFocus();
+  window.getSelection().selectAllChildren(gBlock2);
   commands = ["paste"];
   for (i = 0; i < commands.length; i++) {
     is(document.queryCommandEnabled(commands[i]), false,

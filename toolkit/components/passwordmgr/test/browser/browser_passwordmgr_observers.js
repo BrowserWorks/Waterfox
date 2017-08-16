@@ -1,8 +1,8 @@
 /* Any copyright is dedicated to the Public Domain.
  * http://creativecommons.org/publicdomain/zero/1.0/ */
 
-add_task(function* test() {
-  yield new Promise(resolve => {
+add_task(async function test() {
+  await new Promise(resolve => {
 
   const LOGIN_HOST = "http://example.com";
   const LOGIN_COUNT = 5;
@@ -91,7 +91,7 @@ add_task(function* test() {
 
   function startTest() {
     Services.obs.addObserver(
-      testObserver, "passwordmgr-dialog-updated", false);
+      testObserver, "passwordmgr-dialog-updated");
     is(countLogins(), 0, "Verify starts with 0 logins");
     createLogins();
     runNextTest();

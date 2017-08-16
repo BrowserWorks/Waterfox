@@ -36,7 +36,7 @@
 #include <vector>
 #include "GeckoProfiler.h"              // for GeckoProfiler
 #ifdef MOZ_GECKO_PROFILER
-#include "ProfilerMarkers.h"            // for ProfilerMarkers
+#include "ProfilerMarkerPayload.h"      // for LayerTranslationPayload
 #endif
 
 #define CULLING_LOG(...)
@@ -72,9 +72,12 @@ DrawLayerInfo(const RenderTargetIntRect& aClipRect,
   uint32_t maxWidth = std::min<uint32_t>(visibleRegion.GetBounds().width, 500);
 
   IntPoint topLeft = visibleRegion.ToUnknownRegion().GetBounds().TopLeft();
-  aManager->GetTextRenderer()->RenderText(ss.str().c_str(), topLeft,
-                                          aLayer->GetEffectiveTransform(), 16,
-                                          maxWidth);
+  aManager->GetTextRenderer()->RenderText(
+    aManager->GetCompositor(),
+    ss.str().c_str(),
+    topLeft,
+    aLayer->GetEffectiveTransform(), 16,
+    maxWidth);
 }
 
 static void
@@ -162,8 +165,8 @@ struct PreparedLayer
 {
   PreparedLayer(LayerComposite *aLayer,
                 RenderTargetIntRect aClipRect,
-                const Maybe<gfx::Polygon>& aGeometry)
-  : mLayer(aLayer), mClipRect(aClipRect), mGeometry(aGeometry) {}
+                Maybe<gfx::Polygon>&& aGeometry)
+  : mLayer(aLayer), mClipRect(aClipRect), mGeometry(Move(aGeometry)) {}
 
   LayerComposite* mLayer;
   RenderTargetIntRect mClipRect;
@@ -192,10 +195,10 @@ ContainerPrepare(ContainerT* aContainer,
     ? ContainerLayerComposite::SortMode::WITH_GEOMETRY
     : ContainerLayerComposite::SortMode::WITHOUT_GEOMETRY;
 
-  const nsTArray<LayerPolygon> polygons =
+  nsTArray<LayerPolygon> polygons =
     aContainer->SortChildrenBy3DZOrder(sortMode);
 
-  for (const LayerPolygon& layer : polygons) {
+  for (LayerPolygon& layer : polygons) {
     LayerComposite* layerToRender =
       static_cast<LayerComposite*>(layer.layer->ImplData());
 
@@ -209,8 +212,7 @@ ContainerPrepare(ContainerT* aContainer,
     // We don't want to skip container layers because otherwise their mPrepared
     // may be null which is not allowed.
     if (!layerToRender->GetLayer()->AsContainerLayer()) {
-      if (!layerToRender->GetLayer()->IsVisible() &&
-          !layerToRender->NeedToDrawCheckerboarding(nullptr)) {
+      if (!layerToRender->GetLayer()->IsVisible()) {
         CULLING_LOG("Sublayer %p has no effective visible region\n", layerToRender->GetLayer());
         continue;
       }
@@ -224,7 +226,8 @@ ContainerPrepare(ContainerT* aContainer,
     CULLING_LOG("Preparing sublayer %p\n", layerToRender->GetLayer());
 
     layerToRender->Prepare(clipRect);
-    aContainer->mPrepared->mLayers.AppendElement(PreparedLayer(layerToRender, clipRect, layer.geometry));
+    aContainer->mPrepared->mLayers.AppendElement(PreparedLayer(layerToRender, clipRect,
+                                                               Move(layer.geometry)));
   }
 
   CULLING_LOG("Preparing container layer %p\n", aContainer->GetLayer());
@@ -417,24 +420,6 @@ RenderLayers(ContainerT* aContainer, LayerManagerComposite* aManager,
           break;
         }
       }
-    }
-
-    Color color;
-    if (layerToRender->NeedToDrawCheckerboarding(&color)) {
-      if (gfxPrefs::APZHighlightCheckerboardedAreas()) {
-        color = Color(255 / 255.f, 188 / 255.f, 217 / 255.f, 1.f); // "Cotton Candy"
-      }
-      // Ideally we would want to intersect the checkerboard region from the APZ with the layer bounds
-      // and only fill in that area. However the layer bounds takes into account the base translation
-      // for the painted layer whereas the checkerboard region does not. One does not simply
-      // intersect areas in different coordinate spaces. So we do this a little more permissively
-      // and only fill in the background when we know there is checkerboard, which in theory
-      // should only occur transiently.
-      EffectChain effectChain(layer);
-      effectChain.mPrimaryEffect = new EffectSolidColor(color);
-      aManager->GetCompositor()->DrawGeometry(gfx::Rect(layer->GetLayerBounds()), clipRect,
-                                              effectChain, layer->GetEffectiveOpacity(),
-                                              layer->GetEffectiveTransform(), Nothing());
     }
 
     if (layerToRender->HasLayerBeenComposited()) {

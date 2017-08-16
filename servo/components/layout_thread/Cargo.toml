@@ -10,12 +10,12 @@ name = "layout_thread"
 path = "lib.rs"
 
 [dependencies]
-app_units = "0.4"
-euclid = "0.11"
+app_units = "0.4.1"
+euclid = "0.13"
 fnv = "1.0"
 gfx = {path = "../gfx"}
 gfx_traits = {path = "../gfx_traits"}
-heapsize = "0.3.0"
+heapsize = "0.4"
 ipc-channel = "0.7"
 layout = {path = "../layout"}
 layout_traits = {path = "../layout_traits"}
@@ -25,7 +25,7 @@ msg = {path = "../msg"}
 net_traits = {path = "../net_traits"}
 parking_lot = {version = "0.3.3", features = ["nightly"]}
 profile_traits = {path = "../profile_traits"}
-rayon = "0.6"
+rayon = "0.7.1"
 script = {path = "../script"}
 script_layout_interface = {path = "../script_layout_interface"}
 script_traits = {path = "../script_traits"}

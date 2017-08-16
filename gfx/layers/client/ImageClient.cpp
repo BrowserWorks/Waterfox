@@ -132,7 +132,7 @@ ImageClient::CreateTextureClientForImage(Image* aImage, KnowsCompositor* aForwar
     } else if (aImage->GetFormat() == ImageFormat::SURFACE_TEXTURE) {
       SurfaceTextureImage* typedImage = aImage->AsSurfaceTextureImage();
       texture = AndroidSurfaceTextureData::CreateTextureClient(
-        typedImage->GetSurfaceTexture(), size, typedImage->GetOriginPos(),
+        typedImage->GetHandle(), size, typedImage->GetContinuous(), typedImage->GetOriginPos(),
         aForwarder->GetTextureForwarder(), TextureFlags::DEFAULT);
 #endif
     } else {
@@ -194,6 +194,10 @@ ImageClientSingle::UpdateImage(ImageContainer* aContainer, uint32_t aContentFlag
     // This can also happen if all images in the list are invalid.
     // We return true because the caller would attempt to recreate the
     // ImageClient otherwise, and that isn't going to help.
+    for (auto& b : mBuffers) {
+      RemoveTexture(b.mTextureClient);
+    }
+    mBuffers.Clear();
     return true;
   }
 

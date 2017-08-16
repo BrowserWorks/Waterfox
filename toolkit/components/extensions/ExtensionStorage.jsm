@@ -142,11 +142,11 @@ this.ExtensionStorage = {
     });
   },
 
-  set(extensionId, items, context) {
+  set(extensionId, items) {
     return this.read(extensionId).then(extData => {
       let changes = {};
       for (let prop in items) {
-        let item = this.sanitize(items[prop], context);
+        let item = items[prop];
         changes[prop] = {oldValue: extData[prop], newValue: item};
         extData[prop] = item;
       }
@@ -234,8 +234,8 @@ this.ExtensionStorage = {
     if (Services.appinfo.processType != Services.appinfo.PROCESS_TYPE_DEFAULT) {
       return;
     }
-    Services.obs.addObserver(this, "extension-invalidate-storage-cache", false);
-    Services.obs.addObserver(this, "xpcom-shutdown", false);
+    Services.obs.addObserver(this, "extension-invalidate-storage-cache");
+    Services.obs.addObserver(this, "xpcom-shutdown");
   },
 
   observe(subject, topic, data) {

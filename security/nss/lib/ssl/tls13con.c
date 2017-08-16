@@ -942,27 +942,6 @@ tls13_CanResume(sslSocket *ss, const sslSessionID *sid)
 }
 
 static PRBool
-tls13_AlpnTagAllowed(const sslSocket *ss, const SECItem *tag)
-{
-    const unsigned char *data = ss->opt.nextProtoNego.data;
-    unsigned int length = ss->opt.nextProtoNego.len;
-    unsigned int offset = 0;
-
-    if (!tag->len)
-        return PR_TRUE;
-
-    while (offset < length) {
-        unsigned int taglen = (unsigned int)data[offset];
-        if ((taglen == tag->len) &&
-            !PORT_Memcmp(data + offset + 1, tag->data, tag->len))
-            return PR_TRUE;
-        offset += 1 + taglen;
-    }
-
-    return PR_FALSE;
-}
-
-static PRBool
 tls13_CanNegotiateZeroRtt(sslSocket *ss, const sslSessionID *sid)
 {
     PORT_Assert(ss->ssl3.hs.zeroRttState == ssl_0rtt_sent);
@@ -1778,7 +1757,7 @@ tls13_HandleCertificateRequest(sslSocket *ss, SSL3Opaque *b, PRUint32 length)
     TLS13CertificateRequest *certRequest = NULL;
     SECItem context = { siBuffer, NULL, 0 };
     PLArenaPool *arena;
-    PRUint32 extensionsLength;
+    SECItem extensionsData = { siBuffer, NULL, 0 };
 
     SSL_TRC(3, ("%d: TLS13[%d]: handle certificate_request sequence",
                 SSL_GETPID(), ss->fd));
@@ -1836,14 +1815,16 @@ tls13_HandleCertificateRequest(sslSocket *ss, SSL3Opaque *b, PRUint32 length)
     if (rv != SECSuccess)
         goto loser; /* alert already sent */
 
-    /* Verify that the extensions length is correct. */
-    rv = ssl3_ConsumeHandshakeNumber(ss, &extensionsLength, 2, &b, &length);
+    /* Verify that the extensions are sane. */
+    rv = ssl3_ConsumeHandshakeVariable(ss, &extensionsData, 2, &b, &length);
     if (rv != SECSuccess) {
-        goto loser; /* alert already sent */
+        goto loser;
     }
-    if (extensionsLength != length) {
-        FATAL_ERROR(ss, SSL_ERROR_RX_MALFORMED_CERT_REQUEST,
-                    illegal_parameter);
+
+    /* Process all the extensions (note: currently a no-op). */
+    rv = ssl3_HandleExtensions(ss, &extensionsData.data, &extensionsData.len,
+                               certificate_request);
+    if (rv != SECSuccess) {
         goto loser;
     }
 
@@ -2788,6 +2769,11 @@ tls13_SetCipherSpec(sslSocket *ss, TrafficKeyType type,
             (sslSequenceNumber)spec->epoch << 48;
 
         dtls_InitRecvdRecords(&spec->recvdRecords);
+    }
+
+    if (type == TrafficKeyEarlyApplicationData) {
+        spec->earlyDataRemaining =
+            ss->sec.ci.sid->u.ssl3.locked.sessionTicket.max_early_data_size;
     }
 
     /* Now that we've set almost everything up, finally cut over. */
@@ -3796,7 +3782,7 @@ tls13_SendClientSecondRound(sslSocket *ss)
  *   } NewSessionTicket;
  */
 
-#define MAX_EARLY_DATA_SIZE (2 << 16) /* Arbitrary limit. */
+PRUint32 ssl_max_early_data_size = (2 << 16); /* Arbitrary limit. */
 
 SECStatus
 tls13_SendNewSessionTicket(sslSocket *ss)
@@ -3866,7 +3852,7 @@ tls13_SendNewSessionTicket(sslSocket *ss)
         if (rv != SECSuccess)
             goto loser;
 
-        rv = ssl3_AppendHandshakeNumber(ss, MAX_EARLY_DATA_SIZE, 4);
+        rv = ssl3_AppendHandshakeNumber(ss, ssl_max_early_data_size, 4);
         if (rv != SECSuccess)
             goto loser;
     }
@@ -4050,7 +4036,8 @@ tls13_ExtensionAllowed(PRUint16 extension, SSL3HandshakeType message)
                 (message == hello_retry_request) ||
                 (message == encrypted_extensions) ||
                 (message == new_session_ticket) ||
-                (message == certificate));
+                (message == certificate) ||
+                (message == certificate_request));
 
     for (i = 0; i < PR_ARRAY_SIZE(KnownExtensions); i++) {
         if (KnownExtensions[i].ex_value == extension)
@@ -4108,6 +4095,28 @@ tls13_FormatAdditionalData(PRUint8 *aad, unsigned int length,
     PORT_Assert(length == 8);
     ptr = ssl_EncodeUintX(seqNum, 8, ptr);
     PORT_Assert((ptr - aad) == length);
+}
+
+PRInt32
+tls13_LimitEarlyData(sslSocket *ss, SSL3ContentType type, PRInt32 toSend)
+{
+    PRInt32 reduced;
+
+    PORT_Assert(type == content_application_data);
+    PORT_Assert(ss->vrange.max >= SSL_LIBRARY_VERSION_TLS_1_3);
+    PORT_Assert(!ss->firstHsDone);
+    if (ss->ssl3.cwSpec->epoch != TrafficKeyEarlyApplicationData) {
+        return toSend;
+    }
+
+    if (IS_DTLS(ss) && toSend > ss->ssl3.cwSpec->earlyDataRemaining) {
+        /* Don't split application data records in DTLS. */
+        return 0;
+    }
+
+    reduced = PR_MIN(toSend, ss->ssl3.cwSpec->earlyDataRemaining);
+    ss->ssl3.cwSpec->earlyDataRemaining -= reduced;
+    return reduced;
 }
 
 SECStatus
@@ -4261,6 +4270,17 @@ tls13_UnprotectRecord(sslSocket *ss, SSL3Ciphertext *cText, sslBuffer *plaintext
     cText->type = plaintext->buf[plaintext->len - 1];
     --plaintext->len;
 
+    /* Check that we haven't received too much 0-RTT data. */
+    if (crSpec->epoch == TrafficKeyEarlyApplicationData &&
+        cText->type == content_application_data) {
+        if (plaintext->len > crSpec->earlyDataRemaining) {
+            *alert = unexpected_message;
+            PORT_SetError(SSL_ERROR_TOO_MUCH_EARLY_DATA);
+            return SECFailure;
+        }
+        crSpec->earlyDataRemaining -= plaintext->len;
+    }
+
     SSL_TRC(10,
             ("%d: TLS13[%d]: %s received record of length=%d type=%d",
              SSL_GETPID(), ss->fd, SSL_ROLE(ss),
@@ -4296,7 +4316,7 @@ tls13_ClientAllow0Rtt(const sslSocket *ss, const sslSessionID *sid)
         return PR_FALSE;
     if ((sid->u.ssl3.locked.sessionTicket.flags & ticket_allow_early_data) == 0)
         return PR_FALSE;
-    return tls13_AlpnTagAllowed(ss, &sid->u.ssl3.alpnSelection);
+    return ssl_AlpnTagAllowed(ss, &sid->u.ssl3.alpnSelection);
 }
 
 SECStatus

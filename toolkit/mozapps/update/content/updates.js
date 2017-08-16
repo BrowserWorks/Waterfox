@@ -329,6 +329,7 @@ var gUpdates = {
     for (var i = 0; i < pages.length; ++i) {
       var page = pages[i];
       if (page.localName == "wizardpage")
+        // eslint-disable-next-line no-eval
         this._pages[page.pageid] = eval(page.getAttribute("object"));
     }
 
@@ -824,7 +825,7 @@ var gDownloadingPage = {
     if (this._downloadStatus.textContent == status)
       return;
     while (this._downloadStatus.hasChildNodes())
-      this._downloadStatus.removeChild(this._downloadStatus.firstChild);
+      this._downloadStatus.firstChild.remove();
     this._downloadStatus.appendChild(document.createTextNode(status));
   },
 
@@ -890,7 +891,7 @@ var gDownloadingPage = {
     let applyingStatus = gUpdates.getAUSString("applyingUpdate");
     this._setStatus(applyingStatus);
 
-    Services.obs.addObserver(this, "update-staged", false);
+    Services.obs.addObserver(this, "update-staged");
     this._updateApplyingObserver = true;
   },
 
@@ -1374,14 +1375,14 @@ var gFinishedPage = {
   /**
    * When elevation is required and the user clicks "No Thanks" in the wizard.
    */
-  onExtra2: Task.async(function*() {
-    Services.obs.notifyObservers(null, "update-canceled", null);
+  async onExtra2() {
+    Services.obs.notifyObservers(null, "update-canceled");
     let um = CoC["@mozilla.org/updates/update-manager;1"].
                getService(CoI.nsIUpdateManager);
     um.cleanupActiveUpdate();
     gUpdates.never();
     gUpdates.wiz.cancel();
-  }),
+  },
 };
 
 /**

@@ -19,6 +19,8 @@
 #CPP_UNIT_TESTS = TestCSSPropertyLookup.cpp
 #LIBS += ../nsCSSKeywords.$(OBJ_SUFFIX) ../nsCSSProps.$(OBJ_SUFFIX) $(XPCOM_LIBS)
 
+DIRS += ['gtest']
+
 HAS_MISC_RULE = True
 
 HostSimplePrograms([
@@ -119,6 +121,12 @@ if CONFIG['MOZ_STYLO']:
     TEST_HARNESS_FILES.testing.mochitest.tests.layout.style.test += [
         'stylo-failures.md',
     ]
+    TEST_HARNESS_FILES.testing.mochitest.chrome.layout.style.test += [
+        'stylo-failures.md',
+    ]
+    # TEST_HARNESS_FILES.testing.mochitest.browser.layout.style.test += [
+    #     'stylo-failures.md',
+    # ]
 
 DEFINES['MOZILLA_INTERNAL_API'] = True
 if CONFIG['MOZ_ENABLE_MASK_AS_SHORTHAND']:

@@ -92,11 +92,9 @@ nsWebBrowserFind::FindNext(bool* aResult)
     NS_ENSURE_SUCCESS(rv, rv);
     nsCOMPtr<nsISupports> searchWindowSupports = do_QueryInterface(rootFrame);
     windowSupportsData->SetData(searchWindowSupports);
-    NS_NAMED_LITERAL_STRING(dnStr, "down");
-    NS_NAMED_LITERAL_STRING(upStr, "up");
     observerSvc->NotifyObservers(windowSupportsData,
                                  "nsWebBrowserFind_FindAgain",
-                                 mFindBackwards ? upStr.get() : dnStr.get());
+                                 mFindBackwards ? u"up" : u"down");
     windowSupportsData->GetData(getter_AddRefs(searchWindowSupports));
     // findnext performed if search window data cleared out
     *aResult = searchWindowSupports == nullptr;
@@ -700,7 +698,7 @@ nsWebBrowserFind::SearchInFrame(nsPIDOMWindowOuter* aWindow, bool aWrapping,
   *aDidFind = false;
 
   // Do security check, to ensure that the frame we're searching is
-  // acccessible from the frame where the Find is being run.
+  // accessible from the frame where the Find is being run.
 
   // get a uri for the window
   nsCOMPtr<nsIDocument> theDoc = aWindow->GetDoc();

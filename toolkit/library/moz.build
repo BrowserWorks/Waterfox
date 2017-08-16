@@ -24,11 +24,7 @@ def Libxul(name):
 
     DELAYLOAD_DLLS += [
         'comdlg32.dll',
-        'dbghelp.dll',
         'netapi32.dll',
-        'PowrProf.dll',
-        'rasapi32.dll',
-        'rasdlg.dll',
         'secur32.dll',
         'wininet.dll',
         'winspool.drv'
@@ -67,7 +63,7 @@ def Libxul(name):
 
     # This option should go away in bug 1290972, but we need to wait until
     # Rust 1.12 has been released.
-    if CONFIG['MOZ_RUST'] and CONFIG['OS_ARCH'] == 'Darwin':
+    if CONFIG['OS_ARCH'] == 'Darwin':
         LDFLAGS += ['-Wl,-no_compact_unwind']
 
 Libxul('xul')
@@ -181,14 +177,6 @@ if CONFIG['MOZ_WMF']:
         'strmiids',
     ]
 
-if CONFIG['MOZ_DIRECTSHOW']:
-    OS_LIBS += [
-        'dmoguids',
-        'wmcodecdspuuid',
-        'strmiids',
-        'msdmo',
-    ]
-
 if CONFIG['OS_ARCH'] == 'FreeBSD':
     OS_LIBS += [
         'util',
@@ -201,11 +189,6 @@ if CONFIG['OS_ARCH'] == 'WINNT':
         'ole32',
         'version',
         'winspool',
-    ]
-
-if CONFIG['MOZ_WIDGET_TOOLKIT'] == 'gonk':
-    OS_LIBS += [
-        'dbus',
     ]
 
 if CONFIG['OS_ARCH'] == 'Linux' and CONFIG['OS_TARGET'] != 'Android':
@@ -248,35 +231,6 @@ if CONFIG['MOZ_ALSA']:
 
 if CONFIG['HAVE_CLOCK_MONOTONIC']:
     OS_LIBS += CONFIG['REALTIME_LIBS']
-
-if CONFIG['MOZ_WIDGET_TOOLKIT'] == 'gonk':
-    OS_LIBS += [
-        'ui',
-        'media',
-        'hardware_legacy',
-        'hardware',
-        'utils',
-        'cutils',
-        'sysutils',
-        'camera_client',
-        'sensorservice',
-        'stagefright',
-        'stagefright_foundation',
-        'stagefright_omx',
-        'binder',
-        'gui',
-        'mtp',
-    ]
-
-    if int(CONFIG['ANDROID_VERSION']) >= 17:
-        OS_LIBS += [
-            'sync',
-        ]
-
-    if CONFIG['ANDROID_VERSION'] >= '16':
-        OS_LIBS += [
-            'mdnssd',
-        ]
 
 if 'rtsp' in CONFIG['NECKO_PROTOCOLS']:
     OS_LIBS += [
@@ -343,17 +297,13 @@ if CONFIG['OS_ARCH'] == 'WINNT':
         'netapi32',
         'shlwapi',
         'ws2_32',
-        'dbghelp',
         'dwmapi',
-        'rasapi32',
-        'rasdlg',
         'iphlpapi',
         'uxtheme',
         'setupapi',
         'secur32',
         'sensorsapi',
         'portabledeviceguids',
-        'windowscodecs',
         'wininet',
         'wbemuuid',
         'wintrust',
@@ -390,22 +340,10 @@ if CONFIG['COMPILE_ENVIRONMENT']:
     ]
     FINAL_TARGET_FILES += ['!dependentlibs.list', '!dependentlibs.list.gtest']
 
-# WebRender dependencies
-if CONFIG['MOZ_ENABLE_WEBRENDER']:
-    if CONFIG['OS_ARCH'] == 'Linux':
-        OS_LIBS += [
-            'GL',
-        ]
-    elif CONFIG['OS_ARCH'] == 'WINNT':
-        OS_LIBS += [
-            'opengl32',
-        ]
-
 # This library needs to be last to make XPCOM module registration work.
 USE_LIBS += ['StaticXULComponentsEnd']
 
 # The above library needs to be last for C++ purposes.  This library,
 # however, is entirely composed of Rust code, and needs to come after
 # all the C++ code so any possible C++ -> Rust calls can be resolved.
-if CONFIG['MOZ_RUST']:
-    USE_LIBS += ['gkrust']
+USE_LIBS += ['gkrust']

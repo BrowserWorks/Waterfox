@@ -292,8 +292,13 @@ public class testInputConnection extends JavascriptBridgeTest {
             assertTextAndSelectionAt("Can reuse composition in Java", ic, "foo", 3);
 
             getJS().syncCall("end_events_log");
-            // compositionstart > compositionchange x3
-            fAssertEquals("Can reuse composition in Gecko", "<===", getEventsLog());
+            if (mType.equals("textarea")) {
+                // textarea has a buggy selectionchange behavior.
+                fAssertEquals("Can reuse composition in Gecko", "<=|==", getEventsLog());
+            } else {
+                // compositionstart > (compositionchange > selectionchange) x3
+                fAssertEquals("Can reuse composition in Gecko", "<=|=|=|", getEventsLog());
+            }
 
             ic.deleteSurroundingText(3, 0);
             assertTextAndSelectionAt("Can clear text", ic, "", 0);
@@ -307,8 +312,8 @@ public class testInputConnection extends JavascriptBridgeTest {
             assertTextAndSelectionAt("Can set selection after composition", ic, "foo", 0);
 
             getJS().syncCall("end_events_log");
-            // compositionstart > compositionchange
-            fAssertEquals("Can update composition caret", "<=", getEventsLog());
+            // compositionstart > compositionchange > selectionchange x2
+            fAssertEquals("Can update composition caret", "<=||", getEventsLog());
 
             ic.finishComposingText();
             ic.deleteSurroundingText(0, 3);

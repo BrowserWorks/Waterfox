@@ -97,7 +97,7 @@ public class SiteIdentityPopup extends AnchoredPopup implements BundleEventListe
         mContentButtonClickListener = new ContentNotificationButtonListener();
     }
 
-    void registerListeners() {
+    public void registerListeners() {
         EventDispatcher.getInstance().registerUiThreadListener(this,
                 "Doorhanger:Logins",
                 "Permissions:CheckResult");
@@ -171,6 +171,12 @@ public class SiteIdentityPopup extends AnchoredPopup implements BundleEventListe
 
         } else if ("Permissions:CheckResult".equals(event)) {
             final boolean hasPermissions = geckoObject.getBoolean("hasPermissions", false);
+
+            // ensure initialization completed, in case of receiving event too early
+            if (!mInflated) {
+                init();
+            }
+
             if (hasPermissions) {
                 mSiteSettingsLink.setOnClickListener(new View.OnClickListener() {
                     @Override
@@ -452,7 +458,7 @@ public class SiteIdentityPopup extends AnchoredPopup implements BundleEventListe
     /*
      * @param identityData An object that holds the current tab's identity data.
      */
-    void setSiteIdentity(SiteIdentity siteIdentity) {
+    public void setSiteIdentity(SiteIdentity siteIdentity) {
         mSiteIdentity = siteIdentity;
     }
 
@@ -534,7 +540,7 @@ public class SiteIdentityPopup extends AnchoredPopup implements BundleEventListe
     void destroy() {
     }
 
-    void unregisterListeners() {
+    public void unregisterListeners() {
         EventDispatcher.getInstance().unregisterUiThreadListener(this,
                 "Doorhanger:Logins",
                 "Permissions:CheckResult");

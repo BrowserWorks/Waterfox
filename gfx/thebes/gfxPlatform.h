@@ -185,6 +185,8 @@ public:
 
     static void InitMoz2DLogging();
 
+    static bool IsHeadless();
+
     /**
      * Create an offscreen surface of the given dimensions
      * and image format.
@@ -354,6 +356,16 @@ public:
      * If the name doesn't in the system, aFamilyName will be empty string, but not failed.
      */
     virtual nsresult GetStandardFamilyName(const nsAString& aFontName, nsAString& aFamilyName);
+
+    /**
+     * Returns default font name (localized family name) for aLangGroup and
+     * aGenericFamily.  The result is typically the first font in
+     * font.name-list.<aGenericFamily>.<aLangGroup>.  However, if it's not
+     * available in the system, this may return second or later font in the
+     * pref.  If there are no available fonts in the pref, returns empty string.
+     */
+    nsString GetDefaultFontName(const nsACString& aLangGroup,
+                                const nsACString& aGenericFamily);
 
     /**
      * Create the appropriate platform font group
@@ -571,12 +583,6 @@ public:
      * Return the layer debugging options to use browser-wide.
      */
     mozilla::layers::DiagnosticTypes GetLayerDiagnosticTypes();
-
-    static mozilla::gfx::IntRect FrameCounterBounds() {
-      int bits = 16;
-      int sizeOfBit = 3;
-      return mozilla::gfx::IntRect(0, 0, bits * sizeOfBit, sizeOfBit);
-    }
 
     mozilla::gl::SkiaGLGlue* GetSkiaGLGlue();
     void PurgeSkiaGPUCache();

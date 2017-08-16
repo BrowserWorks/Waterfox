@@ -120,7 +120,8 @@ class nsHtml5ExecutorFlusher : public Runnable
     RefPtr<nsHtml5TreeOpExecutor> mExecutor;
   public:
     explicit nsHtml5ExecutorFlusher(nsHtml5TreeOpExecutor* aExecutor)
-      : mExecutor(aExecutor)
+      : Runnable("nsHtml5ExecutorFlusher")
+      , mExecutor(aExecutor)
     {}
     NS_IMETHOD Run() override
     {
@@ -137,7 +138,8 @@ class nsHtml5LoadFlusher : public Runnable
     RefPtr<nsHtml5TreeOpExecutor> mExecutor;
   public:
     explicit nsHtml5LoadFlusher(nsHtml5TreeOpExecutor* aExecutor)
-      : mExecutor(aExecutor)
+      : Runnable("nsHtml5LoadFlusher")
+      , mExecutor(aExecutor)
     {}
     NS_IMETHOD Run() override
     {
@@ -962,7 +964,7 @@ nsHtml5StreamParser::OnStartRequest(nsIRequest* aRequest, nsISupports* aContext)
   nsCOMPtr<nsIHttpChannel> httpChannel(do_QueryInterface(mRequest, &rv));
   if (NS_SUCCEEDED(rv)) {
     nsAutoCString method;
-    httpChannel->GetRequestMethod(method);
+    Unused << httpChannel->GetRequestMethod(method);
     // XXX does Necko have a way to renavigate POST, etc. without hitting
     // the network?
     if (!method.EqualsLiteral("GET")) {
@@ -982,11 +984,7 @@ nsHtml5StreamParser::OnStartRequest(nsIRequest* aRequest, nsISupports* aContext)
   }
 
   if (NS_FAILED(rv)) {
-    // for now skip warning if we're on child process, since we don't support
-    // off-main thread delivery there yet.  This will change with bug 1015466
-    if (!XRE_IsContentProcess()) {
-      NS_WARNING("Failed to retarget HTML data delivery to the parser thread.");
-    }
+    NS_WARNING("Failed to retarget HTML data delivery to the parser thread.");
   }
 
   if (mCharsetSource == kCharsetFromParentFrame) {
@@ -1070,7 +1068,8 @@ class nsHtml5RequestStopper : public Runnable
     nsHtml5RefPtr<nsHtml5StreamParser> mStreamParser;
   public:
     explicit nsHtml5RequestStopper(nsHtml5StreamParser* aStreamParser)
-      : mStreamParser(aStreamParser)
+      : Runnable("nsHtml5RequestStopper")
+      , mStreamParser(aStreamParser)
     {}
     NS_IMETHOD Run() override
     {
@@ -1159,7 +1158,8 @@ class nsHtml5DataAvailable : public Runnable
     nsHtml5DataAvailable(nsHtml5StreamParser* aStreamParser,
                          UniquePtr<uint8_t[]> aData,
                          uint32_t             aLength)
-      : mStreamParser(aStreamParser)
+      : Runnable("nsHtml5DataAvailable")
+      , mStreamParser(aStreamParser)
       , mData(Move(aData))
       , mLength(aLength)
     {}
@@ -1284,7 +1284,7 @@ nsHtml5StreamParser::PreferredForInternalEncodingDecl(nsACString& aEncoding)
 }
 
 bool
-nsHtml5StreamParser::internalEncodingDeclaration(nsString* aEncoding)
+nsHtml5StreamParser::internalEncodingDeclaration(nsHtml5String aEncoding)
 {
   // This code needs to stay in sync with
   // nsHtml5MetaScanner::tryCharset. Unfortunately, the
@@ -1294,8 +1294,10 @@ nsHtml5StreamParser::internalEncodingDeclaration(nsString* aEncoding)
     return false;
   }
 
+  nsString newEncoding16; // Not Auto, because using it to hold nsStringBuffer*
+  aEncoding.ToString(newEncoding16);
   nsAutoCString newEncoding;
-  CopyUTF16toUTF8(*aEncoding, newEncoding);
+  CopyUTF16toUTF8(newEncoding16, newEncoding);
 
   if (!PreferredForInternalEncodingDecl(newEncoding)) {
     return false;
@@ -1483,7 +1485,8 @@ private:
   nsHtml5RefPtr<nsHtml5StreamParser> mStreamParser;
 public:
   explicit nsHtml5StreamParserContinuation(nsHtml5StreamParser* aStreamParser)
-    : mStreamParser(aStreamParser)
+    : Runnable("nsHtml5StreamParserContinuation")
+    , mStreamParser(aStreamParser)
   {}
   NS_IMETHOD Run() override
   {
@@ -1649,7 +1652,8 @@ private:
   nsHtml5RefPtr<nsHtml5StreamParser> mStreamParser;
 public:
   explicit nsHtml5TimerKungFu(nsHtml5StreamParser* aStreamParser)
-    : mStreamParser(aStreamParser)
+    : Runnable("nsHtml5TimerKungFu")
+    , mStreamParser(aStreamParser)
   {}
   NS_IMETHOD Run() override
   {

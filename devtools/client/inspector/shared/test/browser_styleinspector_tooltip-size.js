@@ -28,19 +28,14 @@ add_task(function* () {
 function* testImageDimension(ruleView) {
   info("Testing background-image tooltip dimensions");
 
-  let tooltip = ruleView.tooltips.previewTooltip;
+  let tooltip = ruleView.tooltips.getTooltip("previewTooltip");
   let panel = tooltip.panel;
   let {valueSpan} = getRuleViewProperty(ruleView, "div", "background");
   let uriSpan = valueSpan.querySelector(".theme-link");
 
   // Make sure there is a hover tooltip for this property, this also will fill
   // the tooltip with its content
-  yield assertHoverTooltipOn(tooltip, uriSpan);
-
-  info("Showing the tooltip");
-  let onShown = tooltip.once("shown");
-  tooltip.show(uriSpan);
-  yield onShown;
+  let previewTooltip = yield assertShowPreviewTooltip(ruleView, uriSpan);
 
   // Let's not test for a specific size, but instead let's make sure it's at
   // least as big as the image
@@ -52,9 +47,7 @@ function* testImageDimension(ruleView) {
   ok(panelRect.height >= imageRect.height,
     "The panel is high enough to show the image");
 
-  let onHidden = tooltip.once("hidden");
-  tooltip.hide();
-  yield onHidden;
+  yield assertTooltipHiddenOnMouseOut(previewTooltip, uriSpan);
 }
 
 function* testPickerDimension(ruleView) {
@@ -62,7 +55,7 @@ function* testPickerDimension(ruleView) {
 
   let {valueSpan} = getRuleViewProperty(ruleView, "div", "background");
   let swatch = valueSpan.querySelector(".ruleview-colorswatch");
-  let cPicker = ruleView.tooltips.colorPicker;
+  let cPicker = ruleView.tooltips.getTooltip("colorPicker");
 
   let onReady = cPicker.once("ready");
   swatch.click();

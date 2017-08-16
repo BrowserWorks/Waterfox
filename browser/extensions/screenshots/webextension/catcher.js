@@ -12,7 +12,9 @@ this.catcher = (function() {
   let log = global.log;
 
   exports.unhandled = function(error, info) {
-    log.error("Unhandled error:", error, info);
+    if (!error.noReport) {
+      log.error("Unhandled error:", error, info);
+    }
     let e = makeError(error, info);
     if (!handler) {
       queue.push(e);
@@ -46,12 +48,14 @@ this.catcher = (function() {
   }
 
   /** Wrap the function, and if it raises any exceptions then call unhandled() */
-  exports.watchFunction = function watchFunction(func) {
+  exports.watchFunction = function watchFunction(func, quiet) {
     return function() {
       try {
         return func.apply(this, arguments);
       } catch (e) {
-        exports.unhandled(e);
+        if (!quiet) {
+          exports.unhandled(e);
+        }
         throw e;
       }
     };
@@ -60,11 +64,15 @@ this.catcher = (function() {
   exports.watchPromise = function watchPromise(promise, quiet) {
     return promise.catch((e) => {
       if (quiet) {
-        log.debug("------Error in promise:", e);
-        log.debug(e.stack);
+        if (!e.noReport) {
+          log.debug("------Error in promise:", e);
+          log.debug(e.stack);
+        }
       } else {
-        log.error("------Error in promise:", e);
-        log.error(e.stack);
+        if (!e.noReport) {
+          log.error("------Error in promise:", e);
+          log.error(e.stack);
+        }
         exports.unhandled(makeError(e));
       }
       throw e;

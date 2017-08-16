@@ -139,8 +139,6 @@ function testNamesForMarkupRules(aMarkupElm, aContainer)
   if (gDumpToConsole)
     dump("\nProcessing markup rules '" + testID + "'\n");
 
-  var serializer = new XMLSerializer();
-
   var expr = "//html/body/div[@id='test']/" + aMarkupElm.getAttribute("ref");
   var elm = evaluateXPath(document, expr, htmlDocResolver)[0];
 
@@ -316,7 +314,7 @@ function testNameForSubtreeRule(aElm, aRule)
   waitForEvent(EVENT_REORDER, aElm, gTestIterator.iterateNext, gTestIterator);
 
   while (aElm.firstChild)
-    aElm.removeChild(aElm.firstChild);
+    aElm.firstChild.remove();
 }
 
 /**

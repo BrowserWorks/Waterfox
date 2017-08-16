@@ -4,12 +4,11 @@
 
 'use strict';
 
-/* global EVENT_REORDER */
-
+/* import-globals-from ../../mochitest/role.js */
 loadScripts({ name: 'role.js', dir: MOCHITESTS_DIR });
 
 addAccessibleTask('<span id="parent"><span id="child"></span></span>',
-  function*(browser, accDoc) {
+  async function(browser, accDoc) {
     is(findAccessibleChildByID(accDoc, 'parent'), null,
       'Check that parent is not accessible.');
     is(findAccessibleChildByID(accDoc, 'child'), null,
@@ -17,27 +16,13 @@ addAccessibleTask('<span id="parent"><span id="child"></span></span>',
 
     let onReorder = waitForEvent(EVENT_REORDER, 'body');
     // Add an event listener to parent.
-    yield ContentTask.spawn(browser, {}, () => {
+    await ContentTask.spawn(browser, {}, () => {
       content.window.dummyListener = () => {};
       content.document.getElementById('parent').addEventListener(
         'click', content.window.dummyListener);
     });
-    yield onReorder;
+    await onReorder;
 
     let tree = { TEXT: [] };
     testAccessibleTree(findAccessibleChildByID(accDoc, 'parent'), tree);
-
-    onReorder = waitForEvent(EVENT_REORDER, 'body');
-    // Remove an event listener from parent.
-    yield ContentTask.spawn(browser, {}, () => {
-      content.document.getElementById('parent').removeEventListener(
-        'click', content.window.dummyListener);
-      delete content.window.dummyListener;
-    });
-    yield onReorder;
-
-    is(findAccessibleChildByID(accDoc, 'parent'), null,
-      'Check that parent is not accessible.');
-    is(findAccessibleChildByID(accDoc, 'child'), null,
-      'Check that child is not accessible.');
   });

@@ -33,8 +33,12 @@ extern crate sig;
 use backtrace::Backtrace;
 use servo::Browser;
 use servo::compositing::windowing::WindowEvent;
+#[cfg(target_os = "android")]
+use servo::config;
 use servo::config::opts::{self, ArgumentParsingResult};
 use servo::config::servo_version;
+use servo::servo_config::prefs::PREFS;
+use servo::servo_url::ServoUrl;
 use std::env;
 use std::panic;
 use std::process;
@@ -66,6 +70,8 @@ fn install_crash_handler() {
             .unwrap_or("".to_owned());
         println!("Stack trace{}\n{:?}", name, Backtrace::new());
         unsafe {
+            // N.B. Using process::abort() here causes the crash handler to be
+            //      triggered recursively.
             abort();
         }
     }
@@ -139,10 +145,16 @@ fn main() {
 
     let window = app::create_window(None);
 
+    // If the url is not provided, we fallback to the homepage in PREFS,
+    // or a blank page in case the homepage is not set either.
+    let target_url = opts::get().url.clone()
+                .unwrap_or(ServoUrl::parse(PREFS.get("shell.homepage").as_string()
+                    .unwrap_or("about:blank")).unwrap());
+
     // Our wrapper around `Browser` that also implements some
     // callbacks required by the glutin window implementation.
     let mut browser = BrowserWrapper {
-        browser: Browser::new(window.clone()),
+        browser: Browser::new(window.clone(), target_url)
     };
 
     browser.browser.setup_logging();
@@ -200,7 +212,7 @@ impl app::NestedEventLoopListener for BrowserWrapper {
 #[cfg(target_os = "android")]
 fn setup_logging() {
     // Piping logs from stdout/stderr to logcat happens in android_injected_glue.
-    ::std::env::set_var("RUST_LOG", "debug");
+    ::std::env::set_var("RUST_LOG", "error");
 
     unsafe { android_injected_glue::ffi::app_dummy() };
 }
@@ -219,8 +231,9 @@ fn args() -> Vec<String> {
     use std::fs::File;
     use std::io::{BufRead, BufReader};
 
-    const PARAMS_FILE: &'static str = "/sdcard/servo/android_params";
-    match File::open(PARAMS_FILE) {
+    let mut params_file = config::basedir::default_config_dir().unwrap();
+    params_file.push("android_params");
+    match File::open(params_file.to_str().unwrap()) {
         Ok(f) => {
             let mut vec = Vec::new();
             let file = BufReader::new(&f);
@@ -236,7 +249,7 @@ fn args() -> Vec<String> {
         },
         Err(e) => {
             debug!("Failed to open params file '{}': {}",
-                   PARAMS_FILE,
+                   params_file.to_str().unwrap(),
                    Error::description(&e));
             vec!["servo".to_owned(), "http://en.wikipedia.org/wiki/Rust".to_owned()]
         },

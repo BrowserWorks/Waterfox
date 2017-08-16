@@ -13,14 +13,13 @@
 #include "nsISupportsBase.h"
 #include "nsISupportsUtils.h"
 
-
 #if !defined(XPCOM_GLUE_AVOID_NSPR)
-#include "prthread.h" /* needed for thread-safety checks */
-#endif // !XPCOM_GLUE_AVOID_NSPR
+#include "prthread.h" /* needed for cargo-culting headers */
+#endif
 
 #include "nsDebug.h"
 #include "nsXPCOM.h"
-#include "mozilla/Atomics.h"
+#include <atomic>
 #include "mozilla/Attributes.h"
 #include "mozilla/Assertions.h"
 #include "mozilla/Compiler.h"
@@ -51,27 +50,42 @@ ToCanonicalSupports(nsISupports* aSupports)
 
 #ifdef MOZ_THREAD_SAFETY_OWNERSHIP_CHECKS_SUPPORTED
 
+#include "prthread.h" /* needed for thread-safety checks */
+
 class nsAutoOwningThread
 {
 public:
   nsAutoOwningThread() { mThread = PR_GetCurrentThread(); }
-  void* GetThread() const { return mThread; }
+
+  // We move the actual assertion checks out-of-line to minimize code bloat,
+  // but that means we have to pass a non-literal string to
+  // MOZ_CRASH_UNSAFE_OOL.  To make that more safe, the public interface
+  // requires a literal string and passes that to the private interface; we
+  // can then be assured that we effectively are passing a literal string
+  // to MOZ_CRASH_UNSAFE_OOL.
+  template<int N>
+  void AssertOwnership(const char (&aMsg)[N]) const
+  {
+    AssertCurrentThreadOwnsMe(aMsg);
+  }
 
 private:
+  void AssertCurrentThreadOwnsMe(const char* aMsg) const;
+
   void* mThread;
 };
 
 #define NS_DECL_OWNINGTHREAD            nsAutoOwningThread _mOwningThread;
 #define NS_ASSERT_OWNINGTHREAD_AGGREGATE(agg, _class) \
-  NS_CheckThreadSafe(agg->_mOwningThread.GetThread(), #_class " not thread-safe")
+  agg->_mOwningThread.AssertOwnership(#_class " not thread-safe")
 #define NS_ASSERT_OWNINGTHREAD(_class) NS_ASSERT_OWNINGTHREAD_AGGREGATE(this, _class)
-#else // !DEBUG && !(NIGHTLY_BUILD && !MOZ_PROFILING)
+#else // !MOZ_THREAD_SAFETY_OWNERSHIP_CHECKS_SUPPORTED
 
 #define NS_DECL_OWNINGTHREAD            /* nothing */
 #define NS_ASSERT_OWNINGTHREAD_AGGREGATE(agg, _class) ((void)0)
 #define NS_ASSERT_OWNINGTHREAD(_class)  ((void)0)
 
-#endif // DEBUG || (NIGHTLY_BUILD && !MOZ_PROFILING)
+#endif // MOZ_THREAD_SAFETY_OWNERSHIP_CHECKS_SUPPORTED
 
 
 // Macros for reference-count and constructor logging
@@ -307,24 +321,55 @@ public:
   void operator=(const ThreadSafeAutoRefCnt&) = delete;
 
   // only support prefix increment/decrement
-  MOZ_ALWAYS_INLINE nsrefcnt operator++() { return ++mValue; }
-  MOZ_ALWAYS_INLINE nsrefcnt operator--() { return --mValue; }
+  MOZ_ALWAYS_INLINE nsrefcnt operator++()
+  {
+    // Memory synchronization is not required when incrementing a
+    // reference count.  The first increment of a reference count on a
+    // thread is not important, since the first use of the object on a
+    // thread can happen before it.  What is important is the transfer
+    // of the pointer to that thread, which may happen prior to the
+    // first increment on that thread.  The necessary memory
+    // synchronization is done by the mechanism that transfers the
+    // pointer between threads.
+    return mValue.fetch_add(1, std::memory_order_relaxed) + 1;
+  }
+  MOZ_ALWAYS_INLINE nsrefcnt operator--()
+  {
+    // Since this may be the last release on this thread, we need
+    // release semantics so that prior writes on this thread are visible
+    // to the thread that destroys the object when it reads mValue with
+    // acquire semantics.
+    nsrefcnt result = mValue.fetch_sub(1, std::memory_order_release) - 1;
+    if (result == 0) {
+      // We're going to destroy the object on this thread, so we need
+      // acquire semantics to synchronize with the memory released by
+      // the last release on other threads, that is, to ensure that
+      // writes prior to that release are now visible on this thread.
+      result = mValue.load(std::memory_order_acquire);
+    }
+    return result;
+  }
 
   MOZ_ALWAYS_INLINE nsrefcnt operator=(nsrefcnt aValue)
   {
-    return (mValue = aValue);
+    // Use release semantics since we're not sure what the caller is
+    // doing.
+    mValue.store(aValue, std::memory_order_release);
+    return aValue;
   }
-  MOZ_ALWAYS_INLINE operator nsrefcnt() const { return mValue; }
-  MOZ_ALWAYS_INLINE nsrefcnt get() const { return mValue; }
+  MOZ_ALWAYS_INLINE operator nsrefcnt() const { return get(); }
+  MOZ_ALWAYS_INLINE nsrefcnt get() const
+  {
+    // Use acquire semantics since we're not sure what the caller is
+    // doing.
+    return mValue.load(std::memory_order_acquire);
+  }
 
   static const bool isThreadSafe = true;
 private:
   nsrefcnt operator++(int) = delete;
   nsrefcnt operator--(int) = delete;
-  // In theory, RelaseAcquire consistency (but no weaker) is sufficient for
-  // the counter. Making it weaker could speed up builds on ARM (but not x86),
-  // but could break pre-existing code that assumes sequential consistency.
-  Atomic<nsrefcnt> mValue;
+  std::atomic<nsrefcnt> mValue;
 };
 } // namespace mozilla
 
@@ -915,7 +960,8 @@ NS_IMETHODIMP _class::QueryInterface(REFNSIID aIID, void** aInstancePtr)      \
   NS_INTERFACE_TABLE_END
 
 #define NS_INTERFACE_TABLE(aClass, ...)                                       \
-  MOZ_STATIC_ASSERT_VALID_ARG_COUNT(__VA_ARGS__);                             \
+  static_assert(MOZ_ARG_COUNT(__VA_ARGS__) > 0,                               \
+                "Need more arguments to NS_INTERFACE_TABLE");                 \
   NS_INTERFACE_TABLE_BEGIN                                                    \
     MOZ_FOR_EACH(NS_INTERFACE_TABLE_ENTRY, (aClass,), (__VA_ARGS__))          \
     NS_INTERFACE_TABLE_ENTRY_AMBIGUOUS(aClass, nsISupports,                   \
@@ -996,7 +1042,8 @@ NS_IMETHODIMP_(MozExternalRefCountType) Class::Release(void)                  \
 #define NS_INTERFACE_TABLE_INHERITED0(Class) /* Nothing to do here */
 
 #define NS_INTERFACE_TABLE_INHERITED(aClass, ...)                             \
-  MOZ_STATIC_ASSERT_VALID_ARG_COUNT(__VA_ARGS__);                             \
+  static_assert(MOZ_ARG_COUNT(__VA_ARGS__) > 0,                               \
+                "Need more arguments to NS_INTERFACE_TABLE_INHERITED");       \
   NS_INTERFACE_TABLE_BEGIN                                                    \
     MOZ_FOR_EACH(NS_INTERFACE_TABLE_ENTRY, (aClass,), (__VA_ARGS__))          \
   NS_INTERFACE_TABLE_END

@@ -9,7 +9,8 @@
 
 #include "gfxUtils.h"
 #include "Layers.h"
-#include "WebRenderLayerManager.h"
+#include "mozilla/layers/WebRenderLayer.h"
+#include "mozilla/layers/WebRenderLayerManager.h"
 
 namespace mozilla {
 namespace layers {
@@ -31,10 +32,9 @@ protected:
 
 public:
   Layer* GetLayer() override { return this; }
-  void RenderLayer() override;
+  void RenderLayer(wr::DisplayListBuilder& aBuilder,
+                   const StackingContextHelper& aSc) override;
 
-protected:
-  gfx::WebRenderGlyphHelper mGlyphHelper;
 };
 
 } // namespace layers

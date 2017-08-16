@@ -2,7 +2,7 @@
 # License, v. 2.0. If a copy of the MPL was not distributed with this
 # file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
-implementation: taskgraph.task.transform:TransformTask
+loader: taskgraph.loader.transform:loader
 
 transforms:
    - taskgraph.transforms.build_attrs:transforms
@@ -18,17 +18,42 @@ job-defaults:
         product: firefox
     worker-type: aws-provisioner-v1/gecko-{level}-b-linux
     worker:
-        implementation: docker-worker
         max-run-time: 36000
         docker-image: {in-tree: desktop-build}
+        env:
+            TOOLTOOL_MANIFEST: "browser/config/tooltool-manifests/linux64/releng.manifest"
     run:
         using: spidermonkey
     when:
         files-changed:
             # any when.files-changed specified below in a job will be
             # appended to this list
+            - build/**
+            - config/**
+            - configure.py
+            - dom/bindings/**
+            - intl/icu/**
+            - js/moz.configure
             - js/public/**
             - js/src/**
+            - layout/tools/reftest/reftest/**
+            - Makefile.in
+            - media/webrtc/trunk/tools/gyp/**
+            - memory/**
+            - mfbt/**
+            - modules/fdlibm/**
+            - modules/zlib/src/**
+            - mozglue/**
+            - moz.build
+            - moz.configure
+            - nsprpub/**
+            - python/**
+            - taskcluster/moz.build
+            - taskcluster/ci/spidermonkey/kind.yml
+            - testing/mozbase/**
+            - test.mozbuild
+            - toolkit/mozapps/installer/package-name.mk
+            - toolkit/mozapps/installer/upload-files.mk
 
 jobs:
     sm-package/opt:
@@ -40,31 +65,6 @@ jobs:
         run:
             using: spidermonkey-package
             spidermonkey-variant: plain
-        when:
-            files-changed:
-                - build/**
-                - config/**
-                - configure.py
-                - dom/bindings/**
-                - intl/icu/**
-                - js/moz.configure
-                - layout/tools/reftest/reftest/**
-                - Makefile.in
-                - media/webrtc/trunk/tools/gyp/**
-                - memory/**
-                - mfbt/**
-                - modules/fdlibm/**
-                - modules/zlib/src/**
-                - mozglue/**
-                - moz.build
-                - moz.configure
-                - nsprpub/**
-                - python/**
-                - taskcluster/moz.build
-                - testing/mozbase/**
-                - test.mozbuild
-                - toolkit/mozapps/installer/package-name.mk
-                - toolkit/mozapps/installer/upload-files.mk
 
     sm-mozjs-sys/debug:
         description: "Build js/src as the mozjs_sys Rust crate"
@@ -107,6 +107,9 @@ jobs:
         treeherder:
             platform: linux32/debug
             symbol: SM-tc(arm)
+        worker:
+            env:
+                TOOLTOOL_MANIFEST: "browser/config/tooltool-manifests/linux32/releng.manifest"
         run:
             spidermonkey-variant: arm-sim
 
@@ -126,9 +129,11 @@ jobs:
             job-name: sm-asan-opt
         treeherder:
             symbol: SM-tc(asan)
+        worker:
+            env:
+                TOOLTOOL_MANIFEST: "browser/config/tooltool-manifests/linux64/asan.manifest"
         run:
             spidermonkey-variant: asan
-            tooltool-manifest: browser/config/tooltool-manifests/linux64/asan.manifest
 
     sm-compacting/debug:
         description: "Spidermonkey Compacting"
@@ -146,9 +151,11 @@ jobs:
             job-name: sm-msan-opt
         treeherder:
             symbol: SM-tc(msan)
+        worker:
+            env:
+                TOOLTOOL_MANIFEST: "browser/config/tooltool-manifests/linux64/msan.manifest"
         run:
             spidermonkey-variant: msan
-            tooltool-manifest: browser/config/tooltool-manifests/linux64/msan.manifest
 
     sm-tsan/opt:
         description: "Spidermonkey Thread Sanitizer"
@@ -157,10 +164,11 @@ jobs:
         treeherder:
             symbol: SM-tc(tsan)
             tier: 3
-        run-on-projects: []
+        worker:
+            env:
+                TOOLTOOL_MANIFEST: "browser/config/tooltool-manifests/linux64/tsan.manifest"
         run:
             spidermonkey-variant: tsan
-            tooltool-manifest: browser/config/tooltool-manifests/linux64/tsan.manifest
 
     sm-rootanalysis/debug:
         description: "Spidermonkey Root Analysis"
@@ -181,3 +189,13 @@ jobs:
             symbol: SM-tc(nu)
         run:
             spidermonkey-variant: nonunified
+
+    sm-fuzzing/opt:
+        description: "Spidermonkey Fuzzing"
+        index:
+            job-name: sm-fuzzing
+        treeherder:
+            platform: linux64/opt
+            symbol: SM-tc(f)
+        run:
+            spidermonkey-variant: fuzzing

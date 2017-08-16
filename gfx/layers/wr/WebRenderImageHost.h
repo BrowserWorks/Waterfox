@@ -12,6 +12,8 @@
 namespace mozilla {
 namespace layers {
 
+class WebRenderBridgeParent;
+
 /**
  * ImageHost. Works with ImageClientSingle and ImageClientBuffered
  */
@@ -24,7 +26,8 @@ public:
 
   virtual CompositableType GetType() override { return mTextureInfo.mCompositableType; }
 
-  virtual void Composite(LayerComposite* aLayer,
+  virtual void Composite(Compositor* aCompositor,
+                         LayerComposite* aLayer,
                          EffectChain& aEffectChain,
                          float aOpacity,
                          const gfx::Matrix4x4& aTransform,
@@ -41,10 +44,10 @@ public:
   virtual TextureHost* GetAsTextureHost(gfx::IntRect* aPictureRect = nullptr) override;
 
   virtual void Attach(Layer* aLayer,
-                      Compositor* aCompositor,
+                      TextureSourceProvider* aProvider,
                       AttachFlags aFlags = NO_FLAGS) override;
 
-  virtual void SetCompositor(Compositor* aCompositor) override;
+  virtual void SetTextureSourceProvider(TextureSourceProvider* aProvider) override;
 
   gfx::IntSize GetImageSize() const override;
 
@@ -62,9 +65,27 @@ public:
 
   virtual void CleanupResources() override;
 
+  virtual WebRenderImageHost* AsWebRenderImageHost() override { return this; }
+
+  TextureHost* GetAsTextureHostForComposite();
+
+  void SetWrBridge(WebRenderBridgeParent* aWrBridge);
+
+  void ClearWrBridge();
+
+  TextureHost* GetCurrentTextureHost() { return mCurrentTextureHost; }
+
 protected:
   // ImageComposite
   virtual TimeStamp GetCompositionTime() const override;
+
+  void SetCurrentTextureHost(TextureHost* aTexture);
+
+  WebRenderBridgeParent* MOZ_NON_OWNING_REF mWrBridge;
+
+  uint32_t mWrBridgeBindings;
+
+  CompositableTextureHostRef mCurrentTextureHost;
 };
 
 } // namespace layers

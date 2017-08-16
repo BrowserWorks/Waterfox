@@ -102,27 +102,6 @@ private:
   nsCOMPtr<nsIThread> mThread;
 };
 
-template<class T>
-class DeleteObjectTask: public Runnable {
-public:
-  explicit DeleteObjectTask(nsAutoPtr<T>& aObject)
-    : mObject(aObject)
-  {
-  }
-  NS_IMETHOD Run() override {
-    NS_ASSERTION(NS_IsMainThread(), "Must be on main thread.");
-    mObject = nullptr;
-    return NS_OK;
-  }
-private:
-  nsAutoPtr<T> mObject;
-};
-
-template<class T>
-void DeleteOnMainThread(nsAutoPtr<T>& aObject) {
-  NS_DispatchToMainThread(new DeleteObjectTask<T>(aObject));
-}
-
 class MediaResource;
 
 // Estimates the buffered ranges of a MediaResource using a simple
@@ -268,7 +247,7 @@ nsresult
 GenerateRandomPathName(nsCString& aOutSalt, uint32_t aLength);
 
 already_AddRefed<TaskQueue>
-CreateMediaDecodeTaskQueue();
+CreateMediaDecodeTaskQueue(const char* aName);
 
 // Iteratively invokes aWork until aCondition returns true, or aWork returns false.
 // Use this rather than a while loop to avoid bogarting the task queue.

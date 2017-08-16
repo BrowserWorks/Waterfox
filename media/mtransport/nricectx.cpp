@@ -44,6 +44,7 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <string>
 #include <vector>
 
+#include "mozilla/Telemetry.h"
 #include "mozilla/UniquePtr.h"
 
 #include "logging.h"
@@ -81,6 +82,7 @@ extern "C" {
 #include "stun_client_ctx.h"
 #include "stun_reg.h"
 #include "stun_server_ctx.h"
+#include "stun_util.h"
 #include "ice_codeword.h"
 #include "ice_ctx.h"
 #include "ice_candidate.h"
@@ -272,13 +274,11 @@ nsresult NrIceTurnServer::ToNicerTurnStruct(nr_ice_turn_server *server) const {
   return NS_OK;
 }
 
-NrIceCtx::NrIceCtx(const std::string& name,
-                   bool offerer,
-                   Policy policy)
+NrIceCtx::NrIceCtx(const std::string& name, Policy policy)
   : connection_state_(ICE_CTX_INIT),
     gathering_state_(ICE_CTX_GATHER_INIT),
     name_(name),
-    offerer_(offerer),
+    offerer_(false),
     ice_controlling_set_(false),
     streams_(),
     ctx_(nullptr),
@@ -288,8 +288,6 @@ NrIceCtx::NrIceCtx(const std::string& name,
     trickle_(true),
     policy_(policy),
     nat_ (nullptr) {
-  // XXX: offerer_ will be used eventually;  placate clang in the meantime.
-  (void)offerer_;
 }
 
 // Handler callbacks
@@ -523,6 +521,51 @@ NrIceCtx::GetNewPwd()
   return pwdStr;
 }
 
+#define MAXADDRS 100 // mirrors setting in ice_ctx.c
+
+/* static */
+nsTArray<NrIceStunAddr>
+NrIceCtx::GetStunAddrs()
+{
+  nsTArray<NrIceStunAddr> addrs;
+
+  nr_local_addr local_addrs[MAXADDRS];
+  int addr_ct=0;
+
+  // most likely running on parent process and need crypto vtbl
+  // initialized on Windows (Linux and OSX don't seem to care)
+  if (!initialized) {
+    nr_crypto_vtbl = &nr_ice_crypto_nss_vtbl;
+  }
+
+  MOZ_MTLOG(ML_INFO, "NrIceCtx static call to find local stun addresses");
+  if (nr_stun_find_local_addresses(local_addrs, MAXADDRS, &addr_ct)) {
+    MOZ_MTLOG(ML_INFO, "Error finding local stun addresses");
+  } else {
+    for(int i=0; i<addr_ct; ++i) {
+      NrIceStunAddr addr(&local_addrs[i]);
+      addrs.AppendElement(addr);
+    }
+  }
+
+  return addrs;
+}
+
+void
+NrIceCtx::SetStunAddrs(const nsTArray<NrIceStunAddr>& addrs)
+{
+  nr_local_addr* local_addrs;
+  local_addrs = new nr_local_addr[addrs.Length()];
+
+  for(size_t i=0; i<addrs.Length(); ++i) {
+    nr_local_addr_copy(&local_addrs[i],
+                       const_cast<nr_local_addr*>(&addrs[i].localAddr()));
+  }
+  nr_ice_set_local_addresses(ctx_, local_addrs, addrs.Length());
+
+  delete[] local_addrs;
+}
+
 bool
 NrIceCtx::Initialize()
 {
@@ -545,9 +588,7 @@ NrIceCtx::Initialize(const std::string& ufrag,
   // Create the ICE context
   int r;
 
-  UINT4 flags = offerer_ ? NR_ICE_CTX_FLAGS_OFFERER:
-      NR_ICE_CTX_FLAGS_ANSWERER;
-  flags |= NR_ICE_CTX_FLAGS_AGGRESSIVE_NOMINATION;
+  UINT4 flags = NR_ICE_CTX_FLAGS_AGGRESSIVE_NOMINATION;
   switch (policy_) {
     case ICE_POLICY_RELAY:
       flags |= NR_ICE_CTX_FLAGS_RELAY_ONLY;
@@ -714,6 +755,21 @@ NrIceStats NrIceCtx::Destroy() {
     stats.turn_401s = ctx_->stats.turn_401s;
     stats.turn_403s = ctx_->stats.turn_403s;
     stats.turn_438s = ctx_->stats.turn_438s;
+  }
+
+  if (!ice_start_time_.IsNull()) {
+    TimeDuration time_delta = TimeStamp::Now() - ice_start_time_;
+    ice_start_time_ = TimeStamp(); // null out
+
+    if (offerer_) {
+      Telemetry::Accumulate(
+          Telemetry::WEBRTC_ICE_OFFERER_ABORT_TIME,
+          time_delta.ToMilliseconds());
+    } else {
+      Telemetry::Accumulate(
+          Telemetry::WEBRTC_ICE_ANSWERER_ABORT_TIME,
+          time_delta.ToMilliseconds());
+    }
   }
 
   if (peer_) {
@@ -972,8 +1028,11 @@ nsresult NrIceCtx::ParseGlobalAttributes(std::vector<std::string> attrs) {
   return NS_OK;
 }
 
-nsresult NrIceCtx::StartChecks() {
+nsresult NrIceCtx::StartChecks(bool offerer) {
   int r;
+
+  offerer_ = offerer;
+  ice_start_time_ = TimeStamp::Now();
 
   r=nr_ice_peer_ctx_pair_candidates(peer_);
   if (r) {
@@ -1031,6 +1090,48 @@ void NrIceCtx::UpdateNetworkState(bool online) {
 void NrIceCtx::SetConnectionState(ConnectionState state) {
   if (state == connection_state_)
     return;
+
+  if (!ice_start_time_.IsNull() && (state > ICE_CTX_CHECKING)) {
+    TimeDuration time_delta = TimeStamp::Now() - ice_start_time_;
+    ice_start_time_ = TimeStamp();
+
+    switch (state) {
+      case ICE_CTX_INIT:
+      case ICE_CTX_CHECKING:
+        MOZ_CRASH();
+        break;
+      case ICE_CTX_CONNECTED:
+      case ICE_CTX_COMPLETED:
+        if (offerer_) {
+          Telemetry::Accumulate(
+              Telemetry::WEBRTC_ICE_OFFERER_SUCCESS_TIME,
+              time_delta.ToMilliseconds());
+        } else {
+          Telemetry::Accumulate(
+              Telemetry::WEBRTC_ICE_ANSWERER_SUCCESS_TIME,
+              time_delta.ToMilliseconds());
+        }
+        break;
+      case ICE_CTX_FAILED:
+        if (offerer_) {
+          Telemetry::Accumulate(
+              Telemetry::WEBRTC_ICE_OFFERER_FAILURE_TIME,
+              time_delta.ToMilliseconds());
+        } else {
+          Telemetry::Accumulate(
+              Telemetry::WEBRTC_ICE_ANSWERER_FAILURE_TIME,
+              time_delta.ToMilliseconds());
+        }
+        break;
+      case ICE_CTX_DISCONNECTED:
+        // We get this every time an ICE disconnect gets reported.
+        // Do we want a Telemetry probe counting how often this happens?
+        break;
+      case ICE_CTX_CLOSED:
+        // This doesn't seem to be used...
+        break;
+    }
+  }
 
   MOZ_MTLOG(ML_INFO, "NrIceCtx(" << name_ << "): state " <<
             connection_state_ << "->" << state);

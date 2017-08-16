@@ -11,7 +11,6 @@ include('/ipc/chromium/chromium-config.mozbuild')
 FINAL_LIBRARY = 'xul'
 
 DEFINES['MOZ_APP_VERSION'] = '"%s"' % CONFIG['MOZ_APP_VERSION']
-DEFINES['BIN_SUFFIX'] = '"%s"' % CONFIG['BIN_SUFFIX']
 
 LOCAL_INCLUDES += [
     '/xpcom/build',
@@ -40,6 +39,7 @@ XPIDL_MODULE = 'telemetry'
 EXPORTS.mozilla += [
     '!TelemetryEventEnums.h',
     '!TelemetryHistogramEnums.h',
+    '!TelemetryProcessEnums.h',
     '!TelemetryScalarEnums.h',
     'ipc/TelemetryComms.h',
     'ipc/TelemetryIPC.h',
@@ -49,6 +49,8 @@ EXPORTS.mozilla += [
 ]
 
 SOURCES += [
+    'CombinedStacks.cpp',
+    'HangReports.cpp',
     'ipc/TelemetryIPC.cpp',
     'ipc/TelemetryIPCAccumulator.cpp',
     'Telemetry.cpp',
@@ -58,6 +60,12 @@ SOURCES += [
     'TelemetryScalar.cpp',
     'WebrtcTelemetry.cpp',
 ]
+
+# KeyedStackCapturer entirely relies on profiler to be enabled.
+if CONFIG['MOZ_GECKO_PROFILER']:
+    SOURCES += [
+      'KeyedStackCapturer.cpp'
+    ]
 
 EXTRA_COMPONENTS += [
     'TelemetryStartup.js',
@@ -90,6 +98,8 @@ GENERATED_FILES = [
     'TelemetryEventEnums.h',
     'TelemetryHistogramData.inc',
     'TelemetryHistogramEnums.h',
+    'TelemetryProcessData.h',
+    'TelemetryProcessEnums.h',
     'TelemetryScalarData.h',
     'TelemetryScalarEnums.h',
 ]
@@ -134,6 +144,19 @@ event_data.inputs = event_files
 event_enums = GENERATED_FILES['TelemetryEventEnums.h']
 event_enums.script = 'gen-event-enum.py'
 event_enums.inputs = event_files
+
+# Generate data from Processes.yaml
+processes_files = [
+    'Processes.yaml',
+]
+
+processes_enum = GENERATED_FILES['TelemetryProcessEnums.h']
+processes_enum.script = 'gen-process-enum.py'
+processes_enum.inputs = processes_files
+
+processes_data = GENERATED_FILES['TelemetryProcessData.h']
+processes_data.script = 'gen-process-data.py'
+processes_data.inputs = processes_files
 
 with Files('**'):
     BUG_COMPONENT = ('Toolkit', 'Telemetry')

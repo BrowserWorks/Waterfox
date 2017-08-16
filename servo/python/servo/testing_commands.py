@@ -231,8 +231,27 @@ class MachCommands(CommandBase):
             else:
                 test_patterns.append(test)
 
+        in_crate_packages = []
+
+        # Since the selectors tests have no corresponding selectors_tests crate in tests/unit,
+        # we need to treat them separately from those that do.
+        try:
+            packages.remove('selectors')
+            in_crate_packages += ["selectors"]
+        except KeyError:
+            pass
+
         if not packages:
             packages = set(os.listdir(path.join(self.context.topdir, "tests", "unit"))) - set(['.DS_Store'])
+            in_crate_packages += ["selectors"]
+
+        # Since the selectors tests have no corresponding selectors_tests crate in tests/unit,
+        # we need to treat them separately from those that do.
+        try:
+            packages.remove('selectors')
+            in_crate_packages += ["selectors"]
+        except KeyError:
+            pass
 
         packages.discard('stylo')
 
@@ -245,19 +264,18 @@ class MachCommands(CommandBase):
         env = self.build_env()
         env["RUST_BACKTRACE"] = "1"
 
-        if sys.platform in ("win32", "msys"):
-            if "msvc" in host_triple():
-                # on MSVC, we need some DLLs in the path. They were copied
-                # in to the servo.exe build dir, so just point PATH to that.
-                env["PATH"] = "%s%s%s" % (path.dirname(self.get_binary_path(False, False)), os.pathsep, env["PATH"])
-            else:
-                env["RUSTFLAGS"] = "-C link-args=-Wl,--subsystem,windows"
+        if "msvc" in host_triple():
+            # on MSVC, we need some DLLs in the path. They were copied
+            # in to the servo.exe build dir, so just point PATH to that.
+            env["PATH"] = "%s%s%s" % (path.dirname(self.get_binary_path(False, False)), os.pathsep, env["PATH"])
 
         features = self.servo_features()
         if len(packages) > 0:
             args = ["cargo", "bench" if bench else "test"]
             for crate in packages:
                 args += ["-p", "%s_tests" % crate]
+            for crate in in_crate_packages:
+                args += ["-p", crate]
             args += test_patterns
 
             if features:
@@ -287,9 +305,11 @@ class MachCommands(CommandBase):
     @Command('test-stylo',
              description='Run stylo unit tests',
              category='testing')
+    @CommandArgument('test_name', nargs=argparse.REMAINDER,
+                     help="Only run tests that match this pattern or file path")
     @CommandArgument('--release', default=False, action="store_true",
                      help="Run with a release build of servo")
-    def test_stylo(self, release=False):
+    def test_stylo(self, release=False, test_name=None):
         self.set_use_stable_rust()
         self.ensure_bootstrapped()
 
@@ -297,14 +317,10 @@ class MachCommands(CommandBase):
         env["RUST_BACKTRACE"] = "1"
         env["CARGO_TARGET_DIR"] = path.join(self.context.topdir, "target", "geckolib").encode("UTF-8")
 
-        release = ["--release"] if release else []
-        ret = 0
+        args = (["cargo", "test", "-p", "stylo_tests", "--features", "testing"] +
+                (["--release"] if release else []) + (test_name or []))
         with cd(path.join("ports", "geckolib")):
-            ret = call(["cargo", "test", "-p", "stylo_tests"] + release, env=env)
-        if ret != 0:
-            return ret
-        with cd(path.join("ports", "geckolib")):
-            return call(["cargo", "test", "-p", "style"] + release, env=env)
+            return call(args, env=env)
 
     @Command('test-compiletest',
              description='Run compiletests',
@@ -458,6 +474,14 @@ class MachCommands(CommandBase):
     # Helper for test_css and test_wpt:
     def wptrunner(self, run_file, **kwargs):
         self.set_software_rendering_env(kwargs['release'])
+
+        # By default, Rayon selects the number of worker threads
+        # based on the available CPU count. This doesn't work very
+        # well when running tests on CI, since we run so many
+        # Servo processes in parallel. The result is a lot of
+        # extra timeouts. Instead, force Rayon to assume we are
+        # running on a 2 CPU environment.
+        os.environ['RAYON_RS_NUM_CPUS'] = "2"
 
         os.environ["RUST_BACKTRACE"] = "1"
         kwargs["debug"] = not kwargs["release"]

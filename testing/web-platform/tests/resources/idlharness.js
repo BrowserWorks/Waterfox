@@ -8,7 +8,7 @@ policies and contribution forms [3].
 [3] http://www.w3.org/2004/10/27-testcases
 */
 
-/* For user documentation see docs/idlharness.md */
+/* For user documentation see docs/_writing-tests/idlharness.md */
 
 /**
  * Notes for people who want to edit this file (not just use it as a library):
@@ -437,6 +437,31 @@ IdlArray.prototype.test = function()
 IdlArray.prototype.assert_type_is = function(value, type)
 //@{
 {
+    if (type.idlType in this.members
+    && this.members[type.idlType] instanceof IdlTypedef) {
+        this.assert_type_is(value, this.members[type.idlType].idlType);
+        return;
+    }
+    if (type.union) {
+        for (var i = 0; i < type.idlType.length; i++) {
+            try {
+                this.assert_type_is(value, type.idlType[i]);
+                // No AssertionError, so we match one type in the union
+                return;
+            } catch(e) {
+                if (e instanceof AssertionError) {
+                    // We didn't match this type, let's try some others
+                    continue;
+                }
+                throw e;
+            }
+        }
+        // TODO: Is there a nice way to list the union's types in the message?
+        assert_true(false, "Attribute has value " + format_value(value)
+                    + " which doesn't match any of the types in the union");
+
+    }
+
     /**
      * Helper function that tests that value is an instance of type according
      * to the rules of WebIDL.  value is any JavaScript value, and type is an
@@ -592,7 +617,7 @@ IdlArray.prototype.assert_type_is = function(value, type)
             return;
 
         case "object":
-            assert_true(typeof value == "object" || typeof value == "function", "wrong type: not object or function");
+            assert_in_array(typeof value, ["object", "function"], "wrong type: not object or function");
             return;
     }
 
@@ -608,7 +633,7 @@ IdlArray.prototype.assert_type_is = function(value, type)
         // in an infinite loop.  TODO: This means we don't have tests for
         // NoInterfaceObject interfaces, and we also can't test objects that
         // come from another self.
-        assert_true(typeof value == "object" || typeof value == "function", "wrong type: not object or function");
+        assert_in_array(typeof value, ["object", "function"], "wrong type: not object or function");
         if (value instanceof Object
         && !this.members[type].has_extended_attribute("NoInterfaceObject")
         && type in self)
@@ -621,10 +646,6 @@ IdlArray.prototype.assert_type_is = function(value, type)
         assert_equals(typeof value, "string");
     }
     else if (this.members[type] instanceof IdlDictionary)
-    {
-        // TODO: Test when we actually have something to test this on
-    }
-    else if (this.members[type] instanceof IdlTypedef)
     {
         // TODO: Test when we actually have something to test this on
     }
@@ -1048,13 +1069,19 @@ IdlInterface.prototype.test_self = function()
         // "The class string of an interface prototype object is the
         // concatenation of the interface’s identifier and the string
         // “Prototype”."
-        assert_class_string(self[this.name].prototype, this.name + "Prototype",
-                            "class string of " + this.name + ".prototype");
+
+        // Skip these tests for now due to a specification issue about
+        // prototype name.
+        // https://www.w3.org/Bugs/Public/show_bug.cgi?id=28244
+
+        // assert_class_string(self[this.name].prototype, this.name + "Prototype",
+        //                     "class string of " + this.name + ".prototype");
+
         // String() should end up calling {}.toString if nothing defines a
         // stringifier.
         if (!this.has_stringifier()) {
-            assert_equals(String(self[this.name].prototype), "[object " + this.name + "Prototype]",
-                    "String(" + this.name + ".prototype)");
+            // assert_equals(String(self[this.name].prototype), "[object " + this.name + "Prototype]",
+            //         "String(" + this.name + ".prototype)");
         }
     }.bind(this), this.name + " interface: existence and properties of interface prototype object");
 
@@ -1606,6 +1633,13 @@ IdlInterface.prototype.test_object = function(desc)
 IdlInterface.prototype.test_primary_interface_of = function(desc, obj, exception, expected_typeof)
 //@{
 {
+    // Only the object itself, not its members, are tested here, so if the
+    // interface is untested, there is nothing to do.
+    if (!this.untested)
+    {
+        return;
+    }
+
     // We can't easily test that its prototype is correct if there's no
     // interface object, or the object is from a different global environment
     // (not instanceof Object).  TODO: test in this case that its prototype at
@@ -1657,6 +1691,9 @@ IdlInterface.prototype.test_interface_of = function(desc, obj, exception, expect
     for (var i = 0; i < this.members.length; i++)
     {
         var member = this.members[i];
+        if (member.untested) {
+            continue;
+        }
         if (!exposed_in(exposure_set(member, this.exposureSet))) {
             test(function() {
                 assert_false(member.name in obj);
@@ -1864,6 +1901,7 @@ IdlInterface.prototype.do_interface_attribute_asserts = function(obj, member, a_
     // TODO: Test calling setter on the interface prototype (should throw
     // TypeError in most cases).
     if (member.readonly
+    && !member.has_extended_attribute("LenientSetter")
     && !member.has_extended_attribute("PutForwards")
     && !member.has_extended_attribute("Replaceable"))
     {
@@ -2003,8 +2041,8 @@ function IdlTypedef(obj)
     /** Self-explanatory. */
     this.name = obj.name;
 
-    /** An array of values produced by the "typedef" production. */
-    this.values = obj.values;
+    /** The idlType that we are supposed to be typedeffing to. */
+    this.idlType = obj.idlType;
 
 }
 //@}

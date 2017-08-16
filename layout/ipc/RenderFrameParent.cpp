@@ -9,9 +9,6 @@
 
 #include "BasicLayers.h"
 #include "gfxPrefs.h"
-#ifdef MOZ_ENABLE_D3D9_LAYER
-# include "LayerManagerD3D9.h"
-#endif //MOZ_ENABLE_D3D9_LAYER
 #include "mozilla/BrowserElementParent.h"
 #include "mozilla/EventForwards.h"  // for Modifiers
 #include "mozilla/ViewportFrame.h"
@@ -88,15 +85,15 @@ GetFrom(nsFrameLoader* aFrameLoader)
   return nsContentUtils::LayerManagerForDocument(doc);
 }
 
-RenderFrameParent::RenderFrameParent(nsFrameLoader* aFrameLoader, bool* aSuccess)
+RenderFrameParent::RenderFrameParent(nsFrameLoader* aFrameLoader)
   : mLayersId(0)
+  , mLayersConnected(false)
   , mFrameLoader(aFrameLoader)
   , mFrameLoaderDestroyed(false)
   , mAsyncPanZoomEnabled(false)
   , mInitted(false)
 {
   mInitted = Init(aFrameLoader);
-  *aSuccess = mInitted;
 }
 
 RenderFrameParent::~RenderFrameParent()
@@ -117,15 +114,22 @@ RenderFrameParent::Init(nsFrameLoader* aFrameLoader)
 
   TabParent* browser = TabParent::GetFrom(mFrameLoader);
   if (XRE_IsParentProcess()) {
+    PCompositorBridgeChild* compositor = nullptr;
+    if (lm) {
+      compositor = lm->GetCompositorBridgeChild();
+    }
+
     // Our remote frame will push layers updates to the compositor,
     // and we'll keep an indirect reference to that tree.
-    browser->Manager()->AsContentParent()->AllocateLayerTreeId(browser, &mLayersId);
-    if (lm && lm->GetCompositorBridgeChild()) {
-      lm->GetCompositorBridgeChild()->SendNotifyChildCreated(mLayersId);
-    }
+    GPUProcessManager* gpm = GPUProcessManager::Get();
+    mLayersConnected = gpm->AllocateAndConnectLayerTreeId(
+      compositor,
+      browser->Manager()->AsContentParent()->OtherPid(),
+      &mLayersId,
+      &mCompositorOptions);
   } else if (XRE_IsContentProcess()) {
     ContentChild::GetSingleton()->SendAllocateLayerTreeId(browser->Manager()->ChildID(), browser->GetTabId(), &mLayersId);
-    CompositorBridgeChild::Get()->SendNotifyChildCreated(mLayersId);
+    mLayersConnected = CompositorBridgeChild::Get()->SendNotifyChildCreated(mLayersId, &mCompositorOptions);
   }
 
   mInitted = true;
@@ -142,6 +146,7 @@ void
 RenderFrameParent::Destroy()
 {
   mFrameLoaderDestroyed = true;
+  mLayerManager = nullptr;
 }
 
 already_AddRefed<Layer>
@@ -173,8 +178,7 @@ RenderFrameParent::BuildLayer(nsDisplayListBuilder* aBuilder,
     return nullptr;
   }
 
-  uint64_t id = GetLayerTreeId();
-  if (!id) {
+  if (!mLayersId) {
     return nullptr;
   }
 
@@ -188,7 +192,7 @@ RenderFrameParent::BuildLayer(nsDisplayListBuilder* aBuilder,
     // use ref layers.
     return nullptr;
   }
-  static_cast<RefLayer*>(layer.get())->SetReferentId(id);
+  static_cast<RefLayer*>(layer.get())->SetReferentId(mLayersId);
   nsIntPoint offset = GetContentRectLayerOffset(aFrame, aBuilder);
   // We can only have an offset if we're a child of an inactive
   // container, but our display item is LAYER_ACTIVE_FORCE which
@@ -203,18 +207,38 @@ RenderFrameParent::BuildLayer(nsDisplayListBuilder* aBuilder,
   return layer.forget();
 }
 
+LayerManager*
+RenderFrameParent::AttachLayerManager()
+{
+  RefPtr<LayerManager> lm;
+
+  if (mFrameLoader) {
+    nsIContent* content = mFrameLoader->GetOwnerContent();
+    if (content) {
+      lm = nsContentUtils::LayerManagerForContent(content);
+    }
+    if (!lm) {
+      lm = GetFrom(mFrameLoader);
+    }
+  }
+
+  // Perhaps the document containing this frame currently has no presentation?
+  if (lm && lm->GetCompositorBridgeChild() && lm != mLayerManager) {
+    mLayersConnected = lm->GetCompositorBridgeChild()->SendAdoptChild(mLayersId);
+    FrameLayerBuilder::InvalidateAllLayers(lm);
+  }
+
+  mLayerManager = lm.forget();
+  return mLayerManager;
+}
+
 void
 RenderFrameParent::OwnerContentChanged(nsIContent* aContent)
 {
   MOZ_ASSERT(!mFrameLoader || mFrameLoader->GetOwnerContent() == aContent,
              "Don't build new map if owner is same!");
 
-  RefPtr<LayerManager> lm = mFrameLoader ? GetFrom(mFrameLoader) : nullptr;
-  // Perhaps the document containing this frame currently has no presentation?
-  if (lm && lm->GetCompositorBridgeChild()) {
-    lm->GetCompositorBridgeChild()->SendAdoptChild(mLayersId);
-    FrameLayerBuilder::InvalidateAllLayers(lm);
-  }
+  Unused << AttachLayerManager();
 }
 
 void
@@ -224,11 +248,13 @@ RenderFrameParent::ActorDestroy(ActorDestroyReason why)
     if (XRE_IsParentProcess()) {
       GPUProcessManager::Get()->UnmapLayerTreeId(mLayersId, OtherPid());
     } else if (XRE_IsContentProcess()) {
-      ContentChild::GetSingleton()->SendDeallocateLayerTreeId(mLayersId);
+      TabParent* browser = TabParent::GetFrom(mFrameLoader);
+      ContentChild::GetSingleton()->SendDeallocateLayerTreeId(browser->Manager()->ChildID(), mLayersId);
     }
   }
 
   mFrameLoader = nullptr;
+  mLayerManager = nullptr;
 }
 
 mozilla::ipc::IPCResult
@@ -252,12 +278,6 @@ RenderFrameParent::TriggerRepaint()
   }
 
   docFrame->InvalidateLayer(nsDisplayItem::TYPE_REMOTE);
-}
-
-uint64_t
-RenderFrameParent::GetLayerTreeId() const
-{
-  return mLayersId;
 }
 
 void
@@ -311,7 +331,7 @@ RenderFrameParent::TakeFocusForClickFromTap()
 }
 
 void
-RenderFrameParent::EnsureLayersConnected()
+RenderFrameParent::EnsureLayersConnected(CompositorOptions* aCompositorOptions)
 {
   RefPtr<LayerManager> lm = GetFrom(mFrameLoader);
   if (!lm) {
@@ -322,7 +342,8 @@ RenderFrameParent::EnsureLayersConnected()
     return;
   }
 
-  lm->GetCompositorBridgeChild()->SendNotifyChildRecreated(mLayersId);
+  mLayersConnected = lm->GetCompositorBridgeChild()->SendNotifyChildRecreated(mLayersId, &mCompositorOptions);
+  *aCompositorOptions = mCompositorOptions;
 }
 
 } // namespace layout

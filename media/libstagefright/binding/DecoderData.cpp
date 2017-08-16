@@ -18,6 +18,7 @@
 #include "mp4parse.h"
 
 using namespace stagefright;
+using mozilla::media::TimeUnit;
 
 namespace mp4_demuxer
 {
@@ -114,8 +115,10 @@ UpdateTrackInfo(mozilla::TrackInfo& aConfig,
 {
   mozilla::CryptoTrack& crypto = aConfig.mCrypto;
   aConfig.mMimeType = aMimeType;
-  aConfig.mDuration = FindInt64(aMetaData, kKeyDuration);
-  aConfig.mMediaTime = FindInt64(aMetaData, kKeyMediaTime);
+  aConfig.mDuration = TimeUnit::FromMicroseconds(
+    FindInt64(aMetaData, kKeyDuration));
+  aConfig.mMediaTime = TimeUnit::FromMicroseconds(
+    FindInt64(aMetaData, kKeyMediaTime));
   aConfig.mTrackId = FindInt32(aMetaData, kKeyTrackID);
   aConfig.mCrypto.mValid = aMetaData->findInt32(kKeyCryptoMode, &crypto.mMode) &&
     aMetaData->findInt32(kKeyCryptoDefaultIVSize, &crypto.mIVSize) &&
@@ -172,19 +175,6 @@ MP4VideoInfo::Update(const MetaData* aMetaData, const char* aMimeType)
   mRotation = VideoInfo::ToSupportedRotation(FindInt32(aMetaData, kKeyRotation));
 
   FindData(aMetaData, kKeyAVCC, mExtraData);
-  if (!mExtraData->Length()) {
-    if (FindData(aMetaData, kKeyESDS, mExtraData)) {
-      ESDS esds(mExtraData->Elements(), mExtraData->Length());
-
-      const void* data;
-      size_t size;
-      if (esds.getCodecSpecificInfo(&data, &size) == OK) {
-        const uint8_t* cdata = reinterpret_cast<const uint8_t*>(data);
-        mCodecSpecificConfig->AppendElements(cdata, size);
-      }
-    }
-  }
-
 }
 
 static void
@@ -205,22 +195,22 @@ MP4AudioInfo::Update(const mp4parse_track_info* track,
 {
   UpdateTrackProtectedInfo(*this, audio->protected_data);
 
-  if (track->codec == MP4PARSE_CODEC_OPUS) {
+  if (track->codec == mp4parse_codec_OPUS) {
     mMimeType = NS_LITERAL_CSTRING("audio/opus");
     // The Opus decoder expects the container's codec delay or
     // pre-skip value, in microseconds, as a 64-bit int at the
     // start of the codec-specific config blob.
-    MOZ_ASSERT(audio->codec_specific_config.data);
-    MOZ_ASSERT(audio->codec_specific_config.length >= 12);
+    MOZ_ASSERT(audio->extra_data.data);
+    MOZ_ASSERT(audio->extra_data.length >= 12);
     uint16_t preskip =
-      LittleEndian::readUint16(audio->codec_specific_config.data + 10);
+      LittleEndian::readUint16(audio->extra_data.data + 10);
     OpusDataDecoder::AppendCodecDelay(mCodecSpecificConfig,
         mozilla::FramesToUsecs(preskip, 48000).value());
-  } else if (track->codec == MP4PARSE_CODEC_AAC) {
+  } else if (track->codec == mp4parse_codec_AAC) {
     mMimeType = MEDIA_MIMETYPE_AUDIO_AAC;
-  } else if (track->codec == MP4PARSE_CODEC_FLAC) {
+  } else if (track->codec == mp4parse_codec_FLAC) {
     mMimeType = MEDIA_MIMETYPE_AUDIO_FLAC;
-  } else if (track->codec == MP4PARSE_CODEC_MP3) {
+  } else if (track->codec == mp4parse_codec_MP3) {
     mMimeType = MEDIA_MIMETYPE_AUDIO_MPEG;
   }
 
@@ -228,8 +218,8 @@ MP4AudioInfo::Update(const mp4parse_track_info* track,
   mChannels = audio->channels;
   mBitDepth = audio->bit_depth;
   mExtendedProfile = audio->profile;
-  mDuration = track->duration;
-  mMediaTime = track->media_time;
+  mDuration = TimeUnit::FromMicroseconds(track->duration);
+  mMediaTime = TimeUnit::FromMicroseconds(track->media_time);
   mTrackId = track->track_id;
 
   // In stagefright, mProfile is kKeyAACProfile, mExtendedProfile is kKeyAACAOT.
@@ -238,10 +228,14 @@ MP4AudioInfo::Update(const mp4parse_track_info* track,
     mProfile = audio->profile;
   }
 
-  const uint8_t* cdata = audio->codec_specific_config.data;
-  size_t size = audio->codec_specific_config.length;
-  if (size > 0) {
-    mCodecSpecificConfig->AppendElements(cdata, size);
+  if (audio->extra_data.length > 0) {
+    mExtraData->AppendElements(audio->extra_data.data,
+                               audio->extra_data.length);
+  }
+
+  if (audio->codec_specific_config.length > 0) {
+    mCodecSpecificConfig->AppendElements(audio->codec_specific_config.data,
+                                         audio->codec_specific_config.length);
   }
 }
 
@@ -250,18 +244,21 @@ MP4VideoInfo::Update(const mp4parse_track_info* track,
                      const mp4parse_track_video_info* video)
 {
   UpdateTrackProtectedInfo(*this, video->protected_data);
-  if (track->codec == MP4PARSE_CODEC_AVC) {
+  if (track->codec == mp4parse_codec_AVC) {
     mMimeType = MEDIA_MIMETYPE_VIDEO_AVC;
-  } else if (track->codec == MP4PARSE_CODEC_VP9) {
+  } else if (track->codec == mp4parse_codec_VP9) {
     mMimeType = NS_LITERAL_CSTRING("video/vp9");
+  } else if (track->codec == mp4parse_codec_MP4V) {
+    mMimeType = MEDIA_MIMETYPE_VIDEO_MPEG4;
   }
   mTrackId = track->track_id;
-  mDuration = track->duration;
-  mMediaTime = track->media_time;
+  mDuration = TimeUnit::FromMicroseconds(track->duration);
+  mMediaTime = TimeUnit::FromMicroseconds(track->media_time);
   mDisplay.width = video->display_width;
   mDisplay.height = video->display_height;
   mImage.width = video->image_width;
   mImage.height = video->image_height;
+  mRotation = ToSupportedRotation(video->rotation);
   if (video->extra_data.data) {
     mExtraData->AppendElements(video->extra_data.data, video->extra_data.length);
   }

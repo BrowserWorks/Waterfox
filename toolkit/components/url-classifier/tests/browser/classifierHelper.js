@@ -6,7 +6,6 @@
 // Unfortunately, browser tests cannot load that script as it is too reliant on
 // being loaded in the content process.
 
-Cu.import("resource://gre/modules/Task.jsm");
 
 let dbService = Cc["@mozilla.org/url-classifier/dbservice;1"]
                 .getService(Ci.nsIUrlClassifierDBService);
@@ -46,12 +45,12 @@ classifierHelper.waitForInit = function() {
   const table = "test-phish-simple";
   const url = "http://itisatrap.org/firefox/its-a-trap.html";
   let principal = secMan.createCodebasePrincipal(
-    iosvc.newURI(url, null, null), {});
+    iosvc.newURI(url), {});
 
   return new Promise(function(resolve, reject) {
     observerService.addObserver(function() {
       resolve();
-    }, "mozentries-update-finished", false);
+    }, "mozentries-update-finished");
 
     let listener = {
       QueryInterface: function(iid)
@@ -144,7 +143,7 @@ classifierHelper.removeUrlFromDB = function(updateData) {
 // This API is used to expire all add/sub chunks we have updated
 // by using addUrlToDB and removeUrlFromDB.
 // Returns a Promise.
-classifierHelper.resetDB = function() {
+classifierHelper.resetDatabase = function() {
   var testUpdate = "";
   for (var update of classifierHelper._updatesToCleanup) {
     if (testUpdate.includes(update.db))
@@ -165,13 +164,13 @@ classifierHelper.reloadDatabase = function() {
 }
 
 classifierHelper._update = function(update) {
-  return Task.spawn(function* () {
+  return (async function() {
     // beginUpdate may fail if there's an existing update in progress
     // retry until success or testcase timeout.
     let success = false;
     while (!success) {
       try {
-        yield new Promise((resolve, reject) => {
+        await new Promise((resolve, reject) => {
           let listener = {
             QueryInterface: function(iid)
             {
@@ -199,10 +198,10 @@ classifierHelper._update = function(update) {
         success = true;
       } catch(e) {
         // Wait 1 second before trying again.
-        yield new Promise(resolve => setTimeout(resolve, 1000));
+        await new Promise(resolve => setTimeout(resolve, 1000));
       }
     }
-  });
+  })();
 };
 
 classifierHelper._cleanup = function() {
@@ -215,7 +214,7 @@ classifierHelper._cleanup = function() {
     return Promise.resolve();
   }
 
-  return classifierHelper.resetDB();
+  return classifierHelper.resetDatabase();
 };
 // Cleanup will be called at end of each testcase to remove all the urls added to database.
 registerCleanupFunction(classifierHelper._cleanup);

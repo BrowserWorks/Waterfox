@@ -47,8 +47,8 @@ class mozJSComponentLoader : public mozilla::ModuleLoader,
     // ModuleLoader
     const mozilla::Module* LoadModule(mozilla::FileLocation& aFile) override;
 
-    nsresult FindTargetObject(JSContext* aCx,
-                              JS::MutableHandleObject aTargetObject);
+    void FindTargetObject(JSContext* aCx,
+                          JS::MutableHandleObject aTargetObject);
 
     static mozJSComponentLoader* Get() { return sSelf; }
 
@@ -62,10 +62,13 @@ class mozJSComponentLoader : public mozilla::ModuleLoader,
     nsresult ReallyInit();
     void UnloadModules();
 
+    void CreateLoaderGlobal(JSContext* aCx,
+                            JSAddonId* aAddonID,
+                            JS::MutableHandleObject aGlobal);
+
     JSObject* PrepareObjectForLocation(JSContext* aCx,
                                        nsIFile* aComponentFile,
                                        nsIURI* aComponent,
-                                       bool aReuseLoaderGlobal,
                                        bool* aRealFile);
 
     nsresult ObjectForLocation(ComponentLoaderInfo& aInfo,
@@ -83,7 +86,6 @@ class mozJSComponentLoader : public mozilla::ModuleLoader,
 
     nsCOMPtr<nsIComponentManager> mCompMgr;
     nsCOMPtr<nsIPrincipal> mSystemPrincipal;
-    nsCOMPtr<nsIXPConnectJSObjectHolder> mLoaderGlobal;
 
     class ModuleEntry : public mozilla::Module
     {
@@ -155,7 +157,6 @@ class mozJSComponentLoader : public mozilla::ModuleLoader,
     nsDataHashtable<nsCStringHashKey, ModuleEntry*> mInProgressImports;
 
     bool mInitialized;
-    bool mReuseLoaderGlobal;
 };
 
 #endif

@@ -68,7 +68,7 @@ CrossProcessSemaphore::Create(CrossProcessSemaphoreHandle aHandle)
     return nullptr;
   }
 
-  if (!sharedBuffer->SetHandle(aHandle)) {
+  if (!sharedBuffer->SetHandle(aHandle, ipc::SharedMemory::RightsReadWrite)) {
     return nullptr;
   }
 

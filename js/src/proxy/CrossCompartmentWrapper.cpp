@@ -458,19 +458,20 @@ CrossCompartmentWrapper::fun_toString(JSContext* cx, HandleObject wrapper, unsig
 }
 
 bool
-CrossCompartmentWrapper::regexp_toShared(JSContext* cx, HandleObject wrapper, RegExpGuard* g) const
+CrossCompartmentWrapper::regexp_toShared(JSContext* cx, HandleObject wrapper,
+                                         MutableHandleRegExpShared shared) const
 {
-    RegExpGuard wrapperGuard(cx);
+    RootedRegExpShared re(cx);
     {
         AutoCompartment call(cx, wrappedObject(wrapper));
-        if (!Wrapper::regexp_toShared(cx, wrapper, &wrapperGuard))
+        if (!Wrapper::regexp_toShared(cx, wrapper, &re))
             return false;
     }
 
     // Get an equivalent RegExpShared associated with the current compartment.
-    RegExpShared* re = wrapperGuard.re();
-    cx->markAtom(re->getSource());
-    return cx->compartment()->regExps.get(cx, re->getSource(), re->getFlags(), g);
+    RootedAtom source(cx, re->getSource());
+    cx->markAtom(source);
+    return cx->compartment()->regExps.get(cx, source, re->getFlags(), shared);
 }
 
 bool
@@ -491,8 +492,8 @@ js::IsCrossCompartmentWrapper(JSObject* obj)
            !!(Wrapper::wrapperHandler(obj)->flags() & Wrapper::CROSS_COMPARTMENT);
 }
 
-void
-js::NukeCrossCompartmentWrapper(JSContext* cx, JSObject* wrapper)
+static void
+NukeRemovedCrossCompartmentWrapper(JSContext* cx, JSObject* wrapper)
 {
     MOZ_ASSERT(wrapper->is<CrossCompartmentWrapperObject>());
 
@@ -501,6 +502,16 @@ js::NukeCrossCompartmentWrapper(JSContext* cx, JSObject* wrapper)
     wrapper->as<ProxyObject>().nuke();
 
     MOZ_ASSERT(IsDeadProxyObject(wrapper));
+}
+
+JS_FRIEND_API(void)
+js::NukeCrossCompartmentWrapper(JSContext* cx, JSObject* wrapper)
+{
+    JSCompartment* comp = wrapper->compartment();
+    auto ptr = comp->lookupWrapper(Wrapper::wrappedObject(wrapper));
+    if (ptr)
+        comp->removeWrapper(ptr);
+    NukeRemovedCrossCompartmentWrapper(cx, wrapper);
 }
 
 /*
@@ -514,14 +525,12 @@ js::NukeCrossCompartmentWrapper(JSContext* cx, JSObject* wrapper)
 JS_FRIEND_API(bool)
 js::NukeCrossCompartmentWrappers(JSContext* cx,
                                  const CompartmentFilter& sourceFilter,
-                                 const CompartmentFilter& targetFilter,
+                                 JSCompartment* target,
                                  js::NukeReferencesToWindow nukeReferencesToWindow,
                                  js::NukeReferencesFromTarget nukeReferencesFromTarget)
 {
     CHECK_REQUEST(cx);
     JSRuntime* rt = cx->runtime();
-
-    EvictAllNurseries(rt);
 
     for (CompartmentsIter c(rt, SkipAtoms); !c.done(); c.next()) {
         if (!sourceFilter.match(c))
@@ -530,18 +539,37 @@ js::NukeCrossCompartmentWrappers(JSContext* cx,
         // If the compartment matches both the source and target filter, we may
         // want to cut both incoming and outgoing wrappers.
         bool nukeAll = (nukeReferencesFromTarget == NukeAllReferences &&
-                        targetFilter.match(c));
+                        target == c.get());
 
-        // Iterate the wrappers looking for anything interesting.
-        for (JSCompartment::WrapperEnum e(c); !e.empty(); e.popFront()) {
-            // Some cross-compartment wrappers are for strings.  We're not
-            // interested in those.
-            const CrossCompartmentKey& k = e.front().key();
+        // Iterate only the wrappers that have target compartment matched unless
+        // |nukeAll| is true. The string wrappers that we're not interested in
+        // won't be iterated, we can exclude them easily because they have
+        // compartment nullptr. Use Maybe to avoid copying from conditionally
+        // initializing NonStringWrapperEnum.
+        mozilla::Maybe<JSCompartment::NonStringWrapperEnum> e;
+        if (MOZ_LIKELY(!nukeAll))
+            e.emplace(c, target);
+        else
+            e.emplace(c);
+        for (; !e->empty(); e->popFront()) {
+            // Skip debugger references because NukeCrossCompartmentWrapper()
+            // doesn't know how to nuke them yet, see bug 1084626 for more
+            // information.
+            const CrossCompartmentKey& k = e->front().key();
             if (!k.is<JSObject*>())
                 continue;
 
-            AutoWrapperRooter wobj(cx, WrapperValue(e));
-            JSObject* wrapped = UncheckedUnwrap(wobj);
+            AutoWrapperRooter wobj(cx, WrapperValue(*e));
+
+            // Unwrap from the wrapped object in CrossCompartmentKey instead of
+            // the wrapper, this could save us a bit of time.
+            JSObject* wrapped = UncheckedUnwrap(k.as<JSObject*>());
+
+            // We never nuke script source objects, since only ever used internally by the JS
+            // engine, and are expected to remain valid throughout a scripts lifetime.
+            if (MOZ_UNLIKELY(wrapped->is<ScriptSourceObject>())) {
+                continue;
+            }
 
             // We only skip nuking window references that point to a target
             // compartment, not the ones that belong to it.
@@ -551,11 +579,9 @@ js::NukeCrossCompartmentWrappers(JSContext* cx,
                 continue;
             }
 
-            if (MOZ_UNLIKELY(nukeAll) || targetFilter.match(wrapped->compartment())) {
-                // We found a wrapper to nuke.
-                e.removeFront();
-                NukeCrossCompartmentWrapper(cx, wobj);
-            }
+            // Now this is the wrapper we want to nuke.
+            e->removeFront();
+            NukeRemovedCrossCompartmentWrapper(cx, wobj);
         }
     }
 
@@ -664,8 +690,7 @@ JS_FRIEND_API(bool)
 js::RecomputeWrappers(JSContext* cx, const CompartmentFilter& sourceFilter,
                       const CompartmentFilter& targetFilter)
 {
-    // Drop any nursery-allocated wrappers.
-    EvictAllNurseries(cx->runtime());
+    bool evictedNursery = false;
 
     AutoWrapperVector toRecompute(cx);
     for (CompartmentsIter c(cx->runtime(), SkipAtoms); !c.done(); c.next()) {
@@ -673,15 +698,16 @@ js::RecomputeWrappers(JSContext* cx, const CompartmentFilter& sourceFilter,
         if (!sourceFilter.match(c))
             continue;
 
+        if (!evictedNursery && c->hasNurseryAllocatedWrapperEntries(targetFilter)) {
+            EvictAllNurseries(cx->runtime());
+            evictedNursery = true;
+        }
+
         // Iterate over the wrappers, filtering appropriately.
-        for (JSCompartment::WrapperEnum e(c); !e.empty(); e.popFront()) {
+        for (JSCompartment::NonStringWrapperEnum e(c, targetFilter); !e.empty(); e.popFront()) {
             // Filter out non-objects.
             CrossCompartmentKey& k = e.front().mutableKey();
             if (!k.is<JSObject*>())
-                continue;
-
-            // Filter by target compartment.
-            if (!targetFilter.match(k.compartment()))
                 continue;
 
             // Add it to the list.

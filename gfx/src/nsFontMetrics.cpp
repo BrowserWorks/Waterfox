@@ -38,7 +38,7 @@ public:
             reinterpret_cast<const uint8_t*>(aString), aLength,
             aDrawTarget,
             aMetrics->AppUnitsPerDevPixel(),
-            ComputeFlags(aMetrics),
+            ComputeFlags(aMetrics), nsTextFrameUtils::Flags(),
             nullptr);
     }
 
@@ -49,7 +49,7 @@ public:
             aString, aLength,
             aDrawTarget,
             aMetrics->AppUnitsPerDevPixel(),
-            ComputeFlags(aMetrics),
+            ComputeFlags(aMetrics), nsTextFrameUtils::Flags(),
             nullptr);
     }
 
@@ -57,21 +57,21 @@ public:
     gfxTextRun *operator->() { return mTextRun.get(); }
 
 private:
-    static uint32_t ComputeFlags(nsFontMetrics* aMetrics) {
-        uint32_t flags = 0;
+    static gfx::ShapedTextFlags ComputeFlags(nsFontMetrics* aMetrics) {
+        gfx::ShapedTextFlags flags = gfx::ShapedTextFlags();
         if (aMetrics->GetTextRunRTL()) {
-            flags |= gfxTextRunFactory::TEXT_IS_RTL;
+            flags |= gfx::ShapedTextFlags::TEXT_IS_RTL;
         }
         if (aMetrics->GetVertical()) {
             switch (aMetrics->GetTextOrientation()) {
             case NS_STYLE_TEXT_ORIENTATION_MIXED:
-                flags |= gfxTextRunFactory::TEXT_ORIENT_VERTICAL_MIXED;
+                flags |= gfx::ShapedTextFlags::TEXT_ORIENT_VERTICAL_MIXED;
                 break;
             case NS_STYLE_TEXT_ORIENTATION_UPRIGHT:
-                flags |= gfxTextRunFactory::TEXT_ORIENT_VERTICAL_UPRIGHT;
+                flags |= gfx::ShapedTextFlags::TEXT_ORIENT_VERTICAL_UPRIGHT;
                 break;
             case NS_STYLE_TEXT_ORIENTATION_SIDEWAYS:
-                flags |= gfxTextRunFactory::TEXT_ORIENT_VERTICAL_SIDEWAYS_RIGHT;
+                flags |= gfx::ShapedTextFlags::TEXT_ORIENT_VERTICAL_SIDEWAYS_RIGHT;
                 break;
             }
         }
@@ -81,29 +81,29 @@ private:
     RefPtr<gfxTextRun> mTextRun;
 };
 
-class StubPropertyProvider : public gfxTextRun::PropertyProvider {
+class StubPropertyProvider final : public gfxTextRun::PropertyProvider {
 public:
-    virtual void GetHyphenationBreaks(gfxTextRun::Range aRange,
-                                      bool* aBreakBefore) {
+    void GetHyphenationBreaks(gfxTextRun::Range aRange,
+                              gfxTextRun::HyphenType* aBreakBefore) const {
         NS_ERROR("This shouldn't be called because we never call BreakAndMeasureText");
     }
-    virtual mozilla::StyleHyphens GetHyphensOption() {
+    mozilla::StyleHyphens GetHyphensOption() const {
         NS_ERROR("This shouldn't be called because we never call BreakAndMeasureText");
         return mozilla::StyleHyphens::None;
     }
-    virtual gfxFloat GetHyphenWidth() {
+    gfxFloat GetHyphenWidth() const {
         NS_ERROR("This shouldn't be called because we never enable hyphens");
         return 0;
     }
-    virtual already_AddRefed<mozilla::gfx::DrawTarget> GetDrawTarget() {
+    already_AddRefed<mozilla::gfx::DrawTarget> GetDrawTarget() const {
         NS_ERROR("This shouldn't be called because we never enable hyphens");
         return nullptr;
     }
-    virtual uint32_t GetAppUnitsPerDevUnit() {
+    uint32_t GetAppUnitsPerDevUnit() const {
         NS_ERROR("This shouldn't be called because we never enable hyphens");
         return 60;
     }
-    virtual void GetSpacing(gfxTextRun::Range aRange, Spacing* aSpacing) {
+    void GetSpacing(gfxTextRun::Range aRange, Spacing* aSpacing) const {
         NS_ERROR("This shouldn't be called because we never enable spacing");
     }
 };
@@ -146,6 +146,8 @@ nsFontMetrics::nsFontMetrics(const nsFont& aFont, const Params& aParams,
 
 nsFontMetrics::~nsFontMetrics()
 {
+    // Should not be dropped by stylo
+    MOZ_ASSERT(NS_IsMainThread());
     if (mDeviceContext) {
         mDeviceContext->FontMetricsDeleted(this);
     }

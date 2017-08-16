@@ -5,7 +5,7 @@ function run_test() {
   run_next_test()
 }
 
-add_task(function* test_observers() {
+add_task(async function test_observers() {
   do_load_manifest("nsDummyObserver.manifest");
 
   let dummyCreated = false;
@@ -14,11 +14,11 @@ add_task(function* test_observers() {
   Services.obs.addObserver(function created() {
     Services.obs.removeObserver(created, "dummy-observer-created");
     dummyCreated = true;
-  }, "dummy-observer-created", false);
+  }, "dummy-observer-created");
   Services.obs.addObserver(function added() {
     Services.obs.removeObserver(added, "dummy-observer-item-added");
     dummyReceivedOnItemAdded = true;
-  }, "dummy-observer-item-added", false);
+  }, "dummy-observer-item-added");
 
   let initialObservers = PlacesUtils.bookmarks.getObservers();
 
@@ -44,7 +44,7 @@ add_task(function* test_observers() {
         Assert.ok(dummyReceivedOnItemAdded);
         resolve();
       }
-    }, false);
+    });
   });
 
   // Add a bookmark
@@ -53,5 +53,5 @@ add_task(function* test_observers() {
                                        PlacesUtils.bookmarks.DEFAULT_INDEX,
                                        "bookmark");
 
-  yield notificationsPromised;
+  await notificationsPromised;
 });

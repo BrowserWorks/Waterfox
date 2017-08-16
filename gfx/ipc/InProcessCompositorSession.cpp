@@ -29,13 +29,14 @@ InProcessCompositorSession::Create(nsIWidget* aWidget,
                                    CSSToLayoutDeviceScale aScale,
                                    const CompositorOptions& aOptions,
                                    bool aUseExternalSurfaceSize,
-                                   const gfx::IntSize& aSurfaceSize)
+                                   const gfx::IntSize& aSurfaceSize,
+                                   uint32_t aNamespace)
 {
   CompositorWidgetInitData initData;
   aWidget->GetCompositorWidgetInitData(&initData);
 
   RefPtr<CompositorWidget> widget = CompositorWidget::CreateLocal(initData, aOptions, aWidget);
-  RefPtr<CompositorBridgeChild> child = new CompositorBridgeChild(aLayerManager);
+  RefPtr<CompositorBridgeChild> child = new CompositorBridgeChild(aLayerManager, aNamespace);
   RefPtr<CompositorBridgeParent> parent =
     child->InitSameProcess(widget, aRootLayerTreeId, aScale, aOptions, aUseExternalSurfaceSize, aSurfaceSize);
 
@@ -60,14 +61,6 @@ InProcessCompositorSession::GetAPZCTreeManager() const
   return mCompositorBridgeParent->GetAPZCTreeManager(mRootLayerTreeId);
 }
 
-bool
-InProcessCompositorSession::Reset(const nsTArray<LayersBackend>& aBackendHints,
-                                  uint64_t aSeqNo,
-                                  TextureFactoryIdentifier* aOutIdentifier)
-{
-  return mCompositorBridgeParent->ResetCompositor(aBackendHints, aSeqNo, aOutIdentifier);
-}
-
 void
 InProcessCompositorSession::Shutdown()
 {
@@ -79,6 +72,12 @@ InProcessCompositorSession::Shutdown()
   mCompositorBridgeChild = nullptr;
   mCompositorBridgeParent = nullptr;
   mCompositorWidget = nullptr;
+#if defined(MOZ_WIDGET_ANDROID)
+  if (mUiCompositorControllerChild) {
+    mUiCompositorControllerChild->Destroy();
+    mUiCompositorControllerChild = nullptr;
+  }
+#endif //defined(MOZ_WIDGET_ANDROID)
 }
 
 } // namespace layers

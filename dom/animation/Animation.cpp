@@ -13,7 +13,7 @@
 #include "mozilla/AutoRestore.h"
 #include "mozilla/AsyncEventDispatcher.h" // For AsyncEventDispatcher
 #include "mozilla/Maybe.h" // For Maybe
-#include "mozilla/AnimationRule.h" // For AnimationRule
+#include "mozilla/TypeTraits.h" // For Forward<>
 #include "nsAnimationManager.h" // For CSSAnimation
 #include "nsDOMMutationObserver.h" // For nsAutoAnimationMutationBatch
 #include "nsIDocument.h" // For nsIDocument
@@ -416,7 +416,9 @@ Animation::GetReady(ErrorResult& aRv)
   }
   if (!mReady) {
     aRv.Throw(NS_ERROR_FAILURE);
-  } else if (PlayState() != AnimationPlayState::Pending) {
+    return nullptr;
+  }
+  if (PlayState() != AnimationPlayState::Pending) {
     mReady->MaybeResolve(this);
   }
   return mReady;
@@ -431,7 +433,9 @@ Animation::GetFinished(ErrorResult& aRv)
   }
   if (!mFinished) {
     aRv.Throw(NS_ERROR_FAILURE);
-  } else if (mFinishedIsResolved) {
+    return nullptr;
+  }
+  if (mFinishedIsResolved) {
     MaybeResolveFinishedPromise();
   }
   return mFinished;
@@ -532,9 +536,18 @@ Animation::Reverse(ErrorResult& aRv)
   SilentlySetPlaybackRate(-mPlaybackRate);
   Play(aRv, LimitBehavior::AutoRewind);
 
+  // If Play() threw, restore state and don't report anything to mutation
+  // observers.
+  if (aRv.Failed()) {
+    SilentlySetPlaybackRate(-mPlaybackRate);
+    return;
+  }
+
   if (IsRelevant()) {
     nsNodeUtils::AnimationChanged(this);
   }
+  // Play(), above, unconditionally calls PostUpdate so we don't need to do
+  // it here.
 }
 
 // ---------------------------------------------------------------------------
@@ -926,7 +939,21 @@ Animation::HasLowerCompositeOrderThan(const Animation& aOther) const
 }
 
 void
-Animation::ComposeStyle(AnimationRule& aStyleRule,
+Animation::WillComposeStyle()
+{
+  mFinishedAtLastComposeStyle = (PlayState() == AnimationPlayState::Finished);
+
+  MOZ_ASSERT(mEffect);
+
+  KeyframeEffectReadOnly* keyframeEffect = mEffect->AsKeyframeEffect();
+  if (keyframeEffect) {
+    keyframeEffect->WillComposeStyle();
+  }
+}
+
+template<typename ComposeAnimationResult>
+void
+Animation::ComposeStyle(ComposeAnimationResult&& aComposeResult,
                         const nsCSSPropertyIDSet& aPropertiesToSkip)
 {
   if (!mEffect) {
@@ -988,13 +1015,13 @@ Animation::ComposeStyle(AnimationRule& aStyleRule,
 
     KeyframeEffectReadOnly* keyframeEffect = mEffect->AsKeyframeEffect();
     if (keyframeEffect) {
-      keyframeEffect->ComposeStyle(aStyleRule, aPropertiesToSkip);
+      keyframeEffect->ComposeStyle(Forward<ComposeAnimationResult>(aComposeResult),
+                                   aPropertiesToSkip);
     }
   }
 
   MOZ_ASSERT(playState == PlayState(),
              "Play state should not change during the course of compositing");
-  mFinishedAtLastComposeStyle = (playState == AnimationPlayState::Finished);
 }
 
 void
@@ -1302,22 +1329,7 @@ Animation::PostUpdate()
   if (!keyframeEffect) {
     return;
   }
-
-  Maybe<NonOwningAnimationTarget> target = keyframeEffect->GetTarget();
-  if (!target) {
-    return;
-  }
-
-  nsPresContext* presContext = keyframeEffect->GetPresContext();
-  if (!presContext) {
-    return;
-  }
-
-  presContext->EffectCompositor()
-             ->RequestRestyle(target->mElement,
-                              target->mPseudoType,
-                              EffectCompositor::RestyleType::Layer,
-                              CascadeLevel());
+  keyframeEffect->RequestRestyle(EffectCompositor::RestyleType::Layer);
 }
 
 void
@@ -1354,6 +1366,7 @@ Animation::ResetPendingTasks()
   CancelPendingTasks();
   if (mReady) {
     mReady->MaybeReject(NS_ERROR_DOM_ABORT_ERR);
+    mReady = nullptr;
   }
 }
 
@@ -1504,6 +1517,18 @@ Animation::IsRunningOnCompositor() const
          mEffect->AsKeyframeEffect() &&
          mEffect->AsKeyframeEffect()->IsRunningOnCompositor();
 }
+
+template
+void
+Animation::ComposeStyle<RefPtr<AnimValuesStyleRule>&>(
+  RefPtr<AnimValuesStyleRule>& aAnimationRule,
+  const nsCSSPropertyIDSet& aPropertiesToSkip);
+
+template
+void
+Animation::ComposeStyle<RawServoAnimationValueMap&>(
+  RawServoAnimationValueMap& aAnimationValues,
+  const nsCSSPropertyIDSet& aPropertiesToSkip);
 
 } // namespace dom
 } // namespace mozilla

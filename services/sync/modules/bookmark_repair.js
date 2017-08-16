@@ -8,18 +8,21 @@ const Cu = Components.utils;
 
 this.EXPORTED_SYMBOLS = ["BookmarkRepairRequestor", "BookmarkRepairResponder"];
 
+Cu.import("resource://gre/modules/XPCOMUtils.jsm");
 Cu.import("resource://gre/modules/Services.jsm");
 Cu.import("resource://gre/modules/Preferences.jsm");
 Cu.import("resource://gre/modules/Log.jsm");
-Cu.import("resource://gre/modules/PlacesUtils.jsm");
-Cu.import("resource://gre/modules/PlacesSyncUtils.jsm");
 Cu.import("resource://services-sync/util.js");
 Cu.import("resource://services-sync/collection_repair.js");
 Cu.import("resource://services-sync/constants.js");
 Cu.import("resource://services-sync/resource.js");
 Cu.import("resource://services-sync/doctor.js");
 Cu.import("resource://services-sync/telemetry.js");
+Cu.import("resource://services-common/async.js");
 Cu.import("resource://services-common/utils.js");
+
+XPCOMUtils.defineLazyModuleGetter(this, "PlacesSyncUtils",
+                                  "resource://gre/modules/PlacesSyncUtils.jsm");
 
 const log = Log.repository.getLogger("Sync.Engine.Bookmarks.Repair");
 
@@ -168,6 +171,27 @@ class BookmarkRepairRequestor extends CollectionRepairRequestor {
 
     // XXX - any others we should consider?
     return ids;
+  }
+
+  _countServerOnlyFixableProblems(validationInfo) {
+    const fixableProblems = ["clientMissing", "serverMissing", "serverDeleted"];
+    return fixableProblems.reduce((numProblems, problemLabel) => {
+      return numProblems + validationInfo.problems[problemLabel].length;
+    }, 0);
+  }
+
+  tryServerOnlyRepairs(validationInfo) {
+    if (this._countServerOnlyFixableProblems(validationInfo) == 0) {
+      return false;
+    }
+    let engine = this.service.engineManager.get("bookmarks");
+    for (let id of validationInfo.problems.serverMissing) {
+      engine._modified.setWeak(id, { tombstone: false });
+    }
+    let toFetch = engine.toFetch.concat(validationInfo.problems.clientMissing,
+                                        validationInfo.problems.serverDeleted);
+    engine.toFetch = Array.from(new Set(toFetch));
+    return true;
   }
 
   /* See if the repairer is willing and able to begin a repair process given
@@ -359,7 +383,7 @@ class BookmarkRepairRequestor extends CollectionRepairRequestor {
       case STATE.FINISHED:
         break;
 
-      case NOT_REPAIRING:
+      case STATE.NOT_REPAIRING:
         // No repair is in progress. This is a common case, so only log trace.
         log.trace("continue repairs called but no repair in progress.");
         break;
@@ -617,7 +641,7 @@ class BookmarkRepairResponder extends CollectionRepairResponder {
     let itemSource = engine.itemSource();
     itemSource.ids = repairable.map(item => item.syncId);
     log.trace(`checking the server for items`, itemSource.ids);
-    let itemsResponse = itemSource.get();
+    let itemsResponse = await itemSource.get();
     // If the response failed, don't bother trying to parse the output.
     // Throwing here means we abort the repair, which isn't ideal for transient
     // errors (eg, no network, 500 service outage etc), but we don't currently
@@ -645,18 +669,16 @@ class BookmarkRepairResponder extends CollectionRepairResponder {
           log.debug(`repair request to upload item '${id}' but it isn't under a syncable root; writing a tombstone`);
           toDelete.add(id);
         }
+      // The item wasn't explicitly requested - only upload if it is syncable
+      // and doesn't exist on the server.
+      } else if (syncable && !existRemotely.has(id)) {
+        log.debug(`repair request found related item '${id}' which isn't on the server; uploading`);
+        toUpload.add(id);
+      } else if (!syncable && existRemotely.has(id)) {
+        log.debug(`repair request found non-syncable related item '${id}' on the server; writing a tombstone`);
+        toDelete.add(id);
       } else {
-        // The item wasn't explicitly requested - only upload if it is syncable
-        // and doesn't exist on the server.
-        if (syncable && !existRemotely.has(id)) {
-          log.debug(`repair request found related item '${id}' which isn't on the server; uploading`);
-          toUpload.add(id);
-        } else if (!syncable && existRemotely.has(id)) {
-          log.debug(`repair request found non-syncable related item '${id}' on the server; writing a tombstone`);
-          toDelete.add(id);
-        } else {
-          log.debug(`repair request found related item '${id}' which we will not upload; ignoring`);
-        }
+        log.debug(`repair request found related item '${id}' which we will not upload; ignoring`);
       }
     }
     return { toUpload, toDelete };

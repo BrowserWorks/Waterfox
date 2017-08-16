@@ -49,7 +49,6 @@
 #include "nsIDocShell.h"
 #include "nsNameSpaceManager.h"
 #include "nsError.h"
-#include "nsScriptLoader.h"
 #include "nsIPrincipal.h"
 #include "nsContainerFrame.h"
 #include "nsStyleUtil.h"
@@ -91,6 +90,7 @@
 #include "mozilla/dom/FromParser.h"
 #include "mozilla/dom/Link.h"
 #include "mozilla/BloomFilter.h"
+#include "mozilla/dom/ScriptLoader.h"
 
 #include "nsVariant.h"
 #include "nsDOMTokenList.h"
@@ -175,9 +175,14 @@ NS_INTERFACE_MAP_BEGIN(nsGenericHTMLElement)
 NS_INTERFACE_MAP_END_INHERITING(nsGenericHTMLElementBase)
 
 nsresult
-nsGenericHTMLElement::CopyInnerTo(Element* aDst)
+nsGenericHTMLElement::CopyInnerTo(Element* aDst, bool aPreallocateChildren)
 {
   nsresult rv;
+
+  rv = static_cast<nsGenericHTMLElement*>(aDst)->mAttrsAndChildren.
+       EnsureCapacityToClone(mAttrsAndChildren, aPreallocateChildren);
+  NS_ENSURE_SUCCESS(rv, rv);
+
   int32_t i, count = GetAttrCount();
   for (i = 0; i < count; ++i) {
     const nsAttrName *name = mAttrsAndChildren.AttrNameAt(i);
@@ -233,17 +238,19 @@ nsGenericHTMLElement::GetAccessKeyLabel(nsString& aLabel)
   }
 }
 
-static bool IS_TABLE_CELL(nsIAtom* frameType) {
-  return nsGkAtoms::tableCellFrame == frameType ||
-    nsGkAtoms::bcTableCellFrame == frameType;
+static bool
+IS_TABLE_CELL(LayoutFrameType frameType)
+{
+  return LayoutFrameType::TableCell == frameType ||
+         LayoutFrameType::BCTableCell == frameType;
 }
 
 static bool
 IsOffsetParent(nsIFrame* aFrame)
 {
-  nsIAtom* frameType = aFrame->GetType();
-  
-  if (IS_TABLE_CELL(frameType) || frameType == nsGkAtoms::tableFrame) {
+  LayoutFrameType frameType = aFrame->Type();
+
+  if (IS_TABLE_CELL(frameType) || frameType == LayoutFrameType::Table) {
     // Per the IDL for Element, only td, th, and table are acceptable offsetParents
     // apart from body or positioned elements; we need to check the content type as
     // well as the frame type so we ignore anonymous tables created by an element
@@ -270,8 +277,7 @@ nsGenericHTMLElement::GetOffsetRect(CSSIntRect& aRect)
   nsIFrame* parent = frame->GetParent();
   nsPoint origin(0, 0);
 
-  if (parent && parent->GetType() == nsGkAtoms::tableWrapperFrame &&
-      frame->GetType() == nsGkAtoms::tableFrame) {
+  if (parent && parent->IsTableWrapperFrame() && frame->IsTableFrame()) {
     origin = parent->GetPositionIgnoringScrolling();
     parent = parent->GetParent();
   }
@@ -403,7 +409,7 @@ nsGenericHTMLElement::Spellcheck()
   }
 
   // Is this a multiline plaintext input?
-  int32_t controlType = formControl->GetType();
+  int32_t controlType = formControl->ControlType();
   if (controlType == NS_FORM_TEXTAREA) {
     return true;             // Spellchecked by default
   }
@@ -638,8 +644,46 @@ nsGenericHTMLElement::GetHrefURIForAnchors() const
 }
 
 nsresult
+nsGenericHTMLElement::BeforeSetAttr(int32_t aNamespaceID, nsIAtom* aName,
+                                    const nsAttrValueOrString* aValue,
+                                    bool aNotify)
+{
+  if (aNamespaceID == kNameSpaceID_None) {
+    if (aName == nsGkAtoms::accesskey) {
+      // Have to unregister before clearing flag. See UnregAccessKey
+      UnregAccessKey();
+      if (!aValue) {
+        UnsetFlags(NODE_HAS_ACCESSKEY);
+      }
+    } else if (aName == nsGkAtoms::name) {
+      // Have to do this before clearing flag. See RemoveFromNameTable
+      RemoveFromNameTable();
+      if (!aValue || aValue->IsEmpty()) {
+        ClearHasName();
+      }
+    } else if (aName == nsGkAtoms::contenteditable) {
+      if (aValue) {
+        // Set this before the attribute is set so that any subclass code that
+        // runs before the attribute is set won't think we're missing a
+        // contenteditable attr when we actually have one.
+        SetMayHaveContentEditableAttr();
+      }
+    }
+    if (!aValue && IsEventAttributeName(aName)) {
+      if (EventListenerManager* manager = GetExistingListenerManager()) {
+        manager->RemoveEventHandler(aName, EmptyString());
+      }
+    }
+  }
+
+  return nsGenericHTMLElementBase::BeforeSetAttr(aNamespaceID, aName, aValue,
+                                                 aNotify);
+}
+
+nsresult
 nsGenericHTMLElement::AfterSetAttr(int32_t aNamespaceID, nsIAtom* aName,
-                                   const nsAttrValue* aValue, bool aNotify)
+                                   const nsAttrValue* aValue,
+                                   const nsAttrValue* aOldValue, bool aNotify)
 {
   if (aNamespaceID == kNameSpaceID_None) {
     if (IsEventAttributeName(aName) && aValue) {
@@ -676,11 +720,39 @@ nsGenericHTMLElement::AfterSetAttr(int32_t aNamespaceID, nsIAtom* aName,
         }
       }
       SetDirectionalityOnDescendants(this, dir, aNotify);
+    } else if (aName == nsGkAtoms::contenteditable) {
+      int32_t editableCountDelta = 0;
+      if (aOldValue &&
+          (aOldValue->Equals(NS_LITERAL_STRING("true"), eIgnoreCase) ||
+          aOldValue->Equals(EmptyString(), eIgnoreCase))) {
+        editableCountDelta = -1;
+      }
+      if (aValue && (aValue->Equals(NS_LITERAL_STRING("true"), eIgnoreCase) ||
+                     aValue->Equals(EmptyString(), eIgnoreCase))) {
+        ++editableCountDelta;
+      }
+      ChangeEditableState(editableCountDelta);
+    } else if (aName == nsGkAtoms::accesskey) {
+      if (aValue && !aValue->Equals(EmptyString(), eIgnoreCase)) {
+        SetFlags(NODE_HAS_ACCESSKEY);
+        RegAccessKey();
+      }
+    } else if (aName == nsGkAtoms::name) {
+      if (aValue && !aValue->Equals(EmptyString(), eIgnoreCase) &&
+          CanHaveName(NodeInfo()->NameAtom())) {
+        // This may not be quite right because we can have subclass code run
+        // before here. But in practice subclasses don't care about this flag,
+        // and in particular selector matching does not care.  Otherwise we'd
+        // want to handle it like we handle id attributes (in PreIdMaybeChange
+        // and PostIdMaybeChange).
+        SetHasName();
+        AddToNameTable(aValue->GetAtomValue());
+      }
     }
   }
 
   return nsGenericHTMLElementBase::AfterSetAttr(aNamespaceID, aName,
-                                                aValue, aNotify);
+                                                aValue, aOldValue, aNotify);
 }
 
 EventListenerManager*
@@ -801,87 +873,6 @@ nsGenericHTMLElement::SetOn##name_(EventHandlerNonNull* handler)              \
 #undef FORWARDED_EVENT
 #undef EVENT
 
-nsresult
-nsGenericHTMLElement::SetAttr(int32_t aNameSpaceID, nsIAtom* aName,
-                              nsIAtom* aPrefix, const nsAString& aValue,
-                              bool aNotify)
-{
-  bool contentEditable = aNameSpaceID == kNameSpaceID_None &&
-                           aName == nsGkAtoms::contenteditable;
-  bool accessKey = aName == nsGkAtoms::accesskey && 
-                     aNameSpaceID == kNameSpaceID_None;
-
-  int32_t change = 0;
-  if (contentEditable) {
-    change = GetContentEditableValue() == eTrue ? -1 : 0;
-    SetMayHaveContentEditableAttr();
-  }
-
-  if (accessKey) {
-    UnregAccessKey();
-  }
-
-  nsresult rv = nsStyledElement::SetAttr(aNameSpaceID, aName, aPrefix, aValue,
-                                         aNotify);
-  NS_ENSURE_SUCCESS(rv, rv);
-
-  if (contentEditable) {
-    if (aValue.IsEmpty() || aValue.LowerCaseEqualsLiteral("true")) {
-      change += 1;
-    }
-
-    ChangeEditableState(change);
-  }
-
-  if (accessKey && !aValue.IsEmpty()) {
-    SetFlags(NODE_HAS_ACCESSKEY);
-    RegAccessKey();
-  }
-
-  return NS_OK;
-}
-
-nsresult
-nsGenericHTMLElement::UnsetAttr(int32_t aNameSpaceID, nsIAtom* aAttribute,
-                                bool aNotify)
-{
-  bool contentEditable = false;
-  int32_t contentEditableChange = 0;
-
-  // Check for event handlers
-  if (aNameSpaceID == kNameSpaceID_None) {
-    if (aAttribute == nsGkAtoms::name) {
-      // Have to do this before clearing flag. See RemoveFromNameTable
-      RemoveFromNameTable();
-      ClearHasName();
-    }
-    else if (aAttribute == nsGkAtoms::contenteditable) {
-      contentEditable = true;
-      contentEditableChange = GetContentEditableValue() == eTrue ? -1 : 0;
-    }
-    else if (aAttribute == nsGkAtoms::accesskey) {
-      // Have to unregister before clearing flag. See UnregAccessKey
-      UnregAccessKey();
-      UnsetFlags(NODE_HAS_ACCESSKEY);
-    }
-    else if (IsEventAttributeName(aAttribute)) {
-      if (EventListenerManager* manager = GetExistingListenerManager()) {
-        manager->RemoveEventHandler(aAttribute, EmptyString());
-      }
-    }
-  }
-
-  nsresult rv = nsGenericHTMLElementBase::UnsetAttr(aNameSpaceID, aAttribute,
-                                                    aNotify);
-  NS_ENSURE_SUCCESS(rv, rv);
-
-  if (contentEditable) {
-    ChangeEditableState(contentEditableChange);
-  }
-
-  return NS_OK;
-}
-
 void
 nsGenericHTMLElement::GetBaseTarget(nsAString& aBaseTarget) const
 {
@@ -911,20 +902,11 @@ nsGenericHTMLElement::ParseAttribute(int32_t aNamespaceID,
 
     if (aAttribute == nsGkAtoms::name) {
       // Store name as an atom.  name="" means that the element has no name,
-      // not that it has an emptystring as the name.
-      RemoveFromNameTable();
+      // not that it has an empty string as the name.
       if (aValue.IsEmpty()) {
-        ClearHasName();
         return false;
       }
-
       aResult.ParseAtom(aValue);
-
-      if (CanHaveName(NodeInfo()->NameAtom())) {
-        SetHasName();
-        AddToNameTable(aResult.GetAtomValue());
-      }
-      
       return true;
     }
 
@@ -962,14 +944,8 @@ nsGenericHTMLElement::ParseBackgroundAttribute(int32_t aNamespaceID,
       return false;
     }
 
-    nsString value(aValue);
-    RefPtr<nsStringBuffer> buffer = nsCSSValue::BufferFromString(value);
-    if (MOZ_UNLIKELY(!buffer)) {
-      return false;
-    }
-
     mozilla::css::URLValue *url =
-      new mozilla::css::URLValue(uri, buffer, baseURI, doc->GetDocumentURI(),
+      new mozilla::css::URLValue(uri, aValue, baseURI, doc->GetDocumentURI(),
                                  NodePrincipal());
     aResult.SetTo(url, &aValue);
     return true;
@@ -1522,36 +1498,13 @@ nsGenericHTMLElement::MapBackgroundInto(const nsMappedAttributes* aAttributes,
   if (!aData->ShouldComputeStyleStruct(NS_STYLE_INHERIT_BIT(Background)))
     return;
 
-  if (aData->IsServo()) {
-    // FIXME(bug 1339711)
-    NS_WARNING("stylo: cannot handle background presentation attribute");
-    return;
-  }
-
-  nsPresContext* presContext = aData->PresContext();
-
   if (!aData->PropertyIsSet(eCSSProperty_background_image) &&
-      presContext->UseDocumentColors()) {
+      aData->PresContext()->UseDocumentColors()) {
     // background
     nsAttrValue* value =
       const_cast<nsAttrValue*>(aAttributes->GetAttr(nsGkAtoms::background));
     if (value) {
-      nsRuleData* aRuleData = aData->AsGecko();
-      // Gecko-specific code
-      // Gecko caches the image on the attr directly, but we need not
-      // do the same thing for Servo.
-      if (aRuleData) {
-        nsCSSValue* backImage = aRuleData->ValueForBackgroundImage();
-        // If the value is an image, or it is a URL and we attempted a load,
-        // put it in the style tree.
-        if (value->Type() == nsAttrValue::eURL) {
-          value->LoadImage(presContext->Document());
-        }
-        if (value->Type() == nsAttrValue::eImage) {
-          nsCSSValueList* list = backImage->SetListValue();
-          list->mValue.SetImageValue(value->GetImageValue());
-        }
-      }
+      aData->SetBackgroundImage(*value);
     }
   }
 }
@@ -1730,8 +1683,10 @@ nsGenericHTMLElement::TouchEventsEnabled(JSContext* aCx, JSObject* aGlobal)
 
 //----------------------------------------------------------------------
 
-nsGenericHTMLFormElement::nsGenericHTMLFormElement(already_AddRefed<mozilla::dom::NodeInfo>& aNodeInfo)
+nsGenericHTMLFormElement::nsGenericHTMLFormElement(already_AddRefed<mozilla::dom::NodeInfo>& aNodeInfo,
+                                                   uint8_t aType)
   : nsGenericHTMLElement(aNodeInfo)
+  , nsIFormControl(aType)
   , mForm(nullptr)
   , mFieldSet(nullptr)
 {
@@ -1781,12 +1736,21 @@ nsGenericHTMLFormElement::SetForm(nsIDOMHTMLFormElement* aForm)
   NS_ASSERTION(!mForm,
                "We don't support switching from one non-null form to another.");
 
+  SetForm(static_cast<HTMLFormElement*>(aForm), false);
+}
+
+void nsGenericHTMLFormElement::SetForm(HTMLFormElement* aForm, bool aBindToTree)
+{
+  if (aForm) {
+    BeforeSetForm(aBindToTree);
+  }
+
   // keep a *weak* ref to the form here
-  mForm = static_cast<HTMLFormElement*>(aForm);
+  mForm = aForm;
 }
 
 void
-nsGenericHTMLFormElement::ClearForm(bool aRemoveFromForm)
+nsGenericHTMLFormElement::ClearForm(bool aRemoveFromForm, bool aUnbindOrDelete)
 {
   NS_ASSERTION((mForm != nullptr) == HasFlag(ADDED_TO_FORM),
                "Form control should have had flag set correctly");
@@ -1813,6 +1777,8 @@ nsGenericHTMLFormElement::ClearForm(bool aRemoveFromForm)
 
   UnsetFlags(ADDED_TO_FORM);
   mForm = nullptr;
+
+  AfterClearForm(aUnbindOrDelete);
 }
 
 Element*
@@ -1897,12 +1863,12 @@ nsGenericHTMLFormElement::UnbindFromTree(bool aDeep, bool aNullParent)
     // Might need to unset mForm
     if (aNullParent) {
       // No more parent means no more form
-      ClearForm(true);
+      ClearForm(true, true);
     } else {
       // Recheck whether we should still have an mForm.
       if (HasAttr(kNameSpaceID_None, nsGkAtoms::form) ||
           !FindAncestorForm(mForm)) {
-        ClearForm(true);
+        ClearForm(true, true);
       } else {
         UnsetFlags(MAYBE_ORPHAN_FORM_ELEMENT);
       }
@@ -1929,7 +1895,7 @@ nsGenericHTMLFormElement::UnbindFromTree(bool aDeep, bool aNullParent)
 
 nsresult
 nsGenericHTMLFormElement::BeforeSetAttr(int32_t aNameSpaceID, nsIAtom* aName,
-                                        nsAttrValueOrString* aValue,
+                                        const nsAttrValueOrString* aValue,
                                         bool aNotify)
 {
   if (aNameSpaceID == kNameSpaceID_None) {
@@ -1959,13 +1925,6 @@ nsGenericHTMLFormElement::BeforeSetAttr(int32_t aNameSpaceID, nsIAtom* aName,
       }
 
       mForm->RemoveElement(this, false);
-
-      // Removing the element from the form can make it not be the default
-      // control anymore.  Go ahead and notify on that change, though we might
-      // end up readding and becoming the default control again in
-      // AfterSetAttr.
-      // FIXME: Bug 656197
-      UpdateState(aNotify);
     }
 
     if (aName == nsGkAtoms::form) {
@@ -1986,7 +1945,8 @@ nsGenericHTMLFormElement::BeforeSetAttr(int32_t aNameSpaceID, nsIAtom* aName,
 
 nsresult
 nsGenericHTMLFormElement::AfterSetAttr(int32_t aNameSpaceID, nsIAtom* aName,
-                                       const nsAttrValue* aValue, bool aNotify)
+                                       const nsAttrValue* aValue,
+                                       const nsAttrValue* aOldValue, bool aNotify)
 {
   if (aNameSpaceID == kNameSpaceID_None) {
     // add the control to the hashtable as needed
@@ -2015,12 +1975,6 @@ nsGenericHTMLFormElement::AfterSetAttr(int32_t aNameSpaceID, nsIAtom* aName,
       }
 
       mForm->AddElement(this, false, aNotify);
-
-      // Adding the element to the form can make it be the default control .
-      // Go ahead and notify on that change.
-      // Note: no need to notify on CanBeDisabled(), since type attr
-      // changes can't affect that.
-      UpdateState(aNotify);
     }
 
     if (aName == nsGkAtoms::form) {
@@ -2041,7 +1995,7 @@ nsGenericHTMLFormElement::AfterSetAttr(int32_t aNameSpaceID, nsIAtom* aName,
   }
 
   return nsGenericHTMLElement::AfterSetAttr(aNameSpaceID, aName,
-                                            aValue, aNotify);
+                                            aValue, aOldValue, aNotify);
 }
 
 nsresult
@@ -2103,7 +2057,7 @@ nsGenericHTMLFormElement::ForgetFieldSet(nsIContent* aFieldset)
 bool
 nsGenericHTMLFormElement::CanBeDisabled() const
 {
-  int32_t type = GetType();
+  int32_t type = ControlType();
   // It's easier to test the types that _cannot_ be disabled
   return
     type != NS_FORM_OBJECT &&
@@ -2303,7 +2257,7 @@ nsGenericHTMLFormElement::UpdateFormOwner(bool aBindToTree,
   bool needStateUpdate = false;
   if (!aBindToTree) {
     needStateUpdate = mForm && mForm->IsDefaultSubmitElement(this);
-    ClearForm(true);
+    ClearForm(true, false);
   }
 
   HTMLFormElement *oldForm = mForm;
@@ -2329,7 +2283,7 @@ nsGenericHTMLFormElement::UpdateFormOwner(bool aBindToTree,
                      "associated with the id in @form!");
 
         if (element && element->IsHTMLElement(nsGkAtoms::form)) {
-          mForm = static_cast<HTMLFormElement*>(element);
+          SetForm(static_cast<HTMLFormElement*>(element), aBindToTree);
         }
       }
      } else {
@@ -2339,7 +2293,7 @@ nsGenericHTMLFormElement::UpdateFormOwner(bool aBindToTree,
       // it to the right value.  Also note that even if being bound here didn't
       // change our parent, we still need to search, since our parent chain
       // probably changed _somewhere_.
-      mForm = FindAncestorForm();
+      SetForm(FindAncestorForm(), aBindToTree);
     }
   }
 
@@ -2416,7 +2370,7 @@ bool
 nsGenericHTMLFormElement::IsLabelable() const
 {
   // TODO: keygen should be in that list, see bug 101019.
-  uint32_t type = GetType();
+  uint32_t type = ControlType();
   return (type & NS_FORM_INPUT_ELEMENT && type != NS_FORM_INPUT_HIDDEN) ||
          type & NS_FORM_BUTTON_ELEMENT ||
          // type == NS_FORM_KEYGEN ||
@@ -2450,6 +2404,7 @@ nsGenericHTMLElement::Click(CallerType aCallerType)
   // Mark this event trusted if Click() is called from system code.
   WidgetMouseEvent event(aCallerType == CallerType::System,
                          eMouseClick, nullptr, WidgetMouseEvent::eReal);
+  event.mFlags.mIsPositionless = true;
   event.inputSource = nsIDOMMouseEvent::MOZ_SOURCE_UNKNOWN;
 
   EventDispatcher::Dispatch(static_cast<nsIContent*>(this), context, &event);
@@ -2574,6 +2529,7 @@ nsGenericHTMLElement::DispatchSimulatedClick(nsGenericHTMLElement* aElement,
   WidgetMouseEvent event(aIsTrusted, eMouseClick, nullptr,
                          WidgetMouseEvent::eReal);
   event.inputSource = nsIDOMMouseEvent::MOZ_SOURCE_KEYBOARD;
+  event.mFlags.mIsPositionless = true;
   return EventDispatcher::Dispatch(ToSupports(aElement), aPresContext, &event);
 }
 
@@ -2741,9 +2697,9 @@ nsGenericHTMLElement::ChangeEditableState(int32_t aChange)
 //----------------------------------------------------------------------
 
 nsGenericHTMLFormElementWithState::nsGenericHTMLFormElementWithState(
-    already_AddRefed<mozilla::dom::NodeInfo>& aNodeInfo
+    already_AddRefed<mozilla::dom::NodeInfo>& aNodeInfo, uint8_t aType
   )
-  : nsGenericHTMLFormElement(aNodeInfo)
+  : nsGenericHTMLFormElement(aNodeInfo, aType)
 {
   mStateKey.SetIsVoid(true);
 }
@@ -2850,8 +2806,9 @@ nsGenericHTMLFormElementWithState::RestoreFormControlState()
 }
 
 void
-nsGenericHTMLFormElementWithState::NodeInfoChanged()
+nsGenericHTMLFormElementWithState::NodeInfoChanged(nsIDocument* aOldDoc)
 {
+  nsGenericHTMLElement::NodeInfoChanged(aOldDoc);
   mStateKey.SetIsVoid(true);
 }
 
@@ -2958,8 +2915,8 @@ IsOrHasAncestorWithDisplayNone(Element* aElement, nsIPresShell* aPresShell)
     if (sc) {
       sc = styleSet->ResolveStyleFor(elementsToCheck[i], sc, LazyComputeBehavior::Assert);
     } else {
-      sc = nsComputedDOMStyle::GetStyleContextForElementNoFlush(elementsToCheck[i],
-                                                                nullptr, aPresShell);
+      sc = nsComputedDOMStyle::GetStyleContextNoFlush(elementsToCheck[i],
+                                                      nullptr, aPresShell);
     }
     if (sc->StyleDisplay()->mDisplay == StyleDisplay::None) {
       return true;

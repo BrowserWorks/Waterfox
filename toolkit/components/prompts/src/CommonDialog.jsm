@@ -21,14 +21,14 @@ this.CommonDialog = function CommonDialog(args, ui) {
 }
 
 CommonDialog.prototype = {
-    args : null,
-    ui   : null,
+    args: null,
+    ui: null,
 
-    hasInputField : true,
-    numButtons    : undefined,
-    iconClass     : undefined,
-    soundID       : undefined,
-    focusTimer    : null,
+    hasInputField: true,
+    numButtons: undefined,
+    iconClass: undefined,
+    soundID: undefined,
+    focusTimer: null,
 
     onLoad(xulDialog) {
         switch (this.args.promptType) {
@@ -188,7 +188,7 @@ CommonDialog.prototype = {
         let topic = "common-dialog-loaded";
         if (!xulDialog)
             topic = "tabmodal-dialog-loaded";
-        Services.obs.notifyObservers(this.ui.prompt, topic, null);
+        Services.obs.notifyObservers(this.ui.prompt, topic);
     },
 
     setLabelForNode(aNode, aLabel) {

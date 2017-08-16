@@ -23,12 +23,10 @@ const Menu = require("devtools/client/framework/menu");
 const MenuItem = require("devtools/client/framework/menu-item");
 
 const {HTMLBreadcrumbs} = require("devtools/client/inspector/breadcrumbs");
-const BoxModel = require("devtools/client/inspector/boxmodel/box-model");
-const {FontInspector} = require("devtools/client/inspector/fonts/fonts");
 const GridInspector = require("devtools/client/inspector/grids/grid-inspector");
 const {InspectorSearch} = require("devtools/client/inspector/inspector-search");
-const {RuleViewTool} = require("devtools/client/inspector/rules/rules");
 const HighlightersOverlay = require("devtools/client/inspector/shared/highlighters-overlay");
+const ReflowTracker = require("devtools/client/inspector/shared/reflow-tracker");
 const {ToolSidebar} = require("devtools/client/inspector/toolsidebar");
 const MarkupView = require("devtools/client/inspector/markup/markup");
 const {CommandUtils} = require("devtools/client/shared/developer-toolbar");
@@ -86,13 +84,20 @@ const PORTRAIT_MODE_WIDTH = 700;
  *      to source-mapped files)
  */
 function Inspector(toolbox) {
+  EventEmitter.decorate(this);
+
   this._toolbox = toolbox;
   this._target = toolbox.target;
   this.panelDoc = window.document;
   this.panelWin = window;
   this.panelWin.inspector = this;
 
+  // Map [panel id => panel instance]
+  // Stores all the instances of sidebar panels like rule view, computed view, ...
+  this._panels = new Map();
+
   this.highlighters = new HighlightersOverlay(this);
+  this.reflowTracker = new ReflowTracker(this._target);
   this.store = Store();
   this.telemetry = new Telemetry();
 
@@ -111,11 +116,12 @@ function Inspector(toolbox) {
   this.onPanelWindowResize = this.onPanelWindowResize.bind(this);
   this.onSidebarShown = this.onSidebarShown.bind(this);
   this.onSidebarHidden = this.onSidebarHidden.bind(this);
+  this.onSidebarSelect = this.onSidebarSelect.bind(this);
+  this.onShowBoxModelHighlighterForNode =
+    this.onShowBoxModelHighlighterForNode.bind(this);
 
   this._target.on("will-navigate", this._onBeforeNavigate);
   this._detectingActorFeatures = this._detectActorFeatures();
-
-  EventEmitter.decorate(this);
 }
 
 Inspector.prototype = {
@@ -537,6 +543,51 @@ Inspector.prototype = {
     Services.prefs.setIntPref("devtools.toolsidebar-height.inspector", state.height);
   },
 
+  onSidebarSelect: function (event, toolId) {
+    // Save the currently selected sidebar panel
+    Services.prefs.setCharPref("devtools.inspector.activeSidebar", toolId);
+
+    // Then forces the panel creation by calling getPanel
+    // (This allows lazy loading the panels only once we select them)
+    this.getPanel(toolId);
+  },
+
+  /**
+   * Lazily get and create panel instances displayed in the sidebar
+   */
+  getPanel: function (id) {
+    if (this._panels.has(id)) {
+      return this._panels.get(id);
+    }
+    let panel;
+    switch (id) {
+      case "computedview":
+        const {ComputedViewTool} =
+          this.browserRequire("devtools/client/inspector/computed/computed");
+        panel = new ComputedViewTool(this, this.panelWin);
+        break;
+      case "ruleview":
+        const {RuleViewTool} = require("devtools/client/inspector/rules/rules");
+        panel = new RuleViewTool(this, this.panelWin);
+        break;
+      case "boxmodel":
+        // box-model isn't a panel on its own, it used to, now it is being used by
+        // computed view and layout which retrieves an instance via getPanel.
+        const BoxModel = require("devtools/client/inspector/boxmodel/box-model");
+        panel = new BoxModel(this, this.panelWin);
+        break;
+      case "fontinspector":
+        const {FontInspector} = require("devtools/client/inspector/fonts/fonts");
+        panel = new FontInspector(this, this.panelWin);
+        break;
+      default:
+        // This is a custom panel or a non lazy-loaded one.
+        return null;
+    }
+    this._panels.set(id, panel);
+    return panel;
+  },
+
   /**
    * Build the sidebar.
    */
@@ -545,14 +596,9 @@ Inspector.prototype = {
     this.sidebar = new ToolSidebar(tabbox, this, "inspector", {
       showAllTabsMenu: true
     });
+    this.sidebar.on("select", this.onSidebarSelect);
 
     let defaultTab = Services.prefs.getCharPref("devtools.inspector.activeSidebar");
-
-    this._setDefaultSidebar = (event, toolId) => {
-      Services.prefs.setCharPref("devtools.inspector.activeSidebar", toolId);
-    };
-
-    this.sidebar.on("select", this._setDefaultSidebar);
 
     if (!Services.prefs.getBoolPref("devtools.fontinspector.enabled") &&
        defaultTab == "fontinspector") {
@@ -570,14 +616,9 @@ Inspector.prototype = {
       INSPECTOR_L10N.getStr("inspector.sidebar.computedViewTitle"),
       defaultTab == "computedview");
 
-    this.ruleview = new RuleViewTool(this, this.panelWin);
-    this.boxmodel = new BoxModel(this, this.panelWin);
-
-    const {ComputedViewTool} =
-      this.browserRequire("devtools/client/inspector/computed/computed");
-    this.computedview = new ComputedViewTool(this, this.panelWin);
-
     if (Services.prefs.getBoolPref("devtools.layoutview.enabled")) {
+      // Grid and layout panels aren't lazy-loaded as their module end up
+      // calling inspector.addSidebarTab
       this.gridInspector = new GridInspector(this, this.panelWin);
 
       const LayoutView = this.browserRequire("devtools/client/inspector/layout/layout");
@@ -599,7 +640,6 @@ Inspector.prototype = {
         INSPECTOR_L10N.getStr("inspector.sidebar.fontInspectorTitle"),
         defaultTab == "fontinspector");
 
-      this.fontInspector = new FontInspector(this, this.panelWin);
       this.sidebar.toggleTab(true, "fontinspector");
     }
 
@@ -922,20 +962,17 @@ Inspector.prototype = {
     this.target.off("thread-resumed", this.updateDebuggerPausedWarning);
     this._toolbox.off("select", this.updateDebuggerPausedWarning);
 
-    if (this.ruleview) {
-      this.ruleview.destroy();
+    for (let [, panel] of this._panels) {
+      panel.destroy();
     }
+    this._panels.clear();
 
-    if (this.computedview) {
-      this.computedview.destroy();
+    if (this.gridInspector) {
+      this.gridInspector.destroy();
     }
 
     if (this.layoutview) {
       this.layoutview.destroy();
-    }
-
-    if (this.fontInspector) {
-      this.fontInspector.destroy();
     }
 
     let cssPropertiesDestroyer = this._cssPropertiesLoaded.then(({front}) => {
@@ -944,7 +981,7 @@ Inspector.prototype = {
       }
     });
 
-    this.sidebar.off("select", this._setDefaultSidebar);
+    this.sidebar.off("select", this.onSidebarSelect);
     let sidebarDestroyer = this.sidebar.destroy();
 
     this.teardownSplitter();
@@ -956,6 +993,10 @@ Inspector.prototype = {
 
     let markupDestroyer = this._destroyMarkup();
 
+    this.highlighters.destroy();
+    this.reflowTracker.destroy();
+    this.search.destroy();
+
     this._toolbox = null;
     this.breadcrumbs = null;
     this.panelDoc = null;
@@ -964,11 +1005,7 @@ Inspector.prototype = {
     this.sidebar = null;
     this.store = null;
     this.target = null;
-
-    this.highlighters.destroy();
     this.highlighters = null;
-
-    this.search.destroy();
     this.search = null;
     this.searchBox = null;
 
@@ -1145,7 +1182,7 @@ Inspector.prototype = {
       id: "node-menu-screenshotnode",
       label: INSPECTOR_L10N.getStr("inspectorScreenshotNode.label"),
       disabled: !isScreenshotable,
-      click: () => this.screenshotNode(),
+      click: () => this.screenshotNode().catch(console.error),
     }));
     menu.append(new MenuItem({
       id: "node-menu-useinconsole",
@@ -1768,16 +1805,23 @@ Inspector.prototype = {
   /**
    * Initiate gcli screenshot command on selected node.
    */
-  screenshotNode: function () {
+  screenshotNode: Task.async(function* () {
     const command = Services.prefs.getBoolPref("devtools.screenshot.clipboard.enabled") ?
       "screenshot --file --clipboard --selector" :
       "screenshot --file --selector";
+
+    // Bug 1332936 - it's possible to call `screenshotNode` while the BoxModel highlighter
+    // is still visible, therefore showing it in the picture.
+    // To avoid that, we have to hide it before taking the screenshot. The `hideBoxModel`
+    // will do that, calling `hide` for the highlighter only if previously shown.
+    yield this.highlighter.hideBoxModel();
+
     // Bug 1180314 -  CssSelector might contain white space so need to make sure it is
     // passed to screenshot as a single parameter.  More work *might* be needed if
     // CssSelector could contain escaped single- or double-quotes, backslashes, etc.
     CommandUtils.executeOnTarget(this._target,
       `${command} '${this.selectionCssSelector}'`);
-  },
+  }),
 
   /**
    * Scroll the node into view.
@@ -1936,7 +1980,50 @@ Inspector.prototype = {
     this.inspector.resolveRelativeURL(link, this.selection.nodeFront).then(url => {
       clipboardHelper.copyString(url);
     }, console.error);
-  }
+  },
+
+  /**
+   * Returns an object containing the shared handler functions used in the box
+   * model and grid React components.
+   */
+  getCommonComponentProps() {
+    return {
+      setSelectedNode: this.selection.setNodeFront,
+      onShowBoxModelHighlighterForNode: this.onShowBoxModelHighlighterForNode,
+    };
+  },
+
+  /**
+   * Shows the box-model highlighter on the element corresponding to the provided
+   * NodeFront.
+   *
+   * @param  {NodeFront} nodeFront
+   *         The node to highlight.
+   * @param  {Object} options
+   *         Options passed to the highlighter actor.
+   */
+  onShowBoxModelHighlighterForNode(nodeFront, options) {
+    let toolbox = this.toolbox;
+    toolbox.highlighterUtils.highlightNodeFront(nodeFront, options);
+  },
+
+  async inspectNodeActor(nodeActor, inspectFromAnnotation) {
+    const nodeFront = await this.walker.getNodeActorFromObjectActor(nodeActor);
+    if (!nodeFront) {
+      console.error("The object cannot be linked to the inspector, the " +
+                    "corresponding nodeFront could not be found.");
+      return false;
+    }
+
+    let isAttached = await this.walker.isInDOMTree(nodeFront);
+    if (!isAttached) {
+      console.error("Selected DOMNode is not attached to the document tree.");
+      return false;
+    }
+
+    await this.selection.setNodeFront(nodeFront, inspectFromAnnotation);
+    return true;
+  },
 };
 
 /**

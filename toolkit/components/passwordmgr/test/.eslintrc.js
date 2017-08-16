@@ -1,9 +1,9 @@
 "use strict";
 
-module.exports = { // eslint-disable-line no-undef
+module.exports = {
   "extends": [
-    "../../../../testing/mochitest/mochitest.eslintrc.js",
-    "../../../../testing/mochitest/chrome.eslintrc.js"
+    "plugin:mozilla/mochitest-test",
+    "plugin:mozilla/chrome-test"
   ],
   "rules": {
     "brace-style": "off",

@@ -139,20 +139,8 @@ partial interface HTMLMediaElement {
   // it is equal to the media duration.
   readonly attribute double mozFragmentEnd;
 
-  // Mozilla extension: an audio channel type for media elements.
-  // Read AudioChannel.webidl for more information about this attribute.
-  [SetterThrows, Pref="media.useAudioChannelAPI"]
-  attribute AudioChannel mozAudioChannelType;
-
-  // In addition the media element has this new events:
-  // * onmozinterruptbegin - called when the media element is interrupted
-  //   because of the audiochannel manager.
-  // * onmozinterruptend - called when the interruption is concluded
-  [Pref="media.useAudioChannelAPI"]
-  attribute EventHandler onmozinterruptbegin;
-
-  [Pref="media.useAudioChannelAPI"]
-  attribute EventHandler onmozinterruptend;
+  [ChromeOnly]
+  void reportCanPlayTelemetry();
 };
 
 // Encrypted Media Extensions
@@ -216,8 +204,16 @@ partial interface HTMLMediaElement {
 /*
  * This is an API for simulating visibility changes to help debug and write
  * tests about suspend-video-decoding.
+ *
+ * - SetVisible() is for simulating visibility changes.
+ * - HasSuspendTaint() is for querying that the element's decoder cannot suspend
+ *   video decoding because it has been tainted by an operation, such as
+ *   drawImage().
  */
 partial interface HTMLMediaElement {
-  [Pref="media.test.setVisible"]
+  [Pref="media.test.video-suspend"]
   void setVisible(boolean aVisible);
+
+  [Pref="media.test.video-suspend"]
+  boolean hasSuspendTaint();
 };

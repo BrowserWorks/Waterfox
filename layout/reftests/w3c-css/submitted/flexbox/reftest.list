@@ -28,7 +28,7 @@
 == flexbox-align-self-horiz-001-table.xhtml  flexbox-align-self-horiz-001-ref.xhtml
 == flexbox-align-self-horiz-002.xhtml  flexbox-align-self-horiz-002-ref.xhtml
 == flexbox-align-self-horiz-003.xhtml  flexbox-align-self-horiz-003-ref.xhtml
-== flexbox-align-self-horiz-004.xhtml  flexbox-align-self-horiz-004-ref.xhtml
+fuzzy-if(webrender,1,2) == flexbox-align-self-horiz-004.xhtml  flexbox-align-self-horiz-004-ref.xhtml
 == flexbox-align-self-horiz-005.xhtml  flexbox-align-self-horiz-005-ref.xhtml
 == flexbox-align-self-vert-001.xhtml  flexbox-align-self-vert-001-ref.xhtml
 == flexbox-align-self-vert-002.xhtml  flexbox-align-self-vert-002-ref.xhtml
@@ -46,8 +46,10 @@ fuzzy-if(Android,158,32) == flexbox-align-self-vert-rtl-001.xhtml  flexbox-align
 == flexbox-baseline-align-self-baseline-vert-001.html flexbox-baseline-align-self-baseline-vert-001-ref.html
 == flexbox-baseline-empty-001a.html flexbox-baseline-empty-001-ref.html
 == flexbox-baseline-empty-001b.html flexbox-baseline-empty-001-ref.html
-== flexbox-baseline-multi-item-horiz-001.html flexbox-baseline-multi-item-horiz-001-ref.html
-== flexbox-baseline-multi-item-vert-001.html flexbox-baseline-multi-item-vert-001-ref.html
+== flexbox-baseline-multi-item-horiz-001a.html flexbox-baseline-multi-item-horiz-001-ref.html
+== flexbox-baseline-multi-item-horiz-001b.html flexbox-baseline-multi-item-horiz-001-ref.html
+== flexbox-baseline-multi-item-vert-001a.html flexbox-baseline-multi-item-vert-001-ref.html
+== flexbox-baseline-multi-item-vert-001b.html flexbox-baseline-multi-item-vert-001-ref.html
 == flexbox-baseline-multi-line-horiz-001.html flexbox-baseline-multi-line-horiz-001-ref.html
 == flexbox-baseline-multi-line-horiz-002.html flexbox-baseline-multi-line-horiz-002-ref.html
 == flexbox-baseline-multi-line-horiz-003.html flexbox-baseline-multi-line-horiz-003-ref.html
@@ -146,7 +148,7 @@ fuzzy-if(Android,158,32) == flexbox-align-self-vert-rtl-001.xhtml  flexbox-align
 # Tests for min-height:auto / min-width:auto on flex items
 == flexbox-min-height-auto-001.html flexbox-min-height-auto-001-ref.html
 == flexbox-min-height-auto-002a.html flexbox-min-height-auto-002-ref.html
-fails == flexbox-min-height-auto-002b.html flexbox-min-height-auto-002-ref.html # bug 1055354
+fails-if(!styloVsGecko) == flexbox-min-height-auto-002b.html flexbox-min-height-auto-002-ref.html # bug 1055354
 == flexbox-min-height-auto-002c.html flexbox-min-height-auto-002-ref.html
 == flexbox-min-height-auto-003.html flexbox-min-height-auto-003-ref.html
 == flexbox-min-height-auto-004.html flexbox-min-height-auto-004-ref.html

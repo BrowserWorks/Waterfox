@@ -12,7 +12,6 @@ Cu.import("resource://gre/modules/NetUtil.jsm");
 Cu.import("resource://gre/modules/PlacesUtils.jsm");
 Cu.import("resource://gre/modules/Preferences.jsm");
 Cu.import("resource://gre/modules/PromiseUtils.jsm");
-Cu.import("resource://gre/modules/Task.jsm");
 Cu.import("resource://gre/modules/Services.jsm");
 Cu.import("resource://gre/modules/XPCOMUtils.jsm");
 Cu.import("resource://testing-common/TestUtils.jsm");
@@ -25,7 +24,7 @@ XPCOMUtils.defineLazyModuleGetter(this, "Sqlite",
 // Initialize profile.
 var gProfD = do_get_profile();
 
-Cu.import("resource://testing-common/AppInfo.jsm"); /* globals updateAppInfo */
+Cu.import("resource://testing-common/AppInfo.jsm");
 updateAppInfo();
 
 /**
@@ -40,7 +39,7 @@ function promiseMigration(migrator, resourceType, aProfile = null) {
     Services.obs.addObserver(function onMigrationEnded() {
       Services.obs.removeObserver(onMigrationEnded, "Migration:Ended");
       resolve();
-    }, "Migration:Ended", false);
+    }, "Migration:Ended");
 
     migrator.migrate(resourceType, null, aProfile);
   });
@@ -50,21 +49,25 @@ function promiseMigration(migrator, resourceType, aProfile = null) {
  * Replaces a directory service entry with a given nsIFile.
  */
 function registerFakePath(key, file) {
-   // Register our own provider for the Library directory.
-  let provider = {
-    getFile(prop, persistent) {
-      persistent.value = true;
-      if (prop == key) {
-        return file;
-      }
-      throw Cr.NS_ERROR_FAILURE;
-    },
-    QueryInterface: XPCOMUtils.generateQI([ Ci.nsIDirectoryServiceProvider ])
-  };
-  Services.dirsvc.QueryInterface(Ci.nsIDirectoryService)
-                 .registerProvider(provider);
+  let dirsvc = Services.dirsvc.QueryInterface(Ci.nsIProperties);
+  let originalFile;
+  try {
+    // If a file is already provided save it and undefine, otherwise set will
+    // throw for persistent entries (ones that are cached).
+    originalFile = dirsvc.get(key, Ci.nsIFile);
+    dirsvc.undefine(key);
+  } catch (e) {
+    // dirsvc.get will throw if nothing provides for the key and dirsvc.undefine
+    // will throw if it's not a persistent entry, in either case we don't want
+    // to set the original file in cleanup.
+    originalFile = undefined;
+  }
+
+  dirsvc.set(key, file);
   do_register_cleanup(() => {
-    Services.dirsvc.QueryInterface(Ci.nsIDirectoryService)
-                   .unregisterProvider(provider);
+    dirsvc.undefine(key);
+    if (originalFile) {
+      dirsvc.set(key, originalFile);
+    }
   });
 }

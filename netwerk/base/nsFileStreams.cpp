@@ -26,8 +26,6 @@
 #include "nsNetCID.h"
 #include "nsXULAppAPI.h"
 
-#define NS_NO_INPUT_BUFFERING 1 // see http://bugzilla.mozilla.org/show_bug.cgi?id=41067
-
 typedef mozilla::ipc::FileDescriptor::PlatformHandleType FileHandleType;
 
 using namespace mozilla::ipc;
@@ -42,7 +40,8 @@ using mozilla::Some;
 nsFileStreamBase::nsFileStreamBase()
     : mFD(nullptr)
     , mBehaviorFlags(0)
-    , mDeferredOpen(false)
+    , mState(eUnitialized)
+    , mErrorValue(NS_ERROR_FAILURE)
 {
 }
 
@@ -61,9 +60,6 @@ nsFileStreamBase::Seek(int32_t whence, int64_t offset)
     nsresult rv = DoPendingOpen();
     NS_ENSURE_SUCCESS(rv, rv);
 
-    if (mFD == nullptr)
-        return NS_BASE_STREAM_CLOSED;
-
     int64_t cnt = PR_Seek64(mFD, offset, (PRSeekWhence)whence);
     if (cnt == int64_t(-1)) {
         return NS_ErrorAccordingToNSPR();
@@ -76,9 +72,6 @@ nsFileStreamBase::Tell(int64_t *result)
 {
     nsresult rv = DoPendingOpen();
     NS_ENSURE_SUCCESS(rv, rv);
-
-    if (mFD == nullptr)
-        return NS_BASE_STREAM_CLOSED;
 
     int64_t cnt = PR_Seek64(mFD, 0, PR_SEEK_CUR);
     if (cnt == int64_t(-1)) {
@@ -93,9 +86,6 @@ nsFileStreamBase::SetEOF()
 {
     nsresult rv = DoPendingOpen();
     NS_ENSURE_SUCCESS(rv, rv);
-
-    if (mFD == nullptr)
-        return NS_BASE_STREAM_CLOSED;
 
 #if defined(XP_UNIX) || defined(XP_BEOS)
     // Some system calls require an EOF offset.
@@ -127,10 +117,6 @@ nsFileStreamBase::GetSize(int64_t* _retval)
     nsresult rv = DoPendingOpen();
     NS_ENSURE_SUCCESS(rv, rv);
 
-    if (!mFD) {
-        return NS_BASE_STREAM_CLOSED;
-    }
-
     PRFileInfo64 info;
     if (PR_GetOpenFileInfo64(mFD, &info) == PR_FAILURE) {
         return NS_BASE_STREAM_OSERROR;
@@ -146,10 +132,6 @@ nsFileStreamBase::GetLastModified(int64_t* _retval)
 {
     nsresult rv = DoPendingOpen();
     NS_ENSURE_SUCCESS(rv, rv);
-
-    if (!mFD) {
-        return NS_BASE_STREAM_CLOSED;
-    }
 
     PRFileInfo64 info;
     if (PR_GetOpenFileInfo64(mFD, &info) == PR_FAILURE) {
@@ -171,13 +153,7 @@ NS_IMETHODIMP
 nsFileStreamBase::GetFileDescriptor(PRFileDesc** _retval)
 {
     nsresult rv = DoPendingOpen();
-    if (NS_WARN_IF(NS_FAILED(rv))) {
-      return rv;
-    }
-
-    if (!mFD) {
-        return NS_BASE_STREAM_CLOSED;
-    }
+    NS_ENSURE_SUCCESS(rv, rv);
 
     *_retval = mFD;
     return NS_OK;
@@ -193,6 +169,7 @@ nsFileStreamBase::Close()
         if (PR_Close(mFD) == PR_FAILURE)
             rv = NS_BASE_STREAM_OSERROR;
         mFD = nullptr;
+        mState = eClosed;
     }
     return rv;
 }
@@ -202,10 +179,6 @@ nsFileStreamBase::Available(uint64_t* aResult)
 {
     nsresult rv = DoPendingOpen();
     NS_ENSURE_SUCCESS(rv, rv);
-
-    if (!mFD) {
-        return NS_BASE_STREAM_CLOSED;
-    }
 
     // PR_Available with files over 4GB returns an error, so we have to
     // use the 64-bit version of PR_Available.
@@ -223,16 +196,13 @@ nsresult
 nsFileStreamBase::Read(char* aBuf, uint32_t aCount, uint32_t* aResult)
 {
     nsresult rv = DoPendingOpen();
-    if (rv == NS_ERROR_FILE_NOT_FOUND) {
-      // Don't warn if this is just a deferred file not found.
-      return rv;
-    }
-
-    NS_ENSURE_SUCCESS(rv, rv);
-
-    if (!mFD) {
+    if (rv == NS_BASE_STREAM_CLOSED) {
         *aResult = 0;
         return NS_OK;
+    }
+
+    if (NS_FAILED(rv)) {
+        return rv;
     }
 
     int32_t bytesRead = PR_Read(mFD, aBuf, aCount);
@@ -269,9 +239,6 @@ nsFileStreamBase::Flush(void)
     nsresult rv = DoPendingOpen();
     NS_ENSURE_SUCCESS(rv, rv);
 
-    if (mFD == nullptr)
-        return NS_BASE_STREAM_CLOSED;
-
     int32_t cnt = PR_Sync(mFD);
     if (cnt == -1) {
         return NS_ErrorAccordingToNSPR();
@@ -284,9 +251,6 @@ nsFileStreamBase::Write(const char *buf, uint32_t count, uint32_t *result)
 {
     nsresult rv = DoPendingOpen();
     NS_ENSURE_SUCCESS(rv, rv);
-
-    if (mFD == nullptr)
-        return NS_BASE_STREAM_CLOSED;
 
     int32_t cnt = PR_Write(mFD, buf, count);
     if (cnt == -1) {
@@ -333,7 +297,7 @@ nsFileStreamBase::MaybeOpen(nsIFile* aFile, int32_t aIoFlags,
         mOpenParams.localFile = do_QueryInterface(file);
         NS_ENSURE_TRUE(mOpenParams.localFile, NS_ERROR_UNEXPECTED);
 
-        mDeferredOpen = true;
+        mState = eDeferredOpen;
         return NS_OK;
     }
 
@@ -348,12 +312,13 @@ void
 nsFileStreamBase::CleanUpOpen()
 {
     mOpenParams.localFile = nullptr;
-    mDeferredOpen = false;
 }
 
 nsresult
 nsFileStreamBase::DoOpen()
 {
+    MOZ_ASSERT(mState == eDeferredOpen || mState == eUnitialized ||
+               mState == eClosed);
     NS_ASSERTION(!mFD, "Already have a file descriptor!");
     NS_ASSERTION(mOpenParams.localFile, "Must have a file to open");
 
@@ -377,9 +342,14 @@ nsFileStreamBase::DoOpen()
     }
 
     CleanUpOpen();
-    if (NS_FAILED(rv))
+    if (NS_FAILED(rv)) {
+        mState = eError;
+        mErrorValue = rv;
         return rv;
+    }
+
     mFD = fd;
+    mState = eOpened;
 
     return NS_OK;
 }
@@ -387,12 +357,30 @@ nsFileStreamBase::DoOpen()
 nsresult
 nsFileStreamBase::DoPendingOpen()
 {
-    if (!mDeferredOpen) {
+    switch (mState) {
+    case eUnitialized:
+        MOZ_CRASH("This should not happen.");
+        return NS_ERROR_FAILURE;
+
+    case eDeferredOpen:
+        return DoOpen();
+
+    case eOpened:
+        MOZ_ASSERT(mFD);
         return NS_OK;
+
+    case eClosed:
+        MOZ_ASSERT(!mFD);
+        return NS_BASE_STREAM_CLOSED;
+
+    case eError:
+        return mErrorValue;
     }
 
-    return DoOpen();
+    MOZ_CRASH("Invalid mState value.");
+    return NS_ERROR_FAILURE;
 }
+
 
 ////////////////////////////////////////////////////////////////////////////////
 // nsFileInputStream
@@ -409,6 +397,7 @@ NS_INTERFACE_MAP_BEGIN(nsFileInputStream)
     NS_INTERFACE_MAP_ENTRY(nsILineInputStream)
     NS_INTERFACE_MAP_ENTRY(nsIIPCSerializableInputStream)
     NS_IMPL_QUERY_CLASSINFO(nsFileInputStream)
+    NS_INTERFACE_MAP_ENTRY_CONDITIONAL(nsICloneableInputStream, IsCloneable())
 NS_INTERFACE_MAP_END_INHERITING(nsFileStreamBase)
 
 NS_IMPL_CI_INTERFACE_GETTER(nsFileInputStream,
@@ -477,9 +466,11 @@ nsFileInputStream::Init(nsIFile* aFile, int32_t aIOFlags, int32_t aPerm,
                         int32_t aBehaviorFlags)
 {
     NS_ENSURE_TRUE(!mFD, NS_ERROR_ALREADY_INITIALIZED);
-    NS_ENSURE_TRUE(!mDeferredOpen, NS_ERROR_ALREADY_INITIALIZED);
+    NS_ENSURE_TRUE(mState == eUnitialized || mState == eClosed,
+                   NS_ERROR_ALREADY_INITIALIZED);
 
     mBehaviorFlags = aBehaviorFlags;
+    mState = eUnitialized;
 
     mFile = aFile;
     mIOFlags = aIOFlags;
@@ -552,12 +543,15 @@ nsresult
 nsFileInputStream::SeekInternal(int32_t aWhence, int64_t aOffset, bool aClearBuf)
 {
     nsresult rv = DoPendingOpen();
-    NS_ENSURE_SUCCESS(rv, rv);
+    if (rv != NS_OK && rv != NS_BASE_STREAM_CLOSED) {
+        return rv;
+    }
 
     if (aClearBuf) {
         mLineBuffer = nullptr;
     }
-    if (!mFD) {
+
+    if (rv == NS_BASE_STREAM_CLOSED) {
         if (mBehaviorFlags & REOPEN_ON_REWIND) {
             rv = Open(mFile, mIOFlags, mPerm);
             NS_ENSURE_SUCCESS(rv, rv);
@@ -595,7 +589,8 @@ nsFileInputStream::Serialize(InputStreamParams& aParams,
 {
     FileInputStreamParams params;
 
-    if (NS_SUCCEEDED(DoPendingOpen()) && mFD) {
+    if (NS_SUCCEEDED(DoPendingOpen())) {
+        MOZ_ASSERT(mFD);
         FileHandleType fd = FileHandleType(PR_FileDesc2NativeHandle(mFD));
         NS_ASSERTION(fd, "This should never be null!");
 
@@ -629,7 +624,7 @@ nsFileInputStream::Deserialize(const InputStreamParams& aParams,
                                const FileDescriptorArray& aFileDescriptors)
 {
     NS_ASSERTION(!mFD, "Already have a file descriptor?!");
-    NS_ASSERTION(!mDeferredOpen, "Deferring open?!");
+    NS_ASSERTION(mState == nsFileStreamBase::eUnitialized, "Deferring open?!");
     NS_ASSERTION(!mFile, "Should never have a file here!");
     NS_ASSERTION(!mPerm, "This should always be 0!");
 
@@ -659,6 +654,10 @@ nsFileInputStream::Deserialize(const InputStreamParams& aParams,
             return false;
         }
         mFD = fileDesc;
+        mState = eOpened;
+    } else {
+      mState = eError;
+      mErrorValue = NS_ERROR_FILE_NOT_FOUND;
     }
 
     mBehaviorFlags = params.behaviorFlags();
@@ -682,6 +681,29 @@ Maybe<uint64_t>
 nsFileInputStream::ExpectedSerializedLength()
 {
     return Nothing();
+}
+
+bool
+nsFileInputStream::IsCloneable() const
+{
+    // This inputStream is cloneable only if has been created using Init() and
+    // it owns a nsIFile. This is not true when it is deserialized from IPC.
+    return XRE_IsParentProcess() && mFile;
+}
+
+NS_IMETHODIMP
+nsFileInputStream::GetCloneable(bool* aCloneable)
+{
+    *aCloneable = IsCloneable();
+    return NS_OK;
+}
+
+NS_IMETHODIMP
+nsFileInputStream::Clone(nsIInputStream** aResult)
+{
+    MOZ_ASSERT(IsCloneable());
+    return NS_NewLocalFileInputStream(aResult, mFile, mIOFlags, mPerm,
+                                      mBehaviorFlags);
 }
 
 ////////////////////////////////////////////////////////////////////////////////
@@ -711,9 +733,11 @@ nsFileOutputStream::Init(nsIFile* file, int32_t ioFlags, int32_t perm,
                          int32_t behaviorFlags)
 {
     NS_ENSURE_TRUE(mFD == nullptr, NS_ERROR_ALREADY_INITIALIZED);
-    NS_ENSURE_TRUE(!mDeferredOpen, NS_ERROR_ALREADY_INITIALIZED);
+    NS_ENSURE_TRUE(mState == eUnitialized || mState == eClosed,
+                   NS_ERROR_ALREADY_INITIALIZED);
 
     mBehaviorFlags = behaviorFlags;
+    mState = eUnitialized;
 
     if (ioFlags == -1)
         ioFlags = PR_WRONLY | PR_CREATE_FILE | PR_TRUNCATE;
@@ -769,6 +793,9 @@ nsAtomicFileOutputStream::DoOpen()
     nsCOMPtr<nsIFile> file;
     file.swap(mOpenParams.localFile);
 
+    if (!file) {
+        return NS_ERROR_NOT_INITIALIZED;
+    }
     nsresult rv = file->Exists(&mTargetFileExists);
     if (NS_FAILED(rv)) {
         NS_ERROR("Can't tell if target file exists");
@@ -913,9 +940,11 @@ nsFileStream::Init(nsIFile* file, int32_t ioFlags, int32_t perm,
                    int32_t behaviorFlags)
 {
     NS_ENSURE_TRUE(mFD == nullptr, NS_ERROR_ALREADY_INITIALIZED);
-    NS_ENSURE_TRUE(!mDeferredOpen, NS_ERROR_ALREADY_INITIALIZED);
+    NS_ENSURE_TRUE(mState == eUnitialized || mState == eClosed,
+                   NS_ERROR_ALREADY_INITIALIZED);
 
     mBehaviorFlags = behaviorFlags;
+    mState = eUnitialized;
 
     if (ioFlags == -1)
         ioFlags = PR_RDWR;

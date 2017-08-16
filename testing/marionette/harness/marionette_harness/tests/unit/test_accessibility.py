@@ -2,6 +2,9 @@
 # License, v. 2.0. If a copy of the MPL was not distributed with this
 # file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
+import sys
+import unittest
+
 from marionette_driver.by import By
 from marionette_driver.errors import (
     ElementNotAccessibleException,
@@ -47,7 +50,7 @@ class TestAccessibility(MarionetteTestCase):
         # Button5 does not have a correct accessibility role and may not be
         # manipulated via the accessibility API
         "button5",
-        # Button6 is missing an accesible name
+        # Button6 is missing an accessible name
         "button6",
         # Button7 is not currently visible via the accessibility API and may
         # not be manipulated by it

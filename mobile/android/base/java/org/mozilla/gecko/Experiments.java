@@ -59,8 +59,23 @@ public class Experiments {
     // Make new activity stream panel available (to replace top sites) (Bug 1313316)
     public static final String ACTIVITY_STREAM = "activity-stream";
 
+    // Show a setting in "experimental features" for enabling/disabling activity stream.
+    public static final String ACTIVITY_STREAM_SETTING = "activity-stream-setting";
+
+    // Enable Activity stream by default for users in the "opt out" group.
+    public static final String ACTIVITY_STREAM_OPT_OUT = "activity-stream-opt-out";
+
     // Tabs tray: Arrange tabs in two columns in portrait mode
     public static final String COMPACT_TABS = "compact-tabs";
+
+    // Enable full bookmark management(full-page dialog, bookmark/folder modification, etc.)
+    public static final String FULL_BOOKMARK_MANAGEMENT = "full-bookmark-management";
+
+    // Enable Leanplum SDK
+    public static final String LEANPLUM = "leanplum-start";
+
+    // Enable processing of background telemetry.
+    public static final String ENABLE_PROCESSING_BACKGROUND_TELEMETRY = "process-background-telemetry";
 
     /**
      * Returns if a user is in certain local experiment.

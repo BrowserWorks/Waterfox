@@ -73,7 +73,7 @@ const ConsoleObserver = {
   }
 };
 
-Services.obs.addObserver(ConsoleObserver, "console-api-log-event", false);
+Services.obs.addObserver(ConsoleObserver, "console-api-log-event");
 registerCleanupFunction(() => {
   Services.obs.removeObserver(ConsoleObserver, "console-api-log-event");
 });
@@ -122,7 +122,7 @@ var addTab = Task.async(function* (url, options = { background: false, window: w
   let { gBrowser } = options.window ? options.window : window;
   let { userContextId } = options;
 
-  let tab = gBrowser.addTab(url,
+  let tab = BrowserTestUtils.addTab(gBrowser, url,
     {userContextId, preferredRemoteType: options.preferredRemoteType});
   if (!background) {
     gBrowser.selectedTab = tab;
@@ -584,6 +584,8 @@ function loadTelemetryAndRecordLogs() {
       this.telemetryInfo[histogramId].push(value);
     }
   };
+  Telemetry.prototype._oldlogScalar = Telemetry.prototype.logScalar;
+  Telemetry.prototype.logScalar = Telemetry.prototype.log;
   Telemetry.prototype._oldlogKeyed = Telemetry.prototype.logKeyed;
   Telemetry.prototype.logKeyed = function (histogramId, key, value) {
     this.log(`${histogramId}|${key}`, value);
@@ -600,8 +602,10 @@ function loadTelemetryAndRecordLogs() {
 function stopRecordingTelemetryLogs(Telemetry) {
   info("Stopping Telemetry");
   Telemetry.prototype.log = Telemetry.prototype._oldlog;
+  Telemetry.prototype.logScalar = Telemetry.prototype._oldlogScalar;
   Telemetry.prototype.logKeyed = Telemetry.prototype._oldlogKeyed;
   delete Telemetry.prototype._oldlog;
+  delete Telemetry.prototype._oldlogScalar;
   delete Telemetry.prototype._oldlogKeyed;
   delete Telemetry.prototype.telemetryInfo;
 }

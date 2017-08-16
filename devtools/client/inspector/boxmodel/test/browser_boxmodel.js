@@ -14,8 +14,20 @@ var res1 = [
     value: "160" + "\u00D7" + "160.117"
   },
   {
-    selector: ".boxmodel-size > span",
-    value: "100" + "\u00D7" + "100.117"
+    selector: ".boxmodel-size > .boxmodel-width",
+    value: "100"
+  },
+  {
+    selector: ".boxmodel-size > .boxmodel-height",
+    value: "100.117"
+  },
+  {
+    selector: ".boxmodel-position.boxmodel-top > span",
+    value: 42
+  },
+  {
+    selector: ".boxmodel-position.boxmodel-left > span",
+    value: 42
   },
   {
     selector: ".boxmodel-margin.boxmodel-top > span",
@@ -73,8 +85,20 @@ var res2 = [
     value: "190" + "\u00D7" + "210"
   },
   {
-    selector: ".boxmodel-size > span",
-    value: "100" + "\u00D7" + "150"
+    selector: ".boxmodel-size > .boxmodel-width",
+    value: "100"
+  },
+  {
+    selector: ".boxmodel-size > .boxmodel-height",
+    value: "150"
+  },
+  {
+    selector: ".boxmodel-position.boxmodel-top > span",
+    value: 50
+  },
+  {
+    selector: ".boxmodel-position.boxmodel-left > span",
+    value: 42
   },
   {
     selector: ".boxmodel-margin.boxmodel-top > span",
@@ -157,7 +181,7 @@ function* testChangingValues(inspector, view, testActor) {
 
   let onUpdated = waitForUpdate(inspector);
   yield testActor.setAttribute("div", "style",
-                               "height:150px;padding-right:50px;");
+                               "height:150px;padding-right:50px;top:50px");
   yield onUpdated;
 
   for (let i = 0; i < res2.length; i++) {

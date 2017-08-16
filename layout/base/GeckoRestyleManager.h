@@ -54,8 +54,8 @@ protected:
 public:
   // Forwarded nsIDocumentObserver method, to handle restyling (and
   // passing the notification to the frame).
-  nsresult ContentStateChanged(nsIContent*   aContent,
-                               EventStates aStateMask);
+  void ContentStateChanged(nsIContent* aContent,
+                           EventStates aStateMask);
 
   // Forwarded nsIMutationObserver method, to handle restyling.
   void AttributeWillChange(Element* aElement,
@@ -70,27 +70,6 @@ public:
                         nsIAtom* aAttribute,
                         int32_t  aModType,
                         const nsAttrValue* aOldValue);
-
-  // Get a counter that increments on every style change, that we use to
-  // track whether off-main-thread animations are up-to-date.
-  uint64_t GetAnimationGeneration() const { return mAnimationGeneration; }
-
-  static uint64_t GetAnimationGenerationForFrame(nsIFrame* aFrame);
-
-  // Update the animation generation count to mark that animation state
-  // has changed.
-  //
-  // This is normally performed automatically by ProcessPendingRestyles
-  // but it is also called when we have out-of-band changes to animations
-  // such as changes made through the Web Animations API.
-  void IncrementAnimationGeneration() {
-    // We update the animation generation at start of each call to
-    // ProcessPendingRestyles so we should ignore any subsequent (redundant)
-    // calls that occur while we are still processing restyles.
-    if (!mIsProcessingRestyles) {
-      ++mAnimationGeneration;
-    }
-  }
 
   // Whether rule matching should skip styles associated with animation
   bool SkipAnimationRules() const { return mSkipAnimationRules; }
@@ -113,7 +92,11 @@ public:
     mPendingRestyles.ClearSelectors();
   }
 
+  void PostRestyleEventForLazyConstruction() { PostRestyleEventInternal(); }
+
 private:
+  void PostRestyleEventInternal();
+
   // Used when restyling an element with a frame.
   void ComputeAndProcessStyleChange(nsIFrame*              aFrame,
                                     nsChangeHint           aMinChange,
@@ -351,6 +334,8 @@ public:
   int32_t& LoggingDepth() { return mLoggingDepth; }
 #endif
 
+  bool IsProcessingRestyles() { return mIsProcessingRestyles; }
+
 private:
   inline nsStyleSet* StyleSet() const {
     MOZ_ASSERT(PresContext()->StyleSet()->IsGecko(),
@@ -399,10 +384,6 @@ private:
 
   nsChangeHint mRebuildAllExtraHint;
   nsRestyleHint mRebuildAllRestyleHint;
-
-  // The total number of animation flushes by this frame constructor.
-  // Used to keep the layer and animation manager in sync.
-  uint64_t mAnimationGeneration;
 
   ReframingStyleContexts* mReframingStyleContexts;
 
@@ -488,13 +469,12 @@ public:
   void Restyle(nsRestyleHint aRestyleHint);
 
   /**
-   * mHintsHandled changes over time; it starts off as the hints that
-   * have been handled by ancestors, and by the end of Restyle it
-   * represents the hints that have been handled for this frame.  This
-   * method is intended to be called after Restyle, to find out what
-   * hints have been handled for this frame.
+   * mHintsHandledBySelf changes over time; it starts off as nsChangeHint(0),
+   * and by the end of Restyle it represents the hints that have been handled
+   * for this frame.  This method is intended to be called after Restyle, to
+   * find out what hints have been handled for this frame.
    */
-  nsChangeHint HintsHandledForFrame() { return mHintsHandled; }
+  nsChangeHint HintsHandledForFrame() { return mHintsHandledBySelf; }
 
   /**
    * Called from GeckoRestyleManager::ComputeAndProcessStyleChange to restyle
@@ -604,8 +584,6 @@ private:
   /**
    * Helpers for Restyle().
    */
-  void AddLayerChangesForAnimation();
-
   bool MoveStyleContextsForContentChildren(nsIFrame* aParent,
                                            nsStyleContext* aOldContext,
                                            nsTArray<nsStyleContext*>& aContextsToMove);
@@ -717,15 +695,15 @@ private:
   // framechange hints if we need them.
   nsIContent* const mContent;
   nsStyleChangeList* const mChangeList;
-  // We have already generated change list entries for hints listed in
-  // mHintsHandled (initially it's those handled by ancestors, but by
-  // the end of Restyle it is those handled for this frame as well).  We
-  // need to generate a new change list entry for the frame when its
-  // style comparision returns a hint other than one of these hints.
-  nsChangeHint mHintsHandled;
-  // See nsStyleContext::CalcStyleDifference
-  nsChangeHint mParentFrameHintsNotHandledForDescendants;
-  nsChangeHint mHintsNotHandledForDescendants;
+  // Hints that we computed on an ancestor (and which we already have
+  // generated a change list entry for).  When we traverse to children
+  // after restyling an element, this field accumulates the hints
+  // generated for that element.
+  const nsChangeHint mHintsHandledByAncestors;
+  // Hints that we have computed so far the current node.  This is
+  // initially zero, and accumulates hints for each same-style continuation
+  // and {ib} split sibling we restyle for the node.
+  nsChangeHint mHintsHandledBySelf;
   RestyleTracker& mRestyleTracker;
   nsTArray<nsCSSSelector*>& mSelectorsForDescendants;
   TreeMatchContext& mTreeMatchContext;

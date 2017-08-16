@@ -12,7 +12,7 @@ const Cu = Components.utils;
 
 Cu.import("resource://gre/modules/Services.jsm");
 Cu.import("resource://gre/modules/XPCOMUtils.jsm");
-Cu.import("resource://gre/modules/Task.jsm");
+Cu.importGlobalProperties(["btoa"]);
 
 XPCOMUtils.defineLazyModuleGetter(this, "PlacesUtils",
   "resource://gre/modules/PlacesUtils.jsm");
@@ -52,6 +52,12 @@ const LINKS_GET_LINKS_LIMIT = 100;
 
 // The gather telemetry topic.
 const TOPIC_GATHER_TELEMETRY = "gather-telemetry";
+
+// The number of top sites to display on Activity Stream page
+const TOP_SITES_LENGTH = 6;
+
+// Use double the number to allow for immediate display when blocking sites
+const TOP_SITES_LIMIT = TOP_SITES_LENGTH * 2;
 
 /**
  * Calculate the MD5 hash for a string.
@@ -118,18 +124,14 @@ LinksStorage.prototype = {
 
   get _storedVersion() {
     if (this.__storedVersion === undefined) {
-      try {
-        this.__storedVersion =
-          Services.prefs.getIntPref("browser.newtabpage.storageVersion");
-      } catch (ex) {
-        // The storage version is unknown, so either:
-        // - it's a new profile
-        // - it's a profile where versioning information got lost
-        // In this case we still run through all of the valid migrations,
-        // starting from 1, as if it was a downgrade.  As previously stated the
-        // migrations should already support running on an updated store.
-        this.__storedVersion = 1;
-      }
+      // When the pref is not set, the storage version is unknown, so either:
+      // - it's a new profile
+      // - it's a profile where versioning information got lost
+      // In this case we still run through all of the valid migrations,
+      // starting from 1, as if it was a downgrade.  As previously stated the
+      // migrations should already support running on an updated store.
+      this.__storedVersion =
+        Services.prefs.getIntPref("browser.newtabpage.storageVersion", 1);
     }
     return this.__storedVersion;
   },
@@ -148,8 +150,7 @@ LinksStorage.prototype = {
   get: function Storage_get(aKey, aDefault) {
     let value;
     try {
-      let prefValue = Services.prefs.getComplexValue(this._prefs[aKey],
-                                                     Ci.nsISupportsString).data;
+      let prefValue = Services.prefs.getStringPref(this._prefs[aKey]);
       value = JSON.parse(prefValue);
     } catch (e) {}
     return value || aDefault;
@@ -162,11 +163,7 @@ LinksStorage.prototype = {
    */
   set: function Storage_set(aKey, aValue) {
     // Page titles may contain unicode, thus use complex values.
-    let string = Cc["@mozilla.org/supports-string;1"]
-                   .createInstance(Ci.nsISupportsString);
-    string.data = JSON.stringify(aValue);
-    Services.prefs.setComplexValue(this._prefs[aKey], Ci.nsISupportsString,
-                                   string);
+    Services.prefs.setStringPref(this._prefs[aKey], JSON.stringify(aValue));
   },
 
   /**
@@ -353,8 +350,16 @@ var GridPrefs = {
    * Initializes object. Adds a preference observer
    */
   init: function GridPrefs_init() {
-    Services.prefs.addObserver(PREF_NEWTAB_ROWS, this, false);
-    Services.prefs.addObserver(PREF_NEWTAB_COLUMNS, this, false);
+    Services.prefs.addObserver(PREF_NEWTAB_ROWS, this);
+    Services.prefs.addObserver(PREF_NEWTAB_COLUMNS, this);
+  },
+
+ /**
+  * Uninitializes object. Removes the preference observers
+  */
+  uninit: function GridPrefs_uninit() {
+    Services.prefs.removeObserver(PREF_NEWTAB_ROWS, this);
+    Services.prefs.removeObserver(PREF_NEWTAB_COLUMNS, this);
   },
 
   /**
@@ -478,8 +483,6 @@ var PinnedLinks = {
       return false;
     }
     aLink.type = "history";
-    // always remove targetedSite
-    delete aLink.targetedSite;
     return true;
   },
 
@@ -518,6 +521,13 @@ var BlockedLinks = {
    */
   addObserver(aObserver) {
     this._observers.push(aObserver);
+  },
+
+  /**
+   * Remove the observers.
+   */
+  removeObservers() {
+    this._observers = [];
   },
 
   /**
@@ -807,6 +817,333 @@ var PlacesProvider = {
 
   QueryInterface: XPCOMUtils.generateQI([Ci.nsINavHistoryObserver,
                                          Ci.nsISupportsWeakReference]),
+};
+
+/**
+ * Queries history to retrieve the most frecent sites. Emits events when the
+ * history changes.
+ */
+var ActivityStreamProvider = {
+
+  /**
+   * Process links after getting them from the database.
+   *
+   * @param {Array} aLinks
+   *          an array containing link objects
+   *
+   * @returns {Array} an array of checked links with favicons and eTLDs added
+   */
+  _processLinks(aLinks) {
+    let links_ = aLinks.filter(link => LinkChecker.checkLoadURI(link.url));
+    links_ = this._faviconBytesToDataURI(links_);
+    return this._addETLD(links_);
+  },
+
+  /**
+   * From an Array of links, if favicons are present, convert to data URIs
+   *
+   * @param {Array} aLinks
+   *          an array containing objects with favicon data and mimeTypes
+   *
+   * @returns {Array} an array of links with favicons as data uri
+   */
+  _faviconBytesToDataURI(aLinks) {
+    return aLinks.map(link => {
+      if (link.favicon) {
+        let encodedData = btoa(String.fromCharCode.apply(null, link.favicon));
+        link.favicon = `data:${link.mimeType};base64,${encodedData}`;
+      }
+      delete link.mimeType;
+      return link;
+    });
+  },
+
+  /**
+   * Computes favicon data for each url in a set of links
+   *
+   * @param {Array} links
+   *          an array containing objects without favicon data or mimeTypes yet
+   *
+   * @returns {Promise} Returns a promise with the array of links with favicon data,
+   *                    mimeType, and byte array length
+   */
+  async _addFavicons(aLinks) {
+    if (aLinks.length) {
+      // Each link in the array needs a favicon for it's page - so we fire off
+      // a promise for each link to compute the favicon data and attach it back
+      // to the original link object. We must wait until all favicons for
+      // the array of links are computed before returning
+      await Promise.all(aLinks.map(link => new Promise(resolve => {
+        return PlacesUtils.favicons.getFaviconDataForPage(
+            Services.io.newURI(link.url),
+            (iconuri, len, data, mime) => {
+              // Due to the asynchronous behaviour of inserting a favicon into
+              // moz_favicons, the data may not be available to us just yet,
+              // since we listen on a history entry being inserted. As a result,
+              // we don't want to throw if the icon uri is not here yet, we
+              // just want to resolve on an empty favicon. Activity Stream
+              // knows how to handle null favicons
+              if (!iconuri) {
+                link.favicon = null;
+                link.mimeType = null;
+              } else {
+                link.favicon = data;
+                link.mimeType = mime;
+                link.faviconLength = len;
+              }
+              return resolve(link);
+            });
+        }).catch(() => {
+          // If something goes wrong - that's ok - just return a null favicon
+          // without rejecting the entire Promise.all
+          link.favicon = null;
+          link.mimeType = null;
+          return link;
+        })
+      ));
+    }
+    return aLinks;
+  },
+
+  /**
+   * Add the eTLD to each link in the array of links.
+   *
+   * @param {Array} aLinks
+   *          an array containing objects with urls
+   *
+   * @returns {Array} an array of links with eTLDs added
+   */
+  _addETLD(aLinks) {
+    return aLinks.map(link => {
+      try {
+        link.eTLD = Services.eTLD.getPublicSuffix(Services.io.newURI(link.url));
+      } catch (e) {
+        link.eTLD = "";
+      }
+      return link;
+    });
+  },
+
+  /*
+   * Gets the top frecent sites for Activity Stream.
+   *
+   * @param {Object} aOptions
+   *          options.ignoreBlocked: Do not filter out blocked links .
+   *
+   * @returns {Promise} Returns a promise with the array of links as payload.
+   */
+  async getTopFrecentSites(aOptions = {}) {
+    let {ignoreBlocked} = aOptions;
+
+    // GROUP first by rev_host to get the most-frecent page of an exact host
+    // then GROUP by rev_nowww to dedupe between top two pages of nowww host.
+    // Note that unlike mysql, sqlite picks the last raw from groupby bucket.
+    // Which is why subselect orders frecency and last_visit_date backwards.
+    // In general the groupby behavior in the absence of aggregates is not
+    // defined in SQL, hence we are relying on sqlite implementation that may
+    // change in the future.
+
+    const limit = Object.keys(BlockedLinks.links).length + TOP_SITES_LIMIT;
+    let sqlQuery = `/* do not warn (bug N/A): do not need index */
+                    SELECT url, title, SUM(frecency) frecency, guid, bookmarkGuid,
+                     last_visit_date / 1000 as lastVisitDate, "history" as type
+                    FROM (SELECT * FROM (
+                      SELECT
+                        rev_host,
+                        fixup_url(get_unreversed_host(rev_host)) AS rev_nowww,
+                        moz_places.url,
+                        moz_places.title,
+                        frecency,
+                        last_visit_date,
+                        moz_places.guid AS guid,
+                        moz_bookmarks.guid AS bookmarkGuid
+                      FROM moz_places
+                      LEFT JOIN moz_bookmarks
+                      on moz_places.id = moz_bookmarks.fk
+                      WHERE hidden = 0 AND last_visit_date NOTNULL
+                      ORDER BY frecency, last_visit_date, moz_places.url DESC
+                    ) GROUP BY rev_host)
+                    GROUP BY rev_nowww
+                    ORDER BY frecency DESC, lastVisitDate DESC, url
+                    LIMIT ${limit}`;
+
+    let links = await this.executePlacesQuery(sqlQuery, {
+      columns: [
+        "bookmarkGuid",
+        "frecency",
+        "guid",
+        "lastVisitDate",
+        "title",
+        "type",
+        "url"
+      ]
+    });
+
+    if (!ignoreBlocked) {
+      links = links.filter(link => !BlockedLinks.isBlocked(link));
+    }
+    links = links.slice(0, TOP_SITES_LIMIT);
+    links = await this._addFavicons(links);
+    return this._processLinks(links);
+  },
+
+  /**
+   * Gets a specific bookmark given an id
+   *
+   * @param {String} aGuid
+   *          A bookmark guid to use as a refrence to fetch the bookmark
+   */
+  async getBookmark(aGuid) {
+    let bookmark = await PlacesUtils.bookmarks.fetch(aGuid);
+    if (!bookmark) {
+      return null;
+    }
+    let result = {};
+    result.bookmarkGuid = bookmark.guid;
+    result.bookmarkTitle = bookmark.title;
+    result.lastModified = bookmark.lastModified.getTime();
+    result.url = bookmark.url.href;
+    return result;
+  },
+
+  /**
+   * Gets History size
+   *
+   * @returns {Promise} Returns a promise with the count of moz_places records
+   */
+  async getHistorySize() {
+    let sqlQuery = `SELECT count(*) FROM moz_places
+                    WHERE hidden = 0 AND last_visit_date NOT NULL`;
+
+    let result = await this.executePlacesQuery(sqlQuery);
+    return result;
+  },
+
+  /**
+   * Gets Bookmarks count
+   *
+   * @returns {Promise} Returns a promise with the count of bookmarks
+   */
+  async getBookmarksSize() {
+    let sqlQuery = `SELECT count(*) FROM moz_bookmarks WHERE type = :type`;
+
+    let result = await this.executePlacesQuery(sqlQuery, {params: {type: PlacesUtils.bookmarks.TYPE_BOOKMARK}});
+    return result;
+  },
+
+  /**
+   * Executes arbitrary query against places database
+   *
+   * @param {String} aQuery
+   *        SQL query to execute
+   * @param {Object} [optional] aOptions
+   *          aOptions.columns - an array of column names. if supplied the return
+   *          items will consists of objects keyed on column names. Otherwise
+   *          array of raw values is returned in the select order
+   *          aOptions.param - an object of SQL binding parameters
+   *
+   * @returns {Promise} Returns a promise with the array of retrieved items
+   */
+  async executePlacesQuery(aQuery, aOptions = {}) {
+    let {columns, params} = aOptions;
+    let items = [];
+    let queryError = null;
+    let conn = await PlacesUtils.promiseDBConnection();
+    await conn.executeCached(aQuery, params, aRow => {
+      try {
+        let item = null;
+        // if columns array is given construct an object
+        if (columns && Array.isArray(columns)) {
+          item = {};
+          columns.forEach(column => {
+            item[column] = aRow.getResultByName(column);
+          });
+        } else {
+          // if no columns - make an array of raw values
+          item = [];
+          for (let i = 0; i < aRow.numEntries; i++) {
+            item.push(aRow.getResultByIndex(i));
+          }
+        }
+        items.push(item);
+      } catch (e) {
+        queryError = e;
+        throw StopIteration;
+      }
+    });
+    if (queryError) {
+      throw new Error(queryError);
+    }
+    return items;
+  }
+};
+
+/**
+ * A set of actions which influence what sites shown on the Activity Stream page
+ */
+var ActivityStreamLinks = {
+  /**
+   * Block a url
+   *
+   * @param {Object} aLink
+   *          The link which contains a URL to add to the block list
+   */
+  blockURL(aLink) {
+    BlockedLinks.block(aLink);
+  },
+
+  onLinkBlocked(aLink) {
+    Services.obs.notifyObservers(null, "newtab-linkBlocked", aLink.url);
+  },
+
+  /**
+   * Adds a bookmark
+   *
+   * @param {String} aUrl
+   *          The url to bookmark
+   *
+   * @returns {Promise} Returns a promise set to an object representing the bookmark
+   */
+  addBookmark(aUrl) {
+    return PlacesUtils.bookmarks.insert({
+      url: aUrl,
+      parentGuid: PlacesUtils.bookmarks.unfiledGuid
+    });
+  },
+
+  /**
+   * Removes a bookmark
+   *
+   * @param {String} aBookmarkGuid
+   *          The bookmark guid associated with the bookmark to remove
+   *
+   * @returns {Promise} Returns a promise set to an object representing the
+   *            removed bookmark
+   */
+  deleteBookmark(aBookmarkGuid) {
+    return PlacesUtils.bookmarks.remove(aBookmarkGuid);
+  },
+
+  /**
+   * Removes a history link
+   *
+   * @param {String} aUrl
+   *           The url to be removed from history
+   *
+   * @returns {Promise} Returns a promise set to true if link was removed
+   */
+  deleteHistoryEntry(aUrl) {
+    return PlacesUtils.history.remove(aUrl);
+  },
+
+  /**
+   * Get the top sites to show on Activity Stream
+   *
+   * @return {Promise} Returns a promise with the array of links as the payload
+   */
+  async getTopSites(aOptions = {}) {
+    return ActivityStreamProvider.getTopFrecentSites(aOptions);
+  }
 };
 
 /**
@@ -1116,6 +1453,14 @@ var Links = {
       }
     }
 
+    return this.mergeLinkLists(linkLists);
+  },
+
+  mergeLinkLists: function Links_mergeLinkLists(linkLists) {
+    if (linkLists.length == 1) {
+      return linkLists[0];
+    }
+
     function getNextLink() {
       let minLinks = null;
       for (let links of linkLists) {
@@ -1300,7 +1645,11 @@ var Telemetry = {
    * Initializes object.
    */
   init: function Telemetry_init() {
-    Services.obs.addObserver(this, TOPIC_GATHER_TELEMETRY, false);
+    Services.obs.addObserver(this, TOPIC_GATHER_TELEMETRY);
+  },
+
+  uninit: function Telemetry_uninit() {
+    Services.obs.removeObserver(this, TOPIC_GATHER_TELEMETRY);
   },
 
   /**
@@ -1425,6 +1774,7 @@ this.NewTabUtils = {
       PlacesProvider.init();
       Links.addProvider(PlacesProvider);
       BlockedLinks.addObserver(Links);
+      BlockedLinks.addObserver(ActivityStreamLinks);
     }
   },
 
@@ -1436,6 +1786,14 @@ this.NewTabUtils = {
       return true;
     }
     return false;
+  },
+
+  uninit: function NewTabUtils_uninit() {
+    if (this.initialized) {
+      Telemetry.uninit();
+      GridPrefs.uninit();
+      BlockedLinks.removeObservers();
+    }
   },
 
   getProviderLinks(aProvider) {
@@ -1490,5 +1848,7 @@ this.NewTabUtils = {
   pinnedLinks: PinnedLinks,
   blockedLinks: BlockedLinks,
   gridPrefs: GridPrefs,
-  placesProvider: PlacesProvider
+  placesProvider: PlacesProvider,
+  activityStreamLinks: ActivityStreamLinks,
+  activityStreamProvider: ActivityStreamProvider
 };

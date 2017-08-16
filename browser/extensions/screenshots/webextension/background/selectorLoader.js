@@ -1,4 +1,4 @@
-/* globals browser, catcher, log */
+/* globals catcher, log */
 
 "use strict";
 
@@ -14,6 +14,7 @@ this.selectorLoader = (function() {
     "log.js",
     "catcher.js",
     "assertIsTrusted.js",
+    "assertIsBlankDocument.js",
     "background/selectorLoader.js",
     "selector/callBackground.js",
     "selector/util.js"
@@ -86,13 +87,12 @@ this.selectorLoader = (function() {
         return browser.tabs.executeScript(tabId, {
           file,
           runAt: "document_end"
-        })
-          .catch((error) => {
-            log.error("error in script:", file, error);
-            error.scriptName = file;
-            throw error;
-          })
-      })
+        }).catch((error) => {
+          log.error("error in script:", file, error);
+          error.scriptName = file;
+          throw error;
+        });
+      });
     });
     return lastPromise.then(() => {
       log.debug("finished loading scripts:", scripts.join(" "));

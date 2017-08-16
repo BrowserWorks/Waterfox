@@ -25,15 +25,12 @@ gfxQuartzNativeDrawing::BeginNativeDrawing()
 
   DrawTarget *dt = mDrawTarget;
   if (dt->IsDualDrawTarget() || dt->IsTiledDrawTarget() ||
-      dt->GetBackendType() != BackendType::SKIA) {
+      dt->GetBackendType() != BackendType::SKIA || dt->IsRecording()) {
     // We need a DrawTarget that we can get a CGContextRef from:
     Matrix transform = dt->GetTransform();
 
     mNativeRect = transform.TransformBounds(mNativeRect);
     mNativeRect.RoundOut();
-    // Quartz theme drawing often adjusts drawing rects, so make
-    // sure our surface is big enough for that.
-    mNativeRect.Inflate(5);
     if (mNativeRect.IsEmpty()) {
       return nullptr;
     }
@@ -42,18 +39,37 @@ gfxQuartzNativeDrawing::BeginNativeDrawing()
       Factory::CreateDrawTarget(BackendType::SKIA,
                                 IntSize::Truncate(mNativeRect.width, mNativeRect.height),
                                 SurfaceFormat::B8G8R8A8);
-
-    if (mTempDrawTarget) {
-        transform.PostTranslate(-mNativeRect.x, -mNativeRect.y);
-        mTempDrawTarget->SetTransform(transform);
+    if (!mTempDrawTarget) {
+      return nullptr;
     }
+
+    transform.PostTranslate(-mNativeRect.x, -mNativeRect.y);
+    mTempDrawTarget->SetTransform(transform);
+
     dt = mTempDrawTarget;
+  } else {
+    // Clip the DT in case BorrowedCGContext needs to create a new layer.
+    // This prevents it from creating a new layer the size of the window.
+    // But make sure that this clip is device pixel aligned.
+    Matrix transform = dt->GetTransform();
+
+    Rect deviceRect = transform.TransformBounds(mNativeRect);
+    deviceRect.RoundOut();
+    mNativeRect = transform.Inverse().TransformBounds(deviceRect);
+    mDrawTarget->PushClipRect(mNativeRect);
   }
-  if (dt) {
-    MOZ_ASSERT(dt->GetBackendType() == BackendType::SKIA);
-    mCGContext = mBorrowedContext.Init(dt);
-    MOZ_ASSERT(mCGContext);
+
+  MOZ_ASSERT(dt->GetBackendType() == BackendType::SKIA);
+  mCGContext = mBorrowedContext.Init(dt);
+
+  if (NS_WARN_IF(!mCGContext)) {
+    // Failed borrowing CG context, so we need to clean up.
+    if (!mTempDrawTarget) {
+      mDrawTarget->PopClip();
+    }
+    return nullptr;
   }
+
   return mCGContext;
 }
 
@@ -70,5 +86,7 @@ gfxQuartzNativeDrawing::EndNativeDrawing()
     mDrawTarget->SetTransform(Matrix());
     mDrawTarget->DrawSurface(source, mNativeRect,
                              Rect(0, 0, mNativeRect.width, mNativeRect.height));
+  } else {
+    mDrawTarget->PopClip();
   }
 }

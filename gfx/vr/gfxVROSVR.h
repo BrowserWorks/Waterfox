@@ -25,18 +25,16 @@ namespace impl {
 class VRDisplayOSVR : public VRDisplayHost
 {
 public:
-  VRHMDSensorState GetSensorState() override;
-  VRHMDSensorState GetImmediateSensorState() override;
   void ZeroSensor() override;
 
 protected:
+  VRHMDSensorState GetSensorState() override;
   virtual void StartPresentation() override;
   virtual void StopPresentation() override;
 
 #if defined(XP_WIN)
-  virtual void SubmitFrame(TextureSourceD3D11* aSource,
+  virtual bool SubmitFrame(TextureSourceD3D11* aSource,
     const IntSize& aSize,
-    const VRHMDSensorState& aSensorState,
     const gfx::Rect& aLeftEyeRect,
     const gfx::Rect& aRightEyeRect) override;
 #endif
@@ -65,14 +63,18 @@ class VRSystemManagerOSVR : public VRSystemManager
 {
 public:
   static already_AddRefed<VRSystemManagerOSVR> Create();
-  virtual bool Init() override;
   virtual void Destroy() override;
-  virtual void GetHMDs(nsTArray<RefPtr<VRDisplayHost>>& aHMDResult) override;
+  virtual void Shutdown() override;
+  virtual bool GetHMDs(nsTArray<RefPtr<VRDisplayHost>>& aHMDResult) override;
+  virtual bool GetIsPresenting() override;
   virtual void HandleInput() override;
   virtual void GetControllers(nsTArray<RefPtr<VRControllerHost>>&
                               aControllerResult) override;
   virtual void ScanForControllers() override;
   virtual void RemoveControllers() override;
+  virtual void VibrateHaptic(uint32_t aControllerIdx, uint32_t aHapticIndex,
+                             double aIntensity, double aDuration, uint32_t aPromiseID) override;
+  virtual void StopVibrateHaptic(uint32_t aControllerIdx) override;
 
 protected:
   VRSystemManagerOSVR()
@@ -86,6 +88,8 @@ protected:
   {
   }
 
+  bool Init();
+
   RefPtr<impl::VRDisplayOSVR> mHMDInfo;
   bool mOSVRInitialized;
   bool mClientContextInitialized;
@@ -98,13 +102,6 @@ protected:
   OSVR_DisplayConfig m_display;
 
 private:
-  virtual void HandleButtonPress(uint32_t aControllerIdx,
-                                 uint64_t aButtonPressed) override;
-  virtual void HandleAxisMove(uint32_t aControllerIdx, uint32_t aAxis,
-                              float aValue) override;
-  virtual void HandlePoseTracking(uint32_t aControllerIdx,
-                                  const dom::GamepadPoseState& aPose,
-                                  VRControllerHost* aController) override;
   // check if all components are initialized
   // and if not, it will try to initialize them
   void CheckOSVRStatus();

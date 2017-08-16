@@ -2,14 +2,14 @@
 /* vim: set sts=2 sw=2 et tw=80: */
 "use strict";
 
-add_task(function* test_sendMessage_error() {
+add_task(async function test_sendMessage_error() {
   async function background() {
     let circ = {};
     circ.circ = circ;
     let testCases = [
       // [arguments, expected error string],
       [[], "runtime.sendMessage's message argument is missing"],
-      [[null, null, null, null], "runtime.sendMessage's last argument is not a function"],
+      [[null, null, null, 42], "runtime.sendMessage's last argument is not a function"],
       [[null, null, 1], "runtime.sendMessage's options argument is invalid"],
       [[1, null, null], "runtime.sendMessage's extensionId argument is invalid"],
       [[null, null, null, null, null], "runtime.sendMessage received too many arguments"],
@@ -18,15 +18,9 @@ add_task(function* test_sendMessage_error() {
       // because there is no onMessage listener.
       [[null, null, null], "Could not establish connection. Receiving end does not exist."],
 
-      // Structural cloning doesn't work with DOM but we fall back
-      // JSON serialization, so we don't expect another error.
-      [[null, location, null], "Could not establish connection. Receiving end does not exist."],
-
-      // Structured cloning supports cyclic self-references.
-      [[null, [circ, location], null], "cyclic object value"],
-      // JSON serialization does not support cyclic references.
-      [[null, circ, null], "Could not establish connection. Receiving end does not exist."],
-      // (the last two tests shows whether sendMessage is implemented as structured cloning).
+      // Structured cloning doesn't work with DOM objects
+      [[null, location, null], "The object could not be cloned."],
+      [[null, [circ, location], null], "The object could not be cloned."],
     ];
 
     // Repeat all tests with the undefined value instead of null.
@@ -51,9 +45,9 @@ add_task(function* test_sendMessage_error() {
   };
 
   let extension = ExtensionTestUtils.loadExtension(extensionData);
-  yield extension.startup();
+  await extension.startup();
 
-  yield extension.awaitFinish("sendMessage parameter validation");
+  await extension.awaitFinish("sendMessage parameter validation");
 
-  yield extension.unload();
+  await extension.unload();
 });

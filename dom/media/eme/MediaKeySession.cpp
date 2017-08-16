@@ -396,7 +396,7 @@ MediaKeySession::Load(const nsAString& aSessionId, ErrorResult& aRv)
   SetSessionId(aSessionId);
 
   PromiseId pid = mKeys->StorePromise(promise);
-  mKeys->GetCDMProxy()->LoadSession(pid, aSessionId);
+  mKeys->GetCDMProxy()->LoadSession(pid, mSessionType, aSessionId);
 
   EME_LOG("MediaKeySession[%p,'%s'] Load() sent to CDM, promiseId=%d",
     this, NS_ConvertUTF16toUTF8(mSessionId).get(), pid);
@@ -662,6 +662,20 @@ void
 MediaKeySession::SetOnmessage(EventHandlerNonNull* aCallback)
 {
   SetEventHandler(nsGkAtoms::onmessage, EmptyString(), aCallback);
+}
+
+nsCString
+ToCString(MediaKeySessionType aType)
+{
+  using IntegerType = typename std::underlying_type<MediaKeySessionType>::type;
+  auto idx = static_cast<IntegerType>(aType);
+  return nsDependentCString(MediaKeySessionTypeValues::strings[idx].value);
+}
+
+nsString
+ToString(MediaKeySessionType aType)
+{
+  return NS_ConvertUTF8toUTF16(ToCString(aType));
 }
 
 } // namespace dom

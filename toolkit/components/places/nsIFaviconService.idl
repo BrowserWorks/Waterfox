@@ -19,7 +19,7 @@ interface nsIFaviconService : nsISupports
    * The limit in bytes of the size of favicons in memory and passed via the
    * favicon protocol.
    */
-  const unsigned long MAX_FAVICON_BUFFER_SIZE = 10240;
+  const unsigned long MAX_FAVICON_BUFFER_SIZE = 65536;
 
   /**
    * For a given icon URI, this will return a URI that will result in the image.
@@ -53,6 +53,15 @@ interface nsIFaviconService : nsISupports
    *       dispatched through observer's service.
    */
   void expireAllFavicons();
+
+  /**
+   * Tries to extract the preferred size from an icon uri ref fragment.
+   *
+   * @param aURI
+   *        The URI to parse.
+   * @return The preferred size, or UINT16_MAX if not present.
+   */
+  unsigned short preferredSizeFromURI(in nsIURI aURI);
 
   /**
    * Adds a given favicon's URI to the failed favicon cache.
@@ -92,6 +101,11 @@ interface nsIFaviconService : nsISupports
    * The default favicon URI
    */
   readonly attribute nsIURI defaultFavicon;
+
+  /**
+   * The default favicon mimeType
+   */
+  readonly attribute AUTF8String defaultFaviconMimeType;
 };
 
 [scriptable, function, uuid(c85e5c82-b70f-4621-9528-beb2aa47fb44)]
@@ -121,6 +135,9 @@ interface nsIFaviconDataCallback : nsISupports
    *        Icon data, or an empty array if aDataLen is 0.
    * @param aMimeType
    *        Mime type of the icon, or an empty string if aDataLen is 0.
+   * @param aWidth
+   *        Width of the icon. 0 if the width is unknown or if the icon is
+   *        vectorial.
    *
    * @note If you want to open a network channel to access the favicon, it's
    *       recommended that you call the getFaviconLinkForIcon method to convert
@@ -129,7 +146,8 @@ interface nsIFaviconDataCallback : nsISupports
   void onComplete(in nsIURI aFaviconURI,
                   in unsigned long aDataLen,
                   [const,array,size_is(aDataLen)] in octet aData,
-                  in AUTF8String aMimeType);
+                  in AUTF8String aMimeType,
+                  in unsigned short aWidth);
 };
 
 %{C++
@@ -139,7 +157,9 @@ interface nsIFaviconDataCallback : nsISupports
  */
 #define NS_PLACES_FAVICONS_EXPIRED_TOPIC_ID "places-favicons-expired"
 
-#define FAVICON_DEFAULT_URL "chrome://mozapps/skin/places/defaultFavicon.png"
+#define FAVICON_DEFAULT_URL "chrome://mozapps/skin/places/defaultFavicon.svg"
+#define FAVICON_DEFAULT_MIMETYPE "image/svg+xml"
+
 #define FAVICON_ERRORPAGE_URL "chrome://global/skin/icons/warning-16.png"
 
 %}

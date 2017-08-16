@@ -408,6 +408,7 @@ var FeedHandler = {
   QueryInterface: XPCOMUtils.generateQI([Ci.nsIObserver,
                                          Ci.nsISupportsWeakReference]),
 
+
   init() {
     window.messageManager.addMessageListener("FeedWriter:ChooseClientApp", this);
     window.messageManager.addMessageListener("FeedWriter:GetSubscriptionUI", this);
@@ -527,10 +528,7 @@ var FeedHandler = {
     // Ensure we have a pref that is settable
     if (aPrefName && SETTABLE_PREFS.has(aPrefName)) {
       if (aIsComplex) {
-        const supportsString = Cc["@mozilla.org/supports-string;1"].
-                             createInstance(Ci.nsISupportsString);
-        supportsString.data = aPrefValue;
-        Services.prefs.setComplexValue(aPrefName, Ci.nsISupportsString, supportsString);
+        Services.prefs.setStringPref(aPrefName, aPrefValue);
       } else {
         Services.prefs.setCharPref(aPrefName, aPrefValue);
       }
@@ -550,7 +548,7 @@ var FeedHandler = {
 
     if (handler === "web") {
       try {
-        url = prefs.getComplexValue(getPrefWebForType(feedType), Ci.nsISupportsString).data;
+        url = prefs.getStringPref(getPrefWebForType(feedType));
       } catch (ex) {
         LOG("FeedWriter._setSelectedHandler: invalid or no handler in prefs");
         url = null;
@@ -629,8 +627,8 @@ var FeedHandler = {
                                           settings.feedSubtitle,
                                           settings.feedType,
                                           settings.reader);
-        }
-        break;
+         }
+         break;
       case "FeedConverter:ExecuteClientApp":
         // Always check feedHandler is from a set array of executable prefs
         if (EXECUTABLE_PREFS.has(msg.data.feedHandler)) {

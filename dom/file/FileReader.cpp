@@ -111,12 +111,18 @@ FileReader::FileReader(nsIGlobalObject* aGlobal,
   , mReadyState(EMPTY)
   , mTotal(0)
   , mTransferred(0)
-  , mTarget(do_GetCurrentThread())
   , mBusyCount(0)
   , mWorkerPrivate(aWorkerPrivate)
 {
   MOZ_ASSERT(aGlobal);
   MOZ_ASSERT(NS_IsMainThread() == !mWorkerPrivate);
+
+  if (NS_IsMainThread()) {
+    mTarget = aGlobal->EventTargetFor(TaskCategory::Other);
+  } else {
+    mTarget = do_GetCurrentThread();
+  }
+
   SetDOMStringToNull(mResult);
 }
 
@@ -280,6 +286,8 @@ FileReader::DoReadData(uint64_t aCount)
 {
   MOZ_ASSERT(mAsyncStream);
 
+  uint32_t bytesRead = 0;
+
   if (mDataFormat == FILE_AS_BINARY) {
     //Continuously update our binary string as data comes in
     uint32_t oldLen = mResult.Length();
@@ -290,10 +298,24 @@ FileReader::DoReadData(uint64_t aCount)
     mResult.GetMutableData(&buf, oldLen + aCount, fallible);
     NS_ENSURE_TRUE(buf, NS_ERROR_OUT_OF_MEMORY);
 
-    uint32_t bytesRead = 0;
-    mAsyncStream->ReadSegments(ReadFuncBinaryString, buf + oldLen, aCount,
-                               &bytesRead);
-    MOZ_ASSERT(bytesRead == aCount, "failed to read data");
+    nsresult rv;
+
+    // nsFileStreams do not implement ReadSegment. In case here we are dealing
+    // with a nsIAsyncInputStream, in content process, we need to wrap a
+    // nsIBufferedInputStream around it.
+    if (!mBufferedStream) {
+      rv = NS_NewBufferedInputStream(getter_AddRefs(mBufferedStream),
+                                     mAsyncStream, 8192);
+      NS_ENSURE_SUCCESS(rv, rv);
+    }
+
+    rv = mBufferedStream->ReadSegments(ReadFuncBinaryString, buf + oldLen,
+                                       aCount, &bytesRead);
+    if (NS_WARN_IF(NS_FAILED(rv))) {
+      return rv;
+    }
+
+    mResult.Truncate(oldLen + bytesRead);
   }
   else {
     CheckedInt<uint64_t> size = mDataLen;
@@ -307,18 +329,16 @@ FileReader::DoReadData(uint64_t aCount)
       return NS_ERROR_OUT_OF_MEMORY;
     }
 
-    if (mDataFormat != FILE_AS_ARRAYBUFFER) {
-      mFileData = (char *) realloc(mFileData, mDataLen + aCount);
-      NS_ENSURE_TRUE(mFileData, NS_ERROR_OUT_OF_MEMORY);
-    }
-
-    uint32_t bytesRead = 0;
     MOZ_DIAGNOSTIC_ASSERT(mFileData);
-    mAsyncStream->Read(mFileData + mDataLen, aCount, &bytesRead);
-    MOZ_ASSERT(bytesRead == aCount, "failed to read data");
+    MOZ_RELEASE_ASSERT((mDataLen + aCount) <= mTotal);
+
+    nsresult rv = mAsyncStream->Read(mFileData + mDataLen, aCount, &bytesRead);
+    if (NS_WARN_IF(NS_FAILED(rv))) {
+      return rv;
+    }
   }
 
-  mDataLen += aCount;
+  mDataLen += bytesRead;
   return NS_OK;
 }
 
@@ -341,6 +361,7 @@ FileReader::ReadFileContent(Blob& aBlob,
   mResultArrayBuffer = nullptr;
 
   mAsyncStream = nullptr;
+  mBufferedStream = nullptr;
 
   mTransferred = 0;
   mTotal = 0;
@@ -365,27 +386,30 @@ FileReader::ReadFileContent(Blob& aBlob,
     return;
   }
 
-  nsCOMPtr<nsITransport> transport;
-  aRv = sts->CreateInputTransport(stream,
-                                  /* aStartOffset */ 0,
-                                  /* aReadLimit */ -1,
-                                  /* aCloseWhenDone */ true,
-                                  getter_AddRefs(transport));
-  if (NS_WARN_IF(aRv.Failed())) {
-    return;
+  mAsyncStream = do_QueryInterface(stream);
+  if (!mAsyncStream) {
+    nsCOMPtr<nsITransport> transport;
+    aRv = sts->CreateInputTransport(stream,
+                                    /* aStartOffset */ 0,
+                                    /* aReadLimit */ -1,
+                                    /* aCloseWhenDone */ true,
+                                    getter_AddRefs(transport));
+    if (NS_WARN_IF(aRv.Failed())) {
+      return;
+    }
+
+    nsCOMPtr<nsIInputStream> wrapper;
+    aRv = transport->OpenInputStream(/* aFlags */ 0,
+                                     /* aSegmentSize */ 0,
+                                     /* aSegmentCount */ 0,
+                                     getter_AddRefs(wrapper));
+    if (NS_WARN_IF(aRv.Failed())) {
+      return;
+    }
+
+    mAsyncStream = do_QueryInterface(wrapper);
   }
 
-  nsCOMPtr<nsIInputStream> wrapper;
-  aRv = transport->OpenInputStream(/* aFlags */ 0,
-                                   /* aSegmentSize */ 0,
-                                   /* aSegmentCount */ 0,
-                                   getter_AddRefs(wrapper));
-  if (NS_WARN_IF(aRv.Failed())) {
-    return;
-  }
-
-  MOZ_ASSERT(!mAsyncStream);
-  mAsyncStream = do_QueryInterface(wrapper);
   MOZ_ASSERT(mAsyncStream);
 
   mTotal = mBlob->GetSize(aRv);
@@ -393,8 +417,15 @@ FileReader::ReadFileContent(Blob& aBlob,
     return;
   }
 
-  if (mDataFormat == FILE_AS_ARRAYBUFFER) {
-    mFileData = js_pod_malloc<char>(mTotal);
+  // Binary Format doesn't need a post-processing of the data. Everything is
+  // written directly into mResult.
+  if (mDataFormat != FILE_AS_BINARY) {
+    if (mDataFormat == FILE_AS_ARRAYBUFFER) {
+      mFileData = js_pod_malloc<char>(mTotal);
+    } else {
+      mFileData = (char *) malloc(mTotal);
+    }
+
     if (!mFileData) {
       NS_WARNING("Preallocation failed for ReadFileData");
       aRv.Throw(NS_ERROR_OUT_OF_MEMORY);
@@ -449,8 +480,8 @@ FileReader::GetAsText(Blob *aBlob,
     }
   }
 
-  nsDependentCSubstring data(aFileData, aDataLen);
-  return nsContentUtils::ConvertStringFromEncoding(encoding, data, aResult);
+  return nsContentUtils::ConvertStringFromEncoding(
+      encoding, aFileData, aDataLen, aResult);
 }
 
 nsresult
@@ -520,6 +551,7 @@ FileReader::FreeDataAndDispatchSuccess()
   FreeFileData();
   mResult.SetIsVoid(false);
   mAsyncStream = nullptr;
+  mBufferedStream = nullptr;
   mBlob = nullptr;
 
   // Dispatch event to signify end of a successful operation
@@ -535,6 +567,7 @@ FileReader::FreeDataAndDispatchError()
   FreeFileData();
   mResult.SetIsVoid(true);
   mAsyncStream = nullptr;
+  mBufferedStream = nullptr;
   mBlob = nullptr;
 
   // Dispatch error event to signify load failure
@@ -613,25 +646,25 @@ FileReader::OnInputStreamReady(nsIAsyncInputStream* aStream)
   // be 100% sure we have a workerHolder when OnLoadEnd() is called.
   FileReaderDecreaseBusyCounter RAII(this);
 
-  uint64_t aCount;
-  nsresult rv = aStream->Available(&aCount);
+  uint64_t count;
+  nsresult rv = aStream->Available(&count);
 
-  if (NS_SUCCEEDED(rv) && aCount) {
-    rv = DoReadData(aCount);
+  if (NS_SUCCEEDED(rv) && count) {
+    rv = DoReadData(count);
+
+    if (NS_SUCCEEDED(rv)) {
+      rv = DoAsyncWait();
+    }
   }
 
-  if (NS_SUCCEEDED(rv)) {
-    rv = DoAsyncWait();
-  }
-
-  if (NS_FAILED(rv) || !aCount) {
+  if (NS_FAILED(rv) || !count) {
     if (rv == NS_BASE_STREAM_CLOSED) {
       rv = NS_OK;
     }
     return OnLoadEnd(rv);
   }
 
-  mTransferred += aCount;
+  mTransferred += count;
 
   //Notify the timer is the appropriate timeframe has passed
   if (mTimerIsActive) {
@@ -720,6 +753,7 @@ FileReader::Abort()
   mResultArrayBuffer = nullptr;
 
   mAsyncStream = nullptr;
+  mBufferedStream = nullptr;
   mBlob = nullptr;
 
   //Clean up memory buffer
@@ -771,6 +805,11 @@ FileReader::Shutdown()
   if (mAsyncStream) {
     mAsyncStream->Close();
     mAsyncStream = nullptr;
+  }
+
+  if (mBufferedStream) {
+    mBufferedStream->Close();
+    mBufferedStream = nullptr;
   }
 
   FreeFileData();

@@ -30,31 +30,36 @@ XPCOMUtils.defineLazyModuleGetter(this, "SessionFile",
 XPCOMUtils.defineLazyModuleGetter(this, "PrivateBrowsingUtils",
   "resource://gre/modules/PrivateBrowsingUtils.jsm");
 
-// Minimal interval between two save operations (in milliseconds).
-XPCOMUtils.defineLazyGetter(this, "gInterval", function () {
-  const PREF = "browser.sessionstore.interval";
-
-  // Observer that updates the cached value when the preference changes.
-  Services.prefs.addObserver(PREF, () => {
-    this.gInterval = Services.prefs.getIntPref(PREF);
-
-    // Cancel any pending runs and call runDelayed() with
-    // zero to apply the newly configured interval.
-    SessionSaverInternal.cancel();
-    SessionSaverInternal.runDelayed(0);
-  }, false);
-
-  return Services.prefs.getIntPref(PREF);
-});
+/*
+ * Minimal interval between two save operations (in milliseconds).
+ *
+ * To save system resources, we generally do not save changes immediately when
+ * a change is detected. Rather, we wait a little to see if this change is
+ * followed by other changes, in which case only the last write is necessary.
+ * This delay is defined by "browser.sessionstore.interval".
+ *
+ * Furthermore, when the user is not actively using the computer, webpages
+ * may still perform changes that require (re)writing to sessionstore, e.g.
+ * updating Session Cookies or DOM Session Storage, or refreshing, etc. We
+ * expect that these changes are much less critical to the user and do not
+ * need to be saved as often. In such cases, we increase the delay to
+ *  "browser.sessionstore.interval.idle".
+ *
+ * When the user returns to the computer, if a save is pending, we reschedule
+ * it to happen soon, with "browser.sessionstore.interval".
+ */
+const PREF_INTERVAL_ACTIVE = "browser.sessionstore.interval";
+const PREF_INTERVAL_IDLE = "browser.sessionstore.interval.idle";
+const PREF_IDLE_DELAY = "browser.sessionstore.idleDelay";
 
 // Notify observers about a given topic with a given subject.
 function notify(subject, topic) {
-  Services.obs.notifyObservers(subject, topic, "");
+  Services.obs.notifyObservers(subject, topic);
 }
 
 // TelemetryStopwatch helper functions.
 function stopWatch(method) {
-  return function (...histograms) {
+  return function(...histograms) {
     for (let hist of histograms) {
       TelemetryStopwatch[method]("FX_SESSION_RESTORE_" + hist);
     }
@@ -72,7 +77,7 @@ this.SessionSaver = Object.freeze({
   /**
    * Immediately saves the current session to disk.
    */
-  run: function () {
+  run() {
     return SessionSaverInternal.run();
   },
 
@@ -81,7 +86,7 @@ this.SessionSaver = Object.freeze({
    * another delayed run be scheduled already, we will ignore the given delay
    * and state saving may occur a little earlier.
    */
-  runDelayed: function () {
+  runDelayed() {
     SessionSaverInternal.runDelayed();
   },
 
@@ -89,14 +94,14 @@ this.SessionSaver = Object.freeze({
    * Sets the last save time to the current time. This will cause us to wait for
    * at least the configured interval when runDelayed() is called next.
    */
-  updateLastSaveTime: function () {
+  updateLastSaveTime() {
     SessionSaverInternal.updateLastSaveTime();
   },
 
   /**
    * Cancels all pending session saves.
    */
-  cancel: function () {
+  cancel() {
     SessionSaverInternal.cancel();
   }
 });
@@ -119,9 +124,39 @@ var SessionSaverInternal = {
   _lastSaveTime: 0,
 
   /**
+   * `true` if the user has been idle for at least
+   * `SessionSaverInternal._intervalWhileIdle` ms. Idleness is computed
+   * with `nsIIdleService`.
+   */
+  _isIdle: false,
+
+  /**
+   * `true` if the user was idle when we last scheduled a delayed save.
+   * See `_isIdle` for details on idleness.
+   */
+  _wasIdle: false,
+
+  /**
+   * Minimal interval between two save operations (in ms), while the user
+   * is active.
+   */
+  _intervalWhileActive: null,
+
+  /**
+   * Minimal interval between two save operations (in ms), while the user
+   * is idle.
+   */
+  _intervalWhileIdle: null,
+
+  /**
+   * How long before we assume that the user is idle (ms).
+   */
+  _idleDelay: null,
+
+  /**
    * Immediately saves the current session to disk.
    */
-  run: function () {
+  run() {
     return this._saveState(true /* force-update all windows */);
   },
 
@@ -134,16 +169,18 @@ var SessionSaverInternal = {
    *        The minimum delay in milliseconds to wait for until we collect and
    *        save the current session.
    */
-  runDelayed: function (delay = 2000) {
+  runDelayed(delay = 2000) {
     // Bail out if there's a pending run.
     if (this._timeoutID) {
       return;
     }
 
     // Interval until the next disk operation is allowed.
-    delay = Math.max(this._lastSaveTime + gInterval - Date.now(), delay, 0);
+    let interval = this._isIdle ? this._intervalWhileIdle : this._intervalWhileActive;
+    delay = Math.max(this._lastSaveTime + interval - Date.now(), delay, 0);
 
     // Schedule a state save.
+    this._wasIdle = this._isIdle;
     this._timeoutID = setTimeout(() => this._saveStateAsync(), delay);
   },
 
@@ -151,16 +188,39 @@ var SessionSaverInternal = {
    * Sets the last save time to the current time. This will cause us to wait for
    * at least the configured interval when runDelayed() is called next.
    */
-  updateLastSaveTime: function () {
+  updateLastSaveTime() {
     this._lastSaveTime = Date.now();
   },
 
   /**
    * Cancels all pending session saves.
    */
-  cancel: function () {
+  cancel() {
     clearTimeout(this._timeoutID);
     this._timeoutID = null;
+  },
+
+  /**
+   * Observe idle/ active notifications.
+   */
+  observe(subject, topic, data) {
+    switch (topic) {
+      case "idle":
+        this._isIdle = true;
+        break;
+      case "active":
+        this._isIdle = false;
+        if (this._timeoutID && this._wasIdle) {
+          // A state save has been scheduled while we were idle.
+          // Replace it by an active save.
+          clearTimeout(this._timeoutID);
+          this._timeoutID = null;
+          this.runDelayed();
+        }
+        break;
+      default:
+        throw new Error(`Unexpected change value ${topic}`);
+    }
   },
 
   /**
@@ -170,7 +230,7 @@ var SessionSaverInternal = {
    *        Forces us to recollect data for all windows and will bypass and
    *        update the corresponding caches.
    */
-  _saveState: function (forceUpdateAllWindows = false) {
+  _saveState(forceUpdateAllWindows = false) {
     // Cancel any pending timeouts.
     this.cancel();
 
@@ -182,7 +242,7 @@ var SessionSaverInternal = {
       return Promise.resolve();
     }
 
-    stopWatchStart("COLLECT_DATA_MS", "COLLECT_DATA_LONGEST_OP_MS");
+    stopWatchStart("COLLECT_DATA_MS");
     let state = SessionStore.getCurrentState(forceUpdateAllWindows);
     PrivacyFilter.filterPrivateWindowsAndTabs(state);
 
@@ -214,26 +274,44 @@ var SessionSaverInternal = {
       }
     }
 
-    // Clear all cookies and storage on clean shutdown according to user preferences
-    if (RunState.isClosing) {
-      let expireCookies = Services.prefs.getIntPref("network.cookie.lifetimePolicy") ==
-                          Services.cookies.QueryInterface(Ci.nsICookieService).ACCEPT_SESSION;
-      let sanitizeCookies = Services.prefs.getBoolPref("privacy.sanitize.sanitizeOnShutdown") &&
-                            Services.prefs.getBoolPref("privacy.clearOnShutdown.cookies");
-      let restart = Services.prefs.getBoolPref("browser.sessionstore.resume_session_once");
-      // Don't clear when restarting
-      if ((expireCookies || sanitizeCookies) && !restart) {
-        for (let window of state.windows) {
-          delete window.cookies;
-          for (let tab of window.tabs) {
-            delete tab.storage;
-          }
+    // Clear cookies and storage on clean shutdown.
+    this._maybeClearCookiesAndStorage(state);
+
+    stopWatchFinish("COLLECT_DATA_MS");
+    return this._writeState(state);
+  },
+
+  /**
+   * Purges cookies and DOMSessionStorage data from the session on clean
+   * shutdown, only if requested by the user's preferences.
+   */
+  _maybeClearCookiesAndStorage(state) {
+    // Only do this on shutdown.
+    if (!RunState.isClosing) {
+      return;
+    }
+
+    // Don't clear when restarting.
+    if (Services.prefs.getBoolPref("browser.sessionstore.resume_session_once")) {
+      return;
+    }
+
+    let expireCookies = Services.prefs.getIntPref("network.cookie.lifetimePolicy") ==
+                        Services.cookies.QueryInterface(Ci.nsICookieService).ACCEPT_SESSION;
+    let sanitizeCookies = Services.prefs.getBoolPref("privacy.sanitize.sanitizeOnShutdown") &&
+                          Services.prefs.getBoolPref("privacy.clearOnShutdown.cookies");
+
+    if (expireCookies || sanitizeCookies) {
+      // Remove cookies.
+      delete state.cookies;
+
+      // Remove DOMSessionStorage data.
+      for (let window of state.windows) {
+        for (let tab of window.tabs) {
+          delete tab.storage;
         }
       }
     }
-
-    stopWatchFinish("COLLECT_DATA_MS", "COLLECT_DATA_LONGEST_OP_MS");
-    return this._writeState(state);
   },
 
   /**
@@ -241,7 +319,7 @@ var SessionSaverInternal = {
    * _saveState() to collect data again (with a cache hit rate of hopefully
    * 100%) and write to disk afterwards.
    */
-  _saveStateAsync: function () {
+  _saveStateAsync() {
     // Allow scheduling delayed saves again.
     this._timeoutID = null;
 
@@ -252,7 +330,7 @@ var SessionSaverInternal = {
   /**
    * Write the given state object to disk.
    */
-  _writeState: function (state) {
+  _writeState(state) {
     // We update the time stamp before writing so that we don't write again
     // too soon, if saving is requested before the write completes. Without
     // this update we may save repeatedly if actions cause a runDelayed
@@ -268,3 +346,33 @@ var SessionSaverInternal = {
     }, console.error);
   },
 };
+
+XPCOMUtils.defineLazyPreferenceGetter(SessionSaverInternal, "_intervalWhileActive", PREF_INTERVAL_ACTIVE,
+  15000 /* 15 seconds */, () => {
+  // Cancel any pending runs and call runDelayed() with
+  // zero to apply the newly configured interval.
+  SessionSaverInternal.cancel();
+  SessionSaverInternal.runDelayed(0);
+});
+
+XPCOMUtils.defineLazyPreferenceGetter(SessionSaverInternal, "_intervalWhileIdle", PREF_INTERVAL_IDLE,
+  3600000 /* 1 h */);
+
+XPCOMUtils.defineLazyPreferenceGetter(SessionSaverInternal, "_idleDelay", PREF_IDLE_DELAY,
+  180000 /* 3 minutes */, (key, previous, latest) => {
+  // Update the idle observer for the new `PREF_IDLE_DELAY` value. Here we need
+  // to re-fetch the service instead of the original one in use; This is for a
+  // case that the Mock service in the unit test needs to be fetched to
+  // replace the original one.
+  var idleService = Cc["@mozilla.org/widget/idleservice;1"].getService(Ci.nsIIdleService);
+  if (previous != undefined) {
+    idleService.removeIdleObserver(SessionSaverInternal, previous);
+  }
+  if (latest != undefined) {
+    idleService.addIdleObserver(SessionSaverInternal, latest);
+  }
+});
+
+var idleService = Cc["@mozilla.org/widget/idleservice;1"].getService(Ci.nsIIdleService);
+idleService.addIdleObserver(SessionSaverInternal, SessionSaverInternal._idleDelay);
+

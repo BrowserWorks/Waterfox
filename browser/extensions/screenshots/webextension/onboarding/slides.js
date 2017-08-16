@@ -1,4 +1,4 @@
-/* globals log, catcher, onboardingHtml, onboardingCss, browser, util, shooter, callBackground, assertIsTrusted */
+/* globals log, catcher, onboardingHtml, onboardingCss, util, shooter, callBackground, assertIsTrusted, assertIsBlankDocument */
 
 "use strict";
 
@@ -35,21 +35,24 @@ this.slides = (function() {
       html = html.replace(/MOZ_EXTENSION([^\"]+)/g, (match, filename) => {
         return browser.extension.getURL(filename);
       });
-      iframe.onload = catcher.watchFunction(() => {
+      iframe.addEventListener("load", catcher.watchFunction(() => {
+        doc = iframe.contentDocument;
+        assertIsBlankDocument(doc);
         let parsedDom = (new DOMParser()).parseFromString(
           html,
           "text/html"
         );
-        doc = iframe.contentDocument;
         doc.replaceChild(
           doc.adoptNode(parsedDom.documentElement),
           doc.documentElement
         );
         doc.addEventListener("keyup", onKeyUp);
+        doc.documentElement.dir = browser.i18n.getMessage("@@bidi_dir");
+        doc.documentElement.lang = browser.i18n.getMessage("@@ui_locale");
         localizeText(doc);
         activateSlide(doc);
         resolve();
-      });
+      }), {once: true});
       document.body.appendChild(iframe);
       iframe.focus();
       window.addEventListener("resize", onResize);
@@ -93,7 +96,7 @@ this.slides = (function() {
     };
     let linkUrls = {
       [termsSentinel]: "https://www.mozilla.org/about/legal/terms/services/",
-      [privacySentinel]: "https://www.mozilla.org/privacy/firefox-cloud/"
+      [privacySentinel]: "https://www.mozilla.org/privacy/firefox/"
     };
     let text = browser.i18n.getMessage(
       "termsAndPrivacyNoticeCloudServices",
@@ -150,6 +153,12 @@ this.slides = (function() {
     doc.querySelector("#privacy").addEventListener("click", watchFunction(assertIsTrusted((event) => {
       event.preventDefault();
       callBackground("openPrivacyPage");
+    })));
+    doc.querySelector("#slide-overlay").addEventListener("click", watchFunction(assertIsTrusted((event) => {
+      if (event.target == doc.querySelector("#slide-overlay")) {
+        shooter.sendEvent("cancel-slides", "background-click");
+        callbacks.onEnd();
+      }
     })));
     setSlide(1);
   }

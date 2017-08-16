@@ -11,15 +11,15 @@ Components.utils.import("resource://gre/modules/Extension.jsm");
 var extension;
 
 const BOOTSTRAP_REASON_TO_STRING_MAP = {
-  1: "APP_STARTUP",
-  2: "APP_SHUTDOWN",
-  3: "ADDON_ENABLE",
-  4: "ADDON_DISABLE",
-  5: "ADDON_INSTALL",
-  6: "ADDON_UNINSTALL",
-  7: "ADDON_UPGRADE",
-  8: "ADDON_DOWNGRADE",
-}
+  [this.APP_STARTUP]: "APP_STARTUP",
+  [this.APP_SHUTDOWN]: "APP_SHUTDOWN",
+  [this.ADDON_ENABLE]: "ADDON_ENABLE",
+  [this.ADDON_DISABLE]: "ADDON_DISABLE",
+  [this.ADDON_INSTALL]: "ADDON_INSTALL",
+  [this.ADDON_UNINSTALL]: "ADDON_UNINSTALL",
+  [this.ADDON_UPGRADE]: "ADDON_UPGRADE",
+  [this.ADDON_DOWNGRADE]: "ADDON_DOWNGRADE",
+};
 
 function install(data, reason) {
 }
@@ -31,6 +31,7 @@ function startup(data, reason) {
 
 function shutdown(data, reason) {
   extension.shutdown(BOOTSTRAP_REASON_TO_STRING_MAP[reason]);
+  extension = null;
 }
 
 function uninstall(data, reason) {

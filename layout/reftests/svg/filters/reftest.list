@@ -72,7 +72,7 @@ random-if(winWidget) == filter-in-mask.svg pass.svg # bug 1356139
 == filter-inner-svg-01.svg pass.svg
 == filter-inner-svg-02.svg pass.svg
 == filter-inner-svg-03.svg pass.svg
-fails == filter-marked-line-01.svg pass.svg # bug 477704
+fails-if(!styloVsGecko) == filter-marked-line-01.svg pass.svg # bug 477704
 == filter-kernelUnitLength-01.svg filter-kernelUnitLength-01-ref.svg
 == filter-marked-line-02.svg pass.svg
 == filter-marked-line-03.svg pass.svg
@@ -86,6 +86,8 @@ fails == filter-marked-line-01.svg pass.svg # bug 477704
 == filter-nested-filtering-02.svg pass.svg
 == filter-patterned-rect-01.svg pass.svg
 == filter-patterned-rect-02.svg pass.svg
+== filter-region-01a.html pass.svg
+== filter-region-01b.html pass.svg
 == filter-transform-01.svg pass.svg
 
 == feColorMatrix-saturate-01.svg pass.svg

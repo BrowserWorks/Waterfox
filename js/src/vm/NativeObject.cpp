@@ -8,6 +8,7 @@
 
 #include "mozilla/ArrayUtils.h"
 #include "mozilla/Casting.h"
+#include "mozilla/CheckedInt.h"
 
 #include "jswatchpoint.h"
 
@@ -28,6 +29,7 @@ using namespace js;
 using JS::AutoCheckCannotGC;
 using JS::GenericNaN;
 using mozilla::ArrayLength;
+using mozilla::CheckedInt;
 using mozilla::DebugOnly;
 using mozilla::PodCopy;
 using mozilla::RoundUpPow2;
@@ -106,17 +108,20 @@ ObjectElements::MakeElementsCopyOnWrite(JSContext* cx, NativeObject* obj)
 /* static */ bool
 ObjectElements::FreezeElements(JSContext* cx, HandleNativeObject obj)
 {
+    MOZ_ASSERT_IF(obj->is<ArrayObject>(),
+                  !obj->as<ArrayObject>().lengthIsWritable());
+
     if (!obj->maybeCopyElementsForWrite(cx))
         return false;
 
-    if (obj->hasEmptyElements())
+    if (obj->hasEmptyElements() || obj->denseElementsAreFrozen())
         return true;
 
-    ObjectElements* header = obj->getElementsHeader();
+    if (obj->getElementsHeader()->numShiftedElements() > 0)
+        obj->moveShiftedElements();
 
-    // Note: this method doesn't update type information to indicate that the
-    // elements might be frozen. Handling this is left to the caller.
-    header->freeze();
+    MarkObjectGroupFlags(cx, obj, OBJECT_FLAG_FROZEN_ELEMENTS);
+    obj->getElementsHeader()->freeze();
 
     return true;
 }
@@ -299,58 +304,6 @@ js::NativeObject::dynamicSlotsCount(uint32_t nfixed, uint32_t span, const Class*
     return slots;
 }
 
-inline bool
-NativeObject::updateSlotsForSpan(JSContext* cx, size_t oldSpan, size_t newSpan)
-{
-    MOZ_ASSERT(oldSpan != newSpan);
-
-    size_t oldCount = dynamicSlotsCount(numFixedSlots(), oldSpan, getClass());
-    size_t newCount = dynamicSlotsCount(numFixedSlots(), newSpan, getClass());
-
-    if (oldSpan < newSpan) {
-        if (oldCount < newCount && !growSlots(cx, oldCount, newCount))
-            return false;
-
-        if (newSpan == oldSpan + 1)
-            initSlotUnchecked(oldSpan, UndefinedValue());
-        else
-            initializeSlotRange(oldSpan, newSpan - oldSpan);
-    } else {
-        /* Trigger write barriers on the old slots before reallocating. */
-        prepareSlotRangeForOverwrite(newSpan, oldSpan);
-        invalidateSlotRange(newSpan, oldSpan - newSpan);
-
-        if (oldCount > newCount)
-            shrinkSlots(cx, oldCount, newCount);
-    }
-
-    return true;
-}
-
-bool
-NativeObject::setLastProperty(JSContext* cx, Shape* shape)
-{
-    MOZ_ASSERT(!inDictionaryMode());
-    MOZ_ASSERT(!shape->inDictionary());
-    MOZ_ASSERT(shape->zone() == zone());
-    MOZ_ASSERT(shape->numFixedSlots() == numFixedSlots());
-    MOZ_ASSERT(shape->getObjectClass() == getClass());
-
-    size_t oldSpan = lastProperty()->slotSpan();
-    size_t newSpan = shape->slotSpan();
-
-    if (oldSpan == newSpan) {
-        shape_ = shape;
-        return true;
-    }
-
-    if (!updateSlotsForSpan(cx, oldSpan, newSpan))
-        return false;
-
-    shape_ = shape;
-    return true;
-}
-
 void
 NativeObject::setLastPropertyShrinkFixedSlots(Shape* shape)
 {
@@ -381,7 +334,7 @@ NativeObject::setLastPropertyMakeNonNative(Shape* shape)
     MOZ_ASSERT(shape->numFixedSlots() == 0);
 
     if (hasDynamicElements())
-        js_free(getElementsHeader());
+        js_free(getUnshiftedElementsHeader());
     if (hasDynamicSlots()) {
         js_free(slots_);
         slots_ = nullptr;
@@ -480,6 +433,32 @@ NativeObject::growSlotsDontReportOOM(JSContext* cx, NativeObject* obj, uint32_t 
     return true;
 }
 
+/* static */ bool
+NativeObject::addDenseElementDontReportOOM(JSContext* cx, NativeObject* obj)
+{
+    // IC code calls this directly.
+    AutoCheckCannotGC nogc;
+
+    MOZ_ASSERT(obj->getDenseInitializedLength() == obj->getDenseCapacity());
+    MOZ_ASSERT(!obj->denseElementsAreCopyOnWrite());
+    MOZ_ASSERT(!obj->denseElementsAreFrozen());
+    MOZ_ASSERT(!obj->isIndexed());
+    MOZ_ASSERT(!obj->is<TypedArrayObject>());
+    MOZ_ASSERT_IF(obj->is<ArrayObject>(), obj->as<ArrayObject>().lengthIsWritable());
+
+    // growElements will report OOM also if the number of dense elements will
+    // exceed MAX_DENSE_ELEMENTS_COUNT. See goodElementsAllocationAmount.
+    uint32_t oldCapacity = obj->getDenseCapacity();
+    if (MOZ_UNLIKELY(!obj->growElements(cx, oldCapacity + 1))) {
+        cx->recoverFromOutOfMemory();
+        return false;
+    }
+
+    MOZ_ASSERT(obj->getDenseCapacity() > oldCapacity);
+    MOZ_ASSERT(obj->getDenseCapacity() <= MAX_DENSE_ELEMENTS_COUNT);
+    return true;
+}
+
 static void
 FreeSlots(JSContext* cx, HeapSlot* slots)
 {
@@ -570,11 +549,13 @@ NativeObject::sparsifyDenseElements(JSContext* cx, HandleNativeObject obj)
     if (initialized)
         obj->setDenseInitializedLengthUnchecked(0);
 
-    /*
-     * Reduce storage for dense elements which are now holes. Explicitly mark
-     * the elements capacity as zero, so that any attempts to add dense
-     * elements will be caught in ensureDenseElements.
-     */
+    // Reduce storage for dense elements which are now holes. Explicitly mark
+    // the elements capacity as zero, so that any attempts to add dense
+    // elements will be caught in ensureDenseElements.
+
+    if (obj->getElementsHeader()->numShiftedElements() > 0)
+        obj->moveShiftedElements();
+
     if (obj->getDenseCapacity()) {
         obj->shrinkElements(cx, 0);
         obj->getElementsHeader()->capacity = 0;
@@ -727,6 +708,130 @@ NativeObject::maybeDensifySparseElements(JSContext* cx, HandleNativeObject obj)
     return DenseElementResult::Success;
 }
 
+void
+NativeObject::moveShiftedElements()
+{
+    ObjectElements* header = getElementsHeader();
+    uint32_t numShifted = header->numShiftedElements();
+    MOZ_ASSERT(numShifted > 0);
+
+    uint32_t initLength = header->initializedLength;
+
+    ObjectElements* newHeader = static_cast<ObjectElements*>(getUnshiftedElementsHeader());
+    memmove(newHeader, header, sizeof(ObjectElements));
+
+    newHeader->clearShiftedElements();
+    newHeader->capacity += numShifted;
+    elements_ = newHeader->elements();
+
+    // To move the elements, temporarily update initializedLength to include
+    // the shifted elements.
+    newHeader->initializedLength += numShifted;
+
+    // Move the elements. Initialize to |undefined| to ensure pre-barriers
+    // don't see garbage.
+    for (size_t i = 0; i < numShifted; i++)
+        initDenseElement(i, UndefinedValue());
+    moveDenseElements(0, numShifted, initLength);
+
+    // Restore the initialized length. We use setDenseInitializedLength to
+    // make sure prepareElementRangeForOverwrite is called on the shifted
+    // elements.
+    setDenseInitializedLength(initLength);
+}
+
+void
+NativeObject::maybeMoveShiftedElements()
+{
+    ObjectElements* header = getElementsHeader();
+    MOZ_ASSERT(header->numShiftedElements() > 0);
+
+    // Move the elements if less than a third of the allocated space is in use.
+    if (header->capacity < header->numAllocatedElements() / 3)
+        moveShiftedElements();
+}
+
+bool
+NativeObject::tryUnshiftDenseElements(uint32_t count)
+{
+    MOZ_ASSERT(count > 0);
+
+    ObjectElements* header = getElementsHeader();
+    uint32_t numShifted = header->numShiftedElements();
+
+    if (count > numShifted) {
+        // We need more elements than are easily available. Try to make space
+        // for more elements than we need (and shift the remaining ones) so
+        // that unshifting more elements later will be fast.
+
+        // Don't bother reserving elements if the number of elements is small.
+        // Note that there's no technical reason for using this particular
+        // limit.
+        if (header->initializedLength <= 10 ||
+            header->isCopyOnWrite() ||
+            header->isFrozen() ||
+            header->hasNonwritableArrayLength() ||
+            MOZ_UNLIKELY(count > ObjectElements::MaxShiftedElements))
+        {
+            return false;
+        }
+
+        MOZ_ASSERT(header->capacity >= header->initializedLength);
+        uint32_t unusedCapacity = header->capacity - header->initializedLength;
+
+        // Determine toShift, the number of extra elements we want to make
+        // available.
+        uint32_t toShift = count - numShifted;
+        MOZ_ASSERT(toShift <= ObjectElements::MaxShiftedElements,
+                   "count <= MaxShiftedElements so toShift <= MaxShiftedElements");
+
+        // Give up if we need to allocate more elements.
+        if (toShift > unusedCapacity)
+            return false;
+
+        // Move more elements than we need, so that other unshift calls will be
+        // fast. We just have to make sure we don't exceed unusedCapacity.
+        toShift = Min(toShift + unusedCapacity / 2, unusedCapacity);
+
+        // Ensure |numShifted + toShift| does not exceed MaxShiftedElements.
+        if (numShifted + toShift > ObjectElements::MaxShiftedElements)
+            toShift = ObjectElements::MaxShiftedElements - numShifted;
+
+        MOZ_ASSERT(count <= numShifted + toShift);
+        MOZ_ASSERT(numShifted + toShift <= ObjectElements::MaxShiftedElements);
+        MOZ_ASSERT(toShift <= unusedCapacity);
+
+        // Now move/unshift the elements.
+        uint32_t initLen = header->initializedLength;
+        setDenseInitializedLength(initLen + toShift);
+        for (uint32_t i = 0; i < toShift; i++)
+            initDenseElement(initLen + i, UndefinedValue());
+        moveDenseElements(toShift, 0, initLen);
+
+        // Shift the elements we just prepended.
+        shiftDenseElementsUnchecked(toShift);
+
+        // We can now fall-through to the fast path below.
+        header = getElementsHeader();
+        MOZ_ASSERT(header->numShiftedElements() == numShifted + toShift);
+
+        numShifted = header->numShiftedElements();
+        MOZ_ASSERT(count <= numShifted);
+    }
+
+    elements_ -= count;
+    ObjectElements* newHeader = getElementsHeader();
+    memmove(newHeader, header, sizeof(ObjectElements));
+
+    newHeader->unshiftShiftedElements(count);
+
+    // Initialize to |undefined| to ensure pre-barriers don't see garbage.
+    for (uint32_t i = 0; i < count; i++)
+        initDenseElement(i, UndefinedValue());
+
+    return true;
+}
+
 // Given a requested capacity (in elements) and (potentially) the length of an
 // array for which elements are being allocated, compute an actual allocation
 // amount (in elements).  (Allocation amounts include space for an
@@ -825,6 +930,35 @@ NativeObject::growElements(JSContext* cx, uint32_t reqCapacity)
     if (denseElementsAreCopyOnWrite())
         MOZ_CRASH();
 
+    // If there are shifted elements, consider moving them first. If we don't
+    // move them here, the code below will include the shifted elements in the
+    // resize.
+    uint32_t numShifted = getElementsHeader()->numShiftedElements();
+    if (numShifted > 0) {
+        // If the number of elements is small, it's cheaper to just move them as
+        // it may avoid a malloc/realloc. Note that there's no technical reason
+        // for using this particular value, but it works well in real-world use
+        // cases.
+        static const size_t MaxElementsToMoveEagerly = 20;
+
+        if (getElementsHeader()->initializedLength <= MaxElementsToMoveEagerly)
+            moveShiftedElements();
+        else
+            maybeMoveShiftedElements();
+        if (getDenseCapacity() >= reqCapacity)
+            return true;
+        numShifted = getElementsHeader()->numShiftedElements();
+
+        // If |reqCapacity + numShifted| overflows, we just move all shifted
+        // elements to avoid the problem.
+        CheckedInt<uint32_t> checkedReqCapacity(reqCapacity);
+        checkedReqCapacity += numShifted;
+        if (MOZ_UNLIKELY(!checkedReqCapacity.isValid())) {
+            moveShiftedElements();
+            numShifted = 0;
+        }
+    }
+
     uint32_t oldCapacity = getDenseCapacity();
     MOZ_ASSERT(oldCapacity < reqCapacity);
 
@@ -835,13 +969,17 @@ NativeObject::growElements(JSContext* cx, uint32_t reqCapacity)
         // Preserve the |capacity <= length| invariant for arrays with
         // non-writable length.  See also js::ArraySetLength which initially
         // enforces this requirement.
-        newAllocated = reqCapacity + ObjectElements::VALUES_PER_HEADER;
+        newAllocated = reqCapacity + numShifted + ObjectElements::VALUES_PER_HEADER;
     } else {
-        if (!goodElementsAllocationAmount(cx, reqCapacity, getElementsHeader()->length, &newAllocated))
+        if (!goodElementsAllocationAmount(cx, reqCapacity + numShifted,
+                                          getElementsHeader()->length,
+                                          &newAllocated))
+        {
             return false;
+        }
     }
 
-    uint32_t newCapacity = newAllocated - ObjectElements::VALUES_PER_HEADER;
+    uint32_t newCapacity = newAllocated - ObjectElements::VALUES_PER_HEADER - numShifted;
     MOZ_ASSERT(newCapacity > oldCapacity && newCapacity >= reqCapacity);
 
     // If newCapacity exceeds MAX_DENSE_ELEMENTS_COUNT, the array should become
@@ -850,11 +988,11 @@ NativeObject::growElements(JSContext* cx, uint32_t reqCapacity)
 
     uint32_t initlen = getDenseInitializedLength();
 
-    HeapSlot* oldHeaderSlots = reinterpret_cast<HeapSlot*>(getElementsHeader());
+    HeapSlot* oldHeaderSlots = reinterpret_cast<HeapSlot*>(getUnshiftedElementsHeader());
     HeapSlot* newHeaderSlots;
     if (hasDynamicElements()) {
         MOZ_ASSERT(oldCapacity <= MAX_DENSE_ELEMENTS_COUNT);
-        uint32_t oldAllocated = oldCapacity + ObjectElements::VALUES_PER_HEADER;
+        uint32_t oldAllocated = oldCapacity + ObjectElements::VALUES_PER_HEADER + numShifted;
 
         newHeaderSlots = ReallocateObjectBuffer<HeapSlot>(cx, this, oldHeaderSlots, oldAllocated, newAllocated);
         if (!newHeaderSlots)
@@ -863,12 +1001,13 @@ NativeObject::growElements(JSContext* cx, uint32_t reqCapacity)
         newHeaderSlots = AllocateObjectBuffer<HeapSlot>(cx, this, newAllocated);
         if (!newHeaderSlots)
             return false;   // Leave elements at its old size.
-        PodCopy(newHeaderSlots, oldHeaderSlots, ObjectElements::VALUES_PER_HEADER + initlen);
+        PodCopy(newHeaderSlots, oldHeaderSlots,
+                ObjectElements::VALUES_PER_HEADER + initlen + numShifted);
     }
 
     ObjectElements* newheader = reinterpret_cast<ObjectElements*>(newHeaderSlots);
-    newheader->capacity = newCapacity;
-    elements_ = newheader->elements();
+    elements_ = newheader->elements() + numShifted;
+    getElementsHeader()->capacity = newCapacity;
 
     Debug_SetSlotRangeToCrashOnTouch(elements_ + initlen, newCapacity - initlen);
 
@@ -878,9 +1017,6 @@ NativeObject::growElements(JSContext* cx, uint32_t reqCapacity)
 void
 NativeObject::shrinkElements(JSContext* cx, uint32_t reqCapacity)
 {
-    uint32_t oldCapacity = getDenseCapacity();
-    MOZ_ASSERT(reqCapacity < oldCapacity);
-
     MOZ_ASSERT(canHaveNonEmptyElements());
     if (denseElementsAreCopyOnWrite())
         MOZ_CRASH();
@@ -888,18 +1024,29 @@ NativeObject::shrinkElements(JSContext* cx, uint32_t reqCapacity)
     if (!hasDynamicElements())
         return;
 
+    // If we have shifted elements, consider moving them.
+    uint32_t numShifted = getElementsHeader()->numShiftedElements();
+    if (numShifted > 0) {
+        maybeMoveShiftedElements();
+        numShifted = getElementsHeader()->numShiftedElements();
+    }
+
+    uint32_t oldCapacity = getDenseCapacity();
+    MOZ_ASSERT(reqCapacity < oldCapacity);
+
     uint32_t newAllocated = 0;
-    MOZ_ALWAYS_TRUE(goodElementsAllocationAmount(cx, reqCapacity, 0, &newAllocated));
+    MOZ_ALWAYS_TRUE(goodElementsAllocationAmount(cx, reqCapacity + numShifted, 0, &newAllocated));
     MOZ_ASSERT(oldCapacity <= MAX_DENSE_ELEMENTS_COUNT);
-    uint32_t oldAllocated = oldCapacity + ObjectElements::VALUES_PER_HEADER;
+
+    uint32_t oldAllocated = oldCapacity + ObjectElements::VALUES_PER_HEADER + numShifted;
     if (newAllocated == oldAllocated)
         return;  // Leave elements at its old size.
 
     MOZ_ASSERT(newAllocated > ObjectElements::VALUES_PER_HEADER);
-    uint32_t newCapacity = newAllocated - ObjectElements::VALUES_PER_HEADER;
+    uint32_t newCapacity = newAllocated - ObjectElements::VALUES_PER_HEADER - numShifted;
     MOZ_ASSERT(newCapacity <= MAX_DENSE_ELEMENTS_COUNT);
 
-    HeapSlot* oldHeaderSlots = reinterpret_cast<HeapSlot*>(getElementsHeader());
+    HeapSlot* oldHeaderSlots = reinterpret_cast<HeapSlot*>(getUnshiftedElementsHeader());
     HeapSlot* newHeaderSlots = ReallocateObjectBuffer<HeapSlot>(cx, this, oldHeaderSlots,
                                                                 oldAllocated, newAllocated);
     if (!newHeaderSlots) {
@@ -908,8 +1055,8 @@ NativeObject::shrinkElements(JSContext* cx, uint32_t reqCapacity)
     }
 
     ObjectElements* newheader = reinterpret_cast<ObjectElements*>(newHeaderSlots);
-    newheader->capacity = newCapacity;
-    elements_ = newheader->elements();
+    elements_ = newheader->elements() + numShifted;
+    getElementsHeader()->capacity = newCapacity;
 }
 
 /* static */ bool
@@ -1065,23 +1212,22 @@ js::NativeLookupOwnProperty<NoGC>(JSContext* cx, NativeObject* const& obj, const
 
 /*** [[DefineOwnProperty]] ***********************************************************************/
 
-static inline bool
-CallAddPropertyHook(JSContext* cx, HandleNativeObject obj, HandleShape shape,
-                    HandleValue value)
+static MOZ_ALWAYS_INLINE bool
+CallAddPropertyHook(JSContext* cx, HandleNativeObject obj, HandleId id, HandleValue value)
 {
-    if (JSAddPropertyOp addProperty = obj->getClass()->getAddProperty()) {
+    JSAddPropertyOp addProperty = obj->getClass()->getAddProperty();
+    if (MOZ_UNLIKELY(addProperty)) {
         MOZ_ASSERT(!cx->helperThread());
 
-        RootedId id(cx, shape->propid());
         if (!CallJSAddPropertyOp(cx, addProperty, obj, id, value)) {
-            NativeObject::removeProperty(cx, obj, shape->propid());
+            NativeObject::removeProperty(cx, obj, id);
             return false;
         }
     }
     return true;
 }
 
-static inline bool
+static MOZ_ALWAYS_INLINE bool
 CallAddPropertyHookDense(JSContext* cx, HandleNativeObject obj, uint32_t index,
                          HandleValue value)
 {
@@ -1094,7 +1240,8 @@ CallAddPropertyHookDense(JSContext* cx, HandleNativeObject obj, uint32_t index,
         return true;
     }
 
-    if (JSAddPropertyOp addProperty = obj->getClass()->getAddProperty()) {
+    JSAddPropertyOp addProperty = obj->getClass()->getAddProperty();
+    if (MOZ_UNLIKELY(addProperty)) {
         MOZ_ASSERT(!cx->helperThread());
 
         if (!obj->maybeCopyElementsForWrite(cx))
@@ -1109,10 +1256,12 @@ CallAddPropertyHookDense(JSContext* cx, HandleNativeObject obj, uint32_t index,
     return true;
 }
 
-static bool
-UpdateShapeTypeAndValue(JSContext* cx, HandleNativeObject obj, HandleShape shape, const Value& value)
+static MOZ_ALWAYS_INLINE void
+UpdateShapeTypeAndValue(JSContext* cx, NativeObject* obj, Shape* shape, jsid id,
+                        const Value& value)
 {
-    jsid id = shape->propid();
+    MOZ_ASSERT(id == shape->propid());
+
     if (shape->hasSlot()) {
         obj->setSlotWithType(cx, shape, value, /* overwriting = */ false);
 
@@ -1128,7 +1277,49 @@ UpdateShapeTypeAndValue(JSContext* cx, HandleNativeObject obj, HandleShape shape
         MarkTypePropertyNonData(cx, obj, id);
     if (!shape->writable())
         MarkTypePropertyNonWritable(cx, obj, id);
-    return true;
+}
+
+void
+js::AddPropertyTypesAfterProtoChange(JSContext* cx, NativeObject* obj, ObjectGroup* oldGroup)
+{
+    MOZ_ASSERT(obj->group() != oldGroup);
+    MOZ_ASSERT(!obj->group()->unknownProperties());
+
+    // First copy the dynamic flags.
+    MarkObjectGroupFlags(cx, obj, oldGroup->flags() & OBJECT_FLAG_DYNAMIC_MASK);
+
+    // Now update all property types. If the object has many properties, this
+    // function may be slow so we mark all properties as unknown.
+    static const size_t MaxPropertyCount = 40;
+
+    size_t nprops = obj->getDenseInitializedLength();
+    if (nprops > MaxPropertyCount) {
+        MarkObjectGroupUnknownProperties(cx, obj->group());
+        return;
+    }
+
+    // Add dense element types.
+    for (size_t i = 0; i < obj->getDenseInitializedLength(); i++) {
+        Value val = obj->getDenseElement(i);
+        if (!val.isMagic(JS_ELEMENTS_HOLE))
+            AddTypePropertyId(cx, obj, JSID_VOID, val);
+    }
+
+    // Add property types.
+    for (Shape::Range<NoGC> r(obj->lastProperty()); !r.empty(); r.popFront()) {
+        Shape* shape = &r.front();
+        jsid id = shape->propid();
+        if (JSID_IS_EMPTY(id))
+            continue;
+
+        if (nprops++ > MaxPropertyCount) {
+            MarkObjectGroupUnknownProperties(cx, obj->group());
+            return;
+        }
+
+        Value val = shape->hasSlot() ? obj->getSlot(shape->slot()) : UndefinedValue();
+        UpdateShapeTypeAndValue(cx, obj, shape, id, val);
+    }
 }
 
 static bool
@@ -1201,7 +1392,10 @@ PurgeEnvironmentChain(JSContext* cx, HandleObject obj, HandleId id)
     return true;
 }
 
-static bool
+enum class IsAddOrChange { Add, AddOrChange };
+
+template <IsAddOrChange AddOrChange>
+static MOZ_ALWAYS_INLINE bool
 AddOrChangeProperty(JSContext* cx, HandleNativeObject obj, HandleId id,
                     Handle<PropertyDescriptor> desc)
 {
@@ -1230,13 +1424,20 @@ AddOrChangeProperty(JSContext* cx, HandleNativeObject obj, HandleId id,
         }
     }
 
-    RootedShape shape(cx, NativeObject::putProperty(cx, obj, id, desc.getter(), desc.setter(),
-                                                    SHAPE_INVALID_SLOT, desc.attributes(), 0));
+    // If we know this is a new property we can call addProperty instead of
+    // the slower putProperty.
+    Shape* shape;
+    if (AddOrChange == IsAddOrChange::Add) {
+        shape = NativeObject::addProperty(cx, obj, id, desc.getter(), desc.setter(),
+                                          SHAPE_INVALID_SLOT, desc.attributes(), 0);
+    } else {
+        shape = NativeObject::putProperty(cx, obj, id, desc.getter(), desc.setter(),
+                                          SHAPE_INVALID_SLOT, desc.attributes(), 0);
+    }
     if (!shape)
         return false;
 
-    if (!UpdateShapeTypeAndValue(cx, obj, shape, desc.value()))
-        return false;
+    UpdateShapeTypeAndValue(cx, obj, shape, id, desc.value());
 
     // Clear any existing dense index after adding a sparse indexed property,
     // and investigate converting the object to dense indexes.
@@ -1256,7 +1457,7 @@ AddOrChangeProperty(JSContext* cx, HandleNativeObject obj, HandleId id,
         }
     }
 
-    return CallAddPropertyHook(cx, obj, shape, desc.value());
+    return CallAddPropertyHook(cx, obj, id, desc.value());
 }
 
 static bool IsConfigurable(unsigned attrs) { return (attrs & JSPROP_PERMANENT) == 0; }
@@ -1299,9 +1500,8 @@ GetExistingPropertyValue(JSContext* cx, HandleNativeObject obj, HandleId id,
 }
 
 /*
- * If ES6 draft rev 37 9.1.6.3 ValidateAndApplyPropertyDescriptor step 4 would
- * return early, because desc is redundant with an existing own property obj[id],
- * then set *redundant = true and return true.
+ * If desc is redundant with an existing own property obj[id], then set
+ * |*redundant = true| and return true.
  */
 static bool
 DefinePropertyIsRedundant(JSContext* cx, HandleNativeObject obj, HandleId id,
@@ -1310,14 +1510,14 @@ DefinePropertyIsRedundant(JSContext* cx, HandleNativeObject obj, HandleId id,
 {
     *redundant = false;
 
-    if (desc.hasConfigurable() && desc.configurable() != ((shapeAttrs & JSPROP_PERMANENT) == 0))
+    if (desc.hasConfigurable() && desc.configurable() != IsConfigurable(shapeAttrs))
         return true;
-    if (desc.hasEnumerable() && desc.enumerable() != ((shapeAttrs & JSPROP_ENUMERATE) != 0))
+    if (desc.hasEnumerable() && desc.enumerable() != IsEnumerable(shapeAttrs))
         return true;
     if (desc.isDataDescriptor()) {
-        if ((shapeAttrs & (JSPROP_GETTER | JSPROP_SETTER)) != 0)
+        if (IsAccessorDescriptor(shapeAttrs))
             return true;
-        if (desc.hasWritable() && desc.writable() != ((shapeAttrs & JSPROP_READONLY) == 0))
+        if (desc.hasWritable() && desc.writable() != IsWritable(shapeAttrs))
             return true;
         if (desc.hasValue()) {
             // Get the current value of the existing property.
@@ -1335,8 +1535,8 @@ DefinePropertyIsRedundant(JSContext* cx, HandleNativeObject obj, HandleId id,
                     return false;
             }
 
-            // The specification calls for SameValue here, but it seems to be a
-            // bug. See <https://bugs.ecmascript.org/show_bug.cgi?id=3508>.
+            // Don't call SameValue here to ensure we properly update distinct
+            // NaN values.
             if (desc.value() != currentValue)
                 return true;
         }
@@ -1374,7 +1574,8 @@ js::NativeDefineProperty(JSContext* cx, HandleNativeObject obj, HandleId id,
 {
     desc_.assertValid();
 
-    // Section numbers and step numbers below refer to ES2016.
+    // Section numbers and step numbers below refer to ES2018, draft rev
+    // 540b827fccf6122a984be99ab9af7be20e3b5562.
     //
     // This function aims to implement 9.1.6 [[DefineOwnProperty]] as well as
     // the [[DefineOwnProperty]] methods described in 9.4.2.1 (arrays), 9.4.4.2
@@ -1407,21 +1608,26 @@ js::NativeDefineProperty(JSContext* cx, HandleNativeObject obj, HandleId id,
             return DefineTypedArrayElement(cx, obj, index, desc_, result);
         }
     } else if (obj->is<ArgumentsObject>()) {
+        Rooted<ArgumentsObject*> argsobj(cx, &obj->as<ArgumentsObject>());
         if (id == NameToId(cx->names().length)) {
-            // Either we are resolving the .length property on this object, or
-            // redefining it. In the latter case only, we must set a bit. To
-            // distinguish the two cases, we note that when resolving, the
-            // property won't already exist; whereas the first time it is
-            // redefined, it will.
-            if ((desc_.attributes() & JSPROP_RESOLVING) == 0)
-                obj->as<ArgumentsObject>().markLengthOverridden();
+            // Either we are resolving the .length property on this object,
+            // or redefining it. In the latter case only, we must reify the
+            // property. To distinguish the two cases, we note that when
+            // resolving, the JSPROP_RESOLVING mask is set; whereas the first
+            // time it is redefined, it isn't set.
+            if ((desc_.attributes() & JSPROP_RESOLVING) == 0) {
+                if (!ArgumentsObject::reifyLength(cx, argsobj))
+                    return false;
+            }
         } else if (JSID_IS_SYMBOL(id) && JSID_TO_SYMBOL(id) == cx->wellKnownSymbols().iterator) {
             // Do same thing as .length for [@@iterator].
-            if ((desc_.attributes() & JSPROP_RESOLVING) == 0)
-                obj->as<ArgumentsObject>().markIteratorOverridden();
+            if ((desc_.attributes() & JSPROP_RESOLVING) == 0) {
+                if (!ArgumentsObject::reifyIterator(cx, argsobj))
+                    return false;
+            }
         } else if (JSID_IS_INT(id)) {
             if ((desc_.attributes() & JSPROP_RESOLVING) == 0)
-                obj->as<ArgumentsObject>().markElementOverridden();
+                argsobj->markElementOverridden();
         }
     }
 
@@ -1455,12 +1661,12 @@ js::NativeDefineProperty(JSContext* cx, HandleNativeObject obj, HandleId id,
         // Fill in missing desc fields with defaults.
         CompletePropertyDescriptor(&desc);
 
-        if (!AddOrChangeProperty(cx, obj, id, desc))
+        if (!AddOrChangeProperty<IsAddOrChange::Add>(cx, obj, id, desc))
             return false;
         return result.succeed();
     }
 
-    // Steps 3-4. (Step 3 is a special case of step 4.) We use shapeAttrs as a
+    // Step 3 and 7.a.i.3, 8.a.iii, 10 (partially). We use shapeAttrs as a
     // stand-in for shape in many places below, since shape might not be a
     // pointer to a real Shape (see IsImplicitDenseOrTypedArrayElement).
     unsigned shapeAttrs = GetPropertyAttributes(obj, prop);
@@ -1472,11 +1678,8 @@ js::NativeDefineProperty(JSContext* cx, HandleNativeObject obj, HandleId id,
         // type for this property that doesn't match the value in the slot.
         // Update the type here, even though this DefineProperty call is
         // otherwise a no-op. (See bug 1125624 comment 13.)
-        if (!prop.isDenseOrTypedArrayElement() && desc.hasValue()) {
-            RootedShape shape(cx, prop.shape());
-            if (!UpdateShapeTypeAndValue(cx, obj, shape, desc.value()))
-                return false;
-        }
+        if (!prop.isDenseOrTypedArrayElement() && desc.hasValue())
+            UpdateShapeTypeAndValue(cx, obj, prop.shape(), id, desc.value());
         return result.succeed();
     }
 
@@ -1490,7 +1693,7 @@ js::NativeDefineProperty(JSContext* cx, HandleNativeObject obj, HandleId id,
                               obj->is<GlobalObject>() &&
                               !obj->getClass()->isDOMClass();
 
-    // Step 5.
+    // Step 4.
     if (!IsConfigurable(shapeAttrs) && !skipRedefineChecks) {
         if (desc.hasConfigurable() && desc.configurable())
             return result.fail(JSMSG_CANT_REDEFINE_PROP);
@@ -1504,9 +1707,9 @@ js::NativeDefineProperty(JSContext* cx, HandleNativeObject obj, HandleId id,
     if (!desc.hasEnumerable())
         desc.setEnumerable(IsEnumerable(shapeAttrs));
 
-    // Steps 6-9.
+    // Steps 5-8.
     if (desc.isGenericDescriptor()) {
-        // Step 6. No further validation is required.
+        // Step 5. No further validation is required.
 
         // Fill in desc. A generic descriptor has none of these fields, so copy
         // everything from shape.
@@ -1525,7 +1728,7 @@ js::NativeDefineProperty(JSContext* cx, HandleNativeObject obj, HandleId id,
             desc.setSetterObject(prop.shape()->setterObject());
         }
     } else if (desc.isDataDescriptor() != IsDataDescriptor(shapeAttrs)) {
-        // Step 7.
+        // Step 6.
         if (!IsConfigurable(shapeAttrs) && !skipRedefineChecks)
             return result.fail(JSMSG_CANT_REDEFINE_PROP);
 
@@ -1536,11 +1739,13 @@ js::NativeDefineProperty(JSContext* cx, HandleNativeObject obj, HandleId id,
             prop.setNativeProperty(obj->lookup(cx, id));
         }
 
-        // Fill in desc fields with default values (steps 7.b.i and 7.c.i).
+        // Fill in desc fields with default values (steps 6.b.i and 6.c.i).
         CompletePropertyDescriptor(&desc);
     } else if (desc.isDataDescriptor()) {
-        // Step 8.
+        // Step 7.
         bool frozen = !IsConfigurable(shapeAttrs) && !IsWritable(shapeAttrs);
+
+        // Step 7.a.i.1.
         if (frozen && desc.hasWritable() && desc.writable() && !skipRedefineChecks)
             return result.fail(JSMSG_CANT_REDEFINE_PROP);
 
@@ -1560,7 +1765,7 @@ js::NativeDefineProperty(JSContext* cx, HandleNativeObject obj, HandleId id,
                 // Fill in desc.[[Value]].
                 desc.setValue(currentValue);
             } else {
-                // Step 8.a.ii.1.
+                // Step 7.a.i.2.
                 bool same;
                 MOZ_ASSERT(!cx->helperThread());
                 if (!SameValue(cx, desc.value(), currentValue, &same))
@@ -1570,16 +1775,21 @@ js::NativeDefineProperty(JSContext* cx, HandleNativeObject obj, HandleId id,
             }
         }
 
+        // Step 7.a.i.3.
+        if (frozen && !skipRedefineChecks)
+            return result.succeed();
+
         if (!desc.hasWritable())
             desc.setWritable(IsWritable(shapeAttrs));
     } else {
-        // Step 9.
+        // Step 8.
         MOZ_ASSERT(prop.shape()->isAccessorDescriptor());
         MOZ_ASSERT(desc.isAccessorDescriptor());
 
         // The spec says to use SameValue, but since the values in
         // question are objects, we can just compare pointers.
         if (desc.hasSetterObject()) {
+            // Step 8.a.i.
             if (!IsConfigurable(shapeAttrs) &&
                 desc.setterObject() != prop.shape()->setterObject() &&
                 !skipRedefineChecks)
@@ -1591,6 +1801,7 @@ js::NativeDefineProperty(JSContext* cx, HandleNativeObject obj, HandleId id,
             desc.setSetterObject(prop.shape()->setterObject());
         }
         if (desc.hasGetterObject()) {
+            // Step 8.a.ii.
             if (!IsConfigurable(shapeAttrs) &&
                 desc.getterObject() != prop.shape()->getterObject() &&
                 !skipRedefineChecks)
@@ -1601,11 +1812,15 @@ js::NativeDefineProperty(JSContext* cx, HandleNativeObject obj, HandleId id,
             // Fill in desc.[[Get]] from shape.
             desc.setGetterObject(prop.shape()->getterObject());
         }
+
+        // Step 8.a.iii (Omitted).
     }
 
-    // Step 10.
-    if (!AddOrChangeProperty(cx, obj, id, desc))
+    // Step 9.
+    if (!AddOrChangeProperty<IsAddOrChange::AddOrChange>(cx, obj, id, desc))
         return false;
+
+    // Step 10.
     return result.succeed();
 }
 
@@ -1673,6 +1888,69 @@ js::NativeDefineProperty(JSContext* cx, HandleNativeObject obj, PropertyName* na
 {
     RootedId id(cx, NameToId(name));
     return NativeDefineProperty(cx, obj, id, value, getter, setter, attrs);
+}
+
+static bool
+DefineNonexistentProperty(JSContext* cx, HandleNativeObject obj, HandleId id,
+                          Handle<PropertyDescriptor> desc, ObjectOpResult& result)
+{
+    desc.assertComplete();
+
+    // Optimized NativeDefineProperty() version for known absent properties.
+
+    // Dispense with custom behavior of exotic native objects first.
+    if (obj->is<ArrayObject>()) {
+        // Array's length property is non-configurable, so we shouldn't
+        // encounter it in this function.
+        MOZ_ASSERT(id != NameToId(cx->names().length));
+
+        // 9.4.2.1 step 3. Don't extend a fixed-length array.
+        uint32_t index;
+        if (IdIsIndex(id, &index)) {
+            if (WouldDefinePastNonwritableLength(obj, index))
+                return result.fail(JSMSG_CANT_DEFINE_PAST_ARRAY_LENGTH);
+        }
+    } else if (obj->is<TypedArrayObject>()) {
+        // 9.4.5.3 step 3. Indexed properties of typed arrays are special.
+        uint64_t index;
+        if (IsTypedArrayIndex(id, &index)) {
+            // This method is only called for non-existent properties, which
+            // means any absent indexed property must be out of range.
+            MOZ_ASSERT(index >= obj->as<TypedArrayObject>().length());
+
+            // We (wrongly) ignore out of range defines.
+            return result.succeed();
+        }
+    } else if (obj->is<ArgumentsObject>()) {
+        // If this method is called with either |length| or |@@iterator|, the
+        // property was previously deleted and hence should already be marked
+        // as overridden.
+        MOZ_ASSERT_IF(id == NameToId(cx->names().length),
+                      obj->as<ArgumentsObject>().hasOverriddenLength());
+        MOZ_ASSERT_IF(JSID_IS_SYMBOL(id) && JSID_TO_SYMBOL(id) == cx->wellKnownSymbols().iterator,
+                      obj->as<ArgumentsObject>().hasOverriddenIterator());
+
+        // We still need to mark any element properties as overridden.
+        if (JSID_IS_INT(id))
+            obj->as<ArgumentsObject>().markElementOverridden();
+    }
+
+#ifdef DEBUG
+    Rooted<PropertyResult> prop(cx);
+    NativeLookupOwnPropertyNoResolve(cx, obj, id, &prop);
+    MOZ_ASSERT(!prop, "didn't expect to find an existing property");
+#endif
+
+    // 9.1.6.3, ValidateAndApplyPropertyDescriptor.
+    // Step 1 is a redundant assertion, step 3 and later don't apply here.
+
+    // Step 2.
+    if (!obj->nonProxyIsExtensible())
+        return result.fail(JSMSG_CANT_DEFINE_PROP_OBJECT_NOT_EXTENSIBLE);
+
+    if (!AddOrChangeProperty<IsAddOrChange::Add>(cx, obj, id, desc))
+        return false;
+    return result.succeed();
 }
 
 
@@ -2226,6 +2504,30 @@ NativeSetExistingDataProperty(JSContext* cx, HandleNativeObject obj, HandleShape
     return true;  // result is populated by CallJSSetterOp above.
 }
 
+static bool
+CallSetPropertyHookAfterDefining(JSContext* cx, HandleObject receiver, HandleId id, HandleValue v,
+                                 ObjectOpResult& result)
+{
+    MOZ_ASSERT(receiver->is<NativeObject>());
+    MOZ_ASSERT(receiver->getClass()->getSetProperty());
+
+    if (!result)
+        return true;
+
+    Rooted<NativeObject*> nativeReceiver(cx, &receiver->as<NativeObject>());
+    MOZ_ASSERT(!cx->helperThread());
+    RootedValue receiverValue(cx, ObjectValue(*receiver));
+
+    // This lookup is a bit unfortunate, but not nearly the most
+    // unfortunate thing about Class getters and setters. Since the above
+    // DefineProperty call succeeded, receiver is native, and the property
+    // has a setter (and thus can't be a dense element), this lookup is
+    // guaranteed to succeed.
+    RootedShape shape(cx, nativeReceiver->lookup(cx, id));
+    MOZ_ASSERT(shape);
+    return NativeSetExistingDataProperty(cx, nativeReceiver, shape, v, receiverValue, result);
+}
+
 /*
  * When a [[Set]] operation finds no existing property with the given id
  * or finds a writable data property on the prototype chain, we end up here.
@@ -2285,24 +2587,8 @@ js::SetPropertyByDefining(JSContext* cx, HandleId id, HandleValue v, HandleValue
 
     // If the receiver is native, there is one more legacy wrinkle: the class
     // JSSetterOp is called after defining the new property.
-    if (setter && receiver->is<NativeObject>()) {
-        if (!result)
-            return true;
-
-        Rooted<NativeObject*> nativeReceiver(cx, &receiver->as<NativeObject>());
-        MOZ_ASSERT(!cx->helperThread());
-        RootedValue receiverValue(cx, ObjectValue(*receiver));
-
-        // This lookup is a bit unfortunate, but not nearly the most
-        // unfortunate thing about Class getters and setters. Since the above
-        // DefineProperty call succeeded, receiver is native, and the property
-        // has a setter (and thus can't be a dense element), this lookup is
-        // guaranteed to succeed.
-        RootedShape shape(cx, nativeReceiver->lookup(cx, id));
-        MOZ_ASSERT(shape);
-        return NativeSetExistingDataProperty(cx, nativeReceiver, shape, v,
-                                             receiverValue, result);
-    }
+    if (setter && receiver->is<NativeObject>())
+        return CallSetPropertyHookAfterDefining(cx, receiver, id, v, result);
 
     return true;
 }
@@ -2330,13 +2616,61 @@ js::SetPropertyOnProto(JSContext* cx, HandleObject obj, HandleId id, HandleValue
  * steps 4.d.i and 5.
  */
 static bool
-SetNonexistentProperty(JSContext* cx, HandleId id, HandleValue v, HandleValue receiver,
-                       QualifiedBool qualified, ObjectOpResult& result)
+SetNonexistentProperty(JSContext* cx, HandleNativeObject obj, HandleId id, HandleValue v,
+                       HandleValue receiver, QualifiedBool qualified, ObjectOpResult& result)
 {
     if (!qualified && receiver.isObject() && receiver.toObject().isUnqualifiedVarObj()) {
         RootedString idStr(cx, JSID_TO_STRING(id));
         if (!MaybeReportUndeclaredVarAssignment(cx, idStr))
             return false;
+    }
+
+    // Pure optimization for the common case. There's no point performing the
+    // lookup in step 5.c again, as our caller just did it for us.
+    if (qualified && receiver.isObject() && obj == &receiver.toObject()) {
+        // Ensure that a custom GetOwnPropertyOp, if present, doesn't
+        // introduce additional properties which weren't previously found by
+        // LookupOwnProperty.
+#ifdef DEBUG
+        if (GetOwnPropertyOp op = obj->getOpsGetOwnPropertyDescriptor()) {
+            Rooted<PropertyDescriptor> desc(cx);
+            if (!op(cx, obj, id, &desc))
+                return false;
+
+            MOZ_ASSERT(!desc.object());
+        }
+#endif
+
+        // Step 5.e. Define the new data property.
+
+        const Class* clasp = obj->getClass();
+        JSGetterOp getter = clasp->getGetProperty();
+        JSSetterOp setter = clasp->getSetProperty();
+        MOZ_ASSERT(getter != JS_PropertyStub);
+        MOZ_ASSERT(setter != JS_StrictPropertyStub);
+
+        Rooted<PropertyDescriptor> desc(cx);
+        desc.initFields(nullptr, v, JSPROP_ENUMERATE, getter, setter);
+
+        if (DefinePropertyOp op = obj->getOpsDefineProperty()) {
+            // Purge the property cache of now-shadowed id in receiver's environment chain.
+            if (!PurgeEnvironmentChain(cx, obj, id))
+                return false;
+
+            MOZ_ASSERT(!cx->helperThread());
+            if (!op(cx, obj, id, desc, result))
+                return false;
+        } else {
+            if (!DefineNonexistentProperty(cx, obj, id, desc, result))
+                return false;
+        }
+
+        // There is one more legacy wrinkle: the class JSSetterOp is called
+        // after defining the new property.
+        if (setter)
+            return CallSetPropertyHookAfterDefining(cx, obj, id, v, result);
+
+        return true;
     }
 
     return SetPropertyByDefining(cx, id, v, receiver, result);
@@ -2496,7 +2830,7 @@ js::NativeSetProperty(JSContext* cx, HandleNativeObject obj, HandleId id, Handle
         RootedObject proto(cx, done ? nullptr : pobj->staticPrototype());
         if (!proto) {
             // Step 4.d.i (and step 5).
-            return SetNonexistentProperty(cx, id, v, receiver, qualified, result);
+            return SetNonexistentProperty(cx, obj, id, v, receiver, qualified, result);
         }
 
         // Step 4.c.i. If the prototype is also native, this step is a
@@ -2513,7 +2847,7 @@ js::NativeSetProperty(JSContext* cx, HandleNativeObject obj, HandleId id, Handle
                 if (!HasProperty(cx, proto, id, &found))
                     return false;
                 if (!found)
-                    return SetNonexistentProperty(cx, id, v, receiver, qualified, result);
+                    return SetNonexistentProperty(cx, obj, id, v, receiver, qualified, result);
             }
 
             return SetProperty(cx, proto, id, v, receiver, result);

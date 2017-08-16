@@ -158,6 +158,12 @@ void*
 nsINode::GetProperty(uint16_t aCategory, nsIAtom *aPropertyName,
                      nsresult *aStatus) const
 {
+  if (!HasProperties()) { // a fast HasFlag() test
+    if (aStatus) {
+      *aStatus = NS_PROPTABLE_PROP_NOT_THERE;
+    }
+    return nullptr;
+  }
   return OwnerDoc()->PropertyTable(aCategory)->GetProperty(this, aPropertyName,
                                                            aStatus);
 }
@@ -1833,12 +1839,9 @@ nsINode::Remove()
   if (!parent) {
     return;
   }
-  int32_t index = parent->IndexOf(this);
-  if (index < 0) {
-    NS_WARNING("Ignoring call to nsINode::Remove on anonymous child.");
-    return;
-  }
-  parent->RemoveChildAt(uint32_t(index), true);
+
+  IgnoredErrorResult err;
+  parent->RemoveChild(*this, err);
 }
 
 Element*
@@ -1900,6 +1903,10 @@ void
 nsINode::doRemoveChildAt(uint32_t aIndex, bool aNotify,
                          nsIContent* aKid, nsAttrAndChildArray& aChildArray)
 {
+  // NOTE: This function must not trigger any calls to
+  // nsIDocument::GetRootElement() calls until *after* it has removed aKid from
+  // aChildArray. Any calls before then could potentially restore a stale
+  // value for our cached root element, per note in nsDocument::RemoveChildAt().
   NS_PRECONDITION(aKid && aKid->GetParentNode() == this &&
                   aKid == GetChildAt(aIndex) &&
                   IndexOf(aKid) == (int32_t)aIndex, "Bogus aKid");
@@ -2799,7 +2806,6 @@ FindMatchingElements(nsINode* aRoot, nsCSSSelectorList* aSelectorList, T &aList,
 
   TreeMatchContext matchingContext(false, nsRuleWalker::eRelevantLinkUnvisited,
                                    doc, TreeMatchContext::eNeverMatchVisited);
-  doc->FlushPendingLinkUpdates();
   AddScopeElements(matchingContext, aRoot);
 
   // Fast-path selectors involving IDs.  We can only do this if aRoot
@@ -2987,7 +2993,7 @@ bool
 nsINode::HasBoxQuadsSupport(JSContext* aCx, JSObject* /* unused */)
 {
   return xpc::AccessCheck::isChrome(js::GetContextCompartment(aCx)) ||
-         Preferences::GetBool("layout.css.getBoxQuads.enabled");
+         nsContentUtils::GetBoxQuadsEnabled();
 }
 
 nsINode*

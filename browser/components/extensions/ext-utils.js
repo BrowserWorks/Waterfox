@@ -2,21 +2,22 @@
 /* vim: set sts=2 sw=2 et tw=80: */
 "use strict";
 
+/* exported WindowEventManager, makeWidgetId */
+/* global EventEmitter:false, TabContext:false, WindowEventManager:false,
+          makeWidgetId:false, tabTracker:true, windowTracker:true */
+/* import-globals-from ../../../toolkit/components/extensions/ext-toolkit.js */
+
 XPCOMUtils.defineLazyModuleGetter(this, "PrivateBrowsingUtils",
                                   "resource://gre/modules/PrivateBrowsingUtils.jsm");
 
-/* globals TabBase, WindowBase, TabTrackerBase, WindowTrackerBase, TabManagerBase, WindowManagerBase */
 Cu.import("resource://gre/modules/ExtensionTabs.jsm");
 
 XPCOMUtils.defineLazyServiceGetter(this, "styleSheetService",
                                    "@mozilla.org/content/style-sheet-service;1",
                                    "nsIStyleSheetService");
 
-Cu.import("resource://gre/modules/ExtensionUtils.jsm");
-
 var {
   ExtensionError,
-  SingletonEventManager,
   defineLazyGetter,
 } = ExtensionUtils;
 
@@ -158,6 +159,7 @@ class TabTracker extends TabTrackerBase {
 
     windowTracker.addListener("TabClose", this);
     windowTracker.addListener("TabOpen", this);
+    windowTracker.addListener("TabSelect", this);
     windowTracker.addOpenListener(this._handleWindowOpen);
     windowTracker.addCloseListener(this._handleWindowClose);
 
@@ -270,6 +272,14 @@ class TabTracker extends TabTrackerBase {
           this.emitRemoved(nativeTab, false);
         }
         break;
+
+      case "TabSelect":
+        // Because we are delaying calling emitCreated above, we also need to
+        // delay sending this event because it shouldn't fire before onCreated.
+        Promise.resolve().then(() => {
+          this.emitActivated(nativeTab);
+        });
+        break;
     }
   }
 
@@ -315,6 +325,9 @@ class TabTracker extends TabTrackerBase {
       for (let nativeTab of window.gBrowser.tabs) {
         this.emitCreated(nativeTab);
       }
+
+      // emitActivated to trigger tab.onActivated/tab.onHighlighted for a newly opened window.
+      this.emitActivated(window.gBrowser.tabs[0]);
     }
   }
 
@@ -334,6 +347,19 @@ class TabTracker extends TabTrackerBase {
         this.emitRemoved(nativeTab, true);
       }
     }
+  }
+
+  /**
+   * Emits a "tab-activated" event for the given tab element.
+   *
+   * @param {NativeTab} nativeTab
+   *        The tab element which has been activated.
+   * @private
+   */
+  emitActivated(nativeTab) {
+    this.emit("tab-activated", {
+      tabId: this.getId(nativeTab),
+      windowId: windowTracker.getId(nativeTab.ownerGlobal)});
   }
 
   /**
@@ -403,9 +429,9 @@ class TabTracker extends TabTrackerBase {
     // `tabs.onRemoved.addListener`, then the tab would be closed before the
     // event listener is registered. To make sure that the event listener is
     // notified, we dispatch `tabs.onRemoved` asynchronously.
-    Services.tm.mainThread.dispatch(() => {
+    Services.tm.dispatchToMainThread(() => {
       this.emit("tab-removed", {nativeTab, tabId, windowId, isWindowClosing});
-    }, Ci.nsIThread.DISPATCH_NORMAL);
+    });
   }
 
   getBrowserData(browser) {
@@ -548,7 +574,6 @@ class Tab extends TabBase {
       sessionId: String(tabData.closedId),
       index: tabData.pos ? tabData.pos : 0,
       windowId: window && windowTracker.getId(window),
-      selected: false,
       highlighted: false,
       active: false,
       pinned: false,

@@ -37,7 +37,7 @@ public:
   }
   void SetColSpan(uint32_t aColSpan, ErrorResult& aError)
   {
-    SetHTMLIntAttr(nsGkAtoms::colspan, aColSpan, aError);
+    SetUnsignedIntAttr(nsGkAtoms::colspan, aColSpan, 1, aError);
   }
   uint32_t RowSpan() const
   {
@@ -45,7 +45,7 @@ public:
   }
   void SetRowSpan(uint32_t aRowSpan, ErrorResult& aError)
   {
-    SetHTMLIntAttr(nsGkAtoms::rowspan, aRowSpan, aError);
+    SetUnsignedIntAttr(nsGkAtoms::rowspan, aRowSpan, 1, aError);
   }
   //already_AddRefed<nsDOMTokenList> Headers() const;
   void GetHeaders(DOMString& aHeaders)
@@ -148,8 +148,11 @@ public:
   virtual nsMapRuleToAttributesFunc GetAttributeMappingFunction() const override;
   NS_IMETHOD WalkContentStyleRules(nsRuleWalker* aRuleWalker) override;
   NS_IMETHOD_(bool) IsAttributeMapped(const nsIAtom* aAttribute) const override;
+  // Get mapped attributes of ancestor table, if any
+  nsMappedAttributes* GetMappedAttributesInheritedFromTable() const;
 
-  virtual nsresult Clone(mozilla::dom::NodeInfo *aNodeInfo, nsINode **aResult) const override;
+  virtual nsresult Clone(mozilla::dom::NodeInfo *aNodeInfo, nsINode **aResult,
+                         bool aPreallocateChildren) const override;
 
 protected:
   virtual ~HTMLTableCellElement();

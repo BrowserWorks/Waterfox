@@ -335,6 +335,10 @@ Accessible::VisibilityState()
   if (!frame->StyleVisibility()->IsVisible())
     return states::INVISIBLE;
 
+  // Offscreen state if the document's visibility state is not visible.
+  if (Document()->IsHidden())
+    return states::OFFSCREEN;
+
   nsIFrame* curFrame = frame;
   do {
     nsView* view = curFrame->GetView();
@@ -385,7 +389,7 @@ Accessible::VisibilityState()
   // marked invisible.
   // XXX Can we just remove this check? Why do we need to mark empty
   // text invisible?
-  if (frame->GetType() == nsGkAtoms::textFrame &&
+  if (frame->IsTextFrame() &&
       !(frame->GetStateBits() & NS_FRAME_OUT_OF_FLOW) &&
       frame->GetRect().IsEmpty()) {
     nsIFrame::RenderedText text = frame->GetRenderedText(0,
@@ -636,7 +640,8 @@ Accessible::RelativeBounds(nsIFrame** aBoundingFrame) const
       // Find a canvas frame the found hit region is relative to.
       nsIFrame* canvasFrame = frame->GetParent();
       if (canvasFrame) {
-        canvasFrame = nsLayoutUtils::GetClosestFrameOfType(canvasFrame, nsGkAtoms::HTMLCanvasFrame);
+        canvasFrame = nsLayoutUtils::GetClosestFrameOfType(
+          canvasFrame, LayoutFrameType::HTMLCanvas);
       }
 
       // make the canvas the bounding frame
@@ -890,6 +895,12 @@ Accessible::HandleAccEvent(AccEvent* aEvent)
           ipcDoc->SendSelectionEvent(id, widgetID, aEvent->GetEventType());
           break;
         }
+#if defined(XP_WIN)
+        case nsIAccessibleEvent::EVENT_FOCUS: {
+          ipcDoc->SendFocusEvent(id);
+          break;
+        }
+#endif
         default:
           ipcDoc->SendEvent(id, aEvent->GetEventType());
       }
@@ -1888,7 +1899,7 @@ Accessible::AppendTextTo(nsAString& aText, uint32_t aStartOffset,
   NS_ASSERTION(mParent,
                "Called on accessible unbound from tree. Result can be wrong.");
 
-  if (frame->GetType() == nsGkAtoms::brFrame) {
+  if (frame->IsBrFrame()) {
     aText += kForcedNewLineChar;
   } else if (mParent && nsAccUtils::MustPrune(mParent)) {
     // Expose the embedded object accessible as imaginary embedded object
@@ -2131,14 +2142,13 @@ Accessible::InsertChildAt(uint32_t aIndex, Accessible* aChild)
 bool
 Accessible::RemoveChild(Accessible* aChild)
 {
-  if (!aChild)
-    return false;
-
-  if (aChild->mParent != this || aChild->mIndexInParent == -1)
-    return false;
-
-  MOZ_ASSERT((mStateFlags & eKidsMutating) || aChild->IsDefunct() || aChild->IsDoc(),
-             "Illicit children change");
+  MOZ_DIAGNOSTIC_ASSERT(aChild, "No child was given");
+  MOZ_DIAGNOSTIC_ASSERT(aChild->mParent, "No parent");
+  MOZ_DIAGNOSTIC_ASSERT(aChild->mParent == this, "Wrong parent");
+  MOZ_DIAGNOSTIC_ASSERT(aChild->mIndexInParent != -1, "Unbound child was given");
+  MOZ_DIAGNOSTIC_ASSERT((mStateFlags & eKidsMutating) || aChild->IsDefunct() ||
+                        aChild->IsDoc() || IsApplication(),
+                        "Illicit children change");
 
   int32_t index = static_cast<uint32_t>(aChild->mIndexInParent);
   if (mChildren.SafeElementAt(index) != aChild) {

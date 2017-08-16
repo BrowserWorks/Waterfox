@@ -11,6 +11,7 @@
 #include "mozilla/dom/UnionTypes.h"
 #include "nsDOMClassInfoID.h"
 #include "nsIMultiplexInputStream.h"
+#include "nsRFPService.h"
 #include "nsStringStream.h"
 #include "nsTArray.h"
 #include "nsJSUtils.h"
@@ -171,8 +172,7 @@ MultipartBlobImpl::InitializeBlob(ErrorResult& aRv)
 }
 
 void
-MultipartBlobImpl::InitializeBlob(JSContext* aCx,
-                                  const Sequence<Blob::BlobPart>& aData,
+MultipartBlobImpl::InitializeBlob(const Sequence<Blob::BlobPart>& aData,
                                   const nsAString& aContentType,
                                   bool aNativeEOL,
                                   ErrorResult& aRv)
@@ -189,7 +189,7 @@ MultipartBlobImpl::InitializeBlob(JSContext* aCx,
     }
 
     else if (data.IsUSVString()) {
-      aRv = blobSet.AppendString(data.GetAsUSVString(), aNativeEOL, aCx);
+      aRv = blobSet.AppendString(data.GetAsUSVString(), aNativeEOL);
       if (aRv.Failed()) {
         return;
       }
@@ -270,8 +270,8 @@ MultipartBlobImpl::SetLengthAndModifiedDate(ErrorResult& aRv)
     //   var x = new Date(); var f = new File(...);
     //   x.getTime() < f.dateModified.getTime()
     // could fail.
-    mLastModificationDate =
-      lastModifiedSet ? lastModified * PR_USEC_PER_MSEC : JS_Now();
+    mLastModificationDate = nsRFPService::ReduceTimePrecisionAsUSecs(
+      lastModifiedSet ? lastModified * PR_USEC_PER_MSEC : JS_Now());
   }
 }
 

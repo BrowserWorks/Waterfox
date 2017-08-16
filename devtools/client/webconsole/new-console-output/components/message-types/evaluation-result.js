@@ -12,13 +12,15 @@ const {
   PropTypes
 } = require("devtools/client/shared/vendor/react");
 const Message = createFactory(require("devtools/client/webconsole/new-console-output/components/message"));
-const GripMessageBody = createFactory(require("devtools/client/webconsole/new-console-output/components/grip-message-body"));
+const GripMessageBody = require("devtools/client/webconsole/new-console-output/components/grip-message-body");
 
 EvaluationResult.displayName = "EvaluationResult";
 
 EvaluationResult.propTypes = {
   message: PropTypes.object.isRequired,
   indent: PropTypes.number.isRequired,
+  timestampsVisible: PropTypes.bool.isRequired,
+  serviceContainer: PropTypes.object,
 };
 
 EvaluationResult.defaultProps = {
@@ -26,7 +28,13 @@ EvaluationResult.defaultProps = {
 };
 
 function EvaluationResult(props) {
-  const { message, serviceContainer, indent } = props;
+  const {
+    message,
+    serviceContainer,
+    indent,
+    timestampsVisible,
+  } = props;
+
   const {
     source,
     type,
@@ -41,14 +49,26 @@ function EvaluationResult(props) {
 
   let messageBody;
   if (message.messageText) {
-    messageBody = message.messageText;
+    if (typeof message.messageText === "string") {
+      messageBody = message.messageText;
+    } else if (
+      typeof message.messageText === "object"
+      && message.messageText.type === "longString"
+    ) {
+      messageBody = `${message.messageText.initial}…`;
+    }
   } else {
-    messageBody = GripMessageBody({grip: parameters, serviceContainer});
+    messageBody = GripMessageBody({
+      grip: parameters,
+      serviceContainer,
+      useQuotes: true,
+      escapeWhitespace: false,
+    });
   }
 
   const topLevelClasses = ["cm-s-mozilla"];
 
-  const childProps = {
+  return Message({
     source,
     type,
     level,
@@ -56,15 +76,14 @@ function EvaluationResult(props) {
     topLevelClasses,
     messageBody,
     messageId,
-    scrollToMessage: props.autoscroll,
     serviceContainer,
     exceptionDocURL,
     frame,
     timeStamp,
     parameters,
     notes,
-  };
-  return Message(childProps);
+    timestampsVisible,
+  });
 }
 
 module.exports = EvaluationResult;

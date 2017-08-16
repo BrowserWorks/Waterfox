@@ -26,7 +26,7 @@ var gLockStrs = [];
 var gTypeStrs = [];
 
 const PREF_IS_DEFAULT_VALUE = 0;
-const PREF_IS_USER_SET = 1;
+const PREF_IS_MODIFIED = 1;
 const PREF_IS_LOCKED = 2;
 
 var gPrefHash = {};
@@ -63,8 +63,8 @@ var view = {
     return "";
   },
   getColumnProperties(col) { return ""; },
-  treebox : null,
-  selection : null,
+  treebox: null,
+  selection: null,
   isContainer(index) { return false; },
   isContainerOpen(index) { return false; },
   isContainerEmpty(index) { return false; },
@@ -279,7 +279,7 @@ function fetchPref(prefName, prefIndex) {
   if (gPrefBranch.prefIsLocked(prefName))
     pref.lockCol = PREF_IS_LOCKED;
   else if (gPrefBranch.prefHasUserValue(prefName))
-    pref.lockCol = PREF_IS_USER_SET;
+    pref.lockCol = PREF_IS_MODIFIED;
 
   try {
     switch (gPrefBranch.getPrefType(prefName)) {
@@ -295,7 +295,7 @@ function fetchPref(prefName, prefIndex) {
         break;
       default:
       case gPrefBranch.PREF_STRING:
-        pref.valueCol = gPrefBranch.getComplexValue(prefName, nsISupportsString).data;
+        pref.valueCol = gPrefBranch.getStringPref(prefName);
         // Try in case it's a localized string (will throw an exception if not)
         if (pref.lockCol == PREF_IS_DEFAULT_VALUE &&
             /^chrome:\/\/.+\/locale\/.+\.properties/.test(pref.valueCol))
@@ -313,7 +313,7 @@ function onConfigLoad() {
   gConfigBundle = document.getElementById("configBundle");
 
   gLockStrs[PREF_IS_DEFAULT_VALUE] = gConfigBundle.getString("default");
-  gLockStrs[PREF_IS_USER_SET] = gConfigBundle.getString("user");
+  gLockStrs[PREF_IS_MODIFIED] = gConfigBundle.getString("modified");
   gLockStrs[PREF_IS_LOCKED] = gConfigBundle.getString("locked");
 
   gTypeStrs[nsIPrefBranch.PREF_STRING] = gConfigBundle.getString("string");
@@ -346,7 +346,7 @@ function ShowPrefs() {
   gSortFunction = gSortFunctions[gSortedColumn];
   gPrefArray.sort(gSortFunction);
 
-  gPrefBranch.addObserver("", gPrefListener, false);
+  gPrefBranch.addObserver("", gPrefListener);
 
   var configTree = document.getElementById("configTree");
   configTree.view = view;
@@ -492,7 +492,7 @@ function updateContextMenu() {
   copyValue.setAttribute("disabled", copyDisabled);
 
   var resetSelected = document.getElementById("resetSelected");
-  resetSelected.setAttribute("disabled", lockCol != PREF_IS_USER_SET);
+  resetSelected.setAttribute("disabled", lockCol != PREF_IS_MODIFIED);
 
   var canToggle = typeCol == nsIPrefBranch.PREF_BOOL && valueCol != "";
   // indicates that a pref is locked or no pref is selected at all
@@ -593,9 +593,7 @@ function ModifyPref(entry) {
       }
       gPrefBranch.setIntPref(entry.prefCol, val);
     } else {
-      var supportsString = Components.classes[nsSupportsString_CONTRACTID].createInstance(nsISupportsString);
-      supportsString.data = result.value;
-      gPrefBranch.setComplexValue(entry.prefCol, nsISupportsString, supportsString);
+      gPrefBranch.setStringPref(entry.prefCol, result.value);
     }
   }
 

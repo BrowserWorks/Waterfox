@@ -56,19 +56,12 @@ nsInlineFrame::GetFrameName(nsAString& aResult) const
 }
 #endif
 
-nsIAtom*
-nsInlineFrame::GetType() const
-{
-  return nsGkAtoms::inlineFrame;
-}
-
 void
 nsInlineFrame::InvalidateFrame(uint32_t aDisplayItemKey)
 {
-  if (IsSVGText()) {
-    nsIFrame* svgTextFrame =
-      nsLayoutUtils::GetClosestFrameOfType(GetParent(),
-                                           nsGkAtoms::svgTextFrame);
+  if (nsSVGUtils::IsInSVGTextSubtree(this)) {
+    nsIFrame* svgTextFrame = nsLayoutUtils::GetClosestFrameOfType(
+      GetParent(), LayoutFrameType::SVGText);
     svgTextFrame->InvalidateFrame();
     return;
   }
@@ -78,10 +71,9 @@ nsInlineFrame::InvalidateFrame(uint32_t aDisplayItemKey)
 void
 nsInlineFrame::InvalidateFrameWithRect(const nsRect& aRect, uint32_t aDisplayItemKey)
 {
-  if (IsSVGText()) {
-    nsIFrame* svgTextFrame =
-      nsLayoutUtils::GetClosestFrameOfType(GetParent(),
-                                           nsGkAtoms::svgTextFrame);
+  if (nsSVGUtils::IsInSVGTextSubtree(this)) {
+    nsIFrame* svgTextFrame = nsLayoutUtils::GetClosestFrameOfType(
+      GetParent(), LayoutFrameType::SVGText);
     svgTextFrame->InvalidateFrame();
     return;
   }
@@ -487,9 +479,9 @@ nsInlineFrame::AttributeChanged(int32_t aNameSpaceID,
     return rv;
   }
 
-  if (IsSVGText()) {
+  if (nsSVGUtils::IsInSVGTextSubtree(this)) {
     SVGTextFrame* f = static_cast<SVGTextFrame*>(
-      nsLayoutUtils::GetClosestFrameOfType(this, nsGkAtoms::svgTextFrame));
+      nsLayoutUtils::GetClosestFrameOfType(this, LayoutFrameType::SVGText));
     f->HandleAttributeChangeInDescendant(mContent->AsElement(),
                                          aNameSpaceID, aAttribute);
   }
@@ -537,7 +529,7 @@ nsInlineFrame::DrainSelfOverflowList()
   // No need to look further than the nearest line container though.
   DrainFlags flags = DrainFlags(0);
   for (nsIFrame* p = GetParent(); p != lineContainer; p = p->GetParent()) {
-    if (p->GetType() == nsGkAtoms::lineFrame) {
+    if (p->IsLineFrame()) {
       flags = DrainFlags(flags | eInFirstLine);
       break;
     }
@@ -653,15 +645,13 @@ nsInlineFrame::ReflowFrames(nsPresContext* aPresContext,
       // Fix the parent pointer for ::first-letter child frame next-in-flows,
       // so nsFirstLetterFrame::Reflow can destroy them safely (bug 401042).
       nsIFrame* realFrame = nsPlaceholderFrame::GetRealFrameFor(frame);
-      if (realFrame->GetType() == nsGkAtoms::letterFrame) {
+      if (realFrame->IsLetterFrame()) {
         nsIFrame* child = realFrame->PrincipalChildList().FirstChild();
         if (child) {
-          NS_ASSERTION(child->GetType() == nsGkAtoms::textFrame,
-                       "unexpected frame type");
+          NS_ASSERTION(child->IsTextFrame(), "unexpected frame type");
           nsIFrame* nextInFlow = child->GetNextInFlow();
           for ( ; nextInFlow; nextInFlow = nextInFlow->GetNextInFlow()) {
-            NS_ASSERTION(nextInFlow->GetType() == nsGkAtoms::textFrame,
-                         "unexpected frame type");
+            NS_ASSERTION(nextInFlow->IsTextFrame(), "unexpected frame type");
             if (mFrames.ContainsFrame(nextInFlow)) {
               nextInFlow->SetParent(this);
               if (inFirstLine) {
@@ -1040,24 +1030,14 @@ nsInlineFrame::DoUpdateStyleOfOwnedAnonBoxes(ServoStyleSet& aStyleSet,
   MOZ_ASSERT(mContent->GetPrimaryFrame() == this,
              "We should be the primary frame for our element");
 
-  nsPresContext* presContext = PresContext();
-  // Get the FramePropertyTable up front, since we are likely to need it
-  // multiple times.  The other option would be to just call
-  // nsIFrame::Properties() every time we need to do a lookup, but that does
-  // more pointer-chasing.
-  FramePropertyTable* propTable = presContext->PropertyTable();
-  nsIFrame* blockFrame = propTable->Get(this, nsIFrame::IBSplitSibling());
+  nsIFrame* blockFrame = GetProperty(nsIFrame::IBSplitSibling());
   MOZ_ASSERT(blockFrame, "Why did we have an IB split?");
-
-  nsIAtom* pseudo = blockFrame->StyleContext()->GetPseudo();
-  MOZ_ASSERT(pseudo == nsCSSAnonBoxes::mozAnonymousBlock ||
-             pseudo == nsCSSAnonBoxes::mozAnonymousPositionedBlock,
-             "Unexpected kind of style context");
 
   // The anonymous block's style inherits from ours, and we already have our new
   // style context.
   RefPtr<nsStyleContext> newContext =
-    aStyleSet.ResolveAnonymousBoxStyle(pseudo, StyleContext());
+    aStyleSet.ResolveInheritingAnonymousBoxStyle(
+      nsCSSAnonBoxes::mozBlockInsideInlineWrapper, StyleContext());
 
   // We're guaranteed that newContext only differs from the old style context on
   // the block in things they might inherit from us.  And changehint processing
@@ -1068,6 +1048,11 @@ nsInlineFrame::DoUpdateStyleOfOwnedAnonBoxes(ServoStyleSet& aStyleSet,
   while (blockFrame) {
     MOZ_ASSERT(!blockFrame->GetPrevContinuation(),
                "Must be first continuation");
+
+    MOZ_ASSERT(blockFrame->StyleContext()->GetPseudo() ==
+               nsCSSAnonBoxes::mozBlockInsideInlineWrapper,
+               "Unexpected kind of style context");
+
     // We _could_ just walk along using GetNextContinuationWithSameStyle here,
     // but it would involve going back to the first continuation every so often,
     // which is a bit silly when we can just keep track of our first
@@ -1076,9 +1061,9 @@ nsInlineFrame::DoUpdateStyleOfOwnedAnonBoxes(ServoStyleSet& aStyleSet,
       cont->SetStyleContext(newContext);
     }
 
-    nsIFrame* nextInline = propTable->Get(blockFrame, nsIFrame::IBSplitSibling());
+    nsIFrame* nextInline = blockFrame->GetProperty(nsIFrame::IBSplitSibling());
     MOZ_ASSERT(nextInline, "There is always a trailing inline in an IB split");
-    blockFrame = propTable->Get(nextInline, nsIFrame::IBSplitSibling());
+    blockFrame = nextInline->GetProperty(nsIFrame::IBSplitSibling());
   }
 }
 
@@ -1115,7 +1100,8 @@ nsFirstLineFrame::Init(nsIContent*       aContent,
     // of the parent frame.
     nsStyleContext* parentContext = aParent->StyleContext();
     RefPtr<nsStyleContext> newSC = PresContext()->StyleSet()->
-      ResolveAnonymousBoxStyle(nsCSSAnonBoxes::mozLineFrame, parentContext);
+      ResolveInheritingAnonymousBoxStyle(nsCSSAnonBoxes::mozLineFrame,
+                                         parentContext);
     SetStyleContext(newSC);
   } else {
     MOZ_ASSERT(FirstInFlow() != aPrevInFlow);
@@ -1131,12 +1117,6 @@ nsFirstLineFrame::GetFrameName(nsAString& aResult) const
   return MakeFrameName(NS_LITERAL_STRING("Line"), aResult);
 }
 #endif
-
-nsIAtom*
-nsFirstLineFrame::GetType() const
-{
-  return nsGkAtoms::lineFrame;
-}
 
 nsIFrame*
 nsFirstLineFrame::PullOneFrame(nsPresContext* aPresContext, InlineReflowInput& irs,

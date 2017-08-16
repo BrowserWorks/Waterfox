@@ -1,4 +1,3 @@
-// |reftest| skip-if(!this.hasOwnProperty('Intl')) -- needs Intl
 // Copyright 2012 Mozilla Corporation. All rights reserved.
 // This code is governed by the BSD license found in the LICENSE file.
 
@@ -14,13 +13,9 @@ includes: [testIntl.js]
 testWithIntlConstructors(function (Constructor) {
     var supportedForUndefined = Constructor.supportedLocalesOf(undefined);
     var supportedForEmptyList = Constructor.supportedLocalesOf([]);
-    if (supportedForUndefined.length !== supportedForEmptyList.length) {
-        $ERROR("Supported locales differ between undefined and empty list input.");
-    }
+    assert.sameValue(supportedForUndefined.length, supportedForEmptyList.length, "Supported locales differ between undefined and empty list input.");
     // we don't compare the elements because length should be 0 - let's just verify that
-    if (supportedForUndefined.length !== 0) {
-        $ERROR("Internal test error: Assumption about length being 0 is invalid.");
-    }
+    assert.sameValue(supportedForUndefined.length, 0, "Internal test error: Assumption about length being 0 is invalid.");
     return true;
 });
 

@@ -47,6 +47,7 @@ function filepickerLoad() {
     if (o.displayDirectory) {
       var directory = o.displayDirectory.path;
     }
+    var specialDirectory = o.displaySpecialDirectory;
 
     const initialText = o.defaultString;
     var filterTitles = o.filters.titles;
@@ -133,21 +134,23 @@ function filepickerLoad() {
   // This allows the window to show onscreen before we begin
   // loading the file list
 
-  setTimeout(setInitialDirectory, 0, directory);
+  setTimeout(setInitialDirectory, 0, { directory, specialDirectory });
 }
 
-function setInitialDirectory(directory) {
+function setInitialDirectory(directories) {
   // Start in the user's home directory
   var dirService = Components.classes[NS_DIRECTORYSERVICE_CONTRACTID]
                              .getService(nsIProperties);
-  homeDir = dirService.get("Home", Components.interfaces.nsIFile);
+  homeDir = dirService.get(directories.specialDirectory
+                             ? directories.specialDirectory : "Home",
+                           Components.interfaces.nsIFile);
 
-  if (directory) {
-    sfile.initWithPath(directory);
+  if (directories.directory) {
+    sfile.initWithPath(directories.directory);
     if (!sfile.exists() || !sfile.isDirectory())
-      directory = false;
+      directories.directory = false;
   }
-  if (!directory) {
+  if (!directories.directory) {
     sfile.initWithPath(homeDir.path);
   }
 
@@ -583,7 +586,7 @@ function populateAncestorList(directory) {
   var menu = document.getElementById("lookInMenu");
 
   while (menu.hasChildNodes()) {
-    menu.removeChild(menu.firstChild);
+    menu.firstChild.remove();
   }
 
   var menuItem = document.createElement("menuitem");
@@ -628,7 +631,7 @@ function newDir() {
     gFilePickerBundle.getString("promptNewDirTitle");
   var dialogMsg =
     gFilePickerBundle.getString("promptNewDirMessage");
-  var ret = promptService.prompt(window, dialogTitle, dialogMsg, gNewDirName, null, {value:0});
+  var ret = promptService.prompt(window, dialogTitle, dialogMsg, gNewDirName, null, {value: 0});
 
   if (ret) {
     file = processPath(gNewDirName.value);
@@ -716,7 +719,7 @@ function toggleShowHidden(event) {
 // returns an array of the files listed,
 // or false if an error occurred.
 function processPath(path) {
-  var fileArray = new Array();
+  var fileArray = [];
   var strLength = path.length;
 
   if (path[0] == '"' && filePickerMode == nsIFilePicker.modeOpenMultiple &&

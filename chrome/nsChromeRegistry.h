@@ -18,7 +18,6 @@
 #include "nsURIHashKey.h"
 #include "nsInterfaceHashtable.h"
 #include "nsXULAppAPI.h"
-#include "nsIXPConnect.h"
 
 #include "mozilla/FileLocation.h"
 
@@ -79,10 +78,6 @@ protected:
   void FlushSkinCaches();
   void FlushAllCaches();
 
-  // Update the selected locale used by the chrome registry, and fire a
-  // notification about this change
-  virtual nsresult UpdateSelectedLocale() = 0;
-
   static void LogMessage(const char* aMsg, ...)
     MOZ_FORMAT_PRINTF(1, 2);
   static void LogMessageWithContext(nsIURI* aURL, uint32_t aLineNumber, uint32_t flags,
@@ -94,8 +89,6 @@ protected:
                                         const nsCString& aPath) = 0;
   virtual nsresult GetFlagsFromPackage(const nsCString& aPackage,
                                        uint32_t* aFlags) = 0;
-
-  nsresult SelectLocaleFromPref(nsIPrefBranch* prefs);
 
   static nsresult RefreshWindow(nsPIDOMWindowOuter* aWindow);
   static nsresult GetProviderAndPath(nsIURL* aChromeURL,
@@ -119,14 +112,11 @@ public:
     { }
 
     nsIURI* GetManifestURI();
-    nsIXPConnect* GetXPConnect();
-
     already_AddRefed<nsIURI> ResolveURI(const char* uri);
 
     NSLocationType mType;
     mozilla::FileLocation mFile;
     nsCOMPtr<nsIURI> mManifestURI;
-    nsCOMPtr<nsIXPConnect> mXPConnect;
   };
 
   virtual void ManifestContent(ManifestProcessingContext& cx, int lineno,
@@ -146,10 +136,6 @@ public:
 
   // Available flags
   enum {
-    // This is a "platform" package (e.g. chrome://global-platform/).
-    // Appends one of win/ unix/ mac/ to the base URI.
-    PLATFORM_PACKAGE = 1 << 0,
-
     // This package should use the new XPCNativeWrappers to separate
     // content from chrome. This flag is currently unused (because we call
     // into xpconnect at registration time).

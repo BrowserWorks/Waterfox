@@ -8,6 +8,7 @@ with Files('**'):
     BUG_COMPONENT = ('Core', 'Networking: HTTP')
 
 XPIDL_SOURCES += [
+    'nsIBackgroundChannelRegistrar.idl',
     'nsIHstsPrimingCallback.idl',
     'nsIHttpActivityObserver.idl',
     'nsIHttpAuthenticableChannel.idl',
@@ -39,6 +40,8 @@ EXPORTS.mozilla.net += [
     'AltDataOutputStreamChild.h',
     'AltDataOutputStreamParent.h',
     'HttpAuthUtils.h',
+    'HttpBackgroundChannelChild.h',
+    'HttpBackgroundChannelParent.h',
     'HttpBaseChannel.h',
     'HttpChannelChild.h',
     'HttpChannelParent.h',
@@ -49,18 +52,16 @@ EXPORTS.mozilla.net += [
     'TimingStruct.h',
 ]
 
-# ASpdySession.cpp and nsHttpAuthCache cannot be built in unified mode because
-# they use plarena.h.
 SOURCES += [
-    'AlternateServices.cpp',
-    'ASpdySession.cpp',
-    'nsHttpAuthCache.cpp',
     'nsHttpChannelAuthProvider.cpp', # redefines GetAuthType
 ]
 
 UNIFIED_SOURCES += [
     'AltDataOutputStreamChild.cpp',
     'AltDataOutputStreamParent.cpp',
+    'AlternateServices.cpp',
+    'ASpdySession.cpp',
+    'BackgroundChannelRegistrar.cpp',
     'CacheControlParser.cpp',
     'ConnectionDiagnostics.cpp',
     'HSTSPrimerListener.cpp',
@@ -69,6 +70,8 @@ UNIFIED_SOURCES += [
     'Http2Session.cpp',
     'Http2Stream.cpp',
     'HttpAuthUtils.cpp',
+    'HttpBackgroundChannelChild.cpp',
+    'HttpBackgroundChannelParent.cpp',
     'HttpBaseChannel.cpp',
     'HttpChannelChild.cpp',
     'HttpChannelParent.cpp',
@@ -78,6 +81,7 @@ UNIFIED_SOURCES += [
     'nsCORSListenerProxy.cpp',
     'nsHttp.cpp',
     'nsHttpActivityDistributor.cpp',
+    'nsHttpAuthCache.cpp',
     'nsHttpAuthManager.cpp',
     'nsHttpBasicAuth.cpp',
     'nsHttpChannel.cpp',
@@ -103,6 +107,7 @@ SOURCES += [
 
 IPDL_SOURCES += [
     'PAltDataOutputStream.ipdl',
+    'PHttpBackgroundChannel.ipdl',
     'PHttpChannel.ipdl',
 ]
 
@@ -121,6 +126,14 @@ LOCAL_INCLUDES += [
 ]
 
 EXTRA_COMPONENTS += [
+    'UAOverridesBootstrapper.js',
+    'UAOverridesBootstrapper.manifest',
     'WellKnownOpportunisticUtils.js',
     'WellKnownOpportunisticUtils.manifest',
 ]
+
+if CONFIG['OS_TARGET'] == 'Darwin':
+    if CONFIG['HOST_MAJOR_VERSION'] == '15':
+        DEFINES.update(
+            HAS_CONNECTX=True,
+        )

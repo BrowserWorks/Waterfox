@@ -4,6 +4,28 @@
 # License, v. 2.0. If a copy of the MPL was not distributed with this
 # file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
+with Files("tests/**"):
+    BUG_COMPONENT = ("Firefox", "General")
+
+with Files("tests/browser/browser_bug538331.js"):
+    BUG_COMPONENT = ("Toolkit", "Application Update")
+
+with Files("tests/browser/browser_contentpermissionprompt.js"):
+    BUG_COMPONENT = ("Firefox", "Site Identity and Permission Panels")
+
+with Files("tests/unit/test_browserGlue_migration_loop_cleanup.js"):
+    BUG_COMPONENT = ("Firefox", "General")
+
+with Files("tests/unit/test_distribution.js"):
+    BUG_COMPONENT = ("Firefox", "Distributions")
+
+with Files("safebrowsing/**"):
+    BUG_COMPONENT = ("Toolkit", "Safe Browsing")
+
+with Files('controlcenter/**'):
+    BUG_COMPONENT = ('Firefox', 'General')
+
+
 DIRS += [
     'about',
     'contextualidentity',
@@ -18,6 +40,7 @@ DIRS += [
     'places',
     'preferences',
     'privatebrowsing',
+    'resistfingerprinting',
     'search',
     'sessionstore',
     'shell',
@@ -41,6 +64,8 @@ EXTRA_PP_COMPONENTS += [
 EXTRA_COMPONENTS += [
     'nsBrowserContentHandler.js',
     'nsBrowserGlue.js',
+    'tests/startupRecorder.js',
+    'tests/testComponents.manifest',
 ]
 
 EXTRA_JS_MODULES += [
@@ -55,9 +80,3 @@ BROWSER_CHROME_MANIFESTS += [
 XPCSHELL_TESTS_MANIFESTS += [
     'tests/unit/xpcshell.ini'
 ]
-
-with Files('safebrowsing/*'):
-    BUG_COMPONENT = ('Toolkit', 'Phishing Protection')
-
-with Files('controlcenter/**'):
-    BUG_COMPONENT = ('Firefox', 'General')

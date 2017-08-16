@@ -17,6 +17,7 @@
 #include "nsDisplayList.h"
 #include "TableArea.h"
 
+struct BCPaintBorderAction;
 class nsTableCellFrame;
 class nsTableCellMap;
 class nsTableColFrame;
@@ -29,13 +30,18 @@ namespace mozilla {
 class WritingMode;
 class LogicalMargin;
 struct TableReflowInput;
+namespace layers {
+class StackingContextHelper;
+}
 } // namespace mozilla
 
 struct BCPropertyData;
 
-static inline bool IS_TABLE_CELL(nsIAtom* frameType) {
-  return nsGkAtoms::tableCellFrame == frameType ||
-    nsGkAtoms::bcTableCellFrame == frameType;
+static inline bool
+IS_TABLE_CELL(mozilla::LayoutFrameType frameType)
+{
+  return frameType == mozilla::LayoutFrameType::TableCell ||
+         frameType == mozilla::LayoutFrameType::BCTableCell;
 }
 
 class nsDisplayTableItem : public nsDisplayItem
@@ -128,8 +134,7 @@ class nsTableFrame : public nsContainerFrame
   typedef mozilla::TableReflowInput TableReflowInput;
 
 public:
-  NS_DECL_QUERYFRAME_TARGET(nsTableFrame)
-  NS_DECL_FRAMEARENA_HELPERS
+  NS_DECL_FRAMEARENA_HELPERS(nsTableFrame)
 
   typedef nsTArray<nsIFrame*> FrameTArray;
   NS_DECLARE_FRAME_PROPERTY_DELETABLE(PositionedTablePartArray, FrameTArray)
@@ -243,14 +248,13 @@ public:
                                       nsFrame* aFrame,
                                       const nsRect& aDirtyRect,
                                       const nsDisplayListSet& aLists,
-                                      nsDisplayTableItem* aDisplayItem,
                                       DisplayGenericTablePartTraversal aTraversal = GenericTraversal);
 
   // Return the closest sibling of aPriorChildFrame (including aPriroChildFrame)
   // of type aChildType.
-  static nsIFrame* GetFrameAtOrBefore(nsIFrame*       aParentFrame,
-                                      nsIFrame*       aPriorChildFrame,
-                                      nsIAtom*        aChildType);
+  static nsIFrame* GetFrameAtOrBefore(nsIFrame* aParentFrame,
+                                      nsIFrame* aPriorChildFrame,
+                                      mozilla::LayoutFrameType aChildType);
   bool IsAutoBSize(mozilla::WritingMode aWM);
 
   /** @return true if aDisplayType represents a rowgroup of any sort
@@ -264,16 +268,6 @@ public:
   virtual void BuildDisplayList(nsDisplayListBuilder*   aBuilder,
                                 const nsRect&           aDirtyRect,
                                 const nsDisplayListSet& aLists) override;
-
-  /**
-   * Paint the background of the table and its parts (column groups,
-   * columns, row groups, rows, and cells), and the table border, and all
-   * internal borders if border-collapse is on.
-   */
-  DrawResult PaintTableBorderBackground(nsDisplayListBuilder* aBuilder,
-                                        nsRenderingContext& aRenderingContext,
-                                        const nsRect& aDirtyRect,
-                                        nsPoint aPt);
 
   /** Get the outer half (i.e., the part outside the height and width of
    *  the table) of the largest segment (?) of border-collapsed border on
@@ -311,6 +305,11 @@ public:
   bool BCRecalcNeeded(nsStyleContext* aOldStyleContext,
                         nsStyleContext* aNewStyleContext);
   void PaintBCBorders(DrawTarget& aDrawTarget, const nsRect& aDirtyRect);
+  void CreateWebRenderCommandsForBCBorders(mozilla::wr::DisplayListBuilder& aBuilder,
+                                           const mozilla::layers::StackingContextHelper& aSc,
+                                           nsTArray<mozilla::layers::WebRenderParentCommand>& aParentCommands,
+                                           mozilla::layers::WebRenderDisplayItemLayer* aLayer,
+                                           const nsPoint& aPt);
 
   virtual void MarkIntrinsicISizesDirty() override;
   // For border-collapse tables, the caller must not add padding and
@@ -376,13 +375,6 @@ public:
 
   virtual nsStyleContext*
   GetParentStyleContext(nsIFrame** aProviderFrame) const override;
-
-  /**
-   * Get the "type" of the frame
-   *
-   * @see nsGkAtoms::tableFrame
-   */
-  virtual nsIAtom* GetType() const override;
 
   virtual bool IsFrameOfType(uint32_t aFlags) const override
   {
@@ -611,7 +603,7 @@ protected:
   /** protected constructor.
     * @see NewFrame
     */
-  explicit nsTableFrame(nsStyleContext* aContext);
+  explicit nsTableFrame(nsStyleContext* aContext, ClassID aID = kClassID);
 
   /** destructor, responsible for mColumnLayoutData */
   virtual ~nsTableFrame();
@@ -619,6 +611,8 @@ protected:
   void InitChildReflowInput(ReflowInput& aReflowInput);
 
   virtual LogicalSides GetLogicalSkipSides(const ReflowInput* aReflowInput = nullptr) const override;
+
+  void IterateBCBorders(BCPaintBorderAction& aAction, const nsRect& aDirtyRect);
 
 public:
   bool IsRowInserted() const;
@@ -769,6 +763,13 @@ public:
   bool NeedToCollapse() const;
   void SetNeedToCollapse(bool aValue);
 
+  bool NeedToCalcHasBCBorders() const;
+  void SetNeedToCalcHasBCBorders(bool aValue);
+
+  void CalcHasBCBorders();
+  bool HasBCBorders();
+  void SetHasBCBorders(bool aValue);
+
   /** The GeometryDirty bit is similar to the NS_FRAME_IS_DIRTY frame
     * state bit, which implies that all descendants are dirty.  The
     * GeometryDirty still implies that all the parts of the table are
@@ -807,7 +808,8 @@ protected:
 
   void SetBorderCollapse(bool aValue);
 
-  BCPropertyData* GetBCProperty(bool aCreateIfNecessary = false) const;
+  BCPropertyData* GetBCProperty() const;
+  BCPropertyData* GetOrCreateBCProperty();
   void SetFullBCDamageArea();
   void CalcBCBorders();
 
@@ -908,6 +910,8 @@ protected:
     uint32_t mIStartContBCBorder:8;
     uint32_t mNeedToCollapse:1;        // rows, cols that have visibility:collapse need to be collapsed
     uint32_t mResizedColumns:1;        // have we resized columns since last reflow?
+    uint32_t mNeedToCalcHasBCBorders:1;
+    uint32_t mHasBCBorders:1;
   } mBits;
 
   std::map<int32_t, int32_t> mDeletedRowIndexRanges; // maintains ranges of row
@@ -1003,6 +1007,30 @@ inline bool nsTableFrame::NeedToCalcBCBorders() const
 inline void nsTableFrame::SetNeedToCalcBCBorders(bool aValue)
 {
   mBits.mNeedToCalcBCBorders = (unsigned)aValue;
+}
+
+inline bool nsTableFrame::NeedToCalcHasBCBorders() const
+{
+  return (bool)mBits.mNeedToCalcHasBCBorders;
+}
+
+inline void nsTableFrame::SetNeedToCalcHasBCBorders(bool aValue)
+{
+  mBits.mNeedToCalcHasBCBorders = (unsigned)aValue;
+}
+
+inline bool nsTableFrame::HasBCBorders()
+{
+  if (NeedToCalcHasBCBorders()) {
+    CalcHasBCBorders();
+    SetNeedToCalcHasBCBorders(false);
+  }
+  return (bool)mBits.mHasBCBorders;
+}
+
+inline void nsTableFrame::SetHasBCBorders(bool aValue)
+{
+  mBits.mHasBCBorders = (unsigned)aValue;
 }
 
 inline nscoord

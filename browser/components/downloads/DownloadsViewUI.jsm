@@ -49,7 +49,7 @@ this.DownloadsViewUI = {
  * HistoryDownloadElementShell and the DownloadsViewItem for the panel. The
  * history view may use a HistoryDownload object in place of a Download object.
  */
-this.DownloadsViewUI.DownloadElementShell = function () {}
+this.DownloadsViewUI.DownloadElementShell = function() {}
 
 this.DownloadsViewUI.DownloadElementShell.prototype = {
   /**
@@ -225,11 +225,12 @@ this.DownloadsViewUI.DownloadElementShell.prototype = {
           let [size, unit] =
             DownloadUtils.convertByteUnits(this.download.target.size);
           stateLabel = s.sizeWithUnits(size, unit);
+          status = s.statusSeparator(s.stateCompleted, stateLabel);
         } else {
           // History downloads may not have a size defined.
           stateLabel = s.sizeUnknown;
+          status = s.stateCompleted;
         }
-        status = s.stateCompleted;
         hoverStatus = status;
       } else if (this.download.canceled) {
         stateLabel = s.stateCanceled;
@@ -242,10 +243,10 @@ this.DownloadsViewUI.DownloadElementShell.prototype = {
       }
 
       let referrer = this.download.source.referrer || this.download.source.url;
-      let [displayHost, fullHost] = DownloadUtils.getURIHost(referrer);
+      let [displayHost /* ,fullHost */] = DownloadUtils.getURIHost(referrer);
 
       let date = new Date(this.download.endTime);
-      let [displayDate, fullDate] = DownloadUtils.getReadableDates(date);
+      let [displayDate /* ,fullDate */] = DownloadUtils.getReadableDates(date);
 
       let firstPart = s.statusSeparator(stateLabel, displayHost);
       fullStatus = s.statusSeparator(firstPart, displayDate);
@@ -279,8 +280,6 @@ this.DownloadsViewUI.DownloadElementShell.prototype = {
     }
     throw new Error("Unexpected reputationCheckVerdict: " +
                     this.download.error.reputationCheckVerdict);
-    // return anyway to avoid a JS strict warning.
-    return [null, null];
   },
 
   /**
@@ -306,6 +305,7 @@ this.DownloadsViewUI.DownloadElementShell.prototype = {
       } else if (action == "confirmBlock") {
         return this.download.confirmBlock();
       }
+      return Promise.resolve();
     }).catch(Cu.reportError);
   },
 
@@ -326,18 +326,18 @@ this.DownloadsViewUI.DownloadElementShell.prototype = {
    */
   get currentDefaultCommandName() {
     switch (DownloadsCommon.stateOfDownload(this.download)) {
-      case Ci.nsIDownloadManager.DOWNLOAD_NOTSTARTED:
+      case DownloadsCommon.DOWNLOAD_NOTSTARTED:
         return "downloadsCmd_cancel";
-      case Ci.nsIDownloadManager.DOWNLOAD_FAILED:
-      case Ci.nsIDownloadManager.DOWNLOAD_CANCELED:
+      case DownloadsCommon.DOWNLOAD_FAILED:
+      case DownloadsCommon.DOWNLOAD_CANCELED:
         return "downloadsCmd_retry";
-      case Ci.nsIDownloadManager.DOWNLOAD_PAUSED:
+      case DownloadsCommon.DOWNLOAD_PAUSED:
         return "downloadsCmd_pauseResume";
-      case Ci.nsIDownloadManager.DOWNLOAD_FINISHED:
+      case DownloadsCommon.DOWNLOAD_FINISHED:
         return "downloadsCmd_open";
-      case Ci.nsIDownloadManager.DOWNLOAD_BLOCKED_PARENTAL:
+      case DownloadsCommon.DOWNLOAD_BLOCKED_PARENTAL:
         return "downloadsCmd_openReferrer";
-      case Ci.nsIDownloadManager.DOWNLOAD_DIRTY:
+      case DownloadsCommon.DOWNLOAD_DIRTY:
         return "downloadsCmd_showBlockedInfo";
     }
     return "";

@@ -23,6 +23,9 @@
 #include "mozilla/dom/network/TCPServerSocketChild.h"
 #include "mozilla/dom/network/UDPSocketChild.h"
 #include "mozilla/net/AltDataOutputStreamChild.h"
+#ifdef MOZ_WEBRTC
+#include "mozilla/net/StunAddrsRequestChild.h"
+#endif
 
 #ifdef NECKO_PROTOCOL_rtsp
 #include "mozilla/net/RtspControllerChild.h"
@@ -63,6 +66,9 @@ void NeckoChild::InitNeckoChild()
     mozilla::dom::ContentChild * cpc = 
       mozilla::dom::ContentChild::GetSingleton();
     NS_ASSERTION(cpc, "Content Protocol is NULL!");
+    if (NS_WARN_IF(cpc->IsShuttingDown())) {
+      return;
+    }
     gNeckoChild = cpc->SendPNeckoConstructor(); 
     NS_ASSERTION(gNeckoChild, "PNecko Protocol init failed!");
   }
@@ -86,6 +92,25 @@ NeckoChild::DeallocPHttpChannelChild(PHttpChannelChild* channel)
 
   HttpChannelChild* child = static_cast<HttpChannelChild*>(channel);
   child->ReleaseIPDLReference();
+  return true;
+}
+
+PStunAddrsRequestChild*
+NeckoChild::AllocPStunAddrsRequestChild()
+{
+  // We don't allocate here: instead we always use IPDL constructor that takes
+  // an existing object
+  NS_NOTREACHED("AllocPStunAddrsRequestChild should not be called on child");
+  return nullptr;
+}
+
+bool
+NeckoChild::DeallocPStunAddrsRequestChild(PStunAddrsRequestChild* aActor)
+{
+#ifdef MOZ_WEBRTC
+  StunAddrsRequestChild* p = static_cast<StunAddrsRequestChild*>(aActor);
+  p->ReleaseIPDLReference();
+#endif
   return true;
 }
 
@@ -211,6 +236,20 @@ NeckoChild::DeallocPDataChannelChild(PDataChannelChild* child)
   return true;
 }
 
+PFileChannelChild*
+NeckoChild::AllocPFileChannelChild(const uint32_t& channelId)
+{
+  MOZ_ASSERT_UNREACHABLE("Should never get here");
+  return nullptr;
+}
+
+bool
+NeckoChild::DeallocPFileChannelChild(PFileChannelChild* child)
+{
+  // NB: See FileChannelChild::ActorDestroy.
+  return true;
+}
+
 PRtspControllerChild*
 NeckoChild::AllocPRtspControllerChild()
 {
@@ -298,6 +337,7 @@ NeckoChild::DeallocPUDPSocketChild(PUDPSocketChild* child)
 
 PDNSRequestChild*
 NeckoChild::AllocPDNSRequestChild(const nsCString& aHost,
+                                  const OriginAttributes& aOriginAttributes,
                                   const uint32_t& aFlags,
                                   const nsCString& aNetworkInterface)
 {

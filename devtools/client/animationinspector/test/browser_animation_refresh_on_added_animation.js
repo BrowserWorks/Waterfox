@@ -42,6 +42,7 @@ function* changeElementAndWait(options, panel, inspector) {
 
   yield executeInContent("devtools:test:setAttribute", options);
 
-  yield promise.all([
-    onInspectorUpdated, onPanelUpdated, waitForAllAnimationTargets(panel)]);
+  yield promise.all([onInspectorUpdated, onPanelUpdated,
+                     waitForAllAnimationTargets(panel),
+                     waitForAnimationTimelineRendering(panel)]);
 }

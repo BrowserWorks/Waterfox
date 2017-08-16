@@ -9,10 +9,10 @@
 use cssparser::Parser;
 use gecko_bindings::structs;
 use parser::{Parse, ParserContext};
+use selectors::parser::SelectorParseError;
 use std::ascii::AsciiExt;
 use std::fmt;
-use style_traits::ToCss;
-use values::HasViewportPercentage;
+use style_traits::{ToCss, ParseError, StyleParseError};
 
 bitflags! {
     /// Constants shared by multiple CSS Box Alignment properties
@@ -36,11 +36,11 @@ bitflags! {
         const ALIGN_CENTER =          structs::NS_STYLE_ALIGN_CENTER as u8,
         /// 'left'
         const ALIGN_LEFT =            structs::NS_STYLE_ALIGN_LEFT as u8,
-        /// 'left'
-        const ALIGN_RIGHT =           structs::NS_STYLE_ALIGN_RIGHT as u8,
         /// 'right'
-        const ALIGN_BASELINE =        structs::NS_STYLE_ALIGN_BASELINE as u8,
+        const ALIGN_RIGHT =           structs::NS_STYLE_ALIGN_RIGHT as u8,
         /// 'baseline'
+        const ALIGN_BASELINE =        structs::NS_STYLE_ALIGN_BASELINE as u8,
+        /// 'last-baseline'
         const ALIGN_LAST_BASELINE =   structs::NS_STYLE_ALIGN_LAST_BASELINE as u8,
         /// 'stretch'
         const ALIGN_STRETCH =         structs::NS_STYLE_ALIGN_STRETCH as u8,
@@ -79,9 +79,9 @@ impl ToCss for AlignFlags {
             ALIGN_FLEX_END => "flex-end",
             ALIGN_CENTER => "center",
             ALIGN_LEFT => "left",
-            ALIGN_RIGHT => "left",
-            ALIGN_BASELINE => "right",
-            ALIGN_LAST_BASELINE => "baseline",
+            ALIGN_RIGHT => "right",
+            ALIGN_BASELINE => "baseline",
+            ALIGN_LAST_BASELINE => "last baseline",
             ALIGN_STRETCH => "stretch",
             ALIGN_SELF_START => "self-start",
             ALIGN_SELF_END => "self-end",
@@ -138,10 +138,6 @@ impl AlignJustifyContent {
         AlignJustifyContent(flags.bits() as u16 | ((fallback.bits() as u16) << ALIGN_ALL_SHIFT))
     }
 
-    /// The combined 16-bit flags, for copying into a Gecko style struct.
-    #[inline]
-    pub fn bits(self) -> u16 { self.0 }
-
     /// The primary alignment
     #[inline]
     pub fn primary(self) -> AlignFlags {
@@ -154,6 +150,12 @@ impl AlignJustifyContent {
     pub fn fallback(self) -> AlignFlags {
         AlignFlags::from_bits((self.0 >> ALIGN_ALL_SHIFT) as u8)
             .expect("AlignJustifyContent must contain valid flags")
+    }
+
+    /// Whether this value has extra flags.
+    #[inline]
+    pub fn has_extra_flags(self) -> bool {
+        self.primary().intersects(ALIGN_FLAG_BITS) || self.fallback().intersects(ALIGN_FLAG_BITS)
     }
 }
 
@@ -176,7 +178,7 @@ no_viewport_percentage!(AlignJustifyContent);
 impl Parse for AlignJustifyContent {
     // normal | <baseline-position> |
     // [ <content-distribution> || [ <overflow-position>? && <content-position> ] ]
-    fn parse(_: &ParserContext, input: &mut Parser) -> Result<Self, ()> {
+    fn parse<'i, 't>(_: &ParserContext, input: &mut Parser<'i, 't>) -> Result<Self, ParseError<'i>> {
         // normal | <baseline-position>
         if let Ok(value) = input.try(|input| parse_normal_or_baseline(input)) {
             return Ok(AlignJustifyContent::new(value))
@@ -197,14 +199,14 @@ impl Parse for AlignJustifyContent {
             }
             return Ok(AlignJustifyContent::new(fallback))
         }
-        Err(())
+        Err(StyleParseError::UnspecifiedError.into())
     }
 }
 
 /// Value of the `align-self` or `justify-self` property.
 ///
 /// https://drafts.csswg.org/css-align/#self-alignment
-#[derive(Copy, Clone, Debug, Eq, PartialEq)]
+#[derive(Copy, Clone, Debug, Eq, PartialEq, ToCss)]
 pub struct AlignJustifySelf(pub AlignFlags);
 
 impl AlignJustifySelf {
@@ -213,20 +215,20 @@ impl AlignJustifySelf {
     pub fn auto() -> Self {
         AlignJustifySelf(ALIGN_AUTO)
     }
+
+    /// Whether this value has extra flags.
+    #[inline]
+    pub fn has_extra_flags(self) -> bool {
+        self.0.intersects(ALIGN_FLAG_BITS)
+    }
 }
 
 no_viewport_percentage!(AlignJustifySelf);
 
-impl ToCss for AlignJustifySelf {
-    fn to_css<W>(&self, dest: &mut W) -> fmt::Result where W: fmt::Write {
-        self.0.to_css(dest)
-    }
-}
-
 impl Parse for AlignJustifySelf {
     // auto | normal | stretch | <baseline-position> |
     // [ <overflow-position>? && <self-position> ]
-    fn parse(_: &ParserContext, input: &mut Parser) -> Result<Self, ()> {
+    fn parse<'i, 't>(_: &ParserContext, input: &mut Parser<'i, 't>) -> Result<Self, ParseError<'i>> {
         // auto | normal | stretch | <baseline-position>
         if let Ok(value) = input.try(parse_auto_normal_stretch_baseline) {
             return Ok(AlignJustifySelf(value))
@@ -235,14 +237,14 @@ impl Parse for AlignJustifySelf {
         if let Ok(value) = input.try(parse_overflow_self_position) {
             return Ok(AlignJustifySelf(value))
         }
-        Err(())
+        Err(StyleParseError::UnspecifiedError.into())
     }
 }
 
 /// Value of the `align-items` property
 ///
 /// https://drafts.csswg.org/css-align/#self-alignment
-#[derive(Copy, Clone, Debug, Eq, PartialEq)]
+#[derive(Copy, Clone, Debug, Eq, PartialEq, ToCss)]
 pub struct AlignItems(pub AlignFlags);
 
 impl AlignItems {
@@ -251,20 +253,20 @@ impl AlignItems {
     pub fn normal() -> Self {
         AlignItems(ALIGN_NORMAL)
     }
+
+    /// Whether this value has extra flags.
+    #[inline]
+    pub fn has_extra_flags(self) -> bool {
+        self.0.intersects(ALIGN_FLAG_BITS)
+    }
 }
 
 no_viewport_percentage!(AlignItems);
 
-impl ToCss for AlignItems {
-    fn to_css<W>(&self, dest: &mut W) -> fmt::Result where W: fmt::Write {
-        self.0.to_css(dest)
-    }
-}
-
 impl Parse for AlignItems {
     // normal | stretch | <baseline-position> |
     // [ <overflow-position>? && <self-position> ]
-    fn parse(_: &ParserContext, input: &mut Parser) -> Result<Self, ()> {
+    fn parse<'i, 't>(_: &ParserContext, input: &mut Parser<'i, 't>) -> Result<Self, ParseError<'i>> {
         // normal | stretch | <baseline-position>
         if let Ok(value) = input.try(parse_normal_stretch_baseline) {
             return Ok(AlignItems(value))
@@ -273,14 +275,14 @@ impl Parse for AlignItems {
         if let Ok(value) = input.try(parse_overflow_self_position) {
             return Ok(AlignItems(value))
         }
-        Err(())
+        Err(StyleParseError::UnspecifiedError.into())
     }
 }
 
 /// Value of the `justify-items` property
 ///
 /// https://drafts.csswg.org/css-align/#justify-items-property
-#[derive(Copy, Clone, Debug, Eq, PartialEq)]
+#[derive(Copy, Clone, Debug, Eq, PartialEq, ToCss)]
 pub struct JustifyItems(pub AlignFlags);
 
 impl JustifyItems {
@@ -289,104 +291,133 @@ impl JustifyItems {
     pub fn auto() -> Self {
         JustifyItems(ALIGN_AUTO)
     }
+
+    /// Whether this value has extra flags.
+    #[inline]
+    pub fn has_extra_flags(self) -> bool {
+        self.0.intersects(ALIGN_FLAG_BITS)
+    }
 }
 
 no_viewport_percentage!(JustifyItems);
-
-impl ToCss for JustifyItems {
-    fn to_css<W>(&self, dest: &mut W) -> fmt::Result where W: fmt::Write {
-        self.0.to_css(dest)
-    }
-}
 
 impl Parse for JustifyItems {
     // auto | normal | stretch | <baseline-position> |
     // [ <overflow-position>? && <self-position> ]
     // [ legacy && [ left | right | center ] ]
-    fn parse(_: &ParserContext, input: &mut Parser) -> Result<Self, ()> {
+    fn parse<'i, 't>(_: &ParserContext, input: &mut Parser<'i, 't>) -> Result<Self, ParseError<'i>> {
         // auto | normal | stretch | <baseline-position>
         if let Ok(value) = input.try(parse_auto_normal_stretch_baseline) {
-            return Ok(JustifyItems(value))
-        }
-        // [ <overflow-position>? && <self-position> ]
-        if let Ok(value) = input.try(parse_overflow_self_position) {
             return Ok(JustifyItems(value))
         }
         // [ legacy && [ left | right | center ] ]
         if let Ok(value) = input.try(parse_legacy) {
             return Ok(JustifyItems(value))
         }
-        Err(())
+        // [ <overflow-position>? && <self-position> ]
+        if let Ok(value) = parse_overflow_self_position(input) {
+            return Ok(JustifyItems(value))
+        }
+        Err(StyleParseError::UnspecifiedError.into())
+    }
+}
+
+#[cfg(feature = "gecko")]
+impl From<u16> for AlignJustifyContent {
+    fn from(bits: u16) -> AlignJustifyContent {
+        AlignJustifyContent(bits)
+    }
+}
+
+#[cfg(feature = "gecko")]
+impl From<AlignJustifyContent> for u16 {
+    fn from(v: AlignJustifyContent) -> u16 {
+        v.0
     }
 }
 
 // auto | normal | stretch | <baseline-position>
-fn parse_auto_normal_stretch_baseline(input: &mut Parser) -> Result<AlignFlags, ()> {
-    let ident = input.expect_ident()?;
-    match_ignore_ascii_case! { &ident,
+fn parse_auto_normal_stretch_baseline<'i, 't>(input: &mut Parser<'i, 't>)
+                                              -> Result<AlignFlags, ParseError<'i>> {
+    if let Ok(baseline) = input.try(parse_baseline) {
+        return Ok(baseline);
+    }
+
+    try_match_ident_ignore_ascii_case! { input.expect_ident()?,
         "auto" => Ok(ALIGN_AUTO),
         "normal" => Ok(ALIGN_NORMAL),
         "stretch" => Ok(ALIGN_STRETCH),
-        "baseline" => Ok(ALIGN_BASELINE),
-        _ => Err(())
     }
 }
 
 // normal | stretch | <baseline-position>
-fn parse_normal_stretch_baseline(input: &mut Parser) -> Result<AlignFlags, ()> {
-    let ident = input.expect_ident()?;
-    match_ignore_ascii_case! { &ident,
+fn parse_normal_stretch_baseline<'i, 't>(input: &mut Parser<'i, 't>) -> Result<AlignFlags, ParseError<'i>> {
+    if let Ok(baseline) = input.try(parse_baseline) {
+        return Ok(baseline);
+    }
+
+    try_match_ident_ignore_ascii_case! { input.expect_ident()?,
         "normal" => Ok(ALIGN_NORMAL),
         "stretch" => Ok(ALIGN_STRETCH),
-        "baseline" => Ok(ALIGN_BASELINE),
-        _ => Err(())
     }
 }
 
 // normal | <baseline-position>
-fn parse_normal_or_baseline(input: &mut Parser) -> Result<AlignFlags, ()> {
-    let ident = input.expect_ident()?;
-    match_ignore_ascii_case! { &ident,
-        "normal" => Ok(ALIGN_NORMAL),
+fn parse_normal_or_baseline<'i, 't>(input: &mut Parser<'i, 't>) -> Result<AlignFlags, ParseError<'i>> {
+    if let Ok(baseline) = input.try(parse_baseline) {
+        return Ok(baseline);
+    }
+
+    input.expect_ident_matching("normal")?;
+    Ok(ALIGN_NORMAL)
+}
+
+// <baseline-position>
+fn parse_baseline<'i, 't>(input: &mut Parser<'i, 't>) -> Result<AlignFlags, ParseError<'i>> {
+    try_match_ident_ignore_ascii_case! { input.expect_ident()?,
         "baseline" => Ok(ALIGN_BASELINE),
-        _ => Err(())
+        "first" => {
+            input.expect_ident_matching("baseline")?;
+            Ok(ALIGN_BASELINE)
+        }
+        "last" => {
+            input.expect_ident_matching("baseline")?;
+            Ok(ALIGN_LAST_BASELINE)
+        }
     }
 }
 
 // <content-distribution>
-fn parse_content_distribution(input: &mut Parser) -> Result<AlignFlags, ()> {
-    let ident = input.expect_ident()?;
-    match_ignore_ascii_case! { &ident,
-      "stretch" => Ok(ALIGN_STRETCH),
-      "space_between" => Ok(ALIGN_SPACE_BETWEEN),
-      "space_around" => Ok(ALIGN_SPACE_AROUND),
-      "space_evenly" => Ok(ALIGN_SPACE_EVENLY),
-      _ => Err(())
+fn parse_content_distribution<'i, 't>(input: &mut Parser<'i, 't>) -> Result<AlignFlags, ParseError<'i>> {
+    try_match_ident_ignore_ascii_case! { input.expect_ident()?,
+        "stretch" => Ok(ALIGN_STRETCH),
+        "space-between" => Ok(ALIGN_SPACE_BETWEEN),
+        "space-around" => Ok(ALIGN_SPACE_AROUND),
+        "space-evenly" => Ok(ALIGN_SPACE_EVENLY),
     }
 }
 
 // [ <overflow-position>? && <content-position> ]
-fn parse_overflow_content_position(input: &mut Parser) -> Result<AlignFlags, ()> {
+fn parse_overflow_content_position<'i, 't>(input: &mut Parser<'i, 't>) -> Result<AlignFlags, ParseError<'i>> {
     // <content-position> followed by optional <overflow-position>
-    if let Ok(mut content) = input.try(|input| parse_content_position(input)) {
-        if let Ok(overflow) = input.try(|input| parse_overflow_position(input)) {
+    if let Ok(mut content) = input.try(parse_content_position) {
+        if let Ok(overflow) = input.try(parse_overflow_position) {
             content |= overflow;
         }
         return Ok(content)
     }
     // <overflow-position> followed by required <content-position>
-    if let Ok(overflow) = input.try(|input| parse_overflow_position(input)) {
-        if let Ok(content) = input.try(|input| parse_content_position(input)) {
+    if let Ok(overflow) = parse_overflow_position(input) {
+        if let Ok(content) = parse_content_position(input) {
             return Ok(overflow | content)
         }
     }
-    return Err(())
+    return Err(StyleParseError::UnspecifiedError.into())
 }
 
 // <content-position>
-fn parse_content_position(input: &mut Parser) -> Result<AlignFlags, ()> {
-    let ident = input.expect_ident()?;
-    match_ignore_ascii_case! { &ident,
+fn parse_content_position<'i, 't>(input: &mut Parser<'i, 't>) -> Result<AlignFlags, ParseError<'i>> {
+    try_match_ident_ignore_ascii_case! { input.expect_ident()?,
         "start" => Ok(ALIGN_START),
         "end" => Ok(ALIGN_END),
         "flex-start" => Ok(ALIGN_FLEX_START),
@@ -394,42 +425,38 @@ fn parse_content_position(input: &mut Parser) -> Result<AlignFlags, ()> {
         "center" => Ok(ALIGN_CENTER),
         "left" => Ok(ALIGN_LEFT),
         "right" => Ok(ALIGN_RIGHT),
-        _ => Err(())
     }
 }
 
 // <overflow-position>
-fn parse_overflow_position(input: &mut Parser) -> Result<AlignFlags, ()> {
-    let ident = input.expect_ident()?;
-    match_ignore_ascii_case! { &ident,
+fn parse_overflow_position<'i, 't>(input: &mut Parser<'i, 't>) -> Result<AlignFlags, ParseError<'i>> {
+    try_match_ident_ignore_ascii_case! { input.expect_ident()?,
         "safe" => Ok(ALIGN_SAFE),
         "unsafe" => Ok(ALIGN_UNSAFE),
-        _ => Err(())
     }
 }
 
 // [ <overflow-position>? && <self-position> ]
-fn parse_overflow_self_position(input: &mut Parser) -> Result<AlignFlags, ()> {
+fn parse_overflow_self_position<'i, 't>(input: &mut Parser<'i, 't>) -> Result<AlignFlags, ParseError<'i>> {
     // <self-position> followed by optional <overflow-position>
-    if let Ok(mut self_position) = input.try(|input| parse_self_position(input)) {
-        if let Ok(overflow) = input.try(|input| parse_overflow_position(input)) {
+    if let Ok(mut self_position) = input.try(parse_self_position) {
+        if let Ok(overflow) = input.try(parse_overflow_position) {
             self_position |= overflow;
         }
         return Ok(self_position)
     }
     // <overflow-position> followed by required <self-position>
-    if let Ok(overflow) = input.try(|input| parse_overflow_position(input)) {
-        if let Ok(self_position) = input.try(|input| parse_self_position(input)) {
+    if let Ok(overflow) = parse_overflow_position(input) {
+        if let Ok(self_position) = parse_self_position(input) {
             return Ok(overflow | self_position)
         }
     }
-    return Err(())
+    return Err(StyleParseError::UnspecifiedError.into())
 }
 
 // <self-position>
-fn parse_self_position(input: &mut Parser) -> Result<AlignFlags, ()> {
-    let ident = input.expect_ident()?;
-    match_ignore_ascii_case! { &ident,
+fn parse_self_position<'i, 't>(input: &mut Parser<'i, 't>) -> Result<AlignFlags, ParseError<'i>> {
+    try_match_ident_ignore_ascii_case! { input.expect_ident()?,
         "start" => Ok(ALIGN_START),
         "end" => Ok(ALIGN_END),
         "flex-start" => Ok(ALIGN_FLEX_START),
@@ -439,29 +466,28 @@ fn parse_self_position(input: &mut Parser) -> Result<AlignFlags, ()> {
         "right" => Ok(ALIGN_RIGHT),
         "self-start" => Ok(ALIGN_SELF_START),
         "self-end" => Ok(ALIGN_SELF_END),
-        _ => Err(())
     }
 }
 
 // [ legacy && [ left | right | center ] ]
-fn parse_legacy(input: &mut Parser) -> Result<AlignFlags, ()> {
+fn parse_legacy<'i, 't>(input: &mut Parser<'i, 't>) -> Result<AlignFlags, ParseError<'i>> {
     let a = input.expect_ident()?;
     let b = input.expect_ident()?;
     if a.eq_ignore_ascii_case("legacy") {
-        match_ignore_ascii_case! { &b,
+        (match_ignore_ascii_case! { &b,
             "left" => Ok(ALIGN_LEGACY | ALIGN_LEFT),
             "right" => Ok(ALIGN_LEGACY | ALIGN_RIGHT),
             "center" => Ok(ALIGN_LEGACY | ALIGN_CENTER),
             _ => Err(())
-        }
+        }).map_err(|()| SelectorParseError::UnexpectedIdent(b).into())
     } else if b.eq_ignore_ascii_case("legacy") {
-        match_ignore_ascii_case! { &a,
+        (match_ignore_ascii_case! { &a,
             "left" => Ok(ALIGN_LEGACY | ALIGN_LEFT),
             "right" => Ok(ALIGN_LEGACY | ALIGN_RIGHT),
             "center" => Ok(ALIGN_LEGACY | ALIGN_CENTER),
             _ => Err(())
-        }
+        }).map_err(|()| SelectorParseError::UnexpectedIdent(a).into())
     } else {
-        Err(())
+        Err(StyleParseError::UnspecifiedError.into())
     }
 }

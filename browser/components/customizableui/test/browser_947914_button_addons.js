@@ -7,10 +7,11 @@
 var initialLocation = gBrowser.currentURI.spec;
 var newTab = null;
 
-add_task(function*() {
+add_task(async function() {
+  await SpecialPowers.pushPrefEnv({set: [["browser.photon.structure.enabled", false]]});
   info("Check addons button existence and functionality");
 
-  yield PanelUI.show();
+  await PanelUI.show();
   info("Menu panel was opened");
 
   let addonsButton = document.getElementById("add-ons-button");
@@ -18,7 +19,7 @@ add_task(function*() {
   addonsButton.click();
 
   newTab = gBrowser.selectedTab;
-  yield waitForCondition(() => gBrowser.currentURI &&
+  await waitForCondition(() => gBrowser.currentURI &&
                                gBrowser.currentURI.spec == "about:addons");
 
   let addonsPage = gBrowser.selectedBrowser.contentWindow.document.
@@ -26,8 +27,8 @@ add_task(function*() {
   ok(addonsPage, "Add-ons page was opened");
 });
 
-add_task(function* asyncCleanup() {
-  gBrowser.addTab(initialLocation);
+add_task(async function asyncCleanup() {
+  BrowserTestUtils.addTab(gBrowser, initialLocation);
   gBrowser.removeTab(gBrowser.selectedTab);
   info("Tabs were restored");
 });

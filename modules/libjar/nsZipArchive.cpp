@@ -10,13 +10,11 @@
  * or pointers to it across thread boundaries.
  */
 
-// This must be the first include in the file in order for the
-// PL_ARENA_CONST_ALIGN_MASK macro to be effective.
-#define PL_ARENA_CONST_ALIGN_MASK  (sizeof(void*)-1)
-#include "plarena.h"
-
 #define READTYPE  int32_t
 #include "zlib.h"
+#ifdef MOZ_JAR_BROTLI
+#include "decode.h" // brotli
+#endif
 #include "nsISupportsUtils.h"
 #include "prio.h"
 #include "plstr.h"
@@ -287,7 +285,7 @@ nsresult nsZipHandle::Init(const uint8_t* aData, uint32_t aLen,
 //    pubKeyLength  : publicKey     - Contents of the author's public key.
 //    sigLength     : signature     - Signature of the ZIP content.
 //                                    Signature is created using the RSA
-//                                    algorighm with the SHA-1 hash function.
+//                                    algorithm with the SHA-1 hash function.
 nsresult nsZipHandle::findDataStart()
 {
   // In the CRX header, integers are 32 bits. Our pointer to the file is of
@@ -355,9 +353,6 @@ nsZipHandle::~nsZipHandle()
 nsresult nsZipArchive::OpenArchive(nsZipHandle *aZipHandle, PRFileDesc *aFd)
 {
   mFd = aZipHandle;
-
-  // Initialize our arena
-  PL_INIT_ARENA_POOL(&mArena, "ZipArena", ZIP_ARENABLOCKSIZE);
 
   //-- get table of contents for archive
   nsresult rv = BuildFileList(aFd);
@@ -427,7 +422,7 @@ nsresult nsZipArchive::Test(const char *aEntryName)
 nsresult nsZipArchive::CloseArchive()
 {
   if (mFd) {
-    PL_FinishArenaPool(&mArena);
+    mArena.Clear();
     mFd = nullptr;
   }
 
@@ -570,7 +565,7 @@ nsZipArchive::FindInit(const char * aPattern, nsZipFind **aFind)
 
       default:
         // undocumented return value from RegExpValid!
-        PR_ASSERT(false);
+        MOZ_ASSERT(false);
         return NS_ERROR_ILLEGAL_VALUE;
     }
 
@@ -647,10 +642,13 @@ static nsresult ResolveSymlink(const char *path)
   int32_t length = PR_Read(fIn, (void*)buf, PATH_MAX);
   PR_Close(fIn);
 
-  if ( (length <= 0)
-    || ((buf[length] = 0, PR_Delete(path)) != 0)
-    || (symlink(buf, path) != 0))
-  {
+  if (length <= 0) {
+    return NS_ERROR_FILE_DISK_FULL;
+  }
+
+  buf[length] = '\0';
+
+  if (PR_Delete(path) != 0 || symlink(buf, path) != 0) {
      return NS_ERROR_FILE_DISK_FULL;
   }
   return NS_OK;
@@ -667,9 +665,7 @@ static nsresult ResolveSymlink(const char *path)
 nsZipItem* nsZipArchive::CreateZipItem()
 {
   // Arena allocate the nsZipItem
-  void *mem;
-  PL_ARENA_ALLOCATE(mem, &mArena, sizeof(nsZipItem));
-  return (nsZipItem*)mem;
+  return (nsZipItem*)mArena.Allocate(sizeof(nsZipItem));
 }
 
 //---------------------------------------------
@@ -1178,6 +1174,9 @@ nsZipCursor::nsZipCursor(nsZipItem *item, nsZipArchive *aZip, uint8_t* aBuf,
   : mItem(item)
   , mBuf(aBuf)
   , mBufSize(aBufSize)
+#ifdef MOZ_JAR_BROTLI
+  , mBrotliState(nullptr)
+#endif
   , mCRC(0)
   , mDoCRC(doCRC)
 {
@@ -1192,6 +1191,12 @@ nsZipCursor::nsZipCursor(nsZipItem *item, nsZipArchive *aZip, uint8_t* aBuf,
   
   mZs.avail_in = item->Size();
   mZs.next_in = (Bytef*)aZip->GetData(item);
+
+#ifdef MOZ_JAR_BROTLI
+  if (mItem->Compression() == MOZ_JAR_BROTLI) {
+    mBrotliState = BrotliCreateState(nullptr, nullptr, nullptr);
+  }
+#endif
   
   if (doCRC)
     mCRC = crc32(0L, Z_NULL, 0);
@@ -1202,6 +1207,11 @@ nsZipCursor::~nsZipCursor()
   if (mItem->Compression() == DEFLATED) {
     inflateEnd(&mZs);
   }
+#ifdef MOZ_JAR_BROTLI
+  if (mItem->Compression() == MOZ_JAR_BROTLI) {
+    BrotliDestroyState(mBrotliState);
+  }
+#endif
 }
 
 uint8_t* nsZipCursor::ReadOrCopy(uint32_t *aBytesRead, bool aCopy) {
@@ -1238,6 +1248,30 @@ MOZ_WIN_MEM_TRY_BEGIN
     *aBytesRead = mZs.next_out - buf;
     verifyCRC = (zerr == Z_STREAM_END);
     break;
+#ifdef MOZ_JAR_BROTLI
+  case MOZ_JAR_BROTLI: {
+    buf = mBuf;
+    mZs.next_out = buf;
+    /* The brotli library wants size_t, but z_stream only contains
+     * unsigned int for avail_*. So use temporary stack values. */
+    size_t avail_out = mBufSize;
+    size_t avail_in = mZs.avail_in;
+    BrotliResult result = BrotliDecompressStream(
+      &avail_in, const_cast<const unsigned char**>(&mZs.next_in),
+      &avail_out, &mZs.next_out, nullptr, mBrotliState);
+    /* We don't need to update avail_out, it's not used outside this
+     * function. */
+    mZs.avail_in = avail_in;
+
+    if (result == BROTLI_RESULT_ERROR) {
+      return nullptr;
+    }
+
+    *aBytesRead = mZs.next_out - buf;
+    verifyCRC = (result == BROTLI_RESULT_SUCCESS);
+    break;
+  }
+#endif
   default:
     return nullptr;
   }
@@ -1264,7 +1298,11 @@ nsZipItemPtr_base::nsZipItemPtr_base(nsZipArchive *aZip,
     return;
 
   uint32_t size = 0;
-  if (item->Compression() == DEFLATED) {
+  bool compressed = (item->Compression() == DEFLATED);
+#ifdef MOZ_JAR_BROTLI
+  compressed |= (item->Compression() == MOZ_JAR_BROTLI);
+#endif
+  if (compressed) {
     size = item->RealSize();
     mAutoBuf = MakeUniqueFallible<uint8_t[]>(size);
     if (!mAutoBuf) {

@@ -27,6 +27,7 @@
 #include "nsObjCExceptions.h"
 #include "nsProxyRelease.h"
 #include "nsContentSecurityManager.h"
+#include "nsNetUtil.h"
 
 #include <Cocoa/Cocoa.h>
 
@@ -236,7 +237,10 @@ nsIconChannel::AsyncOpen(nsIStreamListener* aListener,
   }
 
   // Init our stream pump
-  rv = mPump->Init(inStream, int64_t(-1), int64_t(-1), 0, 0, false);
+  nsCOMPtr<nsIEventTarget> target =
+      nsContentUtils::GetEventTargetByLoadInfo(mLoadInfo,
+                                               mozilla::TaskCategory::Other);
+  rv = mPump->Init(inStream, int64_t(-1), int64_t(-1), 0, 0, false, target);
   if (NS_FAILED(rv)) {
       mCallbacks = nullptr;
       return rv;
@@ -427,6 +431,12 @@ NS_IMETHODIMP
 nsIconChannel::SetLoadFlags(uint32_t aLoadAttributes)
 {
   return mPump->SetLoadFlags(aLoadAttributes);
+}
+
+NS_IMETHODIMP
+nsIconChannel::GetIsDocument(bool *aIsDocument)
+{
+  return NS_GetIsDocumentChannel(this, aIsDocument);
 }
 
 NS_IMETHODIMP

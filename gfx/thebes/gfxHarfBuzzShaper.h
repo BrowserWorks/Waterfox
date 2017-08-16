@@ -27,13 +27,15 @@ public:
     };
 
     bool Initialize();
-    virtual bool ShapeText(DrawTarget      *aDrawTarget,
-                           const char16_t *aText,
-                           uint32_t         aOffset,
-                           uint32_t         aLength,
-                           Script           aScript,
-                           bool             aVertical,
-                           gfxShapedText   *aShapedText);
+
+    bool ShapeText(DrawTarget      *aDrawTarget,
+                   const char16_t *aText,
+                   uint32_t         aOffset,
+                   uint32_t         aLength,
+                   Script           aScript,
+                   bool             aVertical,
+                   RoundingFlags    aRounding,
+                   gfxShapedText   *aShapedText) override;
 
     // get a given font table in harfbuzz blob form
     hb_blob_t * GetFontTable(hb_tag_t aTag) const;
@@ -94,18 +96,16 @@ public:
     }
 
 protected:
-    nsresult SetGlyphsFromRun(DrawTarget     *aDrawTarget,
-                              gfxShapedText  *aShapedText,
+    nsresult SetGlyphsFromRun(gfxShapedText  *aShapedText,
                               uint32_t        aOffset,
                               uint32_t        aLength,
                               const char16_t *aText,
-                              hb_buffer_t    *aBuffer,
-                              bool            aVertical);
+                              bool            aVertical,
+                              RoundingFlags   aRounding);
 
     // retrieve glyph positions, applying advance adjustments and attachments
     // returns results in appUnits
     nscoord GetGlyphPositions(gfxContext *aContext,
-                              hb_buffer_t *aBuffer,
                               nsTArray<nsPoint>& aPositions,
                               uint32_t aAppUnitsPerDevUnit);
 
@@ -129,6 +129,9 @@ protected:
 
     // size-specific font object, owned by the gfxHarfBuzzShaper
     hb_font_t         *mHBFont;
+
+    // harfbuzz buffer for the shaping process
+    hb_buffer_t       *mBuffer;
 
     FontCallbackData   mCallbackData;
 

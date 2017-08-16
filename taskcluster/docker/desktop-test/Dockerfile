@@ -4,8 +4,8 @@ MAINTAINER    Jonas Finnemann Jensen <jopsen@gmail.com>
 RUN useradd -d /home/worker -s /bin/bash -m worker
 WORKDIR /home/worker
 
-# %include taskcluster/docker/recipes/tooltool.py
-ADD topsrcdir/taskcluster/docker/recipes/tooltool.py /setup/tooltool.py
+# %include python/mozbuild/mozbuild/action/tooltool.py
+ADD topsrcdir/python/mozbuild/mozbuild/action/tooltool.py /setup/tooltool.py
 
 # %include testing/mozharness/external_tools/robustcheckout.py
 ADD topsrcdir/testing/mozharness/external_tools/robustcheckout.py /usr/local/mercurial/robustcheckout.py
@@ -28,8 +28,8 @@ RUN bash /setup/system-setup.sh
 # %include taskcluster/docker/recipes/run-task
 ADD topsrcdir/taskcluster/docker/recipes/run-task /home/worker/bin/run-task
 
-# %include taskcluster/scripts/tester/test-ubuntu.sh
-ADD topsrcdir/taskcluster/scripts/tester/test-ubuntu.sh /home/worker/bin/test-linux.sh
+# %include taskcluster/scripts/tester/test-linux.sh
+ADD topsrcdir/taskcluster/scripts/tester/test-linux.sh /home/worker/bin/test-linux.sh
 
 # This will create a host mounted filesystem when the cache is stripped
 # on Try. This cancels out some of the performance losses of aufs. See

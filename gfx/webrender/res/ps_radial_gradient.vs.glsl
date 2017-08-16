@@ -11,24 +11,35 @@ void main(void) {
                                  prim.local_clip_rect,
                                  prim.z,
                                  prim.layer,
-                                 prim.task);
+                                 prim.task,
+                                 prim.local_rect.p0);
 
-    vPos = vi.local_pos;
+    vPos = vi.local_pos - prim.local_rect.p0;
 
-    // Snap the start/end points to device pixel units.
-    // I'm not sure this is entirely correct, but the
-    // old render path does this, and it is needed to
-    // make the angle gradient ref tests pass. It might
-    // be better to fix this higher up in DL construction
-    // and not snap here?
-    vStartCenter = floor(0.5 + gradient.start_end_center.xy * uDevicePixelRatio) / uDevicePixelRatio;
-    vEndCenter = floor(0.5 + gradient.start_end_center.zw * uDevicePixelRatio) / uDevicePixelRatio;
-    vStartRadius = gradient.start_end_radius_extend_mode.x;
-    vEndRadius = gradient.start_end_radius_extend_mode.y;
+    vStartCenter = gradient.start_end_center.xy;
+    vEndCenter = gradient.start_end_center.zw;
+
+    vStartRadius = gradient.start_end_radius_ratio_xy_extend_mode.x;
+    vEndRadius = gradient.start_end_radius_ratio_xy_extend_mode.y;
+
+    vTileSize = gradient.tile_size_repeat.xy;
+    vTileRepeat = gradient.tile_size_repeat.zw;
+
+    // Transform all coordinates by the y scale so the
+    // fragment shader can work with circles
+    float ratio_xy = gradient.start_end_radius_ratio_xy_extend_mode.z;
+    vPos.y *= ratio_xy;
+    vStartCenter.y *= ratio_xy;
+    vEndCenter.y *= ratio_xy;
+    vTileSize.y *= ratio_xy;
+    vTileRepeat.y *= ratio_xy;
 
     // V coordinate of gradient row in lookup texture.
-    vGradientIndex = float(prim.sub_index) + 0.5;
+    vGradientIndex = float(prim.user_data0);
+
+    // The texture size of the lookup texture
+    vGradientTextureSize = vec2(textureSize(sGradients, 0));
 
     // Whether to repeat the gradient instead of clamping.
-    vGradientRepeat = float(int(gradient.start_end_radius_extend_mode.z) == EXTEND_MODE_REPEAT);
+    vGradientRepeat = float(int(gradient.start_end_radius_ratio_xy_extend_mode.w) == EXTEND_MODE_REPEAT);
 }

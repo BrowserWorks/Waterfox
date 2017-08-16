@@ -69,11 +69,9 @@ public:
 private:
   bool ValidateVideoInfo();
 
-  bool InitializeDXVA(bool aForceD3D9);
+  bool InitializeDXVA();
 
-  bool InitInternal(bool aForceD3D9);
-
-  HRESULT ConfigureVideoFrameGeometry();
+  bool InitInternal();
 
   HRESULT CreateBasicVideoFrame(IMFSample* aSample,
                                 int64_t aStreamOffset,
@@ -88,17 +86,16 @@ private:
   bool CanUseDXVA(IMFMediaType* aType);
 
   // Video frame geometry.
-  VideoInfo mVideoInfo;
+  const VideoInfo mVideoInfo;
+  const nsIntSize mImageSize;
   uint32_t mVideoStride;
-  nsIntSize mImageSize;
 
   RefPtr<layers::ImageContainer> mImageContainer;
   RefPtr<layers::KnowsCompositor> mKnowsCompositor;
   nsAutoPtr<DXVA2Manager> mDXVA2Manager;
 
-  RefPtr<IMFSample> mLastInput;
-  float mLastDuration;
-  int64_t mLastTime = 0;
+  media::TimeUnit mLastDuration;
+  media::TimeUnit mLastTime;
   bool mDraining = false;
   int64_t mSamplesCount = 0;
 

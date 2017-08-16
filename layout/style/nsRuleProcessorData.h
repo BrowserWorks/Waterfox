@@ -226,10 +226,15 @@ struct MOZ_STACK_CLASS TreeMatchContext {
     return mCurrentStyleScope;
   }
 
-  /* Helper class for maintaining the ancestor state */
+  /*
+   * Helper class for maintaining the ancestor state.
+   *
+   * This class does nothing if aTreeMatchContext is null, which is the case for
+   * the Servo style system.
+   */
   class MOZ_RAII AutoAncestorPusher {
   public:
-    explicit AutoAncestorPusher(TreeMatchContext& aTreeMatchContext
+    explicit AutoAncestorPusher(TreeMatchContext* aTreeMatchContext
                                 MOZ_GUARD_OBJECT_NOTIFIER_PARAM)
       : mPushedAncestor(false)
       , mPushedStyleScope(false)
@@ -240,32 +245,52 @@ struct MOZ_STACK_CLASS TreeMatchContext {
     }
 
     void PushAncestorAndStyleScope(mozilla::dom::Element* aElement) {
+      if (!mTreeMatchContext) {
+        MOZ_ASSERT(!aElement || aElement->IsStyledByServo());
+        return;
+      }
+
       MOZ_ASSERT(!mElement);
       if (aElement) {
         mElement = aElement;
         mPushedAncestor = true;
         mPushedStyleScope = true;
-        mTreeMatchContext.mAncestorFilter.PushAncestor(aElement);
-        mTreeMatchContext.PushStyleScope(aElement);
+        mTreeMatchContext->mAncestorFilter.PushAncestor(aElement);
+        mTreeMatchContext->PushStyleScope(aElement);
       }
     }
 
     void PushAncestorAndStyleScope(nsIContent* aContent) {
+      if (!mTreeMatchContext) {
+        MOZ_ASSERT(!aContent || aContent->IsStyledByServo());
+        return;
+      }
+
       if (aContent && aContent->IsElement()) {
         PushAncestorAndStyleScope(aContent->AsElement());
       }
     }
 
     void PushStyleScope(mozilla::dom::Element* aElement) {
+      if (!mTreeMatchContext) {
+        MOZ_ASSERT(!aElement || aElement->IsStyledByServo());
+        return;
+      }
+
       MOZ_ASSERT(!mElement);
       if (aElement) {
         mElement = aElement;
         mPushedStyleScope = true;
-        mTreeMatchContext.PushStyleScope(aElement);
+        mTreeMatchContext->PushStyleScope(aElement);
       }
     }
 
     void PushStyleScope(nsIContent* aContent) {
+      if (!mTreeMatchContext) {
+        MOZ_ASSERT(!aContent || aContent->IsStyledByServo());
+        return;
+      }
+
       if (aContent && aContent->IsElement()) {
         PushStyleScope(aContent->AsElement());
       }
@@ -273,17 +298,17 @@ struct MOZ_STACK_CLASS TreeMatchContext {
 
     ~AutoAncestorPusher() {
       if (mPushedAncestor) {
-        mTreeMatchContext.mAncestorFilter.PopAncestor();
+        mTreeMatchContext->mAncestorFilter.PopAncestor();
       }
       if (mPushedStyleScope) {
-        mTreeMatchContext.PopStyleScope(mElement);
+        mTreeMatchContext->PopStyleScope(mElement);
       }
     }
 
   private:
     bool mPushedAncestor;
     bool mPushedStyleScope;
-    TreeMatchContext& mTreeMatchContext;
+    TreeMatchContext* mTreeMatchContext;
     mozilla::dom::Element* mElement;
     MOZ_DECL_USE_GUARD_OBJECT_NOTIFIER
   };
@@ -342,10 +367,6 @@ struct MOZ_STACK_CLASS TreeMatchContext {
   // The document we're working with.
   nsIDocument* const mDocument;
 
-  // Root of scoped stylesheet (set and unset by the supplier of the
-  // scoped stylesheet).
-  nsIContent* mScopedRoot;
-
   // Whether our document is HTML (as opposed to XML of some sort,
   // including XHTML).
   // XXX XBL2 issue: Should we be caching this?  What should it be for XBL2?
@@ -374,6 +395,13 @@ struct MOZ_STACK_CLASS TreeMatchContext {
   // for an HTML5 scoped style sheet.
   bool mForScopedStyle;
 
+  // An enum that communicates the consumer's intensions for this
+  // TreeMatchContext in terms of :visited handling.  eNeverMatchVisited means
+  // that this TreeMatchContext's VisitedHandlingType will always be
+  // eRelevantLinkUnvisited (in other words, this value will be passed to the
+  // constructor and ResetForVisitedMatching() will never be called).
+  // eMatchVisitedDefault doesn't communicate any information about the current
+  // or future VisitedHandlingType of this TreeMatchContext.
   enum MatchVisited {
     eNeverMatchVisited,
     eMatchVisitedDefault
@@ -396,7 +424,6 @@ struct MOZ_STACK_CLASS TreeMatchContext {
     , mHaveSpecifiedScope(false)
     , mVisitedHandling(aVisitedHandling)
     , mDocument(aDocument)
-    , mScopedRoot(nullptr)
     , mIsHTMLDocument(aDocument->IsHTMLDocument())
     , mCompatMode(aDocument->GetCompatibilityMode())
     , mUsingPrivateBrowsing(false)
@@ -409,6 +436,9 @@ struct MOZ_STACK_CLASS TreeMatchContext {
       if (loadContext) {
         mUsingPrivateBrowsing = loadContext->UsePrivateBrowsing();
       }
+    } else {
+      MOZ_ASSERT(aVisitedHandling == nsRuleWalker::eRelevantLinkUnvisited,
+                 "You promised you'd never try to match :visited!");
     }
   }
 

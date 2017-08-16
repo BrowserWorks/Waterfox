@@ -63,18 +63,18 @@ fi
 if [ -n "${HG_DEB}" ]; then
 tooltool_fetch <<EOF
 [
-{
+  {
     "size": ${HG_SIZE},
     "digest": "${HG_DIGEST}",
     "algorithm": "sha512",
     "filename": "${HG_FILENAME}"
-},
-{
+  },
+  {
     "size": ${HG_COMMON_SIZE},
     "digest": "${HG_COMMON_DIGEST}",
     "algorithm": "sha512",
     "filename": "${HG_COMMON_FILENAME}"
-}
+  }
 ]
 EOF
 
@@ -82,12 +82,12 @@ EOF
 elif [ -n "${HG_RPM}" ]; then
 tooltool_fetch <<EOF
 [
-{
+  {
     "size": ${HG_SIZE},
     "digest": "${HG_DIGEST}",
     "algorithm": "sha512",
     "filename": "${HG_FILENAME}"
-}
+  }
 ]
 EOF
 
@@ -95,13 +95,13 @@ EOF
 elif [ -n "${PIP_PATH}" ]; then
 tooltool_fetch <<EOF
 [
-{
-"size": 5133417,
-"visibility": "public",
-"digest": "32b59d23d6b911b7a7e9c9c7659457daf2eba771d5170ad5a44a068d7941939e1d68c72c847e488bf26c14392e5d7ee25e5f660e0330250d0685acce40552745",
-"algorithm": "sha512",
-"filename": "mercurial-4.1.2.tar.gz"
-}
+  {
+    "size": 5133417,
+    "visibility": "public",
+    "digest": "32b59d23d6b911b7a7e9c9c7659457daf2eba771d5170ad5a44a068d7941939e1d68c72c847e488bf26c14392e5d7ee25e5f660e0330250d0685acce40552745",
+    "algorithm": "sha512",
+    "filename": "mercurial-4.1.2.tar.gz"
+  }
 ]
 EOF
 

@@ -7,10 +7,11 @@
 
 from __future__ import absolute_import, print_function, unicode_literals
 
-from voluptuous import Schema, Any, Required, All
+from voluptuous import Any, Required, All
 from taskgraph.util.schema import (
     optionally_keyed_by,
     validate_schema,
+    Schema,
 )
 
 
@@ -31,9 +32,6 @@ cron_yml_schema = Schema({
 
             # Treeherder symbol for the cron task
             Required('treeherder-symbol'): basestring,
-
-            # --triggered-by './mach taskgraph decision' argument
-            'triggered-by': basestring,
 
             # --target-tasks-method './mach taskgraph decision' argument
             'target-tasks-method': basestring,

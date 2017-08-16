@@ -7,14 +7,14 @@ function onCertDialogLoaded(subject) {
   subject.acceptDialog();
 }
 
-Services.obs.addObserver(onCertDialogLoaded, "cert-dialog-loaded", false);
+Services.obs.addObserver(onCertDialogLoaded, "cert-dialog-loaded");
 
 registerCleanupFunction(() => {
   Services.obs.removeObserver(onCertDialogLoaded, "cert-dialog-loaded");
 });
 
-function* setup() {
-  yield SpecialPowers.pushPrefEnv({
+async function setup() {
+  await SpecialPowers.pushPrefEnv({
     set: [["security.default_personal_cert", "Ask Every Time"]]
   });
 }

@@ -18,6 +18,7 @@ var helpers = require("../helpers");
 var globals = require("../globals");
 
 const simpleTestFiles = [
+  "ExtensionTestUtils.js",
   "EventUtils.js",
   "MockObjects.js",
   "SimpleTest.js",
@@ -27,13 +28,14 @@ const simpleTestPath = "testing/mochitest/tests/SimpleTest";
 
 function getScriptGlobals() {
   let fileGlobals = [];
-  let root = helpers.getRootDir(module.filename);
+  let root = helpers.rootDir;
   for (let file of simpleTestFiles) {
     let fileName = path.join(root, simpleTestPath, file);
     try {
       fileGlobals = fileGlobals.concat(globals.getGlobalsForFile(fileName));
     } catch (e) {
-      throw new Error(`Could not load globals from file ${fileName}: ${e}`);
+      // The files may not be available in non-m-c repositories.
+      return [];
     }
   }
 
@@ -49,5 +51,7 @@ function mapGlobals(fileGlobals) {
 }
 
 module.exports = {
-  globals: mapGlobals(getScriptGlobals())
+  globals: helpers.isMozillaCentralBased() ?
+    mapGlobals(getScriptGlobals()) :
+    helpers.getSavedEnvironmentItems("simpletest").globals
 };

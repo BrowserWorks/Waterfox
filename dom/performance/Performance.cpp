@@ -7,6 +7,10 @@
 #include "Performance.h"
 
 #include "GeckoProfiler.h"
+#include "nsRFPService.h"
+#ifdef MOZ_GECKO_PROFILER
+#include "ProfilerMarkerPayload.h"
+#endif
 #include "PerformanceEntry.h"
 #include "PerformanceMainThread.h"
 #include "PerformanceMark.h"
@@ -249,7 +253,8 @@ Performance::RoundTime(double aTime) const
   // can do nasty timing attacks with it.  See similar code in the worker
   // Performance implementation.
   const double maxResolutionMs = 0.005;
-  return floor(aTime / maxResolutionMs) * maxResolutionMs;
+  return nsRFPService::ReduceTimePrecisionAsMSecs(
+    floor(aTime / maxResolutionMs) * maxResolutionMs);
 }
 
 
@@ -270,9 +275,13 @@ Performance::Mark(const nsAString& aName, ErrorResult& aRv)
     new PerformanceMark(GetAsISupports(), aName, Now());
   InsertUserEntry(performanceMark);
 
+#ifdef MOZ_GECKO_PROFILER
   if (profiler_is_active()) {
-    PROFILER_MARKER(NS_ConvertUTF16toUTF8(aName).get());
+    PROFILER_MARKER_PAYLOAD("UserTiming",
+                            new UserTimingMarkerPayload(aName,
+                                                        TimeStamp::Now()));
   }
+#endif
 }
 
 void
@@ -354,6 +363,18 @@ Performance::Measure(const nsAString& aName,
   RefPtr<PerformanceMeasure> performanceMeasure =
     new PerformanceMeasure(GetAsISupports(), aName, startTime, endTime);
   InsertUserEntry(performanceMeasure);
+
+#ifdef MOZ_GECKO_PROFILER
+  if (profiler_is_active()) {
+    TimeStamp startTimeStamp = CreationTimeStamp() +
+                               TimeDuration::FromMilliseconds(startTime);
+    TimeStamp endTimeStamp = CreationTimeStamp() +
+                             TimeDuration::FromMilliseconds(endTime);
+    PROFILER_MARKER_PAYLOAD("UserTiming",
+                            new UserTimingMarkerPayload(aName, startTimeStamp,
+                                                        endTimeStamp));
+  }
+#endif
 }
 
 void
@@ -513,23 +534,6 @@ Performance::QueueEntry(PerformanceEntry* aEntry)
   if (!mPendingNotificationObserversTask) {
     RunNotificationObserversTask();
   }
-}
-
-/* static */ bool
-Performance::IsEnabled(JSContext* aCx, JSObject* aGlobal)
-{
-  if (NS_IsMainThread()) {
-    return Preferences::GetBool("dom.enable_user_timing", false);
-  }
-
-  WorkerPrivate* workerPrivate = GetCurrentThreadWorkerPrivate();
-  MOZ_ASSERT(workerPrivate);
-  workerPrivate->AssertIsOnWorkerThread();
-
-  RefPtr<PrefEnabledRunnable> runnable =
-    new PrefEnabledRunnable(workerPrivate,
-                            NS_LITERAL_CSTRING("dom.enable_user_timing"));
-  return runnable->Dispatch() && runnable->IsEnabled();
 }
 
 /* static */ bool

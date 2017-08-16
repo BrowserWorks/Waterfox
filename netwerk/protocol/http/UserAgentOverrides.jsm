@@ -13,16 +13,15 @@ Components.utils.import("resource://gre/modules/XPCOMUtils.jsm");
 Components.utils.import("resource://gre/modules/Services.jsm");
 Components.utils.import("resource://gre/modules/UserAgentUpdates.jsm");
 
-const OVERRIDE_MESSAGE = "Useragent:GetOverride";
 const PREF_OVERRIDES_ENABLED = "general.useragent.site_specific_overrides";
-const DEFAULT_UA = Cc["@mozilla.org/network/protocol;1?name=http"]
-                     .getService(Ci.nsIHttpProtocolHandler)
-                     .userAgent;
 const MAX_OVERRIDE_FOR_HOST_CACHE_SIZE = 250;
 
-XPCOMUtils.defineLazyServiceGetter(this, "ppmm",
-                                  "@mozilla.org/parentprocessmessagemanager;1",
-                                  "nsIMessageListenerManager");  // Might have to make this broadcast?
+// lazy load nsHttpHandler to improve startup performance.
+XPCOMUtils.defineLazyGetter(this, "DEFAULT_UA", function() {
+  return Cc["@mozilla.org/network/protocol;1?name=http"]
+           .getService(Ci.nsIHttpProtocolHandler)
+           .userAgent;
+});
 
 var gPrefBranch;
 var gOverrides = new Map;
@@ -40,29 +39,34 @@ this.UserAgentOverrides = {
       return;
 
     gPrefBranch = Services.prefs.getBranch("general.useragent.override.");
-    gPrefBranch.addObserver("", buildOverrides, false);
+    gPrefBranch.addObserver("", buildOverrides);
 
-    ppmm.addMessageListener(OVERRIDE_MESSAGE, this);
-    Services.prefs.addObserver(PREF_OVERRIDES_ENABLED, buildOverrides, false);
+    Services.prefs.addObserver(PREF_OVERRIDES_ENABLED, buildOverrides);
 
     try {
-      Services.obs.addObserver(HTTP_on_useragent_request, "http-on-useragent-request", false);
+      Services.obs.addObserver(HTTP_on_useragent_request, "http-on-useragent-request");
     } catch (x) {
       // The http-on-useragent-request notification is disallowed in content processes.
     }
 
-    UserAgentUpdates.init(function(overrides) {
-      gOverrideForHostCache.clear();
-      if (overrides) {
-        for (let domain in overrides) {
-          overrides[domain] = getUserAgentFromOverride(overrides[domain]);
+    try {
+      UserAgentUpdates.init(function(overrides) {
+        gOverrideForHostCache.clear();
+        if (overrides) {
+          for (let domain in overrides) {
+            overrides[domain] = getUserAgentFromOverride(overrides[domain]);
+          }
+          overrides.get = function(key) { return this[key]; };
         }
-        overrides.get = function(key) { return this[key]; };
-      }
-      gUpdatedOverrides = overrides;
-    });
+        gUpdatedOverrides = overrides;
+      });
 
-    buildOverrides();
+      buildOverrides();
+    } catch (e) {
+      // UserAgentOverrides is initialized before profile is ready.
+      // UA override might not work correctly.
+    }
+
     gInitialized = true;
   },
 
@@ -119,17 +123,6 @@ this.UserAgentOverrides = {
     Services.prefs.removeObserver(PREF_OVERRIDES_ENABLED, buildOverrides);
 
     Services.obs.removeObserver(HTTP_on_useragent_request, "http-on-useragent-request");
-  },
-
-  receiveMessage: function(aMessage) {
-    let name = aMessage.name;
-    switch (name) {
-      case OVERRIDE_MESSAGE:
-        let uri = Services.io.newURI(aMessage.data.uri);
-        return this.getOverrideForURI(uri);
-      default:
-        throw("Wrong Message in UserAgentOverride: " + name);
-    }
   }
 };
 

@@ -55,15 +55,10 @@ struct SeekRejectValue
   MediaResult mError;
 };
 
-class MetadataHolder
+struct MetadataHolder
 {
-public:
-  NS_INLINE_DECL_THREADSAFE_REFCOUNTING(MetadataHolder)
-  MediaInfo mInfo;
-  nsAutoPtr<MetadataTags> mTags;
-
-private:
-  virtual ~MetadataHolder() { }
+  UniquePtr<MediaInfo> mInfo;
+  UniquePtr<MetadataTags> mTags;
 };
 
 // Encapsulates the decoding and reading of media data. Reading can either
@@ -82,10 +77,13 @@ class MediaDecoderReader
 public:
   using TrackSet = EnumSet<TrackInfo::TrackType>;
 
-  using MetadataPromise =
-    MozPromise<RefPtr<MetadataHolder>, MediaResult, IsExclusive>;
-  using MediaDataPromise =
-    MozPromise<RefPtr<MediaData>, MediaResult, IsExclusive>;
+  using MetadataPromise = MozPromise<MetadataHolder, MediaResult, IsExclusive>;
+
+  template <typename Type>
+  using DataPromise = MozPromise<RefPtr<Type>, MediaResult, IsExclusive>;
+  using AudioDataPromise = DataPromise<AudioData>;
+  using VideoDataPromise = DataPromise<VideoData>;
+
   using SeekPromise = MozPromise<media::TimeUnit, SeekRejectValue, IsExclusive>;
 
   // Note that, conceptually, WaitForData makes sense in a non-exclusive sense.
@@ -140,14 +138,15 @@ public:
   //
   // The decode should be performed asynchronously, and the promise should
   // be resolved when it is complete.
-  virtual RefPtr<MediaDataPromise> RequestAudioData();
+  virtual RefPtr<AudioDataPromise> RequestAudioData();
 
   // Requests one video sample from the reader.
   //
   // If aSkipToKeyframe is true, the decode should skip ahead to the
-  // the next keyframe at or after aTimeThreshold microseconds.
-  virtual RefPtr<MediaDataPromise>
-  RequestVideoData(bool aSkipToNextKeyframe, int64_t aTimeThreshold);
+  // the next keyframe at or after aTimeThreshold.
+  virtual RefPtr<VideoDataPromise>
+  RequestVideoData(bool aSkipToNextKeyframe,
+                   const media::TimeUnit& aTimeThreshold);
 
   // By default, the state machine polls the reader once per second when it's
   // in buffering mode. Some readers support a promise-based mechanism by which
@@ -260,10 +259,10 @@ public:
     return mOnTrackWaitingForKey;
   }
 
-  // Switch the video decoder to BlankDecoderModule. It might takes effective
+  // Switch the video decoder to NullDecoderModule. It might takes effective
   // since a few samples later depends on how much demuxed samples are already
   // queued in the original video decoder.
-  virtual void SetVideoBlankDecode(bool aIsBlankDecode) { }
+  virtual void SetVideoNullDecode(bool aIsNullDecode) { }
 
 protected:
   virtual ~MediaDecoderReader();
@@ -271,7 +270,7 @@ protected:
   // Recomputes mBuffered.
   virtual void UpdateBuffered();
 
-  RefPtr<MediaDataPromise> DecodeToFirstVideoData();
+  RefPtr<VideoDataPromise> DecodeToFirstVideoData();
 
   // Queue of audio frames. This queue is threadsafe, and is accessed from
   // the audio, decoder, state machine, and main threads.
@@ -361,7 +360,8 @@ private:
   // (unless they're not keyframes and aKeyframeSkip is true), but will
   // not be added to the queue. This function blocks until the decode
   // is complete.
-  virtual bool DecodeVideoFrame(bool &aKeyframeSkip, int64_t aTimeThreshold)
+  virtual bool DecodeVideoFrame(bool& aKeyframeSkip,
+                                const media::TimeUnit& aTimeThreshold)
   {
     return false;
   }
@@ -377,8 +377,8 @@ private:
 
   // Promises used only for the base-class (sync->async adapter) implementation
   // of Request{Audio,Video}Data.
-  MozPromiseHolder<MediaDataPromise> mBaseAudioPromise;
-  MozPromiseHolder<MediaDataPromise> mBaseVideoPromise;
+  MozPromiseHolder<AudioDataPromise> mBaseAudioPromise;
+  MozPromiseHolder<VideoDataPromise> mBaseVideoPromise;
 
   MediaEventListener mDataArrivedListener;
 };

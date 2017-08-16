@@ -112,9 +112,10 @@ static constexpr Register WasmIonExitRegE1 = eax;
 // Registers used in the GenerateFFIIonExit Disable Activation block.
 static constexpr Register WasmIonExitRegReturnData = edx;
 static constexpr Register WasmIonExitRegReturnType = ecx;
+static constexpr Register WasmIonExitTlsReg = esi;
 static constexpr Register WasmIonExitRegD0 = edi;
 static constexpr Register WasmIonExitRegD1 = eax;
-static constexpr Register WasmIonExitRegD2 = esi;
+static constexpr Register WasmIonExitRegD2 = ebx;
 
 // Registerd used in RegExpMatcher instruction (do not use JSReturnOperand).
 static constexpr Register RegExpMatcherRegExpReg = CallTempReg0;
@@ -616,6 +617,22 @@ class Assembler : public AssemblerX86Shared
         }
         return CodeOffset(masm.currentOffset());
     }
+    void vmovss(const Operand& src, FloatRegister dest) {
+        MOZ_ASSERT(HasSSE2());
+        switch (src.kind()) {
+          case Operand::MEM_REG_DISP:
+            masm.vmovss_mr_disp32(src.disp(), src.base(), dest.encoding());
+            break;
+          case Operand::MEM_ADDRESS32:
+            masm.vmovss_mr(src.address(), dest.encoding());
+            break;
+          case Operand::MEM_SCALE:
+            masm.vmovss_mr(src.disp(), src.base(), src.index(), src.scale(), dest.encoding());
+            break;
+          default:
+            MOZ_CRASH("unexpected operand kind");
+        }
+    }
     CodeOffset vmovdWithPatch(const Operand& src, FloatRegister dest) {
         MOZ_ASSERT(HasSSE2());
         switch (src.kind()) {
@@ -657,6 +674,22 @@ class Assembler : public AssemblerX86Shared
             MOZ_CRASH("unexpected operand kind");
         }
         return CodeOffset(masm.currentOffset());
+    }
+    void vmovsd(const Operand& src, FloatRegister dest) {
+        MOZ_ASSERT(HasSSE2());
+        switch (src.kind()) {
+          case Operand::MEM_REG_DISP:
+            masm.vmovsd_mr_disp32(src.disp(), src.base(), dest.encoding());
+            break;
+          case Operand::MEM_ADDRESS32:
+            masm.vmovsd_mr(src.address(), dest.encoding());
+            break;
+          case Operand::MEM_SCALE:
+            masm.vmovsd_mr(src.disp(), src.base(), src.index(), src.scale(), dest.encoding());
+            break;
+          default:
+            MOZ_CRASH("unexpected operand kind");
+        }
     }
     CodeOffset vmovupsWithPatch(const Operand& src, FloatRegister dest) {
         MOZ_ASSERT(HasSSE2());
@@ -799,6 +832,22 @@ class Assembler : public AssemblerX86Shared
         }
         return CodeOffset(masm.currentOffset());
     }
+    void vmovss(FloatRegister src, const Operand& dest) {
+        MOZ_ASSERT(HasSSE2());
+        switch (dest.kind()) {
+          case Operand::MEM_REG_DISP:
+            masm.vmovss_rm_disp32(src.encoding(), dest.disp(), dest.base());
+            break;
+          case Operand::MEM_ADDRESS32:
+            masm.vmovss_rm(src.encoding(), dest.address());
+            break;
+          case Operand::MEM_SCALE:
+            masm.vmovss_rm(src.encoding(), dest.disp(), dest.base(), dest.index(), dest.scale());
+            break;
+          default:
+            MOZ_CRASH("unexpected operand kind");
+        }
+    }
     CodeOffset vmovsdWithPatch(FloatRegister src, const Operand& dest) {
         MOZ_ASSERT(HasSSE2());
         switch (dest.kind()) {
@@ -812,6 +861,22 @@ class Assembler : public AssemblerX86Shared
             MOZ_CRASH("unexpected operand kind");
         }
         return CodeOffset(masm.currentOffset());
+    }
+    void vmovsd(FloatRegister src, const Operand& dest) {
+        MOZ_ASSERT(HasSSE2());
+        switch (dest.kind()) {
+          case Operand::MEM_REG_DISP:
+            masm.vmovsd_rm_disp32(src.encoding(), dest.disp(), dest.base());
+            break;
+          case Operand::MEM_ADDRESS32:
+            masm.vmovsd_rm(src.encoding(), dest.address());
+            break;
+          case Operand::MEM_SCALE:
+            masm.vmovsd_rm(src.encoding(), dest.disp(), dest.base(), dest.index(), dest.scale());
+            break;
+          default:
+            MOZ_CRASH("unexpected operand kind");
+        }
     }
     CodeOffset vmovupsWithPatch(FloatRegister src, const Operand& dest) {
         MOZ_ASSERT(HasSSE2());

@@ -118,7 +118,7 @@ class JS_FRIEND_API(Wrapper) : public BaseProxyHandler
     virtual JSString* fun_toString(JSContext* cx, HandleObject proxy,
                                    unsigned indent) const override;
     virtual bool regexp_toShared(JSContext* cx, HandleObject proxy,
-                                 RegExpGuard* g) const override;
+                                 MutableHandle<RegExpShared*> shared) const override;
     virtual bool boxedValue_unbox(JSContext* cx, HandleObject proxy,
                                   MutableHandleValue vp) const override;
     virtual bool isCallable(JSObject* obj) const override;
@@ -212,7 +212,8 @@ class JS_FRIEND_API(CrossCompartmentWrapper) : public Wrapper
     virtual const char* className(JSContext* cx, HandleObject proxy) const override;
     virtual JSString* fun_toString(JSContext* cx, HandleObject wrapper,
                                    unsigned indent) const override;
-    virtual bool regexp_toShared(JSContext* cx, HandleObject proxy, RegExpGuard* g) const override;
+    virtual bool regexp_toShared(JSContext* cx, HandleObject proxy,
+                                 MutableHandle<RegExpShared*> shared) const override;
     virtual bool boxedValue_unbox(JSContext* cx, HandleObject proxy, MutableHandleValue vp) const override;
 
     // Allocate CrossCompartmentWrappers in the nursery.
@@ -310,7 +311,8 @@ class JS_FRIEND_API(SecurityWrapper) : public Base
                             const CallArgs& args) const override;
     virtual bool getBuiltinClass(JSContext* cx, HandleObject wrapper, ESClass* cls) const override;
     virtual bool isArray(JSContext* cx, HandleObject wrapper, JS::IsArrayAnswer* answer) const override;
-    virtual bool regexp_toShared(JSContext* cx, HandleObject proxy, RegExpGuard* g) const override;
+    virtual bool regexp_toShared(JSContext* cx, HandleObject proxy,
+                                 MutableHandle<RegExpShared*> shared) const override;
     virtual bool boxedValue_unbox(JSContext* cx, HandleObject proxy, MutableHandleValue vp) const override;
 
     // Allow isCallable and isConstructor. They used to be class-level, and so could not be guarded
@@ -341,8 +343,12 @@ IsWrapper(JSObject* obj)
 
 // Given a JSObject, returns that object stripped of wrappers. If
 // stopAtWindowProxy is true, then this returns the WindowProxy if it was
-// previously wrapped. Otherwise, this returns the first object for
-// which JSObject::isWrapper returns false.
+// previously wrapped. Otherwise, this returns the first object for which
+// JSObject::isWrapper returns false.
+//
+// ExposeToActiveJS is called on wrapper targets to allow gray marking
+// assertions to work while an incremental GC is in progress, but this means
+// that this cannot be called from the GC or off the main thread.
 JS_FRIEND_API(JSObject*)
 UncheckedUnwrap(JSObject* obj, bool stopAtWindowProxy = true, unsigned* flagsp = nullptr);
 
@@ -350,6 +356,10 @@ UncheckedUnwrap(JSObject* obj, bool stopAtWindowProxy = true, unsigned* flagsp =
 // the security wrapper has the opportunity to veto the unwrap. If
 // stopAtWindowProxy is true, then this returns the WindowProxy if it was
 // previously wrapped.
+//
+// ExposeToActiveJS is called on wrapper targets to allow gray marking
+// assertions to work while an incremental GC is in progress, but this means
+// that this cannot be called from the GC or off the main thread.
 JS_FRIEND_API(JSObject*)
 CheckedUnwrap(JSObject* obj, bool stopAtWindowProxy = true);
 
@@ -358,13 +368,21 @@ CheckedUnwrap(JSObject* obj, bool stopAtWindowProxy = true);
 JS_FRIEND_API(JSObject*)
 UnwrapOneChecked(JSObject* obj, bool stopAtWindowProxy = true);
 
+// Given a JSObject, returns that object stripped of wrappers. This returns the
+// WindowProxy if it was previously wrapped.
+//
+// ExposeToActiveJS is not called on wrapper targets so this can be called from
+// the GC or off the main thread.
+JS_FRIEND_API(JSObject*)
+UncheckedUnwrapWithoutExpose(JSObject* obj);
+
 void
 ReportAccessDenied(JSContext* cx);
 
 JS_FRIEND_API(bool)
 IsCrossCompartmentWrapper(JSObject* obj);
 
-void
+JS_FRIEND_API(void)
 NukeCrossCompartmentWrapper(JSContext* cx, JSObject* wrapper);
 
 void

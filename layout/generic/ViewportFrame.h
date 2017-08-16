@@ -25,13 +25,13 @@ namespace mozilla {
   */
 class ViewportFrame : public nsContainerFrame {
 public:
-  NS_DECL_QUERYFRAME_TARGET(ViewportFrame)
   NS_DECL_QUERYFRAME
-  NS_DECL_FRAMEARENA_HELPERS
+  NS_DECL_FRAMEARENA_HELPERS(ViewportFrame)
 
   explicit ViewportFrame(nsStyleContext* aContext)
-    : nsContainerFrame(aContext)
+    : ViewportFrame(aContext, kClassID)
   {}
+
   virtual ~ViewportFrame() { } // useful for debugging
 
   virtual void Init(nsIContent*       aContent,
@@ -57,17 +57,10 @@ public:
 
   virtual nscoord GetMinISize(nsRenderingContext *aRenderingContext) override;
   virtual nscoord GetPrefISize(nsRenderingContext *aRenderingContext) override;
-  virtual void Reflow(nsPresContext*           aPresContext,
-                      ReflowOutput&     aDesiredSize,
+  virtual void Reflow(nsPresContext* aPresContext,
+                      ReflowOutput& aDesiredSize,
                       const ReflowInput& aReflowInput,
-                      nsReflowStatus&          aStatus) override;
-
-  /**
-   * Get the "type" of the frame
-   *
-   * @see nsGkAtoms::viewportFrame
-   */
-  virtual nsIAtom* GetType() const override;
+                      nsReflowStatus& aStatus) override;
 
   virtual bool ComputeCustomOverflow(nsOverflowAreas& aOverflowAreas) override;
 
@@ -83,10 +76,12 @@ public:
   virtual nsresult GetFrameName(nsAString& aResult) const override;
 #endif
 
-private:
-  virtual mozilla::layout::FrameChildListID GetAbsoluteListID() const override { return kFixedList; }
-
 protected:
+  ViewportFrame(nsStyleContext* aContext, ClassID aID)
+    : nsContainerFrame(aContext, aID)
+    , mView(nullptr)
+  {}
+
   /**
    * Calculate how much room is available for fixed frames. That means
    * determining if the viewport is scrollable and whether the vertical and/or
@@ -95,6 +90,14 @@ protected:
    * @return the current scroll position, or 0,0 if not scrollable
    */
   nsPoint AdjustReflowInputForScrollbars(ReflowInput* aReflowInput) const;
+
+  nsView* GetViewInternal() const override { return mView; }
+  void SetViewInternal(nsView* aView) override { mView = aView; }
+
+private:
+  virtual mozilla::layout::FrameChildListID GetAbsoluteListID() const override { return kFixedList; }
+
+  nsView* mView;
 };
 
 } // namespace mozilla

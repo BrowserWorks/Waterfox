@@ -1,6 +1,8 @@
-/* globals analytics, browser, communication, makeUuid, Raven, catcher, auth, log */
+/* globals analytics, communication, makeUuid, Raven, catcher, auth, log */
 
 "use strict";
+
+const startTime = Date.now();
 
 this.senderror = (function() {
   let exports = {};
@@ -37,6 +39,13 @@ this.senderror = (function() {
     MY_SHOTS: {
       title: browser.i18n.getMessage("selfScreenshotErrorTitle")
     },
+    EMPTY_SELECTION: {
+      title: browser.i18n.getMessage("emptySelectionErrorTitle")
+    },
+    PRIVATE_WINDOW: {
+      title: browser.i18n.getMessage("privateWindowErrorTitle"),
+      info: browser.i18n.getMessage("privateWindowErrorDetails")
+    },
     generic: {
       title: browser.i18n.getMessage("genericErrorTitle"),
       info: browser.i18n.getMessage("genericErrorDetails"),
@@ -70,12 +79,14 @@ this.senderror = (function() {
         message = error.message;
       }
     }
-    browser.notifications.create(id, {
-      type: "basic",
-      // FIXME: need iconUrl for an image, see #2239
-      title,
-      message
-    });
+    if (Date.now() - startTime > 5 * 1000) {
+      browser.notifications.create(id, {
+        type: "basic",
+        // FIXME: need iconUrl for an image, see #2239
+        title,
+        message
+      });
+    }
   };
 
   exports.reportError = function(e) {
@@ -85,24 +96,32 @@ this.senderror = (function() {
     }
     let dsn = auth.getSentryPublicDSN();
     if (!dsn) {
-      log.warn("Error:", e);
+      log.warn("Screenshots error:", e);
       return;
     }
     if (!Raven.isSetup()) {
-      Raven.config(dsn).install();
+      Raven.config(dsn, {allowSecretKey: true}).install();
     }
     let exception = new Error(e.message);
     exception.stack = e.multilineStack || e.stack || undefined;
+
+    // To improve Sentry reporting & grouping, replace the
+    // moz-extension://$uuid base URL with a generic resource:// URL.
+    exception.stack = exception.stack.replace(
+      /moz-extension:\/\/[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}/g,
+      "resource://screenshots-addon"
+    );
     let rest = {};
     for (let attr in e) {
-      if (!["name", "message", "stack", "multilineStack", "popupMessage", "version", "sentryPublicDSN", "help"].includes(attr)) {
+      if (!["name", "message", "stack", "multilineStack", "popupMessage", "version", "sentryPublicDSN", "help", "fromMakeError"].includes(attr)) {
         rest[attr] = e[attr];
       }
     }
-    rest.stack = e.multilineStack || e.stack;
+    rest.stack = exception.stack;
     Raven.captureException(exception, {
       logger: 'addon',
-      tags: {version: manifest.version, category: e.popupMessage},
+      tags: {category: e.popupMessage},
+      release: manifest.version,
       message: exception.message,
       extra: rest
     });
@@ -112,7 +131,9 @@ this.senderror = (function() {
     if (!errorObj.noPopup) {
       exports.showError(errorObj);
     }
-    exports.reportError(errorObj);
+    if (!errorObj.noReport) {
+      exports.reportError(errorObj);
+    }
   });
 
   return exports;

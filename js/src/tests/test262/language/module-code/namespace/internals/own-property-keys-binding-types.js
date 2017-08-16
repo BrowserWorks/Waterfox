@@ -1,4 +1,4 @@
-// |reftest| skip -- jstests don't yet support module tests
+// |reftest| module
 // Copyright (C) 2016 the V8 project authors. All rights reserved.
 // This code is governed by the BSD license found in the LICENSE file.
 /*---
@@ -54,7 +54,7 @@ assert(
 var allKeys = Reflect.ownKeys(ns);
 
 assert(
-  allKeys.length > 11,
+  allKeys.length >= 11,
   'at least as many keys as defined by the module and the specification'
 );
 assert.sameValue(allKeys[0], 'a_local1');

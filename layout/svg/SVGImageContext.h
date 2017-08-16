@@ -23,29 +23,39 @@ namespace mozilla {
 class SVGImageContext
 {
 public:
-  SVGImageContext()
-    : mGlobalOpacity(1.0)
-  { }
+  SVGImageContext() {}
 
-  // Note: 'aIsPaintingSVGImageElement' should be used to indicate whether
-  // the SVG image in question is being painted for an SVG <image> element.
-  explicit SVGImageContext(const CSSIntSize& aViewportSize,
-                           const Maybe<SVGPreserveAspectRatio>& aPreserveAspectRatio = Nothing(),
-                           gfxFloat aOpacity = 1.0,
-                           bool aIsPaintingSVGImageElement = false)
+  /**
+   * Currently it seems that the aViewportSize parameter ends up being used
+   * for different things by different pieces of code, and probably in some
+   * cases being used incorrectly (specifically in the case of pixel snapping
+   * under the nsLayoutUtils::Draw*Image() methods).  An unfortunate result of
+   * the messy code is that aViewportSize is currently a Maybe<T> since it
+   * is difficult to create a utility function that consumers can use up
+   * front to get the "correct" viewport size (i.e. which for compatibility
+   * with the current code (bugs and all) would mean the size including all
+   * the snapping and resizing magic that happens in various places under the
+   * nsLayoutUtils::Draw*Image() methods on the way to DrawImageInternal
+   * creating |fallbackContext|).  Using Maybe<T> allows code to pass Nothing()
+   * in order to get the size that's created for |fallbackContext|.  At some
+   * point we need to clean this code up, make our abstractions clear, create
+   * that utility and stop using Maybe for this parameter.
+   */
+  explicit SVGImageContext(const Maybe<CSSIntSize>& aViewportSize,
+                           const Maybe<SVGPreserveAspectRatio>& aPreserveAspectRatio  = Nothing())
     : mViewportSize(aViewportSize)
     , mPreserveAspectRatio(aPreserveAspectRatio)
-    , mGlobalOpacity(aOpacity)
-    , mIsPaintingSVGImageElement(aIsPaintingSVGImageElement)
   { }
 
-  bool MaybeStoreContextPaint(nsIFrame* aFromFrame);
+  static void MaybeStoreContextPaint(Maybe<SVGImageContext>& aContext,
+                                     nsIFrame* aFromFrame,
+                                     imgIContainer* aImgContainer);
 
-  const CSSIntSize& GetViewportSize() const {
+  const Maybe<CSSIntSize>& GetViewportSize() const {
     return mViewportSize;
   }
 
-  void SetViewportSize(const CSSIntSize& aSize) {
+  void SetViewportSize(const Maybe<CSSIntSize>& aSize) {
     mViewportSize = aSize;
   }
 
@@ -57,19 +67,25 @@ public:
     mPreserveAspectRatio = aPAR;
   }
 
-  const SVGContextPaint* GetContextPaint() const {
+  const SVGEmbeddingContextPaint* GetContextPaint() const {
     return mContextPaint.get();
   }
 
-  bool IsPaintingForSVGImageElement() const {
-    return mIsPaintingSVGImageElement;
+  void ClearContextPaint() {
+    mContextPaint = nullptr;
   }
 
   bool operator==(const SVGImageContext& aOther) const {
-    return mViewportSize == aOther.mViewportSize &&
-           mPreserveAspectRatio == aOther.mPreserveAspectRatio &&
-           mGlobalOpacity == aOther.mGlobalOpacity &&
-           mIsPaintingSVGImageElement == aOther.mIsPaintingSVGImageElement;
+    bool contextPaintIsEqual =
+      // neither have context paint, or they have the same object:
+      (mContextPaint == aOther.mContextPaint) ||
+      // or both have context paint that are different but equivalent objects:
+      (mContextPaint && aOther.mContextPaint &&
+       *mContextPaint == *aOther.mContextPaint);
+
+    return contextPaintIsEqual &&
+           mViewportSize == aOther.mViewportSize &&
+           mPreserveAspectRatio == aOther.mPreserveAspectRatio;
   }
 
   bool operator!=(const SVGImageContext& aOther) const {
@@ -82,24 +98,22 @@ public:
       hash = HashGeneric(hash, mContextPaint->Hash());
     }
     return HashGeneric(hash,
-                       mViewportSize.width,
-                       mViewportSize.height,
-                       mPreserveAspectRatio.map(HashPAR).valueOr(0),
-                       HashBytes(&mGlobalOpacity, sizeof(mGlobalOpacity)),
-                       mIsPaintingSVGImageElement);
+                       mViewportSize.map(HashSize).valueOr(0),
+                       mPreserveAspectRatio.map(HashPAR).valueOr(0));
   }
 
 private:
+  static uint32_t HashSize(const CSSIntSize& aSize) {
+    return HashGeneric(aSize.width, aSize.height);
+  }
   static uint32_t HashPAR(const SVGPreserveAspectRatio& aPAR) {
     return aPAR.Hash();
   }
 
   // NOTE: When adding new member-vars, remember to update Hash() & operator==.
-  RefPtr<SVGContextPaint>       mContextPaint;
-  CSSIntSize                    mViewportSize;
+  RefPtr<SVGEmbeddingContextPaint> mContextPaint;
+  Maybe<CSSIntSize>             mViewportSize;
   Maybe<SVGPreserveAspectRatio> mPreserveAspectRatio;
-  gfxFloat                      mGlobalOpacity;
-  bool                          mIsPaintingSVGImageElement;
 };
 
 } // namespace mozilla

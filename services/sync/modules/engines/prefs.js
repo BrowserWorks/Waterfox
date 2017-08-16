@@ -10,13 +10,17 @@ var Cu = Components.utils;
 
 const PREF_SYNC_PREFS_PREFIX = "services.sync.prefs.sync.";
 
+Cu.import("resource://gre/modules/XPCOMUtils.jsm");
+Cu.import("resource://gre/modules/Services.jsm");
+Cu.import("resource://gre/modules/Preferences.jsm");
 Cu.import("resource://services-sync/engines.js");
 Cu.import("resource://services-sync/record.js");
 Cu.import("resource://services-sync/util.js");
 Cu.import("resource://services-sync/constants.js");
 Cu.import("resource://services-common/utils.js");
-Cu.import("resource://gre/modules/LightweightThemeManager.jsm");
-Cu.import("resource://gre/modules/Preferences.jsm");
+
+XPCOMUtils.defineLazyModuleGetter(this, "LightweightThemeManager",
+                          "resource://gre/modules/LightweightThemeManager.jsm");
 
 const PREFS_GUID = CommonUtils.encodeBase64URL(Services.appinfo.ID);
 
@@ -239,7 +243,7 @@ PrefTracker.prototype = {
   },
 
   startTracking() {
-    Services.prefs.addObserver("", this, false);
+    Services.prefs.addObserver("", this);
   },
 
   stopTracking() {
@@ -255,6 +259,9 @@ PrefTracker.prototype = {
         this.stopTracking();
         break;
       case "nsPref:changed":
+        if (this.ignoreAll) {
+          break;
+        }
         // Trigger a sync for MULTI-DEVICE for a change that determines
         // which prefs are synced or a regular pref change.
         if (data.indexOf(PREF_SYNC_PREFS_PREFIX) == 0 ||

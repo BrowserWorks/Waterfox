@@ -31,6 +31,8 @@ class CompositorWidget;
 
 namespace wr {
 
+class RenderTextureHost;
+
 /// Owns the WebRender renderer and GL context.
 ///
 /// There is one renderer per window, all owned by the render thread.
@@ -38,9 +40,8 @@ namespace wr {
 /// on the render thread instead of the compositor thread.
 class RendererOGL
 {
-  friend WrExternalImage LockExternalImage(void* aObj, WrExternalImageId aId);
-  friend void UnlockExternalImage(void* aObj, WrExternalImageId aId);
-  friend void ReleaseExternalImage(void* aObj, WrExternalImageId aId);
+  friend WrExternalImage LockExternalImage(void* aObj, WrExternalImageId aId, uint8_t aChannelIndex);
+  friend void UnlockExternalImage(void* aObj, WrExternalImageId aId, uint8_t aChannelIndex);
 
 public:
   WrExternalImageHandler GetExternalImageHandler();
@@ -68,9 +69,19 @@ public:
               WrRenderer* aWrRenderer,
               layers::CompositorBridgeParentBase* aBridge);
 
+  /// This can be called on the render thread only.
+  void Pause();
+
+  /// This can be called on the render thread only.
+  bool Resume();
+
   layers::CompositorBridgeParentBase* GetCompositorBridge() { return mBridge; }
 
   WrRenderedEpochs* FlushRenderedEpochs();
+
+  RenderTextureHost* GetRenderTexture(WrExternalImageId aExternalImageId);
+
+  WrRenderer* GetWrRenderer() { return mWrRenderer; }
 
 protected:
 

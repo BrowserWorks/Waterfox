@@ -10,8 +10,8 @@
 <!ENTITY engine.tabs.accesskey      "T">
 <!ENTITY engine.history.label       "History">
 <!ENTITY engine.history.accesskey   "r">
-<!ENTITY engine.passwords.label     "Passwords">
-<!ENTITY engine.passwords.accesskey "P">
+<!ENTITY engine.logins.label        "Logins">
+<!ENTITY engine.logins.accesskey    "L">
 <!ENTITY engine.prefs.label         "Preferences">
 <!ENTITY engine.prefs.accesskey     "S">
 <!ENTITY engine.addons.label        "Add-ons">
@@ -19,8 +19,8 @@
 
 <!-- Device Settings -->
 <!ENTITY fxaSyncDeviceName.label       "Device Name">
-<!ENTITY changeSyncDeviceName.label "Change Device Name…">
-<!ENTITY changeSyncDeviceName.accesskey "h">
+<!ENTITY changeSyncDeviceName2.label "Change Device Name…">
+<!ENTITY changeSyncDeviceName2.accesskey "h">
 <!ENTITY cancelChangeSyncDeviceName.label "Cancel">
 <!ENTITY cancelChangeSyncDeviceName.accesskey "n">
 <!ENTITY saveChangeSyncDeviceName.label "Save">
@@ -52,8 +52,8 @@ both, to better adapt this sentence to their language.
 <!ENTITY profilePicture.tooltip      "Change profile picture">
 <!ENTITY verifiedManage.label        "Manage Account">
 <!ENTITY verifiedManage.accesskey    "o">
-<!ENTITY disconnect.label            "Disconnect…">
-<!ENTITY disconnect.accesskey        "D">
+<!ENTITY disconnect3.label           "Disconnect…">
+<!ENTITY disconnect3.accesskey       "D">
 <!ENTITY verify.label                "Verify Email">
 <!ENTITY verify.accesskey            "V">
 <!ENTITY forget.label                "Forget this Email">
@@ -67,7 +67,8 @@ both, to better adapt this sentence to their language.
 <!ENTITY signedOut.accountBox.signin  "Sign In">
 <!ENTITY signedOut.accountBox.signin.accesskey  "I">
 
-<!ENTITY signedIn.engines.label       "Sync Across All Devices">
+<!ENTITY signedIn.settings.label       "Sync Settings">
+<!ENTITY signedIn.settings.description "Choose what to synchronize on your devices using &brandShortName;.">
 
 <!-- LOCALIZATION NOTE (mobilePromo3.*): the following strings will be used to
      create a single sentence with active links.

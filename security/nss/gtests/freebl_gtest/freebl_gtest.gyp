@@ -12,6 +12,8 @@
       'type': 'executable',
       'sources': [
         'mpi_unittest.cc',
+        'dh_unittest.cc',
+        'ecl_unittest.cc',
         '<(DEPTH)/gtests/common/gtests.cc'
       ],
       'dependencies': [
@@ -27,13 +29,6 @@
         '<(DEPTH)/lib/dev/dev.gyp:nssdev',
         '<(DEPTH)/lib/pki/pki.gyp:nsspki',
         '<(DEPTH)/lib/ssl/ssl.gyp:ssl',
-      ],
-      'conditions': [
-        [ 'ct_verif==1', {
-          'defines': [
-            'CT_VERIF',
-          ],
-        }],
       ],
     },
     {
@@ -56,12 +51,39 @@
         '<(DEPTH)/lib/pki/pki.gyp:nsspki',
         '<(DEPTH)/lib/ssl/ssl.gyp:ssl',
       ],
+      'conditions': [
+        [ 'OS=="win"', {
+          'libraries': [
+            'advapi32.lib',
+          ],
+        }],
+      ],
+      'defines': [
+        'NSS_USE_STATIC_LIBS'
+      ],
     },
   ],
   'target_defaults': {
     'include_dirs': [
       '<(DEPTH)/lib/freebl/mpi',
-    ]
+      '<(DEPTH)/lib/freebl/',
+    ],
+    # For test builds we have to set MPI defines.
+    'conditions': [
+      [ 'ct_verif==1', {
+        'defines': [
+          'CT_VERIF',
+        ],
+      }],
+      [ 'target_arch=="ia32"', {
+        'defines': [
+          'MP_USE_UINT_DIGIT',
+          'MP_ASSEMBLY_MULTIPLY',
+          'MP_ASSEMBLY_SQUARE',
+          'MP_ASSEMBLY_DIV_2DX1D',
+        ],
+      }],
+    ],
   },
   'variables': {
     'module': 'nss'

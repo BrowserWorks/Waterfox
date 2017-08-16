@@ -73,16 +73,15 @@ class GeckoInstance(object):
         "javascript.options.showInConsole": True,
 
         # Enable Marionette component
+        # (deprecated and can be removed when Firefox 60 ships)
         "marionette.enabled": True,
-        # Deprecated, and can be removed in Firefox 60.0
         "marionette.defaultPrefs.enabled": True,
+
         # Disable recommended automation prefs in CI
         "marionette.prefs.recommended": False,
 
         "media.volume_scale": "0.01",
 
-        # Make sure the disk cache doesn't get auto disabled
-        "network.http.bypass-cachelock-threshold": 200000,
         # Do not prompt for temporary redirects
         "network.http.prompt-temp-redirect": False,
         # Disable speculative connections so they aren"t reported as leaking when they"re
@@ -108,11 +107,14 @@ class GeckoInstance(object):
 
         # We want to collect telemetry, but we don't want to send in the results
         "toolkit.telemetry.server": "https://%(server)s/dummy/telemetry/",
+
+        # Enabling the support for File object creation in the content process.
+        "dom.file.createInChild": True,
     }
 
     def __init__(self, host=None, port=None, bin=None, profile=None, addons=None,
                  app_args=None, symbols_path=None, gecko_log=None, prefs=None,
-                 workspace=None, verbose=0):
+                 workspace=None, verbose=0, headless=False):
         self.runner_class = Runner
         self.app_args = app_args or []
         self.runner = None
@@ -138,6 +140,7 @@ class GeckoInstance(object):
         self._gecko_log_option = gecko_log
         self._gecko_log = None
         self.verbose = verbose
+        self.headless = headless
 
     @property
     def gecko_log(self):
@@ -228,6 +231,10 @@ class GeckoInstance(object):
 
         env = os.environ.copy()
 
+        if self.headless:
+            env["MOZ_HEADLESS"] = "1"
+            env["DISPLAY"] = "77"  # Set a fake display.
+
         # environment variables needed for crashreporting
         # https://developer.mozilla.org/docs/Environment_variables_affecting_crash_reporting
         env.update({"MOZ_CRASHREPORTER": "1",
@@ -244,20 +251,32 @@ class GeckoInstance(object):
             "process_args": process_args
         }
 
-    def close(self, restart=False):
-        if not restart:
-            self.profile = None
+    def close(self, clean=False):
+        """
+        Close the managed Gecko process.
 
+        Depending on self.runner_class, setting `clean` to True may also kill
+        the emulator process in which this instance is running.
+
+        :param clean: If True, also perform runner cleanup.
+        """
         if self.runner:
             self.runner.stop()
-            self.runner.cleanup()
-
-    def restart(self, prefs=None, clean=True):
-        self.close(restart=True)
+            if clean:
+                self.runner.cleanup()
 
         if clean and self.profile:
             self.profile.cleanup()
             self.profile = None
+
+    def restart(self, prefs=None, clean=True):
+        """
+        Close then start the managed Gecko process.
+
+        :param prefs: Dictionary of preference names and values.
+        :param clean: If True, reset the profile before starting.
+        """
+        self.close(clean=clean)
 
         if prefs:
             self.prefs = prefs
@@ -371,9 +390,17 @@ class FennecInstance(GeckoInstance):
 
         return runner_args
 
-    def close(self, restart=False):
-        super(FennecInstance, self).close(restart)
-        if self.runner and self.runner.device.connected:
+    def close(self, clean=False):
+        """
+        Close the managed Gecko process.
+
+        If `clean` is True and the Fennec instance is running in an
+        emulator managed by mozrunner, this will stop the emulator.
+
+        :param clean: If True, also perform runner cleanup.
+        """
+        super(FennecInstance, self).close(clean)
+        if clean and self.runner and self.runner.device.connected:
             self.runner.device.dm.remove_forward(
                 "tcp:{}".format(self.marionette_port))
 
@@ -403,13 +430,9 @@ class DesktopInstance(GeckoInstance):
         # in general can"t hurt - we re-enable them when tests need them
         "browser.pagethumbnails.capturing_disabled": True,
 
-        # Avoid performing Reader Mode intros during tests
-        "browser.reader.detectedFirstArticle": True,
-
         # Disable safebrowsing components
         "browser.safebrowsing.blockedURIs.enabled": False,
         "browser.safebrowsing.downloads.enabled": False,
-        "browser.safebrowsing.forbiddenURIs.enabled": False,
         "browser.safebrowsing.malware.enabled": False,
         "browser.safebrowsing.phishing.enabled": False,
 
@@ -432,8 +455,8 @@ class DesktopInstance(GeckoInstance):
         # Start with a blank page by default
         "browser.startup.page": 0,
 
-        # Disable tab animation
-        "browser.tabs.animate": False,
+        # Disable browser animations
+        "toolkit.cosmeticAnimations.enabled": False,
 
         # Do not warn on exit when multiple tabs are open
         "browser.tabs.warnOnClose": False,

@@ -24,6 +24,8 @@ if CONFIG['OS_TARGET'] == 'Linux' or CONFIG['OS_TARGET'] == 'Android':
     DEFINES['COMMON_LINUX_GUID_CREATOR_H__'] = 1
 
 if CONFIG['OS_TARGET'] == 'Android':
+    DEFINES['ANDROID_NDK_MAJOR_VERSION'] = CONFIG['ANDROID_NDK_MAJOR_VERSION']
+    DEFINES['ANDROID_NDK_MINOR_VERSION'] = CONFIG['ANDROID_NDK_MINOR_VERSION']
     LOCAL_INCLUDES += [
         '/toolkit/crashreporter/google-breakpad/src/common/android/include',
     ]
@@ -36,8 +38,5 @@ FINAL_LIBRARY = 'xul'
 if CONFIG['OS_TARGET'] == 'Android' and CONFIG['CPU_ARCH'] == 'x86':
     # The NDK's user.h defines this struct with a different name.
     DEFINES['user_fpxregs_struct'] = 'user_fxsr_struct'
-
-if CONFIG['MOZ_WIDGET_TOOLKIT'] == 'gonk':
-    DEFINES['getcontext'] = 'breakpad_getcontext'
 
 include('/toolkit/crashreporter/crashreporter.mozbuild')

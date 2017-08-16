@@ -7,6 +7,9 @@
 
 /* exported libc */
 
+// This file is loaded into the same scope as subprocess_unix.jsm
+/* import-globals-from subprocess_unix.jsm */
+
 const LIBC = OS.Constants.libc;
 
 const LIBC_CHOICES = ["libc.so", "libSystem.B.dylib", "a.out"];
@@ -39,6 +42,14 @@ var libc = new Library("libc", LIBC_CHOICES, {
   _NSGetEnviron: [
     ctypes.default_abi,
     ctypes.char.ptr.ptr.ptr,
+  ],
+
+  setenv: [
+    ctypes.default_abi,
+    ctypes.int,
+    ctypes.char.ptr,
+    ctypes.char.ptr,
+    ctypes.int,
   ],
 
   chdir: [

@@ -1304,7 +1304,7 @@ class MacroAssemblerCompat : public vixl::MacroAssembler
         MOZ_CRASH("branchNegativeZeroFloat32");
     }
 
-    void boxDouble(FloatRegister src, const ValueOperand& dest) {
+    void boxDouble(FloatRegister src, const ValueOperand& dest, FloatRegister) {
         Fmov(ARMRegister(dest.valueReg(), 64), ARMFPRegister(src, 64));
     }
     void boxNonDouble(JSValueType type, Register src, const ValueOperand& dest) {
@@ -1840,10 +1840,6 @@ class MacroAssemblerCompat : public vixl::MacroAssembler
                 embedsNurseryPointers_ = true;
             dataRelocations_.writeUnsigned(load.getOffset());
         }
-    }
-
-    void writePrebarrierOffset(CodeOffset label) {
-        preBarriers_.writeUnsigned(label.offset());
     }
 
     void computeEffectiveAddress(const Address& address, Register dest) {

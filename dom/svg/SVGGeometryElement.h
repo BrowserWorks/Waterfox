@@ -52,7 +52,9 @@ public:
   explicit SVGGeometryElement(already_AddRefed<mozilla::dom::NodeInfo>& aNodeInfo);
 
   virtual nsresult AfterSetAttr(int32_t aNamespaceID, nsIAtom* aName,
-                                const nsAttrValue* aValue, bool aNotify) override;
+                                const nsAttrValue* aValue,
+                                const nsAttrValue* aOldValue,
+                                bool aNotify) override;
 
   /**
    * Causes this element to discard any Path object that GetOrBuildPath may
@@ -114,7 +116,10 @@ public:
       return mType != NONE;
     }
     void SetRect(Float x, Float y, Float width, Float height) {
-      mX = x; mY = y, mWidthOrX2 = width, mHeightOrY2 = height;
+      mX = x;
+      mY = y;
+      mWidthOrX2 = width;
+      mHeightOrY2 = height;
       mType = RECT;
     }
     Rect AsRect() const {
@@ -125,7 +130,10 @@ public:
       return mType == RECT;
     }
     void SetLine(Float x1, Float y1, Float x2, Float y2) {
-      mX = x1, mY = y1, mWidthOrX2 = x2, mHeightOrY2 = y2;
+      mX = x1;
+      mY = y1;
+      mWidthOrX2 = x2;
+      mHeightOrY2 = y2;
       mType = LINE;
     }
     Point Point1() const {

@@ -1,4 +1,3 @@
-// |reftest| skip-if(!this.hasOwnProperty('Intl')||!this.hasOwnProperty('addIntlExtras')) -- needs Intl, needs addIntlExtras
 // Copyright 2016 Mozilla Corporation. All rights reserved.
 // This code is governed by the license found in the LICENSE file.
 
@@ -9,17 +8,9 @@ author: Zibi Braniecki
 ---*/
 
 var desc = Object.getOwnPropertyDescriptor(Intl.PluralRules, "prototype");
-if (desc === undefined) {
-    $ERROR("Intl.PluralRules.prototype is not defined.");
-}
-if (desc.writable) {
-    $ERROR("Intl.PluralRules.prototype must not be writable.");
-}
-if (desc.enumerable) {
-    $ERROR("Intl.PluralRules.prototype must not be enumerable.");
-}
-if (desc.configurable) {
-    $ERROR("Intl.PluralRules.prototype must not be configurable.");
-}
+assert.notSameValue(desc, undefined, "Intl.PluralRules.prototype is not defined.");
+assert.sameValue(desc.writable, false, "Intl.PluralRules.prototype must not be writable.");
+assert.sameValue(desc.enumerable, false, "Intl.PluralRules.prototype must not be enumerable.");
+assert.sameValue(desc.configurable, false, "Intl.PluralRules.prototype must not be configurable.");
 
 reportCompare(0, 0);

@@ -89,11 +89,11 @@ def linux_gtest_defines(target, enable_tests):
                          has_clone='0')
 
 set_define('GTEST_OS_LINUX_ANDROID',
-           delayed_getattr(linux_gtest_defines, 'os_linux_android'))
+           linux_gtest_defines.os_linux_android)
 set_define('GTEST_USE_OWN_TR1_TUPLE',
-           delayed_getattr(linux_gtest_defines, 'use_own_tr1_tuple'))
+           linux_gtest_defines.use_own_tr1_tuple)
 set_define('GTEST_HAS_CLONE',
-           delayed_getattr(linux_gtest_defines, 'has_clone'))
+           linux_gtest_defines.has_clone)
 
 js_option('--enable-debug',
           nargs='?',
@@ -102,6 +102,20 @@ js_option('--enable-debug',
 
 add_old_configure_assignment('MOZ_DEBUG',
                              depends('--enable-debug')(lambda v: bool(v)))
+
+imply_option('--enable-rust-debug',
+             depends('--enable-debug')(lambda v: bool(v) or None))
+
+js_option('--enable-rust-debug',
+          help='Build Rust code with debug assertions turned on.')
+
+@depends('--enable-rust-debug')
+def debug_rust(debug):
+    if debug:
+        return True
+
+set_config('MOZ_DEBUG_RUST', debug_rust)
+set_define('MOZ_DEBUG_RUST', debug_rust)
 
 include('build/moz.configure/pkg.configure')
 # Make this assignment here rather than in pkg.configure to avoid
@@ -276,13 +290,13 @@ def extra_programs(target):
     if target.os == 'GNU' and target.kernel == 'Linux':
         return namespace(RPMBUILD=('rpmbuild',))
 
-check_prog('DSYMUTIL', delayed_getattr(extra_programs, 'DSYMUTIL'),
+check_prog('DSYMUTIL', extra_programs.DSYMUTIL,
            allow_missing=True)
-check_prog('MKFSHFS', delayed_getattr(extra_programs, 'MKFSHFS'),
+check_prog('MKFSHFS', extra_programs.MKFSHFS,
            allow_missing=True)
-check_prog('HFS_TOOL', delayed_getattr(extra_programs, 'HFS_TOOL'),
+check_prog('HFS_TOOL', extra_programs.HFS_TOOL,
            allow_missing=True)
-check_prog('RPMBUILD', delayed_getattr(extra_programs, 'RPMBUILD'),
+check_prog('RPMBUILD', extra_programs.RPMBUILD,
            allow_missing=True)
 
 option('--enable-system-hunspell',
@@ -305,10 +319,9 @@ def makensis_progs(target):
         return
 
     candidates = [
-        'makensis-3.01.exe',
-        'makensis-3.0b3.exe',
-        'makensis-3.0b1.exe',
-        'makensis.exe',
+        'makensis-3.01',
+        'makensis-3.0b3',
+        'makensis-3.0b1',
         'makensis',
     ]
 
@@ -321,7 +334,7 @@ def makensis_progs(target):
 
     return tuple(candidates)
 
-nsis = check_prog('MAKENSISU', makensis_progs)
+nsis = check_prog('MAKENSISU', makensis_progs, allow_missing=True)
 
 # Make sure the version of makensis is up to date.
 @depends_if(nsis)
@@ -346,8 +359,8 @@ def nsis_version(nsis):
 
     return ver
 
-# And that makensis is 32-bit.
-@depends_if(nsis)
+# And that makensis is 32-bit (but only on Windows).
+@depends_if(nsis, when=depends(host)(lambda h: h.kernel == 'WINNT'))
 @checking('for 32-bit NSIS')
 def nsis_binary_type(nsis):
     bin_type = windows_binary_type(nsis)
@@ -356,6 +369,14 @@ def nsis_binary_type(nsis):
 
     return 'yes'
 
+# And any flags we have to give to makensis
+@depends(host)
+def nsis_flags(host):
+    if host.kernel != 'WINNT':
+        return '-nocd'
+    return ''
+
+set_config('MAKENSISU_FLAGS', nsis_flags)
 
 # Fallthrough to autoconf-based configure
 include('build/moz.configure/old.configure')

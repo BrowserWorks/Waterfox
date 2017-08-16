@@ -51,6 +51,7 @@
 
 #ifdef XP_WIN
 #include "mozilla/WindowsVersion.h"
+#include "mozilla/gfx/DeviceManagerDx.h"
 #endif
 
 #include "nsGkAtoms.h"
@@ -67,7 +68,6 @@
 #include "nsUnicodeRange.h"
 #include "nsServiceManagerUtils.h"
 #include "nsTArray.h"
-#include "nsILocaleService.h"
 #include "nsIObserverService.h"
 #include "nsIScreenManager.h"
 #include "FrameMetrics.h"
@@ -89,13 +89,8 @@
 #include "GLContextProvider.h"
 #include "mozilla/gfx/Logging.h"
 
-#if defined(MOZ_WIDGET_GTK)
-#include "gfxPlatformGtk.h" // xxx - for UseFcFontList
-#endif
-
 #ifdef MOZ_WIDGET_ANDROID
 #include "TexturePoolOGL.h"
-#include "mozilla/layers/UiCompositorControllerChild.h"
 #endif
 
 #ifdef USE_SKIA
@@ -258,8 +253,7 @@ CrashStatsLogForwarder::UpdateStringsVector(const std::string& aString)
   MOZ_ASSERT(index >= 0 && index < (int32_t)mMaxCapacity);
   MOZ_ASSERT(index <= mIndex && index <= (int32_t)mBuffer.size());
 
-  bool ignored;
-  double tStamp = (TimeStamp::NowLoRes()-TimeStamp::ProcessCreation(ignored)).ToSecondsSigDigits();
+  double tStamp = (TimeStamp::NowLoRes() - TimeStamp::ProcessCreation()).ToSecondsSigDigits();
 
   // Checking for index >= mBuffer.size(), rather than index == mBuffer.size()
   // just out of paranoia, but we know index <= mBuffer.size().
@@ -581,12 +575,12 @@ static uint32_t GetSkiaGlyphCacheSize()
 {
     // Only increase font cache size on non-android to save memory.
 #if !defined(MOZ_WIDGET_ANDROID)
-    // 10mb as the default cache size on desktop due to talos perf tweaking.
+    // 10mb as the default pref cache size on desktop due to talos perf tweaking.
     // Chromium uses 20mb and skia default uses 2mb.
     // We don't need to change the font cache count since we usually
     // cache thrash due to asian character sets in talos.
     // Only increase memory on the content proces
-    uint32_t cacheSize = 10 * 1024 * 1024;
+    uint32_t cacheSize = gfxPrefs::SkiaContentFontCacheSize() * 1024 * 1024;
     if (mozilla::BrowserTabsRemoteAutostart()) {
       return XRE_IsContentProcess() ? cacheSize : kDefaultGlyphCacheSize;
     }
@@ -625,6 +619,16 @@ gfxPlatform::Init()
       } else {
         gfxVars::SetPDMWMFDisableD3D11Dlls(Preferences::GetCString("media.wmf.disable-d3d11-for-dlls"));
         gfxVars::SetPDMWMFDisableD3D9Dlls(Preferences::GetCString("media.wmf.disable-d3d9-for-dlls"));
+      }
+
+      nsCOMPtr<nsIFile> file;
+      nsresult rv = NS_GetSpecialDirectory(NS_GRE_DIR, getter_AddRefs(file));
+      if (NS_FAILED(rv)) {
+        gfxVars::SetGREDirectory(nsCString());
+      } else {
+        nsAutoCString nativePath;
+        file->GetNativePath(nativePath);
+        gfxVars::SetGREDirectory(nsCString(nativePath));
       }
     }
 
@@ -689,6 +693,7 @@ gfxPlatform::Init()
     #error "No gfxPlatform implementation available"
 #endif
     gPlatform->InitAcceleration();
+    gPlatform->InitWebRenderConfig();
 
     if (gfxConfig::IsEnabled(Feature::GPU_PROCESS)) {
       GPUProcessManager* gpu = GPUProcessManager::Get();
@@ -712,17 +717,9 @@ gfxPlatform::Init()
     gPlatform->ComputeTileSize();
 
     nsresult rv;
-
-    bool usePlatformFontList = true;
-#if defined(MOZ_WIDGET_GTK)
-    usePlatformFontList = gfxPlatformGtk::UseFcFontList();
-#endif
-
-    if (usePlatformFontList) {
-        rv = gfxPlatformFontList::Init();
-        if (NS_FAILED(rv)) {
-            MOZ_CRASH("Could not initialize gfxPlatformFontList");
-        }
+    rv = gfxPlatformFontList::Init();
+    if (NS_FAILED(rv)) {
+        MOZ_CRASH("Could not initialize gfxPlatformFontList");
     }
 
     gPlatform->mScreenReferenceSurface =
@@ -763,7 +760,7 @@ gfxPlatform::Init()
     TexturePoolOGL::Init();
 #endif
 
-    Preferences::RegisterCallbackAndCall(RecordingPrefChanged, "gfx.2d.recording", nullptr);
+    Preferences::RegisterCallbackAndCall(RecordingPrefChanged, "gfx.2d.recording");
 
     CreateCMSOutputProfile();
 
@@ -836,6 +833,18 @@ gfxPlatform::InitMoz2DLogging()
     gfx::Factory::Init(cfg);
 }
 
+/* static */ bool
+gfxPlatform::IsHeadless()
+{
+    static bool initialized = false;
+    static bool headless = false;
+    if (!initialized) {
+      initialized = true;
+      headless = PR_GetEnv("MOZ_HEADLESS");
+    }
+    return headless;
+}
+
 static bool sLayersIPCIsUp = false;
 
 /* static */ void
@@ -859,7 +868,6 @@ gfxPlatform::Shutdown()
     // These may be called before the corresponding subsystems have actually
     // started up. That's OK, they can handle it.
     gfxFontCache::Shutdown();
-    gfxFontGroup::Shutdown();
     gfxGradientCache::Shutdown();
     gfxAlphaBoxBlur::ShutdownBlurCache();
     gfxGraphiteShaper::Shutdown();
@@ -967,9 +975,6 @@ gfxPlatform::ShutdownLayersIPC()
         gfx::VRManagerChild::ShutDown();
         layers::CompositorBridgeChild::ShutDown();
         layers::ImageBridgeChild::ShutDown();
-#if defined(MOZ_WIDGET_ANDROID)
-        layers::UiCompositorControllerChild::Shutdown();
-#endif // defined(MOZ_WIDGET_ANDROID)
         // This has to happen after shutting down the child protocols.
         layers::CompositorThreadHolder::Shutdown();
         if (gfxVars::UseWebRender()) {
@@ -1217,6 +1222,7 @@ gfxPlatform::GetScaledFontForFont(DrawTarget* aTarget, gfxFont *aFont)
   nativeFont.mType = NativeFontType::CAIRO_FONT_FACE;
   nativeFont.mFont = aFont->GetCairoScaledFont();
   return Factory::CreateScaledFontForNativeFont(nativeFont,
+                                                aFont->GetUnscaledFont(),
                                                 aFont->GetAdjustedSize());
 }
 
@@ -1264,6 +1270,9 @@ gfxPlatform::PopulateScreenInfo()
   }
 
   screen->GetColorDepth(&mScreenDepth);
+  if (XRE_IsParentProcess()) {
+    gfxVars::SetScreenDepth(mScreenDepth);
+  }
 
   int left, top;
   screen->GetRect(&left, &top, &mScreenSize.width, &mScreenSize.height);
@@ -1547,6 +1556,20 @@ gfxPlatform::GetStandardFamilyName(const nsAString& aFontName,
     return NS_OK;
 }
 
+nsString
+gfxPlatform::GetDefaultFontName(const nsACString& aLangGroup,
+                                const nsACString& aGenericFamily)
+{
+    gfxFontFamily* fontFamily = gfxPlatformFontList::PlatformFontList()->
+        GetDefaultFontFamily(aLangGroup, aGenericFamily);
+    if (!fontFamily) {
+      return EmptyString();
+    }
+    nsAutoString result;
+    fontFamily->LocalizedName(result);
+    return result;
+}
+
 bool
 gfxPlatform::DownloadableFontsEnabled()
 {
@@ -1704,6 +1727,7 @@ gfxPlatform::InitBackendPrefs(uint32_t aCanvasBitmask, BackendType aCanvasDefaul
 
     if (XRE_IsParentProcess()) {
         gfxVars::SetContentBackend(mContentBackend);
+        gfxVars::SetSoftwareBackend(mSoftwareBackend);
     }
 }
 
@@ -2006,7 +2030,7 @@ static void ShutdownCMS()
 void
 gfxPlatform::SetupClusterBoundaries(gfxTextRun *aTextRun, const char16_t *aString)
 {
-    if (aTextRun->GetFlags() & gfxTextRunFactory::TEXT_IS_8BIT) {
+    if (aTextRun->GetFlags() & gfx::ShapedTextFlags::TEXT_IS_8BIT) {
         // 8-bit text doesn't have clusters.
         // XXX is this true in all languages???
         // behdad: don't think so.  Czech for example IIRC has a
@@ -2062,6 +2086,7 @@ gfxPlatform::FontsPrefsChanged(const char *aPref)
     } else if (!strcmp(GFX_PREF_OPENTYPE_SVG, aPref)) {
         mOpenTypeSVGEnabled = UNINITIALIZED_VALUE;
         gfxFontCache::GetCache()->AgeAllGenerations();
+        gfxFontCache::GetCache()->NotifyGlyphsChanged();
     }
 }
 
@@ -2182,16 +2207,27 @@ gfxPlatform::InitAcceleration()
 
   gfxPrefs::GetSingleton();
 
+  nsCOMPtr<nsIGfxInfo> gfxInfo = services::GetGfxInfo();
+  nsCString discardFailureId;
+  int32_t status;
+
   if (XRE_IsParentProcess()) {
     gfxVars::SetBrowserTabsRemoteAutostart(BrowserTabsRemoteAutostart());
     gfxVars::SetOffscreenFormat(GetOffscreenFormat());
     gfxVars::SetRequiresAcceleratedGLContextForCompositorOGL(
               RequiresAcceleratedGLContextForCompositorOGL());
+#ifdef XP_WIN
+    if (NS_SUCCEEDED(gfxInfo->GetFeatureStatus(nsIGfxInfo::FEATURE_D3D11_KEYED_MUTEX,
+                                               discardFailureId, &status))) {
+      gfxVars::SetAllowD3D11KeyedMutex(status == nsIGfxInfo::FEATURE_STATUS_OK);
+    } else {
+      // If we couldn't properly evaluate the status, err on the side
+      // of caution and give this functionality to the user.
+      gfxCriticalNote << "Cannot evaluate keyed mutex feature status";
+      gfxVars::SetAllowD3D11KeyedMutex(true);
+    }
+#endif
   }
-
-  nsCOMPtr<nsIGfxInfo> gfxInfo = services::GetGfxInfo();
-  nsCString discardFailureId;
-  int32_t status;
 
   if (Preferences::GetBool("media.hardware-video-decoding.enabled", false) &&
 #ifdef XP_WIN
@@ -2200,19 +2236,16 @@ gfxPlatform::InitAcceleration()
       NS_SUCCEEDED(gfxInfo->GetFeatureStatus(nsIGfxInfo::FEATURE_HARDWARE_VIDEO_DECODING,
                                                discardFailureId, &status))) {
       if (status == nsIGfxInfo::FEATURE_STATUS_OK || gfxPrefs::HardwareVideoDecodingForceEnabled()) {
-         sLayersSupportsHardwareVideoDecoding = true;
-    }
+        sLayersSupportsHardwareVideoDecoding = true;
+      }
   }
 
   sLayersAccelerationPrefsInitialized = true;
 
   if (XRE_IsParentProcess()) {
     Preferences::RegisterCallbackAndCall(VideoDecodingFailedChangedCallback,
-                                         "media.hardware-video-decoding.failed",
-                                         nullptr,
-                                         Preferences::ExactMatch);
+                                         "media.hardware-video-decoding.failed");
     InitGPUProcessPrefs();
-    InitWebRenderConfig();
   }
 }
 
@@ -2302,14 +2335,33 @@ gfxPlatform::InitCompositorAccelerationPrefs()
 void
 gfxPlatform::InitWebRenderConfig()
 {
+  bool prefEnabled = Preferences::GetBool("gfx.webrender.enabled", false);
+
+  ScopedGfxFeatureReporter reporter("WR", prefEnabled);
+  if (!XRE_IsParentProcess()) {
+    // The parent process runs through all the real decision-making code
+    // later in this function. For other processes we still want to report
+    // the state of the feature for crash reports.
+    if (gfxVars::UseWebRender()) {
+      reporter.SetSuccessful();
+    }
+    return;
+  }
+
   FeatureState& featureWebRender = gfxConfig::GetFeature(Feature::WEBRENDER);
 
-  featureWebRender.EnableByDefault();
+  featureWebRender.DisableByDefault(
+      FeatureStatus::OptIn,
+      "WebRender is an opt-in feature",
+      NS_LITERAL_CSTRING("FEATURE_FAILURE_DEFAULT_OFF"));
 
-  if (!Preferences::GetBool("gfx.webrender.enabled", false)) {
-    featureWebRender.UserDisable(
-      "User disabled WebRender",
-      NS_LITERAL_CSTRING("FEATURE_FAILURE_WEBRENDER_DISABLED"));
+  if (prefEnabled) {
+    featureWebRender.UserEnable("Enabled by pref");
+  } else {
+    const char* env = PR_GetEnv("MOZ_WEBRENDER");
+    if (env && *env == '1') {
+      featureWebRender.UserEnable("Enabled by envvar");
+    }
   }
 
   // WebRender relies on the GPU process when on Windows
@@ -2329,15 +2381,31 @@ gfxPlatform::InitWebRenderConfig()
       NS_LITERAL_CSTRING("FEATURE_FAILURE_SAFE_MODE"));
   }
 
-#ifndef MOZ_ENABLE_WEBRENDER
+#ifndef MOZ_BUILD_WEBRENDER
   featureWebRender.ForceDisable(
     FeatureStatus::Unavailable,
     "Build doesn't include WebRender",
     NS_LITERAL_CSTRING("FEATURE_FAILURE_NO_WEBRENDER"));
 #endif
 
+#ifdef XP_WIN
+  if (Preferences::GetBool("gfx.webrender.force-angle", false)) {
+    if (!gfxConfig::IsEnabled(Feature::D3D11_HW_ANGLE)) {
+      featureWebRender.ForceDisable(
+        FeatureStatus::Unavailable,
+        "ANGLE is disabled",
+        NS_LITERAL_CSTRING("FEATURE_FAILURE_ANGLE_DISABLED"));
+    } else {
+      gfxVars::SetUseWebRenderANGLE(gfxConfig::IsEnabled(Feature::WEBRENDER));
+    }
+  }
+#endif
+
   // gfxFeature is not usable in the GPU process, so we use gfxVars to transmit this feature
-  gfxVars::SetUseWebRender(gfxConfig::IsEnabled(Feature::WEBRENDER));
+  if (gfxConfig::IsEnabled(Feature::WEBRENDER)) {
+    gfxVars::SetUseWebRender(true);
+    reporter.SetSuccessful();
+  }
 }
 
 bool
@@ -2379,13 +2447,11 @@ already_AddRefed<ScaledFont>
 gfxPlatform::GetScaledFontForFontWithCairoSkia(DrawTarget* aTarget, gfxFont* aFont)
 {
     NativeFont nativeFont;
-    if (aTarget->GetBackendType() == BackendType::CAIRO || aTarget->GetBackendType() == BackendType::SKIA) {
-        nativeFont.mType = NativeFontType::CAIRO_FONT_FACE;
-        nativeFont.mFont = aFont->GetCairoScaledFont();
-        return Factory::CreateScaledFontForNativeFont(nativeFont, aFont->GetAdjustedSize());
-    }
-
-    return nullptr;
+    nativeFont.mType = NativeFontType::CAIRO_FONT_FACE;
+    nativeFont.mFont = aFont->GetCairoScaledFont();
+    return Factory::CreateScaledFontForNativeFont(nativeFont,
+                                                  aFont->GetUnscaledFont(),
+                                                  aFont->GetAdjustedSize());
 }
 
 /* static */ bool

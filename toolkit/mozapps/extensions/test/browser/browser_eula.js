@@ -16,7 +16,7 @@ function test() {
   Services.prefs.setIntPref(PREF_SEARCH_MAXRESULTS, 15);
   Services.prefs.setCharPref("extensions.getAddons.search.url", TESTROOT + "browser_eula.xml");
 
-  open_manager(null, function(aWindow) {
+  open_manager("addons://list/extension", function(aWindow) {
     gManagerWindow = aWindow;
     run_next_test();
   });
@@ -52,7 +52,7 @@ function installSearchResult(aCallback) {
     item.mInstall.addListener({
       onInstallEnded() {
         executeSoon(aCallback);
-      }
+      },
     });
   });
 }

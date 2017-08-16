@@ -16,8 +16,6 @@ XPCOMUtils.defineLazyModuleGetter(this, "E10SUtils",
                                   "resource:///modules/E10SUtils.jsm");
 XPCOMUtils.defineLazyModuleGetter(this, "ExtensionParent",
                                   "resource://gre/modules/ExtensionParent.jsm");
-XPCOMUtils.defineLazyModuleGetter(this, "Task",
-                                  "resource://gre/modules/Task.jsm");
 XPCOMUtils.defineLazyModuleGetter(this, "setTimeout",
                                   "resource://gre/modules/Timer.jsm");
 
@@ -52,15 +50,6 @@ function promisePopupShown(popup) {
   });
 }
 
-XPCOMUtils.defineLazyGetter(this, "popupStylesheets", () => {
-  let stylesheets = ["chrome://browser/content/extension.css"];
-
-  if (AppConstants.platform === "macosx") {
-    stylesheets.push("chrome://browser/content/extension-mac.css");
-  }
-  return stylesheets;
-});
-
 XPCOMUtils.defineLazyGetter(this, "standaloneStylesheets", () => {
   let stylesheets = [];
 
@@ -74,7 +63,7 @@ XPCOMUtils.defineLazyGetter(this, "standaloneStylesheets", () => {
 });
 
 class BasePopup {
-  constructor(extension, viewNode, popupURL, browserStyle, fixedWidth = false) {
+  constructor(extension, viewNode, popupURL, browserStyle, fixedWidth = false, blockParser = false) {
     this.extension = extension;
     this.popupURL = popupURL;
     this.viewNode = viewNode;
@@ -82,6 +71,7 @@ class BasePopup {
     this.window = viewNode.ownerGlobal;
     this.destroyed = false;
     this.fixedWidth = fixedWidth;
+    this.blockParser = blockParser;
 
     extension.callOnClose(this);
 
@@ -117,21 +107,28 @@ class BasePopup {
 
     this.destroyed = true;
     this.browserLoadedDeferred.reject(new Error("Popup destroyed"));
+    // Ignore unhandled rejections if the "attach" method is not called.
+    this.browserLoaded.catch(() => {});
+
+    BasePopup.instances.get(this.window).delete(this.extension);
+
     return this.browserReady.then(() => {
-      this.destroyBrowser(this.browser, true);
-      this.browser.remove();
+      if (this.browser) {
+        this.destroyBrowser(this.browser, true);
+        this.browser.remove();
+      }
 
       if (this.viewNode) {
         this.viewNode.removeEventListener(this.DESTROY_EVENT, this);
         this.viewNode.style.maxHeight = "";
       }
 
-      if (this.panel) {
-        this.panel.style.removeProperty("--arrowpanel-background");
-        this.panel.style.removeProperty("--panel-arrow-image-vertical");
+      let {panel} = this;
+      if (panel) {
+        panel.style.removeProperty("--arrowpanel-background");
+        panel.style.removeProperty("--panel-arrow-image-vertical");
+        panel.removeAttribute("remote");
       }
-
-      BasePopup.instances.get(this.window).delete(this.extension);
 
       this.browser = null;
       this.viewNode = null;
@@ -164,7 +161,7 @@ class BasePopup {
     let sheets = [];
 
     if (this.browserStyle) {
-      sheets.push(...popupStylesheets);
+      sheets.push(...ExtensionParent.extensionStylesheets);
     }
     if (!this.fixedWidth) {
       sheets.push(...standaloneStylesheets);
@@ -229,6 +226,8 @@ class BasePopup {
     browser.setAttribute("class", "webextension-popup-browser");
     browser.setAttribute("webextension-view-type", "popup");
     browser.setAttribute("tooltip", "aHTMLTooltip");
+    browser.setAttribute("contextmenu", "contentAreaContextMenu");
+    browser.setAttribute("autocompletepopup", "PopupAutoComplete");
 
     if (this.extension.remote) {
       browser.setAttribute("remote", "true");
@@ -282,11 +281,15 @@ class BasePopup {
       setupBrowser(browser);
       let mm = browser.messageManager;
 
+      // Sets the context information for context menus.
+      mm.loadFrameScript("chrome://browser/content/content.js", true);
+
       mm.loadFrameScript(
         "chrome://extensions/content/ext-browser-content.js", false);
 
       mm.sendAsyncMessage("Extension:InitBrowser", {
         allowScriptsToClose: true,
+        blockParser: this.blockParser,
         fixedWidth: this.fixedWidth,
         maxWidth: 800,
         maxHeight: 600,
@@ -294,6 +297,12 @@ class BasePopup {
       });
 
       browser.loadURI(popupURL);
+    });
+  }
+
+  unblockParser() {
+    this.browserReady.then(browser => {
+      this.browser.messageManager.sendAsyncMessage("Extension:UnblockParser");
     });
   }
 
@@ -364,6 +373,9 @@ class PanelPopup extends BasePopup {
     panel.setAttribute("tabspecific", "true");
     panel.setAttribute("type", "arrow");
     panel.setAttribute("role", "group");
+    if (extension.remote) {
+      panel.setAttribute("remote", "true");
+    }
 
     document.getElementById("mainPopupSet").appendChild(panel);
 
@@ -401,7 +413,7 @@ class PanelPopup extends BasePopup {
 }
 
 class ViewPopup extends BasePopup {
-  constructor(extension, window, popupURL, browserStyle, fixedWidth) {
+  constructor(extension, window, popupURL, browserStyle, fixedWidth, blockParser) {
     let document = window.document;
 
     // Create a temporary panel to hold the browser while it pre-loads its
@@ -411,7 +423,7 @@ class ViewPopup extends BasePopup {
     panel.setAttribute("type", "arrow");
     document.getElementById("mainPopupSet").appendChild(panel);
 
-    super(extension, panel, popupURL, browserStyle, fixedWidth);
+    super(extension, panel, popupURL, browserStyle, fixedWidth, blockParser);
 
     this.ignoreResizes = true;
 
@@ -433,90 +445,92 @@ class ViewPopup extends BasePopup {
    *        browser was destroyed before it was fully loaded, and the popup
    *        should be closed, or `true` otherwise.
    */
-  attach(viewNode) {
-    return Task.spawn(function* () {
-      this.viewNode = viewNode;
-      this.viewNode.addEventListener(this.DESTROY_EVENT, this);
+  async attach(viewNode) {
+    this.viewNode = viewNode;
+    this.viewNode.addEventListener(this.DESTROY_EVENT, this);
 
-      // Wait until the browser element is fully initialized, and give it at least
-      // a short grace period to finish loading its initial content, if necessary.
-      //
-      // In practice, the browser that was created by the mousdown handler should
-      // nearly always be ready by this point.
-      yield Promise.all([
-        this.browserReady,
-        Promise.race([
-          // This promise may be rejected if the popup calls window.close()
-          // before it has fully loaded.
-          this.browserLoaded.catch(() => {}),
-          new Promise(resolve => setTimeout(resolve, POPUP_LOAD_TIMEOUT_MS)),
-        ]),
-      ]);
+    if (this.extension.remote) {
+      this.panel.setAttribute("remote", "true");
+    }
 
-      if (!this.destroyed && !this.panel) {
-        this.destroy();
-      }
+    // Wait until the browser element is fully initialized, and give it at least
+    // a short grace period to finish loading its initial content, if necessary.
+    //
+    // In practice, the browser that was created by the mousdown handler should
+    // nearly always be ready by this point.
+    await Promise.all([
+      this.browserReady,
+      Promise.race([
+        // This promise may be rejected if the popup calls window.close()
+        // before it has fully loaded.
+        this.browserLoaded.catch(() => {}),
+        new Promise(resolve => setTimeout(resolve, POPUP_LOAD_TIMEOUT_MS)),
+      ]),
+    ]);
 
-      if (this.destroyed) {
-        CustomizableUI.hidePanelForNode(viewNode);
-        return false;
-      }
+    if (!this.destroyed && !this.panel) {
+      this.destroy();
+    }
 
-      this.attached = true;
+    if (this.destroyed) {
+      CustomizableUI.hidePanelForNode(viewNode);
+      return false;
+    }
+
+    this.attached = true;
 
 
-      // Store the initial height of the view, so that we never resize menu panel
-      // sub-views smaller than the initial height of the menu.
-      this.viewHeight = this.viewNode.boxObject.height;
+    // Store the initial height of the view, so that we never resize menu panel
+    // sub-views smaller than the initial height of the menu.
+    this.viewHeight = this.viewNode.boxObject.height;
 
-      // Calculate the extra height available on the screen above and below the
-      // menu panel. Use that to calculate the how much the sub-view may grow.
-      let popupRect = this.panel.getBoundingClientRect();
+    // Calculate the extra height available on the screen above and below the
+    // menu panel. Use that to calculate the how much the sub-view may grow.
+    let popupRect = this.panel.getBoundingClientRect();
 
-      this.setBackground(this.background);
+    this.setBackground(this.background);
 
-      let win = this.window;
-      let popupBottom = win.mozInnerScreenY + popupRect.bottom;
-      let popupTop = win.mozInnerScreenY + popupRect.top;
+    let win = this.window;
+    let popupBottom = win.mozInnerScreenY + popupRect.bottom;
+    let popupTop = win.mozInnerScreenY + popupRect.top;
 
-      let screenBottom = win.screen.availTop + win.screen.availHeight;
-      this.extraHeight = {
-        bottom: Math.max(0, screenBottom - popupBottom),
-        top:  Math.max(0, popupTop - win.screen.availTop),
-      };
+    let screenBottom = win.screen.availTop + win.screen.availHeight;
+    this.extraHeight = {
+      bottom: Math.max(0, screenBottom - popupBottom),
+      top:  Math.max(0, popupTop - win.screen.availTop),
+    };
 
-      // Create a new browser in the real popup.
-      let browser = this.browser;
-      yield this.createBrowser(this.viewNode);
+    // Create a new browser in the real popup.
+    let browser = this.browser;
+    await this.createBrowser(this.viewNode);
 
-      this.ignoreResizes = false;
+    this.ignoreResizes = false;
 
-      this.browser.swapDocShells(browser);
-      this.destroyBrowser(browser);
+    this.browser.swapDocShells(browser);
+    this.destroyBrowser(browser);
 
-      if (this.dimensions && !this.fixedWidth) {
-        this.resizeBrowser(this.dimensions);
-      }
+    if (this.dimensions && !this.fixedWidth) {
+      this.resizeBrowser(this.dimensions);
+    }
 
-      this.tempPanel.remove();
-      this.tempPanel = null;
+    this.tempPanel.remove();
+    this.tempPanel = null;
 
-      this.shown = true;
+    this.shown = true;
 
-      if (this.destroyed) {
-        this.closePopup();
-        this.destroy();
-        return false;
-      }
+    if (this.destroyed) {
+      this.closePopup();
+      this.destroy();
+      return false;
+    }
 
-      let event = new this.window.CustomEvent("WebExtPopupLoaded", {
-        bubbles: true,
-        detail: {extension: this.extension},
-      });
-      this.browser.dispatchEvent(event);
+    let event = new this.window.CustomEvent("WebExtPopupLoaded", {
+      bubbles: true,
+      detail: {extension: this.extension},
+    });
+    this.browser.dispatchEvent(event);
 
-      return true;
-    }.bind(this));
+    return true;
   }
 
   destroy() {

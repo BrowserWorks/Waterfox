@@ -13,6 +13,7 @@ this.EXPORTED_SYMBOLS = ["Doctor"];
 
 const Cu = Components.utils;
 
+Cu.import("resource://gre/modules/XPCOMUtils.jsm");
 Cu.import("resource://gre/modules/Services.jsm");
 Cu.import("resource://gre/modules/Log.jsm");
 Cu.import("resource://services-common/async.js");
@@ -201,6 +202,10 @@ this.Doctor = {
     let requestor = this._getRepairRequestor(engine.name);
     let didStart = false;
     if (requestor) {
+      if (requestor.tryServerOnlyRepairs(validationResults)) {
+        return; // TODO: It would be nice if we could request a validation to be
+                // done on next sync.
+      }
       didStart = requestor.startRepairs(validationResults, flowID);
     }
     log.info(`${didStart ? "did" : "didn't"} start a repair of ${engine.name} with flowID ${flowID}`);

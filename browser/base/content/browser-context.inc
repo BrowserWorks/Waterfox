@@ -21,13 +21,13 @@
                   onclick="checkForMiddleClick(this, event);"/>
         <menuitem id="context-reload"
                   class="menuitem-iconic"
-                  tooltiptext="&reloadButton.tooltip;"
+                  tooltip="dynamic-shortcut-tooltip"
                   aria-label="&reloadCmd.label;"
                   oncommand="gContextMenu.reload(event);"
                   onclick="checkForMiddleClick(this, event);"/>
         <menuitem id="context-stop"
                   class="menuitem-iconic"
-                  tooltiptext="&stopButton.tooltip;"
+                  tooltip="dynamic-shortcut-tooltip"
                   aria-label="&stopCmd.label;"
                   command="Browser:Stop"/>
         <menuitem id="context-bookmarkpage"
@@ -285,7 +285,7 @@
                 accesskey="&sendPageToDevice.accesskey;"
                 hidden="true">
         <menupopup id="context-sendpagetodevice-popup"
-                   onpopupshowing="(() => { let browser = gBrowser || getPanelBrowser(); gFxAccounts.populateSendTabToDevicesMenu(event.target, browser.currentURI.spec, browser.contentTitle); })()"/>
+                   onpopupshowing="(() => { let browser = gBrowser || getPanelBrowser(); gSync.populateSendTabToDevicesMenu(event.target, browser.currentURI.spec, browser.contentTitle); })()"/>
       </menu>
       <menuseparator id="context-sep-viewbgimage"/>
       <menuitem id="context-viewbgimage"
@@ -332,7 +332,7 @@
                 accesskey="&sendLinkToDevice.accesskey;"
                 hidden="true">
         <menupopup id="context-sendlinktodevice-popup"
-                   onpopupshowing="gFxAccounts.populateSendTabToDevicesMenu(event.target, gContextMenu.linkURL, gContextMenu.linkTextStr);"/>
+                   onpopupshowing="gSync.populateSendTabToDevicesMenu(event.target, gContextMenu.linkURL, gContextMenu.linkTextStr);"/>
       </menu>
       <menuitem id="context-shareselect"
                 label="&shareSelect.label;"

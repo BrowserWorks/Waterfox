@@ -39,7 +39,11 @@ public:
                         uint32_t aNumCharsToDelete,
                         RangeUpdater* aRangeUpdater);
 
-  nsresult Init();
+  /**
+   * CanDoIt() returns true if there are enough members and can modify the
+   * text.  Otherwise, false.
+   */
+  bool CanDoIt() const;
 
   NS_DECL_CYCLE_COLLECTION_CLASS_INHERITED(DeleteTextTransaction,
                                            EditTransactionBase)
@@ -53,7 +57,7 @@ public:
 
 protected:
   // The provider of basic editing operations.
-  EditorBase& mEditorBase;
+  RefPtr<EditorBase> mEditorBase;
 
   // The CharacterData node to operate upon.
   RefPtr<nsGenericDOMDataNode> mCharData;

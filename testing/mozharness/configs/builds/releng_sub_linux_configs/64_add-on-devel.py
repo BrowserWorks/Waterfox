@@ -10,7 +10,6 @@ config = {
         'upload-files',
 #        'sendchange',
         'check-test',
-        # 'generate-build-stats',
         # 'update',
     ],
     'stage_platform': 'linux64-add-on-devel',
@@ -22,7 +21,6 @@ config = {
     #### 64 bit build specific #####
     'env': {
         'MOZBUILD_STATE_PATH': os.path.join(os.getcwd(), '.mozbuild'),
-        'MOZ_AUTOMATION': '1',
         'HG_SHARE_BASE_DIR': '/builds/hg-shared',
         'MOZ_OBJDIR': 'obj-firefox',
         'TINDERBOX_OUTPUT': '1',

@@ -15,6 +15,7 @@
 #include "mozilla/dom/battery/Types.h"
 #include "mozilla/dom/network/Types.h"
 #include "mozilla/dom/ScreenOrientation.h"
+#include "mozilla/fallback/FallbackScreenConfiguration.h"
 #include "mozilla/Observer.h"
 #include "mozilla/Unused.h"
 #include "nsAutoPtr.h"
@@ -118,7 +119,7 @@ DisableScreenConfigurationNotifications()
 void
 GetCurrentScreenConfiguration(ScreenConfiguration* aScreenConfiguration)
 {
-  Hal()->SendGetCurrentScreenConfiguration(aScreenConfiguration);
+  fallback::GetCurrentScreenConfiguration(aScreenConfiguration);
 }
 
 bool
@@ -348,9 +349,16 @@ SetAlarm(int32_t aSeconds, int32_t aNanoseconds)
 }
 
 void
-SetProcessPriority(int aPid, ProcessPriority aPriority, uint32_t aLRU)
+SetProcessPriority(int aPid, ProcessPriority aPriority)
 {
   NS_RUNTIMEABORT("Only the main process may set processes' priorities.");
+}
+
+bool
+SetProcessPrioritySupported()
+{
+  NS_RUNTIMEABORT("Only the main process may call SetProcessPrioritySupported().");
+  return false;
 }
 
 void
@@ -533,12 +541,6 @@ public:
   virtual mozilla::ipc::IPCResult
   RecvDisableScreenConfigurationNotifications() override {
     hal::UnregisterScreenConfigurationObserver(this);
-    return IPC_OK();
-  }
-
-  virtual mozilla::ipc::IPCResult
-  RecvGetCurrentScreenConfiguration(ScreenConfiguration* aScreenConfiguration) override {
-    hal::GetCurrentScreenConfiguration(aScreenConfiguration);
     return IPC_OK();
   }
 

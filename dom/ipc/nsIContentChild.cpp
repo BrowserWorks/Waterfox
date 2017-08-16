@@ -11,12 +11,16 @@
 #include "mozilla/dom/File.h"
 #include "mozilla/dom/PermissionMessageUtils.h"
 #include "mozilla/dom/TabChild.h"
-#include "mozilla/dom/ipc/BlobChild.h"
+#include "mozilla/dom/TabGroup.h"
 #include "mozilla/dom/ipc/StructuredCloneData.h"
 #include "mozilla/ipc/FileDescriptorSetChild.h"
 #include "mozilla/ipc/InputStreamUtils.h"
-#include "mozilla/ipc/SendStream.h"
-#include "mozilla/dom/ipc/MemoryStreamChild.h"
+#include "mozilla/ipc/IPCStreamAlloc.h"
+#include "mozilla/ipc/IPCStreamDestination.h"
+#include "mozilla/ipc/IPCStreamSource.h"
+#include "mozilla/ipc/PChildToParentStreamChild.h"
+#include "mozilla/ipc/PParentToChildStreamChild.h"
+#include "mozilla/dom/ipc/IPCBlobInputStreamChild.h"
 
 #include "nsPrintfCString.h"
 #include "xpcpublic.h"
@@ -42,6 +46,7 @@ nsIContentChild::DeallocPJavaScriptChild(PJavaScriptChild* aChild)
 
 PBrowserChild*
 nsIContentChild::AllocPBrowserChild(const TabId& aTabId,
+                                    const TabId& aSameTabGroupAs,
                                     const IPCTabContext& aContext,
                                     const uint32_t& aChromeFlags,
                                     const ContentParentId& aCpID,
@@ -60,7 +65,8 @@ nsIContentChild::AllocPBrowserChild(const TabId& aTabId,
   }
 
   RefPtr<TabChild> child =
-    TabChild::Create(this, aTabId, tc.GetTabContext(), aChromeFlags);
+    TabChild::Create(this, aTabId, aSameTabGroupAs,
+                     tc.GetTabContext(), aChromeFlags);
 
   // The ref here is released in DeallocPBrowserChild.
   return child.forget().take();
@@ -77,6 +83,7 @@ nsIContentChild::DeallocPBrowserChild(PBrowserChild* aIframe)
 mozilla::ipc::IPCResult
 nsIContentChild::RecvPBrowserConstructor(PBrowserChild* aActor,
                                          const TabId& aTabId,
+                                         const TabId& aSameTabGroupAs,
                                          const IPCTabContext& aContext,
                                          const uint32_t& aChromeFlags,
                                          const ContentParentId& aCpID,
@@ -99,64 +106,47 @@ nsIContentChild::RecvPBrowserConstructor(PBrowserChild* aActor,
   return IPC_OK();
 }
 
-PMemoryStreamChild*
-nsIContentChild::AllocPMemoryStreamChild(const uint64_t& aSize)
+PIPCBlobInputStreamChild*
+nsIContentChild::AllocPIPCBlobInputStreamChild(const nsID& aID,
+                                               const uint64_t& aSize)
 {
-  return new MemoryStreamChild();
+  // IPCBlobInputStreamChild is refcounted. Here it's created and in
+  // DeallocPIPCBlobInputStreamChild is released.
+
+  RefPtr<IPCBlobInputStreamChild> actor =
+    new IPCBlobInputStreamChild(aID, aSize);
+  return actor.forget().take();
 }
 
 bool
-nsIContentChild::DeallocPMemoryStreamChild(PMemoryStreamChild* aActor)
+nsIContentChild::DeallocPIPCBlobInputStreamChild(PIPCBlobInputStreamChild* aActor)
+{
+  RefPtr<IPCBlobInputStreamChild> actor =
+    dont_AddRef(static_cast<IPCBlobInputStreamChild*>(aActor));
+  return true;
+}
+
+PChildToParentStreamChild*
+nsIContentChild::AllocPChildToParentStreamChild()
+{
+  MOZ_CRASH("PChildToParentStreamChild actors should be manually constructed!");
+}
+
+bool
+nsIContentChild::DeallocPChildToParentStreamChild(PChildToParentStreamChild* aActor)
 {
   delete aActor;
   return true;
 }
 
-PBlobChild*
-nsIContentChild::AllocPBlobChild(const BlobConstructorParams& aParams)
+PParentToChildStreamChild*
+nsIContentChild::AllocPParentToChildStreamChild()
 {
-  return BlobChild::Create(this, aParams);
+  return mozilla::ipc::AllocPParentToChildStreamChild();
 }
 
 bool
-nsIContentChild::DeallocPBlobChild(PBlobChild* aActor)
-{
-  BlobChild::Destroy(aActor);
-  return true;
-}
-
-BlobChild*
-nsIContentChild::GetOrCreateActorForBlob(Blob* aBlob)
-{
-  MOZ_ASSERT(NS_IsMainThread());
-  MOZ_ASSERT(aBlob);
-
-  RefPtr<BlobImpl> blobImpl = aBlob->Impl();
-  MOZ_ASSERT(blobImpl);
-
-  return GetOrCreateActorForBlobImpl(blobImpl);
-}
-
-BlobChild*
-nsIContentChild::GetOrCreateActorForBlobImpl(BlobImpl* aImpl)
-{
-  MOZ_ASSERT(NS_IsMainThread());
-  MOZ_ASSERT(aImpl);
-
-  BlobChild* actor = BlobChild::GetOrCreate(this, aImpl);
-  NS_ENSURE_TRUE(actor, nullptr);
-
-  return actor;
-}
-
-PSendStreamChild*
-nsIContentChild::AllocPSendStreamChild()
-{
-  MOZ_CRASH("PSendStreamChild actors should be manually constructed!");
-}
-
-bool
-nsIContentChild::DeallocPSendStreamChild(PSendStreamChild* aActor)
+nsIContentChild::DeallocPParentToChildStreamChild(PParentToChildStreamChild* aActor)
 {
   delete aActor;
   return true;
@@ -181,6 +171,11 @@ nsIContentChild::RecvAsyncMessage(const nsString& aMsg,
                                   const IPC::Principal& aPrincipal,
                                   const ClonedMessageData& aData)
 {
+  NS_LossyConvertUTF16toASCII messageNameCStr(aMsg);
+  PROFILER_LABEL_DYNAMIC("nsIContentChild", "RecvAsyncMessage",
+                         js::ProfileEntry::Category::EVENTS,
+                         messageNameCStr.get());
+
   CrossProcessCpowHolder cpows(this, aCpows);
   RefPtr<nsFrameMessageManager> cpm = nsFrameMessageManager::GetChildProcessManager();
   if (cpm) {
@@ -192,6 +187,44 @@ nsIContentChild::RecvAsyncMessage(const nsString& aMsg,
   }
   return IPC_OK();
 }
+
+/* static */
+already_AddRefed<nsIEventTarget>
+nsIContentChild::GetConstructedEventTarget(const IPC::Message& aMsg)
+{
+  ActorHandle handle;
+  TabId tabId, sameTabGroupAs;
+  PickleIterator iter(aMsg);
+  if (!IPC::ReadParam(&aMsg, &iter, &handle)) {
+    return nullptr;
+  }
+  aMsg.IgnoreSentinel(&iter);
+  if (!IPC::ReadParam(&aMsg, &iter, &tabId)) {
+    return nullptr;
+  }
+  aMsg.IgnoreSentinel(&iter);
+  if (!IPC::ReadParam(&aMsg, &iter, &sameTabGroupAs)) {
+    return nullptr;
+  }
+
+  // If sameTabGroupAs is non-zero, then the new tab will be in the same
+  // TabGroup as a previously created tab. Rather than try to find the
+  // previously created tab (whose constructor message may not even have been
+  // processed yet, in theory) and look up its event target, we just use the
+  // default event target. This means that runnables for this tab will not be
+  // labeled. However, this path is only taken for print preview and view
+  // source, which are not performance-sensitive.
+  if (sameTabGroupAs) {
+    return nullptr;
+  }
+
+  // If the request for a new TabChild is coming from the parent process, then
+  // there is no opener. Therefore, we create a fresh TabGroup.
+  RefPtr<TabGroup> tabGroup = new TabGroup();
+  nsCOMPtr<nsIEventTarget> target = tabGroup->EventTargetFor(TaskCategory::Other);
+  return target.forget();
+}
+
 
 } // namespace dom
 } // namespace mozilla

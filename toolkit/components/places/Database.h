@@ -18,7 +18,7 @@
 
 // This is the schema version. Update it at any schema change and add a
 // corresponding migrateVxx method below.
-#define DATABASE_SCHEMA_VERSION 36
+#define DATABASE_SCHEMA_VERSION 37
 
 // Fired after Places inited.
 #define TOPIC_PLACES_INIT_COMPLETE "places-init-complete"
@@ -197,8 +197,10 @@ protected:
   /**
    * Finalizes the cached statements and closes the database connection.
    * A TOPIC_PLACES_CONNECTION_CLOSED notification is fired when done.
+   *
+   * @param Whether database init succeeded.
    */
-  void Shutdown();
+  void Shutdown(bool aInitSucceeded);
 
   bool IsShutdownStarted() const;
 
@@ -216,6 +218,14 @@ protected:
                             bool* aNewDatabaseCreated);
 
   /**
+   * Ensure the favicons database file exists.
+   *
+   * @param aStorage
+   *        mozStorage service instance.
+   */
+  nsresult EnsureFaviconsDatabaseFile(nsCOMPtr<mozIStorageService>& aStorage);
+
+  /**
    * Creates a database backup and replaces the original file with a new
    * one.
    *
@@ -225,13 +235,16 @@ protected:
   nsresult BackupAndReplaceDatabaseFile(nsCOMPtr<mozIStorageService>& aStorage);
 
   /**
-   * This should be used as a last resort in case the database is corrupt and
-   * there's no way to fix it in-place.
+   * Set up the connection environment through PRAGMAs.
+   * Will return NS_ERROR_FILE_CORRUPTED if any critical setting fails.
+   *
+   * @param aStorage
+   *        mozStorage service instance.
    */
-  nsresult ForceCrashAndReplaceDatabase(const nsCString& aReason);
+  nsresult SetupDatabaseConnection(nsCOMPtr<mozIStorageService>& aStorage);
 
   /**
-   * Initializes the database.  This performs any necessary migrations for the
+   * Initializes the schema.  This performs any necessary migrations for the
    * database.  All migration is done inside a transaction that is rolled back
    * if any error occurs.
    * @param aDatabaseMigrated
@@ -278,6 +291,7 @@ protected:
   nsresult MigrateV34Up();
   nsresult MigrateV35Up();
   nsresult MigrateV36Up();
+  nsresult MigrateV37Up();
 
   nsresult UpdateBookmarkRootTitles();
 

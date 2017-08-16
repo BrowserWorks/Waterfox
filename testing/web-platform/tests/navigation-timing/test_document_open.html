@@ -7,6 +7,7 @@
 <link rel="help" href="http://www.w3.org/TR/navigation-timing/#sec-navigation-timing-interface"/>
 <script src="/resources/testharness.js"></script>
 <script src="/resources/testharnessreport.js"></script>
+<script src="/common/performance-timeline-utils.js"></script>
 <script src="resources/webperftestharness.js"></script>
 <script>
 setup({explicit_done: true});
@@ -19,7 +20,7 @@ var didOpen = false;
 
 function onload_test() {
   if (!didOpen) {
-    setTimeout(testTimingWithDocumentOpen, 0);
+    step_timeout(testTimingWithDocumentOpen, 0);
     didOpen = true;
   }
 }
@@ -52,7 +53,7 @@ function testTimingWithDocumentOpen() {
   subdocument.write('</html>');
   subdocument.close();
 
-  setTimeout(function() {
+  step_timeout(function() {
     var timing = subcontentWindow.performance.timing;
     for (var i in timingAttributes) {
       test_equals(timing[timingAttributes[i]],

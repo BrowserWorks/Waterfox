@@ -6,7 +6,7 @@
 #ifndef mozilla_windowsdllblocklist_h
 #define mozilla_windowsdllblocklist_h
 
-#if defined(_MSC_VER) && (defined(_M_IX86) || defined(_M_X64))
+#if (defined(_MSC_VER) || defined(__MINGW32__))  && (defined(_M_IX86) || defined(_M_X64))
 
 #include <windows.h>
 #include "mozilla/Attributes.h"
@@ -14,7 +14,13 @@
 
 #define HAS_DLL_BLOCKLIST
 
-MFBT_API void DllBlocklist_Initialize();
+enum DllBlocklistInitFlags
+{
+  eDllBlocklistInitFlagDefault = 0,
+  eDllBlocklistInitFlagIsChildProcess = 1
+};
+
+MFBT_API void DllBlocklist_Initialize(uint32_t aInitFlags = eDllBlocklistInitFlagDefault);
 MFBT_API void DllBlocklist_WriteNotes(HANDLE file);
 MFBT_API bool DllBlocklist_CheckStatus();
 

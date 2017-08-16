@@ -19,8 +19,7 @@ def load_manifest(path):
 
 def save_manifest(manifest, path):
     with open(path, 'w') as f:
-        json.dump(manifest, f,
-                  indent=0, separators=(',', ': '))
+        json.dump(manifest, f, indent=2, separators=(',', ': '))
         f.write('\n')
 
 
@@ -59,8 +58,6 @@ def update_manifest(source_manifest, target, target_filename):
 '''Mapping from targets to target filenames.'''
 TARGETS = {
         'x86_64-unknown-linux-gnu-repack': [
-            'b2g/dev/config/tooltool-manifests/linux64/hazard.manifest',
-            'b2g/dev/config/tooltool-manifests/linux64/releng.manifest',
             'browser/config/tooltool-manifests/linux32/releng.manifest',
             'browser/config/tooltool-manifests/linux64/asan.manifest',
             'browser/config/tooltool-manifests/linux64/clang.manifest',

@@ -277,6 +277,11 @@ function handleRequest(req, res) {
     content = '<head> <script src="push.js"/></head>body text';
   }
 
+  else if (u.pathname === "/push.js") {
+    content = '// comments';
+    res.setHeader("pushed", "no");
+  }
+
   else if (u.pathname === "/push2") {
     push = res.push('/push2.js');
     push.writeHead(200, {
@@ -339,14 +344,15 @@ function handleRequest(req, res) {
 
     push3 = res.push(
         { hostname: 'localhost:' + serverPort, port: serverPort, path : '/pushapi1/3', method : 'GET',
-          headers: {'x-pushed-request': 'true'}});
+          headers: {'x-pushed-request': 'true', 'Accept-Encoding' : 'br'}});
     push3.writeHead(200, {
       'pushed' : 'yes',
-      'content-length' : 1,
+      'content-length' : 6,
       'subresource' : '3',
+      'content-encoding' : 'br',
       'X-Connection-Http2': 'yes'
     });
-    push3.end('3');
+    push3.end(new Buffer([0x8b, 0x00, 0x80, 0x33, 0x0a, 0x03])); // '3\n'
 
     content = '0';
   }
@@ -500,9 +506,9 @@ function handleRequest(req, res) {
       res.writeHead(400);
       res.end("WHAT?");
       return;
-   }
-   // test the alt svc frame for use with altsvc2
-   res.altsvc("foo.example.com", serverPort, "h2", 3600, req.headers['x-redirect-origin']);
+    }
+    // test the alt svc frame for use with altsvc2
+    res.altsvc("foo.example.com", serverPort, "h2", 3600, req.headers['x-redirect-origin']);
   }
 
   else if (u.pathname === "/altsvc2") {
@@ -723,20 +729,82 @@ function handleRequest(req, res) {
 
   // for use with test_immutable.js
   else if (u.pathname === "/immutable-test-without-attribute") {
-     res.setHeader('Cache-Control', 'max-age=100000');
-     res.setHeader('Etag', '1');
-     if (req.headers["if-none-match"]) {
-       res.setHeader("x-conditional", "true");
-     }
+    res.setHeader('Cache-Control', 'max-age=100000');
+    res.setHeader('Etag', '1');
+    if (req.headers["if-none-match"]) {
+      res.setHeader("x-conditional", "true");
+    }
     // default response from here
   }
   else if (u.pathname === "/immutable-test-with-attribute") {
     res.setHeader('Cache-Control', 'max-age=100000, immutable');
     res.setHeader('Etag', '2');
-     if (req.headers["if-none-match"]) {
-       res.setHeader("x-conditional", "true");
-     }
-   // default response from here
+    if (req.headers["if-none-match"]) {
+      res.setHeader("x-conditional", "true");
+    }
+    // default response from here
+  }
+  else if (u.pathname === "/origin-4") {
+   var originList = [ ];
+   req.stream.connection.originFrame(originList);
+   res.setHeader("x-client-port", req.remotePort);
+  }
+  else if (u.pathname === "/origin-6") {
+   var originList = [ "https://alt1.example.com:" + serverPort,
+                      "https://alt2.example.com:" + serverPort,
+                      "https://bar.example.com:" + serverPort ];
+   req.stream.connection.originFrame(originList);
+   res.setHeader("x-client-port", req.remotePort);
+  }
+  else if (u.pathname === "/origin-11-a") {
+    res.setHeader("x-client-port", req.remotePort);
+
+    pushb = res.push(
+        { hostname: 'foo.example.com:' + serverPort, port: serverPort, path : '/origin-11-b', method : 'GET',
+          headers: {'x-pushed-request': 'true', 'x-foo' : 'bar'}});
+    pushb.writeHead(200, {
+      'pushed' : 'yes',
+      'content-length' : 1
+      });
+    pushb.end('1');
+
+    pushc = res.push(
+        { hostname: 'bar.example.com:' + serverPort, port: serverPort, path : '/origin-11-c', method : 'GET',
+          headers: {'x-pushed-request': 'true', 'x-foo' : 'bar'}});
+    pushc.writeHead(200, {
+      'pushed' : 'yes',
+      'content-length' : 1
+      });
+    pushc.end('1');
+
+    pushd = res.push(
+        { hostname: 'madeup.example.com:' + serverPort, port: serverPort, path : '/origin-11-d', method : 'GET',
+          headers: {'x-pushed-request': 'true', 'x-foo' : 'bar'}});
+    pushd.writeHead(200, {
+      'pushed' : 'yes',
+      'content-length' : 1
+      });
+    pushd.end('1');
+
+    pushe = res.push(
+        { hostname: 'alt1.example.com:' + serverPort, port: serverPort, path : '/origin-11-e', method : 'GET',
+          headers: {'x-pushed-request': 'true', 'x-foo' : 'bar'}});
+    pushe.writeHead(200, {
+      'pushed' : 'yes',
+      'content-length' : 1
+      });
+    pushe.end('1');
+  }
+  else if (u.pathname.substring(0,8) === "/origin-") { // test_origin.js coalescing
+    res.setHeader("x-client-port", req.remotePort);
+  }
+
+  else if (u.pathname === "/statusphrase") {
+    // Fortunately, the node-http2 API is dumb enough to allow this right on
+    // through, so we can easily test rejecting this on gecko's end.
+    res.writeHead("200 OK");
+    res.end(content);
+    return;
   }
 
   res.setHeader('Content-Type', 'text/html');

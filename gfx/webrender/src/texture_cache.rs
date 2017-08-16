@@ -8,7 +8,7 @@ use freelist::{FreeList, FreeListItem, FreeListItemId};
 use internal_types::{TextureUpdate, TextureUpdateOp};
 use internal_types::{CacheTextureId, RenderTargetMode, TextureUpdateList, RectUv};
 use profiler::TextureCacheProfileCounters;
-use std::cmp::{self, Ordering};
+use std::cmp;
 use std::collections::HashMap;
 use std::collections::hash_map::Entry;
 use std::hash::BuildHasherDefault;
@@ -16,7 +16,7 @@ use std::mem;
 use std::slice::Iter;
 use time;
 use util;
-use webrender_traits::{ImageData, ImageFormat, DevicePixel, DeviceIntPoint};
+use webrender_traits::{ExternalImageType, ImageData, ImageFormat, DevicePixel, DeviceIntPoint};
 use webrender_traits::{DeviceUintRect, DeviceUintSize, DeviceUintPoint};
 use webrender_traits::ImageDescriptor;
 
@@ -50,6 +50,12 @@ const COALESCING_TIMEOUT_CHECKING_INTERVAL: usize = 256;
 
 pub type TextureCacheItemId = FreeListItemId;
 
+enum CoalescingStatus {
+    Changed,
+    Unchanged,
+    Timeout,
+}
+
 /// A texture allocator using the guillotine algorithm with the rectangle merge improvement. See
 /// sections 2.2 and 2.2.5 in "A Thousand Ways to Pack the Bin - A Practical Approach to Two-
 /// Dimensional Rectangle Bin Packing":
@@ -62,6 +68,7 @@ pub struct TexturePage {
     texture_id: CacheTextureId,
     texture_size: DeviceUintSize,
     free_list: FreeRectList,
+    coalesce_vec: Vec<DeviceUintRect>,
     allocations: u32,
     dirty: bool,
 }
@@ -72,6 +79,7 @@ impl TexturePage {
             texture_id: texture_id,
             texture_size: texture_size,
             free_list: FreeRectList::new(),
+            coalesce_vec: Vec::new(),
             allocations: 0,
             dirty: false,
         };
@@ -117,6 +125,9 @@ impl TexturePage {
 
     pub fn allocate(&mut self,
                     requested_dimensions: &DeviceUintSize) -> Option<DeviceUintPoint> {
+        if requested_dimensions.width == 0 || requested_dimensions.height == 0 {
+            return Some(DeviceUintPoint::new(0, 0))
+        }
         let index = match self.find_index_of_best_rect(requested_dimensions) {
             None => return None,
             Some(index) => index,
@@ -173,7 +184,66 @@ impl TexturePage {
         Some(chosen_rect.origin)
     }
 
-    #[inline(never)]
+    fn coalesce_impl<F, U>(rects: &mut [DeviceUintRect], deadline: u64, fun_key: F, fun_union: U)
+                    -> CoalescingStatus where
+        F: Fn(&DeviceUintRect) -> (u32, u32),
+        U: Fn(&mut DeviceUintRect, &mut DeviceUintRect) -> usize,
+    {
+        let mut num_changed = 0;
+        rects.sort_by_key(&fun_key);
+
+        for work_index in 0..rects.len() {
+            if work_index % COALESCING_TIMEOUT_CHECKING_INTERVAL == 0 &&
+                    time::precise_time_ns() >= deadline {
+                return CoalescingStatus::Timeout
+            }
+
+            let (left, candidates) = rects.split_at_mut(work_index + 1);
+            let mut item = left.last_mut().unwrap();
+            if util::rect_is_empty(item) {
+                continue
+            }
+
+            let key = fun_key(item);
+            for candidate in candidates.iter_mut()
+                                       .take_while(|r| key == fun_key(r)) {
+                num_changed += fun_union(item, candidate);
+            }
+        }
+
+        if num_changed > 0 {
+            CoalescingStatus::Changed
+        } else {
+            CoalescingStatus::Unchanged
+        }
+    }
+
+    /// Combine rects that have the same width and are adjacent.
+    fn coalesce_horisontal(rects: &mut [DeviceUintRect], deadline: u64) -> CoalescingStatus {
+        Self::coalesce_impl(rects, deadline,
+                            |item| (item.size.width, item.origin.x),
+                            |item, candidate| {
+            if item.origin.y == candidate.max_y() || item.max_y() == candidate.origin.y {
+                *item = item.union(candidate);
+                candidate.size.width = 0;
+                1
+            } else { 0 }
+        })
+    }
+
+    /// Combine rects that have the same height and are adjacent.
+    fn coalesce_vertical(rects: &mut [DeviceUintRect], deadline: u64) -> CoalescingStatus {
+        Self::coalesce_impl(rects, deadline,
+                            |item| (item.size.height, item.origin.y),
+                            |item, candidate| {
+            if item.origin.x == candidate.max_x() || item.max_x() == candidate.origin.x {
+                *item = item.union(candidate);
+                candidate.size.height = 0;
+                1
+            } else { 0 }
+        })
+    }
+
     pub fn coalesce(&mut self) -> bool {
         if !self.dirty {
             return false
@@ -181,84 +251,33 @@ impl TexturePage {
 
         // Iterate to a fixed point or until a timeout is reached.
         let deadline = time::precise_time_ns() + COALESCING_TIMEOUT;
-        let mut free_list = mem::replace(&mut self.free_list, FreeRectList::new()).into_vec();
+        self.free_list.copy_to_vec(&mut self.coalesce_vec);
         let mut changed = false;
 
-        // Combine rects that have the same width and are adjacent.
-        let mut new_free_list = Vec::new();
-        free_list.sort_by(|a, b| {
-            match a.size.width.cmp(&b.size.width) {
-                Ordering::Equal => a.origin.x.cmp(&b.origin.x),
-                ordering => ordering,
-            }
-        });
-        for work_index in 0..free_list.len() {
-            if work_index % COALESCING_TIMEOUT_CHECKING_INTERVAL == 0 &&
-                    time::precise_time_ns() >= deadline {
-                self.free_list = FreeRectList::from_slice(&free_list[..]);
-                self.dirty = true;
+        //Note: we might want to consider try to use the last sorted order first
+        // but the elements get shuffled around a bit anyway during the bin placement
+
+        match Self::coalesce_horisontal(&mut self.coalesce_vec, deadline) {
+            CoalescingStatus::Changed => changed = true,
+            CoalescingStatus::Unchanged => (),
+            CoalescingStatus::Timeout => {
+                self.free_list.init_from_slice(&self.coalesce_vec);
                 return true
             }
-
-            if free_list[work_index].size.width == 0 {
-                continue
-            }
-            for candidate_index in (work_index + 1)..free_list.len() {
-                if free_list[work_index].size.width != free_list[candidate_index].size.width ||
-                        free_list[work_index].origin.x != free_list[candidate_index].origin.x {
-                    break
-                }
-                if free_list[work_index].origin.y == free_list[candidate_index].max_y() ||
-                        free_list[work_index].max_y() == free_list[candidate_index].origin.y {
-                    changed = true;
-                    free_list[work_index] =
-                        free_list[work_index].union(&free_list[candidate_index]);
-                    free_list[candidate_index].size.width = 0
-                }
-                new_free_list.push(free_list[work_index])
-            }
-            new_free_list.push(free_list[work_index])
         }
-        free_list = new_free_list;
 
-        // Combine rects that have the same height and are adjacent.
-        let mut new_free_list = Vec::new();
-        free_list.sort_by(|a, b| {
-            match a.size.height.cmp(&b.size.height) {
-                Ordering::Equal => a.origin.y.cmp(&b.origin.y),
-                ordering => ordering,
-            }
-        });
-        for work_index in 0..free_list.len() {
-            if work_index % COALESCING_TIMEOUT_CHECKING_INTERVAL == 0 &&
-                    time::precise_time_ns() >= deadline {
-                self.free_list = FreeRectList::from_slice(&free_list[..]);
-                self.dirty = true;
+        match Self::coalesce_vertical(&mut self.coalesce_vec, deadline) {
+            CoalescingStatus::Changed => changed = true,
+            CoalescingStatus::Unchanged => (),
+            CoalescingStatus::Timeout => {
+                self.free_list.init_from_slice(&self.coalesce_vec);
                 return true
             }
-
-            if free_list[work_index].size.height == 0 {
-                continue
-            }
-            for candidate_index in (work_index + 1)..free_list.len() {
-                if free_list[work_index].size.height !=
-                        free_list[candidate_index].size.height ||
-                        free_list[work_index].origin.y != free_list[candidate_index].origin.y {
-                    break
-                }
-                if free_list[work_index].origin.x == free_list[candidate_index].max_x() ||
-                        free_list[work_index].max_x() == free_list[candidate_index].origin.x {
-                    changed = true;
-                    free_list[work_index] =
-                        free_list[work_index].union(&free_list[candidate_index]);
-                    free_list[candidate_index].size.height = 0
-                }
-            }
-            new_free_list.push(free_list[work_index])
         }
-        free_list = new_free_list;
 
-        self.free_list = FreeRectList::from_slice(&free_list[..]);
+        if changed {
+            self.free_list.init_from_slice(&self.coalesce_vec);
+        }
         self.dirty = changed;
         changed
     }
@@ -273,6 +292,9 @@ impl TexturePage {
     }
 
     fn free(&mut self, rect: &DeviceUintRect) {
+        if util::rect_is_empty(rect) {
+            return
+        }
         debug_assert!(self.allocations > 0);
         self.allocations -= 1;
         if self.allocations == 0 {
@@ -312,6 +334,25 @@ impl TexturePage {
     }
 }
 
+// testing functionality
+impl TexturePage {
+    #[doc(hidden)]
+    pub fn new_dummy(size: DeviceUintSize) -> TexturePage {
+        Self::new(CacheTextureId(0), size)
+    }
+
+    #[doc(hidden)]
+    pub fn fill_from(&mut self, other: &TexturePage) {
+        self.dirty = true;
+        self.free_list.small.clear();
+        self.free_list.small.extend_from_slice(&other.free_list.small);
+        self.free_list.medium.clear();
+        self.free_list.medium.extend_from_slice(&other.free_list.medium);
+        self.free_list.large.clear();
+        self.free_list.large.extend_from_slice(&other.free_list.large);
+    }
+}
+
 /// A binning free list. Binning is important to avoid sifting through lots of small strips when
 /// allocating many texture items.
 struct FreeRectList {
@@ -329,12 +370,15 @@ impl FreeRectList {
         }
     }
 
-    fn from_slice(vector: &[DeviceUintRect]) -> FreeRectList {
-        let mut free_list = FreeRectList::new();
-        for rect in vector {
-            free_list.push(rect)
+    fn init_from_slice(&mut self, rects: &[DeviceUintRect]) {
+        self.small.clear();
+        self.medium.clear();
+        self.large.clear();
+        for rect in rects {
+            if !util::rect_is_empty(rect) {
+                self.push(rect)
+            }
         }
-        free_list
     }
 
     fn push(&mut self, rect: &DeviceUintRect) {
@@ -361,10 +405,11 @@ impl FreeRectList {
         }
     }
 
-    fn into_vec(mut self) -> Vec<DeviceUintRect> {
-        self.small.extend(self.medium.drain(..));
-        self.small.extend(self.large.drain(..));
-        self.small
+    fn copy_to_vec(&self, rects: &mut Vec<DeviceUintRect>) {
+        rects.clear();
+        rects.extend_from_slice(&self.small);
+        rects.extend_from_slice(&self.medium);
+        rects.extend_from_slice(&self.large);
     }
 }
 
@@ -379,13 +424,14 @@ enum FreeListBin {
 }
 
 impl FreeListBin {
-    pub fn for_size(size: &DeviceUintSize) -> FreeListBin {
+    fn for_size(size: &DeviceUintSize) -> FreeListBin {
         if size.width >= MINIMUM_LARGE_RECT_SIZE && size.height >= MINIMUM_LARGE_RECT_SIZE {
             FreeListBin::Large
         } else if size.width >= MINIMUM_MEDIUM_RECT_SIZE &&
                 size.height >= MINIMUM_MEDIUM_RECT_SIZE {
             FreeListBin::Medium
         } else {
+            debug_assert!(size.width > 0 && size.height > 0);
             FreeListBin::Small
         }
     }
@@ -465,6 +511,7 @@ struct TextureCacheArena {
     pages_a8: Vec<TexturePage>,
     pages_rgb8: Vec<TexturePage>,
     pages_rgba8: Vec<TexturePage>,
+    pages_rg8: Vec<TexturePage>,
 }
 
 impl TextureCacheArena {
@@ -473,12 +520,14 @@ impl TextureCacheArena {
             pages_a8: Vec::new(),
             pages_rgb8: Vec::new(),
             pages_rgba8: Vec::new(),
+            pages_rg8: Vec::new(),
         }
     }
 
     fn texture_page_for_id(&mut self, id: CacheTextureId) -> Option<&mut TexturePage> {
         for page in self.pages_a8.iter_mut().chain(self.pages_rgb8.iter_mut())
-                                            .chain(self.pages_rgba8.iter_mut()) {
+                                            .chain(self.pages_rgba8.iter_mut())
+                                            .chain(self.pages_rg8.iter_mut()) {
             if page.texture_id == id {
                 return Some(page)
             }
@@ -546,7 +595,7 @@ impl TextureCache {
 
         TextureCache {
             cache_id_list: CacheTextureIdList::new(),
-            free_texture_levels: HashMap::with_hasher(Default::default()),
+            free_texture_levels: HashMap::default(),
             items: FreeList::new(),
             pending_updates: TextureUpdateList::new(),
             arena: TextureCacheArena::new(),
@@ -607,12 +656,13 @@ impl TextureCache {
             ImageFormat::A8 => (&mut self.arena.pages_a8, &mut profile.pages_a8),
             ImageFormat::RGBA8 => (&mut self.arena.pages_rgba8, &mut profile.pages_rgba8),
             ImageFormat::RGB8 => (&mut self.arena.pages_rgb8, &mut profile.pages_rgb8),
+            ImageFormat::RG8 => (&mut self.arena.pages_rg8, &mut profile.pages_rg8),
             ImageFormat::Invalid | ImageFormat::RGBAF32 => unreachable!(),
         };
 
         // TODO(gw): Handle this sensibly (support failing to render items that can't fit?)
-        assert!(requested_size.width < self.max_texture_size);
-        assert!(requested_size.height < self.max_texture_size);
+        assert!(requested_size.width <= self.max_texture_size);
+        assert!(requested_size.height <= self.max_texture_size);
 
         let mut page_id = None; //using ID here to please the borrow checker
         for (i, page) in page_list.iter_mut().enumerate() {
@@ -706,7 +756,8 @@ impl TextureCache {
     pub fn update(&mut self,
                   image_id: TextureCacheItemId,
                   descriptor: ImageDescriptor,
-                  data: ImageData) {
+                  data: ImageData,
+                  dirty_rect: Option<DeviceUintRect>) {
         let existing_item = self.items.get(image_id);
 
         // TODO(gw): Handle updates to size/format!
@@ -714,21 +765,38 @@ impl TextureCache {
         debug_assert_eq!(existing_item.allocated_rect.size.height, descriptor.height);
 
         let op = match data {
-            ImageData::ExternalHandle(..) | ImageData::ExternalBuffer(..)=> {
+            ImageData::External(..) => {
                 panic!("Doesn't support Update() for external image.");
             }
             ImageData::Blob(..) => {
                 panic!("The vector image should have been rasterized into a raw image.");
             }
             ImageData::Raw(bytes) => {
-                TextureUpdateOp::Update {
-                    page_pos_x: existing_item.allocated_rect.origin.x,
-                    page_pos_y: existing_item.allocated_rect.origin.y,
-                    width: descriptor.width,
-                    height: descriptor.height,
-                    data: bytes,
-                    stride: descriptor.stride,
-                    offset: descriptor.offset,
+                match dirty_rect {
+                    Some(dirty) => {
+                        let stride = descriptor.compute_stride();
+                        let offset = descriptor.offset + dirty.origin.y * stride + dirty.origin.x;
+                        TextureUpdateOp::Update {
+                            page_pos_x: existing_item.allocated_rect.origin.x + dirty.origin.x,
+                            page_pos_y: existing_item.allocated_rect.origin.y + dirty.origin.y,
+                            width: dirty.size.width,
+                            height: dirty.size.height,
+                            data: bytes,
+                            stride: Some(stride),
+                            offset: offset,
+                        }
+                    }
+                    None => {
+                        TextureUpdateOp::Update {
+                            page_pos_x: existing_item.allocated_rect.origin.x,
+                            page_pos_y: existing_item.allocated_rect.origin.y,
+                            width: descriptor.width,
+                            height: descriptor.height,
+                            data: bytes,
+                            stride: descriptor.stride,
+                            offset: descriptor.offset,
+                        }
+                    }
                 }
             }
         };
@@ -756,6 +824,13 @@ impl TextureCache {
         let format = descriptor.format;
         let stride = descriptor.stride;
 
+        if let ImageData::Raw(ref vec) = data {
+            let finish = descriptor.offset +
+                         width * format.bytes_per_pixel().unwrap_or(0) +
+                         (height-1) * descriptor.compute_stride();
+            assert!(vec.len() >= finish as usize);
+        }
+
         let result = self.allocate(image_id,
                                    width,
                                    height,
@@ -766,8 +841,28 @@ impl TextureCache {
         match result.kind {
             AllocationKind::TexturePage => {
                 match data {
-                    ImageData::ExternalHandle(..) => {
-                        panic!("External handle should not go through texture_cache.");
+                    ImageData::External(ext_image) => {
+                        match ext_image.image_type {
+                            ExternalImageType::Texture2DHandle |
+                            ExternalImageType::TextureRectHandle |
+                            ExternalImageType::TextureExternalHandle => {
+                                panic!("External texture handle should not go through texture_cache.");
+                            }
+                            ExternalImageType::ExternalBuffer => {
+                                let update_op = TextureUpdate {
+                                    id: result.item.texture_id,
+                                    op: TextureUpdateOp::UpdateForExternalBuffer {
+                                        rect: result.item.allocated_rect,
+                                        id: ext_image.id,
+                                        channel_index: ext_image.channel_index,
+                                        stride: stride,
+                                        offset: descriptor.offset,
+                                    },
+                                };
+
+                                self.pending_updates.push(update_op);
+                            }
+                        }
                     }
                     ImageData::Blob(..) => {
                         panic!("The vector image should have been rasterized.");
@@ -788,24 +883,33 @@ impl TextureCache {
 
                         self.pending_updates.push(update_op);
                     }
-                    ImageData::ExternalBuffer(id) => {
-                        let update_op = TextureUpdate {
-                            id: result.item.texture_id,
-                            op: TextureUpdateOp::UpdateForExternalBuffer {
-                                rect: result.item.allocated_rect,
-                                id: id,
-                                stride: stride,
-                            },
-                        };
-
-                        self.pending_updates.push(update_op);
-                    }
                 }
             }
             AllocationKind::Standalone => {
                 match data {
-                    ImageData::ExternalHandle(..) => {
-                        panic!("External handle should not go through texture_cache.");
+                    ImageData::External(ext_image) => {
+                        match ext_image.image_type {
+                            ExternalImageType::Texture2DHandle |
+                            ExternalImageType::TextureRectHandle |
+                            ExternalImageType::TextureExternalHandle => {
+                                panic!("External texture handle should not go through texture_cache.");
+                            }
+                            ExternalImageType::ExternalBuffer => {
+                                let update_op = TextureUpdate {
+                                    id: result.item.texture_id,
+                                    op: TextureUpdateOp::Create {
+                                        width: width,
+                                        height: height,
+                                        format: format,
+                                        filter: filter,
+                                        mode: RenderTargetMode::None,
+                                        data: Some(data),
+                                    },
+                                };
+
+                                self.pending_updates.push(update_op);
+                            }
+                        }
                     }
                     _ => {
                         let update_op = TextureUpdate {

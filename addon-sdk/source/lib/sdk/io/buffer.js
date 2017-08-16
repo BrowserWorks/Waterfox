@@ -18,8 +18,8 @@ module.metadata = {
  */
 
 const { Cu } = require('chrome');
-const { isNumber } = require('sdk/lang/type');
-const { TextEncoder, TextDecoder } = Cu.import('resource://gre/modules/commonjs/toolkit/loader.js', {});
+lazyRequire(this, 'sdk/lang/type', "isNumber");
+Cu.importGlobalProperties(["TextEncoder", "TextDecoder"]);
 
 exports.TextEncoder = TextEncoder;
 exports.TextDecoder = TextDecoder;
@@ -47,7 +47,7 @@ function Buffer(subject, encoding /*, bufferLength */) {
         let buffer = new Uint8Array(subject > 0 ? Math.floor(subject) : 0);
         return buffer;
       } catch (e) {
-        if (/size and count too large/.test(e.message) ||
+        if (/invalid array length/.test(e.message) ||
             /invalid arguments/.test(e.message))
           throw new RangeError('Could not instantiate buffer: size of buffer may be too large');
         else

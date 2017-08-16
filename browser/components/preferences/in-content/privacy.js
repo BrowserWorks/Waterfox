@@ -331,9 +331,7 @@ var gPrivacyPane = {
         pref.value = false;
 
       // select the remember history option if needed
-      let rememberHistoryCheckbox = document.getElementById("rememberHistory");
-      if (!rememberHistoryCheckbox.checked)
-        rememberHistoryCheckbox.checked = true;
+      document.getElementById("places.history.enabled").value = true;
 
       // select the remember forms history option
       document.getElementById("browser.formfill.enable").value = true;
@@ -607,13 +605,13 @@ var gPrivacyPane = {
    */
   showCookieExceptions() {
     var bundlePreferences = document.getElementById("bundlePreferences");
-    var params = { blockVisible   : true,
-                   sessionVisible : true,
-                   allowVisible   : true,
-                   prefilledHost  : "",
-                   permissionType : "cookie",
-                   windowTitle    : bundlePreferences.getString("cookiepermissionstitle"),
-                   introText      : bundlePreferences.getString("cookiepermissionstext") };
+    var params = { blockVisible: true,
+                   sessionVisible: true,
+                   allowVisible: true,
+                   prefilledHost: "",
+                   permissionType: "cookie",
+                   windowTitle: bundlePreferences.getString("cookiepermissionstitle"),
+                   introText: bundlePreferences.getString("cookiepermissionstext") };
     gSubDialog.open("chrome://browser/content/preferences/permissions.xul",
                     null, params);
   },
@@ -661,7 +659,7 @@ var gPrivacyPane = {
         ts.value = timeSpanOrig;
       }
 
-      Services.obs.notifyObservers(null, "clear-private-data", null);
+      Services.obs.notifyObservers(null, "clear-private-data");
     });
   },
 

@@ -18,8 +18,10 @@
 #include "nsMenuBarFrame.h"
 #include "nsPopupSetFrame.h"
 #include "nsPIDOMWindow.h"
+#include "nsIDOMEvent.h"
 #include "nsIDOMKeyEvent.h"
 #include "nsIDOMScreen.h"
+#include "nsIDOMXULMenuListElement.h"
 #include "nsIPresShell.h"
 #include "nsFrameManager.h"
 #include "nsIDocument.h"
@@ -53,6 +55,7 @@
 #include "mozilla/LookAndFeel.h"
 #include "mozilla/MouseEvents.h"
 #include "mozilla/dom/Element.h"
+#include "mozilla/dom/Event.h"
 #include "mozilla/dom/PopupBoxObject.h"
 #include <algorithm>
 
@@ -92,29 +95,32 @@ NS_QUERYFRAME_TAIL_INHERITING(nsBoxFrame)
 // nsMenuPopupFrame ctor
 //
 nsMenuPopupFrame::nsMenuPopupFrame(nsStyleContext* aContext)
-  :nsBoxFrame(aContext),
-  mCurrentMenu(nullptr),
-  mPrefSize(-1, -1),
-  mLastClientOffset(0, 0),
-  mPopupType(ePopupTypePanel),
-  mPopupState(ePopupClosed),
-  mPopupAlignment(POPUPALIGNMENT_NONE),
-  mPopupAnchor(POPUPALIGNMENT_NONE),
-  mPosition(POPUPPOSITION_UNKNOWN),
-  mConsumeRollupEvent(PopupBoxObject::ROLLUP_DEFAULT),
-  mFlip(FlipType_Default),
-  mIsOpenChanged(false),
-  mIsContextMenu(false),
-  mAdjustOffsetForContextMenu(false),
-  mGeneratedChildren(false),
-  mMenuCanOverlapOSBar(false),
-  mShouldAutoPosition(true),
-  mInContentShell(true),
-  mIsMenuLocked(false),
-  mMouseTransparent(false),
-  mHFlip(false),
-  mVFlip(false),
-  mAnchorType(MenuPopupAnchorType_Node)
+  : nsBoxFrame(aContext, kClassID)
+  , mCurrentMenu(nullptr)
+  , mView(nullptr)
+  , mPrefSize(-1, -1)
+  , mXPos(0)
+  , mYPos(0)
+  , mLastClientOffset(0, 0)
+  , mPopupType(ePopupTypePanel)
+  , mPopupState(ePopupClosed)
+  , mPopupAlignment(POPUPALIGNMENT_NONE)
+  , mPopupAnchor(POPUPALIGNMENT_NONE)
+  , mPosition(POPUPPOSITION_UNKNOWN)
+  , mConsumeRollupEvent(PopupBoxObject::ROLLUP_DEFAULT)
+  , mFlip(FlipType_Default)
+  , mIsOpenChanged(false)
+  , mIsContextMenu(false)
+  , mAdjustOffsetForContextMenu(false)
+  , mGeneratedChildren(false)
+  , mMenuCanOverlapOSBar(false)
+  , mShouldAutoPosition(true)
+  , mInContentShell(true)
+  , mIsMenuLocked(false)
+  , mMouseTransparent(false)
+  , mHFlip(false)
+  , mVFlip(false)
+  , mAnchorType(MenuPopupAnchorType_Node)
 {
   // the preference name is backwards here. True means that the 'top' level is
   // the default, and false means that the 'parent' level is the default.
@@ -184,6 +190,14 @@ nsMenuPopupFrame::Init(nsIContent*       aContent,
 }
 
 bool
+nsMenuPopupFrame::HasRemoteContent() const
+{
+  return (!mInContentShell && mPopupType == ePopupTypePanel &&
+          mContent->AttrValueIs(kNameSpaceID_None, nsGkAtoms::remote,
+                                nsGkAtoms::_true, eIgnoreCase));
+}
+
+bool
 nsMenuPopupFrame::IsNoAutoHide() const
 {
   // Panels with noautohide="true" don't hide when the mouse is clicked
@@ -234,9 +248,12 @@ nsMenuPopupFrame::PopupLevel(bool aIsNoAutoHide) const
 }
 
 void
-nsMenuPopupFrame::EnsureWidget()
+nsMenuPopupFrame::EnsureWidget(bool aRecreate)
 {
   nsView* ourView = GetView();
+  if (aRecreate) {
+    ourView->DestroyWidget();
+  }
   if (!ourView->HasWidget()) {
     NS_ASSERTION(!mGeneratedChildren && !PrincipalChildList().FirstChild(),
                  "Creating widget for MenuPopupFrame with children");
@@ -285,11 +302,25 @@ nsMenuPopupFrame::CreateWidgetForView(nsView* aView)
     }
   }
 
+  bool remote = HasRemoteContent();
+
   nsTransparencyMode mode = nsLayoutUtils::GetFrameTransparency(this, this);
+#ifdef MOZ_WIDGET_GTK
+  if (remote) {
+    // Paradoxically, on Linux, setting the transparency mode to opaque will
+    // give us proper transparency for composited popups. The shape-mask-based
+    // pseudo-transparency that we use otherwise will render transparent areas
+    // as opaque black when compositing is enabled.
+    // See bug 630346.
+    mode = eTransparencyOpaque;
+  }
+#endif
+
   nsIContent* parentContent = GetContent()->GetParent();
   nsIAtom *tag = nullptr;
   if (parentContent && parentContent->IsXULElement())
     tag = parentContent->NodeInfo()->NameAtom();
+  widgetData.mHasRemoteContent = remote;
   widgetData.mSupportTranslucency = mode == eTransparencyTransparent;
   widgetData.mDropShadow = !(mode == eTransparencyTransparent || tag == nsGkAtoms::menulist);
   widgetData.mPopupLevel = PopupLevel(widgetData.mNoAutoHide);
@@ -403,7 +434,7 @@ nsMenuPopupFrame::SetInitialChildList(ChildListID  aListID,
 }
 
 bool
-nsMenuPopupFrame::IsLeaf() const
+nsMenuPopupFrame::IsLeafDynamic() const
 {
   if (mGeneratedChildren)
     return false;
@@ -529,7 +560,7 @@ nsMenuPopupFrame::LayoutPopup(nsBoxLayoutState& aState, nsIFrame* aParentMenu,
     }
 
     viewManager->SetViewVisibility(view, nsViewVisibility_kShow);
-    nsContainerFrame::SyncFrameViewProperties(pc, this, nullptr, view, 0);
+    SyncFrameViewProperties(view);
   }
 
   // finally, if the popup just opened, send a popupshown event
@@ -556,7 +587,9 @@ nsMenuPopupFrame::LayoutPopup(nsBoxLayoutState& aState, nsIFrame* aParentMenu,
 
     // If there are no transitions, fire the popupshown event right away.
     nsCOMPtr<nsIRunnable> event = new nsXULPopupShownEvent(GetContent(), pc);
-    NS_DispatchToCurrentThread(event);
+    mContent->OwnerDoc()->Dispatch("nsXULPopupShownEvent",
+                                   TaskCategory::Other,
+                                   event.forget());
   }
 
   if (needCallback && !mReflowCallbackData.mPosted) {
@@ -2226,6 +2259,13 @@ nsMenuPopupFrame::AttributeChanged(int32_t aNameSpaceID,
   }
 #endif
 
+  if (aAttribute == nsGkAtoms::remote) {
+    // When the remote attribute changes, we need to create a new widget to
+    // ensure that it has the correct compositor and transparency settings to
+    // match the new value.
+    EnsureWidget(true);
+  }
+
   if (aAttribute == nsGkAtoms::followanchor) {
     nsXULPopupManager* pm = nsXULPopupManager::GetInstance();
     if (pm) {
@@ -2436,7 +2476,7 @@ nsMenuPopupFrame::GetAlignmentPosition() const
 }
 
 /**
- * KEEP THIS IN SYNC WITH nsContainerFrame::CreateViewForFrame
+ * KEEP THIS IN SYNC WITH nsFrame::CreateView
  * as much as possible. Until we get rid of views finally...
  */
 void
@@ -2502,13 +2542,11 @@ nsMenuPopupFrame::ShouldFollowAnchor(nsRect& aRect)
   }
 
   nsIFrame* anchorFrame = mAnchorContent->GetPrimaryFrame();
-  if (!anchorFrame) {
-    return false;
-  }
-
-  nsPresContext* rootPresContext = PresContext()->GetRootPresContext();
-  if (rootPresContext) {
-    aRect = ComputeAnchorRect(rootPresContext, anchorFrame);
+  if (anchorFrame) {
+    nsPresContext* rootPresContext = PresContext()->GetRootPresContext();
+    if (rootPresContext) {
+      aRect = ComputeAnchorRect(rootPresContext, anchorFrame);
+    }
   }
 
   return true;

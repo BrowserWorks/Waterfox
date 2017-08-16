@@ -72,6 +72,8 @@
 
 #include "nsPIWindowRoot.h"
 
+#include "gfxPlatform.h"
+
 #ifdef XP_MACOSX
 #include "nsINativeMenuService.h"
 #define USE_NATIVE_MENUS
@@ -148,9 +150,16 @@ nsresult nsWebShellWindow::Initialize(nsIXULWindow* aParent,
   DesktopIntRect deskRect(initialX, initialY, aInitialWidth, aInitialHeight);
 
   // Create top level window
-  mWindow = do_CreateInstance(kWindowCID, &rv);
-  if (NS_OK != rv) {
-    return rv;
+  if (gfxPlatform::IsHeadless()) {
+    mWindow = nsIWidget::CreateHeadlessWidget();
+    if (!mWindow) {
+      return NS_ERROR_FAILURE;
+    }
+  } else {
+    mWindow = do_CreateInstance(kWindowCID, &rv);
+    if (NS_OK != rv) {
+      return rv;
+    }
   }
 
   /* This next bit is troublesome. We carry two different versions of a pointer
@@ -248,7 +257,8 @@ nsresult nsWebShellWindow::Initialize(nsIXULWindow* aParent,
                          nsIWebNavigation::LOAD_FLAGS_NONE,
                          nullptr,
                          nullptr,
-                         nullptr);
+                         nullptr,
+                         nsContentUtils::GetSystemPrincipal());
     NS_ENSURE_SUCCESS(rv, rv);
   }
                      

@@ -15,16 +15,11 @@
 #include "VideoUtils.h"
 #include "TimeUnits.h"
 
-#ifdef PR_LOGGING
 extern mozilla::LazyLogModule gMediaDemuxerLog;
 #define LOG(msg, ...) \
   MOZ_LOG(gMediaDemuxerLog, LogLevel::Debug, ("FlacDemuxer " msg, ##__VA_ARGS__))
 #define LOGV(msg, ...) \
   MOZ_LOG(gMediaDemuxerLog, LogLevel::Verbose, ("FlacDemuxer " msg, ##__VA_ARGS__))
-#else
-#define LOG(msg, ...)  do {} while (false)
-#define LOGV(msg, ...) do {} while (false)
-#endif
 
 using namespace mozilla::media;
 
@@ -686,7 +681,7 @@ FlacTrackDemuxer::Init()
     return false;
   }
 
-  if (!mParser->Info().IsValid() || !mParser->Info().mDuration) {
+  if (!mParser->Info().IsValid() || !mParser->Info().mDuration.IsPositive()) {
     // Check if we can look at the last frame for the end time to determine the
     // duration when we don't have any.
     TimeAtEnd();
@@ -711,7 +706,7 @@ FlacTrackDemuxer::GetInfo() const
   } else if (mParser->FirstFrame().Info().IsValid()) {
     // Use the first frame header.
     UniquePtr<TrackInfo> info = mParser->FirstFrame().Info().Clone();
-    info->mDuration = Duration().ToMicroseconds();
+    info->mDuration = Duration();
     return info;
   }
   return nullptr;
@@ -722,7 +717,7 @@ FlacTrackDemuxer::IsSeekable() const
 {
   // For now we only allow seeking if a STREAMINFO block was found and with
   // a known number of samples (duration is set).
-  return mParser->Info().IsValid() && mParser->Info().mDuration;
+  return mParser->Info().IsValid() && mParser->Info().mDuration.IsPositive();
 }
 
 RefPtr<FlacTrackDemuxer::SeekPromise>
@@ -985,14 +980,14 @@ FlacTrackDemuxer::GetNextFrame(const flac::Frame& aFrame)
     return nullptr;
   }
 
-  frame->mTime = aFrame.Time().ToMicroseconds();
-  frame->mDuration = aFrame.Duration().ToMicroseconds();
+  frame->mTime = aFrame.Time();
+  frame->mDuration = aFrame.Duration();
   frame->mTimecode = frame->mTime;
   frame->mOffset = aFrame.Offset();
   frame->mKeyframe = true;
 
-  MOZ_ASSERT(frame->mTime >= 0);
-  MOZ_ASSERT(frame->mDuration >= 0);
+  MOZ_ASSERT(!frame->mTime.IsNegative());
+  MOZ_ASSERT(!frame->mDuration.IsNegative());
 
   return frame.forget();
 }
@@ -1020,8 +1015,7 @@ FlacTrackDemuxer::AverageFrameLength() const
 TimeUnit
 FlacTrackDemuxer::Duration() const
 {
-  return std::max(mParsedFramesDuration,
-                  TimeUnit::FromMicroseconds(mParser->Info().mDuration));
+  return std::max(mParsedFramesDuration, mParser->Info().mDuration);
 }
 
 TimeUnit

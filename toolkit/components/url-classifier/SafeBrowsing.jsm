@@ -12,12 +12,7 @@ Cu.import("resource://gre/modules/Services.jsm");
 
 // Log only if browser.safebrowsing.debug is true
 function log(...stuff) {
-  let logging = null;
-  try {
-    logging = Services.prefs.getBoolPref("browser.safebrowsing.debug");
-  } catch(e) {
-    return;
-  }
+  let logging = Services.prefs.getBoolPref("browser.safebrowsing.debug", false);
   if (!logging) {
     return;
   }
@@ -29,18 +24,14 @@ function log(...stuff) {
 
 function getLists(prefName) {
   log("getLists: " + prefName);
-  let pref = null;
-  try {
-    pref = Services.prefs.getCharPref(prefName);
-  } catch(e) {
-    return null;
-  }
+  let pref = Services.prefs.getCharPref(prefName, "");
+
   // Splitting an empty string returns [''], we really want an empty array.
   if (!pref) {
     return [];
   }
-  return pref.split(",")
-    .map(function(value) { return value.trim(); });
+
+  return pref.split(",").map(value => value.trim());
 }
 
 const tablePreferences = [
@@ -56,7 +47,8 @@ const tablePreferences = [
   "urlclassifier.flashTable",
   "urlclassifier.flashExceptTable",
   "urlclassifier.flashSubDocTable",
-  "urlclassifier.flashSubDocExceptTable"
+  "urlclassifier.flashSubDocExceptTable",
+  "urlclassifier.flashInfobarTable"
 ];
 
 this.SafeBrowsing = {
@@ -67,10 +59,10 @@ this.SafeBrowsing = {
       return;
     }
 
-    Services.prefs.addObserver("browser.safebrowsing", this, false);
-    Services.prefs.addObserver("privacy.trackingprotection", this, false);
-    Services.prefs.addObserver("urlclassifier", this, false);
-    Services.prefs.addObserver("plugins.flashBlock.enabled", this, false);
+    Services.prefs.addObserver("browser.safebrowsing", this);
+    Services.prefs.addObserver("privacy.trackingprotection", this);
+    Services.prefs.addObserver("urlclassifier", this);
+    Services.prefs.addObserver("plugins.flashBlock.enabled", this);
 
     this.readPrefs();
     this.addMozEntries();
@@ -91,6 +83,11 @@ this.SafeBrowsing = {
     if (!providerName || !provider) {
       log("No provider info found for " + listname);
       log("Check browser.safebrowsing.provider.[google/mozilla].lists");
+      return;
+    }
+
+    if (!provider.updateURL) {
+      log("Invalid update url " + listname);
       return;
     }
 
@@ -122,6 +119,9 @@ this.SafeBrowsing = {
     for (let i = 0; i < this.flashLists.length; ++i) {
       this.registerTableWithURLs(this.flashLists[i]);
     }
+    for (let i = 0; i < this.flashInfobarLists.length; ++i) {
+      this.registerTableWithURLs(this.flashInfobarLists[i]);
+    }
   },
 
 
@@ -132,6 +132,7 @@ this.SafeBrowsing = {
   blockedEnabled:       false,
   trackingAnnotations:  false,
   flashBlockEnabled:    false,
+  flashInfobarListEnabled: true,
 
   phishingLists:                [],
   malwareLists:                 [],
@@ -140,6 +141,8 @@ this.SafeBrowsing = {
   trackingProtectionLists:      [],
   trackingProtectionWhitelists: [],
   blockedLists:                 [],
+  flashLists:                   [],
+  flashInfobarLists:            [],
 
   updateURL:             null,
   gethashURL:            null,
@@ -217,7 +220,8 @@ this.SafeBrowsing = {
      flashTable,
      flashExceptTable,
      flashSubDocTable,
-     flashSubDocExceptTable] = tablePreferences.map(getLists);
+     flashSubDocExceptTable,
+     this.flashInfobarLists] = tablePreferences.map(getLists);
 
     this.flashLists = flashAllowTable.concat(flashAllowExceptTable,
                                              flashTable,
@@ -279,6 +283,14 @@ this.SafeBrowsing = {
       updateURL = updateURL.replace("SAFEBROWSING_ID", clientID);
       gethashURL = gethashURL.replace("SAFEBROWSING_ID", clientID);
 
+      // Disable updates and gethash if the Google API key is missing.
+      let googleKey = Services.urlFormatter.formatURL("%GOOGLE_API_KEY%").trim();
+      if ((provider == "google" || provider == "google4") &&
+          (!googleKey || googleKey == "no-google-api-key")) {
+        updateURL= "";
+        gethashURL= "";
+      }
+
       log("Provider: " + provider + " updateURL=" + updateURL);
       log("Provider: " + provider + " gethashURL=" + gethashURL);
 
@@ -302,7 +314,8 @@ this.SafeBrowsing = {
     log("phishingEnabled:", this.phishingEnabled, "malwareEnabled:",
         this.malwareEnabled, "trackingEnabled:", this.trackingEnabled,
         "blockedEnabled:", this.blockedEnabled, "trackingAnnotations",
-        this.trackingAnnotations, "flashBlockEnabled", this.flashBlockEnabled);
+        this.trackingAnnotations, "flashBlockEnabled", this.flashBlockEnabled,
+        "flashInfobarListEnabled:", this.flashInfobarListEnabled);
 
     let listManager = Cc["@mozilla.org/url-classifier/listmanager;1"].
                       getService(Ci.nsIUrlListManager);
@@ -361,6 +374,13 @@ this.SafeBrowsing = {
         listManager.enableUpdate(this.flashLists[i]);
       } else {
         listManager.disableUpdate(this.flashLists[i]);
+      }
+    }
+    for (let i = 0; i < this.flashInfobarLists.length; ++i) {
+      if (this.flashInfobarListEnabled) {
+        listManager.enableUpdate(this.flashInfobarLists[i]);
+      } else {
+        listManager.disableUpdate(this.flashInfobarLists[i]);
       }
     }
     listManager.maybeToggleUpdateChecking();
@@ -467,6 +487,6 @@ this.SafeBrowsing = {
       }
       resolve();
     };
-    Services.obs.addObserver(finished, "mozentries-update-finished", false);
+    Services.obs.addObserver(finished, "mozentries-update-finished");
   }),
 };

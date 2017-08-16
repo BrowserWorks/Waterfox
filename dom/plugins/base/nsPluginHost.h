@@ -6,11 +6,12 @@
 #ifndef nsPluginHost_h_
 #define nsPluginHost_h_
 
+#include "mozilla/LinkedList.h"
+
 #include "nsIPluginHost.h"
 #include "nsIObserver.h"
 #include "nsCOMPtr.h"
 #include "prlink.h"
-#include "prclist.h"
 #include "nsIPluginTag.h"
 #include "nsPluginsDir.h"
 #include "nsPluginDirServiceProvider.h"
@@ -33,6 +34,7 @@
 
 namespace mozilla {
 namespace plugins {
+class FakePluginTag;
 class PluginAsyncSurrogate;
 class PluginTag;
 } // namespace plugins
@@ -117,6 +119,7 @@ public:
 
   nsresult FindPluginsForContent(uint32_t aPluginEpoch,
                                  nsTArray<mozilla::plugins::PluginTag>* aPlugins,
+                                 nsTArray<mozilla::plugins::FakePluginTag>* aFakePlugins,
                                  uint32_t* aNewPluginEpoch);
 
   nsresult GetURL(nsISupports* pluginInst,
@@ -130,7 +133,6 @@ public:
                    const char* url,
                    uint32_t postDataLen,
                    const char* postData,
-                   bool isFile,
                    const char* target,
                    nsNPAPIPluginStreamListener* streamListener,
                    const char* altHost,
@@ -144,7 +146,6 @@ public:
                                        uint32_t inPostDataLen,
                                        char **outPostData,
                                        uint32_t *outPostDataLen);
-  nsresult CreateTempFileToPost(const char *aPostDataURL, nsIFile **aTmpFile);
   nsresult NewPluginNativeWindow(nsPluginNativeWindow ** aPluginNativeWindow);
 
   void AddIdleTimeTarget(nsIPluginInstanceOwner* objectFrame, bool isVisible);
@@ -191,16 +192,16 @@ public:
   static bool ShouldLoadTypeInParent(const nsACString& aMimeType);
 
   // checks whether aType is a type we recognize for potential special handling
-  enum SpecialType { eSpecialType_None,
-                     // Needed to whitelist for async init support
-                     eSpecialType_Test,
-                     // Informs some decisions about OOP and quirks
-                     eSpecialType_Flash,
-                     // Binds to the <applet> tag, has various special
-                     // rules around opening channels, codebase, ...
-                     eSpecialType_Java,
-                     // Native widget quirks
-                     eSpecialType_Unity };
+  enum SpecialType {
+    eSpecialType_None,
+    // Needed to whitelist for async init support
+    eSpecialType_Test,
+    // Informs some decisions about OOP and quirks
+    eSpecialType_Flash,
+    // Binds to the <applet> tag, has various special
+    // rules around opening channels, codebase, ...
+    eSpecialType_Java
+  };
   static SpecialType GetSpecialType(const nsACString & aMIMEType);
 
   static nsresult PostPluginUnloadEvent(PRLibrary* aLibrary);
@@ -244,6 +245,10 @@ public:
                              InfallibleTArray<nsCString>& result,
                              bool firstMatchOnly);
 
+  nsresult SendPluginsToContent();
+  nsresult SetPluginsInContent(uint32_t aPluginEpoch,
+                               nsTArray<mozilla::plugins::PluginTag>& aPlugins,
+                               nsTArray<mozilla::plugins::FakePluginTag>& aFakePlugins);
 private:
   friend class nsPluginUnloadRunnable;
 
@@ -292,8 +297,6 @@ private:
 
   nsresult
   FindStoppedPluginForURL(nsIURI* aURL, nsIPluginInstanceOwner *aOwner);
-
-  nsresult FindPluginsInContent(bool aCreatePluginList, bool * aPluginsChanged);
 
   nsresult
   FindPlugins(bool aCreatePluginList, bool * aPluginsChanged);
@@ -360,8 +363,8 @@ private:
 
   void UpdateInMemoryPluginInfo(nsPluginTag* aPluginTag);
 
-  // On certain platforms, we only want to load certain plugins. This function
-  // centralizes loading rules.
+  nsresult ActuallyReloadPlugins();
+
   bool ShouldAddPlugin(nsPluginTag* aPluginTag);
 
   RefPtr<nsPluginTag> mPlugins;
@@ -413,7 +416,7 @@ private:
   static nsPluginHost* sInst;
 };
 
-class PluginDestructionGuard : protected PRCList
+class PluginDestructionGuard : public mozilla::LinkedListElement<PluginDestructionGuard>
 {
 public:
   explicit PluginDestructionGuard(nsNPAPIPluginInstance *aInstance);
@@ -431,8 +434,7 @@ protected:
 
     mDelayedDestroy = false;
 
-    PR_INIT_CLIST(this);
-    PR_INSERT_BEFORE(this, &sListHead);
+    sList.insertBack(this);
   }
 
   void InitAsync()
@@ -441,16 +443,15 @@ protected:
 
     mDelayedDestroy = false;
 
-    PR_INIT_CLIST(this);
-    // Instances with active surrogates must be inserted *after* sListHead so
+    // Instances with active surrogates must be inserted *in front of* sList so
     // that they appear to be at the bottom of the stack
-    PR_INSERT_AFTER(this, &sListHead);
+    sList.insertFront(this);
   }
 
   RefPtr<nsNPAPIPluginInstance> mInstance;
   bool mDelayedDestroy;
 
-  static PRCList sListHead;
+  static mozilla::LinkedList<PluginDestructionGuard> sList;
 };
 
 #endif // nsPluginHost_h_

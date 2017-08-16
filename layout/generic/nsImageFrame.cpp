@@ -135,15 +135,14 @@ NS_NewImageFrame(nsIPresShell* aPresShell, nsStyleContext* aContext)
 
 NS_IMPL_FRAMEARENA_HELPERS(nsImageFrame)
 
-
-nsImageFrame::nsImageFrame(nsStyleContext* aContext) :
-  nsAtomicContainerFrame(aContext),
-  mComputedSize(0, 0),
-  mIntrinsicRatio(0, 0),
-  mDisplayingIcon(false),
-  mFirstFrameComplete(false),
-  mReflowCallbackPosted(false),
-  mForceSyncDecoding(false)
+nsImageFrame::nsImageFrame(nsStyleContext* aContext, ClassID aID)
+  : nsAtomicContainerFrame(aContext, aID)
+  , mComputedSize(0, 0)
+  , mIntrinsicRatio(0, 0)
+  , mDisplayingIcon(false)
+  , mFirstFrameComplete(false)
+  , mReflowCallbackPosted(false)
+  , mForceSyncDecoding(false)
 {
   EnableVisibilityTracking();
 
@@ -283,9 +282,17 @@ nsImageFrame::Init(nsIContent*       aContent,
   nsCOMPtr<imgIRequest> currentRequest;
   imageLoader->GetRequest(nsIImageLoadingContent::CURRENT_REQUEST,
                           getter_AddRefs(currentRequest));
-  nsCOMPtr<nsISupportsPriority> p = do_QueryInterface(currentRequest);
-  if (p)
-    p->AdjustPriority(-1);
+
+  if (currentRequest) {
+    uint32_t categoryToBoostPriority = imgIRequest::CATEGORY_FRAME_INIT;
+
+    // Increase load priority further if intrinsic size might be important for layout.
+    if (!HaveSpecifiedSize(StylePosition())) {
+      categoryToBoostPriority |= imgIRequest::CATEGORY_SIZE_QUERY;
+    }
+
+    currentRequest->BoostPriority(categoryToBoostPriority);
+  }
 }
 
 bool
@@ -793,7 +800,7 @@ nsImageFrame::EnsureIntrinsicSizeAndRatio()
       // image request is null or image size not known, probably an
       // invalid image specified
       if (!(GetStateBits() & NS_FRAME_GENERATED_CONTENT)) {
-        bool imageBroken = false;
+        bool imageInvalid = false;
         // check for broken images. valid null images (eg. img src="") are
         // not considered broken because they have no image requests
         nsCOMPtr<nsIImageLoadingContent> imageLoader = do_QueryInterface(mContent);
@@ -801,14 +808,21 @@ nsImageFrame::EnsureIntrinsicSizeAndRatio()
           nsCOMPtr<imgIRequest> currentRequest;
           imageLoader->GetRequest(nsIImageLoadingContent::CURRENT_REQUEST,
                                   getter_AddRefs(currentRequest));
-          uint32_t imageStatus;
-          imageBroken =
-            currentRequest &&
-            NS_SUCCEEDED(currentRequest->GetImageStatus(&imageStatus)) &&
-            (imageStatus & imgIRequest::STATUS_ERROR);
+          if (currentRequest) {
+            uint32_t imageStatus;
+            imageInvalid =
+              NS_SUCCEEDED(currentRequest->GetImageStatus(&imageStatus)) &&
+              (imageStatus & imgIRequest::STATUS_ERROR);
+          } else {
+            // check if images are user-disabled (or blocked for other
+            // reasons)
+            int16_t imageBlockingStatus;
+            imageLoader->GetImageBlockingStatus(&imageBlockingStatus);
+            imageInvalid = imageBlockingStatus != nsIContentPolicy::ACCEPT;
+          }
         }
         // invalid image specified. make the image big enough for the "broken" icon
-        if (imageBroken) {
+        if (imageInvalid) {
           nscoord edgeLengthToUse =
             nsPresContext::CSSPixelsToAppUnits(
               ICON_SIZE + (2 * (ICON_PADDING + ALT_BORDER_WIDTH)));
@@ -1041,7 +1055,7 @@ nsImageFrame::Reflow(nsPresContext*          aPresContext,
     // to request a decode.
     MaybeDecodeForPredictedSize();
   }
-  FinishAndStoreOverflow(&aMetrics);
+  FinishAndStoreOverflow(&aMetrics, aReflowInput.mStyleDisplay);
 
   if ((GetStateBits() & NS_FRAME_FIRST_REFLOW) && !mReflowCallbackPosted) {
     nsIPresShell* shell = PresContext()->PresShell();
@@ -1575,7 +1589,8 @@ nsDisplayImage::GetLayerState(nsDisplayListBuilder* aBuilder,
                               LayerManager* aManager,
                               const ContainerLayerParameters& aParameters)
 {
-  if (!nsDisplayItem::ForceActiveLayers()) {
+  if (!nsDisplayItem::ForceActiveLayers() &&
+      !ShouldUseAdvancedLayer(aManager, gfxPrefs::LayersAllowImageLayers)) {
     bool animated = false;
     if (!nsLayoutUtils::AnimatedImageLayersEnabled() ||
         mImage->GetType() != imgIContainer::TYPE_RASTER ||
@@ -1621,6 +1636,12 @@ nsDisplayImage::GetLayerState(nsDisplayListBuilder* aBuilder,
                  : imgIContainer::FLAG_NONE;
 
   if (!mImage->IsImageContainerAvailable(aManager, flags)) {
+    return LAYER_NONE;
+  }
+
+  // Image layer doesn't support draw focus ring for image map.
+  nsImageFrame* f = static_cast<nsImageFrame*>(mFrame);
+  if (f->HasImageMap()) {
     return LAYER_NONE;
   }
 
@@ -1698,11 +1719,14 @@ nsImageFrame::PaintImage(nsRenderingContext& aRenderingContext, nsPoint aPt,
     flags |= imgIContainer::FLAG_SYNC_DECODE;
   }
 
+  Maybe<SVGImageContext> svgContext;
+  SVGImageContext::MaybeStoreContextPaint(svgContext, this, aImage);
+
   DrawResult result =
     nsLayoutUtils::DrawSingleImage(*aRenderingContext.ThebesContext(),
       PresContext(), aImage,
       nsLayoutUtils::GetSamplingFilterForFrame(this), dest, aDirtyRect,
-      /* no SVGImageContext */ Nothing(), flags, &anchorPoint);
+      svgContext, flags, &anchorPoint);
 
   nsImageMap* map = GetImageMap();
   if (map) {
@@ -1780,6 +1804,10 @@ nsImageFrame::BuildDisplayList(nsDisplayListBuilder*   aBuilder,
         currentRequest->GetImageStatus(&status);
         if (!(status & imgIRequest::STATUS_DECODE_COMPLETE)) {
           MaybeDecodeForPredictedSize();
+        }
+        // Increase loading priority if the image is ready to be displayed.
+        if (!(status & imgIRequest::STATUS_LOAD_COMPLETE)){
+          currentRequest->BoostPriority(imgIRequest::CATEGORY_DISPLAY);
         }
       }
     } else {
@@ -2113,12 +2141,6 @@ nsImageFrame::OnVisibilityChange(Visibility aNewVisibility,
   nsAtomicContainerFrame::OnVisibilityChange(aNewVisibility, aNonvisibleAction);
 }
 
-nsIAtom*
-nsImageFrame::GetType() const
-{
-  return nsGkAtoms::imageFrame;
-}
-
 #ifdef DEBUG_FRAME_DUMP
 nsresult
 nsImageFrame::GetFrameName(nsAString& aResult) const
@@ -2221,6 +2243,7 @@ nsImageFrame::LoadIcon(const nsAString& aSpec,
                        nullptr,
                        contentPolicyType,
                        EmptyString(),
+                       false,        /* aUseUrgentStartForChannel */
                        aRequest);
 }
 

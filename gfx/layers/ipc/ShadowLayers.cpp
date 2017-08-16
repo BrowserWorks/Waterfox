@@ -15,10 +15,12 @@
 #include "RenderTrace.h"                // for RenderTraceScope
 #include "gfx2DGlue.h"                  // for Moz2D transition helpers
 #include "gfxPlatform.h"                // for gfxImageFormat, gfxPlatform
+#include "gfxPrefs.h"
 //#include "gfxSharedImageSurface.h"      // for gfxSharedImageSurface
 #include "ipc/IPCMessageUtils.h"        // for gfxContentType, null_t
 #include "IPDLActor.h"
 #include "mozilla/Assertions.h"         // for MOZ_ASSERT, etc
+#include "mozilla/dom/TabGroup.h"
 #include "mozilla/gfx/Point.h"          // for IntSize
 #include "mozilla/layers/CompositableClient.h"  // for CompositableClient, etc
 #include "mozilla/layers/CompositorBridgeChild.h"
@@ -189,11 +191,15 @@ ShadowLayerForwarder::ShadowLayerForwarder(ClientLayerManager* aClientLayerManag
  , mDiagnosticTypes(DiagnosticTypes::NO_DIAGNOSTIC)
  , mIsFirstPaint(false)
  , mWindowOverlayChanged(false)
- , mPaintSyncId(0)
  , mNextLayerHandle(1)
 {
   mTxn = new Transaction();
-  mActiveResourceTracker = MakeUnique<ActiveResourceTracker>(1000, "CompositableForwarder");
+  if (TabGroup* tabGroup = mClientLayerManager->GetTabGroup()) {
+    mEventTarget = tabGroup->EventTargetFor(TaskCategory::Other);
+  }
+  MOZ_ASSERT(mEventTarget || !XRE_IsContentProcess());
+  mActiveResourceTracker = MakeUnique<ActiveResourceTracker>(
+    1000, "CompositableForwarder", mEventTarget);
 }
 
 template<typename T>
@@ -220,14 +226,27 @@ ShadowLayerForwarder::~ShadowLayerForwarder()
     if (NS_IsMainThread()) {
       mShadowManager->Destroy();
     } else {
-      NS_DispatchToMainThread(
-        NewRunnableMethod(mShadowManager, &LayerTransactionChild::Destroy));
+      if (mEventTarget) {
+        mEventTarget->Dispatch(
+          NewRunnableMethod("LayerTransactionChild::Destroy", mShadowManager,
+                            &LayerTransactionChild::Destroy),
+          nsIEventTarget::DISPATCH_NORMAL);
+      } else {
+        NS_DispatchToMainThread(
+          NewRunnableMethod(mShadowManager, &LayerTransactionChild::Destroy));
+      }
     }
   }
 
   if (!NS_IsMainThread()) {
-    NS_DispatchToMainThread(
-      new ReleaseOnMainThreadTask<ActiveResourceTracker>(mActiveResourceTracker));
+    RefPtr<ReleaseOnMainThreadTask<ActiveResourceTracker>> event =
+      new ReleaseOnMainThreadTask<ActiveResourceTracker>(mActiveResourceTracker);
+    if (mEventTarget) {
+      event->SetName("ActiveResourceTracker::~ActiveResourceTracker");
+      mEventTarget->Dispatch(event.forget(), nsIEventTarget::DISPATCH_NORMAL);
+    } else {
+      NS_DispatchToMainThread(event);
+    }
   }
 }
 
@@ -586,6 +605,11 @@ ShadowLayerForwarder::EndTransaction(const nsIntRegion& aRegionToClear,
     return false;
   }
 
+  Maybe<TimeStamp> startTime;
+  if (gfxPrefs::LayersDrawFPS()) {
+    startTime = Some(TimeStamp::Now());
+  }
+
   GetCompositorBridgeChild()->WillEndTransaction();
 
   MOZ_ASSERT(aId);
@@ -668,7 +692,8 @@ ShadowLayerForwarder::EndTransaction(const nsIntRegion& aRegionToClear,
     } else {
       common.maskLayer() = LayerHandle();
     }
-    common.animations() = mutant->GetAnimations();
+    common.compositorAnimations().id() = mutant->GetCompositorAnimationsId();
+    common.compositorAnimations().animations() = mutant->GetAnimations();
     common.invalidRegion() = mutant->GetInvalidRegion().GetRegion();
     common.scrollMetadata() = mutant->GetAllScrollMetadata();
     for (size_t i = 0; i < mutant->GetAncestorMaskLayerCount(); i++) {
@@ -710,7 +735,6 @@ ShadowLayerForwarder::EndTransaction(const nsIntRegion& aRegionToClear,
   info.paintSequenceNumber() = aPaintSequenceNumber;
   info.isRepeatTransaction() = aIsRepeatTransaction;
   info.transactionStart() = aTransactionStart;
-  info.paintSyncId() = mPaintSyncId;
 
   TargetConfig targetConfig(mTxn->mTargetBounds,
                             mTxn->mTargetRotation,
@@ -721,6 +745,11 @@ ShadowLayerForwarder::EndTransaction(const nsIntRegion& aRegionToClear,
   if (!GetTextureForwarder()->IsSameProcess()) {
     MOZ_LAYERS_LOG(("[LayersForwarder] syncing before send..."));
     PlatformSyncBeforeUpdate();
+  }
+
+  if (startTime) {
+    mPaintTiming.serializeMs() = (TimeStamp::Now() - startTime.value()).ToMilliseconds();
+    startTime = Some(TimeStamp::Now());
   }
 
   for (ReadLockVector& locks : mTxn->mReadLocks) {
@@ -739,9 +768,13 @@ ShadowLayerForwarder::EndTransaction(const nsIntRegion& aRegionToClear,
     return false;
   }
 
+  if (startTime) {
+    mPaintTiming.sendMs() = (TimeStamp::Now() - startTime.value()).ToMilliseconds();
+    mShadowManager->SendRecordPaintTimes(mPaintTiming);
+  }
+
   *aSent = true;
   mIsFirstPaint = false;
-  mPaintSyncId = 0;
   MOZ_LAYERS_LOG(("[LayersForwarder] ... done"));
   return true;
 }
@@ -1061,6 +1094,15 @@ ShadowLayerForwarder::ReleaseCompositable(const CompositableHandle& aHandle)
     mShadowManager->SendReleaseCompositable(aHandle);
   }
   mCompositables.Remove(aHandle.Value());
+}
+
+void
+ShadowLayerForwarder::SynchronouslyShutdown()
+{
+  if (IPCOpen()) {
+    mShadowManager->SendShutdownSync();
+    mShadowManager->MarkDestroyed();
+  }
 }
 
 ShadowableLayer::~ShadowableLayer()

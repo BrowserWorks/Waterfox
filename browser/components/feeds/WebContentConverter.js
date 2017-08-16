@@ -5,7 +5,8 @@
 
 Components.utils.import("resource://gre/modules/Services.jsm");
 Components.utils.import("resource://gre/modules/XPCOMUtils.jsm");
-Components.utils.import("resource://gre/modules/PrivateBrowsingUtils.jsm");
+XPCOMUtils.defineLazyModuleGetter(this, "PrivateBrowsingUtils",
+  "resource://gre/modules/PrivateBrowsingUtils.jsm");
 
 const Cc = Components.classes;
 const Ci = Components.interfaces;
@@ -183,12 +184,9 @@ const Utils = {
 
     // check if it is in the black list
     let pb = Services.prefs;
-    let allowed;
-    try {
-      allowed = pb.getBoolPref(PREF_HANDLER_EXTERNAL_PREFIX + "." + aProtocol);
-    } catch (e) {
-      allowed = pb.getBoolPref(PREF_HANDLER_EXTERNAL_PREFIX + "-default");
-    }
+    let allowed =
+      pb.getBoolPref(PREF_HANDLER_EXTERNAL_PREFIX + "." + aProtocol,
+                     pb.getBoolPref(PREF_HANDLER_EXTERNAL_PREFIX + "-default"));
     if (!allowed) {
       throw this.getSecurityError(
         `Not allowed to register a protocol handler for ${aProtocol}`,
@@ -300,11 +298,15 @@ WebContentConverterRegistrar.prototype = {
     if (handler) {
       request.cancel(Cr.NS_ERROR_FAILURE);
 
+      let triggeringPrincipal = channel.loadInfo
+        ? channel.loadInfo.triggeringPrincipal
+        : Services.scriptSecurityManager.getSystemPrincipal();
+
       let webNavigation =
           channel.notificationCallbacks.getInterface(Ci.nsIWebNavigation);
       webNavigation.loadURI(handler.getHandlerURI(channel.URI.spec),
                             Ci.nsIWebNavigation.LOAD_FLAGS_NONE,
-                            null, null, null);
+                            null, null, null, triggeringPrincipal);
     }
   },
 
@@ -440,7 +442,7 @@ WebContentConverterRegistrar.prototype = {
           let eps = Cc["@mozilla.org/uriloader/external-protocol-service;1"].
                     getService(Ci.nsIExternalProtocolService);
           let handlerInfo = eps.getProtocolHandlerInfo(protocol);
-          handlerInfo.possibleApplicationHandlers.appendElement(handler, false);
+          handlerInfo.possibleApplicationHandlers.appendElement(handler);
 
           // Since the user has agreed to add a new handler, chances are good
           // that the next time they see a handler of this type, they're going
@@ -699,12 +701,7 @@ WebContentConverterRegistrar.prototype = {
       let pb = Services.prefs.getBranch(null);
       pb.setCharPref(PREF_SELECTED_READER, "web");
 
-      let supportsString =
-        Cc["@mozilla.org/supports-string;1"].
-        createInstance(Ci.nsISupportsString);
-        supportsString.data = uri;
-      pb.setComplexValue(PREF_SELECTED_WEB, Ci.nsISupportsString,
-                         supportsString);
+      pb.setStringPref(PREF_SELECTED_WEB, uri);
       pb.setCharPref(PREF_SELECTED_ACTION, "ask");
       this._setAutoHandler(TYPE_MAYBE_FEED, null);
     }
@@ -849,7 +846,7 @@ WebContentConverterRegistrar.prototype = {
     let os = Services.obs;
     switch (topic) {
     case "app-startup":
-      os.addObserver(this, "browser-ui-startup-complete", false);
+      os.addObserver(this, "browser-ui-startup-complete");
       break;
     case "browser-ui-startup-complete":
       os.removeObserver(this, "browser-ui-startup-complete");

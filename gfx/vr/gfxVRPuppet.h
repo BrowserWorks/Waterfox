@@ -20,24 +20,21 @@ class VRDisplayPuppet : public VRDisplayHost
 public:
   void SetDisplayInfo(const VRDisplayInfo& aDisplayInfo);
   virtual void NotifyVSync() override;
-  virtual VRHMDSensorState GetSensorState() override;
-  virtual VRHMDSensorState GetImmediateSensorState() override;
   void SetSensorState(const VRHMDSensorState& aSensorState);
   void ZeroSensor() override;
 
 protected:
+  virtual VRHMDSensorState GetSensorState() override;
   virtual void StartPresentation() override;
   virtual void StopPresentation() override;
 #if defined(XP_WIN)
-  virtual void SubmitFrame(mozilla::layers::TextureSourceD3D11* aSource,
+  virtual bool SubmitFrame(mozilla::layers::TextureSourceD3D11* aSource,
                            const IntSize& aSize,
-                           const VRHMDSensorState& aSensorState,
                            const gfx::Rect& aLeftEyeRect,
                            const gfx::Rect& aRightEyeRect) override;
 #else
-  virtual void SubmitFrame(mozilla::layers::TextureSourceOGL* aSource,
+  virtual bool SubmitFrame(mozilla::layers::TextureSourceOGL* aSource,
                            const IntSize& aSize,
-                           const VRHMDSensorState& aSensorState,
                            const gfx::Rect& aLeftEyeRect,
                            const gfx::Rect& aRightEyeRect);
 #endif // XP_WIN
@@ -49,11 +46,25 @@ protected:
   virtual ~VRDisplayPuppet();
   void Destroy();
 
-  VRHMDSensorState GetSensorState(double timeOffset);
-
   bool mIsPresenting;
 
 private:
+#if defined(XP_WIN)
+  bool UpdateConstantBuffers();
+
+  RefPtr<ID3D11Device> mDevice;
+  RefPtr<ID3D11DeviceContext> mContext;
+  ID3D11VertexShader* mQuadVS;
+  ID3D11PixelShader* mQuadPS;
+  RefPtr<ID3D11SamplerState> mLinearSamplerState;
+  layers::VertexShaderConstants mVSConstants;
+  layers::PixelShaderConstants mPSConstants;
+  RefPtr<ID3D11Buffer> mVSConstantBuffer;
+  RefPtr<ID3D11Buffer> mPSConstantBuffer;
+  RefPtr<ID3D11Buffer> mVertexBuffer;
+  RefPtr<ID3D11InputLayout> mInputLayout;
+#endif
+
   VRHMDSensorState mSensorState;
 };
 
@@ -63,6 +74,8 @@ public:
   explicit VRControllerPuppet(dom::GamepadHand aHand);
   void SetButtonPressState(uint32_t aButton, bool aPressed);
   uint64_t GetButtonPressState();
+  void SetButtonTouchState(uint32_t aButton, bool aTouched);
+  uint64_t GetButtonTouchState();
   void SetAxisMoveState(uint32_t aAxis, double aValue);
   double GetAxisMoveState(uint32_t aAxis);
   void SetPoseMoveState(const dom::GamepadPoseState& aPose);
@@ -75,6 +88,7 @@ protected:
 
 private:
   uint64_t mButtonPressState;
+  uint64_t mButtonTouchState;
   float mAxisMoveState[3];
   float mAxisMove[3];
   dom::GamepadPoseState mPoseState;
@@ -87,26 +101,36 @@ class VRSystemManagerPuppet : public VRSystemManager
 public:
   static already_AddRefed<VRSystemManagerPuppet> Create();
 
-  virtual bool Init() override;
   virtual void Destroy() override;
-  virtual void GetHMDs(nsTArray<RefPtr<VRDisplayHost>>& aHMDResult) override;
+  virtual void Shutdown() override;
+  virtual bool GetHMDs(nsTArray<RefPtr<VRDisplayHost>>& aHMDResult) override;
+  virtual bool GetIsPresenting() override;
   virtual void HandleInput() override;
   virtual void GetControllers(nsTArray<RefPtr<VRControllerHost>>&
                               aControllerResult) override;
   virtual void ScanForControllers() override;
   virtual void RemoveControllers() override;
+  virtual void VibrateHaptic(uint32_t aControllerIdx,
+                             uint32_t aHapticIndex,
+                             double aIntensity,
+                             double aDuration,
+                             uint32_t aPromiseID) override;
+  virtual void StopVibrateHaptic(uint32_t aControllerIdx) override;
 
 protected:
   VRSystemManagerPuppet();
 
 private:
-  virtual void HandleButtonPress(uint32_t aControllerIndex,
-                                 uint64_t aButtonPressed) override;
-  virtual void HandleAxisMove(uint32_t aControllerIndex, uint32_t aAxis,
-                              float aValue) override;
-  virtual void HandlePoseTracking(uint32_t aControllerIndex,
-                                  const dom::GamepadPoseState& aPose,
-                                  VRControllerHost* aController) override;
+  void HandleButtonPress(uint32_t aControllerIdx,
+                         uint32_t aButton,
+                         uint64_t aButtonMask,
+                         uint64_t aButtonPressed,
+                         uint64_t aButtonTouched);
+  void HandleAxisMove(uint32_t aControllerIndex, uint32_t aAxis,
+                      float aValue);
+  void HandlePoseTracking(uint32_t aControllerIndex,
+                          const dom::GamepadPoseState& aPose,
+                          VRControllerHost* aController);
 
   // there can only be one
   RefPtr<impl::VRDisplayPuppet> mPuppetHMD;

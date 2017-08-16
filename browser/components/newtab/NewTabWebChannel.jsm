@@ -1,14 +1,3 @@
-/* global
-   NewTabPrefsProvider,
-   Services,
-   EventEmitter,
-   Preferences,
-   XPCOMUtils,
-   WebChannel,
-   NewTabRemoteResources
-*/
-/* exported NewTabWebChannel */
-
 "use strict";
 
 this.EXPORTED_SYMBOLS = ["NewTabWebChannel"];
@@ -25,7 +14,7 @@ XPCOMUtils.defineLazyModuleGetter(this, "NewTabRemoteResources",
 XPCOMUtils.defineLazyModuleGetter(this, "WebChannel",
                                   "resource://gre/modules/WebChannel.jsm");
 XPCOMUtils.defineLazyGetter(this, "EventEmitter", function() {
-  const {EventEmitter} = Cu.import("resource://devtools/shared/event-emitter.js", {});
+  const {EventEmitter} = Cu.import("resource://gre/modules/EventEmitter.jsm", {});
   return EventEmitter;
 });
 

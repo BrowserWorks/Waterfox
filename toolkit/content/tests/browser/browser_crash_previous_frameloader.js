@@ -22,18 +22,16 @@ function getCrashDumpId(subject) {
  * @param id {String} The crash dump id.
  */
 function cleanUpMinidump(id) {
-  if (id) {
-    let dir = Services.dirsvc.get("ProfD", Ci.nsIFile);
-    dir.append("minidumps");
+  let dir = Services.dirsvc.get("ProfD", Ci.nsIFile);
+  dir.append("minidumps");
 
-    let file = dir.clone();
-    file.append(id + ".dmp");
-    file.remove(true);
+  let file = dir.clone();
+  file.append(id + ".dmp");
+  file.remove(true);
 
-    file = dir.clone();
-    file.append(id + ".extra");
-    file.remove(true);
-  }
+  file = dir.clone();
+  file.append(id + ".extra");
+  file.remove(true);
 }
 
 /**
@@ -42,7 +40,7 @@ function cleanUpMinidump(id) {
  * that a oop-browser-crashed event is not sent to the new
  * frameloader's browser element.
  */
-add_task(function* test_crash_in_previous_frameloader() {
+add_task(async function test_crash_in_previous_frameloader() {
   // On debug builds, crashing tabs results in much thinking, which
   // slows down the test and results in intermittent test timeouts,
   // so we'll pump up the expected timeout for this test.
@@ -53,10 +51,10 @@ add_task(function* test_crash_in_previous_frameloader() {
     return;
   }
 
-  yield BrowserTestUtils.withNewTab({
+  await BrowserTestUtils.withNewTab({
     gBrowser,
     url: "http://example.com",
-  }, function*(browser) {
+  }, async function(browser) {
     // First, sanity check...
     Assert.ok(browser.isRemoteBrowser,
               "This browser needs to be remote if this test is going to " +
@@ -79,7 +77,7 @@ add_task(function* test_crash_in_previous_frameloader() {
 
     // The name of the game is to cause a crash in a remote browser,
     // and then immediately swap out the browser for a non-remote one.
-    yield ContentTask.spawn(browser, null, function() {
+    await ContentTask.spawn(browser, null, function() {
       const Cu = Components.utils;
       Cu.import("resource://gre/modules/ctypes.jsm");
       Cu.import("resource://gre/modules/Timer.jsm");
@@ -102,7 +100,7 @@ add_task(function* test_crash_in_previous_frameloader() {
 
     gBrowser.updateBrowserRemoteness(browser, false);
     info("Waiting for content process to go away.");
-    let [subject /* , data */] = yield contentProcessGone;
+    let [subject /* , data */] = await contentProcessGone;
 
     // If we don't clean up the minidump, the harness will
     // complain.
@@ -110,7 +108,7 @@ add_task(function* test_crash_in_previous_frameloader() {
 
     Assert.ok(dumpID, "There should be a dumpID");
     if (dumpID) {
-      yield Services.crashmanager.ensureCrashIsPresent(dumpID);
+      await Services.crashmanager.ensureCrashIsPresent(dumpID);
       cleanUpMinidump(dumpID);
     }
 

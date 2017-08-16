@@ -435,10 +435,9 @@ nsPluginTag::InitSandboxLevel()
 
 #if defined(_AMD64_)
   // As level 2 is now the default NPAPI sandbox level for 64-bit flash, we
-  // don't want to allow a lower setting unless this environment variable is
-  // set. This should be changed if the firefox.js pref file is changed.
-  if (mIsFlashPlugin &&
-      !PR_GetEnv("MOZ_ALLOW_WEAKER_SANDBOX") && mSandboxLevel < 2) {
+  // don't want to allow a lower setting. This should be changed if the
+  // firefox.js pref file is changed.
+  if (mIsFlashPlugin && mSandboxLevel < 2) {
     mSandboxLevel = 2;
   }
 #endif
@@ -487,7 +486,7 @@ nsresult nsPluginTag::EnsureMembersAreUTF8()
     ConvertToUTF8(decoder, mFileName);
     ConvertToUTF8(decoder, mFullPath);
   }
-  
+
   // The description of the plug-in and the various MIME type descriptions
   // should be encoded in the standard plain text file encoding for this system.
   // XXX should we add kPlatformCharsetSel_PluginResource?
@@ -819,10 +818,31 @@ bool nsPluginTag::IsFromExtension() const
 
 /* nsFakePluginTag */
 
+uint32_t nsFakePluginTag::sNextId;
+
 nsFakePluginTag::nsFakePluginTag()
-  : mState(nsPluginTag::ePluginState_Disabled)
+  : mId(sNextId++),
+    mState(nsPluginTag::ePluginState_Disabled)
 {
 }
+
+nsFakePluginTag::nsFakePluginTag(uint32_t aId,
+                                 already_AddRefed<nsIURI>&& aHandlerURI,
+                                 const char* aName,
+                                 const char* aDescription,
+                                 const nsTArray<nsCString>& aMimeTypes,
+                                 const nsTArray<nsCString>& aMimeDescriptions,
+                                 const nsTArray<nsCString>& aExtensions,
+                                 const nsCString& aNiceName,
+                                 const nsString& aSandboxScript)
+  : nsIInternalPluginTag(aName, aDescription, nullptr, nullptr,
+                         aMimeTypes, aMimeDescriptions, aExtensions),
+    mId(aId),
+    mHandlerURI(aHandlerURI),
+    mNiceName(aNiceName),
+    mSandboxScript(aSandboxScript),
+    mState(nsPluginTag::ePluginState_Enabled)
+{}
 
 nsFakePluginTag::~nsFakePluginTag()
 {
@@ -846,6 +866,7 @@ nsresult
 nsFakePluginTag::Create(const FakePluginTagInit& aInitDictionary,
                         nsFakePluginTag** aPluginTag)
 {
+  NS_ENSURE_TRUE(sNextId <= PR_INT32_MAX, NS_ERROR_OUT_OF_MEMORY);
   NS_ENSURE_TRUE(!aInitDictionary.mMimeEntries.IsEmpty(), NS_ERROR_INVALID_ARG);
 
   RefPtr<nsFakePluginTag> tag = new nsFakePluginTag();
@@ -859,6 +880,7 @@ nsFakePluginTag::Create(const FakePluginTagInit& aInitDictionary,
   CopyUTF16toUTF8(aInitDictionary.mDescription, tag->mDescription);
   CopyUTF16toUTF8(aInitDictionary.mFileName, tag->mFileName);
   CopyUTF16toUTF8(aInitDictionary.mVersion, tag->mVersion);
+  tag->mSandboxScript = aInitDictionary.mSandboxScript;
 
   for (const FakePluginMimeEntry& mimeEntry : aInitDictionary.mMimeEntries) {
     CopyUTF16toUTF8(mimeEntry.mType, *tag->mMimeTypes.AppendElement());
@@ -882,6 +904,13 @@ NS_IMETHODIMP
 nsFakePluginTag::GetHandlerURI(nsIURI **aResult)
 {
   NS_IF_ADDREF(*aResult = mHandlerURI);
+  return NS_OK;
+}
+
+NS_IMETHODIMP
+nsFakePluginTag::GetSandboxScript(nsAString& aSandboxScript)
+{
+  aSandboxScript = mSandboxScript;
   return NS_OK;
 }
 
@@ -1039,5 +1068,12 @@ NS_IMETHODIMP
 nsFakePluginTag::GetLoaded(bool* ret)
 {
   *ret = true;
+  return NS_OK;
+}
+
+NS_IMETHODIMP
+nsFakePluginTag::GetId(uint32_t* aId)
+{
+  *aId = mId;
   return NS_OK;
 }

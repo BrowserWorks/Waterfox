@@ -30,7 +30,8 @@ window.addEventListener("pageshow", function () {
   setupSearch();
   window.addEventListener("resize", fitToWidth);
 
-  var event = new CustomEvent("AboutHomeLoad", {bubbles:true});
+  // Ask chrome to update snippets.
+  var event = new CustomEvent("AboutHomeLoad", {bubbles: true});
   document.dispatchEvent(event);
 });
 

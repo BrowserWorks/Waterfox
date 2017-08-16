@@ -12,9 +12,13 @@
 
 #include "third_party/curl/curl.h"
 
+#include "mozilla/Unused.h"
+
 namespace PingSender {
 
 using std::string;
+
+using mozilla::Unused;
 
 /**
  * A simple wrapper around libcurl "easy" functions. Provides RAII opening
@@ -37,6 +41,7 @@ public:
   void (*slist_free_all)(curl_slist*);
   const char* (*easy_strerror)(CURLcode);
   void (*easy_cleanup)(CURL*);
+  void (*global_cleanup)(void);
 
 private:
   void* mLib;
@@ -52,6 +57,7 @@ CurlWrapper::CurlWrapper()
   , slist_free_all(nullptr)
   , easy_strerror(nullptr)
   , easy_cleanup(nullptr)
+  , global_cleanup(nullptr)
   , mLib(nullptr)
   , mCurl(nullptr)
 {}
@@ -61,6 +67,10 @@ CurlWrapper::~CurlWrapper()
   if(mLib) {
     if(mCurl && easy_cleanup) {
       easy_cleanup(mCurl);
+    }
+
+    if (global_cleanup) {
+      global_cleanup();
     }
 
     dlclose(mLib);
@@ -112,6 +122,7 @@ CurlWrapper::Init()
   *(void**) (&slist_free_all) = dlsym(mLib, "curl_slist_free_all");
   *(void**) (&easy_strerror) = dlsym(mLib, "curl_easy_strerror");
   *(void**) (&easy_cleanup) = dlsym(mLib, "curl_easy_cleanup");
+  *(void**) (&global_cleanup) = dlsym(mLib, "curl_global_cleanup");
 
   if (!easy_init ||
       !easy_setopt ||
@@ -120,7 +131,8 @@ CurlWrapper::Init()
       !slist_append ||
       !slist_free_all ||
       !easy_strerror ||
-      !easy_cleanup) {
+      !easy_cleanup ||
+      !global_cleanup) {
     PINGSENDER_LOG("ERROR: libcurl is missing one of the required symbols\n");
     return false;
   }
@@ -135,11 +147,23 @@ CurlWrapper::Init()
   return true;
 }
 
+static size_t
+DummyWriteCallback(char *ptr, size_t size, size_t nmemb, void *userdata)
+{
+  Unused << ptr;
+  Unused << size;
+  Unused << nmemb;
+  Unused << userdata;
+
+  return size * nmemb;
+}
+
 bool
 CurlWrapper::Post(const string& url, const string& payload)
 {
   easy_setopt(mCurl, CURLOPT_URL, url.c_str());
   easy_setopt(mCurl, CURLOPT_USERAGENT, kUserAgent);
+  easy_setopt(mCurl, CURLOPT_WRITEFUNCTION, DummyWriteCallback);
 
   // Build the date header.
   std::string dateHeader = GenerateDateHeader();
@@ -165,6 +189,9 @@ CurlWrapper::Post(const string& url, const string& payload)
 
   // Fail if the server returns a 4xx code
   easy_setopt(mCurl, CURLOPT_FAILONERROR, 1);
+
+  // Override the default connection timeout, which is 5 minutes.
+  easy_setopt(mCurl, CURLOPT_CONNECTTIMEOUT_MS, kConnectionTimeoutMs);
 
   // Block until the operation is performend. Ignore the response, if the POST
   // fails we can't do anything about it.

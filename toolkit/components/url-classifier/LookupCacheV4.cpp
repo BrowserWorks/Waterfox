@@ -80,10 +80,11 @@ LookupCacheV4::Init()
 
 nsresult
 LookupCacheV4::Has(const Completion& aCompletion,
-                   bool* aHas, uint32_t* aMatchLength,
-                   bool* aFromCache)
+                   bool* aHas,
+                   uint32_t* aMatchLength,
+                   bool* aConfirmed)
 {
-  *aHas = *aFromCache = false;
+  *aHas = *aConfirmed = false;
   *aMatchLength = 0;
 
   uint32_t length = 0;
@@ -92,6 +93,8 @@ LookupCacheV4::Has(const Completion& aCompletion,
 
   nsresult rv = mVLPrefixSet->Matches(fullhash, &length);
   NS_ENSURE_SUCCESS(rv, rv);
+
+  MOZ_ASSERT(length == 0 || (length >= PREFIX_SIZE && length <= COMPLETE_SIZE));
 
   *aHas = length >= PREFIX_SIZE;
   *aMatchLength = length;
@@ -102,19 +105,14 @@ LookupCacheV4::Has(const Completion& aCompletion,
           prefix, *aHas, length == COMPLETE_SIZE));
   }
 
-  // TODO : Bug 1311935 - Implement v4 caching
+  // Check if fullhash match any prefix in the local database
+  if (!(*aHas)) {
+    return NS_OK;
+  }
 
-  return NS_OK;
-}
-
-void
-LookupCacheV4::IsHashEntryConfirmed(const Completion& aEntry,
-                                    const TableFreshnessMap& aTableFreshness,
-                                    uint32_t aFreshnessGuarantee,
-                                    bool* aConfirmed)
-{
-  // TODO : Bug 1311935 - Implement v4 caching
-  *aConfirmed = true;
+  // Even though V4 supports variable-length prefix, we always send 4-bytes for
+  // completion (Bug 1323953). This means cached prefix length is also 4-bytes.
+  return CheckCache(aCompletion, aHas, aConfirmed);
 }
 
 bool
@@ -325,6 +323,14 @@ LookupCacheV4::ApplyUpdate(TableUpdateV4* aTableUpdate,
     LOG(("Checksum mismatch after applying partial update"));
     return NS_ERROR_UC_UPDATE_CHECKSUM_MISMATCH;
   }
+
+  return NS_OK;
+}
+
+nsresult
+LookupCacheV4::AddFullHashResponseToCache(const FullHashResponseMap& aResponseMap)
+{
+  CopyClassHashTable<FullHashResponseMap>(aResponseMap, mFullHashCache);
 
   return NS_OK;
 }

@@ -41,13 +41,9 @@
 #include "nsISocketTransportService.h"
 #include "nsIURI.h"
 #include "nsILoadInfo.h"
-#include "nsNullPrincipal.h"
+#include "NullPrincipal.h"
 #include "nsIAuthPrompt2.h"
 #include "nsIFTPChannelParentInternal.h"
-
-#ifdef MOZ_WIDGET_GONK
-#include "NetStatistics.h"
-#endif
 
 using namespace mozilla;
 using namespace mozilla::net;
@@ -946,10 +942,9 @@ nsFtpState::R_syst() {
             
             char16_t* ucs2Response = ToNewUnicode(mResponseMsg);
             const char16_t *formatStrings[1] = { ucs2Response };
-            NS_NAMED_LITERAL_STRING(name, "UnsupportedFTPServer");
 
             nsXPIDLString formattedString;
-            rv = bundle->FormatStringFromName(name.get(), formatStrings, 1,
+            rv = bundle->FormatStringFromName(u"UnsupportedFTPServer", formatStrings, 1,
                                               getter_Copies(formattedString));
             free(ucs2Response);
             if (NS_FAILED(rv))
@@ -1616,13 +1611,6 @@ nsFtpState::Init(nsFtpChannel *channel)
     NS_ASSERTION(channel, "FTP: needs a channel");
 
     mChannel = channel; // a straight ref ptr to the channel
-
-#ifdef MOZ_WIDGET_GONK
-    nsCOMPtr<nsINetworkInfo> activeNetworkInfo;
-    GetActiveNetworkInfo(activeNetworkInfo);
-    mActiveNetworkInfo =
-        new nsMainThreadPtrHolder<nsINetworkInfo>(activeNetworkInfo);
-#endif
 
     mKeepRunning = true;
     mSuppliedEntityID = channel->EntityID();

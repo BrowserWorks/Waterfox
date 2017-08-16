@@ -75,6 +75,7 @@ module.exports.colorUtils = {
   rgbToColorName: rgbToColorName,
   colorToRGBA: colorToRGBA,
   isValidCSSColor: isValidCSSColor,
+  calculateContrastRatio: calculateContrastRatio,
 };
 
 /**
@@ -140,7 +141,7 @@ CssColor.prototype = {
     if (!this.valid) {
       return false;
     }
-    return this._getRGBATuple().a !== 1;
+    return this.getRGBATuple().a !== 1;
   },
 
   get valid() {
@@ -152,7 +153,7 @@ CssColor.prototype = {
    */
   get transparent() {
     try {
-      let tuple = this._getRGBATuple();
+      let tuple = this.getRGBATuple();
       return !(tuple.r || tuple.g || tuple.b || tuple.a);
     } catch (e) {
       return false;
@@ -169,17 +170,13 @@ CssColor.prototype = {
       return invalidOrSpecialValue;
     }
 
-    try {
-      let tuple = this._getRGBATuple();
+    let tuple = this.getRGBATuple();
 
-      if (tuple.a !== 1) {
-        return this.hex;
-      }
-      let {r, g, b} = tuple;
-      return rgbToColorName(r, g, b);
-    } catch (e) {
+    if (tuple.a !== 1) {
       return this.hex;
     }
+    let {r, g, b} = tuple;
+    return rgbToColorName(r, g, b) || this.hex;
   },
 
   get hex() {
@@ -226,7 +223,7 @@ CssColor.prototype = {
       return this.longAlphaHex;
     }
 
-    let tuple = this._getRGBATuple();
+    let tuple = this.getRGBATuple();
     return "#" + ((1 << 24) + (tuple.r << 16) + (tuple.g << 8) +
                   (tuple.b << 0)).toString(16).substr(-6);
   },
@@ -237,7 +234,7 @@ CssColor.prototype = {
       return invalidOrSpecialValue;
     }
 
-    let tuple = this._getRGBATuple();
+    let tuple = this.getRGBATuple();
     return "#" + ((1 << 24) + (tuple.r << 16) + (tuple.g << 8) +
                   (tuple.b << 0)).toString(16).substr(-6) +
                   Math.round(tuple.a * 255).toString(16).padEnd(2, "0");
@@ -253,7 +250,7 @@ CssColor.prototype = {
         // The color is valid and begins with rgb(.
         return this.authored;
       }
-      let tuple = this._getRGBATuple();
+      let tuple = this.getRGBATuple();
       return "rgb(" + tuple.r + ", " + tuple.g + ", " + tuple.b + ")";
     }
     return this.rgba;
@@ -268,7 +265,7 @@ CssColor.prototype = {
       // The color is valid and begins with rgba(.
       return this.authored;
     }
-    let components = this._getRGBATuple();
+    let components = this.getRGBATuple();
     return "rgba(" + components.r + ", " +
                      components.g + ", " +
                      components.b + ", " +
@@ -300,7 +297,7 @@ CssColor.prototype = {
       return this.authored;
     }
     if (this.hasAlpha) {
-      let a = this._getRGBATuple().a;
+      let a = this.getRGBATuple().a;
       return this._hsl(a);
     }
     return this._hsl(1);
@@ -400,7 +397,7 @@ CssColor.prototype = {
    * Returns a RGBA 4-Tuple representation of a color or transparent as
    * appropriate.
    */
-  _getRGBATuple: function () {
+  getRGBATuple: function () {
     let tuple = colorToRGBA(this.authored, this.cssColor4);
 
     tuple.a = parseFloat(tuple.a.toFixed(1));
@@ -431,7 +428,7 @@ CssColor.prototype = {
       return this.authored;
     }
 
-    let {r, g, b} = this._getRGBATuple();
+    let {r, g, b} = this.getRGBATuple();
     let [h, s, l] = rgbToHsl([r, g, b]);
     if (maybeAlpha !== undefined) {
       return "hsla(" + h + ", " + s + "%, " + l + "%, " + maybeAlpha + ")";
@@ -444,6 +441,15 @@ CssColor.prototype = {
    */
   valueOf: function () {
     return this.rgba;
+  },
+
+  /**
+   * Check whether the color is fully transparent (alpha === 0).
+   *
+   * @return {Boolean} True if the color is transparent and valid.
+   */
+  isTransparent: function () {
+    return this.getRGBATuple().a === 0;
   },
 };
 
@@ -524,7 +530,7 @@ function setAlpha(colorValue, alpha, useCssColor4ColorFunction = false) {
     alpha = 1;
   }
 
-  let { r, g, b } = color._getRGBATuple();
+  let { r, g, b } = color.getRGBATuple();
   return "rgba(" + r + ", " + g + ", " + b + ", " + alpha + ")";
 }
 
@@ -554,11 +560,11 @@ function classifyColor(value) {
 var cssRGBMap;
 
 /**
- * Given a color, return its name, if it has one.  Throws an exception
- * if the color does not have a name.
+ * Given a color, return its name, if it has one. Otherwise
+ * returns an empty string.
  *
  * @param {Number} r, g, b  The color components.
- * @return {String} the name of the color
+ * @return {String} the name of the color or an empty string
  */
 function rgbToColorName(r, g, b) {
   if (!cssRGBMap) {
@@ -570,11 +576,7 @@ function rgbToColorName(r, g, b) {
       }
     }
   }
-  let value = cssRGBMap[JSON.stringify([r, g, b, 1])];
-  if (!value) {
-    throw new Error("no such color");
-  }
-  return value;
+  return cssRGBMap[JSON.stringify([r, g, b, 1])] || "";
 }
 
 // Translated from nsColor.cpp.
@@ -1141,4 +1143,38 @@ function colorToRGBA(name, useCssColor4ColorFunction = false) {
  */
 function isValidCSSColor(name, useCssColor4ColorFunction = false) {
   return colorToRGBA(name, useCssColor4ColorFunction) !== null;
+}
+
+/**
+ * Calculates the luminance of a rgba tuple based on the formula given in
+ * https://www.w3.org/TR/2008/REC-WCAG20-20081211/#relativeluminancedef
+ *
+ * @param {Array} rgba An array with [r,g,b,a] values.
+ * @return {Number} The calculated luminance.
+ */
+function calculateLuminance(rgba) {
+  for (let i = 0; i < 3; i++) {
+    rgba[i] /= 255;
+    rgba[i] = (rgba[i] < 0.03928) ? (rgba[i] / 12.92) :
+                                    Math.pow(((rgba[i] + 0.055) / 1.055), 2.4);
+  }
+  return 0.2126 * rgba[0] + 0.7152 * rgba[1] + 0.0722 * rgba[2];
+}
+
+/**
+ * Calculates the contrast ratio of 2 rgba tuples based on the formula in
+ * https://www.w3.org/TR/2008/REC-WCAG20-20081211/#visual-audio-contrast7
+ *
+ * @param {Array} backgroundColor An array with [r,g,b,a] values containing
+ * the background color.
+ * @param {Array} textColor An array with [r,g,b,a] values containing
+ * the text color.
+ * @return {Number} The calculated luminance.
+ */
+function calculateContrastRatio(backgroundColor, textColor) {
+  let backgroundLuminance = calculateLuminance(backgroundColor);
+  let textLuminance = calculateLuminance(textColor);
+  let ratio = (textLuminance + 0.05) / (backgroundLuminance + 0.05);
+
+  return (ratio > 1.0) ? ratio : (1 / ratio);
 }

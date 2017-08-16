@@ -404,11 +404,8 @@ ResolvedStyleCache::Get(nsPresContext *aPresContext,
 
 class MOZ_STACK_CLASS ServoCSSAnimationBuilder final {
 public:
-  ServoCSSAnimationBuilder(
-    const ServoComputedValues* aComputedValues,
-    const ServoComputedValues* aParentComputedValues)
+  explicit ServoCSSAnimationBuilder(const ServoComputedValues* aComputedValues)
     : mComputedValues(aComputedValues)
-    , mParentComputedValues(aParentComputedValues)
   {
     MOZ_ASSERT(aComputedValues);
   }
@@ -420,21 +417,19 @@ public:
     ServoStyleSet* styleSet = aPresContext->StyleSet()->AsServo();
     MOZ_ASSERT(styleSet);
     const nsTimingFunction& timingFunction = aSrc.GetTimingFunction();
-    return styleSet->FillKeyframesForName(aSrc.GetName(),
-                                          timingFunction,
-                                          mComputedValues,
-                                          aKeyframes);
+    return styleSet->GetKeyframesForName(aSrc.GetName(),
+                                         timingFunction,
+                                         mComputedValues,
+                                         aKeyframes);
   }
   void SetKeyframes(KeyframeEffectReadOnly& aEffect,
                     nsTArray<Keyframe>&& aKeyframes)
   {
-    aEffect.SetKeyframes(Move(aKeyframes),
-                         { mComputedValues, mParentComputedValues });
+    aEffect.SetKeyframes(Move(aKeyframes), mComputedValues);
   }
 
 private:
   const ServoComputedValues* mComputedValues;
-  const ServoComputedValues* mParentComputedValues;
 };
 
 class MOZ_STACK_CLASS GeckoCSSAnimationBuilder final {
@@ -470,23 +465,16 @@ private:
     nsCSSKeyframeRule* aKeyframeRule,
     nsCSSPropertyIDSet& aAnimatedProperties);
   void FillInMissingKeyframeValues(
-    nsPresContext* aPresContext,
     nsCSSPropertyIDSet aAnimatedProperties,
     nsCSSPropertyIDSet aPropertiesSetAtStart,
     nsCSSPropertyIDSet aPropertiesSetAtEnd,
     const Maybe<ComputedTimingFunction>& aInheritedTimingFunction,
     nsTArray<Keyframe>& aKeyframes);
-  void AppendProperty(nsPresContext* aPresContext,
-                      nsCSSPropertyID aProperty,
-                      nsTArray<PropertyValuePair>& aPropertyValues);
-  nsCSSValue GetComputedValue(nsPresContext* aPresContext,
-                              nsCSSPropertyID aProperty);
 
   RefPtr<nsStyleContext> mStyleContext;
   NonOwningAnimationTarget mTarget;
 
   ResolvedStyleCache mResolvedStyles;
-  RefPtr<nsStyleContext> mStyleWithoutAnimation;
 };
 
 static Maybe<ComputedTimingFunction>
@@ -805,9 +793,9 @@ GeckoCSSAnimationBuilder::BuildAnimationFrames(nsPresContext* aPresContext,
   // Finally, we need to look for any animated properties that have an
   // implicit 'to' or 'from' value and fill in the appropriate keyframe
   // with the current computed style.
-  FillInMissingKeyframeValues(aPresContext, animatedProperties,
-                              propertiesSetAtStart, propertiesSetAtEnd,
-                              inheritedTimingFunction, keyframes);
+  FillInMissingKeyframeValues(animatedProperties, propertiesSetAtStart,
+                              propertiesSetAtEnd, inheritedTimingFunction,
+                              keyframes);
 
   return keyframes;
 }
@@ -891,43 +879,8 @@ GeckoCSSAnimationBuilder::GetKeyframePropertyValues(
   return result;
 }
 
-// Utility function to walk through |aIter| to find the Keyframe with
-// matching offset and timing function but stopping as soon as the offset
-// differs from |aOffset| (i.e. it assumes a sorted iterator).
-//
-// If a matching Keyframe is found,
-//   Returns true and sets |aIndex| to the index of the matching Keyframe
-//   within |aIter|.
-//
-// If no matching Keyframe is found,
-//   Returns false and sets |aIndex| to the index in the iterator of the
-//   first Keyframe with an offset differing to |aOffset| or, if the end
-//   of the iterator is reached, sets |aIndex| to the index after the last
-//   Keyframe.
-template <class IterType>
-static bool
-FindMatchingKeyframe(
-    IterType&& aIter,
-    double aOffset,
-    const Maybe<ComputedTimingFunction>& aTimingFunctionToMatch,
-    size_t& aIndex)
-{
-  aIndex = 0;
-  for (Keyframe& keyframe : aIter) {
-    if (keyframe.mOffset.value() != aOffset) {
-      break;
-    }
-    if (keyframe.mTimingFunction == aTimingFunctionToMatch) {
-      return true;
-    }
-    ++aIndex;
-  }
-  return false;
-}
-
 void
 GeckoCSSAnimationBuilder::FillInMissingKeyframeValues(
-    nsPresContext* aPresContext,
     nsCSSPropertyIDSet aAnimatedProperties,
     nsCSSPropertyIDSet aPropertiesSetAtStart,
     nsCSSPropertyIDSet aPropertiesSetAtEnd,
@@ -939,8 +892,10 @@ GeckoCSSAnimationBuilder::FillInMissingKeyframeValues(
   // Find/create the keyframe to add start values to
   size_t startKeyframeIndex = kNotSet;
   if (!aAnimatedProperties.Equals(aPropertiesSetAtStart) &&
-      !FindMatchingKeyframe(aKeyframes, 0.0, aInheritedTimingFunction,
-                            startKeyframeIndex)) {
+      !nsAnimationManager::FindMatchingKeyframe(aKeyframes,
+                                                0.0,
+                                                aInheritedTimingFunction,
+                                                startKeyframeIndex)) {
     Keyframe newKeyframe;
     newKeyframe.mOffset.emplace(0.0);
     newKeyframe.mTimingFunction = aInheritedTimingFunction;
@@ -950,8 +905,10 @@ GeckoCSSAnimationBuilder::FillInMissingKeyframeValues(
   // Find/create the keyframe to add end values to
   size_t endKeyframeIndex = kNotSet;
   if (!aAnimatedProperties.Equals(aPropertiesSetAtEnd)) {
-    if (!FindMatchingKeyframe(Reversed(aKeyframes), 1.0,
-                              aInheritedTimingFunction, endKeyframeIndex)) {
+    if (!nsAnimationManager::FindMatchingKeyframe(Reversed(aKeyframes),
+                                                  1.0,
+                                                  aInheritedTimingFunction,
+                                                  endKeyframeIndex)) {
       Keyframe newKeyframe;
       newKeyframe.mOffset.emplace(1.0);
       newKeyframe.mTimingFunction = aInheritedTimingFunction;
@@ -984,59 +941,16 @@ GeckoCSSAnimationBuilder::FillInMissingKeyframeValues(
     }
 
     if (startKeyframe && !aPropertiesSetAtStart.HasProperty(prop)) {
-      AppendProperty(aPresContext, prop, startKeyframe->mPropertyValues);
+      PropertyValuePair propertyValue;
+      propertyValue.mProperty = prop;
+      startKeyframe->mPropertyValues.AppendElement(Move(propertyValue));
     }
     if (endKeyframe && !aPropertiesSetAtEnd.HasProperty(prop)) {
-      AppendProperty(aPresContext, prop, endKeyframe->mPropertyValues);
+      PropertyValuePair propertyValue;
+      propertyValue.mProperty = prop;
+      endKeyframe->mPropertyValues.AppendElement(Move(propertyValue));
     }
   }
-}
-
-void
-GeckoCSSAnimationBuilder::AppendProperty(
-    nsPresContext* aPresContext,
-    nsCSSPropertyID aProperty,
-    nsTArray<PropertyValuePair>& aPropertyValues)
-{
-  PropertyValuePair propertyValue;
-  propertyValue.mProperty = aProperty;
-  propertyValue.mValue = GetComputedValue(aPresContext, aProperty);
-
-  aPropertyValues.AppendElement(Move(propertyValue));
-}
-
-nsCSSValue
-GeckoCSSAnimationBuilder::GetComputedValue(nsPresContext* aPresContext,
-                                           nsCSSPropertyID aProperty)
-{
-  nsCSSValue result;
-  StyleAnimationValue computedValue;
-
-  if (!mStyleWithoutAnimation) {
-    MOZ_ASSERT(aPresContext->StyleSet()->IsGecko(),
-               "ServoStyleSet should not use nsAnimationManager for "
-               "animations");
-    mStyleWithoutAnimation = aPresContext->StyleSet()->AsGecko()->
-      ResolveStyleByRemovingAnimation(mTarget.mElement, mStyleContext,
-                                      eRestyle_AllHintsWithAnimations);
-  }
-
-  if (StyleAnimationValue::ExtractComputedValue(aProperty,
-                                                mStyleWithoutAnimation,
-                                                computedValue)) {
-    DebugOnly<bool> uncomputeResult =
-      StyleAnimationValue::UncomputeValue(aProperty, Move(computedValue),
-                                          result);
-    MOZ_ASSERT(uncomputeResult,
-               "Unable to get specified value from computed value");
-  }
-
-  // If we hit this assertion, it probably means we are fetching a value from
-  // the computed style that we don't know how to represent as
-  // a StyleAnimationValue.
-  MOZ_ASSERT(result.GetUnit() != eCSSUnit_Null, "Got null computed value");
-
-  return result;
 }
 
 template<class BuilderType>
@@ -1102,9 +1016,8 @@ nsAnimationManager::UpdateAnimations(nsStyleContext* aStyleContext,
 void
 nsAnimationManager::UpdateAnimations(
   dom::Element* aElement,
-  nsIAtom* aPseudoTagOrNull,
-  const ServoComputedValues* aComputedValues,
-  const ServoComputedValues* aParentComputedValues)
+  CSSPseudoElementType aPseudoType,
+  const ServoComputedValues* aComputedValues)
 {
   MOZ_ASSERT(mPresContext->IsDynamic(),
              "Should not update animations for print or print preview");
@@ -1112,16 +1025,19 @@ nsAnimationManager::UpdateAnimations(
              "Should not update animations that are not attached to the "
              "document tree");
 
-  CSSPseudoElementType pseudoType =
-    nsCSSPseudoElements::GetPseudoType(aPseudoTagOrNull,
-                                       CSSEnabledState::eForAllContent);
-  NonOwningAnimationTarget target(aElement, pseudoType);
-  ServoCSSAnimationBuilder builder(aComputedValues, aParentComputedValues);
+  if (!aComputedValues) {
+    // If we are in a display:none subtree we will have no computed values.
+    // Since CSS animations should not run in display:none subtrees we should
+    // stop (actually, destroy) any animations on this element here.
+    StopAnimationsForElement(aElement, aPseudoType);
+    return;
+  }
 
-  // Currently we don't seem to call this UpdateAnimations for elements in
-  // display:none subtree. We will call this function for such elements with
-  // null computed values in bug 1341985.
-  const nsStyleDisplay *disp = Servo_GetStyleDisplay(aComputedValues);
+  NonOwningAnimationTarget target(aElement, aPseudoType);
+  ServoCSSAnimationBuilder builder(aComputedValues);
+
+  const nsStyleDisplay *disp =
+    Servo_GetStyleDisplay(aComputedValues);
   DoUpdateAnimations(target, *disp, builder);
 }
 

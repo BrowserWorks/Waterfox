@@ -19,11 +19,7 @@ function LOG(str) {
   let prefB = Cc["@mozilla.org/preferences-service;1"].
               getService(Ci.nsIPrefBranch);
 
-  let shouldLog = false;
-  try {
-    shouldLog = prefB.getBoolPref("feeds.log");
-  } catch (ex) {
-  }
+  let shouldLog = prefB.getBoolPref("feeds.log", false);
 
   if (shouldLog)
     dump("*** Feeds: " + str + "\n");
@@ -102,7 +98,7 @@ FeedWriter.prototype = {
     let element = this._document.getElementById(id);
     let textNode = text.createDocumentFragment(element);
     while (element.hasChildNodes())
-      element.removeChild(element.firstChild);
+      element.firstChild.remove();
     element.appendChild(textNode);
     if (text.base) {
       element.setAttributeNS(XML_NS, "base", text.base.spec);
@@ -193,12 +189,11 @@ FeedWriter.prototype = {
   __dateFormatter: null,
   get _dateFormatter() {
     if (!this.__dateFormatter) {
-      const locale = Cc["@mozilla.org/chrome/chrome-registry;1"]
-                     .getService(Ci.nsIXULChromeRegistry)
-                     .getSelectedLocale("global", true);
-      const dtOptions = { year: "numeric", month: "long", day: "numeric",
-                          hour: "numeric", minute: "numeric" };
-      this.__dateFormatter = new Intl.DateTimeFormat(locale, dtOptions);
+      const dtOptions = {
+        timeStyle: "short",
+        dateStyle: "long"
+      };
+      this.__dateFormatter = Services.intl.createDateTimeFormat(undefined, dtOptions);
     }
     return this.__dateFormatter;
   },
@@ -970,13 +965,13 @@ FeedWriter.prototype = {
     // Show the file picker before subscribing if the
     // choose application menuitem was chosen using the keyboard
     if (selectedItem.id == "chooseApplicationMenuItem") {
-      this._chooseClientApp(function(aResult) {
+      this._chooseClientApp(aResult => {
         if (aResult) {
           selectedItem =
             this._handlersList.selectedOptions[0];
           subscribeCallback();
         }
-      }.bind(this));
+      });
     } else {
       subscribeCallback();
     }

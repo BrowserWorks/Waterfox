@@ -1,4 +1,3 @@
-// |reftest| skip-if(!this.hasOwnProperty('Intl')) -- needs Intl
 // Copyright 2012 Mozilla Corporation. All rights reserved.
 // This code is governed by the license found in the LICENSE file.
 
@@ -11,17 +10,9 @@ author: Norbert Lindenberg
 ---*/
 
 var desc = Object.getOwnPropertyDescriptor(Intl.DateTimeFormat, "prototype");
-if (desc === undefined) {
-    $ERROR("Intl.DateTimeFormat.prototype is not defined.");
-}
-if (desc.writable) {
-    $ERROR("Intl.DateTimeFormat.prototype must not be writable.");
-}
-if (desc.enumerable) {
-    $ERROR("Intl.DateTimeFormat.prototype must not be enumerable.");
-}
-if (desc.configurable) {
-    $ERROR("Intl.DateTimeFormat.prototype must not be configurable.");
-}
+assert.notSameValue(desc, undefined, "Intl.DateTimeFormat.prototype is not defined.");
+assert.sameValue(desc.writable, false, "Intl.DateTimeFormat.prototype must not be writable.");
+assert.sameValue(desc.enumerable, false, "Intl.DateTimeFormat.prototype must not be enumerable.");
+assert.sameValue(desc.configurable, false, "Intl.DateTimeFormat.prototype must not be configurable.");
 
 reportCompare(0, 0);

@@ -4,20 +4,19 @@
 
 'use strict';
 
-/* global ROLE_TEXT_LEAF, EVENT_REORDER, ROLE_STATICTEXT, ROLE_LISTITEM */
-
+/* import-globals-from ../../mochitest/role.js */
 loadScripts({ name: 'role.js', dir: MOCHITESTS_DIR });
 
-function* setDisplayAndWaitForReorder(browser, value) {
+async function setDisplayAndWaitForReorder(browser, value) {
   let onReorder = waitForEvent(EVENT_REORDER, 'ul');
-  yield invokeSetStyle(browser, 'li', 'display', value);
-  return yield onReorder;
+  await invokeSetStyle(browser, 'li', 'display', value);
+  return await onReorder;
 }
 
 addAccessibleTask(`
   <ul id="ul">
     <li id="li">item1</li>
-  </ul>`, function*(browser, accDoc) {
+  </ul>`, async function(browser, accDoc) {
   let li = findAccessibleChildByID(accDoc, 'li');
   let bullet = li.firstChild;
   let accTree = {
@@ -32,12 +31,12 @@ addAccessibleTask(`
   };
   testAccessibleTree(li, accTree);
 
-  yield setDisplayAndWaitForReorder(browser, 'none');
+  await setDisplayAndWaitForReorder(browser, 'none');
 
   ok(isDefunct(li), 'Check that li is defunct.');
   ok(isDefunct(bullet), 'Check that bullet is defunct.');
 
-  let event = yield setDisplayAndWaitForReorder(browser, 'list-item');
+  let event = await setDisplayAndWaitForReorder(browser, 'list-item');
 
   testAccessibleTree(findAccessibleChildByID(event.accessible, 'li'), accTree);
 });

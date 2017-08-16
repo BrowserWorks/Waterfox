@@ -38,6 +38,9 @@
 
 var {classes: Cc, interfaces: Ci, utils: Cu} = Components;
 
+Cu.import("resource://gre/modules/XPCOMUtils.jsm");
+Cu.import("resource://gre/modules/Services.jsm");
+Cu.import("resource://gre/modules/Preferences.jsm");
 Cu.import("resource://services-sync/addonutils.js");
 Cu.import("resource://services-sync/addonsreconciler.js");
 Cu.import("resource://services-sync/engines.js");
@@ -47,8 +50,6 @@ Cu.import("resource://services-sync/constants.js");
 Cu.import("resource://services-sync/collection_validator.js");
 Cu.import("resource://services-common/async.js");
 
-Cu.import("resource://gre/modules/Preferences.jsm");
-Cu.import("resource://gre/modules/XPCOMUtils.jsm");
 XPCOMUtils.defineLazyModuleGetter(this, "AddonManager",
                                   "resource://gre/modules/AddonManager.jsm");
 XPCOMUtils.defineLazyModuleGetter(this, "AddonRepository",
@@ -384,9 +385,7 @@ AddonsStore.prototype = {
       // We continue with processing because there could be state or ID change.
     }
 
-    let cb = Async.makeSpinningCallback();
-    this.updateUserDisabled(addon, !record.enabled, cb);
-    cb.wait();
+    this.updateUserDisabled(addon, !record.enabled);
   },
 
   /**
@@ -661,22 +660,17 @@ AddonsStore.prototype = {
   /**
    * Update the userDisabled flag on an add-on.
    *
-   * This will enable or disable an add-on and call the supplied callback when
-   * the action is complete. If no action is needed, the callback gets called
-   * immediately.
+   * This will enable or disable an add-on. It has no return value and does
+   * not catch or handle exceptions thrown by the addon manager. If no action
+   * is needed it will return immediately.
    *
    * @param addon
    *        Addon instance to manipulate.
    * @param value
    *        Boolean to which to set userDisabled on the passed Addon.
-   * @param callback
-   *        Function to be called when action is complete. Will receive 2
-   *        arguments, a truthy value that signifies error, and the Addon
-   *        instance passed to this function.
    */
-  updateUserDisabled: function updateUserDisabled(addon, value, callback) {
+  updateUserDisabled(addon, value) {
     if (addon.userDisabled == value) {
-      callback(null, addon);
       return;
     }
 
@@ -684,11 +678,16 @@ AddonsStore.prototype = {
     if (Svc.Prefs.get("addons.ignoreUserEnabledChanges", false)) {
       this._log.info("Ignoring enabled state change due to preference: " +
                      addon.id);
-      callback(null, addon);
       return;
     }
 
-    AddonUtils.updateUserDisabled(addon, value, callback);
+    AddonUtils.updateUserDisabled(addon, value);
+    // updating this flag doesn't send a notification for appDisabled addons,
+    // meaning the reconciler will not update its state and may resync the
+    // addon - so explicitly rectify the state (bug 1366994)
+    if (addon.appDisabled) {
+      this.reconciler.rectifyStateFromAddon(addon);
+    }
   },
 };
 
@@ -728,8 +727,9 @@ AddonsTracker.prototype = {
       return;
     }
 
-    this.addChangedID(addon.guid, date.getTime() / 1000);
-    this.score += SCORE_INCREMENT_XLARGE;
+    if (this.addChangedID(addon.guid, date.getTime() / 1000)) {
+      this.score += SCORE_INCREMENT_XLARGE;
+    }
   },
 
   startTracking() {

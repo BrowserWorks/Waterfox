@@ -2,47 +2,22 @@
 /* vim: set sts=2 sw=2 et tw=80: */
 "use strict";
 
-const {classes: Cc, interfaces: Ci, utils: Cu} = Components;
-
 XPCOMUtils.defineLazyModuleGetter(this, "Preferences",
                                   "resource://gre/modules/Preferences.jsm");
 
 Cu.import("resource://gre/modules/ExtensionPreferencesManager.jsm");
-Cu.import("resource://gre/modules/ExtensionUtils.jsm");
-const {
+var {
   ExtensionError,
 } = ExtensionUtils;
 
-/* eslint-disable mozilla/balanced-listeners */
-extensions.on("startup", async (type, extension) => {
-  if (["ADDON_ENABLE", "ADDON_UPGRADE", "ADDON_DOWNGRADE"].includes(extension.startupReason)) {
-    await ExtensionPreferencesManager.enableAll(extension);
-  }
-});
-
-extensions.on("shutdown", async (type, extension) => {
-  switch (extension.shutdownReason) {
-    case "ADDON_DISABLE":
-    case "ADDON_DOWNGRADE":
-    case "ADDON_UPGRADE":
-      await ExtensionPreferencesManager.disableAll(extension);
-      break;
-
-    case "ADDON_UNINSTALL":
-      await ExtensionPreferencesManager.removeAll(extension);
-      break;
-  }
-});
-/* eslint-enable mozilla/balanced-listeners */
-
-function checkScope(scope) {
+const checkScope = scope => {
   if (scope && scope !== "regular") {
     throw new ExtensionError(
       `Firefox does not support the ${scope} settings scope.`);
   }
-}
+};
 
-function getAPI(extension, name, callback) {
+const getPrivacyAPI = (extension, name, callback) => {
   return {
     async get(details) {
       return {
@@ -64,7 +39,7 @@ function getAPI(extension, name, callback) {
         extension, name);
     },
   };
-}
+};
 
 // Add settings objects for supported APIs to the preferences manager.
 ExtensionPreferencesManager.addSetting("network.networkPredictionEnabled", {
@@ -82,6 +57,16 @@ ExtensionPreferencesManager.addSetting("network.networkPredictionEnabled", {
       "network.predictor.enabled": value,
       "network.prefetch-next": value,
     };
+  },
+});
+
+ExtensionPreferencesManager.addSetting("network.peerConnectionEnabled", {
+  prefNames: [
+    "media.peerconnection.enabled",
+  ],
+
+  setCallback(value) {
+    return {[this.prefNames[0]]: value};
   },
 });
 
@@ -130,45 +115,52 @@ ExtensionPreferencesManager.addSetting("websites.hyperlinkAuditingEnabled", {
   },
 });
 
-extensions.registerSchemaAPI("privacy.network", "addon_parent", context => {
-  let {extension} = context;
-  return {
-    privacy: {
-      network: {
-        networkPredictionEnabled: getAPI(extension,
-          "network.networkPredictionEnabled",
-          () => {
-            return Preferences.get("network.predictor.enabled") &&
-              Preferences.get("network.prefetch-next") &&
-              Preferences.get("network.http.speculative-parallel-limit") > 0 &&
-              !Preferences.get("network.dns.disablePrefetch");
-          }),
-        webRTCIPHandlingPolicy: getAPI(extension,
-          "network.webRTCIPHandlingPolicy",
-          () => {
-            if (Preferences.get("media.peerconnection.ice.proxy_only")) {
-              return "disable_non_proxied_udp";
-            }
-
-            let default_address_only =
-              Preferences.get("media.peerconnection.ice.default_address_only");
-            if (default_address_only) {
-              if (Preferences.get("media.peerconnection.ice.no_host")) {
-                return "default_public_interface_only";
+this.privacy = class extends ExtensionAPI {
+  getAPI(context) {
+    let {extension} = context;
+    return {
+      privacy: {
+        network: {
+          networkPredictionEnabled: getPrivacyAPI(extension,
+            "network.networkPredictionEnabled",
+            () => {
+              return Preferences.get("network.predictor.enabled") &&
+                Preferences.get("network.prefetch-next") &&
+                Preferences.get("network.http.speculative-parallel-limit") > 0 &&
+                !Preferences.get("network.dns.disablePrefetch");
+            }),
+          peerConnectionEnabled: getPrivacyAPI(extension,
+            "network.peerConnectionEnabled",
+            () => {
+              return Preferences.get("media.peerconnection.enabled");
+            }),
+          webRTCIPHandlingPolicy: getPrivacyAPI(extension,
+            "network.webRTCIPHandlingPolicy",
+            () => {
+              if (Preferences.get("media.peerconnection.ice.proxy_only")) {
+                return "disable_non_proxied_udp";
               }
-              return "default_public_and_private_interfaces";
-            }
 
-            return "default";
-          }),
+              let default_address_only =
+                Preferences.get("media.peerconnection.ice.default_address_only");
+              if (default_address_only) {
+                if (Preferences.get("media.peerconnection.ice.no_host")) {
+                  return "default_public_interface_only";
+                }
+                return "default_public_and_private_interfaces";
+              }
+
+              return "default";
+            }),
+        },
+        websites: {
+          hyperlinkAuditingEnabled: getPrivacyAPI(extension,
+            "websites.hyperlinkAuditingEnabled",
+            () => {
+              return Preferences.get("browser.send_pings");
+            }),
+        },
       },
-      websites: {
-        hyperlinkAuditingEnabled: getAPI(extension,
-          "websites.hyperlinkAuditingEnabled",
-          () => {
-            return Preferences.get("browser.send_pings");
-          }),
-      },
-    },
-  };
-});
+    };
+  }
+};

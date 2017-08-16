@@ -54,13 +54,13 @@
 .tab-label-container[textoverflow][labeldirection=ltr]:not([pinned]),
 .tab-label-container[textoverflow]:not([labeldirection]):not([pinned]):-moz-locale-dir(ltr) {
   direction: ltr;
-  mask-image: linear-gradient(to left, transparent, black 1em);
+  mask-image: linear-gradient(to left, transparent, black 2em);
 }
 
 .tab-label-container[textoverflow][labeldirection=rtl]:not([pinned]),
 .tab-label-container[textoverflow]:not([labeldirection]):not([pinned]):-moz-locale-dir(rtl) {
   direction: rtl;
-  mask-image: linear-gradient(to right, transparent, black 1em);
+  mask-image: linear-gradient(to right, transparent, black 2em);
 }
 
 .tab-stack {
@@ -91,16 +91,7 @@ tabpanels {
   transition: width .15s ease-out;
 }
 
-/**
- * Optimization for tabs that are restored lazily. We can save a good amount of
- * memory that to-be-restored tabs would otherwise consume simply by setting
- * their browsers to 'display: none' as that will prevent them from having to
- * create a presentation and the like.
- */
-browser[pending] {
-  display: none;
-}
-
+browser[blank],
 browser[pendingpaint] {
   opacity: 0;
 }

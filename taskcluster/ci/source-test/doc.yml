@@ -1,13 +1,12 @@
-sphinx/opt:
+sphinx:
     description: Generate the Sphinx documentation
+    platform: lint/opt
     treeherder:
         symbol: tc(Doc)
         kind: test
         tier: 1
-        platform: lint/opt
-    worker-type: aws-provisioner-v1/b2gtest
+    worker-type: aws-provisioner-v1/gecko-t-linux-xlarge
     worker:
-        implementation: docker-worker
         docker-image: {in-tree: "lint"}
         max-run-time: 1800
         artifacts:

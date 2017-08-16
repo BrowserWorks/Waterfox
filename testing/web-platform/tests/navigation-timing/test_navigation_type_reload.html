@@ -7,6 +7,7 @@
         <link rel="help" href="http://www.w3.org/TR/navigation-timing/#sec-navigation-timing-interface"/>
         <script src="/resources/testharness.js"></script>
         <script src="/resources/testharnessreport.js"></script>
+        <script src="/common/performance-timeline-utils.js"></script>
         <script src="resources/webperftestharness.js"></script>
         <script>
             setup({explicit_done: true});
@@ -37,9 +38,9 @@
                 reload_frame.onload = function() {
                     /* Need to make sure we don't examine loadEventEnd
                      until after the load event has finished firing */
-                    setTimeout(do_test, 0);
+                    step_timeout(do_test, 0);
                 }
-                setTimeout("reload_the_frame();", 100);
+                step_timeout(reload_the_frame, 100);
             }
 
             function reload_the_frame()

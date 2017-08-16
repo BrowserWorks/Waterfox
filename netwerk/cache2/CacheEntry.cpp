@@ -585,7 +585,7 @@ void CacheEntry::TransferCallbacks(CacheEntry & aFromEntry)
 
   uint32_t callbacksLength = mCallbacks.Length();
   if (callbacksLength) {
-    // Carry the entry reference (unfortunatelly, needs to be done manually...)
+    // Carry the entry reference (unfortunately, needs to be done manually...)
     for (uint32_t i = 0; i < callbacksLength; ++i)
       mCallbacks[i].ExchangeEntry(this);
 
@@ -1073,6 +1073,26 @@ NS_IMETHODIMP CacheEntry::GetExpirationTime(uint32_t *aExpirationTime)
   NS_ENSURE_SUCCESS(mFileStatus, NS_ERROR_NOT_AVAILABLE);
 
   return mFile->GetExpirationTime(aExpirationTime);
+}
+
+nsresult CacheEntry::GetOnStartTime(uint64_t *aTime)
+{
+  NS_ENSURE_SUCCESS(mFileStatus, NS_ERROR_NOT_AVAILABLE);
+  return mFile->GetOnStartTime(aTime);
+}
+
+nsresult CacheEntry::GetOnStopTime(uint64_t *aTime)
+{
+  NS_ENSURE_SUCCESS(mFileStatus, NS_ERROR_NOT_AVAILABLE);
+  return mFile->GetOnStopTime(aTime);
+}
+
+nsresult CacheEntry::SetNetworkTimes(uint64_t aOnStartTime, uint64_t aOnStopTime)
+{
+  if (NS_SUCCEEDED(mFileStatus)) {
+    return mFile->SetNetworkTimes(aOnStartTime, aOnStopTime);
+  }
+  return NS_ERROR_NOT_AVAILABLE;
 }
 
 NS_IMETHODIMP CacheEntry::GetIsForcedValid(bool *aIsForcedValid)
@@ -1914,7 +1934,7 @@ size_t CacheEntry::SizeOfExcludingThis(mozilla::MallocSizeOf mallocSizeOf) const
   // mDoomCallback is an arbitrary class that is probably reported elsewhere.
   // mOutputStream is reported in mFile.
   // mWriter is one of many handles we create, but (intentionally) not keep
-  // any reference to, so those unfortunatelly cannot be reported.  Handles are
+  // any reference to, so those unfortunately cannot be reported.  Handles are
   // small, though.
   // mSecurityInfo doesn't impl nsISizeOf.
 

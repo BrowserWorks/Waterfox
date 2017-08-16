@@ -26,6 +26,7 @@
 #include "mozilla/Attributes.h"
 #include "mozilla/ContentCache.h"
 #include "mozilla/EventForwards.h"
+#include "mozilla/TextEventDispatcherListener.h"
 
 namespace mozilla {
 
@@ -38,11 +39,18 @@ namespace widget {
 struct AutoCacheNativeKeyCommands;
 
 class PuppetWidget : public nsBaseWidget
+                   , public TextEventDispatcherListener
 {
+  typedef mozilla::CSSRect CSSRect;
   typedef mozilla::dom::TabChild TabChild;
   typedef mozilla::gfx::DrawTarget DrawTarget;
+
+  // Avoiding to make compiler confused between mozilla::widget and nsIWidget.
+  typedef mozilla::widget::TextEventDispatcher TextEventDispatcher;
+  typedef mozilla::widget::TextEventDispatcherListener
+                             TextEventDispatcherListener;
+
   typedef nsBaseWidget Base;
-  typedef mozilla::CSSRect CSSRect;
 
   // The width and height of the "widget" are clamped to this.
   static const size_t kMaxDimension;
@@ -149,11 +157,10 @@ public:
                              const mozilla::Maybe<ZoomConstraints>& aConstraints) override;
   bool AsyncPanZoomEnabled() const override;
 
-  virtual bool
-  ExecuteNativeKeyBinding(NativeKeyBindingsType aType,
-                          const mozilla::WidgetKeyboardEvent& aEvent,
-                          DoCommandCallback aCallback,
-                          void* aCallbackData) override;
+  virtual void GetEditCommands(
+                 NativeKeyBindingsType aType,
+                 const mozilla::WidgetKeyboardEvent& aEvent,
+                 nsTArray<mozilla::CommandInt>& aCommands) override;
 
   friend struct AutoCacheNativeKeyCommands;
 
@@ -182,7 +189,13 @@ public:
                                const InputContextAction& aAction) override;
   virtual InputContext GetInputContext() override;
   virtual NativeIMEContext GetNativeIMEContext() override;
-  virtual nsIMEUpdatePreference GetIMEUpdatePreference() override;
+  TextEventDispatcherListener* GetNativeTextEventDispatcherListener() override
+  {
+    return mNativeTextEventDispatcherListener ?
+             mNativeTextEventDispatcherListener.get() : this;
+  }
+  void SetNativeTextEventDispatcherListener(TextEventDispatcherListener* aListener)
+  { mNativeTextEventDispatcherListener = aListener; }
 
   virtual void SetCursor(nsCursor aCursor) override;
   virtual nsresult SetCursor(imgIContainer* aCursor,
@@ -286,6 +299,19 @@ public:
                  const bool aIsVertical,
                  const LayoutDeviceIntPoint& aPoint) override;
 
+  // TextEventDispatcherListener
+  using nsBaseWidget::NotifyIME;
+  NS_IMETHOD NotifyIME(TextEventDispatcher* aTextEventDispatcher,
+                       const IMENotification& aNotification) override;
+  NS_IMETHOD_(IMENotificationRequests) GetIMENotificationRequests() override;
+  NS_IMETHOD_(void) OnRemovedFrom(
+                      TextEventDispatcher* aTextEventDispatcher) override;
+  NS_IMETHOD_(void) WillDispatchKeyboardEvent(
+                      TextEventDispatcher* aTextEventDispatcher,
+                      WidgetKeyboardEvent& aKeyboardEvent,
+                      uint32_t aIndexOfKeypress,
+                      void* aData) override;
+
 protected:
   virtual nsresult NotifyIMEInternal(
                      const IMENotification& aIMENotification) override;
@@ -351,7 +377,7 @@ private:
   // retained-content-only transactions
   RefPtr<DrawTarget> mDrawTarget;
   // IME
-  nsIMEUpdatePreference mIMEPreferenceOfParent;
+  IMENotificationRequests mIMENotificationRequestsOfParent;
   InputContext mInputContext;
   // mNativeIMEContext is initialized when this dispatches every composition
   // event both from parent process's widget and TextEventDispatcher in same
@@ -366,15 +392,12 @@ private:
   int32_t mRounding;
   double mDefaultScale;
 
-  // Precomputed answers for ExecuteNativeKeyBinding
-  InfallibleTArray<mozilla::CommandInt> mSingleLineCommands;
-  InfallibleTArray<mozilla::CommandInt> mMultiLineCommands;
-  InfallibleTArray<mozilla::CommandInt> mRichTextCommands;
-
   nsCOMPtr<imgIContainer> mCustomCursor;
   uint32_t mCursorHotspotX, mCursorHotspotY;
 
   nsCOMArray<nsIKeyEventInPluginCallback> mKeyEventInPluginCallbacks;
+
+  RefPtr<TextEventDispatcherListener> mNativeTextEventDispatcherListener;
 
 protected:
   bool mEnabled;
@@ -382,52 +405,6 @@ protected:
 
 private:
   bool mNeedIMEStateInit;
-  bool mNativeKeyCommandsValid;
-};
-
-struct AutoCacheNativeKeyCommands
-{
-  explicit AutoCacheNativeKeyCommands(PuppetWidget* aWidget)
-    : mWidget(aWidget)
-  {
-    mSavedValid = mWidget->mNativeKeyCommandsValid;
-    mSavedSingleLine = mWidget->mSingleLineCommands;
-    mSavedMultiLine = mWidget->mMultiLineCommands;
-    mSavedRichText = mWidget->mRichTextCommands;
-  }
-
-  void Cache(const InfallibleTArray<mozilla::CommandInt>& aSingleLineCommands,
-             const InfallibleTArray<mozilla::CommandInt>& aMultiLineCommands,
-             const InfallibleTArray<mozilla::CommandInt>& aRichTextCommands)
-  {
-    mWidget->mNativeKeyCommandsValid = true;
-    mWidget->mSingleLineCommands = aSingleLineCommands;
-    mWidget->mMultiLineCommands = aMultiLineCommands;
-    mWidget->mRichTextCommands = aRichTextCommands;
-  }
-
-  void CacheNoCommands()
-  {
-    mWidget->mNativeKeyCommandsValid = true;
-    mWidget->mSingleLineCommands.Clear();
-    mWidget->mMultiLineCommands.Clear();
-    mWidget->mRichTextCommands.Clear();
-  }
-
-  ~AutoCacheNativeKeyCommands()
-  {
-    mWidget->mNativeKeyCommandsValid = mSavedValid;
-    mWidget->mSingleLineCommands = mSavedSingleLine;
-    mWidget->mMultiLineCommands = mSavedMultiLine;
-    mWidget->mRichTextCommands = mSavedRichText;
-  }
-
-private:
-  PuppetWidget* mWidget;
-  bool mSavedValid;
-  InfallibleTArray<mozilla::CommandInt> mSavedSingleLine;
-  InfallibleTArray<mozilla::CommandInt> mSavedMultiLine;
-  InfallibleTArray<mozilla::CommandInt> mSavedRichText;
 };
 
 class PuppetScreen : public nsBaseScreen
@@ -436,13 +413,10 @@ public:
     explicit PuppetScreen(void* nativeScreen);
     ~PuppetScreen();
 
-    NS_IMETHOD GetId(uint32_t* aId) override;
     NS_IMETHOD GetRect(int32_t* aLeft, int32_t* aTop, int32_t* aWidth, int32_t* aHeight) override;
     NS_IMETHOD GetAvailRect(int32_t* aLeft, int32_t* aTop, int32_t* aWidth, int32_t* aHeight) override;
     NS_IMETHOD GetPixelDepth(int32_t* aPixelDepth) override;
     NS_IMETHOD GetColorDepth(int32_t* aColorDepth) override;
-    NS_IMETHOD GetRotation(uint32_t* aRotation) override;
-    NS_IMETHOD SetRotation(uint32_t  aRotation) override;
 };
 
 class PuppetScreenManager final : public nsIScreenManager

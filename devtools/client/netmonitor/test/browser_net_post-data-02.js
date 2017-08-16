@@ -9,15 +9,15 @@
  */
 
 add_task(function* () {
-  let { L10N } = require("devtools/client/netmonitor/utils/l10n");
+  let { L10N } = require("devtools/client/netmonitor/src/utils/l10n");
 
   let { tab, monitor } = yield initNetMonitor(POST_RAW_URL);
   info("Starting test... ");
 
-  let { document, gStore, windowRequire } = monitor.panelWin;
-  let Actions = windowRequire("devtools/client/netmonitor/actions/index");
+  let { document, store, windowRequire } = monitor.panelWin;
+  let Actions = windowRequire("devtools/client/netmonitor/src/actions/index");
 
-  gStore.dispatch(Actions.batchEnable(false));
+  store.dispatch(Actions.batchEnable(false));
 
   let wait = waitForNetworkEvents(monitor, 0, 1);
   yield ContentTask.spawn(tab.linkedBrowser, {}, function* () {
@@ -55,9 +55,9 @@ add_task(function* () {
     .querySelectorAll("tr:not(.tree-section) .treeValueCell .objectBox");
 
   is(labels[0].textContent, "foo", "The first query param name was incorrect.");
-  is(values[0].textContent, "\"bar\"", "The first query param value was incorrect.");
+  is(values[0].textContent, "bar", "The first query param value was incorrect.");
   is(labels[1].textContent, "baz", "The second query param name was incorrect.");
-  is(values[1].textContent, "\"123\"", "The second query param value was incorrect.");
+  is(values[1].textContent, "123", "The second query param value was incorrect.");
 
   return teardown(monitor);
 });

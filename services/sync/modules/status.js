@@ -13,7 +13,6 @@ Cu.import("resource://services-sync/constants.js");
 Cu.import("resource://gre/modules/Log.jsm");
 Cu.import("resource://services-sync/browserid_identity.js");
 Cu.import("resource://gre/modules/Services.jsm");
-Cu.import("resource://services-common/async.js");
 
 this.Status = {
   _log: Log.repository.getLogger("Sync.Status"),
@@ -117,12 +116,7 @@ this.Status = {
   resetSync: function resetSync() {
     // Logger setup.
     let logPref = PREFS_BRANCH + "log.logger.status";
-    let logLevel = "Trace";
-    try {
-      logLevel = Services.prefs.getCharPref(logPref);
-    } catch (ex) {
-      // Use default.
-    }
+    let logLevel = Services.prefs.getCharPref(logPref, "Trace");
     this._log.level = Log.Level[logLevel];
 
     this._log.info("Resetting Status.");

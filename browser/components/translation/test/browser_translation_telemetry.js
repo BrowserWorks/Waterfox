@@ -10,18 +10,18 @@ const Telemetry = Services.telemetry;
 
 var MetricsChecker = {
   HISTOGRAMS: {
-    OPPORTUNITIES         : Services.telemetry.getHistogramById("TRANSLATION_OPPORTUNITIES"),
-    OPPORTUNITIES_BY_LANG : Services.telemetry.getKeyedHistogramById("TRANSLATION_OPPORTUNITIES_BY_LANGUAGE"),
-    PAGES                 : Services.telemetry.getHistogramById("TRANSLATED_PAGES"),
-    PAGES_BY_LANG         : Services.telemetry.getKeyedHistogramById("TRANSLATED_PAGES_BY_LANGUAGE"),
-    CHARACTERS            : Services.telemetry.getHistogramById("TRANSLATED_CHARACTERS"),
-    DENIED                : Services.telemetry.getHistogramById("DENIED_TRANSLATION_OFFERS"),
-    AUTO_REJECTED         : Services.telemetry.getHistogramById("AUTO_REJECTED_TRANSLATION_OFFERS"),
-    SHOW_ORIGINAL         : Services.telemetry.getHistogramById("REQUESTS_OF_ORIGINAL_CONTENT"),
-    TARGET_CHANGES        : Services.telemetry.getHistogramById("CHANGES_OF_TARGET_LANGUAGE"),
-    DETECTION_CHANGES     : Services.telemetry.getHistogramById("CHANGES_OF_DETECTED_LANGUAGE"),
-    SHOW_UI               : Services.telemetry.getHistogramById("SHOULD_TRANSLATION_UI_APPEAR"),
-    DETECT_LANG           : Services.telemetry.getHistogramById("SHOULD_AUTO_DETECT_LANGUAGE"),
+    OPPORTUNITIES: Services.telemetry.getHistogramById("TRANSLATION_OPPORTUNITIES"),
+    OPPORTUNITIES_BY_LANG: Services.telemetry.getKeyedHistogramById("TRANSLATION_OPPORTUNITIES_BY_LANGUAGE"),
+    PAGES: Services.telemetry.getHistogramById("TRANSLATED_PAGES"),
+    PAGES_BY_LANG: Services.telemetry.getKeyedHistogramById("TRANSLATED_PAGES_BY_LANGUAGE"),
+    CHARACTERS: Services.telemetry.getHistogramById("TRANSLATED_CHARACTERS"),
+    DENIED: Services.telemetry.getHistogramById("DENIED_TRANSLATION_OFFERS"),
+    AUTO_REJECTED: Services.telemetry.getHistogramById("AUTO_REJECTED_TRANSLATION_OFFERS"),
+    SHOW_ORIGINAL: Services.telemetry.getHistogramById("REQUESTS_OF_ORIGINAL_CONTENT"),
+    TARGET_CHANGES: Services.telemetry.getHistogramById("CHANGES_OF_TARGET_LANGUAGE"),
+    DETECTION_CHANGES: Services.telemetry.getHistogramById("CHANGES_OF_DETECTED_LANGUAGE"),
+    SHOW_UI: Services.telemetry.getHistogramById("SHOULD_TRANSLATION_UI_APPEAR"),
+    DETECT_LANG: Services.telemetry.getHistogramById("SHOULD_AUTO_DETECT_LANGUAGE"),
   },
 
   reset() {
@@ -91,10 +91,10 @@ function getInfobarElement(browser, anonid) {
   return notif._getAnonElt(anonid);
 }
 
-var offerTranslationFor = Task.async(function*(text, from) {
+var offerTranslationFor = async function(text, from) {
   // Create some content to translate.
   const dataUrl = "data:text/html;charset=utf-8," + text;
-  let tab = yield BrowserTestUtils.openNewForegroundTab(gBrowser, dataUrl);
+  let tab = await BrowserTestUtils.openNewForegroundTab(gBrowser, dataUrl);
 
   let browser = gBrowser.getBrowserForTab(tab);
 
@@ -104,23 +104,23 @@ var offerTranslationFor = Task.async(function*(text, from) {
                                               detectedLanguage: from});
 
   return tab;
-});
+};
 
-var acceptTranslationOffer = Task.async(function*(tab) {
+var acceptTranslationOffer = async function(tab) {
   let browser = tab.linkedBrowser;
   getInfobarElement(browser, "translate").doCommand();
-  yield waitForMessage(browser, "Translation:Finished");
-});
+  await waitForMessage(browser, "Translation:Finished");
+};
 
-var translate = Task.async(function*(text, from, closeTab = true) {
-  let tab = yield offerTranslationFor(text, from);
-  yield acceptTranslationOffer(tab);
+var translate = async function(text, from, closeTab = true) {
+  let tab = await offerTranslationFor(text, from);
+  await acceptTranslationOffer(tab);
   if (closeTab) {
     gBrowser.removeTab(tab);
     return null;
   }
   return tab;
-});
+};
 
 function waitForMessage({messageManager}, name) {
   return new Promise(resolve => {
@@ -136,7 +136,7 @@ function simulateUserSelectInMenulist(menulist, value) {
   menulist.doCommand();
 }
 
-add_task(function* setup() {
+add_task(async function setup() {
   const setupPrefs = prefs => {
     let prefsBackup = {};
     for (let p of prefs) {
@@ -172,55 +172,55 @@ add_task(function* setup() {
   MetricsChecker.reset();
 });
 
-add_task(function* test_telemetry() {
+add_task(async function test_telemetry() {
   // Translate a page.
-  yield translate("<h1>Привет, мир!</h1>", "ru");
+  await translate("<h1>Привет, мир!</h1>", "ru");
 
   // Translate another page.
-  yield translate("<h1>Hallo Welt!</h1><h1>Bratwurst!</h1>", "de");
-  yield MetricsChecker.checkAdditions({
+  await translate("<h1>Hallo Welt!</h1><h1>Bratwurst!</h1>", "de");
+  await MetricsChecker.checkAdditions({
     opportunitiesCount: 2,
-    opportunitiesCountByLang: { "ru" : 1, "de" : 1 },
+    opportunitiesCountByLang: { "ru": 1, "de": 1 },
     pageCount: 1,
-    pageCountByLang: { "de -> en" : 1 },
+    pageCountByLang: { "de -> en": 1 },
     charCount: 21,
     deniedOffers: 0
   });
 });
 
-add_task(function* test_deny_translation_metric() {
-  function* offerAndDeny(elementAnonid) {
-    let tab = yield offerTranslationFor("<h1>Hallo Welt!</h1>", "de", "en");
+add_task(async function test_deny_translation_metric() {
+  async function offerAndDeny(elementAnonid) {
+    let tab = await offerTranslationFor("<h1>Hallo Welt!</h1>", "de", "en");
     getInfobarElement(tab.linkedBrowser, elementAnonid).doCommand();
-    yield MetricsChecker.checkAdditions({ deniedOffers: 1 });
+    await MetricsChecker.checkAdditions({ deniedOffers: 1 });
     gBrowser.removeTab(tab);
   }
 
-  yield offerAndDeny("notNow");
-  yield offerAndDeny("neverForSite");
-  yield offerAndDeny("neverForLanguage");
-  yield offerAndDeny("closeButton");
+  await offerAndDeny("notNow");
+  await offerAndDeny("neverForSite");
+  await offerAndDeny("neverForLanguage");
+  await offerAndDeny("closeButton");
 
   // Test that the close button doesn't record a denied translation if
   // the infobar is not in its "offer" state.
-  let tab = yield translate("<h1>Hallo Welt!</h1>", "de", false);
-  yield MetricsChecker.checkAdditions({ deniedOffers: 0 });
+  let tab = await translate("<h1>Hallo Welt!</h1>", "de", false);
+  await MetricsChecker.checkAdditions({ deniedOffers: 0 });
   gBrowser.removeTab(tab);
 });
 
-add_task(function* test_show_original() {
+add_task(async function test_show_original() {
   let tab =
-    yield translate("<h1>Hallo Welt!</h1><h1>Bratwurst!</h1>", "de", false);
-  yield MetricsChecker.checkAdditions({ pageCount: 1, showOriginal: 0 });
+    await translate("<h1>Hallo Welt!</h1><h1>Bratwurst!</h1>", "de", false);
+  await MetricsChecker.checkAdditions({ pageCount: 1, showOriginal: 0 });
   getInfobarElement(tab.linkedBrowser, "showOriginal").doCommand();
-  yield MetricsChecker.checkAdditions({ pageCount: 0, showOriginal: 1 });
+  await MetricsChecker.checkAdditions({ pageCount: 0, showOriginal: 1 });
   gBrowser.removeTab(tab);
 });
 
-add_task(function* test_language_change() {
+add_task(async function test_language_change() {
   // This is run 4 times, the total additions are checked afterwards.
   for (let i of Array(4)) { // eslint-disable-line no-unused-vars
-    let tab = yield offerTranslationFor("<h1>Hallo Welt!</h1>", "fr");
+    let tab = await offerTranslationFor("<h1>Hallo Welt!</h1>", "fr");
     let browser = tab.linkedBrowser;
     // In the offer state, translation is executed by the Translate button,
     // so we expect just a single recoding.
@@ -228,7 +228,7 @@ add_task(function* test_language_change() {
     simulateUserSelectInMenulist(detectedLangMenulist, "de");
     simulateUserSelectInMenulist(detectedLangMenulist, "it");
     simulateUserSelectInMenulist(detectedLangMenulist, "de");
-    yield acceptTranslationOffer(tab);
+    await acceptTranslationOffer(tab);
 
     // In the translated state, a change in the form or to menulists
     // triggers re-translation right away.
@@ -253,19 +253,19 @@ add_task(function* test_language_change() {
 
     gBrowser.removeTab(tab);
   }
-  yield MetricsChecker.checkAdditions({
+  await MetricsChecker.checkAdditions({
     detectedLanguageChangedBefore: 4,
     detectedLanguageChangeAfter: 8,
     targetLanguageChanged: 12
   });
 });
 
-add_task(function* test_never_offer_translation() {
+add_task(async function test_never_offer_translation() {
   Services.prefs.setCharPref("browser.translation.neverForLanguages", "fr");
 
-  let tab = yield offerTranslationFor("<h1>Hallo Welt!</h1>", "fr");
+  let tab = await offerTranslationFor("<h1>Hallo Welt!</h1>", "fr");
 
-  yield MetricsChecker.checkAdditions({
+  await MetricsChecker.checkAdditions({
     autoRejectedOffers: 1,
   });
 
@@ -273,14 +273,14 @@ add_task(function* test_never_offer_translation() {
   Services.prefs.clearUserPref("browser.translation.neverForLanguages");
 });
 
-add_task(function* test_translation_preferences() {
+add_task(async function test_translation_preferences() {
 
   let preferenceChecks = {
-    "browser.translation.ui.show" : [
+    "browser.translation.ui.show": [
       {value: false, expected: {showUI: 0}},
       {value: true, expected: {showUI: 1}}
     ],
-    "browser.translation.detectLanguage" : [
+    "browser.translation.detectLanguage": [
       {value: false, expected: {detectLang: 0}},
       {value: true, expected: {detectLang: 1}}
     ],
@@ -292,7 +292,7 @@ add_task(function* test_translation_preferences() {
       Services.prefs.setBoolPref(preference, check.value);
       // Preference metrics are collected once when the provider is initialized.
       TranslationTelemetry.init();
-      yield MetricsChecker.checkAdditions(check.expected);
+      await MetricsChecker.checkAdditions(check.expected);
     }
     Services.prefs.clearUserPref(preference);
   }

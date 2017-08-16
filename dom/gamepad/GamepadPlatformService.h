@@ -38,23 +38,31 @@ class GamepadPlatformService final
 
   // Add a gamepad to the list of known gamepads, and return its index.
   uint32_t AddGamepad(const char* aID, GamepadMappingType aMapping,
-                      uint32_t aNumButtons, uint32_t aNumAxes);
+                      GamepadHand aHand, uint32_t aNumButtons,
+                      uint32_t aNumAxes, uint32_t aNumHaptics);
   // Remove the gamepad at |aIndex| from the list of known gamepads.
   void RemoveGamepad(uint32_t aIndex);
 
   // Update the state of |aButton| for the gamepad at |aIndex| for all
   // windows that are listening and visible, and fire one of
   // a gamepadbutton{up,down} event at them as well.
-  // aPressed is used for digital buttons, aValue is for analog buttons.
+  // aPressed is used for digital buttons, aTouched is for detecting touched
+  // events, aValue is for analog buttons.
   void NewButtonEvent(uint32_t aIndex, uint32_t aButton, bool aPressed,
-                      double aValue);
+                      bool aTouched, double aValue);
   // When only a digital button is available the value will be synthesized.
   void NewButtonEvent(uint32_t aIndex, uint32_t aButton, bool aPressed);
+  // When only a digital button are available the value will be synthesized.
+  void NewButtonEvent(uint32_t aIndex, uint32_t aButton, bool aPressed,
+                      bool aTouched);
 
   // Update the state of |aAxis| for the gamepad at |aIndex| for all
   // windows that are listening and visible, and fire a gamepadaxismove
   // event at them as well.
   void NewAxisMoveEvent(uint32_t aIndex, uint32_t aAxis, double aValue);
+  // Update the state of |aState| for the gamepad at |aIndex| for all
+  // windows that are listening and visible.
+  void NewPoseEvent(uint32_t aIndex, const GamepadPoseState& aState);
 
   // When shutting down the platform communications for gamepad, also reset the
   // indexes.

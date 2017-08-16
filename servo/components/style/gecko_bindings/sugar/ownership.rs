@@ -8,10 +8,10 @@ use std::marker::PhantomData;
 use std::mem::{forget, transmute};
 use std::ops::{Deref, DerefMut};
 use std::ptr;
-use std::sync::Arc;
+use stylearc::Arc;
 
 /// Indicates that a given Servo type has a corresponding Gecko FFI type.
-pub unsafe trait HasFFI : Sized {
+pub unsafe trait HasFFI : Sized + 'static {
     /// The corresponding Gecko type that this rust type represents.
     ///
     /// See the examples in `components/style/gecko/conversions.rs`.

@@ -8,11 +8,11 @@ Transform the beetmover task into an actual task description.
 from __future__ import absolute_import, print_function, unicode_literals
 
 from taskgraph.transforms.base import TransformSequence
-from taskgraph.util.schema import validate_schema
+from taskgraph.util.schema import validate_schema, Schema
 from taskgraph.util.scriptworker import (get_balrog_server_scope,
                                          get_balrog_channel_scopes)
 from taskgraph.transforms.task import task_description_schema
-from voluptuous import Schema, Any, Required, Optional
+from voluptuous import Any, Required, Optional
 
 
 # Voluptuous uses marker objects as dictionary *keys*, but they are not
@@ -47,15 +47,6 @@ def validate(config, jobs):
         yield validate_schema(
             balrog_description_schema, job,
             "In balrog ({!r} kind) task for {!r}:".format(config.kind, label))
-
-
-@transforms.add
-def skip_unsigned_beets(config, jobs):
-    for job in jobs:
-        if 'signing' not in job['dependent-task'].label:
-            # Skip making a balrog task for this
-            continue
-        yield job
 
 
 @transforms.add

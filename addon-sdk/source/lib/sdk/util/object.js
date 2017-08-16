@@ -7,11 +7,45 @@ module.metadata = {
   "stability": "unstable"
 };
 
-const { flatten } = require('./array');
+lazyRequire(this, './array', "flatten");
 
 // Create a shortcut for Array.prototype.slice.call().
 const unbind = Function.call.bind(Function.bind, Function.call);
 const slice = unbind(Array.prototype.slice);
+
+class DefaultWeakMap extends WeakMap {
+  constructor(createItem, items = undefined) {
+    super(items);
+
+    this.createItem = createItem;
+  }
+
+  get(key) {
+    if (!this.has(key)) {
+      this.set(key, this.createItem(key));
+    }
+
+    return super.get(key);
+  }
+}
+
+class DefaultMap extends Map {
+  constructor(createItem, items = undefined) {
+    super(items);
+
+    this.createItem = createItem;
+  }
+
+  get(key) {
+    if (!this.has(key)) {
+      this.set(key, this.createItem(key));
+    }
+
+    return super.get(key);
+  }
+}
+
+Object.assign(exports, {DefaultMap, DefaultWeakMap});
 
 /**
  * Merges all the properties of all arguments into first argument. If two or

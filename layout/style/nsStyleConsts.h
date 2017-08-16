@@ -84,19 +84,19 @@ enum class StyleClear : uint8_t {
   Max = 13  // Max = (Both | Line)
 };
 
-// Define geometry box for clip-path's reference-box, shape-outside's shape
-// box, background-clip, background-origin, mask-clip and mask-origin.
+// Define geometry box for clip-path's reference-box, background-clip,
+// background-origin, mask-clip, mask-origin, shape-box and transform-box.
 enum class StyleGeometryBox : uint8_t {
-  Content,
-  Padding,
-  Border,
-  Margin,  // XXX Bug 1260094 comment 9.
-           // Although margin-box is required by mask-origin and mask-clip, we
-           // do not implement that due to lack of support in other browsers.
-           // clip-path reference-box only.
-  Fill,    // mask-clip, mask-origin and clip-path reference-box only.
-  Stroke,  // mask-clip, mask-origin and clip-path reference-box only.
-  View,    // mask-clip, mask-origin and clip-path reference-box only.
+  ContentBox, // Used by everything, except transform-box.
+  PaddingBox, // Used by everything, except transform-box.
+  BorderBox,
+  MarginBox,  // XXX Bug 1260094 comment 9.
+              // Although margin-box is required by mask-origin and mask-clip,
+              // we do not implement that due to lack of support in other
+              // browsers. clip-path reference-box only.
+  FillBox,    // Used by everything, except shape-box.
+  StrokeBox,  // mask-clip, mask-origin and clip-path reference-box only.
+  ViewBox,    // Used by everything, except shape-box.
   NoClip,  // mask-clip only.
   Text,    // background-clip only.
   NoBox,   // Depending on which kind of element this style value applied on,
@@ -156,6 +156,14 @@ enum class StyleShapeSourceType : uint8_t {
   URL,
   Shape,
   Box,
+};
+
+// -moz-stack-sizing
+enum class StyleStackSizing : uint8_t {
+  Ignore,
+  StretchToFit,
+  IgnoreHorizontal,
+  IgnoreVertical,
 };
 
 // text-justify
@@ -221,10 +229,6 @@ enum class StyleOrient : uint8_t {
   Horizontal,
   Vertical,
 };
-
-// stack-sizing
-#define NS_STYLE_STACK_SIZING_IGNORE         0
-#define NS_STYLE_STACK_SIZING_STRETCH_TO_FIT 1
 
 // Azimuth - See nsStyleAural
 #define NS_STYLE_AZIMUTH_LEFT_SIDE        0x00
@@ -345,12 +349,15 @@ enum class FillMode : uint8_t;
 #define NS_STYLE_IMAGELAYER_POSITION_RIGHT           (1<<4)
 
 // See nsStyleImageLayers
-#define NS_STYLE_IMAGELAYER_REPEAT_NO_REPEAT         0x00
-#define NS_STYLE_IMAGELAYER_REPEAT_REPEAT_X          0x01
-#define NS_STYLE_IMAGELAYER_REPEAT_REPEAT_Y          0x02
-#define NS_STYLE_IMAGELAYER_REPEAT_REPEAT            0x03
-#define NS_STYLE_IMAGELAYER_REPEAT_SPACE             0x04
-#define NS_STYLE_IMAGELAYER_REPEAT_ROUND             0x05
+enum class StyleImageLayerRepeat : uint8_t {
+  NoRepeat = 0x00,
+  RepeatX,
+  RepeatY,
+  Repeat,
+  Space,
+  Round
+};
+
 
 // See nsStyleImageLayers
 #define NS_STYLE_IMAGELAYER_SIZE_CONTAIN             0
@@ -860,10 +867,9 @@ enum class StyleGridTrackBreadth : uint8_t {
 #define NS_STYLE_TEXT_DECORATION_LINE_OVERLINE     0x02
 #define NS_STYLE_TEXT_DECORATION_LINE_LINE_THROUGH 0x04
 #define NS_STYLE_TEXT_DECORATION_LINE_BLINK        0x08
-#define NS_STYLE_TEXT_DECORATION_LINE_PREF_ANCHORS 0x10
 // OVERRIDE_ALL does not occur in stylesheets; it only comes from HTML
 // attribute mapping (and thus appears in computed data)
-#define NS_STYLE_TEXT_DECORATION_LINE_OVERRIDE_ALL 0x20
+#define NS_STYLE_TEXT_DECORATION_LINE_OVERRIDE_ALL 0x10
 #define NS_STYLE_TEXT_DECORATION_LINE_LINES_MASK   (NS_STYLE_TEXT_DECORATION_LINE_UNDERLINE | NS_STYLE_TEXT_DECORATION_LINE_OVERLINE | NS_STYLE_TEXT_DECORATION_LINE_LINE_THROUGH)
 
 // See nsStyleText
@@ -899,11 +905,6 @@ enum class StyleGridTrackBreadth : uint8_t {
 #define NS_STYLE_TOP_LAYER_TOP    1 // in the top layer
 
 // See nsStyleDisplay
-#define NS_STYLE_TRANSFORM_BOX_BORDER_BOX                0
-#define NS_STYLE_TRANSFORM_BOX_FILL_BOX                  1
-#define NS_STYLE_TRANSFORM_BOX_VIEW_BOX                  2
-
-// See nsStyleDisplay
 #define NS_STYLE_TRANSITION_TIMING_FUNCTION_EASE         0
 #define NS_STYLE_TRANSITION_TIMING_FUNCTION_LINEAR       1
 #define NS_STYLE_TRANSITION_TIMING_FUNCTION_EASE_IN      2
@@ -935,12 +936,14 @@ enum class StyleGridTrackBreadth : uint8_t {
 #define NS_STYLE_TABSIZE_INITIAL                8
 
 // See nsStyleText
-#define NS_STYLE_WHITESPACE_NORMAL               0
-#define NS_STYLE_WHITESPACE_PRE                  1
-#define NS_STYLE_WHITESPACE_NOWRAP               2
-#define NS_STYLE_WHITESPACE_PRE_WRAP             3
-#define NS_STYLE_WHITESPACE_PRE_LINE             4
-#define NS_STYLE_WHITESPACE_PRE_SPACE            5
+enum class StyleWhiteSpace : uint8_t {
+  Normal = 0,
+  Pre,
+  Nowrap,
+  PreWrap,
+  PreLine,
+  PreSpace,
+};
 
 // See nsStyleText
 #define NS_STYLE_WORDBREAK_NORMAL               0
@@ -1036,6 +1039,9 @@ enum class StyleGridTrackBreadth : uint8_t {
 #define NS_STYLE_COLUMN_FILL_AUTO               0
 #define NS_STYLE_COLUMN_FILL_BALANCE            1
 
+#define NS_STYLE_COLUMN_SPAN_NONE               0
+#define NS_STYLE_COLUMN_SPAN_ALL                1
+
 // See nsStyleUIReset
 #define NS_STYLE_IME_MODE_AUTO                  0
 #define NS_STYLE_IME_MODE_NORMAL                1
@@ -1055,6 +1061,23 @@ enum class StyleGridTrackBreadth : uint8_t {
 #define NS_STYLE_GRADIENT_SIZE_EXPLICIT_SIZE    4
 
 // See nsStyleSVG
+
+// -moz-context-properties
+#define NS_STYLE_CONTEXT_PROPERTY_FILL          (1 << 0)
+#define NS_STYLE_CONTEXT_PROPERTY_STROKE        (1 << 1)
+#define NS_STYLE_CONTEXT_PROPERTY_FILL_OPACITY   (1 << 2)
+#define NS_STYLE_CONTEXT_PROPERTY_STROKE_OPACITY (1 << 3)
+
+/*
+ * -moz-window-shadow
+ * Also used in widget code
+ */
+
+#define NS_STYLE_WINDOW_SHADOW_NONE             0
+#define NS_STYLE_WINDOW_SHADOW_DEFAULT          1
+#define NS_STYLE_WINDOW_SHADOW_MENU             2
+#define NS_STYLE_WINDOW_SHADOW_TOOLTIP          3
+#define NS_STYLE_WINDOW_SHADOW_SHEET            4
 
 // dominant-baseline
 #define NS_STYLE_DOMINANT_BASELINE_AUTO              0

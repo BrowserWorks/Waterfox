@@ -2,8 +2,8 @@
 
 const TEST_URL = "http://mochi.test:8888/browser/browser/base/content/test/general/file_favicon_change_not_in_document.html"
 
-add_task(function*() {
-  let extraTab = gBrowser.selectedTab = gBrowser.addTab();
+add_task(async function() {
+  let extraTab = gBrowser.selectedTab = BrowserTestUtils.addTab(gBrowser);
   let tabLoaded = promiseTabLoaded(extraTab);
   extraTab.linkedBrowser.loadURI(TEST_URL);
   let expectedFavicon = "http://example.org/one-icon";
@@ -23,10 +23,10 @@ add_task(function*() {
     }
   });
   observer.observe(extraTab, {attributes: true});
-  yield tabLoaded;
+  await tabLoaded;
   expectedFavicon = "http://example.org/yet-another-icon";
   haveChanged = new Promise.defer();
-  yield haveChanged.promise;
+  await haveChanged.promise;
   observer.disconnect();
   gBrowser.removeTab(extraTab);
 });

@@ -65,13 +65,6 @@ wasm::HasCompilerSupport(JSContext* cx)
     if (!wasm::HaveSignalHandlers())
         return false;
 
-#if defined(JS_CODEGEN_ARM)
-    // movw/t are required for the loadWasmActivationFromSymbolicAddress in
-    // GenerateProfilingPrologue/Epilogue to avoid using the constant pool.
-    if (!HasMOVWT())
-        return false;
-#endif
-
 #if defined(JS_CODEGEN_NONE) || defined(JS_CODEGEN_ARM64)
     return false;
 #else
@@ -430,8 +423,7 @@ ToNonWrappingUint32(JSContext* cx, HandleValue v, uint32_t max, const char* kind
         return false;
 
     if (dbl < 0 || dbl > max) {
-        JS_ReportErrorNumberASCII(cx, GetErrorMessage, nullptr, JSMSG_WASM_BAD_UINT32,
-                                  kind, noun);
+        JS_ReportErrorNumberASCII(cx, GetErrorMessage, nullptr, JSMSG_WASM_BAD_UINT32, kind, noun);
         return false;
     }
 
@@ -441,8 +433,8 @@ ToNonWrappingUint32(JSContext* cx, HandleValue v, uint32_t max, const char* kind
 }
 
 static bool
-GetLimits(JSContext* cx, HandleObject obj, uint32_t max, const char* kind,
-          Limits* limits)
+GetLimits(JSContext* cx, HandleObject obj, uint32_t maxInitial, uint32_t maxMaximum,
+          const char* kind, Limits* limits)
 {
     JSAtom* initialAtom = Atomize(cx, "initial", strlen("initial"));
     if (!initialAtom)
@@ -453,7 +445,7 @@ GetLimits(JSContext* cx, HandleObject obj, uint32_t max, const char* kind,
     if (!GetProperty(cx, obj, obj, initialId, &initialVal))
         return false;
 
-    if (!ToNonWrappingUint32(cx, initialVal, max, kind, "initial size", &limits->initial))
+    if (!ToNonWrappingUint32(cx, initialVal, maxInitial, kind, "initial size", &limits->initial))
         return false;
 
     JSAtom* maximumAtom = Atomize(cx, "maximum", strlen("maximum"));
@@ -468,7 +460,7 @@ GetLimits(JSContext* cx, HandleObject obj, uint32_t max, const char* kind,
             return false;
 
         limits->maximum.emplace();
-        if (!ToNonWrappingUint32(cx, maxVal, max, kind, "maximum size", limits->maximum.ptr()))
+        if (!ToNonWrappingUint32(cx, maxVal, maxMaximum, kind, "maximum size", limits->maximum.ptr()))
             return false;
 
         if (limits->initial > *limits->maximum) {
@@ -660,6 +652,8 @@ WasmModuleObject::imports(JSContext* cx, unsigned argc, Value* vp)
     if (!elems.reserve(module->imports().length()))
         return false;
 
+    const FuncImportVector& funcImports = module->metadata(module->code().anyTier()).funcImports;
+
     size_t numFuncImport = 0;
     for (const Import& import : module->imports()) {
         Rooted<IdValueVector> props(cx, IdValueVector(cx));
@@ -682,7 +676,7 @@ WasmModuleObject::imports(JSContext* cx, unsigned argc, Value* vp)
         props.infallibleAppend(IdValuePair(NameToId(names.kind), StringValue(kindStr)));
 
         if (JitOptions.wasmTestMode && import.kind == DefinitionKind::Function) {
-            JSString* sigStr = SigToString(cx, module->metadata().funcImports[numFuncImport++].sig());
+            JSString* sigStr = SigToString(cx, funcImports[numFuncImport++].sig());
             if (!sigStr)
                 return false;
             if (!props.append(IdValuePair(NameToId(names.signature), StringValue(sigStr))))
@@ -721,6 +715,8 @@ WasmModuleObject::exports(JSContext* cx, unsigned argc, Value* vp)
     if (!elems.reserve(module->exports().length()))
         return false;
 
+    const FuncExportVector& funcExports = module->metadata(module->code().anyTier()).funcExports;
+
     size_t numFuncExport = 0;
     for (const Export& exp : module->exports()) {
         Rooted<IdValueVector> props(cx, IdValueVector(cx));
@@ -738,7 +734,7 @@ WasmModuleObject::exports(JSContext* cx, unsigned argc, Value* vp)
         props.infallibleAppend(IdValuePair(NameToId(names.kind), StringValue(kindStr)));
 
         if (JitOptions.wasmTestMode && exp.kind() == DefinitionKind::Function) {
-            JSString* sigStr = SigToString(cx, module->metadata().funcExports[numFuncExport++].sig());
+            JSString* sigStr = SigToString(cx, funcExports[numFuncExport++].sig());
             if (!sigStr)
                 return false;
             if (!props.append(IdValuePair(NameToId(names.signature), StringValue(sigStr))))
@@ -822,6 +818,9 @@ WasmModuleObject::create(JSContext* cx, Module& module, HandleObject proto)
 
     obj->initReservedSlot(MODULE_SLOT, PrivateValue(&module));
     module.AddRef();
+    // We account for the first tier here; the second tier, if different, will be
+    // accounted for separately when it's been compiled.
+    cx->zone()->updateJitCodeMallocBytes(module.codeLength(module.code().anyTier()));
     return obj;
 }
 
@@ -947,8 +946,31 @@ const Class WasmInstanceObject::class_ =
     &WasmInstanceObject::classOps_,
 };
 
+static bool
+IsInstance(HandleValue v)
+{
+    return v.isObject() && v.toObject().is<WasmInstanceObject>();
+}
+
+/* static */ bool
+WasmInstanceObject::exportsGetterImpl(JSContext* cx, const CallArgs& args)
+{
+    args.rval().setObject(args.thisv().toObject().as<WasmInstanceObject>().exportsObj());
+    return true;
+}
+
+/* static */ bool
+WasmInstanceObject::exportsGetter(JSContext* cx, unsigned argc, Value* vp)
+{
+    CallArgs args = CallArgsFromVp(argc, vp);
+    return CallNonGenericMethod<IsInstance, exportsGetterImpl>(cx, args);
+}
+
 const JSPropertySpec WasmInstanceObject::properties[] =
-{ JS_PS_END };
+{
+    JS_PSG("exports", WasmInstanceObject::exportsGetter, 0),
+    JS_PS_END
+};
 
 const JSFunctionSpec WasmInstanceObject::methods[] =
 { JS_FS_END };
@@ -983,7 +1005,8 @@ WasmInstanceObject::trace(JSTracer* trc, JSObject* obj)
 
 /* static */ WasmInstanceObject*
 WasmInstanceObject::create(JSContext* cx,
-                           UniqueCode code,
+                           SharedCode code,
+                           UniqueDebugState debug,
                            UniqueGlobalSegment globals,
                            HandleWasmMemoryObject memory,
                            SharedTableVector&& tables,
@@ -1017,7 +1040,8 @@ WasmInstanceObject::create(JSContext* cx,
     // Root the Instance via WasmInstanceObject before any possible GC.
     auto* instance = cx->new_<Instance>(cx,
                                         obj,
-                                        Move(code),
+                                        code,
+                                        Move(debug),
                                         Move(globals),
                                         memory,
                                         Move(tables),
@@ -1033,6 +1057,13 @@ WasmInstanceObject::create(JSContext* cx,
         return nullptr;
 
     return obj;
+}
+
+void
+WasmInstanceObject::initExportsObj(JSObject& exportsObj)
+{
+    MOZ_ASSERT(getReservedSlot(EXPORTS_OBJ_SLOT).isUndefined());
+    setReservedSlot(EXPORTS_OBJ_SLOT, ObjectValue(exportsObj));
 }
 
 static bool
@@ -1098,6 +1129,12 @@ WasmInstanceObject::instance() const
     return *(Instance*)getReservedSlot(INSTANCE_SLOT).toPrivate();
 }
 
+JSObject&
+WasmInstanceObject::exportsObj() const
+{
+    return getReservedSlot(EXPORTS_OBJ_SLOT).toObject();
+}
+
 WasmInstanceObject::ExportMap&
 WasmInstanceObject::exports() const
 {
@@ -1131,12 +1168,12 @@ WasmInstanceObject::getExportedFunction(JSContext* cx, HandleWasmInstanceObject 
     }
 
     const Instance& instance = instanceObj->instance();
-    unsigned numArgs = instance.metadata().lookupFuncExport(funcIndex).sig().args().length();
+    unsigned numArgs = instance.metadata(instance.code().anyTier()).lookupFuncExport(funcIndex).sig().args().length();
 
     // asm.js needs to act like a normal JS function which means having the name
     // from the original source and being callable as a constructor.
     if (instance.isAsmJS()) {
-        RootedAtom name(cx, instance.code().getFuncAtom(cx, funcIndex));
+        RootedAtom name(cx, instance.getFuncAtom(cx, funcIndex));
         if (!name)
             return false;
 
@@ -1166,12 +1203,12 @@ WasmInstanceObject::getExportedFunction(JSContext* cx, HandleWasmInstanceObject 
 }
 
 const CodeRange&
-WasmInstanceObject::getExportedFunctionCodeRange(HandleFunction fun)
+WasmInstanceObject::getExportedFunctionCodeRange(HandleFunction fun, Tier tier)
 {
     uint32_t funcIndex = ExportedFunctionToFuncIndex(fun);
     MOZ_ASSERT(exports().lookup(funcIndex)->value() == fun);
-    const Metadata& metadata = instance().metadata();
-    return metadata.codeRanges[metadata.lookupFuncExport(funcIndex).codeRangeIndex()];
+    const FuncExport& funcExport = instance().metadata(tier).lookupFuncExport(funcIndex);
+    return instance().metadata(tier).codeRanges[funcExport.codeRangeIndex()];
 }
 
 /* static */ WasmFunctionScope*
@@ -1305,7 +1342,7 @@ WasmMemoryObject::construct(JSContext* cx, unsigned argc, Value* vp)
 
     RootedObject obj(cx, &args[0].toObject());
     Limits limits;
-    if (!GetLimits(cx, obj, UINT32_MAX / PageSize, "Memory", &limits))
+    if (!GetLimits(cx, obj, MaxMemoryInitialPages, MaxMemoryMaximumPages, "Memory", &limits))
         return false;
 
     limits.initial *= PageSize;
@@ -1616,7 +1653,7 @@ WasmTableObject::construct(JSContext* cx, unsigned argc, Value* vp)
     }
 
     Limits limits;
-    if (!GetLimits(cx, obj, UINT32_MAX, "Table", &limits))
+    if (!GetLimits(cx, obj, MaxTableInitialLength, UINT32_MAX, "Table", &limits))
         return false;
 
     RootedWasmTableObject table(cx, WasmTableObject::create(cx, limits));
@@ -1711,6 +1748,7 @@ WasmTableObject::setImpl(JSContext* cx, const CallArgs& args)
     if (value) {
         RootedWasmInstanceObject instanceObj(cx, ExportedFunctionToInstanceObject(value));
         uint32_t funcIndex = ExportedFunctionToFuncIndex(value);
+        Tier tier = Tier::TBD;  // Perhaps the tier that the function is at?
 
 #ifdef DEBUG
         RootedFunction f(cx);
@@ -1719,9 +1757,9 @@ WasmTableObject::setImpl(JSContext* cx, const CallArgs& args)
 #endif
 
         Instance& instance = instanceObj->instance();
-        const FuncExport& funcExport = instance.metadata().lookupFuncExport(funcIndex);
-        const CodeRange& codeRange = instance.metadata().codeRanges[funcExport.codeRangeIndex()];
-        void* code = instance.codeSegment().base() + codeRange.funcTableEntry();
+        const FuncExport& funcExport = instance.metadata(tier).lookupFuncExport(funcIndex);
+        const CodeRange& codeRange = instance.metadata(tier).codeRanges[funcExport.codeRangeIndex()];
+        void* code = instance.codeBase(tier) + codeRange.funcTableEntry();
         table.set(index, code, instance);
     } else {
         table.setNull(index);
@@ -1794,14 +1832,6 @@ WebAssembly_toSource(JSContext* cx, unsigned argc, Value* vp)
     return true;
 }
 #endif
-
-static bool
-Nop(JSContext* cx, unsigned argc, Value* vp)
-{
-    CallArgs args = CallArgsFromVp(argc, vp);
-    args.rval().setUndefined();
-    return true;
-}
 
 static bool
 Reject(JSContext* cx, const CompileArgs& args, UniqueChars error, Handle<PromiseObject*> promise)
@@ -1923,11 +1953,7 @@ WebAssembly_compile(JSContext* cx, unsigned argc, Value* vp)
         return false;
     }
 
-    RootedFunction nopFun(cx, NewNativeFunction(cx, Nop, 0, nullptr));
-    if (!nopFun)
-        return false;
-
-    Rooted<PromiseObject*> promise(cx, PromiseObject::create(cx, nopFun));
+    Rooted<PromiseObject*> promise(cx, PromiseObject::createSkippingExecutor(cx));
     if (!promise)
         return false;
 
@@ -2020,11 +2046,7 @@ WebAssembly_instantiate(JSContext* cx, unsigned argc, Value* vp)
         return false;
     }
 
-    RootedFunction nopFun(cx, NewNativeFunction(cx, Nop, 0, nullptr));
-    if (!nopFun)
-        return false;
-
-    Rooted<PromiseObject*> promise(cx, PromiseObject::create(cx, nopFun));
+    Rooted<PromiseObject*> promise(cx, PromiseObject::createSkippingExecutor(cx));
     if (!promise)
         return false;
 

@@ -51,7 +51,7 @@ NS_QUERYFRAME_TAIL_INHERITING(nsBoxFrame)
 // nsMenuBarFrame cntr
 //
 nsMenuBarFrame::nsMenuBarFrame(nsStyleContext* aContext)
-  : nsBoxFrame(aContext)
+  : nsBoxFrame(aContext, kClassID)
   , mStayActive(false)
   , mIsActive(false)
   , mActiveByKeyboard(false)
@@ -345,7 +345,9 @@ nsMenuBarFrame::ChangeMenuItem(nsMenuFrame* aMenuItem,
   // avoids flickering
   nsCOMPtr<nsIRunnable> event =
     new nsMenuBarSwitchMenu(GetContent(), aOldMenu, aNewMenu, aSelectFirstItem);
-  return NS_DispatchToCurrentThread(event);
+  return mContent->OwnerDoc()->Dispatch("nsMenuBarSwitchMenu",
+                                        TaskCategory::Other,
+                                        event.forget());
 }
 
 nsMenuFrame*

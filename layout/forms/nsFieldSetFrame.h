@@ -15,7 +15,7 @@ class nsFieldSetFrame final : public nsContainerFrame
   typedef mozilla::image::DrawResult DrawResult;
 
 public:
-  NS_DECL_FRAMEARENA_HELPERS
+  NS_DECL_FRAMEARENA_HELPERS(nsFieldSetFrame)
 
   explicit nsFieldSetFrame(nsStyleContext* aContext);
 
@@ -31,11 +31,11 @@ public:
    */
   virtual nsRect VisualBorderRectRelativeToSelf() const override;
 
-  virtual void Reflow(nsPresContext*           aPresContext,
-                      ReflowOutput&     aDesiredSize,
+  virtual void Reflow(nsPresContext* aPresContext,
+                      ReflowOutput& aDesiredSize,
                       const ReflowInput& aReflowInput,
-                      nsReflowStatus&          aStatus) override;
-                               
+                      nsReflowStatus& aStatus) override;
+
   nscoord GetLogicalBaseline(mozilla::WritingMode aWM) const override;
   bool GetVerticalAlignBaseline(mozilla::WritingMode aWM,
                                 nscoord* aBaseline) const override;
@@ -63,7 +63,6 @@ public:
                            nsIFrame*      aOldFrame) override;
 #endif
 
-  virtual nsIAtom* GetType() const override;
   virtual bool IsFrameOfType(uint32_t aFlags) const override
   {
     return nsContainerFrame::IsFrameOfType(aFlags &
@@ -73,6 +72,12 @@ public:
   {
     return do_QueryFrame(GetInner());
   }
+
+  // Update the style on the block wrappers around our kids.
+  virtual void DoUpdateStyleOfOwnedAnonBoxes(
+    mozilla::ServoStyleSet& aStyleSet,
+    nsStyleChangeList& aChangeList,
+    nsChangeHint aHintForThisFrame) override;
 
 #ifdef ACCESSIBILITY  
   virtual mozilla::a11y::AccType AccessibleType() override;
@@ -88,7 +93,8 @@ public:
    * Return the anonymous frame that contains all descendants except
    * the legend frame.  This is currently always a block frame with
    * pseudo nsCSSAnonBoxes::fieldsetContent -- this may change in the
-   * future when we add support for CSS overflow for <fieldset>.
+   * future when we add support for CSS overflow for <fieldset>.  This really
+   * can't return null, though callers seem to feel that it can.
    */
   nsIFrame* GetInner() const;
 

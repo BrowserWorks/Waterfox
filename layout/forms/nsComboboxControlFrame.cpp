@@ -223,7 +223,7 @@ static int32_t gReflowInx = -1;
 //------------------------------------------------------
 
 nsComboboxControlFrame::nsComboboxControlFrame(nsStyleContext* aContext)
-  : nsBlockFrame(aContext)
+  : nsBlockFrame(aContext, kClassID)
   , mDisplayFrame(nullptr)
   , mButtonFrame(nullptr)
   , mDropdownFrame(nullptr)
@@ -779,9 +779,10 @@ nsComboboxControlFrame::GetIntrinsicISize(nsRenderingContext* aRenderingContext,
   }
 
   // add room for the dropmarker button if there is one
-  if ((!IsThemed() ||
+  const nsStyleDisplay* disp = StyleDisplay();
+  if ((!IsThemed(disp) ||
        presContext->GetTheme()->ThemeNeedsComboboxDropmarker()) &&
-      StyleDisplay()->mAppearance != NS_THEME_NONE) {
+      disp->mAppearance != NS_THEME_NONE) {
     displayISize += scrollbarWidth;
   }
 
@@ -831,22 +832,12 @@ nsComboboxControlFrame::Reflow(nsPresContext*          aPresContext,
   }
 
   // Make sure the displayed text is the same as the selected option, bug 297389.
-  int32_t selectedIndex;
-  nsAutoString selectedOptionText;
   if (!mDroppedDown) {
-    selectedIndex = mListControlFrame->GetSelectedIndex();
+    mDisplayedIndex = mListControlFrame->GetSelectedIndex();
   }
-  else {
-    // In dropped down mode the "selected index" is the hovered menu item,
-    // we want the last selected item which is |mDisplayedIndex| in this case.
-    selectedIndex = mDisplayedIndex;
-  }
-  if (selectedIndex != -1) {
-    mListControlFrame->GetOptionText(selectedIndex, selectedOptionText);
-  }
-  if (mDisplayedOptionText != selectedOptionText) {
-    RedisplayText(selectedIndex);
-  }
+  // In dropped down mode the "selected index" is the hovered menu item,
+  // we want the last selected item which is |mDisplayedIndex| in this case.
+  RedisplayText();
 
   // First reflow our dropdown so that we know how tall we should be.
   ReflowDropdown(aPresContext, aReflowInput);
@@ -908,12 +899,6 @@ nsComboboxControlFrame::Reflow(nsPresContext*          aPresContext,
 
 //--------------------------------------------------------------
 
-nsIAtom*
-nsComboboxControlFrame::GetType() const
-{
-  return nsGkAtoms::comboboxControlFrame;
-}
-
 #ifdef DEBUG_FRAME_DUMP
 nsresult
 nsComboboxControlFrame::GetFrameName(nsAString& aResult) const
@@ -974,30 +959,45 @@ nsComboboxControlFrame::GetDropDown()
 
 ///////////////////////////////////////////////////////////////
 
+void
+nsComboboxControlFrame::SetPreviewText(const nsAString& aValue)
+{
+  nsAutoString previewValue(aValue);
+  nsContentUtils::RemoveNewlines(previewValue);
+
+  mPreviewText = previewValue;
+  RedisplayText();
+}
+
 NS_IMETHODIMP
 nsComboboxControlFrame::RedisplaySelectedText()
 {
   nsAutoScriptBlocker scriptBlocker;
-  return RedisplayText(mListControlFrame->GetSelectedIndex());
+  mDisplayedIndex = mListControlFrame->GetSelectedIndex();
+  return RedisplayText();
 }
 
+
 nsresult
-nsComboboxControlFrame::RedisplayText(int32_t aIndex)
+nsComboboxControlFrame::RedisplayText()
 {
+  nsString previousText(mDisplayedOptionTextOrPreview);
   // Get the text to display
-  if (aIndex != -1) {
-    mListControlFrame->GetOptionText(aIndex, mDisplayedOptionText);
+  if (!mPreviewText.IsEmpty()) {
+    mDisplayedOptionTextOrPreview = mPreviewText;
+  } else if (mDisplayedIndex != -1) {
+    mListControlFrame->GetOptionText(mDisplayedIndex, mDisplayedOptionTextOrPreview);
   } else {
-    mDisplayedOptionText.Truncate();
+    mDisplayedOptionTextOrPreview.Truncate();
   }
-  mDisplayedIndex = aIndex;
 
   REFLOW_DEBUG_MSG2("RedisplayText \"%s\"\n",
-                    NS_LossyConvertUTF16toASCII(mDisplayedOptionText).get());
+                    NS_LossyConvertUTF16toASCII(mDisplayedOptionTextOrPreview).get());
 
   // Send reflow command because the new text maybe larger
   nsresult rv = NS_OK;
-  if (mDisplayContent) {
+  if (mDisplayContent &&
+      !previousText.Equals(mDisplayedOptionTextOrPreview)) {
     // Don't call ActuallyDisplayText(true) directly here since that
     // could cause recursive frame construction. See bug 283117 and the comment in
     // HandleRedisplayTextEvent() below.
@@ -1051,13 +1051,13 @@ nsComboboxControlFrame::HandleRedisplayTextEvent()
 void
 nsComboboxControlFrame::ActuallyDisplayText(bool aNotify)
 {
-  if (mDisplayedOptionText.IsEmpty()) {
+  if (mDisplayedOptionTextOrPreview.IsEmpty()) {
     // Have to use a non-breaking space for line-block-size calculations
     // to be right
     static const char16_t space = 0xA0;
     mDisplayContent->SetText(&space, 1, aNotify);
   } else {
-    mDisplayContent->SetText(mDisplayedOptionText, aNotify);
+    mDisplayContent->SetText(mDisplayedOptionTextOrPreview, aNotify);
   }
 }
 
@@ -1101,12 +1101,13 @@ nsComboboxControlFrame::RemoveOption(int32_t aIndex)
       --mDisplayedIndex;
     } else if (aIndex == mDisplayedIndex) {
       mDisplayedIndex = 0; // IE6 compat
-      RedisplayText(mDisplayedIndex);
+      RedisplayText();
     }
   }
   else {
     // If we removed the last option, we need to blank things out
-    RedisplayText(-1);
+    mDisplayedIndex = -1;
+    RedisplayText();
   }
 
   if (!weakThis.IsAlive())
@@ -1120,7 +1121,8 @@ NS_IMETHODIMP
 nsComboboxControlFrame::OnSetSelectedIndex(int32_t aOldIndex, int32_t aNewIndex)
 {
   nsAutoScriptBlocker scriptBlocker;
-  RedisplayText(aNewIndex);
+  mDisplayedIndex = aNewIndex;
+  RedisplayText();
   NS_ASSERTION(mDropdownFrame, "No dropdown frame!");
 
   nsISelectControlFrame* listFrame = do_QueryFrame(mDropdownFrame);
@@ -1186,6 +1188,18 @@ nsComboboxControlFrame::GetContentInsertionFrame() {
   return mInRedisplayText ? mDisplayFrame : mDropdownFrame->GetContentInsertionFrame();
 }
 
+void
+nsComboboxControlFrame::DoUpdateStyleOfOwnedAnonBoxes(
+  ServoStyleSet& aStyleSet,
+  nsStyleChangeList& aChangeList,
+  nsChangeHint aHintForThisFrame)
+{
+  UpdateStyleOfChildAnonBox(mDropdownFrame, aStyleSet, aChangeList,
+                            aHintForThisFrame);
+  UpdateStyleOfChildAnonBox(mDisplayFrame, aStyleSet, aChangeList,
+                            aHintForThisFrame);
+}
+
 nsresult
 nsComboboxControlFrame::CreateAnonymousContent(nsTArray<ContentInfo>& aElements)
 {
@@ -1214,7 +1228,7 @@ nsComboboxControlFrame::CreateAnonymousContent(nsTArray<ContentInfo>& aElements)
   // set the value of the text node
   mDisplayedIndex = mListControlFrame->GetSelectedIndex();
   if (mDisplayedIndex != -1) {
-    mListControlFrame->GetOptionText(mDisplayedIndex, mDisplayedOptionText);
+    mListControlFrame->GetOptionText(mDisplayedIndex, mDisplayedOptionTextOrPreview);
   }
   ActuallyDisplayText(false);
 
@@ -1268,17 +1282,20 @@ nsComboboxControlFrame::AppendAnonymousContentTo(nsTArray<nsIContent*>& aElement
 // need to revisit this.
 class nsComboboxDisplayFrame : public nsBlockFrame {
 public:
-  NS_DECL_FRAMEARENA_HELPERS
+  NS_DECL_FRAMEARENA_HELPERS(nsComboboxDisplayFrame)
 
-  nsComboboxDisplayFrame (nsStyleContext* aContext,
-                          nsComboboxControlFrame* aComboBox)
-    : nsBlockFrame(aContext),
-      mComboBox(aComboBox)
+  nsComboboxDisplayFrame(nsStyleContext* aContext,
+                         nsComboboxControlFrame* aComboBox)
+    : nsBlockFrame(aContext, kClassID)
+    , mComboBox(aComboBox)
   {}
 
-  // Need this so that line layout knows that this block's inline size
-  // depends on the available inline size.
-  virtual nsIAtom* GetType() const override;
+#ifdef DEBUG_FRAME_DUMP
+  nsresult GetFrameName(nsAString& aResult) const override
+  {
+    return MakeFrameName(NS_LITERAL_STRING("ComboboxDisplay"), aResult);
+  }
+#endif
 
   virtual bool IsFrameOfType(uint32_t aFlags) const override
   {
@@ -1300,12 +1317,6 @@ protected:
 };
 
 NS_IMPL_FRAMEARENA_HELPERS(nsComboboxDisplayFrame)
-
-nsIAtom*
-nsComboboxDisplayFrame::GetType() const
-{
-  return nsGkAtoms::comboboxDisplayFrame;
-}
 
 void
 nsComboboxDisplayFrame::Reflow(nsPresContext*           aPresContext,
@@ -1359,9 +1370,8 @@ nsComboboxControlFrame::CreateFrameForDisplayNode()
   // create the style contexts for the anonymous block frame and text frame
   RefPtr<nsStyleContext> styleContext;
   styleContext = styleSet->
-    ResolveAnonymousBoxStyle(nsCSSAnonBoxes::mozDisplayComboboxControlFrame,
-                             mStyleContext,
-                             nsStyleSet::eSkipParentDisplayBasedStyleFixup);
+    ResolveInheritingAnonymousBoxStyle(nsCSSAnonBoxes::mozDisplayComboboxControlFrame,
+                                       mStyleContext);
 
   RefPtr<nsStyleContext> textStyleContext;
   textStyleContext =
@@ -1438,7 +1448,7 @@ nsComboboxControlFrame::SetInitialChildList(ChildListID     aListID,
     for (nsFrameList::Enumerator e(aChildList); !e.AtEnd(); e.Next()) {
       nsCOMPtr<nsIFormControl> formControl =
         do_QueryInterface(e.get()->GetContent());
-      if (formControl && formControl->GetType() == NS_FORM_BUTTON_BUTTON) {
+      if (formControl && formControl->ControlType() == NS_FORM_BUTTON_BUTTON) {
         mButtonFrame = e.get();
         break;
       }
@@ -1627,7 +1637,8 @@ nsComboboxControlFrame::OnOptionSelected(int32_t aIndex, bool aSelected)
   } else {
     if (aSelected) {
       nsAutoScriptBlocker blocker;
-      RedisplayText(aIndex);
+      mDisplayedIndex = aIndex;
+      RedisplayText();
     } else {
       AutoWeakFrame weakFrame(this);
       RedisplaySelectedText();

@@ -206,12 +206,8 @@ NPError
 PluginInstanceParent::Destroy()
 {
     NPError retval;
-    {   // Scope for timer
-        Telemetry::AutoTimer<Telemetry::BLOCKED_ON_PLUGIN_INSTANCE_DESTROY_MS>
-            timer(Module()->GetHistogramKey());
-        if (!CallNPP_Destroy(&retval)) {
-            retval = NPERR_GENERIC_ERROR;
-        }
+    if (!CallNPP_Destroy(&retval)) {
+        retval = NPERR_GENERIC_ERROR;
     }
 
 #if defined(OS_WIN)
@@ -1772,9 +1768,6 @@ PluginInstanceParent::NPP_NewStream(NPMIMEType type, NPStream* stream,
         return NPERR_GENERIC_ERROR;
     }
 
-    Telemetry::AutoTimer<Telemetry::BLOCKED_ON_PLUGIN_STREAM_INIT_MS>
-        timer(Module()->GetHistogramKey());
-
     NPError err = NPERR_NO_ERROR;
     if (mParent->IsStartingAsync()) {
         MOZ_ASSERT(mSurrogate);
@@ -2008,32 +2001,6 @@ PluginInstanceParent::AnswerNPN_SetValueForURL(const NPNURLVariable& variable,
     *result = mNPNIface->setvalueforurl(mNPP, (NPNURLVariable) variable,
                                         url.get(), value.get(),
                                         value.Length());
-    return IPC_OK();
-}
-
-mozilla::ipc::IPCResult
-PluginInstanceParent::AnswerNPN_GetAuthenticationInfo(const nsCString& protocol,
-                                                      const nsCString& host,
-                                                      const int32_t& port,
-                                                      const nsCString& scheme,
-                                                      const nsCString& realm,
-                                                      nsCString* username,
-                                                      nsCString* password,
-                                                      NPError* result)
-{
-    char* u;
-    uint32_t ulen;
-    char* p;
-    uint32_t plen;
-
-    *result = mNPNIface->getauthenticationinfo(mNPP, protocol.get(),
-                                               host.get(), port,
-                                               scheme.get(), realm.get(),
-                                               &u, &ulen, &p, &plen);
-    if (NPERR_NO_ERROR == *result) {
-        username->Adopt(u, ulen);
-        password->Adopt(p, plen);
-    }
     return IPC_OK();
 }
 

@@ -21,7 +21,7 @@
 #ifdef MOZ_WIDGET_ANDROID
 #include "nsIRunnable.h"
 #include "GLContextTypes.h"
-#include "AndroidSurfaceTexture.h"
+#include "AndroidNativeWindow.h"
 #include "AndroidBridge.h"
 #include <map>
 class PluginEventRunnable;
@@ -136,7 +136,8 @@ public:
     return !!mAudioChannelAgent;
   }
 
-  nsresult GetOrCreateAudioChannelAgent(nsIAudioChannelAgent** aAgent);
+  void NotifyStartedPlaying();
+  void NotifyStoppedPlaying();
 
   nsresult SetMuted(bool aIsMuted);
 
@@ -214,22 +215,24 @@ public:
   // For ANPNativeWindow
   void* AcquireContentWindow();
 
-  mozilla::gl::AndroidSurfaceTexture* AsSurfaceTexture();
+  mozilla::java::GeckoSurface::Param AsSurface();
 
   // For ANPVideo
   class VideoInfo {
   public:
-    VideoInfo(mozilla::gl::AndroidSurfaceTexture* aSurfaceTexture) :
-      mSurfaceTexture(aSurfaceTexture)
+    VideoInfo(mozilla::java::GeckoSurface::Param aSurface)
+      : mSurface(aSurface)
+      , mNativeWindow(aSurface)
     {
     }
 
     ~VideoInfo()
     {
-      mSurfaceTexture = nullptr;
+      mozilla::java::SurfaceAllocator::DisposeSurface(mSurface);
     }
 
-    RefPtr<mozilla::gl::AndroidSurfaceTexture> mSurfaceTexture;
+    mozilla::java::GeckoSurface::GlobalRef mSurface;
+    mozilla::gl::AndroidNativeWindow mNativeWindow;
     gfxRect mDimensions;
   };
 
@@ -336,6 +339,8 @@ protected:
                                  const char* const* names,
                                  const char* const* values);
 
+  nsresult CreateAudioChannelAgentIfNeeded();
+
   // The structure used to communicate between the plugin instance and
   // the browser.
   NPP_t mNPP;
@@ -356,7 +361,8 @@ protected:
   bool mFullScreen;
   mozilla::gl::OriginPos mOriginPos;
 
-  RefPtr<mozilla::gl::AndroidSurfaceTexture> mContentSurface;
+  mozilla::java::GeckoSurface::GlobalRef mContentSurface;
+  mozilla::gl::AndroidNativeWindow mContentWindow;
 #endif
 
   enum {
@@ -406,8 +412,7 @@ private:
   mozilla::TimeStamp mStopTime;
 
 #ifdef MOZ_WIDGET_ANDROID
-  already_AddRefed<mozilla::gl::AndroidSurfaceTexture> CreateSurfaceTexture();
-
+  mozilla::java::GeckoSurface::LocalRef CreateSurface();
   std::map<void*, VideoInfo*> mVideos;
   bool mOnScreen;
 

@@ -12,6 +12,7 @@
 #include <map>
 
 #include "mozilla/layers/APZUtils.h"
+#include "mozilla/layers/CompositorOptions.h"
 #include "mozilla/layers/LayersTypes.h"
 #include "mozilla/layout/PRenderFrameParent.h"
 #include "nsDisplayList.h"
@@ -36,6 +37,7 @@ class RenderFrameParent : public PRenderFrameParent
 {
   typedef mozilla::layers::AsyncDragMetrics AsyncDragMetrics;
   typedef mozilla::layers::FrameMetrics FrameMetrics;
+  typedef mozilla::layers::CompositorOptions CompositorOptions;
   typedef mozilla::layers::ContainerLayer ContainerLayer;
   typedef mozilla::layers::Layer Layer;
   typedef mozilla::layers::LayerManager LayerManager;
@@ -55,7 +57,7 @@ public:
    * chosen, then RenderFrameParent will watch input events and use
    * them to asynchronously pan and zoom.
    */
-  RenderFrameParent(nsFrameLoader* aFrameLoader, bool* aSuccess);
+  explicit RenderFrameParent(nsFrameLoader* aFrameLoader);
   virtual ~RenderFrameParent();
 
   bool Init(nsFrameLoader* aFrameLoader);
@@ -80,11 +82,15 @@ public:
 
   void GetTextureFactoryIdentifier(TextureFactoryIdentifier* aTextureFactoryIdentifier);
 
-  inline uint64_t GetLayersId() { return mLayersId; }
+  inline uint64_t GetLayersId() const { return mLayersId; }
+  inline bool IsLayersConnected() const { return mLayersConnected; }
+  inline CompositorOptions GetCompositorOptions() const { return mCompositorOptions; }
 
   void TakeFocusForClickFromTap();
 
-  void EnsureLayersConnected();
+  void EnsureLayersConnected(CompositorOptions* aCompositorOptions);
+
+  LayerManager* AttachLayerManager();
 
 protected:
   void ActorDestroy(ActorDestroyReason why) override;
@@ -95,15 +101,22 @@ private:
   void TriggerRepaint();
   void DispatchEventForPanZoomController(const InputEvent& aEvent);
 
-  uint64_t GetLayerTreeId() const;
-
   // When our child frame is pushing transactions directly to the
   // compositor, this is the ID of its layer tree in the compositor's
   // context.
   uint64_t mLayersId;
+  // A flag that indicates whether or not the compositor knows about the
+  // layers id. In some cases this RenderFrameParent is not connected to the
+  // compositor and so this flag is false.
+  bool mLayersConnected;
+  // The compositor options for this layers id. This is only meaningful if
+  // the compositor actually knows about this layers id (i.e. when mLayersConnected
+  // is true).
+  CompositorOptions mCompositorOptions;
 
   RefPtr<nsFrameLoader> mFrameLoader;
   RefPtr<ContainerLayer> mContainer;
+  RefPtr<LayerManager> mLayerManager;
 
   // True after Destroy() has been called, which is triggered
   // originally by nsFrameLoader::Destroy().  After this point, we can

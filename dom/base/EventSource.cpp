@@ -79,7 +79,7 @@ public:
   NS_DECL_NSISTREAMLISTENER
   NS_DECL_NSICHANNELEVENTSINK
   NS_DECL_NSIINTERFACEREQUESTOR
-  NS_DECL_NSIEVENTTARGET
+  NS_DECL_NSIEVENTTARGET_FULL
   NS_DECL_NSITHREADRETARGETABLESTREAMLISTENER
 
   explicit EventSourceImpl(EventSource* aEventSource);
@@ -689,7 +689,9 @@ EventSourceImpl::OnStartRequest(nsIRequest* aRequest, nsISupports* aCtxt)
     nsCOMPtr<nsIThreadRetargetableRequest> rr = do_QueryInterface(httpChannel);
     if (rr) {
       rv = rr->RetargetDeliveryTo(this);
-      NS_ENSURE_SUCCESS(rv, rv);
+      if (NS_WARN_IF(NS_FAILED(rv))) {
+        NS_WARNING("Retargeting failed");
+      }
     }
   }
   rv = Dispatch(NewRunnableMethod(this, &EventSourceImpl::AnnounceConnection),
@@ -995,18 +997,22 @@ EventSourceImpl::SetupHttpChannel()
 {
   AssertIsOnMainThread();
   MOZ_ASSERT(!IsShutDown());
-  mHttpChannel->SetRequestMethod(NS_LITERAL_CSTRING("GET"));
+  DebugOnly<nsresult> rv =
+    mHttpChannel->SetRequestMethod(NS_LITERAL_CSTRING("GET"));
+  MOZ_ASSERT(NS_SUCCEEDED(rv));
 
   /* set the http request headers */
 
-  mHttpChannel->SetRequestHeader(NS_LITERAL_CSTRING("Accept"),
+  rv = mHttpChannel->SetRequestHeader(NS_LITERAL_CSTRING("Accept"),
     NS_LITERAL_CSTRING(TEXT_EVENT_STREAM), false);
+  MOZ_ASSERT(NS_SUCCEEDED(rv));
 
   // LOAD_BYPASS_CACHE already adds the Cache-Control: no-cache header
 
   if (!mLastEventID.IsEmpty()) {
-    mHttpChannel->SetRequestHeader(NS_LITERAL_CSTRING("Last-Event-ID"),
+    rv = mHttpChannel->SetRequestHeader(NS_LITERAL_CSTRING("Last-Event-ID"),
       NS_ConvertUTF16toUTF8(mLastEventID), false);
+    MOZ_ASSERT(NS_SUCCEEDED(rv));
   }
 }
 

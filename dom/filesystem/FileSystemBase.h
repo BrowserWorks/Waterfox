@@ -72,18 +72,6 @@ public:
   bool
   GetRealPath(BlobImpl* aFile, nsIFile** aPath) const;
 
-  // IPC initialization
-  // See how these 2 methods are used in FileSystemTaskChildBase.
-
-  virtual bool
-  NeedToGoToMainThread() const { return false; }
-
-  virtual nsresult
-  MainThreadWork() { return NS_ERROR_FAILURE; }
-
-  virtual bool
-  ClonableToDifferentThreadOrProcess() const { return false; }
-
   // CC methods
   virtual void Unlink() {}
   virtual void Traverse(nsCycleCollectionTraversalCallback &cb) {}
@@ -106,10 +94,6 @@ protected:
   nsString mLocalRootPath;
 
   bool mShutdown;
-
-#ifdef DEBUG
-  PRThread* mOwningThread;
-#endif
 };
 
 } // namespace dom

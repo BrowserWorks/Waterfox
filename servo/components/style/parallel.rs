@@ -26,44 +26,58 @@ use context::TraversalStatistics;
 use dom::{OpaqueNode, SendNode, TElement, TNode};
 use rayon;
 use scoped_tls::ScopedTLS;
+use smallvec::SmallVec;
 use std::borrow::Borrow;
+use std::mem;
 use time;
 use traversal::{DomTraversal, PerLevelTraversalData, PreTraverseToken};
 
-/// The chunk size used to split the parallel traversal nodes.
+/// The maximum number of child nodes that we will process as a single unit.
 ///
-/// We send each `CHUNK_SIZE` nodes as a different work unit to the work queue.
-pub const CHUNK_SIZE: usize = 64;
+/// Larger values will increase style sharing cache hits and general DOM locality
+/// at the expense of decreased opportunities for parallelism. This value has not
+/// been measured and could potentially be tuned.
+pub const WORK_UNIT_MAX: usize = 16;
 
-/// A parallel top down traversal, generic over `D`.
+/// A list of node pointers.
+///
+/// Note that the inline storage doesn't need to be sized to WORK_UNIT_MAX, but
+/// it generally seems sensible to do so.
+type NodeList<N> = SmallVec<[SendNode<N>; WORK_UNIT_MAX]>;
+
+/// Entry point for the parallel traversal.
 #[allow(unsafe_code)]
 pub fn traverse_dom<E, D>(traversal: &D,
                           root: E,
-                          known_root_dom_depth: Option<usize>,
                           token: PreTraverseToken,
                           queue: &rayon::ThreadPool)
     where E: TElement,
           D: DomTraversal<E>,
 {
-    let dump_stats = TraversalStatistics::should_dump();
+    let dump_stats = traversal.shared_context().options.dump_style_statistics;
     let start_time = if dump_stats { Some(time::precise_time_s()) } else { None };
+    let mut nodes = NodeList::<E::ConcreteNode>::new();
 
     debug_assert!(traversal.is_parallel());
     // Handle Gecko's eager initial styling. We don't currently support it
     // in conjunction with bottom-up traversal. If we did, we'd need to put
     // it on the context to make it available to the bottom-up phase.
-    let (nodes, depth) = if token.traverse_unstyled_children_only() {
+    let depth = if token.traverse_unstyled_children_only() {
         debug_assert!(!D::needs_postorder_traversal());
-        let mut children = vec![];
-        for kid in root.as_node().children() {
+        for kid in root.as_node().traversal_children() {
             if kid.as_element().map_or(false, |el| el.get_data().is_none()) {
-                children.push(unsafe { SendNode::new(kid) });
+                nodes.push(unsafe { SendNode::new(kid) });
             }
         }
-        (children, known_root_dom_depth.map(|x| x + 1))
+        root.depth() + 1
     } else {
-        (vec![unsafe { SendNode::new(root.as_node()) }], known_root_dom_depth)
+        nodes.push(unsafe { SendNode::new(root.as_node()) });
+        root.depth()
     };
+
+    if nodes.is_empty() {
+        return;
+    }
 
     let traversal_data = PerLevelTraversalData {
         current_dom_depth: depth,
@@ -73,7 +87,13 @@ pub fn traverse_dom<E, D>(traversal: &D,
 
     queue.install(|| {
         rayon::scope(|scope| {
-            traverse_nodes(nodes, root, traversal_data, scope, traversal, &tls);
+            traverse_nodes(nodes,
+                           DispatchMode::TailCall,
+                           root,
+                           traversal_data,
+                           scope,
+                           traversal,
+                           &tls);
         });
     });
 
@@ -86,12 +106,38 @@ pub fn traverse_dom<E, D>(traversal: &D,
                 Some(ref cx) => &cx.borrow().statistics + &acc,
             }
         });
-        aggregate.compute_traversal_time(start_time.unwrap());
-        println!("{}", aggregate);
+        aggregate.finish(traversal, start_time.unwrap());
+        if aggregate.is_large_traversal() {
+            println!("{}", aggregate);
+        }
     }
 }
 
+/// A callback to create our thread local context.  This needs to be
+/// out of line so we don't allocate stack space for the entire struct
+/// in the caller.
+#[inline(never)]
+fn create_thread_local_context<'scope, E, D>(
+    traversal: &'scope D,
+    slot: &mut Option<D::ThreadLocalContext>)
+    where E: TElement + 'scope,
+          D: DomTraversal<E>
+{
+    *slot = Some(traversal.create_thread_local_context())
+}
+
 /// A parallel top-down DOM traversal.
+///
+/// This algorithm traverses the DOM in a breadth-first, top-down manner. The
+/// goals are:
+/// * Never process a child before its parent (since child style depends on
+///   parent style). If this were to happen, the styling algorithm would panic.
+/// * Prioritize discovering nodes as quickly as possible to maximize
+///   opportunities for parallelism.
+/// * Style all the children of a given node (i.e. all sibling nodes) on
+///   a single thread (with an upper bound to handle nodes with an
+///   abnormally large number of children). This is important because we use
+///   a thread-local cache to share styles between siblings.
 #[inline(always)]
 #[allow(unsafe_code)]
 fn top_down_dom<'a, 'scope, E, D>(nodes: &'a [SendNode<E::ConcreteNode>],
@@ -103,17 +149,43 @@ fn top_down_dom<'a, 'scope, E, D>(nodes: &'a [SendNode<E::ConcreteNode>],
     where E: TElement + 'scope,
           D: DomTraversal<E>,
 {
-    let mut discovered_child_nodes = vec![];
+    debug_assert!(nodes.len() <= WORK_UNIT_MAX);
+    let mut discovered_child_nodes = NodeList::<E::ConcreteNode>::new();
     {
         // Scope the borrow of the TLS so that the borrow is dropped before
-        // potentially traversing a child on this thread.
-        let mut tlc = tls.ensure(|| traversal.create_thread_local_context());
+        // a potential recursive call when we pass TailCall.
+        let mut tlc = tls.ensure(
+            |slot: &mut Option<D::ThreadLocalContext>| create_thread_local_context(traversal, slot));
 
         for n in nodes {
-            // Perform the appropriate traversal.
+            // If the last node we processed produced children, spawn them off
+            // into a work item. We do this at the beginning of the loop (rather
+            // than at the end) so that we can traverse the children of the last
+            // sibling directly on this thread without a spawn call.
+            //
+            // This has the important effect of removing the allocation and
+            // context-switching overhead of the parallel traversal for perfectly
+            // linear regions of the DOM, i.e.:
+            //
+            // <russian><doll><tag><nesting></nesting></tag></doll></russian>
+            //
+            // Which are not at all uncommon.
+            if !discovered_child_nodes.is_empty() {
+                let children = mem::replace(&mut discovered_child_nodes, Default::default());
+                let mut traversal_data_copy = traversal_data.clone();
+                traversal_data_copy.current_dom_depth += 1;
+                traverse_nodes(children,
+                               DispatchMode::NotTailCall,
+                               root,
+                               traversal_data_copy,
+                               scope,
+                               traversal,
+                               tls);
+            }
+
             let node = **n;
             let mut children_to_process = 0isize;
-            traversal.process_preorder(&mut traversal_data, &mut *tlc, node);
+            traversal.process_preorder(&traversal_data, &mut *tlc, node);
             if let Some(el) = node.as_element() {
                 traversal.traverse_children(&mut *tlc, el, |_tlc, kid| {
                     children_to_process += 1;
@@ -121,29 +193,42 @@ fn top_down_dom<'a, 'scope, E, D>(nodes: &'a [SendNode<E::ConcreteNode>],
                 });
             }
 
-            // Reset the count of children if we need to do a bottom-up traversal
-            // after the top up.
-            if D::needs_postorder_traversal() {
-                if children_to_process == 0 {
-                    // If there were no more children, start walking back up.
-                    bottom_up_dom(traversal, &mut *tlc, root, node)
-                } else {
-                    // Otherwise record the number of children to process when the
-                    // time comes.
-                    node.as_element().unwrap().store_children_to_process(children_to_process);
-                }
-            }
+            traversal.handle_postorder_traversal(&mut *tlc, root, node,
+                                                 children_to_process);
         }
     }
 
-    if let Some(ref mut depth) = traversal_data.current_dom_depth {
-        *depth += 1;
+    // Handle the children of the last element in this work unit. If any exist,
+    // we can process them (or at least one work unit's worth of them) directly
+    // on this thread by passing TailCall.
+    if !discovered_child_nodes.is_empty() {
+        traversal_data.current_dom_depth += 1;
+        traverse_nodes(discovered_child_nodes,
+                       DispatchMode::TailCall,
+                       root,
+                       traversal_data,
+                       scope,
+                       traversal,
+                       tls);
     }
-
-    traverse_nodes(discovered_child_nodes, root, traversal_data, scope, traversal, tls);
 }
 
-fn traverse_nodes<'a, 'scope, E, D>(nodes: Vec<SendNode<E::ConcreteNode>>, root: OpaqueNode,
+/// Controls whether traverse_nodes may make a recursive call to continue
+/// doing work, or whether it should always dispatch work asynchronously.
+#[derive(Clone, Copy, PartialEq)]
+enum DispatchMode {
+    TailCall,
+    NotTailCall,
+}
+
+impl DispatchMode {
+    fn is_tail_call(&self) -> bool { matches!(*self, DispatchMode::TailCall) }
+}
+
+#[inline]
+fn traverse_nodes<'a, 'scope, E, D>(nodes: NodeList<E::ConcreteNode>,
+                                    mode: DispatchMode,
+                                    root: OpaqueNode,
                                     traversal_data: PerLevelTraversalData,
                                     scope: &'a rayon::Scope<'scope>,
                                     traversal: &'scope D,
@@ -151,67 +236,44 @@ fn traverse_nodes<'a, 'scope, E, D>(nodes: Vec<SendNode<E::ConcreteNode>>, root:
     where E: TElement + 'scope,
           D: DomTraversal<E>,
 {
-    if nodes.is_empty() {
-        return;
-    }
+    debug_assert!(!nodes.is_empty());
 
-    // Optimization: traverse directly and avoid a heap-allocating spawn() call if
-    // we're only pushing one work unit.
-    if nodes.len() <= CHUNK_SIZE {
-        let nodes = nodes.into_boxed_slice();
-        top_down_dom(&nodes, root, traversal_data, scope, traversal, tls);
-        return;
-    }
+    // In the common case, our children fit within a single work unit, in which
+    // case we can pass the SmallVec directly and avoid extra allocation.
+    if nodes.len() <= WORK_UNIT_MAX {
+        if mode.is_tail_call() {
+            // If this is a tail call, bypass rayon and invoke top_down_dom directly.
+            top_down_dom(&nodes, root, traversal_data, scope, traversal, tls);
+        } else {
+            // The caller isn't done yet. Append to the queue and return synchronously.
+            scope.spawn(move |scope| {
+                let nodes = nodes;
+                top_down_dom(&nodes, root, traversal_data, scope, traversal, tls);
+            });
+        }
+    } else {
+        // FIXME(bholley): This should be an ArrayVec.
+        let mut first_chunk: Option<NodeList<E::ConcreteNode>> = None;
+        for chunk in nodes.chunks(WORK_UNIT_MAX) {
+            if mode.is_tail_call() && first_chunk.is_none() {
+                first_chunk = Some(chunk.iter().cloned().collect::<NodeList<E::ConcreteNode>>());
+            } else {
+                let boxed = chunk.iter().cloned().collect::<Vec<_>>().into_boxed_slice();
+                let traversal_data_copy = traversal_data.clone();
+                scope.spawn(move |scope| {
+                    let b = boxed;
+                    top_down_dom(&*b, root, traversal_data_copy, scope, traversal, tls)
+                });
 
-    // General case.
-    for chunk in nodes.chunks(CHUNK_SIZE) {
-        let nodes = chunk.iter().cloned().collect::<Vec<_>>().into_boxed_slice();
-        let traversal_data = traversal_data.clone();
-        scope.spawn(move |scope| {
-            let nodes = nodes;
-            top_down_dom(&nodes, root, traversal_data, scope, traversal, tls)
-        })
-    }
-}
-
-/// Process current node and potentially traverse its ancestors.
-///
-/// If we are the last child that finished processing, recursively process
-/// our parent. Else, stop. Also, stop at the root.
-///
-/// Thus, if we start with all the leaves of a tree, we end up traversing
-/// the whole tree bottom-up because each parent will be processed exactly
-/// once (by the last child that finishes processing).
-///
-/// The only communication between siblings is that they both
-/// fetch-and-subtract the parent's children count.
-fn bottom_up_dom<E, D>(traversal: &D,
-                       thread_local: &mut D::ThreadLocalContext,
-                       root: OpaqueNode,
-                       mut node: E::ConcreteNode)
-    where E: TElement,
-          D: DomTraversal<E>,
-{
-    loop {
-        // Perform the appropriate operation.
-        traversal.process_postorder(thread_local, node);
-
-        if node.opaque() == root {
-            break;
+            }
         }
 
-        let parent = match node.parent_element() {
-            None => unreachable!("How can this happen after the break above?"),
-            Some(parent) => parent,
-        };
-
-        let remaining = parent.did_process_child();
-        if remaining != 0 {
-            // Get out of here and find another node to work on.
-            break
+        // If this is a tail call, bypass rayon for the first chunk and invoke top_down_dom
+        // directly.
+        debug_assert_eq!(first_chunk.is_some(), mode.is_tail_call());
+        if let Some(c) = first_chunk {
+            debug_assert_eq!(c.len(), WORK_UNIT_MAX);
+            top_down_dom(&*c, root, traversal_data, scope, traversal, tls);
         }
-
-        // We were the last child of our parent. Construct flows for our parent.
-        node = parent.as_node();
     }
 }

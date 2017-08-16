@@ -18,6 +18,7 @@
 #include "nsGkAtoms.h"
 #include "nsMenuParent.h"
 #include "nsXULPopupManager.h"
+#include "nsINamed.h"
 #include "nsIReflowCallback.h"
 #include "nsITimer.h"
 #include "mozilla/Attributes.h"
@@ -55,13 +56,15 @@ class nsMenuFrame;
  * to it. The callback is delegated to the contained nsMenuFrame as long as
  * the contained nsMenuFrame has not been destroyed.
  */
-class nsMenuTimerMediator final : public nsITimerCallback
+class nsMenuTimerMediator final : public nsITimerCallback,
+                                  public nsINamed
 {
 public:
   explicit nsMenuTimerMediator(nsMenuFrame* aFrame);
 
   NS_DECL_ISUPPORTS
   NS_DECL_NSITIMERCALLBACK
+  NS_DECL_NSINAMED
 
   void ClearFrame();
 
@@ -78,9 +81,8 @@ class nsMenuFrame final : public nsBoxFrame
 public:
   explicit nsMenuFrame(nsStyleContext* aContext);
 
-  NS_DECL_QUERYFRAME_TARGET(nsMenuFrame)
   NS_DECL_QUERYFRAME
-  NS_DECL_FRAMEARENA_HELPERS
+  NS_DECL_FRAMEARENA_HELPERS(nsMenuFrame)
 
   NS_IMETHOD DoXULLayout(nsBoxLayoutState& aBoxLayoutState) override;
   virtual nsSize GetXULMinSize(nsBoxLayoutState& aBoxLayoutState) override;
@@ -105,7 +107,7 @@ public:
   virtual void BuildDisplayListForChildren(nsDisplayListBuilder*   aBuilder,
                                            const nsRect&           aDirtyRect,
                                            const nsDisplayListSet& aLists) override;
-                                         
+
   // this method can destroy the frame
   virtual nsresult HandleEvent(nsPresContext* aPresContext,
                                mozilla::WidgetGUIEvent* aEvent,
@@ -120,8 +122,6 @@ public:
                             nsFrameList&    aFrameList) override;
   virtual void RemoveFrame(ChildListID     aListID,
                            nsIFrame*       aOldFrame) override;
-
-  virtual nsIAtom* GetType() const override { return nsGkAtoms::menuFrame; }
 
   NS_IMETHOD SelectMenu(bool aActivateFlag);
 

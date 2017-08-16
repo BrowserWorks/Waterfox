@@ -16,7 +16,7 @@ function create_n_element_array(n)
   for (let i=0; i<n; i++) {
     let str = new SupportsString();
     str.data = "element " + i;
-    arr.appendElement(str, false);
+    arr.appendElement(str);
   }
   return arr;
 }
@@ -25,7 +25,7 @@ function test_appending_null_actually_inserts()
 {
   var arr = new MutableArray();
   do_check_eq(0, arr.length);
-  arr.appendElement(null, false);
+  arr.appendElement(null);
   do_check_eq(1, arr.length);
 }
 
@@ -34,7 +34,7 @@ function test_object_gets_appended()
   var arr = new MutableArray();
   var str = new SupportsString();
   str.data = "hello";
-  arr.appendElement(str, false);
+  arr.appendElement(str);
   do_check_eq(1, arr.length);
   var obj = arr.queryElementAt(0, Ci.nsISupportsString);
   do_check_eq(str, obj);
@@ -107,45 +107,6 @@ function test_enumerate()
   do_check_eq(arr.length, i);
 }
 
-function test_nssupportsarray_interop() {
-  // Tests to check that an nsSupportsArray instance can behave like an
-  // nsIArray.
-  let test = Components.classes["@mozilla.org/supports-array;1"]
-             .createInstance(Ci.nsISupportsArray);
-
-  let str = new SupportsString();
-  str.data = "element";
-  test.AppendElement(str);
-
-  // Now query to an nsIArray.
-  let iarray = test.QueryInterface(Ci.nsIArray);
-  do_check_neq(iarray, null);
-
-  // Make sure |nsIArray.length| works.
-  do_check_eq(iarray.length, 1);
-
-  // Make sure |nsIArray.queryElementAt| works.
-  let elm = iarray.queryElementAt(0, Ci.nsISupportsString);
-  do_check_eq(elm.data, "element");
-
-  // Make sure |nsIArray.indexOf| works.
-  let idx = iarray.indexOf(0, str);
-  do_check_eq(idx, 0);
-
-  // Make sure |nsIArray.enumerate| works.
-  let en = iarray.enumerate();
-  do_check_neq(en, null);
-  let i = 0;
-  while (en.hasMoreElements()) {
-    let str = en.getNext();
-    do_check_true(str instanceof Ci.nsISupportsString);
-    do_check_eq(str.data, "element");
-    i++;
-  }
-
-  do_check_eq(iarray.length, i);
-}
-
 function test_nsiarrayextensions() {
   // Tests to check that the extensions that make an nsArray act like an
   // nsISupportsArray for iteration purposes works.
@@ -174,7 +135,6 @@ var tests = [
   test_replace_element,
   test_clear,
   test_enumerate,
-  test_nssupportsarray_interop,
   test_nsiarrayextensions,
 ];
 

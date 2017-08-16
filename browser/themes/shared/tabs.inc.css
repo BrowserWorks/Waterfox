@@ -86,7 +86,7 @@
 }
 
 .tab-icon-image {
-  list-style-image: url("chrome://mozapps/skin/places/defaultFavicon.png");
+  list-style-image: url("chrome://mozapps/skin/places/defaultFavicon.svg");
 }
 
 .tab-icon-image[sharing]:not([selected]),
@@ -112,6 +112,8 @@
   /* 16px of the icon + 6px of margin-inline-end of .tab-icon-image */
   margin-inline-start: -22px;
   position: relative;
+  -moz-context-properties: fill;
+  fill: rgb(224, 41, 29);
 }
 
 .tab-sharing-icon-overlay[sharing="camera"] {
@@ -192,13 +194,13 @@
 }
 
 .tab-close-button {
-  margin-inline-start: 2px;
+  margin-inline-start: 1px;
   margin-inline-end: -2px;
   padding: 0;
 }
 
 .tab-icon-sound {
-  margin-inline-start: 4px;
+  margin-inline-start: 1px;
   width: 16px;
   height: 16px;
   padding: 0;
@@ -207,29 +209,29 @@
 .tab-icon-sound[soundplaying],
 .tab-icon-sound[muted],
 .tab-icon-sound[blocked] {
-  list-style-image: url(chrome://browser/skin/tabbrowser/tab-audio.svg#tab-audio);
-  filter: url(chrome://global/skin/filters.svg#fill);
+  list-style-image: url(chrome://browser/skin/tabbrowser/tab-audio-playing.svg);
+  -moz-context-properties: fill;
   fill: currentColor;
 }
 
 .tab-icon-sound[muted] {
-  list-style-image: url(chrome://browser/skin/tabbrowser/tab-audio.svg#tab-audio-muted);
+  list-style-image: url(chrome://browser/skin/tabbrowser/tab-audio-muted.svg);
 }
 
 .tab-icon-sound[blocked] {
-  list-style-image: url(chrome://browser/skin/tabbrowser/tab-audio.svg#tab-audio-blocked);
+  list-style-image: url(chrome://browser/skin/tabbrowser/tab-audio-blocked.svg);
 }
 
 .tab-icon-sound:-moz-lwtheme-darktext[soundplaying],
 .tab-icon-sound:-moz-lwtheme-darktext[muted],
 .tab-icon-sound:-moz-lwtheme-darktext[blocked] {
-  filter: url(chrome://global/skin/filters.svg#fill) drop-shadow(1px 1px 1px white);
+  filter: drop-shadow(1px 1px 1px white);
 }
 
 .tab-icon-sound:-moz-lwtheme-brighttext[soundplaying],
 .tab-icon-sound:-moz-lwtheme-brighttext[muted],
 .tab-icon-sound:-moz-lwtheme-brighttext[blocked] {
-  filter: url(chrome://global/skin/filters.svg#fill) drop-shadow(1px 1px 1px black);
+  filter: drop-shadow(1px 1px 1px black);
 }
 
 .tab-icon-sound[soundplaying]:not(:hover),
@@ -262,7 +264,7 @@
   background-image: url(chrome://browser/skin/tabbrowser/tab-overflow-indicator.png);
   background-size: 100% 100%;
   width: 14px;
-  margin-bottom: var(--navbar-tab-toolbar-highlight-overlap);
+  margin-bottom: calc(var(--navbar-tab-toolbar-highlight-overlap) + var(--tab-toolbar-navbar-overlap));
   pointer-events: none;
   position: relative;
   z-index: 3; /* the selected tab's z-index + 1 */
@@ -524,6 +526,15 @@
   width: calc(36px + var(--tab-curve-width));
 }
 
+.tabs-newtab-button > .toolbarbutton-menu-dropmarker {
+  display: none;
+}
+
+.tabs-newtab-button > .toolbarbutton-icon {
+  /* override drop marker image padding */
+  margin-inline-end: 0;
+}
+
 @media (min-resolution: 1.1dppx) {
   /* image preloading hack from like lowdpi styles */
   #tabbrowser-tabs::before {
@@ -566,10 +577,6 @@
     list-style-image: url("chrome://browser/skin/tabbrowser/connecting@2x.png");
   }
 
-  .tab-icon-image {
-    list-style-image: url("chrome://mozapps/skin/places/defaultFavicon@2x.png");
-  }
-
   .tab-throbber[progress] {
     list-style-image: url("chrome://global/skin/icons/loading@2x.png");
   }
@@ -585,15 +592,15 @@
 .alltabs-endimage[soundplaying],
 .alltabs-endimage[muted],
 .alltabs-endimage[blocked] {
-  list-style-image: url(chrome://browser/skin/tabbrowser/tab-audio.svg#tab-audio);
-  filter: url(chrome://global/skin/filters.svg#fill);
+  list-style-image: url(chrome://browser/skin/tabbrowser/tab-audio-playing.svg);
+  -moz-context-properties: fill;
   fill: currentColor;
 }
 
 .alltabs-endimage[muted] {
-  list-style-image: url(chrome://browser/skin/tabbrowser/tab-audio.svg#tab-audio-muted);
+  list-style-image: url(chrome://browser/skin/tabbrowser/tab-audio-muted.svg);
 }
 
 .alltabs-endimage[blocked] {
-  list-style-image: url(chrome://browser/skin/tabbrowser/tab-audio.svg#tab-audio-blocked);
+  list-style-image: url(chrome://browser/skin/tabbrowser/tab-audio-blocked.svg);
 }

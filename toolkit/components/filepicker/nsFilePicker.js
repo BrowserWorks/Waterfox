@@ -52,9 +52,10 @@ function nsFilePicker() {
   /* attributes */
   this.mDefaultString = "";
   this.mFilterIndex = 0;
-  this.mFilterTitles = new Array();
-  this.mFilters = new Array();
+  this.mFilterTitles = [];
+  this.mFilters = [];
   this.mDisplayDirectory = null;
+  this.mDisplaySpecialDirectory = null;
   if (lastDirectory) {
     try {
       var dir = Components.classes[LOCAL_FILE_CONTRACTID].createInstance(nsILocalFile);
@@ -85,6 +86,14 @@ nsFilePicker.prototype = {
     return this.mDisplayDirectory &&
            this.mDisplayDirectory.clone()
                .QueryInterface(nsILocalFile);
+  },
+
+  /* attribute AString displaySpecialDirectory; */
+  set displaySpecialDirectory(a) {
+    this.mDisplaySpecialDirectory = a;
+  },
+  get displaySpecialDirectory() {
+    return this.mDisplaySpecialDirectory;
   },
 
   /* readonly attribute nsILocalFile file; */
@@ -201,7 +210,7 @@ nsFilePicker.prototype = {
   open(aFilePickerShownCallback) {
     var tm = Components.classes["@mozilla.org/thread-manager;1"]
                        .getService(Components.interfaces.nsIThreadManager);
-    tm.mainThread.dispatch(() => {
+    tm.dispatchToMainThread(() => {
       let result = Components.interfaces.nsIFilePicker.returnCancel;
       try {
         result = this.show();
@@ -248,7 +257,7 @@ nsFilePicker.prototype = {
           aFilePickerShownCallback.done(result);
         }
       });
-    }, Components.interfaces.nsIThread.DISPATCH_NORMAL);
+    });
   },
 
   show() {
@@ -256,6 +265,7 @@ nsFilePicker.prototype = {
     o.title = this.mTitle;
     o.mode = this.mMode;
     o.displayDirectory = this.mDisplayDirectory;
+    o.displaySpecialDirectory = this.mDisplaySpecialDirectory;
     o.defaultString = this.mDefaultString;
     o.filterIndex = this.mFilterIndex;
     o.filters = {};

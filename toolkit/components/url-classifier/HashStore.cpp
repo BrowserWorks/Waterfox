@@ -42,6 +42,7 @@
 #include "zlib.h"
 #include "Classifier.h"
 #include "nsUrlClassifierDBService.h"
+#include "mozilla/Telemetry.h"
 
 // Main store for SafeBrowsing protocol data. We store
 // known add/sub chunks, prefixes and completions in memory
@@ -101,22 +102,6 @@ extern mozilla::LazyLogModule gUrlClassifierDbServiceLog;
 #define LOG(args) MOZ_LOG(gUrlClassifierDbServiceLog, mozilla::LogLevel::Debug, args)
 #define LOG_ENABLED() MOZ_LOG_TEST(gUrlClassifierDbServiceLog, mozilla::LogLevel::Debug)
 
-// Either the return was successful or we call the Reset function (unless we
-// hit an OOM).  Used while reading in the store.
-#define SUCCESS_OR_RESET(res)                                             \
-  do {                                                                    \
-    nsresult __rv = res; /* Don't evaluate |res| more than once */        \
-    if (__rv == NS_ERROR_OUT_OF_MEMORY) {                                 \
-      NS_WARNING("SafeBrowsing OOM.");                                    \
-      return __rv;                                                        \
-    }                                                                     \
-    if (NS_FAILED(__rv)) {                                                \
-      NS_WARNING("SafeBrowsing store corrupted or out of date.");         \
-      Reset();                                                            \
-      return __rv;                                                        \
-    }                                                                     \
-  } while(0)
-
 namespace mozilla {
 namespace safebrowsing {
 
@@ -165,14 +150,32 @@ TableUpdateV2::NewSubComplete(uint32_t aAddChunk, const Completion& aHash, uint3
   return NS_OK;
 }
 
+nsresult
+TableUpdateV2::NewMissPrefix(const Prefix& aPrefix)
+{
+  Prefix *prefix = mMissPrefixes.AppendElement(aPrefix, fallible);
+  if (!prefix) return NS_ERROR_OUT_OF_MEMORY;
+  return NS_OK;
+}
+
 void
 TableUpdateV4::NewPrefixes(int32_t aSize, std::string& aPrefixes)
 {
+  NS_ENSURE_TRUE_VOID(aSize >= 4 && aSize <= COMPLETE_SIZE);
   NS_ENSURE_TRUE_VOID(aPrefixes.size() % aSize == 0);
   NS_ENSURE_TRUE_VOID(!mPrefixesMap.Get(aSize));
 
-  if (LOG_ENABLED() && 4 == aSize) {
-    int numOfPrefixes = aPrefixes.size() / 4;
+  int numOfPrefixes = aPrefixes.size() / aSize;
+
+  if (aSize > 4) {
+    // TODO Bug 1364043 we may have a better API to record multiple samples into
+    // histograms with one call
+#ifdef NIGHTLY_BUILD
+    for (int i = 0; i < std::min(20, numOfPrefixes); i++) {
+      Telemetry::Accumulate(Telemetry::URLCLASSIFIER_VLPS_LONG_PREFIXES, aSize);
+    }
+#endif
+  } else if (LOG_ENABLED()) {
     uint32_t* p = (uint32_t*)aPrefixes.c_str();
 
     // Dump the first/last 10 fixed-length prefixes for debugging.
@@ -207,6 +210,19 @@ void
 TableUpdateV4::NewChecksum(const std::string& aChecksum)
 {
   mChecksum.Assign(aChecksum.data(), aChecksum.size());
+}
+
+nsresult
+TableUpdateV4::NewFullHashResponse(const Prefix& aPrefix,
+                                   CachedFullHashResponse& aResponse)
+{
+  CachedFullHashResponse* response =
+    mFullHashResponseMap.LookupOrAdd(aPrefix.ToUint32());
+  if (!response) {
+    return NS_ERROR_OUT_OF_MEMORY;
+  }
+  *response = aResponse;
+  return NS_OK;
 }
 
 HashStore::HashStore(const nsACString& aTableName,
@@ -306,7 +322,7 @@ HashStore::Open()
     UpdateHeader();
     return NS_OK;
   }
-  SUCCESS_OR_RESET(rv);
+  NS_ENSURE_SUCCESS(rv, rv);
 
   int64_t fileSize;
   rv = storeFile->GetFileSize(&fileSize);
@@ -320,10 +336,10 @@ HashStore::Open()
   mInputStream = NS_BufferInputStream(origStream, mFileSize);
 
   rv = ReadHeader();
-  SUCCESS_OR_RESET(rv);
+  NS_ENSURE_SUCCESS(rv, rv);
 
   rv = SanityCheck();
-  SUCCESS_OR_RESET(rv);
+  NS_ENSURE_SUCCESS(rv, rv);
 
   return NS_OK;
 }
@@ -512,13 +528,13 @@ nsresult
 HashStore::PrepareForUpdate()
 {
   nsresult rv = CheckChecksum(mFileSize);
-  SUCCESS_OR_RESET(rv);
+  NS_ENSURE_SUCCESS(rv, rv);
 
   rv = ReadChunkNumbers();
-  SUCCESS_OR_RESET(rv);
+  NS_ENSURE_SUCCESS(rv, rv);
 
   rv = ReadHashes();
-  SUCCESS_OR_RESET(rv);
+  NS_ENSURE_SUCCESS(rv, rv);
 
   return NS_OK;
 }
@@ -960,8 +976,7 @@ HashStore::WriteFile()
   NS_ENSURE_SUCCESS(rv, rv);
 
   nsCOMPtr<nsIOutputStream> out;
-  rv = NS_NewCheckSummedOutputStream(getter_AddRefs(out), storeFile,
-                                     PR_WRONLY | PR_TRUNCATE | PR_CREATE_FILE);
+  rv = NS_NewCheckSummedOutputStream(getter_AddRefs(out), storeFile);
   NS_ENSURE_SUCCESS(rv, rv);
 
   uint32_t written;

@@ -186,11 +186,17 @@ var tests = [
     [ 'bug1263357-3.html' , 'bug1263357-3-ref.html'] ,
     [ 'bug1263357-4.html' , 'bug1263357-4-ref.html'] ,
     [ 'bug1263357-5.html' , 'bug1263357-5-ref.html'] ,
+    [ 'bug1354478-1.html' , 'bug1354478-1-ref.html'] ,
+    [ 'bug1354478-2.html' , 'bug1354478-2-ref.html'] ,
+    [ 'bug1354478-3.html' , 'bug1354478-3-ref.html'] ,
+    [ 'bug1354478-4.html' , 'bug1354478-4-ref.html'] ,
+    [ 'bug1354478-5.html' , 'bug1354478-5-ref.html'] ,
+    [ 'bug1354478-6.html' , 'bug1354478-6-ref.html'] ,
+    [ 'bug1359411.html'   , 'bug1359411-ref.html' ] ,
     function() {SpecialPowers.pushPrefEnv({'clear': [['layout.accessiblecaret.enabled']]}, nextTest);} ,
 ];
 
-if (navigator.appVersion.indexOf("Android") == -1 &&
-  SpecialPowers.Services.appinfo.name != "B2G") {
+if (navigator.appVersion.indexOf("Android") == -1) {
   tests.push([ 'bug512295-1.html' , 'bug512295-1-ref.html' ]);
   tests.push([ 'bug512295-2.html' , 'bug512295-2-ref.html' ]);
   tests.push([ 'bug923376.html'   , 'bug923376-ref.html'   ]);
@@ -204,8 +210,7 @@ if (navigator.appVersion.indexOf("Android") == -1 &&
   is(SpecialPowers.getIntPref("layout.spellcheckDefault"), 0, "Spellcheck should be turned off for this platform or this if..else check removed");
 }
 
-if (navigator.platform.indexOf("Linux") >= 0 &&
-    SpecialPowers.Services.appinfo.name != "B2G") {
+if (navigator.platform.indexOf("Linux") >= 0) {
   tests = tests.concat([
     // eDirPrevious, Shift+click
     [ 'multi-range-user-select.html#prev1S_' , 'multi-range-user-select-ref.html#prev1S_'  ] ,

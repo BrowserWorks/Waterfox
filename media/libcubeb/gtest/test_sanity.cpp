@@ -19,16 +19,12 @@
 #define STREAM_LATENCY 100 * STREAM_RATE / 1000
 #define STREAM_CHANNELS 1
 #define STREAM_LAYOUT CUBEB_LAYOUT_MONO
-#if (defined(_WIN32) || defined(__WIN32__))
-#define STREAM_FORMAT CUBEB_SAMPLE_FLOAT32LE
-#else
 #define STREAM_FORMAT CUBEB_SAMPLE_S16LE
-#endif
 
 int is_windows_7()
 {
 #ifdef __MINGW32__
-  printf("Warning: this test was built with MinGW.\n"
+  fprintf(stderr, "Warning: this test was built with MinGW.\n"
          "MinGW does not contain necessary version checking infrastructure. Claiming to be Windows 7, even if we're not.\n");
   return 1;
 #endif
@@ -61,11 +57,7 @@ test_data_callback(cubeb_stream * stm, void * user_ptr, const void * /*inputbuff
 {
   EXPECT_TRUE(stm && user_ptr == &dummy && outputbuffer && nframes > 0);
   assert(outputbuffer);
-#if (defined(_WIN32) || defined(__WIN32__))
-  memset(outputbuffer, 0, nframes * sizeof(float));
-#else
   memset(outputbuffer, 0, nframes * sizeof(short));
-#endif
 
   total_frames_written += nframes;
   if (delay_callback) {
@@ -85,7 +77,7 @@ TEST(cubeb, init_destroy_context)
   cubeb * ctx;
   char const* backend_id;
 
-  r = cubeb_init(&ctx, "test_sanity");
+  r = common_init(&ctx, "test_sanity");
   ASSERT_EQ(r, CUBEB_OK);
   ASSERT_NE(ctx, nullptr);
 
@@ -106,7 +98,7 @@ TEST(cubeb, init_destroy_multiple_contexts)
   ASSERT_EQ(ARRAY_LENGTH(ctx), ARRAY_LENGTH(order));
 
   for (i = 0; i < ARRAY_LENGTH(ctx); ++i) {
-    r = cubeb_init(&ctx[i], NULL);
+    r = common_init(&ctx[i], NULL);
     ASSERT_EQ(r, CUBEB_OK);
     ASSERT_NE(ctx[i], nullptr);
   }
@@ -122,9 +114,10 @@ TEST(cubeb, context_variables)
   int r;
   cubeb * ctx;
   uint32_t value;
+  cubeb_channel_layout layout;
   cubeb_stream_params params;
 
-  r = cubeb_init(&ctx, "test_context_variables");
+  r = common_init(&ctx, "test_context_variables");
   ASSERT_EQ(r, CUBEB_OK);
   ASSERT_NE(ctx, nullptr);
 
@@ -147,6 +140,11 @@ TEST(cubeb, context_variables)
     ASSERT_TRUE(value > 0);
   }
 
+  r = cubeb_get_preferred_channel_layout(ctx, &layout);
+  ASSERT_TRUE(r == CUBEB_ERROR_NOT_SUPPORTED ||
+              (r == CUBEB_OK && layout != CUBEB_LAYOUT_UNDEFINED) ||
+              (r == CUBEB_ERROR && layout == CUBEB_LAYOUT_UNDEFINED));
+
   cubeb_destroy(ctx);
 }
 
@@ -157,7 +155,7 @@ TEST(cubeb, init_destroy_stream)
   cubeb_stream * stream;
   cubeb_stream_params params;
 
-  r = cubeb_init(&ctx, "test_sanity");
+  r = common_init(&ctx, "test_sanity");
   ASSERT_EQ(r, CUBEB_OK);
   ASSERT_NE(ctx, nullptr);
 
@@ -186,7 +184,7 @@ TEST(cubeb, init_destroy_multiple_streams)
   cubeb_stream * stream[8];
   cubeb_stream_params params;
 
-  r = cubeb_init(&ctx, "test_sanity");
+  r = common_init(&ctx, "test_sanity");
   ASSERT_EQ(r, CUBEB_OK);
   ASSERT_NE(ctx, nullptr);
 
@@ -219,7 +217,7 @@ TEST(cubeb, configure_stream)
   cubeb_stream * stream;
   cubeb_stream_params params;
 
-  r = cubeb_init(&ctx, "test_sanity");
+  r = common_init(&ctx, "test_sanity");
   ASSERT_EQ(r, CUBEB_OK);
   ASSERT_NE(ctx, nullptr);
 
@@ -255,7 +253,7 @@ test_init_start_stop_destroy_multiple_streams(int early, int delay_ms)
   cubeb_stream * stream[8];
   cubeb_stream_params params;
 
-  r = cubeb_init(&ctx, "test_sanity");
+  r = common_init(&ctx, "test_sanity");
   ASSERT_EQ(r, CUBEB_OK);
   ASSERT_NE(ctx, nullptr);
 
@@ -355,7 +353,7 @@ TEST(cubeb, init_destroy_multiple_contexts_and_streams)
 #endif
 
   for (i = 0; i < ARRAY_LENGTH(ctx); ++i) {
-    r = cubeb_init(&ctx[i], "test_sanity");
+    r = common_init(&ctx[i], "test_sanity");
     ASSERT_EQ(r, CUBEB_OK);
     ASSERT_NE(ctx[i], nullptr);
 
@@ -383,7 +381,7 @@ TEST(cubeb, basic_stream_operations)
   cubeb_stream_params params;
   uint64_t position;
 
-  r = cubeb_init(&ctx, "test_sanity");
+  r = common_init(&ctx, "test_sanity");
   ASSERT_EQ(r, CUBEB_OK);
   ASSERT_NE(ctx, nullptr);
 
@@ -434,7 +432,7 @@ TEST(cubeb, stream_position)
 
   total_frames_written = 0;
 
-  r = cubeb_init(&ctx, "test_sanity");
+  r = common_init(&ctx, "test_sanity");
   ASSERT_EQ(r, CUBEB_OK);
   ASSERT_NE(ctx, nullptr);
 
@@ -545,11 +543,7 @@ test_drain_data_callback(cubeb_stream * stm, void * user_ptr, const void * /*inp
   }
   /* once drain has started, callback must never be called again */
   EXPECT_TRUE(do_drain != 2);
-#if (defined(_WIN32) || defined(__WIN32__))
-  memset(outputbuffer, 0, nframes * sizeof(float));
-#else
   memset(outputbuffer, 0, nframes * sizeof(short));
-#endif
   total_frames_written += nframes;
   return nframes;
 }
@@ -574,7 +568,7 @@ TEST(cubeb, drain)
   delay_callback = 0;
   total_frames_written = 0;
 
-  r = cubeb_init(&ctx, "test_sanity");
+  r = common_init(&ctx, "test_sanity");
   ASSERT_EQ(r, CUBEB_OK);
   ASSERT_NE(ctx, nullptr);
 

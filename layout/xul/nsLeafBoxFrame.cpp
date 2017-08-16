@@ -40,11 +40,6 @@ NS_NewLeafBoxFrame (nsIPresShell* aPresShell, nsStyleContext* aContext)
 
 NS_IMPL_FRAMEARENA_HELPERS(nsLeafBoxFrame)
 
-nsLeafBoxFrame::nsLeafBoxFrame(nsStyleContext* aContext)
-    : nsLeafFrame(aContext)
-{
-}
-
 #ifdef DEBUG_LAYOUT
 void
 nsLeafBoxFrame::GetBoxName(nsAutoString& aName)
@@ -332,12 +327,6 @@ nsLeafBoxFrame::GetFrameName(nsAString& aResult) const
   return MakeFrameName(NS_LITERAL_STRING("LeafBox"), aResult);
 }
 #endif
-
-nsIAtom*
-nsLeafBoxFrame::GetType() const
-{
-  return nsGkAtoms::leafBoxFrame;
-}
 
 nsresult
 nsLeafBoxFrame::CharacterDataChanged(CharacterDataChangeInfo* aInfo)

@@ -11,10 +11,10 @@ add_task(function* () {
   let { tab, monitor } = yield initNetMonitor(PARAMS_URL);
   info("Starting test... ");
 
-  let { document, gStore, windowRequire } = monitor.panelWin;
-  let Actions = windowRequire("devtools/client/netmonitor/actions/index");
+  let { document, store, windowRequire } = monitor.panelWin;
+  let Actions = windowRequire("devtools/client/netmonitor/src/actions/index");
 
-  gStore.dispatch(Actions.batchEnable(false));
+  store.dispatch(Actions.batchEnable(false));
 
   let wait = waitForNetworkEvents(monitor, 1, 6);
   yield ContentTask.spawn(tab.linkedBrowser, {}, function* () {
@@ -94,6 +94,14 @@ add_task(function* () {
   }
 
   function* testCopyPostData(index, postData) {
+    // Wait for formDataSections and requestPostData state are ready in redux store
+    // since copyPostData API needs to read these state.
+    yield waitUntil(() => {
+      let { requests } = store.getState().requests;
+      let actIDs = Object.keys(requests.toJS());
+      let { formDataSections, requestPostData } = requests.get(actIDs[index]).toJS();
+      return formDataSections && requestPostData;
+    });
     EventUtils.sendMouseEvent({ type: "mousedown" },
       document.querySelectorAll(".request-list-item")[index]);
     EventUtils.sendMouseEvent({ type: "contextmenu" },

@@ -10,6 +10,7 @@
 #include "mozilla/StyleSheetInfo.h"
 #include "mozilla/ServoStyleSheet.h"
 #include "mozilla/CSSStyleSheet.h"
+#include "nsINode.h"
 
 namespace mozilla {
 
@@ -88,7 +89,7 @@ StyleSheet::GetParentObject() const
   if (mOwningNode) {
     return dom::ParentObject(mOwningNode);
   }
-  return dom::ParentObject(GetParentSheet());
+  return dom::ParentObject(static_cast<nsIDOMCSSStyleSheet*>(mParent), mParent);
 }
 
 nsIPrincipal*
@@ -127,10 +128,6 @@ StyleSheet::GetIntegrity(dom::SRIMetadata& aResult) const
 {
   aResult = SheetInfo().mIntegrity;
 }
-
-void StyleSheet::WillDirty() { MOZ_STYLO_FORWARD(WillDirty, ()) }
-void StyleSheet::DidDirty() { MOZ_STYLO_FORWARD(DidDirty, ()) }
-
 
 }
 

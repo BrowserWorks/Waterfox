@@ -24,6 +24,8 @@
 #include "GeckoProfiler.h"
 #include "nsComponentManagerUtils.h"
 #include "nsITimer.h"
+#include "ScreenHelperWin.h"
+#include "mozilla/widget/ScreenManager.h"
 
 // These are two messages that the code in winspool.drv on Windows 7 explicitly
 // waits for while it is pumping other Windows messages, during display of the
@@ -34,14 +36,8 @@
 using namespace mozilla;
 using namespace mozilla::widget;
 
-#define WAKE_LOCK_LOG(...) MOZ_LOG(GetWinWakeLockLog(), mozilla::LogLevel::Debug, (__VA_ARGS__))
-PRLogModuleInfo* GetWinWakeLockLog() {
-  static PRLogModuleInfo* log = nullptr;
-  if (!log) {
-    log = PR_NewLogModule("WinWakeLock");
-  }
-  return log;
-}
+#define WAKE_LOCK_LOG(...) MOZ_LOG(gWinWakeLockLog, mozilla::LogLevel::Debug, (__VA_ARGS__))
+static mozilla::LazyLogModule gWinWakeLockLog("WinWakeLock");
 
 // A wake lock listener that disables screen saver when requested by
 // Gecko. For example when we're playing video in a foreground tab we
@@ -246,6 +242,12 @@ nsAppShell::Init()
                             0, 0, 0, 10, 10, HWND_MESSAGE, nullptr, module,
                             nullptr);
   NS_ENSURE_STATE(mEventWnd);
+
+  if (XRE_IsParentProcess()) {
+    ScreenManager& screenManager = ScreenManager::GetSingleton();
+    screenManager.SetHelper(mozilla::MakeUnique<ScreenHelperWin>());
+    ScreenHelperWin::RefreshScreens();
+  }
 
   return nsBaseAppShell::Init();
 }

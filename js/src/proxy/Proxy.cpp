@@ -284,7 +284,22 @@ Proxy::hasOwn(JSContext* cx, HandleObject proxy, HandleId id, bool* bp)
     return handler->hasOwn(cx, proxy, id, bp);
 }
 
-static Value
+bool
+js::ProxyHasOwn(JSContext* cx, HandleObject proxy, HandleValue idVal, MutableHandleValue result)
+{
+    RootedId id(cx);
+    if (!ValueToId<CanGC>(cx, idVal, &id))
+        return false;
+
+    bool hasOwn;
+    if (!Proxy::hasOwn(cx, proxy, id, &hasOwn))
+        return false;
+
+    result.setBoolean(hasOwn);
+    return true;
+}
+
+static MOZ_ALWAYS_INLINE Value
 ValueToWindowProxyIfWindow(const Value& v)
 {
     if (v.isObject())
@@ -559,11 +574,11 @@ Proxy::fun_toString(JSContext* cx, HandleObject proxy, unsigned indent)
 }
 
 bool
-Proxy::regexp_toShared(JSContext* cx, HandleObject proxy, RegExpGuard* g)
+Proxy::regexp_toShared(JSContext* cx, HandleObject proxy, MutableHandleRegExpShared shared)
 {
     if (!CheckRecursionLimit(cx))
         return false;
-    return proxy->as<ProxyObject>().handler()->regexp_toShared(cx, proxy, g);
+    return proxy->as<ProxyObject>().handler()->regexp_toShared(cx, proxy, shared);
 }
 
 bool
@@ -670,14 +685,20 @@ ProxyObject::trace(JSTracer* trc, JSObject* obj)
     // Note: If you add new slots here, make sure to change
     // nuke() to cope.
     TraceCrossCompartmentEdge(trc, obj, proxy->slotOfPrivate(), "private");
-    TraceEdge(trc, proxy->slotOfExtra(0), "extra0");
 
-    /*
-     * The GC can use the second reserved slot to link the cross compartment
-     * wrappers into a linked list, in which case we don't want to trace it.
-     */
-    if (!proxy->is<CrossCompartmentWrapperObject>())
-        TraceEdge(trc, proxy->slotOfExtra(1), "extra1");
+    size_t nreserved = proxy->numReservedSlots();
+    for (size_t i = 0; i < nreserved; i++) {
+        /*
+         * The GC can use the second reserved slot to link the cross compartment
+         * wrappers into a linked list, in which case we don't want to trace it.
+         */
+        if (proxy->is<CrossCompartmentWrapperObject>() &&
+            i == CrossCompartmentWrapperObject::GrayLinkReservedSlot)
+        {
+            continue;
+        }
+        TraceEdge(trc, proxy->reservedSlotPtr(i), "proxy_reserved");
+    }
 
     Proxy::trace(trc, obj);
 }
@@ -697,7 +718,9 @@ proxy_Finalize(FreeOp* fop, JSObject* obj)
 
     MOZ_ASSERT(obj->is<ProxyObject>());
     obj->as<ProxyObject>().handler()->finalize(fop, obj);
-    js_free(js::detail::GetProxyDataLayout(obj)->values);
+
+    if (!obj->as<ProxyObject>().usingInlineValueArray())
+        js_free(js::detail::GetProxyDataLayout(obj)->values());
 }
 
 static void
@@ -759,7 +782,9 @@ const ObjectOps js::ProxyObjectOps = {
 };
 
 const Class js::ProxyObject::proxyClass =
-    PROXY_CLASS_DEF("Proxy", JSCLASS_HAS_CACHED_PROTO(JSProto_Proxy));
+    PROXY_CLASS_DEF("Proxy",
+                    JSCLASS_HAS_CACHED_PROTO(JSProto_Proxy) |
+                    JSCLASS_HAS_RESERVED_SLOTS(2));
 
 const Class* const js::ProxyClassPtr = &js::ProxyObject::proxyClass;
 
@@ -786,8 +811,8 @@ ProxyObject::renew(const BaseProxyHandler* handler, const Value& priv)
 
     setHandler(handler);
     setCrossCompartmentPrivate(priv);
-    setExtra(0, UndefinedValue());
-    setExtra(1, UndefinedValue());
+    for (size_t i = 0; i < numReservedSlots(); i++)
+        setReservedSlot(i, UndefinedValue());
 }
 
 JS_FRIEND_API(JSObject*)

@@ -1,4 +1,3 @@
-// |reftest| skip-if(!this.hasOwnProperty('Intl')) -- needs Intl
 // Copyright 2012 Mozilla Corporation. All rights reserved.
 // This code is governed by the BSD license found in the LICENSE file.
 
@@ -20,19 +19,17 @@ function testWithDateTimeFormat(options, expected) {
         var resolvedOptions = format.resolvedOptions();
         getDateTimeComponents().forEach(function (component) {
             if (resolvedOptions.hasOwnProperty(component)) {
-                if (!expected.hasOwnProperty(component)) {
-                    $ERROR("Unrequested component " + component +
+                assert(expected.hasOwnProperty(component),
+                        "Unrequested component " + component +
                         " added to expected subset " + JSON.stringify(expected) +
                         "; locales " + locales + ", options " +
                         (options ? JSON.stringify(options) : options) + ".");
-                }
             } else {
-                if (expected.hasOwnProperty(component)) {
-                    $ERROR("Missing component " + component +
+                assert.sameValue(expected.hasOwnProperty(component), false,
+                        "Missing component " + component +
                         " from expected subset " + JSON.stringify(expected) +
                         "; locales " + locales + ", options " +
                         (options ? JSON.stringify(options) : options) + ".");
-                }
             }
         });
     });
@@ -51,13 +48,12 @@ function testWithToLocale(f, options, expected) {
                 var referenceFormat = new Intl.DateTimeFormat(locales, expected);
                 expectedStrings.push(referenceFormat.format(date));
             });
-            if (expectedStrings.indexOf(formatted) === -1) {
-                $ERROR("Function " + f + " did not return expected string for locales " +
+            assert.notSameValue(expectedStrings.indexOf(formatted), -1,
+                    "Function " + f + " did not return expected string for locales " +
                     locales + ", options " + (options? JSON.stringify(options) : options) +
                     "; expected " +
                     (expectedStrings.length === 1 ? expectedStrings[0] : "one of " + expectedStrings) +
                     ", got " + formatted + ".");
-            }
         });
     });
 }   

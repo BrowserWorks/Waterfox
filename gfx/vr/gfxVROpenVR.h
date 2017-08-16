@@ -14,15 +14,9 @@
 #include "mozilla/gfx/2D.h"
 #include "mozilla/EnumeratedArray.h"
 
+#include "openvr.h"
 #include "gfxVR.h"
-
-// OpenVR Interfaces
-namespace vr {
-class IVRChaperone;
-class IVRCompositor;
-class IVRSystem;
-struct TrackedDevicePose_t;
-}
+#include "VRDisplayHost.h"
 
 namespace mozilla {
 namespace gfx {
@@ -32,17 +26,15 @@ class VRDisplayOpenVR : public VRDisplayHost
 {
 public:
   virtual void NotifyVSync() override;
-  virtual VRHMDSensorState GetSensorState() override;
-  virtual VRHMDSensorState GetImmediateSensorState() override;
   void ZeroSensor() override;
 
 protected:
+  virtual VRHMDSensorState GetSensorState() override;
   virtual void StartPresentation() override;
   virtual void StopPresentation() override;
 #if defined(XP_WIN)
-  virtual void SubmitFrame(mozilla::layers::TextureSourceD3D11* aSource,
+  virtual bool SubmitFrame(mozilla::layers::TextureSourceD3D11* aSource,
                            const IntSize& aSize,
-                           const VRHMDSensorState& aSensorState,
                            const gfx::Rect& aLeftEyeRect,
                            const gfx::Rect& aRightEyeRect) override;
 #endif
@@ -55,8 +47,6 @@ public:
 protected:
   virtual ~VRDisplayOpenVR();
   void Destroy();
-
-  VRHMDSensorState GetSensorState(double timeOffset);
 
   // not owned by us; global from OpenVR
   ::vr::IVRSystem *mVRSystem;
@@ -72,15 +62,40 @@ protected:
 class VRControllerOpenVR : public VRControllerHost
 {
 public:
-  explicit VRControllerOpenVR(dom::GamepadHand aHand);
+  explicit VRControllerOpenVR(dom::GamepadHand aHand, uint32_t aNumButtons,
+                              uint32_t aNumAxes, ::vr::ETrackedDeviceClass aDeviceType);
   void SetTrackedIndex(uint32_t aTrackedIndex);
   uint32_t GetTrackedIndex();
+  float GetAxisMove(uint32_t aAxis);
+  void SetAxisMove(uint32_t aAxis, float aValue);
+  void SetTrigger(float aValue);
+  float GetTrigger();
+  void SetHand(dom::GamepadHand aHand);
+  void VibrateHaptic(::vr::IVRSystem* aVRSystem,
+                     uint32_t aHapticIndex,
+                     double aIntensity,
+                     double aDuration,
+                     uint32_t aPromiseID);
+  void StopVibrateHaptic();
 
 protected:
   virtual ~VRControllerOpenVR();
 
-  // The index of tracked devices from vr::IVRSystem.
+private:
+  void UpdateVibrateHaptic(::vr::IVRSystem* aVRSystem,
+                           uint32_t aHapticIndex,
+                           double aIntensity,
+                           double aDuration,
+                           uint64_t aVibrateIndex,
+                           uint32_t aPromiseID);
+  void VibrateHapticComplete(uint32_t aPromiseID);
+
+  // The index of tracked devices from ::vr::IVRSystem.
   uint32_t mTrackedIndex;
+  float mTrigger;
+  nsTArray<float> mAxisMove;
+  nsCOMPtr<nsIThread> mVibrateThread;
+  Atomic<bool> mIsVibrateStopped;
 };
 
 } // namespace impl
@@ -90,32 +105,46 @@ class VRSystemManagerOpenVR : public VRSystemManager
 public:
   static already_AddRefed<VRSystemManagerOpenVR> Create();
 
-  virtual bool Init() override;
   virtual void Destroy() override;
-  virtual void GetHMDs(nsTArray<RefPtr<VRDisplayHost> >& aHMDResult) override;
+  virtual void Shutdown() override;
+  virtual bool GetHMDs(nsTArray<RefPtr<VRDisplayHost> >& aHMDResult) override;
+  virtual bool GetIsPresenting() override;
   virtual void HandleInput() override;
   virtual void GetControllers(nsTArray<RefPtr<VRControllerHost>>&
                               aControllerResult) override;
   virtual void ScanForControllers() override;
   virtual void RemoveControllers() override;
+  virtual void VibrateHaptic(uint32_t aControllerIdx,
+                             uint32_t aHapticIndex,
+                             double aIntensity,
+                             double aDuration,
+                             uint32_t aPromiseID) override;
+  virtual void StopVibrateHaptic(uint32_t aControllerIdx) override;
 
 protected:
   VRSystemManagerOpenVR();
 
 private:
-  virtual void HandleButtonPress(uint32_t aControllerIdx,
-                                 uint64_t aButtonPressed) override;
-  virtual void HandleAxisMove(uint32_t aControllerIdx, uint32_t aAxis,
-                              float aValue) override;
-  virtual void HandlePoseTracking(uint32_t aControllerIdx,
-                                  const dom::GamepadPoseState& aPose,
-                                  VRControllerHost* aController) override;
+  void HandleButtonPress(uint32_t aControllerIdx,
+                         uint32_t aButton,
+                         uint64_t aButtonMask,
+                         uint64_t aButtonPressed,
+                         uint64_t aButtonTouched);
+  void HandleTriggerPress(uint32_t aControllerIdx,
+                          uint32_t aButton,
+                          float aValue);
+  void HandleAxisMove(uint32_t aControllerIdx, uint32_t aAxis,
+                      float aValue);
+  void HandlePoseTracking(uint32_t aControllerIdx,
+                          const dom::GamepadPoseState& aPose,
+                          VRControllerHost* aController);
+  dom::GamepadHand GetGamepadHandFromControllerRole(
+                          ::vr::ETrackedControllerRole aRole);
 
   // there can only be one
   RefPtr<impl::VRDisplayOpenVR> mOpenVRHMD;
   nsTArray<RefPtr<impl::VRControllerOpenVR>> mOpenVRController;
-  vr::IVRSystem *mVRSystem;
-  bool mOpenVRInstalled;
+  ::vr::IVRSystem *mVRSystem;
 };
 
 } // namespace gfx

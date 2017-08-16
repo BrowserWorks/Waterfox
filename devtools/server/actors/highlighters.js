@@ -4,7 +4,7 @@
 
 "use strict";
 
-const { Ci } = require("chrome");
+const { Ci, Cu } = require("chrome");
 
 const { XPCOMUtils } = require("resource://gre/modules/XPCOMUtils.jsm");
 const EventEmitter = require("devtools/shared/event-emitter");
@@ -39,12 +39,12 @@ exports.isTypeRegistered = isTypeRegistered;
 
 /**
  * Registers a given constructor as highlighter, for the `typeName` given.
- * If no `typeName` is provided, is looking for a `typeName` property in
- * the prototype's constructor.
+ * If no `typeName` is provided, the `typeName` property on the constructor's prototype
+ * is used, if one is found, otherwise the name of the constructor function is used.
  */
-const register = (constructor, typeName = constructor.prototype.typeName) => {
+const register = (constructor, typeName) => {
   if (!typeName) {
-    throw Error("No type's name found, or provided.");
+    typeName = constructor.prototype.typeName || constructor.name;
   }
 
   if (highlighterTypes.has(typeName)) {
@@ -399,6 +399,11 @@ exports.HighlighterActor = protocol.ActorClassWithSpec(highlighterSpec, {
 
   _stopPickerListeners: function () {
     let target = this._highlighterEnv.pageListenerTarget;
+
+    if (!target) {
+      return;
+    }
+
     target.removeEventListener("mousemove", this._onHovered, true);
     target.removeEventListener("click", this._onPick, true);
     target.removeEventListener("mousedown", this._preventContentEvent, true);
@@ -481,9 +486,8 @@ exports.CustomHighlighterActor = protocol.ActorClassWithSpec(customHighlighterSp
    * NodeActor argument (NodeActor as in
    * devtools/server/actor/inspector).
    * Note however that some highlighters use this argument merely as a context
-   * node: the RectHighlighter for instance uses it to calculate the absolute
-   * position of the provided rect. The SelectHighlighter uses it as a base node
-   * to run the provided CSS selector on.
+   * node: The SelectHighlighter for instance uses it as a base node to run the
+   * provided CSS selector on.
    *
    * @param {NodeActor} The node to be highlighted
    * @param {Object} Options for the custom highlighter
@@ -596,7 +600,6 @@ HighlighterEnvironment.prototype = {
     };
 
     this.webProgress.addProgressListener(this.listener,
-      Ci.nsIWebProgress.NOTIFY_STATUS |
       Ci.nsIWebProgress.NOTIFY_STATE_WINDOW |
       Ci.nsIWebProgress.NOTIFY_STATE_DOCUMENT);
   },
@@ -614,21 +617,25 @@ HighlighterEnvironment.prototype = {
       throw new Error("Initialize HighlighterEnvironment with a tabActor " +
         "or window first");
     }
-    return this._tabActor ? this._tabActor.window : this._win;
+    let win = this._tabActor ? this._tabActor.window : this._win;
+
+    return Cu.isDeadWrapper(win) ? null : win;
   },
 
   get document() {
-    return this.window.document;
+    return this.window && this.window.document;
   },
 
   get docShell() {
-    return this.window.QueryInterface(Ci.nsIInterfaceRequestor)
+    return this.window &&
+           this.window.QueryInterface(Ci.nsIInterfaceRequestor)
                       .getInterface(Ci.nsIWebNavigation)
                       .QueryInterface(Ci.nsIDocShell);
   },
 
   get webProgress() {
-    return this.docShell.QueryInterface(Ci.nsIInterfaceRequestor)
+    return this.docShell &&
+           this.docShell.QueryInterface(Ci.nsIInterfaceRequestor)
                         .getInterface(Ci.nsIWebProgress);
   },
 
@@ -649,7 +656,7 @@ HighlighterEnvironment.prototype = {
     if (this._tabActor && this._tabActor.isRootActor) {
       return this.window;
     }
-    return this.docShell.chromeEventHandler;
+    return this.docShell && this.docShell.chromeEventHandler;
   },
 
   relayTabActorWindowReady: function (data) {
@@ -702,10 +709,6 @@ const { SelectorHighlighter } = require("./highlighters/selector");
 register(SelectorHighlighter);
 exports.SelectorHighlighter = SelectorHighlighter;
 
-const { RectHighlighter } = require("./highlighters/rect");
-register(RectHighlighter);
-exports.RectHighlighter = RectHighlighter;
-
 const { GeometryEditorHighlighter } = require("./highlighters/geometry-editor");
 register(GeometryEditorHighlighter);
 exports.GeometryEditorHighlighter = GeometryEditorHighlighter;
@@ -721,3 +724,11 @@ exports.MeasuringToolHighlighter = MeasuringToolHighlighter;
 const { EyeDropper } = require("./highlighters/eye-dropper");
 register(EyeDropper);
 exports.EyeDropper = EyeDropper;
+
+const { PausedDebuggerOverlay } = require("./highlighters/paused-debugger");
+register(PausedDebuggerOverlay);
+exports.PausedDebuggerOverlay = PausedDebuggerOverlay;
+
+const { ShapesHighlighter } = require("./highlighters/shapes");
+register(ShapesHighlighter);
+exports.ShapesHighlighter = ShapesHighlighter;

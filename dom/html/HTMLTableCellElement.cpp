@@ -107,14 +107,22 @@ HTMLTableCellElement::WalkContentStyleRules(nsRuleWalker* aRuleWalker)
   nsresult rv = nsGenericHTMLElement::WalkContentStyleRules(aRuleWalker);
   NS_ENSURE_SUCCESS(rv, rv);
 
-  if (HTMLTableElement* table = GetTable()) {
-    nsMappedAttributes* tableInheritedAttributes =
-      table->GetAttributesMappedForCell();
+  if (nsMappedAttributes* tableInheritedAttributes = GetMappedAttributesInheritedFromTable()) {
     if (tableInheritedAttributes) {
       aRuleWalker->Forward(tableInheritedAttributes);
     }
   }
   return NS_OK;
+}
+
+nsMappedAttributes*
+HTMLTableCellElement::GetMappedAttributesInheritedFromTable() const
+{
+  if (HTMLTableElement* table = GetTable()) {
+    return table->GetAttributesMappedForCell();
+  }
+
+  return nullptr;
 }
 
 NS_IMETHODIMP
@@ -390,26 +398,16 @@ HTMLTableCellElement::ParseAttribute(int32_t aNamespaceID,
       return aResult.ParseIntWithBounds(aValue, 0);
     }
     if (aAttribute == nsGkAtoms::colspan) {
-      bool res = aResult.ParseIntWithBounds(aValue, -1);
-      if (res) {
-        int32_t val = aResult.GetIntegerValue();
-        // reset large colspan values as IE and opera do
-        if (val > MAX_COLSPAN || val <= 0) {
-          aResult.SetTo(1, &aValue);
-        }
-      }
-      return res;
+      aResult.ParseClampedNonNegativeInt(aValue, 1, 1, MAX_COLSPAN);
+      return true;
     }
     if (aAttribute == nsGkAtoms::rowspan) {
-      bool res = aResult.ParseIntWithBounds(aValue, -1, MAX_ROWSPAN);
-      if (res) {
-        int32_t val = aResult.GetIntegerValue();
-        // quirks mode does not honor the special html 4 value of 0
-        if (val < 0 || (0 == val && InNavQuirksMode(OwnerDoc()))) {
-          aResult.SetTo(1, &aValue);
-        }
+      aResult.ParseClampedNonNegativeInt(aValue, 1, 0, MAX_ROWSPAN);
+      // quirks mode does not honor the special html 4 value of 0
+      if (aResult.GetIntegerValue() == 0 && InNavQuirksMode(OwnerDoc())) {
+        aResult.SetTo(1, &aValue);
       }
-      return res;
+      return true;
     }
     if (aAttribute == nsGkAtoms::height) {
       return aResult.ParseSpecialIntValue(aValue);
@@ -482,7 +480,7 @@ HTMLTableCellElement::MapAttributesIntoRule(const nsMappedAttributes* aAttribute
         if (!value || value->Type() != nsAttrValue::eInteger ||
             value->GetIntegerValue() == 0 ||
             eCompatibility_NavQuirks != mode) {
-          aData->SetKeywordValue(eCSSProperty_white_space, NS_STYLE_WHITESPACE_NOWRAP);
+          aData->SetKeywordValue(eCSSProperty_white_space, StyleWhiteSpace::Nowrap);
         }
       }
     }

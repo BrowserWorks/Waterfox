@@ -75,6 +75,18 @@ public class AndroidBrowserBookmarksDataAccessor extends AndroidBrowserRepositor
     return BrowserContractHelpers.BOOKMARKS_CONTENT_URI;
   }
 
+  /**
+   * Order bookmarks by type, ensuring that folders will be processed before other records during
+   * an upload. This is in support of payload-size validation. See Bug 1343726.
+   */
+  @Override
+  public Cursor fetchSince(long timestamp) throws NullCursorException {
+    return queryHelper.safeQuery(".fetchSince",
+            getAllColumns(),
+            dateModifiedWhere(timestamp),
+            null, BrowserContract.Bookmarks.TYPE + " ASC");
+  }
+
   protected static Uri getPositionsUri() {
     return BrowserContractHelpers.BOOKMARKS_POSITIONS_CONTENT_URI;
   }
@@ -280,6 +292,11 @@ public class AndroidBrowserBookmarksDataAccessor extends AndroidBrowserRepositor
     cv.put(BrowserContract.Bookmarks.TITLE,       rec.title);
     cv.put(BrowserContract.Bookmarks.URL,         rec.bookmarkURI);
     cv.put(BrowserContract.Bookmarks.DESCRIPTION, rec.description);
+
+    if (rec.dateAdded != null) {
+      cv.put(BrowserContract.Bookmarks.DATE_CREATED, rec.dateAdded);
+    }
+
     if (rec.tags == null) {
       rec.tags = new JSONArray();
     }

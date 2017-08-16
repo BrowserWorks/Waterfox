@@ -49,6 +49,7 @@
 #include "mozilla/net/NeckoChild.h"
 
 #include "mozilla/dom/ContentParent.h"
+#include "mozilla/ClearOnShutdown.h"
 
 using namespace mozilla;
 
@@ -688,6 +689,48 @@ private:
 
   nsCOMPtr<nsIThread> mIOThread;
   nsCOMPtr<nsIFile> mDBFile;
+};
+
+class PredictorLearnRunnable final : public Runnable {
+public:
+  PredictorLearnRunnable(nsIURI *targetURI, nsIURI *sourceURI,
+                         PredictorLearnReason reason, const OriginAttributes &oa)
+    : Runnable("PredictorLearnRunnable")
+    , mTargetURI(targetURI)
+    , mSourceURI(sourceURI)
+    , mReason(reason)
+    , mOA(oa)
+  { }
+
+  ~PredictorLearnRunnable() { }
+
+  NS_IMETHOD Run() override
+  {
+    if (!gNeckoChild) {
+      // This may have gone away between when this runnable was dispatched and
+      // when it actually runs, so let's be safe here, even though we asserted
+      // earlier.
+      PREDICTOR_LOG(("predictor::learn (async) gNeckoChild went away"));
+      return NS_OK;
+    }
+
+    ipc::URIParams serTargetURI;
+    SerializeURI(mTargetURI, serTargetURI);
+
+    ipc::OptionalURIParams serSourceURI;
+    SerializeURI(mSourceURI, serSourceURI);
+
+    PREDICTOR_LOG(("predictor::learn (async) forwarding to parent"));
+    gNeckoChild->SendPredLearn(serTargetURI, serSourceURI, mReason, mOA);
+
+    return NS_OK;
+  }
+
+private:
+  nsCOMPtr<nsIURI> mTargetURI;
+  nsCOMPtr<nsIURI> mSourceURI;
+  PredictorLearnReason mReason;
+  const OriginAttributes mOA;
 };
 
 } // namespace
@@ -1369,7 +1412,8 @@ Predictor::Prefetch(nsIURI *uri, nsIURI *referrer,
     return NS_ERROR_UNEXPECTED;
   }
 
-  httpChannel->SetReferrer(referrer);
+  rv = httpChannel->SetReferrer(referrer);
+  NS_ENSURE_SUCCESS(rv, rv);
   // XXX - set a header here to indicate this is a prefetch?
 
   nsCOMPtr<nsIStreamListener> listener = new PrefetchListener(verifier, uri,
@@ -1445,11 +1489,11 @@ Predictor::RunPredictions(nsIURI *referrer,
     uri->GetAsciiHost(hostname);
     PREDICTOR_LOG(("    doing preresolve %s", hostname.get()));
     nsCOMPtr<nsICancelable> tmpCancelable;
-    mDnsService->AsyncResolve(hostname,
-                              (nsIDNSService::RESOLVE_PRIORITY_MEDIUM |
-                               nsIDNSService::RESOLVE_SPECULATE),
-                              mDNSListener, nullptr,
-                              getter_AddRefs(tmpCancelable));
+    mDnsService->AsyncResolveNative(hostname,
+                                    (nsIDNSService::RESOLVE_PRIORITY_MEDIUM |
+                                     nsIDNSService::RESOLVE_SPECULATE),
+                                    mDNSListener, nullptr, originAttributes,
+                                    getter_AddRefs(tmpCancelable));
     predicted = true;
     if (verifier) {
       PREDICTOR_LOG(("    sending preresolve verification"));
@@ -1504,15 +1548,12 @@ Predictor::LearnNative(nsIURI *targetURI, nsIURI *sourceURI,
 
     PREDICTOR_LOG(("    called on child process"));
 
-    ipc::URIParams serTargetURI;
-    SerializeURI(targetURI, serTargetURI);
+    RefPtr<PredictorLearnRunnable> runnable = new PredictorLearnRunnable(
+      targetURI, sourceURI, reason, originAttributes);
+    SystemGroup::Dispatch("PredictorLearnRunnable",
+                          TaskCategory::Other,
+                          runnable.forget());
 
-    ipc::OptionalURIParams serSourceURI;
-    SerializeURI(sourceURI, serSourceURI);
-
-    PREDICTOR_LOG(("    forwarding to parent"));
-    gNeckoChild->SendPredLearn(serTargetURI, serSourceURI, reason,
-                               originAttributes);
     return NS_OK;
   }
 
@@ -2202,17 +2243,24 @@ Predictor::Resetter::Complete()
 
 // Helper functions to make using the predictor easier from native code
 
+static StaticRefPtr<nsINetworkPredictor> sPredictor;
+
 static nsresult
 EnsureGlobalPredictor(nsINetworkPredictor **aPredictor)
 {
   MOZ_ASSERT(NS_IsMainThread());
 
-  nsresult rv;
-  nsCOMPtr<nsINetworkPredictor> predictor =
-    do_GetService("@mozilla.org/network/predictor;1",
-                  &rv);
-  NS_ENSURE_SUCCESS(rv, rv);
+  if (!sPredictor) {
+    nsresult rv;
+    nsCOMPtr<nsINetworkPredictor> predictor =
+      do_GetService("@mozilla.org/network/predictor;1",
+                    &rv);
+    NS_ENSURE_SUCCESS(rv, rv);
+    sPredictor = predictor;
+    ClearOnShutdown(&sPredictor);
+  }
 
+  nsCOMPtr<nsINetworkPredictor> predictor = sPredictor.get();
   predictor.forget(aPredictor);
   return NS_OK;
 }
@@ -2280,10 +2328,7 @@ PredictorLearn(nsIURI *targetURI, nsIURI *sourceURI,
       loadContext = do_GetInterface(callbacks);
 
       if (loadContext) {
-        OriginAttributes dAttrs;
-        loadContext->GetOriginAttributes(dAttrs);
-
-        originAttributes.Inherit(dAttrs);
+        loadContext->GetOriginAttributes(originAttributes);
       }
     }
   }
@@ -2312,9 +2357,8 @@ PredictorLearn(nsIURI *targetURI, nsIURI *sourceURI,
     nsCOMPtr<nsIPrincipal> docPrincipal = document->NodePrincipal();
 
     if (docPrincipal) {
-      originAttributes.Inherit(docPrincipal->OriginAttributesRef());
+      originAttributes = docPrincipal->OriginAttributesRef();
     }
-
   }
 
   return predictor->LearnNative(targetURI, sourceURI, reason, originAttributes);
@@ -2644,6 +2688,12 @@ Predictor::CacheabilityAction::OnCacheEntryAvailable(nsICacheEntry *entry,
   keysToCheck.SwapElements(mKeysToCheck);
   valuesToCheck.SwapElements(mValuesToCheck);
 
+  bool hasQueryString = false;
+  nsAutoCString query;
+  if (NS_SUCCEEDED(mTargetURI->GetQuery(query)) && !query.IsEmpty()) {
+    hasQueryString = true;
+  }
+
   MOZ_ASSERT(keysToCheck.Length() == valuesToCheck.Length());
   for (size_t i = 0; i < keysToCheck.Length(); ++i) {
     const char *key = keysToCheck[i].BeginReading();
@@ -2659,7 +2709,7 @@ Predictor::CacheabilityAction::OnCacheEntryAvailable(nsICacheEntry *entry,
 
     bool eq = false;
     if (NS_SUCCEEDED(uri->Equals(mTargetURI, &eq)) && eq) {
-      if (mHttpStatus == 200 && mMethod.EqualsLiteral("GET")) {
+      if (mHttpStatus == 200 && mMethod.EqualsLiteral("GET") && !hasQueryString) {
         PREDICTOR_LOG(("    marking %s cacheable", key));
         flags |= FLAG_PREFETCHABLE;
       } else {

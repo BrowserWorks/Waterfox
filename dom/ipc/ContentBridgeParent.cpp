@@ -7,7 +7,6 @@
 #include "mozilla/dom/ContentBridgeParent.h"
 #include "mozilla/dom/TabParent.h"
 #include "mozilla/jsipc/CrossProcessObjectWrappers.h"
-#include "mozilla/dom/ipc/MemoryStreamParent.h"
 #include "nsXULAppAPI.h"
 #include "nsIObserverService.h"
 #include "base/task.h"
@@ -23,6 +22,7 @@ NS_IMPL_ISUPPORTS(ContentBridgeParent,
                   nsIObserver)
 
 ContentBridgeParent::ContentBridgeParent()
+  : mIsForJSPlugin(false)
 {}
 
 ContentBridgeParent::~ContentBridgeParent()
@@ -88,16 +88,10 @@ ContentBridgeParent::RecvAsyncMessage(const nsString& aMsg,
                                             aPrincipal, aData);
 }
 
-PBlobParent*
-ContentBridgeParent::SendPBlobConstructor(PBlobParent* actor,
-                                          const BlobConstructorParams& params)
-{
-  return PContentBridgeParent::SendPBlobConstructor(actor, params);
-}
-
 PBrowserParent*
 ContentBridgeParent::SendPBrowserConstructor(PBrowserParent* aActor,
                                              const TabId& aTabId,
+                                             const TabId& aSameTabGroupAs,
                                              const IPCTabContext& aContext,
                                              const uint32_t& aChromeFlags,
                                              const ContentParentId& aCpID,
@@ -105,34 +99,39 @@ ContentBridgeParent::SendPBrowserConstructor(PBrowserParent* aActor,
 {
   return PContentBridgeParent::SendPBrowserConstructor(aActor,
                                                        aTabId,
+                                                       aSameTabGroupAs,
                                                        aContext,
                                                        aChromeFlags,
                                                        aCpID,
                                                        aIsForBrowser);
 }
 
-PBlobParent*
-ContentBridgeParent::AllocPBlobParent(const BlobConstructorParams& aParams)
+PParentToChildStreamParent*
+ContentBridgeParent::SendPParentToChildStreamConstructor(PParentToChildStreamParent* aActor)
 {
-  return nsIContentParent::AllocPBlobParent(aParams);
+  return PContentBridgeParent::SendPParentToChildStreamConstructor(aActor);
+}
+
+PIPCBlobInputStreamParent*
+ContentBridgeParent::SendPIPCBlobInputStreamConstructor(PIPCBlobInputStreamParent* aActor,
+                                                        const nsID& aID,
+                                                        const uint64_t& aSize)
+{
+  return
+    PContentBridgeParent::SendPIPCBlobInputStreamConstructor(aActor, aID, aSize);
+}
+
+PIPCBlobInputStreamParent*
+ContentBridgeParent::AllocPIPCBlobInputStreamParent(const nsID& aID,
+                                                    const uint64_t& aSize)
+{
+  return nsIContentParent::AllocPIPCBlobInputStreamParent(aID, aSize);
 }
 
 bool
-ContentBridgeParent::DeallocPBlobParent(PBlobParent* aActor)
+ContentBridgeParent::DeallocPIPCBlobInputStreamParent(PIPCBlobInputStreamParent* aActor)
 {
-  return nsIContentParent::DeallocPBlobParent(aActor);
-}
-
-PMemoryStreamParent*
-ContentBridgeParent::AllocPMemoryStreamParent(const uint64_t& aSize)
-{
-  return nsIContentParent::AllocPMemoryStreamParent(aSize);
-}
-
-bool
-ContentBridgeParent::DeallocPMemoryStreamParent(PMemoryStreamParent* aActor)
-{
-  return nsIContentParent::DeallocPMemoryStreamParent(aActor);
+  return nsIContentParent::DeallocPIPCBlobInputStreamParent(aActor);
 }
 
 mozilla::jsipc::PJavaScriptParent *
@@ -149,12 +148,14 @@ ContentBridgeParent::DeallocPJavaScriptParent(PJavaScriptParent *parent)
 
 PBrowserParent*
 ContentBridgeParent::AllocPBrowserParent(const TabId& aTabId,
+                                         const TabId& aSameTabGroupAs,
                                          const IPCTabContext &aContext,
                                          const uint32_t& aChromeFlags,
                                          const ContentParentId& aCpID,
                                          const bool& aIsForBrowser)
 {
   return nsIContentParent::AllocPBrowserParent(aTabId,
+                                               aSameTabGroupAs,
                                                aContext,
                                                aChromeFlags,
                                                aCpID,
@@ -200,6 +201,12 @@ ContentBridgeParent::Observe(nsISupports* aSubject,
 }
 
 PFileDescriptorSetParent*
+ContentBridgeParent::SendPFileDescriptorSetConstructor(const FileDescriptor& aFD)
+{
+  return PContentBridgeParent::SendPFileDescriptorSetConstructor(aFD);
+}
+
+PFileDescriptorSetParent*
 ContentBridgeParent::AllocPFileDescriptorSetParent(const FileDescriptor& aFD)
 {
   return nsIContentParent::AllocPFileDescriptorSetParent(aFD);
@@ -211,16 +218,28 @@ ContentBridgeParent::DeallocPFileDescriptorSetParent(PFileDescriptorSetParent* a
   return nsIContentParent::DeallocPFileDescriptorSetParent(aActor);
 }
 
-PSendStreamParent*
-ContentBridgeParent::AllocPSendStreamParent()
+PChildToParentStreamParent*
+ContentBridgeParent::AllocPChildToParentStreamParent()
 {
-  return nsIContentParent::AllocPSendStreamParent();
+  return nsIContentParent::AllocPChildToParentStreamParent();
 }
 
 bool
-ContentBridgeParent::DeallocPSendStreamParent(PSendStreamParent* aActor)
+ContentBridgeParent::DeallocPChildToParentStreamParent(PChildToParentStreamParent* aActor)
 {
-  return nsIContentParent::DeallocPSendStreamParent(aActor);
+  return nsIContentParent::DeallocPChildToParentStreamParent(aActor);
+}
+
+PParentToChildStreamParent*
+ContentBridgeParent::AllocPParentToChildStreamParent()
+{
+  return nsIContentParent::AllocPParentToChildStreamParent();
+}
+
+bool
+ContentBridgeParent::DeallocPParentToChildStreamParent(PParentToChildStreamParent* aActor)
+{
+  return nsIContentParent::DeallocPParentToChildStreamParent(aActor);
 }
 
 } // namespace dom

@@ -43,7 +43,7 @@ registerCleanupFunction(() => {
  *   yield addTab(TEST_URI);
  *   let {toolbox, inspector} = yield openInspector();
  *   inspector.sidebar.select(viewId);
- *   let view = inspector[viewId].view;
+ *   let view = inspector.getPanel(viewId).view;
  *   yield selectNode("#test", inspector);
  *   yield someAsyncTestFunction(view);
  * });
@@ -203,8 +203,8 @@ function getComputedViewProperty(view, name) {
     let nameSpan = property.querySelector(".property-name");
     let valueSpan = property.querySelector(".property-value");
 
-    if (nameSpan.textContent === name) {
-      prop = {nameSpan: nameSpan, valueSpan: valueSpan};
+    if (nameSpan.firstChild.textContent === name) {
+      prop = {nameSpan, valueSpan};
       break;
     }
   }
@@ -222,6 +222,5 @@ function getComputedViewProperty(view, name) {
  * @return {String} The property value
  */
 function getComputedViewPropertyValue(view, name, propertyName) {
-  return getComputedViewProperty(view, name, propertyName)
-    .valueSpan.textContent;
+  return getComputedViewProperty(view, name, propertyName).valueSpan.textContent;
 }

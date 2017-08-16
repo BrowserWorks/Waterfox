@@ -87,6 +87,8 @@ public:
   static void AppendStepsTimingFunction(nsTimingFunction::Type aType,
                                         uint32_t aSteps,
                                         nsAString& aResult);
+  static void AppendFramesTimingFunction(uint32_t aFrames,
+                                         nsAString& aResult);
   static void AppendCubicBezierTimingFunction(float aX1, float aY1,
                                               float aX2, float aY2,
                                               nsAString& aResult);
@@ -136,6 +138,13 @@ public:
   static bool IsSignificantChild(nsIContent* aChild,
                                    bool aTextIsSignificant,
                                    bool aWhitespaceIsSignificant);
+
+  /*
+   * Thread-safe version of IsSignificantChild()
+   */
+  static bool ThreadSafeIsSignificantChild(const nsIContent* aChild,
+                                           bool aTextIsSignificant,
+                                           bool aWhitespaceIsSignificant);
   /**
    * Returns true if our object-fit & object-position properties might cause
    * a replaced element's contents to overflow its content-box (requiring

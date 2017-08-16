@@ -567,6 +567,11 @@ protected:
             << "Did not find " << msidAttr << " in offer";
         }
       }
+      if (types.size() == 1 &&
+          tracks[0]->GetMediaType() == SdpMediaSection::kApplication) {
+        ASSERT_EQ(std::string::npos, offer.find("a=ssrc"))
+          << "Data channel should not contain SSRC";
+      }
     }
   }
 
@@ -631,6 +636,11 @@ protected:
           ASSERT_NE(std::string::npos, answer.find(msidAttr))
             << "Did not find " << msidAttr << " in offer";
         }
+      }
+      if (types.size() == 1 &&
+          pairs[0].mReceiving->GetMediaType() == SdpMediaSection::kApplication) {
+        ASSERT_EQ(std::string::npos, answer.find("a=ssrc"))
+          << "Data channel should not contain SSRC";
       }
     }
     std::cerr << "OFFER pairs:" << std::endl;
@@ -824,21 +834,26 @@ protected:
                                     size_t transportLevel,
                                     const std::string& context) const
       {
+        Address expectedAddress = "0.0.0.0";
+        Port expectedPort = 9U;
+
         if (expectDefault) {
           // Copy so we can be terse and use []
           auto defaultCandidates = mDefaultCandidates;
-          ASSERT_EQ(defaultCandidates[transportLevel][RTP].first,
-                    msection.GetConnection().GetAddress())
-            << context << " (level " << msection.GetLevel() << ")";
-          ASSERT_EQ(defaultCandidates[transportLevel][RTP].second,
-                    msection.GetPort())
-            << context << " (level " << msection.GetLevel() << ")";
-        } else {
-          ASSERT_EQ("0.0.0.0", msection.GetConnection().GetAddress())
-            << context << " (level " << msection.GetLevel() << ")";
-          ASSERT_EQ(9U, msection.GetPort())
-            << context << " (level " << msection.GetLevel() << ")";
+          expectedAddress = defaultCandidates[transportLevel][RTP].first;
+          expectedPort = defaultCandidates[transportLevel][RTP].second;
         }
+
+        // if bundle-only attribute is present, expect port 0
+        const SdpAttributeList& attrs = msection.GetAttributeList();
+        if (attrs.HasAttribute(SdpAttribute::kBundleOnlyAttribute)) {
+          expectedPort = 0U;
+        }
+
+        ASSERT_EQ(expectedAddress, msection.GetConnection().GetAddress())
+          << context << " (level " << msection.GetLevel() << ")";
+        ASSERT_EQ(expectedPort, msection.GetPort())
+          << context << " (level " << msection.GetLevel() << ")";
       }
 
       void CheckDefaultRtcpCandidate(bool expectDefault,
@@ -921,12 +936,8 @@ protected:
     auto pairs = session.GetNegotiatedTrackPairs();
 
     for (JsepTrackPair& pair : pairs) {
-      if (types.size() == 1) {
-        ASSERT_FALSE(pair.HasBundleLevel()) << context;
-      } else {
-        ASSERT_TRUE(pair.HasBundleLevel()) << context;
-        ASSERT_EQ(0U, pair.BundleLevel()) << context;
-      }
+      ASSERT_TRUE(pair.HasBundleLevel()) << context;
+      ASSERT_EQ(0U, pair.BundleLevel()) << context;
     }
   }
 
@@ -1074,11 +1085,15 @@ private:
         ASSERT_EQ(SdpMediaSection::kUdpTlsRtpSavpf, msection.GetProtocol());
       }
 
-      if (msection.GetPort() == 0) {
+      const SdpAttributeList& attrs = msection.GetAttributeList();
+      bool bundle_only = attrs.HasAttribute(SdpAttribute::kBundleOnlyAttribute);
+
+      // port 0 only means disabled when the bundle-only attribute is missing
+      if (!bundle_only && msection.GetPort() == 0) {
         ValidateDisabledMSection(&msection);
         continue;
       }
-      const SdpAttributeList& attrs = msection.GetAttributeList();
+
       ASSERT_EQ(source.mIceUfrag, attrs.GetIceUfrag());
       ASSERT_EQ(source.mIcePwd, attrs.GetIcePwd());
       const SdpFingerprintAttributeList& fps = attrs.GetFingerprint();
@@ -1375,10 +1390,10 @@ TEST_P(JsepSessionTest, RenegotiationBothAddTracksToExistingStream)
 
   auto oHasStream = HasMediaStream(mSessionOff.GetLocalTracks());
   auto aHasStream = HasMediaStream(mSessionAns.GetLocalTracks());
-  ASSERT_EQ(oHasStream, GetLocalUniqueStreamIds(mSessionOff).size());
-  ASSERT_EQ(aHasStream, GetLocalUniqueStreamIds(mSessionAns).size());
-  ASSERT_EQ(aHasStream, GetRemoteUniqueStreamIds(mSessionOff).size());
-  ASSERT_EQ(oHasStream, GetRemoteUniqueStreamIds(mSessionAns).size());
+  ASSERT_EQ(oHasStream, GetLocalUniqueStreamIds(mSessionOff).size() > 0);
+  ASSERT_EQ(aHasStream, GetLocalUniqueStreamIds(mSessionAns).size() > 0);
+  ASSERT_EQ(aHasStream, GetRemoteUniqueStreamIds(mSessionOff).size()> 0);
+  ASSERT_EQ(oHasStream, GetRemoteUniqueStreamIds(mSessionAns).size() > 0);
 
   auto firstOffId = GetFirstLocalStreamId(mSessionOff);
   auto firstAnsId = GetFirstLocalStreamId(mSessionAns);
@@ -1398,10 +1413,10 @@ TEST_P(JsepSessionTest, RenegotiationBothAddTracksToExistingStream)
   oHasStream = HasMediaStream(mSessionOff.GetLocalTracks());
   aHasStream = HasMediaStream(mSessionAns.GetLocalTracks());
 
-  ASSERT_EQ(oHasStream, GetLocalUniqueStreamIds(mSessionOff).size());
-  ASSERT_EQ(aHasStream, GetLocalUniqueStreamIds(mSessionAns).size());
-  ASSERT_EQ(aHasStream, GetRemoteUniqueStreamIds(mSessionOff).size());
-  ASSERT_EQ(oHasStream, GetRemoteUniqueStreamIds(mSessionAns).size());
+  ASSERT_EQ(oHasStream, GetLocalUniqueStreamIds(mSessionOff).size() > 0);
+  ASSERT_EQ(aHasStream, GetLocalUniqueStreamIds(mSessionAns).size() > 0);
+  ASSERT_EQ(aHasStream, GetRemoteUniqueStreamIds(mSessionOff).size() > 0);
+  ASSERT_EQ(oHasStream, GetRemoteUniqueStreamIds(mSessionAns).size() > 0);
   if (oHasStream) {
     ASSERT_STREQ(firstOffId.c_str(),
                  GetFirstLocalStreamId(mSessionOff).c_str());
@@ -4253,10 +4268,12 @@ TEST_P(JsepSessionTest, TestMaxBundle)
   ASSERT_FALSE(
       parsedOffer->GetMediaSection(0).GetAttributeList().HasAttribute(
         SdpAttribute::kBundleOnlyAttribute));
+  ASSERT_NE(0U, parsedOffer->GetMediaSection(0).GetPort());
   for (size_t i = 1; i < parsedOffer->GetMediaSectionCount(); ++i) {
     ASSERT_TRUE(
         parsedOffer->GetMediaSection(i).GetAttributeList().HasAttribute(
           SdpAttribute::kBundleOnlyAttribute));
+    ASSERT_EQ(0U, parsedOffer->GetMediaSection(i).GetPort());
   }
 
 
@@ -5006,41 +5023,55 @@ TEST_F(JsepSessionTest, RtcpFbInOffer)
 }
 
 // In this test we will change the offer SDP's a=setup value
-// from actpass to passive.  This will make the answer do active.
+// from actpass to passive. This will force the answer to do active.
 TEST_F(JsepSessionTest, AudioCallForceDtlsRoles)
 {
   types.push_back(SdpMediaSection::kAudio);
   AddTracks(mSessionOff, "audio");
   AddTracks(mSessionAns, "audio");
   std::string offer = CreateOffer();
+
   std::string actpass = "\r\na=setup:actpass";
   size_t match = offer.find(actpass);
   ASSERT_NE(match, std::string::npos);
   offer.replace(match, actpass.length(), "\r\na=setup:passive");
+
   SetLocalOffer(offer);
   SetRemoteOffer(offer);
+  ASSERT_EQ(kJsepStateHaveRemoteOffer, mSessionAns.GetState());
   std::string answer = CreateAnswer();
   match = answer.find("\r\na=setup:active");
   ASSERT_NE(match, std::string::npos);
+
+  SetLocalAnswer(answer);
+  SetRemoteAnswer(answer);
+  ASSERT_EQ(kJsepStateStable, mSessionAns.GetState());
 }
 
 // In this test we will change the offer SDP's a=setup value
-// from actpass to active.  This will make the answer do passive
+// from actpass to active. This will force the answer to do passive.
 TEST_F(JsepSessionTest, AudioCallReverseDtlsRoles)
 {
   types.push_back(SdpMediaSection::kAudio);
   AddTracks(mSessionOff, "audio");
   AddTracks(mSessionAns, "audio");
   std::string offer = CreateOffer();
+
   std::string actpass = "\r\na=setup:actpass";
   size_t match = offer.find(actpass);
   ASSERT_NE(match, std::string::npos);
   offer.replace(match, actpass.length(), "\r\na=setup:active");
+
   SetLocalOffer(offer);
   SetRemoteOffer(offer);
+  ASSERT_EQ(kJsepStateHaveRemoteOffer, mSessionAns.GetState());
   std::string answer = CreateAnswer();
   match = answer.find("\r\na=setup:passive");
   ASSERT_NE(match, std::string::npos);
+
+  SetLocalAnswer(answer);
+  SetRemoteAnswer(answer);
+  ASSERT_EQ(kJsepStateStable, mSessionAns.GetState());
 }
 
 // In this test we will change the answer SDP's a=setup value
@@ -5052,63 +5083,53 @@ TEST_F(JsepSessionTest, AudioCallMismatchDtlsRoles)
   AddTracks(mSessionOff, "audio");
   AddTracks(mSessionAns, "audio");
   std::string offer = CreateOffer();
+
   std::string actpass = "\r\na=setup:actpass";
   size_t match = offer.find(actpass);
   ASSERT_NE(match, std::string::npos);
   SetLocalOffer(offer);
   SetRemoteOffer(offer);
+  ASSERT_EQ(kJsepStateHaveRemoteOffer, mSessionAns.GetState());
   std::string answer = CreateAnswer();
+  SetLocalAnswer(answer);
+
   std::string active = "\r\na=setup:active";
   match = answer.find(active);
   ASSERT_NE(match, std::string::npos);
-  SetLocalAnswer(answer);
   answer.replace(match, active.length(), "\r\na=setup:passive");
   SetRemoteAnswer(answer);
+
+  // This is as good as it gets in a JSEP test (w/o starting DTLS)
+  ASSERT_EQ(JsepDtlsTransport::kJsepDtlsClient,
+      mSessionOff.GetTransports()[0]->mDtls->GetRole());
+  ASSERT_EQ(JsepDtlsTransport::kJsepDtlsClient,
+      mSessionAns.GetTransports()[0]->mDtls->GetRole());
 }
 
-// In this test we will change the offer SDP's a=setup value
-// from actpass to garbage.  It should ignore the garbage value
-// and respond with setup:active
-TEST_F(JsepSessionTest, AudioCallGarbageSetup)
+// Verify that missing a=setup in offer gets rejected
+TEST_F(JsepSessionTest, AudioCallOffererNoSetup)
 {
   types.push_back(SdpMediaSection::kAudio);
   AddTracks(mSessionOff, "audio");
   AddTracks(mSessionAns, "audio");
   std::string offer = CreateOffer();
-  std::string actpass = "\r\na=setup:actpass";
-  size_t match = offer.find(actpass);
-  ASSERT_NE(match, std::string::npos);
-  offer.replace(match, actpass.length(), "\r\na=setup:G4rb4g3V4lu3");
   SetLocalOffer(offer);
-  SetRemoteOffer(offer);
-  std::string answer = CreateAnswer();
-  match = answer.find("\r\na=setup:active");
-  ASSERT_NE(match, std::string::npos);
-}
 
-// In this test we will change the offer SDP to remove the
-// a=setup line.  Answer should respond with a=setup:active.
-TEST_F(JsepSessionTest, AudioCallOfferNoSetupOrConnection)
-{
-  types.push_back(SdpMediaSection::kAudio);
-  AddTracks(mSessionOff, "audio");
-  AddTracks(mSessionAns, "audio");
-  std::string offer = CreateOffer();
   std::string actpass = "\r\na=setup:actpass";
   size_t match = offer.find(actpass);
   ASSERT_NE(match, std::string::npos);
   offer.replace(match, actpass.length(), "");
-  SetLocalOffer(offer);
-  SetRemoteOffer(offer);
-  std::string answer = CreateAnswer();
-  match = answer.find("\r\na=setup:active");
-  ASSERT_NE(match, std::string::npos);
+
+  // The signaling state will remain "stable" because the unparsable
+  // SDP leads to a failure in SetRemoteDescription.
+  SetRemoteOffer(offer, NO_CHECKS);
+  ASSERT_EQ(kJsepStateStable, mSessionAns.GetState());
+  ASSERT_EQ(kJsepStateHaveLocalOffer, mSessionOff.GetState());
 }
 
 // In this test we will change the answer SDP to remove the
-// a=setup line. TODO: This used to be a signaling test so it also tested that
-// ICE would still connect since active would be assumed.
-TEST_F(JsepSessionTest, AudioCallAnswerNoSetupOrConnection)
+// a=setup line, which results in active being assumed.
+TEST_F(JsepSessionTest, AudioCallAnswerNoSetup)
 {
   types.push_back(SdpMediaSection::kAudio);
   AddTracks(mSessionOff, "audio");
@@ -5119,13 +5140,67 @@ TEST_F(JsepSessionTest, AudioCallAnswerNoSetupOrConnection)
 
   SetLocalOffer(offer);
   SetRemoteOffer(offer);
+  ASSERT_EQ(kJsepStateHaveRemoteOffer, mSessionAns.GetState());
   std::string answer = CreateAnswer();
+  SetLocalAnswer(answer);
+
   std::string active = "\r\na=setup:active";
   match = answer.find(active);
   ASSERT_NE(match, std::string::npos);
   answer.replace(match, active.length(), "");
-  SetLocalAnswer(answer);
   SetRemoteAnswer(answer);
+  ASSERT_EQ(kJsepStateStable, mSessionAns.GetState());
+
+  // This is as good as it gets in a JSEP test (w/o starting DTLS)
+  ASSERT_EQ(JsepDtlsTransport::kJsepDtlsServer,
+      mSessionOff.GetTransports()[0]->mDtls->GetRole());
+  ASSERT_EQ(JsepDtlsTransport::kJsepDtlsClient,
+      mSessionAns.GetTransports()[0]->mDtls->GetRole());
+}
+
+// Verify that 'holdconn' gets rejected
+TEST_F(JsepSessionTest, AudioCallDtlsRoleHoldconn)
+{
+  types.push_back(SdpMediaSection::kAudio);
+  AddTracks(mSessionOff, "audio");
+  AddTracks(mSessionAns, "audio");
+  std::string offer = CreateOffer();
+  SetLocalOffer(offer);
+
+  std::string actpass = "\r\na=setup:actpass";
+  size_t match = offer.find(actpass);
+  ASSERT_NE(match, std::string::npos);
+  offer.replace(match, actpass.length(), "\r\na=setup:holdconn");
+
+  // The signaling state will remain "stable" because the unparsable
+  // SDP leads to a failure in SetRemoteDescription.
+  SetRemoteOffer(offer, NO_CHECKS);
+  ASSERT_EQ(kJsepStateStable, mSessionAns.GetState());
+  ASSERT_EQ(kJsepStateHaveLocalOffer, mSessionOff.GetState());
+}
+
+// Verify that 'actpass' in answer gets rejected
+TEST_F(JsepSessionTest, AudioCallAnswererUsesActpass)
+{
+  types.push_back(SdpMediaSection::kAudio);
+  AddTracks(mSessionOff, "audio");
+  AddTracks(mSessionAns, "audio");
+  std::string offer = CreateOffer();
+  SetLocalOffer(offer);
+  SetRemoteOffer(offer);
+  std::string answer = CreateAnswer();
+  SetLocalAnswer(answer);
+
+  std::string active = "\r\na=setup:active";
+  size_t match = answer.find(active);
+  ASSERT_NE(match, std::string::npos);
+  answer.replace(match, active.length(), "\r\na=setup:actpass");
+
+  // The signaling state will remain "stable" because the unparsable
+  // SDP leads to a failure in SetRemoteDescription.
+  SetRemoteAnswer(answer, NO_CHECKS);
+  ASSERT_EQ(kJsepStateStable, mSessionAns.GetState());
+  ASSERT_EQ(kJsepStateHaveLocalOffer, mSessionOff.GetState());
 }
 
 // Remove H.264 P1 and VP8 from offer, check answer negotiates H.264 P0

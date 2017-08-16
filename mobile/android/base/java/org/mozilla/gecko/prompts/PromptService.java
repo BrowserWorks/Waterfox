@@ -6,8 +6,6 @@
 package org.mozilla.gecko.prompts;
 
 import org.mozilla.gecko.EventDispatcher;
-import org.mozilla.gecko.GeckoApp;
-import org.mozilla.gecko.GeckoAppShell;
 import org.mozilla.gecko.util.BundleEventListener;
 import org.mozilla.gecko.util.EventCallback;
 import org.mozilla.gecko.util.GeckoBundle;
@@ -20,16 +18,18 @@ public class PromptService implements BundleEventListener {
     private static final String LOGTAG = "GeckoPromptService";
 
     private final Context mContext;
+    private final EventDispatcher mDispatcher;
 
-    public PromptService(Context context) {
-        GeckoApp.getEventDispatcher().registerUiThreadListener(this,
+    public PromptService(final Context context, final EventDispatcher dispatcher) {
+        mContext = context;
+        mDispatcher = dispatcher;
+        mDispatcher.registerUiThreadListener(this,
             "Prompt:Show",
             "Prompt:ShowTop");
-        mContext = context;
     }
 
     public void destroy() {
-        GeckoApp.getEventDispatcher().unregisterUiThreadListener(this,
+        mDispatcher.unregisterUiThreadListener(this,
             "Prompt:Show",
             "Prompt:ShowTop");
     }

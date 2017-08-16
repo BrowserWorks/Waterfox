@@ -5,10 +5,10 @@
 
 var gLanguagesDialog = {
 
-  _availableLanguagesList : [],
-  _acceptLanguages        : { },
+  _availableLanguagesList: [],
+  _acceptLanguages: { },
 
-  _selectedItemID         : null,
+  _selectedItemID: null,
 
   init() {
     if (!this._availableLanguagesList.length)
@@ -19,7 +19,9 @@ var gLanguagesDialog = {
   // see bug 1194346.
   forceReflow() {
     this._activeLanguages.style.fontKerning = "none";
-    setTimeout("gLanguagesDialog._activeLanguages.style.removeProperty('font-kerning')", 0);
+    setTimeout(() => {
+      this._activeLanguages.style.removeProperty("font-kerning")
+    }, 0);
   },
 
   get _activeLanguages() {
@@ -97,7 +99,7 @@ var gLanguagesDialog = {
   _buildAvailableLanguageList() {
     var availableLanguagesPopup = document.getElementById("availableLanguagesPopup");
     while (availableLanguagesPopup.hasChildNodes())
-      availableLanguagesPopup.removeChild(availableLanguagesPopup.firstChild);
+      availableLanguagesPopup.firstChild.remove();
 
     // Sort the list of languages by name
     this._availableLanguagesList.sort(function(a, b) {
@@ -119,7 +121,7 @@ var gLanguagesDialog = {
 
   readAcceptLanguages() {
     while (this._activeLanguages.hasChildNodes())
-      this._activeLanguages.removeChild(this._activeLanguages.firstChild);
+      this._activeLanguages.firstChild.remove();
 
     var selectedIndex = 0;
     var preference = document.getElementById("intl.accept_languages");

@@ -19,19 +19,16 @@ Cu.import("resource://gre/modules/XPCOMUtils.jsm");
 
 XPCOMUtils.defineLazyModuleGetter(this, "Extension",
                                   "resource://gre/modules/Extension.jsm");
+XPCOMUtils.defineLazyModuleGetter(this, "ExtensionChild",
+                                  "resource://gre/modules/ExtensionChild.jsm");
 XPCOMUtils.defineLazyModuleGetter(this, "Services",
                                   "resource://gre/modules/Services.jsm");
 
-Cu.import("resource://gre/modules/ExtensionChild.jsm");
 Cu.import("resource://gre/modules/ExtensionCommon.jsm");
 
 var {
   BaseContext,
 } = ExtensionCommon;
-
-var {
-  Messenger,
-} = ExtensionChild;
 
 /**
  * Instances created from this class provide to a legacy extension
@@ -69,7 +66,7 @@ var LegacyExtensionContext = class extends BaseContext {
     // Legacy addons live in the main process. Messages from other addons are
     // Messages from WebExtensions are sent to the main process and forwarded via
     // the parent process manager to the legacy extension.
-    this.messenger = new Messenger(this, [Services.cpmm], sender, filter);
+    this.messenger = new ExtensionChild.Messenger(this, [Services.cpmm], sender, filter);
 
     this.api = {
       browser: {
@@ -112,12 +109,15 @@ class EmbeddedExtension {
    *   An object with the following properties:
    * @param {string} containerAddonParams.id
    *   The Add-on id of the Legacy Extension which will contain the embedded webextension.
+   * @param {string} containerAddonParams.version
+   *   The add-on version.
    * @param {nsIURI} containerAddonParams.resourceURI
    *   The nsIURI of the Legacy Extension container add-on.
    */
-  constructor({id, resourceURI}) {
+  constructor({id, resourceURI, version}) {
     this.addonId = id;
     this.resourceURI = resourceURI;
+    this.version = version;
 
     // Setup status flag.
     this.started = false;
@@ -142,6 +142,7 @@ class EmbeddedExtension {
       this.extension = new Extension({
         id: this.addonId,
         resourceURI: embeddedExtensionURI,
+        version: this.version,
       });
 
       // This callback is register to the "startup" event, emitted by the Extension instance
@@ -230,11 +231,11 @@ EmbeddedExtensionManager = {
     }
   },
 
-  getEmbeddedExtensionFor({id, resourceURI}) {
+  getEmbeddedExtensionFor({id, resourceURI, version}) {
     let embeddedExtension = this.embeddedExtensionsByAddonId.get(id);
 
     if (!embeddedExtension) {
-      embeddedExtension = new EmbeddedExtension({id, resourceURI});
+      embeddedExtension = new EmbeddedExtension({id, resourceURI, version});
       // Keep track of the embedded extension instance.
       this.embeddedExtensionsByAddonId.set(id, embeddedExtension);
     }

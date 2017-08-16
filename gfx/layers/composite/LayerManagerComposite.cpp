@@ -10,9 +10,10 @@
 #include "ColorLayerComposite.h"        // for ColorLayerComposite
 #include "CompositableHost.h"           // for CompositableHost
 #include "ContainerLayerComposite.h"    // for ContainerLayerComposite, etc
+#include "Diagnostics.h"
 #include "FPSCounter.h"                 // for FPSState, FPSCounter
 #include "FrameMetrics.h"               // for FrameMetrics
-#include "GeckoProfiler.h"              // for profiler_set_frame_number, etc
+#include "GeckoProfiler.h"              // for profiler_*
 #include "ImageLayerComposite.h"        // for ImageLayerComposite
 #include "Layers.h"                     // for Layer, ContainerLayer, etc
 #include "LayerScope.h"                 // for LayerScope Tool
@@ -52,14 +53,15 @@
 #include "nsPoint.h"                    // for nsIntPoint
 #include "nsRect.h"                     // for mozilla::gfx::IntRect
 #include "nsRegion.h"                   // for nsIntRegion, etc
-#ifdef MOZ_WIDGET_ANDROID
+#if defined(MOZ_WIDGET_ANDROID)
 #include <android/log.h>
 #include <android/native_window.h>
-#endif
-#if defined(MOZ_WIDGET_ANDROID)
+#include "mozilla/widget/AndroidCompositorWidget.h"
 #include "opengl/CompositorOGL.h"
+#include "GLConsts.h"
 #include "GLContextEGL.h"
 #include "GLContextProvider.h"
+#include "mozilla/Unused.h"
 #include "mozilla/widget/AndroidCompositorWidget.h"
 #include "ScopedGLHelpers.h"
 #endif
@@ -124,6 +126,18 @@ HostLayerManager::HostLayerManager()
 HostLayerManager::~HostLayerManager()
 {}
 
+void
+HostLayerManager::RecordPaintTimes(const PaintTiming& aTiming)
+{
+  mDiagnostics->RecordPaintTimes(aTiming);
+}
+
+void
+HostLayerManager::RecordUpdateTime(float aValue)
+{
+  mDiagnostics->RecordUpdateTime(aValue);
+}
+
 /**
  * LayerManagerComposite
  */
@@ -133,9 +147,12 @@ LayerManagerComposite::LayerManagerComposite(Compositor* aCompositor)
 , mCompositor(aCompositor)
 , mInTransaction(false)
 , mIsCompositorReady(false)
-, mGeometryChanged(true)
+#if defined(MOZ_WIDGET_ANDROID)
+, mScreenPixelsTarget(nullptr)
+#endif // defined(MOZ_WIDGET_ANDROID)
 {
-  mTextRenderer = new TextRenderer(aCompositor);
+  mTextRenderer = new TextRenderer();
+  mDiagnostics = MakeUnique<Diagnostics>();
   MOZ_ASSERT(aCompositor);
 
 #ifdef USE_SKIA
@@ -417,9 +434,6 @@ LayerManagerComposite::EndTransaction(const TimeStamp& aTimeStamp,
     MOZ_ASSERT(!aTimeStamp.IsNull());
     UpdateAndRender();
     mCompositor->FlushPendingNotifyNotUsed();
-  } else {
-    // Modified the layer tree.
-    mGeometryChanged = true;
   }
 
   mCompositor->ClearTargetContext();
@@ -450,7 +464,7 @@ LayerManagerComposite::UpdateAndRender()
     // immediately use the resulting damage area, since ComputeDifferences
     // is also responsible for invalidates intermediate surfaces in
     // ContainerLayers.
-    nsIntRegion changed = mClonedLayerTreeProperties->ComputeDifferences(mRoot, nullptr, &mGeometryChanged);
+    nsIntRegion changed = mClonedLayerTreeProperties->ComputeDifferences(mRoot, nullptr);
 
     if (mTarget) {
       // Since we're composing to an external target, we're not going to use
@@ -498,7 +512,6 @@ LayerManagerComposite::UpdateAndRender()
 #if defined(MOZ_WIDGET_ANDROID)
   RenderToPresentationSurface();
 #endif
-  mGeometryChanged = false;
   mWindowOverlayChanged = false;
 
   // Update cached layer tree information.
@@ -523,23 +536,14 @@ LayerManagerComposite::RootLayer() const
   return ToLayerComposite(mRoot);
 }
 
-#ifdef MOZ_PROFILING
-// Only build the QR feature when profiling to avoid bloating
-// our data section.
-// This table was generated using qrencode and is a binary
-// encoding of the qrcodes 0-255.
-#include "qrcode_table.h"
-#endif
-
 void
 LayerManagerComposite::InvalidateDebugOverlay(nsIntRegion& aInvalidRegion, const IntRect& aBounds)
 {
   bool drawFps = gfxPrefs::LayersDrawFPS();
-  bool drawFrameCounter = gfxPrefs::DrawFrameCounter();
   bool drawFrameColorBars = gfxPrefs::CompositorDrawColorBars();
 
-  if (drawFps || drawFrameCounter) {
-    aInvalidRegion.Or(aInvalidRegion, nsIntRect(0, 0, 256, 256));
+  if (drawFps) {
+    aInvalidRegion.Or(aInvalidRegion, nsIntRect(0, 0, 650, 400));
   }
   if (drawFrameColorBars) {
     aInvalidRegion.Or(aInvalidRegion, nsIntRect(0, 0, 10, aBounds.height));
@@ -571,21 +575,16 @@ void
 LayerManagerComposite::RenderDebugOverlay(const IntRect& aBounds)
 {
   bool drawFps = gfxPrefs::LayersDrawFPS();
-  bool drawFrameCounter = gfxPrefs::DrawFrameCounter();
   bool drawFrameColorBars = gfxPrefs::CompositorDrawColorBars();
 
-  TimeStamp now = TimeStamp::Now();
-
   if (drawFps) {
-    if (!mFPS) {
-      mFPS = MakeUnique<FPSState>();
-    }
-
     float alpha = 1;
 #ifdef ANDROID
     // Draw a translation delay warning overlay
     int width;
     int border;
+
+    TimeStamp now = TimeStamp::Now();
     if (!mWarnTime.IsNull() && (now - mWarnTime).ToMilliseconds() < kVisualWarningDuration) {
       EffectChain effects;
 
@@ -618,8 +617,19 @@ LayerManagerComposite::RenderDebugOverlay(const IntRect& aBounds)
     }
 #endif
 
-    float fillRatio = mCompositor->GetFillRatio();
-    mFPS->DrawFPS(now, drawFrameColorBars ? 10 : 1, 2, unsigned(fillRatio), mCompositor);
+    GPUStats stats;
+    stats.mScreenPixels = mRenderBounds.width * mRenderBounds.height;
+    mCompositor->GetFrameStats(&stats);
+
+    std::string text = mDiagnostics->GetFrameOverlayString(stats);
+    mTextRenderer->RenderText(
+      mCompositor,
+      text,
+      IntPoint(2, 5),
+      Matrix4x4(),
+      24,
+      600,
+      TextRenderer::FontType::FixedWidth);
 
     if (mUnusedApzTransformWarning) {
       // If we have an unused APZ transform on this composite, draw a 20x20 red box
@@ -644,11 +654,6 @@ LayerManagerComposite::RenderDebugOverlay(const IntRect& aBounds)
       mDisabledApzWarning = false;
       SetDebugOverlayWantsNextFrame(true);
     }
-
-
-    // Each frame is invalidate by the previous frame for simplicity
-  } else {
-    mFPS = nullptr;
   }
 
   if (drawFrameColorBars) {
@@ -664,51 +669,7 @@ LayerManagerComposite::RenderDebugOverlay(const IntRect& aBounds)
 
   }
 
-#ifdef MOZ_PROFILING
-  if (drawFrameCounter) {
-    profiler_set_frame_number(sFrameCount);
-    const char* qr = sQRCodeTable[sFrameCount%256];
-
-    int size = 21;
-    int padding = 2;
-    float opacity = 1.0;
-    const uint16_t bitWidth = 5;
-    gfx::IntRect clip(0,0, bitWidth*640, bitWidth*640);
-
-    // Draw the white squares at once
-    gfx::Color bitColor(1.0, 1.0, 1.0, 1.0);
-    EffectChain effects;
-    effects.mPrimaryEffect = new EffectSolidColor(bitColor);
-    int totalSize = (size + padding * 2) * bitWidth;
-    mCompositor->DrawQuad(gfx::Rect(0, 0, totalSize, totalSize),
-                          clip,
-                          effects,
-                          opacity,
-                          gfx::Matrix4x4());
-
-    // Draw a black square for every bit set in qr[index]
-    effects.mPrimaryEffect = new EffectSolidColor(gfx::Color(0, 0, 0, 1.0));
-    for (int y = 0; y < size; y++) {
-      for (int x = 0; x < size; x++) {
-        // Select the right bit from the binary encoding
-        int currBit = 128 >> ((x + y * 21) % 8);
-        int i = (x + y * 21) / 8;
-        if (qr[i] & currBit) {
-          mCompositor->DrawQuad(gfx::Rect(bitWidth * (x + padding),
-                                          bitWidth * (y + padding),
-                                          bitWidth, bitWidth),
-                                clip,
-                                effects,
-                                opacity,
-                                gfx::Matrix4x4());
-        }
-      }
-    }
-
-  }
-#endif
-
-  if (drawFrameColorBars || drawFrameCounter) {
+  if (drawFrameColorBars) {
     // We intentionally overflow at 2^16.
     sFrameCount++;
   }
@@ -822,6 +783,34 @@ ClearLayerFlags(Layer* aLayer) {
       });
 }
 
+#if defined(MOZ_WIDGET_ANDROID)
+class ScopedCompositorRenderOffset {
+public:
+  ScopedCompositorRenderOffset(CompositorOGL* aCompositor, const ScreenPoint& aOffset) :
+    mCompositor(aCompositor),
+    mOriginalOffset(mCompositor->GetScreenRenderOffset()),
+    mOriginalProjection(mCompositor->GetProjMatrix())
+  {
+    ScreenPoint offset(mOriginalOffset.x + aOffset.x, mOriginalOffset.y + aOffset.y);
+    mCompositor->SetScreenRenderOffset(offset);
+    // Calling CompositorOGL::SetScreenRenderOffset does not affect the projection matrix
+    // so adjust that as well.
+    gfx::Matrix4x4 mat = mOriginalProjection;
+    mat.PreTranslate(aOffset.x, aOffset.y, 0.0f);
+    mCompositor->SetProjMatrix(mat);
+  }
+  ~ScopedCompositorRenderOffset()
+  {
+    mCompositor->SetScreenRenderOffset(mOriginalOffset);
+    mCompositor->SetProjMatrix(mOriginalProjection);
+  }
+private:
+  CompositorOGL* const mCompositor;
+  const ScreenPoint mOriginalOffset;
+  const gfx::Matrix4x4 mOriginalProjection;
+};
+#endif // defined(MOZ_WIDGET_ANDROID)
+
 void
 LayerManagerComposite::Render(const nsIntRegion& aInvalidRegion, const nsIntRegion& aOpaqueRegion)
 {
@@ -851,7 +840,7 @@ LayerManagerComposite::Render(const nsIntRegion& aInvalidRegion, const nsIntRegi
   // Dump to console
   if (gfxPrefs::LayersDump()) {
     this->Dump(/* aSorted= */true);
-  } else if (profiler_feature_active("layersdump")) {
+  } else if (profiler_feature_active(ProfilerFeature::LayersDump)) {
     std::stringstream ss;
     Dump(ss);
     profiler_log(ss.str().c_str());
@@ -907,6 +896,10 @@ LayerManagerComposite::Render(const nsIntRegion& aInvalidRegion, const nsIntRegi
     mCompositor->BeginFrame(aInvalidRegion, nullptr, bounds, aOpaqueRegion, &rect, &actualBounds);
     clipRect = ParentLayerIntRect(rect.x, rect.y, rect.width, rect.height);
   }
+#if defined(MOZ_WIDGET_ANDROID)
+  ScreenCoord offset = GetContentShiftForToolbar();
+  ScopedCompositorRenderOffset scopedOffset(mCompositor->AsCompositorOGL(), ScreenPoint(0.0f, offset));
+#endif
 
   if (actualBounds.IsEmpty()) {
     mCompositor->GetWidget()->PostRender(&widgetContext);
@@ -925,8 +918,21 @@ LayerManagerComposite::Render(const nsIntRegion& aInvalidRegion, const nsIntRegi
   }
 
   // Render our layers.
-  RootLayer()->Prepare(ViewAs<RenderTargetPixel>(clipRect, PixelCastJustification::RenderTargetIsParentLayerForRoot));
-  RootLayer()->RenderLayer(clipRect.ToUnknownRect(), Nothing());
+  {
+    Diagnostics::Record record(mRenderStartTime);
+    RootLayer()->Prepare(ViewAs<RenderTargetPixel>(clipRect, PixelCastJustification::RenderTargetIsParentLayerForRoot));
+    if (record.Recording()) {
+      mDiagnostics->RecordPrepareTime(record.Duration());
+    }
+  }
+  // Execute draw commands.
+  {
+    Diagnostics::Record record;
+    RootLayer()->RenderLayer(clipRect.ToUnknownRect(), Nothing());
+    if (record.Recording()) {
+      mDiagnostics->RecordCompositeTime(record.Duration());
+    }
+  }
   RootLayer()->Cleanup();
 
   if (!mRegionToClear.IsEmpty()) {
@@ -945,6 +951,15 @@ LayerManagerComposite::Render(const nsIntRegion& aInvalidRegion, const nsIntRegi
   // Allow widget to render a custom foreground.
   mCompositor->GetWidget()->DrawWindowOverlay(
     &widgetContext, LayoutDeviceIntRect::FromUnknownRect(actualBounds));
+
+  mCompositor->NormalDrawingDone();
+
+#if defined(MOZ_WIDGET_ANDROID)
+  // Depending on the content shift the toolbar may be rendered on top of
+  // some of the content so it must be rendered after the content.
+  RenderToolbar();
+  HandlePixelsTarget();
+#endif // defined(MOZ_WIDGET_ANDROID)
 
   // Debugging
   RenderDebugOverlay(actualBounds);
@@ -998,23 +1013,6 @@ public:
 private:
   CompositorOGL* const mCompositor;
   const gfx::IntSize mOriginalSize;
-};
-
-class ScopedCompositorRenderOffset {
-public:
-  ScopedCompositorRenderOffset(CompositorOGL* aCompositor, const ScreenPoint& aOffset) :
-    mCompositor(aCompositor),
-    mOriginalOffset(mCompositor->GetScreenRenderOffset())
-  {
-    mCompositor->SetScreenRenderOffset(aOffset);
-  }
-  ~ScopedCompositorRenderOffset()
-  {
-    mCompositor->SetScreenRenderOffset(mOriginalOffset);
-  }
-private:
-  CompositorOGL* const mCompositor;
-  const ScreenPoint mOriginalOffset;
 };
 
 class ScopedContextSurfaceOverride {
@@ -1133,6 +1131,80 @@ LayerManagerComposite::RenderToPresentationSurface()
   RootLayer()->RenderLayer(clipRect, Nothing());
 
   mCompositor->EndFrame();
+}
+
+ScreenCoord
+LayerManagerComposite::GetContentShiftForToolbar()
+{
+  ScreenCoord result(0.0f);
+  // If GetTargetContext return is not null we are not drawing to the screen so there will not be any content offset.
+  if (mCompositor->GetTargetContext() != nullptr) {
+    return result;
+  }
+
+  if (CompositorBridgeParent* bridge = mCompositor->GetCompositorBridgeParent()) {
+    AndroidDynamicToolbarAnimator* animator = bridge->GetAPZCTreeManager()->GetAndroidDynamicToolbarAnimator();
+    MOZ_RELEASE_ASSERT(animator);
+    result.value = (float)animator->GetCurrentContentOffset().value;
+  }
+  return result;
+}
+
+void
+LayerManagerComposite::RenderToolbar()
+{
+  // If GetTargetContext return is not null we are not drawing to the screen so don't draw the toolbar.
+  if (mCompositor->GetTargetContext() != nullptr) {
+    return;
+  }
+
+  if (CompositorBridgeParent* bridge = mCompositor->GetCompositorBridgeParent()) {
+    AndroidDynamicToolbarAnimator* animator = bridge->GetAPZCTreeManager()->GetAndroidDynamicToolbarAnimator();
+    MOZ_RELEASE_ASSERT(animator);
+
+    animator->UpdateToolbarSnapshotTexture(mCompositor->AsCompositorOGL());
+
+    int32_t toolbarHeight = animator->GetCurrentToolbarHeight();
+    if (toolbarHeight == 0) {
+      return;
+    }
+
+    EffectChain effects;
+    effects.mPrimaryEffect = animator->GetToolbarEffect();
+
+    // If GetToolbarEffect returns null, nothing is rendered for the static snapshot of the toolbar.
+    // If the real toolbar chrome is not covering this portion of the surface, the clear color
+    // of the surface will be visible. On Android the clear color is the background color of the page.
+    if (effects.mPrimaryEffect) {
+      ScopedCompositorRenderOffset toolbarOffset(mCompositor->AsCompositorOGL(),
+                                                 ScreenPoint(0.0f, -animator->GetCurrentContentOffset()));
+      mCompositor->DrawQuad(gfx::Rect(0, 0, mRenderBounds.width, toolbarHeight),
+                            IntRect(0, 0, mRenderBounds.width, toolbarHeight), effects, 1.0, gfx::Matrix4x4());
+    }
+  }
+}
+
+// Used by robocop tests to get a snapshot of the frame buffer.
+void
+LayerManagerComposite::HandlePixelsTarget()
+{
+  if (!mScreenPixelsTarget) {
+    return;
+  }
+
+  int32_t bufferWidth = mRenderBounds.width;
+  int32_t bufferHeight = mRenderBounds.height;
+  ipc::Shmem mem;
+  if (!mScreenPixelsTarget->AllocPixelBuffer(bufferWidth * bufferHeight * sizeof(uint32_t), &mem)) {
+    // Failed to alloc shmem, Just bail out.
+    return;
+  }
+  CompositorOGL* compositor = mCompositor->AsCompositorOGL();
+  GLContext* gl = compositor->gl();
+  MOZ_ASSERT(gl);
+  gl->fReadPixels(0, 0, bufferWidth, bufferHeight, LOCAL_GL_RGBA, LOCAL_GL_UNSIGNED_BYTE, mem.get<uint8_t>());
+  Unused << mScreenPixelsTarget->SendScreenPixels(mem, ScreenIntSize(bufferWidth, bufferHeight));
+  mScreenPixelsTarget = nullptr;
 }
 #endif
 
@@ -1334,17 +1406,6 @@ LayerManagerComposite::AutoAddMaskEffect::~AutoAddMaskEffect()
   mCompositable->RemoveMaskEffect();
 }
 
-void
-LayerManagerComposite::ChangeCompositor(Compositor* aNewCompositor)
-{
-  if (mCompositor) {
-    mCompositor->CancelFrame(false);
-  }
-  mCompositor = aNewCompositor;
-  mTextRenderer = new TextRenderer(aNewCompositor);
-  mTwoPassTmpTarget = nullptr;
-}
-
 LayerComposite::LayerComposite(LayerManagerComposite *aManager)
   : HostLayer(aManager)
   , mCompositeManager(aManager)
@@ -1388,8 +1449,8 @@ LayerManagerComposite::CanUseCanvasLayerForSize(const IntSize &aSize)
 void
 LayerManagerComposite::NotifyShadowTreeTransaction()
 {
-  if (mFPS) {
-    mFPS->NotifyShadowTreeTransaction();
+  if (gfxPrefs::LayersDrawFPS()) {
+    mDiagnostics->AddTxnFrame();
   }
 }
 
@@ -1448,35 +1509,6 @@ bool
 LayerComposite::HasStaleCompositor() const
 {
   return mCompositeManager->GetCompositor() != mCompositor;
-}
-
-static bool
-LayerHasCheckerboardingAPZC(Layer* aLayer, Color* aOutColor)
-{
-  bool answer = false;
-  for (LayerMetricsWrapper i(aLayer, LayerMetricsWrapper::StartAt::BOTTOM); i; i = i.GetParent()) {
-    if (!i.Metrics().IsScrollable()) {
-      continue;
-    }
-    if (i.GetApzc() && i.GetApzc()->IsCurrentlyCheckerboarding()) {
-      if (aOutColor) {
-        *aOutColor = i.Metadata().GetBackgroundColor();
-      }
-      answer = true;
-      break;
-    }
-    break;
-  }
-  return answer;
-}
-
-bool
-LayerComposite::NeedToDrawCheckerboarding(gfx::Color* aOutCheckerboardingColor)
-{
-  return GetLayer()->Manager()->AsyncPanZoomEnabled() &&
-         (GetLayer()->GetContentFlags() & Layer::CONTENT_OPAQUE) &&
-         GetLayer()->IsOpaqueForVisibility() &&
-         LayerHasCheckerboardingAPZC(GetLayer(), aOutCheckerboardingColor);
 }
 
 #ifndef MOZ_HAVE_PLATFORM_SPECIFIC_LAYER_BUFFERS

@@ -116,31 +116,3 @@ UIKitScreenManager::ScreenForRect(int32_t inLeft,
 {
   return GetPrimaryScreen(outScreen);
 }
-
-NS_IMETHODIMP
-UIKitScreenManager::ScreenForId(uint32_t id,
-                                nsIScreen** outScreen)
-{
-    return GetPrimaryScreen(outScreen);
-}
-
-NS_IMETHODIMP
-UIKitScreenManager::ScreenForNativeWidget(void* aWidget, nsIScreen** outScreen)
-{
-  return GetPrimaryScreen(outScreen);
-}
-
-NS_IMETHODIMP
-UIKitScreenManager::GetNumberOfScreens(uint32_t* aNumberOfScreens)
-{
-  //TODO: support multiple screens
-  *aNumberOfScreens = 1;
-  return NS_OK;
-}
-
-NS_IMETHODIMP
-UIKitScreenManager::GetSystemDefaultScale(float* aScale)
-{
-    *aScale = [UIScreen mainScreen].scale;
-    return NS_OK;
-}

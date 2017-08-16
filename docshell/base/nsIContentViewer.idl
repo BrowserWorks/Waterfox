@@ -43,6 +43,8 @@ interface nsIContentViewer : nsISupports
   void loadComplete(in nsresult aStatus);
   [noscript] readonly attribute boolean loadCompleted;
 
+  [noscript] readonly attribute boolean isStopped;
+
   /**
    * Checks if the document wants to prevent unloading by firing beforeunload on
    * the document, and if it does, prompts the user. The result is returned.
@@ -199,6 +201,9 @@ interface nsIContentViewer : nsISupports
 
   /** The amount by which to scale all text. Default is 1.0. */
   attribute float textZoom;
+
+  /** The actual text zoom in effect, as modified by the system font scale. */
+  readonly attribute float effectiveTextZoom;
 
   /** The amount by which to scale all lengths. Default is 1.0. */
   attribute float fullZoom;

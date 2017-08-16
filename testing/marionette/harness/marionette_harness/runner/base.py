@@ -183,8 +183,6 @@ class MarionetteTestResult(StructuredTestResult, TestResultCollection):
             return '\n'.join((str(test), doc_first_line))
         else:
             desc = str(test)
-            if hasattr(test, 'jsFile'):
-                desc = "{0}, {1}".format(test.jsFile, desc)
             return desc
 
     def printLogs(self, test):
@@ -359,6 +357,11 @@ class BaseMarionetteArguments(ArgumentParser):
                           dest='e10s',
                           default=True,
                           help='Disable e10s when running marionette tests.')
+        self.add_argument('--headless',
+                          action='store_true',
+                          dest='headless',
+                          default=False,
+                          help='Enable headless mode when running marionette tests.')
         self.add_argument('--tag',
                           action='append', dest='test_tags',
                           default=None,
@@ -507,7 +510,7 @@ class BaseMarionetteTestRunner(object):
                  prefs=None, test_tags=None,
                  socket_timeout=BaseMarionetteArguments.socket_timeout_default,
                  startup_timeout=None, addons=None, workspace=None,
-                 verbose=0, e10s=True, emulator=False, **kwargs):
+                 verbose=0, e10s=True, emulator=False, headless=False, **kwargs):
         self._appinfo = None
         self._appName = None
         self._capabilities = None
@@ -548,6 +551,7 @@ class BaseMarionetteTestRunner(object):
         # and default location for profile is TMP
         self.workspace_path = workspace or os.getcwd()
         self.verbose = verbose
+        self.headless = headless
         self.e10s = e10s
         if self.e10s:
             self.prefs.update({
@@ -600,7 +604,7 @@ class BaseMarionetteTestRunner(object):
     def filename_pattern(self):
         if self._filename_pattern is None:
             self._filename_pattern = re.compile(
-                "^test(((_.+?)+?\.((py)|(js)))|(([A-Z].*?)+?\.js))$")
+                "^test(((_.+?)+?\.((py))))$")
 
         return self._filename_pattern
 
@@ -770,6 +774,9 @@ class BaseMarionetteTestRunner(object):
                     raise exc, msg.format(host, port, e), tb
         if self.workspace:
             kwargs['workspace'] = self.workspace_path
+        if self.headless:
+            kwargs['headless'] = True
+
         return kwargs
 
     def record_crash(self):
@@ -794,7 +801,7 @@ class BaseMarionetteTestRunner(object):
                          if not self._is_filename_valid(t['filepath'])]
         if invalid_tests:
             raise Exception("Test file names must be of the form "
-                            "'test_something.py', 'test_something.js', or 'testSomething.js'."
+                            "'test_something.py'."
                             " Invalid test names:\n  {}".format('\n  '.join(invalid_tests)))
 
     def _is_filename_valid(self, filename):
@@ -959,6 +966,7 @@ class BaseMarionetteTestRunner(object):
                 "appname": self.appName,
                 "e10s": self.e10s,
                 "manage_instance": self.marionette.instance is not None,
+                "headless": self.headless
             }
             values.update(mozinfo.info)
 
@@ -1072,7 +1080,7 @@ class BaseMarionetteTestRunner(object):
 
         if hasattr(self, 'marionette') and self.marionette:
             if self.marionette.instance is not None:
-                self.marionette.instance.close()
+                self.marionette.instance.close(clean=True)
                 self.marionette.instance = None
 
             self.marionette.cleanup()

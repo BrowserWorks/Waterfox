@@ -9,6 +9,8 @@
 #include "LayersLogging.h"
 #include "mozilla/webrender/webrender_ffi.h"
 #include "mozilla/webrender/WebRenderTypes.h"
+#include "mozilla/layers/ScrollingLayersHelper.h"
+#include "mozilla/layers/StackingContextHelper.h"
 #include "mozilla/layers/WebRenderBridgeChild.h"
 
 namespace mozilla {
@@ -17,59 +19,22 @@ namespace layers {
 using namespace mozilla::gfx;
 
 void
-WebRenderColorLayer::RenderLayer()
+WebRenderColorLayer::RenderLayer(wr::DisplayListBuilder& aBuilder,
+                                 const StackingContextHelper& aSc)
 {
-  WrScrollFrameStackingContextGenerator scrollFrames(this);
+  ScrollingLayersHelper scroller(this, aBuilder, aSc);
+  StackingContextHelper sc(aSc, aBuilder, this);
 
-  gfx::Matrix4x4 transform = GetTransform();
-  LayerIntRegion visibleRegion = GetVisibleRegion();
-  LayerIntRect bounds = visibleRegion.GetBounds();
-  Rect rect(0, 0, bounds.width, bounds.height);
-  Rect clip;
-  if (GetClipRect().isSome()) {
-      clip = RelativeToVisible(transform.Inverse().TransformBounds(IntRectToRect(GetClipRect().ref().ToUnknownRect())));
-  } else {
-      clip = rect;
-  }
+  LayerRect rect = Bounds();
+  DumpLayerInfo("ColorLayer", rect);
 
-  gfx::Rect relBounds = VisibleBoundsRelativeToParent();
-  if (!transform.IsIdentity()) {
-    // WR will only apply the 'translate' of the transform, so we need to do the scale/rotation manually.
-    gfx::Matrix4x4 boundTransform = transform;
-    boundTransform._41 = 0.0f;
-    boundTransform._42 = 0.0f;
-    boundTransform._43 = 0.0f;
-    relBounds.MoveTo(boundTransform.TransformPoint(relBounds.TopLeft()));
-  }
+  LayerRect clipRect = ClipRect().valueOr(rect);
+  Maybe<WrImageMask> mask = BuildWrMaskLayer(&sc);
+  WrClipRegionToken clip = aBuilder.PushClipRegion(
+      sc.ToRelativeWrRect(clipRect),
+      mask.ptrOr(nullptr));
 
-  gfx::Rect overflow(0, 0, relBounds.width, relBounds.height);
-  WrMixBlendMode mixBlendMode = wr::ToWrMixBlendMode(GetMixBlendMode());
-
-  Maybe<WrImageMask> mask = buildMaskLayer();
-
-  if (gfxPrefs::LayersDump()) {
-    printf_stderr("ColorLayer %p using bounds=%s, overflow=%s, transform=%s, rect=%s, clip=%s, mix-blend-mode=%s\n",
-                  this->GetLayer(),
-                  Stringify(relBounds).c_str(),
-                  Stringify(overflow).c_str(),
-                  Stringify(transform).c_str(),
-                  Stringify(rect).c_str(),
-                  Stringify(clip).c_str(),
-                  Stringify(mixBlendMode).c_str());
-  }
-
-  WrBridge()->AddWebRenderCommand(
-      OpDPPushStackingContext(wr::ToWrRect(relBounds),
-                              wr::ToWrRect(overflow),
-                              mask,
-                              1.0f,
-                              GetAnimations(),
-                              transform,
-                              mixBlendMode,
-                              FrameMetrics::NULL_SCROLL_ID));
-  WrBridge()->AddWebRenderCommand(
-    OpDPPushRect(wr::ToWrRect(rect), wr::ToWrRect(clip), wr::ToWrColor(mColor)));
-  WrBridge()->AddWebRenderCommand(OpDPPopStackingContext());
+  aBuilder.PushRect(sc.ToRelativeWrRect(rect), clip, wr::ToWrColor(mColor));
 }
 
 } // namespace layers

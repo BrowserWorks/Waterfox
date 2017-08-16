@@ -2,57 +2,86 @@
 /* vim: set sts=2 sw=2 et tw=80: */
 "use strict";
 
+// The ext-* files are imported into the same scopes.
+/* import-globals-from ext-browserAction.js */
+/* import-globals-from ext-utils.js */
+
 XPCOMUtils.defineLazyModuleGetter(this, "PanelPopup",
                                   "resource:///modules/ExtensionPopups.jsm");
 
-Cu.import("resource://gre/modules/Task.jsm");
-Cu.import("resource://gre/modules/ExtensionUtils.jsm");
+
 var {
-  SingletonEventManager,
-  IconDetails,
+  DefaultWeakMap,
 } = ExtensionUtils;
 
+Cu.import("resource://gre/modules/ExtensionParent.jsm");
+
+var {
+  IconDetails,
+} = ExtensionParent;
+
 // WeakMap[Extension -> PageAction]
-var pageActionMap = new WeakMap();
+let pageActionMap = new WeakMap();
 
-// Handles URL bar icons, including the |page_action| manifest entry
-// and associated API.
-function PageAction(options, extension) {
-  this.extension = extension;
-  this.id = makeWidgetId(extension.id) + "-page-action";
-
-  this.tabManager = extension.tabManager;
-
-  this.defaults = {
-    show: false,
-    title: options.default_title || extension.name,
-    icon: IconDetails.normalize({path: options.default_icon}, extension),
-    popup: options.default_popup || "",
-  };
-
-  this.browserStyle = options.browser_style || false;
-  if (options.browser_style === null) {
-    this.extension.logger.warn("Please specify whether you want browser_style " +
-                               "or not in your page_action options.");
+this.pageAction = class extends ExtensionAPI {
+  static for(extension) {
+    return pageActionMap.get(extension);
   }
 
-  this.tabContext = new TabContext(tab => Object.create(this.defaults),
-                                   extension);
+  onManifestEntry(entryName) {
+    let {extension} = this;
+    let options = extension.manifest.page_action;
 
-  this.tabContext.on("location-change", this.handleLocationChange.bind(this)); // eslint-disable-line mozilla/balanced-listeners
+    this.iconData = new DefaultWeakMap(icons => this.getIconData(icons));
 
-  // WeakMap[ChromeWindow -> <xul:image>]
-  this.buttons = new WeakMap();
+    this.id = makeWidgetId(extension.id) + "-page-action";
 
-  EventEmitter.decorate(this);
-}
+    this.tabManager = extension.tabManager;
 
-PageAction.prototype = {
+    this.defaults = {
+      show: false,
+      title: options.default_title || extension.name,
+      icon: IconDetails.normalize({path: options.default_icon}, extension),
+      popup: options.default_popup || "",
+    };
+
+    this.browserStyle = options.browser_style || false;
+    if (options.browser_style === null) {
+      this.extension.logger.warn("Please specify whether you want browser_style " +
+                                 "or not in your page_action options.");
+    }
+
+    this.tabContext = new TabContext(tab => Object.create(this.defaults),
+                                     extension);
+
+    this.tabContext.on("location-change", this.handleLocationChange.bind(this)); // eslint-disable-line mozilla/balanced-listeners
+
+    // WeakMap[ChromeWindow -> <xul:image>]
+    this.buttons = new WeakMap();
+
+    EventEmitter.decorate(this);
+
+    pageActionMap.set(extension, this);
+  }
+
+  onShutdown(reason) {
+    pageActionMap.delete(this.extension);
+
+    this.tabContext.shutdown();
+
+    for (let window of windowTracker.browserWindows()) {
+      if (this.buttons.has(window)) {
+        this.buttons.get(window).remove();
+        window.document.removeEventListener("popupshowing", this);
+      }
+    }
+  }
+
   // Returns the value of the property |prop| for the given tab, where
   // |prop| is one of "show", "title", "icon", "popup".
   getProperty(tab, prop) {
     return this.tabContext.get(tab)[prop];
-  },
+  }
 
   // Sets the value of the property |prop| for the given tab to the
   // given value, symmetrically to |getProperty|.
@@ -69,7 +98,7 @@ PageAction.prototype = {
     if (tab.selected) {
       this.updateButton(tab.ownerGlobal);
     }
-  },
+  }
 
   // Updates the page action button in the given window to reflect the
   // properties of the currently selected tab:
@@ -86,32 +115,41 @@ PageAction.prototype = {
       return;
     }
 
-    let button = this.getButton(window);
+    window.requestAnimationFrame(() => {
+      let button = this.getButton(window);
 
-    if (tabData.show) {
-      // Update the title and icon only if the button is visible.
+      if (tabData.show) {
+        // Update the title and icon only if the button is visible.
 
-      let title = tabData.title || this.extension.name;
-      button.setAttribute("tooltiptext", title);
-      button.setAttribute("aria-label", title);
+        let title = tabData.title || this.extension.name;
+        button.setAttribute("tooltiptext", title);
+        button.setAttribute("aria-label", title);
+        button.classList.add("webextension-page-action");
 
-      // These URLs should already be properly escaped, but make doubly sure CSS
-      // string escape characters are escaped here, since they could lead to a
-      // sandbox break.
-      let escape = str => str.replace(/[\\\s"]/g, encodeURIComponent);
+        let {style} = this.iconData.get(tabData.icon);
 
-      let getIcon = size => escape(IconDetails.getPreferredIcon(tabData.icon, this.extension, size).icon);
+        button.setAttribute("style", style);
+      }
 
-      button.setAttribute("style", `
-        --webextension-urlbar-image: url("${getIcon(16)}");
-        --webextension-urlbar-image-2x: url("${getIcon(32)}");
-      `);
+      button.hidden = !tabData.show;
+    });
+  }
 
-      button.classList.add("webextension-page-action");
-    }
+  getIconData(icons) {
+    // These URLs should already be properly escaped, but make doubly sure CSS
+    // string escape characters are escaped here, since they could lead to a
+    // sandbox break.
+    let escape = str => str.replace(/[\\\s"]/g, encodeURIComponent);
 
-    button.hidden = !tabData.show;
-  },
+    let getIcon = size => escape(IconDetails.getPreferredIcon(icons, this.extension, size).icon);
+
+    let style = `
+      --webextension-urlbar-image: url("${getIcon(16)}");
+      --webextension-urlbar-image-2x: url("${getIcon(32)}");
+    `;
+
+    return {style};
+  }
 
   // Create an |image| node and add it to the |urlbar-icons|
   // container in the given window.
@@ -128,7 +166,7 @@ PageAction.prototype = {
     document.getElementById("urlbar-icons").appendChild(button);
 
     return button;
-  },
+  }
 
   // Returns the page action button for the given window, creating it if
   // it doesn't already exist.
@@ -139,7 +177,7 @@ PageAction.prototype = {
     }
 
     return this.buttons.get(window);
-  },
+  }
 
   /**
    * Triggers this page action for the given window, with the same effects as
@@ -154,7 +192,7 @@ PageAction.prototype = {
     if (pageAction.getProperty(window.gBrowser.selectedTab, "show")) {
       pageAction.handleClick(window);
     }
-  },
+  }
 
   handleEvent(event) {
     const window = event.target.ownerGlobal;
@@ -167,6 +205,10 @@ PageAction.prototype = {
         break;
 
       case "popupshowing":
+        if (!global.actionContextMenu) {
+          break;
+        }
+
         const menu = event.target;
         const trigger = menu.triggerNode;
 
@@ -179,7 +221,7 @@ PageAction.prototype = {
         }
         break;
     }
-  },
+  }
 
   // Handles a click event on the page action button for the given
   // window.
@@ -202,115 +244,86 @@ PageAction.prototype = {
     } else {
       this.emit("click", tab);
     }
-  },
+  }
 
   handleLocationChange(eventType, tab, fromBrowse) {
     if (fromBrowse) {
       this.tabContext.clear(tab);
     }
     this.updateButton(tab.ownerGlobal);
-  },
-
-  shutdown() {
-    this.tabContext.shutdown();
-
-    for (let window of windowTracker.browserWindows()) {
-      if (this.buttons.has(window)) {
-        this.buttons.get(window).remove();
-        window.removeEventListener("popupshowing", this);
-      }
-    }
-  },
-};
-
-/* eslint-disable mozilla/balanced-listeners */
-extensions.on("manifest_page_action", (type, directive, extension, manifest) => {
-  let pageAction = new PageAction(manifest.page_action, extension);
-  pageActionMap.set(extension, pageAction);
-});
-
-extensions.on("shutdown", (type, extension) => {
-  if (pageActionMap.has(extension)) {
-    pageActionMap.get(extension).shutdown();
-    pageActionMap.delete(extension);
   }
-});
-/* eslint-enable mozilla/balanced-listeners */
 
-PageAction.for = extension => {
-  return pageActionMap.get(extension);
+  getAPI(context) {
+    let {extension} = context;
+
+    const {tabManager} = extension;
+    const pageAction = this;
+
+    return {
+      pageAction: {
+        onClicked: new SingletonEventManager(context, "pageAction.onClicked", fire => {
+          let listener = (evt, tab) => {
+            fire.async(tabManager.convert(tab));
+          };
+
+          pageAction.on("click", listener);
+          return () => {
+            pageAction.off("click", listener);
+          };
+        }).api(),
+
+        show(tabId) {
+          let tab = tabTracker.getTab(tabId);
+          pageAction.setProperty(tab, "show", true);
+        },
+
+        hide(tabId) {
+          let tab = tabTracker.getTab(tabId);
+          pageAction.setProperty(tab, "show", false);
+        },
+
+        setTitle(details) {
+          let tab = tabTracker.getTab(details.tabId);
+
+          // Clear the tab-specific title when given a null string.
+          pageAction.setProperty(tab, "title", details.title || null);
+        },
+
+        getTitle(details) {
+          let tab = tabTracker.getTab(details.tabId);
+
+          let title = pageAction.getProperty(tab, "title");
+          return Promise.resolve(title);
+        },
+
+        setIcon(details) {
+          let tab = tabTracker.getTab(details.tabId);
+
+          let icon = IconDetails.normalize(details, extension, context);
+          pageAction.setProperty(tab, "icon", icon);
+        },
+
+        setPopup(details) {
+          let tab = tabTracker.getTab(details.tabId);
+
+          // Note: Chrome resolves arguments to setIcon relative to the calling
+          // context, but resolves arguments to setPopup relative to the extension
+          // root.
+          // For internal consistency, we currently resolve both relative to the
+          // calling context.
+          let url = details.popup && context.uri.resolve(details.popup);
+          pageAction.setProperty(tab, "popup", url);
+        },
+
+        getPopup(details) {
+          let tab = tabTracker.getTab(details.tabId);
+
+          let popup = pageAction.getProperty(tab, "popup");
+          return Promise.resolve(popup);
+        },
+      },
+    };
+  }
 };
 
-global.pageActionFor = PageAction.for;
-
-extensions.registerSchemaAPI("pageAction", "addon_parent", context => {
-  let {extension} = context;
-
-  const {tabManager} = extension;
-
-  return {
-    pageAction: {
-      onClicked: new SingletonEventManager(context, "pageAction.onClicked", fire => {
-        let listener = (evt, tab) => {
-          fire.async(tabManager.convert(tab));
-        };
-        let pageAction = PageAction.for(extension);
-
-        pageAction.on("click", listener);
-        return () => {
-          pageAction.off("click", listener);
-        };
-      }).api(),
-
-      show(tabId) {
-        let tab = tabTracker.getTab(tabId);
-        PageAction.for(extension).setProperty(tab, "show", true);
-      },
-
-      hide(tabId) {
-        let tab = tabTracker.getTab(tabId);
-        PageAction.for(extension).setProperty(tab, "show", false);
-      },
-
-      setTitle(details) {
-        let tab = tabTracker.getTab(details.tabId);
-
-        // Clear the tab-specific title when given a null string.
-        PageAction.for(extension).setProperty(tab, "title", details.title || null);
-      },
-
-      getTitle(details) {
-        let tab = tabTracker.getTab(details.tabId);
-
-        let title = PageAction.for(extension).getProperty(tab, "title");
-        return Promise.resolve(title);
-      },
-
-      setIcon(details) {
-        let tab = tabTracker.getTab(details.tabId);
-
-        let icon = IconDetails.normalize(details, extension, context);
-        PageAction.for(extension).setProperty(tab, "icon", icon);
-      },
-
-      setPopup(details) {
-        let tab = tabTracker.getTab(details.tabId);
-
-        // Note: Chrome resolves arguments to setIcon relative to the calling
-        // context, but resolves arguments to setPopup relative to the extension
-        // root.
-        // For internal consistency, we currently resolve both relative to the
-        // calling context.
-        let url = details.popup && context.uri.resolve(details.popup);
-        PageAction.for(extension).setProperty(tab, "popup", url);
-      },
-
-      getPopup(details) {
-        let tab = tabTracker.getTab(details.tabId);
-
-        let popup = PageAction.for(extension).getProperty(tab, "popup");
-        return Promise.resolve(popup);
-      },
-    },
-  };
-});
+global.pageActionFor = this.pageAction.for;

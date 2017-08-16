@@ -4,6 +4,7 @@
 
 #include "util.h"
 
+#include <fstream>
 #include <iomanip>
 #include <iostream>
 #include <sstream>
@@ -73,16 +74,18 @@ static char *GetModulePassword(PK11SlotInfo *slot, int retry, void *arg) {
   return nullptr;
 }
 
-bool InitSlotPassword(void) {
-  ScopedPK11SlotInfo slot(PK11_GetInternalKeySlot());
-  if (slot.get() == nullptr) {
-    std::cerr << "Error: Init PK11SlotInfo failed!" << std::endl;
-    return false;
+static std::vector<uint8_t> ReadFromIstream(std::istream &is) {
+  std::vector<uint8_t> data;
+  while (is) {
+    char buf[1024];
+    is.read(buf, sizeof(buf));
+    data.insert(data.end(), buf, buf + is.gcount());
   }
 
-  std::cout << "Enter a password which will be used to encrypt your keys."
-            << std::endl
-            << std::endl;
+  return data;
+}
+
+static std::string GetNewPasswordFromUser(void) {
   std::string pw;
 
   while (true) {
@@ -94,12 +97,56 @@ bool InitSlotPassword(void) {
     std::cerr << "Passwords do not match. Try again." << std::endl;
   }
 
+  return pw;
+}
+
+bool InitSlotPassword(void) {
+  ScopedPK11SlotInfo slot(PK11_GetInternalKeySlot());
+  if (slot.get() == nullptr) {
+    std::cerr << "Error: Init PK11SlotInfo failed!" << std::endl;
+    return false;
+  }
+
+  std::cout << "Enter a password which will be used to encrypt your keys."
+            << std::endl
+            << std::endl;
+  std::string pw = GetNewPasswordFromUser();
+
   SECStatus rv = PK11_InitPin(slot.get(), nullptr, pw.c_str());
   if (rv != SECSuccess) {
     std::cerr << "Init db password failed." << std::endl;
     return false;
   }
 
+  return true;
+}
+
+bool ChangeSlotPassword(void) {
+  ScopedPK11SlotInfo slot(PK11_GetInternalKeySlot());
+  if (slot.get() == nullptr) {
+    std::cerr << "Error: Init PK11SlotInfo failed!" << std::endl;
+    return false;
+  }
+
+  // get old password and authenticate to db
+  PK11_SetPasswordFunc(&GetModulePassword);
+  std::string oldPw = GetPassword("Enter your current password: ");
+  PwData pwData = {PW_PLAINTEXT, const_cast<char *>(oldPw.c_str())};
+  SECStatus rv = PK11_Authenticate(slot.get(), false /*loadCerts*/, &pwData);
+  if (rv != SECSuccess) {
+    std::cerr << "Password incorrect." << std::endl;
+    return false;
+  }
+
+  // get new password
+  std::string newPw = GetNewPasswordFromUser();
+
+  if (PK11_ChangePW(slot.get(), oldPw.c_str(), newPw.c_str()) != SECSuccess) {
+    std::cerr << "Failed to change password." << std::endl;
+    return false;
+  }
+
+  std::cout << "Password changed successfully." << std::endl;
   return true;
 }
 
@@ -132,4 +179,23 @@ std::string StringToHex(const ScopedSECItem &input) {
   }
 
   return ss.str();
+}
+
+std::vector<uint8_t> ReadInputData(std::string dataPath) {
+  std::vector<uint8_t> data;
+  if (dataPath.empty()) {
+    std::cout << "No input file path given, using stdin." << std::endl;
+    data = ReadFromIstream(std::cin);
+  } else {
+    std::ifstream is(dataPath, std::ifstream::binary);
+    if (is.good()) {
+      data = ReadFromIstream(is);
+    } else {
+      std::cerr << "IO Error when opening " << dataPath << std::endl;
+      std::cerr << "Input file does not exist or you don't have permissions."
+                << std::endl;
+    }
+  }
+
+  return data;
 }

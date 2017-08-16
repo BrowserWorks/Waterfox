@@ -8,14 +8,13 @@
  */
 const TEST_PREFS = [
   ["reader.parse-on-load.enabled", true],
-  ["browser.reader.detectedFirstArticle", false],
 ];
 
 const TEST_PATH = getRootDirectory(gTestPath).replace("chrome://mochitests/content", "http://example.com");
 
 var readerButton = document.getElementById("reader-mode-button");
 
-add_task(function* test_reader_button() {
+add_task(async function test_reader_button() {
   registerCleanupFunction(function() {
     // Reset test prefs.
     TEST_PREFS.forEach(([name, value]) => {
@@ -31,7 +30,7 @@ add_task(function* test_reader_button() {
     Services.prefs.setBoolPref(name, value);
   });
 
-  let tab = gBrowser.selectedTab = gBrowser.addTab();
+  let tab = gBrowser.selectedTab = BrowserTestUtils.addTab(gBrowser);
   is_element_hidden(readerButton, "Reader mode button is not present on a new tab");
   // Point tab to a test page that is not reader-able due to hidden nodes.
   let url = TEST_PATH + "readerModeArticleHiddenNodes.html";
@@ -47,7 +46,7 @@ add_task(function* test_reader_button() {
     });
   });
   tab.linkedBrowser.loadURI(url);
-  yield paintPromise;
+  await paintPromise;
 
   is_element_hidden(readerButton, "Reader mode button is still not present on tab with unreadable content.");
 });

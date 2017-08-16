@@ -18,10 +18,23 @@ const consoleApiCommands = [
   "console.log('hello \\nfrom \\rthe \\\"string world!')",
   "console.log('\xFA\u1E47\u0129\xE7\xF6d\xEA \u021B\u0115\u0219\u0165')",
   "console.dirxml(window)",
+  "console.log('myarray', ['red', 'green', 'blue'])",
+  "console.log('myregex', /a.b.c/)",
+  "console.table(['red', 'green', 'blue']);",
+  "console.log('myobject', {red: 'redValue', green: 'greenValue', blue: 'blueValue'});",
 ];
 
 let consoleApi = new Map(consoleApiCommands.map(
   cmd => [cmd, {keys: [cmd], code: cmd}]));
+
+consoleApi.set("console.map('mymap')", {
+  keys: ["console.map('mymap')"],
+  code: `
+var map = new Map();
+map.set("key1", "value1");
+map.set("key2", "value2");
+console.log('mymap', map);
+`});
 
 consoleApi.set("console.trace()", {
   keys: ["console.trace()"],
@@ -37,9 +50,12 @@ foo()
 `});
 
 consoleApi.set("console.time('bar')", {
-  keys: ["console.time('bar')", "console.timeEnd('bar')"],
+  keys: ["console.time('bar')", "timerAlreadyExists",
+         "console.timeEnd('bar')", "timerDoesntExist"],
   code: `
 console.time("bar");
+console.time("bar");
+console.timeEnd("bar");
 console.timeEnd("bar");
 `});
 
@@ -59,14 +75,14 @@ consoleApi.set("console.group('bar')", {
   keys: ["console.group('bar')", "console.groupEnd('bar')"],
   code: `
 console.group("bar");
-console.groupEnd("bar");
+console.groupEnd();
 `});
 
 consoleApi.set("console.groupCollapsed('foo')", {
   keys: ["console.groupCollapsed('foo')", "console.groupEnd('foo')"],
   code: `
 console.groupCollapsed("foo");
-console.groupEnd("foo");
+console.groupEnd();
 `});
 
 consoleApi.set("console.group()", {
@@ -83,6 +99,26 @@ console.log(
   "%cfoo%cbar",
   "color:blue;font-size:1.3em;background:url('http://example.com/test');position:absolute;top:10px",
   "color:red;background:\\165rl('http://example.com/test')");
+`});
+
+consoleApi.set("console.group(%cfoo%cbar)", {
+  keys: ["console.group(%cfoo%cbar)", "console.groupEnd(%cfoo%cbar)"],
+  code: `
+console.group(
+  "%cfoo%cbar",
+  "color:blue;font-size:1.3em;background:url('http://example.com/test');position:absolute;top:10px",
+  "color:red;background:\\165rl('http://example.com/test')");
+console.groupEnd();
+`});
+
+consoleApi.set("console.groupCollapsed(%cfoo%cbaz)", {
+  keys: ["console.groupCollapsed(%cfoo%cbaz)", "console.groupEnd(%cfoo%cbaz)"],
+  code: `
+console.groupCollapsed(
+  "%cfoo%cbaz",
+  "color:blue;font-size:1.3em;background:url('http://example.com/test');position:absolute;top:10px",
+  "color:red;background:\\165rl('http://example.com/test')");
+console.groupEnd();
 `});
 
 // CSS messages
@@ -108,6 +144,8 @@ const evaluationResultCommands = [
 ];
 
 let evaluationResult = new Map(evaluationResultCommands.map(cmd => [cmd, cmd]));
+evaluationResult.set("longString message Error",
+  `throw new Error("Long error ".repeat(10000))`);
 
 // Network Event
 
@@ -140,7 +178,7 @@ xhr.send();
 
 let pageError = new Map();
 
-pageError.set("Reference Error", `
+pageError.set("ReferenceError: asdf is not defined", `
   function bar() {
     asdf()
   }
@@ -151,9 +189,12 @@ pageError.set("Reference Error", `
   foo()
 `);
 
-pageError.set("Redeclaration Error", `
+pageError.set("SyntaxError: redeclaration of let a", `
   let a, a;
 `);
+
+pageError.set("TypeError longString message",
+  `throw new Error("Long error ".repeat(10000))`);
 
 module.exports = {
   consoleApi,

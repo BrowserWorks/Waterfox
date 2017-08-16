@@ -72,12 +72,6 @@ nsScrollbarFrame::Reflow(nsPresContext*          aPresContext,
   }
 }
 
-nsIAtom*
-nsScrollbarFrame::GetType() const
-{
-  return nsGkAtoms::scrollbarFrame;
-}
-
 nsresult
 nsScrollbarFrame::AttributeChanged(int32_t aNameSpaceID,
                                    nsIAtom* aAttribute,
@@ -249,9 +243,6 @@ nsScrollbarFrame::MoveToNewPosition()
   // get the max pos
   int32_t maxpos = nsSliderFrame::GetMaxPosition(content);
 
-  // save the old curpos
-  int32_t oldCurpos = curpos;
-
   // increment the given amount
   if (mIncrement) {
     curpos += mIncrement;
@@ -291,19 +282,6 @@ nsScrollbarFrame::MoveToNewPosition()
           return curpos;
         }
       }
-    }
-  }
-  // See if we have appearance information for a theme.
-  const nsStyleDisplay* disp = StyleDisplay();
-  nsPresContext* presContext = PresContext();
-  if (disp->mAppearance) {
-    nsITheme *theme = presContext->GetTheme();
-    if (theme && theme->ThemeSupportsWidget(presContext, this, disp->mAppearance)) {
-      bool repaint;
-      nsAttrValue oldValue;
-      oldValue.SetTo(oldCurpos);
-      theme->WidgetStateChanged(this, disp->mAppearance, nsGkAtoms::curpos,
-          &repaint, &oldValue);
     }
   }
   content->UnsetAttr(kNameSpaceID_None, nsGkAtoms::smooth, false);

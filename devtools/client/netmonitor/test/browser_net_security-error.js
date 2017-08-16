@@ -9,26 +9,26 @@
 
 add_task(function* () {
   let { tab, monitor } = yield initNetMonitor(CUSTOM_GET_URL);
-  let { document, gStore, windowRequire } = monitor.panelWin;
-  let Actions = windowRequire("devtools/client/netmonitor/actions/index");
-  let { EVENTS } = windowRequire("devtools/client/netmonitor/constants");
+  let { document, store, windowRequire } = monitor.panelWin;
+  let Actions = windowRequire("devtools/client/netmonitor/src/actions/index");
+  let { EVENTS } = windowRequire("devtools/client/netmonitor/src/constants");
 
-  gStore.dispatch(Actions.batchEnable(false));
+  store.dispatch(Actions.batchEnable(false));
 
   info("Requesting a resource that has a certificate problem.");
 
-  let wait = waitForSecurityBrokenNetworkEvent();
+  let requestsDone = waitForSecurityBrokenNetworkEvent();
   yield ContentTask.spawn(tab.linkedBrowser, {}, function* () {
     content.wrappedJSObject.performRequests(1, "https://nocert.example.com");
   });
-  yield wait;
+  yield requestsDone;
 
-  wait = waitForDOM(document, "#security-panel");
+  let securityInfoLoaded = waitForDOM(document, ".security-info-value");
   EventUtils.sendMouseEvent({ type: "click" },
     document.querySelector(".network-details-panel-toggle"));
   EventUtils.sendMouseEvent({ type: "click" },
     document.querySelector("#security-tab"));
-  yield wait;
+  yield securityInfoLoaded;
 
   let errormsg = document.querySelector(".security-info-value");
   isnot(errormsg.textContent, "", "Error message is not empty.");

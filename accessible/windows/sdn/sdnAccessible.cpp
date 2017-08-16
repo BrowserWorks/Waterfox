@@ -5,7 +5,7 @@
  * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
 
 #include "sdnAccessible-inl.h"
-#include "ISimpleDOMNode_i.c"
+#include "ISimpleDOM_i.c"
 
 #include "DocAccessibleWrap.h"
 
@@ -25,6 +25,13 @@
 using namespace mozilla;
 using namespace mozilla::a11y;
 
+sdnAccessible::~sdnAccessible()
+{
+  if (mUniqueId.isSome()) {
+    AccessibleWrap::ReleaseChildID(WrapNotNull(this));
+  }
+}
+
 STDMETHODIMP
 sdnAccessible::QueryInterface(REFIID aREFIID, void** aInstancePtr)
 {
@@ -32,13 +39,21 @@ sdnAccessible::QueryInterface(REFIID aREFIID, void** aInstancePtr)
     return E_FAIL;
   *aInstancePtr = nullptr;
 
+  if (aREFIID == IID_IClientSecurity) {
+    // Some code might QI(IID_IClientSecurity) to detect whether or not we are
+    // a proxy. Right now that can potentially happen off the main thread, so we
+    // look for this condition immediately so that we don't trigger other code
+    // that might not be thread-safe.
+    return E_NOINTERFACE;
+  }
+
   if (aREFIID == IID_ISimpleDOMNode) {
     *aInstancePtr = static_cast<ISimpleDOMNode*>(this);
     AddRef();
     return S_OK;
   }
 
-  AccessibleWrap* accessible = static_cast<AccessibleWrap*>(GetAccessible());
+  AccessibleWrap* accessible = GetAccessible();
   if (accessible)
     return accessible->QueryInterface(aREFIID, aInstancePtr);
 
@@ -98,11 +113,15 @@ sdnAccessible::get_nodeInfo(BSTR __RPC_FAR* aNodeName,
   // application can compare this to the childID we return for events such as
   // focus events, to correlate back to data nodes in their internal object
   // model.
-  Accessible* accessible = GetAccessible();
+  AccessibleWrap* accessible = GetAccessible();
   if (accessible) {
     *aUniqueID = AccessibleWrap::GetChildIDFor(accessible);
   } else {
-    *aUniqueID = - NS_PTR_TO_INT32(static_cast<void*>(this));
+    if (mUniqueId.isNothing()) {
+      AccessibleWrap::AssignChildIDTo(WrapNotNull(this));
+    }
+    MOZ_ASSERT(mUniqueId.isSome());
+    *aUniqueID = mUniqueId.value();
   }
 
   *aNumChildren = mNode->GetChildCount();

@@ -2,7 +2,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
       package="@ANDROID_PACKAGE_NAME@"
-      android:installLocation="auto"
+      android:installLocation="internalOnly"
       android:versionCode="@ANDROID_VERSION_CODE@"
       android:versionName="@MOZ_APP_VERSION@"
 #ifdef MOZ_ANDROID_SHARED_ID
@@ -54,6 +54,7 @@
             android:theme="@android:style/Theme.Translucent.NoTitleBar"
             android:relinquishTaskIdentity="true"
             android:taskAffinity=""
+            android:exported="true"
             android:excludeFromRecents="true" />
 
         <!-- Fennec is shipped as the Android package named
@@ -97,6 +98,7 @@
                 <data android:scheme="https" />
                 <data android:scheme="about" />
                 <data android:scheme="javascript" />
+                <data android:scheme="firefox" />
             </intent-filter>
             <intent-filter>
                 <action android:name="android.intent.action.VIEW" />
@@ -233,11 +235,9 @@
         </service>
 
         <service android:name="org.mozilla.gecko.media.MediaControlService"
-                 android:exported="false">
+                 android:exported="false"
+                 android:stopWithTask="true">
         </service>
-
-        <receiver android:name="org.mozilla.gecko.AlarmReceiver" >
-        </receiver>
 
         <receiver
             android:name="org.mozilla.gecko.notifications.WhatsNewReceiver"
@@ -266,7 +266,7 @@
 #include ../search/manifests/SearchAndroidManifest_activities.xml.in
 #endif
 
-#if MOZ_CRASHREPORTER
+#ifdef MOZ_CRASHREPORTER
   <activity android:name="org.mozilla.gecko.CrashReporter"
             android:process="@ANDROID_PACKAGE_NAME@.CrashReporter"
             android:label="@string/crash_reporter_title"
@@ -314,8 +314,19 @@
 
 #ifdef MOZ_ANDROID_CUSTOM_TABS
         <activity android:name="org.mozilla.gecko.customtabs.CustomTabsActivity"
-            android:theme="@style/Theme.AppCompat.NoActionBar" />
+                  android:configChanges="keyboard|keyboardHidden|mcc|mnc|orientation|screenSize|locale|layoutDirection|smallestScreenSize|screenLayout"
+                  android:windowSoftInputMode="stateUnspecified|adjustResize"
+                  android:theme="@style/GeckoCustomTabs" />
 #endif
+
+        <activity android:name="org.mozilla.gecko.webapps.WebAppActivity"
+            android:theme="@style/Theme.AppCompat.NoActionBar" />
+
+        <!-- Declare a predefined number of WebApp<num> activities. These are
+             used so that each web app can launch in its own activity. -->
+#define FRAGMENT WebAppManifestFragment.xml.frag.in
+#include WebAppFragmentRepeater.inc
+
 
         <!-- Service to handle requests from overlays. -->
         <service android:name="org.mozilla.gecko.overlays.service.OverlayActionService" />
@@ -462,6 +473,17 @@
             android:process=":tab"
             android:isolatedProcess="false">
         </service>
+
+        <service
+            android:name="org.mozilla.gecko.gfx.SurfaceAllocatorService"
+            android:enabled="true"
+            android:exported="false"
+            android:isolatedProcess="false">
+        </service>
+
+#ifdef MOZ_ANDROID_MMA
+#include MmaAndroidManifest_services.xml.in
+#endif
 
     </application>
 </manifest>

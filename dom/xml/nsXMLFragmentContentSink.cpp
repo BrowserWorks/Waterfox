@@ -3,6 +3,7 @@
 /* This Source Code Form is subject to the terms of the Mozilla Public
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
+
 #include "nsCOMPtr.h"
 #include "nsXMLContentSink.h"
 #include "nsIFragmentContentSink.h"
@@ -24,10 +25,10 @@
 #include "nsTArray.h"
 #include "nsCycleCollectionParticipant.h"
 #include "nsIDocShell.h"
-#include "nsScriptLoader.h"
 #include "mozilla/css/Loader.h"
 #include "mozilla/dom/DocumentFragment.h"
 #include "mozilla/dom/ProcessingInstruction.h"
+#include "mozilla/dom/ScriptLoader.h"
 
 using namespace mozilla::dom;
 

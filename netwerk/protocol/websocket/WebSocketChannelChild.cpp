@@ -11,7 +11,7 @@
 #include "WebSocketChannelChild.h"
 #include "nsITabChild.h"
 #include "nsNetUtil.h"
-#include "mozilla/ipc/InputStreamUtils.h"
+#include "mozilla/ipc/IPCStreamUtils.h"
 #include "mozilla/ipc/URIUtils.h"
 #include "mozilla/ipc/BackgroundUtils.h"
 #include "mozilla/net/ChannelEventQueue.h"
@@ -176,6 +176,15 @@ public:
     mChannelEvent->Run();
   }
 
+  already_AddRefed<nsIEventTarget> GetEventTarget()
+  {
+    nsCOMPtr<nsIEventTarget> target = mEventTarget;
+    if (!target) {
+      target = do_GetMainThread();
+    }
+    return target.forget();
+  }
+
 private:
   nsAutoPtr<ChannelEvent> mChannelEvent;
   nsCOMPtr<nsIEventTarget> mEventTarget;
@@ -200,6 +209,13 @@ class StartEvent : public ChannelEvent
   {
     mChild->OnStart(mProtocol, mExtensions, mEffectiveURL, mEncrypted);
   }
+
+  already_AddRefed<nsIEventTarget> GetEventTarget()
+  {
+    nsCOMPtr<nsIEventTarget> target = do_GetCurrentThread();
+    return target.forget();
+  }
+
  private:
   RefPtr<WebSocketChannelChild> mChild;
   nsCString mProtocol;
@@ -258,6 +274,13 @@ class StopEvent : public ChannelEvent
   {
     mChild->OnStop(mStatusCode);
   }
+
+  already_AddRefed<nsIEventTarget> GetEventTarget()
+  {
+    nsCOMPtr<nsIEventTarget> target = do_GetCurrentThread();
+    return target.forget();
+  }
+
  private:
   RefPtr<WebSocketChannelChild> mChild;
   nsresult mStatusCode;
@@ -308,6 +331,13 @@ class MessageEvent : public ChannelEvent
       mChild->OnBinaryMessageAvailable(mMessage);
     }
   }
+
+  already_AddRefed<nsIEventTarget> GetEventTarget()
+  {
+    nsCOMPtr<nsIEventTarget> target = do_GetCurrentThread();
+    return target.forget();
+  }
+
  private:
   RefPtr<WebSocketChannelChild> mChild;
   nsCString mMessage;
@@ -380,6 +410,13 @@ class AcknowledgeEvent : public ChannelEvent
   {
     mChild->OnAcknowledge(mSize);
   }
+
+  already_AddRefed<nsIEventTarget> GetEventTarget()
+  {
+    nsCOMPtr<nsIEventTarget> target = do_GetCurrentThread();
+    return target.forget();
+  }
+
  private:
   RefPtr<WebSocketChannelChild> mChild;
   uint32_t mSize;
@@ -426,6 +463,13 @@ class ServerCloseEvent : public ChannelEvent
   {
     mChild->OnServerClose(mCode, mReason);
   }
+
+  already_AddRefed<nsIEventTarget> GetEventTarget()
+  {
+    nsCOMPtr<nsIEventTarget> target = do_GetCurrentThread();
+    return target.forget();
+  }
+
  private:
   RefPtr<WebSocketChannelChild> mChild;
   uint16_t mCode;
@@ -665,7 +709,7 @@ class BinaryStreamEvent : public Runnable
 {
 public:
   BinaryStreamEvent(WebSocketChannelChild *aChild,
-                    OptionalInputStreamParams *aStream,
+                    nsIInputStream* aStream,
                     uint32_t aLength)
     : mChild(aChild)
     , mStream(aStream)
@@ -685,35 +729,25 @@ public:
     return NS_OK;
   }
 private:
-  RefPtr<WebSocketChannelChild>      mChild;
-  nsAutoPtr<OptionalInputStreamParams> mStream;
-  uint32_t                             mLength;
+  RefPtr<WebSocketChannelChild> mChild;
+  nsCOMPtr<nsIInputStream> mStream;
+  uint32_t mLength;
 };
 
 NS_IMETHODIMP
 WebSocketChannelChild::SendBinaryStream(nsIInputStream *aStream,
                                         uint32_t aLength)
 {
-  OptionalInputStreamParams *stream = new OptionalInputStreamParams();
-  nsTArray<mozilla::ipc::FileDescriptor> fds;
-  SerializeInputStream(aStream, *stream, fds);
-
-  MOZ_ASSERT(fds.IsEmpty());
-
   if (!NS_IsMainThread()) {
     MOZ_RELEASE_ASSERT(NS_GetCurrentThread() == mTargetThread);
-    return NS_DispatchToMainThread(new BinaryStreamEvent(this, stream, aLength));
+    return NS_DispatchToMainThread(new BinaryStreamEvent(this, aStream, aLength));
   }
-  return SendBinaryStream(stream, aLength);
-}
 
-nsresult
-WebSocketChannelChild::SendBinaryStream(OptionalInputStreamParams *aStream,
-                                        uint32_t aLength)
-{
   LOG(("WebSocketChannelChild::SendBinaryStream() %p\n", this));
 
-  nsAutoPtr<OptionalInputStreamParams> stream(aStream);
+  AutoIPCStream autoStream;
+  autoStream.Serialize(aStream,
+                       static_cast<mozilla::dom::ContentChild*>(gNeckoChild->Manager()));
 
   {
     MutexAutoLock lock(mMutex);
@@ -722,7 +756,7 @@ WebSocketChannelChild::SendBinaryStream(OptionalInputStreamParams *aStream,
     }
   }
 
-  if (!SendSendBinaryStream(*stream, aLength)) {
+  if (!SendSendBinaryStream(autoStream.TakeValue(), aLength)) {
     return NS_ERROR_UNEXPECTED;
   }
 
@@ -734,19 +768,6 @@ WebSocketChannelChild::GetSecurityInfo(nsISupports **aSecurityInfo)
 {
   LOG(("WebSocketChannelChild::GetSecurityInfo() %p\n", this));
   return NS_ERROR_NOT_AVAILABLE;
-}
-
-//-----------------------------------------------------------------------------
-// WebSocketChannelChild::nsIThreadRetargetableRequest
-//-----------------------------------------------------------------------------
-
-NS_IMETHODIMP
-WebSocketChannelChild::RetargetDeliveryTo(nsIEventTarget* aTargetThread)
-{
-  nsresult rv = BaseWebSocketChannel::RetargetDeliveryTo(aTargetThread);
-  MOZ_RELEASE_ASSERT(NS_SUCCEEDED(rv));
-
-  return mEventQ->RetargetDeliveryTo(aTargetThread);
 }
 
 bool

@@ -14,7 +14,6 @@ config = {
         'upload-files',
         'sendchange',
         'multi-l10n',
-        'generate-build-stats',
         'update',  # decided by query_is_nightly()
     ],
     "buildbot_json_path": "buildprops.json",
@@ -48,14 +47,22 @@ config = {
         {'filename': '/builds/adjust-sdk-beta.token',
          'secret_name': 'project/releng/gecko/build/level-%(scm-level)s/adjust-sdk-beta.token',
          'min_scm_level': 2, 'default': 'try-build-has-no-secrets'},
+        {'filename': '/builds/leanplum-sdk-release.token',
+         'secret_name': 'project/releng/gecko/build/level-%(scm-level)s/leanplum-sdk-release.token',
+         'min_scm_level': 2, 'default': 'try-build-has-no-secrets'},
+        {'filename': '/builds/leanplum-sdk-beta.token',
+         'secret_name': 'project/releng/gecko/build/level-%(scm-level)s/leanplum-sdk-beta.token',
+         'min_scm_level': 2, 'default': 'try-build-has-no-secrets'},
+        {'filename': '/builds/leanplum-sdk-nightly.token',
+         'secret_name': 'project/releng/gecko/build/level-%(scm-level)s/leanplum-sdk-nightly.token',
+         'min_scm_level': 2, 'default': 'try-build-has-no-secrets'},
     ],
-    'enable_ccache': True,
     'vcs_share_base': '/builds/hg-shared',
     'objdir': 'obj-firefox',
     'tooltool_script': ["/builds/tooltool.py"],
     'tooltool_bootstrap': "setup.sh",
     'enable_count_ctors': False,
-    'enable_talos_sendchange': True,
+    'enable_talos_sendchange': False,
     'enable_unittest_sendchange': True,
     'multi_locale': True,
     #########################################################################
@@ -72,12 +79,11 @@ config = {
     'use_package_as_marfile': True,
     'env': {
         'MOZBUILD_STATE_PATH': os.path.join(os.getcwd(), '.mozbuild'),
-        'MOZ_AUTOMATION': '1',
         'DISPLAY': ':2',
         'HG_SHARE_BASE_DIR': '/builds/hg-shared',
         'MOZ_OBJDIR': 'obj-firefox',
         'TINDERBOX_OUTPUT': '1',
-        'TOOLTOOL_CACHE': '/builds/tooltool_cache',
+        'TOOLTOOL_CACHE': '/home/worker/tooltool-cache',
         'TOOLTOOL_HOME': '/builds',
         'CCACHE_DIR': '/builds/ccache',
         'CCACHE_COMPRESS': '1',
@@ -106,6 +112,5 @@ config = {
                       'ant', 'ant-apache-regexp'
                       ],
     'src_mozconfig': 'mobile/android/config/mozconfigs/android/nightly',
-    'tooltool_manifest_src': "mobile/android/config/tooltool-manifests/android/releng.manifest",
     #########################################################################
 }

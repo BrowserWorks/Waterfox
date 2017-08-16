@@ -39,12 +39,16 @@ import org.json.JSONException;
 import org.json.JSONObject;
 import org.mozilla.gecko.annotation.RobocopTarget;
 import org.mozilla.gecko.AppConstants;
+import org.mozilla.gecko.EventDispatcher;
 import org.mozilla.gecko.GeckoAppShell;
+import org.mozilla.gecko.GeckoApplication;
 import org.mozilla.gecko.GeckoSharedPrefs;
 import org.mozilla.gecko.Telemetry;
 import org.mozilla.gecko.annotation.JNITarget;
 import org.mozilla.gecko.util.FileUtils;
+import org.mozilla.gecko.util.GeckoBundle;
 import org.mozilla.gecko.util.HardwareUtils;
+import org.mozilla.gecko.util.ProxySelector;
 import org.mozilla.gecko.util.ThreadUtils;
 
 import android.app.Activity;
@@ -62,6 +66,10 @@ import android.util.Log;
 @RobocopTarget
 public class Distribution {
     private static final String LOGTAG = "GeckoDistribution";
+
+    // We use "AndroidPreferences" for profile-scoped pref for backward compatibility(bug 1295675)
+    public static final String PREF_KEY_PROFILE_PREFERENCES = "AndroidPreferences";
+    public static final String PREF_KEY_APPLICATION_PREFERENCES = "ApplicationPreferences";
 
     private static final int STATE_UNKNOWN = 0;
     private static final int STATE_NONE = 1;
@@ -227,7 +235,7 @@ public class Distribution {
             public void run() {
                 boolean distributionSet = distribution.doInit();
                 if (distributionSet) {
-                    String preferencesJSON = "";
+                    GeckoBundle data = null;
                     try {
                         final File descFile = distribution.getDistributionFile("preferences.json");
                         if (descFile == null) {
@@ -235,11 +243,15 @@ public class Distribution {
                             // preferences.json file.
                             throw new IOException("preferences.json not found");
                         }
-                        preferencesJSON = FileUtils.readStringFromFile(descFile);
+
+                        final String preferencesJSON = FileUtils.readStringFromFile(descFile);
+                        data = new GeckoBundle(1);
+                        data.putString("preferences", preferencesJSON);
+
                     } catch (IOException e) {
                         Log.e(LOGTAG, "Error getting distribution descriptor file.", e);
                     }
-                    GeckoAppShell.notifyObservers("Distribution:Set", preferencesJSON);
+                    EventDispatcher.getInstance().dispatch("Distribution:Set", data);
                 }
             }
         });
@@ -347,7 +359,7 @@ public class Distribution {
         runLateReadyQueue();
 
         // Make sure that changes to search defaults are applied immediately.
-        GeckoAppShell.notifyObservers("Distribution:Changed", "");
+        EventDispatcher.getInstance().dispatch("Distribution:Changed", null);
     }
 
     /**
@@ -408,10 +420,11 @@ public class Distribution {
     }
 
     /**
-     * Get the Android preferences from the preferences.json file, if any exist.
+     * Get the preferences from the preferences.json file, if any exist.
+     * There are two types of preferences : Application-scoped and profile-scoped (bug 1295675)
      * @return The preferences in a JSONObject, or an empty JSONObject if no preferences are defined.
      */
-    public JSONObject getAndroidPreferences() {
+    public JSONObject getPreferences(String key) {
         final File descFile = getDistributionFile("preferences.json");
         if (descFile == null) {
             // Logging and existence checks are handled in getDistributionFile.
@@ -421,11 +434,11 @@ public class Distribution {
         try {
             final JSONObject all = FileUtils.readJSONObjectFromFile(descFile);
 
-            if (!all.has("AndroidPreferences")) {
+            if (!all.has(key)) {
                 return new JSONObject();
             }
 
-            return all.getJSONObject("AndroidPreferences");
+            return all.getJSONObject(key);
 
         } catch (IOException e) {
             Log.e(LOGTAG, "Error getting distribution descriptor file.", e);
@@ -531,19 +544,11 @@ public class Distribution {
         Log.v(LOGTAG, "Downloading referred distribution: " + uri);
 
         try {
-            final HttpURLConnection connection = (HttpURLConnection) uri.toURL().openConnection();
+            final HttpURLConnection connection = (HttpURLConnection) ProxySelector.openConnectionWithProxy(uri);
 
             // If the Search Activity starts, and we handle the referrer intent, this'll return
             // null. Recover gracefully in this case.
-            final GeckoAppShell.GeckoInterface geckoInterface = GeckoAppShell.getGeckoInterface();
-            final String ua;
-            if (geckoInterface == null) {
-                // Fall back to GeckoApp's default implementation.
-                ua = HardwareUtils.isTablet() ? AppConstants.USER_AGENT_FENNEC_TABLET :
-                                                AppConstants.USER_AGENT_FENNEC_MOBILE;
-            } else {
-                ua = geckoInterface.getDefaultUAString();
-            }
+            final String ua = GeckoApplication.getDefaultUAString();
 
             connection.setRequestProperty(HTTP.USER_AGENT, ua);
             connection.setRequestProperty("Accept", EXPECTED_CONTENT_TYPE);
@@ -638,7 +643,16 @@ public class Distribution {
             return null;
         }
 
-        return new JarInputStream(new BufferedInputStream(connection.getInputStream()), true);
+        final BufferedInputStream bufferedInputStream = new BufferedInputStream(connection.getInputStream());
+        try {
+            return new JarInputStream(bufferedInputStream, true);
+        } catch (IOException e) {
+            // Thrown e.g. if JarInputStream can't parse the input as a valid Zip.
+            // In that case we need to ensure the bufferedInputStream gets closed since it won't
+            // be used anywhere (while still passing the Exception up the stack).
+            bufferedInputStream.close();
+            throw e;
+        }
     }
 
     private static void recordFetchTelemetry(final Exception exception) {
@@ -867,7 +881,7 @@ public class Distribution {
 
         // We restrict here to avoid injection attacks. After all,
         // we're downloading a distribution payload based on intent input.
-        if (!content.matches("^[a-zA-Z0-9]+$")) {
+        if (!content.matches("^[a-zA-Z0-9_-]+$")) {
             Log.e(LOGTAG, "Invalid referrer content: " + content);
             Telemetry.addToHistogram(HISTOGRAM_REFERRER_INVALID, 1);
             return null;

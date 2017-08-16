@@ -15,12 +15,13 @@
 
 #include "builtin/ModuleObject.h"
 #include "ds/InlineTable.h"
-#include "frontend/ParseNode.h"
 #include "frontend/TokenStream.h"
 #include "vm/EnvironmentObject.h"
 
 namespace js {
 namespace frontend {
+
+class ParseNode;
 
 enum class StatementKind : uint8_t
 {
@@ -38,6 +39,7 @@ enum class StatementKind : uint8_t
     ForOfLoop,
     DoLoop,
     WhileLoop,
+    Class,
 
     // Used only by BytecodeEmitter.
     Spread
@@ -59,56 +61,6 @@ StatementKindIsUnlabeledBreakTarget(StatementKind kind)
 {
     return StatementKindIsLoop(kind) || kind == StatementKind::Switch;
 }
-
-// A base class for nestable structures in the frontend, such as statements
-// and scopes.
-template <typename Concrete>
-class MOZ_STACK_CLASS Nestable
-{
-    Concrete** stack_;
-    Concrete*  enclosing_;
-
-  protected:
-    explicit Nestable(Concrete** stack)
-      : stack_(stack),
-        enclosing_(*stack)
-    {
-        *stack_ = static_cast<Concrete*>(this);
-    }
-
-    // These method are protected. Some derived classes, such as ParseContext,
-    // do not expose the ability to walk the stack.
-    Concrete* enclosing() const {
-        return enclosing_;
-    }
-
-    template <typename Predicate /* (Concrete*) -> bool */>
-    static Concrete* findNearest(Concrete* it, Predicate predicate) {
-        while (it && !predicate(it))
-            it = it->enclosing();
-        return it;
-    }
-
-    template <typename T>
-    static T* findNearest(Concrete* it) {
-        while (it && !it->template is<T>())
-            it = it->enclosing();
-        return it ? &it->template as<T>() : nullptr;
-    }
-
-    template <typename T, typename Predicate /* (T*) -> bool */>
-    static T* findNearest(Concrete* it, Predicate predicate) {
-        while (it && (!it->template is<T>() || !predicate(&it->template as<T>())))
-            it = it->enclosing();
-        return it ? &it->template as<T>() : nullptr;
-    }
-
-  public:
-    ~Nestable() {
-        MOZ_ASSERT(*stack_ == static_cast<Concrete*>(this));
-        *stack_ = enclosing_;
-    }
-};
 
 // These flags apply to both global and function contexts.
 class AnyContextFlags
@@ -280,7 +232,7 @@ class SharedContext
 
   protected:
     enum class Kind {
-        ObjectBox,
+        FunctionBox,
         Global,
         Eval,
         Module
@@ -320,15 +272,13 @@ class SharedContext
     // it. Otherwise nullptr.
     virtual Scope* compilationEnclosingScope() const = 0;
 
-    virtual ObjectBox* toObjectBox() { return nullptr; }
-    bool isObjectBox() { return toObjectBox(); }
-    bool isFunctionBox() { return isObjectBox() && toObjectBox()->isFunctionBox(); }
+    bool isFunctionBox() const { return kind_ == Kind::FunctionBox; }
     inline FunctionBox* asFunctionBox();
-    bool isModuleContext() { return kind_ == Kind::Module; }
+    bool isModuleContext() const { return kind_ == Kind::Module; }
     inline ModuleSharedContext* asModuleContext();
-    bool isGlobalContext() { return kind_ == Kind::Global; }
+    bool isGlobalContext() const { return kind_ == Kind::Global; }
     inline GlobalSharedContext* asGlobalContext();
-    bool isEvalContext() { return kind_ == Kind::Eval; }
+    bool isEvalContext() const { return kind_ == Kind::Eval; }
     inline EvalSharedContext* asEvalContext();
 
     ThisBinding thisBinding()          const { return thisBinding_; }
@@ -450,11 +400,12 @@ class FunctionBox : public ObjectBox, public SharedContext
     uint32_t        bufEnd;
     uint32_t        startLine;
     uint32_t        startColumn;
-    uint32_t        preludeStart;
+    uint32_t        toStringStart;
+    uint32_t        toStringEnd;
     uint16_t        length;
 
     uint8_t         generatorKindBits_;     /* The GeneratorKind of this function. */
-    uint8_t         asyncKindBits_;         /* The FunctionAsyncKing of this function. */
+    uint8_t         asyncKindBits_;         /* The FunctionAsyncKind of this function. */
 
     bool            isGenexpLambda:1;       /* lambda from generator expression */
     bool            hasDestructuringArgs:1; /* parameter list contains destructuring expression */
@@ -480,7 +431,7 @@ class FunctionBox : public ObjectBox, public SharedContext
     FunctionContextFlags funCxFlags;
 
     FunctionBox(JSContext* cx, LifoAlloc& alloc, ObjectBox* traceListHead, JSFunction* fun,
-                uint32_t preludeStart, Directives directives, bool extraWarnings,
+                uint32_t toStringStart, Directives directives, bool extraWarnings,
                 GeneratorKind generatorKind, FunctionAsyncKind asyncKind);
 
     MutableHandle<LexicalScope::Data*> namedLambdaBindings() {
@@ -502,7 +453,6 @@ class FunctionBox : public ObjectBox, public SharedContext
     void initStandaloneFunction(Scope* enclosingScope);
     void initWithEnclosingParseContext(ParseContext* enclosing, FunctionSyntaxKind kind);
 
-    ObjectBox* toObjectBox() override { return this; }
     JSFunction* function() const { return &object->as<JSFunction>(); }
 
     Scope* compilationEnclosingScope() const override {
@@ -612,14 +562,16 @@ class FunctionBox : public ObjectBox, public SharedContext
 
     void setStart(const TokenStream& tokenStream) {
         // Token positions are already offset from the start column in
-        // CompileOptions. bufStart and preludeStart, however, refer to
+        // CompileOptions. bufStart and toStringStart, however, refer to
         // absolute positions within the ScriptSource buffer, and need to
         // de-offset from the starting column.
         uint32_t offset = tokenStream.currentToken().pos.begin;
-        MOZ_ASSERT(offset >= tokenStream.options().column);
-        MOZ_ASSERT(preludeStart >= tokenStream.options().column);
-        preludeStart -= tokenStream.options().column;
-        bufStart = offset - tokenStream.options().column;
+        uint32_t sourceStartColumn = tokenStream.options().sourceStartColumn;
+
+        MOZ_ASSERT(offset >= sourceStartColumn);
+        MOZ_ASSERT(toStringStart >= sourceStartColumn);
+        toStringStart -= sourceStartColumn;
+        bufStart = offset - sourceStartColumn;
         tokenStream.srcCoords.lineNumAndColumnIndex(offset, &startLine, &startColumn);
     }
 
@@ -630,8 +582,11 @@ class FunctionBox : public ObjectBox, public SharedContext
         //
         // Offsets are de-offset for the same reason as in setStart above.
         uint32_t offset = tokenStream.currentToken().pos.end;
-        MOZ_ASSERT(offset >= tokenStream.options().column);
-        bufEnd = offset - tokenStream.options().column;
+        uint32_t sourceStartColumn = tokenStream.options().sourceStartColumn;
+
+        MOZ_ASSERT(offset >= sourceStartColumn);
+        bufEnd = offset - sourceStartColumn;
+        toStringEnd = bufEnd;
     }
 
     void trace(JSTracer* trc) override;

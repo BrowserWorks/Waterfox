@@ -123,6 +123,7 @@ namespace jit {
     _(JSOP_DELELEM)            \
     _(JSOP_STRICTDELELEM)      \
     _(JSOP_IN)                 \
+    _(JSOP_HASOWN)             \
     _(JSOP_GETGNAME)           \
     _(JSOP_BINDGNAME)          \
     _(JSOP_SETGNAME)           \
@@ -160,6 +161,7 @@ namespace jit {
     _(JSOP_INITALIASEDLEXICAL) \
     _(JSOP_UNINITIALIZED)      \
     _(JSOP_CALL)               \
+    _(JSOP_CALL_IGNORES_RV)    \
     _(JSOP_CALLITER)           \
     _(JSOP_FUNCALL)            \
     _(JSOP_FUNAPPLY)           \
@@ -196,6 +198,8 @@ namespace jit {
     _(JSOP_RUNONCE)            \
     _(JSOP_REST)               \
     _(JSOP_TOASYNC)            \
+    _(JSOP_TOASYNCGEN)         \
+    _(JSOP_TOASYNCITER)        \
     _(JSOP_TOID)               \
     _(JSOP_TOSTRING)           \
     _(JSOP_TABLESWITCH)        \
@@ -237,7 +241,11 @@ namespace jit {
     _(JSOP_DEBUGCHECKSELFHOSTED) \
     _(JSOP_JUMPTARGET)         \
     _(JSOP_IS_CONSTRUCTING)    \
-    _(JSOP_TRY_DESTRUCTURING_ITERCLOSE)
+    _(JSOP_TRY_DESTRUCTURING_ITERCLOSE) \
+    _(JSOP_CHECKCLASSHERITAGE) \
+    _(JSOP_BUILTINPROTO)       \
+    _(JSOP_OBJWITHPROTO)       \
+    _(JSOP_FUNWITHPROTO)
 
 class BaselineCompiler : public BaselineCompilerSpecific
 {

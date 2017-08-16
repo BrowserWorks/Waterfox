@@ -15,30 +15,35 @@
 
 namespace js {
 
-class XDRBuffer {
+class XDRBufferBase
+{
   public:
-    XDRBuffer(JSContext* cx, JS::TranscodeBuffer& buffer, size_t cursor = 0)
-      : context_(cx), buffer_(buffer), cursor_(cursor) { }
+    explicit XDRBufferBase(JSContext* cx, size_t cursor = 0)
+      : context_(cx), cursor_(cursor) { }
 
     JSContext* cx() const {
         return context_;
     }
 
-    const uint8_t* read(size_t n) {
-        MOZ_ASSERT(cursor_ < buffer_.length());
-        uint8_t* ptr = &buffer_[cursor_];
-        cursor_ += n;
-        return ptr;
+    size_t cursor() const {
+        return cursor_;
     }
 
-    const char* readCString() {
-        char* ptr = reinterpret_cast<char*>(&buffer_[cursor_]);
-        uint8_t* end = reinterpret_cast<uint8_t*>(strchr(ptr, '\0')) + 1;
-        MOZ_ASSERT(buffer_.begin() < end);
-        MOZ_ASSERT(end <= buffer_.end());
-        cursor_ = end - buffer_.begin();
-        return ptr;
-    }
+  protected:
+    JSContext* const context_;
+    size_t cursor_;
+};
+
+template <XDRMode mode>
+class XDRBuffer;
+
+template <>
+class XDRBuffer<XDR_ENCODE> : public XDRBufferBase
+{
+  public:
+    XDRBuffer(JSContext* cx, JS::TranscodeBuffer& buffer, size_t cursor = 0)
+      : XDRBufferBase(cx, cursor),
+        buffer_(buffer) { }
 
     uint8_t* write(size_t n) {
         MOZ_ASSERT(n != 0);
@@ -51,14 +56,55 @@ class XDRBuffer {
         return ptr;
     }
 
-    size_t cursor() const {
-        return cursor_;
+    const char* readCString() {
+        MOZ_CRASH("Should never read in encode mode");
+        return nullptr;
+    }
+
+    const uint8_t* read(size_t n) {
+        MOZ_CRASH("Should never read in encode mode");
+        return nullptr;
     }
 
   private:
-    JSContext* const context_;
     JS::TranscodeBuffer& buffer_;
-    size_t cursor_;
+};
+
+template <>
+class XDRBuffer<XDR_DECODE> : public XDRBufferBase
+{
+  public:
+    XDRBuffer(JSContext* cx, const JS::TranscodeRange& range)
+      : XDRBufferBase(cx),
+        buffer_(range) { }
+
+    XDRBuffer(JSContext* cx, JS::TranscodeBuffer& buffer, size_t cursor = 0)
+      : XDRBufferBase(cx, cursor),
+        buffer_(buffer.begin(), buffer.length()) { }
+
+    const char* readCString() {
+        char* ptr = reinterpret_cast<char*>(&buffer_[cursor_]);
+        uint8_t* end = reinterpret_cast<uint8_t*>(strchr(ptr, '\0')) + 1;
+        MOZ_ASSERT(buffer_.begin().get() < end);
+        MOZ_ASSERT(end <= buffer_.end().get());
+        cursor_ = end - buffer_.begin().get();
+        return ptr;
+    }
+
+    const uint8_t* read(size_t n) {
+        MOZ_ASSERT(cursor_ < buffer_.length());
+        uint8_t* ptr = &buffer_[cursor_];
+        cursor_ += n;
+        return ptr;
+    }
+
+    uint8_t* write(size_t n) {
+        MOZ_CRASH("Should never write in decode mode");
+        return nullptr;
+    }
+
+  private:
+    const JS::TranscodeRange buffer_;
 };
 
 class XDRCoderBase;
@@ -124,13 +170,20 @@ template <XDRMode mode>
 class XDRState : public XDRCoderBase
 {
   public:
-    XDRBuffer buf;
+    XDRBuffer<mode> buf;
   private:
     JS::TranscodeResult resultCode_;
 
   public:
     XDRState(JSContext* cx, JS::TranscodeBuffer& buffer, size_t cursor = 0)
       : buf(cx, buffer, cursor),
+        resultCode_(JS::TranscodeResult_Ok)
+    {
+    }
+
+    template <typename RangeType>
+    XDRState(JSContext* cx, const RangeType& range)
+      : buf(cx, range),
         resultCode_(JS::TranscodeResult_Ok)
     {
     }
@@ -307,8 +360,8 @@ class XDROffThreadDecoder : public XDRDecoder
     XDROffThreadDecoder(JSContext* cx, LifoAlloc& alloc,
                         const ReadOnlyCompileOptions* options,
                         ScriptSourceObject** sourceObjectOut,
-                        JS::TranscodeBuffer& buffer, size_t cursor = 0)
-      : XDRDecoder(cx, buffer, cursor),
+                        const JS::TranscodeRange& range)
+      : XDRDecoder(cx, range),
         options_(options),
         sourceObjectOut_(sourceObjectOut),
         alloc_(alloc)
@@ -395,18 +448,15 @@ class XDRIncrementalEncoder : public XDREncoder
     // Tree of slices.
     SlicesTree tree_;
     JS::TranscodeBuffer slices_;
-    JS::TranscodeBuffer& buffer_;
     bool oom_;
 
   public:
-    XDRIncrementalEncoder(JSContext* cx, JS::TranscodeBuffer& buffer, size_t cursor)
+    explicit XDRIncrementalEncoder(JSContext* cx)
       : XDREncoder(cx, slices_, 0),
         scope_(nullptr),
         node_(nullptr),
-        buffer_(buffer),
         oom_(false)
     {
-        MOZ_ASSERT(buffer.length() == cursor, "NYI");
     }
 
     virtual ~XDRIncrementalEncoder() {}
@@ -419,9 +469,9 @@ class XDRIncrementalEncoder : public XDREncoder
     void createOrReplaceSubTree(AutoXDRTree* child) override;
     void endSubTree() override;
 
-    // In the current XDRBuffer, move replaceable-parts to form a linear
-    // sequence of bytes.
-    MOZ_MUST_USE bool linearize();
+    // Append the content collected during the incremental encoding into the
+    // buffer given as argument.
+    MOZ_MUST_USE bool linearize(JS::TranscodeBuffer& buffer);
 };
 
 } /* namespace js */

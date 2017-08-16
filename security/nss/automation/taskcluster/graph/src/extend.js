@@ -5,8 +5,20 @@
 import merge from "./merge";
 import * as queue from "./queue";
 
-const LINUX_IMAGE = {name: "linux", path: "automation/taskcluster/docker"};
-const FUZZ_IMAGE = {name: "fuzz", path: "automation/taskcluster/docker-fuzz"};
+const LINUX_IMAGE = {
+  name: "linux",
+  path: "automation/taskcluster/docker"
+};
+
+const LINUX_CLANG39_IMAGE = {
+  name: "linux-clang-3.9",
+  path: "automation/taskcluster/docker-clang-3.9"
+};
+
+const FUZZ_IMAGE = {
+  name: "fuzz",
+  path: "automation/taskcluster/docker-fuzz"
+};
 
 const WINDOWS_CHECKOUT_CMD =
   "bash -c \"hg clone -r $NSS_HEAD_REVISION $NSS_HEAD_REPOSITORY nss || " +
@@ -22,21 +34,16 @@ queue.filter(task => {
       return false;
     }
 
-    // Remove extra builds w/o libpkix for non-linux64-debug.
-    if (task.symbol == "noLibpkix" &&
-        (task.platform != "linux64" || task.collection != "debug")) {
-      return false;
-    }
-
-    // Make modular builds only on Linux x64.
-    if (task.symbol == "modular" && task.platform != "linux64") {
+    // Make modular builds only on Linux make.
+    if (task.symbol == "modular" && task.collection != "make") {
       return false;
     }
   }
 
   if (task.tests == "bogo" || task.tests == "interop") {
     // No windows
-    if (task.platform == "windows2012-64") {
+    if (task.platform == "windows2012-64" ||
+        task.platform == "windows2012-32") {
       return false;
     }
 
@@ -46,9 +53,22 @@ queue.filter(task => {
     }
   }
 
-  // GYP builds with -Ddisable_libpkix=1 by default.
-  if ((task.collection == "gyp" || task.collection == "asan"
-       || task.platform == "aarch64") && task.tests == "chains") {
+  // Only old make builds have -Ddisable_libpkix=0 and can run chain tests.
+  if (task.tests == "chains" && task.collection != "make") {
+    return false;
+  }
+
+  if (task.group == "Test") {
+    // Don't run test builds on old make platforms
+    if (task.collection == "make") {
+      return false;
+    }
+  }
+
+  // Don't run additional hardware tests on ARM (we don't have anything there).
+  if (task.group == "Cipher" && task.platform == "aarch64" && task.env &&
+      (task.env.NSS_DISABLE_PCLMUL == "1" || task.env.NSS_DISABLE_HW_AES == "1"
+       || task.env.NSS_DISABLE_AVX == "1")) {
     return false;
   }
 
@@ -75,47 +95,51 @@ queue.map(task => {
 
 export default async function main() {
   await scheduleLinux("Linux 32 (opt)", {
-    env: {BUILD_OPT: "1"},
     platform: "linux32",
     image: LINUX_IMAGE
-  });
+  }, "-m32 --opt");
 
   await scheduleLinux("Linux 32 (debug)", {
     platform: "linux32",
     collection: "debug",
     image: LINUX_IMAGE
-  });
+  }, "-m32");
 
   await scheduleLinux("Linux 64 (opt)", {
-    env: {USE_64: "1", BUILD_OPT: "1"},
     platform: "linux64",
     image: LINUX_IMAGE
-  });
+  }, "--opt");
 
   await scheduleLinux("Linux 64 (debug)", {
-    env: {USE_64: "1"},
     platform: "linux64",
     collection: "debug",
     image: LINUX_IMAGE
   });
 
-  await scheduleLinux("Linux 64 (debug, gyp)", {
-    command: [
-      "/bin/bash",
-      "-c",
-      "bin/checkout.sh && nss/automation/taskcluster/scripts/build_gyp.sh"
-    ],
+  await scheduleLinux("Linux 64 (debug, make)", {
+    env: {USE_64: "1"},
     platform: "linux64",
-    collection: "gyp",
-    image: LINUX_IMAGE
+    image: LINUX_IMAGE,
+    collection: "make",
+    command: [
+       "/bin/bash",
+       "-c",
+       "bin/checkout.sh && nss/automation/taskcluster/scripts/build.sh"
+    ],
   });
 
-  await scheduleLinux("Linux 64 (GYP, ASan, debug)", {
+  await scheduleLinux("Linux 32 (debug, make)", {
+    platform: "linux32",
+    image: LINUX_IMAGE,
+    collection: "make",
     command: [
-      "/bin/bash",
-      "-c",
-      "bin/checkout.sh && nss/automation/taskcluster/scripts/build_gyp.sh -g -v --ubsan --asan"
+       "/bin/bash",
+       "-c",
+       "bin/checkout.sh && nss/automation/taskcluster/scripts/build.sh"
     ],
+  });
+
+  await scheduleLinux("Linux 64 (ASan, debug)", {
     env: {
       UBSAN_OPTIONS: "print_stacktrace=1",
       NSS_DISABLE_ARENA_FREE_LIST: "1",
@@ -125,20 +149,41 @@ export default async function main() {
     },
     platform: "linux64",
     collection: "asan",
-    image: LINUX_IMAGE
-  });
+    image: LINUX_IMAGE,
+    features: ["allowPtrace"],
+  }, "--ubsan --asan");
+
+  await scheduleWindows("Windows 2012 64 (debug, make)", {
+    platform: "windows2012-64",
+    collection: "make",
+    env: {USE_64: "1"}
+  }, "build.sh");
+
+  await scheduleWindows("Windows 2012 32 (debug, make)", {
+    platform: "windows2012-32",
+    collection: "make"
+  }, "build.sh");
 
   await scheduleWindows("Windows 2012 64 (opt)", {
-    env: {BUILD_OPT: "1"}
-  });
+    platform: "windows2012-64",
+  }, "build_gyp.sh --opt");
 
   await scheduleWindows("Windows 2012 64 (debug)", {
+    platform: "windows2012-64",
     collection: "debug"
-  });
+  }, "build_gyp.sh");
+
+  await scheduleWindows("Windows 2012 32 (opt)", {
+    platform: "windows2012-32",
+  }, "build_gyp.sh --opt -m32");
+
+  await scheduleWindows("Windows 2012 32 (debug)", {
+    platform: "windows2012-32",
+    collection: "debug"
+  }, "build_gyp.sh -m32");
 
   await scheduleFuzzing();
-
-  await scheduleTestBuilds();
+  await scheduleFuzzing32();
 
   await scheduleTools();
 
@@ -175,13 +220,13 @@ export default async function main() {
 
 /*****************************************************************************/
 
-async function scheduleLinux(name, base) {
+async function scheduleLinux(name, base, args = "") {
   // Build base definition.
   let build_base = merge({
     command: [
       "/bin/bash",
       "-c",
-      "bin/checkout.sh && nss/automation/taskcluster/scripts/build.sh"
+      "bin/checkout.sh && nss/automation/taskcluster/scripts/build_gyp.sh " + args
     ],
     artifacts: {
       public: {
@@ -221,12 +266,12 @@ async function scheduleLinux(name, base) {
   // Extra builds.
   let extra_base = merge({group: "Builds"}, build_base);
   queue.scheduleTask(merge(extra_base, {
-    name: `${name} w/ clang-3.9`,
+    name: `${name} w/ clang-4.0`,
     env: {
       CC: "clang",
       CCC: "clang++",
     },
-    symbol: "clang-3.9"
+    symbol: "clang-4.0"
   }));
 
   queue.scheduleTask(merge(extra_base, {
@@ -248,16 +293,17 @@ async function scheduleLinux(name, base) {
   }));
 
   queue.scheduleTask(merge(extra_base, {
-    name: `${name} w/ NSS_DISABLE_LIBPKIX=1`,
-    env: {NSS_DISABLE_LIBPKIX: "1"},
-    symbol: "noLibpkix"
-  }));
-
-  queue.scheduleTask(merge(extra_base, {
     name: `${name} w/ modular builds`,
     env: {NSS_BUILD_MODULAR: "1"},
+    command: [
+      "/bin/bash",
+      "-c",
+      "bin/checkout.sh && nss/automation/taskcluster/scripts/build.sh",
+    ],
     symbol: "modular"
   }));
+
+  await scheduleTestBuilds(merge(base, {group: "Test"}), args);
 
   return queue.submit();
 }
@@ -284,7 +330,7 @@ function scheduleFuzzingRun(base, name, target, max_len, symbol = null, corpus =
 async function scheduleFuzzing() {
   let base = {
     env: {
-      ASAN_OPTIONS: "allocator_may_return_null=1",
+      ASAN_OPTIONS: "allocator_may_return_null=1:detect_stack_use_after_return=1",
       UBSAN_OPTIONS: "print_stacktrace=1",
       NSS_DISABLE_ARENA_FREE_LIST: "1",
       NSS_DISABLE_UNLOAD: "1",
@@ -368,31 +414,137 @@ async function scheduleFuzzing() {
   let tls_base = merge(run_base, {group: "TLS"});
   scheduleFuzzingRun(tls_base, "TLS Client", "tls-client", 20000, "client-nfm",
                      "tls-client-no_fuzzer_mode");
+  scheduleFuzzingRun(tls_base, "TLS Server", "tls-server", 20000, "server-nfm",
+                     "tls-server-no_fuzzer_mode");
+  scheduleFuzzingRun(tls_base, "DTLS Client", "dtls-client", 20000,
+                     "dtls-client-nfm", "dtls-client-no_fuzzer_mode");
+  scheduleFuzzingRun(tls_base, "DTLS Server", "dtls-server", 20000,
+                     "dtls-server-nfm", "dtls-server-no_fuzzer_mode");
 
   // Schedule TLS fuzzing runs (fuzzing mode).
   let tls_fm_base = merge(tls_base, {parent: task_build_tls});
   scheduleFuzzingRun(tls_fm_base, "TLS Client", "tls-client", 20000, "client");
+  scheduleFuzzingRun(tls_fm_base, "TLS Server", "tls-server", 20000, "server");
+  scheduleFuzzingRun(tls_fm_base, "DTLS Client", "dtls-client", 20000, "dtls-client");
+  scheduleFuzzingRun(tls_fm_base, "DTLS Server", "dtls-server", 20000, "dtls-server");
+
+  return queue.submit();
+}
+
+async function scheduleFuzzing32() {
+  let base = {
+    env: {
+      ASAN_OPTIONS: "allocator_may_return_null=1:detect_stack_use_after_return=1",
+      UBSAN_OPTIONS: "print_stacktrace=1",
+      NSS_DISABLE_ARENA_FREE_LIST: "1",
+      NSS_DISABLE_UNLOAD: "1",
+      CC: "clang",
+      CCC: "clang++"
+    },
+    features: ["allowPtrace"],
+    platform: "linux32",
+    collection: "fuzz",
+    image: FUZZ_IMAGE
+  };
+
+  // Build base definition.
+  let build_base = merge({
+    command: [
+      "/bin/bash",
+      "-c",
+      "bin/checkout.sh && " +
+      "nss/automation/taskcluster/scripts/build_gyp.sh -g -v --fuzz -m32"
+    ],
+    artifacts: {
+      public: {
+        expires: 24 * 7,
+        type: "directory",
+        path: "/home/worker/artifacts"
+      }
+    },
+    kind: "build",
+    symbol: "B"
+  }, base);
+
+  // The task that builds NSPR+NSS.
+  let task_build = queue.scheduleTask(merge(build_base, {
+    name: "Linux 32 (debug, fuzz)"
+  }));
+
+  // The task that builds NSPR+NSS (TLS fuzzing mode).
+  let task_build_tls = queue.scheduleTask(merge(build_base, {
+    name: "Linux 32 (debug, TLS fuzz)",
+    symbol: "B",
+    group: "TLS",
+    command: [
+      "/bin/bash",
+      "-c",
+      "bin/checkout.sh && " +
+      "nss/automation/taskcluster/scripts/build_gyp.sh -g -v --fuzz=tls -m32"
+    ],
+  }));
+
+  // Schedule tests.
+  queue.scheduleTask(merge(base, {
+    parent: task_build_tls,
+    name: "Gtests",
+    command: [
+      "/bin/bash",
+      "-c",
+      "bin/checkout.sh && nss/automation/taskcluster/scripts/run_tests.sh"
+    ],
+    env: {GTESTFILTER: "*Fuzz*"},
+    tests: "ssl_gtests gtests",
+    cycle: "standard",
+    symbol: "Gtest",
+    kind: "test"
+  }));
+
+  // Schedule fuzzing runs.
+  let run_base = merge(base, {parent: task_build, kind: "test"});
+  scheduleFuzzingRun(run_base, "CertDN", "certDN", 4096);
+  scheduleFuzzingRun(run_base, "QuickDER", "quickder", 10000);
+
+  // Schedule MPI fuzzing runs.
+  let mpi_base = merge(run_base, {group: "MPI"});
+  let mpi_names = ["add", "addmod", "div", "expmod", "mod", "mulmod", "sqr",
+                   "sqrmod", "sub", "submod"];
+  for (let name of mpi_names) {
+    scheduleFuzzingRun(mpi_base, `MPI (${name})`, `mpi-${name}`, 4096, name);
+  }
+  scheduleFuzzingRun(mpi_base, `MPI (invmod)`, `mpi-invmod`, 256, "invmod");
+
+  // Schedule TLS fuzzing runs (non-fuzzing mode).
+  let tls_base = merge(run_base, {group: "TLS"});
+  scheduleFuzzingRun(tls_base, "TLS Client", "tls-client", 20000, "client-nfm",
+                     "tls-client-no_fuzzer_mode");
+  scheduleFuzzingRun(tls_base, "TLS Server", "tls-server", 20000, "server-nfm",
+                     "tls-server-no_fuzzer_mode");
+  scheduleFuzzingRun(tls_base, "DTLS Client", "dtls-client", 20000,
+                     "dtls-client-nfm", "dtls-client-no_fuzzer_mode");
+  scheduleFuzzingRun(tls_base, "DTLS Server", "dtls-server", 20000,
+                     "dtls-server-nfm", "dtls-server-no_fuzzer_mode");
+
+  // Schedule TLS fuzzing runs (fuzzing mode).
+  let tls_fm_base = merge(tls_base, {parent: task_build_tls});
+  scheduleFuzzingRun(tls_fm_base, "TLS Client", "tls-client", 20000, "client");
+  scheduleFuzzingRun(tls_fm_base, "TLS Server", "tls-server", 20000, "server");
+  scheduleFuzzingRun(tls_fm_base, "DTLS Client", "dtls-client", 20000, "dtls-client");
+  scheduleFuzzingRun(tls_fm_base, "DTLS Server", "dtls-server", 20000, "dtls-server");
 
   return queue.submit();
 }
 
 /*****************************************************************************/
 
-async function scheduleTestBuilds() {
-  let base = {
-    platform: "linux64",
-    collection: "gyp",
-    group: "Test",
-    image: LINUX_IMAGE
-  };
-
+async function scheduleTestBuilds(base, args = "") {
   // Build base definition.
   let build = merge({
     command: [
       "/bin/bash",
       "-c",
       "bin/checkout.sh && " +
-      "nss/automation/taskcluster/scripts/build_gyp.sh -g -v --test --ct-verif"
+      "nss/automation/taskcluster/scripts/build_gyp.sh -g -v --test --ct-verif " + args
     ],
     artifacts: {
       public: {
@@ -403,7 +555,7 @@ async function scheduleTestBuilds() {
     },
     kind: "build",
     symbol: "B",
-    name: "Linux 64 (debug, gyp, test)"
+    name: "Linux 64 (debug, test)"
   }, base);
 
   // The task that builds NSPR+NSS.
@@ -423,6 +575,19 @@ async function scheduleTestBuilds() {
     symbol: "mpi",
     kind: "test"
   }));
+  queue.scheduleTask(merge(base, {
+    parent: task_build,
+    command: [
+      "/bin/bash",
+      "-c",
+      "bin/checkout.sh && nss/automation/taskcluster/scripts/run_tests.sh"
+    ],
+    name: "Gtests",
+    symbol: "Gtest",
+    tests: "gtests",
+    cycle: "standard",
+    kind: "test"
+  }));
 
   return queue.submit();
 }
@@ -430,10 +595,9 @@ async function scheduleTestBuilds() {
 
 /*****************************************************************************/
 
-async function scheduleWindows(name, base) {
+async function scheduleWindows(name, base, build_script) {
   base = merge(base, {
     workerType: "nss-win2012r2",
-    platform: "windows2012-64",
     env: {
       PATH: "c:\\mozilla-build\\python;c:\\mozilla-build\\msys\\local\\bin;" +
             "c:\\mozilla-build\\7zip;c:\\mozilla-build\\info-zip;" +
@@ -443,7 +607,6 @@ async function scheduleWindows(name, base) {
             "c:\\mozilla-build\\wget",
       DOMSUF: "localdomain",
       HOST: "localhost",
-      USE_64: "1"
     }
   });
 
@@ -451,7 +614,7 @@ async function scheduleWindows(name, base) {
   let build_base = merge(base, {
     command: [
       WINDOWS_CHECKOUT_CMD,
-      "bash -c nss/automation/taskcluster/windows/build.sh"
+      `bash -c 'nss/automation/taskcluster/windows/${build_script}'`
     ],
     artifacts: [{
       expires: 24 * 7,
@@ -507,7 +670,19 @@ function scheduleTests(task_build, task_cert, test_base) {
     name: "Chains tests", symbol: "Chains", tests: "chains"
   }));
   queue.scheduleTask(merge(no_cert_base, {
-    name: "Cipher tests", symbol: "Cipher", tests: "cipher"
+    name: "Cipher tests", symbol: "Default", tests: "cipher", group: "Cipher"
+  }));
+  queue.scheduleTask(merge(no_cert_base, {
+    name: "Cipher tests", symbol: "NoAESNI", tests: "cipher",
+    env: {NSS_DISABLE_HW_AES: "1"}, group: "Cipher"
+  }));
+  queue.scheduleTask(merge(no_cert_base, {
+    name: "Cipher tests", symbol: "NoPCLMUL", tests: "cipher",
+    env: {NSS_DISABLE_PCLMUL: "1"}, group: "Cipher"
+  }));
+  queue.scheduleTask(merge(no_cert_base, {
+    name: "Cipher tests", symbol: "NoAVX", tests: "cipher",
+    env: {NSS_DISABLE_AVX: "1"}, group: "Cipher"
   }));
   queue.scheduleTask(merge(no_cert_base, {
     name: "EC tests", symbol: "EC", tests: "ec"
@@ -560,7 +735,6 @@ function scheduleTests(task_build, task_cert, test_base) {
 
 async function scheduleTools() {
   let base = {
-    image: LINUX_IMAGE,
     platform: "nss-tools",
     kind: "test"
   };
@@ -568,6 +742,7 @@ async function scheduleTools() {
   queue.scheduleTask(merge(base, {
     symbol: "clang-format-3.9",
     name: "clang-format-3.9",
+    image: LINUX_CLANG39_IMAGE,
     command: [
       "/bin/bash",
       "-c",
@@ -576,8 +751,9 @@ async function scheduleTools() {
   }));
 
   queue.scheduleTask(merge(base, {
-    symbol: "scan-build-3.9",
-    name: "scan-build-3.9",
+    symbol: "scan-build-4.0",
+    name: "scan-build-4.0",
+    image: LINUX_IMAGE,
     env: {
       USE_64: "1",
       CC: "clang",

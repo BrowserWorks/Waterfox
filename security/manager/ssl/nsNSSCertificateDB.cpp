@@ -17,7 +17,6 @@
 #include "nsArray.h"
 #include "nsArrayUtils.h"
 #include "nsCOMPtr.h"
-#include "nsCRT.h"
 #include "nsComponentManagerUtils.h"
 #include "nsICertificateDialogs.h"
 #include "nsIFile.h"
@@ -969,6 +968,9 @@ nsNSSCertificateDB::ImportCertsFromFile(nsIFile* aFile, uint32_t aType)
 NS_IMETHODIMP
 nsNSSCertificateDB::ImportPKCS12File(nsIFile* aFile)
 {
+  if (!NS_IsMainThread()) {
+    return NS_ERROR_NOT_SAME_THREAD;
+  }
   nsNSSShutDownPreventionLock locker;
   if (isAlreadyShutDown()) {
     return NS_ERROR_NOT_AVAILABLE;
@@ -983,6 +985,9 @@ NS_IMETHODIMP
 nsNSSCertificateDB::ExportPKCS12File(nsIFile* aFile, uint32_t count,
                                      nsIX509Cert** certs)
 {
+  if (!NS_IsMainThread()) {
+    return NS_ERROR_NOT_SAME_THREAD;
+  }
   nsNSSShutDownPreventionLock locker;
   if (isAlreadyShutDown()) {
     return NS_ERROR_NOT_AVAILABLE;
@@ -1395,25 +1400,27 @@ VerifyCertAtTime(nsIX509Cert* aCert,
   SECOidTag evOidPolicy;
   mozilla::pkix::Result result;
 
-  const nsCString& flatHostname = PromiseFlatCString(aHostname);
   if (!aHostname.IsVoid() && aUsage == certificateUsageSSLServer) {
     result = certVerifier->VerifySSLServerCert(nssCert,
                                                nullptr, // stapledOCSPResponse
                                                nullptr, // sctsFromTLSExtension
                                                aTime,
                                                nullptr, // Assume no context
-                                               flatHostname.get(),
+                                               aHostname,
                                                resultChain,
+                                               nullptr, // no peerCertChain
                                                false, // don't save intermediates
                                                aFlags,
                                                OriginAttributes(),
                                                &evOidPolicy);
   } else {
+    const nsCString& flatHostname = PromiseFlatCString(aHostname);
     result = certVerifier->VerifyCert(nssCert.get(), aUsage, aTime,
                                       nullptr, // Assume no context
                                       aHostname.IsVoid() ? nullptr
                                                          : flatHostname.get(),
                                       resultChain,
+                                      nullptr, // no peerCertChain
                                       aFlags,
                                       nullptr, // stapledOCSPResponse
                                       nullptr, // sctsFromTLSExtension

@@ -69,8 +69,10 @@ public:
 MediaDecoderReader::MediaDecoderReader(AbstractMediaDecoder* aDecoder)
   : mAudioCompactor(mAudioQueue)
   , mDecoder(aDecoder)
-  , mTaskQueue(new TaskQueue(GetMediaThreadPool(MediaThreadType::PLAYBACK),
-                             /* aSupportsTailDispatch = */ true))
+  , mTaskQueue(new TaskQueue(
+      GetMediaThreadPool(MediaThreadType::PLAYBACK),
+      "MediaDecoderReader::mTaskQueue",
+      /* aSupportsTailDispatch = */ true))
   , mWatchManager(this, mTaskQueue)
   , mBuffered(mTaskQueue, TimeIntervals(), "MediaDecoderReader::mBuffered (Canonical)")
   , mDuration(mTaskQueue, NullableTimeUnit(), "MediaDecoderReader::mDuration (Mirror)")
@@ -153,18 +155,18 @@ nsresult MediaDecoderReader::ResetDecode(TrackSet aTracks)
   return NS_OK;
 }
 
-RefPtr<MediaDecoderReader::MediaDataPromise>
+RefPtr<MediaDecoderReader::VideoDataPromise>
 MediaDecoderReader::DecodeToFirstVideoData()
 {
   MOZ_ASSERT(OnTaskQueue());
-  typedef MediaDecoderReader::MediaDataPromise PromiseType;
+  typedef VideoDataPromise PromiseType;
   RefPtr<PromiseType::Private> p = new PromiseType::Private(__func__);
   RefPtr<MediaDecoderReader> self = this;
   InvokeUntil([self] () -> bool {
     MOZ_ASSERT(self->OnTaskQueue());
     NS_ENSURE_TRUE(!self->mShutdown, false);
     bool skip = false;
-    if (!self->DecodeVideoFrame(skip, 0)) {
+    if (!self->DecodeVideoFrame(skip, media::TimeUnit::Zero())) {
       self->VideoQueue().Finish();
       return !!self->VideoQueue().PeekFront();
     }
@@ -215,30 +217,33 @@ MediaDecoderReader::AsyncReadMetadata()
   DECODER_LOG("MediaDecoderReader::AsyncReadMetadata");
 
   // Attempt to read the metadata.
-  RefPtr<MetadataHolder> metadata = new MetadataHolder();
-  nsresult rv = ReadMetadata(&metadata->mInfo, getter_Transfers(metadata->mTags));
-  metadata->mInfo.AssertValid();
+  MetadataHolder metadata;
+  metadata.mInfo = MakeUnique<MediaInfo>();
+  MetadataTags* tags = nullptr;
+  nsresult rv = ReadMetadata(metadata.mInfo.get(), &tags);
+  metadata.mTags.reset(tags);
+  metadata.mInfo->AssertValid();
 
   // Update the buffer ranges before resolving the metadata promise. Bug 1320258.
   UpdateBuffered();
 
   // We're not waiting for anything. If we didn't get the metadata, that's an
   // error.
-  if (NS_FAILED(rv) || !metadata->mInfo.HasValidMedia()) {
+  if (NS_FAILED(rv) || !metadata.mInfo->HasValidMedia()) {
     DECODER_WARN("ReadMetadata failed, rv=%" PRIx32 " HasValidMedia=%d",
-                 static_cast<uint32_t>(rv), metadata->mInfo.HasValidMedia());
+                 static_cast<uint32_t>(rv), metadata.mInfo->HasValidMedia());
     return MetadataPromise::CreateAndReject(NS_ERROR_DOM_MEDIA_METADATA_ERR, __func__);
   }
 
   // Success!
-  return MetadataPromise::CreateAndResolve(metadata, __func__);
+  return MetadataPromise::CreateAndResolve(Move(metadata), __func__);
 }
 
 class ReRequestVideoWithSkipTask : public Runnable
 {
 public:
   ReRequestVideoWithSkipTask(MediaDecoderReader* aReader,
-                             int64_t aTimeThreshold)
+                             const media::TimeUnit& aTimeThreshold)
     : mReader(aReader)
     , mTimeThreshold(aTimeThreshold)
   {
@@ -258,7 +263,7 @@ public:
 
 private:
   RefPtr<MediaDecoderReader> mReader;
-  const int64_t mTimeThreshold;
+  const media::TimeUnit mTimeThreshold;
 };
 
 class ReRequestAudioTask : public Runnable
@@ -285,11 +290,11 @@ private:
   RefPtr<MediaDecoderReader> mReader;
 };
 
-RefPtr<MediaDecoderReader::MediaDataPromise>
+RefPtr<MediaDecoderReader::VideoDataPromise>
 MediaDecoderReader::RequestVideoData(bool aSkipToNextKeyframe,
-                                     int64_t aTimeThreshold)
+                                     const media::TimeUnit& aTimeThreshold)
 {
-  RefPtr<MediaDataPromise> p = mBaseVideoPromise.Ensure(__func__);
+  RefPtr<VideoDataPromise> p = mBaseVideoPromise.Ensure(__func__);
   bool skip = aSkipToNextKeyframe;
   while (VideoQueue().GetSize() == 0 &&
          !VideoQueue().IsFinished()) {
@@ -300,7 +305,8 @@ MediaDecoderReader::RequestVideoData(bool aSkipToNextKeyframe,
       // keyframe. Post another task to the decode task queue to decode
       // again. We don't just decode straight in a loop here, as that
       // would hog the decode task queue.
-      RefPtr<nsIRunnable> task(new ReRequestVideoWithSkipTask(this, aTimeThreshold));
+      RefPtr<nsIRunnable> task(
+        new ReRequestVideoWithSkipTask(this, aTimeThreshold));
       mTaskQueue->Dispatch(task.forget());
       return p;
     }
@@ -317,10 +323,10 @@ MediaDecoderReader::RequestVideoData(bool aSkipToNextKeyframe,
   return p;
 }
 
-RefPtr<MediaDecoderReader::MediaDataPromise>
+RefPtr<MediaDecoderReader::AudioDataPromise>
 MediaDecoderReader::RequestAudioData()
 {
-  RefPtr<MediaDataPromise> p = mBaseAudioPromise.Ensure(__func__);
+  RefPtr<AudioDataPromise> p = mBaseAudioPromise.Ensure(__func__);
   while (AudioQueue().GetSize() == 0 &&
          !AudioQueue().IsFinished()) {
     if (!DecodeAudioData()) {

@@ -13,14 +13,14 @@ const TESTURL = "about:testpageforsessionrestore#foo";
 
 let TestAboutPage = {
   QueryInterface: XPCOMUtils.generateQI([Ci.nsIAboutModule]),
-  getURIFlags: function(aURI) {
+  getURIFlags(aURI) {
     // No CAN_ or MUST_LOAD_IN_CHILD means this loads in the parent:
     return Ci.nsIAboutModule.ALLOW_SCRIPT |
            Ci.nsIAboutModule.URI_SAFE_FOR_UNTRUSTED_CONTENT |
            Ci.nsIAboutModule.HIDE_FROM_ABOUTABOUT;
   },
 
-  newChannel: function(aURI, aLoadInfo) {
+  newChannel(aURI, aLoadInfo) {
     // about: page inception!
     let newURI = Services.io.newURI(SELFCHROMEURL);
     let channel = Services.io.newChannelFromURIWithLoadInfo(newURI,
@@ -29,20 +29,20 @@ let TestAboutPage = {
     return channel;
   },
 
-  createInstance: function(outer, iid) {
+  createInstance(outer, iid) {
     if (outer != null) {
       throw Cr.NS_ERROR_NO_AGGREGATION;
     }
     return this.QueryInterface(iid);
   },
 
-  register: function() {
+  register() {
     Cm.QueryInterface(Ci.nsIComponentRegistrar).registerFactory(
       Components.ID(TESTCLASSID), "Only here for a test",
       "@mozilla.org/network/protocol/about;1?what=testpageforsessionrestore", this);
   },
 
-  unregister: function() {
+  unregister() {
     Cm.QueryInterface(Ci.nsIComponentRegistrar).unregisterFactory(
       Components.ID(TESTCLASSID), this);
   }
@@ -53,20 +53,20 @@ let TestAboutPage = {
  * Test that switching from a remote to a parent process browser
  * correctly clears the userTypedValue
  */
-add_task(function* () {
+add_task(async function() {
   TestAboutPage.register();
-  let tab = yield BrowserTestUtils.openNewForegroundTab(gBrowser, "http://example.com/", true, true);
+  let tab = await BrowserTestUtils.openNewForegroundTab(gBrowser, "http://example.com/", true, true);
   ok(tab.linkedBrowser.isRemoteBrowser, "Browser should be remote");
 
   let resolveLocationChangePromise;
   let locationChangePromise = new Promise(r => resolveLocationChangePromise = r);
   let wpl = {
-    onStateChange(wpl, request, state, status) {
+    onStateChange(listener, request, state, status) {
       let location = request.QueryInterface(Ci.nsIChannel).originalURI;
       // Ignore about:blank loads.
       let docStop = Ci.nsIWebProgressListener.STATE_STOP |
                     Ci.nsIWebProgressListener.STATE_IS_NETWORK;
-      if (location.spec == "about:blank" || (state & docStop == docStop)) {
+      if (location.spec == "about:blank" || (state & docStop) != docStop) {
         return;
       }
       is(location.spec, TESTURL, "Got the expected URL");
@@ -79,7 +79,7 @@ add_task(function* () {
   gURLBar.select();
   EventUtils.sendKey("return");
 
-  yield locationChangePromise;
+  await locationChangePromise;
 
   ok(!tab.linkedBrowser.isRemoteBrowser, "Browser should no longer be remote");
 
@@ -89,7 +89,7 @@ add_task(function* () {
 
   ok(!tab.linkedBrowser.userTypedValue, "No userTypedValue should be on the browser.");
 
-  yield BrowserTestUtils.removeTab(tab);
+  await BrowserTestUtils.removeTab(tab);
   gBrowser.removeProgressListener(wpl);
   TestAboutPage.unregister();
 });

@@ -8,29 +8,29 @@
  */
 
 add_task(function* () {
-  let { L10N } = require("devtools/client/netmonitor/utils/l10n");
+  let { L10N } = require("devtools/client/netmonitor/src/utils/l10n");
 
   let { tab, monitor } = yield initNetMonitor(SIMPLE_SJS);
   info("Starting test... ");
 
-  let { document, gStore, windowRequire, NetMonitorView } = monitor.panelWin;
-  let Actions = windowRequire("devtools/client/netmonitor/actions/index");
-  let { EVENTS } = windowRequire("devtools/client/netmonitor/constants");
+  let { document, store, windowRequire, NetMonitorView } = monitor.panelWin;
+  let Actions = windowRequire("devtools/client/netmonitor/src/actions/index");
+  let { EVENTS } = windowRequire("devtools/client/netmonitor/src/constants");
   let {
     getSelectedRequest,
     getSortedRequests,
-  } = windowRequire("devtools/client/netmonitor/selectors/index");
+  } = windowRequire("devtools/client/netmonitor/src/selectors/index");
   let Editor = require("devtools/client/sourceeditor/editor");
 
-  gStore.dispatch(Actions.batchEnable(false));
+  store.dispatch(Actions.batchEnable(false));
 
   let wait = waitForNetworkEvents(monitor, 1);
   tab.linkedBrowser.reload();
   yield wait;
 
-  is(getSelectedRequest(gStore.getState()), undefined,
+  is(getSelectedRequest(store.getState()), undefined,
     "There shouldn't be any selected item in the requests menu.");
-  is(gStore.getState().requests.requests.size, 1,
+  is(store.getState().requests.requests.size, 1,
     "The requests menu should not be empty after the first request.");
   is(!!document.querySelector(".network-details-panel"), false,
     "The network details panel should still be hidden after first request.");
@@ -38,9 +38,9 @@ add_task(function* () {
   EventUtils.sendMouseEvent({ type: "click" },
     document.querySelector(".network-details-panel-toggle"));
 
-  isnot(getSelectedRequest(gStore.getState()), undefined,
+  isnot(getSelectedRequest(store.getState()), undefined,
     "There should be a selected item in the requests menu.");
-  is(getSelectedIndex(gStore.getState()), 0,
+  is(getSelectedIndex(store.getState()), 0,
     "The first item should be selected in the requests menu.");
   is(!!document.querySelector(".network-details-panel"), true,
     "The network details panel should not be hidden after toggle button was pressed.");

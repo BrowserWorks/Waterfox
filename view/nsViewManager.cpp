@@ -3,9 +3,6 @@
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
 
-#define PL_ARENA_CONST_ALIGN_MASK (sizeof(void*)-1)
-#include "plarena.h"
-
 #include "nsAutoPtr.h"
 #include "nsViewManager.h"
 #include "nsGfxCIID.h"
@@ -509,13 +506,6 @@ void nsViewManager::FlushDirtyRegionToWidget(nsView* aView)
   }
   nsRegion r =
     ConvertRegionBetweenViews(*dirtyRegion, aView, nearestViewWithWidget);
-
-  // If we draw the frame counter we need to make sure we invalidate the area
-  // for it to make it on screen
-  if (gfxPrefs::DrawFrameCounter()) {
-    nsRect counterBounds = ToAppUnits(gfxPlatform::FrameCounterBounds(), AppUnitsPerDevPixel());
-    r.OrWith(counterBounds);
-  }
 
   nsViewManager* widgetVM = nearestViewWithWidget->GetViewManager();
   widgetVM->InvalidateWidgetArea(nearestViewWithWidget, r);

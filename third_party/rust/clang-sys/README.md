@@ -13,6 +13,8 @@ Supported on the stable, beta, and nightly Rust channels.
 
 Released under the Apache License 2.0.
 
+See [CONTRIBUTING.md](CONTRIBUTING.md) for guidelines on contributing to this repository.
+
 ## Supported Versions
 
 To target a version of `libclang`, enable one of the following Cargo features:
@@ -27,6 +29,8 @@ To target a version of `libclang`, enable one of the following Cargo features:
   ([Documentation](https://kylemayes.github.io/clang-sys/3_8/clang_sys))
 * `clang_3_9` - requires `libclang` 3.9 or later
   ([Documentation](https://kylemayes.github.io/clang-sys/3_9/clang_sys))
+* `clang_4_0` - requires `libclang` 4.0 or later
+  ([Documentation](https://kylemayes.github.io/clang-sys/4_0/clang_sys))
 
 If you do not enable one of these features, the API provided by `libclang` 3.5 will be available by
 default.
@@ -43,9 +47,16 @@ the `runtime` Cargo feature.
 These libraries can be either be installed as a part of Clang or downloaded
 [here](http://llvm.org/releases/download.html).
 
-**Note:** Installing `libclang` through a package manager might install the `libclang` shared
-library as something like `libclang.so.1` instead of `libclang.so`. In this case, you need to make a
-symbolic link from the versioned shared library to `libclang.so`.
+**Note:** This crate supports finding versioned instances of `libclang.so` (e.g.,
+`libclang.so.3.9`). In the case where there are multiple instances to choose from, this crate will
+prefer an unversioned instance first, then the version with the shortest and highest version. For
+example, the following instances of `libclang.so` are listed in descending order of preference:
+
+1. `libclang.so`
+2. `libclang.so.4`
+3. `libclang.so.4.0`
+4. `libclang.so.3`
+5. `libclang.so.3.9`
 
 **Note:** The downloads for LLVM and Clang 3.8 and later do not include the `libclang.a` static
 library. This means you cannot link to any of these versions of `libclang` statically unless you

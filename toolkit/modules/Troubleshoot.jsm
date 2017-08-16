@@ -29,18 +29,10 @@ const PREFS_WHITELIST = [
   "browser.display.",
   "browser.download.folderList",
   "browser.download.hide_plugins_without_extensions",
-  "browser.download.importedFromSqlite",
   "browser.download.lastDir.savePerSite",
   "browser.download.manager.addToRecentDocs",
   "browser.download.manager.alertOnEXEOpen",
-  "browser.download.manager.closeWhenDone",
-  "browser.download.manager.displayedHistoryDays",
-  "browser.download.manager.quitBehavior",
   "browser.download.manager.resumeOnWakeDelay",
-  "browser.download.manager.retention",
-  "browser.download.manager.scanWhenDone",
-  "browser.download.manager.showAlertOnComplete",
-  "browser.download.manager.showWhenStarting",
   "browser.download.preferred.",
   "browser.download.useDownloadDir",
   "browser.fixup.",
@@ -111,7 +103,7 @@ const PREFS_BLACKLIST = [
 // It's important to use getComplexValue for strings: it returns Unicode (wchars), getCharPref returns UTF-8 encoded chars.
 const PREFS_GETTERS = {};
 
-PREFS_GETTERS[Ci.nsIPrefBranch.PREF_STRING] = (prefs, name) => prefs.getComplexValue(name, Ci.nsISupportsString).data;
+PREFS_GETTERS[Ci.nsIPrefBranch.PREF_STRING] = (prefs, name) => prefs.getStringPref(name);
 PREFS_GETTERS[Ci.nsIPrefBranch.PREF_INT] = (prefs, name) => prefs.getIntPref(name);
 PREFS_GETTERS[Ci.nsIPrefBranch.PREF_BOOL] = (prefs, name) => prefs.getBoolPref(name);
 
@@ -151,8 +143,7 @@ this.Troubleshoot = {
       snapshot[providerName] = providerData;
       if (--numPending == 0)
         // Ensure that done is always and truly called asynchronously.
-        Services.tm.mainThread.dispatch(done.bind(null, snapshot),
-                                        Ci.nsIThread.DISPATCH_NORMAL);
+        Services.tm.dispatchToMainThread(done.bind(null, snapshot));
     }
     for (let name in dataProviders) {
       try {
@@ -194,6 +185,7 @@ var dataProviders = {
     if (AppConstants.MOZ_UPDATER)
       data.updateChannel = Cu.import("resource://gre/modules/UpdateUtils.jsm", {}).UpdateUtils.UpdateChannel;
 
+    // eslint-disable-next-line mozilla/use-default-preference-values
     try {
       data.vendor = Services.prefs.getCharPref("app.support.vendor");
     } catch (e) {}
@@ -220,6 +212,13 @@ var dataProviders = {
 
     data.remoteAutoStart = Services.appinfo.browserTabsRemoteAutostart;
 
+    // Services.ppmm.childCount is a count of how many processes currently
+    // exist that might respond to messages sent through the ppmm, including
+    // the parent process. So we subtract the parent process with the "- 1",
+    // and that’s how many content processes we’re waiting for.
+    data.currentContentProcesses = Services.ppmm.childCount - 1;
+    data.maxContentProcesses = Services.appinfo.maxWebProcessCount;
+
     try {
       let e10sStatus = Cc["@mozilla.org/supports-PRUint64;1"]
                          .createInstance(Ci.nsISupportsPRUint64);
@@ -241,6 +240,7 @@ var dataProviders = {
 
   extensions: function extensions(done) {
     AddonManager.getAddonsByTypes(["extension"], function(extensions) {
+      extensions = extensions.filter(e => !e.isSystem);
       extensions.sort(function(a, b) {
         if (a.isActive != b.isActive)
           return b.isActive ? 1 : -1;
@@ -260,6 +260,30 @@ var dataProviders = {
         return props.reduce(function(extData, prop) {
           extData[prop] = ext[prop];
           return extData;
+        }, {});
+      }));
+    });
+  },
+
+  features: function features(done) {
+    AddonManager.getAddonsByTypes(["extension"], function(features) {
+      features = features.filter(f => f.isSystem);
+      features.sort(function(a, b) {
+        // In some unfortunate cases addon names can be null.
+        let aname = a.name || null;
+        let bname = b.name || null;
+        let lc = aname.localeCompare(bname);
+        if (lc != 0)
+          return lc;
+        if (a.version != b.version)
+          return a.version > b.version ? 1 : -1;
+        return 0;
+      });
+      let props = ["name", "version", "id"];
+      done(features.map(function(f) {
+        return props.reduce(function(fData, prop) {
+          fData[prop] = f[prop];
+          return fData;
         }, {});
       }));
     });
@@ -469,7 +493,7 @@ var dataProviders = {
 
         // //
 
-        let ext = gl.getExtension("MOZ_debug_get");
+        let ext = gl.getExtension("MOZ_debug");
         // This extension is unconditionally available to chrome. No need to check.
         let vendor = ext.getParameter(gl.VENDOR);
         let renderer = ext.getParameter(gl.RENDERER);
@@ -527,6 +551,7 @@ var dataProviders = {
     data.isActive = Cc["@mozilla.org/xre/app-info;1"].
                     getService(Ci.nsIXULRuntime).
                     accessibilityEnabled;
+    // eslint-disable-next-line mozilla/use-default-preference-values
     try {
       data.forceDisabled =
         Services.prefs.getIntPref("accessibility.force_disabled");
@@ -566,7 +591,7 @@ if (AppConstants.MOZ_CRASHREPORTER) {
     let reportsNew = reports.filter(report => (now - report.date < Troubleshoot.kMaxCrashAge));
     let reportsSubmitted = reportsNew.filter(report => (!report.pending));
     let reportsPendingCount = reportsNew.length - reportsSubmitted.length;
-    let data = {submitted : reportsSubmitted, pending : reportsPendingCount};
+    let data = {submitted: reportsSubmitted, pending: reportsPendingCount};
     done(data);
   }
 }
@@ -604,8 +629,12 @@ if (AppConstants.MOZ_SANDBOX) {
     }
 
     if (AppConstants.MOZ_CONTENT_SANDBOX) {
+      let sandboxSettings = Cc["@mozilla.org/sandbox/sandbox-settings;1"].
+                            getService(Ci.mozISandboxSettings);
       data.contentSandboxLevel =
         Services.prefs.getIntPref("security.sandbox.content.level");
+      data.effectiveContentSandboxLevel =
+        sandboxSettings.effectiveContentSandboxLevel;
     }
 
     done(data);

@@ -71,6 +71,7 @@
 #include "js/StructuredClone.h"
 #include "js/Utility.h"
 #include "vm/AsyncFunction.h"
+#include "vm/AsyncIteration.h"
 #include "vm/DateObject.h"
 #include "vm/Debugger.h"
 #include "vm/EnvironmentObject.h"
@@ -119,7 +120,7 @@ using JS::ToUint32;
 #define JS_ADDRESSOF_VA_LIST(ap) (&(ap))
 #endif
 
-bool
+JS_PUBLIC_API(bool)
 JS::CallArgs::requireAtLeast(JSContext* cx, const char* fnname, unsigned required) const
 {
     if (length() < required) {
@@ -565,6 +566,12 @@ JS_GetParentRuntime(JSContext* cx)
     return cx->runtime()->parentRuntime ? cx->runtime()->parentRuntime : cx->runtime();
 }
 
+JS_PUBLIC_API(JSRuntime*)
+JS_GetRuntime(JSContext* cx)
+{
+    return cx->runtime();
+}
+
 JS_PUBLIC_API(void)
 JS::SetSingleThreadedExecutionCallbacks(JSContext* cx,
                                         BeginSingleThreadedExecutionCallback begin,
@@ -673,18 +680,6 @@ JS_SetSizeOfIncludingThisCompartmentCallback(JSContext* cx,
                                              JSSizeOfIncludingThisCompartmentCallback callback)
 {
     cx->runtime()->sizeOfIncludingThisCompartmentCallback = callback;
-}
-
-JS_PUBLIC_API(void)
-JS_SetDestroyZoneCallback(JSContext* cx, JSZoneCallback callback)
-{
-    cx->runtime()->destroyZoneCallback = callback;
-}
-
-JS_PUBLIC_API(void)
-JS_SetSweepZoneCallback(JSContext* cx, JSZoneCallback callback)
-{
-    cx->runtime()->sweepZoneCallback = callback;
 }
 
 JS_PUBLIC_API(void)
@@ -1382,16 +1377,16 @@ JS_RemoveFinalizeCallback(JSContext* cx, JSFinalizeCallback cb)
 }
 
 JS_PUBLIC_API(bool)
-JS_AddWeakPointerZoneGroupCallback(JSContext* cx, JSWeakPointerZoneGroupCallback cb, void* data)
+JS_AddWeakPointerZonesCallback(JSContext* cx, JSWeakPointerZonesCallback cb, void* data)
 {
     AssertHeapIsIdle();
-    return cx->runtime()->gc.addWeakPointerZoneGroupCallback(cb, data);
+    return cx->runtime()->gc.addWeakPointerZonesCallback(cb, data);
 }
 
 JS_PUBLIC_API(void)
-JS_RemoveWeakPointerZoneGroupCallback(JSContext* cx, JSWeakPointerZoneGroupCallback cb)
+JS_RemoveWeakPointerZonesCallback(JSContext* cx, JSWeakPointerZonesCallback cb)
 {
-    cx->runtime()->gc.removeWeakPointerZoneGroupCallback(cb);
+    cx->runtime()->gc.removeWeakPointerZonesCallback(cb);
 }
 
 JS_PUBLIC_API(bool)
@@ -1496,6 +1491,15 @@ JS_NewExternalString(JSContext* cx, const char16_t* chars, size_t length,
     CHECK_REQUEST(cx);
     JSString* s = JSExternalString::new_(cx, chars, length, fin);
     return s;
+}
+
+JS_PUBLIC_API(JSString*)
+JS_NewMaybeExternalString(JSContext* cx, const char16_t* chars, size_t length,
+                          const JSStringFinalizer* fin, bool* allocatedExternal)
+{
+    AssertHeapIsIdle();
+    CHECK_REQUEST(cx);
+    return NewMaybeExternalString(cx, chars, length, fin, allocatedExternal);
 }
 
 extern JS_PUBLIC_API(bool)
@@ -1885,8 +1889,8 @@ JS_GlobalObjectTraceHook(JSTracer* trc, JSObject* global)
         return;
 
     // Trace the compartment for any GC things that should only stick around if
-    // we know the compartment is live.
-    global->compartment()->trace(trc);
+    // we know the global is live.
+    global->compartment()->traceGlobal(trc);
 
     if (JSTraceOp trace = global->compartment()->creationOptions().getTrace())
         trace(trc, global);
@@ -3147,7 +3151,7 @@ JS_DefineConstIntegers(JSContext* cx, HandleObject obj, const JSConstIntegerSpec
     return DefineConstScalar(cx, obj, cis);
 }
 
-bool
+JS_PUBLIC_API(bool)
 JSPropertySpec::getValue(JSContext* cx, MutableHandleValue vp) const
 {
     MOZ_ASSERT(!isAccessor());
@@ -3615,6 +3619,11 @@ CloneFunctionObject(JSContext* cx, HandleObject funobj, HandleObject env, Handle
         return nullptr;
     }
 
+    if (IsWrappedAsyncGenerator(fun)) {
+        JS_ReportErrorNumberASCII(cx, GetErrorMessage, nullptr, JSMSG_CANT_CLONE_OBJECT);
+        return nullptr;
+    }
+
     if (CanReuseScriptForClone(cx->compartment(), fun, env)) {
         // If the script is to be reused, either the script can already handle
         // non-syntactic scopes, or there is only the standard global lexical
@@ -3862,12 +3871,12 @@ JS::TransitiveCompileOptions::copyPODTransitiveOptions(const TransitiveCompileOp
     asmJSOption = rhs.asmJSOption;
     throwOnAsmJSValidationFailureOption = rhs.throwOnAsmJSValidationFailureOption;
     forceAsync = rhs.forceAsync;
-    installedFile = rhs.installedFile;
     sourceIsLazy = rhs.sourceIsLazy;
     introductionType = rhs.introductionType;
     introductionLineno = rhs.introductionLineno;
     introductionOffset = rhs.introductionOffset;
     hasIntroductionInfo = rhs.hasIntroductionInfo;
+    isProbablySystemOrAddonCode = rhs.isProbablySystemOrAddonCode;
 };
 
 void
@@ -3876,6 +3885,7 @@ JS::ReadOnlyCompileOptions::copyPODOptions(const ReadOnlyCompileOptions& rhs)
     copyPODTransitiveOptions(rhs);
     lineno = rhs.lineno;
     column = rhs.column;
+    sourceStartColumn = rhs.sourceStartColumn;
     isRunOnce = rhs.isRunOnce;
     noScriptRval = rhs.noScriptRval;
 }
@@ -3980,6 +3990,7 @@ JS::CompileOptions::CompileOptions(JSContext* cx, JSVersion version)
     strictOption = cx->options().strictMode();
     extraWarningsOption = cx->compartment()->behaviors().extraWarnings(cx);
     forEachStatementOption = cx->options().forEachStatement();
+    isProbablySystemOrAddonCode = cx->compartment()->isProbablySystemOrAddonCode();
     werrorOption = cx->options().werror();
     if (!cx->options().asmJS())
         asmJSOption = AsmJSOption::Disabled;
@@ -4199,8 +4210,33 @@ JS::DecodeOffThreadScript(JSContext* cx, const ReadOnlyCompileOptions& options,
                           mozilla::Vector<uint8_t>& buffer /* TranscodeBuffer& */, size_t cursor,
                           OffThreadCompileCallback callback, void* callbackData)
 {
-    MOZ_ASSERT(CanCompileOffThread(cx, options, buffer.length() - cursor));
-    return StartOffThreadDecodeScript(cx, options, buffer, cursor, callback, callbackData);
+    JS::TranscodeRange range(buffer.begin() + cursor, buffer.length() - cursor);
+    MOZ_ASSERT(CanCompileOffThread(cx, options, range.length()));
+    return StartOffThreadDecodeScript(cx, options, range, callback, callbackData);
+}
+
+JS_PUBLIC_API(bool)
+JS::DecodeOffThreadScript(JSContext* cx, const ReadOnlyCompileOptions& options,
+                          const mozilla::Range<uint8_t>& range /* TranscodeRange& */,
+                          OffThreadCompileCallback callback, void* callbackData)
+{
+    MOZ_ASSERT(CanCompileOffThread(cx, options, range.length()));
+    return StartOffThreadDecodeScript(cx, options, range, callback, callbackData);
+}
+
+JS_PUBLIC_API(bool)
+JS::DecodeMultiOffThreadScripts(JSContext* cx, const ReadOnlyCompileOptions& options,
+                                TranscodeSources& sources,
+                                OffThreadCompileCallback callback, void* callbackData)
+{
+#ifdef DEBUG
+    size_t length = 0;
+    for (auto& source : sources) {
+        length += source.range.length();
+    }
+    MOZ_ASSERT(CanCompileOffThread(cx, options, length));
+#endif
+    return StartOffThreadDecodeMultiScripts(cx, options, sources, callback, callbackData);
 }
 
 JS_PUBLIC_API(JSScript*)
@@ -4217,6 +4253,22 @@ JS::CancelOffThreadScriptDecoder(JSContext* cx, void* token)
     MOZ_ASSERT(cx);
     MOZ_ASSERT(CurrentThreadCanAccessRuntime(cx->runtime()));
     HelperThreadState().cancelParseTask(cx->runtime(), ParseTaskKind::ScriptDecode, token);
+}
+
+JS_PUBLIC_API(bool)
+JS::FinishMultiOffThreadScriptsDecoder(JSContext* cx, void* token, MutableHandle<ScriptVector> scripts)
+{
+    MOZ_ASSERT(cx);
+    MOZ_ASSERT(CurrentThreadCanAccessRuntime(cx->runtime()));
+    return HelperThreadState().finishMultiScriptsDecodeTask(cx, token, scripts);
+}
+
+JS_PUBLIC_API(void)
+JS::CancelMultiOffThreadScriptsDecoder(JSContext* cx, void* token)
+{
+    MOZ_ASSERT(cx);
+    MOZ_ASSERT(CurrentThreadCanAccessRuntime(cx->runtime()));
+    HelperThreadState().cancelParseTask(cx->runtime(), ParseTaskKind::MultiScriptsDecode, token);
 }
 
 JS_PUBLIC_API(bool)
@@ -4254,10 +4306,10 @@ JS_BufferIsCompilableUnit(JSContext* cx, HandleObject obj, const char* utf8, siz
     frontend::UsedNameTracker usedNames(cx);
     if (!usedNames.init())
         return false;
-    frontend::Parser<frontend::FullParseHandler> parser(cx, cx->tempLifoAlloc(),
-                                                        options, chars, length,
-                                                        /* foldConstants = */ true,
-                                                        usedNames, nullptr, nullptr);
+    frontend::Parser<frontend::FullParseHandler, char16_t> parser(cx, cx->tempLifoAlloc(),
+                                                                  options, chars, length,
+                                                                  /* foldConstants = */ true,
+                                                                  usedNames, nullptr, nullptr);
     JS::WarningReporter older = JS::SetWarningReporter(cx, nullptr);
     if (!parser.checkOptions() || !parser.parse()) {
         // We ran into an error. If it was because we ran out of source, we
@@ -4570,7 +4622,22 @@ JS::CloneAndExecuteScript(JSContext* cx, HandleScript scriptArg,
     return ExecuteScript(cx, globalLexical, script, rval.address());
 }
 
-static const unsigned LARGE_SCRIPT_LENGTH = 500*1024;
+JS_PUBLIC_API(bool)
+JS::CloneAndExecuteScript(JSContext* cx, JS::AutoObjectVector& envChain,
+                          HandleScript scriptArg,
+                          JS::MutableHandleValue rval)
+{
+    CHECK_REQUEST(cx);
+    RootedScript script(cx, scriptArg);
+    if (script->compartment() != cx->compartment()) {
+        script = CloneGlobalScript(cx, ScopeKind::NonSyntactic, script);
+        if (!script)
+            return false;
+
+        js::Debugger::onNewScript(cx, script);
+    }
+    return ExecuteScript(cx, envChain, script, rval.address());
+}
 
 static bool
 Evaluate(JSContext* cx, ScopeKind scopeKind, HandleObject env,
@@ -4585,9 +4652,8 @@ Evaluate(JSContext* cx, ScopeKind scopeKind, HandleObject env,
     MOZ_ASSERT_IF(!IsGlobalLexicalEnvironment(env), scopeKind == ScopeKind::NonSyntactic);
 
     options.setIsRunOnce(true);
-    SourceCompressionTask sct(cx);
     RootedScript script(cx, frontend::CompileGlobalScript(cx, cx->tempLifoAlloc(),
-                                                          scopeKind, options, srcBuf, &sct));
+                                                          scopeKind, options, srcBuf));
     if (!script)
         return false;
 
@@ -4595,19 +4661,6 @@ Evaluate(JSContext* cx, ScopeKind scopeKind, HandleObject env,
 
     bool result = Execute(cx, script, *env,
                           options.noScriptRval ? nullptr : rval.address());
-    if (!sct.complete())
-        result = false;
-
-    // After evaluation, the compiled script will not be run again.
-    // script->ensureRanAnalysis allocated 1 analyze::Bytecode for every opcode
-    // which for large scripts means significant memory. Perform a GC eagerly
-    // to clear out this analysis data before anything happens to inhibit the
-    // flushing of this memory (such as setting requestAnimationFrame).
-    if (script->length() > LARGE_SCRIPT_LENGTH) {
-        script = nullptr;
-        PrepareZoneForGC(cx->zone());
-        cx->runtime()->gc.gc(GC_NORMAL, JS::gcreason::FINISH_LARGE_EVALUATE);
-    }
 
     return result;
 }
@@ -4838,34 +4891,37 @@ JS_ResetInterruptCallback(JSContext* cx, bool enable)
 JS_PUBLIC_API(void)
 JS::SetGetIncumbentGlobalCallback(JSContext* cx, JSGetIncumbentGlobalCallback callback)
 {
-    cx->runtime()->getIncumbentGlobalCallback = callback;
+    cx->getIncumbentGlobalCallback = callback;
 }
 
 JS_PUBLIC_API(void)
 JS::SetEnqueuePromiseJobCallback(JSContext* cx, JSEnqueuePromiseJobCallback callback,
                                  void* data /* = nullptr */)
 {
-    cx->runtime()->enqueuePromiseJobCallback = callback;
-    cx->runtime()->enqueuePromiseJobCallbackData = data;
+    cx->enqueuePromiseJobCallback = callback;
+    cx->enqueuePromiseJobCallbackData = data;
 }
 
 extern JS_PUBLIC_API(void)
 JS::SetPromiseRejectionTrackerCallback(JSContext* cx, JSPromiseRejectionTrackerCallback callback,
                                        void* data /* = nullptr */)
 {
-    cx->runtime()->promiseRejectionTrackerCallback = callback;
-    cx->runtime()->promiseRejectionTrackerCallbackData = data;
+    cx->promiseRejectionTrackerCallback = callback;
+    cx->promiseRejectionTrackerCallbackData = data;
 }
 
 JS_PUBLIC_API(JSObject*)
 JS::NewPromiseObject(JSContext* cx, HandleObject executor, HandleObject proto /* = nullptr */)
 {
     MOZ_ASSERT(!cx->runtime()->isAtomsCompartment(cx->compartment()));
-    MOZ_ASSERT(IsCallable(executor));
     AssertHeapIsIdle();
     CHECK_REQUEST(cx);
     assertSameCompartment(cx, executor, proto);
 
+    if (!executor)
+        return PromiseObject::createSkippingExecutor(cx);
+
+    MOZ_ASSERT(IsCallable(executor));
     return PromiseObject::create(cx, executor, proto);
 }
 
@@ -6058,8 +6114,9 @@ JS_NewRegExpObject(JSContext* cx, const char* bytes, size_t length, unsigned fla
     if (!chars)
         return nullptr;
 
-    RegExpObject* reobj = RegExpObject::create(cx, chars, length,
-                                               RegExpFlag(flags), nullptr, cx->tempLifoAlloc());
+    RegExpObject* reobj = RegExpObject::create(cx, chars, length, RegExpFlag(flags),
+                                               nullptr, nullptr, cx->tempLifoAlloc(),
+                                               GenericObject);
     return reobj;
 }
 
@@ -6068,8 +6125,9 @@ JS_NewUCRegExpObject(JSContext* cx, const char16_t* chars, size_t length, unsign
 {
     AssertHeapIsIdle();
     CHECK_REQUEST(cx);
-    return RegExpObject::create(cx, chars, length,
-                                RegExpFlag(flags), nullptr, cx->tempLifoAlloc());
+    return RegExpObject::create(cx, chars, length, RegExpFlag(flags),
+                                nullptr, nullptr, cx->tempLifoAlloc(),
+                                GenericObject);
 }
 
 JS_PUBLIC_API(bool)
@@ -6157,10 +6215,10 @@ JS_GetRegExpFlags(JSContext* cx, HandleObject obj)
     AssertHeapIsIdle();
     CHECK_REQUEST(cx);
 
-    RegExpGuard shared(cx);
+    RootedRegExpShared shared(cx);
     if (!RegExpToShared(cx, obj, &shared))
         return false;
-    return shared.re()->getFlags();
+    return shared->getFlags();
 }
 
 JS_PUBLIC_API(JSString*)
@@ -6169,10 +6227,10 @@ JS_GetRegExpSource(JSContext* cx, HandleObject obj)
     AssertHeapIsIdle();
     CHECK_REQUEST(cx);
 
-    RegExpGuard shared(cx);
+    RootedRegExpShared shared(cx);
     if (!RegExpToShared(cx, obj, &shared))
         return nullptr;
-    return shared.re()->getSource();
+    return shared->getSource();
 }
 
 /************************************************************************/
@@ -6400,8 +6458,10 @@ CreateErrorNoteVA(JSContext* cx,
                   ErrorArgumentsType argumentsType, va_list ap)
 {
     auto note = MakeUnique<JSErrorNotes::Note>();
-    if (!note)
+    if (!note) {
+        ReportOutOfMemory(cx);
         return nullptr;
+    }
 
     note->errorNumber = errorNumber;
     note->filename = filename;
@@ -6473,7 +6533,7 @@ JSErrorNotes::addNoteUTF8(JSContext* cx,
     return true;
 }
 
-size_t
+JS_PUBLIC_API(size_t)
 JSErrorNotes::length()
 {
     return notes_.length();
@@ -6483,8 +6543,10 @@ UniquePtr<JSErrorNotes>
 JSErrorNotes::copy(JSContext* cx)
 {
     auto copiedNotes = MakeUnique<JSErrorNotes>();
-    if (!copiedNotes)
+    if (!copiedNotes) {
+        ReportOutOfMemory(cx);
         return nullptr;
+    }
 
     for (auto&& note : *this) {
         js::UniquePtr<JSErrorNotes::Note> copied(CopyErrorNote(cx, note.get()));
@@ -6498,13 +6560,13 @@ JSErrorNotes::copy(JSContext* cx)
     return copiedNotes;
 }
 
-JSErrorNotes::iterator
+JS_PUBLIC_API(JSErrorNotes::iterator)
 JSErrorNotes::begin()
 {
     return iterator(notes_.begin());
 }
 
-JSErrorNotes::iterator
+JS_PUBLIC_API(JSErrorNotes::iterator)
 JSErrorNotes::end()
 {
     return iterator(notes_.end());
@@ -7017,6 +7079,15 @@ JS::DecodeScript(JSContext* cx, TranscodeBuffer& buffer, JS::MutableHandleScript
 }
 
 JS_PUBLIC_API(JS::TranscodeResult)
+JS::DecodeScript(JSContext* cx, const TranscodeRange& range, JS::MutableHandleScript scriptp)
+{
+    XDRDecoder decoder(cx, range);
+    decoder.codeScript(scriptp);
+    MOZ_ASSERT(bool(scriptp) == (decoder.resultCode() == TranscodeResult_Ok));
+    return decoder.resultCode();
+}
+
+JS_PUBLIC_API(JS::TranscodeResult)
 JS::DecodeInterpretedFunction(JSContext* cx, TranscodeBuffer& buffer,
                               JS::MutableHandleFunction funp,
                               size_t cursorIndex)
@@ -7028,21 +7099,21 @@ JS::DecodeInterpretedFunction(JSContext* cx, TranscodeBuffer& buffer,
 }
 
 JS_PUBLIC_API(bool)
-JS::StartIncrementalEncoding(JSContext* cx, TranscodeBuffer& buffer, JS::HandleScript script)
+JS::StartIncrementalEncoding(JSContext* cx, JS::HandleScript script)
 {
     if (!script)
         return false;
-    if (!script->scriptSource()->xdrEncodeTopLevel(cx, buffer, script))
+    if (!script->scriptSource()->xdrEncodeTopLevel(cx, script))
         return false;
     return true;
 }
 
 JS_PUBLIC_API(bool)
-JS::FinishIncrementalEncoding(JSContext* cx, JS::HandleScript script)
+JS::FinishIncrementalEncoding(JSContext* cx, JS::HandleScript script, TranscodeBuffer& buffer)
 {
     if (!script)
         return false;
-    if (!script->scriptSource()->xdrFinalizeEncoder())
+    if (!script->scriptSource()->xdrFinalizeEncoder(buffer))
         return false;
     return true;
 }
@@ -7090,11 +7161,10 @@ JS::DeserializeWasmModule(PRFileDesc* bytecode, PRFileDesc* maybeCompiled,
 }
 
 JS_PUBLIC_API(void)
-JS::SetLargeAllocationFailureCallback(JSContext* cx, JS::LargeAllocationFailureCallback lafc,
-                                      void* data)
+JS::SetProcessLargeAllocationFailureCallback(JS::LargeAllocationFailureCallback lafc)
 {
-    cx->runtime()->largeAllocationFailureCallback = lafc;
-    cx->runtime()->largeAllocationFailureCallbackData = data;
+    MOZ_ASSERT(!OnLargeAllocationFailure);
+    OnLargeAllocationFailure = lafc;
 }
 
 JS_PUBLIC_API(void)

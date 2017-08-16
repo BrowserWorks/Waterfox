@@ -137,8 +137,9 @@ OggDemuxer::~OggDemuxer()
                ptr, __func__, isChained));
       Telemetry::Accumulate(Telemetry::HistogramID::MEDIA_OGG_LOADED_IS_CHAINED, isChained);
     });
-    // Non-DocGroup version of AbstractThread::MainThread is fine for Telemetry.
-    AbstractThread::MainThread()->Dispatch(task.forget());
+    SystemGroup::Dispatch("~OggDemuxer::report_telemetry",
+                          TaskCategory::Other,
+                          task.forget());
   }
 }
 
@@ -187,7 +188,7 @@ OggDemuxer::HaveStartTime(TrackInfo::TrackType aType)
 int64_t
 OggDemuxer::StartTime(TrackInfo::TrackType aType)
 {
-  return OggState(aType).mStartTime.refOr(TimeUnit::FromMicroseconds(0)).ToMicroseconds();
+  return OggState(aType).mStartTime.refOr(TimeUnit::Zero()).ToMicroseconds();
 }
 
 RefPtr<OggDemuxer::InitPromise>
@@ -580,10 +581,10 @@ OggDemuxer::ReadMetadata()
       mInfo.mMetadataDuration.emplace(TimeUnit::FromInfinity());
     }
     if (HasAudio()) {
-      mInfo.mAudio.mDuration = mInfo.mMetadataDuration->ToMicroseconds();
+      mInfo.mAudio.mDuration = mInfo.mMetadataDuration.ref();
     }
     if (HasVideo()) {
-      mInfo.mVideo.mDuration = mInfo.mMetadataDuration->ToMicroseconds();
+      mInfo.mVideo.mDuration = mInfo.mMetadataDuration.ref();
     }
   } else {
     OGG_DEBUG("no audio or video tracks");
@@ -1316,7 +1317,7 @@ OggTrackDemuxer::Seek(const TimeUnit& aTime)
 
     // Check what time we actually seeked to.
     if (sample != nullptr) {
-      seekTime = TimeUnit::FromMicroseconds(sample->mTime);
+      seekTime = sample->mTime;
       OGG_DEBUG("%p seeked to time %" PRId64, this, seekTime.ToMicroseconds());
     }
     mQueuedSample = sample;
@@ -1356,7 +1357,7 @@ OggTrackDemuxer::NextSample()
     // We've encountered an end of bitstream packet; check for a chained
     // bitstream following this one.
     // This will also update mSharedAudioTrackInfo.
-    mParent->ReadOggChain(TimeUnit::FromMicroseconds(data->GetEndTime()));
+    mParent->ReadOggChain(data->GetEndTime());
   }
   return data;
 }
@@ -1402,15 +1403,14 @@ OggTrackDemuxer::SkipToNextRandomAccessPoint(const TimeUnit& aTimeThreshold)
   OGG_DEBUG("TimeThreshold: %f", aTimeThreshold.ToSeconds());
   while (!found && (sample = NextSample())) {
     parsed++;
-    if (sample->mKeyframe && sample->mTime >= aTimeThreshold.ToMicroseconds()) {
+    if (sample->mKeyframe && sample->mTime >= aTimeThreshold) {
       found = true;
       mQueuedSample = sample;
     }
   }
   if (found) {
     OGG_DEBUG("next sample: %f (parsed: %d)",
-               TimeUnit::FromMicroseconds(sample->mTime).ToSeconds(),
-               parsed);
+               sample->mTime.ToSeconds(), parsed);
     return SkipAccessPointPromise::CreateAndResolve(parsed, __func__);
   } else {
     SkipFailureHolder failure(NS_ERROR_DOM_MEDIA_END_OF_STREAM, parsed);

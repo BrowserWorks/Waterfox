@@ -4,13 +4,12 @@
 
 //! The [Response](https://fetch.spec.whatwg.org/#responses) object
 //! resulting from a [fetch operation](https://fetch.spec.whatwg.org/#concept-fetch)
-use {FetchMetadata, FilteredMetadata, Metadata, NetworkError};
+use {FetchMetadata, FilteredMetadata, Metadata, NetworkError, ReferrerPolicy};
 use hyper::header::{AccessControlExposeHeaders, ContentType, Headers};
 use hyper::status::StatusCode;
 use hyper_serde::Serde;
 use servo_url::ServoUrl;
 use std::ascii::AsciiExt;
-use std::cell::{Cell, RefCell};
 use std::sync::{Arc, Mutex};
 
 /// [Response type](https://fetch.spec.whatwg.org/#concept-response-type)
@@ -75,13 +74,23 @@ pub enum ResponseMsg {
     Errored,
 }
 
+#[derive(Serialize, Deserialize, Clone, HeapSizeOf)]
+pub struct ResponseInit {
+    pub url: ServoUrl,
+    #[serde(deserialize_with = "::hyper_serde::deserialize",
+            serialize_with = "::hyper_serde::serialize")]
+    #[ignore_heap_size_of = "Defined in hyper"]
+    pub headers: Headers,
+    pub referrer: Option<ServoUrl>,
+}
+
 /// A [Response](https://fetch.spec.whatwg.org/#concept-response) as defined by the Fetch spec
 #[derive(Debug, Clone, HeapSizeOf)]
 pub struct Response {
     pub response_type: ResponseType,
     pub termination_reason: Option<TerminationReason>,
     url: Option<ServoUrl>,
-    pub url_list: RefCell<Vec<ServoUrl>>,
+    pub url_list: Vec<ServoUrl>,
     /// `None` can be considered a StatusCode of `0`.
     #[ignore_heap_size_of = "Defined in hyper"]
     pub status: Option<StatusCode>,
@@ -97,7 +106,8 @@ pub struct Response {
     /// is a filtered response
     pub internal_response: Option<Box<Response>>,
     /// whether or not to try to return the internal_response when asked for actual_response
-    pub return_internal: Cell<bool>,
+    pub return_internal: bool,
+    pub referrer_policy: Option<ReferrerPolicy>,
 }
 
 impl Response {
@@ -106,7 +116,7 @@ impl Response {
             response_type: ResponseType::Default,
             termination_reason: None,
             url: Some(url),
-            url_list: RefCell::new(Vec::new()),
+            url_list: vec![],
             status: Some(StatusCode::Ok),
             raw_status: Some((200, b"OK".to_vec())),
             headers: Headers::new(),
@@ -114,9 +124,17 @@ impl Response {
             cache_state: CacheState::None,
             https_state: HttpsState::None,
             referrer: None,
+            referrer_policy: None,
             internal_response: None,
-            return_internal: Cell::new(true),
+            return_internal: true,
         }
+    }
+
+    pub fn from_init(init: ResponseInit) -> Response {
+        let mut res = Response::new(init.url);
+        res.headers = init.headers;
+        res.referrer = init.referrer;
+        res
     }
 
     pub fn network_error(e: NetworkError) -> Response {
@@ -124,7 +142,7 @@ impl Response {
             response_type: ResponseType::Error(e),
             termination_reason: None,
             url: None,
-            url_list: RefCell::new(vec![]),
+            url_list: vec![],
             status: None,
             raw_status: None,
             headers: Headers::new(),
@@ -132,8 +150,9 @@ impl Response {
             cache_state: CacheState::None,
             https_state: HttpsState::None,
             referrer: None,
+            referrer_policy: None,
             internal_response: None,
-            return_internal: Cell::new(true),
+            return_internal: true,
         }
     }
 
@@ -156,15 +175,23 @@ impl Response {
     }
 
     pub fn actual_response(&self) -> &Response {
-        if self.return_internal.get() && self.internal_response.is_some() {
+        if self.return_internal && self.internal_response.is_some() {
             &**self.internal_response.as_ref().unwrap()
         } else {
             self
         }
     }
 
+    pub fn actual_response_mut(&mut self) -> &mut Response {
+        if self.return_internal && self.internal_response.is_some() {
+            &mut **self.internal_response.as_mut().unwrap()
+        } else {
+            self
+        }
+    }
+
     pub fn to_actual(self) -> Response {
-        if self.return_internal.get() && self.internal_response.is_some() {
+        if self.return_internal && self.internal_response.is_some() {
             *self.internal_response.unwrap()
         } else {
             self
@@ -226,7 +253,7 @@ impl Response {
             },
 
             ResponseType::Opaque => {
-                response.url_list = RefCell::new(vec![]);
+                response.url_list = vec![];
                 response.url = None;
                 response.headers = Headers::new();
                 response.status = None;
@@ -256,6 +283,7 @@ impl Response {
             metadata.status = response.raw_status.clone();
             metadata.https_state = response.https_state;
             metadata.referrer = response.referrer.clone();
+            metadata.referrer_policy = response.referrer_policy.clone();
             metadata
         };
 

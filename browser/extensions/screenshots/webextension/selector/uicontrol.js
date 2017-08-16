@@ -1,5 +1,5 @@
 /* globals log, catcher, util, ui, slides */
-/* globals window, document, location, shooter, callBackground, selectorLoader, assertIsTrusted */
+/* globals shooter, callBackground, selectorLoader, assertIsTrusted */
 
 "use strict";
 
@@ -376,7 +376,7 @@ this.uicontrol = (function() {
         ui.Box.remove();
         const handler = watchFunction(assertIsTrusted(keyupHandler));
         document.addEventListener("keyup", handler);
-        registeredDocumentHandlers.push({name: "keyup", doc: document, handler});
+        registeredDocumentHandlers.push({name: "keyup", doc: document, handler, useCapture: false});
       }));
     },
 
@@ -511,6 +511,15 @@ this.uicontrol = (function() {
     },
 
     mousedown(event) {
+      // FIXME: this is happening but we don't know why, we'll track it now
+      // but avoid popping up messages:
+      if (typeof ui === "undefined") {
+        let exc = new Error("Undefined ui in mousedown");
+        exc.unloadTime = unloadTime;
+        exc.nowTime = Date.now();
+        exc.noPopup = true;
+        throw exc;
+      }
       if (ui.isHeader(event.target)) {
         return undefined;
       }
@@ -774,14 +783,14 @@ this.uicontrol = (function() {
   };
 
   let documentWidth = Math.max(
-    document.body.clientWidth,
+    document.body && document.body.clientWidth,
     document.documentElement.clientWidth,
-    document.body.scrollWidth,
+    document.body && document.body.scrollWidth,
     document.documentElement.scrollWidth);
   let documentHeight = Math.max(
-    document.body.clientHeight,
+    document.body && document.body.clientHeight,
     document.documentElement.clientHeight,
-    document.body.scrollHeight,
+    document.body && document.body.scrollHeight,
     document.documentElement.scrollHeight);
 
   function scrollIfByEdge(pageX, pageY) {
@@ -809,16 +818,17 @@ this.uicontrol = (function() {
   let shouldOnboard = typeof slides !== "undefined";
 
   exports.activate = function() {
+    if (!document.body) {
+      callBackground("abortNoDocumentBody", document.documentElement.tagName);
+      selectorLoader.unloadModules();
+      return;
+    }
     if (isFrameset()) {
       callBackground("abortFrameset");
       selectorLoader.unloadModules();
       return;
     }
     addHandlers();
-    // FIXME: self.options is gone
-    if (self.options && self.options.styleMyShotsButton) {
-      ui.iframe.addClassName = `styleMyShotsButton-${self.options.styleMyShotsButton.value}`;
-    }
     if (shouldOnboard) {
       setState("onboarding");
     } else {
@@ -842,8 +852,11 @@ this.uicontrol = (function() {
     }
   };
 
+  let unloadTime = 0;
+
   exports.unload = function() {
     // Note that ui.unload() will be called on its own
+    unloadTime = Date.now();
     removeHandlers();
   };
 
@@ -856,7 +869,7 @@ this.uicontrol = (function() {
 
   function addHandlers() {
     ["mouseup", "mousedown", "mousemove", "click"].forEach((eventName) => {
-      let fn = watchFunction((function(eventName, event) {
+      let fn = watchFunction(assertIsTrusted((function(eventName, event) {
         if (typeof event.button == "number" && event.button !== 0) {
           // Not a left click
           return undefined;
@@ -871,22 +884,28 @@ this.uicontrol = (function() {
           return handler[eventName](event);
         }
         return undefined;
-      }).bind(null, eventName));
+      }).bind(null, eventName)));
       primedDocumentHandlers.set(eventName, fn);
     });
-    primedDocumentHandlers.set("keyup", keyupHandler);
+    primedDocumentHandlers.set("keyup", watchFunction(assertIsTrusted(keyupHandler)));
     window.addEventListener('beforeunload', beforeunloadHandler);
   }
+
+  let mousedownSetOnDocument = false;
 
   function installHandlersOnDocument(docObj) {
     for (let [eventName, handler] of primedDocumentHandlers) {
       let watchHandler = watchFunction(handler);
-      docObj.addEventListener(eventName, watchHandler, eventName !== "keyup");
-      registeredDocumentHandlers.push({name: eventName, doc: docObj, watchHandler});
+      let useCapture = eventName !== "keyup";
+      docObj.addEventListener(eventName, watchHandler, useCapture);
+      registeredDocumentHandlers.push({name: eventName, doc: docObj, handler: watchHandler, useCapture});
     }
-    let mousedownHandler = primedDocumentHandlers.get("mousedown");
-    document.addEventListener("mousedown", mousedownHandler, true);
-    registeredDocumentHandlers.push({name: "mousedown", doc: document, watchHandler: mousedownHandler, useCapture: true});
+    if (!mousedownSetOnDocument) {
+      let mousedownHandler = primedDocumentHandlers.get("mousedown");
+      document.addEventListener("mousedown", mousedownHandler, true);
+      registeredDocumentHandlers.push({name: "mousedown", doc: document, handler: mousedownHandler, useCapture: true});
+      mousedownSetOnDocument = true;
+    }
   }
 
   function beforeunloadHandler() {
@@ -919,7 +938,7 @@ this.uicontrol = (function() {
     registeredDocumentHandlers = [];
   }
 
-  exports.activate();
+  catcher.watchFunction(exports.activate)();
 
   return exports;
 })();

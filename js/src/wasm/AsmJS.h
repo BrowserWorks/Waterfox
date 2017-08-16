@@ -24,12 +24,16 @@
 namespace js {
 
 namespace frontend {
-    template <typename ParseHandler> class Parser;
-    class ParseContext;
-    class FullParseHandler;
-    class ParseNode;
+
+class ParseContext;
+class ParseNode;
+
+template <class ParseHandler, typename CharT> class Parser;
+class FullParseHandler;
+
 }
-typedef frontend::Parser<frontend::FullParseHandler> AsmJSParser;
+
+using AsmJSParser = frontend::Parser<frontend::FullParseHandler, char16_t>;
 
 // This function takes over parsing of a function starting with "use asm". The
 // return value indicates whether an error was reported which the caller should

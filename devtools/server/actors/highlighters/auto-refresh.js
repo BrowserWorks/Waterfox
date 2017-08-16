@@ -120,7 +120,7 @@ AutoRefreshHighlighter.prototype = {
    * Hide the highlighter
    */
   hide: function () {
-    if (!this._isNodeValid(this.currentNode)) {
+    if (!this.currentNode || !this.highlighterEnv.window) {
       return;
     }
 

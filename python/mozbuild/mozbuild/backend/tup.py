@@ -11,15 +11,18 @@ from mozbuild.base import MozbuildObject
 from mozbuild.backend.base import PartialBackend, HybridBackend
 from mozbuild.backend.recursivemake import RecursiveMakeBackend
 from mozbuild.shellutil import quote as shell_quote
+from mozbuild.util import OrderedDefaultDict
 
 from .common import CommonBackend
 from ..frontend.data import (
+    ChromeManifestEntry,
     ContextDerived,
     Defines,
     FinalTargetFiles,
     FinalTargetPreprocessedFiles,
     GeneratedFile,
     HostDefines,
+    JARManifest,
     ObjdirFiles,
 )
 from ..util import (
@@ -27,7 +30,6 @@ from ..util import (
 )
 from ..frontend.context import (
     AbsolutePath,
-    RenamedSourcePath,
     ObjDirPath,
 )
 
@@ -86,8 +88,8 @@ class BackendTupfile(object):
             'extra_outputs': ' | ' + ' '.join(extra_outputs) if extra_outputs else '',
         })
 
-    def symlink_rule(self, source, output_group=None):
-        outputs = [mozpath.basename(source)]
+    def symlink_rule(self, source, output=None, output_group=None):
+        outputs = [output] if output else [mozpath.basename(source)]
         if output_group:
             outputs.append(output_group)
 
@@ -124,6 +126,7 @@ class TupOnly(CommonBackend, PartialBackend):
 
         self._backend_files = {}
         self._cmd = MozbuildObject.from_environment()
+        self._manifest_entries = OrderedDefaultDict(set)
 
         # This is a 'group' dependency - All rules that list this as an output
         # will be built before any rules that list this as an input.
@@ -179,6 +182,14 @@ class TupOnly(CommonBackend, PartialBackend):
                 backend_file.delayed_generated_files.append(obj)
             else:
                 self._process_generated_file(backend_file, obj)
+        elif (isinstance(obj, ChromeManifestEntry) and
+              obj.install_target.startswith('dist/bin')):
+            top_level = mozpath.join(obj.install_target, 'chrome.manifest')
+            if obj.path != top_level:
+                entry = 'manifest %s' % mozpath.relpath(obj.path,
+                                                        obj.install_target)
+                self._manifest_entries[top_level].add(entry)
+            self._manifest_entries[obj.path].add(str(obj.entry))
         elif isinstance(obj, Defines):
             self._process_defines(backend_file, obj)
         elif isinstance(obj, HostDefines):
@@ -187,11 +198,20 @@ class TupOnly(CommonBackend, PartialBackend):
             self._process_final_target_files(obj)
         elif isinstance(obj, FinalTargetPreprocessedFiles):
             self._process_final_target_pp_files(obj, backend_file)
+        elif isinstance(obj, JARManifest):
+            self._consume_jar_manifest(obj)
 
         return True
 
     def consume_finished(self):
         CommonBackend.consume_finished(self)
+
+        # The approach here is similar to fastermake.py, but we
+        # simply write out the resulting files here.
+        for target, entries in self._manifest_entries.iteritems():
+            with self._write_file(mozpath.join(self.environment.topobjdir,
+                                               target)) as fh:
+                fh.write(''.join('%s\n' % e for e in sorted(entries)))
 
         for objdir, backend_file in sorted(self._backend_files.items()):
             for obj in backend_file.delayed_generated_files:
@@ -207,6 +227,14 @@ class TupOnly(CommonBackend, PartialBackend):
                 for name in sorted(acdefines)])
             # TODO: AB_CD only exists in Makefiles at the moment.
             acdefines_flags += ' -DAB_CD=en-US'
+
+            # TODO: BOOKMARKS_INCLUDE_DIR is used by bookmarks.html.in, and is
+            # only defined in browser/locales/Makefile.in
+            acdefines_flags += ' -DBOOKMARKS_INCLUDE_DIR=%s/browser/locales/en-US/profile' % self.environment.topsrcdir
+
+            # Use BUILD_FASTER to avoid CXXFLAGS/CPPFLAGS in
+            # toolkit/content/buildconfig.html
+            acdefines_flags += ' -DBUILD_FASTER=1'
 
             fh.write('MOZ_OBJ_ROOT = $(TUP_CWD)\n')
             fh.write('DIST = $(MOZ_OBJ_ROOT)/dist\n')
@@ -281,7 +309,6 @@ class TupOnly(CommonBackend, PartialBackend):
         for path, files in obj.files.walk():
             backend_file = self._get_backend_file(mozpath.join(target, path))
             for f in files:
-                assert not isinstance(f, RenamedSourcePath)
                 if not isinstance(f, ObjDirPath):
                     if '*' in f:
                         if f.startswith('/') or isinstance(f, AbsolutePath):
@@ -297,7 +324,7 @@ class TupOnly(CommonBackend, PartialBackend):
                             # TODO: This is needed for tests
                             pass
                     else:
-                        backend_file.symlink_rule(f.full_path, output_group=self._installed_files)
+                        backend_file.symlink_rule(f.full_path, output=f.target_basename, output_group=self._installed_files)
                 else:
                     # TODO: Support installing generated files
                     pass
@@ -345,10 +372,21 @@ class TupOnly(CommonBackend, PartialBackend):
                 outputs=outputs,
             )
 
+        for manifest, entries in manager.interface_manifests.items():
+            for xpt in entries:
+                self._manifest_entries[manifest].add('interfaces %s' % xpt)
+
+        for m in manager.chrome_manifests:
+            self._manifest_entries[m].add('manifest components/interfaces.manifest')
+
     def _preprocess(self, backend_file, input_file, destdir=None):
+        # .css files use '%' as the preprocessor marker, which must be scaped as
+        # '%%' in the Tupfile.
+        marker = '%%' if input_file.endswith('.css') else '#'
+
         cmd = self._py_action('preprocessor')
-        cmd.extend(backend_file.defines)
-        cmd.extend(['$(ACDEFINES)', '%f', '-o', '%o'])
+        cmd.extend([shell_quote(d) for d in backend_file.defines])
+        cmd.extend(['$(ACDEFINES)', '%f', '-o', '%o', '--marker=%s' % marker])
 
         base_input = mozpath.basename(input_file)
         if base_input.endswith('.in'):

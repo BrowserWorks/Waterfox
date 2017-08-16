@@ -55,6 +55,14 @@ public:
      */
     nsresult Init(nsIWidget *aWidget);
 
+    /*
+     * Initialize the font cache if it hasn't been initialized yet.
+     * (Needed for stylo)
+     */
+    void InitFontCache();
+
+    void UpdateFontCacheUserFonts(gfxUserFontSet* aUserFontSet);
+
     /**
      * Initialize the device context from a device context spec
      * @param aDevSpec the specification of the printing device
@@ -294,7 +302,6 @@ private:
 
     nscoord  mWidth;
     nscoord  mHeight;
-    uint32_t mDepth;
     int32_t  mAppUnitsPerDevPixel;
     int32_t  mAppUnitsPerDevPixelAtUnitFullZoom;
     int32_t  mAppUnitsPerPhysicalInch;

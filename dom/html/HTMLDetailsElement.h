@@ -32,13 +32,15 @@ public:
 
   nsIContent* GetFirstSummary() const;
 
-  nsresult Clone(NodeInfo* aNodeInfo, nsINode** aResult) const override;
+  nsresult Clone(NodeInfo* aNodeInfo, nsINode** aResult,
+                 bool aPreallocateChildren) const override;
 
   nsChangeHint GetAttributeChangeHint(const nsIAtom* aAttribute,
                                       int32_t aModType) const override;
 
   nsresult BeforeSetAttr(int32_t aNameSpaceID, nsIAtom* aName,
-                         nsAttrValueOrString* aValue, bool aNotify) override;
+                         const nsAttrValueOrString* aValue,
+                         bool aNotify) override;
 
   // HTMLDetailsElement WebIDL
   bool Open() const { return GetBoolAttr(nsGkAtoms::open); }

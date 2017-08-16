@@ -4,19 +4,20 @@
 
 #include "nsDataSignatureVerifier.h"
 
+#include "ScopedNSSTypes.h"
+#include "SharedCertVerifier.h"
 #include "cms.h"
 #include "cryptohi.h"
 #include "keyhi.h"
+#include "mozilla/Base64.h"
 #include "mozilla/Casting.h"
 #include "mozilla/Unused.h"
 #include "nsCOMPtr.h"
 #include "nsNSSComponent.h"
-#include "nssb64.h"
+#include "nsString.h"
 #include "pkix/pkixnss.h"
 #include "pkix/pkixtypes.h"
-#include "ScopedNSSTypes.h"
 #include "secerr.h"
-#include "SharedCertVerifier.h"
 
 using namespace mozilla;
 using namespace mozilla::pkix;
@@ -68,15 +69,22 @@ nsDataSignatureVerifier::VerifyData(const nsACString& aData,
   }
 
   // Base 64 decode the key
-  SECItem keyItem;
-  PORT_Memset(&keyItem, 0, sizeof(SECItem));
-  if (!NSSBase64_DecodeBuffer(arena.get(), &keyItem,
-                              PromiseFlatCString(aPublicKey).get(),
-                              aPublicKey.Length())) {
-    return NS_ERROR_FAILURE;
+  // For compatibility reasons we need to remove all whitespace first, since
+  // Base64Decode() will not accept invalid characters.
+  nsAutoCString b64KeyNoWhitespace(aPublicKey);
+  b64KeyNoWhitespace.StripWhitespace();
+  nsAutoCString key;
+  nsresult rv = Base64Decode(b64KeyNoWhitespace, key);
+  if (NS_FAILED(rv)) {
+    return rv;
   }
 
   // Extract the public key from the data
+  SECItem keyItem = {
+    siBuffer,
+    BitwiseCast<unsigned char*, const char*>(key.get()),
+    key.Length(),
+  };
   UniqueCERTSubjectPublicKeyInfo pki(
     SECKEY_DecodeDERSubjectPublicKeyInfo(&keyItem));
   if (!pki) {
@@ -89,17 +97,24 @@ nsDataSignatureVerifier::VerifyData(const nsACString& aData,
   }
 
   // Base 64 decode the signature
-  SECItem signatureItem;
-  PORT_Memset(&signatureItem, 0, sizeof(SECItem));
-  if (!NSSBase64_DecodeBuffer(arena.get(), &signatureItem,
-                              PromiseFlatCString(aSignature).get(),
-                              aSignature.Length())) {
-    return NS_ERROR_FAILURE;
+  // For compatibility reasons we need to remove all whitespace first, since
+  // Base64Decode() will not accept invalid characters.
+  nsAutoCString b64SignatureNoWhitespace(aSignature);
+  b64SignatureNoWhitespace.StripWhitespace();
+  nsAutoCString signature;
+  rv = Base64Decode(b64SignatureNoWhitespace, signature);
+  if (NS_FAILED(rv)) {
+    return rv;
   }
 
   // Decode the signature and algorithm
   CERTSignedData sigData;
   PORT_Memset(&sigData, 0, sizeof(CERTSignedData));
+  SECItem signatureItem = {
+    siBuffer,
+    BitwiseCast<unsigned char*, const char*>(signature.get()),
+    signature.Length(),
+  };
   SECStatus srv = SEC_QuickDERDecodeItem(arena.get(), &sigData,
                                          CERT_SignatureDataTemplate,
                                          &signatureItem);
@@ -273,14 +288,12 @@ VerifyCertificate(CERTCertificate* cert, void* voidContext, void* pinArg)
 } // namespace
 
 NS_IMETHODIMP
-nsDataSignatureVerifier::VerifySignature(const char* aRSABuf,
-                                         uint32_t aRSABufLen,
-                                         const char* aPlaintext,
-                                         uint32_t aPlaintextLen,
+nsDataSignatureVerifier::VerifySignature(const nsACString& aRSABuf,
+                                         const nsACString& aPlaintext,
                                          int32_t* aErrorCode,
                                          nsIX509Cert** aSigningCert)
 {
-  if (!aRSABuf || !aPlaintext || !aErrorCode || !aSigningCert) {
+  if (!aErrorCode || !aSigningCert) {
     return NS_ERROR_INVALID_ARG;
   }
 
@@ -295,16 +308,16 @@ nsDataSignatureVerifier::VerifySignature(const char* aRSABuf,
   Digest digest;
   nsresult rv = digest.DigestBuf(
     SEC_OID_SHA1,
-    BitwiseCast<const uint8_t*, const char*>(aPlaintext),
-    aPlaintextLen);
+    BitwiseCast<const uint8_t*, const char*>(aPlaintext.BeginReading()),
+    aPlaintext.Length());
   if (NS_WARN_IF(NS_FAILED(rv))) {
     return rv;
   }
 
   SECItem buffer = {
     siBuffer,
-    BitwiseCast<unsigned char*, const char*>(aRSABuf),
-    aRSABufLen
+    BitwiseCast<unsigned char*, const char*>(aRSABuf.BeginReading()),
+    aRSABuf.Length(),
   };
 
   VerifyCertificateContext context;

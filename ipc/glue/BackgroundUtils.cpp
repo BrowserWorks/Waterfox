@@ -10,17 +10,19 @@
 #include "mozilla/Assertions.h"
 #include "mozilla/BasePrincipal.h"
 #include "mozilla/ipc/PBackgroundSharedTypes.h"
+#include "mozilla/ipc/URIUtils.h"
 #include "mozilla/net/NeckoChannelParams.h"
-#include "nsExpandedPrincipal.h"
-#include "nsPrincipal.h"
+#include "ExpandedPrincipal.h"
 #include "nsIScriptSecurityManager.h"
 #include "nsIURI.h"
 #include "nsNetUtil.h"
 #include "mozilla/LoadInfo.h"
-#include "nsNullPrincipal.h"
-#include "nsServiceManagerUtils.h"
+#include "ContentPrincipal.h"
+#include "NullPrincipal.h"
+#include "nsContentUtils.h"
 #include "nsString.h"
 #include "nsTArray.h"
+#include "mozilla/nsRedirectHistoryEntry.h"
 
 namespace mozilla {
 namespace net {
@@ -43,8 +45,8 @@ PrincipalInfoToPrincipal(const PrincipalInfo& aPrincipalInfo,
   nsresult& rv = aOptionalResult ? *aOptionalResult : stackResult;
 
   nsCOMPtr<nsIScriptSecurityManager> secMan =
-    do_GetService(NS_SCRIPTSECURITYMANAGER_CONTRACTID, &rv);
-  if (NS_WARN_IF(NS_FAILED(rv))) {
+    nsContentUtils::GetSecurityManager();
+  if (!secMan) {
     return nullptr;
   }
 
@@ -70,7 +72,7 @@ PrincipalInfoToPrincipal(const PrincipalInfo& aPrincipalInfo,
         return nullptr;
       }
 
-      principal = nsNullPrincipal::Create(info.attrs(), uri);
+      principal = NullPrincipal::Create(info.attrs(), uri);
       return principal.forget();
     }
 
@@ -89,8 +91,7 @@ PrincipalInfoToPrincipal(const PrincipalInfo& aPrincipalInfo,
         attrs = info.attrs();
       }
       principal = BasePrincipal::CreateCodebasePrincipal(uri, attrs);
-      rv = principal ? NS_OK : NS_ERROR_FAILURE;
-      if (NS_WARN_IF(NS_FAILED(rv))) {
+      if (NS_WARN_IF(!principal)) {
         return nullptr;
       }
 
@@ -124,7 +125,8 @@ PrincipalInfoToPrincipal(const PrincipalInfo& aPrincipalInfo,
         whitelist.AppendElement(wlPrincipal);
       }
 
-      RefPtr<nsExpandedPrincipal> expandedPrincipal = new nsExpandedPrincipal(whitelist, info.attrs());
+      RefPtr<ExpandedPrincipal> expandedPrincipal =
+        ExpandedPrincipal::Create(whitelist, info.attrs());
       if (!expandedPrincipal) {
         NS_WARNING("could not instantiate expanded principal");
         return nullptr;
@@ -171,15 +173,14 @@ PrincipalToPrincipalInfo(nsIPrincipal* aPrincipal,
     return NS_OK;
   }
 
-  nsresult rv;
   nsCOMPtr<nsIScriptSecurityManager> secMan =
-    do_GetService(NS_SCRIPTSECURITYMANAGER_CONTRACTID, &rv);
-  if (NS_WARN_IF(NS_FAILED(rv))) {
-    return rv;
+    nsContentUtils::GetSecurityManager();
+  if (!secMan) {
+    return NS_ERROR_FAILURE;
   }
 
   bool isSystemPrincipal;
-  rv = secMan->IsSystemPrincipal(aPrincipal, &isSystemPrincipal);
+  nsresult rv = secMan->IsSystemPrincipal(aPrincipal, &isSystemPrincipal);
   if (NS_WARN_IF(NS_FAILED(rv))) {
     return rv;
   }
@@ -259,6 +260,46 @@ IsPincipalInfoPrivate(const PrincipalInfo& aPrincipalInfo)
   return !!info.attrs().mPrivateBrowsingId;
 }
 
+already_AddRefed<nsIRedirectHistoryEntry>
+RHEntryInfoToRHEntry(const RedirectHistoryEntryInfo& aRHEntryInfo)
+{
+  nsresult rv;
+  nsCOMPtr<nsIPrincipal> principal =
+    PrincipalInfoToPrincipal(aRHEntryInfo.principalInfo(), &rv);
+  if (NS_WARN_IF(NS_FAILED(rv))) {
+    return nullptr;
+  }
+
+  nsCOMPtr<nsIURI> referrerUri = DeserializeURI(aRHEntryInfo.referrerUri());
+
+  nsCOMPtr<nsIRedirectHistoryEntry> entry =
+    new nsRedirectHistoryEntry(principal, referrerUri, aRHEntryInfo.remoteAddress());
+
+  return entry.forget();
+}
+
+nsresult
+RHEntryToRHEntryInfo(nsIRedirectHistoryEntry* aRHEntry,
+                     RedirectHistoryEntryInfo* aRHEntryInfo)
+{
+  MOZ_ASSERT(aRHEntry);
+  MOZ_ASSERT(aRHEntryInfo);
+
+  nsresult rv;
+  aRHEntry->GetRemoteAddress(aRHEntryInfo->remoteAddress());
+
+  nsCOMPtr<nsIURI> referrerUri;
+  rv = aRHEntry->GetReferrerURI(getter_AddRefs(referrerUri));
+  NS_ENSURE_SUCCESS(rv, rv);
+  SerializeURI(referrerUri, aRHEntryInfo->referrerUri());
+
+  nsCOMPtr<nsIPrincipal> principal;
+  rv = aRHEntry->GetPrincipal(getter_AddRefs(principal));
+  NS_ENSURE_SUCCESS(rv, rv);
+
+  return PrincipalToPrincipalInfo(principal, &aRHEntryInfo->principalInfo());
+}
+
 nsresult
 LoadInfoToLoadInfoArgs(nsILoadInfo *aLoadInfo,
                        OptionalLoadInfoArgs* aOptionalLoadInfoArgs)
@@ -305,15 +346,19 @@ LoadInfoToLoadInfoArgs(nsILoadInfo *aLoadInfo,
     sandboxedLoadingPrincipalInfo = sandboxedLoadingPrincipalInfoTemp;
   }
 
-  nsTArray<PrincipalInfo> redirectChainIncludingInternalRedirects;
-  for (const nsCOMPtr<nsIPrincipal>& principal : aLoadInfo->RedirectChainIncludingInternalRedirects()) {
-    rv = PrincipalToPrincipalInfo(principal, redirectChainIncludingInternalRedirects.AppendElement());
+  nsTArray<RedirectHistoryEntryInfo> redirectChainIncludingInternalRedirects;
+  for (const nsCOMPtr<nsIRedirectHistoryEntry>& redirectEntry :
+       aLoadInfo->RedirectChainIncludingInternalRedirects()) {
+    RedirectHistoryEntryInfo* entry = redirectChainIncludingInternalRedirects.AppendElement();
+    rv = RHEntryToRHEntryInfo(redirectEntry, entry);
     NS_ENSURE_SUCCESS(rv, rv);
   }
 
-  nsTArray<PrincipalInfo> redirectChain;
-  for (const nsCOMPtr<nsIPrincipal>& principal : aLoadInfo->RedirectChain()) {
-    rv = PrincipalToPrincipalInfo(principal, redirectChain.AppendElement());
+  nsTArray<RedirectHistoryEntryInfo> redirectChain;
+  for (const nsCOMPtr<nsIRedirectHistoryEntry>& redirectEntry :
+       aLoadInfo->RedirectChain()) {
+    RedirectHistoryEntryInfo* entry = redirectChain.AppendElement();
+    rv = RHEntryToRHEntryInfo(redirectEntry, entry);
     NS_ENSURE_SUCCESS(rv, rv);
   }
 
@@ -386,20 +431,21 @@ LoadInfoArgsToLoadInfo(const OptionalLoadInfoArgs& aOptionalLoadInfoArgs,
     NS_ENSURE_SUCCESS(rv, rv);
   }
 
-  nsTArray<nsCOMPtr<nsIPrincipal>> redirectChainIncludingInternalRedirects;
-  for (const PrincipalInfo& principalInfo : loadInfoArgs.redirectChainIncludingInternalRedirects()) {
-    nsCOMPtr<nsIPrincipal> redirectedPrincipal =
-      PrincipalInfoToPrincipal(principalInfo, &rv);
+  RedirectHistoryArray redirectChainIncludingInternalRedirects;
+  for (const RedirectHistoryEntryInfo& entryInfo :
+      loadInfoArgs.redirectChainIncludingInternalRedirects()) {
+    nsCOMPtr<nsIRedirectHistoryEntry> redirectHistoryEntry =
+      RHEntryInfoToRHEntry(entryInfo);
     NS_ENSURE_SUCCESS(rv, rv);
-    redirectChainIncludingInternalRedirects.AppendElement(redirectedPrincipal.forget());
+    redirectChainIncludingInternalRedirects.AppendElement(redirectHistoryEntry.forget());
   }
 
-  nsTArray<nsCOMPtr<nsIPrincipal>> redirectChain;
-  for (const PrincipalInfo& principalInfo : loadInfoArgs.redirectChain()) {
-    nsCOMPtr<nsIPrincipal> redirectedPrincipal =
-      PrincipalInfoToPrincipal(principalInfo, &rv);
+  RedirectHistoryArray redirectChain;
+  for (const RedirectHistoryEntryInfo& entryInfo : loadInfoArgs.redirectChain()) {
+    nsCOMPtr<nsIRedirectHistoryEntry> redirectHistoryEntry =
+      RHEntryInfoToRHEntry(entryInfo);
     NS_ENSURE_SUCCESS(rv, rv);
-    redirectChain.AppendElement(redirectedPrincipal.forget());
+    redirectChain.AppendElement(redirectHistoryEntry.forget());
   }
 
   nsCOMPtr<nsILoadInfo> loadInfo =

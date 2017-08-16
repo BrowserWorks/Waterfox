@@ -29,7 +29,6 @@
 #include "nsIHTMLAbsPosEditor.h"
 #include "nsIHTMLEditor.h"
 #include "nsIHTMLInlineTableEditor.h"
-#include "nsIHTMLObjectResizeListener.h"
 #include "nsIHTMLObjectResizer.h"
 #include "nsISelectionListener.h"
 #include "nsITableEditor.h"
@@ -60,6 +59,8 @@ class DocumentFragment;
 namespace widget {
 struct IMEState;
 } // namespace widget
+
+enum class ParagraphSeparator { div, p, br };
 
 /**
  * The HTML editor implementation.<br>
@@ -98,6 +99,9 @@ public:
   NS_DECL_CYCLE_COLLECTION_CLASS_INHERITED(HTMLEditor, TextEditor)
 
   HTMLEditor();
+
+  virtual HTMLEditor* AsHTMLEditor() override { return this; }
+  virtual const HTMLEditor* AsHTMLEditor() const override { return this; }
 
   bool GetReturnInParagraphCreatesNewParagraph();
   Element* GetSelectionContainer();
@@ -368,6 +372,15 @@ public:
     return attrCount > 1 ||
            (1 == attrCount &&
             !aElement->GetAttrNameAt(0)->Equals(nsGkAtoms::mozdirty));
+  }
+
+  ParagraphSeparator GetDefaultParagraphSeparator() const
+  {
+    return mDefaultParagraphSeparator;
+  }
+  void SetDefaultParagraphSeparator(ParagraphSeparator aSep)
+  {
+    mDefaultParagraphSeparator = aSep;
   }
 
 protected:
@@ -907,8 +920,6 @@ protected:
   nsCOMPtr<nsISelectionListener> mSelectionListenerP;
   nsCOMPtr<nsIDOMEventListener>  mResizeEventListenerP;
 
-  nsTArray<OwningNonNull<nsIHTMLObjectResizeListener>> mObjectResizeEventListeners;
-
   int32_t mOriginalX;
   int32_t mOriginalY;
 
@@ -1002,6 +1013,8 @@ protected:
   void RemoveMouseClickListener(Element* aElement);
 
   nsCOMPtr<nsILinkHandler> mLinkHandler;
+
+  ParagraphSeparator mDefaultParagraphSeparator;
 
 public:
   friend class HTMLEditorEventListener;

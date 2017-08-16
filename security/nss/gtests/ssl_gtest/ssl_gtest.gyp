@@ -36,12 +36,12 @@
         'ssl_staticrsa_unittest.cc',
         'ssl_v2_client_hello_unittest.cc',
         'ssl_version_unittest.cc',
+        'ssl_versionpolicy_unittest.cc',
         'test_io.cc',
         'tls_agent.cc',
         'tls_connect.cc',
         'tls_filter.cc',
         'tls_hkdf_unittest.cc',
-        'tls_parser.cc',
         'tls_protect.cc'
       ],
       'dependencies': [

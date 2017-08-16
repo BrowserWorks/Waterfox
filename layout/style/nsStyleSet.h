@@ -26,6 +26,7 @@
 #include "nsTArray.h"
 #include "nsCOMArray.h"
 #include "nsIStyleRule.h"
+#include "nsCSSAnonBoxes.h"
 
 class gfxFontFeatureValueSet;
 class nsCSSKeyframesRule;
@@ -40,8 +41,11 @@ struct TreeMatchContext;
 
 namespace mozilla {
 class CSSStyleSheet;
-class EventStates;
 enum class CSSPseudoElementType : uint8_t;
+class EventStates;
+namespace dom {
+class ShadowRoot;
+} // namespace dom
 } // namespace mozilla
 
 class nsEmptyStyleRule final : public nsIStyleRule
@@ -209,18 +213,29 @@ class nsStyleSet final
   already_AddRefed<nsStyleContext>
   ResolveStyleForText(nsIContent* aTextNode, nsStyleContext* aParentContext);
 
-  // Get a style context for a non-element (which no rules will match)
-  // other than a text node, such as placeholder frames, and the
-  // nsFirstLetterFrame for everything after the first letter.
+  // Get a style context for a first-letter continuation (which no rules will
+  // match).
   //
-  // The returned style context will have nsCSSAnonBoxes::mozOtherNonElement as
+  // The returned style context will have
+  // nsCSSAnonBoxes::firstLetterContinuation as its pseudo.
+  //
+  // (Perhaps nsCSSAnonBoxes::firstLetterContinuation should go away and we
+  // shouldn't even create style contexts for such frames.  However, not doing
+  // any rule matching for them is a first step.  And right now we do use this
+  // style context for some things)
+  already_AddRefed<nsStyleContext>
+  ResolveStyleForFirstLetterContinuation(nsStyleContext* aParentContext);
+
+  // Get a style context for a placeholder frame (which no rules will match).
+  //
+  // The returned style context will have nsCSSAnonBoxes::oofPlaceholder as
   // its pseudo.
   //
-  // (Perhaps mozOtherNonElement should go away and we shouldn't even
-  // create style contexts for such content nodes.  However, not doing
-  // any rule matching for them is a first step.)
+  // (Perhaps nsCSSAnonBoxes::oofPlaceholder should go away and we shouldn't
+  // even create style contexts for placeholders.  However, not doing any rule
+  // matching for them is a first step.)
   already_AddRefed<nsStyleContext>
-  ResolveStyleForOtherNonElement(nsStyleContext* aParentContext);
+  ResolveStyleForPlaceholder();
 
   // Get a style context for a pseudo-element.  aParentElement must be
   // non-null.  aPseudoID is the CSSPseudoElementType for the
@@ -248,8 +263,7 @@ class nsStyleSet final
                           mozilla::dom::Element* aPseudoElement = nullptr);
 
   /**
-   * Bit-flags that can be passed to ResolveAnonymousBoxStyle and GetContext
-   * in their parameter 'aFlags'.
+   * Bit-flags that can be passed to GetContext in its parameter 'aFlags'.
    */
   enum {
     eNoFlags =          0,
@@ -265,12 +279,18 @@ class nsStyleSet final
     eSkipParentDisplayBasedStyleFixup = 1 << 3
   };
 
-  // Get a style context for an anonymous box.  aPseudoTag is the
-  // pseudo-tag to use and must be non-null.  aFlags will be forwarded
-  // to a GetContext call internally.
+  // Get a style context for an anonymous box.  aPseudoTag is the pseudo-tag to
+  // use and must be non-null.  It must be an anon box, and must be one that
+  // inherits style from the given aParentContext.
   already_AddRefed<nsStyleContext>
-  ResolveAnonymousBoxStyle(nsIAtom* aPseudoTag, nsStyleContext* aParentContext,
-                           uint32_t aFlags = eNoFlags);
+  ResolveInheritingAnonymousBoxStyle(nsIAtom* aPseudoTag,
+                                     nsStyleContext* aParentContext);
+
+  // Get a style context for an anonymous box that does not inherit style from
+  // anything.  aPseudoTag is the pseudo-tag to use and must be non-null.  It
+  // must be an anon box, and must be a non-inheriting one.
+  already_AddRefed<nsStyleContext>
+  ResolveNonInheritingAnonymousBoxStyle(nsIAtom* aPseudoTag);
 
 #ifdef MOZ_XUL
   // Get a style context for a XUL tree pseudo.  aPseudoTag is the
@@ -278,7 +298,7 @@ class nsStyleSet final
   // non-null.  aComparator must be non-null.
   already_AddRefed<nsStyleContext>
   ResolveXULTreePseudoStyle(mozilla::dom::Element* aParentElement,
-                            nsIAtom* aPseudoTag,
+                            nsICSSAnonBoxPseudo* aPseudoTag,
                             nsStyleContext* aParentContext,
                             nsICSSPseudoComparator* aComparator);
 #endif
@@ -291,7 +311,7 @@ class nsStyleSet final
   nsCSSKeyframesRule* KeyframesRuleForName(const nsString& aName);
 
   // Return the winning (in the cascade) @counter-style rule for the given name.
-  nsCSSCounterStyleRule* CounterStyleRuleForName(const nsAString& aName);
+  nsCSSCounterStyleRule* CounterStyleRuleForName(nsIAtom* aName);
 
   // Fetch object for looking up font feature values
   already_AddRefed<gfxFontFeatureValueSet> GetFontFeatureValuesLookup();
@@ -311,6 +331,20 @@ class nsStyleSet final
 
   // Free all of the data associated with this style set.
   void Shutdown();
+
+  // Notes that a style sheet has changed.
+  void RecordStyleSheetChange(mozilla::CSSStyleSheet* aStyleSheet,
+                              mozilla::StyleSheet::ChangeType);
+
+  // Notes that style sheets have changed in a shadow root.
+  void RecordShadowStyleChange(mozilla::dom::ShadowRoot* aShadowRoot);
+
+  bool StyleSheetsHaveChanged() const
+  {
+    return mStylesHaveChanged || !mChangedScopeStyleRoots.IsEmpty();
+  }
+
+  void InvalidateStyleForCSSRuleChanges();
 
   // Get a new style context that lives in a different parent
   // The new context will be the same as the old if the new parent is the
@@ -446,7 +480,7 @@ class nsStyleSet final
   // sheet inners.
   bool EnsureUniqueInnerOnCSSSheets();
 
-  // Called by CSSStyleSheet::EnsureUniqueInner to let us know it cloned
+  // Called by StyleSheet::EnsureUniqueInner to let us know it cloned
   // its inner.
   void SetNeedsRestyleAfterEnsureUniqueInner() {
     mNeedsRestyleAfterEnsureUniqueInner = true;
@@ -559,10 +593,15 @@ private:
 
   nsPresContext* PresContext() { return mRuleTree->PresContext(); }
 
+  // Clear our cached mNonInheritingStyleContexts.  We do this when we want to
+  // make sure those style contexts won't live too long (e.g. at ruletree
+  // reconstruct or shutdown time).
+  void ClearNonInheritingStyleContexts();
+
   // The sheets in each array in mSheets are stored with the most significant
   // sheet last.
   // The arrays for ePresHintSheet, eStyleAttrSheet, eTransitionSheet,
-  // eAnimationSheet and eSVGAttrAnimationSheet are always empty.
+  // eAnimationSheet are always empty.
   // (FIXME:  We should reduce the storage needed for them.)
   mozilla::EnumeratedArray<mozilla::SheetType, mozilla::SheetType::Count,
                            nsTArray<RefPtr<mozilla::CSSStyleSheet>>> mSheets;
@@ -581,8 +620,21 @@ private:
                                 // lexicographic tree of matched rules that style
                                 // contexts use to look up properties.
 
+  // List of subtrees rooted at style scope roots that need to be restyled.
+  // When a change to a scoped style sheet is made, we add the style scope
+  // root to this array rather than setting mStylesHaveChanged = true, since
+  // we know we don't need to restyle the whole document.  However, if in the
+  // same update block we have already had other changes that require
+  // the whole document to be restyled (i.e., mStylesHaveChanged is already
+  // true), then we don't bother adding the scope root here.
+  AutoTArray<RefPtr<mozilla::dom::Element>,1> mChangedScopeStyleRoots;
+
   uint16_t mBatching;
 
+  // Indicates that the whole document must be restyled.  Changes to scoped
+  // style sheets are recorded in mChangedScopeStyleRoots rather than here
+  // in mStylesHaveChanged.
+  unsigned mStylesHaveChanged : 1;
   unsigned mInShutdown : 1;
   unsigned mInGC : 1;
   unsigned mAuthorStyleDisabled: 1;
@@ -622,6 +674,12 @@ private:
 
   // whether font feature values lookup object needs initialization
   RefPtr<gfxFontFeatureValueSet> mFontFeatureValuesLookup;
+
+  // Stores pointers to our cached style contexts for non-inheriting anonymous
+  // boxes.
+  mozilla::EnumeratedArray<nsCSSAnonBoxes::NonInheriting,
+                           nsCSSAnonBoxes::NonInheriting::_Count,
+                           RefPtr<nsStyleContext>> mNonInheritingStyleContexts;
 };
 
 #ifdef MOZILLA_INTERNAL_API

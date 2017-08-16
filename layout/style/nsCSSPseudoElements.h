@@ -36,6 +36,13 @@
 #define CSS_PSEUDO_ELEMENT_SUPPORTS_USER_ACTION_STATE  (1<<3)
 // Is content prevented from parsing selectors containing this pseudo-element?
 #define CSS_PSEUDO_ELEMENT_UA_SHEET_ONLY               (1<<4)
+// Can we use the ChromeOnly document.createElement(..., { pseudo: "::foo" })
+// API for creating pseudo-implementing native anonymous content in JS with this
+// pseudo-element?
+#define CSS_PSEUDO_ELEMENT_IS_JS_CREATED_NAC           (1<<5)
+// Does this pseudo-element act like an item for containers (such as flex and
+// grid containers) and thus needs parent display-based style fixup?
+#define CSS_PSEUDO_ELEMENT_IS_FLEX_OR_GRID_ITEM        (1<<6)
 
 namespace mozilla {
 
@@ -50,7 +57,9 @@ enum class CSSPseudoElementType : CSSPseudoElementTypeBase {
 #include "nsCSSPseudoElementList.h"
 #undef CSS_PSEUDO_ELEMENT
   Count,
-  AnonBox = Count,
+  InheritingAnonBox = Count, // pseudo from nsCSSAnonBoxes,
+                             // IsNonInheritingAnonBox false.
+  NonInheritingAnonBox, // from nsCSSAnonBoxes, IsNonInheritingAnonBox true.
 #ifdef MOZ_XUL
   XULTree,
 #endif
@@ -86,6 +95,9 @@ public:
   // Get the atom for a given Type.  aType must be < CSSPseudoElementType::Count
   static nsIAtom* GetPseudoAtom(Type aType);
 
+  // Get the atom for a given nsAString. (e.g. "::before")
+  static nsIAtom* GetPseudoAtom(const nsAString& aPseudoElement);
+
   static bool PseudoElementContainsElements(const Type aType) {
     return PseudoElementHasFlags(aType, CSS_PSEUDO_ELEMENT_CONTAINS_ELEMENTS);
   }
@@ -97,6 +109,17 @@ public:
   }
 
   static bool PseudoElementSupportsUserActionState(const Type aType);
+
+  static bool PseudoElementIsJSCreatedNAC(Type aType)
+  {
+    return PseudoElementHasFlags(aType, CSS_PSEUDO_ELEMENT_IS_JS_CREATED_NAC);
+  }
+
+  static bool PseudoElementIsFlexOrGridItem(const Type aType)
+  {
+    return PseudoElementHasFlags(aType,
+                                 CSS_PSEUDO_ELEMENT_IS_FLEX_OR_GRID_ITEM);
+  }
 
   static bool IsEnabled(Type aType, EnabledState aEnabledState)
   {

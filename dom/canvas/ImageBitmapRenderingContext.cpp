@@ -44,6 +44,9 @@ ImageBitmapRenderingContext::ClipToIntrinsicSize()
   } else {
     surface = mImage->GetAsSourceSurface();
   }
+  if (!surface) {
+    return nullptr;
+  }
   result = new layers::SourceSurfaceImage(gfx::IntSize(mWidth, mHeight), surface);
   return result.forget();
 }
@@ -110,7 +113,7 @@ ImageBitmapRenderingContext::MatchWithIntrinsicSize()
   }
 
   RefPtr<DrawTarget> dt =
-    Factory::CreateDrawTargetForData(BackendType::CAIRO,
+    Factory::CreateDrawTargetForData(gfxPlatform::GetPlatform()->GetSoftwareBackend(),
                                      map.GetData(),
                                      temp->GetSize(),
                                      map.GetStride(),
@@ -147,6 +150,9 @@ ImageBitmapRenderingContext::GetImageBuffer(int32_t* aFormat)
 
   if (data->GetSize() != IntSize(mWidth, mHeight)) {
     data = MatchWithIntrinsicSize();
+    if (!data) {
+      return nullptr;
+    }
   }
 
   *aFormat = imgIEncoder::INPUT_FORMAT_HOSTARGB;
@@ -176,14 +182,14 @@ ImageBitmapRenderingContext::GetInputStream(const char* aMimeType,
 }
 
 already_AddRefed<mozilla::gfx::SourceSurface>
-ImageBitmapRenderingContext::GetSurfaceSnapshot(bool* aPremultAlpha)
+ImageBitmapRenderingContext::GetSurfaceSnapshot(gfxAlphaType* const aOutAlphaType)
 {
   if (!mImage) {
     return nullptr;
   }
 
-  if (aPremultAlpha) {
-    *aPremultAlpha = true;
+  if (aOutAlphaType) {
+    *aOutAlphaType = (GetIsOpaque() ? gfxAlphaType::Opaque : gfxAlphaType::Premult);
   }
 
   RefPtr<SourceSurface> surface = mImage->GetAsSourceSurface();
@@ -194,10 +200,9 @@ ImageBitmapRenderingContext::GetSurfaceSnapshot(bool* aPremultAlpha)
   return surface.forget();
 }
 
-NS_IMETHODIMP
+void
 ImageBitmapRenderingContext::SetIsOpaque(bool aIsOpaque)
 {
-  return NS_OK;
 }
 
 bool
@@ -252,6 +257,9 @@ ImageBitmapRenderingContext::GetCanvasLayer(nsDisplayListBuilder* aBuilder,
 
   AutoTArray<ImageContainer::NonOwningImage, 1> imageList;
   RefPtr<layers::Image> image = ClipToIntrinsicSize();
+  if (!image) {
+    return nullptr;
+  }
   imageList.AppendElement(ImageContainer::NonOwningImage(image));
   imageContainer->SetCurrentImages(imageList);
 

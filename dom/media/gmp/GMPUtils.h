@@ -7,9 +7,13 @@
 #define GMPUtils_h_
 
 #include "mozilla/UniquePtr.h"
+#include "mozilla/RefPtr.h"
+#include "mozilla/AbstractThread.h"
 #include "nsTArray.h"
 #include "nsCOMPtr.h"
 #include "nsClassHashtable.h"
+
+#define CHROMIUM_CDM_API "chromium-cdm8-host4"
 
 class nsIFile;
 class nsCString;
@@ -80,6 +84,14 @@ HaveGMPFor(const nsCString& aAPI,
 
 void
 LogToConsole(const nsAString& aMsg);
+
+RefPtr<AbstractThread>
+GetGMPAbstractThread();
+
+// Returns the number of bytes required to store an aWidth x aHeight image in
+// I420 format, padded so that the width and height are multiples of 16.
+size_t
+I420FrameBufferSizePadded(int32_t aWidth, int32_t aHeight);
 
 } // namespace mozilla
 

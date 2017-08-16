@@ -42,9 +42,8 @@ esac
 # necessary for the JS shell, but it's less duplication to share tooltool
 # manifests.
 BROWSER_PLATFORM=$PLATFORM_OS$BITS
-: ${TOOLTOOL_MANIFEST:=browser/config/tooltool-manifests/$BROWSER_PLATFORM/releng.manifest}
 
 : ${TOOLTOOL_CHECKOUT:=$WORK}
 export TOOLTOOL_CHECKOUT
 
-(cd $TOOLTOOL_CHECKOUT && python ${SRCDIR}/taskcluster/docker/recipes/tooltool.py --url $TOOLTOOL_SERVER -m $SRCDIR/$TOOLTOOL_MANIFEST fetch ${TOOLTOOL_CACHE:+ -c $TOOLTOOL_CACHE})
+(cd $TOOLTOOL_CHECKOUT && ${SRCDIR}/mach artifact toolchain -v --tooltool-url $TOOLTOOL_SERVER --tooltool-manifest $SRCDIR/$TOOLTOOL_MANIFEST ${TOOLTOOL_CACHE:+ --cache-dir $TOOLTOOL_CACHE})

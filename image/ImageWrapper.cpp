@@ -88,9 +88,9 @@ ImageWrapper::OnImageDataComplete(nsIRequest* aRequest,
 }
 
 void
-ImageWrapper::OnSurfaceDiscarded()
+ImageWrapper::OnSurfaceDiscarded(const SurfaceKey& aSurfaceKey)
 {
-  return mInnerImage->OnSurfaceDiscarded();
+  return mInnerImage->OnSurfaceDiscarded(aSurfaceKey);
 }
 
 void
@@ -137,6 +137,12 @@ NS_IMETHODIMP
 ImageWrapper::GetHeight(int32_t* aHeight)
 {
   return mInnerImage->GetHeight(aHeight);
+}
+
+nsresult
+ImageWrapper::GetNativeSizes(nsTArray<IntSize>& aNativeSizes) const
+{
+  return mInnerImage->GetNativeSizes(aNativeSizes);
 }
 
 NS_IMETHODIMP

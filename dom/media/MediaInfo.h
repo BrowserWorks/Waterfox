@@ -62,8 +62,6 @@ public:
     , mLanguage(aLanguage)
     , mEnabled(aEnabled)
     , mTrackId(aTrackId)
-    , mDuration(0)
-    , mMediaTime(0)
     , mIsRenderedExternally(false)
     , mType(aType)
   {
@@ -94,8 +92,8 @@ public:
   TrackID mTrackId;
 
   nsCString mMimeType;
-  int64_t mDuration;
-  int64_t mMediaTime;
+  media::TimeUnit mDuration;
+  media::TimeUnit mMediaTime;
   CryptoTrack mCrypto;
 
   nsTArray<MetadataTag> mTags;
@@ -178,7 +176,7 @@ private:
   TrackType mType;
 };
 
-// String version of track type. Don't use with kUndefinedTrack.
+// String version of track type.
 const char* TrackTypeToStr(TrackInfo::TrackType aTrack);
 
 // Stores info relevant to presenting media frames.

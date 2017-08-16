@@ -141,8 +141,19 @@ SSL_GetPreliminaryChannelInfo(PRFileDesc *fd,
     inf.protocolVersion = ss->version;
     inf.cipherSuite = ss->ssl3.hs.cipher_suite;
     inf.canSendEarlyData = !ss->sec.isServer &&
-                           (ss->ssl3.hs.zeroRttState == ssl_0rtt_sent) &&
-                           !ss->firstHsDone;
+                           (ss->ssl3.hs.zeroRttState == ssl_0rtt_sent ||
+                            ss->ssl3.hs.zeroRttState == ssl_0rtt_accepted);
+    /* We shouldn't be able to send early data if the handshake is done. */
+    PORT_Assert(!ss->firstHsDone || !inf.canSendEarlyData);
+
+    if (ss->sec.ci.sid &&
+        (ss->ssl3.hs.zeroRttState == ssl_0rtt_sent ||
+         ss->ssl3.hs.zeroRttState == ssl_0rtt_accepted)) {
+        inf.maxEarlyDataSize =
+            ss->sec.ci.sid->u.ssl3.locked.sessionTicket.max_early_data_size;
+    } else {
+        inf.maxEarlyDataSize = 0;
+    }
 
     memcpy(info, &inf, inf.length);
     return SECSuccess;
@@ -221,6 +232,9 @@ SSL_GetPreliminaryChannelInfo(PRFileDesc *fd,
 #define F_NFIPS_STD 0, 0, 0, 0
 #define F_NFIPS_NSTD 0, 0, 1, 0 /* i.e., trash */
 #define F_EXPORT 0, 1, 0, 0     /* i.e., trash */
+
+// RFC 5705
+#define MAX_CONTEXT_LEN PR_UINT16_MAX - 1
 
 static const SSLCipherSuiteInfo suiteInfo[] = {
     /* <------ Cipher suite --------------------> <auth> <KEA>  <bulk cipher> <MAC> <FIPS> */
@@ -426,6 +440,11 @@ SSL_ExportKeyingMaterial(PRFileDesc *fd,
                               label, labelLen,
                               context, hasContext ? contextLen : 0,
                               out, outLen);
+    }
+
+    if (hasContext && contextLen > MAX_CONTEXT_LEN) {
+        PORT_SetError(SEC_ERROR_INVALID_ARGS);
+        return SECFailure;
     }
 
     /* construct PRF arguments */

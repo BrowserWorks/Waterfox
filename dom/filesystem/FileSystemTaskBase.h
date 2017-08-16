@@ -19,7 +19,6 @@ namespace dom {
 class BlobImpl;
 class FileSystemBase;
 class FileSystemParams;
-class PBlobParent;
 
 /*
  * The base class to implement a Task class.
@@ -138,7 +137,8 @@ protected:
   /*
    * To create a task to handle the page content request.
    */
-  explicit FileSystemTaskChildBase(FileSystemBase* aFileSystem);
+  FileSystemTaskChildBase(nsIGlobalObject* aGlobalObject,
+                          FileSystemBase* aFileSystem);
 
   virtual
   ~FileSystemTaskChildBase();
@@ -169,6 +169,7 @@ protected:
 
   nsresult mErrorValue;
   RefPtr<FileSystemBase> mFileSystem;
+  nsCOMPtr<nsIGlobalObject> mGlobalObject;
 
 private:
 
@@ -187,6 +188,10 @@ private:
 class FileSystemTaskParentBase : public Runnable
 {
 public:
+  FileSystemTaskParentBase()
+    : Runnable("FileSystemTaskParentBase")
+  {}
+
   /*
    * Start the task. This must be called from the PBackground thread only.
    */
@@ -224,17 +229,6 @@ public:
    */
   void
   HandleResult();
-
-  // If this task must do something on the main-thread before IOWork(), it must
-  // overwrite this method. Otherwise it returns true if the FileSystem must be
-  // initialized on the main-thread. It's called from the Background thread.
-  virtual bool
-  NeedToGoToMainThread() const;
-
-  // This method is called only if NeedToGoToMainThread() returns true.
-  // Of course, it runs on the main-thread.
-  virtual nsresult
-  MainThreadWork();
 
   bool
   HasError() const { return NS_FAILED(mErrorValue); }

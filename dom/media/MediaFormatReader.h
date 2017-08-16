@@ -15,6 +15,7 @@
 #include "MediaEventSource.h"
 #include "MediaDataDemuxer.h"
 #include "MediaDecoderReader.h"
+#include "MediaPrefs.h"
 #include "nsAutoPtr.h"
 #include "PDMFactory.h"
 
@@ -37,10 +38,11 @@ public:
   size_t SizeOfVideoQueueInFrames() override;
   size_t SizeOfAudioQueueInFrames() override;
 
-  RefPtr<MediaDataPromise>
-  RequestVideoData(bool aSkipToNextKeyframe, int64_t aTimeThreshold) override;
+  RefPtr<VideoDataPromise>
+  RequestVideoData(bool aSkipToNextKeyframe,
+                   const media::TimeUnit& aTimeThreshold) override;
 
-  RefPtr<MediaDataPromise> RequestAudioData() override;
+  RefPtr<AudioDataPromise> RequestAudioData() override;
 
   RefPtr<MetadataPromise> AsyncReadMetadata() override;
 
@@ -78,7 +80,7 @@ public:
   // Used for debugging purposes.
   void GetMozDebugReaderData(nsACString& aString);
 
-  void SetVideoBlankDecode(bool aIsBlankDecode) override;
+  void SetVideoNullDecode(bool aIsNullDecode) override;
 
 private:
   nsresult InitInternal() override;
@@ -197,6 +199,7 @@ private:
       , mDrainState(DrainState::None)
       , mNumOfConsecutiveError(0)
       , mMaxConsecutiveError(aNumOfMaxError)
+      , mFirstFrameTime(Some(media::TimeUnit::Zero()))
       , mNumSamplesInput(0)
       , mNumSamplesOutput(0)
       , mNumSamplesOutputTotal(0)
@@ -204,7 +207,7 @@ private:
       , mSizeOfQueue(0)
       , mIsHardwareAccelerated(false)
       , mLastStreamSourceID(UINT32_MAX)
-      , mIsBlankDecode(false)
+      , mIsNullDecode(false)
     {
     }
 
@@ -276,6 +279,11 @@ private:
 
     uint32_t mNumOfConsecutiveError;
     uint32_t mMaxConsecutiveError;
+    // Set when we haven't yet decoded the first frame.
+    // Cleared once the first frame has been decoded.
+    // This is used to determine, upon error, if we should try again to decode
+    // the frame, or skip to the next keyframe.
+    Maybe<media::TimeUnit> mFirstFrameTime;
 
     Maybe<MediaResult> mError;
     bool HasFatalError() const
@@ -285,8 +293,9 @@ private:
       }
       if (mError.ref() == NS_ERROR_DOM_MEDIA_DECODE_ERR) {
         // Allow decode errors to be non-fatal, but give up
-        // if we have too many.
-        return mNumOfConsecutiveError > mMaxConsecutiveError;
+        // if we have too many, or if warnings should be treated as errors.
+        return mNumOfConsecutiveError > mMaxConsecutiveError
+               || MediaPrefs::MediaWarningsAsErrors();
       } else if (mError.ref() == NS_ERROR_DOM_MEDIA_NEED_NEW_DECODER) {
         // If the caller asked for a new decoder we shouldn't treat
         // it as fatal.
@@ -301,8 +310,8 @@ private:
     // Used for internal seeking when a change of stream is detected or when
     // encountering data discontinuity.
     Maybe<InternalSeekTarget> mTimeThreshold;
-    // Time of last sample returned.
-    Maybe<media::TimeInterval> mLastSampleTime;
+    // Time of last decoded sample returned.
+    Maybe<media::TimeInterval> mLastDecodedSampleTime;
 
     // Decoded samples returned my mDecoder awaiting being returned to
     // state machine upon request.
@@ -316,8 +325,6 @@ private:
     // Indicate if we have a pending promise for decoded frame.
     // Rejecting the promise will stop the reader from decoding ahead.
     virtual bool HasPromise() const = 0;
-    virtual RefPtr<MediaDataPromise> EnsurePromise(const char* aMethodName) = 0;
-    virtual void ResolvePromise(MediaData* aData, const char* aMethodName) = 0;
     virtual void RejectPromise(const MediaResult& aError,
                                const char* aMethodName) = 0;
 
@@ -361,7 +368,7 @@ private:
       mDrainState = DrainState::None;
       CancelWaitingForKey();
       mTimeThreshold.reset();
-      mLastSampleTime.reset();
+      mLastDecodedSampleTime.reset();
       mOutput.Clear();
       mNumSamplesInput = 0;
       mNumSamplesOutput = 0;
@@ -391,11 +398,12 @@ private:
     UniquePtr<TrackInfo> mOriginalInfo;
     RefPtr<TrackInfoSharedPtr> mInfo;
     Maybe<media::TimeUnit> mFirstDemuxedSampleTime;
-    // Use BlankDecoderModule or not.
-    bool mIsBlankDecode;
+    // Use NullDecoderModule or not.
+    bool mIsNullDecode;
 
   };
 
+  template <typename Type>
   class DecoderDataWithPromise : public DecoderData
   {
   public:
@@ -412,14 +420,14 @@ private:
       return mHasPromise;
     }
 
-    RefPtr<MediaDataPromise> EnsurePromise(const char* aMethodName) override
+    RefPtr<DataPromise<Type>> EnsurePromise(const char* aMethodName)
     {
       MOZ_ASSERT(mOwner->OnTaskQueue());
       mHasPromise = true;
       return mPromise.Ensure(aMethodName);
     }
 
-    void ResolvePromise(MediaData* aData, const char* aMethodName) override
+    void ResolvePromise(Type* aData, const char* aMethodName)
     {
       MOZ_ASSERT(mOwner->OnTaskQueue());
       mPromise.Resolve(aData, aMethodName);
@@ -435,12 +443,12 @@ private:
     }
 
   private:
-    MozPromiseHolder<MediaDataPromise> mPromise;
+    MozPromiseHolder<DataPromise<Type>> mPromise;
     Atomic<bool> mHasPromise;
   };
 
-  DecoderDataWithPromise mAudio;
-  DecoderDataWithPromise mVideo;
+  DecoderDataWithPromise<AudioData> mAudio;
+  DecoderDataWithPromise<VideoData> mVideo;
 
   // Returns true when the decoder for this track needs input.
   bool NeedInput(DecoderData& aDecoder);
@@ -451,7 +459,7 @@ private:
   class DemuxerProxy;
   UniquePtr<DemuxerProxy> mDemuxer;
   bool mDemuxerInitDone;
-  void OnDemuxerInitDone(nsresult);
+  void OnDemuxerInitDone(const MediaResult& aResult);
   void OnDemuxerInitFailed(const MediaResult& aError);
   MozPromiseRequestHolder<MediaDataDemuxer::InitPromise> mDemuxerInitRequest;
   MozPromiseRequestHolder<NotifyDataArrivedPromise> mNotifyDataArrivedPromise;
@@ -537,7 +545,7 @@ private:
 
   RefPtr<GMPCrashHelper> mCrashHelper;
 
-  void SetBlankDecode(TrackType aTrack, bool aIsBlankDecode);
+  void SetNullDecode(TrackType aTrack, bool aIsNullDecode);
 
   class DecoderFactory;
   UniquePtr<DecoderFactory> mDecoderFactory;

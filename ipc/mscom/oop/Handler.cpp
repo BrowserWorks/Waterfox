@@ -8,6 +8,8 @@
 #include "Module.h"
 
 #include "mozilla/ArrayUtils.h"
+#include "mozilla/Assertions.h"
+#include "mozilla/mscom/Objref.h"
 #include "nsWindowsHelpers.h"
 
 #include <objbase.h>
@@ -21,31 +23,33 @@
 namespace mozilla {
 namespace mscom {
 
-Handler::Handler(IUnknown* aOuter, HRESULT& aResult)
+Handler::Handler(IUnknown* aOuter, HRESULT* aResult)
   : mRefCnt(0)
   , mOuter(aOuter)
   , mUnmarshal(nullptr)
   , mHasPayload(false)
 {
+  MOZ_ASSERT(aResult);
+
   if (!aOuter) {
-    aResult = E_INVALIDARG;
+    *aResult = E_INVALIDARG;
     return;
   }
 
   StabilizedRefCount<ULONG> stabilizer(mRefCnt);
 
-  aResult = ::CoGetStdMarshalEx(aOuter, SMEXF_HANDLER,
-                                getter_AddRefs(mInnerUnk));
-  if (FAILED(aResult)) {
+  *aResult = ::CoGetStdMarshalEx(aOuter, SMEXF_HANDLER,
+                                 getter_AddRefs(mInnerUnk));
+  if (FAILED(*aResult)) {
     return;
   }
 
-  aResult = mInnerUnk->QueryInterface(IID_IMarshal, (void**)&mUnmarshal);
-  if (FAILED(aResult)) {
+  *aResult = mInnerUnk->QueryInterface(IID_IMarshal, (void**)&mUnmarshal);
+  if (FAILED(*aResult)) {
     return;
   }
 
-  // mInnerMarshal is a weak ref
+  // mUnmarshal is a weak ref
   mUnmarshal->Release();
 }
 
@@ -90,11 +94,12 @@ Handler::InternalAddRef()
 ULONG
 Handler::InternalRelease()
 {
-  if (--mRefCnt == 0) {
+  ULONG newRefCnt = --mRefCnt;
+  if (newRefCnt == 0) {
     delete this;
     Module::Unlock();
   }
-  return mRefCnt;
+  return newRefCnt;
 }
 
 HRESULT
@@ -165,14 +170,28 @@ Handler::MarshalInterface(IStream* pStm, REFIID riid, void* pv,
   RefPtr<IUnknown> unkToMarshal;
   HRESULT hr;
 
+#if defined(MOZ_MSCOM_REMARSHAL_NO_HANDLER)
+  LARGE_INTEGER seekTo;
+  seekTo.QuadPart = 0;
+
+  ULARGE_INTEGER objrefPos;
+
+  // Save the current position as it points to the location where the OBJREF
+  // will be written.
+  hr = pStm->Seek(seekTo, STREAM_SEEK_CUR, &objrefPos);
+  if (FAILED(hr)) {
+    return hr;
+  }
+
+  // When marshaling without a handler, we just use the riid as passed in.
+  REFIID marshalAs = riid;
+#else
   REFIID marshalAs = MarshalAs(riid);
-  if (marshalAs == riid) {
-    unkToMarshal = static_cast<IUnknown*>(pv);
-  } else {
-    hr = mInnerUnk->QueryInterface(marshalAs, getter_AddRefs(unkToMarshal));
-    if (FAILED(hr)) {
-      return hr;
-    }
+#endif // defined(MOZ_MSCOM_REMARSHAL_NO_HANDLER)
+
+  hr = mInnerUnk->QueryInterface(marshalAs, getter_AddRefs(unkToMarshal));
+  if (FAILED(hr)) {
+    return hr;
   }
 
   hr = mUnmarshal->MarshalInterface(pStm, marshalAs, unkToMarshal.get(),
@@ -181,6 +200,22 @@ Handler::MarshalInterface(IStream* pStm, REFIID riid, void* pv,
     return hr;
   }
 
+#if defined(MOZ_MSCOM_REMARSHAL_NO_HANDLER)
+  // Now the OBJREF has been written, so seek back to its beginning (the
+  // position that we saved earlier).
+  seekTo.QuadPart = objrefPos.QuadPart;
+  hr = pStm->Seek(seekTo, STREAM_SEEK_SET, nullptr);
+  if (FAILED(hr)) {
+    return hr;
+  }
+
+  // Now strip out the handler.
+  if (!StripHandlerFromOBJREF(WrapNotNull(pStm))) {
+    return E_FAIL;
+  }
+
+  return S_OK;
+#else
   if (!HasPayload()) {
     return S_OK;
   }
@@ -188,6 +223,7 @@ Handler::MarshalInterface(IStream* pStm, REFIID riid, void* pv,
   // Unfortunately when COM re-marshals a proxy that prevouisly had a payload,
   // we must re-serialize it.
   return WriteHandlerPayload(pStm, marshalAs);
+#endif // defined(MOZ_MSCOM_REMARSHAL_NO_HANDLER)
 }
 
 HRESULT

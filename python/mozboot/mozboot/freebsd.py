@@ -4,6 +4,14 @@
 
 from mozboot.base import BaseBootstrapper
 
+STYLO_MOZCONFIG = '''
+To enable Stylo in your builds, paste the lines between the chevrons
+(>>> and <<<) into your mozconfig file:
+
+<<<
+ac_add_options --enable-stylo
+>>>
+'''
 
 class FreeBSDBootstrapper(BaseBootstrapper):
     def __init__(self, version, flavor, **kwargs):
@@ -28,7 +36,6 @@ class FreeBSDBootstrapper(BaseBootstrapper):
             'gconf2',
             'gtk2',
             'gtk3',
-            'libGL',
             'pulseaudio',
             'v4l_compat',
             'yasm',
@@ -61,6 +68,13 @@ class FreeBSDBootstrapper(BaseBootstrapper):
     def ensure_browser_packages(self, artifact_mode=False):
         # TODO: Figure out what not to install for artifact mode
         self.pkg_install(*self.browser_packages)
+
+    def ensure_stylo_packages(self, state_dir, checkout_root):
+        self.pkg_install('llvm40')
+
+    def suggest_browser_mozconfig(self):
+        if self.stylo:
+            print(STYLO_MOZCONFIG)
 
     def upgrade_mercurial(self, current):
         self.pkg_install('mercurial')

@@ -4,9 +4,9 @@
 function run_test() {
   var formatter = Cc["@mozilla.org/toolkit/URLFormatterService;1"].
                   getService(Ci.nsIURLFormatter);
-  var locale = Cc["@mozilla.org/chrome/chrome-registry;1"].
-               getService(Ci.nsIXULChromeRegistry).
-               getSelectedLocale("global");
+  var locale = Cc["@mozilla.org/intl/localeservice;1"].
+               getService(Ci.mozILocaleService).
+               getAppLocaleAsLangTag();
   var prefs = Cc["@mozilla.org/preferences-service;1"].
               getService(Ci.nsIPrefBranch);
   var sysInfo = Cc["@mozilla.org/system-info;1"].
@@ -27,11 +27,9 @@ function run_test() {
                 QueryInterface(Ci.nsIXULRuntime);
   var abi = macutils && macutils.isUniversalBinary ? "Universal-gcc3" : appInfo.XPCOMABI;
 
-  let channel = "default";
   let defaults = prefs.QueryInterface(Ci.nsIPrefService).getDefaultBranch(null);
-  try {
-    channel = defaults.getCharPref("app.update.channel");
-  } catch (e) {}
+  let channel = defaults.getCharPref("app.update.channel", "default");
+
   // Set distribution values.
   defaults.setCharPref("distribution.id", "bacon");
   defaults.setCharPref("distribution.version", "1.0");
@@ -48,10 +46,7 @@ function run_test() {
   var advancedUrlRef = "http://test.mozilla.com/Url Formatter Test/1/" + gAppInfo.appBuildID + "/XPCShell_" + abi + "/" + locale + "/" + channel + "/" + OSVersion + "/bacon/1.0/";
 
   var pref = "xpcshell.urlformatter.test";
-  var str = Cc["@mozilla.org/supports-string;1"].
-            createInstance(Ci.nsISupportsString);
-  str.data = upperUrlRaw;
-  prefs.setComplexValue(pref, Ci.nsISupportsString, str);
+  prefs.setStringPref(pref, upperUrlRaw);
 
   do_check_eq(formatter.formatURL(upperUrlRaw), ulUrlRef);
   do_check_eq(formatter.formatURLPref(pref), ulUrlRef);

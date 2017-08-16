@@ -11,13 +11,16 @@ complexities of worker implementations, scopes, and treeherder annotations.
 from __future__ import absolute_import, print_function, unicode_literals
 
 import json
+import os
 import time
+from copy import deepcopy
 
 from taskgraph.util.treeherder import split_symbol
 from taskgraph.transforms.base import TransformSequence
-from taskgraph.util.schema import validate_schema
+from taskgraph.util.schema import validate_schema, Schema
 from taskgraph.util.scriptworker import get_release_config
-from voluptuous import Schema, Any, Required, Optional, Extra
+from voluptuous import Any, Required, Optional, Extra
+from taskgraph import GECKO
 
 from .gecko_v2_whitelist import JOB_NAME_WHITELIST, JOB_NAME_WHITELIST_ERROR
 
@@ -51,10 +54,6 @@ task_description_schema = Schema({
     # custom routes for this task; the default treeherder routes will be added
     # automatically
     Optional('routes'): [basestring],
-
-    # The index paths where this task may be cached. Transforms are expected to
-    # fill these automatically when wanted.
-    Optional('index-paths'): [basestring],
 
     # custom scopes for this task; any scopes required for the worker will be
     # added automatically
@@ -132,6 +131,18 @@ task_description_schema = Schema({
     # tasks are never coalesced
     Optional('coalesce-name'): basestring,
 
+    # Optimizations to perform on this task during the optimization phase,
+    # specified in order.  These optimizations are defined in
+    # taskcluster/taskgraph/optimize.py.
+    Optional('optimizations'): [Any(
+        # search the index for the given index namespace, and replace this task if found
+        ['index-search', basestring],
+        # consult SETA and skip this task if it is low-value
+        ['seta'],
+        # skip this task if none of the given file patterns match
+        ['skip-unless-changed', [basestring]],
+    )],
+
     # the provisioner-id/worker-type for the task.  The following parameters will
     # be substituted in this string:
     #  {level} -- the scm level of this push
@@ -143,6 +154,7 @@ task_description_schema = Schema({
     # information specific to the worker implementation that will run this task
     'worker': Any({
         Required('implementation'): Any('docker-worker', 'docker-engine'),
+        Required('os'): 'linux',
 
         # For tasks that will run in docker-worker or docker-engine, this is the
         # name of the docker image or in-tree docker image to run the task in.  If
@@ -162,6 +174,7 @@ task_description_schema = Schema({
         Required('allow-ptrace', default=False): bool,
         Required('loopback-video', default=False): bool,
         Required('loopback-audio', default=False): bool,
+        Required('docker-in-docker', default=False): bool,  # (aka 'dind')
 
         # caches to set up for the task
         Optional('caches'): [{
@@ -192,20 +205,29 @@ task_description_schema = Schema({
         # environment variables
         Required('env', default={}): {basestring: taskref_or_string},
 
-        # the command to run
-        'command': [taskref_or_string],
+        # the command to run; if not given, docker-worker will default to the
+        # command in the docker image
+        Optional('command'): [taskref_or_string],
 
         # the maximum time to run, in seconds
-        'max-run-time': int,
+        Required('max-run-time'): int,
 
         # the exit status code that indicates the task should be retried
         Optional('retry-exit-status'): int,
 
     }, {
         Required('implementation'): 'generic-worker',
+        Required('os'): Any('windows', 'macosx'),
+        # see http://schemas.taskcluster.net/generic-worker/v1/payload.json
+        # and https://docs.taskcluster.net/reference/workers/generic-worker/payload
 
         # command is a list of commands to run, sequentially
-        'command': [taskref_or_string],
+        # on Windows, each command is a string, on OS X and Linux, each command is
+        # a string array
+        Required('command'): Any(
+            [taskref_or_string],   # Windows
+            [[taskref_or_string]]  # Linux / OS X
+        ),
 
         # artifacts to extract from the task image after completion; note that artifacts
         # for the generic worker cannot have names
@@ -213,52 +235,90 @@ task_description_schema = Schema({
             # type of artifact -- simple file, or recursive directory
             'type': Any('file', 'directory'),
 
-            # task image path from which to read artifact
+            # filesystem path from which to read artifact
             'path': basestring,
+
+            # if not specified, path is used for artifact name
+            Optional('name'): basestring
         }],
 
-        # directories and/or files to be mounted
+        # Directories and/or files to be mounted.
+        # The actual allowed combinations are stricter than the model below,
+        # but this provides a simple starting point.
+        # See https://docs.taskcluster.net/reference/workers/generic-worker/payload
         Optional('mounts'): [{
-            # a unique name for the cache volume
-            'cache-name': basestring,
+            # A unique name for the cache volume, implies writable cache directory
+            # (otherwise mount is a read-only file or directory).
+            Optional('cache-name'): basestring,
+            # Optional content for pre-loading cache, or mandatory content for
+            # read-only file or directory. Pre-loaded content can come from either
+            # a task artifact or from a URL.
+            Optional('content'): {
 
-            # task image path for the cache
-            'path': basestring,
+                # *** Either (artifact and task-id) or url must be specified. ***
+
+                # Artifact name that contains the content.
+                Optional('artifact'): basestring,
+                # Task ID that has the artifact that contains the content.
+                Optional('task-id'): taskref_or_string,
+                # URL that supplies the content in response to an unauthenticated
+                # GET request.
+                Optional('url'): basestring
+            },
+
+            # *** Either file or directory must be specified. ***
+
+            # If mounting a cache or read-only directory, the filesystem location of
+            # the directory should be specified as a relative path to the task
+            # directory here.
+            Optional('directory'): basestring,
+            # If mounting a file, specify the relative path within the task
+            # directory to mount the file (the file will be read only).
+            Optional('file'): basestring,
+            # Required if and only if `content` is specified and mounting a
+            # directory (not a file). This should be the archive format of the
+            # content (either pre-loaded cache or read-only directory).
+            Optional('format'): Any('rar', 'tar.bz2', 'tar.gz', 'zip')
         }],
 
         # environment variables
         Required('env', default={}): {basestring: taskref_or_string},
 
         # the maximum time to run, in seconds
-        'max-run-time': int,
+        Required('max-run-time'): int,
 
         # os user groups for test task workers
         Optional('os-groups', default=[]): [basestring],
+
+        # optional features
+        Required('chain-of-trust', default=False): bool,
     }, {
         Required('implementation'): 'buildbot-bridge',
 
         # see
         # https://github.com/mozilla/buildbot-bridge/blob/master/bbb/schemas/payload.yml
-        'buildername': basestring,
-        'sourcestamp': {
+        Required('buildername'): basestring,
+        Required('sourcestamp'): {
             'branch': basestring,
             Optional('revision'): basestring,
             Optional('repository'): basestring,
             Optional('project'): basestring,
         },
-        'properties': {
+        Required('properties'): {
             'product': basestring,
             Extra: basestring,  # additional properties are allowed
         },
     }, {
         Required('implementation'): 'native-engine',
+        Required('os'): Any('macosx', 'linux'),
 
         # A link for an executable to download
         Optional('context'): basestring,
 
         # Tells the worker whether machine should reboot
         # after the task is finished.
-        Optional('reboot'): bool,
+        Optional('reboot'):
+            Any('always', 'on-exception', 'on-failure'),
 
         # the command to run
         Optional('command'): [taskref_or_string],
@@ -340,6 +400,12 @@ task_description_schema = Schema({
         Required('payload'): object,
 
     }, {
+        Required('implementation'): 'invalid',
+        # an invalid task is one which should never actually be created; this is used in
+        # release automation on branches where the task just doesn't make sense
+        Extra: object,
+
+    }, {
         Required('implementation'): 'push-apk',
 
         # list of artifact URLs for the artifacts that should be beetmoved
@@ -355,19 +421,9 @@ task_description_schema = Schema({
         }],
 
         # "Invalid" is a noop for try and other non-supported branches
-        Required('google-play-track'): Any('production', 'beta', 'alpha', 'rollout',  'invalid'),
+        Required('google-play-track'): Any('production', 'beta', 'alpha', 'rollout', 'invalid'),
         Required('dry-run', default=True): bool,
         Optional('rollout-percentage'): int,
-    }),
-
-    # The "when" section contains descriptions of the circumstances
-    # under which this task can be "optimized", that is, left out of the
-    # task graph because it is unnecessary.
-    Optional('when'): Any({
-        # This task only needs to be run if a file matching one of the given
-        # patterns has changed in the push.  The patterns use the mozpack
-        # match function (python/mozbuild/mozpack/path.py).
-        Optional('files-changed'): [basestring],
     }),
 })
 
@@ -393,12 +449,14 @@ GROUP_NAMES = {
     'tc-X': 'Xpcshell tests executed by TaskCluster',
     'tc-X-e10s': 'Xpcshell tests executed by TaskCluster with e10s',
     'tc-L10n': 'Localised Repacks executed by Taskcluster',
+    'tc-L10n-Rpk': 'Localized Repackaged Repacks executed by Taskcluster',
     'tc-BM-L10n': 'Beetmover for locales executed by Taskcluster',
     'tc-Up': 'Balrog submission of updates, executed by Taskcluster',
     'tc-cs': 'Checksum signing executed by Taskcluster',
     'tc-BMcs': 'Beetmover checksums, executed by Taskcluster',
     'Aries': 'Aries Device Image',
     'Nexus 5-L': 'Nexus 5-L Device Image',
+    'I': 'Docker Image Builds',
     'TL': 'Toolchain builds for Linux 64-bits',
     'TM': 'Toolchain builds for OSX',
     'TW32': 'Toolchain builds for Windows 32-bits',
@@ -434,6 +492,42 @@ TREEHERDER_ROUTE_ROOTS = {
 }
 
 COALESCE_KEY = 'builds.{project}.{name}'
+
+DEFAULT_BRANCH_PRIORITY = 'low'
+BRANCH_PRIORITIES = {
+    'mozilla-release': 'highest',
+    'comm-esr45': 'highest',
+    'comm-esr52': 'highest',
+    'mozilla-esr45': 'very-high',
+    'mozilla-esr52': 'very-high',
+    'mozilla-beta': 'high',
+    'comm-beta': 'high',
+    'mozilla-central': 'medium',
+    'comm-central': 'medium',
+    'mozilla-aurora': 'medium',
+    'comm-aurora': 'medium',
+    'autoland': 'low',
+    'mozilla-inbound': 'low',
+    'try': 'very-low',
+    'try-comm-central': 'very-low',
+    'alder': 'very-low',
+    'ash': 'very-low',
+    'birch': 'very-low',
+    'cedar': 'very-low',
+    'cypress': 'very-low',
+    'date': 'very-low',
+    'elm': 'very-low',
+    'fig': 'very-low',
+    'gum': 'very-low',
+    'holly': 'very-low',
+    'jamun': 'very-low',
+    'larch': 'very-low',
+    'maple': 'very-low',
+    'oak': 'very-low',
+    'pine': 'very-low',
+    'graphics': 'very-low',
+    'ux': 'very-low',
+}
 
 # define a collection of payload builders, depending on the worker implementation
 payload_builders = {}
@@ -485,6 +579,9 @@ def build_docker_worker_payload(config, task, task_def):
     if worker.get('chain-of-trust'):
         features['chainOfTrust'] = True
 
+    if worker.get('docker-in-docker'):
+        features['dind'] = True
+
     if task.get('needs-sccache'):
         features['taskclusterProxy'] = True
         task_def['scopes'].append(
@@ -505,10 +602,11 @@ def build_docker_worker_payload(config, task, task_def):
             task_def['scopes'].append('docker-worker:capability:device:' + capitalized)
 
     task_def['payload'] = payload = {
-        'command': worker['command'],
         'image': image,
         'env': worker['env'],
     }
+    if 'command' in worker:
+        payload['command'] = worker['command']
 
     if 'max-run-time' in worker:
         payload['maxRunTime'] = worker['max-run-time']
@@ -553,19 +651,26 @@ def build_generic_worker_payload(config, task, task_def):
     artifacts = []
 
     for artifact in worker['artifacts']:
-        artifacts.append({
+        a = {
             'path': artifact['path'],
             'type': artifact['type'],
             'expires': task_def['expires'],  # always expire with the task
-        })
+        }
+        if 'name' in artifact:
+            a['name'] = artifact['name']
+        artifacts.append(a)
 
-    mounts = []
-
-    for mount in worker.get('mounts', []):
-        mounts.append({
-            'cacheName': mount['cache-name'],
-            'directory': mount['path']
-        })
+    # Need to copy over mounts, but rename keys to respect naming convention
+    #   * 'cache-name' -> 'cacheName'
+    #   * 'task-id'    -> 'taskId'
+    # All other key names are already suitable, and don't need renaming.
+    mounts = deepcopy(worker.get('mounts', []))
+    for mount in mounts:
+        if 'cache-name' in mount:
+            mount['cacheName'] = mount.pop('cache-name')
+        if 'content' in mount:
+            if 'task-id' in mount['content']:
+                mount['content']['taskId'] = mount['content'].pop('task-id')
 
     task_def['payload'] = {
         'command': worker['command'],
@@ -580,6 +685,15 @@ def build_generic_worker_payload(config, task, task_def):
 
     if 'retry-exit-status' in worker:
         raise Exception("retry-exit-status not supported in generic-worker")
+
+    # currently only support one feature (chain of trust) but this will likely grow
+    features = {}
+
+    if worker.get('chain-of-trust'):
+        features['chainOfTrust'] = True
+
+    if features:
+        task_def['payload']['features'] = features
 
 
 @payload_builder('scriptworker-signing')
@@ -636,6 +750,11 @@ def build_push_apk_breakpoint_payload(config, task, task_def):
     task_def['payload'] = task['worker']['payload']
 
 
+@payload_builder('invalid')
+def build_invalid_payload(config, task, task_def):
+    task_def['payload'] = 'invalid task - should never be created'
+
+
 @payload_builder('native-engine')
 def build_macosx_engine_payload(config, task, task_def):
     worker = task['worker']
@@ -644,15 +763,16 @@ def build_macosx_engine_payload(config, task, task_def):
         'path': artifact['path'],
         'type': artifact['type'],
         'expires': task_def['expires'],
-    }, worker['artifacts'])
+    }, worker.get('artifacts', []))
 
     task_def['payload'] = {
         'context': worker['context'],
         'command': worker['command'],
         'env': worker['env'],
-        'reboot': worker['reboot'],
         'artifacts': artifacts,
     }
+    if worker.get('reboot'):
+        task_def['payload'] = worker['reboot']
 
     if task.get('needs-sccache'):
         raise Exception('needs-sccache not supported in native-engine')
@@ -803,25 +923,6 @@ def add_index_routes(config, tasks):
 
 
 @transforms.add
-def add_files_changed(config, tasks):
-    for task in tasks:
-        if 'files-changed' not in task.get('when', {}):
-            yield task
-            continue
-
-        task['when']['files-changed'].extend([
-            '{}/**'.format(config.path),
-            'taskcluster/taskgraph/**',
-        ])
-
-        if 'in-tree' in task['worker'].get('docker-image', {}):
-            task['when']['files-changed'].append('taskcluster/docker/{}/**'.format(
-                task['worker']['docker-image']['in-tree']))
-
-        yield task
-
-
-@transforms.add
 def build_task(config, tasks):
     for task in tasks:
         worker_type = task['worker-type'].format(level=str(config.params['level']))
@@ -872,6 +973,11 @@ def build_task(config, tasks):
                 name=task['coalesce-name'])
             routes.append('coalesce.v1.' + key)
 
+        if 'priority' not in task:
+            task['priority'] = BRANCH_PRIORITIES.get(
+                config.params['project'],
+                DEFAULT_BRANCH_PRIORITY)
+
         tags = task.get('tags', {})
         tags.update({'createdForUser': config.params['owner']})
 
@@ -894,6 +1000,7 @@ def build_task(config, tasks):
             },
             'extra': extra,
             'tags': tags,
+            'priority': task['priority'],
         }
 
         if task_th:
@@ -909,13 +1016,24 @@ def build_task(config, tasks):
         attributes = task.get('attributes', {})
         attributes['run_on_projects'] = task.get('run-on-projects', ['all'])
 
+        # Set MOZ_AUTOMATION on all jobs.
+        if task['worker']['implementation'] in (
+            'generic-worker',
+            'docker-engine',
+            'native-engine',
+            'docker-worker',
+        ):
+            payload = task_def.get('payload')
+            if payload:
+                env = payload.setdefault('env', {})
+                env['MOZ_AUTOMATION'] = '1'
+
         yield {
             'label': task['label'],
             'task': task_def,
             'dependencies': task.get('dependencies', {}),
             'attributes': attributes,
-            'index-paths': task.get('index-paths'),
-            'when': task.get('when', {}),
+            'optimizations': task.get('optimizations', []),
         }
 
 
@@ -923,7 +1041,7 @@ def build_task(config, tasks):
 # go away once Mozharness builds are no longer performed in Buildbot, and the
 # Mozharness code referencing routes.json is deleted.
 def check_v2_routes():
-    with open("testing/mozharness/configs/routes.json", "rb") as f:
+    with open(os.path.join(GECKO, "testing/mozharness/configs/routes.json"), "rb") as f:
         routes_json = json.load(f)
 
     for key in ('routes', 'nightly', 'l10n'):

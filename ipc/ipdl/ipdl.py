@@ -151,6 +151,10 @@ for f in files:
         log(3, '  pretty printed code:')
         ipdl.genipdl(ast, codedir)
 
+if not ipdl.checkFixedSyncMessages(parser):
+    # Errors have alraedy been printed to stderr, just exit
+    sys.exit(1)
+
 # Second pass: generate code
 for f in files:
     # Read from parser cache

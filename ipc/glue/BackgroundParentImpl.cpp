@@ -19,25 +19,27 @@
 #include "mozilla/dom/FileSystemRequestParent.h"
 #include "mozilla/dom/GamepadEventChannelParent.h"
 #include "mozilla/dom/GamepadTestChannelParent.h"
-#include "mozilla/dom/PBlobParent.h"
 #include "mozilla/dom/PGamepadEventChannelParent.h"
 #include "mozilla/dom/PGamepadTestChannelParent.h"
 #include "mozilla/dom/MessagePortParent.h"
 #include "mozilla/dom/ServiceWorkerRegistrar.h"
 #include "mozilla/dom/asmjscache/AsmJSCache.h"
 #include "mozilla/dom/cache/ActorUtils.h"
-#include "mozilla/dom/ipc/MemoryStreamParent.h"
 #include "mozilla/dom/indexedDB/ActorsParent.h"
-#include "mozilla/dom/ipc/BlobParent.h"
+#include "mozilla/dom/ipc/IPCBlobInputStreamParent.h"
+#include "mozilla/dom/ipc/PendingIPCBlobParent.h"
 #include "mozilla/dom/quota/ActorsParent.h"
 #include "mozilla/ipc/BackgroundParent.h"
 #include "mozilla/ipc/BackgroundUtils.h"
+#include "mozilla/ipc/IPCStreamAlloc.h"
 #include "mozilla/ipc/PBackgroundSharedTypes.h"
 #include "mozilla/ipc/PBackgroundTestParent.h"
-#include "mozilla/ipc/PSendStreamParent.h"
-#include "mozilla/ipc/SendStreamAlloc.h"
+#include "mozilla/ipc/PChildToParentStreamParent.h"
+#include "mozilla/ipc/PParentToChildStreamParent.h"
 #include "mozilla/layout/VsyncParent.h"
+#include "mozilla/net/HttpBackgroundChannelParent.h"
 #include "mozilla/dom/network/UDPSocketParent.h"
+#include "mozilla/dom/WebAuthnTransactionParent.h"
 #include "mozilla/Preferences.h"
 #include "nsNetUtil.h"
 #include "nsIScriptSecurityManager.h"
@@ -64,6 +66,7 @@ using mozilla::dom::FileSystemRequestParent;
 using mozilla::dom::MessagePortParent;
 using mozilla::dom::PMessagePortParent;
 using mozilla::dom::UDPSocketParent;
+using mozilla::dom::WebAuthnTransactionParent;
 
 namespace {
 
@@ -239,44 +242,14 @@ BackgroundParentImpl::RecvFlushPendingFileDeletions()
   return IPC_OK();
 }
 
-auto
-BackgroundParentImpl::AllocPBlobParent(const BlobConstructorParams& aParams)
-  -> PBlobParent*
+PPendingIPCBlobParent*
+BackgroundParentImpl::AllocPPendingIPCBlobParent(const IPCBlob& aBlob)
 {
-  AssertIsInMainProcess();
-  AssertIsOnBackgroundThread();
-
-  if (NS_WARN_IF(aParams.type() !=
-                   BlobConstructorParams::TParentBlobConstructorParams)) {
-    ASSERT_UNLESS_FUZZING();
-    return nullptr;
-  }
-
-  return mozilla::dom::BlobParent::Create(this, aParams);
+  MOZ_CRASH("PPendingIPCBlobParent actors should be manually constructed!");
 }
 
 bool
-BackgroundParentImpl::DeallocPBlobParent(PBlobParent* aActor)
-{
-  AssertIsInMainProcess();
-  AssertIsOnBackgroundThread();
-  MOZ_ASSERT(aActor);
-
-  mozilla::dom::BlobParent::Destroy(aActor);
-  return true;
-}
-
-PMemoryStreamParent*
-BackgroundParentImpl::AllocPMemoryStreamParent(const uint64_t& aSize)
-{
-  AssertIsInMainProcess();
-  AssertIsOnBackgroundThread();
-
-  return new mozilla::dom::MemoryStreamParent(aSize);
-}
-
-bool
-BackgroundParentImpl::DeallocPMemoryStreamParent(PMemoryStreamParent* aActor)
+BackgroundParentImpl::DeallocPPendingIPCBlobParent(PPendingIPCBlobParent* aActor)
 {
   AssertIsInMainProcess();
   AssertIsOnBackgroundThread();
@@ -286,19 +259,37 @@ BackgroundParentImpl::DeallocPMemoryStreamParent(PMemoryStreamParent* aActor)
   return true;
 }
 
-mozilla::ipc::IPCResult
-BackgroundParentImpl::RecvPBlobConstructor(PBlobParent* aActor,
-                                           const BlobConstructorParams& aParams)
+PIPCBlobInputStreamParent*
+BackgroundParentImpl::AllocPIPCBlobInputStreamParent(const nsID& aID,
+                                                     const uint64_t& aSize)
 {
-  const ParentBlobConstructorParams& params = aParams;
-  if (params.blobParams().type() == AnyBlobConstructorParams::TKnownBlobConstructorParams) {
-    if (!aActor->SendCreatedFromKnownBlob()) {
-      return IPC_FAIL_NO_REASON(this);
-    }
-    return IPC_OK();
+  AssertIsInMainProcess();
+  AssertIsOnBackgroundThread();
+
+  return mozilla::dom::IPCBlobInputStreamParent::Create(aID, aSize, this);
+}
+
+mozilla::ipc::IPCResult
+BackgroundParentImpl::RecvPIPCBlobInputStreamConstructor(PIPCBlobInputStreamParent* aActor,
+                                                         const nsID& aID,
+                                                         const uint64_t& aSize)
+{
+  if (!static_cast<mozilla::dom::IPCBlobInputStreamParent*>(aActor)->HasValidStream()) {
+    return IPC_FAIL_NO_REASON(this);
   }
 
   return IPC_OK();
+}
+
+bool
+BackgroundParentImpl::DeallocPIPCBlobInputStreamParent(PIPCBlobInputStreamParent* aActor)
+{
+  AssertIsInMainProcess();
+  AssertIsOnBackgroundThread();
+  MOZ_ASSERT(aActor);
+
+  delete aActor;
+  return true;
 }
 
 PFileDescriptorSetParent*
@@ -323,14 +314,29 @@ BackgroundParentImpl::DeallocPFileDescriptorSetParent(
   return true;
 }
 
-PSendStreamParent*
-BackgroundParentImpl::AllocPSendStreamParent()
+PChildToParentStreamParent*
+BackgroundParentImpl::AllocPChildToParentStreamParent()
 {
-  return mozilla::ipc::AllocPSendStreamParent();
+  return mozilla::ipc::AllocPChildToParentStreamParent();
 }
 
 bool
-BackgroundParentImpl::DeallocPSendStreamParent(PSendStreamParent* aActor)
+BackgroundParentImpl::DeallocPChildToParentStreamParent(
+                                             PChildToParentStreamParent* aActor)
+{
+  delete aActor;
+  return true;
+}
+
+PParentToChildStreamParent*
+BackgroundParentImpl::AllocPParentToChildStreamParent()
+{
+  MOZ_CRASH("PParentToChildStreamParent actors should be manually constructed!");
+}
+
+bool
+BackgroundParentImpl::DeallocPParentToChildStreamParent(
+                                             PParentToChildStreamParent* aActor)
 {
   delete aActor;
   return true;
@@ -850,6 +856,67 @@ BackgroundParentImpl::DeallocPGamepadTestChannelParent(dom::PGamepadTestChannelP
   MOZ_ASSERT(aActor);
   RefPtr<dom::GamepadTestChannelParent> parent =
     dont_AddRef(static_cast<dom::GamepadTestChannelParent*>(aActor));
+  return true;
+}
+
+dom::PWebAuthnTransactionParent*
+BackgroundParentImpl::AllocPWebAuthnTransactionParent()
+{
+  return new dom::WebAuthnTransactionParent();
+}
+
+bool
+BackgroundParentImpl::DeallocPWebAuthnTransactionParent(dom::PWebAuthnTransactionParent *aActor)
+{
+  MOZ_ASSERT(aActor);
+  delete aActor;
+  return true;
+}
+
+net::PHttpBackgroundChannelParent*
+BackgroundParentImpl::AllocPHttpBackgroundChannelParent(const uint64_t& aChannelId)
+{
+  AssertIsInMainProcess();
+  AssertIsOnBackgroundThread();
+
+  RefPtr<net::HttpBackgroundChannelParent> actor =
+    new net::HttpBackgroundChannelParent();
+
+  // hold extra refcount for IPDL
+  return actor.forget().take();
+}
+
+mozilla::ipc::IPCResult
+BackgroundParentImpl::RecvPHttpBackgroundChannelConstructor(
+                                      net::PHttpBackgroundChannelParent *aActor,
+                                      const uint64_t& aChannelId)
+{
+  MOZ_ASSERT(aActor);
+  AssertIsInMainProcess();
+  AssertIsOnBackgroundThread();
+
+  net::HttpBackgroundChannelParent* aParent =
+    static_cast<net::HttpBackgroundChannelParent*>(aActor);
+
+  if (NS_WARN_IF(NS_FAILED(aParent->Init(aChannelId)))) {
+    return IPC_FAIL_NO_REASON(this);
+  }
+
+  return IPC_OK();
+}
+
+bool
+BackgroundParentImpl::DeallocPHttpBackgroundChannelParent(
+                                      net::PHttpBackgroundChannelParent *aActor)
+{
+  MOZ_ASSERT(aActor);
+  AssertIsInMainProcess();
+  AssertIsOnBackgroundThread();
+
+  // release extra refcount hold by AllocPHttpBackgroundChannelParent
+  RefPtr<net::HttpBackgroundChannelParent> actor =
+    dont_AddRef(static_cast<net::HttpBackgroundChannelParent*>(aActor));
+
   return true;
 }
 

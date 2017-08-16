@@ -8,17 +8,17 @@ this.EXPORTED_SYMBOLS = ["BrowserIDManager", "AuthenticationError"];
 
 var {classes: Cc, interfaces: Ci, utils: Cu, results: Cr} = Components;
 
+Cu.import("resource://gre/modules/XPCOMUtils.jsm");
+Cu.import("resource://gre/modules/Services.jsm");
 Cu.import("resource://gre/modules/Log.jsm");
+Cu.import("resource://gre/modules/PromiseUtils.jsm");
+Cu.import("resource://gre/modules/FxAccounts.jsm");
 Cu.import("resource://services-common/async.js");
 Cu.import("resource://services-common/utils.js");
 Cu.import("resource://services-common/tokenserverclient.js");
 Cu.import("resource://services-crypto/utils.js");
 Cu.import("resource://services-sync/util.js");
-Cu.import("resource://services-common/tokenserverclient.js");
-Cu.import("resource://gre/modules/Services.jsm");
 Cu.import("resource://services-sync/constants.js");
-Cu.import("resource://gre/modules/Promise.jsm");
-Cu.import("resource://gre/modules/FxAccounts.jsm");
 
 // Lazy imports to prevent unnecessary load on startup.
 XPCOMUtils.defineLazyModuleGetter(this, "Weave",
@@ -122,7 +122,7 @@ this.BrowserIDManager.prototype = {
 
   initialize() {
     for (let topic of OBSERVER_TOPICS) {
-      Services.obs.addObserver(this, topic, false);
+      Services.obs.addObserver(this, topic);
     }
   },
 
@@ -170,7 +170,7 @@ this.BrowserIDManager.prototype = {
     this._log.trace("initializeWithCurrentIdentity");
 
     // Reset the world before we do anything async.
-    this.whenReadyToAuthenticate = Promise.defer();
+    this.whenReadyToAuthenticate = PromiseUtils.defer();
     this.whenReadyToAuthenticate.promise.catch(err => {
       this._log.error("Could not authenticate", err);
     });
@@ -216,7 +216,7 @@ this.BrowserIDManager.prototype = {
         if (isInitialSync) {
           this._log.info("Doing initial sync actions");
           Svc.Prefs.set("firstSync", "resetClient");
-          Services.obs.notifyObservers(null, "weave:service:setup-complete", null);
+          Services.obs.notifyObservers(null, "weave:service:setup-complete");
           Weave.Utils.nextTick(Weave.Service.sync, Weave.Service);
         }
       }).catch(authErr => {
@@ -255,6 +255,11 @@ this.BrowserIDManager.prototype = {
     this._log.debug("observed " + topic);
     switch (topic) {
     case fxAccountsCommon.ONLOGIN_NOTIFICATION: {
+      // If our existing Sync state is that we needed to reauth, clear that
+      // state now - it will get reset back if a problem persists.
+      if (Weave.Status.login == LOGIN_FAILED_LOGIN_REJECTED) {
+        Weave.Status.login = LOGIN_SUCCEEDED;
+      }
       // This should only happen if we've been initialized without a current
       // user - otherwise we'd have seen the LOGOUT notification and been
       // thrown away.
@@ -276,7 +281,7 @@ this.BrowserIDManager.prototype = {
         // this event or start the next sync until after authentication is done
         // (which is signaled by `this.whenReadyToAuthenticate.promise` resolving).
         this.whenReadyToAuthenticate.promise.then(() => {
-          Services.obs.notifyObservers(null, "weave:service:setup-complete", null);
+          Services.obs.notifyObservers(null, "weave:service:setup-complete");
           return new Promise(resolve => { Weave.Utils.nextTick(resolve, null); })
         }).then(() => {
           Weave.Service.sync();
@@ -559,7 +564,7 @@ this.BrowserIDManager.prototype = {
 
     let getToken = assertion => {
       log.debug("Getting a token");
-      let deferred = Promise.defer();
+      let deferred = PromiseUtils.defer();
       let cb = function(err, token) {
         if (err) {
           return deferred.reject(err);
@@ -653,7 +658,7 @@ this.BrowserIDManager.prototype = {
       return Promise.resolve();
     }
     const notifyStateChanged =
-      () => Services.obs.notifyObservers(null, "weave:service:login:change", null);
+      () => Services.obs.notifyObservers(null, "weave:service:login:change");
     // reset this._token as a safety net to reduce the possibility of us
     // repeatedly attempting to use an invalid token if _fetchTokenForUser throws.
     this._token = null;
@@ -791,7 +796,7 @@ BrowserIDClusterManager.prototype = {
   },
 
   _findCluster() {
-    let endPointFromIdentityToken = function() {
+    let endPointFromIdentityToken = () => {
       // The only reason (in theory ;) that we can end up with a null token
       // is when this.identity._canFetchKeys() returned false.  In turn, this
       // should only happen if the master-password is locked or the credentials
@@ -812,10 +817,10 @@ BrowserIDClusterManager.prototype = {
       }
       log.debug("_findCluster returning " + endpoint);
       return endpoint;
-    }.bind(this);
+    };
 
     // Spinningly ensure we are ready to authenticate and have a valid token.
-    let promiseClusterURL = function() {
+    let promiseClusterURL = () => {
       return this.identity.whenReadyToAuthenticate.promise.then(
         () => {
           // We need to handle node reassignment here.  If we are being asked
@@ -830,7 +835,7 @@ BrowserIDClusterManager.prototype = {
         }
       ).then(endPointFromIdentityToken
       );
-    }.bind(this);
+    };
 
     let cb = Async.makeSpinningCallback();
     promiseClusterURL().then(function(clusterURL) {

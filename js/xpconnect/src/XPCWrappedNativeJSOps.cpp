@@ -44,11 +44,11 @@ static bool Throw(nsresult errNum, JSContext* cx)
 static bool
 ToStringGuts(XPCCallContext& ccx)
 {
-    char* sz;
+    UniqueChars sz;
     XPCWrappedNative* wrapper = ccx.GetWrapper();
 
     if (wrapper)
-        sz = wrapper->ToString(ccx.GetTearOff());
+        sz.reset(wrapper->ToString(ccx.GetTearOff()));
     else
         sz = JS_smprintf("[xpconnect wrapped native prototype]");
 
@@ -57,8 +57,7 @@ ToStringGuts(XPCCallContext& ccx)
         return false;
     }
 
-    JSString* str = JS_NewStringCopyZ(ccx, sz);
-    JS_smprintf_free(sz);
+    JSString* str = JS_NewStringCopyZ(ccx, sz.get());
     if (!str)
         return false;
 
@@ -313,7 +312,7 @@ DefinePropertyIfFound(XPCCallContext& ccx,
 
             if (JSID_IS_STRING(id) &&
                 name.encodeLatin1(ccx, JSID_TO_STRING(id)) &&
-                (iface2 = XPCNativeInterface::GetNewOrUsed(name.ptr()), iface2) &&
+                (iface2 = XPCNativeInterface::GetNewOrUsed(name.ptr())) &&
                 nullptr != (to = wrapperToReflectInterfaceNames->
                            FindTearOff(iface2, true, &rv)) &&
                 nullptr != (jso = to->GetJSObject()))
@@ -692,7 +691,8 @@ XPC_WN_MaybeResolvingDeletePropertyStub(JSContext* cx, HandleObject obj, HandleI
 
 // macro fun!
 #define PRE_HELPER_STUB                                                       \
-    JSObject* unwrapped = js::CheckedUnwrap(obj, false);                      \
+    /* It's very important for "unwrapped" to be rooted here.  */             \
+    RootedObject unwrapped(cx, js::CheckedUnwrap(obj, false));                \
     if (!unwrapped) {                                                         \
         JS_ReportErrorASCII(cx, "Permission denied to operate on object.");   \
         return false;                                                         \

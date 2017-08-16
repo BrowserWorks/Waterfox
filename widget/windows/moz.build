@@ -4,6 +4,12 @@
 # License, v. 2.0. If a copy of the MPL was not distributed with this
 # file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
+with Files("**"):
+    BUG_COMPONENT = ("Core", "Widget: Win32")
+
+with Files("*CompositorWidget*"):
+    BUG_COMPONENT = ("Core", "Graphics")
+
 TEST_DIRS += ['tests']
 
 EXPORTS += [
@@ -17,6 +23,8 @@ EXPORTS.mozilla.widget += [
     'CompositorWidgetChild.h',
     'CompositorWidgetParent.h',
     'InProcessWinCompositorWidget.h',
+    'PDFiumEngineShim.h',
+    'PDFViaEMFPrintHelper.h',
     'WinCompositorWidget.h',
     'WinMessages.h',
     'WinModifierKeyState.h',
@@ -46,8 +54,6 @@ UNIFIED_SOURCES += [
     'nsNativeDragSource.cpp',
     'nsNativeDragTarget.cpp',
     'nsNativeThemeWin.cpp',
-    'nsScreenManagerWin.cpp',
-    'nsScreenWin.cpp',
     'nsSound.cpp',
     'nsToolkit.cpp',
     'nsUXThemeData.cpp',
@@ -56,6 +62,7 @@ UNIFIED_SOURCES += [
     'nsWindowDbg.cpp',
     'nsWindowGfx.cpp',
     'nsWinGesture.cpp',
+    'ScreenHelperWin.cpp',
     'TaskbarPreview.cpp',
     'TaskbarPreviewButton.cpp',
     'TaskbarTabPreview.cpp',
@@ -90,6 +97,9 @@ if CONFIG['NS_PRINTING']:
         'nsDeviceContextSpecWin.cpp',
         'nsPrintOptionsWin.cpp',
         'nsPrintSettingsWin.cpp',
+        'PDFiumEngineShim.cpp',
+        'PDFViaEMFPrintHelper.cpp',
+        'WindowsEMF.cpp',
     ]
 
 if CONFIG['NS_ENABLE_TSF']:

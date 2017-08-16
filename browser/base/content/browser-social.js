@@ -3,8 +3,7 @@
  * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
 
 /* eslint-env mozilla/browser-window */
-/* eslint no-undef: "error" */
-/* global OpenGraphBuilder:false, DynamicResizeWatcher:false */
+/* global OpenGraphBuilder:false, DynamicResizeWatcher:false, Utils:false*/
 
 // the "exported" symbols
 var SocialUI,
@@ -26,6 +25,12 @@ XPCOMUtils.defineLazyGetter(this, "DynamicResizeWatcher", function() {
   return tmp.DynamicResizeWatcher;
 });
 
+XPCOMUtils.defineLazyGetter(this, "Utils", function() {
+  let tmp = {};
+  Cu.import("resource://gre/modules/sessionstore/Utils.jsm", tmp);
+  return tmp.Utils;
+});
+
 let messageManager = window.messageManager;
 let openUILinkIn = window.openUILinkIn;
 
@@ -41,7 +46,7 @@ SocialUI = {
     mm.loadFrameScript("chrome://browser/content/content.js", true);
     mm.loadFrameScript("chrome://browser/content/social-content.js", true);
 
-    Services.obs.addObserver(this, "social:providers-changed", false);
+    Services.obs.addObserver(this, "social:providers-changed");
 
     CustomizableUI.addListener(this);
     SocialActivationListener.init();
@@ -204,7 +209,11 @@ SocialActivationListener = {
         if (provider.postActivationURL) {
           // if activated from an open share panel, we load the landing page in
           // a background tab
-          gBrowser.loadOneTab(provider.postActivationURL, {inBackground: SocialShare.panel.state == "open"});
+          let triggeringPrincipal = Utils.deserializePrincipal(aMessage.data.triggeringPrincipal);
+          gBrowser.loadOneTab(provider.postActivationURL, {
+            inBackground: SocialShare.panel.state == "open",
+            triggeringPrincipal,
+          });
         }
       });
     }, options);

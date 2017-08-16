@@ -27,7 +27,7 @@
 #include "nsISVGSVGFrame.h" //XXX
 #include "mozilla/dom/SVGRect.h"
 #include "nsError.h"
-#include "nsISVGChildFrame.h"
+#include "nsSVGDisplayableFrame.h"
 #include "mozilla/dom/SVGSVGElement.h"
 #include "mozilla/dom/SVGSVGElementBinding.h"
 #include "nsSVGUtils.h"
@@ -183,7 +183,6 @@ SVGSVGElement::SVGSVGElement(already_AddRefed<mozilla::dom::NodeInfo>& aNodeInfo
                                 aFromParser == FROM_PARSER_FRAGMENT ||
                                 aFromParser == FROM_PARSER_XSLT),
     mImageNeedsTransformInvalidation(false),
-    mIsPaintingSVGImageElement(false),
     mHasChildrenOnlyTransform(false)
 {
 }
@@ -193,7 +192,8 @@ SVGSVGElement::SVGSVGElement(already_AddRefed<mozilla::dom::NodeInfo>& aNodeInfo
 
 // From NS_IMPL_ELEMENT_CLONE_WITH_INIT(SVGSVGElement)
 nsresult
-SVGSVGElement::Clone(mozilla::dom::NodeInfo *aNodeInfo, nsINode **aResult) const
+SVGSVGElement::Clone(mozilla::dom::NodeInfo *aNodeInfo, nsINode **aResult,
+                     bool aPreallocateChildren) const
 {
   *aResult = nullptr;
   already_AddRefed<mozilla::dom::NodeInfo> ni = RefPtr<mozilla::dom::NodeInfo>(aNodeInfo).forget();
@@ -201,7 +201,7 @@ SVGSVGElement::Clone(mozilla::dom::NodeInfo *aNodeInfo, nsINode **aResult) const
 
   nsCOMPtr<nsINode> kungFuDeathGrip = it;
   nsresult rv1 = it->Init();
-  nsresult rv2 = const_cast<SVGSVGElement*>(this)->CopyInnerTo(it);
+  nsresult rv2 = const_cast<SVGSVGElement*>(this)->CopyInnerTo(it, aPreallocateChildren);
   if (NS_SUCCEEDED(rv1) && NS_SUCCEEDED(rv2)) {
     kungFuDeathGrip.swap(*aResult);
   }
@@ -475,7 +475,7 @@ SVGSVGElement::SetZoomAndPan(uint16_t aZoomAndPan, ErrorResult& rv)
 }
 
 //----------------------------------------------------------------------
-// helper methods for implementing SVGZoomEvent:
+// helper method for implementing SetCurrentScale/Translate
 
 void
 SVGSVGElement::SetCurrentScaleTranslate(float s, float x, float y)
@@ -499,6 +499,9 @@ SVGSVGElement::SetCurrentScaleTranslate(float s, float x, float y)
   // change that caused the event's dispatch, which is *not* necessarily the
   // same thing as the values of currentScale and currentTranslate prior to
   // their own last change.
+  //
+  // XXX This comment is out-of-date due to removal of SVGZoomEvent.  Can we
+  // remove some of this code?
   mPreviousScale = mCurrentScale;
   mPreviousTranslate = mCurrentTranslate;
   
@@ -511,10 +514,7 @@ SVGSVGElement::SetCurrentScaleTranslate(float s, float x, float y)
     nsCOMPtr<nsIPresShell> presShell = doc->GetShell();
     if (presShell && IsRoot()) {
       nsEventStatus status = nsEventStatus_eIgnore;
-      if (mPreviousScale != mCurrentScale) {
-        InternalSVGZoomEvent svgZoomEvent(true, eSVGZoom);
-        presShell->HandleDOMEventWithTarget(this, &svgZoomEvent, &status);
-      } else {
+      if (mPreviousScale == mCurrentScale) {
         WidgetEvent svgScrollEvent(true, eSVGScroll);
         presShell->HandleDOMEventWithTarget(this, &svgScrollEvent, &status);
       }
@@ -807,7 +807,7 @@ SVGSVGElement::InvalidateTransformNotifyFrame()
   // might fail this check if we've failed conditional processing
   if (svgframe) {
     svgframe->NotifyViewportOrTransformChanged(
-                nsISVGChildFrame::TRANSFORM_CHANGED);
+                nsSVGDisplayableFrame::TRANSFORM_CHANGED);
   }
 }
 
@@ -954,39 +954,52 @@ SVGSVGElement::GetLength(uint8_t aCtxType)
 // nsSVGElement methods
 
 /* virtual */ gfxMatrix
-SVGSVGElement::PrependLocalTransformsTo(
-  const gfxMatrix &aMatrix, SVGTransformTypes aWhich) const
+SVGSVGElement::PrependLocalTransformsTo(const gfxMatrix& aMatrix,
+                                        SVGTransformTypes aWhich) const
 {
   // 'transform' attribute (or an override from a fragment identifier):
-  gfxMatrix fromUserSpace =
-    SVGContentUtils::PrependLocalTransformsTo(
-      aMatrix, aWhich, mAnimateMotionTransform,
-      mSVGView && mSVGView->mTransforms ? mSVGView->mTransforms : mTransforms);
+  gfxMatrix userToParent;
 
-  if (aWhich == eUserSpaceToParent) {
-    return fromUserSpace;
+  if (aWhich == eUserSpaceToParent || aWhich == eAllTransforms) {
+    userToParent = GetUserToParentTransform(mAnimateMotionTransform,
+                                            mSVGView && mSVGView->mTransforms
+                                              ? mSVGView->mTransforms
+                                              : mTransforms);
+    if (aWhich == eUserSpaceToParent) {
+      return userToParent * aMatrix;
+    }
   }
+
+  gfxMatrix childToUser;
 
   if (IsInner()) {
     float x, y;
     const_cast<SVGSVGElement*>(this)->GetAnimatedLengthValues(&x, &y, nullptr);
-    if (aWhich == eAllTransforms) {
-      // the common case
-      return ThebesMatrix(GetViewBoxTransform()) * gfxMatrix::Translation(x, y) * fromUserSpace;
-    }
-    MOZ_ASSERT(aWhich == eChildToUserSpace, "Unknown TransformTypes");
-    return ThebesMatrix(GetViewBoxTransform()) * gfxMatrix::Translation(x, y) * aMatrix;
+    childToUser = ThebesMatrix(GetViewBoxTransform().PostTranslate(x, y));
+  } else if (IsRoot()) {
+    childToUser = ThebesMatrix(GetViewBoxTransform()
+                                 .PostScale(mCurrentScale, mCurrentScale)
+                                 .PostTranslate(mCurrentTranslate.GetX(),
+                                                mCurrentTranslate.GetY()));
+  } else {
+    // outer-<svg>, but inline in some other content:
+    childToUser = ThebesMatrix(GetViewBoxTransform());
   }
 
-  if (IsRoot()) {
-    gfxMatrix zoomPanTM;
-    zoomPanTM.Translate(gfxPoint(mCurrentTranslate.GetX(), mCurrentTranslate.GetY()));
-    zoomPanTM.Scale(mCurrentScale, mCurrentScale);
-    return ThebesMatrix(GetViewBoxTransform()) * zoomPanTM * fromUserSpace;
+  if (aWhich == eAllTransforms) {
+    return childToUser * userToParent * aMatrix;
   }
 
-  // outer-<svg>, but inline in some other content:
-  return ThebesMatrix(GetViewBoxTransform()) * fromUserSpace;
+  MOZ_ASSERT(aWhich == eChildToUserSpace, "Unknown TransformTypes");
+
+  // The following may look broken because pre-multiplying our eChildToUserSpace
+  // transform with another matrix without including our eUserSpaceToParent
+  // transform between the two wouldn't make sense.  We don't expect that to
+  // ever happen though.  We get here either when the identity matrix has been
+  // passed because our caller just wants our eChildToUserSpace transform, or
+  // when our eUserSpaceToParent transform has already been multiplied into the
+  // matrix that our caller passes (such as when we're called from PaintSVG).
+  return childToUser * aMatrix;
 }
 
 nsSVGAnimatedTransformList*
@@ -1048,14 +1061,9 @@ SVGSVGElement::HasViewBoxRect() const
 bool
 SVGSVGElement::ShouldSynthesizeViewBox() const
 {
-  MOZ_ASSERT(!HasViewBoxRect(),
-             "Should only be called if we lack a viewBox");
+  MOZ_ASSERT(!HasViewBoxRect(), "Should only be called if we lack a viewBox");
 
-  nsIDocument* doc = GetUncomposedDoc();
-  return doc &&
-    doc->IsBeingUsedAsImage() &&
-    !mIsPaintingSVGImageElement &&
-    !GetParent();
+  return IsRoot() && OwnerDoc()->IsBeingUsedAsImage();
 }
 
 bool
@@ -1093,12 +1101,6 @@ SVGSVGElement::ClearPreserveAspectRatioProperty()
   void* valPtr = UnsetProperty(nsGkAtoms::overridePreserveAspectRatio);
   delete static_cast<SVGPreserveAspectRatio*>(valPtr);
   return valPtr;
-}
-
-void
-SVGSVGElement::SetIsPaintingForSVGImageElement(bool aIsPaintingSVGImageElement)
-{
-  mIsPaintingSVGImageElement = aIsPaintingSVGImageElement;
 }
 
 void

@@ -13,6 +13,9 @@ contract @mozilla.org/profile/migrator;1?app=browser&type=chromium {8cece922-972
 component {91185366-ba97-4438-acba-48deaca63386} FirefoxProfileMigrator.js
 contract @mozilla.org/profile/migrator;1?app=browser&type=firefox {91185366-ba97-4438-acba-48deaca63386}
 
+component {2acb0662-4041-4017-abb9-548d6d0df97a} WaterfoxProfileMigrator.js
+contract @mozilla.org/profile/migrator;1?app=browser&type=waterfox {2acb0662-4041-4017-abb9-548d6d0df97a}
+
 #ifdef HAS_IE_MIGRATOR
 component {3d2532e3-4932-4774-b7ba-968f5899d3a4} IEProfileMigrator.js
 contract @mozilla.org/profile/migrator;1?app=browser&type=ie {3d2532e3-4932-4774-b7ba-968f5899d3a4}

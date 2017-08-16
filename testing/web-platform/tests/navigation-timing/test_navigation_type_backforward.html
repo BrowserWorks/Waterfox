@@ -7,6 +7,7 @@
         <link rel="help" href="http://www.w3.org/TR/navigation-timing/#sec-navigation-info-interface"/>
         <script src="/resources/testharness.js"></script>
         <script src="/resources/testharnessreport.js"></script>
+        <script src="/common/performance-timeline-utils.js"></script>
         <script src="resources/webperftestharness.js"></script>
         <script>
             setup({explicit_done: true});
@@ -24,7 +25,7 @@
                 }
 
                 // do this with a timeout to see the visuals of the navigations.
-                setTimeout("nav_frame();", 100);
+                step_timeout(nav_frame, 100);
             }
 
             var step = 1;

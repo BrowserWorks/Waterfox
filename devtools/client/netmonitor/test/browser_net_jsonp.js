@@ -8,19 +8,19 @@
  */
 
 add_task(function* () {
-  let { L10N } = require("devtools/client/netmonitor/utils/l10n");
+  let { L10N } = require("devtools/client/netmonitor/src/utils/l10n");
 
   let { tab, monitor } = yield initNetMonitor(JSONP_URL);
   info("Starting test... ");
 
-  let { document, gStore, windowRequire } = monitor.panelWin;
-  let Actions = windowRequire("devtools/client/netmonitor/actions/index");
+  let { document, store, windowRequire } = monitor.panelWin;
+  let Actions = windowRequire("devtools/client/netmonitor/src/actions/index");
   let {
     getDisplayedRequests,
     getSortedRequests,
-  } = windowRequire("devtools/client/netmonitor/selectors/index");
+  } = windowRequire("devtools/client/netmonitor/src/selectors/index");
 
-  gStore.dispatch(Actions.batchEnable(false));
+  store.dispatch(Actions.batchEnable(false));
 
   let wait = waitForNetworkEvents(monitor, 2);
   yield ContentTask.spawn(tab.linkedBrowser, {}, function* () {
@@ -30,8 +30,8 @@ add_task(function* () {
 
   verifyRequestItemTarget(
     document,
-    getDisplayedRequests(gStore.getState()),
-    getSortedRequests(gStore.getState()).get(0),
+    getDisplayedRequests(store.getState()),
+    getSortedRequests(store.getState()).get(0),
     "GET",
     CONTENT_TYPE_SJS + "?fmt=jsonp&jsonp=$_0123Fun",
     {
@@ -44,8 +44,8 @@ add_task(function* () {
     });
   verifyRequestItemTarget(
     document,
-    getDisplayedRequests(gStore.getState()),
-    getSortedRequests(gStore.getState()).get(1),
+    getDisplayedRequests(store.getState()),
+    getSortedRequests(store.getState()).get(1),
     "GET",
     CONTENT_TYPE_SJS + "?fmt=jsonp2&jsonp=$_4567Sad",
     {
@@ -64,14 +64,14 @@ add_task(function* () {
     document.querySelector("#response-tab"));
   yield wait;
 
-  testResponseTab("$_0123Fun", "\"Hello JSONP!\"");
+  testResponseTab("$_0123Fun", "Hello JSONP!");
 
   wait = waitForDOM(document, "#response-panel .tree-section");
   EventUtils.sendMouseEvent({ type: "mousedown" },
     document.querySelectorAll(".request-list-item")[1]);
   yield wait;
 
-  testResponseTab("$_4567Sad", "\"Hello weird JSONP!\"");
+  testResponseTab("$_4567Sad", "Hello weird JSONP!");
 
   yield teardown(monitor);
 
@@ -83,7 +83,7 @@ add_task(function* () {
     is(tabpanel.querySelector(".tree-section .treeLabel").textContent,
       L10N.getFormatStr("jsonpScopeName", func),
       "The response json view has the intened visibility and correct title.");
-    is(tabpanel.querySelector(".editor-mount iframe") === null, true,
+    is(tabpanel.querySelector(".CodeMirror-code") === null, true,
       "The response editor doesn't have the intended visibility.");
     is(tabpanel.querySelector(".responseImageBox") === null, true,
       "The response image box doesn't have the intended visibility.");

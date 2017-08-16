@@ -25,10 +25,11 @@ public:
 
   static already_AddRefed<HTMLOptionElement>
     Option(const GlobalObject& aGlobal,
-           const Optional<nsAString>& aText,
+           const nsAString& aText,
            const Optional<nsAString>& aValue,
-           const Optional<bool>& aDefaultSelected,
-           const Optional<bool>& aSelected, ErrorResult& aError);
+           bool aDefaultSelected,
+           bool aSelected,
+           ErrorResult& aError);
 
   NS_IMPL_FROMCONTENT_HTML_WITH_TAG(HTMLOptionElement, option)
 
@@ -43,14 +44,21 @@ public:
   bool Selected() const;
   bool DefaultSelected() const;
 
+  void SetSelectedChanged(bool aValue)
+  {
+    mSelectedChanged = aValue;
+  }
+
   virtual nsChangeHint GetAttributeChangeHint(const nsIAtom* aAttribute,
                                               int32_t aModType) const override;
 
   virtual nsresult BeforeSetAttr(int32_t aNamespaceID, nsIAtom* aName,
-                                 nsAttrValueOrString* aValue,
+                                 const nsAttrValueOrString* aValue,
                                  bool aNotify) override;
   virtual nsresult AfterSetAttr(int32_t aNameSpaceID, nsIAtom* aName,
-                                const nsAttrValue* aValue, bool aNotify) override;
+                                const nsAttrValue* aValue,
+                                const nsAttrValue* aOldValue,
+                                bool aNotify) override;
 
   void SetSelectedInternal(bool aValue, bool aNotify);
 
@@ -63,9 +71,10 @@ public:
   // nsIContent
   virtual EventStates IntrinsicState() const override;
 
-  virtual nsresult Clone(mozilla::dom::NodeInfo* aNodeInfo, nsINode** aResult) const override;
+  virtual nsresult Clone(mozilla::dom::NodeInfo* aNodeInfo, nsINode** aResult,
+                         bool aPreallocateChildren) const override;
 
-  nsresult CopyInnerTo(mozilla::dom::Element* aDest);
+  nsresult CopyInnerTo(mozilla::dom::Element* aDest, bool aPreallocateChildren);
 
   virtual bool IsDisabled() const override {
     return HasAttr(kNameSpaceID_None, nsGkAtoms::disabled);

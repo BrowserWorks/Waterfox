@@ -13,10 +13,12 @@
 # The histograms are defined in files provided as command-line arguments.
 
 from __future__ import print_function
+from shared_telemetry_utils import ParserError
 
 import histogram_tools
 import itertools
 import sys
+
 
 banner = """/* This file is auto-generated, see gen-histogram-enum.py.  */
 """
@@ -36,13 +38,19 @@ footer = """
 } // namespace Telemetry
 #endif // mozilla_TelemetryHistogramEnums_h"""
 
+
 def main(output, *filenames):
     # Print header.
     print(banner, file=output)
     print(header, file=output)
 
     # Load the histograms.
-    all_histograms = list(histogram_tools.from_files(filenames))
+    try:
+        all_histograms = list(histogram_tools.from_files(filenames))
+    except ParserError as ex:
+        print("\nError processing histograms:\n" + str(ex) + "\n")
+        sys.exit(1)
+
     groups = itertools.groupby(all_histograms,
                                lambda h: h.name().startswith("USE_COUNTER2_"))
 
@@ -77,7 +85,8 @@ def main(output, *filenames):
 
     print("  HistogramCount,", file=output)
     if seen_use_counters:
-        print("  HistogramUseCounterCount = HistogramLastUseCounter - HistogramFirstUseCounter + 1", file=output)
+        print("  HistogramUseCounterCount = HistogramLastUseCounter -"
+              " HistogramFirstUseCounter + 1", file=output)
     else:
         print("  HistogramFirstUseCounter = 0,", file=output)
         print("  HistogramLastUseCounter = 0,", file=output)
@@ -87,18 +96,19 @@ def main(output, *filenames):
     # Write categorical label enums.
     categorical = filter(lambda h: h.kind() == "categorical", all_histograms)
     enums = [("LABELS_" + h.name(), h.labels(), h.name()) for h in categorical]
-    for name,labels,_ in enums:
+    for name, labels, _ in enums:
         print("\nenum class %s : uint32_t {" % name, file=output)
         print("  %s" % ",\n  ".join(labels), file=output)
         print("};", file=output)
 
     print("\ntemplate<class T> struct IsCategoricalLabelEnum : FalseType {};", file=output)
-    for name,_,_ in enums:
+    for name, _, _ in enums:
         print("template<> struct IsCategoricalLabelEnum<%s> : TrueType {};" % name, file=output)
 
     print("\ntemplate<class T> struct CategoricalLabelId {};", file=output)
-    for name,_,id in enums:
-        print("template<> struct CategoricalLabelId<%s> : IntegralConstant<uint32_t, %s> {};" % (name, id), file=output)
+    for name, _, id in enums:
+        print("template<> struct CategoricalLabelId<%s> : "
+              "IntegralConstant<uint32_t, %s> {};" % (name, id), file=output)
 
     # Footer.
     print(footer, file=output)

@@ -4,6 +4,7 @@
 
 from __future__ import print_function, unicode_literals
 
+import errno
 import hashlib
 import os
 import re
@@ -132,6 +133,17 @@ but you may be able to get a recent enough version from a software install
 tool or package manager on your system, or directly from https://rust-lang.org/
 '''
 
+STYLO_MOZCONFIG = '''
+To enable Stylo in your builds, paste the lines between the chevrons
+(>>> and <<<) into your mozconfig file:
+
+<<<
+ac_add_options --enable-stylo
+
+export LLVM_CONFIG=%s/clang/bin/llvm-config
+>>>
+'''
+
 BROWSER_ARTIFACT_MODE_MOZCONFIG = '''
 Paste the lines between the chevrons (>>> and <<<) into your mozconfig file:
 
@@ -150,7 +162,7 @@ MODERN_MERCURIAL_VERSION = LooseVersion('3.7.3')
 MODERN_PYTHON_VERSION = LooseVersion('2.7.3')
 
 # Upgrade rust older than this.
-MODERN_RUST_VERSION = LooseVersion('1.15.1')
+MODERN_RUST_VERSION = LooseVersion('1.18.0')
 
 class BaseBootstrapper(object):
     """Base class for system bootstrappers."""
@@ -158,6 +170,8 @@ class BaseBootstrapper(object):
     def __init__(self, no_interactive=False):
         self.package_manager_updated = False
         self.no_interactive = no_interactive
+        self.stylo = False
+        self.state_dir = None
 
     def install_system_packages(self):
         '''
@@ -185,7 +199,8 @@ class BaseBootstrapper(object):
         Firefox for Desktop can in simple cases determine its build environment
         entirely from configure.
         '''
-        pass
+        if self.stylo:
+            print(STYLO_MOZCONFIG % self.state_dir)
 
     def install_browser_artifact_mode_packages(self):
         '''
@@ -248,6 +263,33 @@ class BaseBootstrapper(object):
         raise NotImplementedError(
             '%s does not yet implement suggest_mobile_android_artifact_mode_mozconfig()'
             % __name__)
+
+    def ensure_stylo_packages(self, state_dir, checkout_root):
+        '''
+        Install any necessary packages needed for Stylo development.
+        '''
+        raise NotImplementedError(
+            '%s does not yet implement ensure_stylo_packages()'
+            % __name__)
+
+    def install_tooltool_clang_package(self, state_dir, checkout_root, manifest_file):
+        abs_manifest_file = os.path.join(checkout_root, manifest_file)
+
+        mach_binary = os.path.join(checkout_root, 'mach')
+        if not os.path.exists(mach_binary):
+            raise ValueError("mach not found at %s" % mach_binary)
+
+        # If Python can't figure out what its own executable is, there's little
+        # chance we're going to be able to execute mach on its own, particularly
+        # on Windows.
+        if not sys.executable:
+            raise ValueError("cannot determine path to Python executable")
+
+        cmd = [sys.executable, mach_binary, 'artifact', 'toolchain',
+               '--tooltool-manifest', abs_manifest_file,
+               'clang']
+
+        subprocess.check_call(cmd, cwd=state_dir)
 
     def which(self, name):
         """Python implementation of which.
@@ -658,9 +700,13 @@ class BaseBootstrapper(object):
                 if e.errno != errno.ENOENT:
                     raise
 
-    def http_download_and_save(self, url, dest, sha256hexhash):
+    def http_download_and_save(self, url, dest, hexhash, digest='sha256'):
+        """Download the given url and save it to dest.  hexhash is a checksum
+        that will be used to validate the downloaded file using the given
+        digest algorithm.  The value of digest can be any value accepted by
+        hashlib.new.  The default digest used is 'sha256'."""
         f = urllib2.urlopen(url)
-        h = hashlib.sha256()
+        h = hashlib.new(digest)
         with open(dest, 'wb') as out:
             while True:
                 data = f.read(4096)
@@ -669,6 +715,6 @@ class BaseBootstrapper(object):
                     h.update(data)
                 else:
                     break
-        if h.hexdigest() != sha256hexhash:
+        if h.hexdigest() != hexhash:
             os.remove(dest)
             raise ValueError('Hash of downloaded file does not match expected hash')

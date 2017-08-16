@@ -6,7 +6,7 @@
 // It is expected that the test files importing this file define Cu etc.
 /* global Cu, Ci, Cc, Cr */
 
-const CURRENT_SCHEMA_VERSION = 36;
+const CURRENT_SCHEMA_VERSION = 37;
 const FIRST_UPGRADABLE_SCHEMA_VERSION = 11;
 
 const NS_APP_USER_PROFILE_50_DIR = "ProfD";
@@ -34,10 +34,10 @@ XPCOMUtils.defineLazyModuleGetter(this, "NetUtil",
                                   "resource://gre/modules/NetUtil.jsm");
 XPCOMUtils.defineLazyModuleGetter(this, "Promise",
                                   "resource://gre/modules/Promise.jsm");
+XPCOMUtils.defineLazyModuleGetter(this, "PromiseUtils",
+                                  "resource://gre/modules/PromiseUtils.jsm");
 XPCOMUtils.defineLazyModuleGetter(this, "Services",
                                   "resource://gre/modules/Services.jsm");
-XPCOMUtils.defineLazyModuleGetter(this, "Task",
-                                  "resource://gre/modules/Task.jsm");
 XPCOMUtils.defineLazyModuleGetter(this, "BookmarkJSONUtils",
                                   "resource://gre/modules/BookmarkJSONUtils.jsm");
 XPCOMUtils.defineLazyModuleGetter(this, "BookmarkHTMLUtils",
@@ -374,7 +374,7 @@ function promiseTopicObserved(aTopic) {
     Services.obs.addObserver(function observe(aObsSubject, aObsTopic, aObsData) {
       Services.obs.removeObserver(observe, aObsTopic);
       resolve([aObsSubject, aObsData]);
-    }, aTopic, false);
+    }, aTopic);
   });
 }
 
@@ -384,7 +384,7 @@ function promiseTopicObserved(aTopic) {
 var shutdownPlaces = function() {
   do_print("shutdownPlaces: starting");
   let promise = new Promise(resolve => {
-    Services.obs.addObserver(resolve, "places-connection-closed", false);
+    Services.obs.addObserver(resolve, "places-connection-closed");
   });
   let hs = PlacesUtils.history.QueryInterface(Ci.nsIObserver);
   hs.observe(null, "profile-change-teardown", null);
@@ -810,30 +810,13 @@ NavHistoryResultObserver.prototype = {
  * @rejects JavaScript exception.
  */
 function promiseIsURIVisited(aURI) {
-  let deferred = Promise.defer();
+  return new Promise(resolve => {
 
-  PlacesUtils.asyncHistory.isURIVisited(aURI, function(unused, aIsVisited) {
-    deferred.resolve(aIsVisited);
+    PlacesUtils.asyncHistory.isURIVisited(aURI, function(unused, aIsVisited) {
+      resolve(aIsVisited);
+    });
+
   });
-
-  return deferred.promise;
-}
-
-/**
- * Asynchronously set the favicon associated with a page.
- * @param aPageURI
- *        The page's URI
- * @param aIconURI
- *        The URI of the favicon to be set.
- */
-function promiseSetIconForPage(aPageURI, aIconURI) {
-  let deferred = Promise.defer();
-  PlacesUtils.favicons.setAndFetchFaviconForPage(
-    aPageURI, aIconURI, true,
-    PlacesUtils.favicons.FAVICON_LOAD_NON_PRIVATE,
-    () => { deferred.resolve(); },
-    Services.scriptSecurityManager.getSystemPrincipal());
-  return deferred.promise;
 }
 
 function checkBookmarkObject(info) {
@@ -849,11 +832,11 @@ function checkBookmarkObject(info) {
 /**
  * Reads foreign_count value for a given url.
  */
-function* foreign_count(url) {
+async function foreign_count(url) {
   if (url instanceof Ci.nsIURI)
     url = url.spec;
-  let db = yield PlacesUtils.promiseDBConnection();
-  let rows = yield db.executeCached(
+  let db = await PlacesUtils.promiseDBConnection();
+  let rows = await db.executeCached(
     `SELECT foreign_count FROM moz_places
      WHERE url_hash = hash(:url) AND url = :url
     `, { url });
@@ -872,4 +855,104 @@ function compareAscending(a, b) {
 
 function sortBy(array, prop) {
   return array.sort((a, b) => compareAscending(a[prop], b[prop]));
+}
+
+/**
+ * Asynchronously set the favicon associated with a page.
+ * @param page
+ *        The page's URL
+ * @param icon
+ *        The URL of the favicon to be set.
+ * @param [optional] forceReload
+ *        Whether to enforce reloading the icon.
+ */
+function setFaviconForPage(page, icon, forceReload = true) {
+  let pageURI = page instanceof Ci.nsIURI ? page
+                                          : NetUtil.newURI(new URL(page).href);
+  let iconURI = icon instanceof Ci.nsIURI ? icon
+                                          : NetUtil.newURI(new URL(icon).href);
+  return new Promise(resolve => {
+    PlacesUtils.favicons.setAndFetchFaviconForPage(
+      pageURI, iconURI, forceReload,
+      PlacesUtils.favicons.FAVICON_LOAD_NON_PRIVATE,
+      resolve,
+      Services.scriptSecurityManager.getSystemPrincipal()
+    );
+  });
+}
+
+function getFaviconUrlForPage(page, width = 0) {
+  let pageURI = page instanceof Ci.nsIURI ? page
+                                          : NetUtil.newURI(new URL(page).href);
+  return new Promise((resolve, reject) => {
+    PlacesUtils.favicons.getFaviconURLForPage(pageURI, iconURI => {
+      if (iconURI)
+        resolve(iconURI.spec);
+      else
+        reject("Unable to find an icon for " + pageURI.spec);
+    }, width);
+  });
+}
+
+function getFaviconDataForPage(page, width = 0) {
+  let pageURI = page instanceof Ci.nsIURI ? page
+                                          : NetUtil.newURI(new URL(page).href);
+  return new Promise(resolve => {
+    PlacesUtils.favicons.getFaviconDataForPage(pageURI, (iconUri, len, data, mimeType) => {
+      resolve({ data, mimeType });
+    }, width);
+  });
+}
+
+/**
+ * Asynchronously compares contents from 2 favicon urls.
+ */
+async function compareFavicons(icon1, icon2, msg) {
+  icon1 = new URL(icon1 instanceof Ci.nsIURI ? icon1.spec : icon1);
+  icon2 = new URL(icon2 instanceof Ci.nsIURI ? icon2.spec : icon2);
+
+  function getIconData(icon) {
+    return new Promise((resolve, reject) => {
+      NetUtil.asyncFetch({
+        uri: icon.href, loadUsingSystemPrincipal: true,
+        contentPolicyType: Ci.nsIContentPolicy.TYPE_INTERNAL_IMAGE_FAVICON
+      }, function(inputStream, status) {
+          if (!Components.isSuccessCode(status))
+            reject();
+          let size = inputStream.available();
+          resolve(NetUtil.readInputStreamToString(inputStream, size));
+      });
+    });
+  }
+
+  let data1 = await getIconData(icon1);
+  Assert.ok(data1.length > 0, "Should fetch icon data");
+  let data2 = await getIconData(icon2);
+  Assert.ok(data2.length > 0, "Should fetch icon data");
+  Assert.deepEqual(data1, data2, msg);
+}
+
+/**
+ * Get the internal "root" folder name for an item, specified by its itemId.
+ * If the itemId does not point to a root folder, null is returned.
+ *
+ * @param aItemId
+ *        the item id.
+ * @return the internal-root name for the root folder, if aItemId points
+ * to such folder, null otherwise.
+ */
+function mapItemIdToInternalRootName(aItemId) {
+  switch (aItemId) {
+    case PlacesUtils.placesRootId:
+      return "placesRoot";
+    case PlacesUtils.bookmarksMenuFolderId:
+      return "bookmarksMenuFolder";
+    case PlacesUtils.toolbarFolderId:
+      return "toolbarFolder";
+    case PlacesUtils.unfiledBookmarksFolderId:
+      return "unfiledBookmarksFolder";
+    case PlacesUtils.mobileFolderId:
+      return "mobileFolder";
+  }
+  return null;
 }

@@ -10,6 +10,7 @@ use euclid::side_offsets::SideOffsets2D;
 use std::cmp::{max, min};
 use std::fmt::{self, Debug, Error, Formatter};
 use std::ops::{Add, Sub};
+use unicode_bidi as bidi;
 
 pub enum BlockFlowDirection {
     TopToBottom,
@@ -29,8 +30,12 @@ bitflags!(
         const FLAG_RTL = 1 << 0,
         const FLAG_VERTICAL = 1 << 1,
         const FLAG_VERTICAL_LR = 1 << 2,
-        const FLAG_SIDEWAYS = 1 << 3,
-        const FLAG_UPRIGHT = 1 << 4,
+        /// For vertical writing modes only.  When set, line-over/line-under
+        /// sides are inverted from block-start/block-end.  This flag is
+        /// set when sideways-lr is used.
+        const FLAG_LINE_INVERTED = 1 << 3,
+        const FLAG_SIDEWAYS = 1 << 4,
+        const FLAG_UPRIGHT = 1 << 5,
     }
 );
 
@@ -50,7 +55,7 @@ impl WritingMode {
     #[inline]
     pub fn is_inline_tb(&self) -> bool {
         // https://drafts.csswg.org/css-writing-modes-3/#logical-to-physical
-        !self.intersects(FLAG_RTL)
+        self.intersects(FLAG_RTL) == self.intersects(FLAG_LINE_INVERTED)
     }
 
     #[inline]
@@ -127,9 +132,13 @@ impl WritingMode {
     #[inline]
     /// The default bidirectional embedding level for this writing mode.
     ///
-    /// Returns 0 if the mode is LTR, or 1 otherwise.
-    pub fn to_bidi_level(&self) -> u8 {
-        !self.is_bidi_ltr() as u8
+    /// Returns bidi level 0 if the mode is LTR, or 1 otherwise.
+    pub fn to_bidi_level(&self) -> bidi::Level {
+        if self.is_bidi_ltr() {
+            bidi::Level::ltr()
+        } else {
+            bidi::Level::rtl()
+        }
     }
 }
 
@@ -144,6 +153,9 @@ impl fmt::Display for WritingMode {
             }
             if self.intersects(FLAG_SIDEWAYS) {
                 try!(write!(formatter, " Sideways"));
+            }
+            if self.intersects(FLAG_LINE_INVERTED) {
+                try!(write!(formatter, " Inverted"));
             }
         } else {
             try!(write!(formatter, "H"));

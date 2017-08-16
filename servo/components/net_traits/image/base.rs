@@ -42,7 +42,7 @@ pub struct ImageMetadata {
 fn byte_swap_and_premultiply(data: &mut [u8]) {
     let length = data.len();
 
-    for i in (0..length).step_by(4) {
+    for i in Iterator::step_by(0..length, 4) {
         let r = data[i + 2];
         let g = data[i + 1];
         let b = data[i + 0];
@@ -108,10 +108,7 @@ pub fn detect_image_format(buffer: &[u8]) -> Result<ImageFormat, &str> {
 }
 
 fn is_gif(buffer: &[u8]) -> bool {
-    match buffer {
-        &[b'G', b'I', b'F', b'8', n, b'a', _..] if n == b'7' || n == b'9' => true,
-        _ => false,
-    }
+    buffer.starts_with(b"GIF87a") || buffer.starts_with(b"GIF89a")
 }
 
 fn is_jpeg(buffer: &[u8]) -> bool {

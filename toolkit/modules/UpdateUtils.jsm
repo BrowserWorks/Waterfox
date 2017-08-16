@@ -16,9 +16,7 @@ Cu.import("resource://gre/modules/ctypes.jsm");
 const FILE_UPDATE_LOCALE                  = "update.locale";
 const PREF_APP_DISTRIBUTION               = "distribution.id";
 const PREF_APP_DISTRIBUTION_VERSION       = "distribution.version";
-const PREF_APP_B2G_VERSION                = "b2g.version";
 const PREF_APP_UPDATE_CUSTOM              = "app.update.custom";
-const PREF_APP_UPDATE_IMEI_HASH           = "app.update.imei_hash";
 
 
 this.UpdateUtils = {
@@ -31,13 +29,9 @@ this.UpdateUtils = {
    *        Whether or not to include the partner bits. Default: true.
    */
   getUpdateChannel(aIncludePartners = true) {
-    let channel = AppConstants.MOZ_UPDATE_CHANNEL;
     let defaults = Services.prefs.getDefaultBranch(null);
-    try {
-      channel = defaults.getCharPref("app.update.channel");
-    } catch (e) {
-      // use default value when pref not found
-    }
+    let channel = defaults.getCharPref("app.update.channel",
+                                       AppConstants.MOZ_UPDATE_CHANNEL);
 
     if (aIncludePartners) {
       try {
@@ -74,7 +68,7 @@ this.UpdateUtils = {
     url = url.replace(/%BUILD_ID%/g, Services.appinfo.appBuildID);
     url = url.replace(/%BUILD_TARGET%/g, Services.appinfo.OS + "_" + this.ABI);
     url = url.replace(/%OS_VERSION%/g, this.OSVersion);
-    url = url.replace(/%SYSTEM_CAPABILITIES%/g, gSystemCapabilities);
+    url = url.replace(/%SYSTEM_CAPABILITIES%/g, getSystemCapabilities());
     if (/%LOCALE%/.test(url)) {
       url = url.replace(/%LOCALE%/g, this.Locale);
     }
@@ -87,39 +81,13 @@ this.UpdateUtils = {
     url = url.replace(/%CUSTOM%/g, Preferences.get(PREF_APP_UPDATE_CUSTOM, ""));
     url = url.replace(/\+/g, "%2B");
 
-    if (AppConstants.platform == "gonk") {
-      let sysLibs = {};
-      Cu.import("resource://gre/modules/systemlibs.js", sysLibs);
-      let productDevice = sysLibs.libcutils.property_get("ro.product.device");
-      let buildType = sysLibs.libcutils.property_get("ro.build.type");
-      url = url.replace(/%PRODUCT_MODEL%/g,
-                        sysLibs.libcutils.property_get("ro.product.model"));
-      if (buildType == "user" || buildType == "userdebug") {
-        url = url.replace(/%PRODUCT_DEVICE%/g, productDevice);
-      } else {
-        url = url.replace(/%PRODUCT_DEVICE%/g, productDevice + "-" + buildType);
-      }
-      url = url.replace(/%B2G_VERSION%/g,
-                        Preferences.get(PREF_APP_B2G_VERSION, null));
-      url = url.replace(/%IMEI%/g,
-                        Preferences.get(PREF_APP_UPDATE_IMEI_HASH, "default"));
-    }
-
     return url;
   }
 };
 
 /* Get the distribution pref values, from defaults only */
 function getDistributionPrefValue(aPrefName) {
-  var prefValue = "default";
-
-  try {
-    prefValue = Services.prefs.getDefaultBranch(null).getCharPref(aPrefName);
-  } catch (e) {
-    // use default when pref not found
-  }
-
-  return prefValue;
+  return Services.prefs.getDefaultBranch(null).getCharPref(aPrefName, "default");
 }
 
 /**
@@ -151,10 +119,32 @@ XPCOMUtils.defineLazyGetter(UpdateUtils, "Locale", function() {
   return null;
 });
 
+function getSystemCapabilities() {
+  return gInstructionSet + "," + getMemoryMB();
+}
+
 /**
- * Provides adhoc system capability information for application update.
+ * Gets the RAM size in megabytes. This will round the value because sysinfo
+ * doesn't always provide RAM in multiples of 1024.
  */
-XPCOMUtils.defineLazyGetter(this, "gSystemCapabilities", function aus_gSC() {
+function getMemoryMB() {
+  let memoryMB = "unknown";
+  try {
+    memoryMB = Services.sysinfo.getProperty("memsize");
+    if (memoryMB) {
+      memoryMB = Math.round(memoryMB / 1024 / 1024);
+    }
+  } catch (e) {
+    Cu.reportError("Error getting system info memsize property. " +
+                   "Exception: " + e);
+  }
+  return memoryMB;
+}
+
+/**
+ * Gets the supported CPU instruction set.
+ */
+XPCOMUtils.defineLazyGetter(this, "gInstructionSet", function aus_gIS() {
   if (AppConstants.platform == "win") {
     const PF_MMX_INSTRUCTIONS_AVAILABLE = 3; // MMX
     const PF_XMMI_INSTRUCTIONS_AVAILABLE = 6; // SSE

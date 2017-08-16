@@ -91,17 +91,17 @@ function test_matches() {
 }
 
 function test_overlaps() {
-  function test(filter, hosts) {
+  function test(filter, hosts, optional) {
     const f = new MatchPattern(filter);
-    return f.overlapsPermissions(new MatchPattern(hosts));
+    return f.overlapsPermissions(new MatchPattern(hosts), new MatchPattern(optional));
   }
 
-  function pass({filter = [], hosts = []}) {
-    ok(test(filter, hosts), `Expected overlap: ${filter}, ${hosts}`);
+  function pass({filter = [], hosts = [], optional = []}) {
+    ok(test(filter, hosts, optional), `Expected overlap: ${filter}, ${hosts} (${optional})`);
   }
 
-  function fail({filter = [], hosts = []}) {
-    ok(!test(filter, hosts), `Expected no overlap: ${filter}, ${hosts}`);
+  function fail({filter = [], hosts = [], optional = []}) {
+    ok(!test(filter, hosts, optional), `Expected no overlap: ${filter}, ${hosts} (${optional})`);
   }
 
   // Direct comparison.
@@ -145,6 +145,11 @@ function test_overlaps() {
   pass({hosts: ["http://*.ab.cd/"], filter: ["http://ab.cd/", "http://www.ab.cd/"]});
   pass({hosts: ["http://ab.cd/", "http://ab.xy/"], filter: ["http://ab.cd/", "http://ab.xy/"]});
   fail({hosts: ["http://ab.cd/", "http://ab.xy/"], filter: ["http://ab.cd/", "http://ab.zz/"]});
+
+  // Optional.
+  pass({hosts: [], optional: "http://ab.cd/", filter: "http://ab.cd/"});
+  pass({hosts: "http://ab.cd/", optional: "http://ab.xy/", filter: ["http://ab.cd/", "http://ab.xy/"]});
+  fail({hosts: "http://ab.cd/", optional: "https://ab.xy/", filter: "http://ab.xy/"});
 }
 
 function run_test() {

@@ -392,8 +392,8 @@ nsPropertiesTable::MakeTextRun(DrawTarget*        aDrawTarget,
   NS_ASSERTION(!aGlyph.IsGlyphID(),
                "nsPropertiesTable can only access glyphs by code point");
   return aFontGroup->
-    MakeTextRun(aGlyph.code, aGlyph.Length(), aDrawTarget,
-                aAppUnitsPerDevPixel, 0, nullptr);
+    MakeTextRun(aGlyph.code, aGlyph.Length(), aDrawTarget, aAppUnitsPerDevPixel,
+                gfx::ShapedTextFlags(), nsTextFrameUtils::Flags(), nullptr);
 }
 
 // An instance of nsOpenTypeTable is associated with one gfxFontEntry that
@@ -474,7 +474,9 @@ nsOpenTypeTable::UpdateCache(DrawTarget*   aDrawTarget,
 {
   if (mCharCache != aChar) {
     RefPtr<gfxTextRun> textRun = aFontGroup->
-      MakeTextRun(&aChar, 1, aDrawTarget, aAppUnitsPerDevPixel, 0, nullptr);
+      MakeTextRun(&aChar, 1, aDrawTarget, aAppUnitsPerDevPixel,
+                  gfx::ShapedTextFlags(), nsTextFrameUtils::Flags(),
+                  nullptr);
     const gfxTextRun::CompressedGlyph& data = textRun->GetCharacterGlyphs()[0];
     if (data.IsSimpleGlyph()) {
       mGlyphID = data.GetSimpleGlyph();
@@ -568,10 +570,11 @@ nsOpenTypeTable::MakeTextRun(DrawTarget*        aDrawTarget,
     aDrawTarget, nullptr, nullptr, nullptr, 0, aAppUnitsPerDevPixel
   };
   RefPtr<gfxTextRun> textRun =
-    gfxTextRun::Create(&params, 1, aFontGroup, 0);
+    gfxTextRun::Create(&params, 1, aFontGroup,
+                       gfx::ShapedTextFlags(), nsTextFrameUtils::Flags());
   textRun->AddGlyphRun(aFontGroup->GetFirstValidFont(),
                        gfxTextRange::kFontGroup, 0,
-                       false, gfxTextRunFactory::TEXT_ORIENT_HORIZONTAL);
+                       false, gfx::ShapedTextFlags::TEXT_ORIENT_HORIZONTAL);
                               // We don't care about CSS writing mode here;
                               // math runs are assumed to be horizontal.
   gfxTextRun::DetailedGlyph detailedGlyph;
@@ -1521,7 +1524,7 @@ nsMathMLChar::StretchInternal(nsPresContext*           aPresContext,
   // Set default font and get the default bounding metrics
   // mStyleContext is a leaf context used only when stretching happens.
   // For the base size, the default font should come from the parent context
-  nsFont font = mStyleContext->GetParent()->StyleFont()->mFont;
+  nsFont font = mStyleContext->GetParentAllowServo()->StyleFont()->mFont;
   NormalizeDefaultFont(font, aFontSizeInflation);
 
   const nsStyleFont* styleFont = mStyleContext->StyleFont();
@@ -1535,7 +1538,8 @@ nsMathMLChar::StretchInternal(nsPresContext*           aPresContext,
   uint32_t len = uint32_t(mData.Length());
   mGlyphs[0] = fm->GetThebesFontGroup()->
     MakeTextRun(static_cast<const char16_t*>(mData.get()), len, aDrawTarget,
-                aPresContext->AppUnitsPerDevPixel(), 0,
+                aPresContext->AppUnitsPerDevPixel(),
+                gfx::ShapedTextFlags(), nsTextFrameUtils::Flags(),
                 aPresContext->MissingFontRecorder());
   aDesiredStretchSize = MeasureTextRun(aDrawTarget, mGlyphs[0].get());
 
@@ -1961,7 +1965,7 @@ nsMathMLChar::Display(nsDisplayListBuilder*   aBuilder,
                       uint32_t                aIndex,
                       const nsRect*           aSelectedRect)
 {
-  nsStyleContext* parentContext = mStyleContext->GetParent();
+  nsStyleContext* parentContext = mStyleContext->GetParentAllowServo();
   nsStyleContext* styleContext = mStyleContext;
 
   if (mDraw == DRAW_NORMAL) {
@@ -2039,7 +2043,7 @@ nsMathMLChar::PaintForeground(nsPresContext* aPresContext,
                               nsPoint aPt,
                               bool aIsSelected)
 {
-  nsStyleContext* parentContext = mStyleContext->GetParent();
+  nsStyleContext* parentContext = mStyleContext->GetParentAllowServo();
   nsStyleContext* styleContext = mStyleContext;
 
   if (mDraw == DRAW_NORMAL) {

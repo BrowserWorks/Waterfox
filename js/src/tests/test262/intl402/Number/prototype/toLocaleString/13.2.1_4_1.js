@@ -1,4 +1,3 @@
-// |reftest| skip-if(!this.hasOwnProperty('Intl')) -- needs Intl
 // Copyright 2012 Mozilla Corporation. All rights reserved.
 // This code is governed by the BSD license found in the LICENSE file.
 
@@ -26,21 +25,11 @@ locales.forEach(function (locales) {
     } catch (e) {
         referenceError = e;
     }
-    if (referenceError === undefined) {
-        $ERROR("Internal error: Expected exception was not thrown by Intl.NumberFormat for locales " + locales + ".");
-    }
-    
-    try {
+    assert.notSameValue(referenceError, undefined, "Internal error: Expected exception was not thrown by Intl.NumberFormat for locales " + locales + ".");
+
+    assert.throws(referenceError.constructor, function() {
         var result = (0).toLocaleString(locales);
-    } catch (e) {
-        error = e;
-    }
-    if (error === undefined) {
-        $ERROR("Number.prototype.toLocaleString didn't throw exception for locales " + locales + ".");
-    } else if (error.name !== referenceError.name) {
-        $ERROR("Number.prototype.toLocaleString threw exception " + error.name +
-            " for locales " + locales + "; expected " + referenceError.name + ".");
-    }
+    }, "Number.prototype.toLocaleString didn't throw exception for locales " + locales + ".");
 });
 
 options.forEach(function (options) {
@@ -50,23 +39,11 @@ options.forEach(function (options) {
     } catch (e) {
         referenceError = e;
     }
-    if (referenceError === undefined) {
-        $ERROR("Internal error: Expected exception was not thrown by Intl.NumberFormat for options " +
-            JSON.stringify(options) + ".");
-    }
-    
-    try {
+    assert.notSameValue(referenceError, undefined, "Internal error: Expected exception was not thrown by Intl.NumberFormat for options " + JSON.stringify(options) + ".");
+
+    assert.throws(referenceError.constructor, function() {
         var result = (0).toLocaleString([], options);
-    } catch (e) {
-        error = e;
-    }
-    if (error === undefined) {
-        $ERROR("Number.prototype.toLocaleString didn't throw exception for options " +
-            JSON.stringify(options) + ".");
-    } else if (error.name !== referenceError.name) {
-        $ERROR("Number.prototype.toLocaleString threw exception " + error.name +
-            " for options " + JSON.stringify(options) + "; expected " + referenceError.name + ".");
-    }
+    }, "Number.prototype.toLocaleString didn't throw exception for options " + JSON.stringify(options) + ".");
 });
 
 reportCompare(0, 0);

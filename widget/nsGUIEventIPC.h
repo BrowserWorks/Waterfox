@@ -230,8 +230,8 @@ struct ParamTraits<mozilla::WidgetPointerHelper>
     WriteParam(aMsg, aParam.tiltY);
     WriteParam(aMsg, aParam.twist);
     WriteParam(aMsg, aParam.tangentialPressure);
-    // We don't serialize convertToPointer and retargetedByPointerCapture since
-    // they are temporarily variable and should be reset to default.
+    // We don't serialize convertToPointer since it's temporarily variable and
+    // should be reset to default.
   }
 
   static bool Read(const Message* aMsg, PickleIterator* aIter, paramType* aResult)
@@ -421,7 +421,6 @@ struct ParamTraits<mozilla::WidgetKeyboardEvent>
     WriteParam(aMsg, aParam.mCharCode);
     WriteParam(aMsg, aParam.mPseudoCharCode);
     WriteParam(aMsg, aParam.mAlternativeCharCodes);
-    WriteParam(aMsg, aParam.mIsChar);
     WriteParam(aMsg, aParam.mIsRepeat);
     WriteParam(aMsg, aParam.mIsReserved);
     WriteParam(aMsg, aParam.mAccessKeyForwardedToChild);
@@ -438,8 +437,16 @@ struct ParamTraits<mozilla::WidgetKeyboardEvent>
     WriteParam(aMsg, aParam.mNativeCharactersIgnoringModifiers);
     WriteParam(aMsg, aParam.mPluginTextEventString);
 #endif
+
     // An OS-specific native event might be attached in |mNativeKeyEvent|,  but
     // that cannot be copied across process boundaries.
+
+    WriteParam(aMsg, aParam.mEditCommandsForSingleLineEditor);
+    WriteParam(aMsg, aParam.mEditCommandsForMultiLineEditor);
+    WriteParam(aMsg, aParam.mEditCommandsForRichTextEditor);
+    WriteParam(aMsg, aParam.mEditCommandsForSingleLineEditorInitialized);
+    WriteParam(aMsg, aParam.mEditCommandsForMultiLineEditorInitialized);
+    WriteParam(aMsg, aParam.mEditCommandsForRichTextEditorInitialized);
   }
 
   static bool Read(const Message* aMsg, PickleIterator* aIter, paramType* aResult)
@@ -457,23 +464,29 @@ struct ParamTraits<mozilla::WidgetKeyboardEvent>
         ReadParam(aMsg, aIter, &aResult->mCharCode) &&
         ReadParam(aMsg, aIter, &aResult->mPseudoCharCode) &&
         ReadParam(aMsg, aIter, &aResult->mAlternativeCharCodes) &&
-        ReadParam(aMsg, aIter, &aResult->mIsChar) &&
         ReadParam(aMsg, aIter, &aResult->mIsRepeat) &&
         ReadParam(aMsg, aIter, &aResult->mIsReserved) &&
         ReadParam(aMsg, aIter, &aResult->mAccessKeyForwardedToChild) &&
         ReadParam(aMsg, aIter, &aResult->mLocation) &&
         ReadParam(aMsg, aIter, &aResult->mUniqueId) &&
         ReadParam(aMsg, aIter, &aResult->mIsSynthesizedByTIP) &&
-        ReadParam(aMsg, aIter, &inputMethodAppState)
+        ReadParam(aMsg, aIter, &inputMethodAppState) &&
 #ifdef XP_MACOSX
-        && ReadParam(aMsg, aIter, &aResult->mNativeKeyCode)
-        && ReadParam(aMsg, aIter, &aResult->mNativeModifierFlags)
-        && ReadParam(aMsg, aIter, &aResult->mNativeCharacters)
-        && ReadParam(aMsg, aIter, &aResult->mNativeCharactersIgnoringModifiers)
-        && ReadParam(aMsg, aIter, &aResult->mPluginTextEventString)
+        ReadParam(aMsg, aIter, &aResult->mNativeKeyCode) &&
+        ReadParam(aMsg, aIter, &aResult->mNativeModifierFlags) &&
+        ReadParam(aMsg, aIter, &aResult->mNativeCharacters) &&
+        ReadParam(aMsg, aIter, &aResult->mNativeCharactersIgnoringModifiers) &&
+        ReadParam(aMsg, aIter, &aResult->mPluginTextEventString) &&
 #endif
-        )
-    {
+        ReadParam(aMsg, aIter, &aResult->mEditCommandsForSingleLineEditor) &&
+        ReadParam(aMsg, aIter, &aResult->mEditCommandsForMultiLineEditor) &&
+        ReadParam(aMsg, aIter, &aResult->mEditCommandsForRichTextEditor) &&
+        ReadParam(aMsg, aIter,
+                  &aResult->mEditCommandsForSingleLineEditorInitialized) &&
+        ReadParam(aMsg, aIter,
+                  &aResult->mEditCommandsForMultiLineEditorInitialized) &&
+        ReadParam(aMsg, aIter,
+                  &aResult->mEditCommandsForRichTextEditorInitialized)) {
       aResult->mKeyNameIndex = static_cast<mozilla::KeyNameIndex>(keyNameIndex);
       aResult->mCodeNameIndex =
         static_cast<mozilla::CodeNameIndex>(codeNameIndex);
@@ -725,9 +738,9 @@ struct ParamTraits<mozilla::WidgetSelectionEvent>
 };
 
 template<>
-struct ParamTraits<nsIMEUpdatePreference>
+struct ParamTraits<mozilla::widget::IMENotificationRequests>
 {
-  typedef nsIMEUpdatePreference paramType;
+  typedef mozilla::widget::IMENotificationRequests paramType;
 
   static void Write(Message* aMsg, const paramType& aParam)
   {

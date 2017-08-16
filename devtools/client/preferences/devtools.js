@@ -1,7 +1,6 @@
-# -*- indent-tabs-mode: nil; js-indent-level: 2 -*-
-# This Source Code Form is subject to the terms of the Mozilla Public
-# License, v. 2.0. If a copy of the MPL was not distributed with this
-# file, You can obtain one at http://mozilla.org/MPL/2.0/.
+/* This Source Code Form is subject to the terms of the Mozilla Public
+ * License, v. 2.0. If a copy of the MPL was not distributed with this
+ * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
 
 // Developer edition promo preferences
 pref("devtools.devedition.promo.shown", false);
@@ -62,7 +61,7 @@ pref("devtools.inspector.showUserAgentStyles", false);
 // Show all native anonymous content (like controls in <video> tags)
 pref("devtools.inspector.showAllAnonymousContent", false);
 // Enable the MDN docs tooltip
-pref("devtools.inspector.mdnDocsTooltip.enabled", true);
+pref("devtools.inspector.mdnDocsTooltip.enabled", false);
 // Enable the new color widget
 pref("devtools.inspector.colorWidget.enabled", false);
 
@@ -73,9 +72,17 @@ pref("devtools.fontinspector.enabled", true);
 pref("devtools.layoutview.enabled", false);
 
 // Grid highlighter preferences
+pref("devtools.gridinspector.showGridAreas", false);
 pref("devtools.gridinspector.showGridLineNumbers", false);
 pref("devtools.gridinspector.showGridOutline", false);
 pref("devtools.gridinspector.showInfiniteLines", false);
+
+// Whether or not the box model panel is opened in the computed view
+pref("devtools.computed.boxmodel.opened", true);
+// Whether or not the box model panel is opened in the layout view
+pref("devtools.layout.boxmodel.opened", true);
+// Whether or not the grid inspector panel is opened in the layout view
+pref("devtools.layout.grid.opened", true);
 
 // By how many times eyedropper will magnify pixels
 pref("devtools.eyedropper.zoom", 6);
@@ -150,6 +157,9 @@ pref("devtools.netmonitor.enabled", true);
 pref("devtools.netmonitor.panes-network-details-width", 550);
 pref("devtools.netmonitor.panes-network-details-height", 450);
 pref("devtools.netmonitor.filters", "[\"all\"]");
+pref("devtools.netmonitor.hiddenColumns",
+  "[\"cookies\",\"duration\",\"endTime\",\"latency\",\"protocol\",\"remoteip\",\"responseTime\",\"scheme\",\"setCookies\",\"startTime\"]"
+);
 
 // The default Network monitor HAR export setting
 pref("devtools.netmonitor.har.defaultLogDir", "");
@@ -180,7 +190,7 @@ pref("devtools.scratchpad.editorFontSize", 12);
 pref("devtools.scratchpad.enableAutocompletion", true);
 
 // Enable the Storage Inspector
-pref("devtools.storage.enabled", false);
+pref("devtools.storage.enabled", true);
 
 // Enable the Style Editor.
 pref("devtools.styleeditor.enabled", true);
@@ -301,8 +311,8 @@ pref("devtools.webconsole.new-frontend-enabled", true);
 pref("devtools.webconsole.new-frontend-enabled", false);
 #endif
 
-// Enable the experimental support for source maps in console (work in progress)
-pref("devtools.source-map.locations.enabled", false);
+// Enable client-side mapping service for source maps
+pref("devtools.source-map.client-service.enabled", true);
 
 // The number of lines that are displayed in the web console.
 pref("devtools.hud.loglimit", 1000);

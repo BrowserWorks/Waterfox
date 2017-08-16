@@ -82,6 +82,7 @@ nav.home {
     }
 
     svg {
+        color: black;
         width: auto;
         height: $spacing-unit * 2;
     }
@@ -89,18 +90,6 @@ nav.home {
     svg|*[fill] {
         fill: currentColor;
     }
-}
-
-
-// TTWF include iframes
-iframe.ttwf {
-    border: 1px solid grey;
-    width: 100%;
-    max-width: 990px;
-    height: 75vh;
-    margin: 0 auto;
-    display: block;
-    box-sizing: border-box;
 }
 
 

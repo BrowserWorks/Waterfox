@@ -23,7 +23,7 @@ pref("toolkit.browser.cacheRatioHeight", 3000);
 // expires.
 pref("toolkit.browser.contentViewExpire", 3000);
 
-pref("toolkit.defaultChromeURI", "chrome://browser/content/browser.xul");
+pref("toolkit.defaultChromeURI", "chrome://geckoview/content/geckoview.xul");
 pref("browser.chromeURL", "chrome://browser/content/");
 
 // If a tab has not been active for this long (seconds), then it may be
@@ -99,10 +99,6 @@ pref("network.protocol-handler.warn-external.mailto", false);
 pref("network.protocol-handler.warn-external.vnd.youtube", false);
 
 /* http prefs */
-pref("network.http.pipelining", true);
-pref("network.http.pipelining.ssl", true);
-pref("network.http.proxy.pipelining", true);
-pref("network.http.pipelining.maxrequests" , 6);
 pref("network.http.keep-alive.timeout", 109);
 pref("network.http.max-connections", 20);
 pref("network.http.max-persistent-connections-per-server", 6);
@@ -111,6 +107,10 @@ pref("network.http.max-persistent-connections-per-proxy", 20);
 // spdy
 pref("network.http.spdy.push-allowance", 32768);
 pref("network.http.spdy.default-hpack-buffer", 4096); // 4k
+
+// Racing the cache with the network should be disabled to prevent accidental
+// data usage.
+pref("network.http.rcwn.enabled", false);
 
 // See bug 545869 for details on why these are set the way they are
 pref("network.buffer.cache.count", 24);
@@ -122,7 +122,7 @@ pref("network.predictor.max-db-size", 2097152); // bytes
 pref("network.predictor.preserve", 50); // percentage of predictor data to keep when cleaning up
 
 // Use JS mDNS as a fallback
-pref("network.mdns.use_js_fallback", true);
+pref("network.mdns.use_js_fallback", false);
 
 /* history max results display */
 pref("browser.display.history.maxresults", 100);
@@ -137,12 +137,11 @@ pref("browser.sessionhistory.contentViewerTimeout", 360);
 pref("browser.sessionhistory.bfcacheIgnoreMemoryPressure", false);
 
 /* session store */
-pref("browser.sessionstore.resume_session_once", false);
 pref("browser.sessionstore.resume_from_crash", true);
 pref("browser.sessionstore.interval", 10000); // milliseconds
 pref("browser.sessionstore.backupInterval", 120000); // milliseconds -> 2 minutes
 pref("browser.sessionstore.max_tabs_undo", 10);
-pref("browser.sessionstore.max_resumed_crashes", 1);
+pref("browser.sessionstore.max_resumed_crashes", 2);
 pref("browser.sessionstore.privacy_level", 0); // saving data: 0 = all, 1 = unencrypted sites, 2 = never
 pref("browser.sessionstore.debug_logging", false);
 
@@ -156,15 +155,6 @@ pref("layout.css.report_errors", false);
 /* download manager (don't show the window or alert) */
 pref("browser.download.useDownloadDir", true);
 pref("browser.download.folderList", 1); // Default to ~/Downloads
-pref("browser.download.manager.showAlertOnComplete", false);
-pref("browser.download.manager.showAlertInterval", 2000);
-pref("browser.download.manager.retention", 2);
-pref("browser.download.manager.showWhenStarting", false);
-pref("browser.download.manager.closeWhenDone", true);
-pref("browser.download.manager.openDelay", 0);
-pref("browser.download.manager.focusWhenStarting", false);
-pref("browser.download.manager.flashCount", 2);
-pref("browser.download.manager.displayedHistoryDays", 7);
 pref("browser.download.manager.addToRecentDocs", true);
 
 /* download helper */
@@ -419,16 +409,21 @@ pref("browser.ui.zoom.force-user-scalable", false);
 // When removing this Nightly flag, also remember to remove the flags surrounding this feature
 // in GeckoPreferences and BrowserApp (see bug 1245930).
 #ifdef NIGHTLY_BUILD
-pref("ui.zoomedview.enabled", true);
 pref("ui.bookmark.mobilefolder.enabled", true);
 #else
-pref("ui.zoomedview.enabled", false);
 pref("ui.bookmark.mobilefolder.enabled", false);
 #endif
-pref("ui.zoomedview.keepLimitSize", 16); // value in layer pixels, used to not keep the large elements in the cluster list (Bug 1191041)
-pref("ui.zoomedview.limitReadableSize", 8); // value in layer pixels
-pref("ui.zoomedview.defaultZoomFactor", 2);
-pref("ui.zoomedview.simplified", true); // Do not display all the zoomed view controls, do not use size heurisistic
+
+#ifdef RELEASE_OR_BETA
+// MMA is disabled in shipping Beta and Release builds.
+pref("mma.enabled", false);
+#elif MOZ_UPDATE_CHANNEL == nightly
+// Enabled in shipping Nightly builds.
+pref("mma.enabled", true);
+#else
+// And enabled in local developer builds.
+pref("mma.enabled", true);
+#endif
 
 pref("ui.touch.radius.enabled", false);
 pref("ui.touch.radius.leftmm", 3);
@@ -605,6 +600,9 @@ pref("media.cache_size", 32768);    // 32MB media cache
 // below 10s of buffered data.
 pref("media.cache_resume_threshold", 10);
 pref("media.cache_readahead_limit", 30);
+// On mobile we'll throttle the download once the readahead_limit is hit,
+// even if the download is slow. This is to preserve battery and data.
+pref("media.throttle-regardless-of-download-rate", true);
 
 // Number of video frames we buffer while decoding video.
 // On Android this is decided by a similar value which varies for
@@ -634,6 +632,9 @@ pref("media.mediadrm-widevinecdm.visible", true);
 // Enable EME (Encrypted Media Extensions)
 pref("media.eme.enabled", true);
 #endif
+
+// Whether to suspend decoding of videos in background tabs.
+pref("media.suspend-bkgnd-video.enabled", true);
 
 // optimize images memory usage
 pref("image.downscale-during-decode.enabled", true);
@@ -895,10 +896,6 @@ pref("dom.push.maxRecentMessageIDsPerSubscription", 0);
 pref("dom.push.enabled", true);
 #endif
 
-// Maximum number of setTimeout()/setInterval() callbacks to run in a single
-// event loop runnable. Minimum value of 1.
-pref("dom.timeout.max_consecutive_callbacks", 3);
-
 // The remote content URL where FxAccountsWebChannel messages originate.  Must use HTTPS.
 pref("identity.fxaccounts.remote.webchannel.uri", "https://accounts.firefox.com");
 
@@ -928,3 +925,10 @@ pref("webchannel.allowObject.urlWhitelist", "https://accounts.firefox.com https:
 pref("media.openUnsupportedTypeWithExternalApp", true);
 
 pref("dom.keyboardevent.dispatch_during_composition", true);
+
+#if CPU_ARCH == aarch64
+pref("javascript.options.native_regexp", false);
+#endif
+
+// Ask for permission when enumerating WebRTC devices.
+pref("media.navigator.permission.device", true);

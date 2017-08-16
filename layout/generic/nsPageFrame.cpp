@@ -41,7 +41,7 @@ NS_QUERYFRAME_HEAD(nsPageFrame)
 NS_QUERYFRAME_TAIL_INHERITING(nsContainerFrame)
 
 nsPageFrame::nsPageFrame(nsStyleContext* aContext)
-: nsContainerFrame(aContext)
+  : nsContainerFrame(aContext, kClassID)
 {
 }
 
@@ -61,7 +61,7 @@ nsPageFrame::Reflow(nsPresContext*           aPresContext,
   aStatus.Reset();  // initialize out parameter
 
   NS_ASSERTION(mFrames.FirstChild() &&
-               nsGkAtoms::pageContentFrame == mFrames.FirstChild()->GetType(),
+               mFrames.FirstChild()->IsPageContentFrame(),
                "pageFrame must have a pageContentFrame child");
 
   // Resize our frame allowing it only to be as big as we are
@@ -169,12 +169,6 @@ nsPageFrame::Reflow(nsPresContext*           aPresContext,
   NS_FRAME_SET_TRUNCATION(aStatus, aReflowInput, aDesiredSize);
 }
 
-nsIAtom*
-nsPageFrame::GetType() const
-{
-  return nsGkAtoms::pageFrame;
-}
-
 #ifdef DEBUG_FRAME_DUMP
 nsresult
 nsPageFrame::GetFrameName(nsAString& aResult) const
@@ -193,7 +187,7 @@ nsPageFrame::ProcessSpecialCodes(const nsString& aStr, nsString& aNewStr)
   // then subst in the current date/time
   NS_NAMED_LITERAL_STRING(kDate, "&D");
   if (aStr.Find(kDate) != kNotFound) {
-    aNewStr.ReplaceSubstring(kDate.get(), mPD->mDateTimeStr.get());
+    aNewStr.ReplaceSubstring(kDate, mPD->mDateTimeStr);
   }
 
   // NOTE: Must search for &PT before searching for &P
@@ -204,7 +198,7 @@ nsPageFrame::ProcessSpecialCodes(const nsString& aStr, nsString& aNewStr)
   NS_NAMED_LITERAL_STRING(kPageAndTotal, "&PT");
   if (aStr.Find(kPageAndTotal) != kNotFound) {
     char16_t * uStr = nsTextFormatter::smprintf(mPD->mPageNumAndTotalsFormat.get(), mPageNum, mTotNumPages);
-    aNewStr.ReplaceSubstring(kPageAndTotal.get(), uStr);
+    aNewStr.ReplaceSubstring(kPageAndTotal, nsDependentString(uStr));
     free(uStr);
   }
 
@@ -213,24 +207,24 @@ nsPageFrame::ProcessSpecialCodes(const nsString& aStr, nsString& aNewStr)
   NS_NAMED_LITERAL_STRING(kPage, "&P");
   if (aStr.Find(kPage) != kNotFound) {
     char16_t * uStr = nsTextFormatter::smprintf(mPD->mPageNumFormat.get(), mPageNum);
-    aNewStr.ReplaceSubstring(kPage.get(), uStr);
+    aNewStr.ReplaceSubstring(kPage, nsDependentString(uStr));
     free(uStr);
   }
 
   NS_NAMED_LITERAL_STRING(kTitle, "&T");
   if (aStr.Find(kTitle) != kNotFound) {
-    aNewStr.ReplaceSubstring(kTitle.get(), mPD->mDocTitle.get());
+    aNewStr.ReplaceSubstring(kTitle, mPD->mDocTitle);
   }
 
   NS_NAMED_LITERAL_STRING(kDocURL, "&U");
   if (aStr.Find(kDocURL) != kNotFound) {
-    aNewStr.ReplaceSubstring(kDocURL.get(), mPD->mDocURL.get());
+    aNewStr.ReplaceSubstring(kDocURL, mPD->mDocURL);
   }
 
   NS_NAMED_LITERAL_STRING(kPageTotal, "&L");
   if (aStr.Find(kPageTotal) != kNotFound) {
     char16_t * uStr = nsTextFormatter::smprintf(mPD->mPageNumFormat.get(), mTotNumPages);
-    aNewStr.ReplaceSubstring(kPageTotal.get(), uStr);
+    aNewStr.ReplaceSubstring(kPageTotal, nsDependentString(uStr));
     free(uStr);
   }
 }
@@ -459,16 +453,16 @@ GetNextPage(nsIFrame* aPageContentFrame)
 {
   // XXX ugh
   nsIFrame* pageFrame = aPageContentFrame->GetParent();
-  NS_ASSERTION(pageFrame->GetType() == nsGkAtoms::pageFrame,
+  NS_ASSERTION(pageFrame->IsPageFrame(),
                "pageContentFrame has unexpected parent");
   nsIFrame* nextPageFrame = pageFrame->GetNextSibling();
   if (!nextPageFrame)
     return nullptr;
-  NS_ASSERTION(nextPageFrame->GetType() == nsGkAtoms::pageFrame,
+  NS_ASSERTION(nextPageFrame->IsPageFrame(),
                "pageFrame's sibling is not a page frame...");
   nsIFrame* f = nextPageFrame->PrincipalChildList().FirstChild();
   NS_ASSERTION(f, "pageFrame has no page content frame!");
-  NS_ASSERTION(f->GetType() == nsGkAtoms::pageContentFrame,
+  NS_ASSERTION(f->IsPageContentFrame(),
                "pageFrame's child is not page content!");
   return f;
 }
@@ -687,8 +681,9 @@ NS_NewPageBreakFrame(nsIPresShell* aPresShell, nsStyleContext* aContext)
 
 NS_IMPL_FRAMEARENA_HELPERS(nsPageBreakFrame)
 
-nsPageBreakFrame::nsPageBreakFrame(nsStyleContext* aContext) :
-  nsLeafFrame(aContext), mHaveReflowed(false)
+nsPageBreakFrame::nsPageBreakFrame(nsStyleContext* aContext)
+  : nsLeafFrame(aContext, kClassID)
+  , mHaveReflowed(false)
 {
 }
 
@@ -732,12 +727,6 @@ nsPageBreakFrame::Reflow(nsPresContext*           aPresContext,
   // DidReflow will always get called before the next Reflow() call.
   mHaveReflowed = true;
   aStatus.Reset(); 
-}
-
-nsIAtom*
-nsPageBreakFrame::GetType() const
-{
-  return nsGkAtoms::pageBreakFrame;
 }
 
 #ifdef DEBUG_FRAME_DUMP

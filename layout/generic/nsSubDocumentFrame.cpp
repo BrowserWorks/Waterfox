@@ -59,7 +59,8 @@ GetDocumentFromView(nsView* aView)
 }
 
 nsSubDocumentFrame::nsSubDocumentFrame(nsStyleContext* aContext)
-  : nsAtomicContainerFrame(aContext)
+  : nsAtomicContainerFrame(aContext, kClassID)
+  , mOuterView(nullptr)
   , mInnerView(nullptr)
   , mIsInline(false)
   , mPostedReflowCallback(false)
@@ -121,17 +122,10 @@ nsSubDocumentFrame::Init(nsIContent*       aContent,
 
   nsAtomicContainerFrame::Init(aContent, aParent, aPrevInFlow);
 
-  // We are going to create an inner view.  If we need a view for the
-  // OuterFrame but we wait for the normal view creation path in
-  // nsCSSFrameConstructor, then we will lose because the inner view's
-  // parent will already have been set to some outer view (e.g., the
-  // canvas) when it really needs to have this frame's view as its
-  // parent. So, create this frame's view right away, whether we
-  // really need it or not, and the inner view will get it as the
-  // parent.
-  if (!HasView()) {
-    nsContainerFrame::CreateViewForFrame(this, true);
-  }
+  // CreateView() creates this frame's view, stored in mOuterView.  It needs to
+  // be created first since it's the parent of the inner view, stored in
+  // mInnerView.
+  CreateView();
   EnsureInnerView();
 
   // Set the primary frame now so that nsDocumentViewer::FindContainerView
@@ -500,7 +494,7 @@ nsSubDocumentFrame::BuildDisplayList(nsDisplayListBuilder*   aBuilder,
         // Add the canvas background color to the bottom of the list. This
         // happens after we've built the list so that AddCanvasBackgroundColorItem
         // can monkey with the contents if necessary.
-        uint32_t flags = nsIPresShell::FORCE_DRAW;
+        uint32_t flags = nsIPresShell::FORCE_DRAW | nsIPresShell::ADD_FOR_SUBDOC;
         presShell->AddCanvasBackgroundColorItem(
           *aBuilder, childItems, frame, bounds, NS_RGBA(0,0,0,0), flags);
       }
@@ -553,6 +547,29 @@ nsSubDocumentFrame::BuildDisplayList(nsDisplayListBuilder*   aBuilder,
       &childItems, flags);
     childItems.AppendToTop(layerItem);
   }
+
+  // If we're using containers for root frames, then the earlier call
+  // to AddCanvasBackgroundColorItem won't have been able to add an
+  // unscrolled color item for overscroll. Try again now that we're
+  // outside the scrolled ContainerLayer.
+  if (!aBuilder->IsForEventDelivery() &&
+      gfxPrefs::LayoutUseContainersForRootFrames() &&
+      !nsLayoutUtils::NeedsPrintPreviewBackground(presContext)) {
+     nsRect bounds = GetContentRectRelativeToSelf() +
+       aBuilder->ToReferenceFrame(this);
+
+    // Invoke AutoBuildingDisplayList to ensure that the correct dirty rect
+    // is used to compute the visible rect if AddCanvasBackgroundColorItem
+    // creates a display item.
+    nsDisplayListBuilder::AutoBuildingDisplayList
+      building(aBuilder, this, dirty, true);
+    // Add the canvas background color to the bottom of the list. This
+    // happens after we've built the list so that AddCanvasBackgroundColorItem
+    // can monkey with the contents if necessary.
+    uint32_t flags = nsIPresShell::FORCE_DRAW | nsIPresShell::APPEND_UNSCROLLED_ONLY;
+    presShell->AddCanvasBackgroundColorItem(
+      *aBuilder, childItems, this, bounds, NS_RGBA(0,0,0,0), flags);
+   }
 
   if (aBuilder->IsForFrameVisibility()) {
     // We don't add the childItems to the return list as we're dealing with them here.
@@ -625,12 +642,6 @@ nsresult nsSubDocumentFrame::GetFrameName(nsAString& aResult) const
   return MakeFrameName(NS_LITERAL_STRING("FrameOuter"), aResult);
 }
 #endif
-
-nsIAtom*
-nsSubDocumentFrame::GetType() const
-{
-  return nsGkAtoms::subDocumentFrame;
-}
 
 /* virtual */ nscoord
 nsSubDocumentFrame::GetMinISize(nsRenderingContext *aRenderingContext)
@@ -1094,7 +1105,7 @@ InsertViewsInReverseOrder(nsView* aSibling, nsView* aParent)
 nsresult
 nsSubDocumentFrame::BeginSwapDocShells(nsIFrame* aOther)
 {
-  if (!aOther || aOther->GetType() != nsGkAtoms::subDocumentFrame) {
+  if (!aOther || !aOther->IsSubDocumentFrame()) {
     return NS_ERROR_NOT_IMPLEMENTED;
   }
 

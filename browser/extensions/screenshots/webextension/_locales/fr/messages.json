@@ -3,7 +3,7 @@
     "message": "Effectuez des captures d’écran sur le Web et sauvegardez-les de manière temporaire ou permanente."
   },
   "addonAuthorsList": {
-    "message": "Mozilla <screenshots-feedback@mozilla.org>"
+    "message": "Mozilla <screenshots-feedback@mozilla.com>"
   },
   "contextMenuLabel": {
     "message": "Effectuer une capture d’écran"
@@ -56,13 +56,16 @@
     "message": "Nous n’avons pas pu enregistrer votre capture d’écran, car le service de Firefox Screenshot rencontre des difficultés. Veuillez réessayer plus tard."
   },
   "unshootablePageErrorTitle": {
-    "message": "Impossible d’effectuer une capture d’écran de cette page."
+    "message": "Impossible d’effectuer une capture de cette page."
   },
   "unshootablePageErrorDetails": {
     "message": "Impossible d’effectuer une capture d’écran, car cette page web n’est pas standard."
   },
   "selfScreenshotErrorTitle": {
     "message": "Vous ne pouvez pas effectuer une capture d’écran d’une page Firefox Screenshots."
+  },
+  "emptySelectionErrorTitle": {
+    "message": "La zone sélectionnée est trop petite"
   },
   "genericErrorTitle": {
     "message": "Firefox Screenshots semble avoir un problème."
@@ -80,16 +83,16 @@
     "message": "Cliquez et glissez pour capturer seulement une partie de la page. Vous pouvez aussi survoler une zone avec votre curseur pour surligner votre sélection."
   },
   "tourHeaderThree": {
-    "message": "À votre guise"
-  },
-  "tourBodyThree": {
-    "message": "Sauvegardez en ligne vos captures recadrées pour les partager plus facilement, ou téléchargez-les sur votre ordinateur. Vous pouvez aussi cliquer sur « Mes captures d’écran » pour retrouver toutes vos captures."
-  },
-  "tourHeaderFour": {
     "message": "Effectuez des captures d’écran de fenêtres ou de pages entières"
   },
-  "tourBodyFour": {
+  "tourBodyThree": {
     "message": "Utilisez les boutons en haut à droite pour capturer au choix la zone visible dans la fenêtre ou la page entière."
+  },
+  "tourHeaderFour": {
+    "message": "À votre guise"
+  },
+  "tourBodyFour": {
+    "message": "Sauvegardez en ligne vos captures recadrées pour les partager plus facilement, ou téléchargez-les sur votre ordinateur. Vous pouvez aussi cliquer sur « Mes captures d’écran » pour retrouver toutes vos captures."
   },
   "tourSkip": {
     "message": "IGNORER"

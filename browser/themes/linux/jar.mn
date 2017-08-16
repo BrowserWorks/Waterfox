@@ -8,11 +8,9 @@ browser.jar:
 #include ../shared/jar.inc.mn
   skin/classic/browser/sanitizeDialog.css
   skin/classic/browser/aboutSessionRestore-window-icon.png
-  skin/classic/browser/aboutSyncTabs.css
 * skin/classic/browser/syncedtabs/sidebar.css     (syncedtabs/sidebar.css)
 * skin/classic/browser/browser.css
 * skin/classic/browser/compacttheme.css
-  skin/classic/browser/click-to-play-warning-stripes.png
   skin/classic/browser/Info.png
   skin/classic/browser/menuPanel-customize.png
   skin/classic/browser/menuPanel-customize@2x.png
@@ -25,16 +23,11 @@ browser.jar:
 * skin/classic/browser/pageInfo.css
   skin/classic/browser/pageInfo.png
   skin/classic/browser/page-livemarks.png
-  skin/classic/browser/Privacy-16.png
   skin/classic/browser/privatebrowsing-mask.png
   skin/classic/browser/reload-stop-go.png
   skin/classic/browser/reload-stop-go@2x.png
   skin/classic/browser/searchbar.css
   skin/classic/browser/setDesktopBackground.css
-  skin/classic/browser/Toolbar.png
-  skin/classic/browser/Toolbar@2x.png
-  skin/classic/browser/Toolbar-inverted.png
-  skin/classic/browser/Toolbar-inverted@2x.png
   skin/classic/browser/Toolbar-small.png
   skin/classic/browser/webRTC-indicator.css  (../shared/webRTC-indicator.css)
 * skin/classic/browser/controlcenter/panel.css        (controlcenter/panel.css)
@@ -55,7 +48,6 @@ browser.jar:
   skin/classic/browser/places/bookmarksMenu.png       (places/bookmarksMenu.png)
   skin/classic/browser/places/bookmarksToolbar.png    (places/bookmarksToolbar.png)
   skin/classic/browser/places/bookmarksToolbar-menuPanel.png (places/bookmarksToolbar-menuPanel.png)
-  skin/classic/browser/places/bookmarks-notification-finish.png  (places/bookmarks-notification-finish.png)
   skin/classic/browser/places/bookmarks-menu-arrow.png           (places/bookmarks-menu-arrow.png)
   skin/classic/browser/places/calendar.png            (places/calendar.png)
 * skin/classic/browser/places/editBookmarkOverlay.css (places/editBookmarkOverlay.css)
@@ -73,7 +65,9 @@ browser.jar:
   skin/classic/browser/preferences/alwaysAsk.png      (preferences/alwaysAsk.png)
   skin/classic/browser/preferences/preferences.css    (preferences/preferences.css)
 * skin/classic/browser/preferences/in-content/preferences.css (preferences/in-content/preferences.css)
+* skin/classic/browser/preferences/in-content-new/preferences.css     (preferences/in-content-new/preferences.css)
 * skin/classic/browser/preferences/in-content/dialog.css      (preferences/in-content/dialog.css)
+* skin/classic/browser/preferences/in-content-new/dialog.css          (preferences/in-content-new/dialog.css)
   skin/classic/browser/preferences/applications.css   (preferences/applications.css)
   skin/classic/browser/social/services-16.png         (social/services-16.png)
   skin/classic/browser/social/services-64.png         (social/services-64.png)
@@ -103,9 +97,6 @@ browser.jar:
   skin/classic/browser/tabbrowser/tab-stroke-start@2x.png   (tabbrowser/tab-stroke-start@2x.png)
   skin/classic/browser/tabbrowser/tabDragIndicator.png      (tabbrowser/tabDragIndicator.png)
 
-  skin/classic/browser/sync-16.png
-  skin/classic/browser/sync-32.png
-  skin/classic/browser/sync-bg.png
   skin/classic/browser/sync-desktopIcon.svg  (../shared/sync-desktopIcon.svg)
   skin/classic/browser/sync-horizontalbar.png
   skin/classic/browser/sync-horizontalbar@2x.png

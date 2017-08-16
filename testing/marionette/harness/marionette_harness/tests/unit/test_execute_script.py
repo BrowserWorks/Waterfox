@@ -6,7 +6,7 @@ import os
 import urllib
 
 from marionette_driver import By, errors
-from marionette_driver.marionette import HTMLElement
+from marionette_driver.marionette import Alert, HTMLElement
 from marionette_driver.wait import Wait
 
 from marionette_harness import MarionetteTestCase, skip_if_mobile, WindowManagerMixin
@@ -29,25 +29,32 @@ globals = set([
               ])
 
 
-class TestExecuteSimpleTestContent(MarionetteTestCase):
-    def test_stack_trace(self):
-        try:
-            self.marionette.execute_js_script("""
-                let a = 1;
-                throwHere();
-                """, filename="file.js")
-            self.assertFalse(True)
-        except errors.JavascriptException as e:
-            self.assertIn("throwHere is not defined", e.message)
-            self.assertIn("@file.js:2", e.stacktrace)
-
-
 class TestExecuteContent(MarionetteTestCase):
+
+    def alert_present(self):
+        try:
+            Alert(self.marionette).text
+            return True
+        except errors.NoAlertPresentException:
+            return False
+
+    def wait_for_alert_closed(self, timeout=None):
+        Wait(self.marionette, timeout=timeout).until(
+            lambda _: not self.alert_present())
+
+    def tearDown(self):
+        if self.alert_present():
+            alert = self.marionette.switch_to_alert()
+            alert.dismiss()
+            self.wait_for_alert_closed()
 
     def assert_is_defined(self, property, sandbox="default"):
         self.assertTrue(self.marionette.execute_script(
             "return typeof arguments[0] != 'undefined'", [property], sandbox=sandbox),
             "property {} is undefined".format(property))
+
+    def assert_is_web_element(self, element):
+        self.assertIsInstance(element, HTMLElement)
 
     def test_return_number(self):
         self.assertEqual(1, self.marionette.execute_script("return 1"))
@@ -200,10 +207,6 @@ class TestExecuteContent(MarionetteTestCase):
         self.assertEqual(self.marionette.execute_script(
             "return this.foobar;", new_sandbox=False), [23, 42])
 
-        self.marionette.execute_script("global.barfoo = [42, 23];")
-        self.assertEqual(self.marionette.execute_script(
-            "return global.barfoo;", new_sandbox=False), [42, 23])
-
     def test_sandbox_refresh_arguments(self):
         self.marionette.execute_script(
             "this.foobar = [arguments[0], arguments[1]]", [23, 42])
@@ -330,6 +333,31 @@ class TestExecuteContent(MarionetteTestCase):
         # test inspection of arguments
         self.marionette.execute_script("__webDriverArguments.toString()")
 
+    def test_toJSON(self):
+        foo = self.marionette.execute_script("""
+            return {
+              toJSON () {
+                return "foo";
+              }
+            }""",
+            sandbox=None)
+        self.assertEqual("foo", foo)
+
+    def test_unsafe_toJSON(self):
+        el = self.marionette.execute_script("""
+            return {
+              toJSON () {
+                return document.documentElement;
+              }
+            }""",
+            sandbox=None)
+        self.assert_is_web_element(el)
+
+    @skip_if_mobile("Modal dialogs not supported in Fennec")
+    def test_return_value_on_alert(self):
+        res = self.marionette._send_message("executeScript", {"script": "alert()"})
+        self.assertIn("value", res)
+        self.assertIsNone(res["value"])
 
 
 class TestExecuteChrome(WindowManagerMixin, TestExecuteContent):
@@ -397,6 +425,9 @@ class TestExecuteChrome(WindowManagerMixin, TestExecuteContent):
         pass
 
     def test_access_chrome_objects_in_event_listeners(self):
+        pass
+
+    def test_return_value_on_alert(self):
         pass
 
 

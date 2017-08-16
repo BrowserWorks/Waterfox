@@ -9,7 +9,7 @@ function getLabel(dbg, index) {
   return findElement(dbg, "scopeNode", index).innerText;
 }
 
-add_task(function* () {
+add_task(function*() {
   const dbg = yield initDebugger("doc-script-switching.html");
 
   toggleScopes(dbg);
@@ -19,4 +19,13 @@ add_task(function* () {
 
   is(getLabel(dbg, 1), "secondCall");
   is(getLabel(dbg, 2), "<this>");
+  is(getLabel(dbg, 4), "foo()");
+
+  toggleNode(dbg, 4);
+  yield waitForDispatch(dbg, "LOAD_OBJECT_PROPERTIES");
+  is(getLabel(dbg, 5), "arguments");
+
+  yield stepOver(dbg);
+  is(getLabel(dbg, 4), "foo()");
+  is(getLabel(dbg, 5), "Window");
 });

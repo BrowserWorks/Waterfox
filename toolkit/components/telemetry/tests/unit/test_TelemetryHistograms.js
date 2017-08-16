@@ -132,6 +132,41 @@ add_task(function* test_parameterChecks() {
   }
 });
 
+add_task(function* test_parameterCounts() {
+  let histogramIds = [
+    "TELEMETRY_TEST_EXPONENTIAL",
+    "TELEMETRY_TEST_LINEAR",
+    "TELEMETRY_TEST_FLAG",
+    "TELEMETRY_TEST_CATEGORICAL",
+    "TELEMETRY_TEST_BOOLEAN",
+  ];
+
+  for (let id of histogramIds) {
+    let h = Telemetry.getHistogramById(id);
+    h.clear();
+    h.add();
+    Assert.equal(h.snapshot().sum, 0, "Calling add() without a value should only log an error.");
+    h.clear();
+  }
+});
+
+add_task(function* test_parameterCountsKeyed() {
+  let histogramIds = [
+    "TELEMETRY_TEST_KEYED_FLAG",
+    "TELEMETRY_TEST_KEYED_BOOLEAN",
+    "TELEMETRY_TEST_KEYED_EXPONENTIAL",
+    "TELEMETRY_TEST_KEYED_LINEAR",
+  ];
+
+  for (let id of histogramIds) {
+    let h = Telemetry.getKeyedHistogramById(id);
+    h.clear();
+    h.add("key");
+    Assert.equal(h.snapshot("key").sum, 0, "Calling add('key') without a value should only log an error.");
+    h.clear();
+  }
+});
+
 add_task(function* test_noSerialization() {
   // Instantiate the storage for this histogram and make sure it doesn't
   // get reflected into JS, as it has no interesting data in it.
@@ -283,6 +318,26 @@ add_task(function* test_add_error_behaviour() {
   }
 });
 
+add_task(function* test_API_return_values() {
+  // Check that the plain scalar functions don't allow to crash the browser.
+  // We expect 'undefined' to be returned so that .add(1).add() can't be called.
+  // See bug 1321349 for context.
+  let hist = Telemetry.getHistogramById("TELEMETRY_TEST_LINEAR");
+  let keyedHist = Telemetry.getKeyedHistogramById("TELEMETRY_TEST_KEYED_COUNT");
+
+  const RETURN_VALUES = [
+    hist.clear(),
+    hist.add(1),
+    keyedHist.clear(),
+    keyedHist.add("some-key", 1),
+  ];
+
+  for (let returnValue of RETURN_VALUES) {
+    Assert.strictEqual(returnValue, undefined,
+                       "The function must return undefined.");
+  }
+});
+
 add_task(function* test_getHistogramById() {
   try {
     Telemetry.getHistogramById("nonexistent");
@@ -375,94 +430,6 @@ add_task(function* test_histogramRecording() {
                "Histogram value should have incremented by 1 due to recording.");
 });
 
-add_task(function* test_addons() {
-  var addon_id = "testing-addon";
-  var fake_addon_id = "fake-addon";
-  var name1 = "testing-histogram1";
-  var register = Telemetry.registerAddonHistogram;
-  expect_success(() =>
-                 register(addon_id, name1, Telemetry.HISTOGRAM_LINEAR, 1, 5, 6));
-  // Can't register the same histogram multiple times.
-  expect_fail(() =>
-              register(addon_id, name1, Telemetry.HISTOGRAM_LINEAR, 1, 5, 6));
-  // Make sure we can't get at it with another name.
-  expect_fail(() => Telemetry.getAddonHistogram(fake_addon_id, name1));
-
-  // Check for reflection capabilities.
-  var h1 = Telemetry.getAddonHistogram(addon_id, name1);
-  // Verify that although we've created storage for it, we don't reflect it into JS.
-  var snapshots = Telemetry.addonHistogramSnapshots;
-  do_check_false(name1 in snapshots[addon_id]);
-  h1.add(1);
-  h1.add(3);
-  var s1 = h1.snapshot();
-  do_check_eq(s1.histogram_type, Telemetry.HISTOGRAM_LINEAR);
-  do_check_eq(s1.min, 1);
-  do_check_eq(s1.max, 5);
-  do_check_eq(s1.counts[1], 1);
-  do_check_eq(s1.counts[3], 1);
-
-  var name2 = "testing-histogram2";
-  expect_success(() =>
-                 register(addon_id, name2, Telemetry.HISTOGRAM_LINEAR, 2, 4, 4));
-
-  var h2 = Telemetry.getAddonHistogram(addon_id, name2);
-  h2.add(2);
-  h2.add(3);
-  var s2 = h2.snapshot();
-  do_check_eq(s2.histogram_type, Telemetry.HISTOGRAM_LINEAR);
-  do_check_eq(s2.min, 2);
-  do_check_eq(s2.max, 4);
-  do_check_eq(s2.counts[1], 1);
-  do_check_eq(s2.counts[2], 1);
-
-  // Check that we can register histograms for a different addon with
-  // identical names.
-  var extra_addon = "testing-extra-addon";
-  expect_success(() =>
-                 register(extra_addon, name1, Telemetry.HISTOGRAM_BOOLEAN));
-
-  // Check that we can register flag histograms.
-  var flag_addon = "testing-flag-addon";
-  var flag_histogram = "flag-histogram";
-  expect_success(() =>
-                 register(flag_addon, flag_histogram, Telemetry.HISTOGRAM_FLAG));
-  expect_success(() =>
-                 register(flag_addon, name2, Telemetry.HISTOGRAM_LINEAR, 2, 4, 4));
-
-  // Check that we reflect registered addons and histograms.
-  snapshots = Telemetry.addonHistogramSnapshots;
-  do_check_true(addon_id in snapshots)
-  do_check_true(extra_addon in snapshots);
-  do_check_true(flag_addon in snapshots);
-
-  // Check that we have data for our created histograms.
-  do_check_true(name1 in snapshots[addon_id]);
-  do_check_true(name2 in snapshots[addon_id]);
-  var s1_alt = snapshots[addon_id][name1];
-  var s2_alt = snapshots[addon_id][name2];
-  do_check_eq(s1_alt.min, s1.min);
-  do_check_eq(s1_alt.max, s1.max);
-  do_check_eq(s1_alt.histogram_type, s1.histogram_type);
-  do_check_eq(s2_alt.min, s2.min);
-  do_check_eq(s2_alt.max, s2.max);
-  do_check_eq(s2_alt.histogram_type, s2.histogram_type);
-
-  // Even though we've registered it, it shouldn't show up until data is added to it.
-  do_check_false(name1 in snapshots[extra_addon]);
-
-  // Flag histograms should show up automagically.
-  do_check_true(flag_histogram in snapshots[flag_addon]);
-  do_check_false(name2 in snapshots[flag_addon]);
-
-  // Check that we can remove addon histograms.
-  Telemetry.unregisterAddonHistograms(addon_id);
-  snapshots = Telemetry.addonHistogramSnapshots;
-  do_check_false(addon_id in snapshots);
-  // Make sure other addons are unaffected.
-  do_check_true(extra_addon in snapshots);
-});
-
 add_task(function* test_expired_histogram() {
   var test_expired_id = "TELEMETRY_TEST_EXPIRED";
   var dummy = Telemetry.getHistogramById(test_expired_id);
@@ -553,6 +520,7 @@ add_task(function* test_keyed_count_histogram() {
   let testSnapShot = {};
 
   let h = Telemetry.getKeyedHistogramById(KEYED_ID);
+  h.clear();
   for (let i = 0; i < 4; ++i) {
     let key = KEYS[i];
     let value = i * 2 + 1;
@@ -587,9 +555,54 @@ add_task(function* test_keyed_count_histogram() {
   let allSnapshots = Telemetry.keyedHistogramSnapshots;
   Assert.deepEqual(allSnapshots[KEYED_ID], testSnapShot);
 
+  // Test clearing categorical histogram.
   h.clear();
   Assert.deepEqual(h.keys(), []);
   Assert.deepEqual(h.snapshot(), {});
+
+  // Test leaving out the value argument. That should increment by 1.
+  h.add("key");
+  Assert.equal(h.snapshot("key").sum, 1);
+});
+
+add_task(function* test_keyed_categorical_histogram() {
+  const KEYED_ID = "TELEMETRY_TEST_KEYED_CATEGORICAL";
+  const KEYS = numberRange(0, 5).map(i => "key" + (i + 1));
+
+  let h = Telemetry.getKeyedHistogramById(KEYED_ID);
+
+  for (let k of KEYS) {
+    // Test adding both per label and index.
+    for (let v of ["CommonLabel", "Label2", "Label3", "Label3", 0, 0, 1]) {
+      h.add(k, v);
+    }
+
+    // The |add| method should not throw for unexpected values, but rather
+    // print an error message in the console.
+    for (let s of ["", "Label4", "1234"]) {
+      h.add(k, s);
+    }
+  }
+
+  // Categorical histograms default to 50 linear buckets.
+  let expectedRanges = [];
+  for (let i = 0; i < 51; ++i) {
+    expectedRanges.push(i);
+  }
+
+  // Check that the set of keys in the snapshot is what we expect.
+  let snapshot = h.snapshot();
+  let snapshotKeys = Object.keys(snapshot);
+  Assert.equal(KEYS.length, snapshotKeys.length);
+  Assert.ok(KEYS.every(k => snapshotKeys.includes(k)));
+
+  // Check the snapshot values.
+  for (let k of KEYS) {
+    Assert.ok(k in snapshot);
+    Assert.equal(snapshot[k].sum, 6);
+    Assert.deepEqual(snapshot[k].ranges, expectedRanges);
+    Assert.deepEqual(snapshot[k].counts.slice(0, 4), [3, 2, 2, 0]);
+  }
 });
 
 add_task(function* test_keyed_flag_histogram() {
@@ -757,27 +770,19 @@ add_task(function* test_keyed_histogram_recording_enabled() {
     "Keyed histogram add should not record when recording is disabled");
 });
 
+add_task(function* test_histogramSnapshots() {
+  let keyed = Telemetry.getKeyedHistogramById("TELEMETRY_TEST_KEYED_COUNT");
+  keyed.add("a", 1);
+
+  // Check that keyed histograms are not returned
+  Assert.ok(!("TELEMETRY_TEST_KEYED_COUNT#a" in Telemetry.histogramSnapshots));
+});
+
 add_task(function* test_datasets() {
   // Check that datasets work as expected.
 
   const RELEASE_CHANNEL_OPTOUT = Ci.nsITelemetry.DATASET_RELEASE_CHANNEL_OPTOUT;
   const RELEASE_CHANNEL_OPTIN  = Ci.nsITelemetry.DATASET_RELEASE_CHANNEL_OPTIN;
-
-  // Histograms should default to the extended dataset
-  let h = Telemetry.getHistogramById("TELEMETRY_TEST_FLAG");
-  Assert.equal(h.dataset(), RELEASE_CHANNEL_OPTIN);
-  h = Telemetry.getKeyedHistogramById("TELEMETRY_TEST_KEYED_FLAG");
-  Assert.equal(h.dataset(), RELEASE_CHANNEL_OPTIN);
-
-  // Check test histograms with explicit dataset definitions
-  h = Telemetry.getHistogramById("TELEMETRY_TEST_RELEASE_OPTIN");
-  Assert.equal(h.dataset(), RELEASE_CHANNEL_OPTIN);
-  h = Telemetry.getHistogramById("TELEMETRY_TEST_RELEASE_OPTOUT");
-  Assert.equal(h.dataset(), RELEASE_CHANNEL_OPTOUT);
-  h = Telemetry.getKeyedHistogramById("TELEMETRY_TEST_KEYED_RELEASE_OPTIN");
-  Assert.equal(h.dataset(), RELEASE_CHANNEL_OPTIN);
-  h = Telemetry.getKeyedHistogramById("TELEMETRY_TEST_KEYED_RELEASE_OPTOUT");
-  Assert.equal(h.dataset(), RELEASE_CHANNEL_OPTOUT);
 
   // Check that registeredHistogram works properly
   let registered = Telemetry.registeredHistograms(RELEASE_CHANNEL_OPTIN, []);

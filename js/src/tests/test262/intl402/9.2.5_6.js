@@ -1,4 +1,3 @@
-// |reftest| skip-if(!this.hasOwnProperty('Intl')) -- needs Intl
 // Copyright 2012 Mozilla Corporation. All rights reserved.
 // This code is governed by the BSD license found in the LICENSE file.
 
@@ -15,9 +14,7 @@ taintProperties(["dataLocale", "nu", "ca", "co", "locale"]);
 
 testWithIntlConstructors(function (Constructor) {
     var locale = new Constructor(undefined, {localeMatcher: "lookup"}).resolvedOptions().locale;
-    if (!isCanonicalizedStructurallyValidLanguageTag(locale)) {
-        $ERROR("Constructor returns invalid locale " + locale + ".");
-    }
+    assert(isCanonicalizedStructurallyValidLanguageTag(locale), "Constructor returns invalid locale " + locale + ".");
 
     return true;
 });

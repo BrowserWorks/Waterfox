@@ -475,7 +475,7 @@ class TreeMetadataEmitter(LoggingMixin):
                         'rpath': False,
                         'lto': False,
                         'debug-assertions': True,
-                        'codegen-units': 1,
+                        'codegen-units': 4,
                         'panic': 'abort',
                     }
                 else:
@@ -1124,9 +1124,6 @@ class TreeMetadataEmitter(LoggingMixin):
 
         for name, jar in context.get('JAVA_JAR_TARGETS', {}).items():
             yield ContextWrapped(context, jar)
-
-        for name, data in context.get('ANDROID_ECLIPSE_PROJECT_TARGETS', {}).items():
-            yield ContextWrapped(context, data)
 
         if context.get('USE_YASM') is True:
             yasm = context.config.substs.get('YASM')

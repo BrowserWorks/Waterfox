@@ -64,7 +64,10 @@ public:
     constexpr XrayTraits() {}
 
     static JSObject* getTargetObject(JSObject* wrapper) {
-        return js::UncheckedUnwrap(wrapper, /* stopAtWindowProxy = */ false);
+        JSObject* target = js::UncheckedUnwrap(wrapper, /* stopAtWindowProxy = */ false);
+        if (target)
+            JS::ExposeObjectToActiveJS(target);
+        return target;
     }
 
     virtual bool resolveNativeProperty(JSContext* cx, JS::HandleObject wrapper,
@@ -99,6 +102,12 @@ public:
     JSObject* ensureExpandoObject(JSContext* cx, JS::HandleObject wrapper,
                                   JS::HandleObject target);
 
+    // Slots for holder objects.
+    enum {
+        HOLDER_SLOT_CACHED_PROTO = 0,
+        HOLDER_SHARED_SLOT_COUNT
+    };
+
     JSObject* getHolder(JSObject* wrapper);
     JSObject* ensureHolder(JSContext* cx, JS::HandleObject wrapper);
     virtual JSObject* createHolder(JSContext* cx, JSObject* wrapper) = 0;
@@ -108,6 +117,8 @@ public:
     bool cloneExpandoChain(JSContext* cx, JS::HandleObject dst, JS::HandleObject src);
 
 protected:
+    static const JSClass HolderClass;
+
     // Get the JSClass we should use for our expando object.
     virtual const JSClass* getExpandoClass(JSContext* cx,
                                            JS::HandleObject target) const;
@@ -116,7 +127,7 @@ private:
     bool expandoObjectMatchesConsumer(JSContext* cx, JS::HandleObject expandoObject,
                                       nsIPrincipal* consumerOrigin,
                                       JS::HandleObject exclusiveGlobal);
-    bool getExpandoObjectInternal(JSContext* cx, JS::HandleObject target,
+    bool getExpandoObjectInternal(JSContext* cx, JSObject* expandoChain,
                                   nsIPrincipal* origin, JSObject* exclusiveGlobal,
                                   JS::MutableHandleObject expandoObject);
     JSObject* attachExpandoObject(JSContext* cx, JS::HandleObject target,
@@ -301,7 +312,7 @@ public:
     }
 
     enum {
-        SLOT_PROTOKEY = 0,
+        SLOT_PROTOKEY = HOLDER_SHARED_SLOT_COUNT,
         SLOT_ISPROTOTYPE,
         SLOT_CONSTRUCTOR_FOR,
         SLOT_COUNT
@@ -421,7 +432,7 @@ public:
 
     virtual JSObject* createHolder(JSContext* cx, JSObject* wrapper) override
     {
-        return JS_NewObjectWithGivenProto(cx, nullptr, nullptr);
+        return JS_NewObjectWithGivenProto(cx, &HolderClass, nullptr);
     }
 
     static OpaqueXrayTraits singleton;
@@ -577,7 +588,7 @@ public:
 
     static inline JSObject* getSandboxProxy(JS::Handle<JSObject*> proxy)
     {
-        return &js::GetProxyExtra(proxy, SandboxProxySlot).toObject();
+        return &js::GetProxyReservedSlot(proxy, SandboxProxySlot).toObject();
     }
 };
 

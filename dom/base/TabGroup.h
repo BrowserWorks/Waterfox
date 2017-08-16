@@ -13,7 +13,7 @@
 #include "nsString.h"
 
 #include "mozilla/Atomics.h"
-#include "mozilla/Dispatcher.h"
+#include "mozilla/SchedulerGroup.h"
 #include "mozilla/RefPtr.h"
 
 class mozIDOMWindowProxy;
@@ -43,7 +43,7 @@ namespace dom {
 
 class DocGroup;
 
-class TabGroup final : public ValidatingDispatcher
+class TabGroup final : public SchedulerGroup
 {
 private:
   class HashEntry : public nsCStringHashKey
@@ -67,13 +67,13 @@ public:
   static TabGroup*
   GetChromeTabGroup();
 
-  // Checks if the PBrowserChild associated with aWindow already has a TabGroup
-  // assigned to it in IPDL. Returns this TabGroup if it does. This could happen
-  // if the parent process created the PBrowser and we needed to assign a
-  // TabGroup immediately upon receiving the IPDL message. This method is main
-  // thread only.
-  static TabGroup*
-  GetFromWindowActor(mozIDOMWindowProxy* aWindow);
+  // Checks if the TabChild already has a TabGroup assigned to it in
+  // IPDL. Returns this TabGroup if it does. This could happen if the parent
+  // process created the PBrowser and we needed to assign a TabGroup immediately
+  // upon receiving the IPDL message. This method is main thread only.
+  static TabGroup* GetFromActor(TabChild* aTabChild);
+
+  static TabGroup* GetFromWindow(mozIDOMWindowProxy* aWindow);
 
   explicit TabGroup(bool aIsChrome = false);
 
@@ -114,11 +114,18 @@ public:
                    nsIDocShellTreeItem* aOriginalRequestor,
                    nsIDocShellTreeItem** aFoundItem);
 
-  nsTArray<nsPIDOMWindowOuter*> GetTopLevelWindows();
+  nsTArray<nsPIDOMWindowOuter*> GetTopLevelWindows() const;
+  const nsTArray<nsPIDOMWindowOuter*>& GetWindows() { return mWindows; }
 
   // This method is always safe to call off the main thread. The nsIEventTarget
   // can always be used off the main thread.
   nsIEventTarget* EventTargetFor(TaskCategory aCategory) const override;
+
+  void WindowChangedBackgroundStatus(bool aIsNowBackground);
+
+  // Returns true if all of the TabGroup's top-level windows are in
+  // the background.
+  bool IsBackground() const override;
 
 private:
   virtual AbstractThread*
@@ -138,6 +145,7 @@ private:
   // Main thread only
   DocGroupMap mDocGroups;
   nsTArray<nsPIDOMWindowOuter*> mWindows;
+  uint32_t mForegroundCount;
 };
 
 } // namespace dom

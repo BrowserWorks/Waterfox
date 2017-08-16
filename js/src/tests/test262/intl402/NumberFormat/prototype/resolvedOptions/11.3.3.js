@@ -1,4 +1,3 @@
-// |reftest| skip-if(!this.hasOwnProperty('Intl')) -- needs Intl
 // Copyright 2012 Mozilla Corporation. All rights reserved.
 // This code is governed by the license found in the LICENSE file.
 
@@ -15,9 +14,7 @@ includes: [testIntl.js]
 var actual = new Intl.NumberFormat().resolvedOptions();
 
 var actual2 = new Intl.NumberFormat().resolvedOptions();
-if (actual2 === actual) {
-    $ERROR("resolvedOptions returned the same object twice.");
-}
+assert.notSameValue(actual2, actual, "resolvedOptions returned the same object twice.");
 
 // this assumes the default values where the specification provides them
 mustHaveProperty(actual, "locale", isCanonicalizedStructurallyValidLanguageTag);

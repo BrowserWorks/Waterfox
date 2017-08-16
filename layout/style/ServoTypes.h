@@ -7,6 +7,8 @@
 #ifndef mozilla_ServoTypes_h
 #define mozilla_ServoTypes_h
 
+#include "mozilla/TypedEnumBits.h"
+
 /*
  * Type definitions used to interact with Servo. This gets included by nsINode,
  * so don't add significant include dependencies to this file.
@@ -49,6 +51,73 @@ enum class LazyComputeBehavior {
 enum class TraversalRootBehavior {
   Normal,
   UnstyledChildrenOnly,
+};
+
+// Indicates whether the Servo style system should perform normal processing,
+// animation-only processing (so we can flush any throttled animation styles),
+// or whether it should traverse in a mode that doesn't generate any change
+// hints, which is what's required when handling frame reconstruction.
+// The change hints in this case are unneeded, since the old frames have
+// already been destroyed.
+// Indicates how the Servo style system should perform.
+enum class TraversalRestyleBehavior {
+  // Normal processing.
+  Normal,
+  // Traverses in a mode that doesn't generate any change hints, which is what's
+  // required when handling frame reconstruction.  The change hints in this case
+  // are unneeded, since the old frames have already been destroyed.
+  ForReconstruct,
+  // Processes animation-only restyle.
+  ForAnimationOnly,
+  // Traverses as normal mode but tries to update all CSS animations.
+  ForCSSRuleChanges,
+};
+
+// Indicates which rules should be included when performing selecting matching
+// on an element.  DefaultOnly is used to exclude all rules except for those
+// that come from UA style sheets, and is used to implemented
+// getDefaultComputedStyle.
+enum class StyleRuleInclusion {
+  All,
+  DefaultOnly,
+};
+
+// Represents which tasks are performed in a SequentialTask of UpdateAnimations.
+enum class UpdateAnimationsTasks : uint8_t {
+  CSSAnimations    = 1 << 0,
+  CSSTransitions   = 1 << 1,
+  EffectProperties = 1 << 2,
+  CascadeResults   = 1 << 3,
+};
+
+MOZ_MAKE_ENUM_CLASS_BITWISE_OPERATORS(UpdateAnimationsTasks)
+
+// The mode to use when parsing values.
+enum class ParsingMode : uint8_t {
+  // In CSS, lengths must have units, except for zero values, where the unit can
+  // be omitted.
+  // https://www.w3.org/TR/css3-values/#lengths
+  Default = 0,
+  // In SVG, a coordinate or length value without a unit identifier (e.g., "25")
+  // is assumed to be in user units (px).
+  // https://www.w3.org/TR/SVG/coords.html#Units
+  AllowUnitlessLength = 1 << 0,
+  // In SVG, out-of-range values are not treated as an error in parsing.
+  // https://www.w3.org/TR/SVG/implnote.html#RangeClamping
+  AllowAllNumericValues = 1 << 1,
+};
+
+MOZ_MAKE_ENUM_CLASS_BITWISE_OPERATORS(ParsingMode)
+
+// The kind of style we're generating when requesting Servo to give us an
+// inherited style.
+enum class InheritTarget {
+  // We're requesting a text style.
+  Text,
+  // We're requesting a first-letter continuation frame style.
+  FirstLetterContinuation,
+  // We're requesting a style for a placeholder frame.
+  PlaceholderFrame,
 };
 
 } // namespace mozilla

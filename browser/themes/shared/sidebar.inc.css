@@ -1,0 +1,135 @@
+%if 0
+/* This Source Code Form is subject to the terms of the Mozilla Public
+ * License, v. 2.0. If a copy of the MPL was not distributed with this
+ * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
+%endif
+
+#sidebar-box {
+  --header-background-color: #F2F2F2;
+  --header-background-color-hover: rgba(204, 204, 204, 0.6);
+}
+
+.sidebar-header,
+#sidebar-header {
+  padding: 4px;
+  background-color: var(--header-background-color);
+  color: -moz-dialogText;
+  text-shadow: none;
+}
+
+.sidebar-splitter {
+  -moz-appearance: none;
+  border: 0 solid #ccc;
+  border-inline-end-width: 1px;
+  min-width: 1px;
+  width: 3px;
+  background-image: none !important;
+  background-color: transparent;
+  margin-inline-start: -3px;
+  position: relative;
+}
+
+.sidebar-splitter[overlapend] {
+  border-inline-end-width: 0;
+  border-inline-start-width: 1px;
+  margin-inline-start: 0;
+  margin-inline-end: -3px;
+}
+
+#sidebar-throbber[loading="true"] {
+  list-style-image: url("chrome://global/skin/icons/loading.png");
+}
+
+@media (min-resolution: 2dppx) {
+  .sidebar-throbber[loading="true"],
+  #sidebar-throbber[loading="true"] {
+    list-style-image: url("chrome://global/skin/icons/loading@2x.png");
+    width: 16px;
+  }
+}
+
+#sidebar-title {
+  margin: 0;
+  padding: 0;
+  padding-inline-start: 8px;
+  padding-inline-end: 4px;
+}
+
+#sidebar-switcher-arrow,
+#sidebar-close > .toolbarbutton-icon {
+  -moz-context-properties: fill;
+  fill: currentColor;
+  opacity: 0.8;
+}
+
+#sidebar-switcher-arrow {
+  list-style-image: url(chrome://browser/skin/arrow-dropdown.svg);
+  width: 12px;
+  height: 12px;
+}
+
+#sidebar-close {
+  -moz-appearance: none;
+  list-style-image: url(chrome://browser/skin/sidebar/close.svg);
+  margin: 0;
+  padding: 4px;
+}
+
+#sidebar-switcher-target {
+  -moz-appearance: none;
+  padding: 4px;
+  color: inherit;
+}
+
+#sidebar-box #sidebar-switcher-target:hover,
+#sidebar-switcher-target.active,
+#sidebar-close:hover {
+  background: var(--header-background-color-hover);
+}
+
+#sidebarMenu-popup .subviewbutton {
+  min-width: 190px;
+}
+
+#sidebar-extensions:empty + toolbarseparator {
+  display: none;
+}
+
+%ifndef XP_MACOSX
+/* Allow room for the checkbox drawn as a background image at the start of the toolbarbutton */
+#sidebarMenu-popup .subviewbutton-iconic > .toolbarbutton-icon {
+  padding-inline-start: 16px;
+}
+#sidebarMenu-popup .subviewbutton-iconic > .toolbarbutton-text {
+  padding-inline-start: 0;
+}
+%endif
+
+
+#sidebar-box[sidebarcommand="viewWebPanelsSidebar"] > #sidebar-header > #sidebar-switcher-target > #sidebar-icon {
+  list-style-image: url(chrome://mozapps/skin/places/defaultFavicon.svg);
+}
+
+#sidebar-switcher-bookmarks > .toolbarbutton-icon,
+#sidebar-box[sidebarcommand="viewBookmarksSidebar"] > #sidebar-header > #sidebar-switcher-target > #sidebar-icon {
+  list-style-image: url(chrome://browser/skin/bookmark.svg);
+  -moz-context-properties: fill;
+  fill: currentColor;
+  opacity: 0.8;
+}
+
+#sidebar-switcher-history > .toolbarbutton-icon,
+#sidebar-box[sidebarcommand="viewHistorySidebar"] > #sidebar-header > #sidebar-switcher-target > #sidebar-icon {
+  list-style-image: url(chrome://browser/skin/history.svg);
+  -moz-context-properties: fill;
+  fill: currentColor;
+  opacity: 0.8;
+}
+
+#sidebar-switcher-tabs > .toolbarbutton-icon,
+#sidebar-box[sidebarcommand="viewTabsSidebar"] > #sidebar-header > #sidebar-switcher-target > #sidebar-icon {
+  list-style-image: url(chrome://browser/skin/synced-tabs.svg);
+  -moz-context-properties: fill;
+  fill: currentColor;
+  opacity: 0.8;
+}

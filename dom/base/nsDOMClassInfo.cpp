@@ -885,23 +885,13 @@ nsDOMClassInfo::PostCreatePrototype(JSContext * cx, JSObject * aProto)
   JS::Rooted<JSObject*> global(cx, ::JS_GetGlobalForObject(cx, proto));
 
   // Only do this if the global object is a window.
-  // XXX Is there a better way to check this?
-  nsISupports *globalNative = XPConnect()->GetNativeOfWrapper(cx, global);
-  nsCOMPtr<nsPIDOMWindowInner> piwin = do_QueryInterface(globalNative);
-  if (!piwin) {
+  nsGlobalWindow* win;
+  if (NS_FAILED(UNWRAP_OBJECT(Window, &global, win))) {
+    // Not a window.
     return NS_OK;
   }
 
-  nsGlobalWindow *win = nsGlobalWindow::Cast(piwin);
   if (win->IsClosedOrClosing()) {
-    return NS_OK;
-  }
-
-  // If the window is in a different compartment than the global object, then
-  // it's likely that global is a sandbox object whose prototype is a window.
-  // Don't do anything in this case.
-  if (win->FastGetGlobalJSObject() &&
-      js::GetObjectCompartment(global) != js::GetObjectCompartment(win->FastGetGlobalJSObject())) {
     return NS_OK;
   }
 
@@ -1611,6 +1601,11 @@ nsWindowSH::NameStructEnabled(JSContext* aCx, nsGlobalWindow *aWin,
                               const nsAString& aName,
                               const nsGlobalNameStruct& aNameStruct)
 {
+  // DOMConstructor is special: creating its proto does not actually define it
+  // as a property on the global.  So we don't want to expose its name either.
+  if (aName.EqualsLiteral("DOMConstructor")) {
+    return false;
+  }
   const nsGlobalNameStruct* nameStruct = &aNameStruct;
   return (nameStruct->mType != nsGlobalNameStruct::eTypeProperty &&
           nameStruct->mType != nsGlobalNameStruct::eTypeClassConstructor) ||
@@ -1633,7 +1628,7 @@ nsWindowSH::GlobalResolve(nsGlobalWindow *aWin, JSContext *cx,
                           JS::Handle<JSObject*> obj, JS::Handle<jsid> id,
                           JS::MutableHandle<JS::PropertyDescriptor> desc)
 {
-  if (id == XPCJSContext::Get()->GetStringID(XPCJSContext::IDX_COMPONENTS)) {
+  if (id == XPCJSRuntime::Get()->GetStringID(XPCJSContext::IDX_COMPONENTS)) {
     return LookupComponentsShim(cx, obj, aWin->AsInner(), desc);
   }
 
@@ -1641,7 +1636,7 @@ nsWindowSH::GlobalResolve(nsGlobalWindow *aWin, JSContext *cx,
   // Note: We use |obj| rather than |aWin| to get the principal here, because
   // this is called during Window setup when the Document isn't necessarily
   // hooked up yet.
-  if (id == XPCJSContext::Get()->GetStringID(XPCJSContext::IDX_CONTROLLERS) &&
+  if (id == XPCJSRuntime::Get()->GetStringID(XPCJSContext::IDX_CONTROLLERS) &&
       !xpc::IsXrayWrapper(obj) &&
       !nsContentUtils::IsSystemPrincipal(nsContentUtils::ObjectPrincipal(obj)))
   {

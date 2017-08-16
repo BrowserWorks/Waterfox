@@ -9,33 +9,40 @@
        flip="slide"
        position="bottomcenter topright"
        noautofocus="true">
-  <panelmultiview id="PanelUI-multiView" mainViewId="PanelUI-mainView">
-    <panelview id="PanelUI-mainView" context="customizationPanelContextMenu">
+  <panelmultiview id="PanelUI-multiView" mainViewId="PanelUI-mainView"
+                  viewCacheId="appMenu-viewCache">
+    <panelview id="PanelUI-mainView" context="customizationPanelContextMenu"
+               descriptionheightworkaround="true" blockinboxworkaround="true">
       <vbox id="PanelUI-contents-scroller">
         <vbox id="PanelUI-contents" class="panelUI-grid"/>
       </vbox>
 
       <footer id="PanelUI-footer">
         <vbox id="PanelUI-footer-addons"></vbox>
-        <toolbarbutton id="PanelUI-update-status"
-                       oncommand="gMenuButtonUpdateBadge.onMenuPanelCommand(event);"
+        <toolbarbutton class="panel-banner-item"
+                       label-update-available="&updateAvailable.panelUI.label;"
+                       label-update-manual="&updateManual.panelUI.label;"
+                       label-update-restart="&updateRestart.panelUI.label2;"
+                       oncommand="PanelUI._onBannerItemSelected(event)"
                        wrap="true"
                        hidden="true"/>
-        <hbox id="PanelUI-footer-fxa">
+        <hbox id="PanelUI-fxa-container">
           <hbox id="PanelUI-fxa-status"
+                label="&fxaSignedIn.tooltip;"
                 defaultlabel="&fxaSignIn.label;"
                 signedinTooltiptext="&fxaSignedIn.tooltip;"
                 tooltiptext="&fxaSignedIn.tooltip;"
                 errorlabel="&fxaSignInError.label;"
                 unverifiedlabel="&fxaUnverified.label;"
-                onclick="if (event.which == 1) gFxAccounts.onMenuPanelCommand();">
+                onclick="if (event.which == 1) gSync.onMenuPanelCommand();">
             <image id="PanelUI-fxa-avatar"/>
             <toolbarbutton id="PanelUI-fxa-label"
+                           label="&fxaSignIn.label;"
                            fxabrandname="&syncBrand.fxAccount.label;"/>
           </hbox>
           <toolbarseparator/>
           <toolbarbutton id="PanelUI-fxa-icon"
-                         oncommand="gSyncUI.doSync();"
+                         oncommand="gSync.doSync();"
                          closemenu="none">
             <observes element="sync-status" attribute="syncstatus"/>
             <observes element="sync-status" attribute="tooltiptext"/>
@@ -103,7 +110,8 @@
                      oncommand="PlacesCommandHook.showPlacesOrganizer('History'); CustomizableUI.hidePanelForNode(this);"/>
     </panelview>
 
-    <panelview id="PanelUI-remotetabs" flex="1" class="PanelUI-subView">
+    <panelview id="PanelUI-remotetabs" flex="1" class="PanelUI-subView"
+               descriptionheightworkaround="true">
       <label value="&appMenuRemoteTabs.label;" class="panel-subview-header"/>
       <vbox class="panel-subview-body">
         <!-- this widget has 3 boxes in the body, but only 1 is ever visible -->
@@ -114,10 +122,14 @@
                            class="subviewbutton"
                            observes="viewTabsSidebar"
                            label="&appMenuRemoteTabs.sidebar.label;"/>
+            <toolbarbutton id="PanelUI-remotetabs-view-managedevices"
+                           class="subviewbutton"
+                           label="&appMenuRemoteTabs.managedevices.label;"
+                           oncommand="gSync.openDevicesManagementPage('syncedtabs-menupanel');"/>
             <toolbarbutton id="PanelUI-remotetabs-syncnow"
                            observes="sync-status"
                            class="subviewbutton"
-                           oncommand="gSyncUI.doSync();"
+                           oncommand="gSync.doSync();"
                            closemenu="none"/>
             <menuseparator id="PanelUI-remotetabs-separator"/>
           </vbox>
@@ -134,7 +146,7 @@
             </vbox>
             <!-- Sync is ready to Sync but the "tabs" engine isn't enabled-->
             <hbox id="PanelUI-remotetabs-tabsdisabledpane" pack="center" flex="1">
-              <vbox class="PanelUI-remotetabs-instruction-box">
+              <vbox class="PanelUI-remotetabs-instruction-box" align="center">
                 <hbox pack="center">
                   <html:img class="fxaSyncIllustration" src="chrome://browser/skin/fxa/sync-illustration.svg"/>
                 </hbox>
@@ -142,7 +154,7 @@
                 <hbox pack="center">
                   <toolbarbutton class="PanelUI-remotetabs-prefs-button"
                                  label="&appMenuRemoteTabs.openprefs.label;"
-                                 oncommand="gSyncUI.openPrefs('synced-tabs');"/>
+                                 oncommand="gSync.openPrefs('synced-tabs');"/>
                 </hbox>
               </vbox>
             </hbox>
@@ -176,7 +188,7 @@
             <label class="PanelUI-remotetabs-instruction-label">&appMenuRemoteTabs.notsignedin.label;</label>
             <toolbarbutton class="PanelUI-remotetabs-prefs-button"
                            label="&appMenuRemoteTabs.signin.label;"
-                           oncommand="gSyncUI.openPrefs('synced-tabs');"/>
+                           oncommand="gSync.openPrefs('synced-tabs');"/>
           </vbox>
           <!-- When Sync needs re-authentication. This uses the exact same messaging
                as "Sync is not configured" but remains a separate box so we get
@@ -190,7 +202,7 @@
             <label class="PanelUI-remotetabs-instruction-label">&appMenuRemoteTabs.notsignedin.label;</label>
             <toolbarbutton class="PanelUI-remotetabs-prefs-button"
                            label="&appMenuRemoteTabs.signin.label;"
-                           oncommand="gSyncUI.openPrefs('synced-tabs');"/>
+                           oncommand="gSync.openPrefs('synced-tabs');"/>
           </vbox>
         </hbox>
       </vbox>
@@ -288,7 +300,8 @@
       </vbox>
     </panelview>
 
-    <panelview id="PanelUI-panicView" flex="1">
+    <panelview id="PanelUI-panicView" flex="1"
+               descriptionheightworkaround="true">
       <vbox class="panel-subview-body">
         <hbox id="PanelUI-panic-timeframe">
           <image id="PanelUI-panic-timeframe-icon" alt=""/>
@@ -323,17 +336,33 @@
     </panelview>
 
   </panelmultiview>
-  <!-- These menupopups are located here to prevent flickering,
-       see bug 492960 comment 20. -->
-  <menupopup id="customizationPanelItemContextMenu">
+
+  <!-- This menu is here because not having it in the menu in which it's used flickers
+       when hover styles overlap. See https://bugzilla.mozilla.org/show_bug.cgi?id=1378427 .
+       -->
+  <menupopup id="customizationPanelItemContextMenu"
+             onpopupshowing="gCustomizeMode.onPanelContextMenuShowing(event)">
+    <menuitem oncommand="gCustomizeMode.addToPanel(document.popupNode)"
+              id="customizationPanelItemContextMenuPin"
+              photonaccesskey="&customizeMenu.pinToOverflowMenu.accesskey;"
+              photonlabel="&customizeMenu.pinToOverflowMenu.label;"
+              accesskey="&customizeMenu.moveToPanel.accesskey;"
+              label="&customizeMenu.moveToPanel.label;"
+              closemenu="single"
+              class="customize-context-moveToPanel"/>
     <menuitem oncommand="gCustomizeMode.addToToolbar(document.popupNode)"
+              id="customizationPanelItemContextMenuUnpin"
               closemenu="single"
               class="customize-context-moveToToolbar"
+              photonaccesskey="&customizeMenu.unpinFromOverflowMenu.accesskey;"
+              photonlabel="&customizeMenu.unpinFromOverflowMenu.label;"
               accesskey="&customizeMenu.moveToToolbar.accesskey;"
               label="&customizeMenu.moveToToolbar.label;"/>
     <menuitem oncommand="gCustomizeMode.removeFromArea(document.popupNode)"
               closemenu="single"
               class="customize-context-removeFromPanel"
+              photonaccesskey="&customizeMenu.removeFromToolbar.accesskey;"
+              photonlabel="&customizeMenu.removeFromToolbar.label;"
               accesskey="&customizeMenu.removeFromMenu.accesskey;"
               label="&customizeMenu.removeFromMenu.label;"/>
     <menuseparator/>
@@ -342,36 +371,32 @@
               accesskey="&viewCustomizeToolbar.accesskey;"
               label="&viewCustomizeToolbar.label;"/>
   </menupopup>
-
-  <menupopup id="customizationPaletteItemContextMenu">
-    <menuitem oncommand="gCustomizeMode.addToToolbar(document.popupNode)"
-              class="customize-context-addToToolbar"
-              accesskey="&customizeMenu.addToToolbar.accesskey;"
-              label="&customizeMenu.addToToolbar.label;"/>
-    <menuitem oncommand="gCustomizeMode.addToPanel(document.popupNode)"
-              class="customize-context-addToPanel"
-              accesskey="&customizeMenu.addToPanel.accesskey;"
-              label="&customizeMenu.addToPanel.label;"/>
-  </menupopup>
-
-  <menupopup id="customizationPanelContextMenu">
-    <menuitem command="cmd_CustomizeToolbars"
-              accesskey="&customizeMenu.addMoreItems.accesskey;"
-              label="&customizeMenu.addMoreItems.label;"/>
-  </menupopup>
 </panel>
 
 <panel id="widget-overflow"
        role="group"
        type="arrow"
        noautofocus="true"
-       context="toolbar-context-menu"
        position="bottomcenter topright"
+#ifndef MOZ_PHOTON_THEME
+       context="toolbar-context-menu"
+#endif
        hidden="true">
-  <vbox id="widget-overflow-scroller">
-    <vbox id="widget-overflow-list" class="widget-overflow-list"
-          overflowfortoolbar="nav-bar"/>
-  </vbox>
+#ifdef MOZ_PHOTON_THEME
+  <panelmultiview mainViewId="widget-overflow-mainView">
+    <panelview id="widget-overflow-mainView"
+               context="toolbar-context-menu">
+#endif
+      <vbox id="widget-overflow-scroller">
+        <vbox id="widget-overflow-list" class="widget-overflow-list"
+              overflowfortoolbar="nav-bar"/>
+        <toolbarseparator id="widget-overflow-fixed-separator" hidden="true"/>
+        <vbox id="widget-overflow-fixed-list" class="widget-overflow-list" hidden="true"/>
+      </vbox>
+#ifdef MOZ_PHOTON_THEME
+    </panelview>
+  </panelmultiview>
+#endif
 </panel>
 
 <panel id="customization-tipPanel"
@@ -409,4 +434,306 @@
   <button label="&panicButton.thankyou.buttonlabel;"
           id="panic-button-success-closebutton"
           oncommand="PanicButtonNotifier.close()"/>
+</panel>
+
+<panel id="appMenu-notification-popup"
+       class="popup-notification-panel"
+       type="arrow"
+       position="after_start"
+       hidden="true"
+       flip="slide"
+       orient="vertical"
+       noautofocus="true"
+       noautohide="true"
+       nopreventnavboxhide="true"
+       role="alert">
+  <popupnotification id="appMenu-update-available-notification"
+                     popupid="update-available"
+                     label="&updateAvailable.header.message;"
+                     buttonlabel="&updateAvailable.acceptButton.label;"
+                     buttonaccesskey="&updateAvailable.acceptButton.accesskey;"
+                     closebuttonhidden="true"
+                     secondarybuttonlabel="&updateAvailable.cancelButton.label;"
+                     secondarybuttonaccesskey="&updateAvailable.cancelButton.accesskey;"
+                     dropmarkerhidden="true"
+                     checkboxhidden="true"
+                     hidden="true">
+    <popupnotificationcontent id="update-available-notification-content" orient="vertical">
+      <description id="update-available-description">&updateAvailable.message;
+        <label id="update-available-whats-new" class="text-link" value="&updateAvailable.whatsnew.label;" />
+      </description>
+    </popupnotificationcontent>
+  </popupnotification>
+
+  <popupnotification id="appMenu-update-manual-notification"
+                     popupid="update-manual"
+                     label="&updateManual.header.message;"
+                     buttonlabel="&updateManual.acceptButton.label;"
+                     buttonaccesskey="&updateManual.acceptButton.accesskey;"
+                     closebuttonhidden="true"
+                     secondarybuttonlabel="&updateManual.cancelButton.label;"
+                     secondarybuttonaccesskey="&updateManual.cancelButton.accesskey;"
+                     dropmarkerhidden="true"
+                     checkboxhidden="true"
+                     hidden="true">
+    <popupnotificationcontent id="update-manual-notification-content" orient="vertical">
+      <description id="update-manual-description">&updateManual.message;
+        <label id="update-manual-whats-new" class="text-link" value="&updateManual.whatsnew.label;" />
+      </description>
+    </popupnotificationcontent>
+  </popupnotification>
+
+  <popupnotification id="appMenu-update-restart-notification"
+                     popupid="update-restart"
+                     label="&updateRestart.header.message2;"
+                     buttonlabel="&updateRestart.acceptButton.label;"
+                     buttonaccesskey="&updateRestart.acceptButton.accesskey;"
+                     closebuttonhidden="true"
+                     secondarybuttonlabel="&updateRestart.cancelButton.label;"
+                     secondarybuttonaccesskey="&updateRestart.cancelButton.accesskey;"
+                     dropmarkerhidden="true"
+                     checkboxhidden="true"
+                     hidden="true">
+    <popupnotificationcontent id="update-restart-notification-content" orient="vertical">
+      <description id="update-restart-description">&updateRestart.message;</description>
+    </popupnotificationcontent>
+  </popupnotification>
+</panel>
+
+<menupopup id="customizationPaletteItemContextMenu">
+  <menuitem oncommand="gCustomizeMode.addToToolbar(document.popupNode)"
+            class="customize-context-addToToolbar"
+            accesskey="&customizeMenu.addToToolbar.accesskey;"
+            label="&customizeMenu.addToToolbar.label;"/>
+  <menuitem oncommand="gCustomizeMode.addToPanel(document.popupNode)"
+            class="customize-context-addToPanel"
+            photonaccesskey="&customizeMenu.addToOverflowMenu.accesskey;"
+            photonlabel="&customizeMenu.addToOverflowMenu.label;"
+            accesskey="&customizeMenu.addToPanel.accesskey;"
+            label="&customizeMenu.addToPanel.label;"/>
+</menupopup>
+
+<menupopup id="customizationPanelContextMenu">
+  <menuitem command="cmd_CustomizeToolbars"
+            accesskey="&customizeMenu.addMoreItems.accesskey;"
+            label="&customizeMenu.addMoreItems.label;"/>
+</menupopup>
+
+<panel id="appMenu-popup"
+       class="cui-widget-panel"
+       role="group"
+       type="arrow"
+       hidden="true"
+       flip="slide"
+       position="bottomcenter topright"
+       noautofocus="true">
+  <photonpanelmultiview id="appMenu-multiView" mainViewId="appMenu-mainView"
+                        viewCacheId="appMenu-viewCache">
+    <panelview id="appMenu-mainView" class="PanelUI-subView"
+               descriptionheightworkaround="true">
+      <vbox class="panel-subview-body">
+        <vbox id="appMenu-addon-banners"/>
+        <toolbarbutton class="panel-banner-item"
+                       label-update-available="&updateAvailable.panelUI.label;"
+                       label-update-manual="&updateManual.panelUI.label;"
+                       label-update-restart="&updateRestart.panelUI.label2;"
+                       oncommand="PanelUI._onBannerItemSelected(event)"
+                       wrap="true"
+                       hidden="true"/>
+        <toolbaritem id="appMenu-fxa-container" class="toolbaritem-combined-buttons">
+          <hbox id="appMenu-fxa-status"
+                flex="1"
+                defaultlabel="&fxaSignIn.label;"
+                signedinTooltiptext="&fxaSignedIn.tooltip;"
+                tooltiptext="&fxaSignedIn.tooltip;"
+                errorlabel="&fxaSignInError.label;"
+                unverifiedlabel="&fxaUnverified.label;"
+                onclick="if (event.which == 1) gSync.onMenuPanelCommand();">
+            <image id="appMenu-fxa-avatar"/>
+            <toolbarbutton id="appMenu-fxa-label"
+                           class="subviewbutton subviewbutton-iconic"
+                           label="&fxaSignIn.label;"
+                           fxabrandname="&syncBrand.fxAccount.label;"/>
+          </hbox>
+          <toolbarseparator orient="vertical"/>
+          <toolbarbutton id="appMenu-fxa-icon"
+                         class="subviewbutton subviewbutton-iconic"
+                         oncommand="gSync.doSync();"
+                         closemenu="none">
+            <observes element="sync-status" attribute="syncstatus"/>
+            <observes element="sync-status" attribute="tooltiptext"/>
+          </toolbarbutton>
+        </toolbaritem>
+        <toolbarseparator/>
+        <toolbarbutton id="appMenu-new-window-button"
+                       class="subviewbutton subviewbutton-iconic"
+                       label="&newNavigatorCmd.label;"
+                       key="key_newNavigator"
+                       command="cmd_newNavigator"/>
+        <toolbarbutton id="appMenu-private-window-button"
+                       class="subviewbutton subviewbutton-iconic"
+                       label="&newPrivateWindow.label;"
+                       key="key_privatebrowsing"
+                       command="Tools:PrivateBrowsing"/>
+        <toolbarseparator/>
+        <toolbaritem id="appMenu-zoom-controls" class="toolbaritem-combined-buttons" closemenu="none">
+          <label value="&fullZoom.label;"/>
+          <toolbarbutton id="appMenu-zoomReduce-button"
+                         class="subviewbutton subviewbutton-iconic"
+                         command="cmd_fullZoomReduce"
+                         tooltip="dynamic-shortcut-tooltip"/>
+          <toolbarbutton id="appMenu-zoomReset-button"
+                         class="subviewbutton"
+                         command="cmd_fullZoomReset"
+                         tooltip="dynamic-shortcut-tooltip"/>
+          <toolbarbutton id="appMenu-zoomEnlarge-button"
+                         class="subviewbutton subviewbutton-iconic"
+                         command="cmd_fullZoomEnlarge"
+                         tooltip="dynamic-shortcut-tooltip"/>
+          <toolbarseparator orient="vertical"/>
+          <toolbarbutton id="appMenu-fullscreen-button"
+                         class="subviewbutton subviewbutton-iconic"
+                         observes="View:FullScreen"
+                         type="checkbox"
+                         tooltip="dynamic-shortcut-tooltip"/>
+        </toolbaritem>
+        <toolbarseparator/>
+        <toolbaritem id="appMenu-edit-controls" class="toolbaritem-combined-buttons" closemenu="none">
+          <label value="&editMenu.label;"/>
+          <toolbarbutton id="appMenu-cut-button"
+                         class="subviewbutton subviewbutton-iconic"
+                         command="cmd_cut"
+                         tooltip="dynamic-shortcut-tooltip"/>
+          <toolbarbutton id="appMenu-copy-button"
+                         class="subviewbutton subviewbutton-iconic"
+                         command="cmd_copy"
+                         tooltip="dynamic-shortcut-tooltip"/>
+          <toolbarbutton id="appMenu-paste-button"
+                         class="subviewbutton subviewbutton-iconic"
+                         command="cmd_paste"
+                         tooltip="dynamic-shortcut-tooltip"/>
+        </toolbaritem>
+        <toolbarseparator/>
+        <toolbarbutton id="appMenu-library-button"
+                       class="subviewbutton subviewbutton-iconic subviewbutton-nav"
+                       label="&places.library.title;"
+                       closemenu="none"
+                       oncommand="PanelUI.showSubView('appMenu-libraryView', this)"/>
+        <toolbarbutton id="appMenu-addons-button"
+                       class="subviewbutton subviewbutton-iconic"
+                       label="&addons.label;"
+                       key="key_openAddons"
+                       command="Tools:Addons"
+                       />
+        <toolbarbutton id="appMenu-preferences-button"
+                       class="subviewbutton subviewbutton-iconic"
+#ifdef XP_WIN
+                       label="&preferencesCmd2.label;"
+#else
+                       label="&preferencesCmdUnix.label;"
+#ifdef XP_MACOSX
+                       key="key_preferencesCmdMac"
+#endif
+#endif
+                       oncommand="openPreferences()"
+                       />
+        <toolbarbutton id="appMenu-customize-button"
+                       class="subviewbutton subviewbutton-iconic"
+                       label="&viewCustomizeToolbar.label;"
+                       command="cmd_CustomizeToolbars"
+                       />
+        <toolbarseparator/>
+        <toolbarbutton id="appMenu-open-file-button"
+                       class="subviewbutton"
+                       label="&openFileCmd.label;"
+                       key="openFileKb"
+                       command="Browser:OpenFile"
+                       />
+        <toolbarbutton id="appMenu-save-file-button"
+                       class="subviewbutton"
+                       label="&savePageCmd.label;"
+                       key="key_savePage"
+                       command="Browser:SavePage"
+                       />
+        <toolbarbutton id="appMenu-page-setup-button"
+                       class="subviewbutton"
+                       label="&printSetupCmd.label;"
+                       command="cmd_pageSetup"
+                       />
+        <toolbarbutton id="appMenu-print-button"
+                       class="subviewbutton subviewbutton-iconic"
+                       label="&printButton.label;"
+                       key="printKb"
+#ifdef XP_MACOSX
+                       command="cmd_print"
+#else
+                       command="cmd_printPreview"
+#endif
+                       />
+        <toolbarseparator/>
+        <toolbarbutton id="appMenu-find-button"
+                       class="subviewbutton subviewbutton-iconic"
+                       label="&findOnCmd.label;"
+                       key="key_find"
+                       command="cmd_find"/>
+        <toolbarbutton id="appMenu-more-button"
+                       class="subviewbutton subviewbutton-nav"
+                       label="&moreMenu.label;"
+                       closemenu="none"
+                       oncommand="PanelUI.showSubView('appMenu-moreView', this)"/>
+        <toolbarbutton id="appMenu-developer-button"
+                       class="subviewbutton subviewbutton-nav"
+                       label="&webDeveloperMenu.label;"
+                       closemenu="none"
+                       oncommand="PanelUI.showSubView('PanelUI-developer', this)"/>
+        <toolbarbutton id="appMenu-help-button"
+                       class="subviewbutton subviewbutton-iconic subviewbutton-nav"
+                       label="&appMenuHelp.label;"
+                       closemenu="none"
+                       oncommand="PanelUI.showSubView('PanelUI-helpView', this)"/>
+#ifndef XP_MACOSX
+        <toolbarseparator/>
+        <toolbarbutton id="appMenu-quit-button"
+                       class="subviewbutton subviewbutton-iconic"
+#ifdef XP_WIN
+                       label="&quitApplicationCmdWin2.label;"
+                       tooltiptext="&quitApplicationCmdWin2.tooltip;"
+#else
+                       label="&quitApplicationCmd.label;"
+#endif
+                       key="key_quitApplication"
+                       command="cmd_quitApplication"/>
+#endif
+      </vbox>
+    </panelview>
+    <panelview id="appMenu-moreView" title="&moreMenu.label;" class="PanelUI-subView">
+      <vbox class="panel-subview-body">
+        <toolbarbutton id="appMenu-characterencoding-button"
+                       class="subviewbutton subviewbutton-nav"
+                       label="&charsetMenu2.label;"
+                       closemenu="none"
+                       oncommand="PanelUI.showSubView('PanelUI-characterEncodingView', this)"/>
+        <toolbarbutton id="appMenu-workoffline-button"
+                       class="subviewbutton"
+                       label="&goOfflineCmd.label;"
+                       type="checkbox"
+                       observes="workOfflineMenuitemState"
+                       oncommand="BrowserOffline.toggleOfflineStatus();"/>
+      </vbox>
+    </panelview>
+    <panelview id="appMenu-libraryView" class="PanelUI-subView">
+      <vbox class="panel-subview-body">
+        <toolbarbutton id="appMenu-library-history-button"
+                       class="subviewbutton subviewbutton-iconic subviewbutton-nav"
+                       label="&historyMenu.label;"
+                       closemenu="none"
+                       oncommand="PanelUI.showSubView('PanelUI-history', this)"/>
+        <toolbarbutton id="appMenu-library-remotetabs-button"
+                       class="subviewbutton subviewbutton-iconic subviewbutton-nav"
+                       label="&appMenuRemoteTabs.label;"
+                       closemenu="none"
+                       oncommand="PanelUI.showSubView('PanelUI-remotetabs', this)"/>
+      </vbox>
+    </panelview>
+  </photonpanelmultiview>
 </panel>

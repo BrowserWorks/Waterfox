@@ -67,9 +67,9 @@
     _(NewArray)                     \
     _(NewArrayCopyOnWrite)          \
     _(NewArrayDynamicLength)        \
+    _(NewIterator)                  \
     _(NewTypedArray)                \
     _(NewTypedArrayDynamicLength)   \
-    _(ArraySplice)                  \
     _(NewObject)                    \
     _(NewTypedObject)               \
     _(NewNamedLambdaObject)         \
@@ -364,6 +364,8 @@
     _(Rest)                         \
     _(TypeOfV)                      \
     _(ToAsync)                      \
+    _(ToAsyncGen)                   \
+    _(ToAsyncIter)                  \
     _(ToIdV)                        \
     _(Floor)                        \
     _(FloorF)                       \
@@ -371,8 +373,11 @@
     _(CeilF)                        \
     _(Round)                        \
     _(RoundF)                       \
-    _(In)                           \
+    _(NearbyInt)                    \
+    _(NearbyIntF)                   \
+    _(InCache)                      \
     _(InArray)                      \
+    _(HasOwnCache)                  \
     _(InstanceOfO)                  \
     _(InstanceOfV)                  \
     _(CallInstanceOf)               \
@@ -422,6 +427,7 @@
     _(WasmSelect)                   \
     _(WasmSelectI64)                \
     _(WasmBoundsCheck)              \
+    _(WasmLoadTls)                  \
     _(WasmAddOffset)                \
     _(WasmLoad)                     \
     _(WasmLoadI64)                  \

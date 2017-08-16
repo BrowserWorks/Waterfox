@@ -17,15 +17,22 @@ MOCHITEST_CHROME_MANIFESTS += [
 BROWSER_CHROME_MANIFESTS += [
     'content/test/alerts/browser.ini',
     'content/test/captivePortal/browser.ini',
+    'content/test/contextMenu/browser.ini',
     'content/test/forms/browser.ini',
     'content/test/general/browser.ini',
     'content/test/newtab/browser.ini',
+    'content/test/pageinfo/browser.ini',
+    'content/test/performance/browser.ini',
+    'content/test/permissions/browser.ini',
     'content/test/plugins/browser.ini',
     'content/test/popupNotifications/browser.ini',
     'content/test/popups/browser.ini',
     'content/test/referrer/browser.ini',
+    'content/test/sidebar/browser.ini',
     'content/test/siteIdentity/browser.ini',
     'content/test/social/browser.ini',
+    'content/test/static/browser.ini',
+    'content/test/sync/browser.ini',
     'content/test/tabcrashed/browser.ini',
     'content/test/tabPrompts/browser.ini',
     'content/test/tabs/browser.ini',
@@ -40,7 +47,6 @@ DEFINES['MOZ_APP_VERSION_DISPLAY'] = CONFIG['MOZ_APP_VERSION_DISPLAY']
 DEFINES['APP_LICENSE_BLOCK'] = '%s/content/overrides/app-license.html' % SRCDIR
 
 if CONFIG['MOZ_WIDGET_TOOLKIT'] in ('windows', 'gtk2', 'gtk3', 'cocoa'):
-    DEFINES['HAVE_SHELL_SERVICE'] = 1
     DEFINES['CONTEXT_COPY_IMAGE_CONTENTS'] = 1
 
 if CONFIG['MOZ_WIDGET_TOOLKIT'] in ('windows', 'cocoa'):

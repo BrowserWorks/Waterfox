@@ -134,33 +134,6 @@
 #define NS_IMETHODIMP       NS_IMETHODIMP_(nsresult)
 
 /**
- * Macro for creating typedefs for pointer-to-member types which are
- * declared with stdcall.  It is important to use this for any type which is
- * declared as stdcall (i.e. NS_IMETHOD).  For example, instead of writing:
- *
- *  typedef nsresult (nsIFoo::*someType)(nsISupports* arg);
- *
- *  you should write:
- *
- *  typedef
- *  NS_STDCALL_FUNCPROTO(nsresult, someType, nsIFoo, typeFunc, (nsISupports*));
- *
- *  where nsIFoo::typeFunc is any method declared as
- *  NS_IMETHOD typeFunc(nsISupports*);
- *
- *  XXX this can be simplified to always use the non-typeof implementation
- *  when http://gcc.gnu.org/bugzilla/show_bug.cgi?id=11893 is fixed.
- */
-
-#ifdef __GNUC__
-#define NS_STDCALL_FUNCPROTO(ret, name, class, func, args) \
-  typeof(&class::func) name
-#else
-#define NS_STDCALL_FUNCPROTO(ret, name, class, func, args) \
-  ret (NS_STDCALL class::*name) args
-#endif
-
-/**
  * Deprecated declarations.
  */
 #ifdef __GNUC__
@@ -186,18 +159,6 @@
 #endif
 
 #define XPCOM_API(type) NS_EXTERN_C type
-
-#ifdef MOZILLA_INTERNAL_API
-   /*
-     The frozen string API has different definitions of nsAC?String
-     classes than the internal API. On systems that explicitly declare
-     dllexport symbols this is not a problem, but on ELF systems
-     internal symbols can accidentally "shine through"; we rename the
-     internal classes to avoid symbol conflicts.
-   */
-#  define nsAString nsAString_internal
-#  define nsACString nsACString_internal
-#endif
 
 #if (defined(DEBUG) || defined(FORCE_BUILD_REFCNT_LOGGING))
 /* Make refcnt logging part of the build. This doesn't mean that

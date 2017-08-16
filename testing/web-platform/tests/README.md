@@ -2,9 +2,7 @@ The web-platform-tests Project [![IRC chat](https://goo.gl/6nCIks)](http://irc.w
 ==============================
 
 The web-platform-tests Project is a W3C-coordinated attempt to build a
-cross-browser testsuite for the Web-platform stack.  However, for mainly
-historic reasons, the CSS WG testsuite is in a separate repository,
-[csswg-test](https://github.com/w3c/csswg-test). Writing tests in a way
+cross-browser testsuite for the Web-platform stack. Writing tests in a way
 that allows them to be run in all browsers gives browser projects
 confidence that they are shipping software that is compatible with other
 implementations, and that later implementations will be compatible with
@@ -42,13 +40,6 @@ following entries are required:
 If you are behind a proxy, you also need to make sure the domains above are
 excluded from your proxy lookups.
 
-Because web-platform-tests uses git submodules, you must ensure that
-these are up to date. In the root of your checkout, run:
-
-```
-git submodule update --init --recursive
-```
-
 The test environment can then be started using
 
     ./serve
@@ -78,6 +69,91 @@ like:
 ```
 "ssl": {"openssl": {"binary": "/path/to/openssl"}}
 ```
+
+Running Tests Automatically
+---------------------------
+
+Tests can be run automatically in a browser using the `wptrun` script
+in the root of the checkout. This requires the hosts file and OpenSSL
+setup documented above, but you must *not* have the test server
+already running when calling `wptrun`. The basic command line syntax
+is:
+
+```
+./wptrun product [tests]
+```
+
+where `product` is currently `firefox` or `chrome` and `[tests]` is a
+list of paths to tests. This will attempt to automatically locate a
+browser instance and install required dependencies. The command is
+very configurable; for examaple to specify a particular binary use
+`wptrun --binary=path product`. The full range of options can be see
+with `wptrun --help` and `wptrun --wptrunner-help`.
+
+Not all dependencies can be automatically installed; in particular the
+`certutil` tool required to run https tests with Firefox must be
+installed using a system package manager or similar.
+
+On Debian/Ubuntu certutil may be installed using:
+
+```
+sudo apt install libnss3-tools
+```
+
+And on macOS with homebrew using:
+
+```
+brew install nss
+```
+
+<span id="submodules">Submodules</span>
+=======================================
+
+Some optional components of web-platform-tests (test components from
+third party software and pieces of the CSS build system) are included
+as submodules. To obtain these components run the following in the
+root of your checkout:
+
+```
+git submodule update --init --recursive
+```
+
+Prior to commit `39d07eb01fab607ab1ffd092051cded1bdd64d78` submodules
+were requried for basic functionality. If you are working with an
+older checkout, the above command is required in all cases.
+
+When moving between a commit prior to `39d07eb` and one after it git
+may complain
+
+```
+$ git checkout master
+error: The following untracked working tree files would be overwritten by checkout:
+[…]
+```
+
+followed by a long list of files. To avoid this error remove
+the `resources` and `tools` directories before switching branches:
+
+```
+$ rm -r resources/ tools/
+$ git checkout master
+Switched to branch 'master'
+Your branch is up-to-date with 'origin/master'
+```
+
+When moving in the opposite direction, i.e. to a commit that does have
+submodules, you will need to `git submodule update`, as above. If git
+throws an error like:
+
+```
+fatal: No url found for submodule path 'resources/webidl2/test/widlproc' in .gitmodules
+Failed to recurse into submodule path 'resources/webidl2'
+fatal: No url found for submodule path 'tools/html5lib' in .gitmodules
+Failed to recurse into submodule path 'resources'
+Failed to recurse into submodule path 'tools'
+```
+
+then remove the `tools` and `resources` directories, as above.
 
 <span id="windows-notes">Windows Notes</span>
 =============================================
@@ -110,41 +186,23 @@ Alternatively, you may also use
 in the Windows 10 Anniversary Update build, then access your windows
 partition from there to launch wptserve.
 
-Test Runner
-===========
-
-There is a test runner that is designed to provide a
-convenient way to run the web-platform-tests in-browser. It will run
-testharness.js tests automatically but requires manual work for
-reftests and manual tests.
-
-The runner can be found at `/tools/runner/index.html` on the local
-server i.e.
-
-```
-http://web-platform.test:8000/tools/runner/index.html
-```
-
-in the default configuration. The first time you use this it has to
-generate a manifest of all tests. This may take some time, so please
-be patient.
-
 Publication
 ===========
 
 The master branch is automatically synced to http://w3c-test.org/.
 
-Pull requests are automatically mirrored to
-http://w3c-test.org/submissions/ a few minutes after someone with merge
-access has added a comment with "LGTM" (or "w3c-test:mirror") to indicate
-the PR has been checked.
+Pull requests are
+[automatically mirrored](http://w3c-test.org/submissions/) except those
+that modify sensitive resources (such as `.py`). The latter require
+someone with merge access to comment with "LGTM" or "w3c-test:mirror" to
+indicate the pull request has been checked.
 
 Finding Things
 ==============
 
-Each top-level directory represents a W3C specification: the name
-matches the shortname used after the canonical address of the said
-specification under http://www.w3.org/TR/ .
+Each top-level directory matches the shortname used by a standard, with
+some exceptions. (Typically the shortname is from the standard's
+corresponding GitHub repository.)
 
 For some of the specifications, the tree under the top-level directory
 represents the sections of the respective documents, using the section
@@ -185,6 +243,14 @@ The way to contribute is just as usual:
 * Commit locally and push that to your repo.
 * Send in a pull request based on the above.
 
+Issues with web-platform-tests
+------------------------------
+
+If you spot an issue with a test and are not comfortable providing a
+pull request per above to fix it, please
+[file a new issue](https://github.com/w3c/web-platform-tests/issues/new).
+Thank you!
+
 Lint tool
 ---------
 
@@ -198,16 +264,16 @@ your local web-platform-tests working directory like this:
 
 The lint tool is also run automatically for every submitted pull
 request, and reviewers will not merge branches with tests that have
-lint errors, so you must fix any errors the lint tool reports. For
-details on doing that, see the [lint-tool documentation][lint-tool].
+lint errors, so you must fix any errors the lint tool reports.
 
-But in the unusual case of error reports for things essential to a
+In the unusual case of error reports for things essential to a
 certain test or that for other exceptional reasons shouldn't prevent
 a merge of a test, update and commit the `lint.whitelist` file in the
-web-platform-tests root directory to suppress the error reports. For
-details on doing that, see the [lint-tool documentation][lint-tool].
+web-platform-tests root directory to suppress the error reports.
 
-[lint-tool]: https://github.com/w3c/web-platform-tests/blob/master/docs/lint-tool.md
+For more details, see the [lint-tool documentation][lint-tool].
+
+[lint-tool]: http://web-platform-tests.org/writing-tests/lint-tool.html
 
 Adding command-line scripts ("tools" subdirs)
 ---------------------------------------------
@@ -269,11 +335,11 @@ is [archived][ircarchive].
 
 [contributing]: https://github.com/w3c/web-platform-tests/blob/master/CONTRIBUTING.md
 [ircw3org]: https://www.w3.org/wiki/IRC
-[ircarchive]: http://krijnhoetmer.nl/irc-logs/testing/
-[mailarchive]: http://lists.w3.org/Archives/Public/public-test-infra/
+[ircarchive]: http://logs.glob.uno/?c=w3%23testing
+[mailarchive]: https://lists.w3.org/Archives/Public/public-test-infra/
 
 Documentation
 =============
 
-* [How to write and review tests](http://testthewebforward.org/docs/)
+* [How to write and review tests](http://web-platform-tests.org/)
 * [Documentation for the wptserve server](http://wptserve.readthedocs.org/en/latest/)

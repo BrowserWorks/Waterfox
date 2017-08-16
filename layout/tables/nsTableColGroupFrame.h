@@ -20,7 +20,7 @@ class nsTableColFrame;
 class nsTableColGroupFrame final : public nsContainerFrame
 {
 public:
-  NS_DECL_FRAMEARENA_HELPERS
+  NS_DECL_FRAMEARENA_HELPERS(nsTableColGroupFrame)
 
   /** instantiate a new instance of nsTableRowFrame.
     * @param aPresShell the pres shell for this frame
@@ -44,18 +44,15 @@ public:
   nsTableFrame* GetTableFrame() const
   {
     nsIFrame* parent = GetParent();
-    MOZ_ASSERT(parent && parent->GetType() == nsGkAtoms::tableFrame);
+    MOZ_ASSERT(parent && parent->IsTableFrame());
     MOZ_ASSERT(!parent->GetPrevInFlow(),
                "Col group should always be in a first-in-flow table frame");
     return static_cast<nsTableFrame*>(parent);
   }
 
-  /**
-   * ColGroups never paint anything, nor receive events.
-   */
   virtual void BuildDisplayList(nsDisplayListBuilder*   aBuilder,
                                 const nsRect&           aDirtyRect,
-                                const nsDisplayListSet& aLists) override {}
+                                const nsDisplayListSet& aLists) override;
 
   /** A colgroup can be caused by three things:
     * 1)	An element with table-column-group display
@@ -111,17 +108,10 @@ public:
     * don't play directly in the rendering game.  They do however
     * maintain important state that effects table and cell layout.
     */
-  virtual void Reflow(nsPresContext*           aPresContext,
-                      ReflowOutput&     aDesiredSize,
+  virtual void Reflow(nsPresContext* aPresContext,
+                      ReflowOutput& aDesiredSize,
                       const ReflowInput& aReflowInput,
-                      nsReflowStatus&          aStatus) override;
-
-  /**
-   * Get the "type" of the frame
-   *
-   * @see nsGkAtoms::tableColGroupFrame
-   */
-  virtual nsIAtom* GetType() const override;
+                      nsReflowStatus& aStatus) override;
 
   /** Add column frames to the table storages: colframe cache and cellmap
     * this doesn't change the mFrames of the colgroup frame.
@@ -222,7 +212,7 @@ protected:
 
   // data members
   int32_t mColCount;
-  // the starting column index this col group represents. Must be >= 0. 
+  // the starting column index this col group represents. Must be >= 0.
   int32_t mStartColIndex;
 
   // border width in pixels
@@ -230,14 +220,16 @@ protected:
   BCPixelSize mBEndContBorderWidth;
 };
 
-inline nsTableColGroupFrame::nsTableColGroupFrame(nsStyleContext *aContext)
-: nsContainerFrame(aContext), mColCount(0), mStartColIndex(0)
-{ 
+inline nsTableColGroupFrame::nsTableColGroupFrame(nsStyleContext* aContext)
+  : nsContainerFrame(aContext, kClassID)
+  , mColCount(0)
+  , mStartColIndex(0)
+{
   SetColType(eColGroupContent);
 }
-  
+
 inline int32_t nsTableColGroupFrame::GetStartColumnIndex()
-{  
+{
   return mStartColIndex;
 }
 
@@ -247,12 +239,12 @@ inline void nsTableColGroupFrame::SetStartColumnIndex (int32_t aIndex)
 }
 
 inline int32_t nsTableColGroupFrame::GetColCount() const
-{  
+{
   return mColCount;
 }
 
 inline nsFrameList& nsTableColGroupFrame::GetWritableChildList()
-{  
+{
   return mFrames;
 }
 

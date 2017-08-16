@@ -67,7 +67,8 @@ RefPtr<MediaDataDecoder::DecodePromise>
 AppleATDecoder::Decode(MediaRawData* aSample)
 {
   LOG("mp4 input sample %p %lld us %lld pts%s %llu bytes audio", aSample,
-      aSample->mDuration, aSample->mTime, aSample->mKeyframe ? " keyframe" : "",
+      aSample->mDuration.ToMicroseconds(), aSample->mTime.ToMicroseconds(),
+      aSample->mKeyframe ? " keyframe" : "",
       (unsigned long long)aSample->Size());
   RefPtr<AppleATDecoder> self = this;
   RefPtr<MediaRawData> sample = aSample;
@@ -269,7 +270,7 @@ AppleATDecoder::DecodeSample(MediaRawData* aSample)
       LOG("Error decoding audio sample: %d\n", static_cast<int>(rv));
       return MediaResult(NS_ERROR_DOM_MEDIA_DECODE_ERR,
                          RESULT_DETAIL("Error decoding audio sample: %d @ %lld",
-                                       static_cast<int>(rv), aSample->mTime));
+                                       static_cast<int>(rv), aSample->mTime.ToMicroseconds()));
     }
 
     if (numFrames) {
@@ -323,7 +324,7 @@ AppleATDecoder::DecodeSample(MediaRawData* aSample)
 
   RefPtr<AudioData> audio = new AudioData(aSample->mOffset,
                                           aSample->mTime,
-                                          duration.ToMicroseconds(),
+                                          duration,
                                           numFrames,
                                           data.Forget(),
                                           channels,

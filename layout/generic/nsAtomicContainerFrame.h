@@ -24,7 +24,6 @@ public:
 
   // Bypass the nsContainerFrame/nsSplittableFrame impl of the following
   // methods so we behave like a leaf frame.
-  bool IsLeaf() const override { return true; }
   FrameSearchResult PeekOffsetNoAmount(bool aForward, int32_t* aOffset) override
   {
     return nsFrame::PeekOffsetNoAmount(aForward, aOffset);
@@ -40,8 +39,9 @@ public:
   }
 
 protected:
-  explicit nsAtomicContainerFrame(nsStyleContext* aContext)
-    : nsContainerFrame(aContext) {}
+  nsAtomicContainerFrame(nsStyleContext* aContext, ClassID aID)
+    : nsContainerFrame(aContext, aID)
+  {}
 };
 
 #endif // nsAtomicContainerFrame_h___

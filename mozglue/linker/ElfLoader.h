@@ -104,7 +104,9 @@ public:
    * of the leaf name.
    */
   LibHandle(const char *path)
-  : directRefCnt(0), path(path ? strdup(path) : nullptr), mappable(nullptr) { }
+  : directRefCnt(0), path(path ? strdup(path) : nullptr), mappable(nullptr)
+  {
+  }
 
   /**
    * Destructor.
@@ -151,8 +153,8 @@ public:
    */
   void AddDirectRef()
   {
-    ++directRefCnt;
     mozilla::external::AtomicRefCounted<LibHandle>::AddRef();
+    ++directRefCnt;
   }
 
   /**
@@ -161,15 +163,12 @@ public:
    */
   bool ReleaseDirectRef()
   {
-    bool ret = false;
-    if (directRefCnt) {
-      MOZ_ASSERT(directRefCnt <=
-                 mozilla::external::AtomicRefCounted<LibHandle>::refCount());
-      if (--directRefCnt)
-        ret = true;
-      mozilla::external::AtomicRefCounted<LibHandle>::Release();
-    }
-    return ret;
+    const MozRefCountType count = --directRefCnt;
+    MOZ_ASSERT(count + 1 > 0);
+    MOZ_ASSERT(count + 1 <=
+               mozilla::external::AtomicRefCounted<LibHandle>::refCount());
+    mozilla::external::AtomicRefCounted<LibHandle>::Release();
+    return !!count;
   }
 
   /**
@@ -231,7 +230,7 @@ protected:
   virtual SystemElf *AsSystemElf() { return nullptr; }
 
 private:
-  MozRefCountType directRefCnt;
+  mozilla::Atomic<MozRefCountType> directRefCnt;
   char *path;
 
   /* Mappable object keeping the result of GetMappable() */
@@ -461,7 +460,11 @@ protected:
   const char *lastError;
 
 private:
-  ElfLoader() : expect_shutdown(true) {}
+  ElfLoader() : expect_shutdown(true)
+  {
+    pthread_mutex_init(&handlesMutex, nullptr);
+  }
+
   ~ElfLoader();
 
   /* Initialization code that can't run during static initialization. */
@@ -482,6 +485,8 @@ private:
   /* Bookkeeping */
   typedef std::vector<LibHandle *> LibHandleList;
   LibHandleList handles;
+
+  pthread_mutex_t handlesMutex;
 
 protected:
   friend class CustomElf;

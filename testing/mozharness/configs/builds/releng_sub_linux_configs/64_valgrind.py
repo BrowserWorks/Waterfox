@@ -13,14 +13,11 @@ config = {
         #'sendchange',
         'check-test',
         'valgrind-test',
-        #'generate-build-stats',
         #'update',
     ],
     'stage_platform': 'linux64-valgrind',
     'publish_nightly_en_US_routes': False,
     'build_type': 'valgrind',
-    'tooltool_manifest_src': "browser/config/tooltool-manifests/linux64/\
-releng.manifest",
     'platform_supports_post_upload_to_latest': False,
     'enable_signing': False,
     'enable_talos_sendchange': False,
@@ -28,7 +25,6 @@ releng.manifest",
     #### 64 bit build specific #####
     'env': {
         'MOZBUILD_STATE_PATH': os.path.join(os.getcwd(), '.mozbuild'),
-        'MOZ_AUTOMATION': '1',
         'DISPLAY': ':2',
         'HG_SHARE_BASE_DIR': '/builds/hg-shared',
         'MOZ_OBJDIR': 'obj-firefox',
@@ -47,4 +43,5 @@ releng.manifest",
     },
     'src_mozconfig': 'browser/config/mozconfigs/linux64/valgrind',
     #######################
+    'artifact_flag_build_variant_in_try': None,
 }

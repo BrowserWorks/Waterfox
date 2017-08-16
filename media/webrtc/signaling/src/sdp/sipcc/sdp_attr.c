@@ -458,7 +458,7 @@ static void sdp_attr_fmtp_invalid_value(sdp_t *sdp, const char *param_name,
  */
 static sdp_result_e sdp_verify_attr_fmtp_telephone_event(char *fmtpVal)
 {
-  size_t len = PL_strlen(fmtpVal);
+  size_t len = fmtpVal ? strlen(fmtpVal) : 0;
 
   // make sure the basics are good:
   // - at least 1 character
@@ -482,7 +482,7 @@ static sdp_result_e sdp_verify_attr_fmtp_telephone_event(char *fmtpVal)
   char *temp = PL_strtok_r(dtmf_tones, ",", &strtok_state);
 
   while (temp != NULL) {
-    len = PL_strlen(temp);
+    len = strlen(temp);
     if (len > 5) {
       // an example of a max size token is "11-15", so if the
       // token is longer than 5 it is bad
@@ -1189,6 +1189,9 @@ sdp_result_e sdp_parse_attr_fmtp (sdp_t *sdp_p, sdp_attr_t *attr_p,
                     temp = PL_strtok_r(NULL, ",", &strtok_state);
                     iter++;
                 }
+            } else {
+              SDP_FREE(temp_ptr);
+              return SDP_INVALID_PARAMETER;
             }
 
             fmtp_p->fmtp_format = SDP_FMTP_CODEC_INFO;
@@ -1353,7 +1356,12 @@ sdp_result_e sdp_parse_attr_fmtp (sdp_t *sdp_p, sdp_attr_t *attr_p,
             }
           }
         }
-        fmtp_ptr++;
+        if (*fmtp_ptr == '\n') {
+          // reached end of line, stop parsing
+          done = TRUE;
+        } else {
+          fmtp_ptr++;
+        }
       } else {
           done = TRUE;
       }

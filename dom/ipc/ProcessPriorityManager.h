@@ -12,6 +12,7 @@
 namespace mozilla {
 namespace dom {
 class ContentParent;
+class TabParent;
 } // namespace dom
 
 /**
@@ -68,11 +69,7 @@ public:
    */
   static bool CurrentProcessIsForeground();
 
-  /**
-   * Returns true if one or more processes with FOREGROUND_HIGH priority are
-   * present, false otherwise.
-   */
-  static bool AnyProcessHasHighPriority();
+  static void TabActivityChanged(dom::TabParent* aTabParent, bool aIsActive);
 
 private:
   ProcessPriorityManager();

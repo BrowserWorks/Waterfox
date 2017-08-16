@@ -119,13 +119,14 @@ public:
   // If premultAlpha is provided, then it assumed the callee can handle
   // un-premultiplied surfaces, and *premultAlpha will be set to false
   // if one is returned.
-  virtual already_AddRefed<mozilla::gfx::SourceSurface> GetSurfaceSnapshot(bool* premultAlpha = nullptr) = 0;
+  virtual already_AddRefed<mozilla::gfx::SourceSurface>
+  GetSurfaceSnapshot(gfxAlphaType* out_alphaType = nullptr) = 0;
 
   // If this context is opaque, the backing store of the canvas should
   // be created as opaque; all compositing operators should assume the
   // dst alpha is always 1.0.  If this is never called, the context
   // defaults to false (not opaque).
-  NS_IMETHOD SetIsOpaque(bool isOpaque) = 0;
+  virtual void SetIsOpaque(bool isOpaque) = 0;
   virtual bool GetIsOpaque() = 0;
 
   // Invalidate this context and release any held resources, in preperation

@@ -31,7 +31,7 @@ var cert;
  */
 function openClientAuthDialog(cert) {
   let certList = Cc["@mozilla.org/array;1"].createInstance(Ci.nsIMutableArray);
-  certList.appendElement(cert, false);
+  certList.appendElement(cert);
 
   let returnVals = Cc["@mozilla.org/hash-property-bag;1"]
                      .createInstance(Ci.nsIWritablePropertyBag2);
@@ -108,7 +108,7 @@ add_task(function* setup() {
 // Test that the contents of the dialog correspond to the details of the
 // provided cert.
 add_task(function* testContents() {
-  let [win, retVals] = yield openClientAuthDialog(cert);
+  let [win] = yield openClientAuthDialog(cert);
   checkDialogContents(win, cert.validity.notBeforeLocalTime,
                       cert.validity.notAfterLocalTime);
   yield BrowserTestUtils.closeWindow(win);

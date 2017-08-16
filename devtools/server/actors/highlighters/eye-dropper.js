@@ -18,7 +18,7 @@ const {getCurrentZoom, getFrameOffsets} = require("devtools/shared/layout/utils"
 loader.lazyGetter(this, "clipboardHelper",
   () => Cc["@mozilla.org/widget/clipboardhelper;1"].getService(Ci.nsIClipboardHelper));
 loader.lazyGetter(this, "l10n",
-  () => Services.strings.createBundle("chrome://devtools/locale/eyedropper.properties"));
+  () => Services.strings.createBundle("chrome://devtools-shared/locale/eyedropper.properties"));
 
 const ZOOM_LEVEL_PREF = "devtools.eyedropper.zoom";
 const FORMAT_PREF = "devtools.defaultColorUnit";
@@ -178,11 +178,14 @@ EyeDropper.prototype = {
     this.pageImage = null;
 
     let {pageListenerTarget} = this.highlighterEnv;
-    pageListenerTarget.removeEventListener("mousemove", this);
-    pageListenerTarget.removeEventListener("click", this, true);
-    pageListenerTarget.removeEventListener("keydown", this);
-    pageListenerTarget.removeEventListener("DOMMouseScroll", this);
-    pageListenerTarget.removeEventListener("FullZoomChange", this);
+
+    if (pageListenerTarget) {
+      pageListenerTarget.removeEventListener("mousemove", this);
+      pageListenerTarget.removeEventListener("click", this, true);
+      pageListenerTarget.removeEventListener("keydown", this);
+      pageListenerTarget.removeEventListener("DOMMouseScroll", this);
+      pageListenerTarget.removeEventListener("FullZoomChange", this);
+    }
 
     this.getElement("root").setAttribute("hidden", "true");
     this.getElement("root").removeAttribute("drawn");
@@ -507,12 +510,7 @@ function toColorString(rgb, format) {
       let [h, s, l] = rgbToHsl(rgb);
       return "hsl(" + h + ", " + s + "%, " + l + "%)";
     case "name":
-      let str;
-      try {
-        str = rgbToColorName(r, g, b);
-      } catch (e) {
-        str = hexString(rgb);
-      }
+      let str = rgbToColorName(r, g, b) || hexString(rgb);
       return str;
     default:
       return hexString(rgb);

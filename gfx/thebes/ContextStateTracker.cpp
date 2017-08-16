@@ -6,7 +6,7 @@
 #include "ContextStateTracker.h"
 #include "GLContext.h"
 #ifdef MOZ_GECKO_PROFILER
-#include "ProfilerMarkers.h"
+#include "ProfilerMarkerPayload.h"
 #endif
 
 namespace mozilla {
@@ -14,7 +14,7 @@ namespace mozilla {
 void
 ContextStateTrackerOGL::PushOGLSection(GLContext* aGL, const char* aSectionName)
 {
-  if (!profiler_feature_active("gpu")) {
+  if (!profiler_feature_active(ProfilerFeature::GPU)) {
     return;
   }
 

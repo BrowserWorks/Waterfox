@@ -32,7 +32,7 @@ public class DefaultGlobalSessionCallback implements GlobalSessionCallback {
   }
 
   @Override
-  public void handleError(GlobalSession globalSession, Exception ex) {
+  public void handleError(GlobalSession globalSession, Exception ex, String reason) {
   }
 
   @Override
@@ -47,6 +47,11 @@ public class DefaultGlobalSessionCallback implements GlobalSessionCallback {
   @Override
   public void handleIncompleteStage(Stage currentState,
                                     GlobalSession globalSession) {
+
+  }
+
+  @Override
+  public void handleFullSyncNecessary() {
 
   }
 

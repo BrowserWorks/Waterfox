@@ -73,6 +73,10 @@ android {
             java {
                 srcDir "${topsrcdir}/mobile/android/geckoview/src/thirdparty/java"
 
+                if (!mozconfig.substs.MOZ_ANDROID_HLS_SUPPORT) {
+                    exclude 'com/google/android/exoplayer2/**'
+                }
+
                 // TODO: support WebRTC.
                 // if (mozconfig.substs.MOZ_WEBRTC) {
                 //     srcDir "${topsrcdir}/media/webrtc/trunk/webrtc/modules/audio_device/android/java/src"
@@ -97,8 +101,9 @@ dependencies {
 task syncPreprocessedCode(type: Sync, dependsOn: rootProject.generateCodeAndResources) {
     into("${project.buildDir}/generated/source/preprocessed_code")
     from("${topobjdir}/mobile/android/base/generated/preprocessed") {
-        // AdjustConstants is included in the main app project.
+        // These constants files are included in the main app project.
         exclude '**/AdjustConstants.java'
+        exclude '**/MmaConstants.java'
     }
 }
 
@@ -200,3 +205,7 @@ afterEvaluate {
         archives sourcesJarWithGeckoBinaries
     }
 }
+
+// Bug 1353055 - Strip 'vars' debugging information to agree with moz.build.
+apply from: "${topsrcdir}/mobile/android/gradle/debug_level.gradle"
+android.libraryVariants.all configureVariantDebugLevel

@@ -63,8 +63,18 @@ namespace CharFlag {
     const uint8_t UNICODE_ID_CONTINUE = UNICODE_ID_START + UNICODE_ID_CONTINUE_ONLY;
 }
 
-const char16_t BYTE_ORDER_MARK2 = 0xFFFE;
-const char16_t NO_BREAK_SPACE  = 0x00A0;
+constexpr char16_t NO_BREAK_SPACE = 0x00A0;
+constexpr char16_t MICRO_SIGN = 0x00B5;
+constexpr char16_t LATIN_SMALL_LETTER_SHARP_S = 0x00DF;
+constexpr char16_t LATIN_SMALL_LETTER_Y_WITH_DIAERESIS = 0x00FF;
+constexpr char16_t LATIN_CAPITAL_LETTER_I_WITH_DOT_ABOVE = 0x0130;
+constexpr char16_t COMBINING_DOT_ABOVE = 0x0307;
+constexpr char16_t GREEK_CAPITAL_LETTER_SIGMA = 0x03A3;
+constexpr char16_t GREEK_SMALL_LETTER_FINAL_SIGMA = 0x03C2;
+constexpr char16_t GREEK_SMALL_LETTER_SIGMA = 0x03C3;
+constexpr char16_t LINE_SEPARATOR = 0x2028;
+constexpr char16_t PARA_SEPARATOR = 0x2029;
+constexpr char16_t BYTE_ORDER_MARK2 = 0xFFFE;
 
 const char16_t LeadSurrogateMin = 0xD800;
 const char16_t LeadSurrogateMax = 0xDBFF;
@@ -239,6 +249,10 @@ IsSpaceOrBOM2(char16_t ch)
     return CharInfo(ch).isSpace();
 }
 
+/*
+ * Returns the simple upper case mapping (see CanUpperCaseSpecialCasing for
+ * details) of the given UTF-16 code unit.
+ */
 inline char16_t
 ToUpperCase(char16_t ch)
 {
@@ -253,6 +267,10 @@ ToUpperCase(char16_t ch)
     return uint16_t(ch) + info.upperCase;
 }
 
+/*
+ * Returns the simple lower case mapping (see CanUpperCaseSpecialCasing for
+ * details) of the given UTF-16 code unit.
+ */
 inline char16_t
 ToLowerCase(char16_t ch)
 {
@@ -328,6 +346,43 @@ ToLowerCaseNonBMPTrail(char16_t lead, char16_t trail)
 
     return trail;
 }
+
+/*
+ * Returns true if the given UTF-16 code unit has a language-independent,
+ * unconditional or conditional special upper case mapping.
+ *
+ * Unicode defines two case mapping modes:
+ * 1. "simple case mappings" for one-to-one mappings which are independent of
+ *    context and language (defined in UnicodeData.txt).
+ * 2. "special case mappings" for mappings which can increase or decrease the
+ *    string length; or are dependent on context or locale (defined in
+ *    SpecialCasing.txt).
+ *
+ * The CanUpperCase() method defined above only supports simple case mappings.
+ * In order to support the full case mappings of all Unicode characters,
+ * callers need to check this method in addition to CanUpperCase().
+ *
+ * NOTE: All special upper case mappings are unconditional in Unicode 9.
+ */
+bool
+CanUpperCaseSpecialCasing(char16_t ch);
+
+/*
+ * Returns the length of the upper case mapping of |ch|.
+ *
+ * This function asserts if |ch| doesn't have a special upper case mapping.
+ */
+size_t
+LengthUpperCaseSpecialCasing(char16_t ch);
+
+/*
+ * Appends the upper case mapping of |ch| to the given output buffer,
+ * starting at the provided index.
+ *
+ * This function asserts if |ch| doesn't have a special upper case mapping.
+ */
+void
+AppendUpperCaseSpecialCasing(char16_t ch, char16_t* elements, size_t* index);
 
 /*
  * For a codepoint C, CodepointsWithSameUpperCaseInfo stores three offsets
@@ -491,7 +546,7 @@ UTF16Encode(uint32_t codePoint, char16_t* lead, char16_t* trail)
     *trail = TrailSurrogate(codePoint);
 }
 
-static inline void
+inline void
 UTF16Encode(uint32_t codePoint, char16_t* elements, unsigned* index)
 {
     if (!IsSupplementary(codePoint)) {

@@ -53,6 +53,7 @@ public class AppConstants {
         public static final boolean feature20Plus = MIN_SDK_VERSION >= 20 || (MAX_SDK_VERSION >= 20 && Build.VERSION.SDK_INT >= 20);
         public static final boolean feature21Plus = MIN_SDK_VERSION >= 21 || (MAX_SDK_VERSION >= 21 && Build.VERSION.SDK_INT >= 21);
         public static final boolean feature24Plus = MIN_SDK_VERSION >= 24 || (MAX_SDK_VERSION >= 24 && Build.VERSION.SDK_INT >= 24);
+        public static final boolean feature26Plus = MIN_SDK_VERSION >= 26 || (MAX_SDK_VERSION >= 26 && Build.VERSION.SDK_INT >= 26);
 
         /*
          * If our MIN_SDK_VERSION is 14 or higher, we must be an ICS device.
@@ -191,7 +192,7 @@ public class AppConstants {
 //#endif
 
     public static final boolean MOZ_CRASHREPORTER =
-//#if MOZ_CRASHREPORTER
+//#ifdef MOZ_CRASHREPORTER
     true;
 //#else
     false;
@@ -291,7 +292,7 @@ public class AppConstants {
 //#endif
 
     /**
-     * Target CPU architecture: "armeabi-v7a", "x86, "mips", ..
+     * Target CPU architecture: "armeabi-v7a", "arm64-v8a", "x86", "mips", ..
      */
     public static final String ANDROID_CPU_ARCH = "@ANDROID_CPU_ARCH@";
 
@@ -321,6 +322,16 @@ public class AppConstants {
 
     public static final boolean MOZ_ANDROID_ACTIVITY_STREAM =
 //#ifdef MOZ_ANDROID_ACTIVITY_STREAM
+        true;
+//#else
+        false;
+//#endif
+    /**
+     * This flag is for enabling custom code used only in the
+     * MozillaOnline (Mozilla China) version of Fennec.
+     */
+    public static final boolean MOZ_ANDROID_MOZILLA_ONLINE =
+//#ifdef MOZ_ANDROID_MOZILLA_ONLINE
         true;
 //#else
         false;

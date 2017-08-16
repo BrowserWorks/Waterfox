@@ -127,9 +127,9 @@ function StorageUI(front, target, panelWin, toolbox) {
   this.view = new VariablesView(this.sidebar.firstChild,
                                 GENERIC_VARIABLES_VIEW_SETTINGS);
 
-  this.searchBox = this._panelDoc.getElementById("storage-searchbox");
   this.filterItems = this.filterItems.bind(this);
-  this.searchBox.addEventListener("command", this.filterItems);
+  this.onPaneToggleButtonClicked = this.onPaneToggleButtonClicked.bind(this);
+  this.setupToolbar();
 
   let shortcuts = new KeyShortcuts({
     window: this._panelDoc.defaultView,
@@ -142,7 +142,16 @@ function StorageUI(front, target, panelWin, toolbox) {
 
   this.front.listStores().then(storageTypes => {
     this.populateStorageTree(storageTypes);
-  }).then(null, console.error);
+  }).catch(e => {
+    if (!this._toolbox || this._toolbox._destroyer) {
+      // The toolbox is in the process of being destroyed... in this case throwing here
+      // is expected and normal so let's ignore the error.
+      return;
+    }
+
+    // The toolbox is open so the error is unexpected and real so let's log it.
+    console.error(e);
+  });
 
   this.onUpdate = this.onUpdate.bind(this);
   this.front.on("stores-update", this.onUpdate);
@@ -160,10 +169,18 @@ function StorageUI(front, target, panelWin, toolbox) {
   this._tablePopup = this._panelDoc.getElementById("storage-table-popup");
   this._tablePopup.addEventListener("popupshowing", this.onTablePopupShowing);
 
+  this.onAddItem = this.onAddItem.bind(this);
   this.onRemoveItem = this.onRemoveItem.bind(this);
   this.onRemoveAllFrom = this.onRemoveAllFrom.bind(this);
   this.onRemoveAll = this.onRemoveAll.bind(this);
   this.onRemoveTreeItem = this.onRemoveTreeItem.bind(this);
+
+  this._addButton = this._panelDoc.getElementById("add-button");
+  this._addButton.addEventListener("command", this.onAddItem);
+
+  this._tablePopupAddItem = this._panelDoc.getElementById(
+    "storage-table-popup-add");
+  this._tablePopupAddItem.addEventListener("command", this.onAddItem);
 
   this._tablePopupDelete = this._panelDoc.getElementById(
     "storage-table-popup-delete");
@@ -191,6 +208,7 @@ exports.StorageUI = StorageUI;
 StorageUI.prototype = {
 
   storageTypes: null,
+  sidebarToggledOpen: null,
   shouldLoadMoreItems: true,
 
   set animationsEnabled(value) {
@@ -209,7 +227,12 @@ StorageUI.prototype = {
     this.searchBox.removeEventListener("input", this.filterItems);
     this.searchBox = null;
 
+    this.sidebarToggleBtn.removeEventListener("click", this.onPaneToggleButtonClicked);
+    this.sidebarToggleBtn = null;
+
     this._treePopup.removeEventListener("popupshowing", this.onTreePopupShowing);
+    this._addButton.removeEventListener("command", this.onAddItem);
+    this._tablePopupAddItem.removeEventListener("command", this.onAddItem);
     this._treePopupDeleteAll.removeEventListener("command", this.onRemoveAll);
     this._treePopupDelete.removeEventListener("command", this.onRemoveTreeItem);
 
@@ -219,16 +242,52 @@ StorageUI.prototype = {
     this._tablePopupDeleteAll.removeEventListener("command", this.onRemoveAll);
   },
 
-  /**
-   * Empties and hides the object viewer sidebar
-   */
-  hideSidebar: function () {
-    this.view.empty();
-    this.sidebar.hidden = true;
-    this.table.clearSelection();
+  setupToolbar: function () {
+    this.searchBox = this._panelDoc.getElementById("storage-searchbox");
+    this.searchBox.addEventListener("command", this.filterItems);
+
+    // Setup the sidebar toggle button.
+    this.sidebarToggleBtn = this._panelDoc.querySelector(".sidebar-toggle");
+    this.updateSidebarToggleButton();
+
+    this.sidebarToggleBtn.addEventListener("click", this.onPaneToggleButtonClicked);
   },
 
-  getCurrentActor: function () {
+  onPaneToggleButtonClicked: function () {
+    if (this.sidebar.hidden && this.table.selectedRow) {
+      this.sidebar.hidden = false;
+      this.sidebarToggledOpen = true;
+      this.updateSidebarToggleButton();
+    } else {
+      this.sidebarToggledOpen = false;
+      this.hideSidebar();
+    }
+  },
+
+  updateSidebarToggleButton: function () {
+    let title;
+    this.sidebarToggleBtn.hidden = !this.table.hasSelectedRow;
+
+    if (this.sidebar.hidden) {
+      this.sidebarToggleBtn.classList.add("pane-collapsed");
+      title = L10N.getStr("storage.expandPane");
+    } else {
+      this.sidebarToggleBtn.classList.remove("pane-collapsed");
+      title = L10N.getStr("storage.collapsePane");
+    }
+
+    this.sidebarToggleBtn.setAttribute("tooltiptext", title);
+  },
+
+  /**
+   * Hide the object viewer sidebar
+   */
+  hideSidebar: function () {
+    this.sidebar.hidden = true;
+    this.updateSidebarToggleButton();
+  },
+
+  getCurrentFront: function () {
     let type = this.table.datatype;
 
     return this.storageTypes[type];
@@ -249,9 +308,9 @@ StorageUI.prototype = {
   },
 
   editItem: function (eventType, data) {
-    let actor = this.getCurrentActor();
+    let front = this.getCurrentFront();
 
-    actor.editItem(data);
+    front.editItem(data);
   },
 
   /**
@@ -490,6 +549,8 @@ StorageUI.prototype = {
                                                     : {};
     let storageType = this.storageTypes[type];
 
+    this.sidebarToggledOpen = null;
+
     if (reason !== REASON.NEXT_50_ITEMS &&
         reason !== REASON.UPDATE &&
         reason !== REASON.NEW_ROW &&
@@ -503,7 +564,7 @@ StorageUI.prototype = {
         // The indexedDB type could have sub-type data to fetch.
         // If having names specified, then it means
         // we are fetching details of specific database or of object store.
-        if (type == "indexedDB" && names) {
+        if (type === "indexedDB" && names) {
           let [ dbName, objectStoreName ] = JSON.parse(names[0]);
           if (dbName) {
             subType = "database";
@@ -512,6 +573,13 @@ StorageUI.prototype = {
             subType = "object store";
           }
         }
+
+        this.actorSupportsAddItem = yield this._target.actorHasMethod(type, "addItem");
+        this.actorSupportsRemoveItem =
+          yield this._target.actorHasMethod(type, "removeItem");
+        this.actorSupportsRemoveAll =
+          yield this._target.actorHasMethod(type, "removeAll");
+
         yield this.resetColumns(type, host, subType);
       }
 
@@ -519,9 +587,31 @@ StorageUI.prototype = {
       if (data.length) {
         this.populateTable(data, reason);
       }
+      yield this.updateToolbar();
       this.emit("store-objects-updated");
     } catch (ex) {
       console.error(ex);
+    }
+  }),
+
+  /**
+   * Updates the toolbar hiding and showing buttons as appropriate.
+   */
+  updateToolbar: Task.async(function* () {
+    let item = this.tree.selectedItem;
+    let howManyNodesIn = item ? item.length : 0;
+
+    // The first node is just a title e.g. "Cookies" so we need to be at least
+    // 2 nodes in to show the add button.
+    let canAdd = this.actorSupportsAddItem && howManyNodesIn > 1;
+
+    if (canAdd) {
+      this._addButton.hidden = false;
+      this._addButton.setAttribute("tooltiptext",
+        L10N.getFormatStr("storage.popupMenu.addItemLabel"));
+    } else {
+      this._addButton.hidden = true;
+      this._addButton.removeAttribute("tooltiptext");
     }
   }),
 
@@ -581,6 +671,7 @@ StorageUI.prototype = {
     if (!item) {
       // Make sure that sidebar is hidden and return
       this.sidebar.hidden = true;
+      this.updateSidebarToggleButton();
       return;
     }
 
@@ -591,7 +682,11 @@ StorageUI.prototype = {
     }
 
     // Start updating the UI. Everything is sync beyond this point.
-    this.sidebar.hidden = false;
+    if (this.sidebarToggledOpen === null || this.sidebarToggledOpen === true) {
+      this.sidebar.hidden = false;
+    }
+
+    this.updateSidebarToggleButton();
     this.view.empty();
     let mainScope = this.view.addScope(L10N.getStr("storage.data.label"));
     mainScope.expanded = true;
@@ -765,6 +860,11 @@ StorageUI.prototype = {
     this.searchBox.value = "";
 
     let [type, host] = item;
+    this.table.host = host;
+    this.table.datatype = type;
+
+    this.updateToolbar();
+
     let names = null;
     if (!host) {
       return;
@@ -797,7 +897,7 @@ StorageUI.prototype = {
     let editableFields = [];
     let hiddenFields = [];
     let privateFields = [];
-    let fields = yield this.getCurrentActor().getFields(subtype);
+    let fields = yield this.getCurrentFront().getFields(subtype);
 
     fields.forEach(f => {
       if (!uniqueKey) {
@@ -898,6 +998,7 @@ StorageUI.prototype = {
     if (event.keyCode == KeyCodes.DOM_VK_ESCAPE && !this.sidebar.hidden) {
       // Stop Propagation to prevent opening up of split console
       this.hideSidebar();
+      this.sidebarToggledOpen = false;
       event.stopPropagation();
       event.preventDefault();
     }
@@ -932,30 +1033,44 @@ StorageUI.prototype = {
   },
 
   /**
-   * Fires before a cell context menu with the "Delete" action is shown.
-   * If the currently selected storage object doesn't support removing items, prevent
-   * showing the menu.
+   * Fires before a cell context menu with the "Add" or "Delete" action is
+   * shown. If the currently selected storage object doesn't support adding or
+   * removing items, prevent showing the menu.
    */
   onTablePopupShowing: function (event) {
     let selectedItem = this.tree.selectedItem;
     let type = selectedItem[0];
-    let actor = this.getCurrentActor();
 
     // IndexedDB only supports removing items from object stores (level 4 of the tree)
-    if (!actor.removeItem || (type === "indexedDB" && selectedItem.length !== 4)) {
+    if ((!this.actorSupportsAddItem && !this.actorSupportsRemoveItem &&
+         type !== "cookies") ||
+        (type === "indexedDB" && selectedItem.length !== 4)) {
       event.preventDefault();
       return;
     }
 
     let rowId = this.table.contextMenuRowId;
     let data = this.table.items.get(rowId);
-    let name = data[this.table.uniqueId];
 
-    let separatorRegex = new RegExp(SEPARATOR_GUID, "g");
-    let label = addEllipsis((name + "").replace(separatorRegex, "-"));
+    if (this.actorSupportsRemoveItem) {
+      let name = data[this.table.uniqueId];
+      let separatorRegex = new RegExp(SEPARATOR_GUID, "g");
+      let label = addEllipsis((name + "").replace(separatorRegex, "-"));
 
-    this._tablePopupDelete.setAttribute("label",
-      L10N.getFormatStr("storage.popupMenu.deleteLabel", label));
+      this._tablePopupDelete.hidden = false;
+      this._tablePopupDelete.setAttribute("label",
+        L10N.getFormatStr("storage.popupMenu.deleteLabel", label));
+    } else {
+      this._tablePopupDelete.hidden = true;
+    }
+
+    if (this.actorSupportsAddItem) {
+      this._tablePopupAddItem.hidden = false;
+      this._tablePopupAddItem.setAttribute("label",
+        L10N.getFormatStr("storage.popupMenu.addItemLabel"));
+    } else {
+      this._tablePopupAddItem.hidden = true;
+    }
 
     if (type === "cookies") {
       let host = addEllipsis(data.host);
@@ -974,13 +1089,12 @@ StorageUI.prototype = {
 
     if (selectedItem) {
       let type = selectedItem[0];
-      let actor = this.storageTypes[type];
 
       // The delete all (aka clear) action is displayed for IndexedDB object stores
       // (level 4 of tree), for Cache objects (level 3) and for the whole host (level 2)
       // for other storage types (cookies, localStorage, ...).
       let showDeleteAll = false;
-      if (actor.removeAll) {
+      if (this.actorSupportsRemoveAll) {
         let level;
         if (type == "indexedDB") {
           level = 4;
@@ -1018,18 +1132,31 @@ StorageUI.prototype = {
   },
 
   /**
+   * Handles adding an item from the storage
+   */
+  onAddItem: function () {
+    let front = this.getCurrentFront();
+    let [, host] = this.tree.selectedItem;
+
+    // Prepare to scroll into view.
+    this.table.scrollIntoViewOnUpdate = true;
+    this.table.editBookmark = createGUID();
+    front.addItem(this.table.editBookmark, host);
+  },
+
+  /**
    * Handles removing an item from the storage
    */
   onRemoveItem: function () {
     let [, host, ...path] = this.tree.selectedItem;
-    let actor = this.getCurrentActor();
+    let front = this.getCurrentFront();
     let rowId = this.table.contextMenuRowId;
     let data = this.table.items.get(rowId);
     let name = data[this.table.uniqueId];
     if (path.length > 0) {
       name = JSON.stringify([...path, name]);
     }
-    actor.removeItem(host, name);
+    front.removeItem(host, name);
   },
 
   /**
@@ -1039,10 +1166,10 @@ StorageUI.prototype = {
     // Cannot use this.currentActor() if the handler is called from the
     // tree context menu: it returns correct value only after the table
     // data from server are successfully fetched (and that's async).
-    let [type, host, ...path] = this.tree.selectedItem;
-    let actor = this.storageTypes[type];
+    let [, host, ...path] = this.tree.selectedItem;
+    let front = this.getCurrentFront();
     let name = path.length > 0 ? JSON.stringify(path) : undefined;
-    actor.removeAll(host, name);
+    front.removeAll(host, name);
   },
 
   /**
@@ -1051,11 +1178,11 @@ StorageUI.prototype = {
    */
   onRemoveAllFrom: function () {
     let [, host] = this.tree.selectedItem;
-    let actor = this.getCurrentActor();
+    let front = this.getCurrentFront();
     let rowId = this.table.contextMenuRowId;
     let data = this.table.items.get(rowId);
 
-    actor.removeAll(host, data.host);
+    front.removeAll(host, data.host);
   },
 
   onRemoveTreeItem: function () {
@@ -1069,9 +1196,9 @@ StorageUI.prototype = {
   },
 
   removeDatabase: function (host, dbName) {
-    let actor = this.storageTypes.indexedDB;
+    let front = this.getCurrentFront();
 
-    actor.removeDatabase(host, dbName).then(result => {
+    front.removeDatabase(host, dbName).then(result => {
       if (result.blocked) {
         let notificationBox = this._toolbox.getNotificationBox();
         notificationBox.appendNotification(
@@ -1091,8 +1218,17 @@ StorageUI.prototype = {
   },
 
   removeCache: function (host, cacheName) {
-    let actor = this.storageTypes.Cache;
+    let front = this.getCurrentFront();
 
-    actor.removeItem(host, JSON.stringify([ cacheName ]));
+    front.removeItem(host, JSON.stringify([ cacheName ]));
   },
 };
+
+// Helper Functions
+
+function createGUID() {
+  return "{cccccccc-cccc-4ccc-yccc-cccccccccccc}".replace(/[cy]/g, c => {
+    let r = Math.random() * 16 | 0, v = c == "c" ? r : (r & 0x3 | 0x8);
+    return v.toString(16);
+  });
+}

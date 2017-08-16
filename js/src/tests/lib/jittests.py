@@ -300,18 +300,22 @@ class JitTest:
             quotechar = '"'
         else:
             quotechar = "'"
-        expr = "const platform={}; const libdir={}; const scriptdir={}".format(
-            js_quote(quotechar, sys.platform),
-            js_quote(quotechar, libdir),
-            js_quote(quotechar, scriptdir_var))
+
+        # Don't merge the expressions: We want separate -e arguments to avoid
+        # semicolons in the command line, bug 1351607.
+        exprs = ["const platform={}".format(js_quote(quotechar, sys.platform)),
+                 "const libdir={}".format(js_quote(quotechar, libdir)),
+                 "const scriptdir={}".format(js_quote(quotechar, scriptdir_var))];
 
         if self.need_for_each:
-            expr += "; enableForEach()"
+            exprs += ["enableForEach()"]
 
         # We may have specified '-a' or '-d' twice: once via --jitflags, once
         # via the "|jit-test|" line.  Remove dups because they are toggles.
         cmd = prefix + ['--js-cache', JitTest.CacheDir]
-        cmd += list(set(self.jitflags)) + ['-e', expr]
+        cmd += list(set(self.jitflags))
+        for expr in exprs:
+            cmd += ['-e', expr]
         for inc in self.other_includes:
             cmd += ['-f', libdir + inc]
         if self.is_module:
@@ -448,6 +452,11 @@ def check_output(out, err, rc, timed_out, test, options):
         # the test actually over-recursed.
         if test.allow_overrecursed and 'too much recursion' in err \
            and 'Assertion failure' not in err:
+            return True
+
+        # Allow a zero exit code if we are running under a sanitizer that
+        # forces the exit status.
+        if test.expect_status != 0 and options.unusable_error_status:
             return True
 
         return False
@@ -665,28 +674,19 @@ def push_progs(options, device, progs):
 
 def run_tests_remote(tests, num_tests, prefix, options):
     # Setup device with everything needed to run our tests.
-    from mozdevice import devicemanagerADB, devicemanagerSUT
+    from mozdevice import devicemanagerADB
 
-    if options.device_transport == 'adb':
-        if options.device_ip:
-            dm = devicemanagerADB.DeviceManagerADB(
-                options.device_ip, options.device_port,
-                deviceSerial=options.device_serial,
-                packageName=None,
-                deviceRoot=options.remote_test_root)
-        else:
-            dm = devicemanagerADB.DeviceManagerADB(
-                deviceSerial=options.device_serial,
-                packageName=None,
-                deviceRoot=options.remote_test_root)
-    else:
-        dm = devicemanagerSUT.DeviceManagerSUT(
+    if options.device_ip:
+        dm = devicemanagerADB.DeviceManagerADB(
             options.device_ip, options.device_port,
+            deviceSerial=options.device_serial,
+            packageName=None,
             deviceRoot=options.remote_test_root)
-        if options.device_ip == None:
-            print('Error: you must provide a device IP to connect to via the'
-                  ' --device option')
-            sys.exit(1)
+    else:
+        dm = devicemanagerADB.DeviceManagerADB(
+            deviceSerial=options.device_serial,
+            packageName=None,
+            deviceRoot=options.remote_test_root)
 
     # Update the test root to point to our test directory.
     jit_tests_dir = posixpath.join(options.remote_test_root, 'jit-tests')

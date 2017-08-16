@@ -790,14 +790,18 @@ FlyWebMDNSService::PairWithService(const nsAString& aServiceId,
   } else {
     url.AssignLiteral("https://");
   }
-  url.Append(aInfo->mService.mHostname + NS_LITERAL_STRING("/"));
+  url.Append(aInfo->mService.mHostname);
+  if (!discInfo->mService.mPath.IsEmpty()) {
+    if (discInfo->mService.mPath.Find("/") != 0) {
+      url.Append(NS_LITERAL_STRING("/"));
+    }
+    url.Append(discInfo->mService.mPath);
+  } else {
+    url.Append(NS_LITERAL_STRING("/"));
+  }
   nsCOMPtr<nsIURI> uiURL;
   NS_NewURI(getter_AddRefs(uiURL), url);
   MOZ_ASSERT(uiURL);
-  if (!discInfo->mService.mPath.IsEmpty()) {
-    nsCOMPtr<nsIURI> tmp = uiURL.forget();
-    NS_NewURI(getter_AddRefs(uiURL), discInfo->mService.mPath, nullptr, tmp);
-  }
   if (uiURL) {
     nsAutoCString spec;
     uiURL->GetSpec(spec);
@@ -1106,7 +1110,14 @@ FlyWebService::Observe(nsISupports* aSubject, const char* aTopic,
   nsresult rv = wrapper->GetData(&innerID);
   NS_ENSURE_SUCCESS(rv, rv);
 
+  // Make a copy of mServers to iterate over, because closing a server
+  // can remove entries from mServers.
+  nsCOMArray<FlyWebPublishedServer> serversCopy;
   for (FlyWebPublishedServer* server : mServers) {
+    serversCopy.AppendElement(server);
+  }
+
+  for (FlyWebPublishedServer* server : serversCopy) {
     if (server->OwnerWindowID() == innerID) {
       server->Close();
     }
@@ -1193,7 +1204,7 @@ FlyWebService::PairWithService(const nsAString& aServiceId,
 
   if (NS_FAILED(rv)) {
     ErrorResult result;
-    result.Throw(rv);
+    result.ThrowWithCustomCleanup(rv);
     const nsAString& reason = NS_LITERAL_STRING("Error pairing.");
     aCallback.PairingFailed(reason, result);
     ENSURE_SUCCESS_VOID(result);

@@ -6,6 +6,8 @@
 
 SharedLibrary('clang-plugin')
 
+SOURCES += ['!ThirdPartyPaths.cpp']
+
 UNIFIED_SOURCES += [
     'ArithmeticArgChecker.cpp',
     'AssertAssignmentChecker.cpp',
@@ -16,6 +18,7 @@ UNIFIED_SOURCES += [
     'KungFuDeathGripChecker.cpp',
     'MozCheckAction.cpp',
     'MustOverrideChecker.cpp',
+    'MustReturnFromCallerChecker.cpp',
     'MustUseChecker.cpp',
     'NaNExprChecker.cpp',
     'NeedsNoVTableTypeChecker.cpp',
@@ -33,6 +36,13 @@ UNIFIED_SOURCES += [
     'ScopeChecker.cpp',
     'SprintfLiteralChecker.cpp',
     'TrivialCtorDtorChecker.cpp',
+]
+
+GENERATED_FILES += ['ThirdPartyPaths.cpp']
+third_party_paths = GENERATED_FILES['ThirdPartyPaths.cpp']
+third_party_paths.script = "ThirdPartyPaths.py:generate"
+third_party_paths.inputs = [
+    '/tools/rewriting/ThirdPartyPaths.txt',
 ]
 
 DISABLE_STL_WRAPPING = True

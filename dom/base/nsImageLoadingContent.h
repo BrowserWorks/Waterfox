@@ -219,6 +219,10 @@ protected:
 
   void AsyncEventRunning(mozilla::AsyncEventDispatcher* aEvent);
 
+  // Get ourselves as an nsIContent*.  Not const because some of the callers
+  // want a non-const nsIContent.
+  virtual nsIContent* AsContent() = 0;
+
 private:
   /**
    * Struct used to manage the image observers.
@@ -364,6 +368,11 @@ protected:
    *
    * No-op if aImage is null.
    *
+   * @param aFrame If called from FrameCreated the frame passed to FrameCreated.
+   *               This is our frame, but at the time of the FrameCreated call
+   *               our primary frame pointer hasn't been set yet, so this is
+   *               only way to get our frame.
+   *
    * @param aNonvisibleAction A requested action if the frame has become
    *                          nonvisible. If Nothing(), no action is
    *                          requested. If DISCARD_IMAGES is specified, the
@@ -371,7 +380,7 @@ protected:
    *                          associated with to discard their surfaces if
    *                          possible.
    */
-  void TrackImage(imgIRequest* aImage);
+  void TrackImage(imgIRequest* aImage, nsIFrame* aFrame = nullptr);
   void UntrackImage(imgIRequest* aImage,
                     const Maybe<OnNonvisible>& aNonvisibleAction = Nothing());
 
@@ -446,6 +455,13 @@ protected:
    */
   bool mNewRequestsWillNeedAnimationReset : 1;
 
+  /**
+   * Flag to indicate whether the channel should be mark as urgent-start.
+   * It should be set in *Element and passed to nsContentUtils::LoadImage.
+   * True if we want to set nsIClassOfService::UrgentStart to the channel to
+   * get the response ASAP for better user responsiveness.
+   */
+  bool mUseUrgentStartForChannel;
 private:
   /* The number of nested AutoStateChangers currently tracking our state. */
   uint8_t mStateChangerDepth;
@@ -454,9 +470,6 @@ private:
   // registered with the refresh driver.
   bool mCurrentRequestRegistered;
   bool mPendingRequestRegistered;
-
-  // True when FrameCreate has been called but FrameDestroy has not.
-  bool mFrameCreateCalled;
 };
 
 #endif // nsImageLoadingContent_h__

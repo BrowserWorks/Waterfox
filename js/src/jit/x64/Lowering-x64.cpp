@@ -146,7 +146,7 @@ LIRGeneratorX64::lowerUntypedPhiInput(MPhi* phi, uint32_t inputPosition, LBlock*
 {
     lowerTypedPhiInput(phi, inputPosition, block, lirIndex);
 }
- 
+
 void
 LIRGeneratorX64::defineInt64Phi(MPhi* phi, size_t lirIndex)
 {
@@ -196,13 +196,14 @@ LIRGeneratorX64::visitWasmUnsignedToFloat32(MWasmUnsignedToFloat32* ins)
 void
 LIRGeneratorX64::visitWasmLoad(MWasmLoad* ins)
 {
-    if (ins->type() != MIRType::Int64) {
-        lowerWasmLoad(ins);
-        return;
-    }
-
     MDefinition* base = ins->base();
     MOZ_ASSERT(base->type() == MIRType::Int32);
+
+    if (ins->type() != MIRType::Int64) {
+        auto* lir = new(alloc()) LWasmLoad(useRegisterOrZeroAtStart(base));
+        define(lir, ins);
+        return;
+    }
 
     auto* lir = new(alloc()) LWasmLoadI64(useRegisterOrZeroAtStart(base));
     defineInt64(lir, ins);

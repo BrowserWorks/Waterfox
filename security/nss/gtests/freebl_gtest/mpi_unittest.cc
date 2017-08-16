@@ -2,15 +2,10 @@
 // License, v. 2.0. If a copy of the MPL was not distributed with this file,
 // You can obtain one at http://mozilla.org/MPL/2.0/.
 
-#include "secdert.h"
-#include "secitem.h"
-#include "secport.h"
-
 #include "gtest/gtest.h"
 
 #include <stdint.h>
 #include <string.h>
-#include <string>
 
 #ifdef __MACH__
 #include <mach/clock.h>
@@ -40,16 +35,39 @@ class MPITest : public ::testing::Test {
  protected:
   void TestCmp(const std::string a_string, const std::string b_string,
                int result) {
-    mp_int a, b, c;
+    mp_int a, b;
     MP_DIGITS(&a) = 0;
     MP_DIGITS(&b) = 0;
-    MP_DIGITS(&c) = 0;
     ASSERT_EQ(MP_OKAY, mp_init(&a));
     ASSERT_EQ(MP_OKAY, mp_init(&b));
 
     mp_read_radix(&a, a_string.c_str(), 16);
     mp_read_radix(&b, b_string.c_str(), 16);
     EXPECT_EQ(result, mp_cmp(&a, &b));
+
+    mp_clear(&a);
+    mp_clear(&b);
+  }
+
+  void TestDiv(const std::string a_string, const std::string b_string,
+               const std::string result) {
+    mp_int a, b, c;
+    MP_DIGITS(&a) = 0;
+    MP_DIGITS(&b) = 0;
+    MP_DIGITS(&c) = 0;
+    ASSERT_EQ(MP_OKAY, mp_init(&a));
+    ASSERT_EQ(MP_OKAY, mp_init(&b));
+    ASSERT_EQ(MP_OKAY, mp_init(&c));
+
+    mp_read_radix(&a, a_string.c_str(), 16);
+    mp_read_radix(&b, b_string.c_str(), 16);
+    mp_read_radix(&c, result.c_str(), 16);
+    EXPECT_EQ(MP_OKAY, mp_div(&a, &b, &a, &b));
+    EXPECT_EQ(0, mp_cmp(&a, &c));
+
+    mp_clear(&a);
+    mp_clear(&b);
+    mp_clear(&c);
   }
 };
 
@@ -57,8 +75,48 @@ TEST_F(MPITest, MpiCmp01Test) { TestCmp("0", "1", -1); }
 TEST_F(MPITest, MpiCmp10Test) { TestCmp("1", "0", 1); }
 TEST_F(MPITest, MpiCmp00Test) { TestCmp("0", "0", 0); }
 TEST_F(MPITest, MpiCmp11Test) { TestCmp("1", "1", 0); }
+TEST_F(MPITest, MpiDiv32ErrorTest) {
+  TestDiv("FFFF00FFFFFFFF000000000000", "FFFF00FFFFFFFFFF", "FFFFFFFFFF");
+}
 
-TEST_F(MPITest, MpiCmpConstTest) {
+#ifdef NSS_X64
+// This tests assumes 64-bit mp_digits.
+TEST_F(MPITest, MpiCmpUnalignedTest) {
+  mp_int a, b, c;
+  MP_DIGITS(&a) = 0;
+  MP_DIGITS(&b) = 0;
+  MP_DIGITS(&c) = 0;
+  ASSERT_EQ(MP_OKAY, mp_init(&a));
+  ASSERT_EQ(MP_OKAY, mp_init(&b));
+  ASSERT_EQ(MP_OKAY, mp_init(&c));
+
+  mp_read_radix(&a, "ffffffffffffffff3b4e802b4e1478", 16);
+  mp_read_radix(&b, "ffffffffffffffff3b4e802b4e1478", 16);
+  EXPECT_EQ(0, mp_cmp(&a, &b));
+
+  // Now change a and b such that they contain the same numbers but are not
+  // aligned.
+  // a = ffffffffffffff|ff3b4e802b4e1478
+  // b = ffffffffffffffff|3b4e802b4e1478
+  MP_DIGITS(&b)[0] &= 0x00ffffffffffffff;
+  MP_DIGITS(&b)[1] = 0xffffffffffffffff;
+  EXPECT_EQ(-1, mp_cmp(&a, &b));
+
+  ASSERT_EQ(MP_OKAY, mp_sub(&a, &b, &c));
+  char c_tmp[40];
+  ASSERT_EQ(MP_OKAY, mp_toradix(&c, c_tmp, 16));
+  ASSERT_TRUE(strncmp(c_tmp, "feffffffffffffff100000000000000", 31));
+
+  mp_clear(&a);
+  mp_clear(&b);
+  mp_clear(&c);
+}
+#endif
+
+// This test is slow. Disable it by default so we can run these tests on CI.
+class DISABLED_MPITest : public ::testing::Test {};
+
+TEST_F(DISABLED_MPITest, MpiCmpConstTest) {
   mp_int a, b, c;
   MP_DIGITS(&a) = 0;
   MP_DIGITS(&b) = 0;
@@ -115,6 +173,10 @@ TEST_F(MPITest, MpiCmpConstTest) {
     ASSERT_EQ(1, r);
   }
   printf("time c: %u\n", time_c / runs);
+
+  mp_clear(&a);
+  mp_clear(&b);
+  mp_clear(&c);
 }
 
 }  // nss_test

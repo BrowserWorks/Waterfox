@@ -461,3 +461,31 @@ add_test(function test_invalidHostChars() {
   // hostname separators, so there is no way to set them and fail.
   run_next_test();
 });
+
+add_test(function test_normalize_ipv6() {
+  var url = stringToURL("http://example.com");
+  url.host = "[::192.9.5.5]";
+  do_check_eq(url.spec, "http://[::c009:505]/");
+
+  run_next_test();
+});
+
+add_test(function test_emptyPassword() {
+  var url = stringToURL("http://a:@example.com");
+  do_check_eq(url.spec, "http://a@example.com/");
+  url.password = "pp";
+  do_check_eq(url.spec, "http://a:pp@example.com/");
+  url.password = "";
+  do_check_eq(url.spec, "http://a@example.com/");
+  url.userPass = "xxx:";
+  do_check_eq(url.spec, "http://xxx@example.com/");
+  url.password = "zzzz";
+  do_check_eq(url.spec, "http://xxx:zzzz@example.com/");
+  url.userPass = "xxxxx:yyyyyy";
+  do_check_eq(url.spec, "http://xxxxx:yyyyyy@example.com/");
+  url.userPass = "z:";
+  do_check_eq(url.spec, "http://z@example.com/");
+  url.password = "ppppppppppp";
+  do_check_eq(url.spec, "http://z:ppppppppppp@example.com/");
+  run_next_test();
+});

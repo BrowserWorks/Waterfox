@@ -8,6 +8,8 @@
 
 #include <string>
 
+#include "SandboxPolicies.h"
+
 enum MacSandboxType {
   MacSandboxType_Default = 0,
   MacSandboxType_Plugin,
@@ -46,7 +48,8 @@ typedef struct _MacSandboxInfo {
       pluginInfo(other.pluginInfo),
       appPath(other.appPath), appBinaryPath(other.appBinaryPath),
       appDir(other.appDir), appTempDir(other.appTempDir),
-      profileDir(other.profileDir), shouldLog(other.shouldLog) {}
+      profileDir(other.profileDir), debugWriteDir(other.debugWriteDir),
+      shouldLog(other.shouldLog) {}
   MacSandboxType type;
   int32_t level;
   bool hasFilePrivileges;
@@ -57,6 +60,7 @@ typedef struct _MacSandboxInfo {
   std::string appDir;
   std::string appTempDir;
   std::string profileDir;
+  std::string debugWriteDir;
   bool shouldLog;
 } MacSandboxInfo;
 

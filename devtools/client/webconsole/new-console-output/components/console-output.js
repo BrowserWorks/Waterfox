@@ -12,12 +12,12 @@ const {
 const { connect } = require("devtools/client/shared/vendor/react-redux");
 
 const {
-  getAllMessages,
   getAllMessagesUiById,
   getAllMessagesTableDataById,
-  getAllGroupsById,
+  getAllNetworkMessagesUpdateById,
+  getVisibleMessages,
+  getAllRepeatById,
 } = require("devtools/client/webconsole/new-console-output/selectors/messages");
-const { getScrollSetting } = require("devtools/client/webconsole/new-console-output/selectors/ui");
 const MessageContainer = createFactory(require("devtools/client/webconsole/new-console-output/components/message-container").MessageContainer);
 
 const ConsoleOutput = createClass({
@@ -25,36 +25,40 @@ const ConsoleOutput = createClass({
   displayName: "ConsoleOutput",
 
   propTypes: {
-    messages: PropTypes.object.isRequired,
     messagesUi: PropTypes.object.isRequired,
     serviceContainer: PropTypes.shape({
       attachRefToHud: PropTypes.func.isRequired,
       openContextMenu: PropTypes.func.isRequired,
+      sourceMapService: PropTypes.object,
     }),
-    autoscroll: PropTypes.bool.isRequired,
     dispatch: PropTypes.func.isRequired,
     timestampsVisible: PropTypes.bool,
-    groups: PropTypes.object.isRequired,
     messagesTableData: PropTypes.object.isRequired,
+    messagesRepeat: PropTypes.object.isRequired,
+    networkMessagesUpdate: PropTypes.object.isRequired,
+    visibleMessages: PropTypes.array.isRequired,
   },
 
   componentDidMount() {
-    scrollToBottom(this.outputNode);
+    // Do the scrolling in the nextTick since this could hit console startup performances.
+    // See https://bugzilla.mozilla.org/show_bug.cgi?id=1355869
+    setTimeout(() => {
+      scrollToBottom(this.outputNode);
+    }, 0);
     this.props.serviceContainer.attachRefToHud("outputScroller", this.outputNode);
   },
 
   componentWillUpdate(nextProps, nextState) {
-    if (!this.outputNode) {
+    const outputNode = this.outputNode;
+    if (!outputNode || !outputNode.lastChild) {
       return;
     }
 
-    const outputNode = this.outputNode;
-
     // Figure out if we are at the bottom. If so, then any new message should be scrolled
     // into view.
-    if (this.props.autoscroll && outputNode.lastChild) {
-      this.shouldScrollBottom = isScrolledToBottom(outputNode.lastChild, outputNode);
-    }
+    const lastChild = outputNode.lastChild;
+    const delta = nextProps.visibleMessages.length - this.props.visibleMessages.length;
+    this.shouldScrollBottom = delta > 0 && isScrolledToBottom(lastChild, outputNode);
   },
 
   componentDidUpdate() {
@@ -72,21 +76,16 @@ const ConsoleOutput = createClass({
   render() {
     let {
       dispatch,
-      autoscroll,
-      messages,
+      visibleMessages,
       messagesUi,
       messagesTableData,
+      messagesRepeat,
+      networkMessagesUpdate,
       serviceContainer,
-      groups,
       timestampsVisible,
     } = this.props;
 
-    let messageNodes = messages.map((message) => {
-      const parentGroups = message.groupId ? (
-        (groups.get(message.groupId) || [])
-          .concat([message.groupId])
-      ) : [];
-
+    let messageNodes = visibleMessages.map((message) => {
       return (
         MessageContainer({
           dispatch,
@@ -95,21 +94,17 @@ const ConsoleOutput = createClass({
           serviceContainer,
           open: messagesUi.includes(message.id),
           tableData: messagesTableData.get(message.id),
-          autoscroll,
-          indent: parentGroups.length,
+          indent: message.indent,
+          timestampsVisible,
+          repeat: messagesRepeat[message.id],
+          networkMessageUpdate: networkMessagesUpdate[message.id],
         })
       );
     });
 
-    let classList = ["webconsole-output"];
-
-    if (!timestampsVisible) {
-      classList.push("hideTimestamps");
-    }
-
     return (
       dom.div({
-        className: classList.join(" "),
+        className: "webconsole-output",
         onContextMenu: this.onContextMenu,
         ref: node => {
           this.outputNode = node;
@@ -133,11 +128,11 @@ function isScrolledToBottom(outputNode, scrollNode) {
 
 function mapStateToProps(state, props) {
   return {
-    messages: getAllMessages(state),
+    visibleMessages: getVisibleMessages(state),
     messagesUi: getAllMessagesUiById(state),
     messagesTableData: getAllMessagesTableDataById(state),
-    autoscroll: getScrollSetting(state),
-    groups: getAllGroupsById(state),
+    messagesRepeat: getAllRepeatById(state),
+    networkMessagesUpdate: getAllNetworkMessagesUpdateById(state),
     timestampsVisible: state.ui.timestampsVisible,
   };
 }

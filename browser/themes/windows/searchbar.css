@@ -2,17 +2,6 @@
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
 
-#PopupSearchAutoComplete {
-  /* JS code forces the panel to have the width of the searchbar rather than
-   * the width of the textfield. Alignment of the panel with the searchbar is
-   * obtained with negative margins here: margin-inline-start when the text
-   * field is in the same direction as the rest of the UI, margin-inline-end
-   * when the textfield's direction has been reversed.
-   * (eg. using ctrl+shift+X) */
-  margin-inline-start: -25px;
-  margin-inline-end: -18px;
-}
-
 .autocomplete-textbox-container {
   -moz-box-align: stretch;
 }
@@ -26,7 +15,7 @@
 .searchbar-engine-image {
   height: 16px;
   width: 16px;
-  list-style-image: url("chrome://mozapps/skin/places/defaultFavicon.png");
+  list-style-image: url("chrome://mozapps/skin/places/defaultFavicon.svg");
   margin-inline-start: -1px;
 }
 
@@ -82,10 +71,6 @@
 }
 
 @media (min-resolution: 1.1dppx) {
-  .searchbar-engine-image {
-    list-style-image: url("chrome://mozapps/skin/places/defaultFavicon@2x.png");
-  }
-
   .searchbar-search-button {
     list-style-image: url("chrome://browser/skin/search-indicator@2x.png");
     -moz-image-region: rect(0, 40px, 40px, 0);
@@ -180,6 +165,7 @@
   margin: 0 !important;
   border-top: 1px solid var(--panel-separator-color);
   line-height: 0;
+  background-color: var(--arrowpanel-dimmed);
 }
 
 .searchbar-engine-one-off-item {
@@ -206,6 +192,10 @@
   border-bottom: 1px solid var(--panel-separator-color);
 }
 
+.searchbar-engine-one-off-item:-moz-focusring {
+  outline: none;
+}
+
 .search-setting-button-compact {
   border-bottom: none !important;
 }
@@ -218,6 +208,12 @@
   background-image: none;
 }
 
+.searchbar-engine-one-off-item:not([selected]):not(.dummy):hover,
+.addengine-item:hover {
+  background-color: var(--arrowpanel-dimmed-further);
+  color: inherit;
+}
+
 .searchbar-engine-one-off-item[selected] {
   background-color: Highlight;
   background-image: none;
@@ -225,7 +221,6 @@
 }
 
 .searchbar-engine-one-off-item > .button-box {
-  border: none;
   padding: 0;
 }
 
@@ -236,6 +231,10 @@
 .searchbar-engine-one-off-item > .button-box > .button-icon {
   width: 16px;
   height: 16px;
+}
+
+.search-add-engines {
+  background-color: var(--arrowpanel-dimmed);
 }
 
 .addengine-item {
@@ -329,12 +328,13 @@
   min-height: 32px;
 }
 
+.search-setting-button:hover,
 .search-setting-button[selected] {
   background-color: var(--arrowpanel-dimmed-further);
 }
 
 .search-setting-button-compact > .button-box > .button-icon {
   list-style-image: url("chrome://browser/skin/gear.svg");
-  filter: url(chrome://global/skin/filters.svg#fill);
+  -moz-context-properties: fill;
   fill: currentColor;
 }

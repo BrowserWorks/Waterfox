@@ -294,7 +294,8 @@ function TypedArrayEvery(callbackfn/*, thisArg*/) {
     return true;
 }
 
-// ES6 draft rev29 (2014/12/06) 22.2.3.8 %TypedArray%.prototype.fill(value [, start [, end ]])
+// ES2018 draft rev ad2d1c60c5dc42a806696d4b58b4dca42d1f7dd4
+// 22.2.3.8 %TypedArray%.prototype.fill ( value [ , start [ , end ] ] )
 function TypedArrayFill(value, start = 0, end = undefined) {
     // This function is not generic.
     if (!IsObject(this) || !IsTypedArray(this)) {
@@ -302,36 +303,50 @@ function TypedArrayFill(value, start = 0, end = undefined) {
                             "TypedArrayFill");
     }
 
-    GetAttachedArrayBuffer(this);
-
-    // Steps 1-2.
+    // Step 1.
     var O = this;
 
-    // Steps 3-5.
+    // Step 2.
+    var buffer = GetAttachedArrayBuffer(this);
+
+    // Step 3.
     var len = TypedArrayLength(O);
 
-    // Steps 6-7.
+    // Step 4.
+    value = ToNumber(value);
+
+    // Step 5.
     var relativeStart = ToInteger(start);
 
-    // Step 8.
+    // Step 6.
     var k = relativeStart < 0
             ? std_Math_max(len + relativeStart, 0)
             : std_Math_min(relativeStart, len);
 
-    // Steps 9-10.
+    // Step 7.
     var relativeEnd = end === undefined ? len : ToInteger(end);
 
-    // Step 11.
+    // Step 8.
     var final = relativeEnd < 0
                 ? std_Math_max(len + relativeEnd, 0)
                 : std_Math_min(relativeEnd, len);
 
-    // Step 12.
+    // Step 9.
+    if (buffer === null) {
+        // A typed array previously using inline storage may acquire a
+        // buffer, so we must check with the source.
+        buffer = ViewedArrayBufferIfReified(O);
+    }
+
+    if (IsDetachedBuffer(buffer))
+        ThrowTypeError(JSMSG_TYPED_ARRAY_DETACHED);
+
+    // Step 10.
     for (; k < final; k++) {
         O[k] = value;
     }
 
-    // Step 13.
+    // Step 11.
     return O;
 }
 
@@ -1436,30 +1451,10 @@ function TypedArrayStaticFrom(source, mapfn = undefined, thisArg = undefined) {
     // Step 7.
     if (usingIterator !== undefined) {
         // Step 7.a.
-        // Inlined: 22.2.2.1.1 Runtime Semantics: IterableToList( items, method ).
-
-        // 22.2.2.1.1 IterableToList, step 1.
-        var iterator = GetIterator(source, usingIterator);
-
-        // 22.2.2.1.1 IterableToList, step 2.
-        var values = new List();
-
-        // 22.2.2.1.1 IterableToList, steps 3-4.
-        var i = 0;
-        while (true) {
-            // 22.2.2.1.1 IterableToList, step 4.a.
-            var next = callContentFunction(iterator.next, iterator);
-            if (!IsObject(next))
-                ThrowTypeError(JSMSG_ITER_METHOD_RETURNED_PRIMITIVE, "next");
-
-            // 22.2.2.1.1 IterableToList, step 4.b.
-            if (next.done)
-                break;
-            values[i++] = next.value;
-        }
+        var values = IterableToList(source, usingIterator);
 
         // Step 7.b.
-        var len = i;
+        var len = values.length;
 
         // Step 7.c.
         var targetObj = TypedArrayCreateWithLength(C, len);

@@ -190,6 +190,8 @@ NS_NewChannel(nsIChannel           **outChannel,
               nsLoadFlags            aLoadFlags = nsIRequest::LOAD_NORMAL,
               nsIIOService          *aIoService = nullptr);
 
+nsresult NS_GetIsDocumentChannel(nsIChannel * aChannel, bool *aIsDocument);
+
 nsresult NS_MakeAbsoluteURI(nsACString       &result,
                             const nsACString &spec,
                             nsIURI           *baseURI);
@@ -285,7 +287,8 @@ nsresult NS_NewInputStreamPump(nsIInputStreamPump **result,
                                int64_t              streamLen = int64_t(-1),
                                uint32_t             segsize = 0,
                                uint32_t             segcount = 0,
-                               bool                 closeWhenDone = false);
+                               bool                 closeWhenDone = false,
+                               nsIEventTarget      *mainThreadTarget = nullptr);
 
 // NOTE: you will need to specify whether or not your streams are buffered
 // (i.e., do they implement ReadSegments/WriteSegments).  the default
@@ -652,12 +655,14 @@ bool NS_HasBeenCrossOrigin(nsIChannel* aChannel, bool aReport = false);
 #define NECKO_SAFEBROWSING_FIRST_PARTY_DOMAIN \
   "safebrowsing.86868755-6b82-4842-b301-72671a0db32e.mozilla"
 
-/**
- * Determines whether appcache should be checked for a given URI.
- */
-bool NS_ShouldCheckAppCache(nsIURI *aURI, bool usePrivateBrowsing);
+// Unique first-party domain for separating about uri.
+#define ABOUT_URI_FIRST_PARTY_DOMAIN \
+  "about.ef2a7dd5-93bc-417f-a698-142c3116864f.mozilla"
 
-bool NS_ShouldCheckAppCache(nsIPrincipal *aPrincipal, bool usePrivateBrowsing);
+/**
+ * Determines whether appcache should be checked for a given principal.
+ */
+bool NS_ShouldCheckAppCache(nsIPrincipal *aPrincipal);
 
 /**
  * Wraps an nsIAuthPrompt so that it can be used as an nsIAuthPrompt2. This
@@ -920,6 +925,11 @@ bool NS_IsReasonableHTTPHeaderValue(const nsACString &aValue);
 bool NS_IsValidHTTPToken(const nsACString &aToken);
 
 /**
+ * Strip the leading or trailing HTTP whitespace per fetch spec section 2.2.
+ */
+void NS_TrimHTTPWhitespace(const nsACString& aSource, nsACString& aDest);
+
+/**
  * Return true if the given request must be upgraded to HTTPS.
  */
 nsresult NS_ShouldSecureUpgrade(nsIURI* aURI,
@@ -942,6 +952,11 @@ nsresult NS_CompareLoadInfoAndLoadContext(nsIChannel *aChannel);
  * pref network.http.referer.userControlPolicy
  */
 uint32_t NS_GetDefaultReferrerPolicy();
+
+/**
+ * Update the window id of the current focused top level content window.
+ */
+nsresult NS_NotifyCurrentTopLevelOuterContentWindowId(uint64_t aWindowId);
 
 namespace mozilla {
 namespace net {

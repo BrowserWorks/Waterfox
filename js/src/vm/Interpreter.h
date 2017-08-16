@@ -14,8 +14,6 @@
 #include "jsiter.h"
 #include "jspubtd.h"
 
-#include "frontend/ParseNode.h"
-
 #include "vm/Stack.h"
 
 namespace js {
@@ -556,7 +554,8 @@ enum class CheckIsObjectKind : uint8_t {
     IteratorNext,
     IteratorReturn,
     IteratorThrow,
-    GetIterator
+    GetIterator,
+    GetAsyncIterator
 };
 
 bool
@@ -577,6 +576,15 @@ DefaultClassConstructor(JSContext* cx, unsigned argc, Value* vp);
 
 bool
 Debug_CheckSelfHosted(JSContext* cx, HandleValue v);
+
+bool
+CheckClassHeritageOperation(JSContext* cx, HandleValue heritage);
+
+JSObject*
+ObjectWithProtoOperation(JSContext* cx, HandleValue proto);
+
+JSObject*
+FunWithProtoOperation(JSContext* cx, HandleFunction fun, HandleObject parent, HandleObject proto);
 
 }  /* namespace js */
 

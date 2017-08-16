@@ -195,7 +195,7 @@ public:
 
   // aClient provides the underlying transport that cache will use to read
   // data for this stream.
-  explicit MediaCacheStream(ChannelMediaResource* aClient);
+  MediaCacheStream(ChannelMediaResource* aClient, bool aIsPrivateBrowsing);
   ~MediaCacheStream();
 
   // Set up this stream with the cache. Can fail on OOM. One
@@ -225,7 +225,7 @@ public:
   // Returns true when this stream is can be shared by a new resource load
   bool IsAvailableForSharing() const
   {
-    return !mClosed &&
+    return !mClosed && !mIsPrivateBrowsing &&
       (!mDidNotifyDataEnded || NS_SUCCEEDED(mNotifyDataEndedStatus));
   }
   // Get the principal for this stream. Anything accessing the contents of
@@ -347,6 +347,8 @@ public:
   // 'Read' for argument and return details.
   nsresult ReadAt(int64_t aOffset, char* aBuffer,
                   uint32_t aCount, uint32_t* aBytes);
+
+  void ThrottleReadahead(bool bThrottle);
 
   size_t SizeOfExcludingThis(MallocSizeOf aMallocSizeOf) const;
 
@@ -508,10 +510,14 @@ private:
   // to wait here so we can write back a complete block. The first
   // mChannelOffset%BLOCK_SIZE bytes have been filled in with good data,
   // the rest are garbage.
-  // Use int64_t so that the data is well-aligned.
   // Heap allocate this buffer since the exact power-of-2 will cause allocation
   // slop when combined with the rest of the object members.
-  UniquePtr<int64_t[]> mPartialBlockBuffer;
+  UniquePtr<uint8_t[]> mPartialBlockBuffer = MakeUnique<uint8_t[]>(BLOCK_SIZE);
+
+  // True if associated with a private browsing window.
+  const bool mIsPrivateBrowsing;
+
+  bool mThrottleReadahead = false;
 };
 
 } // namespace mozilla

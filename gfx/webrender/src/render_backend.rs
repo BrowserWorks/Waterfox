@@ -2,27 +2,33 @@
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
 
-use byteorder::{LittleEndian, ReadBytesExt};
 use frame::Frame;
 use frame_builder::FrameBuilderConfig;
-use internal_types::{FontTemplate, GLContextHandleWrapper, GLContextWrapper};
-use internal_types::{SourceTexture, ResultMsg, RendererFrame};
-use profiler::{BackendProfileCounters, TextureCacheProfileCounters};
+use internal_types::{FontTemplate, SourceTexture, ResultMsg, RendererFrame};
+use profiler::{BackendProfileCounters, GpuCacheProfileCounters, TextureCacheProfileCounters};
 use record::ApiRecordingReceiver;
 use resource_cache::ResourceCache;
 use scene::Scene;
 use std::collections::HashMap;
-use std::io::{Cursor, Read};
 use std::sync::{Arc, Mutex};
 use std::sync::mpsc::Sender;
 use texture_cache::TextureCache;
+use time::precise_time_ns;
 use thread_profiler::register_thread_with_profiler;
-use threadpool::ThreadPool;
-use webrender_traits::{ApiMsg, AuxiliaryLists, BuiltDisplayList, IdNamespace, ImageData};
-use webrender_traits::{PipelineId, RenderNotifier, RenderDispatcher, WebGLCommand, WebGLContextId};
-use webrender_traits::channel::{PayloadHelperMethods, PayloadReceiver, PayloadSender, MsgReceiver};
-use webrender_traits::{BlobImageRenderer, VRCompositorCommand, VRCompositorHandler};
+use rayon::ThreadPool;
+use webgl_types::{GLContextHandleWrapper, GLContextWrapper};
+use webrender_traits::channel::{MsgReceiver, PayloadReceiver, PayloadReceiverHelperMethods};
+use webrender_traits::channel::{PayloadSender, PayloadSenderHelperMethods};
+use webrender_traits::{ApiMsg, BlobImageRenderer, BuiltDisplayList, DeviceIntPoint};
+use webrender_traits::{DeviceUintPoint, DeviceUintRect, DeviceUintSize, IdNamespace, ImageData};
+use webrender_traits::{LayerPoint, PipelineId, RenderDispatcher, RenderNotifier};
+use webrender_traits::{VRCompositorCommand, VRCompositorHandler, WebGLCommand, WebGLContextId};
+
+#[cfg(feature = "webgl")]
 use offscreen_gl_context::GLContextDispatcher;
+
+#[cfg(not(feature = "webgl"))]
+use webgl_types::GLContextDispatcher;
 
 /// The render backend is responsible for transforming high level display lists into
 /// GPU-friendly work which is then submitted to the renderer in the form of a frame::Frame.
@@ -34,7 +40,13 @@ pub struct RenderBackend {
     payload_tx: PayloadSender,
     result_tx: Sender<ResultMsg>,
 
-    device_pixel_ratio: f32,
+    // TODO(gw): Consider using strongly typed units here.
+    hidpi_factor: f32,
+    page_zoom_factor: f32,
+    pinch_zoom_factor: f32,
+    pan: DeviceIntPoint,
+    window_size: DeviceUintSize,
+    inner_rect: DeviceUintRect,
     next_namespace_id: IdNamespace,
 
     resource_cache: ResourceCache,
@@ -59,19 +71,19 @@ impl RenderBackend {
                payload_rx: PayloadReceiver,
                payload_tx: PayloadSender,
                result_tx: Sender<ResultMsg>,
-               device_pixel_ratio: f32,
+               hidpi_factor: f32,
                texture_cache: TextureCache,
-               enable_aa: bool,
-               workers: Arc<Mutex<ThreadPool>>,
+               workers: Arc<ThreadPool>,
                notifier: Arc<Mutex<Option<Box<RenderNotifier>>>>,
                webrender_context_handle: Option<GLContextHandleWrapper>,
                config: FrameBuilderConfig,
                recorder: Option<Box<ApiRecordingReceiver>>,
                main_thread_dispatcher: Arc<Mutex<Option<Box<RenderDispatcher>>>>,
                blob_image_renderer: Option<Box<BlobImageRenderer>>,
-               vr_compositor_handler: Arc<Mutex<Option<Box<VRCompositorHandler>>>>) -> RenderBackend {
+               vr_compositor_handler: Arc<Mutex<Option<Box<VRCompositorHandler>>>>,
+               initial_window_size: DeviceUintSize) -> RenderBackend {
 
-        let resource_cache = ResourceCache::new(texture_cache, workers, blob_image_renderer, enable_aa);
+        let resource_cache = ResourceCache::new(texture_cache, workers, blob_image_renderer);
 
         register_thread_with_profiler("Backend".to_string());
 
@@ -80,7 +92,10 @@ impl RenderBackend {
             payload_rx: payload_rx,
             payload_tx: payload_tx,
             result_tx: result_tx,
-            device_pixel_ratio: device_pixel_ratio,
+            hidpi_factor: hidpi_factor,
+            page_zoom_factor: 1.0,
+            pinch_zoom_factor: 1.0,
+            pan: DeviceIntPoint::zero(),
             resource_cache: resource_cache,
             scene: Scene::new(),
             frame: Frame::new(config),
@@ -92,7 +107,9 @@ impl RenderBackend {
             recorder: recorder,
             main_thread_dispatcher: main_thread_dispatcher,
             next_webgl_id: 0,
-            vr_compositor_handler: vr_compositor_handler
+            vr_compositor_handler: vr_compositor_handler,
+            window_size: initial_window_size,
+            inner_rect: DeviceUintRect::new(DeviceUintPoint::zero(), initial_window_size),
         }
     }
 
@@ -108,14 +125,17 @@ impl RenderBackend {
                         r.write_msg(frame_counter, &msg);
                     }
                     match msg {
-                        ApiMsg::AddRawFont(id, bytes) => {
-                            profile_counters.font_templates.inc(bytes.len());
+                        ApiMsg::AddRawFont(id, bytes, index) => {
+                            profile_counters.resources.font_templates.inc(bytes.len());
                             self.resource_cache
-                                .add_font_template(id, FontTemplate::Raw(Arc::new(bytes)));
+                                .add_font_template(id, FontTemplate::Raw(Arc::new(bytes), index));
                         }
                         ApiMsg::AddNativeFont(id, native_font_handle) => {
                             self.resource_cache
                                 .add_font_template(id, FontTemplate::Native(native_font_handle));
+                        }
+                        ApiMsg::DeleteFont(id) => {
+                            self.resource_cache.delete_font_template(id);
                         }
                         ApiMsg::GetGlyphDimensions(glyph_keys, tx) => {
                             let mut glyph_dimensions = Vec::with_capacity(glyph_keys.len());
@@ -127,15 +147,28 @@ impl RenderBackend {
                         }
                         ApiMsg::AddImage(id, descriptor, data, tiling) => {
                             if let ImageData::Raw(ref bytes) = data {
-                                profile_counters.image_templates.inc(bytes.len());
+                                profile_counters.resources.image_templates.inc(bytes.len());
                             }
                             self.resource_cache.add_image_template(id, descriptor, data, tiling);
                         }
-                        ApiMsg::UpdateImage(id, descriptor, bytes) => {
-                            self.resource_cache.update_image_template(id, descriptor, bytes);
+                        ApiMsg::UpdateImage(id, descriptor, bytes, dirty_rect) => {
+                            self.resource_cache.update_image_template(id, descriptor, bytes, dirty_rect);
                         }
                         ApiMsg::DeleteImage(id) => {
                             self.resource_cache.delete_image_template(id);
+                        }
+                        ApiMsg::SetPageZoom(factor) => {
+                            self.page_zoom_factor = factor.get();
+                        }
+                        ApiMsg::SetPinchZoom(factor) => {
+                            self.pinch_zoom_factor = factor.get();
+                        }
+                        ApiMsg::SetPan(pan) => {
+                            self.pan = pan;
+                        }
+                        ApiMsg::SetWindowParameters(window_size, inner_rect) => {
+                            self.window_size = window_size;
+                            self.inner_rect = inner_rect;
                         }
                         ApiMsg::CloneApi(sender) => {
                             let result = self.next_namespace_id;
@@ -145,60 +178,64 @@ impl RenderBackend {
 
                             sender.send(result).unwrap();
                         }
-                        ApiMsg::SetRootDisplayList(background_color,
-                                                   epoch,
-                                                   pipeline_id,
-                                                   viewport_size,
-                                                   display_list_descriptor,
-                                                   auxiliary_lists_descriptor,
-                                                   preserve_frame_state) => {
-                            profile_scope!("SetRootDisplayList");
-                            let mut leftover_auxiliary_data = vec![];
-                            let mut auxiliary_data;
+                        ApiMsg::SetDisplayList(background_color,
+                                               epoch,
+                                               pipeline_id,
+                                               viewport_size,
+                                               content_size,
+                                               display_list_descriptor,
+                                               preserve_frame_state) => {
+                            profile_scope!("SetDisplayList");
+                            let mut leftover_data = vec![];
+                            let mut data;
                             loop {
-                                auxiliary_data = self.payload_rx.recv().unwrap();
+                                data = self.payload_rx.recv_payload().unwrap();
                                 {
-                                    let mut payload_reader = Cursor::new(&auxiliary_data[..]);
-                                    let payload_epoch =
-                                        payload_reader.read_u32::<LittleEndian>().unwrap();
-                                    if payload_epoch == epoch.0 {
+                                    if data.epoch == epoch &&
+                                       data.pipeline_id == pipeline_id {
                                         break
                                     }
                                 }
-                                leftover_auxiliary_data.push(auxiliary_data)
+                                leftover_data.push(data)
                             }
-                            for leftover_auxiliary_data in leftover_auxiliary_data {
-                                self.payload_tx.send_vec(leftover_auxiliary_data).unwrap()
+                            for leftover_data in leftover_data {
+                                self.payload_tx.send_payload(leftover_data).unwrap()
                             }
                             if let Some(ref mut r) = self.recorder {
-                                r.write_payload(frame_counter, &auxiliary_data);
+                                r.write_payload(frame_counter, &data.to_data());
                             }
 
-                            let mut auxiliary_data = Cursor::new(&mut auxiliary_data[4..]);
-                            let mut built_display_list_data =
-                                vec![0; display_list_descriptor.size()];
-                            auxiliary_data.read_exact(&mut built_display_list_data[..]).unwrap();
                             let built_display_list =
-                                BuiltDisplayList::from_data(built_display_list_data,
+                                BuiltDisplayList::from_data(data.display_list_data,
                                                             display_list_descriptor);
-                            let mut auxiliary_lists_data =
-                                vec![0; auxiliary_lists_descriptor.size()];
-                            auxiliary_data.read_exact(&mut auxiliary_lists_data[..]).unwrap();
-                            let auxiliary_lists =
-                                AuxiliaryLists::from_data(auxiliary_lists_data,
-                                                          auxiliary_lists_descriptor);
 
                             if !preserve_frame_state {
                                 self.discard_frame_state_for_pipeline(pipeline_id);
                             }
 
-                            self.scene.set_root_display_list(pipeline_id,
-                                                             epoch,
-                                                             built_display_list,
-                                                             background_color,
-                                                             viewport_size,
-                                                             auxiliary_lists);
-                            self.build_scene();
+                            let display_list_len = built_display_list.data().len();
+                            let (builder_start_time, builder_finish_time) = built_display_list.times();
+
+                            let display_list_received_time = precise_time_ns();
+
+                            profile_counters.total_time.profile(|| {
+                                self.scene.set_display_list(pipeline_id,
+                                                            epoch,
+                                                            built_display_list,
+                                                            background_color,
+                                                            viewport_size,
+                                                            content_size);
+                                self.build_scene();
+                            });
+
+                            // Note: this isn't quite right as auxiliary values will be
+                            // pulled out somewhere in the prim_store, but aux values are
+                            // really simple and cheap to access, so it's not a big deal.
+                            let display_list_consumed_time = precise_time_ns();
+
+                            profile_counters.ipc.set(builder_start_time, builder_finish_time,
+                                                     display_list_received_time, display_list_consumed_time,
+                                                     display_list_len);
                         }
                         ApiMsg::SetRootPipeline(pipeline_id) => {
                             profile_scope!("SetRootPipeline");
@@ -208,15 +245,18 @@ impl RenderBackend {
                                 continue;
                             }
 
-                            self.build_scene();
+                            profile_counters.total_time.profile(|| {
+                                self.build_scene();
+                            })
                         }
                         ApiMsg::Scroll(delta, cursor, move_phase) => {
                             profile_scope!("Scroll");
                             let frame = {
-                                let counters = &mut profile_counters.texture_cache;
+                                let counters = &mut profile_counters.resources.texture_cache;
+                                let gpu_cache_counters = &mut profile_counters.resources.gpu_cache;
                                 profile_counters.total_time.profile(|| {
                                     if self.frame.scroll(delta, cursor, move_phase) {
-                                        Some(self.render(counters))
+                                        Some(self.render(counters, gpu_cache_counters))
                                     } else {
                                         None
                                     }
@@ -231,13 +271,14 @@ impl RenderBackend {
                                 None => self.notify_compositor_of_new_scroll_frame(false),
                             }
                         }
-                        ApiMsg::ScrollLayersWithScrollId(origin, pipeline_id, scroll_root_id) => {
-                            profile_scope!("ScrollLayersWithScrollId");
+                        ApiMsg::ScrollNodeWithId(origin, id, clamp) => {
+                            profile_scope!("ScrollNodeWithScrollId");
                             let frame = {
-                                let counters = &mut profile_counters.texture_cache;
+                                let counters = &mut profile_counters.resources.texture_cache;
+                                let gpu_cache_counters = &mut profile_counters.resources.gpu_cache;
                                 profile_counters.total_time.profile(|| {
-                                    if self.frame.scroll_nodes(origin, pipeline_id, scroll_root_id) {
-                                        Some(self.render(counters))
+                                    if self.frame.scroll_node(origin, id, clamp) {
+                                        Some(self.render(counters, gpu_cache_counters))
                                     } else {
                                         None
                                     }
@@ -256,10 +297,11 @@ impl RenderBackend {
                         ApiMsg::TickScrollingBounce => {
                             profile_scope!("TickScrollingBounce");
                             let frame = {
-                                let counters = &mut profile_counters.texture_cache;
+                                let counters = &mut profile_counters.resources.texture_cache;
+                                let gpu_cache_counters = &mut profile_counters.resources.gpu_cache;
                                 profile_counters.total_time.profile(|| {
                                     self.frame.tick_scrolling_bounce_animations();
-                                    self.render(counters)
+                                    self.render(counters, gpu_cache_counters)
                                 })
                             };
 
@@ -268,22 +310,24 @@ impl RenderBackend {
                         ApiMsg::TranslatePointToLayerSpace(..) => {
                             panic!("unused api - remove from webrender_traits");
                         }
-                        ApiMsg::GetScrollLayerState(tx) => {
-                            profile_scope!("GetScrollLayerState");
-                            tx.send(self.frame.get_scroll_node_state())
-                              .unwrap()
+                        ApiMsg::GetScrollNodeState(tx) => {
+                            profile_scope!("GetScrollNodeState");
+                            tx.send(self.frame.get_scroll_node_state()).unwrap()
                         }
                         ApiMsg::RequestWebGLContext(size, attributes, tx) => {
                             if let Some(ref wrapper) = self.webrender_context_handle {
                                 let dispatcher: Option<Box<GLContextDispatcher>> = if cfg!(target_os = "windows") {
                                     Some(Box::new(WebRenderGLDispatcher {
-                                        dispatcher: self.main_thread_dispatcher.clone()
+                                        dispatcher: Arc::clone(&self.main_thread_dispatcher)
                                     }))
                                 } else {
                                     None
                                 };
 
                                 let result = wrapper.new_context(size, attributes, dispatcher);
+                                // Creating a new GLContext may make the current bound context_id dirty.
+                                // Clear it to ensure that  make_current() is called in subsequent commands.
+                                self.current_bound_webgl_context_id = None;
 
                                 match result {
                                     Ok(ctx) => {
@@ -310,7 +354,10 @@ impl RenderBackend {
                         }
                         ApiMsg::ResizeWebGLContext(context_id, size) => {
                             let ctx = self.webgl_contexts.get_mut(&context_id).unwrap();
-                            ctx.make_current();
+                            if Some(context_id) != self.current_bound_webgl_context_id {
+                                ctx.make_current();
+                                self.current_bound_webgl_context_id = Some(context_id);
+                            }
                             match ctx.resize(&size) {
                                 Ok(_) => {
                                     // Update webgl texture size. Texture id may change too.
@@ -328,12 +375,18 @@ impl RenderBackend {
                             // TODO: Buffer the commands and only apply them here if they need to
                             // be synchronous.
                             let ctx = &self.webgl_contexts[&context_id];
-                            ctx.make_current();
+                            if Some(context_id) != self.current_bound_webgl_context_id {
+                                ctx.make_current();
+                                self.current_bound_webgl_context_id = Some(context_id);
+                            }
                             ctx.apply_command(command);
-                            self.current_bound_webgl_context_id = Some(context_id);
                         },
 
                         ApiMsg::VRCompositorCommand(context_id, command) => {
+                            if Some(context_id) != self.current_bound_webgl_context_id {
+                                self.webgl_contexts[&context_id].make_current();
+                                self.current_bound_webgl_context_id = Some(context_id);
+                            }
                             self.handle_vr_compositor_command(context_id, command);
                         }
                         ApiMsg::GenerateFrame(property_bindings) => {
@@ -351,13 +404,16 @@ impl RenderBackend {
                             //           rebuild of the frame!
                             if let Some(property_bindings) = property_bindings {
                                 self.scene.properties.set_properties(property_bindings);
-                                self.build_scene();
+                                profile_counters.total_time.profile(|| {
+                                    self.build_scene();
+                                });
                             }
 
                             let frame = {
-                                let counters = &mut profile_counters.texture_cache;
+                                let counters = &mut profile_counters.resources.texture_cache;
+                                let gpu_cache_counters = &mut profile_counters.resources.gpu_cache;
                                 profile_counters.total_time.profile(|| {
-                                    self.render(counters)
+                                    self.render(counters, gpu_cache_counters)
                                 })
                             };
                             if self.scene.root_pipeline_id.is_some() {
@@ -398,6 +454,10 @@ impl RenderBackend {
         self.frame.discard_frame_state_for_pipeline(pipeline_id);
     }
 
+    fn accumulated_scale_factor(&self) -> f32 {
+        self.hidpi_factor * self.page_zoom_factor * self.pinch_zoom_factor
+    }
+
     fn build_scene(&mut self) {
         // Flatten the stacking context hierarchy
         if let Some(id) = self.current_bound_webgl_context_id {
@@ -418,17 +478,27 @@ impl RenderBackend {
             webgl_context.unbind();
         }
 
-        self.frame.create(&self.scene, &mut self.resource_cache);
+        let accumulated_scale_factor = self.accumulated_scale_factor();
+        self.frame.create(&self.scene,
+                          &mut self.resource_cache,
+                          self.window_size,
+                          self.inner_rect,
+                          accumulated_scale_factor);
     }
 
     fn render(&mut self,
-              texture_cache_profile: &mut TextureCacheProfileCounters)
+              texture_cache_profile: &mut TextureCacheProfileCounters,
+              gpu_cache_profile: &mut GpuCacheProfileCounters)
               -> RendererFrame {
+        let accumulated_scale_factor = self.accumulated_scale_factor();
+        let pan = LayerPoint::new(self.pan.x as f32 / accumulated_scale_factor,
+                                  self.pan.y as f32 / accumulated_scale_factor);
         let frame = self.frame.build(&mut self.resource_cache,
-                                     &self.scene.pipeline_auxiliary_lists,
-                                     self.device_pixel_ratio,
-                                     texture_cache_profile);
-
+                                     &self.scene.display_lists,
+                                     accumulated_scale_factor,
+                                     pan,
+                                     texture_cache_profile,
+                                     gpu_cache_profile);
         frame
     }
 
@@ -436,8 +506,7 @@ impl RenderBackend {
                      frame: RendererFrame,
                      profile_counters: &mut BackendProfileCounters) {
         let pending_update = self.resource_cache.pending_updates();
-        let pending_external_image_update = self.resource_cache.pending_external_image_updates();
-        let msg = ResultMsg::NewFrame(frame, pending_update, pending_external_image_update, profile_counters.clone());
+        let msg = ResultMsg::NewFrame(frame, pending_update, profile_counters.clone());
         self.result_tx.send(msg).unwrap();
         profile_counters.reset();
     }
@@ -468,7 +537,10 @@ impl RenderBackend {
         let texture = match cmd {
             VRCompositorCommand::SubmitFrame(..) => {
                     match self.resource_cache.get_webgl_texture(&ctx_id).texture_id {
-                        SourceTexture::WebGL(texture_id) => Some(texture_id),
+                        SourceTexture::WebGL(texture_id) => {
+                            let size = self.resource_cache.get_webgl_texture_size(&ctx_id);
+                            Some((texture_id, size))
+                        },
                         _=> None
                     }
             },

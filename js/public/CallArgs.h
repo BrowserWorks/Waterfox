@@ -97,29 +97,26 @@ CheckIsValidConstructible(const Value& v);
 
 class MOZ_STACK_CLASS IncludeUsedRval
 {
-  protected:
-#ifdef JS_DEBUG
     mutable bool usedRval_;
+
+  public:
+    bool usedRval() const { return usedRval_; }
     void setUsedRval() const { usedRval_ = true; }
     void clearUsedRval() const { usedRval_ = false; }
     void assertUnusedRval() const { MOZ_ASSERT(!usedRval_); }
-#else
-    void setUsedRval() const {}
-    void clearUsedRval() const {}
-    void assertUnusedRval() const {}
-#endif
 };
 
 class MOZ_STACK_CLASS NoUsedRval
 {
-  protected:
+  public:
+    bool usedRval() const { return false; }
     void setUsedRval() const {}
     void clearUsedRval() const {}
     void assertUnusedRval() const {}
 };
 
 template<class WantUsedRval>
-class MOZ_STACK_CLASS CallArgsBase : public WantUsedRval
+class MOZ_STACK_CLASS CallArgsBase
 {
     static_assert(mozilla::IsSame<WantUsedRval, IncludeUsedRval>::value ||
                   mozilla::IsSame<WantUsedRval, NoUsedRval>::value,
@@ -128,7 +125,23 @@ class MOZ_STACK_CLASS CallArgsBase : public WantUsedRval
   protected:
     Value* argv_;
     unsigned argc_;
-    bool constructing_;
+    bool constructing_:1;
+
+    // True if the caller does not use the return value.
+    bool ignoresReturnValue_:1;
+
+#ifdef JS_DEBUG
+    WantUsedRval wantUsedRval_;
+    bool usedRval() const { return wantUsedRval_.usedRval(); }
+    void setUsedRval() const { wantUsedRval_.setUsedRval(); }
+    void clearUsedRval() const { wantUsedRval_.clearUsedRval(); }
+    void assertUnusedRval() const { wantUsedRval_.assertUnusedRval(); }
+#else
+    bool usedRval() const { return false; }
+    void setUsedRval() const {}
+    void clearUsedRval() const {}
+    void assertUnusedRval() const {}
+#endif
 
   public:
     // CALLEE ACCESS
@@ -157,11 +170,15 @@ class MOZ_STACK_CLASS CallArgsBase : public WantUsedRval
             return false;
 
 #ifdef JS_DEBUG
-        if (!this->usedRval_)
+        if (!this->usedRval())
             CheckIsValidConstructible(calleev());
 #endif
 
         return true;
+    }
+
+    bool ignoresReturnValue() const {
+        return ignoresReturnValue_;
     }
 
     MutableHandleValue newTarget() const {
@@ -280,14 +297,17 @@ class MOZ_STACK_CLASS CallArgs : public detail::CallArgsBase<detail::IncludeUsed
 {
   private:
     friend CallArgs CallArgsFromVp(unsigned argc, Value* vp);
-    friend CallArgs CallArgsFromSp(unsigned stackSlots, Value* sp, bool constructing);
+    friend CallArgs CallArgsFromSp(unsigned stackSlots, Value* sp, bool constructing,
+                                   bool ignoresReturnValue);
 
-    static CallArgs create(unsigned argc, Value* argv, bool constructing) {
+    static CallArgs create(unsigned argc, Value* argv, bool constructing,
+                           bool ignoresReturnValue = false) {
         CallArgs args;
         args.clearUsedRval();
         args.argv_ = argv;
         args.argc_ = argc;
         args.constructing_ = constructing;
+        args.ignoresReturnValue_ = ignoresReturnValue;
 #ifdef DEBUG
         MOZ_ASSERT(ValueIsNotGray(args.thisv()));
         MOZ_ASSERT(ValueIsNotGray(args.calleev()));
@@ -302,7 +322,7 @@ class MOZ_STACK_CLASS CallArgs : public detail::CallArgsBase<detail::IncludeUsed
      * Returns true if there are at least |required| arguments passed in. If
      * false, it reports an error message on the context.
      */
-    bool requireAtLeast(JSContext* cx, const char* fnname, unsigned required) const;
+    JS_PUBLIC_API(bool) requireAtLeast(JSContext* cx, const char* fnname, unsigned required) const;
 
 };
 
@@ -316,9 +336,11 @@ CallArgsFromVp(unsigned argc, Value* vp)
 // eventually move it to an internal header.  Embedders should use
 // JS::CallArgsFromVp!
 MOZ_ALWAYS_INLINE CallArgs
-CallArgsFromSp(unsigned stackSlots, Value* sp, bool constructing = false)
+CallArgsFromSp(unsigned stackSlots, Value* sp, bool constructing = false,
+               bool ignoresReturnValue = false)
 {
-    return CallArgs::create(stackSlots - constructing, sp - stackSlots, constructing);
+    return CallArgs::create(stackSlots - constructing, sp - stackSlots, constructing,
+                            ignoresReturnValue);
 }
 
 } // namespace JS

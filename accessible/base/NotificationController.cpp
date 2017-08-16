@@ -591,7 +591,6 @@ void
 NotificationController::WillRefresh(mozilla::TimeStamp aTime)
 {
   PROFILER_LABEL_FUNC(js::ProfileEntry::Category::OTHER);
-  Telemetry::AutoTimer<Telemetry::A11Y_UPDATE_TIME> updateTimer;
 
   // If the document accessible that notification collector was created for is
   // now shut down, don't process notifications anymore.
@@ -657,8 +656,10 @@ NotificationController::WillRefresh(mozilla::TimeStamp aTime)
       continue;
     }
 
+  #ifdef A11Y_LOG
     nsIContent* containerElm = containerNode->IsElement() ?
       containerNode->AsElement() : nullptr;
+  #endif
 
     nsIFrame::RenderedText text = textFrame->GetRenderedText(0,
         UINT32_MAX, nsIFrame::TextOffsetType::OFFSETS_IN_CONTENT_TEXT,
@@ -676,7 +677,7 @@ NotificationController::WillRefresh(mozilla::TimeStamp aTime)
         }
   #endif
 
-        mDocument->ContentRemoved(containerElm, textNode);
+        mDocument->ContentRemoved(textAcc);
         continue;
       }
 
@@ -730,13 +731,20 @@ NotificationController::WillRefresh(mozilla::TimeStamp aTime)
   }
   mContentInsertions.Clear();
 
-  // Bind hanging child documents.
+  // Bind hanging child documents unless we are using IPC and the
+  // document has no IPC actor.  If we fail to bind the child doc then
+  // shut it down.
   uint32_t hangingDocCnt = mHangingChildDocuments.Length();
   nsTArray<RefPtr<DocAccessible>> newChildDocs;
   for (uint32_t idx = 0; idx < hangingDocCnt; idx++) {
     DocAccessible* childDoc = mHangingChildDocuments[idx];
     if (childDoc->IsDefunct())
       continue;
+
+    if (IPCAccessibilityActive() && !mDocument->IPCDoc()) {
+      childDoc->Shutdown();
+      continue;
+    }
 
     nsIContent* ownerContent = mDocument->DocumentNode()->
       FindContentForSubDocument(childDoc->DocumentNode());
@@ -756,7 +764,12 @@ NotificationController::WillRefresh(mozilla::TimeStamp aTime)
     }
   }
 
+  // Clear the hanging documents list, even if we didn't bind them.
   mHangingChildDocuments.Clear();
+  MOZ_ASSERT(mDocument, "Illicit document shutdown");
+  if (!mDocument) {
+    return;
+  }
 
   // If the document is ready and all its subdocuments are completely loaded
   // then process the document load.
@@ -791,10 +804,6 @@ NotificationController::WillRefresh(mozilla::TimeStamp aTime)
   // Process invalidation list of the document after all accessible tree
   // modification are done.
   mDocument->ProcessInvalidationList();
-
-  // We cannot rely on DOM tree to keep aria-owns relations updated. Make
-  // a validation to remove dead links.
-  mDocument->ValidateARIAOwned();
 
   // Process relocation list.
   for (uint32_t idx = 0; idx < mRelocations.Length(); idx++) {

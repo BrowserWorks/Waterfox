@@ -47,19 +47,26 @@ IsMarkedBlack(JSObject* obj)
 bool
 HeapSlot::preconditionForSet(NativeObject* owner, Kind kind, uint32_t slot) const
 {
-    return kind == Slot
-         ? &owner->getSlotRef(slot) == this
-         : &owner->getDenseElement(slot) == (const Value*)this;
+    if (kind == Slot)
+        return &owner->getSlotRef(slot) == this;
+
+    uint32_t numShifted = owner->getElementsHeader()->numShiftedElements();
+    MOZ_ASSERT(slot >= numShifted);
+    return &owner->getDenseElement(slot - numShifted) == (const Value*)this;
 }
 
 void
 HeapSlot::assertPreconditionForWriteBarrierPost(NativeObject* obj, Kind kind, uint32_t slot,
                                                 const Value& target) const
 {
-    if (kind == Slot)
+    if (kind == Slot) {
         MOZ_ASSERT(obj->getSlotAddressUnchecked(slot)->get() == target);
-    else
-        MOZ_ASSERT(static_cast<HeapSlot*>(obj->getDenseElements() + slot)->get() == target);
+    } else {
+        uint32_t numShifted = obj->getElementsHeader()->numShiftedElements();
+        MOZ_ASSERT(slot >= numShifted);
+        MOZ_ASSERT(static_cast<HeapSlot*>(obj->getDenseElements() + (slot - numShifted))->get() ==
+                   target);
+    }
 
     CheckEdgeIsNotBlackToGray(obj, target);
 }
@@ -180,12 +187,21 @@ MovableCellHasher<T>::match(const Key& k, const Lookup& l)
     return zone->getUniqueIdInfallible(k) == zone->getUniqueIdInfallible(l);
 }
 
-template struct MovableCellHasher<JSObject*>;
-template struct MovableCellHasher<GlobalObject*>;
-template struct MovableCellHasher<SavedFrame*>;
-template struct MovableCellHasher<EnvironmentObject*>;
-template struct MovableCellHasher<WasmInstanceObject*>;
-template struct MovableCellHasher<JSScript*>;
+#ifdef JS_BROKEN_GCC_ATTRIBUTE_WARNING
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wattributes"
+#endif // JS_BROKEN_GCC_ATTRIBUTE_WARNING
+
+template struct JS_PUBLIC_API(MovableCellHasher<JSObject*>);
+template struct JS_PUBLIC_API(MovableCellHasher<GlobalObject*>);
+template struct JS_PUBLIC_API(MovableCellHasher<SavedFrame*>);
+template struct JS_PUBLIC_API(MovableCellHasher<EnvironmentObject*>);
+template struct JS_PUBLIC_API(MovableCellHasher<WasmInstanceObject*>);
+template struct JS_PUBLIC_API(MovableCellHasher<JSScript*>);
+
+#ifdef JS_BROKEN_GCC_ATTRIBUTE_WARNING
+#pragma GCC diagnostic pop
+#endif // JS_BROKEN_GCC_ATTRIBUTE_WARNING
 
 } // namespace js
 

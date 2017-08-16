@@ -17,10 +17,10 @@
 #include "mozilla/Attributes.h"
 #include "nsBoxFrame.h"
 
-class nsStackFrame : public nsBoxFrame
+class nsStackFrame final : public nsBoxFrame
 {
 public:
-  NS_DECL_FRAMEARENA_HELPERS
+  NS_DECL_FRAMEARENA_HELPERS(nsStackFrame)
 
   friend nsIFrame* NS_NewStackFrame(nsIPresShell* aPresShell,
                                     nsStyleContext* aContext);

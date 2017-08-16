@@ -70,7 +70,6 @@ CSS_PSEUDO_CLASS(empty, ":empty", 0, "")
 CSS_PSEUDO_CLASS(mozOnlyWhitespace, ":-moz-only-whitespace", 0, "")
 CSS_PSEUDO_CLASS(mozEmptyExceptChildrenWithLocalname, ":-moz-empty-except-children-with-localname", 0, "")
 CSS_PSEUDO_CLASS(lang, ":lang", 0, "")
-CSS_PSEUDO_CLASS(mozBoundElement, ":-moz-bound-element", 0, "")
 CSS_PSEUDO_CLASS(root, ":root", 0, "")
 CSS_PSEUDO_CLASS(any, ":-moz-any", 0, "")
 
@@ -208,6 +207,13 @@ CSS_STATE_PSEUDO_CLASS(mozHandlerCrashed, ":-moz-handler-crashed",
 CSS_STATE_PSEUDO_CLASS(mozMathIncrementScriptLevel,
                        ":-moz-math-increment-script-level", 0, "",
                        NS_EVENT_STATE_INCREMENT_SCRIPT_LEVEL)
+
+CSS_STATE_PSEUDO_CLASS(mozAutofill, ":-moz-autofill",
+                       CSS_PSEUDO_CLASS_ENABLED_IN_UA_SHEETS_AND_CHROME, "",
+                       NS_EVENT_STATE_AUTOFILL)
+CSS_STATE_PSEUDO_CLASS(mozAutofillPreview, ":-moz-autofill-preview",
+                       CSS_PSEUDO_CLASS_ENABLED_IN_UA_SHEETS_AND_CHROME, "",
+                       NS_EVENT_STATE_AUTOFILL_PREVIEW)
 
 // CSS 3 UI
 // http://www.w3.org/TR/2004/CR-css3-ui-20040511/#pseudo-classes

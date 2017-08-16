@@ -7,6 +7,7 @@
 #include "mozilla/dom/TextTrackListBinding.h"
 #include "mozilla/dom/TrackEvent.h"
 #include "nsThreadUtils.h"
+#include "nsGlobalWindow.h"
 #include "mozilla/dom/TextTrackCue.h"
 #include "mozilla/dom/TextTrackManager.h"
 
@@ -42,9 +43,12 @@ TextTrackList::~TextTrackList()
 void
 TextTrackList::GetShowingCues(nsTArray<RefPtr<TextTrackCue> >& aCues)
 {
+  // Only Subtitles and Captions can show on the screen.
   nsTArray< RefPtr<TextTrackCue> > cues;
   for (uint32_t i = 0; i < Length(); i++) {
-    if (mTextTracks[i]->Mode() == TextTrackMode::Showing) {
+    if (mTextTracks[i]->Mode() == TextTrackMode::Showing &&
+        (mTextTracks[i]->Kind() == TextTrackKind::Subtitles ||
+         mTextTracks[i]->Kind() == TextTrackKind::Captions)) {
       mTextTracks[i]->GetActiveCueArray(cues);
       aCues.AppendElements(cues);
     }
@@ -174,6 +178,11 @@ TextTrackList::CreateAndDispatchChangeEvent()
 {
   MOZ_ASSERT(NS_IsMainThread());
   if (!mPendingTextTrackChange) {
+    nsPIDOMWindowInner* win = GetOwner();
+    if (!win) {
+      return;
+    }
+
     mPendingTextTrackChange = true;
     RefPtr<Event> event = NS_NewDOMEvent(this, nullptr, nullptr);
 
@@ -181,7 +190,9 @@ TextTrackList::CreateAndDispatchChangeEvent()
     event->SetTrusted(true);
 
     nsCOMPtr<nsIRunnable> eventRunner = new ChangeEventRunner(this, event);
-    NS_DispatchToMainThread(eventRunner);
+    nsGlobalWindow::Cast(win)->Dispatch(
+      "TextTrackList::CreateAndDispatchChangeEvent", TaskCategory::Other,
+      eventRunner.forget());
   }
 }
 

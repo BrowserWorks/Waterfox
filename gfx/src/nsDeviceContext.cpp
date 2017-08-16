@@ -24,11 +24,10 @@
 #include "nsIAtom.h"                    // for nsIAtom, NS_Atomize
 #include "nsID.h"
 #include "nsIDeviceContextSpec.h"       // for nsIDeviceContextSpec
-#include "nsILanguageAtomService.h"     // for nsILanguageAtomService, etc
+#include "nsLanguageAtomService.h"      // for nsLanguageAtomService
 #include "nsIObserver.h"                // for nsIObserver, etc
 #include "nsIObserverService.h"         // for nsIObserverService
 #include "nsIScreen.h"                  // for nsIScreen
-#include "nsIScreenManager.h"           // for nsIScreenManager
 #include "nsISupportsImpl.h"            // for MOZ_COUNT_CTOR, etc
 #include "nsISupportsUtils.h"           // for NS_ADDREF, NS_RELEASE
 #include "nsIWidget.h"                  // for nsIWidget, NS_NATIVE_WINDOW
@@ -38,10 +37,12 @@
 #include "nsTArray.h"                   // for nsTArray, nsTArray_Impl
 #include "nsThreadUtils.h"              // for NS_IsMainThread
 #include "mozilla/gfx/Logging.h"
+#include "mozilla/widget/ScreenManager.h" // for ScreenManager
 
 using namespace mozilla;
 using namespace mozilla::gfx;
 using mozilla::services::GetObserverService;
+using mozilla::widget::ScreenManager;
 
 class nsFontCache final : public nsIObserver
 {
@@ -60,6 +61,8 @@ public:
     void FontMetricsDeleted(const nsFontMetrics* aFontMetrics);
     void Compact();
     void Flush();
+
+    void UpdateUserFonts(gfxUserFontSet* aUserFontSet);
 
 protected:
     ~nsFontCache() {}
@@ -84,11 +87,7 @@ nsFontCache::Init(nsDeviceContext* aContext)
     if (obs)
         obs->AddObserver(this, "memory-pressure", false);
 
-    nsCOMPtr<nsILanguageAtomService> langService;
-    langService = do_GetService(NS_LANGUAGEATOMSERVICE_CONTRACTID);
-    if (langService) {
-        mLocaleLanguage = langService->GetLocaleLanguage();
-    }
+    mLocaleLanguage = nsLanguageAtomService::GetService()->GetLocaleLanguage();
     if (!mLocaleLanguage) {
         mLocaleLanguage = NS_Atomize("x-western");
     }
@@ -150,6 +149,17 @@ nsFontCache::GetMetricsFor(const nsFont& aFont,
 }
 
 void
+nsFontCache::UpdateUserFonts(gfxUserFontSet* aUserFontSet)
+{
+    for (nsFontMetrics* fm : mFontMetrics) {
+        gfxFontGroup* fg = fm->GetThebesFontGroup();
+        if (fg->GetUserFontSet() == aUserFontSet) {
+            fg->UpdateUserFonts();
+        }
+    }
+}
+
+void
 nsFontCache::FontMetricsDeleted(const nsFontMetrics* aFontMetrics)
 {
     mFontMetrics.RemoveElement(aFontMetrics);
@@ -190,7 +200,7 @@ nsFontCache::Flush()
 }
 
 nsDeviceContext::nsDeviceContext()
-    : mWidth(0), mHeight(0), mDepth(0),
+    : mWidth(0), mHeight(0),
       mAppUnitsPerDevPixel(-1), mAppUnitsPerDevPixelAtUnitFullZoom(-1),
       mAppUnitsPerPhysicalInch(-1),
       mFullZoom(1.0f), mPrintingScale(1.0f),
@@ -209,15 +219,28 @@ nsDeviceContext::~nsDeviceContext()
     }
 }
 
-already_AddRefed<nsFontMetrics>
-nsDeviceContext::GetMetricsFor(const nsFont& aFont,
-                               const nsFontMetrics::Params& aParams)
+void
+nsDeviceContext::InitFontCache()
 {
     if (!mFontCache) {
         mFontCache = new nsFontCache();
         mFontCache->Init(this);
     }
+}
 
+void
+nsDeviceContext::UpdateFontCacheUserFonts(gfxUserFontSet* aUserFontSet)
+{
+    if (mFontCache) {
+        mFontCache->UpdateUserFonts(aUserFontSet);
+    }
+}
+
+already_AddRefed<nsFontMetrics>
+nsDeviceContext::GetMetricsFor(const nsFont& aFont,
+                               const nsFontMetrics::Params& aParams)
+{
+    InitFontCache();
     return mFontCache->GetMetricsFor(aFont, aParams);
 }
 
@@ -395,13 +418,15 @@ nsDeviceContext::CreateRenderingContextCommon(bool aWantReferenceContext)
 nsresult
 nsDeviceContext::GetDepth(uint32_t& aDepth)
 {
-    if (mDepth == 0 && mScreenManager) {
-        nsCOMPtr<nsIScreen> primaryScreen;
-        mScreenManager->GetPrimaryScreen(getter_AddRefs(primaryScreen));
-        primaryScreen->GetColorDepth(reinterpret_cast<int32_t *>(&mDepth));
+    nsCOMPtr<nsIScreen> screen;
+    FindScreen(getter_AddRefs(screen));
+    if (!screen) {
+        ScreenManager& screenManager = ScreenManager::GetSingleton();
+        screenManager.GetPrimaryScreen(getter_AddRefs(screen));
+        MOZ_ASSERT(screen);
     }
+    screen->GetColorDepth(reinterpret_cast<int32_t *>(&aDepth));
 
-    aDepth = mDepth;
     return NS_OK;
 }
 
@@ -626,21 +651,8 @@ nsDeviceContext::FindScreen(nsIScreen** outScreen)
 
     CheckDPIChange();
 
-    if (mWidget->GetOwningTabChild()) {
-        mScreenManager->ScreenForNativeWidget((void *)mWidget->GetOwningTabChild(),
-                                              outScreen);
-    }
-    else if (mWidget->GetNativeData(NS_NATIVE_WINDOW)) {
-        mScreenManager->ScreenForNativeWidget(mWidget->GetNativeData(NS_NATIVE_WINDOW),
-                                              outScreen);
-    }
-
-#ifdef MOZ_WIDGET_ANDROID
-    if (!(*outScreen)) {
-        nsCOMPtr<nsIScreen> screen = mWidget->GetWidgetScreen();
-        screen.forget(outScreen);
-    }
-#endif
+    nsCOMPtr<nsIScreen> screen = mWidget->GetWidgetScreen();
+    screen.forget(outScreen);
 
     if (!(*outScreen)) {
         mScreenManager->GetPrimaryScreen(outScreen);

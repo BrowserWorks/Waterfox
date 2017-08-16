@@ -15,7 +15,6 @@ Cu.import("chrome://marionette/content/error.js");
 this.EXPORTED_SYMBOLS = ["assert"];
 
 const isFennec = () => AppConstants.platform == "android";
-const isB2G = () => AppConstants.MOZ_B2G;
 const isFirefox = () => Services.appinfo.name == "Firefox";
 
 /** Shorthands for common assertions made in Marionette. */
@@ -70,20 +69,6 @@ assert.fennec = function (msg = "") {
 };
 
 /**
- * Asserts that the current browser is B2G.
- *
- * @param {string=} msg
- *     Custom error message.
- *
- * @throws {UnsupportedOperationError}
- *     If the current browser is not B2G.
- */
-assert.b2g = function (msg = "") {
-  msg = msg || "Only supported in B2G";
-  assert.that(isB2G, msg, UnsupportedOperationError)();
-};
-
-/**
  * Asserts that the current |context| is content.
  *
  * @param {string} context
@@ -103,21 +88,6 @@ assert.content = function (context, msg = "") {
 };
 
 /**
- * Asserts that the current browser is a mobile browser, that is either
- * B2G or Fennec.
- *
- * @param {string=} msg
- *     Custom error message.
- *
- * @throws {UnsupportedOperationError}
- *     If the current browser is not B2G or Fennec.
- */
-assert.mobile = function (msg = "") {
-  msg = msg || "Only supported in Fennec or B2G";
-  assert.that(() => isFennec() || isB2G(), msg, UnsupportedOperationError)();
-};
-
-/**
  * Asserts that |win| is open.
  *
  * @param {ChromeWindow} win
@@ -133,16 +103,50 @@ assert.mobile = function (msg = "") {
  */
 assert.window = function (win, msg = "") {
   msg = msg || "Unable to locate window";
-  return assert.that(w => {
-    try {
-      return w && w.document.defaultView;
+  return assert.that(w => w && !w.closed,
+      msg,
+      NoSuchWindowError)(win);
+};
 
-    // If the window is no longer available a TypeError is thrown.
-    } catch (e if e.name === "TypeError") {
-      return null;
-    }
-  }, msg, NoSuchWindowError)(win);
-}
+/**
+ * Asserts that |context| is a valid browsing context.
+ *
+ * @param {browser.Context} context
+ *     Browsing context to test.
+ * @param {string=} msg
+ *     Custom error message.
+ *
+ * @throws {NoSuchWindowError}
+ *     If |context| is invalid.
+ */
+assert.contentBrowser = function (context, msg = "") {
+  // TODO: The contentBrowser uses a cached tab, which is only updated when
+  // switchToTab is called. Because of that an additional check is needed to
+  // make sure that the chrome window has not already been closed.
+  assert.window(context && context.window);
+
+  msg = msg || "Current window does not have a content browser";
+  assert.that(c => c.contentBrowser,
+      msg,
+      NoSuchWindowError)(context);
+};
+
+/**
+ * Asserts that there is no current user prompt.
+ *
+ * @param {modal.Dialog} dialog
+ *     Reference to current dialogue.
+ * @param {string=} msg
+ *     Custom error message.
+ *
+ * @throws {UnexpectedAlertOpenError}
+ *     If there is a user prompt.
+ */
+assert.noUserPrompt = function (dialog, msg = "") {
+  assert.that(d => d === null || typeof d == "undefined",
+      msg,
+      UnexpectedAlertOpenError)(dialog);
+};
 
 /**
  * Asserts that |obj| is defined.

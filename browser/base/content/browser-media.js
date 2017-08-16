@@ -95,22 +95,6 @@ var gEMEHandler = {
 
     this.showNotificationBar(browser, notificationId, keySystem, params, buttonCallback);
   },
-  safeGetString(notificationId, msgId, labelParams) {
-    let message = ""
-    try {
-      message = labelParams.length ?
-                gNavigatorBundle.getFormattedString(msgId, labelParams) :
-                gNavigatorBundle.getString(msgId);
-    } catch (ex) {
-      if (notificationId == "drmContentDisabled") {
-        // Handle accidentally removed string.
-        message = "You must enable DRM to play some audio or video on this page. " + labelParams[0];
-      } else {
-        Cu.reportError("Malformed media notification with id=" + msgId);
-      }
-    }
-    return message;
-  },
   showNotificationBar(browser, notificationId, keySystem, labelParams, callback) {
     let box = gBrowser.getNotificationBox(browser);
     if (box.getNotificationWithValue(notificationId)) {
@@ -119,7 +103,11 @@ var gEMEHandler = {
 
     let msgPrefix = "emeNotifications." + notificationId + ".";
     let msgId = msgPrefix + "message";
-    let message = this.safeGetString(notificationId, msgId, labelParams);
+
+    let message = labelParams.length ?
+                  gNavigatorBundle.getFormattedString(msgId, labelParams) :
+                  gNavigatorBundle.getString(msgId);
+
     let buttons = [];
     if (callback) {
       let btnLabelId = msgPrefix + "button.label";
@@ -179,7 +167,13 @@ var gEMEHandler = {
     let mainAction = {
       label: gNavigatorBundle.getString(btnLabelId),
       accessKey: gNavigatorBundle.getString(btnAccessKeyId),
-      callback() { openPreferences("paneContent"); },
+      callback() {
+        if (Services.prefs.getBoolPref("browser.preferences.useOldOrganization")) {
+          openPreferences("paneContent", {origin: "browserMedia"});
+        } else {
+          openPreferences("panePrivacy", {origin: "browserMedia"});
+        }
+      },
       dismiss: true
     };
     let options = {
@@ -219,15 +213,29 @@ let gDecoderDoctorHandler = {
         AppConstants.platform == "linux") {
       return gNavigatorBundle.getString("decoder.unsupportedLibavcodec.message");
     }
+    if (type == "decode-error") {
+      return gNavigatorBundle.getString("decoder.decodeError.message");
+    }
+    if (type == "decode-warning") {
+      return gNavigatorBundle.getString("decoder.decodeWarning.message");
+    }
     return "";
   },
 
   getSumoForLearnHowButton(type) {
-    if (AppConstants.platform == "win") {
+    if (type == "platform-decoder-not-found" &&
+        AppConstants.platform == "win") {
       return "fix-video-audio-problems-firefox-windows";
     }
     if (type == "cannot-initialize-pulseaudio") {
       return "fix-common-audio-and-video-issues";
+    }
+    return "";
+  },
+
+  getEndpointForReportIssueButton(type) {
+    if (type == "decode-error" || type == "decode-warning") {
+      return Services.prefs.getStringPref("media.decoder-doctor.new-issue-endpoint", "");
     }
     return "";
   },
@@ -250,6 +258,8 @@ let gDecoderDoctorHandler = {
     // contains analysis information from Decoder Doctor:
     // - 'type' is the type of issue, it determines which text to show in the
     //   infobar.
+    // - 'isSolved' is true when the notification actually indicates the
+    //   resolution of that issue, to be reported as telemetry.
     // - 'decoderDoctorReportId' is the Decoder Doctor issue identifier, to be
     //   used here as key for the telemetry (counting infobar displays,
     //   "Learn how" buttons clicks, and resolutions) and for the prefs used
@@ -257,9 +267,10 @@ let gDecoderDoctorHandler = {
     // - 'formats' contains a comma-separated list of formats (or key systems)
     //   that suffer the issue. These are kept in a pref, which the backend
     //   uses to later find when an issue is resolved.
-    // - 'isSolved' is true when the notification actually indicates the
-    //   resolution of that issue, to be reported as telemetry.
-    let {type, isSolved, decoderDoctorReportId, formats} = parsedData;
+    // - 'decodeIssue' is a description of the decode error/warning.
+    // - 'resourceURL' is the resource with the issue.
+    let {type, isSolved, decoderDoctorReportId,
+         formats, decodeIssue, docURL, resourceURL} = parsedData;
     type = type.toLowerCase();
     // Error out early on invalid ReportId
     if (!(/^\w+$/mi).test(decoderDoctorReportId)) {
@@ -272,34 +283,36 @@ let gDecoderDoctorHandler = {
 
     // We keep the list of formats in prefs for the sake of the decoder itself,
     // which reads it to determine when issues get solved for these formats.
-    // (Writing prefs from e10s content is now allowed.)
-    let formatsPref = "media.decoder-doctor." + decoderDoctorReportId + ".formats";
+    // (Writing prefs from e10s content is not allowed.)
+    let formatsPref = formats &&
+                      "media.decoder-doctor." + decoderDoctorReportId + ".formats";
     let buttonClickedPref = "media.decoder-doctor." + decoderDoctorReportId + ".button-clicked";
     let histogram =
       Services.telemetry.getKeyedHistogramById("DECODER_DOCTOR_INFOBAR_STATS");
 
-    let formatsInPref = Services.prefs.getPrefType(formatsPref) &&
-                        Services.prefs.getCharPref(formatsPref);
+    let formatsInPref = formats &&
+                        Services.prefs.getCharPref(formatsPref, "");
 
     if (!isSolved) {
-      if (!formats) {
-        Cu.reportError("Malformed Decoder Doctor unsolved message with no formats");
-        return;
-      }
-      if (!formatsInPref) {
-        Services.prefs.setCharPref(formatsPref, formats);
-        histogram.add(decoderDoctorReportId, TELEMETRY_DDSTAT_SHOWN_FIRST);
-      } else {
-        // Split existing formats into an array of strings.
-        let existing = formatsInPref.split(",").map(x => x.trim());
-        // Keep given formats that were not already recorded.
-        let newbies = formats.split(",").map(x => x.trim())
-                      .filter(x => !existing.includes(x));
-        // And rewrite pref with the added new formats (if any).
-        if (newbies.length) {
-          Services.prefs.setCharPref(formatsPref,
-                                     existing.concat(newbies).join(", "));
+      if (formats) {
+        if (!formatsInPref) {
+          Services.prefs.setCharPref(formatsPref, formats);
+          histogram.add(decoderDoctorReportId, TELEMETRY_DDSTAT_SHOWN_FIRST);
+        } else {
+          // Split existing formats into an array of strings.
+          let existing = formatsInPref.split(",").map(x => x.trim());
+          // Keep given formats that were not already recorded.
+          let newbies = formats.split(",").map(x => x.trim())
+                        .filter(x => !existing.includes(x));
+          // And rewrite pref with the added new formats (if any).
+          if (newbies.length) {
+            Services.prefs.setCharPref(formatsPref,
+                                      existing.concat(newbies).join(", "));
+          }
         }
+      } else if (!decodeIssue) {
+        Cu.reportError("Malformed Decoder Doctor unsolved message with no formats nor decode issue");
+        return;
       }
       histogram.add(decoderDoctorReportId, TELEMETRY_DDSTAT_SHOWN);
 
@@ -310,8 +323,8 @@ let gDecoderDoctorHandler = {
           label: gNavigatorBundle.getString("decoder.noCodecs.button"),
           accessKey: gNavigatorBundle.getString("decoder.noCodecs.accesskey"),
           callback() {
-            let clickedInPref = Services.prefs.getPrefType(buttonClickedPref) &&
-                                Services.prefs.getBoolPref(buttonClickedPref);
+            let clickedInPref =
+              Services.prefs.getBoolPref(buttonClickedPref, false);
             if (!clickedInPref) {
               Services.prefs.setBoolPref(buttonClickedPref, true);
               histogram.add(decoderDoctorReportId, TELEMETRY_DDSTAT_CLICKED_FIRST);
@@ -320,6 +333,32 @@ let gDecoderDoctorHandler = {
 
             let baseURL = Services.urlFormatter.formatURLPref("app.support.baseURL");
             openUILinkIn(baseURL + sumo, "tab");
+          }
+        });
+      }
+      let endpoint = gDecoderDoctorHandler.getEndpointForReportIssueButton(type);
+      if (endpoint) {
+        buttons.push({
+          label: gNavigatorBundle.getString("decoder.decodeError.button"),
+          accessKey: gNavigatorBundle.getString("decoder.decodeError.accesskey"),
+          callback() {
+            let clickedInPref =
+              Services.prefs.getBoolPref(buttonClickedPref, false);
+            if (!clickedInPref) {
+              Services.prefs.setBoolPref(buttonClickedPref, true);
+              histogram.add(decoderDoctorReportId, TELEMETRY_DDSTAT_CLICKED_FIRST);
+            }
+            histogram.add(decoderDoctorReportId, TELEMETRY_DDSTAT_CLICKED);
+
+            let params = new URLSearchParams;
+            params.append("url", docURL);
+            params.append("label", "type-media");
+            params.append("problem_type", "video_bug");
+            params.append("src", "media-decode-error");
+            params.append("details",
+                          "Technical Information:\n" + decodeIssue +
+                          (resourceURL ? ("\nResource: " + resourceURL) : ""));
+            openUILinkIn(endpoint + "?" + params.toString(), "tab");
           }
         });
       }

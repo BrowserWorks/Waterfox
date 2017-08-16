@@ -15,50 +15,61 @@ use dom::bindings::codegen::Bindings::MouseEventBinding::MouseEventMethods;
 use dom::bindings::codegen::Bindings::WindowBinding::WindowMethods;
 use dom::bindings::error::Fallible;
 use dom::bindings::inheritance::Castable;
-use dom::bindings::js::{LayoutJS, Root};
+use dom::bindings::js::{LayoutJS, MutNullableJS, Root};
 use dom::bindings::refcounted::Trusted;
 use dom::bindings::reflector::DomObject;
 use dom::bindings::str::DOMString;
 use dom::document::Document;
 use dom::element::{AttributeMutation, Element, RawLayoutElementHelpers};
 use dom::element::{reflect_cross_origin_attribute, set_cross_origin_attribute};
-use dom::event::Event;
+use dom::event::{Event, EventBubbles, EventCancelable};
 use dom::eventtarget::EventTarget;
 use dom::htmlareaelement::HTMLAreaElement;
 use dom::htmlelement::HTMLElement;
+use dom::htmlformelement::{FormControl, HTMLFormElement};
 use dom::htmlmapelement::HTMLMapElement;
 use dom::mouseevent::MouseEvent;
 use dom::node::{Node, NodeDamage, document_from_node, window_from_node};
+use dom::progressevent::ProgressEvent;
 use dom::values::UNSIGNED_LONG_MAX;
 use dom::virtualmethods::VirtualMethods;
 use dom::window::Window;
 use dom_struct::dom_struct;
 use euclid::point::Point2D;
-use html5ever_atoms::LocalName;
+use html5ever::{LocalName, Prefix};
 use ipc_channel::ipc;
 use ipc_channel::router::ROUTER;
+use microtask::{Microtask, MicrotaskRunnable};
 use net_traits::{FetchResponseListener, FetchMetadata, NetworkError, FetchResponseMsg};
 use net_traits::image::base::{Image, ImageMetadata};
-use net_traits::image_cache_thread::{ImageResponder, ImageResponse, PendingImageId, ImageState};
-use net_traits::image_cache_thread::{UsePlaceholder, ImageOrMetadataAvailable, CanRequestImages};
-use net_traits::image_cache_thread::ImageCacheThread;
+use net_traits::image_cache::{CanRequestImages, ImageCache, ImageOrMetadataAvailable};
+use net_traits::image_cache::{ImageResponder, ImageResponse, ImageState, PendingImageId};
+use net_traits::image_cache::UsePlaceholder;
 use net_traits::request::{RequestInit, Type as RequestType};
 use network_listener::{NetworkListener, PreInvoke};
 use num_traits::ToPrimitive;
-use script_thread::Runnable;
+use script_thread::{Runnable, ScriptThread};
 use servo_url::ServoUrl;
+use servo_url::origin::ImmutableOrigin;
+use std::cell::{Cell, RefMut};
+use std::default::Default;
 use std::i32;
 use std::sync::{Arc, Mutex};
 use style::attr::{AttrValue, LengthOrPercentageOrAuto};
 use task_source::TaskSource;
 
-#[derive(JSTraceable, HeapSizeOf)]
+#[derive(Clone, Copy, JSTraceable, HeapSizeOf)]
 #[allow(dead_code)]
 enum State {
     Unavailable,
     PartiallyAvailable,
     CompletelyAvailable,
     Broken,
+}
+#[derive(Copy, Clone, JSTraceable, HeapSizeOf)]
+enum ImageRequestPhase {
+    Pending,
+    Current
 }
 #[derive(JSTraceable, HeapSizeOf)]
 #[must_root]
@@ -70,12 +81,16 @@ struct ImageRequest {
     #[ignore_heap_size_of = "Arc"]
     image: Option<Arc<Image>>,
     metadata: Option<ImageMetadata>,
+    final_url: Option<ServoUrl>,
 }
 #[dom_struct]
 pub struct HTMLImageElement {
     htmlelement: HTMLElement,
+    image_request: Cell<ImageRequestPhase>,
     current_request: DOMRefCell<ImageRequest>,
     pending_request: DOMRefCell<ImageRequest>,
+    form_owner: MutNullableJS<HTMLFormElement>,
+    generation: Cell<u32>,
 }
 
 impl HTMLImageElement {
@@ -87,14 +102,16 @@ impl HTMLImageElement {
 struct ImageResponseHandlerRunnable {
     element: Trusted<HTMLImageElement>,
     image: ImageResponse,
+    generation: u32,
 }
 
 impl ImageResponseHandlerRunnable {
-    fn new(element: Trusted<HTMLImageElement>, image: ImageResponse)
+    fn new(element: Trusted<HTMLImageElement>, image: ImageResponse, generation: u32)
            -> ImageResponseHandlerRunnable {
         ImageResponseHandlerRunnable {
             element: element,
             image: image,
+            generation: generation,
         }
     }
 }
@@ -104,27 +121,21 @@ impl Runnable for ImageResponseHandlerRunnable {
 
     fn handler(self: Box<Self>) {
         let element = self.element.root();
-        element.process_image_response(self.image);
+        // Ignore any image response for a previous request that has been discarded.
+        if element.generation.get() == self.generation {
+            element.process_image_response(self.image);
+        }
     }
 }
 
 /// The context required for asynchronously loading an external image.
 struct ImageContext {
-    /// The element that initiated the request.
-    elem: Trusted<HTMLImageElement>,
-    /// The initial URL requested.
-    url: ServoUrl,
+    /// Reference to the script thread image cache.
+    image_cache: Arc<ImageCache>,
     /// Indicates whether the request failed, and why
     status: Result<(), NetworkError>,
     /// The cache ID for this request.
     id: PendingImageId,
-}
-
-impl ImageContext {
-    fn image_cache(&self) -> ImageCacheThread {
-        let elem = self.elem.root();
-        window_from_node(&*elem).image_cache_thread().clone()
-    }
 }
 
 impl FetchResponseListener for ImageContext {
@@ -132,7 +143,7 @@ impl FetchResponseListener for ImageContext {
     fn process_request_eof(&mut self) {}
 
     fn process_response(&mut self, metadata: Result<FetchMetadata, NetworkError>) {
-        self.image_cache().notify_pending_response(
+        self.image_cache.notify_pending_response(
             self.id,
             FetchResponseMsg::ProcessResponse(metadata.clone()));
 
@@ -156,19 +167,16 @@ impl FetchResponseListener for ImageContext {
 
     fn process_response_chunk(&mut self, payload: Vec<u8>) {
         if self.status.is_ok() {
-            self.image_cache().notify_pending_response(
+            self.image_cache.notify_pending_response(
                 self.id,
                 FetchResponseMsg::ProcessResponseChunk(payload));
         }
     }
 
     fn process_response_eof(&mut self, response: Result<(), NetworkError>) {
-        let elem = self.elem.root();
-        let document = document_from_node(&*elem);
-        let image_cache = self.image_cache();
-        image_cache.notify_pending_response(self.id,
-                                            FetchResponseMsg::ProcessResponseEOF(response));
-        document.finish_load(LoadType::Image(self.url.clone()));
+        self.image_cache.notify_pending_response(
+            self.id,
+            FetchResponseMsg::ProcessResponseEOF(response));
     }
 }
 
@@ -176,19 +184,8 @@ impl PreInvoke for ImageContext {}
 
 impl HTMLImageElement {
     /// Update the current image with a valid URL.
-    fn update_image_with_url(&self, img_url: ServoUrl, src: DOMString) {
-        {
-            let mut current_request = self.current_request.borrow_mut();
-            current_request.parsed_url = Some(img_url.clone());
-            current_request.source_url = Some(src);
-
-            LoadBlocker::terminate(&mut current_request.blocker);
-            let document = document_from_node(self);
-            current_request.blocker =
-                Some(LoadBlocker::new(&*document, LoadType::Image(img_url.clone())));
-        }
-
-        fn add_cache_listener_for_element(image_cache: &ImageCacheThread,
+    fn fetch_image(&self, img_url: &ServoUrl) {
+        fn add_cache_listener_for_element(image_cache: Arc<ImageCache>,
                                           id: PendingImageId,
                                           elem: &HTMLImageElement) {
             let trusted_node = Trusted::new(elem);
@@ -197,11 +194,13 @@ impl HTMLImageElement {
             let window = window_from_node(elem);
             let task_source = window.networking_task_source();
             let wrapper = window.get_runnable_wrapper();
+            let generation = elem.generation.get();
             ROUTER.add_route(responder_receiver.to_opaque(), box move |message| {
-                // Return the image via a message to the script thread, which marks the element
-                // as dirty and triggers a reflow.
+                debug!("Got image {:?}", message);
+                // Return the image via a message to the script thread, which marks
+                // the element as dirty and triggers a reflow.
                 let runnable = ImageResponseHandlerRunnable::new(
-                    trusted_node.clone(), message.to().unwrap());
+                    trusted_node.clone(), message.to().unwrap(), generation);
                 let _ = task_source.queue_with_wrapper(box runnable, &wrapper);
             });
 
@@ -209,14 +208,14 @@ impl HTMLImageElement {
         }
 
         let window = window_from_node(self);
-        let image_cache = window.image_cache_thread();
+        let image_cache = window.image_cache();
         let response =
             image_cache.find_image_or_metadata(img_url.clone().into(),
                                                UsePlaceholder::Yes,
                                                CanRequestImages::Yes);
         match response {
-            Ok(ImageOrMetadataAvailable::ImageAvailable(image)) => {
-                self.process_image_response(ImageResponse::Loaded(image));
+            Ok(ImageOrMetadataAvailable::ImageAvailable(image, url)) => {
+                self.process_image_response(ImageResponse::Loaded(image, url));
             }
 
             Ok(ImageOrMetadataAvailable::MetadataAvailable(m)) => {
@@ -224,7 +223,7 @@ impl HTMLImageElement {
             }
 
             Err(ImageState::Pending(id)) => {
-                add_cache_listener_for_element(image_cache, id, self);
+                add_cache_listener_for_element(image_cache.clone(), id, self);
             }
 
             Err(ImageState::LoadError) => {
@@ -233,18 +232,17 @@ impl HTMLImageElement {
 
             Err(ImageState::NotRequested(id)) => {
                 add_cache_listener_for_element(image_cache, id, self);
-                self.request_image(img_url, id);
+                self.fetch_request(img_url, id);
             }
         }
     }
 
-    fn request_image(&self, img_url: ServoUrl, id: PendingImageId) {
+    fn fetch_request(&self, img_url: &ServoUrl, id: PendingImageId) {
         let document = document_from_node(self);
         let window = window_from_node(self);
 
         let context = Arc::new(Mutex::new(ImageContext {
-            elem: Trusted::new(self),
-            url: img_url.clone(),
+            image_cache: window.image_cache(),
             status: Ok(()),
             id: id,
         }));
@@ -267,104 +265,373 @@ impl HTMLImageElement {
             .. RequestInit::default()
         };
 
-        document.fetch_async(LoadType::Image(img_url), request, action_sender);
+        // This is a background load because the load blocker already fulfills the
+        // purpose of delaying the document's load event.
+        document.loader().fetch_async_background(request, action_sender);
     }
 
+    /// Step 14 of https://html.spec.whatwg.org/multipage/#update-the-image-data
     fn process_image_response(&self, image: ImageResponse) {
-        let (image, metadata, trigger_image_load, trigger_image_error) = match image {
-            ImageResponse::Loaded(image) | ImageResponse::PlaceholderLoaded(image) => {
-                (Some(image.clone()),
-                 Some(ImageMetadata { height: image.height, width: image.width }),
-                 true,
-                 false)
-            }
-            ImageResponse::MetadataLoaded(meta) => {
-                (None, Some(meta), false, false)
-            }
-            ImageResponse::None => (None, None, false, true)
+        // TODO: Handle multipart/x-mixed-replace
+        let (trigger_image_load, trigger_image_error) = match (image, self.image_request.get()) {
+            (ImageResponse::Loaded(image, url), ImageRequestPhase::Current) |
+            (ImageResponse::PlaceholderLoaded(image, url), ImageRequestPhase::Current) => {
+                self.current_request.borrow_mut().metadata = Some(ImageMetadata {
+                    height: image.height,
+                    width: image.width
+                });
+                self.current_request.borrow_mut().final_url = Some(url);
+                self.current_request.borrow_mut().image = Some(image);
+                self.current_request.borrow_mut().state = State::CompletelyAvailable;
+                LoadBlocker::terminate(&mut self.current_request.borrow_mut().blocker);
+                // Mark the node dirty
+                self.upcast::<Node>().dirty(NodeDamage::OtherNodeDamage);
+                (true, false)
+            },
+            (ImageResponse::Loaded(image, url), ImageRequestPhase::Pending) |
+            (ImageResponse::PlaceholderLoaded(image, url), ImageRequestPhase::Pending) => {
+                self.abort_request(State::Unavailable, ImageRequestPhase::Pending);
+                self.image_request.set(ImageRequestPhase::Current);
+                self.current_request.borrow_mut().metadata = Some(ImageMetadata {
+                    height: image.height,
+                    width: image.width
+                });
+                self.current_request.borrow_mut().final_url = Some(url);
+                self.current_request.borrow_mut().image = Some(image);
+                self.current_request.borrow_mut().state = State::CompletelyAvailable;
+                LoadBlocker::terminate(&mut self.current_request.borrow_mut().blocker);
+                self.upcast::<Node>().dirty(NodeDamage::OtherNodeDamage);
+                (true, false)
+            },
+            (ImageResponse::MetadataLoaded(meta), ImageRequestPhase::Current) => {
+                self.current_request.borrow_mut().state = State::PartiallyAvailable;
+                self.current_request.borrow_mut().metadata = Some(meta);
+                (false, false)
+            },
+            (ImageResponse::MetadataLoaded(_), ImageRequestPhase::Pending) => {
+                self.pending_request.borrow_mut().state = State::PartiallyAvailable;
+                (false, false)
+            },
+            (ImageResponse::None, ImageRequestPhase::Current) => {
+                self.abort_request(State::Broken, ImageRequestPhase::Current);
+                (false, true)
+            },
+            (ImageResponse::None, ImageRequestPhase::Pending) => {
+                self.abort_request(State::Broken, ImageRequestPhase::Current);
+                self.abort_request(State::Broken, ImageRequestPhase::Pending);
+                self.image_request.set(ImageRequestPhase::Current);
+                (false, true)
+            },
         };
-        self.current_request.borrow_mut().image = image;
-        self.current_request.borrow_mut().metadata = metadata;
 
-        // Mark the node dirty
-        self.upcast::<Node>().dirty(NodeDamage::OtherNodeDamage);
-
-        // Fire image.onload
+        // Fire image.onload and loadend
         if trigger_image_load {
+            // TODO: https://html.spec.whatwg.org/multipage/#fire-a-progress-event-or-event
             self.upcast::<EventTarget>().fire_event(atom!("load"));
+            self.upcast::<EventTarget>().fire_event(atom!("loadend"));
         }
 
         // Fire image.onerror
         if trigger_image_error {
             self.upcast::<EventTarget>().fire_event(atom!("error"));
+            self.upcast::<EventTarget>().fire_event(atom!("loadend"));
         }
-
-        LoadBlocker::terminate(&mut self.current_request.borrow_mut().blocker);
 
         // Trigger reflow
         let window = window_from_node(self);
         window.add_pending_reflow();
     }
 
-    /// Makes the local `image` member match the status of the `src` attribute and starts
-    /// prefetching the image. This method must be called after `src` is changed.
-    fn update_image(&self, value: Option<(DOMString, ServoUrl)>) {
+    /// https://html.spec.whatwg.org/multipage/#abort-the-image-request
+    fn abort_request(&self, state: State, request: ImageRequestPhase) {
+        let mut request = match request {
+            ImageRequestPhase::Current => self.current_request.borrow_mut(),
+            ImageRequestPhase::Pending => self.pending_request.borrow_mut(),
+        };
+        LoadBlocker::terminate(&mut request.blocker);
+        request.state = state;
+        request.image = None;
+        request.metadata = None;
+    }
+
+    /// Step 11.4 of https://html.spec.whatwg.org/multipage/#update-the-image-data
+    fn set_current_request_url_to_selected_fire_error_and_loadend(&self, src: DOMString) {
+        struct Task {
+            img: Trusted<HTMLImageElement>,
+            src: String,
+        }
+        impl Runnable for Task {
+            fn handler(self: Box<Self>) {
+                let img = self.img.root();
+                {
+                    let mut current_request = img.current_request.borrow_mut();
+                    current_request.source_url = Some(DOMString::from_string(self.src));
+                }
+                img.upcast::<EventTarget>().fire_event(atom!("error"));
+                img.upcast::<EventTarget>().fire_event(atom!("loadend"));
+                img.abort_request(State::Broken, ImageRequestPhase::Current);
+                img.abort_request(State::Broken, ImageRequestPhase::Pending);
+            }
+        }
+
+        let task = box Task {
+            img: Trusted::new(self),
+            src: src.into()
+        };
         let document = document_from_node(self);
         let window = document.window();
-        match value {
-            None => {
-                self.current_request.borrow_mut().parsed_url = None;
-                self.current_request.borrow_mut().source_url = None;
-                LoadBlocker::terminate(&mut self.current_request.borrow_mut().blocker);
-                self.current_request.borrow_mut().image = None;
+        let task_source = window.dom_manipulation_task_source();
+        let _ = task_source.queue(task, window.upcast());
+    }
+
+    /// Step 10 of html.spec.whatwg.org/multipage/#update-the-image-data
+    fn dispatch_loadstart_progress_event(&self) {
+        struct FireprogressEventTask {
+            img: Trusted<HTMLImageElement>,
+        }
+        impl Runnable for FireprogressEventTask {
+            fn handler(self: Box<Self>) {
+                let progressevent = ProgressEvent::new(&self.img.root().global(),
+                    atom!("loadstart"), EventBubbles::DoesNotBubble, EventCancelable::NotCancelable,
+                    false, 0, 0);
+                progressevent.upcast::<Event>().fire(self.img.root().upcast());
             }
-            Some((src, base_url)) => {
-                let img_url = base_url.join(&src);
-                if let Ok(img_url) = img_url {
-                    self.update_image_with_url(img_url, src);
-                } else {
-                    // https://html.spec.whatwg.org/multipage/#update-the-image-data
-                    // Step 11 (error substeps)
-                    debug!("Failed to parse URL {} with base {}", src, base_url);
-                    let mut req = self.current_request.borrow_mut();
+        }
+        let runnable = box FireprogressEventTask {
+            img: Trusted::new(self),
+        };
+        let document = document_from_node(self);
+        let window = document.window();
+        let task = window.dom_manipulation_task_source();
+        let _ = task.queue(runnable, window.upcast());
+    }
 
-                    // Substeps 1,2
-                    req.image = None;
-                    req.parsed_url = None;
-                    req.state = State::Broken;
-                    // todo: set pending request to null
-                    // (pending requests aren't being used yet)
+    /// https://html.spec.whatwg.org/multipage/#update-the-source-set
+    fn update_source_set(&self) -> Vec<DOMString> {
+        let elem = self.upcast::<Element>();
+        // TODO: follow the algorithm
+        let src = elem.get_string_attribute(&local_name!("src"));
+        if src.is_empty() {
+            return vec![]
+        }
+        vec![src]
+    }
 
+    /// https://html.spec.whatwg.org/multipage/#select-an-image-source
+    fn select_image_source(&self) -> Option<DOMString> {
+        // TODO: select an image source from source set
+        self.update_source_set().first().cloned()
+    }
 
-                    struct ImgParseErrorRunnable {
-                        img: Trusted<HTMLImageElement>,
-                        src: String,
+    /// Step 9.2 of https://html.spec.whatwg.org/multipage/#update-the-image-data
+    fn set_current_request_url_to_none_fire_error(&self) {
+        struct SetUrlToNoneTask {
+            img: Trusted<HTMLImageElement>,
+        }
+        impl Runnable for SetUrlToNoneTask {
+            fn handler(self: Box<Self>) {
+                let img = self.img.root();
+                {
+                    let mut current_request = img.current_request.borrow_mut();
+                    current_request.source_url = None;
+                    current_request.parsed_url = None;
+                }
+                let elem = img.upcast::<Element>();
+                if elem.has_attribute(&local_name!("src")) {
+                    img.upcast::<EventTarget>().fire_event(atom!("error"));
+                }
+                img.abort_request(State::Broken, ImageRequestPhase::Current);
+                img.abort_request(State::Broken, ImageRequestPhase::Pending);
+            }
+        }
+
+        let task = box SetUrlToNoneTask {
+            img: Trusted::new(self),
+        };
+        let document = document_from_node(self);
+        let window = document.window();
+        let task_source = window.dom_manipulation_task_source();
+        let _ = task_source.queue(task, window.upcast());
+    }
+
+    /// Step 5.3.7 of https://html.spec.whatwg.org/multipage/#update-the-image-data
+    fn set_current_request_url_to_string_and_fire_load(&self, src: DOMString, url: ServoUrl) {
+        struct SetUrlToStringTask {
+            img: Trusted<HTMLImageElement>,
+            src: String,
+            url: ServoUrl
+        }
+        impl Runnable for SetUrlToStringTask {
+            fn handler(self: Box<Self>) {
+                let img = self.img.root();
+                {
+                    let mut current_request = img.current_request.borrow_mut();
+                    current_request.parsed_url = Some(self.url.clone());
+                    current_request.source_url = Some(self.src.into());
+                }
+                // TODO: restart animation, if set
+                img.upcast::<EventTarget>().fire_event(atom!("load"));
+            }
+        }
+        let runnable = box SetUrlToStringTask {
+            img: Trusted::new(self),
+            src: src.into(),
+            url: url
+        };
+        let document = document_from_node(self);
+        let window = document.window();
+        let task = window.dom_manipulation_task_source();
+        let _ = task.queue(runnable, window.upcast());
+    }
+
+    fn init_image_request(&self,
+                          request: &mut RefMut<ImageRequest>,
+                          url: &ServoUrl,
+                          src: &DOMString) {
+        request.parsed_url = Some(url.clone());
+        request.source_url = Some(src.clone());
+        request.image = None;
+        request.metadata = None;
+        let document = document_from_node(self);
+        request.blocker = Some(LoadBlocker::new(&*document, LoadType::Image(url.clone())));
+    }
+
+    /// Step 12 of html.spec.whatwg.org/multipage/#update-the-image-data
+    fn prepare_image_request(&self, url: &ServoUrl, src: &DOMString) {
+        match self.image_request.get() {
+            ImageRequestPhase::Pending => {
+                if let Some(pending_url) = self.pending_request.borrow().parsed_url.clone() {
+                    // Step 12.1
+                    if pending_url == *url {
+                        return
                     }
-                    impl Runnable for ImgParseErrorRunnable {
-                        fn handler(self: Box<Self>) {
-                            // https://html.spec.whatwg.org/multipage/#update-the-image-data
-                            // Step 11, substep 5
-                            let img = self.img.root();
-                            img.current_request.borrow_mut().source_url = Some(self.src.into());
-                            img.upcast::<EventTarget>().fire_event(atom!("error"));
-                            img.upcast::<EventTarget>().fire_event(atom!("loadend"));
+                }
+            },
+            ImageRequestPhase::Current => {
+                let mut current_request = self.current_request.borrow_mut();
+                let mut pending_request = self.pending_request.borrow_mut();
+                // step 12.4, create a new "image_request"
+                match (current_request.parsed_url.clone(), current_request.state) {
+                    (Some(parsed_url), State::PartiallyAvailable) => {
+                        // Step 12.2
+                        if parsed_url == *url {
+                            // 12.3 abort pending request
+                            pending_request.image = None;
+                            pending_request.parsed_url = None;
+                            LoadBlocker::terminate(&mut pending_request.blocker);
+                            // TODO: queue a task to restart animation, if restart-animation is set
+                            return
                         }
-                    }
-
-                    let runnable = box ImgParseErrorRunnable {
-                        img: Trusted::new(self),
-                        src: src.into(),
-                    };
-                    let task = window.dom_manipulation_task_source();
-                    let _ = task.queue(runnable, window.upcast());
+                        self.image_request.set(ImageRequestPhase::Pending);
+                        self.init_image_request(&mut pending_request, &url, &src);
+                    },
+                    (_, State::Broken) | (_, State::Unavailable) => {
+                        // Step 12.5
+                        self.init_image_request(&mut current_request, &url, &src);
+                    },
+                    (_, _) => {
+                        // step 12.6
+                        self.image_request.set(ImageRequestPhase::Pending);
+                        self.init_image_request(&mut pending_request, &url, &src);
+                    },
                 }
             }
         }
+        self.fetch_image(&url);
     }
 
-    fn new_inherited(local_name: LocalName, prefix: Option<DOMString>, document: &Document) -> HTMLImageElement {
+    /// Step 8-12 of html.spec.whatwg.org/multipage/#update-the-image-data
+    fn update_the_image_data_sync_steps(&self) {
+        let document = document_from_node(self);
+        // Step 8
+        // TODO: take pixel density into account
+        match self.select_image_source() {
+            Some(src) => {
+                // Step 10
+                self.dispatch_loadstart_progress_event();
+                // Step 11
+                let base_url = document.base_url();
+                let parsed_url = base_url.join(&src);
+                match parsed_url {
+                    Ok(url) => {
+                         // Step 12
+                        self.prepare_image_request(&url, &src);
+                    },
+                    Err(_) => {
+                        // Step 11.1-11.5
+                        self.set_current_request_url_to_selected_fire_error_and_loadend(src);
+                    }
+                }
+            },
+            None => {
+                // Step 9
+                self.set_current_request_url_to_none_fire_error();
+            },
+        }
+    }
+
+    /// https://html.spec.whatwg.org/multipage/#update-the-image-data
+    fn update_the_image_data(&self) {
+        let document = document_from_node(self);
+        let window = document.window();
+        let elem = self.upcast::<Element>();
+        let src = elem.get_string_attribute(&local_name!("src"));
+        let base_url = document.base_url();
+
+        // https://html.spec.whatwg.org/multipage/#reacting-to-dom-mutations
+        // Always first set the current request to unavailable,
+        // ensuring img.complete is false.
+        {
+            let mut current_request = self.current_request.borrow_mut();
+            current_request.state = State::Unavailable;
+        }
+
+        if !document.is_active() {
+            // Step 1 (if the document is inactive)
+            // TODO: use GlobalScope::enqueue_microtask,
+            // to queue micro task to come back to this algorithm
+        }
+        // Step 2 abort if user-agent does not supports images
+        // NOTE: Servo only supports images, skipping this step
+
+        // step 3, 4
+        // TODO: take srcset and parent images into account
+        if !src.is_empty() {
+            // TODO: take pixel density into account
+            if let Ok(img_url) = base_url.join(&src) {
+                // step 5, check the list of available images
+                let image_cache = window.image_cache();
+                let response = image_cache.find_image_or_metadata(img_url.clone().into(),
+                                                                  UsePlaceholder::No,
+                                                                  CanRequestImages::No);
+                if let Ok(ImageOrMetadataAvailable::ImageAvailable(image, url)) = response {
+                    // Step 5.3
+                    let metadata = ImageMetadata { height: image.height, width: image.width };
+                    // Step 5.3.2 abort requests
+                    self.abort_request(State::CompletelyAvailable, ImageRequestPhase::Current);
+                    self.abort_request(State::CompletelyAvailable, ImageRequestPhase::Pending);
+                    let mut current_request = self.current_request.borrow_mut();
+                    current_request.final_url = Some(url);
+                    current_request.image = Some(image.clone());
+                    current_request.metadata = Some(metadata);
+                    self.set_current_request_url_to_string_and_fire_load(src, img_url);
+                    return
+                }
+            }
+        }
+        // step 6, await a stable state.
+        self.generation.set(self.generation.get() + 1);
+        let task = ImageElementMicrotask::StableStateUpdateImageDataTask {
+            elem: Root::from_ref(self),
+            generation: self.generation.get(),
+        };
+        ScriptThread::await_stable_state(Microtask::ImageElement(task));
+    }
+
+    fn new_inherited(local_name: LocalName, prefix: Option<Prefix>, document: &Document) -> HTMLImageElement {
         HTMLImageElement {
             htmlelement: HTMLElement::new_inherited(local_name, prefix, document),
+            image_request: Cell::new(ImageRequestPhase::Current),
             current_request: DOMRefCell::new(ImageRequest {
                 state: State::Unavailable,
                 parsed_url: None,
@@ -372,6 +639,7 @@ impl HTMLImageElement {
                 image: None,
                 metadata: None,
                 blocker: None,
+                final_url: None,
             }),
             pending_request: DOMRefCell::new(ImageRequest {
                 state: State::Unavailable,
@@ -380,13 +648,16 @@ impl HTMLImageElement {
                 image: None,
                 metadata: None,
                 blocker: None,
+                final_url: None,
             }),
+            form_owner: Default::default(),
+            generation: Default::default(),
         }
     }
 
     #[allow(unrooted_must_root)]
     pub fn new(local_name: LocalName,
-               prefix: Option<DOMString>,
+               prefix: Option<Prefix>,
                document: &Document) -> Root<HTMLImageElement> {
         Node::reflect_node(box HTMLImageElement::new_inherited(local_name, prefix, document),
                            document,
@@ -409,35 +680,59 @@ impl HTMLImageElement {
     }
     pub fn areas(&self) -> Option<Vec<Root<HTMLAreaElement>>> {
         let elem = self.upcast::<Element>();
-        let usemap_attr;
-        if elem.has_attribute(&LocalName::from("usemap")) {
-            usemap_attr = elem.get_string_attribute(&local_name!("usemap"));
-        } else {
-            return None;
+        let usemap_attr = match elem.get_attribute(&ns!(), &local_name!("usemap")) {
+            Some(attr) => attr,
+            None => return None,
+        };
+
+        let value = usemap_attr.value();
+
+        if value.len() == 0 || !value.is_char_boundary(1) {
+            return None
         }
 
-        let (first, last) = usemap_attr.split_at(1);
+        let (first, last) = value.split_at(1);
 
-        match first {
-            "#" => {},
-            _ => return None,
-        };
+        if first != "#" || last.len() == 0 {
+            return None
+        }
 
-        match last.len() {
-            0 => return None,
-            _ => {},
-        };
+        let useMapElements = document_from_node(self).upcast::<Node>()
+                                .traverse_preorder()
+                                .filter_map(Root::downcast::<HTMLMapElement>)
+                                .find(|n| n.upcast::<Element>().get_string_attribute(&LocalName::from("name")) == last);
 
-        let map = self.upcast::<Node>()
-                      .following_siblings()
-                      .filter_map(Root::downcast::<HTMLMapElement>)
-                      .find(|n| n.upcast::<Element>().get_string_attribute(&LocalName::from("name")) == last);
+        useMapElements.map(|mapElem| mapElem.get_area_elements())
+    }
 
-        let elements: Vec<Root<HTMLAreaElement>> = map.unwrap().upcast::<Node>()
-                      .children()
-                      .filter_map(Root::downcast::<HTMLAreaElement>)
-                      .collect();
-        Some(elements)
+    pub fn get_origin(&self) -> Option<ImmutableOrigin> {
+        match self.current_request.borrow_mut().final_url {
+            Some(ref url) => Some(url.origin()),
+            None => None
+        }
+    }
+
+}
+
+#[derive(JSTraceable, HeapSizeOf)]
+pub enum ImageElementMicrotask {
+    StableStateUpdateImageDataTask {
+        elem: Root<HTMLImageElement>,
+        generation: u32,
+    }
+}
+
+impl MicrotaskRunnable for ImageElementMicrotask {
+    fn handler(&self) {
+        match self {
+            &ImageElementMicrotask::StableStateUpdateImageDataTask { ref elem, ref generation } => {
+                // Step 7 of https://html.spec.whatwg.org/multipage/#update-the-image-data,
+                // stop here if other instances of this algorithm have been scheduled
+                if elem.generation.get() == *generation {
+                    elem.update_the_image_data_sync_steps();
+                }
+            },
+        }
     }
 }
 
@@ -567,8 +862,21 @@ impl HTMLImageElementMethods for HTMLImageElement {
 
     // https://html.spec.whatwg.org/multipage/#dom-img-complete
     fn Complete(&self) -> bool {
-        let ref image = self.current_request.borrow().image;
-        image.is_some()
+        let elem = self.upcast::<Element>();
+        // TODO: take srcset into account
+        if !elem.has_attribute(&local_name!("src")) {
+            return true
+        }
+        let src = elem.get_string_attribute(&local_name!("src"));
+        if src.is_empty() {
+            return true
+        }
+        let request = self.current_request.borrow();
+        let request_state = request.state;
+        match request_state {
+            State::CompletelyAvailable | State::Broken => return true,
+            State::PartiallyAvailable | State::Unavailable => return false,
+        }
     }
 
     // https://html.spec.whatwg.org/multipage/#dom-img-currentsrc
@@ -622,15 +930,15 @@ impl VirtualMethods for HTMLImageElement {
         Some(self.upcast::<HTMLElement>() as &VirtualMethods)
     }
 
+    fn adopting_steps(&self, old_doc: &Document) {
+        self.super_type().unwrap().adopting_steps(old_doc);
+        self.update_the_image_data();
+    }
+
     fn attribute_mutated(&self, attr: &Attr, mutation: AttributeMutation) {
         self.super_type().unwrap().attribute_mutated(attr, mutation);
         match attr.local_name() {
-            &local_name!("src") => {
-                self.update_image(mutation.new_value(attr).map(|value| {
-                    // FIXME(ajeffrey): convert directly from AttrValue to DOMString
-                    (DOMString::from(&**value), document_from_node(self).base_url())
-                }));
-            },
+            &local_name!("src") => self.update_the_image_data(),
             _ => {},
         }
     }
@@ -645,7 +953,7 @@ impl VirtualMethods for HTMLImageElement {
     }
 
     fn handle_event(&self, event: &Event) {
-       if (event.type_() == atom!("click")) {
+       if event.type_() == atom!("click") {
            let area_elements = self.areas();
            let elements = if let Some(x) = area_elements {
                x
@@ -660,25 +968,44 @@ impl VirtualMethods for HTMLImageElement {
                return;
            };
 
-           let point = Point2D::new(mouse_event.ClientX().to_f32().unwrap(), mouse_event.ClientY().to_f32().unwrap());
+           let point = Point2D::new(mouse_event.ClientX().to_f32().unwrap(),
+                                    mouse_event.ClientY().to_f32().unwrap());
+
            // Walk HTMLAreaElements
-           let mut index = 0;
-           while index < elements.len() {
-               let shape = elements[index].get_shape_from_coords();
+           for element in elements {
+               let shape = element.get_shape_from_coords();
                let p = Point2D::new(self.upcast::<Element>().GetBoundingClientRect().X() as f32,
-               self.upcast::<Element>().GetBoundingClientRect().Y() as f32);
+                                    self.upcast::<Element>().GetBoundingClientRect().Y() as f32);
+
                let shp = if let Some(x) = shape {
                    x.absolute_coords(p)
                } else {
                    return
                };
                if shp.hit_test(point) {
-                   elements[index].activation_behavior(event, self.upcast());
+                   element.activation_behavior(event, self.upcast());
                    return
                }
-               index += 1;
            }
        }
+    }
+}
+
+impl FormControl for HTMLImageElement {
+    fn form_owner(&self) -> Option<Root<HTMLFormElement>> {
+        self.form_owner.get()
+    }
+
+    fn set_form_owner(&self, form: Option<&HTMLFormElement>) {
+        self.form_owner.set(form);
+    }
+
+    fn to_element<'a>(&'a self) -> &'a Element {
+        self.upcast::<Element>()
+    }
+
+    fn is_listed(&self) -> bool {
+        false
     }
 }
 

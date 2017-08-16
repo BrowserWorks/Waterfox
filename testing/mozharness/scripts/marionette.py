@@ -91,11 +91,25 @@ class MarionetteTest(TestingMixin, MercurialScript, BlobUploadMixin, TransferMix
          "help": "Run tests with multiple processes. (Desktop builds only)",
          }
     ], [
+        ["--headless"],
+        {"action": "store_true",
+         "dest": "headless",
+         "default": False,
+         "help": "Run tests in headless mode.",
+        }
+    ], [
        ["--allow-software-gl-layers"],
        {"action": "store_true",
         "dest": "allow_software_gl_layers",
         "default": False,
         "help": "Permits a software GL implementation (such as LLVMPipe) to use the GL compositor."
+        }
+    ], [
+       ["--enable-webrender"],
+       {"action": "store_true",
+        "dest": "enable_webrender",
+        "default": False,
+        "help": "Tries to enable the WebRender compositor."
         }
      ]] + copy.deepcopy(testing_config_options) \
         + copy.deepcopy(blobupload_config_options) \
@@ -278,6 +292,9 @@ class MarionetteTest(TestingMixin, MercurialScript, BlobUploadMixin, TransferMix
         if not self.config['e10s']:
             cmd.append('--disable-e10s')
 
+        if self.config['headless']:
+            cmd.append('--headless')
+
         cmd.append('--gecko-log=%s' % os.path.join(dirs["abs_blob_upload_dir"],
                                                    'gecko.log'))
 
@@ -311,6 +328,8 @@ class MarionetteTest(TestingMixin, MercurialScript, BlobUploadMixin, TransferMix
 
         if self.config['allow_software_gl_layers']:
             env['MOZ_LAYERS_ALLOW_SOFTWARE_GL'] = '1'
+        if self.config['enable_webrender']:
+            env['MOZ_WEBRENDER'] = '1'
 
         if not os.path.isdir(env['MOZ_UPLOAD_DIR']):
             self.mkdir_p(env['MOZ_UPLOAD_DIR'])

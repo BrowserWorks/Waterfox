@@ -8,6 +8,7 @@ package org.mozilla.gecko;
 import org.mozilla.gecko.animation.ViewHelper;
 import org.mozilla.gecko.gfx.FloatSize;
 import org.mozilla.gecko.gfx.ImmutableViewportMetrics;
+import org.mozilla.gecko.util.ActivityUtils;
 import org.mozilla.gecko.util.BundleEventListener;
 import org.mozilla.gecko.util.EventCallback;
 import org.mozilla.gecko.util.GeckoBundle;
@@ -40,7 +41,6 @@ import java.util.Arrays;
 import java.util.Collection;
 
 public class FormAssistPopup extends RelativeLayout implements BundleEventListener {
-    private final Context mContext;
     private final Animation mAnimation;
 
     private ListView mAutoCompleteList;
@@ -48,6 +48,7 @@ public class FormAssistPopup extends RelativeLayout implements BundleEventListen
     private TextView mValidationMessageText;
     private ImageView mValidationMessageArrow;
     private ImageView mValidationMessageArrowInverted;
+    private final GeckoApp geckoApp;
 
     private double mX;
     private double mY;
@@ -82,19 +83,20 @@ public class FormAssistPopup extends RelativeLayout implements BundleEventListen
 
     public FormAssistPopup(Context context, AttributeSet attrs) {
         super(context, attrs);
-        mContext = context;
 
         mAnimation = AnimationUtils.loadAnimation(context, R.anim.grow_fade_in);
         mAnimation.setDuration(75);
 
         setFocusable(false);
+
+        geckoApp = (GeckoApp) ActivityUtils.getActivityFromContext(context);
     }
 
     @Override
     public void onAttachedToWindow() {
         super.onAttachedToWindow();
 
-        GeckoApp.getEventDispatcher().registerUiThreadListener(this,
+        geckoApp.getAppEventDispatcher().registerUiThreadListener(this,
             "FormAssist:AutoCompleteResult",
             "FormAssist:ValidationMessage",
             "FormAssist:Hide");
@@ -105,7 +107,7 @@ public class FormAssistPopup extends RelativeLayout implements BundleEventListen
 
     @Override
     public void onDetachedFromWindow() {
-        GeckoApp.getEventDispatcher().unregisterUiThreadListener(this,
+        geckoApp.getAppEventDispatcher().unregisterUiThreadListener(this,
             "FormAssist:AutoCompleteResult",
             "FormAssist:ValidationMessage",
             "FormAssist:Hide");
@@ -133,7 +135,7 @@ public class FormAssistPopup extends RelativeLayout implements BundleEventListen
     private void showAutoCompleteSuggestions(final GeckoBundle[] suggestions,
                                              final GeckoBundle rect,
                                              final boolean isEmpty) {
-        final String inputMethod = InputMethods.getCurrentInputMethod(mContext);
+        final String inputMethod = InputMethods.getCurrentInputMethod(getContext());
         if (!isEmpty && sInputMethodBlocklist.contains(inputMethod)) {
             // Don't display the form auto-complete popup after the user starts typing
             // to avoid confusing somes IME. See bug 758820 and bug 632744.
@@ -142,7 +144,7 @@ public class FormAssistPopup extends RelativeLayout implements BundleEventListen
         }
 
         if (mAutoCompleteList == null) {
-            LayoutInflater inflater = LayoutInflater.from(mContext);
+            LayoutInflater inflater = LayoutInflater.from(getContext());
             mAutoCompleteList = (ListView) inflater.inflate(R.layout.autocomplete_list, null);
 
             mAutoCompleteList.setOnItemClickListener(new OnItemClickListener() {
@@ -153,7 +155,7 @@ public class FormAssistPopup extends RelativeLayout implements BundleEventListen
                     final TextView textView = (TextView) view;
                     final GeckoBundle message = new GeckoBundle(1);
                     message.putString("value", (String) textView.getTag());
-                    GeckoApp.getEventDispatcher().dispatch("FormAssist:AutoComplete", message);
+                    geckoApp.getAppEventDispatcher().dispatch("FormAssist:AutoComplete", message);
                     hide();
                 }
             });
@@ -172,7 +174,7 @@ public class FormAssistPopup extends RelativeLayout implements BundleEventListen
                     // Remove the item from form history.
                     final GeckoBundle message = new GeckoBundle(1);
                     message.putString("value", item.second);
-                    GeckoApp.getEventDispatcher().dispatch("FormAssist:Remove", message);
+                    geckoApp.getAppEventDispatcher().dispatch("FormAssist:Remove", message);
 
                     // Update the list
                     adapter.remove(item);
@@ -192,7 +194,8 @@ public class FormAssistPopup extends RelativeLayout implements BundleEventListen
             addView(mAutoCompleteList);
         }
 
-        AutoCompleteListAdapter adapter = new AutoCompleteListAdapter(mContext, R.layout.autocomplete_list_item);
+        AutoCompleteListAdapter adapter = new AutoCompleteListAdapter(
+                getContext(), R.layout.autocomplete_list_item);
         adapter.populateSuggestionsList(suggestions);
         mAutoCompleteList.setAdapter(adapter);
 
@@ -204,13 +207,14 @@ public class FormAssistPopup extends RelativeLayout implements BundleEventListen
     private void showValidationMessage(final String validationMessage,
                                        final GeckoBundle rect) {
         if (mValidationMessage == null) {
-            LayoutInflater inflater = LayoutInflater.from(mContext);
+            LayoutInflater inflater = LayoutInflater.from(getContext());
             mValidationMessage = (RelativeLayout) inflater.inflate(R.layout.validation_message, null);
 
             addView(mValidationMessage);
             mValidationMessageText = (TextView) mValidationMessage.findViewById(R.id.validation_message_text);
 
-            sValidationTextMarginTop = (int) (mContext.getResources().getDimension(R.dimen.validation_message_margin_top));
+            sValidationTextMarginTop = (int) (getContext().getResources().getDimension(
+                    R.dimen.validation_message_margin_top));
 
             sValidationTextLayoutNormal = new LayoutParams(mValidationMessageText.getLayoutParams());
             sValidationTextLayoutNormal.setMargins(0, sValidationTextMarginTop, 0, 0);
@@ -251,8 +255,8 @@ public class FormAssistPopup extends RelativeLayout implements BundleEventListen
         ThreadUtils.assertOnUiThread();
 
         // Don't show the form assist popup when using fullscreen VKB
-        InputMethodManager imm =
-                (InputMethodManager) mContext.getSystemService(Context.INPUT_METHOD_SERVICE);
+        InputMethodManager imm = (InputMethodManager)
+                getContext().getSystemService(Context.INPUT_METHOD_SERVICE);
         if (imm.isFullscreenMode()) {
             return;
         }
@@ -266,7 +270,7 @@ public class FormAssistPopup extends RelativeLayout implements BundleEventListen
         }
 
         if (sAutoCompleteMinWidth == 0) {
-            Resources res = mContext.getResources();
+            Resources res = getContext().getResources();
             sAutoCompleteMinWidth = (int) (res.getDimension(R.dimen.autocomplete_min_width));
             sAutoCompleteRowHeight = (int) (res.getDimension(R.dimen.autocomplete_row_height));
             sValidationMessageHeight = (int) (res.getDimension(R.dimen.validation_message_height));
@@ -277,7 +281,7 @@ public class FormAssistPopup extends RelativeLayout implements BundleEventListen
         // These values correspond to the input box for which we want to
         // display the FormAssistPopup.
         int left = (int) (mX * zoom - aMetrics.viewportRectLeft);
-        int top = (int) (mY * zoom - aMetrics.viewportRectTop + GeckoAppShell.getLayerView().getSurfaceTranslation());
+        int top = (int) (mY * zoom - aMetrics.viewportRectTop + GeckoAppShell.getLayerView().getCurrentToolbarHeight());
         int width = (int) (mW * zoom);
         int height = (int) (mH * zoom);
 
@@ -362,7 +366,7 @@ public class FormAssistPopup extends RelativeLayout implements BundleEventListen
     public void hide() {
         if (isShown()) {
             setVisibility(GONE);
-            GeckoApp.getEventDispatcher().dispatch("FormAssist:Hidden", null);
+            geckoApp.getAppEventDispatcher().dispatch("FormAssist:Hidden", null);
         }
     }
 

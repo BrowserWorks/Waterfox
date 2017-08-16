@@ -73,6 +73,8 @@ function typeBCDEF_chars() {
 /** Test for Bug 551704 **/
 SimpleTest.waitForExplicitFinish();
 SimpleTest.waitForFocus(function() {
+  document.execCommand("defaultParagraphSeparator", false, "div");
+
   var preformatted = document.getElementById("preformatted");
   is(preformatted.innerHTML, "a\nb", "No BR node should be injected for preformatted editable fields");
 
@@ -111,7 +113,7 @@ function continueTest() {
     } else {
       var type = typeABCDEF;
     }
-    var expectedHTML = "abc<br>def<br>";
+    var expectedHTML = "<div>abc</div><div>def<br></div>";
     var expectedText = "abc\ndef";
     testLineBreak(div, type, expectedText, expectedHTML, doNextTest);
   }

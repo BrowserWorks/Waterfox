@@ -98,7 +98,10 @@ private:
   HandleResponse(nsresult aResponse);
 
   void
-  HandleResponse(const UsageResponse& aResponse);
+  HandleResponse(const nsTArray<OriginUsage>& aResponse);
+
+  void
+  HandleResponse(const OriginUsageResponse& aResponse);
 
   // IPDL methods are only called by IPDL.
   virtual void
@@ -137,6 +140,9 @@ private:
 
   void
   HandleResponse();
+
+  void
+  HandleResponse(bool aResponse);
 
   // IPDL methods are only called by IPDL.
   virtual void

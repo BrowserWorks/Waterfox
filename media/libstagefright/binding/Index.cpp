@@ -5,6 +5,7 @@
 #include "mp4_demuxer/ByteReader.h"
 #include "mp4_demuxer/Index.h"
 #include "mp4_demuxer/Interval.h"
+#include "mp4_demuxer/MP4Metadata.h"
 #include "mp4_demuxer/SinfParser.h"
 #include "nsAutoPtr.h"
 #include "mozilla/RefPtr.h"
@@ -82,6 +83,12 @@ SampleIterator::SampleIterator(Index* aIndex)
   , mCurrentMoof(0)
   , mCurrentSample(0)
 {
+  mIndex->RegisterIterator(this);
+}
+
+SampleIterator::~SampleIterator()
+{
+  mIndex->UnregisterIterator(this);
 }
 
 already_AddRefed<MediaRawData> SampleIterator::GetNext()
@@ -99,9 +106,9 @@ already_AddRefed<MediaRawData> SampleIterator::GetNext()
   }
 
   RefPtr<MediaRawData> sample = new MediaRawData();
-  sample->mTimecode= s->mDecodeTime;
-  sample->mTime = s->mCompositionRange.start;
-  sample->mDuration = s->mCompositionRange.Length();
+  sample->mTimecode= TimeUnit::FromMicroseconds(s->mDecodeTime);
+  sample->mTime = TimeUnit::FromMicroseconds(s->mCompositionRange.start);
+  sample->mDuration = TimeUnit::FromMicroseconds(s->mCompositionRange.Length());
   sample->mOffset = s->mByteRange.mStart;
   sample->mKeyframe = s->mSync;
 
@@ -297,17 +304,17 @@ SampleIterator::GetNextKeyframeTime()
   return -1;
 }
 
-Index::Index(const nsTArray<Indice>& aIndex,
+Index::Index(const IndiceWrapper& aIndices,
              Stream* aSource,
              uint32_t aTrackId,
              bool aIsAudio)
   : mSource(aSource)
   , mIsAudio(aIsAudio)
 {
-  if (aIndex.IsEmpty()) {
+  if (!aIndices.Length()) {
     mMoofParser = new MoofParser(aSource, aTrackId, aIsAudio);
   } else {
-    if (!mIndex.SetCapacity(aIndex.Length(), fallible)) {
+    if (!mIndex.SetCapacity(aIndices.Length(), fallible)) {
       // OOM.
       return;
     }
@@ -316,8 +323,12 @@ Index::Index(const nsTArray<Indice>& aIndex,
     bool haveSync = false;
     bool progressive = true;
     int64_t lastOffset = 0;
-    for (size_t i = 0; i < aIndex.Length(); i++) {
-      const Indice& indice = aIndex[i];
+    for (size_t i = 0; i < aIndices.Length(); i++) {
+      Indice indice;
+      if (!aIndices.GetIndice(i, indice)) {
+        // Out of index?
+        return;
+      }
       if (indice.sync || mIsAudio) {
         haveSync = true;
       }
@@ -364,8 +375,12 @@ Index::Index(const nsTArray<Indice>& aIndex,
     }
 
     if (mDataOffset.Length() && progressive) {
+      Indice indice;
+      if (!aIndices.GetIndice(aIndices.Length() - 1, indice)) {
+        return;
+      }
       auto& last = mDataOffset.LastElement();
-      last.mEndOffset = aIndex.LastElement().end_offset;
+      last.mEndOffset = indice.end_offset;
       last.mTime = Interval<int64_t>(intervalTime.GetStart(), intervalTime.GetEnd());
     } else {
       mDataOffset.Clear();
@@ -378,11 +393,36 @@ Index::~Index() {}
 void
 Index::UpdateMoofIndex(const MediaByteRangeSet& aByteRanges)
 {
+  UpdateMoofIndex(aByteRanges, false);
+}
+
+void
+Index::UpdateMoofIndex(const MediaByteRangeSet& aByteRanges, bool aCanEvict)
+{
   if (!mMoofParser) {
     return;
   }
-
-  mMoofParser->RebuildFragmentedIndex(aByteRanges);
+  size_t moofs = mMoofParser->Moofs().Length();
+  bool canEvict = aCanEvict && moofs > 1;
+  if (canEvict) {
+    // Check that we can trim the mMoofParser. We can only do so if all
+    // iterators have demuxed all possible samples.
+    for (const SampleIterator* iterator : mIterators) {
+      if ((iterator->mCurrentSample == 0 && iterator->mCurrentMoof == moofs) ||
+          iterator->mCurrentMoof == moofs - 1) {
+        continue;
+      }
+      canEvict = false;
+      break;
+    }
+  }
+  mMoofParser->RebuildFragmentedIndex(aByteRanges, &canEvict);
+  if (canEvict) {
+    // The moofparser got trimmed. Adjust all registered iterators.
+    for (SampleIterator* iterator : mIterators) {
+      iterator->mCurrentMoof -= moofs - 1;
+    }
+  }
 }
 
 Microseconds
@@ -550,4 +590,17 @@ Index::GetEvictionOffset(Microseconds aTime)
   }
   return offset;
 }
+
+void
+Index::RegisterIterator(SampleIterator* aIterator)
+{
+  mIterators.AppendElement(aIterator);
+}
+
+void
+Index::UnregisterIterator(SampleIterator* aIterator)
+{
+  mIterators.RemoveElement(aIterator);
+}
+
 }

@@ -275,6 +275,13 @@ class JSObject : public js::gc::Cell
     inline bool isIndexed() const;
 
     /*
+     * Whether there may be "interesting symbol" properties on this object. An
+     * interesting symbol is a symbol for which symbol->isInterestingSymbol()
+     * returns true.
+     */
+    MOZ_ALWAYS_INLINE bool maybeHasInterestingSymbolProperty() const;
+
+    /*
      * If this object was instantiated with `new Ctor`, return the constructor's
      * display atom. Otherwise, return nullptr.
      */
@@ -670,7 +677,8 @@ JSObject::writeBarrierPost(void* cellp, JSObject* prev, JSObject* next)
         return;
     }
 
-    // Remove the prev entry if the new value does not need it.
+    // Remove the prev entry if the new value does not need it. There will only
+    // be a prev entry if the prev value was in the nursery.
     if (prev && (buffer = prev->storeBuffer()))
         buffer->unputCell(static_cast<js::gc::Cell**>(cellp));
 }
@@ -895,6 +903,18 @@ GetElementNoGC(JSContext* cx, JSObject* obj, const Value& receiver, uint32_t ind
 
 inline bool
 GetElementNoGC(JSContext* cx, JSObject* obj, JSObject* receiver, uint32_t index, Value* vp);
+
+// Returns whether |obj| or an object on its proto chain may have an interesting
+// symbol property (see JSObject::hasInterestingSymbolProperty). If it returns
+// true, *holder is set to the object that may have this property.
+MOZ_ALWAYS_INLINE bool
+MaybeHasInterestingSymbolProperty(JSContext* cx, JSObject* obj, Symbol* symbol,
+                                  JSObject** holder = nullptr);
+
+// Like GetProperty but optimized for interesting symbol properties like
+// @@toStringTag.
+MOZ_ALWAYS_INLINE bool
+GetInterestingSymbolProperty(JSContext* cx, HandleObject obj, Symbol* sym, MutableHandleValue vp);
 
 /*
  * ES6 [[Set]]. Carry out the assignment `obj[id] = v`.
@@ -1319,9 +1339,6 @@ template<XDRMode mode>
 bool
 XDRObjectLiteral(XDRState<mode>* xdr, MutableHandleObject obj);
 
-extern bool
-ReportGetterOnlyAssignment(JSContext* cx, bool strict);
-
 /*
  * Report a TypeError: "so-and-so is not an object".
  * Using NotNullObject is usually less code.
@@ -1335,6 +1352,39 @@ NonNullObject(JSContext* cx, const Value& v)
     if (v.isObject())
         return &v.toObject();
     ReportNotObject(cx, v);
+    return nullptr;
+}
+
+
+/*
+ * Report a TypeError: "N-th argument of FUN must be an object, got VALUE".
+ * Using NotNullObjectArg is usually less code.
+ */
+extern void
+ReportNotObjectArg(JSContext* cx, const char* nth, const char* fun, HandleValue v);
+
+inline JSObject*
+NonNullObjectArg(JSContext* cx, const char* nth, const char* fun, HandleValue v)
+{
+    if (v.isObject())
+        return &v.toObject();
+    ReportNotObjectArg(cx, nth, fun, v);
+    return nullptr;
+}
+
+/*
+ * Report a TypeError: "SOMETHING must be an object, got VALUE".
+ * Using NotNullObjectWithName is usually less code.
+ */
+extern void
+ReportNotObjectWithName(JSContext* cx, const char* name, HandleValue v);
+
+inline JSObject*
+NonNullObjectWithName(JSContext* cx, const char* name, HandleValue v)
+{
+    if (v.isObject())
+        return &v.toObject();
+    ReportNotObjectWithName(cx, name, v);
     return nullptr;
 }
 

@@ -24,6 +24,7 @@ FilePicker.prototype = {
   _domFile: null,
   _defaultExtension: null,
   _displayDirectory: null,
+  _displaySpecialDirectory: null,
   _filePath: null,
   _promptActive: false,
   _filterIndex: 0,
@@ -122,6 +123,14 @@ FilePicker.prototype = {
     this._displayDirectory = dir;
   },
 
+  get displaySpecialDirectory() {
+    return this._displaySpecialDirectory;
+  },
+
+  set displaySpecialDirectory(dir) {
+    this._displaySpecialDirectory = dir;
+  },
+
   get file() {
     if (!this._filePath) {
         return null;
@@ -203,7 +212,7 @@ FilePicker.prototype = {
     // Other consumers of the file picker may have to either wait for Android
     // to clean up the temp dir (not guaranteed) or clean up after themselves.
     let win = Services.wm.getMostRecentWindow('navigator:browser');
-    let tab = win.BrowserApp.getTabForWindow(this._domWin.top)
+    let tab = win && win.BrowserApp.getTabForWindow(this._domWin.top)
     if (tab) {
       msg.tabId = tab.id;
     }

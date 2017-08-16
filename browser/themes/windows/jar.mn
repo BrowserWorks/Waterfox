@@ -7,12 +7,9 @@ browser.jar:
 #include ../shared/jar.inc.mn
   skin/classic/browser/sanitizeDialog.css
   skin/classic/browser/aboutSessionRestore-window-icon.png
-  skin/classic/browser/aboutSyncTabs.css
 * skin/classic/browser/syncedtabs/sidebar.css     (syncedtabs/sidebar.css)
 * skin/classic/browser/browser.css
 * skin/classic/browser/compacttheme.css
-  skin/classic/browser/caption-buttons.svg
-  skin/classic/browser/click-to-play-warning-stripes.png
   skin/classic/browser/Info.png
   skin/classic/browser/livemark-folder.png
   skin/classic/browser/menu-back.png
@@ -38,16 +35,17 @@ browser.jar:
   skin/classic/browser/reload-stop-go-win7@2x.png
   skin/classic/browser/searchbar.css
   skin/classic/browser/setDesktopBackground.css
-  skin/classic/browser/Toolbar.png
-  skin/classic/browser/Toolbar@2x.png
-  skin/classic/browser/Toolbar-win7.png
-  skin/classic/browser/Toolbar-win7@2x.png
-  skin/classic/browser/Toolbar-inverted.png
-  skin/classic/browser/Toolbar-inverted@2x.png
-  skin/classic/browser/Toolbar-win8.png
-  skin/classic/browser/Toolbar-win8@2x.png
+  skin/classic/browser/sync-desktopIcon.svg  (../shared/sync-desktopIcon.svg)
+  skin/classic/browser/sync-horizontalbar.png
+  skin/classic/browser/sync-horizontalbar@2x.png
+  skin/classic/browser/sync-horizontalbar-win7.png
+  skin/classic/browser/sync-horizontalbar-win7@2x.png
+  skin/classic/browser/sync-mobileIcon.svg  (../shared/sync-mobileIcon.svg)
+  skin/classic/browser/syncProgress-horizontalbar.png
+  skin/classic/browser/syncProgress-horizontalbar@2x.png
+  skin/classic/browser/syncProgress-horizontalbar-win7.png
+  skin/classic/browser/syncProgress-horizontalbar-win7@2x.png
   skin/classic/browser/toolbarbutton-dropdown-arrow-win7.png
-  skin/classic/browser/toolbarbutton-dropdown-arrow-inverted.png
   skin/classic/browser/urlbar-popup-blocked.png
   skin/classic/browser/urlbar-history-dropmarker.png
   skin/classic/browser/urlbar-history-dropmarker@2x.png
@@ -56,8 +54,6 @@ browser.jar:
   skin/classic/browser/webRTC-indicator.css  (../shared/webRTC-indicator.css)
 * skin/classic/browser/controlcenter/panel.css                 (controlcenter/panel.css)
   skin/classic/browser/customizableui/background-noise-toolbar.png  (customizableui/background-noise-toolbar.png)
-  skin/classic/browser/customizableui/customize-titleBar-toggle.png  (customizableui/customize-titleBar-toggle.png)
-  skin/classic/browser/customizableui/customize-titleBar-toggle@2x.png  (customizableui/customize-titleBar-toggle@2x.png)
   skin/classic/browser/customizableui/customizeMode-gridTexture.png  (customizableui/customizeMode-gridTexture.png)
   skin/classic/browser/customizableui/customizeMode-separatorHorizontal.png  (customizableui/customizeMode-separatorHorizontal.png)
   skin/classic/browser/customizableui/customizeMode-separatorVertical.png  (customizableui/customizeMode-separatorVertical.png)
@@ -79,7 +75,6 @@ browser.jar:
   skin/classic/browser/places/bookmarksMenu.png                (places/bookmarksMenu.png)
   skin/classic/browser/places/bookmarksToolbar.png             (places/bookmarksToolbar.png)
   skin/classic/browser/places/bookmarksToolbar-menuPanel.png   (places/bookmarksToolbar-menuPanel.png)
-  skin/classic/browser/places/bookmarks-notification-finish.png (places/bookmarks-notification-finish.png)
   skin/classic/browser/places/calendar.png                     (places/calendar.png)
   skin/classic/browser/places/toolbarDropMarker.png            (places/toolbarDropMarker.png)
   skin/classic/browser/places/editBookmarkOverlay.css          (places/editBookmarkOverlay.css)
@@ -97,7 +92,9 @@ browser.jar:
   skin/classic/browser/preferences/saveFile.png                (preferences/saveFile.png)
   skin/classic/browser/preferences/preferences.css             (preferences/preferences.css)
 * skin/classic/browser/preferences/in-content/preferences.css  (preferences/in-content/preferences.css)
+* skin/classic/browser/preferences/in-content-new/preferences.css      (preferences/in-content-new/preferences.css)
 * skin/classic/browser/preferences/in-content/dialog.css       (preferences/in-content/dialog.css)
+* skin/classic/browser/preferences/in-content-new/dialog.css           (preferences/in-content-new/dialog.css)
   skin/classic/browser/preferences/applications.css            (preferences/applications.css)
   skin/classic/browser/social/services-16.png                  (social/services-16.png)
   skin/classic/browser/social/services-64.png                  (social/services-64.png)
@@ -133,19 +130,18 @@ browser.jar:
   skin/classic/browser/tabbrowser/tab-stroke-start.png         (tabbrowser/tab-stroke-start.png)
   skin/classic/browser/tabbrowser/tab-stroke-start@2x.png      (tabbrowser/tab-stroke-start@2x.png)
   skin/classic/browser/tabbrowser/tabDragIndicator.png         (tabbrowser/tabDragIndicator.png)
-  skin/classic/browser/sync-16.png
-  skin/classic/browser/sync-32.png
-  skin/classic/browser/sync-bg.png
-  skin/classic/browser/sync-desktopIcon.svg  (../shared/sync-desktopIcon.svg)
-  skin/classic/browser/sync-horizontalbar.png
-  skin/classic/browser/sync-horizontalbar@2x.png
-  skin/classic/browser/sync-horizontalbar-win7.png
-  skin/classic/browser/sync-horizontalbar-win7@2x.png
-  skin/classic/browser/sync-mobileIcon.svg  (../shared/sync-mobileIcon.svg)
-  skin/classic/browser/syncProgress-horizontalbar.png
-  skin/classic/browser/syncProgress-horizontalbar@2x.png
-  skin/classic/browser/syncProgress-horizontalbar-win7.png
-  skin/classic/browser/syncProgress-horizontalbar-win7@2x.png
+  skin/classic/browser/window-controls/close.svg                 (window-controls/close.svg)
+  skin/classic/browser/window-controls/close-highcontrast.svg    (window-controls/close-highcontrast.svg)
+  skin/classic/browser/window-controls/close-themes.svg          (window-controls/close-themes.svg)
+  skin/classic/browser/window-controls/maximize.svg              (window-controls/maximize.svg)
+  skin/classic/browser/window-controls/maximize-highcontrast.svg (window-controls/maximize-highcontrast.svg)
+  skin/classic/browser/window-controls/maximize-themes.svg       (window-controls/maximize-themes.svg)
+  skin/classic/browser/window-controls/minimize.svg              (window-controls/minimize.svg)
+  skin/classic/browser/window-controls/minimize-highcontrast.svg (window-controls/minimize-highcontrast.svg)
+  skin/classic/browser/window-controls/minimize-themes.svg       (window-controls/minimize-themes.svg)
+  skin/classic/browser/window-controls/restore.svg               (window-controls/restore.svg)
+  skin/classic/browser/window-controls/restore-highcontrast.svg  (window-controls/restore-highcontrast.svg)
+  skin/classic/browser/window-controls/restore-themes.svg        (window-controls/restore-themes.svg)
 
 #ifdef E10S_TESTING_ONLY
   skin/classic/browser/e10s-64@2x.png (../shared/e10s-64@2x.png)
@@ -173,13 +169,6 @@ browser.jar:
 % override chrome://browser/skin/tabbrowser/newtab.svg                chrome://browser/skin/tabbrowser/newtab-win7.svg              os=WINNT osversion<=6.1
 % override chrome://browser/skin/tabbrowser/newtab-inverted.svg       chrome://browser/skin/tabbrowser/newtab-inverted-win7.svg     os=WINNT osversion<=6.1
 % override chrome://browser/skin/tabbrowser/tab-arrow-left.svg        chrome://browser/skin/tabbrowser/tab-arrow-left-win7.svg      os=WINNT osversion<=6.1
-
-% override chrome://browser/skin/Toolbar@2x.png                       chrome://browser/skin/Toolbar-win7@2x.png                         os=WINNT osversion=6.1
-% override chrome://browser/skin/Toolbar@2x.png                       chrome://browser/skin/Toolbar-win8@2x.png                         os=WINNT osversion=6.2
-% override chrome://browser/skin/Toolbar@2x.png                       chrome://browser/skin/Toolbar-win8@2x.png                         os=WINNT osversion=6.3
-% override chrome://browser/skin/Toolbar.png                          chrome://browser/skin/Toolbar-win7.png                            os=WINNT osversion=6.1
-% override chrome://browser/skin/Toolbar.png                          chrome://browser/skin/Toolbar-win8.png                            os=WINNT osversion=6.2
-% override chrome://browser/skin/Toolbar.png                          chrome://browser/skin/Toolbar-win8.png                            os=WINNT osversion=6.3
 
 % override chrome://browser/skin/tabbrowser/tab-background-start.png     chrome://browser/skin/tabbrowser/tab-background-start-preWin10.png     os=WINNT osversion<=6.3
 % override chrome://browser/skin/tabbrowser/tab-background-start@2x.png  chrome://browser/skin/tabbrowser/tab-background-start-preWin10@2x.png  os=WINNT osversion<=6.3

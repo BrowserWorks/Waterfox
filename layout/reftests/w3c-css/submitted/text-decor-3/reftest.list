@@ -1,4 +1,4 @@
-== ruby-text-decoration-01.html ruby-text-decoration-01-ref.html
+fails-if(stylo) == ruby-text-decoration-01.html ruby-text-decoration-01-ref.html
 == text-decoration-propagation-01.html text-decoration-propagation-01-ref.html
 
 # text-emphasis-style

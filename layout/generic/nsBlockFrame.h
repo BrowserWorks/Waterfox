@@ -80,8 +80,7 @@ class nsBlockFrame : public nsContainerFrame
   using BlockReflowInput = mozilla::BlockReflowInput;
 
 public:
-  NS_DECL_QUERYFRAME_TARGET(nsBlockFrame)
-  NS_DECL_FRAMEARENA_HELPERS
+  NS_DECL_FRAMEARENA_HELPERS(nsBlockFrame)
 
   typedef nsLineList::iterator LineIterator;
   typedef nsLineList::const_iterator ConstLineIterator;
@@ -141,7 +140,6 @@ public:
   void BuildDisplayList(nsDisplayListBuilder* aBuilder,
                         const nsRect& aDirtyRect,
                         const nsDisplayListSet& aLists) override;
-  nsIAtom* GetType() const override;
   bool IsFrameOfType(uint32_t aFlags) const override
   {
     return nsContainerFrame::IsFrameOfType(aFlags &
@@ -215,7 +213,7 @@ public:
     ~AutoLineCursorSetup()
     {
       if (mOrigCursor) {
-        mFrame->Properties().Set(LineCursorProperty(), mOrigCursor);
+        mFrame->SetProperty(LineCursorProperty(), mOrigCursor);
       } else {
         mFrame->ClearLineCursor();
       }
@@ -398,8 +396,8 @@ public:
   };
 
 protected:
-  explicit nsBlockFrame(nsStyleContext* aContext)
-    : nsContainerFrame(aContext)
+  explicit nsBlockFrame(nsStyleContext* aContext, ClassID aID = kClassID)
+    : nsContainerFrame(aContext, aID)
     , mMinWidth(NS_INTRINSIC_WIDTH_UNKNOWN)
     , mPrefWidth(NS_INTRINSIC_WIDTH_UNKNOWN)
   {
@@ -407,6 +405,7 @@ protected:
   InitDebugFlags();
 #endif
   }
+
   virtual ~nsBlockFrame();
 
 #ifdef DEBUG
@@ -416,7 +415,7 @@ protected:
   NS_DECLARE_FRAME_PROPERTY_WITHOUT_DTOR(LineCursorProperty, nsLineBox)
   bool HasLineCursor() { return GetStateBits() & NS_BLOCK_HAS_LINE_CURSOR; }
   nsLineBox* GetLineCursor() {
-    return HasLineCursor() ? Properties().Get(LineCursorProperty()) : nullptr;
+    return HasLineCursor() ? GetProperty(LineCursorProperty()) : nullptr;
   }
 
   nsLineBox* NewLineBox(nsIFrame* aFrame, bool aIsBlock) {

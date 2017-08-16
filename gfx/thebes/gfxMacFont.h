@@ -11,12 +11,15 @@
 #include "cairo.h"
 #include <ApplicationServices/ApplicationServices.h>
 
+#include "mozilla/gfx/UnscaledFontMac.h"
+
 class MacOSFontEntry;
 
 class gfxMacFont : public gfxFont
 {
 public:
-    gfxMacFont(MacOSFontEntry *aFontEntry, const gfxFontStyle *aFontStyle,
+    gfxMacFont(const RefPtr<mozilla::gfx::UnscaledFontMac>& aUnscaledFont,
+               MacOSFontEntry *aFontEntry, const gfxFontStyle *aFontStyle,
                bool aNeedsBold);
 
     virtual ~gfxMacFont();
@@ -36,7 +39,7 @@ public:
                        BoundingBoxType aBoundingBoxType,
                        DrawTarget *aDrawTargetForTightBoundingBox,
                        Spacing *aSpacing,
-                       uint16_t aOrientation) override;
+                       mozilla::gfx::ShapedTextFlags aOrientation) override;
 
     // We need to provide hinted (non-linear) glyph widths if using a font
     // with embedded color bitmaps (Apple Color Emoji), as Core Text renders
@@ -82,6 +85,7 @@ protected:
                    uint32_t        aLength,
                    Script          aScript,
                    bool            aVertical,
+                   RoundingFlags   aRounding,
                    gfxShapedText  *aShapedText) override;
 
     void InitMetrics();
@@ -106,7 +110,7 @@ protected:
     Metrics               mMetrics;
     uint32_t              mSpaceGlyph;
 
-    bool                  mVariationFont; // true if variations are in effect
+    bool                  mVariationFont; // true if font has OpenType variations
 };
 
 #endif /* GFX_MACFONT_H */

@@ -25,6 +25,7 @@
 ^gfx/ots/.*
 ^gfx/qcms/.*
 ^gfx/skia/.*
+^gfx/vr/openvr/.*
 ^gfx/webrender.*
 ^gfx/webrender_traits.*
 ^gfx/ycbcr/.*
@@ -59,7 +60,6 @@
 ^media/sphinxbase/.*
 ^media/webrtc/trunk/.*
 ^media/webrtc/signaling/src/sdp/sipcc/.*
-^memory/jemalloc/src/.*
 ^mfbt/decimal/.*
 ^mfbt/double-conversion/source/.*
 ^mfbt/lz4.*

@@ -4,7 +4,7 @@
 
 "use strict";
 
-const {classes: Cc, interfaces: Ci, utils: Cu, results: Cr} = Components;
+const {classes: Cc, interfaces: Ci, utils: Cu} = Components;
 
 Cu.import("resource://gre/modules/Log.jsm");
 
@@ -612,117 +612,6 @@ element.generateUUID = function() {
 };
 
 /**
- * Convert any web elements in arbitrary objects to DOM elements by
- * looking them up in the seen element store.
- *
- * @param {?} obj
- *     Arbitrary object containing web elements.
- * @param {element.Store} seenEls
- *     Element store to use for lookup of web element references.
- * @param {Window} win
- *     Window.
- * @param {ShadowRoot} shadowRoot
- *     Shadow root.
- *
- * @return {?}
- *     Same object as provided by |obj| with the web elements replaced
- *     by DOM elements.
- */
-element.fromJson = function (
-    obj, seenEls, win, shadowRoot = undefined) {
-  switch (typeof obj) {
-    case "boolean":
-    case "number":
-    case "string":
-      return obj;
-
-    case "object":
-      if (obj === null) {
-        return obj;
-      }
-
-      // arrays
-      else if (Array.isArray(obj)) {
-        return obj.map(e => element.fromJson(e, seenEls, win, shadowRoot));
-      }
-
-      // web elements
-      else if (Object.keys(obj).includes(element.Key) ||
-          Object.keys(obj).includes(element.LegacyKey)) {
-        let uuid = obj[element.Key] || obj[element.LegacyKey];
-        let el = seenEls.get(uuid, {frame: win, shadowRoot: shadowRoot});
-        if (!el) {
-          throw new WebDriverError(`Unknown element: ${uuid}`);
-        }
-        return el;
-      }
-
-      // arbitrary objects
-      else {
-        let rv = {};
-        for (let prop in obj) {
-          rv[prop] = element.fromJson(obj[prop], seenEls, win, shadowRoot);
-        }
-        return rv;
-      }
-  }
-};
-
-/**
- * Convert arbitrary objects to JSON-safe primitives that can be
- * transported over the Marionette protocol.
- *
- * Any DOM elements are converted to web elements by looking them up
- * and/or adding them to the element store provided.
- *
- * @param {?} obj
- *     Object to be marshaled.
- * @param {element.Store} seenEls
- *     Element store to use for lookup of web element references.
- *
- * @return {?}
- *     Same object as provided by |obj| with the elements replaced by
- *     web elements.
- */
-element.toJson = function (obj, seenEls) {
-  let t = Object.prototype.toString.call(obj);
-
-  // null
-  if (t == "[object Undefined]" || t == "[object Null]") {
-    return null;
-  }
-
-  // literals
-  else if (t == "[object Boolean]" || t == "[object Number]" || t == "[object String]") {
-    return obj;
-  }
-
-  // Array, NodeList, HTMLCollection, et al.
-  else if (element.isCollection(obj)) {
-    return [...obj].map(el => element.toJson(el, seenEls));
-  }
-
-  // HTMLElement
-  else if ("nodeType" in obj && obj.nodeType == 1) {
-    let uuid = seenEls.add(obj);
-    return element.makeWebElement(uuid);
-  }
-
-  // arbitrary objects + files
-  else {
-    let rv = {};
-    for (let prop in obj) {
-      try {
-        rv[prop] = element.toJson(obj[prop], seenEls);
-      } catch (e if (e.result == Cr.NS_ERROR_NOT_IMPLEMENTED)) {
-        logger.debug(`Skipping ${prop}: ${e.message}`);
-      }
-    }
-    return rv;
-  }
-};
-
-/**
  * Check if the element is detached from the current frame as well as
  * the optional shadow root (when inside a Shadow DOM context).
  *
@@ -883,6 +772,12 @@ element.getContainer = function (el) {
  * pointer-interactable, if it is found somewhere in the
  * |elementsFromPoint| list at |el|'s in-view centre coordinates.
  *
+ * Before running the check, we change |el|'s pointerEvents style property
+ * to "auto", since elements without pointer events enabled do not turn
+ * up in the paint tree we get from document.elementsFromPoint.  This is
+ * a specialisation that is only relevant when checking if the element is
+ * in view.
+ *
  * @param {Element} el
  *     Element to check if is in view.
  *
@@ -890,8 +785,14 @@ element.getContainer = function (el) {
  *     True if |el| is inside the viewport, or false otherwise.
  */
 element.isInView = function (el) {
-  let tree = element.getPointerInteractablePaintTree(el);
-  return tree.includes(el);
+  let originalPointerEvents = el.style.pointerEvents;
+  try {
+    el.style.pointerEvents = "auto";
+    const tree = element.getPointerInteractablePaintTree(el);
+    return tree.includes(el);
+  } finally {
+    el.style.pointerEvents = originalPointerEvents;
+  }
 };
 
 /**
@@ -937,15 +838,19 @@ element.isVisible = function (el, x = undefined, y = undefined) {
  * point of its rectangle that is inside the viewport, excluding the size
  * of any rendered scrollbars.
  *
+ * An element is obscured if the pointer-interactable paint tree at its
+ * centre point is empty, or the first element in this tree is not an
+ * inclusive descendant of itself.
+ *
  * @param {DOMElement} el
  *     Element determine if is pointer-interactable.
  *
  * @return {boolean}
- *     True if interactable, false otherwise.
+ *     True if element is obscured, false otherwise.
  */
-element.isPointerInteractable = function (el) {
+element.isObscured = function (el) {
   let tree = element.getPointerInteractablePaintTree(el);
-  return tree[0] === el;
+  return !el.contains(tree[0]);
 };
 
 /**
@@ -995,9 +900,17 @@ element.getInViewCentrePoint = function (rect, win) {
 element.getPointerInteractablePaintTree = function (el) {
   const doc = el.ownerDocument;
   const win = doc.defaultView;
+  const container = {frame: win};
+  const rootNode = el.getRootNode();
+
+  // Include shadow DOM host only if the element's root node is not the
+  // owner document.
+  if (rootNode !== doc) {
+    container.shadowRoot = rootNode;
+  }
 
   // pointer-interactable elements tree, step 1
-  if (element.isDisconnected(el, {frame: win})) {
+  if (element.isDisconnected(el, container)) {
     return [];
   }
 

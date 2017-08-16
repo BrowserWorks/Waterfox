@@ -19,13 +19,14 @@
 #include "nsIEncodedChannel.h"
 #include "nsIHttpChannelInternal.h"
 #include "nsIForcePendingChannel.h"
-#include "mozilla/ipc/InputStreamUtils.h"
+#include "mozilla/ipc/IPCStreamUtils.h"
 #include "mozilla/ipc/URIUtils.h"
 #include "mozilla/Unused.h"
 #include "SerializedLoadContext.h"
 #include "nsIContentPolicy.h"
 #include "mozilla/ipc/BackgroundUtils.h"
 #include "mozilla/LoadInfo.h"
+#include "mozilla/dom/ContentParent.h"
 
 using namespace mozilla::dom;
 using namespace mozilla::ipc;
@@ -117,7 +118,7 @@ bool
 FTPChannelParent::DoAsyncOpen(const URIParams& aURI,
                               const uint64_t& aStartPos,
                               const nsCString& aEntityID,
-                              const OptionalInputStreamParams& aUploadStream,
+                              const OptionalIPCStream& aUploadStream,
                               const OptionalLoadInfoArgs& aLoadInfoArgs)
 {
   nsresult rv;
@@ -170,8 +171,7 @@ FTPChannelParent::DoAsyncOpen(const URIParams& aURI,
   if (NS_FAILED(rv))
     return SendFailedAsyncOpen(rv);
 
-  nsTArray<mozilla::ipc::FileDescriptor> fds;
-  nsCOMPtr<nsIInputStream> upload = DeserializeInputStream(aUploadStream, fds);
+  nsCOMPtr<nsIInputStream> upload = DeserializeIPCStream(aUploadStream);
   if (upload) {
     // contentType and contentLength are ignored
     rv = ftpChan->SetUploadStream(upload, EmptyCString(), 0);
@@ -240,7 +240,7 @@ FTPChannelParent::RecvResume()
   return IPC_OK();
 }
 
-class FTPDivertDataAvailableEvent : public ChannelEvent
+class FTPDivertDataAvailableEvent : public MainThreadChannelEvent
 {
 public:
   FTPDivertDataAvailableEvent(FTPChannelParent* aParent,
@@ -331,7 +331,7 @@ FTPChannelParent::DivertOnDataAvailable(const nsCString& data,
   }
 }
 
-class FTPDivertStopRequestEvent : public ChannelEvent
+class FTPDivertStopRequestEvent : public MainThreadChannelEvent
 {
 public:
   FTPDivertStopRequestEvent(FTPChannelParent* aParent,
@@ -391,7 +391,7 @@ FTPChannelParent::DivertOnStopRequest(const nsresult& statusCode)
   OnStopRequest(mChannel, nullptr, status);
 }
 
-class FTPDivertCompleteEvent : public ChannelEvent
+class FTPDivertCompleteEvent : public MainThreadChannelEvent
 {
 public:
   explicit FTPDivertCompleteEvent(FTPChannelParent* aParent)
@@ -458,6 +458,13 @@ FTPChannelParent::OnStartRequest(nsIRequest* aRequest, nsISupports* aContext)
   MOZ_ASSERT(chan);
   NS_ENSURE_TRUE(chan, NS_ERROR_UNEXPECTED);
 
+  // Send down any permissions which are relevant to this URL if we are
+  // performing a document load.
+  PContentParent* pcp = Manager()->Manager();
+  DebugOnly<nsresult> rv =
+    static_cast<ContentParent*>(pcp)->AboutToLoadHttpFtpWyciwygDocumentForChild(chan);
+  MOZ_ASSERT(NS_SUCCEEDED(rv));
+
   int64_t contentLength;
   chan->GetContentLength(&contentLength);
   nsCString contentType;
@@ -477,7 +484,8 @@ FTPChannelParent::OnStartRequest(nsIRequest* aRequest, nsISupports* aContext)
   }
   nsCOMPtr<nsIHttpChannelInternal> httpChan = do_QueryInterface(aRequest);
   if (httpChan) {
-    httpChan->GetLastModifiedTime(&lastModified);
+    DebugOnly<nsresult> rv = httpChan->GetLastModifiedTime(&lastModified);
+    MOZ_ASSERT(NS_SUCCEEDED(rv));
   }
 
   URIParams uriparam;

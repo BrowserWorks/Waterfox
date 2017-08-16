@@ -621,9 +621,9 @@ public:
           bool validWK = false;
           bool mixedScheme = false;
           int32_t lifetime = 0;
-          uu->GetValid(&validWK);
-          uu->GetLifetime(&lifetime);
-          uu->GetMixed(&mixedScheme);
+          Unused << uu->GetValid(&validWK);
+          Unused << uu->GetLifetime(&lifetime);
+          Unused << uu->GetMixed(&mixedScheme);
           if (!validWK) {
             LOG(("WellKnownChecker::Done %p json parser declares invalid\n%s\n", this, mTransactionAlternate->mWKResponse.get()));
             accepted = false;
@@ -670,9 +670,9 @@ private:
   MakeChannel(nsHttpChannel *chan, TransactionObserver *obs, nsHttpConnectionInfo *ci,
               nsIURI *uri, uint32_t caps, nsILoadInfo *loadInfo)
   {
-    nsID channelId;
+    uint64_t channelId;
     nsLoadFlags flags;
-    if (NS_FAILED(gHttpHandler->NewChannelId(&channelId)) ||
+    if (NS_FAILED(gHttpHandler->NewChannelId(channelId)) ||
         NS_FAILED(chan->Init(uri, caps, nullptr, 0, nullptr, channelId)) ||
         NS_FAILED(chan->SetAllowAltSvc(false)) ||
         NS_FAILED(chan->SetRedirectMode(nsIHttpChannelInternal::REDIRECT_MODE_ERROR)) ||
@@ -903,7 +903,12 @@ AltSvcCache::UpdateAltServiceMapping(AltSvcMapping *map, nsProxyInfo *pi,
     nsCOMPtr<nsIInterfaceRequestor> callbacks = new AltSvcOverride(aCallbacks);
     RefPtr<AltSvcTransaction> nullTransaction =
       new AltSvcTransaction(map, ci, aCallbacks, caps);
-    gHttpHandler->ConnMgr()->SpeculativeConnect(ci, callbacks, caps, nullTransaction);
+    nsresult rv = gHttpHandler->ConnMgr()->SpeculativeConnect(ci, callbacks, caps, nullTransaction);
+    if (NS_FAILED(rv)) {
+      LOG(("AltSvcCache::UpdateAltServiceMapping %p "
+           "speculative connect failed with code %08x\n", this,
+           static_cast<uint32_t>(rv)));
+    }
   } else {
     // for http:// resources we fetch .well-known too
     nsAutoCString origin (NS_LITERAL_CSTRING("http://") + map->OriginHost());
@@ -941,7 +946,7 @@ AltSvcCache::GetAltServiceMapping(const nsACString &scheme, const nsACString &ho
     // DataStorage gives synchronous access to a memory based hash table
     // that is backed by disk where those writes are done asynchronously
     // on another thread
-    mStorage = DataStorage::Get(NS_LITERAL_STRING("AlternateServices.txt"));
+    mStorage = DataStorage::Get(DataStorageClass::AlternateServices);
     if (mStorage) {
       bool storageWillPersist = false;
       if (NS_FAILED(mStorage->Init(storageWillPersist))) {

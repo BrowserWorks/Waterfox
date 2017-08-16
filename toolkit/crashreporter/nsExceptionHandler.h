@@ -103,7 +103,6 @@ bool GetExtraFileForID(const nsAString& id, nsIFile** extraFile);
 bool GetExtraFileForMinidump(nsIFile* minidump, nsIFile** extraFile);
 bool AppendExtraData(const nsAString& id, const AnnotationTable& data);
 bool AppendExtraData(nsIFile* extraFile, const AnnotationTable& data);
-void RunMinidumpAnalyzer(const nsAString& id);
 
 /*
  * Renames the stand alone dump file aDumpFile to:
@@ -279,6 +278,10 @@ void AddLibraryMapping(const char* library_name,
                        size_t      file_offset);
 
 #endif
+
+// Annotates the crash report with the name of the calling thread.
+void SetCurrentThreadName(const char* aName);
+
 } // namespace CrashReporter
 
 #endif /* nsExceptionHandler_h__ */

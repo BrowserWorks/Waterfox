@@ -4,22 +4,21 @@
 
 'use strict';
 
-/* global EVENT_SHOW */
-
+/* import-globals-from ../../mochitest/role.js */
 loadScripts({ name: 'role.js', dir: MOCHITESTS_DIR });
 
 addAccessibleTask(`
   <canvas id="canvas">
     <div id="dialog" role="dialog" style="display: none;"></div>
-  </canvas>`, function*(browser, accDoc) {
+  </canvas>`, async function(browser, accDoc) {
   let canvas = findAccessibleChildByID(accDoc, 'canvas');
   let dialog = findAccessibleChildByID(accDoc, 'dialog');
 
   testAccessibleTree(canvas, { CANVAS: [] });
 
   let onShow = waitForEvent(EVENT_SHOW, 'dialog');
-  yield invokeSetStyle(browser, 'dialog', 'display', 'block');
-  yield onShow;
+  await invokeSetStyle(browser, 'dialog', 'display', 'block');
+  await onShow;
 
   testAccessibleTree(dialog, { DIALOG: [] });
 });

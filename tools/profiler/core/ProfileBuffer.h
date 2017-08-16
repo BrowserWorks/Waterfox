@@ -6,8 +6,9 @@
 #ifndef MOZ_PROFILE_BUFFER_H
 #define MOZ_PROFILE_BUFFER_H
 
-#include "ProfileBufferEntry.h"
 #include "platform.h"
+#include "ProfileBufferEntry.h"
+#include "ProfilerMarker.h"
 #include "ProfileJSONWriter.h"
 #include "mozilla/RefPtr.h"
 #include "mozilla/RefCounted.h"
@@ -19,14 +20,41 @@ public:
 
   ~ProfileBuffer();
 
+  // LastSample is used to record the buffer location of the most recent
+  // sample for each thread. It is used for periodic samples stored in the
+  // global ProfileBuffer, but *not* for synchronous samples.
+  struct LastSample {
+    LastSample()
+      : mGeneration(0)
+      , mPos(-1)
+    {}
+
+    // The profiler-buffer generation number at which the sample was created.
+    uint32_t mGeneration;
+    // And its position in the buffer, or -1 meaning "invalid".
+    int mPos;
+  };
+
+  // Add |aTag| to the buffer, ignoring what kind of entry it is.
   void addTag(const ProfileBufferEntry& aTag);
-  void StreamSamplesToJSON(SpliceableJSONWriter& aWriter, int aThreadId, double aSinceTime,
-                           JSContext* cx, UniqueStacks& aUniqueStacks);
+
+  // Add to the buffer a sample start (ThreadId) entry for aThreadId. Also,
+  // record the resulting generation and index in |aLS| if it's non-null.
+  void addTagThreadId(int aThreadId, LastSample* aLS);
+
+  void StreamSamplesToJSON(SpliceableJSONWriter& aWriter, int aThreadId,
+                           double aSinceTime, JSContext* cx,
+                           UniqueStacks& aUniqueStacks);
   void StreamMarkersToJSON(SpliceableJSONWriter& aWriter, int aThreadId,
-                           const mozilla::TimeStamp& aStartTime,
+                           const mozilla::TimeStamp& aProcessStartTime,
                            double aSinceTime,
                            UniqueStacks& aUniqueStacks);
-  bool DuplicateLastSample(int aThreadId, const mozilla::TimeStamp& aStartTime);
+
+  // Find (via |aLS|) the most recent sample for the thread denoted by
+  // |aThreadId| and clone it, patching in |aProcessStartTime| as appropriate.
+  bool DuplicateLastSample(int aThreadId,
+                           const mozilla::TimeStamp& aProcessStartTime,
+                           LastSample& aLS);
 
   void addStoredMarker(ProfilerMarker* aStoredMarker);
 
@@ -38,7 +66,7 @@ public:
 
 protected:
   char* processDynamicTag(int readPos, int* tagsConsumed, char* tagBuff);
-  int FindLastSampleOfThread(int aThreadId);
+  int FindLastSampleOfThread(int aThreadId, const LastSample& aLS);
 
 public:
   // Circular buffer 'Keep One Slot Open' implementation for simplicity

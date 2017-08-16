@@ -40,7 +40,8 @@ public:
                              int64_t              streamLen = -1,
                              uint32_t             segsize = 0,
                              uint32_t             segcount = 0,
-                             bool                 closeWhenDone = false);
+                             bool                 closeWhenDone = false,
+                             nsIEventTarget      *mainThreadTarget = nullptr);
 
     typedef void (*PeekSegmentFun)(void *closure, const uint8_t *buf,
                                    uint32_t bufLen);
@@ -75,14 +76,17 @@ protected:
     uint32_t OnStateStart();
     uint32_t OnStateTransfer();
     uint32_t OnStateStop();
+    nsresult CreateBufferedStreamIfNeeded();
 
     uint32_t                      mState;
     nsCOMPtr<nsILoadGroup>        mLoadGroup;
     nsCOMPtr<nsIStreamListener>   mListener;
     nsCOMPtr<nsISupports>         mListenerContext;
     nsCOMPtr<nsIEventTarget>      mTargetThread;
+    nsCOMPtr<nsIEventTarget>      mLabeledMainThreadTarget;
     nsCOMPtr<nsIInputStream>      mStream;
     nsCOMPtr<nsIAsyncInputStream> mAsyncStream;
+    nsCOMPtr<nsIInputStream>      mBufferedStream;
     uint64_t                      mStreamOffset;
     uint64_t                      mStreamLength;
     uint32_t                      mSegSize;

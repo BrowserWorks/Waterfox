@@ -7,9 +7,9 @@
  *
  */
 
-add_task(function*() {
-  let tab1 = gBrowser.addTab("http://mochi.test:8888/#0");
-  let tab2 = gBrowser.addTab("http://mochi.test:8888/#1");
+add_task(async function() {
+  let tab1 = BrowserTestUtils.addTab(gBrowser, "http://mochi.test:8888/#0");
+  let tab2 = BrowserTestUtils.addTab(gBrowser, "http://mochi.test:8888/#1");
   let specificPanel = document.createElement("panel");
   specificPanel.setAttribute("tabspecific", "true");
   let generalPanel = document.createElement("panel");
@@ -22,12 +22,12 @@ add_task(function*() {
 
   let specificPanelPromise = BrowserTestUtils.waitForEvent(specificPanel, "popupshown");
   specificPanel.openPopupAtScreen(210, 210);
-  yield specificPanelPromise;
+  await specificPanelPromise;
   is(specificPanel.state, "open", "specificPanel has been opened");
 
   let generalPanelPromise = BrowserTestUtils.waitForEvent(generalPanel, "popupshown");
   generalPanel.openPopupAtScreen(510, 510);
-  yield generalPanelPromise;
+  await generalPanelPromise;
   is(generalPanel.state, "open", "generalPanel has been opened");
 
   gBrowser.tabContainer.advanceSelectedTab(-1, true);

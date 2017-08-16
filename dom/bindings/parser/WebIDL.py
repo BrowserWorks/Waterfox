@@ -573,7 +573,10 @@ class IDLExternalInterface(IDLObjectWithIdentifier, IDLExposureMixins):
         return False
 
     def addExtendedAttributes(self, attrs):
-        assert len(attrs) == 0
+        if len(attrs) != 0:
+            raise WebIDLError("There are no extended attributes that are "
+                              "allowed on external interfaces",
+                              [attrs[0].location, self.location])
 
     def resolve(self, parentScope):
         pass
@@ -584,7 +587,7 @@ class IDLExternalInterface(IDLObjectWithIdentifier, IDLExposureMixins):
     def isJSImplemented(self):
         return False
 
-    def isProbablyShortLivingObject(self):
+    def hasProbablyShortLivingWrapper(self):
         return False
 
     def isNavigatorProperty(self):
@@ -1498,10 +1501,10 @@ class IDLInterfaceOrNamespace(IDLObjectWithScope, IDLExposureMixins):
     def isJSImplemented(self):
         return bool(self.getJSImplementation())
 
-    def isProbablyShortLivingObject(self):
+    def hasProbablyShortLivingWrapper(self):
         current = self
         while current:
-            if current.getExtendedAttribute("ProbablyShortLivingObject"):
+            if current.getExtendedAttribute("ProbablyShortLivingWrapper"):
                 return True
             current = current.parent
         return False
@@ -1555,10 +1558,8 @@ class IDLInterfaceOrNamespace(IDLObjectWithScope, IDLExposureMixins):
     def hasMembersInSlots(self):
         return self._ownMembersInSlots != 0
 
-    conditionExtendedAttributes = [ "Pref", "ChromeOnly", "Func", "AvailableIn",
-                                    "SecureContext",
-                                    "CheckAnyPermissions",
-                                    "CheckAllPermissions" ]
+    conditionExtendedAttributes = [ "Pref", "ChromeOnly", "Func",
+                                    "SecureContext" ]
     def isExposedConditionally(self, exclusions=[]):
         return any(((not a in exclusions) and self.getExtendedAttribute(a)) for a in self.conditionExtendedAttributes)
 
@@ -1727,7 +1728,7 @@ class IDLInterface(IDLInterfaceOrNamespace):
                   identifier == "Unforgeable" or
                   identifier == "UnsafeInPrerendering" or
                   identifier == "LegacyEventInit" or
-                  identifier == "ProbablyShortLivingObject" or
+                  identifier == "ProbablyShortLivingWrapper" or
                   identifier == "LegacyUnenumerableNamedProperties" or
                   identifier == "NonOrdinaryGetPrototypeOf"):
                 # Known extended attributes that do not take values
@@ -1934,7 +1935,10 @@ class IDLDictionary(IDLObjectWithScope):
                                   [member.location] + locations)
 
     def addExtendedAttributes(self, attrs):
-        assert len(attrs) == 0
+        if len(attrs) != 0:
+            raise WebIDLError("There are no extended attributes that are "
+                              "allowed on dictionaries",
+                              [attrs[0].location, self.location])
 
     def _getDependentObjects(self):
         deps = set(self.members)
@@ -1968,7 +1972,10 @@ class IDLEnum(IDLObjectWithIdentifier):
         return True
 
     def addExtendedAttributes(self, attrs):
-        assert len(attrs) == 0
+        if len(attrs) != 0:
+            raise WebIDLError("There are no extended attributes that are "
+                              "allowed on enums",
+                              [attrs[0].location, self.location])
 
     def _getDependentObjects(self):
         return set()
@@ -2141,7 +2148,11 @@ class IDLType(IDLObject):
         return self.nullable() and self.inner.callback._treatNonObjectAsNull
 
     def addExtendedAttributes(self, attrs):
-        assert len(attrs) == 0
+        if len(attrs) != 0:
+            raise WebIDLError("There are no extended attributes that are "
+                              "allowed on types, for now (but this is "
+                              "changing; see bug 1359269)",
+                              [attrs[0].location, self.location])
 
     def resolveType(self, parentScope):
         pass
@@ -2709,7 +2720,10 @@ class IDLTypedef(IDLObjectWithIdentifier):
         return True
 
     def addExtendedAttributes(self, attrs):
-        assert len(attrs) == 0
+        if len(attrs) != 0:
+            raise WebIDLError("There are no extended attributes that are "
+                              "allowed on typedefs",
+                              [attrs[0].location, self.location])
 
     def _getDependentObjects(self):
         return self.innerType._getDependentObjects()
@@ -4099,6 +4113,11 @@ class IDLAttribute(IDLInterfaceMember):
             raise WebIDLError("Attribute returns a type that is not exposed "
                               "everywhere where the attribute is exposed",
                               [self.location])
+        if self.getExtendedAttribute("CEReactions"):
+            if self.readonly:
+                raise WebIDLError("[CEReactions] is not allowed on "
+                                  "readonly attributes",
+                                  [self.location])
 
     def handleExtendedAttribute(self, attr):
         identifier = attr.identifier()
@@ -4285,6 +4304,10 @@ class IDLAttribute(IDLInterfaceMember):
                 raise WebIDLError("[Unscopable] is only allowed on non-static "
                                   "attributes and operations",
                                   [attr.location, self.location])
+        elif identifier == "CEReactions":
+            if not attr.noArguments():
+                raise WebIDLError("[CEReactions] must take no arguments",
+                                  [attr.location])
         elif (identifier == "Pref" or
               identifier == "Deprecated" or
               identifier == "SetterThrows" or
@@ -4852,9 +4875,10 @@ class IDLMethod(IDLInterfaceMember, IDLScope):
                     # optional arguments must be optional.
                     if (not argument.optional and
                         all(arg.optional for arg in arguments[idx+1:])):
-                        raise WebIDLError("Dictionary argument or union "
-                                          "argument containing a dictionary "
-                                          "not followed by a required argument "
+                        raise WebIDLError("Dictionary argument without any "
+                                          "required fields or union argument "
+                                          "containing such dictionary not "
+                                          "followed by a required argument "
                                           "must be optional",
                                           [argument.location])
 
@@ -5017,6 +5041,15 @@ class IDLMethod(IDLInterfaceMember, IDLScope):
                 raise WebIDLError("[Unscopable] is only allowed on non-static "
                                   "attributes and operations",
                                   [attr.location, self.location])
+        elif identifier == "CEReactions":
+            if not attr.noArguments():
+                raise WebIDLError("[CEReactions] must take no arguments",
+                                  [attr.location])
+
+            if self.isSpecial() and not self.isSetter() and not self.isDeleter():
+                raise WebIDLError("[CEReactions] is only allowed on operation, "
+                                  "attribute, setter, and deleter",
+                                  [attr.location, self.location])
         elif (identifier == "Throws" or
               identifier == "CanOOM" or
               identifier == "NewObject" or
@@ -5091,7 +5124,10 @@ class IDLImplementsStatement(IDLObject):
         pass
 
     def addExtendedAttributes(self, attrs):
-        assert len(attrs) == 0
+        if len(attrs) != 0:
+            raise WebIDLError("There are no extended attributes that are "
+                              "allowed on implements statements",
+                              [attrs[0].location, self.location])
 
 
 class IDLExtendedAttribute(IDLObject):

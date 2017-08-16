@@ -292,7 +292,6 @@ VRDisplayOSVR::GetSensorState()
 
   VRHMDSensorState result;
   OSVR_TimeValue timestamp;
-  result.Clear();
 
   OSVR_OrientationState orientation;
 
@@ -300,6 +299,7 @@ VRDisplayOSVR::GetSensorState()
     osvr_GetOrientationState(*m_iface, &timestamp, &orientation);
 
   result.timestamp = timestamp.seconds;
+  result.inputFrameID = mDisplayInfo.mFrameId;
 
   if (ret == OSVR_RETURN_SUCCESS) {
     result.flags |= VRDisplayCapabilityFlags::Cap_Orientation;
@@ -321,22 +321,16 @@ VRDisplayOSVR::GetSensorState()
   return result;
 }
 
-VRHMDSensorState
-VRDisplayOSVR::GetImmediateSensorState()
-{
-  return GetSensorState();
-}
-
 #if defined(XP_WIN)
 
-void
+bool
 VRDisplayOSVR::SubmitFrame(TextureSourceD3D11* aSource,
   const IntSize& aSize,
-  const VRHMDSensorState& aSensorState,
   const gfx::Rect& aLeftEyeRect,
   const gfx::Rect& aRightEyeRect)
 {
   // XXX Add code to submit frame
+  return false;
 }
 
 #endif
@@ -500,6 +494,12 @@ VRSystemManagerOSVR::Init()
 void
 VRSystemManagerOSVR::Destroy()
 {
+  Shutdown();
+}
+
+void
+VRSystemManagerOSVR::Shutdown()
+{
   if (mOSVRInitialized) {
     MOZ_ASSERT(NS_GetCurrentThread() == mOSVRThread);
     mOSVRThread = nullptr;
@@ -515,21 +515,34 @@ VRSystemManagerOSVR::Destroy()
   osvr_ClientShutdown(m_ctx);
 }
 
-void
+bool
 VRSystemManagerOSVR::GetHMDs(nsTArray<RefPtr<VRDisplayHost>>& aHMDResult)
 {
   // make sure context, interface and display are initialized
   CheckOSVRStatus();
 
-  if (!mOSVRInitialized) {
-    return;
+  if (!Init()) {
+    return false;
   }
 
   mHMDInfo = new VRDisplayOSVR(&m_ctx, &m_iface, &m_display);
 
   if (mHMDInfo) {
     aHMDResult.AppendElement(mHMDInfo);
+    return true;
   }
+  return false;
+}
+
+bool
+VRSystemManagerOSVR::GetIsPresenting()
+{
+  if (mHMDInfo) {
+    VRDisplayInfo displayInfo(mHMDInfo->GetDisplayInfo());
+    return displayInfo.GetPresentingGroups() != kVRGroupNone;
+  }
+
+  return false;
 }
 
 void
@@ -538,21 +551,16 @@ VRSystemManagerOSVR::HandleInput()
 }
 
 void
-VRSystemManagerOSVR::HandleButtonPress(uint32_t aControllerIdx,
-                                       uint64_t aButtonPressed)
+VRSystemManagerOSVR::VibrateHaptic(uint32_t aControllerIdx,
+                                   uint32_t aHapticIndex,
+                                   double aIntensity,
+                                   double aDuration,
+                                   uint32_t aPromiseID)
 {
 }
 
 void
-VRSystemManagerOSVR::HandleAxisMove(uint32_t aControllerIdx, uint32_t aAxis,
-                                    float aValue)
-{
-}
-
-void
-VRSystemManagerOSVR::HandlePoseTracking(uint32_t aControllerIdx,
-                                        const GamepadPoseState& aPose,
-                                        VRControllerHost* aController)
+VRSystemManagerOSVR::StopVibrateHaptic(uint32_t aControllerIdx)
 {
 }
 

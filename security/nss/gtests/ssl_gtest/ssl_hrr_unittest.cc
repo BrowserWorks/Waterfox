@@ -106,7 +106,7 @@ TEST_P(TlsConnectTls13, SecondClientHelloRejectEarlyDataXtn) {
   // A new client that tries to resume with 0-RTT but doesn't send the
   // correct key share(s). The server will respond with an HRR.
   auto orig_client =
-      std::make_shared<TlsAgent>(client_->name(), TlsAgent::CLIENT, mode_);
+      std::make_shared<TlsAgent>(client_->name(), TlsAgent::CLIENT, variant_);
   client_.swap(orig_client);
   client_->SetVersionRange(SSL_LIBRARY_VERSION_TLS_1_1,
                            SSL_LIBRARY_VERSION_TLS_1_3);
@@ -130,7 +130,7 @@ TEST_P(TlsConnectTls13, SecondClientHelloRejectEarlyDataXtn) {
   orig_client.reset();
 
   // Correct the DTLS message sequence number after an HRR.
-  if (mode_ == DGRAM) {
+  if (variant_ == ssl_variant_datagram) {
     client_->SetPacketFilter(
         std::make_shared<CorrectMessageSeqAfterHrrFilter>());
   }
@@ -144,6 +144,7 @@ TEST_P(TlsConnectTls13, SecondClientHelloRejectEarlyDataXtn) {
   PRInt32 rv = PR_Write(client_->ssl_fd(), k0RttData, k0RttDataLen);
   EXPECT_EQ(k0RttDataLen, rv);
 
+  ExpectAlert(server_, kTlsAlertUnsupportedExtension);
   Handshake();
   client_->CheckErrorCode(SSL_ERROR_UNSUPPORTED_EXTENSION_ALERT);
 }
@@ -181,7 +182,7 @@ TEST_P(TlsConnectTls13, RetryWithSameKeyShare) {
   static const std::vector<SSLNamedGroup> groups = {ssl_grp_ec_secp384r1,
                                                     ssl_grp_ec_secp521r1};
   server_->ConfigNamedGroups(groups);
-  ConnectExpectFail();
+  ConnectExpectAlert(server_, kTlsAlertIllegalParameter);
   EXPECT_EQ(SSL_ERROR_BAD_2ND_CLIENT_HELLO, server_->error_code());
   EXPECT_EQ(SSL_ERROR_ILLEGAL_PARAMETER_ALERT, client_->error_code());
 }
@@ -252,12 +253,13 @@ TEST_F(TlsConnectTest, Select12AfterHelloRetryRequest) {
 
   // Here we replace the TLS server with one that does TLS 1.2 only.
   // This will happily send the client a TLS 1.2 ServerHello.
-  server_.reset(new TlsAgent(server_->name(), TlsAgent::SERVER, mode_));
+  server_.reset(new TlsAgent(server_->name(), TlsAgent::SERVER, variant_));
   client_->SetPeer(server_);
   server_->SetPeer(client_);
   server_->SetVersionRange(SSL_LIBRARY_VERSION_TLS_1_2,
                            SSL_LIBRARY_VERSION_TLS_1_2);
   server_->StartConnect();
+  ExpectAlert(client_, kTlsAlertIllegalParameter);
   Handshake();
   EXPECT_EQ(SSL_ERROR_ILLEGAL_PARAMETER_ALERT, server_->error_code());
   EXPECT_EQ(SSL_ERROR_RX_MALFORMED_SERVER_HELLO, client_->error_code());
@@ -309,6 +311,7 @@ TEST_P(HelloRetryRequestAgentTest, SendSecondHelloRetryRequest) {
   MakeGroupHrr(ssl_grp_ec_secp384r1, &hrr, 0);
   ProcessMessage(hrr, TlsAgent::STATE_CONNECTING);
   MakeGroupHrr(ssl_grp_ec_secp521r1, &hrr, 1);
+  ExpectAlert(kTlsAlertUnexpectedMessage);
   ProcessMessage(hrr, TlsAgent::STATE_ERROR,
                  SSL_ERROR_RX_UNEXPECTED_HELLO_RETRY_REQUEST);
 }
@@ -318,6 +321,7 @@ TEST_P(HelloRetryRequestAgentTest, SendSecondHelloRetryRequest) {
 TEST_P(HelloRetryRequestAgentTest, HandleBogusHelloRetryRequest) {
   DataBuffer hrr;
   MakeGroupHrr(ssl_grp_ec_curve25519, &hrr);
+  ExpectAlert(kTlsAlertIllegalParameter);
   ProcessMessage(hrr, TlsAgent::STATE_ERROR,
                  SSL_ERROR_RX_MALFORMED_HELLO_RETRY_REQUEST);
 }
@@ -325,6 +329,7 @@ TEST_P(HelloRetryRequestAgentTest, HandleBogusHelloRetryRequest) {
 TEST_P(HelloRetryRequestAgentTest, HandleNoopHelloRetryRequest) {
   DataBuffer hrr;
   MakeCannedHrr(nullptr, 0U, &hrr);
+  ExpectAlert(kTlsAlertDecodeError);
   ProcessMessage(hrr, TlsAgent::STATE_ERROR,
                  SSL_ERROR_RX_MALFORMED_HELLO_RETRY_REQUEST);
 }
@@ -352,11 +357,11 @@ TEST_P(HelloRetryRequestAgentTest, HandleHelloRetryRequestCookie) {
 }
 
 INSTANTIATE_TEST_CASE_P(HelloRetryRequestAgentTests, HelloRetryRequestAgentTest,
-                        ::testing::Combine(TlsConnectTestBase::kTlsModesAll,
+                        ::testing::Combine(TlsConnectTestBase::kTlsVariantsAll,
                                            TlsConnectTestBase::kTlsV13));
 #ifndef NSS_DISABLE_TLS_1_3
 INSTANTIATE_TEST_CASE_P(HelloRetryRequestKeyExchangeTests, TlsKeyExchange13,
-                        ::testing::Combine(TlsConnectTestBase::kTlsModesAll,
+                        ::testing::Combine(TlsConnectTestBase::kTlsVariantsAll,
                                            TlsConnectTestBase::kTlsV13));
 #endif
 

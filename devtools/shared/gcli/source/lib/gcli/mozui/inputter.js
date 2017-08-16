@@ -22,6 +22,8 @@ var KeyEvent = require('../util/util').KeyEvent;
 var Status = require('../types/types').Status;
 var History = require('../ui/history').History;
 
+var Telemetry = require("devtools/client/shared/telemetry");
+
 var RESOLVED = Promise.resolve(true);
 
 /**
@@ -46,6 +48,9 @@ function Inputter(components) {
 
   // Used to effect caret changes. See _processCaretChange()
   this._caretChange = null;
+
+  // Use telemetry
+  this._telemetry = new Telemetry();
 
   // Ensure that TAB/UP/DOWN isn't handled by the browser
   this.onKeyDown = this.onKeyDown.bind(this);
@@ -122,6 +127,7 @@ Inputter.prototype.destroy = function() {
   this.tooltip = undefined;
   this.document = undefined;
   this.element = undefined;
+  this._telemetry = undefined;
 };
 
 /**
@@ -356,10 +362,10 @@ Inputter.prototype._checkAssignment = function(start) {
  */
 Inputter.prototype.setInput = function(str) {
   this._caretChange = Caret.TO_END;
-  return this.requisition.update(str).then(function(updated) {
+  return this.requisition.update(str).then(updated => {
     this.textChanged();
     return updated;
-  }.bind(this));
+  });
 };
 
 /**
@@ -473,14 +479,14 @@ Inputter.prototype.handleKeyUp = function(ev) {
   this._completed = this.requisition.update(this.element.value);
   this._previousValue = this.element.value;
 
-  return this._completed.then(function() {
+  return this._completed.then(() => {
     // Abort UI changes if this UI update has been overtaken
     if (this._previousValue === this.element.value) {
       this._choice = null;
       this.textChanged();
       this.onChoiceChange({ choice: this._choice });
     }
-  }.bind(this));
+  });
 };
 
 /**
@@ -494,22 +500,22 @@ Inputter.prototype._handleUpArrow = function() {
 
   if (this.element.value === '' || this._scrollingThroughHistory) {
     this._scrollingThroughHistory = true;
-    return this.requisition.update(this.history.backward()).then(function(updated) {
+    return this.requisition.update(this.history.backward()).then(updated => {
       this.textChanged();
       return updated;
-    }.bind(this));
+    });
   }
 
   // If the user is on a valid value, then we increment the value, but if
   // they've typed something that's not right we page through predictions
   if (this.assignment.getStatus() === Status.VALID) {
-    return this.requisition.nudge(this.assignment, 1).then(function() {
+    return this.requisition.nudge(this.assignment, 1).then(() => {
       // See notes on focusManager.onInputChange in onKeyDown
       this.textChanged();
       if (this.focusManager) {
         this.focusManager.onInputChange();
       }
-    }.bind(this));
+    });
   }
 
   this.changeChoice(-1);
@@ -527,21 +533,21 @@ Inputter.prototype._handleDownArrow = function() {
 
   if (this.element.value === '' || this._scrollingThroughHistory) {
     this._scrollingThroughHistory = true;
-    return this.requisition.update(this.history.forward()).then(function(updated) {
+    return this.requisition.update(this.history.forward()).then(updated => {
       this.textChanged();
       return updated;
-    }.bind(this));
+    });
   }
 
   // See notes above for the UP key
   if (this.assignment.getStatus() === Status.VALID) {
-    return this.requisition.nudge(this.assignment, -1).then(function() {
+    return this.requisition.nudge(this.assignment, -1).then(() => {
       // See notes on focusManager.onInputChange in onKeyDown
       this.textChanged();
       if (this.focusManager) {
         this.focusManager.onInputChange();
       }
-    }.bind(this));
+    });
   }
 
   this.changeChoice(+1);
@@ -557,9 +563,12 @@ Inputter.prototype._handleReturn = function() {
     this._scrollingThroughHistory = false;
     this.history.add(this.element.value);
 
-    return this.requisition.exec().then(function() {
+    let name = this.requisition.commandAssignment.value.name;
+    this._telemetry.logKeyed("DEVTOOLS_GCLI_COMMANDS_KEYED", name);
+
+    return this.requisition.exec().then(() => {
       this.textChanged();
-    }.bind(this));
+    });
   }
 
   // If we can't execute the command, but there is a menu choice to use
@@ -608,14 +617,14 @@ Inputter.prototype._handleTab = function(ev) {
   this.lastTabDownAt = 0;
   this._scrollingThroughHistory = false;
 
-  return this._completed.then(function(updated) {
+  return this._completed.then(updated => {
     // Abort UI changes if this UI update has been overtaken
     if (updated) {
       this.textChanged();
       this._choice = null;
       this.onChoiceChange({ choice: this._choice });
     }
-  }.bind(this));
+  });
 };
 
 /**

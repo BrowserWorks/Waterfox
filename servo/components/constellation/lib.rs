@@ -11,6 +11,7 @@ extern crate backtrace;
 extern crate bluetooth_traits;
 extern crate canvas;
 extern crate canvas_traits;
+extern crate clipboard;
 extern crate compositing;
 extern crate debugger;
 extern crate devtools_traits;
@@ -19,11 +20,14 @@ extern crate euclid;
 extern crate gaol;
 extern crate gfx;
 extern crate gfx_traits;
+extern crate hyper;
 extern crate ipc_channel;
+extern crate itertools;
 extern crate layout_traits;
 #[macro_use]
 extern crate log;
 extern crate msg;
+extern crate net;
 extern crate net_traits;
 extern crate offscreen_gl_context;
 extern crate profile_traits;
@@ -39,9 +43,10 @@ extern crate style_traits;
 extern crate webrender_traits;
 extern crate webvr_traits;
 
+mod browsingcontext;
 mod constellation;
 mod event_loop;
-mod frame;
+mod network_listener;
 mod pipeline;
 #[cfg(not(target_os = "windows"))]
 mod sandboxing;

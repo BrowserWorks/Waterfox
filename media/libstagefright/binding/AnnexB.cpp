@@ -38,7 +38,7 @@ AnnexB::ConvertSampleToAnnexB(mozilla::MediaRawData* aSample, bool aAddSPS)
 
   ByteReader reader(aSample->Data(), aSample->Size());
 
-  mozilla::Vector<uint8_t> tmp;
+  nsTArray<uint8_t> tmp;
   ByteWriter writer(tmp);
 
   while (reader.Remaining() >= 4) {
@@ -58,7 +58,7 @@ AnnexB::ConvertSampleToAnnexB(mozilla::MediaRawData* aSample, bool aAddSPS)
 
   nsAutoPtr<MediaRawDataWriter> samplewriter(aSample->CreateWriter());
 
-  if (!samplewriter->Replace(tmp.begin(), tmp.length())) {
+  if (!samplewriter->Replace(tmp.Elements(), tmp.Length())) {
     return false;
   }
 
@@ -242,7 +242,7 @@ AnnexB::ConvertSampleToAVCC(mozilla::MediaRawData* aSample)
     return true;
   }
 
-  mozilla::Vector<uint8_t> nalu;
+  nsTArray<uint8_t> nalu;
   ByteWriter writer(nalu);
   ByteReader reader(aSample->Data(), aSample->Size());
 
@@ -250,142 +250,25 @@ AnnexB::ConvertSampleToAVCC(mozilla::MediaRawData* aSample)
     return false;
   }
   nsAutoPtr<MediaRawDataWriter> samplewriter(aSample->CreateWriter());
-  return samplewriter->Replace(nalu.begin(), nalu.length());
-}
-
-already_AddRefed<mozilla::MediaByteBuffer>
-AnnexB::ExtractExtraData(const mozilla::MediaRawData* aSample)
-{
-  MOZ_ASSERT(IsAVCC(aSample));
-
+  if (!samplewriter->Replace(nalu.Elements(), nalu.Length())) {
+    return false;
+  }
+  // Create the AVCC header.
   RefPtr<mozilla::MediaByteBuffer> extradata = new mozilla::MediaByteBuffer;
-  if (HasSPS(aSample->mExtraData)) {
-    // We already have an explicit extradata, re-use it.
-    extradata = aSample->mExtraData;
-    return extradata.forget();
-  }
-
-  // SPS content
-  mozilla::Vector<uint8_t> sps;
-  ByteWriter spsw(sps);
-  int numSps = 0;
-  // PPS content
-  mozilla::Vector<uint8_t> pps;
-  ByteWriter ppsw(pps);
-  int numPps = 0;
-
-  int nalLenSize = ((*aSample->mExtraData)[4] & 3) + 1;
-  ByteReader reader(aSample->Data(), aSample->Size());
-
-  // Find SPS and PPS NALUs in AVCC data
-  while (reader.Remaining() > nalLenSize) {
-    uint32_t nalLen;
-    switch (nalLenSize) {
-      case 1: nalLen = reader.ReadU8();  break;
-      case 2: nalLen = reader.ReadU16(); break;
-      case 3: nalLen = reader.ReadU24(); break;
-      case 4: nalLen = reader.ReadU32(); break;
-    }
-    uint8_t nalType = reader.PeekU8() & 0x1f;
-    const uint8_t* p = reader.Read(nalLen);
-    if (!p) {
-      return extradata.forget();
-    }
-
-    if (nalType == 0x7) { /* SPS */
-      numSps++;
-      if (!spsw.WriteU16(nalLen)
-          || !spsw.Write(p, nalLen)) {
-        return extradata.forget();
-      }
-    } else if (nalType == 0x8) { /* PPS */
-      numPps++;
-      if (!ppsw.WriteU16(nalLen)
-          || !ppsw.Write(p, nalLen)) {
-        return extradata.forget();
-      }
-    }
-  }
-
-  if (numSps && sps.length() > 5) {
-    extradata->AppendElement(1);        // version
-    extradata->AppendElement(sps[3]);   // profile
-    extradata->AppendElement(sps[4]);   // profile compat
-    extradata->AppendElement(sps[5]);   // level
-    extradata->AppendElement(0xfc | 3); // nal size - 1
-    extradata->AppendElement(0xe0 | numSps);
-    extradata->AppendElements(sps.begin(), sps.length());
-    extradata->AppendElement(numPps);
-    if (numPps) {
-      extradata->AppendElements(pps.begin(), pps.length());
-    }
-  }
-
-  return extradata.forget();
-}
-
-bool
-AnnexB::HasSPS(const mozilla::MediaRawData* aSample)
-{
-  return HasSPS(aSample->mExtraData);
-}
-
-bool
-AnnexB::HasSPS(const mozilla::MediaByteBuffer* aExtraData)
-{
-  if (!aExtraData) {
+  static const uint8_t kFakeExtraData[] = {
+    1 /* version */,
+    0x64 /* profile (High) */,
+    0 /* profile compat (0) */,
+    40 /* level (40) */,
+    0xfc | 3 /* nal size - 1 */,
+    0xe0 /* num SPS (0) */,
+    0 /* num PPS (0) */
+  };
+  if (!extradata->AppendElements(kFakeExtraData, ArrayLength(kFakeExtraData))) {
     return false;
   }
-
-  ByteReader reader(aExtraData);
-  const uint8_t* ptr = reader.Read(5);
-  if (!ptr || !reader.CanRead8()) {
-    return false;
-  }
-  uint8_t numSps = reader.ReadU8() & 0x1f;
-
-  return numSps > 0;
-}
-
-bool
-AnnexB::HasPPS(const mozilla::MediaRawData* aSample)
-{
-  return HasPPS(aSample->mExtraData);
-}
-
-bool
-AnnexB::HasPPS(const mozilla::MediaByteBuffer* aExtraData)
-{
-  if (!aExtraData) {
-    return false;
-  }
-
-  ByteReader reader(aExtraData);
-  const uint8_t* ptr = reader.Read(5);
-  if (!ptr || !reader.CanRead8()) {
-    return false;
-  }
-  uint8_t numSps = reader.ReadU8() & 0x1f;
-  // Skip over the included SPS.
-  for (uint8_t i = 0; i < numSps; i++) {
-    if (reader.Remaining() < 3) {
-      return false;
-    }
-    uint16_t length = reader.ReadU16();
-    if ((reader.PeekU8() & 0x1f) != 7) {
-      // Not an SPS NAL type.
-      return false;
-    }
-    if (!reader.Read(length)) {
-      return false;
-    }
-  }
-  if (!reader.CanRead8()) {
-    return false;
-  }
-  uint8_t numPps = reader.ReadU8();
-
-  return numPps > 0;
+  aSample->mExtraData = extradata;
+  return true;
 }
 
 bool
@@ -398,7 +281,7 @@ AnnexB::ConvertSampleTo4BytesAVCC(mozilla::MediaRawData* aSample)
   if (nalLenSize == 4) {
     return true;
   }
-  mozilla::Vector<uint8_t> dest;
+  nsTArray<uint8_t> dest;
   ByteWriter writer(dest);
   ByteReader reader(aSample->Data(), aSample->Size());
   while (reader.Remaining() > nalLenSize) {
@@ -419,7 +302,7 @@ AnnexB::ConvertSampleTo4BytesAVCC(mozilla::MediaRawData* aSample)
     }
   }
   nsAutoPtr<MediaRawDataWriter> samplewriter(aSample->CreateWriter());
-  return samplewriter->Replace(dest.begin(), dest.length());
+  return samplewriter->Replace(dest.Elements(), dest.Length());
 }
 
 bool
@@ -437,14 +320,6 @@ AnnexB::IsAnnexB(const mozilla::MediaRawData* aSample)
   }
   uint32_t header = mozilla::BigEndian::readUint32(aSample->Data());
   return header == 0x00000001 || (header >> 8) == 0x000001;
-}
-
-bool
-AnnexB::CompareExtraData(const mozilla::MediaByteBuffer* aExtraData1,
-                         const mozilla::MediaByteBuffer* aExtraData2)
-{
-  // Very crude comparison.
-  return aExtraData1 == aExtraData2 || *aExtraData1 == *aExtraData2;
 }
 
 } // namespace mp4_demuxer

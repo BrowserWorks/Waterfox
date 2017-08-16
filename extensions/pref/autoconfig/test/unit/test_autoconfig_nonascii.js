@@ -54,11 +54,11 @@ function run_test() {
       autoConfigCfg.append(test.filename);
       autoConfigCfg.copyTo(greD, "autoconfig.cfg");
   
-      obsvc.notifyObservers(ps, "prefservice:before-read-userprefs", null);
+      obsvc.notifyObservers(ps, "prefservice:before-read-userprefs");
   
       for (let prefName in test.prefs) {
         do_check_eq(test.prefs[prefName],
-                    prefs.getComplexValue(prefName, Ci.nsISupportsString).data);
+                    prefs.getStringPref(prefName));
       }
   
       ps.resetPrefs();

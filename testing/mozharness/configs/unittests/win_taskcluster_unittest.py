@@ -204,7 +204,6 @@ config = {
         },
         "reftest-no-accel": {
             "options": ["--suite=reftest",
-                        "--setpref=gfx.direct2d.disabled=true",
                         "--setpref=layers.acceleration.disabled=true"],
             "tests": ["tests/reftest/tests/layout/reftests/reftest.list"]
         },
@@ -229,7 +228,8 @@ config = {
         "gtest": []
     },
     "all_jittest_suites": {
-        "jittest": []
+        "jittest": [],
+        "jittest-chunked": [],
     },
     "all_mozbase_suites": {
         "mozbase": []

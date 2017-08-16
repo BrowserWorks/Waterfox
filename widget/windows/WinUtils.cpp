@@ -444,10 +444,19 @@ WinUtils::Initialize()
   if (IsWin10OrLater()) {
     HMODULE user32Dll = ::GetModuleHandleW(L"user32");
     if (user32Dll) {
-      sEnableNonClientDpiScaling = (EnableNonClientDpiScalingProc)
-        ::GetProcAddress(user32Dll, "EnableNonClientDpiScaling");
-      sSetThreadDpiAwarenessContext = (SetThreadDpiAwarenessContextProc)
-        ::GetProcAddress(user32Dll, "SetThreadDpiAwarenessContext");
+      auto getThreadDpiAwarenessContext = (decltype(GetThreadDpiAwarenessContext)*)
+        ::GetProcAddress(user32Dll, "GetThreadDpiAwarenessContext");
+      auto areDpiAwarenessContextsEqual = (decltype(AreDpiAwarenessContextsEqual)*)
+        ::GetProcAddress(user32Dll, "AreDpiAwarenessContextsEqual");
+      if (getThreadDpiAwarenessContext && areDpiAwarenessContextsEqual &&
+          areDpiAwarenessContextsEqual(getThreadDpiAwarenessContext(),
+                                       DPI_AWARENESS_CONTEXT_PER_MONITOR_AWARE)) {
+        // Only per-monitor v1 requires these workarounds.
+        sEnableNonClientDpiScaling = (EnableNonClientDpiScalingProc)
+          ::GetProcAddress(user32Dll, "EnableNonClientDpiScaling");
+        sSetThreadDpiAwarenessContext = (SetThreadDpiAwarenessContextProc)
+          ::GetProcAddress(user32Dll, "SetThreadDpiAwarenessContext");
+      }
     }
   }
 
@@ -463,7 +472,7 @@ LRESULT WINAPI
 WinUtils::NonClientDpiScalingDefWindowProcW(HWND hWnd, UINT msg,
                                             WPARAM wParam, LPARAM lParam)
 {
-  if (msg == WM_NCCREATE && sEnableNonClientDpiScaling) {
+  if (msg == WM_NCCREATE) {
     sEnableNonClientDpiScaling(hWnd);
   }
   return ::DefWindowProcW(hWnd, msg, wParam, lParam);
@@ -1229,7 +1238,8 @@ NS_IMETHODIMP
 AsyncFaviconDataReady::OnComplete(nsIURI *aFaviconURI,
                                   uint32_t aDataLen,
                                   const uint8_t *aData, 
-                                  const nsACString &aMimeType)
+                                  const nsACString &aMimeType,
+                                  uint16_t aWidth)
 {
   if (!aDataLen || !aData) {
     if (mURLShortcut) {
@@ -1451,20 +1461,24 @@ AsyncDeleteAllFaviconsFromDisk::
   // We can't call FaviconHelper::GetICOCacheSecondsTimeout() on non-main
   // threads, as it reads a pref, so cache its value here.
   mIcoNoDeleteSeconds = FaviconHelper::GetICOCacheSecondsTimeout() + 600;
+
+  // Prepare the profile directory cache on the main thread, to ensure we wont
+  // do this on non-main threads.
+  Unused << NS_GetSpecialDirectory("ProfLDS",
+    getter_AddRefs(mJumpListCacheDir));
 }
 
 NS_IMETHODIMP AsyncDeleteAllFaviconsFromDisk::Run()
 {
+  if (!mJumpListCacheDir) {
+    return NS_ERROR_FAILURE;
+  }
   // Construct the path of our jump list cache
-  nsCOMPtr<nsIFile> jumpListCacheDir;
-  nsresult rv = NS_GetSpecialDirectory("ProfLDS", 
-    getter_AddRefs(jumpListCacheDir));
-  NS_ENSURE_SUCCESS(rv, rv);
-  rv = jumpListCacheDir->AppendNative(
+  nsresult rv = mJumpListCacheDir->AppendNative(
       nsDependentCString(FaviconHelper::kJumpListCacheDir));
   NS_ENSURE_SUCCESS(rv, rv);
   nsCOMPtr<nsISimpleEnumerator> entries;
-  rv = jumpListCacheDir->GetDirectoryEntries(getter_AddRefs(entries));
+  rv = mJumpListCacheDir->GetDirectoryEntries(getter_AddRefs(entries));
   NS_ENSURE_SUCCESS(rv, rv);
 
   // Loop through each directory entry and remove all ICO files found
@@ -1657,7 +1671,7 @@ nsresult
                                                aIOThread, 
                                                aURLShortcut);
 
-  favIconSvc->GetFaviconDataForPage(aFaviconPageURI, callback);
+  favIconSvc->GetFaviconDataForPage(aFaviconPageURI, callback, 0);
 #endif
   return NS_OK;
 }
@@ -1795,111 +1809,41 @@ WinUtils::GetMaxTouchPoints()
   return 0;
 }
 
-#pragma pack(push, 1)
-typedef struct REPARSE_DATA_BUFFER {
-  ULONG  ReparseTag;
-  USHORT ReparseDataLength;
-  USHORT Reserved;
-  union {
-    struct {
-      USHORT SubstituteNameOffset;
-      USHORT SubstituteNameLength;
-      USHORT PrintNameOffset;
-      USHORT PrintNameLength;
-      ULONG  Flags;
-      WCHAR  PathBuffer[1];
-    } SymbolicLinkReparseBuffer;
-    struct {
-      USHORT SubstituteNameOffset;
-      USHORT SubstituteNameLength;
-      USHORT PrintNameOffset;
-      USHORT PrintNameLength;
-      WCHAR  PathBuffer[1];
-    } MountPointReparseBuffer;
-    struct {
-      UCHAR DataBuffer[1];
-    } GenericReparseBuffer;
-  };
-} REPARSE_DATA_BUFFER, *PREPARSE_DATA_BUFFER;
-#pragma pack(pop)
-
 /* static */
 bool
-WinUtils::ResolveMovedUsersFolder(std::wstring& aPath)
+WinUtils::ResolveJunctionPointsAndSymLinks(std::wstring& aPath)
 {
-  wchar_t* usersPath;
-  if (FAILED(SHGetKnownFolderPath(FOLDERID_UserProfiles, 0, nullptr,
-                                  &usersPath))) {
-    return false;
-  }
+  wchar_t path[MAX_PATH] = { 0 };
 
-  // Ensure usersPath gets freed properly.
-  UniquePtr<wchar_t, CoTaskMemFreePolicy> autoFreePath(usersPath);
-
-  // Is aPath in Users folder?
-  size_t usersLen = wcslen(usersPath);
-  if (_wcsnicmp(aPath.c_str(), usersPath, usersLen) != 0 ||
-      aPath[usersLen] != L'\\') {
-    return true;
-  }
-
-  DWORD attributes = ::GetFileAttributesW(usersPath);
-  if (attributes == INVALID_FILE_ATTRIBUTES) {
-    return false;
-  }
-
-  // Junction points are implemented as reparse points, is the Users folder one?
-  if (!(attributes & FILE_ATTRIBUTE_REPARSE_POINT)) {
-    return true;
-  }
-
-  // Get the reparse point data.
-  nsAutoHandle usersHandle(
-    ::CreateFileW(usersPath, 0,
+  nsAutoHandle handle(
+    ::CreateFileW(aPath.c_str(),
+                  0,
                   FILE_SHARE_READ | FILE_SHARE_WRITE | FILE_SHARE_DELETE,
-                  nullptr, OPEN_EXISTING,
-                  FILE_FLAG_BACKUP_SEMANTICS | FILE_FLAG_OPEN_REPARSE_POINT,
+                  nullptr,
+                  OPEN_EXISTING,
+                  FILE_FLAG_BACKUP_SEMANTICS,
                   nullptr));
 
-  char maxReparseBuf[MAXIMUM_REPARSE_DATA_BUFFER_SIZE] = {0};
-  REPARSE_DATA_BUFFER* reparseBuf = (REPARSE_DATA_BUFFER*)maxReparseBuf;
-  DWORD bytesReturned = 0;
-  if (!::DeviceIoControl(usersHandle, FSCTL_GET_REPARSE_POINT, nullptr, 0,
-                         reparseBuf, MAXIMUM_REPARSE_DATA_BUFFER_SIZE,
-                         &bytesReturned, nullptr)) {
+  if (handle == INVALID_HANDLE_VALUE) {
     return false;
   }
 
-  // Check to see if the reparse point is a junction point.
-  if (reparseBuf->ReparseTag != IO_REPARSE_TAG_MOUNT_POINT) {
-    return true;
-  }
-
-  // The offset and length are in bytes. Length doesn't include null.
-  wchar_t* substituteName = reparseBuf->MountPointReparseBuffer.PathBuffer +
-    reparseBuf->MountPointReparseBuffer.SubstituteNameOffset / sizeof(wchar_t);
-  std::wstring::size_type substituteLen =
-    reparseBuf->MountPointReparseBuffer.SubstituteNameLength / sizeof(wchar_t);
-
-  // If the substitute path starts with the NT namespace then remove it.
-  if (wcsncmp(substituteName, kNTPrefix, kNTPrefixLen) == 0) {
-    substituteName += kNTPrefixLen;
-    substituteLen -= kNTPrefixLen;
-  }
-
-  // Check that what remains looks like a drive letter path.
-  if (substituteName[1] != L':' || substituteName[2] != L'\\') {
+  DWORD pathLen = GetFinalPathNameByHandleW(
+    handle, path, MAX_PATH, FILE_NAME_NORMALIZED | VOLUME_NAME_DOS);
+  if (pathLen == 0 || pathLen >= MAX_PATH) {
     return false;
   }
+  aPath = path;
 
-  // The documentation for SHGetKnownFolderPath says that it doesn't return a
-  // trailing backslash. The REPARSE_DATA_BUFFER path doesn't seem to have one
-  // either, but the documentation doesn't mention it, so let's make sure.
-  if (substituteName[substituteLen - 1] == L'\\') {
-    --substituteLen;
+  // GetFinalPathNameByHandle sticks a '\\?\' in front of the path,
+  // but that confuses some APIs so strip it off. It will also put
+  // '\\?\UNC\' in front of network paths, we convert that to '\\'.
+  if (aPath.compare(0, 7, L"\\\\?\\UNC") == 0) {
+    aPath.erase(2, 6);
+  } else if (aPath.compare(0, 4, L"\\\\?\\") == 0) {
+    aPath.erase(0, 4);
   }
 
-  aPath.replace(0, usersLen, substituteName, substituteLen);
   return true;
 }
 

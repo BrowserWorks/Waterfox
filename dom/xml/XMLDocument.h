@@ -51,7 +51,8 @@ public:
 
   virtual nsresult Init() override;
 
-  virtual nsresult Clone(mozilla::dom::NodeInfo *aNodeInfo, nsINode **aResult) const override;
+  virtual nsresult Clone(mozilla::dom::NodeInfo *aNodeInfo, nsINode **aResult,
+                         bool aPreallocateChildren) const override;
 
   virtual void DocAddSizeOfExcludingThis(nsWindowSizes* aWindowSizes) const override;
   // DocAddSizeOfIncludingThis is inherited from nsIDocument.
@@ -72,9 +73,6 @@ public:
   // nsIDocument version applies to us (it's shadowed by the XPCOM thing on
   // nsDocument).
   using nsIDocument::GetLocation;
-  // But then we need to also pull in the nsDocument XPCOM version
-  // because nsXULDocument tries to forward to it.
-  using nsDocument::GetLocation;
 
 protected:
   virtual ~XMLDocument();

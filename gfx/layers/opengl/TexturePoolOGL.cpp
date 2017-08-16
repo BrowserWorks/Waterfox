@@ -10,6 +10,10 @@
 #include "nsDebug.h"                    // for NS_ASSERTION, NS_ERROR, etc
 #include "nsDeque.h"                    // for nsDeque
 
+#ifdef MOZ_WIDGET_ANDROID
+#include "GeneratedJNINatives.h"
+#endif
+
 #define TEXTURE_POOL_SIZE 10
 
 namespace mozilla {
@@ -19,6 +23,19 @@ static GLContext* sActiveContext = nullptr;
 
 static Monitor* sMonitor = nullptr;
 static nsDeque* sTextures = nullptr;
+
+#ifdef MOZ_WIDGET_ANDROID
+
+class GeckoSurfaceTextureSupport final
+    : public java::GeckoSurfaceTexture::Natives<GeckoSurfaceTextureSupport>
+{
+public:
+  static int32_t NativeAcquireTexture() {
+    return TexturePoolOGL::AcquireTexture();
+  }
+};
+
+#endif // MOZ_WIDGET_ANDROID
 
 GLuint TexturePoolOGL::AcquireTexture()
 {
@@ -62,15 +79,14 @@ GLuint TexturePoolOGL::AcquireTexture()
 
 static void Clear()
 {
-  if (!sActiveContext)
-    return;
-
-  sActiveContext->MakeCurrent();
+  const bool isCurrent = sActiveContext && sActiveContext->MakeCurrent();
 
   GLuint* item;
   while (sTextures->GetSize()) {
     item = (GLuint*)sTextures->Pop();
-    sActiveContext->fDeleteTextures(1, item);
+    if (isCurrent) {
+      sActiveContext->fDeleteTextures(1, item);
+    }
     delete item;
   }
 }
@@ -90,7 +106,8 @@ void TexturePoolOGL::Fill(GLContext* aContext)
   if (sTextures->GetSize() == TEXTURE_POOL_SIZE)
     return;
 
-  sActiveContext->MakeCurrent();
+  DebugOnly<bool> ok = sActiveContext->MakeCurrent();
+  MOZ_ASSERT(ok);
 
   GLuint* texture = nullptr;
   while (sTextures->GetSize() < TEXTURE_POOL_SIZE) {
@@ -111,6 +128,12 @@ void TexturePoolOGL::Init()
 {
   sMonitor = new Monitor("TexturePoolOGL.sMonitor");
   sTextures = new nsDeque();
+
+#ifdef MOZ_WIDGET_ANDROID
+  if (jni::IsAvailable()) {
+    GeckoSurfaceTextureSupport::Init();
+  }
+#endif
 }
 
 void TexturePoolOGL::Shutdown()

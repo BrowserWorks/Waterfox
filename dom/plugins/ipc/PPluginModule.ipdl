@@ -6,7 +6,7 @@
 include protocol PPluginInstance;
 include protocol PPluginScriptableObject;
 include protocol PContent;
-include ProfilerTypes;
+include protocol PProfiler;
 
 using NPError from "npapi.h";
 using NPNVariable from "npapi.h";
@@ -46,6 +46,8 @@ both:
   async ProcessNativeEventsInInterruptCall();
 
 child:
+  async InitProfiler(Endpoint<PProfilerChild> aEndPoint);
+
   async DisableFlashProtectedMode();
 
   // Sync query to check if a Flash library indicates it
@@ -94,14 +96,6 @@ child:
 
   intr InitCrashReporter(Shmem shmem)
     returns (NativeThreadId tid);
-
-  /**
-   * Control the Gecko Profiler in the plugin process.
-   */
-  async StartProfiler(ProfilerInitParams params);
-  async StopProfiler();
-
-  async GatherProfile();
 
   async SettingChanged(PluginSettings settings);
 
@@ -153,8 +147,6 @@ parent:
   // down the plugin process in response.
   async NotifyContentModuleDestroyed();
 
-  async Profile(nsCString aProfile);
-
   // Answers to request about site data
   async ReturnClearSiteData(NPError aRv, uint64_t aCallbackId);
 
@@ -169,6 +161,8 @@ parent:
   // Used to broker the GetOpenFileName/GetSaveFileName file pickers on Windows.
   intr GetFileName(GetFileNameFunc aFunc, OpenFileNameIPC aOfnIn)
     returns (OpenFileNameRetIPC aOfnOut, bool aResult);
+
+  intr SetCursorPos(int x, int y) returns (bool aResult);
 };
 
 } // namespace plugins

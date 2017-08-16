@@ -16,6 +16,7 @@ class JSObject;
 class nsIDocument;
 class nsStyleContext;
 struct ServoComputedValues;
+struct RawServoDeclarationBlock;
 
 namespace mozilla {
 struct AnimationProperty;
@@ -23,7 +24,6 @@ enum class CSSPseudoElementType : uint8_t;
 class ErrorResult;
 struct Keyframe;
 struct PropertyStyleAnimationValuePair;
-struct ServoComputedStyleValues;
 
 namespace dom {
 class Element;
@@ -88,7 +88,7 @@ public:
   static nsTArray<ComputedKeyframeValues>
   GetComputedKeyframeValues(const nsTArray<Keyframe>& aKeyframes,
                             dom::Element* aElement,
-                            const ServoComputedStyleValues& aServoValues);
+                            const ServoComputedValues* aComputedValues);
 
   /**
    * Fills in the mComputedOffset member of each keyframe in the given array
@@ -117,7 +117,7 @@ public:
                            SpacingMode aSpacingMode,
                            nsCSSPropertyID aProperty,
                            nsTArray<ComputedKeyframeValues>& aComputedValues,
-                           const ServoComputedStyleValues& aServoValues)
+                           const ServoComputedValues* aServoValues)
   {
     NS_WARNING("stylo: ApplySpacing not implemented yet");
   }
@@ -161,6 +161,22 @@ public:
    * @return true if |aProperty| is animatable.
    */
   static bool IsAnimatableProperty(nsCSSPropertyID aProperty);
+
+  /**
+   * Parse a string representing a CSS property value into a
+   * RawServoDeclarationBlock.
+   *
+   * @param aProperty The property to be parsed.
+   * @param aValue The specified value.
+   * @param aDocument The current document.
+   * @return The parsed value as a RawServoDeclarationBlock. We put the value
+   *   in a declaration block since that is how we represent specified values
+   *   in Servo.
+   */
+  static already_AddRefed<RawServoDeclarationBlock> ParseProperty(
+    nsCSSPropertyID aProperty,
+    const nsAString& aValue,
+    nsIDocument* aDocument);
 };
 
 } // namespace mozilla

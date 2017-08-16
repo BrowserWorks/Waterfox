@@ -4,6 +4,154 @@
 # License, v. 2.0. If a copy of the MPL was not distributed with this
 # file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
+with Files('**'):
+    BUG_COMPONENT = ('Toolkit', 'General')
+
+with Files('addons/**'):
+    BUG_COMPONENT = ('Toolkit', 'WebExtensions: General')
+
+with Files('docs/**'):
+    BUG_COMPONENT = ('Toolkit', 'Async Tooling')
+
+with Files('subprocess/**'):
+    BUG_COMPONENT = ('Toolkit', 'Async Tooling')
+
+with Files('tests/browser/*AsyncPrefs*'):
+    BUG_COMPONENT = ('Core', 'Security: Process Sandboxing')
+
+with Files('tests/browser/*Finder*'):
+    BUG_COMPONENT = ('Toolkit', 'Find Toolbar')
+
+with Files('tests/xpcshell/test_Color.js'):
+    BUG_COMPONENT = ('Toolkit', 'Find Toolbar')
+
+with Files('tests/xpcshell/test_DeferredTask.js'):
+    BUG_COMPONENT = ('Toolkit', 'Async Tooling')
+
+with Files('tests/xpcshell/test_FinderIterator.js'):
+    BUG_COMPONENT = ('Toolkit', 'Find Toolbar')
+
+with Files('tests/xpcshell/test_Integration.js'):
+    BUG_COMPONENT = ('Toolkit', 'Async Tooling')
+
+with Files('tests/xpcshell/test_JSONFile.js'):
+    BUG_COMPONENT = ('Toolkit', 'Form Manager')
+
+with Files('tests/xpcshell/test_Match*.js'):
+    BUG_COMPONENT = ('Toolkit', 'WebExtentions: General')
+
+with Files('tests/xpcshell/test_NewTabUtils.js'):
+    BUG_COMPONENT = ('Firefox', 'New Tab Page')
+
+with Files('tests/xpcshell/test_UpdateUtils*.js'):
+    BUG_COMPONENT = ('Toolkit', 'General')
+
+with Files('tests/xpcshell/test_client_id.js'):
+    BUG_COMPONENT = ('Toolkit', 'Telemetry')
+
+with Files('AsyncPrefs.jsm'):
+    BUG_COMPONENT = ('Core', 'Security: Process Sandboxing')
+
+with Files('CharsetMenu.jsm'):
+    BUG_COMPONENT = ('Firefox', 'Toolbars and Customization')
+
+with Files('ClientID.jsm'):
+    BUG_COMPONENT = ('Toolkit', 'Telemetry')
+
+with Files('Color.jsm'):
+    BUG_COMPONENT = ('Toolkit', 'Find Toolbar')
+
+with Files('Console.jsm'):
+    BUG_COMPONENT = ('Firefox', 'Developer Tools: Console')
+
+with Files('DateTimePickerHelper.jsm'):
+    BUG_COMPONENT = ('Core', 'Layout: Form Controls ')
+
+with Files('DeferredTask.jsm'):
+    BUG_COMPONENT = ('Toolkit', 'Async Tooling')
+
+with Files('Finder*.jsm'):
+    BUG_COMPONENT = ('Toolkit', 'Find Toolbar')
+
+with Files('FormLikeFactory.jsm'):
+    BUG_COMPONENT = ('Toolkit', 'Password Manager')
+
+with Files('IndexedDB.jsm'):
+    BUG_COMPONENT = ('Toolkit', 'Web Extensions: General')
+
+with Files('InlineSpellChecker*.jsm'):
+    BUG_COMPONENT = ('Core', 'Spell Checker')
+
+with Files('Integration.jsm'):
+    BUG_COMPONENT = ('Toolkit', 'Async Tooling')
+
+with Files('JSONFile.jsm'):
+    BUG_COMPONENT = ('Toolkit', 'Form Manager')
+
+with Files('LightweightThemeConsumer.jsm'):
+    BUG_COMPONENT = ('Firefox', 'Toolbars and Customization')
+
+with Files('LoadContextInfo.jsm'):
+    BUG_COMPONENT = ('Core', 'Networking: Cache')
+
+with Files('Locale.jsm'):
+    BUG_COMPONENT = ('Core', 'Internationalization')
+
+with Files('Memory.jsm'):
+    BUG_COMPONENT = ('Core', 'DOM: Content Processes')
+
+with Files('NLP.jsm'):
+    BUG_COMPONENT = ('Toolkit', 'Find Toolbar')
+
+with Files('NewTabUtils.jsm'):
+    BUG_COMPONENT = ('Firefox', 'Tabbed Browser')
+
+with Files('ObjectUtils.jsm'):
+    BUG_COMPONENT = ('Toolkit', 'Telemetry')
+
+with Files('PageMenu.jsm'):
+    BUG_COMPONENT = ('Firefox', 'Menus')
+
+with Files('PermissionsUtils.jsm'):
+    BUG_COMPONENT = ('Toolkit', 'Add-ons Manager')
+
+with Files('PopupNotifications.jsm'):
+    BUG_COMPONENT = ('Toolkit', 'Password Manager')
+
+with Files('PrivateBrowsingUtils.jsm'):
+    BUG_COMPONENT = ('Firefox', 'Private Browsing')
+
+with Files('Promise*.jsm'):
+    BUG_COMPONENT = ('Toolkit', 'Async Tooling')
+
+with Files('RemoteController.jsm'):
+    BUG_COMPONENT = ('Core', 'Widget')
+
+with Files('RemoteFinder.jsm'):
+    BUG_COMPONENT = ('Toolkit', 'Find Toolbar')
+
+with Files('RemoteSecurityUI.jsm'):
+    BUG_COMPONENT = ('Firefox', 'Tabbed Browser')
+
+with Files('RemoteWebProgress.jsm'):
+    BUG_COMPONENT = ('Core', 'Document Navigation')
+
+with Files('ResponsivenessMonitor.jsm'):
+    BUG_COMPONENT = ('Firefox', 'Migration')
+
+with Files('ShortcutUtils.jsm'):
+    BUG_COMPONENT = ('Firefox', 'Toolbars and Customization')
+
+with Files('Sqlite.jsm'):
+    BUG_COMPONENT = ('Toolkit', 'Storage')
+
+with Files('UpdateUtils.jsm'):
+    BUG_COMPONENT = ('Toolkit', 'Add-ons Manager')
+
+with Files('WindowsRegistry.jsm'):
+    BUG_COMPONENT = ('Toolkit', 'General')
+
+
 XPCSHELL_TESTS_MANIFESTS += ['tests/xpcshell/xpcshell.ini']
 BROWSER_CHROME_MANIFESTS += ['tests/browser/browser.ini']
 MOCHITEST_CHROME_MANIFESTS += ['tests/chrome/chrome.ini']
@@ -25,6 +173,7 @@ EXTRA_JS_MODULES += [
     'addons/WebRequestCommon.jsm',
     'addons/WebRequestContent.js',
     'addons/WebRequestUpload.jsm',
+    'AppMenuNotifications.jsm',
     'AsyncPrefs.jsm',
     'Battery.jsm',
     'BinarySearch.jsm',
@@ -35,10 +184,12 @@ EXTRA_JS_MODULES += [
     'ClientID.jsm',
     'Color.jsm',
     'Console.jsm',
+    'css-selector.js',
     'DateTimePickerHelper.jsm',
     'debug.js',
     'DeferredTask.jsm',
     'Deprecated.jsm',
+    'EventEmitter.jsm',
     'FileUtils.jsm',
     'Finder.jsm',
     'FinderHighlighter.jsm',
@@ -47,7 +198,9 @@ EXTRA_JS_MODULES += [
     'Geometry.jsm',
     'GMPInstallManager.jsm',
     'GMPUtils.jsm',
+    'HiddenFrame.jsm',
     'Http.jsm',
+    'IndexedDB.jsm',
     'InlineSpellChecker.jsm',
     'InlineSpellCheckerContent.jsm',
     'Integration.jsm',
@@ -70,7 +223,6 @@ EXTRA_JS_MODULES += [
     'Promise.jsm',
     'PromiseMessage.jsm',
     'PromiseUtils.jsm',
-    'PropertyListUtils.jsm',
     'RemoteController.jsm',
     'RemoteFinder.jsm',
     'RemotePageManager.jsm',
@@ -84,12 +236,10 @@ EXTRA_JS_MODULES += [
     'SelectParentHelper.jsm',
     'ServiceRequest.jsm',
     'Services.jsm',
-    'SessionRecorder.jsm',
     'sessionstore/FormData.jsm',
     'sessionstore/ScrollPosition.jsm',
     'sessionstore/XPathGenerator.jsm',
     'ShortcutUtils.jsm',
-    'Sntp.jsm',
     'Sqlite.jsm',
     'Task.jsm',
     'Timer.jsm',
@@ -99,9 +249,16 @@ EXTRA_JS_MODULES += [
     'WindowDraggingUtils.jsm',
     'ZipUtils.jsm',
 ]
+
+if CONFIG['MOZ_WIDGET_TOOLKIT'] == 'cocoa':
+    EXTRA_JS_MODULES += [
+        'PropertyListUtils.jsm',
+    ]
+
 EXTRA_JS_MODULES.third_party.jsesc += ['third_party/jsesc/jsesc.js']
 EXTRA_JS_MODULES.sessionstore += [
     'sessionstore/PrivacyLevel.jsm',
+    'sessionstore/SessionHistory.jsm',
     'sessionstore/Utils.jsm',
 ]
 
@@ -150,8 +307,7 @@ for var in ('ANDROID_PACKAGE_NAME',
 for var in ('MOZ_TOOLKIT_SEARCH',
             'MOZ_SYSTEM_NSS',
             'MOZ_UPDATER',
-            'MOZ_SWITCHBOARD',
-            'MOZ_SERVICES_CLOUDSYNC'):
+            'MOZ_SWITCHBOARD'):
     if CONFIG[var]:
         DEFINES[var] = True
 

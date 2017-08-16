@@ -12,7 +12,7 @@
 class nsLeafBoxFrame : public nsLeafFrame
 {
 public:
-  NS_DECL_FRAMEARENA_HELPERS
+  NS_DECL_FRAMEARENA_HELPERS(nsLeafBoxFrame)
 
   friend nsIFrame* NS_NewLeafBoxFrame(nsIPresShell* aPresShell, nsStyleContext* aContext);
 
@@ -22,7 +22,6 @@ public:
   virtual nscoord GetXULFlex() override;
   virtual nscoord GetXULBoxAscent(nsBoxLayoutState& aState) override;
 
-  virtual nsIAtom* GetType() const override;
   virtual bool IsFrameOfType(uint32_t aFlags) const override
   {
     // This is bogus, but it's what we've always done.
@@ -83,7 +82,9 @@ protected:
 
   virtual nscoord GetIntrinsicISize() override;
 
- explicit nsLeafBoxFrame(nsStyleContext* aContext);
+  explicit nsLeafBoxFrame(nsStyleContext* aContext, ClassID aID = kClassID)
+    : nsLeafFrame(aContext, aID)
+  {}
 
 private:
 

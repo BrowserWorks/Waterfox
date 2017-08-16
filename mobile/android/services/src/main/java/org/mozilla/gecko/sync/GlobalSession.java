@@ -5,6 +5,10 @@
 package org.mozilla.gecko.sync;
 
 import android.content.Context;
+import android.os.SystemClock;
+import android.support.annotation.NonNull;
+import android.support.annotation.Nullable;
+import android.support.annotation.VisibleForTesting;
 
 import org.json.simple.JSONArray;
 import org.mozilla.gecko.background.common.log.Logger;
@@ -42,6 +46,8 @@ import org.mozilla.gecko.sync.stage.NoSuchStageException;
 import org.mozilla.gecko.sync.stage.PasswordsServerSyncStage;
 import org.mozilla.gecko.sync.stage.SyncClientsEngineStage;
 import org.mozilla.gecko.sync.stage.UploadMetaGlobalStage;
+import org.mozilla.gecko.sync.telemetry.TelemetryCollector;
+import org.mozilla.gecko.sync.telemetry.TelemetryStageCollector;
 
 import java.io.IOException;
 import java.net.URI;
@@ -83,6 +89,12 @@ public class GlobalSession implements HttpResponseObserver {
    */
   public final Map<String, EngineSettings> enginesToUpdate = new HashMap<String, EngineSettings>();
 
+  private final TelemetryCollector telemetryCollector;
+
+  public TelemetryCollector getTelemetryCollector() {
+    return telemetryCollector;
+  }
+
    /*
    * Key accessors.
    */
@@ -104,7 +116,8 @@ public class GlobalSession implements HttpResponseObserver {
   public GlobalSession(SyncConfiguration config,
                        GlobalSessionCallback callback,
                        Context context,
-                       ClientsDataDelegate clientsDelegate)
+                       ClientsDataDelegate clientsDelegate,
+                       TelemetryCollector telemetryCollector)
     throws SyncConfigurationException, IllegalArgumentException, IOException, NonObjectJSONException {
 
     if (callback == null) {
@@ -114,6 +127,7 @@ public class GlobalSession implements HttpResponseObserver {
     this.callback        = callback;
     this.context         = context;
     this.clientsDelegate = clientsDelegate;
+    this.telemetryCollector = telemetryCollector;
 
     this.config = config;
     registerCommands();
@@ -265,7 +279,7 @@ public class GlobalSession implements HttpResponseObserver {
     // If we have a backoff, request a backoff and don't advance to next stage.
     long existingBackoff = largestBackoffObserved.get();
     if (existingBackoff > 0) {
-      this.abort(null, "Aborting sync because of backoff of " + existingBackoff + " milliseconds.");
+      this.abort(new BackoffException(), "Aborting sync because of backoff of " + existingBackoff + " milliseconds.");
       return;
     }
 
@@ -280,12 +294,27 @@ public class GlobalSession implements HttpResponseObserver {
     }
     this.currentState = next;
     Logger.info(LOG_TAG, "Running next stage " + next + " (" + nextStage + ")...");
+
+    // For named stages, use the repository name.
+    String collectorName = currentState.getRepositoryName();
+    // For unnamed, non-repository stages use name of the stage itself.
+    if (collectorName == null) {
+      collectorName = currentState.name();
+    }
+    final TelemetryStageCollector stageCollector = telemetryCollector.collectorFor(collectorName);
+    // Stage is responsible for setting the 'finished' timestamp when appropriate.
+    stageCollector.started = SystemClock.elapsedRealtime();
+
     try {
-      nextStage.execute(this);
+      nextStage.execute(this, stageCollector);
     } catch (Exception ex) {
       Logger.warn(LOG_TAG, "Caught exception " + ex + " running stage " + next);
+      // We're not setting stageCollector's error since there's a chance the stage already set it
+      // and we'll lose a root cause error by overriding it here. Call to `abort` will end up calling
+      // GlobalSession's callback handler which is instrumented and records global errors, so this
+      // error won't get lost.
+      stageCollector.finished = SystemClock.elapsedRealtime();
       this.abort(ex, "Uncaught exception in stage.");
-      return;
     }
   }
 
@@ -322,6 +351,7 @@ public class GlobalSession implements HttpResponseObserver {
    * @throws AlreadySyncingException
    */
   protected void restart() throws AlreadySyncingException {
+    telemetryCollector.setRestarted();
     this.currentState = GlobalSyncStage.Stage.idle;
     if (callback.shouldBackOffStorage()) {
       this.callback.handleAborted(this, "Told to back off.");
@@ -409,44 +439,17 @@ public class GlobalSession implements HttpResponseObserver {
     Runnable doUpload = new Runnable() {
       @Override
       public void run() {
-        config.metaGlobal.upload(new MetaGlobalDelegate() {
-          @Override
-          public void handleSuccess(MetaGlobal global, SyncStorageResponse response) {
-            Logger.info(LOG_TAG, "Successfully uploaded updated meta/global record.");
-            // Engine changes are stored as diffs, so update enabled engines in config to match uploaded meta/global.
-            config.enabledEngineNames = config.metaGlobal.getEnabledEngineNames();
-            // Clear userSelectedEngines because they are updated in config and meta/global.
-            config.userSelectedEngines = null;
-
-            synchronized (monitor) {
-              monitor.notify();
-            }
-          }
-
-          @Override
-          public void handleMissing(MetaGlobal global, SyncStorageResponse response) {
-            Logger.warn(LOG_TAG, "Got 404 missing uploading updated meta/global record; shouldn't happen.  Ignoring.");
-            synchronized (monitor) {
-              monitor.notify();
-            }
-          }
-
-          @Override
-          public void handleFailure(SyncStorageResponse response) {
-            Logger.warn(LOG_TAG, "Failed to upload updated meta/global record; ignoring.");
-            synchronized (monitor) {
-              monitor.notify();
-            }
-          }
-
-          @Override
-          public void handleError(Exception e) {
-            Logger.warn(LOG_TAG, "Got exception trying to upload updated meta/global record; ignoring.", e);
-            synchronized (monitor) {
-              monitor.notify();
-            }
-          }
-        });
+        // During regular meta/global upload, set X-I-U-S to the last-modified value of meta/global
+        // in info/collections, to ensure we catch concurrent modifications by other clients.
+        Long lastModifiedTimestamp = config.infoCollections.getTimestamp("meta");
+        // Theoretically, meta/global's timestamp might be missing from info/collections.
+        // The safest thing in that case is to assert that meta/global hasn't been modified by other
+        // clients by setting X-I-U-S to 0.
+        // See Bug 1346438.
+        if (lastModifiedTimestamp == null) {
+          lastModifiedTimestamp = 0L;
+        }
+        config.metaGlobal.upload(lastModifiedTimestamp, makeMetaGlobalUploadDelegate(config, callback, monitor));
       }
     };
 
@@ -462,6 +465,54 @@ public class GlobalSession implements HttpResponseObserver {
     }
   }
 
+  @VisibleForTesting
+  public static MetaGlobalDelegate makeMetaGlobalUploadDelegate(final SyncConfiguration config, final GlobalSessionCallback callback, final Object monitor) {
+    return new MetaGlobalDelegate() {
+      @Override
+      public void handleSuccess(MetaGlobal global, SyncStorageResponse response) {
+        Logger.info(LOG_TAG, "Successfully uploaded updated meta/global record.");
+        // Engine changes are stored as diffs, so update enabled engines in config to match uploaded meta/global.
+        config.enabledEngineNames = config.metaGlobal.getEnabledEngineNames();
+        // Clear userSelectedEngines because they are updated in config and meta/global.
+        config.userSelectedEngines = null;
+
+        synchronized (monitor) {
+          monitor.notify();
+        }
+      }
+
+      @Override
+      public void handleMissing(MetaGlobal global, SyncStorageResponse response) {
+        Logger.warn(LOG_TAG, "Got 404 missing uploading updated meta/global record; shouldn't happen.  Ignoring.");
+        synchronized (monitor) {
+          monitor.notify();
+        }
+      }
+
+      @Override
+      public void handleFailure(SyncStorageResponse response) {
+        Logger.warn(LOG_TAG, "Failed to upload updated meta/global record; ignoring.");
+
+        // If we encountered a concurrent modification while uploading meta/global, request that
+        // sync of all stages happens once we're done.
+        if (response.getStatusCode() == 412) {
+          callback.handleFullSyncNecessary();
+        }
+
+        synchronized (monitor) {
+          monitor.notify();
+        }
+      }
+
+      @Override
+      public void handleError(Exception e) {
+        Logger.warn(LOG_TAG, "Got exception trying to upload updated meta/global record; ignoring.", e);
+        synchronized (monitor) {
+          monitor.notify();
+        }
+      }
+    };
+  }
 
   public void abort(Exception e, String reason) {
     Logger.warn(LOG_TAG, "Aborting sync: " + reason, e);
@@ -476,7 +527,7 @@ public class GlobalSession implements HttpResponseObserver {
         this.uploadUpdatedMetaGlobal(); // Only logs errors; does not call abort.
       }
     }
-    this.callback.handleError(this, e);
+    this.callback.handleError(this, e, reason);
   }
 
   public void handleIncompleteStage() {
@@ -544,14 +595,14 @@ public class GlobalSession implements HttpResponseObserver {
   }
 
   /**
-   * Upload new crypto/keys.
+   * Upload new crypto/keys with X-If-Unmodified-Since=0
    *
    * @param keys
    *          new keys.
    * @param keyUploadDelegate
    *          a delegate.
    */
-  public void uploadKeys(final CollectionKeys keys,
+  public void uploadKeys(final CollectionKeys keys, final long timestamp,
                          final KeyUploadDelegate keyUploadDelegate) {
     SyncStorageRecordRequest request;
     try {
@@ -565,7 +616,7 @@ public class GlobalSession implements HttpResponseObserver {
 
       @Override
       public String ifUnmodifiedSince() {
-        return null;
+        return Utils.millisecondsToDecimalSecondsString(timestamp);
       }
 
       @Override
@@ -613,12 +664,13 @@ public class GlobalSession implements HttpResponseObserver {
   /*
    * meta/global callbacks.
    */
-  public void processMetaGlobal(MetaGlobal global) {
+  public void processMetaGlobal(MetaGlobal global, TelemetryStageCollector stageCollector) {
     config.metaGlobal = global;
 
     Long storageVersion = global.getStorageVersion();
     if (storageVersion == null) {
       Logger.warn(LOG_TAG, "Malformed remote meta/global: could not retrieve remote storage version.");
+      stageCollector.error = new TelemetryCollector.StageErrorBuilder("metaglobal", "noversion").build();
       freshStart();
       return;
     }
@@ -639,6 +691,7 @@ public class GlobalSession implements HttpResponseObserver {
     String remoteSyncID = global.getSyncID();
     if (remoteSyncID == null) {
       Logger.warn(LOG_TAG, "Malformed remote meta/global: could not retrieve remote syncID.");
+      stageCollector.error = new TelemetryCollector.StageErrorBuilder("metaglobal", "nosyncid").build();
       freshStart();
       return;
     }
@@ -709,12 +762,32 @@ public class GlobalSession implements HttpResponseObserver {
    * Do a fresh start then quietly finish the sync, starting another.
    */
   public void freshStart() {
-    final GlobalSession globalSession = this;
-    freshStart(this, new FreshStartDelegate() {
+    freshStart(this, makeFreshStartDelegate(this));
+  }
 
+  @VisibleForTesting
+  public static FreshStartDelegate makeFreshStartDelegate(final GlobalSession globalSession) {
+    return new FreshStartDelegate() {
       @Override
       public void onFreshStartFailed(Exception e) {
-        globalSession.abort(e, "Fresh start failed.");
+        if (!(e instanceof  HTTPFailureException)) {
+          globalSession.abort(e, "Fresh start failed.");
+          return;
+        }
+
+        if (((HTTPFailureException) e).response.getStatusCode() != 412) {
+          globalSession.abort(e, "Fresh start failed with non-412 status code.");
+          return;
+        }
+
+        // In case of a concurrent modification during a fresh start, restart global session.
+        try {
+          // We are not persisting SyncConfiguration at this point; we can't be sure of its state.
+          globalSession.restart();
+        } catch (AlreadySyncingException restartException) {
+          Logger.warn(LOG_TAG, "Got exception restarting sync after freshStart failure.", restartException);
+          globalSession.abort(restartException, "Got exception restarting sync after freshStart failure.");
+        }
       }
 
       @Override
@@ -728,7 +801,7 @@ public class GlobalSession implements HttpResponseObserver {
           globalSession.abort(e, "Got exception after freshStart.");
         }
       }
-    });
+    };
   }
 
   /**
@@ -762,11 +835,11 @@ public class GlobalSession implements HttpResponseObserver {
 
         Logger.info(LOG_TAG, "Uploading new meta/global with sync ID " + mg.syncID + ".");
 
-        // It would be good to set the X-If-Unmodified-Since header to `timestamp`
-        // for this PUT to ensure at least some level of transactionality.
-        // Unfortunately, the servers don't support it after a wipe right now
-        // (bug 693893), so we're going to defer this until bug 692700.
-        mg.upload(new MetaGlobalDelegate() {
+        // During a fresh start, set X-I-U-S to 0 to ensure we don't race with other clients.
+        // Since we are performing a fresh start, we are asserting that meta/global was not uploaded
+        // by other clients.
+        // See Bug 1346438.
+        mg.upload(0L, new MetaGlobalDelegate() {
           @Override
           public void handleSuccess(MetaGlobal uploadedGlobal, SyncStorageResponse uploadResponse) {
             Logger.info(LOG_TAG, "Uploaded new meta/global with sync ID " + uploadedGlobal.syncID + ".");
@@ -784,9 +857,10 @@ public class GlobalSession implements HttpResponseObserver {
               freshStartDelegate.onFreshStartFailed(null);
             }
 
-            // Upload new keys.
+            // Upload new keys. Assert that no other client uploaded keys yet by setting X-I-U-S to 0.
+            // See Bug 1346438.
             Logger.info(LOG_TAG, "Uploading new crypto/keys.");
-            session.uploadKeys(keys, new KeyUploadDelegate() {
+            session.uploadKeys(keys, 0L, new KeyUploadDelegate() {
               @Override
               public void onKeysUploaded() {
                 Logger.info(LOG_TAG, "Uploaded new crypto/keys.");
@@ -1064,7 +1138,7 @@ public class GlobalSession implements HttpResponseObserver {
   public void requiresUpgrade() {
     Logger.info(LOG_TAG, "Client outdated storage version; requires update.");
     // TODO: notify UI.
-    this.abort(null, "Requires upgrade");
+    this.abort(new OutdatedStorageVersionException(), "Requires upgrade from " + STORAGE_VERSION);
   }
 
   /**

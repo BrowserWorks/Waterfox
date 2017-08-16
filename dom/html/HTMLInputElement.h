@@ -13,10 +13,10 @@
 #include "nsIDOMHTMLInputElement.h"
 #include "nsITextControlElement.h"
 #include "nsITimer.h"
-#include "nsIPhonetic.h"
 #include "nsIDOMNSEditableElement.h"
 #include "nsCOMPtr.h"
 #include "nsIConstraintValidation.h"
+#include "mozilla/UniquePtr.h"
 #include "mozilla/dom/BindingDeclarations.h"
 #include "mozilla/dom/HTMLFormElement.h" // for HasEverTriedInvalidSubmit()
 #include "mozilla/dom/HTMLInputElementBinding.h"
@@ -27,7 +27,27 @@
 #include "mozilla/Decimal.h"
 #include "nsContentUtils.h"
 #include "nsTextEditorState.h"
+#include "mozilla/Variant.h"
+#include "SingleLineTextInputTypes.h"
+#include "NumericInputTypes.h"
+#include "CheckableInputTypes.h"
+#include "ButtonInputTypes.h"
+#include "DateTimeInputTypes.h"
+#include "ColorInputType.h"
+#include "FileInputType.h"
+#include "HiddenInputType.h"
 
+static constexpr size_t INPUT_TYPE_SIZE = sizeof(
+  mozilla::Variant<TextInputType, SearchInputType, TelInputType, URLInputType,
+                   EmailInputType, PasswordInputType, NumberInputType,
+                   RangeInputType, RadioInputType, CheckboxInputType,
+                   ButtonInputType, ImageInputType, ResetInputType,
+                   SubmitInputType, DateInputType, TimeInputType, WeekInputType,
+                   MonthInputType, DateTimeLocalInputType, FileInputType,
+                   ColorInputType, HiddenInputType> );
+
+class InputType;
+struct DoNotDelete;
 class nsIRadioGroupContainer;
 class nsIRadioVisitor;
 
@@ -107,12 +127,12 @@ class HTMLInputElement final : public nsGenericHTMLFormElementWithState,
                                public nsImageLoadingContent,
                                public nsIDOMHTMLInputElement,
                                public nsITextControlElement,
-                               public nsIPhonetic,
                                public nsIDOMNSEditableElement,
                                public nsIConstraintValidation
 {
   friend class AfterSetFilesOrDirectoriesCallback;
   friend class DispatchChangeEventCallback;
+  friend class ::InputType;
 
 public:
   using nsIConstraintValidation::GetValidationMessage;
@@ -152,9 +172,6 @@ public:
   // nsIDOMHTMLInputElement
   NS_DECL_NSIDOMHTMLINPUTELEMENT
 
-  // nsIPhonetic
-  NS_DECL_NSIPHONETIC
-
   // nsIDOMNSEditableElement
   NS_IMETHOD GetEditor(nsIEditor** aEditor) override
   {
@@ -164,7 +181,6 @@ public:
   NS_IMETHOD SetUserInput(const nsAString& aInput) override;
 
   // Overriden nsIFormControl methods
-  NS_IMETHOD_(uint32_t) GetType() const override { return mType; }
   NS_IMETHOD Reset() override;
   NS_IMETHOD SubmitNamesValues(HTMLFormSubmission* aFormSubmission) override;
   NS_IMETHOD SaveState() override;
@@ -235,20 +251,29 @@ public:
   NS_IMETHOD_(Element*) GetRootEditorNode() override;
   NS_IMETHOD_(Element*) CreatePlaceholderNode() override;
   NS_IMETHOD_(Element*) GetPlaceholderNode() override;
-  NS_IMETHOD_(void) UpdatePlaceholderVisibility(bool aNotify) override;
+  NS_IMETHOD_(Element*) CreatePreviewNode() override;
+  NS_IMETHOD_(Element*) GetPreviewNode() override;
+  NS_IMETHOD_(void) UpdateOverlayTextVisibility(bool aNotify) override;
+  NS_IMETHOD_(void) SetPreviewValue(const nsAString& aValue) override;
+  NS_IMETHOD_(void) GetPreviewValue(nsAString& aValue) override;
+  NS_IMETHOD_(void) EnablePreview() override;
+  NS_IMETHOD_(bool) IsPreviewEnabled() override;
   NS_IMETHOD_(bool) GetPlaceholderVisibility() override;
+  NS_IMETHOD_(bool) GetPreviewVisibility() override;
   NS_IMETHOD_(void) InitializeKeyboardEventListeners() override;
   NS_IMETHOD_(void) OnValueChanged(bool aNotify, bool aWasInteractiveUserChange) override;
+  virtual void GetValueFromSetRangeText(nsAString& aValue) override;
+  virtual nsresult SetValueFromSetRangeText(const nsAString& aValue) override;
   NS_IMETHOD_(bool) HasCachedSelection() override;
-  NS_IMETHOD GetSelectionRange(int32_t* aSelectionStart,
-                               int32_t* aSelectionEnd) override;
+
+  // Methods for nsFormFillController so it can do selection operations on input
+  // types the HTML spec doesn't support them on, like "email".
+  uint32_t GetSelectionStartIgnoringType(ErrorResult& aRv);
+  uint32_t GetSelectionEndIgnoringType(ErrorResult& aRv);
 
   void GetDisplayFileName(nsAString& aFileName) const;
 
-  const nsTArray<OwningFileOrDirectory>& GetFilesOrDirectoriesInternal() const
-  {
-    return mFilesOrDirectories;
-  }
+  const nsTArray<OwningFileOrDirectory>& GetFilesOrDirectoriesInternal() const;
 
   void SetFilesOrDirectories(const nsTArray<OwningFileOrDirectory>& aFilesOrDirectories,
                              bool aSetValueChanged);
@@ -277,7 +302,8 @@ public:
    */
   already_AddRefed<nsIDOMHTMLInputElement> GetSelectedRadioButton() const;
 
-  virtual nsresult Clone(mozilla::dom::NodeInfo *aNodeInfo, nsINode **aResult) const override;
+  virtual nsresult Clone(mozilla::dom::NodeInfo *aNodeInfo, nsINode **aResult,
+                         bool aPreallocateChildren) const override;
 
   NS_DECL_CYCLE_COLLECTION_CLASS_INHERITED(HTMLInputElement,
                                            nsGenericHTMLFormElementWithState)
@@ -293,11 +319,10 @@ public:
 
   void MaybeLoadImage();
 
-  void SetSelectionProperties(const nsTextEditorState::SelectionProperties& aProps)
+  void SetSelectionCached()
   {
     MOZ_ASSERT(mType == NS_FORM_INPUT_NUMBER);
     mSelectionCached = true;
-    mSelectionProperties = aProps;
   }
   bool IsSelectionCached() const
   {
@@ -712,25 +737,24 @@ public:
 
   // XPCOM Select() is OK
 
-  Nullable<int32_t> GetSelectionStart(ErrorResult& aRv);
-  void SetSelectionStart(const Nullable<int32_t>& aValue, ErrorResult& aRv);
+  Nullable<uint32_t> GetSelectionStart(ErrorResult& aRv);
+  void SetSelectionStart(const Nullable<uint32_t>& aValue, ErrorResult& aRv);
 
-  Nullable<int32_t> GetSelectionEnd(ErrorResult& aRv);
-  void SetSelectionEnd(const Nullable<int32_t>& aValue, ErrorResult& aRv);
+  Nullable<uint32_t> GetSelectionEnd(ErrorResult& aRv);
+  void SetSelectionEnd(const Nullable<uint32_t>& aValue, ErrorResult& aRv);
 
   void GetSelectionDirection(nsAString& aValue, ErrorResult& aRv);
   void SetSelectionDirection(const nsAString& aValue, ErrorResult& aRv);
 
-  void SetSelectionRange(int32_t aStart, int32_t aEnd,
+  void SetSelectionRange(uint32_t aStart, uint32_t aEnd,
                          const Optional< nsAString >& direction,
                          ErrorResult& aRv);
 
   void SetRangeText(const nsAString& aReplacement, ErrorResult& aRv);
 
   void SetRangeText(const nsAString& aReplacement, uint32_t aStart,
-                    uint32_t aEnd, const SelectionMode& aSelectMode,
-                    ErrorResult& aRv, int32_t aSelectionStart = -1,
-                    int32_t aSelectionEnd = -1);
+                    uint32_t aEnd, SelectionMode aSelectMode,
+                    ErrorResult& aRv);
 
   bool Allowdirs() const
   {
@@ -806,8 +830,13 @@ public:
   void UpdateDateTimePicker(const DateTimeValue& aValue);
   void CloseDateTimePicker();
 
+  /*
+   * Called from datetime input box binding when inner text fields are focused
+   * or blurred.
+   */
+  void SetFocusState(bool aIsFocused);
+
   HTMLInputElement* GetOwnerNumberControl();
-  HTMLInputElement* GetOwnerDateTimeControl();
 
   void StartNumberControlSpinnerSpin();
   enum SpinnerStopState {
@@ -841,8 +870,6 @@ public:
   void SetUserInput(const nsAString& aInput,
                     nsIPrincipal& aSubjectPrincipal);
 
-  // XPCOM GetPhonetic() is OK
-
   /**
    * If aValue contains a valid floating-point number in the format specified
    * by the HTML 5 spec:
@@ -855,6 +882,8 @@ public:
   static Decimal StringToDecimal(const nsAString& aValue);
 
   void UpdateEntries(const nsTArray<OwningFileOrDirectory>& aFilesOrDirectories);
+
+  static void Shutdown();
 
 protected:
   virtual ~HTMLInputElement();
@@ -887,28 +916,6 @@ protected:
     // throw the INVALID_STATE_ERR exception.
     VALUE_MODE_FILENAME
   };
-
-  /**
-   * This helper method returns true if aValue is a valid email address.
-   * This is following the HTML5 specification:
-   * http://dev.w3.org/html5/spec/forms.html#valid-e-mail-address
-   *
-   * @param aValue  the email address to check.
-   * @result        whether the given string is a valid email address.
-   */
-  static bool IsValidEmailAddress(const nsAString& aValue);
-
-  /**
-   * This helper method returns true if aValue is a valid email address list.
-   * Email address list is a list of email address separated by comas (,) which
-   * can be surrounded by space charecters.
-   * This is following the HTML5 specification:
-   * http://dev.w3.org/html5/spec/forms.html#valid-e-mail-address-list
-   *
-   * @param aValue  the email address list to check.
-   * @result        whether the given string is a valid email address list.
-   */
-  static bool IsValidEmailAddressList(const nsAString& aValue);
 
   /**
    * This helper method convert a sub-string that contains only digits to a
@@ -962,13 +969,19 @@ protected:
    * Called when an attribute is about to be changed
    */
   virtual nsresult BeforeSetAttr(int32_t aNameSpaceID, nsIAtom* aName,
-                                 nsAttrValueOrString* aValue,
+                                 const nsAttrValueOrString* aValue,
                                  bool aNotify) override;
   /**
    * Called when an attribute has just been changed
    */
   virtual nsresult AfterSetAttr(int32_t aNameSpaceID, nsIAtom* aName,
-                                const nsAttrValue* aValue, bool aNotify) override;
+                                const nsAttrValue* aValue,
+                                const nsAttrValue* aOldValue,
+                                bool aNotify) override;
+
+  virtual void BeforeSetForm(bool aBindToTree) override;
+
+  virtual void AfterClearForm(bool aUnbindOrDelete) override;
 
   /**
    * Dispatch a select event. Returns true if the event was not cancelled.
@@ -1064,11 +1077,6 @@ protected:
   bool DoesRequiredApply() const;
 
   /**
-   * Returns if the pattern attribute applies for the current type.
-   */
-  bool DoesPatternApply() const;
-
-  /**
    * Returns if the min and max attributes apply for the current type.
    */
   bool DoesMinMaxApply() const;
@@ -1093,18 +1101,13 @@ protected:
    */
   bool DoesAutocompleteApply() const;
 
-  /**
-   * Returns if the minlength or maxlength attributes apply for the current type.
-   */
-  bool MinOrMaxLengthApplies() const { return IsSingleLineTextControl(false, mType); }
-
   void FreeData();
   nsTextEditorState *GetEditorState() const;
 
   /**
    * Manages the internal data storage across type changes.
    */
-  void HandleTypeChange(uint8_t aNewType);
+  void HandleTypeChange(uint8_t aNewType, bool aNotify);
 
   /**
    * Sanitize the value of the element depending of its current type.
@@ -1164,30 +1167,6 @@ protected:
    * @return the radio group container if the element has one, null otherwise.
    */
   nsIRadioGroupContainer* GetRadioGroupContainer() const;
-
-  /**
-   * Convert a string to a Decimal number in a type specific way,
-   * http://www.whatwg.org/specs/web-apps/current-work/multipage/the-input-element.html#concept-input-value-string-number
-   * ie parse a date string to a timestamp if type=date,
-   * or parse a number string to its value if type=number.
-   * @param aValue the string to be parsed.
-   * @param aResultValue the number as a Decimal.
-   * @result whether the parsing was successful.
-   */
-  bool ConvertStringToNumber(nsAString& aValue, Decimal& aResultValue) const;
-
-  /**
-   * Convert a Decimal to a string in a type specific way, ie convert a timestamp
-   * to a date string if type=date or append the number string representing the
-   * value if type=number.
-   *
-   * @param aValue the Decimal to be converted
-   * @param aResultString [out] the string representing the Decimal
-   * @return whether the function succeded, it will fail if the current input's
-   *         type is not supported or the number can't be converted to a string
-   *         as expected by the type.
-   */
-  bool ConvertNumberToString(Decimal aValue, nsAString& aResultString) const;
 
   /**
    * Parse a color string of the form #XXXXXX where X should be hexa characters
@@ -1326,13 +1305,6 @@ protected:
   uint32_t MaximumWeekInYear(uint32_t aYear) const;
 
   /**
-   * This method converts aValue (milliseconds within a day) to hours, minutes,
-   * seconds and milliseconds.
-   */
-  bool GetTimeFromMs(double aValue, uint16_t* aHours, uint16_t* aMinutes,
-                     uint16_t* aSeconds, uint16_t* aMilliseconds) const;
-
-  /**
    * This methods returns true if it's a leap year.
    */
   bool IsLeapYear(uint32_t aYear) const;
@@ -1457,7 +1429,6 @@ protected:
   };
   nsresult InitFilePicker(FilePickerType aType);
   nsresult InitColorPicker();
-  nsresult InitDatePicker();
 
   /**
    * Use this function before trying to open a picker.
@@ -1484,6 +1455,19 @@ protected:
    */
   void UpdateApzAwareFlag();
 
+  /**
+   * A helper to get the current selection range.  Will throw on the ErrorResult
+   * if we have no editor state.
+   */
+  void GetSelectionRange(uint32_t* aSelectionStart,
+                         uint32_t* aSelectionEnd,
+                         ErrorResult& aRv);
+
+  /**
+   * Override for nsImageLoadingContent.
+   */
+  nsIContent* AsContent() override { return this; }
+
   nsCOMPtr<nsIControllers> mControllers;
 
   /*
@@ -1505,30 +1489,8 @@ protected:
     nsTextEditorState*       mState;
   } mInputData;
 
-  /**
-   * The value of the input if it is a file input. This is the list of files or
-   * directories DOM objects used when uploading a file. It is vital that this
-   * is kept separate from mValue so that it won't be possible to 'leak' the
-   * value from a text-input to a file-input. Additionally, the logic for this
-   * value is kept as simple as possible to avoid accidental errors where the
-   * wrong filename is used.  Therefor the list of filenames is always owned by
-   * this member, never by the frame. Whenever the frame wants to change the
-   * filename it has to call SetFilesOrDirectories to update this member.
-   */
-  nsTArray<OwningFileOrDirectory> mFilesOrDirectories;
-
-  RefPtr<GetFilesHelper> mGetFilesRecursiveHelper;
-  RefPtr<GetFilesHelper> mGetFilesNonRecursiveHelper;
-
-  /**
-   * Hack for bug 1086684: Stash the .value when we're a file picker.
-   */
-  nsString mFirstFilePath;
-
-  RefPtr<FileList>  mFileList;
-  Sequence<RefPtr<FileSystemEntry>> mEntries;
-
-  nsString mStaticDocFileList;
+  struct FileData;
+  UniquePtr<FileData> mFileData;
 
   /**
    * The value of the input element when first initialized and it is updated
@@ -1558,6 +1520,14 @@ protected:
    * nsTextEditorState cannot do its job.
    */
   nsTextEditorState::SelectionProperties mSelectionProperties;
+
+  /*
+   * InputType object created based on input type.
+   */
+  UniquePtr<InputType, DoNotDelete> mInputType;
+
+  // Memory allocated for mInputType, reused when type changes.
+  char mInputTypeMem[INPUT_TYPE_SIZE];
 
   // Step scale factor values, for input types that have one.
   static const Decimal kStepScaleFactorDate;
@@ -1594,13 +1564,8 @@ protected:
   // Milliseconds in a day.
   static const double kMsPerDay;
 
-
-  /**
-   * The type of this input (<input type=...>) as an integer.
-   * @see nsIFormControl.h (specifically NS_FORM_INPUT_*)
-   */
-  uint8_t                  mType;
   nsContentUtils::AutocompleteAttrState mAutocompleteAttrState;
+  nsContentUtils::AutocompleteAttrState mAutocompleteInfoState;
   bool                     mDisabledChanged     : 1;
   bool                     mValueChanged        : 1;
   bool                     mLastValueChangeWasInteractive : 1;
@@ -1621,6 +1586,7 @@ protected:
   bool                     mNumberControlSpinnerSpinsUp : 1;
   bool                     mPickerRunning : 1;
   bool                     mSelectionCached : 1;
+  bool                     mIsPreviewEnabled : 1;
 
 private:
   static void MapAttributesIntoRule(const nsMappedAttributes* aAttributes,
@@ -1652,7 +1618,7 @@ private:
 
   /**
    * Checks if aDateTimeInputType should be supported based on "dom.forms.datetime",
-   * "dom.forms.datepicker" and "dom.experimental_forms".
+   * and "dom.experimental_forms".
    */
   static bool
   IsDateTimeTypeSupported(uint8_t aDateTimeInputType);
@@ -1679,13 +1645,6 @@ private:
   IsDirPickerEnabled();
 
   /**
-   * Checks preference "dom.forms.datepicker" to determine if date picker should
-   * be supported.
-   */
-  static bool
-  IsDatePickerEnabled();
-
-  /**
    * Checks preference "dom.experimental_forms" to determine if experimental
    * implementation of input element should be enabled.
    */
@@ -1693,11 +1652,18 @@ private:
   IsExperimentalFormsEnabled();
 
   /**
-   * Checks preference "dom.forms.datetime" to determine if input date/time
-   * related types should be supported.
+   * Checks preference "dom.forms.datetime" to determine if input date and time
+   * should be supported.
    */
   static bool
   IsInputDateTimeEnabled();
+
+  /**
+   * Checks preference "dom.forms.datetime.others" to determine if input week,
+   * month and datetime-local should be supported.
+   */
+  static bool
+  IsInputDateTimeOthersEnabled();
 
   /**
    * Checks preference "dom.forms.number" to determine if input type=number
@@ -1763,6 +1729,11 @@ private:
     nsCOMPtr<nsIFilePicker> mFilePicker;
     RefPtr<HTMLInputElement> mInput;
   };
+
+  static void ReleaseTextEditorState(nsTextEditorState* aState);
+
+  static nsTextEditorState* sCachedTextEditorState;
+  static bool sShutdown;
 };
 
 } // namespace dom

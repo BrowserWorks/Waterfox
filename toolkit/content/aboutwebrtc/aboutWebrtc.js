@@ -3,8 +3,6 @@
  * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
 "use strict";
 
-/* global WebrtcGlobalInformation, document */
-
 var Cu = Components.utils;
 
 Cu.import("resource://gre/modules/XPCOMUtils.jsm");
@@ -141,11 +139,13 @@ Control.prototype = {
   update() {
     this.ctrl.textContent = this._label;
 
+    this.msg.textContent = "";
     if (this._message) {
-      this.msg.innerHTML =
-        `<span class="info-label">${this._messageHeader}:</span> ${this._message}`;
-    } else {
-      this.msg.innerHTML = null;
+      this.msg.appendChild(Object.assign(document.createElement("span"), {
+        className: "info-label",
+        textContent: `${this._messageHeader}: `,
+      }));
+      this.msg.appendChild(document.createTextNode(this._message));
     }
   },
 
@@ -307,7 +307,7 @@ var AboutWebRTC = {
       msg.textContent = getString("cannot_retrieve_log");
       parent.appendChild(msg);
       msg = document.createElement("p");
-      msg.innerHTML = `${data.error.name}: ${data.error.message}`;
+      msg.textContent = `${data.error.name}: ${data.error.message}`;
       parent.appendChild(msg);
       return;
     }
@@ -612,8 +612,8 @@ RTPStats.prototype = {
 
       statsString += ` ${getString("lost_label")}: ${stats.packetsLost} ${getString("jitter_label")}: ${stats.jitter}`;
 
-      if (stats.mozRtt) {
-        statsString += ` RTT: ${stats.mozRtt} ms`;
+      if (stats.roundTripTime) {
+        statsString += ` RTT: ${stats.roundTripTime} ms`;
       }
     } else if (stats.packetsSent) {
       statsString += ` ${getString("sent_label")}: ${stats.packetsSent} ${getString("packets")}`;

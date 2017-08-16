@@ -5,11 +5,11 @@
 const PREF_RESTORE_ON_DEMAND = "browser.sessionstore.restore_on_demand";
 const PREF_RESTORE_PINNED_TABS_ON_DEMAND = "browser.sessionstore.restore_pinned_tabs_on_demand";
 
-add_task(function* test() {
+add_task(async function test() {
   Services.prefs.setBoolPref(PREF_RESTORE_ON_DEMAND, true);
   Services.prefs.setBoolPref(PREF_RESTORE_PINNED_TABS_ON_DEMAND, true);
 
-  registerCleanupFunction(function () {
+  registerCleanupFunction(function() {
     Services.prefs.clearUserPref(PREF_RESTORE_ON_DEMAND);
     Services.prefs.clearUserPref(PREF_RESTORE_PINNED_TABS_ON_DEMAND);
   });
@@ -25,7 +25,7 @@ add_task(function* test() {
   ], selected: 5 }] };
 
   let promiseRestoringTabs = new Promise(resolve => {
-    gProgressListener.setCallback(function (aBrowser, aNeedRestore, aRestoring, aRestored) {
+    gProgressListener.setCallback(function(aBrowser, aNeedRestore, aRestoring, aRestored) {
       // get the tab
       let tab;
       for (let i = 0; i < window.gBrowser.tabs.length; i++) {
@@ -46,8 +46,8 @@ add_task(function* test() {
 
   let backupState = ss.getBrowserState();
   ss.setBrowserState(JSON.stringify(state));
-  yield promiseRestoringTabs;
+  await promiseRestoringTabs;
 
   // Cleanup.
-  yield promiseBrowserState(backupState);
+  await promiseBrowserState(backupState);
 });

@@ -13,7 +13,6 @@ const TOPIC_PLACES_DEFAULTS_FINISHED = "places-browser-init-complete";
 
 Cu.import("resource://gre/modules/AppConstants.jsm");
 Cu.import("resource://gre/modules/Services.jsm");
-Cu.import("resource://gre/modules/Task.jsm");
 Cu.import("resource://gre/modules/XPCOMUtils.jsm");
 
 Cu.importGlobalProperties(["URL"]);
@@ -49,14 +48,14 @@ XPCOMUtils.defineLazyGetter(this, "gAvailableMigratorKeys", function() {
   if (AppConstants.platform == "win") {
     return [
       "firefox", "edge", "ie", "chrome", "chromium", "360se",
-      "canary"
+      "canary", "waterfox"
     ];
   }
   if (AppConstants.platform == "macosx") {
-    return ["firefox", "safari", "chrome", "chromium", "canary"];
+    return ["firefox", "safari", "chrome", "chromium", "canary", "waterfox"];
   }
   if (AppConstants.XP_UNIX) {
-    return ["firefox", "chrome", "chromium"];
+    return ["firefox", "chrome", "chromium", "waterfox"];
   }
   return [];
 });
@@ -235,7 +234,7 @@ this.MigratorPrototype = {
     // Used to periodically give back control to the main-thread loop.
     let unblockMainThread = function() {
       return new Promise(resolve => {
-        Services.tm.mainThread.dispatch(resolve, Ci.nsIThread.DISPATCH_NORMAL);
+        Services.tm.dispatchToMainThread(resolve);
       });
     };
 
@@ -300,7 +299,7 @@ this.MigratorPrototype = {
     };
 
     // Called either directly or through the bookmarks import callback.
-    let doMigrate = Task.async(function*() {
+    let doMigrate = async function() {
       let resourcesGroupedByItems = new Map();
       resources.forEach(function(resource) {
         if (!resourcesGroupedByItems.has(resource.type)) {
@@ -367,13 +366,13 @@ this.MigratorPrototype = {
           // for example bookmarks and history (See bug 1272652).
           if (migrationType == MigrationUtils.resourceTypes.BOOKMARKS ||
               migrationType == MigrationUtils.resourceTypes.HISTORY) {
-            yield completeDeferred.promise;
+            await completeDeferred.promise;
           }
 
-          yield unblockMainThread();
+          await unblockMainThread();
         }
       }
-    });
+    };
 
     if (MigrationUtils.isStartupMigration && !this.startupOnlyMigrator) {
       MigrationUtils.profileStartup.doStartup();
@@ -381,14 +380,14 @@ this.MigratorPrototype = {
       // Note: We do not need to do so for the Firefox migrator
       // (=startupOnlyMigrator), as it just copies over the places database
       // from another profile.
-      Task.spawn(function* () {
+      (async function() {
         // Tell nsBrowserGlue we're importing default bookmarks.
         let browserGlue = Cc["@mozilla.org/browser/browserglue;1"].
                           getService(Ci.nsIObserver);
         browserGlue.observe(null, TOPIC_WILL_IMPORT_BOOKMARKS, "");
 
         // Import the default bookmarks. We ignore whether or not we succeed.
-        yield BookmarkHTMLUtils.importFromURL(
+        await BookmarkHTMLUtils.importFromURL(
           "chrome://browser/locale/bookmarks.html", true).catch(r => r);
 
         // We'll tell nsBrowserGlue we've imported bookmarks, but before that
@@ -399,12 +398,12 @@ this.MigratorPrototype = {
             Services.obs.removeObserver(onPlacesInited, TOPIC_PLACES_DEFAULTS_FINISHED);
             resolve();
           };
-          Services.obs.addObserver(onPlacesInited, TOPIC_PLACES_DEFAULTS_FINISHED, false);
+          Services.obs.addObserver(onPlacesInited, TOPIC_PLACES_DEFAULTS_FINISHED);
         });
         browserGlue.observe(null, TOPIC_DID_IMPORT_BOOKMARKS, "");
-        yield placesInitedPromise;
+        await placesInitedPromise;
         doMigrate();
-      });
+      })();
       return;
     }
     doMigrate();
@@ -537,7 +536,9 @@ this.MigrationUtils = Object.freeze({
 
     const OVERRIDES = {
       "4_firefox": "4_firefox_history_and_bookmarks",
-      "64_firefox": "64_firefox_other"
+      "64_firefox": "64_firefox_other",
+      "4_waterfox": "4_waterfox_history_and_bookmarks",
+      "64_waterfox": "64_waterfox_other"
     };
     aKey = OVERRIDES[aKey] || aKey;
 
@@ -563,6 +564,8 @@ this.MigrationUtils = Object.freeze({
         return "sourceNameChromium";
       case "firefox":
         return "sourceNameFirefox";
+      case "waterfox":
+        return "sourceNameWaterfox";
       case "360se":
         return "sourceName360se";
     }
@@ -590,13 +593,13 @@ this.MigrationUtils = Object.freeze({
    *        the GUID of the folder in which the new folder should be created.
    * @return the GUID of the new folder.
    */
-  createImportedBookmarksFolder: Task.async(function* (sourceNameStr, parentGuid) {
+  async createImportedBookmarksFolder(sourceNameStr, parentGuid) {
     let source = this.getLocalizedString("sourceName" + sourceNameStr);
     let title = this.getLocalizedString("importedBookmarksFolder", [source]);
-    return (yield PlacesUtils.bookmarks.insert({
+    return (await PlacesUtils.bookmarks.insert({
       type: PlacesUtils.bookmarks.TYPE_FOLDER, parentGuid, title
     })).guid;
-  }),
+  },
 
   /**
    * Get all the rows corresponding to a select query from a database, without
@@ -624,7 +627,7 @@ this.MigrationUtils = Object.freeze({
 
     const RETRYLIMIT = 10;
     const RETRYINTERVAL = 100;
-    return Task.spawn(function* innerGetRows() {
+    return (async function innerGetRows() {
       let rows = null;
       for (let retryCount = RETRYLIMIT; retryCount && !rows; retryCount--) {
         // Attempt to get the rows. If this succeeds, we will bail out of the loop,
@@ -635,9 +638,9 @@ this.MigrationUtils = Object.freeze({
         let didOpen = false;
         let exceptionSeen;
         try {
-          db = yield Sqlite.openConnection(dbOptions);
+          db = await Sqlite.openConnection(dbOptions);
           didOpen = true;
-          rows = yield db.execute(selectQuery);
+          rows = await db.execute(selectQuery);
         } catch (ex) {
           if (!exceptionSeen) {
             Cu.reportError(ex);
@@ -646,19 +649,19 @@ this.MigrationUtils = Object.freeze({
         } finally {
           try {
             if (didOpen) {
-              yield db.close();
+              await db.close();
             }
           } catch (ex) {}
         }
         if (exceptionSeen) {
-          yield new Promise(resolve => setTimeout(resolve, RETRYINTERVAL));
+          await new Promise(resolve => setTimeout(resolve, RETRYINTERVAL));
         }
       }
       if (!rows) {
         throw new Error("Couldn't get rows from the " + description + " database.");
       }
       return rows;
-    });
+    })();
   },
 
   get _migrators() {
@@ -722,6 +725,7 @@ this.MigrationUtils = Object.freeze({
       "Safari":                            "safari",
       "Firefox":                           "firefox",
       "Nightly":                           "firefox",
+      "Waterfox":                          "waterfox",
       "Google Chrome":                     "chrome",  // Windows, Linux
       "Chrome":                            "chrome",  // OS X
       "Chromium":                          "chromium", // Windows, OS X
@@ -865,7 +869,7 @@ this.MigrationUtils = Object.freeze({
               throw new Error("Unexpected parameter type " + (typeof item) + ": " + item);
           }
         }
-        params.appendElement(comtaminatedVal, false);
+        params.appendElement(comtaminatedVal);
       }
     } else {
       params = aParams;
@@ -1031,7 +1035,7 @@ this.MigrationUtils = Object.freeze({
     gUndoData = new Map([["bookmarks", []], ["visits", []], ["logins", []]]);
   },
 
-  _postProcessUndoData: Task.async(function*(state) {
+  async _postProcessUndoData(state) {
     if (!state) {
       return state;
     }
@@ -1044,7 +1048,7 @@ this.MigrationUtils = Object.freeze({
       return PlacesUtils.bookmarks.fetch(guid).then(bm => bm && bookmarkFolderData.push(bm), () => {});
     });
 
-    yield Promise.all(bmPromises);
+    await Promise.all(bmPromises);
     let folderLMMap = new Map(bookmarkFolderData.map(b => [b.guid, b.lastModified]));
     for (let bookmark of bookmarkFolders) {
       let lastModified = folderLMMap.get(bookmark.guid);
@@ -1054,7 +1058,7 @@ this.MigrationUtils = Object.freeze({
       }
     }
     return state;
-  }),
+  },
 
   stopAndRetrieveUndoData() {
     let undoData = gUndoData;
@@ -1111,6 +1115,7 @@ this.MigrationUtils = Object.freeze({
   MIGRATION_ENTRYPOINT_FXREFRESH: 2,
   MIGRATION_ENTRYPOINT_PLACES: 3,
   MIGRATION_ENTRYPOINT_PASSWORDS: 4,
+  MIGRATION_ENTRYPOINT_NEWTAB: 5,
 
   _sourceNameToIdMapping: {
     "nothing":    1,
@@ -1122,6 +1127,7 @@ this.MigrationUtils = Object.freeze({
     "canary":     7,
     "safari":     8,
     "360se":      9,
+    "waterfox":   10,
   },
   getSourceIdForTelemetry(sourceName) {
     return this._sourceNameToIdMapping[sourceName] || 0;

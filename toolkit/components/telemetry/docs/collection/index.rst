@@ -16,11 +16,13 @@ The current data collection possibilities include:
 * :doc:`histograms` can efficiently record multiple data points
 * ``environment`` data records information about the system and settings a session occurs in
 * :doc:`events` can record richer data on individual occurences of specific actions
-* ``TelemetryLog`` allows collecting ordered event entries (note: this does not have supporting analysis tools)
+* ``TelemetryLog`` allows collecting ordered event entries up to a limit of 1000 entries (note: this does not have supporting analysis tools)
 * :doc:`measuring elapsed time <measuring-time>`
 * :doc:`custom pings <custom-pings>`
 * :doc:`stack capture <stack-capture>` allow recording application call stacks
 * :doc:`Use counters <use-counters>` measure the usage of web platform features
+* :doc:`Experiment annotations <experiments>`
+* :doc:`Remote content uptake <uptake>`
 
 .. toctree::
    :maxdepth: 2
@@ -34,16 +36,10 @@ The current data collection possibilities include:
    measuring-time
    custom-pings
    stack-capture
+   experiments
+   uptake
    *
 
 Browser Usage Telemetry
 ~~~~~~~~~~~~~~~~~~~~~~~
 For more information, see :ref:`browserusagetelemetry`.
-
-Experiment Annotation
-~~~~~~~~~~~~~~~~~~~~~
-Experiment annotations can be added through the API exposed in ``TelemetryEnvironment.jsm`` and are collected in the :doc:`environment <../data/environment>`:
-
-- ``TelemetryEnvironment.setExperimentActive(id, branch)``, adds an annotation to the environment for the provided ``id`` and ``branch``. This triggers a new subsession.
-- ``TelemetryEnvironment.setExperimentInactive(id)``, removes the annotation for the experiment with the provided ``id``. This triggers a new subsession.
-- ``TelemetryEnvironment.getActiveExperiments()``, returns a dictionary containing the informations for each active experiment.

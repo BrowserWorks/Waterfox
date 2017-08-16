@@ -45,7 +45,7 @@ public:
   typedef mozilla::layers::LayerManager LayerManager;
 
   friend class nsDisplayXULImage;
-  NS_DECL_FRAMEARENA_HELPERS
+  NS_DECL_FRAMEARENA_HELPERS(nsImageBoxFrame)
 
   virtual nsSize GetXULPrefSize(nsBoxLayoutState& aBoxLayoutState) override;
   virtual nsSize GetXULMinSize(nsBoxLayoutState& aBoxLayoutState) override;
@@ -68,7 +68,6 @@ public:
 
   virtual void DestroyFrom(nsIFrame* aDestructRoot) override;
 
-  virtual nsIAtom* GetType() const override;
 #ifdef DEBUG_FRAME_DUMP
   virtual nsresult GetFrameName(nsAString& aResult) const override;
 #endif
@@ -97,6 +96,8 @@ public:
                         nsPoint aPt, uint32_t aFlags);
 
   bool CanOptimizeToImageLayer();
+
+  nsRect GetDestRect(const nsPoint& aOffset, Maybe<nsPoint>& aAnchorPoint);
 
 protected:
   explicit nsImageBoxFrame(nsStyleContext* aContext);
@@ -127,7 +128,8 @@ private:
   bool mSuppressStyleCheck;
 }; // class nsImageBoxFrame
 
-class nsDisplayXULImage : public nsDisplayImageContainer {
+class nsDisplayXULImage final : public nsDisplayImageContainer
+{
 public:
   nsDisplayXULImage(nsDisplayListBuilder* aBuilder,
                     nsImageBoxFrame* aFrame) :

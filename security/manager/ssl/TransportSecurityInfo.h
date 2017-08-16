@@ -20,13 +20,14 @@
 #include "nsITransportSecurityInfo.h"
 #include "nsNSSShutDown.h"
 #include "nsSSLStatus.h"
+#include "nsString.h"
 #include "pkix/pkixtypes.h"
 
 namespace mozilla { namespace psm {
 
-enum SSLErrorMessageType {
-  OverridableCertErrorMessage  = 1, // for *overridable* certificate errors
-  PlainErrorMessage = 2             // all other errors (or "no error")
+enum class SSLErrorMessageType {
+  OverridableCert = 1, // for *overridable* certificate errors
+  Plain = 2,           // all other errors (or "no error")
 };
 
 class TransportSecurityInfo : public nsITransportSecurityInfo,
@@ -42,7 +43,7 @@ protected:
   virtual ~TransportSecurityInfo();
 public:
   TransportSecurityInfo();
-  
+
   NS_DECL_THREADSAFE_ISUPPORTS
   NS_DECL_NSITRANSPORTSECURITYINFO
   NS_DECL_NSIINTERFACEREQUESTOR
@@ -51,35 +52,31 @@ public:
   NS_DECL_NSISERIALIZABLE
   NS_DECL_NSICLASSINFO
 
-  nsresult SetSecurityState(uint32_t aState);
-  nsresult SetShortSecurityDescription(const char16_t *aText);
+  void SetSecurityState(uint32_t aState);
 
   const nsACString & GetHostName() const { return mHostName; }
-  const char * GetHostNameRaw() const { return mHostName.get(); }
 
-  nsresult GetHostName(char **aHostName);
-  nsresult SetHostName(const char *aHostName);
+  void SetHostName(const char* host);
 
   int32_t GetPort() const { return mPort; }
-  nsresult GetPort(int32_t *aPort);
-  nsresult SetPort(int32_t aPort);
+  void SetPort(int32_t aPort);
 
   const OriginAttributes& GetOriginAttributes() const {
     return mOriginAttributes;
   }
-  nsresult SetOriginAttributes(const OriginAttributes& aOriginAttributes);
+  void SetOriginAttributes(const OriginAttributes& aOriginAttributes);
 
   PRErrorCode GetErrorCode() const;
-  
+
   void GetErrorLogMessage(PRErrorCode errorCode,
                           ::mozilla::psm::SSLErrorMessageType errorMessageType,
                           nsString &result);
-  
+
   void SetCanceled(PRErrorCode errorCode,
                    ::mozilla::psm::SSLErrorMessageType errorMessageType);
 
   /* Set SSL Status values */
-  nsresult SetSSLStatus(nsSSLStatus *aSSLStatus);
+  void SetSSLStatus(nsSSLStatus* aSSLStatus);
   nsSSLStatus* SSLStatus() { return mSSLStatus; }
   void SetStatusErrorBits(nsNSSCertificate* cert, uint32_t collected_errors);
 
@@ -106,7 +103,7 @@ private:
                               nsString &result);
 
   int32_t mPort;
-  nsXPIDLCString mHostName;
+  nsCString mHostName;
   OriginAttributes mOriginAttributes;
 
   /* SSL Status */
@@ -139,10 +136,9 @@ public:
   void LookupCertErrorBits(TransportSecurityInfo * infoObject,
                            nsSSLStatus* status);
 
-  static nsresult Init()
+  static void Init()
   {
     sInstance = new RememberCertErrorsTable();
-    return NS_OK;
   }
 
   static RememberCertErrorsTable & GetInstance()

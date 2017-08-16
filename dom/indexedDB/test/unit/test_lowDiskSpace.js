@@ -179,7 +179,7 @@ function* testSteps()
     txn.onerror = expectedErrorHandler("AbortError");
     txn.onabort = grabEventAndContinueHandler;
 
-    let objectStore = db.createObjectStore(objectStoreName, objectStoreOptions);
+    db.createObjectStore(objectStoreName, objectStoreOptions);
 
     request.onupgradeneeded = unexpectedSuccessHandler;
     event = yield undefined;
@@ -236,7 +236,7 @@ function* testSteps()
     txn.onabort = grabEventAndContinueHandler;
 
     objectStore = event.target.transaction.objectStore(objectStoreName);
-    let index = objectStore.createIndex(indexName, indexName, indexOptions);
+    objectStore.createIndex(indexName, indexName, indexOptions);
 
     request.onupgradeneeded = unexpectedSuccessHandler;
     event = yield undefined;
@@ -266,7 +266,7 @@ function* testSteps()
     db.onerror = errorHandler;
 
     let objectStore = event.target.transaction.objectStore(objectStoreName);
-    let index = objectStore.createIndex(indexName, indexName, indexOptions);
+    objectStore.createIndex(indexName, indexName, indexOptions);
 
     request.onupgradeneeded = unexpectedSuccessHandler;
     request.onsuccess = grabEventAndContinueHandler;
@@ -353,7 +353,7 @@ function* testSteps()
     db.onerror = errorHandler;
 
     let objectStore = db.createObjectStore(objectStoreName, objectStoreOptions);
-    let index = objectStore.createIndex(indexName, indexName, indexOptions);
+    objectStore.createIndex(indexName, indexName, indexOptions);
 
     for (let data of dbData) {
       objectStore.add(data);
@@ -721,33 +721,33 @@ function RequestCounter(expectedType) {
   this._counter = 0;
 }
 RequestCounter.prototype = {
-  incr: function() {
+  incr() {
     this._counter++;
   },
 
-  decr: function() {
+  decr() {
     if (!--this._counter) {
       continueToNextStepSync();
     }
   },
 
-  handler: function(type, preventDefault) {
+  handler(type, preventDefault) {
     this.incr();
-    return function(event) {
+    return event => {
       is(event.type, type || "success", "Correct type");
       this.decr();
-    }.bind(this);
+    };
   },
 
-  errorHandler: function(eventType, errorName) {
+  errorHandler(eventType, errorName) {
     this.incr();
-    return function(event) {
+    return event => {
       is(event.type, eventType || "error", "Correct type");
       is(event.target.error.name, errorName || "QuotaExceededError",
           "Correct error name");
       event.preventDefault();
       event.stopPropagation();
       this.decr();
-    }.bind(this);
+    };
   }
 };

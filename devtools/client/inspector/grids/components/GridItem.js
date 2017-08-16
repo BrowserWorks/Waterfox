@@ -4,12 +4,12 @@
 
 "use strict";
 
-const { addons, createClass, createFactory, DOM: dom, PropTypes } = require("devtools/client/shared/vendor/react");
+const { addons, createClass, DOM: dom, PropTypes } = require("devtools/client/shared/vendor/react");
 const { findDOMNode } = require("devtools/client/shared/vendor/react-dom");
 
 // Reps
-const { REPS } = require("devtools/client/shared/components/reps/reps");
-const Rep = createFactory(REPS.Rep);
+const { REPS, MODE } = require("devtools/client/shared/components/reps/reps");
+const { Rep } = REPS;
 const ElementNode = REPS.ElementNode;
 
 const Types = require("../types");
@@ -81,6 +81,8 @@ module.exports = createClass({
       preview: {
         attributes: attributesMap,
         attributesLength: attributes.length,
+        // All the grid containers are assumed to be in the DOM tree.
+        isConnected: true,
         // nodeName is already lowerCased in Node grips
         nodeName: nodeFront.nodeName.toLowerCase(),
         nodeType: nodeFront.nodeType,
@@ -116,10 +118,7 @@ module.exports = createClass({
     let { nodeFront } = grid;
 
     return dom.li(
-      {
-        key: grid.id,
-        className: "grid-item",
-      },
+      {},
       dom.label(
         {},
         dom.input(
@@ -133,10 +132,11 @@ module.exports = createClass({
         Rep(
           {
             defaultRep: ElementNode,
+            mode: MODE.TINY,
             object: this.translateNodeFrontToGrip(nodeFront),
             onDOMNodeMouseOut: () => onHideBoxModelHighlighter(),
             onDOMNodeMouseOver: () => onShowBoxModelHighlighterForNode(nodeFront),
-            onInspectIconClick: () => setSelectedNode(nodeFront),
+            onInspectIconClick: () => setSelectedNode(nodeFront, "layout-panel"),
           }
         )
       ),

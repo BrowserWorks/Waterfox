@@ -43,14 +43,10 @@ add_task(function* () {
   is(cmdSelectAll.getAttribute("disabled"), "true", "cmdSelectAll is disabled");
 
   // Cut/Copy items are enabled in context menu even if there
-  // is no selection. See also Bug 1303033
+  // is no selection. See also Bug 1303033, and 1317322
   is(cmdCut.getAttribute("disabled"), "", "cmdCut is enabled");
   is(cmdCopy.getAttribute("disabled"), "", "cmdCopy is enabled");
-
-  if (isWindows()) {
-    // emptyClipboard only works on Windows (666254), assert paste only for this OS.
-    is(cmdPaste.getAttribute("disabled"), "true", "cmdPaste is disabled");
-  }
+  is(cmdPaste.getAttribute("disabled"), "", "cmdPaste is enabled");
 
   info("Closing context menu");
   let onContextMenuHidden = once(searchContextMenu, "popuphidden");
@@ -58,7 +54,7 @@ add_task(function* () {
   yield onContextMenuHidden;
 
   info("Copy text in search field using the context menu");
-  searchBox.value = TEST_INPUT;
+  searchBox.setUserInput(TEST_INPUT);
   searchBox.select();
   searchBox.focus();
   EventUtils.synthesizeMouse(searchBox, 2, 2,
@@ -79,4 +75,8 @@ add_task(function* () {
   is(cmdCut.getAttribute("disabled"), "", "cmdCut is enabled");
   is(cmdCopy.getAttribute("disabled"), "", "cmdCopy is enabled");
   is(cmdPaste.getAttribute("disabled"), "", "cmdPaste is enabled");
+
+  // We have to wait for search query to avoid test failure.
+  info("Waiting for search query to complete and getting the suggestions");
+  yield inspector.searchSuggestions._lastQuery;
 });

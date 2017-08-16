@@ -26,34 +26,37 @@ public:
   explicit VRDisplayClient(const VRDisplayInfo& aDisplayInfo);
 
   void UpdateDisplayInfo(const VRDisplayInfo& aDisplayInfo);
+  void UpdateSubmitFrameResult(const VRSubmitFrameResultInfo& aResult);
 
   const VRDisplayInfo& GetDisplayInfo() const { return mDisplayInfo; }
   virtual VRHMDSensorState GetSensorState();
-  virtual VRHMDSensorState GetImmediateSensorState();
+  void GetSubmitFrameResult(VRSubmitFrameResultInfo& aResult);
 
   virtual void ZeroSensor();
 
-  already_AddRefed<VRDisplayPresentation> BeginPresentation(const nsTArray<dom::VRLayer>& aLayers);
+  already_AddRefed<VRDisplayPresentation> BeginPresentation(const nsTArray<dom::VRLayer>& aLayers,
+                                                            uint32_t aGroup);
   void PresentationDestroyed();
 
-  void NotifyVsync();
-  void NotifyVRVsync();
-
   bool GetIsConnected() const;
-  bool GetIsPresenting() const;
 
   void NotifyDisconnected();
+  void SetGroupMask(uint32_t aGroupMask);
 
 protected:
   virtual ~VRDisplayClient();
+
+  void FireEvents();
 
   VRDisplayInfo mDisplayInfo;
 
   bool bLastEventWasMounted;
   bool bLastEventWasPresenting;
 
-  TimeStamp mLastVSyncTime;
   int mPresentationCount;
+  uint32_t mLastEventFrameId;
+private:
+  VRSubmitFrameResultInfo mSubmitFrameResult;
 };
 
 } // namespace gfx

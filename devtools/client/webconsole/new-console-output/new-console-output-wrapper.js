@@ -16,7 +16,7 @@ const EventEmitter = require("devtools/shared/event-emitter");
 const ConsoleOutput = React.createFactory(require("devtools/client/webconsole/new-console-output/components/console-output"));
 const FilterBar = React.createFactory(require("devtools/client/webconsole/new-console-output/components/filter-bar"));
 
-const store = configureStore();
+let store = null;
 let queuedActions = [];
 let throttledDispatchTimeout = false;
 
@@ -30,6 +30,8 @@ function NewConsoleOutputWrapper(parentNode, jsterm, toolbox, owner, document) {
   this.document = document;
 
   this.init = this.init.bind(this);
+
+  store = configureStore(this.jsterm.hud);
 }
 
 NewConsoleOutputWrapper.prototype = {
@@ -38,16 +40,42 @@ NewConsoleOutputWrapper.prototype = {
       this.jsterm.hud[id] = node;
     };
 
-    let childComponent = ConsoleOutput({
-      serviceContainer: {
-        attachRefToHud,
-        emitNewMessage: (node, messageId) => {
-          this.jsterm.hud.emit("new-messages", new Set([{
-            node,
-            messageId,
-          }]));
-        },
-        hudProxyClient: this.jsterm.hud.proxy.client,
+    const serviceContainer = {
+      attachRefToHud,
+      emitNewMessage: (node, messageId) => {
+        this.jsterm.hud.emit("new-messages", new Set([{
+          node,
+          messageId,
+        }]));
+      },
+      hudProxyClient: this.jsterm.hud.proxy.client,
+      openContextMenu: (e, message) => {
+        let { screenX, screenY, target } = e;
+
+        let messageEl = target.closest(".message");
+        let clipboardText = messageEl ? messageEl.textContent : null;
+
+        // Retrieve closes actor id from the DOM.
+        let actorEl = target.closest("[data-link-actor-id]");
+        let actor = actorEl ? actorEl.dataset.linkActorId : null;
+
+        let menu = createContextMenu(this.jsterm, this.parentNode,
+          { actor, clipboardText, message });
+
+        // Emit the "menu-open" event for testing.
+        menu.once("open", () => this.emit("menu-open"));
+        menu.popup(screenX, screenY, this.toolbox);
+
+        return menu;
+      },
+      openLink: url => this.jsterm.hud.owner.openLink(url),
+      createElement: nodename => {
+        return this.document.createElementNS("http://www.w3.org/1999/xhtml", nodename);
+      },
+    };
+
+    if (this.toolbox) {
+      Object.assign(serviceContainer, {
         onViewSourceInDebugger: frame => {
           this.toolbox.viewSourceInDebugger(frame.url, frame.line).then(() =>
             this.jsterm.hud.emit("source-in-debugger-opened")
@@ -61,47 +89,42 @@ NewConsoleOutputWrapper.prototype = {
           frame.url,
           frame.line
         ),
-        openContextMenu: (e, message) => {
-          let { screenX, screenY, target } = e;
-
-          let messageEl = target.closest(".message");
-          let clipboardText = messageEl ? messageEl.textContent : null;
-
-          // Retrieve closes actor id from the DOM.
-          let actorEl = target.closest("[data-link-actor-id]");
-          let actor = actorEl ? actorEl.dataset.linkActorId : null;
-
-          let menu = createContextMenu(this.jsterm, this.parentNode,
-            { actor, clipboardText, message });
-
-          // Emit the "menu-open" event for testing.
-          menu.once("open", () => this.emit("menu-open"));
-          menu.popup(screenX, screenY, this.toolbox);
-
-          return menu;
-        },
         openNetworkPanel: (requestId) => {
-          return this.toolbox.selectTool("netmonitor").then(panel => {
-            return panel.panelWin.NetMonitorController.inspectRequest(requestId);
+          return this.toolbox.selectTool("netmonitor").then((panel) => {
+            let { inspectRequest } = panel.panelWin.windowRequire(
+              "devtools/client/netmonitor/src/connector/index");
+            return inspectRequest(requestId);
           });
         },
-        sourceMapService: this.toolbox ? this.toolbox._sourceMapService : null,
-        openLink: url => this.jsterm.hud.owner.openLink(url),
-        createElement: nodename => {
-          return this.document.createElementNS("http://www.w3.org/1999/xhtml", nodename);
-        },
+        sourceMapService: this.toolbox ? this.toolbox.sourceMapURLService : null,
         highlightDomElement: (grip, options = {}) => {
-          return this.toolbox && this.toolbox.highlighterUtils
+          return this.toolbox.highlighterUtils
             ? this.toolbox.highlighterUtils.highlightDomValueGrip(grip, options)
             : null;
         },
         unHighlightDomElement: (forceHide = false) => {
-          return this.toolbox && this.toolbox.highlighterUtils
+          return this.toolbox.highlighterUtils
             ? this.toolbox.highlighterUtils.unhighlight(forceHide)
             : null;
         },
-      }
-    });
+        openNodeInInspector: async (grip) => {
+          let onSelectInspector = this.toolbox.selectTool("inspector");
+          let onGripNodeToFront = this.toolbox.highlighterUtils.gripToNodeFront(grip);
+          let [
+            front,
+            inspector
+          ] = await Promise.all([onGripNodeToFront, onSelectInspector]);
+
+          let onInspectorUpdated = inspector.once("inspector-updated");
+          let onNodeFrontSet = this.toolbox.selection.setNodeFront(front, "console");
+
+          return Promise.all([onNodeFrontSet, onInspectorUpdated]);
+        }
+      });
+    }
+
+    let childComponent = ConsoleOutput({serviceContainer});
+
     let filterBar = FilterBar({
       serviceContainer: {
         attachRefToHud
@@ -161,11 +184,12 @@ NewConsoleOutputWrapper.prototype = {
   },
 
   dispatchMessageUpdate: function (message, res) {
-    batchedMessageAdd(actions.networkMessageUpdate(message));
-
-    // network-message-updated will emit when eventTimings message arrives
-    // which is the last one of 8 updates happening on network message update.
-    if (res.packet.updateType === "eventTimings") {
+    // network-message-updated will emit when all the update message arrives.
+    // Since we can't ensure the order of the network update, we check
+    // that networkInfo.updates has all we need.
+    const NUMBER_OF_NETWORK_UPDATE = 8;
+    if (res.networkInfo.updates.length === NUMBER_OF_NETWORK_UPDATE) {
+      batchedMessageAdd(actions.networkMessageUpdate(message));
       this.jsterm.hud.emit("network-message-updated", res);
     }
   },

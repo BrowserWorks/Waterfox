@@ -6,10 +6,11 @@
 
 "use strict";
 
-const promise = require("promise");
 const {Task} = require("devtools/shared/task");
 const EventEmitter = require("devtools/shared/event-emitter");
 const { VIEW_NODE_VALUE_TYPE } = require("devtools/client/inspector/shared/node-types");
+
+const DEFAULT_GRID_COLOR = "#4B0082";
 
 /**
  * Highlighters overlay is a singleton managing all highlighters in the Inspector.
@@ -33,11 +34,24 @@ function HighlightersOverlay(inspector) {
   this.hoveredHighlighterShown = null;
   // Name of the selector highlighter shown.
   this.selectorHighlighterShown = null;
+  // Saved state to be restore on page navigation.
+  this.state = {
+    // Only the grid highlighter state is saved at the moment.
+    grid: {}
+  };
 
   this.onClick = this.onClick.bind(this);
+  this.onMarkupMutation = this.onMarkupMutation.bind(this);
   this.onMouseMove = this.onMouseMove.bind(this);
   this.onMouseOut = this.onMouseOut.bind(this);
   this.onWillNavigate = this.onWillNavigate.bind(this);
+  this.onNavigate = this.onNavigate.bind(this);
+  this._handleRejection = this._handleRejection.bind(this);
+
+  // Add inspector events, not specific to a given view.
+  this.inspector.on("markupmutation", this.onMarkupMutation);
+  this.inspector.target.on("navigate", this.onNavigate);
+  this.inspector.target.on("will-navigate", this.onWillNavigate);
 
   EventEmitter.decorate(this);
 }
@@ -65,8 +79,6 @@ HighlightersOverlay.prototype = {
     el.addEventListener("mousemove", this.onMouseMove);
     el.addEventListener("mouseout", this.onMouseOut);
     el.ownerDocument.defaultView.addEventListener("mouseout", this.onMouseOut);
-
-    this.inspector.target.on("will-navigate", this.onWillNavigate);
   },
 
   /**
@@ -86,8 +98,6 @@ HighlightersOverlay.prototype = {
     el.removeEventListener("click", this.onClick, true);
     el.removeEventListener("mousemove", this.onMouseMove);
     el.removeEventListener("mouseout", this.onMouseOut);
-
-    this.inspector.target.off("will-navigate", this.onWillNavigate);
   },
 
   /**
@@ -128,10 +138,19 @@ HighlightersOverlay.prototype = {
 
     this._toggleRuleViewGridIcon(node, true);
 
-    // Emit the NodeFront of the grid container element that the grid highlighter was
-    // shown for.
-    this.emit("grid-highlighter-shown", node);
-    this.gridHighlighterShown = node;
+    try {
+      // Save grid highlighter state.
+      let { url } = this.inspector.target;
+      let selector = yield node.getUniqueSelector();
+      this.state.grid = { selector, options, url };
+
+      this.gridHighlighterShown = node;
+      // Emit the NodeFront of the grid container element that the grid highlighter was
+      // shown for.
+      this.emit("grid-highlighter-shown", node, options);
+    } catch (e) {
+      this._handleRejection(e);
+    }
   }),
 
   /**
@@ -151,8 +170,12 @@ HighlightersOverlay.prototype = {
 
     // Emit the NodeFront of the grid container element that the grid highlighter was
     // hidden for.
-    this.emit("grid-highlighter-hidden", this.gridHighlighterShown);
+    this.emit("grid-highlighter-hidden", this.gridHighlighterShown,
+      this.state.grid.options);
     this.gridHighlighterShown = null;
+
+    // Erase grid highlighter state.
+    this.state.grid = {};
   }),
 
   /**
@@ -207,23 +230,69 @@ HighlightersOverlay.prototype = {
   }),
 
   /**
+   * Restore the saved highlighter states.
+   *
+   * @return {Promise} that resolves when the highlighter state was restored, and the
+   *          expected highlighters are displayed.
+   */
+  restoreState: Task.async(function* () {
+    let { selector, options, url } = this.state.grid;
+
+    if (!selector || url !== this.inspector.target.url) {
+      // Bail out if no selector was saved, or if we are on a different page.
+      this.emit("state-restored", { restored: false });
+      return;
+    }
+
+    // Wait for the new root to be ready in the inspector.
+    yield this.onInspectorNewRoot;
+
+    let walker = this.inspector.walker;
+    let rootNode = yield walker.getRootNode();
+    let nodeFront = yield walker.querySelector(rootNode, selector);
+
+    if (nodeFront) {
+      yield this.showGridHighlighter(nodeFront, options);
+      this.emit("state-restored", { restored: true });
+    }
+
+    this.emit("state-restored", { restored: false });
+  }),
+
+  /**
    * Get a highlighter front given a type. It will only be initialized once.
    *
    * @param  {String} type
    *         The highlighter type. One of this.highlighters.
    * @return {Promise} that resolves to the highlighter
    */
-  _getHighlighter: function (type) {
+  _getHighlighter: Task.async(function* (type) {
     let utils = this.highlighterUtils;
 
     if (this.highlighters[type]) {
-      return promise.resolve(this.highlighters[type]);
+      return this.highlighters[type];
     }
 
-    return utils.getHighlighterByType(type).then(highlighter => {
-      this.highlighters[type] = highlighter;
-      return highlighter;
-    });
+    let highlighter;
+
+    try {
+      highlighter = yield utils.getHighlighterByType(type);
+    } catch (e) {
+      // Ignore any error
+    }
+
+    if (!highlighter) {
+      return null;
+    }
+
+    this.highlighters[type] = highlighter;
+    return highlighter;
+  }),
+
+  _handleRejection: function (error) {
+    if (!this.destroyed) {
+      console.error(error);
+    }
   },
 
   /**
@@ -240,7 +309,7 @@ HighlightersOverlay.prototype = {
       return;
     }
 
-    let ruleViewEl = this.inspector.ruleview.view.element;
+    let ruleViewEl = this.inspector.getPanel("ruleview").view.element;
 
     for (let gridIcon of ruleViewEl.querySelectorAll(".ruleview-grid")) {
       gridIcon.classList.toggle("active", active);
@@ -315,7 +384,14 @@ HighlightersOverlay.prototype = {
     }
 
     event.stopPropagation();
-    this.toggleGridHighlighter(this.inspector.selection.nodeFront);
+
+    let { store } = this.inspector;
+    let { grids, highlighterSettings } = store.getState();
+    let grid = grids.find(g => g.nodeFront == this.inspector.selection.nodeFront);
+
+    highlighterSettings.color = grid ? grid.color : DEFAULT_GRID_COLOR;
+
+    this.toggleGridHighlighter(this.inspector.selection.nodeFront, highlighterSettings);
   },
 
   onMouseMove: function (event) {
@@ -330,7 +406,8 @@ HighlightersOverlay.prototype = {
     this._lastHovered = event.target;
 
     let view = this.isRuleView ?
-      this.inspector.ruleview.view : this.inspector.computedview.computedView;
+      this.inspector.getPanel("ruleview").view :
+      this.inspector.getPanel("computedview").computedView;
     let nodeInfo = view.getNodeInfo(event.target);
     if (!nodeInfo) {
       return;
@@ -369,6 +446,41 @@ HighlightersOverlay.prototype = {
   },
 
   /**
+   * Handler function for "markupmutation" events. Hides the grid highlighter if the grid
+   * container is no longer in the DOM tree.
+   */
+  onMarkupMutation: Task.async(function* (evt, mutations) {
+    let hasInterestingMutation = mutations.some(mut => mut.type === "childList");
+    if (!hasInterestingMutation || !this.gridHighlighterShown) {
+      // Bail out if the mutations did not remove nodes, or if no grid highlighter is
+      // displayed.
+      return;
+    }
+
+    let nodeFront = this.gridHighlighterShown;
+
+    try {
+      let isInTree = yield this.inspector.walker.isInDOMTree(nodeFront);
+      if (!isInTree) {
+        this.hideGridHighlighter(nodeFront);
+      }
+    } catch (e) {
+      console.error(e);
+    }
+  }),
+
+  /**
+   * Restore saved highlighter state after navigate.
+   */
+  onNavigate: Task.async(function* () {
+    try {
+      yield this.restoreState();
+    } catch (e) {
+      this._handleRejection(e);
+    }
+  }),
+
+  /**
    * Clear saved highlighter shown properties on will-navigate.
    */
   onWillNavigate: function () {
@@ -376,6 +488,9 @@ HighlightersOverlay.prototype = {
     this.gridHighlighterShown = null;
     this.hoveredHighlighterShown = null;
     this.selectorHighlighterShown = null;
+
+    // The inspector panel should emit the new-root event when it is ready after navigate.
+    this.onInspectorNewRoot = this.inspector.once("new-root");
   },
 
   /**
@@ -390,6 +505,11 @@ HighlightersOverlay.prototype = {
       }
     }
 
+    // Remove inspector events.
+    this.inspector.off("markupmutation", this.onMarkupMutation);
+    this.inspector.target.off("navigate", this.onNavigate);
+    this.inspector.target.off("will-navigate", this.onWillNavigate);
+
     this._lastHovered = null;
 
     this.inspector = null;
@@ -401,6 +521,8 @@ HighlightersOverlay.prototype = {
     this.gridHighlighterShown = null;
     this.hoveredHighlighterShown = null;
     this.selectorHighlighterShown = null;
+
+    this.destroyed = true;
   }
 };
 

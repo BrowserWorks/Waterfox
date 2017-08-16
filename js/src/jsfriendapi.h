@@ -96,6 +96,22 @@ JS_PCToLineNumber(JSScript* script, jsbytecode* pc, unsigned* columnp = nullptr)
 extern JS_FRIEND_API(bool)
 JS_IsDeadWrapper(JSObject* obj);
 
+/**
+ * Creates a new dead wrapper object in the given scope. To be used when
+ * attempting to wrap objects from scopes which are already dead.
+ *
+ * If origObject is passed, it must be an proxy object, and will be
+ * used to determine the characteristics of the new dead wrapper.
+ */
+extern JS_FRIEND_API(JSObject*)
+JS_NewDeadWrapper(JSContext* cx, JSObject* origObject = nullptr);
+
+/**
+ * Determine whether the given object is a ScriptSourceObject.
+ */
+extern JS_FRIEND_API(bool)
+JS_IsScriptSourceObject(JSObject* obj);
+
 /*
  * Used by the cycle collector to trace through a shape or object group and
  * all cycle-participating data it reaches, using bounded stack space.
@@ -112,6 +128,7 @@ enum {
     JS_TELEMETRY_GC_BUDGET_MS,
     JS_TELEMETRY_GC_ANIMATION_MS,
     JS_TELEMETRY_GC_MAX_PAUSE_MS,
+    JS_TELEMETRY_GC_MAX_PAUSE_MS_2,
     JS_TELEMETRY_GC_MARK_MS,
     JS_TELEMETRY_GC_SWEEP_MS,
     JS_TELEMETRY_GC_COMPACT_MS,
@@ -119,6 +136,7 @@ enum {
     JS_TELEMETRY_GC_MARK_GRAY_MS,
     JS_TELEMETRY_GC_SLICE_MS,
     JS_TELEMETRY_GC_SLOW_PHASE,
+    JS_TELEMETRY_GC_SLOW_TASK,
     JS_TELEMETRY_GC_MMU_50,
     JS_TELEMETRY_GC_RESET,
     JS_TELEMETRY_GC_RESET_REASON,
@@ -136,6 +154,8 @@ enum {
     JS_TELEMETRY_DEPRECATED_LANGUAGE_EXTENSIONS_IN_ADDONS,
     JS_TELEMETRY_ADDON_EXCEPTIONS,
     JS_TELEMETRY_AOT_USAGE,
+    JS_TELEMETRY_PRIVILEGED_PARSER_COMPILE_LAZY_AFTER_MS,
+    JS_TELEMETRY_WEB_PARSER_COMPILE_LAZY_AFTER_MS,
     JS_TELEMETRY_END
 };
 
@@ -265,8 +285,9 @@ DumpBacktrace(JSContext* cx);
 namespace JS {
 
 /** Exposed for DumpJSStack */
-extern JS_FRIEND_API(char*)
-FormatStackDump(JSContext* cx, char* buf, bool showArgs, bool showLocals, bool showThisProps);
+extern JS_FRIEND_API(JS::UniqueChars)
+FormatStackDump(JSContext* cx, JS::UniqueChars&& buf, bool showArgs, bool showLocals,
+                bool showThisProps);
 
 /**
  * Set all of the uninitialized lexicals on an object to undefined. Return
@@ -340,38 +361,6 @@ JS_DefineFunctionsWithHelp(JSContext* cx, JS::HandleObject obj, const JSFunction
 
 namespace js {
 
-extern JS_FRIEND_DATA(const js::ClassOps) ProxyClassOps;
-extern JS_FRIEND_DATA(const js::ClassExtension) ProxyClassExtension;
-extern JS_FRIEND_DATA(const js::ObjectOps) ProxyObjectOps;
-
-/*
- * Helper Macros for creating JSClasses that function as proxies.
- *
- * NB: The macro invocation must be surrounded by braces, so as to
- *     allow for potential JSClass extensions.
- */
-#define PROXY_MAKE_EXT(objectMoved)                                     \
-    {                                                                   \
-        js::proxy_WeakmapKeyDelegate,                                   \
-        objectMoved                                                     \
-    }
-
-#define PROXY_CLASS_WITH_EXT(name, flags, extPtr)                                       \
-    {                                                                                   \
-        name,                                                                           \
-        js::Class::NON_NATIVE |                                                         \
-            JSCLASS_IS_PROXY |                                                          \
-            JSCLASS_DELAY_METADATA_BUILDER |                                            \
-            flags,                                                                      \
-        &js::ProxyClassOps,                                                             \
-        JS_NULL_CLASS_SPEC,                                                             \
-        extPtr,                                                                         \
-        &js::ProxyObjectOps                                                             \
-    }
-
-#define PROXY_CLASS_DEF(name, flags) \
-  PROXY_CLASS_WITH_EXT(name, flags, &js::ProxyClassExtension)
-
 extern JS_FRIEND_API(JSObject*)
 proxy_WeakmapKeyDelegate(JSObject* obj);
 
@@ -411,6 +400,33 @@ SetSourceHook(JSContext* cx, mozilla::UniquePtr<SourceHook> hook);
 extern JS_FRIEND_API(mozilla::UniquePtr<SourceHook>)
 ForgetSourceHook(JSContext* cx);
 
+/**
+ * Use the runtime's internal handling of job queues for Promise jobs.
+ *
+ * Most embeddings, notably web browsers, will have their own task scheduling
+ * systems and need to integrate handling of Promise jobs into that, so they
+ * will want to manage job queues themselves. For basic embeddings such as the
+ * JS shell that don't have an event loop of their own, it's easier to have
+ * SpiderMonkey handle job queues internally.
+ *
+ * Note that the embedding still has to trigger processing of job queues at
+ * right time(s), such as after evaluation of a script has run to completion.
+ */
+extern JS_FRIEND_API(bool)
+UseInternalJobQueues(JSContext* cx);
+
+/**
+ * Instruct the runtime to stop draining the internal job queue.
+ *
+ * Useful if the embedding is in the process of quitting in reaction to a
+ * builtin being called, or if it wants to resume executing jobs later on.
+ */
+extern JS_FRIEND_API(void)
+StopDrainingJobQueue(JSContext* cx);
+
+extern JS_FRIEND_API(void)
+RunJobs(JSContext* cx);
+
 extern JS_FRIEND_API(JS::Zone*)
 GetCompartmentZone(JSCompartment* comp);
 
@@ -448,9 +464,9 @@ IsAtomsZone(JS::Zone* zone);
 
 struct WeakMapTracer
 {
-    JSContext* context;
+    JSRuntime* runtime;
 
-    explicit WeakMapTracer(JSContext* cx) : context(cx) {}
+    explicit WeakMapTracer(JSRuntime* rt) : runtime(rt) {}
 
     // Weak map tracer callback, called once for every binding of every
     // weak map that was live at the time of the last garbage collection.
@@ -465,10 +481,13 @@ extern JS_FRIEND_API(void)
 TraceWeakMaps(WeakMapTracer* trc);
 
 extern JS_FRIEND_API(bool)
-AreGCGrayBitsValid(JSContext* cx);
+AreGCGrayBitsValid(JSRuntime* rt);
 
 extern JS_FRIEND_API(bool)
 ZoneGlobalsAreAllGray(JS::Zone* zone);
+
+extern JS_FRIEND_API(bool)
+IsObjectZoneSweepingOrCompacting(JSObject* obj);
 
 typedef void
 (*GCThingCallback)(void* closure, JS::GCCellPtr thing);
@@ -491,6 +510,16 @@ IterateGrayObjects(JS::Zone* zone, GCThingCallback cellCallback, void* data);
  */
 extern JS_FRIEND_API(void)
 IterateGrayObjectsUnderCC(JS::Zone* zone, GCThingCallback cellCallback, void* data);
+
+#ifdef DEBUG
+// Trace the heap and check there are no black to gray edges. These are
+// not allowed since the cycle collector could throw away the gray thing and
+// leave a dangling pointer.
+//
+// This doesn't trace weak maps as these are handled separately.
+extern JS_FRIEND_API(bool)
+CheckGrayMarkingState(JSRuntime* rt);
+#endif
 
 #ifdef JS_HAS_CTYPES
 extern JS_FRIEND_API(size_t)
@@ -538,6 +567,8 @@ struct Object {
     shadow::Shape*      shape;
     JS::Value*          slots;
     void*               _1;
+
+    static const size_t MAX_FIXED_SLOTS = 16;
 
     size_t numFixedSlots() const { return shape->slotInfo >> Shape::FIXED_SLOTS_SHIFT; }
     JS::Value* fixedSlots() const {
@@ -641,6 +672,9 @@ GetPrototypeNoProxy(JSObject* obj);
 JS_FRIEND_API(void)
 AssertSameCompartment(JSContext* cx, JSObject* obj);
 
+JS_FRIEND_API(void)
+AssertSameCompartment(JSContext* cx, JS::HandleValue v);
+
 #ifdef JS_DEBUG
 JS_FRIEND_API(void)
 AssertSameCompartment(JSObject* objA, JSObject* objB);
@@ -650,18 +684,6 @@ inline void AssertSameCompartment(JSObject* objA, JSObject* objB) {}
 
 JS_FRIEND_API(void)
 NotifyAnimationActivity(JSObject* obj);
-
-/**
- * Return the outermost enclosing function (script) of the scripted caller.
- * This function returns nullptr in several cases:
- *  - no script is running on the context
- *  - the caller is in global or eval code
- * In particular, this function will "stop" its outermost search at eval() and
- * thus it will really return the outermost enclosing function *since the
- * innermost eval*.
- */
-JS_FRIEND_API(JSFunction*)
-GetOutermostEnclosingFunctionOfScriptedCaller(JSContext* cx);
 
 JS_FRIEND_API(JSFunction*)
 DefineFunctionWithReserved(JSContext* cx, JSObject* obj, const char* name, JSNative call,
@@ -703,6 +725,11 @@ GetObjectPrivate(JSObject* obj)
     return *addr;
 }
 
+/**
+ * Get the value stored in an object's reserved slot. This can be used with
+ * both native objects and proxies, but if |obj| is known to be a proxy
+ * GetProxyReservedSlot is a bit more efficient.
+ */
 inline const JS::Value&
 GetReservedSlot(JSObject* obj, size_t slot)
 {
@@ -711,15 +738,20 @@ GetReservedSlot(JSObject* obj, size_t slot)
 }
 
 JS_FRIEND_API(void)
-SetReservedOrProxyPrivateSlotWithBarrier(JSObject* obj, size_t slot, const JS::Value& value);
+SetReservedSlotWithBarrier(JSObject* obj, size_t slot, const JS::Value& value);
 
+/**
+ * Store a value in an object's reserved slot. This can be used with
+ * both native objects and proxies, but if |obj| is known to be a proxy
+ * SetProxyReservedSlot is a bit more efficient.
+ */
 inline void
 SetReservedSlot(JSObject* obj, size_t slot, const JS::Value& value)
 {
     MOZ_ASSERT(slot < JSCLASS_RESERVED_SLOTS(GetObjectClass(obj)));
     shadow::Object* sobj = reinterpret_cast<shadow::Object*>(obj);
     if (sobj->slotRef(slot).isGCThing() || value.isGCThing())
-        SetReservedOrProxyPrivateSlotWithBarrier(obj, slot, value);
+        SetReservedSlotWithBarrier(obj, slot, value);
     else
         sobj->slotRef(slot) = value;
 }
@@ -960,6 +992,7 @@ IsObjectInContextCompartment(JSObject* obj, const JSContext* cx);
 #define JSITER_HIDDEN     0x10  /* also enumerate non-enumerable properties */
 #define JSITER_SYMBOLS    0x20  /* also include symbol property keys */
 #define JSITER_SYMBOLSONLY 0x40 /* exclude string property keys */
+#define JSITER_FORAWAITOF 0x80  /* for-await-of */
 
 JS_FRIEND_API(bool)
 RunningWithTrustedPrincipals(JSContext* cx);
@@ -1148,9 +1181,9 @@ extern JS_FRIEND_API(unsigned)
 GetEnterCompartmentDepth(JSContext* cx);
 #endif
 
-class RegExpGuard;
 extern JS_FRIEND_API(bool)
-RegExpToSharedNonInline(JSContext* cx, JS::HandleObject regexp, RegExpGuard* shared);
+RegExpToSharedNonInline(JSContext* cx, JS::HandleObject regexp,
+                        JS::MutableHandle<RegExpShared*> shared);
 
 /* Implemented in CrossCompartmentWrapper.cpp. */
 typedef enum NukeReferencesToWindow {
@@ -1204,7 +1237,7 @@ struct CompartmentsWithPrincipals : public CompartmentFilter {
 extern JS_FRIEND_API(bool)
 NukeCrossCompartmentWrappers(JSContext* cx,
                              const CompartmentFilter& sourceFilter,
-                             const CompartmentFilter& targetFilter,
+                             JSCompartment* target,
                              NukeReferencesToWindow nukeReferencesToWindow,
                              NukeReferencesFromTarget nukeReferencesFromTarget);
 
@@ -1269,11 +1302,10 @@ typedef enum DOMProxyShadowsResult {
 typedef DOMProxyShadowsResult
 (* DOMProxyShadowsCheck)(JSContext* cx, JS::HandleObject object, JS::HandleId id);
 JS_FRIEND_API(void)
-SetDOMProxyInformation(const void* domProxyHandlerFamily, uint32_t domProxyExpandoSlot,
+SetDOMProxyInformation(const void* domProxyHandlerFamily,
                        DOMProxyShadowsCheck domProxyShadowsCheck);
 
 const void* GetDOMProxyHandlerFamily();
-uint32_t GetDOMProxyExpandoSlot();
 DOMProxyShadowsCheck GetDOMProxyShadowsCheck();
 inline bool DOMProxyIsShadowing(DOMProxyShadowsResult result) {
     return result == Shadows ||
@@ -1323,7 +1355,7 @@ GetErrorMessage(void* userRef, const unsigned errorNumber);
  * JSString methods and often the code can be rewritten so that only indexes
  * instead of char pointers are used in parts of the code that can GC.
  */
-class MOZ_STACK_CLASS AutoStableStringChars
+class MOZ_STACK_CLASS JS_FRIEND_API(AutoStableStringChars)
 {
     /*
      * When copying string char, use this many bytes of inline storage.  This is
@@ -1456,8 +1488,8 @@ struct MOZ_STACK_CLASS JS_FRIEND_API(ErrorReport)
     bool populateUncaughtExceptionReportUTF8(JSContext* cx, ...);
     bool populateUncaughtExceptionReportUTF8VA(JSContext* cx, va_list ap);
 
-    // Reports exceptions from add-on scopes to telementry.
-    void ReportAddonExceptionToTelementry(JSContext* cx);
+    // Reports exceptions from add-on scopes to telemetry.
+    void ReportAddonExceptionToTelemetry(JSContext* cx);
 
     // We may have a provided JSErrorReport, so need a way to represent that.
     JSErrorReport* reportp;
@@ -2300,6 +2332,7 @@ struct JSJitInfo {
         Method,
         StaticMethod,
         InlinableNative,
+        IgnoresReturnValueNative,
         // Must be last
         OpTypeCount
     };
@@ -2391,7 +2424,12 @@ struct JSJitInfo {
         JSJitMethodOp method;
         /** A DOM static method, used for Promise wrappers */
         JSNative staticMethod;
+        JSNative ignoresReturnValueMethod;
     };
+
+    static unsigned offsetOfIgnoresReturnValueNative() {
+        return offsetof(JSJitInfo, ignoresReturnValueMethod);
+    }
 
     union {
         uint16_t protoID;
@@ -2570,6 +2608,7 @@ JSID_FROM_BITS(size_t bits)
 namespace js {
 namespace detail {
 bool IdMatchesAtom(jsid id, JSAtom* atom);
+bool IdMatchesAtom(jsid id, JSString* atom);
 } // namespace detail
 } // namespace js
 
@@ -2596,6 +2635,15 @@ bool IdMatchesAtom(jsid id, JSAtom* atom);
  */
 static MOZ_ALWAYS_INLINE jsid
 NON_INTEGER_ATOM_TO_JSID(JSAtom* atom)
+{
+    MOZ_ASSERT(((size_t)atom & 0x7) == 0);
+    jsid id = JSID_FROM_BITS((size_t)atom);
+    MOZ_ASSERT(js::detail::IdMatchesAtom(id, atom));
+    return id;
+}
+
+static MOZ_ALWAYS_INLINE jsid
+NON_INTEGER_ATOM_TO_JSID(JSString* atom)
 {
     MOZ_ASSERT(((size_t)atom & 0x7) == 0);
     jsid id = JSID_FROM_BITS((size_t)atom);
@@ -2809,14 +2857,6 @@ SetJitExceptionHandler(JitExceptionHandler handler);
 #endif
 
 /**
- * Get the nearest enclosing with environment object for a given function. If
- * the function is not scripted or is not enclosed by a with scope, returns
- * the global.
- */
-extern JS_FRIEND_API(JSObject*)
-GetNearestEnclosingWithEnvironmentObjectForFunction(JSFunction* fun);
-
-/**
  * Get the first SavedFrame object in this SavedFrame stack whose principals are
  * subsumed by the cx's principals. If there is no such frame, return nullptr.
  *
@@ -2868,6 +2908,9 @@ namespace detail {
 JS_FRIEND_API(bool)
 IsWindowSlow(JSObject* obj);
 
+JS_FRIEND_API(JSObject*)
+ToWindowProxyIfWindowSlow(JSObject* obj);
+
 } // namespace detail
 
 /**
@@ -2893,8 +2936,13 @@ IsWindowProxy(JSObject* obj);
  * wrapper if the page was navigated away from), else return `obj`. This
  * function is infallible and never returns nullptr.
  */
-extern JS_FRIEND_API(JSObject*)
-ToWindowProxyIfWindow(JSObject* obj);
+MOZ_ALWAYS_INLINE JSObject*
+ToWindowProxyIfWindow(JSObject* obj)
+{
+    if (GetObjectClass(obj)->flags & JSCLASS_IS_GLOBAL)
+        return detail::ToWindowProxyIfWindowSlow(obj);
+    return obj;
+}
 
 /**
  * If `obj` is a WindowProxy, get its associated Window (the compartment's
@@ -2950,6 +2998,20 @@ EnableAccessValidation(JSContext* cx, bool enabled);
 extern JS_FRIEND_API(void)
 SetCompartmentValidAccessPtr(JSContext* cx, JS::HandleObject global, bool* accessp);
 
+// If the JS engine wants to block so that other cooperative threads can run, it
+// will call the yield callback. It may do this if it needs to access a ZoneGroup
+// that is held by another thread (such as the system zone group).
+typedef void
+(* YieldCallback)(JSContext* cx);
+
+extern JS_FRIEND_API(void)
+SetCooperativeYieldCallback(JSContext* cx, YieldCallback callback);
+
+// Returns true if the system zone is available (i.e., if no cooperative contexts
+// are using it now).
+extern JS_FRIEND_API(bool)
+SystemZoneAvailable(JSContext* cx);
+
 } /* namespace js */
 
 class NativeProfiler
@@ -2978,7 +3040,7 @@ class GCHeapProfiler
 class MemProfiler
 {
     static mozilla::Atomic<uint32_t, mozilla::Relaxed> sActiveProfilerCount;
-    static NativeProfiler* sNativeProfiler;
+    static JS_FRIEND_DATA(NativeProfiler*) sNativeProfiler;
 
     static GCHeapProfiler* GetGCHeapProfiler(void* addr);
     static GCHeapProfiler* GetGCHeapProfiler(JSRuntime* runtime);
@@ -2993,8 +3055,8 @@ class MemProfiler
   public:
     explicit MemProfiler(JSRuntime* aRuntime) : mGCHeapProfiler(nullptr), mRuntime(aRuntime) {}
 
-    void start(GCHeapProfiler* aGCHeapProfiler);
-    void stop();
+    JS_FRIEND_API(void) start(GCHeapProfiler* aGCHeapProfiler);
+    JS_FRIEND_API(void) stop();
 
     GCHeapProfiler* getGCHeapProfiler() const {
         return mGCHeapProfiler;
@@ -3004,7 +3066,7 @@ class MemProfiler
         return sActiveProfilerCount > 0;
     }
 
-    static MemProfiler* GetMemProfiler(JSContext* context);
+    static JS_FRIEND_API(MemProfiler*) GetMemProfiler(JSContext* context);
 
     static void SetNativeProfiler(NativeProfiler* aProfiler) {
         sNativeProfiler = aProfiler;

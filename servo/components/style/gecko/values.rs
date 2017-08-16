@@ -7,16 +7,22 @@
 //! Different kind of helpers to interact with Gecko values.
 
 use app_units::Au;
+use counter_style::Symbol;
 use cssparser::RGBA;
-use gecko_bindings::structs::{nsStyleCoord, StyleGridTrackBreadth, StyleShapeRadius};
+use gecko_bindings::structs::{CounterStylePtr, nsStyleCoord};
+use gecko_bindings::structs::{StyleGridTrackBreadth, StyleShapeRadius};
 use gecko_bindings::sugar::ns_style_coord::{CoordData, CoordDataMut, CoordDataValue};
+use nsstring::{nsACString, nsCString};
 use std::cmp::max;
 use values::{Auto, Either, ExtremumLength, None_, Normal};
-use values::computed::{Angle, LengthOrPercentageOrNone, Number};
-use values::computed::{LengthOrPercentage, LengthOrPercentageOrAuto};
-use values::computed::{MaxLength, MinLength};
-use values::computed::basic_shape::ShapeRadius;
-use values::specified::grid::{TrackBreadth, TrackKeyword};
+use values::computed::{Angle, LengthOrPercentage, LengthOrPercentageOrAuto};
+use values::computed::{LengthOrPercentageOrNone, Number, NumberOrPercentage};
+use values::computed::{MaxLength, MozLength};
+use values::computed::basic_shape::ShapeRadius as ComputedShapeRadius;
+use values::generics::CounterStyleOrNone;
+use values::generics::basic_shape::ShapeRadius;
+use values::generics::grid::{TrackBreadth, TrackKeyword};
+use values::specified::Percentage;
 
 /// A trait that defines an interface to convert from and to `nsStyleCoord`s.
 pub trait GeckoStyleCoordConvertible : Sized {
@@ -57,6 +63,38 @@ impl GeckoStyleCoordConvertible for Number {
     fn from_gecko_style_coord<T: CoordData>(coord: &T) -> Option<Self> {
         match coord.as_value() {
             CoordDataValue::Factor(f) => Some(f),
+            _ => None,
+        }
+    }
+}
+
+impl GeckoStyleCoordConvertible for Percentage {
+    fn to_gecko_style_coord<T: CoordDataMut>(&self, coord: &mut T) {
+        coord.set_value(CoordDataValue::Percent(self.0));
+    }
+
+    fn from_gecko_style_coord<T: CoordData>(coord: &T) -> Option<Self> {
+        match coord.as_value() {
+            CoordDataValue::Percent(p) => Some(Percentage(p)),
+            _ => None,
+        }
+    }
+}
+
+impl GeckoStyleCoordConvertible for NumberOrPercentage {
+    fn to_gecko_style_coord<T: CoordDataMut>(&self, coord: &mut T) {
+        match *self {
+            NumberOrPercentage::Number(ref n) => n.to_gecko_style_coord(coord),
+            NumberOrPercentage::Percentage(ref p) => p.to_gecko_style_coord(coord),
+        }
+    }
+
+    fn from_gecko_style_coord<T: CoordData>(coord: &T) -> Option<Self> {
+        match coord.as_value() {
+            CoordDataValue::Factor(f) => Some(NumberOrPercentage::Number(f)),
+            CoordDataValue::Percent(p) => {
+                Some(NumberOrPercentage::Percentage(Percentage(p)))
+            },
             _ => None,
         }
     }
@@ -172,15 +210,13 @@ impl<L: GeckoStyleCoordConvertible> GeckoStyleCoordConvertible for TrackBreadth<
     }
 }
 
-impl GeckoStyleCoordConvertible for ShapeRadius {
+impl GeckoStyleCoordConvertible for ComputedShapeRadius {
     fn to_gecko_style_coord<T: CoordDataMut>(&self, coord: &mut T) {
         match *self {
-            ShapeRadius::ClosestSide => {
-                coord.set_value(CoordDataValue::Enumerated(StyleShapeRadius::ClosestSide as u32))
-            }
-            ShapeRadius::FarthestSide => {
-                coord.set_value(CoordDataValue::Enumerated(StyleShapeRadius::FarthestSide as u32))
-            }
+            ShapeRadius::ClosestSide =>
+                coord.set_value(CoordDataValue::Enumerated(StyleShapeRadius::ClosestSide as u32)),
+            ShapeRadius::FarthestSide =>
+                coord.set_value(CoordDataValue::Enumerated(StyleShapeRadius::FarthestSide as u32)),
             ShapeRadius::Length(lop) => lop.to_gecko_style_coord(coord),
         }
     }
@@ -217,15 +253,16 @@ impl<T: GeckoStyleCoordConvertible> GeckoStyleCoordConvertible for Option<T> {
 
 impl GeckoStyleCoordConvertible for Angle {
     fn to_gecko_style_coord<T: CoordDataMut>(&self, coord: &mut T) {
-        coord.set_value(CoordDataValue::Radian(self.radians()))
+        coord.set_value(CoordDataValue::from(*self));
     }
 
     fn from_gecko_style_coord<T: CoordData>(coord: &T) -> Option<Self> {
-        if let CoordDataValue::Radian(r) = coord.as_value() {
-            Some(Angle::from_radians(r))
-            // XXXManishearth should this handle Degree too?
-        } else {
-            None
+        match coord.as_value() {
+            CoordDataValue::Degree(val) => Some(Angle::Degree(val)),
+            CoordDataValue::Grad(val) => Some(Angle::Gradian(val)),
+            CoordDataValue::Radian(val) => Some(Angle::Radian(val)),
+            CoordDataValue::Turn(val) => Some(Angle::Turn(val)),
+            _ => None,
         }
     }
 }
@@ -302,41 +339,31 @@ impl GeckoStyleCoordConvertible for ExtremumLength {
     }
 }
 
-impl GeckoStyleCoordConvertible for MinLength {
+impl GeckoStyleCoordConvertible for MozLength {
     fn to_gecko_style_coord<T: CoordDataMut>(&self, coord: &mut T) {
         match *self {
-            MinLength::LengthOrPercentage(ref lop) => lop.to_gecko_style_coord(coord),
-            MinLength::Auto => coord.set_value(CoordDataValue::Auto),
-            MinLength::ExtremumLength(ref e) => e.to_gecko_style_coord(coord),
+            MozLength::LengthOrPercentageOrAuto(ref lopoa) => lopoa.to_gecko_style_coord(coord),
+            MozLength::ExtremumLength(ref e) => e.to_gecko_style_coord(coord),
         }
     }
 
     fn from_gecko_style_coord<T: CoordData>(coord: &T) -> Option<Self> {
-        LengthOrPercentage::from_gecko_style_coord(coord).map(MinLength::LengthOrPercentage)
-            .or_else(|| ExtremumLength::from_gecko_style_coord(coord).map(MinLength::ExtremumLength))
-            .or_else(|| match coord.as_value() {
-                CoordDataValue::Auto => Some(MinLength::Auto),
-                _ => None,
-            })
+        LengthOrPercentageOrAuto::from_gecko_style_coord(coord).map(MozLength::LengthOrPercentageOrAuto)
+            .or_else(|| ExtremumLength::from_gecko_style_coord(coord).map(MozLength::ExtremumLength))
     }
 }
 
 impl GeckoStyleCoordConvertible for MaxLength {
     fn to_gecko_style_coord<T: CoordDataMut>(&self, coord: &mut T) {
         match *self {
-            MaxLength::LengthOrPercentage(ref lop) => lop.to_gecko_style_coord(coord),
-            MaxLength::None => coord.set_value(CoordDataValue::None),
+            MaxLength::LengthOrPercentageOrNone(ref lopon) => lopon.to_gecko_style_coord(coord),
             MaxLength::ExtremumLength(ref e) => e.to_gecko_style_coord(coord),
         }
     }
 
     fn from_gecko_style_coord<T: CoordData>(coord: &T) -> Option<Self> {
-        LengthOrPercentage::from_gecko_style_coord(coord).map(MaxLength::LengthOrPercentage)
+        LengthOrPercentageOrNone::from_gecko_style_coord(coord).map(MaxLength::LengthOrPercentageOrNone)
             .or_else(|| ExtremumLength::from_gecko_style_coord(coord).map(MaxLength::ExtremumLength))
-            .or_else(|| match coord.as_value() {
-                CoordDataValue::None => Some(MaxLength::None),
-                _ => None,
-            })
     }
 }
 
@@ -365,5 +392,32 @@ pub fn round_border_to_device_pixels(width: Au, au_per_device_px: Au) -> Au {
         Au(0)
     } else {
         max(au_per_device_px, Au(width.0 / au_per_device_px.0 * au_per_device_px.0))
+    }
+}
+
+impl CounterStyleOrNone {
+    /// Convert this counter style to a Gecko CounterStylePtr.
+    pub fn to_gecko_value(self, gecko_value: &mut CounterStylePtr) {
+        use gecko_bindings::bindings::Gecko_SetCounterStyleToName as set_name;
+        use gecko_bindings::bindings::Gecko_SetCounterStyleToSymbols as set_symbols;
+        match self {
+            CounterStyleOrNone::None_ => unsafe {
+                set_name(gecko_value, atom!("none").into_addrefed());
+            },
+            CounterStyleOrNone::Name(name) => unsafe {
+                set_name(gecko_value, name.0.into_addrefed());
+            },
+            CounterStyleOrNone::Symbols(symbols_type, symbols) => {
+                let symbols: Vec<_> = symbols.0.iter().map(|symbol| match *symbol {
+                    Symbol::String(ref s) => nsCString::from(s),
+                    Symbol::Ident(_) => unreachable!("Should not have identifier in symbols()"),
+                }).collect();
+                let symbols: Vec<_> = symbols.iter()
+                    .map(|symbol| symbol as &nsACString as *const _)
+                    .collect();
+                unsafe { set_symbols(gecko_value, symbols_type.to_gecko_keyword(),
+                                     symbols.as_ptr(), symbols.len() as u32) };
+            }
+        }
     }
 }

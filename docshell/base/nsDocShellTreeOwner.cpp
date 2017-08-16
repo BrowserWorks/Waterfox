@@ -9,6 +9,7 @@
 #include "nsWebBrowser.h"
 
 // Helper Classes
+#include "nsContentUtils.h"
 #include "nsStyleCoord.h"
 #include "nsSize.h"
 #include "mozilla/ReflowInput.h"
@@ -993,6 +994,7 @@ nsDocShellTreeOwner::HandleEvent(nsIDOMEvent* aEvent)
           if (webBrowserChrome) {
             nsCOMPtr<nsITabChild> tabChild = do_QueryInterface(webBrowserChrome);
             if (tabChild) {
+              // Bug 1370843 - Explicitly pass triggeringPrincipal
               nsresult rv = tabChild->RemoteDropLinks(linksCount, links);
               for (uint32_t i = 0; i < linksCount; i++) {
                 NS_RELEASE(links[i]);
@@ -1004,7 +1006,8 @@ nsDocShellTreeOwner::HandleEvent(nsIDOMEvent* aEvent)
           nsAutoString url;
           if (NS_SUCCEEDED(links[0]->GetUrl(url))) {
             if (!url.IsEmpty()) {
-              webnav->LoadURI(url.get(), 0, nullptr, nullptr, nullptr);
+              webnav->LoadURI(url.get(), 0, nullptr, nullptr, nullptr,
+                              nsContentUtils::GetSystemPrincipal());
             }
           }
 
@@ -1251,6 +1254,10 @@ ChromeTooltipListener::MouseMove(nsIDOMEvent* aMouseEvent)
         aMouseEvent->InternalDOMEvent()->GetTarget();
       if (eventTarget) {
         mPossibleTooltipNode = do_QueryInterface(eventTarget);
+        nsCOMPtr<nsIGlobalObject> global(eventTarget->GetOwnerGlobal());
+        if (global) {
+          mTooltipTimer->SetTarget(global->EventTargetFor(TaskCategory::UI));
+        }
       }
       if (mPossibleTooltipNode) {
         nsresult rv = mTooltipTimer->InitWithFuncCallback(
@@ -1553,7 +1560,7 @@ ChromeContextMenuListener::HandleEvent(nsIDOMEvent* aMouseEvent)
 
     nsCOMPtr<nsIFormControl> formControl(do_QueryInterface(node));
     if (formControl) {
-      if (formControl->GetType() == NS_FORM_TEXTAREA) {
+      if (formControl->ControlType() == NS_FORM_TEXTAREA) {
         flags |= nsIContextMenuListener::CONTEXT_TEXT;
         flags2 |= nsIContextMenuListener2::CONTEXT_TEXT;
         targetDOMnode = node;

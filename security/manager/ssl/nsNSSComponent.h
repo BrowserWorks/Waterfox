@@ -47,27 +47,12 @@ MOZ_MUST_USE
   { 0xa0a8f52b, 0xea18, 0x4abc, \
     { 0xa3, 0xca, 0xec, 0xcf, 0x70, 0x4f, 0xfe, 0x63 } }
 
-enum EnsureNSSOperator
-{
-  nssLoadingComponent = 0,
-  nssInitSucceeded = 1,
-  nssInitFailed = 2,
-  nssShutdown = 3,
-  nssEnsure = 100,
-  nssEnsureOnChromeOnly = 101,
-  nssEnsureChromeOrContent = 102,
-};
-
 extern bool EnsureNSSInitializedChromeOrContent();
-
-extern bool EnsureNSSInitialized(EnsureNSSOperator op);
 
 class NS_NO_VTABLE nsINSSComponent : public nsISupports
 {
 public:
   NS_DECLARE_STATIC_IID_ACCESSOR(NS_INSSCOMPONENT_IID)
-
-  NS_IMETHOD ShowAlertFromStringBundle(const char* messageID) = 0;
 
   NS_IMETHOD GetPIPNSSBundleString(const char* name,
                                    nsAString& outString) = 0;
@@ -86,8 +71,6 @@ public:
 
   NS_IMETHOD ShutdownSmartCardThread(SECMODModule* module) = 0;
 #endif
-
-  NS_IMETHOD IsNSSInitialized(bool* initialized) = 0;
 
 #ifdef DEBUG
   NS_IMETHOD IsCertTestBuiltInRoot(CERTCertificate* cert, bool& result) = 0;
@@ -122,8 +105,6 @@ public:
   nsresult Init();
 
   static nsresult GetNewPrompter(nsIPrompt** result);
-  static nsresult ShowAlertWithConstructedString(const nsString& message);
-  NS_IMETHOD ShowAlertFromStringBundle(const char* messageID) override;
 
   NS_IMETHOD GetPIPNSSBundleString(const char* name,
                                    nsAString& outString) override;
@@ -143,8 +124,6 @@ public:
                                  const nsAString& eventType,
                                  const nsAString& token);
 #endif
-
-  NS_IMETHOD IsNSSInitialized(bool* initialized) override;
 
 #ifdef DEBUG
   NS_IMETHOD IsCertTestBuiltInRoot(CERTCertificate* cert, bool& result) override;
@@ -183,8 +162,6 @@ private:
   nsresult InitializePIPNSSBundle();
   nsresult ConfigureInternalPKCS11Token();
   nsresult RegisterObservers();
-
-  void DoProfileBeforeChange();
 
   void MaybeEnableFamilySafetyCompatibility();
   void MaybeImportEnterpriseRoots();

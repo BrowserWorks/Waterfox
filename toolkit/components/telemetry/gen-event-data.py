@@ -6,7 +6,7 @@
 # in a file provided as a command-line argument.
 
 from __future__ import print_function
-from shared_telemetry_utils import StringTable, static_assert
+from shared_telemetry_utils import StringTable, static_assert, ParserError
 
 import parse_events
 import sys
@@ -29,6 +29,7 @@ file_footer = """\
 #endif // mozilla_TelemetryEventData_h
 """
 
+
 def write_extra_table(events, output, string_table):
     table_name = "gExtraKeysTable"
     extra_table = []
@@ -45,9 +46,9 @@ def write_extra_table(events, output, string_table):
             indexes = string_table.stringIndexes(extra_keys)
 
             print("  // %s, [%s], [%s]" % (
-                    e.category,
-                    ", ".join(e.methods),
-                    ", ".join(e.objects)),
+                  e.category,
+                  ", ".join(e.methods),
+                  ", ".join(e.objects)),
                   file=output)
             print("  // extra_keys: %s" % ", ".join(extra_keys), file=output)
             print("  %s," % ", ".join(map(str, indexes)),
@@ -61,56 +62,63 @@ def write_extra_table(events, output, string_table):
 
     return extra_table
 
+
 def write_common_event_table(events, output, string_table, extra_table):
     table_name = "gCommonEventInfo"
-    extra_count = 0
 
     print("const CommonEventInfo %s[] = {" % table_name, file=output)
-    for e,extras in zip(events, extra_table):
+    for e, extras in zip(events, extra_table):
         # Write a comment to make the file human-readable.
         print("  // category: %s" % e.category, file=output)
         print("  // methods: [%s]" % ", ".join(e.methods), file=output)
         print("  // objects: [%s]" % ", ".join(e.objects), file=output)
 
         # Write the common info structure
-        print("  {%d, %d, %d, %d, %d, %s}," %
-                (string_table.stringIndex(e.category),
-                 string_table.stringIndex(e.expiry_version),
-                 extras[0], # extra keys index
-                 extras[1], # extra keys count
-                 e.expiry_day,
-                 e.dataset),
+        print("  {%d, %d, %d, %d, %d, %s, %s}," %
+              (string_table.stringIndex(e.category),
+               string_table.stringIndex(e.expiry_version),
+               extras[0],  # extra keys index
+               extras[1],  # extra keys count
+               e.expiry_day,
+               e.dataset,
+               " | ".join(e.record_in_processes_enum)),
               file=output)
 
     print("};", file=output)
     static_assert(output, "sizeof(%s) <= UINT32_MAX" % table_name,
                   "index overflow")
 
+
 def write_event_table(events, output, string_table):
     table_name = "gEventInfo"
     print("const EventInfo %s[] = {" % table_name, file=output)
 
-    for common_info_index,e in enumerate(events):
+    for common_info_index, e in enumerate(events):
         for method_name, object_name in itertools.product(e.methods, e.objects):
             print("  // category: %s, method: %s, object: %s" %
-                    (e.category, method_name, object_name),
+                  (e.category, method_name, object_name),
                   file=output)
 
             print("  {gCommonEventInfo[%d], %d, %d}," %
-                    (common_info_index,
-                     string_table.stringIndex(method_name),
-                     string_table.stringIndex(object_name)),
+                  (common_info_index,
+                   string_table.stringIndex(method_name),
+                   string_table.stringIndex(object_name)),
                   file=output)
 
     print("};", file=output)
     static_assert(output, "sizeof(%s) <= UINT32_MAX" % table_name,
                   "index overflow")
 
+
 def main(output, *filenames):
     # Load the event data.
     if len(filenames) > 1:
         raise Exception('We don\'t support loading from more than one file.')
-    events = parse_events.load_events(filenames[0])
+    try:
+        events = parse_events.load_events(filenames[0])
+    except ParserError as ex:
+        print("\nError processing events:\n" + str(ex) + "\n")
+        sys.exit(1)
 
     # Write the scalar data file.
     print(banner, file=output)

@@ -4,10 +4,13 @@
 # License, v. 2.0. If a copy of the MPL was not distributed with this
 # file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
+with Files("**"):
+    BUG_COMPONENT = ("Core", "Audio/Video: Playback")
+
 DEFINES['ANDROID_SMP'] = 0
 DEFINES['LOG_NDEBUG'] = 1
 
-if CONFIG['OS_TARGET'] != 'WINNT':
+if CONFIG['OS_TARGET'] != 'WINNT' and CONFIG['OS_TARGET'] != 'SunOS':
    DEFINES['_GLIBCXX_OS_DEFINES'] = True
 
 if CONFIG['OS_TARGET'] == 'WINNT':
@@ -80,10 +83,9 @@ SOURCES += [
     'system/core/libutils/VectorImpl.cpp',
 ]
 
-if CONFIG['MOZ_RUST']:
-    EXPORTS += [
-        'binding/include/mp4parse.h',
-    ]
+EXPORTS += [
+    'binding/include/mp4parse.h',
+]
 
 UNIFIED_SOURCES += [
     'binding/Adts.cpp',
@@ -154,11 +156,11 @@ if CONFIG['_MSC_VER']:
 elif CONFIG['GNU_CXX']:
     CFLAGS += [
         '-Wno-comment',
-        '-Wno-sign-compare'
+        '-Wno-sign-compare',
+        '-Wno-unused-function',
     ]
     CXXFLAGS += [
-        '-Wno-format',
-        '-Wno-format-security',
+        '-Werror=format',
         '-Wno-multichar',
         '-Wno-sign-compare',
         '-Wno-unused',

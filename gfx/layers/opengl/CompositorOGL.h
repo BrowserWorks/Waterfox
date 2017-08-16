@@ -165,12 +165,13 @@ public:
                         const gfx::Matrix4x4& aTransform,
                         const gfx::Rect& aVisibleRect) override;
 
-  virtual void DrawTriangle(const gfx::TexturedTriangle& aTriangle,
-                            const gfx::IntRect& aClipRect,
-                            const EffectChain& aEffectChain,
-                            gfx::Float aOpacity,
-                            const gfx::Matrix4x4& aTransform,
-                            const gfx::Rect& aVisibleRect) override;
+  virtual void DrawTriangles(const nsTArray<gfx::TexturedTriangle>& aTriangles,
+                             const gfx::Rect& aRect,
+                             const gfx::IntRect& aClipRect,
+                             const EffectChain& aEffectChain,
+                             gfx::Float aOpacity,
+                             const gfx::Matrix4x4& aTransform,
+                             const gfx::Rect& aVisibleRect) override;
 
   virtual bool SupportsLayerGeometry() const override;
 
@@ -212,6 +213,8 @@ public:
   virtual bool Resume() override;
 
   GLContext* gl() const { return mGLContext; }
+  GLContext* GetGLContext() const override { return mGLContext; }
+
   /**
    * Clear the program state. This must be called
    * before operating on the GLContext directly. */
@@ -248,8 +251,9 @@ public:
 private:
   template<typename Geometry>
   void DrawGeometry(const Geometry& aGeometry,
+                    const gfx::Rect& aRect,
                     const gfx::IntRect& aClipRect,
-                    const EffectChain &aEffectChain,
+                    const EffectChain& aEffectChain,
                     gfx::Float aOpacity,
                     const gfx::Matrix4x4& aTransform,
                     const gfx::Rect& aVisibleRect);
@@ -334,7 +338,7 @@ private:
   }
 
   void ApplyPrimitiveConfig(ShaderConfigOGL& aConfig,
-                            const gfx::TexturedTriangle&)
+                            const nsTArray<gfx::TexturedTriangle>&)
   {
     aConfig.SetDynamicGeometry(true);
   }
@@ -380,14 +384,10 @@ private:
   }
 
   void BindAndDrawGeometry(ShaderProgramOGL* aProgram,
-                           const gfx::Rect& aRect,
-                           const gfx::Rect& aTextureRect =
-                             gfx::Rect(0.0f, 0.0f, 1.0f, 1.0f));
+                           const gfx::Rect& aRect);
 
   void BindAndDrawGeometry(ShaderProgramOGL* aProgram,
-                           const gfx::TexturedTriangle& aTriangle,
-                           const gfx::Rect& aTextureRect =
-                             gfx::Rect(0.0f, 0.0f, 1.0f, 1.0f));
+                           const nsTArray<gfx::TexturedTriangle>& aTriangles);
 
   void BindAndDrawGeometryWithTextureRect(ShaderProgramOGL *aProg,
                                           const gfx::Rect& aRect,
@@ -395,9 +395,9 @@ private:
                                           TextureSource *aTexture);
 
   void BindAndDrawGeometryWithTextureRect(ShaderProgramOGL *aProg,
-                                         const gfx::TexturedTriangle& aTriangle,
-                                         const gfx::Rect& aTexCoordRect,
-                                         TextureSource *aTexture);
+                                          const nsTArray<gfx::TexturedTriangle>& aTriangles,
+                                          const gfx::Rect& aTexCoordRect,
+                                          TextureSource *aTexture);
 
   void InitializeVAO(const GLuint aAttribIndex, const GLint aComponents,
                      const GLsizei aStride, const size_t aOffset);

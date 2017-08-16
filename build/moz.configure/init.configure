@@ -65,20 +65,19 @@ def check_build_environment(help, dist):
 
     return result
 
-set_config('TOPSRCDIR', delayed_getattr(check_build_environment, 'topsrcdir'))
-set_config('TOPOBJDIR', delayed_getattr(check_build_environment, 'topobjdir'))
-set_config('MOZ_BUILD_ROOT', delayed_getattr(check_build_environment,
-                                             'topobjdir'))
-set_config('DIST', delayed_getattr(check_build_environment, 'dist'))
+set_config('TOPSRCDIR', check_build_environment.topsrcdir)
+set_config('TOPOBJDIR', check_build_environment.topobjdir)
+set_config('MOZ_BUILD_ROOT', check_build_environment.topobjdir)
+set_config('DIST', check_build_environment.dist)
 
 add_old_configure_assignment(
-    '_topsrcdir', delayed_getattr(check_build_environment, 'topsrcdir'))
+    '_topsrcdir', check_build_environment.topsrcdir)
 add_old_configure_assignment(
-    '_objdir', delayed_getattr(check_build_environment, 'topobjdir'))
+    '_objdir', check_build_environment.topobjdir)
 add_old_configure_assignment(
-    'MOZ_BUILD_ROOT', delayed_getattr(check_build_environment, 'topobjdir'))
+    'MOZ_BUILD_ROOT', check_build_environment.topobjdir)
 add_old_configure_assignment(
-    'DIST', delayed_getattr(check_build_environment, 'dist'))
+    'DIST', check_build_environment.dist)
 
 option(env='MOZ_AUTOMATION', help='Enable options for automated builds')
 set_config('MOZ_AUTOMATION', depends_if('MOZ_AUTOMATION')(lambda x: True))
@@ -89,15 +88,28 @@ option(env='OLD_CONFIGURE', nargs=1, help='Path to the old configure script')
 option(env='MOZ_CURRENT_PROJECT', nargs=1, help='Current build project')
 option(env='MOZCONFIG', nargs=1, help='Mozconfig location')
 
+option('--with-external-source-dir', env='EXTERNAL_SOURCE_DIR', nargs=1,
+       help='External directory containing additional build files')
+
+@depends('--with-external-source-dir')
+def external_source_dir(value):
+    if value:
+        return value[0]
+
+set_config('EXTERNAL_SOURCE_DIR', external_source_dir)
+add_old_configure_assignment('EXTERNAL_SOURCE_DIR', external_source_dir)
+
 # Read user mozconfig
 # ==============================================================
 # Note: the dependency on --help is only there to always read the mozconfig,
 # even when --help is passed. Without this dependency, the function wouldn't
 # be called when --help is passed, and the mozconfig wouldn't be read.
 @depends('MOZ_CURRENT_PROJECT', 'MOZCONFIG', 'OLD_CONFIGURE',
-         check_build_environment, '--help')
+         check_build_environment, '--with-external-source-dir',
+         '--help')
 @imports(_from='mozbuild.mozconfig', _import='MozconfigLoader')
-def mozconfig(current_project, mozconfig, old_configure, build_env, help):
+def mozconfig(current_project, mozconfig, old_configure, build_env,
+              external_source_dir, help):
     if not old_configure:
         die('The OLD_CONFIGURE environment variable must be set')
 
@@ -120,7 +132,10 @@ def mozconfig(current_project, mozconfig, old_configure, build_env, help):
     if os.path.dirname(os.path.abspath(old_configure[0])).endswith('/js/src'):
         return {'path': None}
 
-    loader = MozconfigLoader(build_env.topsrcdir)
+    topsrcdir = build_env.topsrcdir
+    if external_source_dir:
+        topsrcdir = external_source_dir[0]
+    loader = MozconfigLoader(topsrcdir)
     current_project = current_project[0] if current_project else None
     mozconfig = mozconfig[0] if mozconfig else None
     mozconfig = loader.find_mozconfig(env={'MOZCONFIG': mozconfig})
@@ -178,7 +193,7 @@ def virtualenv_python(env_python, build_env, mozconfig, help):
         # If we're not in the virtualenv, we need the which module for
         # find_program.
         if normsep(sys.executable) != normsep(manager.python_path):
-            sys.path.append(os.path.join(topsrcdir, 'python', 'which'))
+            sys.path.append(os.path.join(topsrcdir, 'third_party', 'python', 'which'))
         found_python = find_program(python)
         if not found_python:
             die('The PYTHON environment variable does not contain '
@@ -352,6 +367,8 @@ def split_triplet(triplet):
         canonical_os = canonical_kernel = 'NetBSD'
     elif os.startswith('openbsd'):
         canonical_os = canonical_kernel = 'OpenBSD'
+    elif os.startswith('solaris'):
+        canonical_os = canonical_kernel = 'SunOS'
     else:
         die('Unknown OS: %s' % os)
 
@@ -486,6 +503,13 @@ set_config('HAVE_64BIT_BUILD', have_64_bit)
 set_define('HAVE_64BIT_BUILD', have_64_bit)
 add_old_configure_assignment('HAVE_64BIT_BUILD', have_64_bit)
 
+@depends(host)
+def host_os_kernel_major_version(host):
+    versions = host.raw_os.split('.')
+    version = ''.join(x for x in versions[0] if x.isdigit())
+    return version
+
+set_config('HOST_MAJOR_VERSION', host_os_kernel_major_version)
 
 # Autoconf needs these set
 @depends(host)
@@ -533,21 +557,20 @@ def target_variables(target):
         INTEL_ARCHITECTURE=target.cpu in ('x86', 'x86_64') or None,
     )
 
-set_config('OS_TARGET', delayed_getattr(target_variables, 'OS_TARGET'))
+set_config('OS_TARGET', target_variables.OS_TARGET)
 add_old_configure_assignment('OS_TARGET',
-                             delayed_getattr(target_variables, 'OS_TARGET'))
-set_config('OS_ARCH', delayed_getattr(target_variables, 'OS_ARCH'))
+                             target_variables.OS_TARGET)
+set_config('OS_ARCH', target_variables.OS_ARCH)
 add_old_configure_assignment('OS_ARCH',
-                             delayed_getattr(target_variables, 'OS_ARCH'))
-set_config('OS_TEST', delayed_getattr(target_variables, 'OS_TEST'))
+                             target_variables.OS_ARCH)
+set_config('OS_TEST', target_variables.OS_TEST)
 add_old_configure_assignment('OS_TEST',
-                             delayed_getattr(target_variables, 'OS_TEST'))
-set_config('CPU_ARCH', delayed_getattr(target, 'cpu'))
-add_old_configure_assignment('CPU_ARCH', delayed_getattr(target, 'cpu'))
-set_config('INTEL_ARCHITECTURE', delayed_getattr(target_variables,
-                                                 'INTEL_ARCHITECTURE'))
-set_config('TARGET_CPU', delayed_getattr(target, 'raw_cpu'))
-set_config('TARGET_OS', delayed_getattr(target, 'raw_os'))
+                             target_variables.OS_TEST)
+set_config('CPU_ARCH', target.cpu)
+add_old_configure_assignment('CPU_ARCH', target.cpu)
+set_config('INTEL_ARCHITECTURE', target_variables.INTEL_ARCHITECTURE)
+set_config('TARGET_CPU', target.raw_cpu)
+set_config('TARGET_OS', target.raw_os)
 
 
 @depends(host)
@@ -560,10 +583,10 @@ def host_variables(host):
         HOST_OS_ARCH=os_arch,
     )
 
-set_config('HOST_CPU_ARCH', delayed_getattr(host, 'cpu'))
-set_config('HOST_OS_ARCH', delayed_getattr(host_variables, 'HOST_OS_ARCH'))
+set_config('HOST_CPU_ARCH', host.cpu)
+set_config('HOST_OS_ARCH', host_variables.HOST_OS_ARCH)
 add_old_configure_assignment('HOST_OS_ARCH',
-                             delayed_getattr(host_variables, 'HOST_OS_ARCH'))
+                             host_variables.HOST_OS_ARCH)
 
 @depends(target)
 def target_is_windows(target):
@@ -610,6 +633,13 @@ def target_is_linux(target):
 
 set_define('XP_LINUX', target_is_linux)
 
+@depends(target)
+def target_is_solaris(target):
+    if target.kernel == 'SunOS':
+        return True
+
+set_define('XP_SOLARIS', target_is_solaris)
+
 # The application/project to build
 # ==============================================================
 option('--enable-application', nargs=1, env='MOZ_BUILD_APP',
@@ -632,9 +662,6 @@ def default_project(build_env, help):
 option('--enable-project', nargs=1, default=default_project,
        help='Project to build')
 
-option('--with-external-source-dir', env='EXTERNAL_SOURCE_DIR', nargs=1,
-       help='External directory containing additional build files')
-
 @depends('--enable-project', '--with-external-source-dir',
          check_build_environment, '--help')
 @imports(_from='os.path', _import='exists')
@@ -650,14 +677,6 @@ def include_project_configure(project, external_source_dir, build_env, help):
     if not exists(path):
         die('Cannot find project %s', project[0])
     return path
-
-@depends('--with-external-source-dir')
-def external_source_dir(value):
-    if value:
-        return value[0]
-
-set_config('EXTERNAL_SOURCE_DIR', external_source_dir)
-add_old_configure_assignment('EXTERNAL_SOURCE_DIR', external_source_dir)
 
 
 @depends(include_project_configure, check_build_environment, '--help')
@@ -696,15 +715,14 @@ def milestone(build_env, _):
                      is_nightly=is_nightly,
                      is_release_or_beta=is_release_or_beta)
 
-set_config('GRE_MILESTONE', delayed_getattr(milestone, 'version'))
-set_config('NIGHTLY_BUILD', delayed_getattr(milestone, 'is_nightly'))
-set_define('NIGHTLY_BUILD', delayed_getattr(milestone, 'is_nightly'))
-add_old_configure_assignment('NIGHTLY_BUILD',
-                             delayed_getattr(milestone, 'is_nightly'))
-set_config('RELEASE_OR_BETA', delayed_getattr(milestone, 'is_release_or_beta'))
-set_define('RELEASE_OR_BETA', delayed_getattr(milestone, 'is_release_or_beta'))
+set_config('GRE_MILESTONE', milestone.version)
+set_config('NIGHTLY_BUILD', milestone.is_nightly)
+set_define('NIGHTLY_BUILD', milestone.is_nightly)
+add_old_configure_assignment('NIGHTLY_BUILD', milestone.is_nightly)
+set_config('RELEASE_OR_BETA', milestone.is_release_or_beta)
+set_define('RELEASE_OR_BETA', milestone.is_release_or_beta)
 add_old_configure_assignment('RELEASE_OR_BETA',
-                             delayed_getattr(milestone, 'is_release_or_beta'))
+                             milestone.is_release_or_beta)
 
 # The app update channel is 'default' when not supplied. The value is used in
 # the application's confvars.sh (and is made available to a project specific

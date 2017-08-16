@@ -205,7 +205,8 @@ config = {
         "jetpack-package-clipboard": ["--flavor=jetpack-package", "--subsuite=clipboard"],
         "jetpack-addon": ["--flavor=jetpack-addon"],
         "a11y": ["--flavor=a11y"],
-        "mochitest-style": ["--disable-e10s", "--failure-pattern-file=stylo-failures.md", "layout/style/test"],
+        "plain-style": ["--failure-pattern-file=stylo-failures.md", "layout/style/test"],
+        "chrome-style": ["--flavor=chrome", "--failure-pattern-file=../stylo-failures.md", "layout/style/test/chrome"],
     },
     # local reftest suites
     "all_reftest_suites": {
@@ -228,9 +229,8 @@ config = {
             "tests": ["tests/reftest/tests/layout/reftests/reftest.list"]},
         "reftest-stylo": {
             "options": ["--suite=reftest",
-                        "--disable-e10s",
                         "--setpref=reftest.compareStyloToGecko=true"],
-            "tests": ["tests/reftest/tests/layout/reftests/reftest-stylo.list"],
+            "tests": ["tests/reftest/tests/layout/reftests/reftest.list"],
         },
     },
     "all_xpcshell_suites": {
@@ -292,7 +292,7 @@ config = {
     ],
     "vcs_output_timeout": 1000,
     "minidump_save_path": "%(abs_work_dir)s/../minidumps",
-    "buildbot_max_log_size": 52428800,
+    "buildbot_max_log_size": 209715200,
     "default_blob_upload_servers": [
         "https://blobupload.elasticbeanstalk.com",
     ],
@@ -308,7 +308,7 @@ config = {
     "download_minidump_stackwalk": True,
     "minidump_stackwalk_path": MINIDUMP_STACKWALK_PATH,
     "minidump_tooltool_manifest_path": TOOLTOOL_MANIFEST_PATH,
-    "tooltool_cache": "/builds/tooltool_cache",
+    "tooltool_cache": "/home/worker/tooltool-cache",
     "download_nodejs": True,
     "nodejs_path": NODEJS_PATH,
     "nodejs_tooltool_manifest_path": NODEJS_TOOLTOOL_MANIFEST_PATH,

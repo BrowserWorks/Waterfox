@@ -1,4 +1,3 @@
-// |reftest| skip-if(!this.hasOwnProperty('Intl')) -- needs Intl
 // Copyright 2012 Mozilla Corporation. All rights reserved.
 // This code is governed by the BSD license found in the LICENSE file.
 
@@ -20,17 +19,9 @@ var invalidValues = [undefined, null, 5, "5", false, {valueOf: function () { ret
 Object.getOwnPropertyNames(functions).forEach(function (p) {
     var f = functions[p];
     invalidValues.forEach(function (value) {
-        var error;
-        try {
+        assert.throws(TypeError, function() {
             var result = f.call(value);
-        } catch (e) {
-            error = e;
-        }
-        if (error === undefined) {
-            $ERROR("Date.prototype." + p + " did not reject this = " + value + ".");
-        } else if (error.name !== "TypeError") {
-            $ERROR("Date.prototype." + p + " rejected this = " + value + " with wrong error " + error.name + ".");
-        }
+        }, "Date.prototype." + p + " did not reject this = " + value + ".");
     });
 });
 

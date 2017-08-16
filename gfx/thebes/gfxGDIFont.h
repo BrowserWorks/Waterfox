@@ -42,7 +42,7 @@ public:
                                BoundingBoxType aBoundingBoxType,
                                DrawTarget *aDrawTargetForTightBoundingBox,
                                Spacing *aSpacing,
-                               uint16_t aOrientation) override;
+                               mozilla::gfx::ShapedTextFlags aOrientation) override;
 
     /* required for MathML to suppress effects of ClearType "padding" */
     mozilla::UniquePtr<gfxFont>
@@ -74,13 +74,14 @@ protected:
     virtual const Metrics& GetHorizontalMetrics() override;
 
     /* override to ensure the cairo font is set up properly */
-    virtual bool ShapeText(DrawTarget     *aDrawTarget,
-                           const char16_t *aText,
-                           uint32_t        aOffset,
-                           uint32_t        aLength,
-                           Script          aScript,
-                           bool            aVertical,
-                           gfxShapedText  *aShapedText) override;
+    bool ShapeText(DrawTarget     *aDrawTarget,
+                   const char16_t *aText,
+                   uint32_t        aOffset,
+                   uint32_t        aLength,
+                   Script          aScript,
+                   bool            aVertical,
+                   RoundingFlags   aRounding,
+                   gfxShapedText  *aShapedText) override;
 
     void Initialize(); // creates metrics and Cairo fonts
 

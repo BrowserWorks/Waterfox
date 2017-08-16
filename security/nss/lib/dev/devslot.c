@@ -31,6 +31,7 @@ nssSlot_Destroy(
 {
     if (slot) {
         if (PR_ATOMIC_DECREMENT(&slot->base.refCount) == 0) {
+            PK11_FreeSlot(slot->pk11slot);
             PZ_DestroyLock(slot->base.lock);
             return nssArena_Destroy(slot->base.arena);
         }
@@ -224,10 +225,18 @@ NSS_IMPLEMENT NSSToken *
 nssSlot_GetToken(
     NSSSlot *slot)
 {
+    NSSToken *rvToken = NULL;
+
     if (nssSlot_IsTokenPresent(slot)) {
-        return nssToken_AddRef(slot->token);
+        /* Even if a token should be present, check `slot->token` too as it
+	 * might be gone already. This would happen mostly on shutdown. */
+        nssSlot_EnterMonitor(slot);
+        if (slot->token)
+            rvToken = nssToken_AddRef(slot->token);
+        nssSlot_ExitMonitor(slot);
     }
-    return (NSSToken *)NULL;
+
+    return rvToken;
 }
 
 NSS_IMPLEMENT PRStatus

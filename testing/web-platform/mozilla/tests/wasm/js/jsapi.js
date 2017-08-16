@@ -97,6 +97,7 @@ let CompileError;
 let LinkError;
 let RuntimeError;
 let Memory;
+let instanceProto;
 let memoryProto;
 let mem1;
 let Table;
@@ -350,7 +351,7 @@ test(() => {
 }, "'WebAssembly.Instance.prototype' data property");
 
 test(() => {
-    const instanceProto = Instance.prototype;
+    instanceProto = Instance.prototype;
     const instanceProtoDesc = Object.getOwnPropertyDescriptor(Instance, 'prototype');
     assert_equals(instanceProto, instanceProtoDesc.value);
     assert_equals(String(instanceProto), "[object WebAssembly.Instance]");
@@ -366,12 +367,16 @@ test(() => {
 }, "'WebAssembly.Instance' instance objects");
 
 test(() => {
-    const instanceExportsDesc = Object.getOwnPropertyDescriptor(exportingInstance, 'exports');
-    assert_equals(typeof instanceExportsDesc.value, "object");
-    assert_equals(instanceExportsDesc.writable, true);
-    assert_equals(instanceExportsDesc.enumerable, true);
-    assert_equals(instanceExportsDesc.configurable, true);
-}, "'WebAssembly.Instance' 'exports' data property");
+    const exportsDesc = Object.getOwnPropertyDescriptor(instanceProto, 'exports');
+    assert_equals(typeof exportsDesc.get, "function");
+    assert_equals(exportsDesc.set, undefined);
+    assert_equals(exportsDesc.enumerable, false);
+    assert_equals(exportsDesc.configurable, true);
+    const exportsGetter = exportsDesc.get;
+    assertThrows(() => exportsGetter.call(), TypeError);
+    assertThrows(() => exportsGetter.call({}), TypeError);
+    assert_equals(typeof exportsGetter.call(exportingInstance), "object");
+}, "'WebAssembly.Instance.prototype.exports' accessor property");
 
 test(() => {
     exportsObj = exportingInstance.exports;
@@ -385,7 +390,7 @@ test(() => {
     assert_equals(Object.getPrototypeOf(exportsObj), null);
     assertThrows(() => Object.defineProperty(exportsObj, 'g', {}), TypeError);
     assert_equals(Object.keys(exportsObj).join(), "f");
-}, "'WebAssembly.Instance' 'exports' object");
+}, "exports object");
 
 test(() => {
     const f = exportsObj.f;
@@ -714,6 +719,7 @@ test(() => {
     assert_equals(instantiate, instantiateDesc.value);
     assert_equals(instantiate.length, 1);
     assert_equals(instantiate.name, "instantiate");
+    var instantiateErrorTests = 1;
     function assertInstantiateError(args, err) {
         promise_test(() => {
             return instantiate(...args)
@@ -724,7 +730,7 @@ test(() => {
                     assert_equals(error instanceof err, true);
                     assert_equals(Boolean(error.stack.match("jsapi.js")), true);
                 })
-        }, 'unexpected success in assertInstantiateError');
+        }, `unexpected success in assertInstantiateError ${instantiateErrorTests++}`);
     }
     var scratch_memory = new WebAssembly.Memory({initial:1});
     var scratch_table = new WebAssembly.Table({element:"anyfunc", initial:1, maximum:1});
@@ -750,6 +756,7 @@ test(() => {
     assertInstantiateError([complexImportingModuleBinary, {}], TypeError);
     assertInstantiateError([complexImportingModuleBinary, {"c": {"d": scratch_memory}}], TypeError);
 
+    var instantiateSuccessTests = 1;
     function assertInstantiateSuccess(module, imports) {
         promise_test(()=> {
             return instantiate(module, imports)
@@ -768,7 +775,7 @@ test(() => {
                         assert_equals(desc.enumerable, true);
                         assert_equals(desc.configurable, true);
                     }
-                })}, 'unexpected failure in assertInstantiateSuccess');
+                })}, `unexpected failure in assertInstantiateSuccess ${instantiateSuccessTests++}`);
     }
     assertInstantiateSuccess(emptyModule);
     assertInstantiateSuccess(emptyModuleBinary);

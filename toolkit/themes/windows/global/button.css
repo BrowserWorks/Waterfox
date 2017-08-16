@@ -12,18 +12,17 @@
 
 button {
   -moz-appearance: button;
-  margin: 1px 5px 2px 5px;
+  margin: 1px 5px 2px;
   min-width: 6.3em;
   color: ButtonText;
   text-shadow: none;
 }
 
 .button-box {
-  border: 1px solid transparent;
-  padding-top: 1px;
-  padding-bottom: 2px;
-  padding-inline-start: 3px;
-  padding-inline-end: 4px;
+  padding-top: 2px;
+  padding-bottom: 3px;
+  padding-inline-start: 4px;
+  padding-inline-end: 5px;
 }
 
 .button-text {
@@ -33,17 +32,22 @@ button {
 
 /* .......... focused state .......... */
 
-button:-moz-focusring > .button-box {
-  border: 1px dotted ThreeDDarkShadow;
+button:-moz-focusring {
+  outline: 1px dotted;
+  outline-offset: -3px;
 }
 
-/* .......... default state .......... */
+/* .......... default/hover/focused state .......... */
 
 @media (-moz-windows-default-theme: 0) {
   @media (-moz-windows-compositor) {
-    /* This is for high-contrast themes on Windows 8 and later */
-    button[default="true"],
-    button:hover {
+    /* This is for high-contrast black and white themes on Windows 8 and later,
+       where the native appearance renders a different background (which
+       appears to be equivalent to the Highlight color) if the button is in the
+       default, hovered or focused state. However, if these states overlap with
+       the active, disabled, open or checked state, the appearance reverts back
+       to the default background. */
+    button:-moz-any([default="true"],:hover,:focus):not(:-moz-any(:active,[disabled="true"],[open="true"],[checked="true"])) {
       color: HighlightText;
     }
   }
@@ -51,13 +55,13 @@ button:-moz-focusring > .button-box {
 
 /* .......... active/open/checked state .......... */
 
-button:hover:active > .button-box:-moz-system-metric(windows-classic),
-button[open="true"] > .button-box:-moz-system-metric(windows-classic),
-button[checked="true"] > .button-box:-moz-system-metric(windows-classic) {
-  padding-top: 2px;
-  padding-bottom: 1px;
-  padding-inline-start: 4px;
-  padding-inline-end: 3px;
+@media (-moz-windows-classic) {
+  button:-moz-any(:hover:active,[open="true"],[checked="true"]):not([disabled="true"]) > .button-box {
+    padding-top: 3px;
+    padding-bottom: 2px;
+    padding-inline-start: 5px;
+    padding-inline-end: 4px;
+  }
 }
 
 /* .......... disabled state .......... */
@@ -66,16 +70,11 @@ button[disabled="true"] {
   color: GrayText;
 }
 
-button[disabled="true"]:-moz-system-metric(windows-classic) {
-  color: ThreeDShadow;
-  text-shadow: 1px 1px ThreeDHighlight;
-}
-
-button[disabled="true"] > .button-box {
-  padding-top: 1px !important;
-  padding-bottom: 2px !important;
-  padding-inline-start: 3px !important;
-  padding-inline-end: 4px !important;
+@media (-moz-windows-classic) {
+  button[disabled="true"] {
+    color: ThreeDShadow;
+    text-shadow: 1px 1px ThreeDHighlight;
+  }
 }
 
 /* ::::: menu/menu-button buttons ::::: */

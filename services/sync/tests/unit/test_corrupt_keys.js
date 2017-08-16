@@ -1,10 +1,10 @@
 /* Any copyright is dedicated to the Public Domain.
    http://creativecommons.org/publicdomain/zero/1.0/ */
 
-Cu.import("resource://gre/modules/PlacesUtils.jsm");
 Cu.import("resource://gre/modules/Log.jsm");
 Cu.import("resource://services-sync/constants.js");
 Cu.import("resource://services-sync/engines.js");
+Cu.import("resource://services-sync/main.js");
 Cu.import("resource://services-sync/engines/tabs.js");
 Cu.import("resource://services-sync/engines/history.js");
 Cu.import("resource://services-sync/record.js");
@@ -37,21 +37,6 @@ add_task(async function test_locally_changed_keys() {
 
   try {
     Svc.Prefs.set("registerEngines", "Tab");
-    _("Set up some tabs.");
-    let myTabs =
-      {windows: [{tabs: [{index: 1,
-                          entries: [{
-                            url: "http://foo.com/",
-                            title: "Title"
-                          }],
-                          attributes: {
-                            image: "image"
-                          }
-                          }]}]};
-    delete Svc.Session;
-    Svc.Session = {
-      getBrowserState: () => JSON.stringify(myTabs)
-    };
 
     await configureIdentity({ username: "johndoe" }, server);
     // We aren't doing a .login yet, so fudge the cluster URL.
@@ -61,8 +46,8 @@ add_task(async function test_locally_changed_keys() {
     Service.engineManager.unregister("addons");
 
     function corrupt_local_keys() {
-      Service.collectionKeys._default.keyPair = [Svc.Crypto.generateRandomKey(),
-                                                 Svc.Crypto.generateRandomKey()];
+      Service.collectionKeys._default.keyPair = [Weave.Crypto.generateRandomKey(),
+                                                 Weave.Crypto.generateRandomKey()];
     }
 
     _("Setting meta.");
@@ -71,7 +56,7 @@ add_task(async function test_locally_changed_keys() {
     let m = new WBORecord("meta", "global");
     m.payload = {"syncID": "foooooooooooooooooooooooooo",
                  "storageVersion": STORAGE_VERSION};
-    m.upload(Service.resource(Service.metaURL));
+    await m.upload(Service.resource(Service.metaURL));
 
     _("New meta/global: " + JSON.stringify(johndoe.collection("meta").wbo("global")));
 
@@ -79,7 +64,7 @@ add_task(async function test_locally_changed_keys() {
     generateNewKeys(Service.collectionKeys);
     let serverKeys = Service.collectionKeys.asWBO("crypto", "keys");
     serverKeys.encrypt(Service.identity.syncKeyBundle);
-    do_check_true(serverKeys.upload(Service.resource(Service.cryptoKeysURL)).success);
+    do_check_true((await serverKeys.upload(Service.resource(Service.cryptoKeysURL))).success);
 
     // Check that login works.
     do_check_true(Service.login());
@@ -123,7 +108,7 @@ add_task(async function test_locally_changed_keys() {
 
     // Check that we can decrypt one.
     let rec = new CryptoWrapper("history", "record-no--0");
-    rec.fetch(Service.resource(Service.storageURL + "history/record-no--0"));
+    await rec.fetch(Service.resource(Service.storageURL + "history/record-no--0"));
     _(JSON.stringify(rec));
     do_check_true(!!rec.decrypt(liveKeys));
 

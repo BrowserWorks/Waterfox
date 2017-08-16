@@ -23,12 +23,13 @@ use std::borrow::ToOwned;
 use std::collections::LinkedList;
 use std::mem;
 use std::sync::Arc;
-use style::computed_values::{line_height, text_rendering, text_transform};
+use style::computed_values::{text_rendering, text_transform};
 use style::computed_values::{word_break, white_space};
 use style::logical_geometry::{LogicalSize, WritingMode};
 use style::properties::ServoComputedValues;
 use style::properties::style_structs;
-use unicode_bidi::{is_rtl, process_text};
+use style::values::generics::text::LineHeight;
+use unicode_bidi as bidi;
 use unicode_script::{Script, get_script};
 
 /// Returns the concatenated text of a list of unscanned text fragments.
@@ -74,10 +75,10 @@ impl TextRunScanner {
         // Calculate bidi embedding levels, so we can split bidirectional fragments for reordering.
         let text = text(&fragments);
         let para_level = fragments.front().unwrap().style.writing_mode.to_bidi_level();
-        let bidi_info = process_text(&text, Some(para_level));
+        let bidi_info = bidi::BidiInfo::new(&text, Some(para_level));
 
         // Optimization: If all the text is LTR, don't bother splitting on bidi levels.
-        let bidi_levels = if bidi_info.levels.iter().cloned().any(is_rtl) {
+        let bidi_levels = if bidi_info.has_rtl() {
             Some(&bidi_info.levels[..])
         } else {
             None
@@ -126,7 +127,7 @@ impl TextRunScanner {
                            font_context: &mut FontContext,
                            out_fragments: &mut Vec<Fragment>,
                            paragraph_bytes_processed: &mut usize,
-                           bidi_levels: Option<&[u8]>,
+                           bidi_levels: Option<&[bidi::Level]>,
                            mut last_whitespace: bool)
                            -> bool {
         debug!("TextRunScanner: flushing {} fragments in range", self.clump.len());
@@ -165,8 +166,8 @@ impl TextRunScanner {
                     white_space::T::pre_line => CompressionMode::CompressWhitespace,
                 };
                 text_transform = inherited_text_style.text_transform;
-                letter_spacing = inherited_text_style.letter_spacing.0;
-                word_spacing = inherited_text_style.word_spacing.0
+                letter_spacing = inherited_text_style.letter_spacing;
+                word_spacing = inherited_text_style.word_spacing.value()
                                .map(|lop| lop.to_hash_key())
                                .unwrap_or((Au(0), NotNaN::new(0.0).unwrap()));
                 text_rendering = inherited_text_style.text_rendering;
@@ -211,7 +212,7 @@ impl TextRunScanner {
 
                     let bidi_level = match bidi_levels {
                         Some(levels) => levels[*paragraph_bytes_processed],
-                        None => 0
+                        None => bidi::Level::ltr(),
                     };
 
                     // Break the run if the new character has a different explicit script than the
@@ -234,17 +235,22 @@ impl TextRunScanner {
                     let flush_run = run_info.font_index != font_index ||
                                     run_info.bidi_level != bidi_level ||
                                     !compatible_script;
-                    let flush_mapping = flush_run || mapping.selected != selected;
+                    let new_mapping_needed = flush_run || mapping.selected != selected;
 
-                    if flush_mapping {
-                        mapping.flush(&mut mappings,
-                                      &mut run_info,
-                                      &**text,
-                                      compression,
-                                      text_transform,
-                                      &mut last_whitespace,
-                                      &mut start_position,
-                                      end_position);
+                    if new_mapping_needed {
+                        // We ignore empty mappings at the very start of a fragment.
+                        // The run info values are uninitialized at this point so
+                        // flushing an empty mapping is pointless.
+                        if end_position > 0 {
+                            mapping.flush(&mut mappings,
+                                          &mut run_info,
+                                          &**text,
+                                          compression,
+                                          text_transform,
+                                          &mut last_whitespace,
+                                          &mut start_position,
+                                          end_position);
+                        }
                         if run_info.text.len() > 0 {
                             if flush_run {
                                 run_info.flush(&mut run_info_list, &mut insertion_point);
@@ -283,8 +289,8 @@ impl TextRunScanner {
             // example, `finally` with a wide `letter-spacing` renders as `f i n a l l y` and not
             // `ﬁ n a l l y`.
             let mut flags = ShapingFlags::empty();
-            match letter_spacing {
-                Some(Au(0)) | None => {}
+            match letter_spacing.value() {
+                Some(&Au(0)) | None => {}
                 Some(_) => flags.insert(IGNORE_LIGATURES_SHAPING_FLAG),
             }
             if text_rendering == text_rendering::T::optimizespeed {
@@ -295,7 +301,7 @@ impl TextRunScanner {
                 flags.insert(KEEP_ALL_FLAG);
             }
             let options = ShapingOptions {
-                letter_spacing: letter_spacing,
+                letter_spacing: letter_spacing.value().cloned(),
                 word_spacing: word_spacing,
                 script: Script::Common,
                 flags: flags,
@@ -305,7 +311,7 @@ impl TextRunScanner {
             run_info_list.into_iter().map(|run_info| {
                 let mut options = options;
                 options.script = run_info.script;
-                if is_rtl(run_info.bidi_level) {
+                if run_info.bidi_level.is_rtl() {
                     options.flags.insert(RTL_FLAG);
                 }
                 let mut font = fontgroup.fonts.get(run_info.font_index).unwrap().borrow_mut();
@@ -430,7 +436,7 @@ fn bounding_box_for_run_metrics(metrics: &RunMetrics, writing_mode: WritingMode)
 ///
 /// `#[inline]` because often the caller only needs a few fields from the font metrics.
 #[inline]
-pub fn font_metrics_for_style(font_context: &mut FontContext, font_style: Arc<style_structs::Font>)
+pub fn font_metrics_for_style(font_context: &mut FontContext, font_style: ::StyleArc<style_structs::Font>)
                               -> FontMetrics {
     let fontgroup = font_context.layout_font_group_for_style(font_style);
     // FIXME(https://github.com/rust-lang/rust/issues/23338)
@@ -442,9 +448,9 @@ pub fn font_metrics_for_style(font_context: &mut FontContext, font_style: Arc<st
 pub fn line_height_from_style(style: &ServoComputedValues, metrics: &FontMetrics) -> Au {
     let font_size = style.get_font().font_size;
     match style.get_inheritedtext().line_height {
-        line_height::T::Normal => metrics.line_gap,
-        line_height::T::Number(l) => font_size.scale_by(l),
-        line_height::T::Length(l) => l
+        LineHeight::Normal => metrics.line_gap,
+        LineHeight::Number(l) => font_size.scale_by(l),
+        LineHeight::Length(l) => l
     }
 }
 
@@ -517,7 +523,7 @@ struct RunInfo {
     /// The index of the applicable font in the font group.
     font_index: usize,
     /// The bidirection embedding level of this text run.
-    bidi_level: u8,
+    bidi_level: bidi::Level,
     /// The Unicode script property of this text run.
     script: Script,
 }
@@ -528,7 +534,7 @@ impl RunInfo {
             text: String::new(),
             insertion_point: None,
             font_index: 0,
-            bidi_level: 0,
+            bidi_level: bidi::Level::ltr(),
             script: Script::Common,
         }
     }

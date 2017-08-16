@@ -88,9 +88,7 @@ nsURLFormatterService.prototype = {
   QueryInterface: XPCOMUtils.generateQI([Ci.nsIURLFormatter]),
 
   _defaults: {
-    LOCALE:           () => Cc["@mozilla.org/chrome/chrome-registry;1"].
-                            getService(Ci.nsIXULChromeRegistry).
-                            getSelectedLocale('global'),
+    LOCALE:           () => Services.locale.getAppLocaleAsLangTag(),
     REGION:           function() {
       try {
         // When the geoip lookup failed to identify the region, we fallback to
@@ -140,7 +138,7 @@ nsURLFormatterService.prototype = {
              getService(Ci.nsIPrefBranch);
 
     try {
-      format = PS.getComplexValue(aPref, Ci.nsISupportsString).data;
+      format = PS.getStringPref(aPref);
     } catch(ex) {
       Cu.reportError("formatURLPref: Couldn't get pref: " + aPref);
       return "about:blank";

@@ -32,14 +32,7 @@ function checkDouble(element, maxVal) {
 
 // ---------------------------------------------------
 function isListOfPrinterFeaturesAvailable() {
-  var has_printerfeatures = false;
-
-  try {
-    has_printerfeatures = gPrefs.getBoolPref("print.tmp.printerfeatures." + gPrintSettings.printerName + ".has_special_printerfeatures");
-  } catch (ex) {
-  }
-
-  return has_printerfeatures;
+  return gPrefs.getBoolPref("print.tmp.printerfeatures." + gPrintSettings.printerName + ".has_special_printerfeatures", false);
 }
 
 // ---------------------------------------------------
@@ -88,7 +81,7 @@ paperListElement.prototype =
   {
     clearPaperList() {
           // remove the menupopup node child of the menulist.
-          this.paperListElement.removeChild(this.paperListElement.firstChild);
+          this.paperListElement.firstChild.remove();
         },
 
     appendPaperNames(aDataObject) {
@@ -124,7 +117,7 @@ function createPaperArrayFromDefaults() {
   var paperHeights = [11.0, 14.0, 10.50, 210.0, 297.0, 420.0, 594.0, 841.0, 1189.0];
   var paperInches  = [true, true, true,  false, false, false, false, false, false];
 
-  gPaperArray = new Array();
+  gPaperArray = [];
 
   for (var i = 0;i < paperNames.length;i++) {
     var obj    = {};
@@ -152,7 +145,7 @@ function createPaperArrayFromPrinterFeatures() {
     dump("createPaperArrayFromPrinterFeatures for " + printername + ".\n");
   }
 
-  gPaperArray = new Array();
+  gPaperArray = [];
 
   var numPapers = gPrefs.getIntPref("print.tmp.printerfeatures." + printername + ".paper.count");
 

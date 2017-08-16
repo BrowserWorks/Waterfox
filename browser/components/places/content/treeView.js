@@ -3,6 +3,7 @@
  * You can obtain one at http://mozilla.org/MPL/2.0/. */
 
 Components.utils.import("resource://gre/modules/XPCOMUtils.jsm");
+Components.utils.import("resource://gre/modules/Services.jsm");
 
 const PTV_interfaces = [Ci.nsITreeView,
                         Ci.nsINavHistoryResultObserver,
@@ -499,11 +500,8 @@ PlacesTreeView.prototype = {
   __todayFormatter: null,
   get _todayFormatter() {
     if (!this.__todayFormatter) {
-      const locale = Cc["@mozilla.org/chrome/chrome-registry;1"]
-                     .getService(Ci.nsIXULChromeRegistry)
-                     .getSelectedLocale("global", true);
-      const dtOptions = { hour: "numeric", minute: "numeric" };
-      this.__todayFormatter = new Intl.DateTimeFormat(locale, dtOptions);
+      const dtOptions = { timeStyle: "short" };
+      this.__todayFormatter = Services.intl.createDateTimeFormat(undefined, dtOptions);
     }
     return this.__todayFormatter;
   },
@@ -511,12 +509,11 @@ PlacesTreeView.prototype = {
   __dateFormatter: null,
   get _dateFormatter() {
     if (!this.__dateFormatter) {
-      const locale = Cc["@mozilla.org/chrome/chrome-registry;1"]
-                     .getService(Ci.nsIXULChromeRegistry)
-                     .getSelectedLocale("global", true);
-      const dtOptions = { year: "numeric", month: "numeric", day: "numeric",
-                          hour: "numeric", minute: "numeric" };
-      this.__dateFormatter = new Intl.DateTimeFormat(locale, dtOptions);
+      const dtOptions = {
+        dateStyle: "short",
+        timeStyle: "short"
+      };
+      this.__dateFormatter = Services.intl.createDateTimeFormat(undefined, dtOptions);
     }
     return this.__dateFormatter;
   },
@@ -784,8 +781,11 @@ PlacesTreeView.prototype = {
       return;
 
     let column = this._findColumnByType(aColumnType);
-    if (column && !column.element.hidden)
+    if (column && !column.element.hidden) {
+      if (aColumnType == this.COLUMN_TYPE_TITLE)
+        this._tree.removeImageCacheEntry(row, column);
       this._tree.invalidateCell(row, column);
+    }
 
     // Last modified time is altered for almost all node changes.
     if (aColumnType != this.COLUMN_TYPE_LASTMODIFIED) {
@@ -816,7 +816,7 @@ PlacesTreeView.prototype = {
     this._invalidateCellValue(aNode, this.COLUMN_TYPE_TITLE);
   },
 
-  nodeURIChanged: function PTV_nodeURIChanged(aNode, aNewURI) {
+  nodeURIChanged: function PTV_nodeURIChanged(aNode, aOldURI) {
     this._invalidateCellValue(aNode, this.COLUMN_TYPE_URI);
   },
 
@@ -825,8 +825,8 @@ PlacesTreeView.prototype = {
   },
 
   nodeHistoryDetailsChanged:
-  function PTV_nodeHistoryDetailsChanged(aNode, aUpdatedVisitDate,
-                                         aUpdatedVisitCount) {
+  function PTV_nodeHistoryDetailsChanged(aNode, aOldVisitDate,
+                                         aOldVisitCount) {
     if (aNode.parent && this._controller.hasCachedLivemarkInfo(aNode.parent)) {
       // Find the node in the parent.
       let parentRow = this._flatList ? 0 : this._getRowForNode(aNode.parent);

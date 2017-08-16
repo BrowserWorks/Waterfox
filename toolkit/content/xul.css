@@ -23,6 +23,10 @@
 @namespace html url("http://www.w3.org/1999/xhtml"); /* namespace for HTML elements */
 @namespace xbl url("http://www.mozilla.org/xbl"); /* namespace for XBL elements */
 
+:root {
+  --animation-easing-function: cubic-bezier(.07, .95, 0, 1);
+}
+
 /* ::::::::::
    :: Rules for 'hiding' portions of the chrome for special
    :: kinds of windows (not JUST browser windows) with toolbars
@@ -196,7 +200,10 @@ notificationbox {
 
 notification {
   -moz-binding: url("chrome://global/content/bindings/notification.xml#notification");
-  transition: margin-top 300ms, opacity 300ms;
+}
+
+notification.animated {
+  transition: margin-top 300ms var(--animation-easing-function), opacity 300ms var(--animation-easing-function);
 }
 
 /*********** popup notification ************/
@@ -1214,4 +1221,13 @@ tabmodalprompt {
   -moz-binding: url("chrome://global/content/tabprompts.xml#tabmodalprompt");
   overflow: hidden;
   text-shadow: none;
+}
+
+.button-highlightable-text:not([highlightable="true"]),
+.button-text[highlightable="true"],
+.menulist-highlightable-label:not([highlightable="true"]),
+.menulist-label[highlightable="true"],
+.menu-iconic-highlightable-text:not([highlightable="true"]),
+.menu-iconic-text[highlightable="true"] {
+  display: none;
 }

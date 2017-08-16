@@ -12,7 +12,6 @@
 #include "nsTableColFrame.h"
 #include "nsTableRowFrame.h"
 #include "nsTableRowGroupFrame.h"
-#include "nsTablePainter.h"
 #include "nsStyleContext.h"
 #include "nsStyleConsts.h"
 #include "nsPresContext.h"
@@ -43,8 +42,9 @@ using namespace mozilla::gfx;
 using namespace mozilla::image;
 
 nsTableCellFrame::nsTableCellFrame(nsStyleContext* aContext,
-                                   nsTableFrame* aTableFrame)
-  : nsContainerFrame(aContext)
+                                   nsTableFrame* aTableFrame,
+                                   ClassID aID)
+  : nsContainerFrame(aContext, aID)
   , mDesiredSize(aTableFrame->GetWritingMode())
 {
   mColIndex = 0;
@@ -174,8 +174,8 @@ nsTableCellFrame::NeedsToObserve(const ReflowInput& aReflowInput)
 
   // We always need to let the percent bsize observer be propagated
   // from a table wrapper frame to an inner table frame.
-  nsIAtom *fType = aReflowInput.mFrame->GetType();
-  if (fType == nsGkAtoms::tableFrame) {
+  LayoutFrameType fType = aReflowInput.mFrame->Type();
+  if (fType == LayoutFrameType::Table) {
     return true;
   }
 
@@ -187,7 +187,7 @@ nsTableCellFrame::NeedsToObserve(const ReflowInput& aReflowInput)
   // instead of bsizes for orthogonal children.
   return rs->mFrame == this &&
          (PresContext()->CompatibilityMode() == eCompatibility_NavQuirks ||
-          fType == nsGkAtoms::tableWrapperFrame);
+          fType == LayoutFrameType::TableWrapper);
 }
 
 nsresult
@@ -380,23 +380,9 @@ nsTableCellFrame::PaintBackground(nsRenderingContext& aRenderingContext,
   nsRect rect(aPt, GetSize());
   nsCSSRendering::PaintBGParams params =
     nsCSSRendering::PaintBGParams::ForAllLayers(*PresContext(),
-                                                aRenderingContext,
                                                 aDirtyRect, rect,
                                                 this, aFlags);
-  return nsCSSRendering::PaintStyleImageLayer(params);
-}
-
-// Called by nsTablePainter
-DrawResult
-nsTableCellFrame::PaintCellBackground(nsRenderingContext& aRenderingContext,
-                                      const nsRect& aDirtyRect, nsPoint aPt,
-                                      uint32_t aFlags)
-{
-  if (!StyleVisibility()->IsVisible()) {
-    return DrawResult::SUCCESS;
-  }
-
-  return PaintBackground(aRenderingContext, aDirtyRect, aPt, aFlags);
+  return nsCSSRendering::PaintStyleImageLayer(params, aRenderingContext);
 }
 
 nsresult
@@ -490,70 +476,50 @@ nsTableCellFrame::BuildDisplayList(nsDisplayListBuilder*   aBuilder,
                                    const nsDisplayListSet& aLists)
 {
   DO_GLOBAL_REFLOW_COUNT_DSP("nsTableCellFrame");
-  if (IsVisibleInSelection(aBuilder)) {
-    nsTableFrame* tableFrame = GetTableFrame();
-    int32_t emptyCellStyle = GetContentEmpty() && !tableFrame->IsBorderCollapse() ?
-                                StyleTableBorder()->mEmptyCells
-                                : NS_STYLE_TABLE_EMPTY_CELLS_SHOW;
-    // take account of 'empty-cells'
-    if (StyleVisibility()->IsVisible() &&
-        (NS_STYLE_TABLE_EMPTY_CELLS_HIDE != emptyCellStyle)) {
-      // display outset box-shadows if we need to.
-      bool hasBoxShadow = !!StyleEffects()->mBoxShadow;
-      if (hasBoxShadow) {
-        aLists.BorderBackground()->AppendNewToTop(
-          new (aBuilder) nsDisplayBoxShadowOuter(aBuilder, this));
-      }
-    
-      // display background if we need to.
-      if (aBuilder->IsForEventDelivery() ||
-          !StyleBackground()->IsTransparent(this) ||
-          StyleDisplay()->mAppearance) {
-        if (!tableFrame->IsBorderCollapse()) {
-          nsDisplayBackgroundImage::AppendBackgroundItemsToTop(aBuilder,
-              this,
-              GetRectRelativeToSelf(),
-              aLists.BorderBackground());
-        } else if (aBuilder->IsAtRootOfPseudoStackingContext() ||
-                   aBuilder->IsForEventDelivery()) {
-          // The cell background was not painted by the nsTablePainter,
-          // so we need to do it. We have special background processing here
-          // so we need to duplicate some code from nsFrame::DisplayBorderBackgroundOutline
-          nsDisplayTableItem* item =
-            new (aBuilder) nsDisplayTableCellBackground(aBuilder, this);
-          aLists.BorderBackground()->AppendNewToTop(item);
-          item->UpdateForFrameBackground(this);
-        } else {
-          // The nsTablePainter will paint our background. Make sure it
-          // knows if we're background-attachment:fixed.
-          nsDisplayTableItem* currentItem = aBuilder->GetCurrentTableItem();
-          if (currentItem) {
-            currentItem->UpdateForFrameBackground(this);
-          }
-        }
-      }
-    
-      // display inset box-shadows if we need to.
-      if (hasBoxShadow) {
-        aLists.BorderBackground()->AppendNewToTop(
-          new (aBuilder) nsDisplayBoxShadowInner(aBuilder, this));
-      }
-    
-      // display borders if we need to
-      ProcessBorders(tableFrame, aBuilder, aLists);
-    
-      // and display the selection border if we need to
-      if (IsSelected()) {
-        aLists.BorderBackground()->AppendNewToTop(new (aBuilder)
-          nsDisplayGeneric(aBuilder, this, ::PaintTableCellSelection,
-                           "TableCellSelection",
-                           nsDisplayItem::TYPE_TABLE_CELL_SELECTION));
-      }
+  nsTableFrame* tableFrame = GetTableFrame();
+  int32_t emptyCellStyle = GetContentEmpty() && !tableFrame->IsBorderCollapse() ?
+                              StyleTableBorder()->mEmptyCells
+                              : NS_STYLE_TABLE_EMPTY_CELLS_SHOW;
+  // take account of 'empty-cells'
+  if (StyleVisibility()->IsVisible() &&
+      (NS_STYLE_TABLE_EMPTY_CELLS_HIDE != emptyCellStyle)) {
+    // display outset box-shadows if we need to.
+    bool hasBoxShadow = !!StyleEffects()->mBoxShadow;
+    if (hasBoxShadow) {
+      aLists.BorderBackground()->AppendNewToTop(
+        new (aBuilder) nsDisplayBoxShadowOuter(aBuilder, this));
     }
-    
-    // the 'empty-cells' property has no effect on 'outline'
-    DisplayOutline(aBuilder, aLists);
+
+    // display background if we need to.
+    if (aBuilder->IsForEventDelivery() ||
+        !StyleBackground()->IsTransparent(this) ||
+        StyleDisplay()->mAppearance) {
+      nsDisplayBackgroundImage::AppendBackgroundItemsToTop(aBuilder,
+          this,
+          GetRectRelativeToSelf(),
+          aLists.BorderBackground());
+    }
+
+    // display inset box-shadows if we need to.
+    if (hasBoxShadow) {
+      aLists.BorderBackground()->AppendNewToTop(
+        new (aBuilder) nsDisplayBoxShadowInner(aBuilder, this));
+    }
+
+    // display borders if we need to
+    ProcessBorders(tableFrame, aBuilder, aLists);
+
+    // and display the selection border if we need to
+    if (IsSelected()) {
+      aLists.BorderBackground()->AppendNewToTop(new (aBuilder)
+        nsDisplayGeneric(aBuilder, this, ::PaintTableCellSelection,
+                         "TableCellSelection",
+                         nsDisplayItem::TYPE_TABLE_CELL_SELECTION));
+    }
   }
+
+  // the 'empty-cells' property has no effect on 'outline'
+  DisplayOutline(aBuilder, aLists);
 
   // Push a null 'current table item' so that descendant tables can't
   // accidentally mess with our table
@@ -712,13 +678,12 @@ nsTableCellFrame::CellHasVisibleContent(nscoord       height,
   if (tableFrame->IsBorderCollapse())
     return true;
   for (nsIFrame* innerFrame : kidFrame->PrincipalChildList()) {
-    nsIAtom* frameType = innerFrame->GetType();
-    if (nsGkAtoms::textFrame == frameType) {
-       nsTextFrame* textFrame = static_cast<nsTextFrame*>(innerFrame);
-       if (textFrame->HasNoncollapsedCharacters())
-         return true;
-    }
-    else if (nsGkAtoms::placeholderFrame != frameType) {
+    LayoutFrameType frameType = innerFrame->Type();
+    if (LayoutFrameType::Text == frameType) {
+      nsTextFrame* textFrame = static_cast<nsTextFrame*>(innerFrame);
+      if (textFrame->HasNoncollapsedCharacters())
+        return true;
+    } else if (LayoutFrameType::Placeholder != frameType) {
       return true;
     }
     else {
@@ -1098,12 +1063,6 @@ nsTableCellFrame::GetBorderWidth(WritingMode aWM) const
   return LogicalMargin(aWM, StyleBorder()->GetComputedBorder());
 }
 
-nsIAtom*
-nsTableCellFrame::GetType() const
-{
-  return nsGkAtoms::tableCellFrame;
-}
-
 void
 nsTableCellFrame::DoUpdateStyleOfOwnedAnonBoxes(ServoStyleSet& aStyleSet,
                                                 nsStyleChangeList& aChangeList,
@@ -1127,7 +1086,7 @@ nsTableCellFrame::GetFrameName(nsAString& aResult) const
 
 nsBCTableCellFrame::nsBCTableCellFrame(nsStyleContext* aContext,
                                        nsTableFrame* aTableFrame)
-  : nsTableCellFrame(aContext, aTableFrame)
+  : nsTableCellFrame(aContext, aTableFrame, kClassID)
 {
   mBStartBorder = mIEndBorder = mBEndBorder = mIStartBorder = 0;
 }
@@ -1136,29 +1095,11 @@ nsBCTableCellFrame::~nsBCTableCellFrame()
 {
 }
 
-nsIAtom*
-nsBCTableCellFrame::GetType() const
-{
-  return nsGkAtoms::bcTableCellFrame;
-}
-
 /* virtual */ nsMargin
 nsBCTableCellFrame::GetUsedBorder() const
 {
   WritingMode wm = GetWritingMode();
   return GetBorderWidth(wm).GetPhysicalMargin(wm);
-}
-
-/* virtual */ bool
-nsBCTableCellFrame::GetBorderRadii(const nsSize& aFrameSize,
-                                   const nsSize& aBorderArea,
-                                   Sides aSkipSides,
-                                   nscoord aRadii[8]) const
-{
-  NS_FOR_CSS_HALF_CORNERS(corner) {
-    aRadii[corner] = 0;
-  }
-  return false;
 }
 
 #ifdef DEBUG_FRAME_DUMP
@@ -1248,9 +1189,9 @@ nsBCTableCellFrame::PaintBackground(nsRenderingContext& aRenderingContext,
   nsRect rect(aPt, GetSize());
   nsCSSRendering::PaintBGParams params =
     nsCSSRendering::PaintBGParams::ForAllLayers(*PresContext(),
-                                                aRenderingContext, aDirtyRect,
+                                                aDirtyRect,
                                                 rect, this,
                                                 aFlags);
-  return nsCSSRendering::PaintStyleImageLayerWithSC(params, StyleContext(),
+  return nsCSSRendering::PaintStyleImageLayerWithSC(params, aRenderingContext, StyleContext(),
                                                     myBorder);
 }

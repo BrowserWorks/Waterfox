@@ -7,6 +7,12 @@
 #ifndef gc_NurseryAwareHashMap_h
 #define gc_NurseryAwareHashMap_h
 
+#include "gc/Barrier.h"
+#include "gc/Marking.h"
+#include "js/GCHashTable.h"
+#include "js/GCPolicyAPI.h"
+#include "js/HashTable.h"
+
 namespace js {
 
 namespace detail {
@@ -81,6 +87,7 @@ class NurseryAwareHashMap
     using Lookup = typename MapType::Lookup;
     using Ptr = typename MapType::Ptr;
     using Range = typename MapType::Range;
+    using Entry = typename MapType::Entry;
 
     explicit NurseryAwareHashMap(AllocPolicy a = AllocPolicy()) : map(a) {}
 
@@ -94,10 +101,12 @@ class NurseryAwareHashMap
         explicit Enum(NurseryAwareHashMap& namap) : MapType::Enum(namap.map) {}
     };
     size_t sizeOfExcludingThis(mozilla::MallocSizeOf mallocSizeOf) const {
-        return map.sizeOfExcludingThis(mallocSizeOf);
+        return map.sizeOfExcludingThis(mallocSizeOf) +
+               nurseryEntries.sizeOfExcludingThis(mallocSizeOf);
     }
     size_t sizeOfIncludingThis(mozilla::MallocSizeOf mallocSizeOf) const {
-        return map.sizeOfIncludingThis(mallocSizeOf);
+        return map.sizeOfIncludingThis(mallocSizeOf) +
+               nurseryEntries.sizeOfIncludingThis(mallocSizeOf);
     }
 
     MOZ_MUST_USE bool put(const Key& k, const Value& v) {
@@ -155,6 +164,10 @@ class NurseryAwareHashMap
     void sweep() {
         MOZ_ASSERT(nurseryEntries.empty());
         map.sweep();
+    }
+
+    bool hasNurseryEntries() const {
+        return !nurseryEntries.empty();
     }
 };
 

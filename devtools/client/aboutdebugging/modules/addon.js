@@ -6,6 +6,8 @@
 
 loader.lazyImporter(this, "BrowserToolboxProcess",
   "resource://devtools/client/framework/ToolboxProcess.jsm");
+loader.lazyImporter(this, "AddonManager", "resource://gre/modules/AddonManager.jsm");
+loader.lazyImporter(this, "AddonManagerPrivate", "resource://gre/modules/AddonManager.jsm");
 
 let toolbox = null;
 
@@ -20,4 +22,13 @@ exports.debugAddon = function (addonID) {
       toolbox = null;
     }
   });
+};
+
+exports.uninstallAddon = async function (addonID) {
+  let addon = await AddonManager.getAddonByID(addonID);
+  return addon && addon.uninstall();
+};
+
+exports.isTemporaryID = function (addonID) {
+  return AddonManagerPrivate.isTemporaryInstallID(addonID);
 };

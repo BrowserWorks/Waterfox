@@ -6,7 +6,6 @@
 
 Components.utils.import("resource://gre/modules/Downloads.jsm");
 Components.utils.import("resource://gre/modules/FileUtils.jsm");
-Components.utils.import("resource://gre/modules/Task.jsm");
 Components.utils.import("resource:///modules/ShellService.jsm");
 Components.utils.import("resource:///modules/TransientPrefs.jsm");
 
@@ -17,6 +16,11 @@ XPCOMUtils.defineLazyModuleGetter(this, "OS",
 if (AppConstants.E10S_TESTING_ONLY) {
   XPCOMUtils.defineLazyModuleGetter(this, "UpdateUtils",
                                     "resource://gre/modules/UpdateUtils.jsm");
+}
+
+if (AppConstants.MOZ_DEV_EDITION) {
+  XPCOMUtils.defineLazyModuleGetter(this, "fxAccounts",
+                                    "resource://gre/modules/FxAccounts.jsm");
 }
 
 var gMainPane = {
@@ -40,6 +44,20 @@ var gMainPane = {
         window.setInterval(this.updateSetDefaultBrowser.bind(this), 1000);
       }
     }
+
+    this.buildContentProcessCountMenuList();
+    this.updateDefaultPerformanceSettingsPref();
+
+    let defaultPerformancePref =
+      document.getElementById("browser.preferences.defaultPerformanceSettings.enabled");
+    defaultPerformancePref.addEventListener("change", () => {
+      this.updatePerformanceSettingsBox({duringChangeEvent: true});
+    });
+    this.updatePerformanceSettingsBox({duringChangeEvent: false});
+
+    let performanceSettingsLink = document.getElementById("performanceSettingsLearnMore");
+    let performanceSettingsUrl = Services.urlFormatter.formatURLPref("app.support.baseURL") + "performance";
+    performanceSettingsLink.setAttribute("href", performanceSettingsUrl);
 
     // set up the "use current page" label-changing listener
     this._updateUseCurrentButton();
@@ -121,12 +139,31 @@ var gMainPane = {
 
       OS.File.stat(ignoreSeparateProfile).then(() => separateProfileModeCheckbox.checked = false,
                                                () => separateProfileModeCheckbox.checked = true);
+
+      fxAccounts.getSignedInUser().then(data => {
+        document.getElementById("getStarted").selectedIndex = data ? 1 : 0;
+      });
     }
 
     // Notify observers that the UI is now ready
     Components.classes["@mozilla.org/observer-service;1"]
               .getService(Components.interfaces.nsIObserverService)
-              .notifyObservers(window, "main-pane-loaded", null);
+              .notifyObservers(window, "main-pane-loaded");
+  },
+
+  isE10SEnabled() {
+    let e10sEnabled;
+    try {
+      let e10sStatus = Components.classes["@mozilla.org/supports-PRUint64;1"]
+                         .createInstance(Ci.nsISupportsPRUint64);
+      let appinfo = Services.appinfo.QueryInterface(Ci.nsIObserver);
+      appinfo.observe(e10sStatus, "getE10SBlocked", "");
+      e10sEnabled = e10sStatus.data < 2;
+    } catch (e) {
+      e10sEnabled = false;
+    }
+
+    return e10sEnabled;
   },
   
   // Sets language selector to current locale value
@@ -249,10 +286,17 @@ var gMainPane = {
                   .getService(Ci.nsIWindowMediator);
       let win = wm.getMostRecentWindow("navigator:browser");
 
-      if (win) {
-        let accountsTab = win.gBrowser.addTab("about:accounts?action=signin&entrypoint=dev-edition-setup");
-        win.gBrowser.selectedTab = accountsTab;
-      }
+      fxAccounts.getSignedInUser().then(data => {
+        if (win) {
+          if (data) {
+            // We have a user, open Sync preferences in the same tab
+            win.openUILinkIn("about:preferences#sync", "current");
+            return;
+          }
+          let accountsTab = win.gBrowser.addTab("about:accounts?action=signin&entrypoint=dev-edition-setup");
+          win.gBrowser.selectedTab = accountsTab;
+        }
+      });
     }
   },
 
@@ -409,6 +453,69 @@ var gMainPane = {
     homePage.value = homePage.defaultValue;
   },
 
+  updateDefaultPerformanceSettingsPref() {
+    let defaultPerformancePref =
+      document.getElementById("browser.preferences.defaultPerformanceSettings.enabled");
+    let processCountPref = document.getElementById("dom.ipc.processCount");
+    let accelerationPref = document.getElementById("layers.acceleration.disabled");
+    if (processCountPref.value != processCountPref.defaultValue ||
+        accelerationPref.value != accelerationPref.defaultValue) {
+      defaultPerformancePref.value = false;
+    }
+  },
+
+  updatePerformanceSettingsBox({duringChangeEvent}) {
+    let defaultPerformancePref =
+      document.getElementById("browser.preferences.defaultPerformanceSettings.enabled");
+    let performanceSettings = document.getElementById("performanceSettings");
+    let processCountPref = document.getElementById("dom.ipc.processCount");
+    if (defaultPerformancePref.value) {
+      let accelerationPref = document.getElementById("layers.acceleration.disabled");
+      // Unset the value so process count will be decided by e10s rollout.
+      processCountPref.value = processCountPref.defaultValue;
+      accelerationPref.value = accelerationPref.defaultValue;
+      performanceSettings.hidden = true;
+    } else {
+      let e10sRolloutProcessCountPref =
+        document.getElementById("dom.ipc.processCount.web");
+      // Take the e10s rollout value as the default value (if it exists),
+      // but don't overwrite the user set value.
+      if (duringChangeEvent &&
+          e10sRolloutProcessCountPref.value &&
+          processCountPref.value == processCountPref.defaultValue) {
+        processCountPref.value = e10sRolloutProcessCountPref.value;
+      }
+      performanceSettings.hidden = false;
+    }
+  },
+
+  buildContentProcessCountMenuList() {
+    if (gMainPane.isE10SEnabled()) {
+      let processCountPref = document.getElementById("dom.ipc.processCount");
+      let e10sRolloutProcessCountPref =
+        document.getElementById("dom.ipc.processCount.web");
+      let defaultProcessCount =
+        e10sRolloutProcessCountPref.value || processCountPref.defaultValue;
+      let bundlePreferences = document.getElementById("bundlePreferences");
+      let label = bundlePreferences.getFormattedString("defaultContentProcessCount",
+        [defaultProcessCount]);
+      let contentProcessCount =
+        document.querySelector(`#contentProcessCount > menupopup >
+                                menuitem[value="${defaultProcessCount}"]`);
+      contentProcessCount.label = label;
+
+      document.getElementById("limitContentProcess").disabled = false;
+      document.getElementById("contentProcessCount").disabled = false;
+      document.getElementById("contentProcessCountEnabledDescription").hidden = false;
+      document.getElementById("contentProcessCountDisabledDescription").hidden = true;
+    } else {
+      document.getElementById("limitContentProcess").disabled = true;
+      document.getElementById("contentProcessCount").disabled = true;
+      document.getElementById("contentProcessCountEnabledDescription").hidden = true;
+      document.getElementById("contentProcessCountDisabledDescription").hidden = false;
+    }
+  },
+
   // DOWNLOADS
 
   /*
@@ -464,12 +571,12 @@ var gMainPane = {
   chooseFolder() {
     return this.chooseFolderTask().catch(Components.utils.reportError);
   },
-  chooseFolderTask: Task.async(function* () {
+  async chooseFolderTask() {
     let bundlePreferences = document.getElementById("bundlePreferences");
     let title = bundlePreferences.getString("chooseDownloadFolderTitle");
     let folderListPref = document.getElementById("browser.download.folderList");
-    let currentDirPref = yield this._indexToFolder(folderListPref.value);
-    let defDownloads = yield this._indexToFolder(1);
+    let currentDirPref = await this._indexToFolder(folderListPref.value);
+    let defDownloads = await this._indexToFolder(1);
     let fp = Components.classes["@mozilla.org/filepicker;1"].
              createInstance(Components.interfaces.nsIFilePicker);
 
@@ -483,22 +590,22 @@ var gMainPane = {
       fp.displayDirectory = defDownloads;
     } else {
       // Fall back to Desktop
-      fp.displayDirectory = yield this._indexToFolder(0);
+      fp.displayDirectory = await this._indexToFolder(0);
     }
 
-    let result = yield new Promise(resolve => fp.open(resolve));
+    let result = await new Promise(resolve => fp.open(resolve));
     if (result != Components.interfaces.nsIFilePicker.returnOK) {
       return;
     }
 
     let downloadDirPref = document.getElementById("browser.download.dir");
     downloadDirPref.value = fp.file;
-    folderListPref.value = yield this._folderToIndex(fp.file);
+    folderListPref.value = await this._folderToIndex(fp.file);
     // Note, the real prefs will not be updated yet, so dnld manager's
     // userDownloadsDirectory may not return the right folder after
     // this code executes. displayDownloadDirPref will be called on
     // the assignment above to update the UI.
-  }),
+  },
 
   /**
    * Initializes the download folder display settings based on the user's
@@ -511,7 +618,7 @@ var gMainPane = {
     return undefined;
   },
 
-  displayDownloadDirPrefTask: Task.async(function* () {
+  async displayDownloadDirPrefTask() {
     var folderListPref = document.getElementById("browser.download.folderList");
     var bundlePreferences = document.getElementById("bundlePreferences");
     var downloadFolder = document.getElementById("downloadFolder");
@@ -531,24 +638,15 @@ var gMainPane = {
       iconUrlSpec = fph.getURLSpecFromFile(currentDirPref.value);
     } else if (folderListPref.value == 1) {
       // 'Downloads'
-      // In 1.5, this pointed to a folder we created called 'My Downloads'
-      // and was available as an option in the 1.5 drop down. On XP this
-      // was in My Documents, on OSX it was in User Docs. In 2.0, we did
-      // away with the drop down option, although the special label was
-      // still supported for the folder if it existed. Because it was
-      // not exposed it was rarely used.
-      // With 3.0, a new desktop folder - 'Downloads' was introduced for
-      // platforms and versions that don't support a default system downloads
-      // folder. See nsDownloadManager for details.
       downloadFolder.label = bundlePreferences.getString("downloadsFolderName");
-      iconUrlSpec = fph.getURLSpecFromFile(yield this._indexToFolder(1));
+      iconUrlSpec = fph.getURLSpecFromFile(await this._indexToFolder(1));
     } else {
       // 'Desktop'
       downloadFolder.label = bundlePreferences.getString("desktopFolderName");
-      iconUrlSpec = fph.getURLSpecFromFile(yield this._getDownloadsFolder("Desktop"));
+      iconUrlSpec = fph.getURLSpecFromFile(await this._getDownloadsFolder("Desktop"));
     }
     downloadFolder.image = "moz-icon://" + iconUrlSpec + "?size=16";
-  }),
+  },
 
   /**
    * Returns the textual path of a folder in readable form.
@@ -568,18 +666,18 @@ var gMainPane = {
    *
    * @throws if aFolder is not "Desktop" or "Downloads"
    */
-  _getDownloadsFolder: Task.async(function* (aFolder) {
+  async _getDownloadsFolder(aFolder) {
     switch (aFolder) {
       case "Desktop":
         var fileLoc = Components.classes["@mozilla.org/file/directory_service;1"]
                                     .getService(Components.interfaces.nsIProperties);
         return fileLoc.get("Desk", Components.interfaces.nsILocalFile);
       case "Downloads":
-        let downloadsDir = yield Downloads.getSystemDownloadsDirectory();
+        let downloadsDir = await Downloads.getSystemDownloadsDirectory();
         return new FileUtils.File(downloadsDir);
     }
     throw "ASSERTION FAILED: folder type should be 'Desktop' or 'Downloads'";
-  }),
+  },
 
   /**
    * Determines the type of the given folder.
@@ -591,13 +689,13 @@ var gMainPane = {
    *          1 if aFolder is the Downloads folder,
    *          2 otherwise
    */
-  _folderToIndex: Task.async(function* (aFolder) {
-    if (!aFolder || aFolder.equals(yield this._getDownloadsFolder("Desktop")))
+  async _folderToIndex(aFolder) {
+    if (!aFolder || aFolder.equals(await this._getDownloadsFolder("Desktop")))
       return 0;
-    else if (aFolder.equals(yield this._getDownloadsFolder("Downloads")))
+    else if (aFolder.equals(await this._getDownloadsFolder("Downloads")))
       return 1;
     return 2;
-  }),
+  },
 
   /**
    * Converts an integer into the corresponding folder.
@@ -608,16 +706,16 @@ var gMainPane = {
    *          the Downloads folder if aIndex == 1,
    *          the folder stored in browser.download.dir
    */
-  _indexToFolder: Task.async(function* (aIndex) {
+  async _indexToFolder(aIndex) {
     switch (aIndex) {
       case 0:
-        return yield this._getDownloadsFolder("Desktop");
+        return await this._getDownloadsFolder("Desktop");
       case 1:
-        return yield this._getDownloadsFolder("Downloads");
+        return await this._getDownloadsFolder("Downloads");
     }
     var currentDirPref = document.getElementById("browser.download.dir");
     return currentDirPref.value;
-  }),
+  },
 
   /**
    * Hide/show the "Show my windows and tabs from last time" option based

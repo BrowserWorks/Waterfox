@@ -246,15 +246,15 @@ this.PopupNotifications = function PopupNotifications(tabbrowser, panel,
     }
 
     let doc = this.window.document;
-    let activeElement = doc.activeElement;
+    let focusedElement = Services.focus.focusedElement;
 
     // If the chrome window has a focused element, let it handle the ESC key instead.
-    if (!activeElement ||
-        activeElement == doc.body ||
-        activeElement == this.tabbrowser.selectedBrowser ||
+    if (!focusedElement ||
+        focusedElement == doc.body ||
+        focusedElement == this.tabbrowser.selectedBrowser ||
         // Ignore focused elements inside the notification.
-        getNotificationFromElement(activeElement) == notification ||
-        notification.contains(activeElement)) {
+        getNotificationFromElement(focusedElement) == notification ||
+        notification.contains(focusedElement)) {
       this._onButtonEvent(aEvent, "secondarybuttoncommand", notification);
     }
   };
@@ -365,6 +365,8 @@ PopupNotifications.prototype = {
    *        dismissed:   Whether the notification should be added as a dismissed
    *                     notification. Dismissed notifications can be activated
    *                     by clicking on their anchorElement.
+   *        autofocus:   Whether the notification should be autofocused on
+   *                     showing, stealing focus from any other focused element.
    *        eventCallback:
    *                     Callback to be invoked when the notification changes
    *                     state. The callback's first argument is a string
@@ -476,6 +478,14 @@ PopupNotifications.prototype = {
 
     if (isActiveBrowser) {
       if (isActiveWindow) {
+
+        // Autofocus if the notification requests focus.
+        if (options && !options.dismissed && options.autofocus) {
+          this.panel.removeAttribute("noautofocus");
+        } else {
+          this.panel.setAttribute("noautofocus", "true");
+        }
+
         // show panel now
         this._update(notifications, new Set([notification.anchorElement]), true);
       } else {
@@ -859,6 +869,7 @@ PopupNotifications.prototype = {
         }
       } else {
         popupnotification.setAttribute("checkboxhidden", "true");
+        popupnotification.setAttribute("warninghidden", "true");
       }
 
       this.panel.appendChild(popupnotification);
@@ -1150,6 +1161,11 @@ PopupNotifications.prototype = {
       let anchorElm = notification.anchorElement;
       if (anchorElm) {
         anchorElm.setAttribute(ICON_ATTRIBUTE_SHOWING, "true");
+
+        if (notification.options.extraAttr) {
+          anchorElm.setAttribute("extraAttr", notification.options.extraAttr);
+        }
+
       }
     }
   },
@@ -1329,6 +1345,12 @@ PopupNotifications.prototype = {
       return;
     }
 
+    // We may have removed the "noautofocus" attribute before showing the panel
+    // if the notification specified it wants to autofocus on first show.
+    // When the panel is closed, we have to restore the attribute to its default
+    // value, so we don't autofocus it if it's subsequently opened from a different code path.
+    this.panel.setAttribute("noautofocus", "true");
+
     // Handle the case where the panel was closed programmatically.
     if (this._ignoreDismissal) {
       this._ignoreDismissal.resolve();
@@ -1413,6 +1435,13 @@ PopupNotifications.prototype = {
     }
 
     if (type == "buttoncommand" || type == "secondarybuttoncommand") {
+      if (Services.focus.activeWindow != this.window) {
+        Services.console.logStringMessage("PopupNotifications._onButtonEvent: " +
+                                          "Button click happened before the window was focused");
+        this.window.focus();
+        return;
+      }
+
       let timeSinceShown = this.window.performance.now() - notification.timeShown;
       if (timeSinceShown < this.buttonDelay) {
         Services.console.logStringMessage("PopupNotifications._onButtonEvent: " +
@@ -1479,6 +1508,6 @@ PopupNotifications.prototype = {
   },
 
   _notify: function PopupNotifications_notify(topic) {
-    Services.obs.notifyObservers(null, "PopupNotifications-" + topic, "");
+    Services.obs.notifyObservers(null, "PopupNotifications-" + topic);
   },
 };

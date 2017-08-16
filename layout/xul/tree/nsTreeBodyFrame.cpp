@@ -114,7 +114,7 @@ NS_QUERYFRAME_TAIL_INHERITING(nsLeafBoxFrame)
 
 // Constructor
 nsTreeBodyFrame::nsTreeBodyFrame(nsStyleContext* aContext)
-:nsLeafBoxFrame(aContext),
+:nsLeafBoxFrame(aContext, kClassID),
  mSlots(nullptr),
  mImageCache(),
  mTopRowIndex(0),
@@ -907,6 +907,10 @@ nsTreeBodyFrame::CheckOverflow(const ScrollParts& aParts)
     }
   }
 
+  if (!horizontalOverflowChanged && !verticalOverflowChanged) {
+    return;
+  }
+
   AutoWeakFrame weakFrame(this);
 
   RefPtr<nsPresContext> presContext = PresContext();
@@ -1053,7 +1057,7 @@ nsTreeBodyFrame::GetCellAt(int32_t aX, int32_t aY, int32_t* aRow, nsITreeColumn*
   }
 
   nsTreeColumn* col;
-  nsIAtom* child;
+  nsICSSAnonBoxPseudo* child;
   GetCellAt(point.x, point.y, aRow, &col, &child);
 
   if (col) {
@@ -1105,7 +1109,7 @@ nsTreeBodyFrame::GetCoordsForCellItem(int32_t aRow, nsITreeColumn* aCol, const n
   bool isRTL = StyleVisibility()->mDirection == NS_STYLE_DIRECTION_RTL;
   nscoord currX = mInnerBox.x - mHorzPosition;
 
-  // The Rect for the requested item. 
+  // The Rect for the requested item.
   nsRect theRect;
 
   nsPresContext* presContext = PresContext();
@@ -1480,7 +1484,7 @@ nsTreeBodyFrame::AdjustForCellText(nsAutoString& aText,
   aTextRect.width = width;
 }
 
-nsIAtom*
+nsICSSAnonBoxPseudo*
 nsTreeBodyFrame::GetItemWithinCellAt(nscoord aX, const nsRect& aCellRect, 
                                      int32_t aRowIndex,
                                      nsTreeColumn* aColumn)
@@ -1630,7 +1634,8 @@ nsTreeBodyFrame::GetItemWithinCellAt(nscoord aX, const nsRect& aCellRect,
 
 void
 nsTreeBodyFrame::GetCellAt(nscoord aX, nscoord aY, int32_t* aRow,
-                           nsTreeColumn** aCol, nsIAtom** aChildElt)
+                           nsTreeColumn** aCol,
+                           nsICSSAnonBoxPseudo** aChildElt)
 {
   *aCol = nullptr;
   *aChildElt = nullptr;
@@ -1796,7 +1801,7 @@ nsTreeBodyFrame::MarkDirtyIfSelect()
 nsresult
 nsTreeBodyFrame::CreateTimer(const LookAndFeel::IntID aID,
                              nsTimerCallbackFunc aFunc, int32_t aType,
-                             nsITimer** aTimer)
+                             nsITimer** aTimer, const char* aName)
 {
   // Get the delay from the look and feel service.
   int32_t delay = LookAndFeel::GetInt(aID, 0);
@@ -1807,8 +1812,11 @@ nsTreeBodyFrame::CreateTimer(const LookAndFeel::IntID aID,
   // Zero value means that this feature is completely disabled.
   if (delay > 0) {
     timer = do_CreateInstance("@mozilla.org/timer;1");
-    if (timer)
-      timer->InitWithFuncCallback(aFunc, this, delay, aType);
+    if (timer) {
+      timer->SetTarget(
+          mContent->OwnerDoc()->EventTargetFor(TaskCategory::Other));
+      timer->InitWithNamedFuncCallback(aFunc, this, delay, aType, aName);
+    }
   }
 
   NS_IF_ADDREF(*aTimer = timer);
@@ -2521,7 +2529,7 @@ nsTreeBodyFrame::GetCursor(const nsPoint& aPoint,
   if (mView && GetContent()->GetComposedDoc()->GetScriptHandlingObject(dummy)) {
     int32_t row;
     nsTreeColumn* col;
-    nsIAtom* child;
+    nsICSSAnonBoxPseudo* child;
     GetCellAt(aPoint.x, aPoint.y, &row, &col, &child);
 
     if (child) {
@@ -2642,7 +2650,8 @@ nsTreeBodyFrame::HandleEvent(nsPresContext* aPresContext,
         // Set a timer to trigger the tree scrolling.
         CreateTimer(LookAndFeel::eIntID_TreeLazyScrollDelay,
                     LazyScrollCallback, nsITimer::TYPE_ONE_SHOT,
-                    getter_AddRefs(mSlots->mTimer));
+                    getter_AddRefs(mSlots->mTimer),
+                    "nsTreeBodyFrame::LazyScrollCallback");
        }
 #endif
       // Bail out to prevent spring loaded timer and feedback line settings.
@@ -2680,7 +2689,8 @@ nsTreeBodyFrame::HandleEvent(nsPresContext* aPresContext,
               // This node isn't expanded, set a timer to expand it.
               CreateTimer(LookAndFeel::eIntID_TreeOpenDelay,
                           OpenCallback, nsITimer::TYPE_ONE_SHOT,
-                          getter_AddRefs(mSlots->mTimer));
+                          getter_AddRefs(mSlots->mTimer),
+                          "nsTreeBodyFrame::OpenCallback");
             }
           }
         }
@@ -2754,7 +2764,8 @@ nsTreeBodyFrame::HandleEvent(nsPresContext* aPresContext,
       // Close all spring loaded folders except the drop folder.
       CreateTimer(LookAndFeel::eIntID_TreeCloseDelay,
                   CloseCallback, nsITimer::TYPE_ONE_SHOT,
-                  getter_AddRefs(mSlots->mTimer));
+                  getter_AddRefs(mSlots->mTimer),
+                  "nsTreeBodyFrame::CloseCallback");
     }
   }
 
@@ -2798,11 +2809,12 @@ public:
   virtual void Paint(nsDisplayListBuilder* aBuilder,
                      nsRenderingContext* aCtx) override
   {
+    MOZ_ASSERT(aBuilder);
     DrawTargetAutoDisableSubpixelAntialiasing disable(aCtx->GetDrawTarget(),
                                                       mDisableSubpixelAA);
 
     DrawResult result = static_cast<nsTreeBodyFrame*>(mFrame)
-      ->PaintTreeBody(*aCtx, mVisibleRect, ToReferenceFrame());
+      ->PaintTreeBody(*aCtx, mVisibleRect, ToReferenceFrame(), aBuilder);
 
     nsDisplayItemGenericImageGeometry::UpdateDrawResult(this, result);
   }
@@ -2892,7 +2904,8 @@ nsTreeBodyFrame::BuildDisplayList(nsDisplayListBuilder*   aBuilder,
 
 DrawResult
 nsTreeBodyFrame::PaintTreeBody(nsRenderingContext& aRenderingContext,
-                               const nsRect& aDirtyRect, nsPoint aPt)
+                               const nsRect& aDirtyRect, nsPoint aPt,
+                               nsDisplayListBuilder* aBuilder)
 {
   // Update our available height and our page count.
   CalcInnerBox();
@@ -2947,8 +2960,8 @@ nsTreeBodyFrame::PaintTreeBody(nsRenderingContext& aRenderingContext,
     nsRect dirtyRect;
     if (dirtyRect.IntersectRect(aDirtyRect, rowRect + aPt) &&
         rowRect.y < (mInnerBox.y+mInnerBox.height)) {
-      result &=
-        PaintRow(i, rowRect + aPt, PresContext(), aRenderingContext, aDirtyRect, aPt);
+      result &= PaintRow(i, rowRect + aPt, PresContext(), aRenderingContext,
+                         aDirtyRect, aPt, aBuilder);
     }
   }
 
@@ -3005,12 +3018,13 @@ nsTreeBodyFrame::PaintColumn(nsTreeColumn*        aColumn,
 }
 
 DrawResult
-nsTreeBodyFrame::PaintRow(int32_t              aRowIndex,
-                          const nsRect&        aRowRect,
-                          nsPresContext*       aPresContext,
-                          nsRenderingContext& aRenderingContext,
-                          const nsRect&        aDirtyRect,
-                          nsPoint              aPt)
+nsTreeBodyFrame::PaintRow(int32_t               aRowIndex,
+                          const nsRect&         aRowRect,
+                          nsPresContext*        aPresContext,
+                          nsRenderingContext&   aRenderingContext,
+                          const nsRect&         aDirtyRect,
+                          nsPoint               aPt,
+                          nsDisplayListBuilder* aBuilder)
 {
   // We have been given a rect for our row.  We treat this row like a full-blown
   // frame, meaning that it can have borders, margins, padding, and a background.
@@ -3095,7 +3109,8 @@ nsTreeBodyFrame::PaintRow(int32_t              aRowIndex,
                          cellRect.width, originalRowRect.height);
         if (dirtyRect.IntersectRect(aDirtyRect, checkRect)) {
           result &= PaintCell(aRowIndex, primaryCol, cellRect, aPresContext,
-                              aRenderingContext, aDirtyRect, primaryX, aPt);
+                              aRenderingContext, aDirtyRect, primaryX, aPt,
+                              aBuilder);
         }
       }
 
@@ -3161,7 +3176,8 @@ nsTreeBodyFrame::PaintRow(int32_t              aRowIndex,
         nscoord dummy;
         if (dirtyRect.IntersectRect(aDirtyRect, checkRect))
           result &= PaintCell(aRowIndex, currCol, cellRect, aPresContext,
-                              aRenderingContext, aDirtyRect, dummy, aPt);
+                              aRenderingContext, aDirtyRect, dummy, aPt,
+                              aBuilder);
       }
     }
   }
@@ -3232,14 +3248,15 @@ nsTreeBodyFrame::PaintSeparator(int32_t              aRowIndex,
 }
 
 DrawResult
-nsTreeBodyFrame::PaintCell(int32_t              aRowIndex,
-                           nsTreeColumn*        aColumn,
-                           const nsRect&        aCellRect,
-                           nsPresContext*       aPresContext,
-                           nsRenderingContext& aRenderingContext,
-                           const nsRect&        aDirtyRect,
-                           nscoord&             aCurrX,
-                           nsPoint              aPt)
+nsTreeBodyFrame::PaintCell(int32_t               aRowIndex,
+                           nsTreeColumn*         aColumn,
+                           const nsRect&         aCellRect,
+                           nsPresContext*        aPresContext,
+                           nsRenderingContext&   aRenderingContext,
+                           const nsRect&         aDirtyRect,
+                           nscoord&              aCurrX,
+                           nsPoint               aPt,
+                           nsDisplayListBuilder* aBuilder)
 {
   NS_PRECONDITION(aColumn && aColumn->GetFrame(), "invalid column passed");
 
@@ -3393,7 +3410,7 @@ nsTreeBodyFrame::PaintCell(int32_t              aRowIndex,
   if (dirtyRect.IntersectRect(aDirtyRect, iconRect)) {
     result &= PaintImage(aRowIndex, aColumn, iconRect, aPresContext,
                          aRenderingContext, aDirtyRect, remainingWidth,
-                         currX);
+                         currX, aBuilder);
   }
 
   // Now paint our element, but only if we aren't a cycler column.
@@ -3421,7 +3438,7 @@ nsTreeBodyFrame::PaintCell(int32_t              aRowIndex,
             case nsITreeView::PROGRESS_UNDETERMINED:
               result &= PaintProgressMeter(aRowIndex, aColumn, elementRect,
                                            aPresContext, aRenderingContext,
-                                           aDirtyRect);
+                                           aDirtyRect, aBuilder);
               break;
             case nsITreeView::PROGRESS_NONE:
             default:
@@ -3541,14 +3558,15 @@ nsTreeBodyFrame::PaintTwisty(int32_t              aRowIndex,
 }
 
 DrawResult
-nsTreeBodyFrame::PaintImage(int32_t              aRowIndex,
-                            nsTreeColumn*        aColumn,
-                            const nsRect&        aImageRect,
-                            nsPresContext*       aPresContext,
-                            nsRenderingContext& aRenderingContext,
-                            const nsRect&        aDirtyRect,
-                            nscoord&             aRemainingWidth,
-                            nscoord&             aCurrX)
+nsTreeBodyFrame::PaintImage(int32_t               aRowIndex,
+                            nsTreeColumn*         aColumn,
+                            const nsRect&         aImageRect,
+                            nsPresContext*        aPresContext,
+                            nsRenderingContext&   aRenderingContext,
+                            const nsRect&         aDirtyRect,
+                            nscoord&              aRemainingWidth,
+                            nscoord&              aCurrX,
+                            nsDisplayListBuilder* aBuilder)
 {
   NS_PRECONDITION(aColumn && aColumn->GetFrame(), "invalid column passed");
 
@@ -3695,11 +3713,12 @@ nsTreeBodyFrame::PaintImage(int32_t              aRowIndex,
       ctx->PushGroupForBlendBack(gfxContentType::COLOR_ALPHA, opacity);
     }
 
+    uint32_t drawFlags = aBuilder && aBuilder->IsPaintingToWindow() ?
+      imgIContainer::FLAG_HIGH_QUALITY_SCALING : imgIContainer::FLAG_NONE;
     result &=
       nsLayoutUtils::DrawImage(*ctx, aPresContext, image,
         nsLayoutUtils::GetSamplingFilterForFrame(this),
-        wholeImageDest, destRect, destRect.TopLeft(), aDirtyRect,
-        imgIContainer::FLAG_NONE);
+        wholeImageDest, destRect, destRect.TopLeft(), aDirtyRect, drawFlags);
 
     if (opacity != 1.0f) {
       ctx->PopGroupAndBlend();
@@ -3929,12 +3948,13 @@ nsTreeBodyFrame::PaintCheckbox(int32_t              aRowIndex,
 }
 
 DrawResult
-nsTreeBodyFrame::PaintProgressMeter(int32_t              aRowIndex,
-                                    nsTreeColumn*        aColumn,
-                                    const nsRect&        aProgressMeterRect,
-                                    nsPresContext*      aPresContext,
-                                    nsRenderingContext& aRenderingContext,
-                                    const nsRect&        aDirtyRect)
+nsTreeBodyFrame::PaintProgressMeter(int32_t               aRowIndex,
+                                    nsTreeColumn*         aColumn,
+                                    const nsRect&         aProgressMeterRect,
+                                    nsPresContext*        aPresContext,
+                                    nsRenderingContext&   aRenderingContext,
+                                    const nsRect&         aDirtyRect,
+                                    nsDisplayListBuilder* aBuilder)
 {
   NS_PRECONDITION(aColumn && aColumn->GetFrame(), "invalid column passed");
 
@@ -3986,12 +4006,14 @@ nsTreeBodyFrame::PaintProgressMeter(int32_t              aRowIndex,
       image->GetHeight(&height);
       nsSize size(width*nsDeviceContext::AppUnitsPerCSSPixel(),
                   height*nsDeviceContext::AppUnitsPerCSSPixel());
+      uint32_t drawFlags = aBuilder && aBuilder->IsPaintingToWindow() ?
+        imgIContainer::FLAG_HIGH_QUALITY_SCALING : imgIContainer::FLAG_NONE;
       result &=
         nsLayoutUtils::DrawImage(*aRenderingContext.ThebesContext(),
           aPresContext, image,
           nsLayoutUtils::GetSamplingFilterForFrame(this),
           nsRect(meterRect.TopLeft(), size), meterRect, meterRect.TopLeft(),
-          aDirtyRect, imgIContainer::FLAG_NONE);
+          aDirtyRect, drawFlags);
     } else {
       DrawTarget* drawTarget = aRenderingContext.GetDrawTarget();
       int32_t appUnitsPerDevPixel = PresContext()->AppUnitsPerDevPixel();
@@ -4014,12 +4036,14 @@ nsTreeBodyFrame::PaintProgressMeter(int32_t              aRowIndex,
       image->GetHeight(&height);
       nsSize size(width*nsDeviceContext::AppUnitsPerCSSPixel(),
                   height*nsDeviceContext::AppUnitsPerCSSPixel());
+      uint32_t drawFlags = aBuilder && aBuilder->IsPaintingToWindow() ?
+        imgIContainer::FLAG_HIGH_QUALITY_SCALING : imgIContainer::FLAG_NONE;
       result &=
         nsLayoutUtils::DrawImage(*aRenderingContext.ThebesContext(),
           aPresContext, image,
           nsLayoutUtils::GetSamplingFilterForFrame(this),
           nsRect(meterRect.TopLeft(), size), meterRect, meterRect.TopLeft(),
-          aDirtyRect, imgIContainer::FLAG_NONE);
+          aDirtyRect, drawFlags);
     }
   }
 
@@ -4145,11 +4169,11 @@ nsTreeBodyFrame::PaintBackgroundLayer(nsStyleContext*      aStyleContext,
 {
   const nsStyleBorder* myBorder = aStyleContext->StyleBorder();
   nsCSSRendering::PaintBGParams params =
-    nsCSSRendering::PaintBGParams::ForAllLayers(*aPresContext, aRenderingContext,
+    nsCSSRendering::PaintBGParams::ForAllLayers(*aPresContext,
                                                 aDirtyRect, aRect, this,
                                                 nsCSSRendering::PAINTBG_SYNC_DECODE_IMAGES);
   DrawResult result =
-    nsCSSRendering::PaintStyleImageLayerWithSC(params, aStyleContext,
+    nsCSSRendering::PaintStyleImageLayerWithSC(params, aRenderingContext, aStyleContext,
                                                *myBorder);
 
   result &=
@@ -4465,7 +4489,7 @@ nsTreeBodyFrame::ThumbMoved(nsScrollbarFrame* aScrollbar,
 
 // The style cache.
 nsStyleContext*
-nsTreeBodyFrame::GetPseudoStyleContext(nsIAtom* aPseudoElement)
+nsTreeBodyFrame::GetPseudoStyleContext(nsICSSAnonBoxPseudo* aPseudoElement)
 {
   return mStyleCache.GetStyleContext(this, PresContext(), mContent,
                                      mStyleContext, aPseudoElement,
@@ -4516,6 +4540,22 @@ nsTreeBodyFrame::ClearStyleAndImageCaches()
   mStyleCache.Clear();
   CancelImageRequests();
   mImageCache.Clear();
+  return NS_OK;
+}
+
+nsresult
+nsTreeBodyFrame::RemoveImageCacheEntry(int32_t aRowIndex, nsITreeColumn* aCol)
+{
+  nsAutoString imageSrc;
+  if (NS_SUCCEEDED(mView->GetImageSrc(aRowIndex, aCol, imageSrc))) {
+    nsTreeImageCacheEntry entry;
+    if (mImageCache.Get(imageSrc, &entry)) {
+      nsLayoutUtils::DeregisterImageRequest(PresContext(), entry.request,
+                                            nullptr);
+      entry.request->CancelAndForgetObserver(NS_BINDING_ABORTED);
+      mImageCache.Remove(imageSrc);
+    }
+  }
   return NS_OK;
 }
 
@@ -4691,7 +4731,8 @@ nsTreeBodyFrame::LazyScrollCallback(nsITimer *aTimer, void *aClosure)
       // Set a new timer to scroll the tree repeatedly.
       self->CreateTimer(LookAndFeel::eIntID_TreeScrollDelay,
                         ScrollCallback, nsITimer::TYPE_REPEATING_SLACK,
-                        getter_AddRefs(self->mSlots->mTimer));
+                        getter_AddRefs(self->mSlots->mTimer),
+                        "nsTreeBodyFrame::ScrollCallback");
       self->ScrollByLines(self->mSlots->mScrollLines);
       // ScrollByLines may have deleted |self|.
     }
@@ -4740,11 +4781,14 @@ nsTreeBodyFrame::PostScrollEvent()
   if (mScrollEvent.IsPending())
     return;
 
-  RefPtr<ScrollEvent> ev = new ScrollEvent(this);
-  if (NS_FAILED(NS_DispatchToCurrentThread(ev))) {
+  RefPtr<ScrollEvent> event = new ScrollEvent(this);
+  nsresult rv = mContent->OwnerDoc()->Dispatch("ScrollEvent",
+                                               TaskCategory::Other,
+                                               do_AddRef(event));
+  if (NS_FAILED(rv)) {
     NS_WARNING("failed to dispatch ScrollEvent");
   } else {
-    mScrollEvent = ev;
+    mScrollEvent = event;
   }
 }
 
@@ -4931,7 +4975,9 @@ nsTreeBodyFrame::FullScrollbarsUpdate(bool aNeedsFullInvalidation)
   if (!mCheckingOverflow) {
     nsContentUtils::AddScriptRunner(checker);
   } else {
-    NS_DispatchToCurrentThread(checker);
+    mContent->OwnerDoc()->Dispatch("nsOverflowChecker",
+                                   TaskCategory::Other,
+                                   checker.forget());
   }
   return weakFrame.IsAlive();
 }

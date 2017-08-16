@@ -237,6 +237,7 @@ class JSFunction : public js::NativeObject
     }
 
     bool isBuiltinFunctionConstructor();
+    bool needsPrototypeProperty();
 
     /* Returns the strictness of this function, which must be interpreted. */
     bool strict() const {
@@ -311,7 +312,8 @@ class JSFunction : public js::NativeObject
     static bool getUnresolvedLength(JSContext* cx, js::HandleFunction fun,
                                     js::MutableHandleValue v);
 
-    JSAtom* getUnresolvedName(JSContext* cx);
+    static bool getUnresolvedName(JSContext* cx, js::HandleFunction fun,
+                                  js::MutableHandleAtom v);
 
     JSAtom* explicitName() const {
         return (hasCompileTimeName() || hasGuessedAtom()) ? nullptr : atom_.get();
@@ -339,6 +341,7 @@ class JSFunction : public js::NativeObject
         MOZ_ASSERT(atom);
         MOZ_ASSERT(!hasGuessedAtom());
         MOZ_ASSERT(!isClassConstructor());
+        MOZ_ASSERT(js::AtomIsMarked(zone(), atom));
         atom_ = atom;
         flags_ |= HAS_COMPILE_TIME_NAME;
     }
@@ -353,6 +356,7 @@ class JSFunction : public js::NativeObject
         MOZ_ASSERT(atom);
         MOZ_ASSERT(!hasCompileTimeName());
         MOZ_ASSERT(!hasGuessedAtom());
+        MOZ_ASSERT(js::AtomIsMarked(zone(), atom));
         atom_ = atom;
         flags_ |= HAS_GUESSED_ATOM;
     }
@@ -578,6 +582,10 @@ class JSFunction : public js::NativeObject
         return offsetof(JSFunction, u.nativeOrScript);
     }
 
+    static unsigned offsetOfJitInfo() {
+        return offsetof(JSFunction, u.n.jitinfo);
+    }
+
     inline void trace(JSTracer* trc);
 
     /* Bound function accessors. */
@@ -648,6 +656,9 @@ Generator(JSContext* cx, unsigned argc, Value* vp);
 
 extern bool
 AsyncFunctionConstructor(JSContext* cx, unsigned argc, Value* vp);
+
+extern bool
+AsyncGeneratorConstructor(JSContext* cx, unsigned argc, Value* vp);
 
 // Allocate a new function backed by a JSNative.  Note that by default this
 // creates a singleton object.

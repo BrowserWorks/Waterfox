@@ -6,75 +6,8 @@
 
 "use strict";
 
-const { Cu, Cc, Ci } = require("chrome");
+const { Cu } = require("chrome");
 const Services = require("Services");
-const { getMostRecentBrowserWindow } = require("sdk/window/utils");
-
-const OPEN_FLAGS = {
-  RDONLY: parseInt("0x01", 16),
-  WRONLY: parseInt("0x02", 16),
-  CREATE_FILE: parseInt("0x08", 16),
-  APPEND: parseInt("0x10", 16),
-  TRUNCATE: parseInt("0x20", 16),
-  EXCL: parseInt("0x80", 16)
-};
-
-/**
- * Open File Save As dialog and let the user to pick proper file location.
- */
-exports.getTargetFile = function () {
-  return new Promise(resolve => {
-    let fp = Cc["@mozilla.org/filepicker;1"].createInstance(Ci.nsIFilePicker);
-
-    let win = getMostRecentBrowserWindow();
-    fp.init(win, null, Ci.nsIFilePicker.modeSave);
-    fp.appendFilter("JSON Files", "*.json; *.jsonp;");
-    fp.appendFilters(Ci.nsIFilePicker.filterText);
-    fp.appendFilters(Ci.nsIFilePicker.filterAll);
-    fp.filterIndex = 0;
-
-    fp.open(rv => {
-      if (rv == Ci.nsIFilePicker.returnOK || rv == Ci.nsIFilePicker.returnReplace) {
-        resolve(fp.file);
-      } else {
-        resolve(null);
-      }
-    });
-  });
-};
-
-/**
- * Save JSON to a file
- */
-exports.saveToFile = function (file, jsonString) {
-  let foStream = Cc["@mozilla.org/network/file-output-stream;1"]
-    .createInstance(Ci.nsIFileOutputStream);
-
-  // write, create, truncate
-  let openFlags = OPEN_FLAGS.WRONLY | OPEN_FLAGS.CREATE_FILE |
-    OPEN_FLAGS.TRUNCATE;
-
-  let permFlags = parseInt("0666", 8);
-  foStream.init(file, openFlags, permFlags, 0);
-
-  let converter = Cc["@mozilla.org/intl/converter-output-stream;1"]
-    .createInstance(Ci.nsIConverterOutputStream);
-
-  converter.init(foStream, "UTF-8", 0, 0);
-
-  // The entire jsonString can be huge so, write the data in chunks.
-  let chunkLength = 1024 * 1204;
-  for (let i = 0; i <= jsonString.length; i++) {
-    let data = jsonString.substr(i, chunkLength + 1);
-    if (data) {
-      converter.writeString(data);
-    }
-    i = i + chunkLength;
-  }
-
-  // this closes foStream
-  converter.close();
-};
 
 /**
  * Get the current theme from preferences.
@@ -99,6 +32,8 @@ exports.exportIntoContentScope = function (win, obj, defineAs) {
       Cu.exportFunction(propValue, clone, {
         defineAs: propName
       });
+    } else {
+      clone[propName] = Cu.cloneInto(propValue, win);
     }
   }
 };

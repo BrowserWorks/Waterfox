@@ -32,6 +32,15 @@ JITFLAGS = {
         ['--ion-eager', '--ion-offthread-compile=off'], # implies --baseline-eager
         ['--baseline-eager'],
     ],
+    # Cover cases useful for tsan. Note that tsan on try messes up the signal
+    # handler (bug 1362239), so must avoid wasm/asmjs.
+    'tsan': [
+        ['--no-asmjs', '--no-wasm'],
+        ['--no-asmjs', '--no-wasm',
+         '--ion-eager', '--ion-offthread-compile=off', '--non-writable-jitcode',
+         '--ion-check-range-analysis', '--ion-extra-checks', '--no-sse3', '--no-threads'],
+        ['--no-asmjs', '--no-wasm', '--no-baseline', '--no-ion'],
+    ],
     # Interpreter-only, for tools that cannot handle binary code generation.
     'interp': [
         ['--no-baseline', '--no-asmjs', '--no-wasm', '--no-native-regexp']
@@ -141,6 +150,7 @@ class RefTest(object):
         self.test_reflect_stringify = None  # str or None: path to
                                             # reflect-stringify.js file to test
                                             # instead of actually running tests
+        self.is_module = False # bool: True => test is module code
 
     @staticmethod
     def prefix_command(path):
@@ -158,6 +168,8 @@ class RefTest(object):
               + RefTest.prefix_command(dirname)
         if self.test_reflect_stringify is not None:
             cmd += [self.test_reflect_stringify, "--check", self.path]
+        elif self.is_module:
+            cmd += ["--module", self.path]
         else:
             cmd += ["-f", self.path]
         return cmd
@@ -168,6 +180,7 @@ class RefTestCase(RefTest):
     def __init__(self, path):
         RefTest.__init__(self, path)
         self.enable = True   # bool: True => run test, False => don't run
+        self.error = None    # str?: Optional error type
         self.expect = True   # bool: expected result, True => pass
         self.random = False  # bool: True => ignore output as 'random'
         self.slow = False    # bool: True => test may run slowly
@@ -185,6 +198,8 @@ class RefTestCase(RefTest):
         ans = self.path
         if not self.enable:
             ans += ', skip'
+        if self.error is not None:
+            ans += ', error=' + self.error
         if not self.expect:
             ans += ', fails'
         if self.random:

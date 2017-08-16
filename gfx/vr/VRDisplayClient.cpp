@@ -32,6 +32,7 @@ VRDisplayClient::VRDisplayClient(const VRDisplayInfo& aDisplayInfo)
   , bLastEventWasMounted(false)
   , bLastEventWasPresenting(false)
   , mPresentationCount(0)
+  , mLastEventFrameId(0)
 {
   MOZ_COUNT_CTOR(VRDisplayClient);
 }
@@ -44,13 +45,15 @@ void
 VRDisplayClient::UpdateDisplayInfo(const VRDisplayInfo& aDisplayInfo)
 {
   mDisplayInfo = aDisplayInfo;
+  FireEvents();
 }
 
 already_AddRefed<VRDisplayPresentation>
-VRDisplayClient::BeginPresentation(const nsTArray<mozilla::dom::VRLayer>& aLayers)
+VRDisplayClient::BeginPresentation(const nsTArray<mozilla::dom::VRLayer>& aLayers,
+                                   uint32_t aGroup)
 {
   ++mPresentationCount;
-  RefPtr<VRDisplayPresentation> presentation = new VRDisplayPresentation(this, aLayers);
+  RefPtr<VRDisplayPresentation> presentation = new VRDisplayPresentation(this, aLayers, aGroup);
   return presentation.forget();
 }
 
@@ -67,48 +70,19 @@ VRDisplayClient::ZeroSensor()
   vm->SendResetSensor(mDisplayInfo.mDisplayID);
 }
 
-VRHMDSensorState
-VRDisplayClient::GetSensorState()
+void
+VRDisplayClient::SetGroupMask(uint32_t aGroupMask)
 {
-  VRHMDSensorState sensorState;
   VRManagerChild *vm = VRManagerChild::Get();
-  Unused << vm->SendGetSensorState(mDisplayInfo.mDisplayID, &sensorState);
-  return sensorState;
+  vm->SendSetGroupMask(mDisplayInfo.mDisplayID, aGroupMask);
 }
-
-VRHMDSensorState
-VRDisplayClient::GetImmediateSensorState()
-{
-  VRHMDSensorState sensorState;
-
-  VRManagerChild *vm = VRManagerChild::Get();
-  Unused << vm->SendGetImmediateSensorState(mDisplayInfo.mDisplayID, &sensorState);
-  return sensorState;
-}
-
-const double kVRDisplayRAFMaxDuration = 32; // milliseconds
 
 void
-VRDisplayClient::NotifyVsync()
+VRDisplayClient::FireEvents()
 {
   VRManagerChild *vm = VRManagerChild::Get();
-
-  bool isPresenting = GetIsPresenting();
-
-  bool bShouldCallback = !isPresenting;
-  if (mLastVSyncTime.IsNull()) {
-    bShouldCallback = true;
-  } else {
-    TimeDuration duration = TimeStamp::Now() - mLastVSyncTime;
-    if (duration.ToMilliseconds() > kVRDisplayRAFMaxDuration) {
-      bShouldCallback = true;
-    }
-  }
-
-  if (bShouldCallback) {
-    vm->RunFrameRequestCallbacks();
-    mLastVSyncTime = TimeStamp::Now();
-  }
+  // Only fire these events for non-chrome VR sessions
+  bool isPresenting = (mDisplayInfo.mPresentingGroups & kVRGroupContent) != 0;
 
   // Check if we need to trigger onVRDisplayPresentChange event
   if (bLastEventWasPresenting != isPresenting) {
@@ -119,22 +93,30 @@ VRDisplayClient::NotifyVsync()
   // Check if we need to trigger onvrdisplayactivate event
   if (!bLastEventWasMounted && mDisplayInfo.mIsMounted) {
     bLastEventWasMounted = true;
-    vm->FireDOMVRDisplayMountedEvent(mDisplayInfo.mDisplayID);
+    if (gfxPrefs::VRAutoActivateEnabled()) {
+      vm->FireDOMVRDisplayMountedEvent(mDisplayInfo.mDisplayID);
+    }
   }
 
   // Check if we need to trigger onvrdisplaydeactivate event
   if (bLastEventWasMounted && !mDisplayInfo.mIsMounted) {
     bLastEventWasMounted = false;
-    vm->FireDOMVRDisplayUnmountedEvent(mDisplayInfo.mDisplayID);
+    if (gfxPrefs::VRAutoActivateEnabled()) {
+      vm->FireDOMVRDisplayUnmountedEvent(mDisplayInfo.mDisplayID);
+    }
+  }
+
+  // Check if we need to trigger VRDisplay.requestAnimationFrame
+  if (mLastEventFrameId != mDisplayInfo.mFrameId) {
+    mLastEventFrameId = mDisplayInfo.mFrameId;
+    vm->RunFrameRequestCallbacks();
   }
 }
 
-void
-VRDisplayClient::NotifyVRVsync()
+VRHMDSensorState
+VRDisplayClient::GetSensorState()
 {
-  VRManagerChild *vm = VRManagerChild::Get();
-  vm->RunFrameRequestCallbacks();
-  mLastVSyncTime = TimeStamp::Now();
+  return mDisplayInfo.GetSensorState();
 }
 
 bool
@@ -143,14 +125,20 @@ VRDisplayClient::GetIsConnected() const
   return mDisplayInfo.GetIsConnected();
 }
 
-bool
-VRDisplayClient::GetIsPresenting() const
-{
-  return mDisplayInfo.GetIsPresenting();
-}
-
 void
 VRDisplayClient::NotifyDisconnected()
 {
   mDisplayInfo.mIsConnected = false;
+}
+
+void
+VRDisplayClient::UpdateSubmitFrameResult(const VRSubmitFrameResultInfo& aResult)
+{
+  mSubmitFrameResult = aResult;
+}
+
+void
+VRDisplayClient::GetSubmitFrameResult(VRSubmitFrameResultInfo& aResult)
+{
+  aResult = mSubmitFrameResult;
 }

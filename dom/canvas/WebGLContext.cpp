@@ -166,7 +166,6 @@ WebGLContext::WebGLContext()
     mDitherEnabled = 1;
     mRasterizerDiscardEnabled = 0; // OpenGL ES 3.0 spec p244
     mScissorTestEnabled = 0;
-    mDepthTestEnabled = 0;
     mStencilTestEnabled = 0;
 
     if (NS_IsMainThread()) {
@@ -727,7 +726,8 @@ WebGLContext::CreateAndInitGL(bool forceEnabled,
     }
 
     const gl::SurfaceCaps baseCaps = BaseCaps(mOptions, this);
-    gl::CreateContextFlags flags = gl::CreateContextFlags::NO_VALIDATION;
+    gl::CreateContextFlags flags = (gl::CreateContextFlags::NO_VALIDATION |
+                                    gl::CreateContextFlags::PREFER_ROBUSTNESS);
     bool tryNativeGL = true;
     bool tryANGLE = false;
 
@@ -1011,7 +1011,13 @@ WebGLContext::SetDimensions(int32_t signedWidth, int32_t signedHeight)
     if (!CreateAndInitGL(forceEnabled, &failReasons)) {
         nsCString text("WebGL creation failed: ");
         for (const auto& cur : failReasons) {
-            Telemetry::Accumulate(Telemetry::CANVAS_WEBGL_FAILURE_ID, cur.key);
+            // Don't try to accumulate using an empty key if |cur.key| is empty.
+            if (cur.key.IsEmpty()) {
+                Telemetry::Accumulate(Telemetry::CANVAS_WEBGL_FAILURE_ID,
+                                      NS_LITERAL_CSTRING("FEATURE_FAILURE_REASON_UNKNOWN"));
+            } else {
+                Telemetry::Accumulate(Telemetry::CANVAS_WEBGL_FAILURE_ID, cur.key);
+            }
 
             text.AppendASCII("\n* ");
             text.Append(cur.info);
@@ -1246,14 +1252,10 @@ WebGLContext::GetImageBuffer(int32_t* out_format)
     *out_format = 0;
 
     // Use GetSurfaceSnapshot() to make sure that appropriate y-flip gets applied
-    bool premult;
-    RefPtr<SourceSurface> snapshot =
-      GetSurfaceSnapshot(mOptions.premultipliedAlpha ? nullptr : &premult);
-    if (!snapshot) {
+    gfxAlphaType any;
+    RefPtr<SourceSurface> snapshot = GetSurfaceSnapshot(&any);
+    if (!snapshot)
         return nullptr;
-    }
-
-    MOZ_ASSERT(mOptions.premultipliedAlpha || !premult, "We must get unpremult when we ask for it!");
 
     RefPtr<DataSourceSurface> dataSurface = snapshot->GetDataSurface();
 
@@ -1271,13 +1273,10 @@ WebGLContext::GetInputStream(const char* mimeType,
         return NS_ERROR_FAILURE;
 
     // Use GetSurfaceSnapshot() to make sure that appropriate y-flip gets applied
-    bool premult;
-    RefPtr<SourceSurface> snapshot =
-      GetSurfaceSnapshot(mOptions.premultipliedAlpha ? nullptr : &premult);
+    gfxAlphaType any;
+    RefPtr<SourceSurface> snapshot = GetSurfaceSnapshot(&any);
     if (!snapshot)
         return NS_ERROR_FAILURE;
-
-    MOZ_ASSERT(mOptions.premultipliedAlpha || !premult, "We must get unpremult when we ask for it!");
 
     RefPtr<DataSourceSurface> dataSurface = snapshot->GetDataSurface();
     return gfxUtils::GetInputStream(dataSurface, mOptions.premultipliedAlpha, mimeType,
@@ -1933,21 +1932,19 @@ WebGLContext::MakeContextCurrent() const
 }
 
 already_AddRefed<mozilla::gfx::SourceSurface>
-WebGLContext::GetSurfaceSnapshot(bool* out_premultAlpha)
+WebGLContext::GetSurfaceSnapshot(gfxAlphaType* const out_alphaType)
 {
     if (!gl)
         return nullptr;
 
-    bool hasAlpha = mOptions.alpha;
-    SurfaceFormat surfFormat = hasAlpha ? SurfaceFormat::B8G8R8A8
-                                        : SurfaceFormat::B8G8R8X8;
+    const auto surfFormat = mOptions.alpha ? SurfaceFormat::B8G8R8A8
+                                           : SurfaceFormat::B8G8R8X8;
     RefPtr<DataSourceSurface> surf;
     surf = Factory::CreateDataSourceSurfaceWithStride(IntSize(mWidth, mHeight),
                                                       surfFormat,
                                                       mWidth * 4);
-    if (NS_WARN_IF(!surf)) {
+    if (NS_WARN_IF(!surf))
         return nullptr;
-    }
 
     gl->MakeCurrent();
     {
@@ -1958,35 +1955,40 @@ WebGLContext::GetSurfaceSnapshot(bool* out_premultAlpha)
         const GLenum readBufferMode = gl->Screen()->GetReadBufferMode();
 
         if (readBufferMode != LOCAL_GL_BACK) {
-            gl->fReadBuffer(LOCAL_GL_BACK);
+            gl->Screen()->SetReadBuffer(LOCAL_GL_BACK);
         }
         ReadPixelsIntoDataSurface(gl, surf);
 
         if (readBufferMode != LOCAL_GL_BACK) {
-            gl->fReadBuffer(readBufferMode);
+            gl->Screen()->SetReadBuffer(readBufferMode);
         }
     }
 
-    if (out_premultAlpha) {
-        *out_premultAlpha = true;
+    gfxAlphaType alphaType;
+    if (!mOptions.alpha) {
+        alphaType = gfxAlphaType::Opaque;
+    } else if (mOptions.premultipliedAlpha) {
+        alphaType = gfxAlphaType::Premult;
+    } else {
+        alphaType = gfxAlphaType::NonPremult;
     }
-    bool srcPremultAlpha = mOptions.premultipliedAlpha;
-    if (!srcPremultAlpha) {
-        if (out_premultAlpha) {
-            *out_premultAlpha = false;
-        } else if(hasAlpha) {
+
+    if (out_alphaType) {
+        *out_alphaType = alphaType;
+    } else {
+        // Expects Opaque or Premult
+        if (alphaType == gfxAlphaType::NonPremult) {
             gfxUtils::PremultiplyDataSurface(surf, surf);
+            alphaType = gfxAlphaType::Premult;
         }
     }
 
     RefPtr<DrawTarget> dt =
-        Factory::CreateDrawTarget(BackendType::CAIRO,
+        Factory::CreateDrawTarget(gfxPlatform::GetPlatform()->GetSoftwareBackend(),
                                   IntSize(mWidth, mHeight),
                                   SurfaceFormat::B8G8R8A8);
-
-    if (!dt) {
+    if (!dt)
         return nullptr;
-    }
 
     dt->SetTransform(Matrix::Translation(0.0, mHeight).PreScale(1.0, -1.0));
 
@@ -2350,7 +2352,7 @@ WebGLContext::GetVRFrame()
 
     if (sharedSurface && sharedSurface->GetAllocator() != vrmc) {
         RefPtr<SharedSurfaceTextureClient> dest =
-        screen->Factory()->NewTexClient(sharedSurface->GetSize());
+        screen->Factory()->NewTexClient(sharedSurface->GetSize(), vrmc);
         if (!dest) {
             return nullptr;
         }

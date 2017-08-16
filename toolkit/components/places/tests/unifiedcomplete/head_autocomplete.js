@@ -24,11 +24,7 @@ Cu.import("resource://testing-common/httpd.js");
 
 const TITLE_SEARCH_ENGINE_SEPARATOR = " \u00B7\u2013\u00B7 ";
 
-function run_test() {
-  run_next_test();
-}
-
-function* cleanup() {
+async function cleanup() {
   Services.prefs.clearUserPref("browser.urlbar.autocomplete.enabled");
   Services.prefs.clearUserPref("browser.urlbar.autoFill");
   Services.prefs.clearUserPref("browser.urlbar.autoFill.typed");
@@ -44,14 +40,13 @@ function* cleanup() {
     Services.prefs.clearUserPref("browser.urlbar.suggest." + type);
   }
   Services.prefs.clearUserPref("browser.search.suggest.enabled");
-  yield PlacesUtils.bookmarks.eraseEverything();
-  yield PlacesTestUtils.clearHistory();
+  await PlacesUtils.bookmarks.eraseEverything();
+  await PlacesTestUtils.clearHistory();
 }
 do_register_cleanup(cleanup);
 
 /**
- * @param aSearches
- *        Array of AutoCompleteSearch names.
+ * @param {Array} aSearches Array of AutoCompleteSearch names.
  */
 function AutoCompleteInput(aSearches) {
   this.searches = aSearches;
@@ -109,9 +104,22 @@ AutoCompleteInput.prototype = {
   QueryInterface: XPCOMUtils.generateQI([Ci.nsIAutoCompleteInput])
 }
 
-// A helper for check_autocomplete to check a specific match against data from
-// the controller.
-function _check_autocomplete_matches(match, result) {
+/**
+ * A helper for check_autocomplete to check a specific match against data from
+ * the controller.
+ *
+ * @param {Object} match The expected match for the result, in the following form:
+ * {
+ *   uri: {nsIURI} The expected uri.
+ *   title: {String} The title of the entry.
+ *   tags: {String} The tags for the entry.
+ *   style: {String} The style of the entry.
+ * }
+ * @param {Object} result The result to compare the result against with the same
+ *                        properties as the match param.
+ * @returns {boolean} Returns true if the result matches.
+ */
+async function _check_autocomplete_matches(match, result) {
   let { uri, title, tags, style } = match;
   if (tags)
     title += " \u2013 " + tags.sort().join(", ");
@@ -133,18 +141,31 @@ function _check_autocomplete_matches(match, result) {
     Assert.ok(actualStyle.includes("action"), "moz-action results should always have 'action' in their style");
   }
 
-  if (match.icon)
-    Assert.equal(result.image, match.icon, "Match should have expected image");
+  if (match.icon) {
+    await compareFavicons(result.image, match.icon, "Match should have the expected icon");
+  }
 
   return true;
 }
 
-function* check_autocomplete(test) {
+/**
+ * Helper function to test an autocomplete entry and check the resultant matches.
+ *
+ * @param {Object} test An object representing the test to run, in the following form:
+ * {
+ *   search: {String} The string to enter for autocompleting.
+ *   searchParam: {String} The search parameters to apply to the
+ *                         autocomplete search.
+ *   matches: {Object[]} The expected results in match format. see
+ *                       _check_autocomplete_matches.
+ * }
+ */
+async function check_autocomplete(test) {
   // At this point frecency could still be updating due to latest pages
   // updates.
   // This is not a problem in real life, but autocomplete tests should
   // return reliable resultsets, thus we have to wait.
-  yield PlacesTestUtils.promiseAsyncUpdates();
+  await PlacesTestUtils.promiseAsyncUpdates();
 
   // Make an AutoCompleteInput that uses our searches and confirms results.
   let input = new AutoCompleteInput(["unifiedcomplete"]);
@@ -182,7 +203,7 @@ function* check_autocomplete(test) {
 
   do_print("Searching for: '" + test.search + "'");
   controller.startSearch(test.search);
-  yield searchCompletePromise;
+  await searchCompletePromise;
 
   Assert.equal(numSearchesStarted, expectedSearches, "All searches started");
 
@@ -207,7 +228,7 @@ function* check_autocomplete(test) {
           image: controller.getImageAt(0),
         }
         do_print(`First match is "${result.value}", "${result.comment}"`);
-        Assert.ok(_check_autocomplete_matches(matches[0], result), "first item is correct");
+        Assert.ok(await _check_autocomplete_matches(matches[0], result), "first item is correct");
         do_print("Checking rest of the matches");
       }
 
@@ -226,7 +247,7 @@ function* check_autocomplete(test) {
           // Skip processed expected results
           if (matches[j] == undefined)
             continue;
-          if (_check_autocomplete_matches(matches[j], result)) {
+          if (await _check_autocomplete_matches(matches[j], result)) {
             do_print("Got a match at index " + j + "!");
             // Make it undefined so we don't process it again
             matches[j] = undefined;
@@ -263,20 +284,20 @@ function* check_autocomplete(test) {
   }
 }
 
-var addBookmark = Task.async(function* (aBookmarkObj) {
+var addBookmark = async function(aBookmarkObj) {
   Assert.ok(!!aBookmarkObj.uri, "Bookmark object contains an uri");
   let parentId = aBookmarkObj.parentId ? aBookmarkObj.parentId
                                        : PlacesUtils.unfiledBookmarksFolderId;
 
-  let bm = yield PlacesUtils.bookmarks.insert({
-    parentGuid: (yield PlacesUtils.promiseItemGuid(parentId)),
+  let bm = await PlacesUtils.bookmarks.insert({
+    parentGuid: (await PlacesUtils.promiseItemGuid(parentId)),
     title: aBookmarkObj.title || "A bookmark",
     url: aBookmarkObj.uri
   });
-  yield PlacesUtils.promiseItemId(bm.guid);
+  await PlacesUtils.promiseItemId(bm.guid);
 
   if (aBookmarkObj.keyword) {
-    yield PlacesUtils.keywords.insert({ keyword: aBookmarkObj.keyword,
+    await PlacesUtils.keywords.insert({ keyword: aBookmarkObj.keyword,
                                         url: aBookmarkObj.uri.spec,
                                         postData: aBookmarkObj.postData
                                       });
@@ -285,7 +306,7 @@ var addBookmark = Task.async(function* (aBookmarkObj) {
   if (aBookmarkObj.tags) {
     PlacesUtils.tagging.tagURI(aBookmarkObj.uri, aBookmarkObj.tags);
   }
-});
+};
 
 function addOpenPages(aUri, aCount = 1, aUserContextId = 0) {
   let ac = Cc["@mozilla.org/autocomplete/search;1?name=unifiedcomplete"]
@@ -329,9 +350,9 @@ function resetRestrict(aType) {
 /**
  * Strip prefixes from the URI that we don't care about for searching.
  *
- * @param spec
+ * @param {String} spec
  *        The text to modify.
- * @return the modified spec.
+ * @return {String} the modified spec.
  */
 function stripPrefix(spec) {
   ["http://", "https://", "ftp://"].some(scheme => {
@@ -432,19 +453,6 @@ function makeExtensionMatch(extra = {}) {
   };
 }
 
-function setFaviconForHref(href, iconHref) {
-  return new Promise(resolve => {
-    PlacesUtils.favicons.setAndFetchFaviconForPage(
-      NetUtil.newURI(href),
-      NetUtil.newURI(iconHref),
-      true,
-      PlacesUtils.favicons.FAVICON_LOAD_NON_PRIVATE,
-      resolve,
-      Services.scriptSecurityManager.getSystemPrincipal()
-    );
-  });
-}
-
 function makeTestServer(port = -1) {
   let httpServer = new HttpServer();
   httpServer.start(port);
@@ -452,14 +460,14 @@ function makeTestServer(port = -1) {
   return httpServer;
 }
 
-function* addTestEngine(basename, httpServer = undefined) {
+async function addTestEngine(basename, httpServer = undefined) {
   httpServer = httpServer || makeTestServer();
   httpServer.registerDirectory("/", do_get_cwd());
   let dataUrl =
     "http://localhost:" + httpServer.identity.primaryPort + "/data/";
 
   do_print("Adding engine: " + basename);
-  return yield new Promise(resolve => {
+  return await new Promise(resolve => {
     Services.obs.addObserver(function obs(subject, topic, data) {
       let engine = subject.QueryInterface(Ci.nsISearchEngine);
       do_print("Observed " + data + " for " + engine.name);
@@ -470,7 +478,7 @@ function* addTestEngine(basename, httpServer = undefined) {
       Services.obs.removeObserver(obs, "browser-search-engine-modified");
       do_register_cleanup(() => Services.search.removeEngine(engine));
       resolve(engine);
-    }, "browser-search-engine-modified", false);
+    }, "browser-search-engine-modified");
 
     do_print("Adding engine from URL: " + dataUrl + basename);
     Services.search.addEngine(dataUrl + basename, null, null, false);
@@ -479,7 +487,7 @@ function* addTestEngine(basename, httpServer = undefined) {
 
 // Ensure we have a default search engine and the keyword.enabled preference
 // set.
-add_task(function* ensure_search_engine() {
+add_task(async function ensure_search_engine() {
   // keyword.enabled is necessary for the tests to see keyword searches.
   Services.prefs.setBoolPref("keyword.enabled", true);
 
@@ -490,7 +498,7 @@ add_task(function* ensure_search_engine() {
   let geoPref = "browser.search.geoip.url";
   Services.prefs.setCharPref(geoPref, "");
   do_register_cleanup(() => Services.prefs.clearUserPref(geoPref));
-  yield new Promise(resolve => {
+  await new Promise(resolve => {
     Services.search.init(resolve);
   });
 

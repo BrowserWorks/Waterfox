@@ -7,11 +7,12 @@ from argparse import ArgumentParser, SUPPRESS
 from distutils.util import strtobool
 from itertools import chain
 from urlparse import urlparse
+import logging
 import json
 import os
 import tempfile
 
-from mozdevice import DroidADB, DroidSUT
+from mozdevice import DroidADB
 from mozprofile import DEFAULT_PORTS
 import mozinfo
 import mozlog
@@ -734,7 +735,6 @@ class MochitestArguments(ArgumentContainer):
                 "devtools.chrome.enabled=true",
                 "devtools.debugger.prompt-connection=false"
             ]
-            options.autorun = False
 
         if options.debugOnFailure and not options.jsdebugger:
             parser.error(
@@ -765,24 +765,19 @@ class MochitestArguments(ArgumentContainer):
                     "data." % options.jscov_dir_prefix)
 
         if options.testingModulesDir is None:
+            # Try to guess the testing modules directory.
+            possible = [os.path.join(here, os.path.pardir, 'modules')]
             if build_obj:
-                options.testingModulesDir = os.path.join(
-                    build_obj.topobjdir, '_tests', 'modules')
-            else:
-                # Try to guess the testing modules directory.
-                # This somewhat grotesque hack allows the buildbot machines to find the
-                # modules directory without having to configure the buildbot hosts. This
-                # code should never be executed in local runs because the build system
-                # should always set the flag that populates this variable. If buildbot ever
-                # passes this argument, this code can be deleted.
-                possible = os.path.join(here, os.path.pardir, 'modules')
+                possible.insert(0, os.path.join(build_obj.topobjdir, '_tests', 'modules'))
 
-                if os.path.isdir(possible):
-                    options.testingModulesDir = possible
+            for p in possible:
+                if os.path.isdir(p):
+                    options.testingModulesDir = p
+                    break
 
         if build_obj:
             plugins_dir = os.path.join(build_obj.distdir, 'plugins')
-            if plugins_dir not in options.extraProfileFiles:
+            if os.path.isdir(plugins_dir) and plugins_dir not in options.extraProfileFiles:
                 options.extraProfileFiles.append(plugins_dir)
 
         # Even if buildbot is updated, we still want this, as the path we pass in
@@ -879,12 +874,6 @@ class AndroidArguments(ArgumentContainer):
           "help": "ip address of remote device to test",
           "default": None,
           }],
-        [["--dm_trans"],
-         {"choices": ["adb", "sut"],
-          "default": "adb",
-          "help": "The transport to use for communication with the device [default: adb].",
-          "suppress": True,
-          }],
         [["--adbpath"],
          {"dest": "adbPath",
           "default": None,
@@ -963,21 +952,16 @@ class AndroidArguments(ArgumentContainer):
             options.log_mach = '-'
 
         device_args = {'deviceRoot': options.remoteTestRoot}
-        if options.dm_trans == "adb":
-            device_args['adbPath'] = options.adbPath
-            if options.deviceIP:
-                device_args['host'] = options.deviceIP
-                device_args['port'] = options.devicePort
-            elif options.deviceSerial:
-                device_args['deviceSerial'] = options.deviceSerial
-            options.dm = DroidADB(**device_args)
-        elif options.dm_trans == 'sut':
-            if options.deviceIP is None:
-                parser.error(
-                    "If --dm_trans = sut, you must provide a device IP")
+        device_args['adbPath'] = options.adbPath
+        if options.deviceIP:
             device_args['host'] = options.deviceIP
             device_args['port'] = options.devicePort
-            options.dm = DroidSUT(**device_args)
+        elif options.deviceSerial:
+            device_args['deviceSerial'] = options.deviceSerial
+
+        if options.log_tbpl_level == 'debug' or options.log_mach_level == 'debug':
+            device_args['logLevel'] = logging.DEBUG
+        options.dm = DroidADB(**device_args)
 
         if not options.remoteTestRoot:
             options.remoteTestRoot = options.dm.deviceRoot
@@ -1018,6 +1002,9 @@ class AndroidArguments(ArgumentContainer):
         if options.xrePath is None:
             options.xrePath = options.utilityPath
 
+        if build_obj:
+            options.topsrcdir = build_obj.topsrcdir
+
         if options.pidFile != "":
             f = open(options.pidFile, 'w')
             f.write("%s" % os.getpid())
@@ -1032,9 +1019,15 @@ class AndroidArguments(ArgumentContainer):
             options.robocopIni = os.path.abspath(options.robocopIni)
 
             if not options.robocopApk and build_obj:
-                options.robocopApk = os.path.join(build_obj.topobjdir, 'mobile', 'android',
-                                                  'tests', 'browser',
-                                                  'robocop', 'robocop-debug.apk')
+                if build_obj.substs.get('MOZ_BUILD_MOBILE_ANDROID_WITH_GRADLE'):
+                    options.robocopApk = os.path.join(build_obj.topobjdir, 'gradle', 'build',
+                                                      'mobile', 'android', 'app', 'outputs', 'apk',
+                                                      'app-official-australis-debug-androidTest-'
+                                                      'unaligned.apk')
+                else:
+                    options.robocopApk = os.path.join(build_obj.topobjdir, 'mobile', 'android',
+                                                      'tests', 'browser',
+                                                      'robocop', 'robocop-debug.apk')
 
         if options.robocopApk != "":
             if not os.path.exists(options.robocopApk):

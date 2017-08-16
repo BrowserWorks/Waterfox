@@ -1,4 +1,3 @@
-// |reftest| skip-if(!this.hasOwnProperty('Intl')) -- needs Intl
 // Copyright 2012 Google Inc.  All rights reserved.
 // This code is governed by the BSD license found in the LICENSE file.
 
@@ -21,11 +20,7 @@ for (i in testData) {
     correctResult = formatter.format(number);
     
     result = formatter.format(input);
-    if (result !== correctResult) {
-        $ERROR('Intl.NumberFormat does not convert other ' +
-            'types to numbers. Input: "'+input+'" Output: "'+result+'" '+
-            'Expected output: "'+correctResult+'"');
-    }
+    assert.sameValue(result, correctResult, 'Intl.NumberFormat does not convert other types to numbers. Input: "' + input + '".');
 }
 
 reportCompare(0, 0);

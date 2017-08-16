@@ -8,20 +8,20 @@
  */
 
 add_task(function* () {
-  let { L10N } = require("devtools/client/netmonitor/utils/l10n");
+  let { L10N } = require("devtools/client/netmonitor/src/utils/l10n");
 
   let { tab, monitor } = yield initNetMonitor(STATUS_CODES_URL);
 
   info("Starting test... ");
 
-  let { document, gStore, windowRequire } = monitor.panelWin;
-  let Actions = windowRequire("devtools/client/netmonitor/actions/index");
+  let { document, store, windowRequire } = monitor.panelWin;
+  let Actions = windowRequire("devtools/client/netmonitor/src/actions/index");
   let {
     getDisplayedRequests,
     getSortedRequests,
-  } = windowRequire("devtools/client/netmonitor/selectors/index");
+  } = windowRequire("devtools/client/netmonitor/src/selectors/index");
 
-  gStore.dispatch(Actions.batchEnable(false));
+  store.dispatch(Actions.batchEnable(false));
 
   let requestItems = [];
 
@@ -114,13 +114,13 @@ add_task(function* () {
     info("Verifying requests contain correct information.");
     let index = 0;
     for (let request of REQUEST_DATA) {
-      let item = getSortedRequests(gStore.getState()).get(index);
+      let item = getSortedRequests(store.getState()).get(index);
       requestItems[index] = item;
 
       info("Verifying request #" + index);
       yield verifyRequestItemTarget(
         document,
-        getDisplayedRequests(gStore.getState()),
+        getDisplayedRequests(store.getState()),
         item,
         request.method,
         request.uri,
@@ -182,7 +182,6 @@ add_task(function* () {
 
     let panel = document.querySelector("#params-panel");
     let statusParamValue = data.uri.split("=").pop();
-    let statusParamShownValue = "\"" + statusParamValue + "\"";
     let treeSections = panel.querySelectorAll(".tree-section");
 
     is(treeSections.length, 1,
@@ -202,7 +201,7 @@ add_task(function* () {
       "The params scope doesn't have the correct title.");
 
     is(labels[0].textContent, "sts", "The param name was incorrect.");
-    is(values[0].textContent, statusParamShownValue, "The param value was incorrect.");
+    is(values[0].textContent, statusParamValue, "The param value was incorrect.");
 
     ok(panel.querySelector(".treeTable"),
       "The request params tree view should be displayed.");

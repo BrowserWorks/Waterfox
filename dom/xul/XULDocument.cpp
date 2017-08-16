@@ -403,7 +403,15 @@ XULDocument::StartDocumentLoad(const char* aCommand, nsIChannel* aChannel,
     nsresult rv =
         NS_GetFinalChannelURI(aChannel, getter_AddRefs(mDocumentURI));
     NS_ENSURE_SUCCESS(rv, rv);
-    
+
+    mOriginalURI = mDocumentURI;
+
+    // Get the document's principal
+    nsCOMPtr<nsIPrincipal> principal;
+    nsContentUtils::GetSecurityManager()->
+        GetChannelResultPrincipal(mChannel, getter_AddRefs(principal));
+    principal = MaybeDowngradePrincipal(principal);
+
     ResetStylesheetsToURI(mDocumentURI);
 
     RetrieveRelevantHeaders(aChannel);
@@ -460,8 +468,8 @@ XULDocument::StartDocumentLoad(const char* aCommand, nsIChannel* aChannel,
         // with the stream n' stuff.
 
         nsCOMPtr<nsIParser> parser;
-        rv = PrepareToLoad(aContainer, aCommand, aChannel, aLoadGroup,
-                           getter_AddRefs(parser));
+        rv = PrepareToLoadPrototype(mDocumentURI, aCommand, principal,
+                                    getter_AddRefs(parser));
         if (NS_FAILED(rv)) return rv;
 
         // Predicate mIsWritingFastLoad on the XUL cache being enabled,
@@ -1864,7 +1872,8 @@ XULDocument::RemoveElementFromRefMap(Element* aElement)
 //
 
 nsresult
-XULDocument::Clone(mozilla::dom::NodeInfo *aNodeInfo, nsINode **aResult) const
+XULDocument::Clone(mozilla::dom::NodeInfo *aNodeInfo, nsINode **aResult,
+                   bool aPreallocateChildren) const
 {
     // We don't allow cloning of a XUL document
     *aResult = nullptr;
@@ -1970,21 +1979,6 @@ XULDocument::MatchAttribute(Element* aElement,
 
     return false;
 }
-
-nsresult
-XULDocument::PrepareToLoad(nsISupports* aContainer,
-                           const char* aCommand,
-                           nsIChannel* aChannel,
-                           nsILoadGroup* aLoadGroup,
-                           nsIParser** aResult)
-{
-    // Get the document's principal
-    nsCOMPtr<nsIPrincipal> principal;
-    nsContentUtils::GetSecurityManager()->
-        GetChannelResultPrincipal(aChannel, getter_AddRefs(principal));
-    return PrepareToLoadPrototype(mDocumentURI, aCommand, principal, aResult);
-}
-
 
 nsresult
 XULDocument::PrepareToLoadPrototype(nsIURI* aURI, const char* aCommand,
@@ -3350,10 +3344,10 @@ XULDocument::OnStreamComplete(nsIStreamLoader* aLoader,
                                             !mOffThreadCompileStringBuf),
                    "XULDocument can't load multiple scripts at once");
 
-        rv = nsScriptLoader::ConvertToUTF16(channel, string, stringLen,
-                                            EmptyString(), this,
-                                            mOffThreadCompileStringBuf,
-                                            mOffThreadCompileStringLength);
+        rv = ScriptLoader::ConvertToUTF16(channel, string, stringLen,
+                                          EmptyString(), this,
+                                          mOffThreadCompileStringBuf,
+                                          mOffThreadCompileStringLength);
         if (NS_SUCCEEDED(rv)) {
             // Attempt to give ownership of the buffer to the JS engine.  If
             // we hit offthread compilation, however, we will have to take it
@@ -4438,6 +4432,7 @@ XULDocument::ParserObserver::OnStartRequest(nsIRequest *request,
             nsCOMPtr<nsIPrincipal> principal;
             secMan->GetChannelResultPrincipal(channel, getter_AddRefs(principal));
 
+            principal = mDocument->MaybeDowngradePrincipal(principal);
             // Failure there is ok -- it'll just set a (safe) null principal
             mPrototype->SetDocumentPrincipal(principal);
         }

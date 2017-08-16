@@ -11,6 +11,8 @@
 #include "mozilla/layers/Compositor.h"
 #include "TextureD3D11.h"
 #include <d3d11.h>
+#include <dxgi1_2.h>
+#include "ShaderDefinitionsD3D11.h"
 
 class nsWidget;
 
@@ -19,26 +21,8 @@ namespace layers {
 
 #define LOGD3D11(param)
 
-struct VertexShaderConstants
-{
-  float layerTransform[4][4];
-  float projection[4][4];
-  float renderTargetOffset[4];
-  gfx::Rect textureCoords;
-  gfx::Rect layerQuad;
-  gfx::Rect maskQuad;
-  float backdropTransform[4][4];
-};
-
-struct PixelShaderConstants
-{
-  float layerColor[4];
-  float layerOpacity[4];
-  int blendConfig[4];
-  float yuvColorMatrix[3][4];
-};
-
-struct DeviceAttachmentsD3D11;
+class DeviceAttachmentsD3D11;
+class DiagnosticsD3D11;
 
 class CompositorD3D11 : public Compositor
 {
@@ -101,7 +85,7 @@ public:
 
   /**
    * Start a new frame. If aClipRectIn is null, sets *aClipRectOut to the
-   * screen dimensions. 
+   * screen dimensions.
    */
   virtual void BeginFrame(const nsIntRegion& aInvalidRegion,
                           const gfx::IntRect *aClipRectIn,
@@ -109,6 +93,8 @@ public:
                           const nsIntRegion& aOpaqueRegion,
                           gfx::IntRect *aClipRectOut = nullptr,
                           gfx::IntRect *aRenderBoundsOut = nullptr) override;
+
+  void NormalDrawingDone() override;
 
   /**
    * Flush the current frame to the screen.
@@ -127,6 +113,8 @@ public:
 
   virtual bool SupportsPartialTextureUpdate() override { return true; }
 
+  virtual bool SupportsLayerGeometry() const override;
+
 #ifdef MOZ_DUMP_PAINTING
   virtual const char* Name() const override { return "Direct3D 11"; }
 #endif
@@ -136,6 +124,9 @@ public:
   }
 
   virtual void ForcePresent();
+
+  // For TextureSourceProvider.
+  ID3D11Device* GetD3D11Device() const override { return mDevice; }
 
   ID3D11Device* GetDevice() { return mDevice; }
 
@@ -160,7 +151,10 @@ private:
   bool UpdateRenderTarget();
   bool UpdateConstantBuffers();
   void SetSamplerForSamplingFilter(gfx::SamplingFilter aSamplingFilter);
-  ID3D11PixelShader* GetPSForEffect(Effect *aEffect, MaskType aMaskType);
+
+  ID3D11PixelShader* GetPSForEffect(Effect* aEffect,
+                                    const bool aUseBlendShader,
+                                    const MaskType aMaskType);
   void PaintToTarget();
   RefPtr<ID3D11Texture2D> CreateTexture(const gfx::IntRect& aRect,
                                         const CompositingRenderTarget* aSource,
@@ -168,6 +162,50 @@ private:
   bool CopyBackdrop(const gfx::IntRect& aRect,
                     RefPtr<ID3D11Texture2D>* aOutTexture,
                     RefPtr<ID3D11ShaderResourceView>* aOutView);
+
+  virtual void DrawTriangles(const nsTArray<gfx::TexturedTriangle>& aTriangles,
+                             const gfx::Rect& aRect,
+                             const gfx::IntRect& aClipRect,
+                             const EffectChain& aEffectChain,
+                             gfx::Float aOpacity,
+                             const gfx::Matrix4x4& aTransform,
+                             const gfx::Rect& aVisibleRect) override;
+
+  template<typename Geometry>
+  void DrawGeometry(const Geometry& aGeometry,
+                    const gfx::Rect& aRect,
+                    const gfx::IntRect& aClipRect,
+                    const EffectChain& aEffectChain,
+                    gfx::Float aOpacity,
+                    const gfx::Matrix4x4& aTransform,
+                    const gfx::Rect& aVisibleRect);
+
+  bool UpdateDynamicVertexBuffer(const nsTArray<gfx::TexturedTriangle>& aTriangles);
+
+  void PrepareDynamicVertexBuffer();
+  void PrepareStaticVertexBuffer();
+
+  // Overloads for rendering both rects and triangles with same rendering path
+  void Draw(const nsTArray<gfx::TexturedTriangle>& aGeometry,
+            const gfx::Rect* aTexCoords);
+
+  void Draw(const gfx::Rect& aGeometry,
+            const gfx::Rect* aTexCoords);
+
+  void GetFrameStats(GPUStats* aStats) override;
+
+  void Present();
+
+  ID3D11VertexShader* GetVSForGeometry(const nsTArray<gfx::TexturedTriangle>& aTriangles,
+                                       const bool aUseBlendShader,
+                                       const MaskType aMaskType);
+
+  ID3D11VertexShader* GetVSForGeometry(const gfx::Rect& aRect,
+                                       const bool aUseBlendShader,
+                                       const MaskType aMaskType);
+
+  template<typename VertexType>
+  void SetVertexBuffer(ID3D11Buffer* aBuffer);
 
   RefPtr<ID3D11DeviceContext> mContext;
   RefPtr<ID3D11Device> mDevice;
@@ -177,7 +215,8 @@ private:
 
   RefPtr<ID3D11Query> mQuery;
 
-  DeviceAttachmentsD3D11* mAttachments;
+  RefPtr<DeviceAttachmentsD3D11> mAttachments;
+  UniquePtr<DiagnosticsD3D11> mDiagnostics;
 
   LayoutDeviceIntSize mSize;
 
@@ -189,11 +228,12 @@ private:
   PixelShaderConstants mPSConstants;
   bool mDisableSequenceForNextFrame;
   bool mAllowPartialPresents;
+  bool mIsDoubleBuffered;
 
-  gfx::IntRect mInvalidRect;
+  gfx::IntRegion mFrontBufferInvalid;
+  gfx::IntRegion mBackBufferInvalid;
   // This is the clip rect applied to the default DrawTarget (i.e. the window)
   gfx::IntRect mCurrentClip;
-  nsIntRegion mInvalidRegion;
 
   bool mVerifyBuffersFailed;
 };

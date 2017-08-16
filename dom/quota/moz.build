@@ -4,14 +4,22 @@
 # License, v. 2.0. If a copy of the MPL was not distributed with this
 # file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
-
 with Files("**"):
     BUG_COMPONENT = ("Core", "DOM: Quota Manager")
+
+MOCHITEST_MANIFESTS += ['test/mochitest.ini']
+
+BROWSER_CHROME_MANIFESTS += ['test/browser.ini']
+
+XPCSHELL_TESTS_MANIFESTS += [
+    'test/unit/xpcshell.ini'
+]
 
 XPIDL_SOURCES += [
     'nsIQuotaCallbacks.idl',
     'nsIQuotaManagerService.idl',
     'nsIQuotaRequests.idl',
+    'nsIQuotaResults.idl',
 ]
 
 XPIDL_MODULE = 'dom_quota'
@@ -40,6 +48,7 @@ UNIFIED_SOURCES += [
     'FileStreams.cpp',
     'QuotaManagerService.cpp',
     'QuotaRequests.cpp',
+    'QuotaResults.cpp',
     'StorageManager.cpp',
 ]
 

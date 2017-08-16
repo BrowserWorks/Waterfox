@@ -96,6 +96,11 @@ typedef enum DPI_AWARENESS {
 #define DPI_AWARENESS_CONTEXT_DECLARED
 #endif // (DPI_AWARENESS_CONTEXT_DECLARED)
 
+#if WINVER < 0x0605
+WINUSERAPI DPI_AWARENESS_CONTEXT WINAPI GetThreadDpiAwarenessContext();
+WINUSERAPI BOOL WINAPI
+AreDpiAwarenessContextsEqual(DPI_AWARENESS_CONTEXT, DPI_AWARENESS_CONTEXT);
+#endif /* WINVER < 0x0605 */
 typedef DPI_AWARENESS_CONTEXT(WINAPI * SetThreadDpiAwarenessContextProc)(DPI_AWARENESS_CONTEXT);
 typedef BOOL(WINAPI * EnableNonClientDpiScalingProc)(HWND);
 
@@ -152,6 +157,12 @@ class WinUtils
   static SetThreadDpiAwarenessContextProc sSetThreadDpiAwarenessContext;
   static EnableNonClientDpiScalingProc sEnableNonClientDpiScaling;
 
+  // Wrapper for DefWindowProc that will enable non-client dpi scaling on the
+  // window during creation.
+  static LRESULT WINAPI
+  NonClientDpiScalingDefWindowProcW(HWND hWnd, UINT msg,
+                                    WPARAM wParam, LPARAM lParam);
+
 public:
   class AutoSystemDpiAware
   {
@@ -174,11 +185,11 @@ public:
     DPI_AWARENESS_CONTEXT mPrevContext;
   };
 
-  // Wrapper for DefWindowProc that will enable non-client dpi scaling on the
-  // window during creation.
-  static LRESULT WINAPI
-  NonClientDpiScalingDefWindowProcW(HWND hWnd, UINT msg,
-                                    WPARAM wParam, LPARAM lParam);
+  static decltype(::DefWindowProcW)* GetDefWindowProc()
+  {
+    return sEnableNonClientDpiScaling ? NonClientDpiScalingDefWindowProcW :
+                                        ::DefWindowProcW;
+  }
 
   /**
    * Get the system's default logical-to-physical DPI scaling factor,
@@ -452,16 +463,16 @@ public:
   static uint32_t GetMaxTouchPoints();
 
   /**
-   * Detect if path is within the Users folder and Users is actually a junction
-   * point to another folder.
-   * If this is detected it will change the path to the actual path.
+   * Fully resolves a path to its final path name. So if path contains
+   * junction points or symlinks to other folders, we'll resolve the path
+   * fully to the actual path that the links target.
    *
    * @param aPath path to be resolved.
    * @return true if successful, including if nothing needs to be changed.
    *         false if something failed or aPath does not exist, aPath will
    *               remain unchanged.
    */
-  static bool ResolveMovedUsersFolder(std::wstring& aPath);
+  static bool ResolveJunctionPointsAndSymLinks(std::wstring& aPath);
 
   static void Initialize();
 
@@ -562,6 +573,7 @@ private:
 
   int32_t mIcoNoDeleteSeconds;
   bool mIgnoreRecent;
+  nsCOMPtr<nsIFile> mJumpListCacheDir;
 };
 
 class FaviconHelper

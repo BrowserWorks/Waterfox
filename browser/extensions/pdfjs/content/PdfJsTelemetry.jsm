@@ -13,7 +13,6 @@
  * limitations under the License.
  */
 /* eslint max-len: ["error", 100] */
-/* globals Components, Services */
 
 "use strict";
 
@@ -66,5 +65,5 @@ this.PdfJsTelemetry = {
   onTimeToView(ms) {
     let histogram = Services.telemetry.getHistogramById("PDF_VIEWER_TIME_TO_VIEW_MS");
     histogram.add(ms);
-  }
+  },
 };

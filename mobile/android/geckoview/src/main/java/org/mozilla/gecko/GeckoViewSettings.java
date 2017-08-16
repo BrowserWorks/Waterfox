@@ -22,20 +22,46 @@ public final class GeckoViewSettings {
         }
     }
 
+    /*
+     * Key to enabled and disable tracking protection.
+     */
     public static final Key<Boolean> USE_TRACKING_PROTECTION =
         new Key<Boolean>("useTrackingProtection");
+    /*
+     * Key to enabled and disable private mode browsing.
+     */
+    public static final Key<Boolean> USE_PRIVATE_MODE =
+        new Key<Boolean>("usePrivateMode");
+    /*
+     * Key to enabled and disable multiprocess browsing (e10s).
+     * Note: can only be set during GeckoView initialization, changes during an
+     * active GeckoView session will be ignored.
+     */
+    public static final Key<Boolean> USE_MULTIPROCESS =
+        new Key<Boolean>("useMultiprocess");
 
     private final EventDispatcher mEventDispatcher;
     private final GeckoBundle mBundle;
+
+    public GeckoViewSettings() {
+        this(null);
+    }
 
     /* package */ GeckoViewSettings(EventDispatcher eventDispatcher) {
         mEventDispatcher = eventDispatcher;
         mBundle = new GeckoBundle();
 
         setBoolean(USE_TRACKING_PROTECTION, false);
+        setBoolean(USE_PRIVATE_MODE, false);
+        setBoolean(USE_MULTIPROCESS, true);
     }
 
-    public void setBoolean(Key<Boolean> key, boolean value) {
+    /* package */ GeckoViewSettings(GeckoViewSettings settings, EventDispatcher eventDispatcher) {
+        mBundle = new GeckoBundle(settings.mBundle);
+        mEventDispatcher = eventDispatcher;
+    }
+
+    public void setBoolean(final Key<Boolean> key, boolean value) {
         synchronized (mBundle) {
             final Object old = mBundle.get(key.text);
             if (old != null && old.equals(value)) {
@@ -46,7 +72,7 @@ public final class GeckoViewSettings {
         dispatchUpdate();
     }
 
-    public Object getBoolean(Key<Boolean> key) {
+    public boolean getBoolean(final Key<Boolean> key) {
         synchronized (mBundle) {
             return mBundle.getBoolean(key.text);
         }
@@ -57,6 +83,8 @@ public final class GeckoViewSettings {
     }
 
     private void dispatchUpdate() {
-        mEventDispatcher.dispatch("GeckoView:UpdateSettings", null);
+        if (mEventDispatcher != null) {
+            mEventDispatcher.dispatch("GeckoView:UpdateSettings", null);
+        }
     }
 }

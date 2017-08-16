@@ -30,7 +30,7 @@
 #include "nsCCUncollectableMarker.h"
 #include "nsNameSpaceManager.h"
 #include "nsDocument.h"
-#include "nsNullPrincipal.h"
+#include "NullPrincipal.h"
 
 using namespace mozilla;
 using mozilla::dom::NodeInfo;
@@ -112,7 +112,8 @@ nsNodeInfoManager::nsNodeInfoManager()
     mNonDocumentNodeInfos(0),
     mTextNodeInfo(nullptr),
     mCommentNodeInfo(nullptr),
-    mDocumentNodeInfo(nullptr)
+    mDocumentNodeInfo(nullptr),
+    mRecentlyUsedNodeInfos{}
 {
   nsLayoutStatics::AddRef();
 
@@ -182,7 +183,7 @@ nsNodeInfoManager::Init(nsIDocument *aDocument)
   NS_PRECONDITION(!mPrincipal,
                   "Being inited when we already have a principal?");
 
-  mPrincipal = nsNullPrincipal::Create();
+  mPrincipal = NullPrincipal::Create();
 
   if (aDocument) {
     mBindingManager = new nsBindingManager(aDocument);
@@ -232,11 +233,19 @@ nsNodeInfoManager::GetNodeInfo(nsIAtom *aName, nsIAtom *aPrefix,
   NodeInfo::NodeInfoInner tmpKey(aName, aPrefix, aNamespaceID, aNodeType,
                                  aExtraName);
 
+  uint32_t index =
+    GetNodeInfoInnerHashValue(&tmpKey) % RECENTLY_USED_NODEINFOS_SIZE;
+  NodeInfo* ni = mRecentlyUsedNodeInfos[index];
+  if (ni && NodeInfoInnerKeyCompare(&(ni->mInner), &tmpKey)) {
+    RefPtr<NodeInfo> nodeInfo = ni;
+    return nodeInfo.forget();
+  }
+
   void *node = PL_HashTableLookup(mNodeInfoHash, &tmpKey);
 
   if (node) {
     RefPtr<NodeInfo> nodeInfo = static_cast<NodeInfo*>(node);
-
+    mRecentlyUsedNodeInfos[index] = nodeInfo;
     return nodeInfo.forget();
   }
 
@@ -254,6 +263,7 @@ nsNodeInfoManager::GetNodeInfo(nsIAtom *aName, nsIAtom *aPrefix,
     NS_IF_ADDREF(mDocument);
   }
 
+  mRecentlyUsedNodeInfos[index] = newNodeInfo;
   return newNodeInfo.forget();
 }
 
@@ -272,10 +282,20 @@ nsNodeInfoManager::GetNodeInfo(const nsAString& aName, nsIAtom *aPrefix,
 
   NodeInfo::NodeInfoInner tmpKey(aName, aPrefix, aNamespaceID, aNodeType);
 
+  uint32_t index =
+    GetNodeInfoInnerHashValue(&tmpKey) % RECENTLY_USED_NODEINFOS_SIZE;
+  NodeInfo* ni = mRecentlyUsedNodeInfos[index];
+  if (ni && NodeInfoInnerKeyCompare(&(ni->mInner), &tmpKey)) {
+    RefPtr<NodeInfo> nodeInfo = ni;
+    nodeInfo.forget(aNodeInfo);
+    return NS_OK;
+  }
+
   void *node = PL_HashTableLookup(mNodeInfoHash, &tmpKey);
 
   if (node) {
     RefPtr<NodeInfo> nodeInfo = static_cast<NodeInfo*>(node);
+    mRecentlyUsedNodeInfos[index] = nodeInfo;
     nodeInfo.forget(aNodeInfo);
 
     return NS_OK;
@@ -297,6 +317,7 @@ nsNodeInfoManager::GetNodeInfo(const nsAString& aName, nsIAtom *aPrefix,
     NS_IF_ADDREF(mDocument);
   }
 
+  mRecentlyUsedNodeInfos[index] = newNodeInfo;
   newNodeInfo.forget(aNodeInfo);
 
   return NS_OK;
@@ -422,6 +443,12 @@ nsNodeInfoManager::RemoveNodeInfo(NodeInfo *aNodeInfo)
     else if (aNodeInfo == mCommentNodeInfo) {
       mCommentNodeInfo = nullptr;
     }
+  }
+
+  uint32_t index =
+    GetNodeInfoInnerHashValue(&aNodeInfo->mInner) % RECENTLY_USED_NODEINFOS_SIZE;
+  if (mRecentlyUsedNodeInfos[index] == aNodeInfo) {
+    mRecentlyUsedNodeInfos[index] = nullptr;
   }
 
 #ifdef DEBUG

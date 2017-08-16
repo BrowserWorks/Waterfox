@@ -12,11 +12,11 @@ add_task(function* () {
   let { tab, monitor } = yield initNetMonitor(PARAMS_URL);
   info("Starting test... ");
 
-  let { document, gStore, windowRequire } = monitor.panelWin;
-  let Actions = windowRequire("devtools/client/netmonitor/actions/index");
-  let { L10N } = windowRequire("devtools/client/netmonitor/utils/l10n");
+  let { document, store, windowRequire } = monitor.panelWin;
+  let Actions = windowRequire("devtools/client/netmonitor/src/actions/index");
+  let { L10N } = windowRequire("devtools/client/netmonitor/src/utils/l10n");
 
-  gStore.dispatch(Actions.batchEnable(false));
+  store.dispatch(Actions.batchEnable(false));
 
   let wait = waitForNetworkEvents(monitor, 1, 6);
   yield ContentTask.spawn(tab.linkedBrowser, {}, function* () {
@@ -30,41 +30,39 @@ add_task(function* () {
   EventUtils.sendMouseEvent({ type: "click" },
     document.querySelector("#params-tab"));
   yield wait;
-  testParamsTab1("a", '""', '{ "foo": "bar" }', '""');
+  testParamsTab1("a", "", '{ "foo": "bar" }', "");
 
   wait = waitForDOM(document, "#params-panel .tree-section", 2);
   EventUtils.sendMouseEvent({ type: "mousedown" },
     document.querySelectorAll(".request-list-item")[1]);
   yield wait;
-  testParamsTab1("a", '"b"', '{ "foo": "bar" }', '""');
+  testParamsTab1("a", "b", '{ "foo": "bar" }', "");
 
   wait = waitForDOM(document, "#params-panel .tree-section", 2);
   EventUtils.sendMouseEvent({ type: "mousedown" },
     document.querySelectorAll(".request-list-item")[2]);
   yield wait;
-  testParamsTab1("a", '"b"', "foo", '"bar"');
+  testParamsTab1("a", "b", "?foo", "bar");
 
   wait = waitForDOM(document, "#params-panel tr:not(.tree-section).treeRow", 2);
   EventUtils.sendMouseEvent({ type: "mousedown" },
     document.querySelectorAll(".request-list-item")[3]);
   yield wait;
-  testParamsTab2("a", '""', '{ "foo": "bar" }', "js");
+  testParamsTab2("a", "", '{ "foo": "bar" }', "js");
 
   wait = waitForDOM(document, "#params-panel tr:not(.tree-section).treeRow", 2);
   EventUtils.sendMouseEvent({ type: "mousedown" },
     document.querySelectorAll(".request-list-item")[4]);
   yield wait;
-  testParamsTab2("a", '"b"', '{ "foo": "bar" }', "js");
+  testParamsTab2("a", "b", '{ "foo": "bar" }', "js");
 
   // Wait for all tree sections and editor updated by react
   let waitSections = waitForDOM(document, "#params-panel .tree-section", 2);
-  let waitEditor = waitForDOM(document, "#params-panel .editor-mount iframe");
+  let waitSourceEditor = waitForDOM(document, "#params-panel .CodeMirror-code");
   EventUtils.sendMouseEvent({ type: "mousedown" },
     document.querySelectorAll(".request-list-item")[5]);
-  let [, editorFrames] = yield Promise.all([waitSections, waitEditor]);
-  yield once(editorFrames[0], "DOMContentLoaded");
-  yield waitForDOM(editorFrames[0].contentDocument, ".CodeMirror-code");
-  testParamsTab2("a", '"b"', "?foo=bar", "text");
+  yield Promise.all([waitSections, waitSourceEditor]);
+  testParamsTab2("a", "b", "?foo=bar", "text");
 
   EventUtils.sendMouseEvent({ type: "mousedown" },
     document.querySelectorAll(".request-list-item")[6]);
@@ -85,7 +83,7 @@ add_task(function* () {
 
     ok(tabpanel.querySelector(".treeTable"),
       "The request params box should be displayed.");
-    ok(tabpanel.querySelector(".editor-mount") === null,
+    ok(tabpanel.querySelector(".CodeMirror-code") === null,
       "The request post data editor should not be displayed.");
 
     let treeSections = tabpanel.querySelectorAll(".tree-section");
@@ -126,7 +124,7 @@ add_task(function* () {
 
     ok(tabpanel.querySelector(".treeTable"),
       "The request params box should be displayed.");
-    is(tabpanel.querySelector(".editor-mount") === null,
+    is(tabpanel.querySelector(".CodeMirror-code") === null,
       isJSON,
       "The request post data editor should be not displayed.");
 
@@ -161,8 +159,7 @@ add_task(function* () {
           "JSON property value " + i + " should be displayed correctly");
       }
     } else {
-      let editor = editorFrames[0].contentDocument.querySelector(".CodeMirror-code");
-      ok(editor.textContent.includes(requestPayload),
+      ok(document.querySelector(".CodeMirror-code").textContent.includes(requestPayload),
         "The text shown in the source editor is incorrect.");
     }
   }
@@ -179,7 +176,7 @@ add_task(function* () {
 
     ok(!tabpanel.querySelector(".treeTable"),
       "The request params box should be hidden.");
-    ok(!tabpanel.querySelector(".editor-mount iframe"),
+    ok(!tabpanel.querySelector(".CodeMirror-code"),
       "The request post data editor should be hidden.");
   }
 });

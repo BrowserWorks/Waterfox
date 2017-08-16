@@ -24,8 +24,6 @@
 namespace mozilla {
 namespace dom {
 
-static uint64_t gTabId = 0;
-
 /* static */
 StaticAutoPtr<ContentProcessManager>
 ContentProcessManager::sSingleton;
@@ -49,10 +47,14 @@ ContentProcessManager::AddContentProcess(ContentParent* aChildCp,
   MOZ_ASSERT(NS_IsMainThread());
   MOZ_ASSERT(aChildCp);
 
-  ContentProcessInfo info;
-  info.mCp = aChildCp;
+  ContentProcessInfo& info = mContentParentMap[aChildCp->ChildID()];
+  if (!info.mCp) {
+    info.mCp = aChildCp;
+  } else {
+    MOZ_ASSERT(info.mCp == aChildCp);
+    MOZ_ASSERT_IF(!!info.mParentCpId, info.mParentCpId == aParentCpId);
+  }
   info.mParentCpId = aParentCpId;
-  mContentParentMap[aChildCp->ChildID()] = info;
 }
 
 void
@@ -135,17 +137,19 @@ ContentProcessManager::GetAllChildProcessById(const ContentParentId& aParentCpId
   return Move(cpIdArray);
 }
 
-TabId
-ContentProcessManager::AllocateTabId(const TabId& aOpenerTabId,
-                                     const IPCTabContext& aContext,
-                                     const ContentParentId& aChildCpId)
+bool
+ContentProcessManager::RegisterRemoteFrame(const TabId& aTabId,
+                                           const ContentParentId& aOpenerCpId,
+                                           const TabId& aOpenerTabId,
+                                           const IPCTabContext& aContext,
+                                           const ContentParentId& aChildCpId)
 {
   MOZ_ASSERT(NS_IsMainThread());
 
   auto iter = mContentParentMap.find(aChildCpId);
   if (NS_WARN_IF(iter == mContentParentMap.end())) {
     ASSERT_UNLESS_FUZZING();
-    return TabId(0);
+    return false;
   }
 
   struct RemoteFrameInfo info;
@@ -156,20 +160,11 @@ ContentProcessManager::AllocateTabId(const TabId& aOpenerTabId,
     auto remoteFrameIter = iter->second.mRemoteFrames.find(aOpenerTabId);
     if (remoteFrameIter == iter->second.mRemoteFrames.end()) {
       ASSERT_UNLESS_FUZZING("Failed to find parent frame's opener id.");
-      return TabId(0);
+      return false;
     }
 
+    info.mOpenerCpId = remoteFrameIter->second.mOpenerCpId;
     info.mOpenerTabId = remoteFrameIter->second.mOpenerTabId;
-
-    const PopupIPCTabContext &ipcContext = aContext.get_PopupIPCTabContext();
-    MOZ_ASSERT(ipcContext.opener().type() == PBrowserOrId::TTabId);
-
-    remoteFrameIter = iter->second.mRemoteFrames.find(ipcContext.opener().get_TabId());
-    if (remoteFrameIter == iter->second.mRemoteFrames.end()) {
-      ASSERT_UNLESS_FUZZING("Failed to find tab id.");
-      return TabId(0);
-    }
-
     info.mContext = remoteFrameIter->second.mContext;
   }
   else {
@@ -178,21 +173,20 @@ ContentProcessManager::AllocateTabId(const TabId& aOpenerTabId,
       NS_ERROR(nsPrintfCString("Received an invalid TabContext from "
                                "the child process. (%s)",
                                tc.GetInvalidReason()).get());
-      return TabId(0);
+      return false;
     }
+    info.mOpenerCpId = aOpenerCpId;
     info.mOpenerTabId = aOpenerTabId;
     info.mContext = tc.GetTabContext();
   }
 
-  mUniqueId = ++gTabId;
-  iter->second.mRemoteFrames[mUniqueId] = info;
-
-  return mUniqueId;
+  iter->second.mRemoteFrames[aTabId] = info;
+  return true;
 }
 
 void
-ContentProcessManager::DeallocateTabId(const ContentParentId& aChildCpId,
-                                       const TabId& aChildTabId)
+ContentProcessManager::UnregisterRemoteFrame(const ContentParentId& aChildCpId,
+                                             const TabId& aChildTabId)
 {
   MOZ_ASSERT(NS_IsMainThread());
 
@@ -257,6 +251,7 @@ ContentProcessManager::GetTabContextByContentProcess(const ContentParentId& aChi
 bool
 ContentProcessManager::GetRemoteFrameOpenerTabId(const ContentParentId& aChildCpId,
                                                  const TabId& aChildTabId,
+                                                 /*out*/ContentParentId* aOpenerCpId,
                                                  /*out*/TabId* aOpenerTabId)
 {
   MOZ_ASSERT(NS_IsMainThread());
@@ -272,6 +267,7 @@ ContentProcessManager::GetRemoteFrameOpenerTabId(const ContentParentId& aChildCp
     return false;
   }
 
+  *aOpenerCpId = remoteFrameIter->second.mOpenerCpId;
   *aOpenerTabId = remoteFrameIter->second.mOpenerTabId;
 
   return true;
@@ -323,8 +319,7 @@ ContentProcessManager::GetTopLevelTabParentByProcessAndTabId(const ContentParent
     currentTabId = openerTabId;
 
     // Get the ContentParentId and TabId on upper level
-    if (!GetParentProcessId(currentCpId, &parentCpId) ||
-        !GetRemoteFrameOpenerTabId(currentCpId, currentTabId, &openerTabId)) {
+    if (!GetRemoteFrameOpenerTabId(currentCpId, currentTabId, &parentCpId, &openerTabId)) {
       return nullptr;
     }
   } while (parentCpId);

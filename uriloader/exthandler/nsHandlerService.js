@@ -29,7 +29,6 @@ const NC_PROTOCOL_SCHEMES   = NC_NS + "Protocol-Schemes";
 
 // nsIHandlerInfo::type
 const NC_VALUE              = NC_NS + "value";
-const NC_DESCRIPTION        = NC_NS + "description";
 
 // additional extensions
 const NC_FILE_EXTENSIONS    = NC_NS + "fileExtensions";
@@ -110,17 +109,17 @@ HandlerService.prototype = {
   _init: function HS__init() {
     // Observe profile-before-change so we can switch to the datasource
     // in the new profile when the user changes profiles.
-    this._observerSvc.addObserver(this, "profile-before-change", false);
+    this._observerSvc.addObserver(this, "profile-before-change");
 
     // Observe xpcom-shutdown so we can remove these observers
     // when the application shuts down.
-    this._observerSvc.addObserver(this, "xpcom-shutdown", false);
+    this._observerSvc.addObserver(this, "xpcom-shutdown");
 
     // Observe profile-do-change so that non-default profiles get upgraded too
-    this._observerSvc.addObserver(this, "profile-do-change", false);
-    
-    // do any necessary updating of the datastore
-    this._updateDB();
+    this._observerSvc.addObserver(this, "profile-do-change");
+
+    // Observe handlersvc-rdf-replace so we can switch to the datasource
+    this._observerSvc.addObserver(this, "handlersvc-rdf-replace");
   },
 
   _updateDB: function HS__updateDB() {
@@ -150,16 +149,16 @@ HandlerService.prototype = {
   },
 
   get _currentLocale() {
-    var chromeRegistry = Cc["@mozilla.org/chrome/chrome-registry;1"].
-                         getService(Ci.nsIXULChromeRegistry);
-    var currentLocale = chromeRegistry.getSelectedLocale("global");
-    return currentLocale;
+    const locSvc = Cc["@mozilla.org/intl/localeservice;1"].
+                   getService(Ci.mozILocaleService);
+    return locSvc.getAppLocaleAsLangTag();
   }, 
 
   _destroy: function HS__destroy() {
     this._observerSvc.removeObserver(this, "profile-before-change");
     this._observerSvc.removeObserver(this, "xpcom-shutdown");
     this._observerSvc.removeObserver(this, "profile-do-change");
+    this._observerSvc.removeObserver(this, "handlersvc-rdf-replace");
 
     // XXX Should we also null references to all the services that get stored
     // by our memoizing getters in the Convenience Getters section?
@@ -268,7 +267,7 @@ HandlerService.prototype = {
         handlerApp.name = handlerPrefs.name;                
 
         if (!this._isInHandlerArray(possibleHandlers, handlerApp)) {
-          possibleHandlers.appendElement(handlerApp, false);
+          possibleHandlers.appendElement(handlerApp);
         }
       }
 
@@ -289,7 +288,14 @@ HandlerService.prototype = {
         break;
       case "profile-do-change":
         this._updateDB();
-        break;  
+        break;
+      case "handlersvc-rdf-replace":
+        if (this.__ds) {
+          this._rdf.UnregisterDataSource(this.__ds);
+          this.__ds = null;
+        }
+        this._observerSvc.notifyObservers(null, "handlersvc-rdf-replace-complete");
+        break;
     }
   },
 
@@ -313,11 +319,8 @@ HandlerService.prototype = {
     // in the datastore by looking for its "value" property, which stores its
     // type and should always be present.
     if (!this._hasValue(typeID, NC_VALUE))
-      throw Cr.NS_ERROR_NOT_AVAILABLE;
-
-    // Retrieve the human-readable description of the type.
-    if (this._hasValue(typeID, NC_DESCRIPTION))
-      aHandlerInfo.description = this._getValue(typeID, NC_DESCRIPTION);
+      throw new Components.Exception("handlerSvc fillHandlerInfo: don't know this type",
+                                     Cr.NS_ERROR_NOT_AVAILABLE);
 
     // Note: for historical reasons, we don't actually check that the type
     // record has a "handlerProp" property referencing the info record.  It's
@@ -352,17 +355,11 @@ HandlerService.prototype = {
       var prefSvc = Cc["@mozilla.org/preferences-service;1"].
                     getService(Ci.nsIPrefService);
       var prefBranch = prefSvc.getBranch("network.protocol-handler.");
-      try {
-        alwaysAsk = prefBranch.getBoolPref("warn-external." + type);
-      } catch (e) {
-        // will throw if pref didn't exist.
-        try {
-          alwaysAsk = prefBranch.getBoolPref("warn-external-default");
-        } catch (e) {
-          // Nothing to tell us what to do, so be paranoid and prompt.
-          alwaysAsk = true;
-        }
-      }
+      // If neither of the prefs exists, be paranoid and prompt.
+      alwaysAsk =
+        prefBranch.getBoolPref("warn-external." + type,
+                               prefBranch.getBoolPref("warn-external-default",
+                                                      true));
     }
     aHandlerInfo.alwaysAskBeforeHandling = alwaysAsk;
 
@@ -518,7 +515,7 @@ HandlerService.prototype = {
     // include the preferred handler, so check if it's included as we build
     // the list of handlers, and, if it's not included, add it to the list.
     if (aPreferredHandler)
-      aPossibleHandlers.appendElement(aPreferredHandler, false);
+      aPossibleHandlers.appendElement(aPreferredHandler);
 
     var possibleHandlerTargets = this._getTargets(aInfoID, NC_POSSIBLE_APP);
 
@@ -531,7 +528,7 @@ HandlerService.prototype = {
       let possibleHandler = this._retrieveHandlerApp(possibleHandlerID);
       if (possibleHandler && (!aPreferredHandler ||
                               !possibleHandler.equals(aPreferredHandler)))
-        aPossibleHandlers.appendElement(possibleHandler, false);
+        aPossibleHandlers.appendElement(possibleHandler);
     }
   },
 
@@ -694,6 +691,17 @@ HandlerService.prototype = {
     }
   },
 
+  _handlerAppIsUnknownType: function HS__handlerAppIsUnknownType(aHandlerApp) {
+    if (aHandlerApp instanceof Ci.nsILocalHandlerApp ||
+        aHandlerApp instanceof Ci.nsIWebHandlerApp ||
+        aHandlerApp instanceof Ci.nsIDBusHandlerApp) {
+      return false;
+    } else {
+      return true;
+    }
+  },
+
+
   _storePreferredHandler: function HS__storePreferredHandler(aHandlerInfo) {
     var infoID = this._getInfoID(this._getClass(aHandlerInfo), aHandlerInfo.type);
     var handlerID =
@@ -701,7 +709,7 @@ HandlerService.prototype = {
 
     var handler = aHandlerInfo.preferredApplicationHandler;
 
-    if (handler) {
+    if (handler && !this._handlerAppIsUnknownType(handler)) {
       this._storeHandlerApp(handlerID, handler);
 
       // Make this app be the preferred app for the handler info.
@@ -715,8 +723,9 @@ HandlerService.prototype = {
       this._setResource(infoID, NC_PREFERRED_APP, handlerID);
     }
     else {
-      // There isn't a preferred handler.  Remove the existing record for it,
-      // if any.
+      // There isn't a preferred handler or the handler cannot be serialized,
+      // for example the Android default application handler. Remove the
+      // existing record for it, if any.
       this._removeTarget(infoID, NC_PREFERRED_APP);
       this._removeAssertions(handlerID);
     }
@@ -750,6 +759,11 @@ HandlerService.prototype = {
     while (newHandlerApps.hasMoreElements()) {
       let handlerApp =
         newHandlerApps.getNext().QueryInterface(Ci.nsIHandlerApp);
+      // If the handlerApp is an unknown type, ignore it.
+      // Android default application handler is the case.
+      if (this._handlerAppIsUnknownType(handlerApp)) {
+        continue;
+      }
       let handlerAppID = this._getPossibleHandlerAppID(handlerApp);
       if (!this._hasResourceAssertion(infoID, NC_POSSIBLE_APP, handlerAppID)) {
         this._storeHandlerApp(handlerAppID, handlerApp);
@@ -834,12 +848,13 @@ HandlerService.prototype = {
   _storeExtensions: function HS__storeExtensions(aHandlerInfo) {
     if (aHandlerInfo instanceof Ci.nsIMIMEInfo) {
       var typeID = this._getTypeID(this._getClass(aHandlerInfo), aHandlerInfo.type);
+      let source = this._rdf.GetResource(typeID);
+      let property = this._rdf.GetResource(NC_FILE_EXTENSIONS);
       var extEnum = aHandlerInfo.getFileExtensions();
       while (extEnum.hasMore()) {
         let ext = extEnum.getNext().toLowerCase();
-        if (!this._hasLiteralAssertion(typeID, NC_FILE_EXTENSIONS, ext)) {
-          this._setLiteral(typeID, NC_FILE_EXTENSIONS, ext);
-        }
+        let target = this._rdf.GetLiteral(ext);
+        this._ds.Assert(source, property, target, true);
       }
     }
   },
@@ -910,7 +925,8 @@ HandlerService.prototype = {
   __ds: null,
   get _ds() {
     if (!this.__ds) {
-      var file = this._dirSvc.get("UMimTyp", Ci.nsIFile);
+      var file = this._dirSvc.get("ProfD", Ci.nsIFile);
+      file.append("mimeTypes.rdf");
       // FIXME: make this a memoizing getter if we use it anywhere else.
       var ioService = Cc["@mozilla.org/network/io-service;1"].
                       getService(Ci.nsIIOService);
@@ -918,6 +934,8 @@ HandlerService.prototype = {
                         QueryInterface(Ci.nsIFileProtocolHandler);
       this.__ds =
         this._rdf.GetDataSourceBlocking(fileHandler.getURLSpecFromFile(file));
+      // do any necessary updating of the datastore
+      this._updateDB();
     }
 
     return this.__ds;
@@ -1148,7 +1166,7 @@ HandlerService.prototype = {
       else
         handler = this._protocolSvc.getProtocolHandlerInfo(type);
 
-      aHandlers.appendElement(handler, false);
+      aHandlers.appendElement(handler);
     }
   },
 

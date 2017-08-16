@@ -16,6 +16,7 @@
 #include "mozilla/Attributes.h"
 #include "nsCOMPtr.h"
 #include "nsIAtom.h"
+#include "nsCycleCollectionParticipant.h"
 #include "nsIContentSerializer.h"
 #include "nsIDocumentEncoder.h"
 #include "nsILineBreaker.h"
@@ -37,7 +38,8 @@ class nsPlainTextSerializer final : public nsIContentSerializer
 public:
   nsPlainTextSerializer();
 
-  NS_DECL_ISUPPORTS
+  NS_DECL_CYCLE_COLLECTING_ISUPPORTS
+  NS_DECL_CYCLE_COLLECTION_CLASS(nsPlainTextSerializer)
 
   // nsIContentSerializer
   NS_IMETHOD Init(uint32_t flags, uint32_t aWrapColumn,

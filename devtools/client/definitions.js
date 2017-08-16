@@ -177,8 +177,7 @@ switchDebugger();
 
 Services.prefs.addObserver(
   "devtools.debugger.new-debugger-frontend",
-  { observe: switchDebugger },
-  false
+  { observe: switchDebugger }
 );
 
 Tools.styleEditor = {
@@ -302,13 +301,13 @@ Tools.memory = {
 Tools.netMonitor = {
   id: "netmonitor",
   accesskey: l10n("netmonitor.accesskey"),
-  key: l10n("netmonitor.commandkey"),
+  key: l10n("netmonitor.commandkey2"),
   ordinal: 9,
   modifiers: osString == "Darwin" ? "accel,alt" : "accel,shift",
   visibilityswitch: "devtools.netmonitor.enabled",
   icon: "chrome://devtools/skin/images/tool-network.svg",
   invertIconForDarkTheme: true,
-  url: "chrome://devtools/content/netmonitor/netmonitor.xhtml",
+  url: "chrome://devtools/content/netmonitor/index.html",
   label: l10n("netmonitor.label"),
   panelLabel: l10n("netmonitor.panelLabel"),
   get tooltip() {

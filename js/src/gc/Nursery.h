@@ -59,6 +59,7 @@ class NativeObject;
 class Nursery;
 class HeapSlot;
 class ZoneGroup;
+class JSONPrinter;
 
 void SetGCZeal(JSRuntime*, uint8_t, uint32_t);
 
@@ -259,6 +260,9 @@ class Nursery
     void leaveZealMode();
 #endif
 
+    /* Write profile time JSON on JSONPrinter. */
+    void renderProfileJSON(JSONPrinter& json) const;
+
     /* Print header line for profile times. */
     static void printProfileHeader();
 
@@ -275,6 +279,7 @@ class Nursery
     void clearMinorGCRequest() { minorGCTriggerReason_ = JS::gcreason::NO_REASON; }
 
     bool enableProfiling() const { return enableProfiling_; }
+    bool trackTimings() const { return trackTimings_; }
 
   private:
     /* The amount of space in the mapped nursery available to allocations. */
@@ -320,6 +325,12 @@ class Nursery
     /* Report minor collections taking at least this long, if enabled. */
     mozilla::TimeDuration profileThreshold_;
     bool enableProfiling_;
+
+    /*
+     * Track timings if either enableProfiling_ or the Gecko profiler is
+     * compiled in.
+     */
+    bool trackTimings_;
 
     /* Report ObjectGroups with at lest this many instances tenured. */
     int64_t reportTenurings_;
@@ -448,7 +459,7 @@ class Nursery
 
     void setSlotsForwardingPointer(HeapSlot* oldSlots, HeapSlot* newSlots, uint32_t nslots);
     void setElementsForwardingPointer(ObjectElements* oldHeader, ObjectElements* newHeader,
-                                      uint32_t nelems);
+                                      uint32_t capacity);
 
     /* Free malloced pointers owned by freed things in the nursery. */
     void freeMallocedBuffers();

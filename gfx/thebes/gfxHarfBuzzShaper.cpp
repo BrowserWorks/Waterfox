@@ -48,6 +48,7 @@ gfxHarfBuzzShaper::gfxHarfBuzzShaper(gfxFont *aFont)
     : gfxFontShaper(aFont),
       mHBFace(aFont->GetFontEntry()->GetHBFace()),
       mHBFont(nullptr),
+      mBuffer(nullptr),
       mKernTable(nullptr),
       mHmtxTable(nullptr),
       mVmtxTable(nullptr),
@@ -97,6 +98,9 @@ gfxHarfBuzzShaper::~gfxHarfBuzzShaper()
     }
     if (mHBFace) {
         hb_face_destroy(mHBFace);
+    }
+    if (mBuffer) {
+        hb_buffer_destroy(mBuffer);
     }
 }
 
@@ -1289,6 +1293,11 @@ gfxHarfBuzzShaper::Initialize()
         }
     }
 
+    mBuffer = hb_buffer_create();
+    hb_buffer_set_unicode_funcs(mBuffer, sHBUnicodeFuncs);
+    hb_buffer_set_cluster_level(mBuffer,
+                                HB_BUFFER_CLUSTER_LEVEL_MONOTONE_CHARACTERS);
+
     mHBFont = hb_font_create(mHBFace);
     hb_font_set_funcs(mHBFont, sHBFontFuncs, &mCallbackData, nullptr);
     hb_font_set_ppem(mHBFont, mFont->GetAdjustedSize(), mFont->GetAdjustedSize());
@@ -1419,6 +1428,7 @@ gfxHarfBuzzShaper::ShapeText(DrawTarget      *aDrawTarget,
                              uint32_t         aLength,
                              Script           aScript,
                              bool             aVertical,
+                             RoundingFlags    aRounding,
                              gfxShapedText   *aShapedText)
 {
     // some font back-ends require this in order to get proper hinted metrics
@@ -1473,20 +1483,18 @@ gfxHarfBuzzShaper::ShapeText(DrawTarget      *aDrawTarget,
                       &features);
 
     bool isRightToLeft = aShapedText->IsRightToLeft();
-    hb_buffer_t *buffer = hb_buffer_create();
-    hb_buffer_set_unicode_funcs(buffer, sHBUnicodeFuncs);
 
-    hb_buffer_set_direction(buffer,
+    hb_buffer_set_direction(mBuffer,
                             aVertical ? HB_DIRECTION_TTB :
                                         (isRightToLeft ? HB_DIRECTION_RTL :
                                                          HB_DIRECTION_LTR));
     hb_script_t scriptTag;
-    if (aShapedText->GetFlags() & gfxTextRunFactory::TEXT_USE_MATH_SCRIPT) {
+    if (aShapedText->GetFlags() & gfx::ShapedTextFlags::TEXT_USE_MATH_SCRIPT) {
         scriptTag = sMathScript;
     } else {
         scriptTag = GetHBScriptUsedForShaping(aScript);
     }
-    hb_buffer_set_script(buffer, scriptTag);
+    hb_buffer_set_script(mBuffer, scriptTag);
 
     hb_language_t language;
     if (style->languageOverride) {
@@ -1501,27 +1509,25 @@ gfxHarfBuzzShaper::ShapeText(DrawTarget      *aDrawTarget,
     } else {
         language = hb_ot_tag_to_language(HB_OT_TAG_DEFAULT_LANGUAGE);
     }
-    hb_buffer_set_language(buffer, language);
+    hb_buffer_set_language(mBuffer, language);
 
     uint32_t length = aLength;
-    hb_buffer_add_utf16(buffer,
+    hb_buffer_add_utf16(mBuffer,
                         reinterpret_cast<const uint16_t*>(aText),
                         length, 0, length);
 
-    hb_buffer_set_cluster_level(buffer, HB_BUFFER_CLUSTER_LEVEL_MONOTONE_CHARACTERS);
-
-    hb_shape(mHBFont, buffer, features.Elements(), features.Length());
+    hb_shape(mHBFont, mBuffer, features.Elements(), features.Length());
 
     if (isRightToLeft) {
-        hb_buffer_reverse(buffer);
+        hb_buffer_reverse(mBuffer);
     }
 
-    nsresult rv = SetGlyphsFromRun(aDrawTarget, aShapedText, aOffset, aLength,
-                                   aText, buffer, aVertical);
+    nsresult rv = SetGlyphsFromRun(aShapedText, aOffset, aLength,
+                                   aText, aVertical, aRounding);
 
     NS_WARNING_ASSERTION(NS_SUCCEEDED(rv),
                          "failed to store glyphs into gfxShapedWord");
-    hb_buffer_destroy(buffer);
+    hb_buffer_clear_contents(mBuffer);
 
     return NS_SUCCEEDED(rv);
 }
@@ -1531,16 +1537,15 @@ gfxHarfBuzzShaper::ShapeText(DrawTarget      *aDrawTarget,
                             // for charToGlyphArray
 
 nsresult
-gfxHarfBuzzShaper::SetGlyphsFromRun(DrawTarget     *aDrawTarget,
-                                    gfxShapedText  *aShapedText,
+gfxHarfBuzzShaper::SetGlyphsFromRun(gfxShapedText  *aShapedText,
                                     uint32_t        aOffset,
                                     uint32_t        aLength,
                                     const char16_t *aText,
-                                    hb_buffer_t    *aBuffer,
-                                    bool            aVertical)
+                                    bool            aVertical,
+                                    RoundingFlags   aRounding)
 {
     uint32_t numGlyphs;
-    const hb_glyph_info_t *ginfo = hb_buffer_get_glyph_infos(aBuffer, &numGlyphs);
+    const hb_glyph_info_t *ginfo = hb_buffer_get_glyph_infos(mBuffer, &numGlyphs);
     if (numGlyphs == 0) {
         return NS_OK;
     }
@@ -1571,9 +1576,11 @@ gfxHarfBuzzShaper::SetGlyphsFromRun(DrawTarget     *aDrawTarget,
 
     bool roundI, roundB;
     if (aVertical) {
-        GetRoundOffsetsToPixels(aDrawTarget, &roundB, &roundI);
+        roundI = bool(aRounding & RoundingFlags::kRoundY);
+        roundB = bool(aRounding & RoundingFlags::kRoundX);
     } else {
-        GetRoundOffsetsToPixels(aDrawTarget, &roundI, &roundB);
+        roundI = bool(aRounding & RoundingFlags::kRoundX);
+        roundB = bool(aRounding & RoundingFlags::kRoundY);
     }
 
     int32_t appUnitsPerDevUnit = aShapedText->GetAppUnitsPerDevUnit();
@@ -1600,7 +1607,7 @@ gfxHarfBuzzShaper::SetGlyphsFromRun(DrawTarget     *aDrawTarget,
     nscoord bPos = 0;
 
     const hb_glyph_position_t *posInfo =
-        hb_buffer_get_glyph_positions(aBuffer, nullptr);
+        hb_buffer_get_glyph_positions(mBuffer, nullptr);
 
     while (glyphStart < int32_t(numGlyphs)) {
 

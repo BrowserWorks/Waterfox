@@ -39,6 +39,7 @@
 #include "gfxPrefs.h"
 #if defined(MOZ_WIDGET_ANDROID)
 # include <android/log.h>
+# include "mozilla/layers/UiCompositorControllerParent.h"
 # include "mozilla/widget/AndroidCompositorWidget.h"
 #endif
 #include "GeckoProfiler.h"
@@ -67,12 +68,13 @@ ContentMightReflowOnOrientationChange(const IntRect& rect)
   return rect.width != rect.height;
 }
 
-AsyncCompositionManager::AsyncCompositionManager(HostLayerManager* aManager)
+  AsyncCompositionManager::AsyncCompositionManager(CompositorBridgeParent* aParent,
+                                                   HostLayerManager* aManager)
   : mLayerManager(aManager)
   , mIsFirstPaint(true)
   , mLayersUpdated(false)
-  , mPaintSyncId(0)
   , mReadyForCompose(true)
+  , mCompositorBridge(aParent)
 {
 }
 
@@ -576,6 +578,7 @@ AsyncCompositionManager::AlignFixedAndStickyLayers(Layer* aTransformedSubtreeRoo
 
 static void
 ApplyAnimatedValue(Layer* aLayer,
+                   CompositorAnimationStorage* aStorage,
                    nsCSSPropertyID aProperty,
                    const AnimationData& aAnimationData,
                    const StyleAnimationValue& aValue)
@@ -592,6 +595,9 @@ ApplyAnimatedValue(Layer* aLayer,
                  "Interpolated value for opacity should be float");
       layerCompositor->SetShadowOpacity(aValue.GetFloatValue());
       layerCompositor->SetShadowOpacitySetByAnimation(true);
+      aStorage->SetAnimatedValue(aLayer->GetCompositorAnimationsId(),
+                                 aValue.GetFloatValue());
+
       break;
     }
     case eCSSProperty_transform: {
@@ -607,25 +613,31 @@ ApplyAnimatedValue(Layer* aLayer,
       nsDisplayTransform::FrameTransformProperties props(list,
                                                          transformOrigin);
 
-      // If our parent layer is a perspective layer, then the offset into reference
-      // frame coordinates is already on that layer. If not, then we need to ask
-      // for it to be added here.
-      uint32_t flags = 0;
-      if (!aLayer->GetParent() ||
-          !aLayer->GetParent()->GetTransformIsPerspective()) {
-        flags = nsDisplayTransform::OFFSET_BY_ORIGIN;
-      }
-
       Matrix4x4 transform =
         nsDisplayTransform::GetResultingTransformMatrix(props, origin,
                                                         transformData.appUnitsPerDevPixel(),
-                                                        flags, &transformData.bounds());
+                                                        0, &transformData.bounds());
+      Matrix4x4 frameTransform = transform;
+
+      // If our parent layer is a perspective layer, then the offset into reference
+      // frame coordinates is already on that layer. If not, then we need to ask
+      // for it to be added here.
+      if (!aLayer->GetParent() ||
+          !aLayer->GetParent()->GetTransformIsPerspective()) {
+        nsLayoutUtils::PostTranslate(transform, origin,
+                                     transformData.appUnitsPerDevPixel(),
+                                     true);
+      }
 
       if (ContainerLayer* c = aLayer->AsContainerLayer()) {
         transform.PostScale(c->GetInheritedXScale(), c->GetInheritedYScale(), 1);
       }
+
       layerCompositor->SetShadowBaseTransform(transform);
       layerCompositor->SetShadowTransformSetByAnimation(true);
+      aStorage->SetAnimatedValue(aLayer->GetCompositorAnimationsId(),
+                                 Move(transform), Move(frameTransform),
+                                 transformData);
       break;
     }
     default:
@@ -633,26 +645,45 @@ ApplyAnimatedValue(Layer* aLayer,
   }
 }
 
-static bool
-SampleAnimations(Layer* aLayer, TimeStamp aPoint, uint64_t* aLayerAreaAnimated)
+static AnimationProcessTypes
+SampleAnimations(Layer* aLayer,
+                 CompositorAnimationStorage* aStorage,
+                 TimeStamp aTime,
+                 uint64_t* aLayerAreaAnimated)
 {
-  bool activeAnimations = false;
+  // This tracks the first-encountered RefLayer in the layer tree. Since we are
+  // doing a depth-first traversal, it is set to a non-null value if and only if
+  // the currently-being-traversed node has a RefLayer ancestor. In the case of
+  // nested RefLayers it points to the rootmost RefLayer.
+  RefLayer* ancestorRefLayer = nullptr;
+
+  // This bitfield-enum tracks which processes have active animations. Anything
+  // "above" the |ancestorRefLayer| in the layer tree is assumed to be the
+  // chrome process, and anything "below" is assumed to be the content process.
+  AnimationProcessTypes animProcess = AnimationProcessTypes::eNone;
 
   ForEachNode<ForwardIterator>(
       aLayer,
-      [&activeAnimations, &aPoint, &aLayerAreaAnimated] (Layer* layer)
+      [&] (Layer* layer)
       {
+        if (!ancestorRefLayer) {
+          ancestorRefLayer = layer->AsRefLayer();
+        }
+
         bool hasInEffectAnimations = false;
         StyleAnimationValue animationValue = layer->GetBaseAnimationStyle();
-        activeAnimations |=
-          AnimationHelper::SampleAnimationForEachNode(aPoint,
-                                                      layer->GetAnimations(),
-                                                      layer->GetAnimationData(),
-                                                      animationValue,
-                                                      hasInEffectAnimations);
+        if (AnimationHelper::SampleAnimationForEachNode(aTime,
+                                                        layer->GetAnimations(),
+                                                        layer->GetAnimationData(),
+                                                        animationValue,
+                                                        hasInEffectAnimations)) {
+          animProcess |= (ancestorRefLayer ? AnimationProcessTypes::eContent
+                                           : AnimationProcessTypes::eChrome);
+        }
         if (hasInEffectAnimations) {
           Animation& animation = layer->GetAnimations().LastElement();
           ApplyAnimatedValue(layer,
+                             aStorage,
                              animation.property(),
                              animation.data(),
                              animationValue);
@@ -660,8 +691,16 @@ SampleAnimations(Layer* aLayer, TimeStamp aPoint, uint64_t* aLayerAreaAnimated)
             *aLayerAreaAnimated += (layer->GetVisibleRegion().Area());
           }
         }
+      },
+      [&ancestorRefLayer] (Layer* aLayer)
+      {
+        // If we're unwinding up past the rootmost RefLayer, clear our pointer
+        if (ancestorRefLayer && aLayer->AsRefLayer() == ancestorRefLayer) {
+          ancestorRefLayer = nullptr;
+        }
       });
-  return activeAnimations;
+
+  return animProcess;
 }
 
 static bool
@@ -765,7 +804,7 @@ MoveScrollbarForLayerMargin(Layer* aRoot, FrameMetrics::ViewID aRootScrollId,
   // adjustment on the layer tree.
   Layer* scrollbar = BreadthFirstSearch<ReverseIterator>(aRoot,
     [aRootScrollId](Layer* aNode) {
-      return (aNode->GetScrollbarDirection() == ScrollDirection::HORIZONTAL &&
+      return (aNode->GetScrollThumbData().mDirection == ScrollDirection::HORIZONTAL &&
               aNode->GetScrollbarTargetContainerId() == aRootScrollId);
     });
   if (scrollbar) {
@@ -815,6 +854,7 @@ AsyncCompositionManager::ApplyAsyncContentTransformToTree(Layer *aLayer,
 
         AsyncTransformComponentMatrix combinedAsyncTransform;
         bool hasAsyncTransform = false;
+        // Only set on the root layer for Android.
         ScreenMargin fixedLayerMargins;
 
         // Each layer has multiple clips:
@@ -904,33 +944,30 @@ AsyncCompositionManager::ApplyAsyncContentTransformToTree(Layer *aLayer,
                    i + 1 >= layer->GetScrollMetadataCount());
             if (*aOutFoundRoot) {
               mRootScrollableId = metrics.GetScrollId();
-              CSSToLayerScale geckoZoom = metrics.LayersPixelsPerCSSPixel().ToScaleFactor();
-              if (mIsFirstPaint) {
-                LayerIntPoint scrollOffsetLayerPixels = RoundedToInt(metrics.GetScrollOffset() * geckoZoom);
-                mContentRect = metrics.GetScrollableRect();
-                SetFirstPaintViewport(scrollOffsetLayerPixels,
-                                      geckoZoom,
-                                      mContentRect);
-              } else {
-                ParentLayerPoint scrollOffset = controller->GetCurrentAsyncScrollOffset(
-                    AsyncPanZoomController::RESPECT_FORCE_DISABLE);
-                // Compute the painted displayport in document-relative CSS pixels.
-                CSSRect displayPort(metrics.GetCriticalDisplayPort().IsEmpty() ?
-                    metrics.GetDisplayPort() :
-                    metrics.GetCriticalDisplayPort());
-                displayPort += metrics.GetScrollOffset();
-                SyncFrameMetrics(scrollOffset,
-                    geckoZoom * asyncTransformWithoutOverscroll.mScale,
-                    metrics.GetScrollableRect(), displayPort, geckoZoom, mLayersUpdated,
-                    mPaintSyncId, fixedLayerMargins);
-                mFixedLayerMargins = fixedLayerMargins;
-                mLayersUpdated = false;
-                mPaintSyncId = 0;
+              Compositor* compositor = mLayerManager->GetCompositor();
+              if (CompositorBridgeParent* bridge = compositor->GetCompositorBridgeParent()) {
+                AndroidDynamicToolbarAnimator* animator = bridge->GetAPZCTreeManager()->GetAndroidDynamicToolbarAnimator();
+                MOZ_ASSERT(animator);
+                if (mIsFirstPaint) {
+                  animator->UpdateRootFrameMetrics(metrics);
+                  animator->FirstPaint();
+                  mIsFirstPaint = false;
+                }
+                if (mLayersUpdated) {
+                  animator->NotifyLayersUpdated();
+                  mLayersUpdated = false;
+                }
+                // If this is not actually the root content then the animator is not getting updated in AsyncPanZoomController::NotifyLayersUpdated
+                // because the root content document is not scrollable. So update it here so it knows if the root composition size has changed.
+                if (!metrics.IsRootContent()) {
+                  animator->MaybeUpdateCompositionSizeAndRootFrameMetrics(metrics);
+                }
               }
-              mIsFirstPaint = false;
+              fixedLayerMargins = mFixedLayerMargins;
             }
           }
 #else
+          *aOutFoundRoot = false;
           // Non-Android platforms still care about this flag being cleared after
           // the first call to TransformShadowTree().
           mIsFirstPaint = false;
@@ -1044,7 +1081,7 @@ AsyncCompositionManager::ApplyAsyncContentTransformToTree(Layer *aLayer,
 
         ExpandRootClipRect(layer, fixedLayerMargins);
 
-        if (layer->GetScrollbarDirection() != ScrollDirection::NONE) {
+        if (layer->GetScrollThumbData().mDirection != ScrollDirection::NONE) {
           ApplyAsyncTransformToScrollbar(layer);
         }
       });
@@ -1071,28 +1108,61 @@ ApplyAsyncTransformToScrollbarForContent(Layer* aScrollbar,
                                          const LayerMetricsWrapper& aContent,
                                          bool aScrollbarIsDescendant)
 {
+  AsyncTransformComponentMatrix clipTransform;
+
+  LayerToParentLayerMatrix4x4 transform =
+      AsyncCompositionManager::ComputeTransformForScrollThumb(
+          aScrollbar->GetLocalTransformTyped(),
+          aContent.GetTransform(),
+          aContent.GetApzc(),
+          aContent.Metrics(),
+          aScrollbar->GetScrollThumbData(),
+          aScrollbarIsDescendant,
+          &clipTransform);
+
+  if (aScrollbarIsDescendant) {
+    // We also need to make a corresponding change on the clip rect of all the
+    // layers on the ancestor chain from the scrollbar layer up to but not
+    // including the layer with the async transform. Otherwise the scrollbar
+    // shifts but gets clipped and so appears to flicker.
+    for (Layer* ancestor = aScrollbar; ancestor != aContent.GetLayer(); ancestor = ancestor->GetParent()) {
+      TransformClipRect(ancestor, clipTransform);
+    }
+  }
+
+  SetShadowTransform(aScrollbar, transform);
+}
+
+/* static */ LayerToParentLayerMatrix4x4
+AsyncCompositionManager::ComputeTransformForScrollThumb(
+    const LayerToParentLayerMatrix4x4& aCurrentTransform,
+    const Matrix4x4& aScrollableContentTransform,
+    AsyncPanZoomController* aApzc,
+    const FrameMetrics& aMetrics,
+    const ScrollThumbData& aThumbData,
+    bool aScrollbarIsDescendant,
+    AsyncTransformComponentMatrix* aOutClipTransform)
+{
   // We only apply the transform if the scroll-target layer has non-container
   // children (i.e. when it has some possibly-visible content). This is to
   // avoid moving scroll-bars in the situation that only a scroll information
   // layer has been built for a scroll frame, as this would result in a
   // disparity between scrollbars and visible content.
-  if (aContent.IsScrollInfoLayer()) {
-    return;
+  if (aMetrics.IsScrollInfoLayer()) {
+    return LayerToParentLayerMatrix4x4{};
   }
 
-  const FrameMetrics& metrics = aContent.Metrics();
-  AsyncPanZoomController* apzc = aContent.GetApzc();
-  MOZ_RELEASE_ASSERT(apzc);
+  MOZ_RELEASE_ASSERT(aApzc);
 
   AsyncTransformComponentMatrix asyncTransform =
-    apzc->GetCurrentAsyncTransform(AsyncPanZoomController::RESPECT_FORCE_DISABLE);
+    aApzc->GetCurrentAsyncTransform(AsyncPanZoomController::RESPECT_FORCE_DISABLE);
 
   // |asyncTransform| represents the amount by which we have scrolled and
   // zoomed since the last paint. Because the scrollbar was sized and positioned based
   // on the painted content, we need to adjust it based on asyncTransform so that
   // it reflects what the user is actually seeing now.
   AsyncTransformComponentMatrix scrollbarTransform;
-  if (aScrollbar->GetScrollbarDirection() == ScrollDirection::VERTICAL) {
+  if (aThumbData.mDirection == ScrollDirection::VERTICAL) {
     const ParentLayerCoord asyncScrollY = asyncTransform._42;
     const float asyncZoomY = asyncTransform._22;
 
@@ -1102,13 +1172,13 @@ ApplyAsyncTransformToScrollbarForContent(Layer* aScrollbar,
     const float yScale = 1.f / asyncZoomY;
 
     // Note: |metrics.GetZoom()| doesn't yet include the async zoom.
-    const CSSToParentLayerScale effectiveZoom(metrics.GetZoom().yScale * asyncZoomY);
+    const CSSToParentLayerScale effectiveZoom(aMetrics.GetZoom().yScale * asyncZoomY);
 
     // Here we convert the scrollbar thumb ratio into a true unitless ratio by
     // dividing out the conversion factor from the scrollframe's parent's space
     // to the scrollframe's space.
-    const float ratio = aScrollbar->GetScrollbarThumbRatio() /
-        (metrics.GetPresShellResolution() * asyncZoomY);
+    const float ratio = aThumbData.mThumbRatio /
+        (aMetrics.GetPresShellResolution() * asyncZoomY);
     // The scroll thumb needs to be translated in opposite direction of the
     // async scroll. This is because scrolling down, which translates the layer
     // content up, should result in moving the scroll thumb down.
@@ -1125,26 +1195,26 @@ ApplyAsyncTransformToScrollbarForContent(Layer* aScrollbar,
     // a change of basis. We have a method to help with that,
     // Matrix4x4::ChangeBasis(), but it wouldn't necessarily make the code
     // cleaner in this case).
-    const CSSCoord thumbOrigin = (metrics.GetScrollOffset().y * ratio);
+    const CSSCoord thumbOrigin = (aMetrics.GetScrollOffset().y * ratio);
     const CSSCoord thumbOriginScaled = thumbOrigin * yScale;
     const CSSCoord thumbOriginDelta = thumbOriginScaled - thumbOrigin;
     const ParentLayerCoord thumbOriginDeltaPL = thumbOriginDelta * effectiveZoom;
     yTranslation -= thumbOriginDeltaPL;
 
-    if (metrics.IsRootContent()) {
+    if (aMetrics.IsRootContent()) {
       // Scrollbar for the root are painted at the same resolution as the
       // content. Since the coordinate space we apply this transform in includes
       // the resolution, we need to adjust for it as well here. Note that in
       // another metrics.IsRootContent() hunk below we apply a
       // resolution-cancelling transform which ensures the scroll thumb isn't
       // actually rendered at a larger scale.
-      yTranslation *= metrics.GetPresShellResolution();
+      yTranslation *= aMetrics.GetPresShellResolution();
     }
 
     scrollbarTransform.PostScale(1.f, yScale, 1.f);
     scrollbarTransform.PostTranslate(0, yTranslation, 0);
   }
-  if (aScrollbar->GetScrollbarDirection() == ScrollDirection::HORIZONTAL) {
+  if (aThumbData.mDirection == ScrollDirection::HORIZONTAL) {
     // See detailed comments under the VERTICAL case.
 
     const ParentLayerCoord asyncScrollX = asyncTransform._41;
@@ -1152,20 +1222,20 @@ ApplyAsyncTransformToScrollbarForContent(Layer* aScrollbar,
 
     const float xScale = 1.f / asyncZoomX;
 
-    const CSSToParentLayerScale effectiveZoom(metrics.GetZoom().xScale * asyncZoomX);
+    const CSSToParentLayerScale effectiveZoom(aMetrics.GetZoom().xScale * asyncZoomX);
 
-    const float ratio = aScrollbar->GetScrollbarThumbRatio() /
-        (metrics.GetPresShellResolution() * asyncZoomX);
+    const float ratio = aThumbData.mThumbRatio /
+        (aMetrics.GetPresShellResolution() * asyncZoomX);
     ParentLayerCoord xTranslation = -asyncScrollX * ratio;
 
-    const CSSCoord thumbOrigin = (metrics.GetScrollOffset().x * ratio);
+    const CSSCoord thumbOrigin = (aMetrics.GetScrollOffset().x * ratio);
     const CSSCoord thumbOriginScaled = thumbOrigin * xScale;
     const CSSCoord thumbOriginDelta = thumbOriginScaled - thumbOrigin;
     const ParentLayerCoord thumbOriginDeltaPL = thumbOriginDelta * effectiveZoom;
     xTranslation -= thumbOriginDeltaPL;
 
-    if (metrics.IsRootContent()) {
-      xTranslation *= metrics.GetPresShellResolution();
+    if (aMetrics.IsRootContent()) {
+      xTranslation *= aMetrics.GetPresShellResolution();
     }
 
     scrollbarTransform.PostScale(xScale, 1.f, 1.f);
@@ -1173,7 +1243,7 @@ ApplyAsyncTransformToScrollbarForContent(Layer* aScrollbar,
   }
 
   LayerToParentLayerMatrix4x4 transform =
-      aScrollbar->GetLocalTransformTyped() * scrollbarTransform;
+      aCurrentTransform * scrollbarTransform;
 
   AsyncTransformComponentMatrix compensation;
   // If the scrollbar layer is for the root then the content's resolution
@@ -1181,11 +1251,11 @@ ApplyAsyncTransformToScrollbarForContent(Layer* aScrollbar,
   // thumb's size to vary with the zoom (other than its length reflecting the
   // fraction of the scrollable length that's in view, which is taken care of
   // above), we apply a transform to cancel out this resolution.
-  if (metrics.IsRootContent()) {
+  if (aMetrics.IsRootContent()) {
     compensation =
         AsyncTransformComponentMatrix::Scaling(
-            metrics.GetPresShellResolution(),
-            metrics.GetPresShellResolution(),
+            aMetrics.GetPresShellResolution(),
+            aMetrics.GetPresShellResolution(),
             1.0f).Inverse();
   }
   // If the scrollbar layer is a child of the content it is a scrollbar for,
@@ -1201,9 +1271,9 @@ ApplyAsyncTransformToScrollbarForContent(Layer* aScrollbar,
   // and then unapplying it after unapplying the async transform.
   if (aScrollbarIsDescendant) {
     AsyncTransformComponentMatrix overscroll =
-        apzc->GetOverscrollTransform(AsyncPanZoomController::RESPECT_FORCE_DISABLE);
+        aApzc->GetOverscrollTransform(AsyncPanZoomController::RESPECT_FORCE_DISABLE);
     Matrix4x4 asyncUntransform = (asyncTransform * overscroll).Inverse().ToUnknownMatrix();
-    Matrix4x4 contentTransform = aContent.GetTransform();
+    Matrix4x4 contentTransform = aScrollableContentTransform;
     Matrix4x4 contentUntransform = contentTransform.Inverse();
 
     AsyncTransformComponentMatrix asyncCompensation =
@@ -1214,17 +1284,15 @@ ApplyAsyncTransformToScrollbarForContent(Layer* aScrollbar,
 
     compensation = compensation * asyncCompensation;
 
-    // We also need to make a corresponding change on the clip rect of all the
-    // layers on the ancestor chain from the scrollbar layer up to but not
-    // including the layer with the async transform. Otherwise the scrollbar
-    // shifts but gets clipped and so appears to flicker.
-    for (Layer* ancestor = aScrollbar; ancestor != aContent.GetLayer(); ancestor = ancestor->GetParent()) {
-      TransformClipRect(ancestor, asyncCompensation);
+    // Pass the async compensation out to the caller so that it can use it
+    // to transform clip transforms as needed.
+    if (aOutClipTransform) {
+      *aOutClipTransform = asyncCompensation;
     }
   }
   transform = transform * compensation;
 
-  SetShadowTransform(aScrollbar, transform);
+  return transform;
 }
 
 static LayerMetricsWrapper
@@ -1307,6 +1375,9 @@ AsyncCompositionManager::TransformShadowTree(TimeStamp aCurrentFrame,
     return false;
   }
 
+  // GetAnimationStorage in CompositorBridgeParent expects id as 0
+  CompositorAnimationStorage* storage =
+    mCompositorBridge->GetAnimationStorage(0);
   // First, compute and set the shadow transforms from OMT animations.
   // NB: we must sample animations *before* sampling pan/zoom
   // transforms.
@@ -1315,12 +1386,40 @@ AsyncCompositionManager::TransformShadowTree(TimeStamp aCurrentFrame,
   // On the initial frame we use aVsyncTimestamp here so the timestamp on the
   // second frame are the same as the initial frame, but it does not matter.
   uint64_t layerAreaAnimated = 0;
-  bool wantNextFrame = SampleAnimations(root,
-    !mPreviousFrameTimeStamp.IsNull() ?
-      mPreviousFrameTimeStamp : aCurrentFrame,
-    &layerAreaAnimated);
+  AnimationProcessTypes animationProcess =
+    SampleAnimations(root,
+                     storage,
+                     !mPreviousFrameTimeStamp.IsNull() ?
+                       mPreviousFrameTimeStamp : aCurrentFrame,
+                     &layerAreaAnimated);
+  bool wantNextFrame = (animationProcess != AnimationProcessTypes::eNone);
+
   mAnimationMetricsTracker.UpdateAnimationInProgress(
-    wantNextFrame, layerAreaAnimated);
+    animationProcess, layerAreaAnimated, aVsyncRate);
+
+  if (!wantNextFrame) {
+    // Clean up the CompositorAnimationStorage because
+    // there are no active animations running
+    storage->Clear();
+  }
+
+  // Advance animations to the next expected vsync timestamp, if we can
+  // get it.
+  TimeStamp nextFrame = aCurrentFrame;
+
+  MOZ_ASSERT(aVsyncRate != TimeDuration::Forever());
+  if (aVsyncRate != TimeDuration::Forever()) {
+    nextFrame += aVsyncRate;
+  }
+
+#if defined(MOZ_WIDGET_ANDROID)
+  Compositor* compositor = mLayerManager->GetCompositor();
+  if (CompositorBridgeParent* bridge = compositor->GetCompositorBridgeParent()) {
+    AndroidDynamicToolbarAnimator* animator = bridge->GetAPZCTreeManager()->GetAndroidDynamicToolbarAnimator();
+    MOZ_ASSERT(animator);
+    wantNextFrame |= animator->UpdateAnimation(nextFrame);
+  }
+#endif // defined(MOZ_WIDGET_ANDROID)
 
   // Reset the previous time stamp if we don't already have any running
   // animations to avoid using the time which is far behind for newly
@@ -1349,16 +1448,9 @@ AsyncCompositionManager::TransformShadowTree(TimeStamp aCurrentFrame,
 #endif
     }
 
-    // Advance APZ animations to the next expected vsync timestamp, if we can
-    // get it.
-    TimeStamp nextFrame = aCurrentFrame;
-
-    MOZ_ASSERT(aVsyncRate != TimeDuration::Forever());
-    if (aVsyncRate != TimeDuration::Forever()) {
-      nextFrame += aVsyncRate;
-    }
-
-    wantNextFrame |= SampleAPZAnimations(LayerMetricsWrapper(root), nextFrame);
+    bool apzAnimating = SampleAPZAnimations(LayerMetricsWrapper(root), nextFrame);
+    mAnimationMetricsTracker.UpdateApzAnimationInProgress(apzAnimating, aVsyncRate);
+    wantNextFrame |= apzAnimating;
   }
 
   HostLayer* rootComposite = root->AsHostLayer();
@@ -1374,42 +1466,14 @@ AsyncCompositionManager::TransformShadowTree(TimeStamp aCurrentFrame,
   return wantNextFrame;
 }
 
+#if defined(MOZ_WIDGET_ANDROID)
 void
-AsyncCompositionManager::SetFirstPaintViewport(const LayerIntPoint& aOffset,
-                                               const CSSToLayerScale& aZoom,
-                                               const CSSRect& aCssPageRect)
+AsyncCompositionManager::SetFixedLayerMargins(ScreenIntCoord aTop, ScreenIntCoord aBottom)
 {
-#ifdef MOZ_WIDGET_ANDROID
-  widget::AndroidCompositorWidget* widget =
-      mLayerManager->GetCompositor()->GetWidget()->AsAndroid();
-  if (!widget) {
-    return;
-  }
-  widget->SetFirstPaintViewport(aOffset, aZoom, aCssPageRect);
-#endif
+  mFixedLayerMargins.top = aTop;
+  mFixedLayerMargins.bottom = aBottom;
 }
-
-void
-AsyncCompositionManager::SyncFrameMetrics(const ParentLayerPoint& aScrollOffset,
-                                          const CSSToParentLayerScale& aZoom,
-                                          const CSSRect& aCssPageRect,
-                                          const CSSRect& aDisplayPort,
-                                          const CSSToLayerScale& aPaintedResolution,
-                                          bool aLayersUpdated,
-                                          int32_t aPaintSyncId,
-                                          ScreenMargin& aFixedLayerMargins)
-{
-#ifdef MOZ_WIDGET_ANDROID
-  widget::AndroidCompositorWidget* widget =
-      mLayerManager->GetCompositor()->GetWidget()->AsAndroid();
-  if (!widget) {
-    return;
-  }
-  widget->SyncFrameMetrics(
-      aScrollOffset, aZoom, aCssPageRect, aDisplayPort, aPaintedResolution,
-      aLayersUpdated, aPaintSyncId, aFixedLayerMargins);
-#endif
-}
+#endif // defined(MOZ_WIDGET_ANDROID)
 
 } // namespace layers
 } // namespace mozilla

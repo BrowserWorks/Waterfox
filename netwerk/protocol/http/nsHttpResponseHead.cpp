@@ -7,6 +7,7 @@
 // HttpLog.h should generally be included first
 #include "HttpLog.h"
 
+#include "mozilla/Unused.h"
 #include "nsHttpResponseHead.h"
 #include "nsIHttpHeaderVisitor.h"
 #include "nsPrintfCString.h"
@@ -137,6 +138,26 @@ nsHttpResponseHead::Immutable()
 }
 
 nsresult
+nsHttpResponseHead::SetHeader(const nsACString &hdr,
+                              const nsACString &val,
+                              bool merge)
+{
+    ReentrantMonitorAutoEnter monitor(mReentrantMonitor);
+
+    if (mInVisitHeaders) {
+        return NS_ERROR_FAILURE;
+    }
+
+    nsHttpAtom atom = nsHttp::ResolveAtom(PromiseFlatCString(hdr).get());
+    if (!atom) {
+        NS_WARNING("failed to resolve atom");
+        return NS_ERROR_NOT_AVAILABLE;
+    }
+
+    return SetHeader_locked(atom, hdr, val, merge);
+}
+
+nsresult
 nsHttpResponseHead::SetHeader(nsHttpAtom hdr,
                               const nsACString &val,
                               bool merge)
@@ -147,24 +168,25 @@ nsHttpResponseHead::SetHeader(nsHttpAtom hdr,
         return NS_ERROR_FAILURE;
     }
 
-    return SetHeader_locked(hdr, val, merge);
+    return SetHeader_locked(hdr, EmptyCString(), val, merge);
 }
 
 nsresult
-nsHttpResponseHead::SetHeader_locked(nsHttpAtom hdr,
+nsHttpResponseHead::SetHeader_locked(nsHttpAtom atom,
+                                     const nsACString &hdr,
                                      const nsACString &val,
                                      bool merge)
 {
-    nsresult rv = mHeaders.SetHeader(hdr, val, merge,
+    nsresult rv = mHeaders.SetHeader(atom, hdr, val, merge,
                                      nsHttpHeaderArray::eVarietyResponse);
     if (NS_FAILED(rv)) return rv;
 
     // respond to changes in these headers.  we need to reparse the entire
     // header since the change may have merged in additional values.
-    if (hdr == nsHttp::Cache_Control)
-        ParseCacheControl(mHeaders.PeekHeader(hdr));
-    else if (hdr == nsHttp::Pragma)
-        ParsePragma(mHeaders.PeekHeader(hdr));
+    if (atom == nsHttp::Cache_Control)
+        ParseCacheControl(mHeaders.PeekHeader(atom));
+    else if (atom == nsHttp::Pragma)
+        ParsePragma(mHeaders.PeekHeader(atom));
 
     return NS_OK;
 }
@@ -227,11 +249,14 @@ nsHttpResponseHead::SetContentLength(int64_t len)
     mContentLength = len;
     if (len < 0)
         mHeaders.ClearHeader(nsHttp::Content_Length);
-    else
-        mHeaders.SetHeader(nsHttp::Content_Length,
-                           nsPrintfCString("%" PRId64, len),
-                           false,
-                           nsHttpHeaderArray::eVarietyResponse);
+    else {
+        DebugOnly<nsresult> rv =
+            mHeaders.SetHeader(nsHttp::Content_Length,
+                               nsPrintfCString("%" PRId64, len),
+                               false,
+                               nsHttpHeaderArray::eVarietyResponse);
+        MOZ_ASSERT(NS_SUCCEEDED(rv));
+    }
 }
 
 void
@@ -294,7 +319,7 @@ nsHttpResponseHead::ParseCachedHead(const char *block)
         if (!p)
             return NS_ERROR_UNEXPECTED;
 
-        ParseHeaderLine_locked(nsDependentCSubstring(block, p - block), false);
+        Unused << ParseHeaderLine_locked(nsDependentCSubstring(block, p - block), false);
 
     } while (1);
 
@@ -316,6 +341,7 @@ nsHttpResponseHead::ParseCachedOriginalHeaders(char *block)
 
     char *p = block;
     nsHttpAtom hdr = {0};
+    nsAutoCString headerNameOriginal;
     nsAutoCString val;
     nsresult rv;
 
@@ -331,12 +357,13 @@ nsHttpResponseHead::ParseCachedOriginalHeaders(char *block)
 
         *p = 0;
         if (NS_FAILED(nsHttpHeaderArray::ParseHeaderLine(
-            nsDependentCString(block, p - block), &hdr, &val))) {
+            nsDependentCString(block, p - block), &hdr, &headerNameOriginal, &val))) {
 
             return NS_OK;
         }
 
         rv = mHeaders.SetResponseHeaderFromCache(hdr,
+                                                 headerNameOriginal,
                                                  val,
                                                  nsHttpHeaderArray::eVarietyResponseNetOriginal);
 
@@ -567,18 +594,21 @@ nsresult
 nsHttpResponseHead::ParseHeaderLine_locked(const nsACString &line, bool originalFromNetHeaders)
 {
     nsHttpAtom hdr = {0};
+    nsAutoCString headerNameOriginal;
     nsAutoCString val;
 
-    if (NS_FAILED(nsHttpHeaderArray::ParseHeaderLine(line, &hdr, &val))) {
+    if (NS_FAILED(nsHttpHeaderArray::ParseHeaderLine(line, &hdr, &headerNameOriginal, &val))) {
         return NS_OK;
     }
     nsresult rv;
     if (originalFromNetHeaders) {
         rv = mHeaders.SetHeaderFromNet(hdr,
+                                       headerNameOriginal,
                                        val,
                                        true);
     } else {
         rv = mHeaders.SetResponseHeaderFromCache(hdr,
+                                                 headerNameOriginal,
                                                  val,
                                                  nsHttpHeaderArray::eVarietyResponse);
     }
@@ -856,7 +886,8 @@ nsHttpResponseHead::UpdateHeaders(nsHttpResponseHead *aOther)
     uint32_t i, count = aOther->mHeaders.Count();
     for (i=0; i<count; ++i) {
         nsHttpAtom header;
-        const char *val = aOther->mHeaders.PeekHeaderAt(i, header);
+        nsAutoCString headerNameOriginal;
+        const char *val = aOther->mHeaders.PeekHeaderAt(i, header, headerNameOriginal);
 
         if (!val) {
             continue;
@@ -890,7 +921,9 @@ nsHttpResponseHead::UpdateHeaders(nsHttpResponseHead *aOther)
             LOG(("new response header [%s: %s]\n", header.get(), val));
 
             // overwrite the current header value with the new value...
-            SetHeader_locked(header, nsDependentCString(val));
+            DebugOnly<nsresult> rv = SetHeader_locked(header, headerNameOriginal,
+                                                      nsDependentCString(val));
+            MOZ_ASSERT(NS_SUCCEEDED(rv));
         }
     }
 

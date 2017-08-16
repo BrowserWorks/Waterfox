@@ -2,6 +2,12 @@
 /* vim: set sts=2 sw=2 et tw=80: */
 "use strict";
 
+/* exported browserActionFor, sidebarActionFor, pageActionFor */
+/* global browserActionFor:false, sidebarActionFor:false, pageActionFor:false */
+
+// The ext-* files are imported into the same scopes.
+/* import-globals-from ext-utils.js */
+
 XPCOMUtils.defineLazyModuleGetter(this, "CustomizableUI",
                                   "resource:///modules/CustomizableUI.jsm");
 XPCOMUtils.defineLazyModuleGetter(this, "clearTimeout",
@@ -15,27 +21,30 @@ XPCOMUtils.defineLazyServiceGetter(this, "DOMUtils",
                                    "@mozilla.org/inspector/dom-utils;1",
                                    "inIDOMUtils");
 
-Cu.import("resource://devtools/shared/event-emitter.js");
-Cu.import("resource://gre/modules/ExtensionUtils.jsm");
-Cu.import("resource://gre/modules/Task.jsm");
+Cu.import("resource://gre/modules/EventEmitter.jsm");
+
+var {
+  DefaultWeakMap,
+} = ExtensionUtils;
+
+Cu.import("resource://gre/modules/ExtensionParent.jsm");
 
 var {
   IconDetails,
-  SingletonEventManager,
-} = ExtensionUtils;
+} = ExtensionParent;
 
 const POPUP_PRELOAD_TIMEOUT_MS = 200;
 
-const XUL_NS = "http://www.mozilla.org/keymaster/gatekeeper/there.is.only.xul";
+var XUL_NS = "http://www.mozilla.org/keymaster/gatekeeper/there.is.only.xul";
 
-function isAncestorOrSelf(target, node) {
+const isAncestorOrSelf = (target, node) => {
   for (; node; node = node.parentNode) {
     if (node === target) {
       return true;
     }
   }
   return false;
-}
+};
 
 // WeakMap[Extension -> BrowserAction]
 const browserActionMap = new WeakMap();
@@ -49,44 +58,62 @@ XPCOMUtils.defineLazyGetter(this, "browserAreas", () => {
   };
 });
 
-// Responsible for the browser_action section of the manifest as well
-// as the associated popup.
-function BrowserAction(options, extension) {
-  this.extension = extension;
-
-  let widgetId = makeWidgetId(extension.id);
-  this.id = `${widgetId}-browser-action`;
-  this.viewId = `PanelUI-webext-${widgetId}-browser-action-view`;
-  this.widget = null;
-
-  this.pendingPopup = null;
-  this.pendingPopupTimeout = null;
-
-  this.tabManager = extension.tabManager;
-
-  this.defaults = {
-    enabled: true,
-    title: options.default_title || extension.name,
-    badgeText: "",
-    badgeBackgroundColor: null,
-    icon: IconDetails.normalize({path: options.default_icon}, extension),
-    popup: options.default_popup || "",
-    area: browserAreas[options.default_area || "navbar"],
-  };
-
-  this.browserStyle = options.browser_style || false;
-  if (options.browser_style === null) {
-    this.extension.logger.warn("Please specify whether you want browser_style " +
-                               "or not in your browser_action options.");
+this.browserAction = class extends ExtensionAPI {
+  static for(extension) {
+    return browserActionMap.get(extension);
   }
 
-  this.tabContext = new TabContext(tab => Object.create(this.defaults),
-                                   extension);
+  onManifestEntry(entryName) {
+    let {extension} = this;
 
-  EventEmitter.decorate(this);
-}
+    let options = extension.manifest.browser_action;
 
-BrowserAction.prototype = {
+    this.iconData = new DefaultWeakMap(icons => this.getIconData(icons));
+
+    let widgetId = makeWidgetId(extension.id);
+    this.id = `${widgetId}-browser-action`;
+    this.viewId = `PanelUI-webext-${widgetId}-browser-action-view`;
+    this.widget = null;
+
+    this.pendingPopup = null;
+    this.pendingPopupTimeout = null;
+
+    this.tabManager = extension.tabManager;
+
+    this.defaults = {
+      enabled: true,
+      title: options.default_title || extension.name,
+      badgeText: "",
+      badgeBackgroundColor: null,
+      icon: IconDetails.normalize({path: options.default_icon}, extension),
+      popup: options.default_popup || "",
+      area: browserAreas[options.default_area || "navbar"],
+    };
+
+    this.browserStyle = options.browser_style || false;
+    if (options.browser_style === null) {
+      this.extension.logger.warn("Please specify whether you want browser_style " +
+                                 "or not in your browser_action options.");
+    }
+
+    this.tabContext = new TabContext(tab => Object.create(this.defaults),
+                                     extension);
+
+    EventEmitter.decorate(this);
+
+    this.build();
+    browserActionMap.set(extension, this);
+  }
+
+  onShutdown(reason) {
+    browserActionMap.delete(this.extension);
+
+    this.tabContext.shutdown();
+    CustomizableUI.destroyWidget(this.id);
+
+    this.clearPopup();
+  }
+
   build() {
     let widget = CustomizableUI.createWidget({
       id: this.id,
@@ -107,13 +134,14 @@ BrowserAction.prototype = {
       },
 
       onDestroyed: document => {
+        document.removeEventListener("popupshowing", this);
+
         let view = document.getElementById(this.viewId);
         if (view) {
           this.clearPopup();
           CustomizableUI.hidePanelForNode(view);
           view.remove();
         }
-        document.removeEventListener("popupshowing", this);
       },
 
       onCreated: node => {
@@ -122,6 +150,8 @@ BrowserAction.prototype = {
         node.setAttribute("constrain-size", "true");
 
         node.onmousedown = event => this.handleEvent(event);
+        node.onmouseover = event => this.handleEvent(event);
+        node.onmouseout = event => this.handleEvent(event);
 
         this.updateButton(node, this.defaults);
       },
@@ -158,7 +188,7 @@ BrowserAction.prototype = {
                        (evt, tab) => { this.updateWindow(tab.ownerGlobal); });
 
     this.widget = widget;
-  },
+  }
 
   /**
    * Triggers this browser action for the given window, with the same effects as
@@ -166,8 +196,10 @@ BrowserAction.prototype = {
    *
    * This has no effect if the browser action is disabled for, or not
    * present in, the given window.
+   *
+   * @param {Window} window
    */
-  triggerAction: Task.async(function* (window) {
+  async triggerAction(window) {
     let popup = ViewPopup.for(this.extension, window);
     if (popup) {
       popup.closePopup();
@@ -186,7 +218,7 @@ BrowserAction.prototype = {
     // Google Chrome onClicked extension API.
     if (this.getProperty(tab, "popup")) {
       if (this.widget.areaType == CustomizableUI.TYPE_MENU_PANEL) {
-        yield window.PanelUI.show();
+        await window.PanelUI.show();
       }
 
       let event = new window.CustomEvent("command", {bubbles: true, cancelable: true});
@@ -194,7 +226,7 @@ BrowserAction.prototype = {
     } else {
       this.emit("click");
     }
-  }),
+  }
 
   handleEvent(event) {
     let button = event.target;
@@ -209,10 +241,10 @@ BrowserAction.prototype = {
           let popupURL = this.getProperty(tab, "popup");
           let enabled = this.getProperty(tab, "enabled");
 
-          if (popupURL && enabled) {
+          if (popupURL && enabled && (this.pendingPopup || !ViewPopup.for(this.extension, window))) {
             // Add permission for the active tab so it will exist for the popup.
             // Store the tab to revoke the permission during clearPopup.
-            if (!this.pendingPopup && !this.tabManager.hasActiveTabPermission(tab)) {
+            if (!this.tabManager.hasActiveTabPermission(tab)) {
               this.tabManager.addActiveTabPermission(tab);
               this.tabToRevokeDuringClearPopup = tab;
             }
@@ -242,7 +274,31 @@ BrowserAction.prototype = {
         }
         break;
 
+      case "mouseover": {
+        // Begin pre-loading the browser for the popup, so it's more likely to
+        // be ready by the time we get a complete click.
+        let tab = window.gBrowser.selectedTab;
+        let popupURL = this.getProperty(tab, "popup");
+        let enabled = this.getProperty(tab, "enabled");
+
+        if (popupURL && enabled && (this.pendingPopup || !ViewPopup.for(this.extension, window))) {
+          this.pendingPopup = this.getPopup(window, popupURL, true);
+        }
+        break;
+      }
+
+      case "mouseout":
+        if (this.pendingPopup) {
+          this.clearPopup();
+        }
+        break;
+
+
       case "popupshowing":
+        if (!global.actionContextMenu) {
+          break;
+        }
+
         const menu = event.target;
         const trigger = menu.triggerNode;
         const node = window.document.getElementById(this.id);
@@ -257,7 +313,7 @@ BrowserAction.prototype = {
         }
         break;
     }
-  },
+  }
 
   /**
    * Returns a potentially pre-loaded popup for the given URL in the given
@@ -271,23 +327,29 @@ BrowserAction.prototype = {
    *        The browser window in which to create the popup.
    * @param {string} popupURL
    *        The URL to load into the popup.
+   * @param {boolean} [blockParser = false]
+   *        True if the HTML parser should initially be blocked.
    * @returns {ViewPopup}
    */
-  getPopup(window, popupURL) {
+  getPopup(window, popupURL, blockParser = false) {
     this.clearPopupTimeout();
     let {pendingPopup} = this;
     this.pendingPopup = null;
 
     if (pendingPopup) {
       if (pendingPopup.window === window && pendingPopup.popupURL === popupURL) {
+        if (!blockParser) {
+          pendingPopup.unblockParser();
+        }
+
         return pendingPopup;
       }
       pendingPopup.destroy();
     }
 
     let fixedWidth = this.widget.areaType == CustomizableUI.TYPE_MENU_PANEL;
-    return new ViewPopup(this.extension, window, popupURL, this.browserStyle, fixedWidth);
-  },
+    return new ViewPopup(this.extension, window, popupURL, this.browserStyle, fixedWidth, blockParser);
+  }
 
   /**
    * Clears any pending pre-loaded popup and related timeouts.
@@ -297,12 +359,12 @@ BrowserAction.prototype = {
     if (this.pendingPopup) {
       if (this.tabToRevokeDuringClearPopup) {
         this.tabManager.revokeActiveTabPermission(this.tabToRevokeDuringClearPopup);
-        this.tabToRevokeDuringClearPopup = null;
       }
       this.pendingPopup.destroy();
       this.pendingPopup = null;
     }
-  },
+    this.tabToRevokeDuringClearPopup = null;
+  }
 
   /**
    * Clears any pending timeouts to clear stale, pre-loaded popups.
@@ -316,65 +378,81 @@ BrowserAction.prototype = {
       clearTimeout(this.pendingPopupTimeout);
       this.pendingPopupTimeout = null;
     }
-  },
+  }
 
   // Update the toolbar button |node| with the tab context data
   // in |tabData|.
   updateButton(node, tabData) {
     let title = tabData.title || this.extension.name;
-    node.setAttribute("tooltiptext", title);
-    node.setAttribute("label", title);
 
-    if (tabData.badgeText) {
-      node.setAttribute("badge", tabData.badgeText);
-    } else {
-      node.removeAttribute("badge");
-    }
+    node.ownerGlobal.requestAnimationFrame(() => {
+      node.setAttribute("tooltiptext", title);
+      node.setAttribute("label", title);
 
-    if (tabData.enabled) {
-      node.removeAttribute("disabled");
-    } else {
-      node.setAttribute("disabled", "true");
-    }
-
-    let badgeNode = node.ownerDocument.getAnonymousElementByAttribute(node,
-                                        "class", "toolbarbutton-badge");
-    if (badgeNode) {
-      let color = tabData.badgeBackgroundColor;
-      if (color) {
-        color = `rgba(${color[0]}, ${color[1]}, ${color[2]}, ${color[3] / 255})`;
+      if (tabData.badgeText) {
+        node.setAttribute("badge", tabData.badgeText);
+      } else {
+        node.removeAttribute("badge");
       }
-      badgeNode.style.backgroundColor = color || "";
-    }
 
-    const LEGACY_CLASS = "toolbarbutton-legacy-addon";
-    node.classList.remove(LEGACY_CLASS);
+      if (tabData.enabled) {
+        node.removeAttribute("disabled");
+      } else {
+        node.setAttribute("disabled", "true");
+      }
 
+      let badgeNode = node.ownerDocument.getAnonymousElementByAttribute(node,
+                                          "class", "toolbarbutton-badge");
+      if (badgeNode) {
+        let color = tabData.badgeBackgroundColor;
+        if (color) {
+          color = `rgba(${color[0]}, ${color[1]}, ${color[2]}, ${color[3] / 255})`;
+        }
+        badgeNode.style.backgroundColor = color || "";
+      }
+
+      let {style, legacy} = this.iconData.get(tabData.icon);
+      const LEGACY_CLASS = "toolbarbutton-legacy-addon";
+      if (legacy) {
+        node.classList.add(LEGACY_CLASS);
+      } else {
+        node.classList.remove(LEGACY_CLASS);
+      }
+
+      node.setAttribute("style", style);
+    });
+  }
+
+  getIconData(icons) {
     let baseSize = 16;
-    let {icon, size} = IconDetails.getPreferredIcon(tabData.icon, this.extension, baseSize);
+    let {icon, size} = IconDetails.getPreferredIcon(icons, this.extension, baseSize);
+
+    let legacy = false;
 
     // If the best available icon size is not divisible by 16, check if we have
     // an 18px icon to fall back to, and trim off the padding instead.
     if (size % 16 && !icon.endsWith(".svg")) {
-      let result = IconDetails.getPreferredIcon(tabData.icon, this.extension, 18);
+      let result = IconDetails.getPreferredIcon(icons, this.extension, 18);
 
       if (result.size % 18 == 0) {
         baseSize = 18;
         icon = result.icon;
-        node.classList.add(LEGACY_CLASS);
+        legacy = true;
       }
     }
 
     let getIcon = size => IconDetails.escapeUrl(
-      IconDetails.getPreferredIcon(tabData.icon, this.extension, size).icon);
+      IconDetails.getPreferredIcon(icons, this.extension, size).icon);
 
-    node.setAttribute("style", `
+    let style = `
       --webextension-menupanel-image: url("${getIcon(32)}");
       --webextension-menupanel-image-2x: url("${getIcon(64)}");
       --webextension-toolbar-image: url("${IconDetails.escapeUrl(icon)}");
       --webextension-toolbar-image-2x: url("${getIcon(baseSize * 2)}");
-    `);
-  },
+    `;
+
+    return {style, legacy};
+  }
 
   // Update the toolbar button for a given window.
   updateWindow(window) {
@@ -383,7 +461,7 @@ BrowserAction.prototype = {
       let tab = window.gBrowser.selectedTab;
       this.updateButton(widget.node, this.tabContext.get(tab));
     }
-  },
+  }
 
   // Update the toolbar button when the extension changes the icon,
   // title, badge, etc. If it only changes a parameter for a single
@@ -398,7 +476,7 @@ BrowserAction.prototype = {
         this.updateWindow(window);
       }
     }
-  },
+  }
 
   // tab is allowed to be null.
   // prop should be one of "icon", "title", "badgeText", "popup", or "badgeBackgroundColor".
@@ -412,7 +490,7 @@ BrowserAction.prototype = {
     }
 
     this.updateOnChange(tab);
-  },
+  }
 
   // tab is allowed to be null.
   // prop should be one of "title", "badgeText", "popup", or "badgeBackgroundColor".
@@ -421,142 +499,119 @@ BrowserAction.prototype = {
       return this.defaults[prop];
     }
     return this.tabContext.get(tab)[prop];
-  },
-
-  shutdown() {
-    this.tabContext.shutdown();
-    CustomizableUI.destroyWidget(this.id);
-  },
-};
-
-BrowserAction.for = (extension) => {
-  return browserActionMap.get(extension);
-};
-
-global.browserActionFor = BrowserAction.for;
-
-/* eslint-disable mozilla/balanced-listeners */
-extensions.on("manifest_browser_action", (type, directive, extension, manifest) => {
-  let browserAction = new BrowserAction(manifest.browser_action, extension);
-  browserAction.build();
-  browserActionMap.set(extension, browserAction);
-});
-
-extensions.on("shutdown", (type, extension) => {
-  if (browserActionMap.has(extension)) {
-    browserActionMap.get(extension).shutdown();
-    browserActionMap.delete(extension);
   }
-});
-/* eslint-enable mozilla/balanced-listeners */
 
-extensions.registerSchemaAPI("browserAction", "addon_parent", context => {
-  let {extension} = context;
+  getAPI(context) {
+    let {extension} = context;
+    let {tabManager} = extension;
 
-  let {tabManager} = extension;
+    let browserAction = this;
 
-  function getTab(tabId) {
-    if (tabId !== null) {
-      return tabTracker.getTab(tabId);
+    function getTab(tabId) {
+      if (tabId !== null) {
+        return tabTracker.getTab(tabId);
+      }
+      return null;
     }
-    return null;
+
+    return {
+      browserAction: {
+        onClicked: new SingletonEventManager(context, "browserAction.onClicked", fire => {
+          let listener = () => {
+            fire.async(tabManager.convert(tabTracker.activeTab));
+          };
+          browserAction.on("click", listener);
+          return () => {
+            browserAction.off("click", listener);
+          };
+        }).api(),
+
+        enable: function(tabId) {
+          let tab = getTab(tabId);
+          browserAction.setProperty(tab, "enabled", true);
+        },
+
+        disable: function(tabId) {
+          let tab = getTab(tabId);
+          browserAction.setProperty(tab, "enabled", false);
+        },
+
+        setTitle: function(details) {
+          let tab = getTab(details.tabId);
+
+          let title = details.title;
+          // Clear the tab-specific title when given a null string.
+          if (tab && title == "") {
+            title = null;
+          }
+          browserAction.setProperty(tab, "title", title);
+        },
+
+        getTitle: function(details) {
+          let tab = getTab(details.tabId);
+
+          let title = browserAction.getProperty(tab, "title");
+          return Promise.resolve(title);
+        },
+
+        setIcon: function(details) {
+          let tab = getTab(details.tabId);
+
+          let icon = IconDetails.normalize(details, extension, context);
+          browserAction.setProperty(tab, "icon", icon);
+        },
+
+        setBadgeText: function(details) {
+          let tab = getTab(details.tabId);
+
+          browserAction.setProperty(tab, "badgeText", details.text);
+        },
+
+        getBadgeText: function(details) {
+          let tab = getTab(details.tabId);
+
+          let text = browserAction.getProperty(tab, "badgeText");
+          return Promise.resolve(text);
+        },
+
+        setPopup: function(details) {
+          let tab = getTab(details.tabId);
+
+          // Note: Chrome resolves arguments to setIcon relative to the calling
+          // context, but resolves arguments to setPopup relative to the extension
+          // root.
+          // For internal consistency, we currently resolve both relative to the
+          // calling context.
+          let url = details.popup && context.uri.resolve(details.popup);
+          browserAction.setProperty(tab, "popup", url);
+        },
+
+        getPopup: function(details) {
+          let tab = getTab(details.tabId);
+
+          let popup = browserAction.getProperty(tab, "popup");
+          return Promise.resolve(popup);
+        },
+
+        setBadgeBackgroundColor: function(details) {
+          let tab = getTab(details.tabId);
+          let color = details.color;
+          if (!Array.isArray(color)) {
+            let col = DOMUtils.colorToRGBA(color);
+            color = col && [col.r, col.g, col.b, Math.round(col.a * 255)];
+          }
+          browserAction.setProperty(tab, "badgeBackgroundColor", color);
+        },
+
+        getBadgeBackgroundColor: function(details, callback) {
+          let tab = getTab(details.tabId);
+
+          let color = browserAction.getProperty(tab, "badgeBackgroundColor");
+          return Promise.resolve(color || [0xd9, 0, 0, 255]);
+        },
+      },
+    };
   }
+};
 
-  return {
-    browserAction: {
-      onClicked: new SingletonEventManager(context, "browserAction.onClicked", fire => {
-        let listener = () => {
-          fire.async(tabManager.convert(tabTracker.activeTab));
-        };
-        BrowserAction.for(extension).on("click", listener);
-        return () => {
-          BrowserAction.for(extension).off("click", listener);
-        };
-      }).api(),
-
-      enable: function(tabId) {
-        let tab = getTab(tabId);
-        BrowserAction.for(extension).setProperty(tab, "enabled", true);
-      },
-
-      disable: function(tabId) {
-        let tab = getTab(tabId);
-        BrowserAction.for(extension).setProperty(tab, "enabled", false);
-      },
-
-      setTitle: function(details) {
-        let tab = getTab(details.tabId);
-
-        let title = details.title;
-        // Clear the tab-specific title when given a null string.
-        if (tab && title == "") {
-          title = null;
-        }
-        BrowserAction.for(extension).setProperty(tab, "title", title);
-      },
-
-      getTitle: function(details) {
-        let tab = getTab(details.tabId);
-
-        let title = BrowserAction.for(extension).getProperty(tab, "title");
-        return Promise.resolve(title);
-      },
-
-      setIcon: function(details) {
-        let tab = getTab(details.tabId);
-
-        let icon = IconDetails.normalize(details, extension, context);
-        BrowserAction.for(extension).setProperty(tab, "icon", icon);
-      },
-
-      setBadgeText: function(details) {
-        let tab = getTab(details.tabId);
-
-        BrowserAction.for(extension).setProperty(tab, "badgeText", details.text);
-      },
-
-      getBadgeText: function(details) {
-        let tab = getTab(details.tabId);
-
-        let text = BrowserAction.for(extension).getProperty(tab, "badgeText");
-        return Promise.resolve(text);
-      },
-
-      setPopup: function(details) {
-        let tab = getTab(details.tabId);
-
-        // Note: Chrome resolves arguments to setIcon relative to the calling
-        // context, but resolves arguments to setPopup relative to the extension
-        // root.
-        // For internal consistency, we currently resolve both relative to the
-        // calling context.
-        let url = details.popup && context.uri.resolve(details.popup);
-        BrowserAction.for(extension).setProperty(tab, "popup", url);
-      },
-
-      getPopup: function(details) {
-        let tab = getTab(details.tabId);
-
-        let popup = BrowserAction.for(extension).getProperty(tab, "popup");
-        return Promise.resolve(popup);
-      },
-
-      setBadgeBackgroundColor: function(details) {
-        let tab = getTab(details.tabId);
-        let color = details.color;
-        if (!Array.isArray(color)) {
-          let col = DOMUtils.colorToRGBA(color);
-          color = col && [col.r, col.g, col.b, Math.round(col.a * 255)];
-        }
-        BrowserAction.for(extension).setProperty(tab, "badgeBackgroundColor", color);
-      },
-
-      getBadgeBackgroundColor: function(details, callback) {
-        let tab = getTab(details.tabId);
-
-        let color = BrowserAction.for(extension).getProperty(tab, "badgeBackgroundColor");
-        return Promise.resolve(color || [0xd9, 0, 0, 255]);
-      },
-    },
-  };
-});
+global.browserActionFor = this.browserAction.for;

@@ -8,10 +8,10 @@ Transform the signing task into an actual task description.
 from __future__ import absolute_import, print_function, unicode_literals
 
 from taskgraph.transforms.base import TransformSequence
-from taskgraph.util.schema import validate_schema
+from taskgraph.util.schema import validate_schema, Schema
 from taskgraph.util.scriptworker import get_signing_cert_scope, get_devedition_signing_cert_scope
 from taskgraph.transforms.task import task_description_schema
-from voluptuous import Schema, Any, Required, Optional
+from voluptuous import Any, Required, Optional
 
 
 # Voluptuous uses marker objects as dictionary *keys*, but they are not
@@ -101,6 +101,7 @@ def make_task_description(config, jobs):
             'nightly': dep_job.attributes.get('nightly', False),
             'build_platform': dep_job.attributes.get('build_platform'),
             'build_type': dep_job.attributes.get('build_type'),
+            'signed': True,
         }
         if dep_job.attributes.get('chunk_locales'):
             # Used for l10n attribute passthrough
@@ -132,7 +133,7 @@ def make_task_description(config, jobs):
         }
 
         if job.get('use-funsize-route', False):
-            task['routes'].append("index.project.releng.funsize.level-{level}.{project}".format(
+            task['routes'].append("project.releng.funsize.level-{level}.{project}".format(
                 project=config.params['project'], level=config.params['level']))
 
         yield task

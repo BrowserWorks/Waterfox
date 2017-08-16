@@ -29,7 +29,7 @@ class MochiRemote(MochitestDesktop):
     logMessages = []
 
     def __init__(self, automation, devmgr, options):
-        MochitestDesktop.__init__(self, options)
+        MochitestDesktop.__init__(self, options.flavor, options)
 
         self._automation = automation
         self._dm = devmgr
@@ -50,6 +50,7 @@ class MochiRemote(MochitestDesktop):
             "chrome")
         self._dm.removeDir(self.remoteChromeTestDir)
         self._dm.mkDir(self.remoteChromeTestDir)
+        self._dm.removeDir(self.remoteProfile)
 
     def cleanup(self, options):
         if self._dm.fileExists(self.remoteLog):
@@ -286,7 +287,8 @@ class MochiRemote(MochitestDesktop):
         # remove args not supported by automation.py
         kwargs.pop('marionette_args', None)
 
-        return self._automation.runApp(*args, **kwargs)
+        ret, _ = self._automation.runApp(*args, **kwargs)
+        return ret, None
 
 
 def run_test_harness(parser, options):
@@ -328,6 +330,7 @@ def run_test_harness(parser, options):
     auto.setAppName(options.remoteappname)
 
     logParent = os.path.dirname(options.remoteLogFile)
+    dm.removeDir(logParent)
     dm.mkDir(logParent)
     auto.setRemoteLog(options.remoteLogFile)
     auto.setServerInfo(options.webServer, options.httpPort, options.sslPort)

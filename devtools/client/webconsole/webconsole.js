@@ -38,8 +38,7 @@ loader.lazyRequireGetter(this, "ZoomKeys", "devtools/client/shared/zoom-keys");
 loader.lazyRequireGetter(this, "WebConsoleConnectionProxy", "devtools/client/webconsole/webconsole-connection-proxy", true);
 
 const {PluralForm} = require("devtools/shared/plural-form");
-const STRINGS_URI = "devtools/client/locales/webconsole.properties";
-var l10n = new WebConsoleUtils.L10n(STRINGS_URI);
+const l10n = require("devtools/client/webconsole/webconsole-l10n");
 
 const XHTML_NS = "http://www.w3.org/1999/xhtml";
 
@@ -488,7 +487,7 @@ WebConsoleFrame.prototype = {
     // to the toolbox before the web-console-created event is receieved.
     let notifyObservers = () => {
       let id = WebConsoleUtils.supportsString(this.hudId);
-      Services.obs.notifyObservers(id, "web-console-created", null);
+      Services.obs.notifyObservers(id, "web-console-created");
     };
     allReady.then(notifyObservers, notifyObservers);
 
@@ -1349,7 +1348,8 @@ WebConsoleFrame.prototype = {
           return null;
         }
         if (timer.error) {
-          console.error(new Error(l10n.getStr(timer.error)));
+          console.error(new Error(l10n.getFormatStr(timer.error,
+                                                    [timer.name])));
           return null;
         }
         body = l10n.getFormatStr("timerStarted", [timer.name]);
@@ -1360,6 +1360,11 @@ WebConsoleFrame.prototype = {
       case "timeEnd": {
         let timer = message.timer;
         if (!timer) {
+          return null;
+        }
+        if (timer.error) {
+          console.error(new Error(l10n.getFormatStr(timer.error,
+                                                    [timer.name])));
           return null;
         }
         let duration = Math.round(timer.duration * 100) / 100;
@@ -1533,7 +1538,7 @@ WebConsoleFrame.prototype = {
 
     // Collect telemetry data regarding JavaScript errors
     this._telemetry.logKeyed("DEVTOOLS_JAVASCRIPT_ERROR_DISPLAYED",
-                             scriptError.errorMessageName,
+                             scriptError.errorMessageName || "Unknown",
                              true);
 
     if (objectActors.size > 0) {
@@ -1937,7 +1942,9 @@ WebConsoleFrame.prototype = {
       return;
     }
     return toolbox.selectTool("netmonitor").then(panel => {
-      return panel.panelWin.NetMonitorController.inspectRequest(requestId);
+      let { inspectRequest } = panel.panelWin.windowRequire(
+        "devtools/client/netmonitor/src/connector/index");
+      return inspectRequest(requestId);
     });
   },
 
@@ -2624,7 +2631,7 @@ WebConsoleFrame.prototype = {
       frame: { source, line, column },
       showEmptyPathAsHost: true,
       onClick,
-      sourceMapService: toolbox ? toolbox._sourceMapService : null,
+      sourceMapService: toolbox ? toolbox.sourceMapURLService : null,
     }), locationNode);
 
     return locationNode;

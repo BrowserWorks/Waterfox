@@ -4,6 +4,8 @@
  * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
 
 #include "mozilla/Logging.h"
+#include "mozilla/intl/LocaleService.h"
+#include "mozilla/intl/OSPreferences.h"
 
 #include "gfxPlatformFontList.h"
 #include "gfxTextRun.h"
@@ -11,7 +13,6 @@
 
 #include "nsCRT.h"
 #include "nsGkAtoms.h"
-#include "nsILocaleService.h"
 #include "nsServiceManagerUtils.h"
 #include "nsUnicharUtils.h"
 #include "nsUnicodeRange.h"
@@ -28,6 +29,8 @@
 #include <locale.h>
 
 using namespace mozilla;
+using mozilla::intl::LocaleService;
+using mozilla::intl::OSPreferences;
 
 #define LOG_FONTLIST(args) MOZ_LOG(gfxPlatform::GetLog(eGfxLog_fontlist), \
                                LogLevel::Debug, args)
@@ -184,6 +187,8 @@ gfxPlatformFontList::gfxPlatformFontList(bool aNeedFullnamePostscriptNames)
         mExtraNames = MakeUnique<ExtraNames>();
     }
     mFaceNameListsInitialized = false;
+
+    mLangService = nsLanguageAtomService::GetService();
 
     LoadBadUnderlineList();
 
@@ -645,6 +650,18 @@ gfxPlatformFontList::GlobalFontFallback(const uint32_t aCh,
                                         uint32_t& aCmapCount,
                                         gfxFontFamily** aMatchedFamily)
 {
+    bool useCmaps = IsFontFamilyWhitelistActive() ||
+                    gfxPlatform::GetPlatform()->UseCmapsDuringSystemFallback();
+    if (!useCmaps) {
+        // Allow platform-specific fallback code to try and find a usable font
+        gfxFontEntry* fe =
+            PlatformGlobalFontFallback(aCh, aRunScript, aMatchStyle,
+                                       aMatchedFamily);
+        if (fe) {
+            return fe;
+        }
+    }
+
     // otherwise, try to find it among local fonts
     GlobalFontMatch data(aCh, aRunScript, aMatchStyle);
 
@@ -790,6 +807,28 @@ gfxPlatformFontList::GetStandardFamilyName(const nsAString& aFontName, nsAString
     return true;
 }
 
+gfxFontFamily*
+gfxPlatformFontList::GetDefaultFontFamily(const nsACString& aLangGroup,
+                                          const nsACString& aGenericFamily)
+{
+    if (NS_WARN_IF(aLangGroup.IsEmpty()) ||
+        NS_WARN_IF(aGenericFamily.IsEmpty())) {
+        return nullptr;
+    }
+
+    AutoTArray<nsString,4> names;
+    gfxFontUtils::AppendPrefsFontList(
+        NameListPref(aGenericFamily, aLangGroup).get(), names);
+
+    for (nsString& name : names) {
+        gfxFontFamily* fontFamily = FindFamily(name);
+        if (fontFamily) {
+            return fontFamily;
+        }
+    }
+    return nullptr;
+}
+
 gfxCharacterMap*
 gfxPlatformFontList::FindCharMap(gfxCharacterMap *aCmap)
 {
@@ -841,18 +880,12 @@ gfxPlatformFontList::ResolveGenericFontNames(
     AutoTArray<nsString,4> genericFamilies;
 
     // load family for "font.name.generic.lang"
-    nsAutoCString prefFontName("font.name.");
-    prefFontName.Append(generic);
-    prefFontName.Append('.');
-    prefFontName.Append(langGroupStr);
-    gfxFontUtils::AppendPrefsFontList(prefFontName.get(), genericFamilies);
+    gfxFontUtils::AppendPrefsFontList(
+        NamePref(generic, langGroupStr).get(), genericFamilies);
 
     // load fonts for "font.name-list.generic.lang"
-    nsAutoCString prefFontListName("font.name-list.");
-    prefFontListName.Append(generic);
-    prefFontListName.Append('.');
-    prefFontListName.Append(langGroupStr);
-    gfxFontUtils::AppendPrefsFontList(prefFontListName.get(), genericFamilies);
+    gfxFontUtils::AppendPrefsFontList(
+        NameListPref(generic, langGroupStr).get(), genericFamilies);
 
     nsIAtom* langGroup = GetLangGroupForPrefLang(aPrefLang);
     NS_ASSERTION(langGroup, "null lang group for pref lang");
@@ -1090,40 +1123,48 @@ gfxPlatformFontList::AppendCJKPrefLangs(eFontPrefLang aPrefLangs[], uint32_t &aL
             }
         }
 
-        do { // to allow 'break' to abort this block if a call fails
-            nsresult rv;
-            nsCOMPtr<nsILocaleService> ls =
-                do_GetService(NS_LOCALESERVICE_CONTRACTID, &rv);
-            if (NS_FAILED(rv))
-                break;
+        // Try using app's locale
+        nsAutoCString localeStr;
+        LocaleService::GetInstance()->GetAppLocaleAsLangTag(localeStr);
 
-            nsCOMPtr<nsILocale> appLocale;
-            rv = ls->GetApplicationLocale(getter_AddRefs(appLocale));
-            if (NS_FAILED(rv))
-                break;
+        {
+          const nsACString& lang = Substring(localeStr, 0, 2);
+          if (lang.EqualsLiteral("ja")) {
+              AppendPrefLang(tempPrefLangs, tempLen, eFontPrefLang_Japanese);
+          } else if (lang.EqualsLiteral("zh")) {
+              const nsACString& region = Substring(localeStr, 3, 2);
+              if (region.EqualsLiteral("CN")) {
+                  AppendPrefLang(tempPrefLangs, tempLen, eFontPrefLang_ChineseCN);
+              } else if (region.EqualsLiteral("TW")) {
+                  AppendPrefLang(tempPrefLangs, tempLen, eFontPrefLang_ChineseTW);
+              } else if (region.EqualsLiteral("HK")) {
+                  AppendPrefLang(tempPrefLangs, tempLen, eFontPrefLang_ChineseHK);
+              }
+          } else if (lang.EqualsLiteral("ko")) {
+              AppendPrefLang(tempPrefLangs, tempLen, eFontPrefLang_Korean);
+          }
+        }
 
-            nsString localeStr;
-            rv = appLocale->
-                GetCategory(NS_LITERAL_STRING(NSILOCALE_MESSAGE), localeStr);
-            if (NS_FAILED(rv))
-                break;
+        // Then test OS locale
+        OSPreferences::GetInstance()->GetSystemLocale(localeStr);
 
-            const nsAString& lang = Substring(localeStr, 0, 2);
-            if (lang.EqualsLiteral("ja")) {
-                AppendPrefLang(tempPrefLangs, tempLen, eFontPrefLang_Japanese);
-            } else if (lang.EqualsLiteral("zh")) {
-                const nsAString& region = Substring(localeStr, 3, 2);
-                if (region.EqualsLiteral("CN")) {
-                    AppendPrefLang(tempPrefLangs, tempLen, eFontPrefLang_ChineseCN);
-                } else if (region.EqualsLiteral("TW")) {
-                    AppendPrefLang(tempPrefLangs, tempLen, eFontPrefLang_ChineseTW);
-                } else if (region.EqualsLiteral("HK")) {
-                    AppendPrefLang(tempPrefLangs, tempLen, eFontPrefLang_ChineseHK);
-                }
-            } else if (lang.EqualsLiteral("ko")) {
-                AppendPrefLang(tempPrefLangs, tempLen, eFontPrefLang_Korean);
-            }
-        } while (0);
+        {
+          const nsACString& lang = Substring(localeStr, 0, 2);
+          if (lang.EqualsLiteral("ja")) {
+              AppendPrefLang(tempPrefLangs, tempLen, eFontPrefLang_Japanese);
+          } else if (lang.EqualsLiteral("zh")) {
+              const nsACString& region = Substring(localeStr, 3, 2);
+              if (region.EqualsLiteral("CN")) {
+                  AppendPrefLang(tempPrefLangs, tempLen, eFontPrefLang_ChineseCN);
+              } else if (region.EqualsLiteral("TW")) {
+                  AppendPrefLang(tempPrefLangs, tempLen, eFontPrefLang_ChineseTW);
+              } else if (region.EqualsLiteral("HK")) {
+                  AppendPrefLang(tempPrefLangs, tempLen, eFontPrefLang_ChineseHK);
+              }
+          } else if (lang.EqualsLiteral("ko")) {
+              AppendPrefLang(tempPrefLangs, tempLen, eFontPrefLang_Korean);
+          }
+        }
 
         // last resort... (the order is same as old gfx.)
         AppendPrefLang(tempPrefLangs, tempLen, eFontPrefLang_Japanese);
@@ -1214,25 +1255,13 @@ gfxPlatformFontList::GetFontFamilyNames(nsTArray<nsString>& aFontFamilyNames)
     }
 }
 
-nsILanguageAtomService*
-gfxPlatformFontList::GetLangService()
-{
-    if (!mLangService) {
-        mLangService = do_GetService(NS_LANGUAGEATOMSERVICE_CONTRACTID);
-    }
-    NS_ASSERTION(mLangService, "no language service!");
-    return mLangService;
-}
-
 nsIAtom*
 gfxPlatformFontList::GetLangGroup(nsIAtom* aLanguage)
 {
     // map lang ==> langGroup
     nsIAtom *langGroup = nullptr;
     if (aLanguage) {
-        nsresult rv;
-        nsILanguageAtomService* langService = GetLangService();
-        langGroup = langService->GetLanguageGroup(aLanguage, &rv);
+        langGroup = mLangService->GetLanguageGroup(aLanguage);
     }
     if (!langGroup) {
         langGroup = nsGkAtoms::Unicode;
@@ -1316,8 +1345,8 @@ gfxPlatformFontList::TryLangForGroup(const nsACString& aOSLang,
     // Truncate at '.' or '@' from aOSLang, and convert '_' to '-'.
     // aOSLang is in the form "language[_territory][.codeset][@modifier]".
     // fontconfig takes languages in the form "language-territory".
-    // nsILanguageAtomService takes languages in the form language-subtag,
-    // where subtag may be a territory.  fontconfig and nsILanguageAtomService
+    // nsLanguageAtomService takes languages in the form language-subtag,
+    // where subtag may be a territory.  fontconfig and nsLanguageAtomService
     // handle case-conversion for us.
     const char *pos, *end;
     aOSLang.BeginReading(pos);
@@ -1338,8 +1367,7 @@ gfxPlatformFontList::TryLangForGroup(const nsACString& aOSLang,
         ++pos;
     }
 
-    nsILanguageAtomService* langService = GetLangService();
-    nsIAtom *atom = langService->LookupLanguage(aFcLang);
+    nsIAtom *atom = mLangService->LookupLanguage(aFcLang);
     return atom == aLangGroup;
 }
 

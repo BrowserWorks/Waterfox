@@ -10,7 +10,6 @@
 #include "mozilla/net/NeckoCommon.h"
 #include "nsIAuthPrompt2.h"
 #include "nsINetworkPredictor.h"
-#include "nsIThrottlingService.h"
 #include "nsNetUtil.h"
 
 #ifndef mozilla_net_NeckoParent_h
@@ -105,6 +104,10 @@ protected:
       const HttpChannelCreationArgs& aOpenArgs) override;
   virtual bool DeallocPHttpChannelParent(PHttpChannelParent*) override;
 
+  virtual PStunAddrsRequestParent* AllocPStunAddrsRequestParent() override;
+  virtual bool
+    DeallocPStunAddrsRequestParent(PStunAddrsRequestParent* aActor) override;
+
   virtual PAltDataOutputStreamParent* AllocPAltDataOutputStreamParent(
     const nsCString& type, PHttpChannelParent* channel) override;
   virtual bool DeallocPAltDataOutputStreamParent(
@@ -149,10 +152,12 @@ protected:
                                                             const nsCString& aFilter) override;
   virtual bool DeallocPUDPSocketParent(PUDPSocketParent*) override;
   virtual PDNSRequestParent* AllocPDNSRequestParent(const nsCString& aHost,
+                                                    const OriginAttributes& aOriginAttributes,
                                                     const uint32_t& aFlags,
                                                     const nsCString& aNetworkInterface) override;
   virtual mozilla::ipc::IPCResult RecvPDNSRequestConstructor(PDNSRequestParent* actor,
                                                              const nsCString& hostName,
+                                                             const OriginAttributes& aOriginAttributes,
                                                              const uint32_t& flags,
                                                              const nsCString& aNetworkInterface) override;
   virtual bool DeallocPDNSRequestParent(PDNSRequestParent*) override;
@@ -160,8 +165,10 @@ protected:
                                                          const Principal& aPrincipal,
                                                          const bool& aAnonymous) override;
   virtual mozilla::ipc::IPCResult RecvHTMLDNSPrefetch(const nsString& hostname,
+                                                      const OriginAttributes& aOriginAttributes,
                                                       const uint16_t& flags) override;
   virtual mozilla::ipc::IPCResult RecvCancelHTMLDNSPrefetch(const nsString& hostname,
+                                                            const OriginAttributes& aOriginAttributes,
                                                             const uint16_t& flags,
                                                             const nsresult& reason) override;
   virtual PWebSocketEventListenerParent*
@@ -173,6 +180,13 @@ protected:
   virtual bool DeallocPDataChannelParent(PDataChannelParent* parent) override;
 
   virtual mozilla::ipc::IPCResult RecvPDataChannelConstructor(PDataChannelParent* aActor,
+                                                              const uint32_t& channelId) override;
+
+  virtual PFileChannelParent*
+    AllocPFileChannelParent(const uint32_t& channelId) override;
+  virtual bool DeallocPFileChannelParent(PFileChannelParent* parent) override;
+
+  virtual mozilla::ipc::IPCResult RecvPFileChannelConstructor(PFileChannelParent* aActor,
                                                               const uint32_t& channelId) override;
 
   virtual PRtspControllerParent* AllocPRtspControllerParent() override;
@@ -219,14 +233,9 @@ protected:
                                                 const OriginAttributes& aOriginAttributes) override;
   virtual mozilla::ipc::IPCResult RecvPredReset() override;
 
-  virtual mozilla::ipc::IPCResult RecvRemoveRequestContext(const nsCString& rcid) override;
+  virtual mozilla::ipc::IPCResult RecvRemoveRequestContext(const uint64_t& rcid) override;
 
-  /* Throttler messages */
-  virtual mozilla::ipc::IPCResult RecvIncreaseThrottlePressure() override;
-  virtual mozilla::ipc::IPCResult RecvDecreaseThrottlePressure() override;
-
-private:
-  nsTArray<mozilla::UniquePtr<mozilla::net::Throttler>> mThrottlers;
+  virtual mozilla::ipc::IPCResult RecvNotifyCurrentTopLevelOuterContentWindowId(const uint64_t& aWindowId) override;
 };
 
 } // namespace net

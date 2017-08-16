@@ -1,3 +1,6 @@
+// This file expects contextMenu to be defined in the scope it is loaded into.
+/* global contextMenu:true */
+
 var lastElement;
 
 function openContextMenuFor(element, shiftkey, waitForSpellCheck) {
@@ -12,12 +15,14 @@ function openContextMenuFor(element, shiftkey, waitForSpellCheck) {
     // run on them.
     function actuallyOpenContextMenuFor() {
       lastElement = element;
-      var eventDetails = { type : "contextmenu", button : 2, shiftKey : shiftkey };
+      var eventDetails = { type: "contextmenu", button: 2, shiftKey: shiftkey };
       synthesizeMouse(element, 2, 2, eventDetails, element.ownerGlobal);
     }
 
     if (waitForSpellCheck) {
-      var { onSpellCheck } = SpecialPowers.Cu.import("resource://gre/modules/AsyncSpellCheckTestHelper.jsm", {});
+      var { onSpellCheck } =
+        SpecialPowers.Cu.import(
+          "resource://testing-common/AsyncSpellCheckTestHelper.jsm", {});
       onSpellCheck(element, actuallyOpenContextMenuFor);
     } else {
       actuallyOpenContextMenuFor();
@@ -43,8 +48,8 @@ function getVisibleMenuItems(aMenu, aData) {
         var isPageMenuItem = item.hasAttribute("generateditemid");
 
         if (item.nodeName == "menuitem") {
-            var isGenerated = item.className == "spell-suggestion"
-                              || item.className == "sendtab-target";
+            var isGenerated = item.classList.contains("spell-suggestion")
+                              || item.classList.contains("sendtab-target");
             if (isGenerated) {
               is(item.id, "", "child menuitem #" + i + " is generated");
             } else if (isPageMenuItem) {
@@ -64,7 +69,10 @@ function getVisibleMenuItems(aMenu, aData) {
                        item.id != "spell-add-dictionaries-main" &&
                        item.id != "context-savelinktopocket" &&
                        item.id != "fill-login-saved-passwords" &&
-                       item.id != "fill-login-no-logins") {
+                       item.id != "fill-login-no-logins" &&
+                       // XXX Screenshots doesn't have an access key. This needs
+                       // at least bug 1320462 fixing first.
+                       item.id != "screenshots_mozilla_org_create-screenshot") {
               ok(key, "menuitem " + item.id + " has an access key");
               if (accessKeys[key])
                   ok(false, "menuitem " + item.id + " has same accesskey as " + accessKeys[key]);
@@ -241,12 +249,15 @@ let lastElementSelector = null;
  *                  to true if offsetX and offsetY are not provided
  *        waitForSpellCheck: wait until spellcheck is initialized before
  *                           starting test
+ *        maybeScreenshotsPresent: if true, the screenshots menu entry is
+ *                                 expected to be present in the menu if
+ *                                 screenshots is enabled, optional
  *        preCheckContextMenuFn: callback to run before opening menu
  *        onContextMenuShown: callback to run when the context menu is shown
  *        postCheckContextMenuFn: callback to run after opening menu
  * @return {Promise} resolved after the test finishes
  */
-function* test_contextmenu(selector, menuItems, options = {}) {
+async function test_contextmenu(selector, menuItems, options = {}) {
   contextMenu = document.getElementById("contentAreaContextMenu");
   is(contextMenu.state, "closed", "checking if popup is closed");
 
@@ -256,9 +267,9 @@ function* test_contextmenu(selector, menuItems, options = {}) {
   }
 
   if (!options.skipFocusChange) {
-    yield ContentTask.spawn(gBrowser.selectedBrowser,
+    await ContentTask.spawn(gBrowser.selectedBrowser,
                             [lastElementSelector, selector],
-                            function*([contentLastElementSelector, contentSelector]) {
+                            async function([contentLastElementSelector, contentSelector]) {
       if (contentLastElementSelector) {
         let contentLastElement = content.document.querySelector(contentLastElementSelector);
         contentLastElement.blur();
@@ -271,33 +282,35 @@ function* test_contextmenu(selector, menuItems, options = {}) {
   }
 
   if (options.preCheckContextMenuFn) {
-    yield options.preCheckContextMenuFn();
+    await options.preCheckContextMenuFn();
     info("Completed preCheckContextMenuFn");
   }
 
   if (options.waitForSpellCheck) {
     info("Waiting for spell check");
-    yield ContentTask.spawn(gBrowser.selectedBrowser, selector, function*(contentSelector) {
-      let {onSpellCheck} = Cu.import("resource://gre/modules/AsyncSpellCheckTestHelper.jsm", {});
+    await ContentTask.spawn(gBrowser.selectedBrowser, selector, async function(contentSelector) {
+      let {onSpellCheck} =
+        Cu.import("resource://testing-common/AsyncSpellCheckTestHelper.jsm",
+                  {});
       let element = content.document.querySelector(contentSelector);
-      yield new Promise(resolve => onSpellCheck(element, resolve));
+      await new Promise(resolve => onSpellCheck(element, resolve));
       info("Spell check running");
     });
   }
 
   let awaitPopupShown = BrowserTestUtils.waitForEvent(contextMenu, "popupshown");
-  yield BrowserTestUtils.synthesizeMouse(selector, options.offsetX || 0, options.offsetY || 0, {
+  await BrowserTestUtils.synthesizeMouse(selector, options.offsetX || 0, options.offsetY || 0, {
       type: "contextmenu",
       button: 2,
       shiftkey: options.shiftkey,
       centered: options.centered
     },
     gBrowser.selectedBrowser);
-  yield awaitPopupShown;
+  await awaitPopupShown;
   info("Popup Shown");
 
   if (options.onContextMenuShown) {
-    yield options.onContextMenuShown();
+    await options.onContextMenuShown();
     info("Completed onContextMenuShown");
   }
 
@@ -308,16 +321,27 @@ function* test_contextmenu(selector, menuItems, options = {}) {
       menuItems = menuItems.concat(inspectItems);
     }
 
+    if (options.maybeScreenshotsPresent &&
+        !Services.prefs.getBoolPref("extensions.screenshots.disabled", false) &&
+        !Services.prefs.getBoolPref("extensions.screenshots.system-disabled", false)) {
+      let screenshotItems = [
+        "---", null,
+        "screenshots_mozilla_org_create-screenshot", true
+      ];
+
+      menuItems = menuItems.concat(screenshotItems);
+    }
+
     checkContextMenu(menuItems);
   }
 
   let awaitPopupHidden = BrowserTestUtils.waitForEvent(contextMenu, "popuphidden");
 
   if (options.postCheckContextMenuFn) {
-    yield options.postCheckContextMenuFn();
+    await options.postCheckContextMenuFn();
     info("Completed postCheckContextMenuFn");
   }
 
   contextMenu.hidePopup();
-  yield awaitPopupHidden;
+  await awaitPopupHidden;
 }

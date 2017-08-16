@@ -166,7 +166,9 @@ textarea > scrollbar {
 textarea > .anonymous-div,
 input > .anonymous-div,
 input::placeholder,
-textarea::placeholder {
+textarea::placeholder,
+input > .preview-div
+textarea > .preview-div {
   overflow: auto;
   border: 0px !important;
   padding: inherit !important;
@@ -182,7 +184,8 @@ textarea::placeholder {
 }
 
 input > .anonymous-div,
-input::placeholder {
+input::placeholder,
+input > .preview-div {
   white-space: pre;
 }
 
@@ -199,7 +202,9 @@ input > .anonymous-div.inherit-scroll-behavior {
 }
 
 input::placeholder,
-textarea::placeholder {
+textarea::placeholder,
+input > .preview-div,
+textarea > .preview-div {
   /*
    * Changing display to inline can leads to broken behaviour and will assert.
    */
@@ -213,15 +218,19 @@ textarea::placeholder {
   overflow: hidden !important;
 
   /*
-   * The placeholder should be ignored by pointer otherwise, we might have some
+   * The placeholder or preview should be ignored by pointer otherwise, we might have some
    * unexpected behavior like the resize handle not being selectable.
    */
   pointer-events: none !important;
+}
 
+input::placeholder,
+textarea::placeholder {
   opacity: 0.54;
 }
 
-textarea::placeholder {
+textarea::placeholder,
+textarea > .preview-div {
   white-space: pre-wrap !important;
 }
 
@@ -589,7 +598,7 @@ input[type="checkbox"]:disabled:hover:active {
   cursor: inherit;
 }
 
-%if defined(MOZ_WIDGET_ANDROID) || defined(MOZ_WIDGET_GONK)
+%if defined(MOZ_WIDGET_ANDROID)
 /*
  * These platforms doesn't have any theming support and thus -moz-appearance:none
  * is the same as any other appearance value.
@@ -636,7 +645,7 @@ input[type="radio"]:hover:active {
   border-style: inset !important;
 }
 
-%endif /* defined(MOZ_WIDGET_ANDROID) || defined(MOZ_WIDGET_GONK) */
+%endif /* defined(MOZ_WIDGET_ANDROID) */
 
 % On Mac, the native theme takes care of this.
 % See nsNativeThemeCocoa::ThemeDrawsFocusForWidget.
@@ -1176,4 +1185,16 @@ input[type=number]::-moz-number-spin-down {
 input[type="number"] > div > div > div:hover {
   /* give some indication of hover state for the up/down buttons */
   background-color: lightblue;
+}
+
+input[type="date"],
+input[type="time"] {
+  overflow: hidden !important;
+}
+
+:-moz-autofill, :-moz-autofill-preview {
+  filter: grayscale(21%) brightness(88%) contrast(161%) invert(10%) sepia(40%) saturate(206%);
+}
+:-moz-autofill-preview {
+  color: GrayText;
 }

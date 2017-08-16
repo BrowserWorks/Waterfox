@@ -26,6 +26,7 @@
 #include "nsError.h"
 
 #include "nsCSSParser.h"
+#include "nsCSSPseudoElements.h"
 #include "mozilla/css/StyleRule.h"
 #include "mozilla/css/Declaration.h"
 #include "nsComputedDOMStyle.h"
@@ -95,6 +96,7 @@
 #include "mozilla/layers/PersistentBufferProvider.h"
 #include "mozilla/MathAlgorithms.h"
 #include "mozilla/Preferences.h"
+#include "mozilla/ServoBindings.h"
 #include "mozilla/Telemetry.h"
 #include "mozilla/TimeStamp.h"
 #include "mozilla/UniquePtr.h"
@@ -120,7 +122,7 @@
 #include "nsFontMetrics.h"
 #include "Units.h"
 #include "CanvasUtils.h"
-#include "mozilla/CycleCollectedJSContext.h"
+#include "mozilla/CycleCollectedJSRuntime.h"
 #include "mozilla/StyleSetHandle.h"
 #include "mozilla/StyleSetHandleInlines.h"
 #include "mozilla/layers/CanvasClient.h"
@@ -131,6 +133,7 @@
 #ifdef USE_SKIA
 #include "SurfaceTypes.h"
 #include "GLBlitHelper.h"
+#include "ScopedGLHelpers.h"
 #endif
 
 using mozilla::gl::GLContext;
@@ -1169,8 +1172,9 @@ CanvasRenderingContext2D::ParseColor(const nsAString& aString,
     RefPtr<nsStyleContext> parentContext;
     if (mCanvasElement && mCanvasElement->IsInUncomposedDoc()) {
       // Inherit from the canvas element.
-      parentContext = nsComputedDOMStyle::GetStyleContextForElement(
-        mCanvasElement, nullptr, presShell);
+      parentContext = nsComputedDOMStyle::GetStyleContext(mCanvasElement,
+                                                          nullptr,
+                                                          presShell);
     }
 
     Unused << nsRuleNode::ComputeColor(
@@ -1796,7 +1800,7 @@ CanvasRenderingContext2D::RegisterAllocation()
 
   JSObject* wrapper = GetWrapperPreserveColor();
   if (wrapper) {
-    CycleCollectedJSContext::Get()->
+    CycleCollectedJSRuntime::Get()->
       AddZoneWaitingForGC(JS::GetObjectZone(wrapper));
   }
 }
@@ -1962,9 +1966,7 @@ CanvasRenderingContext2D::ClearTarget()
     nsCOMPtr<nsIPresShell> presShell = GetPresShell();
     if (presShell) {
       canvasStyle =
-        nsComputedDOMStyle::GetStyleContextForElement(mCanvasElement,
-                                                      nullptr,
-                                                      presShell);
+        nsComputedDOMStyle::GetStyleContext(mCanvasElement, nullptr, presShell);
       if (canvasStyle) {
         WritingMode wm(canvasStyle);
         if (wm.IsVertical() && !wm.IsSideways()) {
@@ -2024,15 +2026,13 @@ CanvasRenderingContext2D::InitializeWithDrawTarget(nsIDocShell* aShell,
   return NS_OK;
 }
 
-NS_IMETHODIMP
+void
 CanvasRenderingContext2D::SetIsOpaque(bool aIsOpaque)
 {
   if (aIsOpaque != mOpaque) {
     mOpaque = aIsOpaque;
     ClearTarget();
   }
-
-  return NS_OK;
 }
 
 NS_IMETHODIMP
@@ -2691,8 +2691,7 @@ GetFontParentStyleContext(Element* aElement, nsIPresShell* aPresShell,
   if (aElement && aElement->IsInUncomposedDoc()) {
     // Inherit from the canvas element.
     RefPtr<nsStyleContext> result =
-      nsComputedDOMStyle::GetStyleContextForElement(aElement, nullptr,
-                                                    aPresShell);
+      nsComputedDOMStyle::GetStyleContext(aElement, nullptr, aPresShell);
     if (!result) {
       aError.Throw(NS_ERROR_FAILURE);
       return nullptr;
@@ -2702,15 +2701,6 @@ GetFontParentStyleContext(Element* aElement, nsIPresShell* aPresShell,
 
   // otherwise inherit from default (10px sans-serif)
 
-  nsStyleSet* styleSet = aPresShell->StyleSet()->GetAsGecko();
-  if (!styleSet) {
-    // XXXheycam ServoStyleSets do not support resolving style from a list of
-    // rules yet.
-    NS_ERROR("stylo: cannot resolve style for canvas from a ServoStyleSet yet");
-    aError.Throw(NS_ERROR_FAILURE);
-    return nullptr;
-  }
-
   bool changed;
   RefPtr<css::Declaration> parentRule =
     CreateFontDeclaration(NS_LITERAL_STRING("10px sans-serif"),
@@ -2718,6 +2708,10 @@ GetFontParentStyleContext(Element* aElement, nsIPresShell* aPresShell,
 
   nsTArray<nsCOMPtr<nsIStyleRule>> parentRules;
   parentRules.AppendElement(parentRule);
+
+  nsStyleSet* styleSet = aPresShell->StyleSet()->GetAsGecko();
+  MOZ_RELEASE_ASSERT(styleSet);
+
   RefPtr<nsStyleContext> result =
     styleSet->ResolveStyleForRules(nullptr, parentRules);
 
@@ -2746,15 +2740,6 @@ GetFontStyleContext(Element* aElement, const nsAString& aFont,
                     nsAString& aOutUsedFont,
                     ErrorResult& aError)
 {
-  nsStyleSet* styleSet = aPresShell->StyleSet()->GetAsGecko();
-  if (!styleSet) {
-    // XXXheycam ServoStyleSets do not support resolving style from a list of
-    // rules yet.
-    NS_ERROR("stylo: cannot resolve style for canvas from a ServoStyleSet yet");
-    aError.Throw(NS_ERROR_FAILURE);
-    return nullptr;
-  }
-
   bool fontParsedSuccessfully = false;
   RefPtr<css::Declaration> decl =
     CreateFontDeclaration(aFont, aPresShell->GetDocument(),
@@ -2794,6 +2779,9 @@ GetFontStyleContext(Element* aElement, const nsAString& aFont,
   // add a rule to prevent text zoom from affecting the style
   rules.AppendElement(new nsDisableTextZoomStyleRule);
 
+  nsStyleSet* styleSet = aPresShell->StyleSet()->GetAsGecko();
+  MOZ_RELEASE_ASSERT(styleSet);
+
   RefPtr<nsStyleContext> sc =
     styleSet->ResolveStyleForRules(parentContext, rules);
 
@@ -2802,6 +2790,117 @@ GetFontStyleContext(Element* aElement, const nsAString& aFont,
   // the spec required font sizes be converted to pixels, but that no
   // longer seems to be required.)
   decl->GetPropertyValueByID(eCSSProperty_font, aOutUsedFont);
+
+  return sc.forget();
+}
+
+static already_AddRefed<RawServoDeclarationBlock>
+CreateDeclarationForServo(nsCSSPropertyID aProperty,
+                          const nsAString& aPropertyValue,
+                          nsIDocument* aDocument)
+{
+  RefPtr<URLExtraData> data =
+    new URLExtraData(aDocument->GetDocBaseURI(),
+                     aDocument->GetDocumentURI(),
+                     aDocument->NodePrincipal());
+
+  NS_ConvertUTF16toUTF8 value(aPropertyValue);
+
+  RefPtr<RawServoDeclarationBlock> servoDeclarations =
+    Servo_ParseProperty(aProperty,
+                        &value,
+                        data,
+                        ParsingMode::Default,
+                        aDocument->GetCompatibilityMode()).Consume();
+
+  if (!servoDeclarations) {
+    // We got a syntax error.  The spec says this value must be ignored.
+    return nullptr;
+  }
+
+  // From canvas spec, force to set line-height property to 'normal' font
+  // property.
+  if (aProperty == eCSSProperty_font) {
+    const nsCString normalString = NS_LITERAL_CSTRING("normal");
+    Servo_DeclarationBlock_SetPropertyById(servoDeclarations,
+                                           eCSSProperty_line_height,
+                                           &normalString,
+                                           false,
+                                           data,
+                                           ParsingMode::Default,
+                                           aDocument->GetCompatibilityMode());
+  }
+
+  return servoDeclarations.forget();
+}
+
+static already_AddRefed<RawServoDeclarationBlock>
+CreateFontDeclarationForServo(const nsAString& aFont,
+                              nsIDocument* aDocument)
+{
+  return CreateDeclarationForServo(eCSSProperty_font, aFont, aDocument);
+}
+
+static already_AddRefed<ServoComputedValues>
+GetFontStyleForServo(Element* aElement, const nsAString& aFont,
+                     nsIPresShell* aPresShell,
+                     nsAString& aOutUsedFont,
+                     ErrorResult& aError)
+{
+  MOZ_ASSERT(aPresShell->StyleSet()->IsServo());
+
+  RefPtr<RawServoDeclarationBlock> declarations =
+    CreateFontDeclarationForServo(aFont, aPresShell->GetDocument());
+  if (!declarations) {
+    // We got a syntax error.  The spec says this value must be ignored.
+    return nullptr;
+  }
+
+  // In addition to unparseable values, the spec says we need to reject
+  // 'inherit' and 'initial'. The easiest way to check for this is to look
+  // at font-size-adjust, which the font shorthand resets to 'none'.
+  if (Servo_DeclarationBlock_HasCSSWideKeyword(declarations,
+                                               eCSSProperty_font_size_adjust)) {
+    return nullptr;
+  }
+
+  ServoStyleSet* styleSet = aPresShell->StyleSet()->AsServo();
+
+  RefPtr<ServoComputedValues> parentStyle;
+  // have to get a parent style context for inherit-like relative
+  // values (2em, bolder, etc.)
+  if (aElement && aElement->IsInUncomposedDoc()) {
+    // Inherit from the canvas element.
+    aPresShell->FlushPendingNotifications(FlushType::Style);
+    // We need to use ResolveTransientServoStyle, which involves traversal,
+    // instead of ResolveServoStyle() because we need up-to-date style even if
+    // the canvas element is display:none.
+    parentStyle =
+      styleSet->ResolveTransientServoStyle(aElement,
+                                           CSSPseudoElementType::NotPseudo);
+  } else {
+    RefPtr<RawServoDeclarationBlock> declarations =
+      CreateFontDeclarationForServo(NS_LITERAL_STRING("10px sans-serif"),
+                                    aPresShell->GetDocument());
+    MOZ_ASSERT(declarations);
+
+    parentStyle = aPresShell->StyleSet()->AsServo()->
+      ResolveForDeclarations(nullptr, declarations);
+  }
+
+  MOZ_RELEASE_ASSERT(parentStyle, "Should have a valid parent style");
+
+  MOZ_ASSERT(!aPresShell->IsDestroying(),
+             "GetFontParentStyleContext should have returned an error if the presshell is being destroyed.");
+
+  RefPtr<ServoComputedValues> sc =
+    styleSet->ResolveForDeclarations(parentStyle, declarations);
+
+  // The font getter is required to be reserialized based on what we
+  // parsed (including having line-height removed).  (Older drafts of
+  // the spec required font sizes be converted to pixels, but that no
+  // longer seems to be required.)
+  Servo_SerializeFontValueForCanvas(declarations, &aOutUsedFont);
 
   return sc.forget();
 }
@@ -2818,20 +2917,11 @@ CreateFilterDeclaration(const nsAString& aFilter,
 }
 
 static already_AddRefed<nsStyleContext>
-ResolveStyleForFilter(const nsAString& aFilterString,
-                      nsIPresShell* aPresShell,
-                      nsStyleContext* aParentContext,
-                      ErrorResult& aError)
+ResolveFilterStyle(const nsAString& aFilterString,
+                   nsIPresShell* aPresShell,
+                   nsStyleContext* aParentContext,
+                   ErrorResult& aError)
 {
-  nsStyleSet* styleSet = aPresShell->StyleSet()->GetAsGecko();
-  if (!styleSet) {
-    // XXXheycam ServoStyleSets do not support resolving style from a list of
-    // rules yet.
-    NS_ERROR("stylo: cannot resolve style for canvas from a ServoStyleSet yet");
-    aError.Throw(NS_ERROR_FAILURE);
-    return nullptr;
-  }
-
   nsIDocument* document = aPresShell->GetDocument();
   bool filterChanged = false;
   RefPtr<css::Declaration> decl =
@@ -2851,10 +2941,49 @@ ResolveStyleForFilter(const nsAString& aFilterString,
   nsTArray<nsCOMPtr<nsIStyleRule>> rules;
   rules.AppendElement(decl);
 
+  nsStyleSet* styleSet = aPresShell->StyleSet()->GetAsGecko();
+  MOZ_RELEASE_ASSERT(styleSet);
+
   RefPtr<nsStyleContext> sc =
     styleSet->ResolveStyleForRules(aParentContext, rules);
 
   return sc.forget();
+}
+
+static already_AddRefed<RawServoDeclarationBlock>
+CreateFilterDeclarationForServo(const nsAString& aFilter,
+                                nsIDocument* aDocument)
+{
+  return CreateDeclarationForServo(eCSSProperty_filter, aFilter, aDocument);
+}
+
+static already_AddRefed<ServoComputedValues>
+ResolveFilterStyleForServo(const nsAString& aFilterString,
+                           const ServoComputedValues* aParentStyle,
+                           nsIPresShell* aPresShell,
+                           ErrorResult& aError)
+{
+  MOZ_ASSERT(aPresShell->StyleSet()->IsServo());
+
+  RefPtr<RawServoDeclarationBlock> declarations =
+    CreateFilterDeclarationForServo(aFilterString, aPresShell->GetDocument());
+  if (!declarations) {
+    // Refuse to accept the filter, but do not throw an error.
+    return nullptr;
+  }
+
+  // In addition to unparseable values, the spec says we need to reject
+  // 'inherit' and 'initial'.
+  if (Servo_DeclarationBlock_HasCSSWideKeyword(declarations,
+                                               eCSSProperty_filter)) {
+    return nullptr;
+  }
+
+  ServoStyleSet* styleSet = aPresShell->StyleSet()->AsServo();
+  RefPtr<ServoComputedValues> computedValues =
+    styleSet->ResolveForDeclarations(aParentStyle, declarations);
+
+  return computedValues.forget();
 }
 
 bool
@@ -2875,22 +3004,49 @@ CanvasRenderingContext2D::ParseFilter(const nsAString& aString,
   }
 
   nsString usedFont;
-  RefPtr<nsStyleContext> parentContext =
-    GetFontStyleContext(mCanvasElement, GetFont(),
-                        presShell, usedFont, aError);
-  if (!parentContext) {
-    aError.Throw(NS_ERROR_FAILURE);
+  if (presShell->StyleSet()->IsGecko()) {
+    RefPtr<nsStyleContext> parentContext =
+      GetFontStyleContext(mCanvasElement, GetFont(),
+                          presShell, usedFont, aError);
+    if (!parentContext) {
+      aError.Throw(NS_ERROR_FAILURE);
+      return false;
+    }
+    RefPtr<nsStyleContext> sc =
+      ResolveFilterStyle(aString, presShell, parentContext, aError);
+
+    if (!sc) {
+      return false;
+    }
+    aFilterChain = sc->StyleEffects()->mFilters;
+    return true;
+  }
+
+  // For stylo
+  MOZ_ASSERT(presShell->StyleSet()->IsServo());
+
+  RefPtr<ServoComputedValues> parentStyle =
+    GetFontStyleForServo(mCanvasElement,
+                         GetFont(),
+                         presShell,
+                         usedFont,
+                         aError);
+  if (!parentStyle) {
     return false;
   }
 
-  RefPtr<nsStyleContext> sc =
-    ResolveStyleForFilter(aString, presShell, parentContext, aError);
-
-  if (!sc) {
-    return false;
+  RefPtr<ServoComputedValues> computedValues =
+    ResolveFilterStyleForServo(aString,
+                               parentStyle,
+                               presShell,
+                               aError);
+  if (!computedValues) {
+     return false;
   }
 
-  aFilterChain = sc->StyleEffects()->mFilters;
+  const nsStyleEffects* effects = Servo_GetStyleEffects(computedValues);
+  // XXX: This mFilters is a one shot object, we probably could avoid copying.
+  aFilterChain = effects->mFilters;
   return true;
 }
 
@@ -3795,14 +3951,31 @@ CanvasRenderingContext2D::SetFontInternal(const nsAString& aFont,
     return false;
   }
 
+  RefPtr<nsStyleContext> sc;
+  RefPtr<ServoComputedValues> computedValues;
   nsString usedFont;
-  RefPtr<nsStyleContext> sc =
-    GetFontStyleContext(mCanvasElement, aFont, presShell, usedFont, aError);
-  if (!sc) {
-    return false;
+  const nsStyleFont* fontStyle;
+  if (presShell->StyleSet()->IsServo()) {
+    computedValues = GetFontStyleForServo(mCanvasElement,
+                                          aFont,
+                                          presShell,
+                                          usedFont,
+                                          aError);
+    if (!computedValues) {
+      return false;
+    }
+    fontStyle = Servo_GetStyleFont(computedValues);
+  } else {
+    sc = GetFontStyleContext(mCanvasElement,
+                             aFont,
+                             presShell,
+                             usedFont,
+                             aError);
+    if (!sc) {
+      return false;
+    }
+    fontStyle = sc->StyleFont();
   }
-
-  const nsStyleFont* fontStyle = sc->StyleFont();
 
   nsPresContext* c = presShell->GetPresContext();
 
@@ -3810,7 +3983,8 @@ CanvasRenderingContext2D::SetFontInternal(const nsAString& aFont,
   // font preference (fontStyle->mFont.size) in favor of the computed
   // size (fontStyle->mSize).  See
   // https://bugzilla.mozilla.org/show_bug.cgi?id=698652.
-  MOZ_ASSERT(!fontStyle->mAllowZoom,
+  // FIXME: Nobody initializes mAllowZoom for servo?
+  MOZ_ASSERT(presShell->StyleSet()->IsServo() || !fontStyle->mAllowZoom,
              "expected text zoom to be disabled on this nsStyleFont");
   nsFont resizedFont(fontStyle->mFont);
   // Create a font group working in units of CSS pixels instead of the usual
@@ -4096,17 +4270,18 @@ struct MOZ_STACK_CLASS CanvasBidiProcessor : public nsBidiPresUtils::BidiProcess
   {
     mFontgrp->UpdateUserFonts(); // ensure user font generation is current
     // adjust flags for current direction run
-    uint32_t flags = mTextRunFlags;
+    gfx::ShapedTextFlags flags = mTextRunFlags;
     if (aDirection == NSBIDI_RTL) {
-      flags |= gfxTextRunFactory::TEXT_IS_RTL;
+      flags |= gfx::ShapedTextFlags::TEXT_IS_RTL;
     } else {
-      flags &= ~gfxTextRunFactory::TEXT_IS_RTL;
+      flags &= ~gfx::ShapedTextFlags::TEXT_IS_RTL;
     }
     mTextRun = mFontgrp->MakeTextRun(aText,
                                      aLength,
                                      mDrawTarget,
                                      mAppUnitsPerDevPixel,
                                      flags,
+                                     nsTextFrameUtils::Flags(),
                                      mMissingFonts);
   }
 
@@ -4319,7 +4494,7 @@ struct MOZ_STACK_CLASS CanvasBidiProcessor : public nsBidiPresUtils::BidiProcess
   gfxRect mBoundingBox;
 
   // flags to use when creating textrun, based on CSS style
-  uint32_t mTextRunFlags;
+  gfx::ShapedTextFlags mTextRunFlags;
 
   // true iff the bounding box should be measured
   bool mDoMeasureBoundingBox;
@@ -4363,9 +4538,7 @@ CanvasRenderingContext2D::DrawOrMeasureText(const nsAString& aRawText,
   if (mCanvasElement && mCanvasElement->IsInUncomposedDoc()) {
     // try to find the closest context
     canvasStyle =
-      nsComputedDOMStyle::GetStyleContextForElement(mCanvasElement,
-                                                    nullptr,
-                                                    presShell);
+      nsComputedDOMStyle::GetStyleContext(mCanvasElement, nullptr, presShell);
     if (!canvasStyle) {
       return NS_ERROR_FAILURE;
     }
@@ -4409,11 +4582,12 @@ CanvasRenderingContext2D::DrawOrMeasureText(const nsAString& aRawText,
 
   // If we don't have a style context, we can't set up vertical-text flags
   // (for now, at least; perhaps we need new Canvas API to control this).
-  processor.mTextRunFlags = canvasStyle ?
-    nsLayoutUtils::GetTextRunFlagsForStyle(canvasStyle,
-                                           canvasStyle->StyleFont(),
-                                           canvasStyle->StyleText(),
-                                           0) : 0;
+  processor.mTextRunFlags = canvasStyle
+    ? nsLayoutUtils::GetTextRunFlagsForStyle(canvasStyle,
+                                             canvasStyle->StyleFont(),
+                                             canvasStyle->StyleText(),
+                                             0)
+    : gfx::ShapedTextFlags();
 
   GetAppUnitsValues(&processor.mAppUnitsPerDevPixel, nullptr);
   processor.mPt = gfxPoint(aX, aY);
@@ -4507,11 +4681,11 @@ CanvasRenderingContext2D::DrawOrMeasureText(const nsAString& aRawText,
 
   // We can't query the textRun directly, as it may not have been created yet;
   // so instead we check the flags that will be used to initialize it.
-  uint16_t runOrientation =
-    (processor.mTextRunFlags & gfxTextRunFactory::TEXT_ORIENT_MASK);
-  if (runOrientation != gfxTextRunFactory::TEXT_ORIENT_HORIZONTAL) {
-    if (runOrientation == gfxTextRunFactory::TEXT_ORIENT_VERTICAL_MIXED ||
-        runOrientation == gfxTextRunFactory::TEXT_ORIENT_VERTICAL_UPRIGHT) {
+  gfx::ShapedTextFlags runOrientation =
+    (processor.mTextRunFlags & gfx::ShapedTextFlags::TEXT_ORIENT_MASK);
+  if (runOrientation != gfx::ShapedTextFlags::TEXT_ORIENT_HORIZONTAL) {
+    if (runOrientation == gfx::ShapedTextFlags::TEXT_ORIENT_VERTICAL_MIXED ||
+        runOrientation == gfx::ShapedTextFlags::TEXT_ORIENT_VERTICAL_UPRIGHT) {
       // Adjust to account for mTextRun being shaped using center baseline
       // rather than alphabetic.
       baselineAnchor -= (fontMetrics.emAscent - fontMetrics.emDescent) * .5f;
@@ -5057,46 +5231,49 @@ CanvasRenderingContext2D::DrawImage(const CanvasImageSource& aImage,
       return;
     }
 
-    gl->MakeCurrent();
-    GLuint videoTexture = 0;
-    gl->fGenTextures(1, &videoTexture);
-    // skiaGL expect upload on drawing, and uses texture 0 for texturing,
-    // so we must active texture 0 and bind the texture for it.
-    gl->fActiveTexture(LOCAL_GL_TEXTURE0);
-    gl->fBindTexture(LOCAL_GL_TEXTURE_2D, videoTexture);
+    {
+      gl->MakeCurrent();
+      GLuint videoTexture = 0;
+      gl->fGenTextures(1, &videoTexture);
+      // skiaGL expect upload on drawing, and uses texture 0 for texturing,
+      // so we must active texture 0 and bind the texture for it.
+      gl->fActiveTexture(LOCAL_GL_TEXTURE0);
+      const gl::ScopedBindTexture scopeBindTexture(gl, videoTexture);
 
-    gl->fTexImage2D(LOCAL_GL_TEXTURE_2D, 0, LOCAL_GL_RGB, srcImage->GetSize().width, srcImage->GetSize().height, 0, LOCAL_GL_RGB, LOCAL_GL_UNSIGNED_SHORT_5_6_5, nullptr);
-    gl->fTexParameteri(LOCAL_GL_TEXTURE_2D, LOCAL_GL_TEXTURE_WRAP_S, LOCAL_GL_CLAMP_TO_EDGE);
-    gl->fTexParameteri(LOCAL_GL_TEXTURE_2D, LOCAL_GL_TEXTURE_WRAP_T, LOCAL_GL_CLAMP_TO_EDGE);
-    gl->fTexParameteri(LOCAL_GL_TEXTURE_2D, LOCAL_GL_TEXTURE_MAG_FILTER, LOCAL_GL_LINEAR);
-    gl->fTexParameteri(LOCAL_GL_TEXTURE_2D, LOCAL_GL_TEXTURE_MIN_FILTER, LOCAL_GL_LINEAR);
+      gl->fTexImage2D(LOCAL_GL_TEXTURE_2D, 0, LOCAL_GL_RGB, srcImage->GetSize().width, srcImage->GetSize().height, 0, LOCAL_GL_RGB, LOCAL_GL_UNSIGNED_SHORT_5_6_5, nullptr);
+      gl->fTexParameteri(LOCAL_GL_TEXTURE_2D, LOCAL_GL_TEXTURE_WRAP_S, LOCAL_GL_CLAMP_TO_EDGE);
+      gl->fTexParameteri(LOCAL_GL_TEXTURE_2D, LOCAL_GL_TEXTURE_WRAP_T, LOCAL_GL_CLAMP_TO_EDGE);
+      gl->fTexParameteri(LOCAL_GL_TEXTURE_2D, LOCAL_GL_TEXTURE_MAG_FILTER, LOCAL_GL_LINEAR);
+      gl->fTexParameteri(LOCAL_GL_TEXTURE_2D, LOCAL_GL_TEXTURE_MIN_FILTER, LOCAL_GL_LINEAR);
 
-    const gl::OriginPos destOrigin = gl::OriginPos::TopLeft;
-    bool ok = gl->BlitHelper()->BlitImageToTexture(srcImage, srcImage->GetSize(),
-                                                   videoTexture, LOCAL_GL_TEXTURE_2D,
-                                                   destOrigin);
-    if (ok) {
-      NativeSurface texSurf;
-      texSurf.mType = NativeSurfaceType::OPENGL_TEXTURE;
-      texSurf.mFormat = SurfaceFormat::R5G6B5_UINT16;
-      texSurf.mSize.width = srcImage->GetSize().width;
-      texSurf.mSize.height = srcImage->GetSize().height;
-      texSurf.mSurface = (void*)((uintptr_t)videoTexture);
+      const gl::OriginPos destOrigin = gl::OriginPos::TopLeft;
+      bool ok = gl->BlitHelper()->BlitImageToTexture(srcImage, srcImage->GetSize(),
+                                                     videoTexture, LOCAL_GL_TEXTURE_2D,
+                                                     destOrigin);
+      if (ok) {
+        NativeSurface texSurf;
+        texSurf.mType = NativeSurfaceType::OPENGL_TEXTURE;
+        texSurf.mFormat = SurfaceFormat::R5G6B5_UINT16;
+        texSurf.mSize.width = srcImage->GetSize().width;
+        texSurf.mSize.height = srcImage->GetSize().height;
+        texSurf.mSurface = (void*)((uintptr_t)videoTexture);
 
-      srcSurf = mTarget->CreateSourceSurfaceFromNativeSurface(texSurf);
-      if (!srcSurf) {
+        srcSurf = mTarget->CreateSourceSurfaceFromNativeSurface(texSurf);
+        if (!srcSurf) {
+          gl->fDeleteTextures(1, &videoTexture);
+        }
+        imgSize.width = srcImage->GetSize().width;
+        imgSize.height = srcImage->GetSize().height;
+
+        int32_t displayWidth = video->VideoWidth();
+        int32_t displayHeight = video->VideoHeight();
+        aSw *= (double)imgSize.width / (double)displayWidth;
+        aSh *= (double)imgSize.height / (double)displayHeight;
+      } else {
         gl->fDeleteTextures(1, &videoTexture);
       }
-      imgSize.width = srcImage->GetSize().width;
-      imgSize.height = srcImage->GetSize().height;
-
-      int32_t displayWidth = video->VideoWidth();
-      int32_t displayHeight = video->VideoHeight();
-      aSw *= (double)imgSize.width / (double)displayWidth;
-      aSh *= (double)imgSize.height / (double)displayHeight;
-    } else {
-      gl->fDeleteTextures(1, &videoTexture);
     }
+
     srcImage = nullptr;
 
     if (mCanvasElement) {
@@ -5294,7 +5471,7 @@ CanvasRenderingContext2D::DrawDirectlyToCanvas(
   uint32_t modifiedFlags = aImage.mDrawingFlags | imgIContainer::FLAG_CLAMP;
 
   CSSIntSize sz(scaledImageSize.width, scaledImageSize.height); // XXX hmm is scaledImageSize really in CSS pixels?
-  SVGImageContext svgContext(sz);
+  SVGImageContext svgContext(Some(sz));
 
   auto result = aImage.mImgContainer->
     Draw(context, scaledImageSize,
@@ -5601,7 +5778,7 @@ CanvasRenderingContext2D::GetImageData(JSContext* aCx, double aSx,
       // JSContext, and we're at least _somewhat_ perf-sensitive (so may not
       // want to compute the caller type in the common non-write-only case), so
       // let's just use what we have.
-      !nsContentUtils::IsSystemCaller(aCx))
+      !nsContentUtils::CallerHasPermission(aCx, NS_LITERAL_STRING("<all_urls>")))
   {
     // XXX ERRMSG we need to report an error to developers here! (bug 329026)
     aError.Throw(NS_ERROR_DOM_SECURITY_ERR);
@@ -5697,31 +5874,34 @@ CanvasRenderingContext2D::GetImageDataArray(JSContext* aCx,
   IntRect srcRect(0, 0, mWidth, mHeight);
   IntRect destRect(aX, aY, aWidth, aHeight);
   IntRect srcReadRect = srcRect.Intersect(destRect);
+  if (srcReadRect.IsEmpty()) {
+    *aRetval = darray;
+    return NS_OK;
+  }
+
   RefPtr<DataSourceSurface> readback;
   DataSourceSurface::MappedSurface rawData;
-  if (!srcReadRect.IsEmpty()) {
-    RefPtr<SourceSurface> snapshot;
-    if (!mTarget && mBufferProvider) {
-      snapshot = mBufferProvider->BorrowSnapshot();
-    } else {
-      EnsureTarget();
-      if (!IsTargetValid()) {
-        return NS_ERROR_FAILURE;
-      }
-      snapshot = mTarget->Snapshot();
+  RefPtr<SourceSurface> snapshot;
+  if (!mTarget && mBufferProvider) {
+    snapshot = mBufferProvider->BorrowSnapshot();
+  } else {
+    EnsureTarget();
+    if (!IsTargetValid()) {
+      return NS_ERROR_FAILURE;
     }
+    snapshot = mTarget->Snapshot();
+  }
 
-    if (snapshot) {
-      readback = snapshot->GetDataSurface();
-    }
+  if (snapshot) {
+    readback = snapshot->GetDataSurface();
+  }
 
-    if (!mTarget && mBufferProvider) {
-      mBufferProvider->ReturnSnapshot(snapshot.forget());
-    }
+  if (!mTarget && mBufferProvider) {
+    mBufferProvider->ReturnSnapshot(snapshot.forget());
+  }
 
-    if (!readback || !readback->Map(DataSourceSurface::READ, &rawData)) {
-      return NS_ERROR_OUT_OF_MEMORY;
-    }
+  if (!readback || !readback->Map(DataSourceSurface::READ, &rawData)) {
+    return NS_ERROR_OUT_OF_MEMORY;
   }
 
   IntRect dstWriteRect = srcReadRect;
@@ -5733,16 +5913,8 @@ CanvasRenderingContext2D::GetImageDataArray(JSContext* aCx,
     uint8_t* data = JS_GetUint8ClampedArrayData(darray, &isShared, nogc);
     MOZ_ASSERT(!isShared);        // Should not happen, data was created above
 
-    uint8_t* src;
-    uint32_t srcStride;
-    if (readback) {
-      srcStride = rawData.mStride;
-      src = rawData.mData + srcReadRect.y * srcStride + srcReadRect.x * 4;
-    } else {
-      src = data;
-      srcStride = aWidth * 4;
-    }
-
+    uint32_t srcStride = rawData.mStride;
+    uint8_t* src = rawData.mData + srcReadRect.y * srcStride + srcReadRect.x * 4;
     uint8_t* dst = data + dstWriteRect.y * (aWidth * 4) + dstWriteRect.x * 4;
 
     if (mOpaque) {
@@ -5756,10 +5928,7 @@ CanvasRenderingContext2D::GetImageDataArray(JSContext* aCx,
     }
   }
 
-  if (readback) {
-    readback->Unmap();
-  }
-
+  readback->Unmap();
   *aRetval = darray;
   return NS_OK;
 }

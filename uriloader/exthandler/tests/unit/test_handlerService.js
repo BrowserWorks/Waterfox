@@ -64,23 +64,17 @@ function run_test() {
   // that exists on all platforms (except possibly the application being
   // tested, but there doesn't seem to be a way to get a reference to that
   // from the directory service), we use the temporary directory itself.
-  var executable = HandlerServiceTest._dirSvc.get("TmpD", Ci.nsIFile);
+  var executable = Services.dirsvc.get("TmpD", Ci.nsIFile);
   // XXX We could, of course, create an actual executable in the directory:
   //executable.append("localhandler");
   //if (!executable.exists())
   //  executable.create(Ci.nsIFile.NORMAL_FILE_TYPE, 0o755);
 
-  var localHandler = {
-    name: "Local Handler",
-    executable: executable,
-    interfaces: [Ci.nsIHandlerApp, Ci.nsILocalHandlerApp, Ci.nsISupports],
-    QueryInterface: function(iid) {
-      if (!this.interfaces.some( function(v) { return iid.equals(v) } ))
-        throw Cr.NS_ERROR_NO_INTERFACE;
-      return this;
-    }
-  };
-  
+  var localHandler = Cc["@mozilla.org/uriloader/local-handler-app;1"].
+                     createInstance(Ci.nsILocalHandlerApp);
+  localHandler.name = "Local Handler";
+  localHandler.executable = executable;
+
   var webHandler = Cc["@mozilla.org/uriloader/web-handler-app;1"].
                    createInstance(Ci.nsIWebHandlerApp);
   webHandler.name = "Web Handler";
@@ -301,10 +295,8 @@ function run_test() {
 
   // Add two handlers, store the object, re-retrieve it, and make sure it has
   // two handlers.
-  possibleHandlersInfo.possibleApplicationHandlers.appendElement(localHandler,
-                                                                 false);
-  possibleHandlersInfo.possibleApplicationHandlers.appendElement(webHandler,
-                                                                 false);
+  possibleHandlersInfo.possibleApplicationHandlers.appendElement(localHandler);
+  possibleHandlersInfo.possibleApplicationHandlers.appendElement(webHandler);
   handlerSvc.store(possibleHandlersInfo);
   possibleHandlersInfo =
     mimeSvc.getFromTypeAndExtension("nonexistent/possible-handlers", null);
@@ -431,30 +423,12 @@ function run_test() {
   lolHandler.preferredAction = Ci.nsIHandlerInfo.useHelperApp;
   lolHandler.preferredApplicationHandler = localHandler;
   lolHandler.alwaysAskBeforeHandling = false;
+  lolHandler.appendExtension("lolcat");
 
   // store the handler
   do_check_false(handlerSvc.exists(lolHandler));
   handlerSvc.store(lolHandler);
   do_check_true(handlerSvc.exists(lolHandler));
-
-  // Get a file:// string pointing to mimeTypes.rdf
-  var rdfFile = HandlerServiceTest._dirSvc.get("UMimTyp", Ci.nsIFile);
-  var fileHandler = ioService.getProtocolHandler("file").QueryInterface(Ci.nsIFileProtocolHandler);
-  var rdfFileURI = fileHandler.getURLSpecFromFile(rdfFile);
-
-  // Assign a file extenstion to the handler. handlerSvc.store() doesn't
-  // actually store any file extensions added with setFileExtensions(), you
-  // have to wade into RDF muck to do so.
-
-  // Based on toolkit/mozapps/downloads/content/helperApps.js :: addExtension()
-  var gRDF = Cc["@mozilla.org/rdf/rdf-service;1"].getService(Ci.nsIRDFService);
-  var mimeSource    = gRDF.GetUnicodeResource("urn:mimetype:application/lolcat");
-  var valueProperty = gRDF.GetUnicodeResource("http://home.netscape.com/NC-rdf#fileExtensions");
-  var mimeLiteral   = gRDF.GetLiteral("lolcat");
-
-  var DS = gRDF.GetDataSourceBlocking(rdfFileURI);
-  DS.Assert(mimeSource, valueProperty, mimeLiteral, true);
-
 
   // test now-existent extension
   lolType = handlerSvc.getTypeFromExtension("lolcat");

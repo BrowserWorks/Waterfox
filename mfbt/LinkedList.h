@@ -253,11 +253,12 @@ public:
   /*
    * Remove this element from the list containing it.  Returns a pointer to the
    * element that follows this element (before it was removed).  This method
-   * asserts if the element does not belong to a list.
+   * asserts if the element does not belong to a list. Note: In a refcounted list,
+   * |this| may be destroyed.
    */
-  ClientType removeAndGetNext()
+  RawType removeAndGetNext()
   {
-    ClientType r = getNext();
+    RawType r = getNext();
     remove();
     return r;
   }
@@ -265,11 +266,12 @@ public:
   /*
    * Remove this element from the list containing it.  Returns a pointer to the
    * previous element in the containing list (before the removal).  This method
-   * asserts if the element does not belong to a list.
+   * asserts if the element does not belong to a list. Note: In a refcounted list,
+   * |this| may be destroyed.
    */
-  ClientType removeAndGetPrevious()
+  RawType removeAndGetPrevious()
   {
-    ClientType r = getPrevious();
+    RawType r = getPrevious();
     remove();
     return r;
   }
@@ -645,6 +647,17 @@ class AutoCleanLinkedList : public LinkedList<T>
 {
 public:
   ~AutoCleanLinkedList()
+  {
+    clear();
+  }
+
+  AutoCleanLinkedList& operator=(AutoCleanLinkedList&& aOther)
+  {
+    LinkedList<T>::operator=(Forward<LinkedList<T>>(aOther));
+    return *this;
+  }
+
+  void clear()
   {
     while (T* element = this->popFirst()) {
       delete element;

@@ -72,6 +72,14 @@ var snapshotFormatters = {
     $("multiprocess-box").textContent = strings.formatStringFromName("multiProcessWindows",
       [data.numRemoteWindows, data.numTotalWindows, statusText], 3);
 
+    if (data.remoteAutoStart) {
+      $("contentprocesses-box").textContent = data.currentContentProcesses +
+                                              "/" +
+                                              data.maxContentProcesses;
+    } else {
+      $("contentprocesses-row").hidden = true;
+    }
+
     let keyGoogleFound = data.keyGoogleFound ? "found" : "missing";
     $("key-google-box").textContent = strings.GetStringFromName(keyGoogleFound);
 
@@ -134,7 +142,7 @@ var snapshotFormatters = {
       }
       return $.new("tr", [
         $.new("td", [
-          $.new("a", crash.id, null, {href : reportURL + crash.id})
+          $.new("a", crash.id, null, {href: reportURL + crash.id})
         ]),
         $.new("td", formattedDate)
       ]);
@@ -152,6 +160,16 @@ var snapshotFormatters = {
     }));
   },
 
+  features: function features(data) {
+    $.append($("features-tbody"), data.map(function(feature) {
+      return $.new("tr", [
+        $.new("td", feature.name),
+        $.new("td", feature.version),
+        $.new("td", feature.id),
+      ]);
+    }));
+  },
+
   experiments: function experiments(data) {
     $.append($("experiments-tbody"), data.map(function(experiment) {
       return $.new("tr", [
@@ -161,7 +179,7 @@ var snapshotFormatters = {
         $.new("td", experiment.active),
         $.new("td", experiment.endDate),
         $.new("td", [
-          $.new("a", experiment.detailURL, null, {href : experiment.detailURL, })
+          $.new("a", experiment.detailURL, null, {href: experiment.detailURL, })
         ]),
         $.new("td", experiment.branch),
       ]);
@@ -292,20 +310,24 @@ var snapshotFormatters = {
       delete data.info;
     }
 
-    if (AppConstants.NIGHTLY_BUILD || AppConstants.MOZ_DEV_EDITION) {
-      let windowUtils = window.QueryInterface(Ci.nsIInterfaceRequestor)
-                              .getInterface(Ci.nsIDOMWindowUtils);
-      let gpuProcessPid = windowUtils.gpuProcessPid;
+    let windowUtils = window.QueryInterface(Ci.nsIInterfaceRequestor)
+                            .getInterface(Ci.nsIDOMWindowUtils);
+    let gpuProcessPid = windowUtils.gpuProcessPid;
 
-      if (gpuProcessPid != -1) {
-        let gpuProcessKillButton = $.new("button");
+    if (gpuProcessPid != -1) {
+      let gpuProcessKillButton = null;
+      if (AppConstants.NIGHTLY_BUILD || AppConstants.MOZ_DEV_EDITION) {
+        gpuProcessKillButton = $.new("button");
 
         gpuProcessKillButton.addEventListener("click", function() {
           windowUtils.terminateGPUProcess();
         });
 
         gpuProcessKillButton.textContent = strings.GetStringFromName("gpuProcessKillButton");
-        addRow("diagnostics", "GPUProcessPid", gpuProcessPid);
+      }
+
+      addRow("diagnostics", "GPUProcessPid", gpuProcessPid);
+      if (gpuProcessKillButton) {
         addRow("diagnostics", "GPUProcess", [gpuProcessKillButton]);
       }
     }
@@ -597,8 +619,8 @@ var snapshotFormatters = {
         continue;
       }
       if (key === "syscallLog") {
-	// Not in this table.
-	continue;
+        // Not in this table.
+        continue;
       }
       tbody.appendChild($.new("tr", [
         $.new("th", strings.GetStringFromName(key), "column"),
@@ -606,25 +628,27 @@ var snapshotFormatters = {
       ]));
     }
 
-    let syscallBody = $("sandbox-syscalls-tbody");
-    let argsHead = $("sandbox-syscalls-argshead");
-    for (let syscall of data.syscallLog) {
-      if (argsHead.colSpan < syscall.args.length) {
-	argsHead.colSpan = syscall.args.length;
+    if ("syscallLog" in data) {
+      let syscallBody = $("sandbox-syscalls-tbody");
+      let argsHead = $("sandbox-syscalls-argshead");
+      for (let syscall of data.syscallLog) {
+        if (argsHead.colSpan < syscall.args.length) {
+          argsHead.colSpan = syscall.args.length;
+        }
+        let cells = [
+          $.new("td", syscall.index, "integer"),
+          $.new("td", syscall.msecAgo / 1000),
+          $.new("td", syscall.pid, "integer"),
+          $.new("td", syscall.tid, "integer"),
+          $.new("td", strings.GetStringFromName("sandboxProcType." +
+                                                syscall.procType)),
+          $.new("td", syscall.syscall, "integer"),
+        ];
+        for (let arg of syscall.args) {
+          cells.push($.new("td", arg, "integer"));
+        }
+        syscallBody.appendChild($.new("tr", cells));
       }
-      let cells = [
-	$.new("td", syscall.index, "integer"),
-	$.new("td", syscall.msecAgo / 1000),
-	$.new("td", syscall.pid, "integer"),
-	$.new("td", syscall.tid, "integer"),
-	$.new("td", strings.GetStringFromName("sandboxProcType." +
-					      syscall.procType)),
-	$.new("td", syscall.syscall, "integer"),
-      ];
-      for (let arg of syscall.args) {
-	cells.push($.new("td", arg, "integer"));
-      }
-      syscallBody.appendChild($.new("tr", cells));
     }
   },
 };
@@ -674,9 +698,9 @@ function assembleFromGraphicsFailure(i, data) {
     what = "Assert";
     message = message.substring(8);
   }
-  let assembled = {"index" : index,
-                   "header" : ("(#" + index + ") " + what),
-                   "message" : message};
+  let assembled = {"index": index,
+                   "header": ("(#" + index + ") " + what),
+                   "message": message};
   return assembled;
 }
 
@@ -1015,14 +1039,14 @@ function setupEventListeners() {
   });
   $("restart-in-safe-mode-button").addEventListener("click", function(event) {
     if (Services.obs.enumerateObservers("restart-in-safe-mode").hasMoreElements()) {
-      Services.obs.notifyObservers(null, "restart-in-safe-mode", "");
+      Services.obs.notifyObservers(null, "restart-in-safe-mode");
     } else {
       safeModeRestart();
     }
   });
   $("verify-place-integrity-button").addEventListener("click", function(event) {
-    PlacesDBUtils.checkAndFixDatabase(function(aLog) {
-      let msg = aLog.join("\n");
+    PlacesDBUtils.checkAndFixDatabase().then((tasksStatusMap) => {
+      let msg = PlacesDBUtils.getLegacyLog(tasksStatusMap).join("\n");
       $("verify-place-result").style.display = "block";
       $("verify-place-result").classList.remove("no-copy");
       $("verify-place-result").textContent = msg;

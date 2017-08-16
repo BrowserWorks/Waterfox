@@ -25,6 +25,7 @@
 #include "vm/StringBuffer.h"
 #include "wasm/WasmAST.h"
 #include "wasm/WasmBinaryToAST.h"
+#include "wasm/WasmDebug.h"
 #include "wasm/WasmTextUtils.h"
 #include "wasm/WasmTypes.h"
 
@@ -1426,8 +1427,12 @@ RenderImport(WasmRenderContext& c, AstImport& import, const AstModule& module)
 
     switch (import.kind()) {
       case DefinitionKind::Function: {
+        if (!c.buffer.append("(func"))
+            return false;
         const AstSig* sig = module.sigs()[import.funcSig().index()];
         if (!RenderSignature(c, *sig))
+            return false;
+        if (!c.buffer.append(")"))
             return false;
         break;
       }

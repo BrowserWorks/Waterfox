@@ -1,7 +1,6 @@
 /* Any copyright is dedicated to the Public Domain.
    http://creativecommons.org/publicdomain/zero/1.0/ */
 
-Cu.import("resource://gre/modules/PlacesUtils.jsm");
 Cu.import("resource://gre/modules/PlacesSyncUtils.jsm");
 Cu.import("resource://testing-common/PlacesTestUtils.jsm");
 Cu.import("resource:///modules/PlacesUIUtils.jsm");
@@ -34,39 +33,9 @@ function getServerBookmarks(server) {
 }
 
 async function setup() {
-  let clientsEngine = Service.clientsEngine;
   let bookmarksEngine = Service.engineManager.get("bookmarks");
 
-  let server = serverForUsers({"foo": "password"}, {
-    meta: {
-      global: {
-        syncID: Service.syncID,
-        storageVersion: STORAGE_VERSION,
-        engines: {
-          clients: {
-            version: clientsEngine.version,
-            syncID: clientsEngine.syncID,
-          },
-          bookmarks: {
-            version: bookmarksEngine.version,
-            syncID: bookmarksEngine.syncID,
-          },
-        },
-      },
-    },
-    crypto: {
-      keys: encryptPayload({
-        id: "keys",
-        // Generate a fake default key bundle to avoid resetting the client
-        // before the first sync.
-        default: [
-          Svc.Crypto.generateRandomKey(),
-          Svc.Crypto.generateRandomKey(),
-        ],
-      }),
-    },
-  });
-
+  let server = serverForFoo(bookmarksEngine);
   await SyncTestingInfrastructure(server);
 
   // Disable validation so that we don't try to automatically repair the server

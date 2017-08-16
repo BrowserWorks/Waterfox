@@ -33,6 +33,7 @@
 #include <usp10.h>
 
 using namespace mozilla;
+using namespace mozilla::gfx;
 
 #define ROUND(x) floor((x) + 0.5)
 
@@ -246,6 +247,21 @@ GDIFontEntry::CopyFontTable(uint32_t aTableTag, nsTArray<uint8_t>& aBuffer)
     return NS_ERROR_FAILURE;
 }
 
+already_AddRefed<UnscaledFontGDI>
+GDIFontEntry::LookupUnscaledFont(HFONT aFont)
+{
+    RefPtr<UnscaledFontGDI> unscaledFont =
+        static_cast<UnscaledFontGDI*>(mUnscaledFont.get());
+    if (!unscaledFont) {
+        LOGFONT lf;
+        GetObject(aFont, sizeof(LOGFONT), &lf);
+        unscaledFont = new UnscaledFontGDI(lf);
+        mUnscaledFont = unscaledFont;
+    }
+
+    return unscaledFont.forget();
+}
+
 void
 GDIFontEntry::FillLogFont(LOGFONTW *aLogFont,
                           uint16_t aWeight, gfxFloat aSize)
@@ -413,6 +429,18 @@ GDIFontEntry::AddSizeOfIncludingThis(MallocSizeOf aMallocSizeOf,
  *
  */
 
+static bool
+ShouldIgnoreItalicStyle(const nsAString& aName)
+{
+    // Ignore italic style's "Meiryo" because "Meiryo (Bold) Italic" has
+    // non-italic style glyphs as Japanese characters.  However, using it
+    // causes serious problem if web pages wants some elements to be
+    // different style from others only with font-style.  For example,
+    // <em> and <i> should be rendered as italic in the default style.
+    return aName.EqualsLiteral("Meiryo") ||
+           aName.Equals(NS_LITERAL_STRING(u"\x30E1\x30A4\x30EA\x30AA"));
+}
+
 int CALLBACK
 GDIFontFamily::FamilyAddStylesProc(const ENUMLOGFONTEXW *lpelfe,
                                         const NEWTEXTMETRICEXW *nmetrics,
@@ -421,6 +449,10 @@ GDIFontFamily::FamilyAddStylesProc(const ENUMLOGFONTEXW *lpelfe,
     const NEWTEXTMETRICW& metrics = nmetrics->ntmTm;
     LOGFONTW logFont = lpelfe->elfLogFont;
     GDIFontFamily *ff = reinterpret_cast<GDIFontFamily*>(data);
+
+    if (logFont.lfItalic && ShouldIgnoreItalicStyle(ff->mName)) {
+        return 1;
+    }
 
     // Some fonts claim to support things > 900, but we don't so clamp the sizes
     logFont.lfWeight = clamped(logFont.lfWeight, LONG(100), LONG(900));
@@ -531,14 +563,23 @@ GDIFontFamily::FindStyleVariations(FontInfoData *aFontInfoData)
     // check for existence of italic face(s); if present, set the
     // FamilyHasItalic flag on all faces so that we'll know *not*
     // to use GDI's fake-italic effect with them
-    size_t count = mAvailableFonts.Length();
-    for (size_t i = 0; i < count; ++i) {
-        if (mAvailableFonts[i]->IsItalic()) {
-            for (uint32_t j = 0; j < count; ++j) {
-                static_cast<GDIFontEntry*>(mAvailableFonts[j].get())->
-                    mFamilyHasItalicFace = true;
+
+    // If we ignored italic face(s), we should mark this has italic face.
+    bool hasItalicFace = ShouldIgnoreItalicStyle(mName);
+
+    if (!hasItalicFace) {
+        for (RefPtr<gfxFontEntry>& fontEntry : mAvailableFonts) {
+            if (fontEntry->IsItalic()) {
+                hasItalicFace = true;
+                break;
             }
-            break;
+        }
+    }
+
+    if (hasItalicFace) {
+        for (RefPtr<gfxFontEntry>& fontEntry : mAvailableFonts) {
+            static_cast<GDIFontEntry*>(fontEntry.get())->
+                mFamilyHasItalicFace = true;
         }
     }
 }

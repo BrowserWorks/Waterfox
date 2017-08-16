@@ -453,6 +453,8 @@ WebGLContext::InitAndValidateGL(FailureReason* const out_failReason)
     mDitherEnabled = true;
     mRasterizerDiscardEnabled = false;
     mScissorTestEnabled = false;
+    mDepthTestEnabled = 0;
+    mStencilTestEnabled = 0;
     mGenerateMipmapHint = LOCAL_GL_DONT_CARE;
 
     // Bindings, etc.
@@ -538,21 +540,6 @@ WebGLContext::InitAndValidateGL(FailureReason* const out_failReason)
         gl->fGetIntegerv(LOCAL_GL_MAX_TEXTURE_IMAGE_UNITS, &mGLMaxTextureImageUnits);
         gl->fGetIntegerv(LOCAL_GL_MAX_VERTEX_TEXTURE_IMAGE_UNITS, &mGLMaxVertexTextureImageUnits);
     }
-
-    // If we don't support a target, its max size is 0. We should only floor-to-POT if the
-    // value if it's non-zero. (NB log2(0) is -Inf, so zero isn't an integer power-of-two)
-    const auto fnFloorPOTIfSupported = [](uint32_t& val) {
-        if (val) {
-            val = FloorPOT(val);
-        }
-    };
-
-    fnFloorPOTIfSupported(mImplMaxTextureSize);
-    fnFloorPOTIfSupported(mImplMaxCubeMapTextureSize);
-    fnFloorPOTIfSupported(mImplMaxRenderbufferSize);
-
-    fnFloorPOTIfSupported(mImplMax3DTextureSize);
-    fnFloorPOTIfSupported(mImplMaxArrayTextureLayers);
 
     ////////////////
 
@@ -701,6 +688,7 @@ WebGLContext::InitAndValidateGL(FailureReason* const out_failReason)
     mPixelStore_FlipY = false;
     mPixelStore_PremultiplyAlpha = false;
     mPixelStore_ColorspaceConversion = BROWSER_DEFAULT_WEBGL;
+    mPixelStore_RequireFastPath = false;
 
     // GLES 3.0.4, p259:
     mPixelStore_UnpackImageHeight = 0;
@@ -724,6 +712,11 @@ WebGLContext::InitAndValidateGL(FailureReason* const out_failReason)
            sizeof(mGenericVertexAttrib0Data));
 
     mFakeVertexAttrib0BufferObject = 0;
+
+    mNeedsIndexValidation = !gl->IsSupported(gl::GLFeature::robust_buffer_access_behavior);
+    if (gfxPrefs::WebGLForceIndexValidation()) {
+        mNeedsIndexValidation = true;
+    }
 
     return true;
 }

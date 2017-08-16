@@ -19,7 +19,7 @@ var gTests = [
 function test() {
   waitForExplicitFinish();
 
-  let tab = gBrowser.selectedTab = gBrowser.addTab();
+  let tab = gBrowser.selectedTab = BrowserTestUtils.addTab(gBrowser);
 
   let searchObserver = function search_observer(aSubject, aTopic, aData) {
     let engine = aSubject.QueryInterface(Ci.nsISearchEngine);
@@ -41,7 +41,7 @@ function test() {
     executeSoon(nextTest);
   };
 
-  Services.obs.addObserver(searchObserver, "browser-search-engine-modified", false);
+  Services.obs.addObserver(searchObserver, "browser-search-engine-modified");
 
   registerCleanupFunction(function() {
     gBrowser.removeTab(tab);

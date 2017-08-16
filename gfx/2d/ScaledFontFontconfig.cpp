@@ -4,13 +4,12 @@
  * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
 
 #include "ScaledFontFontconfig.h"
+#include "UnscaledFontFreeType.h"
 #include "Logging.h"
 
 #ifdef USE_SKIA
 #include "skia/include/ports/SkTypeface_cairo.h"
 #endif
-
-#include FT_TRUETYPE_TABLES_H
 
 #include <fontconfig/fcfreetype.h>
 
@@ -23,8 +22,9 @@ namespace gfx {
 // is a requirement when we consider runtime switchable backends and so on
 ScaledFontFontconfig::ScaledFontFontconfig(cairo_scaled_font_t* aScaledFont,
                                            FcPattern* aPattern,
+                                           const RefPtr<UnscaledFont>& aUnscaledFont,
                                            Float aSize)
-  : ScaledFontBase(aSize),
+  : ScaledFontBase(aUnscaledFont, aSize),
     mPattern(aPattern)
 {
   SetCairoScaledFont(aScaledFont);
@@ -46,27 +46,6 @@ SkTypeface* ScaledFontFontconfig::GetSkTypeface()
   return mTypeface;
 }
 #endif
-
-bool
-ScaledFontFontconfig::GetFontFileData(FontFileDataOutput aDataCallback, void* aBaton)
-{
-  bool success = false;
-  // Lock the Cairo scaled font to force it to resolve the Fontconfig pattern to an FT_Face.
-  if (FT_Face face = cairo_ft_scaled_font_lock_face(GetCairoScaledFont())) {
-    FT_ULong length = 0;
-    // Request the SFNT file. This may not always succeed for all font types.
-    if (FT_Load_Sfnt_Table(face, 0, 0, nullptr, &length) == FT_Err_Ok) {
-      uint8_t* fontData = new uint8_t[length];
-      if (FT_Load_Sfnt_Table(face, 0, 0, fontData, &length) == FT_Err_Ok) {
-        aDataCallback(fontData, length, 0, mSize, 0, nullptr, aBaton);
-        success = true;
-      }
-      delete[] fontData;
-    }
-    cairo_ft_scaled_font_unlock_face(GetCairoScaledFont());
-  }
-  return success;
-}
 
 ScaledFontFontconfig::InstanceData::InstanceData(cairo_scaled_font_t* aScaledFont, FcPattern* aPattern)
   : mFlags(0)
@@ -252,52 +231,45 @@ ScaledFontFontconfig::GetFontInstanceData(FontInstanceDataOutput aCb, void* aBat
   return true;
 }
 
-bool
-ScaledFontFontconfig::GetFontDescriptor(FontDescriptorOutput aCb, void* aBaton)
+already_AddRefed<ScaledFont>
+UnscaledFontFontconfig::CreateScaledFont(Float aGlyphSize,
+                                         const uint8_t* aInstanceData,
+                                         uint32_t aInstanceDataLength)
 {
-  // Check if the Fontconfig pattern uses a font file and index to specify which
-  // font to load. If so, record these as a font descriptor along with any instance
-  // data required to rebuild a scaled font from it.
-  FcChar8* pathname = nullptr;
-  if (FcPatternGetString(mPattern, FC_FILE, 0, &pathname) != FcResultMatch) {
-    return false;
+  if (aInstanceDataLength < sizeof(ScaledFontFontconfig::InstanceData)) {
+    gfxWarning() << "Fontconfig scaled font instance data is truncated.";
+    return nullptr;
   }
-  int index = 0;
-  FcPatternGetInteger(mPattern, FC_INDEX, 0, &index);
-  if (index < 0) {
-    return false;
-  }
+  const ScaledFontFontconfig::InstanceData *instanceData =
+    reinterpret_cast<const ScaledFontFontconfig::InstanceData*>(aInstanceData);
+  return ScaledFontFontconfig::CreateFromInstanceData(*instanceData, this, aGlyphSize,
+                                                      mNativeFontResource.get());
+}
 
-  size_t pathLength = strlen(reinterpret_cast<char*>(pathname)) + 1;
-  size_t dataLength = sizeof(FontDescriptor) + pathLength;
-  uint8_t* data = new uint8_t[dataLength];
-  FontDescriptor* desc = reinterpret_cast<FontDescriptor*>(data);
-  desc->mPathLength = pathLength;
-  desc->mIndex = index;
-  desc->mInstanceData = InstanceData(GetCairoScaledFont(), mPattern);
-  memcpy(data + sizeof(FontDescriptor), pathname, pathLength);
+static cairo_user_data_key_t sNativeFontResourceKey;
 
-  aCb(data, dataLength, mSize, aBaton);
-  delete[] data;
-  return true;
+static void
+ReleaseNativeFontResource(void* aData)
+{
+  static_cast<NativeFontResource*>(aData)->Release();
 }
 
 already_AddRefed<ScaledFont>
 ScaledFontFontconfig::CreateFromInstanceData(const InstanceData& aInstanceData,
-                                             FT_Face aFace, const char* aPathname, uint32_t aIndex,
-                                             Float aSize)
-
+                                             UnscaledFontFontconfig* aUnscaledFont,
+                                             Float aSize,
+                                             NativeFontResource* aNativeFontResource)
 {
   FcPattern* pattern = FcPatternCreate();
   if (!pattern) {
     gfxWarning() << "Failing initializing Fontconfig pattern for scaled font";
     return nullptr;
   }
-  if (aFace) {
-    FcPatternAddFTFace(pattern, FC_FT_FACE, aFace);
+  if (aUnscaledFont->GetFace()) {
+    FcPatternAddFTFace(pattern, FC_FT_FACE, aUnscaledFont->GetFace());
   } else {
-    FcPatternAddString(pattern, FC_FILE, reinterpret_cast<const FcChar8*>(aPathname));
-    FcPatternAddInteger(pattern, FC_INDEX, aIndex);
+    FcPatternAddString(pattern, FC_FILE, reinterpret_cast<const FcChar8*>(aUnscaledFont->GetFile()));
+    FcPatternAddInteger(pattern, FC_INDEX, aUnscaledFont->GetIndex());
   }
   FcPatternAddDouble(pattern, FC_PIXEL_SIZE, aSize);
   aInstanceData.SetupPattern(pattern);
@@ -307,6 +279,22 @@ ScaledFontFontconfig::CreateFromInstanceData(const InstanceData& aInstanceData,
     gfxWarning() << "Failed creating Cairo font face for Fontconfig pattern";
     FcPatternDestroy(pattern);
     return nullptr;
+  }
+
+  if (aNativeFontResource) {
+    // Bug 1362117 - Cairo may keep the font face alive after the owning NativeFontResource
+    // was freed. To prevent this, we must bind the NativeFontResource to the font face so that
+    // it stays alive at least as long as the font face.
+    if (cairo_font_face_set_user_data(font,
+                                      &sNativeFontResourceKey,
+                                      aNativeFontResource,
+                                      ReleaseNativeFontResource) != CAIRO_STATUS_SUCCESS) {
+      gfxWarning() << "Failed binding NativeFontResource to Cairo font face";
+      cairo_font_face_destroy(font);
+      FcPatternDestroy(pattern);
+      return nullptr;
+    }
+    aNativeFontResource->AddRef();
   }
 
   cairo_matrix_t sizeMatrix;
@@ -331,7 +319,7 @@ ScaledFontFontconfig::CreateFromInstanceData(const InstanceData& aInstanceData,
   }
 
   RefPtr<ScaledFontFontconfig> scaledFont =
-    new ScaledFontFontconfig(cairoScaledFont, pattern, aSize);
+    new ScaledFontFontconfig(cairoScaledFont, pattern, aUnscaledFont, aSize);
 
   cairo_scaled_font_destroy(cairoScaledFont);
   FcPatternDestroy(pattern);
@@ -339,8 +327,8 @@ ScaledFontFontconfig::CreateFromInstanceData(const InstanceData& aInstanceData,
   return scaledFont.forget();
 }
 
-already_AddRefed<ScaledFont>
-ScaledFontFontconfig::CreateFromFontDescriptor(const uint8_t* aData, uint32_t aDataLength, Float aSize)
+already_AddRefed<UnscaledFont>
+UnscaledFontFontconfig::CreateFromFontDescriptor(const uint8_t* aData, uint32_t aDataLength)
 {
   if (aDataLength < sizeof(FontDescriptor)) {
     gfxWarning() << "Fontconfig font descriptor is truncated.";
@@ -352,12 +340,14 @@ ScaledFontFontconfig::CreateFromFontDescriptor(const uint8_t* aData, uint32_t aD
     gfxWarning() << "Pathname in Fontconfig font descriptor has invalid size.";
     return nullptr;
   }
-  const char* pathname = reinterpret_cast<const char*>(aData + sizeof(FontDescriptor));
-  if (pathname[desc->mPathLength - 1] != '\0') {
+  const char* path = reinterpret_cast<const char*>(aData + sizeof(FontDescriptor));
+  if (path[desc->mPathLength - 1] != '\0') {
     gfxWarning() << "Pathname in Fontconfig font descriptor is not terminated.";
     return nullptr;
   }
-  return CreateFromInstanceData(desc->mInstanceData, nullptr, pathname, desc->mIndex, aSize);
+
+  RefPtr<UnscaledFont> unscaledFont = new UnscaledFontFontconfig(path, desc->mIndex);
+  return unscaledFont.forget();
 }
 
 } // namespace gfx

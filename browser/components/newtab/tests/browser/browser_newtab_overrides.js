@@ -1,29 +1,19 @@
-/* globals
-  XPCOMUtils,
-  aboutNewTabService,
-  Services,
-  ContentTask,
-  TestUtils,
-  BrowserOpenTab,
-  registerCleanupFunction,
-  is,
-  content
-*/
-
 "use strict";
 
 let Cu = Components.utils;
-Cu.import("resource://gre/modules/Task.jsm");
 Cu.import("resource://gre/modules/XPCOMUtils.jsm");
 Cu.import("resource://gre/modules/Services.jsm");
 Cu.import("resource://gre/modules/Preferences.jsm");
+const PREF_NEWTAB_ACTIVITY_STREAM = "browser.newtabpage.activity-stream.enabled";
+
+Services.prefs.setBoolPref(PREF_NEWTAB_ACTIVITY_STREAM, false);
 
 XPCOMUtils.defineLazyServiceGetter(this, "aboutNewTabService",
                                    "@mozilla.org/browser/aboutnewtab-service;1",
                                    "nsIAboutNewTabService");
 
 registerCleanupFunction(function() {
-  Services.prefs.setBoolPref("browser.newtabpage.activity-stream.enabled", false);
+  Services.prefs.clearUserPref(PREF_NEWTAB_ACTIVITY_STREAM);
   aboutNewTabService.resetNewTabURL();
 });
 
@@ -31,7 +21,7 @@ registerCleanupFunction(function() {
  * Tests that the default newtab page is always returned when one types "about:newtab" in the URL bar,
  * even when overridden.
  */
-add_task(function* redirector_ignores_override() {
+add_task(async function redirector_ignores_override() {
   let overrides = [
     "chrome://browser/content/downloads/contentAreaDownloadsView.xul",
     "about:home",
@@ -41,7 +31,7 @@ add_task(function* redirector_ignores_override() {
     let notificationPromise = nextChangeNotificationPromise(overrideURL, `newtab page now points to ${overrideURL}`);
     aboutNewTabService.newTabURL = overrideURL;
 
-    yield notificationPromise;
+    await notificationPromise;
     Assert.ok(aboutNewTabService.overridden, "url has been overridden");
 
     let tabOptions = {
@@ -56,8 +46,8 @@ add_task(function* redirector_ignores_override() {
      * due to invoking AboutRedirector. A user interacting with the chrome otherwise would lead
      * to the overriding URLs.
      */
-    yield BrowserTestUtils.withNewTab(tabOptions, function*(browser) {
-      yield ContentTask.spawn(browser, {}, function*() {
+    await BrowserTestUtils.withNewTab(tabOptions, async function(browser) {
+      await ContentTask.spawn(browser, {}, async function() {
         Assert.equal(content.location.href, "about:newtab", "Got right URL");
         Assert.equal(content.document.location.href, "about:newtab", "Got right URL");
         Assert.equal(content.document.nodePrincipal,
@@ -71,7 +61,7 @@ add_task(function* redirector_ignores_override() {
 /*
  * Tests loading an overridden newtab page by simulating opening a newtab page from chrome
  */
-add_task(function* override_loads_in_browser() {
+add_task(async function override_loads_in_browser() {
   let overrides = [
     "chrome://browser/content/downloads/contentAreaDownloadsView.xul",
     "about:home",
@@ -82,27 +72,27 @@ add_task(function* override_loads_in_browser() {
     let notificationPromise = nextChangeNotificationPromise(overrideURL.trim(), `newtab page now points to ${overrideURL}`);
     aboutNewTabService.newTabURL = overrideURL;
 
-    yield notificationPromise;
+    await notificationPromise;
     Assert.ok(aboutNewTabService.overridden, "url has been overridden");
 
     // simulate a newtab open as a user would
     BrowserOpenTab();  // jshint ignore:line
 
     let browser = gBrowser.selectedBrowser;
-    yield BrowserTestUtils.browserLoaded(browser);
+    await BrowserTestUtils.browserLoaded(browser);
 
-    yield ContentTask.spawn(browser, {url: overrideURL}, function*(args) {
+    await ContentTask.spawn(browser, {url: overrideURL}, async function(args) {
       Assert.equal(content.location.href, args.url.trim(), "Got right URL");
       Assert.equal(content.document.location.href, args.url.trim(), "Got right URL");
     });  // jshint ignore:line
-    yield BrowserTestUtils.removeTab(gBrowser.selectedTab);
+    await BrowserTestUtils.removeTab(gBrowser.selectedTab);
   }
 });
 
 /*
  * Tests edge cases when someone overrides the newtabpage with whitespace
  */
-add_task(function* override_blank_loads_in_browser() {
+add_task(async function override_blank_loads_in_browser() {
   let overrides = [
     "",
     " ",
@@ -114,20 +104,20 @@ add_task(function* override_blank_loads_in_browser() {
     let notificationPromise = nextChangeNotificationPromise("about:blank", "newtab page now points to about:blank");
     aboutNewTabService.newTabURL = overrideURL;
 
-    yield notificationPromise;
+    await notificationPromise;
     Assert.ok(aboutNewTabService.overridden, "url has been overridden");
 
     // simulate a newtab open as a user would
     BrowserOpenTab();  // jshint ignore:line
 
     let browser = gBrowser.selectedBrowser;
-    yield BrowserTestUtils.browserLoaded(browser);
+    await BrowserTestUtils.browserLoaded(browser);
 
-    yield ContentTask.spawn(browser, {}, function*() {
+    await ContentTask.spawn(browser, {}, async function() {
       Assert.equal(content.location.href, "about:blank", "Got right URL");
       Assert.equal(content.document.location.href, "about:blank", "Got right URL");
     });  // jshint ignore:line
-    yield BrowserTestUtils.removeTab(gBrowser.selectedTab);
+    await BrowserTestUtils.removeTab(gBrowser.selectedTab);
   }
 });
 

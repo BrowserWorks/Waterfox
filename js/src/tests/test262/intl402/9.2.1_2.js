@@ -1,4 +1,3 @@
-// |reftest| skip-if(!this.hasOwnProperty('Intl')) -- needs Intl
 // Copyright 2012 Mozilla Corporation. All rights reserved.
 // This code is governed by the BSD license found in the LICENSE file.
 
@@ -16,9 +15,7 @@ taintArray();
 testWithIntlConstructors(function (Constructor) {
     var defaultLocale = new Constructor().resolvedOptions().locale;
     var canonicalized = Constructor.supportedLocalesOf([defaultLocale, defaultLocale]);
-    if (canonicalized.length > 1) {
-        $ERROR("Canonicalization didn't remove duplicate language tags from locale list.");
-    }
+    assert.sameValue(canonicalized.length > 1, false, "Canonicalization didn't remove duplicate language tags from locale list.");
 });
 
 reportCompare(0, 0);

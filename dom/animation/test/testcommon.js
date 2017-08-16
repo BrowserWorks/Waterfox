@@ -55,6 +55,55 @@ function assert_matrix_equals(actual, expected, description) {
 }
 
 /**
+ * Compare given values which are same format of
+ * KeyframeEffectReadonly::GetProperties.
+ */
+function assert_properties_equal(actual, expected) {
+  assert_equals(actual.length, expected.length);
+
+  const compareProperties = (a, b) =>
+    a.property == b.property ? 0 : (a.property < b.property ? -1 : 1);
+
+  const sortedActual   = actual.sort(compareProperties);
+  const sortedExpected = expected.sort(compareProperties);
+
+  const serializeValues = values =>
+    values.map(value =>
+      '{ ' +
+          [ 'offset', 'value', 'easing', 'composite' ].map(
+            member => `${member}: ${value[member]}`
+          ).join(', ') +
+                      ' }')
+          .join(', ');
+
+  for (let i = 0; i < sortedActual.length; i++) {
+    assert_equals(sortedActual[i].property,
+                  sortedExpected[i].property,
+                  'CSS property name should match');
+    assert_equals(serializeValues(sortedActual[i].values),
+                  serializeValues(sortedExpected[i].values),
+                  `Values arrays do not match for `
+                  + `${sortedActual[i].property} property`);
+  }
+}
+
+/**
+ * Construct a object which is same to a value of
+ * KeyframeEffectReadonly::GetProperties().
+ * The method returns undefined as a value in case of missing keyframe.
+ * Therefor, we can use undefined for |value| and |easing| parameter.
+ * @param offset - keyframe offset. e.g. 0.1
+ * @param value - any keyframe value. e.g. undefined '1px', 'center', 0.5
+ * @param composite - 'replace', 'add', 'accumulate'
+ * @param easing - e.g. undefined, 'linear', 'ease' and so on
+ * @return Object -
+ *   e.g. { offset: 0.1, value: '1px', composite: 'replace', easing: 'ease'}
+ */
+function valueFormat(offset, value, composite, easing) {
+  return { offset: offset, value: value, easing: easing, composite: composite };
+}
+
+/**
  * Appends a div to the document body and creates an animation on the div.
  * NOTE: This function asserts when trying to create animations with durations
  * shorter than 100s because the shorter duration may cause intermittent
@@ -186,6 +235,15 @@ function waitForAnimationFrames(frameCount, onFrame) {
 }
 
 /**
+ * Promise wrapper for requestIdleCallback.
+ */
+function waitForIdle() {
+  return new Promise(resolve => {
+    requestIdleCallback(resolve);
+  });
+}
+
+/**
  * Wrapper that takes a sequence of N animations and returns:
  *
  *   Promise.all([animations[0].ready, animations[1].ready, ... animations[N-1].ready]);
@@ -203,7 +261,7 @@ function waitForAllAnimations(animations) {
  * we actually get a transition instead of that being the initial value.
  */
 function flushComputedStyle(elem) {
-  var cs = window.getComputedStyle(elem);
+  var cs = getComputedStyle(elem);
   cs.marginLeft;
 }
 
@@ -211,8 +269,6 @@ if (opener) {
   for (var funcName of ["async_test", "assert_not_equals", "assert_equals",
                         "assert_approx_equals", "assert_less_than",
                         "assert_less_than_equal", "assert_greater_than",
-                        "assert_greater_than_equal",
-                        "assert_not_exists",
                         "assert_between_inclusive",
                         "assert_true", "assert_false",
                         "assert_class_string", "assert_throws",
@@ -222,8 +278,6 @@ if (opener) {
   }
 
   window.EventWatcher = opener.EventWatcher;
-  // Used for requestLongerTimeout.
-  window.W3CTest = opener.W3CTest;
 
   function done() {
     opener.add_completion_callback(function() {
@@ -231,25 +285,6 @@ if (opener) {
     });
     opener.done();
   }
-}
-
-/**
- * Return a new MutationObserver which started observing |target| element
- * with { animations: true, subtree: |subtree| } option.
- * NOTE: This observer should be used only with takeRecords(). If any of
- * MutationRecords are observed in the callback of the MutationObserver,
- * it will raise an assertion.
- */
-function setupSynchronousObserver(t, target, subtree) {
-   var observer = new MutationObserver(records => {
-     assert_unreached("Any MutationRecords should not be observed in this " +
-                      "callback");
-   });
-  t.add_cleanup(() => {
-    observer.disconnect();
-  });
-  observer.observe(target, { animations: true, subtree: subtree });
-  return observer;
 }
 
 /*
@@ -282,4 +317,26 @@ function isOMTAEnabled() {
   const OMTAPrefKey = 'layers.offmainthreadcomposition.async-animations';
   return SpecialPowers.DOMWindowUtils.layerManagerRemote &&
          SpecialPowers.getBoolPref(OMTAPrefKey);
+}
+
+/**
+ * Append an SVG element to the target element.
+ *
+ * @param target The element which want to append.
+ * @param attrs  A array object with attribute name and values to set on
+ *               the SVG element.
+ * @return An SVG outer element.
+ */
+function addSVGElement(target, tag, attrs) {
+  if (!target) {
+    return null;
+  }
+  var element = document.createElementNS('http://www.w3.org/2000/svg', tag);
+  if (attrs) {
+    for (var attrName in attrs) {
+      element.setAttributeNS(null, attrName, attrs[attrName]);
+    }
+  }
+  target.appendChild(element);
+  return element;
 }

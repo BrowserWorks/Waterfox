@@ -2,9 +2,6 @@
 /* vim: set sts=2 sw=2 et tw=80: */
 "use strict";
 
-const {classes: Cc, interfaces: Ci, utils: Cu, results: Cr} = Components;
-
-Cu.import("resource://gre/modules/Task.jsm");
 
 XPCOMUtils.defineLazyModuleGetter(this, "PlacesUtils",
                                   "resource://gre/modules/PlacesUtils.jsm");
@@ -35,18 +32,18 @@ XPCOMUtils.defineLazyGetter(this, "sanitizer", () => {
   return sanitizer;
 });
 
-function makeRange(options) {
+const makeRange = options => {
   return (options.since == null) ?
     null :
     [PlacesUtils.toPRTime(options.since), PlacesUtils.toPRTime(Date.now())];
-}
+};
 
-function clearCache() {
+const clearCache = () => {
   // Clearing the cache does not support timestamps.
   return sanitizer.items.cache.clear();
-}
+};
 
-let clearCookies = Task.async(function* (options) {
+const clearCookies = async function(options) {
   let cookieMgr = Services.cookies;
   // This code has been borrowed from sanitize.js.
   let yieldCounter = 0;
@@ -63,7 +60,7 @@ let clearCookies = Task.async(function* (options) {
                          false, cookie.originAttributes);
 
         if (++yieldCounter % YIELD_PERIOD == 0) {
-          yield new Promise(resolve => setTimeout(resolve, 0)); // Don't block the main thread too long.
+          await new Promise(resolve => setTimeout(resolve, 0)); // Don't block the main thread too long.
         }
       }
     }
@@ -71,21 +68,21 @@ let clearCookies = Task.async(function* (options) {
     // Remove everything.
     cookieMgr.removeAll();
   }
-});
+};
 
-function clearDownloads(options) {
+const clearDownloads = options => {
   return sanitizer.items.downloads.clear(makeRange(options));
-}
+};
 
-function clearFormData(options) {
+const clearFormData = options => {
   return sanitizer.items.formdata.clear(makeRange(options));
-}
+};
 
-function clearHistory(options) {
+const clearHistory = options => {
   return sanitizer.items.history.clear(makeRange(options));
-}
+};
 
-let clearPasswords = Task.async(function* (options) {
+const clearPasswords = async function(options) {
   let loginManager = Services.logins;
   let yieldCounter = 0;
 
@@ -97,7 +94,7 @@ let clearPasswords = Task.async(function* (options) {
       if (login.timePasswordChanged >= options.since) {
         loginManager.removeLogin(login);
         if (++yieldCounter % YIELD_PERIOD == 0) {
-          yield new Promise(resolve => setTimeout(resolve, 0)); // Don't block the main thread too long.
+          await new Promise(resolve => setTimeout(resolve, 0)); // Don't block the main thread too long.
         }
       }
     }
@@ -105,13 +102,13 @@ let clearPasswords = Task.async(function* (options) {
     // Remove everything.
     loginManager.removeAllLogins();
   }
-});
+};
 
-function clearPluginData(options) {
+const clearPluginData = options => {
   return sanitizer.items.pluginData.clear(makeRange(options));
-}
+};
 
-let clearServiceWorkers = Task.async(function* () {
+const clearServiceWorkers = async function() {
   // Clearing service workers does not support timestamps.
   let yieldCounter = 0;
 
@@ -122,12 +119,12 @@ let clearServiceWorkers = Task.async(function* () {
     let host = sw.principal.URI.host;
     serviceWorkerManager.removeAndPropagate(host);
     if (++yieldCounter % YIELD_PERIOD == 0) {
-      yield new Promise(resolve => setTimeout(resolve, 0)); // Don't block the main thread too long.
+      await new Promise(resolve => setTimeout(resolve, 0)); // Don't block the main thread too long.
     }
   }
-});
+};
 
-function doRemoval(options, dataToRemove, extension) {
+const doRemoval = (options, dataToRemove, extension) => {
   if (options.originTypes &&
       (options.originTypes.protectedWeb || options.originTypes.extension)) {
     return Promise.reject(
@@ -173,65 +170,67 @@ function doRemoval(options, dataToRemove, extension) {
       `Firefox does not support dataTypes: ${invalidDataTypes.toString()}.`);
   }
   return Promise.all(removalPromises);
-}
+};
 
-extensions.registerSchemaAPI("browsingData", "addon_parent", context => {
-  let {extension} = context;
-  return {
-    browsingData: {
-      settings() {
-        const PREF_DOMAIN = "privacy.cpd.";
-        // The following prefs are the only ones in Firefox that match corresponding
-        // values used by Chrome when rerturning settings.
-        const PREF_LIST = ["cache", "cookies", "history", "formdata", "downloads"];
+this.browsingData = class extends ExtensionAPI {
+  getAPI(context) {
+    let {extension} = context;
+    return {
+      browsingData: {
+        settings() {
+          const PREF_DOMAIN = "privacy.cpd.";
+          // The following prefs are the only ones in Firefox that match corresponding
+          // values used by Chrome when rerturning settings.
+          const PREF_LIST = ["cache", "cookies", "history", "formdata", "downloads"];
 
-        // since will be the start of what is returned by Sanitizer.getClearRange
-        // divided by 1000 to convert to ms.
-        // If Sanitizer.getClearRange returns undefined that means the range is
-        // currently "Everything", so we should set since to 0.
-        let clearRange = Sanitizer.getClearRange();
-        let since = clearRange ? clearRange[0] / 1000 : 0;
-        let options = {since};
+          // since will be the start of what is returned by Sanitizer.getClearRange
+          // divided by 1000 to convert to ms.
+          // If Sanitizer.getClearRange returns undefined that means the range is
+          // currently "Everything", so we should set since to 0.
+          let clearRange = Sanitizer.getClearRange();
+          let since = clearRange ? clearRange[0] / 1000 : 0;
+          let options = {since};
 
-        let dataToRemove = {};
-        let dataRemovalPermitted = {};
+          let dataToRemove = {};
+          let dataRemovalPermitted = {};
 
-        for (let item of PREF_LIST) {
-          // The property formData needs a different case than the
-          // formdata preference.
-          const name = item === "formdata" ? "formData" : item;
-          dataToRemove[name] = Preferences.get(`${PREF_DOMAIN}${item}`);
-          // Firefox doesn't have the same concept of dataRemovalPermitted
-          // as Chrome, so it will always be true.
-          dataRemovalPermitted[name] = true;
-        }
+          for (let item of PREF_LIST) {
+            // The property formData needs a different case than the
+            // formdata preference.
+            const name = item === "formdata" ? "formData" : item;
+            dataToRemove[name] = Preferences.get(`${PREF_DOMAIN}${item}`);
+            // Firefox doesn't have the same concept of dataRemovalPermitted
+            // as Chrome, so it will always be true.
+            dataRemovalPermitted[name] = true;
+          }
 
-        return Promise.resolve({options, dataToRemove, dataRemovalPermitted});
+          return Promise.resolve({options, dataToRemove, dataRemovalPermitted});
+        },
+        remove(options, dataToRemove) {
+          return doRemoval(options, dataToRemove, extension);
+        },
+        removeCache(options) {
+          return doRemoval(options, {cache: true});
+        },
+        removeCookies(options) {
+          return doRemoval(options, {cookies: true});
+        },
+        removeDownloads(options) {
+          return doRemoval(options, {downloads: true});
+        },
+        removeFormData(options) {
+          return doRemoval(options, {formData: true});
+        },
+        removeHistory(options) {
+          return doRemoval(options, {history: true});
+        },
+        removePasswords(options) {
+          return doRemoval(options, {passwords: true});
+        },
+        removePluginData(options) {
+          return doRemoval(options, {pluginData: true});
+        },
       },
-      remove(options, dataToRemove) {
-        return doRemoval(options, dataToRemove, extension);
-      },
-      removeCache(options) {
-        return doRemoval(options, {cache: true});
-      },
-      removeCookies(options) {
-        return doRemoval(options, {cookies: true});
-      },
-      removeDownloads(options) {
-        return doRemoval(options, {downloads: true});
-      },
-      removeFormData(options) {
-        return doRemoval(options, {formData: true});
-      },
-      removeHistory(options) {
-        return doRemoval(options, {history: true});
-      },
-      removePasswords(options) {
-        return doRemoval(options, {passwords: true});
-      },
-      removePluginData(options) {
-        return doRemoval(options, {pluginData: true});
-      },
-    },
-  };
-});
+    };
+  }
+};

@@ -27,15 +27,15 @@
 using namespace js;
 using namespace wasm;
 
+// With tiering, instances can have one or two code segments, and code that
+// searches the instance list will change.  Search for Tier::TBD below.
+
 Compartment::Compartment(Zone* zone)
-  : mutatingInstances_(false),
-    activationCount_(0),
-    profilingEnabled_(false)
+  : mutatingInstances_(false)
 {}
 
 Compartment::~Compartment()
 {
-    MOZ_ASSERT(activationCount_ == 0);
     MOZ_ASSERT(instances_.empty());
     MOZ_ASSERT(!mutatingInstances_);
 }
@@ -48,24 +48,16 @@ struct InstanceComparator
     int operator()(const Instance* instance) const {
         if (instance == &target)
             return 0;
-        MOZ_ASSERT(!target.codeSegment().containsCodePC(instance->codeBase()));
-        MOZ_ASSERT(!instance->codeSegment().containsCodePC(target.codeBase()));
-        return target.codeBase() < instance->codeBase() ? -1 : 1;
+
+        // Instances can share code, so the segments can be equal (though they
+        // can't partially overlap).  If the codeBases are equal, we sort by
+        // Instance address.  Thus a Code may map to many instances.
+        if (instance->codeBase(Tier::TBD) == target.codeBase(Tier::TBD))
+            return instance < &target ? -1 : 1;
+
+        return target.codeBase(Tier::TBD) < instance->codeBase(Tier::TBD) ? -1 : 1;
     }
 };
-
-void
-Compartment::trace(JSTracer* trc)
-{
-    // A WasmInstanceObject that was initially reachable when called can become
-    // unreachable while executing on the stack. Since wasm does not otherwise
-    // scan the stack during GC to identify live instances, we mark all instance
-    // objects live if there is any running wasm in the compartment.
-    if (activationCount_) {
-        for (Instance* i : instances_)
-            i->trace(trc);
-    }
-}
 
 bool
 Compartment::registerInstance(JSContext* cx, HandleWasmInstanceObject instanceObj)
@@ -73,8 +65,13 @@ Compartment::registerInstance(JSContext* cx, HandleWasmInstanceObject instanceOb
     Instance& instance = instanceObj->instance();
     MOZ_ASSERT(this == &instance.compartment()->wasm);
 
-    if (!instance.ensureProfilingState(cx, profilingEnabled_))
-        return false;
+    instance.ensureProfilingLabels(cx->runtime()->geckoProfiler().enabled());
+
+    if (instance.debugEnabled() &&
+        instance.compartment()->debuggerObservesAllExecution())
+    {
+        instance.ensureEnterFrameTrapsState(cx, true);
+    }
 
     size_t index;
     if (BinarySearchIf(instances_, 0, instances_.length(), InstanceComparator(instance), &index))
@@ -109,25 +106,18 @@ struct PCComparator
     explicit PCComparator(const void* pc) : pc(pc) {}
 
     int operator()(const Instance* instance) const {
-        if (instance->codeSegment().containsCodePC(pc))
+        if (instance->codeSegment(Tier::TBD).containsCodePC(pc))
             return 0;
-        return pc < instance->codeBase() ? -1 : 1;
+        return pc < instance->codeBase(Tier::TBD) ? -1 : 1;
     }
 };
 
-Code*
-Compartment::lookupCode(const void* pc) const
+const Code*
+Compartment::lookupCode(const void* pc, const CodeSegment** segmentp) const
 {
-    Instance* instance = lookupInstanceDeprecated(pc);
-    return instance ? &instance->code() : nullptr;
-}
-
-Instance*
-Compartment::lookupInstanceDeprecated(const void* pc) const
-{
-    // lookupInstanceDeprecated can be called asynchronously from the interrupt
-    // signal handler. In that case, the signal handler is just asking whether
-    // the pc is in wasm code. If instances_ is being mutated then we can't be
+    // lookupCode() can be called asynchronously from the interrupt signal
+    // handler. In that case, the signal handler is just asking whether the pc
+    // is in wasm code. If instances_ is being mutated then we can't be
     // executing wasm code so returning nullptr is fine.
     if (mutatingInstances_)
         return nullptr;
@@ -136,41 +126,17 @@ Compartment::lookupInstanceDeprecated(const void* pc) const
     if (!BinarySearchIf(instances_, 0, instances_.length(), PCComparator(pc), &index))
         return nullptr;
 
-    return instances_[index];
+    const Code& code = instances_[index]->code();
+    if (segmentp)
+        *segmentp = &code.segment(Tier::TBD);
+    return &code;
 }
 
-bool
-Compartment::ensureProfilingState(JSContext* cx)
+void
+Compartment::ensureProfilingLabels(bool profilingEnabled)
 {
-    bool newProfilingEnabled = cx->runtime()->geckoProfiler().enabled();
-    if (profilingEnabled_ == newProfilingEnabled)
-        return true;
-
-    // Since one Instance can call another Instance in the same compartment
-    // directly without calling through Instance::callExport(), when profiling
-    // is enabled, enable it for the entire compartment at once. It is only safe
-    // to enable profiling when the wasm is not on the stack, so delay enabling
-    // profiling until there are no live WasmActivations in this compartment.
-
-    if (activationCount_ > 0)
-        return true;
-
-    for (Instance* instance : instances_) {
-        if (!instance->ensureProfilingState(cx, newProfilingEnabled))
-            return false;
-    }
-
-    profilingEnabled_ = newProfilingEnabled;
-    return true;
-}
-
-bool
-Compartment::profilingEnabled() const
-{
-    // Profiling can asynchronously interrupt the mutation of the instances_
-    // vector which is used by lookupCode() during stack-walking. To handle
-    // this rare case, disable profiling during mutation.
-    return profilingEnabled_ && !mutatingInstances_;
+    for (Instance* instance : instances_)
+        instance->ensureProfilingLabels(profilingEnabled);
 }
 
 void

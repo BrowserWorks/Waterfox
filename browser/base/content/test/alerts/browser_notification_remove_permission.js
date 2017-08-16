@@ -17,7 +17,7 @@ function test() {
 
   pm.add(makeURI(notificationURL), "desktop-notification", pm.ALLOW_ACTION);
 
-  tab = gBrowser.addTab(notificationURL);
+  tab = BrowserTestUtils.addTab(gBrowser, notificationURL);
   gBrowser.selectedTab = tab;
   tab.linkedBrowser.addEventListener("load", onLoad, true);
 }
@@ -40,7 +40,7 @@ function onAlertShowing() {
      "Permission should exist prior to removal");
   let disableForOriginMenuItem = alertWindow.document.getElementById("disableForOriginMenuItem");
   is(disableForOriginMenuItem.localName, "menuitem", "menuitem found");
-  Services.obs.addObserver(permObserver, "perm-changed", false);
+  Services.obs.addObserver(permObserver, "perm-changed");
   alertWindow.addEventListener("beforeunload", onAlertClosing);
   disableForOriginMenuItem.click();
   info("Clicked on disable-for-origin menuitem")

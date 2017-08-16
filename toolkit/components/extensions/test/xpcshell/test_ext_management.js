@@ -2,9 +2,18 @@
 /* vim: set sts=2 sw=2 et tw=80: */
 "use strict";
 
-add_task(function* test_management_schema() {
-  function background() {
+XPCOMUtils.defineLazyModuleGetter(this, "AddonManager",
+                                  "resource://gre/modules/AddonManager.jsm");
+
+add_task(async function setup() {
+  await ExtensionTestUtils.startAddonManager();
+});
+
+add_task(async function test_management_schema() {
+  async function background() {
     browser.test.assertTrue(browser.management, "browser.management API exists");
+    let self = await browser.management.getSelf();
+    browser.test.assertEq(browser.runtime.id, self.id, "got self");
     browser.test.notifyPass("management-schema");
   }
 
@@ -13,8 +22,9 @@ add_task(function* test_management_schema() {
       permissions: ["management"],
     },
     background: `(${background})()`,
+    useAddonManager: "temporary",
   });
-  yield extension.startup();
-  yield extension.awaitFinish("management-schema");
-  yield extension.unload();
+  await extension.startup();
+  await extension.awaitFinish("management-schema");
+  await extension.unload();
 });

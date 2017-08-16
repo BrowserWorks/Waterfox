@@ -10,8 +10,8 @@ load 493915-1.html
 load 495794-1.html
 load 576612-1.html
 load 752784-1.html
-skip-if(webrender) load 789075-1.html # bug 1322816 for webrender
-HTTP load 795892-1.html
+skip-if(webrender) load 789075-1.html # bug 1366502 comment 42
+skip-if(Android&&AndroidVersion=='22') HTTP load 795892-1.html # bug 1358718
 load 844563.html
 load 846612.html
 load 852838.html
@@ -81,8 +81,6 @@ load 1157994.html
 load 1158427.html
 load 1185176.html
 load 1185192.html
-load 1223670.html
-load 1228484.html
 load 1304948.html
 load 1319486.html
 load 1291702.html
@@ -92,12 +90,13 @@ load audiocontext-double-suspend.html
 load buffer-source-duration-1.html
 load buffer-source-ended-1.html
 load buffer-source-resampling-start-1.html
+load buffer-source-slow-resampling-1.html
 load doppler-1.html
 HTTP load media-element-source-seek-1.html
 load offline-buffer-source-ended-1.html
 load oscillator-ended-1.html
 load oscillator-ended-2.html
-load video-replay-after-audio-end.html
+skip-if(Android&&AndroidVersion=='22') load video-replay-after-audio-end.html # bug 1315125, bug 1358876
 # This needs to run at the end to avoid leaking busted state into other tests.
 load 691096-1.html
 load 1236639.html

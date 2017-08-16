@@ -129,43 +129,24 @@ class GeckoProfiler
 
     JSRuntime*           rt;
     ExclusiveData<ProfileStringMap> strings;
-    ProfileEntry*        stack_;
-    uint32_t*            size_;
-    uint32_t             max_;
+    PseudoStack*         pseudoStack_;
     bool                 slowAssertions;
     uint32_t             enabled_;
     void                (*eventMarker_)(const char*);
 
     UniqueChars allocProfileString(JSScript* script, JSFunction* function);
-    void push(const char* string, void* sp, JSScript* script, jsbytecode* pc, bool copy,
-              ProfileEntry::Category category = ProfileEntry::Category::JS);
-    void pop();
 
   public:
     explicit GeckoProfiler(JSRuntime* rt);
 
     bool init();
 
-    uint32_t** addressOfSizePointer() {
-        return &size_;
-    }
-
-    uint32_t* addressOfMaxSize() {
-        return &max_;
-    }
-
-    ProfileEntry** addressOfStack() {
-        return &stack_;
-    }
-
-    uint32_t* sizePointer() { return size_; }
-    uint32_t maxSize() { return max_; }
-    uint32_t size() { MOZ_ASSERT(installed()); return *size_; }
-    ProfileEntry* stack() { return stack_; }
+    uint32_t stackPointer() { MOZ_ASSERT(installed()); return pseudoStack_->stackPointer; }
+    ProfileEntry* stack() { return pseudoStack_->entries; }
 
     /* management of whether instrumentation is on or off */
     bool enabled() { MOZ_ASSERT_IF(enabled_, installed()); return enabled_; }
-    bool installed() { return stack_ != nullptr && size_ != nullptr; }
+    bool installed() { return pseudoStack_ != nullptr; }
     MOZ_MUST_USE bool enable(bool enabled);
     void enableSlowAssertions(bool enabled) { slowAssertions = enabled; }
     bool slowAssertionsEnabled() { return slowAssertions; }
@@ -182,20 +163,18 @@ class GeckoProfiler
     bool enter(JSContext* cx, JSScript* script, JSFunction* maybeFun);
     void exit(JSScript* script, JSFunction* maybeFun);
     void updatePC(JSScript* script, jsbytecode* pc) {
-        if (enabled() && *size_ - 1 < max_) {
-            MOZ_ASSERT(*size_ > 0);
-            MOZ_ASSERT(stack_[*size_ - 1].rawScript() == script);
-            stack_[*size_ - 1].setPC(pc);
+        if (!enabled())
+            return;
+
+        uint32_t sp = pseudoStack_->stackPointer;
+        if (sp - 1 < PseudoStack::MaxEntries) {
+            MOZ_ASSERT(sp > 0);
+            MOZ_ASSERT(pseudoStack_->entries[sp - 1].rawScript() == script);
+            pseudoStack_->entries[sp - 1].setPC(pc);
         }
     }
 
-    /* Enter wasm code */
-    void beginPseudoJS(const char* string, void* sp);
-    void endPseudoJS() { pop(); }
-
-    jsbytecode* ipToPC(JSScript* script, size_t ip) { return nullptr; }
-
-    void setProfilingStack(ProfileEntry* stack, uint32_t* size, uint32_t max);
+    void setProfilingStack(PseudoStack* pseudoStack);
     void setEventMarker(void (*fn)(const char*));
     const char* profileString(JSScript* script, JSFunction* maybeFun);
     void onScriptFinalized(JSScript* script);
@@ -244,7 +223,7 @@ class MOZ_RAII GeckoProfilerEntryMarker
 
   private:
     GeckoProfiler* profiler;
-    mozilla::DebugOnly<uint32_t> size_before;
+    mozilla::DebugOnly<uint32_t> spBefore_;
     MOZ_DECL_USE_GUARD_OBJECT_NOTIFIER
 };
 
@@ -263,7 +242,7 @@ class MOZ_NONHEAP_CLASS AutoGeckoProfilerEntry
 
   private:
     GeckoProfiler* profiler_;
-    mozilla::DebugOnly<uint32_t> sizeBefore_;
+    mozilla::DebugOnly<uint32_t> spBefore_;
     MOZ_DECL_USE_GUARD_OBJECT_NOTIFIER
 };
 
@@ -281,7 +260,7 @@ class MOZ_RAII GeckoProfilerBaselineOSRMarker
 
   private:
     GeckoProfiler* profiler;
-    mozilla::DebugOnly<uint32_t> size_before;
+    mozilla::DebugOnly<uint32_t> spBefore_;
     MOZ_DECL_USE_GUARD_OBJECT_NOTIFIER
 };
 
@@ -314,10 +293,6 @@ class GeckoProfilerInstrumentation
     GeckoProfiler* profiler() { MOZ_ASSERT(enabled()); return profiler_; }
     void disable() { profiler_ = nullptr; }
 };
-
-
-/* Get a pointer to the top-most profiling frame, given the exit frame pointer. */
-void* GetTopProfilingJitFrame(uint8_t* exitFramePtr);
 
 } /* namespace js */
 

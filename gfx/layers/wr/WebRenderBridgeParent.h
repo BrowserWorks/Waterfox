@@ -37,6 +37,7 @@ class Compositor;
 class CompositorBridgeParentBase;
 class CompositorVsyncScheduler;
 class WebRenderCompositableHolder;
+class WebRenderImageHost;
 
 class WebRenderBridgeParent final : public PWebRenderBridgeParent
                                   , public CompositorVsyncSchedulerOwner
@@ -52,6 +53,7 @@ public:
 
   wr::PipelineId PipelineId() { return mPipelineId; }
   wr::WebRenderAPI* GetWebRenderAPI() { return mApi; }
+  wr::Epoch WrEpoch() { return wr::NewEpoch(mWrEpoch); }
   WebRenderCompositableHolder* CompositableHolder() { return mCompositableHolder; }
   CompositorVsyncScheduler* CompositorScheduler() { return mCompositorScheduler.get(); }
 
@@ -68,46 +70,69 @@ public:
                                        const uint32_t& aStride,
                                        const gfx::SurfaceFormat& aFormat,
                                        const ByteBuffer& aBuffer) override;
-  mozilla::ipc::IPCResult RecvAddRawFont(const wr::FontKey& aFontKey,
-                                         const ByteBuffer& aBuffer,
-                                         const uint32_t& aFontIndex) override;
+  mozilla::ipc::IPCResult RecvAddBlobImage(const wr::ImageKey& aImageKey,
+                                           const gfx::IntSize& aSize,
+                                           const uint32_t& aStride,
+                                           const gfx::SurfaceFormat& aFormat,
+                                           const ByteBuffer& aBuffer) override;
   mozilla::ipc::IPCResult RecvUpdateImage(const wr::ImageKey& aImageKey,
                                           const gfx::IntSize& aSize,
                                           const gfx::SurfaceFormat& aFormat,
                                           const ByteBuffer& aBuffer) override;
   mozilla::ipc::IPCResult RecvDeleteImage(const wr::ImageKey& a1) override;
+  mozilla::ipc::IPCResult RecvDeleteCompositorAnimations(InfallibleTArray<uint64_t>&& aIds) override;
+  mozilla::ipc::IPCResult RecvAddRawFont(const wr::FontKey& aFontKey,
+                                         const ByteBuffer& aBuffer,
+                                         const uint32_t& aFontIndex) override;
+  mozilla::ipc::IPCResult RecvDeleteFont(const wr::FontKey& aFontKey) override;
   mozilla::ipc::IPCResult RecvDPBegin(const gfx::IntSize& aSize) override;
   mozilla::ipc::IPCResult RecvDPEnd(const gfx::IntSize& aSize,
                                     InfallibleTArray<WebRenderParentCommand>&& aCommands,
                                     InfallibleTArray<OpDestroy>&& aToDestroy,
                                     const uint64_t& aFwdTransactionId,
                                     const uint64_t& aTransactionId,
+                                    const WrSize& aContentSize,
                                     const ByteBuffer& dl,
                                     const WrBuiltDisplayListDescriptor& dlDesc,
-                                    const ByteBuffer& aux,
-                                    const WrAuxiliaryListsDescriptor& auxDesc) override;
+                                    const WebRenderScrollData& aScrollData) override;
   mozilla::ipc::IPCResult RecvDPSyncEnd(const gfx::IntSize& aSize,
                                         InfallibleTArray<WebRenderParentCommand>&& aCommands,
                                         InfallibleTArray<OpDestroy>&& aToDestroy,
                                         const uint64_t& aFwdTransactionId,
                                         const uint64_t& aTransactionId,
+                                        const WrSize& aContentSize,
                                         const ByteBuffer& dl,
                                         const WrBuiltDisplayListDescriptor& dlDesc,
-                                        const ByteBuffer& aux,
-                                        const WrAuxiliaryListsDescriptor& auxDesc) override;
+                                        const WebRenderScrollData& aScrollData) override;
   mozilla::ipc::IPCResult RecvDPGetSnapshot(PTextureParent* aTexture) override;
 
-  mozilla::ipc::IPCResult RecvAddExternalImageId(const uint64_t& aImageId,
-                                                 const CompositableHandle& aHandle) override;
-  mozilla::ipc::IPCResult RecvAddExternalImageIdForCompositable(const uint64_t& aImageId,
+  mozilla::ipc::IPCResult RecvAddPipelineIdForAsyncCompositable(const wr::PipelineId& aPipelineIds,
                                                                 const CompositableHandle& aHandle) override;
-  mozilla::ipc::IPCResult RecvRemoveExternalImageId(const uint64_t& aImageId) override;
+  mozilla::ipc::IPCResult RecvRemovePipelineIdForAsyncCompositable(const wr::PipelineId& aPipelineId) override;
+
+  mozilla::ipc::IPCResult RecvAddExternalImageIdForCompositable(const ExternalImageId& aImageId,
+                                                                const CompositableHandle& aHandle) override;
+  mozilla::ipc::IPCResult RecvRemoveExternalImageId(const ExternalImageId& aImageId) override;
   mozilla::ipc::IPCResult RecvSetLayerObserverEpoch(const uint64_t& aLayerObserverEpoch) override;
 
   mozilla::ipc::IPCResult RecvClearCachedResources() override;
+  mozilla::ipc::IPCResult RecvForceComposite() override;
+
+  mozilla::ipc::IPCResult RecvSetConfirmedTargetAPZC(const uint64_t& aBlockId,
+                                                     nsTArray<ScrollableLayerGuid>&& aTargets) override;
+  mozilla::ipc::IPCResult RecvSetAsyncScrollOffset(const FrameMetrics::ViewID& aScrollId,
+                                                   const float& aX,
+                                                   const float& aY) override;
+  mozilla::ipc::IPCResult RecvSetAsyncZoom(const FrameMetrics::ViewID& aScrollId,
+                                           const float& aZoom) override;
+  mozilla::ipc::IPCResult RecvFlushApzRepaints() override;
+  mozilla::ipc::IPCResult RecvGetAPZTestData(APZTestData* data) override;
 
   void ActorDestroy(ActorDestroyReason aWhy) override;
   void SetWebRenderProfilerEnabled(bool aEnabled);
+
+  void Pause();
+  bool Resume();
 
   void Destroy();
 
@@ -148,16 +173,28 @@ public:
     return mIdNameSpace;
   }
 
+  void UpdateAPZ();
+  const WebRenderScrollData& GetScrollData() const;
+
+  static uint32_t AllocIdNameSpace() {
+    return ++sIdNameSpace;
+  }
+
+  void FlushRendering(bool aIsSync);
+
+  void ScheduleComposition();
+
 private:
   virtual ~WebRenderBridgeParent();
 
+  uint64_t GetLayersId() const;
   void DeleteOldImages();
-  void ProcessWebrenderCommands(const gfx::IntSize &aSize, InfallibleTArray<WebRenderParentCommand>& commands, const wr::Epoch& aEpoch,
-                                    const ByteBuffer& dl,
-                                    const WrBuiltDisplayListDescriptor& dlDesc,
-                                    const ByteBuffer& aux,
-                                    const WrAuxiliaryListsDescriptor& auxDesc);
-  void ScheduleComposition();
+  void ProcessWebRenderCommands(const gfx::IntSize &aSize,
+                                InfallibleTArray<WebRenderParentCommand>& commands,
+                                const wr::Epoch& aEpoch,
+                                const WrSize& aContentSize,
+                                const ByteBuffer& dl,
+                                const WrBuiltDisplayListDescriptor& dlDesc);
   void ClearResources();
   uint64_t GetChildLayerObserverEpoch() const { return mChildLayerObserverEpoch; }
   bool ShouldParentObserveEpoch();
@@ -166,10 +203,25 @@ private:
                    InfallibleTArray<OpDestroy>&& aToDestroy,
                    const uint64_t& aFwdTransactionId,
                    const uint64_t& aTransactionId,
+                   const WrSize& aContentSize,
                    const ByteBuffer& dl,
                    const WrBuiltDisplayListDescriptor& dlDesc,
-                   const ByteBuffer& aux,
-                   const WrAuxiliaryListsDescriptor& auxDesc);
+                   const WebRenderScrollData& aScrollData);
+
+  void SampleAnimations(nsTArray<WrOpacityProperty>& aOpacityArray,
+                        nsTArray<WrTransformProperty>& aTransformArray);
+
+  CompositorBridgeParent* GetRootCompositorBridgeParent() const;
+
+  // Have APZ push the async scroll state to WR. Returns true if an APZ
+  // animation is in effect and we need to schedule another composition.
+  // If scrollbars need their transforms updated, the provided aTransformArray
+  // is populated with the property update details.
+  bool PushAPZStateToWR(nsTArray<WrTransformProperty>& aTransformArray);
+
+  // Helper method to get an APZC reference from a scroll id. Uses the layers
+  // id of this bridge, and may return null if the APZC wasn't found.
+  already_AddRefed<AsyncPanZoomController> GetTargetAPZC(const FrameMetrics::ViewID& aId);
 
 private:
   struct PendingTransactionId {
@@ -188,7 +240,10 @@ private:
   RefPtr<WebRenderCompositableHolder> mCompositableHolder;
   RefPtr<CompositorVsyncScheduler> mCompositorScheduler;
   std::vector<wr::ImageKey> mKeysToDelete;
-  nsDataHashtable<nsUint64HashKey, RefPtr<CompositableHost>> mExternalImageIds;
+  // XXX How to handle active keys of non-ExternalImages?
+  nsDataHashtable<nsUint64HashKey, wr::ImageKey> mActiveKeys;
+  nsDataHashtable<nsUint64HashKey, RefPtr<WebRenderImageHost>> mAsyncCompositables;
+  nsDataHashtable<nsUint64HashKey, RefPtr<WebRenderImageHost>> mExternalImageIds;
   nsTArray<ImageCompositeNotificationInfo> mImageCompositeNotifications;
 
   // These fields keep track of the latest layer observer epoch values in the child and the
@@ -202,7 +257,12 @@ private:
   uint32_t mWrEpoch;
   uint32_t mIdNameSpace;
 
+  bool mPaused;
   bool mDestroyed;
+  bool mForceRendering;
+
+  // Can only be accessed on the compositor thread.
+  WebRenderScrollData mScrollData;
 
   static uint32_t sIdNameSpace;
 };

@@ -26,35 +26,35 @@ const STATE3 = createEntries(JSON.stringify(CRASH_STATE));
 function createEntries(sessionData) {
   return {
     entries: [{url: "about:sessionrestore", triggeringPrincipal_base64}],
-    formdata: {id: {sessionData: sessionData}, url: "about:sessionrestore"}
+    formdata: {id: {sessionData}, url: "about:sessionrestore"}
   };
 }
 
-add_task(function* test_nested_about_sessionrestore() {
+add_task(async function test_nested_about_sessionrestore() {
   // Prepare a blank tab.
-  let tab = gBrowser.addTab("about:blank");
+  let tab = BrowserTestUtils.addTab(gBrowser, "about:blank");
   let browser = tab.linkedBrowser;
-  yield promiseBrowserLoaded(browser);
+  await promiseBrowserLoaded(browser);
 
   // test 1
-  yield promiseTabState(tab, STATE);
-  yield checkState("test1", tab);
+  await promiseTabState(tab, STATE);
+  await checkState("test1", tab);
 
   // test 2
-  yield promiseTabState(tab, STATE2);
-  yield checkState("test2", tab);
+  await promiseTabState(tab, STATE2);
+  await checkState("test2", tab);
 
   // test 3
-  yield promiseTabState(tab, STATE3);
-  yield checkState("test3", tab);
+  await promiseTabState(tab, STATE3);
+  await checkState("test3", tab);
 
   // Cleanup.
   gBrowser.removeTab(tab);
 });
 
-function* checkState(prefix, tab) {
+async function checkState(prefix, tab) {
   // Flush and query tab state.
-  yield TabStateFlusher.flush(tab.linkedBrowser);
+  await TabStateFlusher.flush(tab.linkedBrowser);
   let {formdata} = JSON.parse(ss.getTabState(tab));
 
   ok(formdata.id["sessionData"], prefix + ": we have form data for about:sessionrestore");

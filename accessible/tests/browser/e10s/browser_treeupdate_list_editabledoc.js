@@ -4,12 +4,10 @@
 
 'use strict';
 
-/* global ROLE_TEXT_LEAF, EVENT_REORDER, ROLE_LISTITEM, ROLE_LIST,
-          ROLE_STATICTEXT */
-
+/* import-globals-from ../../mochitest/role.js */
 loadScripts({ name: 'role.js', dir: MOCHITESTS_DIR });
 
-addAccessibleTask('<ol id="list"></ol>', function*(browser, accDoc) {
+addAccessibleTask('<ol id="list"></ol>', async function(browser, accDoc) {
   let list = findAccessibleChildByID(accDoc, 'list');
 
   testAccessibleTree(list, {
@@ -17,14 +15,14 @@ addAccessibleTask('<ol id="list"></ol>', function*(browser, accDoc) {
     children: [ ]
   });
 
-  yield invokeSetAttribute(browser, 'body', 'contentEditable', 'true');
+  await invokeSetAttribute(browser, 'body', 'contentEditable', 'true');
   let onReorder = waitForEvent(EVENT_REORDER, 'list');
-  yield ContentTask.spawn(browser, {}, () => {
+  await ContentTask.spawn(browser, {}, () => {
     let li = content.document.createElement('li');
     li.textContent = 'item';
     content.document.getElementById('list').appendChild(li);
   });
-  yield onReorder;
+  await onReorder;
 
   testAccessibleTree(list, {
     role: ROLE_LIST,

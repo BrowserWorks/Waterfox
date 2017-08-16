@@ -8,12 +8,39 @@
 from __future__ import print_function
 
 import re
+import yaml
+
+# This is a list of flags that determine which process a measurement is allowed
+# to record from.
+KNOWN_PROCESS_FLAGS = {
+    'all': 'All',
+    'all_childs': 'AllChilds',
+    'main': 'Main',
+    'content': 'Content',
+    'gpu': 'Gpu',
+}
+
+PROCESS_ENUM_PREFIX = "mozilla::Telemetry::Common::RecordedProcessType::"
+
+
+# This is thrown by the different probe parsers.
+class ParserError(Exception):
+    pass
+
+
+def is_valid_process_name(name):
+    return (name in KNOWN_PROCESS_FLAGS)
+
+
+def process_name_to_enum(name):
+    return PROCESS_ENUM_PREFIX + KNOWN_PROCESS_FLAGS.get(name)
+
 
 class StringTable:
     """Manages a string table and allows C style serialization to a file."""
 
     def __init__(self):
-        self.current_index = 0;
+        self.current_index = 0
         self.table = {}
 
     def c_strlen(self, string):
@@ -54,7 +81,7 @@ class StringTable:
         :param name: the name of the output array.
         """
         entries = self.table.items()
-        entries.sort(key=lambda x:x[1])
+        entries.sort(key=lambda x: x[1])
 
         # Avoid null-in-string warnings with GCC and potentially
         # overlong string constants; write everything out the long way.
@@ -69,7 +96,8 @@ class StringTable:
         f.write("const char %s[] = {\n" % name)
         for (string, offset) in entries:
             if "*/" in string:
-                raise ValueError, "String in string table contains unexpected sequence '*/': %s" % string
+                raise ValueError("String in string table contains unexpected sequence '*/': %s" %
+                                 string)
 
             e = explodeToCharArray(string)
             if e:
@@ -79,6 +107,7 @@ class StringTable:
                 f.write("  /* %5d - \"%s\" */ '\\0',\n" % (offset, string))
         f.write("};\n\n")
 
+
 def static_assert(output, expression, message):
     """Writes a C++ compile-time assertion expression to a file.
     :param output: the output stream.
@@ -87,6 +116,7 @@ def static_assert(output, expression, message):
         false.
     """
     print("static_assert(%s, \"%s\");" % (expression, message), file=output)
+
 
 def add_expiration_postfix(expiration):
     """ Formats the expiration version and adds a version postfix if needed.
@@ -101,3 +131,15 @@ def add_expiration_postfix(expiration):
         return expiration + "a1"
 
     return expiration
+
+
+def load_yaml_file(filename):
+    """ Load a YAML file from disk, throw a ParserError on failure."""
+    try:
+        with open(filename, 'r') as f:
+            return yaml.safe_load(f)
+    except IOError, e:
+        raise ParserError('Error opening ' + filename + ': ' + e.message)
+    except ValueError, e:
+        raise ParserError('Error parsing processes in {}: {}'
+                          .format(filename, e.message))

@@ -14,12 +14,13 @@
 #include "mozilla/Assertions.h"
 #include <algorithm>
 
+class nsFloatManager;
+struct nsHypotheticalPosition;
+class nsIPercentBSizeObserver;
+class nsLineLayout;
+class nsPlaceholderFrame;
 class nsPresContext;
 class nsRenderingContext;
-class nsFloatManager;
-class nsLineLayout;
-class nsIPercentBSizeObserver;
-struct nsHypotheticalPosition;
 
 /**
  * @return aValue clamped to [aMinValue, aMaxValue].
@@ -293,16 +294,16 @@ private:
    */
   bool ComputePadding(mozilla::WritingMode aWM,
                       const mozilla::LogicalSize& aPercentBasis,
-                      nsIAtom* aFrameType);
+                      mozilla::LayoutFrameType aFrameType);
 
 protected:
-
   void InitOffsets(mozilla::WritingMode aWM,
                    const mozilla::LogicalSize& aPercentBasis,
-                   nsIAtom* aFrameType,
+                   mozilla::LayoutFrameType aFrameType,
                    ReflowInputFlags aFlags,
                    const nsMargin* aBorder = nullptr,
-                   const nsMargin* aPadding = nullptr);
+                   const nsMargin* aPadding = nullptr,
+                   const nsStyleDisplay* aDisplay = nullptr);
 
   /*
    * Convert nsStyleCoord to nscoord when percentages depend on the
@@ -966,15 +967,16 @@ public:
 #endif
 
 protected:
-  void InitFrameType(nsIAtom* aFrameType);
+  void InitFrameType(LayoutFrameType aFrameType);
   void InitCBReflowInput();
-  void InitResizeFlags(nsPresContext* aPresContext, nsIAtom* aFrameType);
+  void InitResizeFlags(nsPresContext* aPresContext,
+                       mozilla::LayoutFrameType aFrameType);
 
-  void InitConstraints(nsPresContext*              aPresContext,
+  void InitConstraints(nsPresContext* aPresContext,
                        const mozilla::LogicalSize& aContainingBlockSize,
-                       const nsMargin*             aBorder,
-                       const nsMargin*             aPadding,
-                       nsIAtom*                    aFrameType);
+                       const nsMargin* aBorder,
+                       const nsMargin* aPadding,
+                       mozilla::LayoutFrameType aFrameType);
 
   // Returns the nearest containing block or block frame (whether or not
   // it is a containing block) for the specified frame.  Also returns
@@ -991,15 +993,15 @@ protected:
   // mode with the same block direction as the absolute containing block
   // (cbrs->frame), though it may differ in inline direction.
   void CalculateHypotheticalPosition(nsPresContext* aPresContext,
-                                     nsIFrame* aPlaceholderFrame,
+                                     nsPlaceholderFrame* aPlaceholderFrame,
                                      const ReflowInput* cbrs,
                                      nsHypotheticalPosition& aHypotheticalPos,
-                                     nsIAtom* aFrameType) const;
+                                     mozilla::LayoutFrameType aFrameType) const;
 
   void InitAbsoluteConstraints(nsPresContext* aPresContext,
                                const ReflowInput* cbrs,
                                const mozilla::LogicalSize& aContainingBlockSize,
-                               nsIAtom* aFrameType);
+                               mozilla::LayoutFrameType aFrameType);
 
   // Calculates the computed values for the 'min-Width', 'max-Width',
   // 'min-Height', and 'max-Height' properties, and stores them in the assorted
@@ -1014,7 +1016,7 @@ protected:
                                     nscoord* aInsideBoxSizing,
                                     nscoord* aOutsideBoxSizing) const;
 
-  void CalculateBlockSideMargins(nsIAtom* aFrameType);
+  void CalculateBlockSideMargins(LayoutFrameType aFrameType);
 };
 
 } // namespace mozilla

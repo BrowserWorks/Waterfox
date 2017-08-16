@@ -14,16 +14,21 @@ const { classes: Cc, interfaces: Ci, utils: Cu } = Components;
 
 Cu.import("resource://gre/modules/Services.jsm");
 Cu.import("resource://gre/modules/XPCOMUtils.jsm");
-const { Task } = Cu.import("resource://gre/modules/Task.jsm", {});
 const { OS } = Cu.import("resource://gre/modules/osfile.jsm", {});
 Cu.importGlobalProperties(["fetch"]);
 
-const { Kinto } = Cu.import("resource://services-common/kinto-offline-client.js", {});
-const { KintoHttpClient } = Cu.import("resource://services-common/kinto-http-client.js", {});
-const { FirefoxAdapter } = Cu.import("resource://services-common/kinto-storage-adapter.js", {});
-const { CanonicalJSON } = Components.utils.import("resource://gre/modules/CanonicalJSON.jsm", {});
-
-XPCOMUtils.defineLazyModuleGetter(this, "FileUtils", "resource://gre/modules/FileUtils.jsm");
+XPCOMUtils.defineLazyModuleGetter(this, "FileUtils",
+                                  "resource://gre/modules/FileUtils.jsm");
+XPCOMUtils.defineLazyModuleGetter(this, "Kinto",
+                                  "resource://services-common/kinto-offline-client.js");
+XPCOMUtils.defineLazyModuleGetter(this, "KintoHttpClient",
+                                  "resource://services-common/kinto-http-client.js");
+XPCOMUtils.defineLazyModuleGetter(this, "FirefoxAdapter",
+                                  "resource://services-common/kinto-storage-adapter.js");
+XPCOMUtils.defineLazyModuleGetter(this, "CanonicalJSON",
+                                  "resource://gre/modules/CanonicalJSON.jsm");
+XPCOMUtils.defineLazyModuleGetter(this, "UptakeTelemetry",
+                                  "resource://services-common/uptake-telemetry.js");
 
 const KEY_APPDIR                             = "XCurProcD";
 const PREF_SETTINGS_SERVER                   = "services.settings.server";
@@ -96,14 +101,17 @@ class BlocklistClient {
     this.bucketName = bucketName;
     this.signerName = signerName;
 
-    this._kinto = new Kinto({
-      bucket: bucketName,
-      adapter: FirefoxAdapter,
-    });
+    this._kinto = null;
+  }
+
+  get identifier() {
+    return `${this.bucketName}/${this.collectionName}`;
   }
 
   get filename() {
-    return `${this.bucketName}/${this.collectionName}.json`;
+    // Replace slash by OS specific path separator (eg. Windows)
+    const identifier = OS.Path.join(...this.identifier.split("/"));
+    return `${identifier}.json`;
   }
 
   /**
@@ -113,54 +121,53 @@ class BlocklistClient {
    * in order to leverage the updateJSONBlocklist() below, which writes a new
    * dump each time the collection changes.
    */
-  loadDumpFile() {
-    const fileURI = `resource://app/defaults/${this.filename}`;
-    return Task.spawn(function* loadFile() {
-      const response = yield fetch(fileURI);
-      if (!response.ok) {
-        throw new Error(`Could not read from '${fileURI}'`);
-      }
-      // Will be rejected if JSON is invalid.
-      return yield response.json();
-    });
+  async loadDumpFile() {
+    // Replace OS specific path separator by / for URI.
+    const { components: folderFile } = OS.Path.split(this.filename);
+    const fileURI = `resource://app/defaults/${folderFile.join("/")}`;
+    const response = await fetch(fileURI);
+    if (!response.ok) {
+      throw new Error(`Could not read from '${fileURI}'`);
+    }
+    // Will be rejected if JSON is invalid.
+    return response.json();
   }
 
-  validateCollectionSignature(remote, payload, collection, options = {}) {
+  async validateCollectionSignature(remote, payload, collection, options = {}) {
     const {ignoreLocal} = options;
 
-    return Task.spawn((function* () {
-      // this is a content-signature field from an autograph response.
-      const {x5u, signature} = yield fetchCollectionMetadata(remote, collection);
-      const certChain = yield fetch(x5u).then((res) => res.text());
+    // this is a content-signature field from an autograph response.
+    const {x5u, signature} = await fetchCollectionMetadata(remote, collection);
+    const certChainResponse = await fetch(x5u)
+    const certChain = await certChainResponse.text();
 
-      const verifier = Cc["@mozilla.org/security/contentsignatureverifier;1"]
-                         .createInstance(Ci.nsIContentSignatureVerifier);
+    const verifier = Cc["@mozilla.org/security/contentsignatureverifier;1"]
+                       .createInstance(Ci.nsIContentSignatureVerifier);
 
-      let toSerialize;
-      if (ignoreLocal) {
-        toSerialize = {
-          last_modified: `${payload.last_modified}`,
-          data: payload.data
-        };
-      } else {
-        const {data: localRecords} = yield collection.list();
-        const records = mergeChanges(collection, localRecords, payload.changes);
-        toSerialize = {
-          last_modified: `${payload.lastModified}`,
-          data: records
-        };
-      }
+    let toSerialize;
+    if (ignoreLocal) {
+      toSerialize = {
+        last_modified: `${payload.last_modified}`,
+        data: payload.data
+      };
+    } else {
+      const {data: localRecords} = await collection.list();
+      const records = mergeChanges(collection, localRecords, payload.changes);
+      toSerialize = {
+        last_modified: `${payload.lastModified}`,
+        data: records
+      };
+    }
 
-      const serialized = CanonicalJSON.stringify(toSerialize);
+    const serialized = CanonicalJSON.stringify(toSerialize);
 
-      if (verifier.verifyContentSignature(serialized, "p384ecdsa=" + signature,
-                                          certChain,
-                                          this.signerName)) {
-        // In case the hash is valid, apply the changes locally.
-        return payload;
-      }
-      throw new Error(INVALID_SIGNATURE);
-    }).bind(this));
+    if (verifier.verifyContentSignature(serialized, "p384ecdsa=" + signature,
+                                        certChain,
+                                        this.signerName)) {
+      // In case the hash is valid, apply the changes locally.
+      return payload;
+    }
+    throw new Error(INVALID_SIGNATURE);
   }
 
   /**
@@ -173,11 +180,18 @@ class BlocklistClient {
    * @param {bool} options.loadDump load initial dump from disk on first sync (default: true)
    * @return {Promise}              which rejects on sync or process failure.
    */
-  maybeSync(lastModified, serverTime, options = {loadDump: true}) {
+  async maybeSync(lastModified, serverTime, options = {loadDump: true}) {
     const {loadDump} = options;
     const remote = Services.prefs.getCharPref(PREF_SETTINGS_SERVER);
     const enforceCollectionSigning =
       Services.prefs.getBoolPref(PREF_BLOCKLIST_ENFORCE_SIGNING);
+
+    if (!this._kinto) {
+      this._kinto = new Kinto({
+        bucket: this.bucketName,
+        adapter: FirefoxAdapter,
+      });
+    }
 
     // if there is a signerName and collection signing is enforced, add a
     // hook for incoming changes that validates the signature
@@ -190,78 +204,115 @@ class BlocklistClient {
       }
     }
 
-    return Task.spawn((function* syncCollection() {
-      let sqliteHandle;
-      try {
-        // Synchronize remote data into a local Sqlite DB.
-        sqliteHandle = yield FirefoxAdapter.openConnection({path: KINTO_STORAGE_PATH});
-        const options = {
-          hooks,
-          adapterOptions: {sqliteHandle},
-        };
-        const collection = this._kinto.collection(this.collectionName, options);
+    let sqliteHandle;
+    let reportStatus = null;
+    try {
+      // Synchronize remote data into a local Sqlite DB.
+      sqliteHandle = await FirefoxAdapter.openConnection({path: KINTO_STORAGE_PATH});
+      const options = {
+        hooks,
+        adapterOptions: {sqliteHandle},
+      };
+      const collection = this._kinto.collection(this.collectionName, options);
 
-        let collectionLastModified = yield collection.db.getLastModified();
+      let collectionLastModified = await collection.db.getLastModified();
 
-        // If there is no data currently in the collection, attempt to import
-        // initial data from the application defaults.
-        // This allows to avoid synchronizing the whole collection content on
-        // cold start.
-        if (!collectionLastModified && loadDump) {
-          try {
-            const initialData = yield this.loadDumpFile();
-            yield collection.db.loadDump(initialData.data);
-            collectionLastModified = yield collection.db.getLastModified();
-          } catch (e) {
-            // Report but go-on.
-            Cu.reportError(e);
-          }
-        }
-
-        // If the data is up to date, there's no need to sync. We still need
-        // to record the fact that a check happened.
-        if (lastModified <= collectionLastModified) {
-          this.updateLastCheck(serverTime);
-          return;
-        }
-
-        // Fetch changes from server.
+      // If there is no data currently in the collection, attempt to import
+      // initial data from the application defaults.
+      // This allows to avoid synchronizing the whole collection content on
+      // cold start.
+      if (!collectionLastModified && loadDump) {
         try {
-          const {ok} = yield collection.sync({remote});
-          if (!ok) {
-            throw new Error("Sync failed");
-          }
+          const initialData = await this.loadDumpFile();
+          await collection.db.loadDump(initialData.data);
+          collectionLastModified = await collection.db.getLastModified();
         } catch (e) {
-          if (e.message == INVALID_SIGNATURE) {
-            // if sync fails with a signature error, it's likely that our
-            // local data has been modified in some way.
-            // We will attempt to fix this by retrieving the whole
-            // remote collection.
-            const payload = yield fetchRemoteCollection(remote, collection);
-            yield this.validateCollectionSignature(remote, payload, collection, {ignoreLocal: true});
-            // if the signature is good (we haven't thrown), and the remote
-            // last_modified is newer than the local last_modified, replace the
-            // local data
-            const localLastModified = yield collection.db.getLastModified();
-            if (payload.last_modified >= localLastModified) {
-              yield collection.clear();
-              yield collection.loadDump(payload.data);
-            }
-          } else {
+          // Report but go-on.
+          Cu.reportError(e);
+        }
+      }
+
+      // If the data is up to date, there's no need to sync. We still need
+      // to record the fact that a check happened.
+      if (lastModified <= collectionLastModified) {
+        this.updateLastCheck(serverTime);
+        reportStatus = UptakeTelemetry.STATUS.UP_TO_DATE;
+        return;
+      }
+
+      // Fetch changes from server.
+      try {
+        const {ok} = await collection.sync({remote});
+        if (!ok) {
+          // Some synchronization conflicts occured.
+          reportStatus = UptakeTelemetry.STATUS.CONFLICT_ERROR;
+          throw new Error("Sync failed");
+        }
+      } catch (e) {
+        if (e.message == INVALID_SIGNATURE) {
+          // Signature verification failed during synchronzation.
+          reportStatus = UptakeTelemetry.STATUS.SIGNATURE_ERROR;
+          // if sync fails with a signature error, it's likely that our
+          // local data has been modified in some way.
+          // We will attempt to fix this by retrieving the whole
+          // remote collection.
+          const payload = await fetchRemoteCollection(remote, collection);
+          try {
+            await this.validateCollectionSignature(remote, payload, collection, {ignoreLocal: true});
+          } catch (e) {
+            reportStatus = UptakeTelemetry.STATUS.SIGNATURE_RETRY_ERROR;
             throw e;
           }
+          // if the signature is good (we haven't thrown), and the remote
+          // last_modified is newer than the local last_modified, replace the
+          // local data
+          const localLastModified = await collection.db.getLastModified();
+          if (payload.last_modified >= localLastModified) {
+            await collection.clear();
+            await collection.loadDump(payload.data);
+          }
+        } else {
+          // The sync has thrown, it can be a network or a general error.
+          if (/NetworkError/.test(e.message)) {
+            reportStatus = UptakeTelemetry.STATUS.NETWORK_ERROR;
+          } else if (/Backoff/.test(e.message)) {
+            reportStatus = UptakeTelemetry.STATUS.BACKOFF;
+          } else {
+            reportStatus = UptakeTelemetry.STATUS.SYNC_ERROR;
+          }
+          throw e;
         }
-        // Read local collection of records.
-        const {data} = yield collection.list();
-
-        yield this.processCallback(data);
-
-        // Track last update.
-        this.updateLastCheck(serverTime);
-      } finally {
-        yield sqliteHandle.close();
       }
-    }).bind(this));
+      // Read local collection of records.
+      const {data} = await collection.list();
+
+      // Handle the obtained records (ie. apply locally).
+      try {
+        await this.processCallback(data);
+      } catch (e) {
+        reportStatus = UptakeTelemetry.STATUS.APPLY_ERROR;
+        throw e;
+      }
+
+      // Track last update.
+      this.updateLastCheck(serverTime);
+    } catch (e) {
+      // No specific error was tracked, mark it as unknown.
+      if (reportStatus === null) {
+        reportStatus = UptakeTelemetry.STATUS.UNKNOWN_ERROR;
+      }
+      throw e;
+    } finally {
+      if (sqliteHandle) {
+        await sqliteHandle.close();
+      }
+      // No error was reported, this is a success!
+      if (reportStatus === null) {
+        reportStatus = UptakeTelemetry.STATUS.SUCCESS;
+      }
+      // Report success/error status to Telemetry.
+      UptakeTelemetry.report(this.identifier, reportStatus);
+    }
   }
 
   /**
@@ -280,7 +331,7 @@ class BlocklistClient {
  *
  * @param {Object} records   current records in the local db.
  */
-function* updateCertBlocklist(records) {
+async function updateCertBlocklist(records) {
   const certList = Cc["@mozilla.org/security/certblocklist;1"]
                      .getService(Ci.nsICertBlocklist);
   for (let item of records) {
@@ -308,7 +359,7 @@ function* updateCertBlocklist(records) {
  *
  * @param {Object} records   current records in the local db.
  */
-function* updatePinningList(records) {
+async function updatePinningList(records) {
   if (!Services.prefs.getBoolPref(PREF_BLOCKLIST_PINNING_ENABLED)) {
     return;
   }
@@ -353,16 +404,16 @@ function* updatePinningList(records) {
  * @param {String} filename  path relative to profile dir.
  * @param {Object} records   current records in the local db.
  */
-function* updateJSONBlocklist(filename, records) {
+async function updateJSONBlocklist(filename, records) {
   // Write JSON dump for synchronous load at startup.
   const path = OS.Path.join(OS.Constants.Path.profileDir, filename);
   const blocklistFolder = OS.Path.dirname(path);
 
-  yield OS.File.makeDir(blocklistFolder, {from: OS.Constants.Path.profileDir});
+  await OS.File.makeDir(blocklistFolder, {from: OS.Constants.Path.profileDir});
 
   const serialized = JSON.stringify({data: records}, null, 2);
   try {
-    yield OS.File.writeAtomic(path, serialized, {tmpPath: path + ".tmp"});
+    await OS.File.writeAtomic(path, serialized, {tmpPath: path + ".tmp"});
     // Notify change to `nsBlocklistService`
     const eventData = {filename};
     Services.cpmm.sendAsyncMessage("Blocklist:reload-from-disk", eventData);

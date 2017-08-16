@@ -13,6 +13,7 @@
 #include "cubeb/cubeb.h"
 #include "cubeb-internal.h"
 #include "cubeb_mixer.h"
+#include "cubeb_utils.h"
 #include <stdio.h>
 
 #ifdef DISABLE_LIBPULSE_DLOPEN
@@ -142,7 +143,11 @@ sink_info_callback(pa_context * context, const pa_sink_info * info, int eol, voi
 static void
 server_info_callback(pa_context * context, const pa_server_info * info, void * u)
 {
-  WRAP(pa_context_get_sink_info_by_name)(context, info->default_sink_name, sink_info_callback, u);
+  pa_operation * o;
+  o = WRAP(pa_context_get_sink_info_by_name)(context, info->default_sink_name, sink_info_callback, u);
+  if (o) {
+    WRAP(pa_operation_unref)(o);
+  }
 }
 
 static void
@@ -576,6 +581,7 @@ pulse_init(cubeb ** context, char const * context_name)
 {
   void * libpulse = NULL;
   cubeb * ctx;
+  pa_operation * o;
 
   *context = NULL;
 
@@ -614,9 +620,17 @@ pulse_init(cubeb ** context, char const * context_name)
     return CUBEB_ERROR;
   }
 
+  /* server_info_callback performs a second async query, which is
+     responsible for initializing default_sink_info and signalling the
+     mainloop to end the wait. */
   WRAP(pa_threaded_mainloop_lock)(ctx->mainloop);
-  WRAP(pa_context_get_server_info)(ctx->context, server_info_callback, ctx);
+  o = WRAP(pa_context_get_server_info)(ctx->context, server_info_callback, ctx);
+  if (o) {
+    operation_wait(ctx, NULL, o);
+    WRAP(pa_operation_unref)(o);
+  }
   WRAP(pa_threaded_mainloop_unlock)(ctx->mainloop);
+  assert(ctx->default_sink_info);
 
   *context = ctx;
 
@@ -636,12 +650,6 @@ pulse_get_max_channel_count(cubeb * ctx, uint32_t * max_channels)
   (void)ctx;
   assert(ctx && max_channels);
 
-  WRAP(pa_threaded_mainloop_lock)(ctx->mainloop);
-  while (!ctx->default_sink_info) {
-    WRAP(pa_threaded_mainloop_wait)(ctx->mainloop);
-  }
-  WRAP(pa_threaded_mainloop_unlock)(ctx->mainloop);
-
   *max_channels = ctx->default_sink_info->channel_map.channels;
 
   return CUBEB_OK;
@@ -653,12 +661,6 @@ pulse_get_preferred_sample_rate(cubeb * ctx, uint32_t * rate)
   assert(ctx && rate);
   (void)ctx;
 
-  WRAP(pa_threaded_mainloop_lock)(ctx->mainloop);
-  while (!ctx->default_sink_info) {
-    WRAP(pa_threaded_mainloop_wait)(ctx->mainloop);
-  }
-  WRAP(pa_threaded_mainloop_unlock)(ctx->mainloop);
-
   *rate = ctx->default_sink_info->sample_spec.rate;
 
   return CUBEB_OK;
@@ -669,12 +671,6 @@ pulse_get_preferred_channel_layout(cubeb * ctx, cubeb_channel_layout * layout)
 {
   assert(ctx && layout);
   (void)ctx;
-
-  WRAP(pa_threaded_mainloop_lock)(ctx->mainloop);
-  while (!ctx->default_sink_info) {
-    WRAP(pa_threaded_mainloop_wait)(ctx->mainloop);
-  }
-  WRAP(pa_threaded_mainloop_unlock)(ctx->mainloop);
 
   *layout = channel_map_to_layout(&ctx->default_sink_info->channel_map);
 
@@ -711,9 +707,7 @@ pulse_context_destroy(cubeb * ctx)
 static void
 pulse_destroy(cubeb * ctx)
 {
-  if (ctx->context_name) {
-    free(ctx->context_name);
-  }
+  free(ctx->context_name);
   if (ctx->context) {
     pulse_context_destroy(ctx);
   }
@@ -726,9 +720,7 @@ pulse_destroy(cubeb * ctx)
   if (ctx->libpulse) {
     dlclose(ctx->libpulse);
   }
-  if (ctx->default_sink_info) {
-    free(ctx->default_sink_info);
-  }
+  free(ctx->default_sink_info);
   free(ctx);
 }
 
@@ -757,8 +749,10 @@ create_pa_stream(cubeb_stream * stm,
                  cubeb_stream_params * stream_params,
                  char const * stream_name)
 {
-  assert(stm && stream_params && stream_params->layout != CUBEB_LAYOUT_UNDEFINED &&
-         CUBEB_CHANNEL_LAYOUT_MAPS[stream_params->layout].channels == stream_params->channels);
+  assert(stm && stream_params);
+  assert(&stm->input_stream == pa_stm || (&stm->output_stream == pa_stm &&
+         stream_params->layout != CUBEB_LAYOUT_UNDEFINED &&
+         CUBEB_CHANNEL_LAYOUT_MAPS[stream_params->layout].channels == stream_params->channels));
   *pa_stm = NULL;
   pa_sample_spec ss;
   ss.format = to_pulse_format(stream_params->format);
@@ -767,10 +761,13 @@ create_pa_stream(cubeb_stream * stm,
   ss.rate = stream_params->rate;
   ss.channels = stream_params->channels;
 
-  pa_channel_map cm;
-  layout_to_channel_map(stream_params->layout, &cm);
-
-  *pa_stm = WRAP(pa_stream_new)(stm->context->context, stream_name, &ss, &cm);
+  if (stream_params->layout == CUBEB_LAYOUT_UNDEFINED) {
+    *pa_stm = WRAP(pa_stream_new)(stm->context->context, stream_name, &ss, NULL);
+  } else {
+    pa_channel_map cm;
+    layout_to_channel_map(stream_params->layout, &cm);
+    *pa_stm = WRAP(pa_stream_new)(stm->context->context, stream_name, &ss, &cm);
+  }
   return (*pa_stm == NULL) ? CUBEB_ERROR : CUBEB_OK;
 }
 
@@ -886,7 +883,7 @@ pulse_stream_init(cubeb * context,
     return CUBEB_ERROR;
   }
 
-  if (g_log_level) {
+  if (g_cubeb_log_level) {
     if (output_stream_params){
       const pa_buffer_attr * output_att;
       output_att = WRAP(pa_stream_get_buffer_attr)(stm->output_stream);
@@ -1059,10 +1056,6 @@ pulse_stream_set_volume(cubeb_stream * stm, float volume)
 
   WRAP(pa_threaded_mainloop_lock)(stm->context->mainloop);
 
-  while (!stm->context->default_sink_info) {
-    WRAP(pa_threaded_mainloop_wait)(stm->context->mainloop);
-  }
-
   /* if the pulse daemon is configured to use flat volumes,
    * apply our own gain instead of changing the input volume on the sink. */
   if (stm->context->default_sink_info->flags & PA_SINK_FLAT_VOLUME) {
@@ -1155,7 +1148,7 @@ typedef struct {
   char * default_sink_name;
   char * default_source_name;
 
-  cubeb_device_info ** devinfo;
+  cubeb_device_info * devinfo;
   uint32_t max;
   uint32_t count;
   cubeb * context;
@@ -1184,7 +1177,7 @@ pulse_ensure_dev_list_data_list_size (pulse_dev_list_data * list_data)
   if (list_data->count == list_data->max) {
     list_data->max += 8;
     list_data->devinfo = realloc(list_data->devinfo,
-        sizeof(cubeb_device_info *) * list_data->max);
+        sizeof(cubeb_device_info) * list_data->max);
   }
 }
 
@@ -1216,7 +1209,9 @@ pulse_sink_info_cb(pa_context * context, const pa_sink_info * info,
   if (eol || info == NULL)
     return;
 
-  devinfo = calloc(1, sizeof(cubeb_device_info));
+  pulse_ensure_dev_list_data_list_size(list_data);
+  devinfo = &list_data->devinfo[list_data->count];
+  memset(devinfo, 0, sizeof(cubeb_device_info));
 
   devinfo->device_id = strdup(info->name);
   devinfo->devid = (cubeb_devid) devinfo->device_id;
@@ -1231,7 +1226,7 @@ pulse_sink_info_cb(pa_context * context, const pa_sink_info * info,
   devinfo->type = CUBEB_DEVICE_TYPE_OUTPUT;
   devinfo->state = pulse_get_state_from_sink_port(info->active_port);
   devinfo->preferred = (strcmp(info->name, list_data->default_sink_name) == 0) ?
-				 CUBEB_DEVICE_PREF_ALL : CUBEB_DEVICE_PREF_NONE;
+    CUBEB_DEVICE_PREF_ALL : CUBEB_DEVICE_PREF_NONE;
 
   devinfo->format = CUBEB_DEVICE_FMT_ALL;
   devinfo->default_format = pulse_format_to_cubeb_format(info->sample_spec.format);
@@ -1243,8 +1238,7 @@ pulse_sink_info_cb(pa_context * context, const pa_sink_info * info,
   devinfo->latency_lo = 0;
   devinfo->latency_hi = 0;
 
-  pulse_ensure_dev_list_data_list_size (list_data);
-  list_data->devinfo[list_data->count++] = devinfo;
+  list_data->count += 1;
 
   WRAP(pa_threaded_mainloop_signal)(list_data->context->mainloop, 0);
 }
@@ -1277,7 +1271,9 @@ pulse_source_info_cb(pa_context * context, const pa_source_info * info,
   if (eol)
     return;
 
-  devinfo = calloc(1, sizeof(cubeb_device_info));
+  pulse_ensure_dev_list_data_list_size(list_data);
+  devinfo = &list_data->devinfo[list_data->count];
+  memset(devinfo, 0, sizeof(cubeb_device_info));
 
   devinfo->device_id = strdup(info->name);
   devinfo->devid = (cubeb_devid) devinfo->device_id;
@@ -1292,7 +1288,7 @@ pulse_source_info_cb(pa_context * context, const pa_source_info * info,
   devinfo->type = CUBEB_DEVICE_TYPE_INPUT;
   devinfo->state = pulse_get_state_from_source_port(info->active_port);
   devinfo->preferred = (strcmp(info->name, list_data->default_source_name) == 0) ?
-				   CUBEB_DEVICE_PREF_ALL : CUBEB_DEVICE_PREF_NONE;
+    CUBEB_DEVICE_PREF_ALL : CUBEB_DEVICE_PREF_NONE;
 
   devinfo->format = CUBEB_DEVICE_FMT_ALL;
   devinfo->default_format = pulse_format_to_cubeb_format(info->sample_spec.format);
@@ -1304,9 +1300,7 @@ pulse_source_info_cb(pa_context * context, const pa_source_info * info,
   devinfo->latency_lo = 0;
   devinfo->latency_hi = 0;
 
-  pulse_ensure_dev_list_data_list_size (list_data);
-  list_data->devinfo[list_data->count++] = devinfo;
-
+  list_data->count += 1;
   WRAP(pa_threaded_mainloop_signal)(list_data->context->mainloop, 0);
 }
 
@@ -1327,11 +1321,10 @@ pulse_server_info_cb(pa_context * c, const pa_server_info * i, void * userdata)
 
 static int
 pulse_enumerate_devices(cubeb * context, cubeb_device_type type,
-                        cubeb_device_collection ** collection)
+                        cubeb_device_collection * collection)
 {
   pulse_dev_list_data user_data = { NULL, NULL, NULL, 0, 0, context };
   pa_operation * o;
-  uint32_t i;
 
   WRAP(pa_threaded_mainloop_lock)(context->mainloop);
 
@@ -1362,15 +1355,11 @@ pulse_enumerate_devices(cubeb * context, cubeb_device_type type,
 
   WRAP(pa_threaded_mainloop_unlock)(context->mainloop);
 
-  *collection = malloc(sizeof(cubeb_device_collection) +
-      sizeof(cubeb_device_info *) * (user_data.count > 0 ? user_data.count - 1 : 0));
-  (*collection)->count = user_data.count;
-  for (i = 0; i < user_data.count; i++)
-    (*collection)->device[i] = user_data.devinfo[i];
+  collection->device = user_data.devinfo;
+  collection->count = user_data.count;
 
   free(user_data.default_sink_name);
   free(user_data.default_source_name);
-  free(user_data.devinfo);
   return CUBEB_OK;
 }
 
@@ -1421,7 +1410,7 @@ pulse_subscribe_callback(pa_context * ctx,
   case PA_SUBSCRIPTION_EVENT_SOURCE:
   case PA_SUBSCRIPTION_EVENT_SINK:
 
-    if (g_log_level) {
+    if (g_cubeb_log_level) {
       if ((t & PA_SUBSCRIPTION_EVENT_FACILITY_MASK) == PA_SUBSCRIPTION_EVENT_SOURCE &&
           (t & PA_SUBSCRIPTION_EVENT_TYPE_MASK) == PA_SUBSCRIPTION_EVENT_REMOVE) {
         LOG("Removing sink index %d", index);
@@ -1503,6 +1492,7 @@ static struct cubeb_ops const pulse_ops = {
   .get_preferred_sample_rate = pulse_get_preferred_sample_rate,
   .get_preferred_channel_layout = pulse_get_preferred_channel_layout,
   .enumerate_devices = pulse_enumerate_devices,
+  .device_collection_destroy = cubeb_utils_default_device_collection_destroy,
   .destroy = pulse_destroy,
   .stream_init = pulse_stream_init,
   .stream_destroy = pulse_stream_destroy,

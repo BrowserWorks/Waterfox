@@ -4,9 +4,11 @@
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
 
-#ifdef ACCESSIBILITY
+#if defined(ACCESSIBILITY)
 #include "mozilla/mscom/Registration.h"
+#if defined(MOZILLA_INTERNAL_API)
 #include "nsTArray.h"
+#endif
 #endif
 
 #include "mozilla/mscom/Utils.h"
@@ -49,7 +51,52 @@ IsProxy(IUnknown* aUnknown)
   return false;
 }
 
-#ifdef ACCESSIBILITY
+bool
+IsValidGUID(REFGUID aCheckGuid)
+{
+  // This function determines whether or not aCheckGuid conforms to RFC4122
+  // as it applies to Microsoft COM.
+
+  BYTE variant = aCheckGuid.Data4[0];
+  if (!(variant & 0x80)) {
+    // NCS Reserved
+    return false;
+  }
+  if ((variant & 0xE0) == 0xE0) {
+    // Reserved for future use
+    return false;
+  }
+  if ((variant & 0xC0) == 0xC0) {
+    // Microsoft Reserved.
+    return true;
+  }
+
+  BYTE version = HIBYTE(aCheckGuid.Data3) >> 4;
+  // Other versions are specified in RFC4122 but these are the two used by COM.
+  return version == 1 || version == 4;
+}
+
+#if defined(MOZILLA_INTERNAL_API)
+
+void
+GUIDToString(REFGUID aGuid, nsAString& aOutString)
+{
+  // This buffer length is long enough to hold a GUID string that is formatted
+  // to include curly braces and dashes.
+  const int kBufLenWithNul = 39;
+  aOutString.SetLength(kBufLenWithNul);
+  int result = StringFromGUID2(aGuid, wwc(aOutString.BeginWriting()), kBufLenWithNul);
+  MOZ_ASSERT(result);
+  if (result) {
+    // Truncate the terminator
+    aOutString.SetLength(result - 1);
+  }
+}
+
+#endif // defined(MOZILLA_INTERNAL_API)
+
+#if defined(ACCESSIBILITY)
+
 static bool
 IsVtableIndexFromParentInterface(TYPEATTR* aTypeAttr,
                                  unsigned long aVtableIndex)
@@ -93,6 +140,8 @@ IsVtableIndexFromParentInterface(REFIID aInterface, unsigned long aVtableIndex)
   typeInfo->ReleaseTypeAttr(typeAttr);
   return result;
 }
+
+#if defined(MOZILLA_INTERNAL_API)
 
 bool
 IsInterfaceEqualToOrInheritedFrom(REFIID aInterface, REFIID aFrom,
@@ -177,7 +226,10 @@ IsInterfaceEqualToOrInheritedFrom(REFIID aInterface, REFIID aFrom,
 
   return false;
 }
-#endif // ifdef ACCESSIBILITY
+
+#endif // defined(MOZILLA_INTERNAL_API)
+
+#endif // defined(ACCESSIBILITY)
 
 } // namespace mscom
 } // namespace mozilla

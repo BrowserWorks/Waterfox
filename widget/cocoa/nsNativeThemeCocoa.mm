@@ -451,7 +451,7 @@ static NSWindow* NativeWindowForFrame(nsIFrame* aFrame,
                                       nsIWidget** aTopLevelWidget = NULL)
 {
   if (!aFrame)
-    return nil;  
+    return nil;
 
   nsIWidget* widget = aFrame->GetNearestWidget();
   if (!widget)
@@ -539,7 +539,7 @@ nsNativeThemeCocoa::nsNativeThemeCocoa()
   [mDisclosureButtonCell setBezelStyle:NSRoundedDisclosureBezelStyle];
   [mDisclosureButtonCell setButtonType:NSPushOnPushOffButton];
   [mDisclosureButtonCell setHighlightsBy:NSPushInCellMask];
-  
+
   mHelpButtonCell = [[NSButtonCell alloc] initTextCell:@""];
   [mHelpButtonCell setBezelStyle:NSHelpButtonBezelStyle];
   [mHelpButtonCell setButtonType:NSMomentaryPushInButton];
@@ -620,7 +620,7 @@ GetBackingScaleFactorForRendering(CGContextRef cgContext)
   CGRect transformedUserSpacePixel = CGRectApplyAffineTransform(CGRectMake(0, 0, 1, 1), ctm);
   float maxScale = std::max(fabs(transformedUserSpacePixel.size.width),
                           fabs(transformedUserSpacePixel.size.height));
-  return maxScale > 1.0 ? 2 : 1;  
+  return maxScale > 1.0 ? 2 : 1;
 }
 
 /*
@@ -2057,7 +2057,7 @@ nsNativeThemeCocoa::DrawSegment(CGContextRef cgContext, const HIRect& inBoxRect,
             nil]);
 }
 
-void 
+void
 nsNativeThemeCocoa::GetScrollbarPressStates(nsIFrame* aFrame,
                                             EventStates aButtonStates[])
 {
@@ -2073,7 +2073,7 @@ nsNativeThemeCocoa::GetScrollbarPressStates(nsIFrame* aFrame,
   for (nsIFrame *childFrame : aFrame->PrincipalChildList()) {
     nsIContent *childContent = childFrame->GetContent();
     if (!childContent) continue;
-    int32_t attrIndex = childContent->FindAttrValueIn(kNameSpaceID_None, nsGkAtoms::sbattr, 
+    int32_t attrIndex = childContent->FindAttrValueIn(kNameSpaceID_None, nsGkAtoms::sbattr,
                                                       attributeValues, eCaseMatters);
     if (attrIndex < 0) continue;
 
@@ -2085,9 +2085,9 @@ nsIFrame*
 nsNativeThemeCocoa::GetParentScrollbarFrame(nsIFrame *aFrame)
 {
   // Walk our parents to find a scrollbar frame
-  nsIFrame *scrollbarFrame = aFrame;
+  nsIFrame* scrollbarFrame = aFrame;
   do {
-    if (scrollbarFrame->GetType() == nsGkAtoms::scrollbarFrame) break;
+    if (scrollbarFrame->IsScrollbarFrame()) break;
   } while ((scrollbarFrame = scrollbarFrame->GetParent()));
 
   // We return null if we can't find a parent scrollbar frame
@@ -2273,10 +2273,10 @@ nsNativeThemeCocoa::IsParentScrollbarRolledOver(nsIFrame* aFrame)
 }
 
 static bool
-IsHiDPIContext(nsPresContext* aContext)
+IsHiDPIContext(nsDeviceContext* aContext)
 {
   return nsPresContext::AppUnitsPerCSSPixel() >=
-    2 * aContext->DeviceContext()->AppUnitsPerDevPixelAtUnitFullZoom();
+    2 * aContext->AppUnitsPerDevPixelAtUnitFullZoom();
 }
 
 NS_IMETHODIMP
@@ -2303,7 +2303,7 @@ nsNativeThemeCocoa::DrawWidgetBackground(nsRenderingContext* aContext,
 
   AutoRestoreTransform autoRestoreTransform(&aDrawTarget);
 
-  bool hidpi = IsHiDPIContext(aFrame->PresContext());
+  bool hidpi = IsHiDPIContext(aFrame->PresContext()->DeviceContext());
   if (hidpi) {
     // Use high-resolution drawing.
     nativeWidgetRect.Scale(0.5f);
@@ -2603,7 +2603,7 @@ nsNativeThemeCocoa::DrawWidgetBackground(nsRenderingContext* aContext,
     }
       break;
 
-    case NS_THEME_STATUSBAR: 
+    case NS_THEME_STATUSBAR:
       DrawStatusBar(cgContext, macRect, aFrame);
       break;
 
@@ -2641,7 +2641,7 @@ nsNativeThemeCocoa::DrawWidgetBackground(nsRenderingContext* aContext,
       DrawFrame(cgContext, kHIThemeFrameTextFieldSquare, macRect,
                 IsDisabled(aFrame, eventState) || IsReadOnly(aFrame), eventState);
       break;
-      
+
     case NS_THEME_SEARCHFIELD:
       DrawSearchField(cgContext, macRect, aFrame, eventState);
       break;
@@ -2831,7 +2831,7 @@ nsNativeThemeCocoa::DrawWidgetBackground(nsRenderingContext* aContext,
     case NS_THEME_TEXTFIELD_MULTILINE: {
       // we have to draw this by hand because there is no HITheme value for it
       CGContextSetRGBFillColor(cgContext, 1.0, 1.0, 1.0, 1.0);
-      
+
       CGContextFillRect(cgContext, macRect);
 
       // #737373 for the top border, #999999 for the rest.
@@ -2924,7 +2924,7 @@ nsNativeThemeCocoa::DrawWidgetBackground(nsRenderingContext* aContext,
       }
     }
       break;
-    
+
     case NS_THEME_TAB:
       DrawSegment(cgContext, macRect, eventState, aFrame, tabRenderSettings);
       break;
@@ -2975,7 +2975,7 @@ static const nsIntMargin kAquaComboboxBorder(3, 20, 3, 4);
 static const nsIntMargin kAquaSearchfieldBorder(3, 5, 2, 19);
 
 NS_IMETHODIMP
-nsNativeThemeCocoa::GetWidgetBorder(nsDeviceContext* aContext, 
+nsNativeThemeCocoa::GetWidgetBorder(nsDeviceContext* aContext,
                                     nsIFrame* aFrame,
                                     uint8_t aWidgetType,
                                     nsIntMargin* aResult)
@@ -3085,7 +3085,7 @@ nsNativeThemeCocoa::GetWidgetBorder(nsDeviceContext* aContext,
       break;
   }
 
-  if (IsHiDPIContext(aFrame->PresContext())) {
+  if (IsHiDPIContext(aContext)) {
     *aResult = *aResult + *aResult; // doubled
   }
 
@@ -3099,7 +3099,7 @@ nsNativeThemeCocoa::GetWidgetBorder(nsDeviceContext* aContext,
 // whatever values you want in GetWidgetBorder and only use this to return true
 // if you want to override CSS padding values.
 bool
-nsNativeThemeCocoa::GetWidgetPadding(nsDeviceContext* aContext, 
+nsNativeThemeCocoa::GetWidgetPadding(nsDeviceContext* aContext,
                                      nsIFrame* aFrame,
                                      uint8_t aWidgetType,
                                      nsIntMargin* aResult)
@@ -3122,7 +3122,7 @@ bool
 nsNativeThemeCocoa::GetWidgetOverflow(nsDeviceContext* aContext, nsIFrame* aFrame,
                                       uint8_t aWidgetType, nsRect* aOverflowRect)
 {
-  int32_t p2a = aFrame->PresContext()->AppUnitsPerDevPixel();
+  nsIntMargin overflow;
   switch (aWidgetType) {
     case NS_THEME_BUTTON:
     case NS_THEME_MAC_DISCLOSURE_BUTTON_OPEN:
@@ -3140,32 +3140,40 @@ nsNativeThemeCocoa::GetWidgetOverflow(nsDeviceContext* aContext, nsIFrame* aFram
     case NS_THEME_CHECKBOX:
     case NS_THEME_RADIO:
     case NS_THEME_TAB:
+    case NS_THEME_FOCUS_OUTLINE:
     {
-      // We assume that the above widgets can draw a focus ring that will be less than
-      // or equal to 4 pixels thick.
-      nsIntMargin extraSize = nsIntMargin(kMaxFocusRingWidth,
-                                          kMaxFocusRingWidth,
-                                          kMaxFocusRingWidth,
-                                          kMaxFocusRingWidth);
-      nsMargin m(NSIntPixelsToAppUnits(extraSize.top, p2a),
-                 NSIntPixelsToAppUnits(extraSize.right, p2a),
-                 NSIntPixelsToAppUnits(extraSize.bottom, p2a),
-                 NSIntPixelsToAppUnits(extraSize.left, p2a));
-      aOverflowRect->Inflate(m);
-      return true;
+      overflow.SizeTo(kMaxFocusRingWidth,
+                      kMaxFocusRingWidth,
+                      kMaxFocusRingWidth,
+                      kMaxFocusRingWidth);
+      break;
     }
     case NS_THEME_PROGRESSBAR:
     {
-      // Progress bars draw a 2 pixel white shadow under their progress indicators
-      nsMargin m(0, 0, NSIntPixelsToAppUnits(2, p2a), 0);
-      aOverflowRect->Inflate(m);
-      return true;
+      // Progress bars draw a 2 pixel white shadow under their progress indicators.
+      overflow.bottom = 2;
+      break;
     }
-    case NS_THEME_FOCUS_OUTLINE:
+    case NS_THEME_METERBAR:
     {
-      aOverflowRect->Inflate(NSIntPixelsToAppUnits(2, p2a));
-      return true;
+      // Meter bars overflow their boxes by about 2 pixels.
+      overflow.SizeTo(2, 2, 2, 2);
+      break;
     }
+  }
+
+  if (IsHiDPIContext(aContext)) {
+    // Double the number of device pixels.
+    overflow += overflow;
+  }
+
+  if (overflow != nsIntMargin()) {
+    int32_t p2a = aFrame->PresContext()->AppUnitsPerDevPixel();
+    aOverflowRect->Inflate(nsMargin(NSIntPixelsToAppUnits(overflow.top, p2a),
+                                    NSIntPixelsToAppUnits(overflow.right, p2a),
+                                    NSIntPixelsToAppUnits(overflow.bottom, p2a),
+                                    NSIntPixelsToAppUnits(overflow.left, p2a)));
+    return true;
   }
 
   return false;
@@ -3301,7 +3309,7 @@ nsNativeThemeCocoa::GetMinimumWidgetSize(nsPresContext* aPresContext,
     }
 
     case NS_THEME_TREETWISTY:
-    case NS_THEME_TREETWISTYOPEN:   
+    case NS_THEME_TREETWISTYOPEN:
     {
       SInt32 twistyHeight = 0, twistyWidth = 0;
       ::GetThemeMetric(kThemeMetricDisclosureButtonWidth, &twistyWidth);
@@ -3310,7 +3318,7 @@ nsNativeThemeCocoa::GetMinimumWidgetSize(nsPresContext* aPresContext,
       *aIsOverridable = false;
       break;
     }
-    
+
     case NS_THEME_TREEHEADER:
     case NS_THEME_TREEHEADERCELL:
     {
@@ -3469,7 +3477,7 @@ nsNativeThemeCocoa::GetMinimumWidgetSize(nsPresContext* aPresContext,
         aResult->SizeTo(scrollbarWidth+1, scrollbarWidth);
       else
         aResult->SizeTo(scrollbarWidth, scrollbarWidth+1);
- 
+
       *aIsOverridable = false;
       break;
     }
@@ -3489,7 +3497,7 @@ nsNativeThemeCocoa::GetMinimumWidgetSize(nsPresContext* aPresContext,
     }
   }
 
-  if (IsHiDPIContext(aPresContext)) {
+  if (IsHiDPIContext(aPresContext->DeviceContext())) {
     *aResult = *aResult * 2;
   }
 
@@ -3499,7 +3507,7 @@ nsNativeThemeCocoa::GetMinimumWidgetSize(nsPresContext* aPresContext,
 }
 
 NS_IMETHODIMP
-nsNativeThemeCocoa::WidgetStateChanged(nsIFrame* aFrame, uint8_t aWidgetType, 
+nsNativeThemeCocoa::WidgetStateChanged(nsIFrame* aFrame, uint8_t aWidgetType,
                                        nsIAtom* aAttribute, bool* aShouldRepaint,
                                        const nsAttrValue* aOldValue)
 {
@@ -3536,7 +3544,7 @@ nsNativeThemeCocoa::WidgetStateChanged(nsIFrame* aFrame, uint8_t aWidgetType,
     // Hover/focus/active changed.  Always repaint.
     *aShouldRepaint = true;
   } else {
-    // Check the attribute to see if it's relevant.  
+    // Check the attribute to see if it's relevant.
     // disabled, checked, dlgtype, default, etc.
     *aShouldRepaint = false;
     if (aAttribute == nsGkAtoms::disabled ||
@@ -3563,20 +3571,14 @@ nsNativeThemeCocoa::ThemeChanged()
   return NS_OK;
 }
 
-bool 
+bool
 nsNativeThemeCocoa::ThemeSupportsWidget(nsPresContext* aPresContext, nsIFrame* aFrame,
                                       uint8_t aWidgetType)
 {
-  // We don't have CSS set up to render non-native scrollbars on Mac OS X so we
-  // render natively even if native theme support is disabled.
-  if (aWidgetType != NS_THEME_SCROLLBAR &&
-      aPresContext && !aPresContext->PresShell()->IsThemeSupportEnabled())
-    return false;
-
   // if this is a dropdown button in a combobox the answer is always no
   if (aWidgetType == NS_THEME_MENULIST_BUTTON) {
     nsIFrame* parentFrame = aFrame->GetParent();
-    if (parentFrame && (parentFrame->GetType() == nsGkAtoms::comboboxControlFrame))
+    if (parentFrame && parentFrame->IsComboboxControlFrame())
       return false;
   }
 
@@ -3604,7 +3606,7 @@ nsNativeThemeCocoa::ThemeSupportsWidget(nsPresContext* aPresContext, nsIFrame* a
     case NS_THEME_MENUSEPARATOR:
     case NS_THEME_MAC_FULLSCREEN_BUTTON:
     case NS_THEME_TOOLTIP:
-    
+
     case NS_THEME_CHECKBOX:
     case NS_THEME_CHECKBOX_CONTAINER:
     case NS_THEME_RADIO:
@@ -3636,10 +3638,10 @@ nsNativeThemeCocoa::ThemeSupportsWidget(nsPresContext* aPresContext, nsIFrame* a
     case NS_THEME_METERBAR:
     case NS_THEME_METERCHUNK:
     case NS_THEME_SEPARATOR:
-    
+
     case NS_THEME_TABPANELS:
     case NS_THEME_TAB:
-    
+
     case NS_THEME_TREETWISTY:
     case NS_THEME_TREETWISTYOPEN:
     case NS_THEME_TREEVIEW:
@@ -3675,7 +3677,7 @@ nsNativeThemeCocoa::ThemeSupportsWidget(nsPresContext* aPresContext, nsIFrame* a
     case NS_THEME_RESIZER:
     {
       nsIFrame* parentFrame = aFrame->GetParent();
-      if (!parentFrame || parentFrame->GetType() != nsGkAtoms::scrollFrame)
+      if (!parentFrame || !parentFrame->IsScrollFrame())
         return true;
 
       // Note that IsWidgetStyled is not called for resizers on Mac. This is

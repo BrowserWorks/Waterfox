@@ -22,10 +22,10 @@
 #include "nsITimer.h"
 #include "nsIUploadChannel2.h"
 #include "nsPIDOMWindow.h"
-#include "nsScriptLoader.h"
 #include "nsServiceManagerUtils.h"
 #include "nsDebug.h"
 #include "nsISupportsPrimitives.h"
+#include "nsIPermissionManager.h"
 
 #include "jsapi.h"
 
@@ -50,6 +50,7 @@
 #include "mozilla/ipc/BackgroundChild.h"
 #include "mozilla/ipc/PBackgroundChild.h"
 #include "mozilla/ipc/PBackgroundSharedTypes.h"
+#include "mozilla/dom/ScriptLoader.h"
 #include "mozilla/Unused.h"
 #include "mozilla/EnumSet.h"
 
@@ -187,9 +188,16 @@ PopulateRegistrationData(nsIPrincipal* aPrincipal,
     aData.currentWorkerURL() = aRegistration->GetActive()->ScriptSpec();
     aData.cacheName() = aRegistration->GetActive()->CacheName();
     aData.currentWorkerHandlesFetch() = aRegistration->GetActive()->HandlesFetch();
+
+    aData.currentWorkerInstalledTime() =
+      aRegistration->GetActive()->GetInstalledTime();
+    aData.currentWorkerActivatedTime() =
+      aRegistration->GetActive()->GetActivatedTime();
   }
 
   aData.loadFlags() = aRegistration->GetLoadFlags();
+
+  aData.lastUpdateTime() = aRegistration->GetLastUpdateTime();
 
   return NS_OK;
 }
@@ -2024,6 +2032,8 @@ ServiceWorkerManager::LoadRegistration(
     }
   }
 
+  registration->SetLastUpdateTime(aRegistration.lastUpdateTime());
+
   const nsCString& currentWorkerURL = aRegistration.currentWorkerURL();
   if (!currentWorkerURL.IsEmpty()) {
     registration->SetActive(
@@ -2033,7 +2043,8 @@ ServiceWorkerManager::LoadRegistration(
                             aRegistration.cacheName(),
                             registration->GetLoadFlags()));
     registration->GetActive()->SetHandlesFetch(aRegistration.currentWorkerHandlesFetch());
-    registration->GetActive()->SetActivateStateUncheckedWithoutEvent(ServiceWorkerState::Activated);
+    registration->GetActive()->SetInstalledTime(aRegistration.currentWorkerInstalledTime());
+    registration->GetActive()->SetActivatedTime(aRegistration.currentWorkerActivatedTime());
   }
 }
 
@@ -2759,6 +2770,15 @@ ServiceWorkerManager::DispatchFetchEvent(const OriginAttributes& aOriginAttribut
                                            aChannel, loadGroup,
                                            documentId, aIsReload);
 
+  // When this service worker was registered, we also sent down the permissions
+  // for the runnable. They should have arrived by now, but we still need to
+  // wait for them if they have not.
+  nsCOMPtr<nsIRunnable> permissionsRunnable = NS_NewRunnableFunction([=] () {
+      nsCOMPtr<nsIPermissionManager> permMgr = services::GetPermissionManager();
+      MOZ_ALWAYS_SUCCEEDS(permMgr->WhenPermissionsAvailable(serviceWorker->Principal(),
+                                                            continueRunnable));
+    });
+
   nsCOMPtr<nsIChannel> innerChannel;
   aRv = aChannel->GetChannel(getter_AddRefs(innerChannel));
   if (NS_WARN_IF(aRv.Failed())) {
@@ -2769,12 +2789,12 @@ ServiceWorkerManager::DispatchFetchEvent(const OriginAttributes& aOriginAttribut
 
   // If there is no upload stream, then continue immediately
   if (!uploadChannel) {
-    MOZ_ALWAYS_SUCCEEDS(continueRunnable->Run());
+    MOZ_ALWAYS_SUCCEEDS(permissionsRunnable->Run());
     return;
   }
   // Otherwise, ensure the upload stream can be cloned directly.  This may
   // require some async copying, so provide a callback.
-  aRv = uploadChannel->EnsureUploadStreamIsCloneable(continueRunnable);
+  aRv = uploadChannel->EnsureUploadStreamIsCloneable(permissionsRunnable);
 }
 
 bool
@@ -3191,14 +3211,13 @@ FireControllerChangeOnDocument(nsIDocument* aDocument)
   }
 
   auto* window = nsGlobalWindow::Cast(w.get());
-  ErrorResult result;
-  dom::Navigator* navigator = window->GetNavigator(result);
-  if (NS_WARN_IF(result.Failed())) {
-    result.SuppressException();
+  dom::Navigator* navigator = window->Navigator();
+  if (!navigator) {
     return;
   }
 
   RefPtr<ServiceWorkerContainer> container = navigator->ServiceWorker();
+  ErrorResult result;
   container->ControllerChanged(result);
   if (result.Failed()) {
     NS_WARNING("Failed to dispatch controllerchange event");

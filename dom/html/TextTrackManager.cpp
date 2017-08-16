@@ -15,6 +15,7 @@
 #include "mozilla/SizePrintfMacros.h"
 #include "mozilla/Telemetry.h"
 #include "nsComponentManagerUtils.h"
+#include "nsGlobalWindow.h"
 #include "nsVariant.h"
 #include "nsVideoFrame.h"
 #include "nsIFrame.h"
@@ -275,18 +276,18 @@ TextTrackManager::UpdateCueDisplay()
     return;
   }
 
-  nsTArray<RefPtr<TextTrackCue> > activeCues;
-  mTextTracks->GetShowingCues(activeCues);
+  nsTArray<RefPtr<TextTrackCue> > showingCues;
+  mTextTracks->GetShowingCues(showingCues);
 
-  if (activeCues.Length() > 0) {
+  if (showingCues.Length() > 0) {
     WEBVTT_LOG("UpdateCueDisplay ProcessCues");
-    WEBVTT_LOGV("UpdateCueDisplay activeCues.Length() %" PRIuSIZE, activeCues.Length());
+    WEBVTT_LOGV("UpdateCueDisplay showingCues.Length() %" PRIuSIZE, showingCues.Length());
     RefPtr<nsVariantCC> jsCues = new nsVariantCC();
 
     jsCues->SetAsArray(nsIDataType::VTYPE_INTERFACE,
                        &NS_GET_IID(nsIDOMEventTarget),
-                       activeCues.Length(),
-                       static_cast<void*>(activeCues.Elements()));
+                       showingCues.Length(),
+                       static_cast<void*>(showingCues.Elements()));
     nsPIDOMWindowInner* window = mMediaElement->OwnerDoc()->GetInnerWindow();
     if (window) {
       sParserWrapper->ProcessCues(window, jsCues, overlay, controls);
@@ -580,8 +581,13 @@ TextTrackManager::DispatchUpdateCueDisplay()
   if (!mUpdateCueDisplayDispatched && !mShutdown &&
       (mMediaElement->GetHasUserInteraction() || mMediaElement->IsCurrentlyPlaying())) {
     WEBVTT_LOG("DispatchUpdateCueDisplay");
-    NS_DispatchToMainThread(NewRunnableMethod(this, &TextTrackManager::UpdateCueDisplay));
-    mUpdateCueDisplayDispatched = true;
+    nsPIDOMWindowInner* win = mMediaElement->OwnerDoc()->GetInnerWindow();
+    if (win) {
+      nsGlobalWindow::Cast(win)->Dispatch(
+        "TextTrackManager::UpdateCueDisplay", TaskCategory::Other,
+        NewRunnableMethod(this, &TextTrackManager::UpdateCueDisplay));
+      mUpdateCueDisplayDispatched = true;
+    }
   }
 }
 
@@ -595,8 +601,13 @@ TextTrackManager::DispatchTimeMarchesOn()
   if (!mTimeMarchesOnDispatched && !mShutdown &&
       (mMediaElement->GetHasUserInteraction() || mMediaElement->IsCurrentlyPlaying())) {
     WEBVTT_LOG("DispatchTimeMarchesOn");
-    NS_DispatchToMainThread(NewRunnableMethod(this, &TextTrackManager::TimeMarchesOn));
-    mTimeMarchesOnDispatched = true;
+    nsPIDOMWindowInner* win = mMediaElement->OwnerDoc()->GetInnerWindow();
+    if (win) {
+      nsGlobalWindow::Cast(win)->Dispatch(
+        "TextTrackManager::TimeMarchesOn", TaskCategory::Other,
+        NewRunnableMethod(this, &TextTrackManager::TimeMarchesOn));
+      mTimeMarchesOnDispatched = true;
+    }
   }
 }
 
@@ -816,6 +827,10 @@ TextTrackManager::NotifyCueUpdated(TextTrackCue *aCue)
   // TODO: Add/Reorder the cue to mNewCues if we have some optimization?
   WEBVTT_LOG("NotifyCueUpdated");
   DispatchTimeMarchesOn();
+  // For the case "Texttrack.mode = hidden/showing", if the mode
+  // changing between showing and hidden, TimeMarchesOn
+  // doesn't render the cue. Call DispatchUpdateCueDisplay() explicitly.
+  DispatchUpdateCueDisplay();
 }
 
 void

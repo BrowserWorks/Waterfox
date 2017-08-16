@@ -2,7 +2,7 @@
 # License, v. 2.0. If a copy of the MPL was not distributed with this
 # file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
-implementation: taskgraph.task.transform:TransformTask
+loader: taskgraph.loader.transform:loader
 
 transforms:
    - taskgraph.transforms.build_attrs:transforms
@@ -22,12 +22,13 @@ jobs:
             tier: 2
         worker-type: aws-provisioner-v1/gecko-{level}-b-linux
         worker:
-            implementation: docker-worker
             docker-image: {in-tree: desktop-build}
             max-run-time: 36000
+            env:
+                TOOLTOOL_MANIFEST: "browser/config/tooltool-manifests/linux64/releng.manifest"
         run:
             using: mozharness
-            actions: [get-secrets build generate-build-stats]
+            actions: [get-secrets build]
             config:
                 - builds/releng_sub_linux_configs/64_artifact.py
                 - balrog/production.py

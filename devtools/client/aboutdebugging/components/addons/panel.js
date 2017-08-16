@@ -23,6 +23,8 @@ const Strings = Services.strings.createBundle(
 const ExtensionIcon = "chrome://mozapps/skin/extensions/extensionGeneric.svg";
 const CHROME_ENABLED_PREF = "devtools.chrome.enabled";
 const REMOTE_ENABLED_PREF = "devtools.debugger.remote-enabled";
+const WEB_EXT_URL = "https://developer.mozilla.org/Add-ons" +
+                    "/WebExtensions/Getting_started_with_web-ext";
 
 module.exports = createClass({
   displayName: "AddonsPanel",
@@ -43,9 +45,9 @@ module.exports = createClass({
     AddonManager.addAddonListener(this);
 
     Services.prefs.addObserver(CHROME_ENABLED_PREF,
-      this.updateDebugStatus, false);
+      this.updateDebugStatus);
     Services.prefs.addObserver(REMOTE_ENABLED_PREF,
-      this.updateDebugStatus, false);
+      this.updateDebugStatus);
 
     this.updateDebugStatus();
     this.updateAddonsList();
@@ -76,7 +78,9 @@ module.exports = createClass({
             icon: addon.iconURL || ExtensionIcon,
             addonID: addon.id,
             addonActor: addon.actor,
-            temporarilyInstalled: addon.temporarilyInstalled
+            temporarilyInstalled: addon.temporarilyInstalled,
+            url: addon.url,
+            manifestURL: addon.manifestURL,
           };
         });
 
@@ -144,7 +148,16 @@ module.exports = createClass({
         debugDisabled,
         targetClass,
         sort: true
-      })),
+      }),
+      dom.div({ className: "addons-tip"},
+        dom.span({
+          className: "addons-web-ext-tip",
+        }, Strings.GetStringFromName("webExtTip")),
+        dom.a({ href: WEB_EXT_URL, target: "_blank" },
+          Strings.GetStringFromName("webExtTip.learnMore")
+        )
+      )
+    ),
     dom.div({ id: "addons" },
       TargetList({
         id: "extensions",

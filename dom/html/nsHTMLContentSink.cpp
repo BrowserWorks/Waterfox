@@ -19,10 +19,10 @@
 #include "nsIHTMLContentSink.h"
 #include "nsIInterfaceRequestor.h"
 #include "nsIInterfaceRequestorUtils.h"
-#include "nsScriptLoader.h"
 #include "nsIURI.h"
 #include "nsIContentViewer.h"
 #include "mozilla/dom/NodeInfo.h"
+#include "mozilla/dom/ScriptLoader.h"
 #include "nsToken.h"
 #include "nsIAppShell.h"
 #include "nsCRT.h"
@@ -263,7 +263,8 @@ NS_NewHTMLElement(Element** aResult, already_AddRefed<mozilla::dom::NodeInfo>&& 
     return NS_ERROR_OUT_OF_MEMORY;
   }
 
-  if (isCustomElementName || aIs) {
+  if (CustomElementRegistry::IsCustomElementEnabled() &&
+      (isCustomElementName || aIs)) {
     nsContentUtils::SetupCustomElement(*aResult, aIs);
   }
 
@@ -1067,7 +1068,7 @@ HTMLContentSink::FlushPendingNotifications(FlushType aType)
         FlushTags();
       }
     }
-    if (aType >= FlushType::InterruptibleLayout) {
+    if (aType >= FlushType::EnsurePresShellInitAndFrames) {
       // Make sure that layout has started so that the reflow flush
       // will actually happen.
       StartLayout(true);

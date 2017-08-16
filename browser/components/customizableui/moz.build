@@ -15,8 +15,10 @@ EXTRA_JS_MODULES += [
     'CustomizableWidgets.jsm',
     'CustomizeMode.jsm',
     'DragPositionManager.jsm',
+    'PanelMultiView.jsm',
     'PanelWideWidgetTracker.jsm',
     'ScrollbarSampler.jsm',
+    'SearchWidgetTracker.jsm',
 ]
 
 if CONFIG['MOZ_WIDGET_TOOLKIT'] in ('windows', 'cocoa'):

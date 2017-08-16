@@ -7,6 +7,7 @@
 # The events are defined in files provided as command-line arguments.
 
 from __future__ import print_function
+from shared_telemetry_utils import ParserError
 
 import sys
 import parse_events
@@ -29,36 +30,42 @@ file_footer = """\
 #endif // mozilla_TelemetryEventEnums_h
 """
 
+
 def main(output, *filenames):
     # Load the events first.
     if len(filenames) > 1:
         raise Exception('We don\'t support loading from more than one file.')
-    events = parse_events.load_events(filenames[0])
+
+    try:
+        events = parse_events.load_events(filenames[0])
+    except ParserError as ex:
+        print("\nError processing events:\n" + str(ex) + "\n")
+        sys.exit(1)
 
     grouped = dict()
     index = 0
     for e in events:
         category = e.category
-        if not category in grouped:
+        if category not in grouped:
             grouped[category] = []
         grouped[category].append((index, e))
         index += len(e.enum_labels)
 
     # Write the enum file.
     print(banner, file=output)
-    print(file_header, file=output);
+    print(file_header, file=output)
 
-    for category,indexed in grouped.iteritems():
+    for category, indexed in grouped.iteritems():
         category_cpp = indexed[0][1].category_cpp
 
         print("// category: %s" % category, file=output)
         print("enum class %s : uint32_t {" % category_cpp, file=output)
 
-        for event_index,e in indexed:
+        for event_index, e in indexed:
             cpp_guard = e.cpp_guard
             if cpp_guard:
                 print("#if defined(%s)" % cpp_guard, file=output)
-            for offset,label in enumerate(e.enum_labels):
+            for offset, label in enumerate(e.enum_labels):
                 print("  %s = %d," % (label, event_index + offset), file=output)
             if cpp_guard:
                 print("#endif", file=output)

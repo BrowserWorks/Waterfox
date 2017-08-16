@@ -75,12 +75,23 @@ from its prototype:
 
     **If the instance refers to WebAssembly code**, the serialized text
     representation. The format is yet to be specified in the WebAssembly
-    standard. Currently, the text is an s-expression based syntax.
+    standard. Currently, the text is an s-expression based syntax. The text
+    generation is disabled if the Debugger has the `allowWasmBinarySource`
+    property set, the `"[wasm]"` value will be returned in this case.
+
+`binary`
+:   **If the instance refers to WebAssembly code** and the Debugger has
+    the `allowWasmBinarySource` property set, a Uint8Array that contains the
+    WebAssembly bytecode.
 
 `url`
-:   **If the instance refers to JavaScript source**, the URL from which this
-    source was loaded, if this source was loaded from a URL. Otherwise, this
-    is `undefined`. Source may be loaded from a URL in the following ways:
+:   **If the instance refers to JavaScript source**, the filename or URL from
+    which this script's code was loaded. For scripts created by `eval` or the
+    `Function` constructor, this may be a synthesized filename, starting with a
+    valid URL and followed by information tracking how the code was introduced
+    into the system; the entire string is not a valid URL. For
+    `Function.prototype`'s script, this is `null`. Source may be loaded from a
+    URL in the following ways:
 
     * The URL may appear as the `src` attribute of a `<script>` element
       in markup text.

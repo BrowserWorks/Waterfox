@@ -9,7 +9,6 @@
 #include "nsXPCOM.h"
 #include "nsISupportsPrimitives.h"
 #include "nsXPIDLString.h"
-#include "nsScriptLoader.h"
 #include "nsEscape.h"
 #include "nsIParser.h"
 #include "nsIDTD.h"
@@ -36,7 +35,8 @@
 #include "nsTreeSanitizer.h"
 #include "nsHtml5Module.h"
 #include "mozilla/dom/DocumentFragment.h"
-#include "nsNullPrincipal.h"
+#include "mozilla/dom/ScriptLoader.h"
+#include "NullPrincipal.h"
 
 #define XHTML_DIV_TAG "div xmlns=\"http://www.w3.org/1999/xhtml\""
 
@@ -76,7 +76,7 @@ nsParserUtils::Sanitize(const nsAString& aFromStr,
 {
   nsCOMPtr<nsIURI> uri;
   NS_NewURI(getter_AddRefs(uri), "about:blank");
-  nsCOMPtr<nsIPrincipal> principal = nsNullPrincipal::Create();
+  nsCOMPtr<nsIPrincipal> principal = NullPrincipal::Create();
   nsCOMPtr<nsIDOMDocument> domDocument;
   nsresult rv = NS_NewDOMDocument(getter_AddRefs(domDocument),
                                   EmptyString(),
@@ -148,7 +148,7 @@ nsParserUtils::ParseFragment(const nsAString& aFragment,
   nsAutoScriptBlockerSuppressNodeRemoved autoBlocker;
 
   // stop scripts
-  RefPtr<nsScriptLoader> loader;
+  RefPtr<ScriptLoader> loader;
   bool scripts_enabled = false;
   if (document) {
     loader = document->ScriptLoader();

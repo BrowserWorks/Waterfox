@@ -529,6 +529,9 @@ protected:
     // String which are included in [mKeyEvent characters] and already handled
     // by InsertText() call(s).
     nsString mInsertedString;
+    // Unique id associated with a keydown / keypress event. It's ok if this
+    // wraps over long periods.
+    uint32_t mUniqueId;
     // Whether keydown event was consumed by web contents or chrome contents.
     bool mKeyDownHandled;
     // Whether keypress event was dispatched for mKeyEvent.
@@ -542,15 +545,19 @@ protected:
     // if it dispatches keypress event.
     bool mCompositionDispatched;
 
-    KeyEventState() : mKeyEvent(nullptr)
+    KeyEventState()
+      : mKeyEvent(nullptr)
+      , mUniqueId(0)
     {
       Clear();
-    }    
+    }
 
-    explicit KeyEventState(NSEvent* aNativeKeyEvent) : mKeyEvent(nullptr)
+    explicit KeyEventState(NSEvent* aNativeKeyEvent, uint32_t aUniqueId = 0)
+      : mKeyEvent(nullptr)
+      , mUniqueId(0)
     {
       Clear();
-      Set(aNativeKeyEvent);
+      Set(aNativeKeyEvent, aUniqueId);
     }
 
     KeyEventState(const KeyEventState &aOther) = delete;
@@ -560,11 +567,12 @@ protected:
       Clear();
     }
 
-    void Set(NSEvent* aNativeKeyEvent)
+    void Set(NSEvent* aNativeKeyEvent, uint32_t aUniqueId = 0)
     {
       NS_PRECONDITION(aNativeKeyEvent, "aNativeKeyEvent must not be NULL");
       Clear();
       mKeyEvent = [aNativeKeyEvent retain];
+      mUniqueId = aUniqueId;
     }
 
     void Clear()
@@ -572,6 +580,7 @@ protected:
       if (mKeyEvent) {
         [mKeyEvent release];
         mKeyEvent = nullptr;
+        mUniqueId = 0;
       }
       mInsertString = nullptr;
       mInsertedString.Truncate();
@@ -596,6 +605,16 @@ protected:
     bool CanHandleCommand() const
     {
       return !mKeyDownHandled && !mKeyPressHandled;
+    }
+
+    bool IsEnterKeyEvent() const
+    {
+      if (NS_WARN_IF(!mKeyEvent)) {
+        return false;
+      }
+      KeyNameIndex keyNameIndex =
+        TISInputSourceWrapper::ComputeGeckoKeyNameIndex([mKeyEvent keyCode]);
+      return keyNameIndex == KEY_NAME_INDEX_Enter;
     }
 
     void InitKeyEvent(TextInputHandlerBase* aHandler,
@@ -660,7 +679,7 @@ protected:
   /**
    * PushKeyEvent() adds the current key event to mCurrentKeyEvents.
    */
-  KeyEventState* PushKeyEvent(NSEvent* aNativeKeyEvent)
+  KeyEventState* PushKeyEvent(NSEvent* aNativeKeyEvent, uint32_t aUniqueId = 0)
   {
     uint32_t nestCount = mCurrentKeyEvents.Length();
     for (uint32_t i = 0; i < nestCount; i++) {
@@ -671,10 +690,10 @@ protected:
 
     KeyEventState* keyEvent = nullptr;
     if (nestCount == 0) {
-      mFirstKeyEvent.Set(aNativeKeyEvent);
+      mFirstKeyEvent.Set(aNativeKeyEvent, aUniqueId);
       keyEvent = &mFirstKeyEvent;
     } else {
-      keyEvent = new KeyEventState(aNativeKeyEvent);
+      keyEvent = new KeyEventState(aNativeKeyEvent, aUniqueId);
     }
     return *mCurrentKeyEvents.AppendElement(keyEvent);
   }
@@ -779,6 +798,7 @@ public:
   // TextEventDispatcherListener methods
   NS_IMETHOD NotifyIME(TextEventDispatcher* aTextEventDispatcher,
                        const IMENotification& aNotification) override;
+  NS_IMETHOD_(IMENotificationRequests) GetIMENotificationRequests() override;
   NS_IMETHOD_(void) OnRemovedFrom(
                       TextEventDispatcher* aTextEventDispatcher) override;
   NS_IMETHOD_(void) WillDispatchKeyboardEvent(
@@ -1100,10 +1120,11 @@ public:
    * KeyDown event handler.
    *
    * @param aNativeEvent          A native NSKeyDown event.
-   * @return                      TRUE if the event is consumed by web contents
-   *                              or chrome contents.  Otherwise, FALSE.
+   * @param aUniqueId             A unique ID for the event.
+   * @return                      TRUE if the event is dispatched to web
+   *                              contents or chrome contents. Otherwise, FALSE.
    */
-  bool HandleKeyDownEvent(NSEvent* aNativeEvent);
+  bool HandleKeyDownEvent(NSEvent* aNativeEvent, uint32_t aUniqueId);
 
   /**
    * KeyUp event handler.
@@ -1131,6 +1152,15 @@ public:
    */
   void InsertText(NSAttributedString *aAttrString,
                   NSRange* aReplacementRange = nullptr);
+
+  /**
+   * Handles "insertNewline:" command.  Due to bug 1350541, this always
+   * dispatches a keypress event of Enter key unless there is composition.
+   * If it's handling Enter key event, this dispatches "actual" Enter
+   * keypress event.  Otherwise, dispatches "fake" Enter keypress event
+   * whose code value is unidentified.
+   */
+  void InsertNewline();
 
   /**
    * doCommandBySelector event handler.

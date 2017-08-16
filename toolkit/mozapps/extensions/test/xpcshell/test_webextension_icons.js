@@ -24,16 +24,17 @@ function promiseAddonStartup() {
   });
 }
 
-function* testSimpleIconsetParsing(manifest) {
-  yield promiseWriteWebManifestForExtension(manifest, profileDir);
+async function testSimpleIconsetParsing(manifest) {
+  await promiseWriteWebManifestForExtension(manifest, profileDir);
 
-  yield promiseRestartManager();
-  if (!manifest.theme)
-    yield promiseAddonStartup();
+  await Promise.all([
+    promiseRestartManager(),
+    manifest.theme || promiseAddonStartup(),
+  ]);
 
   let uri = do_get_addon_root_uri(profileDir, ID);
 
-  let addon = yield promiseAddonByID(ID);
+  let addon = await promiseAddonByID(ID);
   do_check_neq(addon, null);
 
   function check_icons(addon_copy) {
@@ -60,28 +61,28 @@ function* testSimpleIconsetParsing(manifest) {
   check_icons(addon);
 
   // check if icons are persisted through a restart
-  yield promiseRestartManager();
-  if (!manifest.theme)
-    yield promiseAddonStartup();
+  await Promise.all([
+    promiseRestartManager(),
+    manifest.theme || promiseAddonStartup(),
+  ]);
 
-  addon = yield promiseAddonByID(ID);
+  addon = await promiseAddonByID(ID);
   do_check_neq(addon, null);
 
   check_icons(addon);
 
   addon.uninstall();
-
-  yield promiseRestartManager();
 }
 
-function* testRetinaIconsetParsing(manifest) {
-  yield promiseWriteWebManifestForExtension(manifest, profileDir);
+async function testRetinaIconsetParsing(manifest) {
+  await promiseWriteWebManifestForExtension(manifest, profileDir);
 
-  yield promiseRestartManager();
-  if (!manifest.theme)
-    yield promiseAddonStartup();
+  await Promise.all([
+    promiseRestartManager(),
+    manifest.theme || promiseAddonStartup(),
+  ]);
 
-  let addon = yield promiseAddonByID(ID);
+  let addon = await promiseAddonByID(ID);
   do_check_neq(addon, null);
 
   let uri = do_get_addon_root_uri(profileDir, ID);
@@ -100,18 +101,17 @@ function* testRetinaIconsetParsing(manifest) {
   }), uri + "icon128.png");
 
   addon.uninstall();
-
-  yield promiseRestartManager();
 }
 
-function* testNoIconsParsing(manifest) {
-  yield promiseWriteWebManifestForExtension(manifest, profileDir);
+async function testNoIconsParsing(manifest) {
+  await promiseWriteWebManifestForExtension(manifest, profileDir);
 
-  yield promiseRestartManager();
-  if (!manifest.theme)
-    yield promiseAddonStartup();
+  await Promise.all([
+    promiseRestartManager(),
+    manifest.theme || promiseAddonStartup(),
+  ]);
 
-  let addon = yield promiseAddonByID(ID);
+  let addon = await promiseAddonByID(ID);
   do_check_neq(addon, null);
 
   deepEqual(addon.icons, {});
@@ -122,13 +122,11 @@ function* testNoIconsParsing(manifest) {
   equal(AddonManager.getPreferredIconURL(addon, 128), null);
 
   addon.uninstall();
-
-  yield promiseRestartManager();
 }
 
 // Test simple icon set parsing
-add_task(function*() {
-  yield* testSimpleIconsetParsing({
+add_task(async function() {
+  await testSimpleIconsetParsing({
     name: "Web Extension Name",
     version: "1.0",
     manifest_version: 2,
@@ -146,7 +144,7 @@ add_task(function*() {
   });
 
   // Now for theme-type extensions too.
-  yield* testSimpleIconsetParsing({
+  await testSimpleIconsetParsing({
     name: "Web Extension Name",
     version: "1.0",
     manifest_version: 2,
@@ -161,13 +159,13 @@ add_task(function*() {
       48: "icon48.png",
       64: "icon64.png"
     },
-    theme: { images: { headerURL: "https://example.com/example.png" } }
+    theme: { images: { headerURL: "example.png" } }
   });
 });
 
 // Test AddonManager.getPreferredIconURL for retina screen sizes
-add_task(function*() {
-  yield* testRetinaIconsetParsing({
+add_task(async function() {
+  await testRetinaIconsetParsing({
     name: "Web Extension Name",
     version: "1.0",
     manifest_version: 2,
@@ -185,7 +183,7 @@ add_task(function*() {
     }
   });
 
-  yield* testRetinaIconsetParsing({
+  await testRetinaIconsetParsing({
     name: "Web Extension Name",
     version: "1.0",
     manifest_version: 2,
@@ -201,13 +199,13 @@ add_task(function*() {
       128: "icon128.png",
       256: "icon256.png"
     },
-    theme: { images: { headerURL: "https://example.com/example.png" } }
+    theme: { images: { headerURL: "example.png" } }
   });
 });
 
 // Handles no icons gracefully
-add_task(function*() {
-  yield* testNoIconsParsing({
+add_task(async function() {
+  await testNoIconsParsing({
     name: "Web Extension Name",
     version: "1.0",
     manifest_version: 2,
@@ -218,7 +216,7 @@ add_task(function*() {
     }
   });
 
-  yield* testNoIconsParsing({
+  await testNoIconsParsing({
     name: "Web Extension Name",
     version: "1.0",
     manifest_version: 2,
@@ -227,6 +225,6 @@ add_task(function*() {
         id: ID
       }
     },
-    theme: { images: { headerURL: "https://example.com/example.png" } }
+    theme: { images: { headerURL: "example.png" } }
   });
 });

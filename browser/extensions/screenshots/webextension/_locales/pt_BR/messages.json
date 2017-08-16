@@ -3,7 +3,7 @@
     "message": "Tire clipes e capturas de tela da Web e guarde-as temporariamente ou permanentemente."
   },
   "addonAuthorsList": {
-    "message": "Mozilla <screenshots-feedback@mozilla.org>"
+    "message": "Mozilla <screenshots-feedback@mozilla.com>"
   },
   "contextMenuLabel": {
     "message": "Tirar uma captura de tela"
@@ -12,7 +12,7 @@
     "message": "Minhas capturas"
   },
   "screenshotInstructions": {
-    "message": "Arraste ou clique na página para selecionar uma área. Pressione ESC para cancelar."
+    "message": "Arraste ou clique na página para selecionar uma região. Pressione ESC para cancelar."
   },
   "saveScreenshotSelectedArea": {
     "message": "Salvar"
@@ -41,7 +41,7 @@
     }
   },
   "requestErrorTitle": {
-    "message": "Fora de ordem."
+    "message": "Com defeito."
   },
   "requestErrorDetails": {
     "message": "Desculpa! Não pudemos salvar a sua captura de tela. Por favor, tente novamente mais tarde."
@@ -64,6 +64,9 @@
   "selfScreenshotErrorTitle": {
     "message": "Você não pode tirar uma captura em uma página de capturas de tela do Firefox!"
   },
+  "emptySelectionErrorTitle": {
+    "message": "Sua seleção é muito pequena"
+  },
   "genericErrorTitle": {
     "message": "Uau! Algo correu mal com a capturas de tela do Firefox."
   },
@@ -80,16 +83,16 @@
     "message": "Clique e arraste para capturar apenas uma parte de uma página. Você também pode passar o mouse para realçar sua seleção."
   },
   "tourHeaderThree": {
-    "message": "Como você quiser"
-  },
-  "tourBodyThree": {
-    "message": "Salve as suas capturas na Web para compartilhar mais facilmente ou baixe-as no seu computador. Você também pode clicar no botão Minhas capturas para encontras todas as capturas que tirou."
-  },
-  "tourHeaderFour": {
     "message": "Capture janelas ou páginas inteiras"
   },
-  "tourBodyFour": {
+  "tourBodyThree": {
     "message": "Selecione os botões no canto superior direito para capturar a área visível na janela ou capturar uma página inteira."
+  },
+  "tourHeaderFour": {
+    "message": "Como você quiser"
+  },
+  "tourBodyFour": {
+    "message": "Salve as suas capturas na Web para compartilhar mais facilmente ou baixe-as no seu computador. Você também pode clicar no botão Minhas capturas para encontras todas as capturas que tirou."
   },
   "tourSkip": {
     "message": "Pular"

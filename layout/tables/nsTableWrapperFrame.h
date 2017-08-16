@@ -21,9 +21,7 @@ class nsTableWrapperFrame : public nsContainerFrame
 {
 public:
   NS_DECL_QUERYFRAME
-  NS_DECL_FRAMEARENA_HELPERS
-
-  NS_DECL_QUERYFRAME_TARGET(nsTableWrapperFrame)
+  NS_DECL_FRAMEARENA_HELPERS(nsTableWrapperFrame)
 
   /** instantiate a new instance of nsTableRowFrame.
     * @param aPresShell the pres shell for this frame
@@ -107,13 +105,6 @@ public:
                       ReflowOutput&     aDesiredSize,
                       const ReflowInput& aReflowInput,
                       nsReflowStatus&          aStatus) override;
-
-  /**
-   * Get the "type" of the frame
-   *
-   * @see nsGkAtoms::tableWrapperFrame
-   */
-  virtual nsIAtom* GetType() const override;
 
 #ifdef DEBUG_FRAME_DUMP
   virtual nsresult GetFrameName(nsAString& aResult) const override;
@@ -205,7 +196,7 @@ public:
 
 protected:
 
-  explicit nsTableWrapperFrame(nsStyleContext* aContext);
+  explicit nsTableWrapperFrame(nsStyleContext* aContext, ClassID aID = kClassID);
   virtual ~nsTableWrapperFrame();
 
   void InitChildReflowInput(nsPresContext&     aPresContext,

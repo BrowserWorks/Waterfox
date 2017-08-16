@@ -36,6 +36,7 @@ interfaces = [
     'svg',
     'smil',
     'push',
+    'payments',
 ]
 
 DIRS += ['interfaces/' + i for i in interfaces]
@@ -49,6 +50,7 @@ DIRS += [
     'cache',
     'canvas',
     'commandhandler',
+    'credentialmanagement',
     'crypto',
     'encoding',
     'events',
@@ -104,6 +106,8 @@ DIRS += [
     'webbrowserpersist',
     'xhr',
     'worklet',
+    'script',
+    'payments',
 ]
 
 if CONFIG['OS_ARCH'] == 'WINNT':

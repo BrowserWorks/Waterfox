@@ -26,6 +26,7 @@
 #include "nsIWebBrowserPersistable.h"
 #include "nsIFrame.h"
 #include "nsIGroupedSHistory.h"
+#include "nsPluginTags.h"
 
 class nsIURI;
 class nsSubDocumentFrame;
@@ -79,7 +80,8 @@ class nsFrameLoader final : public nsIFrameLoader,
 public:
   static nsFrameLoader* Create(mozilla::dom::Element* aOwner,
                                nsPIDOMWindowOuter* aOpener,
-                               bool aNetworkCreated);
+                               bool aNetworkCreated,
+                               int32_t aJSPluginID = nsFakePluginTag::NOT_JSPLUGIN);
 
   NS_DECL_CYCLE_COLLECTING_ISUPPORTS
   NS_DECL_CYCLE_COLLECTION_CLASS_AMBIGUOUS(nsFrameLoader, nsIFrameLoader)
@@ -113,6 +115,8 @@ public:
   bool Show(int32_t marginWidth, int32_t marginHeight,
               int32_t scrollbarPrefX, int32_t scrollbarPrefY,
               nsSubDocumentFrame* frame);
+
+  void MaybeShowFrame();
 
   /**
    * Called when the margin properties of the containing frame are changed.
@@ -230,7 +234,8 @@ public:
 private:
   nsFrameLoader(mozilla::dom::Element* aOwner,
                 nsPIDOMWindowOuter* aOpener,
-                bool aNetworkCreated);
+                bool aNetworkCreated,
+                int32_t aJSPluginID);
   ~nsFrameLoader();
 
   void SetOwnerContent(mozilla::dom::Element* aContent);
@@ -241,6 +246,11 @@ private:
    * Return true if the frame is a remote frame. Return false otherwise
    */
   bool IsRemoteFrame();
+
+  bool IsForJSPlugin()
+  {
+    return mJSPluginID != nsFakePluginTag::NOT_JSPLUGIN;
+  }
 
   /**
    * Is this a frame loader for a bona fide <iframe mozbrowser>?
@@ -343,6 +353,8 @@ private:
   TabParent* mRemoteBrowser;
   uint64_t mChildID;
 
+  int32_t mJSPluginID;
+
   // See nsIFrameLoader.idl. EVENT_MODE_NORMAL_DISPATCH automatically
   // forwards some input events to out-of-process content.
   uint32_t mEventMode;
@@ -375,10 +387,6 @@ private:
   bool mClampScrollPosition : 1;
   bool mObservingOwnerContent : 1;
 
-  // Backs nsIFrameLoader::{Get,Set}Visible.  Visibility state here relates to
-  // whether this frameloader's <iframe mozbrowser> is setVisible(true)'ed, and
-  // doesn't necessarily correlate with docshell/document visibility.
-  bool mVisible : 1;
   bool mFreshProcess : 1;
 };
 

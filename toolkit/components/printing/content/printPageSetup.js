@@ -53,7 +53,7 @@ function initDialog() {
 
   gDialog.enabled         = false;
 
-  gDialog.strings                        = new Array;
+  gDialog.strings                        = [];
   gDialog.strings["marginUnits.inches"]  = document.getElementById("marginUnits.inches").childNodes[0].nodeValue;
   gDialog.strings["marginUnits.metric"]  = document.getElementById("marginUnits.metric").childNodes[0].nodeValue;
   gDialog.strings["customPrompt.title"]  = document.getElementById("customPrompt.title").childNodes[0].nodeValue;
@@ -63,14 +63,7 @@ function initDialog() {
 
 // ---------------------------------------------------
 function isListOfPrinterFeaturesAvailable() {
-  var has_printerfeatures = false;
-
-  try {
-    has_printerfeatures = gPrefs.getBoolPref("print.tmp.printerfeatures." + gPrintSettings.printerName + ".has_special_printerfeatures");
-  } catch (ex) {
-  }
-
-  return has_printerfeatures;
+  return gPrefs.getBoolPref("print.tmp.printerfeatures." + gPrintSettings.printerName + ".has_special_printerfeatures", false);
 }
 
 // ---------------------------------------------------
@@ -174,7 +167,7 @@ function setHeaderFooter( node, value ) {
   }
 }
 
-var gHFValues = new Array;
+var gHFValues = [];
 gHFValues["&T"] = 1;
 gHFValues["&U"] = 2;
 gHFValues["&D"] = 3;
@@ -456,4 +449,3 @@ function onCancel() {
 
   return true;
 }
-

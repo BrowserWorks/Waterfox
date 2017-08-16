@@ -12,10 +12,10 @@ class nsPageFrame;
 class nsSharedPageData;
 
 // Page frame class used by the simple page sequence frame
-class nsPageContentFrame : public mozilla::ViewportFrame {
-
+class nsPageContentFrame final : public mozilla::ViewportFrame
+{
 public:
-  NS_DECL_FRAMEARENA_HELPERS
+  NS_DECL_FRAMEARENA_HELPERS(nsPageContentFrame)
 
   friend nsPageContentFrame* NS_NewPageContentFrame(nsIPresShell* aPresShell,
                                                     nsStyleContext* aContext);
@@ -37,20 +37,15 @@ public:
 
   virtual bool HasTransformGetter() const override { return true; }
 
-  /**
-   * Get the "type" of the frame
-   *
-   * @see nsGkAtoms::pageContentFrame
-   */
-  virtual nsIAtom* GetType() const override;
-
 #ifdef DEBUG_FRAME_DUMP
   // Debugging
   virtual nsresult  GetFrameName(nsAString& aResult) const override;
 #endif
 
 protected:
-  explicit nsPageContentFrame(nsStyleContext* aContext) : ViewportFrame(aContext) {}
+  explicit nsPageContentFrame(nsStyleContext* aContext)
+    : ViewportFrame(aContext, kClassID)
+  {}
 
   nsSharedPageData*         mPD;
 };

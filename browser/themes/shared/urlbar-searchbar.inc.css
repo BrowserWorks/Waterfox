@@ -1,0 +1,66 @@
+/* This Source Code Form is subject to the terms of the Mozilla Public
+ * License, v. 2.0. If a copy of the MPL was not distributed with this
+ * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
+
+%ifdef MOZ_PHOTON_THEME
+
+#urlbar,
+.searchbar-textbox {
+  -moz-appearance: none;
+  background-clip: content-box;
+  border: 1px solid hsla(240,5%,5%,.25);
+  border-radius: var(--toolbarbutton-border-radius);
+  box-shadow: 0 1px 4px rgba(0,0,0,.05);
+  padding: 0;
+  margin: 0 5px;
+  min-height: 30px;
+}
+
+#urlbar:hover,
+.searchbar-textbox:hover {
+  border-color: hsla(240,5%,5%,.35);
+  box-shadow: 0 1px 6px rgba(0,0,0,.1), 0 0 1px rgba(0,0,0,.1);
+}
+
+#urlbar:-moz-lwtheme,
+.searchbar-textbox:-moz-lwtheme {
+  background-color: hsla(0,0%,100%,.8);
+  color: black;
+}
+
+#urlbar:-moz-lwtheme:hover,
+#urlbar:-moz-lwtheme[focused="true"],
+.searchbar-textbox:-moz-lwtheme:hover,
+.searchbar-textbox:-moz-lwtheme[focused="true"] {
+  background-color: white;
+}
+
+%endif
+
+:root[uidensity=compact] #urlbar,
+:root[uidensity=compact] .searchbar-textbox {
+  min-height: 26px;
+  margin-top: 3px;
+  margin-bottom: 3px;
+}
+
+:root[uidensity=touch] #urlbar,
+:root[uidensity=touch] .searchbar-textbox {
+  min-height: 32px;
+}
+
+#urlbar-container {
+  -moz-box-align: center;
+}
+
+#urlbar-search-splitter {
+  /* The splitter width should equal the location and search bars' combined
+     neighboring margin and border width. */
+  min-width: 12px;
+  margin: 0 -6px;
+  position: relative;
+  border: none;
+  background: transparent;
+  -moz-appearance: none;
+}
+

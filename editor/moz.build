@@ -16,7 +16,6 @@ XPIDL_SOURCES += [
     'nsIDocumentStateListener.idl',
     'nsIEditActionListener.idl',
     'nsIEditor.idl',
-    'nsIEditorIMESupport.idl',
     'nsIEditorMailSupport.idl',
     'nsIEditorObserver.idl',
     'nsIEditorSpellCheck.idl',
@@ -25,7 +24,6 @@ XPIDL_SOURCES += [
     'nsIHTMLAbsPosEditor.idl',
     'nsIHTMLEditor.idl',
     'nsIHTMLInlineTableEditor.idl',
-    'nsIHTMLObjectResizeListener.idl',
     'nsIHTMLObjectResizer.idl',
     'nsIPlaintextEditor.idl',
     'nsITableEditor.idl',
@@ -39,7 +37,7 @@ EXPORTS += [
     'nsEditorCID.h',
 ]
 
-EXTRA_JS_MODULES += [
+TESTING_JS_MODULES += [
     'AsyncSpellCheckTestHelper.jsm',
 ]
 

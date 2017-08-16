@@ -147,6 +147,7 @@ TextCompositionArray* IMEStateManager::sTextCompositions = nullptr;
 bool IMEStateManager::sInstalledMenuKeyboardListener = false;
 bool IMEStateManager::sIsGettingNewIMEState = false;
 bool IMEStateManager::sCheckForIMEUnawareWebApps = false;
+bool IMEStateManager::sInputModeSupported = false;
 bool IMEStateManager::sRemoteHasFocus = false;
 
 // static
@@ -156,6 +157,11 @@ IMEStateManager::Init()
   Preferences::AddBoolVarCache(
     &sCheckForIMEUnawareWebApps,
     "intl.ime.hack.on_ime_unaware_apps.fire_key_events_for_composition",
+    false);
+
+  Preferences::AddBoolVarCache(
+    &sInputModeSupported,
+    "dom.forms.inputmode",
     false);
 }
 
@@ -857,8 +863,9 @@ IMEStateManager::UpdateIMEState(const IMEState& aNewIMEState,
     MOZ_LOG(sISMLog, LogLevel::Debug,
       ("  UpdateIMEState(), try to reinitialize the "
        "active IMEContentObserver"));
-    if (!sActiveIMEContentObserver->MaybeReinitialize(widget, sPresContext,
-                                                      aContent, &aEditorBase)) {
+    RefPtr<IMEContentObserver> contentObserver = sActiveIMEContentObserver;
+    if (!contentObserver->MaybeReinitialize(widget, sPresContext,
+                                            aContent, &aEditorBase)) {
       MOZ_LOG(sISMLog, LogLevel::Error,
         ("  UpdateIMEState(), failed to reinitialize the "
          "active IMEContentObserver"));
@@ -1104,7 +1111,7 @@ IMEStateManager::SetIMEState(const IMEState& aState,
       context.mHTMLInputType.Assign(nsGkAtoms::textarea->GetUTF16String());
     }
 
-    if (Preferences::GetBool("dom.forms.inputmode", false) ||
+    if (sInputModeSupported ||
         nsContentUtils::IsChromeDoc(aContent->OwnerDoc())) {
       aContent->GetAttr(kNameSpaceID_None, nsGkAtoms::inputmode,
                         context.mHTMLInputInputmode);
@@ -1139,7 +1146,7 @@ IMEStateManager::SetIMEState(const IMEState& aState,
         }
       }
       context.mActionHint.Assign(
-        willSubmit ? (control->GetType() == NS_FORM_INPUT_SEARCH ?
+        willSubmit ? (control->ControlType() == NS_FORM_INPUT_SEARCH ?
                        NS_LITERAL_STRING("search") : NS_LITERAL_STRING("go")) :
                      (formElement ?
                        NS_LITERAL_STRING("next") : EmptyString()));

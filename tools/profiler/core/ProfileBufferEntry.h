@@ -25,11 +25,12 @@
 #include "mozilla/HashFunctions.h"
 #include "mozilla/UniquePtr.h"
 
+class ProfilerMarker;
+
 #define PROFILE_BUFFER_ENTRY_KIND_LIST(_) \
     _(Category,        int)               \
     _(CodeLocation,    const char *)      \
     _(EmbeddedString,  void *)            \
-    _(FrameNumber,     int)               \
     _(JitReturnAddr,   void *)            \
     _(LineNumber,      int)               \
     _(NativeLeafAddr,  void *)            \
@@ -346,8 +347,7 @@ private:
 //       "time": 1,            /* number */
 //       "responsiveness": 2,  /* number */
 //       "rss": 3,             /* number */
-//       "uss": 4,             /* number */
-//       "frameNumber": 5      /* number */
+//       "uss": 4              /* number */
 //     },
 //     "data":
 //     [

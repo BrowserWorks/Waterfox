@@ -8,10 +8,113 @@
 #include "mozilla/Unused.h"
 #include "nsColumnSetFrame.h"
 #include "nsCSSRendering.h"
-#include "nsDisplayList.h"
 
 using namespace mozilla;
 using namespace mozilla::layout;
+
+
+class nsDisplayColumnRule : public nsDisplayItem {
+public:
+  nsDisplayColumnRule(nsDisplayListBuilder* aBuilder, nsIFrame* aFrame)
+    : nsDisplayItem(aBuilder, aFrame)
+  {
+    MOZ_COUNT_CTOR(nsDisplayColumnRule);
+  }
+#ifdef NS_BUILD_REFCNT_LOGGING
+  virtual ~nsDisplayColumnRule() {
+    MOZ_COUNT_DTOR(nsDisplayColumnRule);
+    mBorderRenderers.Clear();
+  }
+#endif
+
+  /**
+   * Returns the frame's visual overflow rect instead of the frame's bounds.
+   */
+  virtual nsRect GetBounds(nsDisplayListBuilder* aBuilder,
+                           bool* aSnap) override
+  {
+    *aSnap = false;
+    return static_cast<nsColumnSetFrame*>(mFrame)->CalculateBounds(ToReferenceFrame());
+  }
+
+  virtual LayerState GetLayerState(nsDisplayListBuilder* aBuilder,
+                                   LayerManager* aManager,
+                                   const ContainerLayerParameters& aParameters) override;
+  virtual already_AddRefed<Layer> BuildLayer(nsDisplayListBuilder* aBuilder,
+                                             LayerManager* aManager,
+                                             const ContainerLayerParameters& aContainerParameters) override;
+  virtual void CreateWebRenderCommands(mozilla::wr::DisplayListBuilder& aBuilder,
+                                       const StackingContextHelper& aSc,
+                                       nsTArray<WebRenderParentCommand>& aParentCommands,
+                                       mozilla::layers::WebRenderDisplayItemLayer* aLayer) override;
+  virtual void Paint(nsDisplayListBuilder* aBuilder,
+                     nsRenderingContext* aCtx) override;
+
+  NS_DISPLAY_DECL_NAME("ColumnRule", nsDisplayItem::TYPE_COLUMN_RULE);
+
+private:
+  nsTArray<nsCSSBorderRenderer> mBorderRenderers;
+};
+
+void
+nsDisplayColumnRule::Paint(nsDisplayListBuilder* aBuilder,
+                           nsRenderingContext* aCtx)
+{
+  static_cast<nsColumnSetFrame*>(mFrame)->
+    CreateBorderRenderers(mBorderRenderers, aCtx, mVisibleRect, ToReferenceFrame());
+
+  for (auto iter = mBorderRenderers.begin(); iter != mBorderRenderers.end(); iter++) {
+    iter->DrawBorders();
+  }
+}
+LayerState
+nsDisplayColumnRule::GetLayerState(nsDisplayListBuilder* aBuilder,
+                                   LayerManager* aManager,
+                                   const ContainerLayerParameters& aParameters)
+{
+  if (!gfxPrefs::LayersAllowColumnRuleLayers()) {
+    return LAYER_NONE;
+  }
+
+  RefPtr<gfxContext> screenRefCtx =
+    gfxContext::CreateOrNull(gfxPlatform::GetPlatform()->ScreenReferenceDrawTarget());
+  nsRenderingContext ctx(screenRefCtx);
+
+  static_cast<nsColumnSetFrame*>(mFrame)->
+    CreateBorderRenderers(mBorderRenderers, &ctx, mVisibleRect, ToReferenceFrame());
+
+  if (mBorderRenderers.IsEmpty()) {
+    return LAYER_NONE;
+  }
+
+  for (auto iter = mBorderRenderers.begin(); iter != mBorderRenderers.end(); iter++) {
+    if (!iter->CanCreateWebRenderCommands()) {
+      return LAYER_NONE;
+    }
+  }
+
+  return LAYER_ACTIVE;
+}
+
+already_AddRefed<Layer>
+nsDisplayColumnRule::BuildLayer(nsDisplayListBuilder* aBuilder,
+                                LayerManager* aManager,
+                                const ContainerLayerParameters& aContainerParameters)
+{
+  return BuildDisplayItemLayer(aBuilder, aManager, aContainerParameters);
+}
+
+void
+nsDisplayColumnRule::CreateWebRenderCommands(wr::DisplayListBuilder& aBuilder,
+                                             const StackingContextHelper& aSc,
+                                             nsTArray<WebRenderParentCommand>& aParentCommands,
+                                             WebRenderDisplayItemLayer* aLayer)
+{
+  MOZ_ASSERT(!mBorderRenderers.IsEmpty());
+  for (auto iter = mBorderRenderers.begin(); iter != mBorderRenderers.end(); iter++) {
+      iter->CreateWebRenderCommands(aBuilder, aSc, aLayer);
+  }
+}
 
 /**
  * Tracking issues:
@@ -32,28 +135,14 @@ NS_NewColumnSetFrame(nsIPresShell* aPresShell, nsStyleContext* aContext, nsFrame
 NS_IMPL_FRAMEARENA_HELPERS(nsColumnSetFrame)
 
 nsColumnSetFrame::nsColumnSetFrame(nsStyleContext* aContext)
-  : nsContainerFrame(aContext)
+  : nsContainerFrame(aContext, kClassID)
   , mLastBalanceBSize(NS_INTRINSICSIZE)
 {
 }
 
-nsIAtom*
-nsColumnSetFrame::GetType() const
-{
-  return nsGkAtoms::columnSetFrame;
-}
-
-static void
-PaintColumnRule(nsIFrame* aFrame, nsRenderingContext* aCtx,
-                const nsRect& aDirtyRect, nsPoint aPt)
-{
-  static_cast<nsColumnSetFrame*>(aFrame)->PaintColumnRule(aCtx, aDirtyRect, aPt);
-}
-
 void
-nsColumnSetFrame::PaintColumnRule(nsRenderingContext* aCtx,
-                                  const nsRect& aDirtyRect,
-                                  const nsPoint& aPt)
+nsColumnSetFrame::ForEachColumn(const std::function<void(const nsRect& lineRect)>& aSetLineRect,
+                                const nsPoint& aPt)
 {
   nsIFrame* child = mFrames.FirstChild();
   if (!child)
@@ -63,48 +152,14 @@ nsColumnSetFrame::PaintColumnRule(nsRenderingContext* aCtx,
   if (!nextSibling)
     return;  // 1 column only - this means no gap to draw on
 
-  WritingMode wm = GetWritingMode();
-  bool isVertical = wm.IsVertical();
-  bool isRTL = !wm.IsBidiLTR();
   const nsStyleColumn* colStyle = StyleColumn();
-
-  uint8_t ruleStyle;
-  // Per spec, inset => ridge and outset => groove
-  if (colStyle->mColumnRuleStyle == NS_STYLE_BORDER_STYLE_INSET)
-    ruleStyle = NS_STYLE_BORDER_STYLE_RIDGE;
-  else if (colStyle->mColumnRuleStyle == NS_STYLE_BORDER_STYLE_OUTSET)
-    ruleStyle = NS_STYLE_BORDER_STYLE_GROOVE;
-  else
-    ruleStyle = colStyle->mColumnRuleStyle;
-
-  nsPresContext* presContext = PresContext();
   nscoord ruleWidth = colStyle->GetComputedColumnRuleWidth();
   if (!ruleWidth)
     return;
 
-  nscolor ruleColor =
-    GetVisitedDependentColor(&nsStyleColumn::mColumnRuleColor);
-
-  // In order to re-use a large amount of code, we treat the column rule as a border.
-  // We create a new border style object and fill in all the details of the column rule as
-  // the left border. PaintBorder() does all the rendering for us, so we not
-  // only save an enormous amount of code but we'll support all the line styles that
-  // we support on borders!
-  nsStyleBorder border(presContext);
-  Sides skipSides;
-  if (isVertical) {
-    border.SetBorderWidth(eSideTop, ruleWidth);
-    border.SetBorderStyle(eSideTop, ruleStyle);
-    border.mBorderTopColor = StyleComplexColor::FromColor(ruleColor);
-    skipSides |= mozilla::eSideBitsLeftRight;
-    skipSides |= mozilla::eSideBitsBottom;
-  } else {
-    border.SetBorderWidth(eSideLeft, ruleWidth);
-    border.SetBorderStyle(eSideLeft, ruleStyle);
-    border.mBorderLeftColor = StyleComplexColor::FromColor(ruleColor);
-    skipSides |= mozilla::eSideBitsTopBottom;
-    skipSides |= mozilla::eSideBitsRight;
-  }
+  WritingMode wm = GetWritingMode();
+  bool isVertical = wm.IsVertical();
+  bool isRTL = !wm.IsBidiLTR();
 
   // Get our content rect as an absolute coordinate, not relative to
   // our parent (which is what the X and Y normally is)
@@ -136,22 +191,90 @@ nsColumnSetFrame::PaintColumnRule(nsRenderingContext* aCtx,
                        contentRect.y);
     }
 
-    nsRect lineRect(linePt, ruleSize);
-
-    // Assert that we're not drawing a border-image here; if we were, we
-    // couldn't ignore the DrawResult that PaintBorderWithStyleBorder returns.
-    MOZ_ASSERT(border.mBorderImageSource.GetType() == eStyleImageType_Null);
-
-    Unused <<
-      nsCSSRendering::PaintBorderWithStyleBorder(presContext, *aCtx, this,
-                                                 aDirtyRect, lineRect, border,
-                                                 StyleContext(),
-                                                 PaintBorderFlags::SYNC_DECODE_IMAGES,
-                                                 skipSides);
+    aSetLineRect(nsRect(linePt, ruleSize));
 
     child = nextSibling;
     nextSibling = nextSibling->GetNextSibling();
   }
+}
+
+nsRect
+nsColumnSetFrame::CalculateBounds(const nsPoint& aOffset)
+{
+  nsRect combined;
+  ForEachColumn([&combined](const nsRect& aLineRect)
+                {
+                  combined = combined.Union(aLineRect);
+                }, aOffset);
+  return combined;
+}
+
+void
+nsColumnSetFrame::CreateBorderRenderers(nsTArray<nsCSSBorderRenderer>& aBorderRenderers,
+                                        nsRenderingContext* aCtx,
+                                        const nsRect& aDirtyRect,
+                                        const nsPoint& aPt)
+{
+  WritingMode wm = GetWritingMode();
+  bool isVertical = wm.IsVertical();
+  const nsStyleColumn* colStyle = StyleColumn();
+  uint8_t ruleStyle;
+
+  // Per spec, inset => ridge and outset => groove
+  if (colStyle->mColumnRuleStyle == NS_STYLE_BORDER_STYLE_INSET)
+    ruleStyle = NS_STYLE_BORDER_STYLE_RIDGE;
+  else if (colStyle->mColumnRuleStyle == NS_STYLE_BORDER_STYLE_OUTSET)
+    ruleStyle = NS_STYLE_BORDER_STYLE_GROOVE;
+  else
+    ruleStyle = colStyle->mColumnRuleStyle;
+
+  nsPresContext* presContext = PresContext();
+  nscoord ruleWidth = colStyle->GetComputedColumnRuleWidth();
+  if (!ruleWidth)
+    return;
+
+  aBorderRenderers.Clear();
+  nscolor ruleColor =
+    GetVisitedDependentColor(&nsStyleColumn::mColumnRuleColor);
+
+  // In order to re-use a large amount of code, we treat the column rule as a border.
+  // We create a new border style object and fill in all the details of the column rule as
+  // the left border. PaintBorder() does all the rendering for us, so we not
+  // only save an enormous amount of code but we'll support all the line styles that
+  // we support on borders!
+  nsStyleBorder border(presContext);
+  Sides skipSides;
+  if (isVertical) {
+    border.SetBorderWidth(eSideTop, ruleWidth);
+    border.SetBorderStyle(eSideTop, ruleStyle);
+    border.mBorderTopColor = StyleComplexColor::FromColor(ruleColor);
+    skipSides |= mozilla::eSideBitsLeftRight;
+    skipSides |= mozilla::eSideBitsBottom;
+  } else {
+    border.SetBorderWidth(eSideLeft, ruleWidth);
+    border.SetBorderStyle(eSideLeft, ruleStyle);
+    border.mBorderLeftColor = StyleComplexColor::FromColor(ruleColor);
+    skipSides |= mozilla::eSideBitsTopBottom;
+    skipSides |= mozilla::eSideBitsRight;
+  }
+
+  ForEachColumn([&]
+                (const nsRect& aLineRect)
+                {
+                  // Assert that we're not drawing a border-image here; if we were, we
+                  // couldn't ignore the DrawResult that PaintBorderWithStyleBorder returns.
+                  MOZ_ASSERT(border.mBorderImageSource.GetType() == eStyleImageType_Null);
+
+                  gfx::DrawTarget* dt = aCtx ? aCtx->GetDrawTarget() : nullptr;
+                  Maybe<nsCSSBorderRenderer> br =
+                    nsCSSRendering::CreateBorderRendererWithStyleBorder(presContext, dt,
+                                                                        this, aDirtyRect,
+                                                                        aLineRect, border,
+                                                                        StyleContext(), skipSides);
+                  if (br.isSome()) {
+                    aBorderRenderers.AppendElement(br.value());
+                  }
+                }, aPt);
 }
 
 static nscoord
@@ -461,7 +584,6 @@ nsColumnSetFrame::ReflowChildren(ReflowOutput&     aDesiredSize,
   aColData.Reset();
   bool allFit = true;
   WritingMode wm = GetWritingMode();
-  bool isVertical = wm.IsVertical();
   bool isRTL = !wm.IsBidiLTR();
   bool shrinkingBSizeOnly = !NS_SUBTREE_DIRTY(this) &&
     mLastBalanceBSize > aConfig.mColMaxBSize;
@@ -511,7 +633,7 @@ nsColumnSetFrame::ReflowChildren(ReflowOutput&     aDesiredSize,
   // XXX when all of layout is converted to logical coordinates, we
   //     probably won't need to do this hack any more. For now, we
   //     confine it to the legacy horizontal-rl case
-  if (!isVertical && isRTL) {
+  if (!wm.IsVertical() && isRTL) {
     nscoord availISize = aReflowInput.AvailableISize();
     if (aReflowInput.ComputedISize() != NS_INTRINSICSIZE) {
       availISize = aReflowInput.ComputedISize();
@@ -1128,15 +1250,34 @@ nsColumnSetFrame::BuildDisplayList(nsDisplayListBuilder*   aBuilder,
   DisplayBorderBackgroundOutline(aBuilder, aLists);
 
   if (IsVisibleForPainting(aBuilder)) {
-    aLists.BorderBackground()->AppendNewToTop(new (aBuilder)
-      nsDisplayGenericOverflow(aBuilder, this, ::PaintColumnRule, "ColumnRule",
-                               nsDisplayItem::TYPE_COLUMN_RULE));
+    aLists.BorderBackground()->
+      AppendNewToTop(new (aBuilder)nsDisplayColumnRule(aBuilder, this));
   }
 
   // Our children won't have backgrounds so it doesn't matter where we put them.
   for (nsFrameList::Enumerator e(mFrames); !e.AtEnd(); e.Next()) {
     BuildDisplayListForChild(aBuilder, e.get(), aDirtyRect, aLists);
   }
+}
+
+void
+nsColumnSetFrame::DoUpdateStyleOfOwnedAnonBoxes(
+    mozilla::ServoStyleSet& aStyleSet,
+    nsStyleChangeList& aChangeList,
+    nsChangeHint aHintForThisFrame)
+{
+  // Everything in mFrames is continuations of the first thing in mFrames.
+  nsIFrame* column = mFrames.FirstChild();
+
+  // We might not have any columns, apparently?
+  if (!column) {
+    return;
+  }
+
+  MOZ_ASSERT(column->StyleContext()->GetPseudo() ==
+               nsCSSAnonBoxes::columnContent,
+             "What sort of child is this?");
+  UpdateStyleOfChildAnonBox(column, aStyleSet, aChangeList, aHintForThisFrame);
 }
 
 #ifdef DEBUG

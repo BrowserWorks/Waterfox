@@ -87,8 +87,10 @@ IonBuilder::inlineNativeCall(CallInfo& callInfo, JSFunction* target)
         return inlineArrayPush(callInfo);
       case InlinableNative::ArraySlice:
         return inlineArraySlice(callInfo);
-      case InlinableNative::ArraySplice:
-        return inlineArraySplice(callInfo);
+
+      // Array intrinsics.
+      case InlinableNative::IntrinsicNewArrayIterator:
+        return inlineNewIterator(callInfo, MNewIterator::ArrayIterator);
 
       // Atomic natives.
       case InlinableNative::AtomicsCompareExchange:
@@ -107,6 +109,10 @@ IonBuilder::inlineNativeCall(CallInfo& callInfo, JSFunction* target)
         return inlineAtomicsBinop(callInfo, inlNative);
       case InlinableNative::AtomicsIsLockFree:
         return inlineAtomicsIsLockFree(callInfo);
+
+      // Boolean natives.
+      case InlinableNative::Boolean:
+        return inlineBoolean(callInfo);
 
       // Intl natives.
       case InlinableNative::IntlIsCollator:
@@ -223,6 +229,8 @@ IonBuilder::inlineNativeCall(CallInfo& callInfo, JSFunction* target)
         return inlineStringReplaceString(callInfo);
       case InlinableNative::IntrinsicStringSplitString:
         return inlineStringSplitString(callInfo);
+      case InlinableNative::IntrinsicNewStringIterator:
+        return inlineNewIterator(callInfo, MNewIterator::StringIterator);
 
       // Object natives.
       case InlinableNative::ObjectCreate:
@@ -354,6 +362,8 @@ IonBuilder::inlineNativeCall(CallInfo& callInfo, JSFunction* target)
         return inlineHasClass(callInfo, &ArrayTypeDescr::class_);
       case InlinableNative::IntrinsicSetTypedObjectOffset:
         return inlineSetTypedObjectOffset(callInfo);
+      case InlinableNative::Limit:
+        break;
     }
 
     MOZ_CRASH("Shouldn't get here");
@@ -672,45 +682,6 @@ IonBuilder::inlineArrayPopShift(CallInfo& callInfo, MArrayPopShift::Mode mode)
 }
 
 IonBuilder::InliningResult
-IonBuilder::inlineArraySplice(CallInfo& callInfo)
-{
-    if (callInfo.argc() != 2 || callInfo.constructing()) {
-        trackOptimizationOutcome(TrackedOutcome::CantInlineNativeBadForm);
-        return InliningStatus_NotInlined;
-    }
-
-    // Ensure |this|, argument and result are objects.
-    if (getInlineReturnType() != MIRType::Object)
-        return InliningStatus_NotInlined;
-    if (callInfo.thisArg()->type() != MIRType::Object)
-        return InliningStatus_NotInlined;
-    if (callInfo.getArg(0)->type() != MIRType::Int32)
-        return InliningStatus_NotInlined;
-    if (callInfo.getArg(1)->type() != MIRType::Int32)
-        return InliningStatus_NotInlined;
-
-    callInfo.setImplicitlyUsedUnchecked();
-
-    // Specialize arr.splice(start, deleteCount) with unused return value and
-    // avoid creating the result array in this case.
-    if (!BytecodeIsPopped(pc)) {
-        trackOptimizationOutcome(TrackedOutcome::CantInlineGeneric);
-        return InliningStatus_NotInlined;
-    }
-
-    MArraySplice* ins = MArraySplice::New(alloc(),
-                                          callInfo.thisArg(),
-                                          callInfo.getArg(0),
-                                          callInfo.getArg(1));
-
-    current->add(ins);
-    pushConstant(UndefinedValue());
-
-    MOZ_TRY(resumeAfter(ins));
-    return InliningStatus_Inlined;
-}
-
-IonBuilder::InliningResult
 IonBuilder::inlineArrayJoin(CallInfo& callInfo)
 {
     if (callInfo.argc() != 1 || callInfo.constructing()) {
@@ -932,6 +903,64 @@ IonBuilder::inlineArraySlice(CallInfo& callInfo)
 }
 
 IonBuilder::InliningResult
+IonBuilder::inlineBoolean(CallInfo& callInfo)
+{
+    if (callInfo.constructing()) {
+        trackOptimizationOutcome(TrackedOutcome::CantInlineNativeBadForm);
+        return InliningStatus_NotInlined;
+    }
+
+    if (getInlineReturnType() != MIRType::Boolean)
+        return InliningStatus_NotInlined;
+
+    callInfo.setImplicitlyUsedUnchecked();
+
+    if (callInfo.argc() > 0) {
+        MDefinition* result = convertToBoolean(callInfo.getArg(0));
+        current->push(result);
+    } else {
+        pushConstant(BooleanValue(false));
+    }
+    return InliningStatus_Inlined;
+}
+
+IonBuilder::InliningResult
+IonBuilder::inlineNewIterator(CallInfo& callInfo, MNewIterator::Type type)
+{
+    if (callInfo.argc() != 0 || callInfo.constructing()) {
+        trackOptimizationOutcome(TrackedOutcome::CantInlineNativeBadForm);
+        return InliningStatus_NotInlined;
+    }
+
+    JSObject* templateObject = nullptr;
+    switch (type) {
+      case MNewIterator::ArrayIterator:
+        templateObject = inspector->getTemplateObjectForNative(pc, js::intrinsic_NewArrayIterator);
+        MOZ_ASSERT_IF(templateObject, templateObject->is<ArrayIteratorObject>());
+        break;
+      case MNewIterator::StringIterator:
+        templateObject = inspector->getTemplateObjectForNative(pc, js::intrinsic_NewStringIterator);
+        MOZ_ASSERT_IF(templateObject, templateObject->is<StringIteratorObject>());
+        break;
+    }
+
+    if (!templateObject)
+        return InliningStatus_NotInlined;
+
+    callInfo.setImplicitlyUsedUnchecked();
+
+    MConstant* templateConst = MConstant::NewConstraintlessObject(alloc(), templateObject);
+    current->add(templateConst);
+
+    MNewIterator* ins = MNewIterator::New(alloc(), constraints(), templateConst, type);
+    current->add(ins);
+    current->push(ins);
+
+    MOZ_TRY(resumeAfter(ins));
+    return InliningStatus_Inlined;
+}
+
+IonBuilder::InliningResult
 IonBuilder::inlineMathAbs(CallInfo& callInfo)
 {
     if (callInfo.argc() != 1 || callInfo.constructing()) {
@@ -990,20 +1019,30 @@ IonBuilder::inlineMathFloor(CallInfo& callInfo)
         return InliningStatus_Inlined;
     }
 
-    if (IsFloatingPointType(argType) && returnType == MIRType::Int32) {
-        callInfo.setImplicitlyUsedUnchecked();
-        MFloor* ins = MFloor::New(alloc(), callInfo.getArg(0));
-        current->add(ins);
-        current->push(ins);
-        return InliningStatus_Inlined;
-    }
+    if (IsFloatingPointType(argType)) {
+        if (returnType == MIRType::Int32) {
+            callInfo.setImplicitlyUsedUnchecked();
+            MFloor* ins = MFloor::New(alloc(), callInfo.getArg(0));
+            current->add(ins);
+            current->push(ins);
+            return InliningStatus_Inlined;
+        }
 
-    if (IsFloatingPointType(argType) && returnType == MIRType::Double) {
-        callInfo.setImplicitlyUsedUnchecked();
-        MMathFunction* ins = MMathFunction::New(alloc(), callInfo.getArg(0), MMathFunction::Floor, nullptr);
-        current->add(ins);
-        current->push(ins);
-        return InliningStatus_Inlined;
+        if (returnType == MIRType::Double) {
+            callInfo.setImplicitlyUsedUnchecked();
+
+            MInstruction* ins = nullptr;
+            if (MNearbyInt::HasAssemblerSupport(RoundingMode::Down)) {
+                ins = MNearbyInt::New(alloc(), callInfo.getArg(0), argType, RoundingMode::Down);
+            } else {
+                ins = MMathFunction::New(alloc(), callInfo.getArg(0), MMathFunction::Floor,
+                                         /* cache */ nullptr);
+            }
+
+            current->add(ins);
+            current->push(ins);
+            return InliningStatus_Inlined;
+        }
     }
 
     return InliningStatus_NotInlined;
@@ -1034,20 +1073,30 @@ IonBuilder::inlineMathCeil(CallInfo& callInfo)
         return InliningStatus_Inlined;
     }
 
-    if (IsFloatingPointType(argType) && returnType == MIRType::Int32) {
-        callInfo.setImplicitlyUsedUnchecked();
-        MCeil* ins = MCeil::New(alloc(), callInfo.getArg(0));
-        current->add(ins);
-        current->push(ins);
-        return InliningStatus_Inlined;
-    }
+    if (IsFloatingPointType(argType)) {
+        if (returnType == MIRType::Int32) {
+            callInfo.setImplicitlyUsedUnchecked();
+            MCeil* ins = MCeil::New(alloc(), callInfo.getArg(0));
+            current->add(ins);
+            current->push(ins);
+            return InliningStatus_Inlined;
+        }
 
-    if (IsFloatingPointType(argType) && returnType == MIRType::Double) {
-        callInfo.setImplicitlyUsedUnchecked();
-        MMathFunction* ins = MMathFunction::New(alloc(), callInfo.getArg(0), MMathFunction::Ceil, nullptr);
-        current->add(ins);
-        current->push(ins);
-        return InliningStatus_Inlined;
+        if (returnType == MIRType::Double) {
+            callInfo.setImplicitlyUsedUnchecked();
+
+            MInstruction* ins = nullptr;
+            if (MNearbyInt::HasAssemblerSupport(RoundingMode::Up)) {
+                ins = MNearbyInt::New(alloc(), callInfo.getArg(0), argType, RoundingMode::Up);
+            } else {
+                ins = MMathFunction::New(alloc(), callInfo.getArg(0), MMathFunction::Ceil,
+                                         /* cache */ nullptr);
+            }
+
+            current->add(ins);
+            current->push(ins);
+            return InliningStatus_Inlined;
+        }
     }
 
     return InliningStatus_NotInlined;
@@ -1112,7 +1161,8 @@ IonBuilder::inlineMathRound(CallInfo& callInfo)
 
     if (IsFloatingPointType(argType) && returnType == MIRType::Double) {
         callInfo.setImplicitlyUsedUnchecked();
-        MMathFunction* ins = MMathFunction::New(alloc(), callInfo.getArg(0), MMathFunction::Round, nullptr);
+        MMathFunction* ins = MMathFunction::New(alloc(), callInfo.getArg(0), MMathFunction::Round,
+                                                /* cache */ nullptr);
         current->add(ins);
         current->push(ins);
         return InliningStatus_Inlined;
@@ -1376,7 +1426,9 @@ IonBuilder::inlineMathMinMax(CallInfo& callInfo, bool max)
     current->add(last);
 
     for (unsigned i = 2; i < cases.length(); i++) {
-        MMinMax* ins = MMinMax::New(alloc(), last, cases[i], returnType, max);
+        MMinMax* ins = MMinMax::New(alloc().fallible(), last, cases[i], returnType, max);
+        if (!ins)
+            return abort(AbortReason::Alloc);
         current->add(ins);
         last = ins;
     }

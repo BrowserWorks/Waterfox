@@ -78,7 +78,8 @@ public:
                      mozilla::EventChainPreVisitor& aVisitor) override;
   virtual nsresult PostHandleEvent(
                      mozilla::EventChainPostVisitor& aVisitor) override;
-  nsresult Clone(mozilla::dom::NodeInfo*, nsINode**) const override;
+  nsresult Clone(mozilla::dom::NodeInfo* aNodeInfo, nsINode** aResult,
+                 bool aPreallocateChildren) const override;
   virtual mozilla::EventStates IntrinsicState() const override;
   virtual bool IsNodeOfType(uint32_t aFlags) const override;
 
@@ -93,23 +94,24 @@ public:
   virtual bool IsLink(nsIURI** aURI) const override;
   virtual void GetLinkTarget(nsAString& aTarget) override;
   virtual already_AddRefed<nsIURI> GetHrefURI() const override;
-  nsresult SetAttr(int32_t aNameSpaceID, nsIAtom* aName,
-                   const nsAString& aValue, bool aNotify)
-  {
-    return SetAttr(aNameSpaceID, aName, nullptr, aValue, aNotify);
-  }
-  virtual nsresult SetAttr(int32_t aNameSpaceID, nsIAtom* aName,
-                           nsIAtom* aPrefix, const nsAString& aValue,
-                           bool aNotify) override;
-  virtual nsresult UnsetAttr(int32_t aNameSpaceID, nsIAtom* aAttribute,
-                             bool aNotify) override;
 
   virtual nsIDOMNode* AsDOMNode() override { return this; }
+
+  virtual void NodeInfoChanged(nsIDocument* aOldDoc) override
+  {
+    ClearHasPendingLinkUpdate();
+    nsMathMLElementBase::NodeInfoChanged(aOldDoc);
+  }
 
 protected:
   virtual ~nsMathMLElement() {}
 
   virtual JSObject* WrapNode(JSContext *aCx, JS::Handle<JSObject*> aGivenProto) override;
+
+  virtual nsresult AfterSetAttr(int32_t aNameSpaceID, nsIAtom* aName,
+                                const nsAttrValue* aValue,
+                                const nsAttrValue* aOldValue,
+                                bool aNotify) override;
 
 private:
   bool mIncrementScriptLevel;

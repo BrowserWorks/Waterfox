@@ -21,14 +21,14 @@ Cu.forcePermissiveCOWs();
 var registrar = Cm.QueryInterface(Ci.nsIComponentRegistrar);
 var oldClassID = "", oldFactory = null;
 var newClassID = Cc["@mozilla.org/uuid-generator;1"].getService(Ci.nsIUUIDGenerator).generateUUID();
-var newFactory = function (window) {
+var newFactory = function(window) {
   return {
-    createInstance: function(aOuter, aIID) {
+    createInstance(aOuter, aIID) {
       if (aOuter)
         throw Components.results.NS_ERROR_NO_AGGREGATION;
       return new MockColorPickerInstance(window).QueryInterface(aIID);
     },
-    lockFactory: function(aLock) {
+    lockFactory(aLock) {
       throw Components.results.NS_ERROR_NOT_IMPLEMENTED;
     },
     QueryInterface: XPCOMUtils.generateQI([Ci.nsIFactory])
@@ -36,14 +36,14 @@ var newFactory = function (window) {
 }
 
 this.MockColorPicker = {
-  init: function(window) {
+  init(window) {
     this.reset();
     this.factory = newFactory(window);
     if (!registrar.isCIDRegistered(newClassID)) {
       try {
         oldClassID = registrar.contractIDToCID(CONTRACT_ID);
         oldFactory = Cm.getClassObject(Cc[CONTRACT_ID], Ci.nsIFactory);
-      } catch(ex) {
+      } catch (ex) {
         oldClassID = "";
         oldFactory = null;
         dump("TEST-INFO | can't get colorpicker registered component, " +
@@ -56,14 +56,14 @@ this.MockColorPicker = {
     }
   },
 
-  reset: function() {
+  reset() {
     this.returnColor = "";
     this.showCallback = null;
     this.shown = false;
     this.showing = false;
   },
 
-  cleanup: function() {
+  cleanup() {
     var previousFactory = this.factory;
     this.reset();
     this.factory = null;
@@ -77,20 +77,20 @@ this.MockColorPicker = {
 
 function MockColorPickerInstance(window) {
   this.window = window;
-};
+}
 MockColorPickerInstance.prototype = {
   QueryInterface: XPCOMUtils.generateQI([Ci.nsIColorPicker]),
-  init: function(aParent, aTitle, aInitialColor) {
+  init(aParent, aTitle, aInitialColor) {
     this.parent = aParent;
     this.initialColor = aInitialColor;
   },
   initialColor: "",
   parent: null,
-  open: function(aColorPickerShownCallback) {
+  open(aColorPickerShownCallback) {
     MockColorPicker.showing = true;
     MockColorPicker.shown = true;
 
-    this.window.setTimeout(function() {
+    this.window.setTimeout(() => {
       let result = "";
       try {
         if (typeof MockColorPicker.showCallback == "function") {
@@ -105,13 +105,13 @@ MockColorPickerInstance.prototype = {
         } else if (typeof MockColorPicker.returnColor === "string") {
           result = MockColorPicker.returnColor;
         }
-      } catch(ex) {
+      } catch (ex) {
         dump("TEST-UNEXPECTED-FAIL | Exception in MockColorPicker.jsm open() " +
              "method: " + ex + "\n");
       }
       if (aColorPickerShownCallback) {
         aColorPickerShownCallback.done(result);
       }
-    }.bind(this), 0);
+    }, 0);
   }
 };

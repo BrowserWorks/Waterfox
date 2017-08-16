@@ -31,8 +31,13 @@ XPCOMUtils.defineLazyModuleGetter(this, "OS",
                                   "resource://gre/modules/osfile.jsm");
 XPCOMUtils.defineLazyModuleGetter(this, "ServiceRequest",
                                   "resource://gre/modules/ServiceRequest.jsm");
-XPCOMUtils.defineLazyModuleGetter(this, "Task",
-                                  "resource://gre/modules/Task.jsm");
+
+// The blocklist updater is the new system in charge of fetching remote data
+// securely and efficiently. It will replace the current XML-based system.
+// See Bug 1257565 and Bug 1252456.
+const BlocklistUpdater = {};
+XPCOMUtils.defineLazyModuleGetter(BlocklistUpdater, "checkVersions",
+                                  "resource://services-common/blocklist-updater.js");
 
 const TOOLKIT_ID                      = "toolkit@mozilla.org";
 const KEY_PROFILEDIR                  = "ProfD";
@@ -48,7 +53,6 @@ const PREF_BLOCKLIST_PINGCOUNTVERSION = "extensions.blocklist.pingCountVersion";
 const PREF_BLOCKLIST_SUPPRESSUI       = "extensions.blocklist.suppressUI";
 const PREF_ONECRL_VIA_AMO             = "security.onecrl.via.amo";
 const PREF_BLOCKLIST_UPDATE_ENABLED   = "services.blocklist.update_enabled";
-const PREF_GENERAL_USERAGENT_LOCALE   = "general.useragent.locale";
 const PREF_APP_DISTRIBUTION           = "distribution.id";
 const PREF_APP_DISTRIBUTION_VERSION   = "distribution.version";
 const PREF_EM_LOGGING_ENABLED         = "extensions.logging.enabled";
@@ -203,7 +207,7 @@ function restartApp() {
            getService(Ci.nsIObserverService);
   var cancelQuit = Cc["@mozilla.org/supports-PRBool;1"].
                    createInstance(Ci.nsISupportsPRBool);
-  os.notifyObservers(cancelQuit, "quit-application-requested", null);
+  os.notifyObservers(cancelQuit, "quit-application-requested");
 
   // Something aborted the quit process.
   if (cancelQuit.data)
@@ -242,28 +246,12 @@ function matchesOSABI(blocklistElement) {
  * exists in nsHttpHandler.cpp when building the UA string.
  */
 function getLocale() {
-  try {
-      // Get the default branch
-      var defaultPrefs = gPref.getDefaultBranch(null);
-      return defaultPrefs.getComplexValue(PREF_GENERAL_USERAGENT_LOCALE,
-                                          Ci.nsIPrefLocalizedString).data;
-  } catch (e) {}
-
-  return gPref.getCharPref(PREF_GENERAL_USERAGENT_LOCALE);
+  return Services.locale.getRequestedLocales();
 }
 
 /* Get the distribution pref values, from defaults only */
 function getDistributionPrefValue(aPrefName) {
-  var prefValue = "default";
-
-  var defaults = gPref.getDefaultBranch(null);
-  try {
-    prefValue = defaults.getCharPref(aPrefName);
-  } catch (e) {
-    // use default when pref not found
-  }
-
-  return prefValue;
+  return gPref.getDefaultBranch(null).getCharPref(aPrefName, "default");
 }
 
 /**
@@ -290,14 +278,14 @@ function parseRegExp(aStr) {
  */
 
 function Blocklist() {
-  Services.obs.addObserver(this, "xpcom-shutdown", false);
-  Services.obs.addObserver(this, "sessionstore-windows-restored", false);
+  Services.obs.addObserver(this, "xpcom-shutdown");
+  Services.obs.addObserver(this, "sessionstore-windows-restored");
   gLoggingEnabled = getPref("getBoolPref", PREF_EM_LOGGING_ENABLED, false);
   gBlocklistEnabled = getPref("getBoolPref", PREF_BLOCKLIST_ENABLED, true);
   gBlocklistLevel = Math.min(getPref("getIntPref", PREF_BLOCKLIST_LEVEL, DEFAULT_LEVEL),
                                      MAX_BLOCK_LEVEL);
-  gPref.addObserver("extensions.blocklist.", this, false);
-  gPref.addObserver(PREF_EM_LOGGING_ENABLED, this, false);
+  gPref.addObserver("extensions.blocklist.", this);
+  gPref.addObserver(PREF_EM_LOGGING_ENABLED, this);
   this.wrappedJSObject = this;
   // requests from child processes come in here, see receiveMessage.
   Services.ppmm.addMessageListener("Blocklist:getPluginBlocklistState", this);
@@ -369,7 +357,7 @@ Blocklist.prototype = {
                                             aMsg.data.appVersion,
                                             aMsg.data.toolkitVersion);
       case "Blocklist:content-blocklist-updated":
-        Services.obs.notifyObservers(null, "content-blocklist-updated", null);
+        Services.obs.notifyObservers(null, "content-blocklist-updated");
         break;
       default:
         throw new Error("Unknown blocklist message received from content: " + aMsg.name);
@@ -618,19 +606,16 @@ Blocklist.prototype = {
     if (!this._isBlocklistLoaded())
       this._loadBlocklist();
 
-    // If kinto update is enabled, do the kinto update
+    // If blocklist update via Kinto is enabled, poll for changes and sync.
+    // Currently certificates blocklist relies on it by default.
     if (gPref.getBoolPref(PREF_BLOCKLIST_UPDATE_ENABLED)) {
-      const updater =
-        Components.utils.import("resource://services-common/blocklist-updater.js",
-                                {});
-      updater.checkVersions().catch(() => {
-        // Before we enable this in release, we want to collect telemetry on
-        // failed kinto updates - see bug 1254099
+      BlocklistUpdater.checkVersions().catch(() => {
+        // Bug 1254099 - Telemetry (success or errors) will be collected during this process.
       });
     }
   },
 
-  onXMLLoad: Task.async(function*(aEvent) {
+  async onXMLLoad(aEvent) {
     let request = aEvent.target;
     try {
       gCertUtils.checkCert(request.channel);
@@ -658,11 +643,11 @@ Blocklist.prototype = {
 
     try {
       let path = OS.Path.join(OS.Constants.Path.profileDir, FILE_BLOCKLIST);
-      yield OS.File.writeAtomic(path, request.responseText, {tmpPath: path + ".tmp"});
+      await OS.File.writeAtomic(path, request.responseText, {tmpPath: path + ".tmp"});
     } catch (e) {
       LOG("Blocklist::onXMLLoad: " + e);
     }
-  }),
+  },
 
   onXMLError(aEvent) {
     try {
@@ -843,10 +828,10 @@ Blocklist.prototype = {
     this._preloadedBlocklistContent = null;
   },
 
-  _preloadBlocklist: Task.async(function*() {
+  async _preloadBlocklist() {
     let profPath = OS.Path.join(OS.Constants.Path.profileDir, FILE_BLOCKLIST);
     try {
-      yield this._preloadBlocklistFile(profPath);
+      await this._preloadBlocklistFile(profPath);
       return;
     } catch (e) {
       LOG("Blocklist::_preloadBlocklist: Failed to load XML file " + e)
@@ -854,16 +839,16 @@ Blocklist.prototype = {
 
     var appFile = FileUtils.getFile(KEY_APPDIR, [FILE_BLOCKLIST]);
     try {
-      yield this._preloadBlocklistFile(appFile.path);
+      await this._preloadBlocklistFile(appFile.path);
       return;
     } catch (e) {
       LOG("Blocklist::_preloadBlocklist: Failed to load XML file " + e)
     }
 
     LOG("Blocklist::_preloadBlocklist: no XML File found");
-  }),
+  },
 
-  _preloadBlocklistFile: Task.async(function*(path) {
+  async _preloadBlocklistFile(path) {
     if (this._addonEntries) {
       // The file has been already loaded.
       return;
@@ -874,13 +859,13 @@ Blocklist.prototype = {
       return;
     }
 
-    let text = yield OS.File.read(path, { encoding: "utf-8" });
+    let text = await OS.File.read(path, { encoding: "utf-8" });
 
     if (!this._addonEntries) {
       // Store the content only if a sync load has not been performed in the meantime.
       this._preloadedBlocklistContent = text;
     }
-  }),
+  },
 
   _loadBlocklistFromString(text) {
     try {
@@ -1303,7 +1288,7 @@ Blocklist.prototype = {
   },
 
   _notifyObserversBlocklistUpdated() {
-    Services.obs.notifyObservers(this, "blocklist-updated", "");
+    Services.obs.notifyObservers(this, "blocklist-updated");
     Services.ppmm.broadcastAsyncMessage("Blocklist:blocklistInvalidated", {});
   },
 
@@ -1467,7 +1452,7 @@ Blocklist.prototype = {
         Services.obs.removeObserver(applyBlocklistChanges, "addon-blocklist-closed");
       }
 
-      Services.obs.addObserver(applyBlocklistChanges, "addon-blocklist-closed", false);
+      Services.obs.addObserver(applyBlocklistChanges, "addon-blocklist-closed");
 
       if (getPref("getBoolPref", PREF_BLOCKLIST_SUPPRESSUI, false)) {
         applyBlocklistChanges();

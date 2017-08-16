@@ -9,9 +9,13 @@
 :root {
   --tab-toolbar-navbar-overlap: 0px;
   --navbar-tab-toolbar-highlight-overlap: 0px;
+%ifndef MOZ_PHOTON_THEME
   --space-above-tabbar: 0px;
+%endif
   --toolbarbutton-text-shadow: none;
   --backbutton-urlbar-overlap: 0px;
+  /* 18px icon + 2 * 5px padding + 1 * 1px border */
+  --forwardbutton-width: 29px;
 }
 
 :root:-moz-lwtheme-brighttext {
@@ -49,6 +53,7 @@
   --urlbar-dropmarker-active-2x-region: rect(0px, 33px, 14px, 22px);
 }
 
+%ifndef MOZ_PHOTON_THEME
 /* Override the lwtheme-specific styling for toolbar buttons */
 :root:-moz-lwtheme-brighttext,
 toolbar:-moz-lwtheme-brighttext  {
@@ -59,9 +64,8 @@ toolbar:-moz-lwtheme-brighttext  {
   --toolbarbutton-active-boxshadow: none;
   --toolbarbutton-active-bordercolor: rgba(25,33,38,.8);
   --toolbarbutton-checkedhover-backgroundcolor: #3C5283;
-
 }
-
+%endif
 :root:-moz-lwtheme-darktext {
   --url-and-searchbar-background-color: #fff;
 
@@ -84,6 +88,7 @@ toolbar:-moz-lwtheme-brighttext  {
   --pinned-tab-glow: radial-gradient(22px at center calc(100% - 2px), rgba(76,158,217,0.9) 13%, transparent 16%);
 }
 
+%ifndef MOZ_PHOTON_THEME
 /* Override the lwtheme-specific styling for toolbar buttons */
 :root:-moz-lwtheme-darktext,
 toolbar:-moz-lwtheme-darktext {
@@ -101,7 +106,7 @@ toolbar:-moz-lwtheme-darktext {
 #main-window[tabsintitlebar][customizing] {
   --space-above-tabbar: 9px;
 }
-
+%endif
 /* Override @tabCurveHalfWidth@ and @tabCurveWidth@.  XXX: Switch to a CSS variable once the perf is sorted out - bug 1088771 */
 .tab-background-middle {
   border-left-width: 0;
@@ -176,15 +181,56 @@ toolbar:-moz-lwtheme-darktext {
   text-shadow: var(--toolbarbutton-text-shadow);
 }
 
-/* Using toolbar[brighttext] instead of important to override linux */
-toolbar[brighttext] #downloads-indicator-counter {
-  text-shadow: var(--toolbarbutton-text-shadow);
-  color: var(--chrome-color);
-}
-
 #TabsToolbar {
   text-shadow: none !important;
 }
+%ifndef MOZ_PHOTON_THEME
+
+/* Back and forward button */
+
+#back-button > .toolbarbutton-icon,
+#forward-button > .toolbarbutton-icon {
+  background: var(--chrome-nav-buttons-background) !important;
+  border-radius: 0 !important;
+  padding: var(--toolbarbutton-inner-padding) 5px !important;
+  margin: 0 !important;
+  border: 1px solid var(--chrome-nav-bar-controls-border-color) !important;
+  box-shadow: none !important;
+  height: auto !important;
+}
+
+/* the normal theme adds box-shadow: <stuff> !important when the back-button is [open]. Fix: */
+#back-button[open="true"] > .toolbarbutton-icon {
+  box-shadow: none !important;
+}
+
+#forward-button > .toolbarbutton-icon {
+  border-inline-start: none !important;
+}
+
+/* Override a box shadow for disabled back button */
+#main-window:not([customizing]) #back-button[disabled] > .toolbarbutton-icon {
+  box-shadow: none !important;
+}
+
+/* Override !important properties for hovered back button */
+#main-window #back-button:hover:not([disabled="true"]) > .toolbarbutton-icon,
+#main-window #forward-button:hover:not([disabled="true"]) > .toolbarbutton-icon {
+  background: var(--chrome-nav-buttons-hover-background) !important;
+  box-shadow: none !important;
+}
+
+#back-button > .toolbarbutton-icon {
+  border-radius: 2px 0 0 2px !important;
+}
+
+#nav-bar .toolbarbutton-1:not([type=menu-button]),
+#nav-bar .toolbarbutton-1 > .toolbarbutton-menubutton-button,
+#nav-bar .toolbarbutton-1 > .toolbarbutton-menubutton-dropmarker {
+  padding-top: 2px;
+  padding-bottom: 2px;
+}
+%endif
 
 /* URL bar and search bar*/
 #urlbar,
@@ -196,11 +242,16 @@ toolbar[brighttext] #downloads-indicator-counter {
   box-shadow: none !important;
 }
 
-%filter substitution
-%define selectorSuffix :-moz-lwtheme-brighttext
-%define iconVariant -white
-%include identity-block/icons.inc.css
+#identity-icon:-moz-lwtheme-brighttext,
+#tracking-protection-icon:-moz-lwtheme-brighttext,
+#connection-icon:-moz-lwtheme-brighttext,
+.notification-anchor-icon:-moz-lwtheme-brighttext,
+#blocked-permissions-container > .blocked-permission-icon:-moz-lwtheme-brighttext,
+#extension-icon:-moz-lwtheme-brighttext {
+  fill: rgba(255,255,255,.7);
+}
 
+%ifndef MOZ_PHOTON_THEME
 #urlbar {
   border-inline-start: none !important;
   opacity: 1 !important;
@@ -220,7 +271,7 @@ window:not([chromehidden~="toolbar"]) #urlbar-wrapper > #urlbar:-moz-locale-dir(
      value is set in the previous rule set. o_O */
   margin-inline-start: 0;
 }
-
+%endif
 #urlbar-zoom-button:-moz-lwtheme-brighttext:hover {
   background-color: rgba(255,255,255,.2);
 }
@@ -246,13 +297,7 @@ window:not([chromehidden~="toolbar"]) #urlbar-wrapper > #urlbar:-moz-locale-dir(
 
 /* Use smaller back button icon */
 #back-button {
-  -moz-image-region: rect(0, 54px, 18px, 36px);
-}
-
-@media (min-resolution: 1.1dppx) {
-  #back-button {
-    -moz-image-region: rect(0, 108px, 36px, 72px);
-  }
+  list-style-image: url("chrome://browser/skin/back.svg");
 }
 
 .tab-background {
@@ -313,7 +358,7 @@ window:not([chromehidden~="toolbar"]) #urlbar-wrapper > #urlbar:-moz-locale-dir(
 
 .tab-icon-sound[soundplaying],
 .tab-icon-sound[muted] {
-  filter: url(chrome://global/skin/filters.svg#fill) !important; /* removes drop-shadow filter */
+  filter: none !important; /* removes drop-shadow filter */
 }
 
 /* Don't need space for the tab curves (66px - 30px) */

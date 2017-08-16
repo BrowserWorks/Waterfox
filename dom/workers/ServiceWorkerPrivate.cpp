@@ -14,6 +14,7 @@
 #include "nsINetworkInterceptController.h"
 #include "nsIPushErrorReporter.h"
 #include "nsISupportsImpl.h"
+#include "nsITimedChannel.h"
 #include "nsIUploadChannel2.h"
 #include "nsNetUtil.h"
 #include "nsProxyRelease.h"
@@ -356,8 +357,12 @@ private:
     MOZ_ASSERT(mWorkerPrivate);
     mWorkerPrivate->AssertIsOnWorkerThread();
     MOZ_DIAGNOSTIC_ASSERT(mPendingPromisesCount > 0);
-    MOZ_ASSERT(mSelfRef);
-    MOZ_ASSERT(mKeepAliveToken);
+
+    // Note: mSelfRef and mKeepAliveToken can be nullptr here
+    //       if MaybeCleanup() was called just before a promise
+    //       settled.  This can happen, for example, if the
+    //       worker thread is being terminated for running too
+    //       long, browser shutdown, etc.
 
     mRejected |= (aResult == Rejected);
 
@@ -1297,6 +1302,7 @@ class FetchEventRunnable : public ExtendableFunctionalEventWorkerRunnable
   nsCString mMethod;
   nsString mClientId;
   bool mIsReload;
+  bool mMarkLaunchServiceWorkerEnd;
   RequestCache mCacheMode;
   RequestMode mRequestMode;
   RequestRedirect mRequestRedirect;
@@ -1315,13 +1321,15 @@ public:
                      const nsACString& aScriptSpec,
                      nsMainThreadPtrHandle<ServiceWorkerRegistrationInfo>& aRegistration,
                      const nsAString& aDocumentId,
-                     bool aIsReload)
+                     bool aIsReload,
+                     bool aMarkLaunchServiceWorkerEnd)
     : ExtendableFunctionalEventWorkerRunnable(
         aWorkerPrivate, aKeepAliveToken, aRegistration)
     , mInterceptedChannel(aChannel)
     , mScriptSpec(aScriptSpec)
     , mClientId(aDocumentId)
     , mIsReload(aIsReload)
+    , mMarkLaunchServiceWorkerEnd(aMarkLaunchServiceWorkerEnd)
     , mCacheMode(RequestCache::Default)
     , mRequestMode(RequestMode::No_cors)
     , mRequestRedirect(RequestRedirect::Follow)
@@ -1384,7 +1392,8 @@ public:
 
     nsAutoCString referrer;
     // Ignore the return value since the Referer header may not exist.
-    httpChannel->GetRequestHeader(NS_LITERAL_CSTRING("Referer"), referrer);
+    Unused << httpChannel->GetRequestHeader(NS_LITERAL_CSTRING("Referer"),
+                                            referrer);
     if (!referrer.IsEmpty()) {
       mReferrer = referrer;
     } else {
@@ -1439,15 +1448,18 @@ public:
 
     // This is safe due to static_asserts in ServiceWorkerManager.cpp.
     uint32_t redirectMode;
-    internalChannel->GetRedirectMode(&redirectMode);
+    rv = internalChannel->GetRedirectMode(&redirectMode);
+    MOZ_ASSERT(NS_SUCCEEDED(rv));
     mRequestRedirect = static_cast<RequestRedirect>(redirectMode);
 
     // This is safe due to static_asserts in ServiceWorkerManager.cpp.
     uint32_t cacheMode;
-    internalChannel->GetFetchCacheMode(&cacheMode);
+    rv = internalChannel->GetFetchCacheMode(&cacheMode);
+    MOZ_ASSERT(NS_SUCCEEDED(rv));
     mCacheMode = static_cast<RequestCache>(cacheMode);
 
-    internalChannel->GetIntegrityMetadata(mIntegrity);
+    rv = internalChannel->GetIntegrityMetadata(mIntegrity);
+    MOZ_ASSERT(NS_SUCCEEDED(rv));
 
     mRequestCredentials = InternalRequest::MapChannelToRequestCredentials(channel);
 
@@ -1470,6 +1482,12 @@ public:
   WorkerRun(JSContext* aCx, WorkerPrivate* aWorkerPrivate) override
   {
     MOZ_ASSERT(aWorkerPrivate);
+
+    if (mMarkLaunchServiceWorkerEnd) {
+      mInterceptedChannel->SetLaunchServiceWorkerEnd(TimeStamp::Now());
+    }
+
+    mInterceptedChannel->SetDispatchFetchEventEnd(TimeStamp::Now());
     return DispatchFetchEvent(aCx, aWorkerPrivate);
   }
 
@@ -1493,11 +1511,18 @@ private:
     explicit ResumeRequest(nsMainThreadPtrHandle<nsIInterceptedChannel>& aChannel)
       : mChannel(aChannel)
     {
+      mChannel->SetFinishResponseStart(TimeStamp::Now());
     }
 
     NS_IMETHOD Run() override
     {
       AssertIsOnMainThread();
+
+      TimeStamp timeStamp = TimeStamp::Now();
+      mChannel->SetHandleFetchEventEnd(timeStamp);
+      mChannel->SetChannelResetEnd(timeStamp);
+      mChannel->SaveTimeStamps();
+
       nsresult rv = mChannel->ResetInterception();
       NS_WARNING_ASSERTION(NS_SUCCEEDED(rv),
                            "Failed to resume intercepted network request");
@@ -1573,6 +1598,8 @@ private:
     event->PostInit(mInterceptedChannel, mRegistration, mScriptSpec);
     event->SetTrusted(true);
 
+    mInterceptedChannel->SetHandleFetchEventStart(TimeStamp::Now());
+
     nsresult rv2 =
       DispatchExtendableEventOnWorkerScope(aCx, aWorkerPrivate->GlobalScope(),
                                            event, nullptr);
@@ -1643,8 +1670,19 @@ ServiceWorkerPrivate::SendFetchEvent(nsIInterceptedChannel* aChannel,
   nsCOMPtr<nsIRunnable> failRunnable =
     NewRunnableMethod(aChannel, &nsIInterceptedChannel::ResetInterception);
 
-  nsresult rv = SpawnWorkerIfNeeded(FetchEvent, failRunnable, aLoadGroup);
+  aChannel->SetLaunchServiceWorkerStart(TimeStamp::Now());
+  aChannel->SetDispatchFetchEventStart(TimeStamp::Now());
+
+  bool newWorkerCreated = false;
+  nsresult rv = SpawnWorkerIfNeeded(FetchEvent,
+                                    failRunnable,
+                                    &newWorkerCreated,
+                                    aLoadGroup);
   NS_ENSURE_SUCCESS(rv, rv);
+
+  if (!newWorkerCreated) {
+    aChannel->SetLaunchServiceWorkerEnd(TimeStamp::Now());
+  }
 
   nsMainThreadPtrHandle<nsIInterceptedChannel> handle(
     new nsMainThreadPtrHolder<nsIInterceptedChannel>(aChannel, false));
@@ -1654,10 +1692,11 @@ ServiceWorkerPrivate::SendFetchEvent(nsIInterceptedChannel* aChannel,
 
   RefPtr<KeepAliveToken> token = CreateEventKeepAliveToken();
 
+
   RefPtr<FetchEventRunnable> r =
     new FetchEventRunnable(mWorkerPrivate, token, handle,
                            mInfo->ScriptSpec(), regInfo,
-                           aDocumentId, aIsReload);
+                           aDocumentId, aIsReload, newWorkerCreated);
   rv = r->Init();
   if (NS_WARN_IF(NS_FAILED(rv))) {
     return rv;
@@ -1680,6 +1719,7 @@ ServiceWorkerPrivate::SendFetchEvent(nsIInterceptedChannel* aChannel,
 nsresult
 ServiceWorkerPrivate::SpawnWorkerIfNeeded(WakeUpReason aWhy,
                                           nsIRunnable* aLoadFailedRunnable,
+                                          bool* aNewWorkerCreated,
                                           nsILoadGroup* aLoadGroup)
 {
   AssertIsOnMainThread();
@@ -1689,6 +1729,12 @@ ServiceWorkerPrivate::SpawnWorkerIfNeeded(WakeUpReason aWhy,
   // This should be fixed in bug 1125961, but for now we enforce updating
   // the overriden load group when intercepting a fetch.
   MOZ_ASSERT_IF(aWhy == FetchEvent, aLoadGroup);
+
+  // Defaults to no new worker created, but if there is one, we'll set the value
+  // to true at the end of this function.
+  if (aNewWorkerCreated) {
+    *aNewWorkerCreated = false;
+  }
 
   if (mWorkerPrivate) {
     mWorkerPrivate->UpdateOverridenLoadGroup(aLoadGroup);
@@ -1763,7 +1809,7 @@ ServiceWorkerPrivate::SpawnWorkerIfNeeded(WakeUpReason aWhy,
   info.mOriginAttributes = mInfo->GetOriginAttributes();
 
   // Verify that we don't have any CSP on pristine principal.
-#if defined(DEBUG) || !defined(RELEASE_OR_BETA)
+#ifdef MOZ_DIAGNOSTIC_ASSERT_ENABLED
   nsCOMPtr<nsIContentSecurityPolicy> csp;
   Unused << info.mPrincipal->GetCsp(getter_AddRefs(csp));
   MOZ_DIAGNOSTIC_ASSERT(!csp);
@@ -1789,12 +1835,18 @@ ServiceWorkerPrivate::SpawnWorkerIfNeeded(WakeUpReason aWhy,
   mWorkerPrivate = WorkerPrivate::Constructor(jsapi.cx(),
                                               scriptSpec,
                                               false, WorkerTypeService,
-                                              mInfo->Scope(), &info, error);
+                                              NullString(),
+                                              mInfo->Scope(),
+                                              &info, error);
   if (NS_WARN_IF(error.Failed())) {
     return error.StealNSResult();
   }
 
   RenewKeepAliveToken(aWhy);
+
+  if (aNewWorkerCreated) {
+    *aNewWorkerCreated = true;
+  }
 
   return NS_OK;
 }

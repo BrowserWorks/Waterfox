@@ -9,8 +9,12 @@ way, and certainly anything using mozharness should use this approach.
 """
 
 from __future__ import absolute_import, print_function, unicode_literals
+import slugid
 
-from voluptuous import Schema, Required, Optional, Any
+from textwrap import dedent
+
+from taskgraph.util.schema import Schema
+from voluptuous import Required, Optional, Any
 
 from taskgraph.transforms.job import run_job_using
 from taskgraph.transforms.job.common import (
@@ -18,7 +22,7 @@ from taskgraph.transforms.job.common import (
     docker_worker_add_gecko_vcs_env_vars,
     docker_worker_setup_secrets,
     docker_worker_add_public_artifacts,
-    docker_worker_support_vcs_checkout,
+    support_vcs_checkout,
 )
 
 COALESCE_KEY = 'builds.{project}.{name}'
@@ -91,7 +95,7 @@ def mozharness_on_docker_worker_setup(config, job, taskdesc):
 
     docker_worker_add_public_artifacts(config, job, taskdesc)
     docker_worker_add_workspace_cache(config, job, taskdesc)
-    docker_worker_support_vcs_checkout(config, job, taskdesc)
+    support_vcs_checkout(config, job, taskdesc)
 
     env = worker.setdefault('env', {})
     env.update({
@@ -101,6 +105,7 @@ def mozharness_on_docker_worker_setup(config, job, taskdesc):
         'MH_BUILD_POOL': 'taskcluster',
         'MOZ_BUILD_DATE': config.params['moz_build_date'],
         'MOZ_SCM_LEVEL': config.params['level'],
+        'MOZ_AUTOMATION': '1',
     })
 
     if 'actions' in run:
@@ -165,9 +170,10 @@ def mozharness_on_docker_worker_setup(config, job, taskdesc):
     worker['command'] = command
 
 
-# We use the generic worker to run tasks on Windows
 @run_job_using("generic-worker", "mozharness", schema=mozharness_run_schema)
-def mozharness_on_windows(config, job, taskdesc):
+def mozharness_on_generic_worker(config, job, taskdesc):
+    assert job['worker']['os'] == 'windows', 'only supports windows right now'
+
     run = job['run']
 
     # fail if invalid run options are included
@@ -186,7 +192,7 @@ def mozharness_on_windows(config, job, taskdesc):
     worker = taskdesc['worker']
 
     worker['artifacts'] = [{
-        'path': r'public\build',
+        'path': r'public/build',
         'type': 'directory',
     }]
 
@@ -196,7 +202,14 @@ def mozharness_on_windows(config, job, taskdesc):
     env.update({
         'MOZ_BUILD_DATE': config.params['moz_build_date'],
         'MOZ_SCM_LEVEL': config.params['level'],
+        'MOZ_SIMPLE_PACKAGE_NAME': 'target',
+        'MOZ_AUTOMATION': '1',
     })
+
+    if not job['attributes']['build_platform'].startswith('win'):
+        raise Exception(
+            "Task generation for mozharness build jobs currently only supported on Windows"
+        )
 
     mh_command = [r'c:\mozilla-build\python\python.exe']
     mh_command.append('\\'.join([r'.\build\src\testing', run['script'].replace('/', '\\')]))
@@ -217,12 +230,15 @@ def mozharness_on_windows(config, job, taskdesc):
     hg_command.append('.\\build\\src')
 
     worker['command'] = []
-    # sccache currently uses the full compiler commandline as input to the
-    # cache hash key, so create a symlink to the task dir and build from
-    # the symlink dir to get consistent paths.
     if taskdesc.get('needs-sccache'):
         worker['command'].extend([
-            r'if exist z:\build rmdir z:\build',
+            # Make the comment part of the first command, as it will help users to
+            # understand what is going on, and why these steps are implemented.
+            dedent('''\
+            :: sccache currently uses the full compiler commandline as input to the
+            :: cache hash key, so create a symlink to the task dir and build from
+            :: the symlink dir to get consistent paths.
+            if exist z:\\build rmdir z:\\build'''),
             r'mklink /d z:\build %cd%',
             # Grant delete permission on the link to everyone.
             r'icacls z:\build /grant *S-1-1-0:D /L',
@@ -233,3 +249,32 @@ def mozharness_on_windows(config, job, taskdesc):
         ' '.join(hg_command),
         ' '.join(mh_command)
     ])
+
+
+@run_job_using('buildbot-bridge', 'mozharness', schema=mozharness_run_schema)
+def mozharness_on_buildbot_bridge(config, job, taskdesc):
+    run = job['run']
+    worker = taskdesc['worker']
+    branch = config.params['project']
+    product = run.get('index', {}).get('product', 'firefox')
+
+    worker.pop('env', None)
+
+    if 'devedition' in job['attributes']['build_platform']:
+        buildername = 'OS X 10.7 {} devedition build'.format(branch)
+    else:
+        buildername = 'OS X 10.7 {} build'.format(branch)
+
+    worker.update({
+        'buildername': buildername,
+        'sourcestamp': {
+            'branch': branch,
+            'repository': config.params['head_repository'],
+            'revision': config.params['head_rev'],
+        },
+        'properties': {
+            'product': product,
+            'who': config.params['owner'],
+            'upload_to_task_id': slugid.nice(),
+        }
+    })

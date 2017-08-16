@@ -36,6 +36,7 @@ class nsIURI;
 namespace mozilla {
 class DeclarationBlock;
 namespace dom {
+struct CustomElementData;
 class DOMIntersectionObserver;
 class Element;
 } // namespace dom
@@ -142,6 +143,7 @@ public:
   virtual nsresult AppendText(const char16_t* aBuffer, uint32_t aLength,
                               bool aNotify) override;
   virtual bool TextIsOnlyWhitespace() override;
+  virtual bool ThreadSafeTextIsOnlyWhitespace() const override;
   virtual bool HasTextForTranslation() override;
   virtual void AppendTextTo(nsAString& aResult) override;
   MOZ_MUST_USE
@@ -157,9 +159,6 @@ public:
   virtual nsIContent *GetXBLInsertionParent() const override;
   virtual void SetXBLInsertionParent(nsIContent* aContent) override;
   virtual bool IsLink(nsIURI** aURI) const override;
-
-  virtual CustomElementData *GetCustomElementData() const override;
-  virtual void SetCustomElementData(CustomElementData* aData) override;
 
   virtual void DestroyContent() override;
   virtual void SaveSubtreeState() override;
@@ -237,7 +236,7 @@ protected:
    * Copy attributes and state to another element
    * @param aDest the object to copy to
    */
-  nsresult CopyInnerTo(FragmentOrElement* aDest);
+  nsresult CopyInnerTo(FragmentOrElement* aDest, bool aPreallocateChildren);
 
 public:
   // Because of a bug in MS C++ compiler nsDOMSlots must be declared public,
@@ -276,7 +275,7 @@ public:
 
     /**
      * SMIL Overridde style rules (for SMIL animation of CSS properties)
-     * @see nsIContent::GetSMILOverrideStyle
+     * @see Element::GetSMILOverrideStyle
      */
     nsCOMPtr<nsICSSDeclaration> mSMILOverrideStyle;
 

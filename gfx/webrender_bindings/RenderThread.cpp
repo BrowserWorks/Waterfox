@@ -3,14 +3,16 @@
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
 
+#include "base/task.h"
+#include "GeckoProfiler.h"
 #include "RenderThread.h"
 #include "nsThreadUtils.h"
-#include "mozilla/webrender/RendererOGL.h"
-#include "mozilla/widget/CompositorWidget.h"
 #include "mozilla/layers/CompositorThread.h"
 #include "mozilla/layers/CompositorBridgeParent.h"
 #include "mozilla/StaticPtr.h"
-#include "base/task.h"
+#include "mozilla/webrender/RendererOGL.h"
+#include "mozilla/webrender/RenderTextureHost.h"
+#include "mozilla/widget/CompositorWidget.h"
 
 namespace mozilla {
 namespace wr {
@@ -19,6 +21,8 @@ static StaticRefPtr<RenderThread> sRenderThread;
 
 RenderThread::RenderThread(base::Thread* aThread)
   : mThread(aThread)
+  , mPendingFrameCountMapLock("RenderThread.mPendingFrameCountMapLock")
+  , mRenderTextureMapLock("RenderThread.mRenderTextureMapLock")
 {
 
 }
@@ -86,6 +90,9 @@ RenderThread::AddRenderer(wr::WindowId aWindowId, UniquePtr<RendererOGL> aRender
 {
   MOZ_ASSERT(IsInRenderThread());
   mRenderers[aWindowId] = Move(aRenderer);
+
+  MutexAutoLock lock(mPendingFrameCountMapLock);
+  mPendingFrameCounts.Put(AsUint64(aWindowId), 0);
 }
 
 void
@@ -93,6 +100,9 @@ RenderThread::RemoveRenderer(wr::WindowId aWindowId)
 {
   MOZ_ASSERT(IsInRenderThread());
   mRenderers.erase(aWindowId);
+
+  MutexAutoLock lock(mPendingFrameCountMapLock);
+  mPendingFrameCounts.Remove(AsUint64(aWindowId));
 }
 
 RendererOGL*
@@ -121,6 +131,7 @@ RenderThread::NewFrameReady(wr::WindowId aWindowId)
   }
 
   UpdateAndRender(aWindowId);
+  DecPendingFrameCount(aWindowId);
 }
 
 void
@@ -168,6 +179,7 @@ NotifyDidRender(layers::CompositorBridgeParentBase* aBridge,
 void
 RenderThread::UpdateAndRender(wr::WindowId aWindowId)
 {
+  GeckoProfilerTracingRAII tracer("Paint", "Composite");
   MOZ_ASSERT(IsInRenderThread());
 
   auto it = mRenderers.find(aWindowId);
@@ -194,6 +206,125 @@ RenderThread::UpdateAndRender(wr::WindowId aWindowId)
   ));
 }
 
+void
+RenderThread::Pause(wr::WindowId aWindowId)
+{
+  MOZ_ASSERT(IsInRenderThread());
+
+  auto it = mRenderers.find(aWindowId);
+  MOZ_ASSERT(it != mRenderers.end());
+  if (it == mRenderers.end()) {
+    return;
+  }
+  auto& renderer = it->second;
+  renderer->Pause();
+}
+
+bool
+RenderThread::Resume(wr::WindowId aWindowId)
+{
+  MOZ_ASSERT(IsInRenderThread());
+
+  auto it = mRenderers.find(aWindowId);
+  MOZ_ASSERT(it != mRenderers.end());
+  if (it == mRenderers.end()) {
+    return false;
+  }
+  auto& renderer = it->second;
+  return renderer->Resume();
+}
+
+uint32_t
+RenderThread::GetPendingFrameCount(wr::WindowId aWindowId)
+{
+  MutexAutoLock lock(mPendingFrameCountMapLock);
+  uint32_t count = 0;
+  MOZ_ASSERT(mPendingFrameCounts.Get(AsUint64(aWindowId), &count));
+  mPendingFrameCounts.Get(AsUint64(aWindowId), &count);
+  return count;
+}
+
+void
+RenderThread::IncPendingFrameCount(wr::WindowId aWindowId)
+{
+  MutexAutoLock lock(mPendingFrameCountMapLock);
+  // Get the old count.
+  uint32_t oldCount = 0;
+  if (!mPendingFrameCounts.Get(AsUint64(aWindowId), &oldCount)) {
+    MOZ_ASSERT(false);
+    return;
+  }
+  // Update pending frame count.
+  mPendingFrameCounts.Put(AsUint64(aWindowId), oldCount + 1);
+}
+
+void
+RenderThread::DecPendingFrameCount(wr::WindowId aWindowId)
+{
+  MutexAutoLock lock(mPendingFrameCountMapLock);
+  // Get the old count.
+  uint32_t oldCount = 0;
+  if (!mPendingFrameCounts.Get(AsUint64(aWindowId), &oldCount)) {
+    MOZ_ASSERT(false);
+    return;
+  }
+  MOZ_ASSERT(oldCount > 0);
+  if (oldCount <= 0) {
+    return;
+  }
+  // Update pending frame count.
+  mPendingFrameCounts.Put(AsUint64(aWindowId), oldCount - 1);
+}
+
+void
+RenderThread::RegisterExternalImage(uint64_t aExternalImageId, already_AddRefed<RenderTextureHost> aTexture)
+{
+  MutexAutoLock lock(mRenderTextureMapLock);
+
+  MOZ_ASSERT(!mRenderTextures.Get(aExternalImageId).get());
+  RefPtr<RenderTextureHost> texture(aTexture);
+  mRenderTextures.Put(aExternalImageId, Move(texture));
+}
+
+void
+RenderThread::UnregisterExternalImage(uint64_t aExternalImageId)
+{
+  MutexAutoLock lock(mRenderTextureMapLock);
+  MOZ_ASSERT(mRenderTextures.Get(aExternalImageId).get());
+  if (!IsInRenderThread()) {
+    // The RenderTextureHost should be released in render thread. So, post the
+    // deletion task here.
+    // The shmem and raw buffer are owned by compositor ipc channel. It's
+    // possible that RenderTextureHost is still exist after the shmem/raw buffer
+    // deletion. Then the buffer in RenderTextureHost becomes invalid. It's fine
+    // for this situation. Gecko will only release the buffer if WR doesn't need
+    // it. So, no one will access the invalid buffer in RenderTextureHost.
+    RefPtr<RenderTextureHost> texture = mRenderTextures.Get(aExternalImageId);
+    mRenderTextures.Remove(aExternalImageId);
+    Loop()->PostTask(NewRunnableMethod<RefPtr<RenderTextureHost>>(
+      this, &RenderThread::DeferredRenderTextureHostDestroy, Move(texture)
+    ));
+  } else {
+    mRenderTextures.Remove(aExternalImageId);
+  }
+}
+
+void
+RenderThread::DeferredRenderTextureHostDestroy(RefPtr<RenderTextureHost>)
+{
+  // Do nothing. Just decrease the ref-count of RenderTextureHost.
+}
+
+RenderTextureHost*
+RenderThread::GetRenderTexture(WrExternalImageId aExternalImageId)
+{
+  MOZ_ASSERT(IsInRenderThread());
+
+  MutexAutoLock lock(mRenderTextureMapLock);
+  MOZ_ASSERT(mRenderTextures.Get(aExternalImageId.mHandle).get());
+  return mRenderTextures.Get(aExternalImageId.mHandle).get();
+}
+
 } // namespace wr
 } // namespace mozilla
 
@@ -201,6 +332,7 @@ extern "C" {
 
 void wr_notifier_new_frame_ready(WrWindowId aWindowId)
 {
+  mozilla::wr::RenderThread::Get()->IncPendingFrameCount(aWindowId);
   mozilla::wr::RenderThread::Get()->NewFrameReady(mozilla::wr::WindowId(aWindowId));
 }
 

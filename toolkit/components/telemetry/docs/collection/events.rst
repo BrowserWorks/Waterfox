@@ -9,6 +9,10 @@ Across the different Firefox initiatives, there is a common need for a mechanism
 
 For events recorded into Firefox Telemetry we also provide an API that opaquely handles storage and submission to our servers.
 
+.. important::
+
+    Every new data collection in Firefox needs a `data collection review <https://wiki.mozilla.org/Firefox/Data_Collection#Requesting_Approval>`_ from a data collection peer. Just set the feedback? flag for :bsmedberg or one of the other data peers. We try to reply within a business day.
+
 Serialization format
 ====================
 
@@ -39,14 +43,14 @@ Where the individual fields are:
 - ``method``: ``String``, identifier. This describes the type of event that occured, e.g. ``click``, ``keydown`` or ``focus``.
 - ``object``: ``String``, identifier. This is the object the event occured on, e.g. ``reload_button`` or ``urlbar``.
 - ``value``: ``String``, optional, may be ``null``. This is a user defined value, providing context for the event.
-- ``extra``: ``Object``, optional, may be ``null``. This is an object of the form ``{"key": "value", ...}``, used for events where additional context is needed.
+- ``extra``: ``Object``, optional, may be ``null``. This is an object of the form ``{"key": "value", ...}``, both keys and values need to be strings. This is used for events where additional richer context is needed.
 
 .. _eventlimits:
 
 Limits
 ------
 
-Each ``String`` marked as an identifier is restricted to the following regex pattern: ``^[:alpha:][:alnum:_.]+[:alnum:]$``.
+Each ``String`` marked as an identifier is restricted to the following regex pattern: ``^[:alpha:][:alnum:_.]*[:alnum:]$``.
 
 For the Firefox Telemetry implementation, several fields are subject to limits:
 
@@ -96,6 +100,14 @@ The following event properties are valid:
 - ``objects`` *(required, list of strings)*: The valid event objects.
 - ``description`` *(required, string)*: Description of the event and its semantics.
 - ``release_channel_collection`` *(optional, string)*: This can be set to ``opt-in`` (default) or ``opt-out``.
+- ``record_in_processes`` *(required, list of strings)*: A list of processes the event can be recorded in. Currently supported values are:
+
+  - ``main``
+  - ``content``
+  - ``gpu``
+  - ``all_child`` (record in all the child processes)
+  - ``all`` (record in all the processes).
+
 - ``bug_numbers`` *(required, list of numbers)*: A list of bugzilla bug numbers that are relevant to this event.
 - ``notification_emails`` *(required, list of strings)*: A list of emails of owners for this event. This is used for contact for data reviews and potentially to email alerts.
 - expiry: There are two properties that can specify expiry, at least one needs to be set:
@@ -126,7 +138,9 @@ Record a registered event.
 Throws if the combination of ``category``, ``method`` and ``object`` is unknown.
 Recording an expired event will not throw, but print a warning into the browser console.
 
-Note: Currently events are only recorded in the main process. Recording in other processes is silently ignored (until `bug 1313326 <https://bugzilla.mozilla.org/show_bug.cgi?id=1313326>`_ is landed).
+.. warning::
+
+  Event Telemetry recording is designed to be cheap, not free. If you wish to record events in a performance-sensitive piece of code, store the events locally and record them only after the performance-sensitive piece ("hot path") has completed.
 
 Example:
 
@@ -165,3 +179,10 @@ Internal API
   Services.telemetry.clearEvents();
 
 These functions are only supposed to be used by Telemetry internally or in tests.
+
+Version History
+===============
+
+- Firefox 52: Initial event support (`bug 1302663 <https://bugzilla.mozilla.org/show_bug.cgi?id=1302663>`_).
+- Firefox 53: Event recording disabled by default (`bug 1329139 <https://bugzilla.mozilla.org/show_bug.cgi?id=1329139>`_).
+- Firefox 54: Added child process events (`bug 1313326 <https://bugzilla.mozilla.org/show_bug.cgi?id=1313326>`_).

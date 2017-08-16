@@ -21,7 +21,7 @@ using namespace dom;
 JoinNodeTransaction::JoinNodeTransaction(EditorBase& aEditorBase,
                                          nsINode& aLeftNode,
                                          nsINode& aRightNode)
-  : mEditorBase(aEditorBase)
+  : mEditorBase(&aEditorBase)
   , mLeftNode(&aLeftNode)
   , mRightNode(&aRightNode)
   , mOffset(0)
@@ -29,6 +29,7 @@ JoinNodeTransaction::JoinNodeTransaction(EditorBase& aEditorBase,
 }
 
 NS_IMPL_CYCLE_COLLECTION_INHERITED(JoinNodeTransaction, EditTransactionBase,
+                                   mEditorBase,
                                    mLeftNode,
                                    mRightNode,
                                    mParent)
@@ -36,13 +37,16 @@ NS_IMPL_CYCLE_COLLECTION_INHERITED(JoinNodeTransaction, EditTransactionBase,
 NS_INTERFACE_MAP_BEGIN_CYCLE_COLLECTION(JoinNodeTransaction)
 NS_INTERFACE_MAP_END_INHERITING(EditTransactionBase)
 
-nsresult
-JoinNodeTransaction::CheckValidity()
+bool
+JoinNodeTransaction::CanDoIt() const
 {
-  if (!mEditorBase.IsModifiableNode(mLeftNode->GetParentNode())) {
-    return NS_ERROR_FAILURE;
+  if (NS_WARN_IF(!mLeftNode) ||
+      NS_WARN_IF(!mRightNode) ||
+      NS_WARN_IF(!mEditorBase) ||
+      !mLeftNode->GetParentNode()) {
+    return false;
   }
-  return NS_OK;
+  return mEditorBase->IsModifiableNode(mLeftNode->GetParentNode());
 }
 
 // After DoTransaction() and RedoTransaction(), the left node is removed from
@@ -50,6 +54,12 @@ JoinNodeTransaction::CheckValidity()
 NS_IMETHODIMP
 JoinNodeTransaction::DoTransaction()
 {
+  if (NS_WARN_IF(!mEditorBase) ||
+      NS_WARN_IF(!mLeftNode) ||
+      NS_WARN_IF(!mRightNode)) {
+    return NS_ERROR_NOT_INITIALIZED;
+  }
+
   // Get the parent node
   nsCOMPtr<nsINode> leftParent = mLeftNode->GetParentNode();
   NS_ENSURE_TRUE(leftParent, NS_ERROR_NULL_POINTER);
@@ -65,7 +75,7 @@ JoinNodeTransaction::DoTransaction()
   mParent = leftParent;
   mOffset = mLeftNode->Length();
 
-  return mEditorBase.JoinNodesImpl(mRightNode, mLeftNode, mParent);
+  return mEditorBase->JoinNodesImpl(mRightNode, mLeftNode, mParent);
 }
 
 //XXX: What if instead of split, we just deleted the unneeded children of
@@ -73,7 +83,11 @@ JoinNodeTransaction::DoTransaction()
 NS_IMETHODIMP
 JoinNodeTransaction::UndoTransaction()
 {
-  MOZ_ASSERT(mParent);
+  if (NS_WARN_IF(!mParent) ||
+      NS_WARN_IF(!mLeftNode) ||
+      NS_WARN_IF(!mRightNode)) {
+    return NS_ERROR_NOT_INITIALIZED;
+  }
 
   // First, massage the existing node so it is in its post-split state
   ErrorResult rv;

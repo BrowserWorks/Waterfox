@@ -26,7 +26,6 @@ const Cu = Components.utils;
 
 Cu.import("resource://gre/modules/XPCOMUtils.jsm");
 Cu.import("resource://gre/modules/Services.jsm");
-Cu.import("resource://gre/modules/Task.jsm");
 
 XPCOMUtils.defineLazyModuleGetter(this, "PlacesUtils",
   "resource://gre/modules/PlacesUtils.jsm");
@@ -74,7 +73,7 @@ const DATABASE_TO_MEMORY_PERC = 4;
 const DATABASE_TO_DISK_PERC = 2;
 // Maximum size of the optimal database.  High-end hardware has plenty of
 // memory and disk space, but performances don't grow linearly.
-const DATABASE_MAX_SIZE = 73400320; // 70MiB
+const DATABASE_MAX_SIZE = 62914560; // 60MiB
 // If the physical memory size is bogus, fallback to this.
 const MEMSIZE_FALLBACK_BYTES = 268435456; // 256 MiB
 // If the disk available space is bogus, fallback to this.
@@ -269,15 +268,24 @@ const EXPIRATION_QUERIES = {
              ACTION.DEBUG
   },
 
+  // Expire orphan pages from the icons database.
+  QUERY_EXPIRE_FAVICONS_PAGES: {
+    sql: `DELETE FROM moz_pages_w_icons
+          WHERE page_url_hash NOT IN (
+            SELECT url_hash FROM moz_places
+          )`,
+    actions: ACTION.TIMED_OVERLIMIT | ACTION.CLEAR_HISTORY |
+             ACTION.SHUTDOWN_DIRTY | ACTION.IDLE_DIRTY | ACTION.IDLE_DAILY |
+             ACTION.DEBUG
+  },
+
   // Expire orphan icons from the database.
   QUERY_EXPIRE_FAVICONS: {
-    sql: `DELETE FROM moz_favicons WHERE id IN (
-            SELECT f.id FROM moz_favicons f
-            LEFT JOIN moz_places h ON f.id = h.favicon_id
-            WHERE h.favicon_id IS NULL
-            LIMIT :limit_favicons
+    sql: `DELETE FROM moz_icons
+          WHERE root = 0 AND id NOT IN (
+            SELECT icon_id FROM moz_icons_to_pages
           )`,
-    actions: ACTION.TIMED | ACTION.TIMED_OVERLIMIT | ACTION.CLEAR_HISTORY |
+    actions: ACTION.TIMED_OVERLIMIT | ACTION.CLEAR_HISTORY |
              ACTION.SHUTDOWN_DIRTY | ACTION.IDLE_DIRTY | ACTION.IDLE_DAILY |
              ACTION.DEBUG
   },
@@ -488,7 +496,7 @@ function nsPlacesExpiration() {
                      getService(Ci.nsIPrefService).
                      getBranch(PREF_BRANCH);
 
-  this._loadPrefs().then(() => {
+  this._loadPrefsPromise = this._loadPrefs().then(() => {
     // Observe our preferences branch for changes.
     this._prefBranch.addObserver("", this, true);
 
@@ -531,7 +539,7 @@ nsPlacesExpiration.prototype = {
 
       this._finalizeInternalStatements();
     } else if (aTopic == TOPIC_PREF_CHANGED) {
-      this._loadPrefs().then(() => {
+      this._loadPrefsPromise = this._loadPrefs().then(() => {
         if (aData == PREF_INTERVAL_SECONDS) {
           // Renew the timer with the new interval value.
           this._newTimer();
@@ -618,7 +626,7 @@ nsPlacesExpiration.prototype = {
 
   notify: function PEX_timerCallback() {
     // Check if we are over history capacity, if so visits must be expired.
-    this._getPagesStats((function onPagesCount(aPagesCount, aStatsCount) {
+    this._getPagesStats((aPagesCount, aStatsCount) => {
       let overLimitPages = aPagesCount - this._urisLimit;
       this._overLimit = overLimitPages > 0;
 
@@ -634,7 +642,7 @@ nsPlacesExpiration.prototype = {
                                                              : LIMIT.SMALL;
 
       this._expireWithActionAndLimit(action, limit);
-    }).bind(this));
+    });
   },
 
   // mozIStorageStatementCallback
@@ -696,7 +704,6 @@ nsPlacesExpiration.prototype = {
   _telemetrySteps: 1,
   handleCompletion: function PEX_handleCompletion(aReason) {
     if (aReason == Ci.mozIStorageStatementCallback.REASON_FINISHED) {
-
       if (this._mostRecentExpiredVisitDays) {
         try {
           Services.telemetry
@@ -739,7 +746,7 @@ nsPlacesExpiration.prototype = {
       }
 
       // Dispatch a notification that expiration has finished.
-      Services.obs.notifyObservers(null, TOPIC_EXPIRATION_FINISHED, null);
+      Services.obs.notifyObservers(null, TOPIC_EXPIRATION_FINISHED);
     }
   },
 
@@ -791,19 +798,15 @@ nsPlacesExpiration.prototype = {
     return this._expireOnIdle;
   },
 
-  _loadPrefs: Task.async(function* () {
+  async _loadPrefs() {
     // Get the user's limit, if it was set.
-    try {
-      // We want to silently fail since getIntPref throws if it does not exist,
-      // and use a default to fallback to.
-      this._urisLimit = this._prefBranch.getIntPref(PREF_MAX_URIS);
-    } catch (ex) { /* User limit not set */ }
-
+    this._urisLimit = this._prefBranch.getIntPref(PREF_MAX_URIS,
+                                                  PREF_MAX_URIS_NOTSET);
     if (this._urisLimit < 0) {
       // Some testing code expects a pref change to be synchronous, so
       // temporarily set this to a large value, while we asynchronously update
       // to the correct value.
-      this._urisLimit = 300000;
+      this._urisLimit = 100000;
 
       // The user didn't specify a custom limit, so we calculate the number of
       // unique places that may fit an optimal database size on this hardware.
@@ -835,19 +838,30 @@ nsPlacesExpiration.prototype = {
       );
 
       // Calculate avg size of a URI in the database.
-      let db = yield PlacesUtils.promiseDBConnection();
-      let pageSize = (yield db.execute(`PRAGMA page_size`))[0].getResultByIndex(0);
-      let pageCount = (yield db.execute(`PRAGMA page_count`))[0].getResultByIndex(0);
-      let freelistCount = (yield db.execute(`PRAGMA freelist_count`))[0].getResultByIndex(0);
-      let dbSize = (pageCount - freelistCount) * pageSize;
-      let uriCount = (yield db.execute(`SELECT count(*) FROM moz_places`))[0].getResultByIndex(0);
-      let avgURISize = Math.ceil(dbSize / uriCount);
-      // For new profiles this value may be too large, due to the Sqlite header,
-      // or Infinity when there are no pages.  Thus we must limit it.
-      if (avgURISize > (URIENTRY_AVG_SIZE * 3)) {
-        avgURISize = URIENTRY_AVG_SIZE;
+      let db;
+      try {
+        db = await PlacesUtils.promiseDBConnection();
+      } catch (ex) {
+        // We may have been initialized late in the shutdown process, maybe
+        // by a call to clear history on shutdown.
+        // If we're unable to get a connection clone, we'll just proceed with
+        // the default value, it should not be critical at this point in the
+        // application life-cycle.
       }
-      this._urisLimit = Math.ceil(optimalDatabaseSize / avgURISize);
+      if (db) {
+        let pageSize = (await db.execute(`PRAGMA page_size`))[0].getResultByIndex(0);
+        let pageCount = (await db.execute(`PRAGMA page_count`))[0].getResultByIndex(0);
+        let freelistCount = (await db.execute(`PRAGMA freelist_count`))[0].getResultByIndex(0);
+        let dbSize = (pageCount - freelistCount) * pageSize;
+        let uriCount = (await db.execute(`SELECT count(*) FROM moz_places`))[0].getResultByIndex(0);
+        let avgURISize = Math.ceil(dbSize / uriCount);
+        // For new profiles this value may be too large, due to the Sqlite header,
+        // or Infinity when there are no pages.  Thus we must limit it.
+        if (avgURISize > (URIENTRY_AVG_SIZE * 3)) {
+          avgURISize = URIENTRY_AVG_SIZE;
+        }
+        this._urisLimit = Math.ceil(optimalDatabaseSize / avgURISize);
+      }
     }
 
     // Expose the calculated limit to other components.
@@ -855,15 +869,12 @@ nsPlacesExpiration.prototype = {
                                 this._urisLimit);
 
     // Get the expiration interval value.
-    try {
-      // We want to silently fail since getIntPref throws if it does not exist,
-      // and use a default to fallback to.
-      this._interval = this._prefBranch.getIntPref(PREF_INTERVAL_SECONDS);
-    } catch (ex) { /* User interval not set */ }
+    this._interval = this._prefBranch.getIntPref(PREF_INTERVAL_SECONDS,
+                                                 PREF_INTERVAL_SECONDS_NOTSET);
     if (this._interval <= 0) {
       this._interval = PREF_INTERVAL_SECONDS_NOTSET;
     }
-  }),
+  },
 
   /**
    * Evaluates the real number of pages in the database and the value currently
@@ -911,22 +922,32 @@ nsPlacesExpiration.prototype = {
    */
   _expireWithActionAndLimit:
   function PEX__expireWithActionAndLimit(aAction, aLimit) {
-    // Skip expiration during batch mode.
-    if (this._inBatchMode)
-      return;
-    // Don't try to further expire after shutdown.
-    if (this._shuttingDown && aAction != ACTION.SHUTDOWN_DIRTY) {
-      return;
-    }
+    (async () => {
+      // Ensure that we'll run statements with the most up-to-date pref values.
+      // On shutdown we cannot do this, since we must enqueue the expiration
+      // statements synchronously before the connection goes away.
+      // TODO (Bug 1275878): handle this properly through a shutdown blocker.
+      if (!this._shuttingDown)
+        await this._loadPrefsPromise;
 
-    let boundStatements = [];
-    for (let queryType in EXPIRATION_QUERIES) {
-      if (EXPIRATION_QUERIES[queryType].actions & aAction)
-        boundStatements.push(this._getBoundStatement(queryType, aLimit, aAction));
-    }
+      // Skip expiration during batch mode.
+      if (this._inBatchMode)
+        return;
+      // Don't try to further expire after shutdown.
+      if (this._shuttingDown && aAction != ACTION.SHUTDOWN_DIRTY) {
+        return;
+      }
 
-    // Execute statements asynchronously in a transaction.
-    this._db.executeAsync(boundStatements, boundStatements.length, this);
+      let boundStatements = [];
+      for (let queryType in EXPIRATION_QUERIES) {
+        if (EXPIRATION_QUERIES[queryType].actions & aAction)
+          boundStatements.push(this._getBoundStatement(queryType, aLimit, aAction));
+      }
+
+
+      // Execute statements asynchronously in a transaction.
+      this._db.executeAsync(boundStatements, boundStatements.length, this);
+    })().catch(Cu.reportError);
   },
 
   /**
@@ -1001,9 +1022,6 @@ nsPlacesExpiration.prototype = {
         break;
       case "QUERY_SILENT_EXPIRE_ORPHAN_URIS":
         params.limit_uris = baseLimit;
-        break;
-      case "QUERY_EXPIRE_FAVICONS":
-        params.limit_favicons = baseLimit;
         break;
       case "QUERY_EXPIRE_ANNOS":
         // Each page may have multiple annos.

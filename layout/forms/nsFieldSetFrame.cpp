@@ -32,16 +32,10 @@ NS_NewFieldSetFrame(nsIPresShell* aPresShell, nsStyleContext* aContext)
 NS_IMPL_FRAMEARENA_HELPERS(nsFieldSetFrame)
 
 nsFieldSetFrame::nsFieldSetFrame(nsStyleContext* aContext)
-  : nsContainerFrame(aContext)
+  : nsContainerFrame(aContext, kClassID)
   , mLegendRect(GetWritingMode())
 {
   mLegendSpace  = 0;
-}
-
-nsIAtom*
-nsFieldSetFrame::GetType() const
-{
-  return nsGkAtoms::fieldSetFrame;
 }
 
 nsRect
@@ -80,8 +74,7 @@ nsFieldSetFrame::GetLegend() const
     return nullptr;
   }
   MOZ_ASSERT(mFrames.FirstChild() &&
-             mFrames.FirstChild()->GetContentInsertionFrame()->GetType() ==
-               nsGkAtoms::legendFrame);
+             mFrames.FirstChild()->GetContentInsertionFrame()->IsLegendFrame());
   return mFrames.FirstChild();
 }
 
@@ -671,3 +664,15 @@ nsFieldSetFrame::GetNaturalBaselineBOffset(WritingMode          aWM,
   }
   return true;
 }
+
+void
+nsFieldSetFrame::DoUpdateStyleOfOwnedAnonBoxes(ServoStyleSet& aStyleSet,
+                                               nsStyleChangeList& aChangeList,
+                                               nsChangeHint aHintForThisFrame)
+{
+  nsIFrame* kid = GetInner();
+  if (kid) {
+    UpdateStyleOfChildAnonBox(kid, aStyleSet, aChangeList, aHintForThisFrame);
+  }
+}
+

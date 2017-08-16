@@ -99,7 +99,7 @@ protected:
 
 OmxDataDecoder::OmxDataDecoder(const TrackInfo& aTrackInfo,
                                layers::ImageContainer* aImageContainer)
-  : mOmxTaskQueue(CreateMediaDecodeTaskQueue())
+  : mOmxTaskQueue(CreateMediaDecodeTaskQueue("OmxDataDecoder::mOmxTaskQueue"))
   , mImageContainer(aImageContainer)
   , mWatchManager(this, mOmxTaskQueue)
   , mOmxState(OMX_STATETYPE::OMX_StateInvalid, "OmxDataDecoder::mOmxState")
@@ -241,8 +241,9 @@ OmxDataDecoder::DoAsyncShutdown()
              LOGL("DoAsyncShutdown: flush complete");
              return self->mOmxLayer->SendCommand(OMX_CommandStateSet, OMX_StateIdle, nullptr);
            },
-           [self] () {
+           [self] (const OmxCommandFailureHolder& aError) {
              self->mOmxLayer->Shutdown();
+             return OmxCommandPromise::CreateAndReject(aError, __func__);
            })
     ->Then(mOmxTaskQueue, __func__,
            [self] () -> RefPtr<OmxCommandPromise> {
@@ -263,8 +264,9 @@ OmxDataDecoder::DoAsyncShutdown()
 
              return p;
            },
-           [self] () {
+           [self] (const OmxCommandFailureHolder& aError) {
              self->mOmxLayer->Shutdown();
+             return OmxCommandPromise::CreateAndReject(aError, __func__);
            })
     ->Then(mOmxTaskQueue, __func__,
            [self] () {
@@ -445,7 +447,7 @@ OmxDataDecoder::FillAndEmptyBuffers()
     inbuf->mBuffer->nOffset = 0;
     inbuf->mBuffer->nFlags = inbuf->mBuffer->nAllocLen > data->Size() ?
                              OMX_BUFFERFLAG_ENDOFFRAME : 0;
-    inbuf->mBuffer->nTimeStamp = data->mTime;
+    inbuf->mBuffer->nTimeStamp = data->mTime.ToMicroseconds();
     if (data->Size()) {
       inbuf->mRawData = mMediaRawDatas[0];
     } else {
@@ -607,7 +609,7 @@ OmxDataDecoder::FillCodecConfigDataToOmx()
   if (mTrackInfo->IsAudio()) {
     csc = mTrackInfo->GetAsAudioInfo()->mCodecSpecificConfig;
   } else if (mTrackInfo->IsVideo()) {
-    csc = mTrackInfo->GetAsVideoInfo()->mCodecSpecificConfig;
+    csc = mTrackInfo->GetAsVideoInfo()->mExtraData;
   }
 
   MOZ_RELEASE_ASSERT(csc);
@@ -786,8 +788,9 @@ OmxDataDecoder::PortSettingsChanged()
 
                return p;
              },
-             [self] () {
+             [self] (const OmxCommandFailureHolder& aError) {
                self->NotifyError(OMX_ErrorUndefined, __func__);
+               return OmxCommandPromise::CreateAndReject(aError, __func__);
              })
       ->Then(mOmxTaskQueue, __func__,
              [self] () {
@@ -994,11 +997,11 @@ MediaDataHelper::CreateYUV420VideoData(BufferData* aBufferData)
     VideoData::CreateAndCopyData(info,
                                  mImageContainer,
                                  0, // Filled later by caller.
-                                 0, // Filled later by caller.
-                                 1, // We don't know the duration.
+                                 media::TimeUnit::Zero(), // Filled later by caller.
+                                 media::TimeUnit::FromMicroseconds(1), // We don't know the duration.
                                  b,
                                  0, // Filled later by caller.
-                                 -1,
+                                 media::TimeUnit::FromMicroseconds(-1),
                                  info.ImageRect());
 
   LOG("YUV420 VideoData: disp width %d, height %d, pic width %d, height %d, time %lld",

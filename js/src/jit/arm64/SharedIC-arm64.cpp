@@ -13,6 +13,7 @@
 #include "jit/arm64/vixl/Debugger-vixl.h"
 #endif
 
+#include "jit/arm64/MacroAssembler-arm64-inl.h"
 
 using namespace js;
 using namespace js::jit;
@@ -143,7 +144,7 @@ ICBinaryArith_Int32::Compiler::generateStubCode(MacroAssembler& masm)
 
             masm.bind(&toUint);
             masm.convertUInt32ToDouble(Rscratch, ScratchDoubleReg);
-            masm.boxDouble(ScratchDoubleReg, R0);
+            masm.boxDouble(ScratchDoubleReg, R0, ScratchDoubleReg);
         } else {
             // Testing for negative is equivalent to testing bit 31
             masm.Tbnz(Wscratch, 31, &failure);

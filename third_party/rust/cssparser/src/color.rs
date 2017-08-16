@@ -2,10 +2,10 @@
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
 
-use std::cmp;
 use std::fmt;
+use std::f32::consts::PI;
 
-use super::{Token, Parser, ToCss};
+use super::{Token, Parser, ToCss, ParseError, BasicParseError};
 use tokenizer::NumericValue;
 
 #[cfg(feature = "serde")]
@@ -30,7 +30,12 @@ impl RGBA {
     /// clamped to the 0.0 ... 1.0 range.
     #[inline]
     pub fn from_floats(red: f32, green: f32, blue: f32, alpha: f32) -> Self {
-        Self::new(clamp_f32(red), clamp_f32(green), clamp_f32(blue), clamp_f32(alpha))
+        Self::new(
+            clamp_unit_f32(red),
+            clamp_unit_f32(green),
+            clamp_unit_f32(blue),
+            clamp_unit_f32(alpha),
+        )
     }
 
     /// Returns a transparent color.
@@ -98,7 +103,7 @@ impl ToCss for RGBA {
     {
         // Try first with two decimal places, then with three.
         let mut rounded_alpha = (self.alpha_f32() * 100.).round() / 100.;
-        if clamp_f32(rounded_alpha) != self.alpha {
+        if clamp_unit_f32(rounded_alpha) != self.alpha {
             rounded_alpha = (self.alpha_f32() * 1000.).round() / 1000.;
         }
 
@@ -136,29 +141,64 @@ impl Color {
     /// Parse a <color> value, per CSS Color Module Level 3.
     ///
     /// FIXME(#2) Deprecated CSS2 System Colors are not supported yet.
-    pub fn parse(input: &mut Parser) -> Result<Color, ()> {
-        match try!(input.next()) {
-            Token::Hash(value) | Token::IDHash(value) => parse_color_hash(&*value),
-            Token::Ident(value) => parse_color_keyword(&*value),
-            Token::Function(name) => {
-                input.parse_nested_block(|arguments| {
+    pub fn parse<'i, 't>(input: &mut Parser<'i, 't>) -> Result<Color, BasicParseError<'i>> {
+        let token = try!(input.next());
+        match token {
+            Token::Hash(ref value) | Token::IDHash(ref value) => {
+                Color::parse_hash(value.as_bytes())
+            },
+            Token::Ident(ref value) => parse_color_keyword(&*value),
+            Token::Function(ref name) => {
+                return input.parse_nested_block(|arguments| {
                     parse_color_function(&*name, arguments)
-                })
+                        .map_err(|e| ParseError::Basic(e))
+                }).map_err(ParseError::<()>::basic);
             }
+            _ => Err(())
+        }.map_err(|()| BasicParseError::UnexpectedToken(token))
+    }
+
+    /// Parse a color hash, without the leading '#' character.
+    #[inline]
+    pub fn parse_hash(value: &[u8]) -> Result<Self, ()> {
+        match value.len() {
+            8 => Ok(rgba(
+                try!(from_hex(value[0])) * 16 + try!(from_hex(value[1])),
+                try!(from_hex(value[2])) * 16 + try!(from_hex(value[3])),
+                try!(from_hex(value[4])) * 16 + try!(from_hex(value[5])),
+                try!(from_hex(value[6])) * 16 + try!(from_hex(value[7]))),
+            ),
+            6 => Ok(rgb(
+                try!(from_hex(value[0])) * 16 + try!(from_hex(value[1])),
+                try!(from_hex(value[2])) * 16 + try!(from_hex(value[3])),
+                try!(from_hex(value[4])) * 16 + try!(from_hex(value[5]))),
+            ),
+            4 => Ok(rgba(
+                try!(from_hex(value[0])) * 17,
+                try!(from_hex(value[1])) * 17,
+                try!(from_hex(value[2])) * 17,
+                try!(from_hex(value[3])) * 17),
+            ),
+            3 => Ok(rgb(
+                try!(from_hex(value[0])) * 17,
+                try!(from_hex(value[1])) * 17,
+                try!(from_hex(value[2])) * 17),
+            ),
             _ => Err(())
         }
     }
+
 }
 
 
 #[inline]
-fn rgb(red: u8, green: u8, blue: u8) -> Result<Color, ()> {
+fn rgb(red: u8, green: u8, blue: u8) -> Color {
     rgba(red, green, blue, 255)
 }
 
 #[inline]
-fn rgba(red: u8, green: u8, blue: u8, alpha: u8) -> Result<Color, ()> {
-    Ok(Color::RGBA(RGBA::new(red, green, blue, alpha)))
+fn rgba(red: u8, green: u8, blue: u8, alpha: u8) -> Color {
+    Color::RGBA(RGBA::new(red, green, blue, alpha))
 }
 
 
@@ -349,124 +389,171 @@ fn from_hex(c: u8) -> Result<u8, ()> {
     }
 }
 
-
-#[inline]
-fn parse_color_hash(value: &str) -> Result<Color, ()> {
-    let value = value.as_bytes();
-    match value.len() {
-        8 => rgba(
-            try!(from_hex(value[0])) * 16 + try!(from_hex(value[1])),
-            try!(from_hex(value[2])) * 16 + try!(from_hex(value[3])),
-            try!(from_hex(value[4])) * 16 + try!(from_hex(value[5])),
-            try!(from_hex(value[6])) * 16 + try!(from_hex(value[7])),
-        ),
-        6 => rgb(
-            try!(from_hex(value[0])) * 16 + try!(from_hex(value[1])),
-            try!(from_hex(value[2])) * 16 + try!(from_hex(value[3])),
-            try!(from_hex(value[4])) * 16 + try!(from_hex(value[5])),
-        ),
-        4 => rgba(
-            try!(from_hex(value[0])) * 17,
-            try!(from_hex(value[1])) * 17,
-            try!(from_hex(value[2])) * 17,
-            try!(from_hex(value[3])) * 17,
-        ),
-        3 => rgb(
-            try!(from_hex(value[0])) * 17,
-            try!(from_hex(value[1])) * 17,
-            try!(from_hex(value[2])) * 17,
-        ),
-        _ => Err(())
-    }
-}
-
-
-fn clamp_i32(val: i32) -> u8 {
-    cmp::min(cmp::max(0, val), 255) as u8
-}
-
-fn clamp_f32(val: f32) -> u8 {
-    // Scale by 256, not 255, so that each of the 256 u8 values has an equal range
-    // of f32 values mapping to it. Floor before clamping.
+fn clamp_unit_f32(val: f32) -> u8 {
+    // Whilst scaling by 256 and flooring would provide
+    // an equal distribution of integers to percentage inputs,
+    // this is not what Gecko does so we instead multiply by 255
+    // and round (adding 0.5 and flooring is equivalent to rounding)
     //
-    // Clamping to 256 and flooring after would let 1.0 map to 256, and
+    // Chrome does something similar for the alpha value, but not
+    // the rgb values.
+    //
+    // See https://bugzilla.mozilla.org/show_bug.cgi?id=1340484
+    //
+    // Clamping to 256 and rounding after would let 1.0 map to 256, and
     // `256.0_f32 as u8` is undefined behavior:
     //
     // https://github.com/rust-lang/rust/issues/10184
-    (val * 256.).floor().max(0.).min(255.) as u8
+    clamp_floor_256_f32(val * 255.)
+}
+
+fn clamp_floor_256_f32(val: f32) -> u8 {
+    val.round().max(0.).min(255.) as u8
 }
 
 #[inline]
-fn parse_color_function(name: &str, arguments: &mut Parser) -> Result<Color, ()> {
-    let (is_rgb, has_alpha) = match_ignore_ascii_case! { name,
-        "rgba" => (true, true),
-        "rgb" => (true, false),
-        "hsl" => (false, false),
-        "hsla" => (false, true),
-        _ => return Err(())
+fn parse_color_function<'i, 't>(name: &str, arguments: &mut Parser<'i, 't>) -> Result<Color, BasicParseError<'i>> {
+    let (red, green, blue, uses_commas) = match_ignore_ascii_case! { name,
+        "rgb" | "rgba" => parse_rgb_components_rgb(arguments)?,
+        "hsl" | "hsla" => parse_rgb_components_hsl(arguments)?,
+        _ => return Err(BasicParseError::UnexpectedToken(Token::Ident(name.to_owned().into()))),
     };
 
-    let red: u8;
-    let green: u8;
-    let blue: u8;
-    if is_rgb {
-        // Either integers or percentages, but all the same type.
-        // https://drafts.csswg.org/css-color/#rgb-functions
-        match try!(arguments.next()) {
-            Token::Number(NumericValue { int_value: Some(v), .. }) => {
-                red = clamp_i32(v);
-                try!(arguments.expect_comma());
-                green = clamp_i32(try!(arguments.expect_integer()));
-                try!(arguments.expect_comma());
-                blue = clamp_i32(try!(arguments.expect_integer()));
+    let alpha = if !arguments.is_exhausted() {
+        if uses_commas {
+            try!(arguments.expect_comma());
+        } else {
+            match try!(arguments.next()) {
+                Token::Delim('/') => {},
+                t => return Err(BasicParseError::UnexpectedToken(t)),
+            };
+        };
+        let token = try!(arguments.next());
+        match token {
+            Token::Number(NumericValue { value: v, .. }) => {
+                clamp_unit_f32(v)
             }
             Token::Percentage(ref v) => {
-                red = clamp_f32(v.unit_value);
-                try!(arguments.expect_comma());
-                green = clamp_f32(try!(arguments.expect_percentage()));
-                try!(arguments.expect_comma());
-                blue = clamp_f32(try!(arguments.expect_percentage()));
+                clamp_unit_f32(v.unit_value)
             }
-            _ => return Err(())
-        };
-    } else {
-        let hue_degrees = try!(arguments.expect_number());
-        // Subtract an integer before rounding, to avoid some rounding errors:
-        let hue_normalized_degrees = hue_degrees - 360. * (hue_degrees / 360.).floor();
-        let hue = hue_normalized_degrees / 360.;
-        // Saturation and lightness are clamped to 0% ... 100%
-        // https://drafts.csswg.org/css-color/#the-hsl-notation
-        try!(arguments.expect_comma());
-        let saturation = try!(arguments.expect_percentage()).max(0.).min(1.);
-        try!(arguments.expect_comma());
-        let lightness = try!(arguments.expect_percentage()).max(0.).min(1.);
-
-        // https://drafts.csswg.org/css-color/#hsl-color
-        // except with h pre-multiplied by 3, to avoid some rounding errors.
-        fn hue_to_rgb(m1: f32, m2: f32, mut h3: f32) -> f32 {
-            if h3 < 0. { h3 += 3. }
-            if h3 > 3. { h3 -= 3. }
-
-            if h3 * 2. < 1. { m1 + (m2 - m1) * h3 * 2. }
-            else if h3 * 2. < 3. { m2 }
-            else if h3 < 2. { m1 + (m2 - m1) * (2. - h3) * 2. }
-            else { m1 }
+            t => {
+                return Err(BasicParseError::UnexpectedToken(t))
+            }
         }
-        let m2 = if lightness <= 0.5 { lightness * (saturation + 1.) }
-                 else { lightness + saturation - lightness * saturation };
-        let m1 = lightness * 2. - m2;
-        let hue_times_3 = hue * 3.;
-        red = clamp_f32(hue_to_rgb(m1, m2, hue_times_3 + 1.));
-        green = clamp_f32(hue_to_rgb(m1, m2, hue_times_3));
-        blue = clamp_f32(hue_to_rgb(m1, m2, hue_times_3 - 1.));
-    }
-
-    let alpha = if has_alpha {
-        try!(arguments.expect_comma());
-        clamp_f32(try!(arguments.expect_number()))
     } else {
         255
     };
+
     try!(arguments.expect_exhausted());
-    rgba(red, green, blue, alpha)
+    Ok(rgba(red, green, blue, alpha))
+}
+
+
+#[inline]
+fn parse_rgb_components_rgb<'i, 't>(arguments: &mut Parser<'i, 't>) -> Result<(u8, u8, u8, bool), BasicParseError<'i>> {
+    let red: u8;
+    let green: u8;
+    let blue: u8;
+    let mut uses_commas = false;
+
+    // Either integers or percentages, but all the same type.
+    // https://drafts.csswg.org/css-color/#rgb-functions
+    match try!(arguments.next()) {
+        Token::Number(NumericValue { value: v, .. }) => {
+            red = clamp_floor_256_f32(v);
+            green = clamp_floor_256_f32(match try!(arguments.next()) {
+                Token::Number(NumericValue { value: v, .. }) => v,
+                Token::Comma => {
+                    uses_commas = true;
+                    try!(arguments.expect_number())
+                }
+                t => return Err(BasicParseError::UnexpectedToken(t))
+            });
+            if uses_commas {
+                try!(arguments.expect_comma());
+            }
+            blue = clamp_floor_256_f32(try!(arguments.expect_number()));
+        }
+        Token::Percentage(ref v) => {
+            red = clamp_unit_f32(v.unit_value);
+            green = clamp_unit_f32(match try!(arguments.next()) {
+                Token::Percentage(ref v) => v.unit_value,
+                Token::Comma => {
+                    uses_commas = true;
+                    try!(arguments.expect_percentage())
+                }
+                t => return Err(BasicParseError::UnexpectedToken(t))
+            });
+            if uses_commas {
+                try!(arguments.expect_comma());
+            }
+            blue = clamp_unit_f32(try!(arguments.expect_percentage()));
+        }
+        t => return Err(BasicParseError::UnexpectedToken(t))
+    };
+    return Ok((red, green, blue, uses_commas));
+}
+
+#[inline]
+fn parse_rgb_components_hsl<'i, 't>(arguments: &mut Parser<'i, 't>) -> Result<(u8, u8, u8, bool), BasicParseError<'i>> {
+    let mut uses_commas = false;
+    // Hue given as an angle
+    // https://drafts.csswg.org/css-values/#angles
+    let token = try!(arguments.next());
+    let hue_degrees = match token {
+        Token::Number(NumericValue { value: v, .. }) => Ok(v),
+        Token::Dimension(NumericValue { value: v, .. }, ref unit) => {
+            match_ignore_ascii_case! { &*unit,
+                "deg" => Ok(v),
+                "grad" => Ok(v * 360. / 400.),
+                "rad" => Ok(v * 360. / (2. * PI)),
+                "turn" => Ok(v * 360.),
+                _ => Err(()),
+            }
+        }
+        t => return Err(BasicParseError::UnexpectedToken(t))
+    };
+    let hue_degrees = try!(hue_degrees.map_err(|()| BasicParseError::UnexpectedToken(token)));
+    // Subtract an integer before rounding, to avoid some rounding errors:
+    let hue_normalized_degrees = hue_degrees - 360. * (hue_degrees / 360.).floor();
+    let hue = hue_normalized_degrees / 360.;
+
+    // Saturation and lightness are clamped to 0% ... 100%
+    // https://drafts.csswg.org/css-color/#the-hsl-notation
+    let saturation = match try!(arguments.next()) {
+        Token::Percentage(ref v) => v.unit_value,
+        Token::Comma => {
+            uses_commas = true;
+            try!(arguments.expect_percentage())
+        }
+        t => return Err(BasicParseError::UnexpectedToken(t))
+    };
+    let saturation = saturation.max(0.).min(1.);
+
+    if uses_commas {
+        try!(arguments.expect_comma());
+    }
+
+    let lightness = try!(arguments.expect_percentage());
+    let lightness = lightness.max(0.).min(1.);
+
+    // https://drafts.csswg.org/css-color/#hsl-color
+    // except with h pre-multiplied by 3, to avoid some rounding errors.
+    fn hue_to_rgb(m1: f32, m2: f32, mut h3: f32) -> f32 {
+        if h3 < 0. { h3 += 3. }
+        if h3 > 3. { h3 -= 3. }
+
+        if h3 * 2. < 1. { m1 + (m2 - m1) * h3 * 2. }
+        else if h3 * 2. < 3. { m2 }
+        else if h3 < 2. { m1 + (m2 - m1) * (2. - h3) * 2. }
+        else { m1 }
+    }
+    let m2 = if lightness <= 0.5 { lightness * (saturation + 1.) }
+             else { lightness + saturation - lightness * saturation };
+    let m1 = lightness * 2. - m2;
+    let hue_times_3 = hue * 3.;
+    let red = clamp_unit_f32(hue_to_rgb(m1, m2, hue_times_3 + 1.));
+    let green = clamp_unit_f32(hue_to_rgb(m1, m2, hue_times_3));
+    let blue = clamp_unit_f32(hue_to_rgb(m1, m2, hue_times_3 - 1.));
+    return Ok((red, green, blue, uses_commas));
 }

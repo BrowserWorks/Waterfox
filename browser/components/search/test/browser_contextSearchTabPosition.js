@@ -2,9 +2,9 @@
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
 
-add_task(function* test() {
-  yield SpecialPowers.pushPrefEnv({set: [["toolkit.telemetry.enabled", true]]});
-  let engine = yield promiseNewEngine("testEngine.xml");
+add_task(async function test() {
+  await SpecialPowers.pushPrefEnv({set: [["toolkit.telemetry.enabled", true]]});
+  let engine = await promiseNewEngine("testEngine.xml");
   let histogramKey = "other-" + engine.name + ".contextmenu";
   let numSearchesBefore = 0;
 
@@ -33,12 +33,12 @@ add_task(function* test() {
   let container = gBrowser.tabContainer;
   container.addEventListener("TabOpen", tabAdded);
 
-  gBrowser.addTab("about:blank");
+  BrowserTestUtils.addTab(gBrowser, "about:blank");
   BrowserSearch.loadSearchFromContext("mozilla");
   BrowserSearch.loadSearchFromContext("firefox");
 
   // Wait for all the tabs to open.
-  yield tabsLoadedDeferred.promise;
+  await tabsLoadedDeferred.promise;
 
   is(tabs[0], gBrowser.tabs[3], "blank tab has been pushed to the end");
   is(tabs[1], gBrowser.tabs[1], "first search tab opens next to the current tab");

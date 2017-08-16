@@ -28,7 +28,6 @@
 #include "nsIFragmentContentSink.h"
 #include "nsStreamUtils.h"
 #include "nsHTMLTokenizer.h"
-#include "nsScriptLoader.h"
 #include "nsDataHashtable.h"
 #include "nsXPCOMCIDInternal.h"
 #include "nsMimeTypes.h"
@@ -40,12 +39,12 @@
 #include "nsIHTMLContentSink.h"
 
 #include "mozilla/dom/EncodingUtils.h"
+#include "mozilla/dom/ScriptLoader.h"
 #include "mozilla/BinarySearch.h"
 
 using namespace mozilla;
 using mozilla::dom::EncodingUtils;
 
-#define NS_PARSER_FLAG_PARSER_ENABLED         0x00000002
 #define NS_PARSER_FLAG_OBSERVERS_ENABLED      0x00000004
 #define NS_PARSER_FLAG_PENDING_CONTINUE_EVENT 0x00000008
 #define NS_PARSER_FLAG_FLUSH_TOKENS           0x00000020
@@ -157,8 +156,8 @@ nsParser::Initialize(bool aConstructor)
   mInternalState = NS_OK;
   mStreamStatus = NS_OK;
   mCommand = eViewNormal;
+  mBlocked = 0;
   mFlags = NS_PARSER_FLAG_OBSERVERS_ENABLED |
-           NS_PARSER_FLAG_PARSER_ENABLED |
            NS_PARSER_FLAG_CAN_TOKENIZE;
 
   mProcessingNetworkData = false;
@@ -631,7 +630,7 @@ nsParser::ContinueInterruptedParsing()
   nsCOMPtr<nsIContentSink> sinkDeathGrip(mSink);
 
 #ifdef DEBUG
-  if (!(mFlags & NS_PARSER_FLAG_PARSER_ENABLED)) {
+  if (mBlocked) {
     NS_WARNING("Don't call ContinueInterruptedParsing on a blocked parser.");
   }
 #endif
@@ -654,13 +653,15 @@ nsParser::ContinueInterruptedParsing()
 }
 
 /**
- *  Stops parsing temporarily. That's it will prevent the
- *  parser from building up content model.
+ *  Stops parsing temporarily. That is, it will prevent the
+ *  parser from building up content model while scripts
+ *  are being loaded (either an external script from a web
+ *  page, or any number of extension content scripts).
  */
 NS_IMETHODIMP_(void)
 nsParser::BlockParser()
 {
-  mFlags &= ~NS_PARSER_FLAG_PARSER_ENABLED;
+  mBlocked++;
 }
 
 /**
@@ -672,17 +673,19 @@ nsParser::BlockParser()
 NS_IMETHODIMP_(void)
 nsParser::UnblockParser()
 {
-  if (!(mFlags & NS_PARSER_FLAG_PARSER_ENABLED)) {
-    mFlags |= NS_PARSER_FLAG_PARSER_ENABLED;
-  } else {
-    NS_WARNING("Trying to unblock an unblocked parser.");
+  MOZ_DIAGNOSTIC_ASSERT(mBlocked > 0);
+  if (MOZ_LIKELY(mBlocked > 0)) {
+    mBlocked--;
   }
 }
 
 NS_IMETHODIMP_(void)
 nsParser::ContinueInterruptedParsingAsync()
 {
-  mSink->ContinueInterruptedParsingAsync();
+  MOZ_ASSERT(mSink);
+  if (MOZ_LIKELY(mSink)) {
+    mSink->ContinueInterruptedParsingAsync();
+  }
 }
 
 /**
@@ -691,7 +694,7 @@ nsParser::ContinueInterruptedParsingAsync()
 NS_IMETHODIMP_(bool)
 nsParser::IsParserEnabled()
 {
-  return (mFlags & NS_PARSER_FLAG_PARSER_ENABLED) != 0;
+  return !mBlocked;
 }
 
 /**
@@ -1024,8 +1027,7 @@ nsParser::ResumeParse(bool allowIteration, bool aIsFinalChunk,
 {
   nsresult result = NS_OK;
 
-  if ((mFlags & NS_PARSER_FLAG_PARSER_ENABLED) &&
-      mInternalState != NS_ERROR_HTMLPARSER_STOPPARSING) {
+  if (!mBlocked && mInternalState != NS_ERROR_HTMLPARSER_STOPPARSING) {
 
     result = WillBuildModel(mParserContext->mScanner->GetFilename());
     if (NS_FAILED(result)) {
@@ -1070,7 +1072,7 @@ nsParser::ResumeParse(bool allowIteration, bool aIsFinalChunk,
         // (and cache any data coming in) until the parser is re-enabled.
         if (NS_ERROR_HTMLPARSER_BLOCK == result) {
           mSink->WillInterrupt();
-          if (mFlags & NS_PARSER_FLAG_PARSER_ENABLED) {
+          if (!mBlocked) {
             // If we were blocked by a recursive invocation, don't re-block.
             BlockParser();
           }

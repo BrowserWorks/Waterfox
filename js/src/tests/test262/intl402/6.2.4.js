@@ -1,4 +1,3 @@
-// |reftest| skip-if(!this.hasOwnProperty('Intl')) -- needs Intl
 // Copyright 2012 Mozilla Corporation. All rights reserved.
 // This code is governed by the BSD license found in the LICENSE file.
 
@@ -13,9 +12,7 @@ includes: [testIntl.js]
 
 testWithIntlConstructors(function (Constructor) {
     var defaultLocale = new Constructor().resolvedOptions().locale;
-    if (!isCanonicalizedStructurallyValidLanguageTag(defaultLocale)) {
-        $ERROR("Default locale \"" + defaultLocale + "\" is not canonicalized and structurally valid language tag.");
-    }
+    assert(isCanonicalizedStructurallyValidLanguageTag(defaultLocale), "Default locale \"" + defaultLocale + "\" is not canonicalized and structurally valid language tag.");
     return true;
 });
 

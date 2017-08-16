@@ -10,6 +10,8 @@
   <link rel="stylesheet" type="text/css" href="/tests/SimpleTest/test.css"/>
 
   <script type="text/javascript">
+  /* import-globals-from file.js */
+  /* import-globals-from helpers.js */
   function* testSteps()
   {
     const READ_WRITE = "readwrite";
@@ -18,7 +20,7 @@
 
     const objectStoreName = "Blobs";
 
-    getUsage(grabFileUsageAndContinueHandler);
+    getCurrentUsage(grabFileUsageAndContinueHandler);
     let startUsage = yield undefined;
 
     const fileData1 = {
@@ -61,7 +63,7 @@
 
       is(event.type, "success", "Got correct event type");
 
-      getUsage(grabFileUsageAndContinueHandler);
+      getCurrentUsage(grabFileUsageAndContinueHandler);
       let usage = yield undefined;
 
       is(usage, startUsage + fileData1.obj.file.size + fileData2.obj.file.size,
@@ -74,7 +76,7 @@
 
       is(event.type, "complete", "Got correct event type");
 
-      getUsage(grabFileUsageAndContinueHandler);
+      getCurrentUsage(grabFileUsageAndContinueHandler);
       usage = yield undefined;
 
       is(usage, startUsage + fileData1.obj.file.size + fileData2.obj.file.size,
@@ -90,7 +92,7 @@
     // Flush pending file deletions before checking usage.
     flushPendingFileDeletions();
 
-    getUsage(grabFileUsageAndContinueHandler);
+    getCurrentUsage(grabFileUsageAndContinueHandler);
     let endUsage = yield undefined;
 
     is(endUsage, startUsage, "OS files deleted");

@@ -133,22 +133,6 @@ public:
      mozilla::safebrowsing::CacheResultArray *mEntries;
   };
 
-  class CacheMissesRunnable : public mozilla::Runnable
-  {
-  public:
-    CacheMissesRunnable(nsUrlClassifierDBServiceWorker* aTarget,
-                        mozilla::safebrowsing::PrefixArray *aEntries)
-      : mTarget(aTarget)
-      , mEntries(aEntries)
-    { }
-
-    NS_DECL_NSIRUNNABLE
-
-  private:
-    RefPtr<nsUrlClassifierDBServiceWorker> mTarget;
-    mozilla::safebrowsing::PrefixArray *mEntries;
-  };
-
   class DoLocalLookupRunnable : public mozilla::Runnable
   {
   public:
@@ -171,24 +155,6 @@ public:
     mozilla::safebrowsing::LookupResultArray* mResults;
   };
 
-  class SetLastUpdateTimeRunnable : public mozilla::Runnable
-  {
-  public:
-    SetLastUpdateTimeRunnable(nsUrlClassifierDBServiceWorker* aTarget,
-                              const nsACString& table,
-                              uint64_t updateTime)
-      : mTarget(aTarget),
-        mTable(table),
-        mUpdateTime(updateTime)
-    { }
-
-    NS_DECL_NSIRUNNABLE
-  private:
-    RefPtr<nsUrlClassifierDBServiceWorker> mTarget;
-    nsCString mTable;
-    uint64_t mUpdateTime;
-  };
-
   class ClearLastResultsRunnable : public mozilla::Runnable
   {
   public:
@@ -201,6 +167,24 @@ public:
     RefPtr<nsUrlClassifierDBServiceWorker> mTarget;
   };
 
+  class GetCacheInfoRunnable: public mozilla::Runnable
+  {
+  public:
+    explicit GetCacheInfoRunnable(nsUrlClassifierDBServiceWorker* aTarget,
+                                  const nsACString& aTable,
+                                  nsIUrlClassifierCacheInfo** aCache)
+      : mTarget(aTarget),
+        mTable(aTable),
+        mCache(aCache)
+    { }
+
+    NS_DECL_NSIRUNNABLE
+  private:
+    RefPtr<nsUrlClassifierDBServiceWorker> mTarget;
+    nsCString mTable;
+    nsIUrlClassifierCacheInfo** mCache;
+  };
+
 public:
   nsresult DoLocalLookup(const nsACString& spec,
                          const nsACString& tables,
@@ -210,8 +194,9 @@ public:
   nsresult CloseDb();
 
   nsresult CacheCompletions(mozilla::safebrowsing::CacheResultArray * aEntries);
-  nsresult CacheMisses(mozilla::safebrowsing::PrefixArray * aEntries);
 
+  nsresult GetCacheInfo(const nsACString& aTable,
+                        nsIUrlClassifierCacheInfo** aCache);
 private:
   ~UrlClassifierDBServiceWorkerProxy() {}
 

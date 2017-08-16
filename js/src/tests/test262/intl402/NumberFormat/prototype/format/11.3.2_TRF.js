@@ -1,4 +1,3 @@
-// |reftest| skip-if(!this.hasOwnProperty('Intl')) -- needs Intl
 // Copyright 2011-2012 Norbert Lindenberg. All rights reserved.
 // Copyright 2012 Mozilla Corporation. All rights reserved.
 // This code is governed by the BSD license found in the LICENSE file.
@@ -49,8 +48,9 @@ var testData = {
     "-0.0000000012344501": "-000.0",
     "123445.01": "123445.01",
     "-123445.01": "-123445.01",
-    "12344501000000000000000000000000000": "12344501000000000000000000000000000.0",
-    "-12344501000000000000000000000000000": "-12344501000000000000000000000000000.0"
+    // Ref tc39/ecma402#128
+    "12344501000000000000000000000000000": "12344501000000000487815444678311936.0",
+    "-12344501000000000000000000000000000": "-12344501000000000487815444678311936.0"
 };
 
 testNumberFormat(locales, numberingSystems,

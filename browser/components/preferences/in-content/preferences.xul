@@ -19,24 +19,24 @@
 <!ENTITY % brandDTD SYSTEM "chrome://branding/locale/brand.dtd">
 <!ENTITY % globalPreferencesDTD SYSTEM "chrome://global/locale/preferences.dtd">
 <!ENTITY % preferencesDTD SYSTEM
-  "chrome://browser/locale/preferences/preferences.dtd">
-<!ENTITY % privacyDTD SYSTEM "chrome://browser/locale/preferences/privacy.dtd">
-<!ENTITY % tabsDTD SYSTEM "chrome://browser/locale/preferences/tabs.dtd">
-<!ENTITY % searchDTD SYSTEM "chrome://browser/locale/preferences/search.dtd">
+  "chrome://browser/locale/preferences-old/preferences.dtd">
+<!ENTITY % privacyDTD SYSTEM "chrome://browser/locale/preferences-old/privacy.dtd">
+<!ENTITY % tabsDTD SYSTEM "chrome://browser/locale/preferences-old/tabs.dtd">
+<!ENTITY % searchDTD SYSTEM "chrome://browser/locale/preferences-old/search.dtd">
 <!ENTITY % syncBrandDTD SYSTEM "chrome://browser/locale/syncBrand.dtd">
-<!ENTITY % syncDTD SYSTEM "chrome://browser/locale/preferences/sync.dtd">
+<!ENTITY % syncDTD SYSTEM "chrome://browser/locale/preferences-old/sync.dtd">
 <!ENTITY % securityDTD SYSTEM
-  "chrome://browser/locale/preferences/security.dtd">
+  "chrome://browser/locale/preferences-old/security.dtd">
 <!ENTITY % containersDTD SYSTEM
-  "chrome://browser/locale/preferences/containers.dtd">
+  "chrome://browser/locale/preferences-old/containers.dtd">
 <!ENTITY % sanitizeDTD SYSTEM "chrome://browser/locale/sanitize.dtd">
-<!ENTITY % mainDTD SYSTEM "chrome://browser/locale/preferences/main.dtd">
+<!ENTITY % mainDTD SYSTEM "chrome://browser/locale/preferences-old/main.dtd">
 <!ENTITY % aboutHomeDTD SYSTEM "chrome://browser/locale/aboutHome.dtd">
-<!ENTITY % contentDTD SYSTEM "chrome://browser/locale/preferences/content.dtd">
+<!ENTITY % contentDTD SYSTEM "chrome://browser/locale/preferences-old/content.dtd">
 <!ENTITY % applicationsDTD SYSTEM
-  "chrome://browser/locale/preferences/applications.dtd">
+  "chrome://browser/locale/preferences-old/applications.dtd">
 <!ENTITY % advancedDTD SYSTEM
-  "chrome://browser/locale/preferences/advanced.dtd">
+  "chrome://browser/locale/preferences-old/advanced.dtd">
 %brandDTD;
 %globalPreferencesDTD;
 %preferencesDTD;
@@ -80,7 +80,7 @@
   <stringbundle id="bundleBrand"
                 src="chrome://branding/locale/brand.properties"/>
   <stringbundle id="bundlePreferences"
-                src="chrome://browser/locale/preferences/preferences.properties"/>
+                src="chrome://browser/locale/preferences-old/preferences.properties"/>
 
   <stringbundleset id="appManagerBundleset">
     <stringbundle id="appManagerBundle"
@@ -202,23 +202,22 @@
 
   </hbox>
 
-    <vbox id="dialogOverlay" align="center" pack="center">
-      <groupbox id="dialogBox"
-                orient="vertical"
-                pack="end"
-                role="dialog"
-                aria-labelledby="dialogTitle">
-        <caption flex="1" align="center">
-          <label id="dialogTitle" flex="1"></label>
-          <button id="dialogClose"
-                  class="close-icon"
-                  aria-label="&preferencesCloseButton.label;"/>
-        </caption>
-        <browser id="dialogFrame"
-                 name="dialogFrame"
-                 autoscroll="false"
-                 disablehistory="true"/>
-      </groupbox>
-    </vbox>
+  <stack id="dialogStack" hidden="true"/>
+  <vbox id="dialogTemplate" class="dialogOverlay" align="center" pack="center" topmost="true" hidden="true">
+    <groupbox class="dialogBox"
+              orient="vertical"
+              pack="end"
+              role="dialog"
+              aria-labelledby="dialogTitle">
+      <caption flex="1" align="center">
+        <label class="dialogTitle" flex="1"></label>
+        <button class="dialogClose close-icon"
+                aria-label="&preferencesCloseButton.label;"/>
+      </caption>
+      <browser class="dialogFrame"
+               autoscroll="false"
+               disablehistory="true"/>
+    </groupbox>
+  </vbox>
   </stack>
 </page>

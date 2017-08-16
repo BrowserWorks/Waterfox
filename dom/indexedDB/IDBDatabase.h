@@ -77,8 +77,6 @@ class IDBDatabase final
   nsDataHashtable<nsISupportsHashKey, indexedDB::PBackgroundIDBDatabaseFileChild*>
     mFileActors;
 
-  nsTHashtable<nsISupportsHashKey> mReceivedBlobs;
-
   RefPtr<Observer> mObserver;
 
   // Weak refs, IDBMutableFile strongly owns this IDBDatabase object.
@@ -96,15 +94,11 @@ public:
          indexedDB::BackgroundDatabaseChild* aActor,
          DatabaseSpec* aSpec);
 
-#ifdef DEBUG
-  void
-  AssertIsOnOwningThread() const;
-
-  PRThread*
-  OwningThread() const;
-#else
   void
   AssertIsOnOwningThread() const
+#ifdef DEBUG
+  ;
+#else
   { }
 #endif
 
@@ -196,9 +190,6 @@ public:
 
   void
   NoteFinishedFileActor(indexedDB::PBackgroundIDBDatabaseFileChild* aFileActor);
-
-  void
-  NoteReceivedBlob(Blob* aBlob);
 
   void
   DelayedMaybeExpireFileActors();

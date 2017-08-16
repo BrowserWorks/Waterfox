@@ -617,7 +617,7 @@ imgRequestProxy* NewStaticProxy(imgRequestProxy* aThis)
 {
   nsCOMPtr<nsIPrincipal> currentPrincipal;
   aThis->GetImagePrincipal(getter_AddRefs(currentPrincipal));
-  RefPtr<Image> image = aThis->GetImage();
+  RefPtr<mozilla::image::Image> image = aThis->GetImage();
   return new imgRequestProxyStatic(image, currentPrincipal);
 }
 
@@ -713,6 +713,14 @@ imgRequestProxy::GetCORSMode(int32_t* aCorsMode)
 
   *aCorsMode = GetOwner()->GetCORSMode();
 
+  return NS_OK;
+}
+
+NS_IMETHODIMP
+imgRequestProxy::BoostPriority(uint32_t aCategory)
+{
+  NS_ENSURE_STATE(GetOwner() && !mCanceled);
+  GetOwner()->BoostPriority(aCategory);
   return NS_OK;
 }
 

@@ -3,40 +3,48 @@
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
 
+/*
+ * The nsILanguageAtomService provides a mapping from languages or charsets
+ * to language groups, and access to the system locale language.
+ */
+
+#ifndef nsLanguageAtomService_h_
+#define nsLanguageAtomService_h_
+
 #include "nsCOMPtr.h"
-#include "nsILanguageAtomService.h"
-#include "nsIStringBundle.h"
-#include "nsInterfaceHashtable.h"
 #include "nsIAtom.h"
-#include "nsUConvPropertySearch.h"
-#include "mozilla/Attributes.h"
+#include "nsInterfaceHashtable.h"
 
-#define NS_LANGUAGEATOMSERVICE_CID \
-  {0xB7C65853, 0x2996, 0x435E, {0x96, 0x54, 0xDC, 0xC1, 0x78, 0xAA, 0xB4, 0x8C}}
-
-class nsLanguageAtomService final : public nsILanguageAtomService
+class nsLanguageAtomService
 {
 public:
-  NS_DECL_ISUPPORTS
+  static nsLanguageAtomService* GetService();
 
-  // nsILanguageAtomService
-  virtual nsIAtom*
-    LookupLanguage(const nsACString &aLanguage, nsresult *aError) override;
+  nsIAtom* LookupLanguage(const nsACString &aLanguage);
+  already_AddRefed<nsIAtom> LookupCharSet(const nsACString& aCharSet);
+  nsIAtom* GetLocaleLanguage();
 
-  virtual already_AddRefed<nsIAtom>
-    LookupCharSet(const nsACString& aCharSet) override;
-
-  virtual nsIAtom* GetLocaleLanguage(nsresult *aError) override;
-
-  virtual nsIAtom* GetLanguageGroup(nsIAtom *aLanguage,
-                                                nsresult *aError) override;
-
-  nsLanguageAtomService();
+  // Returns the language group that the specified language is a part of.
+  //
+  // aNeedsToCache is used for two things.  If null, it indicates that
+  // the nsLanguageAtomService is safe to cache the result of the
+  // language group lookup, either because we're on the main thread,
+  // or because we're on a style worker thread but the font lock has
+  // been acquired.  If non-null, it indicates that it's not safe to
+  // cache the result of the language group lookup (because we're on
+  // a style worker thread without the lock acquired).  In this case,
+  // GetLanguageGroup will store true in *aNeedsToCache true if we
+  // would have cached the result of a new lookup, and false if we
+  // were able to use an existing cached result.  Thus, callers that
+  // get a true *aNeedsToCache outparam value should make an effort
+  // to re-call GetLanguageGroup when it is safe to cache, to avoid
+  // recomputing the language group again later.
+  nsIAtom* GetLanguageGroup(nsIAtom* aLanguage, bool* aNeedsToCache = nullptr);
+  already_AddRefed<nsIAtom> GetUncachedLanguageGroup(nsIAtom* aLanguage) const;
 
 private:
-  ~nsLanguageAtomService() { }
-
-protected:
   nsInterfaceHashtable<nsISupportsHashKey, nsIAtom> mLangToGroup;
   nsCOMPtr<nsIAtom> mLocaleLanguage;
 };
+
+#endif

@@ -4,9 +4,7 @@
 
 "use strict";
 
-const Cc = Components.classes;
-const Ci = Components.interfaces;
-const Cu = Components.utils;
+const { classes: Cc, interfaces: Ci, utils: Cu, results: Cr } = Components;
 
 this.EXPORTED_SYMBOLS = [ "AutoCompletePopup" ];
 
@@ -145,9 +143,8 @@ this.AutoCompletePopup = {
     }
 
     let window = browser.ownerGlobal;
-    let tabbrowser = window.gBrowser;
-    if (Services.focus.activeWindow != window ||
-        tabbrowser.selectedBrowser != browser) {
+    // Also check window top in case this is a sidebar.
+    if (Services.focus.activeWindow !== window.top) {
       // We were sent a message from a window or tab that went into the
       // background, so we'll ignore it for now.
       return;

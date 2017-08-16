@@ -324,17 +324,17 @@ var PopupBlocking = {
       case "DOMPopupBlocked":
         return this.onPopupBlocked(ev);
       case "pageshow":
-        return this.onPageShow(ev);
+        return this._removeIrrelevantPopupData();
       case "pagehide":
-        return this.onPageHide(ev);
+        return this._removeIrrelevantPopupData(ev.target);
     }
     return undefined;
   },
 
   onPopupBlocked(ev) {
     if (!this.popupData) {
-      this.popupData = new Array();
-      this.popupDataInternal = new Array();
+      this.popupData = [];
+      this.popupDataInternal = [];
     }
 
     let obj = {
@@ -353,14 +353,15 @@ var PopupBlocking = {
     this.updateBlockedPopups(true);
   },
 
-  onPageShow(ev) {
+  _removeIrrelevantPopupData(removedDoc = null) {
     if (this.popupData) {
       let i = 0;
+      let oldLength = this.popupData.length;
       while (i < this.popupData.length) {
+        let {requestingWindow, requestingDocument} = this.popupDataInternal[i];
         // Filter out irrelevant reports.
-        if (this.popupDataInternal[i].requestingWindow &&
-            (this.popupDataInternal[i].requestingWindow.document ==
-             this.popupDataInternal[i].requestingDocument)) {
+        if (requestingWindow && requestingWindow.document == requestingDocument &&
+            requestingDocument != removedDoc) {
           i++;
         } else {
           this.popupData.splice(i, 1);
@@ -371,15 +372,9 @@ var PopupBlocking = {
         this.popupData = null;
         this.popupDataInternal = null;
       }
-      this.updateBlockedPopups(false);
-    }
-  },
-
-  onPageHide(ev) {
-    if (this.popupData) {
-      this.popupData = null;
-      this.popupDataInternal = null;
-      this.updateBlockedPopups(false);
+      if (!this.popupData || oldLength > this.popupData.length) {
+        this.updateBlockedPopups(false);
+      }
     }
   },
 
@@ -445,7 +440,7 @@ var Printing = {
     let data = message.data;
     switch (message.name) {
       case "Printing:Preview:Enter": {
-        this.enterPrintPreview(Services.wm.getOuterWindowWithId(data.windowID), data.simplifiedMode, data.defaultPrinterName);
+        this.enterPrintPreview(Services.wm.getOuterWindowWithId(data.windowID), data.simplifiedMode, data.changingBrowsers, data.defaultPrinterName);
         break;
       }
 
@@ -622,7 +617,7 @@ var Printing = {
     });
   },
 
-  enterPrintPreview(contentWindow, simplifiedMode, defaultPrinterName) {
+  enterPrintPreview(contentWindow, simplifiedMode, changingBrowsers, defaultPrinterName) {
     // We'll call this whenever we've finished reflowing the document, or if
     // we errored out while attempting to print preview (in which case, we'll
     // notify the parent that we've failed).
@@ -630,6 +625,7 @@ var Printing = {
       removeEventListener("printPreviewUpdate", onPrintPreviewReady);
       sendAsyncMessage("Printing:Preview:Entered", {
         failed: !!error,
+        changingBrowsers,
       });
     };
 
@@ -656,7 +652,7 @@ var Printing = {
       // The print preview docshell will be in a different TabGroup,
       // so we run it in a separate runnable to avoid touching a
       // different TabGroup in our own runnable.
-      Services.tm.mainThread.dispatch(() => {
+      Services.tm.dispatchToMainThread(() => {
         try {
           docShell.printPreview.printPreview(printSettings, contentWindow, this);
         } catch (error) {
@@ -665,7 +661,7 @@ var Printing = {
           Components.utils.reportError(error);
           notifyEntered(error);
         }
-      }, Ci.nsIThread.DISPATCH_NORMAL);
+      });
     } catch (error) {
       // This might fail if we, for example, attempt to print a XUL document.
       // In that case, we inform the parent to bail out of print preview.
@@ -970,9 +966,7 @@ var AudioPlaybackListener = {
   QueryInterface: XPCOMUtils.generateQI([Ci.nsIObserver]),
 
   init() {
-    Services.obs.addObserver(this, "audio-playback", false);
-    Services.obs.addObserver(this, "AudioFocusChanged", false);
-    Services.obs.addObserver(this, "MediaControl", false);
+    Services.obs.addObserver(this, "audio-playback");
 
     addMessageListener("AudioPlayback", this);
     addEventListener("unload", () => {
@@ -982,8 +976,6 @@ var AudioPlaybackListener = {
 
   uninit() {
     Services.obs.removeObserver(this, "audio-playback");
-    Services.obs.removeObserver(this, "AudioFocusChanged");
-    Services.obs.removeObserver(this, "MediaControl");
 
     removeMessageListener("AudioPlayback", this);
   },
@@ -1039,8 +1031,6 @@ var AudioPlaybackListener = {
         }
         sendAsyncMessage(name);
       }
-    } else if (topic == "AudioFocusChanged" || topic == "MediaControl") {
-      this.handleMediaControlMessage(data);
     }
   },
 
@@ -1103,7 +1093,7 @@ var ViewSelectionSource = {
     var p = n.parentNode;
     if (n == ancestor || !p)
       return null;
-    var path = new Array();
+    var path = [];
     if (!path)
       return null;
     do {
@@ -1457,6 +1447,9 @@ let AutoCompletePopup = {
   init() {
     addEventListener("unload", this);
     addEventListener("DOMContentLoaded", this);
+    // WebExtension browserAction is preloaded and does not receive DCL, wait
+    // on pageshow so we can hookup the formfill controller.
+    addEventListener("pageshow", this, true);
 
     for (let messageName of this.MESSAGES) {
       addMessageListener(messageName, this);
@@ -1474,6 +1467,7 @@ let AutoCompletePopup = {
       this._connected = false;
     }
 
+    removeEventListener("pageshow", this);
     removeEventListener("unload", this);
     removeEventListener("DOMContentLoaded", this);
 
@@ -1482,22 +1476,34 @@ let AutoCompletePopup = {
     }
   },
 
+  connect() {
+    if (this._connected) {
+      return;
+    }
+    // We need to wait for a content viewer to be available
+    // before we can attach our AutoCompletePopup handler,
+    // since nsFormFillController assumes one will exist
+    // when we call attachToBrowser.
+
+    // Hook up the form fill autocomplete controller.
+    let controller = Cc["@mozilla.org/satchel/form-fill-controller;1"]
+                       .getService(Ci.nsIFormFillController);
+    controller.attachToBrowser(docShell,
+                               this.QueryInterface(Ci.nsIAutoCompletePopup));
+    this._connected = true;
+  },
+
   handleEvent(event) {
     switch (event.type) {
+      case "pageshow": {
+        removeEventListener("pageshow", this);
+        this.connect();
+        break;
+      }
+
       case "DOMContentLoaded": {
         removeEventListener("DOMContentLoaded", this);
-
-        // We need to wait for a content viewer to be available
-        // before we can attach our AutoCompletePopup handler,
-        // since nsFormFillController assumes one will exist
-        // when we call attachToBrowser.
-
-        // Hook up the form fill autocomplete controller.
-        let controller = Cc["@mozilla.org/satchel/form-fill-controller;1"]
-                           .getService(Ci.nsIFormFillController);
-        controller.attachToBrowser(docShell,
-                                   this.QueryInterface(Ci.nsIAutoCompletePopup));
-        this._connected = true;
+        this.connect();
         break;
       }
 

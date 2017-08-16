@@ -1,6 +1,3 @@
-/* global XPCOMUtils, ContentSearch, Task, Services, EventEmitter */
-/* exported NewTabSearchProvider */
-
 "use strict";
 
 this.EXPORTED_SYMBOLS = ["NewTabSearchProvider"];
@@ -9,14 +6,13 @@ const {utils: Cu, interfaces: Ci} = Components;
 const CURRENT_ENGINE = "browser-search-engine-modified";
 
 Cu.import("resource://gre/modules/XPCOMUtils.jsm");
-Cu.import("resource://gre/modules/Task.jsm");
 Cu.import("resource://gre/modules/Services.jsm");
 
 XPCOMUtils.defineLazyModuleGetter(this, "ContentSearch",
                                   "resource:///modules/ContentSearch.jsm");
 
 XPCOMUtils.defineLazyGetter(this, "EventEmitter", function() {
-  const {EventEmitter} = Cu.import("resource://devtools/shared/event-emitter.js", {});
+  const {EventEmitter} = Cu.import("resource://gre/modules/EventEmitter.jsm", {});
   return EventEmitter;
 });
 
@@ -30,15 +26,15 @@ SearchProvider.prototype = {
     // all other topics are not relevant to content searches and can be
     // ignored by NewTabSearchProvider
     if (data === "engine-current" && topic === CURRENT_ENGINE) {
-      Task.spawn(function* () {
+      (async () => {
         try {
-          let state = yield ContentSearch.currentStateObj(true);
+          let state = await ContentSearch.currentStateObj(true);
           let engine = state.currentEngine;
           this.emit(CURRENT_ENGINE, engine);
         } catch (e) {
           Cu.reportError(e);
         }
-      }.bind(this));
+      })();
     }
   },
 
@@ -72,30 +68,34 @@ SearchProvider.prototype = {
 
   manageEngines(browser) {
     const browserWin = browser.ownerGlobal;
-    browserWin.openPreferences("paneSearch");
+    if (Services.prefs.getBoolPref("browser.preferences.useOldOrganization")) {
+      browserWin.openPreferences("paneSearch", { origin: "contentSearch" });
+    } else {
+      browserWin.openPreferences("paneGeneral", { origin: "contentSearch" });
+    }
   },
 
-  asyncGetState: Task.async(function*() {
-    let state = yield ContentSearch.currentStateObj(true);
+  async asyncGetState() {
+    let state = await ContentSearch.currentStateObj(true);
     return state;
-  }),
+  },
 
-  asyncPerformSearch: Task.async(function*({browser}, searchData) {
+  async asyncPerformSearch({browser}, searchData) {
     ContentSearch.performSearch({target: browser}, searchData);
-    yield ContentSearch.addFormHistoryEntry({target: browser}, searchData.searchString);
-  }),
+    await ContentSearch.addFormHistoryEntry({target: browser}, searchData.searchString);
+  },
 
-  asyncCycleEngine: Task.async(function*(engineName) {
+  async asyncCycleEngine(engineName) {
     Services.search.currentEngine = Services.search.getEngineByName(engineName);
-    let state = yield ContentSearch.currentStateObj(true);
+    let state = await ContentSearch.currentStateObj(true);
     let newEngine = state.currentEngine;
     this.emit(CURRENT_ENGINE, newEngine);
-  }),
+  },
 
-  asyncGetSuggestions: Task.async(function*(engineName, searchString, target) {
+  async asyncGetSuggestions(engineName, searchString, target) {
     let suggestions = ContentSearch.getSuggestions(engineName, searchString, target.browser);
     return suggestions;
-  }),
+  },
 };
 
 const NewTabSearchProvider = {

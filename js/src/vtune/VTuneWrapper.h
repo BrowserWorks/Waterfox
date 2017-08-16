@@ -15,12 +15,12 @@
 #include "jsscript.h"
 
 #include "jit/IonCode.h"
-#include "wasm/WasmCode.h"
 
 namespace js {
 namespace vtune {
 
 bool Initialize();
+void Shutdown();
 
 // VTune profiling may be attached/detached at any time, but there is no API for
 // attaching a callback to execute at attachment time. Methods compiled before
@@ -38,7 +38,7 @@ void MarkScript(const js::jit::JitCode* code,
                 const JSScript* script,
                 const char* module);
 
-void MarkWasm(const js::wasm::CodeSegment& cs,
+void MarkWasm(unsigned methodId,
               const char* name,
               void* start,
               uintptr_t size);

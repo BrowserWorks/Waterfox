@@ -99,6 +99,9 @@ public:
   {
     mSuccess = !!VirtualProtectEx(GetCurrentProcess(), mFunc, mSize,
                                   mNewProtect, &mOldProtect);
+    if (!mSuccess) {
+      // printf("VirtualProtectEx failed! %d\n", GetLastError());
+    }
     return mSuccess;
   }
 
@@ -138,7 +141,6 @@ public:
       // Ensure we can write to the code.
       AutoVirtualProtect protect(fn, 2, PAGE_EXECUTE_READWRITE);
       if (!protect.Protect()) {
-        // printf("VirtualProtectEx failed! %d\n", GetLastError());
         continue;
       }
 
@@ -271,7 +273,6 @@ public:
     AutoVirtualProtect protectBefore(fn - 5, 5, PAGE_EXECUTE_READWRITE);
     AutoVirtualProtect protectAfter(fn, 2, PAGE_EXECUTE_READWRITE);
     if (!protectBefore.Protect() || !protectAfter.Protect()) {
-      //printf ("VirtualProtectEx failed! %d\n", GetLastError());
       return false;
     }
 
@@ -332,6 +333,26 @@ public:
 private:
   static byteptr_t ResolveRedirectedAddress(const byteptr_t aOriginalFunction)
   {
+    // If function entry is jmp rel8 stub to the internal implementation, we
+    // resolve redirected address from the jump target.
+    if (aOriginalFunction[0] == 0xeb) {
+      int8_t offset = (int8_t)(aOriginalFunction[1]);
+      if (offset <= 0) {
+        // Bail out for negative offset: probably already patched by some
+        // third-party code.
+        return aOriginalFunction;
+      }
+
+      for (int8_t i = 0; i < offset; i++) {
+        if (aOriginalFunction[2 + i] != 0x90) {
+          // Bail out on insufficient nop space.
+          return aOriginalFunction;
+        }
+      }
+
+      return aOriginalFunction + 2 + offset;
+    }
+
     // If function entry is jmp [disp32] such as used by kernel32,
     // we resolve redirected address from import table.
     if (aOriginalFunction[0] == 0xff && aOriginalFunction[1] == 0x25) {
@@ -375,12 +396,11 @@ public:
 #else
 #error "Unknown processor type"
 #endif
-      byteptr_t origBytes = *((byteptr_t*)p);
+      byteptr_t origBytes = (byteptr_t)DecodePointer(*((byteptr_t*)p));
 
       // ensure we can modify the original code
       AutoVirtualProtect protect(origBytes, nBytes, PAGE_EXECUTE_READWRITE);
       if (!protect.Protect()) {
-        //printf ("VirtualProtectEx failed! %d\n", GetLastError());
         continue;
       }
 
@@ -388,9 +408,15 @@ public:
       // in the trampoline.
       intptr_t dest = (intptr_t)(p + sizeof(void*));
 #if defined(_M_IX86)
+      // Ensure the JMP from CreateTrampoline is where we expect it to be.
+      if (origBytes[0] != 0xE9)
+        continue;
       *((intptr_t*)(origBytes + 1)) =
         dest - (intptr_t)(origBytes + 5); // target displacement
 #elif defined(_M_X64)
+      // Ensure the MOV R11 from CreateTrampoline is where we expect it to be.
+      if (origBytes[0] != 0x49 || origBytes[1] != 0xBB)
+        continue;
       *((intptr_t*)(origBytes + 2)) = dest;
 #else
 #error "Unknown processor type"
@@ -420,7 +446,7 @@ public:
     mHookPage = (byteptr_t)VirtualAllocEx(GetCurrentProcess(), nullptr,
                                           mMaxHooks * kHookSize,
                                           MEM_COMMIT | MEM_RESERVE,
-                                          PAGE_EXECUTE_READWRITE);
+                                          PAGE_EXECUTE_READ);
     if (!mHookPage) {
       mModule = 0;
       return;
@@ -428,19 +454,6 @@ public:
   }
 
   bool Initialized() { return !!mModule; }
-
-  void LockHooks()
-  {
-    if (!mModule) {
-      return;
-    }
-
-    DWORD op;
-    VirtualProtectEx(GetCurrentProcess(), mHookPage, mMaxHooks * kHookSize,
-                     PAGE_EXECUTE_READ, &op);
-
-    mModule = 0;
-  }
 
   bool AddHook(const char* aName, intptr_t aHookDest, void** aOrigFunc)
   {
@@ -577,6 +590,7 @@ protected:
 
   enum JumpType {
    Je,
+   Jne,
    Jmp,
    Call
   };
@@ -598,6 +612,11 @@ protected:
       if (mType == JumpType::Je) {
         // JNE RIP+14
         aCode[offset]     = 0x75;
+        aCode[offset + 1] = 14;
+        offset += 2;
+      } else if (mType == JumpType::Jne) {
+        // JE RIP+14
+        aCode[offset]     = 0x74;
         aCode[offset + 1] = 14;
         offset += 2;
       }
@@ -710,6 +729,12 @@ protected:
   {
     *aOutTramp = nullptr;
 
+    AutoVirtualProtect protectHookPage(mHookPage, mMaxHooks * kHookSize,
+                                       PAGE_EXECUTE_READWRITE);
+    if (!protectHookPage.Protect()) {
+      return;
+    }
+
     byteptr_t tramp = FindTrampolineSpace();
     if (!tramp) {
       return;
@@ -717,7 +742,7 @@ protected:
 
     // We keep the address of the original function in the first bytes of
     // the trampoline buffer
-    *((void**)tramp) = aOrigFunction;
+    *((void**)tramp) = EncodePointer(aOrigFunction);
     tramp += sizeof(void*);
 
     byteptr_t origBytes = (byteptr_t)aOrigFunction;
@@ -846,6 +871,18 @@ protected:
         } else if (origBytes[nOrigBytes] == 0x05) {
           // syscall
           COPY_CODES(1);
+        } else if (origBytes[nOrigBytes] == 0x10 ||
+                   origBytes[nOrigBytes] == 0x11) {
+          // SSE: movups xmm, xmm/m128
+          //      movups xmm/m128, xmm
+          COPY_CODES(1);
+          int nModRmSibBytes = CountModRmSib(&origBytes[nOrigBytes]);
+          if (nModRmSibBytes < 0) {
+            MOZ_ASSERT_UNREACHABLE("Unrecognized opcode sequence");
+            return;
+          } else {
+            COPY_CODES(nModRmSibBytes);
+          }
         } else if (origBytes[nOrigBytes] == 0x84) {
           // je rel32
           JumpPatch jump(nTrampBytes - 1,  // overwrite the 0x0f we copied above
@@ -883,8 +920,8 @@ protected:
           MOZ_ASSERT_UNREACHABLE("Unrecognized opcode sequence");
           return;
         }
-      } else if ((origBytes[nOrigBytes] & 0xfb) == 0x48) {
-        // REX.W | REX.WR
+      } else if ((origBytes[nOrigBytes] & 0xfa) == 0x48) {
+        // REX.W | REX.WR | REX.WRB | REX.WB
         COPY_CODES(1);
 
         if (origBytes[nOrigBytes] == 0x81 &&
@@ -988,6 +1025,10 @@ protected:
             MOZ_ASSERT_UNREACHABLE("Unrecognized opcode sequence");
             return;
           }
+        } else if (origBytes[nOrigBytes] == 0x63 &&
+                   (origBytes[nOrigBytes + 1] & kMaskMod) == kModReg) {
+          // movsxd r64, r32 (move + sign extend)
+          COPY_CODES(2);
         } else {
           // not support yet!
           MOZ_ASSERT_UNREACHABLE("Unrecognized opcode sequence");
@@ -1042,11 +1083,52 @@ protected:
           MOZ_ASSERT_UNREACHABLE("Unrecognized opcode sequence");
           return;
         }
+      } else if (origBytes[nOrigBytes] == 0x80 &&
+                 origBytes[nOrigBytes + 1] == 0x3d) {
+        // cmp byte ptr [rip-relative address], imm8
+        // We'll compute the absolute address and do the cmp in r11
+
+        // push r11 (to save the old value)
+        tramp[nTrampBytes] = 0x49;
+        ++nTrampBytes;
+        tramp[nTrampBytes] = 0x53;
+        ++nTrampBytes;
+
+        byteptr_t absAddr =
+          reinterpret_cast<byteptr_t>(origBytes + nOrigBytes + 7 +
+                                      *reinterpret_cast<int32_t*>(origBytes + nOrigBytes + 2));
+        nOrigBytes += 6;
+
+        // mov r11, absolute address
+        tramp[nTrampBytes] = 0x49;
+        ++nTrampBytes;
+        tramp[nTrampBytes] = 0xbb;
+        ++nTrampBytes;
+
+        *reinterpret_cast<byteptr_t*>(tramp + nTrampBytes) = absAddr;
+        nTrampBytes += 8;
+
+        // cmp byte ptr [r11],...
+        tramp[nTrampBytes] = 0x41;
+        ++nTrampBytes;
+        tramp[nTrampBytes] = 0x80;
+        ++nTrampBytes;
+        tramp[nTrampBytes] = 0x3b;
+        ++nTrampBytes;
+
+        // ...imm8
+        COPY_CODES(1);
+
+        // pop r11 (doesn't affect the flags from the cmp)
+        tramp[nTrampBytes] = 0x49;
+        ++nTrampBytes;
+        tramp[nTrampBytes] = 0x5b;
+        ++nTrampBytes;
       } else if (origBytes[nOrigBytes] == 0x90) {
         // nop
         COPY_CODES(1);
-      } else if (origBytes[nOrigBytes] == 0xb8) {
-        // MOV 0xB8: http://ref.x86asm.net/coder32.html#xB8
+      } else if ((origBytes[nOrigBytes] & 0xf8) == 0xb8) {
+        // MOV r32, imm32
         COPY_CODES(5);
       } else if (origBytes[nOrigBytes] == 0x33) {
         // xor r32, r/m32
@@ -1063,6 +1145,14 @@ protected:
           return;
         }
         COPY_CODES(2 + nModRmSibBytes);
+      } else if (origBytes[nOrigBytes] == 0x85) {
+        // test r/m32, r32
+        int nModRmSibBytes = CountModRmSib(&origBytes[nOrigBytes + 1]);
+        if (nModRmSibBytes < 0) {
+          MOZ_ASSERT_UNREACHABLE("Unrecognized opcode sequence");
+          return;
+        }
+        COPY_CODES(1 + nModRmSibBytes);
       } else if (origBytes[nOrigBytes] == 0xd1 &&
                   (origBytes[nOrigBytes+1] & kMaskMod) == kModReg) {
         // bit shifts/rotates : (SA|SH|RO|RC)(R|L) r32
@@ -1084,20 +1174,32 @@ protected:
                        origBytes[nOrigBytes] == 0xe8 ? JumpType::Call : JumpType::Jmp);
         nTrampBytes = jump.GenerateJump(tramp);
         nOrigBytes += 5;
+      } else if (origBytes[nOrigBytes] == 0x74 || // je rel8 (0x74)
+                 origBytes[nOrigBytes] == 0x75) { // jne rel8 (0x75)
+        char offset = origBytes[nOrigBytes + 1];
+        auto jumpType = JumpType::Je;
+        if (origBytes[nOrigBytes] == 0x75)
+          jumpType = JumpType::Jne;
+        JumpPatch jump(nTrampBytes,
+          (intptr_t)(origBytes + nOrigBytes + 2 + offset), jumpType);
+        nTrampBytes = jump.GenerateJump(tramp);
+        nOrigBytes += 2;
       } else if (origBytes[nOrigBytes] == 0xff) {
-        COPY_CODES(1);
-        if ((origBytes[nOrigBytes] & (kMaskMod|kMaskReg)) == 0xf0) {
+        if ((origBytes[nOrigBytes + 1] & (kMaskMod|kMaskReg)) == 0xf0) {
           // push r64
-          COPY_CODES(1);
-        } else if (origBytes[nOrigBytes] == 0x25) {
+          COPY_CODES(2);
+        } else if (origBytes[nOrigBytes + 1] == 0x25) {
           // jmp absolute indirect m32
           foundJmp = true;
-          int32_t offset = *(reinterpret_cast<int32_t*>(origBytes + nOrigBytes + 1));
-          int64_t* ptrToJmpDest = reinterpret_cast<int64_t*>(origBytes + nOrigBytes + 5 + offset);
+          int32_t offset = *(reinterpret_cast<int32_t*>(origBytes + nOrigBytes + 2));
+          int64_t* ptrToJmpDest = reinterpret_cast<int64_t*>(origBytes + nOrigBytes + 6 + offset);
           intptr_t jmpDest = static_cast<intptr_t>(*ptrToJmpDest);
           JumpPatch jump(nTrampBytes, jmpDest, JumpType::Jmp);
           nTrampBytes = jump.GenerateJump(tramp);
-          nOrigBytes += 5;
+          nOrigBytes += 6;
+        } else if ((origBytes[nOrigBytes + 1] & (kMaskMod|kMaskReg)) == BuildModRmByte(kModReg, 2, 0)) {
+          // CALL reg (ff nn)
+          COPY_CODES(2);
         } else {
           MOZ_ASSERT_UNREACHABLE("Unrecognized opcode sequence");
           return;
@@ -1146,7 +1248,6 @@ protected:
     // ensure we can modify the original code
     AutoVirtualProtect protect(aOrigFunction, nOrigBytes, PAGE_EXECUTE_READWRITE);
     if (!protect.Protect()) {
-      //printf ("VirtualProtectEx failed! %d\n", GetLastError());
       return;
     }
 
@@ -1184,6 +1285,26 @@ protected:
 
   static void* ResolveRedirectedAddress(const byteptr_t aOriginalFunction)
   {
+    // If function entry is jmp rel8 stub to the internal implementation, we
+    // resolve redirected address from the jump target.
+    if (aOriginalFunction[0] == 0xeb) {
+      int8_t offset = (int8_t)(aOriginalFunction[1]);
+      if (offset <= 0) {
+        // Bail out for negative offset: probably already patched by some
+        // third-party code.
+        return aOriginalFunction;
+      }
+
+      for (int8_t i = 0; i < offset; i++) {
+        if (aOriginalFunction[2 + i] != 0x90) {
+          // Bail out on insufficient nop space.
+          return aOriginalFunction;
+        }
+      }
+
+      return aOriginalFunction + 2 + offset;
+    }
+
 #if defined(_M_IX86)
     // If function entry is jmp [disp32] such as used by kernel32,
     // we resolve redirected address from import table.
@@ -1230,13 +1351,6 @@ public:
 
     // Lazily initialize mDetourPatcher, since it allocates memory and we might
     // not need it.
-  }
-
-  void LockHooks()
-  {
-    if (mDetourPatcher.Initialized()) {
-      mDetourPatcher.LockHooks();
-    }
   }
 
   /**

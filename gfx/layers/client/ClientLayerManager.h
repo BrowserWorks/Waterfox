@@ -29,7 +29,13 @@
 class nsDisplayListBuilder;
 
 namespace mozilla {
+
+namespace dom {
+class TabGroup;
+}
 namespace layers {
+
+using dom::TabGroup;
 
 class ClientPaintedLayer;
 class CompositorBridgeChild;
@@ -63,6 +69,8 @@ public:
   {
     return this;
   }
+
+  TabGroup* GetTabGroup();
 
   virtual int32_t GetMaxTextureSize() const override;
 
@@ -106,7 +114,8 @@ public:
   }
 
   virtual void FlushRendering() override;
-  void SendInvalidRegion(const nsIntRegion& aRegion);
+  virtual void WaitOnTransactionProcessed() override;
+  virtual void SendInvalidRegion(const nsIntRegion& aRegion) override;
 
   virtual uint32_t StartFrameTimeRecording(int32_t aBufferSize) override;
 
@@ -172,11 +181,11 @@ public:
 #endif
   bool InTransaction() { return mPhase != PHASE_NONE; }
 
-  void SetNeedsComposite(bool aNeedsComposite)
+  virtual void SetNeedsComposite(bool aNeedsComposite) override
   {
     mNeedsComposite = aNeedsComposite;
   }
-  bool NeedsComposite() const { return mNeedsComposite; }
+  virtual bool NeedsComposite() const override { return mNeedsComposite; }
 
   virtual void Composite() override;
   virtual void GetFrameUniformity(FrameUniformityData* aFrameUniformityData) override;
@@ -230,8 +239,6 @@ public:
 
   bool AsyncPanZoomEnabled() const override;
 
-  void SetNextPaintSyncId(int32_t aSyncId);
-
   virtual void SetLayerObserverEpoch(uint64_t aLayerObserverEpoch) override;
 
   virtual void AddDidCompositeObserver(DidCompositeObserver* aObserver) override;
@@ -239,6 +246,16 @@ public:
 
   virtual already_AddRefed<PersistentBufferProvider>
   CreatePersistentBufferProvider(const gfx::IntSize& aSize, gfx::SurfaceFormat aFormat) override;
+
+  static PaintTiming* MaybeGetPaintTiming(LayerManager* aManager) {
+    if (!aManager) {
+      return nullptr;
+    }
+    if (ClientLayerManager* lm = aManager->AsClientLayerManager()) {
+      return &lm->AsShadowForwarder()->GetPaintTiming();
+    }
+    return nullptr;
+  }
 
 protected:
   enum TransactionPhase {

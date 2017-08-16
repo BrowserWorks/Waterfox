@@ -41,8 +41,7 @@ public:
   explicit nsVideoFrame(nsStyleContext* aContext);
 
   NS_DECL_QUERYFRAME
-  NS_DECL_QUERYFRAME_TARGET(nsVideoFrame)
-  NS_DECL_FRAMEARENA_HELPERS
+  NS_DECL_FRAMEARENA_HELPERS(nsVideoFrame)
 
   void BuildDisplayList(nsDisplayListBuilder*   aBuilder,
                         const nsRect&           aDirtyRect,
@@ -70,7 +69,6 @@ public:
   nscoord GetMinISize(nsRenderingContext *aRenderingContext) override;
   nscoord GetPrefISize(nsRenderingContext *aRenderingContext) override;
   void DestroyFrom(nsIFrame* aDestructRoot) override;
-  bool IsLeaf() const override;
 
   void Reflow(nsPresContext*     aPresContext,
               ReflowOutput&      aDesiredSize,
@@ -80,8 +78,6 @@ public:
 #ifdef ACCESSIBILITY
   mozilla::a11y::AccType AccessibleType() override;
 #endif
-
-  nsIAtom* GetType() const override;
 
   bool IsFrameOfType(uint32_t aFlags) const override
   {
@@ -127,6 +123,9 @@ protected:
   // if we're the frame for a video element. Only call on frames for video
   // elements, not for frames for audio elements.
   void UpdatePosterSource(bool aNotify);
+
+  // Notify the mediaElement that the mCaptionDiv was created.
+  void UpdateTextTrack();
 
   virtual ~nsVideoFrame();
 

@@ -22,6 +22,7 @@ EXTRA_COMPONENTS += [
     'ChromeProfileMigrator.js',
     'FirefoxProfileMigrator.js',
     'ProfileMigrator.js',
+    'WaterfoxProfileMigrator.js',
 ]
 
 EXTRA_PP_COMPONENTS += [

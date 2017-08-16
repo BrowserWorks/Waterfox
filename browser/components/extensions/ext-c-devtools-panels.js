@@ -2,14 +2,19 @@
 /* vim: set sts=2 sw=2 et tw=80: */
 "use strict";
 
-Cu.import("resource://gre/modules/ExtensionUtils.jsm");
+// The ext-* files are imported into the same scopes.
+/* import-globals-from ../../../toolkit/components/extensions/ext-c-toolkit.js */
 
-const {
+Cu.import("resource://gre/modules/Services.jsm");
+
+XPCOMUtils.defineLazyModuleGetter(this, "EventEmitter",
+                                  "resource://gre/modules/EventEmitter.jsm");
+XPCOMUtils.defineLazyModuleGetter(this, "ExtensionChildDevToolsUtils",
+                                  "resource://gre/modules/ExtensionChildDevToolsUtils.jsm");
+
+var {
   promiseDocumentLoaded,
-  SingletonEventManager,
 } = ExtensionUtils;
-
-const {EventEmitter} = Cu.import("resource://devtools/shared/event-emitter.js", {});
 
 /**
  * Represents an addon devtools panel in the child process.
@@ -132,24 +137,41 @@ class ChildDevToolsPanel extends EventEmitter {
   }
 }
 
-extensions.registerSchemaAPI("devtools.panels", "devtools_child", context => {
-  return {
-    devtools: {
-      panels: {
-        create(title, icon, url) {
-          return context.cloneScope.Promise.resolve().then(async () => {
-            const panelId = await context.childManager.callParentAsyncFunction(
-              "devtools.panels.create", [title, icon, url]);
+this.devtools_panels = class extends ExtensionAPI {
+  getAPI(context) {
+    const themeChangeObserver = ExtensionChildDevToolsUtils.getThemeChangeObserver();
 
-            const devtoolsPanel = new ChildDevToolsPanel(context, {id: panelId});
+    return {
+      devtools: {
+        panels: {
+          create(title, icon, url) {
+            return context.cloneScope.Promise.resolve().then(async () => {
+              const panelId = await context.childManager.callParentAsyncFunction(
+                "devtools.panels.create", [title, icon, url]);
 
-            const devtoolsPanelAPI = Cu.cloneInto(devtoolsPanel.api(),
-                                                  context.cloneScope,
-                                                  {cloneFunctions: true});
-            return devtoolsPanelAPI;
-          });
+              const devtoolsPanel = new ChildDevToolsPanel(context, {id: panelId});
+
+              const devtoolsPanelAPI = Cu.cloneInto(devtoolsPanel.api(),
+                                                    context.cloneScope,
+                                                    {cloneFunctions: true});
+              return devtoolsPanelAPI;
+            });
+          },
+          get themeName() {
+            return themeChangeObserver.themeName;
+          },
+          onThemeChanged: new SingletonEventManager(
+            context, "devtools.panels.onThemeChanged", fire => {
+              const listener = (eventName, themeName) => {
+                fire.async(themeName);
+              };
+              themeChangeObserver.on("themeChanged", listener);
+              return () => {
+                themeChangeObserver.off("themeChanged", listener);
+              };
+            }).api(),
         },
       },
-    },
-  };
-});
+    };
+  }
+};

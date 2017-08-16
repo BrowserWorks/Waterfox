@@ -24,6 +24,9 @@
  * PRLogModuleInfo.level field to be a bitfield.  Each bit controls a
  * specific type of logging. Each logging operation has associated
  * inline methods defined below.
+ *
+ * Due to the redefinition of the level field we cannot use MOZ_LOG directly
+ * as that will cause assertions due to invalid log levels.
  */
 #define NS_FRAME_TRACE_CALLS        0x1
 #define NS_FRAME_TRACE_PUSH_PULL    0x2
@@ -36,7 +39,7 @@
 #define NS_FRAME_LOG(_bit,_args)                                \
   PR_BEGIN_MACRO                                                \
     if (NS_FRAME_LOG_TEST(nsFrame::sFrameLogModule,_bit)) {  \
-      PR_LogPrint _args;                                        \
+      printf_stderr _args; \
     }                                                           \
   PR_END_MACRO
 #else
@@ -87,15 +90,17 @@
 // with potentially catastrophic consequences (not enough memory is
 // allocated for a frame object).
 
-#define NS_DECL_FRAMEARENA_HELPERS                                \
-  void* operator new(size_t, nsIPresShell*) MOZ_MUST_OVERRIDE;    \
-  nsQueryFrame::FrameIID GetFrameId() override MOZ_MUST_OVERRIDE;
+#define NS_DECL_FRAMEARENA_HELPERS(class)                           \
+  NS_DECL_QUERYFRAME_TARGET(class)                                  \
+  static constexpr nsIFrame::ClassID kClassID = nsIFrame::ClassID::class##_id;  \
+  void* operator new(size_t, nsIPresShell*) MOZ_MUST_OVERRIDE;      \
+  nsQueryFrame::FrameIID GetFrameId() override MOZ_MUST_OVERRIDE {  \
+    return nsQueryFrame::class##_id;                                \
+  }
 
 #define NS_IMPL_FRAMEARENA_HELPERS(class)                         \
   void* class::operator new(size_t sz, nsIPresShell* aShell)      \
   { return aShell->AllocateFrame(nsQueryFrame::class##_id, sz); } \
-  nsQueryFrame::FrameIID class::GetFrameId()                      \
-  { return nsQueryFrame::class##_id; }
 
 #define NS_DECL_ABSTRACT_FRAME(class)                                   \
   void* operator new(size_t, nsIPresShell*) MOZ_MUST_OVERRIDE = delete; \
@@ -144,8 +149,11 @@ public:
 
   // nsQueryFrame
   NS_DECL_QUERYFRAME
+  NS_DECL_QUERYFRAME_TARGET(nsFrame)
+  virtual nsQueryFrame::FrameIID GetFrameId() MOZ_MUST_OVERRIDE {
+    return kFrameIID;
+  }
   void* operator new(size_t, nsIPresShell*) MOZ_MUST_OVERRIDE;
-  virtual nsQueryFrame::FrameIID GetFrameId() MOZ_MUST_OVERRIDE;
 
   // nsIFrame
   void Init(nsIContent*       aContent,
@@ -197,7 +205,6 @@ public:
   void SetPrevInFlow(nsIFrame*) override;
   nsIFrame* GetNextInFlowVirtual() const override;
   void SetNextInFlow(nsIFrame*) override;
-  nsIAtom* GetType() const override;
 
   nsresult GetSelectionController(nsPresContext *aPresContext,
                                   nsISelectionController **aSelCon) override;
@@ -577,7 +584,9 @@ public:
 
 protected:
   // Protected constructor and destructor
-  explicit nsFrame(nsStyleContext* aContext);
+  nsFrame(nsStyleContext* aContext, ClassID aID);
+  explicit nsFrame(nsStyleContext* aContext)
+    : nsFrame(aContext, ClassID::nsFrame_id) {}
   virtual ~nsFrame();
 
   /**
@@ -595,6 +604,12 @@ protected:
   void DidSetStyleContext(nsStyleContext* aOldStyleContext) override;
 
 public:
+  /**
+   * Helper method to create a view for a frame.  Only used by a few sub-classes
+   * that need a view.
+   */
+  void CreateView();
+
   //given a frame five me the first/last leaf available
   //XXX Robert O'Callahan wants to move these elsewhere
   static void GetLastLeaf(nsPresContext* aPresContext, nsIFrame **aFrame);
@@ -617,7 +632,7 @@ public:
     // clip overflow:-moz-hidden-unscrollable, except for nsListControlFrame,
     // which is an nsHTMLScrollFrame.
     if (MOZ_UNLIKELY(aDisp->mOverflowX == NS_STYLE_OVERFLOW_CLIP &&
-                     aFrame->GetType() != nsGkAtoms::listControlFrame)) {
+                     !aFrame->IsListControlFrame())) {
       return true;
     }
 
@@ -625,17 +640,17 @@ public:
     if (aDisp->mOverflowX == NS_STYLE_OVERFLOW_HIDDEN &&
         aDisp->mOverflowY == NS_STYLE_OVERFLOW_HIDDEN) {
       // REVIEW: these are the frame types that set up clipping.
-      nsIAtom* type = aFrame->GetType();
-      if (type == nsGkAtoms::tableFrame ||
-          type == nsGkAtoms::tableCellFrame ||
-          type == nsGkAtoms::bcTableCellFrame ||
-          type == nsGkAtoms::svgOuterSVGFrame ||
-          type == nsGkAtoms::svgInnerSVGFrame ||
-          type == nsGkAtoms::svgForeignObjectFrame) {
+      mozilla::LayoutFrameType type = aFrame->Type();
+      if (type == mozilla::LayoutFrameType::Table ||
+          type == mozilla::LayoutFrameType::TableCell ||
+          type == mozilla::LayoutFrameType::BCTableCell ||
+          type == mozilla::LayoutFrameType::SVGOuterSVG ||
+          type == mozilla::LayoutFrameType::SVGInnerSVG ||
+          type == mozilla::LayoutFrameType::SVGForeignObject) {
         return true;
       }
       if (aFrame->IsFrameOfType(nsIFrame::eReplacedContainsBlock)) {
-        if (type == nsGkAtoms::textInputFrame) {
+        if (type == mozilla::LayoutFrameType::TextInput) {
           // It always has an anonymous scroll frame that handles any overflow.
           return false;
         }
@@ -649,10 +664,8 @@ public:
 
     // If we're paginated and a block, and have NS_BLOCK_CLIP_PAGINATED_OVERFLOW
     // set, then we want to clip our overflow.
-    return
-      (aFrame->GetStateBits() & NS_BLOCK_CLIP_PAGINATED_OVERFLOW) != 0 &&
-      aFrame->PresContext()->IsPaginated() &&
-      aFrame->GetType() == nsGkAtoms::blockFrame;
+    return (aFrame->GetStateBits() & NS_BLOCK_CLIP_PAGINATED_OVERFLOW) != 0 &&
+           aFrame->PresContext()->IsPaginated() && aFrame->IsBlockFrame();
   }
 
   nsILineIterator* GetLineIterator() override;

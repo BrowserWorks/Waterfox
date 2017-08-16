@@ -389,15 +389,9 @@ nsHTMLCanvasFrame::BuildDisplayList(nsDisplayListBuilder*   aBuilder,
                           nsISelectionDisplay::DISPLAY_IMAGES);
 }
 
-nsIAtom*
-nsHTMLCanvasFrame::GetType() const
-{
-  return nsGkAtoms::HTMLCanvasFrame;
-}
-
 // get the offset into the content area of the image where aImg starts if it is a continuation.
 // from nsImageFrame
-nscoord 
+nscoord
 nsHTMLCanvasFrame::GetContinuationOffset(nscoord* aWidth) const
 {
   nscoord offset = 0;
@@ -417,6 +411,18 @@ nsHTMLCanvasFrame::GetContinuationOffset(nscoord* aWidth) const
     offset = std::max(0, offset);
   }
   return offset;
+}
+
+void
+nsHTMLCanvasFrame::DoUpdateStyleOfOwnedAnonBoxes(ServoStyleSet& aStyleSet,
+                                                 nsStyleChangeList& aChangeList,
+                                                 nsChangeHint aHintForThisFrame)
+{
+  MOZ_ASSERT(mFrames.FirstChild(), "Must have our canvas content anon box");
+  MOZ_ASSERT(!mFrames.FirstChild()->GetNextSibling(),
+             "Must only have our canvas content anon box");
+  UpdateStyleOfChildAnonBox(mFrames.FirstChild(),
+                            aStyleSet, aChangeList, aHintForThisFrame);
 }
 
 #ifdef ACCESSIBILITY

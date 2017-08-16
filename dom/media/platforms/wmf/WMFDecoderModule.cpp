@@ -28,6 +28,7 @@
 #include "nsServiceManagerUtils.h"
 #include "nsWindowsHelpers.h"
 #include "prsystem.h"
+#include "nsIXULRuntime.h"
 
 namespace mozilla {
 
@@ -45,7 +46,20 @@ WMFDecoderModule::~WMFDecoderModule()
 void
 WMFDecoderModule::Init()
 {
-  sDXVAEnabled = gfx::gfxVars::CanUseHardwareVideoDecoding();
+  if (XRE_IsContentProcess()) {
+    // If we're in the content process and the UseGPUDecoder pref is set, it
+    // means that we've given up on the GPU process (it's been crashing) so we
+    // should disable DXVA
+    sDXVAEnabled = !MediaPrefs::PDMUseGPUDecoder();
+  } else if (XRE_IsGPUProcess()) {
+    // Always allow DXVA in the GPU process.
+    sDXVAEnabled = true;
+  } else {
+    // Only allow DXVA in the UI process if we aren't in e10s Firefox
+    sDXVAEnabled = !mozilla::BrowserTabsRemoteAutostart();
+  }
+
+  sDXVAEnabled = sDXVAEnabled && gfx::gfxVars::CanUseHardwareVideoDecoding();
 }
 
 /* static */
@@ -240,7 +254,7 @@ WMFDecoderModule::Supports(const TrackInfo& aTrackInfo,
       CanCreateWMFDecoder<CLSID_CMP3DecMediaObject>()) {
     return true;
   }
-  if (MediaPrefs::PDMWMFVP9DecoderEnabled() && sDXVAEnabled) {
+  if (MediaPrefs::PDMWMFVP9DecoderEnabled()) {
     if ((VPXDecoder::IsVP8(aTrackInfo.mMimeType)
          || VPXDecoder::IsVP9(aTrackInfo.mMimeType))
         && CanCreateWMFDecoder<CLSID_WebmMfVpxDec>()) {

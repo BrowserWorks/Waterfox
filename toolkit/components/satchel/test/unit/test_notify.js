@@ -9,7 +9,7 @@ var expectedNotification;
 var expectedData;
 
 var TestObserver = {
-  QueryInterface : XPCOMUtils.generateQI([Ci.nsIObserver, Ci.nsISupportsWeakReference]),
+  QueryInterface: XPCOMUtils.generateQI([Ci.nsIObserver, Ci.nsISupportsWeakReference]),
 
   observe(subject, topic, data) {
     do_check_eq(topic, "satchel-storage-changed");
@@ -64,7 +64,7 @@ yield countEntries(null, null, function(num) { do_check_false(num, "Checking ini
 // Add the observer
 var os = Cc["@mozilla.org/observer-service;1"].
          getService(Ci.nsIObserverService);
-os.addObserver(TestObserver, "satchel-storage-changed", false);
+os.addObserver(TestObserver, "satchel-storage-changed");
 
 /* ========== 2 ========== */
 testnum++;

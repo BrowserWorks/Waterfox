@@ -12,7 +12,7 @@ const {
   DOM: dom,
   PropTypes
 } = require("devtools/client/shared/vendor/react");
-const GripMessageBody = createFactory(require("devtools/client/webconsole/new-console-output/components/grip-message-body"));
+const GripMessageBody = require("devtools/client/webconsole/new-console-output/components/grip-message-body");
 const ConsoleTable = createFactory(require("devtools/client/webconsole/new-console-output/components/console-table"));
 const {isGroupType, l10n} = require("devtools/client/webconsole/new-console-output/utils/messages");
 
@@ -25,6 +25,7 @@ ConsoleApiCall.propTypes = {
   open: PropTypes.bool,
   serviceContainer: PropTypes.object.isRequired,
   indent: PropTypes.number.isRequired,
+  timestampsVisible: PropTypes.bool.isRequired,
 };
 
 ConsoleApiCall.defaultProps = {
@@ -40,13 +41,14 @@ function ConsoleApiCall(props) {
     tableData,
     serviceContainer,
     indent,
+    timestampsVisible,
+    repeat,
   } = props;
   const {
     id: messageId,
     source,
     type,
     level,
-    repeat,
     stacktrace,
     frame,
     timeStamp,
@@ -108,6 +110,7 @@ function ConsoleApiCall(props) {
     dispatch,
     indent,
     timeStamp,
+    timestampsVisible,
   });
 }
 
@@ -119,7 +122,8 @@ function formatReps(parameters, userProvidedStyles, serviceContainer) {
         grip,
         key,
         userProvidedStyle: userProvidedStyles ? userProvidedStyles[key] : null,
-        serviceContainer
+        serviceContainer,
+        useQuotes: false,
       }))
       // Interleave spaces.
       .reduce((arr, v, i) => {

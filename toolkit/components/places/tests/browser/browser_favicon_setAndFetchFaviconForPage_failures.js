@@ -2,6 +2,8 @@
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
 
+/* eslint max-nested-callbacks: ["warn", 17] */
+
 /**
  * This file tests setAndFetchFaviconForPage when it is called with invalid
  * arguments, and when no favicon is stored for the given arguments.
@@ -38,7 +40,7 @@ function test() {
   });
 
   function checkFavIconsDBCount(aCallback) {
-    let stmt = DBConn().createAsyncStatement("SELECT url FROM moz_favicons");
+    let stmt = DBConn().createAsyncStatement("SELECT icon_url FROM moz_icons");
     stmt.executeAsync({
       handleResult: function final_handleResult(aResultSet) {
         while (aResultSet.getNextRow()) {
@@ -50,7 +52,7 @@ function test() {
       },
       handleCompletion: function final_handleCompletion(aReason) {
         // begin testing
-        info("Previous records in moz_favicons: " + favIconsResultCount);
+        info("Previous records in moz_icons: " + favIconsResultCount);
         if (aCallback) {
           aCallback();
         }
@@ -173,11 +175,11 @@ function test() {
       function final_callback() {
         // Check that only one record corresponding to the last favicon is present.
         let resultCount = 0;
-        let stmt = DBConn().createAsyncStatement("SELECT url FROM moz_favicons");
+        let stmt = DBConn().createAsyncStatement("SELECT icon_url FROM moz_icons");
         stmt.executeAsync({
           handleResult: function final_handleResult(aResultSet) {
 
-            // If the moz_favicons DB had been previously loaded (before our
+            // If the moz_icons DB had been previously loaded (before our
             // test began), we should focus only in the URI we are testing and
             // skip the URIs not related to our test.
             if (favIconsResultCount > 0) {

@@ -14,6 +14,8 @@
 *.swp
 *.swo
 *.csv
+*.rej
+*.orig
 .DS_Store
 Servo.app
 .config.mk.last
@@ -24,6 +26,12 @@ Servo.app
 # IntelliJ
 .idea
 *.iws
+*.iml
+
+#Gradle
+.gradle
 
 # VSCode
 .vscode
+
+/unminified-js

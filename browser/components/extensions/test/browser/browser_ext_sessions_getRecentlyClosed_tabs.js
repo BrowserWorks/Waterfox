@@ -8,6 +8,9 @@ function expectedTabInfo(tab, window) {
     url: browser.currentURI.spec,
     title: browser.contentTitle,
     favIconUrl: window.gBrowser.getIcon(tab),
+    // 'selected' is marked as unsupported in schema, so we've removed it.
+    // For more details, see bug 1337509
+    selected: undefined,
   };
 }
 
@@ -35,13 +38,13 @@ add_task(async function test_sessions_get_recently_closed_tabs() {
   });
 
   let win = await BrowserTestUtils.openNewBrowserWindow();
-  await BrowserTestUtils.loadURI(win.gBrowser.selectedBrowser, "about:addons");
+  await BrowserTestUtils.loadURI(win.gBrowser.selectedBrowser, "about:mozilla");
   await BrowserTestUtils.browserLoaded(win.gBrowser.selectedBrowser);
   let expectedTabs = [];
   let tab = win.gBrowser.selectedTab;
   expectedTabs.push(expectedTabInfo(tab, win));
 
-  for (let url of ["about:robots", "about:mozilla"]) {
+  for (let url of ["about:robots", "about:buildconfig"]) {
     tab = await BrowserTestUtils.openNewForegroundTab(win.gBrowser, url);
     expectedTabs.push(expectedTabInfo(tab, win));
   }

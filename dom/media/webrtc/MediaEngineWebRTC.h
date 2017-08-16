@@ -153,6 +153,7 @@ public:
   virtual int GetRecordingDeviceName(int aIndex, char (&aStrNameUTF8)[128],
                                      char aStrGuidUTF8[128]) = 0;
   virtual int GetRecordingDeviceStatus(bool& aIsAvailable) = 0;
+  virtual int GetChannelCount(int aDeviceIndex, uint32_t& aChannels) = 0;
   virtual void StartRecording(SourceMediaStream *aStream, AudioDataListener *aListener) = 0;
   virtual void StopRecording(SourceMediaStream *aStream) = 0;
   virtual int SetRecordingDevice(int aIndex) = 0;
@@ -179,11 +180,7 @@ public:
 
   static void CleanupGlobalData()
   {
-    if (mDevices) {
-      // This doesn't require anything more than support for free()
-      cubeb_device_collection_destroy(mDevices);
-      mDevices = nullptr;
-    }
+    cubeb_device_collection_destroy(CubebUtils::GetCubebContext(), &mDevices);
     delete mDeviceIndexes;
     mDeviceIndexes = nullptr;
     delete mDeviceNames;
@@ -212,6 +209,7 @@ public:
         aIndex = mDefaultDevice;
       }
     }
+    MOZ_ASSERT(mDeviceIndexes);
     if (aIndex < 0 || aIndex >= (int) mDeviceIndexes->Length()) {
       return -1;
     }
@@ -234,7 +232,7 @@ public:
 #else
     int dev_index = DeviceIndex(aDeviceIndex);
     if (dev_index != -1) {
-      aID = mDevices->device[dev_index]->devid;
+      aID = mDevices.device[dev_index].devid;
       return true;
     }
     return false;
@@ -249,11 +247,11 @@ public:
     aStrGuidUTF8[0] = '\0';
 #else
     int32_t devindex = DeviceIndex(aIndex);
-    if (!mDevices || devindex < 0) {
+    if (mDevices.count == 0 || devindex < 0) {
       return 1;
     }
     SprintfLiteral(aStrNameUTF8, "%s%s", aIndex == -1 ? "default: " : "",
-		   mDevices->device[devindex]->friendly_name);
+                   mDevices.device[devindex].friendly_name);
     aStrGuidUTF8[0] = '\0';
 #endif
     return 0;
@@ -267,13 +265,32 @@ public:
     return 0;
   }
 
+  int GetChannelCount(int aDeviceIndex, uint32_t& aChannels)
+  {
+    return GetDeviceMaxChannels(aDeviceIndex, aChannels);
+  }
+
+  static int GetDeviceMaxChannels(int aDeviceIndex, uint32_t& aChannels)
+  {
+#ifdef MOZ_WIDGET_ANDROID
+    aChannels = 1;
+#else
+    int32_t devindex = DeviceIndex(aDeviceIndex);
+    if (mDevices.count == 0 || devindex < 0) {
+      return 1;
+    }
+    aChannels = mDevices.device[devindex].max_channels;
+#endif
+    return 0;
+  }
+
   void StartRecording(SourceMediaStream *aStream, AudioDataListener *aListener)
   {
 #ifdef MOZ_WIDGET_ANDROID
     // OpenSL ES does not support enumerating devices.
-    MOZ_ASSERT(!mDevices);
+    MOZ_ASSERT(mDevices.count == 0);
 #else
-    MOZ_ASSERT(mDevices);
+    MOZ_ASSERT(mDevices.count > 0);
 #endif
 
     if (mInUseCount == 0) {
@@ -325,7 +342,7 @@ private:
   static nsTArray<int>* mDeviceIndexes;
   static int mDefaultDevice; // -1 == not set
   static nsTArray<nsCString>* mDeviceNames;
-  static cubeb_device_collection *mDevices;
+  static cubeb_device_collection mDevices;
   static bool mAnyInUse;
   static StaticMutex sMutex;
 };
@@ -365,6 +382,12 @@ public:
       return 1;
     }
     ptrVoEHw->GetRecordingDeviceStatus(aIsAvailable);
+    return 0;
+  }
+
+  int GetChannelCount(int aDeviceIndex, uint32_t& aChannels)
+  {
+    aChannels = 1; // default to mono
     return 0;
   }
 
@@ -573,6 +596,8 @@ private:
   nsCString mDeviceUUID;
 
   int32_t mSampleFrequency;
+  uint64_t mTotalFrames;
+  uint64_t mLastLogFrames;
   int32_t mPlayoutDelay;
 
   NullTransport *mNullTransport;

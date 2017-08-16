@@ -12,14 +12,16 @@
 namespace mozilla {
 
 ServoElementSnapshot::ServoElementSnapshot(const Element* aElement)
-  : mContains(Flags(0))
-  , mState(0)
+  : mState(0)
+  , mContains(Flags(0))
+  , mIsTableBorderNonzero(false)
+  , mIsMozBrowserFrame(false)
 {
   MOZ_COUNT_CTOR(ServoElementSnapshot);
   mIsHTMLElementInHTMLDocument =
     aElement->IsHTMLElement() && aElement->IsInHTMLDocument();
-  mIsInChromeDocument =
-    nsContentUtils::IsChromeDoc(aElement->OwnerDoc());
+  mIsInChromeDocument = nsContentUtils::IsChromeDoc(aElement->OwnerDoc());
+  mSupportsLangAttr = aElement->SupportsLangAttr();
 }
 
 ServoElementSnapshot::~ServoElementSnapshot()
@@ -32,7 +34,7 @@ ServoElementSnapshot::AddAttrs(Element* aElement)
 {
   MOZ_ASSERT(aElement);
 
-  if (HasAny(Flags::Attributes)) {
+  if (HasAttrs()) {
     return;
   }
 
@@ -45,6 +47,31 @@ ServoElementSnapshot::AddAttrs(Element* aElement)
     mAttrs.AppendElement(ServoAttrSnapshot(*attrName, *attrValue));
   }
   mContains |= Flags::Attributes;
+  if (aElement->HasID()) {
+    mContains |= Flags::Id;
+  }
+  if (aElement->MayHaveClass()) {
+    mContains |= Flags::MaybeClass;
+  }
+}
+
+void
+ServoElementSnapshot::AddOtherPseudoClassState(Element* aElement)
+{
+  MOZ_ASSERT(aElement);
+
+  if (HasOtherPseudoClassState()) {
+    return;
+  }
+
+  mIsTableBorderNonzero =
+    *nsCSSPseudoClasses::MatchesElement(CSSPseudoClassType::mozTableBorderNonzero,
+                                        aElement);
+  mIsMozBrowserFrame =
+    *nsCSSPseudoClasses::MatchesElement(CSSPseudoClassType::mozBrowserFrame,
+                                        aElement);
+
+  mContains |= Flags::OtherPseudoClassState;
 }
 
 } // namespace mozilla

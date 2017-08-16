@@ -14,7 +14,7 @@ var DevToolsUtils = require("devtools/shared/DevToolsUtils");
 
 loader.lazyRequireGetter(this, "RootActor", "devtools/server/actors/root", true);
 loader.lazyRequireGetter(this, "BrowserAddonActor", "devtools/server/actors/addon", true);
-loader.lazyRequireGetter(this, "WebExtensionActor", "devtools/server/actors/webextension", true);
+loader.lazyRequireGetter(this, "WebExtensionParentActor", "devtools/server/actors/webextension-parent", true);
 loader.lazyRequireGetter(this, "WorkerActorList", "devtools/server/actors/worker-list", true);
 loader.lazyRequireGetter(this, "ServiceWorkerRegistrationActorList", "devtools/server/actors/worker-list", true);
 loader.lazyRequireGetter(this, "ProcessActorList", "devtools/server/actors/process", true);
@@ -355,7 +355,8 @@ BrowserTabList.prototype.getTab = function ({ outerWindowID, tabId }) {
   } else if (typeof tabId == "number") {
     // Tabs OOP
     for (let browser of this._getBrowsers()) {
-      if (browser.frameLoader.tabParent &&
+      if (browser.frameLoader &&
+          browser.frameLoader.tabParent &&
           browser.frameLoader.tabParent.tabId === tabId) {
         return this._getActorForBrowser(browser);
       }
@@ -671,7 +672,7 @@ DevToolsUtils.makeInfallible(function (window) {
    * a nsIWindowMediatorListener's onCloseWindow hook (bug 873589), so
    * handle the close in a different tick.
    */
-  Services.tm.currentThread.dispatch(DevToolsUtils.makeInfallible(() => {
+  Services.tm.dispatchToMainThread(DevToolsUtils.makeInfallible(() => {
     /*
      * Scan the entire map for actors representing tabs that were in this
      * top-level window, and exit them.
@@ -682,7 +683,7 @@ DevToolsUtils.makeInfallible(function (window) {
         this._handleActorClose(actor, browser);
       }
     }
-  }, "BrowserTabList.prototype.onCloseWindow's delayed body"), 0);
+  }, "BrowserTabList.prototype.onCloseWindow's delayed body"));
 }, "BrowserTabList.prototype.onCloseWindow");
 
 exports.BrowserTabList = BrowserTabList;
@@ -700,6 +701,7 @@ function BrowserTabActor(connection, browser) {
   this._conn = connection;
   this._browser = browser;
   this._form = null;
+  this.exited = false;
 }
 
 BrowserTabActor.prototype = {
@@ -712,7 +714,7 @@ BrowserTabActor.prototype = {
           message: "Tab destroyed while performing a BrowserTabActor update"
         });
       }
-      this._form = null;
+      this.exit();
     };
     let connect = DebuggerServer.connectToChild(this._conn, this._browser, onDestroy);
     return connect.then(form => {
@@ -722,7 +724,7 @@ BrowserTabActor.prototype = {
   },
 
   get _tabbrowser() {
-    if (typeof this._browser.getTabBrowser == "function") {
+    if (this._browser && typeof this._browser.getTabBrowser == "function") {
       return this._browser.getTabBrowser();
     }
     return null;
@@ -739,7 +741,7 @@ BrowserTabActor.prototype = {
     // If the child happens to be crashed/close/detach, it won't have _form set,
     // so only request form update if some code is still listening on the other
     // side.
-    if (this._form) {
+    if (!this.exited) {
       this._deferredUpdate = promise.defer();
       let onFormUpdate = msg => {
         // There may be more than just one childtab.js up and running
@@ -764,7 +766,7 @@ BrowserTabActor.prototype = {
    */
   get title() {
     // On Fennec, we can check the session store data for zombie tabs
-    if (this._browser.__SS_restore) {
+    if (this._browser && this._browser.__SS_restore) {
       let sessionStore = this._browser.__SS_data;
       // Get the last selected entry
       let entry = sessionStore.entries[sessionStore.index - 1];
@@ -788,7 +790,7 @@ BrowserTabActor.prototype = {
    */
   get url() {
     // On Fennec, we can check the session store data for zombie tabs
-    if (this._browser.__SS_restore) {
+    if (this._browser && this._browser.__SS_restore) {
       let sessionStore = this._browser.__SS_data;
       // Get the last selected entry
       let entry = sessionStore.entries[sessionStore.index - 1];
@@ -813,6 +815,8 @@ BrowserTabActor.prototype = {
 
   exit() {
     this._browser = null;
+    this._form = null;
+    this.exited = true;
   },
 };
 
@@ -831,7 +835,7 @@ BrowserAddonList.prototype.getList = function () {
       let actor = this._actorByAddonId.get(addon.id);
       if (!actor) {
         if (addon.isWebExtension) {
-          actor = new WebExtensionActor(this._connection, addon);
+          actor = new WebExtensionParentActor(this._connection, addon);
         } else {
           actor = new BrowserAddonActor(this._connection, addon);
         }
@@ -839,8 +843,10 @@ BrowserAddonList.prototype.getList = function () {
         this._actorByAddonId.set(addon.id, actor);
       }
     }
+
     deferred.resolve([...this._actorByAddonId].map(([_, actor]) => actor));
   });
+
   return deferred.promise;
 };
 

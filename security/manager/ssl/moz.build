@@ -17,11 +17,14 @@ XPIDL_SOURCES += [
     'nsICertOverrideService.idl',
     'nsIClientAuthDialogs.idl',
     'nsIContentSignatureVerifier.idl',
+    'nsICryptoHash.idl',
+    'nsICryptoHMAC.idl',
     'nsIDataSignatureVerifier.idl',
     'nsIGenKeypairInfoDlg.idl',
     'nsIKeygenThread.idl',
     'nsIKeyModule.idl',
     'nsILocalCertService.idl',
+    'nsINSSErrorsService.idl',
     'nsINSSU2FToken.idl',
     'nsINSSVersion.idl',
     'nsIPK11Token.idl',
@@ -52,7 +55,9 @@ if CONFIG['MOZ_XUL']:
 
 XPIDL_MODULE = 'pipnss'
 
-EXTRA_JS_MODULES.psm += [
+# These aren't actually used in production code yet, so we don't want to
+# ship them with the browser.
+TESTING_JS_MODULES.psm += [
     'DER.jsm',
     'X509.jsm',
 ]
@@ -60,7 +65,6 @@ EXTRA_JS_MODULES.psm += [
 EXPORTS += [
     'CryptoTask.h',
     'nsClientAuthRemember.h',
-    'nsCrypto.h',
     'nsNSSCallbacks.h',
     'nsNSSCertificate.h',
     'nsNSSComponent.h',
@@ -76,6 +80,7 @@ EXPORTS += [
 
 EXPORTS.mozilla += [
     'DataStorage.h',
+    'DataStorageList.h',
     'PublicSSL.h',
 ]
 
@@ -96,7 +101,6 @@ UNIFIED_SOURCES += [
     'LocalCertService.cpp',
     'nsCertOverrideService.cpp',
     'nsClientAuthRemember.cpp',
-    'nsCrypto.cpp',
     'nsCryptoHash.cpp',
     'nsDataSignatureVerifier.cpp',
     'nsKeygenHandler.cpp',
@@ -108,7 +112,6 @@ UNIFIED_SOURCES += [
     'nsNSSCertHelper.cpp',
     'nsNSSCertificate.cpp',
     'nsNSSCertificateDB.cpp',
-    'nsNSSCertificateFakeTransport.cpp',
     'nsNSSCertTrust.cpp',
     'nsNSSCertValidity.cpp',
     'nsNSSComponent.cpp',
@@ -131,6 +134,7 @@ UNIFIED_SOURCES += [
     'nsSSLSocketProvider.cpp',
     'nsSSLStatus.cpp',
     'nsTLSSocketProvider.cpp',
+    'PKCS11.cpp',
     'PSMContentListener.cpp',
     'PSMRunnable.cpp',
     'PublicKeyPinningService.cpp',
@@ -188,4 +192,13 @@ if not CONFIG['MOZ_SYSTEM_NSS']:
 include('/ipc/chromium/chromium-config.mozbuild')
 
 if CONFIG['GNU_CXX']:
-    CXXFLAGS += ['-Wno-error=shadow']
+    CXXFLAGS += [
+        '-Wextra',
+        # -Wextra enables this warning, but it's too noisy to be useful.
+        '-Wno-missing-field-initializers',
+    ]
+
+    # Gecko headers aren't warning-free enough for us to enable these warnings.
+    CXXFLAGS += [
+        '-Wno-unused-parameter',
+    ]

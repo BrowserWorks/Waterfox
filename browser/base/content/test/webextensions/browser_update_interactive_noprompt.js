@@ -1,16 +1,13 @@
 
 // Set some prefs that apply to all the tests in this file
-add_task(function* setup() {
-  yield SpecialPowers.pushPrefEnv({set: [
+add_task(async function setup() {
+  await SpecialPowers.pushPrefEnv({set: [
     // We don't have pre-pinned certificates for the local mochitest server
     ["extensions.install.requireBuiltInCerts", false],
     ["extensions.update.requireBuiltInCerts", false],
 
     // Point updates to the local mochitest server
     ["extensions.update.url", `${BASE}/browser_webext_update.json`],
-
-    // XXX remove this when prompts are enabled by default
-    ["extensions.webextPermissionPrompts", true],
   ]});
 });
 
@@ -37,7 +34,7 @@ async function testUpdateNoPrompt(filename, id,
   PopupNotifications.panel.addEventListener("popupshown", popupListener);
 
   // Trigger an update check, we should see the update get applied
-  let updatePromise = promiseInstallEvent(addon, "onInstallEnded");
+  let updatePromise = waitForUpdate(addon);
   win.gViewController.doCommand("cmd_findAllUpdates");
   await updatePromise;
 

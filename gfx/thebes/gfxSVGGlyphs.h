@@ -120,7 +120,7 @@ public:
      * @param aContextPaint Information on text context paints.
      *   See |SVGContextPaint|.
      */
-    bool RenderGlyph(gfxContext *aContext, uint32_t aGlyphId,
+    void RenderGlyph(gfxContext *aContext, uint32_t aGlyphId,
                      mozilla::SVGContextPaint* aContextPaint);
 
     /**
@@ -202,9 +202,11 @@ public:
         mStrokeMatrix = SetupDeviceToPatternMatrix(aStrokePattern, aCTM);
     }
 
-    already_AddRefed<gfxPattern> GetFillPattern(const DrawTarget* aDrawTarget,
-                                                float aOpacity,
-                                                const gfxMatrix& aCTM) {
+    already_AddRefed<gfxPattern>
+    GetFillPattern(const DrawTarget* aDrawTarget,
+                   float aOpacity,
+                   const gfxMatrix& aCTM,
+                   imgDrawingParams& aImgParams) override {
         if (mFillPattern) {
             mFillPattern->SetMatrix(aCTM * mFillMatrix);
         }
@@ -212,9 +214,11 @@ public:
         return fillPattern.forget();
     }
 
-    already_AddRefed<gfxPattern> GetStrokePattern(const DrawTarget* aDrawTarget,
-                                                  float aOpacity,
-                                                  const gfxMatrix& aCTM) {
+    already_AddRefed<gfxPattern>
+    GetStrokePattern(const DrawTarget* aDrawTarget,
+                     float aOpacity,
+                     const gfxMatrix& aCTM,
+                     imgDrawingParams& aImgParams) override {
         if (mStrokePattern) {
             mStrokePattern->SetMatrix(aCTM * mStrokeMatrix);
         }
@@ -222,11 +226,11 @@ public:
         return strokePattern.forget();
     }
 
-    float GetFillOpacity() const {
+    float GetFillOpacity() const override {
         return mFillPattern ? 1.0f : 0.0f;
     }
 
-    float GetStrokeOpacity() const {
+    float GetStrokeOpacity() const override {
         return mStrokePattern ? 1.0f : 0.0f;
     }
 

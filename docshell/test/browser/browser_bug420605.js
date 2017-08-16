@@ -100,7 +100,7 @@ function test() {
             throw Cr.NS_ERROR_NO_INTERFACE;
         }
     };
-    historyService.addObserver(historyObserver, false);
+    historyService.addObserver(historyObserver);
 
     function onPageLoad() {
       gBrowser.selectedBrowser
@@ -115,7 +115,7 @@ function test() {
     ok(!info, "The fragment test page must not have been visited already.");
 
     // Now open the test page in a new tab.
-    gBrowser.selectedTab = gBrowser.addTab();
+    gBrowser.selectedTab = BrowserTestUtils.addTab(gBrowser);
     gBrowser.selectedBrowser.addEventListener(
         "DOMContentLoaded", onPageLoad, true);
     content.location = pageurl;

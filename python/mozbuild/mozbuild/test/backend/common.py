@@ -33,22 +33,14 @@ CONFIGS = defaultdict(lambda: {
     'non_global_defines': [],
     'substs': {'OS_TARGET': 'WINNT'},
 }, {
-    'android_eclipse': {
-        'defines': {
-            'MOZ_ANDROID_MIN_SDK_VERSION': '15',
-        },
-        'non_global_defines': [],
-        'substs': {
-            'ANDROID_TARGET_SDK': '16',
-            'MOZ_WIDGET_TOOLKIT': 'android',
-        },
-    },
     'binary-components': {
         'defines': {},
         'non_global_defines': [],
         'substs': {
             'LIB_PREFIX': 'lib',
+            'RUST_LIB_PREFIX': 'lib',
             'LIB_SUFFIX': 'a',
+            'RUST_LIB_SUFFIX': 'a',
             'COMPILE_ENVIRONMENT': '1',
         },
     },
@@ -59,7 +51,9 @@ CONFIGS = defaultdict(lambda: {
             'COMPILE_ENVIRONMENT': '1',
             'RUST_TARGET': 'x86_64-unknown-linux-gnu',
             'LIB_PREFIX': 'lib',
+            'RUST_LIB_PREFIX': 'lib',
             'LIB_SUFFIX': 'a',
+            'RUST_LIB_SUFFIX': 'a',
         },
     },
     'host-rust-library': {
@@ -70,7 +64,9 @@ CONFIGS = defaultdict(lambda: {
             'RUST_HOST_TARGET': 'x86_64-unknown-linux-gnu',
             'RUST_TARGET': 'armv7-linux-androideabi',
             'LIB_PREFIX': 'lib',
+            'RUST_LIB_PREFIX': 'lib',
             'LIB_SUFFIX': 'a',
+            'RUST_LIB_SUFFIX': 'a',
         },
     },
     'host-rust-library-features': {
@@ -81,7 +77,9 @@ CONFIGS = defaultdict(lambda: {
             'RUST_HOST_TARGET': 'x86_64-unknown-linux-gnu',
             'RUST_TARGET': 'armv7-linux-androideabi',
             'LIB_PREFIX': 'lib',
+            'RUST_LIB_PREFIX': 'lib',
             'LIB_SUFFIX': 'a',
+            'RUST_LIB_SUFFIX': 'a',
         },
     },
     'rust-library-features': {
@@ -91,7 +89,9 @@ CONFIGS = defaultdict(lambda: {
             'COMPILE_ENVIRONMENT': '1',
             'RUST_TARGET': 'x86_64-unknown-linux-gnu',
             'LIB_PREFIX': 'lib',
+            'RUST_LIB_PREFIX': 'lib',
             'LIB_SUFFIX': 'a',
+            'RUST_LIB_SUFFIX': 'a',
         },
     },
     'rust-programs': {

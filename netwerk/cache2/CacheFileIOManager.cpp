@@ -978,7 +978,8 @@ public:
     // parsing the entry file, but we must set the filesize here since nobody is
     // going to set it if there is no write to the file.
     uint32_t sizeInK = mHandle->FileSizeInK();
-    CacheIndex::UpdateEntry(mHandle->Hash(), nullptr, nullptr, &sizeInK);
+    CacheIndex::UpdateEntry(mHandle->Hash(), nullptr, nullptr, nullptr, nullptr,
+                            nullptr, &sizeInK);
 
     return NS_OK;
   }
@@ -992,11 +993,18 @@ protected:
 
 class UpdateIndexEntryEvent : public Runnable {
 public:
-  UpdateIndexEntryEvent(CacheFileHandle *aHandle, const uint32_t *aFrecency,
-                        const uint32_t *aExpirationTime)
+  UpdateIndexEntryEvent(CacheFileHandle *aHandle,
+                        const uint32_t  *aFrecency,
+                        const uint32_t  *aExpirationTime,
+                        const bool      *aHasAltData,
+                        const uint16_t  *aOnStartTime,
+                        const uint16_t  *aOnStopTime)
     : mHandle(aHandle)
     , mHasFrecency(false)
     , mHasExpirationTime(false)
+    , mHasHasAltData(false)
+    , mHasOnStartTime(false)
+    , mHasOnStopTime(false)
   {
     if (aFrecency) {
       mHasFrecency = true;
@@ -1005,6 +1013,18 @@ public:
     if (aExpirationTime) {
       mHasExpirationTime = true;
       mExpirationTime = *aExpirationTime;
+    }
+    if (aHasAltData) {
+      mHasHasAltData = true;
+      mHasAltData = *aHasAltData;
+    }
+    if (aOnStartTime) {
+      mHasOnStartTime = true;
+      mOnStartTime = *aOnStartTime;
+    }
+    if (aOnStopTime) {
+      mHasOnStopTime = true;
+      mOnStopTime = *aOnStopTime;
     }
   }
 
@@ -1023,16 +1043,27 @@ public:
     CacheIndex::UpdateEntry(mHandle->Hash(),
                             mHasFrecency ? &mFrecency : nullptr,
                             mHasExpirationTime ? &mExpirationTime : nullptr,
+                            mHasHasAltData ? &mHasAltData : nullptr,
+                            mHasOnStartTime ? &mOnStartTime : nullptr,
+                            mHasOnStopTime ? &mOnStopTime : nullptr,
                             nullptr);
     return NS_OK;
   }
 
 protected:
-  RefPtr<CacheFileHandle> mHandle;
+  RefPtr<CacheFileHandle>   mHandle;
+
   bool                      mHasFrecency;
   bool                      mHasExpirationTime;
+  bool                      mHasHasAltData;
+  bool                      mHasOnStartTime;
+  bool                      mHasOnStopTime;
+
   uint32_t                  mFrecency;
   uint32_t                  mExpirationTime;
+  bool                      mHasAltData;
+  uint16_t                  mOnStartTime;
+  uint16_t                  mOnStopTime;
 };
 
 class MetadataWriteScheduleEvent : public Runnable
@@ -1090,6 +1121,7 @@ CacheFileIOManager::CacheFileIOManager()
   , mTreeCreated(false)
   , mTreeCreationFailed(false)
   , mOverLimitEvicting(false)
+  , mCacheSizeOnHardLimit(false)
   , mRemovingTrashDirs(false)
 {
   LOG(("CacheFileIOManager::CacheFileIOManager [this=%p]", this));
@@ -1777,11 +1809,18 @@ CacheFileIOManager::CloseHandleInternal(CacheFileHandle *aHandle)
 
   // Delete the file if the entry was doomed or invalid and
   // filedesc properly closed
-  if ((aHandle->mIsDoomed || aHandle->mInvalid) && NS_SUCCEEDED(rv)) {
+  if ((aHandle->mIsDoomed || aHandle->mInvalid) && aHandle->mFileExists &&
+       NS_SUCCEEDED(rv)) {
     LOG(("CacheFileIOManager::CloseHandleInternal() - Removing file from "
          "disk"));
 
-    aHandle->mFile->Remove(false);
+    rv = aHandle->mFile->Remove(false);
+    if (NS_SUCCEEDED(rv)) {
+      aHandle->mFileExists = false;
+    } else {
+      LOG(("  failed to remove the file [rv=0x%08" PRIx32 "]",
+           static_cast<uint32_t>(rv)));
+    }
   }
 
   if (!aHandle->IsSpecialFile() && !aHandle->mIsDoomed &&
@@ -1984,8 +2023,15 @@ CacheFileIOManager::WriteInternal(CacheFileHandle *aHandle, int64_t aOffset,
     return NS_ERROR_NOT_AVAILABLE;
   }
 
-  // Check whether this write would cause critical low disk space.
+  // When this operation would increase cache size, check whether the cache size
+  // reached the hard limit and whether it would cause critical low disk space.
   if (aHandle->mFileSize < aOffset + aCount) {
+    if (mOverLimitEvicting && mCacheSizeOnHardLimit) {
+      LOG(("CacheFileIOManager::WriteInternal() - failing because cache size "
+           "reached hard limit!"));
+      return NS_ERROR_FILE_DISK_FULL;
+    }
+
     int64_t freeSpace = -1;
     rv = mCacheDirectory->GetDiskSpaceAvailable(&freeSpace);
     if (NS_WARN_IF(NS_FAILED(rv))) {
@@ -2030,7 +2076,8 @@ CacheFileIOManager::WriteInternal(CacheFileHandle *aHandle, int64_t aOffset,
 
     if (oldSizeInK != newSizeInK && !aHandle->IsDoomed() &&
         !aHandle->IsSpecialFile()) {
-      CacheIndex::UpdateEntry(aHandle->Hash(), nullptr, nullptr, &newSizeInK);
+      CacheIndex::UpdateEntry(aHandle->Hash(), nullptr, nullptr, nullptr,
+                              nullptr, nullptr, &newSizeInK);
 
       if (oldSizeInK < newSizeInK) {
         EvictIfOverLimitInternal();
@@ -2516,8 +2563,15 @@ CacheFileIOManager::TruncateSeekSetEOFInternal(CacheFileHandle *aHandle,
     return NS_ERROR_NOT_AVAILABLE;
   }
 
-  // Check whether this operation would cause critical low disk space.
+  // When this operation would increase cache size, check whether the cache size
+  // reached the hard limit and whether it would cause critical low disk space.
   if (aHandle->mFileSize < aEOFPos) {
+    if (mOverLimitEvicting && mCacheSizeOnHardLimit) {
+      LOG(("CacheFileIOManager::TruncateSeekSetEOFInternal() - failing because "
+           "cache size reached hard limit!"));
+      return NS_ERROR_FILE_DISK_FULL;
+    }
+
     int64_t freeSpace = -1;
     rv = mCacheDirectory->GetDiskSpaceAvailable(&freeSpace);
     if (NS_WARN_IF(NS_FAILED(rv))) {
@@ -2552,7 +2606,8 @@ CacheFileIOManager::TruncateSeekSetEOFInternal(CacheFileHandle *aHandle,
 
   if (oldSizeInK != newSizeInK && !aHandle->IsDoomed() &&
       !aHandle->IsSpecialFile()) {
-    CacheIndex::UpdateEntry(aHandle->Hash(), nullptr, nullptr, &newSizeInK);
+    CacheIndex::UpdateEntry(aHandle->Hash(), nullptr, nullptr, nullptr, nullptr,
+                            nullptr, &newSizeInK);
 
     if (oldSizeInK < newSizeInK) {
       EvictIfOverLimitInternal();
@@ -2782,6 +2837,20 @@ CacheFileIOManager::OverLimitEvictionInternal()
     if (cacheUsage > cacheLimit) {
       LOG(("CacheFileIOManager::OverLimitEvictionInternal() - Cache size over "
            "limit. [cacheSize=%u, limit=%u]", cacheUsage, cacheLimit));
+
+      // We allow cache size to go over the specified limit. Eviction should
+      // keep the size within the limit in a long run, but in case the eviction
+      // is too slow, the cache could go way over the limit. To prevent this we
+      // set flag mCacheSizeOnHardLimit when the size reaches 105% of the limit
+      // and WriteInternal() and TruncateSeekSetEOFInternal() fail to cache
+      // additional data.
+      if ((cacheUsage - cacheLimit) > (cacheLimit / 20)) {
+        LOG(("CacheFileIOManager::OverLimitEvictionInternal() - Cache size "
+             "reached hard limit."));
+        mCacheSizeOnHardLimit = true;
+      } else {
+        mCacheSizeOnHardLimit = false;
+      }
     } else if (freeSpace != 1 && freeSpace < freeSpaceLimit) {
       LOG(("CacheFileIOManager::OverLimitEvictionInternal() - Free space under "
            "limit. [freeSpace=%" PRId64 ", freeSpaceLimit=%u]", freeSpace,
@@ -2791,6 +2860,8 @@ CacheFileIOManager::OverLimitEvictionInternal()
            "free space in limits. [cacheSize=%ukB, cacheSizeLimit=%ukB, "
            "freeSpace=%" PRId64 ", freeSpaceLimit=%u]", cacheUsage, cacheLimit,
            freeSpace, freeSpaceLimit));
+
+      mCacheSizeOnHardLimit = false;
       return NS_OK;
     }
 
@@ -2841,7 +2912,8 @@ CacheFileIOManager::OverLimitEvictionInternal()
       // failing on one entry forever.
       uint32_t frecency = 0;
       uint32_t expTime = nsICacheEntry::NO_EXPIRATION_TIME;
-      rv = CacheIndex::UpdateEntry(&hash, &frecency, &expTime, nullptr);
+      rv = CacheIndex::UpdateEntry(&hash, &frecency, &expTime, nullptr, nullptr,
+                                   nullptr, nullptr);
       NS_ENSURE_SUCCESS(rv, rv);
 
       consecutiveFailures++;
@@ -3505,12 +3577,18 @@ CacheFileIOManager::InitIndexEntry(CacheFileHandle *aHandle,
 nsresult
 CacheFileIOManager::UpdateIndexEntry(CacheFileHandle *aHandle,
                                      const uint32_t  *aFrecency,
-                                     const uint32_t  *aExpirationTime)
+                                     const uint32_t  *aExpirationTime,
+                                     const bool      *aHasAltData,
+                                     const uint16_t  *aOnStartTime,
+                                     const uint16_t  *aOnStopTime)
 {
   LOG(("CacheFileIOManager::UpdateIndexEntry() [handle=%p, frecency=%s, "
-       "expirationTime=%s]", aHandle,
+       "expirationTime=%s, hasAltData=%s, onStartTime=%s, onStopTime=%s]", aHandle,
        aFrecency ? nsPrintfCString("%u", *aFrecency).get() : "",
-       aExpirationTime ? nsPrintfCString("%u", *aExpirationTime).get() : ""));
+       aExpirationTime ? nsPrintfCString("%u", *aExpirationTime).get() : "",
+       aHasAltData ? (*aHasAltData ? "true" : "false") : "",
+       aOnStartTime ? nsPrintfCString("%u", *aOnStartTime).get() : "",
+       aOnStopTime ? nsPrintfCString("%u", *aOnStopTime).get() : ""));
 
   nsresult rv;
   RefPtr<CacheFileIOManager> ioMan = gInstance;
@@ -3524,7 +3602,8 @@ CacheFileIOManager::UpdateIndexEntry(CacheFileHandle *aHandle,
   }
 
   RefPtr<UpdateIndexEntryEvent> ev =
-    new UpdateIndexEntryEvent(aHandle, aFrecency, aExpirationTime);
+    new UpdateIndexEntryEvent(aHandle, aFrecency, aExpirationTime, aHasAltData,
+                              aOnStartTime, aOnStopTime);
   rv = ioMan->mIOThread->Dispatch(ev, aHandle->mPriority
                                   ? CacheIOThread::WRITE_PRIORITY
                                   : CacheIOThread::WRITE);

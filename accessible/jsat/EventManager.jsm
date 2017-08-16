@@ -98,7 +98,6 @@ this.EventManager.prototype = {
       switch (aEvent.type) {
       case 'wheel':
       {
-        let attempts = 0;
         let delta = aEvent.deltaX || aEvent.deltaY;
         this.contentControl.autoMove(
          null,
@@ -271,7 +270,6 @@ this.EventManager.prototype = {
       {
         // Put vc where the focus is at
         let acc = aEvent.accessible;
-        let doc = aEvent.accessibleDocument;
         this._setEditingMode(aEvent);
         if ([Roles.CHROME_WINDOW,
              Roles.DOCUMENT,
@@ -288,7 +286,7 @@ this.EventManager.prototype = {
       {
         let position = this.contentControl.vc.position;
         // Check if position is in the subtree of the DOCUMENT_LOAD_COMPLETE
-        // event's dialog accesible or accessible document
+        // event's dialog accessible or accessible document
         let subtreeRoot = aEvent.accessible.role === Roles.DIALOG ?
           aEvent.accessible : aEvent.accessibleDocument;
         if (aEvent.accessible === aEvent.accessibleDocument ||
@@ -486,7 +484,7 @@ this.EventManager.prototype = {
       }
       return {};
     };
-    let {live, relevant, busy, atomic, memberOf} = getLiveAttributes(aEvent);
+    let {live, relevant, /* busy, atomic, memberOf */ } = getLiveAttributes(aEvent);
     // If container-live is not present or is set to |off| ignore the event.
     if (!live || live === 'off') {
       return {};
@@ -564,16 +562,10 @@ this.EventManager.prototype = {
     }
   },
 
-  onProgressChange: function onProgressChange() {},
-
   onLocationChange: function onLocationChange(aWebProgress, aRequest, aLocation, aFlags) {
     let docAcc = Utils.AccService.getAccessibleFor(aWebProgress.DOMWindow.document);
     this.present(Presentation.tabStateChanged(docAcc, 'newdoc'));
   },
-
-  onStatusChange: function onStatusChange() {},
-
-  onSecurityChange: function onSecurityChange() {},
 
   QueryInterface: XPCOMUtils.generateQI([Ci.nsIWebProgressListener,
                                          Ci.nsISupportsWeakReference,
@@ -605,7 +597,7 @@ const AccessibilityEventObserver = {
     if (this.started || this.listenerCount === 0) {
       return;
     }
-    Services.obs.addObserver(this, 'accessible-event', false);
+    Services.obs.addObserver(this, 'accessible-event');
     this.started = true;
   },
 

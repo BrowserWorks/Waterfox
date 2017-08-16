@@ -168,7 +168,7 @@ SdpHelper::DisableMsection(Sdp* sdp, SdpMediaSection* msection)
       msection->AddCodec("120", "VP8", 90000, 1);
       break;
     case SdpMediaSection::kApplication:
-      msection->AddDataChannel("rejected", 0, 0);
+      msection->AddDataChannel("rejected", 0, 0, 0);
       break;
     default:
       // We need to have something here to fit the grammar, this seems safe
@@ -424,14 +424,19 @@ SdpHelper::SetDefaultAddresses(const std::string& defaultCandidateAddr,
                                SdpMediaSection* msection)
 {
   msection->GetConnection().SetAddress(defaultCandidateAddr);
-  msection->SetPort(defaultCandidatePort);
+  SdpAttributeList& attrList = msection->GetAttributeList();
+
+  // only set the port if there is no bundle-only attribute
+  if (!attrList.HasAttribute(SdpAttribute::kBundleOnlyAttribute)) {
+    msection->SetPort(defaultCandidatePort);
+  }
 
   if (!defaultRtcpCandidateAddr.empty()) {
     sdp::AddrType ipVersion = sdp::kIPv4;
     if (defaultRtcpCandidateAddr.find(':') != std::string::npos) {
       ipVersion = sdp::kIPv6;
     }
-    msection->GetAttributeList().SetAttribute(new SdpRtcpAttribute(
+    attrList.SetAttribute(new SdpRtcpAttribute(
           defaultRtcpCandidatePort,
           sdp::kInternet,
           ipVersion,
@@ -747,35 +752,29 @@ SdpHelper::AddCommonExtmaps(
 
   UniquePtr<SdpExtmapAttributeList> localExtmap(new SdpExtmapAttributeList);
   auto& theirExtmap = remoteMsection.GetAttributeList().GetExtmap().mExtmaps;
-  for (auto i = theirExtmap.begin(); i != theirExtmap.end(); ++i) {
-    for (auto j = localExtensions.begin(); j != localExtensions.end(); ++j) {
-      // verify we have a valid combination of directions.  For kInactive
-      // we'll just not add the response
-      if (i->extensionname == j->extensionname &&
-          (((i->direction == SdpDirectionAttribute::Direction::kSendrecv ||
-             i->direction == SdpDirectionAttribute::Direction::kSendonly) &&
-            (j->direction == SdpDirectionAttribute::Direction::kSendrecv ||
-             j->direction == SdpDirectionAttribute::Direction::kRecvonly)) ||
-
-           ((i->direction == SdpDirectionAttribute::Direction::kSendrecv ||
-             i->direction == SdpDirectionAttribute::Direction::kRecvonly) &&
-            (j->direction == SdpDirectionAttribute::Direction::kSendrecv ||
-             j->direction == SdpDirectionAttribute::Direction::kSendonly)))) {
-        auto k = *i; // we need to modify it
-        if (j->direction == SdpDirectionAttribute::Direction::kSendonly) {
-          k.direction = SdpDirectionAttribute::Direction::kRecvonly;
-        } else if (j->direction == SdpDirectionAttribute::Direction::kRecvonly) {
-          k.direction = SdpDirectionAttribute::Direction::kSendonly;
-        }
-        localExtmap->mExtmaps.push_back(k);
-
-        // RFC 5285 says that ids >= 4096 can be used by the offerer to
-        // force the answerer to pick, otherwise the value in the offer is
-        // used.
-        if (localExtmap->mExtmaps.back().entry >= 4096) {
-          localExtmap->mExtmaps.back().entry = j->entry;
-        }
+  for (const auto& theirExt : theirExtmap) {
+    for (const auto& ourExt : localExtensions) {
+      if (theirExt.extensionname != ourExt.extensionname) {
+        continue;
       }
+
+      auto negotiatedExt = theirExt;
+
+      negotiatedExt.direction =
+        reverse(negotiatedExt.direction) & ourExt.direction;
+      if (negotiatedExt.direction ==
+            SdpDirectionAttribute::Direction::kInactive) {
+        continue;
+      }
+
+      // RFC 5285 says that ids >= 4096 can be used by the offerer to
+      // force the answerer to pick, otherwise the value in the offer is
+      // used.
+      if (negotiatedExt.entry >= 4096) {
+        negotiatedExt.entry = ourExt.entry;
+      }
+
+      localExtmap->mExtmaps.push_back(negotiatedExt);
     }
   }
 

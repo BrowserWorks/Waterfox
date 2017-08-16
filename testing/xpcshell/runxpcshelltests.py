@@ -660,6 +660,10 @@ class XPCShellTestThread(Thread):
         if self.test_object.get('subprocess') == 'true':
             self.env['PYTHON'] = sys.executable
 
+        if self.test_object.get('headless', False):
+            self.env["MOZ_HEADLESS"] = '1'
+            self.env["DISPLAY"] = '77' # Set a fake display.
+
         testTimeoutInterval = self.harness_timeout
         # Allow a test to request a multiple of the timeout if it is expected to take long
         if 'requesttimeoutfactor' in self.test_object:
@@ -917,6 +921,13 @@ class XPCShellTests(object):
         # enable non-local connections for the purposes of local testing.
         # Don't override the user's choice here.  See bug 1049688.
         self.env.setdefault('MOZ_DISABLE_NONLOCAL_CONNECTIONS', '1')
+        if self.mozInfo.get("topsrcdir") is not None:
+            self.env["MOZ_DEVELOPER_REPO_DIR"] = self.mozInfo["topsrcdir"].encode()
+
+        # Disable the content process sandbox for the xpcshell tests. They
+        # currently attempt to do things like bind() sockets, which is not
+        # compatible with the sandbox.
+        self.env["MOZ_DISABLE_CONTENT_SANDBOX"] = "1"
 
     def buildEnvironment(self):
         """
@@ -942,7 +953,9 @@ class XPCShellTests(object):
         usingTSan = "tsan" in self.mozInfo and self.mozInfo["tsan"]
         if usingASan or usingTSan:
             # symbolizer support
-            llvmsym = os.path.join(self.xrePath, "llvm-symbolizer")
+            llvmsym = os.path.join(
+                self.xrePath,
+                "llvm-symbolizer" + self.mozInfo["bin_suffix"].encode('ascii'))
             if os.path.isfile(llvmsym):
                 if usingASan:
                     self.env["ASAN_SYMBOLIZER_PATH"] = llvmsym
@@ -1092,7 +1105,8 @@ class XPCShellTests(object):
                  testClass=XPCShellTestThread, failureManifest=None,
                  log=None, stream=None, jsDebugger=False, jsDebuggerPort=0,
                  test_tags=None, dump_tests=None, utility_path=None,
-                 rerun_failures=False, failure_manifest=None, jscovdir=None, **otherOptions):
+                 rerun_failures=False, threadCount=NUM_THREADS,
+                 failure_manifest=None, jscovdir=None, **otherOptions):
         """Run xpcshell tests.
 
         |xpcshell|, is the xpcshell executable to use to run the tests.
@@ -1193,6 +1207,7 @@ class XPCShellTests(object):
         self.pluginsPath = pluginsPath
         self.sequential = sequential
         self.failure_manifest = failure_manifest
+        self.threadCount = threadCount or NUM_THREADS
         self.jscovdir = jscovdir
 
         self.testCount = 0
@@ -1347,10 +1362,10 @@ class XPCShellTests(object):
         if self.sequential:
             self.log.info("Running tests sequentially.")
         else:
-            self.log.info("Using at most %d threads." % NUM_THREADS)
+            self.log.info("Using at most %d threads." % self.threadCount)
 
-        # keep a set of NUM_THREADS running tests and start running the
-        # tests in the queue at most NUM_THREADS at a time
+        # keep a set of threadCount running tests and start running the
+        # tests in the queue at most threadCount at a time
         running_tests = set()
         keep_going = True
         exceptions = []
@@ -1368,7 +1383,7 @@ class XPCShellTests(object):
                 break
 
             # if there's room to run more tests, start running them
-            while keep_going and tests_queue and (len(running_tests) < NUM_THREADS):
+            while keep_going and tests_queue and (len(running_tests) < self.threadCount):
                 test = tests_queue.popleft()
                 running_tests.add(test)
                 test.start()

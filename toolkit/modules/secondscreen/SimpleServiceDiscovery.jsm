@@ -186,10 +186,7 @@ var SimpleServiceDiscovery = {
   },
 
   _searchFixedDevices: function _searchFixedDevices() {
-    let fixedDevices = null;
-    try {
-      fixedDevices = Services.prefs.getCharPref("browser.casting.fixedDevices");
-    } catch (e) {}
+    let fixedDevices = Services.prefs.getCharPref("browser.casting.fixedDevices", "");
 
     if (!fixedDevices) {
       return;
@@ -356,7 +353,7 @@ var SimpleServiceDiscovery = {
     xhr.channel.loadFlags |= Ci.nsIRequest.INHIBIT_CACHING;
     xhr.overrideMimeType("text/xml");
 
-    xhr.addEventListener("load", (function() {
+    xhr.addEventListener("load", () => {
       if (xhr.status == 200) {
         let doc = xhr.responseXML;
         aService.appsURL = xhr.getResponseHeader("Application-URL");
@@ -369,7 +366,7 @@ var SimpleServiceDiscovery = {
 
         this.addService(aService);
       }
-    }).bind(this));
+    });
 
     xhr.send(null);
   },

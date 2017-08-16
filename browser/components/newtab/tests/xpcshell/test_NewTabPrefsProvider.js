@@ -1,8 +1,5 @@
 "use strict";
 
-/* global XPCOMUtils, equal, Preferences, NewTabPrefsProvider, run_next_test */
-/* jscs:disable requireCamelCaseOrUpperCaseIdentifiers */
-
 const Cu = Components.utils;
 Cu.import("resource://gre/modules/XPCOMUtils.jsm");
 Cu.import("resource://gre/modules/Preferences.jsm");
@@ -14,7 +11,7 @@ function run_test() {
   run_next_test();
 }
 
-add_task(function* test_observe() {
+add_task(async function test_observe() {
   let prefsMap = NewTabPrefsProvider.prefs.prefsMap;
   for (let prefName of prefsMap.keys()) {
     let prefValueType = prefsMap.get(prefName);
@@ -42,7 +39,7 @@ add_task(function* test_observe() {
       });
     });
     Preferences.set(prefName, afterVal);
-    let [actualName, actualData] = yield promise;
+    let [actualName, actualData] = await promise;
     equal(prefName, actualName, `emitter sent the correct pref: ${prefName}`);
     equal(afterVal, actualData, `emitter collected correct pref data for ${prefName}`);
     NewTabPrefsProvider.prefs.uninit();

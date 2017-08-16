@@ -6,18 +6,16 @@
 # a temporary place to generate these tasks in Bug 1286075 until they are
 # rewritten in a better way.
 
-implementation: taskgraph.task.transform:TransformTask
+loader: taskgraph.loader.transform:loader
 
 transforms:
+   - taskgraph.transforms.try_job:transforms
    - taskgraph.transforms.android_stuff:transforms
    - taskgraph.transforms.task:transforms
 
 jobs:
     android-api-15-gradle-dependencies:
         description: "Android armv7 API 15+ gradle dependencies"
-        attributes:
-            build_platform: android-api-15-gradle-dependencies
-            build_type: opt
         index:
             product: mobile
             job-name: android-api-15-gradle-dependencies-opt
@@ -29,6 +27,7 @@ jobs:
         worker-type: aws-provisioner-v1/gecko-{level}-b-android
         worker:
             implementation: docker-worker
+            os: linux
             docker-image: {in-tree: android-gradle-build}
             env:
                 GRADLE_USER_HOME: "/home/worker/workspace/build/src/dotgradle-online"
@@ -41,6 +40,7 @@ jobs:
                     platform_supports_post_upload_to_latest.py
                 MOZHARNESS_SCRIPT: "mozharness/scripts/fx_desktop_build.py"
                 TOOLTOOL_CACHE: "/home/worker/tooltool-cache"
+                TOOLTOOL_MANIFEST: "mobile/android/config/tooltool-manifests/android-gradle-dependencies/releng.manifest"
             artifacts:
               - name: public/build
                 path: /home/worker/artifacts/
@@ -58,17 +58,14 @@ jobs:
         scopes:
           - docker-worker:relengapi-proxy:tooltool.download.internal
           - docker-worker:relengapi-proxy:tooltool.download.public
-        when:
-            files-changed:
-              - "mobile/android/config/**"
+        optimizations:
+          - - skip-unless-changed
+            - - "mobile/android/config/**"
               - "testing/mozharness/configs/builds/releng_sub_android_configs/*gradle_dependencies.py"
               - "**/*.gradle"
 
     android-test:
         description: "Android armv7 unit tests"
-        attributes:
-            build_platform: android-test
-            build_type: opt
         treeherder:
             platform: android-4-0-armv7-api15/opt
             kind: test
@@ -77,6 +74,7 @@ jobs:
         worker-type: aws-provisioner-v1/gecko-{level}-b-android
         worker:
             implementation: docker-worker
+            os: linux
             docker-image: {in-tree: desktop-build}
             env:
                 GRADLE_USER_HOME: "/home/worker/workspace/build/src/dotgradle"
@@ -88,6 +86,7 @@ jobs:
                     disable_signing.py
                     platform_supports_post_upload_to_latest.py
                 MOZHARNESS_SCRIPT: "mozharness/scripts/fx_desktop_build.py"
+                TOOLTOOL_MANIFEST: "mobile/android/config/tooltool-manifests/android-frontend/releng.manifest"
             artifacts:
               - name: public/android/unittest
                 path: /home/worker/workspace/build/src/obj-firefox/gradle/build/mobile/android/app/reports/tests
@@ -108,16 +107,13 @@ jobs:
         scopes:
           - docker-worker:relengapi-proxy:tooltool.download.internal
           - docker-worker:relengapi-proxy:tooltool.download.public
-        when:
-            files-changed:
-              - "mobile/android/base/**"
+        optimizations:
+          - - skip-unless-changed
+            - - "mobile/android/base/**"
               - "mobile/android/tests/background/junit4/**"
 
     android-lint:
         description: "Android lint"
-        attributes:
-            build_platform: android-lint
-            build_type: opt
         treeherder:
             platform: android-4-0-armv7-api15/opt
             kind: test
@@ -126,6 +122,7 @@ jobs:
         worker-type: aws-provisioner-v1/gecko-{level}-b-android
         worker:
             implementation: docker-worker
+            os: linux
             docker-image: {in-tree: desktop-build}
             env:
                 GRADLE_USER_HOME: "/home/worker/workspace/build/src/dotgradle"
@@ -137,15 +134,25 @@ jobs:
                     disable_signing.py
                     platform_supports_post_upload_to_latest.py
                 MOZHARNESS_SCRIPT: "mozharness/scripts/fx_desktop_build.py"
+                TOOLTOOL_MANIFEST: "mobile/android/config/tooltool-manifests/android-frontend/releng.manifest"
             artifacts:
-              - name: public/android/lint/lint-results-automationDebug.html
-                path: /home/worker/workspace/build/src/obj-firefox/gradle/build/mobile/android/app/outputs/lint-results-automationDebug.html
+              - name: public/android/lint/lint-results-officialAustralisDebug.html
+                path: /home/worker/workspace/build/src/obj-firefox/gradle/build/mobile/android/app/outputs/lint-results-officialAustralisDebug.html
                 type: file
-              - name: public/android/lint/lint-results-automationDebug.xml
-                path: /home/worker/workspace/build/src/obj-firefox/gradle/build/mobile/android/app/outputs/lint-results-automationDebug.xml
+              - name: public/android/lint/lint-results-officialAustralisDebug.xml
+                path: /home/worker/workspace/build/src/obj-firefox/gradle/build/mobile/android/app/outputs/lint-results-officialAustralisDebug.xml
                 type: file
-              - name: public/android/lint/lint-results-automationDebug_files
-                path: /home/worker/workspace/build/src/obj-firefox/gradle/build/mobile/android/app/outputs/lint-results-automationDebug_files
+              - name: public/android/lint/lint-results-officialAustralisDebug_files
+                path: /home/worker/workspace/build/src/obj-firefox/gradle/build/mobile/android/app/outputs/lint-results-officialAustralisDebug_files
+                type: directory
+              - name: public/android/lint/lint-results-officialPhotonDebug.html
+                path: /home/worker/workspace/build/src/obj-firefox/gradle/build/mobile/android/app/outputs/lint-results-officialPhotonDebug.html
+                type: file
+              - name: public/android/lint/lint-results-officialPhotonDebug.xml
+                path: /home/worker/workspace/build/src/obj-firefox/gradle/build/mobile/android/app/outputs/lint-results-officialPhotonDebug.xml
+                type: file
+              - name: public/android/lint/lint-results-officialPhotonDebug_files
+                path: /home/worker/workspace/build/src/obj-firefox/gradle/build/mobile/android/app/outputs/lint-results-officialPhotonDebug_files
                 type: directory
               - name: public/build
                 path: /home/worker/artifacts/
@@ -163,21 +170,20 @@ jobs:
         scopes:
           - docker-worker:relengapi-proxy:tooltool.download.internal
           - docker-worker:relengapi-proxy:tooltool.download.public
-        when:
-            files-changed:
-              - "mobile/android/**/*.java"
+        optimizations:
+          - - skip-unless-changed
+            - - "mobile/android/**/*.java"
               - "mobile/android/**/*.jpeg"
               - "mobile/android/**/*.jpg"
               - "mobile/android/**/*.png"
               - "mobile/android/**/*.svg"
               - "mobile/android/**/*.xml" # Manifest & android resources
-              - "mobile/android/**/build.gradle"
+              - "mobile/android/**/*.gradle"
+              - "mobile/android/**/Makefile.in"
+              - "mobile/android/**/moz.build"
 
     android-checkstyle:
         description: "Android checkstyle"
-        attributes:
-            build_platform: android-checkstyle
-            build_type: opt
         treeherder:
             platform: android-4-0-armv7-api15/opt
             kind: test
@@ -186,6 +192,7 @@ jobs:
         worker-type: aws-provisioner-v1/gecko-{level}-b-android
         worker:
             implementation: docker-worker
+            os: linux
             docker-image: {in-tree: desktop-build}
             env:
                 GRADLE_USER_HOME: "/home/worker/workspace/build/src/dotgradle"
@@ -197,6 +204,7 @@ jobs:
                     disable_signing.py
                     platform_supports_post_upload_to_latest.py
                 MOZHARNESS_SCRIPT: "mozharness/scripts/fx_desktop_build.py"
+                TOOLTOOL_MANIFEST: "mobile/android/config/tooltool-manifests/android-frontend/releng.manifest"
             artifacts:
               - name: public/android/checkstyle/checkstyle.xml
                 path: /home/worker/workspace/build/src/obj-firefox/gradle/build/mobile/android/app/reports/checkstyle/checkstyle.xml
@@ -217,17 +225,16 @@ jobs:
         scopes:
           - docker-worker:relengapi-proxy:tooltool.download.internal
           - docker-worker:relengapi-proxy:tooltool.download.public
-        when:
-            files-changed:
-              - "mobile/android/**/checkstyle.xml"
-              - "mobile/android/**/*.gradle"
+        optimizations:
+          - - skip-unless-changed
+            - - "mobile/android/**/checkstyle.xml"
               - "mobile/android/**/*.java"
+              - "mobile/android/**/*.gradle"
+              - "mobile/android/**/Makefile.in"
+              - "mobile/android/**/moz.build"
 
     android-findbugs:
         description: "Android findbugs"
-        attributes:
-            build_platform: android-findbugs
-            build_type: opt
         treeherder:
             platform: android-4-0-armv7-api15/opt
             kind: test
@@ -236,6 +243,7 @@ jobs:
         worker-type: aws-provisioner-v1/gecko-{level}-b-android
         worker:
             implementation: docker-worker
+            os: linux
             docker-image: {in-tree: desktop-build}
             env:
                 GRADLE_USER_HOME: "/home/worker/workspace/build/src/dotgradle"
@@ -247,9 +255,13 @@ jobs:
                     disable_signing.py
                     platform_supports_post_upload_to_latest.py
                 MOZHARNESS_SCRIPT: "mozharness/scripts/fx_desktop_build.py"
+                TOOLTOOL_MANIFEST: "mobile/android/config/tooltool-manifests/android-frontend/releng.manifest"
             artifacts:
-              - name: public/android/findbugs/findbugs-report.html
-                path: /home/worker/workspace/build/src/obj-firefox/gradle/build/mobile/android/app/outputs/findbugs/findbugs-automationDebug-output.html
+              - name: public/android/findbugs/findbugs-officialAustralisDebug-output.html
+                path: /home/worker/workspace/build/src/obj-firefox/gradle/build/mobile/android/app/outputs/findbugs/findbugs-officialAustralisDebug-output.html
+                type: file
+              - name: public/android/findbugs/findbugs-officialPhotonDebug-output.html
+                path: /home/worker/workspace/build/src/obj-firefox/gradle/build/mobile/android/app/outputs/findbugs/findbugs-officialPhotonDebug-output.html
                 type: file
               - name: public/build
                 path: /home/worker/artifacts/
@@ -267,7 +279,9 @@ jobs:
         scopes:
           - docker-worker:relengapi-proxy:tooltool.download.internal
           - docker-worker:relengapi-proxy:tooltool.download.public
-        when:
-            files-changed:
+        optimizations:
+          - - skip-unless-changed
+            - - "mobile/android/**/*.java"
               - "mobile/android/**/*.gradle"
-              - "mobile/android/**/*.java"
+              - "mobile/android/**/Makefile.in"
+              - "mobile/android/**/moz.build"

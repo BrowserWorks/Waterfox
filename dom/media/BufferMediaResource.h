@@ -68,6 +68,9 @@ private:
     mOffset = aOffset + *aBytes;
     return NS_OK;
   }
+  // Memory-based and no locks, caching discouraged.
+  bool ShouldCacheReads() override { return false; }
+
   int64_t Tell() override { return mOffset; }
 
   void Pin() override {}
@@ -75,7 +78,10 @@ private:
   double GetDownloadRate(bool* aIsReliable) override { *aIsReliable = false; return 0.; }
   int64_t GetLength() override { return mLength; }
   int64_t GetNextCachedData(int64_t aOffset) override { return aOffset; }
-  int64_t GetCachedDataEnd(int64_t aOffset) override { return mLength; }
+  int64_t GetCachedDataEnd(int64_t aOffset) override
+  {
+    return std::max(aOffset, int64_t(mLength));
+  }
   bool IsDataCachedToEndOfResource(int64_t aOffset) override { return true; }
   bool IsSuspendedByCache() override { return false; }
   bool IsSuspended() override { return false; }

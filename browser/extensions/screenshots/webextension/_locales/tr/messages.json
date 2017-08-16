@@ -3,7 +3,7 @@
     "message": "Web sayfalarının ekran görüntülerini alın, ister geçici ister kalıcı olarak kaydedin."
   },
   "addonAuthorsList": {
-    "message": "Mozilla <screenshots-feedback@mozilla.org>"
+    "message": "Mozilla <screenshots-feedback@mozilla.com>"
   },
   "contextMenuLabel": {
     "message": "Ekran görüntüsü al"
@@ -64,6 +64,9 @@
   "selfScreenshotErrorTitle": {
     "message": "Firefox Screenshots sayfalarının ekran görüntüsünü alamazsınz."
   },
+  "emptySelectionErrorTitle": {
+    "message": "Seçiminiz çok küçük"
+  },
   "genericErrorTitle": {
     "message": "Firefox Screenshosts kafayı yedi!"
   },
@@ -80,16 +83,16 @@
     "message": "Sayfanın belli bir kısmını yakalamak için işaretçiyi tıklayıp sürükleyin. Seçiminizi vurgulamak için fareyle üzerine gelebilirsiniz."
   },
   "tourHeaderThree": {
-    "message": "İstediğin gibi yakala"
-  },
-  "tourBodyThree": {
-    "message": "Ekran görüntülerinizi daha kolay paylşamak veya bilgisayarınıza indirmek için web'e kaydedin. Kaydettiğiniz tüm görüntüleri bulmak için \"Ekran görüntülerim\" düğmesine tıklayabilirsiniz."
-  },
-  "tourHeaderFour": {
     "message": "Pencereleri veya sayfaların tamamını yakala"
   },
+  "tourBodyThree": {
+    "message": "Yalnızca pencerede gördüğünüz alanı veya sayfanın tamamını yakalamak için sağ üstteki düğmelerden uygun olanı seçin."
+  },
+  "tourHeaderFour": {
+    "message": "İstediğin gibi yakala"
+  },
   "tourBodyFour": {
-    "message": "Yalnızda pencerede gördüğünüz alanı veya sayfanın tamamını yakalamak için sağ üstteki düğmelerden uygun olanı seçin."
+    "message": "Ekran görüntülerinizi daha kolay paylaşmak veya bilgisayarınıza indirmek için web’e kaydedin. Kaydettiğiniz tüm görüntüleri bulmak için \"Ekran görüntülerim\" düğmesine tıklayabilirsiniz."
   },
   "tourSkip": {
     "message": "GEÇ"

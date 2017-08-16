@@ -10,6 +10,9 @@
 #include "mozilla/layers/LayersTypes.h"
 #include "mozilla/layers/CompositorTypes.h"
 #include "nsISupportsImpl.h"
+#if defined(MOZ_WIDGET_ANDROID)
+#include "mozilla/layers/UiCompositorControllerChild.h"
+#endif // defined(MOZ_WIDGET_ANDROID)
 
 class nsIWidget;
 
@@ -44,10 +47,6 @@ protected:
 public:
   NS_INLINE_DECL_THREADSAFE_REFCOUNTING(CompositorSession)
 
-  virtual bool Reset(const nsTArray<LayersBackend>& aBackendHints,
-                     uint64_t aSeqNo,
-                     TextureFactoryIdentifier* aOutIdentifier) = 0;
-
   virtual void Shutdown() = 0;
 
   // This returns a CompositorBridgeParent if the compositor resides in the same process.
@@ -72,6 +71,17 @@ public:
     return mRootLayerTreeId;
   }
 
+#if defined(MOZ_WIDGET_ANDROID)
+  // Set the UiCompositorControllerChild after Session creation so the Session constructor
+  // doesn't get mucked up for other platforms.
+  void SetUiCompositorControllerChild(RefPtr<UiCompositorControllerChild> aUiController) {
+    mUiCompositorControllerChild = aUiController;
+  }
+
+  RefPtr<UiCompositorControllerChild> GetUiCompositorControllerChild() {
+    return mUiCompositorControllerChild;
+  }
+#endif // defined(MOZ_WIDGET_ANDROID)
 protected:
   CompositorSession(CompositorWidgetDelegate* aDelegate,
                     CompositorBridgeChild* aChild,
@@ -82,7 +92,9 @@ protected:
   CompositorWidgetDelegate* mCompositorWidgetDelegate;
   RefPtr<CompositorBridgeChild> mCompositorBridgeChild;
   uint64_t mRootLayerTreeId;
-
+#if defined(MOZ_WIDGET_ANDROID)
+  RefPtr<UiCompositorControllerChild> mUiCompositorControllerChild;
+#endif // defined(MOZ_WIDGET_ANDROID)
 private:
   DISALLOW_COPY_AND_ASSIGN(CompositorSession);
 };

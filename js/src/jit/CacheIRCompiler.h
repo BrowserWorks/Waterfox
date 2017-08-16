@@ -51,6 +51,10 @@ namespace jit {
     _(LoadDenseElementHoleExistsResult)   \
     _(LoadUnboxedArrayElementResult)      \
     _(LoadTypedElementResult)             \
+    _(LoadObjectResult)                   \
+    _(LoadTypeOfObjectResult)             \
+    _(MegamorphicLoadSlotByValueResult)   \
+    _(MegamorphicHasOwnResult)            \
     _(WrapResult)
 
 // Represents a Value on the Baseline frame's expression stack. Slot 0 is the
@@ -251,6 +255,10 @@ class MOZ_RAII CacheRegisterAllocator
     // The current location of each operand.
     Vector<OperandLocation, 8, SystemAllocPolicy> operandLocations_;
 
+    // Free lists for value- and payload-slots on stack
+    Vector<uint32_t, 2, SystemAllocPolicy> freeValueSlots_;
+    Vector<uint32_t, 2, SystemAllocPolicy> freePayloadSlots_;
+
     // The registers allocated while emitting the current CacheIR op.
     // This prevents us from allocating a register and then immediately
     // clobbering it for something else, while we're still holding on to it.
@@ -279,7 +287,7 @@ class MOZ_RAII CacheRegisterAllocator
     CacheRegisterAllocator(const CacheRegisterAllocator&) = delete;
     CacheRegisterAllocator& operator=(const CacheRegisterAllocator&) = delete;
 
-    void freeDeadOperandRegisters();
+    void freeDeadOperandLocations(MacroAssembler& masm);
 
     void spillOperandToStack(MacroAssembler& masm, OperandLocation* loc);
     void spillOperandToStackOrRegister(MacroAssembler& masm, OperandLocation* loc);
@@ -581,6 +589,27 @@ class MOZ_RAII CacheIRCompiler
 
     void emitStoreTypedObjectReferenceProp(ValueOperand val, ReferenceTypeDescr::Type type,
                                            const Address& dest, Register scratch);
+
+  private:
+    void emitPostBarrierShared(Register obj, const ConstantOrRegister& val, Register scratch,
+                               Register maybeIndex);
+
+    void emitPostBarrierShared(Register obj, ValueOperand val, Register scratch,
+                               Register maybeIndex) {
+        emitPostBarrierShared(obj, ConstantOrRegister(val), scratch, maybeIndex);
+    }
+
+  protected:
+    template <typename T>
+    void emitPostBarrierSlot(Register obj, const T& val, Register scratch) {
+        emitPostBarrierShared(obj, val, scratch, InvalidReg);
+    }
+
+    template <typename T>
+    void emitPostBarrierElement(Register obj, const T& val, Register scratch, Register index) {
+        MOZ_ASSERT(index != InvalidReg);
+        emitPostBarrierShared(obj, val, scratch, index);
+    }
 
 #define DEFINE_SHARED_OP(op) MOZ_MUST_USE bool emit##op();
     CACHE_IR_SHARED_OPS(DEFINE_SHARED_OP)

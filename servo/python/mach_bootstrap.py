@@ -14,11 +14,6 @@ SEARCH_PATHS = [
     os.path.join("python", "tidy"),
 ]
 
-WPT_SEARCH_PATHS = [
-    ".",
-    "harness",
-]
-
 # Individual files providing mach commands.
 MACH_MODULES = [
     os.path.join('python', 'servo', 'bootstrap_commands.py'),
@@ -106,11 +101,21 @@ def _get_virtualenv_script_dir():
     return "bin"
 
 
-def wpt_path(topdir, paths, is_firefox):
+def wpt_path(is_firefox, topdir, *paths):
     if is_firefox:
         rel = os.path.join("..", "testing", "web-platform")
     else:
         rel = os.path.join("tests", "wpt")
+
+    return os.path.join(topdir, rel, *paths)
+
+
+def wpt_harness_path(is_firefox, topdir, *paths):
+    wpt_root = wpt_path(is_firefox, topdir)
+    if is_firefox:
+        rel = os.path.join(wpt_root, "tests", "tools", "wptrunner")
+    else:
+        rel = os.path.join(wpt_root, "harness")
 
     return os.path.join(topdir, rel, *paths)
 
@@ -157,9 +162,9 @@ def _activate_virtualenv(topdir, is_firefox):
     # and it will check for conflicts.
     requirements_paths = [
         os.path.join("python", "requirements.txt"),
-        wpt_path(topdir, ("harness", "requirements.txt"), is_firefox),
-        wpt_path(topdir, ("harness", "requirements_firefox.txt"), is_firefox),
-        wpt_path(topdir, ("harness", "requirements_servo.txt"), is_firefox),
+        wpt_harness_path(is_firefox, topdir, "requirements.txt",),
+        wpt_harness_path(is_firefox, topdir, "requirements_firefox.txt"),
+        wpt_harness_path(is_firefox, topdir, "requirements_servo.txt"),
     ]
 
     if need_pip_upgrade:
@@ -211,7 +216,7 @@ def _ensure_case_insensitive_if_windows():
 
 
 def _is_windows():
-    return sys.platform == 'win32' or sys.platform == 'msys'
+    return sys.platform == 'win32'
 
 
 def bootstrap(topdir):
@@ -233,15 +238,6 @@ def bootstrap(topdir):
     if ' ' in topdir:
         print('Cannot run mach in a path with spaces.')
         print('Current path:', topdir)
-        sys.exit(1)
-
-    # We don't support MinGW Python
-    if os.path.join(os.sep, 'mingw64', 'bin') in sys.executable:
-        print('Cannot run mach with MinGW or MSYS Python.')
-        print('\nPlease add the path to Windows Python (usually /c/Python27) to your path.')
-        print('You can do this by appending the line:')
-        print('    export PATH=/c/Python27:$PATH')
-        print('to your ~/.profile.')
         sys.exit(1)
 
     # Ensure we are running Python 2.7+. We put this check here so we generate a
@@ -266,8 +262,10 @@ def bootstrap(topdir):
         raise AttributeError(key)
 
     sys.path[0:0] = [os.path.join(topdir, path) for path in SEARCH_PATHS]
-    sys.path[0:0] = [wpt_path(topdir, (path,), is_firefox)
-                     for path in WPT_SEARCH_PATHS]
+
+    sys.path[0:0] = [wpt_path(is_firefox, topdir),
+                     wpt_harness_path(is_firefox, topdir)]
+
     import mach.main
     mach = mach.main.Mach(os.getcwd())
     mach.populate_context_handler = populate_context

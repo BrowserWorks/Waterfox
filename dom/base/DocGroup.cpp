@@ -33,6 +33,7 @@ DocGroup::GetKey(nsIPrincipal* aPrincipal, nsACString& aKey)
 void
 DocGroup::RemoveDocument(nsIDocument* aDocument)
 {
+  MOZ_ASSERT(NS_IsMainThread());
   MOZ_ASSERT(mDocuments.Contains(aDocument));
   mDocuments.RemoveElement(aDocument);
 }
@@ -46,6 +47,11 @@ DocGroup::DocGroup(TabGroup* aTabGroup, const nsACString& aKey)
 DocGroup::~DocGroup()
 {
   MOZ_ASSERT(mDocuments.IsEmpty());
+  if (!NS_IsMainThread()) {
+    nsIEventTarget* target = EventTargetFor(TaskCategory::Other);
+    NS_ProxyRelease(target, mReactionsStack.forget());
+  }
+
   mTabGroup->mDocGroups.RemoveEntry(mKey);
 }
 
@@ -64,7 +70,7 @@ DocGroup::EventTargetFor(TaskCategory aCategory) const
 }
 
 AbstractThread*
-DocGroup::AbstractMainThreadForImpl(TaskCategory aCategory)
+DocGroup::AbstractMainThreadFor(TaskCategory aCategory)
 {
   MOZ_RELEASE_ASSERT(NS_IsMainThread());
   return mTabGroup->AbstractMainThreadFor(aCategory);

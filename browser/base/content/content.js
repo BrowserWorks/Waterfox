@@ -12,11 +12,6 @@ var {classes: Cc, interfaces: Ci, utils: Cu, results: Cr} = Components;
 
 Cu.import("resource://gre/modules/XPCOMUtils.jsm");
 Cu.import("resource://gre/modules/Services.jsm");
-Cu.import("resource:///modules/ContentWebRTC.jsm");
-Cu.import("resource:///modules/ContentObservers.jsm");
-Cu.import("resource://gre/modules/InlineSpellChecker.jsm");
-Cu.import("resource://gre/modules/InlineSpellCheckerContent.jsm");
-Cu.import("resource://gre/modules/Task.jsm");
 
 XPCOMUtils.defineLazyModuleGetter(this, "E10SUtils",
   "resource:///modules/E10SUtils.jsm");
@@ -24,6 +19,12 @@ XPCOMUtils.defineLazyModuleGetter(this, "BrowserUtils",
   "resource://gre/modules/BrowserUtils.jsm");
 XPCOMUtils.defineLazyModuleGetter(this, "ContentLinkHandler",
   "resource:///modules/ContentLinkHandler.jsm");
+XPCOMUtils.defineLazyModuleGetter(this, "ContentWebRTC",
+  "resource:///modules/ContentWebRTC.jsm");
+XPCOMUtils.defineLazyModuleGetter(this, "SpellCheckHelper",
+  "resource://gre/modules/InlineSpellChecker.jsm");
+XPCOMUtils.defineLazyModuleGetter(this, "InlineSpellCheckerContent",
+  "resource://gre/modules/InlineSpellCheckerContent.jsm");
 XPCOMUtils.defineLazyModuleGetter(this, "LoginManagerContent",
   "resource://gre/modules/LoginManagerContent.jsm");
 XPCOMUtils.defineLazyModuleGetter(this, "LoginFormFactory",
@@ -40,13 +41,19 @@ XPCOMUtils.defineLazyModuleGetter(this, "PageMetadata",
   "resource://gre/modules/PageMetadata.jsm");
 XPCOMUtils.defineLazyModuleGetter(this, "PlacesUIUtils",
   "resource:///modules/PlacesUIUtils.jsm");
+XPCOMUtils.defineLazyModuleGetter(this, "Utils",
+  "resource://gre/modules/sessionstore/Utils.jsm");
 XPCOMUtils.defineLazyGetter(this, "PageMenuChild", function() {
   let tmp = {};
   Cu.import("resource://gre/modules/PageMenu.jsm", tmp);
   return new tmp.PageMenuChild();
 });
+XPCOMUtils.defineLazyModuleGetter(this, "WebNavigationFrames",
+  "resource://gre/modules/WebNavigationFrames.jsm");
 XPCOMUtils.defineLazyModuleGetter(this, "Feeds",
   "resource:///modules/Feeds.jsm");
+XPCOMUtils.defineLazyModuleGetter(this, "findCssSelector",
+  "resource://gre/modules/css-selector.js");
 
 Cu.importGlobalProperties(["URL"]);
 
@@ -109,7 +116,7 @@ var handleContentContextMenu = function(event) {
     addonInfo,
   };
   subject.wrappedJSObject = subject;
-  Services.obs.notifyObservers(subject, "content-contextmenu", null);
+  Services.obs.notifyObservers(subject, "content-contextmenu");
 
   let doc = event.target.ownerDocument;
   let docLocation = doc.mozDocumentURIIfNotForErrorPages;
@@ -118,23 +125,17 @@ var handleContentContextMenu = function(event) {
   let baseURI = doc.baseURI;
   let referrer = doc.referrer;
   let referrerPolicy = doc.referrerPolicy;
-  let frameOuterWindowID = doc.defaultView.QueryInterface(Ci.nsIInterfaceRequestor)
-                                          .getInterface(Ci.nsIDOMWindowUtils)
-                                          .outerWindowID;
+  let frameOuterWindowID = WebNavigationFrames.getFrameId(doc.defaultView);
   let loginFillInfo = LoginManagerContent.getFieldContext(event.target);
 
   // The same-origin check will be done in nsContextMenu.openLinkInTab.
   let parentAllowsMixedContent = !!docShell.mixedContentChannel;
 
   // get referrer attribute from clicked link and parse it
-  // if per element referrer is enabled, the element referrer overrules
-  // the document wide referrer
-  if (Services.prefs.getBoolPref("network.http.enablePerElementReferrer")) {
-    let referrerAttrValue = Services.netUtils.parseAttributePolicyString(event.target.
-                            getAttribute("referrerpolicy"));
-    if (referrerAttrValue !== Ci.nsIHttpChannel.REFERRER_POLICY_UNSET) {
-      referrerPolicy = referrerAttrValue;
-    }
+  let referrerAttrValue = Services.netUtils.parseAttributePolicyString(event.target.
+                          getAttribute("referrerpolicy"));
+  if (referrerAttrValue !== Ci.nsIHttpChannel.REFERRER_POLICY_UNSET) {
+    referrerPolicy = referrerAttrValue;
   }
 
   let disableSetDesktopBg = null;
@@ -166,6 +167,7 @@ var handleContentContextMenu = function(event) {
 
   let loadContext = docShell.QueryInterface(Ci.nsILoadContext);
   let userContextId = loadContext.originAttributes.userContextId;
+  let popupNodeSelectors = getNodeSelectors(event.target);
 
   if (Services.appinfo.processType == Services.appinfo.PROCESS_TYPE_CONTENT) {
     let editFlags = SpellCheckHelper.isEditable(event.target, content);
@@ -185,13 +187,18 @@ var handleContentContextMenu = function(event) {
 
     let customMenuItems = PageMenuChild.build(event.target);
     let principal = doc.nodePrincipal;
+
     sendRpcMessage("contextmenu",
                    { editFlags, spellInfo, customMenuItems, addonInfo,
                      principal, docLocation, charSet, baseURI, referrer,
                      referrerPolicy, contentType, contentDisposition,
                      frameOuterWindowID, selectionInfo, disableSetDesktopBg,
-                     loginFillInfo, parentAllowsMixedContent, userContextId },
-                   { event, popupNode: event.target });
+                     loginFillInfo, parentAllowsMixedContent, userContextId,
+                     popupNodeSelectors,
+                   }, {
+                     event,
+                     popupNode: event.target,
+                   });
   } else {
     // Break out to the parent window and pass the add-on info along
     let browser = docShell.chromeEventHandler;
@@ -200,6 +207,7 @@ var handleContentContextMenu = function(event) {
       isRemote: false,
       event,
       popupNode: event.target,
+      popupNodeSelectors,
       browser,
       addonInfo,
       documentURIObject: doc.documentURIObject,
@@ -247,6 +255,28 @@ const PREF_SSL_IMPACT = PREF_SSL_IMPACT_ROOTS.reduce((prefs, root) => {
   return prefs.concat(Services.prefs.getChildList(root));
 }, []);
 
+/**
+ * Retrieve the array of CSS selectors corresponding to the provided node. The first item
+ * of the array is the selector of the node in its owner document. Additional items are
+ * used if the node is inside a frame, each representing the CSS selector for finding the
+ * frame element in its parent document.
+ *
+ * This format is expected by DevTools in order to handle the Inspect Node context menu
+ * item.
+ *
+ * @param  {Node}
+ *         The node for which the CSS selectors should be computed
+ * @return {Array} array of css selectors (strings).
+ */
+function getNodeSelectors(node) {
+  let selectors = [];
+  while (node) {
+    selectors.push(findCssSelector(node));
+    node = node.ownerGlobal.frameElement;
+  }
+
+  return selectors;
+}
 
 function getSerializedSecurityInfo(docShell) {
   let serhelper = Cc["@mozilla.org/network/serialization-helper;1"]
@@ -353,7 +383,9 @@ var AboutNetAndCertErrorListener = {
 
         // If the difference is more than a day.
         if (Math.abs(difference) > 60 * 60 * 24) {
-          let formatter = new Intl.DateTimeFormat();
+          let formatter = Services.intl.createDateTimeFormat(undefined, {
+            dateStyle: "short"
+          });
           let systemDate = formatter.format(new Date());
           // negative difference means local time is behind server time
           let actualDate = formatter.format(new Date(Date.now() - difference * 1000));
@@ -383,7 +415,9 @@ var AboutNetAndCertErrorListener = {
           let systemDate = new Date();
 
           if (buildDate > systemDate) {
-            let formatter = new Intl.DateTimeFormat();
+            let formatter = Services.intl.createDateTimeFormat(undefined, {
+              dateStyle: "short"
+            });
 
             content.document.getElementById("wrongSystemTimeWithoutReference_URL")
               .textContent = content.document.location.hostname;
@@ -521,8 +555,7 @@ var ClickEventHandler = {
     // if per element referrer is enabled, the element referrer overrules
     // the document wide referrer
     let referrerPolicy = ownerDoc.referrerPolicy;
-    if (Services.prefs.getBoolPref("network.http.enablePerElementReferrer") &&
-        node) {
+    if (node) {
       let referrerAttrValue = Services.netUtils.parseAttributePolicyString(node.
                               getAttribute("referrerpolicy"));
       if (referrerAttrValue !== Ci.nsIHttpChannel.REFERRER_POLICY_UNSET) {
@@ -530,9 +563,7 @@ var ClickEventHandler = {
       }
     }
 
-    let frameOuterWindowID = ownerDoc.defaultView.QueryInterface(Ci.nsIInterfaceRequestor)
-                                     .getInterface(Ci.nsIDOMWindowUtils)
-                                     .outerWindowID;
+    let frameOuterWindowID = WebNavigationFrames.getFrameId(ownerDoc.defaultView);
 
     let json = { button: event.button, shiftKey: event.shiftKey,
                  ctrlKey: event.ctrlKey, metaKey: event.metaKey,
@@ -572,12 +603,13 @@ var ClickEventHandler = {
       if (docShell.mixedContentChannel) {
         const sm = Services.scriptSecurityManager;
         try {
-          let targetURI = BrowserUtils.makeURI(href);
+          let targetURI = Services.io.newURI(href);
           sm.checkSameOriginURI(docshell.mixedContentChannel.URI, targetURI, false);
           json.allowMixedContent = true;
         } catch (e) {}
       }
       json.originPrincipal = ownerDoc.nodePrincipal;
+      json.triggeringPrincipal = ownerDoc.nodePrincipal;
 
       sendAsyncMessage("Content:Click", json);
       return;
@@ -687,7 +719,7 @@ var ClickEventHandler = {
     // In case of XLink, we don't return the node we got href from since
     // callers expect <a>-like elements.
     // Note: makeURI() will throw if aUri is not a valid URI.
-    return [href ? BrowserUtils.makeURI(href, null, baseURI).spec : null, null,
+    return [href ? Services.io.newURI(href, null, baseURI).spec : null, null,
             node && node.ownerDocument.nodePrincipal];
   }
 };
@@ -698,27 +730,19 @@ ContentLinkHandler.init(this);
 // TODO: Load this lazily so the JSM is run only if a relevant event/message fires.
 var pluginContent = new PluginContent(global);
 
-addEventListener("DOMWebNotificationClicked", function(event) {
-  sendAsyncMessage("DOMWebNotificationClicked", {});
+addEventListener("DOMWindowFocus", function(event) {
+  sendAsyncMessage("DOMWindowFocus", {});
 }, false);
 
-addEventListener("DOMServiceWorkerFocusClient", function(event) {
-  sendAsyncMessage("DOMServiceWorkerFocusClient", {});
-}, false);
+// We use this shim so that ContentWebRTC.jsm will not be loaded until
+// it is actually needed.
+var ContentWebRTCShim = message => ContentWebRTC.receiveMessage(message);
 
-ContentWebRTC.init();
-addMessageListener("rtcpeer:Allow", ContentWebRTC);
-addMessageListener("rtcpeer:Deny", ContentWebRTC);
-addMessageListener("webrtc:Allow", ContentWebRTC);
-addMessageListener("webrtc:Deny", ContentWebRTC);
-addMessageListener("webrtc:StopSharing", ContentWebRTC);
-addMessageListener("webrtc:StartBrowserSharing", () => {
-  let windowID = content.QueryInterface(Ci.nsIInterfaceRequestor)
-                        .getInterface(Ci.nsIDOMWindowUtils).outerWindowID;
-  sendAsyncMessage("webrtc:response:StartBrowserSharing", {
-    windowID
-  });
-});
+addMessageListener("rtcpeer:Allow", ContentWebRTCShim);
+addMessageListener("rtcpeer:Deny", ContentWebRTCShim);
+addMessageListener("webrtc:Allow", ContentWebRTCShim);
+addMessageListener("webrtc:Deny", ContentWebRTCShim);
+addMessageListener("webrtc:StopSharing", ContentWebRTCShim);
 
 addEventListener("pageshow", function(event) {
   if (event.target == content.document) {
@@ -786,7 +810,8 @@ addEventListener("ActivateSocialFeature", function(aEvent) {
   sendAsyncMessage("Social:Activation", {
     url: ownerDocument.location.href,
     origin: ownerDocument.nodePrincipal.origin,
-    manifest: data
+    manifest: data,
+    triggeringPrincipal: Utils.serializePrincipal(ownerDocument.nodePrincipal),
   });
 }, true, true);
 
@@ -870,12 +895,10 @@ addMessageListener("ContextMenu:SearchFieldBookmarkData", (message) => {
 
   let charset = node.ownerDocument.characterSet;
 
-  let formBaseURI = BrowserUtils.makeURI(node.form.baseURI,
-                                         charset);
+  let formBaseURI = Services.io.newURI(node.form.baseURI, charset);
 
-  let formURI = BrowserUtils.makeURI(node.form.getAttribute("action"),
-                                     charset,
-                                     formBaseURI);
+  let formURI = Services.io.newURI(node.form.getAttribute("action"), charset,
+                                   formBaseURI);
 
   let spec = formURI.spec;
 
@@ -1056,7 +1079,7 @@ var PageInfoListener = {
     let frameOuterWindowID = message.data.frameOuterWindowID;
 
     // If inside frame then get the frame's window and document.
-    if (frameOuterWindowID) {
+    if (frameOuterWindowID != undefined) {
       window = Services.wm.getOuterWindowWithId(frameOuterWindowID);
       document = window.document;
     } else {
@@ -1172,7 +1195,7 @@ var PageInfoListener = {
   // Only called once to get the media tab's media elements from the content page.
   getMediaInfo(document, window, strings) {
     let frameList = this.goThroughFrames(document, window);
-    Task.spawn(() => this.processFrames(document, frameList, strings));
+    this.processFrames(document, frameList, strings);
   },
 
   goThroughFrames(document, window) {
@@ -1188,7 +1211,7 @@ var PageInfoListener = {
     return frameList;
   },
 
-  *processFrames(document, frameList, strings) {
+  async processFrames(document, frameList, strings) {
     let nodeCount = 0;
     for (let doc of frameList) {
       let iterator = doc.createTreeWalker(doc, content.NodeFilter.SHOW_ELEMENT);
@@ -1204,7 +1227,7 @@ var PageInfoListener = {
 
         if (++nodeCount % 500 == 0) {
           // setTimeout every 500 elements so we don't keep blocking the content process.
-          yield new Promise(resolve => setTimeout(resolve, 10));
+          await new Promise(resolve => setTimeout(resolve, 10));
         }
       }
     }
@@ -1465,8 +1488,8 @@ let OfflineApps = {
       return null;
 
     try {
-      var contentURI = BrowserUtils.makeURI(aWindow.location.href, null, null);
-      return BrowserUtils.makeURI(attr, aWindow.document.characterSet, contentURI);
+      return Services.io.newURI(attr, aWindow.document.characterSet,
+                                Services.io.newURI(aWindow.location.href));
     } catch (e) {
       return null;
     }

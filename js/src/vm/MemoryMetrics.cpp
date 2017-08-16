@@ -272,6 +272,7 @@ struct StatsClosure
     SourceSet seenSources;
     wasm::Metadata::SeenSet wasmSeenMetadata;
     wasm::ShareableBytes::SeenSet wasmSeenBytes;
+    wasm::Code::SeenSet wasmSeenCode;
     wasm::Table::SeenSet wasmSeenTables;
     bool anonymize;
 
@@ -285,6 +286,7 @@ struct StatsClosure
         return seenSources.init() &&
                wasmSeenMetadata.init() &&
                wasmSeenBytes.init() &&
+               wasmSeenCode.init() &&
                wasmSeenTables.init();
     }
 };
@@ -321,7 +323,9 @@ StatsZoneCallback(JSRuntime* rt, void* data, Zone* zone)
 
     zone->addSizeOfIncludingThis(rtStats->mallocSizeOf_,
                                  &zStats.typePool,
+                                 &zStats.jitZone,
                                  &zStats.baselineStubsOptimized,
+                                 &zStats.cachedCFG,
                                  &zStats.uniqueIdMap,
                                  &zStats.shapeTables,
                                  &rtStats->runtime.atomsMarkBitmaps);
@@ -357,6 +361,7 @@ StatsCompartmentCallback(JSContext* cx, void* data, JSCompartment* compartment)
                                         &cStats.savedStacksSet,
                                         &cStats.varNamesSet,
                                         &cStats.nonSyntacticLexicalScopesTable,
+                                        &cStats.templateLiteralMap,
                                         &cStats.jitCompartment,
                                         &cStats.privateData);
 }
@@ -472,6 +477,7 @@ StatsCellCallback(JSRuntime* rt, void* data, void* thing, JS::TraceKind traceKin
             module.addSizeOfMisc(rtStats->mallocSizeOf_,
                                  &closure->wasmSeenMetadata,
                                  &closure->wasmSeenBytes,
+                                 &closure->wasmSeenCode,
                                  &info.objectsNonHeapCodeWasm,
                                  &info.objectsMallocHeapMisc);
         } else if (obj->is<WasmInstanceObject>()) {
@@ -481,6 +487,7 @@ StatsCellCallback(JSRuntime* rt, void* data, void* thing, JS::TraceKind traceKin
             instance.addSizeOfMisc(rtStats->mallocSizeOf_,
                                    &closure->wasmSeenMetadata,
                                    &closure->wasmSeenBytes,
+                                   &closure->wasmSeenCode,
                                    &closure->wasmSeenTables,
                                    &info.objectsNonHeapCodeWasm,
                                    &info.objectsMallocHeapMisc);
@@ -594,6 +601,13 @@ StatsCellCallback(JSRuntime* rt, void* data, void* thing, JS::TraceKind traceKin
         Scope* scope = static_cast<Scope*>(thing);
         zStats->scopesGCHeap += thingSize;
         zStats->scopesMallocHeap += scope->sizeOfExcludingThis(rtStats->mallocSizeOf_);
+        break;
+      }
+
+      case JS::TraceKind::RegExpShared: {
+        auto regexp = static_cast<RegExpShared*>(thing);
+        zStats->regExpSharedsGCHeap += thingSize;
+        zStats->regExpSharedsMallocHeap += regexp->sizeOfExcludingThis(rtStats->mallocSizeOf_);
         break;
       }
 
@@ -869,6 +883,15 @@ JS::PeakSizeOfTemporary(const JSContext* cx)
     return cx->tempLifoAlloc().peakSizeOfExcludingThis();
 }
 
+JS_PUBLIC_API(void)
+JS::CollectTraceLoggerStateStats(RuntimeStats* rtStats)
+{
+#ifdef JS_TRACE_LOGGING
+    rtStats->runtime.tracelogger += SizeOfTraceLogState(rtStats->mallocSizeOf_);
+    rtStats->runtime.tracelogger += SizeOfTraceLogGraphState(rtStats->mallocSizeOf_);
+#endif
+}
+
 namespace JS {
 
 class SimpleJSRuntimeStats : public JS::RuntimeStats
@@ -928,8 +951,8 @@ AddSizeOfTab(JSContext* cx, HandleObject obj, MallocSizeOf mallocSizeOf, ObjectP
 }
 
 JS_PUBLIC_API(bool)
-AddServoSizeOf(JSContext* cx, MallocSizeOf mallocSizeOf, ObjectPrivateVisitor *opv,
-               ServoSizes *sizes)
+AddServoSizeOf(JSContext* cx, MallocSizeOf mallocSizeOf, ObjectPrivateVisitor* opv,
+               ServoSizes* sizes)
 {
     SimpleJSRuntimeStats rtStats(mallocSizeOf);
 

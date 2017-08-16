@@ -437,6 +437,7 @@ var PageStyleActor = protocol.ActorClassWithSpec(pageStyleSpec, {
    *   `inherited`: Include styles inherited from parent nodes.
    *   `matchedSelectors`: Include an array of specific selectors that
    *     caused this rule to match its node.
+   *   `skipPseudo`: Exclude styles applied to pseudo elements of the provided node.
    */
   getApplied: Task.async(function* (node, options) {
     if (!node) {
@@ -537,7 +538,7 @@ var PageStyleActor = protocol.ActorClassWithSpec(pageStyleSpec, {
         });
 
     // Now any pseudos.
-    if (showElementStyles) {
+    if (showElementStyles && !options.skipPseudo) {
       for (let readPseudo of PSEUDO_ELEMENTS) {
         this._getElementRules(bindingElement, readPseudo, inherited, options)
             .forEach(oneRule => {
@@ -636,6 +637,7 @@ var PageStyleActor = protocol.ActorClassWithSpec(pageStyleSpec, {
    *   `inherited`: Include styles inherited from parent nodes.
    *   `matchedSelectors`: Include an array of specific selectors that
    *     caused this rule to match its node.
+   *   `skipPseudo`: Exclude styles applied to pseudo elements of the provided node.
    * @param array entries
    *   List of appliedstyle objects that lists the rules that apply to the
    *   node. If adding a new rule to the stylesheet, only the new rule entry
@@ -771,6 +773,10 @@ var PageStyleActor = protocol.ActorClassWithSpec(pageStyleSpec, {
     let style = CssLogic.getComputedStyle(node.rawNode);
     for (let prop of [
       "position",
+      "top",
+      "right",
+      "bottom",
+      "left",
       "margin-top",
       "margin-right",
       "margin-bottom",
@@ -1001,15 +1007,13 @@ var StyleRuleActor = protocol.ActorClassWithSpec(styleRuleSpec, {
   },
 
   getDocument: function (sheet) {
-    let document;
-
-    if (sheet.ownerNode instanceof Ci.nsIDOMHTMLDocument) {
-      document = sheet.ownerNode;
-    } else {
-      document = sheet.ownerNode.ownerDocument;
+    if (sheet.ownerNode) {
+      return sheet.ownerNode instanceof Ci.nsIDOMHTMLDocument ?
+             sheet.ownerNode : sheet.ownerNode.ownerDocument;
+    } else if (sheet.parentStyleSheet) {
+      return this.getDocument(sheet.parentStyleSheet);
     }
-
-    return document;
+    throw (new Error("Failed trying to get the document of an invalid stylesheet"));
   },
 
   toString: function () {
@@ -1513,9 +1517,9 @@ function getFontPreviewData(font, doc, options) {
   // Get the correct preview text measurements and set the canvas dimensions
   ctx.font = fontValue;
   ctx.fillStyle = fillStyle;
-  let textWidth = ctx.measureText(previewText).width;
+  let textWidth = Math.round(ctx.measureText(previewText).width);
 
-  canvas.width = textWidth * 2 + FONT_PREVIEW_OFFSET * 2;
+  canvas.width = textWidth * 2 + FONT_PREVIEW_OFFSET * 4;
   canvas.height = previewFontSize * 3;
 
   // we have to reset these after changing the canvas size

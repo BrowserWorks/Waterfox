@@ -4,32 +4,59 @@
 
 //! Computed values.
 
-use app_units::Au;
+use Atom;
+use context::QuirksMode;
 use euclid::size::Size2D;
 use font_metrics::FontMetricsProvider;
-use properties::ComputedValues;
+use media_queries::Device;
+use num_traits::Zero;
+#[cfg(feature = "gecko")]
+use properties;
+use properties::{ComputedValues, StyleBuilder};
+use std::f32;
+use std::f32::consts::PI;
 use std::fmt;
 use style_traits::ToCss;
-use super::{CSSFloat, RGBA, specified};
-use super::specified::grid::{TrackBreadth as GenericTrackBreadth, TrackSize as GenericTrackSize};
+use super::{CSSFloat, CSSInteger, RGBA};
+use super::generics::grid::{TrackBreadth as GenericTrackBreadth, TrackSize as GenericTrackSize};
+use super::generics::grid::TrackList as GenericTrackList;
+use super::specified;
 
-pub use cssparser::Color as CSSColor;
-pub use self::image::{AngleOrCorner, EndingShape as GradientShape, Gradient, GradientKind, Image};
-pub use self::image::{LengthOrKeyword, LengthOrPercentageOrKeyword};
+pub use app_units::Au;
+pub use properties::animated_properties::TransitionProperty;
+pub use self::background::BackgroundSize;
+pub use self::border::{BorderImageSlice, BorderImageWidth, BorderImageSideWidth};
+pub use self::border::{BorderRadius, BorderCornerRadius};
+pub use self::color::{Color, RGBAColor};
+pub use self::image::{Gradient, GradientItem, ImageLayer, LineDirection, Image, ImageRect};
+#[cfg(feature = "gecko")]
+pub use self::gecko::ScrollSnapPoint;
+pub use self::rect::LengthOrNumberRect;
 pub use super::{Auto, Either, None_};
 #[cfg(feature = "gecko")]
 pub use super::specified::{AlignItems, AlignJustifyContent, AlignJustifySelf, JustifyItems};
-pub use super::specified::{Angle, BorderStyle, GridLine, Time, UrlOrNone};
-pub use super::specified::url::{SpecifiedUrl, UrlExtraData};
+pub use super::specified::{BorderStyle, Percentage, UrlOrNone};
+pub use super::generics::grid::GridLine;
+pub use super::specified::url::SpecifiedUrl;
 pub use self::length::{CalcLengthOrPercentage, Length, LengthOrNumber, LengthOrPercentage, LengthOrPercentageOrAuto};
 pub use self::length::{LengthOrPercentageOrAutoOrContent, LengthOrPercentageOrNone, LengthOrNone};
-pub use self::length::{MaxLength, MinLength};
+pub use self::length::{MaxLength, MozLength};
 pub use self::position::Position;
+pub use self::text::{InitialLetter, LetterSpacing, LineHeight, WordSpacing};
+pub use self::transform::{TimingFunction, TransformOrigin};
 
+pub mod background;
 pub mod basic_shape;
+pub mod border;
+pub mod color;
 pub mod image;
+#[cfg(feature = "gecko")]
+pub mod gecko;
 pub mod length;
 pub mod position;
+pub mod rect;
+pub mod text;
+pub mod transform;
 
 /// A `Context` is all the data a specified value could ever need to compute
 /// itself and be transformed to a computed value.
@@ -37,8 +64,8 @@ pub struct Context<'a> {
     /// Whether the current element is the root element.
     pub is_root_element: bool,
 
-    /// The current viewport size.
-    pub viewport_size: Size2D<Au>,
+    /// The Device holds the viewport and other external state.
+    pub device: &'a Device,
 
     /// The style we're inheriting from.
     pub inherited_style: &'a ComputedValues,
@@ -49,30 +76,85 @@ pub struct Context<'a> {
     /// isn't `contents`.
     pub layout_parent_style: &'a ComputedValues,
 
-    /// Values access through this need to be in the properties "computed
+    /// Values accessed through this need to be in the properties "computed
     /// early": color, text-decoration, font-size, display, position, float,
     /// border-*-style, outline-style, font-family, writing-mode...
-    pub style: ComputedValues,
+    pub style: StyleBuilder<'a>,
+
+    /// A cached computed system font value, for use by gecko.
+    ///
+    /// See properties/longhands/font.mako.rs
+    #[cfg(feature = "gecko")]
+    pub cached_system_font: Option<properties::longhands::system_font::ComputedSystemFont>,
+
+    /// A dummy option for servo so initializing a computed::Context isn't
+    /// painful.
+    ///
+    /// TODO(emilio): Make constructors for Context, and drop this.
+    #[cfg(feature = "servo")]
+    pub cached_system_font: Option<()>,
 
     /// A font metrics provider, used to access font metrics to implement
     /// font-relative units.
-    ///
-    /// TODO(emilio): This should be required, see #14079.
-    pub font_metrics_provider: Option<&'a FontMetricsProvider>,
+    pub font_metrics_provider: &'a FontMetricsProvider,
+
+    /// Whether or not we are computing the media list in a media query
+    pub in_media_query: bool,
+
+    /// The quirks mode of this context.
+    pub quirks_mode: QuirksMode,
 }
 
 impl<'a> Context<'a> {
     /// Whether the current element is the root element.
     pub fn is_root_element(&self) -> bool { self.is_root_element }
     /// The current viewport size.
-    pub fn viewport_size(&self) -> Size2D<Au> { self.viewport_size }
+    pub fn viewport_size(&self) -> Size2D<Au> { self.device.au_viewport_size() }
     /// The style we're inheriting from.
     pub fn inherited_style(&self) -> &ComputedValues { &self.inherited_style }
     /// The current style. Note that only "eager" properties should be accessed
     /// from here, see the comment in the member.
-    pub fn style(&self) -> &ComputedValues { &self.style }
+    pub fn style(&self) -> &StyleBuilder { &self.style }
     /// A mutable reference to the current style.
-    pub fn mutate_style(&mut self) -> &mut ComputedValues { &mut self.style }
+    pub fn mutate_style(&mut self) -> &mut StyleBuilder<'a> { &mut self.style }
+    /// Get a mutable reference to the current style as well as the device
+    pub fn mutate_style_with_device(&mut self) -> (&mut StyleBuilder<'a>, &Device) { (&mut self.style, &self.device) }
+}
+
+/// An iterator over a slice of computed values
+#[derive(Clone)]
+pub struct ComputedVecIter<'a, 'cx, 'cx_a: 'cx, S: ToComputedValue + 'a> {
+    cx: &'cx Context<'cx_a>,
+    values: &'a [S],
+}
+
+impl<'a, 'cx, 'cx_a: 'cx, S: ToComputedValue + 'a> ComputedVecIter<'a, 'cx, 'cx_a, S> {
+    /// Construct an iterator from a slice of specified values and a context
+    pub fn new(cx: &'cx Context<'cx_a>, values: &'a [S]) -> Self {
+        ComputedVecIter {
+            cx: cx,
+            values: values,
+        }
+    }
+}
+
+impl<'a, 'cx, 'cx_a: 'cx, S: ToComputedValue + 'a> ExactSizeIterator for ComputedVecIter<'a, 'cx, 'cx_a, S> {
+    fn len(&self) -> usize {
+        self.values.len()
+    }
+}
+
+impl<'a, 'cx, 'cx_a: 'cx, S: ToComputedValue + 'a> Iterator for ComputedVecIter<'a, 'cx, 'cx_a, S> {
+    type Item = S::ComputedValue;
+    fn next(&mut self) -> Option<Self::Item> {
+        if let Some((next, rest)) = self.values.split_first() {
+            let ret = next.to_computed_value(self.cx);
+            self.values = rest;
+            Some(ret)
+        } else {
+            None
+        }
+    }
 }
 
 /// A trait to represent the conversion between computed and specified values.
@@ -91,6 +173,79 @@ pub trait ToComputedValue {
     /// This will be used for recascading during animation.
     /// Such from_computed_valued values should recompute to the same value.
     fn from_computed_value(computed: &Self::ComputedValue) -> Self;
+}
+
+impl<A, B> ToComputedValue for (A, B)
+    where A: ToComputedValue, B: ToComputedValue,
+{
+    type ComputedValue = (
+        <A as ToComputedValue>::ComputedValue,
+        <B as ToComputedValue>::ComputedValue,
+    );
+
+    #[inline]
+    fn to_computed_value(&self, context: &Context) -> Self::ComputedValue {
+        (self.0.to_computed_value(context), self.1.to_computed_value(context))
+    }
+
+    #[inline]
+    fn from_computed_value(computed: &Self::ComputedValue) -> Self {
+        (A::from_computed_value(&computed.0), B::from_computed_value(&computed.1))
+    }
+}
+
+impl<T> ToComputedValue for Option<T>
+    where T: ToComputedValue
+{
+    type ComputedValue = Option<<T as ToComputedValue>::ComputedValue>;
+
+    #[inline]
+    fn to_computed_value(&self, context: &Context) -> Self::ComputedValue {
+        self.as_ref().map(|item| item.to_computed_value(context))
+    }
+
+    #[inline]
+    fn from_computed_value(computed: &Self::ComputedValue) -> Self {
+        computed.as_ref().map(T::from_computed_value)
+    }
+}
+
+impl<T> ToComputedValue for Size2D<T>
+    where T: ToComputedValue
+{
+    type ComputedValue = Size2D<<T as ToComputedValue>::ComputedValue>;
+
+    #[inline]
+    fn to_computed_value(&self, context: &Context) -> Self::ComputedValue {
+        Size2D::new(
+            self.width.to_computed_value(context),
+            self.height.to_computed_value(context),
+        )
+    }
+
+    #[inline]
+    fn from_computed_value(computed: &Self::ComputedValue) -> Self {
+        Size2D::new(
+            T::from_computed_value(&computed.width),
+            T::from_computed_value(&computed.height),
+        )
+    }
+}
+
+impl<T> ToComputedValue for Vec<T>
+    where T: ToComputedValue
+{
+    type ComputedValue = Vec<<T as ToComputedValue>::ComputedValue>;
+
+    #[inline]
+    fn to_computed_value(&self, context: &Context) -> Self::ComputedValue {
+        self.iter().map(|item| item.to_computed_value(context)).collect()
+    }
+
+    #[inline]
+    fn from_computed_value(computed: &Self::ComputedValue) -> Self {
+        computed.iter().map(T::from_computed_value).collect()
+    }
 }
 
 /// A marker trait to represent that the specified value is also the computed
@@ -113,20 +268,96 @@ impl<T> ToComputedValue for T
     }
 }
 
-impl ToComputedValue for specified::CSSColor {
-    type ComputedValue = CSSColor;
+impl ComputedValueAsSpecified for Atom {}
+impl ComputedValueAsSpecified for bool {}
 
-    #[inline]
-    fn to_computed_value(&self, _context: &Context) -> CSSColor {
-        self.parsed
+/// A computed `<angle>` value.
+#[derive(Clone, Copy, Debug, HasViewportPercentage, PartialEq, PartialOrd)]
+#[cfg_attr(feature = "servo", derive(HeapSizeOf, Deserialize, Serialize))]
+pub enum Angle {
+    /// An angle with degree unit
+    Degree(CSSFloat),
+    /// An angle with gradian unit
+    Gradian(CSSFloat),
+    /// An angle with radian unit
+    Radian(CSSFloat),
+    /// An angle with turn unit
+    Turn(CSSFloat),
+}
+
+impl Angle {
+    /// Construct a computed `Angle` value from a radian amount.
+    pub fn from_radians(radians: CSSFloat) -> Self {
+        Angle::Radian(radians)
     }
 
+    /// Return the amount of radians this angle represents.
     #[inline]
-    fn from_computed_value(computed: &CSSColor) -> Self {
-        specified::CSSColor {
-            parsed: *computed,
-            authored: None,
+    pub fn radians(&self) -> CSSFloat {
+        const RAD_PER_DEG: CSSFloat = PI / 180.0;
+        const RAD_PER_GRAD: CSSFloat = PI / 200.0;
+        const RAD_PER_TURN: CSSFloat = PI * 2.0;
+
+        let radians = match *self {
+            Angle::Degree(val) => val * RAD_PER_DEG,
+            Angle::Gradian(val) => val * RAD_PER_GRAD,
+            Angle::Turn(val) => val * RAD_PER_TURN,
+            Angle::Radian(val) => val,
+        };
+        radians.min(f32::MAX).max(f32::MIN)
+    }
+
+    /// Returns an angle that represents a rotation of zero radians.
+    pub fn zero() -> Self {
+        Angle::Radian(0.0)
+    }
+}
+
+impl ToCss for Angle {
+    fn to_css<W>(&self, dest: &mut W) -> fmt::Result
+        where W: fmt::Write,
+    {
+        match *self {
+            Angle::Degree(val) => write!(dest, "{}deg", val),
+            Angle::Gradian(val) => write!(dest, "{}grad", val),
+            Angle::Radian(val) => write!(dest, "{}rad", val),
+            Angle::Turn(val) => write!(dest, "{}turn", val),
         }
+    }
+}
+
+/// A computed `<time>` value.
+#[derive(Clone, PartialEq, PartialOrd, Copy, Debug)]
+#[cfg_attr(feature = "servo", derive(HeapSizeOf, Deserialize, Serialize))]
+pub struct Time {
+    seconds: CSSFloat,
+}
+
+impl Time {
+    /// Construct a computed `Time` value from a seconds amount.
+    pub fn from_seconds(seconds: CSSFloat) -> Self {
+        Time {
+            seconds: seconds,
+        }
+    }
+
+    /// Construct a computed `Time` value that represents zero seconds.
+    pub fn zero() -> Self {
+        Self::from_seconds(0.0)
+    }
+
+    /// Return the amount of seconds this time represents.
+    #[inline]
+    pub fn seconds(&self) -> CSSFloat {
+        self.seconds
+    }
+}
+
+impl ToCss for Time {
+    fn to_css<W>(&self, dest: &mut W) -> fmt::Result
+        where W: fmt::Write,
+    {
+        write!(dest, "{}s", self.seconds())
     }
 }
 
@@ -165,76 +396,98 @@ impl ComputedValueAsSpecified for specified::BorderStyle {}
 #[derive(Debug, PartialEq, Clone, Copy)]
 #[cfg_attr(feature = "servo", derive(HeapSizeOf))]
 #[allow(missing_docs)]
-pub struct BorderRadiusSize(pub Size2D<LengthOrPercentage>);
-
-impl BorderRadiusSize {
-    #[allow(missing_docs)]
-    pub fn zero() -> BorderRadiusSize {
-        BorderRadiusSize(Size2D::new(LengthOrPercentage::Length(Au(0)), LengthOrPercentage::Length(Au(0))))
-    }
-}
-
-impl ToComputedValue for specified::BorderRadiusSize {
-    type ComputedValue = BorderRadiusSize;
-
-    #[inline]
-    fn to_computed_value(&self, context: &Context) -> BorderRadiusSize {
-        let w = self.0.width.to_computed_value(context);
-        let h = self.0.height.to_computed_value(context);
-        BorderRadiusSize(Size2D::new(w, h))
-    }
-
-    #[inline]
-    fn from_computed_value(computed: &BorderRadiusSize) -> Self {
-        let w = ToComputedValue::from_computed_value(&computed.0.width);
-        let h = ToComputedValue::from_computed_value(&computed.0.height);
-        specified::BorderRadiusSize(Size2D::new(w, h))
-    }
-}
-
-impl ToCss for BorderRadiusSize {
-    fn to_css<W>(&self, dest: &mut W) -> fmt::Result where W: fmt::Write {
-        try!(self.0.width.to_css(dest));
-        try!(dest.write_str("/"));
-        self.0.height.to_css(dest)
-    }
-}
-
-#[derive(Debug, PartialEq, Clone, Copy)]
-#[cfg_attr(feature = "servo", derive(HeapSizeOf))]
-#[allow(missing_docs)]
 pub struct Shadow {
     pub offset_x: Au,
     pub offset_y: Au,
     pub blur_radius: Au,
     pub spread_radius: Au,
-    pub color: CSSColor,
+    pub color: Color,
     pub inset: bool,
+}
+
+impl ToCss for Shadow {
+    fn to_css<W>(&self, dest: &mut W) -> fmt::Result where W: fmt::Write {
+        if self.inset {
+            dest.write_str("inset ")?;
+        }
+        self.offset_x.to_css(dest)?;
+        dest.write_str(" ")?;
+        self.offset_y.to_css(dest)?;
+        dest.write_str(" ")?;
+        self.blur_radius.to_css(dest)?;
+        dest.write_str(" ")?;
+        if self.spread_radius != Au::zero() {
+            self.spread_radius.to_css(dest)?;
+            dest.write_str(" ")?;
+        }
+        self.color.to_css(dest)?;
+        Ok(())
+    }
 }
 
 /// A `<number>` value.
 pub type Number = CSSFloat;
 
+#[allow(missing_docs)]
+#[cfg_attr(feature = "servo", derive(HeapSizeOf))]
+#[derive(Clone, Copy, Debug, PartialEq, ToCss)]
+pub enum NumberOrPercentage {
+    Percentage(Percentage),
+    Number(Number),
+}
+
+impl ToComputedValue for specified::NumberOrPercentage {
+    type ComputedValue = NumberOrPercentage;
+
+    #[inline]
+    fn to_computed_value(&self, context: &Context) -> NumberOrPercentage {
+        match *self {
+            specified::NumberOrPercentage::Percentage(percentage) =>
+                NumberOrPercentage::Percentage(percentage.to_computed_value(context)),
+            specified::NumberOrPercentage::Number(number) =>
+                NumberOrPercentage::Number(number.to_computed_value(context)),
+        }
+    }
+    #[inline]
+    fn from_computed_value(computed: &NumberOrPercentage) -> Self {
+        match *computed {
+            NumberOrPercentage::Percentage(percentage) =>
+                specified::NumberOrPercentage::Percentage(ToComputedValue::from_computed_value(&percentage)),
+            NumberOrPercentage::Number(number) =>
+                specified::NumberOrPercentage::Number(ToComputedValue::from_computed_value(&number)),
+        }
+    }
+}
+
 /// A type used for opacity.
 pub type Opacity = CSSFloat;
 
+/// A `<integer>` value.
+pub type Integer = CSSInteger;
 
-/// An SVG paint value
-///
-/// https://www.w3.org/TR/SVG2/painting.html#SpecifyingPaint
-#[derive(Debug, Clone, PartialEq)]
-#[cfg_attr(feature = "servo", derive(HeapSizeOf))]
-pub struct SVGPaint {
-    /// The paint source
-    pub kind: SVGPaintKind,
-    /// The fallback color
-    pub fallback: Option<CSSColor>,
+/// <integer> | auto
+pub type IntegerOrAuto = Either<CSSInteger, Auto>;
+
+impl IntegerOrAuto {
+    /// Returns the integer value if it is an integer, otherwise return
+    /// the given value.
+    pub fn integer_or(&self, auto_value: CSSInteger) -> CSSInteger {
+        match *self {
+            Either::First(n) => n,
+            Either::Second(Auto) => auto_value,
+        }
+    }
 }
+
+/// Computed SVG Paint value
+pub type SVGPaint = ::values::generics::SVGPaint<RGBA>;
+/// Computed SVG Paint Kind value
+pub type SVGPaintKind = ::values::generics::SVGPaintKind<RGBA>;
 
 impl Default for SVGPaint {
     fn default() -> Self {
         SVGPaint {
-            kind: SVGPaintKind::None,
+            kind: ::values::generics::SVGPaintKind::None,
             fallback: None,
         }
     }
@@ -245,56 +498,14 @@ impl SVGPaint {
     pub fn black() -> Self {
         let rgba = RGBA::from_floats(0., 0., 0., 1.);
         SVGPaint {
-            kind: SVGPaintKind::Color(CSSColor::RGBA(rgba)),
+            kind: ::values::generics::SVGPaintKind::Color(rgba),
             fallback: None,
         }
     }
 }
 
-/// An SVG paint value without the fallback
-///
-/// Whereas the spec only allows PaintServer
-/// to have a fallback, Gecko lets the context
-/// properties have a fallback as well.
-#[derive(Debug, Clone, PartialEq)]
-#[cfg_attr(feature = "servo", derive(HeapSizeOf))]
-pub enum SVGPaintKind {
-    /// `none`
-    None,
-    /// `<color>`
-    Color(CSSColor),
-    /// `url(...)`
-    PaintServer(SpecifiedUrl),
-    /// `context-fill`
-    ContextFill,
-    /// `context-stroke`
-    ContextStroke,
-}
-
-impl ToCss for SVGPaintKind {
-    fn to_css<W>(&self, dest: &mut W) -> fmt::Result where W: fmt::Write {
-        match *self {
-            SVGPaintKind::None => dest.write_str("none"),
-            SVGPaintKind::ContextStroke => dest.write_str("context-stroke"),
-            SVGPaintKind::ContextFill => dest.write_str("context-fill"),
-            SVGPaintKind::Color(ref color) => color.to_css(dest),
-            SVGPaintKind::PaintServer(ref server) => server.to_css(dest),
-        }
-    }
-}
-
-impl ToCss for SVGPaint {
-    fn to_css<W>(&self, dest: &mut W) -> fmt::Result where W: fmt::Write {
-        self.kind.to_css(dest)?;
-        if let Some(ref fallback) = self.fallback {
-            fallback.to_css(dest)?;
-        }
-        Ok(())
-    }
-}
-
 /// <length> | <percentage> | <number>
-pub type LoPOrNumber = Either<LengthOrPercentage, Number>;
+pub type LengthOrPercentageOrNumber = Either<Number, LengthOrPercentage>;
 
 #[derive(Clone, PartialEq, Eq, Copy, Debug)]
 #[cfg_attr(feature = "servo", derive(HeapSizeOf))]
@@ -349,6 +560,13 @@ pub type TrackBreadth = GenericTrackBreadth<LengthOrPercentage>;
 /// The computed value of a grid `<track-size>`
 pub type TrackSize = GenericTrackSize<LengthOrPercentage>;
 
+/// The computed value of a grid `<track-list>`
+/// (could also be `<auto-track-list>` or `<explicit-track-list>`)
+pub type TrackList = GenericTrackList<TrackSize>;
+
+/// `<track-list> | none`
+pub type TrackListOrNone = Either<TrackList, None_>;
+
 impl ClipRectOrAuto {
     /// Return an auto (default for clip-rect and image-region) value
     pub fn auto() -> Self {
@@ -363,3 +581,6 @@ impl ClipRectOrAuto {
         }
     }
 }
+
+/// <color> | auto
+pub type ColorOrAuto = Either<Color, Auto>;

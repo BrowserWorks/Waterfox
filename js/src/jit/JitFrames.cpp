@@ -107,7 +107,7 @@ JitFrameIterator::JitFrameIterator()
 }
 
 JitFrameIterator::JitFrameIterator(JSContext* cx)
-  : current_(cx->jitTop),
+  : current_(cx->activation()->asJit()->exitFP()),
     type_(JitFrame_Exit),
     returnAddressToFp_(nullptr),
     frameSize_(0),
@@ -122,7 +122,7 @@ JitFrameIterator::JitFrameIterator(JSContext* cx)
 }
 
 JitFrameIterator::JitFrameIterator(const ActivationIterator& activations)
-  : current_(activations.jitTop()),
+  : current_(activations->asJit()->exitFP()),
     type_(JitFrame_Exit),
     returnAddressToFp_(nullptr),
     frameSize_(0),
@@ -348,7 +348,8 @@ CloseLiveIteratorIon(JSContext* cx, const InlineFrameIterator& frame, JSTryNote*
     for (unsigned i = 0; i < skipSlots; i++)
         si.skip();
 
-    Value v = si.read();
+    MaybeReadFallback recover(cx, cx->activation()->asJit(), &frame.frame(), MaybeReadFallback::Fallback_DoNothing);
+    Value v = si.maybeRead(recover);
     RootedObject iterObject(cx, &v.toObject());
 
     if (isDestructuring) {
@@ -947,7 +948,7 @@ HandleException(ResumeFromException* rfe)
         ++iter;
 
         if (current) {
-            // Unwind the frame by updating jitTop. This is necessary so that
+            // Unwind the frame by updating exitFP. This is necessary so that
             // (1) debugger exception unwind and leave frame hooks don't see this
             // frame when they use ScriptFrameIter, and (2) ScriptFrameIter does
             // not crash when accessing an IonScript that's destroyed by the
@@ -971,7 +972,7 @@ EnsureBareExitFrame(JSContext* cx, JitFrameLayout* frame)
 {
     ExitFrameLayout* exitFrame = reinterpret_cast<ExitFrameLayout*>(frame);
 
-    if (cx->jitTop == (uint8_t*)frame) {
+    if (cx->activation()->asJit()->exitFP() == (uint8_t*)frame) {
         // If we already called this function for the current frame, do
         // nothing.
         MOZ_ASSERT(exitFrame->isBareExit());
@@ -984,11 +985,12 @@ EnsureBareExitFrame(JSContext* cx, JitFrameLayout* frame)
         ++iter;
     MOZ_ASSERT(iter.current() == frame, "|frame| must be the top JS frame");
 
-    MOZ_ASSERT((uint8_t*)exitFrame->footer() >= cx->jitTop,
-               "Must have space for ExitFooterFrame before jitTop");
+    MOZ_ASSERT(!!cx->activation()->asJit()->exitFP());
+    MOZ_ASSERT((uint8_t*)exitFrame->footer() >= cx->activation()->asJit()->exitFP(),
+               "Must have space for ExitFooterFrame before exitFP");
 #endif
 
-    cx->jitTop = (uint8_t*)frame;
+    cx->activation()->asJit()->setExitFP((uint8_t*)frame);
     *exitFrame->footer()->addressOfJitCode() = ExitFrameLayout::BareToken();
     MOZ_ASSERT(exitFrame->isBareExit());
 }
@@ -1531,19 +1533,8 @@ TraceJitActivations(JSContext* cx, const CooperatingContext& target, JSTracer* t
         TraceJitActivation(trc, activations);
 }
 
-JSCompartment*
-TopmostIonActivationCompartment(JSContext* cx)
-{
-    for (JitActivationIterator activations(cx); !activations.done(); ++activations) {
-        for (JitFrameIterator frames(activations); !frames.done(); ++frames) {
-            if (frames.type() == JitFrame_IonJS)
-                return activations.activation()->compartment();
-        }
-    }
-    return nullptr;
-}
-
-void UpdateJitActivationsForMinorGC(JSRuntime* rt, JSTracer* trc)
+void
+UpdateJitActivationsForMinorGC(JSRuntime* rt, JSTracer* trc)
 {
     MOZ_ASSERT(JS::CurrentThreadIsHeapMinorCollecting());
     JSContext* cx = TlsContext.get();
@@ -2408,7 +2399,7 @@ InlineFrameIterator::findNextFrame()
             MOZ_CRASH("Couldn't deduce the number of arguments of an ionmonkey frame");
 
         // Skip over non-argument slots, as well as |this|.
-        bool skipNewTarget = JSOp(*pc_) == JSOP_NEW;
+        bool skipNewTarget = IsConstructorCallPC(pc_);
         unsigned skipCount = (si_.numAllocations() - 1) - numActualArgs_ - 1 - skipNewTarget;
         for (unsigned j = 0; j < skipCount; j++)
             si_.skip();
@@ -2572,9 +2563,9 @@ InlineFrameIterator::isConstructing() const
             return false;
 
         // In the case of a JS frame, look up the pc from the snapshot.
-        MOZ_ASSERT(IsCallPC(parent.pc()));
+        MOZ_ASSERT(IsCallPC(parent.pc()) && !IsSpreadCallPC(parent.pc()));
 
-        return (JSOp)*parent.pc() == JSOP_NEW;
+        return IsConstructorCallPC(parent.pc());
     }
 
     return frame_->isConstructing();

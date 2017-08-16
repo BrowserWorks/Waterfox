@@ -110,6 +110,10 @@ nsPlaceholderFrame::Reflow(nsPresContext*           aPresContext,
                            const ReflowInput& aReflowInput,
                            nsReflowStatus&          aStatus)
 {
+  // NOTE that the ReflowInput passed to this method is not fully initialized,
+  // on the grounds that reflowing a placeholder is a rather trivial operation.
+  // (See bug 1367711.)
+
 #ifdef DEBUG
   // We should be getting reflowed before our out-of-flow.
   // If this is our first reflow, and our out-of-flow has already received its
@@ -128,7 +132,7 @@ nsPlaceholderFrame::Reflow(nsPresContext*           aPresContext,
     nsIFrame* ancestor = this;
     while ((ancestor = ancestor->GetParent())) {
       if (ancestor->GetPrevContinuation() ||
-          ancestor->Properties().Get(IBSplitPrevSibling())) {
+          ancestor->GetProperty(IBSplitPrevSibling())) {
         isInContinuationOrIBSplit = true;
         break;
       }
@@ -156,28 +160,21 @@ nsPlaceholderFrame::DestroyFrom(nsIFrame* aDestructRoot)
 {
   nsIFrame* oof = mOutOfFlowFrame;
   if (oof) {
-    // Unregister out-of-flow frame
-    nsFrameManager* fm = PresContext()->GetPresShell()->FrameManager();
-    fm->UnregisterPlaceholderFrame(this);
     mOutOfFlowFrame = nullptr;
+    oof->DeleteProperty(nsIFrame::PlaceholderFrameProperty());
     // If aDestructRoot is not an ancestor of the out-of-flow frame,
     // then call RemoveFrame on it here.
     // Also destroy it here if it's a popup frame. (Bug 96291)
     if ((GetStateBits() & PLACEHOLDER_FOR_POPUP) ||
         !nsLayoutUtils::IsProperAncestorFrame(aDestructRoot, oof)) {
       ChildListID listId = nsLayoutUtils::GetChildListNameFor(oof);
+      nsFrameManager* fm = PresContext()->GetPresShell()->FrameManager();
       fm->RemoveFrame(listId, oof);
     }
     // else oof will be destroyed by its parent
   }
 
   nsFrame::DestroyFrom(aDestructRoot);
-}
-
-nsIAtom*
-nsPlaceholderFrame::GetType() const
-{
-  return nsGkAtoms::placeholderFrame;
 }
 
 /* virtual */ bool
@@ -192,7 +189,7 @@ nsPlaceholderFrame::CanContinueTextRun() const
 }
 
 nsStyleContext*
-nsPlaceholderFrame::GetParentStyleContext(nsIFrame** aProviderFrame) const
+nsPlaceholderFrame::GetParentStyleContextForOutOfFlow(nsIFrame** aProviderFrame) const
 {
   NS_PRECONDITION(GetParent(), "How can we not have a parent here?");
 
@@ -213,8 +210,8 @@ nsPlaceholderFrame::GetParentStyleContext(nsIFrame** aProviderFrame) const
   // However, it will be skipped in CorrectStyleParentFrame below, so
   // we need to handle it specially here.
   if ((GetStateBits() & PLACEHOLDER_FOR_TOPLAYER) &&
-      parentFrame->GetType() == nsGkAtoms::tableWrapperFrame) {
-    MOZ_ASSERT(mOutOfFlowFrame->GetType() == nsGkAtoms::backdropFrame,
+      parentFrame->IsTableWrapperFrame()) {
+    MOZ_ASSERT(mOutOfFlowFrame->IsBackdropFrame(),
                "Only placeholder of backdrop frame can be put inside "
                "a table wrapper frame");
     *aProviderFrame = parentFrame;

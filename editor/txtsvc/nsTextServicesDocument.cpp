@@ -8,7 +8,7 @@
 #include "mozilla/Assertions.h"         // for MOZ_ASSERT, etc
 #include "mozilla/dom/Selection.h"
 #include "mozilla/mozalloc.h"           // for operator new, etc
-#include "nsAString.h"                  // for nsAString_internal::Length, etc
+#include "nsAString.h"                  // for nsAString::Length, etc
 #include "nsContentUtils.h"             // for nsContentUtils
 #include "nsDebug.h"                    // for NS_ENSURE_TRUE, etc
 #include "nsDependentSubstring.h"       // for Substring
@@ -406,11 +406,13 @@ nsTextServicesDocument::ExpandRangeToWordBoundaries(nsIDOMRange *aRange)
 
   // Now adjust the range so that it uses our new
   // end points.
-
-  rv = range->SetEnd(rngEndNode, rngEndOffset);
-  NS_ENSURE_SUCCESS(rv, rv);
-
-  return range->SetStart(rngStartNode, rngStartOffset);
+  nsCOMPtr<nsINode> startNode = do_QueryInterface(rngStartNode);
+  nsCOMPtr<nsINode> endNode = do_QueryInterface(rngEndNode);
+  rv = range->SetStartAndEnd(startNode, rngStartOffset, endNode, rngEndOffset);
+  if (NS_WARN_IF(NS_FAILED(rv))) {
+    return rv;
+  }
+  return NS_OK;
 }
 
 NS_IMETHODIMP

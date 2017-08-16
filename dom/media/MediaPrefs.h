@@ -7,7 +7,7 @@
 #define MEDIA_PREFS_H
 
 #ifdef MOZ_WIDGET_ANDROID
-#include "AndroidBridge.h"
+#include "GeneratedJNIWrappers.h"
 #endif
 
 #include "mozilla/Atomics.h"
@@ -86,6 +86,10 @@ private:
 
   // This is where DECL_MEDIA_PREF for each of the preferences should go.
 
+  // Cache sizes.
+  DECL_MEDIA_PREF("media.memory_cache_max_size",              MediaMemoryCacheMaxSize, uint32_t, 8192);
+  DECL_MEDIA_PREF("media.cache.resource-index",               MediaResourceIndexCache, uint32_t, 8192);
+
   // AudioSink
   DECL_MEDIA_PREF("accessibility.monoaudio.enable",           MonoAudio, bool, false);
   DECL_MEDIA_PREF("media.resampling.enabled",                 AudioSinkResampling, bool, false);
@@ -114,6 +118,7 @@ private:
 #ifdef MOZ_WIDGET_ANDROID
   DECL_MEDIA_PREF("media.android-media-codec.enabled",        PDMAndroidMediaCodecEnabled, bool, false);
   DECL_MEDIA_PREF("media.android-media-codec.preferred",      PDMAndroidMediaCodecPreferred, bool, false);
+  DECL_MEDIA_PREF("media.navigator.hardware.vp8_encode.acceleration_remote_enabled", RemoteMediaCodecVP8EncoderEnabled, bool, false);
 #endif
 #ifdef MOZ_FFMPEG
   DECL_MEDIA_PREF("media.ffmpeg.enabled",                     PDMFFmpegEnabled, bool, true);
@@ -142,6 +147,11 @@ private:
   DECL_MEDIA_PREF("media.gmp.decoder.h264",                   GMPH264Preferred, uint32_t, 0);
   DECL_MEDIA_PREF("media.eme.audio.blank",                    EMEBlankAudio, bool, false);
   DECL_MEDIA_PREF("media.eme.video.blank",                    EMEBlankVideo, bool, false);
+  DECL_MEDIA_PREF("media.eme.chromium-api.enabled",           EMEChromiumAPIEnabled, bool, false);
+  DECL_MEDIA_PREF("media.eme.chromium-api.video-shmems",
+                  EMEChromiumAPIVideoShmemCount,
+                  uint32_t,
+                  3);
 
   // MediaDecoderStateMachine
   DECL_MEDIA_PREF("media.suspend-bkgnd-video.enabled",        MDSMSuspendBackgroundVideoEnabled, bool, false);
@@ -159,6 +169,15 @@ private:
   DECL_MEDIA_PREF("media.num-decode-threads",                 MediaThreadPoolDefaultCount, uint32_t, 4);
   DECL_MEDIA_PREF("media.decoder.limit",                      MediaDecoderLimit, int32_t, MediaDecoderLimitDefault());
 
+#if defined(RELEASE_OR_BETA)
+  DECL_MEDIA_PREF("media.audio-max-decode-error",             MaxAudioDecodeError, uint32_t, 3);
+  DECL_MEDIA_PREF("media.video-max-decode-error",             MaxVideoDecodeError, uint32_t, 2);
+#else
+  // Take zero tolerance of decoding error in debug for any decoder regression.
+  DECL_MEDIA_PREF("media.audio-max-decode-error",             MaxAudioDecodeError, uint32_t, 0);
+  DECL_MEDIA_PREF("media.video-max-decode-error",             MaxVideoDecodeError, uint32_t, 0);
+#endif
+
   // Ogg
   DECL_MEDIA_PREF("media.ogg.enabled",                        OggEnabled, bool, true);
   // Flac
@@ -168,6 +187,19 @@ private:
 #if !defined(RELEASE_OR_BETA)
   DECL_MEDIA_PREF("media.rust.test_mode",                     RustTestMode, bool, false);
 #endif
+
+#if defined(MOZ_WIDGET_GTK)
+  DECL_MEDIA_PREF("media.rust.mp4parser",                     EnableRustMP4Parser, bool, true);
+#else
+  DECL_MEDIA_PREF("media.rust.mp4parser",                     EnableRustMP4Parser, bool, false);
+#endif
+
+  DECL_MEDIA_PREF("media.mp4.enabled",                        MP4Enabled, bool, false);
+
+  // Error/warning handling, Decoder Doctor
+  DECL_MEDIA_PREF("media.playback.warnings-as-errors",        MediaWarningsAsErrors, bool, false);
+  DECL_MEDIA_PREF("media.playback.warnings-as-errors.stagefright-vs-rust",
+                                                              MediaWarningsAsErrorsStageFrightVsRust, bool, false);
 
 public:
   // Manage the singleton:
@@ -182,8 +214,7 @@ private:
   static int32_t MediaDecoderLimitDefault()
   {
 #ifdef MOZ_WIDGET_ANDROID
-    if (AndroidBridge::Bridge() &&
-        AndroidBridge::Bridge()->GetAPIVersion() < 18) {
+    if (jni::GetAPIVersion() < 18) {
       // Older Android versions have broken support for multiple simultaneous
       // decoders, see bug 1278574.
       return 1;

@@ -27,23 +27,9 @@ function checkPending() {
   }
 }
 
-function checkString(aPref, aValue) {
-  try {
-    do_check_eq(Services.prefs.getCharPref(aPref), aValue)
-  } catch (e) {
-    // OK
-  }
-}
-
 // Make sure all our extension state is empty/nonexistent
 function check_empty_state() {
-  do_check_false(gExtensionsJSON.exists());
-  do_check_false(gExtensionsINI.exists());
-
   do_check_eq(Services.prefs.getIntPref("extensions.databaseSchema"), DB_SCHEMA);
-
-  checkString("extensions.bootstrappedAddons", "{}");
-  checkString("extensions.installCache", "[]");
   checkPending();
 }
 
@@ -54,30 +40,30 @@ function check_empty_state() {
 // bootstrap add-ons preference is not found
 // add-on directory state preference is an empty array
 // no pending operations
-add_task(function* first_run() {
+add_task(async function first_run() {
   startupManager();
   check_empty_state();
-  yield true;
+  await true;
 });
 
 // Now do something that causes a DB load, and re-check
-function* trigger_db_load() {
-  let addonDefer = Promise.defer();
-  AddonManager.getAddonsByTypes(["extension"], addonDefer.resolve);
-  let addonList = yield addonDefer.promise;
+async function trigger_db_load() {
+  let addonList = await new Promise(resolve => {
+    AddonManager.getAddonsByTypes(["extension"], resolve);
+  });
 
   do_check_eq(addonList.length, 0);
   check_empty_state();
 
-  yield true;
+  await true;
 }
 add_task(trigger_db_load);
 
 // Now restart the manager and check again
-add_task(function* restart_and_recheck() {
+add_task(async function restart_and_recheck() {
   restartManager();
   check_empty_state();
-  yield true;
+  await true;
 });
 
 // and reload the DB again

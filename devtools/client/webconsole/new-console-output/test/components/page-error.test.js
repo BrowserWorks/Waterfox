@@ -27,9 +27,12 @@ const serviceContainer = require("devtools/client/webconsole/new-console-output/
 describe("PageError component:", () => {
   it("renders", () => {
     const message = stubPreparedMessages.get("ReferenceError: asdf is not defined");
-    const wrapper = render(PageError({ message, serviceContainer }));
-    const L10n = require("devtools/client/webconsole/new-console-output/test/fixtures/L10n");
-    const { timestampString } = new L10n();
+    const wrapper = render(PageError({
+      message,
+      serviceContainer,
+      timestampsVisible: true,
+    }));
+    const { timestampString } = require("devtools/client/webconsole/webconsole-l10n");
 
     expect(wrapper.find(".timestamp").text()).toBe(timestampString(message.timeStamp));
 
@@ -45,6 +48,25 @@ describe("PageError component:", () => {
     expect(locationLink.length).toBe(1);
     // @TODO Will likely change. See bug 1307952
     expect(locationLink.text()).toBe("test-console-api.html:3:5");
+  });
+
+  it("does not have a timestamp when timestampsVisible prop is falsy", () => {
+    const message = stubPreparedMessages.get("ReferenceError: asdf is not defined");
+    const wrapper = render(PageError({
+      message,
+      serviceContainer,
+      timestampsVisible: false,
+    }));
+
+    expect(wrapper.find(".timestamp").length).toBe(0);
+  });
+
+  it("renders an error with a longString exception message", () => {
+    const message = stubPreparedMessages.get("TypeError longString message");
+    const wrapper = render(PageError({ message, serviceContainer }));
+
+    const text = wrapper.find(".message-body").text();
+    expect(text.startsWith("Error: Long error Long error")).toBe(true);
   });
 
   it("displays a [Learn more] link", () => {

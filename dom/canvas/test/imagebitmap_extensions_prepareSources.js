@@ -11,7 +11,7 @@ var gGroundTruthImageData;
 
 function prepareSources() {
   gVideo = document.createElement("video");
-  gVideo.src = "http://example.com/tests/dom/canvas/test/crossorigin/video.sjs?name=tests/dom/media/test/320x240.ogv&type=video/ogg&cors=anonymous";
+  gVideo.src = "http://example.com/tests/dom/canvas/test/crossorigin/video.sjs?name=tests/dom/canvas/test/320x240.ogv&type=video/ogg&cors=anonymous";
   gVideo.crossOrigin = "anonymous";
   gVideo.autoplay = "true"
 
@@ -41,6 +41,7 @@ function prepareSources() {
 
     // Prepare image.
     gImage = document.createElement("img");
+    gImage.crossOrigin = "anonymous";
     gImage.src = gCanvas.toDataURL();
     var resolverImage;
     var promiseImage = new Promise(function(resolve, reject) {

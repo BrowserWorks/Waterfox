@@ -13,20 +13,23 @@
 class nsProfilerStartParams : public nsIProfilerStartParams
 {
 public:
-  NS_DECL_ISUPPORTS
+  // This class can be used on multiple threads. For example, it's used for the
+  // observer notification from profiler_start, which can run on any thread but
+  // posts the notification to the main thread.
+  NS_DECL_THREADSAFE_ISUPPORTS
   NS_DECL_NSIPROFILERSTARTPARAMS
 
   nsProfilerStartParams(uint32_t aEntries,
                         double aInterval,
-                        const nsTArray<nsCString>& aFeatures,
-                        const nsTArray<nsCString>& aThreadFilterNames);
+                        uint32_t aFeatures,
+                        const nsTArray<nsCString>& aFilters);
 
 private:
   virtual ~nsProfilerStartParams();
   uint32_t mEntries;
   double mInterval;
-  nsTArray<nsCString> mFeatures;
-  nsTArray<nsCString> mThreadFilterNames;
+  uint32_t mFeatures;
+  nsTArray<nsCString> mFilters;
 };
 
 #endif

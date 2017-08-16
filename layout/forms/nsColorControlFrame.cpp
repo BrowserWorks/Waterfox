@@ -23,7 +23,7 @@ using mozilla::dom::HTMLInputElement;
 using mozilla::dom::CallerType;
 
 nsColorControlFrame::nsColorControlFrame(nsStyleContext* aContext)
-  : nsHTMLButtonControlFrame(aContext)
+  : nsHTMLButtonControlFrame(aContext, kClassID)
 {
 }
 
@@ -46,12 +46,6 @@ void nsColorControlFrame::DestroyFrom(nsIFrame* aDestructRoot)
   nsFormControlFrame::RegUnRegAccessKey(static_cast<nsIFrame*>(this), false);
   nsContentUtils::DestroyAnonymousContent(&mColorContent);
   nsHTMLButtonControlFrame::DestroyFrom(aDestructRoot);
-}
-
-nsIAtom*
-nsColorControlFrame::GetType() const
-{
-  return nsGkAtoms::colorControlFrame;
 }
 
 #ifdef DEBUG_FRAME_DUMP
@@ -121,7 +115,7 @@ nsColorControlFrame::AttributeChanged(int32_t  aNameSpaceID,
   // still a color control, which might not be the case if the type attribute
   // was removed/changed.
   nsCOMPtr<nsIFormControl> fctrl = do_QueryInterface(GetContent());
-  if (fctrl->GetType() == NS_FORM_INPUT_COLOR &&
+  if (fctrl->ControlType() == NS_FORM_INPUT_COLOR &&
       aNameSpaceID == kNameSpaceID_None && nsGkAtoms::value == aAttribute) {
     UpdateColor();
   }

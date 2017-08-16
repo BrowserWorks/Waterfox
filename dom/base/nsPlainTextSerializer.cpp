@@ -55,6 +55,20 @@ static int32_t GetUnicharStringWidth(const char16_t* pwcs, int32_t n);
 static const uint32_t TagStackSize = 500;
 static const uint32_t OLStackSize = 100;
 
+static bool gPreferenceInitialized = false;
+static bool gAlwaysIncludeRuby = false;
+
+NS_IMPL_CYCLE_COLLECTING_ADDREF(nsPlainTextSerializer)
+NS_IMPL_CYCLE_COLLECTING_RELEASE(nsPlainTextSerializer)
+
+NS_INTERFACE_MAP_BEGIN_CYCLE_COLLECTION(nsPlainTextSerializer)
+  NS_INTERFACE_MAP_ENTRY(nsIContentSerializer)
+  NS_INTERFACE_MAP_ENTRY(nsISupports)
+NS_INTERFACE_MAP_END
+
+NS_IMPL_CYCLE_COLLECTION(nsPlainTextSerializer,
+                         mElement)
+
 nsresult
 NS_NewPlainTextSerializer(nsIContentSerializer** aSerializer)
 {
@@ -107,6 +121,12 @@ nsPlainTextSerializer::nsPlainTextSerializer()
   mULCount = 0;
 
   mIgnoredChildNodeLevel = 0;
+
+  if (!gPreferenceInitialized) {
+    Preferences::AddBoolVarCache(&gAlwaysIncludeRuby, PREF_ALWAYS_INCLUDE_RUBY,
+                                 true);
+    gPreferenceInitialized = true;
+  }
 }
 
 nsPlainTextSerializer::~nsPlainTextSerializer()
@@ -115,10 +135,6 @@ nsPlainTextSerializer::~nsPlainTextSerializer()
   delete[] mOLStack;
   NS_WARNING_ASSERTION(mHeadLevel == 0, "Wrong head level!");
 }
-
-NS_IMPL_ISUPPORTS(nsPlainTextSerializer,
-                  nsIContentSerializer)
-
 
 NS_IMETHODIMP 
 nsPlainTextSerializer::Init(uint32_t aFlags, uint32_t aWrapColumn,
@@ -183,7 +199,7 @@ nsPlainTextSerializer::Init(uint32_t aFlags, uint32_t aWrapColumn,
   // as fallback value because we don't want to affect behavior in
   // other places which use this serializer currently.
   mWithRubyAnnotation =
-    Preferences::GetBool(PREF_ALWAYS_INCLUDE_RUBY, true) ||
+    gAlwaysIncludeRuby ||
     (mFlags & nsIDocumentEncoder::OutputRubyAnnotation);
 
   // XXX We should let the caller decide whether to do this or not
@@ -1816,8 +1832,7 @@ bool
 nsPlainTextSerializer::IsElementPreformatted(Element* aElement)
 {
   RefPtr<nsStyleContext> styleContext =
-    nsComputedDOMStyle::GetStyleContextForElementNoFlush(aElement, nullptr,
-                                                         nullptr);
+    nsComputedDOMStyle::GetStyleContextNoFlush(aElement, nullptr, nullptr);
   if (styleContext) {
     const nsStyleText* textStyle = styleContext->StyleText();
     return textStyle->WhiteSpaceOrNewlineIsSignificant();
@@ -1830,8 +1845,7 @@ bool
 nsPlainTextSerializer::IsElementBlock(Element* aElement)
 {
   RefPtr<nsStyleContext> styleContext =
-    nsComputedDOMStyle::GetStyleContextForElementNoFlush(aElement, nullptr,
-                                                         nullptr);
+    nsComputedDOMStyle::GetStyleContextNoFlush(aElement, nullptr, nullptr);
   if (styleContext) {
     const nsStyleDisplay* displayStyle = styleContext->StyleDisplay();
     return displayStyle->IsBlockOutsideStyle();

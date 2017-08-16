@@ -12,6 +12,7 @@
 #include "nsString.h"
 
 namespace mozilla {
+
 namespace net {
 
 class ChannelEvent;
@@ -24,7 +25,6 @@ class WebSocketChannelChild final : public BaseWebSocketChannel,
   explicit WebSocketChannelChild(bool aSecure);
 
   NS_DECL_THREADSAFE_ISUPPORTS
-  NS_DECL_NSITHREADRETARGETABLEREQUEST
 
   // nsIWebSocketChannel methods BaseWebSocketChannel didn't implement for us
   //
@@ -36,7 +36,6 @@ class WebSocketChannelChild final : public BaseWebSocketChannel,
   NS_IMETHOD SendMsg(const nsACString &aMsg) override;
   NS_IMETHOD SendBinaryMsg(const nsACString &aMsg) override;
   NS_IMETHOD SendBinaryStream(nsIInputStream *aStream, uint32_t aLength) override;
-  MOZ_MUST_USE nsresult SendBinaryStream(OptionalInputStreamParams *aStream, uint32_t aLength);
   NS_IMETHOD GetSecurityInfo(nsISupports **aSecurityInfo) override;
 
   void AddIPDLReference();

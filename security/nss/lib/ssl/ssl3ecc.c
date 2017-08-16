@@ -31,13 +31,6 @@
 
 #include <stdio.h>
 
-#ifndef PK11_SETATTRS
-#define PK11_SETATTRS(x, id, v, l) \
-    (x)->type = (id);              \
-    (x)->pValue = (v);             \
-    (x)->ulValueLen = (l);
-#endif
-
 SECStatus
 ssl_NamedGroup2ECParams(PLArenaPool *arena, const sslNamedGroupDef *ecGroup,
                         SECKEYECParams *params)
@@ -255,16 +248,6 @@ loser:
     if (keyPair)
         ssl_FreeEphemeralKeyPair(keyPair);
     return SECFailure;
-}
-
-/* This function returns the size of the key_exchange field in
- * the KeyShareEntry structure, i.e.:
- *     opaque point <1..2^8-1>; */
-unsigned int
-tls13_SizeOfECDHEKeyShareKEX(const SECKEYPublicKey *pubKey)
-{
-    PORT_Assert(pubKey->keyType == ecKey);
-    return pubKey->u.ec.publicValue.len;
 }
 
 /* This function encodes the key_exchange field in

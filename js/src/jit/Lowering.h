@@ -78,6 +78,7 @@ class LIRGenerator : public LIRGeneratorSpecific
     void visitNewArray(MNewArray* ins);
     void visitNewArrayCopyOnWrite(MNewArrayCopyOnWrite* ins);
     void visitNewArrayDynamicLength(MNewArrayDynamicLength* ins);
+    void visitNewIterator(MNewIterator* ins);
     void visitNewTypedArray(MNewTypedArray* ins);
     void visitNewTypedArrayDynamicLength(MNewTypedArrayDynamicLength* ins);
     void visitNewObject(MNewObject* ins);
@@ -107,7 +108,6 @@ class LIRGenerator : public LIRGeneratorSpecific
     void visitCall(MCall* call);
     void visitApplyArgs(MApplyArgs* apply);
     void visitApplyArray(MApplyArray* apply);
-    void visitArraySplice(MArraySplice* splice);
     void visitBail(MBail* bail);
     void visitUnreachable(MUnreachable* unreachable);
     void visitEncodeSnapshot(MEncodeSnapshot* ins);
@@ -122,6 +122,8 @@ class LIRGenerator : public LIRGeneratorSpecific
     void visitCompare(MCompare* comp);
     void visitTypeOf(MTypeOf* ins);
     void visitToAsync(MToAsync* ins);
+    void visitToAsyncGen(MToAsyncGen* ins);
+    void visitToAsyncIter(MToAsyncIter* ins);
     void visitToId(MToId* ins);
     void visitBitNot(MBitNot* ins);
     void visitBitAnd(MBitAnd* ins);
@@ -135,6 +137,7 @@ class LIRGenerator : public LIRGeneratorSpecific
     void visitFloor(MFloor* ins);
     void visitCeil(MCeil* ins);
     void visitRound(MRound* ins);
+    void visitNearbyInt(MNearbyInt* ins);
     void visitMinMax(MMinMax* ins);
     void visitAbs(MAbs* ins);
     void visitClz(MClz* ins);
@@ -283,8 +286,9 @@ class LIRGenerator : public LIRGeneratorSpecific
     void visitRunOncePrologue(MRunOncePrologue* ins);
     void visitRest(MRest* ins);
     void visitThrow(MThrow* ins);
-    void visitIn(MIn* ins);
+    void visitInCache(MInCache* ins);
     void visitInArray(MInArray* ins);
+    void visitHasOwnCache(MHasOwnCache* ins);
     void visitInstanceOf(MInstanceOf* ins);
     void visitCallInstanceOf(MCallInstanceOf* ins);
     void visitIsCallable(MIsCallable* ins);
@@ -292,6 +296,7 @@ class LIRGenerator : public LIRGeneratorSpecific
     void visitIsObject(MIsObject* ins);
     void visitHasClass(MHasClass* ins);
     void visitWasmAddOffset(MWasmAddOffset* ins);
+    void visitWasmLoadTls(MWasmLoadTls* ins);
     void visitWasmBoundsCheck(MWasmBoundsCheck* ins);
     void visitWasmLoadGlobalVar(MWasmLoadGlobalVar* ins);
     void visitWasmStoreGlobalVar(MWasmStoreGlobalVar* ins);

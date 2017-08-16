@@ -12,6 +12,7 @@
 #include "mozilla/gfx/gfxVarReceiver.h"
 
 namespace mozilla {
+
 namespace ipc {
 class CrashReporterHost;
 } // namespace ipc
@@ -23,8 +24,8 @@ namespace gfx {
 class GPUProcessHost;
 
 class GPUChild final
-  : public PGPUChild,
-    public gfxVarReceiver
+  : public PGPUChild
+  , public gfxVarReceiver
 {
   typedef mozilla::dom::MemoryReportRequestHost MemoryReportRequestHost;
 
@@ -43,14 +44,17 @@ public:
   mozilla::ipc::IPCResult RecvInitComplete(const GPUDeviceData& aData) override;
   mozilla::ipc::IPCResult RecvReportCheckerboard(const uint32_t& aSeverity, const nsCString& aLog) override;
   mozilla::ipc::IPCResult RecvInitCrashReporter(Shmem&& shmem, const NativeThreadId& aThreadId) override;
+
   mozilla::ipc::IPCResult RecvAccumulateChildHistograms(InfallibleTArray<Accumulation>&& aAccumulations) override;
   mozilla::ipc::IPCResult RecvAccumulateChildKeyedHistograms(InfallibleTArray<KeyedAccumulation>&& aAccumulations) override;
   mozilla::ipc::IPCResult RecvUpdateChildScalars(InfallibleTArray<ScalarAction>&& aScalarActions) override;
   mozilla::ipc::IPCResult RecvUpdateChildKeyedScalars(InfallibleTArray<KeyedScalarAction>&& aScalarActions) override;
+  mozilla::ipc::IPCResult RecvRecordChildEvents(nsTArray<ChildEventData>&& events) override;
+
   void ActorDestroy(ActorDestroyReason aWhy) override;
   mozilla::ipc::IPCResult RecvGraphicsError(const nsCString& aError) override;
   mozilla::ipc::IPCResult RecvNotifyUiObservers(const nsCString& aTopic) override;
-  mozilla::ipc::IPCResult RecvNotifyDeviceReset() override;
+  mozilla::ipc::IPCResult RecvNotifyDeviceReset(const GPUDeviceData& aData) override;
   mozilla::ipc::IPCResult RecvAddMemoryReport(const MemoryReport& aReport) override;
   mozilla::ipc::IPCResult RecvFinishMemoryReport(const uint32_t& aGeneration) override;
 

@@ -21,6 +21,9 @@ namespace PingSender {
 const char* kUserAgent = "pingsender/1.0";
 const char* kCustomVersionHeader = "X-PingSender-Version: 1.0";
 const char* kContentEncodingHeader = "Content-Encoding: gzip";
+// The maximum time, in milliseconds, we allow for the connection phase
+// to the server.
+const uint32_t kConnectionTimeoutMs = 30 * 1000;
 
 /**
  * This shared function returns a Date header string for use in HTTP requests.
@@ -103,11 +106,7 @@ GzipCompress(const std::string& rawData)
     // much data to compress. When the buffer is full, we repeadetly
     // flush out.
     while (deflater.avail_out == 0) {
-      size_t bytesToWrite = kBufferSize - deflater.avail_out;
-      if (bytesToWrite == 0) {
-        break;
-      }
-      gzipData.append(reinterpret_cast<const char*>(outputBuffer), bytesToWrite);
+      gzipData.append(reinterpret_cast<const char*>(outputBuffer), kBufferSize);
 
       // Update the state and let the deflater know about it.
       deflater.next_out = outputBuffer;
@@ -156,14 +155,14 @@ int main(int argc, char* argv[])
                    "Send the payload stored in PATH to the specified URL using "
                    "an HTTP POST message\n"
                    "then delete the file after a successful send.\n");
-    exit(EXIT_FAILURE);
+    return EXIT_FAILURE;
   }
 
   string ping(ReadPing(pingPath));
 
   if (ping.empty()) {
     PINGSENDER_LOG("ERROR: Ping payload is empty\n");
-    exit(EXIT_FAILURE);
+    return EXIT_FAILURE;
   }
 
   // Compress the ping using gzip.
@@ -174,18 +173,18 @@ int main(int argc, char* argv[])
   // it compressed.
   if (gzipPing.empty()) {
     PINGSENDER_LOG("ERROR: Ping compression failed\n");
-    exit(EXIT_FAILURE);
+    return EXIT_FAILURE;
   }
 
   if (!Post(url, gzipPing)) {
-    exit(EXIT_FAILURE);
+    return EXIT_FAILURE;
   }
 
   // If the ping was successfully sent, delete the file.
   if (!pingPath.empty() && std::remove(pingPath.c_str())) {
     // We failed to remove the pending ping file.
-    exit(EXIT_FAILURE);
+    return EXIT_FAILURE;
   }
 
-  exit(EXIT_SUCCESS);
+  return EXIT_SUCCESS;
 }

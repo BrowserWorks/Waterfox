@@ -37,29 +37,32 @@ public:
   void AddLayer(VRLayerParent* aLayer);
   void RemoveLayer(VRLayerParent* aLayer);
 
-  virtual VRHMDSensorState GetSensorState() = 0;
-  virtual VRHMDSensorState GetImmediateSensorState() = 0;
   virtual void ZeroSensor() = 0;
   virtual void StartPresentation() = 0;
   virtual void StopPresentation() = 0;
-  virtual void NotifyVSync() { };
+  virtual void NotifyVSync();
 
+  void StartFrame();
   void SubmitFrame(VRLayerParent* aLayer,
-                   const int32_t& aInputFrameID,
                    mozilla::layers::PTextureParent* aTexture,
                    const gfx::Rect& aLeftEyeRect,
                    const gfx::Rect& aRightEyeRect);
 
   bool CheckClearDisplayInfoDirty();
+  void SetGroupMask(uint32_t aGroupMask);
+  bool GetIsConnected();
 
 protected:
   explicit VRDisplayHost(VRDeviceType aType);
   virtual ~VRDisplayHost();
 
 #if defined(XP_WIN)
-  virtual void SubmitFrame(mozilla::layers::TextureSourceD3D11* aSource,
+  // Subclasses should override this SubmitFrame function.
+  // Returns true if the SubmitFrame call will block as necessary
+  // to control timing of the next frame and throttle the render loop
+  // for the needed framerate.
+  virtual bool SubmitFrame(mozilla::layers::TextureSourceD3D11* aSource,
                            const IntSize& aSize,
-                           const VRHMDSensorState& aSensorState,
                            const gfx::Rect& aLeftEyeRect,
                            const gfx::Rect& aRightEyeRect) = 0;
 #endif
@@ -67,21 +70,16 @@ protected:
   VRDisplayInfo mDisplayInfo;
 
   nsTArray<RefPtr<VRLayerParent>> mLayers;
-  // Weak reference to mLayers entries are cleared in VRLayerParent destructor
+  // Weak reference to mLayers entries are cleared in
+  // VRLayerParent destructor
 
-  // The maximum number of frames of latency that we would expect before we
-  // should give up applying pose prediction.
-  // If latency is greater than one second, then the experience is not likely
-  // to be corrected by pose prediction.  Setting this value too
-  // high may result in unnecessary memory allocation.
-  // As the current fastest refresh rate is 90hz, 100 is selected as a
-  // conservative value.
-  static const int kMaxLatencyFrames = 100;
-  VRHMDSensorState mLastSensorState[kMaxLatencyFrames];
-  int32_t mInputFrameID;
+protected:
+  virtual VRHMDSensorState GetSensorState() = 0;
 
 private:
   VRDisplayInfo mLastUpdateDisplayInfo;
+  TimeStamp mLastFrameStart;
+  bool mFrameStarted;
 };
 
 class VRControllerHost {
@@ -89,23 +87,26 @@ public:
   NS_INLINE_DECL_THREADSAFE_REFCOUNTING(VRControllerHost)
 
   const VRControllerInfo& GetControllerInfo() const;
-  void SetIndex(uint32_t aIndex);
-  uint32_t GetIndex();
   void SetButtonPressed(uint64_t aBit);
   uint64_t GetButtonPressed();
+  void SetButtonTouched(uint64_t aBit);
+  uint64_t GetButtonTouched();
   void SetPose(const dom::GamepadPoseState& aPose);
   const dom::GamepadPoseState& GetPose();
   dom::GamepadHand GetHand();
+  void SetVibrateIndex(uint64_t aIndex);
+  uint64_t GetVibrateIndex();
 
 protected:
   explicit VRControllerHost(VRDeviceType aType);
   virtual ~VRControllerHost();
 
   VRControllerInfo mControllerInfo;
-  // The controller index in VRControllerManager.
-  uint32_t mIndex;
   // The current button pressed bit of button mask.
   uint64_t mButtonPressed;
+  // The current button touched bit of button mask.
+  uint64_t mButtonTouched;
+  uint64_t mVibrateIndex;
   dom::GamepadPoseState mPose;
 };
 

@@ -115,7 +115,7 @@ public:
   virtual size_t
     SizeOfExcludingThis(mozilla::MallocSizeOf aMallocSizeOf) const;
 
-  bool ElementHasHref() const;
+  virtual bool ElementHasHref() const;
 
   // This is called by HTMLAnchorElement.
   void TryDNSPrefetch();
@@ -125,6 +125,20 @@ public:
   // This is called by HTMLLinkElement.
   void TryDNSPrefetchPreconnectOrPrefetchOrPrerender();
   void CancelPrefetch();
+
+  bool HasPendingLinkUpdate() { return mHasPendingLinkUpdate; }
+  void SetHasPendingLinkUpdate() { mHasPendingLinkUpdate = true; }
+  void ClearHasPendingLinkUpdate() { mHasPendingLinkUpdate = false; }
+
+  // To ensure correct mHasPendingLinkUpdate handling, we have this method
+  // similar to the one in Element. Overriders must call
+  // ClearHasPendingLinkUpdate().
+  // If you change this, change also the method in Element.
+  virtual void NodeInfoChanged(nsIDocument* aOldDoc) = 0;
+
+  bool IsInDNSPrefetch() { return mInDNSPrefetch; }
+  void SetIsInDNSPrefetch() { mInDNSPrefetch = true; }
+  void ClearIsInDNSPrefetch() { mInDNSPrefetch = false; }
 
 protected:
   virtual ~Link();
@@ -164,9 +178,13 @@ private:
 
   uint16_t mLinkState;
 
-  bool mNeedsRegistration;
+  bool mNeedsRegistration : 1;
 
-  bool mRegistered;
+  bool mRegistered : 1;
+
+  bool mHasPendingLinkUpdate : 1;
+
+  bool mInDNSPrefetch : 1;
 };
 
 NS_DEFINE_STATIC_IID_ACCESSOR(Link, MOZILLA_DOM_LINK_IMPLEMENTATION_IID)

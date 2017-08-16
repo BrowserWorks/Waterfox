@@ -68,7 +68,7 @@ public:
   NS_IMPL_FROMCONTENT(nsGenericHTMLElement, kNameSpaceID_XHTML)
 
   // From Element
-  nsresult CopyInnerTo(mozilla::dom::Element* aDest);
+  nsresult CopyInnerTo(mozilla::dom::Element* aDest, bool aPreallocateChildren);
 
   void GetTitle(mozilla::dom::DOMString& aTitle)
   {
@@ -469,17 +469,6 @@ public:
   virtual void UnbindFromTree(bool aDeep = true,
                               bool aNullParent = true) override;
 
-  MOZ_ALWAYS_INLINE // Avoid a crashy hook from Avast 10 Beta
-  nsresult SetAttr(int32_t aNameSpaceID, nsIAtom* aName,
-                   const nsAString& aValue, bool aNotify)
-  {
-    return SetAttr(aNameSpaceID, aName, nullptr, aValue, aNotify);
-  }
-  virtual nsresult SetAttr(int32_t aNameSpaceID, nsIAtom* aName,
-                           nsIAtom* aPrefix, const nsAString& aValue,
-                           bool aNotify) override;
-  virtual nsresult UnsetAttr(int32_t aNameSpaceID, nsIAtom* aName,
-                             bool aNotify) override;
   virtual bool IsFocusableInternal(int32_t *aTabIndex, bool aWithMouse) override
   {
     bool isFocusable = false;
@@ -942,8 +931,13 @@ private:
   void RegUnRegAccessKey(bool aDoReg);
 
 protected:
+  virtual nsresult BeforeSetAttr(int32_t aNamespaceID, nsIAtom* aName,
+                                 const nsAttrValueOrString* aValue,
+                                 bool aNotify) override;
   virtual nsresult AfterSetAttr(int32_t aNamespaceID, nsIAtom* aName,
-                                const nsAttrValue* aValue, bool aNotify) override;
+                                const nsAttrValue* aValue,
+                                const nsAttrValue* aOldValue,
+                                bool aNotify) override;
 
   virtual mozilla::EventListenerManager*
     GetEventListenerManagerForAttr(nsIAtom* aAttrName,
@@ -1208,7 +1202,8 @@ class nsGenericHTMLFormElement : public nsGenericHTMLElement,
                                  public nsIFormControl
 {
 public:
-  explicit nsGenericHTMLFormElement(already_AddRefed<mozilla::dom::NodeInfo>& aNodeInfo);
+  nsGenericHTMLFormElement(already_AddRefed<mozilla::dom::NodeInfo>& aNodeInfo,
+                           uint8_t aType);
 
   NS_DECL_ISUPPORTS_INHERITED
 
@@ -1225,7 +1220,7 @@ public:
     return mForm;
   }
   virtual void SetForm(nsIDOMHTMLFormElement* aForm) override;
-  virtual void ClearForm(bool aRemoveFromForm) override;
+  virtual void ClearForm(bool aRemoveFromForm, bool aUnbindOrDelete) override;
 
   nsresult GetForm(nsIDOMHTMLFormElement** aForm);
 
@@ -1296,11 +1291,19 @@ protected:
   virtual ~nsGenericHTMLFormElement();
 
   virtual nsresult BeforeSetAttr(int32_t aNameSpaceID, nsIAtom* aName,
-                                 nsAttrValueOrString* aValue,
+                                 const nsAttrValueOrString* aValue,
                                  bool aNotify) override;
 
   virtual nsresult AfterSetAttr(int32_t aNameSpaceID, nsIAtom* aName,
-                                const nsAttrValue* aValue, bool aNotify) override;
+                                const nsAttrValue* aValue,
+                                const nsAttrValue* aOldValue,
+                                bool aNotify) override;
+
+  virtual void BeforeSetForm(bool aBindToTree) {}
+
+  virtual void AfterClearForm(bool aUnbindOrDelete) {}
+
+  void SetForm(mozilla::dom::HTMLFormElement* aForm, bool aBindToTree);
 
   /**
    * This method will update the form owner, using @form or looking to a parent.
@@ -1368,7 +1371,8 @@ protected:
 class nsGenericHTMLFormElementWithState : public nsGenericHTMLFormElement
 {
 public:
-  explicit nsGenericHTMLFormElementWithState(already_AddRefed<mozilla::dom::NodeInfo>& aNodeInfo);
+  nsGenericHTMLFormElementWithState(already_AddRefed<mozilla::dom::NodeInfo>& aNodeInfo,
+                                    uint8_t aType);
 
   /**
    * Get the presentation state for a piece of content, or create it if it does
@@ -1399,7 +1403,7 @@ public:
    * Called when we have been cloned and adopted, and the information of the
    * node has been changed.
    */
-  virtual void NodeInfoChanged() override;
+  virtual void NodeInfoChanged(nsIDocument* aOldDoc) override;
 
 protected:
   /* Generates the state key for saving the form state in the session if not

@@ -22,7 +22,6 @@ const { classes: Cc, interfaces: Ci, utils: Cu } = Components;
 Cu.import("resource://gre/modules/XPCOMUtils.jsm", this);
 Cu.import("resource://gre/modules/PageThumbs.jsm");
 Cu.import("resource://gre/modules/Services.jsm");
-Cu.import("resource://gre/modules/Task.jsm");
 
 // possible FX_THUMBNAILS_BG_CAPTURE_DONE_REASON_2 telemetry values
 const TEL_CAPTURE_DONE_OK = 0;
@@ -94,11 +93,11 @@ const BackgroundPageThumbs = {
    *                 capture() for description.
    * @return {Promise} A Promise that resolves when this task completes
    */
-  captureIfMissing: Task.async(function* (url, options = {}) {
+  async captureIfMissing(url, options = {}) {
     // The fileExistsForURL call is an optimization, potentially but unlikely
     // incorrect, and no big deal when it is.  After the capture is done, we
     // atomically test whether the file exists before writing it.
-    let exists = yield PageThumbsStorage.fileExistsForURL(url);
+    let exists = await PageThumbsStorage.fileExistsForURL(url);
     if (exists) {
       if (options.onDone) {
         options.onDone(url);
@@ -106,26 +105,32 @@ const BackgroundPageThumbs = {
       return url;
     }
     let thumbPromise = new Promise((resolve, reject) => {
-      function observe(subject, topic, data) { // jshint ignore:line
-        if (data === url) {
-          switch (topic) {
-            case "page-thumbnail:create":
-              resolve();
-              break;
-            case "page-thumbnail:error":
-              reject(new Error("page-thumbnail:error"));
-              break;
+      let observer = {
+        observe(subject, topic, data) { // jshint ignore:line
+          if (data === url) {
+            switch (topic) {
+              case "page-thumbnail:create":
+                resolve();
+                break;
+              case "page-thumbnail:error":
+                reject(new Error("page-thumbnail:error"));
+                break;
+            }
+            Services.obs.removeObserver(observer, "page-thumbnail:create");
+            Services.obs.removeObserver(observer, "page-thumbnail:error");
           }
-          Services.obs.removeObserver(observe, "page-thumbnail:create");
-          Services.obs.removeObserver(observe, "page-thumbnail:error");
-        }
-      }
-      Services.obs.addObserver(observe, "page-thumbnail:create", false);
-      Services.obs.addObserver(observe, "page-thumbnail:error", false);
+        },
+        QueryInterface: XPCOMUtils.generateQI([Ci.nsIObserver,
+                                               Ci.nsISupportsWeakReference])
+      };
+      // Use weak references to avoid leaking in tests where the promise we
+      // return is GC'ed before it has resolved.
+      Services.obs.addObserver(observer, "page-thumbnail:create", true);
+      Services.obs.addObserver(observer, "page-thumbnail:error", true);
     });
     try {
       this.capture(url, options);
-      yield thumbPromise;
+      await thumbPromise;
     } catch (err) {
       if (options.onDone) {
         options.onDone(url);
@@ -133,7 +138,7 @@ const BackgroundPageThumbs = {
       throw err;
     }
     return url;
-  }),
+  },
 
   /**
    * Tell the service that the thumbnail browser should be recreated at next
@@ -264,9 +269,9 @@ const BackgroundPageThumbs = {
         // browser's message manager if it happens on the same stack as the
         // listener.  Trying to send a message to the manager in that case
         // throws NS_ERROR_NOT_INITIALIZED.
-        Services.tm.currentThread.dispatch(() => {
+        Services.tm.dispatchToMainThread(() => {
           curCapture._done(null, TEL_CAPTURE_DONE_CRASHED);
-        }, Ci.nsIEventTarget.DISPATCH_NORMAL);
+        });
       }
       // else: we must have been idle and not currently doing a capture (eg,
       // maybe a GC or similar crashed) - so there's no need to attempt a
@@ -336,8 +341,7 @@ Services.prefs.addObserver(ABOUT_NEWTAB_SEGREGATION_PREF,
     if (aTopic == "nsPref:changed" && aData == ABOUT_NEWTAB_SEGREGATION_PREF) {
       BackgroundPageThumbs.renewThumbnailBrowser();
     }
-  },
-  false);
+  });
 
 Object.defineProperty(this, "BackgroundPageThumbs", {
   value: BackgroundPageThumbs,
@@ -503,5 +507,5 @@ function tel(histogramID, value) {
 }
 
 function schedule(callback) {
-  Services.tm.mainThread.dispatch(callback, Ci.nsIThread.DISPATCH_NORMAL);
+  Services.tm.dispatchToMainThread(callback);
 }

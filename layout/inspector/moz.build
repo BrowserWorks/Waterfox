@@ -31,7 +31,6 @@ UNIFIED_SOURCES += [
     'inDeepTreeWalker.cpp',
     'inDOMUtils.cpp',
     'inLayoutUtils.cpp',
-    'inSearchLoop.cpp',
     'nsFontFace.cpp',
     'nsFontFaceList.cpp',
 ]
@@ -46,4 +45,5 @@ LOCAL_INCLUDES += [
     '../style',
     '/dom/base',
     '/dom/xbl',
+    '/modules/brotli/dec',
 ]

@@ -37,6 +37,7 @@ public:
 
   // Sets an error that will be reported to the content process.
   void SetError(nsresult status) { mStatus = status; }
+  virtual mozilla::ipc::IPCResult RecvDeleteSelf() override;
 
 private:
   virtual ~AltDataOutputStreamParent();
@@ -44,6 +45,7 @@ private:
   // In case any error occurs mStatus will be != NS_OK, and this status code will
   // be sent to the content process asynchronously.
   nsresult mStatus;
+  bool     mIPCOpen;
 };
 
 } // namespace net

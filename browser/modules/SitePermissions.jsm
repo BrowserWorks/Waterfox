@@ -608,9 +608,22 @@ var gPermissionObject = {
     exactHostMatch: true
   },
 
-  "indexedDB": {}
+  "indexedDB": {},
+
+  "focus-tab-by-prompt": {
+    exactHostMatch: true,
+    states: [ SitePermissions.UNKNOWN, SitePermissions.ALLOW ],
+  },
+  "persistent-storage": {
+    exactHostMatch: true
+  }
 };
+
+// Delete this entry while being pre-off
+// or the persistent-storage permission would appear in Page info's Permission section
+if (!Services.prefs.getBoolPref("browser.storageManager.enabled")) {
+  delete gPermissionObject["persistent-storage"];
+}
 
 XPCOMUtils.defineLazyPreferenceGetter(SitePermissions, "temporaryPermissionExpireTime",
                                       "privacy.temporary_permission_expire_time_ms", 3600 * 1000);
-

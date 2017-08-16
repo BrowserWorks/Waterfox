@@ -73,7 +73,7 @@
     </popupnotification>
 
     <popupnotification id="addon-webext-permissions-notification" hidden="true">
-      <popupnotificationcontent orient="vertical">
+      <popupnotificationcontent class="addon-webext-perm-notification-content" orient="vertical">
         <description id="addon-webext-perm-header" class="addon-webext-perm-header"/>
         <description id="addon-webext-perm-text" class="addon-webext-perm-text"/>
         <label id="addon-webext-perm-intro" class="addon-webext-perm-text"/>
@@ -82,7 +82,7 @@
     </popupnotification>
 
     <popupnotification id="addon-installed-notification" hidden="true">
-      <popupnotificationcontent orient="vertical">
+      <popupnotificationcontent class="addon-installed-notification-content" orient="vertical">
         <description id="addon-installed-notification-header"/>
         <description id="addon-installed-notification-message"/>
       </popupnotificationcontent>

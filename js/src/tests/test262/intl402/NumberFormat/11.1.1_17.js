@@ -1,4 +1,3 @@
-// |reftest| skip-if(!this.hasOwnProperty('Intl')) -- needs Intl
 // Copyright 2012 Mozilla Corporation. All rights reserved.
 // This code is governed by the BSD license found in the LICENSE file.
 
@@ -20,65 +19,39 @@ validValues.forEach(function (value) {
     format = new Intl.NumberFormat([defaultLocale], {style: "currency", currency: value});
     actual = format.resolvedOptions().currency;
     expected = value.toString().toUpperCase();
-    if (actual !== expected) {
-        $ERROR("Incorrect resolved currency with currency style - expected " +
-            expected + "; got " + actual + ".");
-    }
+    assert.sameValue(actual, expected, "Incorrect resolved currency with currency style.");
     
     // without currency style, we shouldn't get any currency back
     format = new Intl.NumberFormat([defaultLocale], {currency: value});
     actual = format.resolvedOptions().currency;
     expected = undefined;
-    if (actual !== expected) {
-        $ERROR("Incorrect resolved currency with non-currency style - expected " +
-            expected + "; got " + actual + ".");
-    }
+    assert.sameValue(actual, expected, "Incorrect resolved currency with non-currency style.");
     
     // currencies specified through the locale must be ignored
     format = new Intl.NumberFormat([defaultLocale + "-u-cu-krw"], {style: "currency", currency: value});
     actual = format.resolvedOptions().currency;
     expected = value.toString().toUpperCase();
-    if (actual !== expected) {
-        $ERROR("Incorrect resolved currency with -u-cu- and currency style - expected " +
-            expected + "; got " + actual + ".");
-    }
+    assert.sameValue(actual, expected, "Incorrect resolved currency with -u-cu- and currency style.");
     
     format = new Intl.NumberFormat([defaultLocale + "-u-cu-krw"], {currency: value});
     actual = format.resolvedOptions().currency;
     expected = undefined;
-    if (actual !== expected) {
-        $ERROR("Incorrect resolved currency with -u-cu- and non-currency style - expected " +
-            expected + "; got " + actual + ".");
-    }
+    assert.sameValue(actual, expected, "Incorrect resolved currency with -u-cu- and non-currency style.");
 });
 
 invalidValues.forEach(function (value) {
-    function expectError(f) {
-        var error;
-        try {
-            f();
-        } catch (e) {
-            error = e;
-        }
-        if (error === undefined) {
-            $ERROR("Invalid currency value " + value + " was not rejected.");
-        } else if (error.name !== "RangeError") {
-            $ERROR("Invalid currency value " + value + " was rejected with wrong error " + error.name + ".");
-        }
-    }
-
-    expectError(function () {
+    assert.throws(RangeError, function () {
             return new Intl.NumberFormat([defaultLocale], {style: "currency", currency: value});
-    });
-    expectError(function () {
+    }, "Invalid currency value " + value + " was not rejected.");
+    assert.throws(RangeError, function () {
             return new Intl.NumberFormat([defaultLocale], {currency: value});
-    });
-    expectError(function () {
+    }, "Invalid currency value " + value + " was not rejected.");
+    assert.throws(RangeError, function () {
             return new Intl.NumberFormat([defaultLocale + "-u-cu-krw"], {style: "currency", currency: value});
-    });
-    expectError(function () {
+    }, "Invalid currency value " + value + " was not rejected.");
+    assert.throws(RangeError, function () {
             return new Intl.NumberFormat([defaultLocale + "-u-cu-krw"], {currency: value});
-    });
+    }, "Invalid currency value " + value + " was not rejected.");
 });
 
 reportCompare(0, 0);

@@ -7,6 +7,13 @@
 #define TelemetryEvent_h__
 
 #include "mozilla/TelemetryEventEnums.h"
+#include "mozilla/TelemetryProcessEnums.h"
+
+namespace mozilla {
+namespace Telemetry {
+  struct ChildEventData;
+}
+}
 
 // This module is internal to Telemetry. It encapsulates Telemetry's
 // event recording and storage logic. It should only be used by
@@ -29,6 +36,10 @@ nsresult RecordEvent(const nsACString& aCategory, const nsACString& aMethod,
 void SetEventRecordingEnabled(const nsACString& aCategory, bool aEnabled);
 nsresult CreateSnapshots(uint32_t aDataset, bool aClear, JSContext* aCx,
                          uint8_t optional_argc, JS::MutableHandleValue aResult);
+
+// Record events from child processes.
+nsresult RecordChildEvents(mozilla::Telemetry::ProcessID aProcessType,
+                           const nsTArray<mozilla::Telemetry::ChildEventData>& aEvents);
 
 // Only to be used for testing.
 void ClearEvents();

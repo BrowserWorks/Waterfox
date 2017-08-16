@@ -1126,6 +1126,12 @@ ContentCacheInParent::OnCompositionEvent(const WidgetCompositionEvent& aEvent)
     MOZ_ASSERT(aEvent.mMessage == eCompositionChange ||
                aEvent.mMessage == eCompositionCommit);
     *mCommitStringByRequest = aEvent.mData;
+    // We need to wait eCompositionCommitRequestHandled from the remote process
+    // in this case.  Therefore, mPendingEventsNeedingAck needs to be
+    // incremented here.
+    if (!mWidgetHasComposition) {
+      mPendingEventsNeedingAck++;
+    }
     return false;
   }
 
@@ -1165,7 +1171,8 @@ ContentCacheInParent::OnEventNeedingAckHandled(nsIWidget* aWidget,
      "aMessage=%s), mPendingEventsNeedingAck=%u, mPendingCompositionCount=%" PRIu8,
      this, aWidget, ToChar(aMessage), mPendingEventsNeedingAck, mPendingCompositionCount));
 
-  if (WidgetCompositionEvent::IsFollowedByCompositionEnd(aMessage)) {
+  if (WidgetCompositionEvent::IsFollowedByCompositionEnd(aMessage) ||
+      aMessage == eCompositionCommitRequestHandled) {
     MOZ_RELEASE_ASSERT(mPendingCompositionCount > 0);
     mPendingCompositionCount--;
   }
@@ -1270,28 +1277,34 @@ ContentCacheInParent::FlushPendingNotifications(nsIWidget* aWidget)
 {
   MOZ_ASSERT(!mPendingEventsNeedingAck);
 
+  // If the TabParent's widget has already gone, this can do nothing since
+  // widget is necessary to notify IME of something.
+  if (!aWidget) {
+    return;
+  }
+
   // New notifications which are notified during flushing pending notifications
   // should be merged again.
   mPendingEventsNeedingAck++;
 
-  nsCOMPtr<nsIWidget> kungFuDeathGrip(aWidget);
+  nsCOMPtr<nsIWidget> widget = aWidget;
 
   // First, text change notification should be sent because selection change
   // notification notifies IME of current selection range in the latest content.
   // So, IME may need the latest content before that.
   if (mPendingTextChange.HasNotification()) {
     IMENotification notification(mPendingTextChange);
-    if (!aWidget->Destroyed()) {
+    if (!widget->Destroyed()) {
       mPendingTextChange.Clear();
-      IMEStateManager::NotifyIME(notification, aWidget, true);
+      IMEStateManager::NotifyIME(notification, widget, true);
     }
   }
 
   if (mPendingSelectionChange.HasNotification()) {
     IMENotification notification(mPendingSelectionChange);
-    if (!aWidget->Destroyed()) {
+    if (!widget->Destroyed()) {
       mPendingSelectionChange.Clear();
-      IMEStateManager::NotifyIME(notification, aWidget, true);
+      IMEStateManager::NotifyIME(notification, widget, true);
     }
   }
 
@@ -1299,9 +1312,9 @@ ContentCacheInParent::FlushPendingNotifications(nsIWidget* aWidget)
   // notification because IME may want to query position of new caret position.
   if (mPendingLayoutChange.HasNotification()) {
     IMENotification notification(mPendingLayoutChange);
-    if (!aWidget->Destroyed()) {
+    if (!widget->Destroyed()) {
       mPendingLayoutChange.Clear();
-      IMEStateManager::NotifyIME(notification, aWidget, true);
+      IMEStateManager::NotifyIME(notification, widget, true);
     }
   }
 
@@ -1309,18 +1322,18 @@ ContentCacheInParent::FlushPendingNotifications(nsIWidget* aWidget)
   // finishing handling whole sending events.
   if (mPendingCompositionUpdate.HasNotification()) {
     IMENotification notification(mPendingCompositionUpdate);
-    if (!aWidget->Destroyed()) {
+    if (!widget->Destroyed()) {
       mPendingCompositionUpdate.Clear();
-      IMEStateManager::NotifyIME(notification, aWidget, true);
+      IMEStateManager::NotifyIME(notification, widget, true);
     }
   }
 
-  if (!--mPendingEventsNeedingAck && !aWidget->Destroyed() &&
+  if (!--mPendingEventsNeedingAck && !widget->Destroyed() &&
       (mPendingTextChange.HasNotification() ||
        mPendingSelectionChange.HasNotification() ||
        mPendingLayoutChange.HasNotification() ||
        mPendingCompositionUpdate.HasNotification())) {
-    FlushPendingNotifications(aWidget);
+    FlushPendingNotifications(widget);
   }
 }
 

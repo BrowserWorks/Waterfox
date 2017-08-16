@@ -1,21 +1,17 @@
 "use strict";
 
-var {interfaces: Ci, utils: Cu} = Components;
-
 Cu.import("resource://gre/modules/Services.jsm");
-Cu.import("resource://gre/modules/Task.jsm");
 
 XPCOMUtils.defineLazyModuleGetter(this, "AddonManager",
                                   "resource://gre/modules/AddonManager.jsm");
+XPCOMUtils.defineLazyModuleGetter(this, "TelemetryStopwatch",
+                                  "resource://gre/modules/TelemetryStopwatch.jsm");
 
 Cu.import("resource://gre/modules/ExtensionParent.jsm");
-const {
+var {
   HiddenExtensionPage,
   promiseExtensionViewLoaded,
 } = ExtensionParent;
-
-// WeakMap[Extension -> BackgroundPage]
-var backgroundPagesMap = new WeakMap();
 
 // Responsible for the background_page section of the manifest.
 class BackgroundPage extends HiddenExtensionPage {
@@ -24,7 +20,6 @@ class BackgroundPage extends HiddenExtensionPage {
 
     this.page = options.page || null;
     this.isGenerated = !!options.scripts;
-    this.webNav = null;
 
     if (this.page) {
       this.url = this.extension.baseURI.resolve(this.page);
@@ -38,54 +33,42 @@ class BackgroundPage extends HiddenExtensionPage {
     }
   }
 
-  build() {
-    return Task.spawn(function* () {
-      yield this.createBrowserElement();
+  async build() {
+    TelemetryStopwatch.start("WEBEXT_BACKGROUND_PAGE_LOAD_MS", this);
+    await this.createBrowserElement();
 
-      extensions.emit("extension-browser-inserted", this.browser);
+    extensions.emit("extension-browser-inserted", this.browser);
 
-      this.browser.loadURI(this.url);
+    this.browser.loadURI(this.url);
 
-      yield promiseExtensionViewLoaded(this.browser);
+    let context = await promiseExtensionViewLoaded(this.browser);
+    TelemetryStopwatch.finish("WEBEXT_BACKGROUND_PAGE_LOAD_MS", this);
 
-      if (this.browser.docShell) {
-        this.webNav = this.browser.docShell.QueryInterface(Ci.nsIWebNavigation);
-        let window = this.webNav.document.defaultView;
+    if (context) {
+      // Wait until all event listeners registered by the script so far
+      // to be handled.
+      await Promise.all(context.listenerPromises);
+      context.listenerPromises = null;
+    }
 
-        // Set the add-on's main debugger global, for use in the debugger
-        // console.
-        if (this.extension.addonData.instanceID) {
-          AddonManager.getAddonByInstanceID(this.extension.addonData.instanceID)
-                      .then(addon => addon.setDebugGlobal(window));
-        }
-      }
-
-      this.extension.emit("startup");
-    }.bind(this));
+    this.extension.emit("startup");
   }
 
   shutdown() {
-    if (this.extension.addonData.instanceID) {
-      AddonManager.getAddonByInstanceID(this.extension.addonData.instanceID)
-                  .then(addon => addon.setDebugGlobal(null));
-    }
-
     super.shutdown();
   }
 }
 
-/* eslint-disable mozilla/balanced-listeners */
-extensions.on("manifest_background", (type, directive, extension, manifest) => {
-  let bgPage = new BackgroundPage(extension, manifest.background);
+this.backgroundPage = class extends ExtensionAPI {
+  onManifestEntry(entryName) {
+    let {manifest} = this.extension;
 
-  backgroundPagesMap.set(extension, bgPage);
-  return bgPage.build();
-});
+    this.bgPage = new BackgroundPage(this.extension, manifest.background);
 
-extensions.on("shutdown", (type, extension) => {
-  if (backgroundPagesMap.has(extension)) {
-    backgroundPagesMap.get(extension).shutdown();
-    backgroundPagesMap.delete(extension);
+    return this.bgPage.build();
   }
-});
-/* eslint-enable mozilla/balanced-listeners */
+
+  onShutdown() {
+    this.bgPage.shutdown();
+  }
+};

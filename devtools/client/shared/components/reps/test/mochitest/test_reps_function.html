@@ -17,16 +17,19 @@ Test Func rep
 <script src="head.js" type="application/javascript"></script>
 <script type="application/javascript">
 window.onload = Task.async(function* () {
-  const { REPS, MODE } = browserRequire("devtools/client/shared/components/reps/reps");
-  let { Rep, Func } = REPS;
+  const {
+    REPS,
+    MODE,
+    getRep,
+   } = browserRequire("devtools/client/shared/components/reps/reps");
+  let { Func } = REPS;
 
   const componentUnderTest = Func;
 
   try {
     // Test that correct rep is chosen
     const gripStub = getGripStub("testNamed");
-    const renderedRep = shallowRenderComponent(Rep, { object: gripStub });
-    is(renderedRep.type, Func.rep, `Rep correctly selects ${Func.rep.displayName}`);
+    is(getRep(gripStub), Func.rep, "Rep correctly selects Func Rep");
 
     yield testNamed();
     yield testVarNamed();
@@ -36,6 +39,7 @@ window.onload = Task.async(function* () {
     yield testAnonAsyncFunction();
     yield testGeneratorFunction();
     yield testAnonGeneratorFunction();
+    yield testObjectLink();
   } catch(e) {
     ok(false, "Got an error: " + DevToolsUtils.safeErrorString(e));
   } finally {
@@ -224,6 +228,27 @@ window.onload = Task.async(function* () {
       }
     ];
     testRepRenderModes(modeTests, testName, componentUnderTest, getGripStub(testName));
+  }
+
+  function testObjectLink() {
+    // Test declaration: `function testName() { let innerVar = "foo" }`
+    const modeTests = [
+      {
+        mode: undefined,
+        expectedOutput: "*function *testName()",
+      }
+    ];
+
+    testRepRenderModes(
+      modeTests,
+      "testObjectLink",
+      componentUnderTest,
+      getGripStub("testNamed"),
+      {
+        objectLink: (props, ...children) => React.DOM.span({},
+          "*", ...children, "*"),
+      }
+    );
   }
 
   function getGripStub(functionName) {

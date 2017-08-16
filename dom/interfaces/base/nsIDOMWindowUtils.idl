@@ -48,8 +48,9 @@ interface nsITranslationNodeList;
 interface nsIJSRAIIHelper;
 interface nsIContentPermissionRequest;
 interface nsIObserver;
+interface nsIDOMStorage;
 
-[scriptable, uuid(c471d440-004b-4c50-a6f2-747db5f443b6)]
+[scriptable, uuid(4d6732ca-9da7-4176-b8a1-8dde15cd0bf9)]
 interface nsIDOMWindowUtils : nsISupports {
 
   /**
@@ -1455,12 +1456,6 @@ interface nsIDOMWindowUtils : nsISupports {
                              [retval, array, size_is(frameCount)] out float frameIntervals);
 
   /**
-   * Signals that we're begining to tab switch. This is used by painting code to
-   * determine total tab switch time.
-   */
-  void beginTabSwitch();
-
-  /**
    * The DPI of the display
    */
   readonly attribute float displayDPI;
@@ -1562,6 +1557,24 @@ interface nsIDOMWindowUtils : nsISupports {
                                   in AString property,
                                   in AString value1,
                                   in AString value2);
+
+  /**
+   * Returns the animation type of the specified property (e.g. 'coord').
+   *
+   * @param aProperty A longhand CSS property (e.g. 'background-color').
+   */
+  AString getAnimationTypeForLonghand(in AString aProperty);
+
+  /**
+   * Returns the computed style for the specified property of given pseudo type
+   * on the given element after removing styles from declarative animations.
+   * @param aElement - A target element
+   * @param aPseudoElement - A pseudo type (e.g. '::before' or null)
+   * @param aProperty - A longhand CSS property (e.g. 'background-color')
+   */
+  AString getUnanimatedComputedStyle(in nsIDOMElement aElement,
+                                     in AString aPseudoElement,
+                                     in AString aProperty);
 
   /**
    * Get the type of the currently focused html input, if any.
@@ -1863,15 +1876,11 @@ interface nsIDOMWindowUtils : nsISupports {
   void askPermission(in nsIContentPermissionRequest aRequest);
 
   /**
-   * Number of elements restyled for the curent document.
-   *
-   * Note that during a restyle operation we may restyle an element more
-   * than once (e.g., for an inline that contains blocks).  This also
-   * counts restyling of pseudo-elements and anonymous boxes.
+   * Restyle generation for the current document.
    *
    * May throw NS_ERROR_NOT_AVAILABLE.
    */
-  readonly attribute unsigned long long elementsRestyled;
+  readonly attribute unsigned long long restyleGeneration;
 
   /**
    * Number of frames constructed (excluding breaking) for the curent
@@ -1944,8 +1953,6 @@ interface nsIDOMWindowUtils : nsISupports {
    */
   void forceUseCounterFlush(in nsIDOMNode aNode);
 
-  void setNextPaintSyncId(in long aSyncId);
-
   /**
    * Enable or disable displayport suppression. This is intended to be used by
    * testing code, to provide more deterministic behaviour over the displayport
@@ -1975,6 +1982,34 @@ interface nsIDOMWindowUtils : nsISupports {
    * timeouts.
    */
   boolean isTimeoutTracking(in unsigned long timeoutId);
+
+  /**
+   * Adds an EventStates bit to the element.
+   *
+   * The state string must be one of the following:
+   *   * (none yet; but for example "higlighted" for NS_EVENT_STATE_HIGHLIGHTED)
+   *
+   * The supported state strings are defined in kManuallyManagedStates
+   * in nsDOMWindowUtils.cpp.
+   */
+  void addManuallyManagedState(in nsIDOMElement element,
+                               in AString state);
+
+  /**
+   * Removes the specified EventStates bits from the element.
+   *
+   * See above for the strings that can be passed for |state|.
+   */
+  void removeManuallyManagedState(in nsIDOMElement element,
+                                  in AString state);
+
+  /**
+   * Returns usage data for a given storage object.
+   *
+   * @param aStorage
+   *    The storage object to get usage data for.
+   */
+  int64_t getStorageUsage(in nsIDOMStorage aStorage);
 
   /**
    * Returns the directionality of a string using the first-strong character

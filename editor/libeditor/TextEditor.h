@@ -56,6 +56,11 @@ public:
 
   TextEditor();
 
+  virtual TextEditor* AsTextEditor() override { return this; }
+  virtual const TextEditor* AsTextEditor() const override { return this; }
+  virtual HTMLEditor* AsHTMLEditor() override;
+  virtual const HTMLEditor* AsHTMLEditor() const override;
+
   // nsIPlaintextEditor methods
   NS_DECL_NSIPLAINTEXTEDITOR
 
@@ -179,10 +184,10 @@ protected:
   void BeginEditorInit();
   nsresult EndEditorInit();
 
-  nsresult GetAndInitDocEncoder(const nsAString& aFormatType,
-                                uint32_t aFlags,
-                                const nsACString& aCharset,
-                                nsIDocumentEncoder** encoder);
+  already_AddRefed<nsIDocumentEncoder> GetAndInitDocEncoder(
+                                         const nsAString& aFormatType,
+                                         uint32_t aFlags,
+                                         const nsACString& aCharset);
 
   NS_IMETHOD CreateBR(nsIDOMNode* aNode, int32_t aOffset,
                       nsCOMPtr<nsIDOMNode>* outBRNode,
@@ -222,11 +227,13 @@ protected:
                           int32_t aSelectionType,
                           bool* aActionTaken = nullptr);
 
-  bool UpdateMetaCharset(nsIDOMDocument* aDocument,
+  bool UpdateMetaCharset(nsIDocument& aDocument,
                          const nsACString& aCharacterSet);
 
 protected:
   nsCOMPtr<nsIEditRules> mRules;
+  nsCOMPtr<nsIDocumentEncoder> mCachedDocumentEncoder;
+  nsString mCachedDocumentEncoderType;
   int32_t mWrapColumn;
   int32_t mMaxTextLength;
   int32_t mInitTriggerCounter;

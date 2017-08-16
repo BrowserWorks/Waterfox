@@ -11,12 +11,11 @@
 #include "mozilla/TimeStamp.h"
 #include "nsCOMPtr.h"
 #include "nsCycleCollectionParticipant.h"
+#include "nsGlobalWindow.h"
+#include "nsITimeoutHandler.h"
 
-class nsGlobalWindow;
 class nsIEventTarget;
 class nsIPrincipal;
-class nsITimeoutHandler;
-class nsITimer;
 class nsIEventTarget;
 
 namespace mozilla {
@@ -28,7 +27,7 @@ namespace dom {
  * abstracts the language specific cruft.
  */
 class Timeout final
-  : public LinkedListElement<Timeout>
+  : public LinkedListElement<RefPtr<Timeout>>
 {
 public:
   Timeout();
@@ -36,25 +35,14 @@ public:
   NS_DECL_CYCLE_COLLECTION_NATIVE_CLASS(Timeout)
   NS_INLINE_DECL_CYCLE_COLLECTING_NATIVE_REFCOUNTING(Timeout)
 
-  // The target may be specified to use a particular event queue for the
-  // resulting timer runnable.  A nullptr target will result in the
-  // default main thread being used.
-  nsresult InitTimer(nsIEventTarget* aTarget, uint32_t aDelay);
-
   enum class Reason
   {
     eTimeoutOrInterval,
     eIdleCallbackTimeout,
   };
 
-#ifdef DEBUG
-  bool HasRefCnt(uint32_t aCount) const;
-#endif // DEBUG
-
   void SetWhenOrTimeRemaining(const TimeStamp& aBaseTime,
                               const TimeDuration& aDelay);
-
-  void SetDummyWhen(const TimeStamp& aWhen);
 
   // Can only be called when not frozen.
   const TimeStamp& When() const;
@@ -62,11 +50,11 @@ public:
   // Can only be called when frozen.
   const TimeDuration& TimeRemaining() const;
 
+  // Can only be called when not frozen.
+  const TimeDuration& ScheduledDelay() const;
+
   // Window for which this timeout fires
   RefPtr<nsGlobalWindow> mWindow;
-
-  // The actual timer object
-  nsCOMPtr<nsITimer> mTimer;
 
   // True if the timeout was cleared
   bool mCleared;
@@ -90,11 +78,9 @@ public:
   // Interval in milliseconds
   uint32_t mInterval;
 
-  // Principal with which to execute
-  nsCOMPtr<nsIPrincipal> mPrincipal;
-
-  // stack depth at which timeout is firing
-  uint32_t mFiringDepth;
+  // Identifies which firing level this Timeout is being processed in
+  // when sync loops trigger nested firing.
+  uint32_t mFiringId;
 
   uint32_t mNestingLevel;
 
@@ -111,10 +97,15 @@ private:
   // Nominal time to run this timeout.  Use only when timeouts are not
   // frozen.
   TimeStamp mWhen;
+
   // Remaining time to wait.  Used only when timeouts are frozen.
   TimeDuration mTimeRemaining;
 
-  ~Timeout();
+  // The actual interval in milliseconds.  This may be throttled to
+  // a longer delay than mInterval for a number of reasons.
+  TimeDuration mScheduledDelay;
+
+  ~Timeout() = default;
 };
 
 } // namespace dom

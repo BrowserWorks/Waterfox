@@ -25,13 +25,17 @@ namespace net {
 void
 nsHttpConnectionMgr::PrintDiagnostics()
 {
-  PostEvent(&nsHttpConnectionMgr::OnMsgPrintDiagnostics, 0, nullptr);
+  nsresult rv = PostEvent(&nsHttpConnectionMgr::OnMsgPrintDiagnostics, 0, nullptr);
+  if (NS_FAILED(rv)) {
+    LOG(("nsHttpConnectionMgr::PrintDiagnostics\n"
+         "  failed to post OnMsgPrintDiagnostics event"));
+  }
 }
 
 void
 nsHttpConnectionMgr::OnMsgPrintDiagnostics(int32_t, ARefBase *)
 {
-  MOZ_ASSERT(PR_GetCurrentThread() == gSocketThread);
+  MOZ_ASSERT(OnSocketThread(), "not on socket thread");
 
   nsCOMPtr<nsIConsoleService> consoleService =
     do_GetService(NS_CONSOLESERVICE_CONTRACTID);
@@ -54,7 +58,7 @@ nsHttpConnectionMgr::OnMsgPrintDiagnostics(int32_t, ARefBase *)
     mLogData.AppendPrintf("   RestrictConnections = %d\n",
                           RestrictConnections(ent));
     mLogData.AppendPrintf("   Pending Q Length = %" PRIuSIZE "\n",
-                          ent->mPendingQ.Length());
+                          ent->PendingQLength());
     mLogData.AppendPrintf("   Active Conns Length = %" PRIuSIZE "\n",
                           ent->mActiveConns.Length());
     mLogData.AppendPrintf("   Idle Conns Length = %" PRIuSIZE "\n",
@@ -63,8 +67,7 @@ nsHttpConnectionMgr::OnMsgPrintDiagnostics(int32_t, ARefBase *)
                           ent->mHalfOpens.Length());
     mLogData.AppendPrintf("   Coalescing Keys Length = %" PRIuSIZE "\n",
                           ent->mCoalescingKeys.Length());
-    mLogData.AppendPrintf("   Spdy using = %d, preferred = %d\n",
-                          ent->mUsingSpdy, ent->mInPreferredHash);
+    mLogData.AppendPrintf("   Spdy using = %d\n", ent->mUsingSpdy);
 
     uint32_t i;
     for (i = 0; i < ent->mActiveConns.Length(); ++i) {
@@ -79,9 +82,17 @@ nsHttpConnectionMgr::OnMsgPrintDiagnostics(int32_t, ARefBase *)
       mLogData.AppendPrintf("   :: Half Open #%u\n", i);
       ent->mHalfOpens[i]->PrintDiagnostics(mLogData);
     }
-    for (i = 0; i < ent->mPendingQ.Length(); ++i) {
-      mLogData.AppendPrintf("   :: Pending Transaction #%u\n", i);
-      ent->mPendingQ[i]->PrintDiagnostics(mLogData);
+    i = 0;
+    for (auto it = ent->mPendingTransactionTable.Iter();
+         !it.Done();
+         it.Next()) {
+      mLogData.AppendPrintf("   :: Pending Transactions with Window ID = %"
+        PRIu64 "\n", it.Key());
+      for (uint32_t j = 0; j < it.UserData()->Length(); ++j) {
+        mLogData.AppendPrintf("     ::: Pending Transaction #%u\n", i);
+        it.UserData()->ElementAt(j)->PrintDiagnostics(mLogData);
+        ++i;
+      }
     }
     for (i = 0; i < ent->mCoalescingKeys.Length(); ++i) {
       mLogData.AppendPrintf("   :: Coalescing Key #%u %s\n",
@@ -194,10 +205,20 @@ nsHttpTransaction::PrintDiagnostics(nsCString &log)
 
   nsAutoCString requestURI;
   mRequestHead->RequestURI(requestURI);
-  log.AppendPrintf("     ::: uri = %s\n", requestURI.get());
-  log.AppendPrintf("     caps = 0x%x\n", mCaps);
-  log.AppendPrintf("     priority = %d\n", mPriority);
-  log.AppendPrintf("     restart count = %u\n", mRestartCount);
+  log.AppendPrintf("       :::: uri = %s\n", requestURI.get());
+  log.AppendPrintf("       caps = 0x%x\n", mCaps);
+  log.AppendPrintf("       priority = %d\n", mPriority);
+  log.AppendPrintf("       restart count = %u\n", mRestartCount);
+}
+
+void
+nsHttpConnectionMgr::PendingTransactionInfo::PrintDiagnostics(nsCString &log)
+{
+  log.AppendPrintf("     ::: Pending transaction\n");
+  mTransaction->PrintDiagnostics(log);
+  RefPtr<nsHalfOpenSocket> halfOpen = do_QueryReferent(mHalfOpen);
+  log.AppendPrintf("     Waiting for half open sock: %p or connection: %p\n",
+                   halfOpen.get(), mActiveConn.get());
 }
 
 } // namespace net

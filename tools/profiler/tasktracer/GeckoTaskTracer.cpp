@@ -57,7 +57,7 @@ static mozilla::StaticMutex sMutex;
 
 // The generation of TraceInfo. It will be > 0 if the Task Tracer is started and
 // <= 0 if stopped.
-static mozilla::Atomic<bool> sStarted(false);
+bool gStarted(false);
 static nsTArray<UniquePtr<TraceInfo>>* sTraceInfos = nullptr;
 static PRTime sStartTime;
 
@@ -139,19 +139,13 @@ ObsoleteCurrentTraceInfos()
   }
 }
 
-inline static bool
-IsStartLogging()
-{
-  return sStarted;
-}
-
 static void
 SetLogStarted(bool aIsStartLogging)
 {
-  MOZ_ASSERT(aIsStartLogging != sStarted);
+  MOZ_ASSERT(aIsStartLogging != gStarted);
   StaticMutexAutoLock lock(sMutex);
 
-  sStarted = aIsStartLogging;
+  gStarted = aIsStartLogging;
 
   if (aIsStartLogging && sTraceInfos == nullptr) {
     sTraceInfos = new nsTArray<UniquePtr<TraceInfo>>();
@@ -272,12 +266,12 @@ GenNewUniqueTaskId()
   return taskid;
 }
 
-AutoSaveCurTraceInfo::AutoSaveCurTraceInfo()
+AutoSaveCurTraceInfoImpl::AutoSaveCurTraceInfoImpl()
 {
   GetCurTraceInfo(&mSavedSourceEventId, &mSavedTaskId, &mSavedSourceEventType);
 }
 
-AutoSaveCurTraceInfo::~AutoSaveCurTraceInfo()
+AutoSaveCurTraceInfoImpl::~AutoSaveCurTraceInfoImpl()
 {
   SetCurTraceInfo(mSavedSourceEventId, mSavedTaskId, mSavedSourceEventType);
 }
@@ -391,41 +385,29 @@ LogVirtualTablePtr(uint64_t aTaskId, uint64_t aSourceEventId, uintptr_t* aVptr)
   }
 }
 
-AutoSourceEvent::AutoSourceEvent(SourceEventType aType)
-  : AutoSaveCurTraceInfo()
+void
+AutoSourceEvent::StartScope(SourceEventType aType)
 {
   CreateSourceEvent(aType);
 }
 
-AutoSourceEvent::~AutoSourceEvent()
+void
+AutoSourceEvent::StopScope()
 {
   DestroySourceEvent();
 }
 
-AutoScopedLabel::AutoScopedLabel(const char* aFormat, ...)
-  : mLabel(nullptr)
+void
+AutoScopedLabel::Init(const char* aFormat, va_list& aArgs)
 {
-  if (IsStartLogging()) {
-    // Optimization for when it is disabled.
-    nsCString label;
-    va_list args;
-    va_start(args, aFormat);
-    label.AppendPrintf(aFormat, args);
-    va_end(args);
-    mLabel = strdup(label.get());
-    AddLabel("Begin %s", mLabel);
-  }
+  nsCString label;
+  va_list& args = aArgs;
+  label.AppendPrintf(aFormat, args);
+  mLabel = strdup(label.get());
+  AddLabel("Begin %s", mLabel);
 }
 
-AutoScopedLabel::~AutoScopedLabel()
-{
-  if (mLabel) {
-    AddLabel("End %s", mLabel);
-    free(mLabel);
-  }
-}
-
-void AddLabel(const char* aFormat, ...)
+void DoAddLabel(const char* aFormat, va_list& aArgs)
 {
   TraceInfoHolder info = GetOrCreateTraceInfo();
   ENSURE_TRUE_VOID(info);
@@ -434,11 +416,9 @@ void AddLabel(const char* aFormat, ...)
   // [3 taskId "label"]
   TraceInfoLogType* log = info->AppendLog();
   if (log) {
-    va_list args;
-    va_start(args, aFormat);
+    va_list& args = aArgs;
     nsCString &buffer = *info->mStrs.AppendElement();
     buffer.AppendPrintf(aFormat, args);
-    va_end(args);
 
     log->mLabel.mType = ACTION_ADD_LABEL;
     log->mLabel.mTaskId = info->mCurTaskId;
@@ -488,37 +468,44 @@ GetLoggedData(TimeStamp aTimeStamp)
 
       switch (log.mType) {
       case ACTION_DISPATCH:
-        buffer.AppendPrintf("%d %lld %lld %lld %d %lld",
+        buffer.AppendPrintf("%d %llu %llu %llu %d %llu",
                             ACTION_DISPATCH,
-                            log.mDispatch.mTaskId,
-                            log.mDispatch.mTime,
-                            log.mDispatch.mSourceEventId,
+                            (unsigned long long)log.mDispatch.mTaskId,
+                            (unsigned long long)log.mDispatch.mTime,
+                            (unsigned long long)log.mDispatch.mSourceEventId,
                             log.mDispatch.mSourceEventType,
-                            log.mDispatch.mParentTaskId);
+                            (unsigned long long)log.mDispatch.mParentTaskId);
         break;
 
       case ACTION_BEGIN:
-        buffer.AppendPrintf("%d %lld %lld %d %d",
-                            ACTION_BEGIN, log.mBegin.mTaskId,
-                            log.mBegin.mTime, log.mBegin.mPid,
+        buffer.AppendPrintf("%d %llu %llu %d %d",
+                            ACTION_BEGIN,
+                            (unsigned long long)log.mBegin.mTaskId,
+                            (unsigned long long)log.mBegin.mTime,
+                            log.mBegin.mPid,
                             log.mBegin.mTid);
         break;
 
       case ACTION_END:
-        buffer.AppendPrintf("%d %lld %lld",
-                            ACTION_END, log.mEnd.mTaskId, log.mEnd.mTime);
+        buffer.AppendPrintf("%d %llu %llu",
+                            ACTION_END,
+                            (unsigned long long)log.mEnd.mTaskId,
+                            (unsigned long long)log.mEnd.mTime);
         break;
 
       case ACTION_GET_VTABLE:
-        buffer.AppendPrintf("%d %lld %p",
-                            ACTION_GET_VTABLE, log.mVPtr.mTaskId,
-                            log.mVPtr.mVPtr);
+        buffer.AppendPrintf("%d %llu %p",
+                            ACTION_GET_VTABLE,
+                            (unsigned long long)log.mVPtr.mTaskId,
+                            (void*)log.mVPtr.mVPtr);
         break;
 
       case ACTION_ADD_LABEL:
-        buffer.AppendPrintf("%d %lld %lld \"%s\"",
-                            ACTION_ADD_LABEL, log.mLabel.mTaskId,
-                            log.mLabel.mTime, strs[log.mLabel.mStrIdx].get());
+        buffer.AppendPrintf("%d %llu %llu2 \"%s\"",
+                            ACTION_ADD_LABEL,
+                            (unsigned long long)log.mLabel.mTaskId,
+                            (unsigned long long)log.mLabel.mTime,
+                            strs[log.mLabel.mStrIdx].get());
         break;
 
       default:

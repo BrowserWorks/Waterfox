@@ -8,6 +8,9 @@
 #include "mozilla/dom/ContentChild.h"
 #include "mozilla/dom/ContentParent.h"
 #include "mozilla/dom/FileBlobImpl.h"
+#include "mozilla/dom/IPCBlobUtils.h"
+#include "mozilla/ipc/IPCStreamUtils.h"
+#include "FileSystemUtils.h"
 #include "nsProxyRelease.h"
 
 namespace mozilla {
@@ -20,6 +23,10 @@ namespace {
 class ReleaseRunnable final : public Runnable
 {
 public:
+  ReleaseRunnable()
+    : Runnable("ReleaseRunnable")
+  {}
+
   static void
   MaybeReleaseOnMainThread(nsTArray<RefPtr<Promise>>& aPromises,
                            nsTArray<RefPtr<GetFilesCallback>>& aCallbacks,
@@ -33,7 +40,7 @@ public:
 
     RefPtr<ReleaseRunnable> runnable =
       new ReleaseRunnable(aPromises, aCallbacks, aFiles, global.forget());
-    NS_DispatchToMainThread(runnable);
+    FileSystemUtils::DispatchRunnable(nullptr, runnable.forget());
   }
 
   NS_IMETHOD
@@ -130,7 +137,8 @@ GetFilesHelper::Create(nsIGlobalObject* aGlobal,
 }
 
 GetFilesHelper::GetFilesHelper(nsIGlobalObject* aGlobal, bool aRecursiveFlag)
-  : GetFilesHelperBase(aRecursiveFlag)
+  : Runnable("GetFilesHelper")
+  , GetFilesHelperBase(aRecursiveFlag)
   , mGlobal(aGlobal)
   , mListingCompleted(false)
   , mErrorResult(NS_OK)
@@ -227,7 +235,8 @@ GetFilesHelper::Run()
       return NS_OK;
     }
 
-    return NS_DispatchToMainThread(this);
+    RefPtr<Runnable> runnable = this;
+    return FileSystemUtils::DispatchRunnable(nullptr, runnable.forget());
   }
 
   // We are here, but we should not do anything on this thread because, in the
@@ -578,13 +587,15 @@ public:
     }
 
     GetFilesResponseSuccess success;
-    nsTArray<PBlobParent*>& blobsParent = success.blobsParent();
-    blobsParent.SetLength(aFiles.Length());
+
+    nsTArray<IPCBlob>& ipcBlobs = success.blobs();
+    ipcBlobs.SetLength(aFiles.Length());
 
     for (uint32_t i = 0; i < aFiles.Length(); ++i) {
-      blobsParent[i] =
-        mParent->mContentParent->GetOrCreateActorForBlob(aFiles[i]);
-      if (!blobsParent[i]) {
+      nsresult rv = IPCBlobUtils::Serialize(aFiles[i]->Impl(),
+                                            mParent->mContentParent,
+                                            ipcBlobs[i]);
+      if (NS_WARN_IF(NS_FAILED(rv))) {
         mParent->mContentParent->SendGetFilesResponseAndForget(mParent->mUUID,
                                                                GetFilesResponseFailure(NS_ERROR_OUT_OF_MEMORY));
         return;

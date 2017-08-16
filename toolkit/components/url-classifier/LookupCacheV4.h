@@ -25,13 +25,9 @@ public:
 
   virtual nsresult Init() override;
   virtual nsresult Has(const Completion& aCompletion,
-                       bool* aHas, uint32_t* aMatchLength,
-                       bool* aFromCache) override;
-
-  virtual void IsHashEntryConfirmed(const Completion& aEntry,
-                                    const TableFreshnessMap& aTableFreshness,
-                                    uint32_t aFreshnessGuarantee,
-                                    bool* aConfirmed) override;
+                       bool* aHas,
+                       uint32_t* aMatchLength,
+                       bool* aConfirmed) override;
 
   virtual bool IsEmpty() override;
 
@@ -44,6 +40,8 @@ public:
   nsresult ApplyUpdate(TableUpdateV4* aTableUpdate,
                        PrefixStringMap& aInputMap,
                        PrefixStringMap& aOutputMap);
+
+  nsresult AddFullHashResponseToCache(const FullHashResponseMap& aResponseMap);
 
   nsresult WriteMetadata(TableUpdateV4* aTableUpdate);
   nsresult LoadMetadata(nsACString& aState, nsACString& aChecksum);

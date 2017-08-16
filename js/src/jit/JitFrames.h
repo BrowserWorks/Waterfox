@@ -95,10 +95,11 @@ ScriptFromCalleeToken(CalleeToken token)
 // to. The exact mechanism in which frames are laid out is architecture
 // dependent.
 //
-// Two special frame types exist. Entry frames begin an ion activation, and
-// therefore there is exactly one per activation of jit::Cannon. Exit frames
-// are necessary to leave JIT code and enter C++, and thus, C++ code will
-// always begin iterating from the topmost exit frame.
+// Two special frame types exist:
+// - Entry frames begin a JitActivation, and therefore there is exactly one
+// per activation of EnterIon or EnterBaseline. These reuse JitFrameLayout.
+// - Exit frames are necessary to leave JIT code and enter C++, and thus,
+// C++ code will always begin iterating from the topmost exit frame.
 
 class LSafepoint;
 
@@ -286,9 +287,6 @@ void EnsureBareExitFrame(JSContext* cx, JitFrameLayout* frame);
 
 void TraceJitActivations(JSContext* cx, const CooperatingContext& target, JSTracer* trc);
 
-JSCompartment*
-TopmostIonActivationCompartment(JSContext* cx);
-
 void UpdateJitActivationsForMinorGC(JSRuntime* rt, JSTracer* trc);
 
 static inline uint32_t
@@ -435,15 +433,6 @@ class JitFrameLayout : public CommonFrameLayout
 
     static inline size_t Size() {
         return sizeof(JitFrameLayout);
-    }
-};
-
-// this is the layout of the frame that is used when we enter Ion code from platform ABI code
-class EntryFrameLayout : public JitFrameLayout
-{
-  public:
-    static inline size_t Size() {
-        return sizeof(EntryFrameLayout);
     }
 };
 

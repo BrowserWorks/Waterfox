@@ -94,7 +94,7 @@ ClearKeySessionManager::CreateSession(uint32_t aPromiseId,
   };
 
   // If we haven't loaded, don't do this yet
-  if (MaybeDeferTillInitialized(deferrer)) {
+  if (MaybeDeferTillInitialized(move(deferrer))) {
     CK_LOGD("Deferring CreateSession");
     return;
   }
@@ -202,7 +202,7 @@ ClearKeySessionManager::LoadSession(uint32_t aPromiseId,
     self->LoadSession(aPromiseId, sessionId.data(), sessionId.size());
   };
 
-  if (MaybeDeferTillInitialized(deferrer)) {
+  if (MaybeDeferTillInitialized(move(deferrer))) {
     CK_LOGD("Deferring LoadSession");
     return;
   }
@@ -232,7 +232,7 @@ ClearKeySessionManager::LoadSession(uint32_t aPromiseId,
                                       size);
   };
 
-  function<void()> failure = [self, sessionId, aPromiseId] {
+  function<void()> failure = [self, aPromiseId] {
     if (!self->mHost) {
       return;
     }
@@ -338,7 +338,7 @@ ClearKeySessionManager::UpdateSession(uint32_t aPromiseId,
   };
 
   // If we haven't fully loaded, defer calling this method
-  if (MaybeDeferTillInitialized(deferrer)) {
+  if (MaybeDeferTillInitialized(move(deferrer))) {
     CK_LOGD("Deferring LoadSession");
     return;
   }
@@ -488,7 +488,7 @@ ClearKeySessionManager::CloseSession(uint32_t aPromiseId,
   };
 
   // If we haven't loaded, call this method later.
-  if (MaybeDeferTillInitialized(deferrer)) {
+  if (MaybeDeferTillInitialized(move(deferrer))) {
     CK_LOGD("Deferring CloseSession");
     return;
   }
@@ -547,7 +547,7 @@ ClearKeySessionManager::RemoveSession(uint32_t aPromiseId,
   };
 
   // If we haven't fully loaded, defer calling this method.
-  if (MaybeDeferTillInitialized(deferrer)) {
+  if (MaybeDeferTillInitialized(move(deferrer))) {
     CK_LOGD("Deferring RemoveSession");
     return;
   }
@@ -586,7 +586,7 @@ ClearKeySessionManager::RemoveSession(uint32_t aPromiseId,
 
   vector<uint8_t> emptyKeydata;
 
-  function<void()> resolve = [self, aPromiseId, sessionId] ()
+  function<void()> resolve = [self, aPromiseId] ()
   {
     if (!self->mHost) {
       return;
@@ -594,7 +594,7 @@ ClearKeySessionManager::RemoveSession(uint32_t aPromiseId,
     self->mHost->OnResolvePromise(aPromiseId);
   };
 
-  function<void()> reject = [self, aPromiseId, sessionId] ()
+  function<void()> reject = [self, aPromiseId] ()
   {
     if (!self->mHost) {
       return;
@@ -665,7 +665,7 @@ ClearKeySessionManager::DecryptingComplete()
   Release();
 }
 
-bool ClearKeySessionManager::MaybeDeferTillInitialized(function<void()> aMaybeDefer)
+bool ClearKeySessionManager::MaybeDeferTillInitialized(function<void()>&& aMaybeDefer)
 {
   if (mPersistence->IsLoaded()) {
     return false;

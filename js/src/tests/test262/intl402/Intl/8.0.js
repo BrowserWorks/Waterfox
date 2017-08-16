@@ -1,4 +1,3 @@
-// |reftest| skip-if(!this.hasOwnProperty('Intl')) -- needs Intl
 // Copyright 2013 Mozilla Corporation. All rights reserved.
 // This code is governed by the license found in the LICENSE file.
 
@@ -8,8 +7,6 @@ description: Tests that Intl has Object.prototype as its prototype.
 author: Norbert Lindenberg
 ---*/
 
-if (Object.getPrototypeOf(Intl) !== Object.prototype) {
-    $ERROR("Intl doesn't have Object.prototype as its prototype.");
-}
+assert.sameValue(Object.getPrototypeOf(Intl), Object.prototype, "Intl doesn't have Object.prototype as its prototype.");
 
 reportCompare(0, 0);

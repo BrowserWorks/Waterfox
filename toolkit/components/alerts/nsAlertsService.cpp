@@ -22,6 +22,10 @@
 #include "nsIFaviconService.h"
 #endif // MOZ_PLACES
 
+#ifdef XP_WIN
+#include <shellapi.h>
+#endif
+
 using namespace mozilla;
 
 using mozilla::dom::ContentChild;
@@ -45,7 +49,7 @@ public:
 
   NS_IMETHOD
   OnComplete(nsIURI *aIconURI, uint32_t aIconSize, const uint8_t *aIconData,
-             const nsACString &aMimeType) override
+             const nsACString &aMimeType, uint16_t aWidth) override
   {
     nsresult rv = NS_ERROR_FAILURE;
     if (aIconSize > 0) {
@@ -107,9 +111,9 @@ ShowWithIconBackend(nsIAlertsService* aBackend, nsIAlertNotification* aAlert,
   nsCOMPtr<nsIFaviconDataCallback> callback =
     new IconCallback(aBackend, aAlert, aAlertListener);
   if (alertsIconData) {
-    return favicons->GetFaviconDataForPage(uri, callback);
+    return favicons->GetFaviconDataForPage(uri, callback, 0);
   }
-  return favicons->GetFaviconURLForPage(uri, callback);
+  return favicons->GetFaviconURLForPage(uri, callback, 0);
 #else
   return NS_ERROR_NOT_IMPLEMENTED;
 #endif // !MOZ_PLACES
@@ -154,23 +158,12 @@ bool nsAlertsService::ShouldShowAlert()
   bool result = true;
 
 #ifdef XP_WIN
-  HMODULE shellDLL = ::LoadLibraryW(L"shell32.dll");
-  if (!shellDLL)
-    return result;
-
-  SHQueryUserNotificationStatePtr pSHQueryUserNotificationState =
-    (SHQueryUserNotificationStatePtr) ::GetProcAddress(shellDLL, "SHQueryUserNotificationState");
-
-  if (pSHQueryUserNotificationState) {
-    MOZ_QUERY_USER_NOTIFICATION_STATE qstate;
-    if (SUCCEEDED(pSHQueryUserNotificationState(&qstate))) {
-      if (qstate != QUNS_ACCEPTS_NOTIFICATIONS) {
-         result = false;
-      }
+  QUERY_USER_NOTIFICATION_STATE qstate;
+  if (SUCCEEDED(SHQueryUserNotificationState(&qstate))) {
+    if (qstate != QUNS_ACCEPTS_NOTIFICATIONS) {
+       result = false;
     }
   }
-
-  ::FreeLibrary(shellDLL);
 #endif
 
   return result;

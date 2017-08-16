@@ -45,13 +45,15 @@ VideoDecoderChild::RecvOutput(const VideoDataIPDL& aData)
   // it gets deallocated.
   RefPtr<Image> image = new GPUVideoImage(GetManager(), aData.sd(), aData.frameSize());
 
-  RefPtr<VideoData> video = VideoData::CreateFromImage(aData.display(),
-                                                       aData.base().offset(),
-                                                       aData.base().time(),
-                                                       aData.base().duration(),
-                                                       image,
-                                                       aData.base().keyframe(),
-                                                       aData.base().timecode());
+  RefPtr<VideoData> video = VideoData::CreateFromImage(
+    aData.display(),
+    aData.base().offset(),
+    media::TimeUnit::FromMicroseconds(aData.base().time()),
+    media::TimeUnit::FromMicroseconds(aData.base().duration()),
+    image,
+    aData.base().keyframe(),
+    media::TimeUnit::FromMicroseconds(aData.base().timecode()));
+
   mDecodedData.AppendElement(Move(video));
   return IPC_OK();
 }
@@ -228,9 +230,9 @@ VideoDecoderChild::Decode(MediaRawData* aSample)
   memcpy(buffer.get<uint8_t>(), aSample->Data(), aSample->Size());
 
   MediaRawDataIPDL sample(MediaDataIPDL(aSample->mOffset,
-                                        aSample->mTime,
-                                        aSample->mTimecode,
-                                        aSample->mDuration,
+                                        aSample->mTime.ToMicroseconds(),
+                                        aSample->mTimecode.ToMicroseconds(),
+                                        aSample->mDuration.ToMicroseconds(),
                                         aSample->mFrames,
                                         aSample->mKeyframe),
                           buffer);

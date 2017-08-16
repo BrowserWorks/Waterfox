@@ -7,6 +7,8 @@ License, v. 2.0. If a copy of the MPL was not distributed with this
 file, You can obtain one at http://mozilla.org/MPL/2.0/.
 -->
 
+<!-- eslint-env mozilla/browser-window -->
+
 <!DOCTYPE bindings [
 <!ENTITY % notificationDTD SYSTEM "chrome://global/locale/notification.dtd">
 %notificationDTD;
@@ -38,7 +40,14 @@ file, You can obtain one at http://mozilla.org/MPL/2.0/.
                       class="autocomplete-textbox urlbar-input textbox-input uri-element-right-align"
                       allowevents="true"
                       inputmode="url"
-                      xbl:inherits="tooltiptext=inputtooltiptext,value,maxlength,disabled,size,readonly,placeholder,tabindex,accesskey"/>
+                      xbl:inherits="tooltiptext=inputtooltiptext,value,maxlength,disabled,size,readonly,placeholder,tabindex,accesskey,focused,textoverflow"/>
+#ifdef MOZ_PHOTON_THEME
+          <xul:image anonid="go-button"
+                     class="urlbar-go-button"
+                     onclick="gURLBar.handleCommand(event);"
+                     tooltiptext="&goEndCap.tooltip;"
+                     xbl:inherits="pageproxystate,parentfocused=focused"/>
+#endif
         </xul:hbox>
         <xul:dropmarker anonid="historydropmarker"
                         class="autocomplete-history-dropmarker urlbar-history-dropmarker"
@@ -53,10 +62,6 @@ file, You can obtain one at http://mozilla.org/MPL/2.0/.
     </content>
 
     <implementation implements="nsIObserver, nsIDOMEventListener">
-      <field name="AppConstants" readonly="true">
-        (Components.utils.import("resource://gre/modules/AppConstants.jsm", {})).AppConstants;
-      </field>
-
       <field name="ExtensionSearchHandler" readonly="true">
         (Components.utils.import("resource://gre/modules/ExtensionSearchHandler.jsm", {})).ExtensionSearchHandler;
       </field>
@@ -65,15 +70,18 @@ file, You can obtain one at http://mozilla.org/MPL/2.0/.
         this._prefs = Components.classes["@mozilla.org/preferences-service;1"]
                                 .getService(Components.interfaces.nsIPrefService)
                                 .getBranch("browser.urlbar.");
+        this._prefs.addObserver("", this);
 
-        this._prefs.addObserver("", this, false);
+        this._defaultPrefs = Components.classes["@mozilla.org/preferences-service;1"]
+                                       .getService(Components.interfaces.nsIPrefService)
+                                       .getDefaultBranch("browser.urlbar.");
+
         this.clickSelectsAll = this._prefs.getBoolPref("clickSelectsAll");
         this.doubleClickSelectsAll = this._prefs.getBoolPref("doubleClickSelectsAll");
         this.completeDefaultIndex = this._prefs.getBoolPref("autoFill");
         this.timeout = this._prefs.getIntPref("delay");
         this._formattingEnabled = this._prefs.getBoolPref("formatting.enabled");
         this._mayTrimURLs = this._prefs.getBoolPref("trimURLs");
-        this._cacheUserMadeSearchSuggestionsChoice();
         this.inputField.controllers.insertControllerAt(0, this._copyCutController);
         this.inputField.addEventListener("paste", this);
         this.inputField.addEventListener("mousedown", this);
@@ -113,7 +121,14 @@ file, You can obtain one at http://mozilla.org/MPL/2.0/.
           cxmenu.insertBefore(pasteAndGo, insertLocation.nextSibling);
         }
 
-        this._enableOrDisableOneOffSearches();
+        this.popup.addEventListener("popupshowing", () => {
+          this._enableOrDisableOneOffSearches();
+        }, {capturing: true, once: true});
+
+        // The autocomplete controller uses heuristic on some internal caches
+        // to handle cases like backspace, autofill or repeated searches.
+        // Ensure to clear those internal caches when switching tabs.
+        gBrowser.tabContainer.addEventListener("TabSelect", this);
       ]]></constructor>
 
       <destructor><![CDATA[
@@ -126,7 +141,28 @@ file, You can obtain one at http://mozilla.org/MPL/2.0/.
         this.inputField.removeEventListener("mouseout", this);
         this.inputField.removeEventListener("overflow", this);
         this.inputField.removeEventListener("underflow", this);
+
+        if (this._deferredKeyEventTimeout) {
+          clearTimeout(this._deferredKeyEventTimeout);
+          this._deferredKeyEventTimeout = null;
+        }
+
+        // Null out the one-offs' popup and textbox so that it cleans up its
+        // internal state for both.  Most importantly, it removes the event
+        // listeners that it added to both.
+        this.popup.oneOffSearchButtons.popup = null;
+        this.popup.oneOffSearchButtons.textbox = null;
       ]]></destructor>
+
+#ifdef MOZ_PHOTON_THEME
+      <field name="goButton">
+        document.getAnonymousElementByAttribute(this, "anonid", "go-button");
+      </field>
+#else
+      <field name="goButton">
+        document.getElementById("urlbar-go-button");
+      </field>
+#endif
 
       <field name="_value">""</field>
       <field name="gotResultForCurrentQuery">false</field>
@@ -213,12 +249,126 @@ file, You can obtain one at http://mozilla.org/MPL/2.0/.
               this.popup.selectedIndex = -1;
               break;
           }
-          if (this.popup.popupOpen &&
-              !this.popup.disableKeyNavigation &&
-              this.popup.handleKeyPress(aEvent)) {
-            return true;
+          if (!this.popup.disableKeyNavigation) {
+            if (this._keyCodesToDefer.has(aEvent.keyCode) &&
+                this._shouldDeferKeyEvent(aEvent)) {
+              this._deferKeyEvent(aEvent, "onKeyPress");
+              return false;
+            }
+            if (this.popup.popupOpen && this.popup.handleKeyPress(aEvent)) {
+              return true;
+            }
           }
           return this.handleKeyPress(aEvent);
+        ]]></body>
+      </method>
+
+      <!--
+        Search results arrive asynchronously, which means that keypresses may
+        arrive before results do and therefore not have the effect the user
+        intends.  That's especially likely to happen with the down arrow and
+        enter keys due to the one-off search buttons: if the user very quickly
+        pastes something in the input, presses the down arrow key, and then hits
+        enter, they are probably expecting to visit the first result.  But if
+        there are no results, then pressing down and enter will trigger the
+        first one-off button.  To prevent that undesirable behavior, certain
+        keys are buffered and deferred until more results arrive, at which time
+        they're replayed.
+
+        @param event
+               The key event that should maybe be deferred.  You can pass null
+               or undefined if you don't have one to see whether the next key
+               event in general should be deferred.
+        @return True if the event should be deferred, false if not.
+       -->
+      <method name="_shouldDeferKeyEvent">
+        <parameter name="event"/>
+        <body><![CDATA[
+          let waitedLongEnough =
+            this._searchStartDate + this._deferredKeyEventTimeoutMs < Date.now();
+          if (waitedLongEnough && !this._deferredKeyEventTimeout) {
+            return false;
+          }
+          if (event && event.keyCode == KeyEvent.DOM_VK_TAB && !this.popupOpen) {
+            // In this case, the popup is closed and the user pressed the Tab
+            // key.  The focus should move out of the urlbar immediately.
+            return false;
+          }
+          if (!this.gotResultForCurrentQuery || !this.popupOpen) {
+            return true;
+          }
+          let maxResultsRemaining =
+            this.popup.maxResults - this.popup._matchCount;
+          let lastResultSelected =
+            this.popup.selectedIndex + 1 == this.popup._matchCount;
+          return maxResultsRemaining > 0 && lastResultSelected;
+        ]]></body>
+      </method>
+
+      <!--
+        Adds a key event to the deferred event queue.
+
+        @param event
+               The key event to defer.
+        @param methodName
+               The name of the method on `this` to call.  It's expected to take
+               a single argument, the event.
+      -->
+      <method name="_deferKeyEvent">
+        <parameter name="event"/>
+        <parameter name="methodName"/>
+        <body><![CDATA[
+          // Somehow event.defaultPrevented ends up true for deferred events.
+          // autocomplete ignores defaultPrevented events, which means it would
+          // ignore replayed deferred events if we didn't tell it to bypass
+          // defaultPrevented.  That's the purpose of this expando.  If we could
+          // figure out what's setting defaultPrevented and prevent it, then we
+          // could get rid of this.
+          event.urlbarDeferred = true;
+
+          this._deferredKeyEventQueue.push({
+            methodName,
+            event,
+            searchString: this.mController.searchString,
+          });
+
+          if (!this._deferredKeyEventTimeout) {
+            this._deferredKeyEventTimeout = setTimeout(() => {
+              this._deferredKeyEventTimeout = null;
+              this.maybeReplayDeferredKeyEvents();
+            }, this._deferredKeyEventTimeoutMs);
+          }
+        ]]></body>
+      </method>
+
+      <!-- The enter key is always deferred, so it's not included here. -->
+      <field name="_keyCodesToDefer">new Set([
+        Ci.nsIDOMKeyEvent.DOM_VK_DOWN,
+        Ci.nsIDOMKeyEvent.DOM_VK_TAB,
+      ])</field>
+      <field name="_deferredKeyEventQueue">[]</field>
+      <field name="_deferredKeyEventTimeout">null</field>
+      <field name="_deferredKeyEventTimeoutMs">200</field>
+      <field name="_searchStartDate">0</field>
+
+      <method name="maybeReplayDeferredKeyEvents">
+        <body><![CDATA[
+          if (!this._deferredKeyEventQueue.length ||
+              this._shouldDeferKeyEvent()) {
+            return;
+          }
+          if (this._deferredKeyEventTimeout) {
+            clearTimeout(this._deferredKeyEventTimeout);
+            this._deferredKeyEventTimeout = null;
+          }
+          let instance = this._deferredKeyEventQueue.shift();
+          // Safety check: handle only if the search string didn't change.
+          if (this.mController.searchString == instance.searchString) {
+            this[instance.methodName](instance.event);
+          }
+          setTimeout(() => {
+            this.maybeReplayDeferredKeyEvents();
+          });
         ]]></body>
       </method>
 
@@ -521,10 +671,17 @@ file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
       <property name="oneOffSearchQuery">
         <getter><![CDATA[
+          // If the user has selected a search suggestion, chances are they
+          // want to use the one off search engine to search for that suggestion,
+          // not the string that they manually entered into the location bar.
+          let action = this._parseActionUrl(this.value);
+          if (action && action.type == "searchengine") {
+            return action.params.input;
+          }
           // this.textValue may be an autofilled string.  Search only with the
           // portion that the user typed, if any, by preferring the autocomplete
           // controller's searchString (including handleEnterInstance.searchString).
-          return (this.handleEnterInstance && this.handleEnterInstance.searchString) ||
+          return this.handleEnterSearchString ||
                  this.mController.searchString ||
                  this.textValue;
         ]]></getter>
@@ -640,7 +797,7 @@ file, You can obtain one at http://mozilla.org/MPL/2.0/.
           }
 
           let url = aUrl;
-          let accel = this.AppConstants.platform == "macosx" ?
+          let accel = AppConstants.platform == "macosx" ?
                       aTriggeringEvent.metaKey :
                       aTriggeringEvent.ctrlKey;
           let shift = aTriggeringEvent.shiftKey;
@@ -684,11 +841,9 @@ file, You can obtain one at http://mozilla.org/MPL/2.0/.
         ]]></body>
       </method>
 
-      <field name="_contentIsCropped">false</field>
-
       <method name="_initURLTooltip">
         <body><![CDATA[
-          if (this.focused || !this._contentIsCropped)
+          if (this.focused || !this.hasAttribute("textoverflow"))
             return;
           this.inputField.setAttribute("tooltiptext", this.value);
         ]]></body>
@@ -924,13 +1079,8 @@ file, You can obtain one at http://mozilla.org/MPL/2.0/.
                 // binding's constructor.
                 this._prefs.setBoolPref("searchSuggestionsChoice",
                   this._prefs.getBoolPref("suggest.searches"));
-
-                this._cacheUserMadeSearchSuggestionsChoice();
-                if (this._userMadeSearchSuggestionsChoice) {
-                  this.popup.searchSuggestionsNotificationWasDismissed(
-                    this._prefs.getBoolPref("suggest.searches")
-                  );
-                }
+                // Clear the cached value to allow changing conditions in tests.
+                delete this._whichSearchSuggestionsNotification;
                 break;
               case "trimURLs":
                 this._mayTrimURLs = this._prefs.getBoolPref(aData);
@@ -998,11 +1148,19 @@ file, You can obtain one at http://mozilla.org/MPL/2.0/.
               this._hideURLTooltip();
               break;
             case "overflow":
-              this._contentIsCropped = true;
+              if (!this.value) {
+                // We initially get a spurious overflow event from the
+                // anonymous div containing the placeholder text; bail out.
+                break;
+              }
+              this.setAttribute("textoverflow", "true");
               break;
             case "underflow":
-              this._contentIsCropped = false;
+              this.removeAttribute("textoverflow");
               this._hideURLTooltip();
+              break;
+            case "TabSelect":
+              this.controller.resetInternalState();
               break;
           }
         ]]></body>
@@ -1085,7 +1243,7 @@ file, You can obtain one at http://mozilla.org/MPL/2.0/.
               KeyEvent.DOM_VK_ALT,
               KeyEvent.DOM_VK_SHIFT,
             ]);
-            let modifier = this.AppConstants.platform == "macosx" ?
+            let modifier = AppConstants.platform == "macosx" ?
                            KeyEvent.DOM_VK_META :
                            KeyEvent.DOM_VK_CONTROL;
             this.__noActionKeys.add(modifier);
@@ -1121,6 +1279,12 @@ file, You can obtain one at http://mozilla.org/MPL/2.0/.
             // a new search and we won't get a result.
             if (this.mController.handleText()) {
               this.gotResultForCurrentQuery = false;
+              this._searchStartDate = Date.now();
+              this._deferredKeyEventQueue = [];
+              if (this._deferredKeyEventTimeout) {
+                clearTimeout(this._deferredKeyEventTimeout);
+                this._deferredKeyEventTimeout = null;
+              }
             }
           }
           this.resetActionType();
@@ -1144,25 +1308,22 @@ file, You can obtain one at http://mozilla.org/MPL/2.0/.
           // However, if the default result is automatically selected, we
           // ensure that it corresponds to the current input.
 
-          // Store the current search string so it can be used in
-          // handleCommand, which will be called as a result of
-          // mController.handleEnter().
-          // Note this is also used to detect if we should perform a delayed
-          // handleEnter, in such a case it won't have been cleared.
-          this.handleEnterInstance = {
-            searchString: this.mController.searchString,
-            event
-          };
+          // Store the current search string so it can be used in handleCommand,
+          // which will be called as a result of mController.handleEnter().
+          this.handleEnterSearchString = this.mController.searchString;
 
-          if (this.popup.selectedIndex != 0 || this.gotResultForCurrentQuery) {
+          if (!this._deferredKeyEventQueue.length &&
+              (this.popup.selectedIndex != 0 || this.gotResultForCurrentQuery)) {
             this.maybeCanonizeURL(event, this.value);
-            let rv = this.mController.handleEnter(false, event);
-            this.handleEnterInstance = null;
+            let handled = this.mController.handleEnter(false, event);
+            this.handleEnterSearchString = null;
             this.popup.overrideValue = null;
-            return rv;
+            return handled;
           }
 
-          return true;
+          // Defer the event until the first non-heuristic result comes in.
+          this._deferKeyEvent(event, "handleEnter");
+          return false;
         ]]></body>
       </method>
 
@@ -1181,29 +1342,66 @@ file, You can obtain one at http://mozilla.org/MPL/2.0/.
         ]]></body>
       </method>
 
-      <field name="_userMadeSearchSuggestionsChoice"><![CDATA[
-        false
-      ]]></field>
-
-      <method name="_cacheUserMadeSearchSuggestionsChoice">
-        <body><![CDATA[
-          this._userMadeSearchSuggestionsChoice =
-            this._prefs.getBoolPref("userMadeSearchSuggestionsChoice") ||
-            this._prefs.getBoolPref("suggest.searches");
-        ]]></body>
-      </method>
-
-      <property name="shouldShowSearchSuggestionsNotification" readonly="true">
+      <property name="_userMadeSearchSuggestionsChoice" readonly="true">
         <getter><![CDATA[
-          return !this._userMadeSearchSuggestionsChoice &&
-                 !this.inPrivateContext &&
-                 // When _urlbarFocused is true, tabbrowser would close the
-                 // popup if it's opened here, so don't show the notification.
-                 !gBrowser.selectedBrowser._urlbarFocused &&
-                 Services.prefs.getBoolPref("browser.search.suggest.enabled") &&
-                 this._prefs.getIntPref("daysBeforeHidingSuggestionsPrompt");
+          return this._prefs.getBoolPref("userMadeSearchSuggestionsChoice") ||
+                 this._defaultPrefs.getBoolPref("suggest.searches") != this._prefs.getBoolPref("suggest.searches");
         ]]></getter>
       </property>
+
+      <property name="whichSearchSuggestionsNotification" readonly="true">
+        <getter><![CDATA[
+          // Once we return "none" once, we'll always return "none".
+          // If available, use the cached value, rather than running all of the
+          // checks again at every locationbar focus.
+          if (this._whichSearchSuggestionsNotification) {
+            return this._whichSearchSuggestionsNotification;
+          }
+
+          if (Services.prefs.getBoolPref("browser.search.suggest.enabled") &&
+              !this.inPrivateContext &&
+              // In any case, if the user made a choice we should not nag him.
+              !this._userMadeSearchSuggestionsChoice) {
+            let enabledByDefault = this._defaultPrefs.getBoolPref("suggest.searches");
+            if (!enabledByDefault &&
+                this._prefs.getIntPref("daysBeforeHidingSuggestionsPrompt")) {
+              return "opt-in";
+            }
+            if (enabledByDefault &&
+                // Has not been switched off.
+                this._prefs.getBoolPref("suggest.searches") &&
+                this._prefs.getIntPref("timesBeforeHidingSuggestionsHint")) {
+              return "opt-out";
+            }
+          }
+          return this._whichSearchSuggestionsNotification = "none";
+        ]]></getter>
+      </property>
+
+      <method name="updateSearchSuggestionsNotificationImpressions">
+        <parameter name="whichNotification"/>
+        <body><![CDATA[
+          if (whichNotification == "none") {
+            throw new Error("Unexpected notification type");
+          }
+
+          let useDays = whichNotification == "opt-in";
+          let prefName = useDays ? "daysBeforeHidingSuggestionsPrompt"
+                                 : "timesBeforeHidingSuggestionsHint";
+          let remaining = this._prefs.getIntPref(prefName);
+          if (remaining <= 0)
+            return;
+
+          let now = new Date();
+          let date = now.getFullYear() * 10000 + (now.getMonth() + 1) * 100 + now.getDate();
+
+          let previousDate = this._prefs.getIntPref("lastSuggestionsPromptDate");
+          if (!useDays || previousDate != date) {
+            this._prefs.setIntPref(prefName, remaining - 1);
+          }
+          this._prefs.setIntPref("lastSuggestionsPromptDate", date);
+        ]]></body>
+      </method>
 
     </implementation>
 
@@ -1236,6 +1434,35 @@ file, You can obtain one at http://mozilla.org/MPL/2.0/.
           if (this.getAttribute("pageproxystate") != "valid") {
             UpdatePopupNotificationsVisibility();
           }
+
+          // We show the opt-out notification on every kind of focus to the urlbar
+          // included opening a new tab, but we want to enforce at least one
+          // notification when the user focuses it with the mouse.
+          let whichNotification = this.whichSearchSuggestionsNotification;
+          if (whichNotification == "opt-out" &&
+              this._showSearchSuggestionNotificationOnMouseFocus === undefined) {
+            this._showSearchSuggestionNotificationOnMouseFocus = true;
+          }
+
+          // Check whether the focus change came from a user mouse action.
+          let focusMethod = Services.focus.getLastFocusMethod(window);
+          let mouseFocused = !!(focusMethod & Services.focus.FLAG_BYMOUSE);
+          if (this._showSearchSuggestionNotificationOnMouseFocus &&
+              mouseFocused) {
+            // Force showing the opt-out notification.
+            this._whichSearchSuggestionsNotification = whichNotification = "opt-out";
+          }
+
+          if (whichNotification == "opt-out") {
+            try {
+              this.popup.openAutocompletePopup(this, this);
+            } finally {
+              if (mouseFocused) {
+                delete this._whichSearchSuggestionsNotification;
+                this._showSearchSuggestionNotificationOnMouseFocus = false;
+              }
+            }
+          }
         }
       ]]></handler>
 
@@ -1247,9 +1474,14 @@ file, You can obtain one at http://mozilla.org/MPL/2.0/.
             UpdatePopupNotificationsVisibility();
           }
         }
-        if (ExtensionSearchHandler.hasActiveInputSession()) {
-          ExtensionSearchHandler.handleInputCancelled();
+        if (this.ExtensionSearchHandler.hasActiveInputSession()) {
+          this.ExtensionSearchHandler.handleInputCancelled();
         }
+        if (this._deferredKeyEventTimeout) {
+          clearTimeout(this._deferredKeyEventTimeout);
+          this._deferredKeyEventTimeout = null;
+        }
+        this._deferredKeyEventQueue = [];
       ]]></handler>
 
       <handler event="dragstart" phase="capturing"><![CDATA[
@@ -1313,34 +1545,62 @@ file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
     <content ignorekeys="true" level="top" consumeoutsideclicks="never"
              aria-owns="richlistbox">
-      <xul:hbox anonid="search-suggestions-notification"
+      <xul:deck anonid="search-suggestions-notification"
                 align="center"
                 role="alert"
-                aria-describedby="search-suggestions-notification-text">
-        <xul:description flex="1">
-          &urlbar.searchSuggestionsNotification.question;
-          <!-- Several things here are to make the label accessibile via an
-               accesskey so that a11y doesn't suck: the accesskey, using an
-               onclick handler instead of an href attribute, the control
-               attribute, and having the control attribute refer to a valid ID
-               that is the label itself. -->
-          <xul:label id="search-suggestions-notification-learn-more"
+                selectedIndex="0">
+        <!-- OPT-IN -->
+        <xul:hbox flex="1" align="center" anonid="search-suggestions-opt-in">
+          <xul:description flex="1" id="search-suggestions-question">
+            &urlbar.searchSuggestionsNotification.question;
+            <!-- Several things here are to make the label accessibile via an
+                accesskey so that a11y doesn't suck: the accesskey, using an
+                onclick handler instead of an href attribute, the control
+                attribute, and having the control attribute refer to a valid ID
+                that is the label itself. -->
+            <xul:label id="search-suggestions-learn-more"
+                      class="text-link"
+                      role="link"
+                      value="&urlbar.searchSuggestionsNotification.learnMore;"
+                      accesskey="&urlbar.searchSuggestionsNotification.learnMore.accesskey;"
+                      onclick="document.getBindingParent(this).openSearchSuggestionsNotificationLearnMoreURL();"
+                      control="search-suggestions-learn-more"/>
+          </xul:description>
+          <xul:button anonid="search-suggestions-notification-disable"
+                      label="&urlbar.searchSuggestionsNotification.disable;"
+                      accesskey="&urlbar.searchSuggestionsNotification.disable.accesskey;"
+                      onclick="document.getBindingParent(this).dismissSearchSuggestionsNotification(false);"/>
+          <xul:button anonid="search-suggestions-notification-enable"
+                      label="&urlbar.searchSuggestionsNotification.enable;"
+                      accesskey="&urlbar.searchSuggestionsNotification.enable.accesskey;"
+                      onclick="document.getBindingParent(this).dismissSearchSuggestionsNotification(true);"/>
+        </xul:hbox>
+        <!-- OPT-OUT -->
+        <xul:hbox flex="1" align="center" anonid="search-suggestions-opt-out">
+          <xul:image class="ac-site-icon" type="searchengine"/>
+          <xul:hbox anonid="search-suggestions-hint-typing">
+            <xul:description class="ac-title-text">&brandShortName;</xul:description>
+          </xul:hbox>
+          <xul:hbox anonid="search-suggestions-hint-box" flex="1">
+            <xul:description id="search-suggestions-hint">
+              <html:span class="prefix">&#x1f4a1; &urlbar.searchSuggestionsNotification.hintPrefix;</html:span>
+              <html:span>&urlbar.searchSuggestionsNotification.hint;</html:span>
+            </xul:description>
+          </xul:hbox>
+          <xul:label id="search-suggestions-change-settings"
                      class="text-link"
                      role="link"
-                     value="&urlbar.searchSuggestionsNotification.learnMore;"
-                     accesskey="&urlbar.searchSuggestionsNotification.learnMore.accesskey;"
-                     onclick="document.getBindingParent(this).openSearchSuggestionsNotificationLearnMoreURL();"
-                     control="search-suggestions-notification-learn-more"/>
-        </xul:description>
-        <xul:button anonid="search-suggestions-notification-disable"
-                    label="&urlbar.searchSuggestionsNotification.disable;"
-                    accesskey="&urlbar.searchSuggestionsNotification.disable.accesskey;"
-                    onclick="document.getBindingParent(this).dismissSearchSuggestionsNotification(false);"/>
-        <xul:button anonid="search-suggestions-notification-enable"
-                    label="&urlbar.searchSuggestionsNotification.enable;"
-                    accesskey="&urlbar.searchSuggestionsNotification.enable.accesskey;"
-                    onclick="document.getBindingParent(this).dismissSearchSuggestionsNotification(true);"/>
-      </xul:hbox>
+#ifdef XP_WIN
+                     value="&urlbar.searchSuggestionsNotification.changeSettingsWin;"
+                     accesskey="&urlbar.searchSuggestionsNotification.changeSettingsWin.accesskey;"
+#else
+                     value="&urlbar.searchSuggestionsNotification.changeSettingsUnix;"
+                     accesskey="&urlbar.searchSuggestionsNotification.changeSettingsUnix.accesskey;"
+#endif
+                     onclick="Preferences.get('browser.preferences.useOldOrganization') ? openPreferences('paneSearch') : openPreferences('general-search');"
+                     control="search-suggestions-change-settings"/>
+        </xul:hbox>
+      </xul:deck>
       <xul:richlistbox anonid="richlistbox" class="autocomplete-richlistbox"
                        flex="1"/>
       <xul:hbox anonid="footer">
@@ -1355,6 +1615,11 @@ file, You can obtain one at http://mozilla.org/MPL/2.0/.
     </content>
 
     <implementation>
+      <field name="DOMWindowUtils">
+        window.QueryInterface(Ci.nsIInterfaceRequestor)
+              .getInterface(Ci.nsIDOMWindowUtils);
+      </field>
+
       <field name="_maxResults">0</field>
 
       <field name="_bundle" readonly="true">
@@ -1441,7 +1706,10 @@ file, You can obtain one at http://mozilla.org/MPL/2.0/.
           Services.prefs.setBoolPref(
             "browser.urlbar.userMadeSearchSuggestionsChoice", true
           );
-          // The input's pref observer will now hide the notification.
+          // Hide the notification.
+          this.searchSuggestionsNotificationWasDismissed(
+            Services.prefs.getBoolPref("browser.urlbar.suggest.searches")
+          );
         ]]></body>
       </method>
 
@@ -1529,29 +1797,6 @@ file, You can obtain one at http://mozilla.org/MPL/2.0/.
           // to avoid impacting startup / new window performance
           aInput.popup.hidden = false;
 
-          let showNotification = aInput.shouldShowSearchSuggestionsNotification;
-          if (showNotification) {
-            let prefs = aInput._prefs;
-            let now = new Date();
-            let date = now.getFullYear() * 10000 + (now.getMonth() + 1) * 100 + now.getDate();
-            let previousDate = prefs.getIntPref("lastSuggestionsPromptDate");
-            if (previousDate < date) {
-              let remainingDays =
-                prefs.getIntPref("daysBeforeHidingSuggestionsPrompt") - 1;
-              prefs.setIntPref("daysBeforeHidingSuggestionsPrompt",
-                               remainingDays);
-              prefs.setIntPref("lastSuggestionsPromptDate", date);
-              if (!remainingDays)
-                showNotification = false;
-            }
-          }
-
-          if (showNotification) {
-            this._showSearchSuggestionsNotification();
-          } else if (this.classList.contains("showSearchSuggestionsNotification")) {
-            this._hideSearchSuggestionsNotification();
-          }
-
           this._openAutocompletePopup(aInput, aElement);
           ]]>
         </body>
@@ -1612,27 +1857,67 @@ file, You can obtain one at http://mozilla.org/MPL/2.0/.
             this.siteIconStart = undefined;
           }
 
+          try {
+            let whichNotification = aInput.whichSearchSuggestionsNotification;
+            if (whichNotification != "none") {
+              // Update the impressions count on real popupshown, since there's
+              // no guarantee openPopup will be respected by the platform.
+              // Though, we must ensure the handled event is the expected one.
+              let impressionId = this._searchSuggestionsImpressionId = {};
+              this.addEventListener("popupshown", () => {
+                if (this._searchSuggestionsImpressionId == impressionId)
+                  aInput.updateSearchSuggestionsNotificationImpressions(whichNotification);
+              }, {once: true});
+              this._showSearchSuggestionsNotification(whichNotification, popupDirection);
+            } else if (this.classList.contains("showSearchSuggestionsNotification")) {
+              this._hideSearchSuggestionsNotification();
+            }
+          } catch (ex) {
+            // Not critical for the urlbar functionality, just report the error.
+            Components.utils.reportError(ex);
+          }
+
           // Position the popup below the navbar.  To get the y-coordinate,
           // which is an offset from the bottom of the input, subtract the
           // bottom of the navbar from the buttom of the input.
           let yOffset =
-            document.getElementById("nav-bar").getBoundingClientRect().bottom -
-            aInput.getBoundingClientRect().bottom;
+            this.DOMWindowUtils.getBoundsWithoutFlushing(document.getElementById("nav-bar")).bottom -
+            this.DOMWindowUtils.getBoundsWithoutFlushing(aInput).bottom;
           this.openPopup(aElement, "after_start", 0, yOffset, false, false);
         ]]></body>
       </method>
 
-      <method name="_updateFooterVisibility">
-        <body>
-          <![CDATA[
-          this.footer.collapsed = this._matchCount == 0;
-          ]]>
-        </body>
-      </method>
-
       <method name="_showSearchSuggestionsNotification">
+        <parameter name="whichNotification"/>
+        <parameter name="popupDirection"/>
         <body>
           <![CDATA[
+          let deckIndex = 0;
+          if (whichNotification == "opt-out") {
+            deckIndex = 1;
+
+            if (this.siteIconStart) {
+              let rect = this.DOMWindowUtils.getBoundsWithoutFlushing(window.document.documentElement);
+              let padding = popupDirection == "rtl" ? rect.right - this.siteIconStart
+                                                    : this.siteIconStart;
+              this.searchSuggestionsNotification.style.paddingInlineStart = padding + "px";
+            } else {
+              this.searchSuggestionsNotification.style.removeProperty("padding-inline-start");
+            }
+
+            // We want to animate the opt-out hint only once.
+            if (!this._firstSearchSuggestionsNotification) {
+              this._firstSearchSuggestionsNotification = true;
+              this.searchSuggestionsNotification.setAttribute("animate", "true");
+            }
+          }
+          this.searchSuggestionsNotification.setAttribute("selectedIndex", deckIndex);
+
+          let ariaDescElt = whichNotification == "opt-in" ?
+            "search-suggestions-question" : "search-suggestions-hint";
+
+          this.searchSuggestionsNotification.setAttribute("aria-describedby", ariaDescElt);
+
           // With the notification shown, the listbox's height can sometimes be
           // too small when it's flexed, as it normally is.  Also, it can start
           // out slightly scrolled down.  Both problems appear together, most
@@ -1646,7 +1931,9 @@ file, You can obtain one at http://mozilla.org/MPL/2.0/.
           this.setAttribute("dontanimate", "true");
 
           this.classList.add("showSearchSuggestionsNotification");
-          this._updateFooterVisibility();
+          // Don't show the one-off buttons if we are showing onboarding and
+          // there's no result, since it would be ugly and pointless.
+          this.footer.collapsed = this._matchCount == 0;
 
           // This event allows accessibility APIs to see the notification.
           if (!this.popupOpen) {
@@ -1682,6 +1969,7 @@ file, You can obtain one at http://mozilla.org/MPL/2.0/.
           this.classList.remove("showSearchSuggestionsNotification");
           this.richlistbox.flex = 1;
           this.removeAttribute("dontanimate");
+          this.searchSuggestionsNotification.removeAttribute("animate");
           if (this._matchCount) {
             // Update popup height.
             this._invalidate();
@@ -1747,7 +2035,7 @@ file, You can obtain one at http://mozilla.org/MPL/2.0/.
           this.oneOffSearchButtons.handleKeyPress(aEvent, this._matchCount,
                                                   !this._isFirstResultHeuristic,
                                                   gBrowser.userTypedValue);
-          return aEvent.defaultPrevented;
+          return aEvent.defaultPrevented && !aEvent.urlbarDeferred;
         ]]></body>
       </method>
 
@@ -1824,24 +2112,11 @@ file, You can obtain one at http://mozilla.org/MPL/2.0/.
               this.richlistbox.suppressMenuItemEvent = false;
             }
 
-            this.input.gotResultForCurrentQuery = true;
+            // When a result is present the footer should always be visible.
+            this.footer.collapsed = false;
 
-            // Check if we should perform a delayed handleEnter.
-            if (this.input.handleEnterInstance) {
-              let instance = this.input.handleEnterInstance;
-              this.input.handleEnterInstance = null;
-              // Don't handle this immediately or we could cause a recursive
-              // loop where the controller sets popupOpen and re-enters here.
-              setTimeout(() => {
-                // Safety check: handle only if the search string didn't change.
-                let { event, searchString } = instance;
-                if (this.input.mController.searchString == searchString) {
-                  this.input.maybeCanonizeURL(event, searchString);
-                  this.input.mController.handleEnter(false, event);
-                  this.overrideValue = null;
-                }
-              }, 0);
-            }
+            this.input.gotResultForCurrentQuery = true;
+            this.input.maybeReplayDeferredKeyEvents();
           ]]>
         </body>
       </method>
@@ -2055,7 +2330,7 @@ file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
           delta /= 1000;
 
-          // This code is taken from nsDownloadManager.cpp
+          // This algorithm is the same used by the downloads code.
           let speed = (aProgress - this.notification.lastProgress) / delta;
           if (this.notification.speed)
             speed = speed * 0.9 + this.notification.speed * 0.1;
@@ -2493,7 +2768,7 @@ file, You can obtain one at http://mozilla.org/MPL/2.0/.
             };
             switch (action.blocklistState) {
             case Ci.nsIBlocklistService.STATE_NOT_BLOCKED:
-              label = "pluginActivateNew.message";
+              label = "pluginActivate2.message";
               linkLabel = "pluginActivate.learnMore";
               button2.default = true;
               break;

@@ -10,7 +10,6 @@
  */
 
 #include "nsContentSink.h"
-#include "nsScriptLoader.h"
 #include "nsIDocument.h"
 #include "nsIDOMDocument.h"
 #include "mozilla/css/Loader.h"
@@ -49,6 +48,7 @@
 #include "nsHTMLDNSPrefetch.h"
 #include "nsIObserverService.h"
 #include "mozilla/Preferences.h"
+#include "mozilla/dom/ScriptLoader.h"
 #include "nsParserConstants.h"
 #include "nsSandboxFlags.h"
 
@@ -337,17 +337,6 @@ nsContentSink::ProcessHeaderData(nsIAtom* aHeader, const nsAString& aValue,
                                      channel);
     if (NS_FAILED(rv)) {
       return rv;
-    }
-  }
-  else if (aHeader == nsGkAtoms::msthemecompatible) {
-    // Disable theming for the presshell if the value is no.
-    // XXXbz don't we want to support this as an HTTP header too?
-    nsAutoString value(aValue);
-    if (value.LowerCaseEqualsLiteral("no")) {
-      nsIPresShell* shell = mDocument->GetShell();
-      if (shell) {
-        shell->DisableThemeSupport();
-      }
     }
   }
 
@@ -894,7 +883,8 @@ nsContentSink::PrefetchDNS(const nsAString &aHref)
   }
 
   if (!hostname.IsEmpty() && nsHTMLDNSPrefetch::IsAllowed(mDocument)) {
-    nsHTMLDNSPrefetch::PrefetchLow(hostname);
+    nsHTMLDNSPrefetch::PrefetchLow(hostname,
+                                   mDocument->NodePrincipal()->OriginAttributesRef());
   }
 }
 

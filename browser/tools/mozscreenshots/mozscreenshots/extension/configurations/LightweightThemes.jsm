@@ -10,7 +10,6 @@ const {classes: Cc, interfaces: Ci, utils: Cu} = Components;
 
 Cu.import("resource://gre/modules/LightweightThemeManager.jsm");
 Cu.import("resource://gre/modules/Services.jsm");
-Cu.import("resource://gre/modules/Task.jsm");
 Cu.import("resource://gre/modules/Timer.jsm");
 
 this.LightweightThemes = {
@@ -28,9 +27,9 @@ this.LightweightThemes = {
 
   configurations: {
     noLWT: {
-      applyConfig: Task.async(function*() {
+      async applyConfig() {
         LightweightThemeManager.currentTheme = null;
-      }),
+      },
     },
 
     darkLWT: {
@@ -39,7 +38,6 @@ this.LightweightThemes = {
           id:          "black",
           name:        "black",
           headerURL:   LightweightThemes._blackImageURL,
-          footerURL:   LightweightThemes._blackImageURL,
           textcolor:   "#eeeeee",
           accentcolor: "#111111",
         });
@@ -59,7 +57,6 @@ this.LightweightThemes = {
           id:          "white",
           name:        "white",
           headerURL:   LightweightThemes._whiteImageURL,
-          footerURL:   LightweightThemes._whiteImageURL,
           textcolor:   "#111111",
           accentcolor: "#eeeeee",
         });

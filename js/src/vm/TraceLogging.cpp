@@ -7,6 +7,7 @@
 #include "vm/TraceLogging.h"
 
 #include "mozilla/DebugOnly.h"
+#include "mozilla/MemoryReporting.h"
 #include "mozilla/ScopeExit.h"
 
 #include <string.h>
@@ -60,7 +61,7 @@ rdtsc(void)
     return result;
 
 }
-#elif defined(__arm__)
+#elif defined(__arm__) || defined(__aarch64__)
 
 #include <sys/time.h>
 
@@ -101,6 +102,12 @@ EnsureTraceLoggerState()
     }
 
     return true;
+}
+
+size_t
+js::SizeOfTraceLogState(mozilla::MallocSizeOf mallocSizeOf)
+{
+    return traceLoggerState ? traceLoggerState->sizeOfIncludingThis(mallocSizeOf) : 0;
 }
 
 void
@@ -216,6 +223,25 @@ TraceLoggerThread::silentFail(const char* error)
     enabled_ = 0;
 }
 
+size_t
+TraceLoggerThread::sizeOfExcludingThis(mozilla::MallocSizeOf mallocSizeOf) const
+{
+    size_t size = 0;
+#ifdef DEBUG
+    size += graphStack.sizeOfExcludingThis(mallocSizeOf);
+#endif
+    size += events.sizeOfExcludingThis(mallocSizeOf);
+    if (graph.get())
+        size += graph->sizeOfIncludingThis(mallocSizeOf);
+    return size;
+}
+
+size_t
+TraceLoggerThread::sizeOfIncludingThis(mozilla::MallocSizeOf mallocSizeOf) const
+{
+    return mallocSizeOf(this) + sizeOfExcludingThis(mallocSizeOf);
+}
+
 bool
 TraceLoggerThread::enable(JSContext* cx)
 {
@@ -312,6 +338,23 @@ TraceLoggerThreadState::maybeEventText(uint32_t id)
     return p->value()->string();
 }
 
+size_t
+TraceLoggerThreadState::sizeOfExcludingThis(mozilla::MallocSizeOf mallocSizeOf)
+{
+    LockGuard<Mutex> guard(lock);
+
+    // Do not count threadLoggers since they are counted by JSContext::traceLogger.
+
+    size_t size = 0;
+    size += pointerMap.sizeOfExcludingThis(mallocSizeOf);
+    if (textIdPayloads.initialized()) {
+        size += textIdPayloads.sizeOfExcludingThis(mallocSizeOf);
+        for (TextIdHashMap::Range r = textIdPayloads.all(); !r.empty(); r.popFront())
+            r.front().value()->sizeOfIncludingThis(mallocSizeOf);
+    }
+    return size;
+}
+
 bool
 TraceLoggerThread::textIdIsScriptEvent(uint32_t id)
 {
@@ -358,29 +401,6 @@ TraceLoggerThread::extractScriptDetails(uint32_t textId, const char** filename, 
 }
 
 TraceLoggerEventPayload*
-TraceLoggerThreadState::getOrCreateEventPayload(TraceLoggerTextId textId)
-{
-    LockGuard<Mutex> guard(lock);
-
-    TextIdHashMap::AddPtr p = textIdPayloads.lookupForAdd(textId);
-    if (p) {
-        MOZ_ASSERT(p->value()->textId() == textId); // Sanity check.
-        p->value()->use();
-        return p->value();
-    }
-
-    TraceLoggerEventPayload* payload = js_new<TraceLoggerEventPayload>(textId, (char*)nullptr);
-    if (!payload)
-        return nullptr;
-
-    if (!textIdPayloads.add(p, textId, payload))
-        return nullptr;
-
-    payload->use();
-    return payload;
-}
-
-TraceLoggerEventPayload*
 TraceLoggerThreadState::getOrCreateEventPayload(const char* text)
 {
     LockGuard<Mutex> guard(lock);
@@ -423,19 +443,11 @@ TraceLoggerThreadState::getOrCreateEventPayload(const char* text)
 }
 
 TraceLoggerEventPayload*
-TraceLoggerThreadState::getOrCreateEventPayload(TraceLoggerTextId type, const char* filename,
+TraceLoggerThreadState::getOrCreateEventPayload(const char* filename,
                                                 size_t lineno, size_t colno, const void* ptr)
 {
-    MOZ_ASSERT(type == TraceLogger_Scripts || type == TraceLogger_AnnotateScripts ||
-               type == TraceLogger_InlinedScripts || type == TraceLogger_Frontend);
-
     if (!filename)
         filename = "<unknown>";
-
-    // Only log scripts when enabled otherwise return the global Scripts textId,
-    // which will get filtered out.
-    if (!isTextIdEnabled(type))
-        return getOrCreateEventPayload(type);
 
     LockGuard<Mutex> guard(lock);
 
@@ -494,10 +506,9 @@ TraceLoggerThreadState::getOrCreateEventPayload(TraceLoggerTextId type, const ch
 }
 
 TraceLoggerEventPayload*
-TraceLoggerThreadState::getOrCreateEventPayload(TraceLoggerTextId type, JSScript* script)
+TraceLoggerThreadState::getOrCreateEventPayload(JSScript* script)
 {
-    return getOrCreateEventPayload(type, script->filename(), script->lineno(), script->column(),
-                                   nullptr);
+    return getOrCreateEventPayload(script->filename(), script->lineno(), script->column(), nullptr);
 }
 
 void
@@ -533,7 +544,7 @@ TraceLoggerThread::startEvent(TraceLoggerTextId id) {
 
 void
 TraceLoggerThread::startEvent(const TraceLoggerEvent& event) {
-    if (!event.hasPayload()) {
+    if (!event.hasTextId()) {
         if (!enabled())
             return;
         startEvent(TraceLogger_Error);
@@ -542,7 +553,7 @@ TraceLoggerThread::startEvent(const TraceLoggerEvent& event) {
                                     "this event. Disabling TraceLogger.");
         return;
     }
-    startEvent(event.payload()->textId());
+    startEvent(event.textId());
 }
 
 void
@@ -576,11 +587,11 @@ TraceLoggerThread::stopEvent(TraceLoggerTextId id) {
 
 void
 TraceLoggerThread::stopEvent(const TraceLoggerEvent& event) {
-    if (!event.hasPayload()) {
+    if (!event.hasTextId()) {
         stopEvent(TraceLogger_Error);
         return;
     }
-    stopEvent(event.payload()->textId());
+    stopEvent(event.textId());
 }
 
 void
@@ -852,7 +863,7 @@ TraceLoggerThreadState::init()
                 "\n"
                 "usage: TLOPTIONS=option,option,option,... where options can be:\n"
                 "\n"
-                "  EnableCooperatingThread Start logging cooperating threads immediately.\n"
+                "  EnableActiveThread      Start logging cooperating threads immediately.\n"
                 "  EnableOffThread         Start logging helper threads immediately.\n"
                 "  EnableGraph             Enable spewing the tracelogging graph to a file.\n"
                 "  Errors                  Report errors during tracing to stderr.\n"
@@ -1009,43 +1020,60 @@ js::TraceLogDisableTextId(JSContext* cx, uint32_t textId)
     traceLoggerState->disableTextId(cx, textId);
 }
 
-TraceLoggerEvent::TraceLoggerEvent(TraceLoggerTextId textId)
-{
-    payload_ = traceLoggerState ? traceLoggerState->getOrCreateEventPayload(textId) : nullptr;
-}
-
 TraceLoggerEvent::TraceLoggerEvent(TraceLoggerTextId type, JSScript* script)
-{
-    payload_ = traceLoggerState ? traceLoggerState->getOrCreateEventPayload(type, script) : nullptr;
-}
+  : TraceLoggerEvent(type, script->filename(), script->lineno(), script->column())
+{ }
 
 TraceLoggerEvent::TraceLoggerEvent(TraceLoggerTextId type, const char* filename, size_t line,
                                    size_t column)
-
+  : payload_()
 {
-    payload_ = traceLoggerState
-               ? traceLoggerState->getOrCreateEventPayload(type, filename, line, column, nullptr)
-               : nullptr;
+    MOZ_ASSERT(type == TraceLogger_Scripts || type == TraceLogger_AnnotateScripts ||
+               type == TraceLogger_InlinedScripts || type == TraceLogger_Frontend);
+
+    if (!traceLoggerState)
+        return;
+
+    // Only log scripts when enabled, otherwise use the more generic type
+    // (which will get filtered out).
+    if (!traceLoggerState->isTextIdEnabled(type)) {
+        payload_.setTextId(type);
+        return;
+    }
+
+    payload_.setEventPayload(
+        traceLoggerState->getOrCreateEventPayload(filename, line, column, nullptr));
 }
 
 TraceLoggerEvent::TraceLoggerEvent(const char* text)
+  : payload_()
 {
-    payload_ = traceLoggerState ? traceLoggerState->getOrCreateEventPayload(text) : nullptr;
+    if (traceLoggerState)
+        payload_.setEventPayload(traceLoggerState->getOrCreateEventPayload(text));
 }
 
 TraceLoggerEvent::~TraceLoggerEvent()
 {
-    if (payload_)
-        payload_->release();
+    if (hasExtPayload())
+        extPayload()->release();
+}
+
+uint32_t
+TraceLoggerEvent::textId() const
+{
+    MOZ_ASSERT(hasTextId());
+    if (hasExtPayload())
+        return extPayload()->textId();
+    return payload_.textId();
 }
 
 TraceLoggerEvent&
 TraceLoggerEvent::operator=(const TraceLoggerEvent& other)
 {
-    if (other.hasPayload())
-        other.payload()->use();
-    if (hasPayload())
-        payload()->release();
+    if (other.hasExtPayload())
+        other.extPayload()->use();
+    if (hasExtPayload())
+        extPayload()->release();
 
     payload_ = other.payload_;
 
@@ -1053,8 +1081,8 @@ TraceLoggerEvent::operator=(const TraceLoggerEvent& other)
 }
 
 TraceLoggerEvent::TraceLoggerEvent(const TraceLoggerEvent& other)
+  : payload_(other.payload_)
 {
-    payload_ = other.payload_;
-    if (hasPayload())
-        payload()->use();
+    if (hasExtPayload())
+        extPayload()->use();
 }

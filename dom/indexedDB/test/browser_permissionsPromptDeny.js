@@ -7,42 +7,56 @@ const testPageURL = "http://mochi.test:8888/browser/" +
   "dom/indexedDB/test/browser_permissionsPrompt.html";
 const notificationID = "indexedDB-permissions-prompt";
 
-function promiseMessage(aMessage, browser) {
-  return ContentTask.spawn(browser.selectedBrowser, aMessage, function* (aMessage) {
-    yield new Promise((resolve, reject) => {
-      content.addEventListener("message", function(event) {
-        is(event.data, aMessage, "received " + aMessage);
-        if (event.data == aMessage)
-          resolve();
-        else
-          reject();
-      }, {once: true});
+function waitForMessage(aMessage, browser) {
+  return new Promise((resolve, reject) => {
+    /* eslint-disable no-undef */
+    function contentScript() {
+      addEventListener("message", function(event) {
+        sendAsyncMessage("testLocal:exception",
+          {exception: event.data});
+      }, {once: true}, true);
+    }
+    /* eslint-enable no-undef */
+
+    let script = "data:,(" + contentScript.toString() + ")();";
+
+    let mm = browser.selectedBrowser.messageManager;
+
+    mm.addMessageListener("testLocal:exception", function listener(msg) {
+      mm.removeMessageListener("testLocal:exception", listener);
+      mm.removeDelayedFrameScript(script);
+      is(msg.data.exception, aMessage, "received " + aMessage);
+      if (msg.data.exception == aMessage) {
+        resolve();
+      } else {
+        reject();
+      }
     });
+
+    mm.loadFrameScript(script, true);
   });
 }
 
-add_task(function* test1() {
+add_task(async function test1() {
   removePermission(testPageURL, "indexedDB");
 
-  info("creating tab");
-  gBrowser.selectedTab = gBrowser.addTab();
-
-  info("loading test page: " + testPageURL);
-  gBrowser.selectedBrowser.loadURI(testPageURL);
-  yield BrowserTestUtils.browserLoaded(gBrowser.selectedBrowser);
-
-  registerPopupEventHandler("popupshowing", function () {
+  registerPopupEventHandler("popupshowing", function() {
     ok(true, "prompt showing");
   });
-  registerPopupEventHandler("popupshown", function () {
+  registerPopupEventHandler("popupshown", function() {
     ok(true, "prompt shown");
     triggerSecondaryCommand(this);
   });
-  registerPopupEventHandler("popuphidden", function () {
+  registerPopupEventHandler("popuphidden", function() {
     ok(true, "prompt hidden");
   });
 
-  yield promiseMessage("InvalidStateError", gBrowser);
+  info("creating tab");
+  gBrowser.selectedTab = BrowserTestUtils.addTab(gBrowser);
+
+  info("loading test page: " + testPageURL);
+  gBrowser.selectedBrowser.loadURI(testPageURL);
+  await waitForMessage("InvalidStateError", gBrowser);
 
   is(getPermission(testPageURL, "indexedDB"),
      Components.interfaces.nsIPermissionManager.DENY_ACTION,
@@ -50,55 +64,52 @@ add_task(function* test1() {
   gBrowser.removeCurrentTab();
 });
 
-add_task(function* test2() {
+add_task(async function test2() {
   info("creating private window");
-  let win = yield BrowserTestUtils.openNewBrowserWindow({ private : true });
-  
+  let win = await BrowserTestUtils.openNewBrowserWindow({ private: true });
+
+  registerPopupEventHandler("popupshowing", function() {
+    ok(false, "prompt showing");
+  }, win);
+  registerPopupEventHandler("popupshown", function() {
+    ok(false, "prompt shown");
+  }, win);
+  registerPopupEventHandler("popuphidden", function() {
+    ok(false, "prompt hidden");
+  }, win);
+
   info("creating private tab");
   win.gBrowser.selectedTab = win.gBrowser.addTab();
 
   info("loading test page: " + testPageURL);
   win.gBrowser.selectedBrowser.loadURI(testPageURL);
-  yield BrowserTestUtils.browserLoaded(win.gBrowser.selectedBrowser);
-  
-  registerPopupEventHandler("popupshowing", function () {
-    ok(false, "prompt showing");
-  });
-  registerPopupEventHandler("popupshown", function () {
-    ok(false, "prompt shown");
-  });
-  registerPopupEventHandler("popuphidden", function () {
-    ok(false, "prompt hidden");
-  });
-  yield promiseMessage("InvalidStateError", win.gBrowser);
+  await waitForMessage("InvalidStateError", win.gBrowser);
 
   is(getPermission(testPageURL, "indexedDB"),
      Components.interfaces.nsIPermissionManager.DENY_ACTION,
      "Correct permission set");
   unregisterAllPopupEventHandlers();
   win.gBrowser.removeCurrentTab();
-  win.close();
+  await BrowserTestUtils.closeWindow(win);
 });
 
-add_task(function* test3() {
+add_task(async function test3() {
+  registerPopupEventHandler("popupshowing", function() {
+    ok(false, "Shouldn't show a popup this time");
+  });
+  registerPopupEventHandler("popupshown", function() {
+    ok(false, "Shouldn't show a popup this time");
+  });
+  registerPopupEventHandler("popuphidden", function() {
+    ok(false, "Shouldn't show a popup this time");
+  });
+
   info("creating tab");
-  gBrowser.selectedTab = gBrowser.addTab();
+  gBrowser.selectedTab = BrowserTestUtils.addTab(gBrowser);
 
   info("loading test page: " + testPageURL);
   gBrowser.selectedBrowser.loadURI(testPageURL);
-  yield BrowserTestUtils.browserLoaded(gBrowser.selectedBrowser);
-
-  registerPopupEventHandler("popupshowing", function () {
-    ok(false, "Shouldn't show a popup this time");
-  });
-  registerPopupEventHandler("popupshown", function () {
-    ok(false, "Shouldn't show a popup this time");
-  });
-  registerPopupEventHandler("popuphidden", function () {
-    ok(false, "Shouldn't show a popup this time");
-  });
-
-  yield promiseMessage("InvalidStateError", gBrowser);
+  await waitForMessage("InvalidStateError", gBrowser);
 
   is(getPermission(testPageURL, "indexedDB"),
      Components.interfaces.nsIPermissionManager.DENY_ACTION,

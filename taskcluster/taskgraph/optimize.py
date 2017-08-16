@@ -3,15 +3,23 @@
 # file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
 from __future__ import absolute_import, print_function, unicode_literals
+
 import logging
 import re
+import os
+import requests
 
 from .graph import Graph
+from . import files_changed
 from .taskgraph import TaskGraph
+from .util.seta import is_low_value_task
+from .util.taskcluster import find_task_id
 from slugid import nice as slugid
 
 logger = logging.getLogger(__name__)
 TASK_REFERENCE_PATTERN = re.compile('<([^>]+)>')
+
+_optimizations = {}
 
 
 def optimize_task_graph(target_task_graph, params, do_not_optimize, existing_tasks=None):
@@ -60,6 +68,21 @@ def resolve_task_references(label, task_def, taskid_for_edge_name):
     return recurse(task_def)
 
 
+def optimize_task(task, params):
+    """
+    Optimize a single task by running its optimizations in order until one
+    succeeds.
+    """
+    for opt in task.optimizations:
+        opt_type, args = opt[0], opt[1:]
+        opt_fn = _optimizations[opt_type]
+        opt_result = opt_fn(task, params, *args)
+        if opt_result:
+            return opt_result
+
+    return False
+
+
 def annotate_task_graph(target_task_graph, params, do_not_optimize,
                         named_links_dict, label_to_taskid, existing_tasks):
     """
@@ -95,7 +118,11 @@ def annotate_task_graph(target_task_graph, params, do_not_optimize,
             replacement_task_id = existing_tasks[label]
         # otherwise, examine the task itself (which may be an expensive operation)
         else:
-            optimized, replacement_task_id = task.optimize(params)
+            opt_result = optimize_task(task, params)
+
+            # use opt_result to determine values for optimized, replacement_task_id
+            optimized = bool(opt_result)
+            replacement_task_id = opt_result if opt_result and opt_result is not True else None
 
         task.optimized = optimized
         task.task_id = replacement_task_id
@@ -154,3 +181,64 @@ def get_subgraph(annotated_task_graph, named_links_dict, label_to_taskid):
     return TaskGraph(
         tasks_by_taskid,
         Graph(set(tasks_by_taskid), edges_by_taskid))
+
+
+def optimization(name):
+    def wrap(func):
+        if name in _optimizations:
+            raise Exception("multiple optimizations with name {}".format(name))
+        _optimizations[name] = func
+        return func
+    return wrap
+
+
+@optimization('index-search')
+def opt_index_search(task, params, index_path):
+    try:
+        task_id = find_task_id(
+            index_path,
+            use_proxy=bool(os.environ.get('TASK_ID')))
+
+        return task_id or True
+    except requests.exceptions.HTTPError:
+        pass
+
+    return False
+
+
+@optimization('seta')
+def opt_seta(task, params):
+    bbb_task = False
+
+    # for bbb tasks we need to send in the buildbot buildername
+    if task.task.get('provisionerId', '') == 'buildbot-bridge':
+        label = task.task.get('payload').get('buildername')
+        bbb_task = True
+    else:
+        label = task.label
+
+    # we would like to return 'False, None' while it's high_value_task
+    # and we wouldn't optimize it. Otherwise, it will return 'True, None'
+    if is_low_value_task(label,
+                         params.get('project'),
+                         params.get('pushlog_id'),
+                         params.get('pushdate'),
+                         bbb_task):
+        # Always optimize away low-value tasks
+        return True
+    else:
+        return False
+
+
+@optimization('skip-unless-changed')
+def opt_files_changed(task, params, file_patterns):
+    # pushlog_id == -1 - this is the case when run from a cron.yml job
+    if params.get('pushlog_id') == -1:
+        return True
+
+    changed = files_changed.check(params, file_patterns)
+    if not changed:
+        logger.debug('no files found matching a pattern in `skip-unless-changed` for ' +
+                     task.label)
+        return True
+    return False

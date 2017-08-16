@@ -131,7 +131,7 @@ window.onload =
 
         // Create responseStart/responseEnd tests from the following array of templates.  In this test, the server delays before
         // responding with responsePart1, then delays again before completing with responsePart2.  The test looks for the expected
-        // pauses before responeStart and responseEnd.
+        // pauses before responseStart and responseEnd.
         [
             { initiator: "iframe",         responsePart1: serverStepDelay + "ms;", responsePart2: (serverStepDelay * 2) + "ms;(done)",                                                      mime: mimeHtml },
             { initiator: "xmlhttprequest", responsePart1: serverStepDelay + "ms;", responsePart2: (serverStepDelay * 2) + "ms;(done)",                                                      mime: mimeText },
@@ -142,7 +142,7 @@ window.onload =
         ]
         .forEach(function (template) {
             testCases.push({
-                description: "'" + template.initiator + ": 1 second delay before 'responseStart', another 1 second delay before 'responseEnd'.",
+                description: "'" + template.initiator + ": " + serverStepDelay + "ms delay before 'responseStart', another " + serverStepDelay + "ms delay before 'responseEnd'.",
                 test: function (test) {
                     initiateFetch(
                         test,
@@ -190,7 +190,7 @@ window.onload =
         ]
         .forEach(function (template) {
             testCases.push({
-                description: "'" + template.initiator + " (Redirected): 1 second delay before 'redirectEnd', another 1 second delay before 'responseStart'.",
+                description: "'" + template.initiator + " (Redirected): " + serverStepDelay + "ms delay before 'redirectEnd', another " + serverStepDelay + "ms delay before 'responseStart'.",
                 test: function (test) {
                     initiateFetch(
                         test,
@@ -277,7 +277,7 @@ window.onload =
             // Per https://w3c.github.io/resource-timing/#performanceresourcetiming:
             //      "[If redirected, startTime] MUST return the same value as redirectStart. Otherwise,
             //      [startTime] MUST return the same value as fetchStart."
-            assert_true(actual.startTime == actual.redirectStart || actual.startTime == actual.fetchStart,
+            assert_in_array(actual.startTime, [actual.redirectStart, actual.fetchStart],
                 "startTime must be equal to redirectStart or fetchStart.");
 
             // redirectStart <= redirectEnd <= fetchStart <= domainLookupStart <= domainLookupEnd <= connectStart

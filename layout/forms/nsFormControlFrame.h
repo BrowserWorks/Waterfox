@@ -25,9 +25,7 @@ public:
     * @param aContent the content representing this frame
     * @param aParentFrame the parent frame
     */
-  explicit nsFormControlFrame(nsStyleContext*);
-
-  virtual nsIAtom* GetType() const override;
+  nsFormControlFrame(nsStyleContext*, nsIFrame::ClassID);
 
   virtual bool IsFrameOfType(uint32_t aFlags) const override
   {

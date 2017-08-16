@@ -6,10 +6,18 @@
 Components.utils.import("resource:///modules/SitePermissions.jsm");
 Components.utils.import("resource://gre/modules/Services.jsm");
 
+const STORAGE_MANAGER_ENABLED = Services.prefs.getBoolPref("browser.storageManager.enabled");
+
 add_task(function* testPermissionsListing() {
-  Assert.deepEqual(SitePermissions.listPermissions().sort(),
-    ["camera", "cookie", "desktop-notification", "geo", "image",
-     "indexedDB", "install", "microphone", "popup", "screen"],
+  let expectedPermissions = ["camera", "cookie", "desktop-notification", "focus-tab-by-prompt",
+     "geo", "image", "indexedDB", "install", "microphone", "popup", "screen"];
+  if (STORAGE_MANAGER_ENABLED) {
+    // The persistent-storage permission is still only pref-on on Nightly
+    // so we add it only when it's pref-on.
+    // Should remove this checking and add it as default after it is fully pref-on.
+    expectedPermissions.push("persistent-storage");
+  }
+  Assert.deepEqual(SitePermissions.listPermissions().sort(), expectedPermissions.sort(),
     "Correct list of all permissions");
 });
 
@@ -72,7 +80,14 @@ add_task(function* testExactHostMatch() {
   let uri = Services.io.newURI("https://example.com");
   let subUri = Services.io.newURI("https://test1.example.com");
 
-  let exactHostMatched = ["desktop-notification", "camera", "microphone", "screen", "geo"];
+  let exactHostMatched = ["desktop-notification", "focus-tab-by-prompt", "camera",
+                          "microphone", "screen", "geo"];
+  if (STORAGE_MANAGER_ENABLED) {
+    // The persistent-storage permission is still only pref-on on Nightly
+    // so we add it only when it's pref-on.
+    // Should remove this checking and add it as default after it is fully pref-on.
+    exactHostMatched.push("persistent-storage");
+  }
   let nonExactHostMatched = ["image", "cookie", "popup", "install", "indexedDB"];
 
   let permissions = SitePermissions.listPermissions();

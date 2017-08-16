@@ -4,7 +4,7 @@
 
 Cu.import("resource://gre/modules/AppConstants.jsm");
 
-add_task(function* test_user_defined_commands() {
+add_task(async function test_user_defined_commands() {
   const testCommands = [
     // Ctrl Shortcuts
     {
@@ -65,6 +65,15 @@ add_task(function* test_user_defined_commands() {
       name: "toggle-ctrl-shift-left",
       shortcut: "Ctrl+Shift+Left",
       key: "VK_LEFT",
+      modifiers: {
+        accelKey: true,
+        shiftKey: true,
+      },
+    },
+    {
+      name: "toggle-ctrl-shift-1",
+      shortcut: "Ctrl+Shift+1",
+      key: "1",
       modifiers: {
         accelKey: true,
         shiftKey: true,
@@ -137,12 +146,37 @@ add_task(function* test_user_defined_commands() {
         shiftKey: true,
       },
     },
+    {
+      name: "toggle-ctrl-space",
+      shortcut: "Ctrl+Space",
+      key: "VK_SPACE",
+      modifiers: {
+        accelKey: true,
+      },
+    },
+    {
+      name: "toggle-ctrl-comma",
+      shortcut: "Ctrl+Comma",
+      key: "VK_COMMA",
+      modifiers: {
+        accelKey: true,
+      },
+    },
+    {
+      name: "toggle-ctrl-period",
+      shortcut: "Ctrl+Period",
+      key: "VK_PERIOD",
+      modifiers: {
+        accelKey: true,
+      },
+    },
+
   ];
 
   // Create a window before the extension is loaded.
-  let win1 = yield BrowserTestUtils.openNewBrowserWindow();
-  yield BrowserTestUtils.loadURI(win1.gBrowser.selectedBrowser, "about:robots");
-  yield BrowserTestUtils.browserLoaded(win1.gBrowser.selectedBrowser);
+  let win1 = await BrowserTestUtils.openNewBrowserWindow();
+  await BrowserTestUtils.loadURI(win1.gBrowser.selectedBrowser, "about:robots");
+  await BrowserTestUtils.browserLoaded(win1.gBrowser.selectedBrowser);
 
   let commands = {};
   let isMac = AppConstants.platform == "macosx";
@@ -192,24 +226,24 @@ add_task(function* test_user_defined_commands() {
     }]);
   });
 
-  yield extension.startup();
-  yield extension.awaitMessage("ready");
+  await extension.startup();
+  await extension.awaitMessage("ready");
 
-  function* runTest(window) {
+  async function runTest(window) {
     for (let testCommand of testCommands) {
       if (testCommand.shortcutMac && !testCommand.shortcut && !isMac) {
         continue;
       }
       EventUtils.synthesizeKey(testCommand.key, testCommand.modifiers, window);
-      let message = yield extension.awaitMessage("oncommand");
+      let message = await extension.awaitMessage("oncommand");
       is(message, testCommand.name, `Expected onCommand listener to fire with the correct name: ${testCommand.name}`);
     }
   }
 
   // Create another window after the extension is loaded.
-  let win2 = yield BrowserTestUtils.openNewBrowserWindow();
-  yield BrowserTestUtils.loadURI(win2.gBrowser.selectedBrowser, "about:robots");
-  yield BrowserTestUtils.browserLoaded(win2.gBrowser.selectedBrowser);
+  let win2 = await BrowserTestUtils.openNewBrowserWindow();
+  await BrowserTestUtils.loadURI(win2.gBrowser.selectedBrowser, "about:robots");
+  await BrowserTestUtils.browserLoaded(win2.gBrowser.selectedBrowser);
 
   let totalTestCommands = Object.keys(testCommands).length;
   let expectedCommandsRegistered = isMac ? totalTestCommands : totalTestCommands - totalMacOnlyCommands;
@@ -225,13 +259,13 @@ add_task(function* test_user_defined_commands() {
   is(keyset.childNodes.length, expectedCommandsRegistered, "Expected keyset to have the correct number of children");
 
   // Confirm that the commands are registered to both windows.
-  yield focusWindow(win1);
-  yield runTest(win1);
+  await focusWindow(win1);
+  await runTest(win1);
 
-  yield focusWindow(win2);
-  yield runTest(win2);
+  await focusWindow(win2);
+  await runTest(win2);
 
-  yield extension.unload();
+  await extension.unload();
 
   // Confirm that the keysets have been removed from both windows after the extension is unloaded.
   keyset = win1.document.getElementById(keysetID);
@@ -240,9 +274,9 @@ add_task(function* test_user_defined_commands() {
   keyset = win2.document.getElementById(keysetID);
   is(keyset, null, "Expected keyset to be removed from the window");
 
-  yield BrowserTestUtils.closeWindow(win1);
-  yield BrowserTestUtils.closeWindow(win2);
+  await BrowserTestUtils.closeWindow(win1);
+  await BrowserTestUtils.closeWindow(win2);
 
   SimpleTest.endMonitorConsole();
-  yield waitForConsole;
+  await waitForConsole;
 });

@@ -1,26 +1,17 @@
 "use strict";
 
-const BACKGROUND = "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAUAAAAFCAYAAACNbyblAAAAHElEQVQI12P4//8/w38GIAXDIBKE0DHxgljNBAAO9TXL0Y4OHwAAAABJRU5ErkJggg==";
-const ACCENT_COLOR = "#a14040";
-const TEXT_COLOR = "#fac96e";
-
-function hexToRGB(hex) {
-  hex = parseInt((hex.indexOf("#") > -1 ? hex.substring(1) : hex), 16);
-  return [hex >> 16, (hex & 0x00FF00) >> 8, (hex & 0x0000FF)];
-}
-
-add_task(function* setup() {
-  yield SpecialPowers.pushPrefEnv({
+add_task(async function setup() {
+  await SpecialPowers.pushPrefEnv({
     set: [["extensions.webextensions.themes.enabled", true]],
   });
 });
 
-add_task(function* test_support_LWT_properties() {
+add_task(async function test_support_LWT_properties() {
   let extension = ExtensionTestUtils.loadExtension({
     manifest: {
       "theme": {
         "images": {
-          "headerURL": BACKGROUND,
+          "headerURL": "image1.png",
         },
         "colors": {
           "accentcolor": ACCENT_COLOR,
@@ -28,9 +19,12 @@ add_task(function* test_support_LWT_properties() {
         },
       },
     },
+    files: {
+      "image1.png": BACKGROUND,
+    },
   });
 
-  yield extension.startup();
+  await extension.startup();
 
   let docEl = window.document.documentElement;
   let style = window.getComputedStyle(docEl);
@@ -39,38 +33,40 @@ add_task(function* test_support_LWT_properties() {
   Assert.equal(docEl.getAttribute("lwthemetextcolor"), "bright",
     "LWT text color attribute should be set");
 
-  Assert.equal(style.backgroundImage, 'url("' + BACKGROUND.replace(/"/g, '\\"') + '")',
-    "Expected background image");
+  Assert.ok(style.backgroundImage.includes("image1.png"), "Expected background image");
   Assert.equal(style.backgroundColor, "rgb(" + hexToRGB(ACCENT_COLOR).join(", ") + ")",
     "Expected correct background color");
   Assert.equal(style.color, "rgb(" + hexToRGB(TEXT_COLOR).join(", ") + ")",
     "Expected correct text color");
 
-  yield extension.unload();
+  await extension.unload();
 
   Assert.ok(!docEl.hasAttribute("lwtheme"), "LWT attribute should not be set");
 });
 
-add_task(function* test_LWT_requires_all_properties_defined_image_only() {
+add_task(async function test_LWT_requires_all_properties_defined_image_only() {
   let extension = ExtensionTestUtils.loadExtension({
     manifest: {
       "theme": {
         "images": {
-          "headerURL": BACKGROUND,
+          "headerURL": "image1.png",
         },
       },
     },
+    files: {
+      "image1.png": BACKGROUND,
+    },
   });
 
-  yield extension.startup();
+  await extension.startup();
 
   let docEl = window.document.documentElement;
   Assert.ok(!docEl.hasAttribute("lwtheme"), "LWT attribute should not be set");
-  yield extension.unload();
+  await extension.unload();
   Assert.ok(!docEl.hasAttribute("lwtheme"), "LWT attribute should not be set");
 });
 
-add_task(function* test_LWT_requires_all_properties_defined_colors_only() {
+add_task(async function test_LWT_requires_all_properties_defined_colors_only() {
   let extension = ExtensionTestUtils.loadExtension({
     manifest: {
       "theme": {
@@ -82,10 +78,10 @@ add_task(function* test_LWT_requires_all_properties_defined_colors_only() {
     },
   });
 
-  yield extension.startup();
+  await extension.startup();
 
   let docEl = window.document.documentElement;
   Assert.ok(!docEl.hasAttribute("lwtheme"), "LWT attribute should not be set");
-  yield extension.unload();
+  await extension.unload();
   Assert.ok(!docEl.hasAttribute("lwtheme"), "LWT attribute should not be set");
 });

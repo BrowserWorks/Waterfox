@@ -25,12 +25,22 @@
 #include "vm/ArgumentsObject.h"
 #include "vm/SavedFrame.h"
 #include "wasm/WasmFrameIterator.h"
+#include "wasm/WasmTypes.h"
 
 struct JSCompartment;
 
 namespace JS {
 namespace dbg {
-class AutoEntryMonitor;
+#ifdef JS_BROKEN_GCC_ATTRIBUTE_WARNING
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wattributes"
+#endif // JS_BROKEN_GCC_ATTRIBUTE_WARNING
+
+class JS_PUBLIC_API(AutoEntryMonitor);
+
+#ifdef JS_BROKEN_GCC_ATTRIBUTE_WARNING
+#pragma GCC diagnostic pop
+#endif // JS_BROKEN_GCC_ATTRIBUTE_WARNING
 } // namespace dbg
 } // namespace JS
 
@@ -157,6 +167,7 @@ class AbstractFramePtr
     MOZ_IMPLICIT AbstractFramePtr(wasm::DebugFrame* fp)
       : ptr_(fp ? uintptr_t(fp) | Tag_WasmDebugFrame : 0)
     {
+        static_assert(wasm::DebugFrame::Alignment >= TagMask, "aligned");
         MOZ_ASSERT_IF(fp, asWasmDebugFrame() == fp);
     }
 
@@ -1036,6 +1047,17 @@ class InvokeArgs : public detail::GenericArgsBase<NO_CONSTRUCT>
     explicit InvokeArgs(JSContext* cx) : Base(cx) {}
 };
 
+/** Function call args of statically-unknown count. */
+class InvokeArgsMaybeIgnoresReturnValue : public detail::GenericArgsBase<NO_CONSTRUCT>
+{
+    using Base = detail::GenericArgsBase<NO_CONSTRUCT>;
+
+  public:
+    explicit InvokeArgsMaybeIgnoresReturnValue(JSContext* cx, bool ignoresReturnValue) : Base(cx) {
+        this->ignoresReturnValue_ = ignoresReturnValue;
+    }
+};
+
 /** Function call args of statically-known count. */
 template <size_t N>
 class FixedInvokeArgs : public detail::FixedArgsBase<NO_CONSTRUCT, N>
@@ -1338,6 +1360,9 @@ class Activation
         return hideScriptedCallerCount_ > 0;
     }
 
+    static size_t offsetOfPrev() {
+        return offsetof(Activation, prev_);
+    }
     static size_t offsetOfPrevProfiling() {
         return offsetof(Activation, prevProfiling_);
     }
@@ -1430,8 +1455,6 @@ class InterpreterActivation : public Activation
 // Iterates over a thread's activation list.
 class ActivationIterator
 {
-    uint8_t* jitTop_;
-
   protected:
     Activation* activation_;
 
@@ -1454,10 +1477,6 @@ class ActivationIterator
     Activation* activation() const {
         return activation_;
     }
-    uint8_t* jitTop() const {
-        MOZ_ASSERT(activation_->isJit());
-        return jitTop_;
-    }
     bool done() const {
         return activation_ == nullptr;
     }
@@ -1470,12 +1489,15 @@ class BailoutFrameInfo;
 // A JitActivation is used for frames running in Baseline or Ion.
 class JitActivation : public Activation
 {
-    uint8_t* prevJitTop_;
+    // If Baseline or Ion code is on the stack, and has called into C++, this
+    // will be aligned to an ExitFrame.
+    uint8_t* exitFP_;
+
     JitActivation* prevJitActivation_;
     bool active_;
 
     // Rematerialized Ion frames which has info copied out of snapshots. Maps
-    // frame pointers (i.e. jitTop) to a vector of rematerializations of all
+    // frame pointers (i.e. exitFP_) to a vector of rematerializations of all
     // inline frames associated with that frame.
     //
     // This table is lazily initialized by calling getRematerializedFrame.
@@ -1527,20 +1549,28 @@ class JitActivation : public Activation
     }
     void setActive(JSContext* cx, bool active = true);
 
-    bool isProfiling() const;
-
-    uint8_t* prevJitTop() const {
-        return prevJitTop_;
+    bool isProfiling() const {
+        // All JitActivations can be profiled.
+        return true;
     }
+
     JitActivation* prevJitActivation() const {
         return prevJitActivation_;
-    }
-    static size_t offsetOfPrevJitTop() {
-        return offsetof(JitActivation, prevJitTop_);
     }
     static size_t offsetOfPrevJitActivation() {
         return offsetof(JitActivation, prevJitActivation_);
     }
+
+    void setExitFP(uint8_t* fp) {
+        exitFP_ = fp;
+    }
+    uint8_t* exitFP() const {
+        return exitFP_;
+    }
+    static size_t offsetOfExitFP() {
+        return offsetof(JitActivation, exitFP_);
+    }
+
     static size_t offsetOfActiveUint8() {
         MOZ_ASSERT(sizeof(bool) == 1);
         return offsetof(JitActivation, active_);
@@ -1653,6 +1683,11 @@ class JitActivationIterator : public ActivationIterator
         settle();
         return *this;
     }
+
+    uint8_t* exitFP() const {
+        MOZ_ASSERT(activation_->isJit());
+        return activation_->asJit()->exitFP();
+    }
 };
 
 } // namespace jit
@@ -1699,55 +1734,40 @@ class InterpreterFrameIterator
     }
 };
 
-// A WasmActivation is part of two activation linked lists:
-//  - the normal Activation list used by FrameIter
-//  - a list of only WasmActivations that is signal-safe since it is accessed
-//    from the profiler at arbitrary points
-//
 // An eventual goal is to remove WasmActivation and to run asm code in a
 // JitActivation interleaved with Ion/Baseline jit code. This would allow
 // efficient calls back and forth but requires that we can walk the stack for
 // all kinds of jit code.
 class WasmActivation : public Activation
 {
-    WasmActivation* prevWasm_;
-    void* entrySP_;
-    void* resumePC_;
-    uint8_t* fp_;
-    wasm::ExitReason exitReason_;
+    wasm::Frame* exitFP_;
 
   public:
     explicit WasmActivation(JSContext* cx);
     ~WasmActivation();
 
-    WasmActivation* prevWasm() const { return prevWasm_; }
-
     bool isProfiling() const {
         return true;
     }
 
-    // Returns a pointer to the base of the innermost stack frame of wasm code
-    // in this activation.
-    uint8_t* fp() const { return fp_; }
-
-    // Returns the reason why wasm code called out of wasm code.
-    wasm::ExitReason exitReason() const { return exitReason_; }
-
-    // Read by JIT code:
-    static unsigned offsetOfContext() { return offsetof(WasmActivation, cx_); }
-    static unsigned offsetOfResumePC() { return offsetof(WasmActivation, resumePC_); }
+    // Returns null or the final wasm::Frame* when wasm exited this
+    // WasmActivation.
+    wasm::Frame* exitFP() const { return exitFP_; }
 
     // Written by JIT code:
-    static unsigned offsetOfEntrySP() { return offsetof(WasmActivation, entrySP_); }
-    static unsigned offsetOfFP() { return offsetof(WasmActivation, fp_); }
-    static unsigned offsetOfExitReason() { return offsetof(WasmActivation, exitReason_); }
+    static unsigned offsetOfExitFP() { return offsetof(WasmActivation, exitFP_); }
 
-    // Read/written from SIGSEGV handler:
-    void setResumePC(void* pc) { resumePC_ = pc; }
-    void* resumePC() const { return resumePC_; }
+    // Interrupts are started from the interrupt signal handler (or the ARM
+    // simulator) and cleared by WasmHandleExecutionInterrupt or WasmHandleThrow
+    // when the interrupt is handled.
+    void startInterrupt(const JS::ProfilingFrameIterator::RegisterState& state);
+    void finishInterrupt();
+    bool interrupted() const;
+    void* unwindPC() const;
+    void* resumePC() const;
 
     // Used by wasm::FrameIterator during stack unwinding.
-    void unwindFP(uint8_t* fp) { fp_ = fp; }
+    void unwindExitFP(wasm::Frame* exitFP);
 };
 
 // A FrameIter walks over a context's stack of JS script activations,

@@ -5,10 +5,13 @@
 
 // HttpLog.h should generally be included first
 #include "HttpLog.h"
+
 #include <errno.h>
 #include "nsHttpChunkedDecoder.h"
 #include <algorithm>
 #include "plstr.h"
+
+#include "mozilla/Unused.h"
 
 namespace mozilla {
 namespace net {
@@ -117,7 +120,7 @@ nsHttpChunkedDecoder::ParseChunkRemaining(char *buf,
                 if (!mTrailers) {
                     mTrailers = new nsHttpHeaderArray();
                 }
-                mTrailers->ParseHeaderLine(nsDependentCSubstring(buf, count));
+                Unused << mTrailers->ParseHeaderLine(nsDependentCSubstring(buf, count));
             }
             else {
                 mWaitEOF = false;

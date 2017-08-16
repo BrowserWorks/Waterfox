@@ -7,7 +7,6 @@ var Cu = Components.utils;
 var Cr = Components.results;
 
 Cu.import("resource://gre/modules/Services.jsm");
-Cu.import("resource://gre/modules/BrowserUtils.jsm");
 Cu.import("resource://gre/modules/XPCOMUtils.jsm");
 
 const baseURL = "http://mochi.test:8888/browser/" +
@@ -49,7 +48,7 @@ function removeTab(tab, done) {
 function testContentWindow() {
   return new Promise(function(resolve, reject) {
     const url = baseURL + "browser_addonShims_testpage.html";
-    let tab = gBrowser.addTab(url);
+    let tab = BrowserTestUtils.addTab(gBrowser, url); // eslint-disable-line no-undef
     gBrowser.selectedTab = tab;
     let browser = tab.linkedBrowser;
     addLoadListener(browser, function handler() {
@@ -76,7 +75,7 @@ function testListeners() {
     const url1 = baseURL + "browser_addonShims_testpage.html";
     const url2 = baseURL + "browser_addonShims_testpage2.html";
 
-    let tab = gBrowser.addTab(url2);
+    let tab = BrowserTestUtils.addTab(gBrowser, url2); // eslint-disable-line no-undef
     let browser = tab.linkedBrowser;
     addLoadListener(browser, function handler() {
       function dummyHandler() {}
@@ -147,7 +146,7 @@ function testCapturing() {
     gBrowser.addEventListener("mousedown", nonCapturingHandler);
 
     const url = baseURL + "browser_addonShims_testpage.html";
-    let tab = gBrowser.addTab(url);
+    let tab = BrowserTestUtils.addTab(gBrowser, url); // eslint-disable-line no-undef
     let browser = tab.linkedBrowser;
     addLoadListener(browser, function handler() {
       let win = browser.contentWindow;
@@ -181,11 +180,11 @@ function testObserver() {
       Services.obs.removeObserver(observer, "document-element-inserted");
       observerFired++;
     }
-    Services.obs.addObserver(observer, "document-element-inserted", false);
+    Services.obs.addObserver(observer, "document-element-inserted");
 
     let count = 0;
     const url = baseURL + "browser_addonShims_testpage.html";
-    let tab = gBrowser.addTab(url);
+    let tab = BrowserTestUtils.addTab(gBrowser, url); // eslint-disable-line no-undef
     let browser = tab.linkedBrowser;
     browser.addEventListener("load", function handler() {
       count++;
@@ -208,7 +207,7 @@ function testObserver() {
 function testSandbox() {
   return new Promise(function(resolve, reject) {
     const url = baseURL + "browser_addonShims_testpage.html";
-    let tab = gBrowser.addTab(url);
+    let tab = BrowserTestUtils.addTab(gBrowser, url); // eslint-disable-line no-undef
     let browser = tab.linkedBrowser;
     browser.addEventListener("load", function() {
       let sandbox = Cu.Sandbox(browser.contentWindow,
@@ -240,7 +239,7 @@ function testSandbox() {
 function testAddonContent() {
   let chromeRegistry = Components.classes["@mozilla.org/chrome/chrome-registry;1"]
     .getService(Components.interfaces.nsIChromeRegistry);
-  let base = chromeRegistry.convertChromeURL(BrowserUtils.makeURI("chrome://addonshim1/content/"));
+  let base = chromeRegistry.convertChromeURL(Services.io.newURI("chrome://addonshim1/content/"));
 
   let res = Services.io.getProtocolHandler("resource")
     .QueryInterface(Ci.nsIResProtocolHandler);
@@ -248,7 +247,7 @@ function testAddonContent() {
 
   return new Promise(function(resolve, reject) {
     const url = "resource://addonshim1/page.html";
-    let tab = gBrowser.addTab(url);
+    let tab = BrowserTestUtils.addTab(gBrowser, url); // eslint-disable-line no-undef
     let browser = tab.linkedBrowser;
     addLoadListener(browser, function handler() {
       res.setSubstitution("addonshim1", null);
@@ -288,7 +287,7 @@ function testAboutModuleRegistration() {
           } catch (e) {}
         }
       };
-      Services.tm.currentThread.dispatch(runnable, Ci.nsIEventTarget.DISPATCH_NORMAL);
+      Services.tm.dispatchToMainThread(runnable);
     },
 
     asyncOpen2(listener) {
@@ -488,7 +487,7 @@ function testAboutModuleRegistration() {
     // content process. It needs chrome privs because otherwise the
     // XHRs for about:test[12] will fail with a privilege error
     // despite the presence of URI_SAFE_FOR_UNTRUSTED_CONTENT.
-    let newTab = gBrowser.addTab("chrome://addonshim1/content/page.html");
+    let newTab = BrowserTestUtils.addTab(gBrowser, "chrome://addonshim1/content/page.html"); // eslint-disable-line no-undef
     gBrowser.selectedTab = newTab;
     let browser = newTab.linkedBrowser;
 
@@ -530,7 +529,7 @@ function testProgressListener() {
   info("Added progress listeners");
 
   return new Promise(function(resolve, reject) {
-    let tab = gBrowser.addTab(url);
+    let tab = BrowserTestUtils.addTab(gBrowser, url); // eslint-disable-line no-undef
     gBrowser.selectedTab = tab;
     addLoadListener(tab.linkedBrowser, function handler() {
       ok(sawGlobalLocChange, "Saw global onLocationChange");
@@ -546,7 +545,7 @@ function testProgressListener() {
 function testRootTreeItem() {
   return new Promise(function(resolve, reject) {
     const url = baseURL + "browser_addonShims_testpage.html";
-    let tab = gBrowser.addTab(url);
+    let tab = BrowserTestUtils.addTab(gBrowser, url); // eslint-disable-line no-undef
     gBrowser.selectedTab = tab;
     let browser = tab.linkedBrowser;
     addLoadListener(browser, function handler() {
@@ -569,7 +568,7 @@ function testRootTreeItem() {
 function testImportNode() {
   return new Promise(function(resolve, reject) {
     const url = baseURL + "browser_addonShims_testpage.html";
-    let tab = gBrowser.addTab(url);
+    let tab = BrowserTestUtils.addTab(gBrowser, url); // eslint-disable-line no-undef
     gBrowser.selectedTab = tab;
     let browser = tab.linkedBrowser;
     addLoadListener(browser, function handler() {

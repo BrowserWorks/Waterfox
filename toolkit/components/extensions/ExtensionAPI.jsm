@@ -10,25 +10,34 @@ this.EXPORTED_SYMBOLS = ["ExtensionAPI", "ExtensionAPIs"];
 
 const {classes: Cc, interfaces: Ci, utils: Cu, results: Cr} = Components;
 
-Cu.import("resource://gre/modules/ExtensionManagement.jsm");
 Cu.import("resource://gre/modules/Services.jsm");
 Cu.import("resource://gre/modules/XPCOMUtils.jsm");
 
+XPCOMUtils.defineLazyModuleGetter(this, "ConsoleAPI",
+                                  "resource://gre/modules/Console.jsm");
 XPCOMUtils.defineLazyModuleGetter(this, "EventEmitter",
-                                  "resource://devtools/shared/event-emitter.js");
+                                  "resource://gre/modules/EventEmitter.jsm");
 XPCOMUtils.defineLazyModuleGetter(this, "Schemas",
                                   "resource://gre/modules/Schemas.jsm");
-XPCOMUtils.defineLazyModuleGetter(this, "Task",
-                                  "resource://gre/modules/Task.jsm");
 
 const global = this;
 
 class ExtensionAPI {
   constructor(extension) {
     this.extension = extension;
+
+    extension.once("shutdown", () => {
+      if (this.onShutdown) {
+        this.onShutdown(extension.shutdownReason);
+      }
+      this.extension = null;
+    });
   }
 
   destroy() {
+  }
+
+  onManifestEntry(entry) {
   }
 
   getAPI(context) {
@@ -37,7 +46,7 @@ class ExtensionAPI {
 }
 
 var ExtensionAPIs = {
-  apis: ExtensionManagement.APIs.apis,
+  apis: new Map(),
 
   load(apiName) {
     let api = this.apis.get(apiName);
@@ -57,6 +66,11 @@ var ExtensionAPIs = {
     });
 
     api.sandbox.ExtensionAPI = ExtensionAPI;
+
+    // Create a console getter which lazily provide a ConsoleAPI instance.
+    XPCOMUtils.defineLazyGetter(api.sandbox, "console", () => {
+      return new ConsoleAPI({prefix: addonId});
+    });
 
     Services.scriptloader.loadSubScript(script, api.sandbox, "UTF-8");
 
@@ -79,5 +93,21 @@ var ExtensionAPIs = {
 
     api.sandbox = null;
     api.loadPromise = null;
+  },
+
+  register(namespace, schema, script) {
+    if (this.apis.has(namespace)) {
+      throw new Error(`API namespace already exists: ${namespace}`);
+    }
+
+    this.apis.set(namespace, {schema, script});
+  },
+
+  unregister(namespace) {
+    if (!this.apis.has(namespace)) {
+      throw new Error(`API namespace does not exist: ${namespace}`);
+    }
+
+    this.apis.delete(namespace);
   },
 };

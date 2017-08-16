@@ -90,8 +90,15 @@ class Manifest {
   }
 
   async icon(expectedSize) {
-    return await ManifestIcons
+    if ('cached_icon' in this._store.data) {
+      return this._store.data.cached_icon;
+    }
+    const icon = await ManifestIcons
       .browserFetchIcon(this._browser, this._store.data.manifest, expectedSize);
+    // Cache the icon so future requests do not go over the network
+    this._store.data.cached_icon = icon;
+    this._store.saveSoon();
+    return icon;
   }
 
   get scope() {
@@ -116,6 +123,10 @@ class Manifest {
   get start_url() {
     return this._store.data.manifest.start_url;
   }
+
+  get path() {
+    return this._path;
+  }
 }
 
 /*
@@ -129,7 +140,7 @@ var Manifests = {
       return this.started;
     }
 
-    this.started = (async function() {
+    this.started = (async () => {
 
       // Make sure the manifests have the folder needed to save into
       await OS.File.makeDir(MANIFESTS_DIR, {ignoreExisting: true});
@@ -148,7 +159,7 @@ var Manifests = {
       // and we do not want multiple file handles
       this.manifestObjs = {};
 
-    }).bind(this)();
+    })();
 
     return this.started;
   },

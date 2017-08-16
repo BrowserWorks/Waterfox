@@ -63,7 +63,7 @@ async function setUp(server) {
   generateNewKeys(Service.collectionKeys);
   let serverKeys = Service.collectionKeys.asWBO("crypto", "keys");
   serverKeys.encrypt(Service.identity.syncKeyBundle);
-  let result = serverKeys.upload(Service.resource(Service.cryptoKeysURL)).success;
+  let result = (await serverKeys.upload(Service.resource(Service.cryptoKeysURL))).success;
   return result;
 }
 
@@ -839,9 +839,9 @@ add_task(async function test_sync_X_Weave_Backoff() {
   Service.sync();
 
   do_check_true(Status.backoffInterval >= BACKOFF * 1000);
-  // Allowing 3 seconds worth of of leeway between when Status.minimumNextSync
+  // Allowing 20 seconds worth of of leeway between when Status.minimumNextSync
   // was set and when this line gets executed.
-  let minimumExpectedDelay = (BACKOFF - 3) * 1000;
+  let minimumExpectedDelay = (BACKOFF - 20) * 1000;
   do_check_true(Status.minimumNextSync >= Date.now() + minimumExpectedDelay);
 
   // Verify that the next sync is actually going to wait that long.

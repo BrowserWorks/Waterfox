@@ -13,9 +13,40 @@ project_flag('MOZ_LOCALE_SWITCHER',
              default=True)
 
 project_flag('MOZ_ANDROID_GCM',
-             help='Enable GCM registration on Nightly builds only',
+             help='Enable GCM (Google Cloud Messaging) registration',
              default=True,
              set_for_old_configure=True)
+
+option(env='MOZ_NATIVE_DEVICES',
+       help='Enable second screen support using native Android libraries.',
+       default=True)
+
+set_config('MOZ_NATIVE_DEVICES',
+           depends_if('MOZ_NATIVE_DEVICES')(lambda _: True))
+add_old_configure_assignment('MOZ_NATIVE_DEVICES',
+                             depends_if('MOZ_NATIVE_DEVICES')(lambda _: True))
+
+# Enable install tracking SDK if we have Google Play support; MOZ_NATIVE_DEVICES
+# is a proxy flag for that support.
+@depends(milestone, 'MOZ_NATIVE_DEVICES', '--help')
+def install_tracking_default(milestone, native_devices, help):
+    return bool(milestone.is_release_or_beta and native_devices)
+
+option(env='MOZ_INSTALL_TRACKING',
+       help='Enable install tracking (currently using the Adjust SDK).',
+       default=install_tracking_default)
+
+set_config('MOZ_INSTALL_TRACKING',
+           depends_if('MOZ_INSTALL_TRACKING')(lambda _: True))
+add_old_configure_assignment('MOZ_INSTALL_TRACKING',
+                             depends_if('MOZ_INSTALL_TRACKING')(lambda _: True))
+
+option(env='MOZ_ANDROID_MMA',
+       help='Enable mobile marketing automation (currently using the Leanplum SDK).',
+       default=False)
+
+set_config('MOZ_ANDROID_MMA',
+           depends_if('MOZ_ANDROID_MMA')(lambda _: True))
 
 project_flag('MOZ_ANDROID_DOWNLOADS_INTEGRATION',
              help='Enable system download manager on Android',
@@ -39,7 +70,7 @@ project_flag('MOZ_ANDROID_DOWNLOAD_CONTENT_SERVICE',
 
 project_flag('MOZ_ANDROID_CUSTOM_TABS',
              help='Enable support for Android custom tabs',
-             default=delayed_getattr(milestone, 'is_nightly'))
+             default=milestone.is_nightly)
 
 # Enable the Switchboard A/B framework code.
 # Note: The framework is always included in the app. This flag controls
@@ -48,12 +79,23 @@ project_flag('MOZ_SWITCHBOARD',
              help='Include Switchboard A/B framework on Android',
              default=True)
 
+project_flag('MOZ_ANDROID_HLS_SUPPORT',
+             help='Enable HLS (HTTP Live Streaming) support (currently using the ExoPlayer library)',
+             default=milestone.is_nightly)
+
 option(env='MOZ_ANDROID_ACTIVITY_STREAM',
        help='Enable Activity Stream on Android (replacing the default HomePager)',
        default=False)
 
 set_config('MOZ_ANDROID_ACTIVITY_STREAM',
            depends_if('MOZ_ANDROID_ACTIVITY_STREAM')(lambda _: True))
+
+option(env='MOZ_ANDROID_MOZILLA_ONLINE',
+       help='Enable MozillaOnline (Mozilla China) specific Android code',
+       default=False)
+
+set_config('MOZ_ANDROID_MOZILLA_ONLINE',
+           depends_if('MOZ_ANDROID_MOZILLA_ONLINE')(lambda _: True))
 
 option(env='MOZ_ANDROID_PACKAGE_INSTALL_BOUNCER',
        help='Build and package the install bouncer APK',
@@ -84,3 +126,36 @@ def check_target(target):
 include('../../toolkit/moz.configure')
 include('../../build/moz.configure/java.configure')
 include('gradle.configure')
+
+# Must come after the ../../toolkit/moz.configure.
+@depends('MOZ_INSTALL_TRACKING', 'MOZ_NATIVE_DEVICES', '--with-adjust-sdk-keyfile')
+def check_install_tracking(install_tracking,
+                           native_devices,
+                           adjust_sdk_keyfile):
+    if install_tracking:
+        if not native_devices:
+            die('You must specify MOZ_NATIVE_DEVICES=1 when'
+                ' building with MOZ_INSTALL_TRACKING=1')
+        if not adjust_sdk_keyfile:
+            die('You must specify --with-adjust-sdk-keyfile=/path/to/keyfile when'
+                ' building with MOZ_INSTALL_TRACKING=1')
+
+# Must come after the ../../toolkit/moz.configure.
+@depends('MOZ_ANDROID_MMA',
+         'MOZ_NATIVE_DEVICES',
+         'MOZ_ANDROID_GCM',
+         '--with-leanplum-sdk-keyfile')
+def check_android_mma(android_mma,
+                      native_devices,
+                      android_gcm,
+                      leanplum_sdk_keyfile):
+    if android_mma:
+        if not native_devices:
+            die('You must specify MOZ_NATIVE_DEVICES=1 when'
+                ' building with MOZ_ANDROID_MMA=1')
+        if not android_gcm:
+            die('You must specify MOZ_ANDROID_GCM=1 when'
+                ' building with MOZ_ANDROID_MMA=1')
+        if not leanplum_sdk_keyfile:
+            die('You must specify --with-leanplum-sdk-keyfile=/path/to/keyfile when'
+                ' building with MOZ_ANDROID_MMA=1')

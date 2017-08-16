@@ -1,6 +1,6 @@
 "use strict";
 
-add_task(function* () {
+add_task(async function() {
   let migrator = MigrationUtils.getMigrator("ie");
   // Sanity check for the source.
   Assert.ok(migrator.sourceExists);
@@ -32,9 +32,9 @@ add_task(function* () {
     onItemVisited() {},
     onItemMoved() {},
   };
-  PlacesUtils.bookmarks.addObserver(bmObserver, false);
+  PlacesUtils.bookmarks.addObserver(bmObserver);
 
-  yield promiseMigration(migrator, MigrationUtils.resourceTypes.BOOKMARKS);
+  await promiseMigration(migrator, MigrationUtils.resourceTypes.BOOKMARKS);
   PlacesUtils.bookmarks.removeObserver(bmObserver);
   Assert.equal(MigrationUtils._importQuantities.bookmarks, itemCount,
                "Ensure telemetry matches actual number of imported items.");

@@ -63,8 +63,10 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "nsAutoPtr.h"
 #include "nsIEventTarget.h"
 #include "nsITimer.h"
+#include "nsTArray.h"
 
 #include "m_cpp_utils.h"
+#include "nricestunaddr.h"
 
 typedef struct nr_ice_ctx_ nr_ice_ctx;
 typedef struct nr_ice_peer_ctx_ nr_ice_peer_ctx;
@@ -233,6 +235,11 @@ class NrIceCtx {
   static std::string GetNewUfrag();
   static std::string GetNewPwd();
 
+  // static GetStunAddrs for use in parent process to support
+  // sandboxing restrictions
+  static nsTArray<NrIceStunAddr> GetStunAddrs();
+  void SetStunAddrs(const nsTArray<NrIceStunAddr>& addrs);
+
   bool Initialize();
   bool Initialize(const std::string& ufrag, const std::string& pwd);
 
@@ -321,7 +328,7 @@ class NrIceCtx {
   nsresult StartGathering(bool default_route_only, bool proxy_only);
 
   // Start checking
-  nsresult StartChecks();
+  nsresult StartChecks(bool offerer);
 
   // Notify that the network has gone online/offline
   void UpdateNetworkState(bool online);
@@ -349,9 +356,7 @@ class NrIceCtx {
   NS_INLINE_DECL_THREADSAFE_REFCOUNTING(NrIceCtx)
 
 private:
-  NrIceCtx(const std::string& name,
-           bool offerer,
-           Policy policy);
+  NrIceCtx(const std::string& name, Policy policy);
 
   virtual ~NrIceCtx();
 
@@ -388,6 +393,7 @@ private:
   GatheringState gathering_state_;
   const std::string name_;
   bool offerer_;
+  TimeStamp ice_start_time_;
   bool ice_controlling_set_;
   std::vector<RefPtr<NrIceMediaStream> > streams_;
   nr_ice_ctx *ctx_;

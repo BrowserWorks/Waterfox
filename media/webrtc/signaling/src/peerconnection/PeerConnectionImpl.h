@@ -450,11 +450,20 @@ public:
   GetParameters(dom::MediaStreamTrack& aTrack,
                 std::vector<JsepTrack::JsConstraints>* aOutConstraints);
 
-  NS_IMETHODIMP_TO_ERRORRESULT(SelectSsrc, ErrorResult &rv,
+  // test-only: called from simulcast mochitests.
+  NS_IMETHODIMP_TO_ERRORRESULT(AddRIDExtension, ErrorResult &rv,
                                dom::MediaStreamTrack& aRecvTrack,
-                               unsigned short aSsrcIndex)
+                               unsigned short aExtensionId)
   {
-    rv = SelectSsrc(aRecvTrack, aSsrcIndex);
+    rv = AddRIDExtension(aRecvTrack, aExtensionId);
+  }
+
+  // test-only: called from simulcast mochitests.
+  NS_IMETHODIMP_TO_ERRORRESULT(AddRIDFilter, ErrorResult& rv,
+                               dom::MediaStreamTrack& aRecvTrack,
+                               const nsAString& aRid)
+  {
+    rv = AddRIDFilter(aRecvTrack, aRid);
   }
 
   nsresult GetPeerIdentity(nsAString& peerIdentity)
@@ -637,7 +646,8 @@ private:
                                 std::vector<uint8_t>* fingerprint) const;
   nsresult ConfigureJsepSessionCodecs();
 
-  NS_IMETHODIMP EnsureDataConnection(uint16_t aNumstreams);
+  NS_IMETHODIMP EnsureDataConnection(uint16_t aLocalPort, uint16_t aNumstreams,
+                                     uint32_t aMaxMessageSize);
 
   nsresult CloseInt();
   nsresult CheckApiState(bool assert_ice_ready) const;
@@ -650,6 +660,11 @@ private:
     NS_ENSURE_TRUE(on, false);
     return true;
   }
+
+  // test-only: called from AddRIDExtension and AddRIDFilter
+  // for simulcast mochitests.
+  RefPtr<MediaPipeline> GetMediaPipelineForTrack(
+      dom::MediaStreamTrack& aRecvTrack);
 
   nsresult GetTimeSinceEpoch(DOMHighResTimeStamp *result);
 
@@ -665,6 +680,7 @@ private:
       uint32_t* channels,
       uint16_t* localport,
       uint16_t* remoteport,
+      uint32_t* maxmessagesize,
       uint16_t* level) const;
 
   static void DeferredAddTrackToJsepSession(const std::string& pcHandle,
@@ -772,12 +788,6 @@ private:
   // Start time of call used for Telemetry
   mozilla::TimeStamp mStartTime;
 
-  // Temporary: used to prevent multiple audio streams or multiple video streams
-  // in a single PC. This is tied up in the IETF discussion around proper
-  // representation of multiple streams in SDP, and strongly related to
-  // Bug 840728.
-  int mNumAudioStreams;
-  int mNumVideoStreams;
   bool mHaveConfiguredCodecs;
 
   bool mHaveDataStream;

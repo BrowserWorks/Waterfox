@@ -30,6 +30,7 @@
 #include "nsNPAPIPlugin.h"
 #include "nsPrintfCString.h"
 #include "prsystem.h"
+#include "prclist.h"
 #include "PluginQuirks.h"
 #include "gfxPlatform.h"
 #include "GeckoProfiler.h"
@@ -44,16 +45,15 @@
 #include "PluginUtilsWin.h"
 #endif
 
-#ifdef MOZ_GECKO_PROFILER
-#include "nsIProfiler.h"
-#include "nsIProfileSaveEvent.h"
-#endif
-
 #ifdef MOZ_WIDGET_GTK
 #include <glib.h>
 #elif XP_MACOSX
 #include "PluginInterposeOSX.h"
 #include "PluginUtilsOSX.h"
+#endif
+
+#ifdef MOZ_GECKO_PROFILER
+#include "ProfilerParent.h"
 #endif
 
 using base::KillProcess;
@@ -107,11 +107,6 @@ mozilla::plugins::SetupBridge(uint32_t aPluginId,
         return true;
     }
     PluginModuleChromeParent* chromeParent = static_cast<PluginModuleChromeParent*>(plugin->GetLibrary());
-    /*
-     *  We can't accumulate BLOCKED_ON_PLUGIN_MODULE_INIT_MS until here because
-     *  its histogram key is not available until *after* NP_Initialize.
-     */
-    chromeParent->AccumulateModuleInitBlockedTime();
     *rv = chromeParent->GetRunID(runID);
     if (NS_FAILED(*rv)) {
         return true;
@@ -154,7 +149,8 @@ class mozilla::plugins::FinishInjectorInitTask : public mozilla::CancelableRunna
 {
 public:
     FinishInjectorInitTask()
-        : mMutex("FlashInjectorInitTask::mMutex")
+        : CancelableRunnable("FinishInjectorInitTask")
+        , mMutex("FlashInjectorInitTask::mMutex")
         , mParent(nullptr)
         , mMainThreadMsgLoop(MessageLoop::current())
     {
@@ -428,17 +424,14 @@ PluginModuleContentParent::LoadModule(uint32_t aPluginId,
     nsresult rv;
     uint32_t runID;
     Endpoint<PPluginModuleParent> endpoint;
-    TimeStamp sendLoadPluginStart = TimeStamp::Now();
     if (!cp->SendLoadPlugin(aPluginId, &rv, &runID, &endpoint) ||
         NS_FAILED(rv)) {
         return nullptr;
     }
     Initialize(Move(endpoint));
-    TimeStamp sendLoadPluginEnd = TimeStamp::Now();
 
     PluginModuleContentParent* parent = mapping->GetModule();
     MOZ_ASSERT(parent);
-    parent->mTimeBlocked += (sendLoadPluginEnd - sendLoadPluginStart);
 
     if (!mapping->IsChannelOpened()) {
         // mapping is linked into PluginModuleMapping::sModuleListHead and is
@@ -532,7 +525,6 @@ PluginModuleChromeParent::LoadModule(const char* aFilePath, uint32_t aPluginId,
                                          aPluginTag->mSupportsAsyncInit));
     UniquePtr<LaunchCompleteTask> onLaunchedRunnable(new LaunchedTask(parent));
     parent->mSubprocess->SetCallRunnableImmediately(!parent->mIsStartingAsync);
-    TimeStamp launchStart = TimeStamp::Now();
     bool launched = parent->mSubprocess->Launch(Move(onLaunchedRunnable),
                                                 aPluginTag->mSandboxLevel);
     if (!launched) {
@@ -551,8 +543,6 @@ PluginModuleChromeParent::LoadModule(const char* aFilePath, uint32_t aPluginId,
             return nullptr;
         }
     }
-    TimeStamp launchEnd = TimeStamp::Now();
-    parent->mTimeBlocked = (launchEnd - launchStart);
     return parent.forget();
 }
 
@@ -635,19 +625,7 @@ PluginModuleChromeParent::OnProcessLaunched(const bool aSucceeded)
     }
 
 #ifdef MOZ_GECKO_PROFILER
-    nsCOMPtr<nsIProfiler> profiler(do_GetService("@mozilla.org/tools/profiler;1"));
-    bool profilerActive = false;
-    DebugOnly<nsresult> rv = profiler->IsActive(&profilerActive);
-    MOZ_ASSERT(NS_SUCCEEDED(rv));
-    if (profilerActive) {
-        nsCOMPtr<nsIProfilerStartParams> currentProfilerParams;
-        rv = profiler->GetStartParams(getter_AddRefs(currentProfilerParams));
-        MOZ_ASSERT(NS_SUCCEEDED(rv));
-
-        mIsProfilerActive = true;
-
-        StartProfiler(currentProfilerParams);
-    }
+    Unused << SendInitProfiler(ProfilerParent::CreateForProcess(OtherPid()));
 #endif
 }
 
@@ -773,18 +751,11 @@ PluginModuleChromeParent::PluginModuleChromeParent(const char* aFilePath,
     , mAsyncInitRv(NS_ERROR_NOT_INITIALIZED)
     , mAsyncInitError(NPERR_NO_ERROR)
     , mContentParent(nullptr)
-#ifdef MOZ_GECKO_PROFILER
-    , mIsProfilerActive(false)
-#endif
 {
     NS_ASSERTION(mSubprocess, "Out of memory!");
     sInstantiated = true;
     mSandboxLevel = aSandboxLevel;
     mRunID = GeckoChildProcessHost::GetUniqueID();
-
-#ifdef MOZ_GECKO_PROFILER
-    InitPluginProfiling();
-#endif
 
     mozilla::HangMonitor::RegisterAnnotator(*this);
 }
@@ -794,10 +765,6 @@ PluginModuleChromeParent::~PluginModuleChromeParent()
     if (!OkToCleanup()) {
         MOZ_CRASH("unsafe destruction");
     }
-
-#ifdef MOZ_GECKO_PROFILER
-    ShutdownPluginProfiling();
-#endif
 
 #ifdef XP_WIN
     // If we registered for audio notifications, stop.
@@ -1227,13 +1194,9 @@ PluginModuleChromeParent::TakeFullMinidump(base::ProcessId aContentPid,
     // hangs we take this earlier (see ProcessHangMonitor) from a background
     // thread. We do this before we message the main thread about the hang
     // since the posted message will trash our browser stack state.
-    bool exists;
     nsCOMPtr<nsIFile> browserDumpFile;
-    if (!aBrowserDumpId.IsEmpty() &&
-        CrashReporter::GetMinidumpForID(aBrowserDumpId, getter_AddRefs(browserDumpFile)) &&
-        browserDumpFile &&
-        NS_SUCCEEDED(browserDumpFile->Exists(&exists)) && exists)
-    {
+    if (CrashReporter::GetMinidumpForID(aBrowserDumpId,
+                                        getter_AddRefs(browserDumpFile))) {
         // We have a single browser report, generate a new plugin process parent
         // report and pair it up with the browser report handed in.
         reportsReady = mCrashReporter->GenerateMinidumpAndPair(
@@ -1265,8 +1228,7 @@ PluginModuleChromeParent::TakeFullMinidump(base::ProcessId aContentPid,
                  NS_ConvertUTF16toUTF8(aDumpId).get()));
         nsAutoCString additionalDumps("browser");
         nsCOMPtr<nsIFile> pluginDumpFile;
-        if (GetMinidumpForID(aDumpId, getter_AddRefs(pluginDumpFile)) &&
-            pluginDumpFile) {
+        if (GetMinidumpForID(aDumpId, getter_AddRefs(pluginDumpFile))) {
 #ifdef MOZ_CRASHREPORTER_INJECTOR
             // If we have handles to the flash sandbox processes on Windows,
             // include those minidumps as well.
@@ -2241,15 +2203,12 @@ PluginModuleChromeParent::NP_Initialize(NPNetscapeFuncs* bFuncs, NPPluginFuncs* 
     PluginSettings settings;
     GetSettings(&settings);
 
-    TimeStamp callNpInitStart = TimeStamp::Now();
     // Asynchronous case
     if (mIsStartingAsync) {
         if (!SendAsyncNP_Initialize(settings)) {
             Close();
             return NS_ERROR_FAILURE;
         }
-        TimeStamp callNpInitEnd = TimeStamp::Now();
-        mTimeBlocked += (callNpInitEnd - callNpInitStart);
         return NS_OK;
     }
 
@@ -2262,8 +2221,6 @@ PluginModuleChromeParent::NP_Initialize(NPNetscapeFuncs* bFuncs, NPPluginFuncs* 
         Close();
         return NS_ERROR_FAILURE;
     }
-    TimeStamp callNpInitEnd = TimeStamp::Now();
-    mTimeBlocked += (callNpInitEnd - callNpInitStart);
 
     RecvNP_InitializeResult(*error);
 
@@ -2368,13 +2325,10 @@ PluginModuleChromeParent::NP_Initialize(NPNetscapeFuncs* bFuncs, NPError* error)
     PluginSettings settings;
     GetSettings(&settings);
 
-    TimeStamp callNpInitStart = TimeStamp::Now();
     if (mIsStartingAsync) {
         if (!SendAsyncNP_Initialize(settings)) {
             return NS_ERROR_FAILURE;
         }
-        TimeStamp callNpInitEnd = TimeStamp::Now();
-        mTimeBlocked += (callNpInitEnd - callNpInitStart);
         return NS_OK;
     }
 
@@ -2382,8 +2336,6 @@ PluginModuleChromeParent::NP_Initialize(NPNetscapeFuncs* bFuncs, NPError* error)
         Close();
         return NS_ERROR_FAILURE;
     }
-    TimeStamp callNpInitEnd = TimeStamp::Now();
-    mTimeBlocked += (callNpInitEnd - callNpInitStart);
     RecvNP_InitializeResult(*error);
     return NS_OK;
 }
@@ -2686,18 +2638,6 @@ public:
   }
 };
 
-void
-PluginModuleParent::AccumulateModuleInitBlockedTime()
-{
-    if (mPluginName.IsEmpty()) {
-        GetPluginDetails();
-    }
-    Telemetry::Accumulate(Telemetry::BLOCKED_ON_PLUGIN_MODULE_INIT_MS,
-                          GetHistogramKey(),
-                          static_cast<uint32_t>(mTimeBlocked.ToMilliseconds()));
-    mTimeBlocked = TimeDuration();
-}
-
 #if defined(XP_WIN) || defined(MOZ_WIDGET_GTK)
 static void
 ForceWindowless(InfallibleTArray<nsCString>& names,
@@ -2749,13 +2689,6 @@ PluginModuleParent::NPP_NewInternal(NPMIMEType pluginType, NPP instance,
     if (mPluginName.IsEmpty()) {
         GetPluginDetails();
         InitQuirksModes(nsDependentCString(pluginType));
-        /** mTimeBlocked measures the time that the main thread has been blocked
-         *  on plugin module initialization. As implemented, this is the sum of
-         *  plugin-container launch + toolhelp32 snapshot + NP_Initialize.
-         *  We don't accumulate its value until here because the plugin info
-         *  for its histogram key is not available until *after* NP_Initialize.
-         */
-        AccumulateModuleInitBlockedTime();
     }
 
     nsCaseInsensitiveUTF8StringArrayComparator comparator;
@@ -2836,9 +2769,7 @@ PluginModuleParent::NPP_NewInternal(NPMIMEType pluginType, NPP instance,
         return NS_ERROR_FAILURE;
     }
 
-    {   // Scope for timer
-        Telemetry::AutoTimer<Telemetry::BLOCKED_ON_PLUGIN_INSTANCE_INIT_MS>
-            timer(GetHistogramKey());
+    {
         if (mIsStartingAsync) {
             MOZ_ASSERT(surrogate);
             surrogate->AsyncCallDeparting();
@@ -2866,6 +2797,8 @@ PluginModuleParent::NPP_NewInternal(NPMIMEType pluginType, NPP instance,
         }
         return NS_ERROR_FAILURE;
     }
+
+    Telemetry::ScalarAdd(Telemetry::ScalarID::BROWSER_USAGE_PLUGIN_INSTANTIATED, 1);
 
     UpdatePluginTimeout();
 
@@ -3228,7 +3161,6 @@ PluginModuleChromeParent::InitializeInjector()
                           NS_LITERAL_CSTRING(FLASH_PLUGIN_PREFIX)))
         return;
 
-    TimeStamp th32Start = TimeStamp::Now();
     mFinishInitTask = mChromeTaskFactory.NewTask<FinishInjectorInitTask>();
     mFinishInitTask->Init(this);
     if (!::QueueUserWorkItem(&PluginModuleChromeParent::GetToolhelpSnapshot,
@@ -3236,8 +3168,6 @@ PluginModuleChromeParent::InitializeInjector()
         mFinishInitTask = nullptr;
         return;
     }
-    TimeStamp th32End = TimeStamp::Now();
-    mTimeBlocked += (th32End - th32Start);
 }
 
 void
@@ -3283,134 +3213,6 @@ PluginModuleChromeParent::OnCrash(DWORD processID)
 }
 
 #endif // MOZ_CRASHREPORTER_INJECTOR
-
-#ifdef MOZ_GECKO_PROFILER
-class PluginProfilerObserver final : public nsIObserver,
-                                     public nsSupportsWeakReference
-{
-public:
-    NS_DECL_ISUPPORTS
-    NS_DECL_NSIOBSERVER
-
-    explicit PluginProfilerObserver(PluginModuleChromeParent* pmp)
-      : mPmp(pmp)
-    {}
-
-private:
-    ~PluginProfilerObserver() {}
-    PluginModuleChromeParent* mPmp;
-};
-
-NS_IMPL_ISUPPORTS(PluginProfilerObserver, nsIObserver, nsISupportsWeakReference)
-
-NS_IMETHODIMP
-PluginProfilerObserver::Observe(nsISupports *aSubject,
-                                const char *aTopic,
-                                const char16_t *aData)
-{
-    if (!strcmp(aTopic, "profiler-started")) {
-        nsCOMPtr<nsIProfilerStartParams> params(do_QueryInterface(aSubject));
-        mPmp->StartProfiler(params);
-    } else if (!strcmp(aTopic, "profiler-stopped")) {
-        mPmp->StopProfiler();
-    } else if (!strcmp(aTopic, "profiler-subprocess-gather")) {
-        mPmp->GatherAsyncProfile();
-    } else if (!strcmp(aTopic, "profiler-subprocess")) {
-        nsCOMPtr<nsIProfileSaveEvent> pse = do_QueryInterface(aSubject);
-        mPmp->GatheredAsyncProfile(pse);
-    }
-    return NS_OK;
-}
-
-void
-PluginModuleChromeParent::InitPluginProfiling()
-{
-    nsCOMPtr<nsIObserverService> observerService = mozilla::services::GetObserverService();
-    if (observerService) {
-        mProfilerObserver = new PluginProfilerObserver(this);
-        observerService->AddObserver(mProfilerObserver, "profiler-started", false);
-        observerService->AddObserver(mProfilerObserver, "profiler-stopped", false);
-        observerService->AddObserver(mProfilerObserver, "profiler-subprocess-gather", false);
-        observerService->AddObserver(mProfilerObserver, "profiler-subprocess", false);
-    }
-}
-
-void
-PluginModuleChromeParent::ShutdownPluginProfiling()
-{
-    nsCOMPtr<nsIObserverService> observerService = mozilla::services::GetObserverService();
-    if (observerService) {
-        observerService->RemoveObserver(mProfilerObserver, "profiler-started");
-        observerService->RemoveObserver(mProfilerObserver, "profiler-stopped");
-        observerService->RemoveObserver(mProfilerObserver, "profiler-subprocess-gather");
-        observerService->RemoveObserver(mProfilerObserver, "profiler-subprocess");
-    }
-}
-
-void
-PluginModuleChromeParent::StartProfiler(nsIProfilerStartParams* aParams)
-{
-    if (NS_WARN_IF(!aParams)) {
-        return;
-    }
-
-    ProfilerInitParams ipcParams;
-
-    ipcParams.enabled() = true;
-    aParams->GetEntries(&ipcParams.entries());
-    aParams->GetInterval(&ipcParams.interval());
-    ipcParams.features() = aParams->GetFeatures();
-    ipcParams.threadFilters() = aParams->GetThreadFilterNames();
-
-    Unused << SendStartProfiler(ipcParams);
-
-    nsCOMPtr<nsIProfiler> profiler(do_GetService("@mozilla.org/tools/profiler;1"));
-    if (NS_WARN_IF(!profiler)) {
-        return;
-    }
-    mIsProfilerActive = true;
-}
-
-void
-PluginModuleChromeParent::StopProfiler()
-{
-    mIsProfilerActive = false;
-    Unused << SendStopProfiler();
-}
-
-void
-PluginModuleChromeParent::GatherAsyncProfile()
-{
-    if (NS_WARN_IF(!mIsProfilerActive)) {
-        return;
-    }
-    profiler_will_gather_OOP_profile();
-    Unused << SendGatherProfile();
-}
-
-void
-PluginModuleChromeParent::GatheredAsyncProfile(nsIProfileSaveEvent* aSaveEvent)
-{
-    if (aSaveEvent && !mProfile.IsEmpty()) {
-        aSaveEvent->AddSubProfile(mProfile.get());
-        mProfile.Truncate();
-    }
-}
-#endif // MOZ_GECKO_PROFILER
-
-mozilla::ipc::IPCResult
-PluginModuleChromeParent::RecvProfile(const nsCString& aProfile)
-{
-#ifdef MOZ_GECKO_PROFILER
-    if (NS_WARN_IF(!mIsProfilerActive)) {
-        return IPC_OK();
-    }
-
-    mProfile = aProfile;
-    profiler_gathered_OOP_profile();
-#endif
-    return IPC_OK();
-}
 
 mozilla::ipc::IPCResult
 PluginModuleParent::AnswerGetKeyState(const int32_t& aVirtKey, int16_t* aRet)
@@ -3493,5 +3295,17 @@ PluginModuleChromeParent::AnswerGetFileName(const GetFileNameFunc& aFunc,
     MOZ_ASSERT_UNREACHABLE("GetFileName IPC message is only available on "
                            "Windows builds with sandbox.");
     return IPC_FAIL_NO_REASON(this);
+#endif
+}
+
+mozilla::ipc::IPCResult
+PluginModuleChromeParent::AnswerSetCursorPos(const int &x, const int &y,
+                                             bool* aResult)
+{
+#if defined(XP_WIN)
+    *aResult = ::SetCursorPos(x, y);
+    return IPC_OK();
+#else
+    return PluginModuleParent::AnswerSetCursorPos(x, y, aResult);
 #endif
 }

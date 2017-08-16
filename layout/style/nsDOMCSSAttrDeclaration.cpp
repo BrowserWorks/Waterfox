@@ -73,6 +73,7 @@ nsresult
 nsDOMCSSAttributeDeclaration::SetCSSDeclaration(DeclarationBlock* aDecl)
 {
   NS_ASSERTION(mElement, "Must have Element to set the declaration!");
+  aDecl->SetDirty();
   return mIsSMILOverride
     ? mElement->SetSMILOverrideStyleDeclaration(aDecl, true)
     : mElement->SetInlineStyleDeclaration(aDecl, nullptr, true);
@@ -168,9 +169,18 @@ nsDOMCSSAttributeDeclaration::GetCSSParsingEnvironment(CSSParsingEnvironment& aC
 
   nsIDocument* doc = mElement->OwnerDoc();
   aCSSParseEnv.mSheetURI = doc->GetDocumentURI();
-  aCSSParseEnv.mBaseURI = mElement->GetBaseURI();
+  aCSSParseEnv.mBaseURI = mElement->GetBaseURIForStyleAttr();
   aCSSParseEnv.mPrincipal = mElement->NodePrincipal();
   aCSSParseEnv.mCSSLoader = doc->CSSLoader();
+}
+
+nsDOMCSSDeclaration::ServoCSSParsingEnvironment
+nsDOMCSSAttributeDeclaration::GetServoCSSParsingEnvironment() const
+{
+  return {
+    mElement->GetURLDataForStyleAttr(),
+    mElement->OwnerDoc()->GetCompatibilityMode(),
+  };
 }
 
 NS_IMETHODIMP

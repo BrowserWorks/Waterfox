@@ -9,6 +9,9 @@
 :root {
   --identity-popup-expander-width: 38px;
   --panelui-subview-transition-duration: 150ms;
+  --lwt-additional-images: none;
+  --lwt-background-alignment: right top;
+  --lwt-background-tiling: no-repeat;
 }
 
 :root:-moz-lwtheme {
@@ -17,7 +20,9 @@
 
 :root:-moz-lwtheme:not([customization-lwtheme]) {
   background-color: var(--lwt-accent-color) !important;
-  background-image: var(--lwt-header-image) !important;
+  background-image: var(--lwt-header-image), var(--lwt-additional-images) !important;
+  background-position: var(--lwt-background-alignment) !important;
+  background-repeat: var(--lwt-background-tiling) !important;
 }
 
 #main-window:not([chromehidden~="toolbar"]) {
@@ -90,6 +95,10 @@ panelmultiview {
   -moz-binding: url("chrome://browser/content/customizableui/panelUI.xml#panelmultiview");
 }
 
+photonpanelmultiview {
+  -moz-binding: url("chrome://browser/content/customizableui/panelUI.xml#photonpanelmultiview");
+}
+
 panelview {
   -moz-binding: url("chrome://browser/content/customizableui/panelUI.xml#panelview");
   -moz-box-orient: vertical;
@@ -102,6 +111,11 @@ panelview {
 panelview:not([mainview]):not([current]) {
   transition: visibility 0s linear var(--panelui-subview-transition-duration);
   visibility: collapse;
+}
+
+panelview[mainview] > .panel-header,
+panelview:not([title]) > .panel-header {
+  display: none;
 }
 
 tabbrowser {
@@ -122,16 +136,6 @@ tabbrowser {
 
 #tabbrowser-tabs:not([overflow="true"])[using-closing-tabs-spacer] ~ #alltabs-button {
   visibility: hidden; /* temporary space to keep a tab's close button under the cursor */
-}
-
-.tabs-newtab-button > .toolbarbutton-menu-dropmarker,
-#new-tab-button > .toolbarbutton-menu-dropmarker {
-  display: none;
-}
-
-/* override drop marker image padding */
-.tabs-newtab-button > .toolbarbutton-icon {
-  margin-inline-end: 0;
 }
 
 .tabbrowser-tab {
@@ -188,8 +192,9 @@ tabbrowser {
   pointer-events: none; /* avoid blocking dragover events on scroll buttons */
 }
 
+.tabbrowser-tab[tabdrop-samewindow],
 .tabbrowser-tabs[movingtab] > .tabbrowser-tab[fadein]:not([selected]) {
-  transition: transform 200ms ease-out;
+  transition: transform 200ms var(--animation-easing-function);
 }
 
 .new-tab-popup,
@@ -209,6 +214,20 @@ toolbar:not([overflowing]) > .overflow-button,
 toolbar[customizing] > .overflow-button {
   display: none;
 }
+
+window:not([chromehidden~="toolbar"]) #nav-bar[nonemptyoverflow] > .overflow-button,
+#nav-bar[customizing][photon-structure] > .overflow-button {
+  display: -moz-box;
+}
+
+/* The ids are ugly, but this should be reasonably performant, and
+ * using a tagname as the last item would be less so.
+ */
+#widget-overflow-list:empty + #widget-overflow-fixed-separator,
+#widget-overflow:not([hasfixeditems]) #widget-overflow-fixed-separator {
+  display: none;
+}
+
 
 %ifdef CAN_DRAW_IN_TITLEBAR
 #main-window:not([chromemargin]) > #titlebar,
@@ -322,39 +341,39 @@ toolbarpaletteitem > toolbaritem[sdkstylewidget="true"][cui-areatype="toolbar"] 
 
 @media not all and (min-resolution: 1.1dppx) {
   .webextension-browser-action {
-    list-style-image: var(--webextension-toolbar-image);
+    list-style-image: var(--webextension-toolbar-image, inherit);
   }
 
   .webextension-browser-action[cui-areatype="menu-panel"],
   toolbarpaletteitem[place="palette"] > .webextension-browser-action {
-    list-style-image: var(--webextension-menupanel-image);
+    list-style-image: var(--webextension-menupanel-image, inherit);
   }
 
   .webextension-page-action {
-    list-style-image: var(--webextension-urlbar-image);
+    list-style-image: var(--webextension-urlbar-image, inherit);
   }
 
   .webextension-menuitem {
-    list-style-image: var(--webextension-menuitem-image);
+    list-style-image: var(--webextension-menuitem-image, inherit);
   }
 }
 
 @media (min-resolution: 1.1dppx) {
   .webextension-browser-action {
-    list-style-image: var(--webextension-toolbar-image-2x);
+    list-style-image: var(--webextension-toolbar-image-2x, inherit);
   }
 
   .webextension-browser-action[cui-areatype="menu-panel"],
   toolbarpaletteitem[place="palette"] > .webextension-browser-action {
-    list-style-image: var(--webextension-menupanel-image-2x);
+    list-style-image: var(--webextension-menupanel-image-2x, inherit);
   }
 
   .webextension-page-action {
-    list-style-image: var(--webextension-urlbar-image-2x);
+    list-style-image: var(--webextension-urlbar-image-2x, inherit);
   }
 
   .webextension-menuitem {
-    list-style-image: var(--webextension-menuitem-image-2x);
+    list-style-image: var(--webextension-menuitem-image-2x, inherit);
   }
 }
 
@@ -404,8 +423,8 @@ toolbar:not(#TabsToolbar) > #personal-bookmarks {
   display: -moz-box;
 }
 
-#urlbar-reload-button:not([displaystop]) + #urlbar-stop-button,
-#urlbar-reload-button[displaystop] {
+#reload-button:not([displaystop]) + #stop-button,
+#reload-button[displaystop] {
   visibility: collapse;
 }
 
@@ -415,29 +434,6 @@ toolbar:not(#TabsToolbar) > #personal-bookmarks {
 
 #panelMenu_bookmarksMenu > .bookmark-item {
   max-width: none;
-}
-
-#urlbar-container {
-  min-width: 50ch;
-}
-
-#search-container {
-  min-width: 25ch;
-}
-
-/* Apply crisp rendering for favicons at exactly 2dppx resolution */
-@media (resolution: 2dppx) {
-  .searchbar-engine-image {
-    image-rendering: -moz-crisp-edges;
-  }
-}
-
-#urlbar,
-.searchbar-textbox {
-  /* Setting a width and min-width to let the location & search bars maintain
-     a constant width in case they haven't be resized manually. (bug 965772) */
-  width: 1px;
-  min-width: 1px;
 }
 
 #main-window:-moz-lwtheme {
@@ -467,9 +463,61 @@ toolbar:not(#TabsToolbar) > #personal-bookmarks {
   display: none;
 }
 
-/* ::::: location bar ::::: */
+/* ::::: location bar & search bar ::::: */
+
+#urlbar-container {
+  min-width: 50ch;
+}
+
+#search-container {
+  min-width: 25ch;
+}
+
+#urlbar,
+.searchbar-textbox {
+  /* Setting a width and min-width to let the location & search bars maintain
+     a constant width in case they haven't be resized manually. (bug 965772) */
+  width: 1px;
+  min-width: 1px;
+}
+
 #urlbar {
   -moz-binding: url(chrome://browser/content/urlbarBindings.xml#urlbar);
+}
+
+/*
+ * Display visual cue that browser is under remote control by Marionette.
+ * This is to help users visually distinguish a user agent session that
+ * is under remote control from those used for normal browsing sessions.
+ *
+ * Attribute is controlled by browser.js:/gRemoteControl.
+ */
+#main-window[remotecontrol] #urlbar {
+  background: repeating-linear-gradient(
+    -45deg,
+    transparent,
+    transparent 25px,
+    rgba(255,255,255,.3) 25px,
+    rgba(255,255,255,.3) 50px);
+  background-color: rgba(255,170,68,.8);
+  color: black;
+}
+#main-window[remotecontrol] #urlbar #identity-box {
+  background: white;
+}
+
+/* Fade out URL on overflow */
+html|input.urlbar-input[textoverflow]:not([focused]) {
+  /* Don't need to worry about RTL here since we use direction:ltr for the
+     input field. */
+  mask-image: linear-gradient(to left, transparent, black 3em);
+}
+
+/* Apply crisp rendering for favicons at exactly 2dppx resolution */
+@media (resolution: 2dppx) {
+  .searchbar-engine-image {
+    image-rendering: -moz-crisp-edges;
+  }
 }
 
 /* Always show URLs LTR. */
@@ -497,14 +545,8 @@ toolbar:not(#TabsToolbar) > #personal-bookmarks {
   list-style-image: none;
 }
 
-#urlbar:not([actiontype="switchtab"]):not([actiontype="extension"]) > #urlbar-display-box {
-  display: none;
-}
-
-#urlbar:not([actiontype="switchtab"]) > #urlbar-display-box > #switchtab {
-  display: none;
-}
-
+#urlbar:not([actiontype="switchtab"]):not([actiontype="extension"]) > #urlbar-display-box,
+#urlbar:not([actiontype="switchtab"]) > #urlbar-display-box > #switchtab,
 #urlbar:not([actiontype="extension"]) > #urlbar-display-box > #extension {
   display: none;
 }
@@ -515,6 +557,10 @@ toolbar:not(#TabsToolbar) > #personal-bookmarks {
 #PopupAutoComplete > richlistbox > richlistitem > .ac-separator,
 #PopupAutoComplete > richlistbox > richlistitem > .ac-url {
   display: none;
+}
+
+#PopupAutoComplete[firstresultstyle="insecureWarning"] {
+  min-width: 200px;
 }
 
 #PopupAutoComplete > richlistbox > richlistitem[originaltype="insecureWarning"] {
@@ -555,13 +601,13 @@ toolbar:not(#TabsToolbar) > #personal-bookmarks {
   transition: height 100ms;
 }
 
-#PopupAutoCompleteRichResult > hbox[anonid="search-suggestions-notification"] {
-  visibility: collapse;
+#PopupAutoCompleteRichResult > deck[anonid="search-suggestions-notification"] {
+  display: none;
   transition: margin-top 100ms;
 }
 
-#PopupAutoCompleteRichResult.showSearchSuggestionsNotification > hbox[anonid="search-suggestions-notification"] {
-  visibility: visible;
+#PopupAutoCompleteRichResult.showSearchSuggestionsNotification > deck[anonid="search-suggestions-notification"] {
+  display: -moz-deck;
 }
 
 #PopupAutoCompleteRichResult > richlistbox {
@@ -572,17 +618,19 @@ toolbar:not(#TabsToolbar) > #personal-bookmarks {
   transition: none;
 }
 
-#DateTimePickerPanel {
+#DateTimePickerPanel[active="true"] {
   -moz-binding: url("chrome://global/content/bindings/datetimepopup.xml#datetime-popup");
 }
 
 #urlbar[pageproxystate="invalid"] > #urlbar-icons > .urlbar-icon,
+%ifdef MOZ_PHOTON_THEME
+.urlbar-go-button[pageproxystate="valid"],
+.urlbar-go-button:not([parentfocused="true"]),
+%else
 #urlbar[pageproxystate="invalid"][focused="true"] > #urlbar-go-button ~ toolbarbutton,
 #urlbar[pageproxystate="valid"] > #urlbar-go-button,
-#urlbar:not([focused="true"]) > #urlbar-go-button {
-  visibility: collapse;
-}
-
+#urlbar:not([focused="true"]) > #urlbar-go-button,
+%endif
 #urlbar[pageproxystate="invalid"] > #identity-box > #blocked-permissions-container,
 #urlbar[pageproxystate="invalid"] > #identity-box > #notification-popup-box,
 #urlbar[pageproxystate="invalid"] > #identity-box > #identity-icon-labels {
@@ -647,10 +695,6 @@ toolbar:not(#TabsToolbar) > #personal-bookmarks {
 }
 
 /* ::::: Unified Back-/Forward Button ::::: */
-#back-button > .toolbarbutton-menu-dropmarker,
-#forward-button > .toolbarbutton-menu-dropmarker {
-  display: none;
-}
 .unified-nav-current {
   font-weight: bold;
 }
@@ -988,17 +1032,6 @@ toolbarpaletteitem[place="palette"] > #downloads-button[indicator] > #downloads-
   display: none;
 }
 
-#downloads-button.withProgressBar:-moz-any([progress], [counter], [paused]) #downloads-indicator-icon,
-#downloads-button:not(:-moz-any([progress], [counter], [paused])) #downloads-indicator-progress-area {
-  visibility: hidden;
-}
-
-/* Hide elements for another type of progressmeter if it's not in use. */
-#downloads-button.withProgressBar #downloads-indicator-progress-icon,
-#downloads-button:not(.withProgressBar) #downloads-indicator-progress-area {
-  visibility: hidden;
-}
-
 /* Combobox dropdown renderer */
 #ContentSelectDropdown > menupopup {
   /* The menupopup itself should always be rendered LTR to ensure the scrollbar aligns with
@@ -1091,6 +1124,29 @@ toolbarpaletteitem[place="palette"] > #downloads-button[indicator] > #downloads-
   }
 }
 
+#customization-container {
+  -moz-box-orient: horizontal;
+}
+
+#customization-container[photon] {
+  display: flex;
+  flex-direction: column;
+}
+
+#customization-container[photon] > #customization-content-container {
+  display: flex;
+  flex-grow: 1; /* Grow so there isn't empty space below the footer */
+  min-height: 0; /* Allow this to shrink so the footer doesn't get pushed out. */
+}
+
+#customization-container[photon] > #customization-content-container > #customization-palette-container {
+  flex-grow: 1;
+}
+
+#customization-panelHolder > #widget-overflow-fixed-list {
+  padding-bottom: 50px; /* Make sure there's always space to drop stuff. */
+}
+
 #customization-panelHolder {
   overflow-y: hidden;
 }
@@ -1178,7 +1234,8 @@ toolbarpaletteitem[place="palette"][hidden] {
   max-width: 10em;
 }
 
-#main-window[customizing=true] #PanelUI-update-status {
+#main-window[customizing=true] .addon-banner-item,
+#main-window[customizing=true] .panel-banner-item {
   display: none;
 }
 
@@ -1201,3 +1258,12 @@ toolbarpaletteitem[place="palette"][hidden] {
   opacity: 0.65;
   -moz-window-shadow: none;
 }
+
+/* Page action menu */
+#page-action-sendToDeviceView-body[signedin] > #page-action-sendToDevice-fxa-button,
+#page-action-sendToDeviceView-body:not([signedin]) > #page-action-no-devices-button,
+#page-action-sendToDeviceView-body[hasdevices] > #page-action-no-devices-button {
+  display: none;
+}
+
+%include theme-vars.inc.css

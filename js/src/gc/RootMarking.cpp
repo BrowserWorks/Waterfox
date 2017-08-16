@@ -259,7 +259,7 @@ js::gc::GCRuntime::traceRuntimeForMajorGC(JSTracer* trc, AutoLockForExclusiveAcc
     if (rt->isBeingDestroyed())
         return;
 
-    gcstats::AutoPhase ap(stats(), gcstats::PHASE_MARK_ROOTS);
+    gcstats::AutoPhase ap(stats(), gcstats::PhaseKind::MARK_ROOTS);
     if (rt->atomsCompartment(lock)->zone()->isCollecting())
         traceRuntimeAtoms(trc, lock);
     JSCompartment::traceIncomingCrossCompartmentEdgesForZoneGC(trc);
@@ -276,10 +276,9 @@ js::gc::GCRuntime::traceRuntimeForMinorGC(JSTracer* trc, AutoLockForExclusiveAcc
     // the map. And we can reach its trace function despite having finished the
     // roots via the edges stored by the pre-barrier verifier when we finish
     // the verifier for the last time.
-    gcstats::AutoPhase ap(stats(), gcstats::PHASE_MARK_ROOTS);
+    gcstats::AutoPhase ap(stats(), gcstats::PhaseKind::MARK_ROOTS);
 
-    // FIXME: As per bug 1298816 comment 12, we should be able to remove this.
-    jit::JitRuntime::TraceJitcodeGlobalTable(trc);
+    jit::JitRuntime::TraceJitcodeGlobalTableForMinorGC(trc);
 
     traceRuntimeCommon(trc, TraceRuntime, lock);
 }
@@ -292,7 +291,7 @@ js::TraceRuntime(JSTracer* trc)
     JSRuntime* rt = trc->runtime();
     EvictAllNurseries(rt);
     AutoPrepareForTracing prep(TlsContext.get(), WithAtoms);
-    gcstats::AutoPhase ap(rt->gc.stats(), gcstats::PHASE_TRACE_HEAP);
+    gcstats::AutoPhase ap(rt->gc.stats(), gcstats::PhaseKind::TRACE_HEAP);
     rt->gc.traceRuntime(trc, prep.session().lock);
 }
 
@@ -301,7 +300,7 @@ js::gc::GCRuntime::traceRuntime(JSTracer* trc, AutoLockForExclusiveAccess& lock)
 {
     MOZ_ASSERT(!rt->isBeingDestroyed());
 
-    gcstats::AutoPhase ap(stats(), gcstats::PHASE_MARK_ROOTS);
+    gcstats::AutoPhase ap(stats(), gcstats::PhaseKind::MARK_ROOTS);
     traceRuntimeAtoms(trc, lock);
     traceRuntimeCommon(trc, TraceRuntime, lock);
 }
@@ -309,7 +308,7 @@ js::gc::GCRuntime::traceRuntime(JSTracer* trc, AutoLockForExclusiveAccess& lock)
 void
 js::gc::GCRuntime::traceRuntimeAtoms(JSTracer* trc, AutoLockForExclusiveAccess& lock)
 {
-    gcstats::AutoPhase ap(stats(), gcstats::PHASE_MARK_RUNTIME_DATA);
+    gcstats::AutoPhase ap(stats(), gcstats::PhaseKind::MARK_RUNTIME_DATA);
     TracePermanentAtoms(trc);
     TraceAtoms(trc, lock);
     TraceWellKnownSymbols(trc);
@@ -323,13 +322,14 @@ js::gc::GCRuntime::traceRuntimeCommon(JSTracer* trc, TraceOrMarkRuntime traceOrM
     MOZ_ASSERT(!TlsContext.get()->suppressGC);
 
     {
-        gcstats::AutoPhase ap(stats(), gcstats::PHASE_MARK_STACK);
+        gcstats::AutoPhase ap(stats(), gcstats::PhaseKind::MARK_STACK);
 
         JSContext* cx = TlsContext.get();
         for (const CooperatingContext& target : rt->cooperatingContexts()) {
             // Trace active interpreter and JIT stack roots.
             TraceInterpreterActivations(cx, target, trc);
             jit::TraceJitActivations(cx, target, trc);
+            wasm::TraceActivations(cx, target, trc);
 
             // Trace legacy C stack roots.
             AutoGCRooter::traceAll(target, trc);
@@ -370,7 +370,7 @@ js::gc::GCRuntime::traceRuntimeCommon(JSTracer* trc, TraceOrMarkRuntime traceOrM
 
     // Trace the embedding's black and gray roots.
     if (!JS::CurrentThreadIsHeapMinorCollecting()) {
-        gcstats::AutoPhase ap(stats(), gcstats::PHASE_MARK_EMBEDDING);
+        gcstats::AutoPhase ap(stats(), gcstats::PhaseKind::MARK_EMBEDDING);
 
         /*
          * The embedding can register additional roots here.
@@ -431,7 +431,7 @@ js::gc::GCRuntime::finishRoots()
 
     AssertNoRootsTracer trc(rt, TraceWeakMapKeysValues);
     AutoPrepareForTracing prep(TlsContext.get(), WithAtoms);
-    gcstats::AutoPhase ap(rt->gc.stats(), gcstats::PHASE_TRACE_HEAP);
+    gcstats::AutoPhase ap(rt->gc.stats(), gcstats::PhaseKind::TRACE_HEAP);
     traceRuntime(&trc, prep.session().lock);
 
     // Restore the wrapper tracing so that we leak instead of leaving dangling
@@ -481,8 +481,6 @@ js::gc::GCRuntime::bufferGrayRoots()
     for (GCZonesIter zone(rt); !zone.done(); zone.next())
         MOZ_ASSERT(zone->gcGrayRoots().empty());
 
-    gcstats::AutoPhase ap(stats(), gcstats::PHASE_BUFFER_GRAY_ROOTS);
-
     BufferGrayRootsTracer grayBufferer(rt);
     if (JSTraceDataOp op = grayRootTracer.op)
         (*op)(&grayBufferer, grayRootTracer.data);
@@ -513,8 +511,10 @@ BufferGrayRootsTracer::onChild(const JS::GCCellPtr& thing)
 
     gc::TenuredCell* tenured = gc::TenuredCell::fromPointer(thing.asCell());
 
-    Zone* zone = tenured->zone();
-    if (zone->isCollecting()) {
+    // This is run from a helper thread while the mutator is paused so we have
+    // to use *FromAnyThread methods here.
+    Zone* zone = tenured->zoneFromAnyThread();
+    if (zone->isCollectingFromAnyThread()) {
         // See the comment on SetMaybeAliveFlag to see why we only do this for
         // objects and scripts. We rely on gray root buffering for this to work,
         // but we only need to worry about uncollected dead compartments during
@@ -549,4 +549,10 @@ JS_PUBLIC_API(void)
 JS::AddPersistentRoot(JS::RootingContext* cx, RootKind kind, PersistentRooted<void*>* root)
 {
     static_cast<JSContext*>(cx)->runtime()->heapRoots.ref()[kind].insertBack(root);
+}
+
+JS_PUBLIC_API(void)
+JS::AddPersistentRoot(JSRuntime* rt, RootKind kind, PersistentRooted<void*>* root)
+{
+    rt->heapRoots.ref()[kind].insertBack(root);
 }

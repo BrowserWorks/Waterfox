@@ -9,6 +9,7 @@ interface nsIURI;
 interface nsIChannel;
 interface nsIDocShell;
 interface nsIDOMDocument;
+interface nsIEventTarget;
 interface nsIPrincipal;
 interface nsIURI;
 
@@ -96,6 +97,11 @@ interface nsIContentSecurityPolicy : nsISerializable
    * an upgrade.
    */
   readonly attribute bool blockAllMixedContent;
+
+  /**
+   * Returns whether this policy enforces the frame-ancestors directive.
+   */
+  readonly attribute bool enforcesFrameAncestors;
 
   /**
    * Obtains the referrer policy (as integer) for this browsing context as
@@ -220,6 +226,10 @@ interface nsIContentSecurityPolicy : nsISerializable
   void setRequestContext(in nsIDOMDocument aDocument,
                          in nsIPrincipal aPrincipal);
 
+  /**
+   *  Ensure we have a nsIEventTarget to use to label CSPReportSenderRunnable
+   */
+  [noscript] void ensureEventTarget(in nsIEventTarget aEventTarget);
 
   /*
    * Checks if a CSP requires Subresource Integrity (SRI)

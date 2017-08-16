@@ -27,6 +27,7 @@ TabGroup::TabGroup(bool aIsChrome)
  : mLastWindowLeft(false)
  , mThrottledQueuesInitialized(false)
  , mIsChrome(aIsChrome)
+ , mForegroundCount(0)
 {
   CreateEventTargets(/* aNeedValidation = */ !aIsChrome);
 
@@ -86,27 +87,31 @@ TabGroup::GetChromeTabGroup()
 }
 
 /* static */ TabGroup*
-TabGroup::GetFromWindowActor(mozIDOMWindowProxy* aWindow)
+TabGroup::GetFromWindow(mozIDOMWindowProxy* aWindow)
+{
+  if (TabChild* tabChild = TabChild::GetFrom(aWindow)) {
+    return tabChild->TabGroup();
+  }
+
+  return nullptr;
+}
+
+/* static */ TabGroup*
+TabGroup::GetFromActor(TabChild* aTabChild)
 {
   MOZ_RELEASE_ASSERT(NS_IsMainThread());
 
-  TabChild* tabChild = TabChild::GetFrom(aWindow);
-  if (!tabChild) {
-    return nullptr;
-  }
-
-  ContentChild* cc = ContentChild::GetSingleton();
-  nsCOMPtr<nsIEventTarget> target = cc->GetActorEventTarget(tabChild);
+  nsCOMPtr<nsIEventTarget> target = aTabChild->Manager()->GetEventTargetFor(aTabChild);
   if (!target) {
     return nullptr;
   }
 
   // We have an event target. We assume the IPC code created it via
   // TabGroup::CreateEventTarget.
-  RefPtr<ValidatingDispatcher> dispatcher =
-    ValidatingDispatcher::FromEventTarget(target);
-  MOZ_RELEASE_ASSERT(dispatcher);
-  auto tabGroup = dispatcher->AsTabGroup();
+  RefPtr<SchedulerGroup> group =
+    SchedulerGroup::FromEventTarget(target);
+  MOZ_RELEASE_ASSERT(group);
+  auto tabGroup = group->AsTabGroup();
   MOZ_RELEASE_ASSERT(tabGroup);
 
   // We delay creating the event targets until now since the TabGroup
@@ -126,6 +131,7 @@ TabGroup::GetDocGroup(const nsACString& aKey)
 already_AddRefed<DocGroup>
 TabGroup::AddDocument(const nsACString& aKey, nsIDocument* aDocument)
 {
+  MOZ_ASSERT(NS_IsMainThread());
   HashEntry* entry = mDocGroups.PutEntry(aKey);
   RefPtr<DocGroup> docGroup;
   if (entry->mDocGroup) {
@@ -146,6 +152,7 @@ TabGroup::AddDocument(const nsACString& aKey, nsIDocument* aDocument)
 /* static */ already_AddRefed<TabGroup>
 TabGroup::Join(nsPIDOMWindowOuter* aWindow, TabGroup* aTabGroup)
 {
+  MOZ_ASSERT(NS_IsMainThread());
   RefPtr<TabGroup> tabGroup = aTabGroup;
   if (!tabGroup) {
     tabGroup = new TabGroup();
@@ -153,21 +160,32 @@ TabGroup::Join(nsPIDOMWindowOuter* aWindow, TabGroup* aTabGroup)
   MOZ_RELEASE_ASSERT(!tabGroup->mLastWindowLeft);
   MOZ_ASSERT(!tabGroup->mWindows.Contains(aWindow));
   tabGroup->mWindows.AppendElement(aWindow);
+
+  if (!aWindow->IsBackground()) {
+    tabGroup->mForegroundCount++;
+  }
+
   return tabGroup.forget();
 }
 
 void
 TabGroup::Leave(nsPIDOMWindowOuter* aWindow)
 {
+  MOZ_ASSERT(NS_IsMainThread());
   MOZ_ASSERT(mWindows.Contains(aWindow));
   mWindows.RemoveElement(aWindow);
+
+  if (!aWindow->IsBackground()) {
+    MOZ_DIAGNOSTIC_ASSERT(mForegroundCount > 0);
+    mForegroundCount--;
+  }
 
   // The Chrome TabGroup doesn't have cyclical references through mEventTargets
   // to itself, meaning that we don't have to worry about nulling mEventTargets
   // out after the last window leaves.
   if (!mIsChrome && mWindows.IsEmpty()) {
     mLastWindowLeft = true;
-    Shutdown();
+    Shutdown(false);
   }
 }
 
@@ -177,6 +195,7 @@ TabGroup::FindItemWithName(const nsAString& aName,
                            nsIDocShellTreeItem* aOriginalRequestor,
                            nsIDocShellTreeItem** aFoundItem)
 {
+  MOZ_ASSERT(NS_IsMainThread());
   NS_ENSURE_ARG_POINTER(aFoundItem);
   *aFoundItem = nullptr;
 
@@ -212,8 +231,9 @@ TabGroup::FindItemWithName(const nsAString& aName,
 }
 
 nsTArray<nsPIDOMWindowOuter*>
-TabGroup::GetTopLevelWindows()
+TabGroup::GetTopLevelWindows() const
 {
+  MOZ_ASSERT(NS_IsMainThread());
   nsTArray<nsPIDOMWindowOuter*> array;
 
   for (nsPIDOMWindowOuter* outerWindow : mWindows) {
@@ -236,7 +256,7 @@ TabGroup::EventTargetFor(TaskCategory aCategory) const
   if (aCategory == TaskCategory::Worker || aCategory == TaskCategory::Timer) {
     MOZ_RELEASE_ASSERT(mThrottledQueuesInitialized || mIsChrome);
   }
-  return ValidatingDispatcher::EventTargetFor(aCategory);
+  return SchedulerGroup::EventTargetFor(aCategory);
 }
 
 AbstractThread*
@@ -250,7 +270,38 @@ TabGroup::AbstractMainThreadForImpl(TaskCategory aCategory)
     return AbstractThread::MainThread();
   }
 
-  return ValidatingDispatcher::AbstractMainThreadForImpl(aCategory);
+  return SchedulerGroup::AbstractMainThreadForImpl(aCategory);
+}
+
+void
+TabGroup::WindowChangedBackgroundStatus(bool aIsNowBackground)
+{
+  MOZ_RELEASE_ASSERT(NS_IsMainThread());
+
+  if (aIsNowBackground) {
+    MOZ_DIAGNOSTIC_ASSERT(mForegroundCount > 0);
+    mForegroundCount -= 1;
+  } else {
+    mForegroundCount += 1;
+  }
+}
+
+bool
+TabGroup::IsBackground() const
+{
+  MOZ_RELEASE_ASSERT(NS_IsMainThread());
+
+#ifdef DEBUG
+  uint32_t foregrounded = 0;
+  for (auto& window : mWindows) {
+    if (!window->IsBackground()) {
+      foregrounded++;
+    }
+  }
+  MOZ_ASSERT(foregrounded == mForegroundCount);
+#endif
+
+  return mForegroundCount == 0;
 }
 
 } // namespace dom

@@ -19,13 +19,7 @@
             if (this.getAttribute("autoscroll") == "false")
               return false;
 
-            var enabled = true;
-            try {
-              enabled = this.mPrefs.getBoolPref("general.autoScroll");
-            } catch (ex) {
-            }
-
-            return enabled;
+            return this.mPrefs.getBoolPref("general.autoScroll", true);
           ]]>
         </getter>
       </property>
@@ -396,10 +390,11 @@
       <method name="getTabBrowser">
         <body>
           <![CDATA[
-            var tabBrowser = this.parentNode;
-            while (tabBrowser && tabBrowser.localName != "tabbrowser")
-              tabBrowser = tabBrowser.parentNode;
-            return tabBrowser;
+            for (let node = this.parentNode; node instanceof Element; node = node.parentNode) {
+              if (node.localName == "tabbrowser")
+                return node;
+            }
+            return null;
           ]]>
         </body>
       </method>
@@ -558,6 +553,13 @@
         ]]></setter>
       </property>
 
+      <property name="effectiveTextZoom"
+                readonly="true">
+        <getter><![CDATA[
+          return this.markupDocumentViewer.effectiveTextZoom;
+        ]]></getter>
+      </property>
+
       <property name="isSyntheticDocument">
         <getter><![CDATA[
           return this.contentDocument.mozSyntheticDocument;
@@ -698,6 +700,9 @@
       <method name="audioPlaybackStarted">
         <body>
           <![CDATA[
+            if (this._audioMuted) {
+              return;
+            }
             let event = document.createEvent("Events");
             event.initEvent("DOMAudioPlaybackStarted", true, false);
             this.dispatchEvent(event);
@@ -752,9 +757,12 @@
                 readonly="true"/>
 
       <method name="mute">
+        <parameter name="transientState"/>
         <body>
           <![CDATA[
-            this._audioMuted = true;
+            if (!transientState) {
+              this._audioMuted = true;
+            }
             this.messageManager.sendAsyncMessage("AudioPlayback",
                                                  {type: "mute"});
           ]]>
@@ -842,26 +850,6 @@
           ]]>
         </setter>
       </property>
-
-      <!-- increases or decreases the browser's network priority -->
-      <method name="adjustPriority">
-        <parameter name="adjustment"/>
-        <body><![CDATA[
-          let loadGroup = this.webNavigation.QueryInterface(Components.interfaces.nsIDocumentLoader)
-                              .loadGroup.QueryInterface(Components.interfaces.nsISupportsPriority);
-          loadGroup.adjustPriority(adjustment);
-        ]]></body>
-      </method>
-
-      <!-- sets the browser's network priority to a discrete value -->
-      <method name="setPriority">
-        <parameter name="priority"/>
-        <body><![CDATA[
-          let loadGroup = this.webNavigation.QueryInterface(Components.interfaces.nsIDocumentLoader)
-                              .loadGroup.QueryInterface(Components.interfaces.nsISupportsPriority);
-          loadGroup.priority = priority;
-        ]]></body>
-      </method>
 
       <field name="urlbarChangeTracker">
         ({
@@ -1384,6 +1372,7 @@
               "_documentContentType",
               "_contentTitle",
               "_characterSet",
+              "_mayEnableCharacterEncodingMenu",
               "_contentPrincipal",
               "_imageDocument",
               "_fullZoom",
@@ -1523,20 +1512,10 @@
             return;
 
           // Toggle browse with caret mode
-          var browseWithCaretOn = false;
-          var warn = true;
-
-          try {
-            warn = this.mPrefs.getBoolPref(kPrefWarnOnEnable);
-          } catch (ex) {
-          }
-
-          try {
-            browseWithCaretOn = this.mPrefs.getBoolPref(kPrefCaretBrowsingOn);
-          } catch (ex) {
-          }
+          var browseWithCaretOn = this.mPrefs.getBoolPref(kPrefCaretBrowsingOn, false);
+          var warn = this.mPrefs.getBoolPref(kPrefWarnOnEnable, true);
           if (warn && !browseWithCaretOn) {
-            var checkValue = {value:false};
+            var checkValue = {value: false};
             var promptService = Components.classes["@mozilla.org/embedcomp/prompt-service;1"]
                                           .getService(Components.interfaces.nsIPromptService);
 
@@ -1614,7 +1593,18 @@
         }
 
         if (links.length) {
-          this.droppedLinkHandler(event, links);
+          // Bug 1368481: mozSourceNode is null if the drag event originated
+          // in an external application - needs better fallback!
+          let triggeringPrincipal;
+          let sourceNode = event.dataTransfer.mozSourceNode;
+          if (sourceNode) {
+            triggeringPrincipal = sourceNode.nodePrincipal;
+          } else {
+            var secMan = Components.classes["@mozilla.org/scriptsecuritymanager;1"].
+              getService(Components.interfaces.nsIScriptSecurityManager);
+            triggeringPrincipal = secMan.getSystemPrincipal();
+          }
+          this.droppedLinkHandler(event, links, triggeringPrincipal);
         }
       ]]>
       </handler>

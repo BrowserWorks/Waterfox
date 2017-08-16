@@ -384,28 +384,6 @@ class TypedArrayObjectTemplate : public TypedArrayObject
         return fun;
     }
 
-    static bool
-    getOrCreateCreateArrayFromBufferFunction(JSContext* cx, MutableHandleValue fval)
-    {
-        RootedValue cache(cx, cx->global()->createArrayFromBuffer<NativeType>());
-        if (cache.isObject()) {
-            MOZ_ASSERT(cache.toObject().is<JSFunction>());
-            fval.set(cache);
-            return true;
-        }
-
-        RootedFunction fun(cx);
-        fun = NewNativeFunction(cx, ArrayBufferObject::createTypedArrayFromBuffer<NativeType>,
-                                0, nullptr);
-        if (!fun)
-            return false;
-
-        cx->global()->setCreateArrayFromBuffer<NativeType>(fun);
-
-        fval.setObject(*fun);
-        return true;
-    }
-
     static inline const Class* instanceClass()
     {
         return TypedArrayObject::classForType(ArrayTypeID());
@@ -479,10 +457,12 @@ class TypedArrayObjectTemplate : public TypedArrayObject
     }
 
     static TypedArrayObject*
-    makeInstance(JSContext* cx, Handle<ArrayBufferObjectMaybeShared*> buffer, uint32_t byteOffset, uint32_t len,
-                 HandleObject proto)
+    makeInstance(JSContext* cx, Handle<ArrayBufferObjectMaybeShared*> buffer, uint32_t byteOffset,
+                 uint32_t len, HandleObject proto)
     {
         MOZ_ASSERT_IF(!buffer, byteOffset == 0);
+        MOZ_ASSERT_IF(buffer, !buffer->isDetached());
+        MOZ_ASSERT(len < INT32_MAX / sizeof(NativeType));
 
         gc::AllocKind allocKind = buffer
                                   ? GetGCObjectKind(instanceClass())
@@ -575,14 +555,6 @@ class TypedArrayObjectTemplate : public TypedArrayObject
     }
 
     static TypedArrayObject*
-    makeInstance(JSContext* cx, Handle<ArrayBufferObjectMaybeShared*> buffer,
-                 uint32_t byteOffset, uint32_t len)
-    {
-        RootedObject proto(cx, nullptr);
-        return makeInstance(cx, buffer, byteOffset, len, proto);
-    }
-
-    static TypedArrayObject*
     makeTemplateObject(JSContext* cx, int32_t len)
     {
         MOZ_ASSERT(len >= 0);
@@ -603,22 +575,23 @@ class TypedArrayObjectTemplate : public TypedArrayObject
         RootedScript script(cx, cx->currentScript(&pc));
         if (script && ObjectGroup::useSingletonForAllocationSite(script, pc, clasp))
             newKind = SingletonObject;
-        RootedObject tmp(cx, NewBuiltinClassInstance(cx, clasp, allocKind, newKind));
+        JSObject* tmp = NewBuiltinClassInstance(cx, clasp, allocKind, newKind);
         if (!tmp)
             return nullptr;
-        if (script && !ObjectGroup::setAllocationSiteObjectGroup(cx, script, pc, tmp,
-                                                                 newKind == SingletonObject))
-        {
-            return nullptr;
-        }
 
-        TypedArrayObject* tarray = &tmp->as<TypedArrayObject>();
+        Rooted<TypedArrayObject*> tarray(cx, &tmp->as<TypedArrayObject>());
         initTypedArraySlots(cx, tarray, len);
 
         // Template objects do not need memory for its elements, since there
         // won't be any elements to store. Therefore, we set the pointer to
         // nullptr and avoid allocating memory that will never be used.
         tarray->initPrivate(nullptr);
+
+        if (script && !ObjectGroup::setAllocationSiteObjectGroup(cx, script, pc, tarray,
+                                                                 newKind == SingletonObject))
+        {
+            return nullptr;
+        }
 
         return tarray;
     }
@@ -671,7 +644,7 @@ class TypedArrayObjectTemplate : public TypedArrayObject
     makeTypedArrayWithTemplate(JSContext* cx, TypedArrayObject* templateObj, int32_t len)
     {
         if (len < 0 || uint32_t(len) >= INT32_MAX / sizeof(NativeType)) {
-            JS_ReportErrorNumberASCII(cx, GetErrorMessage, nullptr, JSMSG_TYPED_ARRAY_BAD_ARGS);
+            JS_ReportErrorNumberASCII(cx, GetErrorMessage, nullptr, JSMSG_BAD_ARRAY_LENGTH);
             return nullptr;
         }
 
@@ -714,17 +687,18 @@ class TypedArrayObjectTemplate : public TypedArrayObject
         return obj;
     }
 
-    /*
-     * new [Type]Array(length)
-     * new [Type]Array(otherTypedArray)
-     * new [Type]Array(JSArray)
-     * new [Type]Array(ArrayBuffer, [optional] byteOffset, [optional] length)
-     */
+    // ES2018 draft rev 8340bf9a8427ea81bb0d1459471afbcc91d18add
+    // 22.2.4.1 TypedArray ( )
+    // 22.2.4.2 TypedArray ( length )
+    // 22.2.4.3 TypedArray ( typedArray )
+    // 22.2.4.4 TypedArray ( object )
+    // 22.2.4.5 TypedArray ( buffer [ , byteOffset [ , length ] ] )
     static bool
     class_constructor(JSContext* cx, unsigned argc, Value* vp)
     {
         CallArgs args = CallArgsFromVp(argc, vp);
 
+        // Step 1 (22.2.4.1) or 2 (22.2.4.2-5).
         if (!ThrowIfNotConstructing(cx, args, "typed array"))
             return false;
 
@@ -735,192 +709,230 @@ class TypedArrayObjectTemplate : public TypedArrayObject
         return true;
     }
 
+  private:
     static JSObject*
     create(JSContext* cx, const CallArgs& args)
     {
         MOZ_ASSERT(args.isConstructing());
         RootedObject newTarget(cx, &args.newTarget().toObject());
 
-        /* () or (number) */
-        uint32_t len = 0;
-        if (args.length() == 0 || ValueIsLength(args[0], &len))
-            return fromLength(cx, len, newTarget);
+        // 22.2.4.1 TypedArray ( )
+        // 22.2.4.2 TypedArray ( length )
+        if (args.length() == 0 || !args[0].isObject()) {
+            // 22.2.4.2, step 3.
+            uint64_t len;
+            if (!ToIndex(cx, args.get(0), JSMSG_BAD_ARRAY_LENGTH, &len))
+                return nullptr;
 
-        /* (not an object) */
-        if (!args[0].isObject()) {
-            JS_ReportErrorNumberASCII(cx, GetErrorMessage, nullptr, JSMSG_TYPED_ARRAY_BAD_ARGS);
-            return nullptr;
+            return fromLength(cx, len, newTarget);
         }
 
-        RootedObject dataObj(cx, &args.get(0).toObject());
+        RootedObject dataObj(cx, &args[0].toObject());
 
-        /*
-         * (typedArray)
-         * (sharedTypedArray)
-         * (type[] array)
-         *
-         * Otherwise create a new typed array and copy elements 0..len-1
-         * properties from the object, treating it as some sort of array.
-         * Note that offset and length will be ignored.  Note that a
-         * shared array's values are copied here.
-         */
+        // 22.2.4.3 TypedArray ( typedArray )
+        // 22.2.4.4 TypedArray ( object )
         if (!UncheckedUnwrap(dataObj)->is<ArrayBufferObjectMaybeShared>())
             return fromArray(cx, dataObj, newTarget);
 
-        /* (ArrayBuffer, [byteOffset, [length]]) */
+        // 22.2.4.5 TypedArray ( buffer [ , byteOffset [ , length ] ] )
+
+        // Step 4.
+        // 22.2.4.2.1 AllocateTypedArray, step 1.
         RootedObject proto(cx);
         if (!GetPrototypeFromConstructor(cx, newTarget, &proto))
             return nullptr;
 
-        int32_t byteOffset = 0;
+        uint64_t byteOffset = 0;
         if (args.hasDefined(1)) {
-            if (!ToInt32(cx, args[1], &byteOffset))
+            // Step 6.
+            if (!ToIndex(cx, args[1], &byteOffset))
                 return nullptr;
-            if (byteOffset < 0) {
+
+            // Step 7.
+            if (byteOffset % sizeof(NativeType) != 0) {
                 JS_ReportErrorNumberASCII(cx, GetErrorMessage, nullptr,
-                                          JSMSG_TYPED_ARRAY_NEGATIVE_ARG,
-                                          "1");
+                                          JSMSG_TYPED_ARRAY_CONSTRUCT_BOUNDS);
                 return nullptr;
             }
         }
 
-        int32_t length = -1;
+        uint64_t length = UINT64_MAX;
         if (args.hasDefined(2)) {
-            if (!ToInt32(cx, args[2], &length))
+            // Step 8.a.
+            if (!ToIndex(cx, args[2], &length))
                 return nullptr;
-            if (length < 0) {
-                JS_ReportErrorNumberASCII(cx, GetErrorMessage, nullptr,
-                                          JSMSG_TYPED_ARRAY_NEGATIVE_ARG,
-                                          "2");
-                return nullptr;
-            }
         }
 
-        return fromBufferWithProto(cx, dataObj, byteOffset, length, proto);
+        // Steps 9-17.
+        if (dataObj->is<ArrayBufferObjectMaybeShared>()) {
+            HandleArrayBufferObjectMaybeShared buffer = dataObj.as<ArrayBufferObjectMaybeShared>();
+            return fromBufferSameCompartment(cx, buffer, byteOffset, length, proto);
+        }
+        return fromBufferWrapped(cx, dataObj, byteOffset, length, proto);
+    }
+
+    // ES2018 draft rev 8340bf9a8427ea81bb0d1459471afbcc91d18add
+    // 22.2.4.5 TypedArray ( buffer [ , byteOffset [ , length ] ] )
+    // Steps 9-12.
+    static bool
+    computeAndCheckLength(JSContext* cx, HandleArrayBufferObjectMaybeShared bufferMaybeUnwrapped,
+                          uint64_t byteOffset, uint64_t lengthIndex, uint32_t* length)
+    {
+        MOZ_ASSERT(byteOffset % sizeof(NativeType) == 0);
+        MOZ_ASSERT(byteOffset < uint64_t(DOUBLE_INTEGRAL_PRECISION_LIMIT));
+        MOZ_ASSERT_IF(lengthIndex != UINT64_MAX,
+                      lengthIndex < uint64_t(DOUBLE_INTEGRAL_PRECISION_LIMIT));
+
+        // Step 9.
+        if (bufferMaybeUnwrapped->isDetached()) {
+           JS_ReportErrorNumberASCII(cx, GetErrorMessage, nullptr, JSMSG_TYPED_ARRAY_DETACHED);
+           return false;
+        }
+
+        // Step 10.
+        uint32_t bufferByteLength = bufferMaybeUnwrapped->byteLength();
+
+        uint32_t len;
+        if (lengthIndex == UINT64_MAX) {
+            // Steps 11.a, 11.c.
+            if (bufferByteLength % sizeof(NativeType) != 0 || byteOffset > bufferByteLength) {
+                // The given byte array doesn't map exactly to
+                // |sizeof(NativeType) * N| or |byteOffset| is invalid.
+                JS_ReportErrorNumberASCII(cx, GetErrorMessage, nullptr,
+                                          JSMSG_TYPED_ARRAY_CONSTRUCT_BOUNDS);
+                return false;
+            }
+
+            // Step 11.b.
+            uint32_t newByteLength = bufferByteLength - uint32_t(byteOffset);
+            len = newByteLength / sizeof(NativeType);
+        } else {
+            // Step 12.a.
+            uint64_t newByteLength = lengthIndex * sizeof(NativeType);
+
+            // Step 12.b.
+            if (byteOffset + newByteLength > bufferByteLength) {
+                // |byteOffset + newByteLength| is too big for the arraybuffer
+                JS_ReportErrorNumberASCII(cx, GetErrorMessage, nullptr,
+                                          JSMSG_TYPED_ARRAY_CONSTRUCT_BOUNDS);
+                return false;
+            }
+
+            len = uint32_t(lengthIndex);
+        }
+
+        // ArrayBuffer is too large for TypedArrays:
+        // Standalone ArrayBuffers can hold up to INT32_MAX bytes, whereas
+        // buffers in TypedArrays must have less than or equal to
+        // |INT32_MAX - sizeof(NativeType) - INT32_MAX % sizeof(NativeType)|
+        // bytes.
+        if (len >= INT32_MAX / sizeof(NativeType)) {
+            JS_ReportErrorNumberASCII(cx, GetErrorMessage, nullptr,
+                                      JSMSG_TYPED_ARRAY_CONSTRUCT_BOUNDS);
+            return false;
+        }
+        MOZ_ASSERT(byteOffset <= UINT32_MAX);
+
+        *length = len;
+        return true;
+    }
+
+    // ES2018 draft rev 8340bf9a8427ea81bb0d1459471afbcc91d18add
+    // 22.2.4.5 TypedArray ( buffer [ , byteOffset [ , length ] ] )
+    // Steps 9-17.
+    static JSObject*
+    fromBufferSameCompartment(JSContext* cx, HandleArrayBufferObjectMaybeShared buffer,
+                              uint64_t byteOffset, uint64_t lengthIndex, HandleObject proto)
+    {
+        // Steps 9-12.
+        uint32_t length;
+        if (!computeAndCheckLength(cx, buffer, byteOffset, lengthIndex, &length))
+            return nullptr;
+
+        // Steps 13-17.
+        return makeInstance(cx, buffer, uint32_t(byteOffset), length, proto);
+    }
+
+    // Create a TypedArray object in another compartment.
+    //
+    // ES6 supports creating a TypedArray in global A (using global A's
+    // TypedArray constructor) backed by an ArrayBuffer created in global B.
+    //
+    // Our TypedArrayObject implementation doesn't support a TypedArray in
+    // compartment A backed by an ArrayBuffer in compartment B. So in this
+    // case, we create the TypedArray in B (!) and return a cross-compartment
+    // wrapper.
+    //
+    // Extra twist: the spec says the new TypedArray's [[Prototype]] must be
+    // A's TypedArray.prototype. So even though we're creating the TypedArray
+    // in B, its [[Prototype]] must be (a cross-compartment wrapper for) the
+    // TypedArray.prototype in A.
+    static JSObject*
+    fromBufferWrapped(JSContext* cx, HandleObject bufobj, uint64_t byteOffset,
+                      uint64_t lengthIndex, HandleObject proto)
+    {
+        JSObject* unwrapped = CheckedUnwrap(bufobj);
+        if (!unwrapped) {
+            ReportAccessDenied(cx);
+            return nullptr;
+        }
+
+        if (!unwrapped->is<ArrayBufferObjectMaybeShared>()) {
+            JS_ReportErrorNumberASCII(cx, GetErrorMessage, nullptr, JSMSG_TYPED_ARRAY_BAD_ARGS);
+            return nullptr;
+        }
+
+        RootedArrayBufferObjectMaybeShared unwrappedBuffer(cx);
+        unwrappedBuffer = &unwrapped->as<ArrayBufferObjectMaybeShared>();
+
+        uint32_t length;
+        if (!computeAndCheckLength(cx, unwrappedBuffer, byteOffset, lengthIndex, &length))
+            return nullptr;
+
+        // Make sure to get the [[Prototype]] for the created typed array from
+        // this compartment.
+        RootedObject protoRoot(cx, proto);
+        if (!protoRoot) {
+            if (!GetBuiltinPrototype(cx, JSCLASS_CACHED_PROTO_KEY(instanceClass()), &protoRoot))
+                return nullptr;
+        }
+
+        RootedObject typedArray(cx);
+        {
+            JSAutoCompartment ac(cx, unwrappedBuffer);
+
+            RootedObject wrappedProto(cx, protoRoot);
+            if (!cx->compartment()->wrap(cx, &wrappedProto))
+                return nullptr;
+
+            typedArray =
+                makeInstance(cx, unwrappedBuffer, uint32_t(byteOffset), length, wrappedProto);
+            if (!typedArray)
+                return nullptr;
+        }
+
+        if (!cx->compartment()->wrap(cx, &typedArray))
+            return nullptr;
+
+        return typedArray;
     }
 
   public:
     static JSObject*
-    fromBuffer(JSContext* cx, HandleObject bufobj, uint32_t byteOffset, int32_t lengthInt) {
-        return fromBufferWithProto(cx, bufobj, byteOffset, lengthInt, nullptr);
-    }
-
-    static JSObject*
-    fromBufferWithProto(JSContext* cx, HandleObject bufobj, uint32_t byteOffset, int32_t lengthInt,
-                        HandleObject proto)
+    fromBuffer(JSContext* cx, HandleObject bufobj, uint32_t byteOffset, int32_t lengthInt)
     {
-        if (bufobj->is<ProxyObject>()) {
-            /*
-             * Normally, NonGenericMethodGuard handles the case of transparent
-             * wrappers. However, we have a peculiar situation: we want to
-             * construct the new typed array in the compartment of the buffer,
-             * so that the typed array can point directly at their buffer's
-             * data without crossing compartment boundaries. So we use the
-             * machinery underlying NonGenericMethodGuard directly to proxy the
-             * native call. We will end up with a wrapper in the origin
-             * compartment for a view in the target compartment referencing the
-             * ArrayBufferObject in that same compartment.
-             */
-            JSObject* wrapped = CheckedUnwrap(bufobj);
-            if (!wrapped) {
-                ReportAccessDenied(cx);
-                return nullptr;
-            }
-
-            if (!IsAnyArrayBuffer(wrapped)) {
-                JS_ReportErrorNumberASCII(cx, GetErrorMessage, nullptr, JSMSG_TYPED_ARRAY_BAD_ARGS);
-                return nullptr; // must be arrayBuffer
-            }
-
-            /*
-             * And for even more fun, the new view's prototype should be
-             * set to the origin compartment's prototype object, not the
-             * target's (specifically, the actual view in the target
-             * compartment will use as its prototype a wrapper around the
-             * origin compartment's view.prototype object).
-             *
-             * Rather than hack some crazy solution together, implement
-             * this all using a private helper function, created when
-             * ArrayBufferObject was initialized and cached in the global.
-             * This reuses all the existing cross-compartment crazy so we
-             * don't have to do anything *uniquely* crazy here.
-             */
-
-            RootedObject protoRoot(cx, proto);
-            if (!protoRoot) {
-                if (!GetBuiltinPrototype(cx, JSCLASS_CACHED_PROTO_KEY(instanceClass()), &protoRoot))
-                    return nullptr;
-            }
-
-            FixedInvokeArgs<3> args(cx);
-
-            args[0].setNumber(byteOffset);
-            args[1].setInt32(lengthInt);
-            args[2].setObject(*protoRoot);
-
-            RootedValue fval(cx);
-            if (!getOrCreateCreateArrayFromBufferFunction(cx, &fval))
-                return nullptr;
-
-            RootedValue thisv(cx, ObjectValue(*bufobj));
-            RootedValue rval(cx);
-            if (!js::Call(cx, fval, thisv, args, &rval))
-                return nullptr;
-
-            return &rval.toObject();
-        }
-
-        if (!IsAnyArrayBuffer(bufobj)) {
-            JS_ReportErrorNumberASCII(cx, GetErrorMessage, nullptr, JSMSG_TYPED_ARRAY_BAD_ARGS);
-            return nullptr; // must be arrayBuffer
-        }
-
-        Rooted<ArrayBufferObjectMaybeShared*> buffer(cx);
-        if (IsArrayBuffer(bufobj)) {
-            ArrayBufferObject& buf = AsArrayBuffer(bufobj);
-            if (buf.isDetached()) {
-                JS_ReportErrorNumberASCII(cx, GetErrorMessage, nullptr, JSMSG_TYPED_ARRAY_DETACHED);
-                return nullptr;
-            }
-
-            buffer = static_cast<ArrayBufferObjectMaybeShared*>(&buf);
-        } else {
-            buffer = static_cast<ArrayBufferObjectMaybeShared*>(&AsSharedArrayBuffer(bufobj));
-        }
-
-        if (byteOffset > buffer->byteLength() || byteOffset % sizeof(NativeType) != 0) {
+        if (byteOffset % sizeof(NativeType) != 0) {
             JS_ReportErrorNumberASCII(cx, GetErrorMessage, nullptr,
                                       JSMSG_TYPED_ARRAY_CONSTRUCT_BOUNDS);
             return nullptr; // invalid byteOffset
         }
 
-        uint32_t len;
-        if (lengthInt == -1) {
-            len = (buffer->byteLength() - byteOffset) / sizeof(NativeType);
-            if (len * sizeof(NativeType) != buffer->byteLength() - byteOffset) {
-                JS_ReportErrorNumberASCII(cx, GetErrorMessage, nullptr,
-                                          JSMSG_TYPED_ARRAY_CONSTRUCT_BOUNDS);
-                return nullptr; // given byte array doesn't map exactly to sizeof(NativeType) * N
-            }
-        } else {
-            len = uint32_t(lengthInt);
+        uint64_t lengthIndex = lengthInt >= 0 ? uint64_t(lengthInt) : UINT64_MAX;
+        if (bufobj->is<ArrayBufferObjectMaybeShared>()) {
+            HandleArrayBufferObjectMaybeShared buffer = bufobj.as<ArrayBufferObjectMaybeShared>();
+            return fromBufferSameCompartment(cx, buffer, byteOffset, lengthIndex, nullptr);
         }
-
-        // Go slowly and check for overflow.
-        uint32_t arrayByteLength = len * sizeof(NativeType);
-        if (len >= INT32_MAX / sizeof(NativeType) || byteOffset >= INT32_MAX - arrayByteLength) {
-            JS_ReportErrorNumberASCII(cx, GetErrorMessage, nullptr,
-                                      JSMSG_TYPED_ARRAY_CONSTRUCT_BOUNDS);
-            return nullptr; // overflow when calculating byteOffset + len * sizeof(NativeType)
-        }
-
-        if (arrayByteLength + byteOffset > buffer->byteLength()) {
-            JS_ReportErrorNumberASCII(cx, GetErrorMessage, nullptr,
-                                      JSMSG_TYPED_ARRAY_CONSTRUCT_BOUNDS);
-            return nullptr; // byteOffset + len is too big for the arraybuffer
-        }
-
-        return makeInstance(cx, buffer, byteOffset, len, proto);
+        return fromBufferWrapped(cx, bufobj, byteOffset, lengthIndex, nullptr);
     }
 
     static bool
@@ -929,8 +941,7 @@ class TypedArrayObjectTemplate : public TypedArrayObject
                            MutableHandle<ArrayBufferObject*> buffer)
     {
         if (count >= INT32_MAX / unit) {
-            JS_ReportErrorNumberASCII(cx, GetErrorMessage, nullptr, JSMSG_NEED_DIET,
-                                      "size and count");
+            JS_ReportErrorNumberASCII(cx, GetErrorMessage, nullptr, JSMSG_BAD_ARRAY_LENGTH);
             return false;
         }
         uint32_t byteLength = count * unit;
@@ -952,18 +963,30 @@ class TypedArrayObjectTemplate : public TypedArrayObject
         return true;
     }
 
+    // 22.2.4.1 TypedArray ( )
+    // 22.2.4.2 TypedArray ( length )
     static JSObject*
-    fromLength(JSContext* cx, uint32_t nelements, HandleObject newTarget = nullptr)
+    fromLength(JSContext* cx, uint64_t nelements, HandleObject newTarget = nullptr)
     {
+        // 22.2.4.1, step 1 and 22.2.4.2, steps 1-3 (performed in caller).
+        // 22.2.4.1, step 2 and 22.2.4.2, step 4 (implicit).
+
+        // 22.2.4.1, step 3 and 22.2.4.2, step 5.
+        // 22.2.4.2.1 AllocateTypedArray, step 1.
         RootedObject proto(cx);
         if (!GetPrototypeForInstance(cx, newTarget, &proto))
             return nullptr;
 
+        if (nelements > UINT32_MAX) {
+            JS_ReportErrorNumberASCII(cx, GetErrorMessage, nullptr, JSMSG_BAD_ARRAY_LENGTH);
+            return nullptr;
+        }
+
         Rooted<ArrayBufferObject*> buffer(cx);
-        if (!maybeCreateArrayBuffer(cx, nelements, BYTES_PER_ELEMENT, nullptr, &buffer))
+        if (!maybeCreateArrayBuffer(cx, uint32_t(nelements), BYTES_PER_ELEMENT, nullptr, &buffer))
             return nullptr;
 
-        return makeInstance(cx, buffer, 0, nelements, proto);
+        return makeInstance(cx, buffer, 0, uint32_t(nelements), proto);
     }
 
     static bool
@@ -1091,12 +1114,21 @@ static bool
 GetSpeciesConstructor(JSContext* cx, HandleObject obj, bool isWrapped,
                       SpeciesConstructorOverride override, MutableHandleValue ctor)
 {
+    if (!GlobalObject::ensureConstructor(cx, cx->global(), JSProto_ArrayBuffer))
+        return false;
+    RootedValue defaultCtor(cx, cx->global()->getConstructor(JSProto_ArrayBuffer));
+
+    // Use the current global's ArrayBuffer if the override is set.
+    if (override == SpeciesConstructorOverride::ArrayBuffer) {
+        ctor.set(defaultCtor);
+        return true;
+    }
+
     if (!isWrapped) {
-        if (!GlobalObject::ensureConstructor(cx, cx->global(), JSProto_ArrayBuffer))
-            return false;
-        RootedValue defaultCtor(cx, cx->global()->getConstructor(JSProto_ArrayBuffer));
-        // The second disjunct is an optimization.
-        if (override == SpeciesConstructorOverride::ArrayBuffer || IsArrayBufferSpecies(cx, obj))
+        // As an optimization, avoid calling into self-hosted code if |obj|'s
+        // constructor is the built-in ArrayBuffer and the constructor's
+        // species property is the original ArrayBuffer[@@species] function.
+        if (IsArrayBufferSpecies(cx, obj))
             ctor.set(defaultCtor);
         else if (!SpeciesConstructor(cx, obj, defaultCtor, ctor))
             return false;
@@ -1104,18 +1136,14 @@ GetSpeciesConstructor(JSContext* cx, HandleObject obj, bool isWrapped,
         return true;
     }
 
-    {
-        JSAutoCompartment ac(cx, obj);
-        if (!GlobalObject::ensureConstructor(cx, cx->global(), JSProto_ArrayBuffer))
-            return false;
-        RootedValue defaultCtor(cx, cx->global()->getConstructor(JSProto_ArrayBuffer));
-        if (override == SpeciesConstructorOverride::ArrayBuffer)
-            ctor.set(defaultCtor);
-        else if (!SpeciesConstructor(cx, obj, defaultCtor, ctor))
-            return false;
-    }
+    RootedObject wrappedObj(cx, obj);
+    if (!cx->compartment()->wrap(cx, &wrappedObj))
+        return false;
 
-    return JS_WrapValue(cx, ctor);
+    if (!SpeciesConstructor(cx, wrappedObj, defaultCtor, ctor))
+        return false;
+
+    return true;
 }
 
 // ES 2017 draft rev 8633ffd9394b203b8876bb23cb79aff13eb07310 24.1.1.4.
@@ -1175,7 +1203,8 @@ TypedArrayObjectTemplate<T>::fromArray(JSContext* cx, HandleObject other,
     return fromObject(cx, other, newTarget);
 }
 
-// ES 2017 draft rev 8633ffd9394b203b8876bb23cb79aff13eb07310 22.2.4.3.
+// ES2017 draft rev 6390c2f1b34b309895d31d8c0512eac8660a0210
+// 22.2.4.3 TypedArray ( typedArray )
 template<typename T>
 /* static */ JSObject*
 TypedArrayObjectTemplate<T>::fromTypedArray(JSContext* cx, HandleObject other, bool isWrapped,
@@ -1223,57 +1252,57 @@ TypedArrayObjectTemplate<T>::fromTypedArray(JSContext* cx, HandleObject other, b
         return nullptr;
     }
 
-    // Steps 10.
+    // Step 9.
     uint32_t elementLength = srcArray->length();
 
-    // Steps 11-12.
+    // Steps 10-11.
     Scalar::Type srcType = srcArray->type();
 
-    // Step 13 (skipped).
+    // Step 12 (skipped).
 
-    // Step 14.
+    // Step 13.
     uint32_t srcByteOffset = srcArray->byteOffset();
 
-    // Step 17, modified for SharedArrayBuffer.
+    // Steps 16-17.
     bool isShared = srcArray->isSharedMemory();
     SpeciesConstructorOverride override = isShared ? SpeciesConstructorOverride::ArrayBuffer
                                                    : SpeciesConstructorOverride::None;
 
-    // Steps 8-9, 17.
+    // Steps 8, 16-17.
     Rooted<ArrayBufferObject*> buffer(cx);
     if (ArrayTypeID() == srcType) {
-        // Step 17.a.
+        // Step 16.a.
         uint32_t srcLength = srcArray->byteLength();
 
-        // Step 17.b, modified for SharedArrayBuffer
+        // Steps 16.b-c.
         if (!CloneArrayBufferNoCopy(cx, srcData, isWrapped, srcByteOffset, srcLength, override,
                                     &buffer))
         {
             return nullptr;
         }
     } else {
-        // Step 18.a, modified for SharedArrayBuffer
+        // Steps 17.a-b.
         RootedValue bufferCtor(cx);
         if (!GetSpeciesConstructor(cx, srcData, isWrapped, override, &bufferCtor))
             return nullptr;
 
-        // Step 15-16, 18.b.
+        // Steps 14-15, 17.c.
         if (!AllocateArrayBuffer(cx, bufferCtor, elementLength, BYTES_PER_ELEMENT, &buffer))
             return nullptr;
 
-        // Step 18.c.
+        // Step 17.d.
         if (srcArray->hasDetachedBuffer()) {
             JS_ReportErrorNumberASCII(cx, GetErrorMessage, nullptr, JSMSG_TYPED_ARRAY_DETACHED);
             return nullptr;
         }
     }
 
-    // Steps 3, 4 (remaining part), 19-22.
+    // Steps 3-4 (remaining part), 18-21.
     Rooted<TypedArrayObject*> obj(cx, makeInstance(cx, buffer, 0, elementLength, proto));
     if (!obj)
         return nullptr;
 
-    // Step 18.d-g or 24.1.1.4 step 11.
+    // Steps 17.e-h or 24.1.1.4 step 8.
     MOZ_ASSERT(!obj->isSharedMemory());
     if (isShared) {
         if (!ElementSpecific<T, SharedOps>::setFromTypedArray(cx, obj, srcArray, 0))
@@ -1283,7 +1312,7 @@ TypedArrayObjectTemplate<T>::fromTypedArray(JSContext* cx, HandleObject other, b
             return nullptr;
     }
 
-    // Step 23.
+    // Step 22.
     return obj;
 }
 
@@ -1772,38 +1801,6 @@ TypedArrayObject::sharedTypedArrayPrototypeClass = {
     JS_NULL_CLASS_OPS,
     &TypedArrayObjectSharedTypedArrayPrototypeClassSpec
 };
-
-template<typename T>
-bool
-ArrayBufferObject::createTypedArrayFromBufferImpl(JSContext* cx, const CallArgs& args)
-{
-    typedef TypedArrayObjectTemplate<T> ArrayType;
-    MOZ_ASSERT(IsAnyArrayBuffer(args.thisv()));
-    MOZ_ASSERT(args.length() == 3);
-
-    Rooted<JSObject*> buffer(cx, &args.thisv().toObject());
-    Rooted<JSObject*> proto(cx, &args[2].toObject());
-
-    Rooted<JSObject*> obj(cx);
-    double byteOffset = args[0].toNumber();
-    MOZ_ASSERT(0 <= byteOffset);
-    MOZ_ASSERT(byteOffset <= UINT32_MAX);
-    MOZ_ASSERT(byteOffset == uint32_t(byteOffset));
-    obj = ArrayType::fromBufferWithProto(cx, buffer, uint32_t(byteOffset), args[1].toInt32(),
-                                         proto);
-    if (!obj)
-        return false;
-    args.rval().setObject(*obj);
-    return true;
-}
-
-template<typename T>
-bool
-ArrayBufferObject::createTypedArrayFromBuffer(JSContext* cx, unsigned argc, Value* vp)
-{
-    CallArgs args = CallArgsFromVp(argc, vp);
-    return CallNonGenericMethod<IsAnyArrayBuffer, createTypedArrayFromBufferImpl<T> >(cx, args);
-}
 
 // this default implementation is only valid for integer types
 // less than 32-bits in size.

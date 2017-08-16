@@ -4,13 +4,11 @@
 
 'use strict';
 
-/* global EVENT_SHOW, ROLE_DIALOG, ROLE_PUSHBUTTON, ROLE_TEXT_LEAF, ROLE_ENTRY,
-          ROLE_DOCUMENT */
-
+/* import-globals-from ../../mochitest/role.js */
 loadScripts({ name: 'role.js', dir: MOCHITESTS_DIR });
 
 // Test ARIA Dialog
-addAccessibleTask('doc_treeupdate_ariadialog.html', function*(browser, accDoc) {
+addAccessibleTask('doc_treeupdate_ariadialog.html', async function(browser, accDoc) {
   testAccessibleTree(accDoc, {
     role: ROLE_DOCUMENT,
     children: [ ]
@@ -18,10 +16,10 @@ addAccessibleTask('doc_treeupdate_ariadialog.html', function*(browser, accDoc) {
 
   // Make dialog visible and update its inner content.
   let onShow = waitForEvent(EVENT_SHOW, 'dialog');
-  yield ContentTask.spawn(browser, {}, () => {
+  await ContentTask.spawn(browser, {}, () => {
     content.document.getElementById('dialog').style.display = 'block';
   });
-  yield onShow;
+  await onShow;
 
   testAccessibleTree(accDoc, {
     role: ROLE_DOCUMENT,

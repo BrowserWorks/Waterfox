@@ -4,26 +4,23 @@
  * Tests that cookies are stored and restored correctly
  * by sessionstore (bug 423132).
  */
-add_task(function*() {
+add_task(async function() {
   const testURL = "http://mochi.test:8888/browser/" +
     "browser/components/sessionstore/test/browser_423132_sample.html";
 
   Services.cookies.removeAll();
   // make sure that sessionstore.js can be forced to be created by setting
   // the interval pref to 0
-  yield SpecialPowers.pushPrefEnv({
+  await SpecialPowers.pushPrefEnv({
     set: [["browser.sessionstore.interval", 0]]
   });
 
-  let win = yield BrowserTestUtils.openNewBrowserWindow();
-  let browser = win.gBrowser.selectedBrowser;
-  browser.loadURI(testURL);
-  yield BrowserTestUtils.browserLoaded(browser);
-
-  yield TabStateFlusher.flush(browser);
+  let tab = BrowserTestUtils.addTab(gBrowser, testURL);
+  await BrowserTestUtils.browserLoaded(tab.linkedBrowser);
+  await TabStateFlusher.flush(tab.linkedBrowser);
 
   // get the sessionstore state for the window
-  let state = ss.getWindowState(win);
+  let state = ss.getBrowserState();
 
   // verify our cookie got set during pageload
   let enumerator = Services.cookies.enumerator;
@@ -39,7 +36,7 @@ add_task(function*() {
   Services.cookies.removeAll();
 
   // restore the window state
-  ss.setWindowState(win, state, true);
+  ss.setBrowserState(state);
 
   // at this point, the cookie should be restored...
   enumerator = Services.cookies.enumerator;
@@ -55,5 +52,5 @@ add_task(function*() {
 
   // clean up
   Services.cookies.removeAll();
-  yield BrowserTestUtils.closeWindow(win);
+  await promiseRemoveTab(gBrowser.tabs[1]);
 });

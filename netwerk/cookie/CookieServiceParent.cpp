@@ -27,14 +27,10 @@ namespace {
 // Ignore failures from this function, as they only affect whether we do or
 // don't show a dialog box in private browsing mode if the user sets a pref.
 void
-CreateDummyChannel(nsIURI* aHostURI, OriginAttributes& aAttrs, bool aIsPrivate,
-                   nsIChannel** aChannel)
+CreateDummyChannel(nsIURI* aHostURI, OriginAttributes& aAttrs, nsIChannel** aChannel)
 {
-  OriginAttributes attrs;
-  attrs.Inherit(aAttrs);
-
   nsCOMPtr<nsIPrincipal> principal =
-    BasePrincipal::CreateCodebasePrincipal(aHostURI, attrs);
+    BasePrincipal::CreateCodebasePrincipal(aHostURI, aAttrs);
   if (!principal) {
     return;
   }
@@ -56,7 +52,7 @@ CreateDummyChannel(nsIURI* aHostURI, OriginAttributes& aAttrs, bool aIsPrivate,
     return;
   }
 
-  pbChannel->SetPrivate(aIsPrivate);
+  pbChannel->SetPrivate(aAttrs.mPrivateBrowsingId > 0);
   dummyChannel.forget(aChannel);
   return;
 }
@@ -104,9 +100,7 @@ CookieServiceParent::RecvGetCookieString(const URIParams& aHost,
   if (!hostURI)
     return IPC_FAIL_NO_REASON(this);
 
-  bool isPrivate = aAttrs.mPrivateBrowsingId > 0;
-  mCookieService->GetCookieStringInternal(hostURI, aIsForeign, false, aAttrs,
-                                          isPrivate, *aResult);
+  mCookieService->GetCookieStringInternal(hostURI, aIsForeign, false, aAttrs, *aResult);
   return IPC_OK();
 }
 
@@ -127,8 +121,6 @@ CookieServiceParent::RecvSetCookieString(const URIParams& aHost,
   if (!hostURI)
     return IPC_FAIL_NO_REASON(this);
 
-  bool isPrivate = aAttrs.mPrivateBrowsingId > 0;
-
   // This is a gross hack. We've already computed everything we need to know
   // for whether to set this cookie or not, but we need to communicate all of
   // this information through to nsICookiePermission, which indirectly
@@ -138,13 +130,13 @@ CookieServiceParent::RecvSetCookieString(const URIParams& aHost,
   // to use the channel to inspect it.
   nsCOMPtr<nsIChannel> dummyChannel;
   CreateDummyChannel(hostURI, const_cast<OriginAttributes&>(aAttrs),
-                     isPrivate, getter_AddRefs(dummyChannel));
+                     getter_AddRefs(dummyChannel));
 
   // NB: dummyChannel could be null if something failed in CreateDummyChannel.
   nsDependentCString cookieString(aCookieString, 0);
   mCookieService->SetCookieStringInternal(hostURI, aIsForeign, cookieString,
                                           aServerTime, aFromHttp, aAttrs,
-                                          isPrivate, dummyChannel);
+                                          dummyChannel);
   return IPC_OK();
 }
 

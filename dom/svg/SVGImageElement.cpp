@@ -5,6 +5,7 @@
  * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
 
 #include "mozilla/ArrayUtils.h"
+#include "mozilla/EventStateManager.h"
 #include "mozilla/EventStates.h"
 
 #include "mozilla/dom/SVGImageElement.h"
@@ -133,6 +134,10 @@ SVGImageElement::LoadSVGImage(bool aForce, bool aNotify)
   if (baseURI && !href.IsEmpty())
     NS_MakeAbsoluteURI(href, href, baseURI);
 
+  // Mark channel as urgent-start before load image if the image load is
+  // initaiated by a user interaction.
+  mUseUrgentStartForChannel = EventStateManager::IsHandlingUserInput();
+
   return LoadImage(href, aForce, aNotify, eImageLoadType_Normal);
 }
 
@@ -150,26 +155,21 @@ SVGImageElement::AsyncEventRunning(AsyncEventDispatcher* aEvent)
 
 nsresult
 SVGImageElement::AfterSetAttr(int32_t aNamespaceID, nsIAtom* aName,
-                              const nsAttrValue* aValue, bool aNotify)
+                              const nsAttrValue* aValue,
+                              const nsAttrValue* aOldValue, bool aNotify)
 {
   if (aName == nsGkAtoms::href &&
       (aNamespaceID == kNameSpaceID_None ||
        aNamespaceID == kNameSpaceID_XLink)) {
 
-    // If there isn't a frame we still need to load the image in case
-    // the frame is created later e.g. by attaching to a document.
-    // If there is a frame then it should deal with loading as the image
-    // url may be animated
-    if (!GetPrimaryFrame()) {
-      if (aValue) {
-        LoadSVGImage(true, aNotify);
-      } else {
-        CancelImageRequests(aNotify);
-      }
+    if (aValue) {
+      LoadSVGImage(true, aNotify);
+    } else {
+      CancelImageRequests(aNotify);
     }
   }
   return SVGImageElementBase::AfterSetAttr(aNamespaceID, aName,
-                                           aValue, aNotify);
+                                           aValue, aOldValue, aNotify);
 }
 
 void
@@ -314,12 +314,12 @@ SVGImageElement::GetStringInfo()
 }
 
 nsresult
-SVGImageElement::CopyInnerTo(Element* aDest)
+SVGImageElement::CopyInnerTo(Element* aDest, bool aPreallocateChildren)
 {
   if (aDest->OwnerDoc()->IsStaticDocument()) {
     CreateStaticImageClone(static_cast<SVGImageElement*>(aDest));
   }
-  return SVGImageElementBase::CopyInnerTo(aDest);
+  return SVGImageElementBase::CopyInnerTo(aDest, aPreallocateChildren);
 }
 
 } // namespace dom

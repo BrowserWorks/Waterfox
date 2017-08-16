@@ -452,8 +452,10 @@ public:
 
   /**
    * Notification that this scroll frame is getting its frame visibility updated.
+   * aIgnoreDisplayPort indicates that the display port was ignored (because
+   * there was no suitable base rect)
    */
-  virtual void NotifyApproximateFrameVisibilityUpdate() = 0;
+  virtual void NotifyApproximateFrameVisibilityUpdate(bool aIgnoreDisplayPort) = 0;
 
   /**
    * Returns true if this scroll frame had a display port at the last frame
@@ -483,6 +485,13 @@ public:
   virtual bool DragScroll(mozilla::WidgetEvent* aEvent) = 0;
 
   virtual void AsyncScrollbarDragRejected() = 0;
+
+  /**
+   * Returns whether this scroll frame is the root scroll frame of the document
+   * that it is in. Note that some documents don't have root scroll frames at
+   * all (ie XUL documents) even though they may contain other scroll frames.
+   */
+  virtual bool IsRootScrollFrameOfDocument() const = 0;
 };
 
 #endif

@@ -28,6 +28,26 @@ class nsWindowRoot;
 { 0x6f3179a1, 0x36f7, 0x4a5c, \
   { 0x8c, 0xf1, 0xad, 0xc8, 0x7c, 0xde, 0x3e, 0x87 } }
 
+// There are two sets of flags used by DOM nodes. One comes from reusing the
+// remaining bits of the inherited nsWrapperCache flags (mFlags), and another is
+// exclusive to nsINode (mBoolFlags).
+//
+// Both sets of flags are 32 bits. On 64-bit platforms, this can cause two
+// wasted 32-bit fields due to alignment requirements. Some compilers are
+// smart enough to coalesce the fields if we make mBoolFlags the first member
+// of nsINode, but others (such as MSVC) are not.
+//
+// So we just store mBoolFlags directly on nsWrapperCache on 64-bit platforms.
+// This may waste space for some other nsWrapperCache-derived objects that have
+// a 32-bit field as their first member, but those objects are unlikely to be as
+// numerous or performance-critical as DOM nodes.
+#if defined(_M_X64) || defined(__x86_64__) || defined(__aarch64__)
+static_assert(sizeof(void*) == 8, "These architectures should be 64-bit");
+#define BOOL_FLAGS_ON_WRAPPER_CACHE
+#else
+static_assert(sizeof(void*) == 4, "Only support 32-bit and 64-bit");
+#endif
+
 /**
  * Class to store the wrapper for an object. This can only be used with objects
  * that only have one non-security wrapper at a time (for an XPCWrappedNative
@@ -71,7 +91,12 @@ class nsWrapperCache
 public:
   NS_DECLARE_STATIC_IID_ACCESSOR(NS_WRAPPERCACHE_IID)
 
-  nsWrapperCache() : mWrapper(nullptr), mFlags(0)
+  nsWrapperCache()
+    : mWrapper(nullptr)
+    , mFlags(0)
+#ifdef BOOL_FLAGS_ON_WRAPPER_CACHE
+    , mBoolFlags(0)
+#endif
   {
   }
   ~nsWrapperCache()
@@ -95,12 +120,25 @@ public:
    * object returned is not guaranteed to be kept alive past the next CC.
    *
    * This should only be called if you are certain that the return value won't
-   * be passed into a JS API function and that it won't be stored without being
+   * be passed into a JSAPI function and that it won't be stored without being
    * rooted (or otherwise signaling the stored value to the CC).
    */
-  JSObject* GetWrapperPreserveColor() const
+  JSObject* GetWrapperPreserveColor() const;
+
+  /**
+   * Get the cached wrapper.
+   *
+   * This getter does not check whether the wrapper is dead and in the process
+   * of being finalized.
+   *
+   * This should only be called if you really need to see the raw contents of
+   * this cache, for example as part of finalization. Don't store the result
+   * anywhere or pass it into JSAPI functions that may cause the value to
+   * escape.
+   */
+  JSObject* GetWrapperMaybeDead() const
   {
-    return GetWrapperJSObject();
+    return mWrapper;
   }
 
 #ifdef DEBUG
@@ -121,14 +159,23 @@ public:
   }
 
   /**
-   * Clear the wrapper. This should be called from the finalizer for the
-   * wrapper.
+   * Clear the cache.
    */
   void ClearWrapper()
   {
     MOZ_ASSERT(!PreservingWrapper(), "Clearing a preserved wrapper!");
-
     SetWrapperJSObject(nullptr);
+  }
+
+  /**
+   * Clear the cache if it still contains a specific wrapper object. This should
+   * be called from the finalizer for the wrapper.
+   */
+  void ClearWrapper(JSObject* obj)
+  {
+    if (obj == mWrapper) {
+      ClearWrapper();
+    }
   }
 
   /**
@@ -294,11 +341,6 @@ private:
     SetWrapperFlags(WRAPPER_IS_NOT_DOM_BINDING);
   }
 
-  JSObject *GetWrapperJSObject() const
-  {
-    return mWrapper;
-  }
-
   void SetWrapperJSObject(JSObject* aWrapper);
 
   FlagsType GetWrapperFlags() const
@@ -356,6 +398,10 @@ private:
 
   JSObject* mWrapper;
   FlagsType mFlags;
+protected:
+#ifdef BOOL_FLAGS_ON_WRAPPER_CACHE
+  uint32_t mBoolFlags;
+#endif
 };
 
 enum { WRAPPER_CACHE_FLAGS_BITS_USED = 2 };

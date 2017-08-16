@@ -14,7 +14,6 @@ const DISTRIBUTION_CUSTOMIZATION_COMPLETE_TOPIC =
 
 Cu.import("resource://gre/modules/XPCOMUtils.jsm");
 Cu.import("resource://gre/modules/Services.jsm");
-Cu.import("resource://gre/modules/Task.jsm");
 Cu.import("resource://gre/modules/Preferences.jsm");
 XPCOMUtils.defineLazyModuleGetter(this, "PlacesUtils",
                                   "resource://gre/modules/PlacesUtils.jsm");
@@ -22,10 +21,7 @@ XPCOMUtils.defineLazyModuleGetter(this, "PlacesUtils",
 this.DistributionCustomizer = function DistributionCustomizer() {
   // For parallel xpcshell testing purposes allow loading the distribution.ini
   // file from the profile folder through an hidden pref.
-  let loadFromProfile = false;
-  try {
-    loadFromProfile = Services.prefs.getBoolPref("distribution.testing.loadFromProfile");
-  } catch (ex) {}
+  let loadFromProfile = Services.prefs.getBoolPref("distribution.testing.loadFromProfile", false);
   let dirSvc = Cc["@mozilla.org/file/directory_service;1"].
                getService(Ci.nsIProperties);
   try {
@@ -60,12 +56,7 @@ DistributionCustomizer.prototype = {
   },
 
   get _locale() {
-    let locale;
-    try {
-      locale = this._prefs.getCharPref("general.useragent.locale");
-    } catch (e) {
-      locale = "en-US";
-    }
+    const locale = Services.locale.getRequestedLocale() || "en-US";
     this.__defineGetter__("_locale", () => locale);
     return this._locale;
   },
@@ -100,7 +91,7 @@ DistributionCustomizer.prototype = {
     return this._ioSvc.newURI(spec);
   },
 
-  _parseBookmarksSection: Task.async(function* (parentGuid, section) {
+  async _parseBookmarksSection(parentGuid, section) {
     let keys = Array.from(enumerate(this._ini.getKeys(section))).sort();
     let re = /^item\.(\d+)\.(\w+)\.?(\w*)/;
     let items = {};
@@ -152,16 +143,16 @@ DistributionCustomizer.prototype = {
         if (itemIndex < defaultIndex)
           index = prependIndex++;
 
-        let folder = yield PlacesUtils.bookmarks.insert({
+        let folder = await PlacesUtils.bookmarks.insert({
           type: PlacesUtils.bookmarks.TYPE_FOLDER,
           parentGuid, index, title: item.title
         });
 
-        yield this._parseBookmarksSection(folder.guid,
+        await this._parseBookmarksSection(folder.guid,
                                           "BookmarksFolder-" + item.folderId);
 
         if (item.description) {
-          let folderId = yield PlacesUtils.promiseItemId(folder.guid);
+          let folderId = await PlacesUtils.promiseItemId(folder.guid);
           PlacesUtils.annotations.setItemAnnotation(folderId,
                                                     "bookmarkProperties/description",
                                                     item.description, 0,
@@ -174,7 +165,7 @@ DistributionCustomizer.prototype = {
         if (itemIndex < defaultIndex)
           index = prependIndex++;
 
-        yield PlacesUtils.bookmarks.insert({
+        await PlacesUtils.bookmarks.insert({
           type: PlacesUtils.bookmarks.TYPE_SEPARATOR,
           parentGuid, index
         });
@@ -185,8 +176,8 @@ DistributionCustomizer.prototype = {
           index = prependIndex++;
 
         // Don't bother updating the livemark contents on creation.
-        let parentId = yield PlacesUtils.promiseItemId(parentGuid);
-        yield PlacesUtils.livemarks.addLivemark({
+        let parentId = await PlacesUtils.promiseItemId(parentGuid);
+        await PlacesUtils.livemarks.addLivemark({
           feedURI: this._makeURI(item.feedLink),
           siteURI: this._makeURI(item.siteLink),
           parentId, index, title: item.title
@@ -198,12 +189,12 @@ DistributionCustomizer.prototype = {
         if (itemIndex < defaultIndex)
           index = prependIndex++;
 
-        let bm = yield PlacesUtils.bookmarks.insert({
+        let bm = await PlacesUtils.bookmarks.insert({
           parentGuid, index, title: item.title, url: item.link
         });
 
         if (item.description) {
-          let bmId = yield PlacesUtils.promiseItemId(bm.guid);
+          let bmId = await PlacesUtils.promiseItemId(bm.guid);
           PlacesUtils.annotations.setItemAnnotation(bmId,
                                                     "bookmarkProperties/description",
                                                     item.description, 0,
@@ -228,7 +219,7 @@ DistributionCustomizer.prototype = {
 
         if (item.keyword) {
           try {
-            yield PlacesUtils.keywords.insert({ keyword: item.keyword,
+            await PlacesUtils.keywords.insert({ keyword: item.keyword,
                                                 url: item.link });
           } catch (e) {
             Cu.reportError(e);
@@ -238,7 +229,7 @@ DistributionCustomizer.prototype = {
         break;
       }
     }
-  }),
+  },
 
   _newProfile: false,
   _customizationsApplied: false,
@@ -259,13 +250,13 @@ DistributionCustomizer.prototype = {
   },
 
   _bookmarksApplied: false,
-  applyBookmarks: Task.async(function* () {
-    yield this._doApplyBookmarks();
+  async applyBookmarks() {
+    await this._doApplyBookmarks();
     this._bookmarksApplied = true;
     this._checkCustomizationComplete();
-  }),
+  },
 
-  _doApplyBookmarks: Task.async(function* () {
+  async _doApplyBookmarks() {
     if (!this._ini)
       return;
 
@@ -289,21 +280,18 @@ DistributionCustomizer.prototype = {
         this._ini.getString("Global", "id") + ".bookmarksProcessed";
     }
 
-    let bmProcessed = false;
-    try {
-      bmProcessed = this._prefs.getBoolPref(bmProcessedPref);
-    } catch (e) {}
+    let bmProcessed = this._prefs.getBoolPref(bmProcessedPref, false);
 
     if (!bmProcessed) {
       if (sections["BookmarksMenu"])
-        yield this._parseBookmarksSection(PlacesUtils.bookmarks.menuGuid,
+        await this._parseBookmarksSection(PlacesUtils.bookmarks.menuGuid,
                                           "BookmarksMenu");
       if (sections["BookmarksToolbar"])
-        yield this._parseBookmarksSection(PlacesUtils.bookmarks.toolbarGuid,
+        await this._parseBookmarksSection(PlacesUtils.bookmarks.toolbarGuid,
                                           "BookmarksToolbar");
       this._prefs.setBoolPref(bmProcessedPref, true);
     }
-  }),
+  },
 
   _prefDefaultsApplied: false,
   applyPrefDefaults: function DIST_applyPrefDefaults() {
@@ -470,7 +458,7 @@ DistributionCustomizer.prototype = {
         prefDefaultsApplied) {
       let os = Cc["@mozilla.org/observer-service;1"].
                getService(Ci.nsIObserverService);
-      os.notifyObservers(null, DISTRIBUTION_CUSTOMIZATION_COMPLETE_TOPIC, null);
+      os.notifyObservers(null, DISTRIBUTION_CUSTOMIZATION_COMPLETE_TOPIC);
     }
   }
 };

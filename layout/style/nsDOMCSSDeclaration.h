@@ -11,8 +11,10 @@
 #include "nsICSSDeclaration.h"
 
 #include "mozilla/Attributes.h"
+#include "mozilla/URLExtraData.h"
 #include "nsIURI.h"
 #include "nsCOMPtr.h"
+#include "nsCompatibility.h"
 
 class nsIPrincipal;
 class nsIDocument;
@@ -146,15 +148,38 @@ protected:
                                          "performance overhead (see bug 649163)") mCSSLoader;
   };
 
+  // Information neded to parse a declaration for Servo side.
+  struct MOZ_STACK_CLASS ServoCSSParsingEnvironment
+  {
+    mozilla::URLExtraData* mUrlExtraData;
+    nsCompatibility mCompatMode;
+
+    ServoCSSParsingEnvironment(mozilla::URLExtraData* aUrlData,
+                               nsCompatibility aCompatMode)
+      : mUrlExtraData(aUrlData)
+      , mCompatMode(aCompatMode)
+    {}
+  };
+
   // On failure, mPrincipal should be set to null in aCSSParseEnv.
   // If mPrincipal is null, the other members may not be set to
   // anything meaningful.
   virtual void GetCSSParsingEnvironment(CSSParsingEnvironment& aCSSParseEnv) = 0;
 
+  // mUrlExtraData returns URL data for parsing url values in
+  // CSS. Returns nullptr on failure. If mUrlExtraData is nullptr,
+  // mCompatMode may not be set to anything meaningful.
+  virtual ServoCSSParsingEnvironment GetServoCSSParsingEnvironment() const = 0;
+
   // An implementation for GetCSSParsingEnvironment for callers wrapping
   // an css::Rule.
   static void GetCSSParsingEnvironmentForRule(mozilla::css::Rule* aRule,
                                               CSSParsingEnvironment& aCSSParseEnv);
+
+  // An implementation for GetServoCSSParsingEnvironment for callers wrapping
+  // an css::Rule.
+  static ServoCSSParsingEnvironment
+    GetServoCSSParsingEnvironmentForRule(const mozilla::css::Rule* aRule);
 
   nsresult ParsePropertyValue(const nsCSSPropertyID aPropID,
                               const nsAString& aPropValue,
@@ -169,6 +194,10 @@ protected:
 
 protected:
   virtual ~nsDOMCSSDeclaration();
+
+private:
+  template<typename GeckoFunc, typename ServoFunc>
+  inline nsresult ModifyDeclaration(GeckoFunc aGeckoFunc, ServoFunc aServoFunc);
 };
 
 #endif // nsDOMCSSDeclaration_h___

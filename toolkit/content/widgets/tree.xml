@@ -685,12 +685,19 @@
     <handlers>
       <handler event="touchstart">
         <![CDATA[
-          if (event.touches.length > 1) {
+          function isScrollbarElement(target) {
+            return (target.localName == "thumb" || target.localName == "slider")
+                && target.namespaceURI == "http://www.mozilla.org/keymaster/gatekeeper/there.is.only.xul";
+          }
+          if (event.touches.length > 1 || isScrollbarElement(event.touches[0].target)) {
             // Multiple touch points detected, abort. In particular this aborts
             // the panning gesture when the user puts a second finger down after
             // already panning with one finger. Aborting at this point prevents
             // the pan gesture from being resumed until all fingers are lifted
             // (as opposed to when the user is back down to one finger).
+            // Additionally, if the user lands on the scrollbar don't use this
+            // code for scrolling, instead allow gecko to handle scrollbar
+            // interaction normally.
             this._touchY = -1;
           } else {
             this._touchY = event.touches[0].screenY;
@@ -717,9 +724,19 @@
           this._touchY = -1;
         ]]>
       </handler>
-      <handler event="MozMousePixelScroll" preventdefault="true"/>
-      <handler event="DOMMouseScroll" preventdefault="true">
+      <handler event="MozMousePixelScroll">
         <![CDATA[
+          if (!(this.getAttribute("allowunderflowscroll") == "true" &&
+                this.getAttribute("hidevscroll") == "true"))
+            event.preventDefault();
+        ]]>
+      </handler>
+      <handler event="DOMMouseScroll">
+        <![CDATA[
+          if (!(this.getAttribute("allowunderflowscroll") == "true" &&
+                this.getAttribute("hidevscroll") == "true"))
+            event.preventDefault();
+
           if (this._editingColumn)
             return;
           if (event.axis == event.HORIZONTAL_AXIS)
@@ -1487,7 +1504,7 @@
           <![CDATA[
             // We no longer cache the picker content, remove the old content.
             while (aPopup.childNodes.length > 2)
-              aPopup.removeChild(aPopup.firstChild);
+              aPopup.firstChild.remove();
 
             var refChild = aPopup.firstChild;
 

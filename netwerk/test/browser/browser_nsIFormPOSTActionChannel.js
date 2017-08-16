@@ -191,7 +191,7 @@ document.getElementById('form').submit();
         } catch(e) {}
       }
     };
-    Services.tm.currentThread.dispatch(runnable, Ci.nsIEventTarget.DISPATCH_NORMAL);
+    Services.tm.dispatchToMainThread(runnable);
   },
   asyncOpen2: function(aListener) {
     this.asyncOpen(aListener, null);
@@ -238,7 +238,7 @@ function frameScript() {
 }
 
 function loadTestTab(uri) {
-  gBrowser.selectedTab = gBrowser.addTab(uri);
+  gBrowser.selectedTab = BrowserTestUtils.addTab(gBrowser, uri);
   var browser = gBrowser.selectedBrowser;
 
   let manager = browser.messageManager;

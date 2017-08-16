@@ -4,9 +4,11 @@
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
 
+#include "mozilla/dom/ContentChild.h"
 #include "mozilla/net/ChildDNSService.h"
 #include "mozilla/net/DNSRequestChild.h"
 #include "mozilla/net/NeckoChild.h"
+#include "mozilla/SystemGroup.h"
 #include "mozilla/Unused.h"
 #include "nsIDNSRecord.h"
 #include "nsHostResolver.h"
@@ -171,7 +173,9 @@ public:
   {
     if (mDnsRequest->mIPCOpen) {
       // Send request to Parent process.
-      mDnsRequest->SendCancelDNSRequest(mDnsRequest->mHost, mDnsRequest->mFlags,
+      mDnsRequest->SendCancelDNSRequest(mDnsRequest->mHost,
+                                        mDnsRequest->mOriginAttributes,
+                                        mDnsRequest->mFlags,
                                         mDnsRequest->mNetworkInterface,
                                         mReasonForCancel);
     }
@@ -187,6 +191,7 @@ private:
 //-----------------------------------------------------------------------------
 
 DNSRequestChild::DNSRequestChild(const nsCString& aHost,
+                                 const OriginAttributes& aOriginAttributes,
                                  const uint32_t& aFlags,
                                  const nsCString& aNetworkInterface,
                                  nsIDNSListener *aListener,
@@ -195,6 +200,7 @@ DNSRequestChild::DNSRequestChild(const nsCString& aHost,
   , mTarget(target)
   , mResultStatus(NS_OK)
   , mHost(aHost)
+  , mOriginAttributes(aOriginAttributes)
   , mFlags(aFlags)
   , mNetworkInterface(aNetworkInterface)
   , mIPCOpen(false)
@@ -206,14 +212,27 @@ DNSRequestChild::StartRequest()
 {
   // we can only do IPDL on the main thread
   if (!NS_IsMainThread()) {
-    NS_DispatchToMainThread(
+    SystemGroup::Dispatch(
+      "StartDNSRequestChild",
+      TaskCategory::Other,
       NewRunnableMethod(this, &DNSRequestChild::StartRequest));
     return;
   }
 
+  nsCOMPtr<nsIEventTarget> systemGroupEventTarget
+    = SystemGroup::EventTargetFor(TaskCategory::Other);
+
+  gNeckoChild->SetEventTargetForActor(this, systemGroupEventTarget);
+
+  mozilla::dom::ContentChild* cc =
+    static_cast<mozilla::dom::ContentChild*>(gNeckoChild->Manager());
+  if (cc->IsShuttingDown()) {
+    return;
+  }
+
   // Send request to Parent process.
-  gNeckoChild->SendPDNSRequestConstructor(this, mHost, mFlags,
-                                          mNetworkInterface);
+  gNeckoChild->SendPDNSRequestConstructor(this, mHost, mOriginAttributes,
+                                          mFlags, mNetworkInterface);
   mIPCOpen = true;
 
   // IPDL holds a reference until IPDL channel gets destroyed
@@ -302,8 +321,10 @@ DNSRequestChild::Cancel(nsresult reason)
 {
   if(mIPCOpen) {
     // We can only do IPDL on the main thread
-    NS_DispatchToMainThread(
-      new CancelDNSRequestEvent(this, reason));
+    nsCOMPtr<nsIRunnable> runnable = new CancelDNSRequestEvent(this, reason);
+    SystemGroup::Dispatch("CancelDNSRequest",
+                          TaskCategory::Other,
+                          runnable.forget());
   }
   return NS_OK;
 }

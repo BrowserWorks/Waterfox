@@ -192,10 +192,12 @@ nsManifestCheck::Begin()
     nsCOMPtr<nsIHttpChannel> httpChannel =
         do_QueryInterface(mChannel);
     if (httpChannel) {
-        httpChannel->SetReferrer(mReferrerURI);
-        httpChannel->SetRequestHeader(NS_LITERAL_CSTRING("X-Moz"),
-                                      NS_LITERAL_CSTRING("offline-resource"),
-                                      false);
+        rv = httpChannel->SetReferrer(mReferrerURI);
+        MOZ_ASSERT(NS_SUCCEEDED(rv));
+        rv = httpChannel->SetRequestHeader(NS_LITERAL_CSTRING("X-Moz"),
+                                           NS_LITERAL_CSTRING("offline-resource"),
+                                           false);
+        MOZ_ASSERT(NS_SUCCEEDED(rv));
     }
 
     return mChannel->AsyncOpen2(this);
@@ -401,10 +403,12 @@ nsOfflineCacheUpdateItem::OpenChannel(nsOfflineCacheUpdate *aUpdate)
     nsCOMPtr<nsIHttpChannel> httpChannel =
         do_QueryInterface(mChannel);
     if (httpChannel) {
-        httpChannel->SetReferrer(mReferrerURI);
-        httpChannel->SetRequestHeader(NS_LITERAL_CSTRING("X-Moz"),
-                                      NS_LITERAL_CSTRING("offline-resource"),
-                                      false);
+        rv = httpChannel->SetReferrer(mReferrerURI);
+        MOZ_ASSERT(NS_SUCCEEDED(rv));
+        rv = httpChannel->SetRequestHeader(NS_LITERAL_CSTRING("X-Moz"),
+                                           NS_LITERAL_CSTRING("offline-resource"),
+                                           false);
+        MOZ_ASSERT(NS_SUCCEEDED(rv));
     }
 
     rv = mChannel->AsyncOpen2(this);
@@ -579,9 +583,10 @@ nsOfflineCacheUpdateItem::AsyncOnChannelRedirect(nsIChannel *aOldChannel,
     nsCOMPtr<nsIHttpChannel> httpChannel = do_QueryInterface(aNewChannel);
     NS_ENSURE_STATE(httpChannel);
 
-    httpChannel->SetRequestHeader(NS_LITERAL_CSTRING("X-Moz"),
-                                  NS_LITERAL_CSTRING("offline-resource"),
-                                  false);
+    rv = httpChannel->SetRequestHeader(NS_LITERAL_CSTRING("X-Moz"),
+                                       NS_LITERAL_CSTRING("offline-resource"),
+                                       false);
+    MOZ_ASSERT(NS_SUCCEEDED(rv));
 
     mChannel = aNewChannel;
 
@@ -1649,7 +1654,7 @@ nsOfflineCacheUpdate::LoadCompleted(nsOfflineCacheUpdateItem *aItem)
     }
 
     // According to parallelism this may imply more pinned retries count,
-    // but that is not critical, since at one moment the algoritm will
+    // but that is not critical, since at one moment the algorithm will
     // stop anyway.  Also, this code may soon be completely removed
     // after we have a separate storage for pinned apps.
     mPinnedEntryRetriesCount = 0;

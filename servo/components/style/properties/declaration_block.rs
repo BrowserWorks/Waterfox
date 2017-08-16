@@ -6,16 +6,36 @@
 
 #![deny(missing_docs)]
 
-use cssparser::{DeclarationListParser, parse_important};
+use context::QuirksMode;
+use cssparser::{DeclarationListParser, parse_important, ParserInput};
 use cssparser::{Parser, AtRuleParser, DeclarationParser, Delimiter};
-use error_reporting::ParseErrorReporter;
-use parser::{ParserContext, ParserContextExtraData, log_css_error};
-use servo_url::ServoUrl;
-use std::boxed::Box as StdBox;
+use error_reporting::{ParseErrorReporter, ContextualParseError};
+use parser::{PARSING_MODE_DEFAULT, ParsingMode, ParserContext, log_css_error};
+use properties::animated_properties::AnimationValue;
+use selectors::parser::SelectorParseError;
+use shared_lock::Locked;
 use std::fmt;
-use style_traits::ToCss;
-use stylesheets::Origin;
+use std::slice::Iter;
+use style_traits::{ToCss, ParseError, StyleParseError};
+use stylesheets::{CssRuleType, Origin, UrlExtraData};
+use stylesheets::{MallocSizeOf, MallocSizeOfFn};
 use super::*;
+use values::computed::Context;
+#[cfg(feature = "gecko")] use properties::animated_properties::AnimationValueMap;
+
+/// The animation rules.
+///
+/// The first one is for Animation cascade level, and the second one is for
+/// Transition cascade level.
+pub struct AnimationRules<'a>(pub Option<&'a Arc<Locked<PropertyDeclarationBlock>>>,
+                              pub Option<&'a Arc<Locked<PropertyDeclarationBlock>>>);
+
+impl<'a> AnimationRules<'a> {
+    /// Returns whether these animation rules represents an actual rule or not.
+    pub fn is_empty(&self) -> bool {
+        self.0.is_none() && self.1.is_none()
+    }
+}
 
 /// A declaration [importance][importance].
 ///
@@ -30,6 +50,12 @@ pub enum Importance {
     Important,
 }
 
+impl MallocSizeOf for Importance {
+    fn malloc_size_of_children(&self, _malloc_size_of: MallocSizeOfFn) -> usize {
+        0
+    }
+}
+
 impl Importance {
     /// Return whether this is an important declaration.
     pub fn important(self) -> bool {
@@ -40,29 +66,149 @@ impl Importance {
     }
 }
 
-impl Default for Importance {
-    #[inline]
-    fn default() -> Self {
-        Importance::Normal
-    }
-}
-
 /// Overridden declarations are skipped.
-#[derive(Debug, PartialEq, Clone)]
-#[cfg_attr(feature = "servo", derive(HeapSizeOf))]
+#[derive(Clone)]
 pub struct PropertyDeclarationBlock {
     /// The group of declarations, along with their importance.
     ///
     /// Only deduplicated declarations appear here.
-    #[cfg_attr(feature = "servo", ignore_heap_size_of = "#7038")]
-    pub declarations: Vec<(PropertyDeclaration, Importance)>,
+    declarations: Vec<(PropertyDeclaration, Importance)>,
 
     /// The number of entries in `self.declaration` with `Importance::Important`
-    pub important_count: u32,
+    important_count: usize,
+
+    longhands: LonghandIdSet,
+}
+
+impl MallocSizeOf for PropertyDeclarationBlock {
+    fn malloc_size_of_children(&self, malloc_size_of: MallocSizeOfFn) -> usize {
+        self.declarations.malloc_size_of_children(malloc_size_of)
+    }
+}
+
+/// Iterator for PropertyDeclaration to be generated from PropertyDeclarationBlock.
+#[derive(Clone)]
+pub struct PropertyDeclarationIterator<'a> {
+    iter: Iter<'a, (PropertyDeclaration, Importance)>,
+}
+
+impl<'a> Iterator for PropertyDeclarationIterator<'a> {
+    type Item = &'a PropertyDeclaration;
+    #[inline]
+    fn next(&mut self) -> Option<&'a PropertyDeclaration> {
+        // we use this function because a closure won't be `Clone`
+        fn get_declaration(dec: &(PropertyDeclaration, Importance))
+            -> &PropertyDeclaration {
+            &dec.0
+        }
+        self.iter.next().map(get_declaration as fn(_) -> _)
+    }
+}
+
+/// Iterator for AnimationValue to be generated from PropertyDeclarationBlock.
+pub struct AnimationValueIterator<'a, 'cx, 'cx_a:'cx> {
+    iter: Iter<'a, (PropertyDeclaration, Importance)>,
+    context: &'cx mut Context<'cx_a>,
+    default_values: &'a Arc<ComputedValues>,
+}
+
+impl<'a, 'cx, 'cx_a:'cx> AnimationValueIterator<'a, 'cx, 'cx_a> {
+    fn new(declarations: &'a PropertyDeclarationBlock,
+           context: &'cx mut Context<'cx_a>,
+           default_values: &'a Arc<ComputedValues>) -> AnimationValueIterator<'a, 'cx, 'cx_a> {
+        AnimationValueIterator {
+            iter: declarations.declarations().iter(),
+            context: context,
+            default_values: default_values,
+        }
+    }
+}
+
+impl<'a, 'cx, 'cx_a:'cx> Iterator for AnimationValueIterator<'a, 'cx, 'cx_a> {
+    type Item = (TransitionProperty, AnimationValue);
+    #[inline]
+    fn next(&mut self) -> Option<Self::Item> {
+        use properties::Importance;
+
+        loop {
+            let next = self.iter.next();
+            match next {
+                Some(&(ref decl, importance)) => {
+                    if importance == Importance::Normal {
+                        let property = TransitionProperty::from_declaration(decl);
+                        let animation = AnimationValue::from_declaration(decl, &mut self.context,
+                                                                         self.default_values);
+                        debug_assert!(property.is_none() == animation.is_none(),
+                                      "The failure condition of TransitionProperty::from_declaration \
+                                       and AnimationValue::from_declaration should be the same");
+                        // Skip the property if either ::from_declaration fails.
+                        match (property, animation) {
+                            (Some(p), Some(a)) => return Some((p, a)),
+                            (_, _) => {},
+                        }
+                    }
+                },
+                None => return None,
+            }
+        }
+    }
+}
+
+impl fmt::Debug for PropertyDeclarationBlock {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        self.declarations.fmt(f)
+    }
 }
 
 impl PropertyDeclarationBlock {
-    /// Returns wheather this block contains any declaration with `!important`.
+    /// Returns the number of declarations in the block.
+    pub fn len(&self) -> usize {
+        self.declarations.len()
+    }
+
+    /// Create an empty block
+    pub fn new() -> Self {
+        PropertyDeclarationBlock {
+            declarations: Vec::new(),
+            important_count: 0,
+            longhands: LonghandIdSet::new(),
+        }
+    }
+
+    /// Create a block with a single declaration
+    pub fn with_one(declaration: PropertyDeclaration, importance: Importance) -> Self {
+        let mut longhands = LonghandIdSet::new();
+        if let PropertyDeclarationId::Longhand(id) = declaration.id() {
+            longhands.insert(id);
+        }
+        PropertyDeclarationBlock {
+            declarations: vec![(declaration, importance)],
+            important_count: if importance.important() { 1 } else { 0 },
+            longhands: longhands,
+        }
+    }
+
+    /// The declarations in this block
+    pub fn declarations(&self) -> &[(PropertyDeclaration, Importance)] {
+        &self.declarations
+    }
+
+    /// Iterate over only PropertyDeclaration.
+    pub fn declarations_iter(&self) -> PropertyDeclarationIterator {
+        PropertyDeclarationIterator {
+            iter: self.declarations.iter(),
+        }
+    }
+
+    /// Return an iterator of (TransitionProperty, AnimationValue).
+    pub fn to_animation_value_iter<'a, 'cx, 'cx_a:'cx>(&'a self,
+                                                       context: &'cx mut Context<'cx_a>,
+                                                       default_values: &'a Arc<ComputedValues>)
+                                                       -> AnimationValueIterator<'a, 'cx, 'cx_a> {
+        AnimationValueIterator::new(self, context, default_values)
+    }
+
+    /// Returns whether this block contains any declaration with `!important`.
     ///
     /// This is based on the `important_count` counter,
     /// which should be maintained whenever `declarations` is changed.
@@ -71,13 +217,13 @@ impl PropertyDeclarationBlock {
         self.important_count > 0
     }
 
-    /// Returns wheather this block contains any declaration without `!important`.
+    /// Returns whether this block contains any declaration without `!important`.
     ///
     /// This is based on the `important_count` counter,
     /// which should be maintained whenever `declarations` is changed.
     // FIXME: make fields private and maintain it here in methods?
     pub fn any_normal(&self) -> bool {
-        self.declarations.len() > self.important_count as usize
+        self.declarations.len() > self.important_count
     }
 
     /// Get a declaration for a given property.
@@ -171,30 +317,145 @@ impl PropertyDeclarationBlock {
     }
 
     /// Adds or overrides the declaration for a given property in this block,
-    /// without taking into account any kind of priority.
-    pub fn set_parsed_declaration(&mut self,
-                                  declaration: PropertyDeclaration,
-                                  importance: Importance) {
-        for slot in &mut *self.declarations {
-            if slot.0.id() == declaration.id() {
-                match (slot.1, importance) {
-                    (Importance::Normal, Importance::Important) => {
-                        self.important_count += 1;
-                    }
-                    (Importance::Important, Importance::Normal) => {
-                        self.important_count -= 1;
-                    }
-                    _ => {}
+    /// **except** if an existing declaration for the same property is more
+    /// important.
+    ///
+    /// Always ensures that the property declaration is at the end.
+    pub fn extend(&mut self, drain: SourcePropertyDeclarationDrain, importance: Importance) {
+        self.extend_common(drain, importance, false);
+    }
+
+    /// Adds or overrides the declaration for a given property in this block,
+    /// **even** if an existing declaration for the same property is more
+    /// important, and reuses the same position in the block.
+    ///
+    /// Returns whether anything changed.
+    pub fn extend_reset(&mut self, drain: SourcePropertyDeclarationDrain,
+                        importance: Importance) -> bool {
+        self.extend_common(drain, importance, true)
+    }
+
+    fn extend_common(
+        &mut self,
+        mut drain: SourcePropertyDeclarationDrain,
+        importance: Importance,
+        overwrite_more_important_and_reuse_slot: bool,
+    ) -> bool {
+        let all_shorthand_len = match drain.all_shorthand {
+            AllShorthand::NotSet => 0,
+            AllShorthand::CSSWideKeyword(_) |
+            AllShorthand::WithVariables(_) => ShorthandId::All.longhands().len()
+        };
+        let push_calls_count = drain.declarations.len() + all_shorthand_len;
+
+        // With deduplication the actual length increase may be less than this.
+        self.declarations.reserve(push_calls_count);
+
+        let mut changed = false;
+        for decl in &mut drain.declarations {
+            changed |= self.push_common(
+                decl,
+                importance,
+                overwrite_more_important_and_reuse_slot,
+            );
+        }
+        match drain.all_shorthand {
+            AllShorthand::NotSet => {}
+            AllShorthand::CSSWideKeyword(keyword) => {
+                for &id in ShorthandId::All.longhands() {
+                    let decl = PropertyDeclaration::CSSWideKeyword(id, keyword);
+                    changed |= self.push_common(
+                        decl,
+                        importance,
+                        overwrite_more_important_and_reuse_slot,
+                    );
                 }
-                *slot = (declaration, importance);
-                return
+            }
+            AllShorthand::WithVariables(unparsed) => {
+                for &id in ShorthandId::All.longhands() {
+                    let decl = PropertyDeclaration::WithVariables(id, unparsed.clone());
+                    changed |= self.push_common(
+                        decl,
+                        importance,
+                        overwrite_more_important_and_reuse_slot,
+                    );
+                }
+            }
+        }
+        changed
+    }
+
+    /// Adds or overrides the declaration for a given property in this block,
+    /// **except** if an existing declaration for the same property is more
+    /// important.
+    ///
+    /// Ensures that, if inserted, it's inserted at the end of the declaration
+    /// block.
+    pub fn push(&mut self, declaration: PropertyDeclaration, importance: Importance) {
+        self.push_common(declaration, importance, false);
+    }
+
+    fn push_common(
+        &mut self,
+        declaration: PropertyDeclaration,
+        importance: Importance,
+        overwrite_more_important_and_reuse_slot: bool
+    ) -> bool {
+        let definitely_new = if let PropertyDeclarationId::Longhand(id) = declaration.id() {
+            !self.longhands.contains(id)
+        } else {
+            false  // For custom properties, always scan
+        };
+
+
+        if !definitely_new {
+            let mut index_to_remove = None;
+            for (i, slot) in self.declarations.iter_mut().enumerate() {
+                if slot.0.id() == declaration.id() {
+                    match (slot.1, importance) {
+                        (Importance::Normal, Importance::Important) => {
+                            self.important_count += 1;
+                        }
+                        (Importance::Important, Importance::Normal) => {
+                            if overwrite_more_important_and_reuse_slot {
+                                self.important_count -= 1;
+                            } else {
+                                return false
+                            }
+                        }
+                        _ => if slot.0 == declaration {
+                            return false;
+                        }
+                    }
+
+                    if overwrite_more_important_and_reuse_slot {
+                        *slot = (declaration, importance);
+                        return true;
+                    }
+
+                    // NOTE(emilio): We could avoid this and just override for
+                    // properties not affected by logical props, but it's not
+                    // clear it's worth it given the `definitely_new` check.
+                    index_to_remove = Some(i);
+                    break;
+                }
+            }
+
+            if let Some(index) = index_to_remove {
+                self.declarations.remove(index);
+                self.declarations.push((declaration, importance));
+                return true;
             }
         }
 
+        if let PropertyDeclarationId::Longhand(id) = declaration.id() {
+            self.longhands.insert(id);
+        }
         self.declarations.push((declaration, importance));
         if importance.important() {
             self.important_count += 1;
         }
+        true
     }
 
     /// Set the declaration importance for a given property, if found.
@@ -226,12 +487,22 @@ impl PropertyDeclarationBlock {
     ///
     /// Returns whether any declaration was actually removed.
     pub fn remove_property(&mut self, property: &PropertyId) -> bool {
+        if let PropertyId::Longhand(id) = *property {
+            if !self.longhands.contains(id) {
+                return false
+            }
+        }
         let important_count = &mut self.important_count;
         let mut removed_at_least_one = false;
+        let longhands = &mut self.longhands;
         self.declarations.retain(|&(ref declaration, importance)| {
-            let remove = declaration.id().is_or_is_longhand_of(property);
+            let id = declaration.id();
+            let remove = id.is_or_is_longhand_of(property);
             if remove {
                 removed_at_least_one = true;
+                if let PropertyDeclarationId::Longhand(id) = id {
+                    longhands.remove(id)
+                }
                 if importance.important() {
                     *important_count -= 1
                 }
@@ -239,6 +510,9 @@ impl PropertyDeclarationBlock {
             !remove
         });
 
+        if let PropertyId::Longhand(_) = *property {
+            debug_assert!(removed_at_least_one);
+        }
         removed_at_least_one
     }
 
@@ -255,17 +529,14 @@ impl PropertyDeclarationBlock {
                 }
             }
             Ok(shorthand) => {
-                // we use this function because a closure won't be `Clone`
-                fn get_declaration(dec: &(PropertyDeclaration, Importance))
-                    -> &PropertyDeclaration {
-                    &dec.0
-                }
                 if !self.declarations.iter().all(|decl| decl.0.shorthands().contains(&shorthand)) {
                     return Err(fmt::Error)
                 }
-                let iter = self.declarations.iter().map(get_declaration as fn(_) -> _);
+                let iter = self.declarations_iter();
                 match shorthand.get_shorthand_appendable_value(iter) {
-                    Some(AppendableValue::Css(css)) => dest.write_str(css),
+                    Some(AppendableValue::Css { css, .. }) => {
+                        dest.write_str(css)
+                    },
                     Some(AppendableValue::DeclarationsForShorthand(_, decls)) => {
                         shorthand.longhands_to_css(decls, dest)
                     }
@@ -275,37 +546,37 @@ impl PropertyDeclarationBlock {
         }
     }
 
-    /// Only keep the "winning" declaration for any given property, by importance then source order.
-    pub fn deduplicate(&mut self) {
-        let mut deduplicated = Vec::with_capacity(self.declarations.len());
-        let mut seen_normal = PropertyDeclarationIdSet::new();
-        let mut seen_important = PropertyDeclarationIdSet::new();
+    /// Convert AnimationValueMap to PropertyDeclarationBlock.
+    #[cfg(feature = "gecko")]
+    pub fn from_animation_value_map(animation_value_map: &AnimationValueMap) -> Self {
+        let mut declarations = vec![];
+        let mut longhands = LonghandIdSet::new();
 
-        for (declaration, importance) in self.declarations.drain(..).rev() {
-            if importance.important() {
-                let id = declaration.id();
-                if seen_important.contains(id) {
-                    self.important_count -= 1;
-                    continue
-                }
-                if seen_normal.contains(id) {
-                    let previous_len = deduplicated.len();
-                    deduplicated.retain(|&(ref d, _)| PropertyDeclaration::id(d) != id);
-                    debug_assert_eq!(deduplicated.len(), previous_len - 1);
-                }
-                seen_important.insert(id);
-            } else {
-                let id = declaration.id();
-                if seen_normal.contains(id) ||
-                   seen_important.contains(id) {
-                    continue
-                }
-                seen_normal.insert(id)
-            }
-            deduplicated.push((declaration, importance))
+        for (property, animation_value) in animation_value_map.iter() {
+          longhands.set_transition_property_bit(property);
+          declarations.push((animation_value.uncompute(), Importance::Normal));
         }
-        deduplicated.reverse();
-        self.declarations = deduplicated;
+
+        PropertyDeclarationBlock {
+            declarations: declarations,
+            important_count: 0,
+            longhands: longhands,
+        }
+    }
+
+    /// Returns true if the declaration block has a CSSWideKeyword for the given
+    /// property.
+    #[cfg(feature = "gecko")]
+    pub fn has_css_wide_keyword(&self, property: &PropertyId) -> bool {
+        if let PropertyId::Longhand(id) = *property {
+            if !self.longhands.contains(id) {
+                return false
+            }
+        }
+        self.declarations.iter().any(|&(ref decl, _)|
+            decl.id().is_or_is_longhand_of(property) &&
+            decl.get_css_wide_keyword().is_some()
+        )
     }
 }
 
@@ -346,22 +617,38 @@ impl ToCss for PropertyDeclarationBlock {
                     // Substep 2 & 3
                     let mut current_longhands = Vec::new();
                     let mut important_count = 0;
+                    let mut found_system = None;
 
-                    for &&(ref longhand, longhand_importance) in longhands.iter() {
-                        if longhand.id().is_longhand_of(shorthand) {
-                            current_longhands.push(longhand);
-                            if longhand_importance.important() {
-                                important_count += 1;
+                    if shorthand == ShorthandId::Font && longhands.iter().any(|&&(ref l, _)| l.get_system().is_some()) {
+                        for &&(ref longhand, longhand_importance) in longhands.iter() {
+                            if longhand.get_system().is_some() || longhand.is_default_line_height() {
+                                current_longhands.push(longhand);
+                                if found_system.is_none() {
+                                   found_system = longhand.get_system();
+                                }
+                                if longhand_importance.important() {
+                                    important_count += 1;
+                                }
                             }
                         }
-                    }
-
-                    // Substep 1
-                    /* Assuming that the PropertyDeclarationBlock contains no duplicate entries,
-                    if the current_longhands length is equal to the properties length, it means
-                    that the properties that map to shorthand are present in longhands */
-                    if current_longhands.is_empty() || current_longhands.len() != properties.len() {
-                        continue;
+                    } else {
+                        for &&(ref longhand, longhand_importance) in longhands.iter() {
+                            if longhand.id().is_longhand_of(shorthand) {
+                                current_longhands.push(longhand);
+                                if longhand_importance.important() {
+                                    important_count += 1;
+                                }
+                            }
+                        }
+                        // Substep 1:
+                        //
+                         // Assuming that the PropertyDeclarationBlock contains no
+                         // duplicate entries, if the current_longhands length is
+                         // equal to the properties length, it means that the
+                         // properties that map to shorthand are present in longhands
+                        if current_longhands.len() != properties.len() {
+                            continue;
+                        }
                     }
 
                     // Substep 4
@@ -375,36 +662,77 @@ impl ToCss for PropertyDeclarationBlock {
                         Importance::Normal
                     };
 
-                    // Substep 5 - Let value be the result of invoking serialize a CSS
-                    // value of current longhands.
-                    let mut value = String::new();
-                    match shorthand.get_shorthand_appendable_value(current_longhands.iter().cloned()) {
-                        None => continue,
-                        Some(appendable_value) => {
-                            try!(append_declaration_value(&mut value, appendable_value));
-                        }
-                    }
+                    // Substep 5 - Let value be the result of invoking serialize
+                    // a CSS value of current longhands.
+                    let appendable_value =
+                        match shorthand.get_shorthand_appendable_value(current_longhands.iter().cloned()) {
+                            None => continue,
+                            Some(appendable_value) => appendable_value,
+                        };
 
-                    // Substep 6
-                    if value.is_empty() {
-                        continue
-                    }
+                    // We avoid re-serializing if we're already an
+                    // AppendableValue::Css.
+                    let mut v = String::new();
+                    let value = match (appendable_value, found_system) {
+                        (AppendableValue::Css { css, with_variables }, _) => {
+                            debug_assert!(!css.is_empty());
+                            AppendableValue::Css {
+                                css: css,
+                                with_variables: with_variables,
+                            }
+                        }
+                        #[cfg(feature = "gecko")]
+                        (_, Some(sys)) => {
+                            sys.to_css(&mut v)?;
+                            AppendableValue::Css {
+                                css: &v,
+                                with_variables: false,
+                            }
+                        }
+                        (other, _) => {
+                            append_declaration_value(&mut v, other)?;
+
+                            // Substep 6
+                            if v.is_empty() {
+                                continue;
+                            }
+
+                            AppendableValue::Css {
+                                css: &v,
+                                with_variables: false,
+                            }
+                        }
+                    };
 
                     // Substeps 7 and 8
-                    try!(append_serialization::<W, Cloned<slice::Iter< _>>, _>(
-                             dest, &shorthand, AppendableValue::Css(&value), importance,
-                             &mut is_first_serialization));
+                    // We need to check the shorthand whether it's an alias property or not.
+                    // If it's an alias property, it should be serialized like its longhand.
+                    if shorthand.flags().contains(SHORTHAND_ALIAS_PROPERTY) {
+                        append_serialization::<_, Cloned<slice::Iter< _>>, _>(
+                             dest,
+                             &property,
+                             value,
+                             importance,
+                             &mut is_first_serialization)?;
+                    } else {
+                        append_serialization::<_, Cloned<slice::Iter< _>>, _>(
+                             dest,
+                             &shorthand,
+                             value,
+                             importance,
+                             &mut is_first_serialization)?;
+                    }
 
-                    for current_longhand in current_longhands {
+                    for current_longhand in &current_longhands {
                         // Substep 9
                         already_serialized.push(current_longhand.id());
-                        let index_to_remove = longhands.iter().position(|l| l.0 == *current_longhand);
+                        let index_to_remove = longhands.iter().position(|l| l.0 == **current_longhand);
                         if let Some(index) = index_to_remove {
                             // Substep 10
                             longhands.remove(index);
                         }
-                     }
-                 }
+                    }
+                }
             }
 
             // Step 3.3.4
@@ -420,12 +748,12 @@ impl ToCss for PropertyDeclarationBlock {
             // "error: unable to infer enough type information about `_`;
             //  type annotations or generic parameter binding required [E0282]"
             // Use the same type as earlier call to reuse generated code.
-            try!(append_serialization::<W, Cloned<slice::Iter< &PropertyDeclaration>>, _>(
+            append_serialization::<_, Cloned<slice::Iter<_>>, _>(
                 dest,
                 &property,
                 AppendableValue::Declaration(declaration),
                 importance,
-                &mut is_first_serialization));
+                &mut is_first_serialization)?;
 
             // Step 3.3.8
             already_serialized.push(property);
@@ -450,7 +778,12 @@ pub enum AppendableValue<'a, I>
     DeclarationsForShorthand(ShorthandId, I),
     /// A raw CSS string, coming for example from a property with CSS variables,
     /// or when storing a serialized shorthand value before appending directly.
-    Css(&'a str)
+    Css {
+        /// The raw CSS string.
+        css: &'a str,
+        /// Whether the original serialization contained variables or not.
+        with_variables: bool,
+    }
 }
 
 /// Potentially appends whitespace after the first (property: value;) pair.
@@ -460,12 +793,11 @@ fn handle_first_serialization<W>(dest: &mut W,
     where W: fmt::Write,
 {
     if !*is_first_serialization {
-        try!(write!(dest, " "));
+        dest.write_str(" ")
     } else {
         *is_first_serialization = false;
+        Ok(())
     }
-
-    Ok(())
 }
 
 /// Append a given kind of appendable value to a serialization.
@@ -476,18 +808,16 @@ pub fn append_declaration_value<'a, W, I>(dest: &mut W,
           I: Iterator<Item=&'a PropertyDeclaration>,
 {
     match appendable_value {
-        AppendableValue::Css(css) => {
-            try!(write!(dest, "{}", css))
+        AppendableValue::Css { css, .. } => {
+            dest.write_str(css)
         },
         AppendableValue::Declaration(decl) => {
-            try!(decl.to_css(dest));
+            decl.to_css(dest)
         },
         AppendableValue::DeclarationsForShorthand(shorthand, decls) => {
-            try!(shorthand.longhands_to_css(decls, dest));
+            shorthand.longhands_to_css(decls, dest)
         }
     }
-
-    Ok(())
 }
 
 /// Append a given property and value pair to a serialization.
@@ -507,110 +837,106 @@ pub fn append_serialization<'a, W, I, N>(dest: &mut W,
     try!(dest.write_char(':'));
 
     // for normal parsed values, add a space between key: and value
-    match &appendable_value {
-        &AppendableValue::Css(_) => {
-            try!(write!(dest, " "))
-        },
-        &AppendableValue::Declaration(decl) => {
+    match appendable_value {
+        AppendableValue::Declaration(decl) => {
             if !decl.value_is_unparsed() {
-                // for normal parsed values, add a space between key: and value
-                try!(write!(dest, " "));
+                // For normal parsed values, add a space between key: and value.
+                dest.write_str(" ")?
             }
         },
+        AppendableValue::Css { with_variables, .. } => {
+            if !with_variables {
+                dest.write_str(" ")?
+            }
+        }
         // Currently append_serialization is only called with a Css or
         // a Declaration AppendableValue.
-        &AppendableValue::DeclarationsForShorthand(..) => unreachable!()
+        AppendableValue::DeclarationsForShorthand(..) => unreachable!(),
     }
 
     try!(append_declaration_value(dest, appendable_value));
 
     if importance.important() {
-        try!(write!(dest, " !important"));
+        try!(dest.write_str(" !important"));
     }
 
-    write!(dest, ";")
+    dest.write_char(';')
 }
 
 /// A helper to parse the style attribute of an element, in order for this to be
 /// shared between Servo and Gecko.
 pub fn parse_style_attribute(input: &str,
-                             base_url: &ServoUrl,
-                             error_reporter: StdBox<ParseErrorReporter + Send>,
-                             extra_data: ParserContextExtraData)
+                             url_data: &UrlExtraData,
+                             error_reporter: &ParseErrorReporter,
+                             quirks_mode: QuirksMode)
                              -> PropertyDeclarationBlock {
-    let context = ParserContext::new_with_extra_data(Origin::Author, base_url, error_reporter, extra_data);
-    parse_property_declaration_list(&context, &mut Parser::new(input))
+    let context = ParserContext::new(Origin::Author,
+                                     url_data,
+                                     error_reporter,
+                                     Some(CssRuleType::Style),
+                                     PARSING_MODE_DEFAULT,
+                                     quirks_mode);
+    let mut input = ParserInput::new(input);
+    parse_property_declaration_list(&context, &mut Parser::new(&mut input))
 }
 
 /// Parse a given property declaration. Can result in multiple
 /// `PropertyDeclaration`s when expanding a shorthand, for example.
 ///
-/// The vector returned will not have the importance set;
-/// this does not attempt to parse !important at all
-pub fn parse_one_declaration(id: PropertyId,
-                             input: &str,
-                             base_url: &ServoUrl,
-                             error_reporter: StdBox<ParseErrorReporter + Send>,
-                             extra_data: ParserContextExtraData)
-                             -> Result<Vec<(PropertyDeclaration, Importance)>, ()> {
-    let context = ParserContext::new_with_extra_data(Origin::Author, base_url, error_reporter, extra_data);
-    Parser::new(input).parse_entirely(|parser| {
-        let mut results = vec![];
-        match PropertyDeclaration::parse(id, &context, parser, &mut results, false) {
-            PropertyDeclarationParseResult::ValidOrIgnoredDeclaration => Ok(results),
-            _ => Err(())
-        }
-    })
+/// This does not attempt to parse !important at all.
+pub fn parse_one_declaration_into(declarations: &mut SourcePropertyDeclaration,
+                                  id: PropertyId,
+                                  input: &str,
+                                  url_data: &UrlExtraData,
+                                  error_reporter: &ParseErrorReporter,
+                                  parsing_mode: ParsingMode,
+                                  quirks_mode: QuirksMode)
+                                  -> Result<(), ()> {
+    let context = ParserContext::new(Origin::Author,
+                                     url_data,
+                                     error_reporter,
+                                     Some(CssRuleType::Style),
+                                     parsing_mode,
+                                     quirks_mode);
+    let mut input = ParserInput::new(input);
+    Parser::new(&mut input).parse_entirely(|parser| {
+        PropertyDeclaration::parse_into(declarations, id, &context, parser)
+            .map_err(|e| e.into())
+    }).map_err(|_| ())
 }
 
 /// A struct to parse property declarations.
 struct PropertyDeclarationParser<'a, 'b: 'a> {
     context: &'a ParserContext<'b>,
-    declarations: Vec<(PropertyDeclaration, Importance)>
+    declarations: &'a mut SourcePropertyDeclaration,
 }
 
 
 /// Default methods reject all at rules.
-impl<'a, 'b> AtRuleParser for PropertyDeclarationParser<'a, 'b> {
+impl<'a, 'b, 'i> AtRuleParser<'i> for PropertyDeclarationParser<'a, 'b> {
     type Prelude = ();
-    type AtRule = (u32, Importance);
+    type AtRule = Importance;
+    type Error = SelectorParseError<'i, StyleParseError<'i>>;
 }
 
+impl<'a, 'b, 'i> DeclarationParser<'i> for PropertyDeclarationParser<'a, 'b> {
+    type Declaration = Importance;
+    type Error = SelectorParseError<'i, StyleParseError<'i>>;
 
-impl<'a, 'b> DeclarationParser for PropertyDeclarationParser<'a, 'b> {
-    /// Declarations are pushed to the internal vector. This will only
-    /// let you know if the decl was !important and how many longhands
-    /// it expanded to
-    type Declaration = (u32, Importance);
-
-    fn parse_value(&mut self, name: &str, input: &mut Parser)
-                   -> Result<(u32, Importance), ()> {
-        let id = try!(PropertyId::parse(name.into()));
-        let old_len = self.declarations.len();
-        let parse_result = input.parse_until_before(Delimiter::Bang, |input| {
-            match PropertyDeclaration::parse(id, self.context, input, &mut self.declarations, false) {
-                PropertyDeclarationParseResult::ValidOrIgnoredDeclaration => Ok(()),
-                _ => Err(())
-            }
-        });
-        if let Err(_) = parse_result {
-            // rollback
-            self.declarations.truncate(old_len);
-            return Err(())
-        }
+    fn parse_value<'t>(&mut self, name: Cow<'i, str>, input: &mut Parser<'i, 't>)
+                       -> Result<Importance, ParseError<'i>> {
+        let id = try!(PropertyId::parse(name));
+        input.parse_until_before(Delimiter::Bang, |input| {
+            PropertyDeclaration::parse_into(self.declarations, id, self.context, input)
+                .map_err(|e| e.into())
+        })?;
         let importance = match input.try(parse_important) {
             Ok(()) => Importance::Important,
-            Err(()) => Importance::Normal,
+            Err(_) => Importance::Normal,
         };
         // In case there is still unparsed text in the declaration, we should roll back.
-        if !input.is_exhausted() {
-            self.declarations.truncate(old_len);
-            return Err(())
-        }
-        for decl in &mut self.declarations[old_len..] {
-            decl.1 = importance
-        }
-        Ok(((self.declarations.len() - old_len) as u32, importance))
+        input.expect_exhausted()?;
+        Ok(importance)
     }
 }
 
@@ -620,31 +946,26 @@ impl<'a, 'b> DeclarationParser for PropertyDeclarationParser<'a, 'b> {
 pub fn parse_property_declaration_list(context: &ParserContext,
                                        input: &mut Parser)
                                        -> PropertyDeclarationBlock {
-    let mut important_count = 0;
+    let mut declarations = SourcePropertyDeclaration::new();
+    let mut block = PropertyDeclarationBlock::new();
     let parser = PropertyDeclarationParser {
         context: context,
-        declarations: vec![],
+        declarations: &mut declarations,
     };
     let mut iter = DeclarationListParser::new(input, parser);
     while let Some(declaration) = iter.next() {
         match declaration {
-            Ok((count, importance)) => {
-                if importance.important() {
-                    important_count += count;
-                }
+            Ok(importance) => {
+                block.extend(iter.parser.declarations.drain(), importance);
             }
-            Err(range) => {
-                let pos = range.start;
-                let message = format!("Unsupported property declaration: '{}'",
-                                      iter.input.slice(range));
-                log_css_error(iter.input, pos, &*message, &context);
+            Err(err) => {
+                iter.parser.declarations.clear();
+                let pos = err.span.start;
+                let error = ContextualParseError::UnsupportedPropertyDeclaration(
+                    iter.input.slice(err.span), err.error);
+                log_css_error(iter.input, pos, error, &context);
             }
         }
     }
-    let mut block = PropertyDeclarationBlock {
-        declarations: iter.parser.declarations,
-        important_count: important_count,
-    };
-    block.deduplicate();
     block
 }

@@ -5,6 +5,8 @@
 
 Components.utils.import("resource://gre/modules/BrowserUtils.jsm");
 
+/* import-globals-from pageInfo.js */
+
 XPCOMUtils.defineLazyModuleGetter(this, "LoginHelper",
                                   "resource://gre/modules/LoginHelper.jsm");
 
@@ -55,15 +57,15 @@ var security = {
 
       var retval = {
         hostName,
-        cAName : issuerName,
-        encryptionAlgorithm : undefined,
-        encryptionStrength : undefined,
+        cAName: issuerName,
+        encryptionAlgorithm: undefined,
+        encryptionStrength: undefined,
         version: undefined,
         isBroken,
         isMixed,
         isEV,
         cert,
-        certificateTransparency : undefined
+        certificateTransparency: undefined
       };
 
       var version;
@@ -111,15 +113,15 @@ var security = {
     }
     return {
       hostName,
-      cAName : "",
-      encryptionAlgorithm : "",
-      encryptionStrength : 0,
+      cAName: "",
+      encryptionAlgorithm: "",
+      encryptionStrength: 0,
       version: "",
       isBroken,
       isMixed,
       isEV,
-      cert : null,
-      certificateTransparency : null
+      cert: null,
+      certificateTransparency: null
     };
   },
 
@@ -165,7 +167,7 @@ var security = {
       win.focus();
     } else
       window.openDialog("chrome://browser/content/preferences/cookies.xul",
-                        "Browser:Cookies", "", {filterString : eTLD});
+                        "Browser:Cookies", "", {filterString: eTLD});
   },
 
   /**
@@ -175,7 +177,7 @@ var security = {
     LoginHelper.openPasswordManager(window, this._getSecurityInfo().hostName);
   },
 
-  _cert : null
+  _cert: null
 };
 
 function securityOnLoad(uri, windowInfo) {
@@ -306,7 +308,7 @@ function setText(id, value) {
     element.value = value;
   else {
     if (element.hasChildNodes())
-      element.removeChild(element.firstChild);
+      element.firstChild.remove();
     var textNode = document.createTextNode(value);
     element.appendChild(textNode);
   }
