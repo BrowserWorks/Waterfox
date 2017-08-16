@@ -494,6 +494,7 @@ nsHttpChannel::OnBeforeConnect()
     mConnectionInfo->SetPrivate(mPrivateBrowsing);
     mConnectionInfo->SetNoSpdy(mCaps & NS_HTTP_DISALLOW_SPDY);
     mConnectionInfo->SetBeConservative((mCaps & NS_HTTP_BE_CONSERVATIVE) || mBeConservative);
+    mConnectionInfo->SetTlsFlags(mTlsFlags);
 
     // notify "http-on-before-connect" observers
     gHttpHandler->OnBeforeConnect(this);
