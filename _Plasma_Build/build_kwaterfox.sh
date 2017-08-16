@@ -29,12 +29,12 @@ function testConnection(){
 
 # Apply KDE Plasma patch to locally downloaded repository.
 function ApplyKDE(){
-
+_patchrev=fde25c29562d # Waterfox 55.0.1
 	# Download patch if not exist and replace some words
 	if [ ! -f "$SourceDir/_Plasma_Build/mozilla-kde-$VERSION.patch" ] && [ ! -f "$SourceDir/_Plasma_Build/firefox-kde-$VERSION.patch" ]; then
 		# Check url next release for changes.	
-			wget -O $SourceDir/_Plasma_Build/mozilla-kde-$VERSION.patch 'http://www.rosenauer.org/hg/mozilla/raw-file/default/mozilla-kde.patch'
-			wget -O $SourceDir/_Plasma_Build/firefox-kde-$VERSION.patch 'http://www.rosenauer.org/hg/mozilla/raw-file/default/firefox-kde.patch'
+			wget -O $SourceDir/_Plasma_Build/mozilla-kde-$VERSION.patch "http://www.rosenauer.org/hg/mozilla/raw-file/$_patchrev/mozilla-kde.patch"
+			wget -O $SourceDir/_Plasma_Build/firefox-kde-$VERSION.patch "http://www.rosenauer.org/hg/mozilla/raw-file/$_patchrev/firefox-kde.patch"
 			sed -i 's/Firefox/Waterfox/g' $SourceDir/_Plasma_Build/mozilla-kde-$VERSION.patch
 			sed -i 's/KMOZILLAHELPER/KWATERFOXHELPER/g' $SourceDir/_Plasma_Build/mozilla-kde-$VERSION.patch
 			sed -i 's|/usr/lib/mozilla/kmozillahelper|/opt/waterfox/kwaterfoxhelper|g' $SourceDir/_Plasma_Build/mozilla-kde-$VERSION.patch
