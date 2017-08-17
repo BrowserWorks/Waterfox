@@ -513,6 +513,7 @@ class BrowserExtensionContent extends EventEmitter {
     this.localeData = new LocaleData(data.localeData);
 
     this.manifest = data.manifest;
+    this.baseURL = data.baseURL;
     this.baseURI = Services.io.newURI(data.baseURL);
 
     // Only used in addon processes.
