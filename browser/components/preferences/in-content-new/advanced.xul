@@ -96,7 +96,7 @@
       <hbox id="apply" align="center">
         <spacer flex="1"/>
         <button id="updateButton"
-                label="&update.updateButton.label3;"
+                label="&update.updateButton.label2;"
                 accesskey="&update.updateButton.accesskey;"
                 oncommand="gAppUpdater.buttonRestartAfterDownload();"/>
       </hbox>
@@ -158,7 +158,7 @@
       <hbox id="restarting" align="center">
         <image class="update-throbber"/><label>&update.restarting;</label>
         <spacer flex="1"/>
-        <button label="&update.updateButton.label3;"
+        <button label="&update.updateButton.label2;"
                 accesskey="&update.updateButton.accesskey;"
                 disabled="true"/>
       </hbox>
