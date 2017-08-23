@@ -2339,7 +2339,7 @@ var gDiscoverView = {
         }
       }
 
-      setURL(url + "#" + JSON.stringify(list));
+      setURL(url);
     });
   },
 
