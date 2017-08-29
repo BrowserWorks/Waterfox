@@ -19,6 +19,8 @@ export WIN_UCRT_REDIST_DIR="/c/Program Files (x86)/Windows Kits/10/Redist/ucrt/D
 elif test `uname -s` = Linux; then
 export CC=clang
 export CXX=clang++
+export LDFLAGS="-static-libstdc++"
+export EXTRA_DSO_LDFLAGS="-lgcov -static-libstdc++"
 ac_add_options --enable-optimize="-O3 -mtune=generic -fcolor-diagnostics -w"
 ac_add_options --target=x86_64-pc-linux-gnu
 ac_add_options --with-ccache=ccache
