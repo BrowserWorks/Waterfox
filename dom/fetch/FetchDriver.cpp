@@ -612,9 +612,9 @@ FetchDriver::OnStartRequest(nsIRequest* aRequest,
 
   // From "Main Fetch" step 19: SRI-part1.
   if (ShouldCheckSRI(mRequest, mResponse) && mSRIMetadata.IsEmpty()) {
-    nsIConsoleReportCollector* aReporter = nullptr;
+    nsIConsoleReportCollector* reporter = nullptr;
     if (mObserver) {
-      aReporter = mObserver->GetReporter();
+      reporter = mObserver->GetReporter();
     }
 
     nsAutoCString sourceUri;
@@ -624,9 +624,9 @@ FetchDriver::OnStartRequest(nsIRequest* aRequest,
       sourceUri.Assign(mWorkerScript);
     }
     SRICheck::IntegrityMetadata(mRequest->GetIntegrity(), sourceUri,
-                                aReporter, &mSRIMetadata);
+                                reporter, &mSRIMetadata);
     mSRIDataVerifier = new SRICheckDataVerifier(mSRIMetadata, sourceUri,
-                                                aReporter);
+                                                reporter);
 
     // Do not retarget off main thread when using SRI API.
     return NS_OK;
@@ -793,9 +793,9 @@ FetchDriver::OnStopRequest(nsIRequest* aRequest,
 
       nsCOMPtr<nsIChannel> channel = do_QueryInterface(aRequest);
 
-      nsIConsoleReportCollector* aReporter = nullptr;
+      nsIConsoleReportCollector* reporter = nullptr;
       if (mObserver) {
-        aReporter = mObserver->GetReporter();
+        reporter = mObserver->GetReporter();
       }
 
       nsAutoCString sourceUri;
@@ -805,7 +805,7 @@ FetchDriver::OnStopRequest(nsIRequest* aRequest,
         sourceUri.Assign(mWorkerScript);
       }
       nsresult rv = mSRIDataVerifier->Verify(mSRIMetadata, channel, sourceUri,
-                                             aReporter);
+                                             reporter);
       if (NS_FAILED(rv)) {
         FailWithNetworkError();
         // Cancel request.
