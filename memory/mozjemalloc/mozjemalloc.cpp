@@ -128,7 +128,7 @@
  * The jemalloc_purge_freed_pages definition in memory/build/mozmemory.h needs
  * to be adjusted if MALLOC_DOUBLE_PURGE is ever enabled on Linux.
  */
-#ifdef MOZ_MEMORY_DARWIN
+#ifdef XP_DARWIN
 #define MALLOC_DOUBLE_PURGE
 #endif
 
@@ -223,12 +223,12 @@ typedef long ssize_t;
 #include <stdint.h>
 #include <stdlib.h>
 #include <string.h>
-#ifndef MOZ_MEMORY_DARWIN
+#ifndef XP_DARWIN
 #include <strings.h>
 #endif
 #include <unistd.h>
 
-#ifdef MOZ_MEMORY_DARWIN
+#ifdef XP_DARWIN
 #include <libkern/OSAtomic.h>
 #include <mach/mach_error.h>
 #include <mach/mach_init.h>
@@ -294,7 +294,7 @@ void *_mmap(void *addr, size_t length, int prot, int flags,
 #endif
 #endif
 
-#ifdef MOZ_MEMORY_DARWIN
+#ifdef XP_DARWIN
 static pthread_key_t tlsIndex;
 #endif
 
@@ -408,7 +408,7 @@ static pthread_key_t tlsIndex;
 #if defined(XP_WIN)
 #define malloc_mutex_t CRITICAL_SECTION
 #define malloc_spinlock_t CRITICAL_SECTION
-#elif defined(MOZ_MEMORY_DARWIN)
+#elif defined(XP_DARWIN)
 typedef struct {
 	OSSpinLock	lock;
 } malloc_mutex_t;
@@ -425,7 +425,7 @@ static bool malloc_initialized = false;
 
 #if defined(XP_WIN)
 /* No init lock for Windows. */
-#elif defined(MOZ_MEMORY_DARWIN)
+#elif defined(XP_DARWIN)
 static malloc_mutex_t init_lock = {OS_SPINLOCK_INIT};
 #elif defined(MOZ_MEMORY_LINUX) && !defined(MOZ_MEMORY_ANDROID)
 static malloc_mutex_t init_lock = PTHREAD_ADAPTIVE_MUTEX_INITIALIZER_NP;
@@ -953,7 +953,7 @@ static malloc_spinlock_t arenas_lock; /* Protects arenas initialization. */
  * Map of pthread_self() --> arenas[???], used for selecting an arena to use
  * for allocations.
  */
-#if !defined(XP_WIN) && !defined(MOZ_MEMORY_DARWIN)
+#if !defined(XP_WIN) && !defined(XP_DARWIN)
 static __thread arena_t	*arenas_map;
 #endif
 #endif
@@ -1004,7 +1004,7 @@ static
 #endif
 bool		malloc_init_hard(void);
 
-#ifdef MOZ_MEMORY_DARWIN
+#ifdef XP_DARWIN
 #define FORK_HOOK extern "C"
 #else
 #define FORK_HOOK static
@@ -1081,7 +1081,7 @@ malloc_mutex_init(malloc_mutex_t *mutex)
 #if defined(XP_WIN)
 	if (!InitializeCriticalSectionAndSpinCount(mutex, _CRT_SPINCOUNT))
 		return (true);
-#elif defined(MOZ_MEMORY_DARWIN)
+#elif defined(XP_DARWIN)
 	mutex->lock = OS_SPINLOCK_INIT;
 #elif defined(MOZ_MEMORY_LINUX) && !defined(MOZ_MEMORY_ANDROID)
 	pthread_mutexattr_t attr;
@@ -1106,7 +1106,7 @@ malloc_mutex_lock(malloc_mutex_t *mutex)
 
 #if defined(XP_WIN)
 	EnterCriticalSection(mutex);
-#elif defined(MOZ_MEMORY_DARWIN)
+#elif defined(XP_DARWIN)
 	OSSpinLockLock(&mutex->lock);
 #else
 	pthread_mutex_lock(mutex);
@@ -1119,7 +1119,7 @@ malloc_mutex_unlock(malloc_mutex_t *mutex)
 
 #if defined(XP_WIN)
 	LeaveCriticalSection(mutex);
-#elif defined(MOZ_MEMORY_DARWIN)
+#elif defined(XP_DARWIN)
 	OSSpinLockUnlock(&mutex->lock);
 #else
 	pthread_mutex_unlock(mutex);
@@ -1135,7 +1135,7 @@ malloc_spin_init(malloc_spinlock_t *lock)
 #if defined(XP_WIN)
 	if (!InitializeCriticalSectionAndSpinCount(lock, _CRT_SPINCOUNT))
 			return (true);
-#elif defined(MOZ_MEMORY_DARWIN)
+#elif defined(XP_DARWIN)
 	lock->lock = OS_SPINLOCK_INIT;
 #elif defined(MOZ_MEMORY_LINUX) && !defined(MOZ_MEMORY_ANDROID)
 	pthread_mutexattr_t attr;
@@ -1160,7 +1160,7 @@ malloc_spin_lock(malloc_spinlock_t *lock)
 
 #if defined(XP_WIN)
 	EnterCriticalSection(lock);
-#elif defined(MOZ_MEMORY_DARWIN)
+#elif defined(XP_DARWIN)
 	OSSpinLockLock(&lock->lock);
 #else
 	pthread_mutex_lock(lock);
@@ -1172,7 +1172,7 @@ malloc_spin_unlock(malloc_spinlock_t *lock)
 {
 #if defined(XP_WIN)
 	LeaveCriticalSection(lock);
-#elif defined(MOZ_MEMORY_DARWIN)
+#elif defined(XP_DARWIN)
 	OSSpinLockUnlock(&lock->lock);
 #else
 	pthread_mutex_unlock(lock);
@@ -1189,7 +1189,7 @@ malloc_spin_unlock(malloc_spinlock_t *lock)
  * priority inversion.
  */
 
-#if !defined(MOZ_MEMORY_DARWIN)
+#if !defined(XP_DARWIN)
 #  define	malloc_spin_init	malloc_mutex_init
 #  define	malloc_spin_lock	malloc_mutex_lock
 #  define	malloc_spin_unlock	malloc_mutex_unlock
@@ -1627,7 +1627,7 @@ pages_unmap(void *addr, size_t size)
 }
 #endif
 
-#ifdef MOZ_MEMORY_DARWIN
+#ifdef XP_DARWIN
 #define	VM_COPY_MIN (pagesize << 5)
 static inline void
 pages_copy(void *dest, const void *src, size_t n)
@@ -2248,7 +2248,7 @@ thread_local_arena(bool enabled)
 	}
 #ifdef XP_WIN
 	TlsSetValue(tlsIndex, arena);
-#elif defined(MOZ_MEMORY_DARWIN)
+#elif defined(XP_DARWIN)
 	pthread_setspecific(tlsIndex, arena);
 #else
 	arenas_map = arena;
@@ -2283,7 +2283,7 @@ choose_arena(void)
 
 #  ifdef XP_WIN
 	ret = (arena_t*)TlsGetValue(tlsIndex);
-#  elif defined(MOZ_MEMORY_DARWIN)
+#  elif defined(XP_DARWIN)
 	ret = (arena_t*)pthread_getspecific(tlsIndex);
 #  else
 	ret = arenas_map;
@@ -4354,7 +4354,7 @@ huge_dalloc(void *ptr)
  * implementation has to take pains to avoid infinite recursion during
  * initialization.
  */
-#if (defined(XP_WIN) || defined(MOZ_MEMORY_DARWIN))
+#if (defined(XP_WIN) || defined(XP_DARWIN))
 #define	malloc_init() false
 #else
 static inline bool
@@ -4368,7 +4368,7 @@ malloc_init(void)
 }
 #endif
 
-#if defined(MOZ_MEMORY_DARWIN)
+#if defined(XP_DARWIN)
 extern "C" void register_zone(void);
 #endif
 
@@ -4400,7 +4400,7 @@ malloc_init_hard(void)
 #ifdef XP_WIN
 	/* get a thread local storage index */
 	tlsIndex = TlsAlloc();
-#elif defined(MOZ_MEMORY_DARWIN)
+#elif defined(XP_DARWIN)
 	pthread_key_create(&tlsIndex, nullptr);
 #endif
 
@@ -4615,7 +4615,7 @@ MALLOC_OUT:
 	 */
 #ifdef XP_WIN
 	TlsSetValue(tlsIndex, arenas[0]);
-#elif defined(MOZ_MEMORY_DARWIN)
+#elif defined(XP_DARWIN)
 	pthread_setspecific(tlsIndex, arenas[0]);
 #else
 	arenas_map = arenas[0];
@@ -4628,12 +4628,12 @@ MALLOC_OUT:
 
 	malloc_initialized = true;
 
-#if !defined(XP_WIN) && !defined(MOZ_MEMORY_DARWIN)
+#if !defined(XP_WIN) && !defined(XP_DARWIN)
 	/* Prevent potential deadlock on malloc locks after fork. */
 	pthread_atfork(_malloc_prefork, _malloc_postfork_parent, _malloc_postfork_child);
 #endif
 
-#if defined(MOZ_MEMORY_DARWIN)
+#if defined(XP_DARWIN)
 	register_zone();
 #endif
 
@@ -4687,7 +4687,7 @@ RETURN:
  */
 
 #ifndef MOZ_REPLACE_MALLOC
-#if defined(__GNUC__) && !defined(MOZ_MEMORY_DARWIN)
+#if defined(__GNUC__) && !defined(XP_DARWIN)
 #define MOZ_MEMORY_ELF
 #endif
 #endif /* MOZ_REPLACE_MALLOC */
@@ -5169,7 +5169,7 @@ jemalloc_free_dirty_pages_impl(void)
  * is threaded here.
  */
 
-#ifndef MOZ_MEMORY_DARWIN
+#ifndef XP_DARWIN
 static
 #endif
 void
@@ -5190,7 +5190,7 @@ _malloc_prefork(void)
 	malloc_mutex_lock(&huge_mtx);
 }
 
-#ifndef MOZ_MEMORY_DARWIN
+#ifndef XP_DARWIN
 static
 #endif
 void
@@ -5211,7 +5211,7 @@ _malloc_postfork_parent(void)
 	malloc_spin_unlock(&arenas_lock);
 }
 
-#ifndef MOZ_MEMORY_DARWIN
+#ifndef XP_DARWIN
 static
 #endif
 void
@@ -5241,7 +5241,7 @@ _malloc_postfork_child(void)
 #  include <dlfcn.h>
 #endif
 
-#if defined(MOZ_MEMORY_DARWIN)
+#if defined(XP_DARWIN)
 
 __attribute__((constructor))
 void
@@ -5261,7 +5261,7 @@ jemalloc_darwin_init(void)
 #define is_malloc_(a) malloc_is_ ## a
 #define is_malloc(a) is_malloc_(a)
 
-#if !defined(MOZ_MEMORY_DARWIN) && (is_malloc(malloc_impl) == 1)
+#if !defined(XP_DARWIN) && (is_malloc(malloc_impl) == 1)
 #  if defined(__GLIBC__) && !defined(__UCLIBC__)
 /*
  * glibc provides the RTLD_DEEPBIND flag for dlopen which can make it possible
