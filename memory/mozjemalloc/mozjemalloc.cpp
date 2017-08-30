@@ -195,7 +195,7 @@ typedef long ssize_t;
 #endif
 
 #ifndef XP_WIN
-#ifndef MOZ_MEMORY_SOLARIS
+#ifndef XP_SOLARIS
 #include <sys/cdefs.h>
 #endif
 #include <sys/mman.h>
