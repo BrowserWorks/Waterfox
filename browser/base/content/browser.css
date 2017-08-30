@@ -1016,6 +1016,17 @@ notification[value="translation"] {
 
 /*** Visibility of downloads indicator controls ***/
 
+#downloads-button.withProgressBar:-moz-any([progress], [counter], [paused]) #downloads-indicator-icon,
+#downloads-button:not(:-moz-any([progress], [counter], [paused])) #downloads-indicator-progress-area {
+  visibility: hidden;
+}
+
+/* Hide elements for another type of progressmeter if it's not in use. */
+#downloads-button.withProgressBar #downloads-indicator-progress-icon,
+#downloads-button:not(.withProgressBar) #downloads-indicator-progress-area {
+  visibility: hidden;
+}
+
 /* Bug 924050: If we've loaded the indicator, for now we hide it in the menu panel,
    and just show the icon. This is a hack to side-step very weird layout bugs that
    seem to be caused by the indicator stack interacting with the menu panel. */

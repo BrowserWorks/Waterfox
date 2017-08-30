@@ -80,6 +80,9 @@ const kDownloadsStringBundleUrl =
 
 const kDownloadsStringsRequiringFormatting = {
   sizeWithUnits: true,
+  shortTimeLeftSeconds: true,
+  shortTimeLeftMinutes: true,
+  shortTimeLeftHours: true,
   statusSeparator: true,
   statusSeparatorBeforeNumber: true,
   fileExecutableSecurityWarning: true
@@ -153,6 +156,12 @@ this.DownloadsCommon = {
   ATTENTION_SUCCESS: "success",
   ATTENTION_WARNING: "warning",
   ATTENTION_SEVERE: "severe",
+  
+    /**
+   * This can be used by add-on experiments as a killswitch for the new style
+   * progress indication.
+   **/
+   arrowStyledIndicator: true,
 
   /**
    * Returns an object whose keys are the string names from the downloads string
@@ -188,7 +197,37 @@ this.DownloadsCommon = {
     delete this.strings;
     return this.strings = strings;
   },
-
+  
+  /**
+   * Generates a very short string representing the given time left.
+   *
+   * @param aSeconds
+   *        Value to be formatted.  It represents the number of seconds, it must
+   *        be positive but does not need to be an integer.
+   *
+   * @return Formatted string, for example "30s" or "2h".  The returned value is
+   *         maximum three characters long, at least in English.
+   */
+  formatTimeLeft(aSeconds) {
+    // Decide what text to show for the time
+    let seconds = Math.round(aSeconds);
+    if (!seconds) {
+      return "";
+    } else if (seconds <= 30) {
+      return DownloadsCommon.strings["shortTimeLeftSeconds"](seconds);
+    }
+    let minutes = Math.round(aSeconds / 60);
+    if (minutes < 60) {
+      return DownloadsCommon.strings["shortTimeLeftMinutes"](minutes);
+    }
+    let hours = Math.round(minutes / 60);
+    if (hours < 48) { // two days
+      return DownloadsCommon.strings["shortTimeLeftHours"](hours);
+    }
+    let days = Math.round(hours / 24);
+    return DownloadsCommon.strings["shortTimeLeftDays"](Math.min(days, 99));
+  },
+  
   /**
    * Indicates whether we should show visual notification on the indicator
    * when a download event is triggered.
@@ -1163,8 +1202,9 @@ DownloadsIndicatorDataCtor.prototype = {
         this.attention = DownloadsCommon.ATTENTION_WARNING;
       }
     }
+    this._lastRawTimeLeft = -1;
+    this._lastTimeLeft = -1;
   },
-
   onDownloadChanged(download) {
     this._updateViews();
   },
@@ -1180,6 +1220,8 @@ DownloadsIndicatorDataCtor.prototype = {
   // propagated to the views.  See _refreshProperties for details.
   _hasDownloads: false,
   _percentComplete: -1,
+  _counter: "",
+  _paused: false,
 
   /**
    * Indicates whether the download indicators should be highlighted.
@@ -1236,7 +1278,9 @@ DownloadsIndicatorDataCtor.prototype = {
    */
   _updateView(aView) {
     aView.hasDownloads = this._hasDownloads;
+	aView.counter = this._counter;
     aView.percentComplete = this._percentComplete;
+	aView.paused = this._paused;
     aView.attention = this._attentionSuppressed ? DownloadsCommon.ATTENTION_NONE
                                                 : this._attention;
   },
@@ -1247,6 +1291,22 @@ DownloadsIndicatorDataCtor.prototype = {
    * Number of download items that are available to be displayed.
    */
   _itemCount: 0,
+  
+  /**
+   * Floating point value indicating the last number of seconds estimated until
+   * the longest download will finish.  We need to store this value so that we
+   * don't continuously apply smoothing if the actual download state has not
+   * changed.  This is set to -1 if the previous value is unknown.
+   */
+  _lastRawTimeLeft: -1,
+
+  /**
+   * Last number of seconds estimated until all in-progress downloads with a
+   * known size and speed will finish.  This value is stored to allow smoothing
+   * in case of small variations.  This is set to -1 if the previous value is
+   * unknown.
+   */
+   _lastTimeLeft: -1,
 
   /**
    * A generator function for the Download objects this summary is currently
@@ -1273,8 +1333,27 @@ DownloadsIndicatorDataCtor.prototype = {
 
     // Determine if the indicator should be shown or get attention.
     this._hasDownloads = (this._itemCount > 0);
+	
+    // If all downloads are paused, show the progress indicator as paused.
+    this._paused = summary.numActive > 0 && summary.numActive == summary.numPaused;
 
     this._percentComplete = summary.percentComplete;
+	
+	// Display the estimated time left, if present.
+    if (summary.rawTimeLeft == -1) {
+      // There are no downloads with a known time left.
+      this._lastRawTimeLeft = -1;
+      this._lastTimeLeft = -1;
+      this._counter = "";
+    } else {
+      // Compute the new time left only if state actually changed.
+      if (this._lastRawTimeLeft != summary.rawTimeLeft) {
+        this._lastRawTimeLeft = summary.rawTimeLeft;
+        this._lastTimeLeft = DownloadsCommon.smoothSeconds(summary.rawTimeLeft,
+                                                           this._lastTimeLeft);
+      }
+      this._counter = DownloadsCommon.formatTimeLeft(this._lastTimeLeft);
+	}
   }
 };
 

@@ -215,10 +215,19 @@ const DownloadsIndicatorView = {
       return;
     }
     this._initialized = true;
+	
+	this._setIndicatorType();
 
     window.addEventListener("unload", this.onWindowUnload);
     DownloadsCommon.getIndicatorData(window).addView(this);
   },
+  _setIndicatorType() {
+    // We keep a killerswitch for old-styled progressbar for now. Corresponding
+    // css class is added here to reflect the type chosen for showing progress.
+    let node = CustomizableUI.getWidget("downloads-button").forWindow(window).node;
+    node.classList.toggle("withProgressBar",!DownloadsCommon.arrowStyledIndicator);
+  },
+
 
   /**
    * Frees the internal resources related to the indicator.
@@ -234,8 +243,10 @@ const DownloadsIndicatorView = {
 
     // Reset the view properties, so that a neutral indicator is displayed if we
     // are visible only temporarily as an anchor.
+	this.counter = "";
     this.percentComplete = 0;
     this.attention = DownloadsCommon.ATTENTION_NONE;
+	this.paused = false;
   },
 
   /**
@@ -384,9 +395,37 @@ const DownloadsIndicatorView = {
     return this._hasDownloads;
   },
   _hasDownloads: false,
+  
+   /**
+   * Status text displayed in the indicator.  If this is set to an empty value,
+   * then the small downloads icon is displayed instead of the text.
+   */
+  set counter(aValue) {
+    if (!this._operational) {
+      return this._counter;
+    }
+
+    if (this._counter !== aValue) {
+      this._counter = aValue;
+      if (this._counter)
+        this.indicator.setAttribute("counter", "true");
+      else
+        this.indicator.removeAttribute("counter");
+      // We have to set the attribute instead of using the property because the
+      // XBL binding isn't applied if the element is invisible for any reason.
+      this._indicatorCounter.setAttribute("value", aValue);
+    }
+    return aValue;
+  },
+
 
   /**
    * Progress indication to display, from 0 to 100, or -1 if unknown.
+   *
+   * Bar-type:
+   *   The progress bar is hidden if the current progress is unknown and no
+   *   status text is set in the "counter" property.
+   * Arrow-type:
    * Progress is not visible if the current progress is unknown.
    */
   set percentComplete(aValue) {
@@ -408,10 +447,35 @@ const DownloadsIndicatorView = {
         this.indicator.removeAttribute("progress");
         this._progressIcon.style.animationDelay = "1s";
       }
+	  // We have to set the attribute instead of using the property because the
+      // XBL binding isn't applied if the element is invisible for any reason.
+      this._indicatorProgress.setAttribute("value", Math.max(aValue, 0));
     }
     return aValue;
   },
   _percentComplete: null,
+  
+  /**
+   * Indicates whether the progress won't advance because of a paused state.
+   * Setting this property forces a paused progress bar to be displayed, even if
+   * the current progress information is unavailable.
+   */
+  set paused(aValue) {
+    if (!this._operational) {
+      return this._paused;
+    }
+
+    if (this._paused != aValue) {
+      this._paused = aValue;
+      if (this._paused) {
+        this.indicator.setAttribute("paused", "true")
+      } else {
+        this.indicator.removeAttribute("paused");
+      }
+    }
+    return aValue;
+  },
+  _paused: false,
 
   /**
    * Set when the indicator should draw user attention to itself.
@@ -435,7 +499,7 @@ const DownloadsIndicatorView = {
 
     // For arrow-Styled indicator, suppress success attention if we have
     // progress in toolbar
-    let suppressAttention = !inMenu &&
+    let suppressAttention = DownloadsCommon.arrowStyledIndicator && !inMenu &&
       this._attention == DownloadsCommon.ATTENTION_SUCCESS &&
       this._percentComplete >= 0;
 
@@ -494,6 +558,8 @@ const DownloadsIndicatorView = {
   },
 
   _indicator: null,
+  __indicatorCounter: null,
+  __indicatorProgress: null,
   __progressIcon: null,
 
   /**
@@ -521,6 +587,15 @@ const DownloadsIndicatorView = {
     }
     return document.getElementById("downloads-indicator-anchor");
   },
+  get _indicatorCounter() {
+    return this.__indicatorCounter ||
+      (this.__indicatorCounter = document.getElementById("downloads-indicator-counter"));
+  },
+
+  get _indicatorProgress() {
+    return this.__indicatorProgress ||
+      (this.__indicatorProgress = document.getElementById("downloads-indicator-progress"));
+  },
 
   get _progressIcon() {
     return this.__progressIcon ||
@@ -535,6 +610,8 @@ const DownloadsIndicatorView = {
   _onCustomizedAway() {
     this._indicator = null;
     this.__progressIcon = null;
+    this.__indicatorCounter = null;
+    this.__indicatorProgress = null;
   },
 
   afterCustomize() {
