@@ -896,6 +896,11 @@ case "$target" in
         if test -z "$CLANG_CC"; then
            MOZ_OPTIMIZE_FLAGS="-freorder-blocks $MOZ_OPTIMIZE_FLAGS"
         fi
+        if test "$CLANG_CC"; then
+           MOZ_OPTIMIZE_FLAGS="-O3"
+           CXXFLAGS="$CXXFLAGS -static-libgcc -static-libstdc++"
+           CFLAGS="$CFLAGS -static-libgcc"
+        fi
     fi
 
     case "${target_cpu}" in
