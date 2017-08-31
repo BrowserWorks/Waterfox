@@ -939,8 +939,7 @@ class GCRuntime
     void startTask(GCParallelTask& task, gcstats::PhaseKind phase, AutoLockHelperThreadState& locked);
     void joinTask(GCParallelTask& task, gcstats::PhaseKind phase, AutoLockHelperThreadState& locked);
 
-    // Delete an empty zone group after its contents have been merged.
-    void deleteEmptyZoneGroup(ZoneGroup* group);
+    void mergeCompartments(JSCompartment* source, JSCompartment* target);
 
   private:
     enum IncrementalResult
@@ -949,12 +948,17 @@ class GCRuntime
         Ok
     };
 
+    // Delete an empty zone group after its contents have been merged.
+    void deleteEmptyZoneGroup(ZoneGroup* group);
+
     // For ArenaLists::allocateFromArena()
     friend class ArenaLists;
     Chunk* pickChunk(const AutoLockGC& lock,
                      AutoMaybeStartBackgroundAllocation& maybeStartBGAlloc);
     Arena* allocateArena(Chunk* chunk, Zone* zone, AllocKind kind,
                          ShouldCheckThresholds checkThresholds, const AutoLockGC& lock);
+
+
     void arenaAllocatedDuringGC(JS::Zone* zone, Arena* arena);
 
     // Allocator internals
