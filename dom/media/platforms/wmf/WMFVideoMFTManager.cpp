@@ -1135,4 +1135,13 @@ WMFVideoMFTManager::IsHardwareAccelerated(nsACString& aFailureReason) const
   return mDecoder && mUseHwAccel;
 }
 
+nsCString
+WMFVideoMFTManager::GetDescriptionName() const
+{
+  nsCString failureReason;
+  return nsPrintfCString("wmf %s video decoder",
+                         IsHardwareAccelerated(failureReason) ? "hardware"
+                                                              : "software");
+}
+
 } // namespace mozilla
