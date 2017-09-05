@@ -50,6 +50,7 @@ LoadInfo::LoadInfo(nsIPrincipal* aLoadingPrincipal,
                            aTriggeringPrincipal : mLoadingPrincipal.get())
   , mPrincipalToInherit(nullptr)
   , mLoadingContext(do_GetWeakReference(aLoadingContext))
+  , mContextForTopLevelLoad(nullptr)
   , mSecurityFlags(aSecurityFlags)
   , mInternalContentPolicyType(aContentPolicyType)
   , mTainting(LoadTainting::Basic)
@@ -224,10 +225,12 @@ LoadInfo::LoadInfo(nsIPrincipal* aLoadingPrincipal,
 */
 LoadInfo::LoadInfo(nsPIDOMWindowOuter* aOuterWindow,
                    nsIPrincipal* aTriggeringPrincipal,
+                   nsISupports* aContextForTopLevelLoad,
                    nsSecurityFlags aSecurityFlags)
   : mLoadingPrincipal(nullptr)
   , mTriggeringPrincipal(aTriggeringPrincipal)
   , mPrincipalToInherit(nullptr)
+  , mContextForTopLevelLoad(do_GetWeakReference(aContextForTopLevelLoad))
   , mSecurityFlags(aSecurityFlags)
   , mInternalContentPolicyType(nsIContentPolicy::TYPE_DOCUMENT)
   , mTainting(LoadTainting::Basic)
@@ -292,6 +295,7 @@ LoadInfo::LoadInfo(const LoadInfo& rhs)
   , mSandboxedLoadingPrincipal(rhs.mSandboxedLoadingPrincipal)
   , mResultPrincipalURI(rhs.mResultPrincipalURI)
   , mLoadingContext(rhs.mLoadingContext)
+  , mContextForTopLevelLoad(rhs.mContextForTopLevelLoad)
   , mSecurityFlags(rhs.mSecurityFlags)
   , mInternalContentPolicyType(rhs.mInternalContentPolicyType)
   , mTainting(rhs.mTainting)
@@ -531,6 +535,17 @@ LoadInfo::LoadingNode()
 {
   nsCOMPtr<nsINode> node = do_QueryReferent(mLoadingContext);
   return node;
+}
+
+nsISupports*
+LoadInfo::ContextForTopLevelLoad()
+{
+  // Most likely you want to query LoadingNode() instead of
+  // ContextForTopLevelLoad() if this assertion fires.
+  MOZ_ASSERT(mInternalContentPolicyType == nsIContentPolicy::TYPE_DOCUMENT,
+            "should only query this context for top level document loads");
+  nsCOMPtr<nsISupports> context = do_QueryReferent(mContextForTopLevelLoad);
+  return context;
 }
 
 NS_IMETHODIMP
