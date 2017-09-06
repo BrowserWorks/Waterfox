@@ -752,6 +752,7 @@ ScriptLoader::StartFetchingModuleAndDependencies(ModuleLoadRequest* aRequest,
   childRequest->mIsInline = false;
   childRequest->mReferrerPolicy = aRequest->mReferrerPolicy;
   childRequest->mParent = aRequest;
+  aRequest->mImports.AppendElement(childRequest);
 
   if (LOG_ENABLED()) {
     nsAutoCString url1;
@@ -774,7 +775,6 @@ ScriptLoader::StartFetchingModuleAndDependencies(ModuleLoadRequest* aRequest,
     return ready;
   }
 
-  aRequest->mImports.AppendElement(childRequest);
   return ready;
 }
 
