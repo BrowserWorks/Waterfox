@@ -640,7 +640,7 @@ class AutoClearUsedByHelperThread
     ZoneGroup* group;
 
   public:
-    AutoClearUsedByHelperThread(JSObject* global)
+    explicit AutoClearUsedByHelperThread(JSObject* global)
       : group(global->zone()->group())
     {}
 
