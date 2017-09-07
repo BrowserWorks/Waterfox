@@ -3,6 +3,8 @@ mk_add_options AUTOCLOBBER=1
 mk_add_options MOZ_MAKE_FLAGS=-j${X%.*}
 mk_add_options MOZ_OBJDIR=objdir-android
 
+export MOZ_INSTALL_TRACKING=
+
 ac_add_options --disable-crashreporter
 ac_add_options --disable-js-shell
 ac_add_options --disable-maintenance-service
