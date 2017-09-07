@@ -245,6 +245,8 @@ var ContentPolicyManager = {
       let response = null;
       let listenerKind = "onStop";
       let data = Object.assign({requestId, browser}, msg.data);
+      data.URI = data.url;
+
       delete data.ids;
       try {
         response = callback(data);
@@ -705,6 +707,7 @@ HttpObserverManager = {
     let data = {
       requestId: String(channel.id),
       url: channel.finalURL,
+      URI: channel.finalURI,
       method: channel.method,
       browser: channel.browserElement,
       type: channel.type,
@@ -712,6 +715,8 @@ HttpObserverManager = {
 
       originUrl: channel.originURL || undefined,
       documentUrl: channel.documentURL || undefined,
+      originURI: channel.originURI,
+      documentURI: channel.documentURI,
       isSystemPrincipal: channel.isSystemLoad,
 
       windowId: channel.windowId,
