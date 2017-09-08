@@ -655,7 +655,7 @@ MediaFormatReader::DecoderFactory::DoCreateDecoder(Data& aData)
         : *ownerData.mOriginalInfo->GetAsAudioInfo(),
         ownerData.mTaskQueue,
         mOwner->mCrashHelper,
-        ownerData.mIsNullDecode,
+        CreateDecoderParams::UseNullDecoder(ownerData.mIsNullDecode),
         &result,
         TrackInfo::kAudioTrack,
         &mOwner->OnTrackWaitingForKeyProducer()
@@ -674,7 +674,7 @@ MediaFormatReader::DecoderFactory::DoCreateDecoder(Data& aData)
         mOwner->mKnowsCompositor,
         mOwner->GetImageContainer(),
         mOwner->mCrashHelper,
-        ownerData.mIsNullDecode,
+        CreateDecoderParams::UseNullDecoder(ownerData.mIsNullDecode),
         &result,
         TrackType::kVideoTrack,
         &mOwner->OnTrackWaitingForKeyProducer()
