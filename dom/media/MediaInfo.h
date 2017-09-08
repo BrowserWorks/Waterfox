@@ -296,7 +296,7 @@ public:
     return imageRect;
   }
 
-  Rotation ToSupportedRotation(int32_t aDegree)
+  Rotation ToSupportedRotation(int32_t aDegree) const
   {
     switch (aDegree) {
       case 90:
