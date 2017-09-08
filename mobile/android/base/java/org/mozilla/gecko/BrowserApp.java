@@ -1916,8 +1916,6 @@ public class BrowserApp extends GeckoApp
 
             case "Search:Keyword":
                 storeSearchQuery(message.getString("query"));
-                recordSearch(GeckoSharedPrefs.forProfile(this), message.getString("identifier"),
-                        TelemetryContract.Method.ACTIONBAR);
                 break;
 
             case "Prompt:ShowTop":

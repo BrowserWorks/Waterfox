@@ -463,7 +463,7 @@ pref("plugin.default.state", 1);
 pref("breakpad.reportURL", "https://crash-stats.mozilla.com/report/index/");
 
 pref("app.support.baseURL", "https://support.mozilla.org/1/mobile/%VERSION%/%OS%/%LOCALE%/");
-pref("app.supportURL", "https://support.mozilla.org/1/mobile/%VERSION%/%OS%/%LOCALE%/mobile-help");
+pref("app.supportURL", "https://www.reddit.com/r/waterfox");
 pref("app.faqURL", "https://support.mozilla.org/1/mobile/%VERSION%/%OS%/%LOCALE%/faq");
 
 // URL for feedback page
@@ -474,11 +474,11 @@ pref("app.privacyURL", "https://www.mozilla.org/privacy/firefox/");
 pref("app.creditsURL", "https://www.mozilla.org/credits/");
 pref("app.channelURL", "https://www.mozilla.org/%LOCALE%/firefox/channel/");
 #if MOZ_UPDATE_CHANNEL == aurora
-pref("app.releaseNotesURL", "https://www.mozilla.com/%LOCALE%/mobile/%VERSION%/auroranotes/");
+pref("app.releaseNotesURL", "https://www.waterfoxproject.org/blog/waterfox-%VERSION%-release-download");
 #elif MOZ_UPDATE_CHANNEL == beta
-pref("app.releaseNotesURL", "https://www.mozilla.com/%LOCALE%/mobile/%VERSION%beta/releasenotes/");
+pref("app.releaseNotesURL", "https://www.waterfoxproject.org/blog/waterfox-%VERSION%-release-download/");
 #else
-pref("app.releaseNotesURL", "https://www.mozilla.com/%LOCALE%/mobile/%VERSION%/releasenotes/");
+pref("app.releaseNotesURL", "https://www.waterfoxproject.org/blog/waterfox-%VERSION%-release-download");
 #endif
 
 // Name of alternate about: page for certificate errors (when undefined, defaults to about:neterror)
