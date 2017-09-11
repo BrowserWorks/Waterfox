@@ -1,7 +1,7 @@
 {
   "default": {
     "visibleDefaultEngines": [
-      "bing", "duckduckgo", "disconnect", "ecosia", "findx", "google", "startpage", "yahoo", "wikipedia"
+      "bing", "duckduckgo", "ecosia", "findx", "google", "startpage", "yahoo", "wikipedia"
     ]
   },
   "regionOverrides": {
@@ -10,7 +10,7 @@
     "en-US": {
       "default": {
         "visibleDefaultEngines": [
-          "bing", "duckduckgo", "disconnect", "ecosia", "findx", "google", "startpage", "yahoo", "wikipedia"
+          "bing", "duckduckgo", "ecosia", "findx", "google", "startpage", "yahoo", "wikipedia"
         ]
       }
     }
