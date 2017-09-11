@@ -5,6 +5,8 @@
 
 #include "ChromiumCDMParent.h"
 
+#include "ChromiumCDMCallback.h"
+#include "ChromiumCDMCallbackProxy.h"
 #include "ChromiumCDMProxy.h"
 #include "content_decryption_module.h"
 #include "GMPContentChild.h"
@@ -38,15 +40,16 @@ ChromiumCDMParent::ChromiumCDMParent(GMPContentParent* aContentParent,
 }
 
 bool
-ChromiumCDMParent::Init(ChromiumCDMProxy* aProxy,
+ChromiumCDMParent::Init(ChromiumCDMCallback* aCDMCallback,
                         bool aAllowDistinctiveIdentifier,
                         bool aAllowPersistentState)
 {
   GMP_LOG("ChromiumCDMParent::Init(this=%p)", this);
-  if (!aProxy) {
+  if (!aCDMCallback || !aMainThread) {
     return false;
   }
-  mProxy = aProxy;
+  mCDMCallback = aCDMCallback;
+  mMainThread = aMainThread;
   return SendInit(aAllowDistinctiveIdentifier, aAllowPersistentState);
 }
 
@@ -275,7 +278,7 @@ ChromiumCDMParent::RecvOnResolveNewSessionPromise(const uint32_t& aPromiseId,
           this,
           aPromiseId,
           aSessionId.get());
-  if (!mProxy || mIsShutdown) {
+  if (!mCDMCallback || mIsShutdown) {
     return IPC_OK();
   }
 
@@ -287,13 +290,7 @@ ChromiumCDMParent::RecvOnResolveNewSessionPromise(const uint32_t& aPromiseId,
     return IPC_OK();
   }
 
-  RefPtr<Runnable> task =
-    NewRunnableMethod<uint32_t, nsString>("ChromiumCDMProxy::OnSetSessionId",
-                                          mProxy,
-                                          &ChromiumCDMProxy::OnSetSessionId,
-                                          token.value(),
-                                          NS_ConvertUTF8toUTF16(aSessionId));
-  NS_DispatchToMainThread(task);
+  mCDMCallback->SetSessionId(token.value(), aSessionId);
 
   ResolvePromise(aPromiseId);
 
@@ -309,18 +306,15 @@ ChromiumCDMParent::RecvResolveLoadSessionPromise(const uint32_t& aPromiseId,
           this,
           aPromiseId,
           aSuccessful);
-  if (!mProxy || mIsShutdown) {
+  if (!mCDMCallback || mIsShutdown) {
     return IPC_OK();
   }
 
-  NS_DispatchToMainThread(NewRunnableMethod<uint32_t, bool>(
-    "ChromiumCDMProxy::OnResolveLoadSessionPromise",
-    mProxy,
-    &ChromiumCDMProxy::OnResolveLoadSessionPromise,
-    aPromiseId,
-    aSuccessful));
+  mCDMCallback->ResolveLoadSessionPromise(aPromiseId, aSuccessful);
+
   return IPC_OK();
 }
+
 void
 ChromiumCDMParent::ResolvePromise(uint32_t aPromiseId)
 {
@@ -329,14 +323,11 @@ ChromiumCDMParent::ResolvePromise(uint32_t aPromiseId)
 
   // Note: The MediaKeys rejects all pending DOM promises when it
   // initiates shutdown.
-  if (!mProxy || mIsShutdown) {
+  if (!mCDMCallback || mIsShutdown) {
     return;
   }
-  NS_DispatchToMainThread(
-    NewRunnableMethod<uint32_t>("ChromiumCDMProxy::ResolvePromise",
-                                mProxy,
-                                &ChromiumCDMProxy::ResolvePromise,
-                                aPromiseId));
+
+  mCDMCallback->ResolvePromise(aPromiseId);
 }
 
 ipc::IPCResult
@@ -344,6 +335,22 @@ ChromiumCDMParent::RecvOnResolvePromise(const uint32_t& aPromiseId)
 {
   ResolvePromise(aPromiseId);
   return IPC_OK();
+}
+
+void
+ChromiumCDMParent::RejectPromise(uint32_t aPromiseId,
+                                 nsresult aError,
+                                 const nsCString& aErrorMessage)
+{
+  GMP_LOG(
+    "ChromiumCDMParent::RejectPromise(this=%p, pid=%u)", this, aPromiseId);
+  // Note: The MediaKeys rejects all pending DOM promises when it
+  // initiates shutdown.
+  if (!mCDMCallback || mIsShutdown) {
+    return;
+  }
+
+  mCDMCallback->RejectPromise(aPromiseId, aError, aErrorMessage);
 }
 
 static nsresult
@@ -363,27 +370,6 @@ ToNsresult(uint32_t aException)
   return NS_ERROR_DOM_TIMEOUT_ERR; // Note: Unique placeholder.
 }
 
-void
-ChromiumCDMParent::RejectPromise(uint32_t aPromiseId,
-                                 nsresult aError,
-                                 const nsCString& aErrorMessage)
-{
-  GMP_LOG(
-    "ChromiumCDMParent::RejectPromise(this=%p, pid=%u)", this, aPromiseId);
-  // Note: The MediaKeys rejects all pending DOM promises when it
-  // initiates shutdown.
-  if (!mProxy || mIsShutdown) {
-    return;
-  }
-  NS_DispatchToMainThread(NewRunnableMethod<uint32_t, nsresult, nsCString>(
-    "ChromiumCDMProxy::RejectPromise",
-    mProxy,
-    &ChromiumCDMProxy::RejectPromise,
-    aPromiseId,
-    aError,
-    aErrorMessage));
-}
-
 ipc::IPCResult
 ChromiumCDMParent::RecvOnRejectPromise(const uint32_t& aPromiseId,
                                        const uint32_t& aError,
@@ -394,21 +380,6 @@ ChromiumCDMParent::RecvOnRejectPromise(const uint32_t& aPromiseId,
   return IPC_OK();
 }
 
-static dom::MediaKeyMessageType
-ToDOMMessageType(uint32_t aMessageType)
-{
-  switch (static_cast<cdm::MessageType>(aMessageType)) {
-    case cdm::kLicenseRequest:
-      return dom::MediaKeyMessageType::License_request;
-    case cdm::kLicenseRenewal:
-      return dom::MediaKeyMessageType::License_renewal;
-    case cdm::kLicenseRelease:
-      return dom::MediaKeyMessageType::License_release;
-  }
-  MOZ_ASSERT_UNREACHABLE("Invalid cdm::MessageType enum value.");
-  return dom::MediaKeyMessageType::License_request;
-}
-
 ipc::IPCResult
 ChromiumCDMParent::RecvOnSessionMessage(const nsCString& aSessionId,
                                         const uint32_t& aMessageType,
@@ -417,42 +388,12 @@ ChromiumCDMParent::RecvOnSessionMessage(const nsCString& aSessionId,
   GMP_LOG("ChromiumCDMParent::RecvOnSessionMessage(this=%p, sid=%s)",
           this,
           aSessionId.get());
-  if (!mProxy || mIsShutdown) {
+  if (!mCDMCallback || mIsShutdown) {
     return IPC_OK();
   }
-  RefPtr<CDMProxy> proxy = mProxy;
-  nsString sid = NS_ConvertUTF8toUTF16(aSessionId);
-  dom::MediaKeyMessageType messageType = ToDOMMessageType(aMessageType);
-  nsTArray<uint8_t> msg(Move(aMessage));
-  NS_DispatchToMainThread(
-    NS_NewRunnableFunction("gmp::ChromiumCDMParent::RecvOnSessionMessage",
-                           [proxy, sid, messageType, msg]() mutable {
-                             proxy->OnSessionMessage(sid, messageType, msg);
-                           }));
-  return IPC_OK();
-}
 
-static dom::MediaKeyStatus
-ToDOMMediaKeyStatus(uint32_t aStatus)
-{
-  switch (static_cast<cdm::KeyStatus>(aStatus)) {
-    case cdm::kUsable:
-      return dom::MediaKeyStatus::Usable;
-    case cdm::kInternalError:
-      return dom::MediaKeyStatus::Internal_error;
-    case cdm::kExpired:
-      return dom::MediaKeyStatus::Expired;
-    case cdm::kOutputRestricted:
-      return dom::MediaKeyStatus::Output_restricted;
-    case cdm::kOutputDownscaled:
-      return dom::MediaKeyStatus::Output_downscaled;
-    case cdm::kStatusPending:
-      return dom::MediaKeyStatus::Status_pending;
-    case cdm::kReleased:
-      return dom::MediaKeyStatus::Released;
-  }
-  MOZ_ASSERT_UNREACHABLE("Invalid cdm::KeyStatus enum value.");
-  return dom::MediaKeyStatus::Internal_error;
+  mCDMCallback->SessionMessage(aSessionId, aMessageType, Move(aMessage));
+  return IPC_OK();
 }
 
 ipc::IPCResult
@@ -461,27 +402,11 @@ ChromiumCDMParent::RecvOnSessionKeysChange(
   nsTArray<CDMKeyInformation>&& aKeysInfo)
 {
   GMP_LOG("ChromiumCDMParent::RecvOnSessionKeysChange(this=%p)", this);
-  if (!mProxy || mIsShutdown) {
+  if (!mCDMCallback || mIsShutdown) {
     return IPC_OK();
   }
-  bool keyStatusesChange = false;
-  {
-    CDMCaps::AutoLock caps(mProxy->Capabilites());
-    for (size_t i = 0; i < aKeysInfo.Length(); i++) {
-      keyStatusesChange |=
-        caps.SetKeyStatus(aKeysInfo[i].mKeyId(),
-                          NS_ConvertUTF8toUTF16(aSessionId),
-                          dom::Optional<dom::MediaKeyStatus>(
-                            ToDOMMediaKeyStatus(aKeysInfo[i].mStatus())));
-    }
-  }
-  if (keyStatusesChange) {
-    NS_DispatchToMainThread(
-      NewRunnableMethod<nsString>("ChromiumCDMProxy::OnKeyStatusesChange",
-                                  mProxy,
-                                  &ChromiumCDMProxy::OnKeyStatusesChange,
-                                  NS_ConvertUTF8toUTF16(aSessionId)));
-  }
+
+  mCDMCallback->SessionKeysChange(aSessionId, Move(aKeysInfo));
   return IPC_OK();
 }
 
@@ -492,15 +417,11 @@ ChromiumCDMParent::RecvOnExpirationChange(const nsCString& aSessionId,
   GMP_LOG("ChromiumCDMParent::RecvOnExpirationChange(this=%p) time=%lf",
           this,
           aSecondsSinceEpoch);
-  if (!mProxy || mIsShutdown) {
+  if (!mCDMCallback || mIsShutdown) {
     return IPC_OK();
   }
-  NS_DispatchToMainThread(NewRunnableMethod<nsString, UnixTime>(
-    "ChromiumCDMProxy::OnExpirationChange",
-    mProxy,
-    &ChromiumCDMProxy::OnExpirationChange,
-    NS_ConvertUTF8toUTF16(aSessionId),
-    GMPTimestamp(aSecondsSinceEpoch * 1000)));
+
+  mCDMCallback->ExpirationChange(aSessionId, aSecondsSinceEpoch);
   return IPC_OK();
 }
 
@@ -508,14 +429,11 @@ ipc::IPCResult
 ChromiumCDMParent::RecvOnSessionClosed(const nsCString& aSessionId)
 {
   GMP_LOG("ChromiumCDMParent::RecvOnSessionClosed(this=%p)", this);
-  if (!mProxy || mIsShutdown) {
+  if (!mCDMCallback || mIsShutdown) {
     return IPC_OK();
   }
-  NS_DispatchToMainThread(
-    NewRunnableMethod<nsString>("ChromiumCDMProxy::OnSessionClosed",
-                                mProxy,
-                                &ChromiumCDMProxy::OnSessionClosed,
-                                NS_ConvertUTF8toUTF16(aSessionId)));
+
+  mCDMCallback->SessionClosed(aSessionId);
   return IPC_OK();
 }
 
@@ -526,18 +444,12 @@ ChromiumCDMParent::RecvOnLegacySessionError(const nsCString& aSessionId,
                                             const nsCString& aMessage)
 {
   GMP_LOG("ChromiumCDMParent::RecvOnLegacySessionError(this=%p)", this);
-  if (!mProxy || mIsShutdown) {
+  if (!mCDMCallback || mIsShutdown) {
     return IPC_OK();
   }
-  NS_DispatchToMainThread(
-    NewRunnableMethod<nsString, nsresult, uint32_t, nsString>(
-      "ChromiumCDMProxy::OnSessionError",
-      mProxy,
-      &ChromiumCDMProxy::OnSessionError,
-      NS_ConvertUTF8toUTF16(aSessionId),
-      ToNsresult(aError),
-      aSystemCode,
-      NS_ConvertUTF8toUTF16(aMessage)));
+
+  mCDMCallback->LegacySessionError(
+    aSessionId, ToNsresult(aError), aSystemCode, aMessage);
   return IPC_OK();
 }
 
@@ -902,8 +814,8 @@ ChromiumCDMParent::ActorDestroy(ActorDestroyReason aWhy)
   GMP_LOG("ChromiumCDMParent::ActorDestroy(this=%p, reason=%d)", this, aWhy);
   MOZ_ASSERT(!mActorDestroyed);
   mActorDestroyed = true;
-  // Shutdown() will clear mProxy, so let's keep a reference for later use.
-  RefPtr<ChromiumCDMProxy> proxy = mProxy;
+  // Shutdown() will clear mCDMCallback, so let's keep a reference for later use.
+  auto callback = mCDMCallback;
   if (!mIsShutdown) {
     // Plugin crash.
     MOZ_ASSERT(aWhy == AbnormalShutdown);
@@ -916,10 +828,8 @@ ChromiumCDMParent::ActorDestroy(ActorDestroyReason aWhy)
     mContentParent = nullptr;
   }
   bool abnormalShutdown = (aWhy == AbnormalShutdown);
-  if (abnormalShutdown && proxy) {
-    RefPtr<Runnable> task = NewRunnableMethod(
-      "ChromiumCDMProxy::Terminated", proxy, &ChromiumCDMProxy::Terminated);
-    NS_DispatchToMainThread(task);
+  if (abnormalShutdown && callback) {
+    callback->Terminated();
   }
   MaybeDisconnect(abnormalShutdown);
 }
@@ -1155,16 +1065,14 @@ ChromiumCDMParent::Shutdown()
   // proxy will shutdown when the owning MediaKeys is destroyed during cycle
   // collection, and that will not shut down cleanly as the GMP thread will be
   // shutdown by then.
-  if (mProxy) {
-    RefPtr<Runnable> task = NewRunnableMethod(
-      "ChromiumCDMProxy::Shutdown", mProxy, &ChromiumCDMProxy::Shutdown);
-    NS_DispatchToMainThread(task.forget());
+  if (mCDMCallback) {
+    mCDMCallback->Shutdown();
   }
 
-  // We may be called from a task holding the last reference to the proxy, so
+  // We may be called from a task holding the last reference to the CDM callback, so
   // let's clear our local weak pointer to ensure it will not be used afterward
   // (including from an already-queued task, e.g.: ActorDestroy).
-  mProxy = nullptr;
+  mCDMCallback = nullptr;
 
   mReorderQueue.Clear();
 
