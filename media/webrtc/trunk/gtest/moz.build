@@ -15,7 +15,7 @@ DEFINES['WEBRTC_APM_DEBUG_DUMP'] = True
 DEFINES['WEBRTC_INTELLIGIBILITY_ENHANCER'] = 0
 
 # Hit build errors on windows with xutility otherwise
-DISABLE_STL_WRAPPING = True
+DisableStlWrapping()
 
 LOCAL_INCLUDES += [
     '../',
