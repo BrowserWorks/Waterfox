@@ -51,6 +51,7 @@ _patchrev=fde25c29562d # Waterfox 55.0.1
         patch -Np1 -i $SourceDir/_Plasma_Build/pgo_fix_missing_kdejs.patch
         patch -Np1 -i $SourceDir/_Plasma_Build/fix-wifi-scanner.diff
         patch -Np1 -i $SourceDir/_Plasma_Build/no-crmf.diff
+        patch -Np1 -i $SourceDir/_Plasma_Build/disable_e10s.patch
 				echo >> "$SourceDir/KDE_lock"
     else
         echo "Unable to find KDE patches or patches has already been applied!"
