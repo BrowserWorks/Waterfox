@@ -4,6 +4,6 @@
   <InputEncoding>UTF-8</InputEncoding>
   <Image height="16" width="16">resource://search-plugins/images/findx.ico</Image>
   <moz:SearchForm>https://www.findx.com/</moz:SearchForm>
-  <Url type="text/html" method="GET" template="https://www.findx.com/search?type=web&amp;q={searchTerms}&amp;client=opensearch"/>
-  <Url type="application/x-suggestions+json" template="https://www.findx.com/api/web-search/suggestions/?q={searchTerms}&amp;type=opensearch"/>
+  <Url type="text/html" method="GET" template="https://www.findx.com/search?q={searchTerms}"/>
+  <Url type="application/x-suggestions+json" template="https://www.findx.com/api/web-search/suggestions/?q={searchTerms}"/>
 </OpenSearchDescription>
