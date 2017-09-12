@@ -142,16 +142,18 @@ GetCompositorBackendType(layers::KnowsCompositor* aKnowsCompositor)
 }
 
 WMFVideoMFTManager::WMFVideoMFTManager(
-                            const VideoInfo& aConfig,
-                            layers::KnowsCompositor* aKnowsCompositor,
-                            layers::ImageContainer* aImageContainer,
-                            bool aDXVAEnabled)
+  const VideoInfo& aConfig,
+  layers::KnowsCompositor* aKnowsCompositor,
+  layers::ImageContainer* aImageContainer,
+  float aFramerate,
+  bool aDXVAEnabled)
   : mVideoInfo(aConfig)
   , mImageSize(aConfig.mImage)
   , mVideoStride(0)
   , mImageContainer(aImageContainer)
   , mDXVAEnabled(aDXVAEnabled)
   , mKnowsCompositor(aKnowsCompositor)
+  , mFramerate(aFramerate)
   // mVideoStride, mVideoWidth, mVideoHeight, mUseHwAccel are initialized in
   // Init().
 {
@@ -634,7 +636,7 @@ WMFVideoMFTManager::InitInternal()
                  MediaResult(NS_ERROR_DOM_MEDIA_FATAL_ERR,
                             RESULT_DETAIL("Fail to get the output media type.")));
 
-  if (mUseHwAccel && !CanUseDXVA(outputType)) {
+  if (mUseHwAccel && !CanUseDXVA(outputType, mFramerate)) {
     mDXVAEnabled = false;
     // DXVA initialization actually failed, re-do initialisation.
     return InitInternal();
@@ -756,7 +758,8 @@ WMFVideoMFTManager::Input(MediaRawData* aSample)
   return mDecoder->Input(inputSample);
 }
 
-class SupportsConfigEvent : public Runnable {
+class SupportsConfigEvent : public Runnable
+{
 public:
   SupportsConfigEvent(DXVA2Manager* aDXVA2Manager,
                       IMFMediaType* aMediaType,
@@ -777,7 +780,7 @@ public:
   }
   DXVA2Manager* mDXVA2Manager;
   IMFMediaType* mMediaType;
-  float mFramerate;
+  const float mFramerate;
   bool mSupportsConfig;
 };
 
@@ -797,7 +800,7 @@ public:
 // that new decoders are created if the resolution changes. Then we could move
 // this check into Init and consolidate the main thread blocking code.
 bool
-WMFVideoMFTManager::CanUseDXVA(IMFMediaType* aType)
+WMFVideoMFTManager::CanUseDXVA(IMFMediaType* aType, float aFramerate)
 {
   MOZ_ASSERT(mDXVA2Manager);
   // SupportsConfig only checks for valid h264 decoders currently.
@@ -805,14 +808,10 @@ WMFVideoMFTManager::CanUseDXVA(IMFMediaType* aType)
     return true;
   }
 
-  // Assume the current samples duration is representative for the
-  // entire video.
-  float framerate = 1000000.0 / mLastDuration.ToMicroseconds();
-
   // The supports config check must be done on the main thread since we have
   // a crash guard protecting it.
   RefPtr<SupportsConfigEvent> event =
-    new SupportsConfigEvent(mDXVA2Manager, aType, framerate);
+    new SupportsConfigEvent(mDXVA2Manager, aType, aFramerate);
 
   if (NS_IsMainThread()) {
     event->Run();

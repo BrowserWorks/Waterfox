@@ -25,6 +25,7 @@ public:
   WMFVideoMFTManager(const VideoInfo& aConfig,
                      layers::KnowsCompositor* aKnowsCompositor,
                      layers::ImageContainer* aImageContainer,
+                     float aFramerate,
                      bool aDXVAEnabled);
   ~WMFVideoMFTManager();
 
@@ -79,7 +80,7 @@ private:
 
   HRESULT SetDecoderMediaTypes();
 
-  bool CanUseDXVA(IMFMediaType* aType);
+  bool CanUseDXVA(IMFMediaType* aType, float aFramerate);
 
   // Video frame geometry.
   const VideoInfo mVideoInfo;
@@ -118,6 +119,7 @@ private:
   bool mGotExcessiveNullOutput = false;
   bool mIsValid = true;
   bool mIMFUsable = false;
+  const float mFramerate;
 };
 
 } // namespace mozilla
