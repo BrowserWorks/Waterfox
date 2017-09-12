@@ -14,11 +14,5 @@
     </Url>
     <Url type="text/html" method="GET" template="https://www.bing.com/search" rel="searchform">
         <Param name="q" value="{searchTerms}"/>
-        <Param name="pc" value="MOZI"/>
-        <MozParam name="form" condition="purpose" purpose="contextmenu" value="MOZCON"/>
-        <MozParam name="form" condition="purpose" purpose="searchbar" value="MOZSBR"/>
-        <MozParam name="form" condition="purpose" purpose="homepage" value="MOZSPG"/>
-        <MozParam name="form" condition="purpose" purpose="keyword" value="MOZLBR"/>
-        <MozParam name="form" condition="purpose" purpose="newtab" value="MOZTSB"/>
     </Url>
 </SearchPlugin>
