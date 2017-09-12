@@ -17,8 +17,9 @@ sync protocol PVideoDecoderManager
 {
   manages PVideoDecoder;
 parent:
-  sync PVideoDecoder(VideoInfo info, TextureFactoryIdentifier identifier) returns (bool success,
-                                                                                   nsCString aErrorDescription);
+  sync PVideoDecoder(VideoInfo info, float framerate, TextureFactoryIdentifier identifier)
+         returns (bool success,
+         nsCString aErrorDescription);
 
   sync Readback(SurfaceDescriptorGPUVideo sd) returns (SurfaceDescriptor aResult);
 

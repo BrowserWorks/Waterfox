@@ -150,6 +150,7 @@ VideoDecoderChild::ActorDestroy(ActorDestroyReason aWhy)
 
 MediaResult
 VideoDecoderChild::InitIPDL(const VideoInfo& aVideoInfo,
+                            float aFramerate,
                             const layers::TextureFactoryIdentifier& aIdentifier)
 {
   RefPtr<VideoDecoderManagerChild> manager =
@@ -176,7 +177,10 @@ VideoDecoderChild::InitIPDL(const VideoInfo& aVideoInfo,
   mIPDLSelfRef = this;
   bool success = false;
   nsCString errorDescription;
-  if (manager->SendPVideoDecoderConstructor(this, aVideoInfo, aIdentifier,
+  if (manager->SendPVideoDecoderConstructor(this,
+                                            aVideoInfo,
+                                            aFramerate,
+                                            aIdentifier,
                                             &success,
                                             &errorDescription)) {
     mCanSend = true;
