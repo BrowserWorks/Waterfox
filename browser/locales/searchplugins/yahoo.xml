@@ -9,21 +9,10 @@
 <Image width="16" height="16">resource://search-plugins/images/yahoo.ico</Image>
 <Url type="application/x-suggestions+json" method="GET"
      template="https://search.yahoo.com/sugg/ff">
-  <Param name="output"  value="fxjson" />
-  <Param name="appid"   value="ffd" />
   <Param name="command" value="{searchTerms}" />
 </Url>
 <Url type="text/html" method="GET" template="https://search.yahoo.com/yhs/search"
      resultdomain="yahoo.com" rel="searchform">
-  <Param name="ei"     value="UTF-8" />
-  <Param name="hspart" value="domaindev" />
-  <MozParam name="hsimp" condition="purpose" purpose="searchbar"   value="yhs-vivaldi"/>
-  <MozParam name="hsimp" condition="purpose" purpose="keyword"     value="yhs-vivaldi"/>
-  <MozParam name="hsimp" condition="purpose" purpose="homepage"    value="yhs-vivaldi"/>
-  <MozParam name="hsimp" condition="purpose" purpose="newtab"      value="yhs-vivaldi"/>
-  <MozParam name="hsimp" condition="purpose" purpose="contextmenu" value="yhs-vivaldi"/>
-  <MozParam name="hsimp" condition="purpose" purpose="system"      value="yhs-vivaldi"/>
   <Param name="p"  value="{searchTerms}" />
-  <Param name="type" value="31__alt__ddc_mwp_vivaldi_com" />
 </Url>
 </SearchPlugin>
