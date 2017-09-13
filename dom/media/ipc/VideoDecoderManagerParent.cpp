@@ -196,7 +196,8 @@ VideoDecoderManagerParent::ActorDestroy(mozilla::ipc::IProtocol::ActorDestroyRea
 PVideoDecoderParent*
 VideoDecoderManagerParent::AllocPVideoDecoderParent(const VideoInfo& aVideoInfo,
                                                     const layers::TextureFactoryIdentifier& aIdentifier,
-                                                    bool* aSuccess)
+                                                    bool* aSuccess,
+                                                    nsCString* aErrorDescription)
 {
   RefPtr<TaskQueue> decodeTaskQueue = new TaskQueue(
     SharedThreadPool::Get(NS_LITERAL_CSTRING("VideoDecoderParent"), 4),
@@ -204,7 +205,7 @@ VideoDecoderManagerParent::AllocPVideoDecoderParent(const VideoInfo& aVideoInfo,
 
   return new VideoDecoderParent(
     this, aVideoInfo, aIdentifier,
-    sManagerTaskQueue, decodeTaskQueue, aSuccess);
+    sManagerTaskQueue, decodeTaskQueue, aSuccess, aErrorDescription);
 }
 
 bool

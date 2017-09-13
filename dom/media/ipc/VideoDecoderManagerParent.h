@@ -31,7 +31,10 @@ public:
   bool OnManagerThread();
 
 protected:
-  PVideoDecoderParent* AllocPVideoDecoderParent(const VideoInfo& aVideoInfo, const layers::TextureFactoryIdentifier& aIdentifier, bool* aSuccess) override;
+  PVideoDecoderParent* AllocPVideoDecoderParent(const VideoInfo& aVideoInfo,
+                                                const layers::TextureFactoryIdentifier& aIdentifier,
+                                                bool* aSuccess,
+                                                nsCString* aErrorDescription) override;
   bool DeallocPVideoDecoderParent(PVideoDecoderParent* actor) override;
 
   mozilla::ipc::IPCResult RecvReadback(const SurfaceDescriptorGPUVideo& aSD, SurfaceDescriptor* aResult) override;
