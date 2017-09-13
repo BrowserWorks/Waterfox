@@ -257,11 +257,18 @@ StreamFilterChild::MaybeStopRequest()
     return;
   }
 
+  if (mStreamFilter) {
+    Unused << mStreamFilter->CheckAlive();
+  }
+
   switch (mState) {
   case State::Suspending:
   case State::Resuming:
     mNextState = State::FinishedTransferringData;
     return;
+
+  case State::Disconnecting:
+    break;
 
   default:
     mState = State::FinishedTransferringData;
@@ -443,6 +450,7 @@ StreamFilterChild::RecvStartRequest()
 
   if (mStreamFilter) {
     mStreamFilter->FireEvent(NS_LITERAL_STRING("start"));
+    Unused << mStreamFilter->CheckAlive();
   }
   return IPC_OK();
 }
@@ -494,6 +502,10 @@ IPCResult
 StreamFilterChild::RecvData(Data&& aData)
 {
   MOZ_ASSERT(!mReceivedOnStop);
+
+  if (mStreamFilter) {
+    Unused << mStreamFilter->CheckAlive();
+  }
 
   switch (mState) {
   case State::TransferringData:
