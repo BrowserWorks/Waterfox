@@ -56,7 +56,7 @@ ChromiumCDMAdapter::SetAdaptee(PRLibrary* aLib)
 void*
 ChromiumCdmHost(int aHostInterfaceVersion, void* aUserData)
 {
-  CDM_LOG("ChromiumCdmHostFunc(%d, %p)", aHostInterfaceVersion, aUserData);
+  GMP_LOG("ChromiumCdmHostFunc(%d, %p)", aHostInterfaceVersion, aUserData);
   if (aHostInterfaceVersion != cdm::Host_8::kVersion) {
     return nullptr;
   }
@@ -79,7 +79,7 @@ TakeToCDMHostFile(HostFileData& aHostFileData)
 GMPErr
 ChromiumCDMAdapter::GMPInit(const GMPPlatformAPI* aPlatformAPI)
 {
-  CDM_LOG("ChromiumCDMAdapter::GMPInit");
+  GMP_LOG("ChromiumCDMAdapter::GMPInit");
   sPlatform = aPlatformAPI;
   if (!mLib) {
     return GMPGenericErr;
@@ -106,7 +106,7 @@ ChromiumCDMAdapter::GMPInit(const GMPPlatformAPI* aPlatformAPI)
     return GMPGenericErr;
   }
 
-  CDM_LOG(STRINGIFY(INITIALIZE_CDM_MODULE)"()");
+  GMP_LOG(STRINGIFY(INITIALIZE_CDM_MODULE) "()");
   init();
 
   return GMPNoErr;
@@ -118,7 +118,7 @@ ChromiumCDMAdapter::GMPGetAPI(const char* aAPIName,
                               void** aPluginAPI,
                               uint32_t aDecryptorId)
 {
-  CDM_LOG("ChromiumCDMAdapter::GMPGetAPI(%s, 0x%p, 0x%p, %u) this=0x%p",
+  GMP_LOG("ChromiumCDMAdapter::GMPGetAPI(%s, 0x%p, 0x%p, %u) this=0x%p",
           aAPIName,
           aHostAPI,
           aPluginAPI,
@@ -128,7 +128,7 @@ ChromiumCDMAdapter::GMPGetAPI(const char* aAPIName,
     auto create = reinterpret_cast<decltype(::CreateCdmInstance)*>(
       PR_FindFunctionSymbol(mLib, "CreateCdmInstance"));
     if (!create) {
-      CDM_LOG("ChromiumCDMAdapter::GMPGetAPI(%s, 0x%p, 0x%p, %u) this=0x%p "
+      GMP_LOG("ChromiumCDMAdapter::GMPGetAPI(%s, 0x%p, 0x%p, %u) this=0x%p "
               "FAILED to find CreateCdmInstance",
               aAPIName,
               aHostAPI,
@@ -145,7 +145,7 @@ ChromiumCDMAdapter::GMPGetAPI(const char* aAPIName,
              &ChromiumCdmHost,
              aHostAPI));
     if (!cdm) {
-      CDM_LOG("ChromiumCDMAdapter::GMPGetAPI(%s, 0x%p, 0x%p, %u) this=0x%p "
+      GMP_LOG("ChromiumCDMAdapter::GMPGetAPI(%s, 0x%p, 0x%p, %u) this=0x%p "
               "FAILED to create cdm",
               aAPIName,
               aHostAPI,
@@ -154,7 +154,7 @@ ChromiumCDMAdapter::GMPGetAPI(const char* aAPIName,
               this);
       return GMPGenericErr;
     }
-    CDM_LOG("cdm: 0x%p", cdm);
+    GMP_LOG("cdm: 0x%p", cdm);
     *aPluginAPI = cdm;
   }
   return *aPluginAPI ? GMPNoErr : GMPNotImplementedErr;
@@ -163,12 +163,12 @@ ChromiumCDMAdapter::GMPGetAPI(const char* aAPIName,
 void
 ChromiumCDMAdapter::GMPShutdown()
 {
-  CDM_LOG("ChromiumCDMAdapter::GMPShutdown()");
+  GMP_LOG("ChromiumCDMAdapter::GMPShutdown()");
 
   decltype(::DeinitializeCdmModule)* deinit;
   deinit = (decltype(deinit))(PR_FindFunctionSymbol(mLib, "DeinitializeCdmModule"));
   if (deinit) {
-    CDM_LOG("DeinitializeCdmModule()");
+    GMP_LOG("DeinitializeCdmModule()");
     deinit();
   }
 }

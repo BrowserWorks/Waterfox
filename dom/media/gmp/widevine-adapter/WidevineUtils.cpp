@@ -4,6 +4,7 @@
  * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
 
 #include "WidevineUtils.h"
+#include "GMPLog.h"
 #include "WidevineDecryptor.h"
 
 #include "gmp-api/gmp-errors.h"
@@ -12,14 +13,6 @@
 #include <inttypes.h>
 
 namespace mozilla {
-
-namespace detail {
-LogModule* GetCDMLog()
-{
-  static LazyLogModule sLog("CDM");
-  return sLog;
-}
-} // namespace detail
 
 GMPErr
 ToGMPErr(cdm::Status aStatus)
@@ -79,13 +72,13 @@ CDMWrapper::~CDMWrapper()
 
 WidevineBuffer::WidevineBuffer(size_t aSize)
 {
-  CDM_LOG("WidevineBuffer(size=%zu) created", aSize);
+  GMP_LOG("WidevineBuffer(size=%zu) created", aSize);
   mBuffer.SetLength(aSize);
 }
 
 WidevineBuffer::~WidevineBuffer()
 {
-  CDM_LOG("WidevineBuffer(size=%" PRIu32 ") destroyed", Size());
+  GMP_LOG("WidevineBuffer(size=%" PRIu32 ") destroyed", Size());
 }
 
 void
