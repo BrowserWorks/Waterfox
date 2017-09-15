@@ -63,6 +63,8 @@ struct IoCounters {
 #include "base/file_descriptor_shuffle.h"
 #endif
 
+#include "mozilla/UniquePtr.h"
+
 #if defined(OS_MACOSX)
 struct kinfo_proc;
 #endif
@@ -189,6 +191,18 @@ bool LaunchApp(const std::vector<std::string>& argv,
                const environment_map& env_vars_to_set,
                bool wait, ProcessHandle* process_handle,
                ProcessArchitecture arch=GetCurrentProcessArchitecture());
+
+// Deleter for the array of strings allocated within BuildEnvironmentArray.
+struct FreeEnvVarsArray
+{
+  void operator()(char** array);
+};
+
+typedef mozilla::UniquePtr<char*[], FreeEnvVarsArray> EnvironmentArray;
+
+// Merge an environment map with the current environment.
+// Existing variables are overwritten by env_vars_to_set.
+EnvironmentArray BuildEnvironmentArray(const environment_map& env_vars_to_set);
 #endif
 
 // Adjust the privileges of this process to match |privs|.  Only
