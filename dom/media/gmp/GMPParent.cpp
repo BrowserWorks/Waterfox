@@ -119,12 +119,12 @@ GMPParent::Init(GeckoMediaPluginServiceParent* aService, nsIFile* aPluginDir)
   // where <gmp-plugin-id> should be gmp-gmpopenh264
   nsCOMPtr<nsIFile> parent;
   nsresult rv = aPluginDir->GetParent(getter_AddRefs(parent));
-  if (NS_FAILED(rv)) {
+  if (NS_WARN_IF(NS_FAILED(rv))) {
     return GenericPromise::CreateAndReject(rv, __func__);
   }
   nsAutoString parentLeafName;
   rv = parent->GetLeafName(parentLeafName);
-  if (NS_FAILED(rv)) {
+  if (NS_WARN_IF(NS_FAILED(rv))) {
     return GenericPromise::CreateAndReject(rv, __func__);
   }
   LOGD("%s: for %s", __FUNCTION__, NS_LossyConvertUTF16toASCII(parentLeafName).get());
@@ -151,7 +151,7 @@ GMPParent::LoadProcess()
   MOZ_ASSERT(mState == GMPStateNotLoaded);
 
   nsAutoString path;
-  if (NS_FAILED(mDirectory->GetPath(path))) {
+  if (NS_WARN_IF(NS_FAILED(mDirectory->GetPath(path)))) {
     return NS_ERROR_FAILURE;
   }
   LOGD("%s: for %s", __FUNCTION__, NS_ConvertUTF16toUTF8(path).get());
@@ -629,7 +629,7 @@ GMPParent::ReadGMPMetaData()
 
   nsCOMPtr<nsIFile> infoFile;
   nsresult rv = mDirectory->Clone(getter_AddRefs(infoFile));
-  if (NS_FAILED(rv)) {
+  if (NS_WARN_IF(NS_FAILED(rv))) {
     return GenericPromise::CreateAndReject(rv, __func__);
   }
   infoFile->AppendRelativePath(mName + NS_LITERAL_STRING(".info"));
@@ -641,7 +641,7 @@ GMPParent::ReadGMPMetaData()
   // Maybe this is the Widevine adapted plugin?
   nsCOMPtr<nsIFile> manifestFile;
   rv = mDirectory->Clone(getter_AddRefs(manifestFile));
-  if (NS_FAILED(rv)) {
+  if (NS_WARN_IF(NS_FAILED(rv))) {
     return GenericPromise::CreateAndReject(rv, __func__);
   }
   manifestFile->AppendRelativePath(NS_LITERAL_STRING("manifest.json"));
@@ -898,8 +898,8 @@ GMPParent::OpenPGMPContent()
 
   Endpoint<PGMPContentParent> parent;
   Endpoint<PGMPContentChild> child;
-  if (NS_FAILED(PGMPContent::CreateEndpoints(base::GetCurrentProcId(),
-                                             OtherPid(), &parent, &child))) {
+  if (NS_WARN_IF(NS_FAILED(PGMPContent::CreateEndpoints(
+        base::GetCurrentProcId(), OtherPid(), &parent, &child)))) {
     return false;
   }
 
