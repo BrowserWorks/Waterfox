@@ -327,7 +327,7 @@ class Script {
     // until the scripts have been loaded.
     let {document} = context.contentWindow;
     if (this.runAt === "document_start" && document.readyState !== "complete") {
-      document.blockParsing(scriptsPromise);
+      document.blockParsing(scriptsPromise, {blockScriptCreated: false});
     }
 
     let scripts = await scriptsPromise;
