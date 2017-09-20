@@ -5,7 +5,7 @@
 <!ENTITY firstrun_panel_title_welcome "Welcome">
 
 <!ENTITY firstrun_urlbar_message "Welcome to &brandShortName;">
-<!ENTITY firstrun_urlbar_subtext "Find things faster with helpful search suggestion shortcuts.">
+<!ENTITY firstrun_urlbar_subtext "Since 2011, &brandShortName; has been built for YOU. Free, open source and private.">
 <!ENTITY firstrun_bookmarks_title "History">
 <!ENTITY firstrun_bookmarks_message "Your faves, front and center">
 <!ENTITY firstrun_bookmarks_subtext "Get results from your bookmarks and history when you search.">
@@ -14,7 +14,7 @@
 <!ENTITY firstrun_data_subtext2 "Turn off images to spend less data on every site you visit.">
 <!ENTITY firstrun_sync_title "Sync">
 <!ENTITY firstrun_sync_message "&brandShortName;, always by your side">
-<!ENTITY firstrun_sync_subtext "Sync your tabs, passwords, and more everywhere you use it.">
+<!ENTITY firstrun_sync_subtext "Waterfox supports Firefox Sync! Sync your tabs, passwords, and more everywhere you use it.">
 <!ENTITY firstrun_signin_message "Get connected, get started">
 <!ENTITY firstrun_signin_button "Sign in to Sync">
 <!ENTITY  onboard_start_button_browser "Start Browsing">
