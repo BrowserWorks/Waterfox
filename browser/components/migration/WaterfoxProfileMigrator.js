@@ -45,6 +45,7 @@
  }
  
  WaterfoxProfileMigrator.prototype = Object.create(MigratorPrototype);
+ var gProfileName;
  
  WaterfoxProfileMigrator.prototype._getAllProfiles = function() {
   let allProfiles = new Map();
@@ -66,10 +67,12 @@
   let rootDir = this._waterfoxUserDataFolder.clone();
   let profileDefault = "";
   let profileName = path;
+  gProfileName = profileName;
   let rootFolder = "";
   if (path.split("/").length > 1) {
    profileDefault = path.split("/");
    profileName = profileDefault[profileDefault.length - 1];
+   gProfileName = profileName;
    rootFolder = profileDefault[0];
   }
  
@@ -153,6 +156,9 @@
  };
  
  WaterfoxProfileMigrator.prototype._getResourcesInternal = function(sourceProfileDir, currentProfileDir) {
+  // Set the name of the old default profile, so we can delete it after migration has finished.   
+  Services.prefs.setCharPref("general.oldDefaultProfile", gProfileName);
+
   let getFileResource = (aMigrationType, aFileNames) => {
    let files = [];
    for (let fileName of aFileNames) {
@@ -173,15 +179,8 @@
     }
    };
   };
- 
+  
   let types = MigrationUtils.resourceTypes;
-  let places = getFileResource(types.HISTORY, [""]);
-  let favicons = getFileResource(types.HISTORY, [""]);
-  let cookies = getFileResource(types.COOKIES, [""]);
-  let passwords = getFileResource(types.PASSWORDS, [""]);
-  let formData = getFileResource(types.FORMDATA, [""]);
-  let bookmarksBackups = getFileResource(types.OTHERDATA, [""]);
-  let dictionary = getFileResource(types.OTHERDATA, [""]);
  
   // Here, we enumarate the extensions directory and loop through each
   // file. Copy each extension within that directory every loop.
@@ -189,15 +188,17 @@
   // https://developer.mozilla.org/en-US/docs/FileGuide/Directories#Iterating_over_the_Files_in_a_Directory
   // https://developer.mozilla.org/en-US/docs/FileGuide/MoveCopyDelete#Copying_a_File
   let enumerator = sourceProfileDir.directoryEntries;
+  let listOfFiles = [];
   while (enumerator.hasMoreElements()) {
     let file = enumerator.getNext().QueryInterface(Ci.nsIFile);
-    if ((file.isFile() || file.isDirectory()) && (file.leafName !== "parent.lock")) {
-      file.copyTo(currentProfileDir, "");
+    if ((file.isFile() || file.isDirectory()) && ((file.leafName !== "parent.lock") || (file.leafName !== ".parentlock"))) {
+      listOfFiles.push(file.leafName);
     }
   }
- 
-  return [places, cookies, passwords, formData, dictionary, bookmarksBackups, favicons
-  ].filter(r => r);
+  
+  let profileData = getFileResource(types.OTHERDATA, listOfFiles);
+  
+  return [profileData].filter(r => r);
  };
  
  Object.defineProperty(WaterfoxProfileMigrator.prototype, "startupOnlyMigrator", {

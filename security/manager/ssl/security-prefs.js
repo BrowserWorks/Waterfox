@@ -43,7 +43,7 @@ pref("security.password_lifetime",       30);
 // 1: only attempt to detect Family Safety mode (don't import the root)
 // 2: detect Family Safety mode and import the root
 // (This is only relevant to Windows 8.1)
-pref("security.family_safety.mode", 2);
+pref("security.family_safety.mode", 0);
 
 pref("security.enterprise_roots.enabled", false);
 
