@@ -1970,6 +1970,11 @@ BrowserGlue.prototype = {
       Services.prefs.setStringPref("browser.newtabpage.directory.source", "");
       Services.prefs.setStringPref("experiments.manifest.uri", "");      
       Services.prefs.setStringPref("extensions.hotfix.id", "");
+      
+      // Delete left over profile
+      let path = OS.Path.join(OS.Constants.Path.profileDir, Services.prefs.getCharPref("general.oldDefaultProfile"));
+      OS.File.removeDir(path);
+      
     }
 
     // Update the migration version.
