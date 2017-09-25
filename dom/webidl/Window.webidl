@@ -522,12 +522,10 @@ partial interface Window {
   [Func="IsChromeOrXBL"]
   sequence<DOMString> getRegionalPrefsLocales();
 
-#ifdef ENABLE_INTL_API
   /**
    * Getter funcion for IntlUtils, which provides helper functions for
    * localization.
    */
   [Throws, Func="IsChromeOrXBL"]
   readonly attribute IntlUtils intlUtils;
-#endif
 };
