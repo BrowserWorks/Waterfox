@@ -10179,13 +10179,8 @@ nsContentUtils::GetElementDefinitionIfObservingAttr(Element* aCustomElement,
                                                     nsIAtom* aExtensionType,
                                                     nsIAtom* aAttrName)
 {
-  nsString extType = nsDependentAtomString(aExtensionType);
-  NodeInfo *ni = aCustomElement->NodeInfo();
-
   CustomElementDefinition* definition =
-    LookupCustomElementDefinition(aCustomElement->OwnerDoc(), ni->LocalName(),
-                                  ni->NamespaceID(),
-                                  extType.IsEmpty() ? nullptr : &extType);
+    aCustomElement->GetCustomElementDefinition();
 
   // Custom element not defined yet or attribute is not in the observed
   // attribute list.
