@@ -12,6 +12,7 @@ UNIFIED_SOURCES += [
     'TestAudioPacketizer.cpp',
     'TestAudioSegment.cpp',
     'TestBlankVideoDataCreator.cpp',
+    'TestCDMStorage.cpp',
     'TestGMPCrossOrigin.cpp',
     'TestGMPRemoveAndDelete.cpp',
     'TestGMPUtils.cpp',
