@@ -1,5 +1,5 @@
 # Waterfox KDE Plasma Edition quick build script
-# Version: 1.0.1
+# Version: 1.0.2
 
 #!/bin/bash
 
@@ -35,6 +35,7 @@ _patchrev=b2ba34e0dc10 # Waterfox 55.1.0
 		# Check url next release for changes.	
 			wget -O $SourceDir/_Plasma_Build/mozilla-kde-$VERSION.patch "http://www.rosenauer.org/hg/mozilla/raw-file/$_patchrev/mozilla-kde.patch"
 			wget -O $SourceDir/_Plasma_Build/firefox-kde-$VERSION.patch "http://www.rosenauer.org/hg/mozilla/raw-file/$_patchrev/firefox-kde.patch"
+			wget -O $SourceDir/_Plasma_Build/mozilla-ucontext-$VERSION.patch "http://www.rosenauer.org/hg/mozilla/raw-file/$_patchrev/mozilla-ucontext.patch"
 			sed -i 's/Firefox/Waterfox/g' $SourceDir/_Plasma_Build/mozilla-kde-$VERSION.patch
 			sed -i 's/KMOZILLAHELPER/KWATERFOXHELPER/g' $SourceDir/_Plasma_Build/mozilla-kde-$VERSION.patch
 			sed -i 's|/usr/lib/mozilla/kmozillahelper|/opt/waterfox/kwaterfoxhelper|g' $SourceDir/_Plasma_Build/mozilla-kde-$VERSION.patch
@@ -49,8 +50,12 @@ _patchrev=b2ba34e0dc10 # Waterfox 55.1.0
         patch -Np1 -i $SourceDir/_Plasma_Build/firefox-kde-$VERSION.patch
         patch -Np1 -i $SourceDir/_Plasma_Build/fix_waterfox_browser-kde_xul.patch
         patch -Np1 -i $SourceDir/_Plasma_Build/pgo_fix_missing_kdejs.patch
-        patch -Np1 -i $SourceDir/_Plasma_Build/fix-wifi-scanner.diff
         patch -Np1 -i $SourceDir/_Plasma_Build/no-crmf.diff
+        patch -Np1 -i $SourceDir/_Plasma_Build/mozilla-ucontext-$VERSION.patch
+        patch -Np1 -i $SourceDir/_Plasma_Build/wifi-disentangle.patch
+        patch -Np1 -i $SourceDir/_Plasma_Build/wifi-fix-interface.patch
+        patch -Np1 -i $SourceDir/_Plasma_Build/clip-ft-glyph.diff
+        patch -Np1 -i $SourceDir/_Plasma_Build/harmony-fix.diff
         patch -Np1 -i $SourceDir/_Plasma_Build/disable_e10s.patch
 				echo >> "$SourceDir/KDE_lock"
     else

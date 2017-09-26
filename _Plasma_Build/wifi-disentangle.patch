@@ -1,0 +1,245 @@
+# HG changeset patch
+# Parent  2edd69b245fbc493c3a1cf17c40c63b0280ead12
+Bug 1314968 - Disentangle nsWifiScannerDBus::SendMessage. r?kanru
+
+Make a copy of the function and specialize it for each message sent.
+Avoids the mess of comparing the method name to figure out what to do.
+
+diff --git a/netwerk/wifi/nsWifiScannerDBus.cpp b/netwerk/wifi/nsWifiScannerDBus.cpp
+--- a/netwerk/wifi/nsWifiScannerDBus.cpp
++++ b/netwerk/wifi/nsWifiScannerDBus.cpp
+@@ -34,19 +34,47 @@ nsWifiScannerDBus::Scan()
+   if (!mConnection) {
+     return NS_ERROR_NOT_AVAILABLE;
+   }
+-  return SendMessage("org.freedesktop.NetworkManager",
+-                     "/org/freedesktop/NetworkManager",
+-                     "GetDevices");
++  return SendGetDevices();
+ }
+ 
++// http://dbus.freedesktop.org/doc/api/html/group__DBusConnection.html
++// Refer to function dbus_connection_send_with_reply_and_block.
++static const uint32_t DBUS_DEFAULT_TIMEOUT = -1;
++
+ nsresult
+-nsWifiScannerDBus::SendMessage(const char* aInterface,
+-                               const char* aPath,
+-                               const char* aFuncCall)
+-{
+-  RefPtr<DBusMessage> msg = already_AddRefed<DBusMessage>(
+-    dbus_message_new_method_call("org.freedesktop.NetworkManager",
+-                                 aPath, aInterface, aFuncCall));
++nsWifiScannerDBus::SendGetDevices()
++{
++  RefPtr<DBusMessage> msg = already_AddRefed<DBusMessage>(
++    dbus_message_new_method_call("org.freedesktop.NetworkManager",
++                                 "/org/freedesktop/NetworkManager",
++                                 "org.freedesktop.NetworkManager",
++                                 "GetDevices"));
++  if (!msg) {
++    return NS_ERROR_FAILURE;
++  }
++
++  DBusError err;
++  dbus_error_init(&err);
++
++  RefPtr<DBusMessage> reply = already_AddRefed<DBusMessage>(
++    dbus_connection_send_with_reply_and_block(mConnection, msg,
++                                              DBUS_DEFAULT_TIMEOUT, &err));
++  if (dbus_error_is_set(&err)) {
++    dbus_error_free(&err);
++    return NS_ERROR_FAILURE;
++  }
++
++  return IdentifyDevices(reply);
++}
++
++nsresult
++nsWifiScannerDBus::SendGetDeviceType(const char* aPath)
++{
++  RefPtr<DBusMessage> msg = already_AddRefed<DBusMessage>(
++    dbus_message_new_method_call("org.freedesktop.NetworkManager",
++                                 aPath,
++                                 "org.freedesktop.DBus.Properties",
++                                 "Get"));
+   if (!msg) {
+     return NS_ERROR_FAILURE;
+   }
+@@ -54,58 +82,92 @@ nsWifiScannerDBus::SendMessage(const cha
+   DBusMessageIter argsIter;
+   dbus_message_iter_init_append(msg, &argsIter);
+ 
+-  if (!strcmp(aFuncCall, "Get")) {
+-    const char* paramInterface = "org.freedesktop.NetworkManager.Device";
+-    if (!dbus_message_iter_append_basic(&argsIter, DBUS_TYPE_STRING,
+-                                        &paramInterface)) {
+-      return NS_ERROR_FAILURE;
+-    }
+-
+-    const char* paramDeviceType = "DeviceType";
+-    if (!dbus_message_iter_append_basic(&argsIter, DBUS_TYPE_STRING,
+-                                        &paramDeviceType)) {
+-      return NS_ERROR_FAILURE;
+-    }
+-  } else if (!strcmp(aFuncCall, "GetAll")) {
+-    const char* param = "";
+-    if (!dbus_message_iter_append_basic(&argsIter, DBUS_TYPE_STRING, &param)) {
+-      return NS_ERROR_FAILURE;
+-    }
+-  }
++  const char* paramInterface = "org.freedesktop.NetworkManager.Device";
++  if (!dbus_message_iter_append_basic(&argsIter, DBUS_TYPE_STRING,
++                                      &paramInterface)) {
++    return NS_ERROR_FAILURE;
++  }
++
++  const char* paramDeviceType = "DeviceType";
++  if (!dbus_message_iter_append_basic(&argsIter, DBUS_TYPE_STRING,
++                                      &paramDeviceType)) {
++    return NS_ERROR_FAILURE;
++  }
++
++  DBusError err;
++  dbus_error_init(&err);
++
++  RefPtr<DBusMessage> reply = already_AddRefed<DBusMessage>(
++    dbus_connection_send_with_reply_and_block(mConnection, msg,
++                                              DBUS_DEFAULT_TIMEOUT, &err));
++  if (dbus_error_is_set(&err)) {
++    dbus_error_free(&err);
++    return NS_ERROR_FAILURE;
++  }
++
++  return IdentifyDeviceType(reply, aPath);
++}
++
++nsresult
++nsWifiScannerDBus::SendGetAccessPoints(const char* aPath)
++{
++  RefPtr<DBusMessage> msg = already_AddRefed<DBusMessage>(
++    dbus_message_new_method_call("org.freedesktop.NetworkManager",
++                                 aPath,
++                                 "org.freedesktop.NetworkManager.Device.Wireless",
++                                 "GetAccessPoints"));
++  if (!msg) {
++    return NS_ERROR_FAILURE;
++  }
+ 
+   DBusError err;
+   dbus_error_init(&err);
+ 
+-  // http://dbus.freedesktop.org/doc/api/html/group__DBusConnection.html
+-  // Refer to function dbus_connection_send_with_reply_and_block.
+-  const uint32_t DBUS_DEFAULT_TIMEOUT = -1;
+   RefPtr<DBusMessage> reply = already_AddRefed<DBusMessage>(
+     dbus_connection_send_with_reply_and_block(mConnection, msg,
+                                               DBUS_DEFAULT_TIMEOUT, &err));
+   if (dbus_error_is_set(&err)) {
+     dbus_error_free(&err);
+-
+     // In the GetAccessPoints case, if there are no access points, error is set.
+     // We don't want to error out here.
+-    if (!strcmp(aFuncCall, "GetAccessPoints")) {
+-      return NS_OK;
+-    }
+-    return NS_ERROR_FAILURE;
++    return NS_OK;
+   }
+ 
+-  nsresult rv;
+-  if (!strcmp(aFuncCall, "GetDevices")) {
+-    rv = IdentifyDevices(reply);
+-  } else if (!strcmp(aFuncCall, "Get")) {
+-    rv = IdentifyDeviceType(reply, aPath);
+-  } else if (!strcmp(aFuncCall, "GetAccessPoints")) {
+-    rv = IdentifyAccessPoints(reply);
+-  } else if (!strcmp(aFuncCall, "GetAll")) {
+-    rv = IdentifyAPProperties(reply);
+-  } else {
+-    rv = NS_ERROR_FAILURE;
+-  }
+-  return rv;
++  return IdentifyAccessPoints(reply);
++}
++
++nsresult
++nsWifiScannerDBus::SendGetAPProperties(const char* aPath)
++{
++  RefPtr<DBusMessage> msg = already_AddRefed<DBusMessage>(
++    dbus_message_new_method_call("org.freedesktop.NetworkManager",
++                                 aPath,
++                                 "org.freedesktop.DBus.Properties",
++                                 "GetAll"));
++  if (!msg) {
++    return NS_ERROR_FAILURE;
++  }
++
++  DBusMessageIter argsIter;
++  dbus_message_iter_init_append(msg, &argsIter);
++
++  const char* param = "";
++  if (!dbus_message_iter_append_basic(&argsIter, DBUS_TYPE_STRING, &param)) {
++    return NS_ERROR_FAILURE;
++  }
++
++  DBusError err;
++  dbus_error_init(&err);
++
++  RefPtr<DBusMessage> reply = already_AddRefed<DBusMessage>(
++    dbus_connection_send_with_reply_and_block(mConnection, msg,
++                                              DBUS_DEFAULT_TIMEOUT, &err));
++  if (dbus_error_is_set(&err)) {
++    dbus_error_free(&err);
++    return NS_ERROR_FAILURE;
++  }
++
++  return IdentifyAPProperties(reply);
+ }
+ 
+ nsresult
+@@ -126,7 +188,7 @@ nsWifiScannerDBus::IdentifyDevices(DBusM
+       return NS_ERROR_FAILURE;
+     }
+ 
+-    rv = SendMessage("org.freedesktop.DBus.Properties", devicePath, "Get");
++    rv = SendGetDeviceType(devicePath);
+     NS_ENSURE_SUCCESS(rv, rv);
+   } while (dbus_message_iter_next(&iter));
+ 
+@@ -159,8 +221,7 @@ nsWifiScannerDBus::IdentifyDeviceType(DB
+   const uint32_t NM_DEVICE_TYPE_WIFI = 2;
+   nsresult rv = NS_OK;
+   if (deviceType == NM_DEVICE_TYPE_WIFI) {
+-    rv = SendMessage("org.freedesktop.NetworkManager.Device.Wireless",
+-                     aDevicePath, "GetAccessPoints");
++    rv = SendGetAccessPoints(aDevicePath);
+   }
+ 
+   return rv;
+@@ -183,7 +244,7 @@ nsWifiScannerDBus::IdentifyAccessPoints(
+       return NS_ERROR_FAILURE;
+     }
+ 
+-    rv = SendMessage("org.freedesktop.DBus.Properties", path, "GetAll");
++    rv = SendGetAPProperties(path);
+     NS_ENSURE_SUCCESS(rv, rv);
+   } while (dbus_message_iter_next(&iter));
+ 
+diff --git a/netwerk/wifi/nsWifiScannerDBus.h b/netwerk/wifi/nsWifiScannerDBus.h
+--- a/netwerk/wifi/nsWifiScannerDBus.h
++++ b/netwerk/wifi/nsWifiScannerDBus.h
+@@ -25,9 +25,10 @@ public:
+   nsresult Scan();
+ 
+ private:
+-  nsresult SendMessage(const char* aInterface,
+-                       const char* aPath,
+-                       const char* aFuncCall);
++  nsresult SendGetDevices();
++  nsresult SendGetDeviceType(const char* aPath);
++  nsresult SendGetAccessPoints(const char* aPath);
++  nsresult SendGetAPProperties(const char* aPath);
+   nsresult IdentifyDevices(DBusMessage* aMsg);
+   nsresult IdentifyDeviceType(DBusMessage* aMsg, const char* aDevicePath);
+   nsresult IdentifyAccessPoints(DBusMessage* aMsg);
