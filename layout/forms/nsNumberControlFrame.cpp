@@ -659,14 +659,12 @@ nsNumberControlFrame::SetValueOfAnonTextControl(const nsAString& aValue)
   // state will be set to invalid) or if aValue can't be localized:
   nsAutoString localizedValue(aValue);
 
-#ifdef ENABLE_INTL_API
   // Try and localize the value we will set:
   Decimal val = HTMLInputElement::StringToDecimal(aValue);
   if (val.isFinite()) {
     ICUUtils::LanguageTagIterForContent langTagIter(mContent);
     ICUUtils::LocalizeNumber(val.toDouble(), langTagIter, localizedValue);
   }
-#endif
 
   // We need to update the value of our anonymous text control here. Note that
   // this must be its value, and not its 'value' attribute (the default value),
@@ -692,7 +690,6 @@ nsNumberControlFrame::GetValueOfAnonTextControl(nsAString& aValue)
 
   HTMLInputElement::FromContent(mTextField)->GetValue(aValue, CallerType::System);
 
-#ifdef ENABLE_INTL_API
   // Here we need to de-localize any number typed in by the user. That is, we
   // need to convert it from the number format of the user's language, region,
   // etc. to the format that the HTML 5 spec defines to be a "valid
@@ -733,7 +730,6 @@ nsNumberControlFrame::GetValueOfAnonTextControl(nsAString& aValue)
   // as 12.345, but HTMLInputElement::StringToDecimal would parse it to NaN.
   aValue.Truncate();
   aValue.AppendFloat(value);
-#endif
 }
 
 bool
