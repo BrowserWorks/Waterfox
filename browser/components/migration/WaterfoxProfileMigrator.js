@@ -181,9 +181,53 @@
   };
   
   let types = MigrationUtils.resourceTypes;
+  let places = getFileResource(types.HISTORY, ["places.sqlite", "places.sqlite-wal"]);
+  let favicons = getFileResource(types.HISTORY, ["favicons.sqlite", "favicons.sqlite-wal"]);
+  let cookies = getFileResource(types.COOKIES, ["cookies.sqlite", "cookies.sqlite-wal"]);
+  let passwords = getFileResource(types.PASSWORDS,
+    ["signons.sqlite", "logins.json", "key3.db",
+     "signedInUser.json"]);
+  let formData = getFileResource(types.FORMDATA, [
+    "formhistory.sqlite",
+    "autofill-profiles.json",
+  ]);
+  let bookmarksBackups = getFileResource(types.OTHERDATA,
+    [PlacesBackups.profileRelativeFolderPath]);
+  let dictionary = getFileResource(types.OTHERDATA, ["persdict.dat"]);
+  let setPrefs = getFileResource(types.OTHERDATA, ["prefs.js"]);
+
+  let session;
+  let env = Cc["@mozilla.org/process/environment;1"].getService(Ci.nsIEnvironment);
+  if (env.get("MOZ_RESET_PROFILE_MIGRATE_SESSION")) {
+    // We only want to restore the previous firefox session if the profile refresh was
+    // triggered by user. The MOZ_RESET_PROFILE_MIGRATE_SESSION would be set when a user-triggered
+    // profile refresh happened in nsAppRunner.cpp. Hence, we detect the MOZ_RESET_PROFILE_MIGRATE_SESSION
+    // to see if session data migration is required.
+    env.set("MOZ_RESET_PROFILE_MIGRATE_SESSION", "");
+  }
+    let sessionCheckpoints = this._getFileObject(sourceProfileDir, "sessionCheckpoints.json");
+    let sessionFile = this._getFileObject(sourceProfileDir, "sessionstore.jsonlz4");
+    if (sessionFile) {
+      session = {
+        type: types.SESSION,
+        migrate(aCallback) {
+          sessionCheckpoints.copyTo(currentProfileDir, "sessionCheckpoints.json");
+          let newSessionFile = currentProfileDir.clone();
+          newSessionFile.append("sessionstore.jsonlz4");
+          let migrationPromise = SessionMigration.migrate(sessionFile.path, newSessionFile.path);
+          migrationPromise.then(function() {
+            // Force the browser to one-off resume the session that we give it:
+            Services.prefs.setBoolPref("browser.sessionstore.resume_session_once", true);
+            aCallback(true);
+          }, function() {
+            aCallback(false);
+          });
+        }
+      };
+    }
  
-  // Here, we enumarate the extensions directory and loop through each
-  // file. Copy each extension within that directory every loop.
+  // Here, we enumarate the profile directory and loop through each
+  // file. Copy each file within that directory every loop, picking up any remnants.
   // More info:
   // https://developer.mozilla.org/en-US/docs/FileGuide/Directories#Iterating_over_the_Files_in_a_Directory
   // https://developer.mozilla.org/en-US/docs/FileGuide/MoveCopyDelete#Copying_a_File
@@ -191,14 +235,16 @@
   let listOfFiles = [];
   while (enumerator.hasMoreElements()) {
     let file = enumerator.getNext().QueryInterface(Ci.nsIFile);
-    if ((file.isFile() || file.isDirectory()) && ((file.leafName !== "parent.lock") || (file.leafName !== ".parentlock"))) {
+    if ((file.isFile() || file.isDirectory()) && (!file.leafName.match(/^(parent.lock|.parentlock|sessionstore.jsonlz4|sessionCheckpoints.json|prefs.js|persdict.dat|autofill-profiles.json|formhistory.sqlite|signInUser.json|key3.db|logins.json|signons.sqlite|cookies.sqlite|cookies.sqlite-wal|favicons.sqlite|favicons.sqlite-wal|places.sqlite|places.sqlite-wal|bookmarkbackups)$/))) {
       listOfFiles.push(file.leafName);
+	  Services.console.logStringMessage(file.leafName);
     }
   }
   
   let profileData = getFileResource(types.OTHERDATA, listOfFiles);
   
-  return [profileData].filter(r => r);
+  return [places, cookies, passwords, formData, dictionary, bookmarksBackups,
+          session, favicons, setPrefs, profileData].filter(r => r);
  };
  
  Object.defineProperty(WaterfoxProfileMigrator.prototype, "startupOnlyMigrator", {

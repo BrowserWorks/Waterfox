@@ -1972,9 +1972,9 @@ BrowserGlue.prototype = {
       Services.prefs.setStringPref("extensions.hotfix.id", "");
       
       // Delete left over profile
-      let path = OS.Path.join(OS.Constants.Path.profileDir, Services.prefs.getCharPref("general.oldDefaultProfile"));
-      OS.File.removeDir(path);
-      
+      //let path = OS.Path.join(OS.Constants.Path.profileDir, Services.prefs.getCharPref("general.oldDefaultProfile"));
+      //OS.File.removeDir(path);
+	  //Services.prefs.setCharPref("general.oldDefaultProfile", "");
     }
 
     // Update the migration version.
