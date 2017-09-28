@@ -11,7 +11,6 @@
 #include "MediaInfo.h"
 #include "MediaPrefs.h"
 #include "PDMFactory.h"
-#include "gmp-decryption.h"
 #include "mozIGeckoMediaPluginService.h"
 #include "mozilla/CDMProxy.h"
 #include "mozilla/EMEUtils.h"
