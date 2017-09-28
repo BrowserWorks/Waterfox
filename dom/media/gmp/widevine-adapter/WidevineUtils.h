@@ -8,7 +8,6 @@
 
 #include "stddef.h"
 #include "content_decryption_module.h"
-#include "gmp-api/gmp-platform.h"
 #include "nsISupportsImpl.h"
 #include "nsTArray.h"
 #include "mozilla/Logging.h"
@@ -31,9 +30,6 @@ namespace mozilla {
       return rv;                                                               \
     }                                                                          \
   }
-
-GMPErr
-ToGMPErr(cdm::Status aStatus);
 
 namespace gmp {
 class CDMShmemBuffer;
