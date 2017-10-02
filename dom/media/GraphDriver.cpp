@@ -35,8 +35,7 @@ GraphDriver::GraphDriver(MediaStreamGraphImpl* aGraphImpl)
     mWaitState(WAITSTATE_RUNNING),
     mCurrentTimeStamp(TimeStamp::Now()),
     mPreviousDriver(nullptr),
-    mNextDriver(nullptr),
-    mScheduled(false)
+    mNextDriver(nullptr)
 { }
 
 void GraphDriver::SetGraphTime(GraphDriver* aPreviousDriver,
@@ -136,12 +135,6 @@ void GraphDriver::SetPreviousDriver(GraphDriver* aPreviousDriver)
   mPreviousDriver = aPreviousDriver;
 }
 
-bool GraphDriver::Scheduled()
-{
-  GraphImpl()->GetMonitor().AssertCurrentThreadOwns();
-  return mScheduled;
-}
-
 ThreadedDriver::ThreadedDriver(MediaStreamGraphImpl* aGraphImpl)
   : GraphDriver(aGraphImpl)
 { }
@@ -184,7 +177,7 @@ public:
     LOG(LogLevel::Debug,
         ("Starting a new system driver for graph %p", mDriver->mGraphImpl));
 
-    RefPtr<GraphDriver> previousDriver;
+    GraphDriver* previousDriver = nullptr;
     {
       MonitorAutoLock mon(mDriver->mGraphImpl->GetMonitor());
       previousDriver = mDriver->PreviousDriver();
@@ -193,7 +186,7 @@ public:
       LOG(LogLevel::Debug,
           ("%p releasing an AudioCallbackDriver(%p), for graph %p",
            mDriver.get(),
-           previousDriver.get(),
+           previousDriver,
            mDriver->GraphImpl()));
       MOZ_ASSERT(!mDriver->AsAudioCallbackDriver());
       RefPtr<AsyncCubebTask> releaseEvent =
@@ -227,8 +220,7 @@ ThreadedDriver::Start()
     // Note: mThread may be null during event->Run() if we pass to NewNamedThread!  See AudioInitTask
     nsresult rv = NS_NewNamedThread("MediaStreamGrph", getter_AddRefs(mThread));
     if (NS_SUCCEEDED(rv)) {
-      rv = mThread->EventTarget()->Dispatch(event.forget(), NS_DISPATCH_NORMAL);
-      mScheduled = NS_SUCCEEDED(rv);
+      mThread->Dispatch(event, NS_DISPATCH_NORMAL);
     }
   }
 }
@@ -800,8 +792,7 @@ AudioCallbackDriver::Start()
        "to ensure it runs after previous shutdown."));
   RefPtr<AsyncCubebTask> initEvent =
     new AsyncCubebTask(AsAudioCallbackDriver(), AsyncCubebOperation::INIT);
-  nsresult rv = initEvent->Dispatch();
-  mScheduled = NS_SUCCEEDED(rv);
+  initEvent->Dispatch();
 }
 
 bool
