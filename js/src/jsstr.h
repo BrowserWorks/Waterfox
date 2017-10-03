@@ -12,6 +12,7 @@
 #include "mozilla/TextUtils.h"
 
 #include <stdio.h>
+#include <string.h>
 
 #include "jsutil.h"
 #include "NamespaceImports.h"
@@ -99,21 +100,15 @@ struct JSSubString {
 #define JS7_UNHEX(c)    (unsigned)(JS7_ISDEC(c) ? (c) - '0' : 10 + tolower(c) - 'a')
 #define JS7_ISLET(c)    (mozilla::IsAsciiAlpha(c))
 
-extern size_t
-js_strlen(const char16_t* s);
-
-extern int32_t
-js_strcmp(const char16_t* lhs, const char16_t* rhs);
+static MOZ_ALWAYS_INLINE size_t
+js_strlen(const char16_t* s)
+{
+    return std::char_traits<char16_t>::length(s);
+}
 
 template <typename CharT>
 extern const CharT*
 js_strchr_limit(const CharT* s, char16_t c, const CharT* limit);
-
-static MOZ_ALWAYS_INLINE void
-js_strncpy(char16_t* dst, const char16_t* src, size_t nelem)
-{
-    return mozilla::PodCopy(dst, src, nelem);
-}
 
 extern int32_t
 js_fputs(const char16_t* s, FILE* f);
