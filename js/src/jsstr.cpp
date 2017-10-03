@@ -2660,7 +2660,8 @@ js::str_trimEnd(JSContext* cx, unsigned argc, Value* vp)
 }
 
 // Utility for building a rope (lazy concatenation) of strings.
-class RopeBuilder {
+class RopeBuilder
+{
     JSContext* cx;
     RootedString res;
 
@@ -2895,14 +2896,14 @@ BuildDollarReplacement(JSContext* cx, JSString* textstrArg, JSLinearString* reps
 
 template <typename StrChar, typename RepChar>
 static bool
-StrFlatReplaceGlobal(JSContext *cx, JSLinearString *str, JSLinearString *pat, JSLinearString *rep,
-                     StringBuffer &sb)
+StrFlatReplaceGlobal(JSContext* cx, JSLinearString* str, JSLinearString* pat, JSLinearString* rep,
+                     StringBuffer& sb)
 {
     MOZ_ASSERT(str->length() > 0);
 
     AutoCheckCannotGC nogc;
-    const StrChar *strChars = str->chars<StrChar>(nogc);
-    const RepChar *repChars = rep->chars<RepChar>(nogc);
+    const StrChar* strChars = str->chars<StrChar>(nogc);
+    const RepChar* repChars = rep->chars<RepChar>(nogc);
 
     // The pattern is empty, so we interleave the replacement string in-between
     // each character.
@@ -2953,8 +2954,8 @@ StrFlatReplaceGlobal(JSContext *cx, JSLinearString *str, JSLinearString *pat, JS
 
 // This is identical to "str.split(pattern).join(replacement)" except that we
 // do some deforestation optimization in Ion.
-JSString *
-js::str_flat_replace_string(JSContext *cx, HandleString string, HandleString pattern,
+JSString*
+js::str_flat_replace_string(JSContext* cx, HandleString string, HandleString pattern,
                             HandleString replacement)
 {
     MOZ_ASSERT(string);
@@ -2999,11 +3000,7 @@ js::str_flat_replace_string(JSContext *cx, HandleString string, HandleString pat
         }
     }
 
-    JSString *str = sb.finishString();
-    if (!str)
-        return nullptr;
-
-    return str;
+    return sb.finishString();
 }
 
 // https://tc39.es/proposal-string-replaceall/#sec-string.prototype.replaceall
@@ -3465,8 +3462,8 @@ SplitSingleCharHelper(JSContext* cx, HandleLinearString str, const TextChar* tex
 
 // ES 2016 draft Mar 25, 2016 21.1.3.17 steps 4, 8, 12-18.
 static ArrayObject*
-SplitSingleCharHelper(JSContext* cx, HandleLinearString str, char16_t ch, HandleObjectGroup group) {
-
+SplitSingleCharHelper(JSContext* cx, HandleLinearString str, char16_t ch, HandleObjectGroup group)
+{
     // Step 12.
     size_t strLength = str->length();
 
@@ -3482,8 +3479,8 @@ SplitSingleCharHelper(JSContext* cx, HandleLinearString str, char16_t ch, Handle
 
 // ES 2016 draft Mar 25, 2016 21.1.3.17 steps 4, 8, 12-18.
 ArrayObject*
-js::str_split_string(JSContext* cx, HandleObjectGroup group, HandleString str, HandleString sep, uint32_t limit)
-
+js::str_split_string(JSContext* cx, HandleObjectGroup group, HandleString str, HandleString sep,
+                     uint32_t limit)
 {
     RootedLinearString linearStr(cx, str->ensureLinear(cx));
     if (!linearStr)
@@ -5042,7 +5039,7 @@ js::FlatStringMatch(JSContext* cx, unsigned argc, Value* vp)
     MOZ_ASSERT(isOptimizable);
 #endif
 
-    RootedString str(cx,args[0].toString());
+    RootedString str(cx, args[0].toString());
     RootedString pattern(cx, args[1].toString());
 
     bool isFlat = false;
@@ -5072,7 +5069,7 @@ js::FlatStringSearch(JSContext* cx, unsigned argc, Value* vp)
     MOZ_ASSERT(isOptimizable);
 #endif
 
-    RootedString str(cx,args[0].toString());
+    RootedString str(cx, args[0].toString());
     RootedString pattern(cx, args[1].toString());
 
     bool isFlat = false;
