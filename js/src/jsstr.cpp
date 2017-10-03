@@ -78,7 +78,7 @@ using mozilla::RangedPtr;
 using JS::AutoCheckCannotGC;
 
 static JSLinearString*
-ArgToRootedString(JSContext* cx, const CallArgs& args, unsigned argno)
+ArgToLinearString(JSContext* cx, const CallArgs& args, unsigned argno)
 {
     if (argno >= args.length())
         return cx->names().undefined;
@@ -87,7 +87,6 @@ ArgToRootedString(JSContext* cx, const CallArgs& args, unsigned argno)
     if (!str)
         return nullptr;
 
-    args[argno].setString(str);
     return str->ensureLinear(cx);
 }
 
@@ -327,7 +326,7 @@ str_escape(JSContext* cx, unsigned argc, Value* vp)
 {
     CallArgs args = CallArgsFromVp(argc, vp);
 
-    JSLinearString* str = ArgToRootedString(cx, args, 0);
+    RootedLinearString str(cx, ArgToLinearString(cx, args, 0));
     if (!str)
         return false;
 
@@ -457,7 +456,7 @@ str_unescape(JSContext* cx, unsigned argc, Value* vp)
     CallArgs args = CallArgsFromVp(argc, vp);
 
     // Step 1.
-    RootedLinearString str(cx, ArgToRootedString(cx, args, 0));
+    RootedLinearString str(cx, ArgToLinearString(cx, args, 0));
     if (!str)
         return false;
 
@@ -1584,7 +1583,7 @@ js::str_normalize(JSContext* cx, unsigned argc, Value* vp)
         form = NFC;
     } else {
         // Step 4.
-        JSLinearString* formStr = ArgToRootedString(cx, args, 0);
+        JSLinearString* formStr = ArgToLinearString(cx, args, 0);
         if (!formStr)
             return false;
 
@@ -2244,7 +2243,7 @@ js::str_includes(JSContext* cx, unsigned argc, Value* vp)
         return false;
 
     // Step 5.
-    RootedLinearString searchStr(cx, ArgToRootedString(cx, args, 0));
+    RootedLinearString searchStr(cx, ArgToLinearString(cx, args, 0));
     if (!searchStr)
         return false;
 
@@ -2289,7 +2288,7 @@ js::str_indexOf(JSContext* cx, unsigned argc, Value* vp)
         return false;
 
     // Steps 4 and 5
-    RootedLinearString searchStr(cx, ArgToRootedString(cx, args, 0));
+    RootedLinearString searchStr(cx, ArgToLinearString(cx, args, 0));
     if (!searchStr)
         return false;
 
@@ -2371,7 +2370,7 @@ js::str_lastIndexOf(JSContext* cx, unsigned argc, Value* vp)
         return false;
 
     // Step 3.
-    RootedLinearString searchStr(cx, ArgToRootedString(cx, args, 0));
+    RootedLinearString searchStr(cx, ArgToLinearString(cx, args, 0));
     if (!searchStr)
         return false;
 
@@ -2485,7 +2484,7 @@ js::str_startsWith(JSContext* cx, unsigned argc, Value* vp)
         return false;
 
     // Step 5.
-    RootedLinearString searchStr(cx, ArgToRootedString(cx, args, 0));
+    RootedLinearString searchStr(cx, ArgToLinearString(cx, args, 0));
     if (!searchStr)
         return false;
 
@@ -2544,7 +2543,7 @@ js::str_endsWith(JSContext* cx, unsigned argc, Value* vp)
         return false;
 
     // Step 5.
-    RootedLinearString searchStr(cx, ArgToRootedString(cx, args, 0));
+    RootedLinearString searchStr(cx, ArgToLinearString(cx, args, 0));
     if (!searchStr)
         return false;
 
@@ -4708,7 +4707,7 @@ static bool
 str_decodeURI(JSContext* cx, unsigned argc, Value* vp)
 {
     CallArgs args = CallArgsFromVp(argc, vp);
-    RootedLinearString str(cx, ArgToRootedString(cx, args, 0));
+    RootedLinearString str(cx, ArgToLinearString(cx, args, 0));
     if (!str)
         return false;
 
@@ -4719,7 +4718,7 @@ static bool
 str_decodeURI_Component(JSContext* cx, unsigned argc, Value* vp)
 {
     CallArgs args = CallArgsFromVp(argc, vp);
-    RootedLinearString str(cx, ArgToRootedString(cx, args, 0));
+    RootedLinearString str(cx, ArgToLinearString(cx, args, 0));
     if (!str)
         return false;
 
@@ -4730,7 +4729,7 @@ static bool
 str_encodeURI(JSContext* cx, unsigned argc, Value* vp)
 {
     CallArgs args = CallArgsFromVp(argc, vp);
-    RootedLinearString str(cx, ArgToRootedString(cx, args, 0));
+    RootedLinearString str(cx, ArgToLinearString(cx, args, 0));
     if (!str)
         return false;
 
@@ -4741,7 +4740,7 @@ static bool
 str_encodeURI_Component(JSContext* cx, unsigned argc, Value* vp)
 {
     CallArgs args = CallArgsFromVp(argc, vp);
-    RootedLinearString str(cx, ArgToRootedString(cx, args, 0));
+    RootedLinearString str(cx, ArgToLinearString(cx, args, 0));
     if (!str)
         return false;
 
