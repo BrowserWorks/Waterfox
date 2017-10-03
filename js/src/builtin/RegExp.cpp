@@ -1293,6 +1293,25 @@ js::RegExpTesterRaw(JSContext* cx, HandleObject regexp, HandleString input,
 
 using CapturesVector = GCVector<Value, 4>;
 
+struct JSSubString
+{
+    JSLinearString* base;
+    size_t          offset;
+    size_t          length;
+
+    JSSubString() { mozilla::PodZero(this); }
+
+    void initEmpty(JSLinearString* base) {
+        this->base = base;
+        offset = length = 0;
+    }
+    void init(JSLinearString* base, size_t offset, size_t length) {
+        this->base = base;
+        this->offset = offset;
+        this->length = length;
+    }
+};
+
 static void
 GetParen(JSLinearString* matched, const JS::Value& capture, JSSubString* out)
 {
