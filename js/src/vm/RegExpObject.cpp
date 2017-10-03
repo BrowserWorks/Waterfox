@@ -1817,7 +1817,7 @@ JS::NewRegExpObject(JSContext* cx, const char* bytes, size_t length, RegExpFlags
 {
     AssertHeapIsIdle();
     CHECK_REQUEST(cx);
-    ScopedJSFreePtr<char16_t> chars(InflateString(cx, bytes, &length));
+    ScopedJSFreePtr<char16_t> chars(InflateString(cx, bytes, length));
     if (!chars) {
         return nullptr;
     }
