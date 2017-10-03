@@ -1344,7 +1344,7 @@ set_config('MOZ_RUST_DEFAULT_FLAGS', rust_compiler_flags)
 
 @depends(target)
 def build_not_win_mac(target):
-    if target.kernel not in ('Darwin', 'WINNT'):
+    if target.kernel not in ('Darwin', 'WINNT', 'SunOS'):
         return True
 
 
