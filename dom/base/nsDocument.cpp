@@ -2786,13 +2786,14 @@ nsDocument::InitCSP(nsIChannel* aChannel)
   rv = csp->GetCSPSandboxFlags(&cspSandboxFlags);
   NS_ENSURE_SUCCESS(rv, rv);
 
-  mSandboxFlags |= cspSandboxFlags;
-
   // Probably the iframe sandbox attribute already caused the creation of a
   // new NullPrincipal. Only create a new NullPrincipal if CSP requires so
   // and no one has been created yet.
   bool needNewNullPrincipal =
     (cspSandboxFlags & SANDBOXED_ORIGIN) && !(mSandboxFlags & SANDBOXED_ORIGIN);
+
+  mSandboxFlags |= cspSandboxFlags;
+  
   if (needNewNullPrincipal) {
     principal = NullPrincipal::CreateWithInheritedAttributes(principal);
     principal->SetCsp(csp);
@@ -12826,9 +12827,15 @@ nsDocument::UpdateIntersectionObservations()
       time = perf->Now();
     }
   }
+  nsTArray<RefPtr<DOMIntersectionObserver>> observers(mIntersectionObservers.Count());
   for (auto iter = mIntersectionObservers.Iter(); !iter.Done(); iter.Next()) {
     DOMIntersectionObserver* observer = iter.Get()->GetKey();
-    observer->Update(this, time);
+      observers.AppendElement(observer);
+  }
+  for (const auto& observer : observers) {
+    if (observer) {
+      observer->Update(this, time);
+    }
   }
 }
 
@@ -12854,7 +12861,9 @@ nsDocument::NotifyIntersectionObservers()
     observers.AppendElement(observer);
   }
   for (const auto& observer : observers) {
-    observer->Notify();
+    if (observer) {
+      observer->Notify();
+    }
   }
 }
 

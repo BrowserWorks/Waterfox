@@ -2904,6 +2904,9 @@ ObjectGroup::markStateChange(JSContext* cx)
 void
 ObjectGroup::setFlags(JSContext* cx, ObjectGroupFlags flags)
 {
+    MOZ_ASSERT(!(flags & OBJECT_FLAG_UNKNOWN_PROPERTIES),
+               "Should use markUnknown to set unknownProperties");
+
     if (hasAllFlags(flags))
         return;
 
