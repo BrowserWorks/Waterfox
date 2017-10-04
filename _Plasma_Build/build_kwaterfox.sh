@@ -29,7 +29,7 @@ function testConnection(){
 
 # Apply KDE Plasma patch to locally downloaded repository.
 function ApplyKDE(){
-_patchrev=b2ba34e0dc10 # Waterfox 55.1.0
+_patchrev=b2ba34e0dc10 # Waterfox 55.2.0
 	# Download patch if not exist and replace some words
 	if [ ! -f "$SourceDir/_Plasma_Build/mozilla-kde-$VERSION.patch" ] && [ ! -f "$SourceDir/_Plasma_Build/firefox-kde-$VERSION.patch" ]; then
 		# Check url next release for changes.	
@@ -54,8 +54,6 @@ _patchrev=b2ba34e0dc10 # Waterfox 55.1.0
         patch -Np1 -i $SourceDir/_Plasma_Build/mozilla-ucontext-$VERSION.patch
         patch -Np1 -i $SourceDir/_Plasma_Build/wifi-disentangle.patch
         patch -Np1 -i $SourceDir/_Plasma_Build/wifi-fix-interface.patch
-        patch -Np1 -i $SourceDir/_Plasma_Build/clip-ft-glyph.diff
-        patch -Np1 -i $SourceDir/_Plasma_Build/harmony-fix.diff
         patch -Np1 -i $SourceDir/_Plasma_Build/disable_e10s.patch
 				echo >> "$SourceDir/KDE_lock"
     else
