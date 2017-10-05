@@ -44,19 +44,7 @@ bool LaunchApp(const std::vector<std::string>& argv,
 bool LaunchApp(const std::vector<std::string>& argv,
                const file_handle_mapping_vector& fds_to_remap,
                const environment_map& env_vars_to_set,
-               bool wait, ProcessHandle* process_handle,
-               ProcessArchitecture arch) {
-  return LaunchApp(argv, fds_to_remap, env_vars_to_set,
-                   PRIVILEGES_INHERIT,
-                   wait, process_handle);
-}
-
-bool LaunchApp(const std::vector<std::string>& argv,
-               const file_handle_mapping_vector& fds_to_remap,
-               const environment_map& env_vars_to_set,
-               ChildPrivileges privs,
-               bool wait, ProcessHandle* process_handle,
-               ProcessArchitecture arch) {
+               bool wait, ProcessHandle* process_handle) {
   bool retval = true;
 
   char* argv_copy[argv.size() + 1];
@@ -124,38 +112,24 @@ bool LaunchApp(const std::vector<std::string>& argv,
     }
   }
 
-  // Set up the CPU preference array.
-  cpu_type_t cpu_types[1];
-  switch (arch) {
-    case PROCESS_ARCH_I386:
-      cpu_types[0] = CPU_TYPE_X86;
-      break;
-    case PROCESS_ARCH_X86_64:
-      cpu_types[0] = CPU_TYPE_X86_64;
-      break;
-    case PROCESS_ARCH_PPC:
-      cpu_types[0] = CPU_TYPE_POWERPC;
-      break;
-    default:
-      cpu_types[0] = CPU_TYPE_ANY;
-      break;
-  }
-
-  // Initialize spawn attributes.
   posix_spawnattr_t spawnattr;
   if (posix_spawnattr_init(&spawnattr) != 0) {
     FreeEnvVarsArray(vars, varsLen);
     return false;
   }
 
-  // Set spawn attributes.
-  size_t attr_count = 1;
-  size_t attr_ocount = 0;
-  if (posix_spawnattr_setbinpref_np(&spawnattr, attr_count, cpu_types, &attr_ocount) != 0 ||
-      attr_ocount != attr_count) {
-    FreeEnvVarsArray(vars, varsLen);
-    posix_spawnattr_destroy(&spawnattr);
+  // Prevent the child process from inheriting any file descriptors
+  // that aren't named in `file_actions`.  (This is an Apple-specific
+  // extension to posix_spawn.)
+  if (posix_spawnattr_setflags(&spawnattr, POSIX_SPAWN_CLOEXEC_DEFAULT) != 0) {
     return false;
+  }
+
+  // Exempt std{in,out,err} from being closed by POSIX_SPAWN_CLOEXEC_DEFAULT.
+  for (int fd = 0; fd <= STDERR_FILENO; ++fd) {
+    if (posix_spawn_file_actions_addinherit_np(&file_actions, fd) != 0) {
+      return false;
+    }
   }
 
   int pid = 0;
