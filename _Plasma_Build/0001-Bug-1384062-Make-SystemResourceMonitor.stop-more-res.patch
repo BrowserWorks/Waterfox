@@ -1,0 +1,117 @@
+From 2874ecd82e9671f774bdfda41fe0857fcb916c13 Mon Sep 17 00:00:00 2001
+Message-Id: <2874ecd82e9671f774bdfda41fe0857fcb916c13.1506634385.git.jan.steffens@gmail.com>
+From: Mike Hommey <mh+mozilla@glandium.org>
+Date: Wed, 16 Aug 2017 13:16:16 +0900
+Subject: [PATCH] Bug 1384062 - Make SystemResourceMonitor.stop more resilient
+ to errors. r=ahal,gps
+
+The poll() call in SystemResourceMonitor.stop might fail even though
+there is something to read from the pipe, in some corner cases, and
+python won't let us know about it. In that case, an exception is thrown,
+leaving the SystemResourceMonitor (and its callers) in a weird state. In
+practice, this leads BuildMonitor.__exit__ to recall stop, which then
+fails.
+
+So when poll() throws an exception, we pretend there's still something
+to read, and we try to read anyways. If there is something to read,
+recv() will return it, otherwise, it will throw an exception of its own,
+which we catch, pretending we're done.
+
+Furthermore, when there is nothing to read from the pipe, poll() simply
+returns False, and our loop never sets `done` to True, and we then hit
+an assert, which doesn't have its place here, so we remove it.
+
+Finally, the other end of the pipe might have died at any time, making
+sending over the pipe fail, so we also protect against that.
+
+With all these changes, it feels like the reason to backout bug 1239939
+in bug 1272782 should have been dealt with, and we can drop the timeout
+again.
+
+--HG--
+extra : rebase_source : ac72dd5b2602cf3ffddfb429f95e02380f939893
+---
+ .../mozsystemmonitor/resourcemonitor.py            | 38 +++++++++++++++-------
+ 1 file changed, 26 insertions(+), 12 deletions(-)
+
+diff --git a/testing/mozbase/mozsystemmonitor/mozsystemmonitor/resourcemonitor.py b/testing/mozbase/mozsystemmonitor/mozsystemmonitor/resourcemonitor.py
+index 8f2ac95cbe505540..38f9bc986ac2a120 100644
+--- a/testing/mozbase/mozsystemmonitor/mozsystemmonitor/resourcemonitor.py
++++ b/testing/mozbase/mozsystemmonitor/mozsystemmonitor/resourcemonitor.py
+@@ -289,47 +289,61 @@ class SystemResourceMonitor(object):
+         assert self._running
+         assert not self._stopped
+ 
+-        self._pipe.send(('terminate',))
++        try:
++            self._pipe.send(('terminate',))
++        except Exception:
++            pass
+         self._running = False
+         self._stopped = True
+ 
+         self.measurements = []
+ 
+-        done = False
+-
+         # The child process will send each data sample over the pipe
+         # as a separate data structure. When it has finished sending
+         # samples, it sends a special "done" message to indicate it
+         # is finished.
+-        while self._pipe.poll(1.0):
+-            start_time, end_time, io_diff, cpu_diff, cpu_percent, virt_mem, \
+-                swap_mem = self._pipe.recv()
++
++        # multiprocessing.Pipe is not actually a pipe on at least Linux.  that
++        # has an effect on the expected outcome of reading from it when the
++        # other end of the pipe dies, leading to possibly hanging on revc()
++        # below. So we must poll().
++        def poll():
++            try:
++                return self._pipe.poll(0.1)
++            except Exception:
++                # Poll might throw an exception even though there's still
++                # data to read. That happens when the underlying system call
++                # returns both POLLERR and POLLIN, but python doesn't tell us
++                # about it. So assume there is something to read, and we'll
++                # get an exception when trying to read the data.
++                return True
++        while poll():
++            try:
++                start_time, end_time, io_diff, cpu_diff, cpu_percent, virt_mem, \
++                    swap_mem = self._pipe.recv()
++            except Exception:
++                # Let's assume we're done here
++                break
+ 
+             # There should be nothing after the "done" message so
+             # terminate.
+             if start_time == 'done':
+-                done = True
+                 break
+ 
+             io = self._io_type(*io_diff)
+             virt = self._virt_type(*virt_mem)
+             swap = self._swap_type(*swap_mem)
+             cpu_times = [self._cpu_times_type(*v) for v in cpu_diff]
+ 
+             self.measurements.append(SystemResourceUsage(start_time, end_time,
+                                                          cpu_times, cpu_percent, io, virt, swap))
+ 
+         # We establish a timeout so we don't hang forever if the child
+         # process has crashed.
+         self._process.join(10)
+         if self._process.is_alive():
+             self._process.terminate()
+             self._process.join(10)
+-        else:
+-            # We should have received a "done" message from the
+-            # child indicating it shut down properly. This only
+-            # happens if the child shuts down cleanly.
+-            assert done
+ 
+         if len(self.measurements):
+             self.start_time = self.measurements[0].start
+-- 
+2.14.2
+

@@ -35,7 +35,7 @@ function ApplyPatches(){
         patch -Np1 -i $SourceDir/_Plasma_Build/no-crmf.diff
         patch -Np1 -i $SourceDir/_Plasma_Build/wifi-disentangle.patch
         patch -Np1 -i $SourceDir/_Plasma_Build/wifi-fix-interface.patch
-        patch -Np1 -i $SourceDir/_Plasma_Build/fixformach.diff
+        patch -Np1 -i $SourceDir/_Plasma_Build/0001-Bug-1384062-Make-SystemResourceMonitor.stop-more-res.patch
         patch -Np1 -i $SourceDir/_Plasma_Build/glibc-2.26-fix.diff
 				echo >> "$SourceDir/wf_lock"
     else

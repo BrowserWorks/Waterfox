@@ -55,7 +55,7 @@ _patchrev=b2ba34e0dc10 # Waterfox 55.2.0
         patch -Np1 -i $SourceDir/_Plasma_Build/wifi-disentangle.patch
         patch -Np1 -i $SourceDir/_Plasma_Build/wifi-fix-interface.patch
         patch -Np1 -i $SourceDir/_Plasma_Build/disable_e10s.patch
-        patch -Np1 -i $SourceDir/_Plasma_Build/fixformach.diff
+        patch -Np1 -i $SourceDir/_Plasma_Build/0001-Bug-1384062-Make-SystemResourceMonitor.stop-more-res.patch
 				echo >> "$SourceDir/KDE_lock"
     else
         echo "Unable to find KDE patches or patches has already been applied!"
