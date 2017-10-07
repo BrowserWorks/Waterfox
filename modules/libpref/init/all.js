@@ -4963,7 +4963,7 @@ pref("dom.vibrator.max_vibrate_ms", 10000);
 pref("dom.vibrator.max_vibrate_list_len", 128);
 
 // Battery API
-pref("dom.battery.enabled", true);
+pref("dom.battery.enabled", false);
 
 // Push
 
