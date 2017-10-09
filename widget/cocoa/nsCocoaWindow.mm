@@ -454,9 +454,6 @@ nsresult nsCocoaWindow::CreateNativeWindow(const NSRect &aRect,
   // Create the window
   mWindow = [[windowClass alloc] initWithContentRect:contentRect styleMask:features 
                                  backing:NSBackingStoreBuffered defer:YES];
-  
-  // By default, hide window titles.                          
-  [mWindow setTitleVisibility:NSWindowTitleHidden];
 
   // setup our notification delegate. Note that setDelegate: does NOT retain.
   mDelegate = [[WindowDelegate alloc] initWithGeckoWindow:this];
@@ -1813,11 +1810,9 @@ nsCocoaWindow::SetTitle(const nsAString& aTitle)
   if ([mWindow drawsContentsIntoWindowFrame] && ![mWindow wantsTitleDrawn]) {
     // Don't cause invalidations.
     [mWindow disableSetNeedsDisplay];
-    [mWindow setTitleVisibility:NSWindowTitleHidden];
     [mWindow setTitle:title];
     [mWindow enableSetNeedsDisplay];
   } else {
-    [mWindow setTitleVisibility:NSWindowTitleVisible];
     [mWindow setTitle:title];
   }
 
