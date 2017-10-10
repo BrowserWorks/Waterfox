@@ -231,6 +231,14 @@ void operator delete(void* ptr) MOZALLOC_THROW_IF_HAS_EXCEPTIONS
     return free_impl(ptr);
 }
 
+#if __cplusplus >= 201402L
+MOZALLOC_EXPORT_NEW MOZALLOC_INLINE
+void operator delete(void* ptr, size_t size) MOZALLOC_THROW_IF_HAS_EXCEPTIONS
+{
+    return free_impl(ptr);
+}
+#endif
+
 MOZALLOC_EXPORT_NEW MOZALLOC_INLINE
 void operator delete(void* ptr, const std::nothrow_t&) MOZALLOC_THROW_IF_HAS_EXCEPTIONS
 {
@@ -242,6 +250,14 @@ void operator delete[](void* ptr) MOZALLOC_THROW_IF_HAS_EXCEPTIONS
 {
     return free_impl(ptr);
 }
+
+#if __cplusplus >= 201402L
+MOZALLOC_EXPORT_NEW MOZALLOC_INLINE
+void operator delete[](void* ptr, size_t size) MOZALLOC_THROW_IF_HAS_EXCEPTIONS
+{
+    return free_impl(ptr);
+}
+#endif
 
 MOZALLOC_EXPORT_NEW MOZALLOC_INLINE
 void operator delete[](void* ptr, const std::nothrow_t&) MOZALLOC_THROW_IF_HAS_EXCEPTIONS
