@@ -5108,15 +5108,15 @@ pref("memory.blob_report.stack_frames", 0);
 
 // comma separated list of domain origins (e.g. https://domain.com) that still
 // need localStorage in the frameworker
-pref("social.whitelist", "https://mozsocial.cliqz.com");
+sticky_pref("social.whitelist", "");
 // comma separated list of domain origins (e.g. https://domain.com) for
 // directory websites (e.g. AMO) that can install providers for other sites
-pref("social.directories", "https://activations.cdn.mozilla.net");
+sticky_pre("social.directories", "");
 // remote-install allows any website to activate a provider, with extended UI
 // notifying user of installation. we can later pref off remote install if
 // necessary. This does not affect whitelisted and directory installs.
-pref("social.remote-install.enabled", true);
-pref("social.toast-notifications.enabled", true);
+sticky_pre("social.remote-install.enabled", false);
+sticky_pre("social.toast-notifications.enabled", false);
 
 // Disable idle observer fuzz, because only privileged content can access idle
 // observers (bug 780507).
