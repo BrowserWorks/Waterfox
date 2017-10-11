@@ -45,7 +45,9 @@ ChromiumCDMParent::Init(ChromiumCDMCallback* aCDMCallback,
                         bool aAllowPersistentState)
 {
   GMP_LOG("ChromiumCDMParent::Init(this=%p)", this);
-  if (!aCDMCallback) {
+  if (!aCDMCallback || !mMainThread) {
+    GMP_LOG("ChromiumCDMParent::Init(this=%p) failure since aCDMCallback(%p) or"
+            " aMainThread(%p) is nullptr", this, aCDMCallback, mMainThread);
     return false;
   }
   mCDMCallback = aCDMCallback;

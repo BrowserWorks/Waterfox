@@ -6,6 +6,7 @@
 
 #include "ChromiumCDMProxy.h"
 #include "ChromiumCDMCallbackProxy.h"
+#include "MediaResult.h"
 #include "mozilla/dom/MediaKeySession.h"
 #include "GMPUtils.h"
 #include "nsPrintfCString.h"
@@ -102,7 +103,7 @@ ChromiumCDMProxy::Init(PromiseId aPromiseId,
                          self->mPersistentStateRequired)) {
             self->RejectPromise(aPromiseId,
                                 NS_ERROR_FAILURE,
-                                NS_LITERAL_CSTRING("GetCDM failed."));
+                                NS_LITERAL_CSTRING("GetCDM failed due to CDM initialization failure."));
             return;
           }
           {
@@ -111,9 +112,9 @@ ChromiumCDMProxy::Init(PromiseId aPromiseId,
           }
           self->OnCDMCreated(aPromiseId);
         },
-        [self, aPromiseId](nsresult rv) {
+        [self, aPromiseId](MediaResult rv) {
           self->RejectPromise(
-            aPromiseId, NS_ERROR_FAILURE, NS_LITERAL_CSTRING("GetCDM failed."));
+            aPromiseId, rv.Code(), rv.Description());
         });
     }));
 
