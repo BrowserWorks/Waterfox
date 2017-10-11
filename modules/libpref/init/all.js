@@ -2506,7 +2506,7 @@ pref("services.blocklist.addons.collection", "addons");
 pref("services.blocklist.addons.checked", 0);
 pref("services.blocklist.plugins.collection", "plugins");
 pref("services.blocklist.plugins.checked", 0);
-pref("services.blocklist.pinning.enabled", true);
+pref("services.blocklist.pinning.enabled", false);
 pref("services.blocklist.pinning.bucket", "pinning");
 pref("services.blocklist.pinning.collection", "pins");
 pref("services.blocklist.pinning.checked", 0);
@@ -2518,7 +2518,7 @@ pref("services.blocklist.gfx.checked", 0);
 pref("services.blocklist.signing.enforced", true);
 
 // Enable blocklists via the services settings mechanism
-pref("services.blocklist.update_enabled", true);
+pref("services.blocklist.update_enabled", false);
 
 // Enable certificate blocklist updates via services settings
 pref("security.onecrl.via.amo", false);
