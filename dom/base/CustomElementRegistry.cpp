@@ -414,8 +414,7 @@ CustomElementRegistry::SyncInvokeReactions(nsIDocument::ElementCallbackType aTyp
   }
 
   UniquePtr<CustomElementReaction> reaction(Move(
-    MakeUnique<CustomElementCallbackReaction>(aDefinition,
-                                              Move(callback))));
+    MakeUnique<CustomElementCallbackReaction>(Move(callback))));
 
   RefPtr<SyncInvokeReactionRunnable> runnable =
     new SyncInvokeReactionRunnable(Move(reaction), aCustomElement);
@@ -461,8 +460,7 @@ CustomElementRegistry::EnqueueLifecycleCallback(nsIDocument::ElementCallbackType
 
   CustomElementReactionsStack* reactionsStack =
     docGroup->CustomElementReactionsStack();
-  reactionsStack->EnqueueCallbackReaction(aCustomElement, definition,
-                                          Move(callback));
+  reactionsStack->EnqueueCallbackReaction(aCustomElement, Move(callback));
 }
 
 void
@@ -1044,11 +1042,9 @@ CustomElementReactionsStack::EnqueueUpgradeReaction(Element* aElement,
 
 void
 CustomElementReactionsStack::EnqueueCallbackReaction(Element* aElement,
-                                                     CustomElementDefinition* aDefinition,
                                                      UniquePtr<CustomElementCallback> aCustomElementCallback)
 {
-  Enqueue(aElement, new CustomElementCallbackReaction(aDefinition,
-                                                      Move(aCustomElementCallback)));
+  Enqueue(aElement, new CustomElementCallbackReaction(Move(aCustomElementCallback)));
 }
 
 void
