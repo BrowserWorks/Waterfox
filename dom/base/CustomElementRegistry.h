@@ -218,6 +218,16 @@ public:
   virtual void Traverse(nsCycleCollectionTraversalCallback& aCb) const
   {
   }
+
+#if DEBUG
+  bool IsUpgradeReaction()
+  {
+    return mIsUpgradeReaction;
+  }
+
+protected:
+  bool mIsUpgradeReaction = false;
+#endif
 };
 
 class CustomElementUpgradeReaction final : public CustomElementReaction
@@ -226,6 +236,9 @@ public:
   explicit CustomElementUpgradeReaction(CustomElementDefinition* aDefinition)
     : mDefinition(aDefinition)
   {
+#if DEBUG
+    mIsUpgradeReaction = true;
+#endif
   }
 
 private:
